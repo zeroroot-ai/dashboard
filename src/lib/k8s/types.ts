@@ -24,6 +24,7 @@ export interface K8sObjectMeta {
   creationTimestamp?: string;
   deletionTimestamp?: string;
   finalizers?: string[];
+  ownerReferences?: import('./owner-ref').K8sOwnerReference[];
 }
 
 export interface K8sResource<Spec, Status> {
