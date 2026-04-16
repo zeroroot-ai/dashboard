@@ -5,7 +5,10 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/" className="text-xl font-bold">Gibson</Link>
+          <Link href="/" className="flex items-baseline gap-2">
+            <span className="text-xl font-bold">Zero Day AI</span>
+            <span className="text-sm text-muted-foreground">Gibson</span>
+          </Link>
           <div className="flex items-center gap-6">
             <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground">
               Pricing

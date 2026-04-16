@@ -59,5 +59,10 @@ vi.mock('@/src/lib/auth-client', () => ({
   },
 }));
 
+// Mock server-only marker so that Server-Action modules can be imported
+// under test. Production code still enforces server-only at build time via
+// Next.js's own handling; vitest runs under Node with no SSR boundary.
+vi.mock('server-only', () => ({}));
+
 // Mock environment variables
 process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3000';

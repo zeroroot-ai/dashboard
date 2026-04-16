@@ -15,6 +15,7 @@ import {
   AgentEnrollmentSpec,
   ComponentGrantSpec,
 } from './types';
+import type { K8sOwnerReference } from './owner-ref';
 
 export async function applyTenant(name: string, spec: TenantSpec): Promise<Tenant> {
   return k8s().apply<Tenant>(
@@ -50,12 +51,15 @@ export async function applyTenantMember(
   namespace: string,
   name: string,
   spec: TenantMemberSpec,
+  ownerRef?: K8sOwnerReference | null,
 ): Promise<TenantMember> {
+  const metadata: TenantMember['metadata'] = { name, namespace };
+  if (ownerRef) metadata.ownerReferences = [ownerRef];
   return k8s().apply<TenantMember>(
     {
       apiVersion: 'gibson.gibson.io/v1alpha1',
       kind: 'TenantMember',
-      metadata: { name, namespace },
+      metadata,
       spec,
     } as TenantMember,
     false,
@@ -84,12 +88,15 @@ export async function applyAgentEnrollment(
   namespace: string,
   name: string,
   spec: AgentEnrollmentSpec,
+  ownerRef?: K8sOwnerReference | null,
 ): Promise<AgentEnrollment> {
+  const metadata: AgentEnrollment['metadata'] = { name, namespace };
+  if (ownerRef) metadata.ownerReferences = [ownerRef];
   return k8s().apply<AgentEnrollment>(
     {
       apiVersion: 'gibson.gibson.io/v1alpha1',
       kind: 'AgentEnrollment',
-      metadata: { name, namespace },
+      metadata,
       spec,
     } as AgentEnrollment,
     false,
@@ -134,12 +141,15 @@ export async function applyComponentGrant(
   namespace: string,
   name: string,
   spec: ComponentGrantSpec,
+  ownerRef?: K8sOwnerReference | null,
 ): Promise<ComponentGrant> {
+  const metadata: ComponentGrant['metadata'] = { name, namespace };
+  if (ownerRef) metadata.ownerReferences = [ownerRef];
   return k8s().apply<ComponentGrant>(
     {
       apiVersion: 'gibson.gibson.io/v1alpha1',
       kind: 'ComponentGrant',
-      metadata: { name, namespace },
+      metadata,
       spec,
     } as ComponentGrant,
     false,

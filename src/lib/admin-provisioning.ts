@@ -236,3 +236,135 @@ export async function handleRemoveMember(req: NextRequest) {
   });
   return NextResponse.json({ ok: true });
 }
+
+/**
+ * List the members of an organization. Used by the tenant-operator's
+ * orphan-user cleanup saga to capture the membership graph before the org
+ * is deleted (and the member rows cascade away).
+ *
+ * Body: { organizationId: string }
+ * Response: { members: [{ userId, role }, ...] }
+ */
+export async function handleListMembers(req: NextRequest) {
+  const a = await authz(req);
+  if (!a.ok) return NextResponse.json(a.body, { status: a.status });
+
+  const body = (await req.json().catch(() => null)) as {
+    organizationId?: string;
+  } | null;
+  if (!body?.organizationId) {
+    return NextResponse.json(
+      { error: "organizationId required" },
+      { status: 400 },
+    );
+  }
+  const ctx = (await auth.$context) as unknown as AnyCtx;
+  const adapter = getOrgAdapter(ctx);
+
+  // Confirm the org exists so we can return 404 (rather than an empty list)
+  // when the operator captures after a teardown that has already removed it.
+  const org = await adapter.findOrganizationById(body.organizationId);
+  if (!org) {
+    return NextResponse.json({ error: "organization not found" }, { status: 404 });
+  }
+
+  const result = await adapter.listMembers({
+    organizationId: body.organizationId,
+    limit: 1000,
+  } as Parameters<typeof adapter.listMembers>[0]);
+  // Better Auth returns either an array or { members, total } depending on
+  // version — normalise to a plain list.
+  const rows = Array.isArray(result)
+    ? (result as Array<{ userId?: string; role?: string }>)
+    : ((result as { members?: Array<{ userId?: string; role?: string }> })
+        ?.members ?? []);
+  const members = rows.map((m) => ({
+    userId: String(m.userId ?? ""),
+    role: String(m.role ?? ""),
+  }));
+  return NextResponse.json({ members });
+}
+
+/**
+ * List the IDs of organizations a user is currently a member of. Used by
+ * the orphan-cleanup saga to count remaining memberships before deletion.
+ *
+ * Returns only organization IDs — no names, metadata, or roles — to avoid
+ * leaking unrelated tenant information across the SPIFFE boundary.
+ *
+ * Body: { userId: string }
+ * Response: { organizationIds: string[] }
+ */
+export async function handleListUserOrganizations(req: NextRequest) {
+  const a = await authz(req);
+  if (!a.ok) return NextResponse.json(a.body, { status: a.status });
+
+  const body = (await req.json().catch(() => null)) as {
+    userId?: string;
+  } | null;
+  if (!body?.userId) {
+    return NextResponse.json({ error: "userId required" }, { status: 400 });
+  }
+  const ctx = (await auth.$context) as unknown as AnyCtx;
+  const user = await ctx.internalAdapter.findUserById(body.userId);
+  if (!user) {
+    return NextResponse.json({ error: "user not found" }, { status: 404 });
+  }
+  const adapter = getOrgAdapter(ctx);
+  const orgs = (await adapter.listOrganizations(body.userId)) as Array<{
+    id?: string;
+  }>;
+  const organizationIds = orgs
+    .map((o) => String(o?.id ?? ""))
+    .filter((id) => id.length > 0);
+  return NextResponse.json({ organizationIds });
+}
+
+/**
+ * Hard-delete a user. Defense-in-depth: re-checks the user's membership
+ * count server-side and refuses (409) if non-zero, regardless of what the
+ * caller believed. This prevents a buggy operator from removing a user who
+ * still belongs to other tenants.
+ *
+ * Better Auth's internalAdapter.deleteUser cascades to session and account
+ * rows. The `member` row has FK ON DELETE CASCADE on the dashboard's user
+ * table, so any stale membership row would also be removed — but the 409
+ * check above means in practice we only hit deleteUser when there are none.
+ *
+ * Body: { userId: string }
+ * Response: 200 { ok: true } | 404 { error } | 409 { error, remainingOrgCount }
+ */
+export async function handleDeleteUser(req: NextRequest) {
+  const a = await authz(req);
+  if (!a.ok) return NextResponse.json(a.body, { status: a.status });
+
+  const body = (await req.json().catch(() => null)) as {
+    userId?: string;
+  } | null;
+  if (!body?.userId) {
+    return NextResponse.json({ error: "userId required" }, { status: 400 });
+  }
+  const ctx = (await auth.$context) as unknown as AnyCtx;
+
+  const user = await ctx.internalAdapter.findUserById(body.userId);
+  if (!user) {
+    return NextResponse.json({ error: "user not found" }, { status: 404 });
+  }
+
+  const adapter = getOrgAdapter(ctx);
+  const orgs = (await adapter.listOrganizations(body.userId)) as Array<{
+    id?: string;
+  }>;
+  if (orgs.length > 0) {
+    return NextResponse.json(
+      {
+        error: "user has remaining memberships",
+        remainingOrgCount: orgs.length,
+      },
+      { status: 409 },
+    );
+  }
+
+  await ctx.internalAdapter.deleteUser(body.userId);
+  return NextResponse.json({ ok: true });
+}

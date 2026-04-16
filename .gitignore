@@ -44,3 +44,6 @@ next-env.d.ts
 
 .cursorrules
 .cursor
+# playwright
+/test-results/
+/playwright-report/

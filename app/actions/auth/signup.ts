@@ -31,7 +31,9 @@
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 
-import { provisionTenantAction } from "@/app/actions/crd/tenant";
+import { applyTenant, tenantNamespace } from "@/src/lib/k8s/tenants";
+import { K8sError } from "@/src/lib/k8s/errors";
+import { emitCrdAudit } from "@/src/lib/audit/crd";
 import { auth } from "@/src/lib/auth-server";
 import {
   isDebug,
@@ -193,37 +195,62 @@ export async function signUpAction(input: SignUpActionInput): Promise<SignUpResu
     // continue — operator's saga will attempt org creation
   }
 
-  // 5. Tenant CRD provisioning.
+  // 5. Tenant CRD provisioning. Signup orchestrates tenant creation itself —
+  // the user has no cross-tenant role yet, so provisionTenantAction's
+  // gate would (correctly) deny them. Signup's own rate limiter + Better
+  // Auth signup protection is the authorization boundary for this path.
   const tier: TenantTier = (["free", "pro", "enterprise"] as const).includes(
     input.plan as "free" | "pro" | "enterprise",
   )
     ? (input.plan as TenantTier)
     : "free";
-  const result = await provisionTenantAction({
-    displayName: data.companyName,
-    owner: data.email.toLowerCase().trim(),
-    tier,
-  });
-  if (!result.ok) {
+  try {
+    const t = await applyTenant(tenantSlug, {
+      displayName: data.companyName,
+      owner: data.email.toLowerCase().trim(),
+      tier,
+    });
+    emitCrdAudit({
+      ts: new Date().toISOString(),
+      action: "provisionTenantAction",
+      outcome: "ok",
+      userId,
+      sessionTenantId: null,
+      targetTenant: t.metadata.name,
+      crossTenant: false,
+      inputKeys: ["displayName", "owner", "tier"],
+      resourceRef: t.metadata.name,
+    });
+    // t.metadata.name + tenantNamespace(t.metadata.name) match the original
+    // provisionTenantAction return shape; kept for downstream consumers.
+    void tenantNamespace(t.metadata.name);
+  } catch (err) {
+    const e = err instanceof Error ? err : new Error(String(err));
     recordDebugError({
       ts: new Date().toISOString(),
       route: "action:signUp.provisionTenant",
       method: "ACTION",
       status: 503,
-      message: `${result.code}: ${result.error}`,
+      message: e.message,
     });
-    if (result.code === "invalid_input") {
-      return {
-        ok: false,
-        code: "INVALID_REQUEST",
-        message: result.error,
-      };
-    }
+    const k8sErr = err as K8sError;
+    emitCrdAudit({
+      ts: new Date().toISOString(),
+      action: "provisionTenantAction",
+      outcome: "internal",
+      userId,
+      sessionTenantId: null,
+      targetTenant: tenantSlug,
+      crossTenant: false,
+      inputKeys: ["displayName", "owner", "tier"],
+      errorCode: k8sErr.name,
+      errorMessage: e.message,
+    });
     return {
       ok: false,
       code: "SERVICE_UNAVAILABLE",
       message: isDebug
-        ? `provisioning error: ${result.error}`
+        ? `provisioning error: ${e.message}`
         : "We're experiencing technical difficulties. Please try again in a moment.",
     };
   }
@@ -247,10 +274,10 @@ export async function signUpAction(input: SignUpActionInput): Promise<SignUpResu
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
       customer_email: data.email,
-      success_url: `${baseUrl}/signup/provisioning?tenant=${result.data.name}&user=${userId}`,
+      success_url: `${baseUrl}/signup/provisioning?tenant=${tenantSlug}&user=${userId}`,
       cancel_url: `${baseUrl}/signup?cancelled=true`,
       metadata: {
-        tenant_id: result.data.name,
+        tenant_id: tenantSlug,
         user_id: userId,
         tier: input.plan,
         owner_email: data.email,
@@ -266,13 +293,13 @@ export async function signUpAction(input: SignUpActionInput): Promise<SignUpResu
     }
     return {
       ok: true,
-      tenantId: result.data.name,
+      tenantId: tenantSlug,
       userId,
       redirectUrl: session.url,
     };
   }
 
-  return { ok: true, tenantId: result.data.name, userId };
+  return { ok: true, tenantId: tenantSlug, userId };
 }
 
 // Anti-enumeration helper: when Better Auth says the user already
@@ -281,7 +308,7 @@ export async function signUpAction(input: SignUpActionInput): Promise<SignUpResu
 // the tenant exists already it redirects; if not, the operator picks it
 // up on the next reconcile.
 async function finishExisting(data: SignupInput, tenantSlug: string): Promise<SignUpResult> {
-  await provisionTenantAction({
+  await applyTenant(tenantSlug, {
     displayName: data.companyName,
     owner: data.email.toLowerCase().trim(),
     tier: "free",

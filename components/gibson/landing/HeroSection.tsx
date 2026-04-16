@@ -20,11 +20,11 @@ export function HeroSection() {
         <GraphBackground />
         <div className="relative z-10 max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold">
-            Security R&amp;D to production. Same day. Same safety.
+            Research. Automate. Operate. Same day. Same safety.
           </h1>
 
           <p className="text-lg font-semibold text-foreground mt-4 max-w-2xl mx-auto">
-            Attackers ship new techniques in hours. Your defenders, red team, and AppSec need a substrate — not another tool — to do the same. One isolation boundary. One RBAC model. One knowledge graph every agent shares. One audit log your CISO already accepts. Everything you build, red or blue, inherits all of it on day one.
+            Attackers ship new techniques in hours. Your defenders, developers, red team, and AppSec need to keep up, building their own tools and agents on shared ground that's sandboxed, governed, and production-ready from the first run. Whatever one team ships, the others can find, audit, and reuse.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">

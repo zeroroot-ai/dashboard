@@ -69,7 +69,7 @@ function isProtectedRoute(pathname: string): boolean {
 function generateCspHeaders(nonce: string): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval'`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
     "style-src 'self' 'unsafe-inline'", // inline styles needed for UI libs
     "img-src 'self' data: https:",
     "connect-src 'self' wss: ws: http://localhost:* https:",

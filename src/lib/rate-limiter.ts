@@ -536,6 +536,62 @@ export async function checkRateLimit(
   }
 }
 
+/**
+ * Check rate limit for a pre-generated key — for callers that already know
+ * the identity (e.g. Server Actions loading the session themselves) and do
+ * not have a NextRequest to pass through `checkRateLimit`.
+ *
+ * Throws instead of falling back to memory when `failClosed: true` is set
+ * and the Redis client errors. Callers that cannot tolerate silent degrade
+ * (e.g. bootstrap token fetch) use that flag to short-circuit.
+ */
+export async function checkRateLimitByKey(
+  key: string,
+  config: RateLimitConfig,
+  opts?: { failClosed?: boolean },
+): Promise<RateLimitResult> {
+  startCleanup();
+
+  const algorithm = config.algorithm || 'sliding_window';
+
+  if (isRedisAvailable()) {
+    if (opts?.failClosed) {
+      // Redis sliding-window path with no memory fallback on error.
+      const now = Date.now();
+      const windowMs = config.windowSeconds * 1000;
+      const windowStart = now - windowMs;
+      if (!redisClient) {
+        throw new Error('rate limiter redis client unavailable');
+      }
+      await redisClient.zremrangebyscore(key, 0, windowStart);
+      await redisClient.zadd(key, now, `${now}-${Math.random()}`);
+      await redisClient.expire(key, config.windowSeconds * 2);
+      const count = await redisClient.zcount(key, windowStart, now);
+      const allowed = count <= config.maxRequests;
+      return {
+        allowed,
+        current: count,
+        limit: config.maxRequests,
+        remaining: Math.max(0, config.maxRequests - count),
+        resetIn: config.windowSeconds,
+        resetAt: Math.ceil((now + windowMs) / 1000),
+      };
+    }
+    return checkSlidingWindowRedis(key, config);
+  }
+
+  switch (algorithm) {
+    case 'fixed_window':
+      return checkFixedWindowMemory(key, config);
+    case 'sliding_window':
+      return checkSlidingWindowMemory(key, config);
+    case 'token_bucket':
+      return checkTokenBucketMemory(key, config);
+    default:
+      return checkSlidingWindowMemory(key, config);
+  }
+}
+
 // ============================================================================
 // Response Helpers
 // ============================================================================

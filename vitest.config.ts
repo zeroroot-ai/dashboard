@@ -30,7 +30,7 @@ export default defineConfig({
         statements: 70,
       },
     },
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'app/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', '.next', 'e2e'],
   },
   resolve: {
@@ -41,6 +41,9 @@ export default defineConfig({
       '@/hooks': path.resolve(__dirname, './hooks'),
       '@/app': path.resolve(__dirname, './app'),
       '@': path.resolve(__dirname, './src'),
+      // Next.js's `import "server-only"` guard has no runtime implementation;
+      // alias to an empty shim so Server-Action modules can be tested.
+      'server-only': path.resolve(__dirname, './src/test/server-only-shim.ts'),
     },
   },
 });

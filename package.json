@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/check-no-public-auth.mjs",
+    "prebuild": "node scripts/check-no-public-auth.mjs && node scripts/check-crd-action-authz.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint . --ext .ts,.tsx",

@@ -10,10 +10,15 @@ import {
 } from '@/src/lib/k8s/tenants';
 import { TenantTier } from '@/src/lib/k8s/types';
 import { K8sError } from '@/src/lib/k8s/errors';
+import { emitCrdAuditFromGate } from '@/src/lib/audit/crd';
 
-export type ActionResult<T = void> =
-  | { ok: true; data: T }
-  | { ok: false; error: string; code?: string };
+import { classifyK8sError, type ActionResult } from './types';
+import { requireCrdSession } from './_authz';
+import {
+  provisionTenantInput,
+  deleteTenantInput,
+  updateTenantInput,
+} from './schemas';
 
 function slugify(s: string): string {
   return s
@@ -25,31 +30,87 @@ function slugify(s: string): string {
 }
 
 /**
- * Create a new Tenant CRD. Operator takes over from there.
+ * Create a new Tenant CRD. Cross-tenant roles only.
  */
 export async function provisionTenantAction(input: {
   displayName: string;
   owner: string;
   tier?: TenantTier;
 }): Promise<ActionResult<{ name: string; namespace: string }>> {
-  const name = slugify(input.displayName);
-  if (!name) {
-    return { ok: false, error: 'Invalid display name', code: 'invalid_input' };
+  const inputKeys = Object.keys(input ?? {});
+  const gate = await requireCrdSession<{ name: string; namespace: string }>({
+    action: 'provisionTenantAction',
+    permission: 'tenants:provision',
+    requireCrossTenant: true,
+    rateLimit: 'provisionTenant',
+    inputKeys,
+  });
+  if (!gate.ok) return gate.result;
+
+  const parsed = provisionTenantInput.safeParse(input);
+  if (!parsed.success) {
+    emitCrdAuditFromGate({
+      session: gate.session,
+      userId: gate.userId,
+      action: 'provisionTenantAction',
+      outcome: 'bad_input',
+      targetTenant: null,
+      inputKeys,
+      errorCode: 'BAD_INPUT',
+      errorMessage: parsed.error.issues[0]?.message,
+    });
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
   }
+
+  const name = slugify(parsed.data.displayName);
+  if (!name) {
+    emitCrdAuditFromGate({
+      session: gate.session,
+      userId: gate.userId,
+      action: 'provisionTenantAction',
+      outcome: 'bad_input',
+      targetTenant: null,
+      inputKeys,
+      errorCode: 'BAD_INPUT',
+      errorMessage: 'Invalid display name',
+    });
+    return { ok: false, error: 'Invalid display name', code: 'BAD_INPUT' };
+  }
+
   try {
     const t = await applyTenant(name, {
-      displayName: input.displayName,
-      owner: input.owner,
-      tier: input.tier ?? 'free',
+      displayName: parsed.data.displayName,
+      owner: parsed.data.owner,
+      tier: parsed.data.tier ?? 'free',
     });
     revalidatePath('/dashboard');
+    emitCrdAuditFromGate({
+      session: gate.session,
+      userId: gate.userId,
+      action: 'provisionTenantAction',
+      outcome: 'ok',
+      targetTenant: t.metadata.name,
+      inputKeys,
+      resourceRef: t.metadata.name,
+    });
     return {
       ok: true,
       data: { name: t.metadata.name, namespace: tenantNamespace(t.metadata.name) },
     };
   } catch (e) {
     const err = e as K8sError;
-    return { ok: false, error: err.message, code: err.name };
+    const code = classifyK8sError(err);
+    emitCrdAuditFromGate({
+      session: gate.session,
+      userId: gate.userId,
+      action: 'provisionTenantAction',
+      outcome: 'internal',
+      targetTenant: name,
+      inputKeys,
+      errorCode: code,
+      errorMessage: err.message,
+    });
+    return { ok: false, error: err.message, code };
   }
 }
 
@@ -60,16 +121,57 @@ export async function deleteTenantAction(
   name: string,
   confirmationText: string,
 ): Promise<ActionResult> {
-  if (confirmationText !== name) {
-    return { ok: false, error: 'Confirmation did not match tenant name', code: 'confirmation_mismatch' };
+  const inputKeys = ['name', 'confirmationText'];
+  const gate = await requireCrdSession({
+    action: 'deleteTenantAction',
+    permission: 'tenants:delete',
+    tenantName: name,
+    inputKeys,
+  });
+  if (!gate.ok) return gate.result;
+
+  const parsed = deleteTenantInput.safeParse({ name, confirmationText });
+  if (!parsed.success) {
+    emitCrdAuditFromGate({
+      session: gate.session,
+      userId: gate.userId,
+      action: 'deleteTenantAction',
+      outcome: 'bad_input',
+      targetTenant: name,
+      inputKeys,
+      errorCode: 'BAD_INPUT',
+      errorMessage: parsed.error.issues[0]?.message,
+    });
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
   }
+
   try {
     await k8sDeleteTenant(name);
     revalidatePath('/dashboard');
+    emitCrdAuditFromGate({
+      session: gate.session,
+      userId: gate.userId,
+      action: 'deleteTenantAction',
+      outcome: 'ok',
+      targetTenant: name,
+      inputKeys,
+      resourceRef: name,
+    });
     return { ok: true, data: undefined };
   } catch (e) {
     const err = e as K8sError;
-    return { ok: false, error: err.message, code: err.name };
+    const code = classifyK8sError(err);
+    emitCrdAuditFromGate({
+      session: gate.session,
+      userId: gate.userId,
+      action: 'deleteTenantAction',
+      outcome: 'internal',
+      targetTenant: name,
+      inputKeys,
+      errorCode: code,
+      errorMessage: err.message,
+    });
+    return { ok: false, error: err.message, code };
   }
 }
 
@@ -80,12 +182,56 @@ export async function updateTenantAction(
   name: string,
   patch: { tier?: TenantTier; displayName?: string },
 ): Promise<ActionResult> {
+  const inputKeys = ['name', 'patch'];
+  const gate = await requireCrdSession({
+    action: 'updateTenantAction',
+    permission: 'tenants:update',
+    tenantName: name,
+    inputKeys,
+  });
+  if (!gate.ok) return gate.result;
+
+  const parsed = updateTenantInput.safeParse({ name, patch });
+  if (!parsed.success) {
+    emitCrdAuditFromGate({
+      session: gate.session,
+      userId: gate.userId,
+      action: 'updateTenantAction',
+      outcome: 'bad_input',
+      targetTenant: name,
+      inputKeys,
+      errorCode: 'BAD_INPUT',
+      errorMessage: parsed.error.issues[0]?.message,
+    });
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
+  }
+
   try {
-    await patchTenant(name, { spec: patch });
+    await patchTenant(name, { spec: parsed.data.patch });
     revalidatePath('/dashboard');
+    emitCrdAuditFromGate({
+      session: gate.session,
+      userId: gate.userId,
+      action: 'updateTenantAction',
+      outcome: 'ok',
+      targetTenant: name,
+      inputKeys,
+      resourceRef: name,
+    });
     return { ok: true, data: undefined };
   } catch (e) {
     const err = e as K8sError;
-    return { ok: false, error: err.message, code: err.name };
+    const code = classifyK8sError(err);
+    emitCrdAuditFromGate({
+      session: gate.session,
+      userId: gate.userId,
+      action: 'updateTenantAction',
+      outcome: 'internal',
+      targetTenant: name,
+      inputKeys,
+      errorCode: code,
+      errorMessage: err.message,
+    });
+    return { ok: false, error: err.message, code };
   }
 }
