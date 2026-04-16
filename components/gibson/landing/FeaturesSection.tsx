@@ -10,9 +10,9 @@ const features = [
   },
   {
     icon: Lock,
-    title: "The agent RBAC nobody else ships.",
+    title: "One place to control every AI connection.",
     description:
-      "Tool A is allowed for this tenant, not that one. Agent X reads findings, doesn't write them. The IR agent can read the graph, can't push to GitHub. One toggle per call, enforced every time — not just the ones you remembered to check.",
+      "Your AI isn't one thing — it's many, each with its own job. Zero Day AI gives you one place to control what every one of them can reach. Your coding AI can't talk to Salesforce unless you say so. Your triage AI opens tickets but can't touch production. Your research AI reads the data lake but can't send email. Every connection is a decision you made, in one place.",
   },
   {
     icon: Brain,
@@ -24,7 +24,7 @@ const features = [
     icon: Wrench,
     title: "One tool library. Every agent. Every team.",
     description:
-      "Wrap nmap, nuclei, semgrep, Sigma, your EDR API, your custom fuzzer — once. In Go, Python, Rust, whatever. Queue-backed, scaled by Kubernetes. The wrapper your pentester writes is the wrapper your IR agent calls.",
+      "Wrap nmap, nuclei, semgrep, Sigma, your EDR API, your custom fuzzer — once, in our SDK. Go, Python, Rust — pick your language. Every AI on the platform can use them, across every team and every workflow. The scanner your red team wraps for engagements is the same scanner your IR team's AI calls at 2am.",
   },
   {
     icon: Rocket,
@@ -36,7 +36,7 @@ const features = [
     icon: ClipboardCheck,
     title: "The audit log that writes itself.",
     description:
-      "Every LLM call, tool invocation, graph read, memory write — actor, policy decision, resource, bytes, tokens, latency, outcome. Linked to the mission and the finding. CISO opens a query. You don't build a pipeline.",
+      "Every move your AI makes is logged — who did it, to what, when, with what result. Tied to the mission it was part of and any finding it produced. When your CISO or auditor asks what your AI touched last Tuesday, the answer is one query away. The audit trail is already there. You didn't have to build it.",
   },
 ] as const;
 
@@ -44,10 +44,21 @@ export function FeaturesSection() {
   return (
     <section className="max-w-6xl mx-auto px-4 py-16">
       <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
-        Opinionated about the boring parts. Out of your way for the new ones.
+        Attackers move at AI speed. With Gibson, so do you.
       </h2>
-      <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-12">
-        Designed to be a force multiplier for your security, operations, and development teams — one substrate, shared across every workflow.
+      <p className="text-lg text-muted-foreground text-center max-w-3xl mx-auto mb-12">
+        A critical CVE drops at 9am for a framework running across your
+        services. A mapping agent queries Gibson's shared graph — 47 services
+        affected, 12 internet-exposed, 3 in the customer data path. A
+        remediation agent drafts the plan against team ownership; a coding
+        agent opens PRs repo-by-repo, each scoped to the permission the owning
+        team granted it — no more, no less. A validation agent fires the
+        original exploit inside Setec — the hardware-isolated microVM sandbox
+        Gibson delegates untrusted code to — against a staged build, and
+        confirms the patch holds. By afternoon, fixes are merged with evidence
+        attached. Same SDK, same agents, same graph — what your red team built
+        to find weaknesses, your blue team uses to close them. Book a demo;
+        bring a real CVE.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {features.map(({ icon: Icon, title, description }) => (

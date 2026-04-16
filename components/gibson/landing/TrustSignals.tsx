@@ -1,9 +1,10 @@
-import { Network, ShieldAlert, Server } from "lucide-react";
+import { Boxes, Network, ShieldAlert, Server } from "lucide-react";
 
 const signals = [
   { icon: ShieldAlert, label: "Hardware-isolated microVMs" },
   { icon: Network, label: "One graph every agent shares" },
   { icon: Server, label: "Your cluster, your LLM keys, your data" },
+  { icon: Boxes, label: "Architected for Kubernetes" },
 ] as const;
 
 export function TrustSignals() {
