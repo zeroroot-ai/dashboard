@@ -6,7 +6,7 @@ plugins:
       - target=ts
       - import_extension=none
 inputs:
-  - directory: ../../core/gibson/internal/daemon/api
-  - directory: ../../core/sdk/api/proto
+  - directory: ../../../core/gibson/internal/daemon/api
+  - directory: ../../../core/sdk/api/proto
     exclude_paths:
-      - ../../core/sdk/api/proto/google
+      - ../../../core/sdk/api/proto/google
