@@ -1,9 +1,9 @@
 import { Network, ShieldAlert, Server } from "lucide-react";
 
 const signals = [
-  { icon: Network, label: "The graph your agents share" },
-  { icon: ShieldAlert, label: "A sandbox you'd point at malware" },
-  { icon: Server, label: "Your cluster, your LLM keys" },
+  { icon: ShieldAlert, label: "Hardware-isolated microVMs" },
+  { icon: Network, label: "One graph every agent shares" },
+  { icon: Server, label: "Your cluster, your LLM keys, your data" },
 ] as const;
 
 export function TrustSignals() {
