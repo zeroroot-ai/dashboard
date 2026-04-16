@@ -12,9 +12,6 @@ import type {
   Capabilities,
 } from '@/src/gen/gibson/daemon/v1/daemon_pb';
 import type {
-  MembershipInfo,
-} from '@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb';
-import type {
   UserSession,
   ListUserSessionsResponse,
   UserProfile,
@@ -310,15 +307,8 @@ export async function revokeAPIKey(tenantId: string, keyId: string, userId?: str
   await client.revokeAPIKey({ keyId });
 }
 
-/**
- * List all tenants a user belongs to with their role in each.
- */
-export async function listUserTenants(userId: string, callerUserId?: string): Promise<MembershipInfo[]> {
-  const client = getAdminClient(callerUserId);
-  const response = await client.listUserTenants({ userId });
-  return response.memberships ?? [];
-}
-
+// listUserTenants / MembershipInfo removed — tenant membership is now
+// served by the Tenant CRD operator (see @/src/lib/k8s/tenants).
 
 // getAuthSchema / getProvisioningStatus / deprovisionTenant removed —
 // auth schema is now served by the FGA-backed GetMyPermissions RPC, and
