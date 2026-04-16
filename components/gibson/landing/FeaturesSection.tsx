@@ -43,9 +43,12 @@ const features = [
 export function FeaturesSection() {
   return (
     <section className="max-w-6xl mx-auto px-4 py-16">
-      <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+      <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
         Opinionated about the boring parts. Out of your way for the new ones.
       </h2>
+      <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto mb-12">
+        Designed to be a force multiplier for your security, operations, and development teams — one substrate, shared across every workflow.
+      </p>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {features.map(({ icon: Icon, title, description }) => (
           <Card key={title} className="glass-hack">
