@@ -1,0 +1,71 @@
+import { auth } from '@/auth';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import {
+  generateCsrfToken,
+  setCsrfCookie,
+  validateCsrfToken,
+  getCsrfTokenFromCookies,
+} from '@/src/lib/csrf';
+
+const CSRF_EXEMPT = ['/api/auth/', '/api/webhooks/', '/api/health', '/api/config', '/api/signup'];
+const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/**
+ * Next.js 16 proxy (middleware) — thin wrapper around Auth.js.
+ *
+ * Auth.js handles session validation and route protection via the
+ * `authorized` callback in auth.ts. This proxy adds two Gibson-specific
+ * concerns: CSRF double-submit cookie validation and tenant ID header
+ * propagation.
+ */
+const PUBLIC_PREFIXES = [
+  '/api/auth', '/api/config', '/api/health', '/api/signup',
+  '/api/webhooks', '/signin', '/auth/', '/signup',
+  '/dashboard/login', '/dashboard/register',
+  '/dashboard/forgot-password',
+  '/pricing', '/contact-sales',
+];
+
+export const proxy = auth((request) => {
+  const { pathname } = request.nextUrl;
+
+  // Allow public routes through without auth
+  const isPublic = pathname === '/' || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+
+  // Redirect unauthenticated users to login
+  if (!isPublic && !request.auth?.user) {
+    const loginUrl = new URL('/dashboard/login/v2', request.nextUrl.origin);
+    loginUrl.searchParams.set('callbackUrl', request.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // CSRF validation for mutating API requests
+  if (
+    MUTATING.has(request.method) &&
+    pathname.startsWith('/api/') &&
+    !CSRF_EXEMPT.some((p) => pathname.startsWith(p))
+  ) {
+    if (!validateCsrfToken(request as unknown as NextRequest)) {
+      return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+    }
+  }
+
+  const response = NextResponse.next();
+
+  // Seed CSRF cookie on page navigations
+  if (
+    (request.method === 'GET' || request.method === 'HEAD') &&
+    !pathname.startsWith('/api/') &&
+    !getCsrfTokenFromCookies(request as unknown as NextRequest)
+  ) {
+    const token = generateCsrfToken();
+    setCsrfCookie(response, token);
+  }
+
+  return response;
+});
+
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|images|public).*)'],
+};

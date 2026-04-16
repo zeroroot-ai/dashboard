@@ -1,0 +1,184 @@
+[
+  {
+    "id": 1,
+    "title": "New Ticket Assigned",
+    "description": "You have been assigned to ticket #1234 - Website Redesign",
+    "type": "ticket",
+    "time": "5 minutes ago",
+    "status": "unread"
+  },
+  {
+    "id": 21,
+    "title": "Access Request",
+    "description": "Requesting access permission",
+    "type": "team",
+    "time": "12 pm",
+    "status": "read",
+    "user": {
+      "name": "Joaquina Weisenborn",
+      "avatar": "https://i.pravatar.cc/150?img=12"
+    },
+    "actions": [
+      {
+        "label": "Accept",
+        "variant": "outline"
+      },
+      {
+        "label": "Decline",
+        "variant": "destructive"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "New Message",
+    "description": "Sarah Johnson sent you a message in the Website Redesign project",
+    "type": "message",
+    "time": "1 hour ago",
+    "status": "read"
+  },
+  {
+    "id": 3,
+    "title": "Team Update",
+    "description": "New team member John Smith has joined the project",
+    "type": "team",
+    "time": "2 hours ago",
+    "status": "read"
+  },
+  {
+    "id": 4,
+    "title": "Ticket Status Update",
+    "description": "Ticket #1235 - Bug Fix has been marked as completed",
+    "type": "ticket",
+    "time": "3 hours ago",
+    "status": "unread"
+  },
+  {
+    "id": 5,
+    "title": "New Message",
+    "description": "Michael Brown mentioned you in a comment on ticket #1236",
+    "type": "message",
+    "time": "5 hours ago",
+    "status": "unread"
+  },
+  {
+    "id": 6,
+    "title": "Team Update",
+    "description": "Project deadline has been updated to June 15, 2024",
+    "type": "team",
+    "time": "1 day ago",
+    "status": "read"
+  },
+  {
+    "id": 7,
+    "title": "New Ticket Created",
+    "description": "A new ticket has been created: #1237 - API Integration",
+    "type": "ticket",
+    "time": "1 day ago",
+    "status": "read"
+  },
+  {
+    "id": 8,
+    "title": "New Message",
+    "description": "Emily Davis shared a document in the Website Redesign project",
+    "type": "message",
+    "time": "2 days ago",
+    "status": "read"
+  },
+  {
+    "id": 9,
+    "title": "Ticket Comment Added",
+    "description": "David Wilson added a comment on ticket #1238 - Database Migration",
+    "type": "ticket",
+    "time": "2 days ago",
+    "status": "read"
+  },
+  {
+    "id": 10,
+    "title": "Team Member Left",
+    "description": "Lisa Anderson has left the Marketing Campaign project",
+    "type": "team",
+    "time": "3 days ago",
+    "status": "read"
+  },
+  {
+    "id": 11,
+    "title": "New Message",
+    "description": "Robert Taylor sent you a direct message about the upcoming meeting",
+    "type": "message",
+    "time": "3 days ago",
+    "status": "read"
+  },
+  {
+    "id": 12,
+    "title": "Ticket Priority Changed",
+    "description": "Ticket #1239 - Security Update priority has been changed to High",
+    "type": "ticket",
+    "time": "4 days ago",
+    "status": "read"
+  },
+  {
+    "id": 13,
+    "title": "Team Update",
+    "description": "New project manager assigned to the Mobile App Development project",
+    "type": "team",
+    "time": "4 days ago",
+    "status": "read"
+  },
+  {
+    "id": 14,
+    "title": "New Message",
+    "description": "Jennifer Martinez replied to your message in the Design System project",
+    "type": "message",
+    "time": "5 days ago",
+    "status": "read"
+  },
+  {
+    "id": 15,
+    "title": "Ticket Reopened",
+    "description": "Ticket #1240 - Performance Issue has been reopened",
+    "type": "ticket",
+    "time": "5 days ago",
+    "status": "read"
+  },
+  {
+    "id": 16,
+    "title": "Team Update",
+    "description": "Weekly team meeting scheduled for Friday at 2 PM",
+    "type": "team",
+    "time": "6 days ago",
+    "status": "read"
+  },
+  {
+    "id": 17,
+    "title": "New Message",
+    "description": "Christopher Lee shared a code review in the Backend API project",
+    "type": "message",
+    "time": "1 week ago",
+    "status": "read"
+  },
+  {
+    "id": 18,
+    "title": "Ticket Assigned",
+    "description": "You have been assigned to ticket #1241 - User Authentication",
+    "type": "ticket",
+    "time": "1 week ago",
+    "status": "read"
+  },
+  {
+    "id": 19,
+    "title": "Team Update",
+    "description": "New sprint planning session scheduled for next Monday",
+    "type": "team",
+    "time": "1 week ago",
+    "status": "read"
+  },
+  {
+    "id": 20,
+    "title": "New Message",
+    "description": "Amanda White mentioned you in a discussion about the new feature",
+    "type": "message",
+    "time": "1 week ago",
+    "status": "read"
+  }
+]

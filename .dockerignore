@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.env*
+.spec-workflow
+.claude
+coverage
+playwright-report
+*.md
+.turbo
+.vercel
+.vscode
+
+go.work
+go.work.sum
