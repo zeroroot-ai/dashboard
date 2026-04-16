@@ -2,9 +2,6 @@
 
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "@/src/lib/session-client";
-import { signOutAction } from "@/app/actions/auth/signout";
-import { signInAction } from "@/app/actions/auth/signin";
 import { Loader2, CheckCircle2, XCircle, Circle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
@@ -82,49 +79,17 @@ function ProvisioningStatus() {
     }
   }
 
-  // Read and clear sessionStorage credentials for auto-login.
-  // Always clears regardless of login outcome.
-  function consumeStoredCredentials(): { email: string; password: string } | null {
-    try {
-      const email = sessionStorage.getItem("signup_email");
-      const password = sessionStorage.getItem("signup_password");
-      sessionStorage.removeItem("signup_email");
-      sessionStorage.removeItem("signup_password");
-      if (email && password) {
-        return { email, password };
-      }
-    } catch {
-      // sessionStorage unavailable
-    }
-    return null;
-  }
-
-  async function handleProvisioningComplete() {
+  function handleProvisioningComplete() {
     stopPolling();
     stopTimeout();
     isCompletedRef.current = true;
 
-    const credentials = consumeStoredCredentials();
-
-    if (!credentials) {
-      // No stored credentials — redirect to login with workspace-ready toast
-      router.push("/dashboard/login/v2?toast=workspace-ready");
-      return;
-    }
-
-    try {
-      const result = await signInAction({
-        email: credentials.email,
-        password: credentials.password,
-      });
-      if (result.ok) {
-        router.push("/dashboard/default");
-      } else {
-        router.push("/dashboard/login/v2?toast=workspace-ready");
-      }
-    } catch {
-      router.push("/dashboard/login/v2?toast=workspace-ready");
-    }
+    // signUpAction already created a Better Auth session and committed
+    // the cookie via nextCookies(), so the user is signed in. Go
+    // straight to the dashboard. If the cookie is missing for any
+    // reason (e.g., the anti-enumeration existing-user path), the
+    // middleware session guard will redirect to login.
+    router.push("/dashboard/default");
   }
 
   useEffect(() => {

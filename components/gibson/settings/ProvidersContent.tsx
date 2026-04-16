@@ -578,7 +578,7 @@ export function ProvidersContent() {
       <div>
         <h3 className="text-sm font-medium">LLM Providers</h3>
         <p className="text-muted-foreground mt-1 text-xs">
-          Configure API credentials for LLM providers. Gibson resolves the active provider at
+          Configure API credentials for LLM providers. Zero Day AI resolves the active provider at
           runtime based on agent slot requirements.
         </p>
       </div>

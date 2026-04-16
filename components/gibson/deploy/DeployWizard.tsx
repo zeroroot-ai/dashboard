@@ -119,7 +119,7 @@ function SelectTypeStep({
           Select component type
         </h2>
         <p className="text-sm text-muted-foreground">
-          Choose what kind of component you want to deploy to the Gibson platform.
+          Choose what kind of component you want to deploy to the Zero Day AI platform.
         </p>
       </div>
 
@@ -176,7 +176,7 @@ function SelectTypeStep({
           spellCheck={false}
         />
         <p className="text-xs text-muted-foreground">
-          Used to identify this component in the Gibson registry.
+          Used to identify this component in the Zero Day AI registry.
         </p>
       </div>
 
@@ -407,7 +407,7 @@ function DeployInstructionsStep({
 
         <TabsContent value="kubernetes" className="mt-4 space-y-2">
           <p className="text-xs text-muted-foreground">
-            Deploy using the official Gibson Helm chart. Requires the{" "}
+            Deploy using the official Zero Day AI Helm chart. Requires the{" "}
             <span className="font-mono">gibson/component</span> chart in your Helm repo.
           </p>
           <CodeBlock code={kubernetesCmd} label="Helm" />
@@ -520,7 +520,7 @@ function WaitForConnectionStep({
           Waiting for connection
         </h2>
         <p className="text-sm text-muted-foreground">
-          Start your component with the credentials from the previous steps. Gibson will detect it
+          Start your component with the credentials from the previous steps. Zero Day AI will detect it
           automatically once it connects.
         </p>
       </div>
@@ -540,7 +540,7 @@ function WaitForConnectionStep({
           <div className="text-center space-y-1">
             <p className="text-lg font-bold font-mono text-glow-green">Connected!</p>
             <p className="text-sm text-muted-foreground">
-              <span className="data-value">{componentName}</span> is live on the Gibson platform.
+              <span className="data-value">{componentName}</span> is live on the Zero Day AI platform.
             </p>
           </div>
           <Button asChild className="gap-2 mt-2">
@@ -568,7 +568,7 @@ function WaitForConnectionStep({
           <ul className="space-y-2 text-sm text-muted-foreground list-none">
             {[
               "Check that GIBSON_API_KEY and GIBSON_PLATFORM_URL are set correctly",
-              "Check that your component can reach the Gibson endpoint",
+              "Check that your component can reach the Zero Day AI endpoint",
               "Check component logs for authentication errors",
             ].map((tip) => (
               <li key={tip} className="flex items-start gap-2">
@@ -689,7 +689,7 @@ export function DeployWizard() {
           Deploy Component
         </h1>
         <p className="text-sm text-muted-foreground">
-          Register a new agent, tool, or plugin with the Gibson platform.
+          Register a new agent, tool, or plugin with the Zero Day AI platform.
         </p>
       </div>
 

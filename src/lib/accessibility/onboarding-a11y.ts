@@ -255,7 +255,7 @@ export function announceSuccess(successMessage: string): void {
  */
 export function announceWizardComplete(): void {
   announce(
-    'Congratulations! Onboarding complete. You can now use Gibson to run security missions.',
+    'Congratulations! Onboarding complete. You can now use Zero Day AI to run security missions.',
     'polite'
   );
 }

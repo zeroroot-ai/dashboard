@@ -898,7 +898,7 @@ export const DEFAULT_CREATION_STATE: MissionCreationState = {
 /**
  * Starter YAML template
  */
-export const STARTER_YAML = `# Gibson Mission Configuration
+export const STARTER_YAML = `# Zero Day AI Mission Configuration
 name: my-mission
 description: A new security mission
 

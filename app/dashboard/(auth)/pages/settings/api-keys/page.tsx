@@ -7,7 +7,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return generateMeta({
     title: "Settings — API Keys",
     additionalTitle: true,
-    description: "Generate and revoke API keys for programmatic access to Gibson.",
+    description: "Generate and revoke API keys for programmatic access to Zero Day AI.",
     canonical: "/pages/settings/api-keys",
   });
 }

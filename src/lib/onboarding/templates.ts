@@ -29,12 +29,12 @@ import type {
 export const BUILTIN_TEMPLATES: MissionTemplate[] = [
   {
     id: 'hello-gibson',
-    name: 'Hello Gibson',
-    description: 'Your first mission - learn the basics of Gibson',
+    name: 'Hello Zero Day AI',
+    description: 'Your first mission - learn the basics of Zero Day AI',
     longDescription: `
-# Hello Gibson
+# Hello Zero Day AI
 
-This introductory mission teaches you the fundamentals of Gibson:
+This introductory mission teaches you the fundamentals of Zero Day AI:
 - How missions execute
 - How agents make decisions
 - How findings are reported
@@ -45,7 +45,7 @@ Perfect for first-time users.
     category: 'reconnaissance',
     difficulty: 'beginner',
     tags: ['tutorial', 'getting-started', 'beginner'],
-    author: 'Gibson Team',
+    author: 'Zero Day AI Team',
     license: 'MIT',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -74,8 +74,8 @@ Perfect for first-time users.
     customizableFields: [],
     fieldGroups: [],
     missionYaml: btoa(`
-name: Hello Gibson
-description: Learn the basics of Gibson
+name: Hello Zero Day AI
+description: Learn the basics of Zero Day AI
 agent: debug-agent
 target:
   type: demo
@@ -108,7 +108,7 @@ Enumerate all subdomains for a given domain using:
     category: 'reconnaissance',
     difficulty: 'beginner',
     tags: ['recon', 'dns', 'subdomain', 'enumeration'],
-    author: 'Gibson Team',
+    author: 'Zero Day AI Team',
     license: 'MIT',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -195,7 +195,7 @@ tools:
     category: 'web-security',
     difficulty: 'intermediate',
     tags: ['web', 'owasp', 'security', 'vulnerabilities'],
-    author: 'Gibson Team',
+    author: 'Zero Day AI Team',
     license: 'MIT',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -280,7 +280,7 @@ tools:
     category: 'compliance',
     difficulty: 'beginner',
     tags: ['ssl', 'tls', 'certificate', 'compliance'],
-    author: 'Gibson Team',
+    author: 'Zero Day AI Team',
     license: 'MIT',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -353,7 +353,7 @@ tools:
     category: 'network-security',
     difficulty: 'intermediate',
     tags: ['network', 'ports', 'services', 'enumeration'],
-    author: 'Gibson Team',
+    author: 'Zero Day AI Team',
     license: 'MIT',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',

@@ -48,7 +48,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <ShieldIcon className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="text-foreground truncate font-semibold">Gibson</span>
+                <span className="text-foreground truncate font-semibold">Zero Day AI</span>
                 <span className="text-muted-foreground truncate text-xs">
                   {tenantLoading ? <Skeleton className="h-3 w-20" /> : (currentTenant?.displayName ?? "No workspace")}
                 </span>

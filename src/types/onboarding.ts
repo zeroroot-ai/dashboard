@@ -49,7 +49,7 @@ export const WIZARD_STEPS: WizardStep[] = [
   {
     id: 'welcome',
     title: 'Welcome',
-    description: 'Get an overview of Gibson capabilities',
+    description: 'Get an overview of Zero Day AI capabilities',
     status: 'pending',
     isSkippable: false,
     order: 0,

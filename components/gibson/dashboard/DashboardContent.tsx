@@ -93,7 +93,7 @@ function ConnectionBanner() {
       {isConnected ? (
         <>
           <span className="mr-2 inline-block h-2 w-2 animate-[pulse-dot_1.5s_ease-in-out_infinite] rounded-full bg-green-500 align-middle" />
-          Connected to Gibson Daemon
+          Connected to Zero Day AI
         </>
       ) : (
         <>

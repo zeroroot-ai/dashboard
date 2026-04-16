@@ -116,12 +116,12 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
             style={{ filter: "drop-shadow(0 0 8px rgba(34,197,94,0.7))" }}
           />
         </div>
-        <p className="data-value text-xs tracking-[0.3em] uppercase">Gibson</p>
+        <p className="data-value text-xs tracking-[0.3em] uppercase">Zero Day AI</p>
       </div>
 
       <div className="space-y-3 max-w-sm">
         <h2 className="text-2xl font-bold tracking-tight text-glow-green font-mono lg:text-3xl">
-          Welcome to Gibson<br />Mission Control
+          Welcome to Zero Day AI<br />Mission Control
         </h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
           Kubernetes-native AI agent orchestration for autonomous security operations. Configure
@@ -210,7 +210,7 @@ function LLMProviderStep({
           Configure your AI provider
         </h2>
         <p className="text-sm text-muted-foreground">
-          Gibson uses LLM slots to abstract provider selection. Agents declare requirements —
+          Zero Day AI uses LLM slots to abstract provider selection. Agents declare requirements —
           never a specific model.
         </p>
       </div>
@@ -369,7 +369,7 @@ function FirstMissionStep({
           Launch your first mission
         </h2>
         <p className="text-sm text-muted-foreground">
-          Define a target and pick a template — Gibson will wire up the agent DAG automatically.
+          Define a target and pick a template — Zero Day AI will wire up the agent DAG automatically.
         </p>
       </div>
 
@@ -497,7 +497,7 @@ function CompleteStep({
           You&apos;re all set!
         </h2>
         <p className="text-sm text-muted-foreground">
-          Gibson Mission Control is ready. Here&apos;s a summary of what was configured.
+          Zero Day AI Mission Control is ready. Here&apos;s a summary of what was configured.
         </p>
       </div>
 

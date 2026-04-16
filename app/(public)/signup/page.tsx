@@ -171,7 +171,7 @@ function SignupForm() {
           <CardHeader>
             <CardTitle className="text-2xl">Create your account</CardTitle>
             <CardDescription>
-              Get started with Gibson on the {selectedPlan.name} plan.
+              Get started with Zero Day AI on the {selectedPlan.name} plan.
             </CardDescription>
           </CardHeader>
           <CardContent>

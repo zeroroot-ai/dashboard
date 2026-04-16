@@ -291,8 +291,8 @@ export function ChatContent() {
                   >
                     <MessageAvatar
                       src={isUser ? '' : '/gibson-avatar.svg'}
-                      alt={isUser ? 'You' : 'Gibson'}
-                      fallback={isUser ? 'U' : 'G'}
+                      alt={isUser ? 'You' : 'Zero Day AI'}
+                      fallback={isUser ? 'U' : 'Z'}
                     />
                     <MessageContent
                       markdown={!isUser}
@@ -311,7 +311,7 @@ export function ChatContent() {
               {/* Streaming indicator */}
               {isStreaming && messages[messages.length - 1]?.role !== 'assistant' && (
                 <Message className="mb-4">
-                  <MessageAvatar src="/gibson-avatar.svg" alt="Gibson" fallback="G" />
+                  <MessageAvatar src="/gibson-avatar.svg" alt="Zero Day AI" fallback="Z" />
                   <div className="bg-secondary flex items-center gap-2 rounded-lg px-4 py-3">
                     <div className="flex gap-1">
                       <span className="bg-muted-foreground h-2 w-2 animate-bounce rounded-full [animation-delay:0ms]" />
@@ -366,7 +366,7 @@ export function ChatContent() {
               placeholder={
                 isLoading
                   ? 'Waiting for response...'
-                  : `Message ${selectedAgent?.name || 'Gibson'}...`
+                  : `Message ${selectedAgent?.name || 'Zero Day AI'}...`
               }
             />
             <PromptInputActions className="justify-end">

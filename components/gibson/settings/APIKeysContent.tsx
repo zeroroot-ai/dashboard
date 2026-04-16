@@ -272,7 +272,7 @@ export function APIKeysContent() {
         <div>
           <h3 className="text-sm font-medium">API Keys</h3>
           <p className="text-muted-foreground mt-1 text-xs">
-            Keys authenticate programmatic access to the Gibson API. Revoke unused keys promptly.
+            Keys authenticate programmatic access to the Zero Day AI API. Revoke unused keys promptly.
           </p>
         </div>
         <GenerateKeyDialog onGenerated={setNewToken} />

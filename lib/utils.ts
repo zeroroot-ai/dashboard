@@ -25,7 +25,7 @@ export function generateMeta({
   canonical: string;
 }): Metadata {
   return {
-    title: `${title} — Gibson`,
+    title: `${title} — Zero Day AI`,
     description: description,
     metadataBase: new URL(`https://shadcnuikit.com`),
     alternates: {

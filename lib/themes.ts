@@ -49,7 +49,7 @@ export const THEMES = [
     colors: ["oklch(0.71 0.16 293.54)"]
   },
   {
-    name: "Gibson",
+    name: "Zero Day AI",
     value: "gibson",
     colors: { primary: "#22c55e", secondary: "#06b6d4" }
   }

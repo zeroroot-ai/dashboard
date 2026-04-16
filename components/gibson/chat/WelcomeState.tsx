@@ -38,7 +38,7 @@ export function WelcomeState({ agent, graphSummary, onSendPrompt }: WelcomeState
           <MessageSquare className="text-primary h-8 w-8" />
         </div>
         <h2 className="mb-2 text-xl font-semibold">
-          Chat with {agent?.name || 'Gibson'}
+          Chat with {agent?.name || 'Zero Day AI'}
         </h2>
         <p className="text-muted-foreground mb-1 text-sm">
           {agent?.description || 'AI-powered security assistant'}
