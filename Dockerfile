@@ -17,8 +17,12 @@ WORKDIR /app
 # Copy dependency manifests for layer caching
 COPY package.json package-lock.json ./
 
-# Install production + dev dependencies (needed for build)
-RUN npm ci --ignore-scripts
+# Install production + dev dependencies (needed for build). --ignore-scripts
+# blocks arbitrary postinstall scripts; npm rebuild then runs install for the
+# specific native modules that need per-arch binaries extracted (multi-arch
+# Docker buildx builds linux/arm64 via QEMU and needs the right .node binary).
+RUN npm ci --ignore-scripts && \
+    npm rebuild lightningcss
 
 # ============================================================================
 # Stage 2: Builder - Build Next.js application
