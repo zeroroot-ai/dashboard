@@ -24,7 +24,10 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          # Prefer a repo-scoped PAT with write:packages if available; the
+          # default GITHUB_TOKEN only works when the package's Actions access
+          # includes this repo, which has to be configured in the package UI.
+          password: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
 
       - uses: docker/metadata-action@v5
         id: meta
