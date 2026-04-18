@@ -34,7 +34,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { PasswordStrength } from "@/components/gibson/auth/password-strength";
-import { plans } from "@/src/lib/plans";
+import { plans } from "@/src/generated/plans";
 import type { UserFacingError } from "@/src/lib/errors/user-facing";
 
 // Signup schema lives in src/lib/validators/auth.ts so the server-side
@@ -47,7 +47,7 @@ type SignupFormValues = SignupInput;
 
 function formatPrice(plan: (typeof plans)[number]): string {
   if (plan.monthlyPrice === null) return "Contact sales";
-  return `$${plan.monthlyPrice}/mo`;
+  return `$${plan.monthlyPrice.toLocaleString("en-US")}/mo`;
 }
 
 /**
@@ -81,10 +81,10 @@ interface SignupFormProps {
 function SignupFormInner({ providers }: SignupFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const planId = searchParams.get("plan") || "indie";
+  const planId = searchParams.get("plan") || "solo";
 
   const selectedPlan =
-    plans.find((p) => p.id === planId) ?? plans.find((p) => p.id === "indie")!;
+    plans.find((p) => p.id === planId) ?? plans.find((p) => p.id === "solo")!;
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -123,7 +123,7 @@ function SignupFormInner({ providers }: SignupFormProps) {
         password: data.password,
         confirmPassword: data.confirmPassword,
         tosAccepted: data.tosAccepted,
-        plan: selectedPlan.tier,
+        plan: selectedPlan.id,
         captchaToken,
       });
 
@@ -270,7 +270,7 @@ function SignupFormInner({ providers }: SignupFormProps) {
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Selected plan
               </p>
-              <p className="mt-0.5 font-semibold">{selectedPlan.name}</p>
+              <p className="mt-0.5 font-semibold">{selectedPlan.displayName}</p>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-lg font-bold">{formatPrice(selectedPlan)}</span>
@@ -289,7 +289,7 @@ function SignupFormInner({ providers }: SignupFormProps) {
           <CardHeader>
             <CardTitle className="text-2xl">Create your account</CardTitle>
             <CardDescription>
-              Get started with Zero Day AI on the {selectedPlan.name} plan.
+              Get started with Zero Day AI on the {selectedPlan.displayName} plan.
             </CardDescription>
           </CardHeader>
           <CardContent>

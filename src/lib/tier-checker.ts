@@ -1,66 +1,46 @@
 /**
- * Tier Checker Utilities
+ * tier-checker.ts — Derived tier-config helpers over the canonical plan
+ * registry (@/src/generated/plans).
  *
- * Functions for checking tier-based restrictions and limits.
- * Supports all subscription tiers: indie, team, business, enterprise.
+ * Historically this file held its own TIER_CONFIGS record duplicating the
+ * data in plans.ts. After the plan-registry migration, TIER_CONFIGS is
+ * derived at module-load time from the generated Plan[] and exposes the
+ * legacy TierConfig shape so existing callers (useTierLimits, API route,
+ * BillingContent) continue to compile unchanged. All new code should
+ * prefer importing plans / lookupPlan from @/src/generated/plans directly.
+ *
+ * The PlanID from the generated module IS the TierLevel here — there is no
+ * separate legacy enum.
  */
 
-import type { TierLevel, TierConfig } from '@/src/hooks/useTierLimits';
+import type { Plan, PlanID } from "@/src/generated/plans";
+import { plans, planIDs, lookupPlan } from "@/src/generated/plans";
 
-/**
- * Tier configurations.
- */
-export const TIER_CONFIGS: Record<TierLevel, TierConfig> = {
-  indie: {
-    tier: 'indie',
-    displayName: 'Indie',
-    maxTeamMembers: 1,
-    maxAPIKeys: Infinity,
-    customRolesEnabled: false,
-    auditLogRetentionDays: 30,
-    ssoEnabled: false,
-    prioritySupport: false,
-  },
-  team: {
-    tier: 'team',
-    displayName: 'Team',
-    maxTeamMembers: 5,
-    maxAPIKeys: Infinity,
-    customRolesEnabled: false,
-    auditLogRetentionDays: 30,
-    ssoEnabled: false,
-    prioritySupport: false,
-  },
-  business: {
-    tier: 'business',
-    displayName: 'Business',
-    maxTeamMembers: 20,
-    maxAPIKeys: Infinity,
-    customRolesEnabled: true,
-    auditLogRetentionDays: 90,
-    ssoEnabled: true,
-    prioritySupport: true,
-  },
-  enterprise: {
-    tier: 'enterprise',
-    displayName: 'Enterprise',
-    maxTeamMembers: Infinity,
-    maxAPIKeys: Infinity,
-    customRolesEnabled: true,
-    auditLogRetentionDays: 365,
-    ssoEnabled: true,
-    prioritySupport: true,
-  },
-};
+/** TierLevel is the canonical PlanID (seven values). */
+export type TierLevel = PlanID;
 
 /**
- * Tier order for comparison.
+ * Legacy tier configuration shape preserved for existing callers. New code
+ * should read directly from the Plan type; these fields are derived:
+ *   - maxTeamMembers          ← quotas.seats (-1 → Infinity)
+ *   - maxAPIKeys              ← Infinity (no new field; historical behavior)
+ *   - customRolesEnabled      ← features.has_audit_logs (proxy: first tier
+ *                                with enterprise-grade features)
+ *   - auditLogRetentionDays   ← quotas.retention_days (-1 → Infinity)
+ *   - ssoEnabled              ← features.has_sso
+ *   - prioritySupport         ← features.has_dedicated_slack
  */
-const TIER_ORDER: TierLevel[] = ['indie', 'team', 'business', 'enterprise'];
+export interface TierConfig {
+  tier: TierLevel;
+  displayName: string;
+  maxTeamMembers: number;
+  maxAPIKeys: number;
+  customRolesEnabled: boolean;
+  auditLogRetentionDays: number;
+  ssoEnabled: boolean;
+  prioritySupport: boolean;
+}
 
-/**
- * Limit check result.
- */
 export interface LimitCheckResult {
   allowed: boolean;
   limit: number;
@@ -69,93 +49,94 @@ export interface LimitCheckResult {
   message?: string;
 }
 
-/**
- * Feature check result.
- */
 export interface FeatureCheckResult {
   available: boolean;
   requiredTier: TierLevel;
   message?: string;
 }
 
-/**
- * Get tier configuration by level.
- */
+function planToTierConfig(plan: Plan): TierConfig {
+  const seats = plan.quotas.seats === -1 ? Infinity : plan.quotas.seats;
+  const retention =
+    plan.quotas.retention_days === -1 ? Infinity : plan.quotas.retention_days;
+  return {
+    tier: plan.id,
+    displayName: plan.displayName,
+    maxTeamMembers: seats,
+    maxAPIKeys: Infinity,
+    customRolesEnabled: plan.features.has_audit_logs,
+    auditLogRetentionDays: retention,
+    ssoEnabled: plan.features.has_sso,
+    prioritySupport: plan.features.has_dedicated_slack,
+  };
+}
+
+/** Derived tier config map keyed by PlanID. */
+export const TIER_CONFIGS: Record<TierLevel, TierConfig> = Object.freeze(
+  Object.fromEntries(plans.map((p) => [p.id, planToTierConfig(p)])) as Record<
+    TierLevel,
+    TierConfig
+  >,
+);
+
+/** Tier ordering for comparison. Uses pricing-page order from the registry. */
+const TIER_ORDER: readonly TierLevel[] = planIDs;
+
 export function getTierConfig(tier: TierLevel): TierConfig {
   return TIER_CONFIGS[tier];
 }
 
-/**
- * Compare tier levels.
- * Returns: negative if a < b, 0 if a === b, positive if a > b
- */
 export function compareTiers(a: TierLevel, b: TierLevel): number {
   return TIER_ORDER.indexOf(a) - TIER_ORDER.indexOf(b);
 }
 
-/**
- * Check if tier A is higher than tier B.
- */
 export function isHigherTier(a: TierLevel, b: TierLevel): boolean {
   return compareTiers(a, b) > 0;
 }
 
-/**
- * Check if tier A is at least tier B.
- */
 export function isAtLeastTier(a: TierLevel, b: TierLevel): boolean {
   return compareTiers(a, b) >= 0;
 }
 
-/**
- * Get the next tier upgrade option.
- */
 export function getNextTier(current: TierLevel): TierLevel | null {
-  const currentIndex = TIER_ORDER.indexOf(current);
-  if (currentIndex === -1 || currentIndex === TIER_ORDER.length - 1) {
-    return null;
-  }
-  return TIER_ORDER[currentIndex + 1];
+  const idx = TIER_ORDER.indexOf(current);
+  if (idx === -1 || idx === TIER_ORDER.length - 1) return null;
+  return TIER_ORDER[idx + 1];
 }
 
-/**
- * Check team member limit.
- */
 export function checkTeamMemberLimit(
   tier: TierLevel,
   currentCount: number,
-  pendingInvitations: number = 0
+  pendingInvitations: number = 0,
 ): LimitCheckResult {
   const config = TIER_CONFIGS[tier];
-  const effectiveCount = currentCount + pendingInvitations;
-  const remaining = Math.max(0, config.maxTeamMembers - effectiveCount);
+  const effective = currentCount + pendingInvitations;
+  const remaining = Math.max(0, config.maxTeamMembers - effective);
 
-  if (effectiveCount >= config.maxTeamMembers) {
+  if (effective >= config.maxTeamMembers) {
     return {
       allowed: false,
       limit: config.maxTeamMembers,
-      current: effectiveCount,
+      current: effective,
       remaining: 0,
-      message: config.maxTeamMembers === Infinity
-        ? undefined
-        : `You've reached the maximum of ${config.maxTeamMembers} team members on the ${config.displayName} plan.`,
+      message:
+        config.maxTeamMembers === Infinity
+          ? undefined
+          : `You've reached the maximum of ${config.maxTeamMembers} team members on the ${config.displayName} plan.`,
     };
   }
 
   return {
     allowed: true,
     limit: config.maxTeamMembers,
-    current: effectiveCount,
+    current: effective,
     remaining,
   };
 }
 
-/**
- * Check API key limit.
- */
 export function checkAPIKeyLimit(
   tier: TierLevel,
-  currentCount: number
+  currentCount: number,
 ): LimitCheckResult {
   const config = TIER_CONFIGS[tier];
   const remaining = Math.max(0, config.maxAPIKeys - currentCount);
@@ -166,9 +147,10 @@ export function checkAPIKeyLimit(
       limit: config.maxAPIKeys,
       current: currentCount,
       remaining: 0,
-      message: config.maxAPIKeys === Infinity
-        ? undefined
-        : `You've reached the maximum of ${config.maxAPIKeys} API keys on the ${config.displayName} plan.`,
+      message:
+        config.maxAPIKeys === Infinity
+          ? undefined
+          : `You've reached the maximum of ${config.maxAPIKeys} API keys on the ${config.displayName} plan.`,
     };
   }
 
@@ -180,84 +162,62 @@ export function checkAPIKeyLimit(
   };
 }
 
-/**
- * Check custom roles feature.
- */
 export function checkCustomRolesFeature(tier: TierLevel): FeatureCheckResult {
   const config = TIER_CONFIGS[tier];
-
   if (!config.customRolesEnabled) {
     return {
       available: false,
-      requiredTier: 'business',
-      message: 'Custom roles are available on Business and Enterprise plans.',
+      requiredTier: "org",
+      message: "Custom roles are available on Org and higher plans.",
     };
   }
-
   return { available: true, requiredTier: tier };
 }
 
-/**
- * Check SSO feature.
- */
 export function checkSSOFeature(tier: TierLevel): FeatureCheckResult {
   const config = TIER_CONFIGS[tier];
-
   if (!config.ssoEnabled) {
     return {
       available: false,
-      requiredTier: 'business',
-      message: 'SSO/OIDC integration is available on Business and Enterprise plans.',
+      requiredTier: "org",
+      message: "SSO/OIDC integration is available on Org and higher plans.",
     };
   }
-
   return { available: true, requiredTier: tier };
 }
 
-/**
- * Check priority support feature.
- */
-export function checkPrioritySupportFeature(tier: TierLevel): FeatureCheckResult {
+export function checkPrioritySupportFeature(
+  tier: TierLevel,
+): FeatureCheckResult {
   const config = TIER_CONFIGS[tier];
-
   if (!config.prioritySupport) {
     return {
       available: false,
-      requiredTier: 'business',
-      message: 'Priority support is available on Business and Enterprise plans.',
+      requiredTier: "org",
+      message: "Priority support is available on Org and higher plans.",
     };
   }
-
   return { available: true, requiredTier: tier };
 }
 
-/**
- * Get audit log retention days.
- */
 export function getAuditLogRetention(tier: TierLevel): number {
   return TIER_CONFIGS[tier].auditLogRetentionDays;
 }
 
-/**
- * Check if a feature is available at a specific tier.
- */
 export function isFeatureAvailable(
   currentTier: TierLevel,
-  requiredTier: TierLevel
+  requiredTier: TierLevel,
 ): boolean {
   return isAtLeastTier(currentTier, requiredTier);
 }
 
-/**
- * Get upgrade recommendation based on usage.
- */
 export function getUpgradeRecommendation(
   tier: TierLevel,
   usage: {
     teamMemberCount: number;
     pendingInvitationCount: number;
     apiKeyCount: number;
-  }
+  },
 ): {
   shouldUpgrade: boolean;
   reason: string[];
@@ -265,124 +225,86 @@ export function getUpgradeRecommendation(
 } {
   const config = TIER_CONFIGS[tier];
   const reasons: string[] = [];
+  const effectiveTeam = usage.teamMemberCount + usage.pendingInvitationCount;
 
-  // Check team member usage
-  const effectiveTeamCount = usage.teamMemberCount + usage.pendingInvitationCount;
   if (config.maxTeamMembers !== Infinity) {
-    const teamUsagePercent = effectiveTeamCount / config.maxTeamMembers;
-    if (teamUsagePercent >= 0.8) {
-      reasons.push('Team member limit approaching');
-    }
+    const pct = effectiveTeam / config.maxTeamMembers;
+    if (pct >= 0.8) reasons.push("Team member limit approaching");
   }
-
-  // Check API key usage
   if (config.maxAPIKeys !== Infinity) {
-    const apiKeyUsagePercent = usage.apiKeyCount / config.maxAPIKeys;
-    if (apiKeyUsagePercent >= 0.8) {
-      reasons.push('API key limit approaching');
-    }
+    const pct = usage.apiKeyCount / config.maxAPIKeys;
+    if (pct >= 0.8) reasons.push("API key limit approaching");
   }
-
-  // Check feature limitations
-  if (!config.customRolesEnabled) {
-    reasons.push('Custom roles unavailable');
-  }
-
-  if (!config.ssoEnabled) {
-    reasons.push('SSO unavailable');
-  }
+  if (!config.customRolesEnabled) reasons.push("Custom roles unavailable");
+  if (!config.ssoEnabled) reasons.push("SSO unavailable");
 
   const shouldUpgrade = reasons.length > 0;
-  const recommendedTier = shouldUpgrade ? getNextTier(tier) : null;
-
   return {
     shouldUpgrade,
     reason: reasons,
-    recommendedTier,
+    recommendedTier: shouldUpgrade ? getNextTier(tier) : null,
   };
 }
 
-/**
- * Format limit message for display.
- */
 export function formatLimitMessage(
-  limitType: 'team_members' | 'api_keys',
+  limitType: "team_members" | "api_keys",
   current: number,
-  limit: number
+  limit: number,
 ): string {
-  if (limit === Infinity) {
-    return `${current} ${limitType === 'team_members' ? 'team members' : 'API keys'} (unlimited)`;
-  }
-
+  const limitName = limitType === "team_members" ? "team members" : "API keys";
+  if (limit === Infinity) return `${current} ${limitName} (unlimited)`;
   const remaining = Math.max(0, limit - current);
-  const limitName = limitType === 'team_members' ? 'team members' : 'API keys';
-
-  if (remaining === 0) {
-    return `${current}/${limit} ${limitName} (limit reached)`;
-  }
-
+  if (remaining === 0) return `${current}/${limit} ${limitName} (limit reached)`;
   return `${current}/${limit} ${limitName} (${remaining} remaining)`;
 }
 
-/**
- * Get tier benefits comparison.
- */
 export function getTierComparison(
   fromTier: TierLevel,
-  toTier: TierLevel
+  toTier: TierLevel,
 ): { feature: string; before: string; after: string }[] {
   const from = TIER_CONFIGS[fromTier];
   const to = TIER_CONFIGS[toTier];
-
   const comparison: { feature: string; before: string; after: string }[] = [];
 
   if (to.maxTeamMembers > from.maxTeamMembers) {
     comparison.push({
-      feature: 'Team Members',
-      before: from.maxTeamMembers === Infinity ? 'Unlimited' : String(from.maxTeamMembers),
-      after: to.maxTeamMembers === Infinity ? 'Unlimited' : String(to.maxTeamMembers),
+      feature: "Team Members",
+      before:
+        from.maxTeamMembers === Infinity ? "Unlimited" : String(from.maxTeamMembers),
+      after: to.maxTeamMembers === Infinity ? "Unlimited" : String(to.maxTeamMembers),
     });
   }
-
   if (to.maxAPIKeys > from.maxAPIKeys) {
     comparison.push({
-      feature: 'API Keys',
-      before: from.maxAPIKeys === Infinity ? 'Unlimited' : String(from.maxAPIKeys),
-      after: to.maxAPIKeys === Infinity ? 'Unlimited' : String(to.maxAPIKeys),
+      feature: "API Keys",
+      before: from.maxAPIKeys === Infinity ? "Unlimited" : String(from.maxAPIKeys),
+      after: to.maxAPIKeys === Infinity ? "Unlimited" : String(to.maxAPIKeys),
     });
   }
-
   if (to.customRolesEnabled && !from.customRolesEnabled) {
-    comparison.push({
-      feature: 'Custom Roles',
-      before: 'Not available',
-      after: 'Available',
-    });
+    comparison.push({ feature: "Custom Roles", before: "Not available", after: "Available" });
   }
-
   if (to.ssoEnabled && !from.ssoEnabled) {
-    comparison.push({
-      feature: 'SSO/OIDC',
-      before: 'Not available',
-      after: 'Available',
-    });
+    comparison.push({ feature: "SSO/OIDC", before: "Not available", after: "Available" });
   }
-
   if (to.auditLogRetentionDays > from.auditLogRetentionDays) {
     comparison.push({
-      feature: 'Audit Log Retention',
-      before: `${from.auditLogRetentionDays} days`,
-      after: `${to.auditLogRetentionDays} days`,
+      feature: "Audit Log Retention",
+      before:
+        from.auditLogRetentionDays === Infinity
+          ? "Unlimited"
+          : `${from.auditLogRetentionDays} days`,
+      after:
+        to.auditLogRetentionDays === Infinity
+          ? "Unlimited"
+          : `${to.auditLogRetentionDays} days`,
     });
   }
-
   if (to.prioritySupport && !from.prioritySupport) {
-    comparison.push({
-      feature: 'Priority Support',
-      before: 'Not available',
-      after: 'Available',
-    });
+    comparison.push({ feature: "Priority Support", before: "Not available", after: "Available" });
   }
-
   return comparison;
 }
+
+/** Re-export lookupPlan so callers that want the full Plan have a single entry point. */
+export { lookupPlan };

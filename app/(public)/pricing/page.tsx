@@ -13,7 +13,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { pricingTiers, type PricingTier } from "@/src/lib/pricing-tiers";
+import {
+  pricingDisplays,
+  type PricingTierDisplay,
+} from "@/src/lib/pricing-display";
+
+// Alias to minimize churn in local JSX — the display struct is the same
+// shape the legacy PricingTier type carried.
+type PricingTier = PricingTierDisplay;
+const pricingTiers = pricingDisplays;
 
 type BillingCycle = "monthly" | "annual";
 
