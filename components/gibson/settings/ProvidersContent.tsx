@@ -39,6 +39,8 @@ import { testProviderConnection } from "@/src/lib/api/providers";
 import { PROVIDER_MODELS, PROVIDER_TYPE_CONFIG, PROVIDER_TYPES } from "@/src/types/provider";
 import type { ProviderConfig, ProviderType } from "@/src/types/provider";
 
+import { DaemonProvidersSection } from "./DaemonProvidersSection";
+
 // ---------------------------------------------------------------------------
 // Per-provider model lists derived from PROVIDER_MODELS constant
 // ---------------------------------------------------------------------------
@@ -620,6 +622,14 @@ export function ProvidersContent() {
           </>
         )}
       </div>
+
+      {/*
+       * Daemon-reported provider catalogue. Read-only for now; the dashboard
+       * form above uses a hard-coded subset (PROVIDER_TYPES) while the daemon
+       * supports the broader set below. A future revision will move the form
+       * to consume this descriptor directly so the two stay in sync.
+       */}
+      <DaemonProvidersSection />
     </div>
   );
 }
