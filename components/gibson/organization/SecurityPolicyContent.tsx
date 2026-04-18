@@ -26,16 +26,35 @@ import { toast } from "sonner";
 
 type Kind = "plugin" | "tool" | "agent" | "all";
 
-// fetchItems is the single fan-out that asks the daemon for the current
-// deny-wins-evaluated catalog view for (kind, scope, target). v1 wires
-// this against a client-side Server Action that wraps DiscoveryService
-// list calls; until that action lands we return an empty array so the
-// page still renders without crashing.
+import {
+  listAccessibleComponentsAction,
+  type DiscoveredItem,
+} from "@/app/actions/read/listAccessibleComponents";
+
+// fetchItems asks the daemon for the caller's deny-wins-evaluated
+// catalog view for (kind, scope, target). Backed by
+// listAccessibleComponentsAction which wraps DiscoveryService.
 async function fetchItems(
-  _kind: Kind,
-  _scope: AccessScopeSelection,
+  kind: Kind,
+  scope: AccessScopeSelection,
 ): Promise<RWXItem[]> {
-  return [];
+  const r = await listAccessibleComponentsAction({
+    kind,
+    scope: scope.scope,
+    targetId: scope.targetId,
+  });
+  if (!r.ok) return [];
+  return r.data.map(toMatrixItem);
+}
+
+function toMatrixItem(d: DiscoveredItem): RWXItem {
+  return {
+    name: d.name,
+    displayName: d.displayName ?? d.name,
+    description: d.description,
+    rwx: d.rwx,
+    denyingGates: d.denyingGates,
+  };
 }
 
 export function SecurityPolicyContent() {
