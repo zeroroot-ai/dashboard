@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 import { NavMain } from "@/components/layout/sidebar/nav-main";
 import { NavUser } from "@/components/layout/sidebar/nav-user";
+import { TenantSwitcher } from "@/components/layout/sidebar/tenant-switcher";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTenant } from "@/src/hooks/useTenant";
@@ -56,6 +57,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <TenantSwitcher />
       </SidebarHeader>
       <SidebarContent>
         <ScrollArea className="h-full">

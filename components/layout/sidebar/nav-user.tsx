@@ -92,7 +92,7 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOutAction("/dashboard/login/v2")}>
+            <DropdownMenuItem onClick={() => signOutAction("/login")}>
               <LogOutIcon />
               Log out
             </DropdownMenuItem>

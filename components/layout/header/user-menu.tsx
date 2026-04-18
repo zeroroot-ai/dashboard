@@ -81,7 +81,7 @@ export default function UserMenu() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOutAction("/dashboard/login/v2")}>
+        <DropdownMenuItem onClick={() => signOutAction("/login")}>
           <LogOut />
           Log out
         </DropdownMenuItem>

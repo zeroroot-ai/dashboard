@@ -44,7 +44,7 @@ const AUDIT_URL = `${BASE_URL}/dashboard/pages/settings/audit`;
  * Log in via the Better Auth email/password form.
  */
 async function loginAs(page: Page, email: string, password: string) {
-  await page.goto(`${BASE_URL}/dashboard/login/v2`);
+  await page.goto(`${BASE_URL}/login`);
   await page.getByLabel(/email/i).fill(email);
   await page.getByLabel(/password/i).fill(password);
   await page.getByRole("button", { name: /^log ?in$|^sign ?in$/i }).click();

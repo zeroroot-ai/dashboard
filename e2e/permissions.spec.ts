@@ -40,11 +40,11 @@ const PERMISSIONS_URL = `${BASE_URL}/dashboard/pages/settings/permissions`;
 // ---------------------------------------------------------------------------
 
 /**
- * Log in via the Better Auth email/password form at /dashboard/login/v2.
+ * Log in via the Better Auth email/password form at /login.
  * Waits for a redirect away from the login page before resolving.
  */
 async function loginAs(page: Page, email: string, password: string) {
-  await page.goto(`${BASE_URL}/dashboard/login/v2`);
+  await page.goto(`${BASE_URL}/login`);
   await page.getByLabel(/email/i).fill(email);
   await page.getByLabel(/password/i).fill(password);
   await page.getByRole("button", { name: /^log ?in$|^sign ?in$/i }).click();

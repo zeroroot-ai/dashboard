@@ -1,6 +1,7 @@
 import "server-only";
 
 import { recordDebugError } from "@/src/lib/debug";
+import { truncate } from "./shared";
 
 import type { CrdActionName } from "@/app/actions/crd/types";
 import type { GibsonSession } from "@/src/lib/auth";
@@ -35,14 +36,6 @@ export interface CrdAuditEvent {
   resourceRef?: string;
   errorCode?: string;
   errorMessage?: string;
-}
-
-const MAX_ERROR_MESSAGE_CHARS = 512;
-
-function truncate(msg: string | undefined): string | undefined {
-  if (!msg) return undefined;
-  if (msg.length <= MAX_ERROR_MESSAGE_CHARS) return msg;
-  return msg.slice(0, MAX_ERROR_MESSAGE_CHARS) + "...[truncated]";
 }
 
 /**

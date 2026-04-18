@@ -627,14 +627,14 @@ export type CallToolProtoRequest = Message<"gibson.harness.v1.CallToolProtoReque
   inputJson: Uint8Array;
 
   /**
-   * Fully qualified proto message type name for input (e.g., "gibson.tool.nmap.NmapRequest")
+   * Fully qualified proto message type name for input (e.g., "gibson.tool.mytool.MyRequest")
    *
    * @generated from field: string input_type = 4;
    */
   inputType: string;
 
   /**
-   * Fully qualified proto message type name for output (e.g., "gibson.tool.nmap.NmapResponse")
+   * Fully qualified proto message type name for output (e.g., "gibson.tool.mytool.MyResponse")
    *
    * @generated from field: string output_type = 5;
    */
@@ -698,14 +698,14 @@ export type CallToolProtoStreamRequest = Message<"gibson.harness.v1.CallToolProt
   inputJson: Uint8Array;
 
   /**
-   * Fully qualified proto message type name for input (e.g., "gibson.tool.nmap.NmapRequest")
+   * Fully qualified proto message type name for input (e.g., "gibson.tool.mytool.MyRequest")
    *
    * @generated from field: string input_type = 4;
    */
   inputType: string;
 
   /**
-   * Fully qualified proto message type name for output (e.g., "gibson.tool.nmap.NmapResponse")
+   * Fully qualified proto message type name for output (e.g., "gibson.tool.mytool.MyResponse")
    *
    * @generated from field: string output_type = 5;
    */
@@ -5397,7 +5397,7 @@ export type AuthorizeRequest = Message<"gibson.harness.v1.AuthorizeRequest"> & {
   action: string;
 
   /**
-   * resource is the FGA object in "<type>:<name>" format, e.g. "tool:nmap".
+   * resource is the FGA object in "<type>:<name>" format, e.g. "tool:mytool".
    *
    * @generated from field: string resource = 3;
    */

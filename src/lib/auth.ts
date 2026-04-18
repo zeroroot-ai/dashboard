@@ -33,6 +33,13 @@ export interface GibsonSession {
     name?: string | null;
     email?: string | null;
     image?: string | null;
+    /**
+     * Whether the user has verified their email address.
+     * `false` for newly-signed-up users who have not yet clicked the
+     * verification link. The dashboard layout gate redirects unverified
+     * users to /verify-email before any protected page is rendered.
+     */
+    emailVerified: boolean;
     groups: string[];
     roles: string[];
     tenantId: string | null | undefined;
@@ -41,8 +48,6 @@ export interface GibsonSession {
     permissions: string[];
     crossTenant: boolean;
   };
-  /** @deprecated No longer used — dashboard authenticates via SPIFFE mTLS. */
-  accessToken?: string;
   error?: string;
   expires: string;
 }
@@ -57,7 +62,7 @@ export interface GibsonSession {
  * per server request even if multiple Server Components call getServerSession().
  */
 const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
-  let rawSession: { session: { token: string; expiresAt: Date; activeOrganizationId?: string | null }; user: { id: string; name: string; email: string; image?: string | null } } | null;
+  let rawSession: { session: { token: string; expiresAt: Date; activeOrganizationId?: string | null }; user: { id: string; name: string; email: string; image?: string | null; emailVerified?: boolean | null } } | null;
 
   try {
     const requestHeaders = await headers();
@@ -73,7 +78,6 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
   }
 
   const { session: baSession, user: baUser } = rawSession;
-  const sessionToken = baSession.token;
 
   // Derive tenant data from the daemon via SPIFFE mTLS transport.
   // The dashboard's SPIFFE identity is used for authentication; no Bearer token
@@ -98,12 +102,17 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
       const orgId = (o as unknown as { id?: string }).id;
       const slug = (o as unknown as { slug?: string }).slug;
       const tenantId = slug ?? orgId;
-      if (!tenantId) continue;
+      if (!tenantId || !orgId) continue;
       tenants.push(tenantId);
-      // We own the creation path — the signup flow grants the creator
-      // "owner" via the org plugin's creatorRole. Treat that as admin
-      // for the downstream permission resolver.
-      rolesByTenant[tenantId] = 'admin';
+      // Fetch the user's actual role from the member record. The Better Auth
+      // organization plugin stores the role on the `member` row — `owner`
+      // for the creator (creatorRole), `admin` for org admins, `member` for
+      // regular members. We read it here rather than hard-coding 'admin'.
+      const memberRow = await orgAdapter.findMemberByOrgId({
+        userId: baUser.id,
+        organizationId: orgId,
+      });
+      rolesByTenant[tenantId] = (memberRow as unknown as { role?: string } | null)?.role ?? 'member';
     }
 
     // Use activeOrganizationId as the active tenant, falling back to first.
@@ -128,6 +137,10 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
       name: baUser.name,
       email: baUser.email,
       image: baUser.image ?? null,
+      // Better Auth sets emailVerified on the user row when verification
+      // completes. Treat null/undefined as false so the layout gate works
+      // correctly for newly-created users before the DB column is populated.
+      emailVerified: baUser.emailVerified === true,
       groups: [],
       roles,
       tenantId: activeTenantId,
@@ -136,9 +149,6 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
       permissions,
       crossTenant,
     },
-    // accessToken is kept for backward compatibility but is no longer used for
-    // daemon calls (SPIFFE mTLS replaced token-based transport).
-    accessToken: sessionToken,
     expires: baSession.expiresAt.toISOString(),
   };
 });
@@ -163,7 +173,7 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
  *
  * export default async function Page() {
  *   const session = await getServerSession();
- *   if (!session) redirect('/dashboard/login/v2');
+ *   if (!session) redirect('/login');
  *   if (!hasPermission(session, 'missions:read')) redirect('/forbidden');
  *   return <div>Hello, {session.user.name}</div>;
  * }

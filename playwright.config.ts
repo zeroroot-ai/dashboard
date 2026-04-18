@@ -69,11 +69,22 @@ export default defineConfig({
     // },
   ],
 
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  /* Run your local dev server before starting the tests.
+   *
+   * Auth e2e tests (e2e/auth/) target the kind `gibson` cluster at port
+   * 30081 and do NOT use the local dev server — they set PLAYWRIGHT_BASE_URL
+   * to http://localhost:30081 and start their own webServer configuration is
+   * skipped for that sub-suite via the CI workflow.
+   *
+   * For the original e2e suite (e2e/*.spec.ts without e2e/auth/) the local
+   * dev server is still started as before.
+   */
+  webServer: process.env.E2E_AUTH_SUITE
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: 'http://localhost:3000',
+        reuseExistingServer: !process.env.CI,
+        timeout: 120 * 1000,
+      },
 });

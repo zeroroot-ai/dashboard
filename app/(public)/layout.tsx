@@ -12,7 +12,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground">
               Pricing
             </Link>
-            <Link href="/dashboard/login/v2" className="text-sm text-muted-foreground hover:text-foreground">
+            <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
               Sign In
             </Link>
           </div>

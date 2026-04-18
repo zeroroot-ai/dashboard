@@ -151,7 +151,7 @@ export function useSessionSecurity(options: SessionSecurityOptions = {}): Sessio
     // sign out and redirect to login.
     if (session?.error === 'RefreshTokenExpired') {
       console.warn('[SessionSecurity] Refresh token expired, signing out');
-      signOutAction("/dashboard/login/v2");
+      signOutAction("/login");
       return;
     }
 

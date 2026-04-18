@@ -15,14 +15,13 @@
  *
  * Usage
  * -----
- *   // In a server component or API route (pass the user's access token):
+ *   // In a server component or API route:
  *   import { getMyPermissions } from '@/src/lib/permissions-cache';
- *   const perms = await getMyPermissions(tenantId, accessToken);
+ *   const perms = await getMyPermissions(tenantId);
  *
- *   // In a client component (no access token — browser side auth is not
- *   // supported server-to-server, so use the hook wrapper instead):
+ *   // In a client component (use the hook wrapper instead):
  *   import { useMyPermissions } from '@/src/lib/permissions-cache';
- *   const { permissions, loading } = useMyPermissions();
+ *   const { permissions, loading } = useMyPermissions(tenantId);
  */
 
 'use client';

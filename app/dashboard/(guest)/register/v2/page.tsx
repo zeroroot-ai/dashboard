@@ -76,7 +76,7 @@ export default function Page() {
       });
       if (!result.ok) {
         toast.success("Account created! Please sign in.");
-        router.push("/dashboard/login/v2");
+        router.push("/login");
         return;
       }
       router.push(result.redirectTo);
@@ -188,7 +188,7 @@ export default function Page() {
           </Form>
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
-            <Link href="/dashboard/login/v2" className="underline">
+            <Link href="/login" className="underline">
               Sign in
             </Link>
           </div>
