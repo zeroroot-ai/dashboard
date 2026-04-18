@@ -11,7 +11,7 @@ import {
   selectYamlContent,
   selectMetadata,
   selectScope,
-  selectWorkflow,
+  selectMission,
   selectGuardrails,
   selectValidation,
   selectUIState,
@@ -195,9 +195,9 @@ describe('MissionCreationStore', () => {
     });
   });
 
-  describe('Workflow Actions', () => {
-    it('should update workflow configuration', () => {
-      const { updateWorkflow } = useMissionCreationStore.getState();
+  describe('Mission Actions', () => {
+    it('should update mission configuration', () => {
+      const { updateMission } = useMissionCreationStore.getState();
       const newSteps = [
         {
           id: 'step-1',
@@ -208,23 +208,23 @@ describe('MissionCreationStore', () => {
       ];
 
       act(() => {
-        updateWorkflow({ steps: newSteps });
+        updateMission({ steps: newSteps });
       });
 
       const state = useMissionCreationStore.getState();
-      expect(state.workflow.steps).toHaveLength(1);
-      expect(state.workflow.steps[0].name).toBe('Recon');
+      expect(state.mission.steps).toHaveLength(1);
+      expect(state.mission.steps[0].name).toBe('Recon');
     });
 
     it('should update error handling mode', () => {
-      const { updateWorkflow } = useMissionCreationStore.getState();
+      const { updateMission } = useMissionCreationStore.getState();
 
       act(() => {
-        updateWorkflow({ errorHandling: 'stop' });
+        updateMission({ errorHandling: 'stop' });
       });
 
       const state = useMissionCreationStore.getState();
-      expect(state.workflow.errorHandling).toBe('stop');
+      expect(state.mission.errorHandling).toBe('stop');
     });
   });
 
@@ -492,7 +492,7 @@ describe('MissionCreationStore', () => {
         updateYaml('name: custom');
         updateMetadata({ name: 'Custom', tags: ['tag1'] });
         updateScope({ maxDepth: 10 });
-        setActiveTab('workflow');
+        setActiveTab('mission');
       });
 
       // Reset
@@ -545,11 +545,11 @@ describe('Selectors', () => {
     expect(scope.maxDepth).toBe(7);
   });
 
-  it('should select workflow', () => {
+  it('should select mission', () => {
     const state = useMissionCreationStore.getState();
-    const workflow = selectWorkflow(state);
-    expect(workflow.steps).toBeDefined();
-    expect(workflow.errorHandling).toBeDefined();
+    const mission = selectMission(state);
+    expect(mission.steps).toBeDefined();
+    expect(mission.errorHandling).toBeDefined();
   });
 
   it('should select guardrails', () => {

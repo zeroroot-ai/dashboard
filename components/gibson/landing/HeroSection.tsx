@@ -8,40 +8,40 @@ import { GraphBackground } from "@/components/gibson/landing/GraphBackground";
 const messages: TypewriterMessage[] = [
   {
     label: "Pentester",
-    text: "Claude, build me a gibson agent to hunt subdomains with amass + httpx + nuclei and deploy it to my engagement VPS.",
+    text: "Claude, build me a gibson agent to hunt subdomains with amass + httpx + nuclei — kick it off with gibson-cli mission run.",
   },
   {
     label: "DevSecOps",
-    text: "Copilot, build me a gibson agent to triage Trivy findings and open Jira tickets and deploy it to GitHub Actions.",
+    text: "Copilot, build me a gibson agent to triage Trivy findings and open Jira tickets — trigger it from CI on every image build.",
   },
   {
     label: "SRE",
-    text: "Cursor, build me a gibson agent that drafts the incident timeline from Loki + recent deploys the moment a page fires — deploy it to our Slack war room.",
+    text: "Cursor, build me a gibson agent to monitor our payments service, troubleshoot with kubectl, and fix config via Argo CD — trigger it from Alertmanager webhooks.",
   },
   {
     label: "Bug Bounty",
-    text: "Codex, build me a gibson agent to watch my private programs for new subdomains with reproducible nuclei hits — deploy it on my laptop.",
+    text: "Codex, build me a gibson agent to watch my private programs for new subdomains with reproducible nuclei hits — run it nightly via gibson-cli mission run.",
   },
   {
     label: "AppSec",
-    text: "Gemini, build me a gibson agent to review PRs for auth-bypass + injection patterns with our org's custom rules — deploy it to our CI.",
+    text: "Gemini, build me a gibson agent to review PRs for auth-bypass + injection patterns with our org's custom rules — trigger it from CI on every PR.",
   },
   {
     label: "Red Teamer",
-    text: "Aider, build me a gibson agent to attempt and score prompt-injection techniques against our company website — deploy it as a weekly CI job.",
+    text: "Aider, build me a gibson agent to attempt and score prompt-injection techniques against our company website — trigger it weekly from CI.",
   },
   {
     label: "Developer",
-    text: "Cline, build me a gibson agent that reproduces every new GitHub issue in a Setec sandbox with a failing test — deploy it to our GitHub org.",
+    text: "Cline, build me a gibson agent that bumps stale dependencies, runs the test suite, and opens PRs only when green — run it nightly from CI.",
   },
   {
     label: "IR / SOC",
-    text: "Ollama, build me a gibson agent to detonate suspicious attachments in Setec and deploy it to our SIEM runner.",
+    text: "Ollama, build me a gibson agent to sweep every new IOC across CloudTrail and k8s audit logs — trigger it from our SIEM webhook.",
   },
 ];
 
 const terminalLines = [
-  "git clone https://github.com/zero-day-ai/gibson-adk",
+  "git clone https://github.com/zero-day-ai/adk gibson-adk",
   "cd gibson-adk",
   "gibson-cli init",
 ];
@@ -55,13 +55,13 @@ export function HeroSection() {
         className="absolute inset-0 z-[1] pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse 70% 75% at 50% 45%, rgba(2,6,4,0.94) 0%, rgba(2,6,4,0.7) 45%, rgba(2,6,4,0) 85%)",
+            "radial-gradient(ellipse 52% 58% at 50% 45%, rgba(2,6,4,0.92) 0%, rgba(2,6,4,0.55) 40%, rgba(2,6,4,0) 75%)",
         }}
       />
 
       <div className="relative z-10 mx-auto max-w-5xl flex flex-col items-center gap-10">
         {/* Terminal card */}
-        <div className="w-full max-w-2xl rounded-lg border border-green-500/40 bg-black/85 shadow-[0_0_40px_rgba(34,197,94,0.25)] backdrop-blur-sm">
+        <div className="w-full max-w-2xl rounded-lg border border-green-500/40 bg-black/85 shadow-[0_0_24px_rgba(34,197,94,0.15)] backdrop-blur-sm">
           <div className="flex items-center gap-2 border-b border-green-500/25 px-4 py-2">
             <span className="h-3 w-3 rounded-full bg-red-500/70" />
             <span className="h-3 w-3 rounded-full bg-yellow-500/70" />
@@ -87,8 +87,8 @@ export function HeroSection() {
           <Typewriter
             messages={messages}
             typingSpeed={30}
-            deletingSpeed={18}
-            pauseDuration={2800}
+            pauseDuration={5000}
+            instantDelete
             className="min-h-[14rem] md:min-h-[12rem] lg:min-h-[10rem] text-xl md:text-2xl lg:text-3xl font-semibold leading-snug max-w-4xl mx-auto"
           />
         </div>

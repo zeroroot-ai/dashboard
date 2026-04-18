@@ -9,7 +9,7 @@
 
 import { Suspense } from "react";
 import { Loader2Icon } from "lucide-react";
-import { buildSocialProviders } from "@/src/lib/social-providers";
+import { buildSocialProviders, PROVIDER_ORDER } from "@/src/lib/social-providers";
 import { LoginForm } from "./login-form";
 
 export default function LoginPage() {
@@ -19,6 +19,14 @@ export default function LoginPage() {
   // client — client secrets stay server-only.
   const { enabled } = buildSocialProviders();
 
+  // UI preview toggle: when DASHBOARD_SOCIAL_PREVIEW=true, render every
+  // supported provider button regardless of backend wiring so operators can
+  // see the layout before real OAuth credentials are plumbed in. Clicking a
+  // non-configured button surfaces Better Auth's "provider not found" error
+  // — acceptable for preview, not for production.
+  const previewAll = process.env.DASHBOARD_SOCIAL_PREVIEW === "true";
+  const providers = previewAll ? PROVIDER_ORDER : enabled;
+
   return (
     <Suspense
       fallback={
@@ -27,7 +35,7 @@ export default function LoginPage() {
         </div>
       }
     >
-      <LoginForm providers={enabled} />
+      <LoginForm providers={providers} />
     </Suspense>
   );
 }

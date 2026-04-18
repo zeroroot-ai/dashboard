@@ -34,7 +34,7 @@ scope:
   depth: 3
   maxTargets: 1000
 
-workflow:
+mission:
   type: sequential
   steps:
     - id: discovery
@@ -86,7 +86,7 @@ scope:
   include:
     - "\${API_BASE_URL}/*"
 
-workflow:
+mission:
   type: sequential
   steps:
     - id: api-discovery
@@ -141,7 +141,7 @@ scope:
       value: \${TARGET_RANGE}
   maxTargets: 256
 
-workflow:
+mission:
   type: sequential
   steps:
     - id: host-discovery
@@ -195,7 +195,7 @@ scope:
   include:
     - "\${CLOUD_DOMAIN}/*"
 
-workflow:
+mission:
   type: parallel
   agents:
     - name: cloud-config-scanner
@@ -242,7 +242,7 @@ scope:
     - type: repository
       value: \${REPO_URL}
 
-workflow:
+mission:
   type: sequential
   steps:
     - id: clone

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { createMDX } from "fumadocs-mdx/next";
 
 // CSP is now nonce-based and set per-request in middleware.ts.
 // Only non-CSP security headers remain here (static, same for every response).
@@ -61,4 +62,9 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Wrap with Fumadocs MDX adapter so `.mdx` content under `content/docs/`
+// is compiled at build time. The adapter reads `source.config.ts` and
+// emits typed output to `.source/` (gitignored).
+const withMDX = createMDX();
+
+export default withMDX(nextConfig);

@@ -24,12 +24,7 @@ interface ValidationPanelProps {
 }
 
 function extractAgentToolNames(parsed: Record<string, unknown>): string {
-  const nodes =
-    (parsed.nodes as Record<string, unknown>[] | undefined) ??
-    ((parsed.workflow as Record<string, unknown> | undefined)?.steps as
-      | Record<string, unknown>[]
-      | undefined) ??
-    [];
+  const nodes = (parsed.nodes as Record<string, unknown>[] | undefined) ?? [];
   const names = new Set<string>();
   for (const node of nodes) {
     const name = (node.agent ?? node.tool ?? node.plugin) as string | undefined;
@@ -39,10 +34,7 @@ function extractAgentToolNames(parsed: Record<string, unknown>): string {
 }
 
 function nodeCount(parsed: Record<string, unknown>): number {
-  const nodes =
-    (parsed.nodes as unknown[] | undefined) ??
-    ((parsed.workflow as Record<string, unknown> | undefined)?.steps as unknown[] | undefined) ??
-    [];
+  const nodes = (parsed.nodes as unknown[] | undefined) ?? [];
   return nodes.length;
 }
 

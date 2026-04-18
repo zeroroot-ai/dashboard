@@ -14,6 +14,8 @@ export interface TypewriterProps {
   typingSpeed?: number;
   deletingSpeed?: number;
   pauseDuration?: number;
+  /** If true, clear the message in one frame instead of backspacing char-by-char. */
+  instantDelete?: boolean;
   className?: string;
 }
 
@@ -24,6 +26,7 @@ export function Typewriter({
   typingSpeed = 65,
   deletingSpeed = 35,
   pauseDuration = 2500,
+  instantDelete = false,
   className,
 }: TypewriterProps) {
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -78,7 +81,10 @@ export function Typewriter({
         setPhase("deleting");
       }, pauseDuration);
     } else if (phase === "deleting") {
-      if (displayedText.length > 0) {
+      if (instantDelete) {
+        setDisplayedText("");
+        setPhase("switching");
+      } else if (displayedText.length > 0) {
         timeoutRef.current = setTimeout(() => {
           setDisplayedText(displayedText.slice(0, -1));
         }, deletingSpeed);
@@ -100,6 +106,7 @@ export function Typewriter({
     typingSpeed,
     deletingSpeed,
     pauseDuration,
+    instantDelete,
     clearPending,
   ]);
 
@@ -115,7 +122,7 @@ export function Typewriter({
             >
               {msg.label}
             </Badge>
-            <span className="font-mono text-glow-green">{msg.text}</span>
+            <span className="font-mono text-glow-green-soft">{msg.text}</span>
           </div>
         ))}
       </div>
@@ -150,7 +157,7 @@ export function Typewriter({
 
       {/* aria-hidden so screen readers only hear the sr-only live region */}
       <span aria-hidden="true" className="flex items-center font-mono">
-        <span className="text-glow-green">{displayedText}</span>
+        <span className="text-glow-green-soft">{displayedText}</span>
         <span
           aria-hidden="true"
           className="ml-px text-green-400 animate-[typewriter-blink_1s_step-end_infinite]"

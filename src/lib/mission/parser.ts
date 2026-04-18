@@ -16,8 +16,8 @@ import type {
   ScopeConfig,
   ScopeTarget,
   ScopePattern,
-  WorkflowConfig,
-  WorkflowStep,
+  MissionConfig,
+  MissionStep,
   GuardrailsConfig,
   RateLimitConfig,
   ConfirmationRule,
@@ -51,7 +51,7 @@ export interface MissionYAML {
     followRedirects?: boolean;
     expansionMode?: string;
   };
-  workflow?: WorkflowYAML;
+  mission?: MissionYAMLBlock | Array<NonNullable<MissionYAMLBlock['steps']>[number]>;
   guardrails?: {
     maxTokens?: number;
     maxTokensPerCall?: number;
@@ -86,7 +86,7 @@ export interface MissionYAML {
   maxCost?: number;
 }
 
-export interface WorkflowYAML {
+export interface MissionYAMLBlock {
   type?: 'sequential' | 'parallel' | 'dag';
   steps?: Array<{
     id?: string;
@@ -254,19 +254,38 @@ export function extractScope(yaml: MissionYAML): Partial<ScopeConfig> {
 }
 
 /**
- * Extract workflow configuration from parsed YAML
+ * Extract mission configuration from parsed YAML
  */
-export function extractWorkflow(yaml: MissionYAML): Partial<WorkflowConfig> {
-  const workflow = yaml.workflow;
-  if (!workflow) {
+export function extractMission(yaml: MissionYAML): Partial<MissionConfig> {
+  const mission = yaml.mission;
+  if (!mission) {
     return { type: 'inline', steps: [], executionMode: 'sequential', errorHandling: 'continue' };
   }
 
-  const steps: WorkflowStep[] = [];
+  const steps: MissionStep[] = [];
+
+  // Handle bare array of steps — `mission:` followed directly by a list.
+  if (Array.isArray(mission)) {
+    for (const step of mission as Array<NonNullable<MissionYAMLBlock['steps']>[number]>) {
+      steps.push({
+        id: step.id || generateId(),
+        type: (step.type as any) || (step.agent ? 'agent' : step.tool ? 'tool' : 'agent'),
+        name: step.name || step.agent || step.tool || 'Step',
+        config: {
+          type: 'agent',
+          agentId: step.agent || '',
+          task: step.task || '',
+          parameters: step.parameters,
+        } as any,
+        dependsOn: step.dependsOn || [],
+      });
+    }
+    return { type: 'inline', steps, executionMode: 'sequential', errorHandling: 'continue' };
+  }
 
   // Handle sequential steps array
-  if (workflow.steps) {
-    for (const step of workflow.steps) {
+  if (mission.steps) {
+    for (const step of mission.steps) {
       steps.push({
         id: step.id || generateId(),
         type: step.type as any || (step.agent ? 'agent' : step.tool ? 'tool' : 'agent'),
@@ -283,8 +302,8 @@ export function extractWorkflow(yaml: MissionYAML): Partial<WorkflowConfig> {
   }
 
   // Handle parallel agents array
-  if (workflow.agents) {
-    for (const agent of workflow.agents) {
+  if (mission.agents) {
+    for (const agent of mission.agents) {
       steps.push({
         id: generateId(),
         type: 'agent',
@@ -302,7 +321,7 @@ export function extractWorkflow(yaml: MissionYAML): Partial<WorkflowConfig> {
   return {
     type: 'inline',
     steps,
-    executionMode: workflow.type || 'sequential',
+    executionMode: mission.type || 'sequential',
     errorHandling: 'continue',
   };
 }
@@ -391,9 +410,9 @@ export function buildMissionYAML(state: Partial<MissionCreationState>): MissionY
     yaml.scope = buildScopeYAML(state.scope);
   }
 
-  // Add workflow
-  if (state.workflow && state.workflow.steps.length > 0) {
-    yaml.workflow = buildWorkflowYAML(state.workflow);
+  // Add mission steps
+  if (state.mission && state.mission.steps.length > 0) {
+    yaml.mission = buildMissionYAMLBlock(state.mission);
   }
 
   // Add guardrails
@@ -479,17 +498,17 @@ function buildScopeYAML(scope: ScopeConfig): MissionYAML['scope'] {
 }
 
 /**
- * Build workflow section of YAML
+ * Build mission section of YAML
  */
-function buildWorkflowYAML(workflow: WorkflowConfig): WorkflowYAML {
-  const result: WorkflowYAML = {};
+function buildMissionYAMLBlock(mission: MissionConfig): MissionYAMLBlock {
+  const result: MissionYAMLBlock = {};
 
-  if (workflow.executionMode !== 'sequential') {
-    result.type = workflow.executionMode as any;
+  if (mission.executionMode !== 'sequential') {
+    result.type = mission.executionMode as any;
   }
 
-  if (workflow.steps.length > 0) {
-    result.steps = workflow.steps.map((step) => {
+  if (mission.steps.length > 0) {
+    result.steps = mission.steps.map((step) => {
       const stepYAML: any = {};
 
       if (step.id) {
@@ -598,7 +617,7 @@ export function yamlToState(yamlContent: string): ParseResult<Partial<MissionCre
       yamlContent,
       metadata: extractMetadata(yaml) as any,
       scope: extractScope(yaml) as any,
-      workflow: extractWorkflow(yaml) as any,
+      mission: extractMission(yaml) as any,
       guardrails: extractGuardrails(yaml) as any,
     };
 
@@ -752,7 +771,7 @@ export default {
   serializeYAML,
   extractMetadata,
   extractScope,
-  extractWorkflow,
+  extractMission,
   extractGuardrails,
   buildMissionYAML,
   yamlToState,

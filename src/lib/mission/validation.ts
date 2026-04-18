@@ -290,13 +290,13 @@ export function validateCustomRules(
     }
   }
 
-  // Check for workflow consistency
-  const workflow = data.workflow as Record<string, unknown> | undefined;
-  if (workflow?.type === 'dag' && !workflow.entrypoint) {
+  // Check for mission DAG consistency
+  const mission = data.mission as Record<string, unknown> | undefined;
+  if (mission?.type === 'dag' && !mission.entrypoint) {
     errors.push({
       code: 'MISSING_ENTRYPOINT',
-      message: 'DAG workflow requires an entrypoint step',
-      path: 'workflow.entrypoint',
+      message: 'DAG mission requires an entrypoint step',
+      path: 'mission.entrypoint',
       severity: 'error',
     });
   }
@@ -333,9 +333,9 @@ export function validateCustomRules(
     });
   }
 
-  // Validate step references in workflow
-  if (workflow?.steps) {
-    const steps = workflow.steps as Array<Record<string, unknown>>;
+  // Validate step references in the mission graph
+  if (mission?.steps) {
+    const steps = mission.steps as Array<Record<string, unknown>>;
     const stepIds = new Set(steps.map(s => s.id as string));
 
     for (const step of steps) {
@@ -344,7 +344,7 @@ export function validateCustomRules(
         errors.push({
           code: 'INVALID_STEP_REF',
           message: `Step "${step.id}" references unknown step "${step.onSuccess}" in onSuccess`,
-          path: `workflow.steps.${step.id}.onSuccess`,
+          path: `mission.steps.${step.id}.onSuccess`,
           severity: 'error',
         });
       }
@@ -354,7 +354,7 @@ export function validateCustomRules(
         errors.push({
           code: 'INVALID_STEP_REF',
           message: `Step "${step.id}" references unknown step "${step.onFailure}" in onFailure`,
-          path: `workflow.steps.${step.id}.onFailure`,
+          path: `mission.steps.${step.id}.onFailure`,
           severity: 'error',
         });
       }
@@ -367,7 +367,7 @@ export function validateCustomRules(
             errors.push({
               code: 'INVALID_BRANCH_REF',
               message: `Parallel step "${step.id}" references unknown branch "${branch}"`,
-              path: `workflow.steps.${step.id}.branches`,
+              path: `mission.steps.${step.id}.branches`,
               severity: 'error',
             });
           }

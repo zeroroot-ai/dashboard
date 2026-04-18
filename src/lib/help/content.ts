@@ -315,7 +315,7 @@ Each finding includes:
 - **Remediation**: How to fix
 - **References**: CVEs, documentation
 
-## Workflow
+## Process
 
 1. **Triage**: Review new findings
 2. **Validate**: Confirm the issue
@@ -565,7 +565,7 @@ Customize your Gibson workspace.
     content: `
 # Keyboard Shortcuts
 
-Speed up your workflow with keyboard shortcuts.
+Speed up your day-to-day work with keyboard shortcuts.
 
 ## Global Shortcuts
 
@@ -673,7 +673,7 @@ Build specialized agents for your unique security needs.
 ## When to Create Custom Agents
 
 - Specific compliance requirements
-- Custom security workflows
+- Custom security missions
 - Integration with internal tools
 - Specialized testing scenarios
 
@@ -732,7 +732,7 @@ Set operational boundaries:
 
 Step-by-step guidance for fixing common security findings.
 
-## Remediation Workflow
+## Remediation Process
 
 1. **Assess** - Understand the finding
 2. **Plan** - Determine the fix approach

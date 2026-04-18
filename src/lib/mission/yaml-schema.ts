@@ -2,11 +2,14 @@
  * Mission YAML JSON Schema
  *
  * Comprehensive JSON Schema (draft-07) for validating Gibson mission YAML files.
- * Property names match the Go YAML struct tags in core/gibson/internal/mission/yaml.go.
- * This schema defines the structure for mission configuration including:
+ * This is an authoring-side validator used by the Monaco editor; the YAML is
+ * parsed client-side into a structured MissionDefinition proto before being
+ * sent to the daemon. The property names here describe the dashboard's YAML
+ * authoring surface (see src/lib/mission/parser.ts + mission-serializer.ts).
+ * Sections covered:
  * - Mission metadata (name, description)
  * - Target configuration (reference or inline seeds)
- * - Workflow definition (reference or inline nodes/edges)
+ * - Mission definition (reference or inline nodes/edges)
  * - Constraints (max_duration, max_findings, max_cost, severity_threshold)
  * - Guardrails (rate limits, allowed agents, confirmation requirements)
  * - Reporting (formats, output_path, email_to, webhooks)
@@ -44,7 +47,10 @@ const targetSeedSchema: JSONSchema7 = {
 };
 
 /**
- * Schema for inline target configuration (maps to InlineTargetConfig in yaml.go)
+ * Schema for the client-side authored target block embedded in a mission YAML.
+ * This is a dashboard-only authoring convenience — the daemon API is reference-only
+ * (target_id + mission_definition_id). Before submit, the UI parses this YAML
+ * client-side and produces a MissionDefinition proto via mission-serializer.ts.
  */
 const inlineTargetSchema: JSONSchema7 = {
   type: 'object',
@@ -92,9 +98,9 @@ const targetSchema: JSONSchema7 = {
 };
 
 /**
- * Schema for a workflow edge (maps to WorkflowEdgeConfig in yaml.go)
+ * Schema for a mission edge (dashboard authoring form of MissionEdge).
  */
-const workflowEdgeSchema: JSONSchema7 = {
+const missionEdgeSchema: JSONSchema7 = {
   type: 'object',
   properties: {
     from: {
@@ -115,9 +121,9 @@ const workflowEdgeSchema: JSONSchema7 = {
 };
 
 /**
- * Schema for a workflow node (maps to WorkflowNodeConfig in yaml.go)
+ * Schema for a mission node (dashboard authoring form of MissionNode).
  */
-const workflowNodeSchema: JSONSchema7 = {
+const missionNodeSchema: JSONSchema7 = {
   type: 'object',
   properties: {
     id: {
@@ -138,30 +144,30 @@ const workflowNodeSchema: JSONSchema7 = {
 };
 
 /**
- * Schema for inline workflow configuration (maps to InlineWorkflowConfig in yaml.go)
+ * Schema for an inline mission definition (dashboard authoring form).
  */
-const inlineWorkflowSchema: JSONSchema7 = {
+const inlineMissionSchema: JSONSchema7 = {
   type: 'object',
   properties: {
     name: {
       type: 'string',
-      description: 'Optional name for this inline workflow',
+      description: 'Optional name for this inline mission definition',
     },
     nodes: {
       type: 'array',
-      items: workflowNodeSchema,
+      items: missionNodeSchema,
       minItems: 1,
-      description: 'Workflow nodes to execute',
+      description: 'Mission nodes to execute',
     },
     edges: {
       type: 'array',
-      items: workflowEdgeSchema,
+      items: missionEdgeSchema,
       description: 'Directed edges defining execution order (DAG)',
     },
     metadata: {
       type: 'object',
       additionalProperties: { type: 'string' },
-      description: 'Optional metadata for the workflow',
+      description: 'Optional metadata for the mission',
     },
   },
   required: ['nodes'],
@@ -169,23 +175,23 @@ const inlineWorkflowSchema: JSONSchema7 = {
 };
 
 /**
- * Schema for workflow configuration (maps to MissionWorkflowConfig in yaml.go)
+ * Schema for the mission step graph (dashboard authoring form).
  */
-const workflowSchema: JSONSchema7 = {
+const missionSectionSchema: JSONSchema7 = {
   type: 'object',
   properties: {
     reference: {
       type: 'string',
       minLength: 1,
-      description: 'Reference to an existing workflow by name or ID',
+      description: 'Reference to an existing mission definition by name or ID',
     },
     inline: {
-      ...inlineWorkflowSchema,
-      description: 'Inline workflow definition',
+      ...inlineMissionSchema,
+      description: 'Inline mission definition',
     },
   },
   additionalProperties: true,
-  description: 'Workflow configuration — specify either reference or inline, not both',
+  description: 'Mission step graph — specify either reference or inline, not both',
 };
 
 /**
@@ -246,7 +252,7 @@ export const missionSchema: JSONSchema7 = {
 
     // Core configuration
     target: targetSchema,
-    workflow: workflowSchema,
+    mission: missionSectionSchema,
     constraints: constraintsSchema,
     guardrails: guardrailsSchema,
     reporting: reportingSchema,
@@ -331,10 +337,10 @@ export {
   targetSeedSchema,
   targetSchema,
   inlineTargetSchema,
-  workflowSchema,
-  workflowNodeSchema,
-  workflowEdgeSchema,
-  inlineWorkflowSchema,
+  missionSectionSchema,
+  missionNodeSchema,
+  missionEdgeSchema,
+  inlineMissionSchema,
   constraintsSchema,
   guardrailsSchema,
   reportingSchema,

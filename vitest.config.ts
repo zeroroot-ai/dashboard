@@ -40,6 +40,11 @@ export default defineConfig({
       '@/lib': path.resolve(__dirname, './lib'),
       '@/hooks': path.resolve(__dirname, './hooks'),
       '@/app': path.resolve(__dirname, './app'),
+      // Docs source output emitted by fumadocs-mdx. The `.source/` artifact
+      // only exists after `npx fumadocs-mdx` has run; vitest stubs this
+      // import via vi.mock inside src/lib/__tests__/source.test.ts, but the
+      // alias still needs a resolvable path for Vite's import-analysis.
+      '@/.source/server': path.resolve(__dirname, './.source/server.ts'),
       '@': path.resolve(__dirname, './src'),
       // Next.js's `import "server-only"` guard has no runtime implementation;
       // alias to an empty shim so Server-Action modules can be tested.

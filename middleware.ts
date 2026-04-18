@@ -155,6 +155,7 @@ const PICKER_EXEMPT = [
   '/signup',
   '/dashboard/login',
   '/dashboard/register',
+  '/docs',
 ];
 
 function isPickerExempt(pathname: string): boolean {

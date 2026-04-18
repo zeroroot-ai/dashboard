@@ -285,8 +285,8 @@ export function useMissionCreation(
       if (result.data.scope) {
         store.updateScope(result.data.scope as Parameters<typeof store.updateScope>[0]);
       }
-      if (result.data.workflow) {
-        store.updateWorkflow(result.data.workflow as Parameters<typeof store.updateWorkflow>[0]);
+      if (result.data.mission) {
+        store.updateMission(result.data.mission as Parameters<typeof store.updateMission>[0]);
       }
       if (result.data.guardrails) {
         store.updateGuardrails(result.data.guardrails as Parameters<typeof store.updateGuardrails>[0]);

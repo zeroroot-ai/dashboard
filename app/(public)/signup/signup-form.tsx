@@ -473,6 +473,7 @@ function SignupFormInner({ providers }: SignupFormProps) {
                         <FormControl>
                           <Checkbox
                             id="tosAccepted"
+                            className="mt-0.5 border-green-500/60 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500 data-[state=checked]:text-black"
                             checked={field.value === true}
                             onCheckedChange={(checked) =>
                               field.onChange(checked ? true : false)
@@ -486,12 +487,12 @@ function SignupFormInner({ providers }: SignupFormProps) {
                         </FormControl>
                         <FormLabel
                           htmlFor="tosAccepted"
-                          className="text-sm font-normal leading-snug cursor-pointer"
+                          className="cursor-pointer text-sm font-normal leading-relaxed text-foreground/90"
                         >
                           I agree to the{" "}
                           <Link
                             href="/terms"
-                            className="font-medium text-foreground underline-offset-4 hover:underline"
+                            className="font-medium text-green-300 underline-offset-4 hover:underline"
                             target="_blank"
                             rel="noopener noreferrer"
                           >
@@ -500,7 +501,7 @@ function SignupFormInner({ providers }: SignupFormProps) {
                           and{" "}
                           <Link
                             href="/privacy"
-                            className="font-medium text-foreground underline-offset-4 hover:underline"
+                            className="font-medium text-green-300 underline-offset-4 hover:underline"
                             target="_blank"
                             rel="noopener noreferrer"
                           >

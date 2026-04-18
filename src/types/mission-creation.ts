@@ -18,8 +18,8 @@ export interface MissionCreationState {
   metadata: MissionMetadata;
   /** Scope configuration */
   scope: ScopeConfig;
-  /** Workflow configuration */
-  workflow: WorkflowConfig;
+  /** Mission step configuration (authored DAG) */
+  mission: MissionConfig;
   /** Guardrails configuration */
   guardrails: GuardrailsConfig;
   /** Current validation errors */
@@ -115,37 +115,37 @@ export interface ScopePattern {
 }
 
 /**
- * Workflow configuration
+ * Mission configuration
  */
-export interface WorkflowConfig {
-  /** Workflow type */
+export interface MissionConfig {
+  /** Mission step-definition type */
   type?: 'inline' | 'reference';
-  /** For inline: workflow steps */
-  steps: WorkflowStep[];
-  /** For reference: workflow file path or ID */
+  /** For inline: mission steps */
+  steps: MissionStep[];
+  /** For reference: mission definition ID or name */
   reference?: string;
-  /** Workflow execution mode */
-  executionMode?: WorkflowExecutionMode;
+  /** Mission execution mode */
+  executionMode?: MissionExecutionMode;
   /** Error handling strategy */
   errorHandling: ErrorHandlingStrategy;
 }
 
 /**
- * Individual workflow step
+ * Individual mission step
  */
-export interface WorkflowStep {
+export interface MissionStep {
   /** Unique step identifier */
   id: string;
   /** Step type */
-  type: WorkflowStepType;
+  type: MissionStepType;
   /** Step name/label */
   name: string;
   /** Step configuration based on type */
-  config: WorkflowStepConfig;
+  config: MissionStepConfig;
   /** Dependencies (step IDs that must complete first) */
   dependsOn?: string[];
   /** Condition for step execution */
-  condition?: WorkflowCondition;
+  condition?: MissionCondition;
   /** Timeout in seconds */
   timeout?: number;
   /** Retry configuration */
@@ -153,9 +153,9 @@ export interface WorkflowStep {
 }
 
 /**
- * Workflow step configuration (varies by type)
+ * Mission step configuration (varies by type)
  */
-export type WorkflowStepConfig =
+export type MissionStepConfig =
   | AgentStepConfig
   | ToolStepConfig
   | PluginStepConfig
@@ -403,7 +403,7 @@ export interface ParsedMission {
   name: string;
   description?: string;
   scope: ScopeConfig;
-  workflow: WorkflowConfig;
+  mission: MissionConfig;
   guardrails?: GuardrailsConfig;
   metadata?: Partial<MissionMetadata>;
 }
@@ -556,7 +556,7 @@ export type MissionCreationTab =
   | 'preview'
   | 'metadata'
   | 'scope'
-  | 'workflow'
+  | 'mission'
   | 'guardrails';
 
 /**
@@ -600,9 +600,9 @@ export type ScopeTargetType =
 export type ScopeExpansionMode = 'strict' | 'subdomain' | 'related' | 'none';
 
 /**
- * Workflow step types
+ * Mission step types
  */
-export type WorkflowStepType =
+export type MissionStepType =
   | 'agent'
   | 'tool'
   | 'plugin'
@@ -612,9 +612,9 @@ export type WorkflowStepType =
   | 'wait';
 
 /**
- * Workflow execution modes
+ * Mission execution modes
  */
-export type WorkflowExecutionMode = 'sequential' | 'parallel' | 'dag';
+export type MissionExecutionMode = 'sequential' | 'parallel' | 'dag';
 
 /**
  * Error handling strategies
@@ -680,13 +680,13 @@ export type TemplateVariableType =
   | 'array';
 
 // ============================================================================
-// Workflow Condition Types
+// Mission Condition Types
 // ============================================================================
 
 /**
- * Workflow condition for step execution
+ * Mission condition for step execution
  */
-export interface WorkflowCondition {
+export interface MissionCondition {
   /** Condition type */
   type: 'cel' | 'simple';
   /** CEL expression or simple condition */
@@ -694,7 +694,7 @@ export interface WorkflowCondition {
 }
 
 /**
- * Retry configuration for workflow steps
+ * Retry configuration for mission steps
  */
 export interface RetryConfig {
   /** Maximum retry attempts */
@@ -783,8 +783,8 @@ export interface MissionCreationActions {
   updateMetadata: (metadata: Partial<MissionMetadata>) => void;
   /** Update scope configuration */
   updateScope: (scope: Partial<ScopeConfig>) => void;
-  /** Update workflow configuration */
-  updateWorkflow: (workflow: Partial<WorkflowConfig>) => void;
+  /** Update mission configuration */
+  updateMission: (mission: Partial<MissionConfig>) => void;
   /** Update guardrails configuration */
   updateGuardrails: (guardrails: Partial<GuardrailsConfig>) => void;
   /** Set validation errors */
@@ -850,9 +850,9 @@ export const DEFAULT_SCOPE: ScopeConfig = {
 };
 
 /**
- * Default workflow configuration
+ * Default mission configuration
  */
-export const DEFAULT_WORKFLOW: WorkflowConfig = {
+export const DEFAULT_MISSION: MissionConfig = {
   type: 'inline',
   steps: [],
   executionMode: 'dag',
@@ -882,7 +882,7 @@ export const DEFAULT_CREATION_STATE: MissionCreationState = {
   yamlContent: '',
   metadata: DEFAULT_METADATA,
   scope: DEFAULT_SCOPE,
-  workflow: DEFAULT_WORKFLOW,
+  mission: DEFAULT_MISSION,
   guardrails: DEFAULT_GUARDRAILS,
   validationErrors: [],
   validationWarnings: [],
@@ -909,7 +909,7 @@ scope:
     - type: subdomain
       pattern: "*.example.com"
 
-workflow:
+mission:
   - agent: recon-agent
     task: Perform initial reconnaissance
   - agent: vulnerability-scanner

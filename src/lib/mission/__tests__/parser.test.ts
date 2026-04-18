@@ -154,10 +154,10 @@ guardrails:
     expect(result.data?.guardrails?.maxTokensPerCall).toBe(50000);
   });
 
-  it('should handle workflow steps', () => {
+  it('should handle mission steps', () => {
     const yaml = `
-name: workflow-test
-workflow:
+name: mission-test
+mission:
   - agent: recon-agent
     task: Perform reconnaissance
   - agent: vulnerability-scanner
@@ -167,7 +167,7 @@ workflow:
     const result = yamlToState(yaml);
 
     expect(result.success).toBe(true);
-    expect(result.data?.workflow?.steps).toHaveLength(2);
+    expect(result.data?.mission?.steps).toHaveLength(2);
   });
 
   it('should return error for invalid YAML', () => {
@@ -243,10 +243,10 @@ describe('stateToYAML', () => {
     // Empty tags should not create empty array
   });
 
-  it('should handle workflow steps', () => {
+  it('should handle mission steps', () => {
     const state = {
       metadata: {
-        name: 'workflow-mission',
+        name: 'mission-test',
         description: '',
         tags: [],
         priority: 'normal' as const,
@@ -255,7 +255,7 @@ describe('stateToYAML', () => {
         severityThreshold: null,
         reportFormats: [],
       },
-      workflow: {
+      mission: {
         steps: [
           {
             id: 'step-1',
@@ -270,7 +270,7 @@ describe('stateToYAML', () => {
 
     const yaml = stateToYAML(state);
 
-    expect(yaml).toContain('workflow:');
+    expect(yaml).toContain('mission:');
     expect(yaml).toContain('agent: recon-agent');
     expect(yaml).toContain('task: Scan target');
   });

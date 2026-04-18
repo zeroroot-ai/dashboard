@@ -197,27 +197,38 @@ async function slugExists(slug: string): Promise<boolean> {
 
 /**
  * Best-effort rollback of a just-created user when org creation permanently
- * fails. Uses the admin plugin's `removeUser` endpoint which accepts a
- * `userId` in the request body. Failure here is swallowed — a partially-
- * created orphan user is the worst-case outcome, and the audit log captures
- * it for ops cleanup.
+ * fails. Uses Better Auth's `internalAdapter.deleteUser` directly — the
+ * admin-plugin HTTP endpoint requires an admin session (which the anonymous
+ * signup request does not have), so it silently leaves orphans behind.
+ * The adapter path is the same one `handleDeleteUser` in
+ * `src/lib/admin-provisioning.ts` uses on the SPIFFE side.
+ *
+ * Failure here is swallowed — a partially-created orphan is the worst-case
+ * outcome and the audit log captures it for ops cleanup.
  */
 async function rollbackUser(userId: string): Promise<void> {
   if (!userId) return;
   try {
-    // The admin plugin exposes removeUser (POST /admin/remove-user) which
-    // accepts { userId } and operates with elevated privileges from the
-    // Better Auth session context.
+    // better-auth's $context is typed loosely; fall through a pragmatic cast
+    // to reach internalAdapter.deleteUser. This is the same shape used by
+    // handleDeleteUser in src/lib/admin-provisioning.ts.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const api = auth.api as unknown as Record<string, any>;
-    if (typeof api.removeUser === "function") {
-      await api.removeUser({
-        body: { userId },
-        headers: await headers(),
-      });
+    const ctx = (await auth.$context) as any;
+    const adapter = ctx?.internalAdapter;
+    if (adapter && typeof adapter.deleteUser === "function") {
+      await adapter.deleteUser(userId);
     }
-  } catch {
-    // Swallow — rollback is best-effort.
+  } catch (err) {
+    // Swallow — rollback is best-effort. Surface to debug logs so orphans
+    // can be correlated with the audit trail.
+    try {
+      console.error(
+        "[signup] rollbackUser failed",
+        { userId, message: err instanceof Error ? err.message : String(err) },
+      );
+    } catch {
+      /* logging is best-effort */
+    }
   }
 }
 

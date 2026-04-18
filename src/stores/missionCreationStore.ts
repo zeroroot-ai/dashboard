@@ -2,7 +2,7 @@
  * Mission Creation Zustand Store
  *
  * Centralized state management for the mission creation interface.
- * Manages YAML content, metadata, scope, workflow, validation, and UI state.
+ * Manages YAML content, metadata, scope, mission steps, validation, and UI state.
  */
 
 import * as React from 'react';
@@ -16,7 +16,7 @@ import {
   type MissionCreationStore,
   type MissionMetadata,
   type ScopeConfig,
-  type WorkflowConfig,
+  type MissionConfig,
   type GuardrailsConfig,
   type ValidationError,
   type ValidationWarning,
@@ -27,7 +27,7 @@ import {
   DEFAULT_CREATION_STATE,
   DEFAULT_METADATA,
   DEFAULT_SCOPE,
-  DEFAULT_WORKFLOW,
+  DEFAULT_MISSION,
   DEFAULT_GUARDRAILS,
   STARTER_YAML,
 } from '@/src/types/mission-creation';
@@ -77,12 +77,12 @@ export const useMissionCreationStore = create<MissionCreationStore>()(
         },
 
         // =====================================================================
-        // Workflow Actions
+        // Mission Actions
         // =====================================================================
 
-        updateWorkflow: (workflow: Partial<WorkflowConfig>) => {
+        updateMission: (mission: Partial<MissionConfig>) => {
           set((state) => {
-            state.workflow = { ...state.workflow, ...workflow };
+            state.mission = { ...state.mission, ...mission };
             state.isDirty = true;
           });
         },
@@ -381,9 +381,9 @@ export const selectMetadata = (state: MissionCreationStore) => state.metadata;
 export const selectScope = (state: MissionCreationStore) => state.scope;
 
 /**
- * Select workflow configuration
+ * Select mission configuration
  */
-export const selectWorkflow = (state: MissionCreationStore) => state.workflow;
+export const selectMission = (state: MissionCreationStore) => state.mission;
 
 /**
  * Select guardrails configuration
@@ -497,13 +497,13 @@ export function useScopeBuilder() {
 }
 
 /**
- * Hook for workflow editor
+ * Hook for mission editor
  */
-export function useWorkflowEditor() {
+export function useMissionEditor() {
   return useMissionCreationStore(
     useShallow((state) => ({
-      workflow: state.workflow,
-      updateWorkflow: state.updateWorkflow,
+      mission: state.mission,
+      updateMission: state.updateMission,
     }))
   );
 }

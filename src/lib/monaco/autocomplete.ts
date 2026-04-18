@@ -67,10 +67,10 @@ const DEFAULT_TOOLS: ToolInfo[] = [
 
 // YAML schema keys for different contexts
 const YAML_KEYS = {
-  root: ['name', 'description', 'tags', 'scope', 'workflow', 'guardrails', 'reporting', 'priority', 'maxDuration', 'maxCost'],
+  root: ['name', 'description', 'tags', 'scope', 'mission', 'guardrails', 'reporting', 'priority', 'maxDuration', 'maxCost'],
   scope: ['seeds', 'include', 'exclude', 'depth', 'maxTargets', 'followRedirects', 'expansionMode'],
-  workflow: ['type', 'steps', 'agents', 'errorHandling'],
-  workflowStep: ['id', 'type', 'agent', 'tool', 'task', 'parameters', 'dependsOn', 'onSuccess', 'onFailure', 'timeout'],
+  mission: ['type', 'steps', 'agents', 'errorHandling'],
+  missionStep: ['id', 'type', 'agent', 'tool', 'task', 'parameters', 'dependsOn', 'onSuccess', 'onFailure', 'timeout'],
   guardrails: ['maxTokens', 'maxTokensPerCall', 'maxTotalTokens', 'rateLimit', 'rateLimits', 'allowedAgents', 'blockedAgents', 'requireConfirmation', 'sandboxMode', 'enableCelGuardrails'],
   reporting: ['formats', 'severityThreshold'],
 };
@@ -184,8 +184,8 @@ export function createMissionCompletionProvider(
           }
           break;
 
-        case 'workflow':
-          for (const key of YAML_KEYS.workflow) {
+        case 'mission':
+          for (const key of YAML_KEYS.mission) {
             suggestions.push({
               label: key,
               kind: monaco.languages.CompletionItemKind.Property,
@@ -195,8 +195,8 @@ export function createMissionCompletionProvider(
           }
           break;
 
-        case 'workflowStep':
-          for (const key of YAML_KEYS.workflowStep) {
+        case 'missionStep':
+          for (const key of YAML_KEYS.missionStep) {
             suggestions.push({
               label: key,
               kind: monaco.languages.CompletionItemKind.Property,
@@ -280,8 +280,8 @@ export function createMissionCompletionProvider(
 type CompletionContext =
   | 'root'
   | 'scope'
-  | 'workflow'
-  | 'workflowStep'
+  | 'mission'
+  | 'missionStep'
   | 'guardrails'
   | 'reporting'
   | 'agent'
@@ -319,11 +319,11 @@ function detectContext(textUntilPosition: string, currentLine: string): Completi
 
   for (const line of lines) {
     if (/^scope:/.test(line)) currentSection = 'scope';
-    else if (/^workflow:/.test(line)) currentSection = 'workflow';
+    else if (/^mission:/.test(line)) currentSection = 'mission';
     else if (/^guardrails:/.test(line)) currentSection = 'guardrails';
     else if (/^reporting:/.test(line)) currentSection = 'reporting';
-    else if (/^\s+-\s*(id|agent|tool|type):/.test(line) && currentSection === 'workflow') {
-      currentSection = 'workflowStep';
+    else if (/^\s+-\s*(id|agent|tool|type):/.test(line) && currentSection === 'mission') {
+      currentSection = 'missionStep';
     }
   }
 
@@ -349,8 +349,8 @@ function getKeySnippet(key: string): string {
       return 'tags:\n  - ${1:tag1}';
     case 'scope':
       return 'scope:\n  seeds:\n    - ${1:https://example.com}';
-    case 'workflow':
-      return 'workflow:\n  - agent: ${1:recon-agent}\n    task: ${2:Perform reconnaissance}';
+    case 'mission':
+      return 'mission:\n  - agent: ${1:recon-agent}\n    task: ${2:Perform reconnaissance}';
     case 'guardrails':
       return 'guardrails:\n  maxTokens: ${1:100000}';
     case 'reporting':

@@ -23,7 +23,7 @@ const NEO4J_PASSWORD = serverConfig.neo4jPassword;
 const NODE_COLORS: Record<string, string> = {
   Mission: '#f59e0b',        // amber-500 - missions are the center
   MissionStep: '#d97706',    // amber-600 - darker amber for steps
-  WorkflowNode: '#fbbf24',   // amber-400 - workflow nodes
+  MissionNode: '#fbbf24',    // amber-400 - mission nodes
   AgentExecution: '#fb923c', // orange-400 - executions
   mission_run: '#fcd34d',    // amber-300 - bright amber for runs
   Host: '#3b82f6',           // blue-500
@@ -40,7 +40,7 @@ const NODE_COLORS: Record<string, string> = {
 const NODE_ICONS: Record<string, string> = {
   Mission: 'rocket',
   MissionStep: 'git-commit',
-  WorkflowNode: 'workflow',
+  MissionNode: 'git-branch',
   AgentExecution: 'cpu',
   mission_run: 'play-circle',
   Host: 'server',

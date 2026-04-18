@@ -69,53 +69,22 @@ export async function GET(
 
     const serialized = serializeMission(mission);
 
-    if (!serialized.workflowYaml) {
-      return NextResponse.json(
-        { success: false, error: 'Mission does not have workflow YAML' },
-        { status: 404 }
-      );
-    }
-
-    // Strip execution state from YAML
-    const cleanedYaml = stripExecutionState(serialized.workflowYaml);
-
-    return NextResponse.json({
-      success: true,
-      yaml: cleanedYaml,
-      name: serialized.name,
-    });
+    // Cloning a mission by fetching its YAML from the daemon is no longer
+    // supported: under spec mission-api-only-cleanup YAML is an authoring-side
+    // convenience only, and the daemon stores a structured MissionDefinition.
+    // Future work: fetch the definition via GetMissionDefinition and render
+    // it back to YAML in the editor for cloning.
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          'Mission cloning is temporarily unavailable. The daemon now stores structured mission definitions; YAML reconstruction from a registered definition is planned in a follow-up.',
+        name: serialized.name,
+      },
+      { status: 501 }
+    );
   } catch (error) {
     return safeErrorResponse(error, 'Failed to process mission request', 500);
   }
 }
 
-// ============================================================================
-// YAML Cleaning
-// ============================================================================
-
-/**
- * Strip execution-related fields from mission YAML
- */
-function stripExecutionState(yaml: string): string {
-  // Remove execution-related fields
-  const fieldsToRemove = [
-    /^status:.*$/gm,
-    /^startedAt:.*$/gm,
-    /^completedAt:.*$/gm,
-    /^executionId:.*$/gm,
-    /^findings:[\s\S]*?(?=\n[a-z]|$)/gm,
-    /^results:[\s\S]*?(?=\n[a-z]|$)/gm,
-    /^metrics:[\s\S]*?(?=\n[a-z]|$)/gm,
-    /^logs:[\s\S]*?(?=\n[a-z]|$)/gm,
-  ];
-
-  let cleanedYaml = yaml;
-  for (const pattern of fieldsToRemove) {
-    cleanedYaml = cleanedYaml.replace(pattern, '');
-  }
-
-  // Remove empty lines created by removal
-  cleanedYaml = cleanedYaml.replace(/\n{3,}/g, '\n\n');
-
-  return cleanedYaml.trim();
-}

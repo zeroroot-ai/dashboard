@@ -3,13 +3,28 @@
  *
  * POST /api/missions/create
  *
- * Creates a new mission from YAML configuration.
- * Validates, forwards to Gibson daemon, and returns mission ID.
+ * Creates a new mission from an authored YAML document.
+ *
+ * The YAML is a *client-side authoring format only* — it is parsed in this
+ * route into a structured `MissionDefinition` proto, registered with the
+ * daemon via `CreateMissionDefinition`, and then the returned definition ID
+ * is used in a second call to `CreateMission`. No YAML ever reaches the
+ * daemon.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { validateMissionYAML } from '@/src/lib/mission/validation';
+import { yamlToState } from '@/src/lib/mission/parser';
+import { serializeToMissionDefinition } from '@/src/lib/mission/mission-serializer';
+import {
+  DEFAULT_METADATA,
+  DEFAULT_SCOPE,
+  DEFAULT_MISSION,
+  type MissionMetadata,
+  type ScopeConfig,
+  type MissionConfig,
+} from '@/src/types/mission-creation';
 import { safeErrorResponse } from '@/src/lib/api-errors';
 import { checkRateLimit, createRateLimitResponse } from '@/src/lib/rate-limiter';
 import type { CreateMissionRequest, CreateMissionResponse } from '@/src/types/mission-creation';
@@ -126,22 +141,37 @@ interface CreateMissionParams {
 async function createMissionInGibson(
   params: CreateMissionParams
 ): Promise<GibsonCreateMissionResponse> {
-  // Parse YAML to extract mission metadata
-  let missionName = params.name;
-  let description = '';
-  let target = '';
-  try {
-    const { parse } = await import('yaml');
-    const parsed = parse(params.yaml);
-    missionName = parsed?.name || params.name;
-    description = typeof parsed?.description === 'string'
-      ? parsed.description.trim().split('\n')[0]
-      : '';
-    target = parsed?.target?.seeds?.[0]?.replace(/^[^:]+:/, '') || '';
-  } catch {}
+  // Parse YAML client-side into the authored state, then serialize to a
+  // MissionDefinition proto. No YAML crosses the wire to the daemon.
+  const parsed = yamlToState(params.yaml);
+  if (!parsed.success || !parsed.data) {
+    return {
+      success: false,
+      error: parsed.error?.message || 'Failed to parse mission YAML',
+    };
+  }
 
-  // Submit to Gibson daemon via gRPC RunMission with inline YAML
-  let missionId = '';
+  const metadata: MissionMetadata = {
+    ...DEFAULT_METADATA,
+    ...(parsed.data.metadata ?? {}),
+    name: parsed.data.metadata?.name || params.name,
+  };
+  const scope: ScopeConfig = {
+    ...DEFAULT_SCOPE,
+    ...(parsed.data.scope ?? {}),
+  };
+  const mission: MissionConfig = {
+    ...DEFAULT_MISSION,
+    ...(parsed.data.mission ?? {}),
+  };
+
+  const definition = serializeToMissionDefinition({ metadata, scope, mission });
+
+  // Derive a target reference from the first scope seed for the
+  // CreateMission call. The daemon treats target_id as a reference — in
+  // this transitional phase the dashboard sends the seed value and the
+  // daemon resolves it against its target registry.
+  const targetId = scope.seeds[0]?.value ?? '';
 
   try {
     const { createClient } = await import('@connectrpc/connect');
@@ -154,68 +184,73 @@ async function createMissionInGibson(
     });
     const client = createClient(DaemonService, transport);
 
-    // RunMission is server-streaming — read the first event to get the mission ID
-    let gotFirstEvent = false;
-    for await (const event of client.runMission({
-      workflowYaml: params.yaml,
-      memoryContinuity: 'isolated',
-    })) {
-      // First event should contain the mission ID
-      if (!gotFirstEvent) {
-        gotFirstEvent = true;
-        missionId = event.missionId || '';
-        // Don't block waiting for all events — the mission is running
-        break;
-      }
+    // Step 1: Register the mission definition.
+    const defResp = await client.createMissionDefinition({ definition });
+    const missionDefinitionId = defResp.missionDefinitionId;
+    if (!missionDefinitionId) {
+      return {
+        success: false,
+        error: 'Daemon did not return a mission definition ID',
+      };
     }
 
-    if (!missionId) {
-      return { success: false, error: 'Daemon returned no mission ID' };
+    // Step 2: Create the mission referencing the registered definition.
+    const createResp = await client.createMission({
+      name: metadata.name,
+      description: metadata.description,
+      targetId,
+      missionDefinitionId,
+      variables: {},
+      memoryContinuity: 'isolated',
+    });
+
+    if (!createResp.success || !createResp.mission?.id) {
+      return {
+        success: false,
+        error: createResp.message || 'Daemon rejected CreateMission',
+      };
     }
+
+    const missionId = createResp.mission.id;
+
+    // Persist a Neo4j mirror record only after a successful daemon launch.
+    try {
+      const { getNeo4jDriver } = await import('@/src/lib/neo4j-client');
+      const driver = getNeo4jDriver();
+      const session = driver.session({ database: 'neo4j' });
+      try {
+        await session.run(
+          `MERGE (m:Mission {id: $id})
+           SET m.name = $name,
+               m.description = $description,
+               m.target = $target,
+               m.status = $status,
+               m.startTime = datetime(),
+               m.createdBy = $userId,
+               m.tenant_id = $tenantId
+           RETURN m.id`,
+          {
+            id: missionId,
+            name: metadata.name,
+            description: metadata.description,
+            target: targetId,
+            status: params.startImmediately ? 'running' : 'pending',
+            userId: params.userId,
+            tenantId: params.tenantId,
+          }
+        );
+      } finally {
+        await session.close();
+      }
+    } catch (err) {
+      console.error('[Missions] Failed to save to Neo4j:', err);
+    }
+
+    return { success: true, missionId };
   } catch (err: any) {
-    console.error('[Missions] gRPC RunMission failed:', err?.message || err);
-    // Return honest error — do not generate a fake missionId or write a
-    // failed record to Neo4j.  The caller translates this into a 502.
+    console.error('[Missions] gRPC mission-create failed:', err?.message || err);
     return { success: false, error: err?.message || 'Daemon unavailable' };
   }
-
-  // Persist to Neo4j only after a successful daemon launch
-  try {
-    const { getNeo4jDriver } = await import('@/src/lib/neo4j-client');
-    const driver = getNeo4jDriver();
-    const session = driver.session({ database: 'neo4j' });
-    try {
-      await session.run(
-        `MERGE (m:Mission {id: $id})
-         SET m.name = $name,
-             m.description = $description,
-             m.target = $target,
-             m.status = $status,
-             m.startTime = datetime(),
-             m.createdBy = $userId,
-             m.tenant_id = $tenantId
-         RETURN m.id`,
-        {
-          id: missionId,
-          name: missionName,
-          description,
-          target,
-          status: params.startImmediately ? 'running' : 'pending',
-          userId: params.userId,
-          tenantId: params.tenantId,
-        }
-      );
-    } finally {
-      await session.close();
-    }
-  } catch (err) {
-    console.error('[Missions] Failed to save to Neo4j:', err);
-  }
-
-  return {
-    success: true,
-    missionId,
-  };
 }
 
 // ============================================================================

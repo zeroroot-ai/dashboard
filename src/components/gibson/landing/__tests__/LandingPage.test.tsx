@@ -1,9 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { FeaturesSection } from '@/components/gibson/landing/FeaturesSection';
-import { TrustSignals } from '@/components/gibson/landing/TrustSignals';
-import { ClosingCTA } from '@/components/gibson/landing/ClosingCTA';
 import { HeroSection } from '@/components/gibson/landing/HeroSection';
+import { WhatYouGet } from '@/components/gibson/landing/WhatYouGet';
+import { WhatYouRunItOn } from '@/components/gibson/landing/WhatYouRunItOn';
 
 // matchMedia mock required by HeroSection → Typewriter
 beforeEach(() => {
@@ -22,69 +21,51 @@ beforeEach(() => {
   });
 });
 
-describe('FeaturesSection', () => {
-  it('renders all 6 feature titles', () => {
-    render(<FeaturesSection />);
-
-    expect(screen.getByText('Mission Orchestration')).toBeInTheDocument();
-    expect(screen.getByText('Knowledge Graph')).toBeInTheDocument();
-    expect(screen.getByText('Persistent Memory')).toBeInTheDocument();
-    expect(screen.getByText('Bring Your Own LLM')).toBeInTheDocument();
-    expect(screen.getByText('Security Tools Built In')).toBeInTheDocument();
-    expect(screen.getByText('Full Observability')).toBeInTheDocument();
-  });
-
-  it('renders section heading', () => {
-    render(<FeaturesSection />);
-
-    // &apos; in JSX renders as a plain apostrophe in the DOM
-    expect(
-      screen.getByText("What You Don't Have to Build")
-    ).toBeInTheDocument();
-  });
-});
-
-describe('TrustSignals', () => {
-  it('renders all trust badges', () => {
-    render(<TrustSignals />);
-
-    expect(screen.getByText('Designed for Kubernetes')).toBeInTheDocument();
-    expect(screen.getByText('SOC2 Ready')).toBeInTheDocument();
-    expect(screen.getByText('Open Source Core')).toBeInTheDocument();
-  });
-});
-
-describe('ClosingCTA', () => {
-  it('renders headline and buttons', () => {
-    render(<ClosingCTA />);
-
-    // Partial match on the heading text
-    expect(
-      screen.getByText(/Stop Building Agent Infrastructure/i)
-    ).toBeInTheDocument();
-
-    // "Get Started Free" is a Next.js Link rendered as an anchor
-    expect(
-      screen.getByRole('link', { name: /Get Started Free/i })
-    ).toBeInTheDocument();
-
-    // "Book a Demo" is an external anchor
-    expect(
-      screen.getByRole('link', { name: /Book a Demo/i })
-    ).toBeInTheDocument();
-  });
-});
-
 describe('HeroSection', () => {
-  it('renders static content', () => {
+  it('renders the terminal commands', () => {
     render(<HeroSection />);
 
     expect(
-      screen.getByText('Production Agent Infrastructure. Already Built.')
+      screen.getByText(/git clone https:\/\/github\.com\/zero-day-ai\/gibson-adk/),
     ).toBeInTheDocument();
+    expect(screen.getByText('cd gibson-adk')).toBeInTheDocument();
+    expect(screen.getByText('gibson-cli init')).toBeInTheDocument();
+  });
+
+  it('renders primary and secondary CTAs', () => {
+    render(<HeroSection />);
 
     expect(
-      screen.getByRole('link', { name: /Get Started Free/i })
+      screen.getByRole('link', { name: /Start Free/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /Star the ADK/i }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe('WhatYouGet', () => {
+  it('renders all six terms', () => {
+    render(<WhatYouGet />);
+
+    for (const term of [
+      'ADK',
+      'gibson-cli',
+      'DAG missions',
+      'Knowledge graph',
+      'RBAC',
+      'Observability',
+    ]) {
+      expect(screen.getByText(term)).toBeInTheDocument();
+    }
+  });
+});
+
+describe('WhatYouRunItOn', () => {
+  it('calls out the SaaS endpoint and Setec sandbox', () => {
+    render(<WhatYouRunItOn />);
+
+    expect(screen.getByText('api.zero-day.ai')).toBeInTheDocument();
+    expect(screen.getByText(/Setec microVMs/)).toBeInTheDocument();
   });
 });

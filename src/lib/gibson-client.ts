@@ -576,10 +576,6 @@ export interface SerializedMission {
   findingCount: number;
   /** Completion fraction in [0.0, 1.0]. Multiply by 100 for a percentage. */
   progress: number;
-  /** Path to the workflow YAML file (may be `"<inline>"` for inline missions). */
-  workflowPath: string;
-  /** Original mission YAML content (populated for inline missions). */
-  workflowYaml: string;
   /** Human-readable mission description. */
   description: string;
 }
@@ -755,8 +751,6 @@ export function serializeMission(m: MissionInfo): SerializedMission {
     endTime: bigintUnixToNumber(m.endTime),
     findingCount: m.findingCount,
     progress: m.progress,
-    workflowPath: m.workflowPath,
-    workflowYaml: m.workflowYaml,
     description: m.description,
   };
 }
