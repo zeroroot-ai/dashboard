@@ -13,6 +13,12 @@
  * placed on the line IMMEDIATELY preceding the `export async function`.
  * Intended for rare cases; use a codeowner review to keep this honest.
  *
+ * A route-level opt-out for app/api/.../route.ts files with a non-browser
+ * trust boundary (e.g. Stripe-signature-verified webhooks) is supported via
+ *   // @crd-authz-exempt-route: <reason>
+ * anywhere in the top-of-file comment block. The reason MUST describe the
+ * alternative auth boundary (e.g. "stripe-signature-verified").
+ *
  * Runs as `prebuild` alongside check-no-public-auth.mjs.
  */
 
@@ -150,6 +156,8 @@ function walkRoutes(dir) {
   return out;
 }
 
+const ROUTE_EXEMPT_MARKER = /\/\/\s*@crd-authz-exempt-route\s*:/;
+
 for (const route of walkRoutes(API_DIR)) {
   let body;
   try {
@@ -160,11 +168,11 @@ for (const route of walkRoutes(API_DIR)) {
   const importsTenants = K8S_TENANTS_IMPORT.test(body);
   if (!importsTenants) continue;
   const writes = TENANTS_WRITE.filter((re) => re.test(body));
-  if (writes.length > 0) {
-    violations.push(
-      `${route} — public API route imports @/src/lib/k8s/tenants and calls a write helper (forbidden — use Server Actions)`,
-    );
-  }
+  if (writes.length === 0) continue;
+  if (ROUTE_EXEMPT_MARKER.test(body)) continue;
+  violations.push(
+    `${route} — public API route imports @/src/lib/k8s/tenants and calls a write helper (forbidden — use Server Actions)`,
+  );
 }
 
 if (violations.length > 0) {

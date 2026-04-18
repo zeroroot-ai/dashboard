@@ -49,18 +49,23 @@ function TenantPickerContent() {
 
   // No session → redirect to login.
   if (status === 'unauthenticated') {
-    router.replace('/dashboard/login/v2');
+    router.replace('/login');
     return null;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tenants: string[] = (session?.user as any)?.tenants ?? [];
 
-  // Single-tenant (or no-tenant) user — skip picker, go to dashboard.
+  // Single-tenant user: skip the picker entirely and go straight to the
+  // destination. The /api/tenant/select call from the post-signin flow will
+  // have already set the cookie; we just redirect without showing the UI.
   useEffect(() => {
-    if (status === 'authenticated' && tenants.length <= 1) {
+    if (status !== 'authenticated') return;
+    if (tenants.length <= 1) {
       const singleTenant = tenants[0];
       if (singleTenant) {
+        // Set the tenant cookie then navigate — keeps the same flow as
+        // multi-tenant selection so middleware sees the cookie immediately.
         selectTenant(singleTenant, from);
       } else {
         router.replace(from);

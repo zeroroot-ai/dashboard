@@ -12,8 +12,18 @@ import { createClient, type RedisClientType } from 'redis';
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
+// Server Actions hit redis-store on the critical path (signin lockout
+// counters, etc.). A hung Redis connection would block the whole UI with
+// "Please wait…" — cap the connect attempt at 2 seconds so the caller gets
+// a null back and can fall through to the in-memory path.
+const CONNECT_TIMEOUT_MS = 2000;
+// After a hard failure, refuse to re-attempt for this window. Keeps retry
+// storms from pinning the event loop when Redis is down for a while.
+const RECONNECT_COOLDOWN_MS = 10_000;
+
 let client: RedisClientType | null = null;
 let connecting = false;
+let lastFailureAt = 0;
 
 /**
  * Return a connected Redis client, or `null` if connection fails.
@@ -28,16 +38,43 @@ async function getRedis(): Promise<RedisClientType | null> {
   // Prevent multiple concurrent connection attempts during startup.
   if (connecting) return null;
 
+  // Cooldown: don't retry for RECONNECT_COOLDOWN_MS after a failure.
+  if (lastFailureAt && Date.now() - lastFailureAt < RECONNECT_COOLDOWN_MS) {
+    return null;
+  }
+
   connecting = true;
   try {
-    const c = createClient({ url: redisUrl });
+    const c = createClient({
+      url: redisUrl,
+      socket: {
+        // Fail fast on initial connect. Without this, the redis client
+        // retries internally with exponential backoff and the first caller
+        // can wait 30s+ before getting an error.
+        connectTimeout: CONNECT_TIMEOUT_MS,
+        // Disable infinite reconnection loop — one attempt, then error.
+        reconnectStrategy: false,
+      },
+    });
     c.on('error', (err: Error) =>
       console.error('[redis-store] Redis client error:', err.message),
     );
-    await c.connect();
+    // Race the connect() against a hard timeout so a black-holed socket
+    // cannot hang the event loop.
+    await Promise.race([
+      c.connect(),
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`connect timeout after ${CONNECT_TIMEOUT_MS}ms`)),
+          CONNECT_TIMEOUT_MS,
+        ),
+      ),
+    ]);
+    lastFailureAt = 0;
     client = c as RedisClientType;
     return client;
   } catch (err) {
+    lastFailureAt = Date.now();
     console.error(
       '[redis-store] Failed to connect to Redis:',
       err instanceof Error ? err.message : err,

@@ -24,7 +24,7 @@ export default async function RootPage() {
                 Dashboard
               </Link>
             ) : (
-              <Link href="/dashboard/login/v2" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
                 Sign In
               </Link>
             )}

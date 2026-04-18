@@ -22,15 +22,30 @@ export default async function AuthLayout({
   const session = await getServerSession();
 
   if (!session) {
-    redirect('/dashboard/login/v2');
+    redirect('/login');
+  }
+
+  // Email-verification gate: redirect unverified users to /verify-email before
+  // any protected page is rendered. Placed AFTER the session guard (no session
+  // → /login) and BEFORE the no-workspace guard so the verification prompt is
+  // always the first thing an unverified signed-in user sees.
+  //
+  // Better Auth's `requireEmailVerification: true` blocks sign-in for users
+  // who never verified, but the initial signup session is allowed through so
+  // the user can reach this page. This gate closes that window.
+  if (session.user.emailVerified === false) {
+    const emailParam = session.user.email
+      ? `?email=${encodeURIComponent(session.user.email)}`
+      : "";
+    redirect(`/verify-email${emailParam}`);
   }
 
   if (!session.user?.tenantId && (!session.user?.tenants || session.user.tenants.length === 0)) {
-    redirect('/signup?error=no-org');
+    redirect('/dashboard/no-workspace');
   }
 
   const tenantId = session?.user?.tenantId;
-  const tenant = tenantId ? await resolveTenant(tenantId, session?.accessToken) : null;
+  const tenant = tenantId ? await resolveTenant(tenantId, undefined) : null;
   const tenants = tenant ? [tenant] : [];
 
   return (

@@ -254,7 +254,7 @@ function ProvisioningStatus() {
               <p className="text-sm text-red-600 dark:text-red-500 pl-7">
                 Your account has been created. Please{" "}
                 <Link
-                  href="/dashboard/login/v2"
+                  href="/login"
                   className="underline underline-offset-4 hover:no-underline"
                 >
                   try signing in

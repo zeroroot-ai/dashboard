@@ -5,6 +5,7 @@
 import 'server-only';
 
 import { k8s } from './client';
+import { getCorrelationId } from '@/src/lib/correlation';
 import {
   Tenant,
   TenantMember,
@@ -17,12 +18,20 @@ import {
 } from './types';
 import type { K8sOwnerReference } from './owner-ref';
 
+/** Annotation key used by the tenant-operator to correlate API calls end-to-end. */
+const ANNOTATION_CORRELATION_ID = 'gibson.io/correlation-id';
+
 export async function applyTenant(name: string, spec: TenantSpec): Promise<Tenant> {
   return k8s().apply<Tenant>(
     {
       apiVersion: 'gibson.gibson.io/v1alpha1',
       kind: 'Tenant',
-      metadata: { name },
+      metadata: {
+        name,
+        annotations: {
+          [ANNOTATION_CORRELATION_ID]: getCorrelationId(),
+        },
+      },
       spec,
     } as Tenant,
     true,
