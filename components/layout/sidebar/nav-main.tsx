@@ -119,6 +119,21 @@ export const navItems: NavGroup[] = [
     ]
   },
   {
+    title: "Organization",
+    items: [
+      {
+        title: "Teams",
+        href: "/dashboard/pages/settings/organization/teams",
+        icon: UsersIcon,
+      },
+      {
+        title: "Security Policy",
+        href: "/dashboard/pages/settings/organization/security-policy",
+        icon: SettingsIcon,
+      },
+    ],
+  },
+  {
     title: "Configuration",
     items: [
       {
