@@ -68,6 +68,14 @@ const AUTH_API_ROUTE_ALLOWLIST = new Set([
   // Pre-existing non-Better-Auth utility routes.
   join("app", "api", "auth", "forgot-password", "route.ts"),
   join("app", "api", "auth", "providers", "route.ts"),
+  // Device Authorization Grant (RFC 8628) — consumed by gibson-mcp login.
+  // These are OAuth2 device-flow endpoints, not Better Auth; they issue a
+  // Better Auth session token to the CLI only after the user has signed
+  // in interactively and clicked Approve on /dashboard/device. Spec
+  // agent-authoring-and-tenant-entitlements task 44.
+  join("app", "api", "auth", "device", "authorize", "route.ts"),
+  join("app", "api", "auth", "device", "token", "route.ts"),
+  join("app", "api", "auth", "device", "approve", "route.ts"),
 ]);
 
 const FORBIDDEN_PATTERNS = [
