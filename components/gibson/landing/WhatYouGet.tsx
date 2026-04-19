@@ -17,7 +17,7 @@ const items = [
   },
   {
     term: "RBAC",
-    body: "OpenFGA authz on every RPC. Agents, users, tenants, and components each have scoped permissions — your PR-review bot can't touch production, your red-team agent can't touch ServiceNow. Every action audited.",
+    body: "Agents, users, teams, and components each have scoped permissions — your PR-review bot can't touch production, your red-team agent can't touch ServiceNow. Every action audited.",
   },
   {
     term: "Observability",
