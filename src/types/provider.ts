@@ -1,96 +1,16 @@
 /**
  * LLM Provider Type Definitions
  * Type definitions for BYOK (Bring Your Own Key) LLM provider configuration
+ *
+ * NOTE (spec 25-daemon-driven-provider-config): The hard-coded ProviderType
+ * union, PROVIDER_TYPES, PROVIDER_TYPE_CONFIG, PROVIDER_MODELS, and the
+ * per-provider typed config interfaces (AnthropicConfig, OpenAIConfig, etc.)
+ * have been removed. The daemon is now the sole source of truth for which
+ * provider types exist and what credential fields they require. Consumers
+ * that need the supported-provider list should use useSupportedProviders()
+ * or getSupportedProviders() from gibson-client.ts. The provider type
+ * identifier is now just `string`.
  */
-
-// ============================================================================
-// Provider Type Enums
-// ============================================================================
-
-/**
- * LLM provider vendor type.
- * Matches ProviderType enum from llm_provider.proto
- */
-export type ProviderType =
-  | 'anthropic'
-  | 'openai'
-  | 'google'
-  | 'ollama'
-  | 'azure_openai'
-  | 'aws_bedrock';
-
-/**
- * Provider type display configuration.
- */
-export const PROVIDER_TYPE_CONFIG: Record<ProviderType, {
-  label: string;
-  description: string;
-  icon: string;
-  color: string;
-  requiresApiKey: boolean;
-  supportsBaseUrl: boolean;
-}> = {
-  anthropic: {
-    label: 'Anthropic',
-    description: 'Claude AI models',
-    icon: 'Brain',
-    color: '#D97706',
-    requiresApiKey: true,
-    supportsBaseUrl: false,
-  },
-  openai: {
-    label: 'OpenAI',
-    description: 'GPT models and DALL-E',
-    icon: 'Sparkles',
-    color: '#10A37F',
-    requiresApiKey: true,
-    supportsBaseUrl: true,
-  },
-  google: {
-    label: 'Google AI',
-    description: 'Gemini models',
-    icon: 'Gem',
-    color: '#4285F4',
-    requiresApiKey: true,
-    supportsBaseUrl: false,
-  },
-  ollama: {
-    label: 'Ollama',
-    description: 'Self-hosted local models',
-    icon: 'Server',
-    color: '#7C3AED',
-    requiresApiKey: false,
-    supportsBaseUrl: true,
-  },
-  azure_openai: {
-    label: 'Azure OpenAI',
-    description: 'Microsoft Azure-hosted OpenAI',
-    icon: 'Cloud',
-    color: '#0078D4',
-    requiresApiKey: true,
-    supportsBaseUrl: false,
-  },
-  aws_bedrock: {
-    label: 'AWS Bedrock',
-    description: 'Amazon Bedrock foundation models',
-    icon: 'CloudCog',
-    color: '#FF9900',
-    requiresApiKey: false,
-    supportsBaseUrl: false,
-  },
-};
-
-/**
- * All provider types as array.
- */
-export const PROVIDER_TYPES: ProviderType[] = [
-  'anthropic',
-  'openai',
-  'google',
-  'ollama',
-  'azure_openai',
-  'aws_bedrock',
-];
 
 // ============================================================================
 // Health Status Types
@@ -144,56 +64,10 @@ export const HEALTH_STATUS_CONFIG: Record<ProviderHealthStatus, {
 // ============================================================================
 // Provider-Specific Configuration Types
 // ============================================================================
-
-/**
- * Azure OpenAI-specific configuration.
- */
-export interface AzureConfig {
-  /** Azure OpenAI resource name */
-  resourceName: string;
-  /** Azure deployment name */
-  deploymentName: string;
-  /** Azure API version (e.g., "2024-02-15-preview") */
-  apiVersion: string;
-}
-
-/**
- * AWS Bedrock-specific configuration.
- */
-export interface AWSConfig {
-  /** AWS region (e.g., "us-east-1") */
-  region: string;
-  /** AWS access key ID (only in requests, masked in responses) */
-  accessKeyId?: string;
-  /** AWS secret access key (only in requests, never returned) */
-  secretAccessKey?: string;
-  /** Optional IAM role ARN to assume */
-  roleArn?: string;
-  /** Masked access key ID (returned in responses) */
-  accessKeyIdMasked?: string;
-}
-
-/**
- * Ollama-specific configuration.
- */
-export interface OllamaConfig {
-  /** Custom model names available on this Ollama instance */
-  customModels?: string[];
-  /** Number of layers to offload to GPU (-1 = all) */
-  gpuLayers?: number;
-  /** Context window size */
-  numCtx?: number;
-}
-
-/**
- * OpenAI-specific configuration.
- */
-export interface OpenAIConfig {
-  /** OpenAI organization ID */
-  organizationId?: string;
-  /** OpenAI project ID */
-  projectId?: string;
-}
+// Note: AzureConfig, AWSConfig (BedrockConfig), OllamaConfig, OpenAIConfig
+// removed in spec 25-daemon-driven-provider-config. Use the descriptor
+// returned by useSupportedProviders() / getSupportedProviders() from
+// gibson-client.ts instead.
 
 /**
  * Rate limiting configuration for a provider.
@@ -237,15 +111,18 @@ export interface HealthStatus {
 
 /**
  * Complete LLM provider configuration.
- * Represents a configured provider instance.
+ * Represents a configured provider instance returned by the dashboard API.
+ *
+ * Note: `type` is now `string` (daemon-assigned identifier); no longer
+ * constrained to the old ProviderType union.
  */
 export interface ProviderConfig {
   /** Unique identifier for this provider */
   name: string;
   /** Human-readable name shown in the UI */
   displayName: string;
-  /** Provider vendor type */
-  type: ProviderType;
+  /** Provider vendor type string (e.g. "anthropic", "bedrock") */
+  type: string;
   /** Masked API key (e.g., "sk-****abc") - never the full key */
   apiKeyMasked?: string;
   /** API endpoint URL (optional, uses provider defaults if empty) */
@@ -258,14 +135,6 @@ export interface ProviderConfig {
   isEnabled: boolean;
   /** Current health status */
   health?: HealthStatus;
-  /** Azure-specific settings */
-  azureConfig?: AzureConfig;
-  /** AWS Bedrock-specific settings */
-  awsConfig?: AWSConfig;
-  /** Ollama-specific settings */
-  ollamaConfig?: OllamaConfig;
-  /** OpenAI-specific settings */
-  openaiConfig?: OpenAIConfig;
   /** Rate limiting configuration */
   rateLimit?: RateLimitConfig;
   /** Request timeout in seconds */
@@ -288,43 +157,8 @@ export interface ProviderConfig {
   updatedBy?: string;
 }
 
-/**
- * Input for creating or updating a provider configuration.
- */
-export interface ProviderConfigInput {
-  /** Unique identifier (required for create, ignored for update) */
-  name?: string;
-  /** Human-readable name shown in the UI */
-  displayName?: string;
-  /** Provider vendor type (required) */
-  type: ProviderType;
-  /** Full API key (required for create, optional for update) */
-  apiKey?: string;
-  /** API endpoint URL */
-  baseUrl?: string;
-  /** Default model to use when not specified */
-  defaultModel?: string;
-  /** Whether this provider should be active */
-  isEnabled?: boolean;
-  /** Azure-specific settings */
-  azureConfig?: AzureConfig;
-  /** AWS Bedrock-specific settings */
-  awsConfig?: AWSConfig;
-  /** Ollama-specific settings */
-  ollamaConfig?: OllamaConfig;
-  /** OpenAI-specific settings */
-  openaiConfig?: OpenAIConfig;
-  /** Rate limiting configuration */
-  rateLimit?: RateLimitConfig;
-  /** Request timeout in seconds */
-  timeoutSeconds?: number;
-  /** Number of retry attempts on failure */
-  maxRetries?: number;
-  /** Additional provider metadata */
-  metadata?: Record<string, string>;
-  /** Version for optimistic locking (required for updates) */
-  version?: number;
-}
+// ProviderConfigInput removed in spec 25-daemon-driven-provider-config.
+// Use DaemonProviderConfigInput from @/src/lib/gibson-client for writes.
 
 // ============================================================================
 // Connection Test Types
@@ -574,7 +408,7 @@ export interface ListProvidersResponse {
  */
 export interface CreateProviderRequest {
   /** Provider configuration to create */
-  config: ProviderConfigInput;
+  config: Record<string, unknown>;
   /** Test connectivity before creating */
   testConnection?: boolean;
   /** Make this the default provider */
@@ -598,7 +432,7 @@ export interface UpdateProviderRequest {
   /** Provider name to update */
   name: string;
   /** Fields to update */
-  config: ProviderConfigInput;
+  config: Record<string, unknown>;
   /** Test connectivity before updating */
   testConnection?: boolean;
 }
@@ -642,7 +476,7 @@ export interface TestConnectionRequest {
   /** Name of existing provider to test */
   name?: string;
   /** New configuration to test without saving */
-  config?: ProviderConfigInput;
+  config?: Record<string, unknown>;
   /** Custom timeout in seconds */
   timeoutSeconds?: number;
 }
@@ -759,222 +593,8 @@ export interface GetAuditLogResponse {
   total: number;
 }
 
-// ============================================================================
-// Model Constants
-// ============================================================================
+// PROVIDER_MODELS, ProviderFormData, ProviderFormErrors removed in
+// spec 25-daemon-driven-provider-config. Models are now sourced from
+// SupportedProviderDescriptor.defaultModels returned by the daemon's
+// GetSupportedProviders RPC via useSupportedProviders().
 
-/**
- * Common models for each provider type.
- */
-export const PROVIDER_MODELS: Record<ProviderType, ModelInfo[]> = {
-  anthropic: [
-    {
-      id: 'claude-3-5-sonnet-20241022',
-      name: 'Claude 3.5 Sonnet',
-      contextWindow: 200000,
-      maxOutputTokens: 8192,
-      supportsVision: true,
-      supportsTools: true,
-      description: 'Best balance of intelligence and speed',
-    },
-    {
-      id: 'claude-3-opus-20240229',
-      name: 'Claude 3 Opus',
-      contextWindow: 200000,
-      maxOutputTokens: 4096,
-      supportsVision: true,
-      supportsTools: true,
-      description: 'Most capable model for complex tasks',
-    },
-    {
-      id: 'claude-3-haiku-20240307',
-      name: 'Claude 3 Haiku',
-      contextWindow: 200000,
-      maxOutputTokens: 4096,
-      supportsVision: true,
-      supportsTools: true,
-      description: 'Fastest and most compact',
-    },
-  ],
-  openai: [
-    {
-      id: 'gpt-4o',
-      name: 'GPT-4o',
-      contextWindow: 128000,
-      maxOutputTokens: 4096,
-      supportsVision: true,
-      supportsTools: true,
-      description: 'Most capable multimodal model',
-    },
-    {
-      id: 'gpt-4-turbo',
-      name: 'GPT-4 Turbo',
-      contextWindow: 128000,
-      maxOutputTokens: 4096,
-      supportsVision: true,
-      supportsTools: true,
-      description: 'Previous generation flagship',
-    },
-    {
-      id: 'gpt-3.5-turbo',
-      name: 'GPT-3.5 Turbo',
-      contextWindow: 16385,
-      maxOutputTokens: 4096,
-      supportsVision: false,
-      supportsTools: true,
-      description: 'Fast and cost-effective',
-    },
-  ],
-  google: [
-    {
-      id: 'gemini-1.5-pro',
-      name: 'Gemini 1.5 Pro',
-      contextWindow: 1000000,
-      maxOutputTokens: 8192,
-      supportsVision: true,
-      supportsTools: true,
-      description: 'Million-token context window',
-    },
-    {
-      id: 'gemini-1.5-flash',
-      name: 'Gemini 1.5 Flash',
-      contextWindow: 1000000,
-      maxOutputTokens: 8192,
-      supportsVision: true,
-      supportsTools: true,
-      description: 'Fast multimodal model',
-    },
-  ],
-  ollama: [
-    {
-      id: 'llama3.1:70b',
-      name: 'Llama 3.1 70B',
-      contextWindow: 128000,
-      maxOutputTokens: 4096,
-      supportsVision: false,
-      supportsTools: true,
-      description: 'Large open-source model',
-    },
-    {
-      id: 'llama3.1:8b',
-      name: 'Llama 3.1 8B',
-      contextWindow: 128000,
-      maxOutputTokens: 4096,
-      supportsVision: false,
-      supportsTools: true,
-      description: 'Efficient open-source model',
-    },
-    {
-      id: 'codellama:34b',
-      name: 'Code Llama 34B',
-      contextWindow: 16384,
-      maxOutputTokens: 4096,
-      supportsVision: false,
-      supportsTools: false,
-      description: 'Code-optimized model',
-    },
-  ],
-  azure_openai: [
-    {
-      id: 'gpt-4o',
-      name: 'GPT-4o (Azure)',
-      contextWindow: 128000,
-      maxOutputTokens: 4096,
-      supportsVision: true,
-      supportsTools: true,
-      description: 'Azure-hosted GPT-4o',
-    },
-    {
-      id: 'gpt-4-turbo',
-      name: 'GPT-4 Turbo (Azure)',
-      contextWindow: 128000,
-      maxOutputTokens: 4096,
-      supportsVision: true,
-      supportsTools: true,
-      description: 'Azure-hosted GPT-4 Turbo',
-    },
-  ],
-  aws_bedrock: [
-    {
-      id: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
-      name: 'Claude 3.5 Sonnet (Bedrock)',
-      contextWindow: 200000,
-      maxOutputTokens: 8192,
-      supportsVision: true,
-      supportsTools: true,
-      description: 'Anthropic Claude on Bedrock',
-    },
-    {
-      id: 'amazon.titan-text-express-v1',
-      name: 'Amazon Titan Text',
-      contextWindow: 8192,
-      maxOutputTokens: 8192,
-      supportsVision: false,
-      supportsTools: false,
-      description: 'Amazon foundation model',
-    },
-  ],
-};
-
-// ============================================================================
-// Form Types
-// ============================================================================
-
-/**
- * Form data for creating or editing a provider.
- */
-export interface ProviderFormData {
-  /** Provider name (slug) */
-  name: string;
-  /** Display name */
-  displayName: string;
-  /** Provider type */
-  type: ProviderType;
-  /** API key */
-  apiKey?: string;
-  /** Base URL override */
-  baseUrl?: string;
-  /** Default model */
-  defaultModel?: string;
-  /** Whether enabled */
-  isEnabled: boolean;
-  /** Azure config */
-  azureConfig?: AzureConfig;
-  /** AWS config */
-  awsConfig?: Omit<AWSConfig, 'accessKeyIdMasked'>;
-  /** Ollama config */
-  ollamaConfig?: OllamaConfig;
-  /** OpenAI config */
-  openaiConfig?: OpenAIConfig;
-  /** Rate limiting */
-  rateLimit?: RateLimitConfig;
-  /** Timeout in seconds */
-  timeoutSeconds?: number;
-  /** Max retries */
-  maxRetries?: number;
-}
-
-/**
- * Validation errors for provider form.
- */
-export interface ProviderFormErrors {
-  name?: string;
-  displayName?: string;
-  type?: string;
-  apiKey?: string;
-  baseUrl?: string;
-  defaultModel?: string;
-  azureConfig?: {
-    resourceName?: string;
-    deploymentName?: string;
-    apiVersion?: string;
-  };
-  awsConfig?: {
-    region?: string;
-    accessKeyId?: string;
-    secretAccessKey?: string;
-  };
-  ollamaConfig?: {
-    baseUrl?: string;
-  };
-}

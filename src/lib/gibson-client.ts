@@ -842,14 +842,29 @@ export function serializeStatus(s: StatusResponse): SerializedStatus {
 }
 
 // ============================================================================
-// Provider Management — stored as JSON array in tenant config under 'providers'
+// Provider Management — thin wrappers over the daemon gRPC client
+//
+// spec 25-daemon-driven-provider-config (task 15): the legacy K8s Secret
+// storage layer (provider-storage.ts) has been deleted. Every provider
+// operation now routes through the DaemonAdminService RPCs. The exported
+// function signatures are preserved so existing callers keep working without
+// changes; the internal helpers (getProviderConfigs, saveProviderConfigs,
+// configToRecord, per-type testXxxProvider) have been removed along with
+// the K8s-backed implementations.
+//
+// The daemon* prefixed functions added in task 9 remain as the canonical
+// implementations — they are called directly by the task-11 route handlers,
+// the task-10 GibsonLLMAdapter, and the thin wrappers below.
 // ============================================================================
 
+/**
+ * Legacy-compatible read shape for a provider record.
+ * @deprecated Prefer {@link DaemonProviderRecord} for new code.
+ */
 export interface ProviderRecord {
   name: string;
   displayName: string;
   type: string;
-  apiKey?: string;
   apiKeyMasked?: string;
   baseUrl?: string;
   defaultModel?: string;
@@ -859,468 +874,47 @@ export interface ProviderRecord {
   createdAt: string;
   updatedAt: string;
   health?: { status: string; latencyMs?: number; lastCheckAt?: string; lastSuccessAt?: string };
-  timeoutSeconds?: number;
-  maxRetries?: number;
-  fallbackPosition?: number;
-  metadata?: Record<string, string>;
+  credentialsMasked?: Record<string, string>;
 }
 
+/**
+ * Result shape returned by {@link listProviders}.
+ * `defaultProvider` is the name of the tenant's current default, or null.
+ */
 export interface ListProvidersResult {
   providers: ProviderRecord[];
   defaultProvider: string | null;
   fallbackChain: string[];
 }
 
-/** Result shape returned by {@link testProvider} and embedded in {@link getProviderHealth}. */
-export interface ProviderTestResult {
-  success: boolean;
-  latencyMs: number;
-  error?: string;
-  testedAt: string;
-}
-
-/**
- * Internal shape of a provider entry as serialised into the tenant config map.
- * The `apiKey` is stored server-side only and is never sent to the browser —
- * only a masked representation appears in {@link ProviderRecord}.
- */
-interface ProviderConfig {
-  name: string;
-  type: 'anthropic' | 'openai' | 'google' | 'ollama';
-  apiKey: string;
-  model: string;
-  baseUrl?: string;
-  isDefault?: boolean;
-  enabled: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-/**
- * Read the provider list from the tenant's Kubernetes Secret.
- *
- * Storage moved from the (now deleted) Tenant RPC config field to a
- * per-tenant Secret `llm-providers` in namespace `tenant-{id}`. The
- * `userId` parameter is retained for signature compatibility with
- * existing callers but is unused.
- */
-async function getProviderConfigs(tenantId: string, _userId?: string): Promise<ProviderConfig[]> {
-  const { readProviders } = await import('@/src/lib/k8s/provider-storage');
-  return readProviders(tenantId);
-}
-
-/** Persist the provider list back to the tenant's Secret. */
-async function saveProviderConfigs(tenantId: string, providers: ProviderConfig[], _userId?: string): Promise<void> {
-  const { writeProviders } = await import('@/src/lib/k8s/provider-storage');
-  await writeProviders(tenantId, providers);
-}
-
-/** Convert the internal config shape to the public-facing ProviderRecord. */
-function configToRecord(cfg: ProviderConfig): ProviderRecord {
-  const masked =
-    cfg.apiKey.length > 8
-      ? `${cfg.apiKey.slice(0, 4)}${'*'.repeat(cfg.apiKey.length - 8)}${cfg.apiKey.slice(-4)}`
-      : cfg.apiKey.length > 0
-        ? '****'
-        : '';
-  return {
-    name: cfg.name,
-    displayName: cfg.name,
-    type: cfg.type,
-    // Never expose the raw key in the public record.
-    apiKeyMasked: masked,
-    baseUrl: cfg.baseUrl,
-    defaultModel: cfg.model,
-    isDefault: cfg.isDefault ?? false,
-    isEnabled: cfg.enabled,
-    version: 1,
-    createdAt: cfg.createdAt ?? new Date().toISOString(),
-    updatedAt: cfg.updatedAt ?? new Date().toISOString(),
-  };
-}
-
 /**
  * List all LLM provider configurations for a tenant.
  *
- * Providers are stored as a JSON array in the tenant config under the
- * `providers` key. The returned {@link ProviderRecord} objects never expose
- * raw API key material — only a masked representation is included.
+ * Thin wrapper over {@link daemonListProviders} + {@link daemonGetFallbackChain}.
+ * Credentials are never returned — only masked values are included.
  */
 export async function listProviders(tenantId: string, userId?: string): Promise<ListProvidersResult> {
-  const configs = await getProviderConfigs(tenantId, userId);
-  const records = configs.map(configToRecord);
-  const defaultProvider = configs.find((c) => c.isDefault)?.name ?? null;
-  const fallbackChain = configs
-    .filter((c) => c.enabled && !c.isDefault)
-    .map((c) => c.name);
-  return { providers: records, defaultProvider, fallbackChain };
-}
+  const [records, fallbackChain] = await Promise.all([
+    daemonListProviders(userId, tenantId),
+    daemonGetFallbackChain(userId, tenantId).catch(() => [] as string[]),
+  ]);
 
-/**
- * Create a new provider configuration for a tenant.
- *
- * The `input` object must supply at minimum: `name`, `type`, `apiKey`, and
- * `model`. If `isDefault` is true all other providers are demoted atomically
- * in the same write.
- */
-export async function createProvider(
-  tenantId: string,
-  input: Record<string, unknown>,
-  userId?: string
-): Promise<ProviderRecord> {
-  const configs = await getProviderConfigs(tenantId, userId);
-  const now = new Date().toISOString();
+  const providers: ProviderRecord[] = records.map((r) => ({
+    name: r.name,
+    displayName: r.name,
+    type: r.type,
+    defaultModel: r.defaultModel,
+    isDefault: r.isDefault,
+    isEnabled: r.enabled,
+    version: 1,
+    createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
+    credentialsMasked: r.credentialsMasked,
+  }));
 
-  if (configs.some((c) => c.name === (input['name'] as string))) {
-    throw new Error(`Provider '${input['name']}' already exists`);
-  }
+  const defaultProvider = records.find((r) => r.isDefault)?.name ?? null;
 
-  const newConfig: ProviderConfig = {
-    name: input['name'] as string,
-    type: input['type'] as ProviderConfig['type'],
-    apiKey: (input['apiKey'] as string | undefined) ?? '',
-    model: (input['model'] as string | undefined) ?? '',
-    baseUrl: input['baseUrl'] as string | undefined,
-    isDefault: (input['isDefault'] as boolean | undefined) ?? false,
-    enabled: (input['enabled'] as boolean | undefined) ?? true,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  let updated = [...configs];
-  if (newConfig.isDefault) {
-    updated = updated.map((c) => ({ ...c, isDefault: false }));
-  }
-  updated.push(newConfig);
-
-  await saveProviderConfigs(tenantId, updated, userId);
-  return configToRecord(newConfig);
-}
-
-/**
- * Retrieve a single provider by name.
- *
- * Throws if no provider with the given name exists for the tenant.
- */
-export async function getProvider(tenantId: string, name: string, userId?: string): Promise<ProviderRecord> {
-  const configs = await getProviderConfigs(tenantId, userId);
-  const cfg = configs.find((c) => c.name === name);
-  if (!cfg) throw new Error(`Provider '${name}' not found`);
-  return configToRecord(cfg);
-}
-
-/**
- * Apply partial updates to an existing provider.
- *
- * When `apiKey` is omitted or empty the stored key is preserved unchanged.
- * Setting `isDefault: true` demotes all other providers atomically in the
- * same write.
- */
-export async function updateProvider(
-  tenantId: string,
-  name: string,
-  input: Record<string, unknown>,
-  userId?: string
-): Promise<ProviderRecord> {
-  const configs = await getProviderConfigs(tenantId, userId);
-  const idx = configs.findIndex((c) => c.name === name);
-  if (idx === -1) throw new Error(`Provider '${name}' not found`);
-
-  const now = new Date().toISOString();
-  const existing = configs[idx];
-  const makingDefault = (input['isDefault'] as boolean | undefined) ?? existing.isDefault;
-
-  let updated = configs.map((c, i) => {
-    if (makingDefault && i !== idx) return { ...c, isDefault: false };
-    return c;
-  });
-
-  updated[idx] = {
-    ...existing,
-    type: (input['type'] as ProviderConfig['type'] | undefined) ?? existing.type,
-    // Only overwrite the stored key when a non-empty replacement is supplied.
-    apiKey:
-      typeof input['apiKey'] === 'string' && input['apiKey'].length > 0
-        ? input['apiKey']
-        : existing.apiKey,
-    model: (input['model'] as string | undefined) ?? existing.model,
-    baseUrl:
-      input['baseUrl'] !== undefined
-        ? (input['baseUrl'] as string | undefined)
-        : existing.baseUrl,
-    isDefault: makingDefault,
-    enabled: (input['enabled'] as boolean | undefined) ?? existing.enabled,
-    updatedAt: now,
-  };
-
-  await saveProviderConfigs(tenantId, updated, userId);
-  return configToRecord(updated[idx]);
-}
-
-/**
- * Permanently remove a provider configuration.
- *
- * Throws if the named provider does not exist. If the deleted provider was the
- * default, no other provider is automatically promoted — callers should call
- * {@link setDefaultProvider} explicitly if needed.
- */
-export async function deleteProvider(tenantId: string, name: string, userId?: string): Promise<void> {
-  const configs = await getProviderConfigs(tenantId, userId);
-  const filtered = configs.filter((c) => c.name !== name);
-  if (filtered.length === configs.length) {
-    throw new Error(`Provider '${name}' not found`);
-  }
-  await saveProviderConfigs(tenantId, filtered, userId);
-}
-
-/**
- * Return the name of the tenant's current default provider, or null if none
- * has been designated.
- */
-export async function getDefaultProvider(tenantId: string, userId?: string): Promise<{ name: string } | null> {
-  const configs = await getProviderConfigs(tenantId, userId);
-  const def = configs.find((c) => c.isDefault);
-  return def ? { name: def.name } : null;
-}
-
-/**
- * Designate a provider as the tenant's default.
- *
- * All other providers are demoted atomically in the same write.
- * Throws if the named provider does not exist.
- */
-export async function setDefaultProvider(tenantId: string, name: string, userId?: string): Promise<void> {
-  const configs = await getProviderConfigs(tenantId, userId);
-  const target = configs.find((c) => c.name === name);
-  if (!target) throw new Error(`Provider '${name}' not found`);
-  const updated = configs.map((c) => ({ ...c, isDefault: c.name === name }));
-  await saveProviderConfigs(tenantId, updated, userId);
-}
-
-// ---------------------------------------------------------------------------
-// Provider connectivity test helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Issue a lightweight liveness probe to an Anthropic endpoint using the
- * Messages API with a minimal single-token prompt.
- *
- * HTTP 400 is treated as success — it means the API correctly parsed the
- * request (key is valid) even if the exact model name is unrecognised.
- */
-async function testAnthropicProvider(apiKey: string): Promise<ProviderTestResult> {
-  const start = Date.now();
-  const testedAt = new Date().toISOString();
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 1,
-        messages: [{ role: 'user', content: 'hi' }],
-      }),
-    });
-    const latencyMs = Date.now() - start;
-    if (res.ok || res.status === 400) {
-      return { success: true, latencyMs, testedAt };
-    }
-    const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-    return {
-      success: false,
-      latencyMs,
-      error: body['error'] ? JSON.stringify(body['error']) : `HTTP ${res.status}`,
-      testedAt,
-    };
-  } catch (err: unknown) {
-    return {
-      success: false,
-      latencyMs: Date.now() - start,
-      error: err instanceof Error ? err.message : String(err),
-      testedAt,
-    };
-  }
-}
-
-/**
- * Issue a lightweight liveness probe to the OpenAI API by listing models.
- */
-async function testOpenAIProvider(apiKey: string): Promise<ProviderTestResult> {
-  const start = Date.now();
-  const testedAt = new Date().toISOString();
-  try {
-    const res = await fetch('https://api.openai.com/v1/models', {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
-    const latencyMs = Date.now() - start;
-    if (res.ok) {
-      return { success: true, latencyMs, testedAt };
-    }
-    const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-    return {
-      success: false,
-      latencyMs,
-      error: body['error'] ? JSON.stringify(body['error']) : `HTTP ${res.status}`,
-      testedAt,
-    };
-  } catch (err: unknown) {
-    return {
-      success: false,
-      latencyMs: Date.now() - start,
-      error: err instanceof Error ? err.message : String(err),
-      testedAt,
-    };
-  }
-}
-
-/**
- * Issue a lightweight liveness probe to the Google Generative Language API
- * by listing available models with the provided API key.
- */
-async function testGoogleProvider(apiKey: string): Promise<ProviderTestResult> {
-  const start = Date.now();
-  const testedAt = new Date().toISOString();
-  const url = `https://generativelanguage.googleapis.com/v1/models?key=${encodeURIComponent(apiKey)}`;
-  try {
-    const res = await fetch(url);
-    const latencyMs = Date.now() - start;
-    if (res.ok) {
-      return { success: true, latencyMs, testedAt };
-    }
-    const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-    return {
-      success: false,
-      latencyMs,
-      error: body['error'] ? JSON.stringify(body['error']) : `HTTP ${res.status}`,
-      testedAt,
-    };
-  } catch (err: unknown) {
-    return {
-      success: false,
-      latencyMs: Date.now() - start,
-      error: err instanceof Error ? err.message : String(err),
-      testedAt,
-    };
-  }
-}
-
-/**
- * Issue a lightweight liveness probe to an Ollama instance via its
- * `/api/tags` endpoint.
- */
-async function testOllamaProvider(baseUrl: string): Promise<ProviderTestResult> {
-  const start = Date.now();
-  const testedAt = new Date().toISOString();
-  const normalized = baseUrl.replace(/\/+$/, '');
-  try {
-    const res = await fetch(`${normalized}/api/tags`);
-    const latencyMs = Date.now() - start;
-    if (res.ok) {
-      return { success: true, latencyMs, testedAt };
-    }
-    return { success: false, latencyMs, error: `HTTP ${res.status}`, testedAt };
-  } catch (err: unknown) {
-    return {
-      success: false,
-      latencyMs: Date.now() - start,
-      error: err instanceof Error ? err.message : String(err),
-      testedAt,
-    };
-  }
-}
-
-/**
- * Test connectivity to a provider.
- *
- * Accepts either the name of an existing stored provider (string) or an
- * ad-hoc config object (same shape as `ProviderConfig`). In both cases a
- * real network request is made to the provider's API to verify credentials
- * and measure round-trip latency.
- *
- * @returns `{ success, latencyMs, error?, testedAt }`
- */
-export async function testProvider(
-  tenantId: string,
-  nameOrInput: string | Record<string, unknown>,
-  userId?: string
-): Promise<ProviderTestResult> {
-  let cfg: ProviderConfig;
-
-  if (typeof nameOrInput === 'string') {
-    const configs = await getProviderConfigs(tenantId, userId);
-    const found = configs.find((c) => c.name === nameOrInput);
-    if (!found) throw new Error(`Provider '${nameOrInput}' not found`);
-    cfg = found;
-  } else {
-    cfg = {
-      name: (nameOrInput['name'] as string | undefined) ?? '',
-      type: nameOrInput['type'] as ProviderConfig['type'],
-      apiKey: (nameOrInput['apiKey'] as string | undefined) ?? '',
-      model: (nameOrInput['model'] as string | undefined) ?? '',
-      baseUrl: nameOrInput['baseUrl'] as string | undefined,
-      enabled: true,
-    };
-  }
-
-  switch (cfg.type) {
-    case 'anthropic':
-      return testAnthropicProvider(cfg.apiKey);
-    case 'openai':
-      return testOpenAIProvider(cfg.apiKey);
-    case 'google':
-      return testGoogleProvider(cfg.apiKey);
-    case 'ollama':
-      return testOllamaProvider(cfg.baseUrl ?? 'http://localhost:11434');
-    default: {
-      const _exhaustive: never = cfg.type;
-      return {
-        success: false,
-        latencyMs: 0,
-        error: `Unknown provider type: ${String(_exhaustive)}`,
-        testedAt: new Date().toISOString(),
-      };
-    }
-  }
-}
-
-/**
- * Check the health of all enabled providers for a tenant concurrently.
- *
- * Each enabled provider is probed via {@link testProvider}. If `name` is
- * supplied only that specific provider is checked.
- *
- * @returns A map of provider name to `{ status, latencyMs, lastCheckAt?, error? }`.
- */
-export async function getProviderHealth(
-  tenantId: string,
-  name?: string,
-  userId?: string
-): Promise<Record<string, { status: string; latencyMs?: number; lastCheckAt?: string; error?: string }>> {
-  const configs = await getProviderConfigs(tenantId, userId);
-  const targets = name
-    ? configs.filter((c) => c.name === name)
-    : configs.filter((c) => c.enabled);
-
-  const results = await Promise.all(
-    targets.map(async (cfg) => {
-      const result = await testProvider(tenantId, cfg.name, userId);
-      return [
-        cfg.name,
-        {
-          status: result.success ? 'healthy' : 'unhealthy',
-          latencyMs: result.latencyMs,
-          lastCheckAt: result.testedAt,
-          ...(result.error ? { error: result.error } : {}),
-        },
-      ] as const;
-    })
-  );
-
-  return Object.fromEntries(results);
+  return { providers, defaultProvider, fallbackChain };
 }
 
 // ============================================================================
@@ -1943,4 +1537,632 @@ export async function getSupportedProviders(
       features: [...(m.features ?? [])],
     })),
   }));
+}
+
+// ============================================================================
+// Daemon-backed Provider Config (spec 25-daemon-driven-provider-config)
+//
+// These functions call the new DaemonAdminService provider-config RPCs that
+// landed in spec 25. They follow the exact same pattern as getSupportedProviders
+// above: getAdminClient(userId, tenantId) → RPC → friendly camelCased shape.
+//
+// NOTE ON NAMING: The existing K8s-backed helpers further up this file share
+// the same base names (listProviders, createProvider, etc.) with `tenantId`
+// as the required first argument. To avoid a TypeScript duplicate-export error
+// without modifying those functions (task 9 restriction), the new daemon-backed
+// variants are prefixed with `daemon`. Task 15 will delete the K8s-backed
+// functions and rename these to drop the prefix so callers see no change.
+// ============================================================================
+
+// ---------------------------------------------------------------------------
+// Daemon provider record types
+// ---------------------------------------------------------------------------
+
+/**
+ * Read-side representation of a daemon-managed LLM provider config.
+ * Credentials are always masked: {"api_key": "****xyz"}.
+ *
+ * Prefixed `Daemon` to avoid collision with the legacy K8s-backed ProviderRecord
+ * until task 15 removes the old function set.
+ */
+export interface DaemonProviderRecord {
+  /** Server-generated UUID. */
+  id: string;
+  /** Tenant-scoped human name. */
+  name: string;
+  /** Provider type identifier, e.g. "anthropic", "openai", "bedrock". */
+  type: string;
+  /** Model used when the caller does not specify one. */
+  defaultModel: string;
+  /** True when this is the tenant's designated default provider. */
+  isDefault: boolean;
+  /** True when the provider is active. */
+  enabled: boolean;
+  /** Masked credential values for display only. {"api_key": "****xyz"} */
+  credentialsMasked: Record<string, string>;
+  /** RFC 3339 creation timestamp. */
+  createdAt: string;
+  /** RFC 3339 last-update timestamp. */
+  updatedAt: string;
+}
+
+/**
+ * Write-side shape for creating or updating a daemon-managed LLM provider.
+ * Credentials are plaintext on the wire; the daemon encrypts them immediately
+ * via AES-256-GCM + KeyProvider and never persists the plaintext.
+ *
+ * Prefixed `Daemon` to avoid collision with the legacy ProviderConfigInput
+ * from src/types/provider.ts.
+ */
+export interface DaemonProviderConfigInput {
+  /** Tenant-scoped human name. */
+  name: string;
+  /** Provider type identifier (e.g. "anthropic", "openai"). */
+  type: string;
+  /** Model to use when none is specified by the caller. */
+  defaultModel: string;
+  /** Plaintext credentials, e.g. {"api_key": "sk-..."}. Transient — not retained by dashboard. */
+  credentials: Record<string, string>;
+  /** When true, atomically designates this provider as the tenant's default. */
+  setAsDefault?: boolean;
+}
+
+/**
+ * Structured result of a daemon-side provider connectivity test.
+ * Note: latencyMs is returned as number here (converted from proto int64 bigint).
+ */
+export interface DaemonProviderTestResult {
+  /** True when the upstream returned a successful response. */
+  ok: boolean;
+  /** Round-trip time in milliseconds (always reported, even on failure). */
+  latencyMs: number;
+  /** Model used for the test completion (when ok is true). */
+  model: string;
+  /** Cleaned upstream error message (when ok is false). */
+  error?: string;
+}
+
+/**
+ * Health status for a daemon-managed provider.
+ */
+export interface DaemonProviderHealthStatus {
+  status: 'healthy' | 'unhealthy' | 'unknown';
+  /** RFC 3339 timestamp of the last health check. */
+  lastCheckAt?: string;
+  /** Error message when status is unhealthy. */
+  lastError?: string;
+}
+
+// ---------------------------------------------------------------------------
+// LLM execution types (spec 25 §5 — GibsonLLMAdapter inputs/outputs)
+// ---------------------------------------------------------------------------
+
+/**
+ * A single message in a conversation sent to executeLLM / streamLLM.
+ * Maps to the proto gibson.daemon.admin.v1.LLMMessageContent.
+ */
+export interface LLMMessage {
+  /** "system" | "user" | "assistant" | "tool" */
+  role: string;
+  /** Text content of the message. */
+  content?: string;
+  /** Tool calls requested by the LLM (assistant role). */
+  toolCalls?: DaemonLLMToolCall[];
+  /** Tool results included in this message (tool role). */
+  toolResults?: DaemonLLMToolResult[];
+  /** Tool name, for tool-role messages. */
+  name?: string;
+}
+
+/**
+ * Tool definition exposed to the LLM.
+ * Maps to the proto gibson.daemon.admin.v1.LLMToolDef.
+ */
+export interface DaemonLLMToolDef {
+  name: string;
+  description: string;
+  /** JSON-encoded JSON Schema for the tool arguments. */
+  parametersJson: string;
+}
+
+/**
+ * A tool invocation requested by the LLM.
+ * Maps to the proto gibson.daemon.admin.v1.LLMToolCall.
+ */
+export interface DaemonLLMToolCall {
+  id: string;
+  name: string;
+  /** JSON-encoded arguments string. */
+  arguments: string;
+}
+
+/**
+ * The output of a tool call.
+ * Maps to the proto gibson.daemon.admin.v1.LLMToolResult.
+ */
+export interface DaemonLLMToolResult {
+  toolCallId: string;
+  content: string;
+  isError: boolean;
+}
+
+/**
+ * Token usage reported for an LLM completion.
+ * Maps to the proto gibson.daemon.admin.v1.LLMTokenUsage.
+ */
+export interface DaemonLLMUsage {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+}
+
+/**
+ * Controls the structure of the LLM's output.
+ * Maps to the proto gibson.daemon.admin.v1.ResponseFormat.
+ */
+export interface DaemonResponseFormat {
+  /** "text" | "json_object" | "json_schema" */
+  type: string;
+  /** Schema name (json_schema mode only). */
+  name?: string;
+  /** JSON-encoded schema (json_schema mode only). */
+  schemaJson?: string;
+  /** Enables strict schema adherence when supported by the provider. */
+  strict?: boolean;
+}
+
+/**
+ * Incremental tool-call delta in a streaming response.
+ * Maps to the proto gibson.daemon.admin.v1.ToolCallDelta.
+ */
+export interface DaemonToolCallDelta {
+  /** 0-based index identifying which tool call this delta belongs to. */
+  index: number;
+  /** Tool call identifier (present on the first delta for this index). */
+  id?: string;
+  /** Tool name (present on the first delta for this index). */
+  name?: string;
+  /** Incremental fragment of the JSON arguments string. */
+  argumentsDelta?: string;
+}
+
+/**
+ * Parameters for executeLLM and streamLLM.
+ */
+export interface ExecuteLLMParams {
+  providerName: string;
+  /** Overrides the provider's default_model when set. */
+  model?: string;
+  messages: LLMMessage[];
+  tools?: DaemonLLMToolDef[];
+  responseFormat?: DaemonResponseFormat;
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  stop?: string[];
+}
+
+/**
+ * Response from executeLLM (non-streaming completion).
+ */
+export interface DaemonExecuteLLMResponse {
+  /** Text response from the LLM. */
+  content: string;
+  /** Tool calls the LLM requested. */
+  toolCalls: DaemonLLMToolCall[];
+  /** "stop" | "length" | "tool_calls" | "content_filter" */
+  finishReason: string;
+  usage: DaemonLLMUsage;
+}
+
+/**
+ * One chunk in a server-streaming LLM response from streamLLM.
+ * Exactly one of the payload variants is set per chunk.
+ * Maps to the proto gibson.daemon.admin.v1.StreamLLMResponse oneof.
+ */
+export interface DaemonStreamLLMChunk {
+  payload:
+    | { case: 'textDelta'; value: string }
+    | { case: 'toolCallDelta'; value: DaemonToolCallDelta }
+    | { case: 'finish'; value: { finishReason: string; usage: DaemonLLMUsage } }
+    | { case: 'error'; value: { code: number; message: string; retryable: boolean } }
+    | { case: undefined; value?: undefined };
+}
+
+// ---------------------------------------------------------------------------
+// Proto → friendly type helpers
+// ---------------------------------------------------------------------------
+
+function fromProtoProviderRecord(
+  p: import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').ProviderRecord,
+): DaemonProviderRecord {
+  return {
+    id: p.id,
+    name: p.name,
+    type: p.type,
+    defaultModel: p.defaultModel,
+    isDefault: p.isDefault,
+    enabled: p.enabled,
+    credentialsMasked: { ...p.credentialsMasked },
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  };
+}
+
+function toProtoDaemonConfigInput(
+  input: DaemonProviderConfigInput,
+): import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').ProviderConfigInput {
+  return {
+    name: input.name,
+    type: input.type,
+    defaultModel: input.defaultModel,
+    credentials: { ...input.credentials },
+    setAsDefault: input.setAsDefault ?? false,
+  } as import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').ProviderConfigInput;
+}
+
+function fromProtoLLMUsage(
+  u: import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMTokenUsage | undefined,
+): DaemonLLMUsage {
+  return {
+    inputTokens: u?.inputTokens ?? 0,
+    outputTokens: u?.outputTokens ?? 0,
+    totalTokens: u?.totalTokens ?? 0,
+  };
+}
+
+function fromProtoLLMToolCall(
+  tc: import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMToolCall,
+): DaemonLLMToolCall {
+  return { id: tc.id, name: tc.name, arguments: tc.arguments };
+}
+
+function toLLMMessageContent(
+  msg: LLMMessage,
+): import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMMessageContent {
+  return {
+    role: msg.role,
+    content: msg.content ?? '',
+    toolCalls: (msg.toolCalls ?? []).map((tc) => ({
+      id: tc.id,
+      name: tc.name,
+      arguments: tc.arguments,
+    })) as import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMToolCall[],
+    toolResults: (msg.toolResults ?? []).map((tr) => ({
+      toolCallId: tr.toolCallId,
+      content: tr.content,
+      isError: tr.isError,
+    })) as import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMToolResult[],
+    name: msg.name ?? '',
+  } as import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMMessageContent;
+}
+
+function toLLMToolDef(
+  def: DaemonLLMToolDef,
+): import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMToolDef {
+  return {
+    name: def.name,
+    description: def.description,
+    parametersJson: def.parametersJson,
+  } as import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMToolDef;
+}
+
+function toProtoResponseFormat(
+  fmt: DaemonResponseFormat,
+): import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').ResponseFormat {
+  return {
+    type: fmt.type,
+    name: fmt.name ?? '',
+    schemaJson: fmt.schemaJson ?? '',
+    strict: fmt.strict ?? false,
+  } as import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').ResponseFormat;
+}
+
+function buildExecRequest(
+  params: ExecuteLLMParams,
+): {
+  providerName: string;
+  model: string;
+  messages: import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMMessageContent[];
+  tools: import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMToolDef[];
+  responseFormat?: import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').ResponseFormat;
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  stop: string[];
+} {
+  return {
+    providerName: params.providerName,
+    model: params.model ?? '',
+    messages: params.messages.map(toLLMMessageContent),
+    tools: (params.tools ?? []).map(toLLMToolDef),
+    responseFormat: params.responseFormat ? toProtoResponseFormat(params.responseFormat) : undefined,
+    temperature: params.temperature,
+    maxTokens: params.maxTokens,
+    topP: params.topP,
+    stop: params.stop ?? [],
+  };
+}
+
+function fromProtoStreamChunk(
+  chunk: import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').StreamLLMResponse,
+): DaemonStreamLLMChunk {
+  const p = chunk.payload;
+  switch (p.case) {
+    case 'textDelta':
+      return { payload: { case: 'textDelta', value: p.value } };
+    case 'toolCallDelta':
+      return {
+        payload: {
+          case: 'toolCallDelta',
+          value: {
+            index: p.value.index,
+            id: p.value.id || undefined,
+            name: p.value.name || undefined,
+            argumentsDelta: p.value.argumentsDelta || undefined,
+          },
+        },
+      };
+    case 'finish':
+      return {
+        payload: {
+          case: 'finish',
+          value: {
+            finishReason: p.value.finishReason,
+            usage: fromProtoLLMUsage(p.value.usage),
+          },
+        },
+      };
+    case 'error':
+      return {
+        payload: {
+          case: 'error',
+          value: {
+            code: p.value.code,
+            message: p.value.message,
+            retryable: p.value.retryable,
+          },
+        },
+      };
+    default:
+      return { payload: { case: undefined } };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Daemon-backed provider CRUD functions
+// ---------------------------------------------------------------------------
+
+/**
+ * List all LLM provider configs for the calling tenant via the daemon
+ * ListProviders RPC. Returns masked credential values only.
+ *
+ * Named `daemonListProviders` to avoid collision with the legacy K8s-backed
+ * `listProviders` function above. Task 15 will remove the K8s version and
+ * rename this to `listProviders`.
+ */
+export async function daemonListProviders(
+  userId?: string,
+  tenantId?: string,
+): Promise<DaemonProviderRecord[]> {
+  const client = getAdminClient(userId, tenantId);
+  const resp = await client.listProviders({});
+  return (resp.providers ?? []).map(fromProtoProviderRecord);
+}
+
+/**
+ * Retrieve a single provider config by name via the daemon GetProvider RPC.
+ * Throws a ConnectError (Code.NotFound) when no provider with the given name
+ * exists for the tenant.
+ */
+export async function daemonGetProvider(
+  name: string,
+  userId?: string,
+  tenantId?: string,
+): Promise<DaemonProviderRecord> {
+  const client = getAdminClient(userId, tenantId);
+  const resp = await client.getProvider({ name });
+  if (!resp.provider) {
+    throw new ConnectError(`Provider '${name}' not found`, Code.NotFound);
+  }
+  return fromProtoProviderRecord(resp.provider);
+}
+
+/**
+ * Create a new provider config via the daemon CreateProvider RPC.
+ * Credentials are transmitted as plaintext and encrypted immediately by
+ * the daemon — the dashboard process never persists them.
+ * Throws a ConnectError (Code.AlreadyExists) when the name is already in use.
+ */
+export async function daemonCreateProvider(
+  input: DaemonProviderConfigInput,
+  userId?: string,
+  tenantId?: string,
+): Promise<DaemonProviderRecord> {
+  const client = getAdminClient(userId, tenantId);
+  const resp = await client.createProvider({ input: toProtoDaemonConfigInput(input) });
+  if (!resp.provider) {
+    throw new ConnectError('CreateProvider returned no provider record', Code.Internal);
+  }
+  return fromProtoProviderRecord(resp.provider);
+}
+
+/**
+ * Update an existing provider config via the daemon UpdateProvider RPC.
+ * Empty credential values in `input` mean "retain the stored value".
+ * Throws a ConnectError (Code.NotFound) when the named provider does not exist.
+ */
+export async function daemonUpdateProvider(
+  name: string,
+  input: DaemonProviderConfigInput,
+  userId?: string,
+  tenantId?: string,
+): Promise<DaemonProviderRecord> {
+  const client = getAdminClient(userId, tenantId);
+  const resp = await client.updateProvider({ name, input: toProtoDaemonConfigInput(input) });
+  if (!resp.provider) {
+    throw new ConnectError('UpdateProvider returned no provider record', Code.Internal);
+  }
+  return fromProtoProviderRecord(resp.provider);
+}
+
+/**
+ * Permanently delete a provider config via the daemon DeleteProvider RPC.
+ * Throws a ConnectError (Code.NotFound) when the named provider does not exist.
+ */
+export async function daemonDeleteProvider(
+  name: string,
+  userId?: string,
+  tenantId?: string,
+): Promise<void> {
+  const client = getAdminClient(userId, tenantId);
+  await client.deleteProvider({ name });
+}
+
+/**
+ * Test connectivity to a provider via the daemon TestProvider RPC.
+ * The config is NOT persisted — the daemon validates and probes the upstream
+ * in process memory only.
+ *
+ * Note: the proto latencyMs field is int64 (bigint in TS); this function
+ * converts it to a plain number for caller convenience.
+ */
+export async function daemonTestProvider(
+  input: DaemonProviderConfigInput,
+  userId?: string,
+  tenantId?: string,
+): Promise<DaemonProviderTestResult> {
+  const client = getAdminClient(userId, tenantId);
+  const resp = await client.testProvider({ input: toProtoDaemonConfigInput(input) });
+  return {
+    ok: resp.ok,
+    latencyMs: Number(resp.latencyMs),
+    model: resp.model,
+    error: resp.error || undefined,
+  };
+}
+
+/**
+ * Get the health status of a named provider via the daemon GetProviderHealth RPC.
+ */
+export async function daemonGetProviderHealth(
+  name: string,
+  userId?: string,
+  tenantId?: string,
+): Promise<DaemonProviderHealthStatus> {
+  const client = getAdminClient(userId, tenantId);
+  const resp = await client.getProviderHealth({ name });
+  return {
+    status: resp.healthy ? 'healthy' : resp.lastCheckedAt ? 'unhealthy' : 'unknown',
+    lastCheckAt: resp.lastCheckedAt || undefined,
+    lastError: resp.error || undefined,
+  };
+}
+
+/**
+ * Get the tenant's current default provider via the daemon GetDefaultProvider RPC.
+ * Returns null when no default has been set.
+ */
+export async function daemonGetDefaultProvider(
+  userId?: string,
+  tenantId?: string,
+): Promise<DaemonProviderRecord | null> {
+  const client = getAdminClient(userId, tenantId);
+  const resp = await client.getDefaultProvider({});
+  return resp.provider ? fromProtoProviderRecord(resp.provider) : null;
+}
+
+/**
+ * Designate a provider as the tenant's default via the daemon SetDefaultProvider RPC.
+ * All other providers are demoted atomically on the daemon side.
+ * Throws a ConnectError (Code.NotFound) when the named provider does not exist.
+ */
+export async function daemonSetDefaultProvider(
+  name: string,
+  userId?: string,
+  tenantId?: string,
+): Promise<void> {
+  const client = getAdminClient(userId, tenantId);
+  await client.setDefaultProvider({ name });
+}
+
+/**
+ * Retrieve the tenant's ordered provider fallback chain via the daemon
+ * GetFallbackChain RPC. Returns an ordered list of provider names.
+ */
+export async function daemonGetFallbackChain(
+  userId?: string,
+  tenantId?: string,
+): Promise<string[]> {
+  const client = getAdminClient(userId, tenantId);
+  const resp = await client.getFallbackChain({});
+  return resp.providerNames ?? [];
+}
+
+/**
+ * Replace the tenant's provider fallback chain via the daemon SetFallbackChain RPC.
+ * All names must refer to existing stored providers.
+ * Throws a ConnectError (Code.InvalidArgument) when a name references a
+ * non-existent or deleted provider.
+ */
+export async function daemonSetFallbackChain(
+  names: string[],
+  userId?: string,
+  tenantId?: string,
+): Promise<void> {
+  const client = getAdminClient(userId, tenantId);
+  await client.setFallbackChain({ providerNames: names });
+}
+
+// ---------------------------------------------------------------------------
+// Daemon-backed LLM execution functions
+// ---------------------------------------------------------------------------
+
+/**
+ * Issue a non-streaming LLM completion request via the daemon ExecuteLLM RPC.
+ *
+ * The daemon resolves the provider name to an encrypted credential record,
+ * decrypts it in process memory, and dispatches to the appropriate
+ * langchaingo provider. Plaintext credentials never leave daemon memory.
+ *
+ * Throws a ConnectError on any gRPC-level failure (NotFound when the provider
+ * name is unknown, ResourceExhausted on rate-limit, Internal on upstream
+ * failure). The routes layer (task 11) maps these to HTTP status codes.
+ */
+export async function executeLLM(
+  params: ExecuteLLMParams,
+  userId?: string,
+  tenantId?: string,
+): Promise<DaemonExecuteLLMResponse> {
+  const client = getAdminClient(userId, tenantId);
+  const resp = await client.executeLLM(buildExecRequest(params));
+  return {
+    content: resp.content,
+    toolCalls: (resp.toolCalls ?? []).map(fromProtoLLMToolCall),
+    finishReason: resp.finishReason,
+    usage: fromProtoLLMUsage(resp.usage),
+  };
+}
+
+/**
+ * Issue a server-streaming LLM completion request via the daemon StreamLLM RPC.
+ *
+ * Returns an async iterable of {@link DaemonStreamLLMChunk} that the caller
+ * can consume with `for await (const chunk of stream) {}`. The stream ends
+ * naturally when the daemon emits a `finish` chunk, or throws a ConnectError
+ * if the gRPC stream closes with an error.
+ *
+ * The `GibsonLLMAdapter` (task 10) wraps this iterable into a
+ * `ReadableStream<LanguageModelV2StreamPart>` for the Vercel AI SDK.
+ */
+export async function* streamLLM(
+  params: ExecuteLLMParams,
+  userId?: string,
+  tenantId?: string,
+): AsyncIterable<DaemonStreamLLMChunk> {
+  const client = getAdminClient(userId, tenantId);
+  const grpcStream = client.streamLLM(buildExecRequest(params));
+  for await (const chunk of grpcStream) {
+    yield fromProtoStreamChunk(chunk);
+  }
 }

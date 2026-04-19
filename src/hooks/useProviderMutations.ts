@@ -22,7 +22,6 @@ import {
 import { providerQueryKeys } from './useProviders';
 import type {
   ProviderConfig,
-  ProviderConfigInput,
   CreateProviderResponse,
   UpdateProviderResponse,
   DeleteProviderResponse,
@@ -32,6 +31,7 @@ import type {
   ExportFormat,
   ListProvidersResponse,
 } from '@/src/types/provider';
+import type { DaemonProviderConfigInput } from '@/src/lib/gibson-client';
 
 // ============================================================================
 // Create Provider Mutation
@@ -42,20 +42,26 @@ interface CreateProviderContext {
 }
 
 /**
- * Hook for creating a new provider
+ * Hook for creating a new provider.
+ *
+ * Accepts the generic daemon-driven payload shape ({type, name, defaultModel,
+ * credentials: Record<string, string>, setAsDefault?}) introduced by spec 25.
+ * The `config` field is forwarded to POST /api/settings/providers which
+ * delegates to the daemon's CreateProvider RPC.
  *
  * @returns Mutation result for provider creation
  */
 export function useCreateProvider(): UseMutationResult<
   CreateProviderResponse,
   Error,
-  { config: ProviderConfigInput; testConnection?: boolean },
+  { config: DaemonProviderConfigInput; testConnection?: boolean },
   CreateProviderContext
 > {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ config, testConnection }) => createProvider(config, { testConnection }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mutationFn: ({ config, testConnection }) => createProvider(config as any, { testConnection }),
     onMutate: async ({ config }) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: providerQueryKeys.lists() });
@@ -70,13 +76,12 @@ export function useCreateProvider(): UseMutationResult<
         const now = new Date().toISOString();
         const optimisticProvider: ProviderConfig = {
           name: config.name ?? 'new-provider',
-          displayName: config.displayName || config.name || 'New Provider',
+          displayName: config.name ?? 'New Provider',
           type: config.type,
-          apiKeyMasked: config.apiKey ? '****' : undefined,
-          baseUrl: config.baseUrl,
+          apiKeyMasked: config.credentials && Object.keys(config.credentials).length > 0 ? '****' : undefined,
           defaultModel: config.defaultModel,
-          isDefault: false,
-          isEnabled: config.isEnabled ?? true,
+          isDefault: config.setAsDefault ?? false,
+          isEnabled: true,
           version: 1,
           createdAt: now,
           updatedAt: now,
@@ -116,7 +121,7 @@ export function useCreateProvider(): UseMutationResult<
 
 interface UpdateProviderVariables {
   name: string;
-  config: Partial<ProviderConfigInput>;
+  config: Partial<DaemonProviderConfigInput>;
   expectedVersion?: number;
 }
 
@@ -157,8 +162,7 @@ export function useUpdateProvider(): UseMutationResult<
       if (previousProvider) {
         queryClient.setQueryData<ProviderConfig>(providerQueryKeys.detail(name), {
           ...previousProvider,
-          ...config,
-          displayName: config.displayName ?? previousProvider.displayName,
+          defaultModel: config.defaultModel ?? previousProvider.defaultModel,
           updatedAt: new Date().toISOString(),
         });
       }
@@ -169,7 +173,11 @@ export function useUpdateProvider(): UseMutationResult<
           ...previousProviders,
           providers: previousProviders.providers.map((p) =>
             p.name === name
-              ? { ...p, ...config, updatedAt: new Date().toISOString() }
+              ? {
+                  ...p,
+                  defaultModel: config.defaultModel ?? p.defaultModel,
+                  updatedAt: new Date().toISOString(),
+                }
               : p
           ),
         });

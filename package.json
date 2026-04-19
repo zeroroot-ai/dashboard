@@ -6,7 +6,9 @@
     "dev": "next dev",
     "check:no-legacy-login-url": "node scripts/check-no-legacy-login-url.mjs",
     "check:csp": "node scripts/check-csp.mjs",
-    "prebuild": "node scripts/gen-plans.mjs && node scripts/check-no-legacy-login-url.mjs && node scripts/check-csp.mjs && node scripts/check-no-public-auth.mjs && node scripts/check-crd-action-authz.mjs",
+    "prebuild": "node scripts/gen-plans.mjs && node scripts/check-no-legacy-login-url.mjs && node scripts/check-csp.mjs && node scripts/check-no-public-auth.mjs && node scripts/check-no-llm-credential-reads.mjs && node scripts/check-no-provider-k8s-access.mjs && node scripts/check-crd-action-authz.mjs",
+    "check:no-llm-credentials": "node scripts/check-no-llm-credential-reads.mjs",
+    "check:no-provider-k8s": "node scripts/check-no-provider-k8s-access.mjs",
     "gen:plans": "node scripts/gen-plans.mjs",
     "predev": "node scripts/gen-plans.mjs",
     "build": "next build",
@@ -24,9 +26,7 @@
     "proto:generate": "buf generate --template buf.gen.yaml"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.64",
-    "@ai-sdk/google": "^3.0.54",
-    "@ai-sdk/openai": "^3.0.49",
+    "@ai-sdk/provider": "^3.0.8",
     "@ai-sdk/react": "^3.0.143",
     "@base-ui/react": "^1.2.0",
     "@bufbuild/protobuf": "^2.0.0",

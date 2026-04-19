@@ -9,7 +9,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { streamText, type ModelMessage } from 'ai';
 import { getServerSession } from '@/src/lib/auth';
-import { resolveProvider, ProviderNotConfiguredError, ProviderKeyMissingError } from '@/src/lib/ai/provider';
+import { resolveProvider } from '@/src/lib/ai/provider';
+import { listProviders } from '@/src/lib/gibson-client';
 import { getGraphContext } from '@/src/lib/graph/context';
 import { getGraphSummary } from '@/src/lib/graph/summary';
 import { buildSystemPrompt } from '@/src/lib/ai/prompts';
@@ -58,20 +59,32 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
     const { messages, agentId, context } = parseResult.data;
 
-    // Resolve the configured LLM provider
     const tenantId = session.user.tenantId ?? '';
-    let resolved;
+    const userId = session.user.id;
+
+    // Resolve the configured LLM provider via daemon — credentials never
+    // enter the dashboard process. We look up the tenant's default provider
+    // name from the daemon's list, then hand a GibsonLLMAdapter back from
+    // resolveProvider so streamText can call through to StreamLLM.
+    let providerName: string;
     try {
-      resolved = await resolveProvider(tenantId);
-    } catch (error) {
-      if (error instanceof ProviderNotConfiguredError || error instanceof ProviderKeyMissingError) {
+      const providerList = await listProviders(tenantId, userId);
+      const defaultName = providerList.defaultProvider;
+      if (!defaultName) {
         return NextResponse.json(
-          { error: error.message },
-          { status: 503 }
+          { error: 'No LLM provider configured. Go to Settings > Providers to set one up.' },
+          { status: 503 },
         );
       }
-      throw error;
+      providerName = defaultName;
+    } catch {
+      return NextResponse.json(
+        { error: 'Unable to fetch provider configuration from daemon.' },
+        { status: 503 },
+      );
     }
+
+    const model = resolveProvider(providerName, { userId, tenantId });
 
     // Fetch graph context and tenant summary in parallel (non-blocking on failure)
     const nodeId = typeof context?.nodeId === 'string' ? context.nodeId : undefined;
@@ -89,7 +102,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Stream the response — cast validated messages to the SDK type
     const result = streamText({
-      model: resolved.model,
+      model,
       system,
       messages: messages as ModelMessage[],
     });

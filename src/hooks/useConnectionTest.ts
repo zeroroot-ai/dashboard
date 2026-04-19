@@ -12,7 +12,8 @@ import {
 } from '@tanstack/react-query';
 import { testProviderConnection, testNewProviderConnection } from '@/src/lib/api/providers';
 import { providerQueryKeys } from './useProviders';
-import type { ConnectionTestResult, ProviderConfigInput } from '@/src/types/provider';
+import type { ConnectionTestResult } from '@/src/types/provider';
+import type { DaemonProviderConfigInput } from '@/src/lib/gibson-client';
 
 // ============================================================================
 // Test Existing Provider Connection
@@ -110,11 +111,11 @@ export function useTestConnection(
  */
 export function useTestNewConnection(
   options?: TestConnectionOptions
-): UseMutationResult<ConnectionTestResult, Error, ProviderConfigInput, unknown> {
+): UseMutationResult<ConnectionTestResult, Error, DaemonProviderConfigInput, unknown> {
   const timeoutSeconds = options?.timeoutSeconds ?? 10;
 
   return useMutation({
-    mutationFn: (config: ProviderConfigInput) =>
+    mutationFn: (config: DaemonProviderConfigInput) =>
       testNewProviderConnection(config, { timeoutSeconds }),
   });
 }
@@ -131,7 +132,7 @@ interface ConnectionTestState {
   /**
    * Test connection with new provider config
    */
-  testNew: UseMutationResult<ConnectionTestResult, Error, ProviderConfigInput, unknown>;
+  testNew: UseMutationResult<ConnectionTestResult, Error, DaemonProviderConfigInput, unknown>;
   /**
    * Whether either test is currently running
    */
