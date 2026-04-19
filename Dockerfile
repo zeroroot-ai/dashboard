@@ -21,7 +21,7 @@ COPY package.json package-lock.json ./
 # blocks arbitrary postinstall scripts; npm rebuild then runs install for the
 # specific native modules that need per-arch binaries extracted (multi-arch
 # Docker buildx builds linux/arm64 via QEMU and needs the right .node binary).
-RUN npm ci --ignore-scripts && \
+RUN npm ci --ignore-scripts --legacy-peer-deps && \
     npm rebuild lightningcss
 
 # ============================================================================
