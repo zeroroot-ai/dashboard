@@ -121,6 +121,57 @@ export async function handleWriteTuples(req: NextRequest) {
   }
 }
 
+export async function handleEmitSummary(req: NextRequest) {
+  const a = await authz(req);
+  if (!a.ok) return NextResponse.json(a.body, { status: a.status });
+
+  const body = await parseBody<{
+    tenant_id?: string;
+    plan?: string;
+    added_feature_tuples?: number;
+    removed_feature_tuples?: number;
+    quota_delta?: number;
+    duration_ms?: number;
+    trigger?: string;
+  }>(req);
+  if ("error" in body) return NextResponse.json({ error: body.error }, { status: body.status });
+  if (!body.tenant_id) return NextResponse.json({ error: "tenant_id required" }, { status: 400 });
+
+  const fields: Record<string, string> = {
+    plan: body.plan ?? "",
+    added_feature_tuples: String(body.added_feature_tuples ?? 0),
+    removed_feature_tuples: String(body.removed_feature_tuples ?? 0),
+    quota_delta: String(body.quota_delta ?? 0),
+    duration_ms: String(body.duration_ms ?? 0),
+    trigger: body.trigger ?? "background",
+  };
+
+  const client = getDaemonAdminClient();
+  try {
+    await client.emitAuditEvent({
+      event: {
+        $typeName: "gibson.daemon.admin.v1.AuditEventMessage",
+        type: "entitlements_reconcile",
+        actorSubject: a.spiffeId,
+        actorSource: "operator",
+        tuple: "",
+        actionClass: "",
+        scopeType: "tenant",
+        operation: "",
+        reason: "",
+        timestamp: new Date().toISOString(),
+        fields,
+      },
+    });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return NextResponse.json(
+      { error: `daemon emitAuditEvent failed: ${String(err)}` },
+      { status: 502 },
+    );
+  }
+}
+
 export async function handleSeedCatalog(req: NextRequest) {
   const a = await authz(req);
   if (!a.ok) return NextResponse.json(a.body, { status: a.status });

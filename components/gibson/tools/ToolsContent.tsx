@@ -2,255 +2,223 @@
 
 /**
  * ToolsContent
- * Registered security tools panel for the Gibson dashboard.
+ * Shared deny-wins matrix for the Gibson Tools catalog. Reuses the shared
+ * AccessScopeSelector + RWXMatrix primitives so the scope/admin semantics
+ * match the Agents and Plugins pages exactly. Tool-specific metadata
+ * (version / endpoint) rides on the matrix row's description slot so the
+ * visual parity with the legacy table layout is preserved.
  */
 
-import * as React from "react";
-import Link from "next/link";
-import { useSession } from "@/src/lib/session-client";
-import { signOutAction } from "@/app/actions/auth/signout";
-import { usePermitted } from "@/src/lib/auth/tenant";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ErrorAlert } from "@/components/gibson/shared";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  AccessScopeSelector,
+  type AccessScopeSelection,
+} from "@/components/gibson/shared/AccessScopeSelector";
+import {
+  RWXMatrix,
+  type RWXAction,
+  type RWXItem,
+} from "@/components/gibson/shared/RWXMatrix";
+import { setComponentAccessAction } from "@/app/actions/crd/access";
+import {
+  listAccessibleComponentsAction,
+  type DiscoveredItem,
+} from "@/app/actions/read/listAccessibleComponents";
+import { usePermitted } from "@/src/lib/auth/tenant";
+import { useTierLimits } from "@/src/hooks/useTierLimits";
 
-import { useTools } from "@/src/hooks/useComponents";
-import type { ComponentHealth, ComponentStatus } from "@/src/types";
+type Scope = AccessScopeSelection["scope"];
 
-// ---------------------------------------------------------------------------
-// Status badge helpers — mirrors AgentsContent palette
-// ---------------------------------------------------------------------------
-
-const STATUS_LABEL: Record<ComponentStatus, string> = {
-  healthy: "Healthy",
-  degraded: "Degraded",
-  unhealthy: "Unhealthy",
-  unknown: "Unknown",
-};
-
-const STATUS_BADGE_CLASS: Record<ComponentStatus, string> = {
-  healthy: "border-green-500/50 bg-green-950/40 text-green-400",
-  degraded: "border-amber-500/50 bg-amber-950/40 text-amber-400",
-  unhealthy: "border-red-500/50 bg-red-950/40 text-red-400",
-  unknown: "border-zinc-500/50 bg-zinc-800/40 text-zinc-400",
-};
-
-// ---------------------------------------------------------------------------
-// Metadata helpers
-// ---------------------------------------------------------------------------
-
-function inferVersion(tool: ComponentHealth): string {
-  const meta = tool.metadata;
-  if (meta && typeof meta["version"] === "string") return `v${meta["version"]}`;
-  return "—";
+function toMatrixItem(d: DiscoveredItem): RWXItem {
+  const meta: string[] = [];
+  if (d.version) meta.push(`v${d.version}`);
+  if (d.description) meta.push(d.description);
+  return {
+    name: d.name,
+    displayName: d.displayName ?? d.name,
+    description: meta.join(" — ") || undefined,
+    rwx: d.rwx,
+    denyingGates: d.denyingGates,
+  };
 }
 
-function inferEndpoint(tool: ComponentHealth): string {
-  const meta = tool.metadata;
-  if (meta && typeof meta["endpoint"] === "string") return meta["endpoint"] as string;
-  return "—";
+function scopeParam(
+  s: Scope,
+): "tenant" | "team" | "user" | "component" | "my" | null {
+  switch (s) {
+    case "tenant-wide":
+      return "tenant";
+    case "per-team":
+      return "team";
+    case "per-user":
+      return "user";
+    case "per-agent":
+      return "component";
+    case "my-access":
+      return "my";
+    default:
+      return null;
+  }
 }
-
-function inferDescription(tool: ComponentHealth): string {
-  const meta = tool.metadata;
-  if (meta && typeof meta["description"] === "string") return meta["description"] as string;
-  return "—";
-}
-
-// ---------------------------------------------------------------------------
-// Loading skeleton row
-// ---------------------------------------------------------------------------
-
-function ToolRowSkeleton() {
-  return (
-    <TableRow>
-      <TableCell className="py-3">
-        <Skeleton className="h-3.5 w-36" />
-      </TableCell>
-      <TableCell>
-        <Skeleton className="h-3.5 w-12" />
-      </TableCell>
-      <TableCell>
-        <Skeleton className="h-5 w-20 rounded-full" />
-      </TableCell>
-      <TableCell>
-        <Skeleton className="h-3.5 w-48" />
-      </TableCell>
-      <TableCell>
-        <Skeleton className="h-3.5 w-56" />
-      </TableCell>
-    </TableRow>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Main component
-// ---------------------------------------------------------------------------
 
 export function ToolsContent() {
-  const { data: tools = [], isLoading, isError, error } = useTools();
-  const { data: session } = useSession();
-  void session; // session available for future use
   const canManage = usePermitted("components:manage");
+  const { data: tier } = useTierLimits();
+  const isProsumer = tier?.config.maxTeamMembers === 1;
 
-  const [enabledOverrides, setEnabledOverrides] = React.useState<Record<string, boolean>>({});
+  const [scope, setScope] = useState<AccessScopeSelection>({
+    scope: canManage ? "tenant-wide" : "my-access",
+  });
+  const [items, setItems] = useState<RWXItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  function isEnabled(tool: ComponentHealth): boolean {
-    if (tool.id in enabledOverrides) return enabledOverrides[tool.id];
-    return tool.status !== "unhealthy";
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    listAccessibleComponentsAction({
+      kind: "tool",
+      scope: scope.scope,
+      targetId: scope.targetId,
+    })
+      .then((r) => {
+        if (cancelled) return;
+        if (r.ok) setItems(r.data.map(toMatrixItem));
+        else setError(new Error(r.error));
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err : new Error(String(err)));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [scope]);
+
+  async function refetch() {
+    const r = await listAccessibleComponentsAction({
+      kind: "tool",
+      scope: scope.scope,
+      targetId: scope.targetId,
+    });
+    if (r.ok) setItems(r.data.map(toMatrixItem));
   }
 
-  async function handleToggle(tool: ComponentHealth, next: boolean) {
-    setEnabledOverrides((prev) => ({ ...prev, [tool.id]: next }));
-    try {
-      const response = await fetch(`/api/tools/${encodeURIComponent(tool.name)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: next }),
-      });
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        throw new Error(body?.error?.message ?? `Request failed (${response.status})`);
-      }
-      toast.success(`${tool.name} ${next ? "enabled" : "disabled"}`);
-    } catch (err) {
-      setEnabledOverrides((prev) => ({ ...prev, [tool.id]: !next }));
-      toast.error(`Failed to ${next ? "enable" : "disable"} ${tool.name}`, {
-        description: err instanceof Error ? err.message : "Unknown error",
-      });
+  async function onToggle(
+    item: RWXItem,
+    action: RWXAction,
+    enabled: boolean,
+  ) {
+    const s = scopeParam(scope.scope);
+    if (!s) return;
+    const r = await setComponentAccessAction({
+      scope: s,
+      targetId: scope.targetId,
+      componentRef: `component:tool/${item.name}`,
+      action,
+      enabled,
+    });
+    if (!r.ok) {
+      toast.error(`Toggle failed: ${r.error}`);
+      await refetch();
+      return;
     }
+    setItems((prev) =>
+      prev.map((it) =>
+        it.name === item.name
+          ? { ...it, rwx: { ...it.rwx, [action]: enabled } }
+          : it,
+      ),
+    );
   }
 
-  const enabledCount = tools.filter((t) => isEnabled(t)).length;
+  const counts = useMemo(() => {
+    const total = items.length;
+    const executable = items.filter((i) => i.rwx.execute).length;
+    return { total, executable };
+  }, [items]);
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <h2 className="text-xl font-bold tracking-tight text-glow-green lg:text-2xl">
           Tools
         </h2>
-        {!isLoading && (
+        {!loading && (
           <>
             <Badge
               variant="outline"
               className="border-green-500/50 bg-green-950/40 text-green-400 font-mono tabular-nums"
             >
-              {tools.length} total
+              {counts.total} total
             </Badge>
-            {canManage && (
-              <Badge
-                variant="outline"
-                className="border-zinc-500/50 bg-zinc-800/40 text-zinc-400 font-mono tabular-nums"
-              >
-                {enabledCount} enabled
-              </Badge>
-            )}
+            <Badge
+              variant="outline"
+              className="border-border bg-muted/50 text-muted-foreground font-mono tabular-nums"
+            >
+              {counts.executable} executable
+            </Badge>
           </>
         )}
       </div>
 
-      {/* Error state */}
-      {isError && (
-        <div className="rounded-md border border-red-500/40 bg-red-950/20 px-4 py-3 text-sm text-red-400">
-          {error instanceof Error ? error.message : "Failed to load tools. Check daemon connectivity."}
-        </div>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Access matrix</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {canManage ? (
+            <AccessScopeSelector
+              value={scope}
+              onChange={setScope}
+              disablePerTeam={isProsumer}
+            />
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Showing the tools currently accessible to you. Tenant admins can
+              manage per-team, per-user, and per-agent scopes.
+            </p>
+          )}
 
-      {/* Table */}
-      <div className="rounded-md border border-border/60 bg-card/60 backdrop-blur-sm">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="text-xs">Name</TableHead>
-              <TableHead className="text-xs">Version</TableHead>
-              <TableHead className="text-xs">Status</TableHead>
-              <TableHead className="text-xs">Endpoint</TableHead>
-              <TableHead className="text-xs">Description</TableHead>
-              {canManage && <TableHead className="w-[100px] text-xs">Enabled</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <>
-                <ToolRowSkeleton />
-                <ToolRowSkeleton />
-                <ToolRowSkeleton />
-                <ToolRowSkeleton />
-              </>
-            ) : tools.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={canManage ? 6 : 5}
-                  className="py-12 text-center text-sm text-muted-foreground"
-                >
-                  <div className="flex flex-col items-center gap-3">
-                    <span>No tools registered</span>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href="/dashboard/deploy?type=tool">Deploy your first tool</Link>
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              tools.map((tool) => {
-                const version = inferVersion(tool);
-                const endpoint = inferEndpoint(tool);
-                const description = inferDescription(tool);
+          {isProsumer && canManage && scope.scope === "per-team" && (
+            <p className="text-xs text-muted-foreground">
+              Upgrade for team policies.
+            </p>
+          )}
 
-                return (
-                  <TableRow key={tool.id} className="hover:bg-muted/40">
-                    <TableCell className="py-3 font-medium">
-                      {tool.name}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {version}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs font-semibold uppercase tracking-wide ${STATUS_BADGE_CLASS[tool.status]}`}
-                      >
-                        {STATUS_LABEL[tool.status]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate font-mono text-xs text-muted-foreground">
-                      {endpoint}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {description}
-                    </TableCell>
-                    {canManage && (
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={isEnabled(tool)}
-                            onCheckedChange={(checked) => handleToggle(tool, checked)}
-                            aria-label={`Toggle ${tool.name}`}
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            {isEnabled(tool) ? "On" : "Off"}
-                          </span>
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+          {error && (
+            <ErrorAlert
+              error={error}
+              title="Unable to load catalog state"
+              retry={refetch}
+            />
+          )}
+
+          {loading && !error && (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          )}
+
+          {!loading && !error && items.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No tools available for this scope.
+            </p>
+          )}
+
+          {!loading && !error && items.length > 0 && (
+            <RWXMatrix items={items} onToggle={onToggle} />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

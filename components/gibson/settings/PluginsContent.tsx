@@ -2,267 +2,286 @@
 
 /**
  * PluginsContent
- * Plugin management panel for Gibson settings.
+ * Plugin catalog matrix for Gibson settings. Reuses the shared scope
+ * selector + RWXMatrix primitives and preserves the per-plugin Configure
+ * button via the matrix's `rowTrailingAction` slot.
  */
 
-import * as React from "react";
-import { AlertCircle, Settings2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Settings2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ErrorAlert } from "@/components/gibson/shared";
+import {
+  AccessScopeSelector,
+  type AccessScopeSelection,
+} from "@/components/gibson/shared/AccessScopeSelector";
+import {
+  RWXMatrix,
+  type RWXAction,
+  type RWXItem,
+} from "@/components/gibson/shared/RWXMatrix";
+import { setComponentAccessAction } from "@/app/actions/crd/access";
+import {
+  listAccessibleComponentsAction,
+  type DiscoveredItem,
+} from "@/app/actions/read/listAccessibleComponents";
+import { usePermitted } from "@/src/lib/auth/tenant";
+import { useTierLimits } from "@/src/hooks/useTierLimits";
 
-import { usePlugins } from "@/src/hooks/useComponents";
-import type { ComponentHealth } from "@/src/types";
+type Scope = AccessScopeSelection["scope"];
 
-// ---------------------------------------------------------------------------
-// Category badge styling derived from plugin metadata
-// ---------------------------------------------------------------------------
+interface PluginMatrixItem extends RWXItem {
+  configurable: boolean;
+  category: string;
+}
+
+function inferCategory(name: string): string {
+  const n = name.toLowerCase();
+  if (n === "scope-ingestion" || n === "scope_ingestion") return "Core";
+  if (n === "debug-plugin" || n === "debug_plugin") return "Development";
+  return "Integration";
+}
+
+function inferConfigurable(name: string): boolean {
+  return !name.toLowerCase().includes("debug");
+}
+
+function toMatrixItem(d: DiscoveredItem): PluginMatrixItem {
+  const meta: string[] = [];
+  if (d.version) meta.push(`v${d.version}`);
+  if (d.description) meta.push(d.description);
+  return {
+    name: d.name,
+    displayName: d.displayName ?? d.name,
+    description: meta.join(" — ") || undefined,
+    rwx: d.rwx,
+    denyingGates: d.denyingGates,
+    configurable: inferConfigurable(d.name),
+    category: inferCategory(d.name),
+  };
+}
+
+function scopeParam(
+  s: Scope,
+): "tenant" | "team" | "user" | "component" | "my" | null {
+  switch (s) {
+    case "tenant-wide":
+      return "tenant";
+    case "per-team":
+      return "team";
+    case "per-user":
+      return "user";
+    case "per-agent":
+      return "component";
+    case "my-access":
+      return "my";
+    default:
+      return null;
+  }
+}
 
 const CATEGORY_BADGE_CLASS: Record<string, string> = {
   Core: "border-primary/40 bg-primary/10 text-primary",
-  Integration: "border-blue-500/40 bg-blue-500/10 text-blue-500 dark:text-blue-400",
+  Integration:
+    "border-blue-500/40 bg-blue-500/10 text-blue-500 dark:text-blue-400",
   Development:
     "border-yellow-500/40 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
 };
 
-function inferCategory(plugin: ComponentHealth): string {
-  const name = plugin.name.toLowerCase();
-  if (name === "scope-ingestion" || name === "scope_ingestion") return "Core";
-  if (name === "debug-plugin" || name === "debug_plugin") return "Development";
-  return "Integration";
-}
-
-function inferVersion(plugin: ComponentHealth): string {
-  const meta = plugin.metadata;
-  if (meta && typeof meta["version"] === "string") return meta["version"] as string;
-  return "—";
-}
-
-function inferConfigurable(plugin: ComponentHealth): boolean {
-  const meta = plugin.metadata;
-  if (meta && typeof meta["configurable"] === "boolean") return meta["configurable"] as boolean;
-  // Default: configurable unless it's the debug plugin
-  return !plugin.name.toLowerCase().includes("debug");
-}
-
-// ---------------------------------------------------------------------------
-// Loading skeleton row
-// ---------------------------------------------------------------------------
-
-function PluginRowSkeleton() {
-  return (
-    <TableRow>
-      <TableCell className="py-3">
-        <div className="space-y-1.5">
-          <Skeleton className="h-3.5 w-32" />
-          <Skeleton className="h-3 w-48" />
-        </div>
-      </TableCell>
-      <TableCell>
-        <Skeleton className="h-5 w-20 rounded-full" />
-      </TableCell>
-      <TableCell>
-        <Skeleton className="h-3.5 w-10" />
-      </TableCell>
-      <TableCell>
-        <Skeleton className="h-5 w-12 rounded-full" />
-      </TableCell>
-      <TableCell />
-    </TableRow>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Page component
-// ---------------------------------------------------------------------------
-
 export function PluginsContent() {
-  const { data: plugins = [], isLoading, isError, error } = usePlugins();
+  const canManage = usePermitted("components:manage");
+  const { data: tier } = useTierLimits();
+  const isProsumer = tier?.config.maxTeamMembers === 1;
 
-  // Optimistic enabled state: keyed by plugin id
-  const [enabledOverrides, setEnabledOverrides] = React.useState<Record<string, boolean>>({});
+  const [scope, setScope] = useState<AccessScopeSelection>({
+    scope: canManage ? "tenant-wide" : "my-access",
+  });
+  const [items, setItems] = useState<PluginMatrixItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  function isEnabled(plugin: ComponentHealth): boolean {
-    if (plugin.id in enabledOverrides) return enabledOverrides[plugin.id];
-    return plugin.status !== "unhealthy";
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    listAccessibleComponentsAction({
+      kind: "plugin",
+      scope: scope.scope,
+      targetId: scope.targetId,
+    })
+      .then((r) => {
+        if (cancelled) return;
+        if (r.ok) setItems(r.data.map(toMatrixItem));
+        else setError(new Error(r.error));
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err : new Error(String(err)));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [scope]);
+
+  async function refetch() {
+    const r = await listAccessibleComponentsAction({
+      kind: "plugin",
+      scope: scope.scope,
+      targetId: scope.targetId,
+    });
+    if (r.ok) setItems(r.data.map(toMatrixItem));
   }
 
-  async function handleToggle(plugin: ComponentHealth, next: boolean) {
-    // Optimistically update local state
-    setEnabledOverrides((prev) => ({ ...prev, [plugin.id]: next }));
-
-    try {
-      const response = await fetch(`/api/plugins/${encodeURIComponent(plugin.name)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: next }),
-      });
-
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        throw new Error(body?.error?.message ?? `Request failed (${response.status})`);
-      }
-
-      toast.success(`${plugin.name} ${next ? "enabled" : "disabled"}`);
-    } catch (err) {
-      // Roll back
-      setEnabledOverrides((prev) => ({ ...prev, [plugin.id]: !next }));
-      toast.error(`Failed to ${next ? "enable" : "disable"} ${plugin.name}`, {
-        description: err instanceof Error ? err.message : "Unknown error",
-      });
+  async function onToggle(
+    item: RWXItem,
+    action: RWXAction,
+    enabled: boolean,
+  ) {
+    const s = scopeParam(scope.scope);
+    if (!s) return;
+    const r = await setComponentAccessAction({
+      scope: s,
+      targetId: scope.targetId,
+      componentRef: `component:plugin/${item.name}`,
+      action,
+      enabled,
+    });
+    if (!r.ok) {
+      toast.error(`Toggle failed: ${r.error}`);
+      await refetch();
+      return;
     }
+    setItems((prev) =>
+      prev.map((it) =>
+        it.name === item.name
+          ? { ...it, rwx: { ...it.rwx, [action]: enabled } }
+          : it,
+      ),
+    );
   }
 
-  function handleConfigure(plugin: ComponentHealth) {
-    // Placeholder — a plugin config dialog would open here
-    toast.info(`Plugin configuration for ${plugin.name} is not yet available`);
+  function handleConfigure(name: string) {
+    toast.info(`Plugin configuration for ${name} is not yet available`);
   }
 
-  const enabledCount = plugins.filter((p) => isEnabled(p)).length;
+  function renderTrailing(item: RWXItem) {
+    const plugin = items.find((p) => p.name === item.name);
+    if (!plugin) return null;
+    return (
+      <div className="flex items-center justify-end gap-2">
+        <Badge
+          variant="outline"
+          className={CATEGORY_BADGE_CLASS[plugin.category] ?? ""}
+        >
+          {plugin.category}
+        </Badge>
+        {plugin.configurable && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={() => handleConfigure(plugin.name)}
+            aria-label={`Configure ${plugin.name}`}
+          >
+            <Settings2 className="size-3.5" />
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  const summary = useMemo(() => {
+    const total = items.length;
+    const executable = items.filter((i) => i.rwx.execute).length;
+    return { total, executable };
+  }, [items]);
 
   return (
     <div className="space-y-4">
       <div>
         <h3 className="text-sm font-medium">Plugins</h3>
         <p className="text-muted-foreground mt-1 text-xs">
-          Plugins are stateful service integrations with Initialize/Shutdown lifecycle hooks.
-          Changes take effect on the next daemon restart.
+          Plugins are stateful service integrations with Initialize/Shutdown
+          lifecycle hooks. Toggles here write the deny-wins tuples that gate
+          per-action access.
         </p>
       </div>
-
-      {isError && (
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertDescription className="text-xs">
-            {error?.message ?? "Failed to load plugins. Check daemon connectivity."}
-          </AlertDescription>
-        </Alert>
-      )}
 
       <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
         <CardHeader className="pb-0">
           <CardTitle className="text-sm">Installed plugins</CardTitle>
           <CardDescription className="text-xs">
-            {isLoading ? (
-              <Skeleton className="inline-block h-3 w-24" />
-            ) : (
-              `${enabledCount} of ${plugins.length} enabled`
-            )}
+            {loading
+              ? "Loading…"
+              : `${summary.executable} of ${summary.total} executable`}
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-3">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="text-xs">Plugin</TableHead>
-                <TableHead className="text-xs">Category</TableHead>
-                <TableHead className="text-xs">Version</TableHead>
-                <TableHead className="text-xs">Status</TableHead>
-                <TableHead className="w-20 text-xs" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <>
-                  <PluginRowSkeleton />
-                  <PluginRowSkeleton />
-                  <PluginRowSkeleton />
-                </>
-              ) : plugins.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="py-8 text-center text-xs text-muted-foreground"
-                  >
-                    No plugins registered. Deploy a plugin binary and register it via{" "}
-                    <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">
-                      component.yaml
-                    </code>
-                    .
-                  </TableCell>
-                </TableRow>
-              ) : (
-                plugins.map((plugin) => {
-                  const category = inferCategory(plugin);
-                  const version = inferVersion(plugin);
-                  const configurable = inferConfigurable(plugin);
-                  const enabled = isEnabled(plugin);
+        <CardContent className="space-y-4 pt-3">
+          {canManage ? (
+            <AccessScopeSelector
+              value={scope}
+              onChange={setScope}
+              disablePerTeam={isProsumer}
+            />
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Showing the plugins currently accessible to you. Tenant admins
+              can manage per-team, per-user, and per-agent scopes.
+            </p>
+          )}
 
-                  return (
-                    <TableRow key={plugin.id} className="hover:bg-muted/40">
-                      <TableCell className="py-3">
-                        <div>
-                          <div className="font-mono text-xs font-medium">{plugin.name}</div>
-                          {typeof plugin.metadata?.description === "string" && (
-                            <div className="text-muted-foreground mt-0.5 text-xs leading-tight">
-                              {plugin.metadata.description}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={CATEGORY_BADGE_CLASS[category] ?? ""}
-                        >
-                          {category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        {version !== "—" ? `v${version}` : version}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={enabled}
-                            onCheckedChange={(checked) => handleToggle(plugin, checked)}
-                            aria-label={`Toggle ${plugin.name}`}
-                            size="sm"
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            {enabled ? "On" : "Off"}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {configurable && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-7"
-                            onClick={() => handleConfigure(plugin)}
-                            aria-label={`Configure ${plugin.name}`}
-                          >
-                            <Settings2 className="size-3.5" />
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+          {isProsumer && canManage && scope.scope === "per-team" && (
+            <p className="text-xs text-muted-foreground">
+              Upgrade for team policies.
+            </p>
+          )}
+
+          {error && (
+            <ErrorAlert
+              error={error}
+              title="Unable to load plugin catalog"
+              retry={refetch}
+            />
+          )}
+
+          {loading && !error && (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          )}
+
+          {!loading && !error && items.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No plugins available for this scope. Deploy a plugin binary and
+              register it via{" "}
+              <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">
+                component.yaml
+              </code>
+              .
+            </p>
+          )}
+
+          {!loading && !error && items.length > 0 && (
+            <RWXMatrix
+              items={items}
+              onToggle={onToggle}
+              rowTrailingAction={renderTrailing}
+            />
+          )}
         </CardContent>
       </Card>
-
-      <p className="text-muted-foreground text-xs">
-        To install additional plugins, add the plugin binary to the cluster and register it via{" "}
-        <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">component.yaml</code>.
-      </p>
     </div>
   );
 }
