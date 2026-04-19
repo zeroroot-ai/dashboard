@@ -21,7 +21,7 @@ const items = [
   },
   {
     term: "Observability",
-    body: "Langfuse captures every prompt, response, tool call, and graph write. Replay any mission step-by-step — see why the agent chose Action X, what each step cost, and where the reasoning went sideways. Tagged per mission, agent, tenant.",
+    body: "Langfuse captures every prompt, response, tool call, and graph write. Replay any mission step-by-step — see why the agent chose Action X, what each step cost, and where the reasoning went sideways. Tagged per mission, agent, team.",
   },
 ] as const;
 
