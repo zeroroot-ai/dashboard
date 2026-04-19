@@ -56,6 +56,35 @@ a defence-in-depth check; the same rules live in
 `src/lib/validators/auth.ts` and are used by both the form and
 `signUpAction`.
 
+## LLM providers (spec 25)
+
+The dashboard does **not** own any LLM provider credential storage. Every
+credential flows through the daemon's encrypted credential store
+(`crypto.AESGCMEncryptor` + configured `KeyProvider`). The dashboard process
+never holds a decrypted credential during chat.
+
+**Runtime (every chat turn):** browser → Next.js route → `GibsonLLMAdapter`
+(custom Vercel AI SDK `LanguageModelV2` at `src/lib/ai/gibson-llm-adapter.ts`)
+→ gRPC `ExecuteLLM` / `StreamLLM` on the daemon. Daemon loads the decrypted
+credential from `internal/providerconfig.Store.Resolve`, constructs the
+langchaingo provider, makes the upstream call, streams back.
+
+**Form submission (one-time per provider config change):** browser → form →
+`POST /api/settings/providers/*` (Next.js route) → `daemon*` gRPC client in
+`src/lib/gibson-client.ts` → daemon's `CreateProvider` / `UpdateProvider`.
+Plaintext credential transits the Next.js route memory for one request,
+never cached or logged.
+
+Build-time guards at `scripts/check-no-llm-credential-reads.mjs` and
+`scripts/check-no-provider-k8s-access.mjs` fail the build if anyone
+re-introduces `@ai-sdk/<provider>` imports, direct provider SDK imports,
+LLM credential env var reads, or the deleted `llm-providers` Kubernetes
+Secret path. Provider form is descriptor-driven — consumes
+`GetSupportedProviders` via `useSupportedProviders()` — so dashboard ↔
+daemon can't drift on the provider list.
+
+See `docs/byok-providers.md` for the full flow + `.spec-workflow/specs/25-daemon-driven-provider-config/` for rationale.
+
 ## Debug mode
 
 Set `dashboard.debug: true` in the helm values to:

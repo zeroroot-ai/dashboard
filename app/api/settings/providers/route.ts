@@ -1,0 +1,94 @@
+/**
+ * GET  /api/settings/providers — list all configured providers (masked creds)
+ * POST /api/settings/providers — create a new provider config
+ *
+ * Both handlers delegate to the daemon DaemonAdminService RPCs via
+ * the typed client functions from gibson-client.ts. No storage logic lives
+ * here — this file is delegation-only.
+ */
+
+import 'server-only';
+import { type NextRequest } from 'next/server';
+import { getServerSession } from '@/src/lib/auth';
+import {
+  daemonListProviders,
+  daemonCreateProvider,
+  type DaemonProviderConfigInput,
+} from '@/src/lib/gibson-client';
+import { translateError } from './_lib/error';
+
+// ---------------------------------------------------------------------------
+// GET /api/settings/providers
+// ---------------------------------------------------------------------------
+
+/**
+ * List all LLM provider configs for the current tenant.
+ * Returns masked credential values only — plaintext is never returned.
+ */
+export async function GET(_req: NextRequest) {
+  const session = await getServerSession();
+  if (!session) {
+    return Response.json(
+      { error: { code: 'unauthenticated', message: 'Authentication required' } },
+      { status: 401 },
+    );
+  }
+
+  const userId = session.user.id;
+  const tenantId = session.user.tenantId ?? undefined;
+
+  try {
+    const providers = await daemonListProviders(userId, tenantId);
+    return Response.json({ providers });
+  } catch (err) {
+    return translateError(err);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/settings/providers
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a new LLM provider config.
+ *
+ * Request body shape matches DaemonProviderConfigInput:
+ *   name         string            (required)
+ *   type         string            (required, e.g. "anthropic")
+ *   defaultModel string            (required)
+ *   credentials  Record<string,string>  (required, plaintext — daemon encrypts immediately)
+ *   setAsDefault boolean           (optional)
+ *
+ * Returns the created provider record with masked credentials.
+ * The plaintext credentials transit this handler's memory for one request
+ * and are never persisted by the dashboard.
+ */
+export async function POST(req: NextRequest) {
+  const session = await getServerSession();
+  if (!session) {
+    return Response.json(
+      { error: { code: 'unauthenticated', message: 'Authentication required' } },
+      { status: 401 },
+    );
+  }
+
+  const userId = session.user.id;
+  const tenantId = session.user.tenantId ?? undefined;
+
+  let body: DaemonProviderConfigInput;
+  try {
+    body = await req.json() as DaemonProviderConfigInput;
+  } catch {
+    return Response.json(
+      { error: { code: 'invalid_argument', message: 'Request body must be valid JSON' } },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const provider = await daemonCreateProvider(body, userId, tenantId);
+    return Response.json({ provider }, { status: 201 });
+  } catch (err) {
+    return translateError(err);
+  }
+}

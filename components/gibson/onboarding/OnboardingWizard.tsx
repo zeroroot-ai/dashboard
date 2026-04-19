@@ -180,12 +180,10 @@ function LLMProviderStep({
     try {
       await createProvider.mutateAsync({
         config: {
-          type: values.provider as LLMProviderValue,
+          type: values.provider,
           name: values.provider,
-          displayName:
-            LLM_PROVIDERS.find((p) => p.value === values.provider)?.label ?? values.provider,
-          apiKey: values.apiKey || undefined,
-          isEnabled: true,
+          defaultModel: '',
+          credentials: values.apiKey ? { api_key: values.apiKey } : {},
         },
         testConnection: false,
       });

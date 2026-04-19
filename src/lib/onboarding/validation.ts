@@ -140,45 +140,21 @@ export function validateApiKeyFormat(
 }
 
 /**
- * Validate API key with the provider (makes actual API call)
+ * Validate API key format.
+ *
+ * NOTE: Spec 25 removed the live-call validation path (`/api/onboarding/validate-llm`)
+ * in favour of the daemon's `TestProvider` RPC, which is invoked from the
+ * Settings > Providers form on save. Onboarding's job is reduced to
+ * format-checking the credential before the user submits; the daemon does
+ * the real network check and returns structured errors through the CRUD
+ * flow. Callers that still need a live test should use the `testProvider`
+ * gibson-client helper against the daemon.
  */
 export async function validateApiKey(
   provider: LLMProvider,
   apiKey: string
 ): Promise<ValidationResult> {
-  // First check format
-  const formatResult = validateApiKeyFormat(provider, apiKey);
-  if (!formatResult.valid) {
-    return formatResult;
-  }
-
-  try {
-    const response = await fetch('/api/onboarding/validate-llm', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider, apiKey }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return {
-        valid: false,
-        error: data.error || 'Validation failed',
-      };
-    }
-
-    return {
-      valid: data.valid,
-      error: data.error,
-      metadata: data.models ? { models: data.models } : undefined,
-    };
-  } catch (error) {
-    return {
-      valid: false,
-      error: 'Failed to validate API key. Please try again.',
-    };
-  }
+  return validateApiKeyFormat(provider, apiKey);
 }
 
 // ============================================================================

@@ -6,7 +6,6 @@
 import { apiFetch } from './fetch';
 import type {
   ProviderConfig,
-  ProviderConfigInput,
   ConnectionTestResult,
   ProviderAuditEvent,
   ProviderAuditEventType,
@@ -22,6 +21,7 @@ import type {
   ImportResult,
   HealthStatus,
 } from '@/src/types/provider';
+import type { DaemonProviderConfigInput } from '@/src/lib/gibson-client';
 
 // ============================================================================
 // Error Types
@@ -123,7 +123,7 @@ export async function getProvider(
  * Create a new LLM provider configuration
  */
 export async function createProvider(
-  config: ProviderConfigInput,
+  config: DaemonProviderConfigInput,
   options?: {
     testConnection?: boolean;
     setAsDefault?: boolean;
@@ -147,7 +147,7 @@ export async function createProvider(
  */
 export async function updateProvider(
   name: string,
-  config: Partial<ProviderConfigInput>,
+  config: Partial<DaemonProviderConfigInput>,
   options?: { testConnection?: boolean; expectedVersion?: number }
 ): Promise<UpdateProviderResponse> {
   const response = await apiFetch(`/api/settings/providers/${encodeURIComponent(name)}`, {
@@ -210,7 +210,7 @@ export async function testProviderConnection(
  * Test connection with a new configuration (without saving)
  */
 export async function testConnectionConfig(
-  config: ProviderConfigInput,
+  config: DaemonProviderConfigInput,
   options?: { timeoutSeconds?: number }
 ): Promise<ConnectionTestResult> {
   const response = await apiFetch('/api/settings/providers/test', {
@@ -229,7 +229,7 @@ export async function testConnectionConfig(
  * Test connection with a new provider configuration (alias for testConnectionConfig)
  */
 export async function testNewProviderConnection(
-  config: ProviderConfigInput,
+  config: DaemonProviderConfigInput,
   options?: { timeoutSeconds?: number }
 ): Promise<ConnectionTestResult> {
   return testConnectionConfig(config, options);
