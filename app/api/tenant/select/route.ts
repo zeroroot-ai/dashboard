@@ -1,13 +1,12 @@
 /**
  * POST /api/tenant/select
  *
- * Sets the active tenant for the current session.
+ * Sets the active tenant for the current session by writing the
+ * gibson_current_tenant cookie. Validates that the requested tenant slug
+ * is in the caller's session tenants list (or the user is cross-tenant).
  *
- * Validates that the requested tenant slug is in the caller's organization
- * list, then calls Better Auth's setActiveOrganization to persist the choice
- * in activeOrganizationId on the session row. Also writes the
- * gibson_current_tenant cookie so middleware can inject X-Gibson-Tenant
- * without a DB call on every request.
+ * The Better Auth setActiveOrganization call is removed — Zitadel manages
+ * the active org via claims in the OIDC token.
  *
  * Request body:
  * - tenant: string — the slug of the tenant to activate
@@ -19,8 +18,6 @@
  * - 403 { error: 'TENANT_FORBIDDEN' } — user is not a member
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
-import { auth } from '@/src/lib/auth-server';
 import { getServerSession } from '@/src/lib/auth';
 
 // Cookie name used across middleware.ts and this route.
@@ -56,23 +53,6 @@ export async function POST(request: NextRequest) {
       { error: 'TENANT_FORBIDDEN' },
       { status: 403 },
     );
-  }
-
-  // Update Better Auth activeOrganizationId via the organization plugin's
-  // setActiveOrganization endpoint. This writes to the session row so the
-  // enriched session (used by server components) reflects the new active org.
-  try {
-    const reqHeaders = await headers();
-    await auth.api.setActiveOrganization({
-      body: { organizationSlug: tenant },
-      headers: reqHeaders,
-    });
-  } catch (err) {
-    // If the org slug is unknown to Better Auth (not yet provisioned) fall
-    // back to cookie-only — the middleware header is still the runtime
-    // enforcement path for the daemon.
-    const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`[tenant/select] setActiveOrganization failed for slug=${tenant}: ${msg}`);
   }
 
   const response = NextResponse.json({ ok: true, currentTenant: tenant });

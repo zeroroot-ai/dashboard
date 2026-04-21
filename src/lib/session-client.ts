@@ -3,19 +3,15 @@
 /**
  * Client-side session shim.
  *
- * Replaces the legacy client-side useSession() hook from
- * better-auth/react. Internally calls the in-process getSessionClient
- * Server Action (which calls auth.api.getSession server-side). No
- * public /api/auth/* HTTP endpoint exists any more; Next.js Server
- * Action RPC has its own Origin + CSRF protection.
+ * Wraps next-auth/react's useSession() so that all dashboard Client Components
+ * continue to use the same import path (@/src/lib/session-client) without
+ * knowing which auth backend is in use.
  *
- * Returned shape mirrors the previous useSession() result so callsites
- * only need a one-line import swap.
+ * Returned shape mirrors the previous Better Auth useSession() result so
+ * callsites only need this one-line import — no other changes needed.
  */
 
-import { useEffect, useState } from "react";
-
-import { getSessionClient } from "@/app/actions/auth/session-client";
+import { useSession as useNextAuthSession } from "next-auth/react";
 
 export type SessionUser = {
   id: string;
@@ -23,6 +19,17 @@ export type SessionUser = {
   name?: string | null;
   image?: string | null;
   role?: string | null;
+  /**
+   * Active tenant slug from the `gibson:tenant` OIDC claim injected by the
+   * Zitadel custom claim Action (task 2).  Set after login and updated on
+   * every token refresh triggered by switchTenantAction.
+   */
+  tenant?: string | null;
+  /**
+   * All tenant slugs available to this user, from the `gibson:tenants` claim.
+   * May be absent for single-tenant users (only `tenant` will be set).
+   */
+  tenants?: string[];
 };
 
 export type ClientSession = {
@@ -44,29 +51,48 @@ export type UseSessionResult = {
 };
 
 export function useSession(): UseSessionResult {
-  const [data, setData] = useState<ClientSession | null>(null);
-  const [isPending, setIsPending] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const { data, status, update } = useNextAuthSession();
 
-  const fetchSession = async () => {
-    setIsPending(true);
-    try {
-      const s = await getSessionClient();
-      setData(s as ClientSession | null);
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e : new Error(String(e)));
-      setData(null);
-    } finally {
-      setIsPending(false);
-    }
+  // Auth.js extends Session.user with the gibson:tenant claim (see auth.ts
+  // module augmentation). Cast to access the extended fields safely.
+  type ExtUser = {
+    id?: string | null;
+    email?: string | null;
+    name?: string | null;
+    image?: string | null;
+    tenant?: string | null;
+    tenants?: string[];
+  };
+  const extUser: ExtUser | undefined = data?.user
+    ? (data.user as ExtUser)
+    : undefined;
+
+  const clientSession: ClientSession | null = extUser
+    ? {
+        user: {
+          id: extUser.id ?? "",
+          email: extUser.email ?? "",
+          name: extUser.name ?? null,
+          image: extUser.image ?? null,
+          tenant: extUser.tenant ?? null,
+          tenants: extUser.tenants,
+        },
+        session: {
+          id: "",
+          userId: extUser.id ?? "",
+          expiresAt: data?.expires,
+        },
+      }
+    : null;
+
+  const refetch = async () => {
+    await update();
   };
 
-  useEffect(() => {
-    void fetchSession();
-    // intentional: fetch once on mount; consumers call refetch() if needed
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return { data, isPending, error, refetch: fetchSession };
+  return {
+    data: clientSession,
+    isPending: status === "loading",
+    error: null,
+    refetch,
+  };
 }

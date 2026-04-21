@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getServerSession } from "@/src/lib/auth";
-import { signOutAction } from "@/app/actions/auth/signout";
+import { signOut } from "@/auth";
 import { resolveUserFacingError } from "@/src/lib/errors/user-facing";
 
 /**
@@ -87,7 +87,7 @@ export default async function ForbiddenPage() {
           <form
             action={async () => {
               "use server";
-              await signOutAction();
+              await signOut({ redirectTo: "/login" });
             }}
           >
             <button

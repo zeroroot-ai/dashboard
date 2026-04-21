@@ -19,7 +19,7 @@ import {
 import { BellIcon, CreditCardIcon, LogOutIcon, UserCircle2Icon } from "lucide-react";
 import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import { useSession } from "@/src/lib/session-client";
-import { signOutAction } from "@/app/actions/auth/signout";
+import { signOut } from "next-auth/react";
 
 function getInitials(name?: string | null): string {
   if (!name) return "??";
@@ -92,7 +92,7 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOutAction("/login")}>
+            <DropdownMenuItem onClick={() => void signOut({ redirectTo: "/login" })}>
               <LogOutIcon />
               Log out
             </DropdownMenuItem>

@@ -12,8 +12,8 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { signOut } from 'next-auth/react';
 import { useSession } from '@/src/lib/session-client';
-import { signOutAction } from '@/app/actions/auth/signout';
 import type { GibsonSession } from '@/src/lib/auth';
 
 // ============================================================================
@@ -151,7 +151,7 @@ export function useSessionSecurity(options: SessionSecurityOptions = {}): Sessio
     // sign out and redirect to login.
     if (session?.error === 'RefreshTokenExpired') {
       console.warn('[SessionSecurity] Refresh token expired, signing out');
-      signOutAction("/login");
+      void signOut({ redirectTo: "/login" });
       return;
     }
 
@@ -269,7 +269,7 @@ export function useSessionSecurity(options: SessionSecurityOptions = {}): Sessio
       const customEvent = event as CustomEvent<{ userId: string }>;
       if (userId === customEvent.detail.userId) {
         onSessionInvalidated?.();
-        signOutAction("/auth/signin");
+        void signOut({ redirectTo: "/auth/signin" });
       }
     };
 

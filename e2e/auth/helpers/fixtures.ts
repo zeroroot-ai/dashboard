@@ -18,7 +18,7 @@ import crypto from "crypto";
 
 /**
  * The target base URL. Defaults to the kind `gibson` dev cluster port
- * (NodePort 30081).  Never targets the gibson-customer cluster (31xxx).
+ * (NodePort 30081).
  */
 export const BASE_URL =
   process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:30081";

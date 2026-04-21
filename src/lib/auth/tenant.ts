@@ -1,7 +1,6 @@
 'use client';
 
 import { useSession } from '@/src/lib/session-client';
-import { signOutAction } from '@/app/actions/auth/signout';
 
 /**
  * Client-side hooks for accessing tenant + permission information from
@@ -30,15 +29,13 @@ interface GibsonSessionUser {
   crossTenant?: boolean;
 }
 
-type BetterAuthSessionData = ReturnType<typeof useSession>['data'];
+type SessionData = ReturnType<typeof useSession>['data'];
 
-function getGibsonUser(session: BetterAuthSessionData): GibsonSessionUser {
-  // Better Auth sessions carry the raw user shape. Gibson-specific fields
-  // (tenants, permissions, crossTenant, etc.) are server-populated and
-  // available via the cookie-cached enriched session. The client-side
-  // session from useSession() contains only the core Better Auth
-  // fields; Gibson fields are read from session.user using type casting
-  // since Better Auth's client types do not model these custom fields.
+function getGibsonUser(session: SessionData): GibsonSessionUser {
+  // Auth.js sessions carry the raw user shape. Gibson-specific fields
+  // (tenants, permissions, crossTenant, etc.) are server-populated via
+  // the Zitadel claim callbacks and available on session.user. Read them
+  // via type cast since next-auth's client types don't model custom fields.
   return (session?.user ?? {}) as unknown as GibsonSessionUser;
 }
 

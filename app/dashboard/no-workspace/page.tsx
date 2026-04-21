@@ -1,5 +1,4 @@
 import React from "react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import {
@@ -9,32 +8,34 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { getServerSession } from "@/src/lib/auth";
-import { signOutAction } from "@/app/actions/auth/signout";
-import { listPendingInvitationsAction } from "@/app/actions/auth/invitations";
 
 /**
- * No-workspace page — shown when an authenticated user has no organization
- * memberships yet. Provides three possible next steps:
+ * No-workspace page — defensive fallback.
  *
- * 1. Create a workspace (always shown).
- * 2. Accept a pending invitation (shown only when the org adapter returns
- *    at least one pending, non-expired invitation for this user's email).
- * 3. Sign out.
+ * Post-`dashboard-native-signup` this page should be unreachable during
+ * normal operation: `signupAction` always applies a Tenant CR + TenantMember
+ * before redirecting the user to OIDC sign-in, so every signed-in user
+ * arrives at `/dashboard` with a populated `session.user.tenant`. Middleware
+ * additionally redirects tenantless users to `/api/auth/federated-signout`.
  *
- * This is a Server Component: session and pending-invitation data are fetched
- * on the server so the page renders without any client-side loading state.
+ * This page exists only for a narrow diagnostic case: an operator-side
+ * failure after signup completed (Tenant CR deleted out from under the
+ * user, Zitadel org removed manually, etc.). Showing a "Create workspace"
+ * link would loop the user back through signup — wrong for this scenario.
+ * Instead, we offer sign-out and a support hand-off.
+ *
+ * Spec: dashboard-native-signup task 20.
  */
 export default async function NoWorkspacePage() {
   const session = await getServerSession();
 
-  // If the user is not signed in at all, send them to login.
+  // Not signed in — normal flow.
   if (!session) {
     redirect("/login");
   }
 
-  // If the user already has a workspace, redirect into the dashboard.
+  // Has a tenant — page should not have been reached.
   if (
     session.user?.tenantId ||
     (session.user?.tenants && session.user.tenants.length > 0)
@@ -42,64 +43,47 @@ export default async function NoWorkspacePage() {
     redirect("/dashboard");
   }
 
-  // Fetch pending invitations addressed to this user's email.
-  const invResult = await listPendingInvitationsAction();
-  const hasPendingInvitations =
-    invResult.ok && invResult.invitations.length > 0;
-
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
       <Card
         role="alert"
-        aria-label="No workspace found"
+        aria-label="Couldn't load your workspace"
         className="w-full max-w-md"
       >
         <CardHeader>
           <CardTitle>
             <h1 className="text-xl font-semibold leading-none">
-              No workspace found
+              Couldn&apos;t load your workspace
             </h1>
           </CardTitle>
         </CardHeader>
 
         <CardContent className="flex flex-col gap-4">
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Your account is not part of any workspace yet. Create a new workspace
-            to get started, or accept a pending invitation if you have been
-            invited to an existing one.
+            Your account is signed in but we can&apos;t find a workspace
+            associated with it. This is usually a temporary issue — please
+            sign out and back in to retry. If it persists, contact support.
           </p>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Button
-              asChild
-              className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            <a
+              href="mailto:support@zero-day.ai"
+              className="underline underline-offset-4 hover:text-foreground"
             >
-              <Link href="/signup">Create workspace</Link>
-            </Button>
-
-            {hasPendingInvitations && (
-              <Button
-                asChild
-                variant="outline"
-                className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                {/*
-                 * Redirect to the accept-invitation flow. The invitations list
-                 * page shows all pending invitations the user can accept.
-                 */}
-                <Link href="/dashboard/invitations">Accept invitation</Link>
-              </Button>
-            )}
-          </div>
+              support@zero-day.ai
+            </a>
+          </p>
         </CardContent>
 
         <CardFooter>
-          <form
-            action={async () => {
-              "use server";
-              await signOutAction();
-            }}
-          >
+          {/*
+            Federated sign-out — clears the Auth.js cookie AND ends the
+            Zitadel session (so the next /login doesn't silently re-auth).
+            Deliberately NO "Create workspace" button: workspace creation
+            happens at /signup only, and linking here would loop a
+            tenant-stuck user back through signup with no effect.
+          */}
+          <form method="post" action="/api/auth/federated-signout">
             <button
               type="submit"
               className="text-muted-foreground text-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"

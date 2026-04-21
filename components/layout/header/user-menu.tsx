@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "@/src/lib/session-client";
-import { signOutAction } from "@/app/actions/auth/signout";
+import { signOut } from "next-auth/react";
 import { BadgeCheck, Bell, ChevronRightIcon, CreditCard, LogOut } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -81,7 +81,7 @@ export default function UserMenu() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOutAction("/login")}>
+        <DropdownMenuItem onClick={() => void signOut({ redirectTo: "/login" })}>
           <LogOut />
           Log out
         </DropdownMenuItem>
