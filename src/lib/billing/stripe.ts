@@ -21,13 +21,28 @@ import type Stripe from 'stripe';
 // Types
 // ---------------------------------------------------------------------------
 
-/** Paid plan tiers that map to Stripe price IDs. */
-export type BillingTier = 'pro' | 'enterprise';
+/**
+ * Paid plan tiers that map to Stripe price IDs.
+ * `solo` is the free self-serve tier and intentionally absent here.
+ * Names match `TenantTier` in `src/lib/k8s/types.ts` and the operator's
+ * `plans.PlanID` Go enum — single source of truth for plan identity.
+ */
+export type BillingTier =
+  | 'squad'
+  | 'org'
+  | 'platform'
+  | 'enterprise-cloud'
+  | 'enterprise-onprem'
+  | 'public-sector';
 
 /** Environment variable names for paid-plan price IDs. */
 const PRICE_ENV_MAP: Record<BillingTier, string> = {
-  pro: 'STRIPE_PRICE_PRO',
-  enterprise: 'STRIPE_PRICE_ENTERPRISE',
+  squad: 'STRIPE_PRICE_SQUAD',
+  org: 'STRIPE_PRICE_ORG',
+  platform: 'STRIPE_PRICE_PLATFORM',
+  'enterprise-cloud': 'STRIPE_PRICE_ENTERPRISE_CLOUD',
+  'enterprise-onprem': 'STRIPE_PRICE_ENTERPRISE_ONPREM',
+  'public-sector': 'STRIPE_PRICE_PUBLIC_SECTOR',
 };
 
 // ---------------------------------------------------------------------------
@@ -148,7 +163,9 @@ export async function refundCharge(
  * Return the Stripe Price ID for the given tier from environment variables,
  * or null if the env var is unset.
  *
- * Env vars: STRIPE_PRICE_PRO, STRIPE_PRICE_ENTERPRISE.
+ * Env vars: STRIPE_PRICE_SQUAD, STRIPE_PRICE_ORG, STRIPE_PRICE_PLATFORM,
+ * STRIPE_PRICE_ENTERPRISE_CLOUD, STRIPE_PRICE_ENTERPRISE_ONPREM,
+ * STRIPE_PRICE_PUBLIC_SECTOR.
  */
 export function priceIdForTier(tier: string): string | null {
   const envKey = PRICE_ENV_MAP[tier as BillingTier];
@@ -181,8 +198,15 @@ export function validateBillingConfig(): void {
   const required = [
     'STRIPE_SECRET_KEY',
     'STRIPE_WEBHOOK_SECRET',
-    'STRIPE_PRICE_PRO',
-    'STRIPE_PRICE_ENTERPRISE',
+    // One env var per paid tier. Validated at startup; missing in dev or
+    // free-tier-only deployments → set DASHBOARD_BILLING_PAID_TIERS_ENABLED
+    // to false to skip this check entirely.
+    'STRIPE_PRICE_SQUAD',
+    'STRIPE_PRICE_ORG',
+    'STRIPE_PRICE_PLATFORM',
+    'STRIPE_PRICE_ENTERPRISE_CLOUD',
+    'STRIPE_PRICE_ENTERPRISE_ONPREM',
+    'STRIPE_PRICE_PUBLIC_SECTOR',
   ];
 
   const missing = required.filter((v) => !process.env[v]);

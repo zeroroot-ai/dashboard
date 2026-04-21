@@ -9,7 +9,7 @@
  * metadata (code, message) so plaintext credentials cannot appear in logs.
  */
 
-import { ConnectError, Code } from '@/src/lib/gibson-client';
+import { ConnectError, Code } from '@connectrpc/connect';
 
 /**
  * Map a Connect gRPC status code to an HTTP status code.
@@ -52,15 +52,12 @@ export function mapCodeToHttpStatus(code: Code): number {
 export function translateError(err: unknown): Response {
   if (err instanceof ConnectError) {
     const status = mapCodeToHttpStatus(err.code);
-    // Use rawMessage (daemon-provided string) rather than err.message which
-    // includes the formatted "X not_found: ..." prefix.
     return Response.json(
       { error: { code: err.code, message: err.rawMessage } },
       { status },
     );
   }
 
-  // Log only the error object — never the request body, never credential fields.
   console.error('[providers route] unexpected error:', err instanceof Error ? err.message : String(err));
   return Response.json(
     { error: { code: 'internal', message: 'Internal server error' } },

@@ -1,6 +1,7 @@
+import 'server-only';
 import { createClient, ConnectError, Code } from '@connectrpc/connect';
 import { createGrpcTransport } from '@connectrpc/connect-node';
-import { getSVID } from './spiffe';
+import { auth } from '@/auth';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
 import { DaemonAdminService } from '@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb';
 import type {
@@ -27,69 +28,87 @@ import { serverConfig } from './config';
 const GIBSON_ADDR = serverConfig.gibsonDaemonUrl;
 
 // ---------------------------------------------------------------------------
-// SPIFFE mTLS Transport
+// Bearer Token Transport
 // ---------------------------------------------------------------------------
-// The dashboard authenticates to the daemon via SPIFFE mTLS using the X.509-SVID
-// issued by the SPIRE Agent. User identity is forwarded as gRPC metadata headers:
-//   x-gibson-user-id  — the authenticated user's Better Auth user ID
-//   x-gibson-tenant   — the user's active tenant ID
+// The dashboard authenticates to the daemon via Envoy Gateway, which validates
+// the Zitadel access token and signs trusted internal identity headers
+// (x-gibson-identity-*) before forwarding the request to the daemon.
 //
-// No Authorization header is set. The mTLS handshake proves the dashboard's
-// identity (spiffe://gibson.io/platform/dashboard); the metadata carries the
-// acting user's context for data-scoped operations.
+// The dashboard MUST:
+//   1. Set Authorization: Bearer <Zitadel access token> on every gRPC call.
+//   2. NOT inject x-gibson-user-id or x-gibson-tenant — Envoy is authoritative.
+//   3. Fail closed when no token is available (do not call the daemon).
+//
+// Token source: auth() from Auth.js (task 21). The access token lives in the
+// encrypted HttpOnly JWT cookie and is never exposed to the browser.
 
 /**
- * Create a Connect-ES gRPC transport using SPIFFE mTLS credentials.
+ * Resolve the Zitadel access token from the current Auth.js session.
  *
- * @param userId  - Optional Better Auth user ID forwarded as x-gibson-user-id.
- * @param tenantId - Optional tenant ID forwarded as x-gibson-tenant.
+ * Throws a {@link ConnectError} with code {@link Code.Unauthenticated} when
+ * the session is missing or the access token has not been stored in the JWT.
+ * This ensures all callers fail closed rather than making unauthenticated
+ * requests to the daemon.
  */
-function getTransport(userId?: string, tenantId?: string) {
-  const svid = getSVID();
+async function resolveAccessToken(): Promise<string> {
+  const session = await auth();
+  const token = session?.accessToken;
+  if (!token) {
+    throw new ConnectError(
+      'No Zitadel access token in session — user must be signed in via Zitadel OIDC',
+      Code.Unauthenticated,
+    );
+  }
+  return token;
+}
 
+/**
+ * Create a Connect-ES gRPC transport that forwards the Zitadel access token.
+ *
+ * The interceptor injects `Authorization: Bearer <token>` on every request.
+ * Envoy Gateway validates the token and appends the signed identity headers;
+ * the daemon trusts only those Envoy-signed headers.
+ *
+ * @param accessToken - Zitadel access token resolved from the Auth.js session.
+ */
+function getTransport(accessToken: string) {
   const interceptors: Parameters<typeof createGrpcTransport>[0]['interceptors'] = [
     (next) => (req) => {
-      if (userId) req.header.set('x-gibson-user-id', userId);
-      if (tenantId) req.header.set('x-gibson-tenant', tenantId);
+      req.header.set('Authorization', `Bearer ${accessToken}`);
       return next(req);
     },
   ];
 
   return createGrpcTransport({
     baseUrl: GIBSON_ADDR,
-    nodeOptions: svid
-      ? {
-          cert: svid.certificate,
-          key: svid.privateKey,
-          ca: svid.trustBundle,
-        }
-      : undefined,
     interceptors,
   });
 }
 
-function getClient(userId?: string, tenantId?: string) {
-  return createClient(DaemonService, getTransport(userId, tenantId));
+async function getClient(_userId?: string, _tenantId?: string) {
+  const token = await resolveAccessToken();
+  return createClient(DaemonService, getTransport(token));
 }
 
-function getAdminClient(userId?: string, tenantId?: string) {
-  return createClient(DaemonAdminService, getTransport(userId, tenantId));
+async function getAdminClient(_userId?: string, _tenantId?: string) {
+  const token = await resolveAccessToken();
+  return createClient(DaemonAdminService, getTransport(token));
 }
 
 export async function getStatus(userId?: string, tenantId?: string): Promise<StatusResponse> {
-  const client = getClient(userId, tenantId);
+  const client = await getClient(userId, tenantId);
   const response = await client.status({});
   return response;
 }
 
 export async function ping(userId?: string, tenantId?: string): Promise<{ timestamp: bigint }> {
-  const client = getClient(userId, tenantId);
+  const client = await getClient(userId, tenantId);
   const response = await client.ping({});
   return response;
 }
 
 export async function listMissions(activeOnly = false, limit = 100, userId?: string, tenantId?: string) {
-  const client = getClient(userId, tenantId);
+  const client = await getClient(userId, tenantId);
   const response = await client.listMissions({
     activeOnly,
     limit,
@@ -98,7 +117,7 @@ export async function listMissions(activeOnly = false, limit = 100, userId?: str
 }
 
 export async function listAgents(kind?: string, userId?: string, tenantId?: string) {
-  const client = getClient(userId, tenantId);
+  const client = await getClient(userId, tenantId);
   const response = await client.listAgents({
     kind: kind || '',
   });
@@ -106,19 +125,19 @@ export async function listAgents(kind?: string, userId?: string, tenantId?: stri
 }
 
 export async function listTools(userId?: string, tenantId?: string) {
-  const client = getClient(userId, tenantId);
+  const client = await getClient(userId, tenantId);
   const response = await client.listTools({});
   return response;
 }
 
 export async function listPlugins(userId?: string, tenantId?: string) {
-  const client = getClient(userId, tenantId);
+  const client = await getClient(userId, tenantId);
   const response = await client.listPlugins({});
   return response;
 }
 
 export async function stopMission(missionId: string, force = false, userId?: string, tenantId?: string) {
-  const client = getClient(userId, tenantId);
+  const client = await getClient(userId, tenantId);
   const response = await client.stopMission({
     missionId,
     force,
@@ -127,7 +146,7 @@ export async function stopMission(missionId: string, force = false, userId?: str
 }
 
 export async function pauseMission(missionId: string, force = false, userId?: string, tenantId?: string) {
-  const client = getClient(userId, tenantId);
+  const client = await getClient(userId, tenantId);
   const response = await client.pauseMission({
     missionId,
     force,
@@ -136,7 +155,7 @@ export async function pauseMission(missionId: string, force = false, userId?: st
 }
 
 export async function resumeMission(missionId: string, userId?: string, tenantId?: string) {
-  const client = getClient(userId, tenantId);
+  const client = await getClient(userId, tenantId);
   // ResumeMission returns a stream, but we just need to initiate it
   // The stream will emit events as the mission progresses
   const stream = client.resumeMission({
@@ -151,7 +170,7 @@ export async function resumeMission(missionId: string, userId?: string, tenantId
 }
 
 export async function getMissionHistory(name: string, limit = 100, offset = 0, userId?: string, tenantId?: string) {
-  const client = getClient(userId, tenantId);
+  const client = await getClient(userId, tenantId);
   const response = await client.getMissionHistory({
     name,
     limit,
@@ -175,7 +194,7 @@ export interface TenantLangfuseCredentials {
  * fall back to platform-level credentials as appropriate.
  */
 export async function getTenantLangfuseCredentials(tenantId: string, userId?: string, _tenantCtx?: string): Promise<TenantLangfuseCredentials> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const response = await client.getTenantLangfuseCredentials({ tenantId });
   return {
     publicKey: response.publicKey,
@@ -194,7 +213,7 @@ export async function setTenantLangfuseCredentials(
   credentials: TenantLangfuseCredentials,
   userId?: string
 ): Promise<void> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   await client.setTenantLangfuseCredentials({
     tenantId,
     publicKey: credentials.publicKey,
@@ -209,7 +228,7 @@ export async function setTenantLangfuseCredentials(
  * Called when deprovisioning a tenant's Langfuse project.
  */
 export async function deleteTenantLangfuseCredentials(tenantId: string, userId?: string): Promise<void> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   await client.deleteTenantLangfuseCredentials({ tenantId });
 }
 
@@ -280,7 +299,7 @@ export async function createAPIKey(
   allowedNames: string[],
   userId?: string
 ): Promise<CreateAPIKeyResult> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const response = await client.createAPIKey({ tenantId, allowedKinds, allowedNames });
   return {
     keyId: response.keyId,
@@ -294,7 +313,7 @@ export async function createAPIKey(
  * returned by this RPC.
  */
 export async function listAPIKeys(tenantId: string, userId?: string) {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const response = await client.listAPIKeys({ tenantId });
   return response.keys ?? [];
 }
@@ -303,7 +322,7 @@ export async function listAPIKeys(tenantId: string, userId?: string) {
  * Permanently revoke an API key.  The key cannot be recovered after revocation.
  */
 export async function revokeAPIKey(tenantId: string, keyId: string, userId?: string): Promise<void> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   await client.revokeAPIKey({ keyId });
 }
 
@@ -328,7 +347,7 @@ async function queryAuditLog(
   opts: AuditLogQueryOptions,
   userId?: string
 ): Promise<AuditLogEntry[]> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const response = await client.listAuditEvents({
     tenantId,
     fromTime: opts.startTime?.toISOString() ?? '',
@@ -362,7 +381,7 @@ async function getTenantQuota(
   targetTenantId: string,
   userId?: string
 ): Promise<TenantQuota> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const response = await client.getTenantQuota({ tenantId: targetTenantId });
   const q = response.quota;
   return {
@@ -384,7 +403,7 @@ async function setTenantQuota(
   quota: Partial<TenantQuota>,
   userId?: string
 ): Promise<TenantQuota> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const response = await client.setTenantQuota({
     tenantId: targetTenantId,
     quota: {
@@ -431,7 +450,7 @@ export async function listAlerts(
   opts?: { unreadOnly?: boolean; limit?: number },
   callerUserId?: string
 ): Promise<AlertRecord[]> {
-  const client = getAdminClient(callerUserId, tenantId);
+  const client = await getAdminClient(callerUserId, tenantId);
   const resp = await client.listAlerts({
     tenantId,
     userId,
@@ -460,7 +479,7 @@ export async function markAlertRead(
   alertId: string,
   userId?: string
 ): Promise<void> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   await client.markAlertRead({ tenantId, alertId });
 }
 
@@ -473,7 +492,7 @@ export async function markAllAlertsRead(
   userId: string,
   callerUserId?: string
 ): Promise<number> {
-  const client = getAdminClient(callerUserId, tenantId);
+  const client = await getAdminClient(callerUserId, tenantId);
   const resp = await client.markAllAlertsRead({ tenantId, userId });
   return resp.count;
 }
@@ -508,7 +527,7 @@ export async function listConversations(
   limit = 20,
   callerUserId?: string
 ): Promise<ConversationRecord[]> {
-  const client = getAdminClient(callerUserId, tenantId);
+  const client = await getAdminClient(callerUserId, tenantId);
   const resp = await client.listConversations({ tenantId, userId, limit });
   return (resp.conversations ?? []).map((c) => ({
     id: c.id,
@@ -529,7 +548,7 @@ export async function getConversation(
   conversationId: string,
   userId?: string
 ): Promise<{ conversation: ConversationRecord | null; messages: ConversationMessageRecord[] }> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const resp = await client.getConversation({ tenantId, conversationId });
   const conv = resp.conversation;
   return {
@@ -955,7 +974,7 @@ export async function testPluginConnection(
   _config?: Record<string, string>,
   userId?: string
 ): Promise<{ success: boolean; error?: string; latencyMs?: number }> {
-  const client = getClient(userId, tenantId);
+  const client = await getClient(userId, tenantId);
   const start = Date.now();
   try {
     const response = await client.queryPlugin({
@@ -995,7 +1014,7 @@ export async function listUserSessions(
   userId: string,
   callerUserId?: string
 ): Promise<ListUserSessionsResponse> {
-  const client = getAdminClient(callerUserId, tenantId);
+  const client = await getAdminClient(callerUserId, tenantId);
   try {
     const resp = await client.getUserSessions({ tenantId, userId });
     const sessions: UserSession[] = (resp.sessions ?? []).map((s) => ({
@@ -1031,7 +1050,7 @@ export async function getUserProfile(
   tenantId: string,
   userId: string
 ): Promise<UserProfile> {
-  const client = getAdminClient();
+  const client = await getAdminClient();
   const resp = await client.getUserProfile({ tenantId, userId });
   const p = resp.profile;
   return {
@@ -1055,7 +1074,7 @@ export async function updateUserProfile(
   userId: string,
   updates: Record<string, unknown>
 ): Promise<UserProfile> {
-  const client = getAdminClient();
+  const client = await getAdminClient();
   const resp = await client.updateUserProfile({
     tenantId,
     userId,
@@ -1094,7 +1113,7 @@ export async function getUserActivity(
   // getUserActivity uses the daemon's ListAuditEvents RPC to surface user-level activity.
   let rawEvents: Array<Record<string, unknown>>;
   try {
-    const client = getAdminClient();
+    const client = await getAdminClient();
     const auditResp = await client.listAuditEvents({
       tenantId,
       actorUserId: userId,
@@ -1444,8 +1463,8 @@ export async function getAgentPerformance(tenantId: string, userId?: string): Pr
 // Member invitation and removal now flow through `app/actions/crd/member.ts`
 // against the TenantMember CRD.
 
-// Agent Auth RPCs (RegisterAgentAuth / ExecuteAgentCapability / ListAgentCapabilities
-// / GetAgentAuthStatus / RevokeAgentAuth / ListAgentAuthAgents /
+// Capability Grant RPCs (RegisterCapabilityGrant / ExecuteAgentCapability / ListAgentCapabilities
+// / GetCapabilityGrantStatus / RevokeCapabilityGrant / ListCapabilityGrantAgents /
 // CreateHostRegistrationToken) have moved to the AgentEnrollment CRD — see
 // `app/actions/crd/enrollment.ts`.
 
@@ -1515,7 +1534,7 @@ export async function getSupportedProviders(
   userId?: string,
   tenantId?: string,
 ): Promise<SupportedProviderDescriptor[]> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const resp = await client.getSupportedProviders({});
   return (resp.providers ?? []).map((p) => ({
     type: p.type,
@@ -1945,7 +1964,7 @@ export async function daemonListProviders(
   userId?: string,
   tenantId?: string,
 ): Promise<DaemonProviderRecord[]> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const resp = await client.listProviders({});
   return (resp.providers ?? []).map(fromProtoProviderRecord);
 }
@@ -1960,7 +1979,7 @@ export async function daemonGetProvider(
   userId?: string,
   tenantId?: string,
 ): Promise<DaemonProviderRecord> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const resp = await client.getProvider({ name });
   if (!resp.provider) {
     throw new ConnectError(`Provider '${name}' not found`, Code.NotFound);
@@ -1979,7 +1998,7 @@ export async function daemonCreateProvider(
   userId?: string,
   tenantId?: string,
 ): Promise<DaemonProviderRecord> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const resp = await client.createProvider({ input: toProtoDaemonConfigInput(input) });
   if (!resp.provider) {
     throw new ConnectError('CreateProvider returned no provider record', Code.Internal);
@@ -1998,7 +2017,7 @@ export async function daemonUpdateProvider(
   userId?: string,
   tenantId?: string,
 ): Promise<DaemonProviderRecord> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const resp = await client.updateProvider({ name, input: toProtoDaemonConfigInput(input) });
   if (!resp.provider) {
     throw new ConnectError('UpdateProvider returned no provider record', Code.Internal);
@@ -2015,7 +2034,7 @@ export async function daemonDeleteProvider(
   userId?: string,
   tenantId?: string,
 ): Promise<void> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   await client.deleteProvider({ name });
 }
 
@@ -2032,7 +2051,7 @@ export async function daemonTestProvider(
   userId?: string,
   tenantId?: string,
 ): Promise<DaemonProviderTestResult> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const resp = await client.testProvider({ input: toProtoDaemonConfigInput(input) });
   return {
     ok: resp.ok,
@@ -2050,7 +2069,7 @@ export async function daemonGetProviderHealth(
   userId?: string,
   tenantId?: string,
 ): Promise<DaemonProviderHealthStatus> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const resp = await client.getProviderHealth({ name });
   return {
     status: resp.healthy ? 'healthy' : resp.lastCheckedAt ? 'unhealthy' : 'unknown',
@@ -2067,7 +2086,7 @@ export async function daemonGetDefaultProvider(
   userId?: string,
   tenantId?: string,
 ): Promise<DaemonProviderRecord | null> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const resp = await client.getDefaultProvider({});
   return resp.provider ? fromProtoProviderRecord(resp.provider) : null;
 }
@@ -2082,7 +2101,7 @@ export async function daemonSetDefaultProvider(
   userId?: string,
   tenantId?: string,
 ): Promise<void> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   await client.setDefaultProvider({ name });
 }
 
@@ -2094,7 +2113,7 @@ export async function daemonGetFallbackChain(
   userId?: string,
   tenantId?: string,
 ): Promise<string[]> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const resp = await client.getFallbackChain({});
   return resp.providerNames ?? [];
 }
@@ -2110,7 +2129,7 @@ export async function daemonSetFallbackChain(
   userId?: string,
   tenantId?: string,
 ): Promise<void> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   await client.setFallbackChain({ providerNames: names });
 }
 
@@ -2134,7 +2153,7 @@ export async function executeLLM(
   userId?: string,
   tenantId?: string,
 ): Promise<DaemonExecuteLLMResponse> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const resp = await client.executeLLM(buildExecRequest(params));
   return {
     content: resp.content,
@@ -2160,7 +2179,7 @@ export async function* streamLLM(
   userId?: string,
   tenantId?: string,
 ): AsyncIterable<DaemonStreamLLMChunk> {
-  const client = getAdminClient(userId, tenantId);
+  const client = await getAdminClient(userId, tenantId);
   const grpcStream = client.streamLLM(buildExecRequest(params));
   for await (const chunk of grpcStream) {
     yield fromProtoStreamChunk(chunk);

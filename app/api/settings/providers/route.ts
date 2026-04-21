@@ -15,7 +15,7 @@ import {
   daemonCreateProvider,
   type DaemonProviderConfigInput,
 } from '@/src/lib/gibson-client';
-import { translateError } from './_lib/error';
+import { translateError } from '@/src/lib/providers-route-error';
 
 // ---------------------------------------------------------------------------
 // GET /api/settings/providers

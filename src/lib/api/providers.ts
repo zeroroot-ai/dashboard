@@ -21,7 +21,10 @@ import type {
   ImportResult,
   HealthStatus,
 } from '@/src/types/provider';
-import type { DaemonProviderConfigInput } from '@/src/lib/gibson-client';
+import type {
+  DaemonProviderConfigInput,
+  SupportedProviderDescriptor,
+} from '@/src/lib/gibson-client';
 
 // ============================================================================
 // Error Types
@@ -82,6 +85,21 @@ function buildQueryString(params: Record<string, string | number | boolean | str
 
   const queryString = searchParams.toString();
   return queryString ? `?${queryString}` : '';
+}
+
+// ============================================================================
+// Supported Providers (descriptor list)
+// ============================================================================
+
+/**
+ * Fetch the daemon-reported list of supported LLM provider types with their
+ * credential schemas and default model catalogues. Used by the settings form
+ * to render provider-specific inputs without a hard-coded frontend list.
+ */
+export async function getSupportedProviders(): Promise<SupportedProviderDescriptor[]> {
+  const response = await apiFetch('/api/settings/providers/supported');
+  const data = await handleResponse<{ providers: SupportedProviderDescriptor[] }>(response);
+  return data.providers;
 }
 
 // ============================================================================

@@ -28,6 +28,12 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Tell Next.js not to bundle these Node-only server packages — they use
+  // `node:http2` / `node:fs` and blow up Turbopack's module analyzer otherwise.
+  serverExternalPackages: [
+    "@connectrpc/connect-node",
+    "@connectrpc/connect",
+  ],
   images: {
     remotePatterns: [
       {

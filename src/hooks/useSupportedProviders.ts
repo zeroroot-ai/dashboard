@@ -9,7 +9,8 @@
  */
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { getSupportedProviders, type SupportedProviderDescriptor } from '@/src/lib/gibson-client';
+import { getSupportedProviders } from '@/src/lib/api/providers';
+import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client';
 
 export const supportedProvidersQueryKeys = {
   all: ['supportedProviders'] as const,

@@ -133,7 +133,7 @@ function makeEvent(type: string, session: Record<string, unknown>) {
 function healthyTenant() {
   return {
     metadata: { name: 'acme', annotations: {} },
-    spec: { tier: 'pro', owner: 'owner@example.com', displayName: 'ACME' },
+    spec: { tier: 'squad', owner: 'owner@example.com', displayName: 'ACME' },
     status: { conditions: [] },
   };
 }
@@ -142,7 +142,7 @@ function healthyTenant() {
 function blockedTenant() {
   return {
     metadata: { name: 'acme', annotations: {} },
-    spec: { tier: 'pro', owner: 'owner@example.com', displayName: 'ACME' },
+    spec: { tier: 'squad', owner: 'owner@example.com', displayName: 'ACME' },
     status: {
       conditions: [
         { type: 'Blocked', status: 'True', reason: 'SagaFailed', message: 'ops' },
@@ -155,7 +155,7 @@ function blockedTenant() {
 function failedTenant() {
   return {
     metadata: { name: 'acme', annotations: {} },
-    spec: { tier: 'pro', owner: 'owner@example.com', displayName: 'ACME' },
+    spec: { tier: 'squad', owner: 'owner@example.com', displayName: 'ACME' },
     status: {
       conditions: [
         { type: 'Ready', status: 'False', reason: 'ProvisioningFailed', message: 'err' },

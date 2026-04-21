@@ -1,0 +1,521 @@
+"use server";
+
+/**
+ * signupAction — the dashboard-native signup pipeline.
+ *
+ * A single linear orchestration: form input → Zitadel user → Tenant CR →
+ * operator saga → TenantMember CR → redirect to OIDC. Each step emits
+ * progress to Redis for the client-side ProvisioningPanel to poll; each
+ * failure short-circuits and maps to a user-safe `SignupFailureCode`.
+ *
+ * The operator owns the heavy lifting once the Tenant CR is applied —
+ * Zitadel org + FGA tuples + Langfuse/Stripe/Redis/Neo4j init all happen
+ * downstream. This action stays focused on:
+ *   (1) creating the Zitadel human user,
+ *   (2) applying the CRs that trigger the saga,
+ *   (3) surfacing saga status back to the user as progress.
+ *
+ * The caller is always redirected through Zitadel's standard OIDC flow for
+ * sign-in — this action never mints a dashboard session. Zitadel remains
+ * the single source of truth for authenticated identity.
+ *
+ * Spec: dashboard-native-signup, task 13.
+ */
+
+import "server-only";
+
+import { headers } from "next/headers";
+import { randomUUID } from "node:crypto";
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+import {
+  signupInputSchema,
+  type SignupInput,
+  type SignupActionResult,
+  type SignupFailureCode,
+  type ProvisioningStep,
+} from "@/app/(public)/signup/types";
+import { getSignupZitadelAdminClient } from "@/src/lib/zitadel/admin-client-factory";
+import { getCachedPasswordPolicy } from "@/src/lib/zitadel/password-policy-cache";
+import { ZitadelApiError } from "@/src/lib/zitadel/errors";
+import type {
+  PasswordPolicy,
+  ZitadelAdminClient,
+} from "@/src/lib/zitadel/admin-client";
+import {
+  applyTenant,
+  applyTenantMember,
+  getTenant,
+  tenantNamespace,
+} from "@/src/lib/k8s/tenants";
+import type { Tenant, TenantMember, TenantTier } from "@/src/lib/k8s/types";
+import { listTenantsForOwner } from "@/src/lib/k8s/tenants-by-owner";
+import { checkSignupRateLimit } from "@/src/lib/signup/rate-limit";
+import {
+  advanceStep,
+  completeProgress,
+  failProgress,
+} from "@/src/lib/signup/progress-store";
+import { k8s } from "@/src/lib/k8s/client";
+
+// Re-export types so callers can import everything from one module.
+export type { SignupInput, SignupActionResult };
+
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
+
+/** How long to wait for Tenant.status.zitadelOrgID to appear. */
+const TENANT_READY_TIMEOUT_MS = 60_000;
+/** How long to wait for the TenantMember to transition to Active. */
+const MEMBER_READY_TIMEOUT_MS = 30_000;
+const POLL_INTERVAL_MS = 1_000;
+
+/**
+ * Default post-signup destination. Auth.js's `/api/auth/signin/zitadel`
+ * starts the OIDC flow; after the callback the user lands on /dashboard.
+ */
+const POST_SIGNUP_REDIRECT =
+  "/api/auth/signin/zitadel?callbackUrl=%2Fdashboard";
+
+// ---------------------------------------------------------------------------
+// Main entry
+// ---------------------------------------------------------------------------
+
+export async function signupAction(
+  rawInput: SignupInput,
+  /**
+   * Optional client-supplied attempt id. The form mints this BEFORE invoking
+   * the action and renders the holding-page <ProvisioningPanel> with it
+   * immediately, so the user sees progress while this action is still
+   * running. Server validates the format defensively. When absent (e.g.
+   * direct invocation from a test) we mint our own.
+   */
+  clientAttemptId?: string,
+): Promise<SignupActionResult> {
+  const attemptId =
+    clientAttemptId && UUID_RE.test(clientAttemptId)
+      ? clientAttemptId
+      : randomUUID();
+
+  // Pipeline context — mutable as steps run; never returned to the caller.
+  const ctx: Ctx = {
+    attemptId,
+    input: rawInput,
+    zitadelUserId: undefined,
+    tenantSlug: undefined,
+  };
+
+  try {
+    // 0. Schema guard (defence-in-depth; Client Component already validates).
+    const parsed = signupInputSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      const first = parsed.error.issues[0];
+      const fieldErrors: NonNullable<
+        Exclude<SignupActionResult, { ok: true }>["fieldErrors"]
+      > = {};
+      for (const issue of parsed.error.issues) {
+        if (issue.path.length > 0) {
+          fieldErrors[issue.path[0] as keyof SignupInput] = issue.message;
+        }
+      }
+      return {
+        ok: false,
+        attemptId,
+        code: first?.code === "invalid_literal" ? "TOS_MISSING" : "INTERNAL_ERROR",
+        userMessage: first?.message ?? "Invalid form submission",
+        fieldErrors,
+      };
+    }
+    ctx.input = parsed.data;
+
+    // Normalize email to lowercase + trim — every downstream comparison
+    // (existing-user lookup, tenant-owner list, rate-limit email key) must
+    // use this canonical form.
+    ctx.input = {
+      ...ctx.input,
+      email: ctx.input.email.trim().toLowerCase(),
+      firstName: ctx.input.firstName.trim(),
+      lastName: ctx.input.lastName.trim(),
+      workspaceName: ctx.input.workspaceName.trim(),
+    };
+
+    // 1. Rate limit.
+    await advanceStep(attemptId, "rate_limit");
+    const ip = await resolveClientIp();
+    const rateLimit = await checkSignupRateLimit(ip, ctx.input.email);
+    if (!rateLimit.allowed) {
+      return await finish(ctx, "rate_limit", {
+        code: "RATE_LIMITED",
+        userMessage: `Too many signup attempts. Try again in ${Math.ceil(
+          rateLimit.retryAfterMs / 60_000,
+        )} minute(s).`,
+      });
+    }
+
+    // 2. Password policy.
+    await advanceStep(attemptId, "policy");
+    const client = getSignupZitadelAdminClient();
+    const policy = await getCachedPasswordPolicy(client);
+    const policyFail = checkPasswordAgainstPolicy(ctx.input.password, policy);
+    if (policyFail) {
+      return await finish(ctx, "policy", {
+        code: "POLICY_VIOLATION",
+        userMessage: policyFail,
+        fieldErrors: { password: policyFail },
+      });
+    }
+
+    // 3. Workspace-name availability.
+    ctx.tenantSlug = slugify(ctx.input.workspaceName);
+    if (!ctx.tenantSlug) {
+      return await finish(ctx, "policy", {
+        code: "INTERNAL_ERROR",
+        userMessage: "That workspace name isn't available — pick another.",
+        fieldErrors: { workspaceName: "Invalid workspace name" },
+      });
+    }
+    const existingTenant = await safeGetTenant(ctx.tenantSlug);
+    if (existingTenant) {
+      // Deliberately vague — no info-leak on whether the owner is someone else.
+      return await finish(ctx, "policy", {
+        code: "WORKSPACE_TAKEN",
+        userMessage: "That workspace name isn't available — pick another.",
+        fieldErrors: { workspaceName: "Not available" },
+      });
+    }
+
+    // 4. Create the Zitadel user (or resume if one already exists with no tenant).
+    await advanceStep(attemptId, "create_user");
+    const userResult = await createOrResumeZitadelUser(client, ctx);
+    if ("fail" in userResult) {
+      return await finish(ctx, "create_user", userResult.fail);
+    }
+    ctx.zitadelUserId = userResult.userId;
+
+    // 5. Kick off verification email — non-fatal.
+    await advanceStep(attemptId, "send_verify_email");
+    try {
+      await client.sendVerificationEmail(ctx.zitadelUserId);
+    } catch (err) {
+      // Zitadel in dev clusters without SMTP returns errors here. Log + keep
+      // going; the user can complete verification later.
+      console.warn("[signup] sendVerificationEmail failed — non-fatal", {
+        attemptId,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    // 6. Apply the Tenant CR — this triggers the operator saga.
+    await advanceStep(attemptId, "apply_tenant");
+    try {
+      await applyTenant(ctx.tenantSlug, {
+        displayName: ctx.input.workspaceName,
+        owner: ctx.input.email,
+        // input.tier is already a canonical PlanID (validated by Zod against
+        // selfServeTierIds, which mirrors plans.PlanID in the operator).
+        // No mapping — the operator's entitlements reconciler expects this
+        // exact value; legacy free/pro/enterprise are explicitly rejected.
+        tier: ctx.input.tier as TenantTier,
+      });
+    } catch (err) {
+      return await finish(ctx, "apply_tenant", {
+        code: "INTERNAL_ERROR",
+        userMessage: "We couldn't create your workspace. Please try again.",
+      });
+    }
+
+    // 7. Wait for the operator to set status.zitadelOrgID.
+    await advanceStep(attemptId, "setup_workspace");
+    const tenant = await waitForTenantReady(ctx.tenantSlug);
+    if (!tenant) {
+      return await finish(ctx, "setup_workspace", {
+        code: "PROVISIONING_TIMEOUT",
+        userMessage:
+          "Still setting up your workspace — we'll email you when it's ready.",
+      });
+    }
+    if (tenant.status?.phase === "Failed") {
+      return await finish(ctx, "setup_workspace", {
+        code: "PROVISIONING_FAILED",
+        userMessage:
+          "Something went wrong setting up your workspace. Our team has been notified.",
+      });
+    }
+
+    // 8. Apply the TenantMember CR (operator wires the user to the Zitadel org).
+    await advanceStep(attemptId, "apply_member");
+    try {
+      await applyTenantMember(
+        tenantNamespace(ctx.tenantSlug),
+        `${slugify(ctx.input.email)}-owner`,
+        {
+          email: ctx.input.email,
+          role: "owner",
+          tenantRef: { name: ctx.tenantSlug },
+        },
+      );
+    } catch (err) {
+      return await finish(ctx, "apply_member", {
+        code: "INTERNAL_ERROR",
+        userMessage:
+          "Your account was created but we couldn't add you to the workspace. Support has been notified.",
+      });
+    }
+
+    // 9. Wait for the membership to become Active.
+    await advanceStep(attemptId, "grant_owner_role");
+    const memberReady = await waitForMemberReady(
+      tenantNamespace(ctx.tenantSlug),
+      `${slugify(ctx.input.email)}-owner`,
+    );
+    if (!memberReady) {
+      return await finish(ctx, "grant_owner_role", {
+        code: "MEMBERSHIP_TIMEOUT",
+        userMessage:
+          "Workspace created but owner-role provisioning is still in progress. Try signing in in a minute.",
+      });
+    }
+
+    // 10. Done.
+    await completeProgress(attemptId);
+    logAudit("signup_ok", ctx);
+    return {
+      ok: true,
+      attemptId,
+      redirect: POST_SIGNUP_REDIRECT,
+    };
+  } catch (err) {
+    // Catch-all — any uncaught exception becomes INTERNAL_ERROR.
+    console.error("[signup] unhandled", {
+      attemptId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return await finish(ctx, "create_user", {
+      code: "INTERNAL_ERROR",
+      userMessage: "Something went wrong on our end.",
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Pipeline context + finish helper
+// ---------------------------------------------------------------------------
+
+interface Ctx {
+  attemptId: string;
+  input: SignupInput;
+  zitadelUserId: string | undefined;
+  tenantSlug: string | undefined;
+}
+
+interface FinishFailure {
+  code: SignupFailureCode;
+  userMessage: string;
+  fieldErrors?: Partial<Record<keyof SignupInput, string>>;
+}
+
+async function finish(
+  ctx: Ctx,
+  atStep: ProvisioningStep,
+  failure: FinishFailure,
+): Promise<SignupActionResult> {
+  await failProgress(ctx.attemptId, atStep, failure.code, failure.userMessage);
+  logAudit("signup_fail", ctx, failure.code);
+  return {
+    ok: false,
+    attemptId: ctx.attemptId,
+    code: failure.code,
+    userMessage: failure.userMessage,
+    fieldErrors: failure.fieldErrors,
+  };
+}
+
+function logAudit(
+  outcome: "signup_ok" | "signup_fail",
+  ctx: Ctx,
+  failureCode?: SignupFailureCode,
+): void {
+  console.log(
+    JSON.stringify({
+      action: "signup",
+      outcome,
+      attemptId: ctx.attemptId,
+      email: ctx.input.email,
+      tenantSlug: ctx.tenantSlug,
+      zitadelUserId: ctx.zitadelUserId,
+      tier: ctx.input.tier,
+      failureCode: failureCode ?? null,
+      timestamp: new Date().toISOString(),
+    }),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+async function resolveClientIp(): Promise<string> {
+  const hdrs = await headers();
+  return (
+    hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    hdrs.get("x-real-ip") ??
+    "unknown"
+  );
+}
+
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 63);
+}
+
+async function safeGetTenant(name: string): Promise<Tenant | null> {
+  try {
+    return await getTenant(name);
+  } catch (err) {
+    if (err instanceof Error && /not.?found|404/i.test(err.message)) {
+      return null;
+    }
+    throw err;
+  }
+}
+
+function checkPasswordAgainstPolicy(
+  pw: string,
+  policy: PasswordPolicy,
+): string | null {
+  if (pw.length < policy.minLength) {
+    return `Password must be at least ${policy.minLength} characters.`;
+  }
+  if (policy.hasUppercase && !/[A-Z]/.test(pw)) {
+    return "Password must contain an uppercase letter.";
+  }
+  if (policy.hasLowercase && !/[a-z]/.test(pw)) {
+    return "Password must contain a lowercase letter.";
+  }
+  if (policy.hasNumber && !/\d/.test(pw)) {
+    return "Password must contain a number.";
+  }
+  if (policy.hasSymbol && !/[^A-Za-z0-9]/.test(pw)) {
+    return "Password must contain a symbol.";
+  }
+  return null;
+}
+
+async function createOrResumeZitadelUser(
+  client: ZitadelAdminClient,
+  ctx: Ctx,
+): Promise<{ userId: string } | { fail: FinishFailure }> {
+  try {
+    const user = await client.createHumanUser({
+      email: ctx.input.email,
+      givenName: ctx.input.firstName,
+      familyName: ctx.input.lastName,
+      password: ctx.input.password,
+      emailVerified: false,
+    });
+    return { userId: user.userId };
+  } catch (err) {
+    if (err instanceof ZitadelApiError) {
+      if (err.httpStatus === 409) {
+        // User already exists — check if they have a tenant.
+        const existing = await client.findUserByEmail(ctx.input.email);
+        if (!existing) {
+          return {
+            fail: {
+              code: "INTERNAL_ERROR",
+              userMessage:
+                "Account state inconsistent — contact support with this attempt ID.",
+            },
+          };
+        }
+        const tenants = await listTenantsForOwner(ctx.input.email);
+        if (tenants.length > 0) {
+          return {
+            fail: {
+              code: "ALREADY_PROVISIONED",
+              userMessage:
+                "You already have a workspace. Please sign in instead.",
+            },
+          };
+        }
+        // User exists with no tenant — resume with the existing user.
+        return { userId: existing.userId };
+      }
+      if (err.httpStatus >= 500 || err.httpStatus === 0) {
+        return {
+          fail: {
+            code: "ZITADEL_UNAVAILABLE",
+            userMessage:
+              "We're having trouble reaching our identity service. Try again in a moment.",
+          },
+        };
+      }
+      // Other 4xx — treat password-policy errors as POLICY_VIOLATION.
+      if (/password|complexity/i.test(err.zitadelErrorMessage ?? "")) {
+        return {
+          fail: {
+            code: "POLICY_VIOLATION",
+            userMessage: err.zitadelErrorMessage ?? "Password doesn't meet the policy.",
+            fieldErrors: { password: "Password doesn't meet the policy." },
+          },
+        };
+      }
+      return {
+        fail: {
+          code: "INTERNAL_ERROR",
+          userMessage: "We couldn't create your account. Please try again.",
+        },
+      };
+    }
+    throw err;
+  }
+}
+
+async function waitForTenantReady(name: string): Promise<Tenant | null> {
+  const deadline = Date.now() + TENANT_READY_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    try {
+      const t = await getTenant(name);
+      if (t.status?.zitadelOrgID) {
+        return t;
+      }
+      if (t.status?.phase === "Failed") {
+        return t;
+      }
+    } catch {
+      // CR may not exist yet on the very first poll — retry.
+    }
+    await sleep(POLL_INTERVAL_MS);
+  }
+  return null;
+}
+
+async function waitForMemberReady(
+  namespace: string,
+  name: string,
+): Promise<boolean> {
+  const deadline = Date.now() + MEMBER_READY_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    try {
+      const m = await k8s().get<TenantMember>("TenantMember", name, namespace);
+      if (m.status?.phase === "Active") {
+        return true;
+      }
+    } catch {
+      // Not yet created — retry.
+    }
+    await sleep(POLL_INTERVAL_MS);
+  }
+  return false;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

@@ -1,29 +1,41 @@
 "use client";
 
-import { Suspense, useState, useRef } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+/**
+ * SignupForm — Client Component.
+ *
+ * Controlled form built with react-hook-form + zodResolver(signupInputSchema).
+ * Fields (in DOM order): firstName, lastName, email, password, workspaceName,
+ * acceptToS checkbox, acceptPrivacy checkbox.
+ *
+ * On submit:
+ *  1. Disables the form and sets provisioning state.
+ *  2. Calls `signupAction(data)` (Server Action).
+ *  3. On success → renders `<ProvisioningPanel>`.
+ *  4. On failure → displays the userMessage via sonner toast, focuses the
+ *     first errored field if `fieldErrors` is present.
+ *
+ * Shows a `beforeunload` prompt while provisioning to prevent accidental
+ * navigation.
+ *
+ * Branding: uses the dashboard's CSS custom properties from globals.css /
+ * themes.css via Shadcn's Card, Input, Label, Checkbox, Button, and Form
+ * primitives. Matches `/login` and `/pricing` visual weight.
+ */
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
-import { signUpAction } from "@/app/actions/auth/signup";
-import { signupSchema, type SignupInput } from "@/src/lib/validators/auth";
-import { resolveUserFacingError } from "@/src/lib/errors/user-facing";
-import { Captcha } from "@/components/gibson/auth/captcha";
-import { ErrorDisplay } from "@/components/gibson/auth/ErrorDisplay";
-import { SocialProvidersBlock } from "@/src/components/auth/SocialProvidersBlock";
-import type { ProviderId } from "@/src/lib/social-providers";
-
+import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
@@ -33,540 +45,566 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { PasswordStrength } from "@/components/gibson/auth/password-strength";
-import { plans } from "@/src/generated/plans";
-import type { UserFacingError } from "@/src/lib/errors/user-facing";
-
-// Signup schema lives in src/lib/validators/auth.ts so the server-side
-// signUpAction enforces the same rules as the form.
-type SignupFormValues = SignupInput;
+import { Input } from "@/components/ui/input";
+import { signupAction } from "@/app/actions/signup";
+import { pricingDisplays } from "@/src/lib/pricing-display";
+import type { PasswordPolicy } from "@/src/lib/zitadel/admin-client";
+import { ProvisioningPanel } from "./provisioning-panel";
+import { signupInputSchema, type SignupInput } from "./types";
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Password strength meter
 // ---------------------------------------------------------------------------
 
-function formatPrice(plan: (typeof plans)[number]): string {
-  if (plan.monthlyPrice === null) return "Contact sales";
-  return `$${plan.monthlyPrice.toLocaleString("en-US")}/mo`;
+interface PolicyCheck {
+  label: string;
+  met: boolean;
 }
 
-/**
- * Convert a company name to a URL-safe slug.
- * Examples:
- *   "Acme Security"     → "acme-security"
- *   "Zero-Day AI, Inc." → "zero-day-ai-inc"
- *   "My Company 123"    → "my-company-123"
- */
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-") // replace non-alphanumeric runs with hyphens
-    .replace(/^-+|-+$/g, "") // strip leading/trailing hyphens
-    .slice(0, 63); // Postgres label limit
+function buildPolicyChecks(
+  password: string,
+  policy: PasswordPolicy,
+): PolicyCheck[] {
+  return [
+    {
+      label: `At least ${policy.minLength} characters`,
+      met: password.length >= policy.minLength,
+    },
+    ...(policy.hasUppercase
+      ? [{ label: "One uppercase letter", met: /[A-Z]/.test(password) }]
+      : []),
+    ...(policy.hasLowercase
+      ? [{ label: "One lowercase letter", met: /[a-z]/.test(password) }]
+      : []),
+    ...(policy.hasNumber
+      ? [{ label: "One number", met: /[0-9]/.test(password) }]
+      : []),
+    ...(policy.hasSymbol
+      ? [
+          {
+            label: "One symbol",
+            met: /[^a-zA-Z0-9]/.test(password),
+          },
+        ]
+      : []),
+  ];
+}
+
+function PasswordStrengthMeter({
+  password,
+  policy,
+}: {
+  password: string;
+  policy: PasswordPolicy;
+}) {
+  if (!password) return null;
+
+  const checks = buildPolicyChecks(password, policy);
+  const metCount = checks.filter((c) => c.met).length;
+  const strength = checks.length === 0 ? 1 : metCount / checks.length;
+
+  const barColor =
+    strength === 1
+      ? "bg-green-500"
+      : strength >= 0.6
+        ? "bg-yellow-500"
+        : "bg-destructive";
+
+  return (
+    <div className="mt-2 space-y-2" aria-label="Password requirements">
+      {/* Strength bar */}
+      <div
+        className="h-1 w-full rounded-full bg-muted overflow-hidden"
+        aria-hidden="true"
+      >
+        <div
+          className={`h-full rounded-full transition-all duration-300 ${barColor}`}
+          style={{ width: `${Math.round(strength * 100)}%` }}
+        />
+      </div>
+      {/* Per-requirement checklist */}
+      <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2" aria-label="Password requirements">
+        {checks.map((check) => (
+          <li
+            key={check.label}
+            className={`flex items-center gap-1.5 text-xs ${
+              check.met ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+            }`}
+          >
+            <span aria-hidden="true">{check.met ? "✓" : "○"}</span>
+            <span>{check.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
 
-interface SignupFormProps {
-  /** Ordered list of enabled social provider IDs from the server. */
-  providers: ProviderId[];
+export interface SignupFormProps {
+  /** Validated plan ID — used both for the tier field and the read-only display. */
+  plan: string;
+  /** Human-readable plan name, e.g. "Squad". */
+  planDisplayName: string;
+  /** Password complexity policy fetched server-side. */
+  passwordPolicy: PasswordPolicy;
 }
 
 // ---------------------------------------------------------------------------
-// Form component
+// Component
 // ---------------------------------------------------------------------------
 
-function SignupFormInner({ providers }: SignupFormProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const planId = searchParams.get("plan") || "solo";
-
-  const selectedPlan =
-    plans.find((p) => p.id === planId) ?? plans.find((p) => p.id === "solo")!;
-
-  const [isLoading, setIsLoading] = useState(false);
+export function SignupForm({
+  plan,
+  planDisplayName,
+  passwordPolicy,
+}: SignupFormProps) {
+  const [isProvisioning, setIsProvisioning] = useState(false);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [redirectOnSuccess, setRedirectOnSuccess] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | undefined>(
-    undefined,
-  );
-  /** Page-level error (EMAIL_ALREADY_REGISTERED, SERVICE_UNAVAILABLE, …). */
-  const [pageError, setPageError] = useState<UserFacingError | null>(null);
 
-  const passwordRef = useRef<HTMLInputElement | null>(null);
+  // Track field refs for programmatic focus on server-side field errors.
+  const fieldRefs = useRef<Partial<Record<keyof SignupInput, HTMLElement | null>>>({});
 
-  const form = useForm<SignupFormValues>({
-    resolver: zodResolver(signupSchema),
+  const form = useForm<SignupInput>({
+    resolver: zodResolver(signupInputSchema),
     defaultValues: {
-      companyName: "",
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
-      confirmPassword: "",
+      workspaceName: "",
+      // tier is pre-filled from the URL query param.
+      tier: plan as SignupInput["tier"],
+      // Checkboxes start unchecked — the schema requires literal true.
+      acceptToS: undefined as unknown as true,
+      acceptPrivacy: undefined as unknown as true,
     },
   });
 
-  const watchedPassword = form.watch("password");
-  const showPasswordStrength = passwordFocused || watchedPassword.length > 0;
+  const { watch } = form;
+  const passwordValue = watch("password");
 
-  async function onSubmit(data: SignupFormValues) {
-    setIsLoading(true);
-    setPageError(null);
-    try {
-      const tenantSlug = slugify(data.companyName);
+  // Prevent accidental navigation while provisioning is in progress.
+  useEffect(() => {
+    if (!isProvisioning) return;
 
-      const result = await signUpAction({
-        companyName: data.companyName,
-        email: data.email,
-        password: data.password,
-        confirmPassword: data.confirmPassword,
-        tosAccepted: data.tosAccepted,
-        plan: selectedPlan.id,
-        captchaToken,
-      });
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
 
-      if (!result.ok) {
-        switch (result.code) {
-          // ── Field-level errors ──────────────────────────────────────────
-          case "COMPANY_NAME_TAKEN":
-            form.setError("companyName", {
-              message:
-                "A workspace with that name already exists. Please choose a different name.",
-            });
-            return;
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isProvisioning]);
 
-          case "PASSWORD_BREACHED":
-            form.setError("password", {
-              message:
-                "This password has appeared in a known data breach. Please choose a different password.",
-            });
-            return;
+  const handleRetry = useCallback(() => {
+    setIsProvisioning(false);
+    setAttemptId(null);
+    setRedirectOnSuccess("");
+    form.reset({
+      firstName: form.getValues("firstName"),
+      lastName: form.getValues("lastName"),
+      email: form.getValues("email"),
+      password: "",
+      workspaceName: form.getValues("workspaceName"),
+      tier: plan as SignupInput["tier"],
+      acceptToS: undefined as unknown as true,
+      acceptPrivacy: undefined as unknown as true,
+    });
+  }, [form, plan]);
 
-          case "PASSWORD_POLICY":
-          case "VALIDATION":
-            if (result.field === "password") {
-              form.setError("password", { message: result.message });
-            } else if (result.field === "email") {
-              form.setError("email", { message: result.message });
-            } else if (result.field === "companyName") {
-              form.setError("companyName", { message: result.message });
-            } else {
-              toast.error(result.message);
+  const onSubmit = useCallback(
+    async (data: SignupInput) => {
+      // Mint the attemptId BEFORE invoking the action so we can show the
+      // ProvisioningPanel immediately. The panel polls /api/signup/progress/:id
+      // for live status while the server action runs in the background.
+      // Without this, the user stares at a disabled form for 20–30s with no
+      // signal that anything is happening.
+      const newAttemptId = crypto.randomUUID();
+      setAttemptId(newAttemptId);
+      setIsProvisioning(true);
+      form.clearErrors();
+
+      try {
+        const result = await signupAction(data, newAttemptId);
+
+        if (result.ok) {
+          setRedirectOnSuccess(result.redirect);
+          // Panel sees terminalState=ok in Redis and follows redirect.
+        } else {
+          // The server has already written a terminal failure state to the
+          // progress store; the panel will show the error inline. Also pop
+          // a toast for users not looking at the panel + apply per-field
+          // errors for retry-time validation feedback.
+          toast.error(result.userMessage);
+
+          if (result.fieldErrors) {
+            const errorEntries = Object.entries(result.fieldErrors) as Array<
+              [keyof SignupInput, string]
+            >;
+            for (const [field, message] of errorEntries) {
+              form.setError(field, { type: "server", message });
             }
-            return;
-
-          // ── Page-level errors ───────────────────────────────────────────
-          case "EMAIL_ALREADY_REGISTERED":
-            setPageError(
-              resolveUserFacingError(
-                "EMAIL_ALREADY_REGISTERED",
-                result.correlationId,
-              ),
-            );
-            return;
-
-          case "CAPTCHA_FAILED":
-            setPageError(
-              resolveUserFacingError("CAPTCHA_FAILED", result.correlationId),
-            );
-            return;
-
-          case "SERVICE_UNAVAILABLE":
-            setPageError(
-              resolveUserFacingError(
-                "SERVICE_UNAVAILABLE",
-                result.correlationId,
-              ),
-            );
-            return;
-
-          case "RATE_LIMITED":
-            toast.error(result.message);
-            return;
-
-          default:
-            toast.error(result.message);
-            return;
+            const firstErrorField = errorEntries[0]?.[0];
+            if (firstErrorField) {
+              const el = fieldRefs.current[firstErrorField];
+              if (el instanceof HTMLElement) {
+                el.focus();
+              }
+            }
+          }
         }
+      } catch {
+        toast.error("Something went wrong on our end. Please try again.");
+        // Drop the panel on uncaught exception so the user can retry the form.
+        setAttemptId(null);
+        setIsProvisioning(false);
       }
+    },
+    [form],
+  );
 
-      if (result.redirectUrl) {
-        if (!result.redirectUrl.startsWith("https://checkout.stripe.com/")) {
-          toast.error("Invalid payment redirect URL. Please contact support.");
-          return;
-        }
-        window.location.href = result.redirectUrl;
-        return;
-      }
-
-      router.push(
-        `/signup/provisioning?tenant=${encodeURIComponent(result.tenantId || tenantSlug)}&user=${encodeURIComponent(result.userId)}`,
-      );
-    } catch (err) {
-      const e = err instanceof Error ? err : new Error(String(err));
-      console.error("[signup] onSubmit failed:", e);
-      const debug = process.env.NEXT_PUBLIC_DASHBOARD_DEBUG === "1";
-      toast.error(
-        debug
-          ? `Signup error: ${e.message}`
-          : "An error occurred. Please try again.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  // Show a full-page error card for page-level errors (EMAIL_ALREADY_REGISTERED,
-  // SERVICE_UNAVAILABLE, CAPTCHA_FAILED). The form is still mounted beneath so
-  // the user can dismiss and correct without a page reload.
-  if (pageError) {
+  // Show the provisioning panel once we have an attemptId.
+  if (attemptId) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md space-y-4">
-          <ErrorDisplay error={pageError} className="w-full" />
-
-          {/* EMAIL_ALREADY_REGISTERED gets additional action links */}
-          {pageError.code === "EMAIL_ALREADY_REGISTERED" && (
-            <div className="flex gap-4 justify-center text-sm">
-              <Link
-                href="/login"
-                className="font-medium text-foreground underline-offset-4 hover:underline"
-              >
-                Sign in
-              </Link>
-              <span className="text-muted-foreground">·</span>
-              <Link
-                href="/forgot-password"
-                className="font-medium text-foreground underline-offset-4 hover:underline"
-              >
-                Reset password
-              </Link>
-            </div>
-          )}
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setPageError(null)}
-              className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-            >
-              Back to sign up
-            </button>
-          </div>
-        </div>
+        <ProvisioningPanel
+          attemptId={attemptId}
+          redirectOnSuccess={redirectOnSuccess}
+          onRetry={handleRetry}
+        />
       </div>
     );
   }
 
+  const isDisabled = form.formState.isSubmitting || isProvisioning;
+
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md space-y-4">
-        {/* Plan summary card */}
-        <Card className="border-muted">
-          <CardContent className="flex items-center justify-between py-4">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Selected plan
-              </p>
-              <p className="mt-0.5 font-semibold">{selectedPlan.displayName}</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-lg font-bold">{formatPrice(selectedPlan)}</span>
-              <Link
-                href="/pricing"
-                className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-              >
-                Change plan
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">
+            Create your account
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Get started with Gibson in under a minute.
+          </p>
+        </CardHeader>
 
-        {/* Registration form card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Create your account</CardTitle>
-            <CardDescription>
-              Get started with Zero Day AI on the {selectedPlan.displayName} plan.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Social sign-up buttons — renders nothing when no providers are enabled */}
-            <SocialProvidersBlock
-              providers={providers}
-              mode="signup"
-            />
+        <CardContent>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-5"
+              noValidate
+            >
+              {/* Read-only plan display */}
+              <div className="flex items-center justify-between rounded-md border border-border bg-muted/50 px-3 py-2">
+                <span className="text-sm text-muted-foreground">Plan</span>
+                <div className="flex items-center gap-2">
+                  <strong className="text-sm font-medium">
+                    {planDisplayName}
+                  </strong>
+                  <Link
+                    href="/pricing"
+                    className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={isDisabled ? -1 : undefined}
+                  >
+                    Edit plan
+                  </Link>
+                </div>
+              </div>
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
-
-                {/* Company Name */}
+              {/* Name row — 2-col on sm+ */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {/* First name */}
                 <FormField
                   control={form.control}
-                  name="companyName"
+                  name="firstName"
                   render={({ field }) => (
-                    <FormItem className="grid gap-2">
-                      <FormLabel htmlFor="companyName">Company / Team Name</FormLabel>
+                    <FormItem>
+                      <FormLabel>First name</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          id="companyName"
-                          type="text"
-                          autoComplete="organization"
-                          placeholder="Acme Security"
-                          aria-describedby={
-                            form.formState.errors.companyName
-                              ? "companyName-error"
-                              : undefined
-                          }
+                          ref={(el) => {
+                            field.ref(el);
+                            fieldRefs.current.firstName = el;
+                          }}
+                          placeholder="Ada"
+                          autoComplete="given-name"
+                          disabled={isDisabled}
+                          aria-required="true"
                         />
                       </FormControl>
-                      <FormMessage id="companyName-error" />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Email */}
+                {/* Last name */}
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="lastName"
                   render={({ field }) => (
-                    <FormItem className="grid gap-2">
-                      <FormLabel htmlFor="email">Email</FormLabel>
+                    <FormItem>
+                      <FormLabel>Last name</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          id="email"
-                          type="email"
-                          autoComplete="email"
-                          placeholder="you@example.com"
-                          aria-describedby={
-                            form.formState.errors.email
-                              ? "email-error"
-                              : undefined
-                          }
+                          ref={(el) => {
+                            field.ref(el);
+                            fieldRefs.current.lastName = el;
+                          }}
+                          placeholder="Lovelace"
+                          autoComplete="family-name"
+                          disabled={isDisabled}
+                          aria-required="true"
                         />
                       </FormControl>
-                      <FormMessage id="email-error" />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
+              </div>
 
-                {/* Password */}
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem className="grid gap-2">
-                      <FormLabel htmlFor="password">Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            {...field}
-                            id="password"
-                            type={showPassword ? "text" : "password"}
-                            autoComplete="new-password"
-                            className="pr-10"
-                            aria-describedby={[
-                              "password-requirements",
-                              form.formState.errors.password
-                                ? "password-error"
-                                : "",
-                            ]
-                              .filter(Boolean)
-                              .join(" ")}
-                            onFocus={() => setPasswordFocused(true)}
-                            onBlur={() => setPasswordFocused(false)}
-                            ref={(el) => {
-                              field.ref(el);
-                              passwordRef.current = el;
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                            onClick={() => setShowPassword((v) => !v)}
-                            aria-label={
-                              showPassword ? "Hide password" : "Show password"
-                            }
-                            tabIndex={-1}
-                          >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4" aria-hidden="true" />
-                            ) : (
-                              <Eye className="h-4 w-4" aria-hidden="true" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage id="password-error" />
+              {/* Email */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Work email</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        ref={(el) => {
+                          field.ref(el);
+                          fieldRefs.current.email = el;
+                        }}
+                        type="email"
+                        placeholder="ada@example.com"
+                        autoComplete="email"
+                        disabled={isDisabled}
+                        aria-required="true"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                      {/* Real-time password requirements */}
-                      {showPasswordStrength && (
-                        <PasswordStrength
-                          id="password-requirements"
-                          password={watchedPassword}
+              {/* Password */}
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          {...field}
+                          ref={(el) => {
+                            field.ref(el);
+                            fieldRefs.current.password = el;
+                          }}
+                          type={showPassword ? "text" : "password"}
+                          placeholder="At least 12 characters"
+                          autoComplete="new-password"
+                          disabled={isDisabled}
+                          aria-required="true"
+                          className="pr-10"
                         />
-                      )}
-                    </FormItem>
-                  )}
-                />
-
-                {/* Confirm Password */}
-                <FormField
-                  control={form.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem className="grid gap-2">
-                      <FormLabel htmlFor="confirmPassword">
-                        Confirm Password
-                      </FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            {...field}
-                            id="confirmPassword"
-                            type={showConfirmPassword ? "text" : "password"}
-                            autoComplete="new-password"
-                            className="pr-10"
-                            aria-describedby={
-                              form.formState.errors.confirmPassword
-                                ? "confirmPassword-error"
-                                : undefined
-                            }
-                          />
-                          <button
-                            type="button"
-                            className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                            onClick={() =>
-                              setShowConfirmPassword((v) => !v)
-                            }
-                            aria-label={
-                              showConfirmPassword
-                                ? "Hide confirm password"
-                                : "Show confirm password"
-                            }
-                            tabIndex={-1}
-                          >
-                            {showConfirmPassword ? (
-                              <EyeOff className="h-4 w-4" aria-hidden="true" />
-                            ) : (
-                              <Eye className="h-4 w-4" aria-hidden="true" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage id="confirmPassword-error" />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Terms of Service */}
-                <FormField
-                  control={form.control}
-                  name="tosAccepted"
-                  render={({ field }) => (
-                    <FormItem className="grid gap-2">
-                      <div className="flex items-start gap-3">
-                        <FormControl>
-                          <Checkbox
-                            id="tosAccepted"
-                            className="mt-0.5 border-green-500/60 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500 data-[state=checked]:text-black"
-                            checked={field.value === true}
-                            onCheckedChange={(checked) =>
-                              field.onChange(checked ? true : false)
-                            }
-                            aria-describedby={
-                              form.formState.errors.tosAccepted
-                                ? "tosAccepted-error"
-                                : undefined
-                            }
-                          />
-                        </FormControl>
-                        <FormLabel
-                          htmlFor="tosAccepted"
-                          className="cursor-pointer text-sm font-normal leading-relaxed text-foreground/90"
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                          tabIndex={isDisabled ? -1 : undefined}
                         >
-                          I agree to the{" "}
-                          <Link
-                            href="/terms"
-                            className="font-medium text-green-300 underline-offset-4 hover:underline"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Terms of Service
-                          </Link>{" "}
-                          and{" "}
-                          <Link
-                            href="/privacy"
-                            className="font-medium text-green-300 underline-offset-4 hover:underline"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Privacy Policy
-                          </Link>
-                        </FormLabel>
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" aria-hidden="true" />
+                          ) : (
+                            <Eye className="h-4 w-4" aria-hidden="true" />
+                          )}
+                        </button>
                       </div>
-                      <FormMessage id="tosAccepted-error" />
-                    </FormItem>
-                  )}
-                />
+                    </FormControl>
+                    <PasswordStrengthMeter
+                      password={passwordValue}
+                      policy={passwordPolicy}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                {/* CAPTCHA widget — renders null when provider is disabled/unset */}
-                <Captcha
-                  action="signup"
-                  onToken={(token) => setCaptchaToken(token)}
-                />
+              {/* Password confirmation */}
+              <FormField
+                control={form.control}
+                name="passwordConfirm"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm password</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        ref={(el) => {
+                          field.ref(el);
+                          fieldRefs.current.passwordConfirm = el;
+                        }}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Re-enter your password"
+                        autoComplete="new-password"
+                        disabled={isDisabled}
+                        aria-required="true"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : (
-                    "Create account"
-                  )}
-                </Button>
-              </form>
-            </Form>
+              {/* Workspace name */}
+              <FormField
+                control={form.control}
+                name="workspaceName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Workspace name</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        ref={(el) => {
+                          field.ref(el);
+                          fieldRefs.current.workspaceName = el;
+                        }}
+                        placeholder="Acme Security"
+                        autoComplete="organization"
+                        disabled={isDisabled}
+                        aria-required="true"
+                      />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      Letters, numbers, spaces, hyphens, and underscores. 2–63 characters.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="mt-4 space-y-2 text-center text-sm text-muted-foreground">
-              <p>
-                <Link
-                  href="/pricing"
-                  className="underline-offset-4 hover:text-foreground hover:underline"
-                >
-                  Back to pricing
-                </Link>
-              </p>
-              <p>
-                Already have an account?{" "}
-                <Link
-                  href="/login"
-                  className="font-medium text-foreground underline-offset-4 hover:underline"
-                >
-                  Sign in
-                </Link>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              {/* ToS checkbox */}
+              <FormField
+                control={form.control}
+                name="acceptToS"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        ref={(el) => {
+                          fieldRefs.current.acceptToS = el;
+                        }}
+                        checked={field.value === true}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked === true ? true : undefined);
+                        }}
+                        disabled={isDisabled}
+                        aria-required="true"
+                        id="acceptToS"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel htmlFor="acceptToS" className="font-normal cursor-pointer">
+                        I agree to the{" "}
+                        <Link
+                          href="https://zero-day.ai/terms"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline underline-offset-4 hover:no-underline"
+                          tabIndex={isDisabled ? -1 : undefined}
+                        >
+                          Terms of Service
+                        </Link>
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              {/* Privacy checkbox */}
+              <FormField
+                control={form.control}
+                name="acceptPrivacy"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        ref={(el) => {
+                          fieldRefs.current.acceptPrivacy = el;
+                        }}
+                        checked={field.value === true}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked === true ? true : undefined);
+                        }}
+                        disabled={isDisabled}
+                        aria-required="true"
+                        id="acceptPrivacy"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel htmlFor="acceptPrivacy" className="font-normal cursor-pointer">
+                        I agree to the{" "}
+                        <Link
+                          href="https://zero-day.ai/privacy"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline underline-offset-4 hover:no-underline"
+                          tabIndex={isDisabled ? -1 : undefined}
+                        >
+                          Privacy Policy
+                        </Link>
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              {/* Submit */}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isDisabled}
+                aria-busy={isDisabled}
+              >
+                {isDisabled
+                  ? isProvisioning
+                    ? "Setting up your workspace…"
+                    : "Creating account…"
+                  : "Create account"}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+
+        <CardFooter className="flex justify-center">
+          <p className="text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="underline underline-offset-4 hover:no-underline font-medium"
+            >
+              Sign in
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
     </div>
-  );
-}
-
-export function SignupForm({ providers }: SignupFormProps) {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <SignupFormInner providers={providers} />
-    </Suspense>
   );
 }

@@ -70,6 +70,12 @@ function die(msg) {
 }
 
 function main() {
+  if (process.env.SKIP_GEN_PLANS === "1" && existsSync(OUTPUT)) {
+    process.stdout.write(
+      `gen-plans: SKIP_GEN_PLANS=1 — using pre-generated ${OUTPUT}\n`,
+    );
+    return;
+  }
   if (!existsSync(PLANS_YAML)) {
     die(`plans.yaml not found at ${PLANS_YAML}`);
   }

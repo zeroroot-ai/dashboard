@@ -42,6 +42,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV BETTER_AUTH_SECRET="build-placeholder"
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 
+# The prebuild gen-plans step reads enterprise/platform/tenant-operator/plans/plans.yaml
+# from the repo root, which is outside this Dockerfile's build context. The host
+# build runs gen-plans beforehand; inside the container we consume the already
+# generated src/generated/plans.ts.
+ENV SKIP_GEN_PLANS=1
+
 # Build the standalone application
 RUN npm run build
 

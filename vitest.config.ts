@@ -40,6 +40,9 @@ export default defineConfig({
       '@/lib': path.resolve(__dirname, './lib'),
       '@/hooks': path.resolve(__dirname, './hooks'),
       '@/app': path.resolve(__dirname, './app'),
+      // Root-level auth singleton (auth.ts lives at the dashboard root, not under src/).
+      // Must come before the catch-all '@' alias so '@/auth' resolves correctly.
+      '@/auth': path.resolve(__dirname, './auth.ts'),
       // Docs source output emitted by fumadocs-mdx. The `.source/` artifact
       // only exists after `npx fumadocs-mdx` has run; vitest stubs this
       // import via vi.mock inside src/lib/__tests__/source.test.ts, but the
