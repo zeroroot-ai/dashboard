@@ -184,7 +184,7 @@ export type WhoAmIResponse = Message<"gibson.daemon.discovery.v1.WhoAmIResponse"
   relations: string[];
 
   /**
-   * is_agent_auth indicates whether the RPC came in on the agent-auth path.
+   * is_agent_auth indicates whether the RPC came in on the capability-grant path.
    * When true, component_scope is populated.
    *
    * @generated from field: bool is_agent_auth = 6;

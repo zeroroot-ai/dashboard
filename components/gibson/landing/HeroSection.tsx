@@ -96,11 +96,11 @@ export function HeroSection() {
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button variant="default" size="lg" asChild>
-            <Link href="/signup">Start Free</Link>
+            <Link href="/pricing">Start Free</Link>
           </Button>
           <Button variant="outline" size="lg" asChild>
             <a
-              href="https://github.com/zero-day-ai/gibson-adk"
+              href="https://github.com/zero-day-ai/adk"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2"

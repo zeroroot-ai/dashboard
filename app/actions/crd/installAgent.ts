@@ -18,15 +18,17 @@
 import { randomUUID } from "node:crypto";
 
 import { createGrpcTransport } from "@connectrpc/connect-node";
-import { createClient } from "@connectrpc/connect";
+import { createClient, type Interceptor } from "@connectrpc/connect";
 
 import { DiscoveryService } from "@/src/gen/gibson/daemon/discovery/v1/discovery_pb";
 import { getDaemonAdminClient } from "@/src/lib/gibson-admin-client";
-import { getServerSession } from "@/src/lib/auth";
+import { getSpiffeJwt } from "@/src/lib/spiffe/jwt-svid";
 import {
   listAccessibleComponentsAction,
   type DiscoveredItem,
 } from "@/app/actions/read/listAccessibleComponents";
+
+import { requireCrdSession } from "./_authz";
 
 export type ActionResult<T> =
   | { ok: true; data: T }
@@ -49,14 +51,33 @@ export interface InstallAgentInput {
   approvals: InstallApproval[];
 }
 
-const DAEMON_ADDR =
-  process.env.GIBSON_DAEMON_ADDRESS || "gibson:50002";
+// Envoy edge gateway — see `dashboard-admin-via-envoy` spec. Direct daemon
+// URLs are blocked by `scripts/check-no-direct-daemon-grpc.mjs`.
+const ENVOY_BASE_URL =
+  process.env.ADMIN_ENVOY_BASE_URL ?? "https://api.zero-day.local:30443";
+
+const DAEMON_AUDIENCE =
+  process.env.GIBSON_DAEMON_SPIFFE_AUDIENCE ??
+  "spiffe://gibson.io/platform/daemon";
+
+const spiffeJwtInterceptor: Interceptor = (next) => async (req) => {
+  const jwt = await getSpiffeJwt({ audience: DAEMON_AUDIENCE });
+  req.header.set("Authorization", `Bearer ${jwt}`);
+  return next(req);
+};
+
+let cachedDiscoveryClient:
+  | ReturnType<typeof createClient<typeof DiscoveryService>>
+  | null = null;
 
 function discoveryClient() {
+  if (cachedDiscoveryClient) return cachedDiscoveryClient;
   const transport = createGrpcTransport({
-    baseUrl: `http://${DAEMON_ADDR}`,
+    baseUrl: ENVOY_BASE_URL,
+    interceptors: [spiffeJwtInterceptor],
   });
-  return createClient(DiscoveryService, transport);
+  cachedDiscoveryClient = createClient(DiscoveryService, transport);
+  return cachedDiscoveryClient;
 }
 
 function relationFor(action: InstallAction): string {
@@ -83,12 +104,15 @@ function hasAccess(
 export async function installAgentAction(
   input: InstallAgentInput,
 ): Promise<ActionResult<{ agentInstallationId: string }>> {
-  const session = await getServerSession();
-  if (!session?.user) {
-    return { ok: false, error: "unauthenticated" };
+  const gate = await requireCrdSession<{ agentInstallationId: string }>({
+    action: "installAgentAction",
+    permission: "grants:create",
+    inputKeys: ["agentSlug", "approvals"],
+  });
+  if (!gate.ok) {
+    return { ok: false, error: gate.result.ok ? "" : gate.result.error };
   }
-  const tenantId =
-    (session.user as { tenantId?: string }).tenantId ?? "";
+  const tenantId = gate.session.user.tenantId ?? "";
   if (!tenantId) {
     return { ok: false, error: "no tenant in session" };
   }

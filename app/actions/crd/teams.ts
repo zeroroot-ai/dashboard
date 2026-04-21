@@ -16,9 +16,10 @@
 
 import { getDaemonAdminClient } from "@/src/lib/gibson-admin-client";
 
-export type ActionResult<T = unknown> =
-  | { ok: true; data: T }
-  | { ok: false; error: string; code?: string };
+import { requireCrdSession } from "./_authz";
+import type { ActionResult } from "./types";
+
+export type { ActionResult };
 
 export interface Team {
   id: string; // the FGA object id, e.g. "red-team"
@@ -34,6 +35,11 @@ export interface TeamMember {
 }
 
 export async function listTeamsAction(): Promise<ActionResult<Team[]>> {
+  const gate = await requireCrdSession<Team[]>({
+    action: "listTeamsAction",
+    permission: "members:invite",
+  });
+  if (!gate.ok) return gate.result;
   // Enumerate teams whose parent is the caller's tenant. Backed by
   // FGA ListObjects(tenant:X, parent, team). The daemon admin client
   // doesn't expose a dedicated "list teams" RPC yet — we stub by
@@ -46,7 +52,17 @@ export async function createTeamAction(input: {
   displayName: string;
 }): Promise<ActionResult<Team>> {
   if (!input.teamId) {
-    return { ok: false, error: "teamId required", code: "INVALID_INPUT" };
+    return { ok: false, error: "teamId required", code: "BAD_INPUT" };
+  }
+  const gate = await requireCrdSession<Team>({
+    action: "createTeamAction",
+    permission: "members:invite",
+    inputKeys: ["teamId", "displayName"],
+  });
+  if (!gate.ok) return gate.result;
+  const callerTenantId = gate.session.user.tenantId;
+  if (!callerTenantId) {
+    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
   }
   try {
     const client = getDaemonAdminClient();
@@ -56,7 +72,7 @@ export async function createTeamAction(input: {
     await client.writeAccessTuples({
       add: [
         {
-          user: `tenant:TODO-caller-tenant`,
+          user: `tenant:${callerTenantId}`,
           relation: "parent",
           object: `team:${input.teamId}`,
         },
@@ -69,7 +85,7 @@ export async function createTeamAction(input: {
       data: { id: input.teamId, displayName: input.displayName, memberCount: 0 },
     };
   } catch (err) {
-    return { ok: false, error: String(err), code: "DAEMON_ERROR" };
+    return { ok: false, error: String(err), code: "INTERNAL" };
   }
 }
 
@@ -77,7 +93,17 @@ export async function deleteTeamAction(
   teamId: string,
 ): Promise<ActionResult<{ removed: number }>> {
   if (!teamId) {
-    return { ok: false, error: "teamId required", code: "INVALID_INPUT" };
+    return { ok: false, error: "teamId required", code: "BAD_INPUT" };
+  }
+  const gate = await requireCrdSession<{ removed: number }>({
+    action: "deleteTeamAction",
+    permission: "members:revoke",
+    inputKeys: ["teamId"],
+  });
+  if (!gate.ok) return gate.result;
+  const callerTenantId = gate.session.user.tenantId;
+  if (!callerTenantId) {
+    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
   }
   // Full orphan cleanup requires enumerating every tuple referencing the
   // team (member, admin, team_*_disabled across every component). The
@@ -91,7 +117,7 @@ export async function deleteTeamAction(
       add: [],
       delete: [
         {
-          user: "tenant:TODO-caller-tenant",
+          user: `tenant:${callerTenantId}`,
           relation: "parent",
           object: `team:${teamId}`,
         },
@@ -100,7 +126,7 @@ export async function deleteTeamAction(
     });
     return { ok: true, data: { removed: 1 } };
   } catch (err) {
-    return { ok: false, error: String(err), code: "DAEMON_ERROR" };
+    return { ok: false, error: String(err), code: "INTERNAL" };
   }
 }
 
@@ -110,8 +136,14 @@ export async function addTeamMemberAction(input: {
   asAdmin?: boolean;
 }): Promise<ActionResult<{ applied: boolean }>> {
   if (!input.teamId || !input.userId) {
-    return { ok: false, error: "teamId + userId required", code: "INVALID_INPUT" };
+    return { ok: false, error: "teamId + userId required", code: "BAD_INPUT" };
   }
+  const gate = await requireCrdSession<{ applied: boolean }>({
+    action: "addTeamMemberAction",
+    permission: "members:invite",
+    inputKeys: ["teamId", "userId", "asAdmin"],
+  });
+  if (!gate.ok) return gate.result;
   try {
     const client = getDaemonAdminClient();
     await client.writeAccessTuples({
@@ -127,7 +159,7 @@ export async function addTeamMemberAction(input: {
     });
     return { ok: true, data: { applied: true } };
   } catch (err) {
-    return { ok: false, error: String(err), code: "DAEMON_ERROR" };
+    return { ok: false, error: String(err), code: "INTERNAL" };
   }
 }
 
@@ -135,6 +167,12 @@ export async function removeTeamMemberAction(input: {
   teamId: string;
   userId: string;
 }): Promise<ActionResult<{ applied: boolean }>> {
+  const gate = await requireCrdSession<{ applied: boolean }>({
+    action: "removeTeamMemberAction",
+    permission: "members:revoke",
+    inputKeys: ["teamId", "userId"],
+  });
+  if (!gate.ok) return gate.result;
   try {
     const client = getDaemonAdminClient();
     await client.writeAccessTuples({
@@ -155,6 +193,6 @@ export async function removeTeamMemberAction(input: {
     });
     return { ok: true, data: { applied: true } };
   } catch (err) {
-    return { ok: false, error: String(err), code: "DAEMON_ERROR" };
+    return { ok: false, error: String(err), code: "INTERNAL" };
   }
 }

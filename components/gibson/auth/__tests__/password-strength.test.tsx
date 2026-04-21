@@ -13,8 +13,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import { PasswordStrength } from "../password-strength";
-import type { checkPasswordAction } from "@/app/actions/auth/check-password";
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -25,9 +23,13 @@ const STRONG_PASSWORD = "Correct#Horse1Battery";
 /** A password that is too short and fails several rules. */
 const WEAK_PASSWORD = "abc";
 
-type CheckResult = Awaited<ReturnType<typeof checkPasswordAction>>;
+type CheckResult =
+  | { ok: true; breached: boolean; count?: number }
+  | { ok: false; reason: string };
 
-function makeAction(result: CheckResult): typeof checkPasswordAction {
+type CheckPasswordAction = (args: { password: string }) => Promise<CheckResult>;
+
+function makeAction(result: CheckResult): CheckPasswordAction {
   return vi.fn().mockResolvedValue(result);
 }
 

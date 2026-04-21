@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useSession } from "@/src/lib/session-client";
-import { signOutAction } from "@/app/actions/auth/signout";
 import { ArrowLeft, Shield } from "lucide-react";
 
 import { Button } from "@/components/ui/button";

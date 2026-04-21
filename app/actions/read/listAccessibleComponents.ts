@@ -13,13 +13,14 @@
  */
 
 import { createGrpcTransport } from "@connectrpc/connect-node";
-import { createClient } from "@connectrpc/connect";
+import { createClient, type Interceptor } from "@connectrpc/connect";
 import {
   DiscoveryService,
   Scope,
   Action,
 } from "@/src/gen/gibson/daemon/discovery/v1/discovery_pb";
 import { getServerSession } from "@/src/lib/auth";
+import { getSpiffeJwt } from "@/src/lib/spiffe/jwt-svid";
 
 export type RWXAction = "read" | "write" | "execute";
 
@@ -44,11 +45,32 @@ export interface ListAccessibleComponentsInput {
   action?: RWXAction;
 }
 
-const DAEMON_ADDR = process.env.GIBSON_DAEMON_ADDRESS || "gibson:50002";
+// Envoy edge gateway — see `dashboard-admin-via-envoy` spec. The direct
+// daemon URL was removed; `scripts/check-no-direct-daemon-grpc.mjs` fails
+// the build if anyone reintroduces it.
+const ENVOY_BASE_URL =
+  process.env.ADMIN_ENVOY_BASE_URL ?? "https://api.zero-day.local:30443";
+
+const DAEMON_AUDIENCE =
+  process.env.GIBSON_DAEMON_SPIFFE_AUDIENCE ??
+  "spiffe://gibson.io/platform/daemon";
+
+const spiffeJwtInterceptor: Interceptor = (next) => async (req) => {
+  const jwt = await getSpiffeJwt({ audience: DAEMON_AUDIENCE });
+  req.header.set("Authorization", `Bearer ${jwt}`);
+  return next(req);
+};
+
+let cachedClient: ReturnType<typeof createClient<typeof DiscoveryService>> | null = null;
 
 function discoveryClient() {
-  const transport = createGrpcTransport({ baseUrl: `http://${DAEMON_ADDR}` });
-  return createClient(DiscoveryService, transport);
+  if (cachedClient) return cachedClient;
+  const transport = createGrpcTransport({
+    baseUrl: ENVOY_BASE_URL,
+    interceptors: [spiffeJwtInterceptor],
+  });
+  cachedClient = createClient(DiscoveryService, transport);
+  return cachedClient;
 }
 
 function mapScope(s?: ListAccessibleComponentsInput["scope"]): Scope {

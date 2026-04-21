@@ -13,6 +13,11 @@
 
 import { getDaemonAdminClient } from "@/src/lib/gibson-admin-client";
 
+import { requireCrdSession } from "./_authz";
+import type { ActionResult } from "./types";
+
+export type { ActionResult };
+
 export type AccessScope = "tenant" | "team" | "user" | "component" | "my";
 export type AccessAction = "read" | "write" | "execute";
 
@@ -26,10 +31,6 @@ export interface SetComponentAccessInput {
   /** true = remove the deny / add the grant; false = install the deny / remove the grant. */
   enabled: boolean;
 }
-
-export type ActionResult<T = unknown> =
-  | { ok: true; data: T }
-  | { ok: false; error: string; code?: string };
 
 /**
  * Compute the FGA tuple that expresses the requested change for this
@@ -85,15 +86,21 @@ function tupleForScope(
 export async function setComponentAccessAction(
   input: SetComponentAccessInput,
 ): Promise<ActionResult<{ applied: boolean }>> {
-  // Deferred: use getServerSession / requireCrdSession for strict gating
-  // and audit emission. For scaffolded v1 we assume the caller is authed
-  // (Server Action invocation requires a session cookie anyway).
-  const callerTenantId = "TODO-caller-tenant";
-  const callerUserId = "TODO-caller-user";
+  const gate = await requireCrdSession<{ applied: boolean }>({
+    action: "setComponentAccessAction",
+    permission: "grants:create",
+    inputKeys: ["scope", "targetId", "componentRef", "action", "enabled"],
+  });
+  if (!gate.ok) return gate.result;
+  const callerTenantId = gate.session.user.tenantId;
+  const callerUserId = gate.userId;
+  if (!callerTenantId) {
+    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
+  }
 
   const tuple = tupleForScope(input, callerTenantId, callerUserId);
   if (!tuple) {
-    return { ok: false, error: "invalid scope/targetId combination", code: "INVALID_INPUT" };
+    return { ok: false, error: "invalid scope/targetId combination", code: "BAD_INPUT" };
   }
 
   // For deny-style tuples: enabled=true removes the tuple (re-enables
@@ -123,7 +130,7 @@ export async function setComponentAccessAction(
     return {
       ok: false,
       error: err instanceof Error ? err.message : String(err),
-      code: "DAEMON_ERROR",
+      code: "INTERNAL",
     };
   }
 }

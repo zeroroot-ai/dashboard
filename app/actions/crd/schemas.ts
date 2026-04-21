@@ -61,7 +61,18 @@ export const componentRefSchema = z
 
 export const memberRoleSchema = z.enum(["admin", "member", "viewer"]);
 
-export const tenantTierSchema = z.enum(["free", "pro", "enterprise"]);
+// Canonical Gibson plan IDs — must match `TenantTier` in `src/lib/k8s/types.ts`
+// AND the operator's `plans.PlanID` Go enum. Legacy free/pro/enterprise are
+// dropped; the entitlements reconciler rejects them as deprecated.
+export const tenantTierSchema = z.enum([
+  "solo",
+  "squad",
+  "org",
+  "platform",
+  "enterprise-cloud",
+  "enterprise-onprem",
+  "public-sector",
+]);
 
 export const agentModeSchema = z.enum(["autonomous", "supervised"]);
 

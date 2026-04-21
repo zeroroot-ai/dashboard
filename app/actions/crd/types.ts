@@ -20,7 +20,14 @@ export type CrdActionName =
   | "resendInvitationAction"
   | "createEnrollmentAction"
   | "revokeEnrollmentAction"
-  | "fetchBootstrapTokenAction";
+  | "fetchBootstrapTokenAction"
+  | "setComponentAccessAction"
+  | "installAgentAction"
+  | "listTeamsAction"
+  | "createTeamAction"
+  | "deleteTeamAction"
+  | "addTeamMemberAction"
+  | "removeTeamMemberAction";
 
 export type ActionErrorCode =
   | "UNAUTHENTICATED"

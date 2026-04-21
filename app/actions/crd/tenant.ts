@@ -81,7 +81,7 @@ export async function provisionTenantAction(input: {
     const t = await applyTenant(name, {
       displayName: parsed.data.displayName,
       owner: parsed.data.owner,
-      tier: parsed.data.tier ?? 'free',
+      tier: parsed.data.tier ?? 'solo',
     });
     revalidatePath('/dashboard');
     emitCrdAuditFromGate({

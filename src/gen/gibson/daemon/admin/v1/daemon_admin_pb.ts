@@ -2233,11 +2233,11 @@ export const AgentCapabilityGrantSchema: GenMessage<AgentCapabilityGrant> = /*@_
   messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 64);
 
 /**
- * RegisterAgentAuthRequest registers a new agent + host pair under a tenant.
+ * RegisterCapabilityGrantRequest registers a new agent + host pair under a tenant.
  *
- * @generated from message gibson.daemon.admin.v1.RegisterAgentAuthRequest
+ * @generated from message gibson.daemon.admin.v1.RegisterCapabilityGrantRequest
  */
-export type RegisterAgentAuthRequest = Message<"gibson.daemon.admin.v1.RegisterAgentAuthRequest"> & {
+export type RegisterCapabilityGrantRequest = Message<"gibson.daemon.admin.v1.RegisterCapabilityGrantRequest"> & {
   /**
    * tenant_id is the tenant that owns this agent.
    *
@@ -2296,18 +2296,18 @@ export type RegisterAgentAuthRequest = Message<"gibson.daemon.admin.v1.RegisterA
 };
 
 /**
- * Describes the message gibson.daemon.admin.v1.RegisterAgentAuthRequest.
- * Use `create(RegisterAgentAuthRequestSchema)` to create a new message.
+ * Describes the message gibson.daemon.admin.v1.RegisterCapabilityGrantRequest.
+ * Use `create(RegisterCapabilityGrantRequestSchema)` to create a new message.
  */
-export const RegisterAgentAuthRequestSchema: GenMessage<RegisterAgentAuthRequest> = /*@__PURE__*/
+export const RegisterCapabilityGrantRequestSchema: GenMessage<RegisterCapabilityGrantRequest> = /*@__PURE__*/
   messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 65);
 
 /**
- * RegisterAgentAuthResponse is returned after successful agent registration.
+ * RegisterCapabilityGrantResponse is returned after successful agent registration.
  *
- * @generated from message gibson.daemon.admin.v1.RegisterAgentAuthResponse
+ * @generated from message gibson.daemon.admin.v1.RegisterCapabilityGrantResponse
  */
-export type RegisterAgentAuthResponse = Message<"gibson.daemon.admin.v1.RegisterAgentAuthResponse"> & {
+export type RegisterCapabilityGrantResponse = Message<"gibson.daemon.admin.v1.RegisterCapabilityGrantResponse"> & {
   /**
    * agent_id is the newly created agent identifier (agt_xxxx).
    *
@@ -2338,10 +2338,10 @@ export type RegisterAgentAuthResponse = Message<"gibson.daemon.admin.v1.Register
 };
 
 /**
- * Describes the message gibson.daemon.admin.v1.RegisterAgentAuthResponse.
- * Use `create(RegisterAgentAuthResponseSchema)` to create a new message.
+ * Describes the message gibson.daemon.admin.v1.RegisterCapabilityGrantResponse.
+ * Use `create(RegisterCapabilityGrantResponseSchema)` to create a new message.
  */
-export const RegisterAgentAuthResponseSchema: GenMessage<RegisterAgentAuthResponse> = /*@__PURE__*/
+export const RegisterCapabilityGrantResponseSchema: GenMessage<RegisterCapabilityGrantResponse> = /*@__PURE__*/
   messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 66);
 
 /**
@@ -2422,11 +2422,11 @@ export const ExecuteAgentCapabilityResponseSchema: GenMessage<ExecuteAgentCapabi
   messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 68);
 
 /**
- * GetAgentAuthStatusRequest fetches status for a single agent.
+ * GetCapabilityGrantStatusRequest fetches status for a single agent.
  *
- * @generated from message gibson.daemon.admin.v1.GetAgentAuthStatusRequest
+ * @generated from message gibson.daemon.admin.v1.GetCapabilityGrantStatusRequest
  */
-export type GetAgentAuthStatusRequest = Message<"gibson.daemon.admin.v1.GetAgentAuthStatusRequest"> & {
+export type GetCapabilityGrantStatusRequest = Message<"gibson.daemon.admin.v1.GetCapabilityGrantStatusRequest"> & {
   /**
    * agent_id is the agent to retrieve.
    *
@@ -2443,18 +2443,18 @@ export type GetAgentAuthStatusRequest = Message<"gibson.daemon.admin.v1.GetAgent
 };
 
 /**
- * Describes the message gibson.daemon.admin.v1.GetAgentAuthStatusRequest.
- * Use `create(GetAgentAuthStatusRequestSchema)` to create a new message.
+ * Describes the message gibson.daemon.admin.v1.GetCapabilityGrantStatusRequest.
+ * Use `create(GetCapabilityGrantStatusRequestSchema)` to create a new message.
  */
-export const GetAgentAuthStatusRequestSchema: GenMessage<GetAgentAuthStatusRequest> = /*@__PURE__*/
+export const GetCapabilityGrantStatusRequestSchema: GenMessage<GetCapabilityGrantStatusRequest> = /*@__PURE__*/
   messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 69);
 
 /**
- * GetAgentAuthStatusResponse carries agent status and capability grants.
+ * GetCapabilityGrantStatusResponse carries agent status and capability grants.
  *
- * @generated from message gibson.daemon.admin.v1.GetAgentAuthStatusResponse
+ * @generated from message gibson.daemon.admin.v1.GetCapabilityGrantStatusResponse
  */
-export type GetAgentAuthStatusResponse = Message<"gibson.daemon.admin.v1.GetAgentAuthStatusResponse"> & {
+export type GetCapabilityGrantStatusResponse = Message<"gibson.daemon.admin.v1.GetCapabilityGrantStatusResponse"> & {
   /**
    * agent_id is the agent identifier.
    *
@@ -2513,18 +2513,18 @@ export type GetAgentAuthStatusResponse = Message<"gibson.daemon.admin.v1.GetAgen
 };
 
 /**
- * Describes the message gibson.daemon.admin.v1.GetAgentAuthStatusResponse.
- * Use `create(GetAgentAuthStatusResponseSchema)` to create a new message.
+ * Describes the message gibson.daemon.admin.v1.GetCapabilityGrantStatusResponse.
+ * Use `create(GetCapabilityGrantStatusResponseSchema)` to create a new message.
  */
-export const GetAgentAuthStatusResponseSchema: GenMessage<GetAgentAuthStatusResponse> = /*@__PURE__*/
+export const GetCapabilityGrantStatusResponseSchema: GenMessage<GetCapabilityGrantStatusResponse> = /*@__PURE__*/
   messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 70);
 
 /**
- * RevokeAgentAuthRequest revokes an agent and all its grants.
+ * RevokeCapabilityGrantRequest revokes an agent and all its grants.
  *
- * @generated from message gibson.daemon.admin.v1.RevokeAgentAuthRequest
+ * @generated from message gibson.daemon.admin.v1.RevokeCapabilityGrantRequest
  */
-export type RevokeAgentAuthRequest = Message<"gibson.daemon.admin.v1.RevokeAgentAuthRequest"> & {
+export type RevokeCapabilityGrantRequest = Message<"gibson.daemon.admin.v1.RevokeCapabilityGrantRequest"> & {
   /**
    * agent_id is the agent to revoke.
    *
@@ -2541,33 +2541,33 @@ export type RevokeAgentAuthRequest = Message<"gibson.daemon.admin.v1.RevokeAgent
 };
 
 /**
- * Describes the message gibson.daemon.admin.v1.RevokeAgentAuthRequest.
- * Use `create(RevokeAgentAuthRequestSchema)` to create a new message.
+ * Describes the message gibson.daemon.admin.v1.RevokeCapabilityGrantRequest.
+ * Use `create(RevokeCapabilityGrantRequestSchema)` to create a new message.
  */
-export const RevokeAgentAuthRequestSchema: GenMessage<RevokeAgentAuthRequest> = /*@__PURE__*/
+export const RevokeCapabilityGrantRequestSchema: GenMessage<RevokeCapabilityGrantRequest> = /*@__PURE__*/
   messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 71);
 
 /**
- * RevokeAgentAuthResponse is empty on success.
+ * RevokeCapabilityGrantResponse is empty on success.
  *
- * @generated from message gibson.daemon.admin.v1.RevokeAgentAuthResponse
+ * @generated from message gibson.daemon.admin.v1.RevokeCapabilityGrantResponse
  */
-export type RevokeAgentAuthResponse = Message<"gibson.daemon.admin.v1.RevokeAgentAuthResponse"> & {
+export type RevokeCapabilityGrantResponse = Message<"gibson.daemon.admin.v1.RevokeCapabilityGrantResponse"> & {
 };
 
 /**
- * Describes the message gibson.daemon.admin.v1.RevokeAgentAuthResponse.
- * Use `create(RevokeAgentAuthResponseSchema)` to create a new message.
+ * Describes the message gibson.daemon.admin.v1.RevokeCapabilityGrantResponse.
+ * Use `create(RevokeCapabilityGrantResponseSchema)` to create a new message.
  */
-export const RevokeAgentAuthResponseSchema: GenMessage<RevokeAgentAuthResponse> = /*@__PURE__*/
+export const RevokeCapabilityGrantResponseSchema: GenMessage<RevokeCapabilityGrantResponse> = /*@__PURE__*/
   messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 72);
 
 /**
- * ListAgentAuthAgentsRequest returns a paginated list of agents for a tenant.
+ * ListCapabilityGrantAgentsRequest returns a paginated list of agents for a tenant.
  *
- * @generated from message gibson.daemon.admin.v1.ListAgentAuthAgentsRequest
+ * @generated from message gibson.daemon.admin.v1.ListCapabilityGrantAgentsRequest
  */
-export type ListAgentAuthAgentsRequest = Message<"gibson.daemon.admin.v1.ListAgentAuthAgentsRequest"> & {
+export type ListCapabilityGrantAgentsRequest = Message<"gibson.daemon.admin.v1.ListCapabilityGrantAgentsRequest"> & {
   /**
    * tenant_id is the tenant to list agents for.
    *
@@ -2591,24 +2591,24 @@ export type ListAgentAuthAgentsRequest = Message<"gibson.daemon.admin.v1.ListAge
 };
 
 /**
- * Describes the message gibson.daemon.admin.v1.ListAgentAuthAgentsRequest.
- * Use `create(ListAgentAuthAgentsRequestSchema)` to create a new message.
+ * Describes the message gibson.daemon.admin.v1.ListCapabilityGrantAgentsRequest.
+ * Use `create(ListCapabilityGrantAgentsRequestSchema)` to create a new message.
  */
-export const ListAgentAuthAgentsRequestSchema: GenMessage<ListAgentAuthAgentsRequest> = /*@__PURE__*/
+export const ListCapabilityGrantAgentsRequestSchema: GenMessage<ListCapabilityGrantAgentsRequest> = /*@__PURE__*/
   messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 73);
 
 /**
- * ListAgentAuthAgentsResponse carries the paginated agent list.
+ * ListCapabilityGrantAgentsResponse carries the paginated agent list.
  *
- * @generated from message gibson.daemon.admin.v1.ListAgentAuthAgentsResponse
+ * @generated from message gibson.daemon.admin.v1.ListCapabilityGrantAgentsResponse
  */
-export type ListAgentAuthAgentsResponse = Message<"gibson.daemon.admin.v1.ListAgentAuthAgentsResponse"> & {
+export type ListCapabilityGrantAgentsResponse = Message<"gibson.daemon.admin.v1.ListCapabilityGrantAgentsResponse"> & {
   /**
    * agents is the list of agent status records.
    *
-   * @generated from field: repeated gibson.daemon.admin.v1.GetAgentAuthStatusResponse agents = 1;
+   * @generated from field: repeated gibson.daemon.admin.v1.GetCapabilityGrantStatusResponse agents = 1;
    */
-  agents: GetAgentAuthStatusResponse[];
+  agents: GetCapabilityGrantStatusResponse[];
 
   /**
    * total is the total number of agents (before pagination).
@@ -2619,10 +2619,10 @@ export type ListAgentAuthAgentsResponse = Message<"gibson.daemon.admin.v1.ListAg
 };
 
 /**
- * Describes the message gibson.daemon.admin.v1.ListAgentAuthAgentsResponse.
- * Use `create(ListAgentAuthAgentsResponseSchema)` to create a new message.
+ * Describes the message gibson.daemon.admin.v1.ListCapabilityGrantAgentsResponse.
+ * Use `create(ListCapabilityGrantAgentsResponseSchema)` to create a new message.
  */
-export const ListAgentAuthAgentsResponseSchema: GenMessage<ListAgentAuthAgentsResponse> = /*@__PURE__*/
+export const ListCapabilityGrantAgentsResponseSchema: GenMessage<ListCapabilityGrantAgentsResponse> = /*@__PURE__*/
   messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 74);
 
 /**
@@ -5151,16 +5151,16 @@ export const DaemonAdminService: GenService<{
     output: typeof GetConversationResponseSchema;
   },
   /**
-   * RegisterAgentAuth registers a new agent and its host, resolves FGA-backed
+   * RegisterCapabilityGrant registers a new agent and its host, resolves FGA-backed
    * capability grants for the agent owner, and writes the grant records.
    * Requires FGA admin relation on the tenant.
    *
-   * @generated from rpc gibson.daemon.admin.v1.DaemonAdminService.RegisterAgentAuth
+   * @generated from rpc gibson.daemon.admin.v1.DaemonAdminService.RegisterCapabilityGrant
    */
-  registerAgentAuth: {
+  registerCapabilityGrant: {
     methodKind: "unary";
-    input: typeof RegisterAgentAuthRequestSchema;
-    output: typeof RegisterAgentAuthResponseSchema;
+    input: typeof RegisterCapabilityGrantRequestSchema;
+    output: typeof RegisterCapabilityGrantResponseSchema;
   },
   /**
    * ExecuteAgentCapability checks FGA for the requested capability execution
@@ -5187,37 +5187,37 @@ export const DaemonAdminService: GenService<{
     output: typeof ListAgentCapabilitiesResponseSchema;
   },
   /**
-   * GetAgentAuthStatus returns the current status and grants for an agent.
+   * GetCapabilityGrantStatus returns the current status and grants for an agent.
    * Requires FGA member relation on the tenant.
    *
-   * @generated from rpc gibson.daemon.admin.v1.DaemonAdminService.GetAgentAuthStatus
+   * @generated from rpc gibson.daemon.admin.v1.DaemonAdminService.GetCapabilityGrantStatus
    */
-  getAgentAuthStatus: {
+  getCapabilityGrantStatus: {
     methodKind: "unary";
-    input: typeof GetAgentAuthStatusRequestSchema;
-    output: typeof GetAgentAuthStatusResponseSchema;
+    input: typeof GetCapabilityGrantStatusRequestSchema;
+    output: typeof GetCapabilityGrantStatusResponseSchema;
   },
   /**
-   * RevokeAgentAuth sets the agent's status to revoked and revokes all grants.
+   * RevokeCapabilityGrant sets the agent's status to revoked and revokes all grants.
    * Requires FGA admin relation on the tenant.
    *
-   * @generated from rpc gibson.daemon.admin.v1.DaemonAdminService.RevokeAgentAuth
+   * @generated from rpc gibson.daemon.admin.v1.DaemonAdminService.RevokeCapabilityGrant
    */
-  revokeAgentAuth: {
+  revokeCapabilityGrant: {
     methodKind: "unary";
-    input: typeof RevokeAgentAuthRequestSchema;
-    output: typeof RevokeAgentAuthResponseSchema;
+    input: typeof RevokeCapabilityGrantRequestSchema;
+    output: typeof RevokeCapabilityGrantResponseSchema;
   },
   /**
-   * ListAgentAuthAgents returns a paginated list of agents for a tenant.
+   * ListCapabilityGrantAgents returns a paginated list of agents for a tenant.
    * Requires FGA admin relation on the tenant.
    *
-   * @generated from rpc gibson.daemon.admin.v1.DaemonAdminService.ListAgentAuthAgents
+   * @generated from rpc gibson.daemon.admin.v1.DaemonAdminService.ListCapabilityGrantAgents
    */
-  listAgentAuthAgents: {
+  listCapabilityGrantAgents: {
     methodKind: "unary";
-    input: typeof ListAgentAuthAgentsRequestSchema;
-    output: typeof ListAgentAuthAgentsResponseSchema;
+    input: typeof ListCapabilityGrantAgentsRequestSchema;
+    output: typeof ListCapabilityGrantAgentsResponseSchema;
   },
   /**
    * CreateHostRegistrationToken issues a single-use API key for host registration.

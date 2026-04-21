@@ -52,7 +52,21 @@ export type TenantPhase =
   | 'Terminating'
   | 'Terminated';
 
-export type TenantTier = 'free' | 'pro' | 'enterprise';
+/**
+ * Canonical Gibson plan IDs. Single source of truth — these match the
+ * operator's `plans.PlanID` Go enum (tenant-operator/plans/registry.go).
+ *
+ * Legacy values `free`/`pro`/`enterprise` are NOT accepted; the
+ * entitlements reconciler rejects them as deprecated.
+ */
+export type TenantTier =
+  | 'solo'
+  | 'squad'
+  | 'org'
+  | 'platform'
+  | 'enterprise-cloud'
+  | 'enterprise-onprem'
+  | 'public-sector';
 
 export interface TenantSpec {
   displayName: string;
@@ -66,6 +80,10 @@ export interface TenantStatus {
   conditions?: K8sCondition[];
   namespace?: string;
   betterAuthOrgId?: string;
+  /** Zitadel organization ID written by the EnsureZitadelOrg saga step. */
+  zitadelOrgID?: string;
+  /** Zitadel primary-domain slug, typically equal to Tenant.metadata.name. */
+  zitadelOrgSlug?: string;
   langfuseProjectId?: string;
   observedGeneration?: number;
   tierObserved?: TenantTier;
@@ -79,7 +97,9 @@ export interface Tenant extends K8sResource<TenantSpec, TenantStatus> {
 // TenantMember
 // ---------------------------------------------------------------------------
 
-export type MemberRole = 'admin' | 'member' | 'viewer';
+// `owner` is the self-signup creator role; defined in the operator's
+// tenantmember_controller.go (MemberRoleOwner constant).
+export type MemberRole = 'owner' | 'admin' | 'member' | 'viewer';
 
 export type TenantMemberPhase =
   | 'Pending'

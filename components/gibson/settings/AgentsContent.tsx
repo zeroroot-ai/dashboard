@@ -12,7 +12,6 @@ import * as React from "react";
 import { AlertCircle, Bot, Key, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useSession } from "@/src/lib/session-client";
-import { signOutAction } from "@/app/actions/auth/signout";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";

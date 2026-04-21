@@ -54,13 +54,13 @@ async function loginAs(page: Page, email: string, password: string) {
 }
 
 /**
- * Mock the ListAgentAuthAgents RPC so the agents page renders with zero agents
+ * Mock the ListCapabilityGrantAgents RPC so the agents page renders with zero agents
  * (empty state) without a real daemon.
  */
 async function mockEmptyAgentList(page: Page) {
   await page.route("**/api/gibson-proxy**", async (route) => {
     const url = route.request().url();
-    if (url.includes("ListAgentAuth") || url.includes("AgentAuth")) {
+    if (url.includes("ListCapabilityGrant") || url.includes("CapabilityGrant")) {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -73,13 +73,13 @@ async function mockEmptyAgentList(page: Page) {
 }
 
 /**
- * Mock the ListAgentAuthAgents RPC so the agents page renders with two sample
+ * Mock the ListCapabilityGrantAgents RPC so the agents page renders with two sample
  * registered agents.
  */
 async function mockAgentList(page: Page) {
   await page.route("**/api/gibson-proxy**", async (route) => {
     const url = route.request().url();
-    if (url.includes("ListAgentAuth") || url.includes("AgentAuth")) {
+    if (url.includes("ListCapabilityGrant") || url.includes("CapabilityGrant")) {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -370,7 +370,7 @@ test.describe("Agents Settings — admin view", () => {
 
     await page.goto(AGENTS_URL);
 
-    // AgentsContent shows an Alert when listAgentAuthAgents rejects
+    // AgentsContent shows an Alert when listCapabilityGrantAgents rejects
     await expect(
       page.locator('[role="alert"]').first(),
     ).toBeVisible({ timeout: 15_000 });

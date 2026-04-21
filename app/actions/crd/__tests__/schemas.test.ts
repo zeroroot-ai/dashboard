@@ -136,12 +136,23 @@ describe("memberRoleSchema", () => {
 });
 
 describe("tenantTierSchema", () => {
-  it.each(["free", "pro", "enterprise"])("accepts %s", (t) => {
+  it.each([
+    "solo",
+    "squad",
+    "org",
+    "platform",
+    "enterprise-cloud",
+    "enterprise-onprem",
+    "public-sector",
+  ])("accepts %s", (t) => {
     expect(tenantTierSchema.safeParse(t).success).toBe(true);
   });
-  it("rejects 'paid'", () => {
-    expect(tenantTierSchema.safeParse("paid").success).toBe(false);
-  });
+  it.each(["free", "pro", "enterprise", "paid"])(
+    "rejects deprecated/unknown tier %s",
+    (t) => {
+      expect(tenantTierSchema.safeParse(t).success).toBe(false);
+    },
+  );
 });
 
 describe("agentModeSchema", () => {
@@ -159,7 +170,7 @@ describe("provisionTenantInput", () => {
     expect(r.success).toBe(true);
   });
   it("accepts with tier", () => {
-    const r = provisionTenantInput.safeParse({ displayName: "Acme", owner: "user-1", tier: "pro" });
+    const r = provisionTenantInput.safeParse({ displayName: "Acme", owner: "user-1", tier: "squad" });
     expect(r.success).toBe(true);
   });
   it("rejects extra key", () => {
@@ -189,11 +200,11 @@ describe("deleteTenantInput", () => {
 
 describe("updateTenantInput", () => {
   it("accepts partial patch", () => {
-    const r = updateTenantInput.safeParse({ name: "acme", patch: { tier: "enterprise" } });
+    const r = updateTenantInput.safeParse({ name: "acme", patch: { tier: "platform" } });
     expect(r.success).toBe(true);
   });
   it("rejects extra key on patch", () => {
-    const r = updateTenantInput.safeParse({ name: "acme", patch: { tier: "enterprise", foo: 1 } });
+    const r = updateTenantInput.safeParse({ name: "acme", patch: { tier: "platform", foo: 1 } });
     expect(r.success).toBe(false);
   });
 });

@@ -14,7 +14,7 @@ type FooterLink = {
 const footerLinks: FooterLink[] = [
   { label: 'docs', href: '/docs' },
   { label: 'discord', href: 'https://discord.gg/zero-day-ai', external: true },
-  { label: 'github', href: 'https://github.com/zero-day-ai/gibson-adk', external: true },
+  { label: 'github', href: 'https://github.com/zero-day-ai/adk', external: true },
   { label: 'pricing', href: '/pricing' },
 ];
 

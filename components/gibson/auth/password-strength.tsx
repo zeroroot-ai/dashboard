@@ -3,7 +3,10 @@
 import { CheckIcon, XIcon, ShieldAlertIcon, LoaderCircleIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/src/lib/utils";
-import type { checkPasswordAction } from "@/app/actions/auth/check-password";
+/** Type for the HIBP password check server action. */
+type CheckPasswordAction = (args: { password: string }) => Promise<
+  { ok: true; breached: boolean; count?: number } | { ok: false; reason: string }
+>;
 
 interface Requirement {
   label: string;
@@ -50,7 +53,7 @@ interface PasswordStrengthProps {
    * Injected Server Action for the HIBP live check. When omitted (e.g. in
    * tests that only exercise the rule checklist), breach checking is skipped.
    */
-  onCheckPassword?: typeof checkPasswordAction;
+  onCheckPassword?: CheckPasswordAction;
   /**
    * Pass `false` to disable the HIBP live-check UI entirely — behaves as if
    * NEXT_PUBLIC_DASHBOARD_HIBP_ENABLED is not 'true'. Defaults to the env var.

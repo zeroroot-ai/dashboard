@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { useSession } from "@/src/lib/session-client";
-import { signOutAction } from "@/app/actions/auth/signout";
 import { usePermitted } from "@/src/lib/auth/tenant";
 import { MoreHorizontal, Search, Trash2, UserPlus, Eye } from "lucide-react";
 import { toast } from "sonner";

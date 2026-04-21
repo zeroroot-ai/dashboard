@@ -234,4 +234,11 @@ export const CRD_PERMISSIONS: Record<
     permission: "enrollments:read_bootstrap",
     rateLimit: "fetchBootstrapToken",
   },
+  setComponentAccessAction: { permission: "grants:create" },
+  installAgentAction: { permission: "grants:create" },
+  listTeamsAction: { permission: "members:invite" },
+  createTeamAction: { permission: "members:invite" },
+  deleteTeamAction: { permission: "members:revoke" },
+  addTeamMemberAction: { permission: "members:invite" },
+  removeTeamMemberAction: { permission: "members:revoke" },
 };
