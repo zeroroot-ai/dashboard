@@ -95,6 +95,30 @@ async function getAdminClient(_userId?: string, _tenantId?: string) {
   return createClient(DaemonAdminService, getTransport(token));
 }
 
+// ---------------------------------------------------------------------------
+// LLM user-attribution-governance clients (spec: llm-user-attribution-governance)
+// ---------------------------------------------------------------------------
+
+export async function getBudgetClient() {
+  const token = await resolveAccessToken();
+  const { BudgetService } = await import("@/src/gen/gibson/budget/v1/budget_pb");
+  return createClient(BudgetService, getTransport(token));
+}
+
+export async function getModelAccessClient() {
+  const token = await resolveAccessToken();
+  const { ModelAccessService } = await import(
+    "@/src/gen/gibson/authz/v1/model_access_pb"
+  );
+  return createClient(ModelAccessService, getTransport(token));
+}
+
+export async function getUsageClient() {
+  const token = await resolveAccessToken();
+  const { UsageService } = await import("@/src/gen/gibson/usage/v1/usage_pb");
+  return createClient(UsageService, getTransport(token));
+}
+
 export async function getStatus(userId?: string, tenantId?: string): Promise<StatusResponse> {
   const client = await getClient(userId, tenantId);
   const response = await client.status({});
