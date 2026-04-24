@@ -253,11 +253,16 @@ export async function signupAction(
         `${slugify(ctx.input.email)}-owner`,
         {
           email: ctx.input.email,
-          role: "owner",
+          role: "admin",
           tenantRef: { name: ctx.tenantSlug },
         },
       );
     } catch (err) {
+      console.error("[signup] applyTenantMember failed", {
+        attemptId: ctx.attemptId,
+        tenantSlug: ctx.tenantSlug,
+        err: err instanceof Error ? err.message : String(err),
+      });
       return await finish(ctx, "apply_member", {
         code: "INTERNAL_ERROR",
         userMessage:
