@@ -13,7 +13,7 @@
  * is a thin redirect shim until a branded Zitadel login theme is configured.
  */
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Loader2Icon } from "lucide-react";
@@ -35,7 +35,20 @@ export function LoginForm({ providers }: LoginFormProps) {
 
   // Immediately redirect to Zitadel hosted login. No email/password form
   // is rendered — credentials are collected by Zitadel.
+  //
+  // Hard guard against double-fire: React StrictMode (and any future
+  // re-mounts triggered by router transitions) would otherwise call
+  // signIn("zitadel") twice. Both POSTs hit the same Zitadel auth
+  // request, the second one fails with "Auth Request has already been
+  // handled (COMMAND-Sx208nt)", and the V2 login UI's error path
+  // parks the user on /ui/v2/login/signedin instead of completing the
+  // OIDC redirect back to /api/auth/callback/zitadel — leaving the
+  // dashboard with no session cookie despite Zitadel showing the
+  // user as signed in.
+  const initiated = useRef(false);
   useEffect(() => {
+    if (initiated.current) return;
+    initiated.current = true;
     void signIn("zitadel", { callbackUrl });
   }, [callbackUrl]);
 
