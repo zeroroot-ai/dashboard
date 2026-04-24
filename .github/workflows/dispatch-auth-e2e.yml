@@ -1,6 +1,8 @@
-# dispatch-signup-e2e.yml — fires the deploy repo's signup-e2e workflow on PR.
-# Requirements: R5.1.
-name: Dispatch signup-e2e
+# dispatch-auth-e2e.yml — fires the deploy repo's auth-e2e workflow on PR.
+#
+# Renamed from dispatch-signup-e2e.yml (login-e2e-tdd Task 9).
+# Requirements: R5.1, R5.3.
+name: Dispatch auth-e2e
 
 on:
   pull_request:
@@ -9,17 +11,17 @@ on:
       - "src/lib/gibson-admin-client.ts"
       - "src/lib/auth/**"
       - "e2e/auth/**"
-      - ".github/workflows/dispatch-signup-e2e.yml"
+      - ".github/workflows/dispatch-auth-e2e.yml"
 
 jobs:
   dispatch:
-    name: Trigger signup-e2e in deploy repo
+    name: Trigger auth-e2e in deploy repo
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
-      - name: Dispatch signup-e2e to deploy repo
+      - name: Dispatch auth-e2e to deploy repo
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.SIGNUP_E2E_DISPATCH_TOKEN }}
@@ -27,7 +29,7 @@ jobs:
             await github.rest.repos.createDispatchEvent({
               owner: 'zero-day-ai',
               repo: 'deploy',
-              event_type: 'signup-e2e-trigger',
+              event_type: 'auth-e2e-trigger',
               client_payload: {
                 dashboard_ref: context.payload.pull_request.head.sha,
                 gibson_ref: 'main',
@@ -38,3 +40,4 @@ jobs:
                 source_pr: context.payload.pull_request.number,
               },
             });
+            console.log(`Dispatched auth-e2e for PR #${context.payload.pull_request.number} @ ${context.payload.pull_request.head.sha}`);
