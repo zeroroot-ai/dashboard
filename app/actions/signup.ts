@@ -255,6 +255,11 @@ export async function signupAction(
           email: ctx.input.email,
           role: "admin",
           tenantRef: { name: ctx.tenantSlug },
+          // Self-signup: the signup user IS the workspace owner — pre-accept the
+          // membership so the operator promotes Invited → Active without
+          // requiring the user to click an emailed invitation link. The
+          // operator's invitation flow is for invitees, not the founding owner.
+          acceptedByUserId: ctx.zitadelUserId,
         },
       );
     } catch (err) {
