@@ -1,0 +1,40 @@
+# dispatch-signup-e2e.yml — fires the deploy repo's signup-e2e workflow on PR.
+# Requirements: R5.1.
+name: Dispatch signup-e2e
+
+on:
+  pull_request:
+    paths:
+      - "src/lib/spiffe/**"
+      - "src/lib/gibson-admin-client.ts"
+      - "src/lib/auth/**"
+      - "e2e/auth/**"
+      - ".github/workflows/dispatch-signup-e2e.yml"
+
+jobs:
+  dispatch:
+    name: Trigger signup-e2e in deploy repo
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Dispatch signup-e2e to deploy repo
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.SIGNUP_E2E_DISPATCH_TOKEN }}
+          script: |
+            await github.rest.repos.createDispatchEvent({
+              owner: 'zero-day-ai',
+              repo: 'deploy',
+              event_type: 'signup-e2e-trigger',
+              client_payload: {
+                dashboard_ref: context.payload.pull_request.head.sha,
+                gibson_ref: 'main',
+                sdk_ref: 'main',
+                extauthz_ref: 'main',
+                operator_ref: 'main',
+                source_repo: 'dashboard',
+                source_pr: context.payload.pull_request.number,
+              },
+            });

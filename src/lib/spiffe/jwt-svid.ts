@@ -203,6 +203,18 @@ async function mintToken(
   try {
     rawJwt = await fetchJWTSVID([audience], socketPath, GRPC_TIMEOUT_MS);
   } catch (err) {
+    // Diagnostic: log the underlying error so we can distinguish a real
+    // gRPC timeout from a synchronous client-construction failure (e.g. URI
+    // parse error in grpc-js). The catch otherwise hides the root cause.
+    console.error('[spiffe/jwt-svid] mintToken raw error:', {
+      socketPath,
+      audience,
+      name: (err as Error)?.name,
+      message: (err as Error)?.message,
+      code: (err as { code?: number })?.code,
+      details: (err as { details?: string })?.details,
+      stack: (err as Error)?.stack?.split('\n').slice(0, 4).join('\n'),
+    });
     // Distinguish between DEADLINE_EXCEEDED / UNAVAILABLE (unreachable) and
     // other errors. grpc-js sets `err.code` to a numeric status code.
     const code = (err as { code?: number }).code;

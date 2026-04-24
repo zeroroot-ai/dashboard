@@ -194,6 +194,11 @@ function decodeJWTSVIDResponse(buf: Buffer): JWTSVIDResponse {
 /** The gRPC service method map for makeGenericClientConstructor. */
 const WORKLOAD_API_METHODS = {
   FetchJWTSVID: {
+    // grpc-js requires `path` (the fully-qualified RPC path used by
+    // Channel#createCall) AND `originalName`. SPIRE Workload API service is
+    // `SpiffeWorkloadAPI` with no package prefix.
+    path: '/SpiffeWorkloadAPI/FetchJWTSVID',
+    originalName: 'FetchJWTSVID',
     requestStream: false,
     responseStream: false,
     requestSerialize: (req: JWTSVIDRequest): Buffer => encodeJWTSVIDRequest(req),
