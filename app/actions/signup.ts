@@ -74,11 +74,16 @@ const MEMBER_READY_TIMEOUT_MS = 30_000;
 const POLL_INTERVAL_MS = 1_000;
 
 /**
- * Default post-signup destination. Auth.js's `/api/auth/signin/zitadel`
- * starts the OIDC flow; after the callback the user lands on /dashboard.
+ * Default post-signup destination. Routes through /login so the LoginForm
+ * client component invokes Auth.js v5's CSRF-protected signIn("zitadel"),
+ * which POSTs to /api/auth/signin/zitadel with the required tokens.
+ *
+ * NOTE: don't redirect directly to /api/auth/signin/zitadel — Auth.js v5
+ * removed the GET-based sign-in initiation that v4 supported, and a GET to
+ * that endpoint now throws `UnknownAction` and bounces back to
+ * /login?error=Configuration.
  */
-const POST_SIGNUP_REDIRECT =
-  "/api/auth/signin/zitadel?callbackUrl=%2Fdashboard";
+const POST_SIGNUP_REDIRECT = "/login?callbackUrl=%2Fdashboard";
 
 // ---------------------------------------------------------------------------
 // Main entry
