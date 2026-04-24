@@ -190,8 +190,14 @@ export function SignupForm({
   const passwordValue = watch("password");
 
   // Prevent accidental navigation while provisioning is in progress.
+  // Skip the guard once a success redirect URL is set: at that point the
+  // panel is about to navigate intentionally (window.location.assign), and
+  // browsers fire beforeunload during that navigation too — without this
+  // skip, the user gets a "you will lose your saved information" popup
+  // every successful signup right before landing on /login.
   useEffect(() => {
     if (!isProvisioning) return;
+    if (redirectOnSuccess) return;
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
@@ -199,7 +205,7 @@ export function SignupForm({
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isProvisioning]);
+  }, [isProvisioning, redirectOnSuccess]);
 
   const handleRetry = useCallback(() => {
     setIsProvisioning(false);

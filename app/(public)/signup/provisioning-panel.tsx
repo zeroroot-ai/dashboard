@@ -62,7 +62,7 @@ const STEP_GROUPS: StepGroup[] = [
   },
   {
     steps: ["create_user", "send_verify_email"],
-    label: "$ forging identity",
+    label: "$ creating account",
   },
   {
     steps: ["apply_tenant"],
@@ -74,7 +74,7 @@ const STEP_GROUPS: StepGroup[] = [
   },
   {
     steps: ["apply_member"],
-    label: "$ wiring access tuples",
+    label: "$ configuring access",
   },
   {
     steps: ["grant_owner_role", "done"],
