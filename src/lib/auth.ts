@@ -78,12 +78,33 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
   const tenants = tenantId ? [tenantId] : [];
   const rolesByTenant: Record<string, string> = {};
 
-  // Zitadel project roles arrive as token claims; for now we don't have a
-  // daemon GetMyPermissions call here — permissions resolve via FGA in ext_authz.
-  // The session carries whatever claims Zitadel includes.
+  // Resolve roles from K8s TenantMember CRs. The dashboard's signup flow
+  // creates a TenantMember with role=admin for the founding owner; that
+  // record is the source of truth for what role this user holds in this
+  // tenant. Zitadel project roles aren't wired yet (no Actions v2 mapper),
+  // so without this lookup `roles` stays [] forever and every
+  // hasPermission(session, …) check returns false → 403 on every protected
+  // API route the moment the user reaches the dashboard.
   let roles: string[] = [];
   let permissions: string[] = [];
   let crossTenant = false;
+
+  if (tenantId && user.email) {
+    try {
+      const { listTenantMembers } = await import('@/src/lib/k8s/tenants');
+      const ns = `tenant-${tenantId}`;
+      const members = await listTenantMembers(ns);
+      const me = members.find(
+        (m) => m.spec?.email?.toLowerCase() === user.email!.toLowerCase(),
+      );
+      if (me?.spec?.role) {
+        roles = [me.spec.role];
+        rolesByTenant[tenantId] = me.spec.role;
+      }
+    } catch (err) {
+      console.error('[auth] TenantMember role lookup failed:', err);
+    }
+  }
 
   try {
     const { resolveEffectivePermissions, resolveCrossTenant } = await import('@/src/lib/auth/schema');
