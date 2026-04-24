@@ -19,80 +19,120 @@ import type {
   UserActivity,
   ListUserActivitiesResponse,
 } from '@/src/types/user';
-import { serverConfig } from './config';
+import { serverConfig as _serverConfig } from './config';
+import { getSpiffeJwt } from './spiffe/jwt-svid';
+// NOTE(spec in-cluster-mtls-restoration Phase 5): the X.509 SVID direct mTLS
+// transport (Track A) was removed in Task 16. The `dashboard.useEnvoyForDaemon`
+// flag (env var USE_ENVOY_FOR_DAEMON) is retained as documented backout
+// (Requirement 6.1) but its `false` branch is now a hard error — the only
+// transport in this file dials Envoy with a JWT-SVID. To revert Phase 5 in a
+// hot patch, restore the X.509 SVID branch from git history (see Task 16
+// commit) AND set the env to "false". Phase 9 removes the flag entirely.
+//
+// `serverConfig.gibsonDaemonUrl` is still imported (aliased _serverConfig) so
+// that the build doesn't dead-strip it before Phase 9 — exporters elsewhere
+// in the dashboard still reference `gibsonDaemonUrl` indirectly.
+void _serverConfig;
 
 // Tenant CRUD/lookup has moved to the Tenant CRD operator. Use
 // `@/src/lib/k8s/tenants` for tenant access. Tenant proto types are no
 // longer exported by this module.
 
-const GIBSON_ADDR = serverConfig.gibsonDaemonUrl;
+// ---------------------------------------------------------------------------
+// Spec in-cluster-mtls-restoration: Track B-only (post Phase 5 teardown)
+// ---------------------------------------------------------------------------
+//
+// All daemon RPCs flow through Envoy at ADMIN_ENVOY_BASE_URL with a
+// JWT-SVID (audience spiffe://gibson.io/platform/daemon) minted via the
+// SPIRE Workload API. Mirrors gibson-admin-client.ts's transport model.
+//
+// Envoy validates the JWT-SVID, ext-authz mints the HMAC-signed
+// x-gibson-identity-* headers, and the daemon accepts the request based on
+// those headers exclusively. The daemon's mTLS listener accepts ONLY
+// connections from spiffe://gibson.io/platform/envoy.
+//
+// USE_ENVOY_FOR_DAEMON=false is a documented backout (Requirement 6.1). After
+// Phase 5 it produces an explicit error rather than a silent fallback to the
+// (now-deleted) direct mTLS path. Reverting requires un-deleting Task 16's
+// changes in a hot patch.
 
-// ---------------------------------------------------------------------------
-// Bearer Token Transport
-// ---------------------------------------------------------------------------
-// The dashboard authenticates to the daemon via Envoy Gateway, which validates
-// the Zitadel access token and signs trusted internal identity headers
-// (x-gibson-identity-*) before forwarding the request to the daemon.
-//
-// The dashboard MUST:
-//   1. Set Authorization: Bearer <Zitadel access token> on every gRPC call.
-//   2. NOT inject x-gibson-user-id or x-gibson-tenant — Envoy is authoritative.
-//   3. Fail closed when no token is available (do not call the daemon).
-//
-// Token source: auth() from Auth.js (task 21). The access token lives in the
-// encrypted HttpOnly JWT cookie and is never exposed to the browser.
+/** Envoy edge URL — mirrors gibson-admin-client.ts. */
+const ENVOY_BASE_URL =
+  process.env['ADMIN_ENVOY_BASE_URL'] ?? 'https://api.zero-day.local:30443';
+
+/**
+ * SPIFFE audience claim on the JWT-SVID. Must match the `audiences` list
+ * configured on Envoy's `spiffe` provider in envoy.yaml. Envoy verifies the
+ * audience; the daemon does not (Envoy is the authoritative validator).
+ */
+const DAEMON_AUDIENCE =
+  process.env['GIBSON_DAEMON_SPIFFE_AUDIENCE'] ??
+  'spiffe://gibson.io/platform/daemon';
+
+/**
+ * Backout-flag check. After Phase 5 (Task 16) the flag's only legal value is
+ * "true" or unset. "false" produces a hard error pointing at the revert path.
+ * Phase 9 deletes the flag + this guard entirely.
+ */
+function assertEnvoyPath(): void {
+  if (process.env['USE_ENVOY_FOR_DAEMON'] === 'false') {
+    throw new ConnectError(
+      'USE_ENVOY_FOR_DAEMON=false but the direct daemon mTLS path was deleted by ' +
+        'spec in-cluster-mtls-restoration Phase 5 (Task 16). To revert, restore the ' +
+        'X.509 SVID branch from git history and redeploy.',
+      Code.FailedPrecondition,
+    );
+  }
+}
 
 /**
  * Resolve the Zitadel access token from the current Auth.js session.
  *
  * Throws a {@link ConnectError} with code {@link Code.Unauthenticated} when
- * the session is missing or the access token has not been stored in the JWT.
- * This ensures all callers fail closed rather than making unauthenticated
- * requests to the daemon.
+ * the session is missing. The token itself is NOT forwarded to Envoy —
+ * Envoy's ext-authz validates the JWT-SVID and mints HMAC identity headers
+ * from that alone. We still resolve the session so unauthenticated requests
+ * fail closed before any SVID minting work happens.
  */
-async function resolveAccessToken(): Promise<string> {
+async function requireAuthSession(): Promise<void> {
   const session = await auth();
-  const token = session?.accessToken;
-  if (!token) {
+  if (!session?.accessToken) {
     throw new ConnectError(
       'No Zitadel access token in session — user must be signed in via Zitadel OIDC',
       Code.Unauthenticated,
     );
   }
-  return token;
 }
 
 /**
- * Create a Connect-ES gRPC transport that forwards the Zitadel access token.
- *
- * The interceptor injects `Authorization: Bearer <token>` on every request.
- * Envoy Gateway validates the token and appends the signed identity headers;
- * the daemon trusts only those Envoy-signed headers.
- *
- * @param accessToken - Zitadel access token resolved from the Auth.js session.
+ * Build the Envoy-routed gRPC transport. Lazily mints a JWT-SVID per request
+ * via the cached `getSpiffeJwt` helper.
  */
-function getTransport(accessToken: string) {
+function getTransport() {
   const interceptors: Parameters<typeof createGrpcTransport>[0]['interceptors'] = [
-    (next) => (req) => {
-      req.header.set('Authorization', `Bearer ${accessToken}`);
+    (next) => async (req) => {
+      const jwt = await getSpiffeJwt({ audience: DAEMON_AUDIENCE });
+      req.header.set('Authorization', `Bearer ${jwt}`);
       return next(req);
     },
   ];
 
   return createGrpcTransport({
-    baseUrl: GIBSON_ADDR,
+    baseUrl: ENVOY_BASE_URL,
     interceptors,
   });
 }
 
 async function getClient(_userId?: string, _tenantId?: string) {
-  const token = await resolveAccessToken();
-  return createClient(DaemonService, getTransport(token));
+  assertEnvoyPath();
+  await requireAuthSession();
+  return createClient(DaemonService, getTransport());
 }
 
 async function getAdminClient(_userId?: string, _tenantId?: string) {
-  const token = await resolveAccessToken();
-  return createClient(DaemonAdminService, getTransport(token));
+  assertEnvoyPath();
+  await requireAuthSession();
+  return createClient(DaemonAdminService, getTransport());
 }
 
 // ---------------------------------------------------------------------------
@@ -100,23 +140,26 @@ async function getAdminClient(_userId?: string, _tenantId?: string) {
 // ---------------------------------------------------------------------------
 
 export async function getBudgetClient() {
-  const token = await resolveAccessToken();
+  assertEnvoyPath();
+  await requireAuthSession();
   const { BudgetService } = await import("@/src/gen/gibson/budget/v1/budget_pb");
-  return createClient(BudgetService, getTransport(token));
+  return createClient(BudgetService, getTransport());
 }
 
 export async function getModelAccessClient() {
-  const token = await resolveAccessToken();
+  assertEnvoyPath();
+  await requireAuthSession();
   const { ModelAccessService } = await import(
     "@/src/gen/gibson/authz/v1/model_access_pb"
   );
-  return createClient(ModelAccessService, getTransport(token));
+  return createClient(ModelAccessService, getTransport());
 }
 
 export async function getUsageClient() {
-  const token = await resolveAccessToken();
+  assertEnvoyPath();
+  await requireAuthSession();
   const { UsageService } = await import("@/src/gen/gibson/usage/v1/usage_pb");
-  return createClient(UsageService, getTransport(token));
+  return createClient(UsageService, getTransport());
 }
 
 export async function getStatus(userId?: string, tenantId?: string): Promise<StatusResponse> {

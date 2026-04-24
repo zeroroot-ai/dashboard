@@ -40,6 +40,49 @@ that is verified against the SPIRE trust bundle exposed by the
 boundary, separate from the browser path. **Do not** consolidate it
 with the Server Actions above.
 
+## SPIFFE workload identity — JWT-SVID minting and the gateway-only daemon path
+
+The dashboard pod is registered as the SPIRE workload
+`spiffe://gibson.io/platform/dashboard` (chart helper `gibson.spiffeID`).
+Two SPIRE-related sidecars run alongside the dashboard container:
+
+- **`spiffe-helper`** — fetches the dashboard's X.509 SVID + the SPIRE
+  trust bundle via the Workload API and materializes them as PEM files
+  (`svid.pem`, `svid-key.pem`, `bundle.pem`) into a shared `emptyDir` at
+  `/spire/svids`. **The dashboard container no longer mounts this volume**
+  as of spec `in-cluster-mtls-restoration` Phase 5 — the helper is kept
+  because other in-cluster components still consume the file-based PEMs.
+- **`spiffe-jwks-exporter`** — translates the SPIRE JWT bundle into a JWKS
+  HTTP endpoint at `http://127.0.0.1:9091/jwks` so Auth.js / `jose` /
+  Envoy's `jwt_authn` filter can verify SPIFFE-issued JWT-SVIDs.
+
+**JWT-SVID minting**: `src/lib/spiffe/jwt-svid.ts` is the canonical minter.
+It opens a gRPC connection to the SPIRE Workload API socket at
+`/run/spire/sockets/agent.sock` (mounted via hostPath into every dashboard
+pod) and calls `FetchJWTSVID` with the requested audience. Tokens are
+cached in-process per audience with stale-while-revalidate semantics
+(refresh fires 30 minutes before expiry; max TTL 3600s enforced server-side).
+Never logs raw JWTs.
+
+**Gateway-only dashboard → daemon**: BOTH `src/lib/gibson-client.ts`
+(non-admin RPCs) AND `src/lib/gibson-admin-client.ts` (admin RPCs) route
+ALL traffic through Envoy at `ADMIN_ENVOY_BASE_URL` (typically
+`https://api.<domain>:30443`) using a JWT-SVID with audience
+`spiffe://gibson.io/platform/daemon`. The dashboard does NOT dial the
+daemon's `:50051` mTLS listener directly. The daemon's listener accepts
+ONLY connections from `spiffe://gibson.io/platform/envoy` (Envoy presents
+its own SPIRE-issued SVID via SDS). Any future code path that introduces
+a direct `https://gibson:50051` transport is rejected by the chart guard
+`gibson.validateEnvoySdsWired`. See `core/gibson/CLAUDE.md` "Identity /
+SPIFFE — In-cluster Transport" and `docs/auth-flow.md` for the full flow.
+
+**Backout flag** (transitional): `dashboard.useEnvoyForDaemon` chart value
+→ `USE_ENVOY_FOR_DAEMON` env var. Default `true`. Setting to `false`
+post-spec produces a hard `ConnectError(FailedPrecondition)` from
+`gibson-client.ts` because the X.509 SVID direct transport was deleted in
+Phase 5. The flag exists for a one-step git-revert hot patch during the
+30-day soak (Requirement 6.1) and is deleted in Phase 9.
+
 ## Better Auth instance
 
 `src/lib/auth-server.ts` is the single Better Auth construction site.
