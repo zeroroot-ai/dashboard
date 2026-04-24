@@ -34,6 +34,22 @@ const nextConfig: NextConfig = {
     "@connectrpc/connect-node",
     "@connectrpc/connect",
   ],
+  experimental: {
+    // Persist the Server Action encryption key across builds so already-loaded
+    // browser bundles can still POST to actions after a deployment. Without
+    // this, every dashboard rebuild rotates action IDs and any client tab
+    // open across the deploy throws "Failed to find Server Action" → the user
+    // sees "Something went wrong on our end" until they hard-refresh.
+    //
+    // Mounted via the Helm chart from the gibson-dashboard secret (key
+    // NEXT_SERVER_ACTIONS_ENCRYPTION_KEY). Falls back to a per-build key in
+    // dev so local `npm run dev` still works without secret plumbing.
+    serverActions: {
+      ...(process.env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+        ? { encryptionKey: process.env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }
+        : {}),
+    },
+  },
   images: {
     remotePatterns: [
       {

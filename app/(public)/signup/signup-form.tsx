@@ -258,7 +258,16 @@ export function SignupForm({
             }
           }
         }
-      } catch {
+      } catch (err) {
+        // Log the actual error so it shows up in browser devtools — without
+        // this the failure is invisible client-side and the dashboard pod
+        // log only sees the Server Action layer's generic 500.
+        console.error("[signup] action threw", {
+          attemptId: newAttemptId,
+          err,
+          message: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack : undefined,
+        });
         toast.error("Something went wrong on our end. Please try again.");
         // Drop the panel on uncaught exception so the user can retry the form.
         setAttemptId(null);
