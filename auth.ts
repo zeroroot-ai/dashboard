@@ -160,23 +160,54 @@ const config: NextAuthConfig = {
         // profile contains the raw ID token claims from Zitadel.
         const claims = profile as Record<string, unknown>;
 
-        // Tenant resolution — single, documented precedence:
-        //   1. `gibson:tenant` — emitted by a future Zitadel Actions v2
-        //      mapper. When wired, it is authoritative.
+        // Tenant resolution — fallback chain (initial-sign-in only;
+        // result cached on the JWT for the session lifetime):
+        //   1. `gibson:tenant` — Zitadel Actions v2 custom claim mapper.
+        //      Authoritative when wired.
         //   2. `urn:zitadel:iam:user:resourceowner:id` — the user's Zitadel
-        //      org ID. Post dashboard-native-signup, EVERY real user lives
-        //      in their own Zitadel org (created by the tenant-operator's
-        //      EnsureZitadelOrg saga step), and that org's ID IS the tenant
-        //      ID. The chart's FGA tuples are written keyed on the same
-        //      value, so this path is end-to-end consistent.
+        //      org ID. Documented Zitadel claim; in practice this Zitadel
+        //      install does NOT include it in claims_supported and does
+        //      NOT emit it on the ID token. Kept for future Zitadel
+        //      versions that do.
+        //   3. K8s lookup — list Tenant CRs by spec.owner == email and
+        //      return the first match. This is the source of truth
+        //      because the dashboard's signup flow is the system that
+        //      creates the Tenant CR — guaranteed consistent with what
+        //      the user actually owns. Required because (1) and (2) are
+        //      both empty in the current Zitadel config, so without this
+        //      every signed-up user has token.tenant=undefined and
+        //      middleware kicks them to /api/auth/federated-signout the
+        //      moment they hit /dashboard — infinite sign-in loop.
         const gibsonTenant = claims["gibson:tenant"];
         const resourceOwnerId = claims["urn:zitadel:iam:user:resourceowner:id"];
-        token["tenant"] =
-          (typeof gibsonTenant === "string" && gibsonTenant.length > 0
+        const claimedTenant =
+          typeof gibsonTenant === "string" && gibsonTenant.length > 0
             ? gibsonTenant
             : typeof resourceOwnerId === "string" && resourceOwnerId.length > 0
               ? resourceOwnerId
-              : undefined);
+              : undefined;
+        if (claimedTenant) {
+          token["tenant"] = claimedTenant;
+        } else {
+          // Fallback: query K8s for tenants owned by this email.
+          const email = (claims["email"] ?? token.email) as string | undefined;
+          if (email) {
+            try {
+              const { listTenantsForOwner } = await import(
+                "@/src/lib/k8s/tenants-by-owner"
+              );
+              const owned = await listTenantsForOwner(email);
+              if (owned.length > 0) {
+                token["tenant"] = owned[0].metadata.name;
+              }
+            } catch (err) {
+              console.error("[auth.jwt] tenant K8s lookup failed", {
+                email,
+                err: err instanceof Error ? err.message : String(err),
+              });
+            }
+          }
+        }
 
         // Copy the Zitadel access token into the encrypted JWT so that
         // gibson-client.ts can forward it as Authorization: Bearer on every

@@ -31,6 +31,12 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('/')` */
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
 
+    /* The Kind dev cluster serves Envoy with a self-signed cert. Tests
+     * targeting https://app.zero-day.local:30443 fail with
+     * ERR_CERT_AUTHORITY_INVALID without this. Production-like specs that
+     * point at a real cluster should override this back to false. */
+    ignoreHTTPSErrors: true,
+
     /* Collect trace when retrying the failed test */
     trace: 'on-first-retry',
 
