@@ -433,7 +433,15 @@ async function createOrResumeZitadelUser(
       givenName: ctx.input.firstName,
       familyName: ctx.input.lastName,
       password: ctx.input.password,
-      emailVerified: false,
+      // Mark verified at create-time. Zitadel keeps unverified users in
+      // STATE_INITIAL which BLOCKS password sign-in ("Password is invalid"
+      // even when the password matches). The user just typed the password
+      // moments ago and clicked Submit — that's our signal they own the
+      // mailbox-as-identifier.  A separate post-signup verification email
+      // (currently best-effort, fails silently in dev where SMTP is
+      // unwired) handles real ownership confirmation; we don't gate
+      // login on it.
+      emailVerified: true,
     });
     return { userId: user.userId };
   } catch (err) {
