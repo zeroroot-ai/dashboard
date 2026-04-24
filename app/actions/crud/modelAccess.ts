@@ -11,7 +11,7 @@
  */
 
 import { getModelAccessClient } from "@/src/lib/gibson-client";
-import { getSession } from "@/src/lib/auth";
+import { getServerSession } from "@/src/lib/auth";
 import {
   GrantSubjectKind,
   GrantTargetKind,
@@ -104,7 +104,7 @@ export interface GrantInput {
 export async function grantModelAccessAction(
   input: GrantInput,
 ): Promise<ActionResult<null>> {
-  const session = await getSession();
+  const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const client = await getModelAccessClient();
@@ -128,7 +128,7 @@ export async function grantModelAccessAction(
 export async function revokeModelAccessAction(
   input: GrantInput,
 ): Promise<ActionResult<null>> {
-  const session = await getSession();
+  const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const client = await getModelAccessClient();
@@ -153,7 +153,7 @@ export async function listModelAccessAction(
   subjectKind: SubjectKindInput,
   subjectId: string,
 ): Promise<ActionResult<AccessGrantRow[]>> {
-  const session = await getSession();
+  const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const client = await getModelAccessClient();
@@ -192,7 +192,7 @@ export interface ListAuditInput {
 export async function listModelAccessAuditAction(
   input: ListAuditInput,
 ): Promise<ActionResult<ModelResolutionEventRow[]>> {
-  const session = await getSession();
+  const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const client = await getModelAccessClient();

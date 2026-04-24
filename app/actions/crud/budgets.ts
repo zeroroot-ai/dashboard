@@ -16,7 +16,7 @@
  */
 
 import { getBudgetClient } from "@/src/lib/gibson-client";
-import { getSession } from "@/src/lib/auth";
+import { getServerSession } from "@/src/lib/auth";
 import { BudgetScope } from "@/src/gen/gibson/budget/v1/budget_pb";
 
 export type ActionResult<T> =
@@ -77,7 +77,7 @@ function scopeFromProto(s: BudgetScope): ScopeInput {
 export async function listBudgetsAction(
   scope: ScopeInput,
 ): Promise<ActionResult<BudgetRow[]>> {
-  const session = await getSession();
+  const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const client = await getBudgetClient();
@@ -102,7 +102,7 @@ export async function listBudgetsAction(
 export async function listBudgetStatusAction(
   scope: ScopeInput,
 ): Promise<ActionResult<BudgetStatusRow[]>> {
-  const session = await getSession();
+  const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const client = await getBudgetClient();
@@ -142,7 +142,7 @@ export interface SetBudgetInput {
 export async function setBudgetAction(
   input: SetBudgetInput,
 ): Promise<ActionResult<null>> {
-  const session = await getSession();
+  const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const client = await getBudgetClient();
@@ -178,7 +178,7 @@ export interface TenantDefaultsRow {
 export async function getTenantBudgetDefaultsAction(): Promise<
   ActionResult<TenantDefaultsRow>
 > {
-  const session = await getSession();
+  const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const client = await getBudgetClient();
@@ -205,7 +205,7 @@ export async function getTenantBudgetDefaultsAction(): Promise<
 export async function setTenantBudgetDefaultsAction(
   input: TenantDefaultsRow,
 ): Promise<ActionResult<null>> {
-  const session = await getSession();
+  const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const client = await getBudgetClient();

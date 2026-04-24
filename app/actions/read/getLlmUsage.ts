@@ -13,7 +13,7 @@
  */
 
 import { getUsageClient } from "@/src/lib/gibson-client";
-import { getSession } from "@/src/lib/auth";
+import { getServerSession } from "@/src/lib/auth";
 import { UsageScope } from "@/src/gen/gibson/usage/v1/usage_pb";
 
 export type UsageRow = {
@@ -66,7 +66,7 @@ export interface GetLlmUsageResponse {
 export async function getLlmUsageAction(
   req: GetLlmUsageRequest,
 ): Promise<ActionResult<GetLlmUsageResponse>> {
-  const session = await getSession();
+  const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "unauthenticated" };
   }
