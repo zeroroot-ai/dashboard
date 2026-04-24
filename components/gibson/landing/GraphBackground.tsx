@@ -2,16 +2,16 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 
-// Old-school CRT palette: P1 green phosphor + IBM 5151 amber. Two hues only —
-// types differentiate by brightness rather than by bringing in foreign colors.
+// Matrix palette: one hue, differentiated by brightness. Head-of-rain whites
+// for "active" node types, classic phosphor for supporting ones.
 const NODE_TYPES = {
-  Mission:   { color: "#ffb000", radius: 16 }, // amber — the goal (primary)
-  Agent:     { color: "#00ff41", radius: 14 }, // phosphor green — the worker
-  Tool:      { color: "#33cc44", radius: 11 }, // dim green — read-only ops
-  Plugin:    { color: "#33ddff", radius: 12 }, // phosphor cyan — external systems
-  Discovery: { color: "#ffd700", radius: 12 }, // bright amber — warnings
-  Action:    { color: "#66ff77", radius: 13 }, // bright green — what was done
-  Memory:    { color: "#88cc66", radius: 11 }, // olive-green — stored state
+  Mission:   { color: "#d4ffd4", radius: 24 }, // head-of-rain white-green — the goal
+  Agent:     { color: "#00ff66", radius: 22 }, // classic matrix phosphor
+  Tool:      { color: "#2ecc54", radius: 17 }, // mid phosphor
+  Plugin:    { color: "#6cff8c", radius: 18 }, // bright phosphor
+  Discovery: { color: "#baffc0", radius: 18 }, // pale bright green — finding
+  Action:    { color: "#5cff7a", radius: 19 }, // bright phosphor
+  Memory:    { color: "#3cbf5c", radius: 17 }, // deep phosphor
 } as const;
 
 type NodeType = keyof typeof NODE_TYPES;
@@ -164,35 +164,33 @@ function buildCluster(
 
   const mission = makeNode("Mission", 0, 0);
 
-  const agentCount = 1 + Math.floor(Math.random() * 2);
-  for (let a = 0; a < agentCount; a++) {
-    const angle = (a / agentCount) * Math.PI * 2 + Math.random() * 0.5;
-    const agent = makeNode("Agent", Math.cos(angle) * 90, Math.sin(angle) * 90);
-    addEdge(mission.id, agent.id);
+  // Single agent per cluster keeps each cluster visually coherent.
+  const angle = Math.random() * Math.PI * 2;
+  const agent = makeNode("Agent", Math.cos(angle) * 80, Math.sin(angle) * 80);
+  addEdge(mission.id, agent.id);
 
-    const toolCount = 1 + Math.floor(Math.random() * 2);
-    for (let t = 0; t < toolCount; t++) {
-      const tAngle = angle + (t - 0.5) * 0.6;
-      const tool = makeNode("Tool", Math.cos(tAngle) * 175, Math.sin(tAngle) * 175);
-      addEdge(agent.id, tool.id);
+  const toolCount = 1 + Math.floor(Math.random() * 2);
+  for (let t = 0; t < toolCount; t++) {
+    const tAngle = angle + (t - (toolCount - 1) / 2) * 0.7;
+    const tool = makeNode("Tool", Math.cos(tAngle) * 150, Math.sin(tAngle) * 150);
+    addEdge(agent.id, tool.id);
 
-      const dAngle = tAngle + (Math.random() - 0.5) * 0.4;
-      const discovery = makeNode("Discovery", Math.cos(dAngle) * 260, Math.sin(dAngle) * 260);
-      addEdge(tool.id, discovery.id);
+    const dAngle = tAngle + (Math.random() - 0.5) * 0.35;
+    const discovery = makeNode("Discovery", Math.cos(dAngle) * 220, Math.sin(dAngle) * 220);
+    addEdge(tool.id, discovery.id);
 
-      const action = makeNode("Action", Math.cos(dAngle) * 345, Math.sin(dAngle) * 345);
-      addEdge(discovery.id, action.id);
+    const action = makeNode("Action", Math.cos(dAngle) * 285, Math.sin(dAngle) * 285);
+    addEdge(discovery.id, action.id);
 
-      const plugin = makeNode("Plugin", Math.cos(dAngle) * 420, Math.sin(dAngle) * 420 + 30);
-      addEdge(action.id, plugin.id);
-      addEdge(agent.id, plugin.id);
-    }
+    const plugin = makeNode("Plugin", Math.cos(dAngle) * 345, Math.sin(dAngle) * 345 + 20);
+    addEdge(action.id, plugin.id);
+    addEdge(agent.id, plugin.id);
+  }
 
-    if (Math.random() < 0.6) {
-      const mAngle = angle + Math.PI / 2;
-      const memory = makeNode("Memory", Math.cos(mAngle) * 125, Math.sin(mAngle) * 125);
-      addEdge(agent.id, memory.id);
-    }
+  if (Math.random() < 0.6) {
+    const mAngle = angle + Math.PI / 2;
+    const memory = makeNode("Memory", Math.cos(mAngle) * 110, Math.sin(mAngle) * 110);
+    addEdge(agent.id, memory.id);
   }
 
   return { nodes, edges };
@@ -234,82 +232,33 @@ function createGraph(width: number, height: number, clusterCount: number): { nod
   return { nodes, edges };
 }
 
-// Each node chases a slowly orbiting anchor. Anchor orbit supplies continuous
-// motion; spring + edge forces keep the structure coherent; low damping +
-// small noise smooth it out. No settling, no pinballing.
-function step(nodes: Node[], edges: Edge[], width: number, height: number, frame: number) {
-  const idealEdgeLen = 145;
-  const springK = 0.0005;
-  const repulsionK = 90;
-  const anchorK = 0.0025;
-  const damping = 0.965;
-  const noise = 0.01;
-  const velocityCap = 0.7;
-  const margin = 30;
+// Anchor-follow only: each node lerps toward a slowly orbiting anchor. The
+// cluster layout already spaces nodes; skipping spring + repulsion forces
+// eliminates the three-way fight that was causing drift instability.
+function step(nodes: Node[], _edges: Edge[], width: number, height: number, frame: number) {
+  const anchorK = 0.018;
+  const damping = 0.86;
+  const noise = 0.004;
+  const margin = 20;
 
-  // Move each anchor along its slow orbit so nodes always have a moving target.
   for (const node of nodes) {
     const t = frame * node.orbitSpeed + node.orbitPhase;
     node.anchorX = node.baseAnchorX + Math.cos(t) * node.orbitRadius;
     node.anchorY = node.baseAnchorY + Math.sin(t) * node.orbitRadius;
-  }
 
-  for (const edge of edges) {
-    const a = nodes[edge.source];
-    const b = nodes[edge.target];
-    if (!a || !b) continue;
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const dist = Math.sqrt(dx * dx + dy * dy) || 0.0001;
-    const force = (dist - idealEdgeLen) * springK;
-    const fx = (dx / dist) * force;
-    const fy = (dy / dist) * force;
-    a.vx += fx;
-    a.vy += fy;
-    b.vx -= fx;
-    b.vy -= fy;
-  }
-
-  for (let i = 0; i < nodes.length; i++) {
-    for (let j = i + 1; j < nodes.length; j++) {
-      const a = nodes[i];
-      const b = nodes[j];
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const distSq = dx * dx + dy * dy;
-      if (distSq < 1) continue;
-      const dist = Math.sqrt(distSq);
-      const force = repulsionK / distSq;
-      const fx = (dx / dist) * force;
-      const fy = (dy / dist) * force;
-      a.vx -= fx;
-      a.vy -= fy;
-      b.vx += fx;
-      b.vy += fy;
-    }
-  }
-
-  for (const node of nodes) {
     node.vx += (node.anchorX - node.x) * anchorK;
     node.vy += (node.anchorY - node.y) * anchorK;
     node.vx += (Math.random() - 0.5) * noise;
     node.vy += (Math.random() - 0.5) * noise;
     node.vx *= damping;
     node.vy *= damping;
-    // Cap velocity so nodes never pinball even if forces spike
-    const speed = Math.sqrt(node.vx * node.vx + node.vy * node.vy);
-    if (speed > velocityCap) {
-      const s = velocityCap / speed;
-      node.vx *= s;
-      node.vy *= s;
-    }
     node.x += node.vx;
     node.y += node.vy;
 
-    if (node.x < margin)         { node.x = margin;         node.vx = Math.abs(node.vx) * 0.6; }
-    if (node.x > width - margin) { node.x = width - margin; node.vx = -Math.abs(node.vx) * 0.6; }
-    if (node.y < margin)         { node.y = margin;         node.vy = Math.abs(node.vy) * 0.6; }
-    if (node.y > height - margin){ node.y = height - margin; node.vy = -Math.abs(node.vy) * 0.6; }
+    if (node.x < margin)          { node.x = margin;          node.vx = 0; }
+    if (node.x > width - margin)  { node.x = width - margin;  node.vx = 0; }
+    if (node.y < margin)          { node.y = margin;          node.vy = 0; }
+    if (node.y > height - margin) { node.y = height - margin; node.vy = 0; }
   }
 }
 
@@ -328,26 +277,44 @@ const NODE_GLYPHS: Record<NodeType, string> = {
 };
 
 function drawIcon(ctx: CanvasRenderingContext2D, node: Node) {
-  const r = node.radius * 1.25;
-  // dark phosphor backdrop
+  const rOuter = node.radius;
+  const rInner = node.radius * 0.55;
+
+  // Subtle phosphor wash so rings don't sit on a noisy background
   ctx.beginPath();
-  ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(6, 12, 8, 0.92)";
+  ctx.arc(node.x, node.y, rOuter, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(4, 10, 7, 0.4)";
   ctx.fill();
-  // neon ring
+
+  // Outer thin ring with phosphor bloom
+  ctx.shadowColor = "#00ff66";
+  ctx.shadowBlur = 8;
   ctx.beginPath();
-  ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+  ctx.arc(node.x, node.y, rOuter, 0, Math.PI * 2);
   ctx.strokeStyle = node.color;
-  ctx.lineWidth = 1.8;
+  ctx.globalAlpha = 0.75;
+  ctx.lineWidth = 1;
   ctx.stroke();
-  // glyph in phosphor color
+
+  // Inner thinner ring — reticle effect
+  ctx.beginPath();
+  ctx.arc(node.x, node.y, rInner, 0, Math.PI * 2);
+  ctx.globalAlpha = 0.35;
+  ctx.lineWidth = 0.6;
+  ctx.stroke();
+
+  // Glyph, centered, with bloom
   const glyph = NODE_GLYPHS[node.type];
-  const fontSize = Math.round(node.radius * 1.5);
+  const fontSize = Math.round(node.radius * 0.9);
   ctx.font = `bold ${fontSize}px 'JetBrains Mono', 'Fira Code', ui-monospace, monospace`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = node.color;
+  ctx.globalAlpha = 0.9;
   ctx.fillText(glyph, node.x, node.y + 1);
+
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 1;
   ctx.textAlign = "start";
   ctx.textBaseline = "alphabetic";
 }
@@ -360,7 +327,7 @@ export function GraphBackground() {
   const frameRef = useRef<number>(0);
   const [reducedMotion, setReducedMotion] = useState(false);
 
-  const CLUSTER_COUNT = 5;
+  const CLUSTER_COUNT = 3;
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -400,18 +367,18 @@ export function GraphBackground() {
 
       // outer glow pass
       ctx.setLineDash([]);
-      ctx.strokeStyle = "rgba(0, 255, 136, 0.08)";
-      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = "rgba(0, 255, 136, 0.05)";
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.moveTo(source.x, source.y);
       ctx.lineTo(target.x, target.y);
       ctx.stroke();
 
       // crisp dashed line, animated
-      ctx.setLineDash([6, 5]);
+      ctx.setLineDash([5, 6]);
       ctx.lineDashOffset = -frame * 0.35;
-      ctx.strokeStyle = "rgba(0, 255, 136, 0.42)";
-      ctx.lineWidth = 1.1;
+      ctx.strokeStyle = "rgba(0, 255, 136, 0.32)";
+      ctx.lineWidth = 0.7;
       ctx.beginPath();
       ctx.moveTo(source.x, source.y);
       ctx.lineTo(target.x, target.y);
@@ -436,30 +403,33 @@ export function GraphBackground() {
     }
     ctx.restore();
 
-    // Nodes: colored glow + drawn glyph + label
+    // Nodes: soft glow + thin ring + glyph + label
     for (const node of nodes) {
-      // outer glow
+      // very soft outer glow — just enough to give the ring a phosphor feel
       const glow = ctx.createRadialGradient(
-        node.x, node.y, 0,
-        node.x, node.y, node.radius * 2.8
+        node.x, node.y, node.radius * 0.4,
+        node.x, node.y, node.radius * 2.2
       );
-      const glowAlpha = Math.round(node.opacity * 170).toString(16).padStart(2, "0");
+      const glowAlpha = Math.round(node.opacity * 70).toString(16).padStart(2, "0");
       glow.addColorStop(0, `${node.color}${glowAlpha}`);
       glow.addColorStop(1, `${node.color}00`);
       ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.arc(node.x, node.y, node.radius * 2.8, 0, Math.PI * 2);
+      ctx.arc(node.x, node.y, node.radius * 2.2, 0, Math.PI * 2);
       ctx.fill();
 
-      // hex tile + glyph
+      // thin ring + glyph
       ctx.globalAlpha = node.opacity;
       drawIcon(ctx, node);
       ctx.globalAlpha = 1;
 
-      // label
-      ctx.font = "12px 'JetBrains Mono', 'Fira Code', monospace";
-      ctx.fillStyle = "rgba(0, 255, 80, 0.9)";
-      ctx.fillText(node.label, node.x + node.radius * 1.6, node.y + 4);
+      // label — Matrix phosphor green with bloom
+      ctx.font = "bold 12px 'JetBrains Mono', 'Fira Code', monospace";
+      ctx.shadowColor = "#00ff66";
+      ctx.shadowBlur = 6;
+      ctx.fillStyle = "#b3ffb3";
+      ctx.fillText(node.label, node.x + node.radius * 1.15, node.y + 4);
+      ctx.shadowBlur = 0;
     }
 
     animationRef.current = requestAnimationFrame(draw);

@@ -12,7 +12,7 @@ const messages: TypewriterMessage[] = [
   },
   {
     label: "DevSecOps",
-    text: "Copilot, build me a gibson agent to triage Trivy findings and open Jira tickets — trigger it from CI on every image build.",
+    text: "Amp, build me a gibson agent to triage Trivy findings and open Jira tickets — trigger it from CI on every image build.",
   },
   {
     label: "SRE",
@@ -32,11 +32,11 @@ const messages: TypewriterMessage[] = [
   },
   {
     label: "Developer",
-    text: "Cline, build me a gibson agent that bumps stale dependencies, runs the test suite, and opens PRs only when green — run it nightly from CI.",
+    text: "Crush, build me a gibson agent that bumps stale dependencies, runs the test suite, and opens PRs only when green — run it nightly from CI.",
   },
   {
     label: "IR / SOC",
-    text: "Ollama, build me a gibson agent to sweep every new IOC across CloudTrail and k8s audit logs — trigger it from our SIEM webhook.",
+    text: "opencode, build me a gibson agent to sweep every new IOC across CloudTrail and k8s audit logs — trigger it from our SIEM webhook.",
   },
 ];
 
@@ -94,21 +94,26 @@ export function HeroSection() {
         </div>
 
         {/* CTAs */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button variant="default" size="lg" asChild>
-            <Link href="/pricing">Start Free</Link>
-          </Button>
-          <Button variant="outline" size="lg" asChild>
-            <a
-              href="https://github.com/zero-day-ai/adk"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2"
-            >
-              <Github className="h-4 w-4" />
-              Star the ADK
-            </a>
-          </Button>
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button variant="default" size="lg" asChild>
+              <Link href="/pricing">Start Free</Link>
+            </Button>
+            <Button variant="outline" size="lg" asChild>
+              <a
+                href="https://github.com/zero-day-ai/adk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2"
+              >
+                <Github className="h-4 w-4" />
+                Star the ADK
+              </a>
+            </Button>
+          </div>
+          <p className="font-mono font-semibold text-glow-green-soft text-sm md:text-base lg:text-lg leading-snug text-center">
+            Stand up your security agent factory in under an hour.
+          </p>
         </div>
       </div>
     </section>

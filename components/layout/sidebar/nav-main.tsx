@@ -62,7 +62,7 @@ export const navItems: NavGroup[] = [
     items: [
       {
         title: "Dashboard",
-        href: "/dashboard/default",
+        href: "/dashboard",
         icon: LayoutDashboardIcon
       },
       {

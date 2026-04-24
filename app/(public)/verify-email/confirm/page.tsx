@@ -19,5 +19,5 @@ interface Props {
 
 export default async function VerifyEmailConfirmPage(_props: Props) {
   // Zitadel handles email verification — redirect straight to dashboard.
-  redirect("/dashboard/default");
+  redirect("/dashboard");
 }

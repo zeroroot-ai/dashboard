@@ -536,7 +536,7 @@ export function OnboardingWizard() {
   // If onboarding is already done, redirect immediately
   React.useEffect(() => {
     if (!shouldShowOnboarding) {
-      router.replace("/dashboard/default");
+      router.replace("/dashboard");
     }
   }, [shouldShowOnboarding, router]);
 
@@ -568,7 +568,7 @@ export function OnboardingWizard() {
       // Non-fatal — local store is already updated
     }
 
-    router.push("/dashboard/default");
+    router.push("/dashboard");
   }
 
   return (
@@ -608,7 +608,7 @@ export function OnboardingWizard() {
           <p className="mt-4 text-center text-xs text-muted-foreground">
             Already configured?{" "}
             <Link
-              href="/dashboard/default"
+              href="/dashboard"
               className="text-green-500 hover:text-green-400 transition-colors underline underline-offset-2"
               onClick={() => {
                 store.skipWizard();

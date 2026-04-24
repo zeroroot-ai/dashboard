@@ -31,7 +31,7 @@ export function LoginForm({ providers }: LoginFormProps) {
   // public landing page. Only override via ?callbackUrl=… when the user
   // was deep-linked into a protected route they couldn't load
   // unauthenticated.
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard/default";
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
 
   // Immediately redirect to Zitadel hosted login. No email/password form
   // is rendered — credentials are collected by Zitadel.

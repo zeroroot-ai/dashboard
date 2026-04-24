@@ -33,7 +33,7 @@ export async function SiteHeader() {
           </Link>
           {session?.user ? (
             <Link
-              href="/dashboard/default"
+              href="/dashboard"
               className="text-muted-foreground hover:text-green-300"
             >
               dashboard

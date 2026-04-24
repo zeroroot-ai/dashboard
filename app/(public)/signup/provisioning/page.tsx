@@ -89,7 +89,7 @@ function ProvisioningStatus() {
     // straight to the dashboard. If the cookie is missing for any
     // reason (e.g., the anti-enumeration existing-user path), the
     // middleware session guard will redirect to login.
-    router.push("/dashboard/default");
+    router.push("/dashboard");
   }
 
   useEffect(() => {
