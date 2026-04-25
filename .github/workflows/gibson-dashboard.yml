@@ -1,0 +1,28 @@
+name: gibson-dashboard
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+  pull_request:
+
+concurrency:
+  group: gibson-dashboard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/reusable-image-build.yml
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      security-events: write
+    with:
+      component_name: dashboard
+      component_path: .
+      dockerfile_path: Dockerfile
+      image_name: ghcr.io/zero-day-ai/gibson-dashboard
+      tag_pattern: v(.*)
