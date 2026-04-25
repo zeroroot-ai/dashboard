@@ -123,7 +123,7 @@ jobs:
 
       - name: Upload Trivy SARIF to GitHub Security
         if: always() && github.event_name != 'pull_request'
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-${{ inputs.component_name }}.sarif
           category: trivy-${{ inputs.component_name }}
