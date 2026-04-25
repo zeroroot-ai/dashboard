@@ -17,23 +17,27 @@
  * This spec reads that file, navigates to the Findings page, and asserts
  * UI visibility for each finding the Go side reported.
  *
+ * Cluster: values.yaml + values-kind.yaml (single-values-file rule; no overlay).
+ *
  * Env vars consumed:
  *   SIGNUP_SLUG      — tenant slug (set by Makefile orchestrator)
  *   SIGNUP_EMAIL     — tenant email
+ *   SIGNUP_PASSWORD  — password (falls back to SYNTHETIC_PASSWORD constant)
  *   PLAYWRIGHT_BASE_URL — target cluster URL (default: https://app.zero-day.local:30443)
  *
  * Security:
  *   - Cookie values are NEVER logged.
  *   - Screenshots taken on failure only.
- *   - Does NOT re-drive signup/login — reuses the session established by
- *     the signup + login specs (via Playwright project deps).
+ *   - Uses loginViaZitadelV2 for session establishment (real OIDC flow).
  *
  * Requirements: R5.1–R5.4, R7.2.
  */
 
-import { test, expect, type Page, type BrowserContext } from "@playwright/test";
+import { test, expect, type BrowserContext } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
+import { loginViaZitadelV2 } from "./helpers/login-via-zitadel-v2";
+import { securePassword } from "./helpers/fixtures";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -44,9 +48,7 @@ const CLUSTER_URL =
 
 const SLUG = process.env.SIGNUP_SLUG ?? "";
 const EMAIL = process.env.SIGNUP_EMAIL ?? "";
-
-/** Default password used for synthetic test tenants (same as smoke suite). */
-const SYNTHETIC_PASSWORD = "SmokeE2E!Secure99";
+const SYNTHETIC_PASSWORD = process.env.SIGNUP_PASSWORD ?? securePassword();
 
 /** Maximum time (ms) to wait for a finding to appear in the UI (R8.1). */
 const FINDINGS_VISIBILITY_TIMEOUT_MS = 15_000;
@@ -85,7 +87,7 @@ function loadCoordFile(slug: string): MissionCoordFile {
       `mission-run: coordination file not found at ${coordPath}. ` +
         `Ensure the Go test (TestMission_Run_HappyPath) ran successfully and ` +
         `wrote the coordination file before invoking this Playwright spec. ` +
-        `Run: make test-mission-run-e2e (which runs Go first, then Playwright).`
+        `Run: make test-mission-run-e2e (which runs Go first, then Playwright).`,
     );
   }
   const raw = fs.readFileSync(coordPath, "utf8");
@@ -93,40 +95,41 @@ function loadCoordFile(slug: string): MissionCoordFile {
 }
 
 /**
- * Login as the test tenant and return their session.
- * Best-effort: if the tenant is already logged in (e.g., from a prior spec
- * in the same Playwright project), this is a no-op.
+ * Ensure we have an authenticated session via the real Zitadel V2 OIDC flow.
+ *
+ * Uses loginViaZitadelV2 (Task 9 helper). Skips signup — the user must already
+ * exist (created by the Go test orchestrator in TestMission_Run_HappyPath via
+ * the signup step, or by a prior make test-mission-run-e2e invocation).
  */
 async function ensureLoggedIn(
   context: BrowserContext,
-  slug: string,
   email: string,
-  password: string
+  password: string,
 ): Promise<void> {
   const page = await context.newPage();
   try {
-    // Try navigating to the dashboard — if we get redirected to /login, login.
-    const resp = await page.goto(
-      `${CLUSTER_URL}/tenant/${slug}/dashboard`,
-      { waitUntil: "domcontentloaded", timeout: 30_000 }
-    );
-    const url = page.url();
-    if (url.includes("/login") || (resp?.status() ?? 0) >= 400) {
-      // Not logged in — drive login.
-      await page.goto(`${CLUSTER_URL}/login`, {
-        waitUntil: "networkidle",
-        timeout: 30_000,
-      });
-      const emailInput = page
-        .locator('input[type="email"], input[name="email"]')
-        .first();
-      const passwordInput = page.locator('input[type="password"]').first();
-      await emailInput.fill(email);
-      await passwordInput.fill(password);
-      const submitButton = page.locator('button[type="submit"]').first();
-      await submitButton.click();
-      await page.waitForURL(/\/dashboard|\/tenant/, { timeout: 60_000 });
+    // Navigate to the dashboard. If already authenticated, return early.
+    await page.goto(`${CLUSTER_URL}/dashboard`, {
+      waitUntil: "domcontentloaded",
+      timeout: 15_000,
+    }).catch(() => {});
+
+    if (page.url().includes("/dashboard")) {
+      const cookies = await context.cookies();
+      if (cookies.some((c) => c.name.includes("authjs.session-token"))) {
+        console.log("[mission-run] Already authenticated — session cookie present");
+        return;
+      }
     }
+
+    // Not authenticated — drive Zitadel V2 OIDC login.
+    await loginViaZitadelV2(page, context, {
+      email,
+      password,
+      baseURL: CLUSTER_URL,
+      loginFormTimeoutMs: 30_000,
+      loginCompleteTimeoutMs: 60_000,
+    });
   } finally {
     await page.close();
   }
@@ -140,27 +143,25 @@ test.describe("mission run UI (R5)", () => {
   let coordFile: MissionCoordFile;
 
   test.beforeAll(async () => {
-    // Validate required env vars.
     if (!SLUG) {
       throw new Error(
         "mission-run: SIGNUP_SLUG env var is required. " +
-          "Set it to the slug used by the Go test orchestrator."
+          "Set it to the slug used by the Go test orchestrator.",
       );
     }
     if (!EMAIL) {
       throw new Error(
         "mission-run: SIGNUP_EMAIL env var is required. " +
-          "Set it to the email used by the Go test orchestrator."
+          "Set it to the email used by the Go test orchestrator.",
       );
     }
 
-    // Load the coordination file written by the Go side.
     coordFile = loadCoordFile(SLUG);
 
     if (!coordFile.mission_id) {
       throw new Error(
         `mission-run: coordination file at /tmp/mission-run-${SLUG}.json ` +
-          `is missing mission_id. The Go test may have failed before writing findings.`
+          `is missing mission_id. The Go test may have failed before writing findings.`,
       );
     }
   });
@@ -171,44 +172,36 @@ test.describe("mission run UI (R5)", () => {
   test("mission run UI: findings page shows all findings (R5.1, R5.2)", async ({
     browser,
   }) => {
+    test.setTimeout(120_000);
+
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
     const screenshotDir = "/tmp";
 
     try {
-      // Ensure we're logged in.
-      await ensureLoggedIn(context, SLUG, EMAIL, SYNTHETIC_PASSWORD);
+      await ensureLoggedIn(context, EMAIL, SYNTHETIC_PASSWORD);
 
       const page = await context.newPage();
       const findingsURL = `${CLUSTER_URL}/tenant/${SLUG}/findings`;
 
       try {
-        // Navigate to the Findings page.
         await page.goto(findingsURL, {
           waitUntil: "domcontentloaded",
           timeout: 30_000,
         });
 
-        // Assert the page loaded without HTTP error.
         const currentURL = page.url();
         if (currentURL.includes("/login")) {
           throw new Error(
             `mission-run: navigating to ${findingsURL} redirected to login — ` +
-              `session cookie may have expired between Go test and Playwright spec.`
+              `session cookie may have expired between Go test and Playwright spec.`,
           );
         }
 
-        // For each finding the Go test reported, assert it's visible in the UI.
-        // Use expect.poll for resilience (server-side render or async data load).
         const missingFindings: string[] = [];
 
         for (const finding of coordFile.findings) {
-          // Locate the finding by its ID or description text.
-          // The exact locator depends on the dashboard's finding-card component;
-          // we look for [data-finding-id="<id>"] OR text matching the description.
           const byId = page.locator(`[data-finding-id="${finding.id}"]`);
-          const byDesc = page
-            .locator(`text="${finding.description}"`)
-            .first();
+          const byDesc = page.locator(`text="${finding.description}"`).first();
 
           const isVisible = await Promise.race([
             byId
@@ -225,26 +218,25 @@ test.describe("mission run UI (R5)", () => {
             missingFindings.push(
               `finding ${finding.id} (severity=${finding.severity}, desc="${finding.description}") ` +
                 `is NOT visible on ${findingsURL} ` +
-                `(R5.1 assertion: each Go-side finding must be visible in the UI)`
+                `(R5.1 assertion: each Go-side finding must be visible in the UI)`,
             );
           }
         }
 
         if (missingFindings.length > 0) {
-          // Take a screenshot for diagnosis.
           const screenshotPath = path.join(
             screenshotDir,
-            `mission-run-findings-missing-${SLUG}.png`
+            `mission-run-findings-missing-${SLUG}.png`,
           );
           await page.screenshot({ path: screenshotPath });
           throw new Error(
             `mission-run: ${missingFindings.length} finding(s) not visible in UI ` +
-              `(screenshot: ${screenshotPath}):\n${missingFindings.join("\n")}`
+              `(screenshot: ${screenshotPath}):\n${missingFindings.join("\n")}`,
           );
         }
 
         console.log(
-          `mission-run: PASS — all ${coordFile.findings.length} finding(s) visible on Findings page`
+          `mission-run: PASS — all ${coordFile.findings.length} finding(s) visible on Findings page`,
         );
       } finally {
         await page.close();
@@ -260,16 +252,17 @@ test.describe("mission run UI (R5)", () => {
   test("mission run UI: finding detail view shows severity/evidence/mission_id (R5.3)", async ({
     browser,
   }) => {
-    // Skip if the Go test reported no findings.
     if (coordFile.findings.length === 0) {
       test.skip();
       return;
     }
 
+    test.setTimeout(120_000);
+
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
 
     try {
-      await ensureLoggedIn(context, SLUG, EMAIL, SYNTHETIC_PASSWORD);
+      await ensureLoggedIn(context, EMAIL, SYNTHETIC_PASSWORD);
 
       const page = await context.newPage();
       const findingsURL = `${CLUSTER_URL}/tenant/${SLUG}/findings`;
@@ -280,64 +273,55 @@ test.describe("mission run UI (R5)", () => {
           timeout: 30_000,
         });
 
-        // Click the first finding.
         const firstFinding = coordFile.findings[0];
         const findingLocator = page
           .locator(
-            `[data-finding-id="${firstFinding.id}"], text="${firstFinding.description}"`
+            `[data-finding-id="${firstFinding.id}"], text="${firstFinding.description}"`,
           )
           .first();
 
-        // Wait for it to be visible.
         await expect(findingLocator).toBeVisible({
           timeout: FINDINGS_VISIBILITY_TIMEOUT_MS,
         });
 
-        // Click it.
         await findingLocator.click();
+        await page.waitForTimeout(500);
 
-        // Wait for detail view to load (URL change or modal opening).
-        // The detail view may be a route (/findings/<id>) or an in-page modal.
-        await page.waitForTimeout(500); // brief wait for navigation or modal animation
-
-        // Assert severity is shown in the detail view.
         const severityLocator = page
           .locator(
-            `[data-testid="finding-severity"], [class*="severity"], text="${firstFinding.severity.toUpperCase()}", text="${firstFinding.severity.toLowerCase()}"`
+            `[data-testid="finding-severity"], [class*="severity"], text="${firstFinding.severity.toUpperCase()}", text="${firstFinding.severity.toLowerCase()}"`,
           )
           .first();
-        await expect(severityLocator).toBeVisible({
-          timeout: 5_000,
-        }).catch(async () => {
-          const screenshotPath = path.join(
-            "/tmp",
-            `mission-run-detail-missing-${SLUG}.png`
-          );
-          await page.screenshot({ path: screenshotPath });
-          throw new Error(
-            `mission-run: finding detail view does not show severity "${firstFinding.severity}" ` +
-              `(R5.3 assertion: detail view must show severity — screenshot: ${screenshotPath})`
-          );
-        });
+        await expect(severityLocator)
+          .toBeVisible({ timeout: 5_000 })
+          .catch(async () => {
+            const screenshotPath = path.join(
+              "/tmp",
+              `mission-run-detail-missing-${SLUG}.png`,
+            );
+            await page.screenshot({ path: screenshotPath });
+            throw new Error(
+              `mission-run: finding detail view does not show severity "${firstFinding.severity}" ` +
+                `(R5.3 assertion: detail view must show severity — screenshot: ${screenshotPath})`,
+            );
+          });
 
-        // Assert mission_id is shown (or linked) in the detail view.
         const missionIdLocator = page
           .locator(
-            `[data-testid="finding-mission-id"], text="${coordFile.mission_id}"`
+            `[data-testid="finding-mission-id"], text="${coordFile.mission_id}"`,
           )
           .first();
-        await expect(missionIdLocator).toBeVisible({
-          timeout: 5_000,
-        }).catch(() => {
-          // Non-fatal: the UI may show a truncated mission ID or a link.
-          console.warn(
-            `mission-run: mission_id "${coordFile.mission_id}" not directly visible ` +
-              `in finding detail view — may be truncated or linked (R5.3 partial pass)`
-          );
-        });
+        await expect(missionIdLocator)
+          .toBeVisible({ timeout: 5_000 })
+          .catch(() => {
+            console.warn(
+              `mission-run: mission_id "${coordFile.mission_id}" not directly visible ` +
+                `in finding detail view — may be truncated or linked (R5.3 partial pass)`,
+            );
+          });
 
         console.log(
-          `mission-run: PASS — finding ${firstFinding.id} detail view shows severity=${firstFinding.severity}`
+          `mission-run: PASS — finding ${firstFinding.id} detail view shows severity=${firstFinding.severity}`,
         );
       } finally {
         await page.close();
@@ -353,16 +337,17 @@ test.describe("mission run UI (R5)", () => {
   test("mission run UI: severity filter updates finding count (R5.4)", async ({
     browser,
   }) => {
-    // Skip if the Go test reported no findings.
     if (coordFile.findings.length === 0) {
       test.skip();
       return;
     }
 
+    test.setTimeout(120_000);
+
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
 
     try {
-      await ensureLoggedIn(context, SLUG, EMAIL, SYNTHETIC_PASSWORD);
+      await ensureLoggedIn(context, EMAIL, SYNTHETIC_PASSWORD);
 
       const page = await context.newPage();
       const findingsURL = `${CLUSTER_URL}/tenant/${SLUG}/findings`;
@@ -373,11 +358,9 @@ test.describe("mission run UI (R5)", () => {
           timeout: 30_000,
         });
 
-        // Find a severity filter control.
-        // Try common patterns: a select, a dropdown button, or filter chips.
         const severityFilterLocator = page
           .locator(
-            '[data-testid="severity-filter"], select[name="severity"], [aria-label*="severity" i], button:has-text("Severity")'
+            '[data-testid="severity-filter"], select[name="severity"], [aria-label*="severity" i], button:has-text("Severity")',
           )
           .first();
 
@@ -386,56 +369,43 @@ test.describe("mission run UI (R5)", () => {
           .catch(() => false);
 
         if (!filterExists) {
-          // The severity filter may not be implemented yet — skip rather than fail.
           console.warn(
             "mission-run: severity filter control not found on Findings page — " +
-              "skipping R5.4 count-update assertion (filter may not be implemented yet)"
+              "skipping R5.4 count-update assertion (filter may not be implemented yet)",
           );
           return;
         }
 
-        // Record initial count of visible finding cards.
         const allFindingCards = page.locator(
-          '[data-testid="finding-card"], [data-finding-id]'
+          '[data-testid="finding-card"], [data-finding-id]',
         );
         const initialCount = await allFindingCards.count();
 
-        // Pick the severity of the first finding to filter by.
         const targetSeverity = coordFile.findings[0].severity.toLowerCase();
 
-        // Apply the severity filter.
-        // Try as a select element first.
-        const tagName = await severityFilterLocator.evaluate(
-          (el) => el.tagName.toLowerCase()
+        const tagName = await severityFilterLocator.evaluate((el) =>
+          el.tagName.toLowerCase(),
         );
         if (tagName === "select") {
-          await severityFilterLocator.selectOption({
-            label: targetSeverity,
-          });
+          await severityFilterLocator.selectOption({ label: targetSeverity });
         } else {
           await severityFilterLocator.click();
-          // Try clicking the option matching the target severity.
           await page
             .locator(
-              `[role="option"]:has-text("${targetSeverity}"), li:has-text("${targetSeverity}")`
+              `[role="option"]:has-text("${targetSeverity}"), li:has-text("${targetSeverity}")`,
             )
             .first()
             .click();
         }
 
-        // Wait for the filter to apply (list re-renders).
         await page.waitForTimeout(1_000);
 
-        // Assert the count changed (filter had an effect).
         const filteredCount = await allFindingCards.count();
-
-        // Count of findings matching the target severity from coord file.
         const expectedMatchCount = coordFile.findings.filter(
-          (f) => f.severity.toLowerCase() === targetSeverity
+          (f) => f.severity.toLowerCase() === targetSeverity,
         ).length;
 
         expect(filteredCount).toBeLessThanOrEqual(initialCount);
-
         if (expectedMatchCount > 0) {
           expect(filteredCount).toBeGreaterThan(0);
         }
@@ -443,7 +413,7 @@ test.describe("mission run UI (R5)", () => {
         console.log(
           `mission-run: PASS — severity filter "${targetSeverity}": ` +
             `${initialCount} → ${filteredCount} finding(s) visible ` +
-            `(expected ~${expectedMatchCount} match(es) from coord file)`
+            `(expected ~${expectedMatchCount} match(es) from coord file)`,
         );
       } finally {
         await page.close();

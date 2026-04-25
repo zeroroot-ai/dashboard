@@ -23,6 +23,7 @@
  *   SIGNUP_EMAIL_A     — tenant A email (set by orchestrator)
  *   SIGNUP_SLUG_B      — tenant B slug (set by orchestrator)
  *   SIGNUP_EMAIL_B     — tenant B email (set by orchestrator)
+ *   SIGNUP_PASSWORD    — shared password for synthetic test tenants
  *   SMOKE_CONCURRENCY  — number of parallel route loads (default: 4)
  *   MANIFEST_PATH      — path to dashboard-routes.yaml
  *   PLAYWRIGHT_BASE_URL — target cluster URL (default: https://app.zero-day.local:30443)
@@ -32,20 +33,24 @@
  *   - Uses synthetic credentials; never logs passwords.
  *   - Screenshots are taken on failure only.
  *
+ * Helpers:
+ *   - signUpViaForm (Task 4): drives the real Gibson signup form.
+ *   - loginViaZitadelV2 (Task 9): drives the Zitadel V2 OIDC login UI.
+ *
  * Requirements: R1, R2, R3 (session setup), R7.
  */
 
 import {
   test,
   expect,
-  type Page,
   type BrowserContext,
-  type Request,
-  type Response,
 } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
+import { signUpViaForm } from "./helpers/signup-via-form";
+import { loginViaZitadelV2 } from "./helpers/login-via-zitadel-v2";
+import { securePassword } from "./helpers/fixtures";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -58,12 +63,14 @@ const SLUG_A = process.env.SIGNUP_SLUG_A ?? "";
 const EMAIL_A = process.env.SIGNUP_EMAIL_A ?? "";
 const SLUG_B = process.env.SIGNUP_SLUG_B ?? "";
 const EMAIL_B = process.env.SIGNUP_EMAIL_B ?? "";
+const SYNTHETIC_PASSWORD = process.env.SIGNUP_PASSWORD ?? securePassword();
 const MANIFEST_PATH =
-  process.env.MANIFEST_PATH ?? path.resolve(__dirname, "../../../core/gibson/tests/e2e/manifests/dashboard-routes.yaml");
+  process.env.MANIFEST_PATH ??
+  path.resolve(
+    __dirname,
+    "../../../../core/gibson/tests/e2e/manifests/dashboard-routes.yaml",
+  );
 const CONCURRENCY = parseInt(process.env.SMOKE_CONCURRENCY ?? "4", 10);
-
-/** Default password used for synthetic test tenants. */
-const SYNTHETIC_PASSWORD = "SmokeE2E!Secure99";
 
 /** Perf budget cold-cache multiplier per R7.2. */
 const COLD_CACHE_MULTIPLIER = 2;
@@ -132,7 +139,6 @@ function loadManifest(manifestPath: string): RouteEntry[] {
 
 /** Resolve a route path to a full URL, substituting test placeholder values. */
 function resolveURL(routePath: string, slugA: string): string {
-  // Replace path parameters with test-safe values.
   const resolved = routePath
     .replace("{slug}", slugA)
     .replace("{id}", "smoke-test-probe-00000000")
@@ -145,77 +151,42 @@ function resolveURL(routePath: string, slugA: string): string {
 }
 
 /**
- * Sign up a new tenant and return their session storage state.
- * This reuses the same flow as signup-full-chain.spec.ts but is scoped to
- * the smoke suite.
+ * Establish an authenticated session using the real signup + Zitadel V2 login flow.
+ *
+ * Uses signUpViaForm (Task 4) to create the tenant, then loginViaZitadelV2
+ * (Task 9) to complete the OIDC exchange. Best-effort: signup may fail if the
+ * tenant already exists — loginViaZitadelV2 is attempted regardless.
  */
-async function signupAndLogin(
+async function establishSession(
   context: BrowserContext,
   slug: string,
   email: string,
-  password: string
+  password: string,
 ): Promise<void> {
   const page = await context.newPage();
   try {
-    // Navigate to the signup page.
-    await page.goto(`${CLUSTER_URL}/signup`, {
-      waitUntil: "networkidle",
-      timeout: 30_000,
-    });
-
-    // Fill in signup form (best-effort; the dashboard may have a different form shape).
-    const emailInput = page.locator('input[type="email"], input[name="email"]').first();
-    const passwordInput = page.locator('input[type="password"]').first();
-
-    await emailInput.fill(email);
-    await passwordInput.fill(password);
-
-    // Look for a tenant slug / workspace name input.
-    const slugInput = page.locator('input[name="slug"], input[name="workspace"], input[name="organization"]').first();
-    if (await slugInput.count() > 0) {
-      await slugInput.fill(slug);
+    // Sign up (best-effort — tenant may already exist from a prior run).
+    try {
+      await signUpViaForm(page, { slug, email, password, baseURL: CLUSTER_URL });
+      // After signup, the page lands on /login?callbackUrl=/dashboard.
+      // Clear the browser state so loginViaZitadelV2 drives a clean flow.
+      await context.clearCookies();
+      await page.evaluate(() => {
+        try { localStorage.clear(); sessionStorage.clear(); } catch (_) { /* ignore */ }
+      });
+    } catch (signupErr: unknown) {
+      const msg = signupErr instanceof Error ? signupErr.message : String(signupErr);
+      console.log(`[dashboard-smoke] signUpViaForm failed (slug=${slug}): ${msg} — proceeding to login`);
     }
 
-    // Submit the form.
-    const submitButton = page.locator('button[type="submit"]').first();
-    await submitButton.click();
-
-    // Wait for navigation to complete (redirect to onboarding or dashboard).
-    await page.waitForURL(/\/(dashboard|onboarding|verify)/, {
-      timeout: 60_000,
+    // Drive Zitadel V2 login UI.
+    await loginViaZitadelV2(page, context, {
+      email,
+      password,
+      baseURL: CLUSTER_URL,
+      loginFormTimeoutMs: 30_000,
+      loginCompleteTimeoutMs: 60_000,
     });
-  } finally {
-    await page.close();
-  }
-}
-
-/**
- * Login to an existing tenant and return their session cookie jar.
- */
-async function loginAndGetSession(
-  context: BrowserContext,
-  slug: string,
-  email: string,
-  password: string
-): Promise<void> {
-  const page = await context.newPage();
-  try {
-    await page.goto(`${CLUSTER_URL}/login`, {
-      waitUntil: "networkidle",
-      timeout: 30_000,
-    });
-
-    const emailInput = page.locator('input[type="email"], input[name="email"]').first();
-    const passwordInput = page.locator('input[type="password"]').first();
-
-    await emailInput.fill(email);
-    await passwordInput.fill(password);
-
-    const submitButton = page.locator('button[type="submit"]').first();
-    await submitButton.click();
-
-    // Wait for the OIDC redirect chain to complete and land on dashboard.
-    await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
   } finally {
     await page.close();
   }
@@ -231,10 +202,11 @@ async function testRouteAuthenticated(
   entry: RouteEntry,
   slugA: string,
   isFirstRun: boolean,
-  screenshotDir: string
+  screenshotDir: string,
 ): Promise<RouteResult> {
   const url = resolveURL(entry.path, slugA);
-  const budget = (entry.perf_budget_ms ?? 3000) * (isFirstRun ? COLD_CACHE_MULTIPLIER : 1);
+  const budget =
+    (entry.perf_budget_ms ?? 3000) * (isFirstRun ? COLD_CACHE_MULTIPLIER : 1);
   const method = (entry.method ?? "GET").toUpperCase();
 
   const result: RouteResult = {
@@ -262,7 +234,6 @@ async function testRouteAuthenticated(
       result.httpStatus = resp.status();
       result.ok = resp.status() < 400;
 
-      // For GET API routes, validate Content-Type: application/json.
       if (method === "GET" && result.ok) {
         const ct = resp.headers()["content-type"] ?? "";
         if (!ct.includes("application/json") && !ct.includes("text/event-stream")) {
@@ -271,7 +242,6 @@ async function testRouteAuthenticated(
         }
       }
 
-      // Perf budget check.
       if (result.loadTimeMs > budget) {
         result.ok = false;
         result.shapeError += ` perf_budget exceeded: ${result.loadTimeMs}ms > ${budget}ms`;
@@ -288,7 +258,6 @@ async function testRouteAuthenticated(
   const consoleErrors: string[] = [];
 
   page.on("console", (msg) => {
-    // Only capture errors (warnings and below are filtered on the Go side).
     if (msg.type() === "error") {
       consoleErrors.push(msg.text());
     }
@@ -303,12 +272,11 @@ async function testRouteAuthenticated(
     result.loadTimeMs = Date.now() - start;
     result.httpStatus = response?.status() ?? 0;
 
-    // Assert HTTP < 400.
     if (result.httpStatus >= 400) {
       result.ok = false;
       const screenshotPath = path.join(
         screenshotDir,
-        `failure-${slugA}-${entry.path.replace(/\//g, "_")}.png`
+        `failure-${slugA}-${entry.path.replace(/\//g, "_")}.png`,
       );
       await page.screenshot({ path: screenshotPath });
       result.screenshotPath = screenshotPath;
@@ -316,7 +284,6 @@ async function testRouteAuthenticated(
       return result;
     }
 
-    // Assert landmark visible.
     if (entry.landmark) {
       const landmarkLocator = page.locator(entry.landmark);
       try {
@@ -326,24 +293,24 @@ async function testRouteAuthenticated(
         result.landmarkOk = false;
       }
     } else {
-      result.landmarkOk = true; // no landmark required
+      result.landmarkOk = true;
     }
 
-    // Perf budget.
     if (result.loadTimeMs > budget) {
       result.ok = false;
       result.shapeError = `perf_budget exceeded: ${result.loadTimeMs}ms > ${budget}ms`;
     }
 
     result.consoleErrors = consoleErrors;
-    result.ok = result.httpStatus < 400 && result.landmarkOk && result.shapeError === "";
+    result.ok =
+      result.httpStatus < 400 && result.landmarkOk && result.shapeError === "";
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     result.shapeError = `navigation error: ${msg}`;
     try {
       const screenshotPath = path.join(
         screenshotDir,
-        `timeout-${slugA}-${entry.path.replace(/\//g, "_")}.png`
+        `timeout-${slugA}-${entry.path.replace(/\//g, "_")}.png`,
       );
       await page.screenshot({ path: screenshotPath });
       result.screenshotPath = screenshotPath;
@@ -366,7 +333,7 @@ async function testRouteAuthenticated(
 async function testRouteUnauthenticated(
   context: BrowserContext,
   entry: RouteEntry,
-  slugA: string
+  slugA: string,
 ): Promise<RouteResult> {
   const url = resolveURL(entry.path, slugA);
   const budget = entry.perf_budget_ms ?? 3000;
@@ -390,19 +357,17 @@ async function testRouteUnauthenticated(
       method,
       failOnStatusCode: false,
       timeout: budget,
-      maxRedirects: 0, // capture the redirect status, don't follow
+      maxRedirects: 0,
     });
     result.loadTimeMs = Date.now() - start;
     result.httpStatus = resp.status();
 
     if (entry.auth === "public") {
-      // Public routes must return 200 (proving they stay accessible).
       result.ok = result.httpStatus === 200 || result.httpStatus < 400;
       if (!result.ok) {
         result.shapeError = `public route returned HTTP ${result.httpStatus} without session (expected 200)`;
       }
     } else {
-      // Auth-required routes must return 401, 403, or redirect to /login.
       const isBlocked =
         result.httpStatus === 401 ||
         result.httpStatus === 403 ||
@@ -436,22 +401,17 @@ async function testRouteUnauthenticated(
 // ---------------------------------------------------------------------------
 
 test.describe("dashboard smoke", () => {
-  // Run tests in this describe block in parallel (concurrency: CONCURRENCY).
-  // Note: test.describe.configure({ mode: 'parallel' }) applies to all tests
-  // in this block.
   test.describe.configure({ mode: "parallel" });
 
   let manifestEntries: RouteEntry[] = [];
   const screenshotDir = "/tmp";
 
   test.beforeAll(async () => {
-    // Validate required env vars.
     if (!SLUG_A) throw new Error("dashboard-smoke: SIGNUP_SLUG_A env var is required");
     if (!EMAIL_A) throw new Error("dashboard-smoke: SIGNUP_EMAIL_A env var is required");
     if (!SLUG_B) throw new Error("dashboard-smoke: SIGNUP_SLUG_B env var is required");
     if (!EMAIL_B) throw new Error("dashboard-smoke: SIGNUP_EMAIL_B env var is required");
 
-    // Load the manifest.
     manifestEntries = loadManifest(MANIFEST_PATH);
   });
 
@@ -459,25 +419,19 @@ test.describe("dashboard smoke", () => {
   // Test 1: Authenticated probe — every non-excluded route as tenant A
   // -------------------------------------------------------------------------
   test("authenticated route smoke (R1)", async ({ browser }) => {
-    // Create context for tenant A and log in.
-    const contextA = await browser.newContext({
-      ignoreHTTPSErrors: true,
-    });
+    // signUpViaForm needs up to 120s provisioning; loginViaZitadelV2 needs 60s.
+    test.setTimeout(300_000);
+
+    const contextA = await browser.newContext({ ignoreHTTPSErrors: true });
 
     try {
-      // Sign up tenant A (best-effort — may already exist).
-      try {
-        await signupAndLogin(contextA, SLUG_A, EMAIL_A, SYNTHETIC_PASSWORD);
-      } catch {
-        // If signup failed (e.g., already exists), proceed to login.
-      }
-
-      // Login.
-      await loginAndGetSession(contextA, SLUG_A, EMAIL_A, SYNTHETIC_PASSWORD);
+      // Establish a real session for tenant A via the signup + Zitadel V2 flow.
+      await establishSession(contextA, SLUG_A, EMAIL_A, SYNTHETIC_PASSWORD);
 
       // Save session A for the cross-tenant isolation test.
       const sessionPathA = `/tmp/dashboard-smoke-session-a-${SLUG_A}.json`;
       await contextA.storageState({ path: sessionPathA });
+      console.log(`[dashboard-smoke] session A saved to ${sessionPathA}`);
 
       // Run the authenticated probe over all non-excluded routes.
       const activeRoutes = manifestEntries.filter((e) => !e.excluded);
@@ -485,7 +439,6 @@ test.describe("dashboard smoke", () => {
       const allResults: RouteResult[] = [];
       const failures: string[] = [];
 
-      // Process routes in chunks of CONCURRENCY (simple batched parallelism).
       for (let i = 0; i < activeRoutes.length; i += CONCURRENCY) {
         const batch = activeRoutes.slice(i, i + CONCURRENCY);
         const batchResults = await Promise.all(
@@ -494,16 +447,16 @@ test.describe("dashboard smoke", () => {
               contextA,
               entry,
               SLUG_A,
-              i === 0 && batchIdx === 0, // first route = cold-cache
-              screenshotDir
-            )
-          )
+              i === 0 && batchIdx === 0,
+              screenshotDir,
+            ),
+          ),
         );
         allResults.push(...batchResults);
         for (const r of batchResults) {
           if (!r.ok) {
             failures.push(
-              `FAIL ${r.path}: http=${r.httpStatus} landmark=${r.landmarkOk} errors=${r.consoleErrors.length} shape=${r.shapeError}`
+              `FAIL ${r.path}: http=${r.httpStatus} landmark=${r.landmarkOk} errors=${r.consoleErrors.length} shape=${r.shapeError}`,
             );
           }
         }
@@ -511,7 +464,6 @@ test.describe("dashboard smoke", () => {
 
       const endTime = new Date().toISOString();
 
-      // Write the smoke report for the Go side.
       const report: SmokeReport = {
         slug: SLUG_A,
         totalRoutes: activeRoutes.length,
@@ -523,11 +475,13 @@ test.describe("dashboard smoke", () => {
       };
       const reportPath = `/tmp/dashboard-smoke-report-${SLUG_A}.json`;
       fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+      console.log(
+        `[dashboard-smoke] report written to ${reportPath} (passed=${report.passed}/${report.totalRoutes})`,
+      );
 
-      // Fail the test if any routes failed (collect ALL failures per R1.4).
       if (failures.length > 0) {
         throw new Error(
-          `dashboard-smoke: ${failures.length} route(s) failed (see ${reportPath}):\n${failures.join("\n")}`
+          `dashboard-smoke: ${failures.length} route(s) failed (see ${reportPath}):\n${failures.join("\n")}`,
         );
       }
     } finally {
@@ -539,10 +493,7 @@ test.describe("dashboard smoke", () => {
   // Test 2: Unauthenticated probe — every route without a session (R2)
   // -------------------------------------------------------------------------
   test("unauthenticated probe (R2)", async ({ browser }) => {
-    // Create a fresh context with NO session.
-    const noAuthContext = await browser.newContext({
-      ignoreHTTPSErrors: true,
-    });
+    const noAuthContext = await browser.newContext({ ignoreHTTPSErrors: true });
 
     try {
       const activeRoutes = manifestEntries.filter((e) => !e.excluded);
@@ -552,8 +503,8 @@ test.describe("dashboard smoke", () => {
         const batch = activeRoutes.slice(i, i + CONCURRENCY);
         const batchResults = await Promise.all(
           batch.map((entry) =>
-            testRouteUnauthenticated(noAuthContext, entry, SLUG_A)
-          )
+            testRouteUnauthenticated(noAuthContext, entry, SLUG_A),
+          ),
         );
         for (const r of batchResults) {
           if (!r.ok) {
@@ -564,7 +515,7 @@ test.describe("dashboard smoke", () => {
 
       if (failures.length > 0) {
         throw new Error(
-          `dashboard-smoke: ${failures.length} unauthenticated probe(s) failed:\n${failures.join("\n")}`
+          `dashboard-smoke: ${failures.length} unauthenticated probe(s) failed:\n${failures.join("\n")}`,
         );
       }
     } finally {
@@ -575,28 +526,21 @@ test.describe("dashboard smoke", () => {
   // -------------------------------------------------------------------------
   // Test 3: Cross-tenant session setup — sign up + log in tenant B (R3 prep)
   //
-  // The actual cross-tenant assertions are on the Go side (TestDashboard_CrossTenantIsolation).
-  // This spec just establishes the session cookie jars.
+  // Actual cross-tenant assertions are on the Go side (TestDashboard_CrossTenantIsolation).
+  // This spec establishes the session cookie jars via the real OIDC flow.
   // -------------------------------------------------------------------------
   test("cross-tenant session setup for Go assertions (R3)", async ({ browser }) => {
-    const contextB = await browser.newContext({
-      ignoreHTTPSErrors: true,
-    });
+    // Signup (120s) + Zitadel login (60s) budget for tenant B.
+    test.setTimeout(300_000);
+
+    const contextB = await browser.newContext({ ignoreHTTPSErrors: true });
 
     try {
-      // Sign up tenant B (best-effort).
-      try {
-        await signupAndLogin(contextB, SLUG_B, EMAIL_B, SYNTHETIC_PASSWORD);
-      } catch {
-        // May already exist.
-      }
+      await establishSession(contextB, SLUG_B, EMAIL_B, SYNTHETIC_PASSWORD);
 
-      // Login as tenant B.
-      await loginAndGetSession(contextB, SLUG_B, EMAIL_B, SYNTHETIC_PASSWORD);
-
-      // Save session B for the Go cross-tenant test.
       const sessionPathB = `/tmp/dashboard-smoke-session-b-${SLUG_B}.json`;
       await contextB.storageState({ path: sessionPathB });
+      console.log(`[dashboard-smoke] session B saved to ${sessionPathB}`);
     } finally {
       await contextB.close();
     }
