@@ -1,7 +1,6 @@
 import 'server-only';
 import { createClient, ConnectError, Code } from '@connectrpc/connect';
 import { createGrpcTransport } from '@connectrpc/connect-node';
-import { auth } from '@/auth';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
 import { DaemonAdminService } from '@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb';
 import type {
@@ -20,18 +19,12 @@ import type {
   ListUserActivitiesResponse,
 } from '@/src/types/user';
 import { serverConfig as _serverConfig } from './config';
-import { getSpiffeJwt } from './spiffe/jwt-svid';
-// NOTE(spec in-cluster-mtls-restoration Phase 5): the X.509 SVID direct mTLS
-// transport (Track A) was removed in Task 16. The `dashboard.useEnvoyForDaemon`
-// flag (env var USE_ENVOY_FOR_DAEMON) is retained as documented backout
-// (Requirement 6.1) but its `false` branch is now a hard error — the only
-// transport in this file dials Envoy with a JWT-SVID. To revert Phase 5 in a
-// hot patch, restore the X.509 SVID branch from git history (see Task 16
-// commit) AND set the env to "false". Phase 9 removes the flag entirely.
-//
+import { requireUserToken } from './auth/user-token';
+import { userTokenForwardingDisabledTotal } from './metrics/auth';
 // `serverConfig.gibsonDaemonUrl` is still imported (aliased _serverConfig) so
-// that the build doesn't dead-strip it before Phase 9 — exporters elsewhere
-// in the dashboard still reference `gibsonDaemonUrl` indirectly.
+// that the build doesn't dead-strip it before Phase 9 of the previous spec —
+// exporters elsewhere in the dashboard still reference `gibsonDaemonUrl`
+// indirectly.
 void _serverConfig;
 
 // Tenant CRUD/lookup has moved to the Tenant CRD operator. Use
@@ -39,40 +32,50 @@ void _serverConfig;
 // longer exported by this module.
 
 // ---------------------------------------------------------------------------
-// Spec in-cluster-mtls-restoration: Track B-only (post Phase 5 teardown)
+// Two-transport model — see enterprise/platform/dashboard/CLAUDE.md
 // ---------------------------------------------------------------------------
 //
-// All daemon RPCs flow through Envoy at ADMIN_ENVOY_BASE_URL with a
-// JWT-SVID (audience spiffe://gibson.io/platform/daemon) minted via the
-// SPIRE Workload API. Mirrors gibson-admin-client.ts's transport model.
+// This file is the **user-acting** transport. It forwards the Zitadel
+// access token from the Auth.js session as `Authorization: Bearer` plus
+// the active-tenant cookie value as `x-gibson-tenant`. Envoy validates
+// the token via its `zitadel` `jwt_authn` provider and ext-authz emits
+// `Identity{Subject: <zitadel-sub>, ...}` so FGA decisions are made
+// against the real user.
 //
-// Envoy validates the JWT-SVID, ext-authz mints the HMAC-signed
-// x-gibson-identity-* headers, and the daemon accepts the request based on
-// those headers exclusively. The daemon's mTLS listener accepts ONLY
-// connections from spiffe://gibson.io/platform/envoy.
+// The **workload-acting** transport lives in `gibson-admin-client.ts`
+// and continues to mint a SPIFFE JWT-SVID. Admin RPCs that operate on
+// `system_tenant:_system` use that path. The two transports are NOT
+// interchangeable at the type level — `getAdminClient()` returns the
+// admin service, this file returns the user service.
 //
-// USE_ENVOY_FOR_DAEMON=false is a documented backout (Requirement 6.1). After
-// Phase 5 it produces an explicit error rather than a silent fallback to the
-// (now-deleted) direct mTLS path. Reverting requires un-deleting Task 16's
-// changes in a hot patch.
+// Spec: dashboard-fga-user-identity (R1, R3).
+//
+// USE_ENVOY_FOR_DAEMON=false is a documented backout from a previous spec
+// (in-cluster-mtls-restoration). Its `false` branch is a hard error.
+//
+// USE_USER_TOKEN_FORWARDING=false is the spec-local backout (Req 8). When
+// "false", this file falls back to minting a SPIFFE JWT-SVID — degraded
+// mode, per-user FGA disabled, audit attribution wrong. The metric
+// `dashboard_user_token_forwarding_disabled_total` increments on every
+// fallback call so the soak gate can detect prolonged degraded operation.
+// Phase 9 deletes the flag + the fallback branch.
 
 /** Envoy edge URL — mirrors gibson-admin-client.ts. */
 const ENVOY_BASE_URL =
   process.env['ADMIN_ENVOY_BASE_URL'] ?? 'https://api.zero-day.local:30443';
 
 /**
- * SPIFFE audience claim on the JWT-SVID. Must match the `audiences` list
- * configured on Envoy's `spiffe` provider in envoy.yaml. Envoy verifies the
- * audience; the daemon does not (Envoy is the authoritative validator).
+ * SPIFFE audience claim used ONLY by the backout fallback branch. The
+ * normal user-acting path does not mint SVIDs.
  */
 const DAEMON_AUDIENCE =
   process.env['GIBSON_DAEMON_SPIFFE_AUDIENCE'] ??
   'spiffe://gibson.io/platform/daemon';
 
 /**
- * Backout-flag check. After Phase 5 (Task 16) the flag's only legal value is
- * "true" or unset. "false" produces a hard error pointing at the revert path.
- * Phase 9 deletes the flag + this guard entirely.
+ * Backout-flag check from a previous spec. After in-cluster-mtls-restoration
+ * Phase 5 the flag's only legal value is "true" or unset. "false" produces
+ * a hard error pointing at the revert path.
  */
 function assertEnvoyPath(): void {
   if (process.env['USE_ENVOY_FOR_DAEMON'] === 'false') {
@@ -86,33 +89,76 @@ function assertEnvoyPath(): void {
 }
 
 /**
- * Resolve the Zitadel access token from the current Auth.js session.
- *
- * Throws a {@link ConnectError} with code {@link Code.Unauthenticated} when
- * the session is missing. The token itself is NOT forwarded to Envoy —
- * Envoy's ext-authz validates the JWT-SVID and mints HMAC identity headers
- * from that alone. We still resolve the session so unauthenticated requests
- * fail closed before any SVID minting work happens.
+ * True when the user-acting path is disabled and the SPIFFE workload
+ * fallback should be used instead. This is the documented one-step
+ * revert for spec dashboard-fga-user-identity (Req 8). Default is false
+ * — the new behavior is on by default.
  */
-async function requireAuthSession(): Promise<void> {
-  const session = await auth();
-  if (!session?.accessToken) {
-    throw new ConnectError(
-      'No Zitadel access token in session — user must be signed in via Zitadel OIDC',
-      Code.Unauthenticated,
-    );
-  }
+function userTokenForwardingDisabled(): boolean {
+  return process.env['USE_USER_TOKEN_FORWARDING'] === 'false';
 }
 
 /**
- * Build the Envoy-routed gRPC transport. Lazily mints a JWT-SVID per request
- * via the cached `getSpiffeJwt` helper.
+ * Build the Envoy-routed gRPC transport.
+ *
+ * Default branch (user-token forwarding ON):
+ *   - resolves the Zitadel access token from the Auth.js session via
+ *     `requireUserToken()`, and
+ *   - resolves the active tenant from the cookie via `getActiveTenant()`,
+ *   - sets `Authorization: Bearer <accessToken>` and
+ *     `x-gibson-tenant: <activeTenant>` on every outbound RPC.
+ *
+ * Backout branch (USE_USER_TOKEN_FORWARDING=false):
+ *   - mints a SPIFFE workload JWT-SVID via the Workload API,
+ *   - sets `Authorization: Bearer <jwt-svid>` (the dashboard's pod
+ *     identity, NOT the user),
+ *   - emits a structured WARN log + increments
+ *     `dashboard_user_token_forwarding_disabled_total` on every call.
+ *
+ * The user-token branch throws `ConnectError(Unauthenticated)` if the
+ * session is missing and `NoActiveTenantError` if the active-tenant
+ * cookie is unset. Callers handle both — middleware redirects to /login
+ * or /select-tenant respectively.
  */
 function getTransport() {
+  const useUserToken = !userTokenForwardingDisabled();
   const interceptors: Parameters<typeof createGrpcTransport>[0]['interceptors'] = [
     (next) => async (req) => {
-      const jwt = await getSpiffeJwt({ audience: DAEMON_AUDIENCE });
+      // Lazy imports keep the active-tenant + spiffe modules out of the
+      // cold path of callers that build the transport at module load time.
+      const { getActiveTenant } = await import('./auth/active-tenant');
+
+      if (useUserToken) {
+        const [token, activeTenant] = await Promise.all([
+          requireUserToken(),
+          getActiveTenant(),
+        ]);
+        req.header.set('Authorization', `Bearer ${token}`);
+        req.header.set('x-gibson-tenant', activeTenant);
+        return next(req);
+      }
+
+      // ---- Backout fallback (USE_USER_TOKEN_FORWARDING=false) ----
+      // Per-call counter so the soak gate sees degraded mode immediately;
+      // structured WARN log so an operator's `kubectl logs` reveals it.
+      userTokenForwardingDisabledTotal.inc();
+      // eslint-disable-next-line no-console
+      console.warn(
+        JSON.stringify({
+          level: 'warn',
+          msg: 'auth.user_token_forwarding_disabled',
+          detail:
+            'USE_USER_TOKEN_FORWARDING=false — operating in degraded mode; per-user FGA disabled, audit attribution wrong',
+        }),
+      );
+
+      const { getSpiffeJwt } = await import('./spiffe/jwt-svid');
+      const [jwt, activeTenant] = await Promise.all([
+        getSpiffeJwt({ audience: DAEMON_AUDIENCE }),
+        getActiveTenant(),
+      ]);
       req.header.set('Authorization', `Bearer ${jwt}`);
+      req.header.set('x-gibson-tenant', activeTenant);
       return next(req);
     },
   ];
@@ -125,13 +171,21 @@ function getTransport() {
 
 async function getClient(_userId?: string, _tenantId?: string) {
   assertEnvoyPath();
-  await requireAuthSession();
+  // Fail closed before constructing the client: the user-acting path
+  // requires a valid session even though the actual token resolution
+  // happens inside the interceptor. This catches "obviously
+  // unauthenticated" calls without paying for transport setup.
+  if (!userTokenForwardingDisabled()) {
+    await requireUserToken();
+  }
   return createClient(DaemonService, getTransport());
 }
 
 async function getAdminClient(_userId?: string, _tenantId?: string) {
   assertEnvoyPath();
-  await requireAuthSession();
+  if (!userTokenForwardingDisabled()) {
+    await requireUserToken();
+  }
   return createClient(DaemonAdminService, getTransport());
 }
 

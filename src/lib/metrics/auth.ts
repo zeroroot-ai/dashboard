@@ -136,3 +136,65 @@ export const provisioningDuration = getOrCreateHistogram({
   // 100ms, 250ms, 500ms, 1s, 2.5s, 5s, 10s, 20s, 40s, 60s.
   buckets: [0.1, 0.25, 0.5, 1, 2.5, 5, 10, 20, 40, 60],
 });
+
+// ---------------------------------------------------------------------------
+// Membership-resolution metrics (spec: tenant-membership-not-in-jwt R9)
+// ---------------------------------------------------------------------------
+
+/** Outcome of a membership-resolution attempt. */
+export type MembershipResolutionOutcome =
+  | "single"        // exactly one membership returned
+  | "multi"         // multiple memberships returned (picker shown)
+  | "zero"          // user is a member of no tenants (onboarding shown)
+  | "fga_error"     // daemon/FGA call failed; middleware routed to /login/error
+  | "daemon_error"; // daemon unreachable
+
+export const membershipResolutionTotal = getOrCreateCounter({
+  name: "dashboard_membership_resolution_total",
+  help: "Membership-resolution attempts during sign-in / per-render, by outcome.",
+  labelNames: ["outcome"] as const,
+});
+
+export const membershipResolutionDuration = getOrCreateHistogram({
+  name: "dashboard_membership_resolution_duration_seconds",
+  help: "Duration of the daemon ListMyMemberships RPC seen from the dashboard.",
+  labelNames: ["outcome"] as const,
+  // 50ms baseline through 5s — anything past 5s is FGA-or-daemon-on-fire.
+  buckets: [0.05, 0.1, 0.25, 0.5, 1, 2.5, 5],
+});
+
+/** Outcome of a single active-tenant cookie validation pass. */
+export type ActiveTenantValidationOutcome =
+  | "ok"
+  | "absent"
+  | "invalid"     // HMAC failed (tampered or stale AUTH_SECRET)
+  | "stale"       // membership revoked while signed-in
+  | "forbidden";  // attempted to set a non-member tenant
+
+export const activeTenantValidationTotal = getOrCreateCounter({
+  name: "dashboard_active_tenant_validation_total",
+  help: "Active-tenant cookie validation outcomes per request.",
+  labelNames: ["outcome"] as const,
+});
+
+export const tenantSwitchTotal = getOrCreateCounter({
+  name: "dashboard_tenant_switch_total",
+  help: "Number of successful in-app tenant switches.",
+});
+
+// ---------------------------------------------------------------------------
+// User-token-forwarding backout (spec: dashboard-fga-user-identity R8)
+// ---------------------------------------------------------------------------
+
+/**
+ * Increments on every dashboard daemon RPC made via the SPIFFE-fallback
+ * (USE_USER_TOKEN_FORWARDING=false) branch. Non-zero in steady state
+ * means the soak-mode backout is active — per-user FGA is disabled and
+ * audit attribution falls back to the dashboard workload identity.
+ *
+ * Phase 9 of the spec deletes both the flag and this counter.
+ */
+export const userTokenForwardingDisabledTotal = getOrCreateCounter({
+  name: "dashboard_user_token_forwarding_disabled_total",
+  help: "Dashboard RPCs served via the SPIFFE-fallback transport because USE_USER_TOKEN_FORWARDING=false. Non-zero in steady state means the soak backout is active.",
+});

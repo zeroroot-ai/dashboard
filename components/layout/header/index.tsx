@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { Separator } from "@/components/ui/separator";
@@ -11,7 +12,6 @@ import { ThemeCustomizerPanel } from "@/components/theme-customizer";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { TenantDisplay } from "@/components/layout/header/tenant-display";
-import { TenantSwitcher } from "@/components/gibson/shared/TenantSwitcher";
 
 function ConnectionStatus() {
   return (
@@ -25,7 +25,18 @@ function ConnectionStatus() {
   );
 }
 
-export function SiteHeader() {
+interface SiteHeaderProps {
+  /**
+   * Tenant switcher slot. The auth layout (a Server Component) renders the
+   * `<TenantSwitcher />` Server Component into this slot so the switcher
+   * can read memberships + the active-tenant cookie on the server without
+   * forcing this header (which uses `useSidebar`) to become a Server
+   * Component itself.
+   */
+  tenantSwitcher?: ReactNode;
+}
+
+export function SiteHeader({ tenantSwitcher }: SiteHeaderProps = {}) {
   const { toggleSidebar, open } = useSidebar();
 
   return (
@@ -40,7 +51,7 @@ export function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-2">
           <TenantDisplay />
-          <TenantSwitcher />
+          {tenantSwitcher}
           <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
           <Notifications />
           <ThemeSwitch />

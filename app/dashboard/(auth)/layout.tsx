@@ -6,6 +6,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
 import { SiteHeader } from "@/components/layout/header";
 import { TenantHydrator } from "@/components/layout/tenant-hydrator";
+import { TenantSwitcher } from "@/components/gibson/shared/TenantSwitcher";
 import { getServerSession } from "@/src/lib/auth";
 import { resolveTenant } from "@/src/lib/resolve-tenant";
 
@@ -40,8 +41,11 @@ export default async function AuthLayout({
     redirect(`/verify-email${emailParam}`);
   }
 
+  // Zero memberships → onboarding (replaces the old /dashboard/no-workspace
+  // redirect); middleware handles this earlier in the request lifecycle, but
+  // keeping the gate here protects against direct rendering paths.
   if (!session.user?.tenantId && (!session.user?.tenants || session.user.tenants.length === 0)) {
-    redirect('/dashboard/no-workspace');
+    redirect('/onboarding');
   }
 
   const tenantId = session?.user?.tenantId;
@@ -64,7 +68,7 @@ export default async function AuthLayout({
       <TenantHydrator initialTenant={tenant} initialTenants={tenants}>
         <AppSidebar variant="inset" />
         <SidebarInset>
-          <SiteHeader />
+          <SiteHeader tenantSwitcher={<TenantSwitcher />} />
           <div className="bg-muted/40 flex flex-1 flex-col">
             <div className="@container/main p-(--content-padding) xl:group-data-[theme-content-layout=centered]/layout:container xl:group-data-[theme-content-layout=centered]/layout:mx-auto">
               {children}

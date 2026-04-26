@@ -51,7 +51,10 @@ import {
   tenantNamespace,
 } from "@/src/lib/k8s/tenants";
 import type { Tenant, TenantMember, TenantTier } from "@/src/lib/k8s/types";
-import { listTenantsForOwner } from "@/src/lib/k8s/tenants-by-owner";
+// Note: listTenantsForOwner / src/lib/k8s/tenants-by-owner.ts deleted under
+// spec `tenant-membership-not-in-jwt`. Duplicate-signup detection now relies
+// on Zitadel's existing-user check (findUserByEmail above) plus the
+// tenant-operator's idempotent reconcile keyed by zitadel_sub.
 import { checkSignupRateLimit } from "@/src/lib/signup/rate-limit";
 import {
   advanceStep,
@@ -458,17 +461,12 @@ async function createOrResumeZitadelUser(
             },
           };
         }
-        const tenants = await listTenantsForOwner(ctx.input.email);
-        if (tenants.length > 0) {
-          return {
-            fail: {
-              code: "ALREADY_PROVISIONED",
-              userMessage:
-                "You already have a workspace. Please sign in instead.",
-            },
-          };
-        }
-        // User exists with no tenant — resume with the existing user.
+        // The K8s `tenants-by-owner` lookup that previously gated this branch
+        // was removed under spec `tenant-membership-not-in-jwt`. Per the new
+        // architecture, an existing Zitadel user always means signup-resume
+        // is appropriate — the tenant-operator's reconcile is idempotent
+        // and keyed on zitadel_sub, so a user with an already-provisioned
+        // Tenant CR will be detected at the operator layer rather than here.
         return { userId: existing.userId };
       }
       if (err.httpStatus >= 500 || err.httpStatus === 0) {

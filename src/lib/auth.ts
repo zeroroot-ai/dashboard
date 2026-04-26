@@ -71,40 +71,37 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
 
   const { user } = session;
 
-  // Derive tenant from the gibson:tenant Zitadel claim forwarded in the JWT
-  // callback (auth.ts jwt callback copies it onto token.tenant, and the
-  // session callback copies it onto session.user.tenant).
-  const tenantId = (user as unknown as { tenant?: string }).tenant ?? null;
-  const tenants = tenantId ? [tenantId] : [];
+  // Tenant + memberships now come from FGA (via the daemon) plus the
+  // gibson_active_tenant cookie — see spec `tenant-membership-not-in-jwt`.
+  // Lazily import to avoid a hard dep cycle through the membership module.
+  let tenantId: string | null = null;
+  const tenants: string[] = [];
   const rolesByTenant: Record<string, string> = {};
+  try {
+    const [{ getMyMemberships }, { readRawActiveTenant }] = await Promise.all([
+      import('@/src/lib/auth/membership'),
+      import('@/src/lib/auth/active-tenant'),
+    ]);
+    const memberships = await getMyMemberships();
+    for (const m of memberships) {
+      tenants.push(m.tenantId);
+      rolesByTenant[m.tenantId] = m.role;
+    }
+    const raw = await readRawActiveTenant();
+    if (raw.status === 'present' && tenants.includes(raw.tenantId!)) {
+      tenantId = raw.tenantId!;
+    } else if (memberships.length === 1) {
+      tenantId = memberships[0]!.tenantId;
+    }
+  } catch (err) {
+    // Transient FGA/daemon errors degrade to "no tenant" — middleware will
+    // route the next request to /login/error if the failure persists.
+    console.error('[auth] membership resolution failed:', err);
+  }
 
-  // Resolve roles from K8s TenantMember CRs. The dashboard's signup flow
-  // creates a TenantMember with role=admin for the founding owner; that
-  // record is the source of truth for what role this user holds in this
-  // tenant. Zitadel project roles aren't wired yet (no Actions v2 mapper),
-  // so without this lookup `roles` stays [] forever and every
-  // hasPermission(session, …) check returns false → 403 on every protected
-  // API route the moment the user reaches the dashboard.
-  let roles: string[] = [];
+  const roles: string[] = tenantId && rolesByTenant[tenantId] ? [rolesByTenant[tenantId]!] : [];
   let permissions: string[] = [];
   let crossTenant = false;
-
-  if (tenantId && user.email) {
-    try {
-      const { listTenantMembers } = await import('@/src/lib/k8s/tenants');
-      const ns = `tenant-${tenantId}`;
-      const members = await listTenantMembers(ns);
-      const me = members.find(
-        (m) => m.spec?.email?.toLowerCase() === user.email!.toLowerCase(),
-      );
-      if (me?.spec?.role) {
-        roles = [me.spec.role];
-        rolesByTenant[tenantId] = me.spec.role;
-      }
-    } catch (err) {
-      console.error('[auth] TenantMember role lookup failed:', err);
-    }
-  }
 
   try {
     const { resolveEffectivePermissions, resolveCrossTenant } = await import('@/src/lib/auth/schema');
