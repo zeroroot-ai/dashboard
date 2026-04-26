@@ -140,7 +140,7 @@ function runScan() {
     "removed along with 15+ hours of Node↔Go SPIFFE mTLS debugging.",
   );
   console.error(
-    "Use ADMIN_ENVOY_BASE_URL + src/lib/spiffe/jwt-svid.ts instead.",
+    "Use ADMIN_ENVOY_BASE_URL + src/lib/gibson-client.ts (userClient / serviceClient) instead.",
   );
   return 1;
 }
