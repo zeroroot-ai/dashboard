@@ -37,6 +37,11 @@ import {
   adminEnvoyUpstreamErrorsTotal,
   type AdminRpcStatus,
 } from './metrics/gibson-admin';
+import {
+  isSpiffeAvailable,
+  tryGetCachedX509SvidContext,
+  warmX509SvidContext,
+} from './spiffe-mtls/svid';
 // `serverConfig.gibsonDaemonUrl` is still imported (aliased _serverConfig) so
 // that the build doesn't dead-strip it before Phase 9 of the previous spec —
 // exporters elsewhere in the dashboard still reference `gibsonDaemonUrl`
@@ -182,8 +187,15 @@ export function makeClient<T extends DescService>(
     return next(req);
   };
 
+  // Spec unified-identity-and-authorization Phase 4 (R2.5, R9.12):
+  // dashboard pod presents an X509-SVID on the mTLS handshake to Envoy
+  // when SPIFFE is wired. The Workload API socket only exists in
+  // in-cluster deploys with SPIRE — local dev (no socket) gets plain
+  // HTTPS with a one-time WARN log naming SPIFFE_ENDPOINT_SOCKET so
+  // the operator knows we're falling back.
   const transport = createGrpcTransport({
     baseUrl: ENVOY_BASE_URL,
+    nodeOptions: spiffeNodeOptions(),
     // Telemetry OUTSIDE auth so token failures still produce a status
     // label. Auth INSIDE so it's the last thing to touch headers before
     // the wire write.
@@ -191,6 +203,55 @@ export function makeClient<T extends DescService>(
   });
 
   return createClient(service, transport);
+}
+
+// ---------------------------------------------------------------------------
+// SPIFFE wiring — sync resolver for createGrpcTransport's nodeOptions
+// ---------------------------------------------------------------------------
+
+let spiffeWarmedUp = false;
+let spiffeFallbackLogged = false;
+
+/**
+ * Returns http2 nodeOptions populated with the dashboard pod's current
+ * X509-SVID context, or `undefined` to leave the default plain-HTTPS
+ * behaviour in place.
+ *
+ * Uses the SYNC accessor {@link tryGetCachedX509SvidContext}: the very
+ * first outbound RPC may go without an SVID (cache cold), but kicks
+ * off a background warm-up so the second call onwards rides on mTLS.
+ * In a pod with steady traffic this is invisible; in cold-start
+ * scenarios the first RPC is plain-TLS-but-still-Bearer-authenticated,
+ * which is the same posture as the local-dev fallback.
+ */
+function spiffeNodeOptions():
+  | (Parameters<typeof createGrpcTransport>[0]['nodeOptions'])
+  | undefined {
+  if (!isSpiffeAvailable()) {
+    if (!spiffeFallbackLogged) {
+      spiffeFallbackLogged = true;
+      console.warn(
+        '[gibson-client] SPIFFE Workload API socket not present ' +
+          `(SPIFFE_ENDPOINT_SOCKET=${process.env.SPIFFE_ENDPOINT_SOCKET ?? 'unset'}); ` +
+          'falling back to plain HTTPS for outbound calls to Envoy.',
+      );
+    }
+    return undefined;
+  }
+  if (!spiffeWarmedUp) {
+    spiffeWarmedUp = true;
+    warmX509SvidContext();
+  }
+  const svidCtx = tryGetCachedX509SvidContext();
+  if (!svidCtx) {
+    // Cache still cold (warm-up just kicked off). The first RPC goes
+    // out without the SVID; by the second the cache is populated.
+    return undefined;
+  }
+  // SecureContextOptions is a subset of http2.SecureClientSessionOptions
+  // (cert/key/ca/minVersion all live on tls.SecureContextOptions which
+  // SecureClientSessionOptions extends). Spread directly.
+  return { ...svidCtx };
 }
 
 // ---------------------------------------------------------------------------
