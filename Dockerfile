@@ -47,6 +47,12 @@ ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 # build runs gen-plans beforehand; inside the container we consume the already
 # generated src/generated/plans.ts.
 ENV SKIP_GEN_PLANS=1
+# check-dashboard-rbac-minimal.mjs runs `helm template` to diff chart RBAC.
+# helm is not installed in this Node.js image; skip it here — the check runs
+# on the dev host via `npm run prebuild` before pushing. The underlying chart
+# RBAC is still enforced by the allowlist at commit time.
+# Spec: signup-zitadel-permissions-fix (Docker build fix for auth-resolution-hardening).
+ENV SKIP_DASHBOARD_RBAC_CHECK=1
 
 # Build the standalone application
 RUN npm run build

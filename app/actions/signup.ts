@@ -114,6 +114,7 @@ export async function signupAction(
     input: rawInput,
     zitadelUserId: undefined,
     tenantSlug: undefined,
+    emailVerifiedAtCreate: undefined,
   };
 
   try {
@@ -202,18 +203,34 @@ export async function signupAction(
       return await finish(ctx, "create_user", userResult.fail);
     }
     ctx.zitadelUserId = userResult.userId;
+    // Track the emailVerified value used at create-time so step 5 can decide
+    // whether to call sendVerificationEmail. Spec: signup-zitadel-permissions-fix.
+    ctx.emailVerifiedAtCreate = userResult.emailVerifiedAtCreate;
 
-    // 5. Kick off verification email — non-fatal.
+    // 5. Kick off verification email — only when the user was created
+    // un-verified (future SMTP-enabled flow). With the current
+    // emailVerified=true default per signup hotfix #5, the user has no
+    // pending code to "resend"; calling Zitadel's /v2/users/.../email/resend
+    // returns 400 "Code is empty (EMAIL-5w5ilin4yt)". Skip the call when
+    // already verified. When SMTP is wired in a future spec and
+    // emailVerified=false is set at create-time, this conditional re-enables
+    // the call automatically. Spec: signup-zitadel-permissions-fix / SIGNUP-B23.
     await advanceStep(attemptId, "send_verify_email");
-    try {
-      await client.sendVerificationEmail(ctx.zitadelUserId);
-    } catch (err) {
-      // Zitadel in dev clusters without SMTP returns errors here. Log + keep
-      // going; the user can complete verification later.
-      console.warn("[signup] sendVerificationEmail failed — non-fatal", {
+    if (ctx.emailVerifiedAtCreate) {
+      console.info("[signup] verification email skipped — user created already verified", {
         attemptId,
-        err: err instanceof Error ? err.message : String(err),
       });
+    } else {
+      try {
+        await client.sendVerificationEmail(ctx.zitadelUserId);
+      } catch (err) {
+        // Zitadel in dev clusters without SMTP returns errors here. Log + keep
+        // going; the user can complete verification later.
+        console.warn("[signup] sendVerificationEmail failed — non-fatal", {
+          attemptId,
+          err: err instanceof Error ? err.message : String(err),
+        });
+      }
     }
 
     // 6. Apply the Tenant CR — this triggers the operator saga.
@@ -327,6 +344,13 @@ interface Ctx {
   input: SignupInput;
   zitadelUserId: string | undefined;
   tenantSlug: string | undefined;
+  /**
+   * Whether the Zitadel user was created with emailVerified=true.
+   * Set immediately after createHumanUser() resolves.
+   * Used by step 5 to skip sendVerificationEmail when already verified.
+   * Spec: signup-zitadel-permissions-fix.
+   */
+  emailVerifiedAtCreate: boolean | undefined;
 }
 
 interface FinishFailure {
@@ -429,7 +453,11 @@ function checkPasswordAgainstPolicy(
 async function createOrResumeZitadelUser(
   client: ZitadelAdminClient,
   ctx: Ctx,
-): Promise<{ userId: string } | { fail: FinishFailure }> {
+): Promise<{ userId: string; emailVerifiedAtCreate: boolean } | { fail: FinishFailure }> {
+  // The emailVerified value used at create-time is tracked so the caller can
+  // set ctx.emailVerifiedAtCreate and step 5 can skip sendVerificationEmail
+  // when already verified. Spec: signup-zitadel-permissions-fix.
+  const emailVerified = true;
   try {
     const user = await client.createHumanUser({
       email: ctx.input.email,
@@ -444,9 +472,9 @@ async function createOrResumeZitadelUser(
       // (currently best-effort, fails silently in dev where SMTP is
       // unwired) handles real ownership confirmation; we don't gate
       // login on it.
-      emailVerified: true,
+      emailVerified,
     });
-    return { userId: user.userId };
+    return { userId: user.userId, emailVerifiedAtCreate: emailVerified };
   } catch (err) {
     if (err instanceof ZitadelApiError) {
       if (err.httpStatus === 409) {
@@ -467,7 +495,10 @@ async function createOrResumeZitadelUser(
         // is appropriate — the tenant-operator's reconcile is idempotent
         // and keyed on zitadel_sub, so a user with an already-provisioned
         // Tenant CR will be detected at the operator layer rather than here.
-        return { userId: existing.userId };
+        //
+        // For the resume path, treat as emailVerified=true (the only value
+        // this codebase has ever written). Spec: signup-zitadel-permissions-fix.
+        return { userId: existing.userId, emailVerifiedAtCreate: true };
       }
       if (err.httpStatus >= 500 || err.httpStatus === 0) {
         return {

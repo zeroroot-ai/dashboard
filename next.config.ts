@@ -30,9 +30,13 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Tell Next.js not to bundle these Node-only server packages — they use
   // `node:http2` / `node:fs` and blow up Turbopack's module analyzer otherwise.
+  // @grpc/grpc-js added here because the SPIFFE workload-api client (server-only)
+  // pulls in native Node.js modules that Turbopack cannot resolve in a browser
+  // or Edge bundle. Spec: signup-zitadel-permissions-fix (Docker build fix).
   serverExternalPackages: [
     "@connectrpc/connect-node",
     "@connectrpc/connect",
+    "@grpc/grpc-js",
   ],
   // Server Action encryption key persistence is env-driven in Next.js 16:
   // setting NEXT_SERVER_ACTIONS_ENCRYPTION_KEY in the runtime environment

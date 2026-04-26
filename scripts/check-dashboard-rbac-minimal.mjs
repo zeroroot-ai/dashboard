@@ -50,7 +50,14 @@ const SCRIPT_NAME = 'check-dashboard-rbac-minimal.mjs';
 const SPEC_NAME = 'auth-resolution-hardening';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(__dirname, '..', '..', '..', '..');
+// When running inside the Docker build context (dashboard dir as root),
+// __dirname is /app/scripts and 4 levels up is / (filesystem root).
+// Detect this and fall back to looking for the chart relative to the build
+// context (dashboard dir = /app). The allowlist is staged at
+// enterprise/deploy/helm/gibson/ inside the build context for Docker builds.
+// Spec: signup-zitadel-permissions-fix (Docker build fix for auth-resolution-hardening).
+const _repoRootCandidate = resolve(__dirname, '..', '..', '..', '..');
+const REPO_ROOT = _repoRootCandidate === '/' ? resolve(__dirname, '..') : _repoRootCandidate;
 const CHART_DIR = resolve(REPO_ROOT, 'enterprise/deploy/helm/gibson');
 const ALLOWLIST_PATH = resolve(CHART_DIR, '.dashboard-rbac-allowlist.yaml');
 
@@ -201,6 +208,15 @@ function selftest() {
 const argv = process.argv.slice(2);
 if (argv.includes('--selftest')) {
   selftest();
+  process.exit(0);
+}
+
+// Skip when helm is not installed (e.g., inside the Docker build image which
+// is Node.js only). The check is a dev-host gate; the Docker build only needs
+// the prebuild code-quality checks that don't require helm.
+// Spec: signup-zitadel-permissions-fix (Docker build fix for auth-resolution-hardening).
+if (process.env.SKIP_DASHBOARD_RBAC_CHECK === '1') {
+  console.log(`[${SCRIPT_NAME}] SKIPPED — SKIP_DASHBOARD_RBAC_CHECK=1`);
   process.exit(0);
 }
 

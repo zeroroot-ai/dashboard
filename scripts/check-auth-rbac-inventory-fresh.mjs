@@ -28,6 +28,15 @@ const REPO_ROOT = resolve(__dirname, '..', '..', '..', '..');
 const COMMITTED = resolve(REPO_ROOT, 'enterprise/docs/AUTH_RBAC_INVENTORY.md');
 const GENERATOR = resolve(__dirname, 'gen-auth-rbac-inventory.mjs');
 
+// Skip when committed file is not accessible (e.g., inside Docker build where
+// REPO_ROOT resolves to filesystem root and enterprise/docs/ is outside the
+// build context). The check is a dev-host gate.
+// Spec: signup-zitadel-permissions-fix (Docker build fix for auth-resolution-hardening).
+if (process.env.SKIP_DASHBOARD_RBAC_CHECK === '1') {
+  console.log(`[${SCRIPT_NAME}] SKIPPED — SKIP_DASHBOARD_RBAC_CHECK=1`);
+  process.exit(0);
+}
+
 let committed;
 try {
   committed = readFileSync(COMMITTED, 'utf8');

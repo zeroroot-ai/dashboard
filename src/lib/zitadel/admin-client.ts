@@ -61,7 +61,7 @@ export interface ZitadelAdminClient {
    */
   sendVerificationEmail(userId: string): Promise<void>;
 
-  /** GET /admin/v1/policies/password/complexity — fetches the instance password policy. */
+  /** GET /auth/v1/policies/passwords/complexity — fetches the effective password policy for the caller's org. */
   getPasswordComplexityPolicy(): Promise<PasswordPolicy>;
 }
 
@@ -298,6 +298,15 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
   }
 
   async getPasswordComplexityPolicy(): Promise<PasswordPolicy> {
+    // Use the Auth API endpoint. The instance-level admin endpoint
+    // (/auth/v1/policies/passwords/complexity) requires IAM_OWNER, which the
+    // signup-bot DOES NOT have by deliberate minimum-scope choice (see
+    // post-install-job.yaml:381-384). The management endpoint
+    // (/management/v1/policies/password/complexity) also requires elevated
+    // permissions not granted to IAM_USER_MANAGER (verified via live probe
+    // 2026-04-23). The auth endpoint returns the EFFECTIVE policy for the
+    // caller's org — default when no org override is set — which is exactly
+    // what the signup form validation needs. Spec: signup-zitadel-permissions-fix.
     const response = await this.request<{
       policy?: {
         minLength?: string | number;
@@ -306,7 +315,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
         hasNumber?: boolean;
         hasSymbol?: boolean;
       };
-    }>('GET', '/admin/v1/policies/password/complexity');
+    }>('GET', '/auth/v1/policies/passwords/complexity');
 
     const p = response.policy ?? {};
     return {
