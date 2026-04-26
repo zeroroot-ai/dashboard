@@ -52,7 +52,15 @@ const SKIP_FILE_MARKERS = [".test.", ".spec.", ".stories."];
 const FORBIDDEN_PATTERNS = [
   { pattern: /\bgibson(?:\.[a-z0-9-]+)*:50051\b/, label: "direct daemon URL (gibson:50051)" },
   { pattern: /\bgibson(?:\.[a-z0-9-]+)*:50002\b/, label: "direct daemon URL (gibson:50002)" },
+  { pattern: /\bgibson(?:\.[a-z0-9-]+)*:50001\b/, label: "direct daemon URL (gibson:50001) — harness callback port" },
+  { pattern: /\bgibson(?:\.[a-z0-9-]+)*:50100\b/, label: "direct daemon URL (gibson:50100) — registration port" },
   { pattern: /\bGIBSON_DAEMON_ADDRESS\b/, label: "retired env var GIBSON_DAEMON_ADDRESS (use ADMIN_ENVOY_BASE_URL)" },
+  // Spec: unified-identity-and-authorization Phase 4 — block reintroduction
+  // of legacy auth credential plumbing. Replacement is Zitadel JWTs
+  // forwarded as Authorization: Bearer headers.
+  { pattern: /\bGSK_API_KEY\b|\bgsk_[a-zA-Z0-9]{8,}/, label: "gsk_ API key (gone — use Zitadel client_credentials)" },
+  { pattern: /\bBETTER_AUTH_SECRET\b/, label: "BETTER_AUTH_SECRET (BetterAuth removed by Phase 4 — use Zitadel via Auth.js)" },
+  { pattern: /\bBETTER_AUTH_URL\b/, label: "BETTER_AUTH_URL (BetterAuth removed by Phase 4 — use Zitadel via Auth.js)" },
 ];
 
 function walk(dir, out = []) {

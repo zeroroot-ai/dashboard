@@ -19,11 +19,17 @@ export const serverConfig = {
   neo4jUser: process.env.NEO4J_USER || 'neo4j',
   neo4jPassword: process.env.NEO4J_PASSWORD || '',
 
-  // Better Auth Configuration
-  betterAuthUrl: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
-  betterAuthSecret: process.env.BETTER_AUTH_SECRET || '',
+  // Auth.js + Zitadel — public dashboard URL Auth.js uses for OIDC
+  // redirect URIs and the email-nonce HMAC secret used by the
+  // legacy missing-email recovery flow. The HMAC secret is just a
+  // generic signing key; the env var name is retained at AUTH_SECRET
+  // (the Auth.js convention) under unified-identity-and-authorization
+  // Phase 4. NEXTAUTH_URL is the canonical dashboard URL.
+  // Spec Phase 4 Requirement 9.1: Auth.js stays; BetterAuth is gone.
+  dashboardPublicUrl: process.env.NEXTAUTH_URL || process.env.AUTH_URL || 'http://localhost:3000',
+  authHmacSecret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || '',
 
-  // Dashboard PostgreSQL (Better Auth database)
+  // Dashboard PostgreSQL (Auth.js + tenant state)
   databaseUrl: process.env.DATABASE_URL || '',
 
   // Langfuse Configuration (for trace viewer)
@@ -55,10 +61,10 @@ export const clientConfig = {
 export function validateEnvConfig(): void {
   const errors: string[] = [];
 
-  // Validate Better Auth configuration in production
+  // Validate Auth.js configuration in production
   if (serverConfig.isProduction) {
-    if (!serverConfig.betterAuthSecret) {
-      errors.push('BETTER_AUTH_SECRET is required in production');
+    if (!serverConfig.authHmacSecret) {
+      errors.push('AUTH_SECRET (or legacy NEXTAUTH_SECRET) is required in production');
     }
     if (!serverConfig.databaseUrl) {
       errors.push('DATABASE_URL is required in production');

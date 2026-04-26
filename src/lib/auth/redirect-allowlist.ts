@@ -71,11 +71,15 @@ export function validateRedirectTo(url: string | null | undefined): string {
 }
 
 /**
- * Resolve the dashboard's own origin from BETTER_AUTH_URL.
+ * Resolve the dashboard's own origin from NEXTAUTH_URL / AUTH_URL.
  * Returns null if the env var is unset or the URL is unparseable.
+ *
+ * Spec: unified-identity-and-authorization Phase 4 — BetterAuth env
+ * vars (BETTER_AUTH_URL/BETTER_AUTH_SECRET) are gone; Auth.js uses
+ * the standard NEXTAUTH_URL convention.
  */
 function resolveAllowedOrigin(): string | null {
-  const raw = process.env.BETTER_AUTH_URL;
+  const raw = process.env.NEXTAUTH_URL || process.env.AUTH_URL;
   if (!raw) return null;
   try {
     return new URL(raw).origin;

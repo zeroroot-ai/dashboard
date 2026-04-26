@@ -23,8 +23,8 @@ export function generateProvideEmailNonce(
   userId: string,
   displayName: string,
 ): string {
-  const secret = process.env.BETTER_AUTH_SECRET;
-  if (!secret) throw new Error("[provide-email] BETTER_AUTH_SECRET is required");
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  if (!secret) throw new Error("[provide-email] AUTH_SECRET (or legacy NEXTAUTH_SECRET) is required");
 
   const payload: NoncePayload = {
     userId,
@@ -44,7 +44,7 @@ export function verifyProvideEmailNonce(
 ):
   | { ok: true; payload: NoncePayload }
   | { ok: false; code: "INVALID_TOKEN" | "TOKEN_EXPIRED" } {
-  const secret = process.env.BETTER_AUTH_SECRET;
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   if (!secret) return { ok: false, code: "INVALID_TOKEN" };
 
   const dotIdx = token.lastIndexOf(".");
