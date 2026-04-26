@@ -9,7 +9,8 @@
  * Spec: access-matrix-finish task 11, R4 AC 2 + 7.
  */
 
-import { getDaemonAdminClient } from "@/src/lib/gibson-admin-client";
+import { DaemonAdminService } from "@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb";
+import { serviceClient } from "@/src/lib/gibson-client";
 import { getServerSession } from "@/src/lib/auth";
 
 export type ActionResult<T> =
@@ -43,7 +44,7 @@ export async function getTenantQuotaAction(): Promise<
   }
 
   try {
-    const resp = await getDaemonAdminClient().getTenantQuota({ tenantId });
+    const resp = await serviceClient(DaemonAdminService, tenantId).getTenantQuota({ tenantId });
     return {
       ok: true,
       data: {

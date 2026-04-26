@@ -11,7 +11,8 @@
  * Spec: agent-authoring-and-tenant-entitlements task 30, R8 AC 7.
  */
 
-import { getDaemonAdminClient } from "@/src/lib/gibson-admin-client";
+import { DaemonAdminService } from "@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb";
+import { serviceClient } from "@/src/lib/gibson-client";
 
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
@@ -111,7 +112,7 @@ export async function setComponentAccessAction(
   const wantAdd = isGrant ? input.enabled : !input.enabled;
 
   try {
-    const client = getDaemonAdminClient();
+    const client = serviceClient(DaemonAdminService, callerTenantId);
     if (wantAdd) {
       await client.writeAccessTuples({
         add: [tuple],

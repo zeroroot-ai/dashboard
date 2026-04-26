@@ -4,35 +4,41 @@
  * Integration test for installAgentAction — exercises the full Server
  * Action path against a live daemon + FGA testcontainers stack. Unlike
  * the unit test in app/actions/crd/__tests__/installAgent.test.ts, this
- * test does NOT mock the admin client or the DiscoveryService client.
+ * test does NOT mock the daemon client or the DiscoveryService client.
  *
  * Spec: access-matrix-finish task 25, R5 AC 4/7 + NFR Reliability.
  *
  * Requirements at runtime:
- *   - A running gibson daemon reachable at GIBSON_DAEMON_ADDRESS
- *   - OpenFGA reachable from the daemon
- *   - A Better Auth session cookie fixture (INTEGRATION_SESSION_COOKIE env)
- *   - A tenant with baseline access to component:plugin/gitlab (read+write+execute)
+ *   - A running Envoy edge reachable at ADMIN_ENVOY_BASE_URL (defaults to
+ *     https://api.zero-day.local:30443) routing to the daemon + FGA.
+ *   - A Zitadel-issued session cookie fixture (INTEGRATION_SESSION_COOKIE env).
+ *   - The dashboard pod's Zitadel SA env vars (ZITADEL_DASHBOARD_CLIENT_ID +
+ *     ZITADEL_DASHBOARD_CLIENT_SECRET) so serviceClient can mint its bearer.
+ *   - A tenant with baseline access to component:plugin/gitlab (read+write+execute).
  *
- * Run: GIBSON_DAEMON_ADDRESS=... INTEGRATION_SESSION_COOKIE=... \
+ * Run: ADMIN_ENVOY_BASE_URL=... INTEGRATION_SESSION_COOKIE=... \
  *      npx vitest run e2e/install-agent-action.int.test.ts --config vitest.integration.config.ts
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
 
-const DAEMON = process.env.GIBSON_DAEMON_ADDRESS;
+const ENVOY = process.env.ADMIN_ENVOY_BASE_URL;
 const SESSION = process.env.INTEGRATION_SESSION_COOKIE;
 const TENANT = process.env.INTEGRATION_TENANT_ID ?? "integration-test";
 
-const describeOrSkip = DAEMON && SESSION ? describe : describe.skip;
+const describeOrSkip = ENVOY && SESSION ? describe : describe.skip;
 
 describeOrSkip("installAgentAction — integration", () => {
   let installAgentAction: typeof import("@/app/actions/crd/installAgent").installAgentAction;
-  let getDaemonAdminClient: typeof import("@/src/lib/gibson-admin-client").getDaemonAdminClient;
+  let serviceClient: typeof import("@/src/lib/gibson-client").serviceClient;
+  let DaemonAdminService: typeof import("@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb").DaemonAdminService;
 
   beforeAll(async () => {
     ({ installAgentAction } = await import("@/app/actions/crd/installAgent"));
-    ({ getDaemonAdminClient } = await import("@/src/lib/gibson-admin-client"));
+    ({ serviceClient } = await import("@/src/lib/gibson-client"));
+    ({ DaemonAdminService } = await import(
+      "@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb"
+    ));
   });
 
   it("happy path — writes approved tuples against live FGA", async () => {
@@ -49,7 +55,7 @@ describeOrSkip("installAgentAction — integration", () => {
       expect(r.data.agentInstallationId).toMatch(new RegExp(`-${TENANT}$`));
 
       // Confirm the tuple is visible on a subsequent Check (by deleting it).
-      await getDaemonAdminClient().writeAccessTuples({
+      await serviceClient(DaemonAdminService, TENANT).writeAccessTuples({
         add: [],
         delete: [
           {

@@ -17,13 +17,13 @@
 import 'server-only';
 
 import { cache } from 'react';
-import { createClient, ConnectError, Code } from '@connectrpc/connect';
-import { createGrpcTransport } from '@connectrpc/connect-node';
+import { ConnectError, Code } from '@connectrpc/connect';
 import { z } from 'zod';
 
 import { auth } from '@/auth';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
-import { getSpiffeJwt } from '@/src/lib/spiffe/jwt-svid';
+import { makeClient } from '@/src/lib/gibson-client';
+import { requireUserToken } from '@/src/lib/auth/user-token';
 
 // ---------------------------------------------------------------------------
 // Public types + errors
@@ -81,39 +81,22 @@ function normalizeRole(raw: string): 'admin' | 'member' {
 }
 
 // ---------------------------------------------------------------------------
-// Transport
-// ---------------------------------------------------------------------------
-
-const ENVOY_BASE_URL =
-  process.env['ADMIN_ENVOY_BASE_URL'] ?? 'https://api.zero-day.local:30443';
-
-const DAEMON_AUDIENCE =
-  process.env['GIBSON_DAEMON_SPIFFE_AUDIENCE'] ??
-  'spiffe://gibson.io/platform/daemon';
-
-/**
- * Build a single-shot gRPC transport that forwards a JWT-SVID Bearer to
- * Envoy. Mirrors `gibson-client.ts` for consistency. Once spec
- * `dashboard-fga-user-identity` lands this should switch to forwarding the
- * Zitadel access token; until then the call still works because
- * `ListMyMemberships` is registered as `unauthenticated: true` in ext-authz.
- */
-function buildTransport() {
-  return createGrpcTransport({
-    baseUrl: ENVOY_BASE_URL,
-    interceptors: [
-      (next) => async (req) => {
-        const jwt = await getSpiffeJwt({ audience: DAEMON_AUDIENCE });
-        req.header.set('Authorization', `Bearer ${jwt}`);
-        return next(req);
-      },
-    ],
-  });
-}
-
-// ---------------------------------------------------------------------------
 // Public surface
 // ---------------------------------------------------------------------------
+
+/**
+ * Build a daemon client that authenticates as the current user but does
+ * NOT send `x-gibson-tenant`. ListMyMemberships is registered as
+ * `unauthenticated: true` in ext-authz (identity is required, but no
+ * per-tenant FGA gate runs — the response IS the tenant list), so a
+ * tenant header would only confuse audit logs. We can't compose
+ * `userClient` here either: that helper reads the active-tenant cookie,
+ * but the cookie's validity itself depends on the result of THIS RPC,
+ * which would create a circular dependency.
+ */
+function membershipsClient() {
+  return makeClient(DaemonService, requireUserToken, async () => '');
+}
 
 /**
  * Returns every tenant the authenticated caller is a member of.
@@ -133,7 +116,7 @@ export const getMyMemberships = cache(async (): Promise<Membership[]> => {
 
   let raw: unknown;
   try {
-    const client = createClient(DaemonService, buildTransport());
+    const client = membershipsClient();
     raw = await client.listMyMemberships({});
   } catch (err) {
     if (err instanceof ConnectError) {

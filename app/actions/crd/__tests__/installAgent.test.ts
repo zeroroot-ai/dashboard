@@ -12,20 +12,28 @@ vi.mock("@/src/lib/auth", () => ({
   getServerSession: vi.fn(),
 }));
 
+// installAgentAction now uses serviceClient(svc, tenantId) for both the
+// DaemonAdminService (writeAccessTuples) and the DiscoveryService
+// (validateComponent). One mock returns a stub keyed on the service it's
+// asked for so we don't have to mock the entire gibson-client surface.
 const mockWriteAccessTuples = vi.fn();
-vi.mock("@/src/lib/gibson-admin-client", () => ({
-  getDaemonAdminClient: () => ({ writeAccessTuples: mockWriteAccessTuples }),
-}));
-
 const mockValidateComponent = vi.fn();
-vi.mock("@connectrpc/connect-node", () => ({
-  createGrpcTransport: () => ({}),
-}));
-vi.mock("@connectrpc/connect", () => ({
-  createClient: () => ({ validateComponent: mockValidateComponent }),
+vi.mock("@/src/lib/gibson-client", () => ({
+  serviceClient: (svc: { typeName?: string }) => {
+    // discovery validateComponent vs admin writeAccessTuples — the test
+    // matches on the property the SUT will reach for next.
+    return {
+      validateComponent: mockValidateComponent,
+      writeAccessTuples: mockWriteAccessTuples,
+      _svc: svc,
+    };
+  },
 }));
 vi.mock("@/src/gen/gibson/daemon/discovery/v1/discovery_pb", () => ({
-  DiscoveryService: {},
+  DiscoveryService: { typeName: "discovery" },
+}));
+vi.mock("@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb", () => ({
+  DaemonAdminService: { typeName: "admin" },
 }));
 
 const mockList = vi.fn();
@@ -40,7 +48,15 @@ import { getServerSession } from "@/src/lib/auth";
 
 function withSession(tenantId = "acme") {
   (getServerSession as ReturnType<typeof vi.fn>).mockResolvedValue({
-    user: { tenantId },
+    user: {
+      id: "user-1",
+      tenantId,
+      // requireCrdSession permission gate consults user.permissions /
+      // user.crossTenant; grants:create is the install-flow permission
+      // installAgentAction asks for.
+      permissions: ["grants:create"],
+      crossTenant: false,
+    },
   });
 }
 

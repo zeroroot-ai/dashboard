@@ -17,12 +17,9 @@
 
 import { randomUUID } from "node:crypto";
 
-import { createGrpcTransport } from "@connectrpc/connect-node";
-import { createClient, type Interceptor } from "@connectrpc/connect";
-
+import { DaemonAdminService } from "@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb";
 import { DiscoveryService } from "@/src/gen/gibson/daemon/discovery/v1/discovery_pb";
-import { getDaemonAdminClient } from "@/src/lib/gibson-admin-client";
-import { getSpiffeJwt } from "@/src/lib/spiffe/jwt-svid";
+import { serviceClient } from "@/src/lib/gibson-client";
 import {
   listAccessibleComponentsAction,
   type DiscoveredItem,
@@ -49,35 +46,6 @@ export interface InstallAgentInput {
   componentYaml: string;
   permissionsYaml: string;
   approvals: InstallApproval[];
-}
-
-// Envoy edge gateway — see `dashboard-admin-via-envoy` spec. Direct daemon
-// URLs are blocked by `scripts/check-no-direct-daemon-grpc.mjs`.
-const ENVOY_BASE_URL =
-  process.env.ADMIN_ENVOY_BASE_URL ?? "https://api.zero-day.local:30443";
-
-const DAEMON_AUDIENCE =
-  process.env.GIBSON_DAEMON_SPIFFE_AUDIENCE ??
-  "spiffe://gibson.io/platform/daemon";
-
-const spiffeJwtInterceptor: Interceptor = (next) => async (req) => {
-  const jwt = await getSpiffeJwt({ audience: DAEMON_AUDIENCE });
-  req.header.set("Authorization", `Bearer ${jwt}`);
-  return next(req);
-};
-
-let cachedDiscoveryClient:
-  | ReturnType<typeof createClient<typeof DiscoveryService>>
-  | null = null;
-
-function discoveryClient() {
-  if (cachedDiscoveryClient) return cachedDiscoveryClient;
-  const transport = createGrpcTransport({
-    baseUrl: ENVOY_BASE_URL,
-    interceptors: [spiffeJwtInterceptor],
-  });
-  cachedDiscoveryClient = createClient(DiscoveryService, transport);
-  return cachedDiscoveryClient;
 }
 
 function relationFor(action: InstallAction): string {
@@ -118,7 +86,7 @@ export async function installAgentAction(
   }
 
   // 1. Re-validate the manifest server-side (defence in depth).
-  const validate = await discoveryClient().validateComponent({
+  const validate = await serviceClient(DiscoveryService, tenantId).validateComponent({
     componentYaml: new TextEncoder().encode(input.componentYaml),
     permissionsYaml: new TextEncoder().encode(input.permissionsYaml),
   });
@@ -172,7 +140,7 @@ export async function installAgentAction(
   }
 
   // 5. All-or-nothing: compensating delete on any batch failure.
-  const client = getDaemonAdminClient();
+  const client = serviceClient(DaemonAdminService, tenantId);
   try {
     await client.writeAccessTuples({
       add: tuples,

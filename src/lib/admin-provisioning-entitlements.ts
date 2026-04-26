@@ -7,8 +7,9 @@
  * Spec: agent-authoring-and-tenant-entitlements task 26.
  */
 import { NextRequest, NextResponse } from "next/server";
+import { DaemonAdminService } from "@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb";
 import { verifySpiffeBearer } from "@/src/lib/spiffe-verifier";
-import { getDaemonAdminClient } from "@/src/lib/gibson-admin-client";
+import { serviceClient } from "@/src/lib/gibson-client";
 
 async function authz(req: NextRequest): Promise<
   | { ok: true; spiffeId: string }
@@ -48,7 +49,7 @@ export async function handleUpsertQuota(req: NextRequest) {
   if ("error" in body) return NextResponse.json({ error: body.error }, { status: body.status });
   if (!body.tenant_id) return NextResponse.json({ error: "tenant_id required" }, { status: 400 });
 
-  const client = getDaemonAdminClient();
+  const client = serviceClient(DaemonAdminService, body.tenant_id);
   try {
     const resp = await client.upsertTenantQuota({
       tenantId: body.tenant_id,
@@ -75,7 +76,7 @@ export async function handleListFeatureTuples(req: NextRequest) {
   if ("error" in body) return NextResponse.json({ error: body.error }, { status: body.status });
   if (!body.tenant_id) return NextResponse.json({ error: "tenant_id required" }, { status: 400 });
 
-  const client = getDaemonAdminClient();
+  const client = serviceClient(DaemonAdminService, body.tenant_id);
   try {
     const resp = await client.listFeatureTuples({ tenantId: body.tenant_id });
     return NextResponse.json({ relations: resp.relations });
@@ -105,7 +106,10 @@ export async function handleWriteTuples(req: NextRequest) {
       .filter((t) => t.user && t.relation && t.object)
       .map((t) => ({ user: t.user!, relation: t.relation!, object: t.object! }));
 
-  const client = getDaemonAdminClient();
+  // Cross-tenant write — entitlement reconciles touch tuples spanning
+  // many tenants in a single batch. Use the system_tenant scope so the
+  // daemon FGA path applies the platform-operator policy.
+  const client = serviceClient(DaemonAdminService, "_system");
   try {
     const resp = await client.writeAccessTuples({
       add: mapTuples(body.add),
@@ -146,7 +150,7 @@ export async function handleEmitSummary(req: NextRequest) {
     trigger: body.trigger ?? "background",
   };
 
-  const client = getDaemonAdminClient();
+  const client = serviceClient(DaemonAdminService, body.tenant_id);
   try {
     await client.emitAuditEvent({
       event: {
@@ -180,7 +184,7 @@ export async function handleSeedCatalog(req: NextRequest) {
   if ("error" in body) return NextResponse.json({ error: body.error }, { status: body.status });
   if (!body.tenant_id) return NextResponse.json({ error: "tenant_id required" }, { status: 400 });
 
-  const client = getDaemonAdminClient();
+  const client = serviceClient(DaemonAdminService, body.tenant_id);
   try {
     const resp = await client.seedCatalogTenantEnabled({ tenantId: body.tenant_id });
     return NextResponse.json({ tuples_written: resp.tuplesWritten });
