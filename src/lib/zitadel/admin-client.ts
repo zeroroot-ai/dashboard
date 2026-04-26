@@ -45,6 +45,68 @@ export interface PasswordPolicy {
 }
 
 // ---------------------------------------------------------------------------
+// Machine user (service account) types — spec
+// unified-identity-and-authorization Phase 4 (R1.4, R9.7, R9.8). Used by
+// the dashboard's "Register Agent" flow to provision Zitadel service
+// accounts for agents that authenticate via the OAuth2 client_credentials
+// grant.
+// ---------------------------------------------------------------------------
+
+export interface CreateMachineUserInput {
+  /**
+   * Stable, URL-safe-ish login name in the org's namespace, e.g.
+   * `agent-acme-redteam-1`. Zitadel rejects whitespace and most punctuation.
+   * The caller is responsible for collision handling (HTTP 409 surfaces as
+   * `ZitadelApiError` with `httpStatus: 409`).
+   */
+  username: string;
+  /** Display name shown in the Zitadel console — falls back to `username`. */
+  name?: string;
+  /**
+   * Optional human-readable description. Stored on the Zitadel user
+   * object so org admins can identify the agent in the console.
+   */
+  description?: string;
+  /**
+   * Org ID the machine user belongs to. When omitted, the user is created
+   * in the PAT's default org — which, for the signup-bot PAT, is the IAM
+   * instance org. For per-tenant agents, the caller MUST supply the
+   * tenant's Zitadel org ID.
+   */
+  orgId?: string;
+}
+
+export interface ZitadelMachineUser {
+  userId: string;
+  username: string;
+}
+
+export interface MachineSecret {
+  /** OAuth2 `client_id` for the client_credentials grant. */
+  clientId: string;
+  /** OAuth2 `client_secret` — emitted exactly once. NEVER logged. */
+  clientSecret: string;
+}
+
+export interface AddProjectMemberInput {
+  /** Zitadel project ID the member is being granted on. */
+  projectId: string;
+  /** The Zitadel user ID (machine or human) to add. */
+  userId: string;
+  /**
+   * Project role keys to grant. Match the keys defined on the Zitadel
+   * project (e.g. `["agent"]`). The set must be non-empty.
+   */
+  roles: string[];
+  /**
+   * Org context for the membership write. Defaults to the PAT's home org.
+   * When the project lives in a tenant org, the caller MUST pass that org
+   * ID so the `x-zitadel-orgid` header reaches the right virtual host.
+   */
+  orgId?: string;
+}
+
+// ---------------------------------------------------------------------------
 // Interface
 // ---------------------------------------------------------------------------
 
@@ -63,6 +125,31 @@ export interface ZitadelAdminClient {
 
   /** GET /auth/v1/policies/passwords/complexity — fetches the effective password policy for the caller's org. */
   getPasswordComplexityPolicy(): Promise<PasswordPolicy>;
+
+  /**
+   * POST /management/v1/users/machine — creates a new machine user (service
+   * account) used for the OAuth2 client_credentials grant. The returned
+   * userId is the Zitadel subject; the secret is minted separately by
+   * {@link addMachineSecret}. Spec: unified-identity-and-authorization R1.4.
+   */
+  createMachineUser(input: CreateMachineUserInput): Promise<ZitadelMachineUser>;
+
+  /**
+   * PUT /management/v1/users/{userId}/secret — generates a fresh
+   * client_secret for the machine user. The plaintext secret is returned
+   * exactly once and CANNOT be retrieved again; it must be surfaced to
+   * the registering admin in the same response. Spec: R9.8.
+   */
+  addMachineSecret(userId: string, orgId?: string): Promise<MachineSecret>;
+
+  /**
+   * POST /management/v1/projects/{projectId}/members — adds a user
+   * (machine or human) to a Zitadel project with one or more project-level
+   * role keys. The role grant is what makes the project's
+   * `urn:zitadel:iam:org:project:roles` claim show up in the issued JWT.
+   * Spec: R1.4 / R9.8 (project membership for agents).
+   */
+  addProjectMember(input: AddProjectMemberInput): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -129,14 +216,21 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
    * Builds the common request headers required by every Zitadel API call.
    * The PAT appears only in the Authorization value and is never stringified
    * into a log-safe form.
+   *
+   * `orgId`, when provided, is forwarded as `x-zitadel-orgid` so management
+   * API writes hit the right tenant org (vs the PAT's home org).
    */
-  private buildHeaders(): Record<string, string> {
-    return {
+  private buildHeaders(orgId?: string): Record<string, string> {
+    const headers: Record<string, string> = {
       Authorization: `Bearer ${this.pat}`,
       Host: this.externalDomain,
       'Content-Type': 'application/json',
       Accept: 'application/json',
     };
+    if (orgId) {
+      headers['x-zitadel-orgid'] = orgId;
+    }
+    return headers;
   }
 
   /**
@@ -146,14 +240,16 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
    * @param method  HTTP verb
    * @param path    Path relative to apiUrl, e.g. "/v2/users/human"
    * @param body    Optional JSON-serialisable body. Passwords must not be logged.
+   * @param orgId   Optional Zitadel org ID for `x-zitadel-orgid` routing.
    */
   private async request<T>(
     method: string,
     path: string,
     body?: unknown,
+    orgId?: string,
   ): Promise<T> {
     const url = `${this.apiUrl}${path}`;
-    const headers = this.buildHeaders();
+    const headers = this.buildHeaders(orgId);
     const init: RequestInit = {
       method,
       headers,
@@ -325,5 +421,88 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
       hasNumber: p.hasNumber ?? false,
       hasSymbol: p.hasSymbol ?? false,
     };
+  }
+
+  // -----------------------------------------------------------------------
+  // Machine user (service account) — spec
+  // unified-identity-and-authorization Phase 4 (R1.4, R9.7, R9.8).
+  //
+  // SECURITY:
+  //   - The machine secret returned by addMachineSecret() exists in
+  //     plaintext exactly once, in the response body of POST /secret. We
+  //     never persist it, never include it in error messages, never log
+  //     any field of MachineSecret. The route handler is the single
+  //     downstream consumer and is responsible for handing it to the
+  //     browser exactly once and dropping it.
+  //   - `username` and `description` are tenant-scoped identifiers; they
+  //     may appear in logs.
+  // -----------------------------------------------------------------------
+
+  async createMachineUser(input: CreateMachineUserInput): Promise<ZitadelMachineUser> {
+    // Zitadel's machine-user accessTokenType controls whether the
+    // resulting access tokens are opaque or JWT. For the OIDC chain we
+    // need JWTs so Envoy's jwt_authn provider can verify them — that is
+    // the OIDC_TOKEN_TYPE_JWT enum, which the management API serialises
+    // as the string `"OIDC_TOKEN_TYPE_JWT"` (vs the default
+    // `"OIDC_TOKEN_TYPE_BEARER"` that yields opaque tokens).
+    const body = {
+      userName: input.username,
+      name: input.name ?? input.username,
+      description: input.description ?? '',
+      accessTokenType: 'OIDC_TOKEN_TYPE_JWT',
+    };
+    const response = await this.request<{ userId?: string }>(
+      'POST',
+      '/management/v1/users/machine',
+      body,
+      input.orgId,
+    );
+    if (!response.userId) {
+      // Surface as a connection-shaped ZitadelApiError so callers can
+      // unify on isRetryable() / httpStatus checks. We deliberately do
+      // NOT echo the username — the caller already has it.
+      throw new ZitadelApiError(0, 'NO_USER_ID', 'Zitadel response missing userId');
+    }
+    return { userId: response.userId, username: input.username };
+  }
+
+  async addMachineSecret(userId: string, orgId?: string): Promise<MachineSecret> {
+    // Zitadel mints both halves of the credential here. The plaintext
+    // `clientSecret` is returned exactly once; subsequent reads of this
+    // user yield only the bcrypt hash. Caller MUST surface to the admin
+    // immediately and never persist.
+    const response = await this.request<{
+      clientId?: string;
+      clientSecret?: string;
+    }>('PUT', `/management/v1/users/${userId}/secret`, {}, orgId);
+
+    if (!response.clientId || !response.clientSecret) {
+      // Do NOT include any field of `response` in the error message —
+      // it would leak the secret on the malformed-response path.
+      throw new ZitadelApiError(
+        0,
+        'NO_MACHINE_SECRET',
+        'Zitadel response missing clientId or clientSecret',
+      );
+    }
+    return { clientId: response.clientId, clientSecret: response.clientSecret };
+  }
+
+  async addProjectMember(input: AddProjectMemberInput): Promise<void> {
+    if (input.roles.length === 0) {
+      // Zitadel requires at least one role on a project membership write
+      // — reject locally so the surfaced error is sharper than the API's.
+      throw new ZitadelApiError(0, 'NO_ROLES', 'addProjectMember requires at least one role');
+    }
+    const body = {
+      userId: input.userId,
+      roles: input.roles,
+    };
+    await this.request<unknown>(
+      'POST',
+      `/management/v1/projects/${input.projectId}/members`,
+      body,
+      input.orgId,
+    );
   }
 }
