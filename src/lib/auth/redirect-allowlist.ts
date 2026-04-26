@@ -13,8 +13,9 @@
  *  - `javascript:` or other non-http(s) schemes → reject, return "/".
  *  - Empty / missing → return "/".
  *
- * The allowed origin is derived from BETTER_AUTH_URL. If BETTER_AUTH_URL is
- * unset (e.g. in test environments), only relative paths are accepted.
+ * The allowed origin is derived from NEXTAUTH_URL (Auth.js convention; legacy
+ * AUTH_URL also accepted). If neither is set (e.g. in test environments),
+ * only relative paths are accepted.
  */
 
 /**

@@ -20,7 +20,7 @@
  *   - GITLAB_CLIENT_SECRET
  *   - GOOGLE_CLIENT_SECRET
  *   - MICROSOFT_CLIENT_SECRET
- *   - BETTER_AUTH_SECRET
+ *   - AUTH_SECRET / NEXTAUTH_SECRET (Auth.js HMAC; legacy BETTER_AUTH_SECRET removed)
  *
  * Runs as part of `prebuild` AFTER `next build` writes the output.
  * Important: this script is a no-op (succeeds silently) when the secret
@@ -46,7 +46,11 @@ const SECRET_ENV_VARS = [
   "GITLAB_CLIENT_SECRET",
   "GOOGLE_CLIENT_SECRET",
   "MICROSOFT_CLIENT_SECRET",
-  "BETTER_AUTH_SECRET",
+  // Auth.js session HMAC. Both names are read because the platform is
+  // mid-migration off the legacy BETTER_AUTH_SECRET name; either being
+  // present in a client bundle is a critical regression.
+  "AUTH_SECRET",
+  "NEXTAUTH_SECRET",
 ];
 
 // Read the active secrets from env at run time. Only secrets that are

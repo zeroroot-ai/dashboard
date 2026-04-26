@@ -6,12 +6,12 @@
  *
  * Social sign-in e2e tests require:
  *   1. A configured GitHub OAuth application with:
- *      - Authorization callback URL: {BETTER_AUTH_URL}/api/auth/callback/github
+ *      - Authorization callback URL: {NEXTAUTH_URL}/api/auth/callback/github
  *      - Scope: user:email
  *   2. Env vars on the running dashboard:
  *      - GITHUB_CLIENT_ID=<your-app-client-id>
  *      - GITHUB_CLIENT_SECRET=<your-app-client-secret>
- *      - BETTER_AUTH_URL=<dashboard-url>
+ *      - NEXTAUTH_URL=<dashboard-url>
  *   3. A test GitHub account (a separate personal account, NOT a corporate one)
  *      with credentials set via:
  *      - E2E_GITHUB_USER=<github-username>

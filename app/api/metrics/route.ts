@@ -21,7 +21,7 @@
  *                                     CIDR blocks. Unset/empty means the
  *                                     CIDR path is disabled; SPIFFE is
  *                                     the only way in.
- *   SPIFFE_JWKS_URL, SPIFFE_TRUST_DOMAIN, BETTER_AUTH_ADMIN_AUDIENCE,
+ *   SPIFFE_JWKS_URL, SPIFFE_TRUST_DOMAIN, DASHBOARD_ADMIN_AUDIENCE,
  *   ALLOWED_ADMIN_SPIFFE_IDS          See src/lib/spiffe-verifier.ts.
  */
 

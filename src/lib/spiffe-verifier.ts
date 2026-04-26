@@ -14,7 +14,11 @@
  * Env vars:
  *   SPIFFE_JWKS_URL            — sidecar URL (default http://127.0.0.1:9091/jwks)
  *   SPIFFE_TRUST_DOMAIN        — expected trust domain (e.g. "gibson.io")
- *   BETTER_AUTH_ADMIN_AUDIENCE — expected JWT audience (e.g. "gibson-dashboard")
+ *   DASHBOARD_ADMIN_AUDIENCE   — expected JWT audience (e.g. "gibson-dashboard").
+ *                                Legacy alias BETTER_AUTH_ADMIN_AUDIENCE is
+ *                                still honoured for one release after the
+ *                                unified-identity-and-authorization Phase 4
+ *                                rename so existing chart values keep working.
  *   ALLOWED_ADMIN_SPIFFE_IDS   — comma-separated SPIFFE ID allow-list
  */
 
@@ -24,7 +28,9 @@ const JWKS_URL =
   process.env.SPIFFE_JWKS_URL ?? "http://127.0.0.1:9091/jwks";
 const TRUST_DOMAIN = process.env.SPIFFE_TRUST_DOMAIN ?? "gibson.io";
 const EXPECTED_AUDIENCE =
-  process.env.BETTER_AUTH_ADMIN_AUDIENCE ?? "gibson-dashboard";
+  process.env.DASHBOARD_ADMIN_AUDIENCE ??
+  process.env.BETTER_AUTH_ADMIN_AUDIENCE ??
+  "gibson-dashboard";
 const ALLOWED_SPIFFE_IDS = (process.env.ALLOWED_ADMIN_SPIFFE_IDS ?? "")
   .split(",")
   .map((s) => s.trim())

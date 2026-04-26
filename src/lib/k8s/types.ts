@@ -79,7 +79,6 @@ export interface TenantStatus {
   phase?: TenantPhase;
   conditions?: K8sCondition[];
   namespace?: string;
-  betterAuthOrgId?: string;
   /** Zitadel organization ID written by the EnsureZitadelOrg saga step. */
   zitadelOrgID?: string;
   /** Zitadel primary-domain slug, typically equal to Tenant.metadata.name. */
