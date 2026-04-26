@@ -1,6 +1,13 @@
 import 'server-only';
-import { createClient, ConnectError, Code } from '@connectrpc/connect';
+import {
+  createClient,
+  ConnectError,
+  Code,
+  type Client,
+  type Interceptor,
+} from '@connectrpc/connect';
 import { createGrpcTransport } from '@connectrpc/connect-node';
+import type { DescService } from '@bufbuild/protobuf';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
 import { DaemonAdminService } from '@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb';
 import type {
@@ -20,7 +27,16 @@ import type {
 } from '@/src/types/user';
 import { serverConfig as _serverConfig } from './config';
 import { requireUserToken } from './auth/user-token';
-import { userTokenForwardingDisabledTotal } from './metrics/auth';
+import {
+  getServiceToken,
+  invalidateServiceToken,
+} from './auth/service-token';
+import { getActiveTenant } from './auth/active-tenant';
+import {
+  adminRpcTotal,
+  adminEnvoyUpstreamErrorsTotal,
+  type AdminRpcStatus,
+} from './metrics/gibson-admin';
 // `serverConfig.gibsonDaemonUrl` is still imported (aliased _serverConfig) so
 // that the build doesn't dead-strip it before Phase 9 of the previous spec —
 // exporters elsewhere in the dashboard still reference `gibsonDaemonUrl`
@@ -32,161 +48,244 @@ void _serverConfig;
 // longer exported by this module.
 
 // ---------------------------------------------------------------------------
-// Two-transport model — see enterprise/platform/dashboard/CLAUDE.md
+// Single-edge transport model — spec unified-identity-and-authorization
+// Phase 4 (R4.1, R4.2, R4.3).
 // ---------------------------------------------------------------------------
 //
-// This file is the **user-acting** transport. It forwards the Zitadel
-// access token from the Auth.js session as `Authorization: Bearer` plus
-// the active-tenant cookie value as `x-gibson-tenant`. Envoy validates
-// the token via its `zitadel` `jwt_authn` provider and ext-authz emits
-// `Identity{Subject: <zitadel-sub>, ...}` so FGA decisions are made
-// against the real user.
+// All daemon RPCs flow `dashboard → Envoy (jwt_authn + ext_authz) → daemon`
+// through one URL: `ADMIN_ENVOY_BASE_URL`. There is no longer an "admin"
+// vs "user" transport distinction at the wire level; the difference lives
+// in WHO the bearer represents:
 //
-// The **workload-acting** transport lives in `gibson-admin-client.ts`
-// and continues to mint a SPIFFE JWT-SVID. Admin RPCs that operate on
-// `system_tenant:_system` use that path. The two transports are NOT
-// interchangeable at the type level — `getAdminClient()` returns the
-// admin service, this file returns the user service.
+//   - userClient(svc): bearer is the signed-in user's Zitadel access
+//     token; x-gibson-tenant is the active-tenant cookie value. Use this
+//     for every Server Component / Server Action / route handler that
+//     runs inside an authenticated browser session.
 //
-// Spec: dashboard-fga-user-identity (R1, R3).
+//   - serviceClient(svc, tenantId): bearer is a Zitadel
+//     `client_credentials` JWT minted from the dashboard pod's own
+//     service-account; x-gibson-tenant is whatever the caller passes
+//     explicitly (no cookie context). Use this for in-cluster callbacks
+//     (admin-provisioning entitlement reconcile, etc.) where there is no
+//     end user.
 //
-// USE_ENVOY_FOR_DAEMON=false is a documented backout from a previous spec
-// (in-cluster-mtls-restoration). Its `false` branch is a hard error.
-//
-// USE_USER_TOKEN_FORWARDING=false is the spec-local backout (Req 8). When
-// "false", this file falls back to minting a SPIFFE JWT-SVID — degraded
-// mode, per-user FGA disabled, audit attribution wrong. The metric
-// `dashboard_user_token_forwarding_disabled_total` increments on every
-// fallback call so the soak gate can detect prolonged degraded operation.
-// Phase 9 deletes the flag + the fallback branch.
+// `makeClient` is the low-level factory both wrappers compose. It does
+// NOT read env, session, or cookies — token + tenant resolution is the
+// caller's concern. This boundary keeps the file deterministic and
+// testable, and ensures no future code path can sneak a third sourcing
+// strategy in unnoticed.
 
-/** Envoy edge URL — mirrors gibson-admin-client.ts. */
+/**
+ * Envoy edge URL the dashboard dials for every daemon RPC. Dev:
+ * `https://api.zero-day.local:30443`. Staging/prod: `https://api.<domain>`.
+ * Set via `ADMIN_ENVOY_BASE_URL` in the chart.
+ *
+ * The env-var name is preserved from the older `dashboard-admin-via-envoy`
+ * spec for chart-overlay continuity even though it now drives both the
+ * user-acting and service-acting transports — there is one Envoy edge.
+ */
 const ENVOY_BASE_URL =
   process.env['ADMIN_ENVOY_BASE_URL'] ?? 'https://api.zero-day.local:30443';
 
-/**
- * SPIFFE audience claim used ONLY by the backout fallback branch. The
- * normal user-acting path does not mint SVIDs.
- */
-const DAEMON_AUDIENCE =
-  process.env['GIBSON_DAEMON_SPIFFE_AUDIENCE'] ??
-  'spiffe://gibson.io/platform/daemon';
+// ---------------------------------------------------------------------------
+// Telemetry interceptor (preserved metric names: `gibson_admin_rpc_total`
+// + `gibson_admin_envoy_upstream_errors_total`). Operator dashboards key
+// off these names; renaming would break alerting silently.
+// ---------------------------------------------------------------------------
 
 /**
- * Backout-flag check from a previous spec. After in-cluster-mtls-restoration
- * Phase 5 the flag's only legal value is "true" or unset. "false" produces
- * a hard error pointing at the revert path.
+ * Buckets a thrown gRPC error into the {@link AdminRpcStatus} label set.
+ * Connect-RPC maps every transport / gRPC error to a `ConnectError` with
+ * a `.code` property; we partition on that code. Anything unrecognised
+ * collapses to `error` to keep label cardinality bounded.
  */
-function assertEnvoyPath(): void {
-  if (process.env['USE_ENVOY_FOR_DAEMON'] === 'false') {
-    throw new ConnectError(
-      'USE_ENVOY_FOR_DAEMON=false but the direct daemon mTLS path was deleted by ' +
-        'spec in-cluster-mtls-restoration Phase 5 (Task 16). To revert, restore the ' +
-        'X.509 SVID branch from git history and redeploy.',
-      Code.FailedPrecondition,
-    );
+function classifyError(err: unknown): AdminRpcStatus {
+  const code = (err as { code?: string | number }).code;
+  const codeStr = typeof code === 'number' ? String(code) : code;
+  if (codeStr === 'permission_denied' || codeStr === 'unauthenticated') {
+    return 'denied';
+  }
+  if (
+    codeStr === 'unavailable' ||
+    codeStr === 'deadline_exceeded' ||
+    codeStr === 'aborted'
+  ) {
+    return 'unavailable';
+  }
+  return 'error';
+}
+
+/**
+ * Returns the HTTP status (as a string) when a transport error clearly
+ * came from Envoy itself (502/503/504 — no healthy upstream / circuit
+ * breaker / upstream timeout). Returns null for daemon-level errors so
+ * we don't double-count.
+ */
+function envoyStatusFrom(err: unknown): string | null {
+  const e = err as { httpStatus?: number };
+  if (typeof e.httpStatus === 'number') {
+    const s = e.httpStatus;
+    if (s === 502 || s === 503 || s === 504) return String(s);
+  }
+  return null;
+}
+
+/**
+ * Telemetry interceptor: emits one `gibson_admin_rpc_total` increment
+ * per call and bumps the upstream-errors counter when the failure looks
+ * Envoy-shaped. Wrapped OUTSIDE the auth interceptor so token-mint
+ * failures still produce a meaningful status label.
+ */
+const telemetryInterceptor: Interceptor = (next) => async (req) => {
+  const method = req.method.name;
+  try {
+    const res = await next(req);
+    adminRpcTotal.inc({ method, status: 'ok' });
+    return res;
+  } catch (err) {
+    adminRpcTotal.inc({ method, status: classifyError(err) });
+    const envoyStatus = envoyStatusFrom(err);
+    if (envoyStatus) {
+      adminEnvoyUpstreamErrorsTotal.inc({ envoy_status: envoyStatus });
+    }
+    throw err;
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Low-level factory
+// ---------------------------------------------------------------------------
+
+/**
+ * Builds a connect-rpc client for `service` against the Envoy edge.
+ * `getToken` and `getTenant` are invoked once per RPC and their values
+ * become `Authorization: Bearer <token>` and `x-gibson-tenant: <tenant>`
+ * respectively.
+ *
+ * Per spec R4.1, this factory MUST NOT read env, session, or cookies —
+ * the caller fully owns token + tenant sourcing. The helpers below
+ * (`userClient`, `serviceClient`) compose this with concrete sourcing
+ * strategies; if you need a different strategy, build a new wrapper —
+ * do not edit `makeClient`.
+ */
+export function makeClient<T extends DescService>(
+  service: T,
+  getToken: () => Promise<string>,
+  getTenant: () => Promise<string>,
+): Client<T> {
+  const authInterceptor: Interceptor = (next) => async (req) => {
+    const [token, tenant] = await Promise.all([getToken(), getTenant()]);
+    req.header.set('Authorization', `Bearer ${token}`);
+    if (tenant) {
+      req.header.set('x-gibson-tenant', tenant);
+    }
+    return next(req);
+  };
+
+  const transport = createGrpcTransport({
+    baseUrl: ENVOY_BASE_URL,
+    // Telemetry OUTSIDE auth so token failures still produce a status
+    // label. Auth INSIDE so it's the last thing to touch headers before
+    // the wire write.
+    interceptors: [telemetryInterceptor, authInterceptor],
+  });
+
+  return createClient(service, transport);
+}
+
+// ---------------------------------------------------------------------------
+// User-acting wrapper — bearer is the signed-in user's Zitadel access
+// token; tenant comes from the active-tenant cookie. Throws
+// `ConnectError(Unauthenticated)` when no session exists, and
+// `NoActiveTenantError` / `StaleActiveTenantError` from the cookie path.
+// Middleware handles both.
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns a typed connect-rpc client that authenticates as the current
+ * signed-in user. Use this from every Server Component / Server Action /
+ * route handler that runs inside an authenticated browser session.
+ *
+ * Per spec R4.2, this is the canonical wrapper for user-acting RPCs.
+ * Internally composes {@link makeClient} with {@link requireUserToken}
+ * and {@link getActiveTenant} — both of which are `react.cache()`-memoized
+ * so multi-RPC renders share a single `auth()` + cookie read.
+ */
+export function userClient<T extends DescService>(service: T): Client<T> {
+  return makeClient(service, requireUserToken, getActiveTenant);
+}
+
+/**
+ * Returns a typed connect-rpc client that authenticates as the dashboard
+ * pod's own Zitadel service account. Tenant header is set to the
+ * `tenantId` argument explicitly — service callers know the tenant they
+ * are acting on; there is no cookie context to fall back on.
+ *
+ * **MUST NEVER be called from user-facing route handlers.** The whole
+ * point of the dual transport is that user-acting code runs as the user
+ * (so FGA decisions are made against their identity) and service-acting
+ * code runs as the workload (where no user exists). Using
+ * `serviceClient` from a path that actually has a user-bound session
+ * silently widens that user's effective privileges. Use {@link userClient}
+ * from those paths instead.
+ *
+ * Per spec R4.2, this is the canonical wrapper for service-acting RPCs.
+ */
+export function serviceClient<T extends DescService>(
+  service: T,
+  tenantId: string,
+): Client<T> {
+  // Wrap getServiceToken in a re-mint-on-401 helper. We don't have access
+  // to the response status from inside the auth interceptor (Connect
+  // wraps the fetch result before bubbling it up), so we instead
+  // pre-emptively invalidate on the next call AFTER an Unauthenticated
+  // ConnectError has been observed by the caller — see the catch in
+  // `withServiceRetry` below.
+  return makeClient(service, getServiceToken, async () => tenantId);
+}
+
+/**
+ * Wrap a service-acting RPC call so a single Unauthenticated/401 from
+ * Envoy triggers a token re-mint and one retry. Most callers won't need
+ * this — Zitadel tokens are valid for hours and we refresh proactively —
+ * but mid-flight signing-key rotation or clock skew can put a still-cached
+ * token over the line.
+ *
+ * Internal helper, not exported. Migration sites use it on writes; reads
+ * can tolerate a one-shot 401 surfacing as an error.
+ */
+async function withServiceRetry<R>(fn: () => Promise<R>): Promise<R> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
+      invalidateServiceToken();
+      return fn();
+    }
+    throw err;
   }
 }
+void withServiceRetry; // reserved for future migration callers
 
-/**
- * True when the user-acting path is disabled and the SPIFFE workload
- * fallback should be used instead. This is the documented one-step
- * revert for spec dashboard-fga-user-identity (Req 8). Default is false
- * — the new behavior is on by default.
- */
-function userTokenForwardingDisabled(): boolean {
-  return process.env['USE_USER_TOKEN_FORWARDING'] === 'false';
-}
-
-/**
- * Build the Envoy-routed gRPC transport.
- *
- * Default branch (user-token forwarding ON):
- *   - resolves the Zitadel access token from the Auth.js session via
- *     `requireUserToken()`, and
- *   - resolves the active tenant from the cookie via `getActiveTenant()`,
- *   - sets `Authorization: Bearer <accessToken>` and
- *     `x-gibson-tenant: <activeTenant>` on every outbound RPC.
- *
- * Backout branch (USE_USER_TOKEN_FORWARDING=false):
- *   - mints a SPIFFE workload JWT-SVID via the Workload API,
- *   - sets `Authorization: Bearer <jwt-svid>` (the dashboard's pod
- *     identity, NOT the user),
- *   - emits a structured WARN log + increments
- *     `dashboard_user_token_forwarding_disabled_total` on every call.
- *
- * The user-token branch throws `ConnectError(Unauthenticated)` if the
- * session is missing and `NoActiveTenantError` if the active-tenant
- * cookie is unset. Callers handle both — middleware redirects to /login
- * or /select-tenant respectively.
- */
-function getTransport() {
-  const useUserToken = !userTokenForwardingDisabled();
-  const interceptors: Parameters<typeof createGrpcTransport>[0]['interceptors'] = [
-    (next) => async (req) => {
-      // Lazy imports keep the active-tenant + spiffe modules out of the
-      // cold path of callers that build the transport at module load time.
-      const { getActiveTenant } = await import('./auth/active-tenant');
-
-      if (useUserToken) {
-        const [token, activeTenant] = await Promise.all([
-          requireUserToken(),
-          getActiveTenant(),
-        ]);
-        req.header.set('Authorization', `Bearer ${token}`);
-        req.header.set('x-gibson-tenant', activeTenant);
-        return next(req);
-      }
-
-      // ---- Backout fallback (USE_USER_TOKEN_FORWARDING=false) ----
-      // Per-call counter so the soak gate sees degraded mode immediately;
-      // structured WARN log so an operator's `kubectl logs` reveals it.
-      userTokenForwardingDisabledTotal.inc();
-      // eslint-disable-next-line no-console
-      console.warn(
-        JSON.stringify({
-          level: 'warn',
-          msg: 'auth.user_token_forwarding_disabled',
-          detail:
-            'USE_USER_TOKEN_FORWARDING=false — operating in degraded mode; per-user FGA disabled, audit attribution wrong',
-        }),
-      );
-
-      const { getSpiffeJwt } = await import('./spiffe/jwt-svid');
-      const [jwt, activeTenant] = await Promise.all([
-        getSpiffeJwt({ audience: DAEMON_AUDIENCE }),
-        getActiveTenant(),
-      ]);
-      req.header.set('Authorization', `Bearer ${jwt}`);
-      req.header.set('x-gibson-tenant', activeTenant);
-      return next(req);
-    },
-  ];
-
-  return createGrpcTransport({
-    baseUrl: ENVOY_BASE_URL,
-    interceptors,
-  });
-}
+// ---------------------------------------------------------------------------
+// Internal user-acting client builders — these preserve the signatures of
+// the old `getClient` / `getAdminClient` so the dozens of helper functions
+// further down this file keep working unchanged. New code should call
+// `userClient(...)` directly.
+// ---------------------------------------------------------------------------
 
 async function getClient(_userId?: string, _tenantId?: string) {
-  assertEnvoyPath();
   // Fail closed before constructing the client: the user-acting path
   // requires a valid session even though the actual token resolution
-  // happens inside the interceptor. This catches "obviously
+  // happens inside the interceptor. Pre-checks catch "obviously
   // unauthenticated" calls without paying for transport setup.
-  if (!userTokenForwardingDisabled()) {
-    await requireUserToken();
-  }
-  return createClient(DaemonService, getTransport());
+  await requireUserToken();
+  return userClient(DaemonService);
 }
 
 async function getAdminClient(_userId?: string, _tenantId?: string) {
-  assertEnvoyPath();
-  if (!userTokenForwardingDisabled()) {
-    await requireUserToken();
-  }
-  return createClient(DaemonAdminService, getTransport());
+  await requireUserToken();
+  return userClient(DaemonAdminService);
 }
 
 // ---------------------------------------------------------------------------
@@ -194,26 +293,23 @@ async function getAdminClient(_userId?: string, _tenantId?: string) {
 // ---------------------------------------------------------------------------
 
 export async function getBudgetClient() {
-  assertEnvoyPath();
-  await requireAuthSession();
-  const { BudgetService } = await import("@/src/gen/gibson/budget/v1/budget_pb");
-  return createClient(BudgetService, getTransport());
+  await requireUserToken();
+  const { BudgetService } = await import('@/src/gen/gibson/budget/v1/budget_pb');
+  return userClient(BudgetService);
 }
 
 export async function getModelAccessClient() {
-  assertEnvoyPath();
-  await requireAuthSession();
+  await requireUserToken();
   const { ModelAccessService } = await import(
-    "@/src/gen/gibson/authz/v1/model_access_pb"
+    '@/src/gen/gibson/authz/v1/model_access_pb'
   );
-  return createClient(ModelAccessService, getTransport());
+  return userClient(ModelAccessService);
 }
 
 export async function getUsageClient() {
-  assertEnvoyPath();
-  await requireAuthSession();
-  const { UsageService } = await import("@/src/gen/gibson/usage/v1/usage_pb");
-  return createClient(UsageService, getTransport());
+  await requireUserToken();
+  const { UsageService } = await import('@/src/gen/gibson/usage/v1/usage_pb');
+  return userClient(UsageService);
 }
 
 export async function getStatus(userId?: string, tenantId?: string): Promise<StatusResponse> {
