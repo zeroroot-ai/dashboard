@@ -28,6 +28,10 @@
 import NextAuth from "next-auth";
 import type { NextAuthConfig } from "next-auth";
 
+// TEST FIXTURE: fault-injection import — no-ops in production
+// (single process.env check per call; zero overhead when not enabled).
+import { getFaultMode } from "@/src/lib/test-fixtures/fault-injection";
+
 // ---------------------------------------------------------------------------
 // Module augmentation — extend the built-in Session/JWT types with the
 // Zitadel tokens needed server-side. Tenant is intentionally NOT on the
@@ -157,6 +161,41 @@ const config: NextAuthConfig = {
      * resolves per-request from FGA memberships.
      */
     async jwt({ token, account }) {
+      // -----------------------------------------------------------------------
+      // TEST FIXTURES: JWKS and token-exchange fault injection.
+      // Only active when TEST_FIXTURES_ENABLED=true. These checks happen at
+      // the start of the jwt callback — which Auth.js calls both on initial
+      // sign-in (account is set) and on subsequent JWT refreshes (account is
+      // undefined). We gate the fault checks on `account` being present so we
+      // only intercept the initial sign-in flow, not every request that calls
+      // auth() (which would break the session after fault arms).
+      //
+      // Fault effects:
+      //   "token-exchange" fault → throw error that Auth.js maps to /login?error=...
+      //     The middleware then intercepts the /login?error= URL and redirects
+      //     to /login/error?reason=oidc_token_exchange_failed.
+      //   "jwks" fault → same mechanism but with jwks_unavailable reason.
+      //
+      // In production: getFaultMode always returns undefined (env guard).
+      // -----------------------------------------------------------------------
+      if (account) {
+        const tokenExchangeFault = getFaultMode("token-exchange");
+        if (tokenExchangeFault) {
+          tokenExchangeFault.decrementIfBounded();
+          // Throwing in the jwt callback causes Auth.js to redirect to
+          // pages.error (/login?error=Callback). The middleware or /login page
+          // then redirects to /login/error?reason=oidc_token_exchange_failed.
+          throw new Error("[fault-injection] token-exchange 503");
+        }
+
+        const jwksFault = getFaultMode("jwks");
+        if (jwksFault) {
+          jwksFault.decrementIfBounded();
+          throw new Error("[fault-injection] jwks unavailable");
+        }
+      }
+      // -----------------------------------------------------------------------
+
       if (account) {
         // account is populated only on the initial sign-in callback.
         // Copy the Zitadel access token into the encrypted JWT so that

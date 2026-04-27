@@ -24,6 +24,7 @@ import { auth } from "@/auth";
 import { readRawActiveTenant, ACTIVE_TENANT_COOKIE_NAME } from "@/src/lib/auth/active-tenant";
 import { getMyMemberships, MembershipResolutionError } from "@/src/lib/auth/membership";
 import { CORRELATION_HEADER, generateCorrelationId } from "@/src/lib/auth/correlation";
+import { popLastFiredSubsystem } from "@/src/lib/test-fixtures/fault-injection";
 
 const PROTECTED_PREFIX = "/dashboard";
 
@@ -41,6 +42,42 @@ export default auth(async (req) => {
   }
   const reqHeaders = new Headers(req.headers);
   reqHeaders.set(CORRELATION_HEADER, correlationId);
+
+  // 1a. Auth.js error redirect — when the jwt or signIn callback throws, Auth.js
+  //     redirects to pages.error (/login) with ?error=Callback or ?error=<name>.
+  //     Intercept those and reroute to /login/error?reason=<machine-readable>
+  //     so the user sees a deterministic error page rather than the login form
+  //     with an error query param that the form doesn't surface. This covers
+  //     the fault-injection paths for "token-exchange" and "jwks" faults.
+  if (pathname === "/login") {
+    const authError = req.nextUrl.searchParams.get("error");
+    if (authError) {
+      // Map Auth.js error names to our LoginErrorReason codes.
+      let reason: string;
+      if (authError === "Callback") {
+        // jwt callback threw — could be token-exchange or jwks fault.
+        // popLastFiredSubsystem() returns which fault subsystem last fired,
+        // letting us pick the right reason code. Falls back to
+        // oidc_token_exchange_failed for non-fixture causes.
+        const lastFired = popLastFiredSubsystem();
+        if (lastFired === "jwks") {
+          reason = "jwks_unavailable";
+        } else {
+          reason = "oidc_token_exchange_failed";
+        }
+      } else if (authError === "OAuthCallbackError") {
+        reason = "oidc_token_exchange_failed";
+      } else if (authError === "JWTSessionError") {
+        reason = "session_invalid";
+      } else {
+        reason = "oidc_token_exchange_failed";
+      }
+      const url = new URL("/login/error", req.nextUrl.origin);
+      url.searchParams.set("reason", reason);
+      if (correlationId) url.searchParams.set("correlationId", correlationId);
+      return NextResponse.redirect(url);
+    }
+  }
 
   // 1. Unauthenticated requests for protected routes — let Auth.js redirect
   //    to /login via its default behavior.
@@ -113,13 +150,17 @@ export const config = {
      *   - api/auth      — Auth.js OIDC callbacks
      *   - api/health    — Kubernetes probes
      *   - api/signup    — signup polling endpoint; opaque-capability protected
-     *   - login         — sign-in page (must stay public)
-     *   - login/error   — deterministic error page for auth failures
+     *   - login/error   — deterministic error page for auth failures (public)
      *   - signup        — signup page (must stay public)
      *   - select-tenant — tenant picker (auth required, but tenant deliberately
      *                     absent here)
      *   - onboarding    — zero-membership state (auth required, no tenant)
+     *
+     * NOTE: /login itself is NOT excluded from the matcher. The middleware runs
+     * on /login to intercept Auth.js ?error= redirects (e.g. ?error=Callback
+     * from a failing jwt callback) and reroute them to /login/error. When there
+     * is no ?error= param the middleware falls through immediately via step 1.
      */
-    "/((?!_next/static|_next/image|favicon\\.ico|api/auth|api/health|api/signup|login$|login/|signup$|signup/|select-tenant$|select-tenant/|onboarding$|onboarding/).+)",
+    "/((?!_next/static|_next/image|favicon\\.ico|api/auth|api/health|api/signup|login/error|signup$|signup/|select-tenant$|select-tenant/|onboarding$|onboarding/).+)",
   ],
 };
