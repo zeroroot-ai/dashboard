@@ -37,6 +37,12 @@ const nextConfig: NextConfig = {
     "@connectrpc/connect-node",
     "@connectrpc/connect",
     "@grpc/grpc-js",
+    // prom-client uses Node-only modules (cluster, fs, v8). With Turbopack
+    // module-graph tracing in Next.js 16, statically including it from the
+    // metrics route + middleware fails to resolve those Node primitives in
+    // the Edge bundle context. Marking it external defers resolution to
+    // Node runtime where the modules are available natively.
+    "prom-client",
   ],
   // Server Action encryption key persistence is env-driven in Next.js 16:
   // setting NEXT_SERVER_ACTIONS_ENCRYPTION_KEY in the runtime environment
