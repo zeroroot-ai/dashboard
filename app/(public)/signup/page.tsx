@@ -51,7 +51,31 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     (selfServeTierIds as readonly string[]).includes(rawPlan);
 
   if (!isValidPlan) {
-    redirect("/pricing?missing_plan=true");
+    // TEST_FIXTURES_BYPASS_PRICING: allow e2e tests to skip the plan-validation
+    // redirect so the signup form renders even when the test cluster has no
+    // plan configuration. NEVER set this in production — it removes the pricing
+    // gate entirely for any request to /signup.
+    if (process.env.TEST_FIXTURES_BYPASS_PRICING !== "true") {
+      redirect("/pricing?missing_plan=true");
+    }
+    // In bypass mode, fall through with the first self-serve plan so the form
+    // renders with a valid (if arbitrary) plan value.
+    const bypassPlan = selfServeTierIds[0] ?? "solo";
+    return (
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-4 lg:h-screen">
+            <Loader2Icon className="h-6 w-6 animate-spin" />
+          </div>
+        }
+      >
+        <SignupForm
+          plan={bypassPlan}
+          planDisplayName="(test bypass)"
+          passwordPolicy={DEFAULT_PASSWORD_POLICY}
+        />
+      </Suspense>
+    );
   }
 
   // At this point rawPlan is guaranteed non-null and valid.
