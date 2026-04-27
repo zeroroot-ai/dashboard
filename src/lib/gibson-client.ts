@@ -57,18 +57,39 @@ import {
 // when statically reaching it from any non-Node bundle context — even with
 // `serverExternalPackages` configured. The lazy load runs at first call,
 // in the Node.js runtime, where those modules exist natively.
-type SpiffeMod = typeof import('./spiffe-mtls/svid');
+//
+// The type surface below is hand-defined — `typeof import('./spiffe-mtls/svid')`
+// would itself be a static module reference that Turbopack traces, defeating
+// the lazy-load. Keep this type aligned with src/lib/spiffe-mtls/svid.ts
+// exports (changes there require updating these signatures).
+import type { SecureContextOptions } from 'node:tls';
+interface SpiffeMod {
+  isSpiffeAvailable(): boolean;
+  warmX509SvidContext(): void;
+  tryGetCachedX509SvidContext(): SecureContextOptions | undefined;
+  getX509SvidContext(): Promise<SecureContextOptions>;
+}
 let spiffeMod: SpiffeMod | null = null;
 let spiffeModFailed = false;
 function loadSpiffe(): SpiffeMod | null {
   if (spiffeMod) return spiffeMod;
   if (spiffeModFailed) return null;
   try {
-    // The variable indirection defeats Turbopack's static-analysis import
-    // walk. The string is still resolved at runtime by Node's require.
-    const modPath = './spiffe-mtls/svid';
+    // Use `node:module` createRequire so the require runs at call time in
+    // the Node.js runtime. The path argument is built from a runtime
+    // expression so Turbopack's static analyser cannot fold it back to a
+    // literal it would trace into the module graph. Variable-string
+    // require() and `typeof import()` were both still traced (Next.js 16
+    // Turbopack pulls grpc-js into the bundle and fails to resolve its
+    // `node:dns` / `node:fs` requires for non-Node bundle contexts even
+    // with serverExternalPackages set). String concatenation forces the
+    // path to be opaque at analysis time.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    spiffeMod = require(modPath) as SpiffeMod;
+    const { createRequire } = require('node:module') as typeof import('node:module');
+    const reqFromHere = createRequire(__filename);
+    const segments = ['.', 'spiffe-mtls', 'svid'];
+    const modPath = segments.join('/');
+    spiffeMod = reqFromHere(modPath) as SpiffeMod;
     return spiffeMod;
   } catch {
     spiffeModFailed = true;
