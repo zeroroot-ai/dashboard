@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useSupportedProviders } from '../useSupportedProviders';
 import { createTestQueryClient } from '@/src/test/test-utils';
-import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client';
+import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
 
 // Mock the RPC wrapper so the hook test stays purely at the client boundary.
 vi.mock('@/src/lib/gibson-client', async () => {

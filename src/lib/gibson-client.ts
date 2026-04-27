@@ -25,6 +25,20 @@ import type {
   UserActivity,
   ListUserActivitiesResponse,
 } from '@/src/types/user';
+import type {
+  CredentialFieldDescriptor,
+  ModelDescriptor,
+  SupportedProviderDescriptor,
+  DaemonProviderConfigInput,
+} from './gibson-client-types';
+// Re-exported for back-compat; client components should import from
+// gibson-client-types directly to avoid pulling grpc-js into the browser bundle.
+export type {
+  CredentialFieldDescriptor,
+  ModelDescriptor,
+  SupportedProviderDescriptor,
+  DaemonProviderConfigInput,
+};
 import { serverConfig as _serverConfig } from './config';
 import { requireUserToken } from './auth/user-token';
 import {
@@ -1750,54 +1764,10 @@ export async function getAgentPerformance(tenantId: string, userId?: string): Pr
 // Supported LLM providers (introspection for dashboard form rendering)
 // ---------------------------------------------------------------------------
 
-/**
- * Credential field descriptor returned by the daemon's GetSupportedProviders
- * RPC. One entry per input the operator must supply in the provider form.
- */
-export interface CredentialFieldDescriptor {
-  /** ProviderConfig.Extra map key the daemon resolver reads ("api_key" / "base_url" for typed fields). */
-  key: string;
-  /** Human-facing form label. */
-  label: string;
-  /** Mandatory-for-construction flag. */
-  required: boolean;
-  /** Render as password input; mask in logs and audit records. */
-  secret: boolean;
-  /** Example value for the empty input. */
-  placeholder: string;
-  /** Short description rendered beneath the field. */
-  help: string;
-}
-
-/**
- * Model descriptor returned per provider so the dashboard can populate a
- * model picker without constructing the provider.
- */
-export interface ModelDescriptor {
-  name: string;
-  contextWindow: number;
-  maxOutput: number;
-  features: string[];
-}
-
-/**
- * Supported LLM provider descriptor — the client-side shape of the daemon's
- * ProviderDescriptor proto message.
- */
-export interface SupportedProviderDescriptor {
-  /** Provider type identifier (e.g. "bedrock", "openai"). */
-  type: string;
-  /** Human-facing label shown in the dashboard dropdown. */
-  displayName: string;
-  /** Upstream provider's credential/setup docs. */
-  docsUrl: string;
-  /** True for providers running on operator-controlled infrastructure. */
-  selfHosted: boolean;
-  /** Form schema — one entry per credential input. */
-  credentials: CredentialFieldDescriptor[];
-  /** Default model catalogue the provider advertises. */
-  defaultModels: ModelDescriptor[];
-}
+// CredentialFieldDescriptor / ModelDescriptor / SupportedProviderDescriptor
+// moved to ./gibson-client-types so client components can type-import them
+// without pulling grpc-js into the browser bundle. Re-exported at the top of
+// this file for back-compat with server-side callers.
 
 /**
  * Fetch the full list of LLM provider types the daemon can construct, with
@@ -1891,18 +1861,7 @@ export interface DaemonProviderRecord {
  * Prefixed `Daemon` to avoid collision with the legacy ProviderConfigInput
  * from src/types/provider.ts.
  */
-export interface DaemonProviderConfigInput {
-  /** Tenant-scoped human name. */
-  name: string;
-  /** Provider type identifier (e.g. "anthropic", "openai"). */
-  type: string;
-  /** Model to use when none is specified by the caller. */
-  defaultModel: string;
-  /** Plaintext credentials, e.g. {"api_key": "sk-..."}. Transient — not retained by dashboard. */
-  credentials: Record<string, string>;
-  /** When true, atomically designates this provider as the tenant's default. */
-  setAsDefault?: boolean;
-}
+// DaemonProviderConfigInput moved to ./gibson-client-types — see top-of-file note.
 
 /**
  * Structured result of a daemon-side provider connectivity test.

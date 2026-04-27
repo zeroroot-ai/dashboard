@@ -13,7 +13,7 @@ import {
 import { testProviderConnection, testNewProviderConnection } from '@/src/lib/api/providers';
 import { providerQueryKeys } from './useProviders';
 import type { ConnectionTestResult } from '@/src/types/provider';
-import type { DaemonProviderConfigInput } from '@/src/lib/gibson-client';
+import type { DaemonProviderConfigInput } from '@/src/lib/gibson-client-types';
 
 // ============================================================================
 // Test Existing Provider Connection

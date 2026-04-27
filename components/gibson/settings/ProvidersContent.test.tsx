@@ -13,7 +13,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ProvidersContent, DynamicCredentialForm } from "./ProvidersContent";
-import type { SupportedProviderDescriptor } from "@/src/lib/gibson-client";
+import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
 import type { ListProvidersResponse } from "@/src/types/provider";
 import { useSupportedProviders } from "@/src/hooks/useSupportedProviders";
 import { useProviders } from "@/src/hooks/useProviders";

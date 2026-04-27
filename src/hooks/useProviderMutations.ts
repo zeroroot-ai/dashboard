@@ -31,7 +31,7 @@ import type {
   ExportFormat,
   ListProvidersResponse,
 } from '@/src/types/provider';
-import type { DaemonProviderConfigInput } from '@/src/lib/gibson-client';
+import type { DaemonProviderConfigInput } from '@/src/lib/gibson-client-types';
 
 // ============================================================================
 // Create Provider Mutation

@@ -50,7 +50,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSupportedProviders } from "@/src/hooks/useSupportedProviders";
 import { useProviders } from "@/src/hooks/useProviders";
 import { useCreateProvider, useDeleteProvider, useSetDefaultProvider } from "@/src/hooks/useProviderMutations";
-import type { SupportedProviderDescriptor } from "@/src/lib/gibson-client";
+import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
 import type { ProviderConfig } from "@/src/types/provider";
 
 // ---------------------------------------------------------------------------
