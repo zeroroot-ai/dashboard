@@ -23,6 +23,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { readRawActiveTenant, ACTIVE_TENANT_COOKIE_NAME } from "@/src/lib/auth/active-tenant";
 import { getMyMemberships, MembershipResolutionError } from "@/src/lib/auth/membership";
+import { CORRELATION_HEADER, generateCorrelationId } from "@/src/lib/auth/correlation";
 
 const PROTECTED_PREFIX = "/dashboard";
 
@@ -30,15 +31,26 @@ export default auth(async (req) => {
   const { pathname, search } = req.nextUrl;
   const session = req.auth;
 
+  // Spec auth-resolution-hardening R2.5/R3.5 — every request through
+  // middleware carries a correlation ID. Generate one if absent so all
+  // downstream Server Components / route handlers / log lines can
+  // correlate against the same request.
+  let correlationId = req.headers.get(CORRELATION_HEADER);
+  if (!correlationId) {
+    correlationId = generateCorrelationId();
+  }
+  const reqHeaders = new Headers(req.headers);
+  reqHeaders.set(CORRELATION_HEADER, correlationId);
+
   // 1. Unauthenticated requests for protected routes — let Auth.js redirect
   //    to /login via its default behavior.
   if (!session?.user) {
-    return NextResponse.next();
+    return NextResponse.next({ request: { headers: reqHeaders } });
   }
 
   // 2. Authenticated requests outside the protected area — let through.
   if (!pathname.startsWith(PROTECTED_PREFIX)) {
-    return NextResponse.next();
+    return NextResponse.next({ request: { headers: reqHeaders } });
   }
 
   // 3. Resolve memberships up front so we can distinguish absent-cookie

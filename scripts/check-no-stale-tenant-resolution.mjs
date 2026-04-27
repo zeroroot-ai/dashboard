@@ -79,6 +79,9 @@ const BANNED = [
   ['urn:zitadel:iam:user:resourceowner:id', 'deleted Zitadel claim (tier 2)'],
   ['listTenantsForOwner', 'deleted K8s helper from src/lib/k8s/tenants-by-owner.ts'],
   ['tenants-by-owner', 'deleted module — see spec tenant-membership-not-in-jwt'],
+  // Spec auth-resolution-hardening (R5.3) — legacy reason codes / comment terms.
+  ['tier 3', 'legacy fallback-chain language; removed under spec auth-resolution-hardening — describe the new path directly instead'],
+  ['fallback chain', 'legacy fallback-chain language; removed under spec auth-resolution-hardening'],
 ];
 
 function isCommentLine(line) {

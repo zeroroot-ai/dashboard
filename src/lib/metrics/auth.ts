@@ -198,3 +198,59 @@ export const userTokenForwardingDisabledTotal = getOrCreateCounter({
   name: "dashboard_user_token_forwarding_disabled_total",
   help: "Dashboard RPCs served via the SPIFFE-fallback transport because USE_USER_TOKEN_FORWARDING=false. Non-zero in steady state means the soak backout is active.",
 });
+
+// ---------------------------------------------------------------------------
+// Sign-in + login-error metrics (spec: auth-resolution-hardening R3)
+// ---------------------------------------------------------------------------
+
+/**
+ * Sign-in attempts by terminal outcome. error_reason is the
+ * machine-readable code from LoginErrorReason; "_n/a" on success.
+ */
+export const signinTotal = getOrCreateCounter({
+  name: "dashboard_signin_total",
+  help: "Dashboard sign-in attempts by terminal outcome.",
+  labelNames: ["outcome", "error_reason"] as const,
+});
+
+/**
+ * Sign-in latency from OIDC callback start to JWT-cookie write.
+ * Buckets sized to catch happy path (<500ms) and slow paths up to 10s.
+ */
+export const signinDuration = getOrCreateHistogram({
+  name: "dashboard_signin_duration_seconds",
+  help: "Sign-in latency in seconds, by outcome.",
+  labelNames: ["outcome"] as const,
+  buckets: [0.1, 0.25, 0.5, 1, 1.5, 2, 3, 5, 10],
+});
+
+/**
+ * /login/error page renders, by reason. Cardinality bounded to the
+ * LoginErrorReason union (8 values).
+ */
+export const loginErrorTotal = getOrCreateCounter({
+  name: "dashboard_login_error_total",
+  help: "Dashboard /login/error page renders, by reason.",
+  labelNames: ["reason"] as const,
+});
+
+/**
+ * Helper: increment loginErrorTotal for a given reason. Safe to call
+ * from a Server Component renderer.
+ */
+export function incrementLoginError(reason: string): void {
+  loginErrorTotal.inc({ reason });
+}
+
+/**
+ * Helper: observe a sign-in attempt's outcome + duration. Caller
+ * passes "_n/a" when outcome is success.
+ */
+export function observeSignin(
+  outcome: "success" | "error",
+  durationSeconds: number,
+  errorReason: string = "_n/a",
+): void {
+  signinTotal.inc({ outcome, error_reason: errorReason });
+  signinDuration.observe({ outcome }, durationSeconds);
+}
