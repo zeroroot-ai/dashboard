@@ -51,11 +51,30 @@ import {
   adminEnvoyUpstreamErrorsTotal,
   type AdminRpcStatus,
 } from './metrics/gibson-admin';
-import {
-  isSpiffeAvailable,
-  tryGetCachedX509SvidContext,
-  warmX509SvidContext,
-} from './spiffe-mtls/svid';
+// SPIFFE module is loaded lazily via require() to keep @grpc/grpc-js out of
+// the statically-traced module graph. Next.js 16 / Turbopack reports
+// Module-not-found for grpc-js's Node-only requires (`dns`, `fs`, `cluster`)
+// when statically reaching it from any non-Node bundle context — even with
+// `serverExternalPackages` configured. The lazy load runs at first call,
+// in the Node.js runtime, where those modules exist natively.
+type SpiffeMod = typeof import('./spiffe-mtls/svid');
+let spiffeMod: SpiffeMod | null = null;
+let spiffeModFailed = false;
+function loadSpiffe(): SpiffeMod | null {
+  if (spiffeMod) return spiffeMod;
+  if (spiffeModFailed) return null;
+  try {
+    // The variable indirection defeats Turbopack's static-analysis import
+    // walk. The string is still resolved at runtime by Node's require.
+    const modPath = './spiffe-mtls/svid';
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    spiffeMod = require(modPath) as SpiffeMod;
+    return spiffeMod;
+  } catch {
+    spiffeModFailed = true;
+    return null;
+  }
+}
 // `serverConfig.gibsonDaemonUrl` is still imported (aliased _serverConfig) so
 // that the build doesn't dead-strip it before Phase 9 of the previous spec —
 // exporters elsewhere in the dashboard still reference `gibsonDaemonUrl`
@@ -241,7 +260,8 @@ let spiffeFallbackLogged = false;
 function spiffeNodeOptions():
   | (Parameters<typeof createGrpcTransport>[0]['nodeOptions'])
   | undefined {
-  if (!isSpiffeAvailable()) {
+  const mod = loadSpiffe();
+  if (!mod || !mod.isSpiffeAvailable()) {
     if (!spiffeFallbackLogged) {
       spiffeFallbackLogged = true;
       console.warn(
@@ -254,9 +274,9 @@ function spiffeNodeOptions():
   }
   if (!spiffeWarmedUp) {
     spiffeWarmedUp = true;
-    warmX509SvidContext();
+    mod.warmX509SvidContext();
   }
-  const svidCtx = tryGetCachedX509SvidContext();
+  const svidCtx = mod.tryGetCachedX509SvidContext();
   if (!svidCtx) {
     // Cache still cold (warm-up just kicked off). The first RPC goes
     // out without the SVID; by the second the cache is populated.

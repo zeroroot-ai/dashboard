@@ -26,6 +26,13 @@ import { getMyMemberships, MembershipResolutionError } from "@/src/lib/auth/memb
 import { CORRELATION_HEADER, generateCorrelationId } from "@/src/lib/auth/correlation";
 import { popLastFiredSubsystem } from "@/src/lib/test-fixtures/fault-injection";
 
+// Pin middleware to the Node.js runtime: membership.ts → gibson-client.ts
+// transitively pulls in @grpc/grpc-js (via the SPIFFE Workload-API client),
+// which uses Node-only modules (`dns`, `fs`, `cluster`). Edge Runtime cannot
+// host those, and Next.js 16's default of Edge Runtime for middleware would
+// fail the build at module-graph trace time.
+export const runtime = "nodejs";
+
 const PROTECTED_PREFIX = "/dashboard";
 
 export default auth(async (req) => {
