@@ -123,6 +123,17 @@ export interface ZitadelAdminClient {
    */
   sendVerificationEmail(userId: string): Promise<void>;
 
+  /**
+   * POST /v2/users/:userId/password — set a new password without requiring
+   * the current one. Used by signup-resume to update the password when the
+   * user retries a failed signup attempt (the original password from the
+   * first attempt would otherwise stick, even though the form accepted a
+   * new value). Idempotent — setting the same password twice is a no-op.
+   * `changeRequired: false` so the user is not forced to change on first
+   * sign-in.
+   */
+  setUserPassword(userId: string, password: string): Promise<void>;
+
   /** GET /auth/v1/policies/passwords/complexity — fetches the effective password policy for the caller's org. */
   getPasswordComplexityPolicy(): Promise<PasswordPolicy>;
 
@@ -391,6 +402,17 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
   async sendVerificationEmail(userId: string): Promise<void> {
     // Empty body is required by the Zitadel API.
     await this.request<void>('POST', `/v2/users/${userId}/email/resend`, {});
+  }
+
+  async setUserPassword(userId: string, password: string): Promise<void> {
+    // POST /v2/users/:userId/password sets the password as IAM_USER_MANAGER
+    // — does NOT require the current password. The signup-bot PAT already
+    // holds IAM_USER_MANAGER for createHumanUser; the same scope covers
+    // this endpoint. SECURITY: password lives in the request body only;
+    // never log it.
+    await this.request<void>('POST', `/v2/users/${userId}/password`, {
+      newPassword: { password, changeRequired: false },
+    });
   }
 
   async getPasswordComplexityPolicy(): Promise<PasswordPolicy> {

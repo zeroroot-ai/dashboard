@@ -496,6 +496,24 @@ async function createOrResumeZitadelUser(
         // and keyed on zitadel_sub, so a user with an already-provisioned
         // Tenant CR will be detected at the operator layer rather than here.
         //
+        // Reset the password to whatever the user just typed. Without this,
+        // a retry after a first-attempt failure (e.g. tenant CR apply
+        // errored after Zitadel user creation) leaves the user logging in
+        // with the old password while the form thinks the new one was
+        // accepted — they get "Password is invalid" on first sign-in even
+        // though signup said success. Idempotent: setting the same password
+        // twice is a no-op.
+        try {
+          await client.setUserPassword(existing.userId, ctx.input.password);
+        } catch (err) {
+          // Non-fatal: the user can use the prior password or the
+          // forgot-password flow. Log so support can correlate.
+          console.warn("[signup] resume-path password update failed", {
+            attemptId: ctx.attemptId,
+            userId: existing.userId,
+            err: err instanceof Error ? err.message : String(err),
+          });
+        }
         // For the resume path, treat as emailVerified=true (the only value
         // this codebase has ever written). Spec: signup-zitadel-permissions-fix.
         return { userId: existing.userId, emailVerifiedAtCreate: true };
