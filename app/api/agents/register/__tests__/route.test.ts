@@ -1,37 +1,33 @@
 /**
  * Unit tests for POST /api/agents/register.
  *
- * Spec: unified-identity-and-authorization Phase 4 (R1.4, R9.7, R9.8).
+ * Spec: agent-service-credentials (Task 16).
  *
  * Coverage:
  *   - 401 Unauthorized when there's no session.
  *   - 412 NO_ACTIVE_TENANT when the active-tenant cookie is missing.
  *   - 403 FORBIDDEN when the caller is a tenant member but not admin.
  *   - 400 INVALID_REQUEST on missing/invalid name.
- *   - 201 happy path returns the credentials shape with the matching
- *     pre-filled enroll command and `Cache-Control: no-store`.
- *   - 502 ZITADEL_FAILED on Zitadel error → message is sanitized
- *     (no PAT / secret leakage).
+ *   - 201 happy path returns the credentials shape with the pre-filled
+ *     enroll command and `Cache-Control: no-store`.
+ *   - 409 AGENT_EXISTS when daemon returns AlreadyExists.
+ *   - 502 DAEMON_ERROR on daemon Internal error.
  *   - The success path never threads the secret through any logger.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { ConnectError, Code } from '@connectrpc/connect';
 
 // ---------------------------------------------------------------------------
-// Vitest module mocks. All factory functions are typed as returning the
-// objects the route imports — keeping the route's import surface in one
-// place avoids "module not mocked" surprises.
+// Vitest module mocks
 // ---------------------------------------------------------------------------
 
 const mockAuth = vi.fn();
 const mockGetServerSession = vi.fn();
 const mockGetActiveTenant = vi.fn();
 const mockHasRoleAtLeast = vi.fn();
-const mockCreateMachineUser = vi.fn();
-const mockAddMachineSecret = vi.fn();
-const mockAddProjectMember = vi.fn();
-const mockGetSignupZitadelAdminClient = vi.fn();
+const mockCreateAgentIdentity = vi.fn();
 
 vi.mock('@/auth', () => ({
   auth: mockAuth,
@@ -49,8 +45,10 @@ vi.mock('@/src/lib/auth/roles', () => ({
   hasRoleAtLeast: mockHasRoleAtLeast,
 }));
 
-vi.mock('@/src/lib/zitadel/admin-client-factory', () => ({
-  getSignupZitadelAdminClient: mockGetSignupZitadelAdminClient,
+vi.mock('@/src/lib/gibson-client', () => ({
+  userClient: vi.fn(() => ({
+    createAgentIdentity: mockCreateAgentIdentity,
+  })),
 }));
 
 // ---------------------------------------------------------------------------
@@ -66,25 +64,13 @@ function makeRequest(body: unknown): NextRequest {
   });
 }
 
-/** Wire up a fake Zitadel client whose three methods are pre-mocked. */
-function installZitadelClient() {
-  mockGetSignupZitadelAdminClient.mockReturnValue({
-    createMachineUser: mockCreateMachineUser,
-    addMachineSecret: mockAddMachineSecret,
-    addProjectMember: mockAddProjectMember,
-  });
-}
-
 beforeEach(() => {
   vi.resetModules();
   mockAuth.mockReset();
   mockGetServerSession.mockReset();
   mockGetActiveTenant.mockReset();
   mockHasRoleAtLeast.mockReset();
-  mockCreateMachineUser.mockReset();
-  mockAddMachineSecret.mockReset();
-  mockAddProjectMember.mockReset();
-  mockGetSignupZitadelAdminClient.mockReset();
+  mockCreateAgentIdentity.mockReset();
 });
 
 // ---------------------------------------------------------------------------
@@ -140,9 +126,6 @@ describe('POST /api/agents/register — role gate', () => {
     expect(res.status).toBe(403);
     const body = await res.json();
     expect(body.error.code).toBe('FORBIDDEN');
-    // The role gate decision was actually consulted with the resolved
-    // tenant + minimum role — without this the test would silently pass
-    // even if we wired up the gate wrong.
     expect(mockHasRoleAtLeast).toHaveBeenCalledWith(expect.anything(), 'acme', 'admin');
   });
 });
@@ -192,19 +175,17 @@ describe('POST /api/agents/register — happy path', () => {
     mockGetActiveTenant.mockResolvedValue('acme');
     mockGetServerSession.mockResolvedValue({ user: { id: 'u1' } });
     mockHasRoleAtLeast.mockReturnValue(true);
-    installZitadelClient();
   });
 
-  it('creates machine user, mints secret, adds project member, returns credentials', async () => {
-    mockCreateMachineUser.mockResolvedValue({
-      userId: 'svc-acct-123',
-      username: 'agent-acme-redteam-1',
-    });
-    mockAddMachineSecret.mockResolvedValue({
+  it('calls daemon CreateAgentIdentity and returns credentials', async () => {
+    mockCreateAgentIdentity.mockResolvedValue({
+      principalId: 'agent_principal:uuid-123',
       clientId: 'cid-abc',
       clientSecret: 'csecret-xyz',
+      gibsonUrl: 'https://api.zero-day.local:30443',
+      enrollCommand:
+        'gibson-cli agent enroll --client-id cid-abc --client-secret csecret-xyz --gibson-url https://api.zero-day.local:30443',
     });
-    mockAddProjectMember.mockResolvedValue(undefined);
 
     const { POST } = await import('../route');
     const res = await POST(
@@ -223,59 +204,23 @@ describe('POST /api/agents/register — happy path', () => {
         'gibson-cli agent enroll --client-id cid-abc --client-secret csecret-xyz --gibson-url https://api.zero-day.local:30443',
     });
 
-    // The username Zitadel sees must be tenant-namespaced.
-    expect(mockCreateMachineUser).toHaveBeenCalledWith(
+    // Verify the daemon received the correct input.
+    expect(mockCreateAgentIdentity).toHaveBeenCalledWith(
       expect.objectContaining({
-        username: 'agent-acme-redteam-1',
         name: 'redteam-1',
         description: 'nightly runner',
       }),
     );
-    // The freshly-minted Zitadel user ID must propagate into the
-    // project-member call.
-    expect(mockAddProjectMember).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: 'svc-acct-123',
-        roles: ['agent'],
-      }),
-    );
-  });
-
-  it('honors ENVOY_PUBLIC_URL override', async () => {
-    const prev = process.env.ENVOY_PUBLIC_URL;
-    process.env.ENVOY_PUBLIC_URL = 'https://api.acme.example';
-    try {
-      mockCreateMachineUser.mockResolvedValue({
-        userId: 'svc-1',
-        username: 'agent-acme-x',
-      });
-      mockAddMachineSecret.mockResolvedValue({
-        clientId: 'cid-1',
-        clientSecret: 'csec-1',
-      });
-      mockAddProjectMember.mockResolvedValue(undefined);
-
-      const { POST } = await import('../route');
-      const res = await POST(makeRequest({ name: 'x' }));
-      const body = await res.json();
-      expect(body.gibsonUrl).toBe('https://api.acme.example');
-      expect(body.enrollCommand).toContain('--gibson-url https://api.acme.example');
-    } finally {
-      if (prev === undefined) delete process.env.ENVOY_PUBLIC_URL;
-      else process.env.ENVOY_PUBLIC_URL = prev;
-    }
   });
 
   it('never logs the client secret on the success path', async () => {
-    mockCreateMachineUser.mockResolvedValue({
-      userId: 'svc-1',
-      username: 'agent-acme-x',
-    });
-    mockAddMachineSecret.mockResolvedValue({
+    mockCreateAgentIdentity.mockResolvedValue({
+      principalId: 'agent_principal:uuid-1',
       clientId: 'cid-1',
       clientSecret: 'topsecret-do-not-leak',
+      gibsonUrl: 'https://api.zero-day.local:30443',
+      enrollCommand: 'gibson-cli agent enroll ...',
     });
-    mockAddProjectMember.mockResolvedValue(undefined);
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -304,42 +249,20 @@ describe('POST /api/agents/register — happy path', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 502 — Zitadel error sanitisation
+// Daemon error mapping
 // ---------------------------------------------------------------------------
 
-describe('POST /api/agents/register — Zitadel failures', () => {
+describe('POST /api/agents/register — daemon error mapping', () => {
   beforeEach(() => {
     mockAuth.mockResolvedValue({ user: { id: 'u1' } });
     mockGetActiveTenant.mockResolvedValue('acme');
     mockGetServerSession.mockResolvedValue({ user: { id: 'u1' } });
     mockHasRoleAtLeast.mockReturnValue(true);
-    installZitadelClient();
   });
 
-  it('returns 502 ZITADEL_FAILED with sanitized message on Zitadel 500', async () => {
-    const { ZitadelApiError } = await import('@/src/lib/zitadel/errors');
-    mockCreateMachineUser.mockRejectedValue(
-      new ZitadelApiError(500, 'INTERNAL', 'thing exploded'),
-    );
-
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    try {
-      const { POST } = await import('../route');
-      const res = await POST(makeRequest({ name: 'x' }));
-      expect(res.status).toBe(502);
-      const body = await res.json();
-      expect(body.error.code).toBe('ZITADEL_FAILED');
-      // The user-facing message must NOT echo internal Zitadel detail.
-      expect(body.error.message).not.toContain('thing exploded');
-    } finally {
-      errSpy.mockRestore();
-    }
-  });
-
-  it('returns 409 AGENT_EXISTS on Zitadel 409', async () => {
-    const { ZitadelApiError } = await import('@/src/lib/zitadel/errors');
-    mockCreateMachineUser.mockRejectedValue(
-      new ZitadelApiError(409, 'ALREADY_EXISTS', 'username exists'),
+  it('returns 409 AGENT_EXISTS on AlreadyExists from daemon', async () => {
+    mockCreateAgentIdentity.mockRejectedValue(
+      new ConnectError('name already in use', Code.AlreadyExists),
     );
 
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -349,6 +272,40 @@ describe('POST /api/agents/register — Zitadel failures', () => {
       expect(res.status).toBe(409);
       const body = await res.json();
       expect(body.error.code).toBe('AGENT_EXISTS');
+    } finally {
+      errSpy.mockRestore();
+    }
+  });
+
+  it('returns 502 DAEMON_ERROR on Internal from daemon', async () => {
+    mockCreateAgentIdentity.mockRejectedValue(
+      new ConnectError('internal error', Code.Internal),
+    );
+
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const { POST } = await import('../route');
+      const res = await POST(makeRequest({ name: 'x' }));
+      expect(res.status).toBe(502);
+      const body = await res.json();
+      expect(body.error.code).toBe('DAEMON_ERROR');
+    } finally {
+      errSpy.mockRestore();
+    }
+  });
+
+  it('returns 503 DAEMON_UNAVAILABLE on Unavailable from daemon', async () => {
+    mockCreateAgentIdentity.mockRejectedValue(
+      new ConnectError('service unavailable', Code.Unavailable),
+    );
+
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const { POST } = await import('../route');
+      const res = await POST(makeRequest({ name: 'x' }));
+      expect(res.status).toBe(503);
+      const body = await res.json();
+      expect(body.error.code).toBe('DAEMON_UNAVAILABLE');
     } finally {
       errSpy.mockRestore();
     }
