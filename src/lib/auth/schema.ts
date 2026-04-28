@@ -8,7 +8,7 @@
  *   2. Caches it at module scope so every server-side route handler
  *      that imports from here shares one in-process copy.
  *   3. Exposes hasPermission(session, "tenants:provision") and
- *      canCallRpc(session, "/gibson.daemon.admin.v1.DaemonAdminService/ProvisionTenant")
+ *      canCallRpc(session, "/gibson.platform.v1.PlatformOperatorService/UpsertTenantQuota")
  *      helpers that every route handler uses instead of hardcoded role
  *      names.
  *
@@ -341,7 +341,7 @@ export function isCrossTenant(session: SessionWithPermissions | null): boolean {
 
 /**
  * Check whether the session can call the given fully-qualified gRPC
- * method (e.g. "/gibson.daemon.admin.v1.DaemonAdminService/ProvisionTenant").
+ * method (e.g. "/gibson.platform.v1.PlatformOperatorService/UpsertTenantQuota").
  *
  * Default-deny: returns false for unmapped methods, mirroring the
  * daemon's RPCAuthzInterceptor behavior so the dashboard's UI gating
