@@ -257,67 +257,17 @@ async function createMissionInGibson(
 // Draft Save Endpoint (PUT)
 // ============================================================================
 
-export async function PUT(request: NextRequest): Promise<NextResponse> {
-  try {
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const tenantId = session.user.tenantId;
-    if (!tenantId) {
-      return NextResponse.json({ error: 'No tenant context' }, { status: 403 });
-    }
-
-    const body = await request.json() as { yaml?: string; name?: string; draftId?: string };
-    if (!body.yaml || typeof body.yaml !== 'string' || body.yaml.trim() === '') {
-      return NextResponse.json({ error: 'yaml (string) is required' }, { status: 400 });
-    }
-
-    const { createClient } = await import('@connectrpc/connect');
-    const { createGrpcTransport } = await import('@connectrpc/connect-node');
-    const { DaemonAdminService } = await import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb');
-    const { serverConfig } = await import('@/src/lib/config');
-
-    const transport = createGrpcTransport({ baseUrl: serverConfig.gibsonDaemonUrl });
-    const client = createClient(DaemonAdminService, transport);
-
-    const resp = await client.saveMissionDraft({
-      tenantId,
-      name: body.name ?? 'Untitled',
-      yaml: body.yaml,
-      draftId: body.draftId ?? '',
-    });
-
-    return NextResponse.json({ success: true, draftId: resp.draftId });
-  } catch (error) {
-    return safeErrorResponse(error, 'Failed to save draft', 500);
-  }
+// SaveMissionDraft is DEFERRED per admin-services-completion spec (design.md
+// disposition table). The daemon TenantAdminService stub returns Unimplemented.
+export async function PUT(_request: NextRequest): Promise<NextResponse> {
+  return NextResponse.json(
+    { error: 'Mission draft saving coming soon' },
+    { status: 501 }
+  );
 }
 
+// ListMissionDrafts is DEFERRED per admin-services-completion spec (design.md
+// disposition table). Returns empty list until mission-yaml-editor spec ships.
 export async function GET(_request: NextRequest): Promise<NextResponse> {
-  try {
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const tenantId = session.user.tenantId;
-    if (!tenantId) {
-      return NextResponse.json({ error: 'No tenant context' }, { status: 403 });
-    }
-
-    const { createClient } = await import('@connectrpc/connect');
-    const { createGrpcTransport } = await import('@connectrpc/connect-node');
-    const { DaemonAdminService } = await import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb');
-    const { serverConfig } = await import('@/src/lib/config');
-
-    const transport = createGrpcTransport({ baseUrl: serverConfig.gibsonDaemonUrl });
-    const client = createClient(DaemonAdminService, transport);
-
-    const resp = await client.listMissionDrafts({ tenantId });
-    return NextResponse.json({ drafts: resp.drafts });
-  } catch (error) {
-    return safeErrorResponse(error, 'Failed to list drafts', 500);
-  }
+  return NextResponse.json({ drafts: [] });
 }

@@ -194,17 +194,29 @@ export default function UserDetailPage() {
                 <div className="flex items-center gap-2">
                   <Shield className="size-4 text-green-500" aria-hidden="true" />
                   <CardTitle className="font-mono text-base">
-                    Active Sessions
+                    Account Management
                   </CardTitle>
                 </div>
                 <CardDescription>
-                  Session data coming soon.
+                  Session management, password, and MFA are handled by your identity provider.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Session tracking will be available in a future update.
+                <p className="text-sm text-muted-foreground mb-4">
+                  To view or revoke active sessions and manage account security, visit your identity provider&apos;s profile page.
                 </p>
+                <a
+                  href={
+                    (process.env.NEXT_PUBLIC_IDENTITY_PROVIDER_URL
+                      ? `${process.env.NEXT_PUBLIC_IDENTITY_PROVIDER_URL}/ui/console`
+                      : '#')
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  Manage account at provider
+                </a>
               </CardContent>
             </Card>
           </div>

@@ -4,12 +4,13 @@
  * getTenantQuotaAction — read-side Server Action for the Plan & Usage
  * section. Reads plan limits from the daemon's tenant_quotas Postgres row
  * and the live usage snapshot from Redis in a single gRPC call
- * (DaemonAdminService.GetTenantQuota).
+ * (TenantAdminService.GetTenantQuota).
  *
  * Spec: access-matrix-finish task 11, R4 AC 2 + 7.
+ * Migration: admin-services-completion task 17 — switched to TenantAdminService.
  */
 
-import { DaemonAdminService } from "@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb";
+import { TenantAdminService } from "@/src/gen/gibson/tenant/v1/tenant_admin_pb";
 import { serviceClient } from "@/src/lib/gibson-client";
 import { getServerSession } from "@/src/lib/auth";
 
@@ -44,7 +45,7 @@ export async function getTenantQuotaAction(): Promise<
   }
 
   try {
-    const resp = await serviceClient(DaemonAdminService, tenantId).getTenantQuota({ tenantId });
+    const resp = await serviceClient(TenantAdminService, tenantId).getTenantQuota({ tenantId });
     return {
       ok: true,
       data: {

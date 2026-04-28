@@ -3,13 +3,16 @@
 /**
  * Supported LLM Providers hook
  *
- * Wraps the daemon's GetSupportedProviders admin RPC so components can
- * render provider-configuration forms dynamically against whatever set of
- * providers the daemon actually supports — no drift between daemon and UI.
+ * GetSupportedProviders has been DELETED per admin-services-completion spec
+ * (design.md disposition: Bucket C). This hook returns an empty list so
+ * components that previously rendered provider-type selector forms degrade
+ * gracefully.
+ *
+ * Form rendering should use existing provider configuration from ListProviders
+ * rather than a separate descriptor list.
  */
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { getSupportedProviders } from '@/src/lib/api/providers';
 import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
 
 export const supportedProvidersQueryKeys = {
@@ -18,21 +21,12 @@ export const supportedProvidersQueryKeys = {
 };
 
 /**
- * Fetch the daemon-reported list of LLM provider types with their credential
- * schemas and default model catalogues.
- *
- * The result is cached for 5 minutes because the set is effectively static
- * (it changes only on daemon deploy). Consumers rendering a form should
- * gate on `isLoading`; the list is never empty on success.
+ * Returns an empty list; GetSupportedProviders RPC has been removed.
  */
 export function useSupportedProviders(): UseQueryResult<SupportedProviderDescriptor[], Error> {
   return useQuery({
     queryKey: supportedProvidersQueryKeys.list(),
-    queryFn: async () => {
-      const descriptors = await getSupportedProviders();
-      return descriptors;
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    queryFn: async (): Promise<SupportedProviderDescriptor[]> => [],
+    staleTime: Infinity,
   });
 }

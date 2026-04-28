@@ -17,7 +17,9 @@ import { buildSystemPrompt } from '@/src/lib/ai/prompts';
 import { chatMessageSchema } from '@/src/lib/api-validation';
 import { validationErrorResponse, safeErrorResponse } from '@/src/lib/api-errors';
 import { checkRateLimit, createRateLimitResponse } from '@/src/lib/rate-limiter';
-import { getConversation } from '@/src/lib/gibson-client';
+// getConversation removed — ListConversations/GetConversation DEFERRED per
+// admin-services-completion spec. Chat history will be wired once the
+// chatbot-page spec implements these RPCs on UserService.
 
 // ============================================================================
 // Request Validation
@@ -134,14 +136,9 @@ export async function GET(request: NextRequest): Promise<Response> {
       );
     }
 
-    const tenantId = session.user.tenantId ?? '';
-    try {
-      const result = await getConversation(tenantId, conversationId, session.user?.id);
-      return NextResponse.json({ conversationId, messages: result.messages });
-    } catch {
-      // Return empty messages for a new conversation or when daemon is unavailable.
-      return NextResponse.json({ conversationId, messages: [] });
-    }
+    // GetConversation is DEFERRED per admin-services-completion spec.
+    // Return empty messages until the chatbot-page spec ships.
+    return NextResponse.json({ conversationId, messages: [] });
   } catch (error) {
     return safeErrorResponse(error, 'Failed to process chat request', 500);
   }

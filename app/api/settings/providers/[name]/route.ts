@@ -3,7 +3,7 @@
  * PATCH  /api/settings/providers/[name] — update an existing provider config
  * DELETE /api/settings/providers/[name] — permanently delete a provider config
  *
- * All handlers delegate to the daemon DaemonAdminService RPCs.
+ * All handlers delegate to the daemon TenantAdminService RPCs.
  * No storage logic lives here — this file is delegation-only.
  */
 

@@ -1,7 +1,7 @@
 /**
  * GET /api/settings/providers/[name]/health — retrieve the health status of a provider
  *
- * Delegates to the daemon DaemonAdminService GetProviderHealth RPC.
+ * Delegates to the daemon TenantAdminService GetProviderHealth RPC.
  * No storage logic lives here — this file is delegation-only.
  */
 

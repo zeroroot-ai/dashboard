@@ -2,24 +2,741 @@
 // @generated from file gibson/user/v1/user.proto (package gibson.user.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file gibson/user/v1/user.proto.
  */
 export const file_gibson_user_v1_user: GenFile = /*@__PURE__*/
-  fileDesc("ChlnaWJzb24vdXNlci92MS91c2VyLnByb3RvEg5naWJzb24udXNlci52MTINCgtVc2VyU2VydmljZUJJWkdnaXRodWIuY29tL3plcm8tZGF5LWFpL2dpYnNvbi9pbnRlcm5hbC9kYWVtb24vYXBpL2dpYnNvbi91c2VyL3YxO3VzZXJ2MWIGcHJvdG8z");
+  fileDesc("ChlnaWJzb24vdXNlci92MS91c2VyLnByb3RvEg5naWJzb24udXNlci52MSI7ChVHZXRVc2VyUHJvZmlsZVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkilAEKD1VzZXJQcm9maWxlRGF0YRIKCgJpZBgBIAEoCRINCgVlbWFpbBgCIAEoCRIUCgxkaXNwbGF5X25hbWUYAyABKAkSEgoKYXZhdGFyX3VybBgEIAEoCRIOCgZzdGF0dXMYBSABKAkSEgoKY3JlYXRlZF9hdBgGIAEoCRIYChBwcmVmZXJyZWRfbG9jYWxlGAcgASgJIkoKFkdldFVzZXJQcm9maWxlUmVzcG9uc2USMAoHcHJvZmlsZRgBIAEoCzIfLmdpYnNvbi51c2VyLnYxLlVzZXJQcm9maWxlRGF0YSJuChhVcGRhdGVVc2VyUHJvZmlsZVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJEhgKEHByZWZlcnJlZF9sb2NhbGUYBCABKAkiTQoZVXBkYXRlVXNlclByb2ZpbGVSZXNwb25zZRIwCgdwcm9maWxlGAEgASgLMh8uZ2lic29uLnVzZXIudjEuVXNlclByb2ZpbGVEYXRhIrABCgVBbGVydBIKCgJpZBgBIAEoCRIRCgl0ZW5hbnRfaWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCRINCgV0aXRsZRgEIAEoCRIMCgRib2R5GAUgASgJEhAKCHNldmVyaXR5GAYgASgJEgwKBHJlYWQYByABKAgSFwoPY3JlYXRlZF9hdF91bml4GAggASgDEg4KBnNvdXJjZRgJIAEoCRIRCglzb3VyY2VfaWQYCiABKAkiWwoRTGlzdEFsZXJ0c1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSEwoLdW5yZWFkX29ubHkYAyABKAgSDQoFbGltaXQYBCABKAUiOwoSTGlzdEFsZXJ0c1Jlc3BvbnNlEiUKBmFsZXJ0cxgBIAMoCzIVLmdpYnNvbi51c2VyLnYxLkFsZXJ0IjsKFE1hcmtBbGVydFJlYWRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIQCghhbGVydF9pZBgCIAEoCSIXChVNYXJrQWxlcnRSZWFkUmVzcG9uc2UiPgoYTWFya0FsbEFsZXJ0c1JlYWRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJIioKGU1hcmtBbGxBbGVydHNSZWFkUmVzcG9uc2USDQoFY291bnQYASABKAUinQEKE0NvbnZlcnNhdGlvblN1bW1hcnkSCgoCaWQYASABKAkSEQoJdGVuYW50X2lkGAIgASgJEg8KB3VzZXJfaWQYAyABKAkSDQoFdGl0bGUYBCABKAkSFwoPY3JlYXRlZF9hdF91bml4GAUgASgDEhcKD3VwZGF0ZWRfYXRfdW5peBgGIAEoAxIVCg1tZXNzYWdlX2NvdW50GAcgASgFIlkKE0NvbnZlcnNhdGlvbk1lc3NhZ2USCgoCaWQYASABKAkSDAoEcm9sZRgCIAEoCRIPCgdjb250ZW50GAMgASgJEhcKD2NyZWF0ZWRfYXRfdW5peBgEIAEoAyJNChhMaXN0Q29udmVyc2F0aW9uc1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSDQoFbGltaXQYAyABKAUiVwoZTGlzdENvbnZlcnNhdGlvbnNSZXNwb25zZRI6Cg1jb252ZXJzYXRpb25zGAEgAygLMiMuZ2lic29uLnVzZXIudjEuQ29udmVyc2F0aW9uU3VtbWFyeSJEChZHZXRDb252ZXJzYXRpb25SZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRIRCgl0ZW5hbnRfaWQYAiABKAkiiwEKF0dldENvbnZlcnNhdGlvblJlc3BvbnNlEjkKDGNvbnZlcnNhdGlvbhgBIAEoCzIjLmdpYnNvbi51c2VyLnYxLkNvbnZlcnNhdGlvblN1bW1hcnkSNQoIbWVzc2FnZXMYAiADKAsyIy5naWJzb24udXNlci52MS5Db252ZXJzYXRpb25NZXNzYWdlMsMFCgtVc2VyU2VydmljZRJfCg5HZXRVc2VyUHJvZmlsZRIlLmdpYnNvbi51c2VyLnYxLkdldFVzZXJQcm9maWxlUmVxdWVzdBomLmdpYnNvbi51c2VyLnYxLkdldFVzZXJQcm9maWxlUmVzcG9uc2USaAoRVXBkYXRlVXNlclByb2ZpbGUSKC5naWJzb24udXNlci52MS5VcGRhdGVVc2VyUHJvZmlsZVJlcXVlc3QaKS5naWJzb24udXNlci52MS5VcGRhdGVVc2VyUHJvZmlsZVJlc3BvbnNlElMKCkxpc3RBbGVydHMSIS5naWJzb24udXNlci52MS5MaXN0QWxlcnRzUmVxdWVzdBoiLmdpYnNvbi51c2VyLnYxLkxpc3RBbGVydHNSZXNwb25zZRJcCg1NYXJrQWxlcnRSZWFkEiQuZ2lic29uLnVzZXIudjEuTWFya0FsZXJ0UmVhZFJlcXVlc3QaJS5naWJzb24udXNlci52MS5NYXJrQWxlcnRSZWFkUmVzcG9uc2USaAoRTWFya0FsbEFsZXJ0c1JlYWQSKC5naWJzb24udXNlci52MS5NYXJrQWxsQWxlcnRzUmVhZFJlcXVlc3QaKS5naWJzb24udXNlci52MS5NYXJrQWxsQWxlcnRzUmVhZFJlc3BvbnNlEmgKEUxpc3RDb252ZXJzYXRpb25zEiguZ2lic29uLnVzZXIudjEuTGlzdENvbnZlcnNhdGlvbnNSZXF1ZXN0GikuZ2lic29uLnVzZXIudjEuTGlzdENvbnZlcnNhdGlvbnNSZXNwb25zZRJiCg9HZXRDb252ZXJzYXRpb24SJi5naWJzb24udXNlci52MS5HZXRDb252ZXJzYXRpb25SZXF1ZXN0GicuZ2lic29uLnVzZXIudjEuR2V0Q29udmVyc2F0aW9uUmVzcG9uc2VCSVpHZ2l0aHViLmNvbS96ZXJvLWRheS1haS9naWJzb24vaW50ZXJuYWwvZGFlbW9uL2FwaS9naWJzb24vdXNlci92MTt1c2VydjFiBnByb3RvMw");
+
+/**
+ * GetUserProfileRequest queries a user's profile from the identity provider.
+ *
+ * @generated from message gibson.user.v1.GetUserProfileRequest
+ */
+export type GetUserProfileRequest = Message<"gibson.user.v1.GetUserProfileRequest"> & {
+  /**
+   * tenant_id is the tenant context for the request.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user ID whose profile to retrieve.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.GetUserProfileRequest.
+ * Use `create(GetUserProfileRequestSchema)` to create a new message.
+ */
+export const GetUserProfileRequestSchema: GenMessage<GetUserProfileRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 0);
+
+/**
+ * UserProfileData carries the public profile fields for a user.
+ *
+ * @generated from message gibson.user.v1.UserProfileData
+ */
+export type UserProfileData = Message<"gibson.user.v1.UserProfileData"> & {
+  /**
+   * id is the user ID.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * email is the user's primary email address.
+   *
+   * @generated from field: string email = 2;
+   */
+  email: string;
+
+  /**
+   * display_name is the user's preferred display name.
+   *
+   * @generated from field: string display_name = 3;
+   */
+  displayName: string;
+
+  /**
+   * avatar_url is the URL of the user's profile picture.
+   *
+   * @generated from field: string avatar_url = 4;
+   */
+  avatarUrl: string;
+
+  /**
+   * status is the user's current account status ("active", "suspended", etc.).
+   *
+   * @generated from field: string status = 5;
+   */
+  status: string;
+
+  /**
+   * created_at is the RFC 3339 timestamp when the account was created.
+   *
+   * @generated from field: string created_at = 6;
+   */
+  createdAt: string;
+
+  /**
+   * preferred_locale is the user's preferred UI locale (e.g., "en-US").
+   *
+   * @generated from field: string preferred_locale = 7;
+   */
+  preferredLocale: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.UserProfileData.
+ * Use `create(UserProfileDataSchema)` to create a new message.
+ */
+export const UserProfileDataSchema: GenMessage<UserProfileData> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 1);
+
+/**
+ * GetUserProfileResponse carries the user's profile data.
+ *
+ * @generated from message gibson.user.v1.GetUserProfileResponse
+ */
+export type GetUserProfileResponse = Message<"gibson.user.v1.GetUserProfileResponse"> & {
+  /**
+   * profile contains the user's public profile fields.
+   *
+   * @generated from field: gibson.user.v1.UserProfileData profile = 1;
+   */
+  profile?: UserProfileData;
+};
+
+/**
+ * Describes the message gibson.user.v1.GetUserProfileResponse.
+ * Use `create(GetUserProfileResponseSchema)` to create a new message.
+ */
+export const GetUserProfileResponseSchema: GenMessage<GetUserProfileResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 2);
+
+/**
+ * UpdateUserProfileRequest updates mutable profile fields for a user.
+ * Email and role changes are not permitted through this endpoint.
+ *
+ * @generated from message gibson.user.v1.UpdateUserProfileRequest
+ */
+export type UpdateUserProfileRequest = Message<"gibson.user.v1.UpdateUserProfileRequest"> & {
+  /**
+   * tenant_id is the tenant context for the update.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user ID to update.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+
+  /**
+   * display_name is the new display name (empty = no change).
+   *
+   * @generated from field: string display_name = 3;
+   */
+  displayName: string;
+
+  /**
+   * preferred_locale is the new locale (empty = no change).
+   *
+   * @generated from field: string preferred_locale = 4;
+   */
+  preferredLocale: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.UpdateUserProfileRequest.
+ * Use `create(UpdateUserProfileRequestSchema)` to create a new message.
+ */
+export const UpdateUserProfileRequestSchema: GenMessage<UpdateUserProfileRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 3);
+
+/**
+ * UpdateUserProfileResponse carries the user's updated profile data.
+ *
+ * @generated from message gibson.user.v1.UpdateUserProfileResponse
+ */
+export type UpdateUserProfileResponse = Message<"gibson.user.v1.UpdateUserProfileResponse"> & {
+  /**
+   * profile contains the updated public profile fields.
+   *
+   * @generated from field: gibson.user.v1.UserProfileData profile = 1;
+   */
+  profile?: UserProfileData;
+};
+
+/**
+ * Describes the message gibson.user.v1.UpdateUserProfileResponse.
+ * Use `create(UpdateUserProfileResponseSchema)` to create a new message.
+ */
+export const UpdateUserProfileResponseSchema: GenMessage<UpdateUserProfileResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 4);
+
+/**
+ * Alert represents a platform notification for a tenant user.
+ *
+ * @generated from message gibson.user.v1.Alert
+ */
+export type Alert = Message<"gibson.user.v1.Alert"> & {
+  /**
+   * id is the unique alert identifier.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * tenant_id is the tenant this alert belongs to.
+   *
+   * @generated from field: string tenant_id = 2;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user this alert is addressed to. Empty means broadcast.
+   *
+   * @generated from field: string user_id = 3;
+   */
+  userId: string;
+
+  /**
+   * title is the short alert heading.
+   *
+   * @generated from field: string title = 4;
+   */
+  title: string;
+
+  /**
+   * body is the full alert message body.
+   *
+   * @generated from field: string body = 5;
+   */
+  body: string;
+
+  /**
+   * severity is the alert urgency level (e.g., "info", "warning", "critical").
+   *
+   * @generated from field: string severity = 6;
+   */
+  severity: string;
+
+  /**
+   * read indicates whether the user has acknowledged this alert.
+   *
+   * @generated from field: bool read = 7;
+   */
+  read: boolean;
+
+  /**
+   * created_at_unix is the alert creation time as a Unix timestamp (seconds).
+   *
+   * @generated from field: int64 created_at_unix = 8;
+   */
+  createdAtUnix: bigint;
+
+  /**
+   * source identifies the subsystem that generated the alert (e.g., "mission", "billing").
+   *
+   * @generated from field: string source = 9;
+   */
+  source: string;
+
+  /**
+   * source_id is the resource ID within the source system (e.g., mission ID).
+   *
+   * @generated from field: string source_id = 10;
+   */
+  sourceId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.Alert.
+ * Use `create(AlertSchema)` to create a new message.
+ */
+export const AlertSchema: GenMessage<Alert> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 5);
+
+/**
+ * ListAlertsRequest queries alerts for a tenant user.
+ *
+ * @generated from message gibson.user.v1.ListAlertsRequest
+ */
+export type ListAlertsRequest = Message<"gibson.user.v1.ListAlertsRequest"> & {
+  /**
+   * tenant_id is the tenant context. If empty, the caller's tenant is used.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user whose alerts to list.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+
+  /**
+   * unread_only restricts results to unread alerts when true.
+   *
+   * @generated from field: bool unread_only = 3;
+   */
+  unreadOnly: boolean;
+
+  /**
+   * limit is the maximum number of alerts to return (default 50, max 200).
+   *
+   * @generated from field: int32 limit = 4;
+   */
+  limit: number;
+};
+
+/**
+ * Describes the message gibson.user.v1.ListAlertsRequest.
+ * Use `create(ListAlertsRequestSchema)` to create a new message.
+ */
+export const ListAlertsRequestSchema: GenMessage<ListAlertsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 6);
+
+/**
+ * ListAlertsResponse carries the list of alerts.
+ *
+ * @generated from message gibson.user.v1.ListAlertsResponse
+ */
+export type ListAlertsResponse = Message<"gibson.user.v1.ListAlertsResponse"> & {
+  /**
+   * alerts is the list of alerts, ordered by creation time descending.
+   *
+   * @generated from field: repeated gibson.user.v1.Alert alerts = 1;
+   */
+  alerts: Alert[];
+};
+
+/**
+ * Describes the message gibson.user.v1.ListAlertsResponse.
+ * Use `create(ListAlertsResponseSchema)` to create a new message.
+ */
+export const ListAlertsResponseSchema: GenMessage<ListAlertsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 7);
+
+/**
+ * MarkAlertReadRequest marks a single alert as read.
+ *
+ * @generated from message gibson.user.v1.MarkAlertReadRequest
+ */
+export type MarkAlertReadRequest = Message<"gibson.user.v1.MarkAlertReadRequest"> & {
+  /**
+   * tenant_id is the tenant context. If empty, the caller's tenant is used.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * alert_id is the unique identifier of the alert to mark as read.
+   *
+   * @generated from field: string alert_id = 2;
+   */
+  alertId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.MarkAlertReadRequest.
+ * Use `create(MarkAlertReadRequestSchema)` to create a new message.
+ */
+export const MarkAlertReadRequestSchema: GenMessage<MarkAlertReadRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 8);
+
+/**
+ * MarkAlertReadResponse confirms the alert was marked as read.
+ *
+ * @generated from message gibson.user.v1.MarkAlertReadResponse
+ */
+export type MarkAlertReadResponse = Message<"gibson.user.v1.MarkAlertReadResponse"> & {
+};
+
+/**
+ * Describes the message gibson.user.v1.MarkAlertReadResponse.
+ * Use `create(MarkAlertReadResponseSchema)` to create a new message.
+ */
+export const MarkAlertReadResponseSchema: GenMessage<MarkAlertReadResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 9);
+
+/**
+ * MarkAllAlertsReadRequest marks all alerts for a user as read.
+ *
+ * @generated from message gibson.user.v1.MarkAllAlertsReadRequest
+ */
+export type MarkAllAlertsReadRequest = Message<"gibson.user.v1.MarkAllAlertsReadRequest"> & {
+  /**
+   * tenant_id is the tenant context. If empty, the caller's tenant is used.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user whose alerts to mark as read.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.MarkAllAlertsReadRequest.
+ * Use `create(MarkAllAlertsReadRequestSchema)` to create a new message.
+ */
+export const MarkAllAlertsReadRequestSchema: GenMessage<MarkAllAlertsReadRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 10);
+
+/**
+ * MarkAllAlertsReadResponse confirms the bulk-read operation.
+ *
+ * @generated from message gibson.user.v1.MarkAllAlertsReadResponse
+ */
+export type MarkAllAlertsReadResponse = Message<"gibson.user.v1.MarkAllAlertsReadResponse"> & {
+  /**
+   * count is the number of alerts that were marked as read.
+   *
+   * @generated from field: int32 count = 1;
+   */
+  count: number;
+};
+
+/**
+ * Describes the message gibson.user.v1.MarkAllAlertsReadResponse.
+ * Use `create(MarkAllAlertsReadResponseSchema)` to create a new message.
+ */
+export const MarkAllAlertsReadResponseSchema: GenMessage<MarkAllAlertsReadResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 11);
+
+/**
+ * ConversationSummary carries metadata for a single conversation.
+ *
+ * @generated from message gibson.user.v1.ConversationSummary
+ */
+export type ConversationSummary = Message<"gibson.user.v1.ConversationSummary"> & {
+  /**
+   * id is the unique conversation identifier.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * tenant_id is the tenant context.
+   *
+   * @generated from field: string tenant_id = 2;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user who owns the conversation.
+   *
+   * @generated from field: string user_id = 3;
+   */
+  userId: string;
+
+  /**
+   * title is the conversation display title.
+   *
+   * @generated from field: string title = 4;
+   */
+  title: string;
+
+  /**
+   * created_at_unix is the conversation creation time as a Unix timestamp.
+   *
+   * @generated from field: int64 created_at_unix = 5;
+   */
+  createdAtUnix: bigint;
+
+  /**
+   * updated_at_unix is the most recent message time as a Unix timestamp.
+   *
+   * @generated from field: int64 updated_at_unix = 6;
+   */
+  updatedAtUnix: bigint;
+
+  /**
+   * message_count is the total number of messages in the conversation.
+   *
+   * @generated from field: int32 message_count = 7;
+   */
+  messageCount: number;
+};
+
+/**
+ * Describes the message gibson.user.v1.ConversationSummary.
+ * Use `create(ConversationSummarySchema)` to create a new message.
+ */
+export const ConversationSummarySchema: GenMessage<ConversationSummary> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 12);
+
+/**
+ * ConversationMessage is a single message within a conversation.
+ *
+ * @generated from message gibson.user.v1.ConversationMessage
+ */
+export type ConversationMessage = Message<"gibson.user.v1.ConversationMessage"> & {
+  /**
+   * id is the unique message identifier.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * role is the message author role (e.g., "user", "assistant").
+   *
+   * @generated from field: string role = 2;
+   */
+  role: string;
+
+  /**
+   * content is the message text content.
+   *
+   * @generated from field: string content = 3;
+   */
+  content: string;
+
+  /**
+   * created_at_unix is the message creation time as a Unix timestamp.
+   *
+   * @generated from field: int64 created_at_unix = 4;
+   */
+  createdAtUnix: bigint;
+};
+
+/**
+ * Describes the message gibson.user.v1.ConversationMessage.
+ * Use `create(ConversationMessageSchema)` to create a new message.
+ */
+export const ConversationMessageSchema: GenMessage<ConversationMessage> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 13);
+
+/**
+ * ListConversationsRequest queries the conversation list for a user.
+ *
+ * @generated from message gibson.user.v1.ListConversationsRequest
+ */
+export type ListConversationsRequest = Message<"gibson.user.v1.ListConversationsRequest"> & {
+  /**
+   * tenant_id is the tenant context. If empty, the caller's tenant is used.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user whose conversations to list.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+
+  /**
+   * limit is the maximum number of conversations to return (default 20, max 100).
+   *
+   * @generated from field: int32 limit = 3;
+   */
+  limit: number;
+};
+
+/**
+ * Describes the message gibson.user.v1.ListConversationsRequest.
+ * Use `create(ListConversationsRequestSchema)` to create a new message.
+ */
+export const ListConversationsRequestSchema: GenMessage<ListConversationsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 14);
+
+/**
+ * ListConversationsResponse carries the list of conversation summaries.
+ *
+ * @generated from message gibson.user.v1.ListConversationsResponse
+ */
+export type ListConversationsResponse = Message<"gibson.user.v1.ListConversationsResponse"> & {
+  /**
+   * conversations is the list of conversations, ordered by update time descending.
+   *
+   * @generated from field: repeated gibson.user.v1.ConversationSummary conversations = 1;
+   */
+  conversations: ConversationSummary[];
+};
+
+/**
+ * Describes the message gibson.user.v1.ListConversationsResponse.
+ * Use `create(ListConversationsResponseSchema)` to create a new message.
+ */
+export const ListConversationsResponseSchema: GenMessage<ListConversationsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 15);
+
+/**
+ * GetConversationRequest fetches the full message history for a conversation.
+ *
+ * @generated from message gibson.user.v1.GetConversationRequest
+ */
+export type GetConversationRequest = Message<"gibson.user.v1.GetConversationRequest"> & {
+  /**
+   * conversation_id is the unique identifier of the conversation.
+   *
+   * @generated from field: string conversation_id = 1;
+   */
+  conversationId: string;
+
+  /**
+   * tenant_id is the tenant context. If empty, the caller's tenant is used.
+   *
+   * @generated from field: string tenant_id = 2;
+   */
+  tenantId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.GetConversationRequest.
+ * Use `create(GetConversationRequestSchema)` to create a new message.
+ */
+export const GetConversationRequestSchema: GenMessage<GetConversationRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 16);
+
+/**
+ * GetConversationResponse carries the conversation and its messages.
+ *
+ * @generated from message gibson.user.v1.GetConversationResponse
+ */
+export type GetConversationResponse = Message<"gibson.user.v1.GetConversationResponse"> & {
+  /**
+   * conversation contains the conversation metadata.
+   *
+   * @generated from field: gibson.user.v1.ConversationSummary conversation = 1;
+   */
+  conversation?: ConversationSummary;
+
+  /**
+   * messages contains all messages in the conversation, ordered by creation time.
+   *
+   * @generated from field: repeated gibson.user.v1.ConversationMessage messages = 2;
+   */
+  messages: ConversationMessage[];
+};
+
+/**
+ * Describes the message gibson.user.v1.GetConversationResponse.
+ * Use `create(GetConversationResponseSchema)` to create a new message.
+ */
+export const GetConversationResponseSchema: GenMessage<GetConversationResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 17);
 
 /**
  * UserService provides user self-service operations.
  * This service is restricted to the calling user acting on their own resources.
  *
- * RPCs will be populated by the admin-services-completion spec.
+ * ---------------------------------------------------------------------------
+ * Profile — IMPLEMENT-NOW
+ * ---------------------------------------------------------------------------
  *
  * @generated from service gibson.user.v1.UserService
  */
 export const UserService: GenService<{
+  /**
+   * GetUserProfile retrieves a user's profile information from the identity provider.
+   * Accessible by the user themselves only (subject == req.user_id).
+   *
+   * @generated from rpc gibson.user.v1.UserService.GetUserProfile
+   */
+  getUserProfile: {
+    methodKind: "unary";
+    input: typeof GetUserProfileRequestSchema;
+    output: typeof GetUserProfileResponseSchema;
+  },
+  /**
+   * UpdateUserProfile updates mutable profile fields (display_name, preferred_locale)
+   * for a user. Email is immutable and changes will be rejected with InvalidArgument.
+   *
+   * @generated from rpc gibson.user.v1.UserService.UpdateUserProfile
+   */
+  updateUserProfile: {
+    methodKind: "unary";
+    input: typeof UpdateUserProfileRequestSchema;
+    output: typeof UpdateUserProfileResponseSchema;
+  },
+  /**
+   * ListAlerts returns platform alerts for a tenant user.
+   *
+   * Unimplemented: <owner-pending>
+   *
+   * @generated from rpc gibson.user.v1.UserService.ListAlerts
+   */
+  listAlerts: {
+    methodKind: "unary";
+    input: typeof ListAlertsRequestSchema;
+    output: typeof ListAlertsResponseSchema;
+  },
+  /**
+   * MarkAlertRead marks a single alert as read.
+   *
+   * Unimplemented: <owner-pending>
+   *
+   * @generated from rpc gibson.user.v1.UserService.MarkAlertRead
+   */
+  markAlertRead: {
+    methodKind: "unary";
+    input: typeof MarkAlertReadRequestSchema;
+    output: typeof MarkAlertReadResponseSchema;
+  },
+  /**
+   * MarkAllAlertsRead marks all alerts for a user as read.
+   *
+   * Unimplemented: <owner-pending>
+   *
+   * @generated from rpc gibson.user.v1.UserService.MarkAllAlertsRead
+   */
+  markAllAlertsRead: {
+    methodKind: "unary";
+    input: typeof MarkAllAlertsReadRequestSchema;
+    output: typeof MarkAllAlertsReadResponseSchema;
+  },
+  /**
+   * ListConversations returns the conversation history list for a user.
+   *
+   * Unimplemented: <owner-pending>
+   *
+   * @generated from rpc gibson.user.v1.UserService.ListConversations
+   */
+  listConversations: {
+    methodKind: "unary";
+    input: typeof ListConversationsRequestSchema;
+    output: typeof ListConversationsResponseSchema;
+  },
+  /**
+   * GetConversation returns the full message history for a single conversation.
+   *
+   * Unimplemented: <owner-pending>
+   *
+   * @generated from rpc gibson.user.v1.UserService.GetConversation
+   */
+  getConversation: {
+    methodKind: "unary";
+    input: typeof GetConversationRequestSchema;
+    output: typeof GetConversationResponseSchema;
+  },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_user_v1_user, 0);
 

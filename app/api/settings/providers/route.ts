@@ -2,7 +2,7 @@
  * GET  /api/settings/providers — list all configured providers (masked creds)
  * POST /api/settings/providers — create a new provider config
  *
- * Both handlers delegate to the daemon DaemonAdminService RPCs via
+ * Both handlers delegate to the daemon TenantAdminService RPCs via
  * the typed client functions from gibson-client.ts. No storage logic lives
  * here — this file is delegation-only.
  */

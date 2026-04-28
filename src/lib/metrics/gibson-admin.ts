@@ -34,8 +34,8 @@ export type JwtRefreshOutcome =
 
 /**
  * Every admin RPC the dashboard issues. `method` is the short gRPC method
- * name (e.g. `UpsertTenantQuota`) — bounded by the `DaemonAdminService`
- * proto definition.
+ * name (e.g. `UpsertTenantQuota`) — bounded by the TenantAdminService /
+ * PlatformOperatorService / UserService proto definitions.
  */
 export const adminRpcTotal = getOrCreateCounter({
   name: "gibson_admin_rpc_total",

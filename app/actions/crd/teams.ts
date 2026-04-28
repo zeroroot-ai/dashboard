@@ -14,7 +14,7 @@
  * Spec: agent-authoring-and-tenant-entitlements task 35, R8.
  */
 
-import { DaemonAdminService } from "@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb";
+import { PlatformOperatorService } from "@/src/gen/gibson/platform/v1/platform_operator_pb";
 import { serviceClient } from "@/src/lib/gibson-client";
 
 import { requireCrdSession } from "./_authz";
@@ -66,7 +66,7 @@ export async function createTeamAction(input: {
     return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
   }
   try {
-    const client = serviceClient(DaemonAdminService, callerTenantId);
+    const client = serviceClient(PlatformOperatorService, callerTenantId);
     // Team objects are created implicitly when the first tuple referencing
     // them is written. For a "create team" UX we write the parent tuple
     // that binds the team to the caller's tenant.
@@ -113,7 +113,7 @@ export async function deleteTeamAction(
   // reconciler's next pass. Track as follow-on task if delete latency
   // is ever user-visible.
   try {
-    const client = serviceClient(DaemonAdminService, callerTenantId);
+    const client = serviceClient(PlatformOperatorService, callerTenantId);
     await client.writeAccessTuples({
       add: [],
       delete: [
@@ -150,7 +150,7 @@ export async function addTeamMemberAction(input: {
     return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
   }
   try {
-    const client = serviceClient(DaemonAdminService, callerTenantId);
+    const client = serviceClient(PlatformOperatorService, callerTenantId);
     await client.writeAccessTuples({
       add: [
         {
@@ -183,7 +183,7 @@ export async function removeTeamMemberAction(input: {
     return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
   }
   try {
-    const client = serviceClient(DaemonAdminService, callerTenantId);
+    const client = serviceClient(PlatformOperatorService, callerTenantId);
     await client.writeAccessTuples({
       add: [],
       delete: [

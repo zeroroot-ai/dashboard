@@ -1,33 +1,21 @@
 /**
- * GET /api/settings/providers/supported — descriptor list for the daemon's
- * supported LLM provider types (credential schema + default model catalogue).
+ * GET /api/settings/providers/supported
  *
- * Client-side hook `useSupportedProviders()` calls this instead of importing
- * `gibson-client.ts` directly so the SPIFFE/gRPC transport stays server-only.
+ * GetSupportedProviders has been DELETED per admin-services-completion spec
+ * (design.md disposition: Bucket C, no caller). The RPC no longer exists on
+ * any service. This route returns 410 Gone so any stale client code fails
+ * clearly.
+ *
+ * Provider form rendering should use the provider list from ListProviders
+ * (which returns existing configurations) rather than a separate descriptor
+ * endpoint.
  */
 
-import 'server-only';
 import { type NextRequest } from 'next/server';
-import { getServerSession } from '@/src/lib/auth';
-import { getSupportedProviders } from '@/src/lib/gibson-client';
-import { translateError } from '@/src/lib/providers-route-error';
 
 export async function GET(_req: NextRequest) {
-  const session = await getServerSession();
-  if (!session) {
-    return Response.json(
-      { error: { code: 'unauthenticated', message: 'Authentication required' } },
-      { status: 401 },
-    );
-  }
-
-  const userId = session.user.id;
-  const tenantId = session.user.tenantId ?? undefined;
-
-  try {
-    const providers = await getSupportedProviders(userId, tenantId);
-    return Response.json({ providers });
-  } catch (err) {
-    return translateError(err);
-  }
+  return Response.json(
+    { error: { code: 'gone', message: 'GetSupportedProviders removed in admin-services-completion' } },
+    { status: 410 },
+  );
 }

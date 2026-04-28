@@ -2,7 +2,7 @@
  * GET /api/settings/providers/fallback-chain — retrieve the ordered fallback chain
  * PUT /api/settings/providers/fallback-chain — replace the fallback chain
  *
- * Both handlers delegate to the daemon DaemonAdminService RPCs.
+ * Both handlers delegate to the daemon TenantAdminService RPCs.
  * No storage logic lives here — this file is delegation-only.
  */
 

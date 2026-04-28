@@ -9,7 +9,8 @@ import {
 import { createGrpcTransport } from '@connectrpc/connect-node';
 import type { DescService } from '@bufbuild/protobuf';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
-import { DaemonAdminService } from '@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb';
+import { TenantAdminService } from '@/src/gen/gibson/tenant/v1/tenant_admin_pb';
+import { UserService } from '@/src/gen/gibson/user/v1/user_pb';
 import type {
   MissionInfo,
   AgentInfo,
@@ -19,8 +20,6 @@ import type {
   Capabilities,
 } from '@/src/gen/gibson/daemon/v1/daemon_pb';
 import type {
-  UserSession,
-  ListUserSessionsResponse,
   UserProfile,
   UserActivity,
   ListUserActivitiesResponse,
@@ -401,7 +400,12 @@ async function getClient(_userId?: string, _tenantId?: string) {
 
 async function getAdminClient(_userId?: string, _tenantId?: string) {
   await requireUserToken();
-  return userClient(DaemonAdminService);
+  return userClient(TenantAdminService);
+}
+
+async function getUserServiceClient(_userId?: string, _tenantId?: string) {
+  await requireUserToken();
+  return userClient(UserService);
 }
 
 // ---------------------------------------------------------------------------
@@ -622,47 +626,18 @@ export interface ProvisioningStep {
 // provisioning lifecycle moved to the Tenant CRD operator.
 
 // ============================================================================
-// Audit Log — ListAuditEvents RPC (DaemonAdminService)
+// Audit Log — ListAuditEvents RPC (DEFERRED — admin-services-completion spec)
+// ============================================================================
+// ListAuditEvents has been deferred per design.md disposition table.
+// Dashboard call sites that previously called queryAuditLog now return empty
+// results to avoid hitting the Unimplemented stub.
+
+// ============================================================================
+// Quota Management — GetTenantQuota RPC (TenantAdminService)
 // ============================================================================
 
 /**
- * Query the audit log for a tenant via the ListAuditEvents RPC.
- *
- * Maps the SDK AuditEvent proto fields to the local AuditLogEntry interface.
- */
-async function queryAuditLog(
-  tenantId: string,
-  opts: AuditLogQueryOptions,
-  userId?: string
-): Promise<AuditLogEntry[]> {
-  const client = await getAdminClient(userId, tenantId);
-  const response = await client.listAuditEvents({
-    tenantId,
-    fromTime: opts.startTime?.toISOString() ?? '',
-    toTime: opts.endTime?.toISOString() ?? '',
-    eventTypes: opts.action ? [opts.action] : [],
-    actorUserId: '',
-    limit: opts.limit ?? 50,
-  });
-  return (response.events ?? []).map((e) => ({
-    id: e.traceId,
-    tenantId: e.tenantId,
-    action: e.eventType,
-    actorSubject: e.actorUserId,
-    actorEmail: e.actorEmail,
-    resourceKind: '',
-    resourceId: e.targetResource,
-    timestamp: e.timestamp,
-    metadata: e.details ?? {},
-  }));
-}
-
-// ============================================================================
-// Quota Management — GetTenantQuota / SetTenantQuota RPCs (DaemonAdminService)
-// ============================================================================
-
-/**
- * Retrieve the resource quota for a tenant via GetTenantQuota RPC.
+ * Retrieve the resource quota for a tenant via TenantAdminService.GetTenantQuota.
  */
 async function getTenantQuota(
   tenantId: string,
@@ -681,38 +656,20 @@ async function getTenantQuota(
   };
 }
 
-/**
- * Set the resource quota for a tenant via SetTenantQuota RPC.
- */
-async function setTenantQuota(
-  tenantId: string,
-  targetTenantId: string,
-  quota: Partial<TenantQuota>,
-  userId?: string
-): Promise<TenantQuota> {
-  const client = await getAdminClient(userId, tenantId);
-  const response = await client.setTenantQuota({
-    tenantId: targetTenantId,
-    quota: {
-      maxMissions: quota.maxMissions ?? 0,
-      maxAgents: quota.maxAgents ?? 0,
-      maxFindings: BigInt(0),
-      planTier: '',
-    },
-  });
-  const q = response.quota;
-  return {
-    tenantId: targetTenantId,
-    maxMissions: q?.maxMissions ?? 0,
-    maxAgents: q?.maxAgents ?? 0,
-    maxMembers: 0,
-    rateLimitRpm: 0,
-  };
-}
+// setTenantQuota removed — DEFERRED per admin-services-completion design.md.
+// SetTenantQuota moved to PlatformOperatorService (platform-operator only; tenants
+// do not set their own quotas). Dashboard call site deleted per task 19.
 
 // ============================================================================
-// Alert Management — ListAlerts / MarkAlertRead / MarkAllAlertsRead RPCs
+// Alert Management — DEFERRED per admin-services-completion spec
 // ============================================================================
+// ListAlerts / MarkAlertRead / MarkAllAlertsRead have been deferred.
+// No alert producer exists today; the daemon stubs return Unimplemented.
+// Route handlers that previously called these functions now return empty
+// responses so the dashboard degrades gracefully without hitting Unimplemented.
+//
+// These exports are retained as no-ops so any reference to them compiles;
+// route files are updated to not call the daemon at all.
 
 export interface AlertRecord {
   id: string;
@@ -727,65 +684,16 @@ export interface AlertRecord {
   sourceId: string;
 }
 
-/**
- * List alerts for a user via the daemon ListAlerts RPC.
- */
-export async function listAlerts(
-  tenantId: string,
-  userId: string,
-  opts?: { unreadOnly?: boolean; limit?: number },
-  callerUserId?: string
-): Promise<AlertRecord[]> {
-  const client = await getAdminClient(callerUserId, tenantId);
-  const resp = await client.listAlerts({
-    tenantId,
-    userId,
-    unreadOnly: opts?.unreadOnly ?? false,
-    limit: opts?.limit ?? 50,
-  });
-  return (resp.alerts ?? []).map((a) => ({
-    id: a.id,
-    tenantId: a.tenantId,
-    userId: a.userId,
-    title: a.title,
-    body: a.body,
-    severity: a.severity,
-    read: a.read,
-    createdAt: new Date(Number(a.createdAtUnix) * 1000).toISOString(),
-    source: a.source,
-    sourceId: a.sourceId,
-  }));
-}
-
-/**
- * Mark a single alert as read via the daemon MarkAlertRead RPC.
- */
-export async function markAlertRead(
-  tenantId: string,
-  alertId: string,
-  userId?: string
-): Promise<void> {
-  const client = await getAdminClient(userId, tenantId);
-  await client.markAlertRead({ tenantId, alertId });
-}
-
-/**
- * Mark all alerts for a user as read via the daemon MarkAllAlertsRead RPC.
- * Returns the count of alerts marked as read.
- */
-export async function markAllAlertsRead(
-  tenantId: string,
-  userId: string,
-  callerUserId?: string
-): Promise<number> {
-  const client = await getAdminClient(callerUserId, tenantId);
-  const resp = await client.markAllAlertsRead({ tenantId, userId });
-  return resp.count;
-}
+// listAlerts removed — DEFER per design.md. Call site in /api/alerts/route.ts returns empty.
+// markAlertRead removed — DEFER per design.md. Call site in /api/alerts/[id]/read/route.ts returns ok.
+// markAllAlertsRead removed — DEFER per design.md. Call site in /api/alerts/mark-all-read/route.ts returns ok.
 
 // ============================================================================
-// Conversation History — ListConversations / GetConversation RPCs
+// Conversation History — DEFERRED per admin-services-completion spec
 // ============================================================================
+// ListConversations / GetConversation have been deferred per design.md.
+// The chatbot-page spec will implement these. Dashboard call sites are removed;
+// the chat route handler returns empty messages for unknown conversationIds.
 
 export interface ConversationRecord {
   id: string;
@@ -804,59 +712,8 @@ export interface ConversationMessageRecord {
   createdAt: string;
 }
 
-/**
- * List conversations for a user via the daemon ListConversations RPC.
- */
-export async function listConversations(
-  tenantId: string,
-  userId: string,
-  limit = 20,
-  callerUserId?: string
-): Promise<ConversationRecord[]> {
-  const client = await getAdminClient(callerUserId, tenantId);
-  const resp = await client.listConversations({ tenantId, userId, limit });
-  return (resp.conversations ?? []).map((c) => ({
-    id: c.id,
-    tenantId: c.tenantId,
-    userId: c.userId,
-    title: c.title,
-    createdAt: new Date(Number(c.createdAtUnix) * 1000).toISOString(),
-    updatedAt: new Date(Number(c.updatedAtUnix) * 1000).toISOString(),
-    messageCount: c.messageCount,
-  }));
-}
-
-/**
- * Get a conversation with its full message history via the daemon GetConversation RPC.
- */
-export async function getConversation(
-  tenantId: string,
-  conversationId: string,
-  userId?: string
-): Promise<{ conversation: ConversationRecord | null; messages: ConversationMessageRecord[] }> {
-  const client = await getAdminClient(userId, tenantId);
-  const resp = await client.getConversation({ tenantId, conversationId });
-  const conv = resp.conversation;
-  return {
-    conversation: conv
-      ? {
-          id: conv.id,
-          tenantId: conv.tenantId,
-          userId: conv.userId,
-          title: conv.title,
-          createdAt: new Date(Number(conv.createdAtUnix) * 1000).toISOString(),
-          updatedAt: new Date(Number(conv.updatedAtUnix) * 1000).toISOString(),
-          messageCount: conv.messageCount,
-        }
-      : null,
-    messages: (resp.messages ?? []).map((m) => ({
-      id: m.id,
-      role: m.role,
-      content: m.content,
-      createdAt: new Date(Number(m.createdAtUnix) * 1000).toISOString(),
-    })),
-  };
-}
+// listConversations removed — DEFER per design.md.
+// getConversation removed — DEFER per design.md. /api/chat GET returns empty messages.
 
 // ============================================================================
 // Serialization Helpers
@@ -1151,11 +1008,10 @@ export function serializeStatus(s: StatusResponse): SerializedStatus {
 //
 // spec 25-daemon-driven-provider-config (task 15): the legacy K8s Secret
 // storage layer (provider-storage.ts) has been deleted. Every provider
-// operation now routes through the DaemonAdminService RPCs. The exported
+// operation now routes through the TenantAdminService RPCs (migrated from
+// DaemonAdminService per admin-services-completion spec). The exported
 // function signatures are preserved so existing callers keep working without
-// changes; the internal helpers (getProviderConfigs, saveProviderConfigs,
-// configToRecord, per-type testXxxProvider) have been removed along with
-// the K8s-backed implementations.
+// changes.
 //
 // The daemon* prefixed functions added in task 9 remain as the canonical
 // implementations — they are called directly by the task-11 route handlers,
@@ -1292,34 +1148,11 @@ export async function testPluginConnection(
 // `app/actions/crd/member.ts` and `useCRDWatch("TenantMember", ns)`.
 // ============================================================================
 
-/**
- * Retrieves active sessions for a user via the daemon GetUserSessions RPC.
- */
-export async function listUserSessions(
-  tenantId: string,
-  userId: string,
-  callerUserId?: string
-): Promise<ListUserSessionsResponse> {
-  const client = await getAdminClient(callerUserId, tenantId);
-  try {
-    const resp = await client.getUserSessions({ tenantId, userId });
-    const sessions: UserSession[] = (resp.sessions ?? []).map((s) => ({
-      id: s.id,
-      userId,
-      deviceInfo: { deviceType: 'unknown' as const },
-      ipAddress: s.ipAddress,
-      location: undefined,
-      createdAt: new Date(Number(s.startedAtUnix) * 1000).toISOString(),
-      lastActiveAt: new Date(Number(s.lastActiveAtUnix) * 1000).toISOString(),
-      expiresAt: undefined,
-      isCurrent: false,
-    }));
-    return { sessions, total: sessions.length };
-  } catch (err) {
-    console.error('listUserSessions: daemon RPC failed', err);
-    return { sessions: [], total: 0 };
-  }
-}
+// listUserSessions removed — DELETE per admin-services-completion design.md.
+// GetUserSessions / RevokeUserSessions belong in the IdP's hosted UI, not the dashboard.
+// The Active Sessions tab in the users/[userId] page now shows a link to the
+// provider's hosted profile page (label: "Manage account at provider").
+// The idp profile URL is derived from ZITADEL_ISSUER at render time.
 
 // ============================================================================
 // User Profile — daemon-RPC backed
@@ -1330,13 +1163,14 @@ export async function listUserSessions(
 // ============================================================================
 
 /**
- * Fetch a user's profile via the daemon GetUserProfile RPC and map it to the UserProfile shape.
+ * Fetch a user's profile via UserService.GetUserProfile and map it to the UserProfile shape.
+ * Routes through the new UserService (admin-services-completion task 17).
  */
 export async function getUserProfile(
   tenantId: string,
   userId: string
 ): Promise<UserProfile> {
-  const client = await getAdminClient();
+  const client = await getUserServiceClient();
   const resp = await client.getUserProfile({ tenantId, userId });
   const p = resp.profile;
   return {
@@ -1351,21 +1185,24 @@ export async function getUserProfile(
 }
 
 /**
- * Apply partial profile updates via the daemon UpdateUserProfile RPC.
- * Only display_name and avatar_url are accepted; email and roles cannot be
- * changed through this endpoint (enforced by the daemon).
+ * Apply partial profile updates via UserService.UpdateUserProfile.
+ * Only display_name and avatar_url are accepted; email is immutable (IdP-managed).
+ * Routes through the new UserService (admin-services-completion task 17).
  */
 export async function updateUserProfile(
   tenantId: string,
   userId: string,
   updates: Record<string, unknown>
 ): Promise<UserProfile> {
-  const client = await getAdminClient();
+  const client = await getUserServiceClient();
   const resp = await client.updateUserProfile({
     tenantId,
     userId,
     displayName: typeof updates.displayName === 'string' ? updates.displayName : '',
-    avatarUrl: typeof updates.avatarUrl === 'string' ? updates.avatarUrl : '',
+    // preferredLocale is the supported editable field alongside displayName.
+    // avatarUrl is not accepted by UserService.UpdateUserProfile (email and
+    // avatar are IdP-managed); callers passing avatarUrl have it silently ignored.
+    preferredLocale: typeof updates.preferredLocale === 'string' ? updates.preferredLocale : '',
   });
   const p = resp.profile;
   return {
@@ -1380,83 +1217,19 @@ export async function updateUserProfile(
 }
 
 /**
- * Retrieve user activity via the daemon's ListAuditEvents RPC.
+ * Retrieve user activity.
  *
- * Events are filtered by actorUserId and mapped to UserActivity records.
- * Unrecognised event types fall back to `settings_change`. On any failure
- * an empty result set is returned so callers degrade gracefully.
+ * ListAuditEvents is DEFERRED per admin-services-completion design.md.
+ * This function returns an empty result set until the feature ships.
+ * The /api/users/activity route handler degrades gracefully on empty.
  */
 export async function getUserActivity(
-  tenantId: string,
-  userId: string,
+  _tenantId: string,
+  _userId: string,
   opts?: { page?: number; limit?: number }
 ): Promise<ListUserActivitiesResponse> {
   const limit = Math.min(opts?.limit ?? 20, 100);
-  // Note: page-based offset is not directly supported by ListAuditEvents; we
-  // return up to `limit` results from the most recent events.
-  const _first = ((opts?.page ?? 1) - 1) * limit;
-
-  // getUserActivity uses the daemon's ListAuditEvents RPC to surface user-level activity.
-  let rawEvents: Array<Record<string, unknown>>;
-  try {
-    const client = await getAdminClient();
-    const auditResp = await client.listAuditEvents({
-      tenantId,
-      actorUserId: userId,
-      limit,
-      fromTime: '',
-      toTime: '',
-      eventTypes: [],
-    });
-    rawEvents = (auditResp.events ?? []).map((e) => ({
-      id: e.traceId,
-      type: e.eventType,
-      time: new Date(e.timestamp).getTime(),
-      userId,
-      ipAddress: '',
-      details: e.details ?? {},
-    }));
-  } catch (err) {
-    console.error('getUserActivity: audit query failed', err);
-    return { activities: [], total: 0, page: opts?.page ?? 1, limit, hasMore: false };
-  }
-
-  // Map audit event type strings to UserActivityType values.
-  const eventTypeMap: Record<string, UserActivity['type']> = {
-    LOGIN: 'login',
-    LOGOUT: 'logout',
-    UPDATE_PROFILE: 'profile_updated',
-    UPDATE_PASSWORD: 'password_changed',
-    UPDATE_TOTP: 'mfa_enabled',
-    REMOVE_TOTP: 'mfa_disabled',
-  };
-
-  const activities: UserActivity[] = rawEvents.map((ev) => {
-    const rawType = typeof ev.type === 'string' ? (ev.type as string) : '';
-    const activityType: UserActivity['type'] = eventTypeMap[rawType] ?? 'settings_change';
-    const ts =
-      typeof ev.time === 'number'
-        ? new Date(ev.time).toISOString()
-        : new Date().toISOString();
-
-    return {
-      id: typeof ev.id === 'string' ? ev.id : `${ts}-${Math.random()}`,
-      userId: typeof ev.userId === 'string' ? ev.userId : userId,
-      type: activityType,
-      description: rawType || 'Activity event',
-      timestamp: ts,
-      metadata: (ev.details ?? {}) as Record<string, unknown>,
-      ipAddress: typeof ev.ipAddress === 'string' ? ev.ipAddress : undefined,
-    };
-  });
-
-  return {
-    activities,
-    total: activities.length,
-    page: opts?.page ?? 1,
-    limit,
-    hasMore: activities.length === limit,
-  };
+  return { activities: [], total: 0, page: opts?.page ?? 1, limit, hasMore: false };
 }
 
 // Invitation RPCs (ListInvitations / RevokeInvitation / ResendInvitation /
@@ -1763,56 +1536,17 @@ export async function getAgentPerformance(tenantId: string, userId?: string): Pr
 // without pulling grpc-js into the browser bundle. Re-exported at the top of
 // this file for back-compat with server-side callers.
 
-/**
- * Fetch the full list of LLM provider types the daemon can construct, with
- * per-provider credential schemas and default model catalogues. The dashboard
- * uses this to render the Settings > Providers form dynamically — no
- * hard-coded frontend provider list, no drift between daemon and UI.
- *
- * The daemon RPC is gated to any authenticated tenant member; it returns
- * only descriptor metadata (no secrets, no tenant-specific data).
- */
-export async function getSupportedProviders(
-  userId?: string,
-  tenantId?: string,
-): Promise<SupportedProviderDescriptor[]> {
-  const client = await getAdminClient(userId, tenantId);
-  const resp = await client.getSupportedProviders({});
-  return (resp.providers ?? []).map((p) => ({
-    type: p.type,
-    displayName: p.displayName,
-    docsUrl: p.docsUrl,
-    selfHosted: p.selfHosted,
-    credentials: (p.credentials ?? []).map((f) => ({
-      key: f.key,
-      label: f.label,
-      required: f.required,
-      secret: f.secret,
-      placeholder: f.placeholder,
-      help: f.help,
-    })),
-    defaultModels: (p.defaultModels ?? []).map((m) => ({
-      name: m.name,
-      contextWindow: m.contextWindow,
-      maxOutput: m.maxOutput,
-      features: [...(m.features ?? [])],
-    })),
-  }));
-}
+// getSupportedProviders removed — DELETE per admin-services-completion design.md.
+// GetSupportedProviders was a Bucket C RPC with no active caller path and is
+// deleted from the proto entirely. The /api/settings/providers/supported route
+// and useSupportedProviders hook are removed.
 
 // ============================================================================
-// Daemon-backed Provider Config (spec 25-daemon-driven-provider-config)
+// Daemon-backed Provider Config (TenantAdminService, migrated from
+// DaemonAdminService per admin-services-completion spec task 16)
 //
-// These functions call the new DaemonAdminService provider-config RPCs that
-// landed in spec 25. They follow the exact same pattern as getSupportedProviders
-// above: getAdminClient(userId, tenantId) → RPC → friendly camelCased shape.
-//
-// NOTE ON NAMING: The existing K8s-backed helpers further up this file share
-// the same base names (listProviders, createProvider, etc.) with `tenantId`
-// as the required first argument. To avoid a TypeScript duplicate-export error
-// without modifying those functions (task 9 restriction), the new daemon-backed
-// variants are prefixed with `daemon`. Task 15 will delete the K8s-backed
-// functions and rename these to drop the prefix so callers see no change.
+// These functions call the TenantAdminService provider-config RPCs via
+// getAdminClient(userId, tenantId) → RPC → friendly camelCased shape.
 // ============================================================================
 
 // ---------------------------------------------------------------------------
@@ -1889,7 +1623,7 @@ export interface DaemonProviderHealthStatus {
 
 /**
  * A single message in a conversation sent to executeLLM / streamLLM.
- * Maps to the proto gibson.daemon.admin.v1.LLMMessageContent.
+ * Maps to the proto gibson.tenant.v1.LLMMessageContent.
  */
 export interface LLMMessage {
   /** "system" | "user" | "assistant" | "tool" */
@@ -1906,7 +1640,7 @@ export interface LLMMessage {
 
 /**
  * Tool definition exposed to the LLM.
- * Maps to the proto gibson.daemon.admin.v1.LLMToolDef.
+ * Maps to the proto gibson.tenant.v1.LLMToolDef.
  */
 export interface DaemonLLMToolDef {
   name: string;
@@ -1917,7 +1651,7 @@ export interface DaemonLLMToolDef {
 
 /**
  * A tool invocation requested by the LLM.
- * Maps to the proto gibson.daemon.admin.v1.LLMToolCall.
+ * Maps to the proto gibson.tenant.v1.LLMToolCall.
  */
 export interface DaemonLLMToolCall {
   id: string;
@@ -1928,7 +1662,7 @@ export interface DaemonLLMToolCall {
 
 /**
  * The output of a tool call.
- * Maps to the proto gibson.daemon.admin.v1.LLMToolResult.
+ * Maps to the proto gibson.tenant.v1.LLMToolResult.
  */
 export interface DaemonLLMToolResult {
   toolCallId: string;
@@ -1938,7 +1672,7 @@ export interface DaemonLLMToolResult {
 
 /**
  * Token usage reported for an LLM completion.
- * Maps to the proto gibson.daemon.admin.v1.LLMTokenUsage.
+ * Maps to the proto gibson.tenant.v1.LLMTokenUsage.
  */
 export interface DaemonLLMUsage {
   inputTokens: number;
@@ -1948,7 +1682,7 @@ export interface DaemonLLMUsage {
 
 /**
  * Controls the structure of the LLM's output.
- * Maps to the proto gibson.daemon.admin.v1.ResponseFormat.
+ * Maps to the proto gibson.tenant.v1.ResponseFormat.
  */
 export interface DaemonResponseFormat {
   /** "text" | "json_object" | "json_schema" */
@@ -1963,7 +1697,7 @@ export interface DaemonResponseFormat {
 
 /**
  * Incremental tool-call delta in a streaming response.
- * Maps to the proto gibson.daemon.admin.v1.ToolCallDelta.
+ * Maps to the proto gibson.tenant.v1.ToolCallDelta.
  */
 export interface DaemonToolCallDelta {
   /** 0-based index identifying which tool call this delta belongs to. */
@@ -2008,7 +1742,7 @@ export interface DaemonExecuteLLMResponse {
 /**
  * One chunk in a server-streaming LLM response from streamLLM.
  * Exactly one of the payload variants is set per chunk.
- * Maps to the proto gibson.daemon.admin.v1.StreamLLMResponse oneof.
+ * Maps to the proto gibson.tenant.v1.StreamLLMResponse oneof.
  */
 export interface DaemonStreamLLMChunk {
   payload:
@@ -2024,7 +1758,7 @@ export interface DaemonStreamLLMChunk {
 // ---------------------------------------------------------------------------
 
 function fromProtoProviderRecord(
-  p: import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').ProviderRecord,
+  p: import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').ProviderRecord,
 ): DaemonProviderRecord {
   return {
     id: p.id,
@@ -2041,18 +1775,18 @@ function fromProtoProviderRecord(
 
 function toProtoDaemonConfigInput(
   input: DaemonProviderConfigInput,
-): import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').ProviderConfigInput {
+): import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').ProviderConfigInput {
   return {
     name: input.name,
     type: input.type,
     defaultModel: input.defaultModel,
     credentials: { ...input.credentials },
     setAsDefault: input.setAsDefault ?? false,
-  } as import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').ProviderConfigInput;
+  } as import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').ProviderConfigInput;
 }
 
 function fromProtoLLMUsage(
-  u: import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMTokenUsage | undefined,
+  u: import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMTokenUsage | undefined,
 ): DaemonLLMUsage {
   return {
     inputTokens: u?.inputTokens ?? 0,
@@ -2062,14 +1796,14 @@ function fromProtoLLMUsage(
 }
 
 function fromProtoLLMToolCall(
-  tc: import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMToolCall,
+  tc: import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMToolCall,
 ): DaemonLLMToolCall {
   return { id: tc.id, name: tc.name, arguments: tc.arguments };
 }
 
 function toLLMMessageContent(
   msg: LLMMessage,
-): import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMMessageContent {
+): import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMMessageContent {
   return {
     role: msg.role,
     content: msg.content ?? '',
@@ -2077,35 +1811,35 @@ function toLLMMessageContent(
       id: tc.id,
       name: tc.name,
       arguments: tc.arguments,
-    })) as import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMToolCall[],
+    })) as import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMToolCall[],
     toolResults: (msg.toolResults ?? []).map((tr) => ({
       toolCallId: tr.toolCallId,
       content: tr.content,
       isError: tr.isError,
-    })) as import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMToolResult[],
+    })) as import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMToolResult[],
     name: msg.name ?? '',
-  } as import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMMessageContent;
+  } as import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMMessageContent;
 }
 
 function toLLMToolDef(
   def: DaemonLLMToolDef,
-): import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMToolDef {
+): import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMToolDef {
   return {
     name: def.name,
     description: def.description,
     parametersJson: def.parametersJson,
-  } as import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMToolDef;
+  } as import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMToolDef;
 }
 
 function toProtoResponseFormat(
   fmt: DaemonResponseFormat,
-): import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').ResponseFormat {
+): import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').ResponseFormat {
   return {
     type: fmt.type,
     name: fmt.name ?? '',
     schemaJson: fmt.schemaJson ?? '',
     strict: fmt.strict ?? false,
-  } as import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').ResponseFormat;
+  } as import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').ResponseFormat;
 }
 
 function buildExecRequest(
@@ -2113,9 +1847,9 @@ function buildExecRequest(
 ): {
   providerName: string;
   model: string;
-  messages: import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMMessageContent[];
-  tools: import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').LLMToolDef[];
-  responseFormat?: import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').ResponseFormat;
+  messages: import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMMessageContent[];
+  tools: import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMToolDef[];
+  responseFormat?: import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').ResponseFormat;
   temperature?: number;
   maxTokens?: number;
   topP?: number;
@@ -2135,7 +1869,7 @@ function buildExecRequest(
 }
 
 function fromProtoStreamChunk(
-  chunk: import('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb').StreamLLMResponse,
+  chunk: import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').StreamLLMResponse,
 ): DaemonStreamLLMChunk {
   const p = chunk.payload;
   switch (p.case) {

@@ -1,13 +1,15 @@
 /**
  * Dashboard-side handlers for the entitlements provisioning routes called
  * by the tenant-operator (SPIFFE JWT-SVID authenticated) during every
- * Tenant CR reconcile. Forwards to the gibson daemon's DaemonAdminService
+ * Tenant CR reconcile. Forwards to the gibson daemon's PlatformOperatorService
  * entitlement RPCs via the existing gRPC client transport.
  *
  * Spec: agent-authoring-and-tenant-entitlements task 26.
+ * Migration: admin-services-completion task 16 — switched from DaemonAdminService
+ * to PlatformOperatorService per the service-split architecture.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { DaemonAdminService } from "@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb";
+import { PlatformOperatorService } from "@/src/gen/gibson/platform/v1/platform_operator_pb";
 import { verifySpiffeBearer } from "@/src/lib/spiffe-verifier";
 import { serviceClient } from "@/src/lib/gibson-client";
 
@@ -49,7 +51,7 @@ export async function handleUpsertQuota(req: NextRequest) {
   if ("error" in body) return NextResponse.json({ error: body.error }, { status: body.status });
   if (!body.tenant_id) return NextResponse.json({ error: "tenant_id required" }, { status: 400 });
 
-  const client = serviceClient(DaemonAdminService, body.tenant_id);
+  const client = serviceClient(PlatformOperatorService, body.tenant_id);
   try {
     const resp = await client.upsertTenantQuota({
       tenantId: body.tenant_id,
@@ -76,7 +78,7 @@ export async function handleListFeatureTuples(req: NextRequest) {
   if ("error" in body) return NextResponse.json({ error: body.error }, { status: body.status });
   if (!body.tenant_id) return NextResponse.json({ error: "tenant_id required" }, { status: 400 });
 
-  const client = serviceClient(DaemonAdminService, body.tenant_id);
+  const client = serviceClient(PlatformOperatorService, body.tenant_id);
   try {
     const resp = await client.listFeatureTuples({ tenantId: body.tenant_id });
     return NextResponse.json({ relations: resp.relations });
@@ -109,7 +111,7 @@ export async function handleWriteTuples(req: NextRequest) {
   // Cross-tenant write — entitlement reconciles touch tuples spanning
   // many tenants in a single batch. Use the system_tenant scope so the
   // daemon FGA path applies the platform-operator policy.
-  const client = serviceClient(DaemonAdminService, "_system");
+  const client = serviceClient(PlatformOperatorService, "_system");
   try {
     const resp = await client.writeAccessTuples({
       add: mapTuples(body.add),
@@ -150,11 +152,11 @@ export async function handleEmitSummary(req: NextRequest) {
     trigger: body.trigger ?? "background",
   };
 
-  const client = serviceClient(DaemonAdminService, body.tenant_id);
+  const client = serviceClient(PlatformOperatorService, body.tenant_id);
   try {
     await client.emitAuditEvent({
       event: {
-        $typeName: "gibson.daemon.admin.v1.AuditEventMessage",
+        $typeName: "gibson.platform.v1.AuditEventMessage",
         type: "entitlements_reconcile",
         actorSubject: a.spiffeId,
         actorSource: "operator",
@@ -184,7 +186,7 @@ export async function handleSeedCatalog(req: NextRequest) {
   if ("error" in body) return NextResponse.json({ error: body.error }, { status: body.status });
   if (!body.tenant_id) return NextResponse.json({ error: "tenant_id required" }, { status: 400 });
 
-  const client = serviceClient(DaemonAdminService, body.tenant_id);
+  const client = serviceClient(PlatformOperatorService, body.tenant_id);
   try {
     const resp = await client.seedCatalogTenantEnabled({ tenantId: body.tenant_id });
     return NextResponse.json({ tuples_written: resp.tuplesWritten });

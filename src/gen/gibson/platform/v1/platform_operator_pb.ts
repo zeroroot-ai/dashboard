@@ -2,25 +2,693 @@
 // @generated from file gibson/platform/v1/platform_operator.proto (package gibson.platform.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file gibson/platform/v1/platform_operator.proto.
  */
 export const file_gibson_platform_v1_platform_operator: GenFile = /*@__PURE__*/
-  fileDesc("CipnaWJzb24vcGxhdGZvcm0vdjEvcGxhdGZvcm1fb3BlcmF0b3IucHJvdG8SEmdpYnNvbi5wbGF0Zm9ybS52MTIZChdQbGF0Zm9ybU9wZXJhdG9yU2VydmljZUJRWk9naXRodWIuY29tL3plcm8tZGF5LWFpL2dpYnNvbi9pbnRlcm5hbC9kYWVtb24vYXBpL2dpYnNvbi9wbGF0Zm9ybS92MTtwbGF0Zm9ybXYxYgZwcm90bzM");
+  fileDesc("CipnaWJzb24vcGxhdGZvcm0vdjEvcGxhdGZvcm1fb3BlcmF0b3IucHJvdG8SEmdpYnNvbi5wbGF0Zm9ybS52MSI5Cg9TaHV0ZG93blJlcXVlc3QSDQoFZm9yY2UYASABKAgSFwoPdGltZW91dF9zZWNvbmRzGAIgASgFIjQKEFNodXRkb3duUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIi0KGEltcGVyc29uYXRlVGVuYW50UmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiKgoZSW1wZXJzb25hdGVUZW5hbnRSZXNwb25zZRINCgV0b2tlbhgBIAEoCSIqChlSZWZyZXNoVG9vbENhdGFsb2dSZXF1ZXN0Eg0KBWZvcmNlGAEgASgIIj0KGlJlZnJlc2hUb29sQ2F0YWxvZ1Jlc3BvbnNlEg4KBnF1ZXVlZBgBIAEoCBIPCgdtZXNzYWdlGAIgASgJImAKC1RlbmFudFF1b3RhEhQKDG1heF9taXNzaW9ucxgBIAEoBRISCgptYXhfYWdlbnRzGAIgASgFEhQKDG1heF9maW5kaW5ncxgDIAEoAxIRCglwbGFuX3RpZXIYBCABKAkiWgoVU2V0VGVuYW50UXVvdGFSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIuCgVxdW90YRgCIAEoCzIfLmdpYnNvbi5wbGF0Zm9ybS52MS5UZW5hbnRRdW90YSJIChZTZXRUZW5hbnRRdW90YVJlc3BvbnNlEi4KBXF1b3RhGAEgASgLMh8uZ2lic29uLnBsYXRmb3JtLnYxLlRlbmFudFF1b3RhIj0KC0FjY2Vzc1R1cGxlEgwKBHVzZXIYASABKAkSEAoIcmVsYXRpb24YAiABKAkSDgoGb2JqZWN0GAMgASgJIokBChhXcml0ZUFjY2Vzc1R1cGxlc1JlcXVlc3QSLAoDYWRkGAEgAygLMh8uZ2lic29uLnBsYXRmb3JtLnYxLkFjY2Vzc1R1cGxlEi8KBmRlbGV0ZRgCIAMoCzIfLmdpYnNvbi5wbGF0Zm9ybS52MS5BY2Nlc3NUdXBsZRIOCgZyZWFzb24YAyABKAkiOwoZV3JpdGVBY2Nlc3NUdXBsZXNSZXNwb25zZRINCgVhZGRlZBgBIAEoBRIPCgdkZWxldGVkGAIgASgFIqcBChhVcHNlcnRUZW5hbnRRdW90YVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg0KBXNlYXRzGAIgASgFEhkKEWNvbmN1cnJlbnRfYWdlbnRzGAMgASgFEhIKCnN0b3JhZ2VfZ2IYBCABKAUSFgoOcmV0ZW50aW9uX2RheXMYBSABKAUSIgoac2FuZGJveF9sYXVuY2hlc19wZXJfbW9udGgYBiABKAUiLwoZVXBzZXJ0VGVuYW50UXVvdGFSZXNwb25zZRISCgp1cGRhdGVkX2F0GAEgASgJIi0KGExpc3RGZWF0dXJlVHVwbGVzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiLgoZTGlzdEZlYXR1cmVUdXBsZXNSZXNwb25zZRIRCglyZWxhdGlvbnMYASADKAkiNAofU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiOgogU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVzcG9uc2USFgoOdHVwbGVzX3dyaXR0ZW4YASABKAUirwIKEUF1ZGl0RXZlbnRNZXNzYWdlEgwKBHR5cGUYASABKAkSFQoNYWN0b3Jfc3ViamVjdBgCIAEoCRIUCgxhY3Rvcl9zb3VyY2UYAyABKAkSDQoFdHVwbGUYBCABKAkSFAoMYWN0aW9uX2NsYXNzGAUgASgJEhIKCnNjb3BlX3R5cGUYBiABKAkSEQoJb3BlcmF0aW9uGAcgASgJEg4KBnJlYXNvbhgIIAEoCRIRCgl0aW1lc3RhbXAYCSABKAkSQQoGZmllbGRzGAogAygLMjEuZ2lic29uLnBsYXRmb3JtLnYxLkF1ZGl0RXZlbnRNZXNzYWdlLkZpZWxkc0VudHJ5Gi0KC0ZpZWxkc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiTQoVRW1pdEF1ZGl0RXZlbnRSZXF1ZXN0EjQKBWV2ZW50GAEgASgLMiUuZ2lic29uLnBsYXRmb3JtLnYxLkF1ZGl0RXZlbnRNZXNzYWdlIhgKFkVtaXRBdWRpdEV2ZW50UmVzcG9uc2UyhwgKF1BsYXRmb3JtT3BlcmF0b3JTZXJ2aWNlElUKCFNodXRkb3duEiMuZ2lic29uLnBsYXRmb3JtLnYxLlNodXRkb3duUmVxdWVzdBokLmdpYnNvbi5wbGF0Zm9ybS52MS5TaHV0ZG93blJlc3BvbnNlEnAKEUltcGVyc29uYXRlVGVuYW50EiwuZ2lic29uLnBsYXRmb3JtLnYxLkltcGVyc29uYXRlVGVuYW50UmVxdWVzdBotLmdpYnNvbi5wbGF0Zm9ybS52MS5JbXBlcnNvbmF0ZVRlbmFudFJlc3BvbnNlEnMKElJlZnJlc2hUb29sQ2F0YWxvZxItLmdpYnNvbi5wbGF0Zm9ybS52MS5SZWZyZXNoVG9vbENhdGFsb2dSZXF1ZXN0Gi4uZ2lic29uLnBsYXRmb3JtLnYxLlJlZnJlc2hUb29sQ2F0YWxvZ1Jlc3BvbnNlEmcKDlNldFRlbmFudFF1b3RhEikuZ2lic29uLnBsYXRmb3JtLnYxLlNldFRlbmFudFF1b3RhUmVxdWVzdBoqLmdpYnNvbi5wbGF0Zm9ybS52MS5TZXRUZW5hbnRRdW90YVJlc3BvbnNlEnAKEVdyaXRlQWNjZXNzVHVwbGVzEiwuZ2lic29uLnBsYXRmb3JtLnYxLldyaXRlQWNjZXNzVHVwbGVzUmVxdWVzdBotLmdpYnNvbi5wbGF0Zm9ybS52MS5Xcml0ZUFjY2Vzc1R1cGxlc1Jlc3BvbnNlEnAKEVVwc2VydFRlbmFudFF1b3RhEiwuZ2lic29uLnBsYXRmb3JtLnYxLlVwc2VydFRlbmFudFF1b3RhUmVxdWVzdBotLmdpYnNvbi5wbGF0Zm9ybS52MS5VcHNlcnRUZW5hbnRRdW90YVJlc3BvbnNlEnAKEUxpc3RGZWF0dXJlVHVwbGVzEiwuZ2lic29uLnBsYXRmb3JtLnYxLkxpc3RGZWF0dXJlVHVwbGVzUmVxdWVzdBotLmdpYnNvbi5wbGF0Zm9ybS52MS5MaXN0RmVhdHVyZVR1cGxlc1Jlc3BvbnNlEoUBChhTZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWQSMy5naWJzb24ucGxhdGZvcm0udjEuU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVxdWVzdBo0LmdpYnNvbi5wbGF0Zm9ybS52MS5TZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWRSZXNwb25zZRJnCg5FbWl0QXVkaXRFdmVudBIpLmdpYnNvbi5wbGF0Zm9ybS52MS5FbWl0QXVkaXRFdmVudFJlcXVlc3QaKi5naWJzb24ucGxhdGZvcm0udjEuRW1pdEF1ZGl0RXZlbnRSZXNwb25zZUJRWk9naXRodWIuY29tL3plcm8tZGF5LWFpL2dpYnNvbi9pbnRlcm5hbC9kYWVtb24vYXBpL2dpYnNvbi9wbGF0Zm9ybS92MTtwbGF0Zm9ybXYxYgZwcm90bzM");
+
+/**
+ * ShutdownRequest requests graceful shutdown of the daemon.
+ *
+ * @generated from message gibson.platform.v1.ShutdownRequest
+ */
+export type ShutdownRequest = Message<"gibson.platform.v1.ShutdownRequest"> & {
+  /**
+   * force indicates whether to force immediate shutdown (skip graceful drain)
+   *
+   * @generated from field: bool force = 1;
+   */
+  force: boolean;
+
+  /**
+   * timeout_seconds is the maximum time to wait for graceful shutdown (0 = default 30s)
+   *
+   * @generated from field: int32 timeout_seconds = 2;
+   */
+  timeoutSeconds: number;
+};
+
+/**
+ * Describes the message gibson.platform.v1.ShutdownRequest.
+ * Use `create(ShutdownRequestSchema)` to create a new message.
+ */
+export const ShutdownRequestSchema: GenMessage<ShutdownRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 0);
+
+/**
+ * ShutdownResponse confirms the shutdown request was accepted.
+ *
+ * @generated from message gibson.platform.v1.ShutdownResponse
+ */
+export type ShutdownResponse = Message<"gibson.platform.v1.ShutdownResponse"> & {
+  /**
+   * success indicates if the shutdown request was accepted
+   *
+   * @generated from field: bool success = 1;
+   */
+  success: boolean;
+
+  /**
+   * message provides additional context about the shutdown
+   *
+   * @generated from field: string message = 2;
+   */
+  message: string;
+};
+
+/**
+ * Describes the message gibson.platform.v1.ShutdownResponse.
+ * Use `create(ShutdownResponseSchema)` to create a new message.
+ */
+export const ShutdownResponseSchema: GenMessage<ShutdownResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 1);
+
+/**
+ * ImpersonateTenantRequest requests a time-limited context token for the given tenant.
+ * Requires the "platform-operator" role.
+ *
+ * @generated from message gibson.platform.v1.ImpersonateTenantRequest
+ */
+export type ImpersonateTenantRequest = Message<"gibson.platform.v1.ImpersonateTenantRequest"> & {
+  /**
+   * tenant_id is the identifier of the tenant to impersonate
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+};
+
+/**
+ * Describes the message gibson.platform.v1.ImpersonateTenantRequest.
+ * Use `create(ImpersonateTenantRequestSchema)` to create a new message.
+ */
+export const ImpersonateTenantRequestSchema: GenMessage<ImpersonateTenantRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 2);
+
+/**
+ * ImpersonateTenantResponse returns a short-lived context token scoped to the
+ * target tenant. The token behaves like a normal auth token for its lifetime.
+ *
+ * @generated from message gibson.platform.v1.ImpersonateTenantResponse
+ */
+export type ImpersonateTenantResponse = Message<"gibson.platform.v1.ImpersonateTenantResponse"> & {
+  /**
+   * token is the time-limited context token granting access to the target tenant
+   *
+   * @generated from field: string token = 1;
+   */
+  token: string;
+};
+
+/**
+ * Describes the message gibson.platform.v1.ImpersonateTenantResponse.
+ * Use `create(ImpersonateTenantResponseSchema)` to create a new message.
+ */
+export const ImpersonateTenantResponseSchema: GenMessage<ImpersonateTenantResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 3);
+
+/**
+ * RefreshToolCatalogRequest carries optional knobs for forced catalog refresh.
+ *
+ * @generated from message gibson.platform.v1.RefreshToolCatalogRequest
+ */
+export type RefreshToolCatalogRequest = Message<"gibson.platform.v1.RefreshToolCatalogRequest"> & {
+  /**
+   * force, when true, triggers a refresh even if one was completed very
+   * recently. Currently advisory — the daemon always queues the signal
+   * and the refresher coalesces back-to-back calls into a single tick.
+   *
+   * @generated from field: bool force = 1;
+   */
+  force: boolean;
+};
+
+/**
+ * Describes the message gibson.platform.v1.RefreshToolCatalogRequest.
+ * Use `create(RefreshToolCatalogRequestSchema)` to create a new message.
+ */
+export const RefreshToolCatalogRequestSchema: GenMessage<RefreshToolCatalogRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 4);
+
+/**
+ * RefreshToolCatalogResponse carries the refresh outcome.
+ *
+ * @generated from message gibson.platform.v1.RefreshToolCatalogResponse
+ */
+export type RefreshToolCatalogResponse = Message<"gibson.platform.v1.RefreshToolCatalogResponse"> & {
+  /**
+   * queued is true when the refresh signal was accepted by the leader
+   * replica. False when this replica is not the leader (the next leader
+   * tick will refresh) or when the refresher is not running.
+   *
+   * @generated from field: bool queued = 1;
+   */
+  queued: boolean;
+
+  /**
+   * message is a human-readable explanation of the outcome.
+   *
+   * @generated from field: string message = 2;
+   */
+  message: string;
+};
+
+/**
+ * Describes the message gibson.platform.v1.RefreshToolCatalogResponse.
+ * Use `create(RefreshToolCatalogResponseSchema)` to create a new message.
+ */
+export const RefreshToolCatalogResponseSchema: GenMessage<RefreshToolCatalogResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 5);
+
+/**
+ * TenantQuota defines the resource limits for a tenant.
+ *
+ * @generated from message gibson.platform.v1.TenantQuota
+ */
+export type TenantQuota = Message<"gibson.platform.v1.TenantQuota"> & {
+  /**
+   * max_missions is the maximum number of concurrent running missions allowed.
+   * Zero means no limit.
+   *
+   * @generated from field: int32 max_missions = 1;
+   */
+  maxMissions: number;
+
+  /**
+   * max_agents is the maximum number of registered agents allowed.
+   * Zero means no limit.
+   *
+   * @generated from field: int32 max_agents = 2;
+   */
+  maxAgents: number;
+
+  /**
+   * max_findings is the maximum number of findings stored across all missions.
+   * Zero means no limit.
+   *
+   * @generated from field: int64 max_findings = 3;
+   */
+  maxFindings: bigint;
+
+  /**
+   * plan_tier identifies the subscription plan (e.g., "free", "pro", "enterprise").
+   *
+   * @generated from field: string plan_tier = 4;
+   */
+  planTier: string;
+};
+
+/**
+ * Describes the message gibson.platform.v1.TenantQuota.
+ * Use `create(TenantQuotaSchema)` to create a new message.
+ */
+export const TenantQuotaSchema: GenMessage<TenantQuota> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 6);
+
+/**
+ * SetTenantQuotaRequest sets the quota configuration for a tenant.
+ *
+ * @generated from message gibson.platform.v1.SetTenantQuotaRequest
+ */
+export type SetTenantQuotaRequest = Message<"gibson.platform.v1.SetTenantQuotaRequest"> & {
+  /**
+   * tenant_id is the target tenant. Required.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * quota contains the new limits to apply.
+   *
+   * @generated from field: gibson.platform.v1.TenantQuota quota = 2;
+   */
+  quota?: TenantQuota;
+};
+
+/**
+ * Describes the message gibson.platform.v1.SetTenantQuotaRequest.
+ * Use `create(SetTenantQuotaRequestSchema)` to create a new message.
+ */
+export const SetTenantQuotaRequestSchema: GenMessage<SetTenantQuotaRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 7);
+
+/**
+ * SetTenantQuotaResponse confirms the quota update.
+ *
+ * @generated from message gibson.platform.v1.SetTenantQuotaResponse
+ */
+export type SetTenantQuotaResponse = Message<"gibson.platform.v1.SetTenantQuotaResponse"> & {
+  /**
+   * quota contains the updated limits as stored.
+   *
+   * @generated from field: gibson.platform.v1.TenantQuota quota = 1;
+   */
+  quota?: TenantQuota;
+};
+
+/**
+ * Describes the message gibson.platform.v1.SetTenantQuotaResponse.
+ * Use `create(SetTenantQuotaResponseSchema)` to create a new message.
+ */
+export const SetTenantQuotaResponseSchema: GenMessage<SetTenantQuotaResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 8);
+
+/**
+ * AccessTuple is a single FGA relationship tuple.
+ *
+ * @generated from message gibson.platform.v1.AccessTuple
+ */
+export type AccessTuple = Message<"gibson.platform.v1.AccessTuple"> & {
+  /**
+   * @generated from field: string user = 1;
+   */
+  user: string;
+
+  /**
+   * @generated from field: string relation = 2;
+   */
+  relation: string;
+
+  /**
+   * @generated from field: string object = 3;
+   */
+  object: string;
+};
+
+/**
+ * Describes the message gibson.platform.v1.AccessTuple.
+ * Use `create(AccessTupleSchema)` to create a new message.
+ */
+export const AccessTupleSchema: GenMessage<AccessTuple> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 9);
+
+/**
+ * WriteAccessTuplesRequest atomically adds and/or deletes FGA tuples.
+ *
+ * @generated from message gibson.platform.v1.WriteAccessTuplesRequest
+ */
+export type WriteAccessTuplesRequest = Message<"gibson.platform.v1.WriteAccessTuplesRequest"> & {
+  /**
+   * @generated from field: repeated gibson.platform.v1.AccessTuple add = 1;
+   */
+  add: AccessTuple[];
+
+  /**
+   * @generated from field: repeated gibson.platform.v1.AccessTuple delete = 2;
+   */
+  delete: AccessTuple[];
+
+  /**
+   * @generated from field: string reason = 3;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message gibson.platform.v1.WriteAccessTuplesRequest.
+ * Use `create(WriteAccessTuplesRequestSchema)` to create a new message.
+ */
+export const WriteAccessTuplesRequestSchema: GenMessage<WriteAccessTuplesRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 10);
+
+/**
+ * WriteAccessTuplesResponse reports how many tuples were written/deleted.
+ *
+ * @generated from message gibson.platform.v1.WriteAccessTuplesResponse
+ */
+export type WriteAccessTuplesResponse = Message<"gibson.platform.v1.WriteAccessTuplesResponse"> & {
+  /**
+   * @generated from field: int32 added = 1;
+   */
+  added: number;
+
+  /**
+   * @generated from field: int32 deleted = 2;
+   */
+  deleted: number;
+};
+
+/**
+ * Describes the message gibson.platform.v1.WriteAccessTuplesResponse.
+ * Use `create(WriteAccessTuplesResponseSchema)` to create a new message.
+ */
+export const WriteAccessTuplesResponseSchema: GenMessage<WriteAccessTuplesResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 11);
+
+/**
+ * UpsertTenantQuotaRequest writes the tenant's runtime quota record.
+ *
+ * @generated from message gibson.platform.v1.UpsertTenantQuotaRequest
+ */
+export type UpsertTenantQuotaRequest = Message<"gibson.platform.v1.UpsertTenantQuotaRequest"> & {
+  /**
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * @generated from field: int32 seats = 2;
+   */
+  seats: number;
+
+  /**
+   * @generated from field: int32 concurrent_agents = 3;
+   */
+  concurrentAgents: number;
+
+  /**
+   * @generated from field: int32 storage_gb = 4;
+   */
+  storageGb: number;
+
+  /**
+   * @generated from field: int32 retention_days = 5;
+   */
+  retentionDays: number;
+
+  /**
+   * @generated from field: int32 sandbox_launches_per_month = 6;
+   */
+  sandboxLaunchesPerMonth: number;
+};
+
+/**
+ * Describes the message gibson.platform.v1.UpsertTenantQuotaRequest.
+ * Use `create(UpsertTenantQuotaRequestSchema)` to create a new message.
+ */
+export const UpsertTenantQuotaRequestSchema: GenMessage<UpsertTenantQuotaRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 12);
+
+/**
+ * UpsertTenantQuotaResponse confirms the upsert.
+ *
+ * @generated from message gibson.platform.v1.UpsertTenantQuotaResponse
+ */
+export type UpsertTenantQuotaResponse = Message<"gibson.platform.v1.UpsertTenantQuotaResponse"> & {
+  /**
+   * @generated from field: string updated_at = 1;
+   */
+  updatedAt: string;
+};
+
+/**
+ * Describes the message gibson.platform.v1.UpsertTenantQuotaResponse.
+ * Use `create(UpsertTenantQuotaResponseSchema)` to create a new message.
+ */
+export const UpsertTenantQuotaResponseSchema: GenMessage<UpsertTenantQuotaResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 13);
+
+/**
+ * ListFeatureTuplesRequest queries the feature tuples for a tenant.
+ *
+ * @generated from message gibson.platform.v1.ListFeatureTuplesRequest
+ */
+export type ListFeatureTuplesRequest = Message<"gibson.platform.v1.ListFeatureTuplesRequest"> & {
+  /**
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+};
+
+/**
+ * Describes the message gibson.platform.v1.ListFeatureTuplesRequest.
+ * Use `create(ListFeatureTuplesRequestSchema)` to create a new message.
+ */
+export const ListFeatureTuplesRequestSchema: GenMessage<ListFeatureTuplesRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 14);
+
+/**
+ * ListFeatureTuplesResponse returns the set of has_* feature tuples present.
+ *
+ * @generated from message gibson.platform.v1.ListFeatureTuplesResponse
+ */
+export type ListFeatureTuplesResponse = Message<"gibson.platform.v1.ListFeatureTuplesResponse"> & {
+  /**
+   * @generated from field: repeated string relations = 1;
+   */
+  relations: string[];
+};
+
+/**
+ * Describes the message gibson.platform.v1.ListFeatureTuplesResponse.
+ * Use `create(ListFeatureTuplesResponseSchema)` to create a new message.
+ */
+export const ListFeatureTuplesResponseSchema: GenMessage<ListFeatureTuplesResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 15);
+
+/**
+ * SeedCatalogTenantEnabledRequest triggers seeding of tenant_enabled tuples.
+ *
+ * @generated from message gibson.platform.v1.SeedCatalogTenantEnabledRequest
+ */
+export type SeedCatalogTenantEnabledRequest = Message<"gibson.platform.v1.SeedCatalogTenantEnabledRequest"> & {
+  /**
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+};
+
+/**
+ * Describes the message gibson.platform.v1.SeedCatalogTenantEnabledRequest.
+ * Use `create(SeedCatalogTenantEnabledRequestSchema)` to create a new message.
+ */
+export const SeedCatalogTenantEnabledRequestSchema: GenMessage<SeedCatalogTenantEnabledRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 16);
+
+/**
+ * SeedCatalogTenantEnabledResponse reports how many tuples were written.
+ *
+ * @generated from message gibson.platform.v1.SeedCatalogTenantEnabledResponse
+ */
+export type SeedCatalogTenantEnabledResponse = Message<"gibson.platform.v1.SeedCatalogTenantEnabledResponse"> & {
+  /**
+   * @generated from field: int32 tuples_written = 1;
+   */
+  tuplesWritten: number;
+};
+
+/**
+ * Describes the message gibson.platform.v1.SeedCatalogTenantEnabledResponse.
+ * Use `create(SeedCatalogTenantEnabledResponseSchema)` to create a new message.
+ */
+export const SeedCatalogTenantEnabledResponseSchema: GenMessage<SeedCatalogTenantEnabledResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 17);
+
+/**
+ * AuditEventMessage is the wire shape for EmitAuditEvent.
+ *
+ * @generated from message gibson.platform.v1.AuditEventMessage
+ */
+export type AuditEventMessage = Message<"gibson.platform.v1.AuditEventMessage"> & {
+  /**
+   * @generated from field: string type = 1;
+   */
+  type: string;
+
+  /**
+   * @generated from field: string actor_subject = 2;
+   */
+  actorSubject: string;
+
+  /**
+   * @generated from field: string actor_source = 3;
+   */
+  actorSource: string;
+
+  /**
+   * @generated from field: string tuple = 4;
+   */
+  tuple: string;
+
+  /**
+   * @generated from field: string action_class = 5;
+   */
+  actionClass: string;
+
+  /**
+   * @generated from field: string scope_type = 6;
+   */
+  scopeType: string;
+
+  /**
+   * @generated from field: string operation = 7;
+   */
+  operation: string;
+
+  /**
+   * @generated from field: string reason = 8;
+   */
+  reason: string;
+
+  /**
+   * @generated from field: string timestamp = 9;
+   */
+  timestamp: string;
+
+  /**
+   * @generated from field: map<string, string> fields = 10;
+   */
+  fields: { [key: string]: string };
+};
+
+/**
+ * Describes the message gibson.platform.v1.AuditEventMessage.
+ * Use `create(AuditEventMessageSchema)` to create a new message.
+ */
+export const AuditEventMessageSchema: GenMessage<AuditEventMessage> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 18);
+
+/**
+ * EmitAuditEventRequest carries the audit event to emit.
+ *
+ * @generated from message gibson.platform.v1.EmitAuditEventRequest
+ */
+export type EmitAuditEventRequest = Message<"gibson.platform.v1.EmitAuditEventRequest"> & {
+  /**
+   * @generated from field: gibson.platform.v1.AuditEventMessage event = 1;
+   */
+  event?: AuditEventMessage;
+};
+
+/**
+ * Describes the message gibson.platform.v1.EmitAuditEventRequest.
+ * Use `create(EmitAuditEventRequestSchema)` to create a new message.
+ */
+export const EmitAuditEventRequestSchema: GenMessage<EmitAuditEventRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 19);
+
+/**
+ * EmitAuditEventResponse confirms the event was emitted.
+ *
+ * @generated from message gibson.platform.v1.EmitAuditEventResponse
+ */
+export type EmitAuditEventResponse = Message<"gibson.platform.v1.EmitAuditEventResponse"> & {
+};
+
+/**
+ * Describes the message gibson.platform.v1.EmitAuditEventResponse.
+ * Use `create(EmitAuditEventResponseSchema)` to create a new message.
+ */
+export const EmitAuditEventResponseSchema: GenMessage<EmitAuditEventResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 20);
 
 /**
  * PlatformOperatorService provides platform-team operations on the Gibson daemon.
  * This service is restricted to callers with the "platform_operator" FGA relation
  * on system_tenant:_system.
  *
- * RPCs will be populated by the admin-services-completion spec.
- *
  * @generated from service gibson.platform.v1.PlatformOperatorService
  */
 export const PlatformOperatorService: GenService<{
+  /**
+   * Shutdown requests graceful shutdown of the daemon.
+   * Only works for local daemons (not when GIBSON_DAEMON_ADDRESS is set to remote).
+   *
+   * @generated from rpc gibson.platform.v1.PlatformOperatorService.Shutdown
+   */
+  shutdown: {
+    methodKind: "unary";
+    input: typeof ShutdownRequestSchema;
+    output: typeof ShutdownResponseSchema;
+  },
+  /**
+   * ImpersonateTenant requests a time-limited context token for the given tenant.
+   * Requires the "platform-operator" role.
+   *
+   * @generated from rpc gibson.platform.v1.PlatformOperatorService.ImpersonateTenant
+   */
+  impersonateTenant: {
+    methodKind: "unary";
+    input: typeof ImpersonateTenantRequestSchema;
+    output: typeof ImpersonateTenantResponseSchema;
+  },
+  /**
+   * RefreshToolCatalog triggers an immediate refresh of the sandboxed-tool
+   * catalog. Bypasses the scheduled interval — useful for CI to publish a
+   * new tool-runner image and immediately surface its parsers to the
+   * orchestrator. Only works on the replica currently holding the refresh
+   * leader lease; followers accept the call but defer to the leader's
+   * next scheduled tick. Requires the platform-operator FGA role.
+   *
+   * @generated from rpc gibson.platform.v1.PlatformOperatorService.RefreshToolCatalog
+   */
+  refreshToolCatalog: {
+    methodKind: "unary";
+    input: typeof RefreshToolCatalogRequestSchema;
+    output: typeof RefreshToolCatalogResponseSchema;
+  },
+  /**
+   * SetTenantQuota sets or updates the resource quotas for a tenant.
+   * Requires platform-operator role.
+   *
+   * Unimplemented: <owner-pending>
+   *
+   * @generated from rpc gibson.platform.v1.PlatformOperatorService.SetTenantQuota
+   */
+  setTenantQuota: {
+    methodKind: "unary";
+    input: typeof SetTenantQuotaRequestSchema;
+    output: typeof SetTenantQuotaResponseSchema;
+  },
+  /**
+   * WriteAccessTuples atomically adds and/or deletes FGA tuples on behalf of
+   * an authenticated caller.
+   *
+   * @generated from rpc gibson.platform.v1.PlatformOperatorService.WriteAccessTuples
+   */
+  writeAccessTuples: {
+    methodKind: "unary";
+    input: typeof WriteAccessTuplesRequestSchema;
+    output: typeof WriteAccessTuplesResponseSchema;
+  },
+  /**
+   * UpsertTenantQuota writes the tenant's runtime quota record to Postgres.
+   * Called by the operator's reconcile loop after resolving the plan.
+   *
+   * @generated from rpc gibson.platform.v1.PlatformOperatorService.UpsertTenantQuota
+   */
+  upsertTenantQuota: {
+    methodKind: "unary";
+    input: typeof UpsertTenantQuotaRequestSchema;
+    output: typeof UpsertTenantQuotaResponseSchema;
+  },
+  /**
+   * ListFeatureTuples enumerates the tenant feature tuples currently set.
+   *
+   * @generated from rpc gibson.platform.v1.PlatformOperatorService.ListFeatureTuples
+   */
+  listFeatureTuples: {
+    methodKind: "unary";
+    input: typeof ListFeatureTuplesRequestSchema;
+    output: typeof ListFeatureTuplesResponseSchema;
+  },
+  /**
+   * SeedCatalogTenantEnabled writes tenant_enabled tuples for all platform-enabled items.
+   *
+   * @generated from rpc gibson.platform.v1.PlatformOperatorService.SeedCatalogTenantEnabled
+   */
+  seedCatalogTenantEnabled: {
+    methodKind: "unary";
+    input: typeof SeedCatalogTenantEnabledRequestSchema;
+    output: typeof SeedCatalogTenantEnabledResponseSchema;
+  },
+  /**
+   * EmitAuditEvent lets an operator/platform workload forward a structured
+   * audit event onto the daemon's emitter.
+   *
+   * @generated from rpc gibson.platform.v1.PlatformOperatorService.EmitAuditEvent
+   */
+  emitAuditEvent: {
+    methodKind: "unary";
+    input: typeof EmitAuditEventRequestSchema;
+    output: typeof EmitAuditEventResponseSchema;
+  },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_platform_v1_platform_operator, 0);
 

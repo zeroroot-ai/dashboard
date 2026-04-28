@@ -6,18 +6,20 @@
  * Re-validates the manifest server-side, intersects the requested
  * permissions with the caller's current access, mints a tenant-scoped
  * `agent_principal` id, and batch-writes `component_*_enabled` tuples via
- * DaemonAdminService.WriteAccessTuples. On any failure, issues a
+ * PlatformOperatorService.WriteAccessTuples. On any failure, issues a
  * compensating delete before surfacing the error.
  *
  * Defence-in-depth: we refuse to write a tuple the caller lacks access to,
  * regardless of what `permissions.yaml` declared required.
  *
  * Spec: access-matrix-finish task 13, R5 AC 1-4, 6, 9.
+ * Migration: admin-services-completion task 16 — WriteAccessTuples moved to
+ * PlatformOperatorService.
  */
 
 import { randomUUID } from "node:crypto";
 
-import { DaemonAdminService } from "@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb";
+import { PlatformOperatorService } from "@/src/gen/gibson/platform/v1/platform_operator_pb";
 import { DiscoveryService } from "@/src/gen/gibson/daemon/discovery/v1/discovery_pb";
 import { serviceClient } from "@/src/lib/gibson-client";
 import {
@@ -140,7 +142,7 @@ export async function installAgentAction(
   }
 
   // 5. All-or-nothing: compensating delete on any batch failure.
-  const client = serviceClient(DaemonAdminService, tenantId);
+  const client = serviceClient(PlatformOperatorService, tenantId);
   try {
     await client.writeAccessTuples({
       add: tuples,

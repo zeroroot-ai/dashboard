@@ -13,14 +13,14 @@ vi.mock("@/src/lib/auth", () => ({
 }));
 
 // installAgentAction now uses serviceClient(svc, tenantId) for both the
-// DaemonAdminService (writeAccessTuples) and the DiscoveryService
+// PlatformOperatorService (writeAccessTuples) and the DiscoveryService
 // (validateComponent). One mock returns a stub keyed on the service it's
 // asked for so we don't have to mock the entire gibson-client surface.
 const mockWriteAccessTuples = vi.fn();
 const mockValidateComponent = vi.fn();
 vi.mock("@/src/lib/gibson-client", () => ({
   serviceClient: (svc: { typeName?: string }) => {
-    // discovery validateComponent vs admin writeAccessTuples — the test
+    // discovery validateComponent vs platform writeAccessTuples — the test
     // matches on the property the SUT will reach for next.
     return {
       validateComponent: mockValidateComponent,
@@ -32,8 +32,8 @@ vi.mock("@/src/lib/gibson-client", () => ({
 vi.mock("@/src/gen/gibson/daemon/discovery/v1/discovery_pb", () => ({
   DiscoveryService: { typeName: "discovery" },
 }));
-vi.mock("@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb", () => ({
-  DaemonAdminService: { typeName: "admin" },
+vi.mock("@/src/gen/gibson/platform/v1/platform_operator_pb", () => ({
+  PlatformOperatorService: { typeName: "platform_operator" },
 }));
 
 const mockList = vi.fn();

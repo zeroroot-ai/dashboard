@@ -2,7 +2,7 @@
  * GET /api/settings/providers/default — retrieve the tenant's default provider
  * PUT /api/settings/providers/default — designate a provider as the default
  *
- * Both handlers delegate to the daemon DaemonAdminService RPCs.
+ * Both handlers delegate to the daemon TenantAdminService RPCs.
  * No storage logic lives here — this file is delegation-only.
  */
 

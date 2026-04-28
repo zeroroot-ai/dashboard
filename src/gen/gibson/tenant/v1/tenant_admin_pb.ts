@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/tenant_admin.proto.
  */
 export const file_gibson_tenant_v1_tenant_admin: GenFile = /*@__PURE__*/
-  fileDesc("CiNnaWJzb24vdGVuYW50L3YxL3RlbmFudF9hZG1pbi5wcm90bxIQZ2lic29uLnRlbmFudC52MSI5Cg5Db21wb25lbnRHcmFudBIVCg1jb21wb25lbnRfcmVmGAEgASgJEhAKCHJlbGF0aW9uGAIgASgJIqoBChpDcmVhdGVBZ2VudElkZW50aXR5UmVxdWVzdBIMCgRuYW1lGAEgASgJEi0KBGtpbmQYAiABKA4yHy5naWJzb24udGVuYW50LnYxLlByaW5jaXBhbEtpbmQSEwoLZGVzY3JpcHRpb24YAyABKAkSOgoQY29tcG9uZW50X2dyYW50cxgEIAMoCzIgLmdpYnNvbi50ZW5hbnQudjEuQ29tcG9uZW50R3JhbnQixgEKG0NyZWF0ZUFnZW50SWRlbnRpdHlSZXNwb25zZRIUCgxwcmluY2lwYWxfaWQYASABKAkSLQoEa2luZBgCIAEoDjIfLmdpYnNvbi50ZW5hbnQudjEuUHJpbmNpcGFsS2luZBIMCgRuYW1lGAMgASgJEhEKCWNsaWVudF9pZBgEIAEoCRIVCg1jbGllbnRfc2VjcmV0GAUgASgJEhIKCmdpYnNvbl91cmwYBiABKAkSFgoOZW5yb2xsX2NvbW1hbmQYByABKAkieQoaTGlzdEFnZW50SWRlbnRpdGllc1JlcXVlc3QSEQoJcGFnZV9zaXplGAEgASgFEhIKCnBhZ2VfdG9rZW4YAiABKAkSNAoLa2luZF9maWx0ZXIYAyABKA4yHy5naWJzb24udGVuYW50LnYxLlByaW5jaXBhbEtpbmQijwIKDUFnZW50SWRlbnRpdHkSFAoMcHJpbmNpcGFsX2lkGAEgASgJEi0KBGtpbmQYAiABKA4yHy5naWJzb24udGVuYW50LnYxLlByaW5jaXBhbEtpbmQSDAoEbmFtZRgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIuCgpjcmVhdGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI5ChVsYXN0X2F1dGhlbnRpY2F0ZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg8KB3Jldm9rZWQYByABKAgSGgoSY3JlYXRlZF9ieV9zdWJqZWN0GAggASgJImsKG0xpc3RBZ2VudElkZW50aXRpZXNSZXNwb25zZRIzCgppZGVudGl0aWVzGAEgAygLMh8uZ2lic29uLnRlbmFudC52MS5BZ2VudElkZW50aXR5EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSIyChpSZXZva2VBZ2VudElkZW50aXR5UmVxdWVzdBIUCgxwcmluY2lwYWxfaWQYASABKAkiHQobUmV2b2tlQWdlbnRJZGVudGl0eVJlc3BvbnNlKn0KDVByaW5jaXBhbEtpbmQSHgoaUFJJTkNJUEFMX0tJTkRfVU5TUEVDSUZJRUQQABIYChRQUklOQ0lQQUxfS0lORF9BR0VOVBABEhcKE1BSSU5DSVBBTF9LSU5EX1RPT0wQAhIZChVQUklOQ0lQQUxfS0lORF9QTFVHSU4QAzLwAgoSVGVuYW50QWRtaW5TZXJ2aWNlEnIKE0NyZWF0ZUFnZW50SWRlbnRpdHkSLC5naWJzb24udGVuYW50LnYxLkNyZWF0ZUFnZW50SWRlbnRpdHlSZXF1ZXN0Gi0uZ2lic29uLnRlbmFudC52MS5DcmVhdGVBZ2VudElkZW50aXR5UmVzcG9uc2UScgoTTGlzdEFnZW50SWRlbnRpdGllcxIsLmdpYnNvbi50ZW5hbnQudjEuTGlzdEFnZW50SWRlbnRpdGllc1JlcXVlc3QaLS5naWJzb24udGVuYW50LnYxLkxpc3RBZ2VudElkZW50aXRpZXNSZXNwb25zZRJyChNSZXZva2VBZ2VudElkZW50aXR5EiwuZ2lic29uLnRlbmFudC52MS5SZXZva2VBZ2VudElkZW50aXR5UmVxdWVzdBotLmdpYnNvbi50ZW5hbnQudjEuUmV2b2tlQWdlbnRJZGVudGl0eVJlc3BvbnNlQk1aS2dpdGh1Yi5jb20vemVyby1kYXktYWkvZ2lic29uL2ludGVybmFsL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_google_protobuf_timestamp]);
+  fileDesc("CiNnaWJzb24vdGVuYW50L3YxL3RlbmFudF9hZG1pbi5wcm90bxIQZ2lic29uLnRlbmFudC52MSI5Cg5Db21wb25lbnRHcmFudBIVCg1jb21wb25lbnRfcmVmGAEgASgJEhAKCHJlbGF0aW9uGAIgASgJIqoBChpDcmVhdGVBZ2VudElkZW50aXR5UmVxdWVzdBIMCgRuYW1lGAEgASgJEi0KBGtpbmQYAiABKA4yHy5naWJzb24udGVuYW50LnYxLlByaW5jaXBhbEtpbmQSEwoLZGVzY3JpcHRpb24YAyABKAkSOgoQY29tcG9uZW50X2dyYW50cxgEIAMoCzIgLmdpYnNvbi50ZW5hbnQudjEuQ29tcG9uZW50R3JhbnQixgEKG0NyZWF0ZUFnZW50SWRlbnRpdHlSZXNwb25zZRIUCgxwcmluY2lwYWxfaWQYASABKAkSLQoEa2luZBgCIAEoDjIfLmdpYnNvbi50ZW5hbnQudjEuUHJpbmNpcGFsS2luZBIMCgRuYW1lGAMgASgJEhEKCWNsaWVudF9pZBgEIAEoCRIVCg1jbGllbnRfc2VjcmV0GAUgASgJEhIKCmdpYnNvbl91cmwYBiABKAkSFgoOZW5yb2xsX2NvbW1hbmQYByABKAkieQoaTGlzdEFnZW50SWRlbnRpdGllc1JlcXVlc3QSEQoJcGFnZV9zaXplGAEgASgFEhIKCnBhZ2VfdG9rZW4YAiABKAkSNAoLa2luZF9maWx0ZXIYAyABKA4yHy5naWJzb24udGVuYW50LnYxLlByaW5jaXBhbEtpbmQijwIKDUFnZW50SWRlbnRpdHkSFAoMcHJpbmNpcGFsX2lkGAEgASgJEi0KBGtpbmQYAiABKA4yHy5naWJzb24udGVuYW50LnYxLlByaW5jaXBhbEtpbmQSDAoEbmFtZRgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIuCgpjcmVhdGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI5ChVsYXN0X2F1dGhlbnRpY2F0ZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg8KB3Jldm9rZWQYByABKAgSGgoSY3JlYXRlZF9ieV9zdWJqZWN0GAggASgJImsKG0xpc3RBZ2VudElkZW50aXRpZXNSZXNwb25zZRIzCgppZGVudGl0aWVzGAEgAygLMh8uZ2lic29uLnRlbmFudC52MS5BZ2VudElkZW50aXR5EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSIyChpSZXZva2VBZ2VudElkZW50aXR5UmVxdWVzdBIUCgxwcmluY2lwYWxfaWQYASABKAkiHQobUmV2b2tlQWdlbnRJZGVudGl0eVJlc3BvbnNlIjgKI0dldFRlbmFudExhbmdmdXNlQ3JlZGVudGlhbHNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSJwCiRHZXRUZW5hbnRMYW5nZnVzZUNyZWRlbnRpYWxzUmVzcG9uc2USEgoKcHVibGljX2tleRgBIAEoCRISCgpzZWNyZXRfa2V5GAIgASgJEgwKBGhvc3QYAyABKAkSEgoKcHJvamVjdF9pZBgEIAEoCSKCAQojU2V0VGVuYW50TGFuZ2Z1c2VDcmVkZW50aWFsc1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhIKCnB1YmxpY19rZXkYAiABKAkSEgoKc2VjcmV0X2tleRgDIAEoCRIMCgRob3N0GAQgASgJEhIKCnByb2plY3RfaWQYBSABKAkiJgokU2V0VGVuYW50TGFuZ2Z1c2VDcmVkZW50aWFsc1Jlc3BvbnNlIjsKJkRlbGV0ZVRlbmFudExhbmdmdXNlQ3JlZGVudGlhbHNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSIpCidEZWxldGVUZW5hbnRMYW5nZnVzZUNyZWRlbnRpYWxzUmVzcG9uc2UiLgoZR2V0T25ib2FyZGluZ1N0YXRlUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAki5wEKGkdldE9uYm9hcmRpbmdTdGF0ZVJlc3BvbnNlEhQKDGN1cnJlbnRfc3RlcBgBIAEoCRIXCg9jb21wbGV0ZWRfc3RlcHMYAiADKAkSUQoLc2V0dXBfdGFza3MYAyADKAsyPC5naWJzb24udGVuYW50LnYxLkdldE9uYm9hcmRpbmdTdGF0ZVJlc3BvbnNlLlNldHVwVGFza3NFbnRyeRIUCgxjb21wbGV0ZWRfYXQYBCABKAkaMQoPU2V0dXBUYXNrc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEi6AEKHFVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhQKDGN1cnJlbnRfc3RlcBgCIAEoCRIXCg9jb21wbGV0ZWRfc3RlcHMYAyADKAkSUwoLc2V0dXBfdGFza3MYBCADKAsyPi5naWJzb24udGVuYW50LnYxLlVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlcXVlc3QuU2V0dXBUYXNrc0VudHJ5GjEKD1NldHVwVGFza3NFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIh8KHVVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlc3BvbnNlImAKC1RlbmFudFF1b3RhEhQKDG1heF9taXNzaW9ucxgBIAEoBRISCgptYXhfYWdlbnRzGAIgASgFEhQKDG1heF9maW5kaW5ncxgDIAEoAxIRCglwbGFuX3RpZXIYBCABKAkiKgoVR2V0VGVuYW50UXVvdGFSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSLXAgoWR2V0VGVuYW50UXVvdGFSZXNwb25zZRIsCgVxdW90YRgBIAEoCzIdLmdpYnNvbi50ZW5hbnQudjEuVGVuYW50UXVvdGESDQoFc2VhdHMYAiABKAUSGQoRY29uY3VycmVudF9hZ2VudHMYAyABKAUSEgoKc3RvcmFnZV9nYhgEIAEoBRIWCg5yZXRlbnRpb25fZGF5cxgFIAEoBRIiChpzYW5kYm94X2xhdW5jaGVzX3Blcl9tb250aBgGIAEoBRISCgp1cGRhdGVkX2F0GAcgASgJEhUKDWN1cnJlbnRfc2VhdHMYCCABKAUSIQoZY3VycmVudF9jb25jdXJyZW50X2FnZW50cxgJIAEoBRIaChJjdXJyZW50X3N0b3JhZ2VfZ2IYCiABKAUSKwojY3VycmVudF9zYW5kYm94X2xhdW5jaGVzX3RoaXNfbW9udGgYCyABKAUioQIKCkF1ZGl0RXZlbnQSEgoKZXZlbnRfdHlwZRgBIAEoCRIRCgl0aW1lc3RhbXAYAiABKAkSFQoNYWN0b3JfdXNlcl9pZBgDIAEoCRITCgthY3Rvcl9lbWFpbBgEIAEoCRIRCgl0ZW5hbnRfaWQYBSABKAkSFgoOdGFyZ2V0X3VzZXJfaWQYBiABKAkSFwoPdGFyZ2V0X3Jlc291cmNlGAcgASgJEjoKB2RldGFpbHMYCCADKAsyKS5naWJzb24udGVuYW50LnYxLkF1ZGl0RXZlbnQuRGV0YWlsc0VudHJ5EhAKCHRyYWNlX2lkGAkgASgJGi4KDERldGFpbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIrABChZMaXN0QXVkaXRFdmVudHNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRITCgtldmVudF90eXBlcxgCIAMoCRIVCg1hY3Rvcl91c2VyX2lkGAMgASgJEhQKDHRhcmdldF9tYXRjaBgEIAEoCRIRCglmcm9tX3RpbWUYBSABKAkSDwoHdG9fdGltZRgGIAEoCRINCgVsaW1pdBgHIAEoBRIOCgZjdXJzb3IYCCABKAkiXAoXTGlzdEF1ZGl0RXZlbnRzUmVzcG9uc2USLAoGZXZlbnRzGAEgAygLMhwuZ2lic29uLnRlbmFudC52MS5BdWRpdEV2ZW50EhMKC25leHRfY3Vyc29yGAIgASgJIlQKDkZpbmRpbmdGaWx0ZXJzEhAKCHNldmVyaXR5GAEgAygJEgwKBHR5cGUYAiADKAkSEgoKbWlzc2lvbl9pZBgDIAEoCRIOCgZzZWFyY2gYBCABKAkiuQEKFUV4cG9ydEZpbmRpbmdzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDgoGZm9ybWF0GAIgASgJEhMKC2ZpbmRpbmdfaWRzGAMgAygJEjEKB2ZpbHRlcnMYBCABKAsyIC5naWJzb24udGVuYW50LnYxLkZpbmRpbmdGaWx0ZXJzEhsKE2luY2x1ZGVfcmVtZWRpYXRpb24YBSABKAgSGAoQaW5jbHVkZV9ldmlkZW5jZRgGIAEoCCJXChZFeHBvcnRGaW5kaW5nc1Jlc3BvbnNlEgwKBGRhdGEYASABKAwSDgoGZm9ybWF0GAIgASgJEhAKCGZpbGVuYW1lGAMgASgJEg0KBWNvdW50GAQgASgFIloKF1NhdmVNaXNzaW9uRHJhZnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEgwKBHlhbWwYAyABKAkSEAoIZHJhZnRfaWQYBCABKAkiLAoYU2F2ZU1pc3Npb25EcmFmdFJlc3BvbnNlEhAKCGRyYWZ0X2lkGAEgASgJIi0KGExpc3RNaXNzaW9uRHJhZnRzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiUAoMTWlzc2lvbkRyYWZ0EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEgoKY3JlYXRlZF9hdBgDIAEoCRISCgp1cGRhdGVkX2F0GAQgASgJIksKGUxpc3RNaXNzaW9uRHJhZnRzUmVzcG9uc2USLgoGZHJhZnRzGAEgAygLMh4uZ2lic29uLnRlbmFudC52MS5NaXNzaW9uRHJhZnQiqwIKDlByb3ZpZGVyUmVjb3JkEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSDAoEdHlwZRgDIAEoCRIVCg1kZWZhdWx0X21vZGVsGAQgASgJEhIKCmlzX2RlZmF1bHQYBSABKAgSDwoHZW5hYmxlZBgGIAEoCBJTChJjcmVkZW50aWFsc19tYXNrZWQYByADKAsyNy5naWJzb24udGVuYW50LnYxLlByb3ZpZGVyUmVjb3JkLkNyZWRlbnRpYWxzTWFza2VkRW50cnkSEgoKY3JlYXRlZF9hdBgIIAEoCRISCgp1cGRhdGVkX2F0GAkgASgJGjgKFkNyZWRlbnRpYWxzTWFza2VkRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLhAQoTUHJvdmlkZXJDb25maWdJbnB1dBIMCgRuYW1lGAEgASgJEgwKBHR5cGUYAiABKAkSFQoNZGVmYXVsdF9tb2RlbBgDIAEoCRJLCgtjcmVkZW50aWFscxgEIAMoCzI2LmdpYnNvbi50ZW5hbnQudjEuUHJvdmlkZXJDb25maWdJbnB1dC5DcmVkZW50aWFsc0VudHJ5EhYKDnNldF9hc19kZWZhdWx0GAUgASgIGjIKEENyZWRlbnRpYWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJRCg5SZXNwb25zZUZvcm1hdBIMCgR0eXBlGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLc2NoZW1hX2pzb24YAyABKAkSDgoGc3RyaWN0GAQgASgIIlEKDVRvb2xDYWxsRGVsdGESDQoFaW5kZXgYASABKAUSCgoCaWQYAiABKAkSDAoEbmFtZRgDIAEoCRIXCg9hcmd1bWVudHNfZGVsdGEYBCABKAkiUgoNTExNVG9rZW5Vc2FnZRIUCgxpbnB1dF90b2tlbnMYASABKAUSFQoNb3V0cHV0X3Rva2VucxgCIAEoBRIUCgx0b3RhbF90b2tlbnMYAyABKAUiOgoLTExNVG9vbENhbGwSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIRCglhcmd1bWVudHMYAyABKAkiSAoNTExNVG9vbFJlc3VsdBIUCgx0b29sX2NhbGxfaWQYASABKAkSDwoHY29udGVudBgCIAEoCRIQCghpc19lcnJvchgDIAEoCCJICgpMTE1Ub29sRGVmEgwKBG5hbWUYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSFwoPcGFyYW1ldGVyc19qc29uGAMgASgJIqoBChFMTE1NZXNzYWdlQ29udGVudBIMCgRyb2xlGAEgASgJEg8KB2NvbnRlbnQYAiABKAkSMQoKdG9vbF9jYWxscxgDIAMoCzIdLmdpYnNvbi50ZW5hbnQudjEuTExNVG9vbENhbGwSNQoMdG9vbF9yZXN1bHRzGAQgAygLMh8uZ2lic29uLnRlbmFudC52MS5MTE1Ub29sUmVzdWx0EgwKBG5hbWUYBSABKAkiSAoUUHJvdmlkZXJIYXJuZXNzRXJyb3ISDAoEY29kZRgBIAEoBRIPCgdtZXNzYWdlGAIgASgJEhEKCXJldHJ5YWJsZRgDIAEoCCJVCgxTdHJlYW1GaW5pc2gSFQoNZmluaXNoX3JlYXNvbhgBIAEoCRIuCgV1c2FnZRgCIAEoCzIfLmdpYnNvbi50ZW5hbnQudjEuTExNVG9rZW5Vc2FnZSIWChRMaXN0UHJvdmlkZXJzUmVxdWVzdCJMChVMaXN0UHJvdmlkZXJzUmVzcG9uc2USMwoJcHJvdmlkZXJzGAEgAygLMiAuZ2lic29uLnRlbmFudC52MS5Qcm92aWRlclJlY29yZCIiChJHZXRQcm92aWRlclJlcXVlc3QSDAoEbmFtZRgBIAEoCSJJChNHZXRQcm92aWRlclJlc3BvbnNlEjIKCHByb3ZpZGVyGAEgASgLMiAuZ2lic29uLnRlbmFudC52MS5Qcm92aWRlclJlY29yZCJNChVDcmVhdGVQcm92aWRlclJlcXVlc3QSNAoFaW5wdXQYASABKAsyJS5naWJzb24udGVuYW50LnYxLlByb3ZpZGVyQ29uZmlnSW5wdXQiTAoWQ3JlYXRlUHJvdmlkZXJSZXNwb25zZRIyCghwcm92aWRlchgBIAEoCzIgLmdpYnNvbi50ZW5hbnQudjEuUHJvdmlkZXJSZWNvcmQiWwoVVXBkYXRlUHJvdmlkZXJSZXF1ZXN0EgwKBG5hbWUYASABKAkSNAoFaW5wdXQYAiABKAsyJS5naWJzb24udGVuYW50LnYxLlByb3ZpZGVyQ29uZmlnSW5wdXQiTAoWVXBkYXRlUHJvdmlkZXJSZXNwb25zZRIyCghwcm92aWRlchgBIAEoCzIgLmdpYnNvbi50ZW5hbnQudjEuUHJvdmlkZXJSZWNvcmQiJQoVRGVsZXRlUHJvdmlkZXJSZXF1ZXN0EgwKBG5hbWUYASABKAkiGAoWRGVsZXRlUHJvdmlkZXJSZXNwb25zZSJLChNUZXN0UHJvdmlkZXJSZXF1ZXN0EjQKBWlucHV0GAEgASgLMiUuZ2lic29uLnRlbmFudC52MS5Qcm92aWRlckNvbmZpZ0lucHV0IlQKFFRlc3RQcm92aWRlclJlc3BvbnNlEgoKAm9rGAEgASgIEhIKCmxhdGVuY3lfbXMYAiABKAMSDQoFbW9kZWwYAyABKAkSDQoFZXJyb3IYBCABKAkiKAoYR2V0UHJvdmlkZXJIZWFsdGhSZXF1ZXN0EgwKBG5hbWUYASABKAkiVAoZR2V0UHJvdmlkZXJIZWFsdGhSZXNwb25zZRIPCgdoZWFsdGh5GAEgASgIEhcKD2xhc3RfY2hlY2tlZF9hdBgCIAEoCRINCgVlcnJvchgDIAEoCSIbChlHZXREZWZhdWx0UHJvdmlkZXJSZXF1ZXN0IlAKGkdldERlZmF1bHRQcm92aWRlclJlc3BvbnNlEjIKCHByb3ZpZGVyGAEgASgLMiAuZ2lic29uLnRlbmFudC52MS5Qcm92aWRlclJlY29yZCIpChlTZXREZWZhdWx0UHJvdmlkZXJSZXF1ZXN0EgwKBG5hbWUYASABKAkiUAoaU2V0RGVmYXVsdFByb3ZpZGVyUmVzcG9uc2USMgoIcHJvdmlkZXIYASABKAsyIC5naWJzb24udGVuYW50LnYxLlByb3ZpZGVyUmVjb3JkIhkKF0dldEZhbGxiYWNrQ2hhaW5SZXF1ZXN0IjIKGEdldEZhbGxiYWNrQ2hhaW5SZXNwb25zZRIWCg5wcm92aWRlcl9uYW1lcxgBIAMoCSIxChdTZXRGYWxsYmFja0NoYWluUmVxdWVzdBIWCg5wcm92aWRlcl9uYW1lcxgBIAMoCSIyChhTZXRGYWxsYmFja0NoYWluUmVzcG9uc2USFgoOcHJvdmlkZXJfbmFtZXMYASADKAki7wIKEUV4ZWN1dGVMTE1SZXF1ZXN0EhUKDXByb3ZpZGVyX25hbWUYASABKAkSDQoFbW9kZWwYAiABKAkSNQoIbWVzc2FnZXMYAyADKAsyIy5naWJzb24udGVuYW50LnYxLkxMTU1lc3NhZ2VDb250ZW50EisKBXRvb2xzGAQgAygLMhwuZ2lic29uLnRlbmFudC52MS5MTE1Ub29sRGVmEj4KD3Jlc3BvbnNlX2Zvcm1hdBgFIAEoCzIgLmdpYnNvbi50ZW5hbnQudjEuUmVzcG9uc2VGb3JtYXRIAIgBARIYCgt0ZW1wZXJhdHVyZRgGIAEoAUgBiAEBEhcKCm1heF90b2tlbnMYByABKAVIAogBARISCgV0b3BfcBgIIAEoAUgDiAEBEgwKBHN0b3AYCSADKAlCEgoQX3Jlc3BvbnNlX2Zvcm1hdEIOCgxfdGVtcGVyYXR1cmVCDQoLX21heF90b2tlbnNCCAoGX3RvcF9wIp8BChJFeGVjdXRlTExNUmVzcG9uc2USDwoHY29udGVudBgBIAEoCRIxCgp0b29sX2NhbGxzGAIgAygLMh0uZ2lic29uLnRlbmFudC52MS5MTE1Ub29sQ2FsbBIVCg1maW5pc2hfcmVhc29uGAMgASgJEi4KBXVzYWdlGAQgASgLMh8uZ2lic29uLnRlbmFudC52MS5MTE1Ub2tlblVzYWdlIu4CChBTdHJlYW1MTE1SZXF1ZXN0EhUKDXByb3ZpZGVyX25hbWUYASABKAkSDQoFbW9kZWwYAiABKAkSNQoIbWVzc2FnZXMYAyADKAsyIy5naWJzb24udGVuYW50LnYxLkxMTU1lc3NhZ2VDb250ZW50EisKBXRvb2xzGAQgAygLMhwuZ2lic29uLnRlbmFudC52MS5MTE1Ub29sRGVmEj4KD3Jlc3BvbnNlX2Zvcm1hdBgFIAEoCzIgLmdpYnNvbi50ZW5hbnQudjEuUmVzcG9uc2VGb3JtYXRIAIgBARIYCgt0ZW1wZXJhdHVyZRgGIAEoAUgBiAEBEhcKCm1heF90b2tlbnMYByABKAVIAogBARISCgV0b3BfcBgIIAEoAUgDiAEBEgwKBHN0b3AYCSADKAlCEgoQX3Jlc3BvbnNlX2Zvcm1hdEIOCgxfdGVtcGVyYXR1cmVCDQoLX21heF90b2tlbnNCCAoGX3RvcF9wItsBChFTdHJlYW1MTE1SZXNwb25zZRIUCgp0ZXh0X2RlbHRhGAEgASgJSAASOgoPdG9vbF9jYWxsX2RlbHRhGAIgASgLMh8uZ2lic29uLnRlbmFudC52MS5Ub29sQ2FsbERlbHRhSAASMAoGZmluaXNoGAMgASgLMh4uZ2lic29uLnRlbmFudC52MS5TdHJlYW1GaW5pc2hIABI3CgVlcnJvchgEIAEoCzImLmdpYnNvbi50ZW5hbnQudjEuUHJvdmlkZXJIYXJuZXNzRXJyb3JIAEIJCgdwYXlsb2FkKn0KDVByaW5jaXBhbEtpbmQSHgoaUFJJTkNJUEFMX0tJTkRfVU5TUEVDSUZJRUQQABIYChRQUklOQ0lQQUxfS0lORF9BR0VOVBABEhcKE1BSSU5DSVBBTF9LSU5EX1RPT0wQAhIZChVQUklOQ0lQQUxfS0lORF9QTFVHSU4QAzLCFgoSVGVuYW50QWRtaW5TZXJ2aWNlEnIKE0NyZWF0ZUFnZW50SWRlbnRpdHkSLC5naWJzb24udGVuYW50LnYxLkNyZWF0ZUFnZW50SWRlbnRpdHlSZXF1ZXN0Gi0uZ2lic29uLnRlbmFudC52MS5DcmVhdGVBZ2VudElkZW50aXR5UmVzcG9uc2UScgoTTGlzdEFnZW50SWRlbnRpdGllcxIsLmdpYnNvbi50ZW5hbnQudjEuTGlzdEFnZW50SWRlbnRpdGllc1JlcXVlc3QaLS5naWJzb24udGVuYW50LnYxLkxpc3RBZ2VudElkZW50aXRpZXNSZXNwb25zZRJyChNSZXZva2VBZ2VudElkZW50aXR5EiwuZ2lic29uLnRlbmFudC52MS5SZXZva2VBZ2VudElkZW50aXR5UmVxdWVzdBotLmdpYnNvbi50ZW5hbnQudjEuUmV2b2tlQWdlbnRJZGVudGl0eVJlc3BvbnNlEo0BChxHZXRUZW5hbnRMYW5nZnVzZUNyZWRlbnRpYWxzEjUuZ2lic29uLnRlbmFudC52MS5HZXRUZW5hbnRMYW5nZnVzZUNyZWRlbnRpYWxzUmVxdWVzdBo2LmdpYnNvbi50ZW5hbnQudjEuR2V0VGVuYW50TGFuZ2Z1c2VDcmVkZW50aWFsc1Jlc3BvbnNlEo0BChxTZXRUZW5hbnRMYW5nZnVzZUNyZWRlbnRpYWxzEjUuZ2lic29uLnRlbmFudC52MS5TZXRUZW5hbnRMYW5nZnVzZUNyZWRlbnRpYWxzUmVxdWVzdBo2LmdpYnNvbi50ZW5hbnQudjEuU2V0VGVuYW50TGFuZ2Z1c2VDcmVkZW50aWFsc1Jlc3BvbnNlEpYBCh9EZWxldGVUZW5hbnRMYW5nZnVzZUNyZWRlbnRpYWxzEjguZ2lic29uLnRlbmFudC52MS5EZWxldGVUZW5hbnRMYW5nZnVzZUNyZWRlbnRpYWxzUmVxdWVzdBo5LmdpYnNvbi50ZW5hbnQudjEuRGVsZXRlVGVuYW50TGFuZ2Z1c2VDcmVkZW50aWFsc1Jlc3BvbnNlEm8KEkdldE9uYm9hcmRpbmdTdGF0ZRIrLmdpYnNvbi50ZW5hbnQudjEuR2V0T25ib2FyZGluZ1N0YXRlUmVxdWVzdBosLmdpYnNvbi50ZW5hbnQudjEuR2V0T25ib2FyZGluZ1N0YXRlUmVzcG9uc2USeAoVVXBkYXRlT25ib2FyZGluZ1N0YXRlEi4uZ2lic29uLnRlbmFudC52MS5VcGRhdGVPbmJvYXJkaW5nU3RhdGVSZXF1ZXN0Gi8uZ2lic29uLnRlbmFudC52MS5VcGRhdGVPbmJvYXJkaW5nU3RhdGVSZXNwb25zZRJjCg5HZXRUZW5hbnRRdW90YRInLmdpYnNvbi50ZW5hbnQudjEuR2V0VGVuYW50UXVvdGFSZXF1ZXN0GiguZ2lic29uLnRlbmFudC52MS5HZXRUZW5hbnRRdW90YVJlc3BvbnNlEmYKD0xpc3RBdWRpdEV2ZW50cxIoLmdpYnNvbi50ZW5hbnQudjEuTGlzdEF1ZGl0RXZlbnRzUmVxdWVzdBopLmdpYnNvbi50ZW5hbnQudjEuTGlzdEF1ZGl0RXZlbnRzUmVzcG9uc2USYwoORXhwb3J0RmluZGluZ3MSJy5naWJzb24udGVuYW50LnYxLkV4cG9ydEZpbmRpbmdzUmVxdWVzdBooLmdpYnNvbi50ZW5hbnQudjEuRXhwb3J0RmluZGluZ3NSZXNwb25zZRJpChBTYXZlTWlzc2lvbkRyYWZ0EikuZ2lic29uLnRlbmFudC52MS5TYXZlTWlzc2lvbkRyYWZ0UmVxdWVzdBoqLmdpYnNvbi50ZW5hbnQudjEuU2F2ZU1pc3Npb25EcmFmdFJlc3BvbnNlEmwKEUxpc3RNaXNzaW9uRHJhZnRzEiouZ2lic29uLnRlbmFudC52MS5MaXN0TWlzc2lvbkRyYWZ0c1JlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkxpc3RNaXNzaW9uRHJhZnRzUmVzcG9uc2USYAoNTGlzdFByb3ZpZGVycxImLmdpYnNvbi50ZW5hbnQudjEuTGlzdFByb3ZpZGVyc1JlcXVlc3QaJy5naWJzb24udGVuYW50LnYxLkxpc3RQcm92aWRlcnNSZXNwb25zZRJaCgtHZXRQcm92aWRlchIkLmdpYnNvbi50ZW5hbnQudjEuR2V0UHJvdmlkZXJSZXF1ZXN0GiUuZ2lic29uLnRlbmFudC52MS5HZXRQcm92aWRlclJlc3BvbnNlEmMKDkNyZWF0ZVByb3ZpZGVyEicuZ2lic29uLnRlbmFudC52MS5DcmVhdGVQcm92aWRlclJlcXVlc3QaKC5naWJzb24udGVuYW50LnYxLkNyZWF0ZVByb3ZpZGVyUmVzcG9uc2USYwoOVXBkYXRlUHJvdmlkZXISJy5naWJzb24udGVuYW50LnYxLlVwZGF0ZVByb3ZpZGVyUmVxdWVzdBooLmdpYnNvbi50ZW5hbnQudjEuVXBkYXRlUHJvdmlkZXJSZXNwb25zZRJjCg5EZWxldGVQcm92aWRlchInLmdpYnNvbi50ZW5hbnQudjEuRGVsZXRlUHJvdmlkZXJSZXF1ZXN0GiguZ2lic29uLnRlbmFudC52MS5EZWxldGVQcm92aWRlclJlc3BvbnNlEl0KDFRlc3RQcm92aWRlchIlLmdpYnNvbi50ZW5hbnQudjEuVGVzdFByb3ZpZGVyUmVxdWVzdBomLmdpYnNvbi50ZW5hbnQudjEuVGVzdFByb3ZpZGVyUmVzcG9uc2USbAoRR2V0UHJvdmlkZXJIZWFsdGgSKi5naWJzb24udGVuYW50LnYxLkdldFByb3ZpZGVySGVhbHRoUmVxdWVzdBorLmdpYnNvbi50ZW5hbnQudjEuR2V0UHJvdmlkZXJIZWFsdGhSZXNwb25zZRJvChJHZXREZWZhdWx0UHJvdmlkZXISKy5naWJzb24udGVuYW50LnYxLkdldERlZmF1bHRQcm92aWRlclJlcXVlc3QaLC5naWJzb24udGVuYW50LnYxLkdldERlZmF1bHRQcm92aWRlclJlc3BvbnNlEm8KElNldERlZmF1bHRQcm92aWRlchIrLmdpYnNvbi50ZW5hbnQudjEuU2V0RGVmYXVsdFByb3ZpZGVyUmVxdWVzdBosLmdpYnNvbi50ZW5hbnQudjEuU2V0RGVmYXVsdFByb3ZpZGVyUmVzcG9uc2USaQoQR2V0RmFsbGJhY2tDaGFpbhIpLmdpYnNvbi50ZW5hbnQudjEuR2V0RmFsbGJhY2tDaGFpblJlcXVlc3QaKi5naWJzb24udGVuYW50LnYxLkdldEZhbGxiYWNrQ2hhaW5SZXNwb25zZRJpChBTZXRGYWxsYmFja0NoYWluEikuZ2lic29uLnRlbmFudC52MS5TZXRGYWxsYmFja0NoYWluUmVxdWVzdBoqLmdpYnNvbi50ZW5hbnQudjEuU2V0RmFsbGJhY2tDaGFpblJlc3BvbnNlElcKCkV4ZWN1dGVMTE0SIy5naWJzb24udGVuYW50LnYxLkV4ZWN1dGVMTE1SZXF1ZXN0GiQuZ2lic29uLnRlbmFudC52MS5FeGVjdXRlTExNUmVzcG9uc2USVgoJU3RyZWFtTExNEiIuZ2lic29uLnRlbmFudC52MS5TdHJlYW1MTE1SZXF1ZXN0GiMuZ2lic29uLnRlbmFudC52MS5TdHJlYW1MTE1SZXNwb25zZTABQk1aS2dpdGh1Yi5jb20vemVyby1kYXktYWkvZ2lic29uL2ludGVybmFsL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_google_protobuf_timestamp]);
 
 /**
  * ComponentGrant describes an optional FGA capability grant to apply at creation time.
@@ -292,6 +292,1846 @@ export const RevokeAgentIdentityResponseSchema: GenMessage<RevokeAgentIdentityRe
   messageDesc(file_gibson_tenant_v1_tenant_admin, 7);
 
 /**
+ * GetTenantLangfuseCredentialsRequest requests Langfuse credentials for a tenant.
+ *
+ * @generated from message gibson.tenant.v1.GetTenantLangfuseCredentialsRequest
+ */
+export type GetTenantLangfuseCredentialsRequest = Message<"gibson.tenant.v1.GetTenantLangfuseCredentialsRequest"> & {
+  /**
+   * tenant_id is the unique identifier of the tenant
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetTenantLangfuseCredentialsRequest.
+ * Use `create(GetTenantLangfuseCredentialsRequestSchema)` to create a new message.
+ */
+export const GetTenantLangfuseCredentialsRequestSchema: GenMessage<GetTenantLangfuseCredentialsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 8);
+
+/**
+ * GetTenantLangfuseCredentialsResponse returns the Langfuse project credentials.
+ *
+ * @generated from message gibson.tenant.v1.GetTenantLangfuseCredentialsResponse
+ */
+export type GetTenantLangfuseCredentialsResponse = Message<"gibson.tenant.v1.GetTenantLangfuseCredentialsResponse"> & {
+  /**
+   * public_key is the Langfuse public key
+   *
+   * @generated from field: string public_key = 1;
+   */
+  publicKey: string;
+
+  /**
+   * secret_key is the Langfuse secret key
+   *
+   * @generated from field: string secret_key = 2;
+   */
+  secretKey: string;
+
+  /**
+   * host is the Langfuse host URL (e.g., "https://cloud.langfuse.com")
+   *
+   * @generated from field: string host = 3;
+   */
+  host: string;
+
+  /**
+   * project_id is the Langfuse project identifier
+   *
+   * @generated from field: string project_id = 4;
+   */
+  projectId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetTenantLangfuseCredentialsResponse.
+ * Use `create(GetTenantLangfuseCredentialsResponseSchema)` to create a new message.
+ */
+export const GetTenantLangfuseCredentialsResponseSchema: GenMessage<GetTenantLangfuseCredentialsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 9);
+
+/**
+ * SetTenantLangfuseCredentialsRequest stores Langfuse project credentials for a tenant.
+ *
+ * @generated from message gibson.tenant.v1.SetTenantLangfuseCredentialsRequest
+ */
+export type SetTenantLangfuseCredentialsRequest = Message<"gibson.tenant.v1.SetTenantLangfuseCredentialsRequest"> & {
+  /**
+   * tenant_id is the unique identifier of the tenant
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * public_key is the Langfuse public key
+   *
+   * @generated from field: string public_key = 2;
+   */
+  publicKey: string;
+
+  /**
+   * secret_key is the Langfuse secret key
+   *
+   * @generated from field: string secret_key = 3;
+   */
+  secretKey: string;
+
+  /**
+   * host is the Langfuse host URL (e.g., "https://cloud.langfuse.com")
+   *
+   * @generated from field: string host = 4;
+   */
+  host: string;
+
+  /**
+   * project_id is the Langfuse project identifier
+   *
+   * @generated from field: string project_id = 5;
+   */
+  projectId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.SetTenantLangfuseCredentialsRequest.
+ * Use `create(SetTenantLangfuseCredentialsRequestSchema)` to create a new message.
+ */
+export const SetTenantLangfuseCredentialsRequestSchema: GenMessage<SetTenantLangfuseCredentialsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 10);
+
+/**
+ * SetTenantLangfuseCredentialsResponse confirms the credentials were stored.
+ *
+ * @generated from message gibson.tenant.v1.SetTenantLangfuseCredentialsResponse
+ */
+export type SetTenantLangfuseCredentialsResponse = Message<"gibson.tenant.v1.SetTenantLangfuseCredentialsResponse"> & {
+};
+
+/**
+ * Describes the message gibson.tenant.v1.SetTenantLangfuseCredentialsResponse.
+ * Use `create(SetTenantLangfuseCredentialsResponseSchema)` to create a new message.
+ */
+export const SetTenantLangfuseCredentialsResponseSchema: GenMessage<SetTenantLangfuseCredentialsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 11);
+
+/**
+ * DeleteTenantLangfuseCredentialsRequest requests deletion of a tenant's Langfuse credentials.
+ *
+ * @generated from message gibson.tenant.v1.DeleteTenantLangfuseCredentialsRequest
+ */
+export type DeleteTenantLangfuseCredentialsRequest = Message<"gibson.tenant.v1.DeleteTenantLangfuseCredentialsRequest"> & {
+  /**
+   * tenant_id is the unique identifier of the tenant
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.DeleteTenantLangfuseCredentialsRequest.
+ * Use `create(DeleteTenantLangfuseCredentialsRequestSchema)` to create a new message.
+ */
+export const DeleteTenantLangfuseCredentialsRequestSchema: GenMessage<DeleteTenantLangfuseCredentialsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 12);
+
+/**
+ * DeleteTenantLangfuseCredentialsResponse confirms the credentials were deleted.
+ *
+ * @generated from message gibson.tenant.v1.DeleteTenantLangfuseCredentialsResponse
+ */
+export type DeleteTenantLangfuseCredentialsResponse = Message<"gibson.tenant.v1.DeleteTenantLangfuseCredentialsResponse"> & {
+};
+
+/**
+ * Describes the message gibson.tenant.v1.DeleteTenantLangfuseCredentialsResponse.
+ * Use `create(DeleteTenantLangfuseCredentialsResponseSchema)` to create a new message.
+ */
+export const DeleteTenantLangfuseCredentialsResponseSchema: GenMessage<DeleteTenantLangfuseCredentialsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 13);
+
+/**
+ * GetOnboardingStateRequest queries the onboarding progress for a tenant.
+ *
+ * @generated from message gibson.tenant.v1.GetOnboardingStateRequest
+ */
+export type GetOnboardingStateRequest = Message<"gibson.tenant.v1.GetOnboardingStateRequest"> & {
+  /**
+   * tenant_id is the identifier of the tenant to query
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetOnboardingStateRequest.
+ * Use `create(GetOnboardingStateRequestSchema)` to create a new message.
+ */
+export const GetOnboardingStateRequestSchema: GenMessage<GetOnboardingStateRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 14);
+
+/**
+ * GetOnboardingStateResponse returns the current onboarding state.
+ *
+ * @generated from message gibson.tenant.v1.GetOnboardingStateResponse
+ */
+export type GetOnboardingStateResponse = Message<"gibson.tenant.v1.GetOnboardingStateResponse"> & {
+  /**
+   * current_step is the name of the active onboarding step
+   *
+   * @generated from field: string current_step = 1;
+   */
+  currentStep: string;
+
+  /**
+   * completed_steps lists all steps that have been marked complete
+   *
+   * @generated from field: repeated string completed_steps = 2;
+   */
+  completedSteps: string[];
+
+  /**
+   * setup_tasks maps task names to their completion status ("true"/"false")
+   *
+   * @generated from field: map<string, string> setup_tasks = 3;
+   */
+  setupTasks: { [key: string]: string };
+
+  /**
+   * completed_at is the RFC 3339 timestamp when onboarding finished (empty if not done)
+   *
+   * @generated from field: string completed_at = 4;
+   */
+  completedAt: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetOnboardingStateResponse.
+ * Use `create(GetOnboardingStateResponseSchema)` to create a new message.
+ */
+export const GetOnboardingStateResponseSchema: GenMessage<GetOnboardingStateResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 15);
+
+/**
+ * UpdateOnboardingStateRequest advances or modifies the onboarding state.
+ *
+ * @generated from message gibson.tenant.v1.UpdateOnboardingStateRequest
+ */
+export type UpdateOnboardingStateRequest = Message<"gibson.tenant.v1.UpdateOnboardingStateRequest"> & {
+  /**
+   * tenant_id is the identifier of the tenant to update
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * current_step sets the active onboarding step
+   *
+   * @generated from field: string current_step = 2;
+   */
+  currentStep: string;
+
+  /**
+   * completed_steps replaces the list of completed steps
+   *
+   * @generated from field: repeated string completed_steps = 3;
+   */
+  completedSteps: string[];
+
+  /**
+   * setup_tasks merges into the existing task completion map
+   *
+   * @generated from field: map<string, string> setup_tasks = 4;
+   */
+  setupTasks: { [key: string]: string };
+};
+
+/**
+ * Describes the message gibson.tenant.v1.UpdateOnboardingStateRequest.
+ * Use `create(UpdateOnboardingStateRequestSchema)` to create a new message.
+ */
+export const UpdateOnboardingStateRequestSchema: GenMessage<UpdateOnboardingStateRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 16);
+
+/**
+ * UpdateOnboardingStateResponse confirms the update was applied.
+ *
+ * @generated from message gibson.tenant.v1.UpdateOnboardingStateResponse
+ */
+export type UpdateOnboardingStateResponse = Message<"gibson.tenant.v1.UpdateOnboardingStateResponse"> & {
+};
+
+/**
+ * Describes the message gibson.tenant.v1.UpdateOnboardingStateResponse.
+ * Use `create(UpdateOnboardingStateResponseSchema)` to create a new message.
+ */
+export const UpdateOnboardingStateResponseSchema: GenMessage<UpdateOnboardingStateResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 17);
+
+/**
+ * TenantQuota defines the resource limits for a tenant.
+ *
+ * @generated from message gibson.tenant.v1.TenantQuota
+ */
+export type TenantQuota = Message<"gibson.tenant.v1.TenantQuota"> & {
+  /**
+   * max_missions is the maximum number of concurrent running missions allowed.
+   * Zero means no limit.
+   *
+   * @generated from field: int32 max_missions = 1;
+   */
+  maxMissions: number;
+
+  /**
+   * max_agents is the maximum number of registered agents allowed.
+   * Zero means no limit.
+   *
+   * @generated from field: int32 max_agents = 2;
+   */
+  maxAgents: number;
+
+  /**
+   * max_findings is the maximum number of findings stored across all missions.
+   * Zero means no limit.
+   *
+   * @generated from field: int64 max_findings = 3;
+   */
+  maxFindings: bigint;
+
+  /**
+   * plan_tier identifies the subscription plan (e.g., "free", "pro", "enterprise").
+   *
+   * @generated from field: string plan_tier = 4;
+   */
+  planTier: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.TenantQuota.
+ * Use `create(TenantQuotaSchema)` to create a new message.
+ */
+export const TenantQuotaSchema: GenMessage<TenantQuota> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 18);
+
+/**
+ * GetTenantQuotaRequest requests the quota configuration for a tenant.
+ *
+ * @generated from message gibson.tenant.v1.GetTenantQuotaRequest
+ */
+export type GetTenantQuotaRequest = Message<"gibson.tenant.v1.GetTenantQuotaRequest"> & {
+  /**
+   * tenant_id is the target tenant. If empty, the caller's tenant is used.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetTenantQuotaRequest.
+ * Use `create(GetTenantQuotaRequestSchema)` to create a new message.
+ */
+export const GetTenantQuotaRequestSchema: GenMessage<GetTenantQuotaRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 19);
+
+/**
+ * GetTenantQuotaResponse carries the tenant quota configuration plus the
+ * current usage snapshot sourced from Redis counters.
+ *
+ * @generated from message gibson.tenant.v1.GetTenantQuotaResponse
+ */
+export type GetTenantQuotaResponse = Message<"gibson.tenant.v1.GetTenantQuotaResponse"> & {
+  /**
+   * quota contains the legacy runtime caps (max_missions/agents/findings).
+   *
+   * @generated from field: gibson.tenant.v1.TenantQuota quota = 1;
+   */
+  quota?: TenantQuota;
+
+  /**
+   * Plan-based limits (mirroring UpsertTenantQuotaRequest).
+   *
+   * @generated from field: int32 seats = 2;
+   */
+  seats: number;
+
+  /**
+   * @generated from field: int32 concurrent_agents = 3;
+   */
+  concurrentAgents: number;
+
+  /**
+   * @generated from field: int32 storage_gb = 4;
+   */
+  storageGb: number;
+
+  /**
+   * @generated from field: int32 retention_days = 5;
+   */
+  retentionDays: number;
+
+  /**
+   * @generated from field: int32 sandbox_launches_per_month = 6;
+   */
+  sandboxLaunchesPerMonth: number;
+
+  /**
+   * updated_at is the Postgres row's last-written timestamp (RFC 3339).
+   *
+   * @generated from field: string updated_at = 7;
+   */
+  updatedAt: string;
+
+  /**
+   * Usage snapshot fields — zero when the underlying counter is missing.
+   *
+   * @generated from field: int32 current_seats = 8;
+   */
+  currentSeats: number;
+
+  /**
+   * @generated from field: int32 current_concurrent_agents = 9;
+   */
+  currentConcurrentAgents: number;
+
+  /**
+   * @generated from field: int32 current_storage_gb = 10;
+   */
+  currentStorageGb: number;
+
+  /**
+   * @generated from field: int32 current_sandbox_launches_this_month = 11;
+   */
+  currentSandboxLaunchesThisMonth: number;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetTenantQuotaResponse.
+ * Use `create(GetTenantQuotaResponseSchema)` to create a new message.
+ */
+export const GetTenantQuotaResponseSchema: GenMessage<GetTenantQuotaResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 20);
+
+/**
+ * AuditEvent represents a single audit log entry.
+ *
+ * @generated from message gibson.tenant.v1.AuditEvent
+ */
+export type AuditEvent = Message<"gibson.tenant.v1.AuditEvent"> & {
+  /**
+   * event_type is the action identifier, e.g. "component_grant_added"
+   *
+   * @generated from field: string event_type = 1;
+   */
+  eventType: string;
+
+  /**
+   * timestamp is when the event occurred (RFC 3339 string)
+   *
+   * @generated from field: string timestamp = 2;
+   */
+  timestamp: string;
+
+  /**
+   * actor_user_id is the unique identifier of the user who performed the action
+   *
+   * @generated from field: string actor_user_id = 3;
+   */
+  actorUserId: string;
+
+  /**
+   * actor_email is the email address of the actor
+   *
+   * @generated from field: string actor_email = 4;
+   */
+  actorEmail: string;
+
+  /**
+   * tenant_id is the tenant this event belongs to
+   *
+   * @generated from field: string tenant_id = 5;
+   */
+  tenantId: string;
+
+  /**
+   * target_user_id is the user affected by the action, if any
+   *
+   * @generated from field: string target_user_id = 6;
+   */
+  targetUserId: string;
+
+  /**
+   * target_resource is the resource affected, e.g. "team:my-team"
+   *
+   * @generated from field: string target_resource = 7;
+   */
+  targetResource: string;
+
+  /**
+   * details holds additional structured context about the event
+   *
+   * @generated from field: map<string, string> details = 8;
+   */
+  details: { [key: string]: string };
+
+  /**
+   * trace_id is the OTel trace ID for correlation with Grafana/Jaeger
+   *
+   * @generated from field: string trace_id = 9;
+   */
+  traceId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.AuditEvent.
+ * Use `create(AuditEventSchema)` to create a new message.
+ */
+export const AuditEventSchema: GenMessage<AuditEvent> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 21);
+
+/**
+ * ListAuditEventsRequest queries audit events for a tenant.
+ *
+ * @generated from message gibson.tenant.v1.ListAuditEventsRequest
+ */
+export type ListAuditEventsRequest = Message<"gibson.tenant.v1.ListAuditEventsRequest"> & {
+  /**
+   * tenant_id is the tenant to query audit events for
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * event_types filters to specific event types (empty = all types)
+   *
+   * @generated from field: repeated string event_types = 2;
+   */
+  eventTypes: string[];
+
+  /**
+   * actor_user_id filters to events performed by a specific actor
+   *
+   * @generated from field: string actor_user_id = 3;
+   */
+  actorUserId: string;
+
+  /**
+   * target_match is a text substring to match against target_resource
+   *
+   * @generated from field: string target_match = 4;
+   */
+  targetMatch: string;
+
+  /**
+   * from_time restricts results to events at or after this time (RFC 3339 string)
+   *
+   * @generated from field: string from_time = 5;
+   */
+  fromTime: string;
+
+  /**
+   * to_time restricts results to events at or before this time (RFC 3339 string)
+   *
+   * @generated from field: string to_time = 6;
+   */
+  toTime: string;
+
+  /**
+   * limit is the maximum number of events to return (default: 50, max: 500)
+   *
+   * @generated from field: int32 limit = 7;
+   */
+  limit: number;
+
+  /**
+   * cursor is the pagination cursor returned by the previous response
+   *
+   * @generated from field: string cursor = 8;
+   */
+  cursor: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ListAuditEventsRequest.
+ * Use `create(ListAuditEventsRequestSchema)` to create a new message.
+ */
+export const ListAuditEventsRequestSchema: GenMessage<ListAuditEventsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 22);
+
+/**
+ * ListAuditEventsResponse returns a page of audit events.
+ *
+ * @generated from message gibson.tenant.v1.ListAuditEventsResponse
+ */
+export type ListAuditEventsResponse = Message<"gibson.tenant.v1.ListAuditEventsResponse"> & {
+  /**
+   * events is the list of audit events for this page
+   *
+   * @generated from field: repeated gibson.tenant.v1.AuditEvent events = 1;
+   */
+  events: AuditEvent[];
+
+  /**
+   * next_cursor is the cursor for fetching the next page (empty = last page)
+   *
+   * @generated from field: string next_cursor = 2;
+   */
+  nextCursor: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ListAuditEventsResponse.
+ * Use `create(ListAuditEventsResponseSchema)` to create a new message.
+ */
+export const ListAuditEventsResponseSchema: GenMessage<ListAuditEventsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 23);
+
+/**
+ * FindingFilters allows filtering the findings included in an export.
+ *
+ * @generated from message gibson.tenant.v1.FindingFilters
+ */
+export type FindingFilters = Message<"gibson.tenant.v1.FindingFilters"> & {
+  /**
+   * severity filters by severity level (e.g., "critical", "high", "medium", "low", "info").
+   *
+   * @generated from field: repeated string severity = 1;
+   */
+  severity: string[];
+
+  /**
+   * type filters by finding type or category.
+   *
+   * @generated from field: repeated string type = 2;
+   */
+  type: string[];
+
+  /**
+   * mission_id restricts the export to findings from a specific mission.
+   *
+   * @generated from field: string mission_id = 3;
+   */
+  missionId: string;
+
+  /**
+   * search is a free-text search term applied across finding titles and descriptions.
+   *
+   * @generated from field: string search = 4;
+   */
+  search: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.FindingFilters.
+ * Use `create(FindingFiltersSchema)` to create a new message.
+ */
+export const FindingFiltersSchema: GenMessage<FindingFilters> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 24);
+
+/**
+ * ExportFindingsRequest specifies the format and scope of a findings export.
+ *
+ * @generated from message gibson.tenant.v1.ExportFindingsRequest
+ */
+export type ExportFindingsRequest = Message<"gibson.tenant.v1.ExportFindingsRequest"> & {
+  /**
+   * tenant_id is the tenant context for the export.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * format is the desired output format: "json", "csv", or "sarif".
+   *
+   * @generated from field: string format = 2;
+   */
+  format: string;
+
+  /**
+   * finding_ids restricts the export to specific findings by ID.
+   * When empty, all findings matching filters are exported.
+   *
+   * @generated from field: repeated string finding_ids = 3;
+   */
+  findingIds: string[];
+
+  /**
+   * filters provides additional filtering criteria.
+   *
+   * @generated from field: gibson.tenant.v1.FindingFilters filters = 4;
+   */
+  filters?: FindingFilters;
+
+  /**
+   * include_remediation controls whether remediation guidance is included.
+   *
+   * @generated from field: bool include_remediation = 5;
+   */
+  includeRemediation: boolean;
+
+  /**
+   * include_evidence controls whether evidence details are included.
+   *
+   * @generated from field: bool include_evidence = 6;
+   */
+  includeEvidence: boolean;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ExportFindingsRequest.
+ * Use `create(ExportFindingsRequestSchema)` to create a new message.
+ */
+export const ExportFindingsRequestSchema: GenMessage<ExportFindingsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 25);
+
+/**
+ * ExportFindingsResponse carries the serialized export content.
+ *
+ * @generated from message gibson.tenant.v1.ExportFindingsResponse
+ */
+export type ExportFindingsResponse = Message<"gibson.tenant.v1.ExportFindingsResponse"> & {
+  /**
+   * data is the serialized export content in the requested format.
+   *
+   * @generated from field: bytes data = 1;
+   */
+  data: Uint8Array;
+
+  /**
+   * format is the format of the exported data (mirrors the request format).
+   *
+   * @generated from field: string format = 2;
+   */
+  format: string;
+
+  /**
+   * filename is the suggested download filename for the export.
+   *
+   * @generated from field: string filename = 3;
+   */
+  filename: string;
+
+  /**
+   * count is the number of findings included in the export.
+   *
+   * @generated from field: int32 count = 4;
+   */
+  count: number;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ExportFindingsResponse.
+ * Use `create(ExportFindingsResponseSchema)` to create a new message.
+ */
+export const ExportFindingsResponseSchema: GenMessage<ExportFindingsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 26);
+
+/**
+ * SaveMissionDraftRequest persists a mission YAML draft.
+ *
+ * @generated from message gibson.tenant.v1.SaveMissionDraftRequest
+ */
+export type SaveMissionDraftRequest = Message<"gibson.tenant.v1.SaveMissionDraftRequest"> & {
+  /**
+   * tenant_id is the tenant context for the draft.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * name is the human-readable name for this draft.
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * yaml is the raw mission YAML content (maximum 512KB).
+   *
+   * @generated from field: string yaml = 3;
+   */
+  yaml: string;
+
+  /**
+   * draft_id is the existing draft ID to update.
+   * When empty, a new draft is created and its ID is returned.
+   *
+   * @generated from field: string draft_id = 4;
+   */
+  draftId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.SaveMissionDraftRequest.
+ * Use `create(SaveMissionDraftRequestSchema)` to create a new message.
+ */
+export const SaveMissionDraftRequestSchema: GenMessage<SaveMissionDraftRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 27);
+
+/**
+ * SaveMissionDraftResponse returns the ID of the saved or updated draft.
+ *
+ * @generated from message gibson.tenant.v1.SaveMissionDraftResponse
+ */
+export type SaveMissionDraftResponse = Message<"gibson.tenant.v1.SaveMissionDraftResponse"> & {
+  /**
+   * draft_id is the unique identifier of the saved draft.
+   *
+   * @generated from field: string draft_id = 1;
+   */
+  draftId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.SaveMissionDraftResponse.
+ * Use `create(SaveMissionDraftResponseSchema)` to create a new message.
+ */
+export const SaveMissionDraftResponseSchema: GenMessage<SaveMissionDraftResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 28);
+
+/**
+ * ListMissionDraftsRequest queries the saved drafts for a tenant.
+ *
+ * @generated from message gibson.tenant.v1.ListMissionDraftsRequest
+ */
+export type ListMissionDraftsRequest = Message<"gibson.tenant.v1.ListMissionDraftsRequest"> & {
+  /**
+   * tenant_id is the tenant context for the listing.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ListMissionDraftsRequest.
+ * Use `create(ListMissionDraftsRequestSchema)` to create a new message.
+ */
+export const ListMissionDraftsRequestSchema: GenMessage<ListMissionDraftsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 29);
+
+/**
+ * MissionDraft carries the metadata for a saved mission draft.
+ *
+ * @generated from message gibson.tenant.v1.MissionDraft
+ */
+export type MissionDraft = Message<"gibson.tenant.v1.MissionDraft"> & {
+  /**
+   * id is the unique identifier of the draft.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * name is the human-readable name of the draft.
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * created_at is the RFC 3339 creation timestamp.
+   *
+   * @generated from field: string created_at = 3;
+   */
+  createdAt: string;
+
+  /**
+   * updated_at is the RFC 3339 last-update timestamp.
+   *
+   * @generated from field: string updated_at = 4;
+   */
+  updatedAt: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.MissionDraft.
+ * Use `create(MissionDraftSchema)` to create a new message.
+ */
+export const MissionDraftSchema: GenMessage<MissionDraft> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 30);
+
+/**
+ * ListMissionDraftsResponse carries the list of mission drafts for a tenant.
+ *
+ * @generated from message gibson.tenant.v1.ListMissionDraftsResponse
+ */
+export type ListMissionDraftsResponse = Message<"gibson.tenant.v1.ListMissionDraftsResponse"> & {
+  /**
+   * drafts is the list of saved mission drafts, ordered by update time descending.
+   *
+   * @generated from field: repeated gibson.tenant.v1.MissionDraft drafts = 1;
+   */
+  drafts: MissionDraft[];
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ListMissionDraftsResponse.
+ * Use `create(ListMissionDraftsResponseSchema)` to create a new message.
+ */
+export const ListMissionDraftsResponseSchema: GenMessage<ListMissionDraftsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 31);
+
+/**
+ * ProviderRecord is the read-side representation of a stored provider config.
+ *
+ * @generated from message gibson.tenant.v1.ProviderRecord
+ */
+export type ProviderRecord = Message<"gibson.tenant.v1.ProviderRecord"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string type = 3;
+   */
+  type: string;
+
+  /**
+   * @generated from field: string default_model = 4;
+   */
+  defaultModel: string;
+
+  /**
+   * @generated from field: bool is_default = 5;
+   */
+  isDefault: boolean;
+
+  /**
+   * @generated from field: bool enabled = 6;
+   */
+  enabled: boolean;
+
+  /**
+   * @generated from field: map<string, string> credentials_masked = 7;
+   */
+  credentialsMasked: { [key: string]: string };
+
+  /**
+   * @generated from field: string created_at = 8;
+   */
+  createdAt: string;
+
+  /**
+   * @generated from field: string updated_at = 9;
+   */
+  updatedAt: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ProviderRecord.
+ * Use `create(ProviderRecordSchema)` to create a new message.
+ */
+export const ProviderRecordSchema: GenMessage<ProviderRecord> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 32);
+
+/**
+ * ProviderConfigInput is the write-side shape for CreateProvider and UpdateProvider.
+ *
+ * @generated from message gibson.tenant.v1.ProviderConfigInput
+ */
+export type ProviderConfigInput = Message<"gibson.tenant.v1.ProviderConfigInput"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string type = 2;
+   */
+  type: string;
+
+  /**
+   * @generated from field: string default_model = 3;
+   */
+  defaultModel: string;
+
+  /**
+   * @generated from field: map<string, string> credentials = 4;
+   */
+  credentials: { [key: string]: string };
+
+  /**
+   * @generated from field: bool set_as_default = 5;
+   */
+  setAsDefault: boolean;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ProviderConfigInput.
+ * Use `create(ProviderConfigInputSchema)` to create a new message.
+ */
+export const ProviderConfigInputSchema: GenMessage<ProviderConfigInput> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 33);
+
+/**
+ * ResponseFormat controls the structure of the LLM output.
+ *
+ * @generated from message gibson.tenant.v1.ResponseFormat
+ */
+export type ResponseFormat = Message<"gibson.tenant.v1.ResponseFormat"> & {
+  /**
+   * @generated from field: string type = 1;
+   */
+  type: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string schema_json = 3;
+   */
+  schemaJson: string;
+
+  /**
+   * @generated from field: bool strict = 4;
+   */
+  strict: boolean;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ResponseFormat.
+ * Use `create(ResponseFormatSchema)` to create a new message.
+ */
+export const ResponseFormatSchema: GenMessage<ResponseFormat> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 34);
+
+/**
+ * ToolCallDelta carries incremental tool-call information in a streaming response.
+ *
+ * @generated from message gibson.tenant.v1.ToolCallDelta
+ */
+export type ToolCallDelta = Message<"gibson.tenant.v1.ToolCallDelta"> & {
+  /**
+   * @generated from field: int32 index = 1;
+   */
+  index: number;
+
+  /**
+   * @generated from field: string id = 2;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string name = 3;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string arguments_delta = 4;
+   */
+  argumentsDelta: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ToolCallDelta.
+ * Use `create(ToolCallDeltaSchema)` to create a new message.
+ */
+export const ToolCallDeltaSchema: GenMessage<ToolCallDelta> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 35);
+
+/**
+ * LLMTokenUsage reports token consumption for an LLM completion.
+ *
+ * @generated from message gibson.tenant.v1.LLMTokenUsage
+ */
+export type LLMTokenUsage = Message<"gibson.tenant.v1.LLMTokenUsage"> & {
+  /**
+   * @generated from field: int32 input_tokens = 1;
+   */
+  inputTokens: number;
+
+  /**
+   * @generated from field: int32 output_tokens = 2;
+   */
+  outputTokens: number;
+
+  /**
+   * @generated from field: int32 total_tokens = 3;
+   */
+  totalTokens: number;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.LLMTokenUsage.
+ * Use `create(LLMTokenUsageSchema)` to create a new message.
+ */
+export const LLMTokenUsageSchema: GenMessage<LLMTokenUsage> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 36);
+
+/**
+ * LLMToolCall describes a tool invocation requested by the LLM.
+ *
+ * @generated from message gibson.tenant.v1.LLMToolCall
+ */
+export type LLMToolCall = Message<"gibson.tenant.v1.LLMToolCall"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string arguments = 3;
+   */
+  arguments: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.LLMToolCall.
+ * Use `create(LLMToolCallSchema)` to create a new message.
+ */
+export const LLMToolCallSchema: GenMessage<LLMToolCall> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 37);
+
+/**
+ * LLMToolResult carries the output of a tool call.
+ *
+ * @generated from message gibson.tenant.v1.LLMToolResult
+ */
+export type LLMToolResult = Message<"gibson.tenant.v1.LLMToolResult"> & {
+  /**
+   * @generated from field: string tool_call_id = 1;
+   */
+  toolCallId: string;
+
+  /**
+   * @generated from field: string content = 2;
+   */
+  content: string;
+
+  /**
+   * @generated from field: bool is_error = 3;
+   */
+  isError: boolean;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.LLMToolResult.
+ * Use `create(LLMToolResultSchema)` to create a new message.
+ */
+export const LLMToolResultSchema: GenMessage<LLMToolResult> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 38);
+
+/**
+ * LLMToolDef defines a tool the LLM may invoke.
+ *
+ * @generated from message gibson.tenant.v1.LLMToolDef
+ */
+export type LLMToolDef = Message<"gibson.tenant.v1.LLMToolDef"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string description = 2;
+   */
+  description: string;
+
+  /**
+   * @generated from field: string parameters_json = 3;
+   */
+  parametersJson: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.LLMToolDef.
+ * Use `create(LLMToolDefSchema)` to create a new message.
+ */
+export const LLMToolDefSchema: GenMessage<LLMToolDef> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 39);
+
+/**
+ * LLMMessageContent is a single message in a conversation.
+ *
+ * @generated from message gibson.tenant.v1.LLMMessageContent
+ */
+export type LLMMessageContent = Message<"gibson.tenant.v1.LLMMessageContent"> & {
+  /**
+   * @generated from field: string role = 1;
+   */
+  role: string;
+
+  /**
+   * @generated from field: string content = 2;
+   */
+  content: string;
+
+  /**
+   * @generated from field: repeated gibson.tenant.v1.LLMToolCall tool_calls = 3;
+   */
+  toolCalls: LLMToolCall[];
+
+  /**
+   * @generated from field: repeated gibson.tenant.v1.LLMToolResult tool_results = 4;
+   */
+  toolResults: LLMToolResult[];
+
+  /**
+   * @generated from field: string name = 5;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.LLMMessageContent.
+ * Use `create(LLMMessageContentSchema)` to create a new message.
+ */
+export const LLMMessageContentSchema: GenMessage<LLMMessageContent> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 40);
+
+/**
+ * ProviderHarnessError carries an error from the LLM execution path.
+ *
+ * @generated from message gibson.tenant.v1.ProviderHarnessError
+ */
+export type ProviderHarnessError = Message<"gibson.tenant.v1.ProviderHarnessError"> & {
+  /**
+   * @generated from field: int32 code = 1;
+   */
+  code: number;
+
+  /**
+   * @generated from field: string message = 2;
+   */
+  message: string;
+
+  /**
+   * @generated from field: bool retryable = 3;
+   */
+  retryable: boolean;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ProviderHarnessError.
+ * Use `create(ProviderHarnessErrorSchema)` to create a new message.
+ */
+export const ProviderHarnessErrorSchema: GenMessage<ProviderHarnessError> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 41);
+
+/**
+ * StreamFinish is emitted as the final chunk of a StreamLLM response.
+ *
+ * @generated from message gibson.tenant.v1.StreamFinish
+ */
+export type StreamFinish = Message<"gibson.tenant.v1.StreamFinish"> & {
+  /**
+   * @generated from field: string finish_reason = 1;
+   */
+  finishReason: string;
+
+  /**
+   * @generated from field: gibson.tenant.v1.LLMTokenUsage usage = 2;
+   */
+  usage?: LLMTokenUsage;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.StreamFinish.
+ * Use `create(StreamFinishSchema)` to create a new message.
+ */
+export const StreamFinishSchema: GenMessage<StreamFinish> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 42);
+
+/**
+ * @generated from message gibson.tenant.v1.ListProvidersRequest
+ */
+export type ListProvidersRequest = Message<"gibson.tenant.v1.ListProvidersRequest"> & {
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ListProvidersRequest.
+ * Use `create(ListProvidersRequestSchema)` to create a new message.
+ */
+export const ListProvidersRequestSchema: GenMessage<ListProvidersRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 43);
+
+/**
+ * @generated from message gibson.tenant.v1.ListProvidersResponse
+ */
+export type ListProvidersResponse = Message<"gibson.tenant.v1.ListProvidersResponse"> & {
+  /**
+   * @generated from field: repeated gibson.tenant.v1.ProviderRecord providers = 1;
+   */
+  providers: ProviderRecord[];
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ListProvidersResponse.
+ * Use `create(ListProvidersResponseSchema)` to create a new message.
+ */
+export const ListProvidersResponseSchema: GenMessage<ListProvidersResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 44);
+
+/**
+ * @generated from message gibson.tenant.v1.GetProviderRequest
+ */
+export type GetProviderRequest = Message<"gibson.tenant.v1.GetProviderRequest"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetProviderRequest.
+ * Use `create(GetProviderRequestSchema)` to create a new message.
+ */
+export const GetProviderRequestSchema: GenMessage<GetProviderRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 45);
+
+/**
+ * @generated from message gibson.tenant.v1.GetProviderResponse
+ */
+export type GetProviderResponse = Message<"gibson.tenant.v1.GetProviderResponse"> & {
+  /**
+   * @generated from field: gibson.tenant.v1.ProviderRecord provider = 1;
+   */
+  provider?: ProviderRecord;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetProviderResponse.
+ * Use `create(GetProviderResponseSchema)` to create a new message.
+ */
+export const GetProviderResponseSchema: GenMessage<GetProviderResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 46);
+
+/**
+ * @generated from message gibson.tenant.v1.CreateProviderRequest
+ */
+export type CreateProviderRequest = Message<"gibson.tenant.v1.CreateProviderRequest"> & {
+  /**
+   * @generated from field: gibson.tenant.v1.ProviderConfigInput input = 1;
+   */
+  input?: ProviderConfigInput;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.CreateProviderRequest.
+ * Use `create(CreateProviderRequestSchema)` to create a new message.
+ */
+export const CreateProviderRequestSchema: GenMessage<CreateProviderRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 47);
+
+/**
+ * @generated from message gibson.tenant.v1.CreateProviderResponse
+ */
+export type CreateProviderResponse = Message<"gibson.tenant.v1.CreateProviderResponse"> & {
+  /**
+   * @generated from field: gibson.tenant.v1.ProviderRecord provider = 1;
+   */
+  provider?: ProviderRecord;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.CreateProviderResponse.
+ * Use `create(CreateProviderResponseSchema)` to create a new message.
+ */
+export const CreateProviderResponseSchema: GenMessage<CreateProviderResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 48);
+
+/**
+ * @generated from message gibson.tenant.v1.UpdateProviderRequest
+ */
+export type UpdateProviderRequest = Message<"gibson.tenant.v1.UpdateProviderRequest"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: gibson.tenant.v1.ProviderConfigInput input = 2;
+   */
+  input?: ProviderConfigInput;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.UpdateProviderRequest.
+ * Use `create(UpdateProviderRequestSchema)` to create a new message.
+ */
+export const UpdateProviderRequestSchema: GenMessage<UpdateProviderRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 49);
+
+/**
+ * @generated from message gibson.tenant.v1.UpdateProviderResponse
+ */
+export type UpdateProviderResponse = Message<"gibson.tenant.v1.UpdateProviderResponse"> & {
+  /**
+   * @generated from field: gibson.tenant.v1.ProviderRecord provider = 1;
+   */
+  provider?: ProviderRecord;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.UpdateProviderResponse.
+ * Use `create(UpdateProviderResponseSchema)` to create a new message.
+ */
+export const UpdateProviderResponseSchema: GenMessage<UpdateProviderResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 50);
+
+/**
+ * @generated from message gibson.tenant.v1.DeleteProviderRequest
+ */
+export type DeleteProviderRequest = Message<"gibson.tenant.v1.DeleteProviderRequest"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.DeleteProviderRequest.
+ * Use `create(DeleteProviderRequestSchema)` to create a new message.
+ */
+export const DeleteProviderRequestSchema: GenMessage<DeleteProviderRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 51);
+
+/**
+ * @generated from message gibson.tenant.v1.DeleteProviderResponse
+ */
+export type DeleteProviderResponse = Message<"gibson.tenant.v1.DeleteProviderResponse"> & {
+};
+
+/**
+ * Describes the message gibson.tenant.v1.DeleteProviderResponse.
+ * Use `create(DeleteProviderResponseSchema)` to create a new message.
+ */
+export const DeleteProviderResponseSchema: GenMessage<DeleteProviderResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 52);
+
+/**
+ * @generated from message gibson.tenant.v1.TestProviderRequest
+ */
+export type TestProviderRequest = Message<"gibson.tenant.v1.TestProviderRequest"> & {
+  /**
+   * @generated from field: gibson.tenant.v1.ProviderConfigInput input = 1;
+   */
+  input?: ProviderConfigInput;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.TestProviderRequest.
+ * Use `create(TestProviderRequestSchema)` to create a new message.
+ */
+export const TestProviderRequestSchema: GenMessage<TestProviderRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 53);
+
+/**
+ * @generated from message gibson.tenant.v1.TestProviderResponse
+ */
+export type TestProviderResponse = Message<"gibson.tenant.v1.TestProviderResponse"> & {
+  /**
+   * @generated from field: bool ok = 1;
+   */
+  ok: boolean;
+
+  /**
+   * @generated from field: int64 latency_ms = 2;
+   */
+  latencyMs: bigint;
+
+  /**
+   * @generated from field: string model = 3;
+   */
+  model: string;
+
+  /**
+   * @generated from field: string error = 4;
+   */
+  error: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.TestProviderResponse.
+ * Use `create(TestProviderResponseSchema)` to create a new message.
+ */
+export const TestProviderResponseSchema: GenMessage<TestProviderResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 54);
+
+/**
+ * @generated from message gibson.tenant.v1.GetProviderHealthRequest
+ */
+export type GetProviderHealthRequest = Message<"gibson.tenant.v1.GetProviderHealthRequest"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetProviderHealthRequest.
+ * Use `create(GetProviderHealthRequestSchema)` to create a new message.
+ */
+export const GetProviderHealthRequestSchema: GenMessage<GetProviderHealthRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 55);
+
+/**
+ * @generated from message gibson.tenant.v1.GetProviderHealthResponse
+ */
+export type GetProviderHealthResponse = Message<"gibson.tenant.v1.GetProviderHealthResponse"> & {
+  /**
+   * @generated from field: bool healthy = 1;
+   */
+  healthy: boolean;
+
+  /**
+   * @generated from field: string last_checked_at = 2;
+   */
+  lastCheckedAt: string;
+
+  /**
+   * @generated from field: string error = 3;
+   */
+  error: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetProviderHealthResponse.
+ * Use `create(GetProviderHealthResponseSchema)` to create a new message.
+ */
+export const GetProviderHealthResponseSchema: GenMessage<GetProviderHealthResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 56);
+
+/**
+ * @generated from message gibson.tenant.v1.GetDefaultProviderRequest
+ */
+export type GetDefaultProviderRequest = Message<"gibson.tenant.v1.GetDefaultProviderRequest"> & {
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetDefaultProviderRequest.
+ * Use `create(GetDefaultProviderRequestSchema)` to create a new message.
+ */
+export const GetDefaultProviderRequestSchema: GenMessage<GetDefaultProviderRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 57);
+
+/**
+ * @generated from message gibson.tenant.v1.GetDefaultProviderResponse
+ */
+export type GetDefaultProviderResponse = Message<"gibson.tenant.v1.GetDefaultProviderResponse"> & {
+  /**
+   * @generated from field: gibson.tenant.v1.ProviderRecord provider = 1;
+   */
+  provider?: ProviderRecord;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetDefaultProviderResponse.
+ * Use `create(GetDefaultProviderResponseSchema)` to create a new message.
+ */
+export const GetDefaultProviderResponseSchema: GenMessage<GetDefaultProviderResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 58);
+
+/**
+ * @generated from message gibson.tenant.v1.SetDefaultProviderRequest
+ */
+export type SetDefaultProviderRequest = Message<"gibson.tenant.v1.SetDefaultProviderRequest"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.SetDefaultProviderRequest.
+ * Use `create(SetDefaultProviderRequestSchema)` to create a new message.
+ */
+export const SetDefaultProviderRequestSchema: GenMessage<SetDefaultProviderRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 59);
+
+/**
+ * @generated from message gibson.tenant.v1.SetDefaultProviderResponse
+ */
+export type SetDefaultProviderResponse = Message<"gibson.tenant.v1.SetDefaultProviderResponse"> & {
+  /**
+   * @generated from field: gibson.tenant.v1.ProviderRecord provider = 1;
+   */
+  provider?: ProviderRecord;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.SetDefaultProviderResponse.
+ * Use `create(SetDefaultProviderResponseSchema)` to create a new message.
+ */
+export const SetDefaultProviderResponseSchema: GenMessage<SetDefaultProviderResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 60);
+
+/**
+ * @generated from message gibson.tenant.v1.GetFallbackChainRequest
+ */
+export type GetFallbackChainRequest = Message<"gibson.tenant.v1.GetFallbackChainRequest"> & {
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetFallbackChainRequest.
+ * Use `create(GetFallbackChainRequestSchema)` to create a new message.
+ */
+export const GetFallbackChainRequestSchema: GenMessage<GetFallbackChainRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 61);
+
+/**
+ * @generated from message gibson.tenant.v1.GetFallbackChainResponse
+ */
+export type GetFallbackChainResponse = Message<"gibson.tenant.v1.GetFallbackChainResponse"> & {
+  /**
+   * @generated from field: repeated string provider_names = 1;
+   */
+  providerNames: string[];
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetFallbackChainResponse.
+ * Use `create(GetFallbackChainResponseSchema)` to create a new message.
+ */
+export const GetFallbackChainResponseSchema: GenMessage<GetFallbackChainResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 62);
+
+/**
+ * @generated from message gibson.tenant.v1.SetFallbackChainRequest
+ */
+export type SetFallbackChainRequest = Message<"gibson.tenant.v1.SetFallbackChainRequest"> & {
+  /**
+   * @generated from field: repeated string provider_names = 1;
+   */
+  providerNames: string[];
+};
+
+/**
+ * Describes the message gibson.tenant.v1.SetFallbackChainRequest.
+ * Use `create(SetFallbackChainRequestSchema)` to create a new message.
+ */
+export const SetFallbackChainRequestSchema: GenMessage<SetFallbackChainRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 63);
+
+/**
+ * @generated from message gibson.tenant.v1.SetFallbackChainResponse
+ */
+export type SetFallbackChainResponse = Message<"gibson.tenant.v1.SetFallbackChainResponse"> & {
+  /**
+   * @generated from field: repeated string provider_names = 1;
+   */
+  providerNames: string[];
+};
+
+/**
+ * Describes the message gibson.tenant.v1.SetFallbackChainResponse.
+ * Use `create(SetFallbackChainResponseSchema)` to create a new message.
+ */
+export const SetFallbackChainResponseSchema: GenMessage<SetFallbackChainResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 64);
+
+/**
+ * @generated from message gibson.tenant.v1.ExecuteLLMRequest
+ */
+export type ExecuteLLMRequest = Message<"gibson.tenant.v1.ExecuteLLMRequest"> & {
+  /**
+   * @generated from field: string provider_name = 1;
+   */
+  providerName: string;
+
+  /**
+   * @generated from field: string model = 2;
+   */
+  model: string;
+
+  /**
+   * @generated from field: repeated gibson.tenant.v1.LLMMessageContent messages = 3;
+   */
+  messages: LLMMessageContent[];
+
+  /**
+   * @generated from field: repeated gibson.tenant.v1.LLMToolDef tools = 4;
+   */
+  tools: LLMToolDef[];
+
+  /**
+   * @generated from field: optional gibson.tenant.v1.ResponseFormat response_format = 5;
+   */
+  responseFormat?: ResponseFormat;
+
+  /**
+   * @generated from field: optional double temperature = 6;
+   */
+  temperature?: number;
+
+  /**
+   * @generated from field: optional int32 max_tokens = 7;
+   */
+  maxTokens?: number;
+
+  /**
+   * @generated from field: optional double top_p = 8;
+   */
+  topP?: number;
+
+  /**
+   * @generated from field: repeated string stop = 9;
+   */
+  stop: string[];
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ExecuteLLMRequest.
+ * Use `create(ExecuteLLMRequestSchema)` to create a new message.
+ */
+export const ExecuteLLMRequestSchema: GenMessage<ExecuteLLMRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 65);
+
+/**
+ * @generated from message gibson.tenant.v1.ExecuteLLMResponse
+ */
+export type ExecuteLLMResponse = Message<"gibson.tenant.v1.ExecuteLLMResponse"> & {
+  /**
+   * @generated from field: string content = 1;
+   */
+  content: string;
+
+  /**
+   * @generated from field: repeated gibson.tenant.v1.LLMToolCall tool_calls = 2;
+   */
+  toolCalls: LLMToolCall[];
+
+  /**
+   * @generated from field: string finish_reason = 3;
+   */
+  finishReason: string;
+
+  /**
+   * @generated from field: gibson.tenant.v1.LLMTokenUsage usage = 4;
+   */
+  usage?: LLMTokenUsage;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ExecuteLLMResponse.
+ * Use `create(ExecuteLLMResponseSchema)` to create a new message.
+ */
+export const ExecuteLLMResponseSchema: GenMessage<ExecuteLLMResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 66);
+
+/**
+ * @generated from message gibson.tenant.v1.StreamLLMRequest
+ */
+export type StreamLLMRequest = Message<"gibson.tenant.v1.StreamLLMRequest"> & {
+  /**
+   * @generated from field: string provider_name = 1;
+   */
+  providerName: string;
+
+  /**
+   * @generated from field: string model = 2;
+   */
+  model: string;
+
+  /**
+   * @generated from field: repeated gibson.tenant.v1.LLMMessageContent messages = 3;
+   */
+  messages: LLMMessageContent[];
+
+  /**
+   * @generated from field: repeated gibson.tenant.v1.LLMToolDef tools = 4;
+   */
+  tools: LLMToolDef[];
+
+  /**
+   * @generated from field: optional gibson.tenant.v1.ResponseFormat response_format = 5;
+   */
+  responseFormat?: ResponseFormat;
+
+  /**
+   * @generated from field: optional double temperature = 6;
+   */
+  temperature?: number;
+
+  /**
+   * @generated from field: optional int32 max_tokens = 7;
+   */
+  maxTokens?: number;
+
+  /**
+   * @generated from field: optional double top_p = 8;
+   */
+  topP?: number;
+
+  /**
+   * @generated from field: repeated string stop = 9;
+   */
+  stop: string[];
+};
+
+/**
+ * Describes the message gibson.tenant.v1.StreamLLMRequest.
+ * Use `create(StreamLLMRequestSchema)` to create a new message.
+ */
+export const StreamLLMRequestSchema: GenMessage<StreamLLMRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 67);
+
+/**
+ * @generated from message gibson.tenant.v1.StreamLLMResponse
+ */
+export type StreamLLMResponse = Message<"gibson.tenant.v1.StreamLLMResponse"> & {
+  /**
+   * @generated from oneof gibson.tenant.v1.StreamLLMResponse.payload
+   */
+  payload: {
+    /**
+     * @generated from field: string text_delta = 1;
+     */
+    value: string;
+    case: "textDelta";
+  } | {
+    /**
+     * @generated from field: gibson.tenant.v1.ToolCallDelta tool_call_delta = 2;
+     */
+    value: ToolCallDelta;
+    case: "toolCallDelta";
+  } | {
+    /**
+     * @generated from field: gibson.tenant.v1.StreamFinish finish = 3;
+     */
+    value: StreamFinish;
+    case: "finish";
+  } | {
+    /**
+     * @generated from field: gibson.tenant.v1.ProviderHarnessError error = 4;
+     */
+    value: ProviderHarnessError;
+    case: "error";
+  } | { case: undefined; value?: undefined };
+};
+
+/**
+ * Describes the message gibson.tenant.v1.StreamLLMResponse.
+ * Use `create(StreamLLMResponseSchema)` to create a new message.
+ */
+export const StreamLLMResponseSchema: GenMessage<StreamLLMResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant_admin, 68);
+
+/**
  * PrincipalKind identifies the type of machine principal being provisioned.
  *
  * @generated from enum gibson.tenant.v1.PrincipalKind
@@ -326,8 +2166,8 @@ export const PrincipalKindSchema: GenEnum<PrincipalKind> = /*@__PURE__*/
 
 /**
  * TenantAdminService provides tenant-admin operations for managing agent identities
- * and other tenant-scoped administrative tasks. This is the canonical replacement
- * for the deprecated gibson.daemon.admin.v1.DaemonAdminService for tenant-admin RPCs.
+ * and other tenant-scoped administrative tasks. This is the canonical tenant-admin
+ * gRPC service, authoritative as of admin-services-completion spec.
  *
  * All RPCs require the caller to hold the "admin" FGA relation on their tenant.
  * Access is gated by the Envoy jwt_authn + ext_authz filter chain.
@@ -368,6 +2208,247 @@ export const TenantAdminService: GenService<{
     methodKind: "unary";
     input: typeof RevokeAgentIdentityRequestSchema;
     output: typeof RevokeAgentIdentityResponseSchema;
+  },
+  /**
+   * GetTenantLangfuseCredentials retrieves the Langfuse project credentials for a tenant.
+   * Returns NOT_FOUND if no credentials have been configured for the tenant.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.GetTenantLangfuseCredentials
+   */
+  getTenantLangfuseCredentials: {
+    methodKind: "unary";
+    input: typeof GetTenantLangfuseCredentialsRequestSchema;
+    output: typeof GetTenantLangfuseCredentialsResponseSchema;
+  },
+  /**
+   * SetTenantLangfuseCredentials stores or updates Langfuse project credentials for a tenant.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.SetTenantLangfuseCredentials
+   */
+  setTenantLangfuseCredentials: {
+    methodKind: "unary";
+    input: typeof SetTenantLangfuseCredentialsRequestSchema;
+    output: typeof SetTenantLangfuseCredentialsResponseSchema;
+  },
+  /**
+   * DeleteTenantLangfuseCredentials removes the Langfuse project credentials for a tenant.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.DeleteTenantLangfuseCredentials
+   */
+  deleteTenantLangfuseCredentials: {
+    methodKind: "unary";
+    input: typeof DeleteTenantLangfuseCredentialsRequestSchema;
+    output: typeof DeleteTenantLangfuseCredentialsResponseSchema;
+  },
+  /**
+   * GetOnboardingState queries the onboarding progress for a tenant.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.GetOnboardingState
+   */
+  getOnboardingState: {
+    methodKind: "unary";
+    input: typeof GetOnboardingStateRequestSchema;
+    output: typeof GetOnboardingStateResponseSchema;
+  },
+  /**
+   * UpdateOnboardingState advances or modifies the onboarding state.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.UpdateOnboardingState
+   */
+  updateOnboardingState: {
+    methodKind: "unary";
+    input: typeof UpdateOnboardingStateRequestSchema;
+    output: typeof UpdateOnboardingStateResponseSchema;
+  },
+  /**
+   * GetTenantQuota retrieves the configured resource quotas for a tenant.
+   * Returns zero values for any quota not explicitly set.
+   * Requires FGA admin relation on the tenant.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.GetTenantQuota
+   */
+  getTenantQuota: {
+    methodKind: "unary";
+    input: typeof GetTenantQuotaRequestSchema;
+    output: typeof GetTenantQuotaResponseSchema;
+  },
+  /**
+   * ListAuditEvents returns audit events for a tenant.
+   *
+   * Unimplemented: <owner-pending>
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.ListAuditEvents
+   */
+  listAuditEvents: {
+    methodKind: "unary";
+    input: typeof ListAuditEventsRequestSchema;
+    output: typeof ListAuditEventsResponseSchema;
+  },
+  /**
+   * ExportFindings exports findings to the requested format (json, csv, sarif).
+   *
+   * Unimplemented: <owner-pending>
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.ExportFindings
+   */
+  exportFindings: {
+    methodKind: "unary";
+    input: typeof ExportFindingsRequestSchema;
+    output: typeof ExportFindingsResponseSchema;
+  },
+  /**
+   * SaveMissionDraft persists a mission YAML draft for later use.
+   *
+   * Unimplemented: <owner-pending>
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.SaveMissionDraft
+   */
+  saveMissionDraft: {
+    methodKind: "unary";
+    input: typeof SaveMissionDraftRequestSchema;
+    output: typeof SaveMissionDraftResponseSchema;
+  },
+  /**
+   * ListMissionDrafts returns all saved mission drafts for a tenant.
+   *
+   * Unimplemented: <owner-pending>
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.ListMissionDrafts
+   */
+  listMissionDrafts: {
+    methodKind: "unary";
+    input: typeof ListMissionDraftsRequestSchema;
+    output: typeof ListMissionDraftsResponseSchema;
+  },
+  /**
+   * ListProviders returns all provider configs for the calling tenant.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.ListProviders
+   */
+  listProviders: {
+    methodKind: "unary";
+    input: typeof ListProvidersRequestSchema;
+    output: typeof ListProvidersResponseSchema;
+  },
+  /**
+   * GetProvider returns a single provider config by name.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.GetProvider
+   */
+  getProvider: {
+    methodKind: "unary";
+    input: typeof GetProviderRequestSchema;
+    output: typeof GetProviderResponseSchema;
+  },
+  /**
+   * CreateProvider encrypts and stores a new provider config.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.CreateProvider
+   */
+  createProvider: {
+    methodKind: "unary";
+    input: typeof CreateProviderRequestSchema;
+    output: typeof CreateProviderResponseSchema;
+  },
+  /**
+   * UpdateProvider replaces an existing provider config.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.UpdateProvider
+   */
+  updateProvider: {
+    methodKind: "unary";
+    input: typeof UpdateProviderRequestSchema;
+    output: typeof UpdateProviderResponseSchema;
+  },
+  /**
+   * DeleteProvider removes a provider config from the store.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.DeleteProvider
+   */
+  deleteProvider: {
+    methodKind: "unary";
+    input: typeof DeleteProviderRequestSchema;
+    output: typeof DeleteProviderResponseSchema;
+  },
+  /**
+   * TestProvider validates a proposed provider config by making a minimal live request.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.TestProvider
+   */
+  testProvider: {
+    methodKind: "unary";
+    input: typeof TestProviderRequestSchema;
+    output: typeof TestProviderResponseSchema;
+  },
+  /**
+   * GetProviderHealth returns the last-known health status of a stored provider.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.GetProviderHealth
+   */
+  getProviderHealth: {
+    methodKind: "unary";
+    input: typeof GetProviderHealthRequestSchema;
+    output: typeof GetProviderHealthResponseSchema;
+  },
+  /**
+   * GetDefaultProvider returns the tenant's currently configured default provider.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.GetDefaultProvider
+   */
+  getDefaultProvider: {
+    methodKind: "unary";
+    input: typeof GetDefaultProviderRequestSchema;
+    output: typeof GetDefaultProviderResponseSchema;
+  },
+  /**
+   * SetDefaultProvider designates an existing stored provider as the default.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.SetDefaultProvider
+   */
+  setDefaultProvider: {
+    methodKind: "unary";
+    input: typeof SetDefaultProviderRequestSchema;
+    output: typeof SetDefaultProviderResponseSchema;
+  },
+  /**
+   * GetFallbackChain returns the ordered list of provider names.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.GetFallbackChain
+   */
+  getFallbackChain: {
+    methodKind: "unary";
+    input: typeof GetFallbackChainRequestSchema;
+    output: typeof GetFallbackChainResponseSchema;
+  },
+  /**
+   * SetFallbackChain replaces the tenant's provider fallback chain.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.SetFallbackChain
+   */
+  setFallbackChain: {
+    methodKind: "unary";
+    input: typeof SetFallbackChainRequestSchema;
+    output: typeof SetFallbackChainResponseSchema;
+  },
+  /**
+   * ExecuteLLM proxies a single (non-streaming) LLM completion.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.ExecuteLLM
+   */
+  executeLLM: {
+    methodKind: "unary";
+    input: typeof ExecuteLLMRequestSchema;
+    output: typeof ExecuteLLMResponseSchema;
+  },
+  /**
+   * StreamLLM proxies a streaming LLM completion.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantAdminService.StreamLLM
+   */
+  streamLLM: {
+    methodKind: "server_streaming";
+    input: typeof StreamLLMRequestSchema;
+    output: typeof StreamLLMResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_tenant_v1_tenant_admin, 0);
