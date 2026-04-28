@@ -573,13 +573,6 @@ export { ConnectError, Code };
 
 // TenantUpdates removed — tenant mutation moved to the Tenant CRD operator.
 
-export interface CreateAPIKeyResult {
-  keyId: string;
-  /** Raw key value including the "gsk_" prefix — shown once only. */
-  rawKey: string;
-  tenantId: string;
-}
-
 export interface AuditLogQueryOptions {
   startTime?: Date;
   endTime?: Date;
@@ -603,7 +596,6 @@ export interface TenantQuota {
   tenantId: string;
   maxMissions: number;
   maxAgents: number;
-  maxAPIKeys: number;
   maxMembers: number;
   rateLimitRpm: number;
 }
@@ -618,46 +610,9 @@ export interface ProvisioningStep {
 // have moved to the Tenant CRD operator. Use `@/src/lib/k8s/tenants` for
 // reads and `app/actions/crd/tenant.ts` for mutations.
 
-/**
- * Issue a new API key for a tenant.
- *
- * `allowedKinds` and `allowedNames` restrict which component kinds/names the
- * key may access; pass empty arrays for unrestricted access.  The returned
- * `rawKey` is shown once and never stored in plaintext — callers must
- * surface it to the user immediately.
- */
-export async function createAPIKey(
-  tenantId: string,
-  allowedKinds: string[],
-  allowedNames: string[],
-  userId?: string
-): Promise<CreateAPIKeyResult> {
-  const client = await getAdminClient(userId, tenantId);
-  const response = await client.createAPIKey({ tenantId, allowedKinds, allowedNames });
-  return {
-    keyId: response.keyId,
-    rawKey: response.rawKey,
-    tenantId: response.tenantId,
-  };
-}
-
-/**
- * List all API key metadata records for a tenant.  Raw key values are never
- * returned by this RPC.
- */
-export async function listAPIKeys(tenantId: string, userId?: string) {
-  const client = await getAdminClient(userId, tenantId);
-  const response = await client.listAPIKeys({ tenantId });
-  return response.keys ?? [];
-}
-
-/**
- * Permanently revoke an API key.  The key cannot be recovered after revocation.
- */
-export async function revokeAPIKey(tenantId: string, keyId: string, userId?: string): Promise<void> {
-  const client = await getAdminClient(userId, tenantId);
-  await client.revokeAPIKey({ keyId });
-}
+// createAPIKey / listAPIKeys / revokeAPIKey removed — the gsk_ API key
+// system has been removed. Agent identity provisioning now goes through
+// TenantAdminService.CreateAgentIdentity (spec: agent-service-credentials).
 
 // listUserTenants / MembershipInfo removed — tenant membership is now
 // served by the Tenant CRD operator (see @/src/lib/k8s/tenants).
@@ -721,7 +676,6 @@ async function getTenantQuota(
     tenantId: targetTenantId,
     maxMissions: q?.maxMissions ?? 0,
     maxAgents: q?.maxAgents ?? 0,
-    maxAPIKeys: 0,
     maxMembers: 0,
     rateLimitRpm: 0,
   };
@@ -751,7 +705,6 @@ async function setTenantQuota(
     tenantId: targetTenantId,
     maxMissions: q?.maxMissions ?? 0,
     maxAgents: q?.maxAgents ?? 0,
-    maxAPIKeys: 0,
     maxMembers: 0,
     rateLimitRpm: 0,
   };

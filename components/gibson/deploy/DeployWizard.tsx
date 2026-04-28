@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
@@ -28,14 +27,9 @@ import {
 
 type ComponentType = "agent" | "tool" | "plugin";
 
-interface ApiKey {
-  keyId: string;
-  secret: string;
-}
-
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 3;
 const DEFAULT_PLATFORM_URL = "http://localhost:30002";
 const POLL_TIMEOUT_MS = 300_000; // 5 minutes
 
@@ -195,122 +189,6 @@ function SelectTypeStep({
   );
 }
 
-// ── Step 2: Generate API Key ──────────────────────────────────────────────────
-
-function GenerateKeyStep({
-  componentType,
-  componentName,
-  apiKey,
-  isCreatingKey,
-  platformUrl,
-  onBack,
-  onNext,
-}: {
-  componentType: ComponentType;
-  componentName: string;
-  apiKey: ApiKey | null;
-  isCreatingKey: boolean;
-  platformUrl: string;
-  onBack: () => void;
-  onNext: () => void;
-}) {
-  const exportLines = apiKey
-    ? `export GIBSON_API_KEY=${apiKey.secret}\nexport GIBSON_PLATFORM_URL=${platformUrl}`
-    : "";
-
-  function handleCopy() {
-    if (!exportLines) return;
-    navigator.clipboard.writeText(exportLines).then(() => {
-      toast.success("Credentials copied to clipboard");
-    }).catch(() => {
-      toast.error("Failed to copy to clipboard");
-    });
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <h2 className="text-xl font-bold tracking-tight font-mono text-glow-green">
-          API key generated
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          A scoped API key has been created for{" "}
-          <span className="data-value">{componentName}</span>. Copy it now — it
-          won't be shown again.
-        </p>
-      </div>
-
-      {/* Loading state */}
-      {isCreatingKey && (
-        <div className="flex flex-col items-center gap-3 py-8 text-muted-foreground">
-          <Loader2 className="size-8 animate-spin text-green-500" aria-label="Generating API key" />
-          <p className="text-sm">Generating API key...</p>
-        </div>
-      )}
-
-      {/* Key display */}
-      {!isCreatingKey && apiKey && (
-        <div className="space-y-3">
-          <div className="relative">
-            <pre className="font-mono bg-muted p-4 rounded-lg text-sm leading-relaxed overflow-x-auto whitespace-pre-wrap break-all data-value">
-              {`export GIBSON_API_KEY=${apiKey.secret}`}{"\n"}
-              {`export GIBSON_PLATFORM_URL=${platformUrl}`}
-            </pre>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={handleCopy}
-              className="absolute top-2 right-2 size-7 text-muted-foreground hover:text-foreground"
-              aria-label="Copy credentials to clipboard"
-            >
-              <Copy className="size-3.5" />
-            </Button>
-          </div>
-
-          <Badge
-            variant="outline"
-            className="gap-1.5 border-amber-500/40 bg-amber-950/20 text-amber-400 text-xs"
-          >
-            <AlertTriangle className="size-3" aria-hidden="true" />
-            Save this key — it won't be shown again
-          </Badge>
-
-          <div className="rounded-lg border border-green-900/20 bg-green-950/10 p-3 text-xs text-muted-foreground space-y-1">
-            <div className="flex gap-2">
-              <span className="font-mono uppercase tracking-wider text-green-500/60 shrink-0 w-16">Key ID</span>
-              <span className="data-value font-mono break-all">{apiKey.keyId}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-mono uppercase tracking-wider text-green-500/60 shrink-0 w-16">Type</span>
-              <span className="font-mono">{componentType}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Error: key not available */}
-      {!isCreatingKey && !apiKey && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-          <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
-          Failed to generate API key. Please go back and try again.
-        </div>
-      )}
-
-      {/* Navigation */}
-      <div className="flex items-center justify-between pt-1">
-        <Button variant="ghost" onClick={onBack} className="gap-2 text-muted-foreground" disabled={isCreatingKey}>
-          <ArrowLeft className="size-4" />
-          Back
-        </Button>
-        <Button onClick={onNext} disabled={isCreatingKey || !apiKey} className="gap-2">
-          Next
-          <ArrowRight className="size-4" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 // ── Code block with copy button ───────────────────────────────────────────────
 
 function CodeBlock({ code, label }: { code: string; label: string }) {
@@ -340,43 +218,36 @@ function CodeBlock({ code, label }: { code: string; label: string }) {
   );
 }
 
-// ── Step 3: Deploy Instructions ───────────────────────────────────────────────
+// ── Step 2: Deploy Instructions ───────────────────────────────────────────────
 
 function DeployInstructionsStep({
   componentType,
   componentName,
-  apiKey,
   platformUrl,
   onBack,
   onNext,
 }: {
   componentType: ComponentType;
   componentName: string;
-  apiKey: ApiKey | null;
   platformUrl: string;
   onBack: () => void;
   onNext: () => void;
 }) {
-  const secret = apiKey?.secret ?? "<GIBSON_API_KEY>";
-
   const kubernetesCmd = [
     `helm install ${componentName} gibson/component \\`,
     `  --set type=${componentType} \\`,
     `  --set name=${componentName} \\`,
-    `  --set platformUrl=${platformUrl} \\`,
-    `  --set apiKey=${secret}`,
+    `  --set platformUrl=${platformUrl}`,
   ].join("\n");
 
   const dockerCmd = [
     `docker run -d \\`,
-    `  -e GIBSON_API_KEY=${secret} \\`,
     `  -e GIBSON_PLATFORM_URL=${platformUrl} \\`,
     `  -e TOOL_NAME=${componentName} \\`,
     `  your-image:latest`,
   ].join("\n");
 
   const manualEnv = [
-    `GIBSON_API_KEY=${secret}`,
     `GIBSON_PLATFORM_URL=${platformUrl}`,
   ].join("\n");
 
@@ -567,7 +438,7 @@ function WaitForConnectionStep({
 
           <ul className="space-y-2 text-sm text-muted-foreground list-none">
             {[
-              "Check that GIBSON_API_KEY and GIBSON_PLATFORM_URL are set correctly",
+              "Check that GIBSON_PLATFORM_URL and agent credentials are set correctly",
               "Check that your component can reach the Zero Day AI endpoint",
               "Check component logs for authentication errors",
             ].map((tip) => (
@@ -629,56 +500,16 @@ export function DeployWizard() {
     }
   );
   const [componentName, setComponentName] = useState("");
-  const [apiKey, setApiKey] = useState<ApiKey | null>(null);
-  const [isCreatingKey, setIsCreatingKey] = useState(false);
 
   // Derive a stable platform URL (configurable later via /api/config).
   const platformUrl = DEFAULT_PLATFORM_URL;
-
-  // Auto-generate the key when entering step 2 for the first time.
-  const generateKey = useCallback(async () => {
-    if (apiKey) return; // already generated
-    setIsCreatingKey(true);
-    try {
-      const res = await fetch("/api/settings/api-keys", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ componentType, componentName }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error?.message ?? `Request failed (${res.status})`);
-      }
-      const data = await res.json();
-      setApiKey({ keyId: data.key?.keyId ?? data.keyId, secret: data.rawKey });
-    } catch (err) {
-      toast.error("Failed to generate API key", {
-        description: err instanceof Error ? err.message : "Unknown error",
-      });
-    } finally {
-      setIsCreatingKey(false);
-    }
-  }, [apiKey, componentType, componentName]);
-
-  // Trigger key creation whenever step 2 is entered.
-  useEffect(() => {
-    if (step === 2) {
-      generateKey();
-    }
-  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function goToStep(n: number) {
-    // Once key is generated, can't go back to step 1 (key is shown once).
-    if (n < 2 && apiKey) return;
-    setStep(n);
-  }
 
   function handleNext() {
     setStep((s) => Math.min(s + 1, TOTAL_STEPS));
   }
 
   function handleBack() {
-    setStep((s) => Math.max(s - 1, apiKey ? 2 : 1));
+    setStep((s) => Math.max(s - 1, 1));
   }
 
   return (
@@ -712,11 +543,9 @@ export function DeployWizard() {
           )}
 
           {step === 2 && (
-            <GenerateKeyStep
+            <DeployInstructionsStep
               componentType={componentType}
               componentName={componentName}
-              apiKey={apiKey}
-              isCreatingKey={isCreatingKey}
               platformUrl={platformUrl}
               onBack={handleBack}
               onNext={handleNext}
@@ -724,17 +553,6 @@ export function DeployWizard() {
           )}
 
           {step === 3 && (
-            <DeployInstructionsStep
-              componentType={componentType}
-              componentName={componentName}
-              apiKey={apiKey}
-              platformUrl={platformUrl}
-              onBack={handleBack}
-              onNext={handleNext}
-            />
-          )}
-
-          {step === 4 && (
             <WaitForConnectionStep
               componentType={componentType}
               componentName={componentName}
@@ -744,33 +562,6 @@ export function DeployWizard() {
         </CardContent>
       </Card>
 
-      {/* Step jump hints — shown only for completed steps */}
-      {step > 1 && (
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Reviewing steps?{" "}
-          {step > 2 && (
-            <button
-              type="button"
-              onClick={() => goToStep(2)}
-              className="text-green-500 hover:text-green-400 transition-colors underline underline-offset-2"
-            >
-              Back to credentials
-            </button>
-          )}
-          {step > 3 && (
-            <>
-              {" · "}
-              <button
-                type="button"
-                onClick={() => goToStep(3)}
-                className="text-green-500 hover:text-green-400 transition-colors underline underline-offset-2"
-              >
-                Back to deploy instructions
-              </button>
-            </>
-          )}
-        </p>
-      )}
     </div>
   );
 }

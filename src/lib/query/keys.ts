@@ -24,7 +24,6 @@ const graphBase = ['graph'] as const;
 const analyticsBase = ['analytics'] as const;
 const userBase = ['user'] as const;
 const alertsBase = ['alerts'] as const;
-const apiKeysBase = ['api-keys'] as const;
 
 export const queryKeys = {
   // Daemon status
@@ -138,12 +137,6 @@ export const queryKeys = {
     lists: (tenantId: string) => [...alertsBase, tenantId, 'list'] as const,
     list: (tenantId: string, filters?: { limit?: number; unreadOnly?: boolean }) =>
       [...alertsBase, tenantId, 'list', filters] as const,
-  },
-
-  // API Keys
-  apiKeys: {
-    all: apiKeysBase,
-    list: (tenantId: string) => [...apiKeysBase, tenantId, 'list'] as const,
   },
 
   // Traces

@@ -10,7 +10,6 @@ import {
   ContrastIcon,
   CreditCardIcon,
   CpuIcon,
-  KeyRoundIcon,
   LockKeyholeIcon,
   PaletteIcon,
   ShieldIcon,
@@ -59,11 +58,6 @@ const gibsonNavItems = [
     title: "Providers",
     href: "/dashboard/pages/settings/providers",
     icon: BotIcon
-  },
-  {
-    title: "API Keys",
-    href: "/dashboard/pages/settings/api-keys",
-    icon: KeyRoundIcon
   },
   {
     title: "Audit Log",
