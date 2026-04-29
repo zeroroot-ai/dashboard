@@ -50,9 +50,9 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
 import {
-  editPluginSecretBinding,
-  revokePluginSecretBinding,
-} from "@/src/lib/gibson-client/plugins-admin";
+  editPluginBindingAction,
+  revokePluginBindingAction,
+} from "@/app/actions/plugin-bindings";
 import type { PluginInstallSummary } from "@/src/gen/gibson/admin/v1/plugins_pb";
 
 // ---------------------------------------------------------------------------
@@ -140,30 +140,29 @@ function BindingRow({
       return;
     }
     setSaving(true);
-    try {
-      await editPluginSecretBinding(installId, declaredName, editValue.trim());
+    const result = await editPluginBindingAction(
+      installId,
+      declaredName,
+      editValue.trim(),
+    );
+    if (result.ok) {
       onUpdate(declaredName, editValue.trim());
       setEditing(false);
       toast.success("Binding updated");
-    } catch (err) {
-      toast.error(
-        `Update failed: ${err instanceof Error ? err.message : "Unknown error"}`,
-      );
-    } finally {
-      setSaving(false);
+    } else {
+      toast.error(`Update failed: ${result.error ?? "Unknown error"}`);
     }
+    setSaving(false);
   }
 
   async function handleRevoke() {
     setRevoking(true);
-    try {
-      await revokePluginSecretBinding(installId, declaredName);
+    const result = await revokePluginBindingAction(installId, declaredName);
+    if (result.ok) {
       onRevoke(declaredName);
       toast.success("Binding revoked");
-    } catch (err) {
-      toast.error(
-        `Revoke failed: ${err instanceof Error ? err.message : "Unknown error"}`,
-      );
+    } else {
+      toast.error(`Revoke failed: ${result.error ?? "Unknown error"}`);
       setRevoking(false);
     }
   }
