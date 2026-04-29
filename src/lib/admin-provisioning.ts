@@ -13,6 +13,11 @@
  *
  * Auth migration: service-acting-auth task 9 — replaced verifySpiffeBearer
  * with verifyZitadelBearer.
+ *
+ * Authz: dashboard-authz-ui-gating Task 10 — verifyZitadelBearer is the
+ * primary gate; all business handlers are stubbed 503 so no second-pass check
+ * is needed here (stub file). See admin-provisioning-entitlements.ts for the
+ * live handlers.
  */
 
 import { NextRequest, NextResponse } from "next/server";

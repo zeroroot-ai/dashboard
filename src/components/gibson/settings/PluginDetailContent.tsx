@@ -54,6 +54,7 @@ import {
   revokePluginBindingAction,
 } from "@/app/actions/plugin-bindings";
 import type { PluginInstallSummary } from "@/src/gen/gibson/admin/v1/plugins_pb";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -120,6 +121,10 @@ interface BindingRowProps {
   existingRef: string;
   onUpdate: (declaredName: string, newRef: string) => void;
   onRevoke: (declaredName: string) => void;
+  /** Whether the current user is authorized to edit this binding. */
+  canEdit: boolean;
+  /** Whether the current user is authorized to revoke this binding. */
+  canRevoke: boolean;
 }
 
 function BindingRow({
@@ -128,6 +133,8 @@ function BindingRow({
   existingRef,
   onUpdate,
   onRevoke,
+  canEdit,
+  canRevoke,
 }: BindingRowProps) {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(existingRef);
@@ -217,7 +224,7 @@ function BindingRow({
       </TableCell>
       <TableCell className="text-right">
         <div className="flex items-center justify-end gap-1">
-          {!editing && (
+          {canEdit && !editing && (
             <Button
               type="button"
               variant="ghost"
@@ -232,21 +239,23 @@ function BindingRow({
               <PencilIcon className="size-3.5" aria-hidden="true" />
             </Button>
           )}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="text-destructive hover:text-destructive size-7"
-            onClick={() => void handleRevoke()}
-            disabled={revoking}
-            aria-label={`Revoke binding for ${declaredName}`}
-          >
-            {revoking ? (
-              <Loader2Icon className="size-3.5 animate-spin" aria-hidden="true" />
-            ) : (
-              <TrashIcon className="size-3.5" aria-hidden="true" />
-            )}
-          </Button>
+          {canRevoke && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="text-destructive hover:text-destructive size-7"
+              onClick={() => void handleRevoke()}
+              disabled={revoking}
+              aria-label={`Revoke binding for ${declaredName}`}
+            >
+              {revoking ? (
+                <Loader2Icon className="size-3.5 animate-spin" aria-hidden="true" />
+              ) : (
+                <TrashIcon className="size-3.5" aria-hidden="true" />
+              )}
+            </Button>
+          )}
         </div>
       </TableCell>
     </TableRow>
@@ -271,6 +280,18 @@ export function PluginDetailContent({ install }: PluginDetailContentProps) {
     install.boundSecretRefs ?? [],
   );
   const [bindingError, setBindingError] = useState<string | null>(null);
+
+  // Authz gates: hide Edit / Revoke buttons for non-admins.
+  // Loading=true → treat as not-allowed to prevent FOUC.
+  // Spec: dashboard-authz-ui-gating Task 13, Requirement 5.3.
+  const { allowed: canEdit, loading: editLoading } = useAuthorize(
+    "/gibson.admin.v1.PluginsAdminService/EditPluginSecretBinding",
+  );
+  const { allowed: canRevoke, loading: revokeLoading } = useAuthorize(
+    "/gibson.admin.v1.PluginsAdminService/RevokePluginSecretBinding",
+  );
+  const allowEdit = !editLoading && canEdit;
+  const allowRevoke = !revokeLoading && canRevoke;
 
   function handleUpdate(declaredName: string, newRef: string) {
     setBindings((prev) =>
@@ -395,6 +416,8 @@ export function PluginDetailContent({ install }: PluginDetailContentProps) {
                       existingRef={ref}
                       onUpdate={handleUpdate}
                       onRevoke={handleRevoke}
+                      canEdit={allowEdit}
+                      canRevoke={allowRevoke}
                     />
                   ))}
                 </TableBody>

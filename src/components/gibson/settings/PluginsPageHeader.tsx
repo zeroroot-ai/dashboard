@@ -10,15 +10,22 @@
  * The existing PluginsContent component is rendered separately by the
  * page — this header is injected above it without touching the template logic.
  *
+ * Authz: "Add Plugin" button and the PluginRegisterDialog are gated on
+ * useAuthorize(RegisterPlugin). Hidden on loading=true (no FOUC).
+ * Spec: dashboard-authz-ui-gating Task 12, Requirements 5.2, 5.9.
+ *
  * Spec: secrets-tenant-lifecycle Task 15, Requirement 2.3.
  */
 
-import { usePermitted } from "@/src/lib/auth/tenant";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { PluginRegisterDialog } from "@/src/components/plugin-register/dialog";
 
 export function PluginsPageHeader() {
-  // Gate the Add Plugin button on tenant_admin permission
-  const canManage = usePermitted("components:manage");
+  // Gate the Add Plugin button (and dialog) on the RegisterPlugin RPC.
+  // Hide on loading=true so admin chrome does not flash for non-admins.
+  const { allowed, loading } = useAuthorize(
+    "/gibson.admin.v1.PluginsAdminService/RegisterPlugin",
+  );
 
   return (
     <div className="flex items-center justify-between">
@@ -28,7 +35,7 @@ export function PluginsPageHeader() {
           Manage installed plugin integrations and register new ones.
         </p>
       </div>
-      {canManage && (
+      {!loading && allowed && (
         <PluginRegisterDialog
           onRegistered={() => {
             // Refresh the page to pick up the newly-registered plugin in the

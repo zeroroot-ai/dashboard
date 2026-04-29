@@ -10,14 +10,33 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mocks
 // ---------------------------------------------------------------------------
 
-const { mockProbeBrokerConfig, mockSetBrokerConfig, mockGetServerSession } =
-  vi.hoisted(() => ({
+const {
+  mockProbeBrokerConfig,
+  mockSetBrokerConfig,
+  mockGetServerSession,
+  mockAssertAuthorized,
+  MockAuthzDeniedError,
+} = vi.hoisted(() => {
+  class _MockAuthzDeniedError extends Error {
+    public readonly method: string;
+    public readonly reason: string;
+    constructor(method: string, reason: string) {
+      super(`assertAuthorized: ${reason} for ${method}`);
+      this.name = "AuthzDeniedError";
+      this.method = method;
+      this.reason = reason;
+    }
+  }
+  return {
     mockProbeBrokerConfig: vi.fn(),
     mockSetBrokerConfig: vi.fn(),
     mockGetServerSession: vi.fn(async () => ({
       user: { id: "user-1", tenantId: "tenant-abc" },
     })),
-  }));
+    mockAssertAuthorized: vi.fn(async () => undefined),
+    MockAuthzDeniedError: _MockAuthzDeniedError,
+  };
+});
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -48,6 +67,11 @@ vi.mock("@/src/gen/gibson/admin/v1/tenant_pb", () => ({
     GCPSM: 4,
     AZUREKV: 5,
   },
+}));
+
+vi.mock("@/src/lib/auth/assert-authorized", () => ({
+  assertAuthorized: mockAssertAuthorized,
+  AuthzDeniedError: MockAuthzDeniedError,
 }));
 
 // ---------------------------------------------------------------------------
@@ -268,6 +292,52 @@ describe("setBrokerConfigAction — unauthenticated", () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected not-ok");
     expect(result.code).toBe("unauthenticated");
+    expect(mockSetBrokerConfig).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// assertAuthorized gating
+// ---------------------------------------------------------------------------
+
+describe("probeBrokerConfigAction — authz denied", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAssertAuthorized.mockRejectedValueOnce(
+      new MockAuthzDeniedError(
+        "/gibson.admin.v1.TenantAdminService/ProbeBrokerConfig",
+        "relation-not-met",
+      ),
+    );
+  });
+
+  it("returns permission_denied without calling daemon", async () => {
+    const fd = makeFormData({ ...vaultFormBase });
+    const result = await probeBrokerConfigAction(fd);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected not-ok");
+    expect(result.code).toBe("permission_denied");
+    expect(mockProbeBrokerConfig).not.toHaveBeenCalled();
+  });
+});
+
+describe("setBrokerConfigAction — authz denied", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAssertAuthorized.mockRejectedValueOnce(
+      new MockAuthzDeniedError(
+        "/gibson.admin.v1.TenantAdminService/SetBrokerConfig",
+        "relation-not-met",
+      ),
+    );
+  });
+
+  it("returns permission_denied without calling daemon", async () => {
+    const fd = makeFormData({ ...vaultFormBase });
+    const result = await setBrokerConfigAction(fd);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected not-ok");
+    expect(result.code).toBe("permission_denied");
     expect(mockSetBrokerConfig).not.toHaveBeenCalled();
   });
 });

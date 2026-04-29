@@ -5,9 +5,11 @@ import Link from "next/link";
 import { ArrowLeftIcon } from "lucide-react";
 
 import { getServerSession } from "@/src/lib/auth";
-import { hasRoleAtLeast } from "@/src/lib/auth/roles";
-import { getActiveTenant } from "@/src/lib/auth/active-tenant";
 import { AddSecretForm } from "@/src/components/secrets/AddSecretForm";
+import {
+  assertAuthorized,
+  AuthzDeniedError,
+} from "@/src/lib/auth/assert-authorized";
 
 export async function generateMetadata(): Promise<Metadata> {
   return generateMeta({
@@ -24,15 +26,16 @@ export default async function NewSecretPage() {
     redirect("/login");
   }
 
-  let tenantId: string;
+  // Server-side authz gate: SetSecret is tenant_admin only.
+  // Non-admins are redirected to the secrets list.
+  // Spec: dashboard-authz-ui-gating Task 14, Requirement 5.5.
   try {
-    tenantId = await getActiveTenant();
-  } catch {
-    redirect("/select-tenant");
-  }
-
-  if (!hasRoleAtLeast(session, tenantId, "admin")) {
-    redirect("/dashboard/pages/settings/secrets");
+    await assertAuthorized("/gibson.admin.v1.SecretsAdminService/SetSecret");
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      redirect("/dashboard/pages/settings/secrets");
+    }
+    throw err;
   }
 
   return (

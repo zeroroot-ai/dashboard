@@ -35,6 +35,10 @@ import {
 } from "@/src/lib/gibson-client/tenant-broker-config";
 import type { CandidateConfig } from "@/src/gen/gibson/admin/v1/tenant_pb";
 import { getServerSession } from "@/src/lib/auth";
+import {
+  assertAuthorized,
+  AuthzDeniedError,
+} from "@/src/lib/auth/assert-authorized";
 
 // ---------------------------------------------------------------------------
 // Shared result types
@@ -191,6 +195,15 @@ function redactErrorMessage(msg: string): string {
 export async function probeBrokerConfigAction(
   formData: FormData,
 ): Promise<ProbeActionResult> {
+  try {
+    await assertAuthorized("/gibson.admin.v1.TenantAdminService/ProbeBrokerConfig");
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      return { ok: false, error: "Permission denied", code: "permission_denied" };
+    }
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "Unauthenticated", code: "unauthenticated" };
@@ -238,6 +251,15 @@ export async function probeBrokerConfigAction(
 export async function setBrokerConfigAction(
   formData: FormData,
 ): Promise<SetConfigActionResult> {
+  try {
+    await assertAuthorized("/gibson.admin.v1.TenantAdminService/SetBrokerConfig");
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      return { ok: false, error: "Permission denied", code: "permission_denied" };
+    }
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "Unauthenticated", code: "unauthenticated" };

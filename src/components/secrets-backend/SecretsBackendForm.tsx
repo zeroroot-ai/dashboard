@@ -56,6 +56,7 @@ import {
   type ProbeActionResult,
   type SetConfigActionResult,
 } from "@/app/actions/secrets-backend";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
 
 import { GibsonHostedForm } from "./gibsonhosted";
 import { VaultForm } from "./vault";
@@ -269,6 +270,17 @@ export function SecretsBackendForm({
   const [isProbing, setIsProbing] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
 
+  // Authz: gate Probe and Save on their respective RPCs.
+  // Disable inputs for non-admins (read-only view).
+  // Spec: dashboard-authz-ui-gating Task 15, Requirement 5.6.
+  const { allowed: canProbe, loading: probeAuthLoading } = useAuthorize(
+    "/gibson.admin.v1.TenantAdminService/ProbeBrokerConfig",
+  );
+  const { allowed: canSave, loading: saveAuthLoading } = useAuthorize(
+    "/gibson.admin.v1.TenantAdminService/SetBrokerConfig",
+  );
+  const isReadOnly = probeAuthLoading || saveAuthLoading || (!canProbe && !canSave);
+
   // --------------------------------------------------------------------------
   // Provider switching with migration warning
   // --------------------------------------------------------------------------
@@ -444,11 +456,13 @@ export function SecretsBackendForm({
                     handleProviderChange(v);
                   }}
                   defaultValue={field.value}
+                  disabled={isReadOnly}
                 >
                   <FormControl>
                     <SelectTrigger
                       className="w-full text-xs"
                       data-testid="provider-switcher"
+                      disabled={isReadOnly}
                     >
                       <SelectValue placeholder="Select provider" />
                     </SelectTrigger>
@@ -494,30 +508,35 @@ export function SecretsBackendForm({
             <ProbeBanner result={saveResult ?? probeResult} />
           )}
 
-          {/* Action buttons — hidden for Gibson-hosted (no config to save) */}
-          {!isGibsonHosted && (
+          {/* Action buttons — hidden for Gibson-hosted (no config to save)
+              and hidden for non-admins (read-only mode). */}
+          {!isGibsonHosted && !isReadOnly && (
             <div className="flex items-center gap-2 pt-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={isProbing || isSaving}
-                onClick={handleProbe}
-                data-testid="probe-button"
-              >
-                {isProbing && <Loader2 className="size-3 animate-spin" />}
-                {isProbing ? "Probing…" : "Test connection"}
-              </Button>
+              {!probeAuthLoading && canProbe && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={isProbing || isSaving}
+                  onClick={handleProbe}
+                  data-testid="probe-button"
+                >
+                  {isProbing && <Loader2 className="size-3 animate-spin" />}
+                  {isProbing ? "Probing…" : "Test connection"}
+                </Button>
+              )}
 
-              <Button
-                type="submit"
-                size="sm"
-                disabled={isSaving || isProbing}
-                data-testid="save-button"
-              >
-                {isSaving && <Loader2 className="size-3 animate-spin" />}
-                {isSaving ? "Saving…" : "Save configuration"}
-              </Button>
+              {!saveAuthLoading && canSave && (
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isSaving || isProbing}
+                  data-testid="save-button"
+                >
+                  {isSaving && <Loader2 className="size-3 animate-spin" />}
+                  {isSaving ? "Saving…" : "Save configuration"}
+                </Button>
+              )}
             </div>
           )}
         </form>

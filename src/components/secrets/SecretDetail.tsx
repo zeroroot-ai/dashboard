@@ -27,6 +27,7 @@ import type { SecretMetadata } from "@/src/gen/gibson/admin/v1/secrets_pb";
 import { SecretCategory } from "@/src/gen/gibson/admin/v1/secrets_pb";
 import { RotateModal } from "./RotateModal";
 import { DeleteModal } from "./DeleteModal";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -80,6 +81,15 @@ export function SecretDetail({ metadata }: SecretDetailProps) {
   const [rotateOpen, setRotateOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
 
+  // Gate action buttons on their respective admin RPCs.
+  // Hide on loading=true (no FOUC). Spec: dashboard-authz-ui-gating Task 14.
+  const { allowed: canRotate, loading: rotateLoading } = useAuthorize(
+    "/gibson.admin.v1.SecretsAdminService/RotateSecret",
+  );
+  const { allowed: canDelete, loading: deleteLoading } = useAuthorize(
+    "/gibson.admin.v1.SecretsAdminService/DeleteSecret",
+  );
+
   return (
     <div className="space-y-6">
       {/* Header with actions */}
@@ -91,23 +101,27 @@ export function SecretDetail({ metadata }: SecretDetailProps) {
           </Badge>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setRotateOpen(true)}
-          >
-            <RotateCcwIcon className="mr-2 h-4 w-4" aria-hidden="true" />
-            Rotate
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-destructive hover:text-destructive"
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2Icon className="mr-2 h-4 w-4" aria-hidden="true" />
-            Delete
-          </Button>
+          {!rotateLoading && canRotate && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRotateOpen(true)}
+            >
+              <RotateCcwIcon className="mr-2 h-4 w-4" aria-hidden="true" />
+              Rotate
+            </Button>
+          )}
+          {!deleteLoading && canDelete && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2Icon className="mr-2 h-4 w-4" aria-hidden="true" />
+              Delete
+            </Button>
+          )}
         </div>
       </div>
 

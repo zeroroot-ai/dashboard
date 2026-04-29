@@ -43,6 +43,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { SecretMetadata } from "@/src/gen/gibson/admin/v1/secrets_pb";
 import { SecretCategory } from "@/src/gen/gibson/admin/v1/secrets_pb";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -209,6 +210,12 @@ export function SecretsList({
   const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
+  // Gate "Add secret" on SetSecret RPC. Hide on loading=true (no FOUC).
+  // Spec: dashboard-authz-ui-gating Task 14, Requirement 5.4.
+  const { allowed: canAddSecret, loading: addSecretLoading } = useAuthorize(
+    "/gibson.admin.v1.SecretsAdminService/SetSecret",
+  );
+
   const table = useReactTable({
     data: secrets,
     columns: secretColumns,
@@ -240,12 +247,14 @@ export function SecretsList({
         <p className="text-muted-foreground text-sm">
           {total} secret{total !== 1 ? "s" : ""}
         </p>
-        <Button asChild size="sm">
-          <Link href="/dashboard/pages/settings/secrets/new">
-            <PlusIcon className="mr-2 h-4 w-4" aria-hidden="true" />
-            Add secret
-          </Link>
-        </Button>
+        {!addSecretLoading && canAddSecret && (
+          <Button asChild size="sm">
+            <Link href="/dashboard/pages/settings/secrets/new">
+              <PlusIcon className="mr-2 h-4 w-4" aria-hidden="true" />
+              Add secret
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Table */}

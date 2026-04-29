@@ -5,10 +5,12 @@ import { ArrowLeftIcon } from "lucide-react";
 import { generateMeta } from "@/lib/utils";
 
 import { getServerSession } from "@/src/lib/auth";
-import { hasRoleAtLeast } from "@/src/lib/auth/roles";
-import { getActiveTenant } from "@/src/lib/auth/active-tenant";
 import { getSecret } from "@/src/lib/gibson-client/secrets";
 import { SecretDetail } from "@/src/components/secrets/SecretDetail";
+import {
+  assertAuthorized,
+  AuthzDeniedError,
+} from "@/src/lib/auth/assert-authorized";
 
 export async function generateMetadata({
   params,
@@ -35,15 +37,16 @@ export default async function SecretDetailPage({ params }: SecretDetailPageProps
     redirect("/login");
   }
 
-  let tenantId: string;
+  // Authz: GetSecret is tenant_member — all members can view details.
+  // Non-members are redirected.
+  // Spec: dashboard-authz-ui-gating Task 14, Requirement 5.4.
   try {
-    tenantId = await getActiveTenant();
-  } catch {
-    redirect("/select-tenant");
-  }
-
-  if (!hasRoleAtLeast(session, tenantId, "admin")) {
-    redirect("/dashboard/pages/settings/secrets");
+    await assertAuthorized("/gibson.admin.v1.SecretsAdminService/GetSecret");
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      redirect("/dashboard/pages/settings/secrets");
+    }
+    throw err;
   }
 
   const { id } = await params;

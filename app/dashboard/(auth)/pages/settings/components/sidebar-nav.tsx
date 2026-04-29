@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -21,8 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useMyPermissions } from "@/src/lib/permissions-cache";
-import { useTenantId } from "@/src/lib/auth/tenant";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
 
 const sidebarNavItems = [
   {
@@ -57,64 +57,68 @@ const sidebarNavItems = [
   }
 ];
 
-const gibsonNavItems = [
+// Non-gated Gibson nav items (all members can see).
+const gibsonNavItemsPublic = [
   {
     title: "Providers",
     href: "/dashboard/pages/settings/providers",
     icon: BotIcon,
-    adminOnly: false,
   },
   {
     title: "Audit Log",
     href: "/dashboard/pages/settings/audit",
     icon: ClipboardListIcon,
-    adminOnly: false,
   },
   {
     title: "Permissions",
     href: "/dashboard/pages/settings/permissions",
     icon: LockKeyholeIcon,
-    adminOnly: false,
   },
   {
     title: "Agents",
     href: "/dashboard/pages/settings/agents",
     icon: CpuIcon,
-    adminOnly: false,
-  },
-  // -------------------------------------------------------------------------
-  // Secrets surface — admin-only (Task 22, secrets-tenant-lifecycle spec).
-  // These entries are hidden from non-admins via the isAdmin permission check.
-  // The pages themselves enforce admin access server-side as well.
-  // -------------------------------------------------------------------------
-  {
-    title: "Secrets",
-    href: "/dashboard/pages/settings/secrets",
-    icon: KeyIcon,
-    adminOnly: true,
-  },
-  {
-    title: "Secrets Backend",
-    href: "/dashboard/pages/settings/secrets-backend",
-    icon: DatabaseIcon,
-    adminOnly: true,
-  },
-  {
-    title: "Grants",
-    href: "/dashboard/pages/settings/grants",
-    icon: ShieldIcon,
-    adminOnly: true,
   },
 ];
 
+/**
+ * GatedNavItem — renders a nav button only when the given RPC is authorized.
+ * Hides on loading=true (no FOUC). Spec: dashboard-authz-ui-gating Task 11.
+ */
+function GatedNavItem({
+  title,
+  href,
+  icon: Icon,
+  method,
+  pathname,
+}: {
+  title: string;
+  href: string;
+  icon: React.ElementType;
+  method: string;
+  pathname: string;
+}) {
+  const { allowed, loading } = useAuthorize(method);
+  if (loading || !allowed) return null;
+  return (
+    <Button
+      variant="ghost"
+      className={cn(
+        "hover:bg-muted justify-start",
+        pathname === href ? "bg-muted hover:bg-muted" : "",
+      )}
+      asChild
+    >
+      <Link href={href}>
+        <Icon />
+        {title}
+      </Link>
+    </Button>
+  );
+}
+
 export function SidebarNav() {
   const pathname = usePathname();
-  const tenantId = useTenantId() ?? "";
-  const { permissions } = useMyPermissions(tenantId);
-
-  // While permissions are loading, treat the user as a non-admin so
-  // admin-only entries stay hidden until the check resolves (no FOUC).
-  const isAdmin = permissions?.isAdmin ?? false;
 
   return (
     <Card className="py-0">
@@ -143,23 +147,46 @@ export function SidebarNav() {
             </p>
           </div>
 
-          {gibsonNavItems
-            .filter((item) => !item.adminOnly || isAdmin)
-            .map((item) => (
-              <Button
-                key={item.href}
-                variant="ghost"
-                className={cn(
-                  "hover:bg-muted justify-start",
-                  pathname === item.href ? "bg-muted hover:bg-muted" : ""
-                )}
-                asChild>
-                <Link href={item.href}>
-                  {item.icon && <item.icon />}
-                  {item.title}
-                </Link>
-              </Button>
-            ))}
+          {gibsonNavItemsPublic.map((item) => (
+            <Button
+              key={item.href}
+              variant="ghost"
+              className={cn(
+                "hover:bg-muted justify-start",
+                pathname === item.href ? "bg-muted hover:bg-muted" : "",
+              )}
+              asChild
+            >
+              <Link href={item.href}>
+                <item.icon />
+                {item.title}
+              </Link>
+            </Button>
+          ))}
+
+          {/* Admin-only entries: gated via useAuthorize on the primary read RPC.
+              Hidden on loading=true to prevent FOUC. */}
+          <GatedNavItem
+            title="Secrets"
+            href="/dashboard/pages/settings/secrets"
+            icon={KeyIcon}
+            method="/gibson.admin.v1.SecretsAdminService/ListSecrets"
+            pathname={pathname}
+          />
+          <GatedNavItem
+            title="Secrets Backend"
+            href="/dashboard/pages/settings/secrets-backend"
+            icon={DatabaseIcon}
+            method="/gibson.admin.v1.TenantAdminService/GetBrokerConfig"
+            pathname={pathname}
+          />
+          <GatedNavItem
+            title="Grants"
+            href="/dashboard/pages/settings/grants"
+            icon={ShieldIcon}
+            method="/gibson.admin.v1.GrantsAdminService/ListActiveGrants"
+            pathname={pathname}
+          />
         </nav>
       </CardContent>
     </Card>

@@ -3,13 +3,16 @@ import { redirect } from "next/navigation";
 import { generateMeta } from "@/lib/utils";
 
 import { getServerSession } from "@/src/lib/auth";
-import { hasRoleAtLeast } from "@/src/lib/auth/roles";
 import { getActiveTenant } from "@/src/lib/auth/active-tenant";
 import { listSecrets } from "@/src/lib/gibson-client/secrets";
 import { getBrokerConfig } from "@/src/lib/gibson-client/tenant-broker-config";
 import { BrokerProvider } from "@/src/gen/gibson/admin/v1/tenant_pb";
 import { SecretsList } from "@/src/components/secrets/SecretsList";
 import { SecretsEmptyState } from "@/src/components/secrets/EmptyState";
+import {
+  assertAuthorized,
+  AuthzDeniedError,
+} from "@/src/lib/auth/assert-authorized";
 
 export async function generateMetadata(): Promise<Metadata> {
   return generateMeta({
@@ -33,16 +36,21 @@ export default async function SecretsPage({ searchParams }: SecretsPageProps) {
     redirect("/login");
   }
 
-  let tenantId: string;
   try {
-    tenantId = await getActiveTenant();
+    await getActiveTenant();
   } catch {
     redirect("/select-tenant");
   }
 
-  if (!hasRoleAtLeast(session, tenantId, "admin")) {
-    // Non-admins see a 403-equivalent; redirect to settings root.
-    redirect("/dashboard/pages/settings");
+  // Authz: ListSecrets is tenant_member, so all members can view the list.
+  // Non-members are redirected. Spec: dashboard-authz-ui-gating Task 14.
+  try {
+    await assertAuthorized("/gibson.admin.v1.SecretsAdminService/ListSecrets");
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      redirect("/dashboard/pages/settings");
+    }
+    throw err;
   }
 
   const params = await searchParams;

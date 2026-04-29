@@ -11,6 +11,10 @@
  * session's tenantId (set by the active-tenant cookie via the existing auth
  * path). The daemon's ext-authz layer enforces tenant_admin for writes.
  *
+ * Authz: assertAuthorized is called at the top of each mutating action before
+ * any Zod parse or daemon call (spec: dashboard-authz-ui-gating Requirements
+ * 6.1, 6.2).
+ *
  * Spec: secrets-tenant-lifecycle Task 7, Requirements 1, 8.
  */
 
@@ -27,6 +31,10 @@ import {
 } from "@/src/lib/gibson-client/secrets";
 import { getServerSession } from "@/src/lib/auth";
 import { SecretCategory } from "@/src/gen/gibson/admin/v1/secrets_pb";
+import {
+  assertAuthorized,
+  AuthzDeniedError,
+} from "@/src/lib/auth/assert-authorized";
 
 // ---------------------------------------------------------------------------
 // Shared result type (mirrors the existing ActionResult<T> convention)
@@ -107,6 +115,15 @@ function categoryToProto(cat: "cred" | "provider_config"): SecretCategory {
 export async function createSecretAction(
   formData: FormData,
 ): Promise<SecretActionResult<SecretMetadata>> {
+  try {
+    await assertAuthorized("/gibson.admin.v1.SecretsAdminService/SetSecret");
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      return { ok: false, error: "Permission denied", code: "permission_denied" };
+    }
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "Unauthenticated", code: "unauthenticated" };
@@ -162,6 +179,15 @@ export async function rotateSecretAction(
   secretName: string,
   formData: FormData,
 ): Promise<SecretActionResult<SecretMetadata>> {
+  try {
+    await assertAuthorized("/gibson.admin.v1.SecretsAdminService/RotateSecret");
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      return { ok: false, error: "Permission denied", code: "permission_denied" };
+    }
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "Unauthenticated", code: "unauthenticated" };
@@ -211,6 +237,15 @@ export async function rotateSecretAction(
 export async function deleteSecretAction(
   secretName: string,
 ): Promise<SecretActionResult<null>> {
+  try {
+    await assertAuthorized("/gibson.admin.v1.SecretsAdminService/DeleteSecret");
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      return { ok: false, error: "Permission denied", code: "permission_denied" };
+    }
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "Unauthenticated", code: "unauthenticated" };

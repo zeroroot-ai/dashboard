@@ -1,4 +1,5 @@
 import { type Metadata } from "next";
+import { redirect } from "next/navigation";
 import { generateMeta } from "@/lib/utils";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +7,10 @@ import { ShieldIcon } from "lucide-react";
 
 import { listActiveGrants } from "@/src/lib/gibson-client/grants";
 import { GrantsTable } from "@/src/components/grants/GrantsTable";
+import {
+  assertAuthorized,
+  AuthzDeniedError,
+} from "@/src/lib/auth/assert-authorized";
 
 /**
  * Grants inspector page — server component.
@@ -33,6 +38,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function GrantsPage() {
+  // Defense-in-depth: block direct URL navigation by non-admins even if the
+  // sidebar entry is hidden. Spec: dashboard-authz-ui-gating Task 16, Req 5.7.
+  try {
+    await assertAuthorized("/gibson.admin.v1.GrantsAdminService/ListActiveGrants");
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      redirect("/dashboard/pages/settings");
+    }
+    throw err;
+  }
+
   let grants: Awaited<ReturnType<typeof listActiveGrants>>["grants"] = [];
   let loadError: string | null = null;
 

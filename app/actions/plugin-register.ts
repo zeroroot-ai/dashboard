@@ -30,6 +30,10 @@ import {
   type PluginManifestValidationError,
 } from "@/src/lib/gibson-client/plugins-admin";
 import { getServerSession } from "@/src/lib/auth";
+import {
+  assertAuthorized,
+  AuthzDeniedError,
+} from "@/src/lib/auth/assert-authorized";
 
 // ---------------------------------------------------------------------------
 // Result types
@@ -115,6 +119,15 @@ function buildBindings(
 export async function validatePluginManifestAction(
   manifestYaml: string,
 ): Promise<PluginActionResult<ValidationResult>> {
+  try {
+    await assertAuthorized("/gibson.admin.v1.PluginsAdminService/RegisterPlugin");
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      return { ok: false, error: "Permission denied", code: "permission_denied" };
+    }
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "Unauthenticated", code: "unauthenticated" };
@@ -175,6 +188,15 @@ export async function registerPluginAtomicAction(
   manifestYaml: string,
   bindingsInput: unknown[],
 ): Promise<PluginActionResult<RegisterResult>> {
+  try {
+    await assertAuthorized("/gibson.admin.v1.PluginsAdminService/RegisterPlugin");
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      return { ok: false, error: "Permission denied", code: "permission_denied" };
+    }
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "Unauthenticated", code: "unauthenticated" };

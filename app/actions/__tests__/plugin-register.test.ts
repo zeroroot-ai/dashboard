@@ -10,12 +10,31 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mocks
 // ---------------------------------------------------------------------------
 
-const { mockRegisterPlugin, mockGetServerSession } = vi.hoisted(() => ({
-  mockRegisterPlugin: vi.fn(),
-  mockGetServerSession: vi.fn(async () => ({
-    user: { id: "user-1", tenantId: "tenant-abc" },
-  })),
-}));
+const {
+  mockRegisterPlugin,
+  mockGetServerSession,
+  mockAssertAuthorized,
+  MockAuthzDeniedError,
+} = vi.hoisted(() => {
+  class _MockAuthzDeniedError extends Error {
+    public readonly method: string;
+    public readonly reason: string;
+    constructor(method: string, reason: string) {
+      super(`assertAuthorized: ${reason} for ${method}`);
+      this.name = "AuthzDeniedError";
+      this.method = method;
+      this.reason = reason;
+    }
+  }
+  return {
+    mockRegisterPlugin: vi.fn(),
+    mockGetServerSession: vi.fn(async () => ({
+      user: { id: "user-1", tenantId: "tenant-abc" },
+    })),
+    mockAssertAuthorized: vi.fn(async () => undefined),
+    MockAuthzDeniedError: _MockAuthzDeniedError,
+  };
+});
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -26,6 +45,11 @@ vi.mock("@/src/lib/auth", () => ({
 
 vi.mock("@/src/lib/gibson-client/plugins-admin", () => ({
   registerPlugin: mockRegisterPlugin,
+}));
+
+vi.mock("@/src/lib/auth/assert-authorized", () => ({
+  assertAuthorized: mockAssertAuthorized,
+  AuthzDeniedError: MockAuthzDeniedError,
 }));
 
 // ---------------------------------------------------------------------------
@@ -303,6 +327,50 @@ describe("registerPluginAtomicAction — unauthenticated", () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected not-ok");
     expect(result.code).toBe("unauthenticated");
+    expect(mockRegisterPlugin).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// assertAuthorized gating
+// ---------------------------------------------------------------------------
+
+describe("validatePluginManifestAction — authz denied", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAssertAuthorized.mockRejectedValueOnce(
+      new MockAuthzDeniedError(
+        "/gibson.admin.v1.PluginsAdminService/RegisterPlugin",
+        "relation-not-met",
+      ),
+    );
+  });
+
+  it("returns permission_denied without calling daemon", async () => {
+    const result = await validatePluginManifestAction(validManifest);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected not-ok");
+    expect(result.code).toBe("permission_denied");
+    expect(mockRegisterPlugin).not.toHaveBeenCalled();
+  });
+});
+
+describe("registerPluginAtomicAction — authz denied", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAssertAuthorized.mockRejectedValueOnce(
+      new MockAuthzDeniedError(
+        "/gibson.admin.v1.PluginsAdminService/RegisterPlugin",
+        "relation-not-met",
+      ),
+    );
+  });
+
+  it("returns permission_denied without calling daemon", async () => {
+    const result = await registerPluginAtomicAction(validManifest, []);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected not-ok");
+    expect(result.code).toBe("permission_denied");
     expect(mockRegisterPlugin).not.toHaveBeenCalled();
   });
 });
