@@ -12,10 +12,26 @@ export type AuditAction =
   | 'tenant.created'
   | 'tenant.updated'
   | 'tenant.deleted'
+  | 'tenant.secrets_namespace_created'
   | 'member.added'
   | 'member.removed'
   | 'member.role_changed'
-  | 'settings.updated';
+  | 'settings.updated'
+  // Secret lifecycle events (Spec 4 R5)
+  | 'secret.create'
+  | 'secret.read'
+  | 'secret.update'
+  | 'secret.delete'
+  | 'secret.bind'
+  | 'secret.revoke_access'
+  | 'secret.config_set'
+  // Plugin lifecycle events (Spec 4 R5)
+  | 'plugin.register'
+  | 'plugin.invoke'
+  | 'plugin.heartbeat'
+  | 'plugin.unreachable'
+  // Authorization events (Spec 4 R5)
+  | 'authz.deny';
 
 export type AuditResult = 'success' | 'failure';
 
@@ -46,17 +62,46 @@ export interface AuditLogEntry {
   };
   /** Error message if result is failure */
   errorMessage?: string;
+  // ---------------------------------------------------------------------------
+  // Extended fields for secret/plugin/authz drill-down (Spec 4 R5.3)
+  // NOTE: credential values are NEVER present in any of these fields.
+  // ---------------------------------------------------------------------------
+  /** Opaque secret identifier — name/ref only, never the value. */
+  secretId?: string;
+  /** Capability-grant JWT ID (jti) associated with this event. */
+  capabilityGrantId?: string;
+  /** Correlation / request ID for cross-service trace linkage. */
+  requestId?: string;
+  /**
+   * Structured error class for `authz.deny` events.
+   * e.g. `"fga_no_can_resolve"`, `"no_broker_configured"`.
+   */
+  errorClass?: string;
+  /**
+   * Sub-filter field for `authz.deny` events indicating the FGA decision
+   * reason. Only populated when `action === "authz.deny"`.
+   */
+  decisionReason?: string;
 }
 
 export interface AuditLogQuery {
   tenantId?: string;
   actorId?: string;
   action?: AuditAction;
+  /** Filter by multiple event types simultaneously (OR semantics). */
+  actions?: AuditAction[];
   result?: AuditResult;
   startDate?: Date;
   endDate?: Date;
   limit?: number;
   offset?: number;
+  // Extended filters (Spec 4 R5)
+  secretId?: string;
+  capabilityGrantId?: string;
+  requestId?: string;
+  errorClass?: string;
+  /** For `authz.deny` events: filter by specific FGA decision reason. */
+  decisionReason?: string;
 }
 
 // ============================================================================
@@ -418,6 +463,12 @@ export async function queryAuditLog(query: AuditLogQuery): Promise<{
   if (query.action) {
     filtered = filtered.filter((e) => e.action === query.action);
   }
+  // `actions` is an OR-filter across multiple event types; takes precedence
+  // over the singular `action` when both are present.
+  if (query.actions && query.actions.length > 0) {
+    const actionSet = new Set(query.actions);
+    filtered = filtered.filter((e) => actionSet.has(e.action));
+  }
   if (query.result) {
     filtered = filtered.filter((e) => e.result === query.result);
   }
@@ -426,6 +477,22 @@ export async function queryAuditLog(query: AuditLogQuery): Promise<{
   }
   if (query.endDate) {
     filtered = filtered.filter((e) => e.timestamp <= query.endDate!);
+  }
+  // Extended filters (Spec 4 R5)
+  if (query.secretId) {
+    filtered = filtered.filter((e) => e.secretId === query.secretId);
+  }
+  if (query.capabilityGrantId) {
+    filtered = filtered.filter((e) => e.capabilityGrantId === query.capabilityGrantId);
+  }
+  if (query.requestId) {
+    filtered = filtered.filter((e) => e.requestId === query.requestId);
+  }
+  if (query.errorClass) {
+    filtered = filtered.filter((e) => e.errorClass === query.errorClass);
+  }
+  if (query.decisionReason) {
+    filtered = filtered.filter((e) => e.decisionReason === query.decisionReason);
   }
 
   // Sort by timestamp descending
@@ -471,6 +538,9 @@ export async function getUserAuditLog(
  * Export audit log entries as CSV
  */
 export function exportAuditLogAsCSV(entries: AuditLogEntry[]): string {
+  // Extended headers include the new Spec 4 R5 fields.
+  // IMPORTANT: credential values are NEVER present in any audit row —
+  // the AuditLogEntry type has no value field by design.
   const headers = [
     'ID',
     'Timestamp',
@@ -484,6 +554,12 @@ export function exportAuditLogAsCSV(entries: AuditLogEntry[]): string {
     'IP Address',
     'User Agent',
     'Error Message',
+    // Extended fields (Spec 4 R5.3)
+    'Secret ID',
+    'Capability Grant ID',
+    'Request ID',
+    'Error Class',
+    'Decision Reason',
   ];
 
   const rows = entries.map((entry) => [
@@ -499,6 +575,12 @@ export function exportAuditLogAsCSV(entries: AuditLogEntry[]): string {
     entry.metadata.ipAddress || '',
     entry.metadata.userAgent || '',
     entry.errorMessage || '',
+    // Extended fields — empty string when absent so column count stays constant
+    entry.secretId || '',
+    entry.capabilityGrantId || '',
+    entry.requestId || '',
+    entry.errorClass || '',
+    entry.decisionReason || '',
   ]);
 
   return [

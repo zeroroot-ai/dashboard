@@ -77,8 +77,19 @@ const STEP_GROUPS: StepGroup[] = [
     label: "$ configuring access",
   },
   {
-    steps: ["grant_owner_role", "done"],
+    steps: ["grant_owner_role"],
     label: "$ granting root",
+  },
+  // Spec 4 Task 20: Vault namespace step published by the tenant-operator saga.
+  // The label intentionally uses plain English (not hacker-theme) because it
+  // appears during the SaaS onboarding flow where tenants may not be engineers.
+  {
+    steps: ["provisioning_secrets_backend"],
+    label: "$ provisioning secrets backend",
+  },
+  {
+    steps: ["done"],
+    label: "$ access granted",
   },
 ];
 
@@ -93,6 +104,10 @@ const STEP_ORDER: ProvisioningStep[] = [
   "setup_workspace",
   "apply_member",
   "grant_owner_role",
+  // New step: published by the tenant-operator after ensureVaultNamespace
+  // completes.  The ProvisioningPanel renders it automatically because
+  // STEP_GROUPS above already references it.
+  "provisioning_secrets_backend",
   "done",
 ];
 
@@ -384,30 +399,55 @@ export function ProvisioningPanel({
 
         {/* Failure state — keep it light + actionable. The hacker theme of
             the rest of the page is the brand voice; failure messages should
-            sound confident, not apologetic. */}
-        {(isFailed || pollError) && (
-          <div className="rounded-md bg-amber-500/10 border border-amber-500/30 px-4 py-3 space-y-2">
-            <div className="flex items-center gap-2">
-              <XCircle
-                className="h-5 w-5 shrink-0 text-amber-500"
-                aria-hidden="true"
-              />
-              <p className="text-sm font-medium font-mono text-amber-200">
-                # one of the daemons hiccupped
+            sound confident, not apologetic.
+            SECRETS_NAMESPACE_FAILED gets a dedicated message because Vault
+            provisioning failures need a slightly different remediation path.*/}
+        {(isFailed || pollError) && (() => {
+          const isVaultFailure =
+            progress?.error?.code === "SECRETS_NAMESPACE_FAILED";
+          return (
+            <div className="rounded-md bg-amber-500/10 border border-amber-500/30 px-4 py-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <XCircle
+                  className="h-5 w-5 shrink-0 text-amber-500"
+                  aria-hidden="true"
+                />
+                <p className="text-sm font-medium font-mono text-amber-200">
+                  {isVaultFailure
+                    ? "# secrets backend provisioning failed"
+                    : "# one of the daemons hiccupped"}
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground pl-7 font-mono">
+                {isVaultFailure ? (
+                  <>
+                    your account is ready but the secrets backend didn&apos;t
+                    come up — retry to try again, or ping{" "}
+                    <a
+                      href="mailto:support@zero-day.ai"
+                      className="underline underline-offset-4 hover:no-underline"
+                    >
+                      support@zero-day.ai
+                    </a>{" "}
+                    if it keeps happening.
+                  </>
+                ) : (
+                  <>
+                    hit the button again — usually clears it. if it sticks,
+                    ping{" "}
+                    <a
+                      href="mailto:support@zero-day.ai"
+                      className="underline underline-offset-4 hover:no-underline"
+                    >
+                      support@zero-day.ai
+                    </a>{" "}
+                    and we&apos;ll dig in.
+                  </>
+                )}
               </p>
             </div>
-            <p className="text-sm text-muted-foreground pl-7 font-mono">
-              hit the button again — usually clears it. if it sticks, ping{" "}
-              <a
-                href="mailto:support@zero-day.ai"
-                className="underline underline-offset-4 hover:no-underline"
-              >
-                support@zero-day.ai
-              </a>{" "}
-              and we&apos;ll dig in.
-            </p>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Timeout state — same vibe; the workspace IS coming, just slowly. */}
         {isTimeout && (

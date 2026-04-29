@@ -99,7 +99,14 @@ export type SignupFailureCode =
   | "PROVISIONING_TIMEOUT"
   | "MEMBERSHIP_TIMEOUT"
   | "TOS_MISSING"
-  | "INTERNAL_ERROR";
+  | "INTERNAL_ERROR"
+  /**
+   * Vault namespace provisioning failed during tenant signup.
+   * The tenant-operator saga rolls back and sets this code in the
+   * SignupProgressStore so the ProvisioningPanel can render an actionable
+   * retry CTA.  (Spec 4 Task 20, Requirement 7.1)
+   */
+  | "SECRETS_NAMESPACE_FAILED";
 
 // ---------------------------------------------------------------------------
 // Server Action result
@@ -144,6 +151,11 @@ export type ProvisioningStep =
   | "setup_workspace"
   | "apply_member"
   | "grant_owner_role"
+  /**
+   * Vault namespace provisioning step published by the tenant-operator saga
+   * after `ensureVaultNamespace` completes.  (Spec 4 Task 19/20, Req 7.1–7.2)
+   */
+  | "provisioning_secrets_backend"
   | "done";
 
 /**

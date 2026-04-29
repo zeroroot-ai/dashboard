@@ -10,15 +10,19 @@ import {
   ContrastIcon,
   CreditCardIcon,
   CpuIcon,
+  DatabaseIcon,
+  KeyIcon,
   LockKeyholeIcon,
   PaletteIcon,
   ShieldIcon,
   UserIcon
 } from "lucide-react";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useMyPermissions } from "@/src/lib/permissions-cache";
+import { useTenantId } from "@/src/lib/auth/tenant";
 
 const sidebarNavItems = [
   {
@@ -57,27 +61,60 @@ const gibsonNavItems = [
   {
     title: "Providers",
     href: "/dashboard/pages/settings/providers",
-    icon: BotIcon
+    icon: BotIcon,
+    adminOnly: false,
   },
   {
     title: "Audit Log",
     href: "/dashboard/pages/settings/audit",
-    icon: ClipboardListIcon
+    icon: ClipboardListIcon,
+    adminOnly: false,
   },
   {
     title: "Permissions",
     href: "/dashboard/pages/settings/permissions",
-    icon: LockKeyholeIcon
+    icon: LockKeyholeIcon,
+    adminOnly: false,
   },
   {
     title: "Agents",
     href: "/dashboard/pages/settings/agents",
-    icon: CpuIcon
-  }
+    icon: CpuIcon,
+    adminOnly: false,
+  },
+  // -------------------------------------------------------------------------
+  // Secrets surface — admin-only (Task 22, secrets-tenant-lifecycle spec).
+  // These entries are hidden from non-admins via the isAdmin permission check.
+  // The pages themselves enforce admin access server-side as well.
+  // -------------------------------------------------------------------------
+  {
+    title: "Secrets",
+    href: "/dashboard/pages/settings/secrets",
+    icon: KeyIcon,
+    adminOnly: true,
+  },
+  {
+    title: "Secrets Backend",
+    href: "/dashboard/pages/settings/secrets-backend",
+    icon: DatabaseIcon,
+    adminOnly: true,
+  },
+  {
+    title: "Grants",
+    href: "/dashboard/pages/settings/grants",
+    icon: ShieldIcon,
+    adminOnly: true,
+  },
 ];
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const tenantId = useTenantId() ?? "";
+  const { permissions } = useMyPermissions(tenantId);
+
+  // While permissions are loading, treat the user as a non-admin so
+  // admin-only entries stay hidden until the check resolves (no FOUC).
+  const isAdmin = permissions?.isAdmin ?? false;
 
   return (
     <Card className="py-0">
@@ -106,21 +143,23 @@ export function SidebarNav() {
             </p>
           </div>
 
-          {gibsonNavItems.map((item) => (
-            <Button
-              key={item.href}
-              variant="ghost"
-              className={cn(
-                "hover:bg-muted justify-start",
-                pathname === item.href ? "bg-muted hover:bg-muted" : ""
-              )}
-              asChild>
-              <Link href={item.href}>
-                {item.icon && <item.icon />}
-                {item.title}
-              </Link>
-            </Button>
-          ))}
+          {gibsonNavItems
+            .filter((item) => !item.adminOnly || isAdmin)
+            .map((item) => (
+              <Button
+                key={item.href}
+                variant="ghost"
+                className={cn(
+                  "hover:bg-muted justify-start",
+                  pathname === item.href ? "bg-muted hover:bg-muted" : ""
+                )}
+                asChild>
+                <Link href={item.href}>
+                  {item.icon && <item.icon />}
+                  {item.title}
+                </Link>
+              </Button>
+            ))}
         </nav>
       </CardContent>
     </Card>

@@ -2150,3 +2150,17 @@ export async function* streamLLM(
     yield fromProtoStreamChunk(chunk);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Admin v1 sub-module re-exports
+// spec: secrets-tenant-lifecycle Task 6
+//
+// These named sub-modules mirror one proto service each and are the canonical
+// import path for new server-only code. They compose with the existing
+// userClient / serviceClient factories defined above.
+// ---------------------------------------------------------------------------
+
+export * as secretsAdmin from './gibson-client/secrets';
+export * as pluginsAdmin from './gibson-client/plugins-admin';
+export * as grantsAdmin from './gibson-client/grants';
+export * as tenantBrokerAdmin from './gibson-client/tenant-broker-config';

@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { ErrorAlert, TableSkeleton } from "@/components/gibson/shared";
 import { useMission } from "@/src/hooks/useMissions";
 import type { MissionStatus } from "@/src/types";
+import { SecretsAccessedPanel } from "@/src/components/missions/SecretsAccessedPanel";
 
 const STATUS_BADGE_CLASSES: Record<MissionStatus, string> = {
   pending: "border-border text-muted-foreground",
@@ -130,6 +131,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
             )}
           </TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
+          <TabsTrigger value="secrets">Secrets</TabsTrigger>
         </TabsList>
 
         {/* Overview */}
@@ -271,6 +273,15 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
               <p className="text-sm text-muted-foreground font-mono">
                 Mission logs — integration pending.
               </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Secrets accessed */}
+        <TabsContent value="secrets" className="mt-4">
+          <Card>
+            <CardContent className="pt-6">
+              <SecretsAccessedPanel missionId={mission.id} />
             </CardContent>
           </Card>
         </TabsContent>
