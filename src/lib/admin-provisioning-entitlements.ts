@@ -1,30 +1,33 @@
 /**
  * Dashboard-side handlers for the entitlements provisioning routes called
- * by the tenant-operator (SPIFFE JWT-SVID authenticated) during every
+ * by the tenant-operator (Zitadel JWT authenticated) during every
  * Tenant CR reconcile. Forwards to the gibson daemon's PlatformOperatorService
  * entitlement RPCs via the existing gRPC client transport.
  *
  * Spec: agent-authoring-and-tenant-entitlements task 26.
  * Migration: admin-services-completion task 16 — switched from DaemonAdminService
  * to PlatformOperatorService per the service-split architecture.
+ * Auth migration: service-acting-auth task 9 — replaced verifySpiffeBearer with
+ * verifyZitadelBearer.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { PlatformOperatorService } from "@/src/gen/gibson/platform/v1/platform_operator_pb";
-import { verifySpiffeBearer } from "@/src/lib/spiffe-verifier";
+import { verifyZitadelBearer, ZitadelBearerError } from "@/src/lib/auth/zitadel-bearer-verifier";
 import { serviceClient } from "@/src/lib/gibson-client";
 
 async function authz(req: NextRequest): Promise<
-  | { ok: true; spiffeId: string }
-  | { ok: false; status: number; body: { error: string } }
+  | { ok: true; subject: string }
+  | { ok: false; status: number; body: { error: string; code?: string } }
 > {
   try {
-    const { spiffeId } = await verifySpiffeBearer(
+    const { subject } = await verifyZitadelBearer(
       req.headers.get("authorization"),
     );
-    return { ok: true, spiffeId };
+    return { ok: true, subject };
   } catch (err) {
+    const code = err instanceof ZitadelBearerError ? err.code : undefined;
     const msg = err instanceof Error ? err.message : String(err);
-    return { ok: false, status: 401, body: { error: `spiffe auth failed: ${msg}` } };
+    return { ok: false, status: 401, body: { error: `zitadel auth failed: ${msg}`, code } };
   }
 }
 
@@ -158,7 +161,7 @@ export async function handleEmitSummary(req: NextRequest) {
       event: {
         $typeName: "gibson.platform.v1.AuditEventMessage",
         type: "entitlements_reconcile",
-        actorSubject: a.spiffeId,
+        actorSubject: a.subject,
         actorSource: "operator",
         tuple: "",
         actionClass: "",

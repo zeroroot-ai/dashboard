@@ -2,15 +2,15 @@
  * Prometheus scrape endpoint.
  *
  * Returns the process-wide metrics registry in Prometheus text exposition
- * format 0.0.4. Access is gated by EITHER a valid SPIFFE JWT-SVID Bearer
- * token (same trust path as `/api/admin/provisioning/*`) OR a source IP
- * that falls inside one of the CIDR blocks listed in the
+ * format 0.0.4. Access is gated by EITHER a valid Zitadel JWT Bearer token
+ * (same trust path as `/api/admin/provisioning/*`) OR a source IP that falls
+ * inside one of the CIDR blocks listed in the
  * `DASHBOARD_METRICS_ALLOWED_CIDRS` environment variable (comma-separated).
  *
- * Either check alone is sufficient — the SPIFFE path covers in-cluster
- * scrapes from the Prometheus pod that ships a SPIRE agent, while the CIDR
- * path covers Prometheus deployments without SPIFFE identity (e.g. a
- * kube-prometheus-stack chart running in a different namespace).
+ * Either check alone is sufficient — the Zitadel path covers in-cluster
+ * scrapes from any service presenting a valid platform service-account JWT,
+ * while the CIDR path covers Prometheus deployments where bearer auth is not
+ * configured (e.g. a kube-prometheus-stack chart scraping via pod IP).
  *
  * Both checks fail-closed: a 401 response body with no metrics. There is
  * no CORS on this route (it's not a browser-reachable surface) and no
@@ -19,17 +19,20 @@
  * Env:
  *   DASHBOARD_METRICS_ALLOWED_CIDRS   Comma-separated list of IPv4/IPv6
  *                                     CIDR blocks. Unset/empty means the
- *                                     CIDR path is disabled; SPIFFE is
+ *                                     CIDR path is disabled; Zitadel JWT is
  *                                     the only way in.
- *   SPIFFE_JWKS_URL, SPIFFE_TRUST_DOMAIN, DASHBOARD_ADMIN_AUDIENCE,
- *   ALLOWED_ADMIN_SPIFFE_IDS          See src/lib/spiffe-verifier.ts.
+ *   ZITADEL_ISSUER, ZITADEL_AUDIENCE, ALLOWED_SERVICE_SUBJECTS
+ *                                     See src/lib/auth/zitadel-bearer-verifier.ts.
+ *
+ * Auth migration: service-acting-auth task 9 — replaced verifySpiffeBearer
+ * with verifyZitadelBearer.
  */
 
 import { NextResponse, type NextRequest } from "next/server";
 import { isIP } from "node:net";
 
 import { registry } from "@/src/lib/metrics/registry";
-import { verifySpiffeBearer } from "@/src/lib/spiffe-verifier";
+import { verifyZitadelBearer } from "@/src/lib/auth/zitadel-bearer-verifier";
 
 // Force this route onto the Node.js runtime: prom-client uses Node APIs
 // (perf_hooks, process memory probing for some collectors) and jose's JWT
@@ -215,8 +218,8 @@ function loadAllowedCidrs(): ParsedCidr[] {
  * NOTE: These headers are trustworthy only when set by an ingress we
  * control. In a public-ingress deployment the chart MUST terminate and
  * rewrite these headers at the edge — otherwise any caller can spoof
- * `X-Forwarded-For: <whitelisted-ip>`. The SPIFFE path exists precisely
- * so operators who can't guarantee that do not need the CIDR gate.
+ * `X-Forwarded-For: <whitelisted-ip>`. The Zitadel JWT path exists
+ * precisely so operators who can't guarantee that do not need the CIDR gate.
  */
 function extractClientIps(req: NextRequest): string[] {
   const ips: string[] = [];
@@ -252,17 +255,17 @@ function isAllowedCidr(req: NextRequest, cidrs: ParsedCidr[]): boolean {
 // ---------------------------------------------------------------------------
 
 export async function GET(req: NextRequest): Promise<Response> {
-  // 1) SPIFFE Bearer — only attempted when the Authorization header is
+  // 1) Zitadel JWT Bearer — only attempted when the Authorization header is
   // present, to avoid paying a JWKS round-trip on CIDR-only scrapes.
   const authHeader = req.headers.get("authorization");
   if (authHeader) {
     try {
-      await verifySpiffeBearer(authHeader);
+      await verifyZitadelBearer(authHeader);
       return renderMetrics();
     } catch {
       // Fall through to the CIDR gate. If CIDR also fails we return 401
-      // at the end; we do not leak the SPIFFE error detail here because
-      // a non-SPIFFE scraper shouldn't see SPIFFE-specific messages.
+      // at the end; we do not leak verifier error detail here because a
+      // non-JWT scraper shouldn't see Zitadel-specific messages.
     }
   }
 

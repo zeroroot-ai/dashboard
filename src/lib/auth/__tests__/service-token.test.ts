@@ -280,4 +280,34 @@ describe('getServiceToken', () => {
       ServiceTokenFetchError,
     );
   });
+
+  // -------------------------------------------------------------------------
+  // Scope sanity (R4.2: service-acting-auth)
+  //
+  // The token-fetch request body MUST include BOTH `openid` (required for
+  // Zitadel to issue a JWT rather than an opaque bearer) AND the project
+  // audience URN (so the issued JWT carries aud: ["gibson-platform"] and
+  // passes Envoy jwt_authn). This test pins the exact scope strings so a
+  // future refactor that silently drops either fails loudly.
+  // -------------------------------------------------------------------------
+
+  it('scope includes openid AND the gibson-platform audience URN (R4.2)', async () => {
+    const { calls } = captureFetch(async () =>
+      jsonResponse({ access_token: 'tok-scope-check', expires_in: 600 }),
+    );
+
+    await getServiceToken();
+
+    const body = String(calls[0].init.body ?? '');
+    // `scope` is URL-encoded in the form body — spaces become '+' or '%20,
+    // URN colons become %3A, etc. Check both the param name and the two
+    // mandatory scope values.
+    expect(body).toContain('scope=');
+    // `openid` is a plain ASCII word — must appear verbatim in the encoded body.
+    expect(body).toContain('openid');
+    // The project-audience URN — space-separated within the scope value,
+    // so it appears URL-encoded. Verify the full URN is present.
+    const AUD_URN = 'urn:zitadel:iam:org:project:id:gibson-platform:aud';
+    expect(body).toContain(encodeURIComponent(AUD_URN));
+  });
 });

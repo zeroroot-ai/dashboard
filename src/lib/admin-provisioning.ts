@@ -1,8 +1,8 @@
 /**
- * SPIFFE-authenticated admin provisioning helpers.
+ * Zitadel-JWT-authenticated admin provisioning helpers.
  *
  * These are called by Next.js route handlers under /api/admin/provisioning/*
- * which are invoked by the tenant-operator via JWT-SVID Bearer auth.
+ * which are invoked by the tenant-operator via Zitadel JWT Bearer auth.
  *
  * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js — see task 24
  * implementation log. The previous implementation used Better Auth's org
@@ -10,26 +10,30 @@
  * the Zitadel Management API (create org, create user, assign role). This
  * rewrite is scoped to the tenant-switcher / provisioning tasks (task 25+).
  * Until then, all endpoints return 503 to make failures explicit.
+ *
+ * Auth migration: service-acting-auth task 9 — replaced verifySpiffeBearer
+ * with verifyZitadelBearer.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { verifySpiffeBearer } from "@/src/lib/spiffe-verifier";
+import { verifyZitadelBearer, ZitadelBearerError } from "@/src/lib/auth/zitadel-bearer-verifier";
 
 async function authz(req: NextRequest): Promise<
-  | { ok: true; spiffeId: string }
-  | { ok: false; status: number; body: { error: string } }
+  | { ok: true; subject: string }
+  | { ok: false; status: number; body: { error: string; code?: string } }
 > {
   try {
-    const { spiffeId } = await verifySpiffeBearer(
+    const { subject } = await verifyZitadelBearer(
       req.headers.get("authorization"),
     );
-    return { ok: true, spiffeId };
+    return { ok: true, subject };
   } catch (err) {
+    const code = err instanceof ZitadelBearerError ? err.code : undefined;
     const msg = err instanceof Error ? err.message : String(err);
     return {
       ok: false,
       status: 401,
-      body: { error: `spiffe auth failed: ${msg}` },
+      body: { error: `zitadel auth failed: ${msg}`, code },
     };
   }
 }
