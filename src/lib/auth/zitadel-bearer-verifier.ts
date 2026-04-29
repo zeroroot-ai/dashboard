@@ -119,8 +119,9 @@ export interface VerifiedServiceIdentity {
   subject: string;
   /** Numeric Zitadel `sub` claim (the machine-user's internal ID). */
   clientId: string;
-  /** Present when the token carries a `gibson:tenant` custom claim. */
-  tenant?: string;
+  // Tenant intentionally omitted — service-acting JWTs do not carry a tenant
+  // claim (per spec tenant-membership-not-in-jwt). The route handler must
+  // resolve the tenant from request context.
 }
 
 // ---------------------------------------------------------------------------
@@ -229,12 +230,8 @@ export async function verifyZitadelBearer(
     );
   }
 
-  return {
-    subject: matchedSubject,
-    clientId: sub,
-    tenant:
-      typeof payload['gibson:tenant'] === 'string'
-        ? (payload['gibson:tenant'] as string)
-        : undefined,
-  };
+  // Tenant is NOT carried in the JWT for service-acting calls (per spec
+  // tenant-membership-not-in-jwt); the route handler resolves the tenant
+  // from request context (path param, body field, or operator's CR ref).
+  return { subject: matchedSubject, clientId: sub };
 }
