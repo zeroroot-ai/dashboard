@@ -40,7 +40,7 @@ import { FetchJWTSVID } from '@spiffe/workload-api';      // forbidden
 
 async function adminBearer(): Promise<string> {
   const svid = await FetchJWTSVID({
-    audience: 'spiffe://gibson.io/platform/daemon',
+    audience: 'spiffe://zero-day.ai/platform/daemon',
   });
   return svid.svid;
 }

@@ -90,7 +90,7 @@ Env vars:
 
 ```
 SPIFFE_JWKS_URL            sidecar URL (default http://127.0.0.1:9091/jwks)
-SPIFFE_TRUST_DOMAIN        expected trust domain (e.g. gibson.io)
+SPIFFE_TRUST_DOMAIN        expected trust domain (e.g. zero-day.ai)
 DASHBOARD_ADMIN_AUDIENCE   expected JWT audience (e.g. gibson-dashboard)
 ```
 
