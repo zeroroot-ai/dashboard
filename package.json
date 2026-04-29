@@ -28,6 +28,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:auth-errors": "playwright test e2e/auth/login-error-regression.spec.ts",
+    "test:e2e:authz": "playwright test e2e/authz/",
     "check:auth-regression": "node -e \"const { execSync } = require('child_process'); const cmds = ['tsc --noEmit', 'node scripts/check-no-stale-tenant-resolution.mjs', 'node scripts/check-no-direct-daemon-grpc.mjs', 'node scripts/check-no-secret-in-logs.mjs', 'node scripts/check-auth-rbac-inventory-fresh.mjs', 'node scripts/check-dashboard-rbac-minimal.mjs']; let failed = false; for (const cmd of cmds) { try { console.log('[check:auth-regression] Running: ' + cmd); execSync(cmd, { stdio: 'inherit' }); } catch { failed = true; } } if (failed) { console.error('[check:auth-regression] FAIL — one or more checks failed'); process.exit(1); } console.log('[check:auth-regression] All static checks passed. Run pnpm test:e2e:auth-errors for the e2e suite.');\"",
     "proto:generate": "buf generate --template buf.gen.yaml"
   },
