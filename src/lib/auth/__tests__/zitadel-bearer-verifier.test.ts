@@ -14,10 +14,14 @@
  *   - signature-failed (JWTExpired)
  *   - issuer-mismatch
  *   - audience-mismatch
- *   - subject-not-allowed
- *   - happy-path (preferred_username match)
- *   - happy-path (numeric sub match)
- *   - happy-path (gibson:tenant claim forwarded)
+ *   - subject-not-allowed (numeric sub absent from allow-list)
+ *   - subject-not-allowed (readable name in payload, numeric sub mismatch — regression guard)
+ *   - happy-path (numeric sub matches)
+ *   - happy-path (case-insensitive Bearer prefix)
+ *
+ * Spec canonical-service-identity Req 5 — ALLOWED_SERVICE_SUBJECTS carries
+ * NUMERIC Zitadel subs only; the verifier does a single equality check on
+ * payload.sub. Tests assert this contract end-to-end.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -83,7 +87,8 @@ beforeEach(() => {
   setEnv({
     ZITADEL_ISSUER: 'https://zitadel.test',
     ZITADEL_AUDIENCE: 'gibson-platform',
-    ALLOWED_SERVICE_SUBJECTS: 'gibson-tenant-operator,gibson-tool-runner-sa',
+    // Spec canonical-service-identity Req 5 — NUMERIC subs only.
+    ALLOWED_SERVICE_SUBJECTS: '123456789,987654321',
   });
 });
 
@@ -213,22 +218,42 @@ describe('audience-mismatch', () => {
 // ---------------------------------------------------------------------------
 
 describe('subject-not-allowed', () => {
-  it('throws when preferred_username is not in the allow-list', async () => {
+  it('throws when numeric sub is not in the allow-list', async () => {
     mockedJwtVerify.mockResolvedValueOnce({
-      payload: okPayload({ preferred_username: 'gibson-unknown-sa' }),
+      payload: okPayload({ sub: '999999' }),
       protectedHeader: { alg: 'RS256' },
     } as Awaited<ReturnType<typeof jwtVerify>>);
     const err = await verifyZitadelBearer(BEARER).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(ZitadelBearerError);
     expect((err as ZitadelBearerError).code).toBe('subject-not-allowed');
-    // Should reveal the subject in the message (to aid diagnostics) but not the token.
-    expect((err as Error).message).toContain('gibson-unknown-sa');
+    // Reveal the offending sub in the message; never the token bytes.
+    expect((err as Error).message).toContain('999999');
     expect((err as Error).message).not.toContain(FAKE_JWT);
   });
 
-  it('throws when neither preferred_username nor sub is in the allow-list', async () => {
+  it('throws when sub is missing entirely', async () => {
     mockedJwtVerify.mockResolvedValueOnce({
-      payload: okPayload({ preferred_username: undefined, sub: '999999' }),
+      payload: okPayload({ sub: undefined }),
+      protectedHeader: { alg: 'RS256' },
+    } as Awaited<ReturnType<typeof jwtVerify>>);
+    const err = await verifyZitadelBearer(BEARER).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ZitadelBearerError);
+    expect((err as ZitadelBearerError).code).toBe('subject-not-allowed');
+    expect((err as Error).message).toContain('(missing)');
+  });
+
+  // Regression guard: a JWT carrying a readable preferred_username that's
+  // in the env (legacy shape) must STILL be rejected — only payload.sub
+  // is consulted.
+  it('rejects readable preferred_username even if it appears in legacy env', async () => {
+    setEnv({ ALLOWED_SERVICE_SUBJECTS: 'gibson-tenant-operator,123456789' });
+    __resetJWKSForTests();
+    vi.mocked(createRemoteJWKSet).mockReturnValue(vi.fn() as unknown as ReturnType<typeof createRemoteJWKSet>);
+    mockedJwtVerify.mockResolvedValueOnce({
+      payload: okPayload({
+        sub: '999999',
+        preferred_username: 'gibson-tenant-operator',
+      }),
       protectedHeader: { alg: 'RS256' },
     } as Awaited<ReturnType<typeof jwtVerify>>);
     const err = await verifyZitadelBearer(BEARER).catch((e: unknown) => e);
@@ -242,41 +267,15 @@ describe('subject-not-allowed', () => {
 // ---------------------------------------------------------------------------
 
 describe('happy-path', () => {
-  it('returns identity when preferred_username matches the allow-list', async () => {
+  it('returns identity when numeric sub matches the allow-list', async () => {
     mockedJwtVerify.mockResolvedValueOnce({
       payload: okPayload(),
       protectedHeader: { alg: 'RS256' },
     } as Awaited<ReturnType<typeof jwtVerify>>);
 
     const identity = await verifyZitadelBearer(BEARER);
-    expect(identity.subject).toBe('gibson-tenant-operator');
-    expect(identity.clientId).toBe('123456789');
-    expect(identity.tenant).toBeUndefined();
-  });
-
-  it('returns identity when numeric sub matches the allow-list (no preferred_username)', async () => {
-    setEnv({ ALLOWED_SERVICE_SUBJECTS: '123456789' });
-    __resetJWKSForTests();
-    vi.mocked(createRemoteJWKSet).mockReturnValue(vi.fn() as unknown as ReturnType<typeof createRemoteJWKSet>);
-
-    mockedJwtVerify.mockResolvedValueOnce({
-      payload: okPayload({ preferred_username: undefined }),
-      protectedHeader: { alg: 'RS256' },
-    } as Awaited<ReturnType<typeof jwtVerify>>);
-
-    const identity = await verifyZitadelBearer(BEARER);
     expect(identity.subject).toBe('123456789');
     expect(identity.clientId).toBe('123456789');
-  });
-
-  it('forwards the gibson:tenant custom claim when present', async () => {
-    mockedJwtVerify.mockResolvedValueOnce({
-      payload: okPayload({ 'gibson:tenant': 'tenant-abc' }),
-      protectedHeader: { alg: 'RS256' },
-    } as Awaited<ReturnType<typeof jwtVerify>>);
-
-    const identity = await verifyZitadelBearer(BEARER);
-    expect(identity.tenant).toBe('tenant-abc');
   });
 
   it('accepts case-insensitive "Bearer" prefix', async () => {
@@ -286,6 +285,6 @@ describe('happy-path', () => {
     } as Awaited<ReturnType<typeof jwtVerify>>);
 
     const identity = await verifyZitadelBearer(`bearer ${FAKE_JWT}`);
-    expect(identity.subject).toBe('gibson-tenant-operator');
+    expect(identity.subject).toBe('123456789');
   });
 });

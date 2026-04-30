@@ -152,3 +152,11 @@ E2E_AUTH_SUITE=1 PLAYWRIGHT_BASE_URL=http://localhost:30081 \
 ```
 
 All three suites compile and lint cleanly without a live cluster.
+
+## Service-account identity (canonical sub)
+
+`verifyZitadelBearer` performs a **single-claim numeric check** on the JWT's `sub` against `ALLOWED_SERVICE_SUBJECTS`. The env is populated at pod startup by the `resolve-sa-identity-map` init container (chart template `templates/dashboard/deployment.yaml`), which reads `.Values.serviceAccounts.required` (readable SA names) and resolves each one to its numeric sub via the chart-managed `gibson-sa-identity-map` ConfigMap. Pod fail-fasts if any required SA is missing from the map.
+
+The TS module `src/lib/auth/identity-resolver.ts` is the **log-enrichment-only** lookup (numeric → readable). Never import it from auth-decision code. The mounted source is `/shared/sa-identity-map.json`, written by the same init container.
+
+Spec: `canonical-service-identity`.

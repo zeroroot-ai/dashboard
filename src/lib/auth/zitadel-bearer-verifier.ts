@@ -11,7 +11,16 @@
  *   2. JWT signature verified against Zitadel JWKS (cached 10 min).
  *   3. `iss` matches ZITADEL_ISSUER.
  *   4. `aud` includes ZITADEL_AUDIENCE (default "gibson-platform").
- *   5. `preferred_username` or `sub` is in ALLOWED_SERVICE_SUBJECTS.
+ *   5. `sub` (Zitadel-issued NUMERIC user ID) is in ALLOWED_SERVICE_SUBJECTS.
+ *
+ * Per spec canonical-service-identity, the canonical service-account
+ * identifier is the Zitadel-issued numeric `sub`. Readable SA names appear
+ * only at bootstrap input (Helm values, post-install Job) and at log
+ * enrichment (via the identity-resolver helper). This verifier does a single
+ * equality check against the numeric sub. The earlier multi-claim fallback
+ * (preferred_username / username / client_id / sub) was a defensive
+ * workaround for a shape mismatch the canonical-service-identity spec
+ * eliminated.
  *
  * Throws a {@link ZitadelBearerError} with a machine-readable `code` on every
  * failure. The bearer token bytes are NEVER included in the error message.
@@ -19,10 +28,13 @@
  * Env vars:
  *   ZITADEL_ISSUER             — Zitadel issuer URL (required).
  *   ZITADEL_AUDIENCE           — Expected audience claim (default "gibson-platform").
- *   ALLOWED_SERVICE_SUBJECTS   — Comma-separated SA usernames or numeric client_ids
- *                                allowed to call service-acting routes.
+ *   ALLOWED_SERVICE_SUBJECTS   — Comma-separated NUMERIC Zitadel subs allowed
+ *                                to call service-acting routes. Populated at
+ *                                pod start by the resolve-sa-identity-map
+ *                                init container reading the chart-managed
+ *                                gibson-sa-identity-map ConfigMap.
  *
- * Spec: service-acting-auth R5.3, NFR Performance, NFR Security.
+ * Spec: canonical-service-identity R5; service-acting-auth R5.3.
  *
  * @module auth/zitadel-bearer-verifier
  */
@@ -205,46 +217,22 @@ export async function verifyZitadelBearer(
   }
 
   // Check 5: subject allow-list
-  // Zitadel client_credentials JWTs may carry the human-readable identity
-  // in any of three claims: `preferred_username` (only when the `profile`
-  // scope is requested), `username` (older Zitadel versions), or
-  // `client_id` (always present and equal to whatever client identifier
-  // the OAuth2 grant supplied — the readable username when the operator's
-  // K8s Secret stores it that way). `sub` is always the numeric internal
-  // user_id. Accept any of the four against ALLOWED_SERVICE_SUBJECTS so
-  // operators don't have to track Zitadel-internal IDs that change per
-  // cluster.
+  // Spec canonical-service-identity Req 5.3 — single-claim numeric check.
+  // The JWT's `sub` claim is the Zitadel-issued numeric user_id. The chart's
+  // resolve-sa-identity-map init container populates ALLOWED_SERVICE_SUBJECTS
+  // with comma-joined numeric subs (resolved from the readable SA names in
+  // serviceAccounts.required against the gibson-sa-identity-map ConfigMap).
+  // Equality compare. No multi-claim fallback.
   const sub = typeof payload.sub === 'string' ? payload.sub : '';
-  const preferredUsername =
-    typeof payload.preferred_username === 'string'
-      ? payload.preferred_username
-      : '';
-  const username =
-    typeof (payload as { username?: unknown }).username === 'string'
-      ? ((payload as { username: string }).username)
-      : '';
-  const clientIdClaim =
-    typeof (payload as { client_id?: unknown }).client_id === 'string'
-      ? ((payload as { client_id: string }).client_id)
-      : '';
-
-  const candidates = [preferredUsername, username, clientIdClaim, sub].filter(
-    (s): s is string => typeof s === 'string' && s.length > 0,
-  );
-  const matchedSubject = candidates.find((c) => allowedSubjects.has(c)) ?? null;
-
-  if (matchedSubject === null) {
-    // Reveal the candidates so operators can diagnose allow-list mismatches,
-    // but NEVER include the bearer token itself.
-    const identity = candidates[0] ?? '(unknown)';
+  if (!sub || !allowedSubjects.has(sub)) {
     throw new ZitadelBearerError(
       'subject-not-allowed',
-      `subject "${identity}" is not in ALLOWED_SERVICE_SUBJECTS (checked preferred_username, username, client_id, sub)`,
+      `subject "${sub || '(missing)'}" is not in ALLOWED_SERVICE_SUBJECTS`,
     );
   }
 
   // Tenant is NOT carried in the JWT for service-acting calls (per spec
   // tenant-membership-not-in-jwt); the route handler resolves the tenant
   // from request context (path param, body field, or operator's CR ref).
-  return { subject: matchedSubject, clientId: sub };
+  return { subject: sub, clientId: sub };
 }
