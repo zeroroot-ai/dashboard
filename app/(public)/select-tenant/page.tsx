@@ -11,8 +11,8 @@ import { Button } from "@/components/ui/button";
 
 import { auth } from "@/auth";
 import { getMyMemberships } from "@/src/lib/auth/membership";
-import { setActiveTenant } from "@/src/lib/auth/active-tenant";
 import { pickTenantAction } from "./actions";
+import { AutoPickTenant } from "./auto-pick";
 
 interface PageProps {
   searchParams: Promise<{ return_to?: string }>;
@@ -33,12 +33,22 @@ export default async function SelectTenantPage({ searchParams }: PageProps) {
     redirect("/onboarding");
   }
 
-  // Single membership → set the cookie and forward without rendering.
+  // Single membership → auto-submit the same Server Action the multi-tenant
+  // form uses. Server Components cannot mutate cookies (Next.js 15+
+  // restriction), so we render a tiny client component that requestSubmit()s
+  // the hidden form on mount. The Server Action then sets the
+  // gibson_active_tenant cookie and redirects.
   if (memberships.length === 1) {
     const only = memberships[0];
     if (only) {
-      await setActiveTenant(only.tenantId);
-      redirect(returnTo && returnTo.startsWith("/") ? returnTo : "/dashboard");
+      return (
+        <AutoPickTenant
+          tenantId={only.tenantId}
+          tenantName={only.tenantName}
+          returnTo={returnTo ?? ""}
+          action={pickTenantAction}
+        />
+      );
     }
   }
 
