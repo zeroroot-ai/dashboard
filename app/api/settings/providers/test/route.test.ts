@@ -56,6 +56,7 @@ const mockTestResult = {
   latencyMs: 342,
   model: 'claude-3-5-sonnet-20241022',
   error: undefined,
+  models: [],
 };
 
 function makeRequest(body?: unknown): Request {
@@ -100,6 +101,7 @@ describe('POST /api/settings/providers/test', () => {
       latencyMs: 5001,
       model: '',
       error: 'authentication failed',
+      models: [],
     });
 
     const res = await POST(makeRequest(testInput) as Parameters<typeof POST>[0]);

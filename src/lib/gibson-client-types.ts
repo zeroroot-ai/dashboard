@@ -40,13 +40,14 @@ export interface CredentialFieldDescriptor {
 
 /**
  * Model descriptor returned per provider so the dashboard can populate a
- * model picker without constructing the provider.
+ * model picker. Mirrors the proto `gibson.tenant.v1.ModelDescriptor` shape.
  */
 export interface ModelDescriptor {
   name: string;
+  /** Optional vendor family / display group, e.g. "Claude 3.5", "GPT-4". */
+  family: string;
+  /** Maximum input tokens; 0 when unknown. */
   contextWindow: number;
-  maxOutput: number;
-  features: string[];
 }
 
 /**

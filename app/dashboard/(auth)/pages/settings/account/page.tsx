@@ -1,15 +1,16 @@
 /**
  * Account Settings page.
  *
- * Source-of-truth for the user's profile is Zitadel. Rather than mirror it
- * in the dashboard (and risk drift), this page surfaces the live session
- * fields read-only and deep-links to Zitadel's self-service console for
- * the editable bits (display name, password, MFA, linked social accounts).
+ * Read-only view of the signed-in user's identity + active workspace.
+ * Editing is not exposed in the dashboard today — the IdP is a backend
+ * implementation detail that should never surface to end users (no
+ * "manage in Zitadel" deep-link, no provider name leakage). When the
+ * dashboard grows in-app profile editing, it will proxy through a
+ * dashboard-owned endpoint that calls the IdP server-side.
  *
- * Active-tenant info is included since users frequently come here looking
- * for their tenant id when filing support requests.
+ * Active-tenant info is included since users come here looking for their
+ * workspace id when filing support requests.
  */
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -24,11 +25,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ExternalLinkIcon } from "lucide-react";
-
-const ZITADEL_ISSUER =
-  process.env.ZITADEL_ISSUER ?? "https://auth.zero-day.local";
-const ZITADEL_SELF_SERVICE_URL = `${ZITADEL_ISSUER}/ui/console/users/me`;
+import Link from "next/link";
 
 export default async function AccountSettingsPage() {
   const session = await auth();
@@ -50,9 +47,7 @@ export default async function AccountSettingsPage() {
         <CardHeader>
           <CardTitle>Profile</CardTitle>
           <CardDescription>
-            Your identity is managed by Zitadel. Edit display name, password,
-            and multi-factor authentication in the Zitadel self-service
-            console.
+            The signed-in identity associated with this dashboard session.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -62,15 +57,8 @@ export default async function AccountSettingsPage() {
             label="User ID"
             value={session.user.id}
             mono
-            description="Zitadel-issued numeric subject. Include this when filing support requests."
+            description="Include this when filing support requests."
           />
-          <Separator />
-          <Button asChild variant="outline">
-            <Link href={ZITADEL_SELF_SERVICE_URL} target="_blank" rel="noreferrer">
-              Manage profile in Zitadel
-              <ExternalLinkIcon className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
         </CardContent>
       </Card>
 
@@ -78,17 +66,17 @@ export default async function AccountSettingsPage() {
         <CardHeader>
           <CardTitle>Active workspace</CardTitle>
           <CardDescription>
-            Calls to the dashboard run in the context of one of your tenants.
-            Switch from the top-bar tenant picker.
+            Calls to the dashboard run in the context of one of your
+            workspaces. Switch from the top-bar workspace picker.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Field
-            label="Tenant"
+            label="Workspace"
             value={active?.tenantName ?? activeTenant ?? "(none selected)"}
           />
           {active?.tenantId ? (
-            <Field label="Tenant ID" value={active.tenantId} mono />
+            <Field label="Workspace ID" value={active.tenantId} mono />
           ) : null}
           {active?.role ? <Field label="Role" value={active.role} /> : null}
           <Separator />

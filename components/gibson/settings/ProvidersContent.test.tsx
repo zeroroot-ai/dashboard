@@ -90,8 +90,8 @@ const anthropicDescriptor: SupportedProviderDescriptor = {
     },
   ],
   defaultModels: [
-    { name: "claude-3-5-sonnet-20241022", contextWindow: 200000, maxOutput: 8192, features: ["chat", "tools"] },
-    { name: "claude-3-haiku-20240307", contextWindow: 200000, maxOutput: 4096, features: ["chat"] },
+    { name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000 },
+    { name: "claude-3-haiku-20240307", family: "Claude 3", contextWindow: 200000 },
   ],
 };
 
@@ -129,9 +129,8 @@ const bedrockDescriptor: SupportedProviderDescriptor = {
   defaultModels: [
     {
       name: "anthropic.claude-3-haiku-20240307-v1:0",
+      family: "Bedrock — Claude 3",
       contextWindow: 200000,
-      maxOutput: 4096,
-      features: ["chat", "streaming", "tools"],
     },
   ],
 };

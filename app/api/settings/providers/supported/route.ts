@@ -1,21 +1,57 @@
 /**
  * GET /api/settings/providers/supported
  *
- * GetSupportedProviders has been DELETED per admin-services-completion spec
- * (design.md disposition: Bucket C, no caller). The RPC no longer exists on
- * any service. This route returns 410 Gone so any stale client code fails
- * clearly.
+ * Returns the daemon's static catalogue of supported LLM provider types,
+ * with their per-provider credential field schemas. Backs the dashboard's
+ * Settings → Providers wizard.
  *
- * Provider form rendering should use the provider list from ListProviders
- * (which returns existing configurations) rather than a separate descriptor
- * endpoint.
+ * Spec: providers-wizard. Daemon RPC:
+ *   gibson.tenant.v1.TenantAdminService/GetSupportedProviders
  */
 
+import 'server-only';
 import { type NextRequest } from 'next/server';
+import { getServerSession } from '@/src/lib/auth';
+import { TenantAdminService } from '@/src/gen/gibson/tenant/v1/tenant_admin_pb';
+import { userClient } from '@/src/lib/gibson-client';
+import { translateError } from '@/src/lib/providers-route-error';
+import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
 
 export async function GET(_req: NextRequest) {
-  return Response.json(
-    { error: { code: 'gone', message: 'GetSupportedProviders removed in admin-services-completion' } },
-    { status: 410 },
-  );
+  const session = await getServerSession();
+  if (!session) {
+    return Response.json(
+      { error: { code: 'unauthenticated', message: 'Authentication required' } },
+      { status: 401 },
+    );
+  }
+
+  try {
+    const client = userClient(TenantAdminService);
+    const resp = await client.getSupportedProviders({});
+    const providers: SupportedProviderDescriptor[] = (resp.providers ?? []).map(
+      (p) => ({
+        type: p.type,
+        displayName: p.displayName,
+        docsUrl: p.docsUrl,
+        selfHosted: p.selfHosted,
+        credentials: (p.credentials ?? []).map((c) => ({
+          key: c.key,
+          label: c.label,
+          required: c.required,
+          secret: c.secret,
+          placeholder: c.placeholder,
+          help: c.help,
+        })),
+        defaultModels: (p.defaultModels ?? []).map((m) => ({
+          name: m.name,
+          family: m.family ?? '',
+          contextWindow: m.contextWindow,
+        })),
+      }),
+    );
+    return Response.json({ providers });
+  } catch (err) {
+    return translateError(err);
+  }
 }

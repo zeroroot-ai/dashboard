@@ -1604,6 +1604,12 @@ export interface DaemonProviderTestResult {
   model: string;
   /** Cleaned upstream error message (when ok is false). */
   error?: string;
+  /**
+   * Live model catalogue returned by the provider's API for these credentials.
+   * Empty for providers that don't expose a list endpoint, OR when ok is false.
+   * Spec: providers-wizard.
+   */
+  models: Array<{ name: string; family: string; contextWindow: number }>;
 }
 
 /**
@@ -2023,6 +2029,11 @@ export async function daemonTestProvider(
     latencyMs: Number(resp.latencyMs),
     model: resp.model,
     error: resp.error || undefined,
+    models: (resp.models ?? []).map((m) => ({
+      name: m.name,
+      family: m.family ?? '',
+      contextWindow: m.contextWindow,
+    })),
   };
 }
 

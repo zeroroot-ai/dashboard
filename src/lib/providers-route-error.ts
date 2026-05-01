@@ -58,7 +58,16 @@ export function translateError(err: unknown): Response {
     );
   }
 
-  console.error('[providers route] unexpected error:', err instanceof Error ? err.message : String(err));
+  // Include the error name and one line of stack for triage. NEVER include
+  // request body content or credentials.
+  if (err instanceof Error) {
+    const stack = (err.stack ?? '').split('\n').slice(0, 3).join(' | ');
+    console.error(
+      `[providers route] unexpected error: name=${err.name} message=${err.message} stack=${stack}`,
+    );
+  } else {
+    console.error('[providers route] unexpected non-Error throw:', String(err));
+  }
   return Response.json(
     { error: { code: 'internal', message: 'Internal server error' } },
     { status: 500 },

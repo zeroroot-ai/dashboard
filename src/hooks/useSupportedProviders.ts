@@ -3,13 +3,14 @@
 /**
  * Supported LLM Providers hook
  *
- * GetSupportedProviders has been DELETED per admin-services-completion spec
- * (design.md disposition: Bucket C). This hook returns an empty list so
- * components that previously rendered provider-type selector forms degrade
- * gracefully.
+ * Fetches from `/api/settings/providers/supported`, which delegates to the
+ * daemon's `gibson.tenant.v1.TenantAdminService/GetSupportedProviders` RPC
+ * (added in SDK v0.91.0 — spec providers-wizard). Powers the Settings →
+ * Providers wizard's type picker and dynamic credential form.
  *
- * Form rendering should use existing provider configuration from ListProviders
- * rather than a separate descriptor list.
+ * The static TS mirror that briefly lived at
+ * `src/lib/llm/provider-descriptors.ts` is gone — the daemon is the single
+ * source of truth.
  */
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
@@ -21,12 +22,29 @@ export const supportedProvidersQueryKeys = {
 };
 
 /**
- * Returns an empty list; GetSupportedProviders RPC has been removed.
+ * Returns the daemon's static catalogue of supported LLM providers.
+ *
+ * `staleTime: 5min` — the catalogue only changes when the daemon image is
+ * upgraded; a 5-minute cache keeps the wizard snappy without holding a
+ * stale list across a deploy roll.
  */
 export function useSupportedProviders(): UseQueryResult<SupportedProviderDescriptor[], Error> {
   return useQuery({
     queryKey: supportedProvidersQueryKeys.list(),
-    queryFn: async (): Promise<SupportedProviderDescriptor[]> => [],
-    staleTime: Infinity,
+    queryFn: async (): Promise<SupportedProviderDescriptor[]> => {
+      const res = await fetch('/api/settings/providers/supported');
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: { message?: string };
+        };
+        throw new Error(
+          body?.error?.message ??
+            `Failed to fetch supported providers (HTTP ${res.status})`,
+        );
+      }
+      const json = (await res.json()) as { providers: SupportedProviderDescriptor[] };
+      return json.providers ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
   });
 }

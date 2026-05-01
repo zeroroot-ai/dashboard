@@ -48,13 +48,17 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useSupportedProviders } from "@/src/hooks/useSupportedProviders";
-import { useProviders } from "@/src/hooks/useProviders";
+import { useProviders, providerQueryKeys } from "@/src/hooks/useProviders";
 import { useCreateProvider, useDeleteProvider, useSetDefaultProvider } from "@/src/hooks/useProviderMutations";
 import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
 import type { ProviderConfig } from "@/src/types/provider";
+import { useQueryClient } from "@tanstack/react-query";
+
+import { ProviderWizard } from "./ProviderWizard";
 
 // ---------------------------------------------------------------------------
-// DynamicCredentialForm
+// DynamicCredentialForm — retained for backward-compat with tests + the
+// onboarding flow. The Settings → Providers page uses ProviderWizard now.
 // ---------------------------------------------------------------------------
 
 /**
@@ -203,98 +207,10 @@ export function DynamicCredentialForm({ descriptor, onSubmit, isPending }: Dynam
   );
 }
 
-// ---------------------------------------------------------------------------
-// AddProviderDialog
-// ---------------------------------------------------------------------------
-
-interface AddProviderDialogProps {
-  supported: SupportedProviderDescriptor[];
-}
-
-function AddProviderDialog({ supported }: AddProviderDialogProps) {
-  const [open, setOpen] = React.useState(false);
-  const [selectedType, setSelectedType] = React.useState<string>("");
-
-  const descriptor = supported.find((d) => d.type === selectedType);
-  const createMutation = useCreateProvider();
-
-  function handleTypeChange(type: string) {
-    setSelectedType(type);
-  }
-
-  function handleSubmit(values: DynamicFormValues) {
-    const payload = {
-      type: selectedType,
-      name: values.name,
-      defaultModel: values.defaultModel,
-      credentials: values.credentials,
-      setAsDefault: values.setAsDefault,
-    };
-
-    createMutation.mutate(
-      { config: { type: payload.type, name: payload.name, defaultModel: payload.defaultModel, credentials: payload.credentials, setAsDefault: payload.setAsDefault } },
-      {
-        onSuccess: () => {
-          toast.success(`${descriptor?.displayName ?? selectedType} provider added`);
-          setOpen(false);
-          setSelectedType("");
-        },
-        onError: (err) => {
-          toast.error(`Failed to add provider`, {
-            description: err.message,
-          });
-        },
-      }
-    );
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="text-xs">
-          Add Provider
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-sm">Add LLM Provider</DialogTitle>
-          <DialogDescription className="text-xs">
-            Configure credentials for an LLM provider. Credentials are encrypted at rest by the
-            daemon — they never persist in the dashboard.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          {/* Provider type selector */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Provider Type</label>
-            <Select value={selectedType} onValueChange={handleTypeChange}>
-              <SelectTrigger className="w-full text-xs" data-testid="provider-type-select">
-                <SelectValue placeholder="Select a provider" />
-              </SelectTrigger>
-              <SelectContent>
-                {supported.map((d) => (
-                  <SelectItem key={d.type} value={d.type} className="text-xs">
-                    {d.displayName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Credential form rendered from the selected descriptor */}
-          {descriptor && (
-            <DynamicCredentialForm
-              descriptor={descriptor}
-              onSubmit={handleSubmit}
-              isPending={createMutation.isPending}
-            />
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+// AddProviderDialog was replaced by ProviderWizard (multi-step type-pick →
+// connect+test → model-pick+save with live model fetching). The page-level
+// component renders the wizard inline for the empty state and inside a
+// Dialog for "Add another." See ProviderWizard.tsx.
 
 // ---------------------------------------------------------------------------
 // ConfiguredProviderRow
@@ -522,13 +438,21 @@ function ProviderCardSkeleton() {
 // ---------------------------------------------------------------------------
 
 export function ProvidersContent() {
+  const queryClient = useQueryClient();
   const { data: supported, isLoading: isSupportedLoading } = useSupportedProviders();
   const { data, isLoading: isProvidersLoading, isError, error } = useProviders({
     includeDisabled: true,
     includeHealth: true,
   });
+  const [wizardOpen, setWizardOpen] = React.useState(false);
 
   const isLoading = isSupportedLoading || isProvidersLoading;
+  const providers = data?.providers ?? [];
+  const isEmpty = !isLoading && !isError && providers.length === 0;
+
+  function refresh() {
+    void queryClient.invalidateQueries({ queryKey: providerQueryKeys.lists() });
+  }
 
   return (
     <div className="space-y-4">
@@ -541,8 +465,32 @@ export function ProvidersContent() {
             daemon — they never persist in the dashboard.
           </p>
         </div>
-        {!isLoading && (
-          <AddProviderDialog supported={supported ?? []} />
+        {!isLoading && providers.length > 0 && (
+          <Dialog open={wizardOpen} onOpenChange={setWizardOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" className="text-xs">
+                Add Provider
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="text-sm">Add LLM Provider</DialogTitle>
+                <DialogDescription className="text-xs">
+                  Pick a provider, enter your credentials, and Gibson will pull
+                  the live model list from the provider&apos;s API for you to
+                  choose from.
+                </DialogDescription>
+              </DialogHeader>
+              <ProviderWizard
+                supported={supported ?? []}
+                onComplete={() => {
+                  setWizardOpen(false);
+                  refresh();
+                }}
+                onCancel={() => setWizardOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 
@@ -561,20 +509,28 @@ export function ProvidersContent() {
             <ProviderCardSkeleton />
             <ProviderCardSkeleton />
           </>
+        ) : isEmpty ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Connect your first provider</CardTitle>
+              <CardDescription className="text-xs">
+                Gibson agents call into your LLM via configured providers.
+                You&apos;ll need at least one — pick a vendor below, paste your
+                key, and Gibson will pull the available models for you to
+                choose a default.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProviderWizard
+                supported={supported ?? []}
+                onComplete={refresh}
+              />
+            </CardContent>
+          </Card>
         ) : (
-          <>
-            {(data?.providers ?? []).length === 0 && (
-              <Alert>
-                <AlertCircle className="size-4" />
-                <AlertDescription className="text-xs">
-                  No providers configured yet. Click &ldquo;Add Provider&rdquo; to get started.
-                </AlertDescription>
-              </Alert>
-            )}
-            {(data?.providers ?? []).map((provider) => (
-              <ConfiguredProviderRow key={provider.name} provider={provider} />
-            ))}
-          </>
+          providers.map((provider) => (
+            <ConfiguredProviderRow key={provider.name} provider={provider} />
+          ))
         )}
       </div>
     </div>

@@ -38,7 +38,7 @@ async function authz(req: NextRequest): Promise<
     return {
       ok: false,
       status: 401,
-      body: { error: `zitadel auth failed: ${msg}`, code },
+      body: { error: `service auth failed: ${msg}`, code },
     };
   }
 }
@@ -47,7 +47,7 @@ function notImplemented() {
   return NextResponse.json(
     {
       error:
-        "admin-provisioning endpoints are being migrated to Zitadel Management API (task 25). " +
+        "admin-provisioning endpoints are being migrated to the platform's identity-management API. " +
         "Retry after the tenant-operator is updated.",
     },
     { status: 503 },

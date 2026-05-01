@@ -22,7 +22,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/admin/v1/tenant.proto.
  */
 export const file_gibson_admin_v1_tenant: GenFile = /*@__PURE__*/
-  fileDesc("ChxnaWJzb24vYWRtaW4vdjEvdGVuYW50LnByb3RvEg9naWJzb24uYWRtaW4udjEiwAIKDlJlZGFjdGVkQ29uZmlnEjEKCHByb3ZpZGVyGAEgASgOMh8uZ2lic29uLmFkbWluLnYxLkJyb2tlclByb3ZpZGVyEg8KB2FkZHJlc3MYAiABKAkSGQoRbmFtZXNwYWNlX29yX3BhdGgYAyABKAkSDQoFbW91bnQYBCABKAkSEwoLYXV0aF9tZXRob2QYBSABKAkSDgoGcmVnaW9uGAYgASgJEg8KB3Byb2plY3QYByABKAkSGgoSdGVuYW50X2lkX2V4dGVybmFsGAggASgJEhEKCWNsaWVudF9pZBgJIAEoCRIQCghyb2xlX2FybhgKIAEoCRIcChRzZW5zaXRpdmVfZmllbGRzX3NldBgLIAMoCRIXCg91cGRhdGVkX2F0X3VuaXgYDCABKAMSEgoKdXBkYXRlZF9ieRgNIAEoCSLRAwoPQ2FuZGlkYXRlQ29uZmlnEjEKCHByb3ZpZGVyGAEgASgOMh8uZ2lic29uLmFkbWluLnYxLkJyb2tlclByb3ZpZGVyEg8KB2FkZHJlc3MYAiABKAkSGQoRbmFtZXNwYWNlX29yX3BhdGgYAyABKAkSDQoFbW91bnQYBCABKAkSEwoLYXV0aF9tZXRob2QYBSABKAkSDgoGcmVnaW9uGAYgASgJEg8KB3Byb2plY3QYByABKAkSGgoSdGVuYW50X2lkX2V4dGVybmFsGAggASgJEhEKCWNsaWVudF9pZBgJIAEoCRIQCghyb2xlX2FybhgKIAEoCRITCgt2YXVsdF90b2tlbhgUIAEoDBIXCg9hcHByb2xlX3JvbGVfaWQYFSABKAkSGQoRYXBwcm9sZV9zZWNyZXRfaWQYFiABKAwSGQoRYXdzX2FjY2Vzc19rZXlfaWQYFyABKAwSHQoVYXdzX3NlY3JldF9hY2Nlc3Nfa2V5GBggASgMEhcKD2F3c19leHRlcm5hbF9pZBgZIAEoDBIgChhnY3Bfc2VydmljZV9hY2NvdW50X2pzb24YGiABKAwSGwoTYXp1cmVfY2xpZW50X3NlY3JldBgbIAEoDCJaCgtQcm9iZVJlc3VsdBIKCgJvaxgBIAEoCBITCgtlcnJvcl9jbGFzcxgCIAEoCRIVCg1lcnJvcl9tZXNzYWdlGAMgASgJEhMKC2R1cmF0aW9uX21zGAQgASgDIhgKFkdldEJyb2tlckNvbmZpZ1JlcXVlc3QiXgoXR2V0QnJva2VyQ29uZmlnUmVzcG9uc2USLwoGY29uZmlnGAEgASgLMh8uZ2lic29uLmFkbWluLnYxLlJlZGFjdGVkQ29uZmlnEhIKCmNvbmZpZ3VyZWQYAiABKAgiTwoYUHJvYmVCcm9rZXJDb25maWdSZXF1ZXN0EjMKCWNhbmRpZGF0ZRgBIAEoCzIgLmdpYnNvbi5hZG1pbi52MS5DYW5kaWRhdGVDb25maWciSQoZUHJvYmVCcm9rZXJDb25maWdSZXNwb25zZRIsCgZyZXN1bHQYASABKAsyHC5naWJzb24uYWRtaW4udjEuUHJvYmVSZXN1bHQiTQoWU2V0QnJva2VyQ29uZmlnUmVxdWVzdBIzCgljYW5kaWRhdGUYASABKAsyIC5naWJzb24uYWRtaW4udjEuQ2FuZGlkYXRlQ29uZmlnIn4KF1NldEJyb2tlckNvbmZpZ1Jlc3BvbnNlEi8KBmNvbmZpZxgBIAEoCzIfLmdpYnNvbi5hZG1pbi52MS5SZWRhY3RlZENvbmZpZxIyCgxwcm9iZV9yZXN1bHQYAiABKAsyHC5naWJzb24uYWRtaW4udjEuUHJvYmVSZXN1bHQqvQEKDkJyb2tlclByb3ZpZGVyEh8KG0JST0tFUl9QUk9WSURFUl9VTlNQRUNJRklFRBAAEhwKGEJST0tFUl9QUk9WSURFUl9QT1NUR1JFUxABEhkKFUJST0tFUl9QUk9WSURFUl9WQVVMVBACEhkKFUJST0tFUl9QUk9WSURFUl9BV1NTTRADEhkKFUJST0tFUl9QUk9WSURFUl9HQ1BTTRAEEhsKF0JST0tFUl9QUk9WSURFUl9BWlVSRUtWEAUy6wMKElRlbmFudEFkbWluU2VydmljZRKYAQoPR2V0QnJva2VyQ29uZmlnEicuZ2lic29uLmFkbWluLnYxLkdldEJyb2tlckNvbmZpZ1JlcXVlc3QaKC5naWJzb24uYWRtaW4udjEuR2V0QnJva2VyQ29uZmlnUmVzcG9uc2UiMoq1GC4KDHRlbmFudF9hZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEp4BChFQcm9iZUJyb2tlckNvbmZpZxIpLmdpYnNvbi5hZG1pbi52MS5Qcm9iZUJyb2tlckNvbmZpZ1JlcXVlc3QaKi5naWJzb24uYWRtaW4udjEuUHJvYmVCcm9rZXJDb25maWdSZXNwb25zZSIyirUYLgoMdGVuYW50X2FkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESmAEKD1NldEJyb2tlckNvbmZpZxInLmdpYnNvbi5hZG1pbi52MS5TZXRCcm9rZXJDb25maWdSZXF1ZXN0GiguZ2lic29uLmFkbWluLnYxLlNldEJyb2tlckNvbmZpZ1Jlc3BvbnNlIjKKtRguCgx0ZW5hbnRfYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAUJNUAFaOmdpdGh1Yi5jb20vemVyby1kYXktYWkvc2RrL2FwaS9nZW4vZ2lic29uL2FkbWluL3YxO2FkbWludjGqAgxHaWJzb24uQWRtaW5iBnByb3RvMw", [file_gibson_auth_v1_options]);
+  fileDesc("ChxnaWJzb24vYWRtaW4vdjEvdGVuYW50LnByb3RvEg9naWJzb24uYWRtaW4udjEiwAIKDlJlZGFjdGVkQ29uZmlnEjEKCHByb3ZpZGVyGAEgASgOMh8uZ2lic29uLmFkbWluLnYxLkJyb2tlclByb3ZpZGVyEg8KB2FkZHJlc3MYAiABKAkSGQoRbmFtZXNwYWNlX29yX3BhdGgYAyABKAkSDQoFbW91bnQYBCABKAkSEwoLYXV0aF9tZXRob2QYBSABKAkSDgoGcmVnaW9uGAYgASgJEg8KB3Byb2plY3QYByABKAkSGgoSdGVuYW50X2lkX2V4dGVybmFsGAggASgJEhEKCWNsaWVudF9pZBgJIAEoCRIQCghyb2xlX2FybhgKIAEoCRIcChRzZW5zaXRpdmVfZmllbGRzX3NldBgLIAMoCRIXCg91cGRhdGVkX2F0X3VuaXgYDCABKAMSEgoKdXBkYXRlZF9ieRgNIAEoCSLRAwoPQ2FuZGlkYXRlQ29uZmlnEjEKCHByb3ZpZGVyGAEgASgOMh8uZ2lic29uLmFkbWluLnYxLkJyb2tlclByb3ZpZGVyEg8KB2FkZHJlc3MYAiABKAkSGQoRbmFtZXNwYWNlX29yX3BhdGgYAyABKAkSDQoFbW91bnQYBCABKAkSEwoLYXV0aF9tZXRob2QYBSABKAkSDgoGcmVnaW9uGAYgASgJEg8KB3Byb2plY3QYByABKAkSGgoSdGVuYW50X2lkX2V4dGVybmFsGAggASgJEhEKCWNsaWVudF9pZBgJIAEoCRIQCghyb2xlX2FybhgKIAEoCRITCgt2YXVsdF90b2tlbhgUIAEoDBIXCg9hcHByb2xlX3JvbGVfaWQYFSABKAkSGQoRYXBwcm9sZV9zZWNyZXRfaWQYFiABKAwSGQoRYXdzX2FjY2Vzc19rZXlfaWQYFyABKAwSHQoVYXdzX3NlY3JldF9hY2Nlc3Nfa2V5GBggASgMEhcKD2F3c19leHRlcm5hbF9pZBgZIAEoDBIgChhnY3Bfc2VydmljZV9hY2NvdW50X2pzb24YGiABKAwSGwoTYXp1cmVfY2xpZW50X3NlY3JldBgbIAEoDCJaCgtQcm9iZVJlc3VsdBIKCgJvaxgBIAEoCBITCgtlcnJvcl9jbGFzcxgCIAEoCRIVCg1lcnJvcl9tZXNzYWdlGAMgASgJEhMKC2R1cmF0aW9uX21zGAQgASgDIhgKFkdldEJyb2tlckNvbmZpZ1JlcXVlc3QiXgoXR2V0QnJva2VyQ29uZmlnUmVzcG9uc2USLwoGY29uZmlnGAEgASgLMh8uZ2lic29uLmFkbWluLnYxLlJlZGFjdGVkQ29uZmlnEhIKCmNvbmZpZ3VyZWQYAiABKAgiTwoYUHJvYmVCcm9rZXJDb25maWdSZXF1ZXN0EjMKCWNhbmRpZGF0ZRgBIAEoCzIgLmdpYnNvbi5hZG1pbi52MS5DYW5kaWRhdGVDb25maWciSQoZUHJvYmVCcm9rZXJDb25maWdSZXNwb25zZRIsCgZyZXN1bHQYASABKAsyHC5naWJzb24uYWRtaW4udjEuUHJvYmVSZXN1bHQiTQoWU2V0QnJva2VyQ29uZmlnUmVxdWVzdBIzCgljYW5kaWRhdGUYASABKAsyIC5naWJzb24uYWRtaW4udjEuQ2FuZGlkYXRlQ29uZmlnIn4KF1NldEJyb2tlckNvbmZpZ1Jlc3BvbnNlEi8KBmNvbmZpZxgBIAEoCzIfLmdpYnNvbi5hZG1pbi52MS5SZWRhY3RlZENvbmZpZxIyCgxwcm9iZV9yZXN1bHQYAiABKAsyHC5naWJzb24uYWRtaW4udjEuUHJvYmVSZXN1bHQicgoPQ3JlZGVudGlhbEZpZWxkEgsKA2tleRgBIAEoCRINCgVsYWJlbBgCIAEoCRIQCghyZXF1aXJlZBgDIAEoCBIOCgZzZWNyZXQYBCABKAgSEwoLcGxhY2Vob2xkZXIYBSABKAkSDAoEaGVscBgGIAEoCSJHCg9Nb2RlbERlc2NyaXB0b3ISDAoEbmFtZRgBIAEoCRIOCgZmYW1pbHkYAiABKAkSFgoOY29udGV4dF93aW5kb3cYAyABKAUizwEKEVN1cHBvcnRlZFByb3ZpZGVyEgwKBHR5cGUYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEhAKCGRvY3NfdXJsGAMgASgJEhMKC3NlbGZfaG9zdGVkGAQgASgIEjUKC2NyZWRlbnRpYWxzGAUgAygLMiAuZ2lic29uLmFkbWluLnYxLkNyZWRlbnRpYWxGaWVsZBI4Cg5kZWZhdWx0X21vZGVscxgGIAMoCzIgLmdpYnNvbi5hZG1pbi52MS5Nb2RlbERlc2NyaXB0b3IiHgocR2V0U3VwcG9ydGVkUHJvdmlkZXJzUmVxdWVzdCJWCh1HZXRTdXBwb3J0ZWRQcm92aWRlcnNSZXNwb25zZRI1Cglwcm92aWRlcnMYASADKAsyIi5naWJzb24uYWRtaW4udjEuU3VwcG9ydGVkUHJvdmlkZXIipQEKFFByb2JlUHJvdmlkZXJSZXF1ZXN0EgwKBHR5cGUYASABKAkSSwoLY3JlZGVudGlhbHMYAiADKAsyNi5naWJzb24uYWRtaW4udjEuUHJvYmVQcm92aWRlclJlcXVlc3QuQ3JlZGVudGlhbHNFbnRyeRoyChBDcmVkZW50aWFsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEilQEKFVByb2JlUHJvdmlkZXJSZXNwb25zZRIKCgJvaxgBIAEoCBIVCg1lcnJvcl9tZXNzYWdlGAIgASgJEhMKC2Vycm9yX2NsYXNzGAMgASgJEjAKBm1vZGVscxgEIAMoCzIgLmdpYnNvbi5hZG1pbi52MS5Nb2RlbERlc2NyaXB0b3ISEgoKbGF0ZW5jeV9tcxgFIAEoAyIpChlMaXN0UHJvdmlkZXJNb2RlbHNSZXF1ZXN0EgwKBG5hbWUYASABKAkimgEKGkxpc3RQcm92aWRlck1vZGVsc1Jlc3BvbnNlEgoKAm9rGAEgASgIEhUKDWVycm9yX21lc3NhZ2UYAiABKAkSEwoLZXJyb3JfY2xhc3MYAyABKAkSMAoGbW9kZWxzGAQgAygLMiAuZ2lic29uLmFkbWluLnYxLk1vZGVsRGVzY3JpcHRvchISCgpsYXRlbmN5X21zGAUgASgDKr0BCg5Ccm9rZXJQcm92aWRlchIfChtCUk9LRVJfUFJPVklERVJfVU5TUEVDSUZJRUQQABIcChhCUk9LRVJfUFJPVklERVJfUE9TVEdSRVMQARIZChVCUk9LRVJfUFJPVklERVJfVkFVTFQQAhIZChVCUk9LRVJfUFJPVklERVJfQVdTU00QAxIZChVCUk9LRVJfUFJPVklERVJfR0NQU00QBBIbChdCUk9LRVJfUFJPVklERVJfQVpVUkVLVhAFMssHChJUZW5hbnRBZG1pblNlcnZpY2USmAEKD0dldEJyb2tlckNvbmZpZxInLmdpYnNvbi5hZG1pbi52MS5HZXRCcm9rZXJDb25maWdSZXF1ZXN0GiguZ2lic29uLmFkbWluLnYxLkdldEJyb2tlckNvbmZpZ1Jlc3BvbnNlIjKKtRguCgx0ZW5hbnRfYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKeAQoRUHJvYmVCcm9rZXJDb25maWcSKS5naWJzb24uYWRtaW4udjEuUHJvYmVCcm9rZXJDb25maWdSZXF1ZXN0GiouZ2lic29uLmFkbWluLnYxLlByb2JlQnJva2VyQ29uZmlnUmVzcG9uc2UiMoq1GC4KDHRlbmFudF9hZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpgBCg9TZXRCcm9rZXJDb25maWcSJy5naWJzb24uYWRtaW4udjEuU2V0QnJva2VyQ29uZmlnUmVxdWVzdBooLmdpYnNvbi5hZG1pbi52MS5TZXRCcm9rZXJDb25maWdSZXNwb25zZSIyirUYLgoMdGVuYW50X2FkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESpAEKFUdldFN1cHBvcnRlZFByb3ZpZGVycxItLmdpYnNvbi5hZG1pbi52MS5HZXRTdXBwb3J0ZWRQcm92aWRlcnNSZXF1ZXN0Gi4uZ2lic29uLmFkbWluLnYxLkdldFN1cHBvcnRlZFByb3ZpZGVyc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKSAQoNUHJvYmVQcm92aWRlchIlLmdpYnNvbi5hZG1pbi52MS5Qcm9iZVByb3ZpZGVyUmVxdWVzdBomLmdpYnNvbi5hZG1pbi52MS5Qcm9iZVByb3ZpZGVyUmVzcG9uc2UiMoq1GC4KDHRlbmFudF9hZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEqEBChJMaXN0UHJvdmlkZXJNb2RlbHMSKi5naWJzb24uYWRtaW4udjEuTGlzdFByb3ZpZGVyTW9kZWxzUmVxdWVzdBorLmdpYnNvbi5hZG1pbi52MS5MaXN0UHJvdmlkZXJNb2RlbHNSZXNwb25zZSIyirUYLgoMdGVuYW50X2FkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAFCTVABWjpnaXRodWIuY29tL3plcm8tZGF5LWFpL3Nkay9hcGkvZ2VuL2dpYnNvbi9hZG1pbi92MTthZG1pbnYxqgIMR2lic29uLkFkbWluYgZwcm90bzM", [file_gibson_auth_v1_options]);
 
 /**
  * RedactedConfig is the dashboard-safe view of a tenant's broker config.
@@ -462,6 +462,351 @@ export const SetBrokerConfigResponseSchema: GenMessage<SetBrokerConfigResponse> 
   messageDesc(file_gibson_admin_v1_tenant, 8);
 
 /**
+ * CredentialField describes one input the operator must supply when
+ * configuring a provider — surfaced verbatim by the dashboard's dynamic
+ * credential form.
+ *
+ * @generated from message gibson.admin.v1.CredentialField
+ */
+export type CredentialField = Message<"gibson.admin.v1.CredentialField"> & {
+  /**
+   * ProviderConfig.Extra map key the daemon's resolver reads
+   * (e.g. "api_key", "base_url", "aws_region").
+   *
+   * @generated from field: string key = 1;
+   */
+  key: string;
+
+  /**
+   * Human-facing form label.
+   *
+   * @generated from field: string label = 2;
+   */
+  label: string;
+
+  /**
+   * Mandatory-for-construction flag.
+   *
+   * @generated from field: bool required = 3;
+   */
+  required: boolean;
+
+  /**
+   * Render as a password input; mask in logs and audit records.
+   *
+   * @generated from field: bool secret = 4;
+   */
+  secret: boolean;
+
+  /**
+   * Example value rendered as the input's placeholder. May be empty.
+   *
+   * @generated from field: string placeholder = 5;
+   */
+  placeholder: string;
+
+  /**
+   * Short description rendered beneath the field. May be empty.
+   *
+   * @generated from field: string help = 6;
+   */
+  help: string;
+};
+
+/**
+ * Describes the message gibson.admin.v1.CredentialField.
+ * Use `create(CredentialFieldSchema)` to create a new message.
+ */
+export const CredentialFieldSchema: GenMessage<CredentialField> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 9);
+
+/**
+ * ModelDescriptor describes one model offered by a provider. Returned both
+ * as the "default catalogue" on the SupportedProvider message and as the
+ * "live catalogue" on Probe / ListModels responses.
+ *
+ * @generated from message gibson.admin.v1.ModelDescriptor
+ */
+export type ModelDescriptor = Message<"gibson.admin.v1.ModelDescriptor"> & {
+  /**
+   * Vendor model identifier (e.g. "claude-3-5-sonnet-20241022", "gpt-4o").
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * Optional family / display group (e.g. "Claude 3.5", "GPT-4 family").
+   *
+   * @generated from field: string family = 2;
+   */
+  family: string;
+
+  /**
+   * Maximum input tokens the model supports. 0 when unknown.
+   *
+   * @generated from field: int32 context_window = 3;
+   */
+  contextWindow: number;
+};
+
+/**
+ * Describes the message gibson.admin.v1.ModelDescriptor.
+ * Use `create(ModelDescriptorSchema)` to create a new message.
+ */
+export const ModelDescriptorSchema: GenMessage<ModelDescriptor> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 10);
+
+/**
+ * SupportedProvider describes one LLM provider type the daemon supports —
+ * the dashboard renders one row per provider in the wizard's type picker.
+ *
+ * @generated from message gibson.admin.v1.SupportedProvider
+ */
+export type SupportedProvider = Message<"gibson.admin.v1.SupportedProvider"> & {
+  /**
+   * Provider type identifier ("anthropic", "openai", "bedrock", …).
+   *
+   * @generated from field: string type = 1;
+   */
+  type: string;
+
+  /**
+   * Human-facing display name shown in the dropdown.
+   *
+   * @generated from field: string display_name = 2;
+   */
+  displayName: string;
+
+  /**
+   * Upstream provider's credential / setup docs URL.
+   *
+   * @generated from field: string docs_url = 3;
+   */
+  docsUrl: string;
+
+  /**
+   * True for providers running on operator-controlled infrastructure
+   * (Ollama, Llamafile). Self-hosted providers don't have a public API
+   * to "test connection" against, so the wizard hides that button.
+   *
+   * @generated from field: bool self_hosted = 4;
+   */
+  selfHosted: boolean;
+
+  /**
+   * Form schema — one entry per credential input.
+   *
+   * @generated from field: repeated gibson.admin.v1.CredentialField credentials = 5;
+   */
+  credentials: CredentialField[];
+
+  /**
+   * Static catalogue surfaced when the daemon can enumerate models without
+   * calling the provider's API (e.g. AWS Bedrock's region-locked list).
+   * Empty for providers that require a live ProbeProvider call to discover
+   * models (Anthropic, OpenAI).
+   *
+   * @generated from field: repeated gibson.admin.v1.ModelDescriptor default_models = 6;
+   */
+  defaultModels: ModelDescriptor[];
+};
+
+/**
+ * Describes the message gibson.admin.v1.SupportedProvider.
+ * Use `create(SupportedProviderSchema)` to create a new message.
+ */
+export const SupportedProviderSchema: GenMessage<SupportedProvider> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 11);
+
+/**
+ * GetSupportedProvidersRequest takes no arguments — the catalogue is the
+ * same for every tenant.
+ *
+ * @generated from message gibson.admin.v1.GetSupportedProvidersRequest
+ */
+export type GetSupportedProvidersRequest = Message<"gibson.admin.v1.GetSupportedProvidersRequest"> & {
+};
+
+/**
+ * Describes the message gibson.admin.v1.GetSupportedProvidersRequest.
+ * Use `create(GetSupportedProvidersRequestSchema)` to create a new message.
+ */
+export const GetSupportedProvidersRequestSchema: GenMessage<GetSupportedProvidersRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 12);
+
+/**
+ * GetSupportedProvidersResponse returns the supported provider list in the
+ * daemon's deterministic SupportedProviderTypes() order.
+ *
+ * @generated from message gibson.admin.v1.GetSupportedProvidersResponse
+ */
+export type GetSupportedProvidersResponse = Message<"gibson.admin.v1.GetSupportedProvidersResponse"> & {
+  /**
+   * @generated from field: repeated gibson.admin.v1.SupportedProvider providers = 1;
+   */
+  providers: SupportedProvider[];
+};
+
+/**
+ * Describes the message gibson.admin.v1.GetSupportedProvidersResponse.
+ * Use `create(GetSupportedProvidersResponseSchema)` to create a new message.
+ */
+export const GetSupportedProvidersResponseSchema: GenMessage<GetSupportedProvidersResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 13);
+
+/**
+ * ProbeProviderRequest carries candidate provider credentials for a
+ * validation-only call that returns the live model catalogue. Credentials
+ * are NEVER persisted by this RPC.
+ *
+ * @generated from message gibson.admin.v1.ProbeProviderRequest
+ */
+export type ProbeProviderRequest = Message<"gibson.admin.v1.ProbeProviderRequest"> & {
+  /**
+   * Provider type identifier (matches SupportedProvider.type).
+   *
+   * @generated from field: string type = 1;
+   */
+  type: string;
+
+  /**
+   * Credential map. Keys come from the provider's CredentialField.key entries;
+   * values are plaintext (used once, discarded).
+   *
+   * @generated from field: map<string, string> credentials = 2;
+   */
+  credentials: { [key: string]: string };
+};
+
+/**
+ * Describes the message gibson.admin.v1.ProbeProviderRequest.
+ * Use `create(ProbeProviderRequestSchema)` to create a new message.
+ */
+export const ProbeProviderRequestSchema: GenMessage<ProbeProviderRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 14);
+
+/**
+ * ProbeProviderResponse carries the structured probe outcome.
+ *
+ * @generated from message gibson.admin.v1.ProbeProviderResponse
+ */
+export type ProbeProviderResponse = Message<"gibson.admin.v1.ProbeProviderResponse"> & {
+  /**
+   * True when the provider accepted the credentials and a model list was
+   * retrieved. False otherwise — error_message describes the reason.
+   *
+   * @generated from field: bool ok = 1;
+   */
+  ok: boolean;
+
+  /**
+   * Human-readable error message when ok=false. May be the upstream
+   * provider's verbatim error text, scrubbed of any credential material.
+   *
+   * @generated from field: string error_message = 2;
+   */
+  errorMessage: string;
+
+  /**
+   * Stable error class for programmatic dispatch when ok=false. Examples:
+   * "auth_failed", "rate_limited", "network", "invalid_argument", "unknown".
+   *
+   * @generated from field: string error_class = 3;
+   */
+  errorClass: string;
+
+  /**
+   * Live model catalogue the provider's API returned for these credentials.
+   * Empty when ok=false. Tier-restricted models are surfaced here exactly
+   * as the provider returns them.
+   *
+   * @generated from field: repeated gibson.admin.v1.ModelDescriptor models = 4;
+   */
+  models: ModelDescriptor[];
+
+  /**
+   * Round-trip latency to the upstream provider, in milliseconds. Useful
+   * for surfacing in the wizard's "Test connection" UX. 0 on local-only
+   * failures (e.g. invalid credentials parsed before any HTTP call).
+   *
+   * @generated from field: int64 latency_ms = 5;
+   */
+  latencyMs: bigint;
+};
+
+/**
+ * Describes the message gibson.admin.v1.ProbeProviderResponse.
+ * Use `create(ProbeProviderResponseSchema)` to create a new message.
+ */
+export const ProbeProviderResponseSchema: GenMessage<ProbeProviderResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 15);
+
+/**
+ * ListProviderModelsRequest fetches the live model list for an already-
+ * configured provider, looked up by name.
+ *
+ * @generated from message gibson.admin.v1.ListProviderModelsRequest
+ */
+export type ListProviderModelsRequest = Message<"gibson.admin.v1.ListProviderModelsRequest"> & {
+  /**
+   * Provider name (the unique string the operator chose at create time,
+   * e.g. "anthropic-prod").
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message gibson.admin.v1.ListProviderModelsRequest.
+ * Use `create(ListProviderModelsRequestSchema)` to create a new message.
+ */
+export const ListProviderModelsRequestSchema: GenMessage<ListProviderModelsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 16);
+
+/**
+ * ListProviderModelsResponse mirrors ProbeProviderResponse but the call is
+ * authenticated by an existing config — credentials are read from the
+ * encrypted store, not the request.
+ *
+ * @generated from message gibson.admin.v1.ListProviderModelsResponse
+ */
+export type ListProviderModelsResponse = Message<"gibson.admin.v1.ListProviderModelsResponse"> & {
+  /**
+   * @generated from field: bool ok = 1;
+   */
+  ok: boolean;
+
+  /**
+   * @generated from field: string error_message = 2;
+   */
+  errorMessage: string;
+
+  /**
+   * @generated from field: string error_class = 3;
+   */
+  errorClass: string;
+
+  /**
+   * @generated from field: repeated gibson.admin.v1.ModelDescriptor models = 4;
+   */
+  models: ModelDescriptor[];
+
+  /**
+   * @generated from field: int64 latency_ms = 5;
+   */
+  latencyMs: bigint;
+};
+
+/**
+ * Describes the message gibson.admin.v1.ListProviderModelsResponse.
+ * Use `create(ListProviderModelsResponseSchema)` to create a new message.
+ */
+export const ListProviderModelsResponseSchema: GenMessage<ListProviderModelsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 17);
+
+/**
  * BrokerProvider names the supported broker provider implementations. Per
  * Spec 1 R2.2 these are: postgres, vault, awssm, gcpsm, azurekv. The
  * dashboard's per-provider sub-form maps to one of these.
@@ -559,6 +904,57 @@ export const TenantAdminService: GenService<{
     methodKind: "unary";
     input: typeof SetBrokerConfigRequestSchema;
     output: typeof SetBrokerConfigResponseSchema;
+  },
+  /**
+   * GetSupportedProviders returns the list of LLM providers the daemon knows
+   * about, with their per-provider credential field schemas. Used by the
+   * dashboard's Settings → Providers wizard to render the type dropdown and
+   * dynamic credential form. Members can read this — it's a static catalogue,
+   * no tenant data leaks.
+   *
+   * Spec: providers-wizard.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.GetSupportedProviders
+   */
+  getSupportedProviders: {
+    methodKind: "unary";
+    input: typeof GetSupportedProvidersRequestSchema;
+    output: typeof GetSupportedProvidersResponseSchema;
+  },
+  /**
+   * ProbeProvider validates candidate provider credentials WITHOUT persisting
+   * them, and returns the live model catalogue the provider's API exposes for
+   * those credentials. Used by the wizard's "Test connection" step so the
+   * user picks from real available models, not a hard-coded default list.
+   *
+   * SECURITY: credentials transit memory only — they are passed to the
+   * transient provider client, the call is made, and the values are dropped
+   * when the request returns. They are never logged, never persisted, and
+   * never returned to the caller.
+   *
+   * Spec: providers-wizard.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.ProbeProvider
+   */
+  probeProvider: {
+    methodKind: "unary";
+    input: typeof ProbeProviderRequestSchema;
+    output: typeof ProbeProviderResponseSchema;
+  },
+  /**
+   * ListProviderModels returns the live model catalogue for a previously-
+   * configured provider (creds are read from the encrypted store; the caller
+   * does not pass them). Used to refresh the model picker on already-saved
+   * providers without making the user re-enter their key.
+   *
+   * Spec: providers-wizard.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.ListProviderModels
+   */
+  listProviderModels: {
+    methodKind: "unary";
+    input: typeof ListProviderModelsRequestSchema;
+    output: typeof ListProviderModelsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_admin_v1_tenant, 0);

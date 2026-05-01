@@ -105,8 +105,14 @@ const config: NextAuthConfig = {
   // -------------------------------------------------------------------------
   providers: [
     {
+      // Provider id is kept as "zitadel" because it ends up in cookies
+      // (next-auth.session-token, next-auth.callback-url) and rotating it
+      // would invalidate every existing session. The display name is
+      // "Identity" — IdP branding never reaches users (the dashboard's
+      // login page does its own redirect; Auth.js's built-in /api/auth/signin
+      // page is not used).
       id: "zitadel",
-      name: "Zitadel",
+      name: "Identity",
       type: "oidc",
       issuer,
       wellKnown: `${internalIssuer}/.well-known/openid-configuration`,
