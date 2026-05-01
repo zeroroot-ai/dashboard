@@ -1,34 +1,20 @@
 /**
  * permissions-cache.test.ts
  *
- * Unit tests for the PermissionsCache module (Requirements 6.4, 6.5).
- * Covers cache hit/miss/TTL/invalidation behaviour without making real network calls.
+ * Unit tests for the PermissionsCache module. Covers cache
+ * hit/miss/TTL/invalidation behaviour without making real network calls.
+ *
+ * Spec: zero-trust-hardening Req 6.1, 6.2 — the module no longer holds a
+ * direct gRPC client. It calls the server route `/api/auth/my-permissions`
+ * via `fetch`. These tests stub `globalThis.fetch` accordingly.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { create } from '@bufbuild/protobuf';
+import { create, toJson } from '@bufbuild/protobuf';
 import {
   GetMyPermissionsResponseSchema,
 } from '@/src/gen/gibson/daemon/v1/daemon_pb';
 
-// ---------------------------------------------------------------------------
-// Hoisted mock: intercept the Connect-ES gRPC client before importing the
-// module under test.
-// ---------------------------------------------------------------------------
-
-const mockGetMyPermissions = vi.fn();
-
-vi.mock('@connectrpc/connect', () => ({
-  createClient: vi.fn(() => ({
-    getMyPermissions: mockGetMyPermissions,
-  })),
-}));
-
-vi.mock('@connectrpc/connect-web', () => ({
-  createGrpcWebTransport: vi.fn(() => ({})),
-}));
-
-// Import AFTER mocks are registered.
 import {
   getMyPermissions,
   invalidatePermissionsCache,
@@ -49,51 +35,72 @@ function makeResponse(role: string) {
   });
 }
 
+function jsonResponse(role: string): Response {
+  const proto = makeResponse(role);
+  const body = toJson(GetMyPermissionsResponseSchema, proto);
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
+const fetchMock = vi.fn();
+
+beforeEach(() => {
+  invalidatePermissionsCache();
+  fetchMock.mockReset();
+  // Install on the global. Vitest's jsdom env exposes `fetch` on
+  // `globalThis`; we replace it for each test and restore in afterEach.
+  vi.stubGlobal('fetch', fetchMock);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
+
 describe('getMyPermissions', () => {
   beforeEach(() => {
-    invalidatePermissionsCache();
-    mockGetMyPermissions.mockReset();
     vi.useFakeTimers();
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it('returns permissions on first call (cache miss)', async () => {
-    const resp = makeResponse('member');
-    mockGetMyPermissions.mockResolvedValueOnce(resp);
+    fetchMock.mockResolvedValueOnce(jsonResponse('member'));
 
     const result = await getMyPermissions('test-tenant');
 
     expect(result.role).toBe('member');
-    expect(mockGetMyPermissions).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/auth/my-permissions?tenantId=test-tenant',
+      expect.objectContaining({ method: 'GET', credentials: 'same-origin' }),
+    );
   });
 
   it('returns cached value on second call (cache hit)', async () => {
-    const resp = makeResponse('admin');
-    mockGetMyPermissions.mockResolvedValueOnce(resp);
+    fetchMock.mockResolvedValueOnce(jsonResponse('admin'));
 
     await getMyPermissions('test-tenant');
     const result = await getMyPermissions('test-tenant');
 
     expect(result.role).toBe('admin');
     // Network call only happened once.
-    expect(mockGetMyPermissions).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 
   it('re-fetches after TTL expires', async () => {
-    const TTL = parseInt(process.env['NEXT_PUBLIC_PERMISSIONS_CACHE_TTL_MS'] ?? '300000', 10);
+    const TTL = parseInt(
+      process.env['NEXT_PUBLIC_PERMISSIONS_CACHE_TTL_MS'] ?? '300000',
+      10,
+    );
 
-    const first = makeResponse('member');
-    const second = makeResponse('admin');
-    mockGetMyPermissions
-      .mockResolvedValueOnce(first)
-      .mockResolvedValueOnce(second);
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse('member'))
+      .mockResolvedValueOnce(jsonResponse('admin'));
 
     await getMyPermissions('test-tenant');
     // Advance time past the TTL.
@@ -101,47 +108,52 @@ describe('getMyPermissions', () => {
 
     const result = await getMyPermissions('test-tenant');
     expect(result.role).toBe('admin');
-    expect(mockGetMyPermissions).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('re-fetches when forceRefresh is true', async () => {
-    const first = makeResponse('viewer');
-    const second = makeResponse('operator');
-    mockGetMyPermissions
-      .mockResolvedValueOnce(first)
-      .mockResolvedValueOnce(second);
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse('viewer'))
+      .mockResolvedValueOnce(jsonResponse('operator'));
 
     await getMyPermissions('test-tenant');
     const result = await getMyPermissions('test-tenant', true);
 
     expect(result.role).toBe('operator');
-    expect(mockGetMyPermissions).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('isolates cache entries per tenant', async () => {
-    const acme = makeResponse('admin');
-    const beta = makeResponse('member');
-    mockGetMyPermissions
-      .mockResolvedValueOnce(acme)
-      .mockResolvedValueOnce(beta);
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse('admin'))
+      .mockResolvedValueOnce(jsonResponse('member'));
 
     const r1 = await getMyPermissions('acme');
     const r2 = await getMyPermissions('beta');
 
     expect(r1.role).toBe('admin');
     expect(r2.role).toBe('member');
-    expect(mockGetMyPermissions).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('throws when the route returns a non-2xx status', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'unauthenticated' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+
+    await expect(getMyPermissions('test-tenant')).rejects.toThrow(/401/);
   });
 });
 
 describe('invalidatePermissionsCache', () => {
-  beforeEach(() => {
-    invalidatePermissionsCache();
-    mockGetMyPermissions.mockReset();
-  });
-
   it('clears all cached entries', async () => {
-    mockGetMyPermissions.mockResolvedValue(makeResponse('member'));
+    // Each invocation must produce a fresh Response — Response bodies can
+    // only be consumed once, so a single shared instance breaks on the
+    // second call.
+    fetchMock.mockImplementation(async () => jsonResponse('member'));
 
     await getMyPermissions('tenant-a');
     await getMyPermissions('tenant-b');
@@ -150,18 +162,13 @@ describe('invalidatePermissionsCache', () => {
 
     await getMyPermissions('tenant-a');
     // 3 calls total: 2 initial + 1 after invalidation.
-    expect(mockGetMyPermissions).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });
 
 describe('invalidateTenantPermissions', () => {
-  beforeEach(() => {
-    invalidatePermissionsCache();
-    mockGetMyPermissions.mockReset();
-  });
-
   it('clears only the specified tenant', async () => {
-    mockGetMyPermissions.mockResolvedValue(makeResponse('member'));
+    fetchMock.mockImplementation(async () => jsonResponse('member'));
 
     await getMyPermissions('tenant-a');
     await getMyPermissions('tenant-b');
@@ -173,6 +180,6 @@ describe('invalidateTenantPermissions', () => {
     await getMyPermissions('tenant-b'); // should still be cached
 
     // 3 calls: 2 initial + 1 re-fetch for tenant-a; tenant-b hits cache.
-    expect(mockGetMyPermissions).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });
