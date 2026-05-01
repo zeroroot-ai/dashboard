@@ -2,15 +2,19 @@
 // @generated from file gibson/admin/v1/grants.proto (package gibson.admin.v1, syntax proto3)
 /* eslint-disable */
 
-// Package gibson.admin.v1 — capability-grant inspector surface for the
-// dashboard. Pairs with secrets.proto, plugins.proto, tenant.proto.
+// Package gibson.admin.v1 — capability-grant inspector + per-agent
+// FGA-grant management surface for the dashboard. Pairs with
+// secrets.proto, plugins.proto, tenant.proto.
 //
-// GrantsAdminService is read-only in v1. Capability grants are minted and
-// revoked daemon-internally during mission dispatch; explicit revocation
-// surfaces are a future spec. The dashboard uses this RPC to render the
-// grants inspector page (Requirement 4).
+// GrantsAdminService originally shipped read-only (ListActiveGrants for
+// CG-JWT inspection). The component-bootstrap-e2e spec extends it with
+// WriteAgentGrants and DeleteAgentGrants for the dashboard's per-agent
+// Permissions tab — these write/delete the per-action FGA tuples
+// (component_read_enabled / component_write_enabled /
+// component_execute_enabled / can_invoke) that gate per-agent access.
 //
-// Spec: secrets-tenant-lifecycle Requirement 8.1, Requirement 4.
+// Spec: secrets-tenant-lifecycle Requirement 8.1, Requirement 4;
+//       component-bootstrap-e2e Requirement 9.
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
@@ -21,7 +25,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/admin/v1/grants.proto.
  */
 export const file_gibson_admin_v1_grants: GenFile = /*@__PURE__*/
-  fileDesc("ChxnaWJzb24vYWRtaW4vdjEvZ3JhbnRzLnByb3RvEg9naWJzb24uYWRtaW4udjEikwIKE0NhcGFiaWxpdHlHcmFudEluZm8SCwoDanRpGAEgASgJEhwKFHJlY2lwaWVudF9pbnN0YWxsX2lkGAIgASgJEjgKD3JlY2lwaWVudF9jbGFzcxgDIAEoDjIfLmdpYnNvbi5hZG1pbi52MS5SZWNpcGllbnRDbGFzcxIWCg5yZWNpcGllbnRfbmFtZRgEIAEoCRIUCgxhbGxvd2VkX3JwY3MYBSADKAkSEgoKbWlzc2lvbl9pZBgGIAEoCRIPCgd0YXNrX2lkGAcgASgJEhYKDmlzc3VlZF9hdF91bml4GAggASgDEhcKD2V4cGlyZXNfYXRfdW5peBgJIAEoAxITCgtuZWFyX2V4cGlyeRgKIAEoCCKvAQoXTGlzdEFjdGl2ZUdyYW50c1JlcXVlc3QSPwoWcmVjaXBpZW50X2NsYXNzX2ZpbHRlchgBIAEoDjIfLmdpYnNvbi5hZG1pbi52MS5SZWNpcGllbnRDbGFzcxISCgpycGNfZmlsdGVyGAIgASgJEiAKGGluY2x1ZGVfbmVhcl9leHBpcnlfb25seRgDIAEoCBINCgVsaW1pdBgEIAEoBRIOCgZvZmZzZXQYBSABKAUiXwoYTGlzdEFjdGl2ZUdyYW50c1Jlc3BvbnNlEjQKBmdyYW50cxgBIAMoCzIkLmdpYnNvbi5hZG1pbi52MS5DYXBhYmlsaXR5R3JhbnRJbmZvEg0KBXRvdGFsGAIgASgFKoIBCg5SZWNpcGllbnRDbGFzcxIfChtSRUNJUElFTlRfQ0xBU1NfVU5TUEVDSUZJRUQQABIZChVSRUNJUElFTlRfQ0xBU1NfQUdFTlQQARIYChRSRUNJUElFTlRfQ0xBU1NfVE9PTBACEhoKFlJFQ0lQSUVOVF9DTEFTU19QTFVHSU4QAzKyAQoSR3JhbnRzQWRtaW5TZXJ2aWNlEpsBChBMaXN0QWN0aXZlR3JhbnRzEiguZ2lic29uLmFkbWluLnYxLkxpc3RBY3RpdmVHcmFudHNSZXF1ZXN0GikuZ2lic29uLmFkbWluLnYxLkxpc3RBY3RpdmVHcmFudHNSZXNwb25zZSIyirUYLgoMdGVuYW50X2FkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAFCTVABWjpnaXRodWIuY29tL3plcm8tZGF5LWFpL3Nkay9hcGkvZ2VuL2dpYnNvbi9hZG1pbi92MTthZG1pbnYxqgIMR2lic29uLkFkbWluYgZwcm90bzM", [file_gibson_auth_v1_options]);
+  fileDesc("ChxnaWJzb24vYWRtaW4vdjEvZ3JhbnRzLnByb3RvEg9naWJzb24uYWRtaW4udjEikwIKE0NhcGFiaWxpdHlHcmFudEluZm8SCwoDanRpGAEgASgJEhwKFHJlY2lwaWVudF9pbnN0YWxsX2lkGAIgASgJEjgKD3JlY2lwaWVudF9jbGFzcxgDIAEoDjIfLmdpYnNvbi5hZG1pbi52MS5SZWNpcGllbnRDbGFzcxIWCg5yZWNpcGllbnRfbmFtZRgEIAEoCRIUCgxhbGxvd2VkX3JwY3MYBSADKAkSEgoKbWlzc2lvbl9pZBgGIAEoCRIPCgd0YXNrX2lkGAcgASgJEhYKDmlzc3VlZF9hdF91bml4GAggASgDEhcKD2V4cGlyZXNfYXRfdW5peBgJIAEoAxITCgtuZWFyX2V4cGlyeRgKIAEoCCKvAQoXTGlzdEFjdGl2ZUdyYW50c1JlcXVlc3QSPwoWcmVjaXBpZW50X2NsYXNzX2ZpbHRlchgBIAEoDjIfLmdpYnNvbi5hZG1pbi52MS5SZWNpcGllbnRDbGFzcxISCgpycGNfZmlsdGVyGAIgASgJEiAKGGluY2x1ZGVfbmVhcl9leHBpcnlfb25seRgDIAEoCBINCgVsaW1pdBgEIAEoBRIOCgZvZmZzZXQYBSABKAUiXwoYTGlzdEFjdGl2ZUdyYW50c1Jlc3BvbnNlEjQKBmdyYW50cxgBIAMoCzIkLmdpYnNvbi5hZG1pbi52MS5DYXBhYmlsaXR5R3JhbnRJbmZvEg0KBXRvdGFsGAIgASgFIi4KCkdyYW50VHVwbGUSDgoGb2JqZWN0GAEgASgJEhAKCHJlbGF0aW9uGAIgASgJImMKF1dyaXRlQWdlbnRHcmFudHNSZXF1ZXN0EhsKE3RhcmdldF9wcmluY2lwYWxfaWQYASABKAkSKwoGZ3JhbnRzGAIgAygLMhsuZ2lic29uLmFkbWluLnYxLkdyYW50VHVwbGUiRAoYV3JpdGVBZ2VudEdyYW50c1Jlc3BvbnNlEg8KB3dyaXR0ZW4YASABKAUSFwoPYWxyZWFkeV9wcmVzZW50GAIgASgFImQKGERlbGV0ZUFnZW50R3JhbnRzUmVxdWVzdBIbChN0YXJnZXRfcHJpbmNpcGFsX2lkGAEgASgJEisKBmdyYW50cxgCIAMoCzIbLmdpYnNvbi5hZG1pbi52MS5HcmFudFR1cGxlIkEKGURlbGV0ZUFnZW50R3JhbnRzUmVzcG9uc2USDwoHZGVsZXRlZBgBIAEoBRITCgtub3RfcHJlc2VudBgCIAEoBSqCAQoOUmVjaXBpZW50Q2xhc3MSHwobUkVDSVBJRU5UX0NMQVNTX1VOU1BFQ0lGSUVEEAASGQoVUkVDSVBJRU5UX0NMQVNTX0FHRU5UEAESGAoUUkVDSVBJRU5UX0NMQVNTX1RPT0wQAhIaChZSRUNJUElFTlRfQ0xBU1NfUExVR0lOEAMy3AMKEkdyYW50c0FkbWluU2VydmljZRKUAQoQTGlzdEFjdGl2ZUdyYW50cxIoLmdpYnNvbi5hZG1pbi52MS5MaXN0QWN0aXZlR3JhbnRzUmVxdWVzdBopLmdpYnNvbi5hZG1pbi52MS5MaXN0QWN0aXZlR3JhbnRzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESlAEKEFdyaXRlQWdlbnRHcmFudHMSKC5naWJzb24uYWRtaW4udjEuV3JpdGVBZ2VudEdyYW50c1JlcXVlc3QaKS5naWJzb24uYWRtaW4udjEuV3JpdGVBZ2VudEdyYW50c1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpcBChFEZWxldGVBZ2VudEdyYW50cxIpLmdpYnNvbi5hZG1pbi52MS5EZWxldGVBZ2VudEdyYW50c1JlcXVlc3QaKi5naWJzb24uYWRtaW4udjEuRGVsZXRlQWdlbnRHcmFudHNSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAUJNUAFaOmdpdGh1Yi5jb20vemVyby1kYXktYWkvc2RrL2FwaS9nZW4vZ2lic29uL2FkbWluL3YxO2FkbWludjGqAgxHaWJzb24uQWRtaW5iBnByb3RvMw", [file_gibson_auth_v1_options]);
 
 /**
  * CapabilityGrantInfo is the wire-shape returned by ListActiveGrants. It is
@@ -196,6 +200,151 @@ export const ListActiveGrantsResponseSchema: GenMessage<ListActiveGrantsResponse
   messageDesc(file_gibson_admin_v1_grants, 2);
 
 /**
+ * GrantTuple is a single (object, relation) pair to write or delete.
+ * The subject is the target_principal_id from the enclosing request.
+ *
+ * Spec: component-bootstrap-e2e Requirement 9.
+ *
+ * @generated from message gibson.admin.v1.GrantTuple
+ */
+export type GrantTuple = Message<"gibson.admin.v1.GrantTuple"> & {
+  /**
+   * object is the FGA object identifier, e.g. "component:gitlab" or
+   * "plugin:nmap-runner".
+   *
+   * @generated from field: string object = 1;
+   */
+  object: string;
+
+  /**
+   * relation is the FGA relation. Must be one of:
+   *   - "can_read"        (component_read_enabled)
+   *   - "can_configure"   (component_write_enabled)
+   *   - "can_execute"     (component_execute_enabled)
+   *   - "can_invoke"      (plugin invocation; tool targets only)
+   *
+   * @generated from field: string relation = 2;
+   */
+  relation: string;
+};
+
+/**
+ * Describes the message gibson.admin.v1.GrantTuple.
+ * Use `create(GrantTupleSchema)` to create a new message.
+ */
+export const GrantTupleSchema: GenMessage<GrantTuple> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_grants, 3);
+
+/**
+ * WriteAgentGrantsRequest writes per-action grants additively for a
+ * target agent / tool principal. Spec: component-bootstrap-e2e R9.
+ *
+ * @generated from message gibson.admin.v1.WriteAgentGrantsRequest
+ */
+export type WriteAgentGrantsRequest = Message<"gibson.admin.v1.WriteAgentGrantsRequest"> & {
+  /**
+   * target_principal_id is the FGA principal to grant tuples to.
+   * Format: "agent_principal:<uuid>" or "tool_principal:<uuid>".
+   *
+   * @generated from field: string target_principal_id = 1;
+   */
+  targetPrincipalId: string;
+
+  /**
+   * grants is the set of tuples to write. Empty array is allowed
+   * (treated as no-op). Implementation iterates and reports per-
+   * tuple disposition in the response counters.
+   *
+   * @generated from field: repeated gibson.admin.v1.GrantTuple grants = 2;
+   */
+  grants: GrantTuple[];
+};
+
+/**
+ * Describes the message gibson.admin.v1.WriteAgentGrantsRequest.
+ * Use `create(WriteAgentGrantsRequestSchema)` to create a new message.
+ */
+export const WriteAgentGrantsRequestSchema: GenMessage<WriteAgentGrantsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_grants, 4);
+
+/**
+ * WriteAgentGrantsResponse reports the disposition of each requested
+ * tuple. The two counters sum to len(request.grants). Per-tuple
+ * errors (e.g. invalid relation) abort the request before any write
+ * and are surfaced via gRPC InvalidArgument.
+ *
+ * @generated from message gibson.admin.v1.WriteAgentGrantsResponse
+ */
+export type WriteAgentGrantsResponse = Message<"gibson.admin.v1.WriteAgentGrantsResponse"> & {
+  /**
+   * @generated from field: int32 written = 1;
+   */
+  written: number;
+
+  /**
+   * @generated from field: int32 already_present = 2;
+   */
+  alreadyPresent: number;
+};
+
+/**
+ * Describes the message gibson.admin.v1.WriteAgentGrantsResponse.
+ * Use `create(WriteAgentGrantsResponseSchema)` to create a new message.
+ */
+export const WriteAgentGrantsResponseSchema: GenMessage<WriteAgentGrantsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_grants, 5);
+
+/**
+ * DeleteAgentGrantsRequest removes per-action grants. Spec:
+ * component-bootstrap-e2e R9.
+ *
+ * @generated from message gibson.admin.v1.DeleteAgentGrantsRequest
+ */
+export type DeleteAgentGrantsRequest = Message<"gibson.admin.v1.DeleteAgentGrantsRequest"> & {
+  /**
+   * @generated from field: string target_principal_id = 1;
+   */
+  targetPrincipalId: string;
+
+  /**
+   * @generated from field: repeated gibson.admin.v1.GrantTuple grants = 2;
+   */
+  grants: GrantTuple[];
+};
+
+/**
+ * Describes the message gibson.admin.v1.DeleteAgentGrantsRequest.
+ * Use `create(DeleteAgentGrantsRequestSchema)` to create a new message.
+ */
+export const DeleteAgentGrantsRequestSchema: GenMessage<DeleteAgentGrantsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_grants, 6);
+
+/**
+ * DeleteAgentGrantsResponse reports the disposition. The two counters
+ * sum to len(request.grants).
+ *
+ * @generated from message gibson.admin.v1.DeleteAgentGrantsResponse
+ */
+export type DeleteAgentGrantsResponse = Message<"gibson.admin.v1.DeleteAgentGrantsResponse"> & {
+  /**
+   * @generated from field: int32 deleted = 1;
+   */
+  deleted: number;
+
+  /**
+   * @generated from field: int32 not_present = 2;
+   */
+  notPresent: number;
+};
+
+/**
+ * Describes the message gibson.admin.v1.DeleteAgentGrantsResponse.
+ * Use `create(DeleteAgentGrantsResponseSchema)` to create a new message.
+ */
+export const DeleteAgentGrantsResponseSchema: GenMessage<DeleteAgentGrantsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_grants, 7);
+
+/**
  * RecipientClass is the class of caller a capability grant is issued to.
  *
  * @generated from enum gibson.admin.v1.RecipientClass
@@ -236,9 +385,11 @@ export const RecipientClassSchema: GenEnum<RecipientClass> = /*@__PURE__*/
   enumDesc(file_gibson_admin_v1_grants, 0);
 
 /**
- * GrantsAdminService is the dashboard's read-only inspector for active
- * capability grants. RBAC is gated on tenant_admin since the audit
- * information is sensitive.
+ * GrantsAdminService is the dashboard's grants surface — both the
+ * CG-JWT inspector (ListActiveGrants) and the per-agent FGA-grant
+ * editor (WriteAgentGrants / DeleteAgentGrants). All RPCs are gated
+ * on tenant_admin since these surfaces touch sensitive authorization
+ * state.
  *
  * @generated from service gibson.admin.v1.GrantsAdminService
  */
@@ -254,6 +405,50 @@ export const GrantsAdminService: GenService<{
     methodKind: "unary";
     input: typeof ListActiveGrantsRequestSchema;
     output: typeof ListActiveGrantsResponseSchema;
+  },
+  /**
+   * WriteAgentGrants additively writes per-action FGA tuples for a
+   * target agent / tool principal. Idempotent: requesting an already
+   * present tuple counts as `already_present` rather than failing.
+   * Each successful write emits an `agent_grant_added` audit event
+   * through the daemon's audit.Writer.
+   *
+   * Authz: ext-authz checks the caller is `admin` of their own tenant
+   * (tenant_from_identity). The handler additionally validates that
+   * target_principal_id resolves to a principal in the caller's tenant
+   * — cross-tenant grant management is rejected with PermissionDenied.
+   *
+   * Validation rules enforced server-side:
+   *   - target_principal_id must exist and be in the caller's tenant
+   *   - relation must be one of {can_read, can_configure, can_execute,
+   *     can_invoke}
+   *   - if relation == "can_invoke", target's kind MUST be TOOL —
+   *     agent_principals are excluded from plugin.can_invoke by the
+   *     FGA model
+   *   - object must be in the tenant's catalog (in_tenant_catalog)
+   *
+   * Spec: component-bootstrap-e2e Requirement 9.
+   *
+   * @generated from rpc gibson.admin.v1.GrantsAdminService.WriteAgentGrants
+   */
+  writeAgentGrants: {
+    methodKind: "unary";
+    input: typeof WriteAgentGrantsRequestSchema;
+    output: typeof WriteAgentGrantsResponseSchema;
+  },
+  /**
+   * DeleteAgentGrants removes per-action FGA tuples. Idempotent:
+   * tuples not present count as `not_present`. Each delete emits an
+   * `agent_grant_removed` audit event.
+   *
+   * Spec: component-bootstrap-e2e Requirement 9.
+   *
+   * @generated from rpc gibson.admin.v1.GrantsAdminService.DeleteAgentGrants
+   */
+  deleteAgentGrants: {
+    methodKind: "unary";
+    input: typeof DeleteAgentGrantsRequestSchema;
+    output: typeof DeleteAgentGrantsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_admin_v1_grants, 0);

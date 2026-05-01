@@ -5,6 +5,7 @@
     "install",
     "first-agent",
     "---",
+    "component-bootstrap",
     "missions",
     "tools",
     "plugins",

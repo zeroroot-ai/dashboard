@@ -46,6 +46,10 @@ import {
   CredentialPanel,
   type Credentials,
 } from '@/components/gibson/shared/CredentialPanel';
+import {
+  CatalogPicker,
+  type GrantSelection as CatalogGrantSelection,
+} from '@/components/gibson/permissions/CatalogPicker';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -220,12 +224,13 @@ function PermissionsStep({
   onBack: () => void;
   onNext: () => void;
 }) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [refInput, setRefInput] = useState('');
   const [relInput, setRelInput] = useState<GrantSelection['relation']>('can_read');
 
   const canProceed = grants.length > 0 || acknowledgedMinimal;
 
-  function addGrant() {
+  function addAdvancedGrant() {
     const ref = refInput.trim();
     if (ref === '') return;
     if (grants.some((g) => g.componentRef === ref && g.relation === relInput)) return;
@@ -233,9 +238,17 @@ function PermissionsStep({
     setRefInput('');
   }
 
-  function removeGrant(idx: number) {
-    onGrantsChange(grants.filter((_, i) => i !== idx));
-  }
+  // Live count for the default-deny preview footer.
+  const counts = grants.reduce(
+    (acc, g) => {
+      if (g.relation === 'can_read') acc.read += 1;
+      else if (g.relation === 'can_configure') acc.configure += 1;
+      else if (g.relation === 'can_execute') acc.execute += 1;
+      else if (g.relation === 'can_invoke') acc.invoke += 1;
+      return acc;
+    },
+    { read: 0, configure: 0, execute: 0, invoke: 0 },
+  );
 
   return (
     <div className="space-y-6">
@@ -244,42 +257,47 @@ function PermissionsStep({
           Permissions
         </h2>
         <p className="text-sm text-muted-foreground">
-          Grant this {componentType} per-action access to specific components and
+          Grant this {componentType} per-action access to components and
           (for tools) plugin invocation. Without explicit grants the {componentType}
           will only inherit tenant-member access.
         </p>
       </div>
 
-      <Card>
-        <CardHeader className="pb-2 pt-3">
-          <p className="text-xs font-medium font-mono uppercase tracking-wider text-muted-foreground">
-            Grants
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {grants.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic">No grants yet.</p>
-          ) : (
-            <ul className="space-y-1 text-xs font-mono">
-              {grants.map((g, i) => (
-                <li key={i} className="flex items-center justify-between rounded border border-green-900/20 px-3 py-1.5">
-                  <span>
-                    <span className="data-value">{g.componentRef}</span> — {g.relation}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeGrant(i)}
-                    aria-label={`Remove grant ${g.componentRef} ${g.relation}`}
-                  >
-                    Remove
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
+      <CatalogPicker
+        kind={componentType}
+        selected={grants as CatalogGrantSelection[]}
+        onChange={(next) => onGrantsChange(next as GrantSelection[])}
+      />
 
+      {/* Default-deny preview footer */}
+      <Alert>
+        <AlertTitle>This {componentType} will be able to:</AlertTitle>
+        <AlertDescription className="text-xs">
+          read {counts.read} component{counts.read === 1 ? '' : 's'},{' '}
+          configure {counts.configure} component{counts.configure === 1 ? '' : 's'},{' '}
+          execute {counts.execute} component{counts.execute === 1 ? '' : 's'}
+          {componentType === 'tool' && (
+            <>
+              , and invoke {counts.invoke} plugin{counts.invoke === 1 ? '' : 's'}
+            </>
+          )}
+          {grants.length === 0 && ' — i.e. only tenant-member inherited access'}.
+        </AlertDescription>
+      </Alert>
+
+      {/* Show advanced — free-form (object_ref, relation) input for ops debugging */}
+      <details className="text-xs">
+        <summary
+          className="cursor-pointer text-muted-foreground hover:text-foreground"
+          onClick={() => setShowAdvanced((v) => !v)}
+        >
+          Show technical detail
+        </summary>
+        <div className="mt-3 space-y-3 rounded border border-green-900/20 p-3">
+          <p className="text-muted-foreground">
+            Free-form grant entry. Use the catalog above unless you&apos;re
+            adding a grant on an object the catalog doesn&apos;t list yet.
+          </p>
           <div className="flex flex-wrap items-end gap-2">
             <div className="space-y-1">
               <label className="text-xs text-muted-foreground" htmlFor="grant-ref">
@@ -309,22 +327,12 @@ function PermissionsStep({
                 {componentType === 'tool' && <option value="can_invoke">can_invoke</option>}
               </select>
             </div>
-            <Button type="button" onClick={addGrant} disabled={refInput.trim() === ''}>
+            <Button type="button" onClick={addAdvancedGrant} disabled={refInput.trim() === ''}>
               Add
             </Button>
           </div>
-
-          <Alert>
-            <AlertTriangle className="size-4" />
-            <AlertTitle>Plugin invocation is binary</AlertTitle>
-            <AlertDescription className="text-xs">
-              Per-action read/write/execute applies to <code>component:</code> objects
-              (the plugin&apos;s data face). Plugin invocation itself is whole-or-nothing
-              via <code>can_invoke</code>, which the daemon only allows on tool targets.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+        </div>
+      </details>
 
       {grants.length === 0 && (
         <label className="flex items-center gap-2 text-xs">
