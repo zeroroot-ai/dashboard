@@ -26,6 +26,7 @@ import {
   Plug2Icon,
   RocketIcon,
   SettingsIcon,
+  ShieldCheckIcon,
   WrenchIcon,
   type LucideIcon
 } from "lucide-react";
@@ -129,7 +130,7 @@ export const navItems: NavGroup[] = [
       {
         title: "Security Policy",
         href: "/dashboard/pages/settings/organization/security-policy",
-        icon: SettingsIcon,
+        icon: ShieldCheckIcon,
       },
     ],
   },
