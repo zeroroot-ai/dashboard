@@ -91,6 +91,41 @@ function getAllowedSubjects(): ReadonlySet<string> {
   );
 }
 
+/**
+ * Startup self-check for `ALLOWED_SERVICE_SUBJECTS`.
+ *
+ * Spec: zero-trust-hardening Req 11.3.
+ *
+ * The dashboard's `verifyZitadelBearer` checks every inbound service-acting
+ * JWT's `sub` claim against `ALLOWED_SERVICE_SUBJECTS`. If that env var is
+ * empty at runtime the verifier silently 401s every machine-to-machine
+ * call — a CrashLoopBackOff-or-quiet-failure trade-off where "quiet"
+ * always wins and the failure mode is "components silently can't reach
+ * the dashboard."
+ *
+ * This function is called from `instrumentation.register()` so the
+ * Next.js Node server fail-fasts at startup if the chart's
+ * `resolve-sa-identity-map` init container has not populated the env var.
+ *
+ * The check is intentionally NOT performed at module-load time: tests and
+ * `pnpm build` static-analysis passes import this module without booting
+ * a Next.js server, and they should not all need the env var present.
+ * Production fail-fast lives at the instrumentation hook only.
+ *
+ * @throws Error if ALLOWED_SERVICE_SUBJECTS parses to an empty Set.
+ */
+export function assertAllowedServiceSubjectsConfigured(): void {
+  const subjects = getAllowedSubjects();
+  if (subjects.size === 0) {
+    throw new Error(
+      'ALLOWED_SERVICE_SUBJECTS missing or empty — fail-fast per zero-trust-hardening Req 11.3. ' +
+        'The chart\'s resolve-sa-identity-map init container should write a comma-joined list of ' +
+        'numeric Zitadel subs into this env var; if the var is empty, no service-acting JWT can ' +
+        'reach the dashboard, which silently breaks every machine-to-machine call. Refusing to start.',
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // JWKS — lazily initialised; cached until __resetJWKSForTests is called.
 // The cache key is the issuer URL — if ZITADEL_ISSUER changes between calls

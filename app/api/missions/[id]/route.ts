@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
+import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 import { hasPermission } from '@/src/lib/auth/schema';
 import { listMissions, serializeMission } from '@/src/lib/gibson-client';
 import { getNeo4jDriver } from '@/src/lib/neo4j-client';
@@ -148,6 +149,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // CSRF — zero-trust-hardening Req 11.5
+    try {
+      await requireCsrf(request);
+    } catch (err) {
+      if (err instanceof CsrfError) return csrfErrorResponse(err);
+      throw err;
+    }
+
     const session = await getServerSession();
     if (!session) {
       return NextResponse.json(
