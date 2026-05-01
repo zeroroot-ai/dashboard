@@ -14,6 +14,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
+import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 import { validateMissionYAML } from '@/src/lib/mission/validation';
 import { yamlToState } from '@/src/lib/mission/parser';
 import { serializeToMissionDefinition } from '@/src/lib/mission/mission-serializer';
@@ -45,6 +46,16 @@ interface GibsonCreateMissionResponse {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
+    // CSRF — zero-trust-hardening Req 11.5. The mission-create flow is
+    // user-acting (browser session), so the proxy-seeded csrf-token cookie
+    // applies. Service-acting callers do not invoke this route.
+    try {
+      await requireCsrf(request);
+    } catch (err) {
+      if (err instanceof CsrfError) return csrfErrorResponse(err);
+      throw err;
+    }
+
     // Rate limiting
     const rateLimitResult = await checkRateLimit(request, 'missions:create', {
       maxRequests: 20,

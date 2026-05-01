@@ -42,6 +42,7 @@ import {
   verifyZitadelBearer,
   ZitadelBearerError,
   __resetJWKSForTests,
+  assertAllowedServiceSubjectsConfigured,
 } from '../zitadel-bearer-verifier';
 
 // ---------------------------------------------------------------------------
@@ -286,5 +287,38 @@ describe('happy-path', () => {
 
     const identity = await verifyZitadelBearer(`bearer ${FAKE_JWT}`);
     expect(identity.subject).toBe('123456789');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Startup self-check: assertAllowedServiceSubjectsConfigured
+// (zero-trust-hardening Req 11.3)
+// ---------------------------------------------------------------------------
+
+describe('assertAllowedServiceSubjectsConfigured', () => {
+  it('returns silently when ALLOWED_SERVICE_SUBJECTS contains entries', () => {
+    setEnv({ ALLOWED_SERVICE_SUBJECTS: '111,222' });
+    expect(() => assertAllowedServiceSubjectsConfigured()).not.toThrow();
+  });
+
+  it('throws when ALLOWED_SERVICE_SUBJECTS is unset', () => {
+    setEnv({ ALLOWED_SERVICE_SUBJECTS: undefined });
+    expect(() => assertAllowedServiceSubjectsConfigured()).toThrowError(
+      /ALLOWED_SERVICE_SUBJECTS missing or empty/,
+    );
+  });
+
+  it('throws when ALLOWED_SERVICE_SUBJECTS is an empty string', () => {
+    setEnv({ ALLOWED_SERVICE_SUBJECTS: '' });
+    expect(() => assertAllowedServiceSubjectsConfigured()).toThrowError(
+      /zero-trust-hardening Req 11\.3/,
+    );
+  });
+
+  it('throws when ALLOWED_SERVICE_SUBJECTS is whitespace and commas only', () => {
+    setEnv({ ALLOWED_SERVICE_SUBJECTS: '  , , ,' });
+    expect(() => assertAllowedServiceSubjectsConfigured()).toThrowError(
+      /ALLOWED_SERVICE_SUBJECTS missing or empty/,
+    );
   });
 });

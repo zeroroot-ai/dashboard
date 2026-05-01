@@ -2,34 +2,46 @@
  * permissions-cache.ts
  *
  * Client-side permission caching for the dashboard. Wraps the
- * GetMyPermissions RPC with a TTL-based in-memory cache so the
- * dashboard does not hammer the daemon on every component render.
+ * `/api/auth/my-permissions` server route (which in turn calls the
+ * daemon's `GetMyPermissions` RPC server-side via Envoy) with a TTL-based
+ * in-memory cache so the dashboard does not hammer the route on every
+ * component render.
  *
- * Design constraints (per authz-04 spec, Requirements 6.4, 6.5):
+ * Spec: zero-trust-hardening Requirements 6.1, 6.2 — the previous
+ * implementation built a `createGrpcWebTransport` against
+ * `NEXT_PUBLIC_GIBSON_DAEMON_URL` directly from the browser. That bypassed
+ * the Envoy edge (the single jwt_authn / ext_authz / SPIFFE-mTLS
+ * checkpoint) and contradicted the platform's "always through Envoy"
+ * doctrine. The browser-side gRPC client has been deleted; calls now go
+ * through the server route, which uses the standard `userClient`
+ * server-side transport.
+ *
+ * Design constraints:
  *  - Cache is a plain Map with timestamps — no third-party cache lib.
  *  - TTL defaults to 5 minutes; overridable via
  *    NEXT_PUBLIC_PERMISSIONS_CACHE_TTL_MS environment variable.
  *  - `invalidatePermissionsCache()` forces a fresh fetch on next access.
- *  - SSR-safe: the singleton is module-scoped, which works for both RSC
- *    (server singleton per request in Node edge runtime) and client components.
+ *  - SSR-safe: the singleton is module-scoped; the fetch is relative-URL
+ *    so it works in both Node-edge runtimes and the browser.
  *
  * Usage
  * -----
- *   // In a server component or API route:
- *   import { getMyPermissions } from '@/src/lib/permissions-cache';
- *   const perms = await getMyPermissions(tenantId);
- *
- *   // In a client component (use the hook wrapper instead):
+ *   // In a client component (use the hook wrapper):
  *   import { useMyPermissions } from '@/src/lib/permissions-cache';
  *   const { permissions, loading } = useMyPermissions(tenantId);
+ *
+ *   // From other client code paths (rare):
+ *   import { getMyPermissions } from '@/src/lib/permissions-cache';
+ *   const perms = await getMyPermissions(tenantId);
  */
 
 'use client';
 
-import { createClient } from '@connectrpc/connect';
-import { createGrpcWebTransport } from '@connectrpc/connect-web';
-import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
-import type { GetMyPermissionsResponse } from '@/src/gen/gibson/daemon/v1/daemon_pb';
+import { fromJson, type JsonValue } from '@bufbuild/protobuf';
+import {
+  GetMyPermissionsResponseSchema,
+  type GetMyPermissionsResponse,
+} from '@/src/gen/gibson/daemon/v1/daemon_pb';
 import { useEffect, useState, useCallback } from 'react';
 
 // ---------------------------------------------------------------------------
@@ -73,17 +85,45 @@ export function invalidateTenantPermissions(tenantId: string): void {
 }
 
 // ---------------------------------------------------------------------------
-// gRPC client (browser-side, uses grpc-web transport)
+// Server-route fetch
 // ---------------------------------------------------------------------------
+//
+// Replaces the previous browser-side gRPC-Web transport. The server route
+// at `/api/auth/my-permissions` requires an Auth.js session and calls
+// `GetMyPermissions` server-side via `userClient` (which routes through
+// Envoy — see src/lib/gibson-client.ts). Per the zero-trust-hardening
+// spec this is the ONLY supported path; no `NEXT_PUBLIC_GIBSON_DAEMON_URL`
+// is read anywhere.
+//
+// The route returns the JSON-serialized `GetMyPermissionsResponse`. We
+// rehydrate it through `fromJson` so the in-memory shape callers see is
+// identical to what the gRPC client previously returned.
 
-function getBrowserClient() {
-  const baseUrl =
-    typeof window !== 'undefined'
-      ? (process.env['NEXT_PUBLIC_GIBSON_DAEMON_URL'] ?? '')
-      : '';
-
-  const transport = createGrpcWebTransport({ baseUrl });
-  return createClient(DaemonService, transport);
+async function fetchMyPermissionsViaRoute(
+  tenantId: string,
+): Promise<GetMyPermissionsResponse> {
+  const url = `/api/auth/my-permissions?tenantId=${encodeURIComponent(tenantId)}`;
+  const resp = await fetch(url, {
+    method: 'GET',
+    credentials: 'same-origin',
+    headers: { Accept: 'application/json' },
+    // Let the browser HTTP cache honour the route's `Cache-Control: private`
+    // response header. Our in-process cache below is a second layer.
+  });
+  if (!resp.ok) {
+    let detail = '';
+    try {
+      const body = (await resp.json()) as { error?: string; detail?: string };
+      detail = body.detail ?? body.error ?? '';
+    } catch {
+      detail = await resp.text().catch(() => '');
+    }
+    throw new Error(
+      `my-permissions route returned ${resp.status}${detail ? `: ${detail}` : ''}`,
+    );
+  }
+  const json = (await resp.json()) as JsonValue;
+  return fromJson(GetMyPermissionsResponseSchema, json);
 }
 
 // ---------------------------------------------------------------------------
@@ -106,8 +146,7 @@ export async function getMyPermissions(
     return cached.value;
   }
 
-  const client = getBrowserClient();
-  const resp = await client.getMyPermissions({ tenantId });
+  const resp = await fetchMyPermissionsViaRoute(tenantId);
 
   _cache.set(tenantId, {
     value: resp,

@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
+import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 import { validateMissionYAML, addLineNumbers } from '@/src/lib/mission/validation';
 import type { ValidationResult } from '@/src/lib/mission/validation';
 
@@ -45,6 +46,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const startTime = performance.now();
 
   try {
+    // CSRF — zero-trust-hardening Req 11.5
+    try {
+      await requireCsrf(request);
+    } catch (err) {
+      if (err instanceof CsrfError) return csrfErrorResponse(err);
+      throw err;
+    }
+
     // Check authentication
     const session = await getServerSession();
     if (!session) {
