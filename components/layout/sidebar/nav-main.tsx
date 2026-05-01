@@ -137,18 +137,17 @@ export const navItems: NavGroup[] = [
     title: "Configuration",
     items: [
       {
+        // The settings index redirects to /pages/settings/account. The
+        // settings page itself has its own sidebar with the full surface
+        // (Account, Billing, Providers, Agents, Plugins, Model Access,
+        // Budgets, plus admin-gated Secrets/Grants), so we don't repeat
+        // it here.
         title: "Settings",
-        href: "/dashboard/pages/settings",
+        href: "/dashboard/pages/settings/account",
         icon: SettingsIcon,
-        items: [
-          { title: "Profile", href: "/dashboard/pages/settings" },
-          { title: "Account", href: "/dashboard/pages/settings/account" },
-          { title: "Providers", href: "/dashboard/pages/settings/providers" },
-          { title: "Billing", href: "/dashboard/pages/settings/billing" }
-        ]
-      }
-    ]
-  }
+      },
+    ],
+  },
 ];
 
 export function NavMain() {

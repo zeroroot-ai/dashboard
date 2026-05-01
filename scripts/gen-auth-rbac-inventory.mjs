@@ -32,11 +32,18 @@ const FGA_INIT = resolve(CHART_DIR, 'templates/openfga/init-job.yaml');
 const OUTPUT_PATH = resolve(REPO_ROOT, 'enterprise/docs/AUTH_RBAC_INVENTORY.md');
 
 function renderChart() {
+  // Render with values-kind.yaml so the chart's environment-overlay-required
+  // values (idp.zitadel.issuer, vault.enabled, etc.) are satisfied. The
+  // generated inventory is environment-independent (it lists rule shapes,
+  // not concrete values), so any working overlay produces the same output.
+  const valuesKind = resolve(CHART_DIR, 'values-kind.yaml');
   return execFileSync(
     'helm',
     [
       'template',
       CHART_DIR,
+      '--values',
+      valuesKind,
       '--set',
       'tenantOperator.billing.devAutoConfirm=false',
       '--api-versions=monitoring.coreos.com/v1',

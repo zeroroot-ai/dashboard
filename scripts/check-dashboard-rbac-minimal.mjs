@@ -75,13 +75,20 @@ function loadAllowlist() {
 }
 
 function renderChart() {
-  // Same flags the e2e suite uses to render past the tenantOperator
-  // billing dev-autoconfirm template guard.
+  // Render with the kind overlay — the chart enforces several environment-
+  // overlay-required values (idp.zitadel.issuer, vault.enabled, etc.) via
+  // template guards. values-kind.yaml is the smallest overlay that satisfies
+  // them, and the rendered RBAC under it matches the rendered RBAC under
+  // values-aws-prod.yaml (the rules don't depend on environment values),
+  // so this is sufficient for the minimal-RBAC invariant we're checking.
+  const valuesKind = resolve(CHART_DIR, 'values-kind.yaml');
   const out = execFileSync(
     'helm',
     [
       'template',
       CHART_DIR,
+      '--values',
+      valuesKind,
       '--set',
       'tenantOperator.billing.devAutoConfirm=false',
       '--api-versions=monitoring.coreos.com/v1',

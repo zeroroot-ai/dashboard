@@ -5,18 +5,16 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import {
-  BellIcon,
   BotIcon,
-  ClipboardListIcon,
-  ContrastIcon,
-  CreditCardIcon,
   CpuIcon,
+  CreditCardIcon,
   DatabaseIcon,
+  DollarSignIcon,
   KeyIcon,
-  LockKeyholeIcon,
-  PaletteIcon,
+  PuzzleIcon,
+  ScaleIcon,
   ShieldIcon,
-  UserIcon
+  UserIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,82 +22,77 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 
-const sidebarNavItems = [
-  {
-    title: "Profile",
-    href: "/dashboard/pages/settings",
-    icon: UserIcon
-  },
-  {
-    title: "Account",
-    href: "/dashboard/pages/settings/account",
-    icon: ShieldIcon
-  },
-  {
-    title: "Billing",
-    href: "/dashboard/pages/settings/billing",
-    icon: CreditCardIcon
-  },
-  {
-    title: "Appearance",
-    href: "/dashboard/pages/settings/appearance",
-    icon: PaletteIcon
-  },
-  {
-    title: "Notifications",
-    href: "/dashboard/pages/settings/notifications",
-    icon: BellIcon
-  },
-  {
-    title: "Display",
-    href: "/dashboard/pages/settings/display",
-    icon: ContrastIcon
-  }
-];
-
-// Non-gated Gibson nav items (all members can see).
-const gibsonNavItemsPublic = [
-  {
-    title: "Providers",
-    href: "/dashboard/pages/settings/providers",
-    icon: BotIcon,
-  },
-  {
-    title: "Audit Log",
-    href: "/dashboard/pages/settings/audit",
-    icon: ClipboardListIcon,
-  },
-  {
-    title: "Permissions",
-    href: "/dashboard/pages/settings/permissions",
-    icon: LockKeyholeIcon,
-  },
-  {
-    title: "Agents",
-    href: "/dashboard/pages/settings/agents",
-    icon: CpuIcon,
-  },
-];
-
 /**
- * GatedNavItem — renders a nav button only when the given RPC is authorized.
- * Hides on loading=true (no FOUC). Spec: dashboard-authz-ui-gating Task 11.
+ * Settings sidebar.
+ *
+ * Three sections, each a flat list (no nested items):
+ *
+ *   Account    — user-prefs / billing surfaces every member sees
+ *   Workspace  — Gibson product surfaces (LLM providers, agents, plugins, …)
+ *   Admin      — admin-gated surfaces hidden via useAuthorize() until the
+ *                membership query confirms tenant_admin
+ *
+ * Items removed from the prior layout:
+ *   - "Profile"     — duplicated /pages/settings/account; the index page
+ *                     now redirects there.
+ *   - "Appearance"  — was a template form with no persistence.
+ *   - "Notifications", "Display" — same.
+ *   - "Audit Log", "Permissions" — pointed at routes that don't exist.
  */
-function GatedNavItem({
+
+const accountNav = [
+  { title: "Account", href: "/dashboard/pages/settings/account", icon: UserIcon },
+  { title: "Billing", href: "/dashboard/pages/settings/billing", icon: CreditCardIcon },
+];
+
+const workspaceNav = [
+  { title: "Providers", href: "/dashboard/pages/settings/providers", icon: BotIcon },
+  { title: "Agents", href: "/dashboard/pages/settings/agents", icon: CpuIcon },
+  { title: "Plugins", href: "/dashboard/pages/settings/plugins", icon: PuzzleIcon },
+  { title: "Model Access", href: "/dashboard/pages/settings/model-access", icon: ScaleIcon },
+  { title: "Budgets", href: "/dashboard/pages/settings/budgets", icon: DollarSignIcon },
+];
+
+interface AdminEntry {
+  title: string;
+  href: string;
+  icon: React.ElementType;
+  /** RPC method to authorize against. Hidden when not allowed. */
+  method: string;
+}
+
+const adminNav: AdminEntry[] = [
+  {
+    title: "Secrets",
+    href: "/dashboard/pages/settings/secrets",
+    icon: KeyIcon,
+    method: "/gibson.admin.v1.SecretsAdminService/ListSecrets",
+  },
+  {
+    title: "Secrets Backend",
+    href: "/dashboard/pages/settings/secrets-backend",
+    icon: DatabaseIcon,
+    method: "/gibson.admin.v1.TenantAdminService/GetBrokerConfig",
+  },
+  {
+    title: "Grants",
+    href: "/dashboard/pages/settings/grants",
+    icon: ShieldIcon,
+    method: "/gibson.admin.v1.GrantsAdminService/ListActiveGrants",
+  },
+];
+
+function NavLink({
   title,
   href,
   icon: Icon,
-  method,
   pathname,
 }: {
   title: string;
   href: string;
   icon: React.ElementType;
-  method: string;
   pathname: string;
 }) {
-  const { allowed, loading } = useAuthorize(method);
-  if (loading || !allowed) return null;
   return (
     <Button
       variant="ghost"
@@ -117,6 +110,29 @@ function GatedNavItem({
   );
 }
 
+function GatedNavLink({
+  title,
+  href,
+  icon,
+  method,
+  pathname,
+}: AdminEntry & { pathname: string }) {
+  const { allowed, loading } = useAuthorize(method);
+  if (loading || !allowed) return null;
+  return <NavLink title={title} href={href} icon={icon} pathname={pathname} />;
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="px-2 pb-1 pt-3">
+      <Separator className="mb-2" />
+      <p className="text-muted-foreground px-1 pb-1 text-[10px] font-medium uppercase tracking-widest">
+        {children}
+      </p>
+    </div>
+  );
+}
+
 export function SidebarNav() {
   const pathname = usePathname();
 
@@ -124,69 +140,19 @@ export function SidebarNav() {
     <Card className="py-0">
       <CardContent className="p-2">
         <nav className="flex flex-col space-y-0.5 space-x-2 lg:space-x-0">
-          {sidebarNavItems.map((item) => (
-            <Button
-              key={item.href}
-              variant="ghost"
-              className={cn(
-                "hover:bg-muted justify-start",
-                pathname === item.href ? "bg-muted hover:bg-muted" : ""
-              )}
-              asChild>
-              <Link href={item.href}>
-                {item.icon && <item.icon />}
-                {item.title}
-              </Link>
-            </Button>
+          {accountNav.map((item) => (
+            <NavLink key={item.href} {...item} pathname={pathname} />
           ))}
 
-          <div className="px-2 pb-1 pt-3">
-            <Separator className="mb-2" />
-            <p className="text-muted-foreground px-1 pb-1 text-[10px] font-medium uppercase tracking-widest">
-              Gibson
-            </p>
-          </div>
-
-          {gibsonNavItemsPublic.map((item) => (
-            <Button
-              key={item.href}
-              variant="ghost"
-              className={cn(
-                "hover:bg-muted justify-start",
-                pathname === item.href ? "bg-muted hover:bg-muted" : "",
-              )}
-              asChild
-            >
-              <Link href={item.href}>
-                <item.icon />
-                {item.title}
-              </Link>
-            </Button>
+          <SectionLabel>Workspace</SectionLabel>
+          {workspaceNav.map((item) => (
+            <NavLink key={item.href} {...item} pathname={pathname} />
           ))}
 
-          {/* Admin-only entries: gated via useAuthorize on the primary read RPC.
-              Hidden on loading=true to prevent FOUC. */}
-          <GatedNavItem
-            title="Secrets"
-            href="/dashboard/pages/settings/secrets"
-            icon={KeyIcon}
-            method="/gibson.admin.v1.SecretsAdminService/ListSecrets"
-            pathname={pathname}
-          />
-          <GatedNavItem
-            title="Secrets Backend"
-            href="/dashboard/pages/settings/secrets-backend"
-            icon={DatabaseIcon}
-            method="/gibson.admin.v1.TenantAdminService/GetBrokerConfig"
-            pathname={pathname}
-          />
-          <GatedNavItem
-            title="Grants"
-            href="/dashboard/pages/settings/grants"
-            icon={ShieldIcon}
-            method="/gibson.admin.v1.GrantsAdminService/ListActiveGrants"
-            pathname={pathname}
-          />
+          <SectionLabel>Admin</SectionLabel>
+          {adminNav.map((item) => (
+            <GatedNavLink key={item.href} {...item} pathname={pathname} />
+          ))}
         </nav>
       </CardContent>
     </Card>

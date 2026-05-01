@@ -214,6 +214,10 @@ async function createMissionInGibson(
     const missionId = createResp.mission.id;
 
     // Persist a Neo4j mirror record only after a successful daemon launch.
+    // The source YAML rides along on the node so the clone API can read it
+    // back without needing a daemon GetMissionDefinition RPC. The daemon
+    // remains the source-of-truth for execution state; Neo4j is only the
+    // authoring-format cache. Spec: mission-api-only-cleanup follow-up.
     try {
       const { getNeo4jDriver } = await import('@/src/lib/neo4j-client');
       const driver = getNeo4jDriver();
@@ -227,7 +231,8 @@ async function createMissionInGibson(
                m.status = $status,
                m.startTime = datetime(),
                m.createdBy = $userId,
-               m.tenant_id = $tenantId
+               m.tenant_id = $tenantId,
+               m.source_yaml = $sourceYaml
            RETURN m.id`,
           {
             id: missionId,
@@ -237,6 +242,7 @@ async function createMissionInGibson(
             status: params.startImmediately ? 'running' : 'pending',
             userId: params.userId,
             tenantId: params.tenantId,
+            sourceYaml: params.yaml,
           }
         );
       } finally {
