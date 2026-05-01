@@ -18,7 +18,59 @@ pnpm test           # vitest unit tests
 pnpm test:e2e       # playwright E2E suite
 pnpm typecheck      # tsc --noEmit
 pnpm lint           # eslint
+pnpm proto:generate # regenerate src/gen/ TS proto bindings
 ```
+
+## Proto regeneration
+
+The dashboard's TS proto bindings at `src/gen/` are generated from
+**two** proto trees:
+
+- the SDK protos at `core/sdk/api/proto/` (resolved via `go list -m`
+  against the gibson repo's `go.mod`, so they track whatever SDK
+  version gibson is pinned to), and
+- the daemon-local protos at `core/gibson/internal/daemon/api/`,
+  which are not published anywhere and are only consumable via a
+  sibling checkout.
+
+Buf v2 has a hard rule that every module path in `buf.yaml` must
+resolve **inside** the directory containing the `buf.yaml`. The
+two proto trees live outside this repo, so we cannot just point
+buf at them with `../../core/...` paths — buf rejects those.
+Instead, `pnpm proto:generate` runs
+[`scripts/proto-generate.mjs`](scripts/proto-generate.mjs) which
+builds a self-contained workspace:
+
+```
+.tmp/proto-ws/
+├── buf.yaml              # generated, lists gibson-local + sdk-proto
+├── buf.gen.yaml          # generated, drives protoc-gen-es
+├── gibson-local -> .../core/gibson/internal/daemon/api    (symlink)
+└── sdk-proto    -> $(go list -m ...)/api/proto            (symlink)
+```
+
+Then `buf generate` runs from inside `.tmp/proto-ws/`, the output
+is rsynced into `src/gen/`, and the workspace is removed. Same
+pattern as the daemon's `make authz-registry` recipe in
+`core/gibson/Makefile`, which faces the identical "two proto
+trees, one buf invocation" constraint.
+
+**No checked-in `buf.yaml` or `buf.gen.yaml`** at the dashboard
+root — they only exist transiently inside `.tmp/proto-ws/`.
+
+**Workstation-only.** The script assumes `core/gibson/` is cloned
+as a sibling of this repo (i.e. you're in the canonical
+`~/Code/zero-day.ai/` polyrepo workspace). CI does not regenerate
+proto bindings — `src/gen/` is committed and CI just typechecks
+it. Run `pnpm proto:generate` locally whenever you change a
+`.proto` file in either tree, then commit the regenerated
+`src/gen/` alongside the proto edit.
+
+The SDK side regen depends on `go list -m` succeeding from the
+gibson repo, which means gibson's `go.mod` must already pin the
+SDK version you want. If you're iterating on a new SDK release,
+bump gibson's `go.mod` first (or use `GOFLAGS=-mod=mod` per the
+top-level CLAUDE.md transient-dev guidance), then regen.
 
 ## Frontend authz
 
