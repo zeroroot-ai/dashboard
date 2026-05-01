@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { DeployWizard } from '@/components/gibson/deploy';
+import { DeployDispatcher } from '@/components/gibson/deploy';
 
 export function generateMetadata() {
   return { title: 'Deploy Component - Zero Day AI' };
@@ -8,7 +8,7 @@ export function generateMetadata() {
 export default function DeployPage() {
   return (
     <Suspense>
-      <DeployWizard />
+      <DeployDispatcher />
     </Suspense>
   );
 }

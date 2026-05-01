@@ -51,6 +51,15 @@ import {
  */
 const AGENT_NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,62}$/;
 
+/**
+ * Per-action FGA grants the wizard's Permissions step emits.
+ * Spec: component-bootstrap-e2e Requirement 8.
+ */
+const ComponentGrantSchema = z.object({
+  componentRef: z.string().min(1).max(256),
+  relation: z.enum(['can_read', 'can_configure', 'can_execute', 'can_invoke']),
+});
+
 const RegisterAgentSchema = z.object({
   name: z
     .string()
@@ -61,6 +70,21 @@ const RegisterAgentSchema = z.object({
       'name must be lowercase letters, digits, and hyphens (max 63 chars)',
     ),
   description: z.string().max(256).optional(),
+  /**
+   * Component kind. Defaults to AGENT for backward compatibility with
+   * the original /api/agents/register caller (RegisterAgentForm).
+   * Spec: component-bootstrap-e2e Requirement 5.
+   */
+  kind: z.enum(['agent', 'tool']).optional().default('agent'),
+  /**
+   * Optional per-action FGA grants applied at creation time. Each
+   * entry is forwarded to TenantAdminService.CreateAgentIdentity as
+   * a ComponentGrant{component_ref, relation}. The daemon validates
+   * the relation/kind compatibility (only TOOL targets may receive
+   * can_invoke).
+   * Spec: component-bootstrap-e2e Requirement 8.
+   */
+  componentGrants: z.array(ComponentGrantSchema).max(64).optional().default([]),
 });
 
 export type RegisterAgentRequestBody = z.infer<typeof RegisterAgentSchema>;
@@ -181,8 +205,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const client = userClient(TenantAdminService);
     const resp = await client.createAgentIdentity({
       name: parsedBody.name,
-      kind: PrincipalKind.AGENT,
+      kind: principalKindFromString(parsedBody.kind),
       description: parsedBody.description ?? '',
+      componentGrants: parsedBody.componentGrants.map((g) => ({
+        componentRef: g.componentRef,
+        relation: g.relation,
+      })),
     });
     daemonResp = {
       clientId: resp.clientId,
@@ -201,6 +229,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     status: 201,
     headers: { 'Cache-Control': 'no-store, max-age=0' },
   });
+}
+
+/**
+ * principalKindFromString maps the wizard's lowercase kind discriminator
+ * to the TenantAdminService PrincipalKind enum.
+ *
+ * Spec: component-bootstrap-e2e Requirement 5.
+ */
+function principalKindFromString(kind: 'agent' | 'tool'): PrincipalKind {
+  switch (kind) {
+    case 'agent':
+      return PrincipalKind.AGENT;
+    case 'tool':
+      return PrincipalKind.TOOL;
+  }
 }
 
 // ---------------------------------------------------------------------------
