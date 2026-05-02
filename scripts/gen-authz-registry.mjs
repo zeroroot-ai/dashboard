@@ -32,7 +32,7 @@
  */
 
 import { execSync, execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fromBinary } from '@bufbuild/protobuf';
@@ -363,6 +363,20 @@ function generateTS(entries) {
 
 function main() {
   const stdout = process.argv.includes('--stdout');
+
+  // SKIP_GEN_AUTHZ_REGISTRY=1: trust the committed src/gen/authz/registry.ts
+  // and skip regeneration. Same pattern as gen-plans.mjs's SKIP_GEN_PLANS.
+  // Used in container builds where the SDK + gibson source trees are not
+  // present. The host build runs the full regen + drift gate, so trusting
+  // the committed file inside the container is safe.
+  if (process.env.SKIP_GEN_AUTHZ_REGISTRY === '1' && existsSync(OUTPUT_PATH)) {
+    if (!stdout) {
+      process.stdout.write(
+        `[gen-authz-registry] SKIP_GEN_AUTHZ_REGISTRY=1 — using pre-generated ${OUTPUT_PATH}\n`,
+      );
+    }
+    return;
+  }
 
   if (!stdout) {
     process.stdout.write('[gen-authz-registry] Building proto FileDescriptorSets (workspace synthesis)...\n');

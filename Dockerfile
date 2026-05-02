@@ -54,6 +54,16 @@ ENV SKIP_GEN_PLANS=1
 # RBAC is still enforced by the allowlist at commit time.
 # Spec: signup-zitadel-permissions-fix (Docker build fix for auth-resolution-hardening).
 ENV SKIP_DASHBOARD_RBAC_CHECK=1
+# gen-authz-registry.mjs walks the SDK + gibson proto trees via workspace
+# synthesis (see scripts/gen-authz-registry.mjs and proto-generate.mjs). Those
+# trees are sibling repos outside this Dockerfile's build context, and the
+# script needs `go list -m` against gibson's go.mod to find the SDK. Neither
+# is available in the node:20-alpine builder. The host build runs the full
+# regen + drift gate via `pnpm prebuild`; inside the container we consume the
+# committed src/gen/authz/registry.ts.
+# Spec: cross-repo-cohesion-fixes Requirement 2.
+ENV SKIP_GEN_AUTHZ_REGISTRY=1
+ENV SKIP_AUTHZ_REGISTRY_CHECK=1
 
 # Build the standalone application
 RUN npm run build
