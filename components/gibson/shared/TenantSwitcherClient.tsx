@@ -17,6 +17,7 @@ import type { Membership } from "@/src/lib/auth/membership";
 import { switchActiveTenantAction } from "./tenant-switcher-action";
 
 const ROLE_BADGE_CLASSES: Record<Membership["role"], string> = {
+  owner: "border-amber-500/50 text-amber-400",
   admin: "border-green-500/50 text-green-400",
   member: "border-zinc-500/50 text-zinc-400",
 };

@@ -114,7 +114,7 @@ function setupNoActiveTenant() {
   mockReadRawActiveTenant.mockResolvedValue({ status: 'absent' });
 }
 
-function setupMemberships(tenantId: string, role: 'admin' | 'member') {
+function setupMemberships(tenantId: string, role: 'owner' | 'admin' | 'member') {
   mockGetMyMemberships.mockResolvedValue([
     { tenantId, tenantName: tenantId, role },
   ]);

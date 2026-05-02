@@ -5,6 +5,24 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2026-05-01
+
+Hotfix completing the dashboard side of the
+**`tenant-role-taxonomy`** spec.
+
+### Fixed
+
+- **Active-workspace UI now displays `owner` instead of collapsing it to
+  `member`.** The `Membership` type in `src/lib/auth/membership.ts` was
+  written before `"owner"` became a valid daemon-returned role and was
+  pinned to `'admin' | 'member'`. `normalizeRole()` actively flattened
+  any non-`"admin"` value (including `"owner"`) to `"member"`, so even
+  after gibson v0.27.1 began returning `role: "owner"` for tenant
+  founders the settings page and tenant switcher rendered "member".
+  Widened the type to `'owner' | 'admin' | 'member'` and taught
+  `normalizeRole()` to preserve `"owner"`. Added a distinct amber badge
+  for `owner` in `TenantSwitcherClient`.
+
 ## [1.5.0] - 2026-05-01
 
 Implements the dashboard portion of the **`tenant-role-taxonomy`** spec

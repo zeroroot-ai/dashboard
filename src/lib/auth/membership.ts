@@ -39,7 +39,7 @@ import { getFaultMode } from '@/src/lib/test-fixtures/fault-injection';
 export type Membership = {
   readonly tenantId: string;
   readonly tenantName: string;
-  readonly role: 'admin' | 'member';
+  readonly role: 'owner' | 'admin' | 'member';
 };
 
 /**
@@ -73,12 +73,16 @@ const MembershipSchema = z.object({
 
 /**
  * Normalize an arbitrary role string from the daemon into the strict
- * `'admin' | 'member'` shape this module promises. Anything other than
- * `"admin"` is treated as `"member"` — the daemon never emits other values
- * today, but defending against drift is cheap.
+ * `'owner' | 'admin' | 'member'` shape this module promises. Anything
+ * outside that set is treated as `"member"` (lowest privilege) — the
+ * daemon emits exactly these three today (`tenant.owner` was added in
+ * gibson v0.27.0 / spec `tenant-role-taxonomy`), but defending against
+ * drift is cheap.
  */
-function normalizeRole(raw: string): 'admin' | 'member' {
-  return raw === 'admin' ? 'admin' : 'member';
+function normalizeRole(raw: string): 'owner' | 'admin' | 'member' {
+  if (raw === 'owner') return 'owner';
+  if (raw === 'admin') return 'admin';
+  return 'member';
 }
 
 // ---------------------------------------------------------------------------
