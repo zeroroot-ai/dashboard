@@ -5,6 +5,43 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-05-01
+
+Implements the dashboard portion of the **`tenant-role-taxonomy`** spec
+(see `.spec-workflow/specs/tenant-role-taxonomy/` in the workspace root).
+Converges the dashboard with the new three-tier
+`owner > admin > member` FGA hierarchy that ships in gibson v0.27.0
+and tenant-operator v0.1.0.
+
+### Changed
+
+- **Self-signup founding user is now a tenant `owner`.** In
+  `app/actions/signup.ts`, the synthesised `TenantMember` CR for the
+  signup user now carries `role: "owner"` (was `"admin"`). The
+  tenant-operator's reconciler writes this directly to FGA as the new
+  first-class `(user:<sub>, owner, tenant:<slug>)` tuple; the daemon's
+  `ListMyMemberships` derives `"owner"` as the highest tier and the
+  active-workspace UI displays the correct role for tenant founders
+  after sign-out / sign-in. (Req 4.1, 4.2, 4.4.)
+- **`TenantRole` doc comment refreshed** in `src/lib/auth/roles.ts` —
+  removed the now-stale claim that the daemon only emits `admin` /
+  `member`; documents the full three-tier hierarchy with a spec
+  cross-reference. The exported type and `ROLE_RANK` table are
+  unchanged (both already encoded the `owner > admin > member`
+  hierarchy with ranks 3 / 2 / 1 — the previously-unreachable
+  rank-3 slot is now reachable end-to-end).
+
+### Compatibility
+
+- Backward-compatible at runtime: existing logged-in founders see
+  their previous role (`admin`) until next session refresh, then see
+  `owner` once the daemon-side change takes effect and the
+  `gibson-tenant-owner-backfill` Job (shipped in deploy v0.5.0) has
+  written the corresponding owner tuple.
+- Forward-compatible: subsequent invitations issued via the dashboard
+  admin UI continue to write `role: "admin"` or `role: "member"` per
+  the inviter's choice. (Req 4.3.)
+
 ## [1.4.0] - 2026-05-01
 
 Implements the dashboard portion of the **`zero-trust-hardening`** spec
