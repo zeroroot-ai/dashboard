@@ -9,6 +9,7 @@ import { TenantHydrator } from "@/components/layout/tenant-hydrator";
 import { TenantSwitcher } from "@/components/gibson/shared/TenantSwitcher";
 import { getServerSession } from "@/src/lib/auth";
 import { resolveTenant } from "@/src/lib/resolve-tenant";
+import type { Tenant } from "@/src/types/tenant";
 
 export default async function AuthLayout({
   children
@@ -27,13 +28,7 @@ export default async function AuthLayout({
   }
 
   // Email-verification gate: redirect unverified users to /verify-email before
-  // any protected page is rendered. Placed AFTER the session guard (no session
-  // → /login) and BEFORE the no-workspace guard so the verification prompt is
-  // always the first thing an unverified signed-in user sees.
-  //
-  // Better Auth's `requireEmailVerification: true` blocks sign-in for users
-  // who never verified, but the initial signup session is allowed through so
-  // the user can reach this page. This gate closes that window.
+  // any protected page is rendered.
   if (session.user.emailVerified === false) {
     const emailParam = session.user.email
       ? `?email=${encodeURIComponent(session.user.email)}`
@@ -41,16 +36,29 @@ export default async function AuthLayout({
     redirect(`/verify-email${emailParam}`);
   }
 
-  // Zero memberships → onboarding (replaces the old /dashboard/no-workspace
-  // redirect); middleware handles this earlier in the request lifecycle, but
-  // keeping the gate here protects against direct rendering paths.
+  // Zero memberships → onboarding. Middleware handles this earlier in the
+  // request lifecycle, but keeping the gate here protects against direct
+  // rendering paths.
   if (!session.user?.tenantId && (!session.user?.tenants || session.user.tenants.length === 0)) {
     redirect('/onboarding');
   }
 
-  const tenantId = session?.user?.tenantId;
-  const tenant = tenantId ? await resolveTenant(tenantId, undefined) : null;
-  const tenants = tenant ? [tenant] : [];
+  // Resolve every member tenant's CRD so the sidebar / header can show
+  // displayNames and the switcher can list the full set. resolveTenant
+  // returns null on lookup failure; drop nulls so a single broken CR
+  // doesn't break the whole chrome render.
+  const memberSlugs = session.user.tenants ?? [];
+  const resolved = await Promise.all(
+    memberSlugs.map((slug) => resolveTenant(slug, undefined)),
+  );
+  const availableTenants: Tenant[] = resolved.filter(
+    (t): t is Tenant => t !== null,
+  );
+
+  const activeTenantId = session.user.tenantId ?? null;
+  const currentTenant: Tenant | null = activeTenantId
+    ? (availableTenants.find((t) => t.id === activeTenantId) ?? null)
+    : null;
 
   return (
     <SidebarProvider
@@ -65,7 +73,14 @@ export default async function AuthLayout({
             "calc(100vh - var(--header-height) - (var(--content-padding) * 2) - (var(--content-margin) * 2))"
         } as React.CSSProperties
       }>
-      <TenantHydrator initialTenant={tenant} initialTenants={tenants}>
+      <TenantHydrator
+        currentTenant={currentTenant}
+        availableTenants={availableTenants}
+        permissions={session.user.permissions ?? []}
+        crossTenant={session.user.crossTenant ?? false}
+        rolesByTenant={session.user.rolesByTenant ?? {}}
+        groups={session.user.groups ?? []}
+      >
         <AppSidebar variant="inset" />
         <SidebarInset>
           <SiteHeader tenantSwitcher={<TenantSwitcher />} />

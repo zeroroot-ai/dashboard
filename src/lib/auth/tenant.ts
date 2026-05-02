@@ -1,84 +1,60 @@
 'use client';
 
-import { useSession } from '@/src/lib/session-client';
-
 /**
- * Client-side hooks for accessing tenant + permission information from
- * the session.
+ * Client-side hooks for accessing tenant + permission state from the
+ * server-hydrated `TenantContextProvider`.
  *
- * These hooks are designed for use in Client Components where you need
- * to gate UI on the current user's tenant or permissions.
+ * These hooks gate UI on the current user's tenant or permissions. The
+ * underlying state is resolved server-side on every layout render via
+ * `getServerSession()` — which reads the `gibson_active_tenant` cookie,
+ * calls `getMyMemberships()` against FGA, and computes effective
+ * permissions from the daemon's permissions schema. The resolved values
+ * are passed through `<TenantHydrator>` and surfaced here.
  *
  * Permission resolution is fully driven by the daemon's permissions.yaml
- * schema (declarative-rbac-framework spec). The set of effective
- * permissions is computed once during sign-in (via the server-side
- * getServerSession enrichment) and stored on session.user.permissions,
- * so these hooks read that flat array directly — no client-side role
- * mapping, no hardcoded role names anywhere on the wire.
+ * schema (declarative-rbac-framework spec). The permissions array is
+ * computed server-side and stored on the context — these hooks read that
+ * flat array directly, no client-side role mapping.
  *
  * For Server Components, use hasPermission() / isCrossTenant() from
  * '@/src/lib/auth/schema' instead.
  */
 
-/** Extended session user type with Gibson-specific fields. */
-interface GibsonSessionUser {
-  tenantId?: string;
-  tenants?: string[];
-  groups?: string[];
-  permissions?: string[];
-  crossTenant?: boolean;
-}
-
-type SessionData = ReturnType<typeof useSession>['data'];
-
-function getGibsonUser(session: SessionData): GibsonSessionUser {
-  // Auth.js sessions carry the raw user shape. Gibson-specific fields
-  // (tenants, permissions, crossTenant, etc.) are server-populated via
-  // the Zitadel claim callbacks and available on session.user. Read them
-  // via type cast since next-auth's client types don't model custom fields.
-  return (session?.user ?? {}) as unknown as GibsonSessionUser;
-}
+import { useTenantContext } from '@/src/lib/tenant-context';
 
 /**
- * Hook to get the current tenant ID from the session.
+ * Hook to get the current tenant ID from the active tenant.
  */
 export function useTenantId(): string | null {
-  const { data: session } = useSession();
-  return getGibsonUser(session).tenantId ?? null;
+  return useTenantContext().currentTenant?.id ?? null;
 }
 
 /**
- * Hook to get all available tenants for the current user.
+ * Hook to get every tenant slug the current user is a member of.
  */
 export function useAvailableTenants(): string[] {
-  const { data: session } = useSession();
-  return getGibsonUser(session).tenants ?? [];
+  return useTenantContext().availableTenants.map((t) => t.id);
 }
 
 /**
  * Hook to check if the current user has multiple tenants.
  */
 export function useHasMultipleTenants(): boolean {
-  const tenants = useAvailableTenants();
-  return tenants.length > 1;
+  return useTenantContext().availableTenants.length > 1;
 }
 
 /**
- * Hook to check whether the current user is permitted to perform a
- * specific action by holding the given permission.
- *
- * Permission strings are the canonical "resource:action" form declared
- * in core/gibson/internal/auth/permissions.yaml. Reads from
- * session.user.permissions which the server-side getServerSession resolved
- * against the daemon's live schema at sign-in time.
+ * Hook to check whether the current user holds the given permission on
+ * the active tenant. Permission strings follow the canonical
+ * "resource:action" form declared in
+ * core/gibson/internal/auth/permissions.yaml.
  *
  * @example
  *   const canExecute = usePermitted('missions:execute');
  *   if (!canExecute) return null;
  */
 export function usePermitted(permission: string): boolean {
-  const { data: session } = useSession();
-  return getGibsonUser(session).permissions?.includes(permission) ?? false;
+  return useTenantContext().permissions.includes(permission);
 }
 
 /**
@@ -87,14 +63,12 @@ export function usePermitted(permission: string): boolean {
  * *-executor). Use for UI that operates across tenant boundaries.
  */
 export function useIsCrossTenant(): boolean {
-  const { data: session } = useSession();
-  return getGibsonUser(session).crossTenant ?? false;
+  return useTenantContext().crossTenant;
 }
 
 /**
  * Hook to get the current user's groups from the identity provider.
  */
 export function useGroups(): string[] {
-  const { data: session } = useSession();
-  return getGibsonUser(session).groups ?? [];
+  return useTenantContext().groups;
 }

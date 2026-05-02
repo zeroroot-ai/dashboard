@@ -1,26 +1,22 @@
 "use client";
 
 /**
- * TenantSwitcher
+ * TenantSwitcher (sidebar)
  *
  * Renders the active workspace in the sidebar header.
  *
  * Single-tenant users: static label, no interactive chrome.
- * Multi-tenant users: DropdownMenu listing all tenants from the Auth.js
- * session (`gibson:tenants` OIDC claim).  Selecting an item calls
- * `switchTenantAction` (Server Action) which:
- *   1. Validates the slug against the session's tenant list.
- *   2. TODO(post-deploy): sets Zitadel user metadata + triggers token refresh.
- * On success `router.refresh()` is called to pick up the updated JWT cookie.
- * On failure an error toast is shown and the picker remains open.
- *
- * Tenant identity lives ONLY in the OIDC token — no cookie writes, no
- * localStorage, no Zustand store.
+ * Multi-tenant users: DropdownMenu listing all tenants from the
+ * server-hydrated `TenantContextProvider`. Selecting an item calls
+ * `switchTenant` on the context, which delegates to
+ * `switchActiveTenantAction` (writes the HMAC-signed
+ * `gibson_active_tenant` cookie via `setActiveTenant`) and then runs
+ * `router.refresh()` so the layout re-renders with new server-resolved
+ * state.
  */
 
 import * as React from "react";
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -38,52 +34,19 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { switchTenantAction } from "@/app/actions/tenant/switch";
-import { useSession } from "@/src/lib/session-client";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function formatTenantName(slug: string): string {
-  return slug
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-}
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
+import { useTenantContext } from "@/src/lib/tenant-context";
 
 export function TenantSwitcher() {
-  const router = useRouter();
   const { isMobile } = useSidebar();
-  const { data: session } = useSession();
+  const { currentTenant, availableTenants, switchTenant } = useTenantContext();
 
-  // Auth.js session carries `tenant` (active) and `tenants` (all) from the
-  // `gibson:tenant` / `gibson:tenants` OIDC claims (auth.ts + Zitadel Action).
-  const activeTenant: string | null = session?.user?.tenant ?? null;
-  const allTenants: string[] =
-    session?.user?.tenants && session.user.tenants.length > 0
-      ? session.user.tenants
-      : activeTenant
-        ? [activeTenant]
-        : [];
+  const activeLabel = currentTenant?.displayName ?? "No workspace";
 
-  const activeLabel = activeTenant
-    ? formatTenantName(activeTenant)
-    : "No workspace";
-
-  // useTransition gives us a non-blocking pending indicator that integrates
-  // with concurrent mode; the dropdown stays responsive while the Server
-  // Action round-trip is in flight.
   const [isPending, startTransition] = useTransition();
-  // Track which slug is being switched to so we can show per-item loading.
   const [switchingTo, setSwitchingTo] = useState<string | null>(null);
 
   // Single-tenant or no-tenant: static display only.
-  if (allTenants.length <= 1) {
+  if (availableTenants.length <= 1) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
@@ -102,20 +65,12 @@ export function TenantSwitcher() {
     );
   }
 
-  // Multi-tenant: dropdown switcher backed by Server Action.
-  function handleSelect(slug: string) {
-    if (slug === activeTenant || isPending) return;
-    setSwitchingTo(slug);
+  function handleSelect(tenantId: string) {
+    if (tenantId === currentTenant?.id || isPending) return;
+    setSwitchingTo(tenantId);
     startTransition(async () => {
       try {
-        const result = await switchTenantAction(slug);
-        if (!result.ok) {
-          toast.error(result.error);
-          return;
-        }
-        // Token has been refreshed server-side; re-render to pick up the new
-        // JWT cookie (new gibson:tenant claim).
-        router.refresh();
+        await switchTenant(tenantId);
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "Failed to switch workspace",
@@ -125,6 +80,11 @@ export function TenantSwitcher() {
       }
     });
   }
+
+  // Stable order: alphabetical by displayName.
+  const sorted = [...availableTenants].sort((a, b) =>
+    a.displayName.localeCompare(b.displayName),
+  );
 
   return (
     <SidebarMenu>
@@ -159,20 +119,20 @@ export function TenantSwitcher() {
               Workspaces
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {allTenants.sort().map((slug) => {
-              const isActive = slug === activeTenant;
-              const isSwitching = slug === switchingTo;
+            {sorted.map((tenant) => {
+              const isActive = tenant.id === currentTenant?.id;
+              const isSwitching = tenant.id === switchingTo;
               return (
                 <DropdownMenuItem
-                  key={slug}
-                  onClick={() => handleSelect(slug)}
+                  key={tenant.id}
+                  onClick={() => handleSelect(tenant.id)}
                   disabled={isPending}
                   aria-checked={isActive}
                   aria-busy={isSwitching}
                   className="flex items-center gap-2"
                 >
                   <span className="flex-1 truncate">
-                    {isSwitching ? "Switching…" : formatTenantName(slug)}
+                    {isSwitching ? "Switching…" : tenant.displayName}
                   </span>
                   {isActive && !isSwitching && (
                     <CheckIcon

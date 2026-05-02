@@ -164,12 +164,17 @@ export function useSessionSecurity(options: SessionSecurityOptions = {}): Sessio
     }));
   }, [session, status, baSessionData]);
 
-  // Check session expiry using Better Auth session expiresAt
+  // Check session expiry. The Auth.js session top-level `expires` is the ISO
+  // string we trust; `expiresAt` is a back-compat fallback on the client
+  // session shape for any in-flight callers still passing a Date.
   const checkExpiry = useCallback(() => {
-    // Better Auth session expiry is in session.expires (ISO string) from
-    // the GibsonSession shape, or from the raw baSessionData.session.expiresAt.
+    const expiresAtRaw = baSessionData?.expiresAt;
     const expiresStr = session?.expires ??
-      (baSessionData as unknown as { session?: { expiresAt?: Date } } | null)?.session?.expiresAt?.toISOString();
+      (typeof expiresAtRaw === 'string'
+        ? expiresAtRaw
+        : expiresAtRaw instanceof Date
+          ? expiresAtRaw.toISOString()
+          : undefined);
 
     if (!expiresStr) return;
 

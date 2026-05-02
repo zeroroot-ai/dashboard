@@ -3,12 +3,23 @@
 /**
  * Client-side session shim.
  *
- * Wraps next-auth/react's useSession() so that all dashboard Client Components
- * continue to use the same import path (@/src/lib/session-client) without
- * knowing which auth backend is in use.
+ * Wraps next-auth/react's useSession() so dashboard Client Components have a
+ * stable import path independent of the auth backend.
  *
- * Returned shape mirrors the previous Better Auth useSession() result so
- * callsites only need this one-line import — no other changes needed.
+ * IMPORTANT: this hook only exposes the fields the Auth.js session callback
+ * actually emits (`auth.ts` `session` callback): `id`, `email`, `name`,
+ * `image`. Tenant / membership / permission / role state lives elsewhere:
+ *
+ *   - Server-side reads use `getServerSession()` from `@/src/lib/auth`,
+ *     which re-resolves tenant + role + permission state from the
+ *     `gibson_active_tenant` cookie + FGA on every request.
+ *   - Client-side reads use the React context surfaced via
+ *     `TenantContextProvider` (mounted in the auth layout). Hooks:
+ *     `useTenant`, `useTenantId`, `usePermitted`, `useIsCrossTenant`, etc.
+ *
+ * Reading `session.user.tenant` / `tenants` / `permissions` / `crossTenant`
+ * here is a bug — the auth callback does not put those fields on the
+ * encrypted JWT cookie that drives `useSession`. Use the context instead.
  */
 
 import { useSession as useNextAuthSession } from "next-auth/react";
@@ -18,29 +29,11 @@ export type SessionUser = {
   email: string;
   name?: string | null;
   image?: string | null;
-  role?: string | null;
-  /**
-   * Active tenant slug from the `gibson:tenant` OIDC claim injected by the
-   * Zitadel custom claim Action (task 2).  Set after login and updated on
-   * every token refresh triggered by switchTenantAction.
-   */
-  tenant?: string | null;
-  /**
-   * All tenant slugs available to this user, from the `gibson:tenants` claim.
-   * May be absent for single-tenant users (only `tenant` will be set).
-   */
-  tenants?: string[];
 };
 
 export type ClientSession = {
   user: SessionUser;
-  session: {
-    id: string;
-    userId: string;
-    activeOrganizationId?: string | null;
-    activeTeamId?: string | null;
-    expiresAt?: string | Date;
-  };
+  expiresAt?: string | Date;
 };
 
 export type UseSessionResult = {
@@ -53,35 +46,15 @@ export type UseSessionResult = {
 export function useSession(): UseSessionResult {
   const { data, status, update } = useNextAuthSession();
 
-  // Auth.js extends Session.user with the gibson:tenant claim (see auth.ts
-  // module augmentation). Cast to access the extended fields safely.
-  type ExtUser = {
-    id?: string | null;
-    email?: string | null;
-    name?: string | null;
-    image?: string | null;
-    tenant?: string | null;
-    tenants?: string[];
-  };
-  const extUser: ExtUser | undefined = data?.user
-    ? (data.user as ExtUser)
-    : undefined;
-
-  const clientSession: ClientSession | null = extUser
+  const clientSession: ClientSession | null = data?.user
     ? {
         user: {
-          id: extUser.id ?? "",
-          email: extUser.email ?? "",
-          name: extUser.name ?? null,
-          image: extUser.image ?? null,
-          tenant: extUser.tenant ?? null,
-          tenants: extUser.tenants,
+          id: data.user.id ?? "",
+          email: data.user.email ?? "",
+          name: data.user.name ?? null,
+          image: data.user.image ?? null,
         },
-        session: {
-          id: "",
-          userId: extUser.id ?? "",
-          expiresAt: data?.expires,
-        },
+        expiresAt: data.expires,
       }
     : null;
 

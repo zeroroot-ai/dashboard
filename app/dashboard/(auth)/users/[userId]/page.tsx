@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useSession } from "@/src/lib/session-client";
+import { useTenantId } from "@/src/lib/auth/tenant";
 import { ArrowLeft, Shield } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -45,10 +46,8 @@ export default function UserDetailPage() {
   const userId = params.userId as string;
 
   const { data: session } = useSession();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const s = session as any;
-  const tenantId = s?.user?.tenantId ?? "";
-  const currentUserId = s?.user?.id ?? "";
+  const tenantId = useTenantId() ?? "";
+  const currentUserId = session?.user?.id ?? "";
   const isSelf = userId === currentUserId;
 
   const namespace = tenantId ? tenantNamespace(tenantId) : undefined;

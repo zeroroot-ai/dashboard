@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useSession } from "@/src/lib/session-client";
-import { usePermitted } from "@/src/lib/auth/tenant";
+import { usePermitted, useTenantId } from "@/src/lib/auth/tenant";
 import { MoreHorizontal, Search, Trash2, UserPlus, Eye } from "lucide-react";
 import { toast } from "sonner";
 
@@ -103,10 +103,8 @@ function UserActionsMenu({
 
 export function UsersContent() {
   const { data: session } = useSession();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const s = session as any;
-  const tenantId = s?.user?.tenantId ?? "";
-  const currentUserId = s?.user?.id ?? "";
+  const tenantId = useTenantId() ?? "";
+  const currentUserId = session?.user?.id ?? "";
   const canEdit = usePermitted("team:manage");
 
   const namespace = tenantId ? tenantNamespace(tenantId) : undefined;

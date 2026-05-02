@@ -11,7 +11,7 @@
 import * as React from "react";
 import { AlertCircle, Bot, Key, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { useSession } from "@/src/lib/session-client";
+import { useTenantId } from "@/src/lib/auth/tenant";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -69,9 +69,7 @@ const STATUS_CLASS: Record<string, string> = {
 };
 
 export function AgentsContent() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: session } = useSession() as { data: any };
-  const tenantId: string = session?.user?.tenantId ?? "";
+  const tenantId: string = useTenantId() ?? "";
   const namespace = tenantId ? tenantNamespace(tenantId) : undefined;
 
   const { items: enrollments, status, error } = useCRDWatch("AgentEnrollment", namespace, {

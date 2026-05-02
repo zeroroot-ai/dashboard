@@ -2,9 +2,11 @@
  * Typed tenant roles and rank-based authorization helpers.
  *
  * TenantRole is the exhaustive set of roles a member may hold within a
- * tenant (organization) as stored by the Better Auth `organization` plugin.
- * The plugin's default roles are `owner`, `admin`, and `member`; Gibson
- * adds no custom roles on top of these.
+ * tenant. Roles are sourced from FGA (the daemon's `ListMyMemberships`
+ * RPC) and normalized into `'admin' | 'member'` by the membership module;
+ * `owner` is retained here as a higher rank for forward compatibility but
+ * is not currently emitted by the daemon. The Gibson schema adds no
+ * custom roles on top of these.
  *
  * ROLE_RANK encodes the privilege hierarchy: a higher number means more
  * privilege. hasRoleAtLeast uses these ranks for a single numeric comparison
@@ -30,9 +32,10 @@ import type { GibsonSession } from '@/src/lib/auth';
 /**
  * Exhaustive set of roles a user may hold within a tenant.
  *
- * Matches the Better Auth `organization` plugin's default role set.
- * Any role string stored in `session.user.rolesByTenant` that is NOT one
- * of these values is treated as rank 0 (deny) by `hasRoleAtLeast`.
+ * Roles are populated server-side on `GibsonSession.user.rolesByTenant`
+ * by `getServerSession()` via the daemon's FGA membership lookup. Any
+ * role string outside this set is treated as rank 0 (deny) by
+ * `hasRoleAtLeast`.
  */
 export type TenantRole = 'owner' | 'admin' | 'member';
 

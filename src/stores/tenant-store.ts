@@ -1,102 +1,45 @@
 'use client';
 
 /**
- * Tenant store shim — session-backed, no Zustand, no localStorage.
+ * Tenant store — context-backed compatibility shim.
  *
- * The Zustand persist store has been removed.  Tenant identity now lives
- * exclusively in the Auth.js JWT cookie (OIDC `gibson:tenant` claim).
+ * The dashboard's nine tenant-scoped data hooks (useMissions, useFindings,
+ * useAlerts, useAnalytics, useComponents, useTraces, useGraph,
+ * useWidgetLayout, useMissionCreation) call `useTenantStore((s) =>
+ * s.currentTenant)` to scope React Query keys and daemon-RPC requests to
+ * the active tenant. This module preserves that selector API but reads
+ * from `TenantContextProvider` (server-hydrated, see `tenant-context.tsx`)
+ * instead of the original Zustand persist store.
  *
- * This module re-exports the same selector-hook API that the 8 data hooks
- * (useMissions, useComponents, etc.) depend on so they require zero changes.
- * Each hook ultimately only reads `currentTenant?.id` to scope API queries.
- *
- * The `Tenant` object is synthesised from the session tenant slug; full Tenant
- * CRD metadata is not available client-side, which is correct — API routes
- * resolve the full CRD server-side using the tenant ID from the signed JWT.
- *
- * NOTE: `useTenantStore` is intentionally NOT exported — callers that were
- * reaching into the Zustand store directly must migrate to the session-backed
- * selectors below.  The only cross-cutting mutation point is
- * `switchTenantAction` in `app/actions/tenant/switch.ts`.
+ * The store shape is kept identical so consumers compile unchanged. Only
+ * the read fields (`currentTenant`, `availableTenants`, `isLoading`) are
+ * live; mutation methods are no-ops — callers that need to switch tenants
+ * use `switchActiveTenantAction` from
+ * `@/components/gibson/shared/tenant-switcher-action`, not the store.
  */
 
-import { useSession } from 'next-auth/react';
+import { useTenantContext } from '@/src/lib/tenant-context';
 import type { Tenant } from '@/src/types/tenant';
 
 // ---------------------------------------------------------------------------
-// Internal: build a minimal Tenant object from the session tenant slug.
-// The id and name are both the slug; displayName is title-cased.
+// Internal: pull live tenant fields off the React context.
 // ---------------------------------------------------------------------------
 
-function slugToTenant(slug: string): Tenant {
-  const displayName = slug
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-  const now = new Date(0); // placeholder — no CRD fetch on client
-  return {
-    id: slug,
-    name: slug,
-    displayName,
-    createdAt: now,
-    updatedAt: now,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Internal: extract tenant fields from the Auth.js session.
-// The session user is extended in auth.ts with `tenant` and optionally
-// `tenants` from Zitadel's custom claim Action (task 2).
-// ---------------------------------------------------------------------------
-
-type ExtendedUser = {
-  id?: string | null;
-  tenant?: string | null;
-  tenants?: string[];
-};
-
-function useSessionTenants(): {
+function useContextTenants(): {
   currentTenant: Tenant | null;
   availableTenants: Tenant[];
   isLoading: boolean;
 } {
-  const { data, status } = useSession();
-  const ext = (data?.user ?? {}) as ExtendedUser;
-
-  const activeTenantSlug: string | null = ext.tenant ?? null;
-
-  // Build the available list from the multi-value `gibson:tenants` claim.
-  // Fall back to a single-element list built from the active slug so that
-  // single-tenant users still get a valid `currentTenant`.
-  const slugs: string[] =
-    ext.tenants && ext.tenants.length > 0
-      ? ext.tenants
-      : activeTenantSlug
-        ? [activeTenantSlug]
-        : [];
-
-  const availableTenants: Tenant[] = slugs.map(slugToTenant);
-  const currentTenant: Tenant | null = activeTenantSlug
-    ? (availableTenants.find((t) => t.id === activeTenantSlug) ??
-        slugToTenant(activeTenantSlug))
-    : null;
-
+  const ctx = useTenantContext();
   return {
-    currentTenant,
-    availableTenants,
-    isLoading: status === 'loading',
+    currentTenant: ctx.currentTenant,
+    availableTenants: ctx.availableTenants,
+    isLoading: ctx.isLoading,
   };
 }
 
 // ---------------------------------------------------------------------------
-// useTenantStore — Zustand-compatible selector shim.
-//
-// The 8 data hooks call `useTenantStore((state) => state.currentTenant)`.
-// This shim accepts a selector function and returns the result so those hooks
-// continue to compile and work without modification.
-//
-// Only the subset of TenantState fields that callers actually read is
-// implemented; unused fields are no-ops or empty values.
+// useTenantStore — Zustand-selector-compatible shim.
 // ---------------------------------------------------------------------------
 
 interface TenantStateCompat {
@@ -118,15 +61,15 @@ interface TenantStateCompat {
 /**
  * Zustand-selector-compatible hook shim.
  *
- * Builds a TenantState-compatible object from the Auth.js session and passes
- * it through the provided selector.  Read-only fields (currentTenant,
- * availableTenants, isLoading) are live; mutation methods are no-ops — use
- * `switchTenantAction` from `@/app/actions/tenant/switch` for switching.
+ * Reads live tenant state from `TenantContextProvider` and projects it
+ * through the provided selector. Read-only fields are live; mutators are
+ * no-ops — switching is performed by `switchActiveTenantAction`.
  *
- * @deprecated Direct callers should migrate to the named selector hooks below.
+ * @deprecated Direct callers should migrate to `useTenantContext()` or
+ *   the named selector hooks below.
  */
 export function useTenantStore<T>(selector: (state: TenantStateCompat) => T): T {
-  const { currentTenant, availableTenants, isLoading } = useSessionTenants();
+  const { currentTenant, availableTenants, isLoading } = useContextTenants();
 
   const state: TenantStateCompat = {
     currentTenant,
@@ -152,54 +95,49 @@ export function useTenantStore<T>(selector: (state: TenantStateCompat) => T): T 
 // ---------------------------------------------------------------------------
 
 /**
- * Returns the currently active Tenant (built from `gibson:tenant` claim),
- * or null while the session is loading or unauthenticated.
+ * Returns the currently active Tenant, or null if none is selected.
  */
 export function useCurrentTenant(): Tenant | null {
-  return useSessionTenants().currentTenant;
+  return useContextTenants().currentTenant;
 }
 
 /**
- * Returns all Tenant objects available to the user (built from
- * `gibson:tenants`).  Single-tenant users get a one-element array.
+ * Returns every Tenant the user is a member of.
  */
 export function useAvailableTenants(): Tenant[] {
-  return useSessionTenants().availableTenants;
+  return useContextTenants().availableTenants;
 }
 
 /**
- * Returns true while the Auth.js session is loading.
+ * Always false — server-resolved props arrive synchronously with the layout
+ * render. Retained for API compatibility.
  */
 export function useTenantLoading(): boolean {
-  return useSessionTenants().isLoading;
+  return useContextTenants().isLoading;
 }
 
 /**
- * Always returns null — errors are surfaced via the switchTenantAction
- * return value and displayed as toasts in tenant-switcher.tsx.
+ * Always null — errors surface via the switch action result and toasts.
  */
 export function useTenantError(): null {
   return null;
 }
 
 /**
- * Returns the tenant switcher open state.
- * Retained for API compatibility; switcher open state is now local UI state
- * inside tenant-switcher.tsx and does not need to be shared globally.
+ * Always false — switcher open state is local UI state inside the
+ * switcher component now.
  *
- * @deprecated Always returns false. Migrate callers to local useState.
+ * @deprecated Migrate callers to local useState.
  */
 export function useSwitcherOpen(): boolean {
   return false;
 }
 
 /**
- * Compatibility shim for callers that destructure tenant action functions.
- * Switching is now performed via `switchTenantAction` (Server Action).
- * Other setters are no-ops — tenant state is driven by the OIDC token.
+ * No-op mutator bag. Switching is performed by `switchActiveTenantAction`
+ * from `@/components/gibson/shared/tenant-switcher-action`.
  *
- * @deprecated Callers should use switchTenantAction from
- *   `@/app/actions/tenant/switch` directly.
+ * @deprecated Use the Server Action directly.
  */
 export function useTenantActions() {
   return {
@@ -214,10 +152,11 @@ export function useTenantActions() {
 }
 
 /**
- * Returns true if the user can switch to a given tenant slug.
+ * Returns true if the user can switch to the given tenant (i.e. they hold
+ * membership and it is not the active one).
  */
 export function useCanSwitchToTenant(tenantId: string): boolean {
-  const { currentTenant, availableTenants } = useSessionTenants();
+  const { currentTenant, availableTenants } = useContextTenants();
   if (currentTenant?.id === tenantId) return false;
   return availableTenants.some((t) => t.id === tenantId);
 }

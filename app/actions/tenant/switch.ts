@@ -3,79 +3,72 @@
 /**
  * switchTenantAction — Server Action for tenant switching.
  *
- * Flow (once a Zitadel service-account PAT is available post-deploy):
+ * Two distinct flows live in this codebase:
  *
- * 1. Validate the requested slug is in the user's `gibson:tenants` claim.
- * 2. Call Zitadel Management API to set the user's "active org" metadata field
- *    to the chosen org ID.  This requires a service-account PAT with the
- *    `user.metadata.write` role on the Zitadel project.
- * 3. Trigger a `grant_type=refresh_token` token exchange against
- *    `${ZITADEL_ISSUER}/oauth/v2/token` using the refresh token from the
- *    current Auth.js session.
- * 4. The Zitadel custom claim Action (task 2) runs server-side during the
- *    token exchange, reads the new active-org metadata, and injects the updated
- *    `gibson:tenant` claim into the new access token.
- * 5. Persist the new access_token + refresh_token into the Auth.js JWT via
- *    `update()` so subsequent server renders forward the correct Bearer token
- *    to the Gibson daemon.
+ * 1. **Active-tenant cookie switch.** The in-app sidebar / header
+ *    `TenantSwitcher` calls `switchActiveTenantAction` (in
+ *    `components/gibson/shared/tenant-switcher-action.ts`), which writes
+ *    the HMAC-signed `gibson_active_tenant` cookie via `setActiveTenant`
+ *    after validating membership against FGA. That is the path users
+ *    actually exercise today; it does not need a Zitadel token refresh
+ *    because the dashboard's tenant resolution reads the cookie + FGA on
+ *    every request rather than the OIDC token.
  *
- * TODO(post-deploy): implement the metadata-update + refresh flow.
- * Prerequisites:
- *   - ZITADEL_SA_PAT env var: Zitadel service-account PAT with
- *     IAM role `ORG_OWNER` or a custom role granting
- *     `user.metadata.write` on the Gibson project.
- *   - The Zitadel custom claim Action from task 2 must be live and associated
- *     with the token-exchange trigger.
+ * 2. **OIDC active-org metadata switch (this action).** Reserved for the
+ *    future case where the *issued* token must reflect the active tenant
+ *    (e.g. for a downstream consumer that does not run through ext-authz).
+ *    Requires a Zitadel service-account PAT to update user metadata, then
+ *    a refresh-token exchange to mint a new access token. Not implemented
+ *    until ZITADEL_SA_PAT is available.
  *
- * Until the PAT is available the action returns an instructive error so the
- * picker UI can surface it as a toast rather than crashing.
+ * The validation below uses `getServerSession()` (the FGA-enriched
+ * session) so an invalid slug is rejected immediately even before the
+ * PAT path is wired up. Previously this read raw `auth().session.user`
+ * tenant fields that the Auth.js session callback never sets — the
+ * validation was decorative.
  */
 
-import { auth } from '@/auth';
-import type { Session } from 'next-auth';
+import { getServerSession } from '@/src/lib/auth';
 
 export type SwitchTenantResult =
   | { ok: true }
   | { ok: false; error: string };
 
 /**
- * Server Action: switch the active tenant in the OIDC token.
+ * Server Action: switch the OIDC active-org metadata for a tenant.
  *
- * @param slug  The tenant slug to switch to (must appear in the session's
- *              `tenants` list).
+ * @param slug  The tenant slug to switch to (must appear in the user's
+ *              FGA membership list).
  */
 export async function switchTenantAction(
   slug: string,
 ): Promise<SwitchTenantResult> {
-  // -------------------------------------------------------------------------
-  // 1. Resolve current session — deny unauthenticated callers.
-  // -------------------------------------------------------------------------
-  const session: Session | null = await auth();
+  const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: 'Not authenticated' };
   }
 
-  // -------------------------------------------------------------------------
-  // 2. Validate the requested tenant is available to this user.
-  //
-  //    `gibson:tenants` is a multi-value claim injected by the Zitadel Action;
-  //    it lists every org slug the user is a member of.  Until the token
-  //    carries that claim we fall through to the TODO stub below.
-  // -------------------------------------------------------------------------
-  const availableTenants: string[] =
-    (session.user as unknown as { tenants?: string[] }).tenants ?? [];
+  const availableTenants: string[] = session.user.tenants ?? [];
 
-  if (availableTenants.length > 0 && !availableTenants.includes(slug)) {
+  // Membership-resolution failure (empty list with non-null user) is
+  // surfaced as a structured error rather than silently allowing the
+  // switch — the caller shows it as a toast.
+  if (availableTenants.length === 0) {
+    return {
+      ok: false,
+      error:
+        'Could not resolve your workspace memberships. Try again or sign out and back in.',
+    };
+  }
+
+  if (!availableTenants.includes(slug)) {
     return { ok: false, error: `Tenant "${slug}" is not in your account` };
   }
 
   // -------------------------------------------------------------------------
-  // 3. TODO(post-deploy): set Zitadel user metadata + trigger token refresh.
+  // TODO(post-deploy): set Zitadel user metadata + trigger token refresh.
   //
   //    Replace this block when ZITADEL_SA_PAT is available:
-  //
-  //    const patAvailable = !!process.env.ZITADEL_SA_PAT;
-  //    if (!patAvailable) { ... }
   //
   //    a) PUT  ${ZITADEL_ISSUER}/management/v1/users/${userId}/metadata/active_org
   //       Authorization: Bearer ${process.env.ZITADEL_SA_PAT}
@@ -85,19 +78,22 @@ export async function switchTenantAction(
   //       grant_type=refresh_token
   //       refresh_token=<session.refreshToken>
   //       client_id=${ZITADEL_CLIENT_ID}
-  //       → the Zitadel Action runs here and injects the new `gibson:tenant`
+  //       → the Zitadel Action runs here and injects the new active org
   //
-  //    c) Call Auth.js `unstable_update({ tokens: { ... } })` (or directly
-  //       encode a new JWT cookie) to replace access + refresh tokens.
+  //    c) Replace access + refresh tokens via Auth.js update().
   //
+  //    For the in-app cookie-only switch path, callers should use
+  //    `switchActiveTenantAction` from
+  //    `@/components/gibson/shared/tenant-switcher-action` instead — that
+  //    path is fully implemented today and writes the HMAC-signed
+  //    active-tenant cookie.
   // -------------------------------------------------------------------------
 
-  // Stub: no PAT configured — return a clear error the picker can display.
-  const _ignored = slug; // lint-safe reference; slug is validated above
   return {
     ok: false,
     error:
-      'Tenant switching requires a Zitadel service-account PAT ' +
-      '(ZITADEL_SA_PAT). Contact your platform administrator.',
+      'Tenant switching via OIDC token refresh requires a Zitadel ' +
+      'service-account PAT (ZITADEL_SA_PAT). Use the in-app workspace ' +
+      'switcher for cookie-based switches.',
   };
 }

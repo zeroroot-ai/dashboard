@@ -3,19 +3,20 @@
 /**
  * Tenant Context
  *
- * Lightweight React Context that surfaces tenant state from the Auth.js
- * session.  The Zustand persist store has been removed — tenant identity lives
- * exclusively in the OIDC `gibson:tenant` / `gibson:tenants` claims stored in
- * the encrypted Auth.js JWT cookie.
+ * Single source of truth for client-side tenant + authz state. Hydrated from
+ * server-resolved props passed through `<TenantHydrator>` (mounted in the
+ * auth layout). The server resolves state on every render via
+ * `getServerSession()` + the `gibson_active_tenant` cookie + FGA membership
+ * lookup; the client consumes the already-resolved props synchronously.
  *
- * TenantContextProvider is kept as a thin wrapper so that tenant-hydrator.tsx
- * and any future server-component wrappers continue to work without changes.
- * The `initialTenant` / `initialTenants` props are accepted for API
- * compatibility but are ignored — the session is the single source of truth.
+ * IMPORTANT: this provider never reads `useSession()` tenant fields. The
+ * Auth.js JWT cookie does NOT carry tenant / permission claims — they live
+ * in the server-only `gibson_active_tenant` cookie + per-request FGA RPC.
  *
- * `switchTenant` now delegates to `switchTenantAction` (Server Action) which
- * triggers a Zitadel token refresh; the page must be refreshed afterwards to
- * pick up the new JWT.  Callers should use `router.refresh()` on success.
+ * Tenant switching: `switchTenant` calls `switchActiveTenantAction`
+ * (Server Action) which writes the HMAC-signed `gibson_active_tenant`
+ * cookie via `setActiveTenant`, then triggers `router.refresh()` so the
+ * layout re-renders with new props.
  */
 
 import {
@@ -25,8 +26,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { switchTenantAction } from "@/app/actions/tenant/switch";
-import { useCurrentTenant, useAvailableTenants, useTenantLoading } from "@/src/stores/tenant-store";
+import { switchActiveTenantAction } from "@/components/gibson/shared/tenant-switcher-action";
 import type { Tenant } from "@/src/types/tenant";
 
 // ============================================================================
@@ -34,45 +34,46 @@ import type { Tenant } from "@/src/types/tenant";
 // ============================================================================
 
 export interface TenantContextValue {
-  /** Currently active tenant (from `gibson:tenant` OIDC claim). */
+  /** Currently active tenant (full Tenant CRD), or null if none selected. */
   currentTenant: Tenant | null;
-  /** All tenants the user has access to (from `gibson:tenants` claim). */
+  /** Every tenant the user is a member of (resolved CRDs). */
   availableTenants: Tenant[];
-  /** True while the Auth.js session is loading. */
+  /** Effective permission strings for the active tenant. */
+  permissions: string[];
+  /** True when the user holds at least one role flagged cross_tenant. */
+  crossTenant: boolean;
+  /** Map of tenantId → role string ("admin" | "member"). */
+  rolesByTenant: Record<string, string>;
+  /** IdP-asserted groups (currently always empty). */
+  groups: string[];
+  /** Always false — props arrive synchronously with the server render. */
   isLoading: boolean;
-  /** Always null — errors are returned from switchTenant or shown as toasts. */
+  /** Always null — failures surface via switchTenant return value / toasts. */
   error: string | null;
   /**
-   * Switch to a different tenant.
-   *
-   * Calls switchTenantAction (Server Action) which updates Zitadel metadata
-   * and triggers a token refresh.  On success the caller should call
-   * `router.refresh()` to pick up the new JWT cookie.
-   *
-   * Throws if the Server Action returns an error.
+   * Switch to a different tenant. Calls `switchActiveTenantAction` which
+   * writes the HMAC-signed active-tenant cookie and validates membership;
+   * on success the page is refreshed to pick up the new server-resolved
+   * state. Throws on failure.
    */
   switchTenant: (tenantId: string) => Promise<void>;
   /**
-   * No-op — tenant list is always in sync with the session.
-   * Retained for API compatibility.
+   * Refresh server-resolved state. Equivalent to `router.refresh()` —
+   * forces the layout to re-fetch memberships from FGA.
    */
   refetchTenants: () => Promise<void>;
-  /** Returns true if the user is a member of the given tenant and it differs from the current one. */
+  /** True if the user can switch to the given tenant (member, not active). */
   canSwitchTenant: (tenantId: string) => boolean;
 }
 
 export interface TenantProviderProps {
+  currentTenant: Tenant | null;
+  availableTenants: Tenant[];
+  permissions: string[];
+  crossTenant: boolean;
+  rolesByTenant: Record<string, string>;
+  groups: string[];
   children: ReactNode;
-  /**
-   * Accepted for API compatibility with tenant-hydrator.tsx.
-   * Ignored — session is the authoritative source.
-   */
-  initialTenant?: Tenant | null;
-  /**
-   * Accepted for API compatibility.
-   * Ignored — session is the authoritative source.
-   */
-  initialTenants?: Tenant[];
 }
 
 // ============================================================================
@@ -86,35 +87,34 @@ const TenantContext = createContext<TenantContextValue | null>(null);
 // ============================================================================
 
 export function TenantContextProvider({
+  currentTenant,
+  availableTenants,
+  permissions,
+  crossTenant,
+  rolesByTenant,
+  groups,
   children,
-  // initialTenant and initialTenants are accepted but intentionally unused —
-  // the Auth.js session JWT is the single source of truth.
-  initialTenant: _initialTenant,
-  initialTenants: _initialTenants,
 }: TenantProviderProps) {
   const router = useRouter();
 
-  const currentTenant = useCurrentTenant();
-  const availableTenants = useAvailableTenants();
-  const isLoading = useTenantLoading();
-
   const switchTenant = useCallback(
     async (tenantId: string) => {
-      const result = await switchTenantAction(tenantId);
+      const result = await switchActiveTenantAction(tenantId);
       if (!result.ok) {
-        throw new Error(result.error);
+        const reason =
+          result.reason === "not_a_member"
+            ? "You are not a member of that workspace."
+            : "Failed to resolve workspace membership.";
+        throw new Error(reason);
       }
-      // Refresh the page so Next.js re-fetches server components with the new
-      // JWT cookie (which now carries the updated gibson:tenant claim).
       router.refresh();
     },
     [router],
   );
 
   const refetchTenants = useCallback(async () => {
-    // No-op: tenant list is derived from the OIDC token; refresh the session
-    // by calling router.refresh() if needed.
-  }, []);
+    router.refresh();
+  }, [router]);
 
   const canSwitchTenant = useCallback(
     (tenantId: string): boolean => {
@@ -127,7 +127,11 @@ export function TenantContextProvider({
   const contextValue: TenantContextValue = {
     currentTenant,
     availableTenants,
-    isLoading,
+    permissions,
+    crossTenant,
+    rolesByTenant,
+    groups,
+    isLoading: false,
     error: null,
     switchTenant,
     refetchTenants,
@@ -146,8 +150,7 @@ export function TenantContextProvider({
 // ============================================================================
 
 /**
- * Hook to access tenant context.
- * Must be used within a TenantContextProvider.
+ * Hook to access tenant context. Must be used within a TenantContextProvider.
  */
 export function useTenantContext(): TenantContextValue {
   const context = useContext(TenantContext);
