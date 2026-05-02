@@ -6,12 +6,10 @@ import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import {
   BotIcon,
-  CpuIcon,
   CreditCardIcon,
   DatabaseIcon,
   DollarSignIcon,
   KeyIcon,
-  PuzzleIcon,
   ScaleIcon,
   ShieldIcon,
   UserIcon,
@@ -47,8 +45,8 @@ const accountNav = [
 
 const workspaceNav = [
   { title: "Providers", href: "/dashboard/pages/settings/providers", icon: BotIcon },
-  { title: "Agents", href: "/dashboard/pages/settings/agents", icon: CpuIcon },
-  { title: "Plugins", href: "/dashboard/pages/settings/plugins", icon: PuzzleIcon },
+  // Agents and Plugins live as top-level dashboard sections (left-bar nav);
+  // the deploy wizard for both is reachable from those pages.
   { title: "Model Access", href: "/dashboard/pages/settings/model-access", icon: ScaleIcon },
   { title: "Budgets", href: "/dashboard/pages/settings/budgets", icon: DollarSignIcon },
 ];

@@ -117,7 +117,7 @@ export function SecretsEmptyStateOnboarding({
         )}
         {/* Secondary link: plugin wizard — requirements say "link to plugin wizard" */}
         <Button asChild size="sm" variant="outline">
-          <Link href="/dashboard/pages/settings/plugins?wizard=open">
+          <Link href="/dashboard/deploy?type=plugin">
             <PlugIcon className="size-3.5 mr-1.5" aria-hidden="true" />
             Or skip and register a plugin
           </Link>

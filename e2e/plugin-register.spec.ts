@@ -32,7 +32,7 @@ const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "admin@example.com";
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "password";
 
-const PLUGINS_URL = `${BASE_URL}/dashboard/pages/settings/plugins`;
+const PLUGINS_URL = `${BASE_URL}/dashboard/plugins`;
 
 /** A minimal valid plugin manifest YAML string for testing. */
 const VALID_MANIFEST_YAML = `

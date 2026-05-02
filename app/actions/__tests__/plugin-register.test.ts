@@ -206,7 +206,7 @@ describe("registerPluginAtomicAction — register-atomic-success", () => {
     expect(opts.dryRun).toBe(false);
 
     expect(revalidatePath).toHaveBeenCalledWith(
-      "/dashboard/pages/settings/plugins",
+      "/dashboard/plugins",
     );
   });
 

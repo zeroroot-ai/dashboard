@@ -1,4 +1,5 @@
 export { DeployDispatcher } from './DeployDispatcher';
+export { DeployLauncher } from './DeployLauncher';
 
 // DeployWizard alias kept for one minor release of backward compat —
 // the deploy page below is updated to use DeployDispatcher directly,

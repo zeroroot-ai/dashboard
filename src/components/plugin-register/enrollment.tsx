@@ -178,7 +178,7 @@ export function EnrollmentStep({ result, onDone }: EnrollmentStepProps) {
       <p className="text-muted-foreground text-xs">
         After enrollment, the plugin will appear in the{" "}
         <Link
-          href="/dashboard/pages/settings/plugins"
+          href="/dashboard/plugins"
           className="text-primary underline underline-offset-2"
         >
           Plugins page

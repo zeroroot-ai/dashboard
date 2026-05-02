@@ -39,7 +39,7 @@ const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? 'password';
 const USERS_URL = `${BASE_URL}/dashboard/users`;
 const AGENTS_URL = `${BASE_URL}/dashboard/agents`;
 const TOOLS_URL = `${BASE_URL}/dashboard/tools`;
-const PLUGINS_URL = `${BASE_URL}/dashboard/pages/settings/plugins`;
+const PLUGINS_URL = `${BASE_URL}/dashboard/plugins`;
 
 async function loginAs(page: Page, email: string, password: string) {
   await page.goto(`${BASE_URL}/login`);
@@ -76,12 +76,9 @@ test.describe('Admin-only chrome via usePermitted (tenant_admin)', () => {
     await page.goto(AGENTS_URL);
     await page.waitForLoadState('networkidle', { timeout: 15_000 });
 
-    // `usePermitted("components:manage")` gates the create-enrollment
-    // controls on AgentsContent.
-    const createCta = page.getByRole('button', {
-      name: /(new|create|add|register|enroll).*(agent|enrollment)/i,
-    });
-    await expect(createCta.first()).toBeVisible({ timeout: 10_000 });
+    // The Deploy launcher links to /dashboard/deploy?type=agent.
+    const deployCta = page.getByRole('link', { name: /deploy agent/i });
+    await expect(deployCta.first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('Tools page shows a manage/create control', async ({ page }) => {
@@ -89,10 +86,8 @@ test.describe('Admin-only chrome via usePermitted (tenant_admin)', () => {
     await page.goto(TOOLS_URL);
     await page.waitForLoadState('networkidle', { timeout: 15_000 });
 
-    const createCta = page.getByRole('button', {
-      name: /(new|create|add|register).*(tool|component)/i,
-    });
-    await expect(createCta.first()).toBeVisible({ timeout: 10_000 });
+    const deployCta = page.getByRole('link', { name: /deploy tool/i });
+    await expect(deployCta.first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('Plugins page shows a manage/install control', async ({ page }) => {
@@ -100,9 +95,7 @@ test.describe('Admin-only chrome via usePermitted (tenant_admin)', () => {
     await page.goto(PLUGINS_URL);
     await page.waitForLoadState('networkidle', { timeout: 15_000 });
 
-    const installCta = page.getByRole('button', {
-      name: /(install|register|add).*plugin|manage/i,
-    });
-    await expect(installCta.first()).toBeVisible({ timeout: 10_000 });
+    const deployCta = page.getByRole('link', { name: /deploy plugin/i });
+    await expect(deployCta.first()).toBeVisible({ timeout: 10_000 });
   });
 });

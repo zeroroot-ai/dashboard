@@ -244,7 +244,7 @@ export async function registerPluginAtomicAction(
     const enrollCommand =
       `gibson-cli plugin enroll --token ${resp.bootstrapToken}`;
 
-    revalidatePath("/dashboard/pages/settings/plugins");
+    revalidatePath("/dashboard/plugins");
     return {
       ok: true,
       data: {

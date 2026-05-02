@@ -66,8 +66,8 @@ const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "admin@example.com";
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "password";
 
-/** The plugins settings page — this is the route that hosts the Register action. */
-const PLUGINS_PAGE = `${BASE_URL}/dashboard/pages/settings/plugins`;
+/** The deploy wizard hosts the RegisterPlugin Server Action. */
+const PLUGINS_PAGE = `${BASE_URL}/dashboard/deploy?type=plugin`;
 
 /** Synthetic tenant ID for the member session mock. */
 const MOCK_TENANT_ID = "tenant-e2e-bypass-001";
