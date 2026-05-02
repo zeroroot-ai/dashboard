@@ -15,8 +15,12 @@
  *     ever being forwarded for unauthorized callers.
  *   - Error messages NEVER include role lists, FGA tuples, or tenant data.
  *     They carry only the method name and a short reason code.
+ *   - Unknown methods are DENIED (fail-closed). In non-production environments,
+ *     set DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 to fall back to allow with a
+ *     warn-once log line per method.
  *
  * Spec: dashboard-authz-ui-gating Requirement 3.
+ * Sister-spec: cross-repo-cohesion-fixes Requirement 1.
  *
  * @module auth/assert-authorized
  */
@@ -28,6 +32,12 @@ import { AuthRegistry, IdentityClass } from '@/src/gen/authz/registry';
 import { satisfiesRelation } from './relation-hierarchy';
 import { getMyMemberships } from './membership';
 import { readRawActiveTenant } from './active-tenant';
+
+// ---------------------------------------------------------------------------
+// Warn-once memoisation for registry misses (Requirement 1.5)
+// Keyed by method; fires once per (process, method) pair.
+// ---------------------------------------------------------------------------
+const _registryMissWarnedMethods = new Map<string, true>();
 
 // ---------------------------------------------------------------------------
 // Error class
@@ -52,7 +62,8 @@ export class AuthzDeniedError extends Error {
       | 'service-only-rpc'
       | 'no-active-tenant'
       | 'not-a-member'
-      | 'relation-not-met',
+      | 'relation-not-met'
+      | 'unknown_method',
   ) {
     super(`assertAuthorized: ${reason} for ${method}`);
     this.name = 'AuthzDeniedError';
@@ -76,8 +87,28 @@ export class AuthzDeniedError extends Error {
 export async function assertAuthorized(method: string): Promise<void> {
   const entry = AuthRegistry[method];
 
-  // Unknown method: allow (don't block new RPCs not yet in registry).
-  if (!entry) return;
+  // Unknown method: DENY (fail-closed). In non-production environments with
+  // DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 set, fall back to allow with a warn-once
+  // log line per (process, method) pair.
+  if (!entry) {
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      process.env.DASHBOARD_AUTHZ_PERMISSIVE_DEV === '1'
+    ) {
+      if (!_registryMissWarnedMethods.has(method)) {
+        _registryMissWarnedMethods.set(method, true);
+        console.warn(
+          JSON.stringify({
+            event: 'authz_registry_miss',
+            method,
+            build: process.env.GIT_SHA ?? 'dev',
+          }),
+        );
+      }
+      return;
+    }
+    throw new AuthzDeniedError(method, 'unknown_method');
+  }
 
   // Unauthenticated RPC: no identity required.
   if (entry.unauthenticated) return;
@@ -114,10 +145,7 @@ export async function assertAuthorized(method: string): Promise<void> {
     throw new AuthzDeniedError(method, 'not-a-member');
   }
 
-  // Map internal role ('admin'/'member') to FGA relation string.
-  const fgaRole = membership.role === 'admin' ? 'tenant_admin' : 'tenant_member';
-
-  if (!satisfiesRelation(fgaRole, entry.relation)) {
+  if (!satisfiesRelation(membership.role, entry.relation)) {
     throw new AuthzDeniedError(method, 'relation-not-met');
   }
 }

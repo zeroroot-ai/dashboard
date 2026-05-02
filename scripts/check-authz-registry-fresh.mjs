@@ -1,13 +1,19 @@
 #!/usr/bin/env node
 /**
  * Build guard: verify that src/gen/authz/registry.ts is in sync with the
- * current SDK proto annotations.
+ * current SDK AND daemon-local proto annotations.
  *
- * Runs gen-authz-registry --stdout to produce the expected registry, then
- * diffs byte-for-byte against the committed file. Exits non-zero on any
- * discrepancy so CI fails fast when protos change without a regen commit.
+ * Drives gen-authz-registry.mjs --stdout (the dual-tree workspace-synthesis
+ * pipeline from task 12) to produce the expected registry, then diffs
+ * byte-for-byte against the committed file. Exits non-zero on any discrepancy
+ * so CI fails fast when protos in either tree change without a regen commit.
+ *
+ * Non-zero exit codes from the generator (e.g. buf build failure, empty FDS,
+ * cross-tree collision) are propagated as exit code 2 — this script does NOT
+ * swallow them.
  *
  * Spec: dashboard-authz-ui-gating Requirement 1.4, 1.5, 9.5.
+ * Sister-spec: cross-repo-cohesion-fixes Requirement 2.4, 2.5.
  *
  * Usage
  * -----
@@ -71,4 +77,4 @@ if (committed !== regenerated) {
   process.exit(1);
 }
 
-process.stdout.write(`[${SCRIPT_NAME}] OK — authz registry is in sync with SDK protos\n`);
+process.stdout.write(`[${SCRIPT_NAME}] OK — authz registry is in sync with SDK + daemon-local protos\n`);

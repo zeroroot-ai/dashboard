@@ -128,7 +128,7 @@ function AddPluginButton() {
 Rules:
 - Pass the fully-qualified RPC name as the method string (matches the key in `AuthRegistry`).
 - Always return `null` (not a disabled element) when `loading || !allowed`. This is the **hide-on-loading** pattern — the element is never in the DOM while the membership query is in flight, which prevents a flash of unauthorized content.
-- Unknown methods (`AuthRegistry[method]` is undefined) return `allowed: true` — new RPCs that have not yet propagated never block UI.
+- Unknown methods (`AuthRegistry[method]` is undefined) are **denied** (fail-closed). Set `NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1` (client) or `DASHBOARD_AUTHZ_PERMISSIVE_DEV=1` (server) in non-production environments to fall back to permissive-allow with a warn-once log line per method. Production builds ignore these vars entirely (`NODE_ENV` is checked first).
 - Uses React Query with `staleTime: 60_000` ms; a single cache entry `"my-memberships"` is shared across all `useAuthorize` calls on a page.
 
 ---
@@ -174,7 +174,8 @@ The query result is cached for 60 seconds and shared across all hooks on the pag
 
 ### Adding a new admin RPC
 
-1. In `core/sdk/`, add the `(gibson.auth.v1.authz)` extension to the new method in the proto file. Set `relation: "tenant_admin"` and `allowed_identities: [USER]`.
+1. In `core/sdk/`, add the `(gibson.auth.v1.authz)` extension to the new method in the proto file. Set `relation: "admin"` and `allowed_identities: [USER]`.
+   <!-- # Sister-spec cross-repo-cohesion-fixes Requirement 3 — every committed SDK proto uses relation: "admin", not "tenant_admin". -->
 2. Run `make proto` in `core/sdk/`, commit and tag a new SDK release.
 3. In this dashboard repo, run `pnpm prebuild` — `gen-authz-registry.mjs` regenerates `src/gen/authz/registry.ts` with the new entry.
 4. In the UI, call `useAuthorize("/your.service.v1.ServiceName/MethodName")` on the new button/action.

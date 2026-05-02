@@ -1,13 +1,24 @@
 #!/usr/bin/env node
 /**
- * Generate src/gen/authz/registry.ts from SDK proto FileDescriptorSet.
+ * Generate src/gen/authz/registry.ts from both the SDK proto FileDescriptorSet
+ * and the daemon-local proto FileDescriptorSet.
  *
- * Reads every service method in the SDK protos, decodes the
+ * Reads every service method in both proto trees, decodes the
  * (gibson.auth.v1.authz) extension (field 50001 on MethodOptions), and emits
  * a TypeScript module with the AuthEntry type, IdentityClass constants, and
  * AuthRegistry record.
  *
- * Spec: dashboard-authz-ui-gating Requirement 1.
+ * Workspace synthesis
+ * -------------------
+ * Buf v2 has a hard rule that every module path in buf.yaml must resolve INSIDE
+ * the directory containing the buf.yaml. The SDK protos (resolved from the
+ * gibson repo's go.mod) and daemon-local protos live outside this dashboard
+ * repo, so they cannot be referenced with ../../ paths. Instead, this script
+ * synthesises a temporary workspace at .tmp/proto-ws/ (same pattern as
+ * proto-generate.mjs), populates it with symlinks, and runs buf build from
+ * inside that workspace. The workspace is always cleaned up in a finally block.
+ *
+ * Spec: cross-repo-cohesion-fixes Requirement 2.1–2.3.
  *
  * Usage
  * -----
@@ -20,8 +31,8 @@
  * output for the same proto input — the drift gate relies on this.
  */
 
-import { execFileSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { execSync, execFileSync, spawnSync } from 'node:child_process';
+import { mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fromBinary } from '@bufbuild/protobuf';
@@ -29,14 +40,96 @@ import { FileDescriptorSetSchema } from '@bufbuild/protobuf/wkt';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, '..');
-const SDK_PROTO_DIR = resolve(DASHBOARD_ROOT, '../../../core/sdk/api/proto');
-const DAEMON_PROTO_DIR = resolve(DASHBOARD_ROOT, '../../../core/gibson/internal/daemon/api');
+const WS = resolve(DASHBOARD_ROOT, '.tmp/proto-ws');
 const OUTPUT_PATH = resolve(DASHBOARD_ROOT, 'src/gen/authz/registry.ts');
+
+// Workspace root: ~/Code/zero-day.ai/. Sibling repos hang off here.
+const WORKSPACE_ROOT = resolve(DASHBOARD_ROOT, '..', '..', '..');
+const GIBSON_REPO = resolve(WORKSPACE_ROOT, 'core/gibson');
+const GIBSON_LOCAL_PROTOS = resolve(GIBSON_REPO, 'internal/daemon/api');
 
 // Extension field number for (gibson.auth.v1.authz) on MethodOptions.
 // Hard-coded per spec: "Field number 50001 is reserved for Gibson's authorization
 // annotations and MUST NOT change."
 const AUTHZ_EXTENSION_FIELD = 50001;
+
+// ---------------------------------------------------------------------------
+// Workspace synthesis (verbatim pattern from proto-generate.mjs)
+// ---------------------------------------------------------------------------
+
+function resolveSdkProtoDir() {
+  try {
+    const dir = execSync('go list -m -f "{{.Dir}}" github.com/zero-day-ai/sdk', {
+      cwd: GIBSON_REPO,
+      encoding: 'utf8',
+      stdio: 'pipe',
+    }).trim();
+    if (!dir) throw new Error('empty');
+    return resolve(dir, 'api/proto');
+  } catch (err) {
+    process.stderr.write(
+      '[gen-authz-registry] FATAL: failed to resolve github.com/zero-day-ai/sdk via `go list -m`.\n' +
+        '  This script expects the gibson daemon repo cloned at:\n' +
+        `    ${GIBSON_REPO}\n` +
+        '  with `go.mod` resolving the SDK as a Go module dependency.\n' +
+        `  Underlying error: ${err.message ?? err}\n`,
+    );
+    process.exit(1);
+  }
+}
+
+function ensureGibsonLocalProtos() {
+  try {
+    execSync(`stat ${GIBSON_LOCAL_PROTOS}`, { stdio: 'pipe' });
+  } catch (err) {
+    process.stderr.write(
+      '[gen-authz-registry] FATAL: daemon-local protos not found at:\n' +
+        `    ${GIBSON_LOCAL_PROTOS}\n` +
+        '  Clone zero-day-ai/gibson alongside this dashboard checkout, or\n' +
+        '  run from the canonical workspace at ~/Code/zero-day.ai/.\n' +
+        `  Underlying error: ${err.message ?? err}\n`,
+    );
+    process.exit(1);
+  }
+}
+
+/**
+ * Build the .tmp/proto-ws/ workspace with symlinks to both proto trees,
+ * exactly mirroring the pattern in proto-generate.mjs.
+ */
+function buildWorkspace() {
+  rmSync(WS, { recursive: true, force: true });
+  mkdirSync(WS, { recursive: true });
+
+  const sdkProtoDir = resolveSdkProtoDir();
+  ensureGibsonLocalProtos();
+
+  // Symlinks bring both proto trees inside the buf.yaml's context directory.
+  // Buf v2 follows symlinks; this satisfies the "modules must be inside the
+  // workspace" rule without copying files.
+  symlinkSync(GIBSON_LOCAL_PROTOS, resolve(WS, 'gibson-local'));
+  symlinkSync(sdkProtoDir, resolve(WS, 'sdk-proto'));
+
+  writeFileSync(
+    resolve(WS, 'buf.yaml'),
+    [
+      'version: v2',
+      'modules:',
+      '  - path: gibson-local',
+      '  - path: sdk-proto',
+      '    excludes:',
+      '      - sdk-proto/google',
+      'lint:',
+      '  use:',
+      '    - STANDARD',
+      '  ignore:',
+      '    - gibson-local/gibson/daemon/admin/v1/daemon_admin.proto',
+      '',
+    ].join('\n'),
+  );
+
+  return { ws: WS, sdkProtoDir };
+}
 
 // ---------------------------------------------------------------------------
 // Proto binary decoding
@@ -114,29 +207,59 @@ function decodeAuthOptions(rawData) {
 }
 
 // ---------------------------------------------------------------------------
-// FDS scan
+// FDS build
 // ---------------------------------------------------------------------------
 
 /**
- * Run `buf build --as-file-descriptor-set` against `protoDir` and return the
- * parsed FileDescriptorSet, or null if the directory does not exist.
+ * Run `buf build --as-file-descriptor-set` for `modulePath` (relative to the
+ * workspace) from inside the workspace directory. Exits the process on failure
+ * or empty result. Returns the parsed FileDescriptorSet.
+ *
+ * @param {string} ws        - Absolute path to the workspace (.tmp/proto-ws/).
+ * @param {string} module    - Module path relative to ws (e.g. "sdk-proto").
+ * @param {string} label     - Human-readable label for error messages.
  */
-function buildFDS(protoDir) {
-  try {
-    const raw = execFileSync(
-      'npx',
-      ['buf', 'build', '--as-file-descriptor-set', '-o', '-', protoDir],
-      { maxBuffer: 64 * 1024 * 1024 },
-    );
-    return fromBinary(FileDescriptorSetSchema, raw);
-  } catch (err) {
-    // Non-fatal: the daemon API dir may not be present in all checkouts.
+function buildFDSFromWorkspace(ws, module, label) {
+  const result = spawnSync(
+    'npx',
+    ['buf', 'build', '--as-file-descriptor-set', '-o', '-', module],
+    {
+      cwd: ws,
+      maxBuffer: 64 * 1024 * 1024,
+    },
+  );
+
+  if (result.status !== 0) {
+    const stderr = result.stderr ? result.stderr.toString('utf8') : '(no stderr)';
     process.stderr.write(
-      `[gen-authz-registry] Warning: buf build failed for ${protoDir}: ${err.message}\n`,
+      `[gen-authz-registry] FATAL: buf build failed for ${label}: ${stderr}\n`,
     );
-    return null;
+    process.exit(1);
   }
+
+  const raw = result.stdout;
+  if (!raw || raw.length === 0) {
+    process.stderr.write(
+      `[gen-authz-registry] FATAL: ${label} produced an empty FDS — is the proto root present?\n`,
+    );
+    process.exit(1);
+  }
+
+  const fds = fromBinary(FileDescriptorSetSchema, raw);
+
+  if (!fds.file || fds.file.length === 0) {
+    process.stderr.write(
+      `[gen-authz-registry] FATAL: ${label} produced an empty FDS — is the proto root present?\n`,
+    );
+    process.exit(1);
+  }
+
+  return fds;
 }
+
+// ---------------------------------------------------------------------------
+// FDS scan
+// ---------------------------------------------------------------------------
 
 /**
  * Walk all service methods in `fds` and extract every method annotated with
@@ -242,37 +365,85 @@ function main() {
   const stdout = process.argv.includes('--stdout');
 
   if (!stdout) {
-    process.stdout.write('[gen-authz-registry] Building proto FileDescriptorSet...\n');
+    process.stdout.write('[gen-authz-registry] Building proto FileDescriptorSets (workspace synthesis)...\n');
   }
 
-  const allEntries = [];
-  const seenMethods = new Set();
+  let ws;
+  try {
+    // Synthesize workspace (verbatim pattern from proto-generate.mjs).
+    ({ ws } = buildWorkspace());
 
-  for (const dir of [SDK_PROTO_DIR, DAEMON_PROTO_DIR]) {
-    const fds = buildFDS(dir);
-    if (!fds) continue;
-    for (const e of scanFDS(fds)) {
-      if (!seenMethods.has(e.method)) {
-        seenMethods.add(e.method);
-        allEntries.push(e);
+    if (!stdout) {
+      process.stdout.write(`[gen-authz-registry] Workspace at ${ws}\n`);
+      process.stdout.write('[gen-authz-registry] Building sdk-proto FDS...\n');
+    }
+
+    // Build each FDS from within the workspace. Fails loudly if either tree
+    // fails to build or produces zero file descriptors.
+    const sdkFDS = buildFDSFromWorkspace(ws, 'sdk-proto', 'sdk-proto');
+
+    if (!stdout) {
+      process.stdout.write('[gen-authz-registry] Building gibson-local FDS...\n');
+    }
+
+    const gibsonFDS = buildFDSFromWorkspace(ws, 'gibson-local', 'gibson-local');
+
+    // Scan both trees for authz annotations.
+    const sdkEntries = scanFDS(sdkFDS);
+    const gibsonEntries = scanFDS(gibsonFDS);
+
+    // Detect cross-tree method-name collisions (defense-in-depth gate).
+    // Same fully-qualified method with conflicting annotation data = fatal.
+    const sdkByMethod = new Map(sdkEntries.map((e) => [e.method, e]));
+    for (const ge of gibsonEntries) {
+      const se = sdkByMethod.get(ge.method);
+      if (se) {
+        // Same method in both trees. Check if annotations differ.
+        const seKey = `${se.relation}|${se.objectType}|${se.objectDeriver}|${se.allowedIdentities}|${se.unauthenticated}`;
+        const geKey = `${ge.relation}|${ge.objectType}|${ge.objectDeriver}|${ge.allowedIdentities}|${ge.unauthenticated}`;
+        if (seKey !== geKey) {
+          process.stderr.write(
+            `[gen-authz-registry] FATAL: conflicting annotations for ${ge.method}\n` +
+              `  sdk-proto:     ${seKey}\n` +
+              `  gibson-local:  ${geKey}\n`,
+          );
+          process.exit(1);
+        }
       }
     }
-  }
 
-  if (!stdout) {
-    process.stdout.write(
-      `[gen-authz-registry] Found ${allEntries.length} annotated methods.\n`,
-    );
-  }
+    // Merge: SDK entries first; gibson-local entries de-dup on method name
+    // (sdk wins on collision with identical annotations, per above check).
+    const seenMethods = new Set(sdkEntries.map((e) => e.method));
+    const allEntries = [...sdkEntries];
+    for (const ge of gibsonEntries) {
+      if (!seenMethods.has(ge.method)) {
+        seenMethods.add(ge.method);
+        allEntries.push(ge);
+      }
+    }
 
-  const ts = generateTS(allEntries);
+    if (!stdout) {
+      process.stdout.write(
+        `[gen-authz-registry] Found ${allEntries.length} annotated methods ` +
+          `(sdk: ${sdkEntries.length}, gibson-local: ${gibsonEntries.length}).\n`,
+      );
+    }
 
-  if (stdout) {
-    process.stdout.write(ts);
-  } else {
-    mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
-    writeFileSync(OUTPUT_PATH, ts, 'utf8');
-    process.stdout.write(`[gen-authz-registry] Wrote ${OUTPUT_PATH}\n`);
+    const ts = generateTS(allEntries);
+
+    if (stdout) {
+      process.stdout.write(ts);
+    } else {
+      mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
+      writeFileSync(OUTPUT_PATH, ts, 'utf8');
+      process.stdout.write(`[gen-authz-registry] Wrote ${OUTPUT_PATH}\n`);
+    }
+  } finally {
+    // Always clean up the workspace, whether success or failure.
+    if (ws) {
+      rmSync(ws, { recursive: true, force: true });
+    }
   }
 }
 

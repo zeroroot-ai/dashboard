@@ -2,21 +2,25 @@
  * Unit tests for src/lib/auth/assert-authorized.ts
  *
  * Covers all error paths per design Component 3:
- *   1. Unknown method → no throw (allowed)
- *   2. unauthenticated entry → no throw (allowed)
- *   3. No session → AuthzDeniedError('no-session')
- *   4. SERVICE-only RPC → AuthzDeniedError('service-only-rpc')
- *   5. No active tenant → AuthzDeniedError('no-active-tenant')
- *   6. Not a member of active tenant → AuthzDeniedError('not-a-member')
- *   7. Role below required relation → AuthzDeniedError('relation-not-met')
- *   8. tenant_admin satisfies tenant_member → no throw
- *   9. tenant_member satisfies tenant_member → no throw
- *  10. Membership resolution failure → AuthzDeniedError('not-a-member')
+ *   1. Unknown method → throws AuthzDeniedError('unknown_method')  [FAIL-CLOSED]
+ *   2. Unknown method + dev escape hatch (NODE_ENV=development + DASHBOARD_AUTHZ_PERMISSIVE_DEV=1) → allow
+ *   3. Unknown method + NODE_ENV=production + DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 → STILL throws (production gate)
+ *   4. Warn-once: same method called twice fires warn exactly once
+ *   5. unauthenticated entry → no throw (allowed)
+ *   6. No session → AuthzDeniedError('no-session')
+ *   7. SERVICE-only RPC → AuthzDeniedError('service-only-rpc')
+ *   8. No active tenant → AuthzDeniedError('no-active-tenant')
+ *   9. Not a member of active tenant → AuthzDeniedError('not-a-member')
+ *  10. Role below required relation → AuthzDeniedError('relation-not-met')
+ *  11. tenant_admin satisfies tenant_member → no throw
+ *  12. tenant_member satisfies tenant_member → no throw
+ *  13. Membership resolution failure → AuthzDeniedError('not-a-member')
  *
  * Spec: dashboard-authz-ui-gating Requirement 3, 9.2.
+ * Sister-spec: cross-repo-cohesion-fixes Requirement 1.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AuthzDeniedError, assertAuthorized } from '../assert-authorized';
 
 // ---------------------------------------------------------------------------
@@ -132,9 +136,56 @@ beforeEach(() => {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('assertAuthorized — unknown method', () => {
-  it('does not throw for an unrecognised method', async () => {
-    await expect(assertAuthorized('/unknown/Service/Method')).resolves.toBeUndefined();
+// ---------------------------------------------------------------------------
+// Fail-closed: unknown method tests (cross-repo-cohesion-fixes Requirement 1)
+// ---------------------------------------------------------------------------
+
+describe('assertAuthorized — unknown method (fail-closed)', () => {
+  it('(a) throws AuthzDeniedError with code unknown_method for an unrecognised method', async () => {
+    await expect(assertAuthorized('/unknown/Service/FailClosed')).rejects.toThrow(AuthzDeniedError);
+    await expect(assertAuthorized('/unknown/Service/FailClosed2')).rejects.toMatchObject({
+      reason: 'unknown_method',
+      method: '/unknown/Service/FailClosed2',
+    });
+  });
+});
+
+describe('assertAuthorized — unknown method dev escape hatch', () => {
+  afterEach(() => {
+    // vi.unstubAllEnvs restores all env stubs set via vi.stubEnv — prevents leakage.
+    vi.unstubAllEnvs();
+  });
+
+  it('(b) NODE_ENV=development + DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 allows the call through', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('DASHBOARD_AUTHZ_PERMISSIVE_DEV', '1');
+    // Method names are unique to avoid hitting the warn-once memo from other tests.
+    await expect(assertAuthorized('/unknown/EscapeHatch/Allow')).resolves.toBeUndefined();
+  });
+
+  it('(c) NODE_ENV=production + DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 STILL throws (production gate)', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('DASHBOARD_AUTHZ_PERMISSIVE_DEV', '1');
+    await expect(assertAuthorized('/unknown/EscapeHatch/ProductionDeny')).rejects.toMatchObject({
+      reason: 'unknown_method',
+    });
+  });
+
+  it('(d) warn log fires exactly once for the same method called twice under dev escape hatch', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('DASHBOARD_AUTHZ_PERMISSIVE_DEV', '1');
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      await assertAuthorized('/unknown/WarnOnce/Method');
+      await assertAuthorized('/unknown/WarnOnce/Method');
+      // The Map memoises on first call; second call skips the warn.
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const logArg: string = warnSpy.mock.calls[0][0] as string;
+      const parsed = JSON.parse(logArg) as Record<string, unknown>;
+      expect(parsed).toMatchObject({ event: 'authz_registry_miss', method: '/unknown/WarnOnce/Method' });
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });
 

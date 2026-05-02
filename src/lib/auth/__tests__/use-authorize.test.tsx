@@ -2,7 +2,9 @@
  * Unit tests for src/lib/auth/use-authorize.ts
  *
  * Covers all decision paths per design Component 2:
- *   1. Unknown method → allowed: true, loading: false
+ *   1. Unknown method → allowed: false, reason: 'unknown_method'  [FAIL-CLOSED]
+ *   1b. Unknown method + NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 (dev) → allowed: true
+ *   1c. Unknown method + NODE_ENV=production + permissive var set → STILL denied (production gate)
  *   2. unauthenticated entry → allowed: true, loading: false
  *   3. SERVICE-only entry → allowed: false, loading: false (no query)
  *   4. Loading state → allowed: false, loading: true
@@ -13,10 +15,11 @@
  *   9. No role for active tenant → allowed: false, loading: false
  *
  * Spec: dashboard-authz-ui-gating Requirement 2, 9.1.
+ * Sister-spec: cross-repo-cohesion-fixes Requirement 1.
  */
 
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
@@ -125,12 +128,41 @@ function mockMembershipsError() {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('useAuthorize — unknown method', () => {
-  it('returns allowed: true, loading: false without fetching memberships', () => {
+// ---------------------------------------------------------------------------
+// Fail-closed: unknown method tests (cross-repo-cohesion-fixes Requirement 1)
+// ---------------------------------------------------------------------------
+
+describe('useAuthorize — unknown method (fail-closed)', () => {
+  it('(a) returns allowed: false, reason: unknown_method without fetching memberships', () => {
     const { result } = renderHook(() => useAuthorize('/unknown/Method'), {
       wrapper: createWrapper(),
     });
+    expect(result.current).toEqual({ allowed: false, loading: false, reason: 'unknown_method' });
+  });
+});
+
+describe('useAuthorize — unknown method dev escape hatch', () => {
+  afterEach(() => {
+    // vi.unstubAllEnvs restores all env stubs set via vi.stubEnv — prevents leakage.
+    vi.unstubAllEnvs();
+  });
+
+  it('(b) NODE_ENV=development + NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 allows the call through', () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV', '1');
+    const { result } = renderHook(() => useAuthorize('/unknown/EscapeHatch'), {
+      wrapper: createWrapper(),
+    });
     expect(result.current).toEqual({ allowed: true, loading: false });
+  });
+
+  it('(c) NODE_ENV=production + NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 STILL returns denied (production gate)', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV', '1');
+    const { result } = renderHook(() => useAuthorize('/unknown/ProductionDeny'), {
+      wrapper: createWrapper(),
+    });
+    expect(result.current).toMatchObject({ allowed: false, reason: 'unknown_method' });
   });
 });
 

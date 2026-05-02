@@ -6,7 +6,9 @@
  * tenant. Wraps the membership fetch in React Query for in-page caching.
  *
  * Decision flow:
- *   1. Unknown method → allowed (never block UI for RPCs not yet in registry).
+ *   1. Unknown method → DENIED (fail-closed). In non-production environments,
+ *      set NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 to fall back to the
+ *      old allow-true behaviour (dev escape hatch). See Requirement 1.3.
  *   2. entry.unauthenticated → allowed (public RPC; no identity required).
  *   3. allowedIdentities excludes USER → denied immediately (service-only RPC).
  *   4. Membership query loading → { allowed: false, loading: true } (hides UI,
@@ -18,6 +20,7 @@
  * Render `null` when `loading || !allowed`.
  *
  * Spec: dashboard-authz-ui-gating Requirement 2.
+ * Sister-spec: cross-repo-cohesion-fixes Requirement 1.
  *
  * @module auth/use-authorize
  */
@@ -35,6 +38,9 @@ import { fetchMyMemberships } from './client-memberships';
  *
  * Callers MUST check `loading` first. While `loading === true`, treat the
  * result as denied to prevent flash-of-visible-admin-chrome (FOUC).
+ *
+ * The optional `reason` field is populated on deny paths to help developers
+ * diagnose issues. Do not surface it in user-visible messages.
  */
 export interface AuthorizeResult {
   /** Whether the current user is allowed to call the method. */
@@ -44,6 +50,12 @@ export interface AuthorizeResult {
    * nothing (or a neutral skeleton) until `loading` is false.
    */
   loading: boolean;
+  /**
+   * Machine-readable deny reason. Populated when `allowed` is false and the
+   * cause is deterministic (not a loading state). Useful for diagnostics.
+   * Do NOT render this in user-visible error messages.
+   */
+  reason?: string;
 }
 
 /** Stable singleton for the React Query cache key. */
@@ -58,9 +70,18 @@ const MY_MEMBERSHIPS_QUERY_KEY = ['my-memberships'] as const;
 export function useAuthorize(method: string): AuthorizeResult {
   const entry = AuthRegistry[method];
 
-  // Unknown method: allow. Don't block UI for new RPCs not yet in the registry.
+  // Unknown method: DENY (fail-closed). In non-production environments with
+  // NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1, fall back to the old
+  // allow-true behaviour. Server-side logging for the miss is owned by
+  // assertAuthorized (task 1); the client does not log.
   if (!entry) {
-    return { allowed: true, loading: false };
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      process.env.NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV === '1'
+    ) {
+      return { allowed: true, loading: false };
+    }
+    return { allowed: false, loading: false, reason: 'unknown_method' };
   }
 
   // Unauthenticated RPC: publicly callable, no identity required.
