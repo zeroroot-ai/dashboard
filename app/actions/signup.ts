@@ -278,12 +278,14 @@ export async function signupAction(
         `${slugify(ctx.input.email)}-owner`,
         {
           email: ctx.input.email,
-          role: "admin",
+          role: "owner",
           tenantRef: { name: ctx.tenantSlug },
           // Self-signup: the signup user IS the workspace owner — pre-accept the
           // membership so the operator promotes Invited → Active without
           // requiring the user to click an emailed invitation link. The
           // operator's invitation flow is for invitees, not the founding owner.
+          // Spec: tenant-role-taxonomy — founding user is granted the
+          // first-class `owner` FGA relation (admin/member inherit by union).
           acceptedByUserId: ctx.zitadelUserId,
         },
       );
