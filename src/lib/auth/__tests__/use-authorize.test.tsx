@@ -8,9 +8,9 @@
  *   2. unauthenticated entry → allowed: true, loading: false
  *   3. SERVICE-only entry → allowed: false, loading: false (no query)
  *   4. Loading state → allowed: false, loading: true
- *   5. tenant_admin role for tenant_admin requirement → allowed: true
- *   6. tenant_admin role for tenant_member requirement → allowed: true (hierarchy)
- *   7. tenant_member role for tenant_admin requirement → allowed: false
+ *   5. admin role for admin requirement → allowed: true
+ *   6. admin role for member requirement → allowed: true (hierarchy)
+ *   7. member role for admin requirement → allowed: false
  *   8. No active tenant → allowed: false, loading: false
  *   9. No role for active tenant → allowed: false, loading: false
  *
@@ -53,7 +53,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
     '/gibson.admin.v1.SecretsAdminService/SetSecret': {
       method: '/gibson.admin.v1.SecretsAdminService/SetSecret',
       service: 'gibson.admin.v1.SecretsAdminService',
-      relation: 'tenant_admin',
+      relation: 'admin',
       objectType: 'tenant',
       objectDeriver: 'tenant_from_identity',
       allowedIdentities: 1,
@@ -62,7 +62,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
     '/gibson.admin.v1.SecretsAdminService/ListSecrets': {
       method: '/gibson.admin.v1.SecretsAdminService/ListSecrets',
       service: 'gibson.admin.v1.SecretsAdminService',
-      relation: 'tenant_member',
+      relation: 'member',
       objectType: 'tenant',
       objectDeriver: 'tenant_from_identity',
       allowedIdentities: 1,
@@ -190,7 +190,7 @@ describe('useAuthorize — loading state', () => {
     server.use(
       http.get('/api/auth/my-memberships', async () => {
         await new Promise((resolve) => setTimeout(resolve, 200));
-        return HttpResponse.json({ activeTenantId: 'tenant-a', byTenant: { 'tenant-a': { role: 'tenant_admin' } } });
+        return HttpResponse.json({ activeTenantId: 'tenant-a', byTenant: { 'tenant-a': { role: 'admin' } } });
       }),
     );
   });
@@ -204,12 +204,12 @@ describe('useAuthorize — loading state', () => {
   });
 });
 
-describe('useAuthorize — tenant_admin role', () => {
+describe('useAuthorize — admin role', () => {
   beforeEach(() => {
-    mockMemberships('tenant-a', { 'tenant-a': { role: 'tenant_admin' } });
+    mockMemberships('tenant-a', { 'tenant-a': { role: 'admin' } });
   });
 
-  it('satisfies tenant_admin requirement → allowed', async () => {
+  it('satisfies admin requirement → allowed', async () => {
     const { result } = renderHook(() => useAuthorize(ADMIN_METHOD), {
       wrapper: createWrapper(),
     });
@@ -217,7 +217,7 @@ describe('useAuthorize — tenant_admin role', () => {
     expect(result.current).toEqual({ allowed: true, loading: false });
   });
 
-  it('satisfies tenant_member requirement via hierarchy → allowed', async () => {
+  it('satisfies member requirement via hierarchy → allowed', async () => {
     const { result } = renderHook(() => useAuthorize(MEMBER_METHOD), {
       wrapper: createWrapper(),
     });
@@ -226,12 +226,12 @@ describe('useAuthorize — tenant_admin role', () => {
   });
 });
 
-describe('useAuthorize — tenant_member role', () => {
+describe('useAuthorize — member role', () => {
   beforeEach(() => {
-    mockMemberships('tenant-a', { 'tenant-a': { role: 'tenant_member' } });
+    mockMemberships('tenant-a', { 'tenant-a': { role: 'member' } });
   });
 
-  it('satisfies tenant_member requirement → allowed', async () => {
+  it('satisfies member requirement → allowed', async () => {
     const { result } = renderHook(() => useAuthorize(MEMBER_METHOD), {
       wrapper: createWrapper(),
     });
@@ -239,7 +239,7 @@ describe('useAuthorize — tenant_member role', () => {
     expect(result.current).toEqual({ allowed: true, loading: false });
   });
 
-  it('does NOT satisfy tenant_admin requirement → denied', async () => {
+  it('does NOT satisfy admin requirement → denied', async () => {
     const { result } = renderHook(() => useAuthorize(ADMIN_METHOD), {
       wrapper: createWrapper(),
     });
@@ -250,7 +250,7 @@ describe('useAuthorize — tenant_member role', () => {
 
 describe('useAuthorize — no active tenant', () => {
   beforeEach(() => {
-    mockMemberships(null, { 'tenant-a': { role: 'tenant_admin' } });
+    mockMemberships(null, { 'tenant-a': { role: 'admin' } });
   });
 
   it('returns denied when activeTenantId is null', async () => {
@@ -265,7 +265,7 @@ describe('useAuthorize — no active tenant', () => {
 describe('useAuthorize — no membership for active tenant', () => {
   beforeEach(() => {
     // Active tenant set, but no matching entry in byTenant.
-    mockMemberships('tenant-b', { 'tenant-a': { role: 'tenant_admin' } });
+    mockMemberships('tenant-b', { 'tenant-a': { role: 'admin' } });
   });
 
   it('returns denied when user is not a member of the active tenant', async () => {

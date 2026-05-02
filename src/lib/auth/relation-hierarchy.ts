@@ -47,10 +47,6 @@ const RELATION_ORDER: Readonly<Record<string, number>> = {
   can_use: 50,       // use a component (harness / callback operations)
   can_invoke: 50,    // invoke a plugin binary
   can_resolve: 50,   // resolve a secret credential
-
-  // alias for forward-compat — remove once no callers reference these strings
-  tenant_admin: 100,
-  tenant_member: 10,
 };
 
 /**
@@ -61,10 +57,6 @@ const RELATION_ORDER: Readonly<Record<string, number>> = {
  *   satisfiesRelation('member', 'admin')   → false  (member does not imply admin)
  *   satisfiesRelation('unknown', 'member') → false  (unknown = tier 0)
  *   satisfiesRelation('member', 'unknown') → false  (unknown required = Infinity)
- *
- * Alias forms also resolve:
- *   satisfiesRelation('tenant_admin', 'admin')       → true
- *   satisfiesRelation('admin', 'tenant_member')      → true
  *
  * @param userRole         - The role held by the user on the active tenant.
  * @param requiredRelation - The relation required by the registry entry.

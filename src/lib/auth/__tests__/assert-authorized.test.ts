@@ -12,8 +12,8 @@
  *   8. No active tenant → AuthzDeniedError('no-active-tenant')
  *   9. Not a member of active tenant → AuthzDeniedError('not-a-member')
  *  10. Role below required relation → AuthzDeniedError('relation-not-met')
- *  11. tenant_admin satisfies tenant_member → no throw
- *  12. tenant_member satisfies tenant_member → no throw
+ *  11. admin satisfies member → no throw
+ *  12. member satisfies member → no throw
  *  13. Membership resolution failure → AuthzDeniedError('not-a-member')
  *
  * Spec: dashboard-authz-ui-gating Requirement 3, 9.2.
@@ -33,7 +33,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
     '/test/AdminService/AdminMethod': {
       method: '/test/AdminService/AdminMethod',
       service: 'test.AdminService',
-      relation: 'tenant_admin',
+      relation: 'admin',
       objectType: 'tenant',
       objectDeriver: 'tenant_from_identity',
       allowedIdentities: 1, // USER only
@@ -42,7 +42,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
     '/test/MemberService/MemberMethod': {
       method: '/test/MemberService/MemberMethod',
       service: 'test.MemberService',
-      relation: 'tenant_member',
+      relation: 'member',
       objectType: 'tenant',
       objectDeriver: 'tenant_from_identity',
       allowedIdentities: 1,
@@ -126,7 +126,7 @@ function setupMembershipsError() {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Default: happy path — tenant_admin on tenant-a.
+  // Default: happy path — admin on tenant-a.
   setupSession();
   setupActiveTenant('tenant-a');
   setupMemberships('tenant-a', 'admin');
@@ -249,7 +249,7 @@ describe('assertAuthorized — not a member', () => {
 });
 
 describe('assertAuthorized — relation-not-met', () => {
-  it('throws relation-not-met when tenant_member tries an admin-only method', async () => {
+  it('throws relation-not-met when member tries an admin-only method', async () => {
     setupMemberships('tenant-a', 'member');
     await expect(assertAuthorized('/test/AdminService/AdminMethod')).rejects.toMatchObject({
       reason: 'relation-not-met',
@@ -259,17 +259,17 @@ describe('assertAuthorized — relation-not-met', () => {
 });
 
 describe('assertAuthorized — allowed paths', () => {
-  it('resolves for tenant_admin on a tenant_admin method', async () => {
+  it('resolves for admin on a admin method', async () => {
     setupMemberships('tenant-a', 'admin');
     await expect(assertAuthorized('/test/AdminService/AdminMethod')).resolves.toBeUndefined();
   });
 
-  it('resolves for tenant_admin on a tenant_member method (hierarchy: admin > member)', async () => {
+  it('resolves for admin on a member method (hierarchy: admin > member)', async () => {
     setupMemberships('tenant-a', 'admin');
     await expect(assertAuthorized('/test/MemberService/MemberMethod')).resolves.toBeUndefined();
   });
 
-  it('resolves for tenant_member on a tenant_member method', async () => {
+  it('resolves for member on a member method', async () => {
     setupMemberships('tenant-a', 'member');
     await expect(assertAuthorized('/test/MemberService/MemberMethod')).resolves.toBeUndefined();
   });

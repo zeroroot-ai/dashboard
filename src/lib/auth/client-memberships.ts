@@ -6,7 +6,7 @@
  *
  *   { activeTenantId: string | null, byTenant: { [tenantId]: { role: string } } }
  *
- * where `role` is already a FGA relation string (`tenant_admin`, `tenant_member`).
+ * where `role` is the proto-emitted FGA relation string (`admin`, `member`).
  *
  * React Query caches the result at `staleTime: 60_000` ms so multiple
  * `useAuthorize` calls on the same page share one fetch.

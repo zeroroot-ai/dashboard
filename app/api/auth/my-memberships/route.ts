@@ -5,11 +5,11 @@
  * memberships and active tenant ID, formatted for consumption by the
  * `useAuthorize` React hook.
  *
- * Roles are returned as FGA relation strings (`tenant_admin`, `tenant_member`)
- * so that callers can directly compare against `AuthRegistry[method].relation`
- * without any client-side translation.
+ * Roles are returned as the proto-emitted FGA relation strings
+ * (`admin`, `member`) so that callers can directly compare against
+ * `AuthRegistry[method].relation` without any client-side translation.
  *
- * Spec: dashboard-authz-ui-gating Requirement 2.3.
+ * Spec: cross-repo-cohesion-fixes Requirement 3 (D1 end state b).
  *
  * @module api/auth/my-memberships
  */
@@ -18,18 +18,6 @@ import { NextResponse } from 'next/server';
 
 import { getMyMemberships } from '@/src/lib/auth/membership';
 import { readRawActiveTenant } from '@/src/lib/auth/active-tenant';
-
-/**
- * Map the dashboard's internal role strings to FGA relation strings used
- * by the authz registry.
- *
- * The daemon normalizes all roles to 'admin' | 'member'. Anything else
- * falls back to 'tenant_member' (deny is handled downstream via the
- * hierarchy; unknown roles get tier 0).
- */
-function toRelation(role: 'admin' | 'member'): string {
-  return role === 'admin' ? 'tenant_admin' : 'tenant_member';
-}
 
 export async function GET(): Promise<NextResponse> {
   let memberships;
@@ -43,7 +31,7 @@ export async function GET(): Promise<NextResponse> {
 
   const byTenant: Record<string, { role: string }> = {};
   for (const m of memberships) {
-    byTenant[m.tenantId] = { role: toRelation(m.role) };
+    byTenant[m.tenantId] = { role: m.role };
   }
 
   // Read the active tenant cookie without throwing (no membership validation
