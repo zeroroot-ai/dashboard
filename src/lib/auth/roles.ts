@@ -3,10 +3,10 @@
  *
  * TenantRole is the exhaustive set of roles a member may hold within a
  * tenant. Roles are sourced from FGA (the daemon's `ListMyMemberships`
- * RPC) and normalized into `'admin' | 'member'` by the membership module;
- * `owner` is retained here as a higher rank for forward compatibility but
- * is not currently emitted by the daemon. The Gibson schema adds no
- * custom roles on top of these.
+ * RPC), which emits the highest tier the caller satisfies in the
+ * three-tier hierarchy `owner > admin > member` (spec
+ * `tenant-role-taxonomy`). The Gibson schema adds no custom roles on top
+ * of these.
  *
  * ROLE_RANK encodes the privilege hierarchy: a higher number means more
  * privilege. hasRoleAtLeast uses these ranks for a single numeric comparison
@@ -36,6 +36,10 @@ import type { GibsonSession } from '@/src/lib/auth';
  * by `getServerSession()` via the daemon's FGA membership lookup. Any
  * role string outside this set is treated as rank 0 (deny) by
  * `hasRoleAtLeast`.
+ *
+ * Spec: tenant-role-taxonomy — `owner` is now a first-class FGA relation
+ * emitted by the daemon for founding users; `admin` and `member` inherit
+ * via the computed-union hierarchy (owner > admin > member).
  */
 export type TenantRole = 'owner' | 'admin' | 'member';
 
