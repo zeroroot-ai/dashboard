@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { hasPermission } from '@/src/lib/auth/schema';
 import { safeErrorResponse } from '@/src/lib/api-errors';
 import { listMissions, serializeMission } from '@/src/lib/gibson-client';
 import type { Mission, MissionStatus, PaginatedResponse } from '@/src/types';
@@ -29,13 +28,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check permissions
-    if (!hasPermission(session, 'missions:read')) {
-      return NextResponse.json(
-        { error: { code: 'FORBIDDEN', message: 'Insufficient permissions to view missions' } },
-        { status: 403 }
-      );
-    }
+    // Authz enforced by daemon ext-authz on the listMissions RPC below.
+    // The previous hasPermission() gate was a no-op since loadSchema() was
+    // stubbed to empty after GetAuthSchema RPC was removed from the daemon.
 
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams;

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { hasPermission } from '@/src/lib/auth/schema';
 import { getFindingsTimeSeries } from '@/src/lib/gibson-client';
 import type { FindingsOverTime, TimeRange } from '@/src/types';
 
@@ -24,13 +23,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Check permissions
-  if (!hasPermission(session, 'findings:read')) {
-    return NextResponse.json(
-      { error: { code: 'FORBIDDEN', message: 'Insufficient permissions' } },
-      { status: 403 }
-    );
-  }
+  // Authz enforced by daemon ext-authz on the downstream RPC.
 
   const tenantId = session.user.tenantId;
   if (!tenantId) {

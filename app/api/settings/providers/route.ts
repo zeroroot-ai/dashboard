@@ -26,18 +26,18 @@ import { translateError } from '@/src/lib/providers-route-error';
  * Returns masked credential values only — plaintext is never returned.
  */
 export async function GET(_req: NextRequest) {
-  const session = await getServerSession();
-  if (!session) {
-    return Response.json(
-      { error: { code: 'unauthenticated', message: 'Authentication required' } },
-      { status: 401 },
-    );
-  }
-
-  const userId = session.user.id;
-  const tenantId = session.user.tenantId ?? undefined;
-
   try {
+    const session = await getServerSession();
+    if (!session) {
+      return Response.json(
+        { error: { code: 'unauthenticated', message: 'Authentication required' } },
+        { status: 401 },
+      );
+    }
+
+    const userId = session.user.id;
+    const tenantId = session.user.tenantId ?? undefined;
+
     const providers = await daemonListProviders(userId, tenantId);
     return Response.json({ providers });
   } catch (err) {

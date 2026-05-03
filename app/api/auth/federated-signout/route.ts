@@ -30,9 +30,46 @@ const ZITADEL_ISSUER =
   process.env.ZITADEL_ISSUER ?? "https://auth.zero-day.local";
 const POST_LOGOUT_REDIRECT_PATH = "/";
 
+// Auth.js v5 cookie names. Names differ in production (Secure cookie prefix)
+// vs. development (no prefix). We clear both forms defensively.
+//
+// For `__Secure-` and `__Host-` prefixed cookies the browser REQUIRES the
+// Set-Cookie header that overwrites them to include the matching `Secure`
+// attribute (and for `__Host-`, no Domain + Path=/). Without it, the browser
+// silently rejects the overwrite and the session cookie survives.
+const AUTHJS_COOKIES: ReadonlyArray<{
+  name: string;
+  secure: boolean;
+  httpOnly: boolean;
+  sameSite: "lax" | "strict" | "none";
+}> = [
+  { name: "__Secure-authjs.session-token", secure: true, httpOnly: true, sameSite: "lax" },
+  { name: "authjs.session-token", secure: false, httpOnly: true, sameSite: "lax" },
+  { name: "__Host-authjs.csrf-token", secure: true, httpOnly: true, sameSite: "lax" },
+  { name: "authjs.csrf-token", secure: false, httpOnly: true, sameSite: "lax" },
+  { name: "__Secure-authjs.callback-url", secure: true, httpOnly: true, sameSite: "lax" },
+  { name: "authjs.callback-url", secure: false, httpOnly: true, sameSite: "lax" },
+];
+
+function clearAuthCookies(res: NextResponse): void {
+  for (const c of AUTHJS_COOKIES) {
+    res.cookies.set(c.name, "", {
+      maxAge: 0,
+      path: "/",
+      secure: c.secure,
+      httpOnly: c.httpOnly,
+      sameSite: c.sameSite,
+      // __Host- prefix forbids Domain attribute; __Secure- and unprefixed
+      // cookies don't need one when omitted (the cookie binds to the host
+      // that set it, which is what we want).
+    });
+  }
+}
+
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const session = await auth();
   const idToken = session?.idToken;
+  const clientId = process.env.ZITADEL_DASHBOARD_CLIENT_ID;
 
   // Compute the absolute post-logout redirect URL from AUTH_URL / the
   // request's own origin so it matches what was registered with Zitadel.
@@ -45,21 +82,29 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   // the final redirect (to Zitadel's end_session_endpoint), not Auth.js.
   await signOut({ redirect: false });
 
-  // If we never captured an ID token (e.g., stale cookie / JWT predates the
-  // idToken claim), there's nothing to hint with — just drop them on the
-  // landing page.
-  if (!idToken) {
-    return NextResponse.redirect(postLogoutRedirectUri);
-  }
-
+  // ALWAYS redirect through Zitadel's end_session — without it, Zitadel's
+  // SSO cookie remains and silently re-authenticates the user on the next
+  // /login. id_token_hint is the preferred shape; client_id is the documented
+  // fallback when the hint is unavailable.
   const endSession = new URL(`${ZITADEL_ISSUER}/oidc/v1/end_session`);
-  endSession.searchParams.set("id_token_hint", idToken);
+  if (idToken) {
+    endSession.searchParams.set("id_token_hint", idToken);
+  } else if (clientId) {
+    endSession.searchParams.set("client_id", clientId);
+  }
   endSession.searchParams.set(
     "post_logout_redirect_uri",
     postLogoutRedirectUri,
   );
 
-  return NextResponse.redirect(endSession.toString());
+  const res = NextResponse.redirect(endSession.toString());
+  // Belt-and-suspenders: explicitly expire every Auth.js cookie shape on the
+  // response. signOut() should do this, but observed behaviour is that the
+  // session cookie occasionally survives the call when redirect: false is set,
+  // letting middleware see a still-valid JWT on the next request and bouncing
+  // the user straight back into /dashboard.
+  clearAuthCookies(res);
+  return res;
 }
 
 // Accept POST too — the sign-out form in no-workspace/page.tsx posts rather

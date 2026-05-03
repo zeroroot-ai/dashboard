@@ -4,6 +4,42 @@
  */
 
 // ============================================================================
+// Data-Plane Store Status Types (Task 34 — D8)
+// ============================================================================
+
+/**
+ * Provisioning state for an individual data-plane store.
+ * Mirrors the tenant-operator saga states written to Tenant CRD
+ * `status.dataPlane.stores.<store>.state` (Task 21).
+ */
+export type DataPlaneStoreState = 'provisioning' | 'ready' | 'failed';
+
+/**
+ * Status of a single data-plane store as surfaced by
+ * GET /api/onboarding/data-plane.
+ *
+ * Missing fields indicate the CRD predates Task 21 or the operator
+ * has not yet started provisioning that store.
+ */
+export interface StoreStatus {
+  state: DataPlaneStoreState | null;
+  reason: string | null;
+  lastUpdated: string | null;
+}
+
+/**
+ * Response shape for GET /api/onboarding/data-plane.
+ *
+ * Each key maps to a logical data-plane store.
+ * A null `state` means not-yet-started (legacy CRD or pre-provisioning).
+ */
+export interface DataPlaneStatus {
+  postgres: StoreStatus;
+  redis: StoreStatus;
+  neo4j: StoreStatus;
+}
+
+// ============================================================================
 // Wizard Step Types
 // ============================================================================
 

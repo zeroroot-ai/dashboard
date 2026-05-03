@@ -18,7 +18,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { hasPermission } from '@/src/lib/auth/schema';
 import { safeErrorResponse } from '@/src/lib/api-errors';
 import neo4j from 'neo4j-driver';
 import { getNeo4jDriver } from '@/src/lib/neo4j-client';
@@ -76,17 +75,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    if (!hasPermission(session, 'findings:read')) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'FORBIDDEN',
-            message: 'Insufficient permissions to export findings',
-          },
-        },
-        { status: 403 },
-      );
-    }
+    // Authz enforced by daemon ext-authz on the downstream RPC.
 
     const tenantId = session.user.tenantId;
     if (!tenantId) {

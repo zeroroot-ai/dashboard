@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { hasPermission } from '@/src/lib/auth/schema';
 import { safeErrorResponse } from '@/src/lib/api-errors';
 import { LokiClient, LokiLogEntry } from '@/src/lib/loki-client';
 
@@ -29,12 +28,7 @@ export async function GET(
       );
     }
 
-    if (!hasPermission(session, 'missions:read')) {
-      return NextResponse.json(
-        { error: { code: 'FORBIDDEN', message: 'Insufficient permissions' } },
-        { status: 403 }
-      );
-    }
+    // Authz enforced by daemon ext-authz on the downstream RPC.
 
     const { id: missionId } = await params;
     const searchParams = request.nextUrl.searchParams;

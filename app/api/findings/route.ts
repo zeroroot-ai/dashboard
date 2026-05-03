@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { hasPermission } from '@/src/lib/auth/schema';
 import { safeErrorResponse } from '@/src/lib/api-errors';
 import neo4j from 'neo4j-driver';
 import { getNeo4jDriver } from '@/src/lib/neo4j-client';
@@ -21,12 +20,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!hasPermission(session, 'findings:read')) {
-      return NextResponse.json(
-        { error: { code: 'FORBIDDEN', message: 'Insufficient permissions to view findings' } },
-        { status: 403 }
-      );
-    }
+    // Authz is enforced by Neo4j tenant_id filter below + daemon-side
+    // ext-authz on any downstream RPC. The previous hasPermission() gate was
+    // a no-op since loadSchema() was stubbed to empty.
 
     const searchParams = request.nextUrl.searchParams;
     const severity = searchParams.get('severity');

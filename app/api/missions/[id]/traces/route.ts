@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { hasPermission } from '@/src/lib/auth/schema';
 import { safeErrorResponse } from '@/src/lib/api-errors';
 import { getMissionHistory, getTenantLangfuseCredentials, ConnectError, Code } from '@/src/lib/gibson-client';
 import { LangfuseClient, LangfuseUnavailableError, LangfuseAuthError, LangfuseNotFoundError } from '@/src/lib/langfuse-client';
@@ -29,13 +28,7 @@ export async function GET(
       );
     }
 
-    // Check permissions
-    if (!hasPermission(session, 'missions:read')) {
-      return NextResponse.json(
-        { error: { code: 'FORBIDDEN', message: 'Insufficient permissions to view traces' } },
-        { status: 403 }
-      );
-    }
+    // Authz enforced by daemon ext-authz on the downstream RPC.
 
     // Get mission history to find trace_id
     // The mission name is the missionId in this context

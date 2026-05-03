@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { hasPermission } from '@/src/lib/auth/schema';
 import { safeErrorResponse } from '@/src/lib/api-errors';
 import { getTenantLangfuseCredentials, ConnectError, Code } from '@/src/lib/gibson-client';
 import { LangfuseClient, LangfuseUnavailableError, LangfuseNotFoundError } from '@/src/lib/langfuse-client';
@@ -29,12 +28,7 @@ export async function GET(
       );
     }
 
-    if (!hasPermission(session, 'missions:read')) {
-      return NextResponse.json(
-        { error: { code: 'FORBIDDEN', message: 'Insufficient permissions' } },
-        { status: 403 }
-      );
-    }
+    // Authz enforced by daemon ext-authz on the downstream RPC.
 
     // Resolve Langfuse credentials: prefer per-tenant, fall back to platform level.
     // A NOT_FOUND gRPC error means the tenant has not been provisioned yet.

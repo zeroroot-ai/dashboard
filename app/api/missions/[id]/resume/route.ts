@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
-import { hasPermission } from '@/src/lib/auth/schema';
 import { safeErrorResponse } from '@/src/lib/api-errors';
 import { resumeMission } from '@/src/lib/gibson-client';
 
@@ -31,12 +30,7 @@ export async function POST(
       );
     }
 
-    if (!hasPermission(session, 'missions:execute')) {
-      return NextResponse.json(
-        { error: { code: 'FORBIDDEN', message: 'Insufficient permissions' } },
-        { status: 403 }
-      );
-    }
+    // Authz enforced by daemon ext-authz on the downstream RPC.
 
     const { id } = await params;
 

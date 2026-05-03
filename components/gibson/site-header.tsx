@@ -21,27 +21,27 @@ export async function SiteHeader() {
         <div className="flex items-center gap-6 font-mono text-sm">
           <Link
             href="/docs"
-            className="text-muted-foreground hover:text-green-300"
+            className="text-green-300/70 hover:text-green-300"
           >
             docs
           </Link>
           <Link
             href="/pricing"
-            className="text-muted-foreground hover:text-green-300"
+            className="text-green-300/70 hover:text-green-300"
           >
             pricing
           </Link>
           {session?.user ? (
             <Link
               href="/dashboard"
-              className="text-muted-foreground hover:text-green-300"
+              className="text-green-300/70 hover:text-green-300"
             >
               dashboard
             </Link>
           ) : (
             <Link
               href="/login"
-              className="text-muted-foreground hover:text-green-300"
+              className="text-green-300/70 hover:text-green-300"
             >
               sign in
             </Link>

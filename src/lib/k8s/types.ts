@@ -75,6 +75,28 @@ export interface TenantSpec {
   stripeCustomerId?: string;
 }
 
+/** Provisioning state for a single data-plane store (Task 21). */
+export type DataPlaneStoreState = 'provisioning' | 'ready' | 'failed';
+
+/** Per-store status entry written by the tenant-operator saga (Task 21). */
+export interface DataPlaneStoreStatus {
+  state: DataPlaneStoreState;
+  reason?: string;
+  lastUpdated?: string;
+}
+
+/**
+ * Data-plane provisioning status written by the tenant-operator.
+ * Added in Task 21; absent on legacy Tenant CRs (use optional chaining).
+ */
+export interface TenantDataPlaneStatus {
+  stores?: {
+    postgres?: DataPlaneStoreStatus;
+    redis?: DataPlaneStoreStatus;
+    neo4j?: DataPlaneStoreStatus;
+  };
+}
+
 export interface TenantStatus {
   phase?: TenantPhase;
   conditions?: K8sCondition[];
@@ -86,6 +108,11 @@ export interface TenantStatus {
   langfuseProjectId?: string;
   observedGeneration?: number;
   tierObserved?: TenantTier;
+  /**
+   * Data-plane store provisioning status. Written by the tenant-operator at
+   * each saga step. Absent on pre-Task-21 Tenant CRs.
+   */
+  dataPlane?: TenantDataPlaneStatus;
 }
 
 export interface Tenant extends K8sResource<TenantSpec, TenantStatus> {

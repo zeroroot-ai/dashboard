@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
-import { hasPermission } from '@/src/lib/auth/schema';
 import { listMissions, serializeMission } from '@/src/lib/gibson-client';
 import { getNeo4jDriver } from '@/src/lib/neo4j-client';
 import type { Mission, MissionStatus } from '@/src/types';
@@ -25,12 +24,7 @@ export async function GET(
       );
     }
 
-    if (!hasPermission(session, 'missions:read')) {
-      return NextResponse.json(
-        { error: { code: 'FORBIDDEN', message: 'Insufficient permissions' } },
-        { status: 403 }
-      );
-    }
+    // Authz enforced by daemon ext-authz on the downstream RPC.
 
     const { id } = await params;
 
@@ -165,12 +159,7 @@ export async function DELETE(
       );
     }
 
-    if (!hasPermission(session, 'missions:execute')) {
-      return NextResponse.json(
-        { error: { code: 'FORBIDDEN', message: 'Insufficient permissions' } },
-        { status: 403 }
-      );
-    }
+    // Authz enforced by daemon ext-authz on the downstream RPC.
 
     const { id } = await params;
 
