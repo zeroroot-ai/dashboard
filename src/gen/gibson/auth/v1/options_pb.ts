@@ -25,18 +25,30 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/auth/v1/options.proto.
  */
 export const file_gibson_auth_v1_options: GenFile = /*@__PURE__*/
-  fileDesc("ChxnaWJzb24vYXV0aC92MS9vcHRpb25zLnByb3RvEg5naWJzb24uYXV0aC52MSKBAQoLQXV0aE9wdGlvbnMSEAoIcmVsYXRpb24YASABKAkSEwoLb2JqZWN0X3R5cGUYAiABKAkSFgoOb2JqZWN0X2Rlcml2ZXIYAyABKAkSGgoSYWxsb3dlZF9pZGVudGl0aWVzGAQgASgFEhcKD3VuYXV0aGVudGljYXRlZBgFIAEoCCqoAQoNSWRlbnRpdHlDbGFzcxIeChpJREVOVElUWV9DTEFTU19VTlNQRUNJRklFRBAAEhcKE0lERU5USVRZX0NMQVNTX1VTRVIQARIaChZJREVOVElUWV9DTEFTU19TRVJWSUNFEAISHAoYSURFTlRJVFlfQ0xBU1NfQ09NUE9ORU5UEAQSJAogSURFTlRJVFlfQ0xBU1NfUExBVEZPUk1fT1BFUkFUT1IQCDpTCgVhdXRoehIeLmdvb2dsZS5wcm90b2J1Zi5NZXRob2RPcHRpb25zGNGGAyABKAsyGy5naWJzb24uYXV0aC52MS5BdXRoT3B0aW9uc1IFYXV0aHpCOlo4Z2l0aHViLmNvbS96ZXJvLWRheS1haS9zZGsvYXBpL2dlbi9naWJzb24vYXV0aC92MTthdXRodjFiBnByb3RvMw", [file_google_protobuf_descriptor]);
+  fileDesc("ChxnaWJzb24vYXV0aC92MS9vcHRpb25zLnByb3RvEg5naWJzb24uYXV0aC52MSKPAQoLQXV0aE9wdGlvbnMSEAoIcmVsYXRpb24YASABKAkSEwoLb2JqZWN0X3R5cGUYAiABKAkSFgoOb2JqZWN0X2Rlcml2ZXIYAyABKAkSGgoSYWxsb3dlZF9pZGVudGl0aWVzGAQgASgFEhcKD3VuYXV0aGVudGljYXRlZBgFIAEoCBIMCgRzZWxmGAYgASgIKqgBCg1JZGVudGl0eUNsYXNzEh4KGklERU5USVRZX0NMQVNTX1VOU1BFQ0lGSUVEEAASFwoTSURFTlRJVFlfQ0xBU1NfVVNFUhABEhoKFklERU5USVRZX0NMQVNTX1NFUlZJQ0UQAhIcChhJREVOVElUWV9DTEFTU19DT01QT05FTlQQBBIkCiBJREVOVElUWV9DTEFTU19QTEFURk9STV9PUEVSQVRPUhAIOlMKBWF1dGh6Eh4uZ29vZ2xlLnByb3RvYnVmLk1ldGhvZE9wdGlvbnMY0YYDIAEoCzIbLmdpYnNvbi5hdXRoLnYxLkF1dGhPcHRpb25zUgVhdXRoekI6WjhnaXRodWIuY29tL3plcm8tZGF5LWFpL3Nkay9hcGkvZ2VuL2dpYnNvbi9hdXRoL3YxO2F1dGh2MWIGcHJvdG8z", [file_google_protobuf_descriptor]);
 
 /**
  * AuthOptions is the per-method authorization annotation. It is attached to
  * every RPC via the (gibson.auth.v1.authz) extension.
  *
- * Two mutually-exclusive forms:
+ * Three mutually-exclusive forms (at most one may be set per RPC):
  *   1) unauthenticated = true: the RPC is callable without identity (Ping,
- *      health checks). The relation/object fields MUST be empty in this form.
- *   2) unauthenticated = false (default): the RPC requires identity. The
- *      relation, object_type, object_deriver, and allowed_identities fields
- *      MUST be populated.
+ *      health checks). The relation/object/allowed_identities fields MUST be
+ *      empty in this form.
+ *   2) rule form (unauthenticated = false, self = false, default): the RPC
+ *      requires identity and an OpenFGA tuple check. The relation, object_type,
+ *      object_deriver, and allowed_identities fields MUST be populated.
+ *   3) self = true: "authenticated user reading their own data". No FGA tuple
+ *      exists to check; the caller IS the subject. The following contract
+ *      applies:
+ *        (a) Envoy jwt_authn runs and validates the caller's JWT before the
+ *            request reaches ext-authz.
+ *        (b) ext-authz skips the FGA Check call (no OpenFGA round-trip).
+ *        (c) ext-authz still applies the per-RPC allowed_identities bitfield;
+ *            callers of a class not in the bitfield are rejected.
+ *        (d) The daemon handler is responsible for scoping the response to the
+ *            verified caller subject (via X-Gibson-Identity-Subject).
+ *      allowed_identities MUST be set when self = true. Spec: self-mode-authz.
  *
  * @generated from message gibson.auth.v1.AuthOptions
  */
@@ -44,7 +56,7 @@ export type AuthOptions = Message<"gibson.auth.v1.AuthOptions"> & {
   /**
    * relation is the OpenFGA relation evaluated against the derived object
    * (e.g. "member", "admin", "platform_operator", "can_read_credential").
-   * Required when unauthenticated is false.
+   * Required when unauthenticated is false and self is false.
    *
    * @generated from field: string relation = 1;
    */
@@ -53,7 +65,7 @@ export type AuthOptions = Message<"gibson.auth.v1.AuthOptions"> & {
   /**
    * object_type is the OpenFGA object type the relation is evaluated against
    * (e.g. "tenant", "mission", "credential", "system_tenant"). Required when
-   * unauthenticated is false.
+   * unauthenticated is false and self is false.
    *
    * @generated from field: string object_type = 2;
    */
@@ -68,9 +80,9 @@ export type AuthOptions = Message<"gibson.auth.v1.AuthOptions"> & {
    *   - "from_field('<name>')"          : object = "<object_type>:" + req.<name>
    *   - "tenant_and_field('<name>')"    : object = "<object_type>:" + identity.tenant + ":" + req.<name>
    *
-   * Required when unauthenticated is false. The grammar is interpreted by the
-   * ext-authz registry loader; unknown derivers cause ext-authz to refuse to
-   * start (fail-closed).
+   * Required when unauthenticated is false and self is false. The grammar is
+   * interpreted by the ext-authz registry loader; unknown derivers cause
+   * ext-authz to refuse to start (fail-closed).
    *
    * @generated from field: string object_deriver = 3;
    */
@@ -82,7 +94,8 @@ export type AuthOptions = Message<"gibson.auth.v1.AuthOptions"> & {
    * this before consulting FGA: callers of a class not in the bitfield are
    * rejected without an FGA call.
    *
-   * Required when unauthenticated is false. At least one bit MUST be set.
+   * Required when unauthenticated is false (rule form) or when self is true.
+   * At least one bit MUST be set in those cases.
    *
    * @generated from field: int32 allowed_identities = 4;
    */
@@ -99,6 +112,24 @@ export type AuthOptions = Message<"gibson.auth.v1.AuthOptions"> & {
    * @generated from field: bool unauthenticated = 5;
    */
   unauthenticated: boolean;
+
+  /**
+   * self, when true, declares that this is a "user reads their own data" RPC
+   * that requires a valid JWT identity but does not need an OpenFGA tuple
+   * lookup (the caller IS the subject — there is nothing to check). ext-authz
+   * will:
+   *   (a) still validate that Envoy ran jwt_authn (subject header is non-empty);
+   *   (b) skip the FGA Check call entirely;
+   *   (c) apply the allowed_identities bitfield to reject wrong caller classes;
+   *   (d) return OK, relying on the daemon handler to self-scope the response.
+   *
+   * Mutually exclusive with unauthenticated and with the rule form
+   * (relation/object_type/object_deriver). Setting self = true without
+   * allowed_identities is a codegen error. Spec: self-mode-authz.
+   *
+   * @generated from field: bool self = 6;
+   */
+  self: boolean;
 };
 
 /**

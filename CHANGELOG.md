@@ -5,6 +5,72 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-05-04
+
+Completes the dashboard side of the
+**`tenant-secrets-broker-completion`** spec. Pairs with gibson v0.29.0
+and SDK v0.99.0.
+
+The `/settings/secrets-backend` page now does what its UI has been
+claiming since `secrets-tenant-lifecycle` shipped — switching providers
+actually changes the broker that serves the tenant's secrets. Before
+this change, calls landed as `Unimplemented` because the SDK admin v1
+service was never registered on the daemon side; that's now fixed in
+gibson v0.29.0. This release adds the dashboard counterpart: a real
+secret-count drives the migration warning, and an explicit "I
+understand" checkbox gates Save when switching with secrets present.
+
+### Added
+
+- **`countSecrets()`** typed wrapper in
+  `src/lib/gibson-client/tenant-broker-config.ts` for the new
+  `gibson.admin.v1.TenantAdminService.CountSecrets` admin RPC.
+- **Acknowledgement checkbox** in `SecretsBackendForm`. When the user
+  is switching from the currently-configured provider AND the tenant
+  has at least one existing secret (or the count RPC is unreachable),
+  an inline amber warning appears with a Shadcn Checkbox. Save is
+  disabled until the checkbox is ticked. The checkbox resets when the
+  selected provider changes again.
+
+### Changed
+
+- **`SecretsBackendContent` now fetches the broker config and the
+  secret count in parallel** via `Promise.allSettled` and threads a
+  real `secretCount: number` through to the form. The previous
+  hard-coded `hasExistingSecrets = true` (which forced the warning to
+  fire on every provider switch regardless of state) is gone.
+- **The migration warning is now an inline alert with an
+  acknowledgement checkbox**, replacing the always-on
+  `MigrationWarningDialog` (which has been removed). Provider
+  switching is no longer dialog-gated; the checkbox-gates-Save model
+  matches the spec design's "fail-loud, opt-in" requirement.
+- **TS proto bindings + authz registry regenerated** for SDK v0.99.0
+  via `pnpm proto:generate` and `pnpm prebuild`. New entry
+  `/gibson.admin.v1.TenantAdminService/CountSecrets` in
+  `src/gen/authz/registry.ts`; `useAuthorize` and `assertAuthorized`
+  pick it up automatically.
+
+### Sentinel: `secretCount === -1`
+
+When the daemon's `CountSecrets` RPC is unreachable
+(`Promise.allSettled` rejection on the count side),
+`SecretsBackendContent` substitutes `-1` for `secretCount`. The form
+treats `-1` as "conservative path — assume there might be secrets"
+and renders the warning + checkbox. A muted-text caveat "Could not
+load current secret count; assuming there may be existing secrets."
+is shown so operators understand why the warning is firing on what
+may be a brand-new tenant. Spec: `tenant-secrets-broker-completion`
+R3.6 + design D4.
+
+### Tests
+
+- New `src/components/secrets-backend/__tests__/SecretsBackendForm.test.tsx`
+  — four RTL tests covering all four R3 acceptance criteria. Required
+  jsdom polyfills for Radix Select internals (`scrollIntoView`,
+  pointer-capture methods, class-based `ResizeObserver`).
+
+---
+
 ## [1.5.1] - 2026-05-01
 
 Hotfix completing the dashboard side of the

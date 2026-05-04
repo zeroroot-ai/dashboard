@@ -94,5 +94,29 @@ export async function setBrokerConfig(
   }
 }
 
+/**
+ * Returns the number of secrets currently stored in the tenant's active
+ * broker. The response carries no names, values, or per-row metadata —
+ * only an integer count.
+ *
+ * Used by SecretsBackendContent to gate the migration-warning UX before
+ * a tenant admin switches broker providers (Spec
+ * tenant-secrets-broker-completion R3).
+ *
+ * Note: the proto field is int64 which @bufbuild deserialises as bigint.
+ * The dashboard treats counts as plain numbers — practical secret counts
+ * are well under 2^53. If a tenant ever crosses that, a follow-up spec
+ * can switch the form to bigint-aware comparisons.
+ */
+export async function countSecrets(): Promise<number> {
+  try {
+    const client = userClient(TenantAdminService);
+    const resp = await client.countSecrets({});
+    return Number(resp.count);
+  } catch (err) {
+    throwMapped(err);
+  }
+}
+
 // Re-export the BrokerProvider enum for convenience in action files.
 export { BrokerProvider } from '@/src/gen/gibson/admin/v1/tenant_pb';

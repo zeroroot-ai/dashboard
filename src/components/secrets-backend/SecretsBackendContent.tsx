@@ -18,30 +18,55 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getServerSession } from "@/src/lib/auth";
 import { hasRoleAtLeast } from "@/src/lib/auth/roles";
 import { getActiveTenant } from "@/src/lib/auth/active-tenant";
-import { getBrokerConfig } from "@/src/lib/gibson-client/tenant-broker-config";
+import {
+  getBrokerConfig,
+  countSecrets,
+} from "@/src/lib/gibson-client/tenant-broker-config";
 import type { RedactedConfig } from "@/src/lib/gibson-client/tenant-broker-config";
 import { SecretsBackendForm } from "./SecretsBackendForm";
+
+// SECRET_COUNT_UNKNOWN is the sentinel server-side fallback used when the
+// daemon's CountSecrets RPC is unreachable. The form treats it as
+// equivalent to "secrets present" (conservative — show the migration
+// warning) so a transient daemon error never silently hides the warning.
+// See spec tenant-secrets-broker-completion R3.6 + design D4.
+const SECRET_COUNT_UNKNOWN = -1;
 
 // ---------------------------------------------------------------------------
 // Server-side data fetch helpers
 // ---------------------------------------------------------------------------
 
-async function fetchCurrentConfig(): Promise<{
+// fetchCurrentState fetches the redacted broker config and the secret
+// count in parallel. countSecrets() failure is silent — it falls back to
+// SECRET_COUNT_UNKNOWN per Requirement 3.6 so the form renders the
+// warning conservatively. getBrokerConfig() failure surfaces in the
+// existing daemon-error banner.
+async function fetchCurrentState(): Promise<{
   config: RedactedConfig | null;
+  secretCount: number;
   error: string | null;
 }> {
-  try {
-    const resp = await getBrokerConfig();
-    return {
-      config: resp.configured ? (resp.config ?? null) : null,
-      error: null,
-    };
-  } catch (err) {
-    // Daemon unreachable or auth error — surface a banner, not a crash.
-    const msg =
-      err instanceof Error ? err.message : "Failed to load broker config";
-    return { config: null, error: msg };
+  const [cfgResult, countResult] = await Promise.allSettled([
+    getBrokerConfig(),
+    countSecrets(),
+  ]);
+
+  let config: RedactedConfig | null = null;
+  let error: string | null = null;
+  if (cfgResult.status === "fulfilled") {
+    const resp = cfgResult.value;
+    config = resp?.configured ? (resp.config ?? null) : null;
+  } else {
+    const reason = cfgResult.reason;
+    error = reason instanceof Error ? reason.message : "Failed to load broker config";
   }
+
+  const secretCount =
+    countResult.status === "fulfilled"
+      ? countResult.value
+      : SECRET_COUNT_UNKNOWN;
+
+  return { config, secretCount, error };
 }
 
 // ---------------------------------------------------------------------------
@@ -66,13 +91,7 @@ export async function SecretsBackendContent() {
     redirect("/dashboard/pages/settings");
   }
 
-  const { config, error } = await fetchCurrentConfig();
-
-  // We cannot determine hasExistingSecrets without an additional RPC here;
-  // default to true to be conservative (always show the migration warning
-  // when the tenant switches providers). The secrets list page Task 10 will
-  // fetch the actual count.
-  const hasExistingSecrets = true;
+  const { config, secretCount, error } = await fetchCurrentState();
 
   return (
     <div className="space-y-6">
@@ -96,7 +115,7 @@ export async function SecretsBackendContent() {
 
       <SecretsBackendForm
         currentConfig={config}
-        hasExistingSecrets={hasExistingSecrets}
+        secretCount={secretCount}
       />
     </div>
   );

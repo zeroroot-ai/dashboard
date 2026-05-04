@@ -25,6 +25,7 @@ import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormField,
@@ -40,14 +41,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 
 import {
@@ -149,57 +142,6 @@ function ProbeBanner({ result }: ProbeBannerProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Provider migration warning dialog
-// ---------------------------------------------------------------------------
-
-interface MigrationWarningDialogProps {
-  open: boolean;
-  targetProvider: ProviderMeta | undefined;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-function MigrationWarningDialog({
-  open,
-  targetProvider,
-  onConfirm,
-  onCancel,
-}: MigrationWarningDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onCancel(); }}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-sm">
-            <AlertTriangle className="size-4 text-amber-500" />
-            Switch secrets backend?
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            Switching to{" "}
-            <strong>{targetProvider?.label ?? "the new provider"}</strong>{" "}
-            does <em>not</em> migrate existing secrets automatically. New
-            secrets will be stored in the new backend; existing secrets remain
-            in the old backend until manually moved or recreated. There is no
-            automatic migration.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" size="sm" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={onConfirm}
-          >
-            Switch anyway
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // SecretsBackendForm (main export)
 // ---------------------------------------------------------------------------
 
@@ -209,14 +151,22 @@ export interface SecretsBackendFormProps {
    * broker configured yet (new tenant defaults to gibson_hosted).
    */
   currentConfig: RedactedConfig | null;
-  /** Whether the tenant has at least one secret stored (used to decide if
-   * migration warning should fire when switching providers). */
-  hasExistingSecrets: boolean;
+  /**
+   * Number of secrets currently stored in the tenant's active broker.
+   * Used to decide whether to show the migration warning + acknowledgement
+   * checkbox when the user picks a different provider.
+   *
+   * Sentinel -1 means "unknown" — the daemon's CountSecrets RPC was
+   * unreachable. In that case the form behaves conservatively: warning +
+   * checkbox shown on any provider change. See spec
+   * tenant-secrets-broker-completion R3.6 + design D4.
+   */
+  secretCount: number;
 }
 
 export function SecretsBackendForm({
   currentConfig,
-  hasExistingSecrets,
+  secretCount,
 }: SecretsBackendFormProps) {
   // Map the proto BrokerProvider enum value back to the form key.
   function resolveInitialProvider(): BrokerProviderKey {
@@ -260,9 +210,21 @@ export function SecretsBackendForm({
 
   const selectedProvider = form.watch("provider") as BrokerProviderKey;
   const authMethod = form.watch("authMethod");
+  const acknowledgeMigration = form.watch("acknowledgeMigration");
 
-  // Dialog state for migration warning
-  const [pendingProvider, setPendingProvider] = React.useState<BrokerProviderKey | null>(null);
+  // showMigrationWarning gates the inline warning + acknowledgement
+  // checkbox below. Spec tenant-secrets-broker-completion R3.3/3.4/3.6:
+  //
+  //   - secretCount === 0       → no warning at all (nothing to orphan)
+  //   - secretCount > 0         → warning + checkbox required to enable Save
+  //   - secretCount === -1      → conservative path (RPC unreachable; assume
+  //                               there might be secrets and show the warning)
+  //
+  // The condition also requires the user to actually be switching providers
+  // — staying on the current provider does not orphan anything.
+  const showMigrationWarning =
+    selectedProvider !== initialProvider &&
+    (secretCount > 0 || secretCount === -1);
 
   // Probe / save result state
   const [probeResult, setProbeResult] = React.useState<ProbeActionResult | null>(null);
@@ -282,38 +244,23 @@ export function SecretsBackendForm({
   const isReadOnly = probeAuthLoading || saveAuthLoading || (!canProbe && !canSave);
 
   // --------------------------------------------------------------------------
-  // Provider switching with migration warning
+  // Provider switching
+  //
+  // Switching providers is free (no dialog gate) — Save is what's gated by
+  // the acknowledgement checkbox when secretCount > 0. The reset clears
+  // sensitive fields, the acknowledgement (back to false), and probe/save
+  // state so stale values never leak across providers.
+  // Spec: tenant-secrets-broker-completion R3.4 (last sentence).
   // --------------------------------------------------------------------------
 
   function handleProviderChange(value: string) {
     const next = value as BrokerProviderKey;
-    if (hasExistingSecrets && next !== selectedProvider) {
-      setPendingProvider(next);
-    } else {
-      applyProviderSwitch(next);
-    }
-  }
-
-  function applyProviderSwitch(next: BrokerProviderKey) {
-    // Reset sensitive fields and provider-specific non-sensitive fields when
-    // switching so stale values do not leak across providers.
     form.reset({
       ...BROKER_FORM_DEFAULTS,
       provider: next,
     });
     setProbeResult(null);
     setSaveResult(null);
-  }
-
-  function confirmSwitch() {
-    if (pendingProvider) {
-      applyProviderSwitch(pendingProvider);
-      setPendingProvider(null);
-    }
-  }
-
-  function cancelSwitch() {
-    setPendingProvider(null);
   }
 
   // --------------------------------------------------------------------------
@@ -401,19 +348,12 @@ export function SecretsBackendForm({
     return fd;
   }
 
-  const pendingProviderMeta = PROVIDERS.find((p) => p.key === pendingProvider);
   const isGibsonHosted = selectedProvider === "gibson_hosted";
+  const targetProviderLabel =
+    PROVIDERS.find((p) => p.key === selectedProvider)?.label ?? "the new provider";
 
   return (
     <div className="space-y-6">
-      {/* Migration warning dialog */}
-      <MigrationWarningDialog
-        open={pendingProvider !== null}
-        targetProvider={pendingProviderMeta}
-        onConfirm={confirmSwitch}
-        onCancel={cancelSwitch}
-      />
-
       {/* Existing config summary */}
       {currentConfig && (
         <div className="text-xs text-muted-foreground">
@@ -503,6 +443,53 @@ export function SecretsBackendForm({
             )}
           </div>
 
+          {/* Migration warning + acknowledgement checkbox.
+              Visible only when the user is switching providers AND the
+              tenant currently has secrets (or the count RPC is unreachable
+              — sentinel -1 falls back to the conservative warning).
+              Spec: tenant-secrets-broker-completion R3.3, R3.4, R3.6. */}
+          {showMigrationWarning && (
+            <Alert variant="default" className="border-amber-500/50" data-testid="migration-warning">
+              <AlertTriangle className="size-4 text-amber-500" />
+              <AlertDescription className="space-y-3 text-xs">
+                <div>
+                  Switching to <strong>{targetProviderLabel}</strong> does{" "}
+                  <em>not</em> migrate existing secrets automatically. New
+                  secrets will be stored in the new backend; existing secrets
+                  remain in the old backend until manually moved or recreated.
+                  {secretCount === -1 && (
+                    <>
+                      {" "}
+                      <span className="text-muted-foreground">
+                        (Could not load current secret count; assuming there
+                        may be existing secrets.)
+                      </span>
+                    </>
+                  )}
+                </div>
+                <FormField
+                  control={form.control}
+                  name="acknowledgeMigration"
+                  render={({ field }) => (
+                    <FormItem className="flex items-start gap-2 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="acknowledge-migration"
+                        />
+                      </FormControl>
+                      <FormLabel className="text-xs font-normal leading-tight">
+                        I understand existing secrets will not be migrated to
+                        the new provider.
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Probe / save result banners */}
           {(probeResult || saveResult) && (
             <ProbeBanner result={saveResult ?? probeResult} />
@@ -530,7 +517,11 @@ export function SecretsBackendForm({
                 <Button
                   type="submit"
                   size="sm"
-                  disabled={isSaving || isProbing}
+                  disabled={
+                    isSaving ||
+                    isProbing ||
+                    (showMigrationWarning && !acknowledgeMigration)
+                  }
                   data-testid="save-button"
                 >
                   {isSaving && <Loader2 className="size-3 animate-spin" />}

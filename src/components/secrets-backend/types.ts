@@ -73,6 +73,19 @@ export interface BrokerFormValues {
   gcpServiceAccountJson: string;
   /** Azure service principal client secret */
   azureClientSecret: string;
+
+  /**
+   * UX-only acknowledgement that switching providers will not migrate
+   * existing secrets. Required (true) when showMigrationWarning is true
+   * before the Save button is enabled. Never sent to the daemon — the
+   * server action's Zod schema strips unknown fields.
+   *
+   * Reset to false whenever the selected provider changes so an
+   * acknowledgement does not carry across edits.
+   *
+   * Spec: tenant-secrets-broker-completion R3.4.
+   */
+  acknowledgeMigration: boolean;
 }
 
 export const BROKER_FORM_DEFAULTS: BrokerFormValues = {
@@ -95,4 +108,5 @@ export const BROKER_FORM_DEFAULTS: BrokerFormValues = {
   awsExternalId: "",
   gcpServiceAccountJson: "",
   azureClientSecret: "",
+  acknowledgeMigration: false,
 };
