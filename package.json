@@ -92,7 +92,7 @@
     "@tiptap/core": "^3.15.3",
     "@tiptap/extension-code-block-lowlight": "^3.15.3",
     "@tiptap/extension-color": "^3.15.3",
-    "@tiptap/extension-heading": "^3.15.3",
+    "@tiptap/extension-heading": "^3.22.5",
     "@tiptap/extension-highlight": "^3.15.3",
     "@tiptap/extension-horizontal-rule": "^3.15.3",
     "@tiptap/extension-image": "^3.15.3",
