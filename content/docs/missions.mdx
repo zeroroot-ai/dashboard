@@ -1,9 +1,165 @@
 ---
 title: Missions
-description: What a mission is, how the DAG executes, and the pause/resume/checkpoint lifecycle.
+description: Build a mission DAG, run it, and use pause / resume / checkpoint replay to manage long-running work.
 ---
 
-This page is a stub — contributions welcome. The finished version will
-cover what a mission is, how the DAG executor schedules work, and the
-pause / resume / checkpoint lifecycle. Source lives at
-[github.com/zero-day-ai/gibson-adk](https://github.com/zero-day-ai/gibson-adk).
+A **mission** is the unit of work in Gibson. It describes — as a
+directed graph of nodes — which agents, tools, and plugins should run,
+in what order, against what target. Gibson takes that graph, dispatches
+the work, captures every observation into the knowledge graph, surfaces
+findings, and emits a structured event stream you can monitor in the
+dashboard.
+
+## When to use a mission
+
+- You want a recurring, repeatable workflow ("nightly subdomain sweep
+  with reproducible nuclei hits").
+- You want multiple components to coordinate ("recon agent feeds the
+  triage agent feeds the reporter agent").
+- You want pause / resume across long-running work, with an audit trail
+  of what happened.
+
+If you only need a single one-shot LLM call, you don't need a mission —
+just call your agent directly. Missions earn their keep when there's
+orchestration, retries, or evidence to preserve.
+
+## Building a mission
+
+The dashboard's mission editor at
+[`app.zero-day.ai/dashboard/missions/new`](https://app.zero-day.ai/dashboard/missions/new)
+is the easiest way to assemble a mission. The editor produces a
+`MissionDefinition` you can save, share, and re-run.
+
+A mission has:
+
+| Piece | Purpose |
+|---|---|
+| **Name & description** | Human-readable identity. |
+| **Target reference** | The system this mission acts against — a URL, a host, an LLM endpoint, a Kubernetes cluster. |
+| **Nodes** | The work units (see below). |
+| **Edges** | Dependencies between nodes. |
+| **Entry & exit points** | Where the run starts and ends. |
+| **Variables** | Inputs you supply at run time (e.g. a search query, a CVE ID). |
+| **Dependencies** | Required agents / tools / plugins. The mission won't run if any are missing or denied. |
+
+### Node types
+
+| Type | What it does |
+|---|---|
+| **Agent** | Dispatches an autonomous reasoning step. The agent receives a task, calls tools/plugins, and returns a result. |
+| **Tool** | Calls a tool's typed RPC directly. Use this when you don't need an LLM in the loop for a particular step. |
+| **Plugin** | Invokes a plugin method (e.g. "lookup host on Shodan"). |
+| **Condition** | Branches based on a CEL expression evaluated over prior node outputs. |
+| **Parallel** | Fans out to multiple successor nodes concurrently. |
+| **Join** | Barrier — waits for all predecessors before continuing. |
+
+The editor lets you wire these together visually. Behind the scenes,
+the mission is stored as a `MissionDefinition` proto — the same shape
+you'd build by hand if you scripted mission creation against the SDK.
+
+## Running a mission
+
+Click **Run** in the editor (or call `RunMission` from your own
+client). Gibson:
+
+1. Validates that every component the mission references is enrolled
+   and that your principal has permission to run it.
+2. Allocates a mission ID, opens an event stream, and starts the
+   orchestrator.
+3. Walks the DAG: for every node whose predecessors have finished, it
+   dispatches the work — agents over their long-running streams, tools
+   directly, plugins through the plugin dispatcher.
+4. Captures everything tools and agents emit — `DiscoveryResult` field
+   100 of any tool response auto-populates the knowledge graph; agents
+   submit findings explicitly via the harness.
+5. Streams lifecycle events to the dashboard's mission detail page.
+
+## The event stream
+
+Every mission emits a typed event stream:
+
+| Event | Meaning |
+|---|---|
+| `mission.started` | Orchestrator began the run. |
+| `node.started` | A node was dispatched. |
+| `node.finished` | A node returned (success or failure). |
+| `agent.delegated` | An agent spawned a subtask via `DelegateToAgent`. |
+| `finding.submitted` | An agent or tool submitted a finding. |
+| `secret.read` | A plugin retrieved a credential — the secret name is logged, never the value. |
+| `checkpoint.written` | A checkpoint was persisted. |
+| `mission.paused` | The mission was suspended; resumable. |
+| `mission.completed` | All exit points reached. |
+| `mission.failed` | A non-recoverable failure terminated the mission. |
+
+The dashboard's mission detail page renders these in real time. You can
+also consume the stream programmatically by calling `RunMission` from
+your own gRPC client.
+
+## Pause, resume, cancel
+
+Long-running missions don't have to be all-or-nothing.
+
+| Action | What happens | Where |
+|---|---|---|
+| **Pause** | Suspends at the next clean node boundary. With `force=true`, suspends immediately and rolls back any in-flight node. | Mission detail page → **Pause**, or `PauseMission` RPC. |
+| **Resume** | Continues from the latest checkpoint by default, or from a specific one. | Mission detail page → **Resume**, or `ResumeMission` RPC. |
+| **Cancel** | Hard stop. Active grants for components in the run expire. | Mission detail page → **Cancel**, or `CancelMission` RPC. |
+
+Checkpoints are written automatically after every clean node
+completion. Each checkpoint snapshots:
+
+- which nodes are done, in-flight, pending
+- mission memory at that point
+- node outputs accumulated so far
+
+## Replay
+
+The mission detail page exposes **Replay from checkpoint X**. Replay is
+how you ask "what if the mission had taken a different branch?" — pick
+a checkpoint, choose the node to resume from, and Gibson re-executes
+the downstream work fresh.
+
+Common uses:
+
+- The triage agent flagged the wrong thing — fix the prompt, replay
+  from the triage node.
+- A tool returned a flaky result — replay the tool call without
+  re-running the prior recon nodes.
+- You want to compare two LLM slots on the same mission — replay with
+  a different slot binding.
+
+## Memory across the mission
+
+Gibson exposes three memory tiers via `Harness.Memory()`:
+
+| Tier | Scope | Lifetime |
+|---|---|---|
+| **Working memory** | One agent invocation | Cleared when `Execute` returns |
+| **Mission memory** | Every node in this mission | Lives as long as the mission |
+| **Long-term memory** | Tenant-wide across missions | Persists; semantic search over embeddings |
+
+Use working memory as a scratchpad inside one agent run; mission memory
+to hand context between agent / tool nodes; long-term memory to teach
+future missions from this one. You don't write Redis or vector queries
+yourself — the typed `Memory()` API handles that.
+
+## Triggering a mission programmatically
+
+There is no `gibson-cli mission` subcommand today. The two practical
+paths are:
+
+- **Dashboard** — visual builder + Run button.
+- **gRPC** — `DaemonService.CreateMission` with a `MissionDefinition`,
+  then `DaemonService.RunMission` with the returned ID. The streaming
+  response gives you the event log directly. Useful for CI, schedulers,
+  or integrating Gibson into another product.
+
+## Related
+
+- [Findings](./findings) — what `finding.submitted` events represent
+  and how findings show up in the dashboard.
+- [Knowledge graph](./knowledge-graph) — what gets auto-populated as
+  your mission runs.
+- [Observability](./observability) — traces, metrics, and replay in
+  more detail.
+- [Roles & permissions](./rbac) — what controls who can run a mission.

@@ -7,11 +7,13 @@
     "---",
     "component-bootstrap",
     "missions",
+    "findings",
     "tools",
     "plugins",
     "secrets-management",
     "---",
     "knowledge-graph",
+    "taxonomy",
     "rbac",
     "observability",
     "cli-reference"

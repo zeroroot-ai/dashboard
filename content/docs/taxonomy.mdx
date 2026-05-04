@@ -1,0 +1,224 @@
+---
+title: Taxonomy
+description: The standard entity types and relationships Gibson recognises — and how to extend the taxonomy when you need shapes Gibson doesn't ship.
+---
+
+Gibson ships a **standard taxonomy** of entities and relationships.
+Every mission, every tool output, every finding — they all reference
+the same set of well-known types. That consistency is what lets the
+dashboard, the knowledge graph, and downstream agents reason about
+data they didn't produce themselves.
+
+This page lists what Gibson recognises out of the box and explains the
+escape hatches for shapes the standard taxonomy doesn't cover.
+
+## Why a fixed taxonomy
+
+When every tool decides its own data shape, the result is N-by-M
+glue: every agent has to learn every tool's idiom, every dashboard
+view has to special-case every payload, and similarity search becomes
+useless because nothing's normalised.
+
+Gibson's answer is a small, opinionated taxonomy that covers most
+security work directly, plus an explicit escape hatch
+(`custom_node` / `explicit_relationship`) for anything outside it.
+
+## Standard entity types
+
+Asset entities — what the target system is and exposes:
+
+| Entity | What it represents |
+|---|---|
+| **Host** | A reachable host: IP address, hostname, or both. |
+| **Port** | A port on a host. |
+| **Service** | A service identified on a port (SSH, HTTP, …). |
+| **Endpoint** | A specific URL or API endpoint exposed by a service. |
+| **Domain** | A registrable domain (`example.com`). |
+| **Subdomain** | A subdomain of a registered domain (`api.example.com`). |
+| **Technology** | A software / framework / library identified on a target (`nginx 1.25.0`, `Spring Boot 3.x`). |
+| **Certificate** | An X.509 certificate observed on a service. |
+
+Security entities — what's interesting about the target:
+
+| Entity | What it represents |
+|---|---|
+| **Finding** | A security finding. Severity, evidence, target, description. The output that matters. |
+| **Evidence** | A structured payload supporting a finding (request/response, config, trace). |
+| **Attack pattern** | A reusable attack pattern (e.g. "credential stuffing"). Often crosswalked to MITRE ATT&CK. |
+| **Technique** | A specific technique used by an attack pattern. |
+
+Provenance entities — who did what, when:
+
+| Entity | What it represents |
+|---|---|
+| **Mission** | A mission run. |
+| **Mission node** | A node within a mission run. |
+| **Agent execution** | One `Execute` call by an agent during a mission. |
+| **Decision** | A reasoned decision an agent or the orchestrator made (with rationale). |
+
+Compliance entities (emitted by Gibson, not your components):
+
+| Entity | What it represents |
+|---|---|
+| **Compliance signal** | A normalised marker tying observed behaviour to a compliance framework (PCI, SOC 2, HIPAA, …). |
+
+## Standard relationships
+
+| Relationship | From → To | Means |
+|---|---|---|
+| `HAS_PORT` | host → port | The port was found on the host. |
+| `RUNS_SERVICE` | port → service | The service was identified on the port. |
+| `AFFECTS` | finding → (host \| service \| endpoint \| …) | The finding applies to this asset. |
+| `USES_TECHNIQUE` | attack pattern → technique | Composition. |
+| `DISCOVERED_IN` | (any) → mission | Provenance — which mission produced this node. |
+| `PRODUCES` | agent execution → (any) | An agent execution emitted this node. |
+| `SIMILAR_TO` | (any) → (any) | Embedding-similarity edge written by the platform. |
+| `DEPENDS_ON` | mission node → mission node | Mirrors mission DAG edges in graph form. |
+| `PART_OF` | (any) → (parent) | Containment (e.g. a subdomain is `PART_OF` a domain). |
+| `EMITTED_SIGNAL` | agent execution → decision (or signal) | Audit-friendly trace of why something happened. |
+
+## Where you populate the taxonomy
+
+Two natural points:
+
+### From a tool
+
+Reserve **field 100** of your tool's response proto for a
+`gibson.graphrag.v1.DiscoveryResult`. Anything you put in it is
+ingested with the right labels, relationships, and provenance.
+
+```go
+out.Discovery = &graphragv1.DiscoveryResult{
+    Hosts: []*graphragv1.Host{{Address: "10.0.0.1"}},
+    Ports: []*graphragv1.Port{{
+        HostAddress: "10.0.0.1",
+        Number:      22,
+        Protocol:    "tcp",
+    }},
+    Services: []*graphragv1.Service{{
+        HostAddress: "10.0.0.1",
+        Port:        22,
+        Protocol:    "ssh",
+        Version:     "OpenSSH 9.6",
+    }},
+}
+```
+
+Gibson generates the `HAS_PORT` and `RUNS_SERVICE` edges for you.
+
+### From an agent
+
+When you submit a finding via `h.SubmitFinding(...)`, Gibson stores
+the finding as a `:finding` node and links it via `AFFECTS` to the
+target. See [Findings](./findings).
+
+For ad-hoc decisions or notes the standard types don't cover:
+
+```go
+h.StoreNode(ctx, agent.StoreNodeRequest{
+    Label: "decision",
+    Properties: map[string]any{"reason": "skipped — vendor disputed"},
+    Relationships: []agent.Relationship{{
+        Type: "PART_OF", To: h.Mission().Id,
+    }},
+})
+```
+
+## Extending the taxonomy
+
+Two escape hatches when the standard types don't fit:
+
+### `CustomNode`
+
+Use `DiscoveryResult.custom_node` for nodes whose shape doesn't match
+any standard entity:
+
+```go
+out.Discovery.CustomNode = []*graphragv1.CustomNode{{
+    Label: "iot_device",
+    Properties: map[string]string{
+        "manufacturer": "Acme",
+        "model":        "BSD-9000",
+        "firmware":     "1.2.3",
+    },
+}}
+```
+
+Custom nodes are first-class in the graph — they show up in queries,
+get provenance stamps, and can be linked into the rest of the graph
+via `ExplicitRelationship`.
+
+### `ExplicitRelationship`
+
+For relationships outside the standard list:
+
+```go
+out.Discovery.ExplicitRelationship = []*graphragv1.ExplicitRelationship{{
+    From:       hostId,
+    To:         iotDeviceId,
+    Type:       "MANAGES",
+    Properties: map[string]string{"protocol": "modbus"},
+}}
+```
+
+### Compliance signals
+
+If your agent identifies behaviour relevant to a compliance framework,
+emit a **`ComplianceSignal`** rather than a custom node. Gibson
+recognises a curated list of frameworks and renders them in the
+dashboard's compliance view:
+
+```go
+h.EmitComplianceSignal(ctx, agent.ComplianceSignal{
+    Framework:  "PCI-DSS-4.0",
+    Control:    "8.3.1",
+    Status:     agent.SignalFail,
+    Evidence:   "TLS 1.0 detected on cardholder service.",
+    TargetRef:  serviceId,
+})
+```
+
+Compliance signals show up on the asset's detail page, in compliance
+roll-ups, and are exportable via the audit log.
+
+## Best practices
+
+- **Prefer the standard taxonomy.** It costs you a tiny bit of
+  expressiveness and buys you a lot of free integration with the rest
+  of Gibson.
+- **Use `CustomNode` deliberately.** Each custom shape you introduce
+  is a small dialect your team has to remember. Three custom shapes
+  is fine; thirty is a smell.
+- **Pin properties.** Where the standard taxonomy has typed properties
+  (e.g. `Service.protocol`), populate them — even if you also stash
+  raw output in a free-form field. Typed fields are what filters and
+  similarity search use.
+- **Don't reinvent findings.** A vulnerability is a `Finding`, not a
+  custom node. The dashboard's triage flow only works for `:finding`
+  nodes.
+
+## Versioning
+
+The standard taxonomy evolves. New entity types and relationships are
+added in backwards-compatible ways — your existing graph keeps working,
+and your tools/agents start producing the new shapes when you bump the
+SDK.
+
+When the taxonomy changes:
+
+1. The SDK release notes call out the new entities and relationships.
+2. The dashboard adds (or upgrades) views to render them.
+3. `DiscoveryResult` gets new fields — your tools opt in by populating
+   them, or simply ignore them and keep emitting the previous shape.
+
+If you've built custom-node patterns that the new release covers
+natively, plan a migration: re-emit those nodes with the new types,
+and let the old `CustomNode` versions age out via retention.
+
+## Related
+
+- [Knowledge graph](./knowledge-graph) — what the graph is, how to
+  query it.
+- [Findings](./findings) — the highest-leverage entity in the
+  taxonomy.
+- [Tools](./tools) — how to populate `DiscoveryResult` field 100.

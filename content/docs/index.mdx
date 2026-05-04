@@ -1,12 +1,79 @@
 ---
 title: Gibson ADK
-description: Developer documentation for the Gibson Agent Development Kit — SDK, CLI, missions, knowledge graph, RBAC, and observability.
+description: Build autonomous security agents with Gibson — the agent orchestration platform from zero-day.ai. Get up and running in under an hour.
 ---
 
-Gibson is an AI-agent orchestration platform designed to move security R&D
-to production in a single day. These docs cover the Agent Development Kit
-(ADK) — the SDK, CLI, and conventions that let you vibe-code an agent and
-deploy it to any runtime that can dial `api.zero-day.ai`.
+Gibson is **zero-day.ai's** AI agent platform for security work. You
+build agents, tools, and plugins; Gibson runs them as missions,
+captures everything they discover into a knowledge graph, and gives
+your team a dashboard to monitor, replay, and act on findings.
 
-This site is a stub — contributions welcome. Source lives at
-[github.com/zero-day-ai/gibson-adk](https://github.com/zero-day-ai/gibson-adk).
+These docs are for builders — engineers and security teams using
+Gibson to ship autonomous workflows.
+
+## What you build
+
+Gibson exposes three component kinds, each suited to a different shape
+of work:
+
+| Component | Use it when… |
+|---|---|
+| **Agent** | You want autonomous reasoning. Agents pick what to do next, call tools, query the knowledge graph, and submit findings. They run inside a mission. |
+| **Tool** | You have a stateless capability with a fixed input/output contract — a port scan, an HTTP probe, a CVE lookup. Tools are called by agents. |
+| **Plugin** | You need a long-running, stateful integration — a Shodan client, a SIEM connector, a custom database. Plugins hold credentials and are called by tools. |
+
+You write components against the **Gibson SDK** (Go), enroll them with
+`gibson-cli`, and they connect to your tenant on `api.zero-day.ai`.
+
+## What Gibson does for you
+
+- **Mission orchestration** — you describe work as a DAG of nodes
+  (agents, tools, plugins, conditions, parallel branches). Gibson runs
+  it, with pause/resume and checkpoint replay.
+- **Knowledge graph** — every host, port, service, finding, and attack
+  pattern your agents see is stored in a per-tenant graph. Future
+  agents query it before re-doing work.
+- **Three-tier memory** — working memory inside one agent invocation;
+  mission memory shared by every node in the run; long-term memory that
+  persists across missions.
+- **LLM slot routing** — agents declare slots (`primary`,
+  `summarizer`, …); your tenant's policy maps each slot to a real
+  model. Bring your own provider keys.
+- **Secrets management** — bind credentials to plugins; rotate without
+  redeploying.
+- **Findings + audit** — every discovery is structured, severity-tagged,
+  and tied back to the mission, agent, and target that produced it.
+- **Observability** — Langfuse-backed traces, cost/latency metrics,
+  per-mission replay.
+
+## Where to start
+
+| If you want to… | Read |
+|---|---|
+| Set up your account and install the CLI | [Install](./install) |
+| See the whole flow end-to-end | [Getting Started](./getting-started) |
+| Ship your first agent | [Your First Agent](./first-agent) |
+| Add a stateless capability | [Tools](./tools) |
+| Connect a stateful integration | [Plugins](./plugins) |
+| Store and rotate credentials | [Secrets management](./secrets-management) |
+
+## Reference
+
+- **[Component bootstrap & auth](./component-bootstrap)** — how
+  components log in and how to debug a 401.
+- **[Missions](./missions)** — DAG model, lifecycle, replay.
+- **[Findings](./findings)** — submitting, triaging, exporting.
+- **[Knowledge graph](./knowledge-graph)** — how the graph is
+  populated, how to query it.
+- **[Taxonomy](./taxonomy)** — the standard entity types Gibson
+  recognizes, and how to extend them.
+- **[Roles & permissions](./rbac)** — tenant roles, per-component
+  grants, plugin invocation gates.
+- **[Observability](./observability)** — traces, metrics, audit log,
+  replay.
+- **[CLI reference](./cli-reference)** — every `gibson-cli` command.
+
+The Gibson SDK is at
+[`github.com/zero-day-ai/sdk`](https://github.com/zero-day-ai/sdk).
+The ADK (which ships `gibson-cli`) is at
+[`github.com/zero-day-ai/adk`](https://github.com/zero-day-ai/adk).

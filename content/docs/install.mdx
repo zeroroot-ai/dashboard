@@ -1,9 +1,162 @@
 ---
 title: Install
-description: Prerequisites, obtaining a gsk_ API key, and setting GIBSON_URL for your environment.
+description: Sign up, install gibson-cli, point it at your Gibson tenant, and verify the connection.
 ---
 
-This page is a stub — contributions welcome. The finished version will list
-prerequisites, walk through obtaining a `gsk_`-prefixed API key, and cover
-setting `GIBSON_URL` for local, staging, and hosted tenants. Source lives at
-[github.com/zero-day-ai/gibson-adk](https://github.com/zero-day-ai/gibson-adk).
+This page gets your workstation talking to Gibson. Gibson itself is a
+hosted service — there's nothing to install on the server side. The only
+thing you install locally is the **`gibson-cli`** binary, which you'll
+use to scaffold and enroll your agents, tools, and plugins.
+
+## Prerequisites
+
+| Tool | Why |
+|---|---|
+| **Go** (the version listed in the SDK's `go.mod`) | Building agents, tools, and plugins |
+| **`gibson-cli`** | Scaffolding, enrollment, plugin runtime |
+| **Docker** | Optional — only needed if you'll run plugins as pods |
+| **`protoc`** | Optional — only if you're defining custom tool/plugin protos |
+
+## 1. Sign up for a Gibson tenant
+
+Go to [zero-day.ai](https://zero-day.ai) and create an account. Your
+tenant is provisioned automatically; you'll be the **owner** of it.
+
+Trial accounts include 14 days of full platform access — see
+[zero-day.ai/pricing](https://zero-day.ai/pricing).
+
+## 2. Install `gibson-cli`
+
+The fastest path:
+
+```bash
+go install github.com/zero-day-ai/adk/cmd/gibson-cli@latest
+```
+
+Or build from source if you want to track `main`:
+
+```bash
+git clone https://github.com/zero-day-ai/adk.git
+cd adk
+go build -o ./bin/gibson-cli ./cmd/gibson-cli
+export PATH="$PWD/bin:$PATH"
+```
+
+Verify:
+
+```bash
+gibson-cli --help
+```
+
+You should see the top-level command groups: `agent`, `tool`, `plugin`,
+`inspect`.
+
+## 3. Point at your tenant
+
+Set `GIBSON_URL` in your shell:
+
+```bash
+export GIBSON_URL=https://api.zero-day.ai
+```
+
+Add it to your shell profile (`~/.zshrc`, `~/.bashrc`, …) so it
+persists across sessions. The SDK reads `GIBSON_URL` from the
+environment when your component dials Gibson; the value can also be
+embedded in the credentials file written by `gibson-cli ... enroll`.
+
+## 4. Get a credential from the dashboard
+
+Open the dashboard at
+[`app.zero-day.ai/dashboard/deploy`](https://app.zero-day.ai/dashboard/deploy).
+This is the **deploy wizard** — the one place where component identities
+are issued.
+
+1. Pick a kind: **Agent**, **Tool**, or **Plugin**.
+2. Name your component (kebab-case, unique within your tenant).
+3. **Permissions** — grant the component access to the data and
+   capabilities it needs. See [Roles & permissions](./rbac).
+4. **Issue credentials**:
+   - Agents and tools get an OAuth2 `client_id` + `client_secret`. The
+     **secret is shown exactly once** — copy it before you leave the
+     page.
+   - Plugins get a single-use **bootstrap token** (default 1 hour,
+     configurable up to 24 hours).
+5. **Connect** — leave the wizard open. It polls until your local
+   `gibson-cli` reports back that the component connected.
+
+## 5. Enroll on your machine
+
+Pick the command that matches your component kind:
+
+```bash
+# Agents
+gibson-cli agent enroll \
+  --client-id     <from-wizard> \
+  --client-secret <from-wizard> \
+  --name          my-first-agent
+
+# Tools
+gibson-cli tool enroll \
+  --client-id     <from-wizard> \
+  --client-secret <from-wizard> \
+  --name          my-first-tool
+
+# Plugins
+gibson-cli plugin enroll --token <from-wizard>
+```
+
+Each command writes a credential file at `~/.gibson/<kind>/credentials`
+(file mode `0600`). For plugins, an Ed25519 host key is also written
+to `~/.gibson/plugin/<name>/host_key` (mode `0600`). Treat both like
+private keys — they identify your component to Gibson.
+
+If `enroll` fails, see
+[Component bootstrap & auth](./component-bootstrap#troubleshooting-a-401)
+for the layered checks.
+
+## 6. Verify with `inspect`
+
+```bash
+gibson-cli inspect              # auto-detects the local credential
+gibson-cli inspect --kind agent --name my-first-agent
+gibson-cli inspect --json       # raw output, scriptable
+```
+
+`inspect` exchanges your credential for a token, calls Gibson's
+identity service, and prints who you are along with the permissions you
+hold. If `inspect` succeeds, your credential is healthy and you can
+move on.
+
+## What's next
+
+- **[Getting Started](./getting-started)** — the 15-minute walkthrough
+  from zero to a running agent.
+- **[Your First Agent](./first-agent)** — write and ship an agent with
+  the SDK.
+- **[Plugins](./plugins)** — build a stateful integration with secret
+  bindings.
+
+## Storing credentials safely
+
+Credential files live in `~/.gibson/` and are restricted to mode `0600`
+by `enroll`. Don't commit them. For CI and production deployments:
+
+- **Agents and tools**: pass `client_id` and `client_secret` as
+  environment variables (`OIDC_CLIENT_CREDENTIALS_CLIENT_ID`,
+  `OIDC_CLIENT_CREDENTIALS_CLIENT_SECRET`,
+  `OIDC_CLIENT_CREDENTIALS_TOKEN_URL`) instead of writing a file. The
+  SDK picks them up automatically.
+- **Plugins**: bake the host key into the deployment artifact, or
+  re-enroll on each fresh runtime instance using a freshly-issued
+  bootstrap token.
+- **Workload identity** (e.g. SPIFFE): if your runtime exposes a
+  workload-identity socket, the SDK auto-detects it and uses mTLS
+  alongside the bearer credential. No extra configuration needed.
+
+## Multi-environment setups
+
+If you operate against more than one Gibson tenant (e.g. staging +
+production), point `GIBSON_URL` at the right tenant per shell session
+or per CI job, and keep credentials separated by passing
+`--credentials-path` to `gibson-cli` or by setting the SDK option
+`agent.WithCredentialsPath(...)` from your component code.

@@ -1,9 +1,154 @@
 ---
 title: Getting Started
-description: Clone the Gibson ADK, run gibson-cli init, and land your first agent skeleton in minutes.
+description: Stand up your first Gibson agent in under an hour — sign up, install gibson-cli, enroll, build, and run a mission.
 ---
 
-This page is a stub — contributions welcome. The finished version will walk
-through cloning the Gibson ADK, running `gibson-cli init`, and reaching a
-working agent skeleton in minutes. Source lives at
-[github.com/zero-day-ai/gibson-adk](https://github.com/zero-day-ai/gibson-adk).
+This is the fast path: account → CLI → component → mission. If you get
+stuck, jump to the linked deep-dive page; otherwise just keep going.
+
+## 1. Sign up and install the CLI
+
+If you haven't already, follow [Install](./install) to:
+
+- create a tenant at [zero-day.ai](https://zero-day.ai),
+- install `gibson-cli`,
+- and set `GIBSON_URL=https://api.zero-day.ai`.
+
+Verify your shell:
+
+```bash
+gibson-cli --help
+echo "$GIBSON_URL"
+```
+
+## 2. Issue a credential from the dashboard
+
+Open
+[`app.zero-day.ai/dashboard/deploy`](https://app.zero-day.ai/dashboard/deploy).
+
+The deploy wizard walks you through:
+
+1. **Pick a kind** — start with **Agent** for this walkthrough.
+2. **Name your agent** — kebab-case, e.g. `my-first-agent`.
+3. **Permissions** — for the walkthrough, accept the defaults. You can
+   tighten them later. See [Roles & permissions](./rbac).
+4. **Issue credentials** — the dashboard shows a `client_id` and a
+   `client_secret`. **Copy the secret now** — it's not shown again.
+5. **Connect** — leave the page open. It polls for the next step.
+
+## 3. Enroll on your machine
+
+```bash
+gibson-cli agent enroll \
+  --client-id     <from-wizard> \
+  --client-secret <from-wizard> \
+  --name          my-first-agent
+```
+
+This writes `~/.gibson/agent/credentials` (mode `0600`) and verifies the
+credential by calling Gibson's identity service. If the verification
+fails, the wizard does **not** advance — see
+[Component bootstrap & auth → Troubleshooting a 401](./component-bootstrap#troubleshooting-a-401).
+
+## 4. Verify with `inspect`
+
+```bash
+gibson-cli inspect             # auto-detects the local credential
+```
+
+You should see your agent's identity, the tenant it belongs to, and
+its current permissions. If `inspect` works, you're ready to build.
+
+## 5. Build your agent
+
+In a fresh Go module:
+
+```bash
+mkdir my-first-agent && cd my-first-agent
+go mod init example.com/my-first-agent
+go get github.com/zero-day-ai/sdk/agent@latest
+go get github.com/zero-day-ai/sdk/llm@latest
+```
+
+Create `main.go`:
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+
+    "github.com/zero-day-ai/sdk/agent"
+    "github.com/zero-day-ai/sdk/llm"
+)
+
+func main() {
+    cfg := agent.NewConfig().
+        SetName("my-first-agent").
+        SetVersion("0.1.0").
+        SetDescription("Says hi via the primary LLM slot.").
+        AddCapability("greeting").
+        AddTargetType("none").
+        AddLLMSlot("primary", llm.SlotRequirements{}).
+        SetExecuteFunc(func(ctx context.Context, h agent.Harness, t agent.Task) (agent.Result, error) {
+            resp, err := h.Complete(ctx, "primary", []llm.Message{
+                {Role: llm.RoleSystem, Content: "Greet warmly in one sentence."},
+                {Role: llm.RoleUser, Content: t.Prompt},
+            })
+            if err != nil {
+                return agent.NewErrorResult(err), nil
+            }
+            return agent.NewSuccessResult(resp.Content), nil
+        })
+
+    a, err := agent.New(cfg)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    if err := agent.Serve(context.Background(), a); err != nil {
+        log.Fatal(err)
+    }
+}
+```
+
+Run it:
+
+```bash
+go run .
+```
+
+The agent connects to your tenant and waits for work. Leave it running.
+
+## 6. Run a mission
+
+Open the dashboard's **Missions** section (`/dashboard/missions/new`)
+and create a one-node mission:
+
+1. **Target** — pick or create a target. For a hello-world, the target
+   can be `none` if your agent doesn't need one.
+2. **Add a node** — type `Agent`, point it at `my-first-agent`, and
+   set a prompt like `"Greet a new Gibson user."`.
+3. **Run**.
+
+The mission detail page streams events live: `mission.started`,
+`node.started`, your agent's output appears as `node.finished`, and the
+mission concludes with `mission.completed`. See
+[Missions](./missions) for the full lifecycle.
+
+## 7. Where to go next
+
+| You want to… | Read |
+|---|---|
+| Add a tool your agent can call | [Tools](./tools) |
+| Connect a stateful integration | [Plugins](./plugins) |
+| Store and rotate credentials | [Secrets management](./secrets-management) |
+| Auto-populate the knowledge graph from tool output | [Knowledge graph](./knowledge-graph) |
+| Submit and triage findings | [Findings](./findings) |
+| Wire your agent into CI / production | the Makefile produced by `gibson-cli plugin init` is the canonical template |
+
+If you hit a wall, the
+[Component bootstrap & auth](./component-bootstrap) page covers the
+common 401 paths, and the [CLI reference](./cli-reference) lists every
+`gibson-cli` command.

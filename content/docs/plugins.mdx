@@ -1,9 +1,247 @@
 ---
 title: Plugins
-description: Writing a Plugin — configuration surface, methods, and stateful service integration.
+description: Build a long-running, stateful integration — manifest, runtime modes, secret bindings, and rotation.
 ---
 
-This page is a stub — contributions welcome. The finished version will
-cover writing a Plugin (stateful service integration): configuration
-surface, methods, and lifecycle contracts. Source lives at
-[github.com/zero-day-ai/gibson-adk](https://github.com/zero-day-ai/gibson-adk).
+A **plugin** is a stateful, long-running integration. Plugins hold
+credentials, maintain connections, expose typed methods, and are the
+only Gibson component kind that can read secrets at runtime.
+
+Reach for a plugin when you need to:
+
+- talk to a stateful backend (Shodan, Splunk, Vault, your CRM)
+- maintain a long-lived session (browser automation, persistent SSH
+  pool)
+- reuse expensive setup across many calls (loaded ML model, warm cache)
+- safely handle credentials that should never reach an agent
+
+If the work is stateless and contract-shaped — "given X, return Y" —
+build a [tool](./tools) instead.
+
+## Plugin shape
+
+A plugin is:
+
+- a **`plugin.yaml`** manifest at the root of your plugin directory
+- a binary that calls `plugin.Serve(ctx)`
+- enrolled with `gibson-cli plugin enroll --token <bootstrap>`
+- invoked **by tools**, not directly by agents — see
+  [Roles & permissions](./rbac#plugin-invocation).
+
+## Scaffold a new plugin
+
+```bash
+gibson-cli plugin init --dir ./my-plugin
+```
+
+The CLI generates a working starting point:
+
+| File | Purpose |
+|---|---|
+| `plugin.yaml` | Manifest. Edit this to declare your methods and secrets. |
+| `main.go` | Entry point — calls `plugin.Serve` with an Echo handler. Replace with your own. |
+| `<name>.proto` | Sample request/response messages. Edit, then `make proto`. |
+| `Makefile` | Targets: `proto`, `build`, `enroll`, `run`. |
+| `Dockerfile` | Multi-stage build, suitable for `runtime: pod`. |
+| `.gitignore`, `README.md` | Boilerplate. |
+
+Names must match `^[a-z][a-z0-9-]{0,61}[a-z0-9]$` (DNS-label style).
+
+Validate the manifest before you enroll:
+
+```bash
+gibson-cli plugin validate
+```
+
+## The `plugin.yaml` manifest
+
+```yaml
+apiVersion: plugin.gibson.zero-day.ai/v1
+kind: Plugin
+
+metadata:
+  name: my-shodan
+  version: "0.1.0"
+  description: Shodan host lookup
+  author: you@example.com
+
+spec:
+  workload_class: plugin
+  runtime: process              # process | pod | setec  (default: process)
+
+  policy:
+    setec_required: false       # if true, force runtime to "setec"
+
+  secrets:
+    - name: cred:shodan_api_key
+      scope: per_call            # startup | per_call
+      rotation: live             # live | restart
+      required: true
+
+  methods:
+    - name: lookup_host
+      description: Look up a host on Shodan.
+      request_proto:  myorg.shodan.v1.LookupRequest
+      response_proto: myorg.shodan.v1.LookupResponse
+
+  health:
+    startup_timeout:    30s
+    liveness_interval:  10s
+
+  egress:
+    - host: api.shodan.io
+      protocol: https
+      port: 443
+      purpose: Shodan API calls
+```
+
+### Runtime modes
+
+| Mode | Where the plugin runs | Pick this when |
+|---|---|---|
+| `process` (default) | Bare process — laptop, VM, sidecar container | Fastest dev loop, simplest deploy. |
+| `pod` | A Kubernetes pod, scheduled by your runtime of choice | Production-style isolation. The included `Dockerfile` is wired for this. |
+| `setec` | A microVM under the [Setec](https://github.com/zero-day-ai/setec) sandbox operator | Strong isolation for sensitive workloads. `policy.setec_required: true` forces this. |
+
+### Secret declarations
+
+Each entry in `spec.secrets` declares a credential the plugin needs:
+
+| Field | Values | Effect |
+|---|---|---|
+| `name` | e.g. `cred:shodan_api_key` | Stable identifier the plugin requests at runtime. |
+| `scope` | `startup` \| `per_call` | `startup`: read once at boot. `per_call`: re-read on each method invocation (subject to a small cache). |
+| `rotation` | `live` \| `restart` | What the plugin does when the secret rotates — see below. |
+| `required` | `true` \| `false` | If `true`, the plugin fails to start when the secret can't be resolved. |
+
+Bindings are created at register time in the deploy wizard. Your
+plugin's identity is granted access to **exactly the secrets it
+declared** and nothing else. See
+[Secrets management](./secrets-management) for the operator side.
+
+### Egress declarations
+
+`spec.egress` is an explicit list of the outbound network destinations
+your plugin will dial. It documents the plugin's network footprint for
+review and is enforced where the runtime supports it (e.g. Setec).
+
+## Enroll and run
+
+After register, the deploy wizard hands you a single-use **bootstrap
+token** (default 1 hour, configurable up to 24 hours).
+
+```bash
+gibson-cli plugin enroll --token eyJ...
+
+# verify
+gibson-cli inspect --kind plugin
+
+# run
+gibson-cli plugin run
+```
+
+`enroll` exchanges the bootstrap token for a persistent **Ed25519 host
+key** at `~/.gibson/plugin/<name>/host_key` (mode `0600`). The host
+key is what the plugin uses for the rest of its life — the bootstrap
+token is consumed and discarded.
+
+`gibson-cli plugin run` is equivalent to running your built binary,
+which calls `plugin.Serve(ctx)`. `Serve`:
+
+1. Loads and validates your manifest.
+2. Loads the host key.
+3. Registers with Gibson.
+4. Calls your `OnStart` hook once the platform marks the install
+   `Ready`.
+5. Polls for work, dispatches handlers, and submits results.
+6. On `SIGTERM`/`SIGINT`, drains in-flight work, calls `OnStop`,
+   exits.
+
+## Calling a plugin
+
+Plugins are invoked through a tool's harness:
+
+```go
+out, err := h.QueryPlugin(ctx, "my-shodan", "lookup_host", req)
+```
+
+Only **tools** can invoke plugins. Agents go through a tool when they
+need a plugin's capability — this keeps the agent path free of
+credential-bearing code paths and gives you a single point to gate
+plugin invocations from. See
+[Roles & permissions](./rbac#plugin-invocation).
+
+## Reading secrets at runtime
+
+The plugin SDK exposes a secrets client:
+
+```go
+val, err := secretsClient.Resolve(ctx, "cred:shodan_api_key")
+```
+
+Internally:
+
+1. The client checks that the requested name is in your manifest's
+   `spec.secrets` list — anything else never hits the wire.
+2. The cache is consulted (default 60-second TTL, max 1 hour).
+3. On a miss, Gibson resolves the value through your tenant's
+   configured **secrets backend** (the built-in encrypted store, or
+   your own Vault / AWS Secrets Manager / GCP Secret Manager / Azure
+   Key Vault). See
+   [Secrets management](./secrets-management).
+
+Credential **values never appear in audit logs** — only the secret
+name and the requesting plugin identity.
+
+## Rotation
+
+When an admin rotates a secret, Gibson notifies your plugin. Behaviour
+follows your manifest:
+
+| `rotation` | Plugin behaviour |
+|---|---|
+| `live` | Cache entry invalidated. Next `Resolve` fetches the new value. No restart. |
+| `restart` | Plugin stops accepting new work, drains in-flight handlers, calls `OnStop`, and exits. Your runtime (Kubernetes, systemd, …) restarts the plugin, which picks up the new value on the next start. |
+
+`live` is the right default for most rotations. `restart` is useful
+when your plugin caches derived state from the credential (e.g. a TLS
+client built from a cert + key) and you'd rather rebuild the whole
+plugin than try to invalidate that derived state mid-flight.
+
+## Lifecycle states
+
+The plugin's status in your tenant transitions through:
+
+```
+Registered → Enrolled → Ready → (Draining → Restart) → Terminated
+```
+
+| State | Means |
+|---|---|
+| **Registered** | The deploy wizard finished and a bootstrap token was issued. |
+| **Enrolled** | The plugin host has exchanged the token for a persistent host key. |
+| **Ready** | The plugin connected, registered methods, and passed startup health. |
+| **Draining** | A rotation-restart is in flight, or an admin issued a stop. |
+| **Terminated** | The plugin exited cleanly. |
+
+The dashboard's plugin list shows the current state plus uptime and
+recent invocation counts.
+
+## Permissions summary
+
+| Action | Granted to |
+|---|---|
+| Resolve a bound secret at runtime | The plugin's own identity (manifest-bound, no broader). |
+| Invoke a plugin method | A tool with a `can_invoke` grant for that plugin, or a tenant member. |
+| Register / configure / delete a plugin | Tenant admins. |
+
+See [Roles & permissions](./rbac).
+
+## Related
+
+- [Component bootstrap & auth](./component-bootstrap) — bootstrap
+  token + host key in detail; 401 troubleshooting.
+- [Secrets management](./secrets-management) — operator-side flows
+  for storing, binding, rotating, and auditing credentials.
+- [CLI reference](./cli-reference) — every `gibson-cli plugin`
+  subcommand.

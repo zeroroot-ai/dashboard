@@ -1,9 +1,233 @@
 ---
 title: CLI Reference
-description: The gibson-cli commands — init, login, missions, tools, and plugins.
+description: Every gibson-cli command — agents, tools, plugins, and inspect.
 ---
 
-This page is a stub — contributions welcome. The finished version will
-enumerate every `gibson-cli` command: `init`, `login`, `missions`,
-`tools`, `plugins`, flag reference, and exit codes. Source lives at
-[github.com/zero-day-ai/gibson-adk](https://github.com/zero-day-ai/gibson-adk).
+`gibson-cli` is the local binary you use to scaffold components,
+enroll them with your tenant, validate manifests, run plugins, and
+verify credentials.
+
+This page lists every command, its required flags, and what it does.
+
+Top-level command groups:
+
+| Group | Purpose |
+|---|---|
+| `agent` | Enroll an agent identity with your tenant. |
+| `tool` | Enroll a tool identity with your tenant. |
+| `plugin` | Scaffold, validate, enroll, and run plugins. |
+| `inspect` | Print who you are and what permissions your local credential carries. |
+
+Global flags available on every command:
+
+| Flag | Default | What it does |
+|---|---|---|
+| `--gibson-url` | `$GIBSON_URL` | Override the Gibson endpoint for one invocation. |
+| `--credentials-path` | `~/.gibson/<kind>/credentials` | Use credentials from a non-default location. |
+| `--quiet` | off | Suppress progress output; only print errors. |
+| `--json` | off | Emit machine-readable output where supported. |
+
+---
+
+## `gibson-cli agent`
+
+Group for agent identity management.
+
+### `gibson-cli agent enroll`
+
+Register an agent install with your tenant using OAuth2 client
+credentials issued by the dashboard's deploy wizard.
+
+```bash
+gibson-cli agent enroll \
+  --client-id     <id> \
+  --client-secret <secret> \
+  --name          <agent-name>
+```
+
+| Flag | Required | Notes |
+|---|---|---|
+| `--client-id` | yes | OAuth2 client ID from the deploy wizard. |
+| `--client-secret` | yes | OAuth2 client secret. Shown exactly once at issuance. |
+| `--name` | yes | Agent name (kebab-case, unique within tenant). |
+| `--credentials-path` | no | Override the path the credentials file is written to. |
+
+What it does:
+
+1. Writes a credentials file at `~/.gibson/agent/credentials` (mode
+   `0600`).
+2. Mints a JWT to verify the credential.
+3. Calls Gibson's identity service to confirm enrolment.
+4. Notifies the dashboard's deploy wizard so it can advance.
+
+If verification fails, the command exits non-zero and the file is
+removed. See
+[Component bootstrap & auth → Troubleshooting a 401](./component-bootstrap#troubleshooting-a-401).
+
+---
+
+## `gibson-cli tool`
+
+Group for tool identity management.
+
+### `gibson-cli tool enroll`
+
+Same shape as `agent enroll`, but writes to `~/.gibson/tool/credentials`.
+
+```bash
+gibson-cli tool enroll \
+  --client-id     <id> \
+  --client-secret <secret> \
+  --name          <tool-name>
+```
+
+| Flag | Required | Notes |
+|---|---|---|
+| `--client-id` | yes | OAuth2 client ID. |
+| `--client-secret` | yes | OAuth2 client secret. |
+| `--name` | yes | Tool name (kebab-case, unique within tenant). |
+| `--credentials-path` | no | Override the credentials file location. |
+
+---
+
+## `gibson-cli plugin`
+
+Group for plugin scaffolding, validation, enrollment, and runtime.
+
+### `gibson-cli plugin init`
+
+Scaffold a new plugin directory.
+
+```bash
+gibson-cli plugin init --dir ./my-plugin
+```
+
+| Flag | Default | Notes |
+|---|---|---|
+| `--dir` | `.` | Target directory. Created if missing. |
+| `--with-secret` | none | Pre-populate `spec.secrets` with one entry of the given name. |
+| `--force` | off | Overwrite existing files in the target directory. |
+
+Generates `plugin.yaml`, `main.go`, a sample proto, `Makefile`,
+`Dockerfile`, `.gitignore`, and `README.md`. Plugin name must match
+`^[a-z][a-z0-9-]{0,61}[a-z0-9]$`.
+
+### `gibson-cli plugin validate`
+
+Validate `plugin.yaml` against the schema, without contacting Gibson.
+
+```bash
+gibson-cli plugin validate
+```
+
+Run from the plugin directory. Errors are printed with the offending
+field and reason.
+
+### `gibson-cli plugin enroll`
+
+Exchange a single-use bootstrap token for a persistent host key.
+
+```bash
+gibson-cli plugin enroll --token <bootstrap-token>
+```
+
+| Flag | Required | Notes |
+|---|---|---|
+| `--token` | yes | Bootstrap token from the deploy wizard. |
+| `--credentials-path` | no | Override the host key location. Default: `~/.gibson/plugin/<name>/host_key`. |
+
+Bootstrap tokens are single-use and have a default 1-hour TTL
+(configurable up to 24 hours by your tenant admin). Run from the
+plugin directory containing `plugin.yaml`.
+
+### `gibson-cli plugin run`
+
+Run the plugin via its built binary (or `go run .` equivalent). Calls
+`plugin.Serve` from the SDK.
+
+```bash
+gibson-cli plugin run
+```
+
+| Flag | Default | Notes |
+|---|---|---|
+| `--manifest` | `./plugin.yaml` | Use a non-default manifest path. |
+
+Standard `make run` wraps this command.
+
+---
+
+## `gibson-cli inspect`
+
+Print your effective identity and permissions.
+
+```bash
+gibson-cli inspect                            # auto-detect
+gibson-cli inspect --kind agent               # specify kind
+gibson-cli inspect --kind plugin --name foo   # specify name when several plugins are enrolled locally
+gibson-cli inspect --json                     # machine-readable
+```
+
+| Flag | Default | Notes |
+|---|---|---|
+| `--kind` | auto-detect | `agent`, `tool`, or `plugin`. Required when more than one kind has a local credential. |
+| `--name` | auto | Required when more than one credential exists for a single kind. |
+| `--json` | off | Emit the raw identity payload. |
+
+What it does:
+
+1. Loads the credential.
+2. Mints a JWT (or signs a capability-grant for plugins).
+3. Calls Gibson's identity service to fetch your principal.
+4. Prints your identity, tenant, and effective grants.
+
+If `inspect` fails:
+
+- **At credential load** — credential file is missing or has wrong
+  permissions. Fix the file mode (`chmod 600`) or re-enroll.
+- **At token mint** — credential is malformed. Re-enroll.
+- **At identity call** — Gibson rejected the credential (revoked,
+  expired, wrong tenant). Re-issue from the dashboard.
+
+---
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | Success. |
+| `1` | Generic error. |
+| `2` | Bad arguments / usage. |
+| `3` | Credential file missing or unreadable. |
+| `4` | Credential rejected by Gibson. |
+| `5` | Network error reaching Gibson. |
+| `75` | Plugin runtime exited cleanly to be restarted (rotation-restart sentinel). |
+
+CI scripts can rely on these. `2` and `3` indicate operator error;
+`4` and `5` indicate platform-side issues to surface.
+
+---
+
+## Environment variables
+
+| Variable | Used by | Effect |
+|---|---|---|
+| `GIBSON_URL` | every command, every component | Endpoint to dial. |
+| `OIDC_CLIENT_CREDENTIALS_CLIENT_ID` | agents, tools | Inline client ID — no credentials file needed. |
+| `OIDC_CLIENT_CREDENTIALS_CLIENT_SECRET` | agents, tools | Inline client secret. |
+| `OIDC_CLIENT_CREDENTIALS_TOKEN_URL` | agents, tools | Token endpoint when env-based credentials are in use. |
+| `GIBSON_CREDENTIALS_PATH` | every command | Override the default credentials path. |
+| `GIBSON_LOG_LEVEL` | every command | `debug` / `info` / `warn` / `error`. Default `info`. |
+
+The env-variable path is the recommended way to ship CI workloads —
+no credential files on disk.
+
+---
+
+## Related
+
+- [Install](./install) — initial setup of `gibson-cli`.
+- [Plugins](./plugins) — full lifecycle of `init` → `validate` →
+  `enroll` → `run`.
+- [Component bootstrap & auth](./component-bootstrap) — what `enroll`
+  is doing under the hood and how to debug a 401.
