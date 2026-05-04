@@ -19,12 +19,12 @@ import {
 import type { K8sOwnerReference } from './owner-ref';
 
 /** Annotation key used by the tenant-operator to correlate API calls end-to-end. */
-const ANNOTATION_CORRELATION_ID = 'gibson.io/correlation-id';
+const ANNOTATION_CORRELATION_ID = 'gibson.zero-day.ai/correlation-id';
 
 export async function applyTenant(name: string, spec: TenantSpec): Promise<Tenant> {
   return k8s().apply<Tenant>(
     {
-      apiVersion: 'gibson.gibson.io/v1alpha1',
+      apiVersion: 'gibson.zero-day.ai/v1alpha1',
       kind: 'Tenant',
       metadata: {
         name,
@@ -66,7 +66,7 @@ export async function applyTenantMember(
   if (ownerRef) metadata.ownerReferences = [ownerRef];
   return k8s().apply<TenantMember>(
     {
-      apiVersion: 'gibson.gibson.io/v1alpha1',
+      apiVersion: 'gibson.zero-day.ai/v1alpha1',
       kind: 'TenantMember',
       metadata,
       spec,
@@ -103,7 +103,7 @@ export async function applyAgentEnrollment(
   if (ownerRef) metadata.ownerReferences = [ownerRef];
   return k8s().apply<AgentEnrollment>(
     {
-      apiVersion: 'gibson.gibson.io/v1alpha1',
+      apiVersion: 'gibson.zero-day.ai/v1alpha1',
       kind: 'AgentEnrollment',
       metadata,
       spec,
@@ -156,7 +156,7 @@ export async function applyComponentGrant(
   if (ownerRef) metadata.ownerReferences = [ownerRef];
   return k8s().apply<ComponentGrant>(
     {
-      apiVersion: 'gibson.gibson.io/v1alpha1',
+      apiVersion: 'gibson.zero-day.ai/v1alpha1',
       kind: 'ComponentGrant',
       metadata,
       spec,

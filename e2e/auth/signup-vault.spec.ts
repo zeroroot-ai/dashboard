@@ -262,7 +262,7 @@ test.describe("Signup — Vault namespace provisioning step (R7)", () => {
     try {
       execSync(
         `kubectl config use-context kind-gibson && ` +
-          `kubectl delete tenant.gibson.gibson.io ${creds.slug} --ignore-not-found`,
+          `kubectl delete tenant.gibson.zero-day.ai ${creds.slug} --ignore-not-found`,
         { stdio: "pipe", timeout: 15_000 },
       );
       console.log(`[signup-vault] Cleanup: deleted tenant ${creds.slug}`);
@@ -377,7 +377,7 @@ test.describe("Signup — Vault namespace provisioning step (R7)", () => {
     try {
       execSync(
         `kubectl config use-context kind-gibson && ` +
-          `kubectl delete tenant.gibson.gibson.io ${creds.slug} --ignore-not-found`,
+          `kubectl delete tenant.gibson.zero-day.ai ${creds.slug} --ignore-not-found`,
         { stdio: "pipe", timeout: 15_000 },
       );
     } catch {
@@ -493,7 +493,7 @@ test.describe("Signup — Vault namespace provisioning step (R7)", () => {
     try {
       execSync(
         `kubectl config use-context kind-gibson && ` +
-          `kubectl delete tenant.gibson.gibson.io ${creds.slug} --ignore-not-found`,
+          `kubectl delete tenant.gibson.zero-day.ai ${creds.slug} --ignore-not-found`,
         { stdio: "pipe", timeout: 15_000 },
       );
     } catch {

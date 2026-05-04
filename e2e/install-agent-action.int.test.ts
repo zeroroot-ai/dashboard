@@ -116,7 +116,7 @@ describeOrSkip("installAgentAction — integration", () => {
 });
 
 const VALID_COMPONENT_YAML = `
-apiVersion: gibson.io/v1
+apiVersion: gibson.zero-day.ai/v1
 kind: Agent
 metadata:
   name: integration-test-agent

@@ -104,7 +104,7 @@ const HARNESS = (component: string, permissions: string) =>
     component,
   )}&permissions=${encodeURIComponent(permissions)}`;
 
-const COMPONENT_YAML = `apiVersion: gibson.io/v1\nkind: Agent\nmetadata:\n  name: test-agent\n`;
+const COMPONENT_YAML = `apiVersion: gibson.zero-day.ai/v1\nkind: Agent\nmetadata:\n  name: test-agent\n`;
 const PERMISSIONS_REQUIRED_WRITE = `permissions:\n  - target: component:plugin/gitlab\n    action: write\n    required: true\n`;
 const PERMISSIONS_OPTIONAL_READ = `permissions:\n  - target: component:plugin/gitlab\n    action: read\n    required: false\n`;
 const PERMISSIONS_ALL = `permissions:\n  - target: component:plugin/gitlab\n    action: read\n    required: true\n  - target: component:plugin/gitlab\n    action: write\n    required: true\n  - target: component:plugin/gitlab\n    action: execute\n    required: true\n`;

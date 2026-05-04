@@ -240,7 +240,7 @@ describe('POST /api/billing/webhook — checkout.session.completed (confirm path
     expect(patch).toMatchObject({
       metadata: {
         annotations: {
-          'gibson.io/billing-active': 'true',
+          'gibson.zero-day.ai/billing-active': 'true',
         },
       },
     });

@@ -44,7 +44,7 @@ function assertBasics(msg: EmailMessage) {
 describe('templates/verify', () => {
   const ctx = {
     email: 'alice@example.com',
-    verificationUrl: 'https://dash.gibson.io/verify-email/confirm?token=abc',
+    verificationUrl: 'https://dash.gibson.zero-day.ai/verify-email/confirm?token=abc',
     expiresInHours: 24,
   };
   const msg = renderVerify(ctx);
@@ -65,7 +65,7 @@ describe('templates/verify', () => {
 describe('templates/reset', () => {
   const ctx = {
     email: 'bob@example.com',
-    resetUrl: 'https://dash.gibson.io/reset?token=xyz',
+    resetUrl: 'https://dash.gibson.zero-day.ai/reset?token=xyz',
     expiresInHours: 1,
   };
   const msg = renderReset(ctx);
@@ -85,11 +85,11 @@ describe('templates/reset', () => {
 describe('templates/claim', () => {
   const ctx = {
     email: 'carol@example.com',
-    claimUrl: 'https://dash.gibson.io/claim?token=q',
+    claimUrl: 'https://dash.gibson.zero-day.ai/claim?token=q',
     expiresInDays: 7,
     orgName: 'Acme R&D',
     role: 'admin',
-    supportEmail: 'support@gibson.io',
+    supportEmail: 'support@zero-day.ai',
   };
   const msg = renderClaim(ctx);
 
@@ -112,7 +112,7 @@ describe('templates/account-locked', () => {
   const ctx = {
     email: 'dave@example.com',
     lockoutEndsAt: new Date('2026-04-17T12:00:00.000Z'),
-    resetUrl: 'https://dash.gibson.io/reset?token=q',
+    resetUrl: 'https://dash.gibson.zero-day.ai/reset?token=q',
   };
   const msg = renderAccountLocked(ctx);
 
@@ -133,7 +133,7 @@ describe('templates/billing-rollback', () => {
     email: 'erin@example.com',
     chargeAmount: 1999, // $19.99
     currency: 'usd',
-    supportEmail: 'billing@gibson.io',
+    supportEmail: 'billing@zero-day.ai',
   };
   const msg = renderBillingRollback(ctx);
 
@@ -143,7 +143,7 @@ describe('templates/billing-rollback', () => {
     expect(msg.html).toContain('19.99 USD');
   });
   it('links the support email in the HTML', () => {
-    expect(msg.html).toContain('mailto:billing@gibson.io');
+    expect(msg.html).toContain('mailto:billing@zero-day.ai');
   });
   it('matches snapshot', () => expect(msg).toMatchSnapshot());
 });

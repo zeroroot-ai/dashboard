@@ -203,7 +203,7 @@ async function handleCheckoutSessionCompleted(
     await patchTenant(tenantSlug, {
       metadata: {
         annotations: {
-          'gibson.io/billing-active': 'true',
+          'gibson.zero-day.ai/billing-active': 'true',
         },
       },
     });
