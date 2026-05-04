@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { safeErrorResponse } from '@/src/lib/api-errors';
 import neo4j from 'neo4j-driver';
-import { getNeo4jDriver } from '@/src/lib/neo4j-client';
+import { getLegacyNeo4jDriver } from '@/src/lib/neo4j-legacy-driver';
 import type { Finding, PaginatedResponse } from '@/src/types';
 
 /**
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const driver = getNeo4jDriver();
+    const driver = getLegacyNeo4jDriver();
     const neo4jSession = driver.session({ database: 'neo4j' });
 
     try {

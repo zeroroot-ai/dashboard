@@ -230,8 +230,8 @@ async function createMissionInGibson(
     // remains the source-of-truth for execution state; Neo4j is only the
     // authoring-format cache. Spec: mission-api-only-cleanup follow-up.
     try {
-      const { getNeo4jDriver } = await import('@/src/lib/neo4j-client');
-      const driver = getNeo4jDriver();
+      const { getLegacyNeo4jDriver } = await import('@/src/lib/neo4j-legacy-driver');
+      const driver = getLegacyNeo4jDriver();
       const session = driver.session({ database: 'neo4j' });
       try {
         await session.run(

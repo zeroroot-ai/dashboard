@@ -19,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/graph/v1/graph.proto.
  */
 export const file_gibson_graph_v1_graph: GenFile = /*@__PURE__*/
-  fileDesc("ChtnaWJzb24vZ3JhcGgvdjEvZ3JhcGgucHJvdG8SD2dpYnNvbi5ncmFwaC52MSLVAQoETm9kZRIKCgJpZBgBIAEoCRIOCgZsYWJlbHMYAiADKAkSOQoKcHJvcGVydGllcxgDIAMoCzIlLmdpYnNvbi5ncmFwaC52MS5Ob2RlLlByb3BlcnRpZXNFbnRyeRIxCg1maXJzdF9zZWVuX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIQCghzZXZlcml0eRgFIAEoCRoxCg9Qcm9wZXJ0aWVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASK0AQoERWRnZRIKCgJpZBgBIAEoCRIRCglzb3VyY2VfaWQYAiABKAkSEQoJdGFyZ2V0X2lkGAMgASgJEgwKBHR5cGUYBCABKAkSOQoKcHJvcGVydGllcxgFIAMoCzIlLmdpYnNvbi5ncmFwaC52MS5FZGdlLlByb3BlcnRpZXNFbnRyeRoxCg9Qcm9wZXJ0aWVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASIqCgRQYXRoEhAKCG5vZGVfaWRzGAEgAygJEhAKCGVkZ2VfaWRzGAIgAygJIj4KFUdldFRlbmFudEdyYXBoUmVxdWVzdBINCgVsaW1pdBgBIAEoDRIWCg5pbmNsdWRlX2xhYmVscxgCIAMoCSKRAQoWR2V0VGVuYW50R3JhcGhSZXNwb25zZRIkCgVub2RlcxgBIAMoCzIVLmdpYnNvbi5ncmFwaC52MS5Ob2RlEiQKBWVkZ2VzGAIgAygLMhUuZ2lic29uLmdyYXBoLnYxLkVkZ2USEQoJdHJ1bmNhdGVkGAMgASgIEhgKEHRvdGFsX25vZGVfY291bnQYBCABKA0iLAoWR2V0TWlzc2lvbkdyYXBoUmVxdWVzdBISCgptaXNzaW9uX2lkGAEgASgJImUKF0dldE1pc3Npb25HcmFwaFJlc3BvbnNlEiQKBW5vZGVzGAEgAygLMhUuZ2lic29uLmdyYXBoLnYxLk5vZGUSJAoFZWRnZXMYAiADKAsyFS5naWJzb24uZ3JhcGgudjEuRWRnZSJwChFRdWVyeVBhdGhzUmVxdWVzdBIUCgxmcm9tX25vZGVfaWQYASABKAkSFAoKdG9fbm9kZV9pZBgCIAEoCUgAEhYKDHRvX25vZGVfa2luZBgDIAEoCUgAEhEKCW1heF9kZXB0aBgEIAEoDUIECgJ0byKfAQoSUXVlcnlQYXRoc1Jlc3BvbnNlEiQKBXBhdGhzGAEgAygLMhUuZ2lic29uLmdyYXBoLnYxLlBhdGgSJAoFbm9kZXMYAiADKAsyFS5naWJzb24uZ3JhcGgudjEuTm9kZRIkCgVlZGdlcxgDIAMoCzIVLmdpYnNvbi5ncmFwaC52MS5FZGdlEhcKD3RydW5jYXRlZF9wYXRocxgEIAEoCCIaChhXYXRjaEdyYXBoVXBkYXRlc1JlcXVlc3QijgIKC0dyYXBoVXBkYXRlEi8KBGtpbmQYASABKA4yIS5naWJzb24uZ3JhcGgudjEuR3JhcGhVcGRhdGUuS2luZBIlCgRub2RlGAIgASgLMhUuZ2lic29uLmdyYXBoLnYxLk5vZGVIABIlCgRlZGdlGAMgASgLMhUuZ2lic29uLmdyYXBoLnYxLkVkZ2VIABImCgJhdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiTgoES2luZBIUChBLSU5EX1VOU1BFQ0lGSUVEEAASDgoKTk9ERV9BRERFRBABEg4KCkVER0VfQURERUQQAhIQCgxOT0RFX1VQREFURUQQA0IICgZlbnRpdHkyygQKDEdyYXBoU2VydmljZRKPAQoOR2V0VGVuYW50R3JhcGgSJi5naWJzb24uZ3JhcGgudjEuR2V0VGVuYW50R3JhcGhSZXF1ZXN0GicuZ2lic29uLmdyYXBoLnYxLkdldFRlbmFudEdyYXBoUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpIBCg9HZXRNaXNzaW9uR3JhcGgSJy5naWJzb24uZ3JhcGgudjEuR2V0TWlzc2lvbkdyYXBoUmVxdWVzdBooLmdpYnNvbi5ncmFwaC52MS5HZXRNaXNzaW9uR3JhcGhSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgwEKClF1ZXJ5UGF0aHMSIi5naWJzb24uZ3JhcGgudjEuUXVlcnlQYXRoc1JlcXVlc3QaIy5naWJzb24uZ3JhcGgudjEuUXVlcnlQYXRoc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKMAQoRV2F0Y2hHcmFwaFVwZGF0ZXMSKS5naWJzb24uZ3JhcGgudjEuV2F0Y2hHcmFwaFVwZGF0ZXNSZXF1ZXN0GhwuZ2lic29uLmdyYXBoLnYxLkdyYXBoVXBkYXRlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAzABQlBQAVo6Z2l0aHViLmNvbS96ZXJvLWRheS1haS9zZGsvYXBpL2dlbi9naWJzb24vZ3JhcGgvdjE7Z3JhcGhwYqoCD0dpYnNvbi5HcmFwaC5WMWIGcHJvdG8z", [file_google_protobuf_timestamp, file_gibson_auth_v1_options]);
+  fileDesc("ChtnaWJzb24vZ3JhcGgvdjEvZ3JhcGgucHJvdG8SD2dpYnNvbi5ncmFwaC52MSLVAQoETm9kZRIKCgJpZBgBIAEoCRIOCgZsYWJlbHMYAiADKAkSOQoKcHJvcGVydGllcxgDIAMoCzIlLmdpYnNvbi5ncmFwaC52MS5Ob2RlLlByb3BlcnRpZXNFbnRyeRIxCg1maXJzdF9zZWVuX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIQCghzZXZlcml0eRgFIAEoCRoxCg9Qcm9wZXJ0aWVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASK0AQoERWRnZRIKCgJpZBgBIAEoCRIRCglzb3VyY2VfaWQYAiABKAkSEQoJdGFyZ2V0X2lkGAMgASgJEgwKBHR5cGUYBCABKAkSOQoKcHJvcGVydGllcxgFIAMoCzIlLmdpYnNvbi5ncmFwaC52MS5FZGdlLlByb3BlcnRpZXNFbnRyeRoxCg9Qcm9wZXJ0aWVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASIqCgRQYXRoEhAKCG5vZGVfaWRzGAEgAygJEhAKCGVkZ2VfaWRzGAIgAygJIj4KFUdldFRlbmFudEdyYXBoUmVxdWVzdBINCgVsaW1pdBgBIAEoDRIWCg5pbmNsdWRlX2xhYmVscxgCIAMoCSKRAQoWR2V0VGVuYW50R3JhcGhSZXNwb25zZRIkCgVub2RlcxgBIAMoCzIVLmdpYnNvbi5ncmFwaC52MS5Ob2RlEiQKBWVkZ2VzGAIgAygLMhUuZ2lic29uLmdyYXBoLnYxLkVkZ2USEQoJdHJ1bmNhdGVkGAMgASgIEhgKEHRvdGFsX25vZGVfY291bnQYBCABKA0iLAoWR2V0TWlzc2lvbkdyYXBoUmVxdWVzdBISCgptaXNzaW9uX2lkGAEgASgJImUKF0dldE1pc3Npb25HcmFwaFJlc3BvbnNlEiQKBW5vZGVzGAEgAygLMhUuZ2lic29uLmdyYXBoLnYxLk5vZGUSJAoFZWRnZXMYAiADKAsyFS5naWJzb24uZ3JhcGgudjEuRWRnZSJwChFRdWVyeVBhdGhzUmVxdWVzdBIUCgxmcm9tX25vZGVfaWQYASABKAkSFAoKdG9fbm9kZV9pZBgCIAEoCUgAEhYKDHRvX25vZGVfa2luZBgDIAEoCUgAEhEKCW1heF9kZXB0aBgEIAEoDUIECgJ0byKfAQoSUXVlcnlQYXRoc1Jlc3BvbnNlEiQKBXBhdGhzGAEgAygLMhUuZ2lic29uLmdyYXBoLnYxLlBhdGgSJAoFbm9kZXMYAiADKAsyFS5naWJzb24uZ3JhcGgudjEuTm9kZRIkCgVlZGdlcxgDIAMoCzIVLmdpYnNvbi5ncmFwaC52MS5FZGdlEhcKD3RydW5jYXRlZF9wYXRocxgEIAEoCCIaChhXYXRjaEdyYXBoVXBkYXRlc1JlcXVlc3QijgIKC0dyYXBoVXBkYXRlEi8KBGtpbmQYASABKA4yIS5naWJzb24uZ3JhcGgudjEuR3JhcGhVcGRhdGUuS2luZBIlCgRub2RlGAIgASgLMhUuZ2lic29uLmdyYXBoLnYxLk5vZGVIABIlCgRlZGdlGAMgASgLMhUuZ2lic29uLmdyYXBoLnYxLkVkZ2VIABImCgJhdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiTgoES2luZBIUChBLSU5EX1VOU1BFQ0lGSUVEEAASDgoKTk9ERV9BRERFRBABEg4KCkVER0VfQURERUQQAhIQCgxOT0RFX1VQREFURUQQA0IICgZlbnRpdHkibgoXR2V0RmluZGluZ0NvdW50c1JlcXVlc3QSNgoIZ3JvdXBfYnkYASABKA4yJC5naWJzb24uZ3JhcGgudjEuRmluZGluZ0NvdW50R3JvdXBCeRIbChN0aW1lX3dpbmRvd19zZWNvbmRzGAIgASgEIisKC0NvdW50QnVja2V0Eg0KBWxhYmVsGAEgASgJEg0KBWNvdW50GAIgASgEIkkKGEdldEZpbmRpbmdDb3VudHNSZXNwb25zZRItCgdidWNrZXRzGAEgAygLMhwuZ2lic29uLmdyYXBoLnYxLkNvdW50QnVja2V0IisKG0dldEZpbmRpbmdUaW1lU2VyaWVzUmVxdWVzdBIMCgRkYXlzGAEgASgNIkoKD1RpbWVTZXJpZXNQb2ludBIoCgRkYXRlGAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBINCgVjb3VudBgCIAEoBCJQChxHZXRGaW5kaW5nVGltZVNlcmllc1Jlc3BvbnNlEjAKBnBvaW50cxgBIAMoCzIgLmdpYnNvbi5ncmFwaC52MS5UaW1lU2VyaWVzUG9pbnQiFgoUR2V0R3JhcGhTdGF0c1JlcXVlc3QiMAoQTm9kZUNvdW50QnlMYWJlbBINCgVsYWJlbBgBIAEoCRINCgVjb3VudBgCIAEoBCKpAQoVR2V0R3JhcGhTdGF0c1Jlc3BvbnNlEjMKCGJ5X2xhYmVsGAEgAygLMiEuZ2lic29uLmdyYXBoLnYxLk5vZGVDb3VudEJ5TGFiZWwSEwoLdG90YWxfbm9kZXMYAiABKAQSEwoLdG90YWxfZWRnZXMYAyABKAQSMQoNbGFzdF93cml0ZV9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiGAoWR2V0R3JhcGhTdW1tYXJ5UmVxdWVzdCJxChFHcmFwaFN1bW1hcnlTdGF0cxINCgVob3N0cxgBIAEoBBIQCghzZXJ2aWNlcxgCIAEoBBIQCghmaW5kaW5ncxgDIAEoBBIXCg92dWxuZXJhYmlsaXRpZXMYBCABKAQSEAoIbWlzc2lvbnMYBSABKAQiXQoXR2V0R3JhcGhTdW1tYXJ5UmVzcG9uc2USDwoHc3VtbWFyeRgBIAEoCRIxCgVzdGF0cxgCIAEoCzIiLmdpYnNvbi5ncmFwaC52MS5HcmFwaFN1bW1hcnlTdGF0cyJKChZHZXRHcmFwaENvbnRleHRSZXF1ZXN0Eg8KB25vZGVfaWQYASABKAkSDAoEaG9wcxgCIAEoDRIRCgltYXhfbm9kZXMYAyABKA0iXAoMTmVpZ2hib3JFZGdlEiMKBG5vZGUYASABKAsyFS5naWJzb24uZ3JhcGgudjEuTm9kZRIUCgxyZWxhdGlvbnNoaXAYAiABKAkSEQoJZGlyZWN0aW9uGAMgASgJIocBChdHZXRHcmFwaENvbnRleHRSZXNwb25zZRIpCgpmb2N1c19ub2RlGAEgASgLMhUuZ2lic29uLmdyYXBoLnYxLk5vZGUSMAoJbmVpZ2hib3JzGAIgAygLMh0uZ2lic29uLmdyYXBoLnYxLk5laWdoYm9yRWRnZRIPCgdzdW1tYXJ5GAMgASgJKlkKE0ZpbmRpbmdDb3VudEdyb3VwQnkSJgoiRklORElOR19DT1VOVF9HUk9VUF9CWV9VTlNQRUNJRklFRBAAEgwKCFNFVkVSSVRZEAESDAoIQ0FURUdPUlkQAjK/CgoMR3JhcGhTZXJ2aWNlEo8BCg5HZXRUZW5hbnRHcmFwaBImLmdpYnNvbi5ncmFwaC52MS5HZXRUZW5hbnRHcmFwaFJlcXVlc3QaJy5naWJzb24uZ3JhcGgudjEuR2V0VGVuYW50R3JhcGhSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkgEKD0dldE1pc3Npb25HcmFwaBInLmdpYnNvbi5ncmFwaC52MS5HZXRNaXNzaW9uR3JhcGhSZXF1ZXN0GiguZ2lic29uLmdyYXBoLnYxLkdldE1pc3Npb25HcmFwaFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKDAQoKUXVlcnlQYXRocxIiLmdpYnNvbi5ncmFwaC52MS5RdWVyeVBhdGhzUmVxdWVzdBojLmdpYnNvbi5ncmFwaC52MS5RdWVyeVBhdGhzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEowBChFXYXRjaEdyYXBoVXBkYXRlcxIpLmdpYnNvbi5ncmFwaC52MS5XYXRjaEdyYXBoVXBkYXRlc1JlcXVlc3QaHC5naWJzb24uZ3JhcGgudjEuR3JhcGhVcGRhdGUiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADMAESlQEKEEdldEZpbmRpbmdDb3VudHMSKC5naWJzb24uZ3JhcGgudjEuR2V0RmluZGluZ0NvdW50c1JlcXVlc3QaKS5naWJzb24uZ3JhcGgudjEuR2V0RmluZGluZ0NvdW50c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKhAQoUR2V0RmluZGluZ1RpbWVTZXJpZXMSLC5naWJzb24uZ3JhcGgudjEuR2V0RmluZGluZ1RpbWVTZXJpZXNSZXF1ZXN0Gi0uZ2lic29uLmdyYXBoLnYxLkdldEZpbmRpbmdUaW1lU2VyaWVzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEowBCg1HZXRHcmFwaFN0YXRzEiUuZ2lic29uLmdyYXBoLnYxLkdldEdyYXBoU3RhdHNSZXF1ZXN0GiYuZ2lic29uLmdyYXBoLnYxLkdldEdyYXBoU3RhdHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkgEKD0dldEdyYXBoU3VtbWFyeRInLmdpYnNvbi5ncmFwaC52MS5HZXRHcmFwaFN1bW1hcnlSZXF1ZXN0GiguZ2lic29uLmdyYXBoLnYxLkdldEdyYXBoU3VtbWFyeVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKSAQoPR2V0R3JhcGhDb250ZXh0EicuZ2lic29uLmdyYXBoLnYxLkdldEdyYXBoQ29udGV4dFJlcXVlc3QaKC5naWJzb24uZ3JhcGgudjEuR2V0R3JhcGhDb250ZXh0UmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADQlBQAVo6Z2l0aHViLmNvbS96ZXJvLWRheS1haS9zZGsvYXBpL2dlbi9naWJzb24vZ3JhcGgvdjE7Z3JhcGhwYqoCD0dpYnNvbi5HcmFwaC5WMWIGcHJvdG8z", [file_google_protobuf_timestamp, file_gibson_auth_v1_options]);
 
 /**
  * Node is a single graph node. Properties are JSON-stringified per value to
@@ -403,6 +403,391 @@ export const GraphUpdate_KindSchema: GenEnum<GraphUpdate_Kind> = /*@__PURE__*/
   enumDesc(file_gibson_graph_v1_graph, 10, 0);
 
 /**
+ * @generated from message gibson.graph.v1.GetFindingCountsRequest
+ */
+export type GetFindingCountsRequest = Message<"gibson.graph.v1.GetFindingCountsRequest"> & {
+  /**
+   * @generated from field: gibson.graph.v1.FindingCountGroupBy group_by = 1;
+   */
+  groupBy: FindingCountGroupBy;
+
+  /**
+   * Optional. When > 0, only count findings whose created_at is within the
+   * last N seconds. 0 (default) means all-time.
+   *
+   * @generated from field: uint64 time_window_seconds = 2;
+   */
+  timeWindowSeconds: bigint;
+};
+
+/**
+ * Describes the message gibson.graph.v1.GetFindingCountsRequest.
+ * Use `create(GetFindingCountsRequestSchema)` to create a new message.
+ */
+export const GetFindingCountsRequestSchema: GenMessage<GetFindingCountsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 11);
+
+/**
+ * @generated from message gibson.graph.v1.CountBucket
+ */
+export type CountBucket = Message<"gibson.graph.v1.CountBucket"> & {
+  /**
+   * @generated from field: string label = 1;
+   */
+  label: string;
+
+  /**
+   * @generated from field: uint64 count = 2;
+   */
+  count: bigint;
+};
+
+/**
+ * Describes the message gibson.graph.v1.CountBucket.
+ * Use `create(CountBucketSchema)` to create a new message.
+ */
+export const CountBucketSchema: GenMessage<CountBucket> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 12);
+
+/**
+ * @generated from message gibson.graph.v1.GetFindingCountsResponse
+ */
+export type GetFindingCountsResponse = Message<"gibson.graph.v1.GetFindingCountsResponse"> & {
+  /**
+   * @generated from field: repeated gibson.graph.v1.CountBucket buckets = 1;
+   */
+  buckets: CountBucket[];
+};
+
+/**
+ * Describes the message gibson.graph.v1.GetFindingCountsResponse.
+ * Use `create(GetFindingCountsResponseSchema)` to create a new message.
+ */
+export const GetFindingCountsResponseSchema: GenMessage<GetFindingCountsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 13);
+
+/**
+ * @generated from message gibson.graph.v1.GetFindingTimeSeriesRequest
+ */
+export type GetFindingTimeSeriesRequest = Message<"gibson.graph.v1.GetFindingTimeSeriesRequest"> & {
+  /**
+   * Default 30, max 365 (server-clamped).
+   *
+   * @generated from field: uint32 days = 1;
+   */
+  days: number;
+};
+
+/**
+ * Describes the message gibson.graph.v1.GetFindingTimeSeriesRequest.
+ * Use `create(GetFindingTimeSeriesRequestSchema)` to create a new message.
+ */
+export const GetFindingTimeSeriesRequestSchema: GenMessage<GetFindingTimeSeriesRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 14);
+
+/**
+ * @generated from message gibson.graph.v1.TimeSeriesPoint
+ */
+export type TimeSeriesPoint = Message<"gibson.graph.v1.TimeSeriesPoint"> & {
+  /**
+   * @generated from field: google.protobuf.Timestamp date = 1;
+   */
+  date?: Timestamp;
+
+  /**
+   * @generated from field: uint64 count = 2;
+   */
+  count: bigint;
+};
+
+/**
+ * Describes the message gibson.graph.v1.TimeSeriesPoint.
+ * Use `create(TimeSeriesPointSchema)` to create a new message.
+ */
+export const TimeSeriesPointSchema: GenMessage<TimeSeriesPoint> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 15);
+
+/**
+ * @generated from message gibson.graph.v1.GetFindingTimeSeriesResponse
+ */
+export type GetFindingTimeSeriesResponse = Message<"gibson.graph.v1.GetFindingTimeSeriesResponse"> & {
+  /**
+   * Ordered, padded with zero buckets for missing days. Length == days.
+   *
+   * @generated from field: repeated gibson.graph.v1.TimeSeriesPoint points = 1;
+   */
+  points: TimeSeriesPoint[];
+};
+
+/**
+ * Describes the message gibson.graph.v1.GetFindingTimeSeriesResponse.
+ * Use `create(GetFindingTimeSeriesResponseSchema)` to create a new message.
+ */
+export const GetFindingTimeSeriesResponseSchema: GenMessage<GetFindingTimeSeriesResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 16);
+
+/**
+ * @generated from message gibson.graph.v1.GetGraphStatsRequest
+ */
+export type GetGraphStatsRequest = Message<"gibson.graph.v1.GetGraphStatsRequest"> & {
+};
+
+/**
+ * Describes the message gibson.graph.v1.GetGraphStatsRequest.
+ * Use `create(GetGraphStatsRequestSchema)` to create a new message.
+ */
+export const GetGraphStatsRequestSchema: GenMessage<GetGraphStatsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 17);
+
+/**
+ * @generated from message gibson.graph.v1.NodeCountByLabel
+ */
+export type NodeCountByLabel = Message<"gibson.graph.v1.NodeCountByLabel"> & {
+  /**
+   * @generated from field: string label = 1;
+   */
+  label: string;
+
+  /**
+   * @generated from field: uint64 count = 2;
+   */
+  count: bigint;
+};
+
+/**
+ * Describes the message gibson.graph.v1.NodeCountByLabel.
+ * Use `create(NodeCountByLabelSchema)` to create a new message.
+ */
+export const NodeCountByLabelSchema: GenMessage<NodeCountByLabel> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 18);
+
+/**
+ * @generated from message gibson.graph.v1.GetGraphStatsResponse
+ */
+export type GetGraphStatsResponse = Message<"gibson.graph.v1.GetGraphStatsResponse"> & {
+  /**
+   * @generated from field: repeated gibson.graph.v1.NodeCountByLabel by_label = 1;
+   */
+  byLabel: NodeCountByLabel[];
+
+  /**
+   * @generated from field: uint64 total_nodes = 2;
+   */
+  totalNodes: bigint;
+
+  /**
+   * @generated from field: uint64 total_edges = 3;
+   */
+  totalEdges: bigint;
+
+  /**
+   * Zero when the tenant has never written a node.
+   *
+   * @generated from field: google.protobuf.Timestamp last_write_at = 4;
+   */
+  lastWriteAt?: Timestamp;
+};
+
+/**
+ * Describes the message gibson.graph.v1.GetGraphStatsResponse.
+ * Use `create(GetGraphStatsResponseSchema)` to create a new message.
+ */
+export const GetGraphStatsResponseSchema: GenMessage<GetGraphStatsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 19);
+
+/**
+ * @generated from message gibson.graph.v1.GetGraphSummaryRequest
+ */
+export type GetGraphSummaryRequest = Message<"gibson.graph.v1.GetGraphSummaryRequest"> & {
+};
+
+/**
+ * Describes the message gibson.graph.v1.GetGraphSummaryRequest.
+ * Use `create(GetGraphSummaryRequestSchema)` to create a new message.
+ */
+export const GetGraphSummaryRequestSchema: GenMessage<GetGraphSummaryRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 20);
+
+/**
+ * @generated from message gibson.graph.v1.GraphSummaryStats
+ */
+export type GraphSummaryStats = Message<"gibson.graph.v1.GraphSummaryStats"> & {
+  /**
+   * @generated from field: uint64 hosts = 1;
+   */
+  hosts: bigint;
+
+  /**
+   * @generated from field: uint64 services = 2;
+   */
+  services: bigint;
+
+  /**
+   * @generated from field: uint64 findings = 3;
+   */
+  findings: bigint;
+
+  /**
+   * @generated from field: uint64 vulnerabilities = 4;
+   */
+  vulnerabilities: bigint;
+
+  /**
+   * @generated from field: uint64 missions = 5;
+   */
+  missions: bigint;
+};
+
+/**
+ * Describes the message gibson.graph.v1.GraphSummaryStats.
+ * Use `create(GraphSummaryStatsSchema)` to create a new message.
+ */
+export const GraphSummaryStatsSchema: GenMessage<GraphSummaryStats> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 21);
+
+/**
+ * @generated from message gibson.graph.v1.GetGraphSummaryResponse
+ */
+export type GetGraphSummaryResponse = Message<"gibson.graph.v1.GetGraphSummaryResponse"> & {
+  /**
+   * LLM-friendly text summary, capped at ~4000 chars.
+   *
+   * @generated from field: string summary = 1;
+   */
+  summary: string;
+
+  /**
+   * @generated from field: gibson.graph.v1.GraphSummaryStats stats = 2;
+   */
+  stats?: GraphSummaryStats;
+};
+
+/**
+ * Describes the message gibson.graph.v1.GetGraphSummaryResponse.
+ * Use `create(GetGraphSummaryResponseSchema)` to create a new message.
+ */
+export const GetGraphSummaryResponseSchema: GenMessage<GetGraphSummaryResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 22);
+
+/**
+ * @generated from message gibson.graph.v1.GetGraphContextRequest
+ */
+export type GetGraphContextRequest = Message<"gibson.graph.v1.GetGraphContextRequest"> & {
+  /**
+   * @generated from field: string node_id = 1;
+   */
+  nodeId: string;
+
+  /**
+   * Default 2, max 5 (server-clamped).
+   *
+   * @generated from field: uint32 hops = 2;
+   */
+  hops: number;
+
+  /**
+   * Default 30, max 100 (server-clamped).
+   *
+   * @generated from field: uint32 max_nodes = 3;
+   */
+  maxNodes: number;
+};
+
+/**
+ * Describes the message gibson.graph.v1.GetGraphContextRequest.
+ * Use `create(GetGraphContextRequestSchema)` to create a new message.
+ */
+export const GetGraphContextRequestSchema: GenMessage<GetGraphContextRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 23);
+
+/**
+ * @generated from message gibson.graph.v1.NeighborEdge
+ */
+export type NeighborEdge = Message<"gibson.graph.v1.NeighborEdge"> & {
+  /**
+   * @generated from field: gibson.graph.v1.Node node = 1;
+   */
+  node?: Node;
+
+  /**
+   * @generated from field: string relationship = 2;
+   */
+  relationship: string;
+
+  /**
+   * "incoming" or "outgoing"
+   *
+   * @generated from field: string direction = 3;
+   */
+  direction: string;
+};
+
+/**
+ * Describes the message gibson.graph.v1.NeighborEdge.
+ * Use `create(NeighborEdgeSchema)` to create a new message.
+ */
+export const NeighborEdgeSchema: GenMessage<NeighborEdge> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 24);
+
+/**
+ * @generated from message gibson.graph.v1.GetGraphContextResponse
+ */
+export type GetGraphContextResponse = Message<"gibson.graph.v1.GetGraphContextResponse"> & {
+  /**
+   * Unset when the node was not found OR Neo4j is unavailable. The daemon
+   * returns this shape (not an error) so chatbot prompts never break.
+   *
+   * @generated from field: gibson.graph.v1.Node focus_node = 1;
+   */
+  focusNode?: Node;
+
+  /**
+   * @generated from field: repeated gibson.graph.v1.NeighborEdge neighbors = 2;
+   */
+  neighbors: NeighborEdge[];
+
+  /**
+   * LLM-friendly text serialization of focus + neighbors.
+   *
+   * @generated from field: string summary = 3;
+   */
+  summary: string;
+};
+
+/**
+ * Describes the message gibson.graph.v1.GetGraphContextResponse.
+ * Use `create(GetGraphContextResponseSchema)` to create a new message.
+ */
+export const GetGraphContextResponseSchema: GenMessage<GetGraphContextResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 25);
+
+/**
+ * @generated from enum gibson.graph.v1.FindingCountGroupBy
+ */
+export enum FindingCountGroupBy {
+  /**
+   * @generated from enum value: FINDING_COUNT_GROUP_BY_UNSPECIFIED = 0;
+   */
+  FINDING_COUNT_GROUP_BY_UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: SEVERITY = 1;
+   */
+  SEVERITY = 1,
+
+  /**
+   * @generated from enum value: CATEGORY = 2;
+   */
+  CATEGORY = 2,
+}
+
+/**
+ * Describes the enum gibson.graph.v1.FindingCountGroupBy.
+ */
+export const FindingCountGroupBySchema: GenEnum<FindingCountGroupBy> = /*@__PURE__*/
+  enumDesc(file_gibson_graph_v1_graph, 0);
+
+/**
  * GraphService serves per-tenant knowledge-graph reads and a server-streaming
  * update feed. Every RPC routes through Pool.For(tenant).Neo4j() server-side
  * and is gated by the FGA tenant.member relation at ext-authz.
@@ -458,6 +843,66 @@ export const GraphService: GenService<{
     methodKind: "server_streaming";
     input: typeof WatchGraphUpdatesRequestSchema;
     output: typeof GraphUpdateSchema;
+  },
+  /**
+   * GetFindingCounts returns finding counts grouped by severity or category.
+   * Replaces the dashboard's prior direct-Neo4j paths in
+   * gibson-client.ts (getKPIs, getFindingsBySeverity, getFindingsByCategory)
+   * and app/api/findings/counts/route.ts.
+   *
+   * @generated from rpc gibson.graph.v1.GraphService.GetFindingCounts
+   */
+  getFindingCounts: {
+    methodKind: "unary";
+    input: typeof GetFindingCountsRequestSchema;
+    output: typeof GetFindingCountsResponseSchema;
+  },
+  /**
+   * GetFindingTimeSeries returns finding counts bucketed by day for the last
+   * N days (default 30, max 365). Missing days are returned as zero buckets.
+   *
+   * @generated from rpc gibson.graph.v1.GraphService.GetFindingTimeSeries
+   */
+  getFindingTimeSeries: {
+    methodKind: "unary";
+    input: typeof GetFindingTimeSeriesRequestSchema;
+    output: typeof GetFindingTimeSeriesResponseSchema;
+  },
+  /**
+   * GetGraphStats returns aggregate stats for the per-tenant knowledge graph:
+   * node counts by label, total edges, last-write timestamp.
+   *
+   * @generated from rpc gibson.graph.v1.GraphService.GetGraphStats
+   */
+  getGraphStats: {
+    methodKind: "unary";
+    input: typeof GetGraphStatsRequestSchema;
+    output: typeof GetGraphStatsResponseSchema;
+  },
+  /**
+   * GetGraphSummary returns an LLM-friendly text summary of the per-tenant
+   * graph plus structured stats. Server-side caches results for 60s per
+   * tenant.
+   *
+   * @generated from rpc gibson.graph.v1.GraphService.GetGraphSummary
+   */
+  getGraphSummary: {
+    methodKind: "unary";
+    input: typeof GetGraphSummaryRequestSchema;
+    output: typeof GetGraphSummaryResponseSchema;
+  },
+  /**
+   * GetGraphContext returns a focus node and its bounded neighborhood, used
+   * by the chatbot to enrich its system prompt. Returns an empty response
+   * (focus_node unset) on missing node or NotProvisioned — does NOT error,
+   * so the chatbot prompt never breaks.
+   *
+   * @generated from rpc gibson.graph.v1.GraphService.GetGraphContext
+   */
+  getGraphContext: {
+    methodKind: "unary";
+    input: typeof GetGraphContextRequestSchema;
+    output: typeof GetGraphContextResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_graph_v1_graph, 0);

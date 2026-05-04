@@ -1,6 +1,6 @@
 /**
  * Utility libraries and clients
- * gibson-client, neo4j-client, utilities, helpers
+ * gibson-client, utilities, helpers
  */
 
 // WebSocket handlers

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 import { listMissions, serializeMission } from '@/src/lib/gibson-client';
-import { getNeo4jDriver } from '@/src/lib/neo4j-client';
+import { getLegacyNeo4jDriver } from '@/src/lib/neo4j-legacy-driver';
 import type { Mission, MissionStatus } from '@/src/types';
 
 /**
@@ -67,7 +67,7 @@ export async function GET(
     let description = serialized.description || '';
 
     try {
-      const driver = getNeo4jDriver();
+      const driver = getLegacyNeo4jDriver();
       const neo4jSession = driver.session({ database: 'neo4j' });
       const tenantId = session.user.tenantId;
 
@@ -171,7 +171,7 @@ export async function DELETE(
       );
     }
 
-    const driver = getNeo4jDriver();
+    const driver = getLegacyNeo4jDriver();
     const neo4jSession = driver.session({ database: 'neo4j' });
 
     try {

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { getStatus, serializeStatus, listMissions, listAgents } from '@/src/lib/gibson-client';
-import { getNeo4jDriver } from '@/src/lib/neo4j-client';
+import { getLegacyNeo4jDriver } from '@/src/lib/neo4j-legacy-driver';
 import type { DashboardMetrics, ComponentStatus } from '@/src/types';
 
 /**
@@ -81,7 +81,7 @@ export async function GET() {
     const defaults = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
     if (!tenantId) return defaults;
     try {
-      const driver = getNeo4jDriver();
+      const driver = getLegacyNeo4jDriver();
       const neo4jSession = driver.session({ database: 'neo4j' });
       try {
         const result = await neo4jSession.run(

@@ -54,9 +54,10 @@ vi.mock('@/src/lib/config', () => ({
   serverConfig: { gibsonDaemonUrl: 'http://envoy.test:8080' },
 }));
 
-// Stub out neo4j-client (imported at module level for analytics helpers).
-vi.mock('@/src/lib/neo4j-client', () => ({
-  getNeo4jDriver: vi.fn(() => ({ session: vi.fn(() => ({ run: vi.fn(), close: vi.fn() })) })),
+// Stub out the GraphService client used by the analytics helpers.
+vi.mock('@/src/gen/gibson/graph/v1/graph_pb', () => ({
+  GraphService: {},
+  FindingCountGroupBy: { SEVERITY: 1, CATEGORY: 2, FINDING_COUNT_GROUP_BY_UNSPECIFIED: 0 },
 }));
 
 // ---------------------------------------------------------------------------

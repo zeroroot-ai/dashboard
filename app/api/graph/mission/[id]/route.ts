@@ -2,7 +2,7 @@
  * Mission Graph API Route — Phase 4, Task 14
  *
  * GET /api/graph/mission/:id — proxies GetMissionGraph through daemon.
- * Does NOT import neo4j-client.ts (deleted in Phase 8).
+ * Does NOT import direct Neo4j driver.
  */
 
 import 'server-only';

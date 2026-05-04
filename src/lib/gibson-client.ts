@@ -1241,7 +1241,10 @@ export async function getUserActivity(
 // Analytics — computed from daemon RPCs and Neo4j graph
 // ============================================================================
 
-import { getNeo4jDriver } from '@/src/lib/neo4j-client';
+import {
+  GraphService,
+  FindingCountGroupBy,
+} from '@/src/gen/gibson/graph/v1/graph_pb';
 
 export interface KPIs {
   activeMissions: number;
@@ -1254,10 +1257,10 @@ export interface KPIs {
 }
 
 /**
- * Return high-level operational KPIs by combining daemon RPC data with a
- * Neo4j finding count query.
+ * Return high-level operational KPIs by combining daemon RPC data with
+ * GraphService.GetFindingCounts.
  *
- * Neo4j failures are handled gracefully — finding counts fall back to zero
+ * Finding count failures are handled gracefully — counts fall back to zero
  * so that the rest of the KPI data remains usable.
  */
 export async function getKPIs(tenantId: string, userId?: string): Promise<KPIs> {
@@ -1278,34 +1281,17 @@ export async function getKPIs(tenantId: string, userId?: string): Promise<KPIs> 
   let criticalFindings = 0;
 
   try {
-    const driver = getNeo4jDriver();
-    const session = driver.session({ database: 'neo4j' });
-    try {
-      const result = await session.run(
-        `MATCH (f:Finding)
-         WHERE f.tenant_id = $tenantId OR $tenantId IS NULL
-         RETURN count(f) AS total,
-                count(CASE WHEN f.severity = 'critical' THEN 1 END) AS critical`,
-        { tenantId: tenantId || null }
-      );
-      if (result.records.length > 0) {
-        const rec = result.records[0];
-        const rawTotal = rec.get('total');
-        const rawCritical = rec.get('critical');
-        totalFindings =
-          rawTotal && typeof rawTotal.toNumber === 'function'
-            ? rawTotal.toNumber()
-            : Number(rawTotal ?? 0);
-        criticalFindings =
-          rawCritical && typeof rawCritical.toNumber === 'function'
-            ? rawCritical.toNumber()
-            : Number(rawCritical ?? 0);
+    const resp = await userClient(GraphService).getFindingCounts({
+      groupBy: FindingCountGroupBy.SEVERITY,
+    });
+    for (const bucket of resp.buckets) {
+      totalFindings += Number(bucket.count);
+      if (bucket.label.toLowerCase() === 'critical') {
+        criticalFindings = Number(bucket.count);
       }
-    } finally {
-      await session.close();
     }
   } catch (err) {
-    console.warn('getKPIs: Neo4j query failed, finding counts will be 0', err);
+    console.warn('getKPIs: GetFindingCounts failed, finding counts will be 0', err);
   }
 
   return {
@@ -1320,70 +1306,43 @@ export async function getKPIs(tenantId: string, userId?: string): Promise<KPIs> 
 }
 
 /**
- * Return finding counts grouped by severity from Neo4j.
+ * Return finding counts grouped by severity via GraphService.GetFindingCounts.
  *
- * Returns an empty object on Neo4j connection failure so the caller can
- * degrade gracefully rather than surface an error to the UI.
+ * Returns an empty object on failure so the caller can degrade gracefully.
  */
 export async function getFindingsBySeverity(tenantId: string, _userId?: string): Promise<Record<string, number>> {
   try {
-    const driver = getNeo4jDriver();
-    const session = driver.session({ database: 'neo4j' });
-    try {
-      const result = await session.run(
-        `MATCH (f:Finding)
-         WHERE f.tenant_id = $tenantId OR $tenantId IS NULL
-         RETURN f.severity AS severity, count(f) AS count`,
-        { tenantId: tenantId || null }
-      );
-      const counts: Record<string, number> = {};
-      for (const rec of result.records) {
-        const severity = rec.get('severity') as string | null;
-        const raw = rec.get('count');
-        const count =
-          raw && typeof raw.toNumber === 'function' ? raw.toNumber() : Number(raw ?? 0);
-        counts[severity ?? 'unknown'] = count;
-      }
-      return counts;
-    } finally {
-      await session.close();
+    const resp = await userClient(GraphService).getFindingCounts({
+      groupBy: FindingCountGroupBy.SEVERITY,
+    });
+    const counts: Record<string, number> = {};
+    for (const bucket of resp.buckets) {
+      counts[bucket.label] = Number(bucket.count);
     }
+    return counts;
   } catch (err) {
-    console.warn('getFindingsBySeverity: Neo4j query failed', err);
+    console.warn('getFindingsBySeverity: GetFindingCounts failed', err);
     return {};
   }
 }
 
 /**
- * Return finding counts grouped by category (f.type) from Neo4j.
+ * Return finding counts grouped by category via GraphService.GetFindingCounts.
  *
- * Returns an empty object on Neo4j connection failure.
+ * Returns an empty object on failure.
  */
 export async function getFindingsByCategory(tenantId: string, _userId?: string): Promise<Record<string, number>> {
   try {
-    const driver = getNeo4jDriver();
-    const session = driver.session({ database: 'neo4j' });
-    try {
-      const result = await session.run(
-        `MATCH (f:Finding)
-         WHERE f.tenant_id = $tenantId OR $tenantId IS NULL
-         RETURN f.type AS category, count(f) AS count`,
-        { tenantId: tenantId || null }
-      );
-      const counts: Record<string, number> = {};
-      for (const rec of result.records) {
-        const category = rec.get('category') as string | null;
-        const raw = rec.get('count');
-        const count =
-          raw && typeof raw.toNumber === 'function' ? raw.toNumber() : Number(raw ?? 0);
-        counts[category ?? 'unknown'] = count;
-      }
-      return counts;
-    } finally {
-      await session.close();
+    const resp = await userClient(GraphService).getFindingCounts({
+      groupBy: FindingCountGroupBy.CATEGORY,
+    });
+    const counts: Record<string, number> = {};
+    for (const bucket of resp.buckets) {
+      counts[bucket.label] = Number(bucket.count);
     }
+    return counts;
   } catch (err) {
-    console.warn('getFindingsByCategory: Neo4j query failed', err);
+    console.warn('getFindingsByCategory: GetFindingCounts failed', err);
     return {};
   }
 }
@@ -1394,9 +1353,10 @@ export interface FindingsTimeSeriesPoint {
 }
 
 /**
- * Return a daily time series of finding counts over the past `days` days.
+ * Return a daily time series of finding counts over the past `days` days
+ * via GraphService.GetFindingTimeSeries.
  *
- * Returns an empty array on Neo4j connection failure.
+ * Returns an empty array on failure.
  */
 export async function getFindingsTimeSeries(
   tenantId: string,
@@ -1404,34 +1364,16 @@ export async function getFindingsTimeSeries(
   _userId?: string
 ): Promise<FindingsTimeSeriesPoint[]> {
   try {
-    const driver = getNeo4jDriver();
-    const session = driver.session({ database: 'neo4j' });
-    try {
-      const result = await session.run(
-        `MATCH (f:Finding)
-         WHERE (f.tenant_id = $tenantId OR $tenantId IS NULL)
-           AND f.created_at > datetime() - duration({days: $days})
-         RETURN date(f.created_at) AS date, count(f) AS count
-         ORDER BY date`,
-        { tenantId: tenantId || null, days }
-      );
-      return result.records.map((rec) => {
-        const raw = rec.get('count');
-        const count =
-          raw && typeof raw.toNumber === 'function' ? raw.toNumber() : Number(raw ?? 0);
-        const dateVal = rec.get('date');
-        // Neo4j Date objects expose .toString() as ISO date strings (YYYY-MM-DD)
-        const dateStr =
-          dateVal && typeof dateVal.toString === 'function'
-            ? dateVal.toString()
-            : String(dateVal ?? '');
-        return { date: dateStr, count };
-      });
-    } finally {
-      await session.close();
-    }
+    const resp = await userClient(GraphService).getFindingTimeSeries({ days });
+    return resp.points.map((pt) => {
+      // pt.date is a google.protobuf.Timestamp; convert to YYYY-MM-DD ISO date string.
+      const dateStr = pt.date
+        ? new Date(Number(pt.date.seconds) * 1000).toISOString().slice(0, 10)
+        : '';
+      return { date: dateStr, count: Number(pt.count) };
+    });
   } catch (err) {
-    console.warn('getFindingsTimeSeries: Neo4j query failed', err);
+    console.warn('getFindingsTimeSeries: GetFindingTimeSeries failed', err);
     return [];
   }
 }

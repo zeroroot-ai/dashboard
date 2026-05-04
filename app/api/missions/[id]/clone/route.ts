@@ -56,8 +56,8 @@ export async function GET(
       );
     }
 
-    const { getNeo4jDriver } = await import('@/src/lib/neo4j-client');
-    const driver = getNeo4jDriver();
+    const { getLegacyNeo4jDriver } = await import('@/src/lib/neo4j-legacy-driver');
+    const driver = getLegacyNeo4jDriver();
     const neo4jSession = driver.session({ database: 'neo4j' });
     try {
       // Tenant scoping is enforced via the Cypher MATCH — a user can only

@@ -20,7 +20,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { safeErrorResponse } from '@/src/lib/api-errors';
 import neo4j from 'neo4j-driver';
-import { getNeo4jDriver } from '@/src/lib/neo4j-client';
+import { getLegacyNeo4jDriver } from '@/src/lib/neo4j-legacy-driver';
 
 const BATCH_SIZE = 500;
 const MAX_RECORDS = 50_000;
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const missionId = request.nextUrl.searchParams.get('missionId');
     const search = request.nextUrl.searchParams.get('search');
 
-    const driver = getNeo4jDriver();
+    const driver = getLegacyNeo4jDriver();
     const allRows: FindingRow[] = [];
 
     const neo4jSession = driver.session({ database: 'neo4j' });
