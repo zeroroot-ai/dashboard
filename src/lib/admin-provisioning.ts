@@ -16,8 +16,10 @@
  *
  * Authz: dashboard-authz-ui-gating Task 10 — verifyZitadelBearer is the
  * primary gate; all business handlers are stubbed 503 so no second-pass check
- * is needed here (stub file). See admin-provisioning-entitlements.ts for the
- * live handlers.
+ * is needed here (stub file). The entitlements forwarders previously lived
+ * at admin-provisioning-entitlements.ts; deleted in spec
+ * tenant-provisioning-unification-phase2 Phase 7.1 because the operator now
+ * calls the daemon's PlatformOperatorService gRPC directly.
  */
 
 import { NextRequest, NextResponse } from "next/server";
