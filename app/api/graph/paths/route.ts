@@ -1,8 +1,7 @@
 /**
- * Mission Graph API Route — Phase 4, Task 14
+ * Graph Paths API Route — Phase 4, Task 15
  *
- * GET /api/graph/mission/:id — proxies GetMissionGraph through daemon.
- * Does NOT import neo4j-client.ts (deleted in Phase 8).
+ * POST /api/graph/paths — proxies QueryPaths through daemon.
  */
 
 import 'server-only';
@@ -43,11 +42,7 @@ function toGraphNode(n: { id: string; labels: string[]; properties: Record<strin
   if (n.severity) {
     properties.severity = n.severity;
   }
-  return {
-    id: n.id,
-    labels: n.labels,
-    properties,
-  };
+  return { id: n.id, labels: n.labels, properties };
 }
 
 /** Map proto Edge to dashboard GraphEdge shape. */
@@ -60,43 +55,67 @@ function toGraphEdge(e: { id: string; sourceId: string; targetId: string; type: 
       properties[k] = v;
     }
   }
-  return {
-    id: e.id,
-    type: e.type,
-    source: e.sourceId,
-    target: e.targetId,
-    properties,
-  };
+  return { id: e.id, type: e.type, source: e.sourceId, target: e.targetId, properties };
 }
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+interface PathsRequestBody {
+  from_node_id: string;
+  to_node_id?: string;
+  to_node_kind?: string;
+  max_depth?: number;
+}
+
+export async function POST(request: NextRequest) {
   const session = await getServerSession();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id: missionId } = await params;
-  if (!missionId) {
-    return NextResponse.json({ error: 'Mission ID is required' }, { status: 400 });
+  let body: PathsRequestBody;
+  try {
+    body = await request.json() as PathsRequestBody;
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  const { from_node_id, to_node_id, to_node_kind, max_depth } = body;
+
+  if (!from_node_id) {
+    return NextResponse.json({ error: 'from_node_id is required' }, { status: 400 });
+  }
+
+  // Validate exactly one of to_node_id or to_node_kind is set.
+  const hasToNodeId = !!to_node_id;
+  const hasToNodeKind = !!to_node_kind;
+  if (hasToNodeId === hasToNodeKind) {
+    return NextResponse.json(
+      { error: 'Exactly one of to_node_id or to_node_kind must be set' },
+      { status: 400 }
+    );
   }
 
   try {
     const client = userClient(GraphService);
-    const resp = await client.getMissionGraph({ missionId });
+    const resp = await client.queryPaths({
+      fromNodeId: from_node_id,
+      to: hasToNodeId
+        ? { case: 'toNodeId', value: to_node_id! }
+        : { case: 'toNodeKind', value: to_node_kind! },
+      maxDepth: max_depth ?? 5,
+    });
 
     return NextResponse.json({
+      paths: resp.paths.map(p => ({ node_ids: p.nodeIds, edge_ids: p.edgeIds })),
       nodes: resp.nodes.map(toGraphNode),
       edges: resp.edges.map(toGraphEdge),
+      truncated_paths: resp.truncatedPaths,
     });
   } catch (err) {
     if (err instanceof ConnectError) {
       const status = grpcStatusToHttp(err);
       return NextResponse.json({ error: err.message }, { status });
     }
-    console.error('[api/graph/mission] unexpected error', err);
+    console.error('[api/graph/paths] unexpected error', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

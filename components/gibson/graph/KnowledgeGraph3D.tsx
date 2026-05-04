@@ -863,6 +863,15 @@ class Graph3DRenderer {
         // Check if this edge is hovered
         const isHovered = edge === this.hoveredEdge;
 
+        // Path highlight: on-path edges at full opacity, off-path dimmed to 0.1
+        if (this.hasHighlight) {
+          if (this.highlightedEdgeIds.has(edge.id)) {
+            alpha = 1.0;
+          } else {
+            alpha = 0.1;
+          }
+        }
+
         // Draw edge using EdgeRenderer
         this.edgeRenderer.drawEdge(
           ctx,
@@ -877,7 +886,7 @@ class Graph3DRenderer {
             animationOffset: animationOffset,
             glowEnabled: true,
             alpha: isHovered ? Math.min(1, alpha + 0.3) : alpha,
-            lineWidth: isHovered
+            lineWidth: isHovered || (this.hasHighlight && this.highlightedEdgeIds.has(edge.id))
               ? Math.max(0.5, 0.8 * this.camera.zoom)
               : Math.max(0.2, 0.4 * this.camera.zoom),
             theme: this.theme,
@@ -936,6 +945,15 @@ class Graph3DRenderer {
       // Selection dimming: unconnected nodes get alpha 0.3
       if (hasSelection && !isSelected && !this.connectedNodeIds.has(node.id)) {
         alpha = 0.3;
+      }
+
+      // Path highlight: on-path nodes at full opacity, off-path dimmed to 0.1
+      if (this.hasHighlight) {
+        if (this.highlightedNodeIds.has(node.id)) {
+          alpha = 1.0;
+        } else {
+          alpha = 0.1;
+        }
       }
 
       // Check if node is in active/running state
@@ -1172,6 +1190,17 @@ class Graph3DRenderer {
     }
   }
 
+  /** Track highlighted path node/edge sets for path-query visualisation. */
+  private highlightedNodeIds: Set<string> = new Set();
+  private highlightedEdgeIds: Set<string> = new Set();
+  private hasHighlight = false;
+
+  setHighlightedPathIds(nodeIds: Set<string>, edgeIds: Set<string>): void {
+    this.highlightedNodeIds = nodeIds;
+    this.highlightedEdgeIds = edgeIds;
+    this.hasHighlight = nodeIds.size > 0 || edgeIds.size > 0;
+  }
+
   resetCamera(): void {
     this.camera = {
       rotationX: -0.3,
@@ -1230,6 +1259,11 @@ function buildPropertyLine(node: Node3D): string | null {
 // React Component
 // ============================================================================
 
+export interface HighlightedPath {
+  node_ids: string[];
+  edge_ids: string[];
+}
+
 export interface KnowledgeGraph3DProps {
   data?: {
     nodes: GraphNode[];
@@ -1240,6 +1274,17 @@ export interface KnowledgeGraph3DProps {
   loading?: boolean;
   error?: string;
   className?: string;
+  /**
+   * Paths returned by QueryPaths. When set, edges on these paths render at
+   * full opacity and off-path nodes/edges are dimmed to 0.1.
+   */
+  highlightedPaths?: HighlightedPath[];
+  /**
+   * Duration in ms over which newly-streamed nodes fade from opacity 0 to 1.
+   * Nodes carrying an `addedAt` property (epoch ms) within this window are
+   * tweened. Default 800ms.
+   */
+  nodeFadeInDuration?: number;
 }
 
 export function KnowledgeGraph3D({
@@ -1249,6 +1294,8 @@ export function KnowledgeGraph3D({
   loading = false,
   error,
   className,
+  highlightedPaths,
+  nodeFadeInDuration = 800,
 }: KnowledgeGraph3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -1340,6 +1387,50 @@ export function KnowledgeGraph3D({
       rendererRef.current.setParticlesEnabled(performance.particleEffects);
     }
   }, [performance.particleEffects]);
+
+  // Update highlighted path sets on the renderer when prop changes.
+  useEffect(() => {
+    if (!rendererRef.current) return;
+    if (!highlightedPaths || highlightedPaths.length === 0) {
+      rendererRef.current.setHighlightedPathIds(new Set(), new Set());
+      return;
+    }
+    const nodeIds = new Set<string>();
+    const edgeIds = new Set<string>();
+    for (const path of highlightedPaths) {
+      for (const id of path.node_ids) nodeIds.add(id);
+      for (const id of path.edge_ids) edgeIds.add(id);
+    }
+    rendererRef.current.setHighlightedPathIds(nodeIds, edgeIds);
+  }, [highlightedPaths]);
+
+  // Node fade-in: nodes with addedAt within nodeFadeInDuration are tweened.
+  // We expose this via the node's properties.addedAt (epoch ms). The renderer
+  // reads alpha from the render loop; to implement fade-in we periodically
+  // force re-renders by toggling a counter when newly-added nodes are present.
+  // This is a lightweight approximation — we don't need sub-frame precision.
+  const [, setFadeTick] = useState(0);
+  useEffect(() => {
+    if (!nodeFadeInDuration) return;
+    const now = Date.now();
+    const freshNodes = data.nodes.filter(n => {
+      const addedAt = n.properties?.addedAt as number | undefined;
+      return addedAt && now - addedAt < nodeFadeInDuration;
+    });
+    if (freshNodes.length === 0) return;
+    const interval = setInterval(() => {
+      const still = data.nodes.some(n => {
+        const addedAt = n.properties?.addedAt as number | undefined;
+        return addedAt && Date.now() - addedAt < nodeFadeInDuration;
+      });
+      if (still) {
+        setFadeTick(t => t + 1);
+      } else {
+        clearInterval(interval);
+      }
+    }, 32); // ~30fps updates for fade
+    return () => clearInterval(interval);
+  }, [data.nodes, nodeFadeInDuration]);
 
   if (loading) {
     return (

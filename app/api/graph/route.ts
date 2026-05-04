@@ -1,59 +1,101 @@
 /**
- * Full Graph API Route
+ * Full Graph API Route — Phase 4, Task 13
  *
- * GET /api/graph - Fetch full knowledge graph with optional filters
+ * GET /api/graph — proxies GetTenantGraph through Envoy + ext-authz + daemon.
+ * Does NOT import neo4j-client.ts (deleted in Phase 8).
  */
 
+import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
+import { ConnectError, Code } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
-import { safeErrorResponse } from '@/src/lib/api-errors';
-import { getFullGraph } from '@/src/lib/neo4j-client';
+import { userClient } from '@/src/lib/gibson-client';
+import { GraphService } from '@/src/gen/gibson/graph/v1/graph_pb';
+import type { GraphNode, GraphEdge } from '@/src/types/graph';
+
+/** Map ConnectError codes to HTTP status codes per spec. */
+function grpcStatusToHttp(err: ConnectError): number {
+  switch (err.code) {
+    case Code.PermissionDenied:
+    case Code.Unauthenticated:
+      return 403;
+    case Code.FailedPrecondition:
+      return 412;
+    case Code.DeadlineExceeded:
+      return 504;
+    case Code.Unavailable:
+      return 503;
+    default:
+      return 500;
+  }
+}
+
+/** Map proto Node to dashboard GraphNode shape. */
+function toGraphNode(n: { id: string; labels: string[]; properties: Record<string, string>; severity: string }): GraphNode {
+  const properties: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(n.properties)) {
+    // Properties are JSON-stringified per value; attempt to parse.
+    try {
+      properties[k] = JSON.parse(v);
+    } catch {
+      properties[k] = v;
+    }
+  }
+  if (n.severity) {
+    properties.severity = n.severity;
+  }
+  return {
+    id: n.id,
+    labels: n.labels,
+    properties,
+  };
+}
+
+/** Map proto Edge to dashboard GraphEdge shape. */
+function toGraphEdge(e: { id: string; sourceId: string; targetId: string; type: string; properties: Record<string, string> }): GraphEdge {
+  const properties: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(e.properties)) {
+    try {
+      properties[k] = JSON.parse(v);
+    } catch {
+      properties[k] = v;
+    }
+  }
+  return {
+    id: e.id,
+    type: e.type,
+    source: e.sourceId,
+    target: e.targetId,
+    properties,
+  };
+}
 
 export async function GET(request: NextRequest) {
+  const session = await getServerSession();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const searchParams = request.nextUrl.searchParams;
+  const limitParam = searchParams.get('limit');
+  const limit = limitParam ? Math.min(parseInt(limitParam, 10), 5000) : 1000;
+
   try {
-    // Validate authentication
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Parse query parameters
-    const searchParams = request.nextUrl.searchParams;
-    const nodeTypes = searchParams.get('nodeTypes')?.split(',');
-    const relationshipTypes = searchParams.get('relationshipTypes')?.split(',');
-    const search = searchParams.get('search') || undefined;
-    const limit = searchParams.get('limit')
-      ? parseInt(searchParams.get('limit')!)
-      : 500;
-
-    const tenantId = session.user.tenantId;
-    if (!tenantId) {
-      return NextResponse.json({ error: 'No tenant associated with session' }, { status: 403 });
-    }
-
-    // Build filter options
-    const labels = nodeTypes || [];
-
-    // Fetch graph data from Neo4j — tenantId is mandatory for data isolation
-    const graphData = await getFullGraph(tenantId, {
-      labels,
-      search,
-      limit,
-    });
-
-    // Filter edges by relationship type if specified
-    let edges = graphData.edges;
-    if (relationshipTypes && relationshipTypes.length > 0) {
-      edges = graphData.edges.filter((edge) =>
-        relationshipTypes.includes(edge.type)
-      );
-    }
+    const client = userClient(GraphService);
+    const resp = await client.getTenantGraph({ limit, includeLabels: [] });
 
     return NextResponse.json({
-      nodes: graphData.nodes,
-      edges,
+      nodes: resp.nodes.map(toGraphNode),
+      edges: resp.edges.map(toGraphEdge),
+      truncated: resp.truncated,
+      total_node_count: resp.totalNodeCount,
     });
-  } catch (error) {
-    return safeErrorResponse(error, 'Failed to process graph request', 500);
+  } catch (err) {
+    if (err instanceof ConnectError) {
+      const status = grpcStatusToHttp(err);
+      return NextResponse.json({ error: err.message }, { status });
+    }
+    console.error('[api/graph] unexpected error', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

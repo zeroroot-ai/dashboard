@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle, Bot, ChevronRight, Crosshair, Network, Plug, Wrench } from 'lucide-react';
+import { GraphHero } from '@/components/gibson/graph/GraphHero';
 import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
@@ -475,6 +476,9 @@ export function DashboardContent() {
 
       {/* KPI row */}
       {isLoading ? <KPICardsSkeleton /> : <KpiCards />}
+
+      {/* Attack-surface graph — dominant visual hero on the landing route */}
+      <GraphHero />
 
       {/* Component cards — Agents, Tools, Plugins */}
       <ComponentCards />
