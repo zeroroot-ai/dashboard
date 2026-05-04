@@ -130,7 +130,6 @@
     "marked": "^15.0.12",
     "monaco-editor": "^0.55.1",
     "motion": "^12.23.26",
-    "neo4j-driver": "^5.27.0",
     "next": "16.0.10",
     "next-auth": "^5.0.0-beta.31",
     "next-themes": "^0.4.6",

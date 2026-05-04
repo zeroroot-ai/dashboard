@@ -206,6 +206,9 @@ async function createMissionInGibson(
     }
 
     // Step 2: Create the mission referencing the registered definition.
+    // Pass source_yaml so the daemon can store it for the clone workflow
+    // (GetMissionSourceYAML). The daemon also does the Neo4j MERGE server-side
+    // after this call succeeds (spec: dashboard-neo4j-crud-removal Phase 2).
     const createResp = await client.createMission({
       name: metadata.name,
       description: metadata.description,
@@ -213,6 +216,7 @@ async function createMissionInGibson(
       missionDefinitionId,
       variables: {},
       memoryContinuity: 'isolated',
+      sourceYaml: params.yaml,
     });
 
     if (!createResp.success || !createResp.mission?.id) {
@@ -223,45 +227,6 @@ async function createMissionInGibson(
     }
 
     const missionId = createResp.mission.id;
-
-    // Persist a Neo4j mirror record only after a successful daemon launch.
-    // The source YAML rides along on the node so the clone API can read it
-    // back without needing a daemon GetMissionDefinition RPC. The daemon
-    // remains the source-of-truth for execution state; Neo4j is only the
-    // authoring-format cache. Spec: mission-api-only-cleanup follow-up.
-    try {
-      const { getLegacyNeo4jDriver } = await import('@/src/lib/neo4j-legacy-driver');
-      const driver = getLegacyNeo4jDriver();
-      const session = driver.session({ database: 'neo4j' });
-      try {
-        await session.run(
-          `MERGE (m:Mission {id: $id})
-           SET m.name = $name,
-               m.description = $description,
-               m.target = $target,
-               m.status = $status,
-               m.startTime = datetime(),
-               m.createdBy = $userId,
-               m.tenant_id = $tenantId,
-               m.source_yaml = $sourceYaml
-           RETURN m.id`,
-          {
-            id: missionId,
-            name: metadata.name,
-            description: metadata.description,
-            target: targetId,
-            status: params.startImmediately ? 'running' : 'pending',
-            userId: params.userId,
-            tenantId: params.tenantId,
-            sourceYaml: params.yaml,
-          }
-        );
-      } finally {
-        await session.close();
-      }
-    } catch (err) {
-      console.error('[Missions] Failed to save to Neo4j:', err);
-    }
 
     return { success: true, missionId };
   } catch (err: any) {

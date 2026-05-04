@@ -2630,8 +2630,7 @@ export const TenantAdminService: GenService<{
   },
   /**
    * ExportFindings exports findings to the requested format (json, csv, sarif).
-   *
-   * Unimplemented: <owner-pending>
+   * Implemented per spec dashboard-neo4j-crud-removal Req 2.
    *
    * @generated from rpc gibson.tenant.v1.TenantAdminService.ExportFindings
    */

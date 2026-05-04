@@ -19,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/graph/v1/graph.proto.
  */
 export const file_gibson_graph_v1_graph: GenFile = /*@__PURE__*/
-  fileDesc("ChtnaWJzb24vZ3JhcGgvdjEvZ3JhcGgucHJvdG8SD2dpYnNvbi5ncmFwaC52MSLVAQoETm9kZRIKCgJpZBgBIAEoCRIOCgZsYWJlbHMYAiADKAkSOQoKcHJvcGVydGllcxgDIAMoCzIlLmdpYnNvbi5ncmFwaC52MS5Ob2RlLlByb3BlcnRpZXNFbnRyeRIxCg1maXJzdF9zZWVuX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIQCghzZXZlcml0eRgFIAEoCRoxCg9Qcm9wZXJ0aWVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASK0AQoERWRnZRIKCgJpZBgBIAEoCRIRCglzb3VyY2VfaWQYAiABKAkSEQoJdGFyZ2V0X2lkGAMgASgJEgwKBHR5cGUYBCABKAkSOQoKcHJvcGVydGllcxgFIAMoCzIlLmdpYnNvbi5ncmFwaC52MS5FZGdlLlByb3BlcnRpZXNFbnRyeRoxCg9Qcm9wZXJ0aWVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASIqCgRQYXRoEhAKCG5vZGVfaWRzGAEgAygJEhAKCGVkZ2VfaWRzGAIgAygJIj4KFUdldFRlbmFudEdyYXBoUmVxdWVzdBINCgVsaW1pdBgBIAEoDRIWCg5pbmNsdWRlX2xhYmVscxgCIAMoCSKRAQoWR2V0VGVuYW50R3JhcGhSZXNwb25zZRIkCgVub2RlcxgBIAMoCzIVLmdpYnNvbi5ncmFwaC52MS5Ob2RlEiQKBWVkZ2VzGAIgAygLMhUuZ2lic29uLmdyYXBoLnYxLkVkZ2USEQoJdHJ1bmNhdGVkGAMgASgIEhgKEHRvdGFsX25vZGVfY291bnQYBCABKA0iLAoWR2V0TWlzc2lvbkdyYXBoUmVxdWVzdBISCgptaXNzaW9uX2lkGAEgASgJImUKF0dldE1pc3Npb25HcmFwaFJlc3BvbnNlEiQKBW5vZGVzGAEgAygLMhUuZ2lic29uLmdyYXBoLnYxLk5vZGUSJAoFZWRnZXMYAiADKAsyFS5naWJzb24uZ3JhcGgudjEuRWRnZSJwChFRdWVyeVBhdGhzUmVxdWVzdBIUCgxmcm9tX25vZGVfaWQYASABKAkSFAoKdG9fbm9kZV9pZBgCIAEoCUgAEhYKDHRvX25vZGVfa2luZBgDIAEoCUgAEhEKCW1heF9kZXB0aBgEIAEoDUIECgJ0byKfAQoSUXVlcnlQYXRoc1Jlc3BvbnNlEiQKBXBhdGhzGAEgAygLMhUuZ2lic29uLmdyYXBoLnYxLlBhdGgSJAoFbm9kZXMYAiADKAsyFS5naWJzb24uZ3JhcGgudjEuTm9kZRIkCgVlZGdlcxgDIAMoCzIVLmdpYnNvbi5ncmFwaC52MS5FZGdlEhcKD3RydW5jYXRlZF9wYXRocxgEIAEoCCIaChhXYXRjaEdyYXBoVXBkYXRlc1JlcXVlc3QijgIKC0dyYXBoVXBkYXRlEi8KBGtpbmQYASABKA4yIS5naWJzb24uZ3JhcGgudjEuR3JhcGhVcGRhdGUuS2luZBIlCgRub2RlGAIgASgLMhUuZ2lic29uLmdyYXBoLnYxLk5vZGVIABIlCgRlZGdlGAMgASgLMhUuZ2lic29uLmdyYXBoLnYxLkVkZ2VIABImCgJhdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiTgoES2luZBIUChBLSU5EX1VOU1BFQ0lGSUVEEAASDgoKTk9ERV9BRERFRBABEg4KCkVER0VfQURERUQQAhIQCgxOT0RFX1VQREFURUQQA0IICgZlbnRpdHkibgoXR2V0RmluZGluZ0NvdW50c1JlcXVlc3QSNgoIZ3JvdXBfYnkYASABKA4yJC5naWJzb24uZ3JhcGgudjEuRmluZGluZ0NvdW50R3JvdXBCeRIbChN0aW1lX3dpbmRvd19zZWNvbmRzGAIgASgEIisKC0NvdW50QnVja2V0Eg0KBWxhYmVsGAEgASgJEg0KBWNvdW50GAIgASgEIkkKGEdldEZpbmRpbmdDb3VudHNSZXNwb25zZRItCgdidWNrZXRzGAEgAygLMhwuZ2lic29uLmdyYXBoLnYxLkNvdW50QnVja2V0IisKG0dldEZpbmRpbmdUaW1lU2VyaWVzUmVxdWVzdBIMCgRkYXlzGAEgASgNIkoKD1RpbWVTZXJpZXNQb2ludBIoCgRkYXRlGAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBINCgVjb3VudBgCIAEoBCJQChxHZXRGaW5kaW5nVGltZVNlcmllc1Jlc3BvbnNlEjAKBnBvaW50cxgBIAMoCzIgLmdpYnNvbi5ncmFwaC52MS5UaW1lU2VyaWVzUG9pbnQiFgoUR2V0R3JhcGhTdGF0c1JlcXVlc3QiMAoQTm9kZUNvdW50QnlMYWJlbBINCgVsYWJlbBgBIAEoCRINCgVjb3VudBgCIAEoBCKpAQoVR2V0R3JhcGhTdGF0c1Jlc3BvbnNlEjMKCGJ5X2xhYmVsGAEgAygLMiEuZ2lic29uLmdyYXBoLnYxLk5vZGVDb3VudEJ5TGFiZWwSEwoLdG90YWxfbm9kZXMYAiABKAQSEwoLdG90YWxfZWRnZXMYAyABKAQSMQoNbGFzdF93cml0ZV9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiGAoWR2V0R3JhcGhTdW1tYXJ5UmVxdWVzdCJxChFHcmFwaFN1bW1hcnlTdGF0cxINCgVob3N0cxgBIAEoBBIQCghzZXJ2aWNlcxgCIAEoBBIQCghmaW5kaW5ncxgDIAEoBBIXCg92dWxuZXJhYmlsaXRpZXMYBCABKAQSEAoIbWlzc2lvbnMYBSABKAQiXQoXR2V0R3JhcGhTdW1tYXJ5UmVzcG9uc2USDwoHc3VtbWFyeRgBIAEoCRIxCgVzdGF0cxgCIAEoCzIiLmdpYnNvbi5ncmFwaC52MS5HcmFwaFN1bW1hcnlTdGF0cyJKChZHZXRHcmFwaENvbnRleHRSZXF1ZXN0Eg8KB25vZGVfaWQYASABKAkSDAoEaG9wcxgCIAEoDRIRCgltYXhfbm9kZXMYAyABKA0iXAoMTmVpZ2hib3JFZGdlEiMKBG5vZGUYASABKAsyFS5naWJzb24uZ3JhcGgudjEuTm9kZRIUCgxyZWxhdGlvbnNoaXAYAiABKAkSEQoJZGlyZWN0aW9uGAMgASgJIocBChdHZXRHcmFwaENvbnRleHRSZXNwb25zZRIpCgpmb2N1c19ub2RlGAEgASgLMhUuZ2lic29uLmdyYXBoLnYxLk5vZGUSMAoJbmVpZ2hib3JzGAIgAygLMh0uZ2lic29uLmdyYXBoLnYxLk5laWdoYm9yRWRnZRIPCgdzdW1tYXJ5GAMgASgJKlkKE0ZpbmRpbmdDb3VudEdyb3VwQnkSJgoiRklORElOR19DT1VOVF9HUk9VUF9CWV9VTlNQRUNJRklFRBAAEgwKCFNFVkVSSVRZEAESDAoIQ0FURUdPUlkQAjK/CgoMR3JhcGhTZXJ2aWNlEo8BCg5HZXRUZW5hbnRHcmFwaBImLmdpYnNvbi5ncmFwaC52MS5HZXRUZW5hbnRHcmFwaFJlcXVlc3QaJy5naWJzb24uZ3JhcGgudjEuR2V0VGVuYW50R3JhcGhSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkgEKD0dldE1pc3Npb25HcmFwaBInLmdpYnNvbi5ncmFwaC52MS5HZXRNaXNzaW9uR3JhcGhSZXF1ZXN0GiguZ2lic29uLmdyYXBoLnYxLkdldE1pc3Npb25HcmFwaFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKDAQoKUXVlcnlQYXRocxIiLmdpYnNvbi5ncmFwaC52MS5RdWVyeVBhdGhzUmVxdWVzdBojLmdpYnNvbi5ncmFwaC52MS5RdWVyeVBhdGhzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEowBChFXYXRjaEdyYXBoVXBkYXRlcxIpLmdpYnNvbi5ncmFwaC52MS5XYXRjaEdyYXBoVXBkYXRlc1JlcXVlc3QaHC5naWJzb24uZ3JhcGgudjEuR3JhcGhVcGRhdGUiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADMAESlQEKEEdldEZpbmRpbmdDb3VudHMSKC5naWJzb24uZ3JhcGgudjEuR2V0RmluZGluZ0NvdW50c1JlcXVlc3QaKS5naWJzb24uZ3JhcGgudjEuR2V0RmluZGluZ0NvdW50c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKhAQoUR2V0RmluZGluZ1RpbWVTZXJpZXMSLC5naWJzb24uZ3JhcGgudjEuR2V0RmluZGluZ1RpbWVTZXJpZXNSZXF1ZXN0Gi0uZ2lic29uLmdyYXBoLnYxLkdldEZpbmRpbmdUaW1lU2VyaWVzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEowBCg1HZXRHcmFwaFN0YXRzEiUuZ2lic29uLmdyYXBoLnYxLkdldEdyYXBoU3RhdHNSZXF1ZXN0GiYuZ2lic29uLmdyYXBoLnYxLkdldEdyYXBoU3RhdHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkgEKD0dldEdyYXBoU3VtbWFyeRInLmdpYnNvbi5ncmFwaC52MS5HZXRHcmFwaFN1bW1hcnlSZXF1ZXN0GiguZ2lic29uLmdyYXBoLnYxLkdldEdyYXBoU3VtbWFyeVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKSAQoPR2V0R3JhcGhDb250ZXh0EicuZ2lic29uLmdyYXBoLnYxLkdldEdyYXBoQ29udGV4dFJlcXVlc3QaKC5naWJzb24uZ3JhcGgudjEuR2V0R3JhcGhDb250ZXh0UmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADQlBQAVo6Z2l0aHViLmNvbS96ZXJvLWRheS1haS9zZGsvYXBpL2dlbi9naWJzb24vZ3JhcGgvdjE7Z3JhcGhwYqoCD0dpYnNvbi5HcmFwaC5WMWIGcHJvdG8z", [file_google_protobuf_timestamp, file_gibson_auth_v1_options]);
+  fileDesc("ChtnaWJzb24vZ3JhcGgvdjEvZ3JhcGgucHJvdG8SD2dpYnNvbi5ncmFwaC52MSLVAQoETm9kZRIKCgJpZBgBIAEoCRIOCgZsYWJlbHMYAiADKAkSOQoKcHJvcGVydGllcxgDIAMoCzIlLmdpYnNvbi5ncmFwaC52MS5Ob2RlLlByb3BlcnRpZXNFbnRyeRIxCg1maXJzdF9zZWVuX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIQCghzZXZlcml0eRgFIAEoCRoxCg9Qcm9wZXJ0aWVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASK0AQoERWRnZRIKCgJpZBgBIAEoCRIRCglzb3VyY2VfaWQYAiABKAkSEQoJdGFyZ2V0X2lkGAMgASgJEgwKBHR5cGUYBCABKAkSOQoKcHJvcGVydGllcxgFIAMoCzIlLmdpYnNvbi5ncmFwaC52MS5FZGdlLlByb3BlcnRpZXNFbnRyeRoxCg9Qcm9wZXJ0aWVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASIqCgRQYXRoEhAKCG5vZGVfaWRzGAEgAygJEhAKCGVkZ2VfaWRzGAIgAygJIj4KFUdldFRlbmFudEdyYXBoUmVxdWVzdBINCgVsaW1pdBgBIAEoDRIWCg5pbmNsdWRlX2xhYmVscxgCIAMoCSKRAQoWR2V0VGVuYW50R3JhcGhSZXNwb25zZRIkCgVub2RlcxgBIAMoCzIVLmdpYnNvbi5ncmFwaC52MS5Ob2RlEiQKBWVkZ2VzGAIgAygLMhUuZ2lic29uLmdyYXBoLnYxLkVkZ2USEQoJdHJ1bmNhdGVkGAMgASgIEhgKEHRvdGFsX25vZGVfY291bnQYBCABKA0iLAoWR2V0TWlzc2lvbkdyYXBoUmVxdWVzdBISCgptaXNzaW9uX2lkGAEgASgJImUKF0dldE1pc3Npb25HcmFwaFJlc3BvbnNlEiQKBW5vZGVzGAEgAygLMhUuZ2lic29uLmdyYXBoLnYxLk5vZGUSJAoFZWRnZXMYAiADKAsyFS5naWJzb24uZ3JhcGgudjEuRWRnZSJwChFRdWVyeVBhdGhzUmVxdWVzdBIUCgxmcm9tX25vZGVfaWQYASABKAkSFAoKdG9fbm9kZV9pZBgCIAEoCUgAEhYKDHRvX25vZGVfa2luZBgDIAEoCUgAEhEKCW1heF9kZXB0aBgEIAEoDUIECgJ0byKfAQoSUXVlcnlQYXRoc1Jlc3BvbnNlEiQKBXBhdGhzGAEgAygLMhUuZ2lic29uLmdyYXBoLnYxLlBhdGgSJAoFbm9kZXMYAiADKAsyFS5naWJzb24uZ3JhcGgudjEuTm9kZRIkCgVlZGdlcxgDIAMoCzIVLmdpYnNvbi5ncmFwaC52MS5FZGdlEhcKD3RydW5jYXRlZF9wYXRocxgEIAEoCCIaChhXYXRjaEdyYXBoVXBkYXRlc1JlcXVlc3QijgIKC0dyYXBoVXBkYXRlEi8KBGtpbmQYASABKA4yIS5naWJzb24uZ3JhcGgudjEuR3JhcGhVcGRhdGUuS2luZBIlCgRub2RlGAIgASgLMhUuZ2lic29uLmdyYXBoLnYxLk5vZGVIABIlCgRlZGdlGAMgASgLMhUuZ2lic29uLmdyYXBoLnYxLkVkZ2VIABImCgJhdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiTgoES2luZBIUChBLSU5EX1VOU1BFQ0lGSUVEEAASDgoKTk9ERV9BRERFRBABEg4KCkVER0VfQURERUQQAhIQCgxOT0RFX1VQREFURUQQA0IICgZlbnRpdHkibgoXR2V0RmluZGluZ0NvdW50c1JlcXVlc3QSNgoIZ3JvdXBfYnkYASABKA4yJC5naWJzb24uZ3JhcGgudjEuRmluZGluZ0NvdW50R3JvdXBCeRIbChN0aW1lX3dpbmRvd19zZWNvbmRzGAIgASgEIisKC0NvdW50QnVja2V0Eg0KBWxhYmVsGAEgASgJEg0KBWNvdW50GAIgASgEIkkKGEdldEZpbmRpbmdDb3VudHNSZXNwb25zZRItCgdidWNrZXRzGAEgAygLMhwuZ2lic29uLmdyYXBoLnYxLkNvdW50QnVja2V0IisKG0dldEZpbmRpbmdUaW1lU2VyaWVzUmVxdWVzdBIMCgRkYXlzGAEgASgNIkoKD1RpbWVTZXJpZXNQb2ludBIoCgRkYXRlGAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBINCgVjb3VudBgCIAEoBCJQChxHZXRGaW5kaW5nVGltZVNlcmllc1Jlc3BvbnNlEjAKBnBvaW50cxgBIAMoCzIgLmdpYnNvbi5ncmFwaC52MS5UaW1lU2VyaWVzUG9pbnQiFgoUR2V0R3JhcGhTdGF0c1JlcXVlc3QiMAoQTm9kZUNvdW50QnlMYWJlbBINCgVsYWJlbBgBIAEoCRINCgVjb3VudBgCIAEoBCKpAQoVR2V0R3JhcGhTdGF0c1Jlc3BvbnNlEjMKCGJ5X2xhYmVsGAEgAygLMiEuZ2lic29uLmdyYXBoLnYxLk5vZGVDb3VudEJ5TGFiZWwSEwoLdG90YWxfbm9kZXMYAiABKAQSEwoLdG90YWxfZWRnZXMYAyABKAQSMQoNbGFzdF93cml0ZV9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiGAoWR2V0R3JhcGhTdW1tYXJ5UmVxdWVzdCJxChFHcmFwaFN1bW1hcnlTdGF0cxINCgVob3N0cxgBIAEoBBIQCghzZXJ2aWNlcxgCIAEoBBIQCghmaW5kaW5ncxgDIAEoBBIXCg92dWxuZXJhYmlsaXRpZXMYBCABKAQSEAoIbWlzc2lvbnMYBSABKAQiXQoXR2V0R3JhcGhTdW1tYXJ5UmVzcG9uc2USDwoHc3VtbWFyeRgBIAEoCRIxCgVzdGF0cxgCIAEoCzIiLmdpYnNvbi5ncmFwaC52MS5HcmFwaFN1bW1hcnlTdGF0cyJKChZHZXRHcmFwaENvbnRleHRSZXF1ZXN0Eg8KB25vZGVfaWQYASABKAkSDAoEaG9wcxgCIAEoDRIRCgltYXhfbm9kZXMYAyABKA0iXAoMTmVpZ2hib3JFZGdlEiMKBG5vZGUYASABKAsyFS5naWJzb24uZ3JhcGgudjEuTm9kZRIUCgxyZWxhdGlvbnNoaXAYAiABKAkSEQoJZGlyZWN0aW9uGAMgASgJIocBChdHZXRHcmFwaENvbnRleHRSZXNwb25zZRIpCgpmb2N1c19ub2RlGAEgASgLMhUuZ2lic29uLmdyYXBoLnYxLk5vZGUSMAoJbmVpZ2hib3JzGAIgAygLMh0uZ2lic29uLmdyYXBoLnYxLk5laWdoYm9yRWRnZRIPCgdzdW1tYXJ5GAMgASgJIp0CCgdGaW5kaW5nEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSDAoEdHlwZRgEIAEoCRIQCghzZXZlcml0eRgFIAEoCRISCgptaXNzaW9uX2lkGAYgASgJEi4KCmNyZWF0ZWRfYXQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjwKCnByb3BlcnRpZXMYCCADKAsyKC5naWJzb24uZ3JhcGgudjEuRmluZGluZy5Qcm9wZXJ0aWVzRW50cnkSDgoGbGFiZWxzGAkgAygJGjEKD1Byb3BlcnRpZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIokBChJHZXRGaW5kaW5nc1JlcXVlc3QSFwoPc2V2ZXJpdHlfZmlsdGVyGAEgASgJEhcKD2NhdGVnb3J5X2ZpbHRlchgCIAEoCRISCgptaXNzaW9uX2lkGAMgASgJEg4KBnNlYXJjaBgEIAEoCRINCgVsaW1pdBgFIAEoDRIOCgZvZmZzZXQYBiABKA0iYwoTR2V0RmluZGluZ3NSZXNwb25zZRIqCghmaW5kaW5ncxgBIAMoCzIYLmdpYnNvbi5ncmFwaC52MS5GaW5kaW5nEg0KBXRvdGFsGAIgASgEEhEKCXRydW5jYXRlZBgDIAEoCCpZChNGaW5kaW5nQ291bnRHcm91cEJ5EiYKIkZJTkRJTkdfQ09VTlRfR1JPVVBfQllfVU5TUEVDSUZJRUQQABIMCghTRVZFUklUWRABEgwKCENBVEVHT1JZEAIyyAsKDEdyYXBoU2VydmljZRKPAQoOR2V0VGVuYW50R3JhcGgSJi5naWJzb24uZ3JhcGgudjEuR2V0VGVuYW50R3JhcGhSZXF1ZXN0GicuZ2lic29uLmdyYXBoLnYxLkdldFRlbmFudEdyYXBoUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpIBCg9HZXRNaXNzaW9uR3JhcGgSJy5naWJzb24uZ3JhcGgudjEuR2V0TWlzc2lvbkdyYXBoUmVxdWVzdBooLmdpYnNvbi5ncmFwaC52MS5HZXRNaXNzaW9uR3JhcGhSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgwEKClF1ZXJ5UGF0aHMSIi5naWJzb24uZ3JhcGgudjEuUXVlcnlQYXRoc1JlcXVlc3QaIy5naWJzb24uZ3JhcGgudjEuUXVlcnlQYXRoc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKMAQoRV2F0Y2hHcmFwaFVwZGF0ZXMSKS5naWJzb24uZ3JhcGgudjEuV2F0Y2hHcmFwaFVwZGF0ZXNSZXF1ZXN0GhwuZ2lic29uLmdyYXBoLnYxLkdyYXBoVXBkYXRlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAzABEpUBChBHZXRGaW5kaW5nQ291bnRzEiguZ2lic29uLmdyYXBoLnYxLkdldEZpbmRpbmdDb3VudHNSZXF1ZXN0GikuZ2lic29uLmdyYXBoLnYxLkdldEZpbmRpbmdDb3VudHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSoQEKFEdldEZpbmRpbmdUaW1lU2VyaWVzEiwuZ2lic29uLmdyYXBoLnYxLkdldEZpbmRpbmdUaW1lU2VyaWVzUmVxdWVzdBotLmdpYnNvbi5ncmFwaC52MS5HZXRGaW5kaW5nVGltZVNlcmllc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKMAQoNR2V0R3JhcGhTdGF0cxIlLmdpYnNvbi5ncmFwaC52MS5HZXRHcmFwaFN0YXRzUmVxdWVzdBomLmdpYnNvbi5ncmFwaC52MS5HZXRHcmFwaFN0YXRzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpIBCg9HZXRHcmFwaFN1bW1hcnkSJy5naWJzb24uZ3JhcGgudjEuR2V0R3JhcGhTdW1tYXJ5UmVxdWVzdBooLmdpYnNvbi5ncmFwaC52MS5HZXRHcmFwaFN1bW1hcnlSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkgEKD0dldEdyYXBoQ29udGV4dBInLmdpYnNvbi5ncmFwaC52MS5HZXRHcmFwaENvbnRleHRSZXF1ZXN0GiguZ2lic29uLmdyYXBoLnYxLkdldEdyYXBoQ29udGV4dFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKGAQoLR2V0RmluZGluZ3MSIy5naWJzb24uZ3JhcGgudjEuR2V0RmluZGluZ3NSZXF1ZXN0GiQuZ2lic29uLmdyYXBoLnYxLkdldEZpbmRpbmdzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADQlBQAVo6Z2l0aHViLmNvbS96ZXJvLWRheS1haS9zZGsvYXBpL2dlbi9naWJzb24vZ3JhcGgvdjE7Z3JhcGhwYqoCD0dpYnNvbi5HcmFwaC5WMWIGcHJvdG8z", [file_google_protobuf_timestamp, file_gibson_auth_v1_options]);
 
 /**
  * Node is a single graph node. Properties are JSON-stringified per value to
@@ -762,6 +762,162 @@ export const GetGraphContextResponseSchema: GenMessage<GetGraphContextResponse> 
   messageDesc(file_gibson_graph_v1_graph, 25);
 
 /**
+ * Finding is a per-tenant security finding or vulnerability node from the
+ * knowledge graph, shaped for dashboard list/detail views.
+ *
+ * @generated from message gibson.graph.v1.Finding
+ */
+export type Finding = Message<"gibson.graph.v1.Finding"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string description = 3;
+   */
+  description: string;
+
+  /**
+   * Category / type. Free-form string drawn from the underlying node's
+   * .type property (e.g. "sql_injection", "exposed_secret").
+   *
+   * @generated from field: string type = 4;
+   */
+  type: string;
+
+  /**
+   * "critical" | "high" | "medium" | "low" | "info" (lowercase, free-form).
+   *
+   * @generated from field: string severity = 5;
+   */
+  severity: string;
+
+  /**
+   * @generated from field: string mission_id = 6;
+   */
+  missionId: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 7;
+   */
+  createdAt?: Timestamp;
+
+  /**
+   * Catch-all for additional properties beyond the structured fields above
+   * (CVE, CVSS, etc.). Values are stringified to preserve fidelity through
+   * proto3.
+   *
+   * @generated from field: map<string, string> properties = 8;
+   */
+  properties: { [key: string]: string };
+
+  /**
+   * Distinguishes :Finding from :Vulnerability and any future label split.
+   *
+   * @generated from field: repeated string labels = 9;
+   */
+  labels: string[];
+};
+
+/**
+ * Describes the message gibson.graph.v1.Finding.
+ * Use `create(FindingSchema)` to create a new message.
+ */
+export const FindingSchema: GenMessage<Finding> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 26);
+
+/**
+ * @generated from message gibson.graph.v1.GetFindingsRequest
+ */
+export type GetFindingsRequest = Message<"gibson.graph.v1.GetFindingsRequest"> & {
+  /**
+   * Exact match. Empty string = no filter.
+   *
+   * @generated from field: string severity_filter = 1;
+   */
+  severityFilter: string;
+
+  /**
+   * Exact match on the type / category. Empty string = no filter.
+   *
+   * @generated from field: string category_filter = 2;
+   */
+  categoryFilter: string;
+
+  /**
+   * When non-empty, only findings reachable from this mission node within
+   * the same tenant (within 3 hops) are returned.
+   *
+   * @generated from field: string mission_id = 3;
+   */
+  missionId: string;
+
+  /**
+   * Substring match on name OR description (case-insensitive). Empty = no
+   * filter.
+   *
+   * @generated from field: string search = 4;
+   */
+  search: string;
+
+  /**
+   * Default 100, max 500 (server-clamped).
+   *
+   * @generated from field: uint32 limit = 5;
+   */
+  limit: number;
+
+  /**
+   * @generated from field: uint32 offset = 6;
+   */
+  offset: number;
+};
+
+/**
+ * Describes the message gibson.graph.v1.GetFindingsRequest.
+ * Use `create(GetFindingsRequestSchema)` to create a new message.
+ */
+export const GetFindingsRequestSchema: GenMessage<GetFindingsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 27);
+
+/**
+ * @generated from message gibson.graph.v1.GetFindingsResponse
+ */
+export type GetFindingsResponse = Message<"gibson.graph.v1.GetFindingsResponse"> & {
+  /**
+   * @generated from field: repeated gibson.graph.v1.Finding findings = 1;
+   */
+  findings: Finding[];
+
+  /**
+   * Count of matching findings without limit/offset, for pagination UI.
+   *
+   * @generated from field: uint64 total = 2;
+   */
+  total: bigint;
+
+  /**
+   * True when total > offset + len(findings).
+   *
+   * @generated from field: bool truncated = 3;
+   */
+  truncated: boolean;
+};
+
+/**
+ * Describes the message gibson.graph.v1.GetFindingsResponse.
+ * Use `create(GetFindingsResponseSchema)` to create a new message.
+ */
+export const GetFindingsResponseSchema: GenMessage<GetFindingsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_graph_v1_graph, 28);
+
+/**
  * @generated from enum gibson.graph.v1.FindingCountGroupBy
  */
 export enum FindingCountGroupBy {
@@ -903,6 +1059,21 @@ export const GraphService: GenService<{
     methodKind: "unary";
     input: typeof GetGraphContextRequestSchema;
     output: typeof GetGraphContextResponseSchema;
+  },
+  /**
+   * GetFindings returns a paginated, filterable list of findings (and
+   * vulnerabilities) for the calling tenant. Replaces the dashboard's
+   * direct-Neo4j paths in app/api/findings/route.ts,
+   * app/api/missions/[id]/findings/route.ts, and the iteration backing
+   * findings export.
+   * Spec: dashboard-neo4j-crud-removal Req 1.
+   *
+   * @generated from rpc gibson.graph.v1.GraphService.GetFindings
+   */
+  getFindings: {
+    methodKind: "unary";
+    input: typeof GetFindingsRequestSchema;
+    output: typeof GetFindingsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_graph_v1_graph, 0);

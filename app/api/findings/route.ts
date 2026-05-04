@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ConnectError, Code } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
 import { safeErrorResponse } from '@/src/lib/api-errors';
-import neo4j from 'neo4j-driver';
-import { getLegacyNeo4jDriver } from '@/src/lib/neo4j-legacy-driver';
+import { userClient } from '@/src/lib/gibson-client';
+import { GraphService } from '@/src/gen/gibson/graph/v1/graph_pb';
 import type { Finding, PaginatedResponse } from '@/src/types';
 
 /**
  * GET /api/findings
  *
- * Retrieve findings from Neo4j knowledge graph with filtering and pagination.
+ * Retrieve findings from the knowledge graph with filtering and pagination.
+ * Calls GraphService.GetFindings — routes through Envoy + ext-authz.
+ *
+ * Spec: dashboard-neo4j-crud-removal (Phase 3, Task 11).
  */
 export async function GET(request: NextRequest) {
   try {
@@ -20,17 +24,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Authz is enforced by Neo4j tenant_id filter below + daemon-side
-    // ext-authz on any downstream RPC. The previous hasPermission() gate was
-    // a no-op since loadSchema() was stubbed to empty.
-
-    const searchParams = request.nextUrl.searchParams;
-    const severity = searchParams.get('severity');
-    const missionId = searchParams.get('missionId');
-    const search = searchParams.get('search');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
-    const offset = parseInt(searchParams.get('offset') || '0');
-
     const tenantId = session.user.tenantId;
     if (!tenantId) {
       return NextResponse.json(
@@ -39,85 +32,64 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const driver = getLegacyNeo4jDriver();
-    const neo4jSession = driver.session({ database: 'neo4j' });
+    const searchParams = request.nextUrl.searchParams;
+    const severity = searchParams.get('severity') ?? '';
+    const category = searchParams.get('category') ?? '';
+    const missionId = searchParams.get('missionId') ?? '';
+    const search = searchParams.get('search') ?? '';
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
+    const offset = parseInt(searchParams.get('offset') || '0');
 
-    try {
-      // Query both Vulnerability and Finding nodes — tenant_id is always the first filter
-      const cypher = `
-        MATCH (n)
-        WHERE (n:Vulnerability OR n:Finding)
-        AND n.tenant_id = $tenantId
-        ${severity ? 'AND n.severity = $severity' : ''}
-        ${search ? 'AND (toLower(n.name) CONTAINS toLower($search) OR toLower(coalesce(n.description, "")) CONTAINS toLower($search))' : ''}
-        OPTIONAL MATCH (m:Mission)-[*1..3]->(n)
-        ${missionId ? 'WHERE m.id = $missionId AND m.tenant_id = $tenantId' : ''}
-        RETURN n, labels(n) AS labels, collect(DISTINCT m.name)[0] AS missionName, collect(DISTINCT m.id)[0] AS mid
-        ORDER BY CASE n.severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END
-        SKIP $offset LIMIT $limit
-      `;
+    const resp = await userClient(GraphService).getFindings({
+      severityFilter: severity,
+      categoryFilter: category,
+      missionId,
+      search,
+      limit,
+      offset,
+    });
 
-      const params: Record<string, any> = {
-        offset: neo4j.int(offset),
-        limit: neo4j.int(limit),
-        tenantId,
+    const findings = resp.findings.map((f) => {
+      const labels = f.labels;
+      return {
+        id: f.id,
+        missionId: f.missionId || '',
+        type: f.type || (labels.includes('Vulnerability') ? 'vulnerability' : 'finding'),
+        title: f.name || 'Unknown',
+        description: f.description || '',
+        severity: (f.severity || 'info') as Finding['severity'],
+        affectedAssets: [] as string[],
+        discoveredAt: f.createdAt ? new Date(Number(f.createdAt.seconds) * 1000) : new Date(),
+        taxonomy: {},
+        status: 'open',
+        source: labels.includes('Vulnerability') ? 'vulnerability-scan' : 'agent',
+        category: f.type || (labels.includes('Vulnerability') ? 'vulnerability' : 'finding'),
+        missionName: f.properties['missionName'] || undefined,
+        cve: f.properties['cve'] || undefined,
+        createdAt: f.createdAt ? new Date(Number(f.createdAt.seconds) * 1000) : new Date(),
+        updatedAt: new Date(),
       };
-      if (severity) params.severity = severity;
-      if (search) params.search = search;
-      if (missionId) params.missionId = missionId;
+    });
 
-      const result = await neo4jSession.run(cypher, params);
+    const total = Number(resp.total);
+    const response: PaginatedResponse<Finding> = {
+      data: findings as Finding[],
+      total,
+      page: Math.floor(offset / limit) + 1,
+      limit,
+      hasMore: offset + limit < total,
+    };
 
-      // Count total — same tenant_id filter applied
-      const countResult = await neo4jSession.run(
-        `MATCH (n) WHERE (n:Vulnerability OR n:Finding)
-         AND n.tenant_id = $tenantId
-         ${severity ? 'AND n.severity = $severity' : ''}
-         ${search ? 'AND (toLower(n.name) CONTAINS toLower($search) OR toLower(coalesce(n.description, "")) CONTAINS toLower($search))' : ''}
-         RETURN count(n) AS total`,
-        { tenantId, ...(severity ? { severity } : {}), ...(search ? { search } : {}) }
-      );
-      const total = countResult.records[0]?.get('total')?.toNumber?.() ?? 0;
-
-      const findings: Finding[] = result.records.map((record) => {
-        const n = record.get('n').properties;
-        const labels = record.get('labels') as string[];
-        const missionName = record.get('missionName');
-        const mid = record.get('mid');
-
-        return {
-          id: n.id || record.get('n').elementId,
-          missionId: mid || '',
-          type: n.type || (labels.includes('Vulnerability') ? 'vulnerability' : 'finding'),
-          title: n.name || 'Unknown',
-          description: n.description || '',
-          severity: n.severity || 'info',
-          affectedAssets: n.affectedAssets || [],
-          discoveredAt: n.discoveredAt || new Date().toISOString(),
-          taxonomy: {},
-          status: 'open',
-          source: labels.includes('Vulnerability') ? 'vulnerability-scan' : 'agent',
-          category: n.type || (labels.includes('Vulnerability') ? 'vulnerability' : 'finding'),
-          missionName: missionName || undefined,
-          cve: n.cve || undefined,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-      });
-
-      const response: PaginatedResponse<Finding> = {
-        data: findings,
-        total,
-        page: Math.floor(offset / limit) + 1,
-        limit,
-        hasMore: offset + limit < total,
-      };
-
-      return NextResponse.json(response);
-    } finally {
-      await neo4jSession.close();
-    }
+    return NextResponse.json(response);
   } catch (error) {
+    if (error instanceof ConnectError) {
+      if (error.code === Code.PermissionDenied || error.code === Code.Unauthenticated) {
+        return NextResponse.json(
+          { error: { code: 'FORBIDDEN', message: error.message } },
+          { status: 403 }
+        );
+      }
+    }
     return safeErrorResponse(error, 'Failed to process findings request', 500);
   }
 }

@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { getStatus, serializeStatus, listMissions, listAgents } from '@/src/lib/gibson-client';
-import { getLegacyNeo4jDriver } from '@/src/lib/neo4j-legacy-driver';
+import {
+  getStatus,
+  serializeStatus,
+  listMissions,
+  listAgents,
+  getFindingsBySeverity,
+} from '@/src/lib/gibson-client';
 import type { DashboardMetrics, ComponentStatus } from '@/src/types';
 
 /**
@@ -9,11 +14,11 @@ import type { DashboardMetrics, ComponentStatus } from '@/src/types';
  *
  * Returns dashboard metrics including:
  * - Active missions count with trend
- * - Total findings by severity
+ * - Total findings by severity (via GraphService.GetFindingCounts)
  * - Agent activity statistics
  * - System health status
  *
- * Requires authentication.
+ * Spec: dashboard-neo4j-crud-removal (Phase 3, Task 11).
  */
 export async function GET() {
   // Validate authentication
@@ -76,37 +81,16 @@ export async function GET() {
       ? 'healthy'
       : 'unknown';
 
-  // Fetch real finding counts from Neo4j (same approach as /api/findings/counts)
-  const findingsBySeverity = await (async () => {
-    const defaults = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
-    if (!tenantId) return defaults;
-    try {
-      const driver = getLegacyNeo4jDriver();
-      const neo4jSession = driver.session({ database: 'neo4j' });
-      try {
-        const result = await neo4jSession.run(
-          `MATCH (n) WHERE (n:Vulnerability OR n:Finding)
-           AND n.tenant_id = $tenantId
-           RETURN n.severity AS severity, count(n) AS count`,
-          { tenantId }
-        );
-        const counts = { ...defaults };
-        for (const record of result.records) {
-          const sev = record.get('severity') as string;
-          const count = record.get('count').toNumber?.() ?? record.get('count');
-          if (sev && sev in counts) {
-            counts[sev as keyof typeof counts] = count;
-          }
-        }
-        return counts;
-      } finally {
-        await neo4jSession.close();
-      }
-    } catch (err) {
-      console.warn('[status] Failed to fetch finding counts from Neo4j, defaulting to zeros:', err);
-      return defaults;
-    }
-  })();
+  // Fetch real finding counts via GraphService.GetFindingCounts (same as /api/findings/counts)
+  const defaults = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+  const findingsBySeverity = tenantId
+    ? await getFindingsBySeverity(tenantId, session?.user?.id).then((counts) => ({
+        ...defaults,
+        ...Object.fromEntries(
+          Object.entries(counts).filter(([k]) => k in defaults)
+        ),
+      }))
+    : defaults;
 
   const metrics: DashboardMetrics = {
     activeMissions: {

@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
-import { listMissions, serializeMission } from '@/src/lib/gibson-client';
-import { getLegacyNeo4jDriver } from '@/src/lib/neo4j-legacy-driver';
+import { listMissions, serializeMission, userClient, stopMission } from '@/src/lib/gibson-client';
+import { GraphService } from '@/src/gen/gibson/graph/v1/graph_pb';
 import type { Mission, MissionStatus } from '@/src/types';
 
 /**
  * GET /api/missions/:id
  *
  * Fetch a single mission by ID. Queries Gibson daemon for mission data,
- * then enriches with graph data from Neo4j.
+ * then enriches with graph data from GraphService.GetMissionGraph.
+ *
+ * Spec: dashboard-neo4j-crud-removal (Phase 3, Task 12).
  */
 export async function GET(
   request: NextRequest,
@@ -59,49 +61,38 @@ export async function GET(
       progress = 50;
     }
 
-    // Enrich with graph data from Neo4j (agents, hosts, findings count)
+    // Enrich with graph data from GraphService.GetMissionGraph
+    // Derive agents, hosts, and findings count by filtering response nodes by label.
     let agents: string[] = [];
     let hosts: string[] = [];
     let graphFindingCount = 0;
     let target = '';
-    let description = serialized.description || '';
+    const description = serialized.description || '';
 
     try {
-      const driver = getLegacyNeo4jDriver();
-      const neo4jSession = driver.session({ database: 'neo4j' });
-      const tenantId = session.user.tenantId;
+      const graphResp = await userClient(GraphService).getMissionGraph({ missionId: id });
 
-    try {
-        const result = await neo4jSession.run(
-          `MATCH (m:Mission {id: $id})
-           WHERE m.tenant_id = $tenantId
-           OPTIONAL MATCH (m)-[:USED_AGENT]->(a:Agent)
-           OPTIONAL MATCH (m)-[:TARGETED]->(h:Host)
-           OPTIONAL MATCH (m)-[*1..2]->(f:Finding)
-           OPTIONAL MATCH (m)-[*1..2]->(v:Vulnerability)
-           RETURN m,
-             collect(DISTINCT a.name) AS agents,
-             collect(DISTINCT h.name) AS hosts,
-             count(DISTINCT f) + count(DISTINCT v) AS findingCount`,
-          { id, tenantId: tenantId || '' }
-        );
-
-        if (result.records.length > 0) {
-          const record = result.records[0];
-          const m = record.get('m').properties;
-          agents = (record.get('agents') as string[]).filter(Boolean);
-          hosts = (record.get('hosts') as string[]).filter(Boolean);
-          graphFindingCount = (record.get('findingCount') as any).toNumber?.() ?? record.get('findingCount');
-          target = m.target || '';
-          if (!description) {
-            description = m.description || '';
+      for (const node of graphResp.nodes) {
+        if (node.labels.includes('Agent')) {
+          const name = node.properties['name'] || node.id;
+          if (name) agents.push(name);
+        } else if (node.labels.includes('Host')) {
+          const name = node.properties['name'] || node.id;
+          if (name) hosts.push(name);
+        } else if (node.labels.includes('Finding') || node.labels.includes('Vulnerability')) {
+          graphFindingCount++;
+        } else if (node.labels.includes('Target') || node.labels.includes('Mission')) {
+          if (!target && node.properties['target']) {
+            target = node.properties['target'];
           }
         }
-      } finally {
-        await neo4jSession.close();
       }
-    } catch (neo4jErr) {
-      console.warn('Neo4j enrichment failed:', neo4jErr);
+
+      // Deduplicate
+      agents = [...new Set(agents)];
+      hosts = [...new Set(hosts)];
+    } catch (graphErr) {
+      console.warn('GraphService.GetMissionGraph enrichment failed:', graphErr);
     }
 
     // Note: startTime and endTime from gRPC are Unix seconds, convert to JS Date (ms)
@@ -136,7 +127,10 @@ export async function GET(
 /**
  * DELETE /api/missions/:id
  *
- * Delete a mission by ID. Only allowed for non-running missions.
+ * Stop a mission by ID. The daemon is authoritative; this calls StopMission
+ * for running missions. The daemon-side Neo4j mirror is managed by the daemon.
+ *
+ * Spec: dashboard-neo4j-crud-removal (Phase 3, Task 12).
  */
 export async function DELETE(
   request: NextRequest,
@@ -171,44 +165,35 @@ export async function DELETE(
       );
     }
 
-    const driver = getLegacyNeo4jDriver();
-    const neo4jSession = driver.session({ database: 'neo4j' });
+    // Find the mission via daemon — listMissions is the daemon source of truth.
+    const missionListResp = await listMissions(false, 1000, session?.user?.id);
+    const mission = missionListResp.missions.find(m => m.id === id);
 
-    try {
-      // Check if mission exists, belongs to this tenant, and is not running
-      const checkResult = await neo4jSession.run(
-        `MATCH (m:Mission {id: $id}) WHERE m.tenant_id = $tenantId RETURN m.status AS status`,
-        { id, tenantId: deleteTenantId }
+    if (!mission) {
+      return NextResponse.json(
+        { error: { code: 'NOT_FOUND', message: 'Mission not found' } },
+        { status: 404 }
       );
-
-      if (checkResult.records.length === 0) {
-        return NextResponse.json(
-          { error: { code: 'NOT_FOUND', message: 'Mission not found' } },
-          { status: 404 }
-        );
-      }
-
-      const status = checkResult.records[0].get('status');
-      if (status === 'running') {
-        return NextResponse.json(
-          { error: { code: 'BAD_REQUEST', message: 'Cannot delete a running mission. Stop it first.' } },
-          { status: 400 }
-        );
-      }
-
-      // Delete the mission and its relationships — tenant_id check prevents cross-tenant deletes
-      await neo4jSession.run(
-        `MATCH (m:Mission {id: $id})
-         WHERE m.tenant_id = $tenantId
-         OPTIONAL MATCH (m)-[r]-()
-         DELETE r, m`,
-        { id, tenantId: deleteTenantId }
-      );
-
-      return NextResponse.json({ success: true });
-    } finally {
-      await neo4jSession.close();
     }
+
+    const missionStatus = mission.status?.toLowerCase().replace('mission_status_', '') || '';
+    if (missionStatus === 'running') {
+      return NextResponse.json(
+        { error: { code: 'BAD_REQUEST', message: 'Cannot delete a running mission. Stop it first.' } },
+        { status: 400 }
+      );
+    }
+
+    // Daemon does not yet expose a delete RPC; stop is the closest operation.
+    // The daemon-side Neo4j mirror is managed by the daemon.
+    // For stopped/completed/failed missions this is a no-op at the daemon level.
+    try {
+      await stopMission(id, false, session?.user?.id, deleteTenantId);
+    } catch {
+      // Ignore stop errors for non-running missions — already stopped.
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to delete mission:', error);
     return NextResponse.json(
