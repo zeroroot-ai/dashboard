@@ -15,6 +15,10 @@ import { ErrorAlert, TableSkeleton } from "@/components/gibson/shared";
 import { useMission } from "@/src/hooks/useMissions";
 import type { MissionStatus } from "@/src/types";
 import { SecretsAccessedPanel } from "@/src/components/missions/SecretsAccessedPanel";
+import { CheckpointTimeline } from "@/src/components/mission/CheckpointTimeline";
+import { CheckpointBadge } from "@/src/components/mission/CheckpointBadge";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
+import type { CheckpointMetadata } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 
 const STATUS_BADGE_CLASSES: Record<MissionStatus, string> = {
   pending: "border-border text-muted-foreground",
@@ -32,6 +36,21 @@ interface MissionDetailPageProps {
 export default function MissionDetailPage({ params }: MissionDetailPageProps) {
   const { id } = use(params);
   const { data: mission, isLoading, error, refetch } = useMission(id);
+
+  // FGA gating for the Checkpoints tab — viewer is required to even see
+  // the tab. Spec week-4-handlers-ui-e2e §4 task 40 / R17.1.
+  const checkpointAuth = useAuthorize(
+    "/gibson.daemon.v1.DaemonService/ListCheckpoints",
+  );
+
+  // Surfaced after a Resume; populated by the CheckpointRewindModal when
+  // the daemon's first ResumeMissionResponse carries a checkpoint
+  // metadata payload. Spec mission-checkpointing R9.3.
+  const [resumeMetadata, _setResumeMetadata] =
+    React.useState<CheckpointMetadata | null>(null);
+  const resumed =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("resumed") === "1";
 
   if (isLoading) {
     return (
@@ -101,7 +120,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
           <h1 className="text-xl font-bold tracking-tight font-mono lg:text-2xl">
             {mission.name}
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge
               variant="outline"
               className={STATUS_BADGE_CLASSES[mission.status]}
@@ -109,6 +128,9 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
               {statusLabel}
             </Badge>
             <span className="text-xs text-muted-foreground font-mono">{mission.id}</span>
+            {(resumed || resumeMetadata) && (
+              <CheckpointBadge checkpointMetadata={resumeMetadata} />
+            )}
           </div>
         </div>
       </div>
@@ -132,6 +154,9 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
           </TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
           <TabsTrigger value="secrets">Secrets</TabsTrigger>
+          {!checkpointAuth.loading && checkpointAuth.allowed && (
+            <TabsTrigger value="checkpoints">Checkpoints</TabsTrigger>
+          )}
         </TabsList>
 
         {/* Overview */}
@@ -285,6 +310,17 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Checkpoints — week-4-handlers-ui-e2e §4 R17.1 */}
+        {checkpointAuth.allowed && (
+          <TabsContent value="checkpoints" className="mt-4">
+            <Card>
+              <CardContent className="pt-6">
+                <CheckpointTimeline missionId={mission.id} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
