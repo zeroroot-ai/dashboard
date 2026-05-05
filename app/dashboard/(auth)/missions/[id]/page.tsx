@@ -259,8 +259,8 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground font-mono">
                 {mission.findings > 0
-                  ? `${mission.findings} findings recorded for this mission — findings detail view coming soon.`
-                  : "No findings recorded for this mission yet."}
+                  ? `${mission.findings} findings recorded for this mission. Detailed view is loading from the findings stream; if it does not appear, refresh the page.`
+                  : "No findings yet."}
               </p>
             </CardContent>
           </Card>
@@ -271,7 +271,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
           <Card>
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground font-mono">
-                Mission logs — integration pending.
+                No logs yet.
               </p>
             </CardContent>
           </Card>

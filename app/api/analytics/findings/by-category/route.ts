@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { getFindingsByCategory } from '@/src/lib/gibson-client';
-import type { CategoryCount } from '@/src/types';
+import { logger } from '@/src/lib/logger';
 
 /**
  * GET /api/analytics/findings/by-category
@@ -34,9 +34,19 @@ export async function GET(request: NextRequest) {
   try {
     const data = await getFindingsByCategory(tenantId, session?.user?.id);
     return NextResponse.json(data);
-  } catch {
-    // RPC not yet available — return empty category list
-    const categories: CategoryCount[] = [];
-    return NextResponse.json(categories);
+  } catch (err) {
+    logger.error(
+      { err, route: 'analytics/findings/by-category' },
+      'analytics RPC failed',
+    );
+    return NextResponse.json(
+      {
+        error: {
+          code: 'UPSTREAM_UNAVAILABLE',
+          message: 'Data temporarily unavailable.',
+        },
+      },
+      { status: 503 },
+    );
   }
 }

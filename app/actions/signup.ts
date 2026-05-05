@@ -62,6 +62,7 @@ import {
   failProgress,
 } from "@/src/lib/signup/progress-store";
 import { k8s } from "@/src/lib/k8s/client";
+import { logger } from "@/src/lib/logger";
 
 // Re-export types so callers can import everything from one module.
 export type { SignupInput, SignupActionResult };
@@ -382,8 +383,8 @@ function logAudit(
   ctx: Ctx,
   failureCode?: SignupFailureCode,
 ): void {
-  console.log(
-    JSON.stringify({
+  logger.info(
+    {
       action: "signup",
       outcome,
       attemptId: ctx.attemptId,
@@ -392,8 +393,8 @@ function logAudit(
       zitadelUserId: ctx.zitadelUserId,
       tier: ctx.input.tier,
       failureCode: failureCode ?? null,
-      timestamp: new Date().toISOString(),
-    }),
+    },
+    "signup completed",
   );
 }
 

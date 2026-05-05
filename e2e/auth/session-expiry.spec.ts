@@ -8,15 +8,15 @@
  *   API because browsers reject cookies with past expiry on set.  Instead we
  *   use one of two approaches:
  *
- *   (A) Delete the session cookie entirely — Better Auth interprets a missing
+ *   (A) Delete the session cookie entirely — Auth.js interprets a missing
  *       session cookie as "unauthenticated" and the middleware redirects to
  *       the login page.  The middleware in this codebase redirects expired /
  *       missing sessions to `/dashboard/login/expired` (not the plain login
  *       page).  This is the approach used here.
  *
- *   (B) Future improvement: manipulate the Better Auth `session` DB row
- *       directly via the DB helper to set `expiresAt` in the past, then
- *       reload.  This requires DB access and is left as a follow-on.
+ *   (B) Future improvement: manipulate the Auth.js `session` DB row directly
+ *       via the DB helper to set `expiresAt` in the past, then reload. This
+ *       requires DB access and is left as a follow-on.
  *
  * Flow:
  *   1. Create and verify a user; sign in.
@@ -130,7 +130,9 @@ test.describe("Session expiry", () => {
       const authCookieNames = cookiesBefore
         .filter(
           (c) =>
-            c.name.startsWith("better-auth") ||
+            c.name.startsWith("authjs.") ||
+            c.name.startsWith("next-auth.") ||
+            c.name.startsWith("__Secure-next-auth.") ||
             c.name.startsWith("__session") ||
             c.name.includes("session") ||
             c.name.includes("auth"),

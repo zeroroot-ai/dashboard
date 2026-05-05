@@ -7,8 +7,8 @@
  * login page (Forgot password link). This page redirects to Zitadel sign-in.
  *
  * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js — see task 24
- * implementation log. The previous email-input form and Better Auth
- * forgotPasswordAction are superseded by Zitadel's hosted password reset.
+ * implementation log. The previous email-input form and forgotPasswordAction
+ * are superseded by Zitadel's hosted password reset.
  */
 
 import { useEffect, Suspense } from "react";

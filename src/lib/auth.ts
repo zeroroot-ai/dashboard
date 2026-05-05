@@ -24,7 +24,7 @@ import { auth } from '@/auth';
 /**
  * Extended session type with Gibson-specific properties.
  *
- * Shape is intentionally preserved from the former Better Auth session so
+ * Shape is intentionally preserved from the pre-Auth.js session so
  * that all existing callers can use this type without changes.
  */
 export interface GibsonSession {

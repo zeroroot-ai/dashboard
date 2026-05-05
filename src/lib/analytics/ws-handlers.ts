@@ -329,9 +329,17 @@ export function handleWebSocketMessage(message: WebSocketMessage): void {
         break;
 
       default:
-        console.warn('[WS Handler] Unknown event type:', (event as any).type);
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[WS Handler] Unknown event type:', (event as any).type);
+        }
     }
   } catch (error) {
-    console.error('[WS Handler] Error processing message:', error, message);
+    // Do NOT log the full message payload — it may contain finding titles,
+    // agent names, or alert content. Log only a short type marker.
+    const messageType =
+      typeof message === 'object' && message !== null && 'type' in message
+        ? (message as { type?: unknown }).type
+        : 'unknown';
+    console.error('[WS Handler] Error processing message:', error, { messageType });
   }
 }

@@ -35,7 +35,7 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({}),
 }));
 
-// Mock Better Auth client
+// Mock Auth.js client
 vi.mock('@/src/lib/auth-client', () => ({
   authClient: {
     useSession: () => ({

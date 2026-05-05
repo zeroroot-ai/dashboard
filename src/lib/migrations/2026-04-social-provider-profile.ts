@@ -1,5 +1,6 @@
 /**
- * Migration: add `provider_profiles` JSONB column to Better Auth's user table.
+ * Migration: add `provider_profiles` JSONB column to the dashboard's `user`
+ * table (Auth.js adapter schema).
  *
  * Purpose:
  *   Stores provider-supplied profile claims (avatar_url, display_name, etc.)
@@ -17,8 +18,9 @@
  *   - No required columns, no data backfill, no existing row is touched.
  *
  * Invoked from `src/lib/auth-server.ts` in the startup migration chain, after
- * Better Auth's own migrations and the grandfather-email-verified migration.
- * Failures are caught at the call site and logged without crashing startup.
+ * the Auth.js adapter's own migrations and the grandfather-email-verified
+ * migration. Failures are caught at the call site and logged without crashing
+ * startup.
  */
 
 import type { Pool } from "pg";

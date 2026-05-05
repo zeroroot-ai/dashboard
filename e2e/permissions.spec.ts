@@ -40,7 +40,7 @@ const PERMISSIONS_URL = `${BASE_URL}/dashboard/pages/settings/permissions`;
 // ---------------------------------------------------------------------------
 
 /**
- * Log in via the Better Auth email/password form at /login.
+ * Log in via the Auth.js Credentials/Zitadel email+password form at /login.
  * Waits for a redirect away from the login page before resolving.
  */
 async function loginAs(page: Page, email: string, password: string) {

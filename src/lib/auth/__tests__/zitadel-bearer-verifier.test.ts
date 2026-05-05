@@ -177,6 +177,50 @@ describe('signature-failed', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Error class: signature-failed (algorithm mismatch — security-hardening R7)
+// ---------------------------------------------------------------------------
+
+describe('algorithm pin (R7)', () => {
+  it('rejects HS256-signed tokens when verifier requires RS256', async () => {
+    // Simulate the alg-confusion attack: a caller signs a JWT with HS256
+    // using the public-key material as the HMAC secret. With the
+    // `algorithms: ['RS256']` pin in place, jose throws
+    // `JOSEAlgNotAllowed` BEFORE the signature is consulted, which the
+    // verifier surfaces as `signature-failed`.
+    mockedJwtVerify.mockRejectedValueOnce(
+      new joseErrors.JOSEAlgNotAllowed('"alg" (Algorithm) Header Parameter value not allowed'),
+    );
+    const err = await verifyZitadelBearer(BEARER).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ZitadelBearerError);
+    expect((err as ZitadelBearerError).code).toBe('signature-failed');
+    expect((err as Error).message).toContain('algorithm');
+    // Token bytes must not leak.
+    expect((err as Error).message).not.toContain(FAKE_JWT);
+  });
+
+  it('passes algorithms: ["RS256"] option to jwtVerify', async () => {
+    // Defence-in-depth: assert the option is actually wired through.
+    // A regression in zitadel-bearer-verifier.ts that drops the option
+    // would silently re-open the alg-confusion vector — only this test
+    // would catch it.
+    mockedJwtVerify.mockResolvedValueOnce({
+      payload: okPayload(),
+      protectedHeader: { alg: 'RS256' },
+    } as Awaited<ReturnType<typeof jwtVerify>>);
+
+    await verifyZitadelBearer(BEARER);
+
+    expect(mockedJwtVerify).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.anything(),
+      expect.objectContaining({
+        algorithms: ['RS256'],
+      }),
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Error class: issuer-mismatch
 // ---------------------------------------------------------------------------
 

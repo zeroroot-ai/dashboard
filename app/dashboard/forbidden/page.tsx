@@ -71,7 +71,7 @@ export default async function ForbiddenPage() {
                     {/*
                      * The tenant switcher navigates to the workspace root.
                      * The (auth) layout will pick up the new active org
-                     * from the session after Better Auth sets activeOrganizationId.
+                     * from the session after Auth.js sets activeOrganizationId.
                      */}
                     <a href={`/dashboard?tenant=${encodeURIComponent(tenantId)}`}>
                       {tenantId}

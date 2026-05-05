@@ -50,7 +50,7 @@ describe("countSignInMethods", () => {
   });
 
   it("de-duplicates the same provider ID appearing twice", () => {
-    // Better Auth should never create duplicates, but the helper must handle it.
+    // The Auth.js adapter should never create duplicates, but the helper must handle it.
     expect(
       countSignInMethods([{ providerId: "github" }, { providerId: "github" }])
     ).toBe(1);

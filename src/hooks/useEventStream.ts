@@ -65,7 +65,9 @@ export function useEventStream() {
       // Connection opened
       eventSource.onopen = () => {
         if (!mountedRef.current) return;
-        console.log("[EventStream] Connected to event stream");
+        if (process.env.NODE_ENV !== "production") {
+          console.log("[EventStream] Connected to event stream");
+        }
         setConnectionStatus("connected");
         reconnectAttemptsRef.current = 0; // Reset reconnect attempts on successful connection
         setError(null);
@@ -112,11 +114,13 @@ export function useEventStream() {
 
         // Schedule reconnection with exponential backoff
         const delay = getReconnectDelay();
-        console.log(
-          `[EventStream] Reconnecting in ${delay / 1000}s (attempt ${
-            reconnectAttemptsRef.current + 1
-          })`
-        );
+        if (process.env.NODE_ENV !== "production") {
+          console.log(
+            `[EventStream] Reconnecting in ${delay / 1000}s (attempt ${
+              reconnectAttemptsRef.current + 1
+            })`
+          );
+        }
 
         reconnectTimeoutRef.current = setTimeout(() => {
           if (mountedRef.current) {

@@ -16,6 +16,7 @@ import { getServerSession } from '@/src/lib/auth';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 import { validateMissionYAML, addLineNumbers } from '@/src/lib/mission/validation';
 import type { ValidationResult } from '@/src/lib/mission/validation';
+import { logger } from '@/src/lib/logger';
 
 // ============================================================================
 // Types
@@ -35,7 +36,7 @@ interface ValidateResponse extends ValidationResult {
   /** Server timestamp */
   timestamp: string;
   /** Validation source */
-  source: 'client' | 'server' | 'daemon';
+  source: 'client' | 'server';
 }
 
 // ============================================================================
@@ -114,22 +115,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Add line numbers to errors
     const errorsWithLines = addLineNumbers(body.yaml, result.errors);
 
-    // Optionally perform deep validation with Gibson daemon
-    if (body.options?.deepValidation && result.isValid) {
-      try {
-        // TODO: Wire to Gibson daemon ValidateMission RPC once proto is defined.
-        // Will check agent availability, tool compatibility, scope reachability,
-        // and resource constraints server-side.
-      } catch (error) {
-        console.error('[Validation] Daemon validation failed:', error);
-        // Don't fail the request, just add a warning
-        result.warnings.push({
-          code: 'DAEMON_UNAVAILABLE',
-          message: 'Could not perform deep validation with Gibson daemon',
-          path: '',
-          severity: 'warning',
-        });
-      }
+    // Deep validation is requested but not yet wired to the Gibson daemon.
+    // The ValidateMission RPC is still pending; until then, surface the
+    // unavailability honestly so the UI can render the toggle as a hint
+    // instead of pretending a full deep-validate ran.
+    if (body.options?.deepValidation) {
+      result.warnings.push({
+        code: 'DEEP_VALIDATION_UNAVAILABLE',
+        message:
+          'Deep validation is not yet wired to the Gibson daemon. ' +
+          'YAML, schema, and business-rule checks ran; daemon-side ' +
+          'agent/tool/scope checks were skipped.',
+        path: '',
+        severity: 'warning',
+      });
     }
 
     const response: ValidateResponse = {
@@ -141,8 +140,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     };
 
     return NextResponse.json(response);
-  } catch (error) {
-    console.error('[Validation] Server error:', error);
+  } catch (err) {
+    logger.error({ err, route: 'missions/validate' }, 'mission validation server error');
 
     return NextResponse.json(
       {

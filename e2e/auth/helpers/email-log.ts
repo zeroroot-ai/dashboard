@@ -7,10 +7,10 @@
  *   [email.log] {"to":"user@example.com","subject":"..."}
  *
  * In test environments the token itself is NOT in this log line (the log
- * provider intentionally omits bodies for security). Instead, Better Auth
- * emits the full verification / reset URL in its own debug log lines, and
- * the dashboard also emits `[audit.auth]` events that include the token for
- * claim flows.
+ * provider intentionally omits bodies for security). Instead, Auth.js /
+ * Zitadel emit the full verification / reset URL in their own debug log
+ * lines, and the dashboard also emits `[audit.auth]` events that include
+ * the token for claim flows.
  *
  * This helper covers two strategies:
  *
@@ -27,7 +27,7 @@
  * and user email and returns the first matching token found within a
  * configurable timeout.
  *
- * Token URL patterns (from Better Auth defaults):
+ * Token URL patterns (Auth.js / Zitadel defaults):
  *   - verify email: `/verify-email/confirm?token=<token>`
  *   - reset password: `/reset-password?token=<token>`
  *   - claim (invitation): the token is the invitation row `id`, delivered
@@ -36,7 +36,7 @@
  * Because the log provider only emits `to` + `subject`, we use the audit
  * log lines which DO include the token in a structured JSON field for
  * operations that need it (password-reset, verify, claim). When audit lines
- * are not available we fall back to scanning Better Auth's own debug output.
+ * are not available we fall back to scanning Auth.js / Zitadel debug output.
  */
 
 import { execSync, spawn } from "child_process";
@@ -113,7 +113,7 @@ function fetchLogs(sinceSeconds = 120): string {
  * Given a block of log text and a token type + recipient, tries to extract
  * the token string.
  *
- * The dashboard emits Better Auth debug lines that include the full URL, e.g.:
+ * The dashboard emits Auth.js / Zitadel debug lines that include the full URL, e.g.:
  *   Sending verification email to user@example.com: .../verify-email/confirm?token=abc123
  *
  * Audit lines look like:

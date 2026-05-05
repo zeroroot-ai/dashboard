@@ -3,9 +3,9 @@
  *
  * Both the signup form (client) and the signUpAction Server Action
  * (server) import these schemas, so a rule change can never silently
- * drift between the two layers. Better Auth's own `password` hook in
- * src/lib/auth-server.ts mirrors the same complexity rules as a
- * defence-in-depth final check.
+ * drift between the two layers. The Auth.js Credentials provider in
+ * auth.ts mirrors the same complexity rules as a defence-in-depth final
+ * check.
  */
 
 import * as z from "zod";

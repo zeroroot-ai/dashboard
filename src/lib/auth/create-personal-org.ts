@@ -1,7 +1,7 @@
 /**
  * createPersonalOrg — shared org-creation helper.
  *
- * Previously used Better Auth's org adapter to create a personal workspace
+ * Previously used a local org adapter to create a personal workspace
  * for newly signed-up users. With Auth.js v5 + Zitadel, tenant provisioning
  * is driven by the tenant-operator (Zitadel user.created webhook → operator
  * reconcile loop). This module is retained as a typed stub so the import

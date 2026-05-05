@@ -185,15 +185,16 @@ async function createMissionInGibson(
   const targetId = scope.seeds[0]?.value ?? '';
 
   try {
-    const { createClient } = await import('@connectrpc/connect');
-    const { createGrpcTransport } = await import('@connectrpc/connect-node');
+    // Spec headline-feature-completion R11 + dashboard-admin-via-envoy:
+    // route the daemon RPC through Envoy via the user-acting `userClient`
+    // factory rather than building a direct grpc-transport off the
+    // legacy `serverConfig.gibsonDaemonUrl`. The Envoy edge enforces
+    // jwt_authn + ext_authz + SPIFFE mTLS upstream of the daemon; a
+    // direct channel from this route bypasses every one of those checks.
     const { DaemonService } = await import('@/src/gen/gibson/daemon/v1/daemon_pb');
-    const { serverConfig } = await import('@/src/lib/config');
+    const { userClient } = await import('@/src/lib/gibson-client');
 
-    const transport = createGrpcTransport({
-      baseUrl: serverConfig.gibsonDaemonUrl,
-    });
-    const client = createClient(DaemonService, transport);
+    const client = userClient(DaemonService);
 
     // Step 1: Register the mission definition.
     const defResp = await client.createMissionDefinition({ definition });
@@ -243,8 +244,15 @@ async function createMissionInGibson(
 // disposition table). The daemon TenantAdminService stub returns Unimplemented.
 export async function PUT(_request: NextRequest): Promise<NextResponse> {
   return NextResponse.json(
-    { error: 'Mission draft saving coming soon' },
-    { status: 501 }
+    {
+      error: {
+        code: 'NOT_IMPLEMENTED',
+        message:
+          'Mission draft persistence is not yet wired to the daemon; ' +
+          'see SaveMissionDraft in spec headline-feature-completion.',
+      },
+    },
+    { status: 501 },
   );
 }
 

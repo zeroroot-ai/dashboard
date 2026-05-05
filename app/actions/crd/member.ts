@@ -55,12 +55,18 @@ export async function inviteMemberAction(input: {
 
   const ns = tenantNamespace(parsed.data.tenantName);
   const memberName = `invite-${randomUUID().slice(0, 8)}`;
+  // Read the inviter's email from the server-side session — never from
+  // client input. Empty string means the controller will fall back to a
+  // generic placeholder.
+  const inviterEmail =
+    typeof gate.session?.user?.email === 'string' ? gate.session.user.email : '';
   try {
     const ownerRef = await getTenantOwnerRef(parsed.data.tenantName);
     await applyTenantMember(ns, memberName, {
       email: parsed.data.email,
       role: parsed.data.role,
       tenantRef: { name: parsed.data.tenantName },
+      invitedByEmail: inviterEmail,
     }, ownerRef);
     revalidatePath(`/dashboard/settings/members`);
     emitCrdAuditFromGate({

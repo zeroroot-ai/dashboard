@@ -5,8 +5,8 @@
  * which are invoked by the tenant-operator via Zitadel JWT Bearer auth.
  *
  * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js — see task 24
- * implementation log. The previous implementation used Better Auth's org
- * adapter directly. With Auth.js v5 + Zitadel, tenant CRUD goes through
+ * implementation log. The previous implementation used a local org adapter
+ * directly. With Auth.js v5 + Zitadel, tenant CRUD goes through
  * the Zitadel Management API (create org, create user, assign role). This
  * rewrite is scoped to the tenant-switcher / provisioning tasks (task 25+).
  * Until then, all endpoints return 503 to make failures explicit.

@@ -259,12 +259,34 @@ const config: NextAuthConfig = {
 
   // -------------------------------------------------------------------------
   // Cookie configuration
+  //
+  // Spec security-hardening R18 — pin the SESSION cookie to `sameSite: strict`
+  // so it is never sent on cross-origin navigations. CSRF and clickjacking
+  // attacks that rely on a third-party origin issuing GET/POST requests with
+  // ambient session credentials cannot reach the dashboard's authenticated
+  // endpoints.
+  //
+  // Trade-off: a user clicking a link to the dashboard FROM an external
+  // origin (email, other site) will see the first request arrive
+  // un-authenticated and be redirected to /login. After successful sign-in
+  // the session cookie is set on the dashboard's own origin, after which
+  // every subsequent same-origin navigation carries the cookie normally.
+  //
+  // CRITICAL: the OIDC state / PKCE / callback-URL cookies that Auth.js
+  // sets during the sign-in round-trip are intentionally LEFT at their
+  // default `sameSite: lax`. They MUST be lax so that Zitadel's
+  // browser-level 302 redirect back to /api/auth/callback/zitadel includes
+  // them — strict would block the redirect from carrying the state cookie,
+  // breaking the entire sign-in flow. Auth.js v5's cookie defaults
+  // (lib/utils/cookie.js) already set lax for these; we are NOT overriding
+  // them here. Only `sessionToken` is overridden — the cookie that
+  // represents an already-established session.
   // -------------------------------------------------------------------------
   cookies: {
     sessionToken: {
       options: {
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: "strict",
         path: "/",
         secure: process.env.NODE_ENV === "production",
       },

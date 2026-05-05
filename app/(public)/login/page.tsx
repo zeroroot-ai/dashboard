@@ -22,7 +22,7 @@ export default function LoginPage() {
   // UI preview toggle: when DASHBOARD_SOCIAL_PREVIEW=true, render every
   // supported provider button regardless of backend wiring so operators can
   // see the layout before real OAuth credentials are plumbed in. Clicking a
-  // non-configured button surfaces Better Auth's "provider not found" error
+  // non-configured button surfaces Auth.js's "provider not found" error
   // — acceptable for preview, not for production.
   const previewAll = process.env.DASHBOARD_SOCIAL_PREVIEW === "true";
   const providers = previewAll ? PROVIDER_ORDER : enabled;

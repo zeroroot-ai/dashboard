@@ -3,6 +3,8 @@
  * Redis pub/sub mechanism to invalidate sessions when users are removed from tenants
  */
 
+import { logger } from './logger';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -55,8 +57,8 @@ async function devPublish(channel: string, message: string): Promise<void> {
     for (const handler of handlers) {
       try {
         await handler(event);
-      } catch (error) {
-        console.error('[SessionInvalidation] Handler error:', error);
+      } catch (err) {
+        logger.error({ err, component: 'SessionInvalidation' }, 'handler error');
       }
     }
   }
@@ -98,7 +100,7 @@ let redisClient: RedisClient | null = null;
  */
 export function initializeSessionInvalidation(client: RedisClient): void {
   redisClient = client;
-  console.log('[SessionInvalidation] Redis client initialized');
+  logger.info({ component: 'SessionInvalidation' }, 'Redis client initialized');
 }
 
 /**
@@ -143,23 +145,30 @@ export async function publishMemberRemoved(
   if (isRedisAvailable()) {
     try {
       await redisClient!.publish(CHANNEL_MEMBER_REMOVED, message);
-      console.log('[SessionInvalidation] Published member removal event:', {
-        tenantId,
-        userId,
-        requestId: options?.requestId,
-      });
-    } catch (error) {
-      console.error('[SessionInvalidation] Failed to publish event:', error);
+      logger.info(
+        {
+          component: 'SessionInvalidation',
+          tenantId,
+          userId,
+          requestId: options?.requestId,
+        },
+        'published member removal event',
+      );
+    } catch (err) {
+      logger.error(
+        { err, component: 'SessionInvalidation' },
+        'failed to publish event',
+      );
       // Fallback to direct invalidation on publish failure
       await invalidateUserSessions(userId);
     }
   } else {
     // Development mode - use in-memory pub/sub
     await devPublish(CHANNEL_MEMBER_REMOVED, message);
-    console.log('[SessionInvalidation] [Dev] Published member removal event:', {
-      tenantId,
-      userId,
-    });
+    logger.info(
+      { component: 'SessionInvalidation', mode: 'dev', tenantId, userId },
+      'published member removal event (dev)',
+    );
   }
 }
 
@@ -195,25 +204,37 @@ export function subscribeMemberRemovals(
   handler?: MemberRemovalHandler
 ): () => void {
   const defaultHandler: MemberRemovalHandler = async (event) => {
-    console.log('[SessionInvalidation] Received member removal event:', {
-      tenantId: event.tenantId,
-      userId: event.userId,
-      timestamp: event.timestamp,
-    });
+    logger.info(
+      {
+        component: 'SessionInvalidation',
+        tenantId: event.tenantId,
+        userId: event.userId,
+        timestamp: event.timestamp,
+      },
+      'received member removal event',
+    );
 
     const result = await invalidateUserSessions(event.userId);
 
     if (result.success) {
-      console.log('[SessionInvalidation] Sessions invalidated:', {
-        userId: event.userId,
-        count: result.sessionsInvalidated,
-      });
+      logger.info(
+        {
+          component: 'SessionInvalidation',
+          userId: event.userId,
+          count: result.sessionsInvalidated,
+        },
+        'sessions invalidated',
+      );
       await publishSessionInvalidated(event.userId, result.sessionsInvalidated);
     } else {
-      console.error('[SessionInvalidation] Failed to invalidate sessions:', {
-        userId: event.userId,
-        error: result.error,
-      });
+      logger.error(
+        {
+          component: 'SessionInvalidation',
+          userId: event.userId,
+          err: result.error,
+        },
+        'failed to invalidate sessions',
+      );
     }
   };
 
@@ -225,8 +246,11 @@ export function subscribeMemberRemovals(
       try {
         const event: MemberRemovalEvent = JSON.parse(message);
         actualHandler(event);
-      } catch (error) {
-        console.error('[SessionInvalidation] Failed to parse event:', error);
+      } catch (err) {
+        logger.error(
+          { err, component: 'SessionInvalidation' },
+          'failed to parse event',
+        );
       }
     });
 
@@ -254,8 +278,8 @@ export async function invalidateUserSessions(
 ): Promise<SessionInvalidationResult> {
   try {
     if (isRedisAvailable()) {
-      // Production: Delete all session keys for this user from Redis
-      // Better Auth stores sessions with keys like: "session:<sessionToken>"
+      // Production: Delete all session keys for this user from Redis.
+      // Auth.js sessions are stored with keys like: "session:<sessionToken>"
       // We need to find and delete all sessions belonging to this user
 
       // Pattern 1: Direct session lookup (if using user-indexed sessions)
@@ -279,10 +303,14 @@ export async function invalidateUserSessions(
       // and check if each session belongs to the user before deleting
       // This requires reading the session data, which adds overhead
 
-      console.log('[SessionInvalidation] Invalidated sessions in Redis:', {
-        userId,
-        count: invalidatedCount,
-      });
+      logger.info(
+        {
+          component: 'SessionInvalidation',
+          userId,
+          count: invalidatedCount,
+        },
+        'invalidated sessions in Redis',
+      );
 
       return {
         success: true,
@@ -291,9 +319,10 @@ export async function invalidateUserSessions(
       };
     } else {
       // Development: Use in-memory session store simulation
-      console.log('[SessionInvalidation] [Dev] Simulating session invalidation:', {
-        userId,
-      });
+      logger.info(
+        { component: 'SessionInvalidation', mode: 'dev', userId },
+        'simulating session invalidation',
+      );
 
       // In development, we'll signal via a custom event that the client should refetch
       if (typeof window !== 'undefined') {
@@ -310,12 +339,12 @@ export async function invalidateUserSessions(
         sessionsInvalidated: 1, // Simulated
       };
     }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[SessionInvalidation] Error invalidating sessions:', {
-      userId,
-      error: errorMessage,
-    });
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    logger.error(
+      { err, component: 'SessionInvalidation', userId },
+      'error invalidating sessions',
+    );
 
     return {
       success: false,
@@ -335,14 +364,23 @@ export async function invalidateSession(sessionToken: string): Promise<boolean> 
   try {
     if (isRedisAvailable()) {
       await redisClient!.del(`session:${sessionToken}`);
-      console.log('[SessionInvalidation] Session invalidated:', { sessionToken: '[redacted]' });
+      logger.info(
+        { component: 'SessionInvalidation' },
+        'session invalidated',
+      );
       return true;
     } else {
-      console.log('[SessionInvalidation] [Dev] Session invalidation simulated');
+      logger.info(
+        { component: 'SessionInvalidation', mode: 'dev' },
+        'session invalidation simulated',
+      );
       return true;
     }
-  } catch (error) {
-    console.error('[SessionInvalidation] Error invalidating session:', error);
+  } catch (err) {
+    logger.error(
+      { err, component: 'SessionInvalidation' },
+      'error invalidating session',
+    );
     return false;
   }
 }
@@ -410,7 +448,10 @@ export function monitorSessionInvalidation(
   const handleInvalidation = (event: Event) => {
     const customEvent = event as CustomEvent<{ userId: string }>;
     if (customEvent.detail.userId === userId) {
-      console.log('[SessionInvalidation] Current user session invalidated');
+      logger.info(
+        { component: 'SessionInvalidation' },
+        'current user session invalidated',
+      );
       onInvalidated();
     }
   };

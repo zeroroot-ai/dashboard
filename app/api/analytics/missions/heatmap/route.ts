@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { getMissionHeatmap } from '@/src/lib/gibson-client';
-import type { MissionHeatmap } from '@/src/types';
+import { logger } from '@/src/lib/logger';
 
 /**
  * GET /api/analytics/missions/heatmap
@@ -34,14 +34,19 @@ export async function GET(request: NextRequest) {
   try {
     const data = await getMissionHeatmap(tenantId, session?.user?.id);
     return NextResponse.json(data);
-  } catch {
-    // RPC not yet available — return empty heatmap
-    const today = new Date().toISOString().split('T')[0];
-    const heatmap: MissionHeatmap = {
-      startDate: today,
-      endDate: today,
-      cells: [],
-    };
-    return NextResponse.json(heatmap);
+  } catch (err) {
+    logger.error(
+      { err, route: 'analytics/missions/heatmap' },
+      'analytics RPC failed',
+    );
+    return NextResponse.json(
+      {
+        error: {
+          code: 'UPSTREAM_UNAVAILABLE',
+          message: 'Data temporarily unavailable.',
+        },
+      },
+      { status: 503 },
+    );
   }
 }

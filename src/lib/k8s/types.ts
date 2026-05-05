@@ -141,6 +141,13 @@ export interface TenantMemberSpec {
   tenantRef: { name: string };
   acceptedByUserId?: string;
   resendRequestedAt?: string;
+  /**
+   * Email of the user who issued the invitation. Server-only — set from
+   * the calling user's session in the dashboard server action. Empty
+   * string means "system-issued"; the controller renders that as
+   * "a Gibson admin" in the outgoing invitation email.
+   */
+  invitedByEmail?: string;
 }
 
 export interface TenantMemberStatus {

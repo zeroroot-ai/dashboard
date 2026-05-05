@@ -295,7 +295,17 @@ export function useGraphSSE(
       eventSource.onopen = () => {
         if (!mountedRef.current) return;
 
-        console.log('[GraphSSE] Connected to stream:', sseUrl);
+        if (process.env.NODE_ENV !== 'production') {
+          // Strip query string + identifying tenant/mission tokens before logging.
+          let safePath = sseUrl;
+          try {
+            const parsed = new URL(sseUrl, window.location.origin);
+            safePath = parsed.pathname;
+          } catch {
+            safePath = '<unparseable-url>';
+          }
+          console.log('[GraphSSE] Connected to stream:', safePath);
+        }
         setStatus('connected');
         reconnectAttemptsRef.current = 0; // Reset on successful connection
         setError(null);
@@ -323,7 +333,9 @@ export function useGraphSSE(
         setLastEvent(parsedEvent);
         setEvents((prev) => [...prev, parsedEvent]);
 
-        console.log('[GraphSSE] Received event:', parsedEvent.type);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[GraphSSE] Received event:', parsedEvent.type);
+        }
       };
 
       // Error occurred
@@ -348,11 +360,13 @@ export function useGraphSSE(
         // Check if we should attempt reconnection
         if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
           const delay = getReconnectDelay();
-          console.log(
-            `[GraphSSE] Reconnecting in ${delay / 1000}s (attempt ${
-              reconnectAttemptsRef.current + 1
-            }/${MAX_RECONNECT_ATTEMPTS})`
-          );
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(
+              `[GraphSSE] Reconnecting in ${delay / 1000}s (attempt ${
+                reconnectAttemptsRef.current + 1
+              }/${MAX_RECONNECT_ATTEMPTS})`
+            );
+          }
 
           reconnectTimeoutRef.current = setTimeout(() => {
             if (mountedRef.current) {

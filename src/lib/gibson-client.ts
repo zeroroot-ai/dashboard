@@ -38,7 +38,6 @@ export type {
   SupportedProviderDescriptor,
   DaemonProviderConfigInput,
 };
-import { serverConfig as _serverConfig } from './config';
 import { requireUserToken } from './auth/user-token';
 import {
   getServiceToken,
@@ -95,11 +94,11 @@ function loadSpiffe(): SpiffeMod | null {
     return null;
   }
 }
-// `serverConfig.gibsonDaemonUrl` is still imported (aliased _serverConfig) so
-// that the build doesn't dead-strip it before Phase 9 of the previous spec —
-// exporters elsewhere in the dashboard still reference `gibsonDaemonUrl`
-// indirectly.
-void _serverConfig;
+// Spec headline-feature-completion R11 — the legacy `void _serverConfig`
+// cast was removed alongside the `gibsonDaemonUrl` field it was guarding.
+// Direct daemon channels are no longer permitted at all; see the
+// `userClient` / `serviceClient` factories below for the only sanctioned
+// transports.
 
 // Tenant CRUD/lookup has moved to the Tenant CRD operator. Use
 // `@/src/lib/k8s/tenants` for tenant access. Tenant proto types are no
@@ -1158,8 +1157,9 @@ export async function testPluginConnection(
 // User Profile — daemon-RPC backed
 //
 // All user identity operations (profile, sessions, activity) go through
-// daemon RPCs. The daemon delegates to Better Auth in the dashboard for the
-// underlying user store.
+// daemon RPCs. Identities themselves are owned by Zitadel; the dashboard's
+// Auth.js adapter mirrors the minimum profile data into Postgres for
+// adapter-required tables.
 // ============================================================================
 
 /**

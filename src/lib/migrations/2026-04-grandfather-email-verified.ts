@@ -21,13 +21,13 @@
  *   falling back to `NOW()` on first run. Whichever we use is persisted to the
  *   marker row so future runs can audit exactly which cutoff was applied.
  *
- * Better Auth's Postgres schema is camelCase with quoted identifiers
- * (see `better-auth/node_modules/@better-auth/core/dist/db/get-tables.mjs`):
+ * The dashboard's Postgres schema (Auth.js adapter) is camelCase with quoted
+ * identifiers:
  *   table: "user", columns: "emailVerified", "createdAt"
  *
  * This module is server-only. It is invoked from `src/lib/auth-server.ts`
- * after Better Auth runs its own schema migrations, and any failure is caught
- * so a grandfather-migration error cannot crash dashboard startup.
+ * after the Auth.js adapter runs its own schema migrations, and any failure
+ * is caught so a grandfather-migration error cannot crash dashboard startup.
  */
 
 import type { Pool } from "pg";

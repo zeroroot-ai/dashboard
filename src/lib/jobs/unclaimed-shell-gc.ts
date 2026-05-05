@@ -63,11 +63,12 @@ export interface GCResult {
  * list so callers can log both (even in dry-run, which logs candidates
  * without mutating the DB).
  *
- * The SQL is intentionally written against the Better Auth schema directly
- * — going through the internalAdapter would require a running `auth` instance
- * (with HTTP plumbing) and would also defeat the batching we get from a
- * single SELECT. The schema is stable: Better Auth v1.6.x guarantees the
- * `user`, `account`, and `member` tables with the column set below.
+ * The SQL is intentionally written against the dashboard's adapter schema
+ * directly — going through the Auth.js adapter would require a running auth
+ * instance (with HTTP plumbing) and would also defeat the batching we get
+ * from a single SELECT. The schema is stable: the Auth.js Postgres adapter
+ * provides the `user`, `account`, and `member` tables with the column set
+ * below.
  */
 export async function runUnclaimedShellGC(
   opts: GCOptions,

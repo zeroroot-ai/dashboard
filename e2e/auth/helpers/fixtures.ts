@@ -28,7 +28,7 @@ export const BASE_URL =
 // ---------------------------------------------------------------------------
 
 /**
- * Returns a DNS-safe, unique company slug suitable for use as a Better Auth
+ * Returns a DNS-safe, unique company slug suitable for use as a Zitadel
  * organisation slug.
  *
  * Format: `e2e-<timestamp_base36>-<6 hex chars>`

@@ -11,6 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from './logger';
 
 // ============================================================================
 // Types
@@ -183,7 +184,7 @@ let redisClient: RedisClient | null = null;
  */
 export function initializeRateLimiter(client: RedisClient): void {
   redisClient = client;
-  console.log('[RateLimiter] Redis client initialized');
+  logger.info({ component: 'RateLimiter' }, 'Redis client initialized');
 }
 
 function isRedisAvailable(): boolean {

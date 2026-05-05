@@ -8,9 +8,9 @@
  *
  * Environment variables expected:
  *   PLAYWRIGHT_BASE_URL        - Dashboard URL (default: http://localhost:30081)
- *   E2E_ADMIN_EMAIL            - Admin user email (seeded in Better Auth)
+ *   E2E_ADMIN_EMAIL            - Admin user email (seeded in Zitadel)
  *   E2E_ADMIN_PASSWORD         - Admin user password
- *   E2E_MEMBER_EMAIL           - Member user email (seeded in Better Auth)
+ *   E2E_MEMBER_EMAIL           - Member user email (seeded in Zitadel)
  *   E2E_MEMBER_PASSWORD        - Member user password
  */
 
@@ -26,7 +26,7 @@ const MEMBER_EMAIL = process.env.E2E_MEMBER_EMAIL ?? "member@example.com";
 // ---------------------------------------------------------------------------
 
 async function loginAs(page: Page, email: string, password: string) {
-  // Dashboard uses Better Auth Server Actions — sign-in is an email+password
+  // Dashboard uses Auth.js v5 Server Actions — sign-in is an email+password
   // form at /login that posts to the signInAction (see app/actions/auth/signin.ts).
   // NOTE: field selectors below match the current form markup; update them if
   // the login UI changes.

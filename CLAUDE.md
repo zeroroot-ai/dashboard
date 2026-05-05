@@ -206,6 +206,59 @@ E2E_AUTH_SUITE=1 PLAYWRIGHT_BASE_URL=http://localhost:30081 \
 
 All three suites compile and lint cleanly without a live cluster.
 
+## Logging
+
+The dashboard uses a single canonical structured logger at
+`src/lib/logger.ts`, built on top of [`pino`](https://github.com/pinojs/pino).
+This is the only approved logging surface for committed server-side
+code (API routes, server actions, instrumentation hooks).
+
+```ts
+import { logger } from '@/src/lib/logger';
+
+logger.info({ tenantId, action: 'invite' }, 'invitation issued');
+logger.error({ err, route: 'analytics/kpis' }, 'analytics RPC failed');
+```
+
+Rules:
+
+- `console.*` is forbidden in committed server-side code. Migrate to
+  `logger.info` / `logger.warn` / `logger.error` instead.
+- For browser-side hooks where a structured logger would not survive
+  the client bundle, gate `console.log` and `console.warn` on
+  `process.env.NODE_ENV !== 'production'`. `console.error` may remain
+  in client code as long as it does not emit identifying URL paths,
+  query parameters, or full RPC payloads.
+- Always pass identifying values (email, tenant id, user id, session
+  id, tokens, secrets) inside the structured object, never in the
+  message string. The redactor scrubs `email`, `tenantId`, `memberId`,
+  `userId`, `sessionId`, `sessionToken`, `zitadelSubject`,
+  `zitadelUserId`, `token`, `password`, `apiKey`, and `secret` before
+  serialisation.
+- New PII fields require a redactor update in `src/lib/logger.ts`.
+
+In development, output is colourised via `pino-pretty`. In production,
+the logger emits one JSON object per event for ingestion.
+
+## Auth (post-Better-Auth)
+
+Better Auth was removed from the dashboard. The canonical auth surface
+is **Auth.js v5** with **Zitadel** as the upstream IdP. There is no
+local user database in the dashboard; identities, sessions, and
+membership are owned by Zitadel and OpenFGA respectively.
+
+Build guards enforce this:
+
+- `scripts/check-no-direct-daemon-grpc.mjs` (line 112) rejects
+  `BETTER_AUTH_*` env vars and any direct daemon gRPC channel from
+  the dashboard. Daemon traffic ALWAYS goes via Envoy + ext-authz
+  with SPIFFE mTLS; never via a direct gRPC client from this codebase.
+- `.env.example` is the canonical reference for required env vars; it
+  no longer contains any `BETTER_AUTH_*` keys.
+
+If you find a stale reference to Better Auth in code, comments, tests,
+or docs, treat it as a regression and remove it.
+
 ## Service-account identity (canonical sub)
 
 `verifyZitadelBearer` performs a **single-claim numeric check** on the JWT's `sub` against `ALLOWED_SERVICE_SUBJECTS`. The env is populated at pod startup by the `resolve-sa-identity-map` init container (chart template `templates/dashboard/deployment.yaml`), which reads `.Values.serviceAccounts.required` (readable SA names) and resolves each one to its numeric sub via the chart-managed `gibson-sa-identity-map` ConfigMap. Pod fail-fasts if any required SA is missing from the map.

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { getAgentPerformance } from '@/src/lib/gibson-client';
-import type { AgentPerformance } from '@/src/types';
+import { logger } from '@/src/lib/logger';
 
 /**
  * GET /api/analytics/agents/performance
@@ -34,9 +34,19 @@ export async function GET(request: NextRequest) {
   try {
     const data = await getAgentPerformance(tenantId, session?.user?.id);
     return NextResponse.json(data);
-  } catch {
-    // RPC not yet available — return empty agent performance list
-    const agentPerformance: AgentPerformance[] = [];
-    return NextResponse.json(agentPerformance);
+  } catch (err) {
+    logger.error(
+      { err, route: 'analytics/agents/performance' },
+      'analytics RPC failed',
+    );
+    return NextResponse.json(
+      {
+        error: {
+          code: 'UPSTREAM_UNAVAILABLE',
+          message: 'Data temporarily unavailable.',
+        },
+      },
+      { status: 503 },
+    );
   }
 }

@@ -63,7 +63,7 @@ async function callServerAction(
   // React Server Action RPC is a POST to the enclosing page with headers that
   // encode the action reference. For robustness the dashboard exposes a thin
   // RPC bridge under /api/test/server-action used only in E2E — the bridge
-  // authenticates via Better Auth session cookies and forwards to the named
+  // authenticates via Auth.js session cookies and forwards to the named
   // action. If the bridge is not present, tests should be skipped with
   // test.skip() by the caller.
   const res = await request.post(`${BASE_URL}/api/test/server-action`, {

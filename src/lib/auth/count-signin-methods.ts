@@ -7,10 +7,10 @@
  *
  * Counting rules:
  *  - Email+password counts as 1 when the user has a "credential" provider
- *    account row in Better Auth's `account` table.
+ *    account row in the dashboard's `account` table (Auth.js adapter schema).
  *  - Each linked social provider counts as 1 additional method.
  *
- * Better Auth's `account` table stores one row per identity:
+ * The `account` table stores one row per identity:
  *  - providerId = "credential"  → email+password
  *  - providerId = "github" | "gitlab" | "google" | "microsoft" → social
  *
@@ -27,7 +27,8 @@ export interface AccountRow {
 /**
  * Count the number of distinct sign-in methods available to the user.
  *
- * @param accounts - Raw account rows from Better Auth's account table.
+ * @param accounts - Raw account rows from the dashboard's `account` table
+ *   (Auth.js adapter schema).
  * @returns Integer >= 0.
  */
 export function countSignInMethods(accounts: AccountRow[]): number {

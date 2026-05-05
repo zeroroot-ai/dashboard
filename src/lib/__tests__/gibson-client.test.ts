@@ -49,9 +49,12 @@ vi.mock('@connectrpc/connect', async (importActual) => {
 vi.mock('@/src/gen/gibson/daemon/v1/daemon_pb', () => ({ DaemonService: {} }));
 vi.mock('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb', () => ({ DaemonAdminService: {} }));
 
-// Stub out server-config (GIBSON_ADDR).
+// Stub out server-config. `gibsonDaemonUrl` was removed in
+// spec headline-feature-completion R11; the field below is left here so
+// any unrelated test assertion that may consult `serverConfig` still
+// resolves an object — but no module under test reads it.
 vi.mock('@/src/lib/config', () => ({
-  serverConfig: { gibsonDaemonUrl: 'http://envoy.test:8080' },
+  serverConfig: { gibsonPlatformPublicUrl: 'http://envoy.test:8080' },
 }));
 
 // Stub out the GraphService client used by the analytics helpers.

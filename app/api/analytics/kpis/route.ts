@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { getKPIs } from '@/src/lib/gibson-client';
-import type { KPIData } from '@/src/types';
+import { logger } from '@/src/lib/logger';
 
 /**
  * GET /api/analytics/kpis
@@ -34,35 +34,19 @@ export async function GET(request: NextRequest) {
   try {
     const data = await getKPIs(tenantId, session?.user?.id);
     return NextResponse.json(data);
-  } catch {
-    // RPC not yet available — return zero-valued KPIs
-    const kpiData: KPIData = {
-      totalMissions: {
-        allTime: 0,
-        thisMonth: 0,
-        thisWeek: 0,
+  } catch (err) {
+    logger.error(
+      { err, route: 'analytics/kpis' },
+      'analytics RPC failed',
+    );
+    return NextResponse.json(
+      {
+        error: {
+          code: 'UPSTREAM_UNAVAILABLE',
+          message: 'Data temporarily unavailable.',
+        },
       },
-      activeMissions: 0,
-      missionSuccessRate: 0,
-      averageMissionDuration: 0,
-      agentUtilization: {
-        busy: 0,
-        idle: 0,
-        percentage: 0,
-      },
-      findingsSummary: {
-        critical: 0,
-        high: 0,
-        medium: 0,
-        low: 0,
-      },
-      newFindingsTrend: {
-        last24h: 0,
-        previous24h: 0,
-        changePercent: 0,
-      },
-      criticalFindingsAged: 0,
-    };
-    return NextResponse.json(kpiData);
+      { status: 503 },
+    );
   }
 }

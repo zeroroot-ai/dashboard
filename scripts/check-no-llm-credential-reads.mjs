@@ -105,8 +105,8 @@ const BANNED = [
     // Explicit allow-list of known LLM-provider credential env var names.
     // Anchored on `API_KEY` / `API_TOKEN` / AWS_{ACCESS,SECRET}_* / the
     // small set of known-bad region-specific names so we don't misfire on
-    // Better Auth OAuth2 client IDs (e.g. `GOOGLE_CLIENT_ID`) which are
-    // unrelated to LLM credentials.
+    // Auth.js / Zitadel OAuth2 client IDs (e.g. `GOOGLE_CLIENT_ID`) which
+    // are unrelated to LLM credentials.
     regex:
       /process\.env\.(?:(?:ANTHROPIC|OPENAI|GOOGLE|GEMINI|COHERE|MISTRAL|HUGGINGFACE|CLOUDFLARE|XAI|GROQ|DEEPSEEK|DEEPINFRA|TOGETHER|FIREWORKS)_API_(?:KEY|TOKEN)|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|AWS_BEDROCK_[A-Z_]+|HUGGINGFACE_HUB_TOKEN|HF_TOKEN|GEMINI_KEY|OPENAI_[A-Z_]*(?:SECRET|KEY)|ANTHROPIC_[A-Z_]*(?:SECRET|KEY))/u,
     reason:

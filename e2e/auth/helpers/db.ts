@@ -69,7 +69,8 @@ async function getPool(): Promise<PgPool | null> {
 // ---------------------------------------------------------------------------
 
 /**
- * Looks up a user row by email from Better Auth's `user` table.
+ * Looks up a user row by email from the dashboard's `user` table
+ * (Auth.js adapter schema).
  * Returns `null` if no row exists or if DB is unreachable.
  */
 export async function queryUser(email: string): Promise<Record<string, unknown> | null> {
@@ -89,7 +90,8 @@ export async function queryUser(email: string): Promise<Record<string, unknown> 
 }
 
 /**
- * Looks up an organization row by slug from Better Auth's `organization` table.
+ * Looks up an organization row by slug from the dashboard's `organization`
+ * table (Auth.js adapter schema).
  * Returns `null` if no row exists or if DB is unreachable.
  */
 export async function queryOrg(slug: string): Promise<Record<string, unknown> | null> {

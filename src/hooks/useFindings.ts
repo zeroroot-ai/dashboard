@@ -278,7 +278,9 @@ export function useFindingsSSE(
         eventSourceRef.current = eventSource;
 
         eventSource.onopen = () => {
-          console.log('[SSE] Connected to findings stream');
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('[SSE] Connected to findings stream');
+          }
           reconnectAttemptsRef.current = 0;
         };
 
@@ -328,7 +330,9 @@ export function useFindingsSSE(
           );
           reconnectAttemptsRef.current++;
 
-          console.log(`[SSE] Reconnecting in ${backoffMs}ms...`);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(`[SSE] Reconnecting in ${backoffMs}ms...`);
+          }
           reconnectTimeoutRef.current = setTimeout(() => {
             connectSSE();
           }, backoffMs);

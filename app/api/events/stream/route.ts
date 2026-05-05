@@ -47,19 +47,21 @@ export async function GET() {
         }
       }, 15000);
 
-      // Attempt to subscribe to the Gibson daemon's event stream
-      // This is a best-effort proxy — the Subscribe RPC may not be fully implemented
+      // Attempt to subscribe to the Gibson daemon's event stream.
+      //
+      // This is a best-effort proxy — the Subscribe RPC may not be fully
+      // implemented. The transport goes through Envoy via the user-acting
+      // `userClient` factory (spec headline-feature-completion R11 +
+      // dashboard-admin-via-envoy), NOT a direct daemon channel — the
+      // legacy `createGrpcTransport({ baseUrl: serverConfig.gibsonDaemonUrl })`
+      // pattern that lived here previously skipped jwt_authn / ext_authz /
+      // SPIFFE mTLS at the Envoy edge.
       void (async () => {
         try {
-          const { createClient } = await import('@connectrpc/connect');
-          const { createGrpcTransport } = await import('@connectrpc/connect-node');
           const { DaemonService } = await import('@/src/gen/gibson/daemon/v1/daemon_pb');
-          const { serverConfig } = await import('@/src/lib/config');
+          const { userClient } = await import('@/src/lib/gibson-client');
 
-          const transport = createGrpcTransport({
-            baseUrl: serverConfig.gibsonDaemonUrl,
-          });
-          const client = createClient(DaemonService, transport);
+          const client = userClient(DaemonService);
 
           for await (const event of client.subscribe({})) {
             if (closed) break;

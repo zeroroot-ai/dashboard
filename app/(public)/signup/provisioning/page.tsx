@@ -84,7 +84,7 @@ function ProvisioningStatus() {
     stopTimeout();
     isCompletedRef.current = true;
 
-    // signUpAction already created a Better Auth session and committed
+    // signUpAction already created an Auth.js session and committed
     // the cookie via nextCookies(), so the user is signed in. Go
     // straight to the dashboard. If the cookie is missing for any
     // reason (e.g., the anti-enumeration existing-user path), the

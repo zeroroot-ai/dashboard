@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { getFindingsBySeverity } from '@/src/lib/gibson-client';
-import type { SeverityDistribution } from '@/src/types';
+import { logger } from '@/src/lib/logger';
 
 /**
  * GET /api/analytics/findings/by-severity
@@ -34,15 +34,19 @@ export async function GET(request: NextRequest) {
   try {
     const data = await getFindingsBySeverity(tenantId, session?.user?.id);
     return NextResponse.json(data);
-  } catch {
-    // RPC not yet available — return empty severity distribution
-    const severityDistribution: SeverityDistribution = {
-      critical: 0,
-      high: 0,
-      medium: 0,
-      low: 0,
-      info: 0,
-    };
-    return NextResponse.json(severityDistribution);
+  } catch (err) {
+    logger.error(
+      { err, route: 'analytics/findings/by-severity' },
+      'analytics RPC failed',
+    );
+    return NextResponse.json(
+      {
+        error: {
+          code: 'UPSTREAM_UNAVAILABLE',
+          message: 'Data temporarily unavailable.',
+        },
+      },
+      { status: 503 },
+    );
   }
 }

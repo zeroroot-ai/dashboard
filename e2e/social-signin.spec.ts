@@ -26,7 +26,7 @@
  * ## Fake-IdP note
  *
  * The spec task called for "reusing the fake from task 19 via a playwright
- * fixture." Better Auth's token exchange is server-to-server (dashboard pod →
+ * fixture." Auth.js's token exchange is server-to-server (dashboard pod →
  * GitHub API), which cannot be intercepted by Playwright's browser-side
  * page.route(). A true in-process fake would require the dashboard pod to be
  * started with GITHUB_OAUTH_AUTHORIZE_URL and GITHUB_OAUTH_TOKEN_URL pointing
@@ -251,7 +251,7 @@ test.describe("GitHub social sign-in — click-through flow", () => {
         // Complete the OAuth consent flow on GitHub's UI.
         await consentGitHub(page);
 
-        // After the callback, Better Auth should redirect to /dashboard.
+        // After the callback, Auth.js should redirect to /dashboard.
         await page.waitForURL(
           (url) =>
             url.pathname.startsWith("/dashboard") ||

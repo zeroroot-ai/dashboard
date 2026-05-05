@@ -152,7 +152,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       ws.onopen = () => {
         if (!isMountedRef.current) return;
 
-        console.log('[WebSocket] Connected');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[WebSocket] Connected');
+        }
         setConnectionState('connected');
         reconnectCountRef.current = 0;
         onConnect?.();
@@ -161,7 +163,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       ws.onclose = (event) => {
         if (!isMountedRef.current) return;
 
-        console.log('[WebSocket] Disconnected', event.code, event.reason);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[WebSocket] Disconnected', event.code, event.reason);
+        }
         setConnectionState('disconnected');
         wsRef.current = null;
         onDisconnect?.();
@@ -169,7 +173,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
         // Attempt reconnection if not a clean close and attempts remain
         if (!event.wasClean && reconnectCountRef.current < reconnectAttempts) {
           const delay = getReconnectDelay();
-          console.log(`[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectCountRef.current + 1}/${reconnectAttempts})`);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(`[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectCountRef.current + 1}/${reconnectAttempts})`);
+          }
 
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectCountRef.current++;
@@ -177,7 +183,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
           }, delay);
         } else if (reconnectCountRef.current >= reconnectAttempts) {
           // Switch to fallback mode after max attempts
-          console.log('[WebSocket] Max reconnection attempts reached, switching to fallback mode');
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('[WebSocket] Max reconnection attempts reached, switching to fallback mode');
+          }
           fallbackModeRef.current = true;
           onFallbackMode?.();
         }

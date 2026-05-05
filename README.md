@@ -1,52 +1,66 @@
-# Shadcn UI Kit
+# Gibson Dashboard
 
-A large collection of admin dashboards, website templates, UI components, and ready-to-use blocks. Save time and deliver projects faster.
+The web UI for the Gibson platform. Operators use it to manage tenants,
+launch missions, browse findings, run admin RPCs, and watch the live
+event graph. Identities live in Zitadel; authorisation is enforced by
+the daemon's ext-authz layer; the dashboard never opens a direct gRPC
+channel to the daemon.
 
-This is a [Next.js 15](https://nextjs.org/) project bootstrapped with [create-next-app](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) and React 19.
+## Stack
 
-## Installation
+- **Next.js 16 / React 19**, App Router, TypeScript everywhere.
+- **pnpm** for package management.
+- **Auth.js v5** with Zitadel as the upstream IdP.
+- **ConnectRPC** over **SPIFFE mTLS**, fronted by Envoy + ext-authz.
+- **Vitest** for unit tests, **Playwright** for end-to-end tests.
 
-Follow these steps to get your project up and running locally:
+## Prerequisites
 
-1. Clone the repository:
+- Node.js 20.x or newer.
+- pnpm 10.x (`corepack enable && corepack prepare pnpm@10 --activate`).
+- A local kind cluster from `enterprise/deploy/helm/gibson/` for any
+  workflow that talks to the daemon (most of them).
+- Sibling checkouts of `core/gibson/` and `core/sdk/` if you intend to
+  regenerate proto bindings (`pnpm proto:generate`).
 
-    ```sh
-    git clone https://github.com/bundui/shadcn-ui-kit-dashboard.git
-    cd shadcn-ui-kit-dashboard
-    ```
+## Clone
 
-2. Install dependencies:
+```bash
+git clone https://github.com/zero-day-ai/dashboard.git
+cd dashboard
+pnpm install
+```
 
-    ```sh
-    npm install
-    # or
-    yarn install
-    # or
-    pnpm install
-    ```
+## Common commands
 
-   If you encounter any problems installing packages, try adding the `--legacy-peer-deps` or `--force` flag:
+```bash
+pnpm dev            # dev server on :3000
+pnpm build          # full production build (runs prebuild policy guards)
+pnpm test           # vitest unit tests
+pnpm test:e2e       # playwright suite
+pnpm typecheck      # tsc --noEmit
+pnpm lint           # eslint
+pnpm proto:generate # regenerate src/gen/ TS proto bindings (workstation-only)
+```
 
-    ```sh
-    npm install --legacy-peer-deps
-    ```
+`pnpm prebuild` runs a chain of policy-guard scripts (no direct daemon
+gRPC, no legacy auth artefacts, RBAC minimality, authz-registry
+freshness, etc.). Do not disable them — fix the underlying code.
 
-3. Run the development server:
+## Architecture
 
-    ```sh
-    npm run dev
-    # or
-    yarn dev
-    # or
-    pnpm dev
-    ```
+This repo is one piece of the wider Gibson platform polyrepo. For the
+authoritative platform-wide overview see
+`enterprise/docs/ARCHITECTURE.md` in the workspace. For dashboard-only
+conventions see [`CLAUDE.md`](./CLAUDE.md), which covers:
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser to view the result.
+- The Auth.js / Zitadel surface and the post-Better-Auth migration.
+- The `useAuthorize` / `assertAuthorized` two-layer authz pattern.
+- Proto regeneration into `src/gen/`.
+- The canonical structured logger at `src/lib/logger.ts`.
+- The Envoy + ext-authz daemon path and the `check-no-direct-daemon-grpc`
+  guard.
 
-4. To edit the project, you can examine the files under the app folder and components folder.
+## Repository
 
-## Minimum system requirements
-
-- Node.js version 20 and above.
-
-Note: If you experience problems with versions above Node.js v20, please replace with version v20.
+`https://github.com/zero-day-ai/dashboard`

@@ -3,8 +3,9 @@
  * Entry point for the shell-user garbage collection CronJob.
  *
  * Run daily (03:00 UTC by default — see the Helm CronJob template) to delete
- * Better Auth user rows that represent unclaimed tenant-operator shell users
- * older than the retention threshold.
+ * shell-user rows in the dashboard `user` table (the Auth.js adapter schema)
+ * that were created by the tenant-operator's shell-user auto-create path
+ * and never claimed within the retention threshold.
  *
  * NOTE ON LANGUAGE CHOICE
  * ---------------------------------------------------------------------------

@@ -19,6 +19,7 @@
  */
 
 import { readFileSync, watchFile, existsSync } from 'fs';
+import { logger } from './logger';
 
 // ---------------------------------------------------------------------------
 // Configuration — paths resolved from env with defaults
@@ -93,7 +94,7 @@ function startRotationWatcher(): void {
     const fresh = loadSVID();
     if (fresh) {
       _cached = fresh;
-      console.log('[spiffe] SVID rotated — new certificate loaded.');
+      logger.info({ component: 'spiffe' }, 'SVID rotated — new certificate loaded');
     }
   });
 }

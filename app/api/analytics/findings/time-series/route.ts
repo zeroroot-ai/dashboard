@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { getFindingsTimeSeries } from '@/src/lib/gibson-client';
-import type { FindingsOverTime, TimeRange } from '@/src/types';
+import { logger } from '@/src/lib/logger';
+import type { TimeRange } from '@/src/types';
 
 /**
  * GET /api/analytics/findings/time-series
@@ -51,12 +52,19 @@ export async function GET(request: NextRequest) {
   try {
     const data = await getFindingsTimeSeries(tenantId, daysByRange[timeRange], session?.user?.id);
     return NextResponse.json(data);
-  } catch {
-    // RPC not yet available — return empty time series
-    const timeSeriesData: FindingsOverTime = {
-      timeRange,
-      data: [],
-    };
-    return NextResponse.json(timeSeriesData);
+  } catch (err) {
+    logger.error(
+      { err, route: 'analytics/findings/time-series', timeRange },
+      'analytics RPC failed',
+    );
+    return NextResponse.json(
+      {
+        error: {
+          code: 'UPSTREAM_UNAVAILABLE',
+          message: 'Data temporarily unavailable.',
+        },
+      },
+      { status: 503 },
+    );
   }
 }

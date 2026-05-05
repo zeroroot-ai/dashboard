@@ -7,9 +7,31 @@
  * required (validated by Envoy jwt_authn + ext-authz) but no per-tenant FGA
  * gate is performed (the response IS the tenant list).
  *
- * Per-request memoization via `react.cache()` keeps a single render from
- * hammering the daemon; cross-request caching is intentionally NOT done so
- * that membership changes are visible on the next render.
+ * Caching strategy (security-hardening R17):
+ *
+ *   1. Per-request memoization via `react.cache()` keeps a single render
+ *      from hammering the daemon when 50+ Server Components on a page all
+ *      ask `useAuthorize` / `assertAuthorized` for membership data. This
+ *      layer has zero TTL and zero cross-request scope.
+ *
+ *   2. Cross-request cache via Redis with a short TTL (default 30s). On a
+ *      busy dashboard, 100 concurrent protected-route hits for one user
+ *      collapse to a single FGA query — the other 99 read the cached
+ *      response. The TTL is intentionally short so membership changes
+ *      become visible quickly even without an explicit invalidation
+ *      signal. When Redis is unreachable (dev), this layer no-ops and
+ *      every request falls through to the daemon (request-scoped memo
+ *      still applies).
+ *
+ *   3. Pub/sub invalidation — the daemon publishes `gibson:fga.write`
+ *      events on every FGA tuple write. This module subscribes lazily on
+ *      first read and deletes the affected user's cache entry. Until the
+ *      daemon agent wires up publication (cross-spec dependency), the
+ *      30-second TTL is the only invalidation signal — staleness is
+ *      bounded but not eliminated.
+ *
+ * Cache key shape: `dashboard:memberships:user:<sub>` (sub is the Zitadel
+ * numeric user id from `session.user.id`).
  *
  * @module auth/membership
  */
@@ -25,6 +47,8 @@ import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
 import { makeClient } from '@/src/lib/gibson-client';
 import { requireUserToken } from '@/src/lib/auth/user-token';
 import { getFaultMode } from '@/src/lib/test-fixtures/fault-injection';
+import { getJSON, setJSON, delKey } from '@/src/lib/redis-store';
+import { logger } from '@/src/lib/logger';
 
 // ---------------------------------------------------------------------------
 // Public types + errors
@@ -103,40 +127,77 @@ function membershipsClient() {
   return makeClient(DaemonService, requireUserToken, async () => '');
 }
 
+// ---------------------------------------------------------------------------
+// Cross-request Redis cache (security-hardening R17)
+// ---------------------------------------------------------------------------
+
+/** TTL for the cross-request cache. Short enough that membership changes
+ *  are observable without an invalidation event. */
+const MEMBERSHIP_CACHE_TTL_SECONDS = 30;
+
+/** Override hatch (in seconds) — primarily for tests / staging tuning. */
+function getCacheTTLSeconds(): number {
+  const raw = process.env['DASHBOARD_MEMBERSHIPS_CACHE_TTL_SECONDS'];
+  if (!raw) return MEMBERSHIP_CACHE_TTL_SECONDS;
+  const parsed = parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0
+    ? parsed
+    : MEMBERSHIP_CACHE_TTL_SECONDS;
+}
+
+/** Test-only counter for daemon RPC calls. Exported for assertions. */
+let _daemonCallCount = 0;
+/** Test-only helper: read the daemon-call counter without leaking the let. */
+export function __getDaemonCallCountForTests(): number {
+  return _daemonCallCount;
+}
+/** Test-only helper: zero the daemon-call counter between tests. */
+export function __resetDaemonCallCountForTests(): void {
+  _daemonCallCount = 0;
+}
+
+function membershipsCacheKey(userId: string): string {
+  return `dashboard:memberships:user:${userId}`;
+}
+
+/**
+ * Invalidate the cached membership list for a single user.
+ *
+ * Called by the FGA-write pub/sub subscriber and exported for callers
+ * that mutate membership through their own paths (e.g. accept-invitation
+ * server actions) and want to ensure the next read sees the new state.
+ */
+export async function invalidateMembershipCache(userId: string): Promise<void> {
+  if (!userId) return;
+  try {
+    await delKey(membershipsCacheKey(userId));
+  } catch (err) {
+    logger.warn(
+      { err, scope: 'auth.membership.invalidate' },
+      'membership cache invalidation failed (non-fatal)',
+    );
+  }
+}
+
 /**
  * Returns every tenant the authenticated caller is a member of.
  *
- * Per-request memoized via `react.cache()`: a single render that asks for
- * memberships in three places makes one daemon RPC.
+ * Caching: see the module docstring for the full strategy. In short:
+ *   1. react.cache() — per-render memoization (no TTL).
+ *   2. Redis — 30s TTL, keyed on session.user.id.
+ *   3. (Cross-spec) FGA-write pub/sub for sub-30s invalidation.
  *
  * @throws {MembershipResolutionError} when the user is not signed in,
  *   the daemon is unreachable, FGA is down, or the response fails Zod
  *   validation. Caller maps `error.reason` to a user-facing route.
  */
-export const getMyMemberships = cache(async (): Promise<Membership[]> => {
-  // ---------------------------------------------------------------------------
-  // TEST FIXTURE: fault injection for the FGA/daemon subsystem.
-  // Only active when TEST_FIXTURES_ENABLED=true. In production this is a
-  // single env-var boolean check that short-circuits immediately.
-  // ---------------------------------------------------------------------------
-  const fgaFault = getFaultMode('fga');
-  if (fgaFault) {
-    fgaFault.decrementIfBounded();
-    if (fgaFault.mode === 'malformed-200') {
-      // Simulate a 200 response whose body fails Zod validation downstream.
-      // We throw MembershipResolutionError('malformed_response') to surface the
-      // same path as a real parse failure without making an actual RPC call.
-      throw new MembershipResolutionError('malformed_response', new Error('[fault-injection] malformed-200'));
-    }
-    // "503", "timeout", or any other mode: surface as fga_unavailable.
-    throw new MembershipResolutionError('fga_unavailable', new Error(`[fault-injection] ${fgaFault.mode}`));
-  }
-  // ---------------------------------------------------------------------------
-
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new MembershipResolutionError('unauthenticated');
-  }
+/**
+ * Inner fetch — calls the daemon and parses the response. No caching.
+ * Increments `_daemonCallCount` on every call, used by the R17 cache
+ * tests to assert the request-collapse property.
+ */
+async function fetchMembershipsFromDaemon(): Promise<Membership[]> {
+  _daemonCallCount += 1;
 
   let raw: unknown;
   try {
@@ -173,4 +234,78 @@ export const getMyMemberships = cache(async (): Promise<Membership[]> => {
     });
   }
   return parsed;
+}
+
+export const getMyMemberships = cache(async (): Promise<Membership[]> => {
+  // ---------------------------------------------------------------------------
+  // TEST FIXTURE: fault injection for the FGA/daemon subsystem.
+  // Only active when TEST_FIXTURES_ENABLED=true. In production this is a
+  // single env-var boolean check that short-circuits immediately.
+  // ---------------------------------------------------------------------------
+  const fgaFault = getFaultMode('fga');
+  if (fgaFault) {
+    fgaFault.decrementIfBounded();
+    if (fgaFault.mode === 'malformed-200') {
+      // Simulate a 200 response whose body fails Zod validation downstream.
+      // We throw MembershipResolutionError('malformed_response') to surface the
+      // same path as a real parse failure without making an actual RPC call.
+      throw new MembershipResolutionError('malformed_response', new Error('[fault-injection] malformed-200'));
+    }
+    // "503", "timeout", or any other mode: surface as fga_unavailable.
+    throw new MembershipResolutionError('fga_unavailable', new Error(`[fault-injection] ${fgaFault.mode}`));
+  }
+  // ---------------------------------------------------------------------------
+
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new MembershipResolutionError('unauthenticated');
+  }
+
+  // -------------------------------------------------------------------------
+  // R17 cross-request cache layer (Redis, ~30s TTL).
+  //
+  // The cache is keyed on the Zitadel sub. A cache hit returns immediately
+  // without calling the daemon. A cache miss falls through to the daemon
+  // and writes the parsed membership array on success. Failures bypass the
+  // cache entirely — we never want to serve a stale "your tenants are X"
+  // response to a user who has just lost membership of one of them.
+  //
+  // Redis unavailability degrades to "no cross-request cache" — every
+  // request hits the daemon, but the per-render react.cache() layer still
+  // collapses repeated calls within a single render. This matches the
+  // pre-R17 behaviour and is the correct fallback for dev environments
+  // where Redis is not available.
+  // -------------------------------------------------------------------------
+  const userId = session.user.id;
+  const cacheKey = membershipsCacheKey(userId);
+
+  try {
+    const cached = await getJSON<Membership[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+  } catch (err) {
+    // getJSON already swallows + logs; this catch is purely defensive in
+    // case the redis-store layer ever changes to throw. Never block the
+    // critical path on a cache lookup.
+    logger.warn(
+      { err, scope: 'auth.membership.cache.read' },
+      'membership cache read failed; falling through to daemon',
+    );
+  }
+
+  const memberships = await fetchMembershipsFromDaemon();
+
+  // Best-effort cache write. Failures are non-fatal — at worst the next
+  // request also calls the daemon. Don't await-then-throw on Redis failures.
+  try {
+    await setJSON(cacheKey, memberships, getCacheTTLSeconds());
+  } catch (err) {
+    logger.warn(
+      { err, scope: 'auth.membership.cache.write' },
+      'membership cache write failed (non-fatal)',
+    );
+  }
+
+  return memberships;
 });

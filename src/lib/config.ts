@@ -10,9 +10,26 @@
  * These variables are only available on the server side.
  */
 export const serverConfig = {
-  // Gibson Daemon Configuration
-  gibsonDaemonUrl: process.env.GIBSON_DAEMON_URL || process.env.GIBSON_API_URL || process.env.GIBSON_ADDR || 'http://localhost:50002',
-  gibsonPlatformPublicUrl: process.env.GIBSON_PLATFORM_PUBLIC_URL || process.env.GIBSON_DAEMON_URL || process.env.GIBSON_API_URL || 'http://localhost:50002',
+  // Gibson Daemon Configuration.
+  //
+  // Spec headline-feature-completion R11 — `gibsonDaemonUrl` was removed.
+  // It existed only as a fallback for direct daemon-channel
+  // `createGrpcTransport({ baseUrl })` callsites, which the
+  // dashboard-admin-via-envoy / zero-trust-hardening / security-hardening
+  // doctrine forbids. All daemon RPCs now go through the Envoy edge via
+  // `userClient` / `serviceClient` in `src/lib/gibson-client.ts`, which
+  // dial `ADMIN_ENVOY_BASE_URL` (default `https://api.zero-day.local:30443`).
+  // The two API routes that still composed a direct transport were
+  // migrated to `userClient` in the same change.
+  //
+  // `gibsonPlatformPublicUrl` is retained for callsites that render
+  // user-facing links to the public platform host (settings page,
+  // documentation cross-links). It does NOT carry a daemon URL — the
+  // historical fallback to `GIBSON_DAEMON_URL` here is also dropped so
+  // an ops engineer cannot accidentally surface a daemon endpoint to
+  // browsers via this field.
+  gibsonPlatformPublicUrl:
+    process.env.GIBSON_PLATFORM_PUBLIC_URL || 'http://localhost:50002',
 
   // Neo4j Database Configuration
   neo4jUri: process.env.NEO4J_URI || 'bolt://localhost:7687',
@@ -25,7 +42,7 @@ export const serverConfig = {
   // generic signing key; the env var name is retained at AUTH_SECRET
   // (the Auth.js convention) under unified-identity-and-authorization
   // Phase 4. NEXTAUTH_URL is the canonical dashboard URL.
-  // Spec Phase 4 Requirement 9.1: Auth.js stays; BetterAuth is gone.
+  // Spec Phase 4 Requirement 9.1: Auth.js is the canonical session layer.
   dashboardPublicUrl: process.env.NEXTAUTH_URL || process.env.AUTH_URL || 'http://localhost:3000',
   authHmacSecret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || '',
 

@@ -189,7 +189,7 @@ function selftest() {
     metadata: { name: 'gibson-dashboard-crd' },
     rules: [
       {
-        apiGroups: ['gibson.gibson.io'],
+        apiGroups: ['gibson.zero-day.ai'],
         resources: ['tenants'],
         verbs: ['get', 'watch', 'delete'], // 'delete' is not in allow-list
       },
