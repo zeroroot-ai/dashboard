@@ -17,8 +17,33 @@ import type { MissionStatus } from "@/src/types";
 import { SecretsAccessedPanel } from "@/src/components/missions/SecretsAccessedPanel";
 import { CheckpointTimeline } from "@/src/components/mission/CheckpointTimeline";
 import { CheckpointBadge } from "@/src/components/mission/CheckpointBadge";
+import { ToolStreamProgress } from "@/src/components/mission/ToolStreamProgress";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import type { CheckpointMetadata } from "@/src/gen/gibson/daemon/v1/daemon_pb";
+
+/**
+ * In-flight tool tracking for `<ToolStreamProgress />`.
+ *
+ * The mission events SSE bridge at `/api/missions/:id/events` emits
+ * `tool_started` / `tool_completed` frames as tools enter and leave the
+ * orchestrator's act loop. Each frame's payload carries an
+ * `invocationId` (the daemon-side `WorkID` keyed into the per-tool
+ * stream ring buffer) and the tool's display name. We model the live
+ * set with a Map keyed by `invocationId` so a tool that is dispatched
+ * twice in quick succession produces two side-by-side progress bars.
+ *
+ * When the daemon's MissionStream lands (currently a placeholder, see
+ * `/api/missions/:id/events/route.ts`), the same shape applies — the
+ * route forwards each `tool_started` / `tool_completed` event verbatim
+ * and the page's listener handles the set transitions identically.
+ *
+ * Spec: week-4-handlers-ui-e2e §5 task 53 (per-tool streaming progress
+ *       on the mission detail page).
+ */
+interface InFlightTool {
+  invocationId: string;
+  toolName: string;
+}
 
 const STATUS_BADGE_CLASSES: Record<MissionStatus, string> = {
   pending: "border-border text-muted-foreground",
@@ -51,6 +76,75 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
   const resumed =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get("resumed") === "1";
+
+  // Live "currently executing tools" set for `<ToolStreamProgress />`.
+  // Map<invocationId, InFlightTool>; using a Map (rather than a Set of
+  // tuples) keeps the React render path stable when the same tool is
+  // re-dispatched. Spec week-4-handlers-ui-e2e §5 task 53.
+  const [currentlyExecutingTools, setCurrentlyExecutingTools] =
+    React.useState<Map<string, InFlightTool>>(new Map());
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (typeof EventSource === "undefined") return;
+
+    let cancelled = false;
+    const url = `/api/missions/${encodeURIComponent(id)}/events`;
+    let es: EventSource;
+    try {
+      es = new EventSource(url);
+    } catch {
+      return;
+    }
+
+    const onToolStarted = (ev: MessageEvent) => {
+      if (cancelled) return;
+      try {
+        const payload = JSON.parse(ev.data) as {
+          invocationId?: string;
+          toolName?: string;
+        };
+        if (!payload?.invocationId || !payload?.toolName) return;
+        setCurrentlyExecutingTools((prev) => {
+          if (prev.has(payload.invocationId!)) return prev;
+          const next = new Map(prev);
+          next.set(payload.invocationId!, {
+            invocationId: payload.invocationId!,
+            toolName: payload.toolName!,
+          });
+          return next;
+        });
+      } catch {
+        // ignore malformed frames
+      }
+    };
+
+    const onToolCompleted = (ev: MessageEvent) => {
+      if (cancelled) return;
+      try {
+        const payload = JSON.parse(ev.data) as { invocationId?: string };
+        if (!payload?.invocationId) return;
+        setCurrentlyExecutingTools((prev) => {
+          if (!prev.has(payload.invocationId!)) return prev;
+          const next = new Map(prev);
+          next.delete(payload.invocationId!);
+          return next;
+        });
+      } catch {
+        // ignore malformed frames
+      }
+    };
+
+    es.addEventListener("tool_started", onToolStarted);
+    es.addEventListener("tool_completed", onToolCompleted);
+
+    return () => {
+      cancelled = true;
+      es.removeEventListener("tool_started", onToolStarted);
+      es.removeEventListener("tool_completed", onToolCompleted);
+      es.close();
+    };
+  }, [id]);
 
   if (isLoading) {
     return (
@@ -273,6 +367,32 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
                 <p className="text-sm text-muted-foreground">
                   {mission.config.description}
                 </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* In-flight tool streaming progress — week-4-handlers-ui-e2e §5
+              task 53. One <ToolStreamProgress /> per active invocation. The
+              set is fed by the mission events SSE bridge's tool_started /
+              tool_completed frames; entries are removed automatically when
+              the daemon emits tool_completed (or the per-tool stream
+              terminates). */}
+          {currentlyExecutingTools.size > 0 && (
+            <Card className="mt-4">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground font-mono">
+                  In-Flight Tools
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {Array.from(currentlyExecutingTools.values()).map((tool) => (
+                  <ToolStreamProgress
+                    key={tool.invocationId}
+                    missionId={mission.id}
+                    invocationId={tool.invocationId}
+                    toolName={tool.toolName}
+                  />
+                ))}
               </CardContent>
             </Card>
           )}

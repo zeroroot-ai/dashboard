@@ -307,4 +307,57 @@ test.describe("Checkpoint Browser (mission-checkpointing R17)", () => {
       page.getByText(/Rewind started|Resumed from checkpoint/i),
     ).toBeVisible({ timeout: 10_000 });
   });
+
+  test("a freshly-captured checkpoint event prepends a row to the timeline", async ({
+    page,
+  }) => {
+    // Override the events SSE route so we can inject a single
+    // `event: checkpoint` frame and assert the timeline prepends a row.
+    // The mock fulfils with a complete SSE payload (no streaming); the
+    // browser's EventSource parser handles it the same way.
+    const FRESH_CP = "ckpt-fresh-eeeeeeee";
+
+    await page.route(
+      `**/api/missions/${MISSION_ID}/events`,
+      async (route) => {
+        const sse = [
+          ": open",
+          "",
+          "event: checkpoint",
+          `data: ${JSON.stringify({
+            checkpointId: FRESH_CP,
+            missionId: MISSION_ID,
+            superStep: "13",
+            capturedAt: { seconds: "1714400000", nanos: 0 },
+            sizeBytes: "210000",
+            source: 1,
+            inFlightIdempotency: 0,
+            parallelGroupId: "",
+          })}`,
+          "",
+          "",
+        ].join("\n");
+        await route.fulfill({
+          status: 200,
+          contentType: "text/event-stream",
+          headers: {
+            "Cache-Control": "no-cache, no-transform",
+            Connection: "keep-alive",
+          },
+          body: sse,
+        });
+      },
+    );
+
+    await page.goto(MISSION_DETAIL_URL);
+    await page.getByRole("tab", { name: /^Checkpoints$/i }).click();
+
+    // The fresh checkpoint should appear as the first row (newest first).
+    // We assert by the last 8 chars of the synthetic ID, which the row
+    // renders verbatim via the `checkpointShortId` helper.
+    const fresh8 = FRESH_CP.slice(-8);
+    await expect(page.getByText(fresh8).first()).toBeVisible({
+      timeout: 15_000,
+    });
+  });
 });
