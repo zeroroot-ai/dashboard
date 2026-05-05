@@ -49,6 +49,8 @@ import { Input } from "@/components/ui/input";
 import { signupAction } from "@/app/actions/signup";
 import { pricingDisplays } from "@/src/lib/pricing-display";
 import type { PasswordPolicy } from "@/src/lib/zitadel/admin-client";
+import { isReservedSlug, slugify } from "@/src/lib/signup/slug";
+import { useReservedNames } from "@/src/lib/signup/use-reserved-names";
 import { ProvisioningPanel } from "./provisioning-panel";
 import { signupInputSchema, type SignupInput } from "./types";
 
@@ -188,6 +190,20 @@ export function SignupForm({
 
   const { watch } = form;
   const passwordValue = watch("password");
+  const workspaceNameValue = watch("workspaceName");
+
+  // Chart-managed reserved-names denylist — fetched once via
+  // /api/auth/reserved-names which proxies to the daemon's
+  // PlatformOperatorService.GetReservedNames RPC. The K8s admission webhook
+  // remains the authoritative gate; this is a UX nicety so users get
+  // inline feedback before submit.
+  // Spec: tenant-provisioning-unification-phase2 Requirement 4.5.
+  const reservedNames = useReservedNames();
+  const workspaceSlugPreview = slugify(workspaceNameValue || "");
+  const workspaceSlugReserved = isReservedSlug(
+    workspaceSlugPreview,
+    reservedNames,
+  );
 
   // Prevent accidental navigation while provisioning is in progress.
   // Skip the guard once a success redirect URL is set: at that point the
@@ -225,6 +241,20 @@ export function SignupForm({
 
   const onSubmit = useCallback(
     async (data: SignupInput) => {
+      // Block submission when the slugified workspace name lands on the
+      // chart-managed denylist. The K8s admission webhook would reject
+      // this anyway with a less friendly error; catching it here gives
+      // the user an immediately-actionable message.
+      const submitSlug = slugify(data.workspaceName);
+      if (isReservedSlug(submitSlug, reservedNames)) {
+        form.setError("workspaceName", {
+          type: "manual",
+          message: `"${submitSlug}" is reserved. Pick a different workspace name.`,
+        });
+        fieldRefs.current.workspaceName?.focus();
+        return;
+      }
+
       // Mint the attemptId BEFORE invoking the action so we can show the
       // ProvisioningPanel immediately. The panel polls /api/signup/progress/:id
       // for live status while the server action runs in the background.
@@ -508,6 +538,11 @@ export function SignupForm({
                     <p className="text-xs text-muted-foreground">
                       Letters, numbers, spaces, hyphens, and underscores. 2–63 characters.
                     </p>
+                    {workspaceSlugPreview && workspaceSlugReserved ? (
+                      <p className="text-xs text-destructive">
+                        &ldquo;{workspaceSlugPreview}&rdquo; is reserved. Pick a different name.
+                      </p>
+                    ) : null}
                     <FormMessage />
                   </FormItem>
                 )}
