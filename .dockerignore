@@ -13,3 +13,10 @@ playwright-report
 
 go.work
 go.work.sum
+
+# Local-dev pnpm lockfile. The Dockerfile uses `npm ci` against
+# package-lock.json — leaking pnpm-lock.yaml into the build context
+# triggers Next.js 16's "patch lockfile via pnpm" path which fails
+# inside the container (no pnpm installed). Excluded so the npm path
+# is the only one Next sees during `next build`.
+pnpm-lock.yaml
