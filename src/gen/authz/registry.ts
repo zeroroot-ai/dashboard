@@ -1957,6 +1957,15 @@ export const AuthRegistry: Record<string, AuthEntry> = {
     allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
     unauthenticated: false,
   },
+  "/gibson.tenant.v1.TenantAdminService/DeleteMissionDraft": {
+    method: "/gibson.tenant.v1.TenantAdminService/DeleteMissionDraft",
+    service: "gibson.tenant.v1.TenantAdminService",
+    relation: "admin",
+    objectType: "tenant",
+    objectDeriver: "tenant_from_identity",
+    allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
+    unauthenticated: false,
+  },
   "/gibson.tenant.v1.TenantAdminService/DeleteProvider": {
     method: "/gibson.tenant.v1.TenantAdminService/DeleteProvider",
     service: "gibson.tenant.v1.TenantAdminService",
@@ -2004,6 +2013,15 @@ export const AuthRegistry: Record<string, AuthEntry> = {
   },
   "/gibson.tenant.v1.TenantAdminService/GetFallbackChain": {
     method: "/gibson.tenant.v1.TenantAdminService/GetFallbackChain",
+    service: "gibson.tenant.v1.TenantAdminService",
+    relation: "admin",
+    objectType: "tenant",
+    objectDeriver: "tenant_from_identity",
+    allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
+    unauthenticated: false,
+  },
+  "/gibson.tenant.v1.TenantAdminService/GetMissionDraft": {
+    method: "/gibson.tenant.v1.TenantAdminService/GetMissionDraft",
     service: "gibson.tenant.v1.TenantAdminService",
     relation: "admin",
     objectType: "tenant",
