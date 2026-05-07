@@ -123,8 +123,8 @@ export function useAutosave(
       localStorage.removeItem(fullKey);
       setStatus('idle');
       setLastSaved(null);
-    } catch (err) {
-      console.error('Failed to clear draft:', err);
+    } catch {
+      // localStorage.removeItem can fail in private-browsing quota situations
     }
   }, [fullKey]);
 
@@ -147,8 +147,7 @@ export function useAutosave(
       }
 
       return parsed;
-    } catch (err) {
-      console.error('Failed to load draft:', err);
+    } catch {
       return null;
     }
   }, [fullKey]);
@@ -235,8 +234,8 @@ function clearOldDrafts(): void {
         localStorage.removeItem(key);
       }
     }
-  } catch (err) {
-    console.error('Failed to clear old drafts:', err);
+  } catch {
+    // localStorage iteration failed; skip cleanup
   }
 }
 
@@ -265,8 +264,8 @@ export function getAllDrafts(prefix: string): AutosaveData[] {
         // Skip invalid data
       }
     }
-  } catch (err) {
-    console.error('Failed to get drafts:', err);
+  } catch {
+    // localStorage iteration failed; return empty list
   }
 
   // Sort by saved date, newest first

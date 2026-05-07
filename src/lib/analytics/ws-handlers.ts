@@ -7,6 +7,7 @@ import { useAnalyticsStore } from '@/src/stores/analytics-store';
 import { useAlertsStore } from '@/src/stores/alerts-store';
 import type { Alert, FindingSeverity, KPIData } from '@/src/types';
 import type { WebSocketMessage } from '@/src/hooks/useWebSocket';
+import { logger } from '@/src/lib/logger';
 
 // ============================================================================
 // WebSocket Event Types
@@ -108,9 +109,7 @@ export function handleMissionStatus(event: MissionStatusEvent): void {
   // Flush updates immediately for mission status changes
   store.flushPendingUpdates();
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[WS Handler] Mission status updated:', payload.missionId, payload.status);
-  }
+  logger.debug({ event: 'ws.mission.status', missionId: payload.missionId, status: payload.status }, 'mission status updated');
 }
 
 /**
@@ -152,9 +151,7 @@ export function handleFindingCreated(event: FindingCreatedEvent): void {
     alertsStore.addAlert(alert);
   }
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[WS Handler] Finding created:', payload.severity, payload.title);
-  }
+  logger.debug({ event: 'ws.finding.created', findingId: payload.findingId, missionId: payload.missionId, severity: payload.severity }, 'finding created');
 }
 
 /**
@@ -201,9 +198,7 @@ export function handleAgentHealth(event: AgentHealthEvent): void {
     alertsStore.addAlert(alert);
   }
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[WS Handler] Agent health updated:', payload.agentName, payload.status);
-  }
+  logger.debug({ event: 'ws.agent.health', agentId: payload.agentId, agentName: payload.agentName, status: payload.status }, 'agent health updated');
 }
 
 /**
@@ -245,9 +240,7 @@ export function handleComponentHealth(event: ComponentHealthEvent): void {
     alertsStore.addAlert(alert);
   }
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[WS Handler] Component health updated:', payload.componentName, payload.status);
-  }
+  logger.debug({ event: 'ws.component.health', componentId: payload.componentId, componentName: payload.componentName, status: payload.status }, 'component health updated');
 }
 
 /**
@@ -261,9 +254,7 @@ export function handleAlertNew(event: AlertNewEvent): void {
   // Add alert to store
   alertsStore.addAlert(payload);
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[WS Handler] New alert:', payload.type, payload.title);
-  }
+  logger.debug({ event: 'ws.alert.created', alertId: payload.id, type: payload.type, severity: payload.severity }, 'new alert received');
 }
 
 /**
@@ -284,9 +275,7 @@ export function handleKPIUpdate(event: KPIUpdateEvent): void {
   // Flush updates immediately for KPI changes
   analyticsStore.flushPendingUpdates();
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[WS Handler] KPI updated:', Object.keys(payload));
-  }
+  logger.debug({ event: 'ws.kpi.updated', keys: Object.keys(payload) }, 'KPI updated');
 }
 
 // ============================================================================
@@ -329,9 +318,7 @@ export function handleWebSocketMessage(message: WebSocketMessage): void {
         break;
 
       default:
-        if (process.env.NODE_ENV !== 'production') {
-          console.warn('[WS Handler] Unknown event type:', (event as any).type);
-        }
+        logger.warn({ event: 'ws.handler.unknown_type', messageType: (event as any).type }, 'received unknown WebSocket event type');
     }
   } catch (error) {
     // Do NOT log the full message payload — it may contain finding titles,
@@ -340,6 +327,6 @@ export function handleWebSocketMessage(message: WebSocketMessage): void {
       typeof message === 'object' && message !== null && 'type' in message
         ? (message as { type?: unknown }).type
         : 'unknown';
-    console.error('[WS Handler] Error processing message:', error, { messageType });
+    logger.error({ event: 'ws.handler.error', messageType, err: error }, 'error processing WebSocket message');
   }
 }

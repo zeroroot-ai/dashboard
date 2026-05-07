@@ -53,7 +53,7 @@ export async function GET(
     // Resolve Langfuse credentials: prefer per-tenant, fall back to platform level.
     // A NOT_FOUND gRPC error means the tenant has not been provisioned yet.
     const tenantId = session.user.tenantId;
-    let langfuseHost: string;
+    let langfuseHost: string | null;
     let publicKey: string | undefined;
     let secretKey: string | undefined;
 
@@ -79,7 +79,7 @@ export async function GET(
       secretKey = serverConfig.langfuseAdminSecretKey;
     }
 
-    if (!publicKey || !secretKey) {
+    if (!langfuseHost || !publicKey || !secretKey) {
       return NextResponse.json(
         { error: { code: 'NOT_CONFIGURED', message: 'LLM trace viewing requires observability configuration. Contact your administrator.' } },
         { status: 404 }
@@ -87,8 +87,9 @@ export async function GET(
     }
 
     // Construct Langfuse client with resolved credentials
+    // langfuseHost is narrowed to string by the guard above
     const langfuse = new LangfuseClient({
-      host: langfuseHost,
+      host: langfuseHost as string,
       publicKey,
       secretKey,
     });

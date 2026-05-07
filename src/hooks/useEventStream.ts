@@ -65,9 +65,6 @@ export function useEventStream() {
       // Connection opened
       eventSource.onopen = () => {
         if (!mountedRef.current) return;
-        if (process.env.NODE_ENV !== "production") {
-          console.log("[EventStream] Connected to event stream");
-        }
         setConnectionStatus("connected");
         reconnectAttemptsRef.current = 0; // Reset reconnect attempts on successful connection
         setError(null);
@@ -93,17 +90,15 @@ export function useEventStream() {
 
           // Add to event buffer
           addEvent(parsedEvent);
-        } catch (err) {
-          console.error("[EventStream] Failed to parse event:", err);
-          // Don't disconnect on parse errors, just log them
+        } catch {
+          // Don't disconnect on parse errors
         }
       };
 
       // Error occurred
-      eventSource.onerror = (event) => {
+      eventSource.onerror = () => {
         if (!mountedRef.current) return;
 
-        console.error("[EventStream] Connection error:", event);
         setConnectionStatus("disconnected");
 
         // Close the current connection
@@ -114,13 +109,6 @@ export function useEventStream() {
 
         // Schedule reconnection with exponential backoff
         const delay = getReconnectDelay();
-        if (process.env.NODE_ENV !== "production") {
-          console.log(
-            `[EventStream] Reconnecting in ${delay / 1000}s (attempt ${
-              reconnectAttemptsRef.current + 1
-            })`
-          );
-        }
 
         reconnectTimeoutRef.current = setTimeout(() => {
           if (mountedRef.current) {
@@ -136,7 +124,6 @@ export function useEventStream() {
         );
       };
     } catch (err) {
-      console.error("[EventStream] Failed to create EventSource:", err);
       setConnectionStatus("disconnected");
       setError(err instanceof Error ? err : new Error("Failed to connect"));
 

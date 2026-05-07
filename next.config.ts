@@ -43,6 +43,19 @@ const nextConfig: NextConfig = {
     // the Edge bundle context. Marking it external defers resolution to
     // Node runtime where the modules are available natively.
     "prom-client",
+    // pino + transport stack: pino-pretty / thread-stream / pino-abstract-transport
+    // ship test files (*.test.js) and ESLint configs that import dev-only
+    // packages (`neostandard`, `pino-elasticsearch`). Next.js 16's Turbopack
+    // tracer follows ALL `require()` sites in the package — including those
+    // in test/eslint files — and fails to resolve them. Marking the entire
+    // pino transport graph as external defers their resolution to Node at
+    // runtime (where the test/eslint files are never required by pino itself).
+    "pino",
+    "pino-pretty",
+    "thread-stream",
+    "pino-abstract-transport",
+    "pino-std-serializers",
+    "sonic-boom",
   ],
   // Server Action encryption key persistence is env-driven in Next.js 16:
   // setting NEXT_SERVER_ACTIONS_ENCRYPTION_KEY in the runtime environment

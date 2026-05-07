@@ -184,11 +184,10 @@ export function useMarkAsRead(): UseMutationResult<MarkAsReadResponse, Error, st
       return { previousAlerts };
     },
     // On error, rollback
-    onError: (err, alertId, context) => {
+    onError: (_err, _alertId, context) => {
       if (context?.previousAlerts) {
         queryClient.setQueryData(queryKeys.alerts.lists(tenantId), context.previousAlerts);
       }
-      console.error('Failed to mark alert as read:', err);
     },
     // Refetch after success
     onSuccess: () => {
@@ -245,11 +244,10 @@ export function useMarkAllAsRead(): UseMutationResult<MarkAllAsReadResponse, Err
       return { previousAlerts };
     },
     // On error, rollback
-    onError: (err, _, context) => {
+    onError: (_err, _v, context) => {
       if (context?.previousAlerts) {
         queryClient.setQueryData(queryKeys.alerts.lists(tenantId), context.previousAlerts);
       }
-      console.error('Failed to mark all alerts as read:', err);
     },
     // Refetch after success
     onSuccess: () => {

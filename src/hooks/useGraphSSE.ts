@@ -156,7 +156,7 @@ const INITIAL_CONNECTION_TIMEOUT = 30000; // 30 seconds
  *   useEffect(() => {
  *     if (lastEvent?.type === 'node-added') {
  *       // Handle new node
- *       console.log('Node added:', lastEvent.data);
+ *       // Handle new node — lastEvent.data contains the updated graph node
  *     }
  *   }, [lastEvent]);
  *
@@ -204,7 +204,6 @@ export function useGraphSSE(
 
       // Validate event structure
       if (!parsed.type || !parsed.timestamp) {
-        console.error('[GraphSSE] Invalid event structure:', parsed);
         return null;
       }
 
@@ -220,13 +219,11 @@ export function useGraphSSE(
       ];
 
       if (!validTypes.includes(parsed.type)) {
-        console.error('[GraphSSE] Unknown event type:', parsed.type);
         return null;
       }
 
       return parsed as GraphSSEEvent;
-    } catch (err) {
-      console.error('[GraphSSE] Failed to parse event:', err);
+    } catch {
       return null;
     }
   }, []);
@@ -256,7 +253,6 @@ export function useGraphSSE(
 
     // Check if we've exceeded max attempts
     if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
-      console.error('[GraphSSE] Max reconnection attempts reached');
       setStatus('error');
       setError(new Error('Maximum reconnection attempts exceeded'));
       return;
@@ -275,7 +271,6 @@ export function useGraphSSE(
       // Set connection timeout
       connectionTimeoutRef.current = setTimeout(() => {
         if (status === 'connecting') {
-          console.error('[GraphSSE] Connection timeout');
           eventSource.close();
           setStatus('error');
           setError(new Error('Connection timeout'));
@@ -295,17 +290,6 @@ export function useGraphSSE(
       eventSource.onopen = () => {
         if (!mountedRef.current) return;
 
-        if (process.env.NODE_ENV !== 'production') {
-          // Strip query string + identifying tenant/mission tokens before logging.
-          let safePath = sseUrl;
-          try {
-            const parsed = new URL(sseUrl, window.location.origin);
-            safePath = parsed.pathname;
-          } catch {
-            safePath = '<unparseable-url>';
-          }
-          console.log('[GraphSSE] Connected to stream:', safePath);
-        }
         setStatus('connected');
         reconnectAttemptsRef.current = 0; // Reset on successful connection
         setError(null);
@@ -333,16 +317,12 @@ export function useGraphSSE(
         setLastEvent(parsedEvent);
         setEvents((prev) => [...prev, parsedEvent]);
 
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[GraphSSE] Received event:', parsedEvent.type);
-        }
       };
 
       // Error occurred
-      eventSource.onerror = (event) => {
+      eventSource.onerror = () => {
         if (!mountedRef.current) return;
 
-        console.error('[GraphSSE] Connection error:', event);
         setStatus('disconnected');
 
         // Close the current connection
@@ -360,13 +340,6 @@ export function useGraphSSE(
         // Check if we should attempt reconnection
         if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
           const delay = getReconnectDelay();
-          if (process.env.NODE_ENV !== 'production') {
-            console.log(
-              `[GraphSSE] Reconnecting in ${delay / 1000}s (attempt ${
-                reconnectAttemptsRef.current + 1
-              }/${MAX_RECONNECT_ATTEMPTS})`
-            );
-          }
 
           reconnectTimeoutRef.current = setTimeout(() => {
             if (mountedRef.current) {
@@ -388,7 +361,6 @@ export function useGraphSSE(
         }
       };
     } catch (err) {
-      console.error('[GraphSSE] Failed to create EventSource:', err);
       setStatus('error');
       setError(err instanceof Error ? err : new Error('Failed to connect'));
 

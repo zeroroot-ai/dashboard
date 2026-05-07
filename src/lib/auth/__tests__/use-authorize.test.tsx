@@ -3,8 +3,11 @@
  *
  * Covers all decision paths per design Component 2:
  *   1. Unknown method → allowed: false, reason: 'unknown_method'  [FAIL-CLOSED]
- *   1b. Unknown method + NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 (dev) → allowed: true
- *   1c. Unknown method + NODE_ENV=production + permissive var set → STILL denied (production gate)
+ *   1b. (regression sentinel) Unknown method +
+ *       NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 in any NODE_ENV →
+ *       STILL denied. The flag was deleted in spec
+ *       eliminate-permissive-authz Req 2; this test catches a future
+ *       re-introduction by asserting the env var has no effect.
  *   2. unauthenticated entry → allowed: true, loading: false
  *   3. SERVICE-only entry → allowed: false, loading: false (no query)
  *   4. Loading state → allowed: false, loading: true
@@ -16,6 +19,9 @@
  *
  * Spec: dashboard-authz-ui-gating Requirement 2, 9.1.
  * Sister-spec: cross-repo-cohesion-fixes Requirement 1.
+ * Sister-spec: eliminate-permissive-authz Requirement 2 — the
+ *   `(b)` permissive-allow test was deleted; the `(c)` production-gate
+ *   test is now the canonical regression sentinel.
  */
 
 import React from 'react';
@@ -141,25 +147,28 @@ describe('useAuthorize — unknown method (fail-closed)', () => {
   });
 });
 
-describe('useAuthorize — unknown method dev escape hatch', () => {
+describe('useAuthorize — unknown method always denies regardless of NODE_ENV+flag', () => {
+  // Regression sentinel for spec eliminate-permissive-authz Req 2: the
+  // `NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV` flag was deleted. Setting
+  // it (in any NODE_ENV) MUST have no effect. If a future change
+  // re-introduces an env-conditioned allow path, these assertions fail.
   afterEach(() => {
-    // vi.unstubAllEnvs restores all env stubs set via vi.stubEnv — prevents leakage.
     vi.unstubAllEnvs();
   });
 
-  it('(b) NODE_ENV=development + NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 allows the call through', () => {
+  it('NODE_ENV=development + NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 STILL returns denied', () => {
     vi.stubEnv('NODE_ENV', 'development');
     vi.stubEnv('NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV', '1');
-    const { result } = renderHook(() => useAuthorize('/unknown/EscapeHatch'), {
+    const { result } = renderHook(() => useAuthorize('/unknown/EscapeHatch/DevDeny'), {
       wrapper: createWrapper(),
     });
-    expect(result.current).toEqual({ allowed: true, loading: false });
+    expect(result.current).toMatchObject({ allowed: false, reason: 'unknown_method' });
   });
 
-  it('(c) NODE_ENV=production + NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 STILL returns denied (production gate)', () => {
+  it('NODE_ENV=production + NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 STILL returns denied', () => {
     vi.stubEnv('NODE_ENV', 'production');
     vi.stubEnv('NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV', '1');
-    const { result } = renderHook(() => useAuthorize('/unknown/ProductionDeny'), {
+    const { result } = renderHook(() => useAuthorize('/unknown/EscapeHatch/ProductionDeny'), {
       wrapper: createWrapper(),
     });
     expect(result.current).toMatchObject({ allowed: false, reason: 'unknown_method' });

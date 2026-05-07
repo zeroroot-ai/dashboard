@@ -15,12 +15,15 @@
  *     ever being forwarded for unauthorized callers.
  *   - Error messages NEVER include role lists, FGA tuples, or tenant data.
  *     They carry only the method name and a short reason code.
- *   - Unknown methods are DENIED (fail-closed). In non-production environments,
- *     set DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 to fall back to allow with a
- *     warn-once log line per method.
+ *   - Unknown methods are DENIED (fail-closed). The same code runs in dev
+ *     and prod: a registry miss is always a programming error and must
+ *     throw before the call leaves the process. There is no environment-
+ *     dependent escape hatch.
  *
  * Spec: dashboard-authz-ui-gating Requirement 3.
  * Sister-spec: cross-repo-cohesion-fixes Requirement 1.
+ * Sister-spec: eliminate-permissive-authz Requirement 2 — the
+ *   non-prod escape-hatch env var and warn-once log path were deleted.
  *
  * @module auth/assert-authorized
  */
@@ -32,12 +35,6 @@ import { AuthRegistry, IdentityClass } from '@/src/gen/authz/registry';
 import { satisfiesRelation } from './relation-hierarchy';
 import { getMyMemberships } from './membership';
 import { readRawActiveTenant } from './active-tenant';
-
-// ---------------------------------------------------------------------------
-// Warn-once memoisation for registry misses (Requirement 1.5)
-// Keyed by method; fires once per (process, method) pair.
-// ---------------------------------------------------------------------------
-const _registryMissWarnedMethods = new Map<string, true>();
 
 // ---------------------------------------------------------------------------
 // Error class
@@ -87,26 +84,10 @@ export class AuthzDeniedError extends Error {
 export async function assertAuthorized(method: string): Promise<void> {
   const entry = AuthRegistry[method];
 
-  // Unknown method: DENY (fail-closed). In non-production environments with
-  // DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 set, fall back to allow with a warn-once
-  // log line per (process, method) pair.
+  // Unknown method: DENY (fail-closed). No environment-dependent escape
+  // hatch. Same code runs in dev and prod: a registry miss is always a
+  // programming error and must throw before the call leaves the process.
   if (!entry) {
-    if (
-      process.env.NODE_ENV !== 'production' &&
-      process.env.DASHBOARD_AUTHZ_PERMISSIVE_DEV === '1'
-    ) {
-      if (!_registryMissWarnedMethods.has(method)) {
-        _registryMissWarnedMethods.set(method, true);
-        console.warn(
-          JSON.stringify({
-            event: 'authz_registry_miss',
-            method,
-            build: process.env.GIT_SHA ?? 'dev',
-          }),
-        );
-      }
-      return;
-    }
     throw new AuthzDeniedError(method, 'unknown_method');
   }
 

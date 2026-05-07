@@ -278,9 +278,6 @@ export function useFindingsSSE(
         eventSourceRef.current = eventSource;
 
         eventSource.onopen = () => {
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('[SSE] Connected to findings stream');
-          }
           reconnectAttemptsRef.current = 0;
         };
 
@@ -314,13 +311,12 @@ export function useFindingsSSE(
             if (onNewFinding) {
               onNewFinding(finding);
             }
-          } catch (error) {
-            console.error('[SSE] Failed to parse finding:', error);
+          } catch {
+            // Silently discard unparseable SSE frames
           }
         };
 
-        eventSource.onerror = (error) => {
-          console.error('[SSE] Connection error:', error);
+        eventSource.onerror = () => {
           eventSource.close();
 
           // Exponential backoff for reconnection
@@ -330,15 +326,12 @@ export function useFindingsSSE(
           );
           reconnectAttemptsRef.current++;
 
-          if (process.env.NODE_ENV !== 'production') {
-            console.log(`[SSE] Reconnecting in ${backoffMs}ms...`);
-          }
           reconnectTimeoutRef.current = setTimeout(() => {
             connectSSE();
           }, backoffMs);
         };
-      } catch (error) {
-        console.error('[SSE] Failed to create EventSource:', error);
+      } catch {
+        // EventSource creation failed; reconnect will be attempted on next mount
       }
     };
 

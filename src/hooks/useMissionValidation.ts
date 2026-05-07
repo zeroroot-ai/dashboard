@@ -144,9 +144,8 @@ export function useMissionValidation(
       try {
         const serverResult = await serverValidationMutation.mutateAsync(content);
         return serverResult;
-      } catch (error) {
+      } catch {
         // Fall back to client result on server error
-        console.error('[Validation] Server validation failed, using client result:', error);
         return clientResult;
       }
     },

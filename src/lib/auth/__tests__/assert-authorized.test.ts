@@ -3,21 +3,26 @@
  *
  * Covers all error paths per design Component 3:
  *   1. Unknown method → throws AuthzDeniedError('unknown_method')  [FAIL-CLOSED]
- *   2. Unknown method + dev escape hatch (NODE_ENV=development + DASHBOARD_AUTHZ_PERMISSIVE_DEV=1) → allow
- *   3. Unknown method + NODE_ENV=production + DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 → STILL throws (production gate)
- *   4. Warn-once: same method called twice fires warn exactly once
- *   5. unauthenticated entry → no throw (allowed)
- *   6. No session → AuthzDeniedError('no-session')
- *   7. SERVICE-only RPC → AuthzDeniedError('service-only-rpc')
- *   8. No active tenant → AuthzDeniedError('no-active-tenant')
- *   9. Not a member of active tenant → AuthzDeniedError('not-a-member')
- *  10. Role below required relation → AuthzDeniedError('relation-not-met')
- *  11. admin satisfies member → no throw
- *  12. member satisfies member → no throw
- *  13. Membership resolution failure → AuthzDeniedError('not-a-member')
+ *   1b. (regression sentinel) Unknown method + DASHBOARD_AUTHZ_PERMISSIVE_DEV=1
+ *       set in any NODE_ENV → STILL throws. The flag was deleted in spec
+ *       eliminate-permissive-authz Req 2; this test catches a future
+ *       re-introduction by asserting the env var has no effect.
+ *   2. unauthenticated entry → no throw (allowed)
+ *   3. No session → AuthzDeniedError('no-session')
+ *   4. SERVICE-only RPC → AuthzDeniedError('service-only-rpc')
+ *   5. No active tenant → AuthzDeniedError('no-active-tenant')
+ *   6. Not a member of active tenant → AuthzDeniedError('not-a-member')
+ *   7. Role below required relation → AuthzDeniedError('relation-not-met')
+ *   8. admin satisfies member → no throw
+ *   9. member satisfies member → no throw
+ *  10. Membership resolution failure → AuthzDeniedError('not-a-member')
  *
  * Spec: dashboard-authz-ui-gating Requirement 3, 9.2.
  * Sister-spec: cross-repo-cohesion-fixes Requirement 1.
+ * Sister-spec: eliminate-permissive-authz Requirement 2 — the
+ *   `(b)` permissive-allow test was deleted; the `(c)` production-gate
+ *   test is now the canonical regression sentinel. The `(d)` warn-once
+ *   test was deleted along with the warn-once memo it covered.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -150,42 +155,29 @@ describe('assertAuthorized — unknown method (fail-closed)', () => {
   });
 });
 
-describe('assertAuthorized — unknown method dev escape hatch', () => {
+describe('assertAuthorized — unknown method always throws regardless of NODE_ENV+flag', () => {
+  // Regression sentinel for spec eliminate-permissive-authz Req 2: the
+  // `DASHBOARD_AUTHZ_PERMISSIVE_DEV` flag was deleted. Setting it (in any
+  // NODE_ENV) MUST have no effect. If a future change re-introduces an
+  // env-conditioned allow path, these assertions fail.
   afterEach(() => {
-    // vi.unstubAllEnvs restores all env stubs set via vi.stubEnv — prevents leakage.
     vi.unstubAllEnvs();
   });
 
-  it('(b) NODE_ENV=development + DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 allows the call through', async () => {
+  it('NODE_ENV=development + DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 STILL throws', async () => {
     vi.stubEnv('NODE_ENV', 'development');
     vi.stubEnv('DASHBOARD_AUTHZ_PERMISSIVE_DEV', '1');
-    // Method names are unique to avoid hitting the warn-once memo from other tests.
-    await expect(assertAuthorized('/unknown/EscapeHatch/Allow')).resolves.toBeUndefined();
+    await expect(assertAuthorized('/unknown/EscapeHatch/DevDeny')).rejects.toMatchObject({
+      reason: 'unknown_method',
+    });
   });
 
-  it('(c) NODE_ENV=production + DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 STILL throws (production gate)', async () => {
+  it('NODE_ENV=production + DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 STILL throws', async () => {
     vi.stubEnv('NODE_ENV', 'production');
     vi.stubEnv('DASHBOARD_AUTHZ_PERMISSIVE_DEV', '1');
     await expect(assertAuthorized('/unknown/EscapeHatch/ProductionDeny')).rejects.toMatchObject({
       reason: 'unknown_method',
     });
-  });
-
-  it('(d) warn log fires exactly once for the same method called twice under dev escape hatch', async () => {
-    vi.stubEnv('NODE_ENV', 'development');
-    vi.stubEnv('DASHBOARD_AUTHZ_PERMISSIVE_DEV', '1');
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      await assertAuthorized('/unknown/WarnOnce/Method');
-      await assertAuthorized('/unknown/WarnOnce/Method');
-      // The Map memoises on first call; second call skips the warn.
-      expect(warnSpy).toHaveBeenCalledTimes(1);
-      const logArg: string = warnSpy.mock.calls[0][0] as string;
-      const parsed = JSON.parse(logArg) as Record<string, unknown>;
-      expect(parsed).toMatchObject({ event: 'authz_registry_miss', method: '/unknown/WarnOnce/Method' });
-    } finally {
-      warnSpy.mockRestore();
-    }
   });
 });
 

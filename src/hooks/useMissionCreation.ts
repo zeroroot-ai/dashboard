@@ -250,8 +250,8 @@ export function useMissionCreation(
       );
 
       updateYaml(yamlContent);
-    } catch (error) {
-      console.error('Failed to clone mission:', error);
+    } catch {
+      // Clone parse error — leave YAML unchanged
     }
   }, [updateYaml]);
 

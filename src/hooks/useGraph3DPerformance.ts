@@ -68,7 +68,7 @@ const LOD_ADJUSTMENT_COOLDOWN = 10000; // 10 seconds between LOD adjustments
  * function Graph3D({ nodes }) {
  *   const { fps, avgFPS, performanceMode, recommendations } =
  *     useGraph3DPerformance(nodes.length, (quality) => {
- *       console.log('Adjusting LOD quality to:', quality);
+ *       // quality is the new LOD level (0-100)
  *     });
  *
  *   return (
@@ -188,9 +188,6 @@ export function useGraph3DPerformance(
         lastLODAdjustmentRef.current = now;
         setAutoLODActive(true);
         onLODQualityChange?.(newQuality);
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[Performance] Critical FPS - LOD quality reduced to 20');
-        }
       }
     } else if (performanceMode === 'reduced') {
       // Reduced: lower quality
@@ -200,9 +197,6 @@ export function useGraph3DPerformance(
         lastLODAdjustmentRef.current = now;
         setAutoLODActive(true);
         onLODQualityChange?.(newQuality);
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[Performance] Low FPS - LOD quality reduced to 50');
-        }
       }
     } else {
       // Optimal: restore quality if it was reduced
@@ -212,9 +206,6 @@ export function useGraph3DPerformance(
         lastLODAdjustmentRef.current = now;
         setAutoLODActive(false);
         onLODQualityChange?.(newQuality);
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[Performance] FPS recovered - LOD quality restored to 80');
-        }
       }
     }
   }, [performanceMode, onLODQualityChange]);

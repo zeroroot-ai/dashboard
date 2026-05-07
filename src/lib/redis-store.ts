@@ -10,7 +10,7 @@
 
 import { createClient, type RedisClientType } from 'redis';
 
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+const redisUrl = process.env.REDIS_URL;
 
 // Server Actions hit redis-store on the critical path (signin lockout
 // counters, etc.). A hung Redis connection would block the whole UI with

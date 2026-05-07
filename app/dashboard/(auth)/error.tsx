@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
+import { logAuthBoundaryError } from "./actions";
 
 export default function Error({
   error,
@@ -11,7 +12,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("-->", error);
+    logAuthBoundaryError({ digest: error.digest });
   }, [error]);
 
   return (

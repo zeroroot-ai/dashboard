@@ -3,6 +3,10 @@
  *
  * Centralized environment variable handling with type safety and validation.
  * All environment variables should be accessed through this module.
+ *
+ * Required variables must be set in every environment (development and
+ * production). Missing required variables cause the process to exit with a
+ * clear error at startup. See .env.example for local-dev values.
  */
 
 /**
@@ -28,11 +32,14 @@ export const serverConfig = {
   // historical fallback to `GIBSON_DAEMON_URL` here is also dropped so
   // an ops engineer cannot accidentally surface a daemon endpoint to
   // browsers via this field.
-  gibsonPlatformPublicUrl:
-    process.env.GIBSON_PLATFORM_PUBLIC_URL || 'http://localhost:50002',
+  //
+  // REQUIRED: set GIBSON_PLATFORM_PUBLIC_URL to the Envoy ingress URL
+  // (e.g. https://api.zero-day.local:30443). See .env.example.
+  gibsonPlatformPublicUrl: process.env.GIBSON_PLATFORM_PUBLIC_URL,
 
   // Neo4j Database Configuration
-  neo4jUri: process.env.NEO4J_URI || 'bolt://localhost:7687',
+  // REQUIRED: set NEO4J_URI to the Neo4j bolt endpoint (e.g. bolt://neo4j-service:7687).
+  neo4jUri: process.env.NEO4J_URI,
   neo4jUser: process.env.NEO4J_USER || 'neo4j',
   neo4jPassword: process.env.NEO4J_PASSWORD || '',
 
@@ -43,14 +50,18 @@ export const serverConfig = {
   // (the Auth.js convention) under unified-identity-and-authorization
   // Phase 4. NEXTAUTH_URL is the canonical dashboard URL.
   // Spec Phase 4 Requirement 9.1: Auth.js is the canonical session layer.
-  dashboardPublicUrl: process.env.NEXTAUTH_URL || process.env.AUTH_URL || 'http://localhost:3000',
+  //
+  // REQUIRED: set AUTH_URL (or NEXTAUTH_URL) to the dashboard public URL.
+  dashboardPublicUrl: process.env.NEXTAUTH_URL || process.env.AUTH_URL,
   authHmacSecret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || '',
 
   // Dashboard PostgreSQL (Auth.js + tenant state)
   databaseUrl: process.env.DATABASE_URL || '',
 
-  // Langfuse Configuration (for trace viewer)
-  langfuseHost: process.env.LANGFUSE_HOST || 'http://localhost:3000',
+  // Langfuse Configuration (for trace viewer).
+  // Optional — when LANGFUSE_HOST is unset, langfuseHost is null and
+  // consumers must handle absence rather than receive a localhost-pointing URL.
+  langfuseHost: process.env.LANGFUSE_HOST ?? null,
   langfuseAdminPublicKey: process.env.LANGFUSE_ADMIN_PUBLIC_KEY || '',
   langfuseAdminSecretKey: process.env.LANGFUSE_ADMIN_SECRET_KEY || '',
 
@@ -58,7 +69,7 @@ export const serverConfig = {
   nodeEnv: process.env.NODE_ENV || 'development',
   isDevelopment: process.env.NODE_ENV === 'development',
   isProduction: process.env.NODE_ENV === 'production',
-} as const;
+};
 
 /**
  * Client-side environment configuration.
@@ -73,10 +84,39 @@ export const clientConfig = {
  * Validate required environment variables.
  * Call this function during application startup to fail fast if configuration is invalid.
  *
+ * Required variables are checked unconditionally (not only in production):
+ *   - GIBSON_PLATFORM_PUBLIC_URL
+ *   - NEO4J_URI
+ *   - AUTH_URL / NEXTAUTH_URL
+ *
+ * Auth.js secrets and DATABASE_URL are additionally checked in production.
+ *
  * @throws Error if required environment variables are missing
  */
 export function validateEnvConfig(): void {
   const errors: string[] = [];
+
+  // Required in every environment — these variables have no safe fallback.
+
+  if (!serverConfig.gibsonPlatformPublicUrl) {
+    errors.push(
+      'GIBSON_PLATFORM_PUBLIC_URL is required (used for platform links; set to your ' +
+      'Envoy ingress URL, e.g. https://api.zero-day.local:30443). See .env.example.',
+    );
+  }
+
+  if (!serverConfig.neo4jUri) {
+    errors.push(
+      'NEO4J_URI is required (e.g. bolt://neo4j-service:7687). See .env.example.',
+    );
+  }
+
+  if (!serverConfig.dashboardPublicUrl) {
+    errors.push(
+      'AUTH_URL (or NEXTAUTH_URL) is required (the dashboard public URL for ' +
+      'Auth.js OIDC callbacks, e.g. http://localhost:30081). See .env.example.',
+    );
+  }
 
   // Validate Auth.js configuration in production
   if (serverConfig.isProduction) {
@@ -96,7 +136,7 @@ export function validateEnvConfig(): void {
   // Throw if any errors found
   if (errors.length > 0) {
     throw new Error(
-      `Environment configuration validation failed:\n${errors.map(e => `  - ${e}`).join('\n')}`
+      `Environment configuration validation failed:\n${errors.map(e => `  - ${e}`).join('\n')}`,
     );
   }
 }

@@ -152,9 +152,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       ws.onopen = () => {
         if (!isMountedRef.current) return;
 
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[WebSocket] Connected');
-        }
         setConnectionState('connected');
         reconnectCountRef.current = 0;
         onConnect?.();
@@ -163,9 +160,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       ws.onclose = (event) => {
         if (!isMountedRef.current) return;
 
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[WebSocket] Disconnected', event.code, event.reason);
-        }
         setConnectionState('disconnected');
         wsRef.current = null;
         onDisconnect?.();
@@ -173,9 +167,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
         // Attempt reconnection if not a clean close and attempts remain
         if (!event.wasClean && reconnectCountRef.current < reconnectAttempts) {
           const delay = getReconnectDelay();
-          if (process.env.NODE_ENV !== 'production') {
-            console.log(`[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectCountRef.current + 1}/${reconnectAttempts})`);
-          }
 
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectCountRef.current++;
@@ -183,9 +174,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
           }, delay);
         } else if (reconnectCountRef.current >= reconnectAttempts) {
           // Switch to fallback mode after max attempts
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('[WebSocket] Max reconnection attempts reached, switching to fallback mode');
-          }
           fallbackModeRef.current = true;
           onFallbackMode?.();
         }
@@ -194,7 +182,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       ws.onerror = (error) => {
         if (!isMountedRef.current) return;
 
-        console.error('[WebSocket] Error:', error);
         onError?.(error);
       };
 
@@ -204,12 +191,11 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
         try {
           const message = JSON.parse(event.data) as WebSocketMessage;
           handleMessage(message);
-        } catch (error) {
-          console.error('[WebSocket] Failed to parse message:', error);
+        } catch {
+          // Silently discard unparseable frames
         }
       };
-    } catch (error) {
-      console.error('[WebSocket] Connection error:', error);
+    } catch {
       setConnectionState('disconnected');
     }
   }, [enabled, url, reconnectAttempts, onConnect, onDisconnect, onError, onFallbackMode, handleMessage, getReconnectDelay]);

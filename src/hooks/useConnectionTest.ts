@@ -43,9 +43,9 @@ interface TestConnectionOptions {
  *   testConnection('anthropic-primary', {
  *     onSuccess: (result) => {
  *       if (result.success) {
- *         console.log('Connected! Models:', result.availableModels);
+ *         // result.availableModels contains the connected models list
  *       } else {
- *         console.error('Failed:', result.errorMessage);
+ *         // result.errorMessage describes the failure
  *       }
  *     },
  *   });

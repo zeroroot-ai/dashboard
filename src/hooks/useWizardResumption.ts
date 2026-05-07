@@ -98,8 +98,8 @@ export function useWizardResumption(): WizardResumptionState {
             setLastActiveAgo(formatTimeAgo(new Date(result.state.updatedAt)));
           }
         }
-      } catch (error) {
-        console.error('[WizardResumption] Failed to check resumable state:', error);
+      } catch {
+        // Resumable state check failed — wizard will not offer to resume
       } finally {
         setIsChecking(false);
       }

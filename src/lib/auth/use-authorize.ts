@@ -6,9 +6,8 @@
  * tenant. Wraps the membership fetch in React Query for in-page caching.
  *
  * Decision flow:
- *   1. Unknown method → DENIED (fail-closed). In non-production environments,
- *      set NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1 to fall back to the
- *      old allow-true behaviour (dev escape hatch). See Requirement 1.3.
+ *   1. Unknown method → DENIED (fail-closed). No environment-dependent
+ *      escape hatch — same behaviour in dev and prod.
  *   2. entry.unauthenticated → allowed (public RPC; no identity required).
  *   3. allowedIdentities excludes USER → denied immediately (service-only RPC).
  *   4. Membership query loading → { allowed: false, loading: true } (hides UI,
@@ -21,6 +20,8 @@
  *
  * Spec: dashboard-authz-ui-gating Requirement 2.
  * Sister-spec: cross-repo-cohesion-fixes Requirement 1.
+ * Sister-spec: eliminate-permissive-authz Requirement 2 — the
+ *   non-prod escape-hatch env var was deleted.
  *
  * @module auth/use-authorize
  */
@@ -70,17 +71,10 @@ const MY_MEMBERSHIPS_QUERY_KEY = ['my-memberships'] as const;
 export function useAuthorize(method: string): AuthorizeResult {
   const entry = AuthRegistry[method];
 
-  // Unknown method: DENY (fail-closed). In non-production environments with
-  // NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1, fall back to the old
-  // allow-true behaviour. Server-side logging for the miss is owned by
-  // assertAuthorized (task 1); the client does not log.
+  // Unknown method: DENY (fail-closed). No environment-dependent escape
+  // hatch. Same behaviour in dev and prod: a registry miss is always a
+  // programming error.
   if (!entry) {
-    if (
-      process.env.NODE_ENV !== 'production' &&
-      process.env.NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV === '1'
-    ) {
-      return { allowed: true, loading: false };
-    }
     return { allowed: false, loading: false, reason: 'unknown_method' };
   }
 

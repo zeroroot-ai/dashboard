@@ -150,7 +150,6 @@ export function useSessionSecurity(options: SessionSecurityOptions = {}): Sessio
     // If the session carries an error (e.g., from the server-side enrichment),
     // sign out and redirect to login.
     if (session?.error === 'RefreshTokenExpired') {
-      console.warn('[SessionSecurity] Refresh token expired, signing out');
       void signOut({ redirectTo: "/login" });
       return;
     }
@@ -220,8 +219,7 @@ export function useSessionSecurity(options: SessionSecurityOptions = {}): Sessio
       }));
 
       return true;
-    } catch (error) {
-      console.error('[SessionSecurity] Failed to refresh session:', error);
+    } catch {
       setState((prev) => ({ ...prev, isRefreshing: false }));
       return false;
     }
@@ -242,8 +240,7 @@ export function useSessionSecurity(options: SessionSecurityOptions = {}): Sessio
       }
 
       return true;
-    } catch (error) {
-      console.error('[SessionSecurity] Failed to terminate sessions:', error);
+    } catch {
       return false;
     }
   }, [baSessionData]);

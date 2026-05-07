@@ -1,0 +1,11 @@
+{
+  "_doc": "Allow-list for check-no-nodeenv-conditioned-auth.mjs. Each entry is a pre-existing, audited legitimate use of process.env.NODE_ENV in a restricted path. The guard fails on any unlisted hit. Adding a new entry requires reviewer scrutiny: NODE_ENV-conditioned authz/identity/daemon-call branches are forbidden; only non-authz conditioning (e.g. cookie-secure flag, dev-only logging) is acceptable. Spec: eliminate-permissive-authz Requirement 5.",
+  "permitted": [
+    {
+      "file": "src/lib/auth/active-tenant.ts",
+      "line": 159,
+      "kind": "cookie-secure-flag",
+      "rationale": "Sets the active-tenant cookie's `secure` attribute to true only in production. NOT an authz bypass; localhost dev legitimately runs without TLS. Audited 2026-05-07."
+    }
+  ]
+}

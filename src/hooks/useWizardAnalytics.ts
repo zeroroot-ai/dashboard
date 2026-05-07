@@ -486,8 +486,8 @@ export function useAbandonmentTracking(context: WizardAnalyticsContext): void {
 
         // Clear the abandonment data
         sessionStorage.removeItem('gibson:onboarding:abandonment');
-      } catch (error) {
-        console.error('[Analytics] Failed to parse abandonment data:', error);
+      } catch {
+        // Abandonment data parse error — skip resumption analytics
       }
     }
   }, [analytics]);
