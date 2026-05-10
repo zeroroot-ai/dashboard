@@ -239,6 +239,14 @@
         }
       ],
       "properties": {
+        "agentConfig": {
+          "$ref": "#/$defs/AgentNodeConfig",
+          "description": "AgentConfig for agent nodes"
+        },
+        "conditionConfig": {
+          "$ref": "#/$defs/ConditionNodeConfig",
+          "description": "ConditionConfig for condition nodes"
+        },
         "dataPolicy": {
           "$ref": "#/$defs/DataPolicy",
           "description": "DataPolicy defines data handling policy for this node"
@@ -258,6 +266,10 @@
           "description": "ID is the unique identifier for this node within the mission",
           "type": "string"
         },
+        "joinConfig": {
+          "$ref": "#/$defs/JoinNodeConfig",
+          "description": "JoinConfig for join nodes (mission-verb-noun-registry). Field number 15 because 10-14 are sibling MissionNode fields (dependencies, timeout, retry_policy, data_policy, metadata)."
+        },
         "metadata": {
           "additionalProperties": {
             "type": "string"
@@ -269,6 +281,14 @@
           "description": "Name is a human-readable name for the node",
           "type": "string"
         },
+        "parallelConfig": {
+          "$ref": "#/$defs/ParallelNodeConfig",
+          "description": "ParallelConfig for parallel nodes"
+        },
+        "pluginConfig": {
+          "$ref": "#/$defs/PluginNodeConfig",
+          "description": "PluginConfig for plugin nodes"
+        },
         "retryPolicy": {
           "$ref": "#/$defs/RetryPolicy",
           "description": "RetryPolicy defines retry behavior for this node"
@@ -276,6 +296,10 @@
         "timeout": {
           "description": "Timeout is the maximum execution time for this node",
           "type": "string"
+        },
+        "toolConfig": {
+          "$ref": "#/$defs/ToolNodeConfig",
+          "description": "ToolConfig for tool nodes"
         },
         "type": {
           "description": "Type is the node type",
@@ -489,7 +513,6 @@
           "properties": {
             "nullValue": {
               "description": "NullValue represents a null value in TypedValue",
-              "enum": [],
               "type": "string"
             }
           },
@@ -571,6 +594,36 @@
           ]
         }
       ],
+      "properties": {
+        "arrayValue": {
+          "$ref": "#/$defs/TypedArray"
+        },
+        "boolValue": {
+          "type": "boolean"
+        },
+        "bytesValue": {
+          "contentEncoding": "base64",
+          "type": "string"
+        },
+        "doubleValue": {
+          "format": "double",
+          "type": "number"
+        },
+        "intValue": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "mapValue": {
+          "$ref": "#/$defs/TypedMap"
+        },
+        "nullValue": {
+          "description": "NullValue represents a null value in TypedValue",
+          "type": "string"
+        },
+        "stringValue": {
+          "type": "string"
+        }
+      },
       "type": "object"
     }
   },
