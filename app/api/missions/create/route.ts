@@ -76,12 +76,51 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Parse request body
-    const body: CreateMissionRequest = await request.json();
-    const { yaml, startImmediately, name } = body;
+    //
+    // The route accepts two shapes:
+    //
+    //   Legacy:  { yaml: string, name?, startImmediately? }
+    //            — pre-rewrite authoring that ships YAML to the
+    //              server, parses to MissionConfig, serializes
+    //              to MissionDefinition.
+    //
+    //   New v2:  { definition: MissionDefinitionJson,
+    //              constraints?: MissionConstraintsJson,
+    //              name?, startImmediately? }
+    //            — post-rewrite shape from form components that
+    //              bind directly to the generated proto types.
+    //              The route renders this back to YAML internally
+    //              and forwards through the existing Gibson
+    //              integration so both paths converge.
+    //
+    // Spec: mission-dashboard-rewrite Requirement 1 AC 4 + Task 16.
+    const body: CreateMissionRequest & { definition?: unknown; constraints?: unknown } =
+      await request.json();
+    let { yaml, startImmediately, name } = body;
+
+    // New-shape path: serialize the proto-typed `definition` to
+    // YAML so the legacy validator + serializer pipeline below
+    // continues to work unchanged. This keeps the rewrite
+    // additive — the existing fail-fast guards still apply.
+    if (!yaml && body.definition) {
+      try {
+        yaml = await renderProtoDefinitionToYaml(body.definition, body.constraints);
+      } catch (e) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              'Failed to serialize new-shape MissionDefinition to YAML: ' +
+              (e instanceof Error ? e.message : String(e)),
+          },
+          { status: 400 },
+        );
+      }
+    }
 
     if (!yaml || typeof yaml !== 'string') {
       return NextResponse.json(
-        { success: false, error: 'YAML content is required' },
+        { success: false, error: 'YAML content is required (or pass `definition` for the new shape)' },
         { status: 400 }
       );
     }
@@ -135,6 +174,43 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch (error) {
     return safeErrorResponse(error, 'Failed to process mission request', 500);
   }
+}
+
+// ============================================================================
+// New-shape adapter (Spec 4 Task 16)
+// ============================================================================
+
+/**
+ * renderProtoDefinitionToYaml — converts the new-shape request
+ * payload (proto-typed MissionDefinition + MissionConstraints
+ * via @bufbuild/protobuf JSON) into the YAML the legacy
+ * validator + serializer expects.
+ *
+ * The dashboard's form components bind directly to the
+ * generated proto types and serialize via protobuf-es's
+ * `toJson`. We accept that shape here, fold MissionConstraints
+ * fields into the YAML's metadata block, and let the existing
+ * validator handle the rest.
+ *
+ * The legacy YAML format is the source of truth for this route's
+ * downstream pipeline; treating it as the rendezvous point
+ * minimizes blast radius. Future cleanup can lift the proto
+ * types end-to-end.
+ */
+async function renderProtoDefinitionToYaml(
+  definition: unknown,
+  constraints: unknown,
+): Promise<string> {
+  // Lazy-import yaml so it doesn't add to the route's cold-start
+  // surface unless a new-shape request actually arrives.
+  const { stringify } = await import('yaml');
+  const payload = {
+    ...(typeof definition === 'object' && definition !== null ? definition : {}),
+    ...(typeof constraints === 'object' && constraints !== null
+      ? { constraints }
+      : {}),
+  };
+  return stringify(payload);
 }
 
 // ============================================================================
