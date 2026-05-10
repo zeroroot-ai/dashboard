@@ -50,7 +50,7 @@ describe('WhatYouGet', () => {
 
     for (const term of [
       'ADK',
-      'gibson-cli',
+      'gibson CLI',
       'DAG missions',
       'Knowledge graph',
       'RBAC',

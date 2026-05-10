@@ -1,12 +1,35 @@
-const diagram = `  your runtime                          api.zero-day.ai (saas)
-  ┌────────────────────┐                ┌─────────────────────┐
-  │  agent binary      │                │  gibson             │
-  │  (laptop / ci /    │ ──── grpc ───▶ │  neo4j              │
-  │   vps / k8s)       │                │  redis              │
-  └────────────────────┘                │  langfuse           │
-           │                            │  setec microvms     │
-           ▼                            └─────────────────────┘
-  byok llm keys ──▶ anthropic · openai · gemini · ollama`;
+const reconMissionCue = `// Recon mission template.
+// Discover the target's exposed surface (open ports,
+// running services, reachable subdomains).
+
+mission: {
+  name:        "recon"
+  description: "Reconnaissance across a target's exposed surface."
+  version:     "1.0.0"
+  target_ref:  ""
+
+  nodes: {
+    scan: {
+      id:   "scan"
+      type: "NODE_TYPE_AGENT"
+      agent_config: {
+        agent_name: "nmap-agent"
+      }
+    }
+    enrich: {
+      id:   "enrich"
+      type: "NODE_TYPE_AGENT"
+      agent_config: {
+        agent_name: "shodan-agent"
+      }
+    }
+  }
+  edges: [
+    {from: "scan", to: "enrich"},
+  ]
+  entry_points: ["scan"]
+  exit_points:  ["enrich"]
+}`;
 
 export function WhatYouRunItOn() {
   return (
@@ -18,20 +41,28 @@ export function WhatYouRunItOn() {
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           <p className="text-base md:text-lg leading-relaxed text-green-50/90">
-            Your agents run where you already work — laptop, CI runner,
-            bug-bounty VPS, your own cluster. They dial out to Gibson at{" "}
+            Every agent is built by your team (platform engineers,
+            devsecops, red teamers, IR) for the workflows they already
+            own. That&apos;s the force multiplier. Agents run where you
+            work (laptop, CI, VPS, k8s) and dial out to{" "}
             <code className="font-mono text-green-300">api.zero-day.ai</code>{" "}
-            for orchestration, shared memory, and the knowledge graph. BYOK
-            for LLM keys. Untrusted payloads — LLM-generated exploits,
-            malware samples, sketchy third-party tools — detonate inside{" "}
+            for orchestration, shared memory, and the knowledge graph.
+            Your team decides what crosses the wire and what stays on
+            the host. BYOK for LLM keys. Untrusted payloads detonate inside{" "}
             <strong className="text-green-300 font-semibold">
               Setec microVMs
             </strong>
             . Hardware isolation, not containers.
           </p>
-          <pre className="overflow-x-auto rounded-lg border border-green-500/25 bg-black/60 p-6 font-mono text-[13px] md:text-sm leading-relaxed text-green-300/90">
-            <code>{diagram}</code>
-          </pre>
+          <div>
+            <div className="mb-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-green-400/60">
+              <span>// what a mission looks like</span>
+              <span>recon.cue</span>
+            </div>
+            <pre className="overflow-x-auto rounded-lg border border-green-500/25 bg-black/60 p-5 font-mono text-[10px] md:text-[11px] leading-[1.55] text-green-300/90">
+              <code>{reconMissionCue}</code>
+            </pre>
+          </div>
         </div>
       </div>
     </section>

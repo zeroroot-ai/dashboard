@@ -1,5 +1,7 @@
 # CLAUDE.md — Dashboard
 
+> **Workflow rules:** see [`github.com/zero-day-ai/.github` → `AGENTS.md`](https://github.com/zero-day-ai/.github/blob/main/AGENTS.md) for branch / PR / commit / release / rebase rules. Repo-local rules below override only when explicitly noted.
+
 This file documents conventions specific to the `zero-day-ai/dashboard` repository for AI assistants and engineers.
 
 ## Key constraints (read first)
