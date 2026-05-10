@@ -5,6 +5,38 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0](https://github.com/zero-day-ai/dashboard/compare/v1.8.0...v1.9.0) (2026-05-10)
+
+
+### Features
+
+* **billing:** Phase 1 foundations — types, stripe wrapper, idempotency table, guards, metrics ([7629c27](https://github.com/zero-day-ai/dashboard/commit/7629c279f7226bbed6113309529258e46dec1aea))
+* **billing:** Phase 2 email infrastructure — SES provider, 5 billing templates, snapshot tests ([9dc6431](https://github.com/zero-day-ai/dashboard/commit/9dc643174c9af53737476843b8ea2591b440cf1b))
+* **billing:** Phase 3 checkout endpoint — POST /api/billing/checkout with 16 unit tests ([1b32072](https://github.com/zero-day-ai/dashboard/commit/1b3207211dc7df30822853755fac16c1f9c491cf))
+* **billing:** Phase 6 webhook subdomain — 410 tombstone, cutover runbook ([523edc5](https://github.com/zero-day-ai/dashboard/commit/523edc5a6d7ed435d885e4cf69971c538b37bc6b))
+* **billing:** Phase 7 webhook lifecycle handlers — 7 event types, console migration, 38 tests ([84bdd01](https://github.com/zero-day-ai/dashboard/commit/84bdd01bf7b82f5552ddce921b4491ac23b6f41c))
+* **billing:** Phases 14+15 — Grafana dashboard, Prometheus alerts, bootstrap script, cleanup guards ([544d95d](https://github.com/zero-day-ai/dashboard/commit/544d95dee1f43196cb0b04b04653c548568abe5e))
+* **billing:** Phases 4+5 — CheckoutButton, pricing page CTAs, portal route, billing settings page ([8ccad87](https://github.com/zero-day-ai/dashboard/commit/8ccad878441fd7eb462550dbb6853d8b6e596ee4))
+* **billing:** Phases 9+11 — admin tools, boot guard, Stripe test suite ([ea5f933](https://github.com/zero-day-ai/dashboard/commit/ea5f933fa568c6bae28361aa6586c6920790f3aa))
+* dashboard W1+W2 hardening + Pino logger + R7/R9/R17/R18/R11 ([3d0d1f6](https://github.com/zero-day-ai/dashboard/commit/3d0d1f6c30eec9e8b90a25da606d684a040234be))
+* **dashboard:** generate BillingTier + PRICE_ENV_MAP from plans.yaml ([e008898](https://github.com/zero-day-ai/dashboard/commit/e0088986cd7311eecae508e91172b85c4cb1e06b))
+* **dashboard:** in-app quota UX + Phase 7.B sweep of legacy fields ([f0161ef](https://github.com/zero-day-ai/dashboard/commit/f0161ef30893b253d6c82d95fd4f6d40a7a442c5))
+* **dashboard:** mission checkpoint browser + tool-stream SSE bridge ([383125e](https://github.com/zero-day-ai/dashboard/commit/383125e274e18783fb7e3248d9efdd7a350cc8bf))
+* **dashboard:** mission events SSE bridge + per-tool streaming progress on detail page ([5889b28](https://github.com/zero-day-ai/dashboard/commit/5889b28976f454b3fec57142ee6b8680df01bf90))
+* **dashboard:** mission-draft server actions for the create page ([7a852f7](https://github.com/zero-day-ai/dashboard/commit/7a852f7ef2911c5cbf1e13cc71a4d1d518b1e9ca))
+* **dashboard:** mission-draft UI on the create page ([e01099b](https://github.com/zero-day-ai/dashboard/commit/e01099bdbe29f83ea85272e401ca2ef1646f8db9))
+* **dashboard:** regen plans.ts for 3-plan schema + drift gate ([3cde94a](https://github.com/zero-day-ai/dashboard/commit/3cde94a5a424d294a8ab0d15aeb4f41cdd159c5f))
+* **dashboard:** seed in-app quota UX hook + Server Action ([f8266a6](https://github.com/zero-day-ai/dashboard/commit/f8266a6c67b0fe0e0e99aa02fb8782ff15287421))
+* **dashboard:** three-card pricing page driven by plans.yaml ([4b812c3](https://github.com/zero-day-ai/dashboard/commit/4b812c30c9d37ad3cebbcb0f0c7dda2c5b617b48))
+* **dashboard:** v1.8.0 — eliminate permissive-dev paths, no localhost defaults, no console.* in hooks, no skipped tests ([7760e05](https://github.com/zero-day-ai/dashboard/commit/7760e0544d0b74f3eb897cc0b70a9bdbfe064d9e))
+* install release-please and pr-title-lint ([#16](https://github.com/zero-day-ai/dashboard/issues/16)) ([77709e6](https://github.com/zero-day-ai/dashboard/commit/77709e6c5e05749d8c0aaab1316352eb894a2921))
+* **signup:** client-side reserved-names check via daemon GetReservedNames ([f918da4](https://github.com/zero-day-ai/dashboard/commit/f918da4ade7d806480c7437cd1019e61b0f0788a))
+
+
+### Bug Fixes
+
+* **billing:** fix 3 TypeScript errors in billing tests and bootstrap script ([0ad4c08](https://github.com/zero-day-ai/dashboard/commit/0ad4c084c83d6190c355daff5fd1f1bf65f3642f))
+
 ## [1.6.0] - 2026-05-04
 
 Completes the dashboard side of the
