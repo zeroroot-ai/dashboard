@@ -4,12 +4,12 @@ const items = [
     body: "Agent, Tool, and Plugin contracts. A single Harness wires LLMs, memory, tools, and the knowledge graph. Go today — Rust and Python in the works.",
   },
   {
-    term: "gibson-cli",
+    term: "gibson CLI",
     body: "Scaffolds projects, installs agents and tools, launches missions, inspects graph state. The client you script against api.zero-day.ai.",
   },
   {
     term: "DAG missions",
-    body: "A mission is a parameterized YAML DAG of agent + tool steps targeting one system. The orchestrator runs it in an Observe → Think → Act → Recall → Reflect loop. Pausable, resumable, checkpointed.",
+    body: "A mission is a CUE-typed DAG of agent + tool nodes wired by edges and parameterized by target. CUE catches misconfigurations at submit time — wrong agent name, missing field, bad enum — before the orchestrator ever runs the Observe → Think → Act → Recall → Reflect loop. Pausable, resumable, checkpointed.",
   },
   {
     term: "Knowledge graph",
