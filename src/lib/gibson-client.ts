@@ -636,7 +636,11 @@ export interface ProvisioningStep {
 // ============================================================================
 
 /**
- * Retrieve the resource quota for a tenant via TenantAdminService.GetTenantQuota.
+ * Retrieve the resource quota (limits) for a tenant via
+ * TenantAdminService.GetTenantQuota. Spec
+ * plans-and-quotas-simplification reduces the response to two enforced
+ * quotas; legacy maxMembers / rateLimitRpm fields are kept in the
+ * dashboard's TenantQuota shape for backward compatibility but always 0.
  */
 async function getTenantQuota(
   tenantId: string,
@@ -645,13 +649,31 @@ async function getTenantQuota(
 ): Promise<TenantQuota> {
   const client = await getAdminClient(userId, tenantId);
   const response = await client.getTenantQuota({ tenantId: targetTenantId });
-  const q = response.quota;
   return {
     tenantId: targetTenantId,
-    maxMissions: q?.maxMissions ?? 0,
-    maxAgents: q?.maxAgents ?? 0,
+    maxMissions: response.concurrentMissions ?? 0,
+    maxAgents: response.concurrentAgents ?? 0,
     maxMembers: 0,
     rateLimitRpm: 0,
+  };
+}
+
+/**
+ * Retrieve the live counter values (current usage) for a tenant via
+ * TenantAdminService.GetTenantQuotaUsage. Cheap (single Redis MGET on
+ * the daemon side); no caching here. Spec plans-and-quotas-simplification
+ * R9.B.
+ */
+export async function getTenantQuotaUsage(
+  tenantId: string,
+  targetTenantId: string,
+  userId?: string
+): Promise<{ missionsActive: number; agentsActive: number }> {
+  const client = await getAdminClient(userId, tenantId);
+  const response = await client.getTenantQuotaUsage({ tenantId: targetTenantId });
+  return {
+    missionsActive: Number(response.missionsActive ?? 0),
+    agentsActive: Number(response.agentsActive ?? 0),
   };
 }
 
