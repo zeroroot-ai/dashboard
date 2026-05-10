@@ -10,4 +10,5 @@ export { ParallelConfigEditor } from "./parallel-config-editor";
 export { JoinConfigEditor, validateJoinConfig } from "./join-config-editor";
 export { RetryPolicyEditor } from "./retry-policy-editor";
 export { ScopeTab } from "./scope-tab";
+export { ConstraintsTab } from "./constraints-tab";
 export { StepConfigSwitcher } from "./step-config-switcher";
