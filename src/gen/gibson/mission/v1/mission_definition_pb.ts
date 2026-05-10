@@ -2,19 +2,39 @@
 // @generated from file gibson/mission/v1/mission_definition.proto (package gibson.mission.v1, syntax proto3)
 /* eslint-disable */
 
+// Schema evolution policy (mission-schema-canonicalization Requirement 7):
+//
+//   1. NodeType, Language, BackoffStrategy, and any future enum values
+//      are append-only. Existing values are NEVER renumbered or removed.
+//   2. Deprecated values are marked `[deprecated = true]` and accompanied
+//      by a `// reserved` comment explaining the supersession.
+//   3. MissionNode.config oneof variants are append-only with the same
+//      discipline; reuse of a tag number is forbidden.
+//   4. Adding a new node type or expression language requires the
+//      controlled-extension contract defined in
+//      `mission-verb-noun-registry`: a matching *NodeConfig message in
+//      the oneof, a registered handler in the daemon, and a conformance
+//      test exercising the new type end-to-end. CI enforces all four.
+//
+// The proto under this package is the single source of truth for the
+// mission schema. The daemon, gibson-cli, and the dashboard all consume
+// the generated bindings of this file. Hand-written parallel
+// representations are forbidden.
+
 import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Duration, Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_duration, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Task } from "../../types/v1/types_pb";
 import { file_gibson_types_v1_types } from "../../types/v1/types_pb";
+import { file_buf_validate_validate } from "../../../buf/validate/validate_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file gibson/mission/v1/mission_definition.proto.
  */
 export const file_gibson_mission_v1_mission_definition: GenFile = /*@__PURE__*/
-  fileDesc("CipnaWJzb24vbWlzc2lvbi92MS9taXNzaW9uX2RlZmluaXRpb24ucHJvdG8SEWdpYnNvbi5taXNzaW9uLnYxIvYEChFNaXNzaW9uRGVmaW5pdGlvbhIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEg8KB3ZlcnNpb24YBCABKAkSEgoKdGFyZ2V0X3JlZhgFIAEoCRI+CgVub2RlcxgGIAMoCzIvLmdpYnNvbi5taXNzaW9uLnYxLk1pc3Npb25EZWZpbml0aW9uLk5vZGVzRW50cnkSLQoFZWRnZXMYByADKAsyHi5naWJzb24ubWlzc2lvbi52MS5NaXNzaW9uRWRnZRIUCgxlbnRyeV9wb2ludHMYCCADKAkSEwoLZXhpdF9wb2ludHMYCSADKAkSRAoIbWV0YWRhdGEYCiADKAsyMi5naWJzb24ubWlzc2lvbi52MS5NaXNzaW9uRGVmaW5pdGlvbi5NZXRhZGF0YUVudHJ5EjwKDGRlcGVuZGVuY2llcxgLIAEoCzImLmdpYnNvbi5taXNzaW9uLnYxLk1pc3Npb25EZXBlbmRlbmNpZXMSDgoGc291cmNlGAwgASgJEjAKDGluc3RhbGxlZF9hdBgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKY3JlYXRlZF9hdBgOIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAaTAoKTm9kZXNFbnRyeRILCgNrZXkYASABKAkSLQoFdmFsdWUYAiABKAsyHi5naWJzb24ubWlzc2lvbi52MS5NaXNzaW9uTm9kZToCOAEaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIkUKE01pc3Npb25EZXBlbmRlbmNpZXMSDgoGYWdlbnRzGAEgAygJEg0KBXRvb2xzGAIgAygJEg8KB3BsdWdpbnMYAyADKAkiyAUKC01pc3Npb25Ob2RlEgoKAmlkGAEgASgJEikKBHR5cGUYAiABKA4yGy5naWJzb24ubWlzc2lvbi52MS5Ob2RlVHlwZRIMCgRuYW1lGAMgASgJEhMKC2Rlc2NyaXB0aW9uGAQgASgJEjoKDGFnZW50X2NvbmZpZxgFIAEoCzIiLmdpYnNvbi5taXNzaW9uLnYxLkFnZW50Tm9kZUNvbmZpZ0gAEjgKC3Rvb2xfY29uZmlnGAYgASgLMiEuZ2lic29uLm1pc3Npb24udjEuVG9vbE5vZGVDb25maWdIABI8Cg1wbHVnaW5fY29uZmlnGAcgASgLMiMuZ2lic29uLm1pc3Npb24udjEuUGx1Z2luTm9kZUNvbmZpZ0gAEkIKEGNvbmRpdGlvbl9jb25maWcYCCABKAsyJi5naWJzb24ubWlzc2lvbi52MS5Db25kaXRpb25Ob2RlQ29uZmlnSAASQAoPcGFyYWxsZWxfY29uZmlnGAkgASgLMiUuZ2lic29uLm1pc3Npb24udjEuUGFyYWxsZWxOb2RlQ29uZmlnSAASFAoMZGVwZW5kZW5jaWVzGAogAygJEioKB3RpbWVvdXQYCyABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SNAoMcmV0cnlfcG9saWN5GAwgASgLMh4uZ2lic29uLm1pc3Npb24udjEuUmV0cnlQb2xpY3kSMgoLZGF0YV9wb2xpY3kYDSABKAsyHS5naWJzb24ubWlzc2lvbi52MS5EYXRhUG9saWN5Ej4KCG1ldGFkYXRhGA4gAygLMiwuZ2lic29uLm1pc3Npb24udjEuTWlzc2lvbk5vZGUuTWV0YWRhdGFFbnRyeRovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCCAoGY29uZmlnIkoKD0FnZW50Tm9kZUNvbmZpZxISCgphZ2VudF9uYW1lGAEgASgJEiMKBHRhc2sYAiABKAsyFS5naWJzb24udHlwZXMudjEuVGFzayKOAQoOVG9vbE5vZGVDb25maWcSEQoJdG9vbF9uYW1lGAEgASgJEjsKBWlucHV0GAIgAygLMiwuZ2lic29uLm1pc3Npb24udjEuVG9vbE5vZGVDb25maWcuSW5wdXRFbnRyeRosCgpJbnB1dEVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEipwEKEFBsdWdpbk5vZGVDb25maWcSEwoLcGx1Z2luX25hbWUYASABKAkSDgoGbWV0aG9kGAIgASgJEj8KBnBhcmFtcxgDIAMoCzIvLmdpYnNvbi5taXNzaW9uLnYxLlBsdWdpbk5vZGVDb25maWcuUGFyYW1zRW50cnkaLQoLUGFyYW1zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJUChNDb25kaXRpb25Ob2RlQ29uZmlnEhIKCmV4cHJlc3Npb24YASABKAkSEwoLdHJ1ZV9icmFuY2gYAiADKAkSFAoMZmFsc2VfYnJhbmNoGAMgAygJImAKElBhcmFsbGVsTm9kZUNvbmZpZxIxCglzdWJfbm9kZXMYASADKAsyHi5naWJzb24ubWlzc2lvbi52MS5NaXNzaW9uTm9kZRIXCg9tYXhfY29uY3VycmVuY3kYAiABKAUi1AEKC1JldHJ5UG9saWN5EhMKC21heF9yZXRyaWVzGAEgASgFEjwKEGJhY2tvZmZfc3RyYXRlZ3kYAiABKA4yIi5naWJzb24ubWlzc2lvbi52MS5CYWNrb2ZmU3RyYXRlZ3kSMAoNaW5pdGlhbF9kZWxheRgDIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhIsCgltYXhfZGVsYXkYBCABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SEgoKbXVsdGlwbGllchgFIAEoASKRAQoKRGF0YVBvbGljeRITCgtzdG9yZV9pbnB1dBgBIAEoCBIUCgxzdG9yZV9vdXRwdXQYAiABKAgSLAoJcmV0ZW50aW9uGAMgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEhIKCmVuY3J5cHRpb24YBCABKAgSFgoOYWNjZXNzX2NvbnRyb2wYBSADKAkiqwEKC01pc3Npb25FZGdlEgwKBGZyb20YASABKAkSCgoCdG8YAiABKAkSEQoJY29uZGl0aW9uGAMgASgJEj4KCG1ldGFkYXRhGAQgAygLMiwuZ2lic29uLm1pc3Npb24udjEuTWlzc2lvbkVkZ2UuTWV0YWRhdGFFbnRyeRovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEqqQEKCE5vZGVUeXBlEhkKFU5PREVfVFlQRV9VTlNQRUNJRklFRBAAEhMKD05PREVfVFlQRV9BR0VOVBABEhIKDk5PREVfVFlQRV9UT09MEAISFAoQTk9ERV9UWVBFX1BMVUdJThADEhcKE05PREVfVFlQRV9DT05ESVRJT04QBBIWChJOT0RFX1RZUEVfUEFSQUxMRUwQBRISCg5OT0RFX1RZUEVfSk9JThAGKpEBCg9CYWNrb2ZmU3RyYXRlZ3kSIAocQkFDS09GRl9TVFJBVEVHWV9VTlNQRUNJRklFRBAAEh0KGUJBQ0tPRkZfU1RSQVRFR1lfQ09OU1RBTlQQARIbChdCQUNLT0ZGX1NUUkFURUdZX0xJTkVBUhACEiAKHEJBQ0tPRkZfU1RSQVRFR1lfRVhQT05FTlRJQUwQA0JTUAFaPmdpdGh1Yi5jb20vemVyby1kYXktYWkvc2RrL2FwaS9nZW4vZ2lic29uL21pc3Npb24vdjE7bWlzc2lvbnBiqgIOR2lic29uLk1pc3Npb25iBnByb3RvMw", [file_google_protobuf_duration, file_google_protobuf_timestamp, file_gibson_types_v1_types]);
+  fileDesc("CipnaWJzb24vbWlzc2lvbi92MS9taXNzaW9uX2RlZmluaXRpb24ucHJvdG8SEWdpYnNvbi5taXNzaW9uLnYxIvYEChFNaXNzaW9uRGVmaW5pdGlvbhIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEg8KB3ZlcnNpb24YBCABKAkSEgoKdGFyZ2V0X3JlZhgFIAEoCRI+CgVub2RlcxgGIAMoCzIvLmdpYnNvbi5taXNzaW9uLnYxLk1pc3Npb25EZWZpbml0aW9uLk5vZGVzRW50cnkSLQoFZWRnZXMYByADKAsyHi5naWJzb24ubWlzc2lvbi52MS5NaXNzaW9uRWRnZRIUCgxlbnRyeV9wb2ludHMYCCADKAkSEwoLZXhpdF9wb2ludHMYCSADKAkSRAoIbWV0YWRhdGEYCiADKAsyMi5naWJzb24ubWlzc2lvbi52MS5NaXNzaW9uRGVmaW5pdGlvbi5NZXRhZGF0YUVudHJ5EjwKDGRlcGVuZGVuY2llcxgLIAEoCzImLmdpYnNvbi5taXNzaW9uLnYxLk1pc3Npb25EZXBlbmRlbmNpZXMSDgoGc291cmNlGAwgASgJEjAKDGluc3RhbGxlZF9hdBgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKY3JlYXRlZF9hdBgOIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAaTAoKTm9kZXNFbnRyeRILCgNrZXkYASABKAkSLQoFdmFsdWUYAiABKAsyHi5naWJzb24ubWlzc2lvbi52MS5NaXNzaW9uTm9kZToCOAEaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIkUKE01pc3Npb25EZXBlbmRlbmNpZXMSDgoGYWdlbnRzGAEgAygJEg0KBXRvb2xzGAIgAygJEg8KB3BsdWdpbnMYAyADKAkiggYKC01pc3Npb25Ob2RlEgoKAmlkGAEgASgJEikKBHR5cGUYAiABKA4yGy5naWJzb24ubWlzc2lvbi52MS5Ob2RlVHlwZRIMCgRuYW1lGAMgASgJEhMKC2Rlc2NyaXB0aW9uGAQgASgJEjoKDGFnZW50X2NvbmZpZxgFIAEoCzIiLmdpYnNvbi5taXNzaW9uLnYxLkFnZW50Tm9kZUNvbmZpZ0gAEjgKC3Rvb2xfY29uZmlnGAYgASgLMiEuZ2lic29uLm1pc3Npb24udjEuVG9vbE5vZGVDb25maWdIABI8Cg1wbHVnaW5fY29uZmlnGAcgASgLMiMuZ2lic29uLm1pc3Npb24udjEuUGx1Z2luTm9kZUNvbmZpZ0gAEkIKEGNvbmRpdGlvbl9jb25maWcYCCABKAsyJi5naWJzb24ubWlzc2lvbi52MS5Db25kaXRpb25Ob2RlQ29uZmlnSAASQAoPcGFyYWxsZWxfY29uZmlnGAkgASgLMiUuZ2lic29uLm1pc3Npb24udjEuUGFyYWxsZWxOb2RlQ29uZmlnSAASOAoLam9pbl9jb25maWcYDyABKAsyIS5naWJzb24ubWlzc2lvbi52MS5Kb2luTm9kZUNvbmZpZ0gAEhQKDGRlcGVuZGVuY2llcxgKIAMoCRIqCgd0aW1lb3V0GAsgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEjQKDHJldHJ5X3BvbGljeRgMIAEoCzIeLmdpYnNvbi5taXNzaW9uLnYxLlJldHJ5UG9saWN5EjIKC2RhdGFfcG9saWN5GA0gASgLMh0uZ2lic29uLm1pc3Npb24udjEuRGF0YVBvbGljeRI+CghtZXRhZGF0YRgOIAMoCzIsLmdpYnNvbi5taXNzaW9uLnYxLk1pc3Npb25Ob2RlLk1ldGFkYXRhRW50cnkaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQggKBmNvbmZpZyKNAQoPQWdlbnROb2RlQ29uZmlnEhIKCmFnZW50X25hbWUYASABKAkSIwoEdGFzaxgCIAEoCzIVLmdpYnNvbi50eXBlcy52MS5UYXNrEikKE21heF90b2tlbnNfcGVyX2NhbGwYAyABKAVCB7pIBBoCKABIAIgBAUIWChRfbWF4X3Rva2Vuc19wZXJfY2FsbCLRAQoOVG9vbE5vZGVDb25maWcSEQoJdG9vbF9uYW1lGAEgASgJEjsKBWlucHV0GAIgAygLMiwuZ2lic29uLm1pc3Npb24udjEuVG9vbE5vZGVDb25maWcuSW5wdXRFbnRyeRIpChNtYXhfdG9rZW5zX3Blcl9jYWxsGAMgASgFQge6SAQaAigASACIAQEaLAoKSW5wdXRFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQhYKFF9tYXhfdG9rZW5zX3Blcl9jYWxsIuoBChBQbHVnaW5Ob2RlQ29uZmlnEhMKC3BsdWdpbl9uYW1lGAEgASgJEg4KBm1ldGhvZBgCIAEoCRI/CgZwYXJhbXMYAyADKAsyLy5naWJzb24ubWlzc2lvbi52MS5QbHVnaW5Ob2RlQ29uZmlnLlBhcmFtc0VudHJ5EikKE21heF90b2tlbnNfcGVyX2NhbGwYBCABKAVCB7pIBBoCKABIAIgBARotCgtQYXJhbXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQhYKFF9tYXhfdG9rZW5zX3Blcl9jYWxsIoMBChNDb25kaXRpb25Ob2RlQ29uZmlnEhIKCmV4cHJlc3Npb24YASABKAkSEwoLdHJ1ZV9icmFuY2gYAiADKAkSFAoMZmFsc2VfYnJhbmNoGAMgAygJEi0KCGxhbmd1YWdlGAQgASgOMhsuZ2lic29uLm1pc3Npb24udjEuTGFuZ3VhZ2UiYAoSUGFyYWxsZWxOb2RlQ29uZmlnEjEKCXN1Yl9ub2RlcxgBIAMoCzIeLmdpYnNvbi5taXNzaW9uLnYxLk1pc3Npb25Ob2RlEhcKD21heF9jb25jdXJyZW5jeRgCIAEoBSJ0Cg5Kb2luTm9kZUNvbmZpZxIaCgh3YWl0X2ZvchgBIAMoCUIIukgFkgECCAESMgoIc3RyYXRlZ3kYAiABKA4yIC5naWJzb24ubWlzc2lvbi52MS5NZXJnZVN0cmF0ZWd5EhIKCmFnZ3JlZ2F0b3IYAyABKAki1AEKC1JldHJ5UG9saWN5EhMKC21heF9yZXRyaWVzGAEgASgFEjwKEGJhY2tvZmZfc3RyYXRlZ3kYAiABKA4yIi5naWJzb24ubWlzc2lvbi52MS5CYWNrb2ZmU3RyYXRlZ3kSMAoNaW5pdGlhbF9kZWxheRgDIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhIsCgltYXhfZGVsYXkYBCABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SEgoKbXVsdGlwbGllchgFIAEoASKRAQoKRGF0YVBvbGljeRITCgtzdG9yZV9pbnB1dBgBIAEoCBIUCgxzdG9yZV9vdXRwdXQYAiABKAgSLAoJcmV0ZW50aW9uGAMgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEhIKCmVuY3J5cHRpb24YBCABKAgSFgoOYWNjZXNzX2NvbnRyb2wYBSADKAkiqwEKC01pc3Npb25FZGdlEgwKBGZyb20YASABKAkSCgoCdG8YAiABKAkSEQoJY29uZGl0aW9uGAMgASgJEj4KCG1ldGFkYXRhGAQgAygLMiwuZ2lic29uLm1pc3Npb24udjEuTWlzc2lvbkVkZ2UuTWV0YWRhdGFFbnRyeRovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEqqQEKCE5vZGVUeXBlEhkKFU5PREVfVFlQRV9VTlNQRUNJRklFRBAAEhMKD05PREVfVFlQRV9BR0VOVBABEhIKDk5PREVfVFlQRV9UT09MEAISFAoQTk9ERV9UWVBFX1BMVUdJThADEhcKE05PREVfVFlQRV9DT05ESVRJT04QBBIWChJOT0RFX1RZUEVfUEFSQUxMRUwQBRISCg5OT0RFX1RZUEVfSk9JThAGKjYKCExhbmd1YWdlEhgKFExBTkdVQUdFX1VOU1BFQ0lGSUVEEAASEAoMTEFOR1VBR0VfQ0VMEAEqswEKDU1lcmdlU3RyYXRlZ3kSHgoaTUVSR0VfU1RSQVRFR1lfVU5TUEVDSUZJRUQQABIZChVNRVJHRV9TVFJBVEVHWV9DT05DQVQQARIZChVNRVJHRV9TVFJBVEVHWV9SRURVQ0UQAhIYChRNRVJHRV9TVFJBVEVHWV9GSVJTVBADEhcKE01FUkdFX1NUUkFURUdZX0xBU1QQBBIZChVNRVJHRV9TVFJBVEVHWV9DVVNUT00QBSqRAQoPQmFja29mZlN0cmF0ZWd5EiAKHEJBQ0tPRkZfU1RSQVRFR1lfVU5TUEVDSUZJRUQQABIdChlCQUNLT0ZGX1NUUkFURUdZX0NPTlNUQU5UEAESGwoXQkFDS09GRl9TVFJBVEVHWV9MSU5FQVIQAhIgChxCQUNLT0ZGX1NUUkFURUdZX0VYUE9ORU5USUFMEANCU1ABWj5naXRodWIuY29tL3plcm8tZGF5LWFpL3Nkay9hcGkvZ2VuL2dpYnNvbi9taXNzaW9uL3YxO21pc3Npb25wYqoCDkdpYnNvbi5NaXNzaW9uYgZwcm90bzM", [file_google_protobuf_duration, file_google_protobuf_timestamp, file_gibson_types_v1_types, file_buf_validate_validate]);
 
 /**
  * MissionDefinition represents a mission template/definition.
@@ -247,6 +267,16 @@ export type MissionNode = Message<"gibson.mission.v1.MissionNode"> & {
      */
     value: ParallelNodeConfig;
     case: "parallelConfig";
+  } | {
+    /**
+     * JoinConfig for join nodes (mission-verb-noun-registry).
+     * Field number 15 because 10-14 are sibling MissionNode fields
+     * (dependencies, timeout, retry_policy, data_policy, metadata).
+     *
+     * @generated from field: gibson.mission.v1.JoinNodeConfig join_config = 15;
+     */
+    value: JoinNodeConfig;
+    case: "joinConfig";
   } | { case: undefined; value?: undefined };
 
   /**
@@ -293,7 +323,10 @@ export const MissionNodeSchema: GenMessage<MissionNode> = /*@__PURE__*/
   messageDesc(file_gibson_mission_v1_mission_definition, 2);
 
 /**
- * AgentNodeConfig contains configuration for agent nodes
+ * AgentNodeConfig contains configuration for agent nodes.
+ * AGENT = LLM-driven worker that calls tools and plugins on the
+ * author's behalf. The executor selects an agent component by name
+ * and dispatches the configured Task.
  *
  * @generated from message gibson.mission.v1.AgentNodeConfig
  */
@@ -311,6 +344,15 @@ export type AgentNodeConfig = Message<"gibson.mission.v1.AgentNodeConfig"> & {
    * @generated from field: gibson.types.v1.Task task = 2;
    */
   task?: Task;
+
+  /**
+   * max_tokens_per_call overrides MissionConstraints.max_tokens_per_call
+   * for this node only. 0 means unlimited; absence means cascade
+   * from the mission level.
+   *
+   * @generated from field: optional int32 max_tokens_per_call = 3;
+   */
+  maxTokensPerCall?: number;
 };
 
 /**
@@ -321,7 +363,10 @@ export const AgentNodeConfigSchema: GenMessage<AgentNodeConfig> = /*@__PURE__*/
   messageDesc(file_gibson_mission_v1_mission_definition, 3);
 
 /**
- * ToolNodeConfig contains configuration for tool nodes
+ * ToolNodeConfig contains configuration for tool nodes.
+ * TOOL = single-purpose named function with a typed input map. The
+ * executor invokes the named tool through the tool worker queue and
+ * returns the tool's output as the node result.
  *
  * @generated from message gibson.mission.v1.ToolNodeConfig
  */
@@ -339,6 +384,15 @@ export type ToolNodeConfig = Message<"gibson.mission.v1.ToolNodeConfig"> & {
    * @generated from field: map<string, string> input = 2;
    */
   input: { [key: string]: string };
+
+  /**
+   * max_tokens_per_call overrides MissionConstraints.max_tokens_per_call
+   * for this node only. 0 means unlimited; absence means cascade
+   * from the mission level.
+   *
+   * @generated from field: optional int32 max_tokens_per_call = 3;
+   */
+  maxTokensPerCall?: number;
 };
 
 /**
@@ -349,7 +403,11 @@ export const ToolNodeConfigSchema: GenMessage<ToolNodeConfig> = /*@__PURE__*/
   messageDesc(file_gibson_mission_v1_mission_definition, 4);
 
 /**
- * PluginNodeConfig contains configuration for plugin nodes
+ * PluginNodeConfig contains configuration for plugin nodes.
+ * PLUGIN = multi-method provider keyed by `plugin_name + method`.
+ * Distinct from TOOL: a plugin advertises several callable methods
+ * behind one component identity. The executor selects the named
+ * method and dispatches `params` as the call payload.
  *
  * @generated from message gibson.mission.v1.PluginNodeConfig
  */
@@ -374,6 +432,15 @@ export type PluginNodeConfig = Message<"gibson.mission.v1.PluginNodeConfig"> & {
    * @generated from field: map<string, string> params = 3;
    */
   params: { [key: string]: string };
+
+  /**
+   * max_tokens_per_call overrides MissionConstraints.max_tokens_per_call
+   * for this node only. 0 means unlimited; absence means cascade
+   * from the mission level.
+   *
+   * @generated from field: optional int32 max_tokens_per_call = 4;
+   */
+  maxTokensPerCall?: number;
 };
 
 /**
@@ -409,6 +476,15 @@ export type ConditionNodeConfig = Message<"gibson.mission.v1.ConditionNodeConfig
    * @generated from field: repeated string false_branch = 3;
    */
   falseBranch: string[];
+
+  /**
+   * Language declares the expression language. Defaults to
+   * LANGUAGE_CEL; LANGUAGE_UNSPECIFIED is treated as CEL for
+   * backwards compatibility with pre-Language-field documents.
+   *
+   * @generated from field: gibson.mission.v1.Language language = 4;
+   */
+  language: Language;
 };
 
 /**
@@ -419,7 +495,11 @@ export const ConditionNodeConfigSchema: GenMessage<ConditionNodeConfig> = /*@__P
   messageDesc(file_gibson_mission_v1_mission_definition, 6);
 
 /**
- * ParallelNodeConfig contains configuration for parallel nodes
+ * ParallelNodeConfig contains configuration for parallel nodes.
+ * PARALLEL fans out to its sub-nodes concurrently, capped by
+ * max_concurrency. Sibling failures are isolated (one failing
+ * sub-node does not cancel its siblings). Spec:
+ * mission-verb-noun-registry Requirement 6.
  *
  * @generated from message gibson.mission.v1.ParallelNodeConfig
  */
@@ -445,6 +525,51 @@ export type ParallelNodeConfig = Message<"gibson.mission.v1.ParallelNodeConfig">
  */
 export const ParallelNodeConfigSchema: GenMessage<ParallelNodeConfig> = /*@__PURE__*/
   messageDesc(file_gibson_mission_v1_mission_definition, 7);
+
+/**
+ * JoinNodeConfig blocks until every node ID in `wait_for` has
+ * completed (success or final failure), then merges their results
+ * per `strategy`. JOIN is a first-class noun separable from
+ * PARALLEL — a JOIN can merge results from non-parallel branches.
+ *
+ * Spec: mission-verb-noun-registry Requirement 7.
+ *
+ * @generated from message gibson.mission.v1.JoinNodeConfig
+ */
+export type JoinNodeConfig = Message<"gibson.mission.v1.JoinNodeConfig"> & {
+  /**
+   * wait_for lists the upstream node IDs whose completion is
+   * required before this JOIN runs. Must be non-empty;
+   * submit-time validation rejects empty wait_for.
+   *
+   * @generated from field: repeated string wait_for = 1;
+   */
+  waitFor: string[];
+
+  /**
+   * strategy selects how upstream results are combined.
+   *
+   * @generated from field: gibson.mission.v1.MergeStrategy strategy = 2;
+   */
+  strategy: MergeStrategy;
+
+  /**
+   * aggregator carries a CEL expression used when strategy is
+   * MERGE_STRATEGY_CUSTOM. The expression sees `sources` (a map
+   * from node ID to that node's result) and returns the merged
+   * value. Empty when strategy is not CUSTOM.
+   *
+   * @generated from field: string aggregator = 3;
+   */
+  aggregator: string;
+};
+
+/**
+ * Describes the message gibson.mission.v1.JoinNodeConfig.
+ * Use `create(JoinNodeConfigSchema)` to create a new message.
+ */
+export const JoinNodeConfigSchema: GenMessage<JoinNodeConfig> = /*@__PURE__*/
+  messageDesc(file_gibson_mission_v1_mission_definition, 8);
 
 /**
  * RetryPolicy defines the retry behavior for a mission node
@@ -493,7 +618,7 @@ export type RetryPolicy = Message<"gibson.mission.v1.RetryPolicy"> & {
  * Use `create(RetryPolicySchema)` to create a new message.
  */
 export const RetryPolicySchema: GenMessage<RetryPolicy> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 8);
+  messageDesc(file_gibson_mission_v1_mission_definition, 9);
 
 /**
  * DataPolicy defines how data is handled for a node
@@ -542,7 +667,7 @@ export type DataPolicy = Message<"gibson.mission.v1.DataPolicy"> & {
  * Use `create(DataPolicySchema)` to create a new message.
  */
 export const DataPolicySchema: GenMessage<DataPolicy> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 9);
+  messageDesc(file_gibson_mission_v1_mission_definition, 10);
 
 /**
  * MissionEdge represents a directed edge in the mission DAG
@@ -584,7 +709,7 @@ export type MissionEdge = Message<"gibson.mission.v1.MissionEdge"> & {
  * Use `create(MissionEdgeSchema)` to create a new message.
  */
 export const MissionEdgeSchema: GenMessage<MissionEdge> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 10);
+  messageDesc(file_gibson_mission_v1_mission_definition, 11);
 
 /**
  * NodeType defines the type of mission node
@@ -614,7 +739,7 @@ export enum NodeType {
   TOOL = 2,
 
   /**
-   * Plugin node queries a plugin
+   * Plugin node calls a named method on a multi-method plugin component.
    *
    * @generated from enum value: NODE_TYPE_PLUGIN = 3;
    */
@@ -647,6 +772,99 @@ export enum NodeType {
  */
 export const NodeTypeSchema: GenEnum<NodeType> = /*@__PURE__*/
   enumDesc(file_gibson_mission_v1_mission_definition, 0);
+
+/**
+ * Language declares the expression language used by mission constructs
+ * that evaluate string expressions (currently only ConditionNodeConfig).
+ *
+ * Spec: mission-schema-canonicalization Requirement 4. CEL is the only
+ * language supported in v1; LANGUAGE_UNSPECIFIED is treated as
+ * LANGUAGE_CEL for backwards compatibility with documents authored
+ * before this enum existed.
+ *
+ * @generated from enum gibson.mission.v1.Language
+ */
+export enum Language {
+  /**
+   * Sentinel value - treated as LANGUAGE_CEL by the daemon.
+   *
+   * @generated from enum value: LANGUAGE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Common Expression Language (cel-spec.dev). The default.
+   *
+   * @generated from enum value: LANGUAGE_CEL = 1;
+   */
+  CEL = 1,
+}
+
+/**
+ * Describes the enum gibson.mission.v1.Language.
+ */
+export const LanguageSchema: GenEnum<Language> = /*@__PURE__*/
+  enumDesc(file_gibson_mission_v1_mission_definition, 1);
+
+/**
+ * MergeStrategy declares how a JoinNodeConfig combines results
+ * from its `wait_for` upstream sources.
+ *
+ * Spec: mission-verb-noun-registry Requirement 7.
+ *
+ * @generated from enum gibson.mission.v1.MergeStrategy
+ */
+export enum MergeStrategy {
+  /**
+   * Sentinel - must be first.
+   *
+   * @generated from enum value: MERGE_STRATEGY_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * CONCAT preserves source order in the merged output.
+   *
+   * @generated from enum value: MERGE_STRATEGY_CONCAT = 1;
+   */
+  CONCAT = 1,
+
+  /**
+   * REDUCE applies a built-in reducer (semantics defined in the
+   * CONDITION/JOIN executor design).
+   *
+   * @generated from enum value: MERGE_STRATEGY_REDUCE = 2;
+   */
+  REDUCE = 2,
+
+  /**
+   * FIRST returns the first source to complete.
+   *
+   * @generated from enum value: MERGE_STRATEGY_FIRST = 3;
+   */
+  FIRST = 3,
+
+  /**
+   * LAST returns the last source to complete.
+   *
+   * @generated from enum value: MERGE_STRATEGY_LAST = 4;
+   */
+  LAST = 4,
+
+  /**
+   * CUSTOM evaluates the JoinNodeConfig.aggregator CEL expression
+   * against the source results.
+   *
+   * @generated from enum value: MERGE_STRATEGY_CUSTOM = 5;
+   */
+  CUSTOM = 5,
+}
+
+/**
+ * Describes the enum gibson.mission.v1.MergeStrategy.
+ */
+export const MergeStrategySchema: GenEnum<MergeStrategy> = /*@__PURE__*/
+  enumDesc(file_gibson_mission_v1_mission_definition, 2);
 
 /**
  * BackoffStrategy defines the strategy for calculating retry delays
@@ -687,5 +905,5 @@ export enum BackoffStrategy {
  * Describes the enum gibson.mission.v1.BackoffStrategy.
  */
 export const BackoffStrategySchema: GenEnum<BackoffStrategy> = /*@__PURE__*/
-  enumDesc(file_gibson_mission_v1_mission_definition, 1);
+  enumDesc(file_gibson_mission_v1_mission_definition, 3);
 

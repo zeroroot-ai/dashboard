@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/platform/v1/platform_operator.proto.
  */
 export const file_gibson_platform_v1_platform_operator: GenFile = /*@__PURE__*/
-  fileDesc("CipnaWJzb24vcGxhdGZvcm0vdjEvcGxhdGZvcm1fb3BlcmF0b3IucHJvdG8SEmdpYnNvbi5wbGF0Zm9ybS52MSI5Cg9TaHV0ZG93blJlcXVlc3QSDQoFZm9yY2UYASABKAgSFwoPdGltZW91dF9zZWNvbmRzGAIgASgFIjQKEFNodXRkb3duUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIi0KGEltcGVyc29uYXRlVGVuYW50UmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiKgoZSW1wZXJzb25hdGVUZW5hbnRSZXNwb25zZRINCgV0b2tlbhgBIAEoCSIqChlSZWZyZXNoVG9vbENhdGFsb2dSZXF1ZXN0Eg0KBWZvcmNlGAEgASgIIj0KGlJlZnJlc2hUb29sQ2F0YWxvZ1Jlc3BvbnNlEg4KBnF1ZXVlZBgBIAEoCBIPCgdtZXNzYWdlGAIgASgJImAKC1RlbmFudFF1b3RhEhQKDG1heF9taXNzaW9ucxgBIAEoBRISCgptYXhfYWdlbnRzGAIgASgFEhQKDG1heF9maW5kaW5ncxgDIAEoAxIRCglwbGFuX3RpZXIYBCABKAkiWgoVU2V0VGVuYW50UXVvdGFSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIuCgVxdW90YRgCIAEoCzIfLmdpYnNvbi5wbGF0Zm9ybS52MS5UZW5hbnRRdW90YSJIChZTZXRUZW5hbnRRdW90YVJlc3BvbnNlEi4KBXF1b3RhGAEgASgLMh8uZ2lic29uLnBsYXRmb3JtLnYxLlRlbmFudFF1b3RhIj0KC0FjY2Vzc1R1cGxlEgwKBHVzZXIYASABKAkSEAoIcmVsYXRpb24YAiABKAkSDgoGb2JqZWN0GAMgASgJIokBChhXcml0ZUFjY2Vzc1R1cGxlc1JlcXVlc3QSLAoDYWRkGAEgAygLMh8uZ2lic29uLnBsYXRmb3JtLnYxLkFjY2Vzc1R1cGxlEi8KBmRlbGV0ZRgCIAMoCzIfLmdpYnNvbi5wbGF0Zm9ybS52MS5BY2Nlc3NUdXBsZRIOCgZyZWFzb24YAyABKAkiOwoZV3JpdGVBY2Nlc3NUdXBsZXNSZXNwb25zZRINCgVhZGRlZBgBIAEoBRIPCgdkZWxldGVkGAIgASgFIqcBChhVcHNlcnRUZW5hbnRRdW90YVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg0KBXNlYXRzGAIgASgFEhkKEWNvbmN1cnJlbnRfYWdlbnRzGAMgASgFEhIKCnN0b3JhZ2VfZ2IYBCABKAUSFgoOcmV0ZW50aW9uX2RheXMYBSABKAUSIgoac2FuZGJveF9sYXVuY2hlc19wZXJfbW9udGgYBiABKAUiLwoZVXBzZXJ0VGVuYW50UXVvdGFSZXNwb25zZRISCgp1cGRhdGVkX2F0GAEgASgJIi0KGExpc3RGZWF0dXJlVHVwbGVzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiLgoZTGlzdEZlYXR1cmVUdXBsZXNSZXNwb25zZRIRCglyZWxhdGlvbnMYASADKAkiNAofU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiOgogU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVzcG9uc2USFgoOdHVwbGVzX3dyaXR0ZW4YASABKAUirwIKEUF1ZGl0RXZlbnRNZXNzYWdlEgwKBHR5cGUYASABKAkSFQoNYWN0b3Jfc3ViamVjdBgCIAEoCRIUCgxhY3Rvcl9zb3VyY2UYAyABKAkSDQoFdHVwbGUYBCABKAkSFAoMYWN0aW9uX2NsYXNzGAUgASgJEhIKCnNjb3BlX3R5cGUYBiABKAkSEQoJb3BlcmF0aW9uGAcgASgJEg4KBnJlYXNvbhgIIAEoCRIRCgl0aW1lc3RhbXAYCSABKAkSQQoGZmllbGRzGAogAygLMjEuZ2lic29uLnBsYXRmb3JtLnYxLkF1ZGl0RXZlbnRNZXNzYWdlLkZpZWxkc0VudHJ5Gi0KC0ZpZWxkc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiTQoVRW1pdEF1ZGl0RXZlbnRSZXF1ZXN0EjQKBWV2ZW50GAEgASgLMiUuZ2lic29uLnBsYXRmb3JtLnYxLkF1ZGl0RXZlbnRNZXNzYWdlIhgKFkVtaXRBdWRpdEV2ZW50UmVzcG9uc2UiGQoXR2V0UmVzZXJ2ZWROYW1lc1JlcXVlc3QiOQoYR2V0UmVzZXJ2ZWROYW1lc1Jlc3BvbnNlEg0KBWV4YWN0GAEgAygJEg4KBnByZWZpeBgCIAMoCTK5DQoXUGxhdGZvcm1PcGVyYXRvclNlcnZpY2USjgEKCFNodXRkb3duEiMuZ2lic29uLnBsYXRmb3JtLnYxLlNodXRkb3duUmVxdWVzdBokLmdpYnNvbi5wbGF0Zm9ybS52MS5TaHV0ZG93blJlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEqkBChFJbXBlcnNvbmF0ZVRlbmFudBIsLmdpYnNvbi5wbGF0Zm9ybS52MS5JbXBlcnNvbmF0ZVRlbmFudFJlcXVlc3QaLS5naWJzb24ucGxhdGZvcm0udjEuSW1wZXJzb25hdGVUZW5hbnRSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKsAQoSUmVmcmVzaFRvb2xDYXRhbG9nEi0uZ2lic29uLnBsYXRmb3JtLnYxLlJlZnJlc2hUb29sQ2F0YWxvZ1JlcXVlc3QaLi5naWJzb24ucGxhdGZvcm0udjEuUmVmcmVzaFRvb2xDYXRhbG9nUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSoAEKDlNldFRlbmFudFF1b3RhEikuZ2lic29uLnBsYXRmb3JtLnYxLlNldFRlbmFudFF1b3RhUmVxdWVzdBoqLmdpYnNvbi5wbGF0Zm9ybS52MS5TZXRUZW5hbnRRdW90YVJlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEqkBChFXcml0ZUFjY2Vzc1R1cGxlcxIsLmdpYnNvbi5wbGF0Zm9ybS52MS5Xcml0ZUFjY2Vzc1R1cGxlc1JlcXVlc3QaLS5naWJzb24ucGxhdGZvcm0udjEuV3JpdGVBY2Nlc3NUdXBsZXNSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKpAQoRVXBzZXJ0VGVuYW50UXVvdGESLC5naWJzb24ucGxhdGZvcm0udjEuVXBzZXJ0VGVuYW50UXVvdGFSZXF1ZXN0Gi0uZ2lic29uLnBsYXRmb3JtLnYxLlVwc2VydFRlbmFudFF1b3RhUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSqQEKEUxpc3RGZWF0dXJlVHVwbGVzEiwuZ2lic29uLnBsYXRmb3JtLnYxLkxpc3RGZWF0dXJlVHVwbGVzUmVxdWVzdBotLmdpYnNvbi5wbGF0Zm9ybS52MS5MaXN0RmVhdHVyZVR1cGxlc1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEr4BChhTZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWQSMy5naWJzb24ucGxhdGZvcm0udjEuU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVxdWVzdBo0LmdpYnNvbi5wbGF0Zm9ybS52MS5TZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWRSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKgAQoORW1pdEF1ZGl0RXZlbnQSKS5naWJzb24ucGxhdGZvcm0udjEuRW1pdEF1ZGl0RXZlbnRSZXF1ZXN0GiouZ2lic29uLnBsYXRmb3JtLnYxLkVtaXRBdWRpdEV2ZW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSpgEKEEdldFJlc2VydmVkTmFtZXMSKy5naWJzb24ucGxhdGZvcm0udjEuR2V0UmVzZXJ2ZWROYW1lc1JlcXVlc3QaLC5naWJzb24ucGxhdGZvcm0udjEuR2V0UmVzZXJ2ZWROYW1lc1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADQlFaT2dpdGh1Yi5jb20vemVyby1kYXktYWkvZ2lic29uL2ludGVybmFsL2RhZW1vbi9hcGkvZ2lic29uL3BsYXRmb3JtL3YxO3BsYXRmb3JtdjFiBnByb3RvMw", [file_gibson_auth_v1_options]);
+  fileDesc("CipnaWJzb24vcGxhdGZvcm0vdjEvcGxhdGZvcm1fb3BlcmF0b3IucHJvdG8SEmdpYnNvbi5wbGF0Zm9ybS52MSI5Cg9TaHV0ZG93blJlcXVlc3QSDQoFZm9yY2UYASABKAgSFwoPdGltZW91dF9zZWNvbmRzGAIgASgFIjQKEFNodXRkb3duUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIi0KGEltcGVyc29uYXRlVGVuYW50UmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiKgoZSW1wZXJzb25hdGVUZW5hbnRSZXNwb25zZRINCgV0b2tlbhgBIAEoCSIqChlSZWZyZXNoVG9vbENhdGFsb2dSZXF1ZXN0Eg0KBWZvcmNlGAEgASgIIj0KGlJlZnJlc2hUb29sQ2F0YWxvZ1Jlc3BvbnNlEg4KBnF1ZXVlZBgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIj0KC0FjY2Vzc1R1cGxlEgwKBHVzZXIYASABKAkSEAoIcmVsYXRpb24YAiABKAkSDgoGb2JqZWN0GAMgASgJIokBChhXcml0ZUFjY2Vzc1R1cGxlc1JlcXVlc3QSLAoDYWRkGAEgAygLMh8uZ2lic29uLnBsYXRmb3JtLnYxLkFjY2Vzc1R1cGxlEi8KBmRlbGV0ZRgCIAMoCzIfLmdpYnNvbi5wbGF0Zm9ybS52MS5BY2Nlc3NUdXBsZRIOCgZyZWFzb24YAyABKAkiOwoZV3JpdGVBY2Nlc3NUdXBsZXNSZXNwb25zZRINCgVhZGRlZBgBIAEoBRIPCgdkZWxldGVkGAIgASgFIrwBChhVcHNlcnRUZW5hbnRRdW90YVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhsKE2NvbmN1cnJlbnRfbWlzc2lvbnMYByABKAUSGQoRY29uY3VycmVudF9hZ2VudHMYAyABKAVKBAgCEANKBAgEEAVKBAgFEAZKBAgGEAdSBXNlYXRzUgpzdG9yYWdlX2diUg5yZXRlbnRpb25fZGF5c1Iac2FuZGJveF9sYXVuY2hlc19wZXJfbW9udGgiLwoZVXBzZXJ0VGVuYW50UXVvdGFSZXNwb25zZRISCgp1cGRhdGVkX2F0GAEgASgJIi0KGExpc3RGZWF0dXJlVHVwbGVzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiLgoZTGlzdEZlYXR1cmVUdXBsZXNSZXNwb25zZRIRCglyZWxhdGlvbnMYASADKAkiNAofU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiOgogU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVzcG9uc2USFgoOdHVwbGVzX3dyaXR0ZW4YASABKAUirwIKEUF1ZGl0RXZlbnRNZXNzYWdlEgwKBHR5cGUYASABKAkSFQoNYWN0b3Jfc3ViamVjdBgCIAEoCRIUCgxhY3Rvcl9zb3VyY2UYAyABKAkSDQoFdHVwbGUYBCABKAkSFAoMYWN0aW9uX2NsYXNzGAUgASgJEhIKCnNjb3BlX3R5cGUYBiABKAkSEQoJb3BlcmF0aW9uGAcgASgJEg4KBnJlYXNvbhgIIAEoCRIRCgl0aW1lc3RhbXAYCSABKAkSQQoGZmllbGRzGAogAygLMjEuZ2lic29uLnBsYXRmb3JtLnYxLkF1ZGl0RXZlbnRNZXNzYWdlLkZpZWxkc0VudHJ5Gi0KC0ZpZWxkc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiTQoVRW1pdEF1ZGl0RXZlbnRSZXF1ZXN0EjQKBWV2ZW50GAEgASgLMiUuZ2lic29uLnBsYXRmb3JtLnYxLkF1ZGl0RXZlbnRNZXNzYWdlIhgKFkVtaXRBdWRpdEV2ZW50UmVzcG9uc2UiGQoXR2V0UmVzZXJ2ZWROYW1lc1JlcXVlc3QiOQoYR2V0UmVzZXJ2ZWROYW1lc1Jlc3BvbnNlEg0KBWV4YWN0GAEgAygJEg4KBnByZWZpeBgCIAMoCTKWDAoXUGxhdGZvcm1PcGVyYXRvclNlcnZpY2USjgEKCFNodXRkb3duEiMuZ2lic29uLnBsYXRmb3JtLnYxLlNodXRkb3duUmVxdWVzdBokLmdpYnNvbi5wbGF0Zm9ybS52MS5TaHV0ZG93blJlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEqkBChFJbXBlcnNvbmF0ZVRlbmFudBIsLmdpYnNvbi5wbGF0Zm9ybS52MS5JbXBlcnNvbmF0ZVRlbmFudFJlcXVlc3QaLS5naWJzb24ucGxhdGZvcm0udjEuSW1wZXJzb25hdGVUZW5hbnRSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKsAQoSUmVmcmVzaFRvb2xDYXRhbG9nEi0uZ2lic29uLnBsYXRmb3JtLnYxLlJlZnJlc2hUb29sQ2F0YWxvZ1JlcXVlc3QaLi5naWJzb24ucGxhdGZvcm0udjEuUmVmcmVzaFRvb2xDYXRhbG9nUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSqQEKEVdyaXRlQWNjZXNzVHVwbGVzEiwuZ2lic29uLnBsYXRmb3JtLnYxLldyaXRlQWNjZXNzVHVwbGVzUmVxdWVzdBotLmdpYnNvbi5wbGF0Zm9ybS52MS5Xcml0ZUFjY2Vzc1R1cGxlc1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEqkBChFVcHNlcnRUZW5hbnRRdW90YRIsLmdpYnNvbi5wbGF0Zm9ybS52MS5VcHNlcnRUZW5hbnRRdW90YVJlcXVlc3QaLS5naWJzb24ucGxhdGZvcm0udjEuVXBzZXJ0VGVuYW50UXVvdGFSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKpAQoRTGlzdEZlYXR1cmVUdXBsZXMSLC5naWJzb24ucGxhdGZvcm0udjEuTGlzdEZlYXR1cmVUdXBsZXNSZXF1ZXN0Gi0uZ2lic29uLnBsYXRmb3JtLnYxLkxpc3RGZWF0dXJlVHVwbGVzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSvgEKGFNlZWRDYXRhbG9nVGVuYW50RW5hYmxlZBIzLmdpYnNvbi5wbGF0Zm9ybS52MS5TZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWRSZXF1ZXN0GjQuZ2lic29uLnBsYXRmb3JtLnYxLlNlZWRDYXRhbG9nVGVuYW50RW5hYmxlZFJlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEqABCg5FbWl0QXVkaXRFdmVudBIpLmdpYnNvbi5wbGF0Zm9ybS52MS5FbWl0QXVkaXRFdmVudFJlcXVlc3QaKi5naWJzb24ucGxhdGZvcm0udjEuRW1pdEF1ZGl0RXZlbnRSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKmAQoQR2V0UmVzZXJ2ZWROYW1lcxIrLmdpYnNvbi5wbGF0Zm9ybS52MS5HZXRSZXNlcnZlZE5hbWVzUmVxdWVzdBosLmdpYnNvbi5wbGF0Zm9ybS52MS5HZXRSZXNlcnZlZE5hbWVzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IANCUVpPZ2l0aHViLmNvbS96ZXJvLWRheS1haS9naWJzb24vaW50ZXJuYWwvZGFlbW9uL2FwaS9naWJzb24vcGxhdGZvcm0vdjE7cGxhdGZvcm12MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
 
 /**
  * ShutdownRequest requests graceful shutdown of the daemon.
@@ -167,100 +167,6 @@ export const RefreshToolCatalogResponseSchema: GenMessage<RefreshToolCatalogResp
   messageDesc(file_gibson_platform_v1_platform_operator, 5);
 
 /**
- * TenantQuota defines the resource limits for a tenant.
- *
- * @generated from message gibson.platform.v1.TenantQuota
- */
-export type TenantQuota = Message<"gibson.platform.v1.TenantQuota"> & {
-  /**
-   * max_missions is the maximum number of concurrent running missions allowed.
-   * Zero means no limit.
-   *
-   * @generated from field: int32 max_missions = 1;
-   */
-  maxMissions: number;
-
-  /**
-   * max_agents is the maximum number of registered agents allowed.
-   * Zero means no limit.
-   *
-   * @generated from field: int32 max_agents = 2;
-   */
-  maxAgents: number;
-
-  /**
-   * max_findings is the maximum number of findings stored across all missions.
-   * Zero means no limit.
-   *
-   * @generated from field: int64 max_findings = 3;
-   */
-  maxFindings: bigint;
-
-  /**
-   * plan_tier identifies the subscription plan (e.g., "free", "pro", "enterprise").
-   *
-   * @generated from field: string plan_tier = 4;
-   */
-  planTier: string;
-};
-
-/**
- * Describes the message gibson.platform.v1.TenantQuota.
- * Use `create(TenantQuotaSchema)` to create a new message.
- */
-export const TenantQuotaSchema: GenMessage<TenantQuota> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 6);
-
-/**
- * SetTenantQuotaRequest sets the quota configuration for a tenant.
- *
- * @generated from message gibson.platform.v1.SetTenantQuotaRequest
- */
-export type SetTenantQuotaRequest = Message<"gibson.platform.v1.SetTenantQuotaRequest"> & {
-  /**
-   * tenant_id is the target tenant. Required.
-   *
-   * @generated from field: string tenant_id = 1;
-   */
-  tenantId: string;
-
-  /**
-   * quota contains the new limits to apply.
-   *
-   * @generated from field: gibson.platform.v1.TenantQuota quota = 2;
-   */
-  quota?: TenantQuota;
-};
-
-/**
- * Describes the message gibson.platform.v1.SetTenantQuotaRequest.
- * Use `create(SetTenantQuotaRequestSchema)` to create a new message.
- */
-export const SetTenantQuotaRequestSchema: GenMessage<SetTenantQuotaRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 7);
-
-/**
- * SetTenantQuotaResponse confirms the quota update.
- *
- * @generated from message gibson.platform.v1.SetTenantQuotaResponse
- */
-export type SetTenantQuotaResponse = Message<"gibson.platform.v1.SetTenantQuotaResponse"> & {
-  /**
-   * quota contains the updated limits as stored.
-   *
-   * @generated from field: gibson.platform.v1.TenantQuota quota = 1;
-   */
-  quota?: TenantQuota;
-};
-
-/**
- * Describes the message gibson.platform.v1.SetTenantQuotaResponse.
- * Use `create(SetTenantQuotaResponseSchema)` to create a new message.
- */
-export const SetTenantQuotaResponseSchema: GenMessage<SetTenantQuotaResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 8);
-
-/**
  * AccessTuple is a single FGA relationship tuple.
  *
  * @generated from message gibson.platform.v1.AccessTuple
@@ -287,7 +193,7 @@ export type AccessTuple = Message<"gibson.platform.v1.AccessTuple"> & {
  * Use `create(AccessTupleSchema)` to create a new message.
  */
 export const AccessTupleSchema: GenMessage<AccessTuple> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 9);
+  messageDesc(file_gibson_platform_v1_platform_operator, 6);
 
 /**
  * WriteAccessTuplesRequest atomically adds and/or deletes FGA tuples.
@@ -316,7 +222,7 @@ export type WriteAccessTuplesRequest = Message<"gibson.platform.v1.WriteAccessTu
  * Use `create(WriteAccessTuplesRequestSchema)` to create a new message.
  */
 export const WriteAccessTuplesRequestSchema: GenMessage<WriteAccessTuplesRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 10);
+  messageDesc(file_gibson_platform_v1_platform_operator, 7);
 
 /**
  * WriteAccessTuplesResponse reports how many tuples were written/deleted.
@@ -340,10 +246,13 @@ export type WriteAccessTuplesResponse = Message<"gibson.platform.v1.WriteAccessT
  * Use `create(WriteAccessTuplesResponseSchema)` to create a new message.
  */
 export const WriteAccessTuplesResponseSchema: GenMessage<WriteAccessTuplesResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 11);
+  messageDesc(file_gibson_platform_v1_platform_operator, 8);
 
 /**
- * UpsertTenantQuotaRequest writes the tenant's runtime quota record.
+ * UpsertTenantQuotaRequest writes the tenant's runtime quota record. The
+ * schema is governed by spec plans-and-quotas-simplification — only
+ * concurrent_missions and concurrent_agents are enforced; 0 means
+ * "unlimited" on either dimension.
  *
  * @generated from message gibson.platform.v1.UpsertTenantQuotaRequest
  */
@@ -354,29 +263,20 @@ export type UpsertTenantQuotaRequest = Message<"gibson.platform.v1.UpsertTenantQ
   tenantId: string;
 
   /**
-   * @generated from field: int32 seats = 2;
+   * concurrent_missions is the cap on missions in non-terminal execution
+   * state at any moment. 0 = unlimited.
+   *
+   * @generated from field: int32 concurrent_missions = 7;
    */
-  seats: number;
+  concurrentMissions: number;
 
   /**
+   * concurrent_agents is the cap on agents bound to in-flight mission
+   * tasks at any moment (idle agents do NOT count). 0 = unlimited.
+   *
    * @generated from field: int32 concurrent_agents = 3;
    */
   concurrentAgents: number;
-
-  /**
-   * @generated from field: int32 storage_gb = 4;
-   */
-  storageGb: number;
-
-  /**
-   * @generated from field: int32 retention_days = 5;
-   */
-  retentionDays: number;
-
-  /**
-   * @generated from field: int32 sandbox_launches_per_month = 6;
-   */
-  sandboxLaunchesPerMonth: number;
 };
 
 /**
@@ -384,7 +284,7 @@ export type UpsertTenantQuotaRequest = Message<"gibson.platform.v1.UpsertTenantQ
  * Use `create(UpsertTenantQuotaRequestSchema)` to create a new message.
  */
 export const UpsertTenantQuotaRequestSchema: GenMessage<UpsertTenantQuotaRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 12);
+  messageDesc(file_gibson_platform_v1_platform_operator, 9);
 
 /**
  * UpsertTenantQuotaResponse confirms the upsert.
@@ -403,7 +303,7 @@ export type UpsertTenantQuotaResponse = Message<"gibson.platform.v1.UpsertTenant
  * Use `create(UpsertTenantQuotaResponseSchema)` to create a new message.
  */
 export const UpsertTenantQuotaResponseSchema: GenMessage<UpsertTenantQuotaResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 13);
+  messageDesc(file_gibson_platform_v1_platform_operator, 10);
 
 /**
  * ListFeatureTuplesRequest queries the feature tuples for a tenant.
@@ -422,7 +322,7 @@ export type ListFeatureTuplesRequest = Message<"gibson.platform.v1.ListFeatureTu
  * Use `create(ListFeatureTuplesRequestSchema)` to create a new message.
  */
 export const ListFeatureTuplesRequestSchema: GenMessage<ListFeatureTuplesRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 14);
+  messageDesc(file_gibson_platform_v1_platform_operator, 11);
 
 /**
  * ListFeatureTuplesResponse returns the set of has_* feature tuples present.
@@ -441,7 +341,7 @@ export type ListFeatureTuplesResponse = Message<"gibson.platform.v1.ListFeatureT
  * Use `create(ListFeatureTuplesResponseSchema)` to create a new message.
  */
 export const ListFeatureTuplesResponseSchema: GenMessage<ListFeatureTuplesResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 15);
+  messageDesc(file_gibson_platform_v1_platform_operator, 12);
 
 /**
  * SeedCatalogTenantEnabledRequest triggers seeding of tenant_enabled tuples.
@@ -460,7 +360,7 @@ export type SeedCatalogTenantEnabledRequest = Message<"gibson.platform.v1.SeedCa
  * Use `create(SeedCatalogTenantEnabledRequestSchema)` to create a new message.
  */
 export const SeedCatalogTenantEnabledRequestSchema: GenMessage<SeedCatalogTenantEnabledRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 16);
+  messageDesc(file_gibson_platform_v1_platform_operator, 13);
 
 /**
  * SeedCatalogTenantEnabledResponse reports how many tuples were written.
@@ -479,7 +379,7 @@ export type SeedCatalogTenantEnabledResponse = Message<"gibson.platform.v1.SeedC
  * Use `create(SeedCatalogTenantEnabledResponseSchema)` to create a new message.
  */
 export const SeedCatalogTenantEnabledResponseSchema: GenMessage<SeedCatalogTenantEnabledResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 17);
+  messageDesc(file_gibson_platform_v1_platform_operator, 14);
 
 /**
  * AuditEventMessage is the wire shape for EmitAuditEvent.
@@ -543,7 +443,7 @@ export type AuditEventMessage = Message<"gibson.platform.v1.AuditEventMessage"> 
  * Use `create(AuditEventMessageSchema)` to create a new message.
  */
 export const AuditEventMessageSchema: GenMessage<AuditEventMessage> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 18);
+  messageDesc(file_gibson_platform_v1_platform_operator, 15);
 
 /**
  * EmitAuditEventRequest carries the audit event to emit.
@@ -562,7 +462,7 @@ export type EmitAuditEventRequest = Message<"gibson.platform.v1.EmitAuditEventRe
  * Use `create(EmitAuditEventRequestSchema)` to create a new message.
  */
 export const EmitAuditEventRequestSchema: GenMessage<EmitAuditEventRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 19);
+  messageDesc(file_gibson_platform_v1_platform_operator, 16);
 
 /**
  * EmitAuditEventResponse confirms the event was emitted.
@@ -577,7 +477,7 @@ export type EmitAuditEventResponse = Message<"gibson.platform.v1.EmitAuditEventR
  * Use `create(EmitAuditEventResponseSchema)` to create a new message.
  */
 export const EmitAuditEventResponseSchema: GenMessage<EmitAuditEventResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 20);
+  messageDesc(file_gibson_platform_v1_platform_operator, 17);
 
 /**
  * GetReservedNamesRequest is empty — the list is global.
@@ -592,7 +492,7 @@ export type GetReservedNamesRequest = Message<"gibson.platform.v1.GetReservedNam
  * Use `create(GetReservedNamesRequestSchema)` to create a new message.
  */
 export const GetReservedNamesRequestSchema: GenMessage<GetReservedNamesRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 21);
+  messageDesc(file_gibson_platform_v1_platform_operator, 18);
 
 /**
  * GetReservedNamesResponse carries the chart-managed reserved-names
@@ -626,7 +526,7 @@ export type GetReservedNamesResponse = Message<"gibson.platform.v1.GetReservedNa
  * Use `create(GetReservedNamesResponseSchema)` to create a new message.
  */
 export const GetReservedNamesResponseSchema: GenMessage<GetReservedNamesResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_platform_v1_platform_operator, 22);
+  messageDesc(file_gibson_platform_v1_platform_operator, 19);
 
 /**
  * PlatformOperatorService provides platform-team operations on the Gibson daemon.
@@ -672,19 +572,6 @@ export const PlatformOperatorService: GenService<{
     methodKind: "unary";
     input: typeof RefreshToolCatalogRequestSchema;
     output: typeof RefreshToolCatalogResponseSchema;
-  },
-  /**
-   * SetTenantQuota sets or updates the resource quotas for a tenant.
-   * Requires platform-operator role.
-   *
-   * Unimplemented: <owner-pending>
-   *
-   * @generated from rpc gibson.platform.v1.PlatformOperatorService.SetTenantQuota
-   */
-  setTenantQuota: {
-    methodKind: "unary";
-    input: typeof SetTenantQuotaRequestSchema;
-    output: typeof SetTenantQuotaResponseSchema;
   },
   /**
    * WriteAccessTuples atomically adds and/or deletes FGA tuples on behalf of

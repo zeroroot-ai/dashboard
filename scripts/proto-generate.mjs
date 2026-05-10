@@ -128,6 +128,11 @@ function buildWorkspace() {
       '  - path: sdk-proto',
       '    excludes:',
       '      - sdk-proto/google',
+      // protovalidate provides the (buf.validate.field).* annotations
+      // adopted by the SDK from v1.5.0 onward. Pulled from the buf.build
+      // remote registry; resolved by `buf dep update` invoked below.
+      'deps:',
+      '  - buf.build/bufbuild/protovalidate',
       'lint:',
       '  use:',
       '    - STANDARD',
@@ -153,6 +158,11 @@ function buildWorkspace() {
       'inputs:',
       '  - directory: gibson-local',
       '  - directory: sdk-proto',
+      // Generate TS bindings for the protovalidate annotation proto so
+      // imports of file_buf_validate_validate from generated SDK files
+      // resolve. Without this, src/gen/buf/validate/validate_pb.ts is
+      // missing and the SDK's mission_definition_pb.ts fails to compile.
+      '  - module: buf.build/bufbuild/protovalidate',
       '',
     ].join('\n'),
   );
@@ -163,6 +173,14 @@ function buildWorkspace() {
 function generate() {
   const ws = buildWorkspace();
   console.log(`proto-generate: workspace at ${path.relative(DASHBOARD_ROOT, ws)}`);
+
+  // Resolve the protovalidate dep declared in buf.yaml. Writes a
+  // buf.lock alongside the generated buf.yaml so `buf generate` can
+  // find the (buf.validate.field).* import.
+  execSync(`npx buf dep update`, {
+    cwd: ws,
+    stdio: 'inherit',
+  });
 
   // Run buf generate via the dashboard's npx (so we use the version
   // pinned in package.json, not whatever the system has).
