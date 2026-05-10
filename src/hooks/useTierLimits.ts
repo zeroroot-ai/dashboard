@@ -1,14 +1,15 @@
 /**
  * useTierLimits Hook
  *
- * React-Query hook for fetching the tenant's current tier configuration and
- * usage. Types and TIER_CONFIGS are now derived from the canonical plan
- * registry; see @/src/lib/tier-checker for the adapter and
- * @/src/generated/plans for the source of truth.
+ * React-Query hook for fetching the tenant's current tier configuration
+ * and live usage. Spec plans-and-quotas-simplification reduces this to
+ * the two enforced quotas; legacy team-member / API-key / SSO surfaces
+ * are dropped.
  */
 
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+
 import {
   TIER_CONFIGS,
   type TierConfig,
@@ -22,15 +23,15 @@ import {
 export { TIER_CONFIGS, compareTiers, getNextTier, getTierConfig, isHigherTier };
 export type { TierConfig, TierLevel };
 
-/** Current usage statistics. */
+/** Live usage snapshot (mirrors the daemon's :active counters). */
 export interface TierUsage {
-  teamMemberCount: number;
-  apiKeyCount: number;
-  customRoleCount: number;
-  pendingInvitationCount: number;
+  /** Missions currently in non-terminal execution at any moment. */
+  concurrentMissions: number;
+  /** Agents currently bound to in-flight tasks. */
+  concurrentAgents: number;
 }
 
-/** Tier limits response. */
+/** Tier limits + usage response. */
 export interface TierLimitsResponse {
   config: TierConfig;
   usage: TierUsage;
@@ -41,15 +42,13 @@ export const tierLimitsKeys = {
   current: () => [...tierLimitsKeys.all, "current"] as const,
 };
 
-/** Default fallback response used when the tier API is unavailable. */
+/** Default fallback used when the tier API is unavailable. Selects
+ * the smallest plan in the registry so the dashboard renders something
+ * conservative. */
+const DEFAULT_TIER: TierLevel = "team";
 const DEFAULT_TIER_RESPONSE: TierLimitsResponse = {
-  config: TIER_CONFIGS.solo,
-  usage: {
-    teamMemberCount: 0,
-    apiKeyCount: 0,
-    customRoleCount: 0,
-    pendingInvitationCount: 0,
-  },
+  config: TIER_CONFIGS[DEFAULT_TIER],
+  usage: { concurrentMissions: 0, concurrentAgents: 0 },
 };
 
 async function fetchTierLimits(): Promise<TierLimitsResponse> {
@@ -81,33 +80,35 @@ export function useTierLimitCheck() {
 
   return useMemo(() => {
     if (!data) {
+      const fallback = TIER_CONFIGS[DEFAULT_TIER];
       return {
-        canAddTeamMember: false,
-        canCreateAPIKey: false,
-        canCreateCustomRole: false,
-        teamMembersRemaining: 0,
-        apiKeysRemaining: 0,
-        isAtTeamLimit: true,
-        isAtAPIKeyLimit: true,
-        tier: "solo" as TierLevel,
-        config: TIER_CONFIGS.solo,
+        canRunMission: false,
+        canDispatchAgent: false,
+        missionsRemaining: 0,
+        agentsRemaining: 0,
+        isAtMissionLimit: true,
+        isAtAgentLimit: true,
+        tier: DEFAULT_TIER,
+        config: fallback,
         usage: null,
       };
     }
     const { config, usage } = data;
-    const effectiveTeamCount =
-      usage.teamMemberCount + usage.pendingInvitationCount;
+    const missionLimit = config.concurrentMissions;
+    const agentLimit = config.concurrentAgents;
+    const missionsUnlimited = missionLimit === 0;
+    const agentsUnlimited = agentLimit === 0;
     return {
-      canAddTeamMember: effectiveTeamCount < config.maxTeamMembers,
-      canCreateAPIKey: usage.apiKeyCount < config.maxAPIKeys,
-      canCreateCustomRole: config.customRolesEnabled,
-      teamMembersRemaining: Math.max(
-        0,
-        config.maxTeamMembers - effectiveTeamCount,
-      ),
-      apiKeysRemaining: Math.max(0, config.maxAPIKeys - usage.apiKeyCount),
-      isAtTeamLimit: effectiveTeamCount >= config.maxTeamMembers,
-      isAtAPIKeyLimit: usage.apiKeyCount >= config.maxAPIKeys,
+      canRunMission: missionsUnlimited || usage.concurrentMissions < missionLimit,
+      canDispatchAgent: agentsUnlimited || usage.concurrentAgents < agentLimit,
+      missionsRemaining: missionsUnlimited
+        ? Number.POSITIVE_INFINITY
+        : Math.max(0, missionLimit - usage.concurrentMissions),
+      agentsRemaining: agentsUnlimited
+        ? Number.POSITIVE_INFINITY
+        : Math.max(0, agentLimit - usage.concurrentAgents),
+      isAtMissionLimit: !missionsUnlimited && usage.concurrentMissions >= missionLimit,
+      isAtAgentLimit: !agentsUnlimited && usage.concurrentAgents >= agentLimit,
       tier: config.tier,
       config,
       usage,
@@ -121,24 +122,20 @@ export function useUpgradeRecommendation() {
   return useMemo(() => {
     if (!data) return null;
     const { config, usage } = data;
-    const effectiveTeam = usage.teamMemberCount + usage.pendingInvitationCount;
-
     const limitations: string[] = [];
-    if (
-      config.maxTeamMembers !== Infinity &&
-      effectiveTeam >= config.maxTeamMembers * 0.8
-    ) {
-      limitations.push("team_members");
-    }
-    if (
-      config.maxAPIKeys !== Infinity &&
-      usage.apiKeyCount >= config.maxAPIKeys * 0.8
-    ) {
-      limitations.push("api_keys");
-    }
-    if (!config.customRolesEnabled) limitations.push("custom_roles");
-    if (!config.ssoEnabled) limitations.push("sso");
 
+    if (
+      config.concurrentMissions !== 0 &&
+      usage.concurrentMissions >= config.concurrentMissions * 0.8
+    ) {
+      limitations.push("concurrent_missions");
+    }
+    if (
+      config.concurrentAgents !== 0 &&
+      usage.concurrentAgents >= config.concurrentAgents * 0.8
+    ) {
+      limitations.push("concurrent_agents");
+    }
     if (limitations.length === 0) return null;
 
     const nextTier = getNextTier(config.tier);
@@ -153,27 +150,3 @@ export function useUpgradeRecommendation() {
     };
   }, [data]);
 }
-
-/** Feature availability metadata (unchanged from pre-migration). */
-export const TIER_FEATURES = {
-  customRoles: {
-    availableFrom: "org" as TierLevel,
-    description: "Create custom roles with specific permissions",
-  },
-  sso: {
-    availableFrom: "org" as TierLevel,
-    description: "Single sign-on with your identity provider",
-  },
-  auditExport: {
-    availableFrom: "org" as TierLevel,
-    description: "Export audit logs for compliance",
-  },
-  prioritySupport: {
-    availableFrom: "org" as TierLevel,
-    description: "Priority email and chat support",
-  },
-  unlimitedMembers: {
-    availableFrom: "enterprise-cloud" as TierLevel,
-    description: "Unlimited team members",
-  },
-};

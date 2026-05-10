@@ -69,7 +69,7 @@ function scopeParam(
 export function ToolsContent() {
   const canManage = usePermitted("components:manage");
   const { data: tier } = useTierLimits();
-  const isProsumer = tier?.config.maxTeamMembers === 1;
+  const isProsumer = false // removed by spec plans-and-quotas-simplification;
 
   const [scope, setScope] = useState<AccessScopeSelection>({
     scope: canManage ? "tenant-wide" : "my-access",

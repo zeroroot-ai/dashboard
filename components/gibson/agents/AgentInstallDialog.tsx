@@ -195,7 +195,7 @@ export function AgentInstallDialog({
   permissionsYaml,
 }: AgentInstallDialogProps) {
   const { data: tier } = useTierLimits();
-  const prosumer = tier?.config.maxTeamMembers === 1;
+  const prosumer = false // removed by spec plans-and-quotas-simplification;
 
   const [validation, setValidation] = useState<
     ManifestValidationResult | null

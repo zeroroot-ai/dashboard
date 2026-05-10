@@ -1,21 +1,17 @@
 "use client";
 
 /**
- * BillingContent
- * Gibson Enterprise billing overview with Plan & Usage card (plan header,
- * quota bars, feature list) plus Stripe customer-portal CTA.
+ * BillingContent — Settings → Billing page.
+ *
+ * Spec plans-and-quotas-simplification simplifies this surface: plan
+ * name + the two enforced quotas (concurrent_missions, concurrent_agents)
+ * with usage bars + a tier-aware upgrade CTA + Stripe Customer Portal
+ * entry for managing payment / cancellation.
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  AlertCircle,
-  Building2,
-  Check,
-  CreditCard,
-  ExternalLink,
-  Minus,
-  Zap,
-} from "lucide-react";
+import Link from "next/link";
+import { CreditCard, ExternalLink, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -29,345 +25,196 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { useTierLimits } from "@/src/hooks/useTierLimits";
 import { lookupPlan, type PlanID } from "@/src/generated/plans";
+import { getUpgradeTarget } from "@/src/lib/billing/upgrade-target";
 import {
   getTenantQuotaAction,
   type TenantQuotaRow,
 } from "@/app/actions/read/getTenantQuota";
 
-const UNLIMITED = -1;
 const REFRESH_INTERVAL_MS = 60_000;
-const SALES_EMAIL = "sales@zero-day.ai";
-
-type FeatureRow =
-  | { label: string; state: "on" | "off" }
-  | { label: string; state: "priority" };
-
-interface QuotaSpec {
-  label: string;
-  current: number;
-  limit: number;
-  description?: string;
-}
 
 function pct(used: number, limit: number): number {
   if (limit <= 0) return 0;
   return Math.min(100, Math.round((used / limit) * 100));
 }
 
-function fmt(n: number): string {
-  return n.toLocaleString();
+interface QuotaCardProps {
+  label: string;
+  description: string;
+  used: number;
+  limit: number;
 }
 
-function formatLimit(limit: number): string {
-  return limit === UNLIMITED ? "Unlimited" : fmt(limit);
+function QuotaCard({ label, description, used, limit }: QuotaCardProps) {
+  if (limit === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{label}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-semibold">Unlimited</div>
+        </CardContent>
+      </Card>
+    );
+  }
+  const pctVal = pct(used, limit);
+  const variant =
+    pctVal >= 100 ? "destructive" : pctVal >= 80 ? "secondary" : "outline";
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">{label}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <div className="flex items-baseline justify-between">
+          <div className="text-2xl font-semibold tabular-nums">
+            {used}
+            <span className="text-muted-foreground/60 text-base"> / {limit}</span>
+          </div>
+          <Badge variant={variant}>{pctVal}%</Badge>
+        </div>
+        <Progress value={pctVal} className="h-2" />
+      </CardContent>
+    </Card>
+  );
 }
 
-function progressTone(percent: number, unlimited: boolean): string {
-  if (unlimited) return "";
-  if (percent >= 95) return "[&>div]:bg-red-500";
-  if (percent >= 80) return "[&>div]:bg-amber-500";
-  return "";
-}
+export function BillingContent({ initialPlanId }: { initialPlanId?: string }) {
+  const [data, setData] = useState<TenantQuotaRow | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [portalLoading, setPortalLoading] = useState(false);
 
-function featureRows(planId: PlanID): FeatureRow[] {
-  const plan = lookupPlan(planId);
-  const f = plan.features;
-  // Priority Slack lights up at org tier (first has_dedicated_slack=true) —
-  // render a "Priority" badge rather than a plain check.
-  return [
-    { label: "SSO (OIDC / SAML)", state: f.has_sso ? "on" : "off" },
-    { label: "Audit log export", state: f.has_audit_logs ? "on" : "off" },
-    {
-      label: "Compliance exports",
-      state: f.has_compliance_exports ? "on" : "off",
-    },
-    {
-      label: "Dedicated Slack",
-      state: f.has_dedicated_slack ? "priority" : "off",
-    },
-    {
-      label: "Dedicated tenant",
-      state: f.has_dedicated_tenant ? "on" : "off",
-    },
-    {
-      label: "Private registry",
-      state: f.has_private_registry ? "on" : "off",
-    },
-  ];
-}
-
-export function BillingContent() {
-  const { data, isLoading, isError, error } = useTierLimits();
-  const planId = (data?.config?.tier ?? "solo") as PlanID;
-  const plan = useMemo(() => lookupPlan(planId), [planId]);
-
-  const [quota, setQuota] = useState<TenantQuotaRow | null>(null);
-  const [quotaError, setQuotaError] = useState<string | null>(null);
-  const [quotaLoading, setQuotaLoading] = useState(true);
-
-  const refreshQuota = useCallback(async () => {
-    const r = await getTenantQuotaAction();
-    if (r.ok) {
-      setQuota(r.data);
-      setQuotaError(null);
+  const refresh = useCallback(async () => {
+    const res = await getTenantQuotaAction();
+    if (res.ok) {
+      setData(res.data);
+      setError(null);
     } else {
-      setQuotaError(r.error);
+      setError(res.error);
     }
-    setQuotaLoading(false);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    refreshQuota();
-    const tick = () => {
-      if (cancelled) return;
-      if (
-        typeof document !== "undefined" &&
-        document.visibilityState !== "visible"
-      ) {
-        return;
-      }
-      refreshQuota();
-    };
-    const id = window.setInterval(tick, REFRESH_INTERVAL_MS);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, [refreshQuota]);
+    refresh();
+    const t = setInterval(refresh, REFRESH_INTERVAL_MS);
+    return () => clearInterval(t);
+  }, [refresh]);
 
-  async function handleManageSubscription() {
-    if (plan.contactOnly) {
-      window.location.href = `mailto:${SALES_EMAIL}?subject=${encodeURIComponent(
-        `Gibson ${plan.displayName} — upgrade inquiry`,
-      )}`;
-      return;
-    }
+  const plan = useMemo(() => {
+    const id = (initialPlanId ?? "team") as PlanID;
     try {
-      const response = await fetch("/api/billing/portal", { method: "POST" });
-      if (!response.ok) {
-        throw new Error(`Request failed (${response.status})`);
+      return lookupPlan(id);
+    } catch {
+      return null;
+    }
+  }, [initialPlanId]);
+
+  const upgrade = getUpgradeTarget(plan?.id);
+
+  async function openCustomerPortal() {
+    setPortalLoading(true);
+    try {
+      const res = await fetch("/api/billing/portal", { method: "POST" });
+      if (!res.ok) {
+        const msg = await res.text().catch(() => "");
+        throw new Error(msg || `HTTP ${res.status}`);
       }
-      const body = await response.json();
-      if (body?.url) {
-        window.open(body.url, "_blank", "noopener,noreferrer");
+      const json = (await res.json()) as { url?: string };
+      if (json.url) {
+        window.location.href = json.url;
       } else {
-        throw new Error("No portal URL returned");
+        throw new Error("portal returned no URL");
       }
     } catch (err) {
-      toast.error("Failed to open billing portal", {
-        description: err instanceof Error ? err.message : "Unknown error",
-      });
+      toast.error(
+        err instanceof Error ? err.message : "Failed to open Stripe portal",
+      );
+    } finally {
+      setPortalLoading(false);
     }
   }
 
-  const quotaSpecs: QuotaSpec[] = quota
-    ? [
-        {
-          label: "Seats",
-          current: quota.currentSeats,
-          limit: plan.quotas.seats,
-        },
-        {
-          label: "Concurrent agents",
-          current: quota.currentConcurrentAgents,
-          limit: plan.quotas.concurrent_agents,
-        },
-        {
-          label: "Storage (GB)",
-          current: quota.currentStorageGb,
-          limit: plan.quotas.storage_gb,
-        },
-        {
-          label: "Retention (days)",
-          current: plan.quotas.retention_days === UNLIMITED
-            ? 0
-            : plan.quotas.retention_days,
-          limit: plan.quotas.retention_days,
-          description: "Retention window for audit / mission history.",
-        },
-        {
-          label: "Sandbox launches / month",
-          current: quota.currentSandboxLaunchesThisMonth,
-          limit: plan.quotas.sandbox_launches_per_month,
-        },
-      ]
-    : [];
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-32 w-full" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !plan) {
+    return (
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          {error ?? "Plan information unavailable."}
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      {isError && (
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertDescription className="text-xs">
-            {error?.message ?? "Failed to load billing information."}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Plan header card */}
-      <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
+    <div className="space-y-6">
+      <Card>
         <CardHeader>
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="border-primary/30 bg-primary/10 flex h-9 w-9 items-center justify-center rounded-md border">
-                <Building2 className="text-primary size-4" />
-              </div>
-              <div>
-                {isLoading ? (
-                  <>
-                    <Skeleton className="h-5 w-32 mb-1" />
-                    <Skeleton className="h-3 w-56" />
-                  </>
-                ) : (
-                  <>
-                    <CardTitle className="text-base">
-                      {plan.displayName}
-                    </CardTitle>
-                    <CardDescription className="mt-0.5 text-xs">
-                      {plan.tagline}
-                    </CardDescription>
-                    <p className="text-muted-foreground mt-1 text-xs italic">
-                      {plan.persona}
-                    </p>
-                  </>
-                )}
-              </div>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="text-2xl">{plan.displayName}</CardTitle>
+              <CardDescription>{plan.tagline}</CardDescription>
             </div>
-            <Badge variant="success" className="shrink-0 text-xs">
-              Active
-            </Badge>
+            <Badge variant="secondary">{plan.id}</Badge>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <Separator />
-          <div className="flex items-center justify-between">
-            <p className="text-muted-foreground text-xs">
-              {plan.contactOnly
-                ? "Contact sales to adjust seats or tier."
-                : "Need to adjust seats or tier?"}
-            </p>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 text-xs"
-              onClick={handleManageSubscription}
-              disabled={isLoading}
-            >
-              <CreditCard className="size-3.5" />
-              {plan.contactOnly ? "Contact sales" : "Manage subscription"}
-              <ExternalLink className="size-3" />
+        <CardContent className="flex flex-wrap items-center gap-3">
+          {upgrade ? (
+            <Button asChild>
+              <Link href={upgrade.href}>{upgrade.label} →</Link>
             </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Plan & Usage card — quota bars */}
-      <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Zap className="text-primary size-4" />
-            Plan &amp; Usage
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Current utilisation against plan quotas. Amber at 80%, red at 95%.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {quotaError && (
-            <Alert variant="destructive" className="py-2">
-              <AlertCircle className="size-4" />
-              <AlertDescription className="text-xs">
-                Usage temporarily unavailable — retry. ({quotaError})
-              </AlertDescription>
-            </Alert>
-          )}
-          {quotaLoading && !quotaError ? (
-            <>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="h-3.5 w-28" />
-                    <Skeleton className="h-3.5 w-20" />
-                  </div>
-                  <Skeleton className="h-1.5 w-full rounded-full" />
-                </div>
-              ))}
-            </>
-          ) : (
-            quotaSpecs.map((spec) => {
-              const unlimited = spec.limit === UNLIMITED;
-              const p = unlimited ? 0 : pct(spec.current, spec.limit);
-              return (
-                <div key={spec.label} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium">{spec.label}</span>
-                    <span className="text-muted-foreground font-mono">
-                      {unlimited
-                        ? "Unlimited"
-                        : `${fmt(spec.current)} / ${formatLimit(spec.limit)}`}
-                    </span>
-                  </div>
-                  <Progress
-                    value={unlimited ? 0 : p}
-                    className={`h-1.5 ${
-                      unlimited ? "opacity-30" : ""
-                    } ${progressTone(p, unlimited)}`}
-                    aria-label={spec.label}
-                  />
-                  {spec.description && (
-                    <p className="text-muted-foreground text-[11px]">
-                      {spec.description}
-                    </p>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Feature availability card */}
-      <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm">Features included</CardTitle>
-          <CardDescription className="text-xs">
-            Platform capabilities available on your current plan.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {featureRows(planId).map((row) => (
-            <div
-              key={row.label}
-              className="flex items-center justify-between text-xs"
+          ) : null}
+          {plan.id !== "enterprise-deploy" ? (
+            <Button
+              variant="outline"
+              onClick={openCustomerPortal}
+              disabled={portalLoading}
             >
-              <span className="font-medium">{row.label}</span>
-              {row.state === "on" && (
-                <Check className="text-primary size-4" aria-label="included" />
-              )}
-              {row.state === "priority" && (
-                <Badge
-                  variant="outline"
-                  className="border-primary/40 bg-primary/10 text-primary text-[10px] uppercase tracking-wide"
-                >
-                  Priority
-                </Badge>
-              )}
-              {row.state === "off" && (
-                <Minus
-                  className="text-muted-foreground size-4"
-                  aria-label="not included"
-                />
-              )}
-            </div>
-          ))}
+              <CreditCard className="mr-2 h-4 w-4" />
+              {portalLoading ? "Opening…" : "Manage payment"}
+              <ExternalLink className="ml-2 h-3 w-3 opacity-60" />
+            </Button>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Contact your account team for billing changes.
+            </p>
+          )}
         </CardContent>
       </Card>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <QuotaCard
+          label="Concurrent missions"
+          description="Missions in non-terminal execution at any moment."
+          used={data?.currentConcurrentMissions ?? 0}
+          limit={data?.concurrentMissions ?? plan.quotas.concurrent_missions}
+        />
+        <QuotaCard
+          label="Concurrent agents"
+          description="Agents currently bound to an in-flight mission task."
+          used={data?.currentConcurrentAgents ?? 0}
+          limit={data?.concurrentAgents ?? plan.quotas.concurrent_agents}
+        />
+      </div>
     </div>
   );
 }

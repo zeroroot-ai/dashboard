@@ -7,8 +7,12 @@ import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
 import { SiteHeader } from "@/components/layout/header";
 import { TenantHydrator } from "@/components/layout/tenant-hydrator";
 import { TenantSwitcher } from "@/components/gibson/shared/TenantSwitcher";
+import { QuotaWidget } from "@/src/components/quota/quota-widget";
 import { getServerSession } from "@/src/lib/auth";
 import { resolveTenant } from "@/src/lib/resolve-tenant";
+import { getTenant } from "@/src/lib/k8s/tenants";
+import { lookupPlan, type PlanID } from "@/src/generated/plans";
+import { logger } from "@/src/lib/logger";
 import type { Tenant } from "@/src/types/tenant";
 
 export default async function AuthLayout({
@@ -60,6 +64,29 @@ export default async function AuthLayout({
     ? (availableTenants.find((t) => t.id === activeTenantId) ?? null)
     : null;
 
+  // Resolve plan limits for the in-app quota widget by reading the active
+  // tenant CR's spec.tier and looking up the generated plan registry.
+  // Failures degrade silently to zero (widget hides). Spec
+  // plans-and-quotas-simplification R9.B.3.
+  let missionsLimit = 0;
+  let agentsLimit = 0;
+  if (activeTenantId) {
+    try {
+      const tenantCR = await getTenant(activeTenantId);
+      const tier = tenantCR?.spec?.tier;
+      if (tier) {
+        const plan = lookupPlan(tier as PlanID);
+        missionsLimit = plan.quotas.concurrent_missions;
+        agentsLimit = plan.quotas.concurrent_agents;
+      }
+    } catch (err) {
+      logger.warn(
+        { err: String(err), tenantId: activeTenantId },
+        "[auth-layout] could not resolve plan limits for quota widget",
+      );
+    }
+  }
+
   return (
     <SidebarProvider
       defaultOpen={defaultOpen}
@@ -83,7 +110,17 @@ export default async function AuthLayout({
       >
         <AppSidebar variant="inset" />
         <SidebarInset>
-          <SiteHeader tenantSwitcher={<TenantSwitcher />} />
+          <SiteHeader
+            tenantSwitcher={<TenantSwitcher />}
+            quotaWidget={
+              currentTenant ? (
+                <QuotaWidget
+                  missionsLimit={missionsLimit}
+                  agentsLimit={agentsLimit}
+                />
+              ) : null
+            }
+          />
           <div className="bg-muted/40 flex flex-1 flex-col">
             <div className="@container/main p-(--content-padding) xl:group-data-[theme-content-layout=centered]/layout:container xl:group-data-[theme-content-layout=centered]/layout:mx-auto">
               {children}

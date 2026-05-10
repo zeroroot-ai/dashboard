@@ -2,12 +2,14 @@
 
 /**
  * getTenantQuotaAction — read-side Server Action for the Plan & Usage
- * section. Reads plan limits from the daemon's tenant_quotas Postgres row
- * and the live usage snapshot from Redis in a single gRPC call
- * (TenantAdminService.GetTenantQuota).
+ * section. Reads plan limits from the daemon's tenant_quotas Postgres
+ * row via TenantAdminService.GetTenantQuota and the live counter
+ * snapshot via TenantAdminService.GetTenantQuotaUsage.
  *
- * Spec: access-matrix-finish task 11, R4 AC 2 + 7.
- * Migration: admin-services-completion task 17 — switched to TenantAdminService.
+ * Spec plans-and-quotas-simplification reduces the schema to two
+ * enforced quotas (concurrent_missions / concurrent_agents); legacy
+ * fields (seats, storage_gb, retention_days, sandbox_launches_per_month)
+ * are removed end-to-end.
  */
 
 import { TenantAdminService } from "@/src/gen/gibson/tenant/v1/tenant_admin_pb";
@@ -19,16 +21,16 @@ export type ActionResult<T> =
   | { ok: false; error: string };
 
 export interface TenantQuotaRow {
-  seats: number;
+  /** Concurrent missions limit (0 = unlimited). */
+  concurrentMissions: number;
+  /** Concurrent agents limit (0 = unlimited). */
   concurrentAgents: number;
-  storageGb: number;
-  retentionDays: number;
-  sandboxLaunchesPerMonth: number;
+  /** Postgres updated_at (RFC 3339). */
   updatedAt: string;
-  currentSeats: number;
+  /** Live missions-active counter from Redis. */
+  currentConcurrentMissions: number;
+  /** Live agents-active counter from Redis. */
   currentConcurrentAgents: number;
-  currentStorageGb: number;
-  currentSandboxLaunchesThisMonth: number;
 }
 
 export async function getTenantQuotaAction(): Promise<
@@ -45,20 +47,19 @@ export async function getTenantQuotaAction(): Promise<
   }
 
   try {
-    const resp = await serviceClient(TenantAdminService, tenantId).getTenantQuota({ tenantId });
+    const client = serviceClient(TenantAdminService, tenantId);
+    const [limits, usage] = await Promise.all([
+      client.getTenantQuota({ tenantId }),
+      client.getTenantQuotaUsage({ tenantId }),
+    ]);
     return {
       ok: true,
       data: {
-        seats: resp.seats,
-        concurrentAgents: resp.concurrentAgents,
-        storageGb: resp.storageGb,
-        retentionDays: resp.retentionDays,
-        sandboxLaunchesPerMonth: resp.sandboxLaunchesPerMonth,
-        updatedAt: resp.updatedAt,
-        currentSeats: resp.currentSeats,
-        currentConcurrentAgents: resp.currentConcurrentAgents,
-        currentStorageGb: resp.currentStorageGb,
-        currentSandboxLaunchesThisMonth: resp.currentSandboxLaunchesThisMonth,
+        concurrentMissions: limits.concurrentMissions ?? 0,
+        concurrentAgents: limits.concurrentAgents ?? 0,
+        updatedAt: limits.updatedAt ?? "",
+        currentConcurrentMissions: Number(usage.missionsActive ?? 0),
+        currentConcurrentAgents: Number(usage.agentsActive ?? 0),
       },
     };
   } catch (err) {

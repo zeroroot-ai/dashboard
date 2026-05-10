@@ -34,9 +34,16 @@ interface SiteHeaderProps {
    * Component itself.
    */
   tenantSwitcher?: ReactNode;
+
+  /**
+   * Quota widget slot. The auth layout renders <QuotaWidget /> into this
+   * slot with the active tenant's plan limits resolved server-side. Spec
+   * plans-and-quotas-simplification R9.B.3.
+   */
+  quotaWidget?: ReactNode;
 }
 
-export function SiteHeader({ tenantSwitcher }: SiteHeaderProps = {}) {
+export function SiteHeader({ tenantSwitcher, quotaWidget }: SiteHeaderProps = {}) {
   const { toggleSidebar, open } = useSidebar();
 
   return (
@@ -50,6 +57,12 @@ export function SiteHeader({ tenantSwitcher }: SiteHeaderProps = {}) {
         <Search />
 
         <div className="ml-auto flex items-center gap-2">
+          {quotaWidget ? (
+            <>
+              {quotaWidget}
+              <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
+            </>
+          ) : null}
           <TenantDisplay />
           {tenantSwitcher}
           <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />

@@ -83,3 +83,12 @@ export const pricingDisplays: readonly PricingTierDisplay[] = plans.map(planToDi
 export const selfServeTierIds: readonly string[] = pricingDisplays
   .filter((d) => !d.contactSales)
   .map((d) => d.id);
+
+/**
+ * contactTierIds — plan ids whose signup flow routes to a contact-sales
+ * form rather than a Stripe checkout. Used by the billing checkout
+ * route to reject contact-only tiers.
+ */
+export const contactTierIds: readonly string[] = pricingDisplays
+  .filter((d) => d.contactSales)
+  .map((d) => d.id);

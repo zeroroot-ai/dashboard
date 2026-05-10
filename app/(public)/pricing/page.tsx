@@ -7,7 +7,7 @@
 import Link from "next/link";
 
 import { pricingDisplays, type PricingTierDisplay } from "@/src/lib/pricing-display";
-import { Button } from "@/src/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -15,7 +15,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/src/components/ui/card";
+} from "@/components/ui/card";
 
 export const metadata = {
   title: "Pricing — Gibson",
