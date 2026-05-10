@@ -2,6 +2,7 @@ import type { EmailProvider } from './types';
 import { LogEmailProvider } from './providers/log';
 import { SmtpEmailProvider } from './providers/smtp';
 import { ResendEmailProvider } from './providers/resend';
+import { SesEmailProvider } from './providers/ses';
 
 /**
  * Factory for the singleton email provider.
@@ -34,12 +35,15 @@ export function getEmailProvider(opts?: { force?: boolean }): EmailProvider {
     case 'smtp':
       cached = new SmtpEmailProvider();
       return cached;
+    case 'ses':
+      cached = new SesEmailProvider();
+      return cached;
     case 'log':
       cached = new LogEmailProvider();
       return cached;
     default:
       throw new Error(
-        `Unknown DASHBOARD_EMAIL_PROVIDER value: ${choice} (expected resend|smtp|log)`,
+        `Unknown DASHBOARD_EMAIL_PROVIDER value: ${choice} (expected resend|smtp|ses|log)`,
       );
   }
 }
