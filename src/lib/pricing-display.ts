@@ -1,234 +1,85 @@
 /**
- * pricing-display.ts — Converts the canonical Plan shape (from
- * @/src/generated/plans) into the display-oriented struct the pricing page
- * and BillingContent consume.
+ * pricing-display.ts — formats a generated Plan for the pricing UI.
  *
- * The canonical registry stores quotas as integers with -1 meaning unlimited.
- * This module formats them as the human strings the pricing UI expects
- * ("50 GB", "60 days", "Unlimited", etc.), and derives "priority" slack
- * variants based on plan position.
- *
- * No other file should format plan quota strings; route every display
- * derivation through here so future plan tweaks land in one place.
+ * Spec plans-and-quotas-simplification simplifies this to the two enforced
+ * quotas and a small pricing block. No more vibes-features bullet list.
  */
 
 import type { Plan, PlanID } from "@/src/generated/plans";
 import { plans } from "@/src/generated/plans";
 
-export type BooleanFeature = true | false | "priority";
-
 export interface PricingTierDisplay {
   id: PlanID;
   name: string;
   tagline: string;
-  persona: string;
-
-  monthlyPrice: number | null;
-  annualPrice: number | null;
-  contactOnly: boolean;
-  annualSavingsPct: number | null;
-
-  includedSeats: number | "Unlimited";
-  perSeatBase: number | null;
-  perSeatOverage: number | null;
-
-  concurrentAgents: number | "Unlimited";
-  graphStorage: string;
-  retention: string;
-  sandboxLaunchesPerMonth: string;
-
-  sso: BooleanFeature;
-  auditLogs: BooleanFeature;
-  complianceExports: BooleanFeature;
-  dedicatedSlack: BooleanFeature;
-  dedicatedTenant: BooleanFeature | "n/a";
-  privateRegistry: BooleanFeature;
-
-  deployment: string;
-  responseSla: string;
-
-  additionalNotes: string[];
-  isMostPopular: boolean;
-
-  /**
-   * Derived checkout mode for this tier.
-   *
-   * - `"self-serve"`: paid tiers that go through Stripe Checkout (squad/org/platform).
-   * - `"contact-sales"`: tiers that require a sales conversation (enterprise-cloud/
-   *   enterprise-onprem/public-sector).
-   * - `"free"`: the solo tier which has no checkout flow.
-   *
-   * Derived in `toPricingTierDisplay` from `selfServeTierIds` / `contactTierIds`.
-   * Not stored in the canonical plans YAML or the generated plans registry.
-   */
-  stripeMode: "self-serve" | "contact-sales" | "free";
-
-  cta: {
-    label: string;
-    /**
-     * href is only meaningful for contact-sales and free tiers.
-     * For self-serve tiers, CheckoutButton handles the redirect — href is
-     * an empty string and should not be used as a navigation target.
-     */
-    href: string;
-    variant: "default" | "outline" | "secondary";
-  };
+  /** Headline price string ("$99/mo", "$24,000/yr", "Contact sales"). */
+  priceLabel: string;
+  /** Optional secondary price string ("billed annually"). */
+  priceSubLabel: string | null;
+  /** "Save 17%" / "" — the savings badge. */
+  annualSavings: string | null;
+  /** Two enforced quotas formatted for display. 0 → "Unlimited". */
+  concurrentMissionsLabel: string;
+  concurrentAgentsLabel: string;
+  /** True for plans whose CTA routes to a contact-sales form. */
+  contactSales: boolean;
 }
 
-function formatSeats(seats: number): number | "Unlimited" {
-  return seats === -1 ? "Unlimited" : seats;
+function formatQuota(value: number, noun: string): string {
+  if (value === 0) return "Unlimited";
+  return `${value.toLocaleString()} ${noun}`;
 }
 
-function formatConcurrent(n: number): number | "Unlimited" {
-  return n === -1 ? "Unlimited" : n;
+function dollars(amount: number): string {
+  return amount.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
-function formatStorage(gb: number): string {
-  if (gb === -1) return "Unlimited";
-  if (gb >= 1000) {
-    const tb = gb / 1000;
-    return Number.isInteger(tb) ? `${tb} TB` : `${tb.toFixed(1)} TB`;
+function formatPriceLabel(p: Plan): { label: string; sub: string | null } {
+  if (p.pricing.contactSales) {
+    return { label: "Contact sales", sub: null };
   }
-  return `${gb} GB`;
-}
-
-function formatDays(days: number): string {
-  return days === -1 ? "Unlimited" : `${days} days`;
-}
-
-function formatSandboxLaunches(n: number, id: PlanID): string {
-  if (n === -1) {
-    // Reflect the pre-migration copy: enterprise-cloud says "Fair use", the
-    // other unlimited tiers say "Unlimited".
-    return id === "enterprise-cloud" ? "Fair use" : "Unlimited";
+  if (typeof p.pricing.monthlyUSD === "number") {
+    return {
+      label: `${dollars(p.pricing.monthlyUSD)}/mo`,
+      sub:
+        typeof p.pricing.annualUSD === "number"
+          ? `or ${dollars(p.pricing.annualUSD)}/yr (billed annually)`
+          : null,
+    };
   }
-  return n.toLocaleString("en-US");
-}
-
-/**
- * Promotes has_dedicated_slack=true to the "priority" variant for the org
- * tier, matching the pre-migration pricing page copy ("Priority Slack").
- * Platform and enterprise tiers get full "Dedicated Slack".
- */
-function deriveDedicatedSlack(plan: Plan): BooleanFeature {
-  if (!plan.features.has_dedicated_slack) return false;
-  if (plan.id === "org") return "priority";
-  return true;
-}
-
-/**
- * For presentation: the enterprise-onprem / public-sector tiers render
- * dedicatedTenant as "n/a" since the tenant is the customer's own cluster.
- */
-function deriveDedicatedTenant(plan: Plan): BooleanFeature | "n/a" {
-  if (plan.id === "enterprise-onprem" || plan.id === "public-sector") {
-    return "n/a";
+  if (typeof p.pricing.annualUSD === "number") {
+    return { label: `${dollars(p.pricing.annualUSD)}/yr`, sub: "billed annually" };
   }
-  return plan.features.has_dedicated_tenant;
+  return { label: "Contact sales", sub: null };
 }
 
-/**
- * Derive the checkout mode for a plan ID.
- *
- * - `solo` is the free tier (no checkout).
- * - `squad`, `org`, `platform` are paid self-serve tiers handled by Stripe Checkout.
- * - `enterprise-cloud`, `enterprise-onprem`, `public-sector` require a sales conversation.
- *
- * Inlined here (not referencing the exported constants below) so that
- * `toPricingTierDisplay` is usable at module-init time before the constants
- * are bound.
- */
-function deriveStripeMode(
-  planId: PlanID,
-): "self-serve" | "contact-sales" | "free" {
-  const id = planId as string;
-  if (id === "solo") return "free";
-  if (id === "squad" || id === "org" || id === "platform") return "self-serve";
-  if (
-    id === "enterprise-cloud" ||
-    id === "enterprise-onprem" ||
-    id === "public-sector"
-  ) {
-    return "contact-sales";
-  }
-  // Fallback: treat unknown plans as contact-sales for safety.
-  return "contact-sales";
-}
-
-/**
- * Convert a canonical Plan into the display struct used by the /pricing
- * page. This function is pure; it does not consult any runtime state.
- */
-export function toPricingTierDisplay(plan: Plan): PricingTierDisplay {
-  const stripeMode = deriveStripeMode(plan.id);
-
+export function planToDisplay(p: Plan): PricingTierDisplay {
+  const { label, sub } = formatPriceLabel(p);
+  const savings =
+    typeof p.pricing.annualSavingsPct === "number" && p.pricing.annualSavingsPct > 0
+      ? `Save ${p.pricing.annualSavingsPct}%`
+      : null;
   return {
-    id: plan.id,
-    name: plan.displayName,
-    tagline: plan.tagline,
-    persona: plan.persona,
-
-    monthlyPrice: plan.monthlyPrice,
-    annualPrice: plan.annualPrice,
-    contactOnly: plan.contactOnly,
-    annualSavingsPct: plan.annualSavingsPct,
-
-    includedSeats: formatSeats(plan.quotas.seats),
-    perSeatBase: plan.perSeatBase ?? null,
-    perSeatOverage: plan.perSeatOverage ?? null,
-
-    concurrentAgents: formatConcurrent(plan.quotas.concurrent_agents),
-    graphStorage: formatStorage(plan.quotas.storage_gb),
-    retention: formatDays(plan.quotas.retention_days),
-    sandboxLaunchesPerMonth: formatSandboxLaunches(
-      plan.quotas.sandbox_launches_per_month,
-      plan.id,
-    ),
-
-    sso: plan.features.has_sso,
-    auditLogs: plan.features.has_audit_logs,
-    complianceExports: plan.features.has_compliance_exports,
-    dedicatedSlack: deriveDedicatedSlack(plan),
-    dedicatedTenant: deriveDedicatedTenant(plan),
-    privateRegistry: plan.features.has_private_registry,
-
-    deployment: plan.deployment ?? "",
-    responseSla: plan.responseSla ?? "",
-
-    additionalNotes: plan.additionalNotes ?? [],
-    isMostPopular: plan.isMostPopular ?? false,
-
-    stripeMode,
-
-    cta: {
-      label: plan.cta?.label ?? "",
-      // For self-serve tiers, CheckoutButton handles the redirect — href is
-      // intentionally empty. Contact-sales and free tiers keep their href.
-      href: stripeMode === "self-serve" ? "" : (plan.cta?.href ?? ""),
-      variant: (plan.cta?.variant ?? "default") as
-        | "default"
-        | "outline"
-        | "secondary",
-    },
+    id: p.id,
+    name: p.displayName,
+    tagline: p.tagline,
+    priceLabel: label,
+    priceSubLabel: sub,
+    annualSavings: savings,
+    concurrentMissionsLabel: formatQuota(p.quotas.concurrent_missions, "concurrent missions"),
+    concurrentAgentsLabel: formatQuota(p.quotas.concurrent_agents, "concurrent agents"),
+    contactSales: !!p.pricing.contactSales,
   };
 }
 
+/** All plans for the pricing page, in registry order. */
+export const pricingDisplays: readonly PricingTierDisplay[] = plans.map(planToDisplay);
+
 /**
- * All plans rendered as pricing displays, in pricing-page order.
+ * selfServeTierIds is the list of plan ids whose signup flow proceeds via
+ * self-serve (Stripe checkout) rather than a contact-sales form. The
+ * signup page allow-lists `?tier=` against this set.
  */
-export const pricingDisplays: readonly PricingTierDisplay[] = Object.freeze(
-  plans.map(toPricingTierDisplay),
-);
-
-export const selfServeTierIds: readonly PlanID[] = Object.freeze([
-  "solo",
-  "squad",
-  "org",
-  "platform",
-]);
-
-export const contactTierIds: readonly PlanID[] = Object.freeze([
-  "enterprise-cloud",
-  "enterprise-onprem",
-  "public-sector",
-]);
+export const selfServeTierIds: readonly string[] = pricingDisplays
+  .filter((d) => !d.contactSales)
+  .map((d) => d.id);

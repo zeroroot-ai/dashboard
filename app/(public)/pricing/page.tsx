@@ -1,366 +1,101 @@
-"use client";
+/**
+ * Public pricing page — three plan cards driven entirely by plans.yaml
+ * (via gen-plans + pricing-display). Spec
+ * plans-and-quotas-simplification R9.A.
+ */
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Check, Server, Shield, Github } from "lucide-react";
-import { toast } from "sonner";
+
+import { pricingDisplays, type PricingTierDisplay } from "@/src/lib/pricing-display";
+import { Button } from "@/src/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import {
-  pricingDisplays,
-  selfServeTierIds,
-  contactTierIds,
-  type PricingTierDisplay,
-} from "@/src/lib/pricing-display";
-import { CheckoutButton } from "./checkout-button";
+} from "@/src/components/ui/card";
 
-// Alias to minimize churn in local JSX — the display struct is the same
-// shape the legacy PricingTier type carried.
-type PricingTier = PricingTierDisplay;
-const allPricingTiers = pricingDisplays;
+export const metadata = {
+  title: "Pricing — Gibson",
+  description:
+    "Three plans for Gibson: Team, Enterprise, and Enterprise (Deploy) for on-prem / whitelabel / public-sector deployments.",
+};
 
-type BillingCycle = "monthly" | "annual";
-
-function formatMoney(amount: number): string {
-  return `$${amount.toLocaleString("en-US")}`;
+function ctaForTier(t: PricingTierDisplay): { label: string; href: string; variant: "default" | "outline" | "secondary" } {
+  if (t.contactSales) {
+    return { label: "Contact sales", href: "/contact-sales?tier=" + encodeURIComponent(t.id), variant: "secondary" };
+  }
+  return {
+    label: "Start trial",
+    href: "/signup?tier=" + encodeURIComponent(t.id),
+    variant: t.id === "enterprise" ? "default" : "outline",
+  };
 }
 
-function PriceDisplay({
-  tier,
-  billing,
-}: {
-  tier: PricingTier;
-  billing: BillingCycle;
-}) {
-  if (tier.contactOnly) {
-    return (
-      <div>
-        <span className="font-mono text-4xl font-bold">Custom</span>
-        <p className="text-sm text-muted-foreground mt-1">Contact sales</p>
-      </div>
-    );
-  }
-
-  // Enterprise Cloud: annual-only
-  if (tier.monthlyPrice === null && tier.annualPrice !== null) {
-    return (
-      <div>
-        <div className="flex items-baseline gap-2">
-          <span className="font-mono text-4xl font-bold">
-            {formatMoney(tier.annualPrice)}
-          </span>
-          <span className="text-sm text-muted-foreground">/yr</span>
-        </div>
-        <p className="text-sm text-muted-foreground mt-1">Annual only</p>
-      </div>
-    );
-  }
-
-  if (tier.monthlyPrice === null) {
-    return (
-      <div>
-        <span className="font-mono text-4xl font-bold">Custom</span>
-      </div>
-    );
-  }
-
-  const effectiveMonthly =
-    billing === "annual" && tier.annualPrice
-      ? Math.round(tier.annualPrice / 12)
-      : tier.monthlyPrice;
-
-  const showStrikethrough =
-    billing === "annual" &&
-    tier.annualPrice !== null &&
-    (tier.annualSavingsPct ?? 0) > 0;
-
+function Tier({ t }: { t: PricingTierDisplay }) {
+  const cta = ctaForTier(t);
   return (
-    <div>
-      <div className="flex items-baseline gap-2">
-        <span className="font-mono text-4xl font-bold">
-          {formatMoney(effectiveMonthly)}
-        </span>
-        <span className="text-sm text-muted-foreground">/mo</span>
-        {showStrikethrough && (
-          <span className="text-sm text-muted-foreground line-through">
-            {formatMoney(tier.monthlyPrice)}/mo
-          </span>
-        )}
-      </div>
-      {billing === "annual" && tier.annualPrice && (
-        <p className="text-sm text-muted-foreground mt-1">
-          Billed {formatMoney(tier.annualPrice)}/yr
-        </p>
-      )}
-      {typeof tier.includedSeats === "number" && tier.perSeatBase && (
-        <p className="text-xs text-muted-foreground mt-1">
-          {formatMoney(tier.perSeatBase)}/seat base ·{" "}
-          {tier.perSeatOverage ? `${formatMoney(tier.perSeatOverage)}/overage` : ""}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function TierCard({
-  tier,
-  billing,
-}: {
-  tier: PricingTier;
-  billing: BillingCycle;
-}) {
-  const highlight = tier.isMostPopular;
-
-  const cardFeatureLines = [
-    `${tier.includedSeats === "Unlimited" ? "Unlimited" : `${tier.includedSeats}`} ${tier.includedSeats === 1 ? "seat" : "seats included"}`,
-    `${tier.concurrentAgents} concurrent agents`,
-    `${tier.graphStorage} graph storage`,
-    `${tier.retention} retention`,
-    `${tier.sandboxLaunchesPerMonth} sandbox launches/mo`,
-    tier.sso === true ? "SSO / OIDC" : null,
-    tier.auditLogs === true ? "Audit logs" : null,
-    tier.complianceExports === true ? "Compliance exports (SOC2, HIPAA)" : null,
-    tier.dedicatedSlack === true
-      ? "Dedicated Slack"
-      : tier.dedicatedSlack === "priority"
-        ? "Priority Slack"
-        : null,
-    tier.dedicatedTenant === true ? "Dedicated tenant" : null,
-    tier.deployment,
-    tier.responseSla,
-    ...tier.additionalNotes,
-  ].filter((s): s is string => Boolean(s));
-
-  return (
-    <Card
-      className={
-        highlight
-          ? "ring-2 ring-green-500 relative flex flex-col"
-          : "relative flex flex-col"
-      }
-    >
-      {highlight && (
-        <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 top-0">
-          <Badge className="bg-green-500 text-white hover:bg-green-600">
-            Most Popular
-          </Badge>
-        </div>
-      )}
-      <CardHeader className={highlight ? "pt-6" : undefined}>
-        <CardTitle className="text-xl font-bold">{tier.name}</CardTitle>
-        <PriceDisplay tier={tier} billing={billing} />
-        <p className="text-sm text-muted-foreground mt-2">{tier.tagline}</p>
+    <Card className="flex flex-col h-full">
+      <CardHeader>
+        <CardTitle className="text-2xl">{t.name}</CardTitle>
+        <CardDescription>{t.tagline}</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col flex-1">
-        <Separator />
-        <ul className="space-y-3 mt-6 flex-1">
-          {cardFeatureLines.map((feature) => (
-            <li
-              key={feature}
-              className="flex flex-row items-start gap-2"
-            >
-              <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-              <span className="text-sm">{feature}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-8">
-          {tier.stripeMode === "self-serve" && (tier.id as string) !== "solo" ? (
-            <CheckoutButton
-              tier={tier.id}
-              label={tier.cta.label}
-              variant={tier.cta.variant}
-            />
-          ) : tier.stripeMode === "contact-sales" ? (
-            <Button variant={tier.cta.variant} className="w-full" asChild>
-              <Link href="/contact-sales">{tier.cta.label}</Link>
-            </Button>
-          ) : (
-            // solo / free tier
-            <Button variant={tier.cta.variant} className="w-full" asChild>
-              <Link href={tier.cta.href || "/signup"}>{tier.cta.label}</Link>
-            </Button>
-          )}
+      <CardContent className="flex-grow space-y-4">
+        <div>
+          <div className="text-3xl font-semibold">{t.priceLabel}</div>
+          {t.priceSubLabel ? (
+            <div className="text-sm text-muted-foreground mt-1">{t.priceSubLabel}</div>
+          ) : null}
+          {t.annualSavings ? (
+            <div className="inline-block mt-2 text-xs uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-900">
+              {t.annualSavings}
+            </div>
+          ) : null}
         </div>
+        <ul className="space-y-2 text-sm">
+          <li>
+            <span className="font-medium">{t.concurrentMissionsLabel}</span>
+            <div className="text-muted-foreground">in non-terminal execution at any moment</div>
+          </li>
+          <li>
+            <span className="font-medium">{t.concurrentAgentsLabel}</span>
+            <div className="text-muted-foreground">bound to in-flight tasks at any moment</div>
+          </li>
+        </ul>
       </CardContent>
+      <CardFooter>
+        <Button asChild variant={cta.variant} className="w-full">
+          <Link href={cta.href}>{cta.label}</Link>
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
 
-// ---- Page ----------------------------------------------------------------
-
 export default function PricingPage() {
-  const [billing, setBilling] = useState<BillingCycle>("annual");
-  const searchParams = useSearchParams();
-
-  // Show "Checkout canceled" toast when ?canceled=1 is present.
-  // useEffect ensures the toast fires only once on mount.
-  useEffect(() => {
-    if (searchParams.get("canceled") === "1") {
-      toast.info("Checkout canceled — no charge applied");
-    }
-  }, [searchParams]);
-
-  // When ?as=tenant_admin, hide the solo tier (admin billing view).
-  const isTenantAdmin = searchParams.get("as") === "tenant_admin";
-  const pricingTiers = isTenantAdmin
-    ? allPricingTiers.filter((t) => (t.id as string) !== "solo")
-    : allPricingTiers;
-
   return (
-    <div className="bg-background text-foreground">
-      {/* Hero */}
-      <section className="text-center py-16 px-4">
-        <h1 className="text-4xl font-bold">Simple, transparent pricing</h1>
-        <p className="text-lg text-muted-foreground mt-4 max-w-2xl mx-auto">
-          Build unlimited agents, tools, plugins, and missions at every paid
-          tier. You&apos;re charged for parallelism, people, storage, and
-          detonation — not for what you build.
+    <main className="container mx-auto py-12 px-4 max-w-6xl">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold">Pricing</h1>
+        <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
+          Two enforced quotas: concurrent missions in flight, and agents currently bound to a
+          mission task. Idle agents do not count.
         </p>
-      </section>
-
-      {/* Billing toggle */}
-      <div className="flex justify-center">
-        <div className="flex flex-row items-center gap-3">
-          <span
-            className={
-              billing === "monthly"
-                ? "text-sm font-medium"
-                : "text-sm text-muted-foreground"
-            }
-          >
-            Monthly
-          </span>
-          <Switch
-            checked={billing === "annual"}
-            onCheckedChange={(checked) =>
-              setBilling(checked ? "annual" : "monthly")
-            }
-            aria-label="Toggle annual billing"
-          />
-          <span
-            className={
-              billing === "annual"
-                ? "text-sm font-medium"
-                : "text-sm text-muted-foreground"
-            }
-          >
-            Annual
-          </span>
-          {billing === "annual" && (
-            <Badge variant="secondary">Save 5%</Badge>
-          )}
-        </div>
       </div>
-
-      {/* Self-serve tier cards */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto px-4 py-12">
-        {pricingTiers
-          .filter((t) => (selfServeTierIds as readonly string[]).includes(t.id as string) && (t.id as string) !== "enterprise-cloud")
-          .map((tier) => (
-            <TierCard key={tier.id} tier={tier} billing={billing} />
-          ))}
-      </section>
-
-      {/* Enterprise tier cards */}
-      <section className="max-w-7xl mx-auto px-4 pb-4">
-        <h2 className="text-2xl font-bold text-center mb-2">Enterprise</h2>
-        <p className="text-center text-sm text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Dedicated infrastructure, on-prem Kubernetes, or government
-          deployments via cleared partners. Unlimited seats, storage, and
-          retention.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {pricingTiers
-            .filter((t) =>
-              (contactTierIds as readonly string[]).includes(t.id),
-            )
-            .map((tier) => (
-              <TierCard key={tier.id} tier={tier} billing={billing} />
-            ))}
-        </div>
-      </section>
-
-      {/* Footnotes */}
-      <section className="max-w-4xl mx-auto px-4 py-8">
-        <dl className="space-y-4 text-sm text-muted-foreground">
-          <div>
-            <dt className="font-semibold text-foreground inline">
-              Concurrent agents —{" "}
-            </dt>
-            <dd className="inline">
-              the number of agents that can be running simultaneously. Agents
-              can be built and stored in unlimited quantities.
-            </dd>
-          </div>
-          <div>
-            <dt className="font-semibold text-foreground inline">
-              Sandbox launches —{" "}
-            </dt>
-            <dd className="inline">
-              every time Gibson runs untrusted code — an LLM-generated
-              exploit, an unknown binary, a third-party tool — it asks{" "}
-              <strong>Setec</strong> to boot a fresh Firecracker microVM,
-              run the code in hardware isolation, stream the output back,
-              and tear the VM down. One tool invocation = one launch. Tiers
-              set your monthly quota; overage pricing is per-launch and
-              negotiated at the tier level — contact us for current rates.
-            </dd>
-          </div>
-          <div>
-            <dt className="font-semibold text-foreground inline">
-              Graph retention —{" "}
-            </dt>
-            <dd className="inline">
-              how long Gibson&apos;s knowledge graph retains mission data
-              before archival.
-            </dd>
-          </div>
-          <div>
-            <dt className="font-semibold text-foreground inline">BYOK — </dt>
-            <dd className="inline">
-              all tiers require you to bring your own LLM API keys
-              (Anthropic, OpenAI, Gemini, or local Ollama).
-            </dd>
-          </div>
-        </dl>
-      </section>
-
-      {/* Trust line */}
-      <section className="max-w-3xl mx-auto px-4 py-12 text-center">
-        <p className="text-base font-medium">
-          Everything built on the platform — agents, tools, plugins, mission
-          definitions, mission runs — is unlimited at every paid tier. We
-          charge for parallelism, people, storage, and detonation.
-        </p>
-      </section>
-
-      {/* Trust signals */}
-      <section className="flex justify-center gap-12 py-16 text-muted-foreground px-4 flex-wrap">
-        <div className="flex items-center gap-2">
-          <Server className="h-5 w-5 shrink-0" />
-          <span className="text-sm font-medium">
-            Designed For Security Teams
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 shrink-0" />
-          <span className="text-sm font-medium">SOC2 Ready</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Github className="h-5 w-5 shrink-0" />
-          <span className="text-sm font-medium">Open Source Core</span>
-        </div>
-      </section>
-    </div>
+      <div className="grid gap-6 md:grid-cols-3">
+        {pricingDisplays.map((t) => (
+          <Tier key={t.id} t={t} />
+        ))}
+      </div>
+      <p className="mt-12 text-center text-sm text-muted-foreground">
+        Looking for an air-gapped or compliance-led deployment? See{" "}
+        <Link href="/contact-sales?tier=enterprise-deploy" className="underline">
+          Enterprise (Deploy)
+        </Link>
+        .
+      </p>
+    </main>
   );
 }
