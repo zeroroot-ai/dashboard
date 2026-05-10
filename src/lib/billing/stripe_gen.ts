@@ -5,15 +5,18 @@
 
 export type BillingTier =
   | "team"
+  | "org"
   | "enterprise";
 
 export const BILLING_TIER_IDS: readonly BillingTier[] = Object.freeze([
   "team",
+  "org",
   "enterprise",
 ]) as readonly BillingTier[];
 
 export const PRICE_ENV_MAP: Readonly<Record<BillingTier, string>> = Object.freeze({
   "team": "STRIPE_PRICE_TEAM",
+  "org": "STRIPE_PRICE_ORG",
   "enterprise": "STRIPE_PRICE_ENTERPRISE",
 });
 

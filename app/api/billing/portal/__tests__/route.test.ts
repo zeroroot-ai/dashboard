@@ -106,7 +106,7 @@ describe('POST /api/billing/portal', () => {
       spec: {
         displayName: 'Acme Inc',
         owner: 'alice',
-        tier: 'squad',
+        tier: 'team',
         stripeCustomerId: 'cus_test123',
       },
       status: {},
@@ -154,7 +154,7 @@ describe('POST /api/billing/portal', () => {
         spec: {
           displayName: 'Acme Inc',
           owner: 'alice',
-          tier: 'solo',
+          tier: 'team',
           // stripeCustomerId intentionally absent
         },
         status: {},

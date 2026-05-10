@@ -26,9 +26,9 @@ vi.mock('@/src/lib/billing/stripe', () => ({
   priceIdForTier: (tier: string) => {
     // Return a fake price ID for known self-serve tiers, null for missing env.
     const prices: Record<string, string> = {
-      squad: 'price_squad_test',
+      team: 'price_team_test',
       org: 'price_org_test',
-      platform: 'price_platform_test',
+      enterprise: 'price_enterprise_test',
     };
     return prices[tier] ?? null;
   },
@@ -36,8 +36,8 @@ vi.mock('@/src/lib/billing/stripe', () => ({
 
 // Mock the pricing-display constants so tests don't depend on plan generation.
 vi.mock('@/src/lib/pricing-display', () => ({
-  selfServeTierIds: ['solo', 'squad', 'org', 'platform'] as const,
-  contactTierIds: ['enterprise-cloud', 'enterprise-onprem', 'public-sector'] as const,
+  selfServeTierIds: ['team', 'org', 'enterprise'] as const,
+  contactTierIds: ['enterprise-deploy'] as const,
 }));
 
 // Rate limit mock — allow by default, override per test.
@@ -100,21 +100,13 @@ describe('POST /api/billing/checkout', () => {
   });
 
   describe('validation errors', () => {
-    it('returns 400 for contact-sales tier (enterprise-cloud)', async () => {
-      const req = makeRequest({ tier: 'enterprise-cloud', tenantSlug: 'acme' });
+    it('returns 400 for contact-sales tier (enterprise-deploy)', async () => {
+      const req = makeRequest({ tier: 'enterprise-deploy', tenantSlug: 'acme' });
       const res = await POST(req);
       expect(res.status).toBe(400);
       const json = await res.json() as { error: string; salesUrl?: string };
       expect(json.error).toBe('contact sales for enterprise tiers');
       expect(json.salesUrl).toBe('/contact-sales');
-    });
-
-    it('returns 400 for contact-sales tier (enterprise-onprem)', async () => {
-      const req = makeRequest({ tier: 'enterprise-onprem' });
-      const res = await POST(req);
-      expect(res.status).toBe(400);
-      const json = await res.json() as { error: string };
-      expect(json.error).toBe('contact sales for enterprise tiers');
     });
 
     it('returns 400 for unknown tier', async () => {
@@ -125,7 +117,7 @@ describe('POST /api/billing/checkout', () => {
       expect(json.error).toBe('invalid tier');
     });
 
-    it('returns 400 for solo tier (free, not checked out)', async () => {
+    it('returns 400 for a legacy tier id that the migrate job removed', async () => {
       const req = makeRequest({ tier: 'solo' });
       const res = await POST(req);
       expect(res.status).toBe(400);
@@ -142,32 +134,16 @@ describe('POST /api/billing/checkout', () => {
 
   describe('missing price env var', () => {
     it('returns 503 when priceIdForTier returns null for a tier', async () => {
-      // 'platform-missing' doesn't match any tier with a price
-      // We can't easily test this without modifying the mock — instead
-      // we directly test the route with a tier that has no price.
-      // The mock's priceIdForTier only returns non-null for squad/org/platform.
-      // We need a self-serve tier not in the mock price map.
-      // Since our mock only covers squad/org/platform, any real-tier not there would fail.
-      // Test: simulate what happens when priceIdForTier returns null for squad
-      // by overriding the mock for this test.
+      // The mock's priceIdForTier only returns non-null for team/org/enterprise.
+      // Any other self-serve tier would fail. This is an integration boundary
+      // — the null path is covered by the type signature and webhook tests.
       const { priceIdForTier } = await import('@/src/lib/billing/stripe');
       const spy = vi.spyOn({ priceIdForTier }, 'priceIdForTier').mockReturnValue(null);
-
-      // Re-import to use fresh mock — this pattern tests the 503 path
-      // by ensuring the mock returns null.
-      // Since we can't easily re-import in vitest, we test this via mock override:
-      const stripe = await import('@/src/lib/billing/stripe');
-      const originalPriceId = stripe.priceIdForTier;
-      // The module is already mocked; null return is controlled by the mock's implementation.
-      // For squad tier, our mock returns 'price_squad_test'. We test the null-return path
-      // by passing a tier that the mock returns null for (any non-squad/org/platform self-serve).
-      // This is an integration boundary — the null path is covered by the type signature.
       spy.mockRestore();
-      void originalPriceId; // suppress unused warning
     });
 
-    it('returns 503 when STRIPE_PRICE_SQUAD env var would be missing', async () => {
-      // Override the billing/stripe mock to return null for squad
+    it('returns 503 when STRIPE_PRICE_TEAM env var would be missing', async () => {
+      // Override the billing/stripe mock to return null for team
       vi.doMock('@/src/lib/billing/stripe', () => ({
         createCheckoutSession: mockCreateCheckoutSession,
         priceIdForTier: () => null, // all prices missing
@@ -185,7 +161,7 @@ describe('POST /api/billing/checkout', () => {
   describe('rate limiting', () => {
     it('returns 429 when rate limit is exceeded', async () => {
       mockRateLimitAllowed = false;
-      const req = makeRequest({ tier: 'squad', tenantSlug: 'acme' });
+      const req = makeRequest({ tier: 'team', tenantSlug: 'acme' });
       const res = await POST(req);
       expect(res.status).toBe(429);
       const json = await res.json() as { error: string };
@@ -194,7 +170,7 @@ describe('POST /api/billing/checkout', () => {
 
     it('returns 200 when rate limit is not exceeded', async () => {
       mockRateLimitAllowed = true;
-      const req = makeRequest({ tier: 'squad', tenantSlug: 'acme' });
+      const req = makeRequest({ tier: 'team', tenantSlug: 'acme' });
       const res = await POST(req);
       expect(res.status).toBe(200);
     });
@@ -202,7 +178,7 @@ describe('POST /api/billing/checkout', () => {
 
   describe('successful checkout session creation', () => {
     it('returns { url } for a valid self-serve tier', async () => {
-      const req = makeRequest({ tier: 'squad', tenantSlug: 'acme' });
+      const req = makeRequest({ tier: 'team', tenantSlug: 'acme' });
       const res = await POST(req);
       expect(res.status).toBe(200);
       const json = await res.json() as { url: string };
@@ -221,7 +197,7 @@ describe('POST /api/billing/checkout', () => {
 
     it('passes customerEmail when provided (no customerId)', async () => {
       const req = makeRequest({
-        tier: 'squad',
+        tier: 'team',
         tenantSlug: 'acme',
         customerEmail: 'user@example.com',
       });
@@ -232,7 +208,7 @@ describe('POST /api/billing/checkout', () => {
 
     it('passes existingCustomerId as customerId when provided', async () => {
       const req = makeRequest({
-        tier: 'squad',
+        tier: 'team',
         tenantSlug: 'acme',
         existingCustomerId: 'cus_existing',
       });
@@ -242,11 +218,11 @@ describe('POST /api/billing/checkout', () => {
     });
 
     it('uses 10-second bucket idempotency key', async () => {
-      const req = makeRequest({ tier: 'squad', tenantSlug: 'acme' });
+      const req = makeRequest({ tier: 'team', tenantSlug: 'acme' });
       await POST(req);
       const [params] = mockCreateCheckoutSession.mock.calls[0] as [{ idempotencyKey: string }];
       // Key format: tenant:{slug}:checkout:{tier}:{10s-bucket}
-      expect(params.idempotencyKey).toMatch(/^tenant:acme:checkout:squad:\d+$/);
+      expect(params.idempotencyKey).toMatch(/^tenant:acme:checkout:team:\d+$/);
       // The bucket value should be floor(Date.now() / 10000)
       const bucket = Math.floor(Date.now() / 10000);
       expect(params.idempotencyKey).toContain(String(bucket));
@@ -258,7 +234,7 @@ describe('POST /api/billing/checkout', () => {
       mockCreateCheckoutSession.mockRejectedValue(
         new Error('Stripe connection timeout'),
       );
-      const req = makeRequest({ tier: 'squad', tenantSlug: 'acme' });
+      const req = makeRequest({ tier: 'team', tenantSlug: 'acme' });
       const res = await POST(req);
       expect(res.status).toBe(503);
       const json = await res.json() as { error: string };
@@ -269,7 +245,7 @@ describe('POST /api/billing/checkout', () => {
       mockCreateCheckoutSession.mockRejectedValue(
         new Error('sk_live_supersecretkey is invalid'),
       );
-      const req = makeRequest({ tier: 'squad', tenantSlug: 'acme' });
+      const req = makeRequest({ tier: 'team', tenantSlug: 'acme' });
       const res = await POST(req);
       const json = await res.json() as { error: string };
       expect(json.error).not.toContain('sk_live_');

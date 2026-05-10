@@ -19,7 +19,7 @@
  * so the build fails loudly rather than producing stale types.
  *
  * Schema simplified by spec plans-and-quotas-simplification:
- *   - Three plan ids: team, enterprise, enterprise-deploy
+ *   - Four plan ids: team, org, enterprise, enterprise-deploy
  *   - Two quotas: concurrent_missions, concurrent_agents (0 = unlimited)
  *   - Pricing block carries display metadata
  *   - No more Features / has_* flags
@@ -43,7 +43,7 @@ const PLANS_SCHEMA = resolve(
 );
 const OUTPUT = resolve(DASHBOARD_ROOT, "src/generated/plans.ts");
 
-const KNOWN_PLAN_IDS = ["team", "enterprise", "enterprise-deploy"];
+const KNOWN_PLAN_IDS = ["team", "org", "enterprise", "enterprise-deploy"];
 
 const REQUIRED_QUOTA_KEYS = ["concurrent_missions", "concurrent_agents"];
 

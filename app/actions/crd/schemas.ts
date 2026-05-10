@@ -11,6 +11,7 @@
  */
 
 import { z } from "zod";
+import { planIDs, type PlanID } from "@/src/generated/plans";
 
 // ---------------------------------------------------------------------------
 // Primitives
@@ -61,18 +62,13 @@ export const componentRefSchema = z
 
 export const memberRoleSchema = z.enum(["admin", "member", "viewer"]);
 
-// Canonical Gibson plan IDs — must match `TenantTier` in `src/lib/k8s/types.ts`
-// AND the operator's `plans.PlanID` Go enum. Legacy free/pro/enterprise are
-// dropped; the entitlements reconciler rejects them as deprecated.
-export const tenantTierSchema = z.enum([
-  "solo",
-  "squad",
-  "org",
-  "platform",
-  "enterprise-cloud",
-  "enterprise-onprem",
-  "public-sector",
-]);
+// Canonical Gibson plan IDs — derived from the generated plan registry
+// (src/generated/plans.ts), which mirrors the operator's plans.PlanID Go
+// enum via gen-plans.mjs reading plans.yaml. Legacy ids (solo / squad /
+// platform / enterprise-cloud / enterprise-onprem / public-sector / free /
+// pro) are remapped by the tenant-operator's migrate-tenant-tiers Job and
+// rejected by the validating webhook.
+export const tenantTierSchema = z.enum(planIDs as unknown as readonly [PlanID, ...PlanID[]]);
 
 export const agentModeSchema = z.enum(["autonomous", "supervised"]);
 

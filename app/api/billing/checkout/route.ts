@@ -75,11 +75,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Validate tier: must be in selfServeTierIds and not 'solo'.
-  if (
-    tier === 'solo' ||
-    !(selfServeTierIds as readonly string[]).includes(tier)
-  ) {
+  // Validate tier: must be in selfServeTierIds (i.e., a self-serve paid tier).
+  if (!(selfServeTierIds as readonly string[]).includes(tier)) {
     return NextResponse.json({ error: 'invalid tier' }, { status: 400 });
   }
 

@@ -107,7 +107,7 @@ const VALID_INPUT = {
   password: 'Passw0rd!Test',
   passwordConfirm: 'Passw0rd!Test',
   workspaceName: 'test-workspace',
-  tier: 'solo',
+  tier: 'team',
   acceptToS: true as const,
   acceptPrivacy: true as const,
 };

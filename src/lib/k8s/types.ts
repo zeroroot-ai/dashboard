@@ -53,25 +53,22 @@ export type TenantPhase =
   | 'Terminated';
 
 /**
- * Canonical Gibson plan IDs. Single source of truth — these match the
- * operator's `plans.PlanID` Go enum (tenant-operator/plans/registry.go).
+ * Canonical Gibson plan IDs. Re-exported from the generated plan
+ * registry (src/generated/plans.ts), which is the single source of
+ * truth — operator's plans/registry.go → plans.yaml → gen-plans.mjs.
  *
- * Legacy values `free`/`pro`/`enterprise` are NOT accepted; the
- * entitlements reconciler rejects them as deprecated.
+ * Legacy values (solo / squad / platform / enterprise-cloud /
+ * enterprise-onprem / public-sector / free / pro) are NOT accepted;
+ * the tenant-operator's migrate-tenant-tiers Job rewrites them at
+ * chart-upgrade time and the validating webhook rejects them after.
  */
-export type TenantTier =
-  | 'solo'
-  | 'squad'
-  | 'org'
-  | 'platform'
-  | 'enterprise-cloud'
-  | 'enterprise-onprem'
-  | 'public-sector';
+export type { PlanID as TenantTier } from '@/src/generated/plans';
+import type { PlanID } from '@/src/generated/plans';
 
 export interface TenantSpec {
   displayName: string;
   owner: string;
-  tier: TenantTier;
+  tier: PlanID;
   stripeCustomerId?: string;
 }
 
@@ -147,7 +144,7 @@ export interface TenantStatus {
   zitadelOrgSlug?: string;
   langfuseProjectId?: string;
   observedGeneration?: number;
-  tierObserved?: TenantTier;
+  tierObserved?: PlanID;
   /**
    * Data-plane store provisioning status. Written by the tenant-operator at
    * each saga step. Absent on pre-Task-21 Tenant CRs.

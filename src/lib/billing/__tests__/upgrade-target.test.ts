@@ -7,8 +7,15 @@ import { describe, it, expect } from 'vitest';
 import { getUpgradeTarget } from '../upgrade-target';
 
 describe('getUpgradeTarget', () => {
-  it('routes team → Stripe portal targeting enterprise', () => {
+  it('routes team → Stripe portal targeting org', () => {
     const target = getUpgradeTarget('team');
+    expect(target).not.toBeNull();
+    expect(target?.label).toMatch(/upgrade to org/i);
+    expect(target?.href).toContain('/billing/upgrade?target=org');
+  });
+
+  it('routes org → Stripe portal targeting enterprise', () => {
+    const target = getUpgradeTarget('org');
     expect(target).not.toBeNull();
     expect(target?.label).toMatch(/upgrade to enterprise/i);
     expect(target?.href).toContain('/billing/upgrade?target=enterprise');
