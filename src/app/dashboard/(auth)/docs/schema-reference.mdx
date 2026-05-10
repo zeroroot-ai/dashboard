@@ -1,0 +1,172 @@
+---
+title: Schema Reference
+description: Every field of every mission-related message.
+---
+
+# Mission Schema Reference
+
+Generated from the canonical proto at `gibson/mission/v1/mission_definition.proto` and `gibson/daemon/v1/daemon.proto`.
+
+## `gibson.daemon.v1.MissionConstraints`
+
+MissionConstraints defines execution constraints for a mission.
+
+| Field | Type | Tag | Description |
+|---|---|---|---|
+| `max_duration_seconds` | `int32` | 1 | max_duration_seconds is the maximum mission duration in seconds (0 = no limit) |
+| `max_findings` | `int32` | 2 | max_findings is the maximum number of findings to collect (0 = no limit) |
+| `max_tokens` | `int32` | 3 | max_tokens is the maximum LLM tokens to consume (0 = no limit) |
+| `max_turns_per_agent` | `int32` | 4 | max_turns_per_agent is the maximum turns per agent (0 = no limit) |
+| `allowed_techniques` | `repeated string` | 5 | allowed_techniques is the list of allowed MITRE techniques (empty = all allowed) |
+| `blocked_techniques` | `repeated string` | 6 | blocked_techniques is the list of blocked MITRE techniques (empty = none blocked) |
+| `max_tokens_per_call` | `int32` | 7 | max_tokens_per_call is the default per-call LLM token cap that applies to every node unless overridden by the per-noun *NodeConfig.max_tokens_per_call field. 0 means unlimited from this mechanism (the cap is not applied). Spec: mission-schema-canonicalization Requirement 5. |
+
+## `gibson.mission.v1.AgentNodeConfig`
+
+AgentNodeConfig contains configuration for agent nodes. AGENT = LLM-driven worker that calls tools and plugins on the author's behalf. The executor selects an agent component by name and dispatches the configured Task.
+
+| Field | Type | Tag | Description |
+|---|---|---|---|
+| `agent_name` | `string` | 1 | AgentName is the name of the agent to execute |
+| `task` | `gibson.types.v1.Task` | 2 | Task is the agent task configuration |
+| `max_tokens_per_call` | `int32` | 3 | max_tokens_per_call overrides MissionConstraints.max_tokens_per_call for this node only. 0 means unlimited; absence means cascade from the mission level. |
+
+## `gibson.mission.v1.ConditionNodeConfig`
+
+ConditionNodeConfig contains configuration for condition nodes
+
+| Field | Type | Tag | Description |
+|---|---|---|---|
+| `expression` | `string` | 1 | Expression to evaluate (e.g., "result.status == 'success'") |
+| `true_branch` | `repeated string` | 2 | TrueBranch contains node IDs to execute if condition is true |
+| `false_branch` | `repeated string` | 3 | FalseBranch contains node IDs to execute if condition is false |
+| `language` | `gibson.mission.v1.Language` | 4 | Language declares the expression language. Defaults to LANGUAGE_CEL; LANGUAGE_UNSPECIFIED is treated as CEL for backwards compatibility with pre-Language-field documents. |
+
+## `gibson.mission.v1.DataPolicy`
+
+DataPolicy defines how data is handled for a node
+
+| Field | Type | Tag | Description |
+|---|---|---|---|
+| `store_input` | `bool` | 1 | StoreInput determines whether to store input data in GraphRAG |
+| `store_output` | `bool` | 2 | StoreOutput determines whether to store output data in GraphRAG |
+| `retention` | `google.protobuf.Duration` | 3 | Retention specifies how long to retain data (0 = forever) |
+| `encryption` | `bool` | 4 | Encryption determines whether data should be encrypted at rest |
+| `access_control` | `repeated string` | 5 | AccessControl specifies who can access this data |
+
+## `gibson.mission.v1.JoinNodeConfig`
+
+JoinNodeConfig blocks until every node ID in `wait_for` has completed (success or final failure), then merges their results per `strategy`. JOIN is a first-class noun separable from PARALLEL — a JOIN can merge results from non-parallel branches.  Spec: mission-verb-noun-registry Requirement 7.
+
+| Field | Type | Tag | Description |
+|---|---|---|---|
+| `wait_for` | `repeated string` | 1 | wait_for lists the upstream node IDs whose completion is required before this JOIN runs. Must be non-empty; submit-time validation rejects empty wait_for. |
+| `strategy` | `gibson.mission.v1.MergeStrategy` | 2 | strategy selects how upstream results are combined. |
+| `aggregator` | `string` | 3 | aggregator carries a CEL expression used when strategy is MERGE_STRATEGY_CUSTOM. The expression sees `sources` (a map from node ID to that node's result) and returns the merged value. Empty when strategy is not CUSTOM. |
+
+## `gibson.mission.v1.MissionDefinition`
+
+MissionDefinition represents a mission template/definition. This is the shareable mission specification that can be created via the CreateMissionDefinition API and referenced by mission runs.
+
+| Field | Type | Tag | Description |
+|---|---|---|---|
+| `id` | `string` | 1 | ID is the unique identifier for this mission definition |
+| `name` | `string` | 2 | Name is a human-readable name for the mission |
+| `description` | `string` | 3 | Description provides additional context about what this mission does |
+| `version` | `string` | 4 | Version is the semantic version of the mission definition |
+| `target_ref` | `string` | 5 | TargetRef is a reference to the target (name or ID) This needs to be resolved to a TargetID when creating a mission instance |
+| `nodes` | `map<string, gibson.mission.v1.MissionNode>` | 6 | Nodes contains all the nodes in the mission, indexed by node ID |
+| `edges` | `repeated gibson.mission.v1.MissionEdge` | 7 | Edges contains all the directed edges connecting nodes in the mission |
+| `entry_points` | `repeated string` | 8 | EntryPoints contains the IDs of nodes that can serve as entry points to the mission These are nodes with no incoming edges |
+| `exit_points` | `repeated string` | 9 | ExitPoints contains the IDs of nodes that can serve as exit points from the mission These are nodes with no outgoing edges |
+| `metadata` | `map<string, string>` | 10 | Metadata contains additional custom metadata for the mission |
+| `dependencies` | `gibson.mission.v1.MissionDependencies` | 11 | Dependencies specifies required agents and tools for this mission |
+| `source` | `string` | 12 | Source is the git URL this mission was installed from (if applicable) |
+| `installed_at` | `google.protobuf.Timestamp` | 13 | InstalledAt is the timestamp when this mission was installed |
+| `created_at` | `google.protobuf.Timestamp` | 14 | CreatedAt is the timestamp when the mission definition was created |
+
+## `gibson.mission.v1.MissionDependencies`
+
+MissionDependencies specifies required components for a mission
+
+| Field | Type | Tag | Description |
+|---|---|---|---|
+| `agents` | `repeated string` | 1 | Agents lists required agent components by name or URL |
+| `tools` | `repeated string` | 2 | Tools lists required tool components by name or URL |
+| `plugins` | `repeated string` | 3 | Plugins lists required plugin components by name or URL |
+
+## `gibson.mission.v1.MissionEdge`
+
+MissionEdge represents a directed edge in the mission DAG
+
+| Field | Type | Tag | Description |
+|---|---|---|---|
+| `from` | `string` | 1 | From is the source node ID |
+| `to` | `string` | 2 | To is the destination node ID |
+| `condition` | `string` | 3 | Condition is an optional condition that must be satisfied for the edge to be traversed |
+| `metadata` | `map<string, string>` | 4 | Metadata contains additional metadata for the edge |
+
+## `gibson.mission.v1.MissionNode`
+
+MissionNode represents a single node in a mission DAG
+
+| Field | Type | Tag | Description |
+|---|---|---|---|
+| `id` | `string` | 1 | ID is the unique identifier for this node within the mission |
+| `type` | `gibson.mission.v1.NodeType` | 2 | Type is the node type |
+| `name` | `string` | 3 | Name is a human-readable name for the node |
+| `description` | `string` | 4 | Description provides additional context about this node |
+| `agent_config` | `gibson.mission.v1.AgentNodeConfig` | 5 | AgentConfig for agent nodes |
+| `tool_config` | `gibson.mission.v1.ToolNodeConfig` | 6 | ToolConfig for tool nodes |
+| `plugin_config` | `gibson.mission.v1.PluginNodeConfig` | 7 | PluginConfig for plugin nodes |
+| `condition_config` | `gibson.mission.v1.ConditionNodeConfig` | 8 | ConditionConfig for condition nodes |
+| `parallel_config` | `gibson.mission.v1.ParallelNodeConfig` | 9 | ParallelConfig for parallel nodes |
+| `join_config` | `gibson.mission.v1.JoinNodeConfig` | 15 | JoinConfig for join nodes (mission-verb-noun-registry). Field number 15 because 10-14 are sibling MissionNode fields (dependencies, timeout, retry_policy, data_policy, metadata). |
+| `dependencies` | `repeated string` | 10 | Dependencies lists node IDs that must complete before this node executes |
+| `timeout` | `google.protobuf.Duration` | 11 | Timeout is the maximum execution time for this node |
+| `retry_policy` | `gibson.mission.v1.RetryPolicy` | 12 | RetryPolicy defines retry behavior for this node |
+| `data_policy` | `gibson.mission.v1.DataPolicy` | 13 | DataPolicy defines data handling policy for this node |
+| `metadata` | `map<string, string>` | 14 | Metadata contains additional custom metadata for this node |
+
+## `gibson.mission.v1.ParallelNodeConfig`
+
+ParallelNodeConfig contains configuration for parallel nodes. PARALLEL fans out to its sub-nodes concurrently, capped by max_concurrency. Sibling failures are isolated (one failing sub-node does not cancel its siblings). Spec: mission-verb-noun-registry Requirement 6.
+
+| Field | Type | Tag | Description |
+|---|---|---|---|
+| `sub_nodes` | `repeated gibson.mission.v1.MissionNode` | 1 | SubNodes contains the nodes to execute in parallel |
+| `max_concurrency` | `int32` | 2 | MaxConcurrency limits the number of concurrent executions (0 = unlimited) |
+
+## `gibson.mission.v1.PluginNodeConfig`
+
+PluginNodeConfig contains configuration for plugin nodes. PLUGIN = multi-method provider keyed by `plugin_name + method`. Distinct from TOOL: a plugin advertises several callable methods behind one component identity. The executor selects the named method and dispatches `params` as the call payload.
+
+| Field | Type | Tag | Description |
+|---|---|---|---|
+| `plugin_name` | `string` | 1 | PluginName is the name of the plugin to query |
+| `method` | `string` | 2 | Method is the plugin method to call |
+| `params` | `map<string, string>` | 3 | Params contains the method parameters |
+| `max_tokens_per_call` | `int32` | 4 | max_tokens_per_call overrides MissionConstraints.max_tokens_per_call for this node only. 0 means unlimited; absence means cascade from the mission level. |
+
+## `gibson.mission.v1.RetryPolicy`
+
+RetryPolicy defines the retry behavior for a mission node
+
+| Field | Type | Tag | Description |
+|---|---|---|---|
+| `max_retries` | `int32` | 1 | MaxRetries is the maximum number of retry attempts |
+| `backoff_strategy` | `gibson.mission.v1.BackoffStrategy` | 2 | BackoffStrategy determines how delays are calculated between retries |
+| `initial_delay` | `google.protobuf.Duration` | 3 | InitialDelay is the delay before the first retry attempt |
+| `max_delay` | `google.protobuf.Duration` | 4 | MaxDelay is the maximum delay between retry attempts (used for exponential backoff) |
+| `multiplier` | `double` | 5 | Multiplier is the factor by which the delay increases (used for exponential backoff) |
+
+## `gibson.mission.v1.ToolNodeConfig`
+
+ToolNodeConfig contains configuration for tool nodes. TOOL = single-purpose named function with a typed input map. The executor invokes the named tool through the tool worker queue and returns the tool's output as the node result.
+
+| Field | Type | Tag | Description |
+|---|---|---|---|
+| `tool_name` | `string` | 1 | ToolName is the name of the tool to execute |
+| `input` | `map<string, string>` | 2 | Input contains the tool input parameters |
+| `max_tokens_per_call` | `int32` | 3 | max_tokens_per_call overrides MissionConstraints.max_tokens_per_call for this node only. 0 means unlimited; absence means cascade from the mission level. |
+

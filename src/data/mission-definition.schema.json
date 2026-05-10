@@ -1,0 +1,658 @@
+{
+  "$defs": {
+    "AgentNodeConfig": {
+      "additionalProperties": false,
+      "description": "AgentNodeConfig contains configuration for agent nodes. AGENT = LLM-driven worker that calls tools and plugins on the author's behalf. The executor selects an agent component by name and dispatches the configured Task.",
+      "properties": {
+        "agentName": {
+          "description": "AgentName is the name of the agent to execute",
+          "type": "string"
+        },
+        "maxTokensPerCall": {
+          "description": "max_tokens_per_call overrides MissionConstraints.max_tokens_per_call for this node only. 0 means unlimited; absence means cascade from the mission level.",
+          "format": "int32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "task": {
+          "$ref": "#/$defs/Task",
+          "description": "Task is the agent task configuration"
+        }
+      },
+      "type": "object"
+    },
+    "ConditionNodeConfig": {
+      "additionalProperties": false,
+      "description": "ConditionNodeConfig contains configuration for condition nodes",
+      "properties": {
+        "expression": {
+          "description": "Expression to evaluate (e.g., \"result.status == 'success'\")",
+          "type": "string"
+        },
+        "falseBranch": {
+          "description": "FalseBranch contains node IDs to execute if condition is false",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "language": {
+          "description": "Language declares the expression language. Defaults to LANGUAGE_CEL; LANGUAGE_UNSPECIFIED is treated as CEL for backwards compatibility with pre-Language-field documents.",
+          "enum": [
+            "LANGUAGE_CEL"
+          ],
+          "type": "string"
+        },
+        "trueBranch": {
+          "description": "TrueBranch contains node IDs to execute if condition is true",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "DataPolicy": {
+      "additionalProperties": false,
+      "description": "DataPolicy defines how data is handled for a node",
+      "properties": {
+        "accessControl": {
+          "description": "AccessControl specifies who can access this data",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "encryption": {
+          "description": "Encryption determines whether data should be encrypted at rest",
+          "type": "boolean"
+        },
+        "retention": {
+          "description": "Retention specifies how long to retain data (0 = forever)",
+          "type": "string"
+        },
+        "storeInput": {
+          "description": "StoreInput determines whether to store input data in GraphRAG",
+          "type": "boolean"
+        },
+        "storeOutput": {
+          "description": "StoreOutput determines whether to store output data in GraphRAG",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "JoinNodeConfig": {
+      "additionalProperties": false,
+      "description": "JoinNodeConfig blocks until every node ID in `wait_for` has completed (success or final failure), then merges their results per `strategy`. JOIN is a first-class noun separable from PARALLEL — a JOIN can merge results from non-parallel branches.  Spec: mission-verb-noun-registry Requirement 7.",
+      "properties": {
+        "aggregator": {
+          "description": "aggregator carries a CEL expression used when strategy is MERGE_STRATEGY_CUSTOM. The expression sees `sources` (a map from node ID to that node's result) and returns the merged value. Empty when strategy is not CUSTOM.",
+          "type": "string"
+        },
+        "strategy": {
+          "description": "strategy selects how upstream results are combined.",
+          "enum": [
+            "MERGE_STRATEGY_CONCAT",
+            "MERGE_STRATEGY_REDUCE",
+            "MERGE_STRATEGY_FIRST",
+            "MERGE_STRATEGY_LAST",
+            "MERGE_STRATEGY_CUSTOM"
+          ],
+          "type": "string"
+        },
+        "waitFor": {
+          "description": "wait_for lists the upstream node IDs whose completion is required before this JOIN runs. Must be non-empty; submit-time validation rejects empty wait_for.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "MissionDependencies": {
+      "additionalProperties": false,
+      "description": "MissionDependencies specifies required components for a mission",
+      "properties": {
+        "agents": {
+          "description": "Agents lists required agent components by name or URL",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "plugins": {
+          "description": "Plugins lists required plugin components by name or URL",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "tools": {
+          "description": "Tools lists required tool components by name or URL",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "MissionEdge": {
+      "additionalProperties": false,
+      "description": "MissionEdge represents a directed edge in the mission DAG",
+      "properties": {
+        "condition": {
+          "description": "Condition is an optional condition that must be satisfied for the edge to be traversed",
+          "type": "string"
+        },
+        "from": {
+          "description": "From is the source node ID",
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Metadata contains additional metadata for the edge",
+          "type": "object"
+        },
+        "to": {
+          "description": "To is the destination node ID",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "MissionNode": {
+      "additionalProperties": false,
+      "description": "MissionNode represents a single node in a mission DAG",
+      "oneOf": [
+        {
+          "properties": {
+            "agentConfig": {
+              "$ref": "#/$defs/AgentNodeConfig",
+              "description": "AgentConfig for agent nodes"
+            }
+          },
+          "required": [
+            "agentConfig"
+          ]
+        },
+        {
+          "properties": {
+            "toolConfig": {
+              "$ref": "#/$defs/ToolNodeConfig",
+              "description": "ToolConfig for tool nodes"
+            }
+          },
+          "required": [
+            "toolConfig"
+          ]
+        },
+        {
+          "properties": {
+            "pluginConfig": {
+              "$ref": "#/$defs/PluginNodeConfig",
+              "description": "PluginConfig for plugin nodes"
+            }
+          },
+          "required": [
+            "pluginConfig"
+          ]
+        },
+        {
+          "properties": {
+            "conditionConfig": {
+              "$ref": "#/$defs/ConditionNodeConfig",
+              "description": "ConditionConfig for condition nodes"
+            }
+          },
+          "required": [
+            "conditionConfig"
+          ]
+        },
+        {
+          "properties": {
+            "parallelConfig": {
+              "$ref": "#/$defs/ParallelNodeConfig",
+              "description": "ParallelConfig for parallel nodes"
+            }
+          },
+          "required": [
+            "parallelConfig"
+          ]
+        },
+        {
+          "properties": {
+            "joinConfig": {
+              "$ref": "#/$defs/JoinNodeConfig",
+              "description": "JoinConfig for join nodes (mission-verb-noun-registry). Field number 15 because 10-14 are sibling MissionNode fields (dependencies, timeout, retry_policy, data_policy, metadata)."
+            }
+          },
+          "required": [
+            "joinConfig"
+          ]
+        }
+      ],
+      "properties": {
+        "dataPolicy": {
+          "$ref": "#/$defs/DataPolicy",
+          "description": "DataPolicy defines data handling policy for this node"
+        },
+        "dependencies": {
+          "description": "Dependencies lists node IDs that must complete before this node executes",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "description": {
+          "description": "Description provides additional context about this node",
+          "type": "string"
+        },
+        "id": {
+          "description": "ID is the unique identifier for this node within the mission",
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Metadata contains additional custom metadata for this node",
+          "type": "object"
+        },
+        "name": {
+          "description": "Name is a human-readable name for the node",
+          "type": "string"
+        },
+        "retryPolicy": {
+          "$ref": "#/$defs/RetryPolicy",
+          "description": "RetryPolicy defines retry behavior for this node"
+        },
+        "timeout": {
+          "description": "Timeout is the maximum execution time for this node",
+          "type": "string"
+        },
+        "type": {
+          "description": "Type is the node type",
+          "enum": [
+            "NODE_TYPE_AGENT",
+            "NODE_TYPE_TOOL",
+            "NODE_TYPE_PLUGIN",
+            "NODE_TYPE_CONDITION",
+            "NODE_TYPE_PARALLEL",
+            "NODE_TYPE_JOIN"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ParallelNodeConfig": {
+      "additionalProperties": false,
+      "description": "ParallelNodeConfig contains configuration for parallel nodes. PARALLEL fans out to its sub-nodes concurrently, capped by max_concurrency. Sibling failures are isolated (one failing sub-node does not cancel its siblings). Spec: mission-verb-noun-registry Requirement 6.",
+      "properties": {
+        "maxConcurrency": {
+          "description": "MaxConcurrency limits the number of concurrent executions (0 = unlimited)",
+          "format": "int32",
+          "type": "integer"
+        },
+        "subNodes": {
+          "description": "SubNodes contains the nodes to execute in parallel",
+          "items": {
+            "$ref": "#/$defs/MissionNode"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "PluginNodeConfig": {
+      "additionalProperties": false,
+      "description": "PluginNodeConfig contains configuration for plugin nodes. PLUGIN = multi-method provider keyed by `plugin_name + method`. Distinct from TOOL: a plugin advertises several callable methods behind one component identity. The executor selects the named method and dispatches `params` as the call payload.",
+      "properties": {
+        "maxTokensPerCall": {
+          "description": "max_tokens_per_call overrides MissionConstraints.max_tokens_per_call for this node only. 0 means unlimited; absence means cascade from the mission level.",
+          "format": "int32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "method": {
+          "description": "Method is the plugin method to call",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Params contains the method parameters",
+          "type": "object"
+        },
+        "pluginName": {
+          "description": "PluginName is the name of the plugin to query",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "RetryPolicy": {
+      "additionalProperties": false,
+      "description": "RetryPolicy defines the retry behavior for a mission node",
+      "properties": {
+        "backoffStrategy": {
+          "description": "BackoffStrategy determines how delays are calculated between retries",
+          "enum": [
+            "BACKOFF_STRATEGY_CONSTANT",
+            "BACKOFF_STRATEGY_LINEAR",
+            "BACKOFF_STRATEGY_EXPONENTIAL"
+          ],
+          "type": "string"
+        },
+        "initialDelay": {
+          "description": "InitialDelay is the delay before the first retry attempt",
+          "type": "string"
+        },
+        "maxDelay": {
+          "description": "MaxDelay is the maximum delay between retry attempts (used for exponential backoff)",
+          "type": "string"
+        },
+        "maxRetries": {
+          "description": "MaxRetries is the maximum number of retry attempts",
+          "format": "int32",
+          "type": "integer"
+        },
+        "multiplier": {
+          "description": "Multiplier is the factor by which the delay increases (used for exponential backoff)",
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "Task": {
+      "additionalProperties": false,
+      "description": "Task represents a goal-oriented task with context and constraints.",
+      "properties": {
+        "constraints": {
+          "$ref": "#/$defs/TaskConstraints"
+        },
+        "context": {
+          "additionalProperties": {
+            "$ref": "#/$defs/TypedValue"
+          },
+          "description": "",
+          "type": "object"
+        },
+        "goal": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "$ref": "#/$defs/TypedValue"
+          },
+          "description": "",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "TaskConstraints": {
+      "additionalProperties": false,
+      "description": "TaskConstraints represents execution constraints for a task.",
+      "properties": {
+        "allowedTools": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "blockedTools": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "maxTokens": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "maxTurns": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "ToolNodeConfig": {
+      "additionalProperties": false,
+      "description": "ToolNodeConfig contains configuration for tool nodes. TOOL = single-purpose named function with a typed input map. The executor invokes the named tool through the tool worker queue and returns the tool's output as the node result.",
+      "properties": {
+        "input": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Input contains the tool input parameters",
+          "type": "object"
+        },
+        "maxTokensPerCall": {
+          "description": "max_tokens_per_call overrides MissionConstraints.max_tokens_per_call for this node only. 0 means unlimited; absence means cascade from the mission level.",
+          "format": "int32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "toolName": {
+          "description": "ToolName is the name of the tool to execute",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "TypedArray": {
+      "additionalProperties": false,
+      "description": "TypedArray represents an array of TypedValues",
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/$defs/TypedValue"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "TypedMap": {
+      "additionalProperties": false,
+      "description": "TypedMap represents a map of string keys to TypedValues",
+      "properties": {
+        "entries": {
+          "additionalProperties": {
+            "$ref": "#/$defs/TypedValue"
+          },
+          "description": "",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "TypedValue": {
+      "additionalProperties": false,
+      "description": "TypedValue represents a dynamically typed value",
+      "oneOf": [
+        {
+          "properties": {
+            "nullValue": {
+              "description": "NullValue represents a null value in TypedValue",
+              "enum": [],
+              "type": "string"
+            }
+          },
+          "required": [
+            "nullValue"
+          ]
+        },
+        {
+          "properties": {
+            "stringValue": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "stringValue"
+          ]
+        },
+        {
+          "properties": {
+            "intValue": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "intValue"
+          ]
+        },
+        {
+          "properties": {
+            "doubleValue": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          "required": [
+            "doubleValue"
+          ]
+        },
+        {
+          "properties": {
+            "boolValue": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "boolValue"
+          ]
+        },
+        {
+          "properties": {
+            "bytesValue": {
+              "contentEncoding": "base64",
+              "type": "string"
+            }
+          },
+          "required": [
+            "bytesValue"
+          ]
+        },
+        {
+          "properties": {
+            "arrayValue": {
+              "$ref": "#/$defs/TypedArray"
+            }
+          },
+          "required": [
+            "arrayValue"
+          ]
+        },
+        {
+          "properties": {
+            "mapValue": {
+              "$ref": "#/$defs/TypedMap"
+            }
+          },
+          "required": [
+            "mapValue"
+          ]
+        }
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://gibson.zero-day.ai/schemas/mission-definition.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "MissionDefinition represents a mission template/definition. This is the shareable mission specification that can be created via the CreateMissionDefinition API and referenced by mission runs.",
+  "properties": {
+    "createdAt": {
+      "description": "CreatedAt is the timestamp when the mission definition was created",
+      "format": "date-time",
+      "type": "string"
+    },
+    "dependencies": {
+      "$ref": "#/$defs/MissionDependencies",
+      "description": "Dependencies specifies required agents and tools for this mission"
+    },
+    "description": {
+      "description": "Description provides additional context about what this mission does",
+      "type": "string"
+    },
+    "edges": {
+      "description": "Edges contains all the directed edges connecting nodes in the mission",
+      "items": {
+        "$ref": "#/$defs/MissionEdge"
+      },
+      "type": "array"
+    },
+    "entryPoints": {
+      "description": "EntryPoints contains the IDs of nodes that can serve as entry points to the mission These are nodes with no incoming edges",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exitPoints": {
+      "description": "ExitPoints contains the IDs of nodes that can serve as exit points from the mission These are nodes with no outgoing edges",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "id": {
+      "description": "ID is the unique identifier for this mission definition",
+      "type": "string"
+    },
+    "installedAt": {
+      "description": "InstalledAt is the timestamp when this mission was installed",
+      "format": "date-time",
+      "type": "string"
+    },
+    "metadata": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Metadata contains additional custom metadata for the mission",
+      "type": "object"
+    },
+    "name": {
+      "description": "Name is a human-readable name for the mission",
+      "type": "string"
+    },
+    "nodes": {
+      "additionalProperties": {
+        "$ref": "#/$defs/MissionNode"
+      },
+      "description": "Nodes contains all the nodes in the mission, indexed by node ID",
+      "type": "object"
+    },
+    "source": {
+      "description": "Source is the git URL this mission was installed from (if applicable)",
+      "type": "string"
+    },
+    "targetRef": {
+      "description": "TargetRef is a reference to the target (name or ID) This needs to be resolved to a TargetID when creating a mission instance",
+      "type": "string"
+    },
+    "version": {
+      "description": "Version is the semantic version of the mission definition",
+      "type": "string"
+    }
+  },
+  "title": "MissionDefinition",
+  "type": "object"
+}
