@@ -8,4 +8,5 @@ export { PluginConfigEditor } from "./plugin-config-editor";
 export { ConditionConfigEditor } from "./condition-config-editor";
 export { ParallelConfigEditor } from "./parallel-config-editor";
 export { JoinConfigEditor, validateJoinConfig } from "./join-config-editor";
+export { RetryPolicyEditor } from "./retry-policy-editor";
 export { StepConfigSwitcher } from "./step-config-switcher";
