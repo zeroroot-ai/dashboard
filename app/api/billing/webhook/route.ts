@@ -273,6 +273,28 @@ function handleCheckoutSessionExpiredOrFailed(
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * GET /api/billing/webhook — 410 tombstone.
+ *
+ * This endpoint exists as a tombstone for the webhook migration plan
+ * (spec: stripe-billing-integration R12.4, R12.5). It returns 410 Gone
+ * unconditionally to signal to any legacy Stripe webhook destinations
+ * pointing at this path that they should be updated.
+ *
+ * Migration Phase 2 cutover: once the 30-day parallel-listen window closes
+ * and all Stripe webhook traffic has been moved to webhooks.zero-day.ai/stripe,
+ * the body of the POST handler below can be replaced with this same 410
+ * response to fully retire the endpoint.
+ *
+ * To advance to Phase 2 (full tombstone):
+ * 1. Verify Stripe Dashboard shows zero deliveries to this path for 72 hours.
+ * 2. Replace the POST handler body with: return NextResponse.json({ gone: true }, { status: 410 });
+ * 3. Remove the stripe-webhook-cutover runbook reference; update to "completed".
+ */
+export async function GET(_req: NextRequest): Promise<NextResponse> {
+  return NextResponse.json({ gone: true }, { status: 410 });
+}
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
   // Read raw body for signature verification — must happen before any parsing.
   const rawBody = await req.text();
