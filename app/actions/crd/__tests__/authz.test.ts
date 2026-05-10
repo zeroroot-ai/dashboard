@@ -220,10 +220,10 @@ const MANIFESTS: ActionManifest[] = [
     name: "updateTenantAction",
     permission: "tenants:update",
     tenantName: "acme",
-    invokeValid: (t) => () => tenantActions.updateTenantAction(t, { tier: "squad" }),
+    invokeValid: (t) => () => tenantActions.updateTenantAction(t, { tier: "team" }),
     invokeBadInput:
       (t) => () =>
-        tenantActions.updateTenantAction(t, { tier: "invalid" as unknown as "squad" }),
+        tenantActions.updateTenantAction(t, { tier: "invalid" as unknown as "team" }),
     k8sMock: () => k8sTenants.patchTenant as Mock,
   },
   {

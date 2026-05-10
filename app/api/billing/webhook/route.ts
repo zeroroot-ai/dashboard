@@ -56,14 +56,11 @@ import { getPool } from '@/src/lib/db';
 import { logger } from '@/src/lib/logger';
 import { incBillingEvent } from '@/src/lib/metrics/billing';
 
-// Price env var → tier name mapping (for plan-changed email).
+// Price env var → tier display name mapping (for plan-changed email).
 const PRICE_TO_TIER_NAME: Record<string, string> = {
-  [process.env.STRIPE_PRICE_SQUAD ?? '']: 'Squad',
+  [process.env.STRIPE_PRICE_TEAM ?? '']: 'Team',
   [process.env.STRIPE_PRICE_ORG ?? '']: 'Org',
-  [process.env.STRIPE_PRICE_PLATFORM ?? '']: 'Platform',
-  [process.env.STRIPE_PRICE_ENTERPRISE_CLOUD ?? '']: 'Enterprise Cloud',
-  [process.env.STRIPE_PRICE_ENTERPRISE_ONPREM ?? '']: 'Enterprise On-Prem',
-  [process.env.STRIPE_PRICE_PUBLIC_SECTOR ?? '']: 'Public Sector',
+  [process.env.STRIPE_PRICE_ENTERPRISE ?? '']: 'Enterprise',
 };
 
 const SUPPORT_EMAIL = process.env.DASHBOARD_SUPPORT_EMAIL ?? 'support@zero-day.ai';

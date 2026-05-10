@@ -178,9 +178,8 @@ const CONTACT_SALES_TIERS = new Set<string>(CONTACT_SALES_TIER_IDS);
  * Return the Stripe Price ID for the given tier from environment variables,
  * or null if the env var is unset.
  *
- * Env vars: STRIPE_PRICE_SQUAD, STRIPE_PRICE_ORG, STRIPE_PRICE_PLATFORM,
- * STRIPE_PRICE_ENTERPRISE_CLOUD, STRIPE_PRICE_ENTERPRISE_ONPREM,
- * STRIPE_PRICE_PUBLIC_SECTOR.
+ * Env vars: STRIPE_PRICE_TEAM, STRIPE_PRICE_ORG, STRIPE_PRICE_ENTERPRISE.
+ * enterprise-deploy is contact-sales and has no Stripe price.
  */
 export function priceIdForTier(tier: string): string | null {
   const envKey = PRICE_ENV_MAP[tier as BillingTier];
@@ -197,7 +196,7 @@ export function priceIdForTier(tier: string): string | null {
  *
  * Always creates a subscription with a 14-day trial; trial cancels automatically
  * if no payment method is collected before trial end. Throws if called with
- * a contact-sales tier (enterprise-cloud, enterprise-onprem, public-sector).
+ * a contact-sales tier (enterprise-deploy).
  *
  * @throws If `params.tier` is a contact-sales tier.
  */

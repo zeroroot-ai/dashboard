@@ -47,7 +47,7 @@ describe('ApproachingLimitBanner', () => {
     );
     expect(screen.getByTestId('quota-approaching-limit-banner')).toBeTruthy();
     const cta = screen.getByTestId('quota-banner-upgrade-cta');
-    expect(cta.getAttribute('href')).toContain('/billing/upgrade?target=enterprise');
+    expect(cta.getAttribute('href')).toContain('/billing/upgrade?target=org');
   });
 
   it('renders at 100% with the at-limit copy', () => {

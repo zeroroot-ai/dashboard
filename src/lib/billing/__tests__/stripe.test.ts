@@ -19,12 +19,9 @@ const originalEnv: Record<string, string | undefined> = {};
 const REQUIRED_KEYS = [
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
-  'STRIPE_PRICE_SQUAD',
+  'STRIPE_PRICE_TEAM',
   'STRIPE_PRICE_ORG',
-  'STRIPE_PRICE_PLATFORM',
-  'STRIPE_PRICE_ENTERPRISE_CLOUD',
-  'STRIPE_PRICE_ENTERPRISE_ONPREM',
-  'STRIPE_PRICE_PUBLIC_SECTOR',
+  'STRIPE_PRICE_ENTERPRISE',
 ];
 
 function saveEnv(...keys: string[]) {
@@ -84,12 +81,9 @@ describe('validateBillingConfig — key-mode guard', () => {
     (process.env as any).NODE_ENV = nodeEnv;
     process.env.STRIPE_SECRET_KEY = stripeKey;
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
-    process.env.STRIPE_PRICE_SQUAD = 'price_squad';
+    process.env.STRIPE_PRICE_TEAM = 'price_team';
     process.env.STRIPE_PRICE_ORG = 'price_org';
-    process.env.STRIPE_PRICE_PLATFORM = 'price_platform';
-    process.env.STRIPE_PRICE_ENTERPRISE_CLOUD = 'price_ec';
-    process.env.STRIPE_PRICE_ENTERPRISE_ONPREM = 'price_eo';
-    process.env.STRIPE_PRICE_PUBLIC_SECTOR = 'price_ps';
+    process.env.STRIPE_PRICE_ENTERPRISE = 'price_enterprise';
   }
 
   it('throws with exact message when NODE_ENV=production and sk_test_ key', () => {
