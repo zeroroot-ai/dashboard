@@ -97,6 +97,46 @@ export interface TenantDataPlaneStatus {
   };
 }
 
+/**
+ * Billing subscription status mirroring the Go `BillingSubscriptionStatus`
+ * struct in `tenant-operator/api/v1alpha1/tenant_types.go`.
+ *
+ * Written by the Stripe webhook handlers and the billing reconciler.
+ * Absent on Tenant CRs that have not yet entered a billing flow.
+ */
+export interface BillingStatus {
+  /** Stripe subscription ID (sub_...). */
+  subscriptionId?: string;
+  /** Stripe customer ID (cus_...). */
+  customerId?: string;
+  /** Stripe price ID currently active on the subscription. */
+  priceId?: string;
+  /**
+   * Subscription lifecycle state mirroring Stripe's status field.
+   * Values: trialing | active | past_due | cancelled | incomplete | incomplete_expired
+   */
+  status?: 'trialing' | 'active' | 'past_due' | 'cancelled' | 'incomplete' | 'incomplete_expired';
+  /** ISO 8601 UTC timestamp when the trial period ends. */
+  trialEnd?: string;
+  /**
+   * True when `customer.subscription.trial_will_end` fires (3 days before
+   * trialEnd). Reset to false when the first invoice is paid successfully.
+   */
+  trialEndsSoon?: boolean;
+  /** ISO 8601 UTC timestamp for the end of the current billing period. */
+  currentPeriodEnd?: string;
+  /**
+   * ISO 8601 UTC timestamp when the subscription first entered past_due state.
+   * Null/absent when not in past_due. Preserved on subsequent retries to
+   * track the original failure date for the 7-day enforcement window.
+   */
+  pastDueSince?: string;
+  /** Stripe event ID of the last webhook event that mutated this status. */
+  lastWebhookEventId?: string;
+  /** ISO 8601 UTC timestamp of the last status update. */
+  lastUpdated?: string;
+}
+
 export interface TenantStatus {
   phase?: TenantPhase;
   conditions?: K8sCondition[];
@@ -113,6 +153,11 @@ export interface TenantStatus {
    * each saga step. Absent on pre-Task-21 Tenant CRs.
    */
   dataPlane?: TenantDataPlaneStatus;
+  /**
+   * Stripe billing subscription state. Written by webhook handlers and the
+   * billing reconciler. Absent on tenants with no billing history.
+   */
+  billing?: BillingStatus;
 }
 
 export interface Tenant extends K8sResource<TenantSpec, TenantStatus> {

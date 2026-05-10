@@ -43,20 +43,35 @@ import { getPool } from '@/src/lib/db';
 // Idempotency table helpers
 // ---------------------------------------------------------------------------
 
-const EVENTS_TABLE = 'gibson_stripe_events';
+/**
+ * Migration 0042 replaced the original `gibson_stripe_events` inline table
+ * with the schema-managed `webhook_idempotency` table. The constant below
+ * references the new table name.
+ *
+ * The `gibson_stripe_events` name is preserved as a view alias in the
+ * migration so any external tooling using the old name continues to work
+ * during the transition window.
+ */
+const EVENTS_TABLE = 'webhook_idempotency';
 
 /**
- * Ensure the idempotency table exists. Runs on every webhook call but
- * CREATE TABLE IF NOT EXISTS is cheap — no lock is taken when the table
- * already exists.
+ * Validate that the idempotency table exists. After migration 0042 ships
+ * this is a lightweight no-op — the table is now schema-managed rather than
+ * created inline. We still call it on each request to fail fast if the
+ * migration has not yet run.
  */
 async function ensureEventsTable(): Promise<void> {
-  await getPool().query(`
-    CREATE TABLE IF NOT EXISTS "${EVENTS_TABLE}" (
-      event_id   TEXT        PRIMARY KEY,
-      received_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
+  const result = await getPool().query(`
+    SELECT 1 FROM information_schema.tables
+    WHERE table_name = $1
+    LIMIT 1
+  `, [EVENTS_TABLE]);
+  if ((result.rowCount ?? 0) === 0) {
+    throw new Error(
+      `[billing/webhook] Idempotency table "${EVENTS_TABLE}" does not exist. ` +
+      'Run migration 0042_webhook_idempotency.sql before enabling billing.',
+    );
+  }
 }
 
 /**
@@ -66,11 +81,21 @@ async function ensureEventsTable(): Promise<void> {
  * INSERT … ON CONFLICT DO NOTHING is the canonical idempotency primitive:
  * on the first delivery the row is inserted and rowCount=1; on any replay
  * the constraint fires, no row is written, rowCount=0.
+ *
+ * @param eventId   - Stripe event ID (evt_...).
+ * @param eventType - Stripe event type string (e.g. 'customer.subscription.created').
+ * @param tenantId  - Tenant slug this event is attributed to (may be empty).
  */
-async function recordEventIfNew(eventId: string): Promise<boolean> {
+async function recordEventIfNew(
+  eventId: string,
+  eventType: string,
+  tenantId: string,
+): Promise<boolean> {
   const result = await getPool().query(
-    `INSERT INTO "${EVENTS_TABLE}" (event_id) VALUES ($1) ON CONFLICT DO NOTHING`,
-    [eventId],
+    `INSERT INTO "${EVENTS_TABLE}" (event_id, event_type, tenant_id)
+     VALUES ($1, $2, $3)
+     ON CONFLICT DO NOTHING`,
+    [eventId, eventType, tenantId],
   );
   return (result.rowCount ?? 0) > 0;
 }
@@ -273,7 +298,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // Idempotency guard — silently ack duplicate deliveries.
-  const isNew = await recordEventIfNew(event.id);
+  // Best-effort extract tenantId from event metadata for observability;
+  // falls back to '' if not present (pre-tenant events, session events, etc.).
+  const eventObj = event.data.object as unknown as { metadata?: Record<string, string> };
+  const resolvedTenantId = eventObj?.metadata?.['tenantId'] ?? '';
+  const isNew = await recordEventIfNew(event.id, event.type, resolvedTenantId);
   if (!isNew) {
     return NextResponse.json({ ok: true, duplicate: true });
   }

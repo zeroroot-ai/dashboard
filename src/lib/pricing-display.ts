@@ -50,8 +50,26 @@ export interface PricingTierDisplay {
   additionalNotes: string[];
   isMostPopular: boolean;
 
+  /**
+   * Derived checkout mode for this tier.
+   *
+   * - `"self-serve"`: paid tiers that go through Stripe Checkout (squad/org/platform).
+   * - `"contact-sales"`: tiers that require a sales conversation (enterprise-cloud/
+   *   enterprise-onprem/public-sector).
+   * - `"free"`: the solo tier which has no checkout flow.
+   *
+   * Derived in `toPricingTierDisplay` from `selfServeTierIds` / `contactTierIds`.
+   * Not stored in the canonical plans YAML or the generated plans registry.
+   */
+  stripeMode: "self-serve" | "contact-sales" | "free";
+
   cta: {
     label: string;
+    /**
+     * href is only meaningful for contact-sales and free tiers.
+     * For self-serve tiers, CheckoutButton handles the redirect — href is
+     * an empty string and should not be used as a navigation target.
+     */
     href: string;
     variant: "default" | "outline" | "secondary";
   };
@@ -110,10 +128,40 @@ function deriveDedicatedTenant(plan: Plan): BooleanFeature | "n/a" {
 }
 
 /**
+ * Derive the checkout mode for a plan ID.
+ *
+ * - `solo` is the free tier (no checkout).
+ * - `squad`, `org`, `platform` are paid self-serve tiers handled by Stripe Checkout.
+ * - `enterprise-cloud`, `enterprise-onprem`, `public-sector` require a sales conversation.
+ *
+ * Inlined here (not referencing the exported constants below) so that
+ * `toPricingTierDisplay` is usable at module-init time before the constants
+ * are bound.
+ */
+function deriveStripeMode(
+  planId: PlanID,
+): "self-serve" | "contact-sales" | "free" {
+  const id = planId as string;
+  if (id === "solo") return "free";
+  if (id === "squad" || id === "org" || id === "platform") return "self-serve";
+  if (
+    id === "enterprise-cloud" ||
+    id === "enterprise-onprem" ||
+    id === "public-sector"
+  ) {
+    return "contact-sales";
+  }
+  // Fallback: treat unknown plans as contact-sales for safety.
+  return "contact-sales";
+}
+
+/**
  * Convert a canonical Plan into the display struct used by the /pricing
  * page. This function is pure; it does not consult any runtime state.
  */
 export function toPricingTierDisplay(plan: Plan): PricingTierDisplay {
+  const stripeMode = deriveStripeMode(plan.id);
+
   return {
     id: plan.id,
     name: plan.displayName,
@@ -150,9 +198,13 @@ export function toPricingTierDisplay(plan: Plan): PricingTierDisplay {
     additionalNotes: plan.additionalNotes ?? [],
     isMostPopular: plan.isMostPopular ?? false,
 
+    stripeMode,
+
     cta: {
       label: plan.cta?.label ?? "",
-      href: plan.cta?.href ?? "",
+      // For self-serve tiers, CheckoutButton handles the redirect — href is
+      // intentionally empty. Contact-sales and free tiers keep their href.
+      href: stripeMode === "self-serve" ? "" : (plan.cta?.href ?? ""),
       variant: (plan.cta?.variant ?? "default") as
         | "default"
         | "outline"

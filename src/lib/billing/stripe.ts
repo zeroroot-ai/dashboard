@@ -17,6 +17,8 @@ import 'server-only';
 
 import type Stripe from 'stripe';
 
+import { logger } from '@/src/lib/logger';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -109,9 +111,7 @@ export function verifyWebhookSignature(
 ): Stripe.Event | null {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret) {
-    console.error(
-      '[billing/stripe] STRIPE_WEBHOOK_SECRET is not set — cannot verify webhook.',
-    );
+    logger.error('[billing/stripe] STRIPE_WEBHOOK_SECRET is not set — cannot verify webhook.');
     return null;
   }
 
@@ -121,7 +121,7 @@ export function verifyWebhookSignature(
   } catch (err) {
     // constructEvent throws on any signature failure (invalid, expired, etc.)
     const msg = err instanceof Error ? err.message : String(err);
-    console.warn('[billing/stripe] Webhook signature verification failed:', msg);
+    logger.warn({ err: msg }, '[billing/stripe] Webhook signature verification failed');
     return null;
   }
 }
@@ -156,6 +156,43 @@ export async function refundCharge(
 }
 
 // ---------------------------------------------------------------------------
+// Types for new billing operations
+// ---------------------------------------------------------------------------
+
+/** Parameters for creating a Stripe Checkout session. */
+export interface CheckoutSessionParams {
+  /** Billing tier — must be a self-serve tier (squad/org/platform), not a contact-sales tier. */
+  tier: BillingTier;
+  /** Stripe Price ID for the tier (resolved from PRICE_ENV_MAP). */
+  priceId: string;
+  /** Stripe customer ID to associate with the session (optional). */
+  customerId?: string;
+  /** Pre-fill customer email on the Checkout page (optional, ignored if customerId set). */
+  customerEmail?: string;
+  /** Tenant slug used for client_reference_id and metadata. */
+  tenantSlug: string;
+  /** Idempotency key for the Stripe API call. */
+  idempotencyKey: string;
+}
+
+/** Parameters for creating a Stripe Billing Portal session. */
+export interface PortalSessionParams {
+  /** Stripe customer ID (cus_...). */
+  customerId: string;
+  /** URL to return to after the portal session. */
+  returnUrl: string;
+  /** Idempotency key for the Stripe API call. */
+  idempotencyKey: string;
+}
+
+/** Contact-sales tiers that must not be used with Stripe Checkout. */
+const CONTACT_SALES_TIERS = new Set<BillingTier>([
+  'enterprise-cloud',
+  'enterprise-onprem',
+  'public-sector',
+]);
+
+// ---------------------------------------------------------------------------
 // Price ID lookup
 // ---------------------------------------------------------------------------
 
@@ -171,6 +208,124 @@ export function priceIdForTier(tier: string): string | null {
   const envKey = PRICE_ENV_MAP[tier as BillingTier];
   if (!envKey) return null;
   return process.env[envKey] ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// Checkout session
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a Stripe Checkout session for a self-serve subscription.
+ *
+ * Always creates a subscription with a 14-day trial; trial cancels automatically
+ * if no payment method is collected before trial end. Throws if called with
+ * a contact-sales tier (enterprise-cloud, enterprise-onprem, public-sector).
+ *
+ * @throws If `params.tier` is a contact-sales tier.
+ */
+export async function createCheckoutSession(
+  params: CheckoutSessionParams,
+): Promise<Stripe.Checkout.Session> {
+  if (CONTACT_SALES_TIERS.has(params.tier)) {
+    throw new Error(
+      `[billing/stripe] createCheckoutSession called with contact-sales tier "${params.tier}". ` +
+        'Enterprise tiers must go through the sales flow, not Stripe Checkout.',
+    );
+  }
+
+  const stripe = getStripeClient();
+  const publicUrl = process.env.PUBLIC_URL ?? 'http://localhost:3000';
+
+  return stripe.checkout.sessions.create(
+    {
+      mode: 'subscription',
+      payment_method_collection: 'always',
+      line_items: [{ price: params.priceId, quantity: 1 }],
+      subscription_data: {
+        trial_period_days: 14,
+        trial_settings: {
+          end_behavior: { missing_payment_method: 'cancel' },
+        },
+        metadata: { tenantId: params.tenantSlug },
+      },
+      client_reference_id: params.tenantSlug,
+      ...(params.customerId ? { customer: params.customerId } : {}),
+      ...(params.customerEmail && !params.customerId
+        ? { customer_email: params.customerEmail }
+        : {}),
+      success_url: `${publicUrl}/onboarding/billing-confirmed?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${publicUrl}/pricing?canceled=1`,
+      metadata: { tenantId: params.tenantSlug, tier: params.tier },
+    },
+    { idempotencyKey: params.idempotencyKey },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Customer Portal session
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a Stripe Billing Portal session for self-serve subscription management.
+ *
+ * Portal configuration is read from STRIPE_PORTAL_CONFIGURATION_ID. If unset,
+ * Stripe uses the default portal configuration for the account.
+ */
+export async function createPortalSession(
+  params: PortalSessionParams,
+): Promise<Stripe.BillingPortal.Session> {
+  const stripe = getStripeClient();
+  const configurationId = process.env.STRIPE_PORTAL_CONFIGURATION_ID;
+
+  return stripe.billingPortal.sessions.create(
+    {
+      customer: params.customerId,
+      return_url: params.returnUrl,
+      ...(configurationId ? { configuration: configurationId } : {}),
+    },
+    { idempotencyKey: params.idempotencyKey },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Subscription helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Retrieve a Stripe subscription by ID.
+ *
+ * Used by the billing reconciler to verify subscription state against the
+ * live Stripe record (drift detection and trial enforcement).
+ */
+export async function getSubscription(
+  subscriptionId: string,
+): Promise<Stripe.Subscription> {
+  const stripe = getStripeClient();
+  return stripe.subscriptions.retrieve(subscriptionId);
+}
+
+/**
+ * Update the trial end date of a Stripe subscription.
+ *
+ * Used by platform operators via `POST /api/admin/billing/trial-extension` to
+ * grant trial extensions. The `idempotencyKey` must be unique per extension
+ * event to prevent duplicate extensions from double-submits.
+ *
+ * @param subscriptionId  - The Stripe subscription ID (sub_...).
+ * @param trialEnd        - New trial end date as a Unix timestamp (seconds).
+ * @param idempotencyKey  - Unique key to make the call idempotent.
+ */
+export async function updateSubscriptionTrialEnd(
+  subscriptionId: string,
+  trialEnd: number,
+  idempotencyKey: string,
+): Promise<Stripe.Subscription> {
+  const stripe = getStripeClient();
+  return stripe.subscriptions.update(
+    subscriptionId,
+    { trial_end: trialEnd },
+    { idempotencyKey },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -215,6 +370,24 @@ export function validateBillingConfig(): void {
       `[billing/stripe] Paid tiers are enabled (DASHBOARD_BILLING_PAID_TIERS_ENABLED=true) ` +
         `but the following required environment variables are missing: ${missing.join(', ')}. ` +
         `Set them in the Helm chart under dashboard.billing.* or as raw env vars.`,
+    );
+  }
+
+  // Enforce Stripe key mode consistency to prevent test keys in production
+  // and live keys in non-production environments.
+  // The key VALUE is never logged — only whether it starts with sk_test_ or sk_live_.
+  const secretKey = process.env.STRIPE_SECRET_KEY ?? '';
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (isProduction && secretKey.startsWith('sk_test_')) {
+    throw new Error(
+      '[billing/stripe] Production deployment detected with test-mode Stripe key',
+    );
+  }
+
+  if (!isProduction && secretKey.startsWith('sk_live_')) {
+    throw new Error(
+      '[billing/stripe] Non-production deployment detected with live-mode Stripe key',
     );
   }
 }
