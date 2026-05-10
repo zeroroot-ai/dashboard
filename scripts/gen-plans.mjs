@@ -9,7 +9,7 @@
  * Emits:
  *   enterprise/platform/dashboard/src/generated/plans.ts
  *
- * The generated file contains strongly-typed Plan / Quotas / Features / PlanID
+ * The generated file contains strongly-typed Plan / Quotas / Pricing / PlanID
  * definitions + the frozen `plans` constant used by /pricing, BillingContent,
  * and tier-checker. This script is the single bridge between the Go operator's
  * source of truth and the dashboard; no other TS file should parse the YAML
@@ -17,6 +17,12 @@
  *
  * Runs in the `prebuild` npm hook. Exits with a non-zero status on any failure
  * so the build fails loudly rather than producing stale types.
+ *
+ * Schema simplified by spec plans-and-quotas-simplification:
+ *   - Three plan ids: team, enterprise, enterprise-deploy
+ *   - Two quotas: concurrent_missions, concurrent_agents (0 = unlimited)
+ *   - Pricing block carries display metadata
+ *   - No more Features / has_* flags
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
@@ -37,32 +43,9 @@ const PLANS_SCHEMA = resolve(
 );
 const OUTPUT = resolve(DASHBOARD_ROOT, "src/generated/plans.ts");
 
-const KNOWN_PLAN_IDS = [
-  "solo",
-  "squad",
-  "org",
-  "platform",
-  "enterprise-cloud",
-  "enterprise-onprem",
-  "public-sector",
-];
+const KNOWN_PLAN_IDS = ["team", "enterprise", "enterprise-deploy"];
 
-const REQUIRED_QUOTA_KEYS = [
-  "seats",
-  "concurrent_agents",
-  "storage_gb",
-  "retention_days",
-  "sandbox_launches_per_month",
-];
-
-const REQUIRED_FEATURE_KEYS = [
-  "has_sso",
-  "has_audit_logs",
-  "has_compliance_exports",
-  "has_dedicated_slack",
-  "has_dedicated_tenant",
-  "has_private_registry",
-];
+const REQUIRED_QUOTA_KEYS = ["concurrent_missions", "concurrent_agents"];
 
 function die(msg) {
   process.stderr.write(`gen-plans: ${msg}\n`);
@@ -70,7 +53,9 @@ function die(msg) {
 }
 
 function main() {
-  if (process.env.SKIP_GEN_PLANS === "1" && existsSync(OUTPUT)) {
+  const stdoutMode = process.argv.slice(2).includes("--stdout");
+
+  if (!stdoutMode && process.env.SKIP_GEN_PLANS === "1" && existsSync(OUTPUT)) {
     process.stdout.write(
       `gen-plans: SKIP_GEN_PLANS=1 — using pre-generated ${OUTPUT}\n`,
     );
@@ -94,6 +79,10 @@ function main() {
   validate(doc);
 
   const ts = renderTypeScript(doc);
+  if (stdoutMode) {
+    process.stdout.write(ts);
+    return;
+  }
   mkdirSync(dirname(OUTPUT), { recursive: true });
   writeFileSync(OUTPUT, ts, "utf8");
   process.stdout.write(`gen-plans: wrote ${OUTPUT} (${doc.plans.length} plans)\n`);
@@ -117,11 +106,20 @@ function validate(doc) {
     }
     if (seen.has(plan.id)) die(`plan id ${plan.id} defined more than once`);
     seen.add(plan.id);
-    for (const f of ["displayName", "tagline", "persona"]) {
+    for (const f of ["displayName", "tagline"]) {
       if (!plan[f]) die(`plan[${plan.id}]: missing ${f}`);
     }
-    if (typeof plan.contactOnly !== "boolean") {
-      die(`plan[${plan.id}]: contactOnly must be boolean`);
+    if (!plan.pricing || typeof plan.pricing !== "object") {
+      die(`plan[${plan.id}]: pricing missing`);
+    }
+    const hasPrice =
+      typeof plan.pricing.monthlyUSD === "number" ||
+      typeof plan.pricing.annualUSD === "number" ||
+      plan.pricing.contactSales === true;
+    if (!hasPrice) {
+      die(
+        `plan[${plan.id}]: pricing must set at least one of monthlyUSD, annualUSD, or contactSales=true`,
+      );
     }
     if (!plan.quotas || typeof plan.quotas !== "object") {
       die(`plan[${plan.id}]: quotas missing`);
@@ -130,16 +128,8 @@ function validate(doc) {
       if (!Number.isInteger(plan.quotas[k])) {
         die(`plan[${plan.id}]: quotas.${k} must be an integer`);
       }
-      if (plan.quotas[k] < -1) {
-        die(`plan[${plan.id}]: quotas.${k} must be >= -1`);
-      }
-    }
-    if (!plan.features || typeof plan.features !== "object") {
-      die(`plan[${plan.id}]: features missing`);
-    }
-    for (const k of REQUIRED_FEATURE_KEYS) {
-      if (typeof plan.features[k] !== "boolean") {
-        die(`plan[${plan.id}]: features.${k} must be boolean`);
+      if (plan.quotas[k] < 0) {
+        die(`plan[${plan.id}]: quotas.${k} must be >= 0 (0 = unlimited)`);
       }
     }
   }
@@ -160,59 +150,33 @@ function renderTypeScript(doc) {
     }),
     "",
     "export interface Quotas {",
-    "  /** Seat count; -1 = unlimited. */",
-    "  seats: number;",
-    "  /** Max concurrent agents; -1 = unlimited. */",
+    "  /** Max concurrent (in-flight) missions; 0 = unlimited. */",
+    "  concurrent_missions: number;",
+    "  /** Max concurrent agents bound to in-flight tasks; 0 = unlimited.",
+    "   *  Idle-but-connected agents do NOT count toward this quota. */",
     "  concurrent_agents: number;",
-    "  /** GraphRAG/workspace storage in gigabytes; -1 = unlimited. */",
-    "  storage_gb: number;",
-    "  /** Audit/mission-history retention window; -1 = unlimited. */",
-    "  retention_days: number;",
-    "  /** Setec microVM launches per month; -1 = unlimited / fair-use. */",
-    "  sandbox_launches_per_month: number;",
     "}",
     "",
-    "export interface Features {",
-    "  has_sso: boolean;",
-    "  has_audit_logs: boolean;",
-    "  has_compliance_exports: boolean;",
-    "  has_dedicated_slack: boolean;",
-    "  has_dedicated_tenant: boolean;",
-    "  has_private_registry: boolean;",
-    "}",
-    "",
-    "export interface CTA {",
-    "  label?: string;",
-    "  href?: string;",
-    "  variant?: \"default\" | \"outline\" | \"secondary\";",
+    "export interface Pricing {",
+    "  monthlyUSD?: number;",
+    "  annualUSD?: number;",
+    "  annualSavingsPct?: number;",
+    "  contactSales?: boolean;",
     "}",
     "",
     "export interface Plan {",
     "  id: PlanID;",
     "  displayName: string;",
     "  tagline: string;",
-    "  persona: string;",
     "  stripeProductId: string | null;",
-    "  monthlyPrice: number | null;",
-    "  annualPrice: number | null;",
-    "  contactOnly: boolean;",
-    "  annualSavingsPct: number | null;",
+    "  pricing: Pricing;",
     "  quotas: Quotas;",
-    "  features: Features;",
-    "  deployment?: string;",
-    "  responseSla?: string;",
-    "  includedSeatsDisplay?: string;",
-    "  perSeatBase?: number | null;",
-    "  perSeatOverage?: number | null;",
-    "  additionalNotes?: string[];",
-    "  isMostPopular?: boolean;",
-    "  cta?: CTA;",
     "}",
     "",
     `export const PLAN_REGISTRY_VERSION = ${JSON.stringify(doc.version)};`,
     "",
     "export const plans: readonly Plan[] = Object.freeze([",
-    ...doc.plans.map((p) => "  " + jsonToTsLiteral(p) + ","),
+    ...doc.plans.map((p) => "  " + jsonToTsLiteral(normalisePlan(p)) + ","),
     "]);",
     "",
     `export const planIDs: readonly PlanID[] = Object.freeze([${KNOWN_PLAN_IDS.map(
@@ -229,23 +193,32 @@ function renderTypeScript(doc) {
     "  return p;",
     "}",
     "",
-    "export function featureTupleSet(id: PlanID, tenantName: string): string[] {",
-    "  if (!tenantName) return [];",
-    "  const f = lookupPlan(id).features;",
-    "  const prefix = `tenant:${tenantName}#has_`;",
-    "  const suffix = `@tenant:${tenantName}`;",
-    "  const out: string[] = [];",
-    "  if (f.has_sso) out.push(prefix + \"sso\" + suffix);",
-    "  if (f.has_audit_logs) out.push(prefix + \"audit_logs\" + suffix);",
-    "  if (f.has_compliance_exports) out.push(prefix + \"compliance_exports\" + suffix);",
-    "  if (f.has_dedicated_slack) out.push(prefix + \"dedicated_slack\" + suffix);",
-    "  if (f.has_dedicated_tenant) out.push(prefix + \"dedicated_tenant\" + suffix);",
-    "  if (f.has_private_registry) out.push(prefix + \"private_registry\" + suffix);",
-    "  return out.sort();",
-    "}",
-    "",
   );
   return lines.join("\n");
+}
+
+/**
+ * normalisePlan strips any YAML keys not part of the Plan TS interface and
+ * fills in `stripeProductId: null` when omitted, so the generated literal
+ * matches the type exactly.
+ */
+function normalisePlan(p) {
+  return {
+    id: p.id,
+    displayName: p.displayName,
+    tagline: p.tagline,
+    stripeProductId: p.stripeProductId ?? null,
+    pricing: {
+      ...(typeof p.pricing.monthlyUSD === "number" ? { monthlyUSD: p.pricing.monthlyUSD } : {}),
+      ...(typeof p.pricing.annualUSD === "number" ? { annualUSD: p.pricing.annualUSD } : {}),
+      ...(typeof p.pricing.annualSavingsPct === "number" ? { annualSavingsPct: p.pricing.annualSavingsPct } : {}),
+      ...(p.pricing.contactSales === true ? { contactSales: true } : {}),
+    },
+    quotas: {
+      concurrent_missions: p.quotas.concurrent_missions,
+      concurrent_agents: p.quotas.concurrent_agents,
+    },
+  };
 }
 
 /**
