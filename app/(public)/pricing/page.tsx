@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Check, Server, Shield, Github } from "lucide-react";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -15,13 +17,16 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import {
   pricingDisplays,
+  selfServeTierIds,
+  contactTierIds,
   type PricingTierDisplay,
 } from "@/src/lib/pricing-display";
+import { CheckoutButton } from "./checkout-button";
 
 // Alias to minimize churn in local JSX — the display struct is the same
 // shape the legacy PricingTier type carried.
 type PricingTier = PricingTierDisplay;
-const pricingTiers = pricingDisplays;
+const allPricingTiers = pricingDisplays;
 
 type BillingCycle = "monthly" | "annual";
 
@@ -169,9 +174,22 @@ function TierCard({
           ))}
         </ul>
         <div className="mt-8">
-          <Button variant={tier.cta.variant} className="w-full" asChild>
-            <Link href={tier.cta.href}>{tier.cta.label}</Link>
-          </Button>
+          {tier.stripeMode === "self-serve" && (tier.id as string) !== "solo" ? (
+            <CheckoutButton
+              tier={tier.id}
+              label={tier.cta.label}
+              variant={tier.cta.variant}
+            />
+          ) : tier.stripeMode === "contact-sales" ? (
+            <Button variant={tier.cta.variant} className="w-full" asChild>
+              <Link href="/contact-sales">{tier.cta.label}</Link>
+            </Button>
+          ) : (
+            // solo / free tier
+            <Button variant={tier.cta.variant} className="w-full" asChild>
+              <Link href={tier.cta.href || "/signup"}>{tier.cta.label}</Link>
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -182,6 +200,21 @@ function TierCard({
 
 export default function PricingPage() {
   const [billing, setBilling] = useState<BillingCycle>("annual");
+  const searchParams = useSearchParams();
+
+  // Show "Checkout canceled" toast when ?canceled=1 is present.
+  // useEffect ensures the toast fires only once on mount.
+  useEffect(() => {
+    if (searchParams.get("canceled") === "1") {
+      toast.info("Checkout canceled — no charge applied");
+    }
+  }, [searchParams]);
+
+  // When ?as=tenant_admin, hide the solo tier (admin billing view).
+  const isTenantAdmin = searchParams.get("as") === "tenant_admin";
+  const pricingTiers = isTenantAdmin
+    ? allPricingTiers.filter((t) => (t.id as string) !== "solo")
+    : allPricingTiers;
 
   return (
     <div className="bg-background text-foreground">
@@ -232,7 +265,7 @@ export default function PricingPage() {
       {/* Self-serve tier cards */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto px-4 py-12">
         {pricingTiers
-          .filter((t) => !t.contactOnly && t.id !== "enterprise-cloud")
+          .filter((t) => (selfServeTierIds as readonly string[]).includes(t.id as string) && (t.id as string) !== "enterprise-cloud")
           .map((tier) => (
             <TierCard key={tier.id} tier={tier} billing={billing} />
           ))}
@@ -249,7 +282,7 @@ export default function PricingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {pricingTiers
             .filter((t) =>
-              ["enterprise-cloud", "enterprise-onprem", "public-sector"].includes(t.id),
+              (contactTierIds as readonly string[]).includes(t.id),
             )
             .map((tier) => (
               <TierCard key={tier.id} tier={tier} billing={billing} />
