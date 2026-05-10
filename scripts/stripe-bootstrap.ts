@@ -119,7 +119,7 @@ async function main() {
     // Create a new portal configuration.
     console.log('No existing portal configuration found. Creating...');
 
-    const config = await (stripe.billingPortal as { configurations: { create: (params: Record<string, unknown>) => Promise<{ id: string }> } }).configurations.create({
+    const config = await (stripe.billingPortal as unknown as { configurations: { create: (params: Record<string, unknown>) => Promise<{ id: string }> } }).configurations.create({
       features,
       business_profile: {
         headline: 'Gibson — AI Security Research Platform',

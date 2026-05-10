@@ -79,7 +79,9 @@ describe('validateBillingConfig — key-mode guard', () => {
    */
   function setupWithKey(stripeKey: string, nodeEnv: string) {
     process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
-    process.env.NODE_ENV = nodeEnv;
+    // NODE_ENV is normally read-only but we need to override it for tests.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (process.env as any).NODE_ENV = nodeEnv;
     process.env.STRIPE_SECRET_KEY = stripeKey;
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
     process.env.STRIPE_PRICE_SQUAD = 'price_squad';

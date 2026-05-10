@@ -131,7 +131,7 @@ describe('POST /api/billing/portal', () => {
     it('returns 403 when assertAuthorized throws AuthzDeniedError', async () => {
       mockAssertAuthorizedShouldThrow = new AuthzDeniedError(
         '/gibson.admin.v1.TenantAdminService/CountSecrets',
-        'not_member',
+        'not-a-member',
       );
       const res = await POST(makeRequest());
       expect(res.status).toBe(403);
