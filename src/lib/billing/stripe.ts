@@ -23,29 +23,11 @@ import { logger } from '@/src/lib/logger';
 // Types
 // ---------------------------------------------------------------------------
 
-/**
- * Paid plan tiers that map to Stripe price IDs.
- * `solo` is the free self-serve tier and intentionally absent here.
- * Names match `TenantTier` in `src/lib/k8s/types.ts` and the operator's
- * `plans.PlanID` Go enum — single source of truth for plan identity.
- */
-export type BillingTier =
-  | 'squad'
-  | 'org'
-  | 'platform'
-  | 'enterprise-cloud'
-  | 'enterprise-onprem'
-  | 'public-sector';
-
-/** Environment variable names for paid-plan price IDs. */
-const PRICE_ENV_MAP: Record<BillingTier, string> = {
-  squad: 'STRIPE_PRICE_SQUAD',
-  org: 'STRIPE_PRICE_ORG',
-  platform: 'STRIPE_PRICE_PLATFORM',
-  'enterprise-cloud': 'STRIPE_PRICE_ENTERPRISE_CLOUD',
-  'enterprise-onprem': 'STRIPE_PRICE_ENTERPRISE_ONPREM',
-  'public-sector': 'STRIPE_PRICE_PUBLIC_SECTOR',
-};
+// Paid plan tiers + their env-var price-id slots are generated from
+// plans.yaml — see scripts/gen-stripe-tiers.mjs. Drift is caught by
+// scripts/check-stripe-tiers-fresh.mjs as part of pnpm prebuild.
+export type { BillingTier } from './stripe_gen';
+import { BillingTier, PRICE_ENV_MAP, CONTACT_SALES_TIERS as CONTACT_SALES_TIER_IDS, BILLING_TIER_IDS } from './stripe_gen';
 
 // ---------------------------------------------------------------------------
 // Lazy singleton Stripe client
@@ -186,11 +168,7 @@ export interface PortalSessionParams {
 }
 
 /** Contact-sales tiers that must not be used with Stripe Checkout. */
-const CONTACT_SALES_TIERS = new Set<BillingTier>([
-  'enterprise-cloud',
-  'enterprise-onprem',
-  'public-sector',
-]);
+const CONTACT_SALES_TIERS = new Set<string>(CONTACT_SALES_TIER_IDS);
 
 // ---------------------------------------------------------------------------
 // Price ID lookup
@@ -356,12 +334,8 @@ export function validateBillingConfig(): void {
     // One env var per paid tier. Validated at startup; missing in dev or
     // free-tier-only deployments → set DASHBOARD_BILLING_PAID_TIERS_ENABLED
     // to false to skip this check entirely.
-    'STRIPE_PRICE_SQUAD',
-    'STRIPE_PRICE_ORG',
-    'STRIPE_PRICE_PLATFORM',
-    'STRIPE_PRICE_ENTERPRISE_CLOUD',
-    'STRIPE_PRICE_ENTERPRISE_ONPREM',
-    'STRIPE_PRICE_PUBLIC_SECTOR',
+    // Generated env-var names; one per Stripe-priced tier (not contact-sales).
+    ...BILLING_TIER_IDS.map((t) => PRICE_ENV_MAP[t]),
   ];
 
   const missing = required.filter((v) => !process.env[v]);
