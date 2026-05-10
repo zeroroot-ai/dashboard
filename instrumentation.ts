@@ -52,6 +52,12 @@ export async function register() {
   const { validateEnvConfig } = await import('@/src/lib/config');
   validateEnvConfig();
 
+  // Billing configuration validation: throws if DASHBOARD_BILLING_PAID_TIERS_ENABLED=true
+  // and the Stripe key mode doesn't match the environment (test key in prod, live key in dev).
+  // See spec stripe-billing-integration R8.1, R8.2.
+  const { validateBillingConfig } = await import('@/src/lib/billing/stripe');
+  validateBillingConfig();
+
   // Production-only: assert the service-subject allow-list is configured.
   // Local `pnpm dev` and `pnpm build` (no NODE_ENV=production) do not
   // require this env to be set — Auth.js user-acting flows do not depend
