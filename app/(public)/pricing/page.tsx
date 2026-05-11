@@ -4,10 +4,20 @@
  * on-prem / air-gapped / federal deployment option.
  *
  * Spec plans-and-quotas-simplification R9.A.
+ *
+ * Spec stripe-billing-integration Task 16 / R7.3 overlays the live
+ * Stripe price (fetched server-side via `fetchStripePrices`, cached
+ * for 60s) onto the displayed monthly figure for SaaS tiers. When
+ * Stripe is unreachable each SaaS card renders a "pricing temporarily
+ * unavailable" placeholder rather than the plans.yaml fallback (R7.3:
+ * Stripe is the source of truth at render time; placeholder beats
+ * stale). Contact-sales tiers (enterprise-deploy) never fetch prices.
  */
 
 import Link from "next/link";
 
+import { fetchStripePrices } from "@/src/lib/billing/fetch-prices";
+import type { BillingTier } from "@/src/lib/billing/stripe_gen";
 import { pricingDisplays, type PricingTierDisplay } from "@/src/lib/pricing-display";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +39,9 @@ const SAAS_TIER_IDS = new Set(["team", "org", "enterprise"]);
 const FEATURED_TIER_ID = "org";
 const DEPLOY_TIER_ID = "enterprise-deploy";
 
+const PLACEHOLDER_PRICE = "Pricing temporarily unavailable";
+const PLACEHOLDER_SUB = "Try again in a minute, or contact sales for a quote.";
+
 function ctaForTier(t: PricingTierDisplay): {
   label: string;
   href: string;
@@ -41,8 +54,46 @@ function ctaForTier(t: PricingTierDisplay): {
   };
 }
 
-function Tier({ t, featured }: { t: PricingTierDisplay; featured: boolean }) {
+function dollars(cents: number): string {
+  return (cents / 100).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
+}
+
+/** Resolve the price-card shape for one SaaS tier, given the live Stripe map. */
+function resolvePriceCard(
+  t: PricingTierDisplay,
+  livePrice: number | null | undefined,
+): { priceLabel: string; priceSubLabel: string | null; degraded: boolean } {
+  // Live Stripe price wins when present.
+  if (typeof livePrice === "number") {
+    return {
+      priceLabel: `${dollars(livePrice)}/mo`,
+      priceSubLabel: t.priceSubLabel,
+      degraded: false,
+    };
+  }
+  // Stripe unreachable → R7.3 placeholder (NOT the plans.yaml fallback).
+  return {
+    priceLabel: PLACEHOLDER_PRICE,
+    priceSubLabel: PLACEHOLDER_SUB,
+    degraded: true,
+  };
+}
+
+function Tier({
+  t,
+  featured,
+  livePrice,
+}: {
+  t: PricingTierDisplay;
+  featured: boolean;
+  livePrice: number | null | undefined;
+}) {
   const cta = ctaForTier(t);
+  const card = resolvePriceCard(t, livePrice);
   return (
     <Card
       className={
@@ -63,11 +114,19 @@ function Tier({ t, featured }: { t: PricingTierDisplay; featured: boolean }) {
       </CardHeader>
       <CardContent className="flex-grow space-y-4">
         <div>
-          <div className="text-3xl font-semibold">{t.priceLabel}</div>
-          {t.priceSubLabel ? (
-            <div className="text-sm text-muted-foreground mt-1">{t.priceSubLabel}</div>
+          <div
+            className={
+              card.degraded
+                ? "text-lg font-medium text-muted-foreground"
+                : "text-3xl font-semibold"
+            }
+          >
+            {card.priceLabel}
+          </div>
+          {card.priceSubLabel ? (
+            <div className="text-sm text-muted-foreground mt-1">{card.priceSubLabel}</div>
           ) : null}
-          {t.annualSavings ? (
+          {!card.degraded && t.annualSavings ? (
             <div className="inline-block mt-2 text-xs uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-900">
               {t.annualSavings}
             </div>
@@ -164,9 +223,13 @@ function OnPremCard({ t }: { t: PricingTierDisplay }) {
   );
 }
 
-export default function PricingPage() {
+export default async function PricingPage() {
   const saasTiers = pricingDisplays.filter((t) => SAAS_TIER_IDS.has(t.id));
   const deployTier = pricingDisplays.find((t) => t.id === DEPLOY_TIER_ID);
+
+  // Server-side fetch (60s unstable_cache). On Stripe outage every
+  // SaaS tier resolves to null and the page renders placeholders, never 500s.
+  const livePrices = await fetchStripePrices();
 
   return (
     <main className="container mx-auto py-12 px-4 max-w-6xl">
@@ -180,7 +243,12 @@ export default function PricingPage() {
 
       <div className="grid gap-6 md:grid-cols-3">
         {saasTiers.map((t) => (
-          <Tier key={t.id} t={t} featured={t.id === FEATURED_TIER_ID} />
+          <Tier
+            key={t.id}
+            t={t}
+            featured={t.id === FEATURED_TIER_ID}
+            livePrice={livePrices[t.id as BillingTier]}
+          />
         ))}
       </div>
 
