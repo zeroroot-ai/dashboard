@@ -155,7 +155,11 @@ function loadLocal() {
 /** Fetch plans.yaml + plans.schema.json from the canonical remote source. */
 async function loadRemote() {
   const ref = process.env.PLANS_REF || "main";
-  process.stdout.write(
+  // Diagnostic to stderr (never stdout): in --stdout mode the parent
+  // captures stdout as the generated TS payload, so any progress line on
+  // stdout pollutes the captured output and trips drift gates like
+  // check-plans-fresh.mjs that diff the capture against the on-disk file.
+  process.stderr.write(
     `gen-plans: fetching from ${REMOTE_REPO}@${ref} (PLANS_SOURCE=remote)\n`,
   );
   const yamlText = await fetchRemoteFile(ref, REMOTE_PATHS.yaml);
@@ -173,7 +177,10 @@ async function main() {
   const source = resolveSource(argv);
 
   if (!stdoutMode && process.env.SKIP_GEN_PLANS === "1" && existsSync(OUTPUT)) {
-    process.stdout.write(
+    // Diagnostic to stderr so --stdout consumers never see it (defense in
+    // depth — the !stdoutMode guard already prevents this path, but stderr
+    // is the right channel regardless).
+    process.stderr.write(
       `gen-plans: SKIP_GEN_PLANS=1 — using pre-generated ${OUTPUT}\n`,
     );
     return;
@@ -201,7 +208,7 @@ async function main() {
   }
   mkdirSync(dirname(OUTPUT), { recursive: true });
   writeFileSync(OUTPUT, ts, "utf8");
-  process.stdout.write(
+  process.stderr.write(
     `gen-plans: wrote ${OUTPUT} (${doc.plans.length} plans, source=${loaded.sourceLabel})\n`,
   );
 }
