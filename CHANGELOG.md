@@ -5,6 +5,14 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0](https://github.com/zero-day-ai/dashboard/compare/v1.9.0...v1.10.0) (2026-05-11)
+
+
+### Features
+
+* add org tier and restructure pricing page ([#19](https://github.com/zero-day-ai/dashboard/issues/19)) ([b30c18d](https://github.com/zero-day-ai/dashboard/commit/b30c18dddf21e73adc916c0c684a9980030a4046))
+* **billing:** live Stripe price overlay on pricing page ([#21](https://github.com/zero-day-ai/dashboard/issues/21)) ([8504b80](https://github.com/zero-day-ai/dashboard/commit/8504b807d43f3e697b3a688f348f09ec83b2422f))
+
 ## [1.9.0](https://github.com/zero-day-ai/dashboard/compare/v1.8.0...v1.9.0) (2026-05-10)
 
 
