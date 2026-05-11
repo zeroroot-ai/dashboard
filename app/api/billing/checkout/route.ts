@@ -3,7 +3,13 @@
 // extracted from the request body but is NOT required. The tenant slug comes
 // from the request body and is used as client_reference_id for the webhook
 // to reconcile. The Stripe session URL is returned to the client for redirect.
-'use server';
+//
+// NOTE: API route handlers (route.ts under app/api/) are server-only by
+// construction; the 'use server' directive is for Server Actions modules,
+// not route handlers. Under Next.js 16 / Turbopack, mixing the directive
+// with a non-async export like `export const dynamic = 'force-dynamic'`
+// fails the build with "Only async functions are allowed to be exported
+// in a 'use server' file."
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';

@@ -1,4 +1,7 @@
-'use server';
+// API route handlers (route.ts under app/api/) are server-only by
+// construction; 'use server' is for Server Actions modules. Under
+// Next.js 16 / Turbopack, mixing the directive with a non-async export
+// like `export const dynamic = 'force-dynamic'` fails the build.
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
