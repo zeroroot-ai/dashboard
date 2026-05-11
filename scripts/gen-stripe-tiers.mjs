@@ -41,6 +41,20 @@ function die(msg) {
 
 function main() {
   const stdoutMode = process.argv.slice(2).includes("--stdout");
+
+  // Docker image builds skip regen and trust the committed stripe_gen.ts:
+  // the polyrepo sibling tenant-operator/plans/plans.yaml is not in the
+  // build context. The drift gate (check-stripe-tiers-fresh.mjs) keeps
+  // workstation regens honest; the file is tracked in git so the committed
+  // state is the source of truth at deploy time. Mirrors SKIP_GEN_PLANS=1
+  // in gen-plans.mjs.
+  if (!stdoutMode && process.env.SKIP_GEN_STRIPE_TIERS === "1" && existsSync(OUTPUT)) {
+    process.stdout.write(
+      `gen-stripe-tiers: SKIP_GEN_STRIPE_TIERS=1 — using pre-generated ${OUTPUT}\n`,
+    );
+    return;
+  }
+
   if (!existsSync(PLANS_YAML)) die(`plans.yaml not found at ${PLANS_YAML}`);
   const doc = parseYaml(readFileSync(PLANS_YAML, "utf8"));
   if (!doc || !Array.isArray(doc.plans)) die("plans.yaml malformed");

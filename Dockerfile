@@ -71,6 +71,20 @@ ENV SKIP_DASHBOARD_RBAC_CHECK=1
 ENV SKIP_GEN_AUTHZ_REGISTRY=1
 ENV SKIP_AUTHZ_REGISTRY_CHECK=1
 
+# gen-plans.mjs runs in remote mode (PLANS_SOURCE=remote above) and writes
+# the file fresh from the canonical tenant-operator source. The freshness
+# drift gate (check-plans-fresh.mjs) is a workstation-only consistency check
+# that catches devs who change plans.yaml without committing the regenerated
+# src/generated/plans.ts. In Docker the regen has just run, so the gate is
+# redundant — and it can flap on transient remote-fetch nondeterminism.
+ENV SKIP_PLANS_FRESH_CHECK=1
+# gen-stripe-tiers.mjs reads the polyrepo sibling plans.yaml directly; that
+# path is not in the build context. The committed src/lib/billing/stripe_gen.ts
+# is the source of truth at image-build time. The workstation drift gate
+# (check-stripe-tiers-fresh.mjs) keeps that file honest.
+ENV SKIP_GEN_STRIPE_TIERS=1
+ENV SKIP_STRIPE_TIERS_FRESH_CHECK=1
+
 # Build the standalone application. The `ghtoken` BuildKit secret is mounted
 # only for the duration of this RUN; gen-plans.mjs reads it via GITHUB_TOKEN
 # to fetch plans.yaml + plans.schema.json from zero-day-ai/tenant-operator
