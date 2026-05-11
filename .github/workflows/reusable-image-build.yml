@@ -46,6 +46,16 @@ on:
         type: string
         default: "HIGH,CRITICAL"
         description: Comma-separated Trivy severities that fail the build.
+    secrets:
+      ghtoken:
+        required: false
+        description: >
+          GitHub PAT with read access to private sibling repos that the
+          Dockerfile fetches at build time (e.g. plans.yaml from
+          zero-day-ai/tenant-operator). When supplied it is exposed to the
+          docker build as the BuildKit secret id=ghtoken; the Dockerfile is
+          responsible for mounting it under /run/secrets/ghtoken with
+          required=true if it actually needs the value.
 
 jobs:
   build:
@@ -98,6 +108,13 @@ jobs:
           provenance: true
           sbom: true
           build-args: ${{ inputs.build_args }}
+          # ghtoken — BuildKit secret. Mounted iff the caller supplied
+          # `secrets.ghtoken`; when unset the value is empty and any
+          # `--mount=type=secret,id=ghtoken,required=true` clause in the
+          # Dockerfile will fail loudly (as it should — image builds that
+          # fetch private cross-repo content must not silently degrade).
+          secrets: |
+            ghtoken=${{ secrets.ghtoken }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

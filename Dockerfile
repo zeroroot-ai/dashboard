@@ -43,11 +43,17 @@ ENV AUTH_SECRET="build-placeholder"
 ENV NEXTAUTH_SECRET="build-placeholder"
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 
-# The prebuild gen-plans step reads enterprise/platform/tenant-operator/plans/plans.yaml
-# from the repo root, which is outside this Dockerfile's build context. The host
-# build runs gen-plans beforehand; inside the container we consume the already
-# generated src/generated/plans.ts.
-ENV SKIP_GEN_PLANS=1
+# The prebuild gen-plans step needs plans.yaml from the canonical source —
+# the tenant-operator repo (zero-day-ai/tenant-operator), which is private.
+# We fetch it at build time via gen-plans.mjs remote mode (PLANS_SOURCE=remote).
+# Auth: the optional `ghtoken` BuildKit secret (a GitHub PAT with read access
+# to zero-day-ai/tenant-operator). Same pattern as gibson + tenant-operator
+# Dockerfiles for cross-repo private content.
+ENV PLANS_SOURCE=remote
+# PLANS_REF can be overridden at build time (--build-arg) to pin against a
+# specific tenant-operator commit / tag instead of bleeding-edge main.
+ARG PLANS_REF=main
+ENV PLANS_REF=${PLANS_REF}
 # check-dashboard-rbac-minimal.mjs runs `helm template` to diff chart RBAC.
 # helm is not installed in this Node.js image; skip it here — the check runs
 # on the dev host via `npm run prebuild` before pushing. The underlying chart
@@ -65,8 +71,14 @@ ENV SKIP_DASHBOARD_RBAC_CHECK=1
 ENV SKIP_GEN_AUTHZ_REGISTRY=1
 ENV SKIP_AUTHZ_REGISTRY_CHECK=1
 
-# Build the standalone application
-RUN npm run build
+# Build the standalone application. The `ghtoken` BuildKit secret is mounted
+# only for the duration of this RUN; gen-plans.mjs reads it via GITHUB_TOKEN
+# to fetch plans.yaml + plans.schema.json from zero-day-ai/tenant-operator
+# (per PLANS_SOURCE=remote / PLANS_REF above). When the secret is absent,
+# gen-plans exits non-zero and the build fails loudly — we never want to
+# ship a stale plans.ts baked from a phantom YAML.
+RUN --mount=type=secret,id=ghtoken,target=/run/secrets/ghtoken,required=true \
+    GITHUB_TOKEN="$(cat /run/secrets/ghtoken)" npm run build
 
 # ============================================================================
 # Stage 3: Runtime - Minimal production image
