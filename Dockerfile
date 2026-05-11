@@ -10,7 +10,7 @@
 # ============================================================================
 # Stage 1: Dependencies - Install node modules
 # ============================================================================
-FROM node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS deps
+FROM ghcr.io/zero-day-ai/mirror/node:20-alpine AS deps
 
 WORKDIR /app
 
@@ -27,7 +27,7 @@ RUN npm ci --ignore-scripts --legacy-peer-deps && \
 # ============================================================================
 # Stage 2: Builder - Build Next.js application
 # ============================================================================
-FROM node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS builder
+FROM ghcr.io/zero-day-ai/mirror/node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -97,7 +97,7 @@ RUN --mount=type=secret,id=ghtoken,target=/run/secrets/ghtoken,required=true \
 # ============================================================================
 # Stage 3: Runtime - Minimal production image
 # ============================================================================
-FROM node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS runner
+FROM ghcr.io/zero-day-ai/mirror/node:20-alpine AS runner
 
 WORKDIR /app
 
