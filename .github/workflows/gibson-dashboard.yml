@@ -26,3 +26,10 @@ jobs:
       dockerfile_path: Dockerfile
       image_name: ghcr.io/zero-day-ai/gibson-dashboard
       tag_pattern: v(.*)
+    secrets:
+      # PAT with read access to zero-day-ai/tenant-operator (private). The
+      # Dockerfile fetches plans/plans.yaml + plans/plans.schema.json from
+      # that repo at build time via gen-plans.mjs PLANS_SOURCE=remote.
+      # Provisioned out of band in repo settings (Settings → Secrets and
+      # variables → Actions → New repository secret).
+      ghtoken: ${{ secrets.GH_PAT_TENANT_OPERATOR_RO }}

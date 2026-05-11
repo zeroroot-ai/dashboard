@@ -2,12 +2,24 @@
 /**
  * gen-plans.mjs — canonical plan registry → TypeScript emitter.
  *
- * Reads:
- *   enterprise/platform/tenant-operator/plans/plans.yaml
- *   enterprise/platform/tenant-operator/plans/plans.schema.json
+ * Two source modes:
  *
- * Emits:
- *   enterprise/platform/dashboard/src/generated/plans.ts
+ *   local  (default)   read plans.yaml + plans.schema.json from the polyrepo
+ *                      sibling at enterprise/platform/tenant-operator/plans/.
+ *                      Used for local dev where the workspace has both clones.
+ *
+ *   remote             fetch plans.yaml + plans.schema.json from GitHub raw at
+ *                      https://raw.githubusercontent.com/zero-day-ai/tenant-operator/{ref}/plans/...
+ *                      Used in Docker / CI where the sibling clone is not on disk.
+ *                      Auth: GITHUB_TOKEN env var (tenant-operator is private).
+ *                      Ref:  PLANS_REF env var, default "main".
+ *
+ * Mode selection:
+ *   --remote / --source=remote  | PLANS_SOURCE=remote   ⇒ remote
+ *   --local  / --source=local   | PLANS_SOURCE=local    ⇒ local
+ *   default                                              ⇒ local
+ *
+ * Emits:  enterprise/platform/dashboard/src/generated/plans.ts
  *
  * The generated file contains strongly-typed Plan / Quotas / Pricing / PlanID
  * definitions + the frozen `plans` constant used by /pricing, BillingContent,
@@ -43,6 +55,12 @@ const PLANS_SCHEMA = resolve(
 );
 const OUTPUT = resolve(DASHBOARD_ROOT, "src/generated/plans.ts");
 
+const REMOTE_REPO = "zero-day-ai/tenant-operator";
+const REMOTE_PATHS = {
+  yaml: "plans/plans.yaml",
+  schema: "plans/plans.schema.json",
+};
+
 const KNOWN_PLAN_IDS = ["team", "org", "enterprise", "enterprise-deploy"];
 
 const REQUIRED_QUOTA_KEYS = ["concurrent_missions", "concurrent_agents"];
@@ -52,8 +70,107 @@ function die(msg) {
   process.exit(1);
 }
 
-function main() {
-  const stdoutMode = process.argv.slice(2).includes("--stdout");
+/**
+ * Resolve the active source mode from CLI flags + env vars. CLI flags win
+ * over env vars; env wins over the implicit default ("local").
+ */
+function resolveSource(argv) {
+  for (const arg of argv) {
+    if (arg === "--remote") return "remote";
+    if (arg === "--local") return "local";
+    if (arg.startsWith("--source=")) {
+      const v = arg.slice("--source=".length);
+      if (v === "remote" || v === "local") return v;
+      die(`--source must be 'remote' or 'local', got ${JSON.stringify(v)}`);
+    }
+  }
+  const env = process.env.PLANS_SOURCE;
+  if (env === "remote" || env === "local") return env;
+  if (env && env !== "") {
+    die(`PLANS_SOURCE must be 'remote' or 'local', got ${JSON.stringify(env)}`);
+  }
+  return "local";
+}
+
+/**
+ * Fetch a single file from the tenant-operator repo's raw content endpoint.
+ * Uses the GITHUB_TOKEN env var (the BuildKit `ghtoken` secret in the
+ * Dockerfile, the `secrets.GH_PAT_*` PAT in CI workflows). tenant-operator
+ * is a private repo so unauthenticated fetches will 401 / 404.
+ */
+async function fetchRemoteFile(ref, repoPath) {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) {
+    die(
+      "PLANS_SOURCE=remote requires GITHUB_TOKEN env var with read access " +
+        `to ${REMOTE_REPO} (private repo). Set GITHUB_TOKEN or switch to ` +
+        "PLANS_SOURCE=local.",
+    );
+  }
+  const url = `https://raw.githubusercontent.com/${REMOTE_REPO}/${encodeURIComponent(ref)}/${repoPath}`;
+  let resp;
+  try {
+    resp = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.raw",
+        "User-Agent": "gibson-dashboard-gen-plans",
+      },
+    });
+  } catch (e) {
+    die(`fetch ${url}: ${e.message}`);
+  }
+  if (!resp.ok) {
+    die(
+      `fetch ${url}: HTTP ${resp.status} ${resp.statusText}` +
+        (resp.status === 404
+          ? ` (check PLANS_REF=${JSON.stringify(ref)} resolves to a commit on ${REMOTE_REPO})`
+          : resp.status === 401 || resp.status === 403
+            ? " (check GITHUB_TOKEN has read access to the private repo)"
+            : ""),
+    );
+  }
+  return await resp.text();
+}
+
+/** Load plans.yaml + plans.schema.json from local polyrepo paths. */
+function loadLocal() {
+  if (!existsSync(PLANS_YAML)) {
+    die(
+      `plans.yaml not found at ${PLANS_YAML} (local mode). ` +
+        "Ensure the polyrepo sibling clone exists at that path, or switch to " +
+        "remote mode with PLANS_SOURCE=remote (sets GITHUB_TOKEN required).",
+    );
+  }
+  if (!existsSync(PLANS_SCHEMA)) {
+    die(`plans.schema.json not found at ${PLANS_SCHEMA} (local mode)`);
+  }
+  return {
+    yamlText: readFileSync(PLANS_YAML, "utf8"),
+    schemaText: readFileSync(PLANS_SCHEMA, "utf8"),
+    sourceLabel: `local: ${PLANS_YAML}`,
+  };
+}
+
+/** Fetch plans.yaml + plans.schema.json from the canonical remote source. */
+async function loadRemote() {
+  const ref = process.env.PLANS_REF || "main";
+  process.stdout.write(
+    `gen-plans: fetching from ${REMOTE_REPO}@${ref} (PLANS_SOURCE=remote)\n`,
+  );
+  const yamlText = await fetchRemoteFile(ref, REMOTE_PATHS.yaml);
+  const schemaText = await fetchRemoteFile(ref, REMOTE_PATHS.schema);
+  return {
+    yamlText,
+    schemaText,
+    sourceLabel: `remote: ${REMOTE_REPO}@${ref}`,
+  };
+}
+
+async function main() {
+  const argv = process.argv.slice(2);
+  const stdoutMode = argv.includes("--stdout");
+  const source = resolveSource(argv);
 
   if (!stdoutMode && process.env.SKIP_GEN_PLANS === "1" && existsSync(OUTPUT)) {
     process.stdout.write(
@@ -61,19 +178,18 @@ function main() {
     );
     return;
   }
-  if (!existsSync(PLANS_YAML)) {
-    die(`plans.yaml not found at ${PLANS_YAML}`);
-  }
-  if (!existsSync(PLANS_SCHEMA)) {
-    die(`plans.schema.json not found at ${PLANS_SCHEMA}`);
-  }
 
-  const yamlText = readFileSync(PLANS_YAML, "utf8");
+  const loaded = source === "remote" ? await loadRemote() : loadLocal();
+  // schemaText is intentionally not re-validated here; validate() below is
+  // the structural gate. The schema file is the source-of-truth for the Go
+  // validator in tenant-operator.
+  void loaded.schemaText;
+
   let doc;
   try {
-    doc = parseYaml(yamlText);
+    doc = parseYaml(loaded.yamlText);
   } catch (e) {
-    die(`parse plans.yaml: ${e.message}`);
+    die(`parse plans.yaml (${loaded.sourceLabel}): ${e.message}`);
   }
 
   validate(doc);
@@ -85,7 +201,9 @@ function main() {
   }
   mkdirSync(dirname(OUTPUT), { recursive: true });
   writeFileSync(OUTPUT, ts, "utf8");
-  process.stdout.write(`gen-plans: wrote ${OUTPUT} (${doc.plans.length} plans)\n`);
+  process.stdout.write(
+    `gen-plans: wrote ${OUTPUT} (${doc.plans.length} plans, source=${loaded.sourceLabel})\n`,
+  );
 }
 
 function validate(doc) {
@@ -230,4 +348,4 @@ function jsonToTsLiteral(obj) {
   return JSON.stringify(obj, null, 2).replace(/\n/g, "\n  ");
 }
 
-main();
+await main();
