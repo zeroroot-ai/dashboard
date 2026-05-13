@@ -1,27 +1,20 @@
 ---
 title: Taxonomy
-description: The standard entity types and relationships Gibson recognises — and how to extend the taxonomy when you need shapes Gibson doesn't ship.
+description: The standard entity types and relationships Gibson recognises — and how to extend the taxonomy from your component repo via taxonomy.yaml.
 ---
 
-Gibson ships a **standard taxonomy** of entities and relationships.
-Every mission, every tool output, every finding — they all reference
-the same set of well-known types. That consistency is what lets the
-dashboard, the knowledge graph, and downstream agents reason about
-data they didn't produce themselves.
+Gibson ships a **standard taxonomy** of entities and relationships
+(the SDK's `core.yaml`). Every mission, every tool output, every
+finding references the same set of well-known types. That consistency
+is what lets the dashboard, the knowledge graph, and downstream agents
+reason about data they didn't produce themselves.
 
-This page lists what Gibson recognises out of the box and explains the
-escape hatches for shapes the standard taxonomy doesn't cover.
+This page lists what Gibson recognises out of the box and explains
+how to add your own node types and relationships via `taxonomy.yaml`.
 
-## Why a fixed taxonomy
-
-When every tool decides its own data shape, the result is N-by-M
-glue: every agent has to learn every tool's idiom, every dashboard
-view has to special-case every payload, and similarity search becomes
-useless because nothing's normalised.
-
-Gibson's answer is a small, opinionated taxonomy that covers most
-security work directly, plus an explicit escape hatch
-(`custom_node` / `explicit_relationship`) for anything outside it.
+For hierarchy, equivalence, and identity mappings — *"`CWE-79` is a
+kind of injection"*, *"our `LeakedSecret` category is equivalent to
+`gibson:disclosure`"* — see [Ontology](./ontology).
 
 ## Standard entity types
 
@@ -62,6 +55,10 @@ Compliance entities (emitted by Gibson, not your components):
 |---|---|
 | **Compliance signal** | A normalised marker tying observed behaviour to a compliance framework (PCI, SOC 2, HIPAA, …). |
 
+The authoritative field-by-field schema lives in the SDK's
+[`taxonomy/core.yaml`](https://github.com/zero-day-ai/sdk/blob/main/taxonomy/core.yaml).
+Don't duplicate it in your `taxonomy.yaml`.
+
 ## Standard relationships
 
 | Relationship | From → To | Means |
@@ -79,144 +76,120 @@ Compliance entities (emitted by Gibson, not your components):
 
 ## Where you populate the taxonomy
 
-Two natural points:
-
-### From a tool
-
-Reserve **field 100** of your tool's response proto for a
-`gibson.graphrag.v1.DiscoveryResult`. Anything you put in it is
-ingested with the right labels, relationships, and provenance.
-
-```go
-out.Discovery = &graphragv1.DiscoveryResult{
-    Hosts: []*graphragv1.Host{{Address: "10.0.0.1"}},
-    Ports: []*graphragv1.Port{{
-        HostAddress: "10.0.0.1",
-        Number:      22,
-        Protocol:    "tcp",
-    }},
-    Services: []*graphragv1.Service{{
-        HostAddress: "10.0.0.1",
-        Port:        22,
-        Protocol:    "ssh",
-        Version:     "OpenSSH 9.6",
-    }},
-}
-```
-
-Gibson generates the `HAS_PORT` and `RUNS_SERVICE` edges for you.
-
-### From an agent
-
-When you submit a finding via `h.SubmitFinding(...)`, Gibson stores
-the finding as a `:finding` node and links it via `AFFECTS` to the
-target. See [Findings](./findings).
-
-For ad-hoc decisions or notes the standard types don't cover:
-
-```go
-h.StoreNode(ctx, agent.StoreNodeRequest{
-    Label: "decision",
-    Properties: map[string]any{"reason": "skipped — vendor disputed"},
-    Relationships: []agent.Relationship{{
-        Type: "PART_OF", To: h.Mission().Id,
-    }},
-})
-```
+The bulk of nodes come from tool output. Reserve **field 100** of
+your tool's response proto for a `gibson.graphrag.v1.DiscoveryResult`
+— Gibson ingests it with the right labels, relationships, and
+provenance. From an agent, `h.SubmitFinding(...)` stores a finding
+linked via `AFFECTS` to its target. See [Findings](./findings) and
+[Knowledge graph](./knowledge-graph).
 
 ## Extending the taxonomy
 
-Two escape hatches when the standard types don't fit:
+When you need a node or relationship the standard set doesn't cover
+— a `secret_finding` with team-specific fields, a `MANAGES` edge
+between hosts and IoT devices — declare it in a **`taxonomy.yaml`**
+at the root of your component repo.
 
-### `CustomNode`
+The build flow:
 
-Use `DiscoveryResult.custom_node` for nodes whose shape doesn't match
-any standard entity:
+1. You write `taxonomy.yaml` (custom node types and relationships).
+2. `gibson component build` validates it against the SDK's
+   `core.yaml` (no name collisions, properties typed correctly,
+   parent/category references resolve).
+3. The ADK emits `gen/taxonomy_extension.go` — a `TaxonomyExtension`
+   value baked into your component binary.
+4. Your component contributes the extension to the daemon at
+   enrollment. The daemon merges it into the tenant's working
+   taxonomy.
+5. From then on your custom shapes are first-class in the graph,
+   the dashboard, and any sibling components in the same tenant.
 
-```go
-out.Discovery.CustomNode = []*graphragv1.CustomNode{{
-    Label: "iot_device",
-    Properties: map[string]string{
-        "manufacturer": "Acme",
-        "model":        "BSD-9000",
-        "firmware":     "1.2.3",
-    },
-}}
+The same YAML shape as the SDK's `core.yaml`, scoped to your
+component:
+
+```yaml
+version: "0.1.0"
+kind: extension
+node_types:
+  - name: secret_finding
+    category: security
+    description: "A leaked credential discovered in source or config."
+    properties:
+      - name: severity
+        type: string
+        enum: [critical, high, medium, low]
+        required: true
+      - name: source_file
+        type: string
+        required: true
+    parent: finding
+    identifying_properties: [source_file, severity]
+
+relationships:
+  - name: MANAGES
+    from: [host]
+    to: [iot_device]
+    description: "Host manages an IoT device over some control protocol."
+    properties:
+      - name: protocol
+        type: string
 ```
 
-Custom nodes are first-class in the graph — they show up in queries,
-get provenance stamps, and can be linked into the rest of the graph
-via `ExplicitRelationship`.
+Field reference: see the SDK's
+[`taxonomy/core.yaml`](https://github.com/zero-day-ai/sdk/blob/main/taxonomy/core.yaml)
+for the full schema (property types, enums, validations, parent
+chains).
 
-### `ExplicitRelationship`
-
-For relationships outside the standard list:
-
-```go
-out.Discovery.ExplicitRelationship = []*graphragv1.ExplicitRelationship{{
-    From:       hostId,
-    To:         iotDeviceId,
-    Type:       "MANAGES",
-    Properties: map[string]string{"protocol": "modbus"},
-}}
-```
-
-### Compliance signals
+## Compliance signals
 
 If your agent identifies behaviour relevant to a compliance framework,
-emit a **`ComplianceSignal`** rather than a custom node. Gibson
-recognises a curated list of frameworks and renders them in the
-dashboard's compliance view:
+emit a **`ComplianceSignal`** rather than declaring a custom node.
+Gibson recognises a curated list of frameworks and renders them in
+the dashboard's compliance view:
 
 ```go
 h.EmitComplianceSignal(ctx, agent.ComplianceSignal{
-    Framework:  "PCI-DSS-4.0",
-    Control:    "8.3.1",
-    Status:     agent.SignalFail,
-    Evidence:   "TLS 1.0 detected on cardholder service.",
-    TargetRef:  serviceId,
+    Framework: "PCI-DSS-4.0",
+    Control:   "8.3.1",
+    Status:    agent.SignalFail,
+    Evidence:  "TLS 1.0 detected on cardholder service.",
+    TargetRef: serviceId,
 })
 ```
 
-Compliance signals show up on the asset's detail page, in compliance
-roll-ups, and are exportable via the audit log.
+To map a custom finding category to a control id, declare it in
+[`ontology.yaml`](./ontology) — don't reinvent the framework in
+`taxonomy.yaml`.
 
-## Best practices
+## Runtime escape hatch
 
-- **Prefer the standard taxonomy.** It costs you a tiny bit of
-  expressiveness and buys you a lot of free integration with the rest
-  of Gibson.
-- **Use `CustomNode` deliberately.** Each custom shape you introduce
-  is a small dialect your team has to remember. Three custom shapes
-  is fine; thirty is a smell.
-- **Pin properties.** Where the standard taxonomy has typed properties
-  (e.g. `Service.protocol`), populate them — even if you also stash
-  raw output in a free-form field. Typed fields are what filters and
-  similarity search use.
-- **Don't reinvent findings.** A vulnerability is a `Finding`, not a
-  custom node. The dashboard's triage flow only works for `:finding`
-  nodes.
+The legacy `DiscoveryResult.custom_node` and
+`DiscoveryResult.explicit_relationship` fields still work for
+one-shot tools that don't ship a `taxonomy.yaml`. They're useful for
+quick experiments, but they bypass validation and don't surface
+named types in the dashboard. Prefer `taxonomy.yaml` for anything
+you intend to keep.
 
-## Versioning
+## Prompting your assistant
 
-The standard taxonomy evolves. New entity types and relationships are
-added in backwards-compatible ways — your existing graph keeps working,
-and your tools/agents start producing the new shapes when you bump the
-SDK.
+When you ask Claude / Cursor / Copilot to extend the taxonomy, give
+it concrete shape. Examples:
 
-When the taxonomy changes:
-
-1. The SDK release notes call out the new entities and relationships.
-2. The dashboard adds (or upgrades) views to render them.
-3. `DiscoveryResult` gets new fields — your tools opt in by populating
-   them, or simply ignore them and keep emitting the previous shape.
-
-If you've built custom-node patterns that the new release covers
-natively, plan a migration: re-emit those nodes with the new types,
-and let the old `CustomNode` versions age out via retention.
+- *"Open `taxonomy.yaml` and add a `secret_finding` node type with a
+  `severity` enum (`critical|high|medium|low`) and a required
+  `source_file` string. Parent is `finding`. Then run `gibson
+  component build` and stop if it fails validation."*
+- *"In `taxonomy.yaml`, add a `MANAGES` relationship from `host` to
+  our existing `iot_device` custom node, with a `protocol` string
+  property. Run `gibson component build` and surface any validator
+  errors verbatim."*
+- *"Read the SDK `core.yaml` and tell me whether `web_request` is
+  already a standard node type before I add it to `taxonomy.yaml`."*
 
 ## Related
 
+- [Ontology](./ontology) — hierarchy, equivalence, and identity
+  mappings between your custom types and industry vocab.
 - [Knowledge graph](./knowledge-graph) — what the graph is, how to
   query it.
 - [Findings](./findings) — the highest-leverage entity in the
