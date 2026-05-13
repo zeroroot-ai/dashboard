@@ -5,6 +5,14 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.1](https://github.com/zero-day-ai/dashboard/compare/v1.11.0...v1.11.1) (2026-05-13)
+
+
+### Bug Fixes
+
+* **ci:** actually rename dashboard workflow + image (lost in [#34](https://github.com/zero-day-ai/dashboard/issues/34) rename diff) ([#36](https://github.com/zero-day-ai/dashboard/issues/36)) ([a8ba906](https://github.com/zero-day-ai/dashboard/commit/a8ba9065643eae7411e79ebc8956ec3375952a01))
+* **ci:** rename dashboard workflow + image to ghcr.io/zero-day-ai/dashboard ([#34](https://github.com/zero-day-ai/dashboard/issues/34)) ([e131bdb](https://github.com/zero-day-ai/dashboard/commit/e131bdbf97d2b1e28f4a930665afa426570c2672))
+
 ## [1.11.0](https://github.com/zero-day-ai/dashboard/compare/v1.10.0...v1.11.0) (2026-05-13)
 
 
