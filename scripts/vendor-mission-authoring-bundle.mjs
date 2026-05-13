@@ -139,7 +139,7 @@ function resolveVersion() {
   if (explicit) return explicit;
 
   // Resolve from sibling gibson's go.mod via `go list -m`.
-  const gibsonRepo = path.join(WORKSPACE_ROOT, 'core/gibson');
+  const gibsonRepo = path.join(WORKSPACE_ROOT, 'enterprise/platform/gibson');
   if (existsSync(path.join(gibsonRepo, 'go.mod'))) {
     try {
       const v = run(

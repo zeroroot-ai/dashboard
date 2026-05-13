@@ -45,8 +45,11 @@ const DASHBOARD_ROOT = path.resolve(HERE, '..');
 const WS = path.join(DASHBOARD_ROOT, '.tmp/proto-ws');
 
 // Workspace root: ~/Code/zero-day.ai/. Sibling repos hang off here.
+// Dashboard lives at enterprise/platform/dashboard so the workspace root
+// is three levels up. Gibson lives at enterprise/platform/gibson — the
+// `core/` prefix was the pre-refactor layout and is no longer present.
 const WORKSPACE_ROOT = path.resolve(DASHBOARD_ROOT, '..', '..', '..');
-const GIBSON_REPO = path.join(WORKSPACE_ROOT, 'core/gibson');
+const GIBSON_REPO = path.join(WORKSPACE_ROOT, 'enterprise/platform/gibson');
 const GIBSON_LOCAL_PROTOS = path.join(GIBSON_REPO, 'internal/daemon/api');
 
 function run(cmd, opts = {}) {
