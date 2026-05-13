@@ -49,7 +49,7 @@ function ctaForTier(t: PricingTierDisplay): {
 } {
   return {
     label: "Start trial",
-    href: "/signup?tier=" + encodeURIComponent(t.id),
+    href: "/signup?plan=" + encodeURIComponent(t.id),
     variant: t.id === FEATURED_TIER_ID ? "default" : "outline",
   };
 }
