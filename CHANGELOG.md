@@ -5,6 +5,22 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0](https://github.com/zero-day-ai/dashboard/compare/v1.10.0...v1.11.0) (2026-05-13)
+
+
+### Features
+
+* **build:** point Dockerfile FROM at ghcr.io mirror ([#28](https://github.com/zero-day-ai/dashboard/issues/28)) ([5445955](https://github.com/zero-day-ai/dashboard/commit/5445955f79ad7efec0ab4a3dcec01e8ace1a319b))
+* **build:** pull plans.yaml from tenant-operator at image build ([#22](https://github.com/zero-day-ai/dashboard/issues/22)) ([99ca903](https://github.com/zero-day-ai/dashboard/commit/99ca9035b7e33e001596186bf54e78d058cf21b7))
+
+
+### Bug Fixes
+
+* **api:** drop 'use server' from billing route handlers ([#25](https://github.com/zero-day-ai/dashboard/issues/25)) ([f4f8dd6](https://github.com/zero-day-ai/dashboard/commit/f4f8dd6ec0442f41e323a67f832e7803de85dadb))
+* **build:** route gen-plans diagnostics to stderr ([c83d707](https://github.com/zero-day-ai/dashboard/commit/c83d707a9525fac138dd80ff1a2246a5c9e5b667))
+* **build:** skip plans-fresh + stripe-tiers gates in Docker ([#24](https://github.com/zero-day-ai/dashboard/issues/24)) ([29d2c88](https://github.com/zero-day-ai/dashboard/commit/29d2c887287425eec7744b993d1dcc1ff18a5863))
+* **pricing:** route Start-trial CTA to /signup?plan= so signup loads ([#29](https://github.com/zero-day-ai/dashboard/issues/29)) ([c511aed](https://github.com/zero-day-ai/dashboard/commit/c511aed7109cb7e7993638cc378bec0fec5e82b2))
+
 ## [1.10.0](https://github.com/zero-day-ai/dashboard/compare/v1.9.0...v1.10.0) (2026-05-11)
 
 
