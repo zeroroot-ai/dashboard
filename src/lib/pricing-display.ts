@@ -78,7 +78,7 @@ export const pricingDisplays: readonly PricingTierDisplay[] = plans.map(planToDi
 /**
  * selfServeTierIds is the list of plan ids whose signup flow proceeds via
  * self-serve (Stripe checkout) rather than a contact-sales form. The
- * signup page allow-lists `?tier=` against this set.
+ * signup page allow-lists `?plan=` against this set.
  */
 export const selfServeTierIds: readonly string[] = pricingDisplays
   .filter((d) => !d.contactSales)
