@@ -18,13 +18,14 @@ import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { DiscoveryResult } from "../../graphrag/v1/graphrag_pb";
 import { file_gibson_graphrag_v1_graphrag } from "../../graphrag/v1/graphrag_pb";
+import { file_gibson_tool_v1_options } from "../../tool/v1/options_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file gibson/test/v1/fixture.proto.
  */
 export const file_gibson_test_v1_fixture: GenFile = /*@__PURE__*/
-  fileDesc("ChxnaWJzb24vdGVzdC92MS9maXh0dXJlLnByb3RvEg5naWJzb24udGVzdC52MSKPAQoOR2VuZXJpY1JlcXVlc3QSDwoHdGFyZ2V0cxgBIAMoCRI8CgdvcHRpb25zGAIgAygLMisuZ2lic29uLnRlc3QudjEuR2VuZXJpY1JlcXVlc3QuT3B0aW9uc0VudHJ5Gi4KDE9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIqcBChFHZW5lcmljUmVzdWx0SXRlbRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEkUKCmF0dHJpYnV0ZXMYAyADKAsyMS5naWJzb24udGVzdC52MS5HZW5lcmljUmVzdWx0SXRlbS5BdHRyaWJ1dGVzRW50cnkaMQoPQXR0cmlidXRlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiUwoPR2VuZXJpY1Jlc3BvbnNlEjAKBWl0ZW1zGAEgAygLMiEuZ2lic29uLnRlc3QudjEuR2VuZXJpY1Jlc3VsdEl0ZW0SDgoGc3RhdHVzGAIgASgJIoQBChhHZW5lcmljRGlzY292ZXJ5UmVzcG9uc2USMAoFaXRlbXMYASADKAsyIS5naWJzb24udGVzdC52MS5HZW5lcmljUmVzdWx0SXRlbRI2CglkaXNjb3ZlcnkYZCABKAsyIy5naWJzb24uZ3JhcGhyYWcudjEuRGlzY292ZXJ5UmVzdWx0Qk1QAVo4Z2l0aHViLmNvbS96ZXJvLWRheS1haS9zZGsvYXBpL2dlbi9naWJzb24vdGVzdC92MTt0ZXN0cGKqAg5HaWJzb24uVGVzdC5WMWIGcHJvdG8z", [file_gibson_graphrag_v1_graphrag]);
+  fileDesc("ChxnaWJzb24vdGVzdC92MS9maXh0dXJlLnByb3RvEg5naWJzb24udGVzdC52MSKPAQoOR2VuZXJpY1JlcXVlc3QSDwoHdGFyZ2V0cxgBIAMoCRI8CgdvcHRpb25zGAIgAygLMisuZ2lic29uLnRlc3QudjEuR2VuZXJpY1JlcXVlc3QuT3B0aW9uc0VudHJ5Gi4KDE9wdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIqcBChFHZW5lcmljUmVzdWx0SXRlbRIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEkUKCmF0dHJpYnV0ZXMYAyADKAsyMS5naWJzb24udGVzdC52MS5HZW5lcmljUmVzdWx0SXRlbS5BdHRyaWJ1dGVzRW50cnkaMQoPQXR0cmlidXRlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiUwoPR2VuZXJpY1Jlc3BvbnNlEjAKBWl0ZW1zGAEgAygLMiEuZ2lic29uLnRlc3QudjEuR2VuZXJpY1Jlc3VsdEl0ZW0SDgoGc3RhdHVzGAIgASgJIooBChhHZW5lcmljRGlzY292ZXJ5UmVzcG9uc2USMAoFaXRlbXMYASADKAsyIS5naWJzb24udGVzdC52MS5HZW5lcmljUmVzdWx0SXRlbRI2CglkaXNjb3ZlcnkYZCABKAsyIy5naWJzb24uZ3JhcGhyYWcudjEuRGlzY292ZXJ5UmVzdWx0OgSguxgBQk1QAVo4Z2l0aHViLmNvbS96ZXJvLWRheS1haS9zZGsvYXBpL2dlbi9naWJzb24vdGVzdC92MTt0ZXN0cGKqAg5HaWJzb24uVGVzdC5WMWIGcHJvdG8z", [file_gibson_graphrag_v1_graphrag, file_gibson_tool_v1_options]);
 
 /**
  * GenericRequest is a tool-agnostic request message used by SDK tests for
@@ -116,6 +117,10 @@ export const GenericResponseSchema: GenMessage<GenericResponse> = /*@__PURE__*/
  * core/gibson/CLAUDE.md so SDK extraction tests continue to validate that
  * mechanism. The non-discovery items field is included so tests can verify
  * extraction works regardless of other fields present in the message.
+ *
+ * The (gibson.tool.v1.is_tool_response) option opts this message into the
+ * SDK field-100 contract test (graphrag/field_100_contract_test.go), which
+ * asserts every tool-response message has DiscoveryResult at slot 100.
  *
  * @generated from message gibson.test.v1.GenericDiscoveryResponse
  */

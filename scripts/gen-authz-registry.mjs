@@ -44,8 +44,10 @@ const WS = resolve(DASHBOARD_ROOT, '.tmp/proto-ws');
 const OUTPUT_PATH = resolve(DASHBOARD_ROOT, 'src/gen/authz/registry.ts');
 
 // Workspace root: ~/Code/zero-day.ai/. Sibling repos hang off here.
+// Gibson lives at enterprise/platform/gibson — the `core/` prefix was the
+// pre-refactor layout and is no longer present.
 const WORKSPACE_ROOT = resolve(DASHBOARD_ROOT, '..', '..', '..');
-const GIBSON_REPO = resolve(WORKSPACE_ROOT, 'core/gibson');
+const GIBSON_REPO = resolve(WORKSPACE_ROOT, 'enterprise/platform/gibson');
 const GIBSON_LOCAL_PROTOS = resolve(GIBSON_REPO, 'internal/daemon/api');
 
 // Extension field number for (gibson.auth.v1.authz) on MethodOptions.
