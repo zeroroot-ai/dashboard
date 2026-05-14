@@ -88,6 +88,79 @@ export interface MachineSecret {
   clientSecret: string;
 }
 
+/**
+ * Inputs to `createSession` — the V2 Session Service entry point used by the
+ * signup auto-login flow (spec/issue dashboard#41).
+ *
+ * Both `loginName` and `password` are forwarded to Zitadel as the two
+ * authentication "checks" in a single POST /v2/sessions call:
+ *   - `checks.user.loginName: <email>`     — identifies the human user
+ *   - `checks.password.password: <pw>`     — proves the user knows the password
+ *
+ * The signup form just collected the password from the user (they typed it
+ * moments ago) AND we created the user with that exact password via the
+ * admin API in the same Server Action, so combining both checks is the
+ * canonical "you just signed up, here's a session" pattern Zitadel
+ * documents for the build-your-own-login-UI flow.
+ *
+ * SECURITY: the password lives in the request body only. NEVER log this
+ * struct or any field of it. The PAT calling this endpoint must hold the
+ * `IAM_LOGIN_CLIENT` role (granted in gitops#90); without it Zitadel
+ * returns 403 PERMISSION_DENIED.
+ */
+export interface CreateSessionInput {
+  /** The Zitadel loginName — the dashboard uses email as loginName at user-creation time. */
+  loginName: string;
+  /** Plaintext password the user just typed in the signup form. NEVER logged. */
+  password: string;
+}
+
+/**
+ * Output of `createSession`. The `sessionToken` is opaque-but-secret — treat
+ * like a bearer credential, never log it, never expose to the browser. It
+ * is the ONE input to `finalizeAuthRequest` and is single-use in that flow.
+ */
+export interface ZitadelSession {
+  /** Stable Zitadel session ID. Safe to log; pairs with the session resource. */
+  sessionId: string;
+  /**
+   * Opaque token authenticating the holder as the session subject. The
+   * server-side Action passes this directly into `finalizeAuthRequest`
+   * within the same request lifecycle and discards it afterwards.
+   * NEVER log this value.
+   */
+  sessionToken: string;
+}
+
+/**
+ * Input to `finalizeAuthRequest` — completes a parked OIDC auth_request by
+ * pinning it to a pre-established V2 session. The browser receives the
+ * returned `callbackUrl` and lands on the relying party's `/api/auth/callback/*`
+ * endpoint with the standard `code=...&state=...` query string.
+ *
+ * Spec: Zitadel V2 OIDC Service — `POST /v2/oidc/auth_requests/{authRequestId}/CreateCallback`.
+ */
+export interface FinalizeAuthRequestInput {
+  /**
+   * The Zitadel-assigned ID of the OIDC auth_request initiated server-side
+   * by the relying party. Extracted from the `authRequest=` query param of
+   * the redirect Location header that Zitadel emits on /oauth/v2/authorize.
+   */
+  authRequestId: string;
+  /** Session returned by `createSession`. */
+  session: ZitadelSession;
+}
+
+/**
+ * Output of `finalizeAuthRequest`. The `callbackUrl` is the absolute URL
+ * the user agent must follow to complete the OIDC handshake. It points at
+ * the relying party's registered redirect_uri with `code=...&state=...`.
+ */
+export interface FinalizeAuthRequestResult {
+  /** Absolute URL — typically `${ZITADEL_ISSUER}/oauth/v2/...` or directly the RP callback. */
+  callbackUrl: string;
+}
+
 export interface AddProjectMemberInput {
   /** Zitadel project ID the member is being granted on. */
   projectId: string;
@@ -161,6 +234,37 @@ export interface ZitadelAdminClient {
    * Spec: R1.4 / R9.8 (project membership for agents).
    */
   addProjectMember(input: AddProjectMemberInput): Promise<void>;
+
+  /**
+   * POST /v2/sessions — creates a Zitadel session for the supplied user,
+   * authenticated by password. Used by the signup auto-login pipeline
+   * (issue dashboard#41) to mint a session immediately after admin-API
+   * user provisioning so the caller can complete a parked OIDC auth_request
+   * without bouncing the user to Zitadel's hosted login UI.
+   *
+   * Requires the calling PAT to hold `IAM_LOGIN_CLIENT` (gitops#90). On
+   * 403 PERMISSION_DENIED the auto-login flow falls back to the standard
+   * /login redirect (graceful failure UX); the ZitadelApiError is rethrown
+   * for the action layer to catch.
+   *
+   * SECURITY: the password is forwarded to Zitadel in the request body
+   * only. Never log it, never persist it.
+   */
+  createSession(input: CreateSessionInput): Promise<ZitadelSession>;
+
+  /**
+   * POST /v2/oidc/auth_requests/{authRequestId}/CreateCallback — finalises
+   * a parked OIDC auth_request by binding it to an established session.
+   * Returns the absolute URL the user agent must follow to complete the
+   * code/state hand-off with the relying party.
+   *
+   * Spec: Zitadel V2 OIDC Service. Requires `IAM_LOGIN_CLIENT` (gitops#90).
+   * On any failure the caller should fall back to the standard hosted
+   * login flow — the user has a valid Zitadel account either way.
+   */
+  finalizeAuthRequest(
+    input: FinalizeAuthRequestInput,
+  ): Promise<FinalizeAuthRequestResult>;
 }
 
 // ---------------------------------------------------------------------------
@@ -526,5 +630,103 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
       body,
       input.orgId,
     );
+  }
+
+  // -----------------------------------------------------------------------
+  // V2 Session + OIDC callback methods (issue dashboard#41 — signup
+  // auto-login). Both require the calling PAT to hold IAM_LOGIN_CLIENT.
+  //
+  // Why these live on the admin client and not a separate "login client":
+  // the build-your-own-login-UI flow is, by Zitadel's design, an admin-API
+  // operation — the relying party uses a privileged service account to
+  // mint a session on behalf of a user that just identified itself by
+  // password. The role distinction (IAM_LOGIN_CLIENT vs IAM_USER_MANAGER)
+  // is a Zitadel role grant; the dashboard's signup-bot service account
+  // is the single home for all such grants.
+  //
+  // SECURITY:
+  //   - The `password` argument to createSession is forwarded into the
+  //     request body and NEVER logged. Same treatment as createHumanUser.
+  //   - The returned `sessionToken` is bearer-credential-equivalent. The
+  //     action layer is the single caller and consumes it inline in the
+  //     same Server Action invocation — it is never returned to the
+  //     browser, never persisted, never logged.
+  // -----------------------------------------------------------------------
+
+  async createSession(input: CreateSessionInput): Promise<ZitadelSession> {
+    // V2 Session API request body schema:
+    //   {
+    //     checks: {
+    //       user:     { loginName: "..." },
+    //       password: { password:  "..." }
+    //     }
+    //   }
+    // Both checks are combined in a single create call — Zitadel executes
+    // them atomically and either returns a verified session or rejects.
+    // SECURITY: input.password is in the body only, never in headers/URL.
+    const body = {
+      checks: {
+        user: { loginName: input.loginName },
+        password: { password: input.password },
+      },
+    };
+
+    const response = await this.request<{
+      sessionId?: string;
+      sessionToken?: string;
+      details?: unknown;
+    }>('POST', '/v2/sessions', body);
+
+    if (!response.sessionId || !response.sessionToken) {
+      // Do NOT echo `response` in the error message — the sessionToken
+      // would leak on the malformed-response path. The error type matches
+      // the rest of the client so callers can use the same isRetryable()
+      // / httpStatus discrimination.
+      throw new ZitadelApiError(
+        0,
+        'NO_SESSION',
+        'Zitadel response missing sessionId or sessionToken',
+      );
+    }
+
+    return {
+      sessionId: response.sessionId,
+      sessionToken: response.sessionToken,
+    };
+  }
+
+  async finalizeAuthRequest(
+    input: FinalizeAuthRequestInput,
+  ): Promise<FinalizeAuthRequestResult> {
+    // The Zitadel V2 OIDC API for CreateCallback expects a `session` object
+    // carrying the freshly-minted sessionId + sessionToken. The endpoint
+    // path itself encodes the authRequestId — the same id that originally
+    // came back as the `authRequest` query param when the dashboard
+    // initiated /oauth/v2/authorize.
+    const body = {
+      session: {
+        sessionId: input.session.sessionId,
+        sessionToken: input.session.sessionToken,
+      },
+    };
+
+    const response = await this.request<{
+      callbackUrl?: string;
+      details?: unknown;
+    }>(
+      'POST',
+      `/v2/oidc/auth_requests/${encodeURIComponent(input.authRequestId)}/CreateCallback`,
+      body,
+    );
+
+    if (!response.callbackUrl) {
+      throw new ZitadelApiError(
+        0,
+        'NO_CALLBACK_URL',
+        'Zitadel response missing callbackUrl',
+      );
+    }
+
+    return { callbackUrl: response.callbackUrl };
   }
 }

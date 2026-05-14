@@ -45,6 +45,11 @@ import type {
   ZitadelAdminClient,
 } from "@/src/lib/zitadel/admin-client";
 import {
+  initiateOidcAuthRequest,
+  loadHandoffConfig,
+  type OidcAuthRequestHandoff,
+} from "@/src/lib/zitadel/signup-handoff";
+import {
   applyTenant,
   applyTenantMember,
   getTenant,
@@ -78,7 +83,10 @@ const MEMBER_READY_TIMEOUT_MS = 30_000;
 const POLL_INTERVAL_MS = 1_000;
 
 /**
- * Default post-signup destination. Routes through /login so the LoginForm
+ * Fallback post-signup destination — used when the V2 session auto-login
+ * dance (issue dashboard#41) fails for ANY reason (config missing,
+ * IAM_LOGIN_CLIENT not granted yet [pending gitops#90], auth_request
+ * initiation failed, etc). Routes through /login so the LoginForm
  * client component invokes Auth.js v5's CSRF-protected signIn("zitadel"),
  * which POSTs to /api/auth/signin/zitadel with the required tokens.
  *
@@ -87,7 +95,7 @@ const POLL_INTERVAL_MS = 1_000;
  * that endpoint now throws `UnknownAction` and bounces back to
  * /login?error=Configuration.
  */
-const POST_SIGNUP_REDIRECT = "/login?callbackUrl=%2Fdashboard";
+const FALLBACK_POST_SIGNUP_REDIRECT = "/login?callbackUrl=%2Fdashboard";
 
 // ---------------------------------------------------------------------------
 // Main entry
@@ -116,6 +124,7 @@ export async function signupAction(
     zitadelUserId: undefined,
     tenantSlug: undefined,
     emailVerifiedAtCreate: undefined,
+    oidcHandoff: undefined,
   };
 
   try {
@@ -151,6 +160,24 @@ export async function signupAction(
       lastName: ctx.input.lastName.trim(),
       workspaceName: ctx.input.workspaceName.trim(),
     };
+
+    // 0.5. Initiate the Zitadel V2 OIDC auth_request so we can complete
+    // the build-your-own-login-UI handshake after admin-API user creation.
+    // This step sets Auth.js's state + PKCE cookies on the Server Action
+    // response BEFORE the action returns, so the browser has them in hand
+    // when it later follows the callbackUrl returned by CreateCallback.
+    //
+    // Why it runs this early: the cookies must be committed on a response
+    // sent to the user agent, and the next response is THIS action's
+    // return. Initiation is also cheap and never blocks the user-facing
+    // outcome — failures (config missing, gitops#90 unmerged so
+    // IAM_LOGIN_CLIENT not granted, network glitch) leave
+    // ctx.oidcHandoff undefined and the action will fall back to the
+    // standard /login redirect at the end.
+    //
+    // Issue: dashboard#41 (auto-login after signup).
+    // Blocker: gitops#90 — IAM_LOGIN_CLIENT grant on the signup-bot.
+    ctx.oidcHandoff = await safeInitiateOidcAuthRequest(ctx.attemptId);
 
     // 1. Rate limit.
     await advanceStep(attemptId, "rate_limit");
@@ -317,13 +344,29 @@ export async function signupAction(
       });
     }
 
-    // 10. Done.
+    // 10. Optional auto-login (issue dashboard#41).
+    //
+    // If we successfully parked an OIDC auth_request at step 0.5 AND the
+    // signup-bot PAT can mint sessions (IAM_LOGIN_CLIENT — gitops#90),
+    // exchange the just-collected password for a Zitadel session and
+    // CreateCallback the parked auth_request. The returned callbackUrl
+    // lands the user on /api/auth/callback/zitadel?code=&state= which
+    // Auth.js consumes using the state/PKCE cookies set at step 0.5,
+    // minting the dashboard session WITHOUT bouncing through Zitadel's
+    // hosted login UI.
+    //
+    // On any failure here we fall back to the standard /login redirect —
+    // the user has a valid Zitadel account and can sign in normally.
+    // This is the graceful-failure UX the acceptance criteria require.
+    const redirect = await finalizeAutoLoginOrFallback(ctx, client);
+
+    // 11. Done.
     await completeProgress(attemptId);
     logAudit("signup_ok", ctx);
     return {
       ok: true,
       attemptId,
-      redirect: POST_SIGNUP_REDIRECT,
+      redirect,
     };
   } catch (err) {
     // Catch-all — any uncaught exception becomes INTERNAL_ERROR.
@@ -354,6 +397,15 @@ interface Ctx {
    * Spec: signup-zitadel-permissions-fix.
    */
   emailVerifiedAtCreate: boolean | undefined;
+  /**
+   * The parked OIDC auth_request — populated at step 0.5 IF
+   * `initiateOidcAuthRequest` succeeded. Used at step 10 to
+   * CreateCallback the auth_request and auto-login the user.
+   * Undefined on env-misconfig / network failure → caller falls back to
+   * the standard /login redirect.
+   * Issue: dashboard#41.
+   */
+  oidcHandoff: OidcAuthRequestHandoff | undefined;
 }
 
 interface FinishFailure {
@@ -591,4 +643,123 @@ async function waitForMemberReady(
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// ---------------------------------------------------------------------------
+// Auto-login (issue dashboard#41) — V2 session + CreateCallback handoff.
+// ---------------------------------------------------------------------------
+
+/**
+ * Wraps `initiateOidcAuthRequest` so a failure NEVER blocks signup. Returns
+ * undefined when the handoff can't be set up (env misconfig, gitops#90
+ * unmerged so the bot lacks IAM_LOGIN_CLIENT, network glitch, etc) — the
+ * action then falls back to the standard /login redirect at the end.
+ *
+ * SECURITY: must not log error contents that might include the OIDC
+ * client secret if it appears in error envelopes — we only log a stable
+ * marker string and the attemptId.
+ */
+async function safeInitiateOidcAuthRequest(
+  attemptId: string,
+): Promise<OidcAuthRequestHandoff | undefined> {
+  // Skip entirely when handoff config is missing — saves the cookie-set
+  // overhead in dev environments that don't have AUTH_URL set.
+  if (loadHandoffConfig() === null) {
+    logger.info(
+      { attemptId, action: "signup_auto_login" },
+      "auth_request init skipped — handoff config missing (likely dev without ZITADEL_CLIENT_ID/AUTH_URL)",
+    );
+    return undefined;
+  }
+
+  try {
+    const handoff = await initiateOidcAuthRequest();
+    if (!handoff) {
+      logger.info(
+        { attemptId, action: "signup_auto_login" },
+        "auth_request init returned null — falling back to standard /login",
+      );
+      return undefined;
+    }
+    return handoff;
+  } catch (err) {
+    logger.warn(
+      {
+        attemptId,
+        action: "signup_auto_login",
+        err: err instanceof Error ? err.message : String(err),
+      },
+      "auth_request init threw — falling back to standard /login",
+    );
+    return undefined;
+  }
+}
+
+/**
+ * Final-step auto-login. Returns the redirect URL the SignupForm follows
+ * after the action completes. On any failure (no parked auth_request,
+ * IAM_LOGIN_CLIENT 403, session API outage) returns the standard /login
+ * redirect — the user has a valid Zitadel account and can sign in via the
+ * existing hosted-login fallback.
+ */
+async function finalizeAutoLoginOrFallback(
+  ctx: Ctx,
+  client: ZitadelAdminClient,
+): Promise<string> {
+  if (!ctx.oidcHandoff) {
+    // No parked auth_request → standard path. This is the BLOCKED state
+    // until gitops#90 lands AND a redeploy picks up the new env.
+    return FALLBACK_POST_SIGNUP_REDIRECT;
+  }
+
+  try {
+    // 1. Create a Zitadel V2 session bound to the just-provisioned user.
+    //    SECURITY: ctx.input.password is consumed inline here and never
+    //    leaves the action; ZitadelAdminClient is responsible for never
+    //    logging the body. The signup-bot PAT must hold IAM_LOGIN_CLIENT
+    //    (gitops#90) — without it Zitadel returns 403 and we fall back.
+    const session = await client.createSession({
+      loginName: ctx.input.email,
+      password: ctx.input.password,
+    });
+
+    // 2. Bind the session to the parked auth_request — receive the
+    //    callbackUrl pointing at /api/auth/callback/zitadel.
+    const { callbackUrl } = await client.finalizeAuthRequest({
+      authRequestId: ctx.oidcHandoff.authRequestId,
+      session,
+    });
+
+    logger.info(
+      {
+        attemptId: ctx.attemptId,
+        action: "signup_auto_login",
+        outcome: "ok",
+        // Never log the sessionToken or the full callbackUrl (contains code).
+      },
+      "auto-login handoff complete",
+    );
+
+    return callbackUrl;
+  } catch (err) {
+    // V2 session/CreateCallback failed. The most common cause is
+    // IAM_LOGIN_CLIENT not yet granted on the signup-bot (gitops#90).
+    // Surface a structured warning so the failure is debuggable from
+    // pod logs, then fall back to the standard hosted-login redirect so
+    // the user CAN still complete signin.
+    const isZitadelErr = err instanceof ZitadelApiError;
+    logger.warn(
+      {
+        attemptId: ctx.attemptId,
+        action: "signup_auto_login",
+        outcome: "fallback",
+        httpStatus: isZitadelErr ? err.httpStatus : undefined,
+        zitadelErrorId: isZitadelErr ? err.zitadelErrorId : undefined,
+        zitadelErrorMessage: isZitadelErr ? err.zitadelErrorMessage : undefined,
+        err: !isZitadelErr && err instanceof Error ? err.message : undefined,
+      },
+      "auto-login V2 session/CreateCallback failed — falling back to /login (likely gitops#90 not yet merged)",
+    );
+    return FALLBACK_POST_SIGNUP_REDIRECT;
+  }
 }
