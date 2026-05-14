@@ -122,7 +122,7 @@ export function Typewriter({
             >
               {msg.label}
             </Badge>
-            <span className="font-mono text-glow-green-soft">{msg.text}</span>
+            <span className="font-mono text-emerald-100 text-glow-green-soft">{msg.text}</span>
           </div>
         ))}
       </div>
@@ -157,7 +157,7 @@ export function Typewriter({
 
       {/* aria-hidden so screen readers only hear the sr-only live region */}
       <span aria-hidden="true" className="flex items-center font-mono">
-        <span className="text-glow-green-soft">{displayedText}</span>
+        <span className="text-emerald-100 text-glow-green-soft">{displayedText}</span>
         <span
           aria-hidden="true"
           className="ml-px text-green-400 animate-[typewriter-blink_1s_step-end_infinite]"
