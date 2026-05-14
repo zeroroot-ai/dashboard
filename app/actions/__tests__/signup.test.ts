@@ -37,13 +37,38 @@ const mockGetPasswordComplexityPolicy = vi.fn().mockResolvedValue({
   hasSymbol: false,
 });
 
+// Issue dashboard#41 — V2 session + CreateCallback methods. Use vi.hoisted
+// so the mock vars are initialised in the hoisted vi.mock factory phase
+// (vi.mock is hoisted to the top of the file by the vitest transform).
+const {
+  mockCreateSession,
+  mockFinalizeAuthRequest,
+  mockInitiateOidcAuthRequest,
+  mockLoadHandoffConfig,
+} = vi.hoisted(() => ({
+  mockCreateSession: vi.fn(),
+  mockFinalizeAuthRequest: vi.fn(),
+  mockInitiateOidcAuthRequest: vi.fn().mockResolvedValue(null),
+  mockLoadHandoffConfig: vi.fn().mockReturnValue(null),
+}));
+
 vi.mock('@/src/lib/zitadel/admin-client-factory', () => ({
   getSignupZitadelAdminClient: vi.fn(() => ({
     createHumanUser: mockCreateHumanUser,
     findUserByEmail: mockFindUserByEmail,
     sendVerificationEmail: mockSendVerificationEmail,
     getPasswordComplexityPolicy: mockGetPasswordComplexityPolicy,
+    createSession: mockCreateSession,
+    finalizeAuthRequest: mockFinalizeAuthRequest,
   })),
+}));
+
+// Mock the signup-handoff module — default behaviour is "no handoff
+// parked" so legacy tests fall through to the existing /login redirect.
+// Individual tests in the auto-login describe-block override this.
+vi.mock('@/src/lib/zitadel/signup-handoff', () => ({
+  initiateOidcAuthRequest: mockInitiateOidcAuthRequest,
+  loadHandoffConfig: mockLoadHandoffConfig,
 }));
 
 // Mock password-policy-cache to return permissive defaults immediately.
@@ -221,6 +246,173 @@ describe('signupAction — sendVerificationEmail conditional', () => {
       ).toBe(0);
 
       expect(result.ok).toBe(true);
+    },
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Tests: V2 session auto-login (issue dashboard#41)
+// ---------------------------------------------------------------------------
+
+describe('signupAction — V2 session + CreateCallback auto-login', () => {
+  beforeEach(() => {
+    resetMocks();
+    mockInitiateOidcAuthRequest.mockReset();
+    mockLoadHandoffConfig.mockReset();
+    mockCreateSession.mockReset();
+    mockFinalizeAuthRequest.mockReset();
+  });
+
+  it(
+    'returns the V2 callbackUrl as redirect when the auto-login dance succeeds — issue dashboard#41',
+    async () => {
+      // Handoff config is present (production-like env).
+      mockLoadHandoffConfig.mockReturnValue({
+        issuer: 'https://auth.test.local',
+        internalIssuer: 'http://zitadel.test:8080',
+        clientId: 'cid',
+        redirectUri: 'http://app.test.local/api/auth/callback/zitadel',
+        authSecret: 'secret-32-chars-or-more-aaaaaaaaaa',
+      });
+      mockInitiateOidcAuthRequest.mockResolvedValue({
+        authRequestId: 'AR_PARKED_001',
+        zitadelLoginUrl: 'https://auth.test.local/ui/v2/login?authRequest=AR_PARKED_001',
+      });
+
+      mockCreateHumanUser.mockResolvedValue({
+        userId: 'zitadel-user-123',
+        state: 'active',
+        email: VALID_INPUT.email,
+      });
+      mockCreateSession.mockResolvedValue({
+        sessionId: 'sess-1',
+        sessionToken: 'tok-secret-1',
+      });
+      mockFinalizeAuthRequest.mockResolvedValue({
+        callbackUrl:
+          'http://app.test.local/api/auth/callback/zitadel?code=ABC&state=XYZ',
+      });
+
+      let tenantCallCount = 0;
+      vi.mocked(getTenant).mockImplementation(async () => {
+        tenantCallCount++;
+        if (tenantCallCount === 1) return null;
+        return mockTenant as never;
+      });
+
+      const result = await signupAction(
+        VALID_INPUT,
+        'aaaaaaaa-0000-0000-0000-000000000010',
+      );
+
+      expect(result.ok).toBe(true);
+      // The redirect is the V2 callbackUrl, not the /login fallback.
+      if (result.ok) {
+        expect(result.redirect).toBe(
+          'http://app.test.local/api/auth/callback/zitadel?code=ABC&state=XYZ',
+        );
+      }
+
+      // createSession was called with the email + password from the form.
+      expect(mockCreateSession).toHaveBeenCalledWith({
+        loginName: VALID_INPUT.email.toLowerCase(),
+        password: VALID_INPUT.password,
+      });
+      // finalizeAuthRequest was called with the parked authRequestId.
+      expect(mockFinalizeAuthRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          authRequestId: 'AR_PARKED_001',
+          session: { sessionId: 'sess-1', sessionToken: 'tok-secret-1' },
+        }),
+      );
+    },
+  );
+
+  it(
+    'falls back to /login when initiateOidcAuthRequest returns null (handoff config missing / IAM_LOGIN_CLIENT 403) — issue dashboard#41',
+    async () => {
+      // No handoff config — typical in dev clusters where gitops#90 hasn't merged.
+      mockLoadHandoffConfig.mockReturnValue(null);
+      mockInitiateOidcAuthRequest.mockResolvedValue(null);
+
+      mockCreateHumanUser.mockResolvedValue({
+        userId: 'zitadel-user-456',
+        state: 'active',
+        email: VALID_INPUT.email,
+      });
+
+      let tenantCallCount = 0;
+      vi.mocked(getTenant).mockImplementation(async () => {
+        tenantCallCount++;
+        if (tenantCallCount === 1) return null;
+        return mockTenant as never;
+      });
+
+      const result = await signupAction(
+        VALID_INPUT,
+        'aaaaaaaa-0000-0000-0000-000000000011',
+      );
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.redirect).toBe('/login?callbackUrl=%2Fdashboard');
+      }
+      // The V2 methods should NOT have been called.
+      expect(mockCreateSession).not.toHaveBeenCalled();
+      expect(mockFinalizeAuthRequest).not.toHaveBeenCalled();
+    },
+  );
+
+  it(
+    'falls back to /login when createSession throws (e.g. IAM_LOGIN_CLIENT 403 from Zitadel) — issue dashboard#41',
+    async () => {
+      mockLoadHandoffConfig.mockReturnValue({
+        issuer: 'https://auth.test.local',
+        internalIssuer: 'http://zitadel.test:8080',
+        clientId: 'cid',
+        redirectUri: 'http://app.test.local/api/auth/callback/zitadel',
+        authSecret: 'secret-32-chars-or-more-aaaaaaaaaa',
+      });
+      mockInitiateOidcAuthRequest.mockResolvedValue({
+        authRequestId: 'AR_PARKED_403',
+        zitadelLoginUrl: 'https://auth.test.local/ui/v2/login?authRequest=AR_PARKED_403',
+      });
+
+      mockCreateHumanUser.mockResolvedValue({
+        userId: 'zitadel-user-789',
+        state: 'active',
+        email: VALID_INPUT.email,
+      });
+
+      // Simulate the gitops#90-unmerged failure: 403 PERMISSION_DENIED.
+      mockCreateSession.mockRejectedValue(
+        Object.assign(new Error('Zitadel API error: HTTP 403'), {
+          name: 'ZitadelApiError',
+          httpStatus: 403,
+          zitadelErrorId: 'AUTHZ-permission-denied',
+          zitadelErrorMessage: 'IAM_LOGIN_CLIENT required',
+        }),
+      );
+
+      let tenantCallCount = 0;
+      vi.mocked(getTenant).mockImplementation(async () => {
+        tenantCallCount++;
+        if (tenantCallCount === 1) return null;
+        return mockTenant as never;
+      });
+
+      const result = await signupAction(
+        VALID_INPUT,
+        'aaaaaaaa-0000-0000-0000-000000000012',
+      );
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.redirect).toBe('/login?callbackUrl=%2Fdashboard');
+      }
+      // We attempted createSession but it failed; finalizeAuthRequest never ran.
+      expect(mockCreateSession).toHaveBeenCalled();
+      expect(mockFinalizeAuthRequest).not.toHaveBeenCalled();
     },
   );
 });

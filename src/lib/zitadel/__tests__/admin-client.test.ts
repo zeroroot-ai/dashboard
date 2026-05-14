@@ -89,3 +89,186 @@ describe('HttpZitadelAdminClient.getPasswordComplexityPolicy', () => {
     expect(policy.hasSymbol).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// V2 Session API — signup auto-login (issue dashboard#41)
+// ---------------------------------------------------------------------------
+
+describe('HttpZitadelAdminClient.createSession', () => {
+  let lastRequest:
+    | { url: string; method: string; body: unknown; headers: Record<string, string> }
+    | null;
+
+  beforeEach(() => {
+    lastRequest = null;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init: RequestInit) => {
+        lastRequest = {
+          url,
+          method: init.method ?? 'GET',
+          body: init.body ? JSON.parse(init.body as string) : null,
+          headers: init.headers as Record<string, string>,
+        };
+        return new Response(
+          JSON.stringify({
+            sessionId: 'sess-123',
+            sessionToken: 'tok-secret-xyz',
+            details: { changeDate: '2026-05-14T00:00:00Z' },
+          }),
+          { status: 201, headers: { 'Content-Type': 'application/json' } },
+        );
+      }),
+    );
+  });
+
+  it(
+    'POSTs to /v2/sessions with combined user.loginName + password.password checks — issue dashboard#41',
+    async () => {
+      const client = makeClient();
+      await client.createSession({
+        loginName: 'ada@example.com',
+        password: 'P@ssw0rd-very-long-enough-12345',
+      });
+
+      expect(lastRequest).not.toBeNull();
+      const u = new URL(lastRequest!.url);
+      // Value-lock: any drift away from /v2/sessions breaks the V2 flow.
+      expect(
+        u.pathname,
+        'createSession must POST /v2/sessions exactly — Zitadel V2 spec',
+      ).toBe('/v2/sessions');
+      expect(lastRequest!.method).toBe('POST');
+
+      // Body shape: both checks bundled in one request.
+      const body = lastRequest!.body as {
+        checks: {
+          user: { loginName: string };
+          password: { password: string };
+        };
+      };
+      expect(body.checks.user.loginName).toBe('ada@example.com');
+      expect(body.checks.password.password).toBe(
+        'P@ssw0rd-very-long-enough-12345',
+      );
+    },
+  );
+
+  it('returns sessionId + sessionToken from the response', async () => {
+    const client = makeClient();
+    const session = await client.createSession({
+      loginName: 'ada@example.com',
+      password: 'P@ssw0rd-very-long-enough-12345',
+    });
+    expect(session.sessionId).toBe('sess-123');
+    expect(session.sessionToken).toBe('tok-secret-xyz');
+  });
+
+  it('throws ZitadelApiError with NO_SESSION when response is missing sessionId', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+          new Response(JSON.stringify({ sessionToken: 'tok-only' }), {
+            status: 201,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+      ),
+    );
+    const client = makeClient();
+    await expect(
+      client.createSession({ loginName: 'a@b.c', password: 'x'.repeat(12) }),
+    ).rejects.toMatchObject({
+      name: 'ZitadelApiError',
+      zitadelErrorId: 'NO_SESSION',
+    });
+  });
+});
+
+describe('HttpZitadelAdminClient.finalizeAuthRequest', () => {
+  let lastRequest:
+    | { url: string; method: string; body: unknown }
+    | null;
+
+  beforeEach(() => {
+    lastRequest = null;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init: RequestInit) => {
+        lastRequest = {
+          url,
+          method: init.method ?? 'GET',
+          body: init.body ? JSON.parse(init.body as string) : null,
+        };
+        return new Response(
+          JSON.stringify({
+            callbackUrl:
+              'https://app.zero-day.local/api/auth/callback/zitadel?code=AUTH_CODE&state=STATE_VAL',
+            details: { sequence: '42' },
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }),
+    );
+  });
+
+  it(
+    'POSTs to /v2/oidc/auth_requests/:id/CreateCallback with the session in the body — issue dashboard#41',
+    async () => {
+      const client = makeClient();
+      const result = await client.finalizeAuthRequest({
+        authRequestId: 'V2_AUTH_REQ_abc',
+        session: { sessionId: 'sess-123', sessionToken: 'tok-xyz' },
+      });
+
+      expect(lastRequest).not.toBeNull();
+      const u = new URL(lastRequest!.url);
+      expect(
+        u.pathname,
+        'finalizeAuthRequest path must encode the authRequestId verbatim',
+      ).toBe('/v2/oidc/auth_requests/V2_AUTH_REQ_abc/CreateCallback');
+      expect(lastRequest!.method).toBe('POST');
+
+      const body = lastRequest!.body as {
+        session: { sessionId: string; sessionToken: string };
+      };
+      expect(body.session.sessionId).toBe('sess-123');
+      expect(body.session.sessionToken).toBe('tok-xyz');
+
+      expect(result.callbackUrl).toMatch(/\/api\/auth\/callback\/zitadel\?code=/);
+    },
+  );
+
+  it('URL-encodes the authRequestId path parameter', async () => {
+    const client = makeClient();
+    await client.finalizeAuthRequest({
+      authRequestId: 'with spaces/and+plus',
+      session: { sessionId: 's', sessionToken: 't' },
+    });
+    const u = new URL(lastRequest!.url);
+    expect(u.pathname).toBe(
+      '/v2/oidc/auth_requests/with%20spaces%2Fand%2Bplus/CreateCallback',
+    );
+  });
+
+  it('throws ZitadelApiError with NO_CALLBACK_URL when response is malformed', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+          new Response(JSON.stringify({ details: {} }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+      ),
+    );
+    const client = makeClient();
+    await expect(
+      client.finalizeAuthRequest({
+        authRequestId: 'x',
+        session: { sessionId: 's', sessionToken: 't' },
+      }),
+    ).rejects.toMatchObject({
+      name: 'ZitadelApiError',
+      zitadelErrorId: 'NO_CALLBACK_URL',
+    });
+  });
+});
