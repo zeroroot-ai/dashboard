@@ -19,6 +19,7 @@ export type LoginErrorReason =
   | "jwks_unavailable"
   | "oidc_token_exchange_failed"
   | "session_invalid"
+  | "permission_denied"
   | "membership_revoked"
   | "unknown";
 
@@ -66,6 +67,17 @@ export const ERROR_COPY: Record<LoginErrorReason, LoginErrorCopy> = {
       "Your session has expired or was revoked. Please sign in again.",
     cta: { label: "Sign in", href: "/login" },
   },
+  permission_denied: {
+    // ConnectRPC code 7 from the daemon path: the user's session validated
+    // fine at the JWT layer, but ext-authz / FGA denied the specific RPC.
+    // The CTA must NOT be "retry sign-in" — retrying just repeats the
+    // failing call. Sign-out-then-sign-in is the recovery path because
+    // the user's group/role grants are loaded into the session at sign-in.
+    title: "Your sign-in isn't authorized yet",
+    description:
+      "You signed in successfully, but you don't have access to this workspace. Sign out and sign back in to refresh your permissions, or contact your administrator if the problem persists.",
+    cta: { label: "Sign out", href: "/api/auth/signout" },
+  },
   membership_revoked: {
     title: "Your access was revoked",
     description:
@@ -86,6 +98,7 @@ const KNOWN: ReadonlySet<LoginErrorReason> = new Set([
   "jwks_unavailable",
   "oidc_token_exchange_failed",
   "session_invalid",
+  "permission_denied",
   "membership_revoked",
   "unknown",
 ]);
