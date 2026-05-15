@@ -5,6 +5,19 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0](https://github.com/zero-day-ai/dashboard/compare/v1.11.1...v1.12.0) (2026-05-15)
+
+
+### Features
+
+* **auth:** wire Zitadel V2 session+CreateCallback into signup auto-login ([#42](https://github.com/zero-day-ai/dashboard/issues/42)) ([48e98bd](https://github.com/zero-day-ai/dashboard/commit/48e98bd5d447d958e6285707c1937cfa859d7ecc)), closes [#41](https://github.com/zero-day-ai/dashboard/issues/41)
+
+
+### Bug Fixes
+
+* **auth:** correct Zitadel V2 OIDC CreateCallback HTTP path ([#43](https://github.com/zero-day-ai/dashboard/issues/43)) ([6119714](https://github.com/zero-day-ai/dashboard/commit/61197146b42a5f50cd020f52ea9ac224bd6431d1))
+* **landing:** explicit text color on Typewriter so hero text is readable ([#37](https://github.com/zero-day-ai/dashboard/issues/37)) ([366f383](https://github.com/zero-day-ai/dashboard/commit/366f3838d56496825772282829278d24e6591b8c))
+
 ## [1.11.1](https://github.com/zero-day-ai/dashboard/compare/v1.11.0...v1.11.1) (2026-05-13)
 
 
