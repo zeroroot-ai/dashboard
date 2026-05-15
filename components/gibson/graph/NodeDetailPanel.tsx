@@ -33,11 +33,11 @@ interface NodeDetailPanelProps {
 type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
 const SEVERITY_CLASSES: Record<Severity, string> = {
-  critical: 'bg-red-500/20 text-red-400 border-red-500/30',
-  high: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  medium: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  low: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  info: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+  critical: 'bg-destructive/20 text-destructive border-destructive/30',
+  high: 'bg-alt/20 text-alt border-alt/30',
+  medium: 'bg-alt/20 text-alt border-alt/30',
+  low: 'bg-link/20 text-link border-link/30',
+  info: 'bg-muted/20 text-muted-foreground border-border/30',
 };
 
 function formatPropertyValue(value: unknown): string {

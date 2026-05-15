@@ -200,9 +200,9 @@ export default function GraphPage() {
     >
       {/* Truncation banner */}
       {truncated && totalNodeCount && (
-        <div className="absolute top-0 left-0 right-0 z-30 bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-          <p className="text-xs text-amber-400">
+        <div className="absolute top-0 left-0 right-0 z-30 bg-alt/10 border-b border-alt/40/30 px-4 py-2 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-alt flex-shrink-0" />
+          <p className="text-xs text-alt">
             Showing {mergedData.nodes.length.toLocaleString()} of {totalNodeCount.toLocaleString()} nodes.
             Use filters to narrow the scope.
           </p>
@@ -254,14 +254,14 @@ export default function GraphPage() {
           onClick={() => setLiveEnabled(e => !e)}
           className={cn(
             "flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-background/80 backdrop-blur-sm border border-border",
-            liveEnabled ? "text-green-400 border-green-500/40" : "text-muted-foreground"
+            liveEnabled ? "text-highlight border-highlight/40" : "text-muted-foreground"
           )}
           title={liveEnabled ? 'Live updates enabled' : 'Enable live updates'}
           aria-pressed={liveEnabled}
         >
           <span className={cn(
             "w-2 h-2 rounded-full",
-            liveEnabled && streamHealthy ? "bg-green-400 animate-pulse" : "bg-muted-foreground"
+            liveEnabled && streamHealthy ? "bg-highlight animate-pulse" : "bg-muted-foreground"
           )} />
           Live
         </button>

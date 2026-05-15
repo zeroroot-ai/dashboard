@@ -324,7 +324,7 @@ export function ChatContent() {
 
               {/* Error state with retry */}
               {error && !providerError && (
-                <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
+                <div className="mb-4 flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm text-destructive dark:border-destructive/40 dark:bg-destructive/10 dark:text-destructive">
                   <span className="flex-1">Response failed. {error.message}</span>
                   <Button variant="ghost" size="sm" onClick={handleRetry}>
                     <RefreshCw className="mr-1 h-3 w-3" />
@@ -348,7 +348,7 @@ export function ChatContent() {
 
         {/* Provider error banner */}
         {providerError && (
-          <div className="border-t border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950 dark:text-yellow-300">
+          <div className="border-t border-alt/40 bg-alt/10 px-4 py-2 text-sm text-alt dark:border-alt/40 dark:bg-alt/10 dark:text-alt">
             {providerError}
           </div>
         )}

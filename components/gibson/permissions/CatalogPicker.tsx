@@ -199,7 +199,7 @@ export function CatalogPicker({
                 </thead>
                 <tbody>
                   {components.map((c) => (
-                    <tr key={c.ref} className="border-b border-green-900/10">
+                    <tr key={c.ref} className="border-b border-highlight/10">
                       <td className="py-1.5 pr-3">
                         <div className="font-mono">{c.name}</div>
                         {c.description ? (
@@ -258,7 +258,7 @@ export function CatalogPicker({
                   return (
                     <li
                       key={p.ref}
-                      className="flex items-center justify-between rounded border border-green-900/10 px-3 py-1.5"
+                      className="flex items-center justify-between rounded border border-highlight/10 px-3 py-1.5"
                     >
                       <span>
                         <span className="font-mono">{p.name}</span>

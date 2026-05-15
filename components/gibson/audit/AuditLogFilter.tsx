@@ -178,7 +178,7 @@ export function AuditLogFilter({
           <SelectTrigger
             id="audit-event-type"
             size="sm"
-            className="font-mono text-xs border-green-900/40 bg-transparent"
+            className="font-mono text-xs border-highlight/40 bg-transparent"
             aria-label="Filter by event type"
           >
             <SelectValue placeholder="All event types" />
@@ -215,7 +215,7 @@ export function AuditLogFilter({
             <SelectTrigger
               id="audit-decision-reason"
               size="sm"
-              className="font-mono text-xs border-green-900/40 bg-transparent"
+              className="font-mono text-xs border-highlight/40 bg-transparent"
               aria-label="Filter by authz decision reason"
             >
               <SelectValue placeholder="All reasons" />
@@ -243,7 +243,7 @@ export function AuditLogFilter({
             <SelectTrigger
               id="audit-tenant"
               size="sm"
-              className="font-mono text-xs border-green-900/40 bg-transparent"
+              className="font-mono text-xs border-highlight/40 bg-transparent"
               aria-label="Filter by tenant"
             >
               <SelectValue placeholder="All tenants" />
@@ -271,7 +271,7 @@ export function AuditLogFilter({
           value={value.actorId}
           onChange={(e) => set("actorId", e.target.value)}
           placeholder="user-id or email"
-          className="font-mono text-xs h-8 border-green-900/40 bg-transparent"
+          className="font-mono text-xs h-8 border-highlight/40 bg-transparent"
           aria-label="Filter by actor"
           autoComplete="off"
         />
@@ -288,7 +288,7 @@ export function AuditLogFilter({
           value={value.secretId}
           onChange={(e) => set("secretId", e.target.value)}
           placeholder="secret name or id"
-          className="font-mono text-xs h-8 border-green-900/40 bg-transparent"
+          className="font-mono text-xs h-8 border-highlight/40 bg-transparent"
           aria-label="Filter by secret ID"
           autoComplete="off"
         />
@@ -305,7 +305,7 @@ export function AuditLogFilter({
           value={value.requestId}
           onChange={(e) => set("requestId", e.target.value)}
           placeholder="trace / request id"
-          className="font-mono text-xs h-8 border-green-900/40 bg-transparent"
+          className="font-mono text-xs h-8 border-highlight/40 bg-transparent"
           aria-label="Filter by request ID"
           autoComplete="off"
         />
@@ -326,7 +326,7 @@ export function AuditLogFilter({
               type="date"
               value={value.startDate}
               onChange={(e) => set("startDate", e.target.value)}
-              className="font-mono text-xs h-8 pl-7 border-green-900/40 bg-transparent w-[140px]"
+              className="font-mono text-xs h-8 pl-7 border-highlight/40 bg-transparent w-[140px]"
               aria-label="Start date"
             />
           </div>
@@ -340,7 +340,7 @@ export function AuditLogFilter({
               type="date"
               value={value.endDate}
               onChange={(e) => set("endDate", e.target.value)}
-              className="font-mono text-xs h-8 pl-7 border-green-900/40 bg-transparent w-[140px]"
+              className="font-mono text-xs h-8 pl-7 border-highlight/40 bg-transparent w-[140px]"
               aria-label="End date"
             />
           </div>

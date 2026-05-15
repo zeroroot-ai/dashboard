@@ -75,19 +75,19 @@ const COMPONENT_DEFS: Array<{
     type: 'agent',
     label: 'Agent',
     description: 'LLM-driven autonomous executor with tool access and memory.',
-    icon: <BotIcon className="size-6 text-green-400" aria-hidden="true" />,
+    icon: <BotIcon className="size-6 text-highlight" aria-hidden="true" />,
   },
   {
     type: 'tool',
     label: 'Tool',
     description: 'Stateless proto-based worker that consumes jobs from Redis queues.',
-    icon: <WrenchIcon className="size-6 text-green-400" aria-hidden="true" />,
+    icon: <WrenchIcon className="size-6 text-highlight" aria-hidden="true" />,
   },
   {
     type: 'plugin',
     label: 'Plugin',
     description: 'Stateful service integration with Initialize/Shutdown lifecycle.',
-    icon: <Plug2Icon className="size-6 text-green-400" aria-hidden="true" />,
+    icon: <Plug2Icon className="size-6 text-highlight" aria-hidden="true" />,
   },
 ];
 
@@ -105,7 +105,7 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
       </div>
       <Progress
         value={percent}
-        className="h-1 bg-muted [&>div]:bg-green-500 [&>div]:shadow-[0_0_6px_rgba(34,197,94,0.6)]"
+        className="h-1 bg-muted [&>div]:bg-highlight [&>div]:shadow-[0_0_6px_rgba(34,197,94,0.6)]"
       />
     </div>
   );
@@ -154,15 +154,15 @@ function SelectTypeStep({
                 'flex flex-col gap-3 rounded-lg p-4 text-left transition-all duration-150',
                 'border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 isSelected
-                  ? 'ring-2 ring-green-500 border-green-500/40 bg-green-950/20'
-                  : 'border-green-900/20 hover:border-green-500/30 hover:bg-green-950/10',
+                  ? 'ring-2 ring-highlight border-highlight/40 bg-highlight/10/20'
+                  : 'border-highlight/20 hover:border-highlight/30 hover:bg-highlight/10/10',
               ].join(' ')}
               aria-pressed={isSelected}
             >
               <div className="flex items-center gap-2">
                 {icon}
                 {isSelected && (
-                  <CheckCircle2 className="ml-auto size-4 text-green-500" aria-hidden="true" />
+                  <CheckCircle2 className="ml-auto size-4 text-highlight" aria-hidden="true" />
                 )}
               </div>
               <div>
@@ -293,7 +293,7 @@ function PermissionsStep({
         >
           Show technical detail
         </summary>
-        <div className="mt-3 space-y-3 rounded border border-green-900/20 p-3">
+        <div className="mt-3 space-y-3 rounded border border-highlight/20 p-3">
           <p className="text-muted-foreground">
             Free-form grant entry. Use the catalog above unless you&apos;re
             adding a grant on an object the catalog doesn&apos;t list yet.
@@ -523,7 +523,7 @@ function WaitForConnectionStep({
       {connected ? (
         <div className="flex flex-col items-center gap-4 py-4">
           <CheckCircle2
-            className="size-10 text-green-400"
+            className="size-10 text-highlight"
             style={{ filter: 'drop-shadow(0 0 10px rgba(34,197,94,0.8))' }}
           />
           <p className="text-sm">
@@ -544,7 +544,7 @@ function WaitForConnectionStep({
         </Alert>
       ) : (
         <div className="flex flex-col items-center gap-3 py-4">
-          <Loader2 className="size-8 animate-spin text-green-500" />
+          <Loader2 className="size-8 animate-spin text-highlight" />
           <p className="text-xs text-muted-foreground">Polling every 3 seconds…</p>
         </div>
       )}
@@ -624,7 +624,7 @@ export function DeployDispatcher({ initialType }: DeployDispatcherProps = {}) {
             total={componentType === 'plugin' ? 1 : TOTAL_STEPS}
           />
         </CardHeader>
-        <Separator className="bg-green-900/20" />
+        <Separator className="bg-highlight/20" />
         <CardContent className="pt-6 pb-8 px-6">
           {step === 1 && (
             <SelectTypeStep

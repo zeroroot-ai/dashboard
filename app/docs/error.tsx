@@ -29,7 +29,7 @@ export default function DocsError({
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-16 font-mono">
-      <h1 className="text-2xl font-bold text-green-300">
+      <h1 className="text-2xl font-bold text-highlight">
         Something went wrong rendering this page
       </h1>
       <p className="text-sm text-muted-foreground">
@@ -39,7 +39,7 @@ export default function DocsError({
       <button
         type="button"
         onClick={reset}
-        className="w-fit rounded-md border border-green-500/25 bg-[#0a1610] px-4 py-2 text-sm text-green-300 hover:border-green-500/50"
+        className="w-fit rounded-md border border-highlight/25 bg-card px-4 py-2 text-sm text-highlight hover:border-highlight/50"
       >
         Try again
       </button>

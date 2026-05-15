@@ -23,7 +23,7 @@ import { useCRDWatch } from "@/src/hooks/useCRDWatch";
 
 const ROLE_BADGE_CLASS: Record<string, string> = {
   admin: "border-primary/50 bg-primary/10 text-primary",
-  member: "border-blue-500/50 bg-blue-950/20 text-blue-400",
+  member: "border-link/50 bg-link/10/20 text-link",
   viewer: "border-border bg-muted/50 text-muted-foreground",
 };
 
@@ -92,7 +92,7 @@ export default function UserDetailPage() {
         </p>
       </div>
 
-      <Separator className="bg-green-900/20" />
+      <Separator className="bg-highlight/20" />
 
       {/* Loading */}
       {isLoading && (
@@ -148,7 +148,7 @@ export default function UserDetailPage() {
                   </div>
                 </div>
 
-                <Separator className="bg-green-900/20" />
+                <Separator className="bg-highlight/20" />
 
                 <div className="space-y-2">
                   <label className="font-mono text-sm text-muted-foreground">
@@ -191,7 +191,7 @@ export default function UserDetailPage() {
             <Card className="glass-hack border-0">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
-                  <Shield className="size-4 text-green-500" aria-hidden="true" />
+                  <Shield className="size-4 text-highlight" aria-hidden="true" />
                   <CardTitle className="font-mono text-base">
                     Account Management
                   </CardTitle>

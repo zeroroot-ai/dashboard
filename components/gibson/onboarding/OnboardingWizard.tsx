@@ -95,7 +95,7 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
       </div>
       <Progress
         value={percent}
-        className="h-1 bg-muted [&>div]:bg-green-500 [&>div]:shadow-[0_0_6px_rgba(34,197,94,0.6)]"
+        className="h-1 bg-muted [&>div]:bg-highlight [&>div]:shadow-[0_0_6px_rgba(34,197,94,0.6)]"
       />
     </div>
   );
@@ -112,7 +112,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
           aria-hidden="true"
         >
           <Shield
-            className="size-10 text-green-400"
+            className="size-10 text-highlight"
             style={{ filter: "drop-shadow(0 0 8px rgba(34,197,94,0.7))" }}
           />
         </div>
@@ -137,7 +137,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
           "Security tool integration (nmap, nuclei, httpx)",
         ].map((feature) => (
           <li key={feature} className="flex items-center gap-2.5 text-sm text-muted-foreground">
-            <CheckCircle2 className="size-3.5 shrink-0 text-green-500" aria-hidden="true" />
+            <CheckCircle2 className="size-3.5 shrink-0 text-highlight" aria-hidden="true" />
             {feature}
           </li>
         ))}
@@ -485,7 +485,7 @@ function CompleteStep({
         aria-hidden="true"
       >
         <CheckCircle2
-          className="size-12 text-green-400"
+          className="size-12 text-highlight"
           style={{ filter: "drop-shadow(0 0 10px rgba(34,197,94,0.8))" }}
         />
       </div>
@@ -500,7 +500,7 @@ function CompleteStep({
       </div>
 
       {configured.length > 0 ? (
-        <div className="w-full max-w-xs rounded-lg border border-green-900/30 bg-green-950/10 p-4 text-left space-y-3">
+        <div className="w-full max-w-xs rounded-lg border border-highlight/30 bg-highlight/10/10 p-4 text-left space-y-3">
           {configured.map(({ label, value }) => (
             <div key={label} className="flex items-start justify-between gap-3">
               <span className="text-xs text-muted-foreground uppercase tracking-wider shrink-0">
@@ -579,7 +579,7 @@ export function OnboardingWizard() {
             <StepIndicator step={step} total={TOTAL_STEPS} />
           </CardHeader>
 
-          <Separator className="bg-green-900/20" />
+          <Separator className="bg-highlight/20" />
 
           <CardContent className="pt-6 pb-8 px-6">
             {step === 1 && <WelcomeStep onNext={goNext} />}
@@ -609,7 +609,7 @@ export function OnboardingWizard() {
             Already configured?{" "}
             <Link
               href="/dashboard"
-              className="text-green-500 hover:text-green-400 transition-colors underline underline-offset-2"
+              className="text-highlight hover:text-highlight transition-colors underline underline-offset-2"
               onClick={() => {
                 store.skipWizard();
                 updateState({ wizardSkipped: true }).catch(() => {});

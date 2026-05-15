@@ -32,7 +32,7 @@ import "@/components/gibson/docs/docs-theme.css";
 export default function DocsRootLayout({ children }: { children: ReactNode }) {
   return (
     <div
-      className="docs-root min-h-screen bg-[#050a07] text-foreground"
+      className="docs-root min-h-screen bg-background text-foreground"
       data-no-scanlines
     >
       <SiteHeader />

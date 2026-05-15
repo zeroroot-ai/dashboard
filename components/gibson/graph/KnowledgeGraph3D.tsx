@@ -1524,11 +1524,11 @@ export function KnowledgeGraph3D({
                 <span className="text-muted-foreground min-w-[60px]">Severity:</span>
                 <span className={cn(
                   "px-2 py-0.5 rounded text-xs font-medium",
-                  hoveredNode.properties.severity === 'critical' && "bg-red-500/20 text-red-400 border border-red-500/30",
-                  hoveredNode.properties.severity === 'high' && "bg-orange-500/20 text-orange-400 border border-orange-500/30",
-                  hoveredNode.properties.severity === 'medium' && "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
-                  hoveredNode.properties.severity === 'low' && "bg-blue-500/20 text-blue-400 border border-blue-500/30",
-                  hoveredNode.properties.severity === 'info' && "bg-gray-500/20 text-gray-400 border border-gray-500/30"
+                  hoveredNode.properties.severity === 'critical' && "bg-destructive/20 text-destructive border border-destructive/30",
+                  hoveredNode.properties.severity === 'high' && "bg-alt/20 text-alt border border-alt/30",
+                  hoveredNode.properties.severity === 'medium' && "bg-alt/20 text-alt border border-alt/30",
+                  hoveredNode.properties.severity === 'low' && "bg-link/20 text-link border border-link/30",
+                  hoveredNode.properties.severity === 'info' && "bg-muted/20 text-muted-foreground border border-border/30"
                 )}>
                   {(hoveredNode.properties.severity as string).toUpperCase()}
                 </span>
@@ -1541,10 +1541,10 @@ export function KnowledgeGraph3D({
                 <span className="text-muted-foreground min-w-[60px]">Status:</span>
                 <span className={cn(
                   "px-2 py-0.5 rounded text-xs font-medium",
-                  hoveredNode.properties.status === 'running' && "bg-green-500/20 text-green-400 border border-green-500/30",
-                  hoveredNode.properties.status === 'completed' && "bg-blue-500/20 text-blue-400 border border-blue-500/30",
-                  hoveredNode.properties.status === 'failed' && "bg-red-500/20 text-red-400 border border-red-500/30",
-                  hoveredNode.properties.status === 'pending' && "bg-gray-500/20 text-gray-400 border border-gray-500/30"
+                  hoveredNode.properties.status === 'running' && "bg-highlight/20 text-highlight border border-highlight/30",
+                  hoveredNode.properties.status === 'completed' && "bg-link/20 text-link border border-link/30",
+                  hoveredNode.properties.status === 'failed' && "bg-destructive/20 text-destructive border border-destructive/30",
+                  hoveredNode.properties.status === 'pending' && "bg-muted/20 text-muted-foreground border border-border/30"
                 )}>
                   {(hoveredNode.properties.status as string).charAt(0).toUpperCase() + (hoveredNode.properties.status as string).slice(1)}
                 </span>

@@ -24,21 +24,21 @@ type FilterType = "all" | EventType;
 // ── Badge / indicator config ──────────────────────────────────────────────────
 
 const EVENT_TYPE_BADGE_CLASS: Record<EventType, string> = {
-  mission: "border-green-500/60 bg-green-950/50 text-green-400",
-  agent:   "border-violet-500/60 bg-violet-950/50 text-violet-400",
-  tool:    "border-cyan-500/60 bg-cyan-950/50 text-cyan-400",
-  finding: "border-red-500/60 bg-red-950/50 text-red-400",
-  llm:     "border-indigo-500/60 bg-indigo-950/50 text-indigo-400",
-  system:  "border-zinc-500/50 bg-zinc-800/50 text-zinc-400",
+  mission: "border-highlight/60 bg-highlight/10/50 text-highlight",
+  agent:   "border-link/60 bg-link/50 text-link",
+  tool:    "border-link/40/60 bg-link/10/50 text-link",
+  finding: "border-destructive/60 bg-destructive/10/50 text-destructive",
+  llm:     "border-link/60 bg-link/50 text-link",
+  system:  "border-border/50 bg-muted/50 text-muted-foreground",
 };
 
 const EVENT_TYPE_INDICATOR_CLASS: Record<EventType, string> = {
-  mission: "bg-green-500/70",
-  agent:   "bg-violet-500/70",
-  tool:    "bg-cyan-500/70",
-  finding: "bg-red-500/70",
-  llm:     "bg-indigo-500/70",
-  system:  "bg-zinc-500/50",
+  mission: "bg-highlight/70",
+  agent:   "bg-link/70",
+  tool:    "bg-link/70",
+  finding: "bg-destructive/70",
+  llm:     "bg-link/70",
+  system:  "bg-muted/50",
 };
 
 const EVENT_TYPE_LABELS: Record<EventType, string> = {
@@ -99,10 +99,10 @@ function LiveIndicator({ paused, isConnecting }: LiveIndicatorProps) {
     return (
       <div className="flex items-center gap-1.5">
         <span className="relative flex size-2.5" aria-hidden="true">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-amber-400 opacity-75" />
-          <span className="relative inline-flex size-2.5 rounded-full bg-amber-500" />
+          <span className="absolute inline-flex size-full animate-ping rounded-full bg-alt opacity-75" />
+          <span className="relative inline-flex size-2.5 rounded-full bg-alt" />
         </span>
-        <span className="text-xs font-mono font-medium text-amber-400">
+        <span className="text-xs font-mono font-medium text-alt">
           CONNECTING...
         </span>
       </div>
@@ -117,14 +117,14 @@ function LiveIndicator({ paused, isConnecting }: LiveIndicatorProps) {
       >
         {!paused && (
           <span
-            className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75"
+            className="absolute inline-flex size-full animate-ping rounded-full bg-highlight opacity-75"
             style={{ animationDuration: "1.4s" }}
           />
         )}
-        <span className="relative inline-flex size-2.5 rounded-full bg-green-500" />
+        <span className="relative inline-flex size-2.5 rounded-full bg-highlight" />
       </span>
       <span
-        className={`text-xs font-mono font-medium ${paused ? "text-zinc-500" : "text-green-400"}`}
+        className={`text-xs font-mono font-medium ${paused ? "text-muted-foreground" : "text-highlight"}`}
       >
         {paused ? "PAUSED" : "LIVE"}
       </span>
@@ -137,7 +137,7 @@ function EventRow({ event }: { event: Event }) {
   const timestamp = formatTimestamp(event.timestamp);
 
   return (
-    <div className="group relative flex items-start gap-4 py-3 px-4 hover:bg-green-950/10 transition-colors border-b border-green-900/15 last:border-b-0">
+    <div className="group relative flex items-start gap-4 py-3 px-4 hover:bg-highlight/10/10 transition-colors border-b border-highlight/15 last:border-b-0">
       {/* Timeline indicator */}
       <div className="relative flex flex-col items-center shrink-0 pt-0.5">
         <div
@@ -239,7 +239,7 @@ export function EventsContent() {
               variant="outline"
               size="sm"
               onClick={reconnect}
-              className="gap-1.5 font-mono text-xs border-amber-500/40 text-amber-400 hover:bg-amber-950/30"
+              className="gap-1.5 font-mono text-xs border-alt/40/40 text-alt hover:bg-alt/10/30"
               aria-label="Reconnect to event stream"
             >
               <RefreshCw className="size-3.5" aria-hidden="true" />
@@ -287,7 +287,7 @@ export function EventsContent() {
         <Select value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
           <SelectTrigger
             size="sm"
-            className="w-[160px] font-mono text-xs border-green-900/40 bg-transparent"
+            className="w-[160px] font-mono text-xs border-highlight/40 bg-transparent"
             aria-label="Filter by event type"
           >
             <SelectValue />
@@ -306,7 +306,7 @@ export function EventsContent() {
         </Select>
 
         <span className="text-xs text-muted-foreground ml-auto tabular-nums">
-          <span className="text-green-400 font-medium">{visibleEvents.length}</span>
+          <span className="text-highlight font-medium">{visibleEvents.length}</span>
           {" "}event{visibleEvents.length !== 1 ? "s" : ""}
         </span>
       </div>
@@ -314,7 +314,7 @@ export function EventsContent() {
       {/* ── Event list ── */}
       <div className="glass-hack rounded-lg overflow-hidden">
         {/* Column headers */}
-        <div className="flex items-center gap-4 px-4 py-2 border-b border-green-900/20 bg-green-950/10">
+        <div className="flex items-center gap-4 px-4 py-2 border-b border-highlight/20 bg-highlight/10/10">
           <div className="size-2 shrink-0" aria-hidden="true" />
           <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground min-w-[80px]">
             Time

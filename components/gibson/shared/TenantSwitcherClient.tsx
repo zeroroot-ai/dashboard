@@ -17,9 +17,9 @@ import type { Membership } from "@/src/lib/auth/membership";
 import { switchActiveTenantAction } from "./tenant-switcher-action";
 
 const ROLE_BADGE_CLASSES: Record<Membership["role"], string> = {
-  owner: "border-amber-500/50 text-amber-400",
-  admin: "border-green-500/50 text-green-400",
-  member: "border-zinc-500/50 text-zinc-400",
+  owner: "border-alt/40/50 text-alt",
+  admin: "border-highlight/50 text-highlight",
+  member: "border-border/50 text-muted-foreground",
 };
 
 function RoleBadge({ role }: { role: Membership["role"] }) {
@@ -68,7 +68,7 @@ export function TenantSwitcherClient({
           variant="outline"
           size="sm"
           disabled={isPending}
-          className="h-7 gap-1 border-zinc-700 bg-zinc-900/50 px-2 text-xs font-mono text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+          className="h-7 gap-1 border-border bg-muted/50 px-2 text-xs font-mono text-muted-foreground hover:bg-muted hover:text-muted-foreground"
         >
           <span className="max-w-[140px] truncate">{triggerLabel}</span>
           {active && <RoleBadge role={active.role} />}

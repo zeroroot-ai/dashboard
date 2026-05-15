@@ -129,7 +129,7 @@ export default async function AdminBillingPage() {
                       href={`https://dashboard.stripe.com/customers/${customerId}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-400 hover:text-blue-300 underline"
+                      className="text-sm text-link hover:text-link underline"
                     >
                       View in Stripe
                     </a>

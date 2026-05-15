@@ -1,70 +1,58 @@
 /*
  * Docs theme overrides (scoped to .docs-root).
  *
- * Maps Fumadocs' `--color-fd-*` CSS custom properties onto the Zero Day AI
- * hacker palette so the docs sidebar, code blocks, search dialog, and
- * content surface visually belong to the same product as the landing.
+ * Maps Fumadocs' `--color-fd-*` CSS custom properties onto the dashboard's
+ * design-system tokens (#52) so the docs sidebar, code blocks, search
+ * dialog, and content surface visually belong to the same product as the
+ * marketing landing + authenticated chrome — light and dark both legible.
  *
- * Scoping: every rule lives under `.docs-root` so no variable leaks into
- * the dashboard or the landing. Page chrome outside the docs root is
+ * Every rule lives under `.docs-root` so no variable leaks into the
+ * dashboard or the landing. Page chrome outside the docs root is
  * untouched.
- *
- * Color reference:
- *   - Background surface       : #050a07  (landing base)
- *   - Elevated surface (cards) : #0a1610  (green-tinted near-black)
- *   - Popover/dialog surface   : #0d1b14
- *   - Foreground               : #e6f5ed  (close to text-green-50)
- *   - Muted foreground         : #7aa890  (close to text-green-300/70)
- *   - Primary / accent         : #4ade80  (tailwind green-400, hacker link)
- *   - Border                   : rgb(34 197 94 / .25)  (green-500/25)
- *   - Ring                     : rgb(34 197 94 / .5)   (green-500/50)
- *
- * Motion is preserved; a `prefers-reduced-motion` clause disables
- * Fumadocs-default hover transitions for the accessibility NFR.
  */
 
 .docs-root {
-  /* Surfaces */
-  --color-fd-background: #050a07;
-  --color-fd-foreground: #e6f5ed;
-  --color-fd-muted: #0a1610;
-  --color-fd-muted-foreground: #7aa890;
-  --color-fd-popover: #0d1b14;
-  --color-fd-popover-foreground: #e6f5ed;
-  --color-fd-card: #0a1610;
-  --color-fd-card-foreground: #e6f5ed;
+  /* Surfaces — map directly to the dashboard's semantic tokens. */
+  --color-fd-background: var(--background);
+  --color-fd-foreground: var(--foreground);
+  --color-fd-muted: var(--muted);
+  --color-fd-muted-foreground: var(--muted-foreground);
+  --color-fd-popover: var(--popover);
+  --color-fd-popover-foreground: var(--popover-foreground);
+  --color-fd-card: var(--card);
+  --color-fd-card-foreground: var(--card-foreground);
 
-  /* Borders */
-  --color-fd-border: rgb(34 197 94 / 0.25);
-  --color-fd-ring: rgb(34 197 94 / 0.5);
+  /* Borders + focus ring */
+  --color-fd-border: color-mix(in oklch, var(--highlight) 25%, transparent);
+  --color-fd-ring: color-mix(in oklch, var(--highlight) 50%, transparent);
 
-  /* Primary accent (hacker link green) */
-  --color-fd-primary: #4ade80;
-  --color-fd-primary-foreground: #050a07;
+  /* Primary accent — terminal-link cyan via the link specialty token. */
+  --color-fd-primary: var(--link);
+  --color-fd-primary-foreground: var(--background);
 
-  /* Secondary and accent — subtle green tint */
-  --color-fd-secondary: #0a1610;
-  --color-fd-secondary-foreground: #e6f5ed;
-  --color-fd-accent: rgb(34 197 94 / 0.12);
-  --color-fd-accent-foreground: #86efac;
+  /* Secondary and accent. */
+  --color-fd-secondary: var(--secondary);
+  --color-fd-secondary-foreground: var(--secondary-foreground);
+  --color-fd-accent: color-mix(in oklch, var(--highlight) 12%, transparent);
+  --color-fd-accent-foreground: var(--highlight);
 
-  /* Overlay for modals / search dialog */
-  --color-fd-overlay: rgba(0, 8, 4, 0.72);
+  /* Overlay for modals / search dialog. */
+  --color-fd-overlay: color-mix(in oklch, var(--background) 72%, transparent);
 
-  /* Semantic colors — slight green-shift for consistency */
-  --color-fd-success: #4ade80;
-  --color-fd-info: #60a5fa;
-  --color-fd-warning: #facc15;
-  --color-fd-error: #f87171;
-  --color-fd-idea: #4ade80;
+  /* Semantic / status. */
+  --color-fd-success: var(--highlight);
+  --color-fd-info: var(--link);
+  --color-fd-warning: var(--alt);
+  --color-fd-error: var(--destructive);
+  --color-fd-idea: var(--highlight);
 
-  /* Diff block tints (keep signed colors, reduce saturation) */
-  --color-fd-diff-add: rgba(34, 197, 94, 0.10);
-  --color-fd-diff-add-symbol: rgb(34, 197, 94);
-  --color-fd-diff-remove: rgba(248, 113, 113, 0.10);
-  --color-fd-diff-remove-symbol: rgb(248, 113, 113);
+  /* Diff block tints — keep signed colors via the destructive token plus
+   * highlight, reduce saturation through color-mix. */
+  --color-fd-diff-add: color-mix(in oklch, var(--highlight) 10%, transparent);
+  --color-fd-diff-add-symbol: var(--highlight);
+  --color-fd-diff-remove: color-mix(in oklch, var(--destructive) 10%, transparent);
+  --color-fd-diff-remove-symbol: var(--destructive);
 
-  /* Layout (unchanged defaults kept explicit for discoverability) */
   color: var(--color-fd-foreground);
   background-color: var(--color-fd-background);
 }
@@ -73,10 +61,6 @@
  * Honour the OS-level motion preference. Fumadocs animates sidebar item
  * hover and search-dialog open/close by default; zeroing those transitions
  * here is the usability NFR (`prefers-reduced-motion`) contract.
- *
- * We use specific selectors rather than `!important` to keep the override
- * targeted — animation-* and transition-* properties on descendants of
- * `.docs-root` cascade from this block.
  */
 @media (prefers-reduced-motion: reduce) {
   .docs-root,

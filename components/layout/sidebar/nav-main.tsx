@@ -239,7 +239,7 @@ export function NavMain() {
                     </SidebarMenuBadge>
                   )}
                   {!!item.isNew && (
-                    <SidebarMenuBadge className="border border-green-400 text-green-600 peer-hover/menu-button:text-green-600">
+                    <SidebarMenuBadge className="border border-highlight/40 text-highlight peer-hover/menu-button:text-highlight">
                       New
                     </SidebarMenuBadge>
                   )}

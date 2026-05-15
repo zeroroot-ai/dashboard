@@ -253,7 +253,7 @@ function CredentialsAndTest({
         {/* Probe result banner */}
         {probeResult && probeResult.ok && (
           <Alert>
-            <CheckCircle2 className="size-4 text-green-500" />
+            <CheckCircle2 className="size-4 text-highlight" />
             <AlertDescription className="text-xs">
               Connection verified ({probeResult.latencyMs} ms).{" "}
               {probeResult.models.length > 0 ? (
@@ -590,7 +590,7 @@ export function ProviderWizard({
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="size-3.5 text-green-500" />
+              <CheckCircle2 className="size-3.5 text-highlight" />
               <span className="text-sm font-medium">
                 {descriptor.displayName} verified
               </span>
