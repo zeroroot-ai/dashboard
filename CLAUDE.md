@@ -9,6 +9,7 @@ This file documents conventions specific to the `zero-day-ai/dashboard` reposito
 - This is a **Shadcn UI Kit** template. Do not touch pages/components that are unrelated to the Gibson product surface — the template pages are intentionally untouched.
 - Dashboard → daemon always goes through **Envoy + ext_authz**. Never open a direct gRPC channel to `:50051` / `:50002` or use `GIBSON_DAEMON_ADDRESS`. The guard script `scripts/check-no-direct-daemon-grpc.mjs` will fail the build if you do.
 - `pnpm prebuild` runs a chain of policy-guard scripts. Do not disable them. Fix the code instead.
+- **No hardcoded colors anywhere under `app/**` or `components/**`.** Every color goes through a token declared in `app/globals.css`. The guard `scripts/check-no-hardcoded-colors.mjs` rejects tailwind palette utilities (`text-emerald-*`, `bg-zinc-*`), tailwind arbitrary-value colors (`bg-[#...]`, `text-[oklch(...)]`), black/white utilities (`bg-white`, `text-black`), inline-style colors, and raw `#...`/`oklch(...)`/`rgb(...)`/`hsl(...)` in `.css` files. Two files are exempt because they declare the token system itself: `app/globals.css`, `app/themes.css`. See the design-system guide below.
 
 ## Commands
 
@@ -207,6 +208,42 @@ E2E_AUTH_SUITE=1 PLAYWRIGHT_BASE_URL=http://localhost:30081 \
 ```
 
 All three suites compile and lint cleanly without a live cluster.
+
+## Design system
+
+The dashboard's design system is a single token tree in `app/globals.css` with **explicit light AND dark values for every token**. The terminal-hacker brand identity (deep navy + terminal green + cyan link + CRT scanline overlay) is enforced uniformly across marketing, public auth, the authenticated product, and in-app docs. The canonical reference page is `/design-tokens` — both modes render side-by-side.
+
+Three token layers, narrowing from raw to semantic:
+
+- **Palette** (`--base-50` … `--base-1000`, `--primary-50` … `--primary-1000`, `--secondary-50` … `--secondary-1000`) — never reference these directly from a component.
+- **Semantic** (`--background`, `--foreground`, `--card`, `--primary`, `--secondary`, `--muted`, `--accent`, `--destructive`, `--border`, `--input`, `--ring`, `--sidebar-*`, `--chart-*`) — the default choice. Maps directly to tailwind utilities (`bg-background`, `text-foreground`, `border-border`).
+- **Specialty** (`--highlight`, `--alt`, `--link`, `--glow-strength`, `--scanline-opacity`) — reach for these only when the design intent is the terminal-hacker accent itself. Available as `text-highlight`, `text-alt`, `text-link`.
+
+Full architectural rationale + when-to-update: [docs.git → repos/dashboard/design-system.md](https://github.com/zero-day-ai/docs/blob/main/repos/dashboard/design-system.md).
+
+### No hardcoded colors — the CI guard
+
+`scripts/check-no-hardcoded-colors.mjs` runs as part of `pnpm prebuild`. Modes:
+
+```bash
+node scripts/check-no-hardcoded-colors.mjs            # default: scan + diff against .color-allowlist.json
+node scripts/check-no-hardcoded-colors.mjs --shrink   # remove allowlist entries whose source line no longer matches
+node scripts/check-no-hardcoded-colors.mjs --selftest # synthesise + verify the scanner catches each pattern class
+```
+
+The allowlist file `.color-allowlist.json` at the repo root captures every pre-existing violation as of the guard's land time (#53). It is **monotonic-shrink only**:
+
+- A new violation outside the allowlist → CI fail. Replace with a semantic or specialty token.
+- An allowlist entry whose source line no longer matches → CI fail with hint to run `--shrink` and commit the result.
+- A line content that changed at an allowlisted slot to a different hardcoded color → CI fail.
+
+When migrating a file (slices #54-#59), the drain procedure is:
+
+1. Replace the hardcoded color in the source file with the appropriate semantic or specialty token.
+2. Run `node scripts/check-no-hardcoded-colors.mjs --shrink`.
+3. Commit both the source change and the updated `.color-allowlist.json`.
+
+Adding a new entry to the allowlist is intentionally NOT automated. If a genuine exception exists, hand-edit the JSON file — that forces a review-time conversation about why the token system can't accommodate the case.
 
 ## Logging
 
