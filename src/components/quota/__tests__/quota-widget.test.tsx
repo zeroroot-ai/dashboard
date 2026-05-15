@@ -24,7 +24,7 @@ function withUsage(missionsActive: number, agentsActive: number) {
     data: { missionsActive, agentsActive },
     isLoading: false,
     error: undefined,
-  } as ReturnType<typeof useTenantQuotaUsage>);
+  } as unknown as ReturnType<typeof useTenantQuotaUsage>);
 }
 
 describe('QuotaWidget', () => {
@@ -55,7 +55,7 @@ describe('QuotaWidget', () => {
       data: undefined,
       isLoading: true,
       error: undefined,
-    } as ReturnType<typeof useTenantQuotaUsage>);
+    } as unknown as ReturnType<typeof useTenantQuotaUsage>);
     const { container } = render(<QuotaWidget missionsLimit={10} agentsLimit={50} />);
     expect(container.firstChild).not.toBeNull();
   });
