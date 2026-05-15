@@ -36,16 +36,24 @@ export default async function OnboardingPage() {
     redirect("/select-tenant");
   }
 
+  const userEmail = session.user.email ?? null;
+
   return (
     <div className="mx-auto max-w-xl p-8">
       <Card>
         <CardHeader>
           <CardTitle>Welcome — let&apos;s set up your organization</CardTitle>
           <CardDescription>
-            You are signed in, but you don&apos;t belong to any organization yet.
-            Either finish creating your first organization, or wait a moment if
-            you just completed signup — provisioning typically takes 30–60
-            seconds.
+            You are signed in
+            {userEmail ? (
+              <>
+                {" as "}
+                <span className="font-medium text-foreground">{userEmail}</span>
+              </>
+            ) : null}
+            , but you don&apos;t belong to any organization yet. Either finish
+            creating your first organization, or wait a moment if you just
+            completed signup — provisioning typically takes 30–60 seconds.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -64,6 +72,28 @@ export default async function OnboardingPage() {
               page in a minute. If you are still stuck, contact support.
             </p>
           </div>
+
+          {/*
+            Federated sign-out — clears the Auth.js cookie AND ends the
+            Zitadel session (so the next /login doesn't silently re-auth
+            via the still-active IdP cookie at auth.<domain>). Same pattern
+            and styling as app/dashboard/no-workspace/page.tsx so users
+            stuck in either zero-tenant state see a consistent escape
+            hatch. Secondary text-link style — "Create your first
+            organization" remains the primary CTA.
+          */}
+          <form
+            method="post"
+            action="/api/auth/federated-signout"
+            className="border-t pt-4"
+          >
+            <button
+              type="submit"
+              className="text-muted-foreground text-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+            >
+              Sign out
+            </button>
+          </form>
         </CardContent>
       </Card>
     </div>
