@@ -27,10 +27,16 @@
 
 import NextAuth from "next-auth";
 import type { NextAuthConfig } from "next-auth";
+import { cookies } from "next/headers";
 
 // TEST FIXTURE: fault-injection import — no-ops in production
 // (single process.env check per call; zero overhead when not enabled).
 import { getFaultMode } from "@/src/lib/test-fixtures/fault-injection";
+
+import {
+  getThemeFromZitadel,
+  THEME_COOKIE_NAME,
+} from "@/src/lib/user-prefs/theme";
 
 // ---------------------------------------------------------------------------
 // Module augmentation — extend the built-in Session/JWT types with the
@@ -216,6 +222,35 @@ const config: NextAuthConfig = {
         // out of Zitadel, not just the dashboard's own cookie).
         if (typeof account.id_token === "string") {
           token["idToken"] = account.id_token;
+        }
+
+        // Per-user theme cross-device sync (#57 sub-decision 2). On
+        // initial sign-in only, fetch the user's `theme_choice` from
+        // Zitadel user metadata and seed the same-named cookie so
+        // app/layout.tsx's server render picks up the user's preference
+        // without an additional Zitadel round-trip. Best-effort: if
+        // Zitadel is unreachable the cookie stays whatever it was on
+        // this device.
+        if (typeof token.sub === "string" && token.sub.length > 0) {
+          const remoteTheme = await getThemeFromZitadel(token.sub);
+          if (remoteTheme) {
+            try {
+              const cookieStore = await cookies();
+              cookieStore.set({
+                name: THEME_COOKIE_NAME,
+                value: remoteTheme,
+                path: "/",
+                maxAge: 60 * 60 * 24 * 365,
+                sameSite: "lax",
+                secure: process.env.NODE_ENV === "production",
+              });
+            } catch {
+              // cookies() can throw in some Auth.js execution contexts;
+              // a missed seed only means the user sees the previous
+              // device's theme on their first page render — they can
+              // re-select in the user menu and it'll persist normally.
+            }
+          }
         }
       }
       return token;

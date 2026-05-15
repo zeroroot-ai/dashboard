@@ -40,27 +40,17 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTierQuota } from "@/src/hooks/useTierQuota";
 
-/**
- * Per-decision (#57 sub-decision 2): theme persistence is per-user, syncing
- * across devices. The dashboard's only existing user-pref persistence layer
- * is the `theme_*` cookie pattern (per-browser). Until a real per-user pref
- * store is introduced, we mirror next-themes' localStorage write to a
- * `theme_choice` cookie so layout.tsx can read it server-side and avoid the
- * dark-flash on light-themed signed-in sessions. Marked follow-up.
- */
-function setThemeCookie(value: string | null) {
-  if (typeof document === "undefined") return;
-  if (!value) {
-    document.cookie =
-      "theme_choice=; path=/; max-age=0; SameSite=Lax" +
-      (window.location.protocol === "https:" ? "; Secure" : "");
-    return;
-  }
-  document.cookie =
-    `theme_choice=${value}; path=/; max-age=31536000; SameSite=Lax` +
-    (window.location.protocol === "https:" ? "; Secure" : "");
-}
+import { setThemePreference } from "@/app/actions/theme";
 
+/**
+ * Per-user theme cross-device sync (#57 sub-decision 2).
+ *
+ * The Server Action setThemePreference writes BOTH the same-device
+ * `theme_choice` cookie (instant effect; what app/layout.tsx reads for
+ * SSR) AND the user's Zitadel metadata (cross-device source of truth).
+ * next-themes is still called to flip the live DOM class immediately
+ * without waiting for the action to round-trip.
+ */
 function ThemePicker() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -80,7 +70,11 @@ function ThemePicker() {
           value={mounted ? (theme ?? "system") : "system"}
           onValueChange={(value) => {
             setTheme(value);
-            setThemeCookie(value);
+            // Fire-and-forget: the cookie is set on the next request,
+            // but next-themes already applied the live class so there's
+            // no visible delay. The Zitadel write also runs server-side
+            // inside the action.
+            void setThemePreference(value);
           }}
         >
           <DropdownMenuRadioItem value="light">

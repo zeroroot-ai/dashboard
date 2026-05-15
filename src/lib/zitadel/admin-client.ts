@@ -268,6 +268,30 @@ export interface ZitadelAdminClient {
   finalizeAuthRequest(
     input: FinalizeAuthRequestInput,
   ): Promise<FinalizeAuthRequestResult>;
+
+  /**
+   * GET /management/v1/users/{userId}/metadata/{key} — fetches a single
+   * metadata value for a user. Zitadel returns the value base64-encoded;
+   * this method decodes it before returning. Returns null on 404 so
+   * callers can treat "never set" as a normal state, and on connection
+   * errors so the user-pref flow degrades gracefully rather than blocking
+   * sign-in.
+   *
+   * Used by the per-user theme cross-device sync — JWT signIn callback
+   * reads `theme_choice` here and seeds the cookie.
+   */
+  getUserMetadata(userId: string, key: string): Promise<string | null>;
+
+  /**
+   * POST /management/v1/users/{userId}/metadata/{key} — sets a metadata
+   * value for a user. The value is base64-encoded for transport per
+   * Zitadel's API contract.
+   *
+   * Used by the per-user theme cross-device sync — the
+   * setThemePreference Server Action calls this on every theme change so
+   * the choice follows the user across devices.
+   */
+  setUserMetadata(userId: string, key: string, value: string): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -742,5 +766,48 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
     }
 
     return { callbackUrl: response.callbackUrl };
+  }
+
+  /**
+   * GET /management/v1/users/{userId}/metadata/{key}. Returns the decoded
+   * value or null on 404 / connection failure. Never throws — this is a
+   * preference read; if it fails the caller falls back to defaults.
+   */
+  async getUserMetadata(userId: string, key: string): Promise<string | null> {
+    try {
+      const resp = await this.request<{ metadata?: { value?: string } }>(
+        'GET',
+        `/management/v1/users/${encodeURIComponent(userId)}/metadata/${encodeURIComponent(key)}`,
+      );
+      const encoded = resp?.metadata?.value;
+      if (!encoded) return null;
+      return Buffer.from(encoded, 'base64').toString('utf8');
+    } catch (err) {
+      if (err instanceof ZitadelApiError && err.httpStatus === 404) {
+        return null;
+      }
+      // Connection or other transient — degrade to "never set".
+      return null;
+    }
+  }
+
+  /**
+   * POST /management/v1/users/{userId}/metadata/{key} with base64-encoded
+   * value. Throws ZitadelApiError on permanent failures so the caller can
+   * decide whether to surface the failure to the user (writes are
+   * expected to succeed; a 5xx storm during a theme toggle is worth
+   * logging at minimum).
+   */
+  async setUserMetadata(
+    userId: string,
+    key: string,
+    value: string,
+  ): Promise<void> {
+    const encoded = Buffer.from(value, 'utf8').toString('base64');
+    await this.request<void>(
+      'POST',
+      `/management/v1/users/${encodeURIComponent(userId)}/metadata/${encodeURIComponent(key)}`,
+      { value: encoded },
+    );
   }
 }
