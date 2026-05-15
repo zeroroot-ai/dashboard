@@ -163,6 +163,55 @@
   --font-display: var(--display-family);
   --display-weight: var(--display-weight);
   --font-sans: var(--text-family);
+
+  /* ----------------------------------------------------------------------
+   * Zero Day AI brand tokens — imported from the holding-page Hugo site
+   * at github.com/zero-day-ai/zero-day-ai.github.io (css/zero-day.css).
+   *
+   * These are surface-level marketing tokens (landing page, public auth
+   * routes). They are intentionally DARK-ONLY — the holding site has no
+   * light-mode variant and the landing experience is canonically dark
+   * (terminal aesthetic). Per dashboard#47 we don't synthesize a
+   * light-mode flip here; if it's ever needed it gets a separate
+   * decision + ADR.
+   *
+   * Consumers: tailwind utility classes (text-zd-highlight,
+   * bg-zd-gradient, etc.) and direct var() references in HeroSection +
+   * SiteHeader (see dashboard#48).
+   * ---------------------------------------------------------------------- */
+  --color-zd-bg: #0a0e27;
+  --color-zd-bg-deep: #0d1225;
+  --color-zd-fg: #a0a9cc;
+  --color-zd-highlight: #00ffaa;
+  --color-zd-alt: #64ffda;
+  --color-zd-link: #00d9ff;
+  --color-zd-border: #1a1f3a;
+  --color-zd-accent-purple: #bd93f9;
+  --color-zd-accent-orange: #ffb86c;
+}
+
+@utility bg-zd-gradient {
+  background: linear-gradient(135deg, var(--color-zd-bg) 0%, var(--color-zd-bg-deep) 50%, var(--color-zd-bg) 100%);
+  background-attachment: fixed;
+}
+
+@utility text-zd-glow {
+  text-shadow: 0 0 10px var(--color-zd-highlight), 0 0 20px rgba(0, 255, 170, 0.3);
+}
+
+@keyframes zd-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+@utility zd-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  background-color: var(--color-zd-link);
+  box-shadow: 0 0 5px var(--color-zd-link);
+  animation: zd-blink 1s infinite;
+  vertical-align: text-bottom;
 }
 
 * {
