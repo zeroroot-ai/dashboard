@@ -30,12 +30,6 @@
     "match": "text-green-600"
   },
   {
-    "file": "app/(public)/pricing/page.tsx",
-    "line": 130,
-    "pattern": "tw-palette",
-    "match": "bg-emerald-100"
-  },
-  {
     "file": "app/(public)/signup/provisioning-panel.tsx",
     "line": 160,
     "pattern": "tw-palette",

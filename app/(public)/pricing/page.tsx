@@ -98,14 +98,14 @@ function Tier({
     <Card
       className={
         "flex flex-col h-full " +
-        (featured ? "border-primary shadow-md ring-1 ring-primary/30" : "")
+        (featured ? "border-highlight shadow-md ring-1 ring-highlight/30" : "")
       }
     >
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-2xl">{t.name}</CardTitle>
+          <CardTitle className="font-display text-2xl">{t.name}</CardTitle>
           {featured ? (
-            <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-primary text-primary-foreground">
+            <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-highlight text-primary-foreground">
               Most popular
             </span>
           ) : null}
@@ -118,7 +118,8 @@ function Tier({
             className={
               card.degraded
                 ? "text-lg font-medium text-muted-foreground"
-                : "text-3xl font-semibold"
+                : "font-display text-3xl font-semibold" +
+                  (featured ? " text-highlight text-zd-glow" : "")
             }
           >
             {card.priceLabel}
@@ -127,7 +128,7 @@ function Tier({
             <div className="text-sm text-muted-foreground mt-1">{card.priceSubLabel}</div>
           ) : null}
           {!card.degraded && t.annualSavings ? (
-            <div className="inline-block mt-2 text-xs uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-900">
+            <div className="inline-block mt-2 text-xs uppercase tracking-wider px-2 py-0.5 rounded bg-highlight/15 text-highlight">
               {t.annualSavings}
             </div>
           ) : null}
@@ -144,7 +145,11 @@ function Tier({
         </ul>
       </CardContent>
       <CardFooter>
-        <Button asChild variant={cta.variant} className="w-full">
+        <Button
+          asChild
+          variant={cta.variant}
+          className={"w-full " + (featured ? "glow-green" : "")}
+        >
           <Link href={cta.href}>{cta.label}</Link>
         </Button>
       </CardFooter>
@@ -189,11 +194,11 @@ const onPremFeatures: { title: string; body: string }[] = [
 
 function OnPremCard({ t }: { t: PricingTierDisplay }) {
   return (
-    <Card className="border-primary/40">
+    <Card className="border-alt/40">
       <CardHeader>
         <div className="flex flex-wrap items-center gap-3">
-          <CardTitle className="text-2xl">{t.name}</CardTitle>
-          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-secondary text-secondary-foreground">
+          <CardTitle className="font-display text-2xl">{t.name}</CardTitle>
+          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-alt/15 text-alt">
             Self-hosted
           </span>
         </div>
@@ -234,7 +239,7 @@ export default async function PricingPage() {
   return (
     <main className="container mx-auto py-12 px-4 max-w-6xl">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold">Pricing</h1>
+        <h1 className="font-display text-4xl font-bold">Pricing</h1>
         <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
           Two enforced quotas: concurrent missions in flight, and agents currently bound to a
           mission task. Idle agents do not count.
