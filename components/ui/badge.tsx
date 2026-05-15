@@ -12,17 +12,18 @@ const badgeVariants = cva(
         default: "bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
         secondary: "bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
         destructive:
-          "bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "bg-destructive text-destructive-foreground [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20",
         outline:
           "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         link: "text-primary underline-offset-4 [a&]:hover:underline",
-        // custom variants
+        // custom variants — subtle wash + token-coloured text. No dark:
+        // overrides because the design system's tokens already adapt per mode.
         warning:
-          "border border-alt/40 bg-alt text-alt [a&]:hover:bg-alt/90 focus-visible:ring-alt/20 dark:focus-visible:ring-alt/40 dark:bg-alt/70 dark:text-white/80",
-        info: "border border-link/40 bg-link text-link [a&]:hover:bg-link/90 focus-visible:ring-link/20 dark:focus-visible:ring-link/40 dark:bg-link/70 dark:text-white/80",
+          "border border-warning/40 bg-warning/15 text-warning [a&]:hover:bg-warning/25 focus-visible:ring-warning/20",
+        info: "border border-link/40 bg-link/15 text-link [a&]:hover:bg-link/25 focus-visible:ring-link/20",
         success:
-          "border border-highlight/40 bg-highlight text-highlight [a&]:hover:bg-highlight/90 focus-visible:ring-highlight/20 dark:focus-visible:ring-highlight/40 dark:bg-highlight/70 dark:text-white/80"
+          "border border-highlight/40 bg-highlight/15 text-highlight [a&]:hover:bg-highlight/25 focus-visible:ring-highlight/20"
       }
     },
     defaultVariants: {
