@@ -49,13 +49,16 @@ export const signupInputSchema = z.object({
   // to the confirm field rather than the password field.
   passwordConfirm: z.string(),
 
+  // dashboard#44: user-visible label is "Company Name". The form-field
+  // name, schema field, and downstream Tenant CR all still use
+  // `workspaceName` to avoid touching the operator wiring.
   workspaceName: z
     .string()
-    .min(2, "Workspace name must be at least 2 characters")
-    .max(63, "Workspace name must be 63 characters or fewer")
+    .min(2, "Company name must be at least 2 characters")
+    .max(63, "Company name must be 63 characters or fewer")
     .regex(
       /^[a-zA-Z0-9 _-]+$/,
-      "Workspace name may only contain letters, numbers, spaces, hyphens, and underscores",
+      "Company name may only contain letters, numbers, spaces, hyphens, and underscores",
     ),
 
   tier: z.enum(tierTuple, {
