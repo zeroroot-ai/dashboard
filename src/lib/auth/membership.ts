@@ -69,19 +69,41 @@ export type Membership = {
 /**
  * Reason classifier for membership-resolution failures. The middleware /
  * route handler maps this to a `/login/error?reason=<code>` URL.
+ *
+ * `permission_denied` and `unauthenticated` cover the two ext-authz / FGA
+ * deny shapes (ConnectRPC codes 7 and 16). They must NOT be conflated with
+ * `daemon_unavailable` (code 14) — surfacing a permission failure as
+ * "service unreachable" misattributes the cause and triggers "on-call has
+ * been paged" copy where no on-call action would help. See dashboard#45.
  */
 export type MembershipResolutionReason =
   | 'unauthenticated'
+  | 'permission_denied'
   | 'daemon_unavailable'
   | 'fga_unavailable'
-  | 'malformed_response';
+  | 'malformed_response'
+  | 'unknown';
 
 export class MembershipResolutionError extends Error {
   readonly reason: MembershipResolutionReason;
-  constructor(reason: MembershipResolutionReason, cause?: unknown) {
+  /**
+   * The underlying ConnectRPC code label (e.g. `"permission_denied"`,
+   * `"unavailable"`), captured at throw time when the cause was a
+   * ConnectError. Used by the middleware's `auth.login_error` log entry
+   * so log review can correlate the user-facing reason with the wire-level
+   * failure mode. Undefined when the failure was non-Connect (e.g. Zod
+   * parse error, no session).
+   */
+  readonly connectCode?: string;
+  constructor(
+    reason: MembershipResolutionReason,
+    cause?: unknown,
+    connectCode?: string,
+  ) {
     super(`membership resolution failed: ${reason}`, { cause });
     this.name = 'MembershipResolutionError';
     this.reason = reason;
+    this.connectCode = connectCode;
   }
 }
 
@@ -205,17 +227,33 @@ async function fetchMembershipsFromDaemon(): Promise<Membership[]> {
     raw = await client.listMyMemberships({});
   } catch (err) {
     if (err instanceof ConnectError) {
+      const codeLabel = Code[err.code];
       switch (err.code) {
         case Code.Unauthenticated:
-          throw new MembershipResolutionError('unauthenticated', err);
+          // No valid session at the JWT/ext-authz layer.
+          throw new MembershipResolutionError('unauthenticated', err, codeLabel);
+        case Code.PermissionDenied:
+          // JWT validated, but FGA / ext-authz denied this specific RPC.
+          // Pre-dashboard#45 this fell through to the generic
+          // `daemon_unavailable` branch below, surfacing as the wrong
+          // "service unreachable / on-call has been paged" UX.
+          throw new MembershipResolutionError('permission_denied', err, codeLabel);
         case Code.Unavailable:
         case Code.DeadlineExceeded:
-          throw new MembershipResolutionError('daemon_unavailable', err);
+          throw new MembershipResolutionError('daemon_unavailable', err, codeLabel);
         case Code.Internal:
           // The daemon returns Internal when FGA fails inside ListMyMemberships.
-          throw new MembershipResolutionError('fga_unavailable', err);
+          throw new MembershipResolutionError('fga_unavailable', err, codeLabel);
+        default:
+          // Any other ConnectRPC code is genuinely unknown — surfacing as
+          // `daemon_unavailable` would falsely page on-call. The generic
+          // error page is the honest UX.
+          throw new MembershipResolutionError('unknown', err, codeLabel);
       }
     }
+    // Non-ConnectError path: typically a transport-layer failure before
+    // a code could be assigned. Surface as daemon_unavailable since the
+    // call genuinely didn't land.
     throw new MembershipResolutionError('daemon_unavailable', err);
   }
 

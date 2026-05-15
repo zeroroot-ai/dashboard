@@ -22,9 +22,14 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { readRawActiveTenant, ACTIVE_TENANT_COOKIE_NAME } from "@/src/lib/auth/active-tenant";
-import { getMyMemberships, MembershipResolutionError } from "@/src/lib/auth/membership";
+import {
+  getMyMemberships,
+  MembershipResolutionError,
+} from "@/src/lib/auth/membership";
+import { membershipReasonToLoginErrorReason } from "@/src/lib/auth/login-error-mapping";
 import { CORRELATION_HEADER, generateCorrelationId } from "@/src/lib/auth/correlation";
 import { popLastFiredSubsystem } from "@/src/lib/test-fixtures/fault-injection";
+import { logger } from "@/src/lib/logger";
 
 // Pin middleware to the Node.js runtime: membership.ts → gibson-client.ts
 // transitively pulls in @grpc/grpc-js (via the SPIFFE Workload-API client),
@@ -104,12 +109,36 @@ export default auth(async (req) => {
     memberships = await getMyMemberships();
   } catch (err) {
     if (err instanceof MembershipResolutionError) {
+      const loginErrorReason = membershipReasonToLoginErrorReason(err.reason);
+      // Log the underlying ConnectRPC code alongside the user-facing
+      // bucket so log review can pin a misclassification (e.g. a
+      // permission_denied surfacing as daemon_unavailable would
+      // re-create the dashboard#45 bug).
+      logger.warn(
+        {
+          scope: "middleware.membership_resolution",
+          membership_reason: err.reason,
+          login_error_reason: loginErrorReason,
+          connect_code: err.connectCode,
+          correlation_id: correlationId,
+        },
+        "auth.login_error",
+      );
       const url = new URL("/login/error", req.nextUrl.origin);
-      url.searchParams.set("reason", err.reason);
+      url.searchParams.set("reason", loginErrorReason);
       return NextResponse.redirect(url);
     }
+    logger.warn(
+      {
+        scope: "middleware.membership_resolution",
+        membership_reason: "unknown",
+        login_error_reason: "unknown",
+        correlation_id: correlationId,
+      },
+      "auth.login_error",
+    );
     const url = new URL("/login/error", req.nextUrl.origin);
-    url.searchParams.set("reason", "daemon_unavailable");
+    url.searchParams.set("reason", "unknown");
     return NextResponse.redirect(url);
   }
 
