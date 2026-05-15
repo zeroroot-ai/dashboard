@@ -70,6 +70,11 @@
   --accent: var(--base-200);
   --accent-foreground: var(--base-800);
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+  --warning: oklch(0.70 0.15 70);
+  --warning-foreground: oklch(0.18 0.02 70);
+  --success-foreground: oklch(1 0 0);
+  --overlay: oklch(0 0 0 / 0.5);
   --border: var(--base-200);
   --input: var(--base-300);
   --ring: var(--primary-700);
@@ -128,6 +133,11 @@
   --accent: var(--base-900);
   --accent-foreground: var(--base-200);
   --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(1 0 0);
+  --warning: oklch(0.80 0.16 75);
+  --warning-foreground: oklch(0.18 0.02 70);
+  --success-foreground: var(--base-1000);
+  --overlay: oklch(0 0 0 / 0.7);
   --border: var(--base-800);
   --input: var(--base-700);
   --ring: var(--primary-500);
@@ -209,6 +219,11 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success-foreground: var(--success-foreground);
+  --color-overlay: var(--overlay);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -295,7 +310,7 @@
   [data-slot="dialog-overlay"],
   [data-slot="sheet-overlay"],
   [data-slot="drawer-overlay"] {
-    @apply bg-black/20! backdrop-blur-sm;
+    @apply bg-overlay! backdrop-blur-sm;
   }
 }
 
