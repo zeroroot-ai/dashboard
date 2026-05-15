@@ -6,12 +6,6 @@
     "match": "text-green-500"
   },
   {
-    "file": "app/(public)/layout.tsx",
-    "line": 41,
-    "pattern": "tw-arbitrary-color",
-    "match": "bg-[#050a07"
-  },
-  {
     "file": "app/(public)/onboarding/DataPlaneProgressPanel.tsx",
     "line": 66,
     "pattern": "tw-palette",
@@ -163,19 +157,19 @@
   },
   {
     "file": "app/(public)/signup/signup-form.tsx",
-    "line": 110,
+    "line": 111,
     "pattern": "tw-palette",
     "match": "bg-green-500"
   },
   {
     "file": "app/(public)/signup/signup-form.tsx",
-    "line": 112,
+    "line": 113,
     "pattern": "tw-palette",
     "match": "bg-yellow-500"
   },
   {
     "file": "app/(public)/signup/signup-form.tsx",
-    "line": 133,
+    "line": 134,
     "pattern": "tw-palette",
     "match": "text-green-600"
   },
@@ -1258,276 +1252,6 @@
     "line": 218,
     "pattern": "tw-palette",
     "match": "bg-green-500/20"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 60,
-    "pattern": "tw-palette",
-    "match": "text-green-300"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 61,
-    "pattern": "tw-palette",
-    "match": "text-emerald-300"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 62,
-    "pattern": "tw-palette",
-    "match": "text-cyan-300/90"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 63,
-    "pattern": "tw-palette",
-    "match": "text-amber-300/90"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 77,
-    "pattern": "tw-palette",
-    "match": "text-amber-300"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 78,
-    "pattern": "tw-palette",
-    "match": "text-emerald-300"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 93,
-    "pattern": "tw-palette",
-    "match": "border-emerald-500/25"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 95,
-    "pattern": "tw-palette",
-    "match": "text-emerald-400/50"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 96,
-    "pattern": "tw-palette",
-    "match": "text-emerald-400/50"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 97,
-    "pattern": "tw-palette",
-    "match": "text-emerald-400/50"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 98,
-    "pattern": "tw-palette",
-    "match": "text-emerald-400/50"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 100,
-    "pattern": "tw-palette",
-    "match": "text-emerald-400/70"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 107,
-    "pattern": "tw-palette",
-    "match": "text-emerald-200/85"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 129,
-    "pattern": "tw-black-white",
-    "match": "bg-black/85"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 129,
-    "pattern": "tw-palette",
-    "match": "border-green-500/40"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 130,
-    "pattern": "tw-palette",
-    "match": "border-green-500/25"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 131,
-    "pattern": "tw-palette",
-    "match": "bg-red-500/70"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 132,
-    "pattern": "tw-palette",
-    "match": "bg-yellow-500/70"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 133,
-    "pattern": "tw-palette",
-    "match": "bg-green-500/70"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 134,
-    "pattern": "tw-palette",
-    "match": "text-green-400/60"
-  },
-  {
-    "file": "components/gibson/landing/HeroSection.tsx",
-    "line": 142,
-    "pattern": "tw-palette",
-    "match": "text-green-400/50"
-  },
-  {
-    "file": "components/gibson/landing/Production.tsx",
-    "line": 5,
-    "pattern": "tw-palette",
-    "match": "border-green-500/25"
-  },
-  {
-    "file": "components/gibson/landing/Production.tsx",
-    "line": 8,
-    "pattern": "tw-palette",
-    "match": "text-green-400/50"
-  },
-  {
-    "file": "components/gibson/landing/Production.tsx",
-    "line": 9,
-    "pattern": "tw-palette",
-    "match": "text-green-300"
-  },
-  {
-    "file": "components/gibson/landing/Production.tsx",
-    "line": 11,
-    "pattern": "tw-palette",
-    "match": "text-green-50/85"
-  },
-  {
-    "file": "components/gibson/landing/Production.tsx",
-    "line": 16,
-    "pattern": "tw-palette",
-    "match": "text-green-300"
-  },
-  {
-    "file": "components/gibson/landing/Typewriter.tsx",
-    "line": 121,
-    "pattern": "tw-palette",
-    "match": "border-green-500/60"
-  },
-  {
-    "file": "components/gibson/landing/Typewriter.tsx",
-    "line": 125,
-    "pattern": "tw-palette",
-    "match": "text-emerald-100"
-  },
-  {
-    "file": "components/gibson/landing/Typewriter.tsx",
-    "line": 153,
-    "pattern": "tw-palette",
-    "match": "border-green-500/60"
-  },
-  {
-    "file": "components/gibson/landing/Typewriter.tsx",
-    "line": 160,
-    "pattern": "tw-palette",
-    "match": "text-emerald-100"
-  },
-  {
-    "file": "components/gibson/landing/Typewriter.tsx",
-    "line": 163,
-    "pattern": "tw-palette",
-    "match": "text-green-400"
-  },
-  {
-    "file": "components/gibson/landing/WhatYouGet.tsx",
-    "line": 32,
-    "pattern": "tw-palette",
-    "match": "text-green-400/50"
-  },
-  {
-    "file": "components/gibson/landing/WhatYouGet.tsx",
-    "line": 33,
-    "pattern": "tw-palette",
-    "match": "text-green-300"
-  },
-  {
-    "file": "components/gibson/landing/WhatYouGet.tsx",
-    "line": 37,
-    "pattern": "tw-palette",
-    "match": "border-green-500/30"
-  },
-  {
-    "file": "components/gibson/landing/WhatYouGet.tsx",
-    "line": 38,
-    "pattern": "tw-palette",
-    "match": "text-green-300"
-  },
-  {
-    "file": "components/gibson/landing/WhatYouGet.tsx",
-    "line": 41,
-    "pattern": "tw-palette",
-    "match": "text-green-50/85"
-  },
-  {
-    "file": "components/gibson/landing/WhatYouRunItOn.tsx",
-    "line": 36,
-    "pattern": "tw-palette",
-    "match": "border-green-500/25"
-  },
-  {
-    "file": "components/gibson/landing/WhatYouRunItOn.tsx",
-    "line": 39,
-    "pattern": "tw-palette",
-    "match": "text-green-400/50"
-  },
-  {
-    "file": "components/gibson/landing/WhatYouRunItOn.tsx",
-    "line": 40,
-    "pattern": "tw-palette",
-    "match": "text-green-300"
-  },
-  {
-    "file": "components/gibson/landing/WhatYouRunItOn.tsx",
-    "line": 43,
-    "pattern": "tw-palette",
-    "match": "text-green-50/90"
-  },
-  {
-    "file": "components/gibson/landing/WhatYouRunItOn.tsx",
-    "line": 48,
-    "pattern": "tw-palette",
-    "match": "text-green-300"
-  },
-  {
-    "file": "components/gibson/landing/WhatYouRunItOn.tsx",
-    "line": 52,
-    "pattern": "tw-palette",
-    "match": "text-green-300"
-  },
-  {
-    "file": "components/gibson/landing/WhatYouRunItOn.tsx",
-    "line": 58,
-    "pattern": "tw-palette",
-    "match": "text-green-400/60"
-  },
-  {
-    "file": "components/gibson/landing/WhatYouRunItOn.tsx",
-    "line": 62,
-    "pattern": "tw-black-white",
-    "match": "bg-black/60"
-  },
-  {
-    "file": "components/gibson/landing/WhatYouRunItOn.tsx",
-    "line": 62,
-    "pattern": "tw-palette",
-    "match": "border-green-500/25"
   },
   {
     "file": "components/gibson/missions/MissionsContent.tsx",

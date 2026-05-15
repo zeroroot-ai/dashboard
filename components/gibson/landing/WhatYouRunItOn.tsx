@@ -33,33 +33,33 @@ mission: {
 
 export function WhatYouRunItOn() {
   return (
-    <section className="border-t border-green-500/25">
+    <section className="border-t border-highlight/25">
       <div className="mx-auto max-w-5xl px-4 py-20 md:py-24">
         <h2 className="mb-10 font-mono text-sm md:text-base">
-          <span className="text-green-400/50 select-none">$ </span>
-          <span className="text-green-300">cat what-you-run-on.md</span>
+          <span className="text-highlight/50 select-none">$ </span>
+          <span className="text-highlight">cat what-you-run-on.md</span>
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-          <p className="text-base md:text-lg leading-relaxed text-green-50/90">
+          <p className="text-base md:text-lg leading-relaxed text-foreground/90">
             Every agent is built by your team (platform engineers,
             devsecops, red teamers, IR) for the workflows they already
             own. That&apos;s the force multiplier. Agents run where you
             work (laptop, CI, VPS, k8s) and dial out to{" "}
-            <code className="font-mono text-green-300">api.zero-day.ai</code>{" "}
+            <code className="font-mono text-highlight">api.zero-day.ai</code>{" "}
             for orchestration, shared memory, and the knowledge graph.
             Your team decides what crosses the wire and what stays on
             the host. BYOK for LLM keys. Untrusted payloads detonate inside{" "}
-            <strong className="text-green-300 font-semibold">
+            <strong className="text-highlight font-semibold">
               Setec microVMs
             </strong>
             . Hardware isolation, not containers.
           </p>
           <div>
-            <div className="mb-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-green-400/60">
+            <div className="mb-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-highlight/60">
               <span>// what a mission looks like</span>
               <span>recon.cue</span>
             </div>
-            <pre className="overflow-x-auto rounded-lg border border-green-500/25 bg-black/60 p-5 font-mono text-[10px] md:text-[11px] leading-[1.55] text-green-300/90">
+            <pre className="overflow-x-auto rounded-lg border border-highlight/25 bg-card/60 p-5 font-mono text-[10px] md:text-[11px] leading-[1.55] text-highlight/90">
               <code>{reconMissionCue}</code>
             </pre>
           </div>
