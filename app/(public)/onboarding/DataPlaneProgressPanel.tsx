@@ -63,9 +63,9 @@ function StoreRow({ label, hint, status }: StoreRowProps) {
   let indicator: React.ReactNode;
 
   if (state === 'ready') {
-    indicator = <span className="text-green-600 font-medium">&#10003;</span>;
+    indicator = <span className="text-highlight font-medium">&#10003;</span>;
   } else if (state === 'failed') {
-    indicator = <span className="text-red-500 font-medium">&#10007;</span>;
+    indicator = <span className="text-destructive font-medium">&#10007;</span>;
   } else if (state === 'provisioning') {
     indicator = (
       <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent text-muted-foreground" />
@@ -86,7 +86,7 @@ function StoreRow({ label, hint, status }: StoreRowProps) {
           <span className="text-muted-foreground ml-1">{hint}</span>
         ) : null}
         {state === 'failed' && reason ? (
-          <span className="text-red-500 ml-1 text-xs">— {reason}</span>
+          <span className="text-destructive ml-1 text-xs">— {reason}</span>
         ) : null}
       </span>
     </li>
@@ -174,7 +174,7 @@ export function DataPlaneProgressPanel({ onAllReady }: DataPlaneProgressPanelPro
       )}
 
       {allReady(data) && (
-        <p className="text-sm text-green-600 font-medium">
+        <p className="text-sm text-highlight font-medium">
           All systems ready — redirecting…
         </p>
       )}

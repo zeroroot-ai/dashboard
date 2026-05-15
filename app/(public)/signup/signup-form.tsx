@@ -108,9 +108,9 @@ function PasswordStrengthMeter({
 
   const barColor =
     strength === 1
-      ? "bg-green-500"
+      ? "bg-highlight"
       : strength >= 0.6
-        ? "bg-yellow-500"
+        ? "bg-alt"
         : "bg-destructive";
 
   return (
@@ -131,7 +131,7 @@ function PasswordStrengthMeter({
           <li
             key={check.label}
             className={`flex items-center gap-1.5 text-xs ${
-              check.met ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+              check.met ? "text-highlight" : "text-muted-foreground"
             }`}
           >
             <span aria-hidden="true">{check.met ? "✓" : "○"}</span>
