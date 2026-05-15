@@ -170,7 +170,7 @@ export function PasswordStrength({
             >
               {passes ? (
                 <CheckIcon
-                  className="h-4 w-4 shrink-0 text-green-500"
+                  className="h-4 w-4 shrink-0 text-highlight"
                   aria-hidden="true"
                 />
               ) : (
@@ -187,7 +187,7 @@ export function PasswordStrength({
               <span
                 className={cn(
                   passes
-                    ? "text-green-700 dark:text-green-400"
+                    ? "text-highlight dark:text-highlight"
                     : password.length === 0
                     ? "text-muted-foreground"
                     : "text-destructive"
@@ -253,8 +253,8 @@ function BreachIndicator({ breach }: BreachIndicatorProps) {
         className="space-y-0.5"
       >
         <div className="flex items-center gap-2">
-          <CheckIcon className="h-4 w-4 shrink-0 text-green-500" aria-hidden="true" />
-          <span className="text-sm font-semibold text-green-700 dark:text-green-400">Strong</span>
+          <CheckIcon className="h-4 w-4 shrink-0 text-highlight" aria-hidden="true" />
+          <span className="text-sm font-semibold text-highlight dark:text-highlight">Strong</span>
         </div>
         <p className="text-sm text-muted-foreground pl-6">Not found in public breaches</p>
       </div>

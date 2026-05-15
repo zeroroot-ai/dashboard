@@ -269,7 +269,7 @@ function DirectGrantsSection({
             {direct.map((g, i) => (
               <li
                 key={`${g.componentRef}|${g.relation}|${i}`}
-                className="flex items-center justify-between rounded border border-green-900/20 px-3 py-1.5"
+                className="flex items-center justify-between rounded border border-highlight/20 px-3 py-1.5"
               >
                 <span>
                   <span className="data-value">{g.componentRef}</span> — {g.relation}
@@ -402,7 +402,7 @@ function InheritedGrantsSection({
             {inherited.map((entry, i) => (
               <li
                 key={i}
-                className="rounded border border-green-900/10 px-3 py-1.5 font-mono"
+                className="rounded border border-highlight/10 px-3 py-1.5 font-mono"
               >
                 <div>
                   <span className="data-value">{entry.grant.componentRef}</span> —{' '}
@@ -457,8 +457,8 @@ function ActiveCapabilityGrantsSection({ grants }: { grants: ActiveGrantVM[] }) 
                   key={g.jti}
                   className={
                     g.nearExpiry
-                      ? 'border-b border-amber-900/30 bg-amber-950/10'
-                      : 'border-b border-green-900/10'
+                      ? 'border-b border-alt/40/30 bg-alt/10/10'
+                      : 'border-b border-highlight/10'
                   }
                 >
                   <td className="py-1.5 pr-3 font-mono">{g.jti.slice(0, 12)}…</td>

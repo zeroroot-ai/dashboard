@@ -102,7 +102,7 @@ export function FindingsExportDialog({
           <DialogTitle className="text-glow-green">Export Findings</DialogTitle>
           <DialogDescription>
             Export{" "}
-            <span className="text-green-400 font-medium">{findings.length}</span>{" "}
+            <span className="text-highlight font-medium">{findings.length}</span>{" "}
             finding{findings.length !== 1 ? "s" : ""} matching the current filters.
           </DialogDescription>
         </DialogHeader>

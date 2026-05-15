@@ -30,7 +30,7 @@ export function ErrorAlert({
   return (
     <Alert
       variant="destructive"
-      className={cn('border-red-900/50', className)}
+      className={cn('border-destructive/50', className)}
     >
       <AlertTriangle className="h-4 w-4" aria-hidden="true" />
       <AlertTitle>{title}</AlertTitle>
@@ -41,7 +41,7 @@ export function ErrorAlert({
             variant="outline"
             size="sm"
             onClick={retry}
-            className="shrink-0 border-red-800/60 bg-red-950/30 text-red-300 hover:bg-red-950/60 hover:text-red-200"
+            className="shrink-0 border-destructive/60 bg-destructive/10/30 text-destructive hover:bg-destructive/10/60 hover:text-destructive"
           >
             Retry
           </Button>

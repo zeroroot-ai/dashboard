@@ -354,7 +354,7 @@ function ConfiguredProviderRow({ provider }: ConfiguredProviderRowProps) {
             {testState === "testing" ? (
               <Loader2 className="size-3 animate-spin" />
             ) : testState === "ok" ? (
-              <CheckCircle2 className="size-3 text-green-500" />
+              <CheckCircle2 className="size-3 text-highlight" />
             ) : testState === "fail" ? (
               <WifiOff className="size-3 text-destructive" />
             ) : (

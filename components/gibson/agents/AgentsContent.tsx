@@ -149,7 +149,7 @@ export function AgentsContent() {
           <>
             <Badge
               variant="outline"
-              className="border-green-500/50 bg-green-950/40 text-green-400 font-mono tabular-nums"
+              className="border-highlight/50 bg-highlight/10/40 text-highlight font-mono tabular-nums"
             >
               {counts.total} total
             </Badge>

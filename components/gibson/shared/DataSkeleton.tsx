@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 // ── Shared animation class ─────────────────────────────────────────────────────
 // Layered on top of the base animate-pulse to give a faint green tint matching
 // the Gibson "glass-hack" dark theme.
-const SKEL = 'bg-green-950/40 animate-pulse';
+const SKEL = 'bg-highlight/10/40 animate-pulse';
 
 // ── TableSkeleton ──────────────────────────────────────────────────────────────
 
@@ -27,13 +27,13 @@ export function TableSkeleton({
 }: TableSkeletonProps) {
   return (
     <div
-      className={cn('w-full overflow-hidden rounded-lg border border-green-900/30', className)}
+      className={cn('w-full overflow-hidden rounded-lg border border-highlight/30', className)}
       role="status"
       aria-label="Loading table data"
       aria-busy="true"
     >
       {/* Header row */}
-      <div className="flex gap-4 border-b border-green-900/30 bg-green-950/20 px-4 py-3">
+      <div className="flex gap-4 border-b border-highlight/30 bg-highlight/10/20 px-4 py-3">
         {Array.from({ length: cols }).map((_, colIdx) => (
           <Skeleton
             key={colIdx}
@@ -46,7 +46,7 @@ export function TableSkeleton({
       {Array.from({ length: rows }).map((_, rowIdx) => (
         <div
           key={rowIdx}
-          className="flex gap-4 border-b border-green-900/20 px-4 py-3 last:border-0"
+          className="flex gap-4 border-b border-highlight/20 px-4 py-3 last:border-0"
         >
           {Array.from({ length: cols }).map((_, colIdx) => (
             <Skeleton
@@ -90,10 +90,10 @@ export function CardGridSkeleton({ count = 4, className }: CardGridSkeletonProps
       {Array.from({ length: count }).map((_, idx) => (
         <div
           key={idx}
-          className="flex flex-col gap-0 overflow-hidden rounded-lg border border-green-900/30 bg-green-950/10"
+          className="flex flex-col gap-0 overflow-hidden rounded-lg border border-highlight/30 bg-highlight/10/10"
         >
           {/* Card header */}
-          <div className="flex flex-col gap-2 border-b border-green-900/20 px-4 py-4">
+          <div className="flex flex-col gap-2 border-b border-highlight/20 px-4 py-4">
             <div className="flex items-start justify-between gap-2">
               <Skeleton className={cn(SKEL, 'h-4 w-32')} />
               <Skeleton className={cn(SKEL, 'h-2.5 w-2.5 shrink-0 rounded-full')} />
@@ -112,7 +112,7 @@ export function CardGridSkeleton({ count = 4, className }: CardGridSkeletonProps
               <Skeleton className={cn(SKEL, 'h-4 w-full')} />
             </div>
             {/* Footer stripe */}
-            <div className="mt-auto flex items-center justify-between border-t border-green-900/20 pt-2">
+            <div className="mt-auto flex items-center justify-between border-t border-highlight/20 pt-2">
               <Skeleton className={cn(SKEL, 'h-3 w-12')} />
               <Skeleton className={cn(SKEL, 'h-3 w-14')} />
             </div>
@@ -144,7 +144,7 @@ export function KPICardsSkeleton({ className }: KPICardsSkeletonProps) {
       {Array.from({ length: 4 }).map((_, idx) => (
         <div
           key={idx}
-          className="flex flex-col gap-3 overflow-hidden rounded-lg border border-green-900/30 bg-green-950/10 p-4"
+          className="flex flex-col gap-3 overflow-hidden rounded-lg border border-highlight/30 bg-highlight/10/10 p-4"
         >
           {/* Card header: label + icon */}
           <div className="flex items-center justify-between">

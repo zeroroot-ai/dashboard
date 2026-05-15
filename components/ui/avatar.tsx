@@ -97,9 +97,9 @@ function AvatarGroupCount({ className, ...props }: React.ComponentProps<"div">) 
 const indicatorVariants = cva("size-2 absolute rounded-full", {
   variants: {
     variant: {
-      success: "bg-green-400",
-      danger: "bg-red-400",
-      warning: "bg-orange-400"
+      success: "bg-highlight",
+      danger: "bg-destructive",
+      warning: "bg-alt"
     },
     position: {
       "top-end": "end-0.5 top-0.5",

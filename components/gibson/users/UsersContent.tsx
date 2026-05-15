@@ -45,7 +45,7 @@ import type { TenantMember } from "@/src/lib/k8s/types";
 
 const ROLE_BADGE_CLASS: Record<string, string> = {
   admin: "border-primary/50 bg-primary/10 text-primary",
-  member: "border-blue-500/50 bg-blue-950/20 text-blue-400",
+  member: "border-link/50 bg-link/10/20 text-link",
   viewer: "border-border bg-muted/50 text-muted-foreground",
 };
 

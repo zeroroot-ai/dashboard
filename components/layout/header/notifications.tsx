@@ -36,10 +36,10 @@ interface NotificationItem {
 }
 
 const severityColor: Record<FindingSeverity, string> = {
-  critical: "text-red-500",
-  high: "text-orange-500",
-  medium: "text-yellow-500",
-  low: "text-blue-500",
+  critical: "text-destructive",
+  high: "text-alt",
+  medium: "text-alt",
+  low: "text-link",
   info: "text-muted-foreground"
 };
 

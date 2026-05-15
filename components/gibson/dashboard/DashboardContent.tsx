@@ -36,20 +36,20 @@ function timeAgo(date: Date): string {
 }
 
 const SEVERITY_STYLES: Record<FindingSeverity, string> = {
-  critical: 'bg-red-950 text-red-400 border-red-800',
-  high:     'bg-orange-950 text-orange-400 border-orange-800',
-  medium:   'bg-yellow-950 text-yellow-400 border-yellow-800',
-  low:      'bg-blue-950 text-blue-400 border-blue-800',
-  info:     'bg-zinc-900 text-zinc-400 border-zinc-700',
+  critical: 'bg-destructive/10 text-destructive border-destructive/40',
+  high:     'bg-alt/10 text-alt border-alt/40',
+  medium:   'bg-alt/10 text-alt border-alt/40',
+  low:      'bg-link/10 text-link border-link/40',
+  info:     'bg-muted text-muted-foreground border-border',
 };
 
 const STATUS_STYLES: Record<MissionStatus, string> = {
-  running:   'bg-green-950 text-green-400 border-green-800',
-  paused:    'bg-yellow-950 text-yellow-400 border-yellow-800',
-  completed: 'bg-blue-950 text-blue-400 border-blue-800',
-  failed:    'bg-red-950 text-red-400 border-red-800',
-  stopped:   'bg-zinc-900 text-zinc-400 border-zinc-700',
-  pending:   'bg-zinc-900 text-zinc-300 border-zinc-700',
+  running:   'bg-highlight/10 text-highlight border-highlight/40',
+  paused:    'bg-alt/10 text-alt border-alt/40',
+  completed: 'bg-link/10 text-link border-link/40',
+  failed:    'bg-destructive/10 text-destructive border-destructive/40',
+  stopped:   'bg-muted text-muted-foreground border-border',
+  pending:   'bg-muted text-muted-foreground border-border',
 };
 
 function SeverityBadge({ severity }: { severity: FindingSeverity }) {
@@ -87,18 +87,18 @@ function ConnectionBanner() {
       aria-live="polite"
       className={`w-full rounded border px-4 py-2 text-center text-sm font-mono font-medium tracking-wide ${
         isConnected
-          ? 'border-green-800 bg-green-950 text-green-400'
-          : 'border-red-800 bg-red-950 text-red-400'
+          ? 'border-highlight/40 bg-highlight/10 text-highlight'
+          : 'border-destructive/40 bg-destructive/10 text-destructive'
       }`}
     >
       {isConnected ? (
         <>
-          <span className="mr-2 inline-block h-2 w-2 animate-[pulse-dot_1.5s_ease-in-out_infinite] rounded-full bg-green-500 align-middle" />
+          <span className="mr-2 inline-block h-2 w-2 animate-[pulse-dot_1.5s_ease-in-out_infinite] rounded-full bg-highlight align-middle" />
           Connected to Zero Day AI
         </>
       ) : (
         <>
-          <span className="mr-2 inline-block h-2 w-2 rounded-full bg-red-500 align-middle" />
+          <span className="mr-2 inline-block h-2 w-2 rounded-full bg-destructive align-middle" />
           Connection Lost &mdash; Retrying...
         </>
       )}
@@ -120,13 +120,13 @@ function KpiCards() {
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       {/* Active Missions */}
-      <Card className="glass-hack border-green-900/40">
+      <Card className="glass-hack border-highlight/40">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
               Active Missions
             </CardTitle>
-            <Crosshair className="h-4 w-4 text-green-500 opacity-70" aria-hidden="true" />
+            <Crosshair className="h-4 w-4 text-highlight opacity-70" aria-hidden="true" />
           </div>
         </CardHeader>
         <CardContent>
@@ -135,20 +135,20 @@ function KpiCards() {
       </Card>
 
       {/* Total Findings */}
-      <Card className="glass-hack border-green-900/40">
+      <Card className="glass-hack border-highlight/40">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
               Total Findings
             </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-green-500 opacity-70" aria-hidden="true" />
+            <AlertTriangle className="h-4 w-4 text-highlight opacity-70" aria-hidden="true" />
           </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-end gap-2">
             <p className="data-value text-3xl font-bold">{totalFindings}</p>
             <Badge
-              className="mb-0.5 border-red-800 bg-red-950 font-mono text-red-400"
+              className="mb-0.5 border-destructive/40 bg-destructive/10 font-mono text-destructive"
               variant="outline"
             >
               {criticalFindings} crit
@@ -158,13 +158,13 @@ function KpiCards() {
       </Card>
 
       {/* Agents Online */}
-      <Card className="glass-hack border-green-900/40">
+      <Card className="glass-hack border-highlight/40">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
               Agents Online
             </CardTitle>
-            <Bot className="h-4 w-4 text-green-500 opacity-70" aria-hidden="true" />
+            <Bot className="h-4 w-4 text-highlight opacity-70" aria-hidden="true" />
           </div>
         </CardHeader>
         <CardContent>
@@ -173,13 +173,13 @@ function KpiCards() {
       </Card>
 
       {/* Graph Nodes — not yet backed by a hook; shows 0 until graph hook is wired */}
-      <Card className="glass-hack border-green-900/40">
+      <Card className="glass-hack border-highlight/40">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
               Graph Nodes
             </CardTitle>
-            <Network className="h-4 w-4 text-green-500 opacity-70" aria-hidden="true" />
+            <Network className="h-4 w-4 text-highlight opacity-70" aria-hidden="true" />
           </div>
         </CardHeader>
         <CardContent>
@@ -196,7 +196,7 @@ function RecentFindings() {
 
   if (isLoading) {
     return (
-      <Card className="glass-hack border-green-900/40">
+      <Card className="glass-hack border-highlight/40">
         <CardHeader>
           <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground">
             Recent Findings
@@ -211,7 +211,7 @@ function RecentFindings() {
 
   if (error) {
     return (
-      <Card className="glass-hack border-green-900/40">
+      <Card className="glass-hack border-highlight/40">
         <CardHeader>
           <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground">
             Recent Findings
@@ -225,7 +225,7 @@ function RecentFindings() {
   }
 
   return (
-    <Card className="glass-hack border-green-900/40">
+    <Card className="glass-hack border-highlight/40">
       <CardHeader>
         <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground">
           Recent Findings
@@ -234,7 +234,7 @@ function RecentFindings() {
       <CardContent className="px-0">
         <Table>
           <TableHeader>
-            <TableRow className="border-green-900/30 hover:bg-transparent">
+            <TableRow className="border-highlight/30 hover:bg-transparent">
               <TableHead className="pl-6 text-xs font-mono uppercase text-muted-foreground">
                 Severity
               </TableHead>
@@ -251,7 +251,7 @@ function RecentFindings() {
           </TableHeader>
           <TableBody>
             {findings.length === 0 ? (
-              <TableRow className="border-green-900/20 hover:bg-transparent">
+              <TableRow className="border-highlight/20 hover:bg-transparent">
                 <TableCell colSpan={4} className="py-8 text-center">
                   <p className="font-mono text-sm text-muted-foreground">0 findings</p>
                   <p className="mt-1 text-xs text-muted-foreground/60">
@@ -263,7 +263,7 @@ function RecentFindings() {
               findings.map((finding) => (
                 <TableRow
                   key={finding.id}
-                  className="border-green-900/20 hover:bg-green-950/20"
+                  className="border-highlight/20 hover:bg-highlight/10/20"
                 >
                   <TableCell className="pl-6">
                     <SeverityBadge severity={finding.severity} />
@@ -293,7 +293,7 @@ function MissionStatusPanel() {
 
   if (isLoading) {
     return (
-      <Card className="glass-hack border-green-900/40">
+      <Card className="glass-hack border-highlight/40">
         <CardHeader>
           <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground">
             Mission Status
@@ -308,7 +308,7 @@ function MissionStatusPanel() {
 
   if (error) {
     return (
-      <Card className="glass-hack border-green-900/40">
+      <Card className="glass-hack border-highlight/40">
         <CardHeader>
           <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground">
             Mission Status
@@ -322,7 +322,7 @@ function MissionStatusPanel() {
   }
 
   return (
-    <Card className="glass-hack border-green-900/40">
+    <Card className="glass-hack border-highlight/40">
       <CardHeader>
         <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground">
           Mission Status
@@ -340,14 +340,14 @@ function MissionStatusPanel() {
           recent.map((mission) => (
             <div
               key={mission.id}
-              className="flex items-center justify-between gap-3 rounded border border-green-900/20 bg-green-950/10 px-3 py-2"
+              className="flex items-center justify-between gap-3 rounded border border-highlight/20 bg-highlight/10/10 px-3 py-2"
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-foreground">{mission.name}</p>
                 {/* Progress bar */}
-                <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-green-900/30">
+                <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-highlight/30">
                   <div
-                    className="h-full rounded-full bg-green-500/60 transition-all"
+                    className="h-full rounded-full bg-highlight/60 transition-all"
                     style={{ width: `${mission.progress ?? 0}%` }}
                     role="progressbar"
                     aria-valuenow={mission.progress ?? 0}
@@ -402,11 +402,11 @@ function ComponentCards() {
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       {cards.map((card) => (
         <Link key={card.title} href={card.href} className="group">
-          <Card className="glass-hack border-green-900/40 transition-colors group-hover:border-green-700/60">
+          <Card className="glass-hack border-highlight/40 transition-colors group-hover:border-highlight/60">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <card.icon className="h-4 w-4 text-green-500 opacity-70" aria-hidden="true" />
+                  <card.icon className="h-4 w-4 text-highlight opacity-70" aria-hidden="true" />
                   <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground">
                     {card.title}
                   </CardTitle>
@@ -421,7 +421,7 @@ function ComponentCards() {
                   <p className="mt-1 text-xs text-muted-foreground">{card.description}</p>
                 </div>
                 <Badge
-                  className="mb-0.5 border-green-800 bg-green-950 font-mono text-green-400"
+                  className="mb-0.5 border-highlight/40 bg-highlight/10 font-mono text-highlight"
                   variant="outline"
                 >
                   {card.healthy} healthy
@@ -452,7 +452,7 @@ export function DashboardContent() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <h1 className="font-mono text-xl font-bold tracking-tight text-glow-green lg:text-2xl">
-          <span className="text-green-500/70">&gt;</span> Console
+          <span className="text-highlight/70">&gt;</span> Console
         </h1>
         <span className="font-mono text-xs text-muted-foreground">
           {new Date().toUTCString()}

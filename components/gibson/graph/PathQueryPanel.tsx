@@ -215,7 +215,7 @@ export function PathQueryPanel({ nodes, initialSourceNode, onPathsFound }: PathQ
           {resultCount !== null && (
             <span className={cn(
               "ml-1 px-1.5 rounded text-xs",
-              resultCount > 0 ? "bg-green-500/20 text-green-400" : "bg-muted text-muted-foreground"
+              resultCount > 0 ? "bg-highlight/20 text-highlight" : "bg-muted text-muted-foreground"
             )}>
               {resultCount} path{resultCount !== 1 ? 's' : ''}
             </span>

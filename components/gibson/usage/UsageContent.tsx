@@ -209,7 +209,7 @@ export function UsageContent({ fromParam, toParam, scopeParam }: Props) {
           </Tabs>
 
           {staleAsOfUnix > 0 && (
-            <p className="mt-4 text-xs text-amber-600 dark:text-amber-400">
+            <p className="mt-4 text-xs text-alt dark:text-alt">
               Data may be up to{" "}
               {Math.round((Date.now() / 1000 - staleAsOfUnix) / 60)} minutes
               old — the upstream observability store was briefly unavailable.

@@ -279,8 +279,8 @@ export const SearchAndReplace = Extension.create<
 
   addOptions() {
     return {
-      searchResultClass: " bg-yellow-200",
-      selectedResultClass: "bg-yellow-500",
+      searchResultClass: " bg-alt",
+      selectedResultClass: "bg-alt",
       disableRegex: true,
     };
   },

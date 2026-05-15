@@ -11,7 +11,7 @@ import Link from "next/link";
 export default function DocsNotFound() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-16 font-mono">
-      <h1 className="text-2xl font-bold text-green-300">Page not found</h1>
+      <h1 className="text-2xl font-bold text-highlight">Page not found</h1>
       <p className="text-sm text-muted-foreground">
         That docs page does not exist (yet). It may have moved, or been
         renamed — open the sidebar and pick another topic, or head back to
@@ -19,7 +19,7 @@ export default function DocsNotFound() {
       </p>
       <Link
         href="/docs"
-        className="w-fit text-sm text-green-300 underline underline-offset-4 hover:text-green-200"
+        className="w-fit text-sm text-highlight underline underline-offset-4 hover:text-highlight"
       >
         /docs
       </Link>

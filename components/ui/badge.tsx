@@ -19,10 +19,10 @@ const badgeVariants = cva(
         link: "text-primary underline-offset-4 [a&]:hover:underline",
         // custom variants
         warning:
-          "border border-orange-400 bg-orange-50 text-orange-800 [a&]:hover:bg-orange-500/90 focus-visible:ring-orange-500/20 dark:focus-visible:ring-orange-500/40 dark:bg-orange-900/70 dark:text-white/80",
-        info: "border border-blue-400 bg-blue-50 text-blue-800 [a&]:hover:bg-blue-500/90 focus-visible:ring-blue-500/20 dark:focus-visible:ring-blue-500/40 dark:bg-blue-900/70 dark:text-white/80",
+          "border border-alt/40 bg-alt text-alt [a&]:hover:bg-alt/90 focus-visible:ring-alt/20 dark:focus-visible:ring-alt/40 dark:bg-alt/70 dark:text-white/80",
+        info: "border border-link/40 bg-link text-link [a&]:hover:bg-link/90 focus-visible:ring-link/20 dark:focus-visible:ring-link/40 dark:bg-link/70 dark:text-white/80",
         success:
-          "border border-green-400 bg-green-50 text-green-800 [a&]:hover:bg-green-500/90 focus-visible:ring-green-500/20 dark:focus-visible:ring-green-500/40 dark:bg-green-900/70 dark:text-white/80"
+          "border border-highlight/40 bg-highlight text-highlight [a&]:hover:bg-highlight/90 focus-visible:ring-highlight/20 dark:focus-visible:ring-highlight/40 dark:bg-highlight/70 dark:text-white/80"
       }
     },
     defaultVariants: {

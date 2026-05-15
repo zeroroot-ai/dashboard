@@ -39,11 +39,11 @@ const SEVERITY_ORDER: Record<FindingSeverity, number> = {
 };
 
 const SEVERITY_BADGE_CLASS: Record<FindingSeverity, string> = {
-  critical: "border-red-500 bg-red-950/60 text-red-400",
-  high: "border-orange-500 bg-orange-950/60 text-orange-400",
-  medium: "border-yellow-500 bg-yellow-950/60 text-yellow-400",
-  low: "border-green-500 bg-green-950/60 text-green-400",
-  info: "border-zinc-500 bg-zinc-800/60 text-zinc-400",
+  critical: "border-destructive/40 bg-destructive/10/60 text-destructive",
+  high: "border-alt/40 bg-alt/10/60 text-alt",
+  medium: "border-alt/40 bg-alt/10/60 text-alt",
+  low: "border-highlight/40 bg-highlight/10/60 text-highlight",
+  info: "border-border bg-muted/60 text-muted-foreground",
 };
 
 const SEVERITY_LABELS: Record<FindingSeverity, string> = {
@@ -79,9 +79,9 @@ function SortIcon({
     return <ArrowUpDown className="ml-1 inline size-3 opacity-40" />;
   }
   return sortDir === "asc" ? (
-    <ChevronUp className="ml-1 inline size-3 text-green-400" />
+    <ChevronUp className="ml-1 inline size-3 text-highlight" />
   ) : (
-    <ChevronDown className="ml-1 inline size-3 text-green-400" />
+    <ChevronDown className="ml-1 inline size-3 text-highlight" />
   );
 }
 
@@ -236,14 +236,14 @@ export function FindingsContent() {
                   className={
                     enabledSeverities.has(sev)
                       ? sev === "critical"
-                        ? "data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+                        ? "data-[state=checked]:bg-destructive data-[state=checked]:border-destructive/40"
                         : sev === "high"
-                        ? "data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                        ? "data-[state=checked]:bg-alt data-[state=checked]:border-alt/40"
                         : sev === "medium"
-                        ? "data-[state=checked]:bg-yellow-500 data-[state=checked]:border-yellow-500"
+                        ? "data-[state=checked]:bg-alt data-[state=checked]:border-alt/40"
                         : sev === "low"
-                        ? "data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                        : "data-[state=checked]:bg-zinc-500 data-[state=checked]:border-zinc-500"
+                        ? "data-[state=checked]:bg-highlight data-[state=checked]:border-highlight/40"
+                        : "data-[state=checked]:bg-muted data-[state=checked]:border-border"
                       : ""
                   }
                 />
@@ -287,7 +287,7 @@ export function FindingsContent() {
         <div className="glass-hack rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="border-b border-green-900/30 hover:bg-transparent">
+              <TableRow className="border-b border-highlight/30 hover:bg-transparent">
                 {(
                   [
                     { field: "severity" as SortField, label: "Severity" },
@@ -300,7 +300,7 @@ export function FindingsContent() {
                 ).map(({ field, label }) => (
                   <TableHead
                     key={field}
-                    className="text-muted-foreground cursor-pointer select-none text-xs uppercase tracking-wider hover:text-green-400 transition-colors"
+                    className="text-muted-foreground cursor-pointer select-none text-xs uppercase tracking-wider hover:text-highlight transition-colors"
                     onClick={() => handleSort(field)}
                   >
                     {label}
@@ -323,7 +323,7 @@ export function FindingsContent() {
                 visibleFindings.map((finding) => (
                   <TableRow
                     key={finding.id}
-                    className="border-b border-green-900/20 hover:bg-green-950/20 transition-colors"
+                    className="border-b border-highlight/20 hover:bg-highlight/10/20 transition-colors"
                   >
                     <TableCell>
                       <SeverityBadge severity={finding.severity} />
@@ -363,8 +363,8 @@ export function FindingsContent() {
       {!isLoading && !isError && (
         <p className="text-muted-foreground px-1 text-xs">
           Showing{" "}
-          <span className="text-green-400 font-medium">{visibleFindings.length}</span> of{" "}
-          <span className="text-green-400 font-medium">{data?.total ?? 0}</span> findings
+          <span className="text-highlight font-medium">{visibleFindings.length}</span> of{" "}
+          <span className="text-highlight font-medium">{data?.total ?? 0}</span> findings
         </p>
       )}
 

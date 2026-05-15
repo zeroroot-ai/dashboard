@@ -16,19 +16,19 @@ interface BillingPageProps {
 function BillingStatusBadge({ status }: { status?: BillingStatus['status'] }) {
   if (!status) {
     return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-800 text-gray-300">
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
         No billing
       </span>
     );
   }
 
   const colors: Record<NonNullable<BillingStatus['status']>, string> = {
-    trialing: 'bg-blue-900 text-blue-200',
-    active: 'bg-green-900 text-green-200',
-    past_due: 'bg-amber-900 text-amber-200',
-    cancelled: 'bg-red-900 text-red-200',
-    incomplete: 'bg-yellow-900 text-yellow-200',
-    incomplete_expired: 'bg-red-900 text-red-300',
+    trialing: 'bg-link text-link',
+    active: 'bg-highlight text-highlight',
+    past_due: 'bg-alt text-alt',
+    cancelled: 'bg-destructive text-destructive',
+    incomplete: 'bg-alt text-alt',
+    incomplete_expired: 'bg-destructive text-destructive',
   };
 
   const labels: Record<NonNullable<BillingStatus['status']>, string> = {
@@ -73,8 +73,8 @@ function DismissibleBanner({
 
   const colors =
     variant === 'amber'
-      ? 'bg-amber-950 border-amber-800 text-amber-200'
-      : 'bg-blue-950 border-blue-800 text-blue-200';
+      ? 'bg-alt/10 border-alt/40 text-alt'
+      : 'bg-link/10 border-link/40 text-link';
 
   return (
     <div className={`border rounded-lg p-4 mb-4 flex items-start justify-between ${colors}`}>

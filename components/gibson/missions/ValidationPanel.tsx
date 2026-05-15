@@ -83,11 +83,11 @@ export function ValidationPanel({ errors, warnings, parsed, isValid }: Validatio
       {/* Errors */}
       {hasErrors && (
         <div className="space-y-1">
-          <p className="text-xs font-medium text-red-500 uppercase tracking-wide">Errors</p>
+          <p className="text-xs font-medium text-destructive uppercase tracking-wide">Errors</p>
           <div className="max-h-64 overflow-y-auto space-y-2">
             {errors.map((err, i) => (
               <div key={i} className="flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
                 <Badge variant="outline" className="font-mono text-xs shrink-0">
                   L{err.line}
                 </Badge>
@@ -101,11 +101,11 @@ export function ValidationPanel({ errors, warnings, parsed, isValid }: Validatio
       {/* Warnings */}
       {hasWarnings && (
         <div className="space-y-1">
-          <p className="text-xs font-medium text-amber-500 uppercase tracking-wide">Warnings</p>
+          <p className="text-xs font-medium text-alt uppercase tracking-wide">Warnings</p>
           <div className="max-h-64 overflow-y-auto space-y-2">
             {warnings.map((warn, i) => (
               <div key={i} className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                <AlertTriangle className="h-4 w-4 text-alt shrink-0 mt-0.5" />
                 <Badge variant="outline" className="font-mono text-xs shrink-0">
                   L{warn.line}
                 </Badge>
