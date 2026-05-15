@@ -263,7 +263,14 @@ When an intentional design change lands:
 3. Review the regenerated PNGs in the diff — every changed pixel should be expected.
 4. Commit the baselines alongside the design change. CI will compare future PRs against the new baseline.
 
-Authenticated routes are NOT covered today. They require a session-plus-daemon mock harness which is a separate slice; once that exists, a sibling `e2e/visual/auth-routes.spec.ts` extends coverage with the same theme-cookie + screenshot pattern.
+#### Auth-route coverage
+
+`e2e/visual/auth-routes.spec.ts` covers `/dashboard`, `/dashboard/pages/missions`, `/dashboard/pages/findings`, `/dashboard/pages/settings/account` in both modes. Tests are **gated behind `E2E_VISUAL_AUTH=1` + `E2E_AUTH_COOKIE`** because they need an Auth.js session cookie minted before navigation. Two ways to satisfy that prerequisite:
+
+- **Local dev against the Kind cluster:** sign in to the dashboard in your browser, copy the `__Secure-authjs.session-token` cookie value from devtools (Application → Cookies → http://localhost:30443), export as `E2E_AUTH_COOKIE`. Run with `E2E_VISUAL_AUTH=1 pnpm test:visual`.
+- **CI / fully-offline:** requires a test-only session-encoder that uses Auth.js's `encode` helper to mint a synthetic JWE under `AUTH_SECRET` for a mock user. Adding that is a security-sensitive change (it effectively forges a session) and is tracked as a follow-up — must be guarded so it cannot activate in production.
+
+Until the encoder lands, CI runs only the public-route visual suite. The auth-route spec is skipped by default; the scaffolding (route list, daemon-proxy stubs, theme cookie helper, stabilisation) is in place so flipping it on is a one-line change once the encoder ships.
 
 ## Logging
 
