@@ -209,9 +209,12 @@ export async function signupAction(
     ctx.tenantSlug = slugify(ctx.input.workspaceName);
     if (!ctx.tenantSlug) {
       return await finish(ctx, "policy", {
+        // dashboard#44: user-visible copy uses "company name"; the
+        // internal code, error code, and field name stay as
+        // workspaceName/WORKSPACE_TAKEN to avoid moving downstream wiring.
         code: "INTERNAL_ERROR",
-        userMessage: "That workspace name isn't available — pick another.",
-        fieldErrors: { workspaceName: "Invalid workspace name" },
+        userMessage: "That company name isn't available — pick another.",
+        fieldErrors: { workspaceName: "Invalid company name" },
       });
     }
     const existingTenant = await safeGetTenant(ctx.tenantSlug);
@@ -219,7 +222,7 @@ export async function signupAction(
       // Deliberately vague — no info-leak on whether the owner is someone else.
       return await finish(ctx, "policy", {
         code: "WORKSPACE_TAKEN",
-        userMessage: "That workspace name isn't available — pick another.",
+        userMessage: "That company name isn't available — pick another.",
         fieldErrors: { workspaceName: "Not available" },
       });
     }

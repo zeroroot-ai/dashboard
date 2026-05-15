@@ -51,6 +51,7 @@ import { pricingDisplays } from "@/src/lib/pricing-display";
 import type { PasswordPolicy } from "@/src/lib/zitadel/admin-client";
 import { isReservedSlug, slugify } from "@/src/lib/signup/slug";
 import { useReservedNames } from "@/src/lib/signup/use-reserved-names";
+import { useTenantAvailability } from "@/src/lib/signup/use-tenant-availability";
 import { ProvisioningPanel } from "./provisioning-panel";
 import { signupInputSchema, type SignupInput } from "./types";
 
@@ -205,6 +206,13 @@ export function SignupForm({
     reservedNames,
   );
 
+  // Debounced "is this slug already a Tenant?" lookup. Mirrors the
+  // server-action WORKSPACE_TAKEN check via GET /api/auth/tenant-available
+  // so the failure becomes inline before submit (issue dashboard#44).
+  // The server-side check in `signupAction` stays as defense-in-depth.
+  const workspaceAvailability = useTenantAvailability(workspaceNameValue ?? "");
+  const workspaceSlugTaken = workspaceAvailability.available === false;
+
   // Prevent accidental navigation while provisioning is in progress.
   // Skip the guard once a success redirect URL is set: at that point the
   // panel is about to navigate intentionally (window.location.assign), and
@@ -249,7 +257,7 @@ export function SignupForm({
       if (isReservedSlug(submitSlug, reservedNames)) {
         form.setError("workspaceName", {
           type: "manual",
-          message: `"${submitSlug}" is reserved. Pick a different workspace name.`,
+          message: `"${submitSlug}" is reserved. Pick a different company name.`,
         });
         fieldRefs.current.workspaceName?.focus();
         return;
@@ -515,13 +523,17 @@ export function SignupForm({
                 )}
               />
 
-              {/* Workspace name */}
+              {/* Company name — the form-field name (`workspaceName`),
+                  slugified Tenant CR name, and all downstream operator
+                  wiring still use the workspace terminology. Only the
+                  user-visible label/placeholder/helper text changed in
+                  dashboard#44. */}
               <FormField
                 control={form.control}
                 name="workspaceName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Workspace name</FormLabel>
+                    <FormLabel>Company Name</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -533,6 +545,11 @@ export function SignupForm({
                         autoComplete="organization"
                         disabled={isDisabled}
                         aria-required="true"
+                        aria-invalid={
+                          workspaceSlugReserved || workspaceSlugTaken
+                            ? true
+                            : undefined
+                        }
                       />
                     </FormControl>
                     <p className="text-xs text-muted-foreground">
@@ -541,6 +558,15 @@ export function SignupForm({
                     {workspaceSlugPreview && workspaceSlugReserved ? (
                       <p className="text-xs text-destructive">
                         &ldquo;{workspaceSlugPreview}&rdquo; is reserved. Pick a different name.
+                      </p>
+                    ) : null}
+                    {!workspaceSlugReserved && workspaceSlugTaken ? (
+                      <p
+                        className="text-xs text-destructive"
+                        role="alert"
+                        aria-live="polite"
+                      >
+                        That name is already in use — pick a different one.
                       </p>
                     ) : null}
                     <FormMessage />
@@ -630,7 +656,16 @@ export function SignupForm({
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isDisabled}
+                // Block submit when:
+                //   - form is mid-submit / provisioning (existing behaviour),
+                //   - the slug is on the reserved-names denylist (the K8s
+                //     admission webhook would reject this server-side),
+                //   - the inline availability lookup says the slug is taken.
+                // The dashboard#44 inline check is best-effort UX; the
+                // server-action's WORKSPACE_TAKEN check remains as
+                // defense-in-depth against the TOCTOU race between two
+                // simultaneous signups.
+                disabled={isDisabled || workspaceSlugReserved || workspaceSlugTaken}
                 aria-busy={isDisabled}
               >
                 {isDisabled
