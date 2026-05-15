@@ -28,7 +28,7 @@ function withUsage(missions: number, agents: number) {
     data: { missionsActive: missions, agentsActive: agents },
     isLoading: false,
     error: undefined,
-  } as ReturnType<typeof useTenantQuotaUsage>);
+  } as unknown as ReturnType<typeof useTenantQuotaUsage>);
 }
 
 describe('ApproachingLimitBanner', () => {

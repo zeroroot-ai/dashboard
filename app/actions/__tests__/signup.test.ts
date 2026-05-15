@@ -16,6 +16,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import type { Tenant } from '@/src/lib/k8s/types';
+
 // ---------------------------------------------------------------------------
 // Mocks — must precede the subject import so Vitest's module registry sees them
 // ---------------------------------------------------------------------------
@@ -100,10 +102,16 @@ const mockTenant = {
   spec: {},
   status: { phase: 'Active', zitadelOrgID: 'mock-org-123' },
 };
+// Real k8s().get throws on 404; the production code's safeGetTenant catches
+// the not-found error and treats it as "no existing tenant". Modeling the
+// reject (instead of resolving null) keeps the mock faithful to the real
+// `(name) => Promise<Tenant>` signature. applyTenant/applyTenantMember have
+// no observable return contract at the call sites here (the action awaits
+// them but doesn't read the value), so a cast through unknown is enough.
 vi.mock('@/src/lib/k8s/tenants', () => ({
-  applyTenant: vi.fn().mockResolvedValue(undefined),
-  applyTenantMember: vi.fn().mockResolvedValue(undefined),
-  getTenant: vi.fn().mockResolvedValue(null), // no existing tenant
+  applyTenant: vi.fn().mockResolvedValue(undefined as unknown as Tenant),
+  applyTenantMember: vi.fn().mockResolvedValue(undefined as unknown as Tenant),
+  getTenant: vi.fn().mockRejectedValue(new Error('tenant not found: 404')),
   tenantNamespace: vi.fn((slug: string) => `tenant-${slug}`),
 }));
 
@@ -146,8 +154,8 @@ function resetMocks() {
   mockSendVerificationEmail.mockClear();
   mockCreateHumanUser.mockClear();
   mockFindUserByEmail.mockClear();
-  vi.mocked(getTenant).mockResolvedValue(null);
-  vi.mocked(applyTenant).mockResolvedValue(undefined);
+  vi.mocked(getTenant).mockRejectedValue(new Error('tenant not found: 404'));
+  vi.mocked(applyTenant).mockResolvedValue(undefined as unknown as Tenant);
 }
 
 // ---------------------------------------------------------------------------
@@ -173,11 +181,16 @@ describe('signupAction — sendVerificationEmail conditional', () => {
 
       // Patch getTenant to return the mock ready tenant AFTER the first call
       // (first call returns null = no existing workspace; subsequent polls return ready).
+      // First call simulates workspace-availability check ("not found" =
+      // available); subsequent polls simulate operator-ready. Throw on the
+      // first to match real k8s 404 behavior — safeGetTenant catches it.
       let tenantCallCount = 0;
       vi.mocked(getTenant).mockImplementation(async () => {
         tenantCallCount++;
-        if (tenantCallCount === 1) return null; // workspace-availability check
-        return mockTenant as never; // operator ready
+        if (tenantCallCount === 1) {
+          throw new Error('tenant not found: 404');
+        }
+        return mockTenant as Tenant;
       });
 
       const result = await signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-000000000001');
@@ -225,11 +238,16 @@ describe('signupAction — sendVerificationEmail conditional', () => {
         email: VALID_INPUT.email,
       });
 
+      // Real k8s().get throws on 404; safeGetTenant catches "not found" errors
+      // and returns null. Modeling the throw (instead of returning null) keeps
+      // the mock faithful to the real signature `Promise<Tenant>`.
       let tenantCallCount = 0;
       vi.mocked(getTenant).mockImplementation(async () => {
         tenantCallCount++;
-        if (tenantCallCount === 1) return null;
-        return mockTenant as never;
+        if (tenantCallCount === 1) {
+          throw new Error("tenant not found: 404");
+        }
+        return mockTenant as Tenant;
       });
 
       // With emailVerified=true (current production default), sendVerificationEmail
@@ -293,11 +311,16 @@ describe('signupAction — V2 session + CreateCallback auto-login', () => {
           'http://app.test.local/api/auth/callback/zitadel?code=ABC&state=XYZ',
       });
 
+      // Real k8s().get throws on 404; safeGetTenant catches "not found" errors
+      // and returns null. Modeling the throw (instead of returning null) keeps
+      // the mock faithful to the real signature `Promise<Tenant>`.
       let tenantCallCount = 0;
       vi.mocked(getTenant).mockImplementation(async () => {
         tenantCallCount++;
-        if (tenantCallCount === 1) return null;
-        return mockTenant as never;
+        if (tenantCallCount === 1) {
+          throw new Error("tenant not found: 404");
+        }
+        return mockTenant as Tenant;
       });
 
       const result = await signupAction(
@@ -341,11 +364,16 @@ describe('signupAction — V2 session + CreateCallback auto-login', () => {
         email: VALID_INPUT.email,
       });
 
+      // Real k8s().get throws on 404; safeGetTenant catches "not found" errors
+      // and returns null. Modeling the throw (instead of returning null) keeps
+      // the mock faithful to the real signature `Promise<Tenant>`.
       let tenantCallCount = 0;
       vi.mocked(getTenant).mockImplementation(async () => {
         tenantCallCount++;
-        if (tenantCallCount === 1) return null;
-        return mockTenant as never;
+        if (tenantCallCount === 1) {
+          throw new Error("tenant not found: 404");
+        }
+        return mockTenant as Tenant;
       });
 
       const result = await signupAction(
@@ -394,11 +422,16 @@ describe('signupAction — V2 session + CreateCallback auto-login', () => {
         }),
       );
 
+      // Real k8s().get throws on 404; safeGetTenant catches "not found" errors
+      // and returns null. Modeling the throw (instead of returning null) keeps
+      // the mock faithful to the real signature `Promise<Tenant>`.
       let tenantCallCount = 0;
       vi.mocked(getTenant).mockImplementation(async () => {
         tenantCallCount++;
-        if (tenantCallCount === 1) return null;
-        return mockTenant as never;
+        if (tenantCallCount === 1) {
+          throw new Error("tenant not found: 404");
+        }
+        return mockTenant as Tenant;
       });
 
       const result = await signupAction(
