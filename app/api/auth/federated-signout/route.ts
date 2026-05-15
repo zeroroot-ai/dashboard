@@ -14,9 +14,22 @@
  *  2. Kills its own session cookie on `auth.zero-day.local`
  *  3. Redirects the browser back to our post_logout URL
  *
- * The `post_logout_redirect_uri` must be pre-registered on the OIDC client —
- * the Zitadel bootstrap Job registers `https://<dashboard-host>/` and
- * `http://localhost:3000/` for exactly this purpose.
+ * Multi-tenant note: Zitadel maintains one SSO session per user, not one per
+ * tenant. RP-initiated `end_session` terminates that single session globally,
+ * which is the intended logout-from-all-tenants behavior. The dashboard-side
+ * tenant-scope cookie (`gibson_active_tenant`) is cleared on this response too
+ * so the next sign-in re-runs default-tenant resolution / picker logic rather
+ * than auto-routing the user back into the tenant they had selected at logout
+ * time.
+ *
+ * The `post_logout_redirect_uri` MUST be pre-registered on the Zitadel OIDC
+ * client byte-for-byte. The chart owns both sides of that contract: the
+ * `gibson-dashboard` OIDC client registration (gibson-operators chart) and the
+ * `POST_LOGOUT_REDIRECT_URI` env on this pod (gibson-workloads chart) read from
+ * the same source-of-truth value. This route sends the env verbatim — no path
+ * append, no origin synthesis from `req.nextUrl.origin`. The previous shape
+ * appended a trailing slash and silently drifted from the registration, which
+ * Zitadel rejected with `invalid_request / post_logout_redirect_uri invalid`.
  *
  * Why this lives at a custom path rather than as a middleware hook on
  * next-auth's `/api/auth/signout`: Auth.js's built-in `signOut` server action
@@ -25,10 +38,8 @@
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { auth, signOut } from "@/auth";
-
-const ZITADEL_ISSUER =
-  process.env.ZITADEL_ISSUER ?? "https://auth.zero-day.local";
-const POST_LOGOUT_REDIRECT_PATH = "/";
+import { ACTIVE_TENANT_COOKIE_NAME } from "@/src/lib/auth/active-tenant";
+import { logger } from "@/src/lib/logger";
 
 // Auth.js v5 cookie names. Names differ in production (Secure cookie prefix)
 // vs. development (no prefix). We clear both forms defensively.
@@ -66,17 +77,41 @@ function clearAuthCookies(res: NextResponse): void {
   }
 }
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
+function clearActiveTenantCookie(res: NextResponse): void {
+  // Mirror the attributes setActiveTenant uses when writing the cookie
+  // (src/lib/auth/active-tenant.ts) so the browser accepts the overwrite.
+  // Path=/ + sameSite=lax + httpOnly + secure-in-production.
+  res.cookies.set(ACTIVE_TENANT_COOKIE_NAME, "", {
+    maxAge: 0,
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
+}
+
+export async function GET(_req: NextRequest): Promise<NextResponse> {
   const session = await auth();
   const idToken = session?.idToken;
   const clientId = process.env.ZITADEL_DASHBOARD_CLIENT_ID;
 
-  // Compute the absolute post-logout redirect URL from AUTH_URL / the
-  // request's own origin so it matches what was registered with Zitadel.
-  const postLogoutRedirectUri = new URL(
-    POST_LOGOUT_REDIRECT_PATH,
-    process.env.AUTH_URL ?? req.nextUrl.origin,
-  ).toString();
+  // The exact URI Zitadel has registered for this OIDC client. The chart
+  // (gibson-workloads dashboard.auth.postLogoutRedirectURIs) projects the
+  // first registered URI into this env verbatim, and the gibson-operators
+  // chart registers the same list on the OIDC client. Sending anything
+  // else (origin synthesis, path append, trailing-slash drift) makes
+  // Zitadel reject the logout with `invalid_request`.
+  const postLogoutRedirectUri = process.env.POST_LOGOUT_REDIRECT_URI;
+  if (!postLogoutRedirectUri) {
+    logger.error(
+      { route: "auth/federated-signout" },
+      "POST_LOGOUT_REDIRECT_URI env is unset — dashboard cannot complete RP-initiated logout. Check helm/gibson-workloads dashboard.auth.postLogoutRedirectURIs",
+    );
+    return NextResponse.json(
+      { error: "logout_misconfigured" },
+      { status: 500 },
+    );
+  }
 
   // Clear the Auth.js session cookie first. Pass redirect: false so we own
   // the final redirect (to Zitadel's end_session_endpoint), not Auth.js.
@@ -86,7 +121,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   // SSO cookie remains and silently re-authenticates the user on the next
   // /login. id_token_hint is the preferred shape; client_id is the documented
   // fallback when the hint is unavailable.
-  const endSession = new URL(`${ZITADEL_ISSUER}/oidc/v1/end_session`);
+  const zitadelIssuer =
+    process.env.ZITADEL_ISSUER ?? "https://auth.zero-day.local";
+  const endSession = new URL(`${zitadelIssuer}/oidc/v1/end_session`);
   if (idToken) {
     endSession.searchParams.set("id_token_hint", idToken);
   } else if (clientId) {
@@ -104,6 +141,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   // letting middleware see a still-valid JWT on the next request and bouncing
   // the user straight back into /dashboard.
   clearAuthCookies(res);
+  // Multi-tenant: also drop the active-tenant cookie so the next sign-in
+  // runs default-tenant resolution / picker afresh, not auto-routing the
+  // user back into the tenant they were viewing at logout time.
+  clearActiveTenantCookie(res);
   return res;
 }
 
