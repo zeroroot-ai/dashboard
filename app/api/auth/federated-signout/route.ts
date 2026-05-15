@@ -93,7 +93,16 @@ function clearActiveTenantCookie(res: NextResponse): void {
 export async function GET(_req: NextRequest): Promise<NextResponse> {
   const session = await auth();
   const idToken = session?.idToken;
-  const clientId = process.env.ZITADEL_DASHBOARD_CLIENT_ID;
+
+  // The user-flow OIDC client (gibson-dashboard, registered as an
+  // authorization-code App in Zitadel). This is the client whose
+  // postLogoutRedirectURIs the chart registers; sending end_session
+  // with any other client_id (notably ZITADEL_DASHBOARD_CLIENT_ID,
+  // which points at the gibson-dashboard-service MACHINE_USER for
+  // s2s client_credentials and has zero postLogoutRedirectURIs)
+  // makes Zitadel reject with `invalid_request /
+  // post_logout_redirect_uri invalid`. See dashboard#76.
+  const clientId = process.env.ZITADEL_CLIENT_ID;
 
   // The exact URI Zitadel has registered for this OIDC client. The chart
   // (gibson-workloads dashboard.auth.postLogoutRedirectURIs) projects the
@@ -106,6 +115,25 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
     logger.error(
       { route: "auth/federated-signout" },
       "POST_LOGOUT_REDIRECT_URI env is unset — dashboard cannot complete RP-initiated logout. Check helm/gibson-workloads dashboard.auth.postLogoutRedirectURIs",
+    );
+    return NextResponse.json(
+      { error: "logout_misconfigured" },
+      { status: 500 },
+    );
+  }
+
+  // We need EITHER an id_token_hint OR a client_id for Zitadel to
+  // accept the end_session call. id_token_hint is preferred (Zitadel
+  // resolves the client by aud claim); client_id is the documented
+  // fallback for sessions that have lost the id_token (refresh
+  // cycles, JWT-shape changes, etc.). If neither is available we
+  // can't drive a real RP-initiated logout — fail loud rather than
+  // silently sending an unauthenticated end_session that Zitadel
+  // would reject anyway.
+  if (!idToken && !clientId) {
+    logger.error(
+      { route: "auth/federated-signout" },
+      "ZITADEL_CLIENT_ID env is unset AND session has no idToken — cannot drive RP-initiated logout. Check helm/gibson-workloads dashboard ZITADEL_CLIENT_ID wiring.",
     );
     return NextResponse.json(
       { error: "logout_misconfigured" },

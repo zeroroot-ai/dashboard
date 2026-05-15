@@ -76,7 +76,13 @@ describe('GET /api/auth/federated-signout', () => {
     mockAuth.mockResolvedValue({ idToken: 'test-id-token' });
     process.env.POST_LOGOUT_REDIRECT_URI = 'https://app.zero-day.local:30443';
     process.env.ZITADEL_ISSUER = 'https://auth.zero-day.local:30443';
-    process.env.ZITADEL_DASHBOARD_CLIENT_ID = 'test-client-id';
+    // dashboard#76: the route reads ZITADEL_CLIENT_ID (the user-flow OIDC App)
+    // for the client_id fallback, NOT ZITADEL_DASHBOARD_CLIENT_ID (a MACHINE_USER
+    // for s2s client_credentials, which has no postLogoutRedirectURIs).
+    process.env.ZITADEL_CLIENT_ID = 'test-user-flow-client-id';
+    // Set the wrong env too so we'd catch a future regression that reaches
+    // for the machine-user client by mistake.
+    process.env.ZITADEL_DASHBOARD_CLIENT_ID = 'wrong-machine-user-client-id';
   });
 
   afterEach(() => {
@@ -104,15 +110,38 @@ describe('GET /api/auth/federated-signout', () => {
     expect(url.searchParams.get('id_token_hint')).toBe('test-id-token');
   });
 
-  it('falls back to client_id when id_token_hint is unavailable', async () => {
+  it('falls back to the user-flow client_id (ZITADEL_CLIENT_ID) when id_token_hint is unavailable', async () => {
     mockAuth.mockResolvedValue({ idToken: undefined });
     const res = await GET(makeRequest());
     const url = new URL(res.headers.get('location')!);
     expect(url.searchParams.get('id_token_hint')).toBeNull();
-    expect(url.searchParams.get('client_id')).toBe('test-client-id');
+    // dashboard#76 regression guard — must NOT use the machine-user client
+    // (ZITADEL_DASHBOARD_CLIENT_ID), which has no postLogoutRedirectURIs and
+    // would make Zitadel reject every logout with
+    // {"error":"invalid_request","error_description":"post_logout_redirect_uri invalid"}.
+    expect(url.searchParams.get('client_id')).toBe('test-user-flow-client-id');
+    expect(url.searchParams.get('client_id')).not.toBe('wrong-machine-user-client-id');
     expect(url.searchParams.get('post_logout_redirect_uri')).toBe(
       'https://app.zero-day.local:30443',
     );
+  });
+
+  it('fails loud (500) when no idToken AND ZITADEL_CLIENT_ID is unset — no silent unauthenticated end_session', async () => {
+    // Both end_session client-resolution inputs are missing: an
+    // unauthenticated end_session call would be rejected by Zitadel anyway
+    // and would partially trash the user's local session in the process
+    // (Auth.js cookie cleared but Zitadel session intact). Better to refuse
+    // and surface the misconfiguration. See dashboard#76.
+    mockAuth.mockResolvedValue({ idToken: undefined });
+    delete process.env.ZITADEL_CLIENT_ID;
+    const res = await GET(makeRequest());
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body).toEqual({ error: 'logout_misconfigured' });
+    expect(mockLoggerError).toHaveBeenCalledTimes(1);
+    // signOut MUST NOT have been called — same invariant as the
+    // POST_LOGOUT_REDIRECT_URI-missing branch.
+    expect(mockSignOut).not.toHaveBeenCalled();
   });
 
   it('clears the gibson_active_tenant cookie on the redirect response', async () => {
