@@ -37,7 +37,7 @@ interface NotificationItem {
 
 const severityColor: Record<FindingSeverity, string> = {
   critical: "text-destructive",
-  high: "text-alt",
+  high: "text-destructive",
   medium: "text-alt",
   low: "text-link",
   info: "text-muted-foreground"
