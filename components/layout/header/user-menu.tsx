@@ -1,12 +1,25 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
+
 import { useSession } from "@/src/lib/session-client";
 // Logout uses the federated-signout route, not next-auth's client-side
 // signOut(). signOut() only clears the dashboard's Auth.js cookie — Zitadel
 // keeps a parallel SSO cookie that silently re-authenticates the next call
 // to /authorize. /api/auth/federated-signout clears Auth.js AND redirects
 // to Zitadel's end_session_endpoint with id_token_hint.
-import { BadgeCheck, Bell, ChevronRightIcon, CreditCard, LogOut } from "lucide-react";
+import {
+  BadgeCheck,
+  Bell,
+  ChevronRightIcon,
+  CreditCard,
+  LogOut,
+  MonitorIcon,
+  MoonIcon,
+  Palette,
+  SunIcon,
+} from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -15,12 +28,78 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTierQuota } from "@/src/hooks/useTierQuota";
+
+/**
+ * Per-decision (#57 sub-decision 2): theme persistence is per-user, syncing
+ * across devices. The dashboard's only existing user-pref persistence layer
+ * is the `theme_*` cookie pattern (per-browser). Until a real per-user pref
+ * store is introduced, we mirror next-themes' localStorage write to a
+ * `theme_choice` cookie so layout.tsx can read it server-side and avoid the
+ * dark-flash on light-themed signed-in sessions. Marked follow-up.
+ */
+function setThemeCookie(value: string | null) {
+  if (typeof document === "undefined") return;
+  if (!value) {
+    document.cookie =
+      "theme_choice=; path=/; max-age=0; SameSite=Lax" +
+      (window.location.protocol === "https:" ? "; Secure" : "");
+    return;
+  }
+  document.cookie =
+    `theme_choice=${value}; path=/; max-age=31536000; SameSite=Lax` +
+    (window.location.protocol === "https:" ? "; Secure" : "");
+}
+
+function ThemePicker() {
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger>
+        <Palette />
+        Theme
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent>
+        <DropdownMenuRadioGroup
+          value={mounted ? (theme ?? "system") : "system"}
+          onValueChange={(value) => {
+            setTheme(value);
+            setThemeCookie(value);
+          }}
+        >
+          <DropdownMenuRadioItem value="light">
+            <SunIcon className="mr-2 h-4 w-4" />
+            Light
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="dark">
+            <MoonIcon className="mr-2 h-4 w-4" />
+            Dark
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="system">
+            <MonitorIcon className="mr-2 h-4 w-4" />
+            System
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
+  );
+}
 
 function getInitials(name?: string | null): string {
   if (!name) return "??";
@@ -83,6 +162,7 @@ export default function UserMenu() {
             <Bell />
             Notifications
           </DropdownMenuItem>
+          <ThemePicker />
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem

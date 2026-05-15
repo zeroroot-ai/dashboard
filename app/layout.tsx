@@ -20,6 +20,7 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies();
   const nonce = (await headers()).get('x-nonce') ?? undefined;
+  const themeChoice = cookieStore.get("theme_choice")?.value ?? "dark";
   const themeSettings = {
     preset: (cookieStore.get("theme_preset")?.value ?? DEFAULT_THEME.preset) as any,
     scale: (cookieStore.get("theme_scale")?.value ?? DEFAULT_THEME.scale) as any,
@@ -42,7 +43,7 @@ export default async function RootLayout({
         {...bodyAttributes}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme={themeChoice}
           enableSystem
           disableTransitionOnChange
           nonce={nonce}>

@@ -44,7 +44,7 @@ export default function Search() {
           type="search"
           onFocus={() => setOpen(true)}
         />
-        <div className="absolute top-1/2 right-2 hidden -translate-y-1/2 items-center gap-0.5 rounded-sm bg-muted p-1 font-mono text-xs font-medium sm:flex dark:bg-muted">
+        <div className="absolute top-1/2 right-2 hidden -translate-y-1/2 items-center gap-0.5 rounded-sm bg-muted p-1 font-mono text-xs font-medium sm:flex">
           <CommandIcon className="size-3" />
           <span>k</span>
         </div>

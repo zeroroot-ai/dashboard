@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useEffect } from "react";
-import { ShieldIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useIsTablet } from "@/hooks/use-mobile";
 
@@ -45,11 +44,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton
               className="hover:text-foreground h-10 cursor-default group-data-[collapsible=icon]:px-0!"
               tooltip={currentTenant?.displayName ?? "No workspace"}>
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground group-data-[collapsible=icon]:size-8">
-                <ShieldIcon className="size-4" />
+              <div className="flex size-7 shrink-0 items-center justify-center rounded-md group-data-[collapsible=icon]:size-8">
+                <span
+                  aria-hidden="true"
+                  className="font-display text-2xl font-bold leading-none text-highlight text-zd-glow group-data-[collapsible=icon]:text-3xl"
+                >
+                  Z
+                </span>
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="text-foreground truncate font-semibold">Zero Day AI</span>
+                <span className="font-display text-foreground truncate font-semibold">Zero Day AI</span>
                 <span className="text-muted-foreground truncate text-xs">
                   {tenantLoading ? <Skeleton className="h-3 w-20" /> : (currentTenant?.displayName ?? "No workspace")}
                 </span>
