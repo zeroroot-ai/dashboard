@@ -245,6 +245,26 @@ When migrating a file (slices #54-#59), the drain procedure is:
 
 Adding a new entry to the allowlist is intentionally NOT automated. If a genuine exception exists, hand-edit the JSON file — that forces a review-time conversation about why the token system can't accommodate the case.
 
+### Visual regression — the snapshot suite
+
+`e2e/visual/` ships Playwright screenshot tests that capture every customer-facing route in both light and dark mode. The suite runs as part of `pnpm test:e2e`; visual diffs fail the run.
+
+```bash
+pnpm test:visual          # run snapshots; fail on diff
+pnpm test:visual:update   # regenerate baselines after an intentional design change
+```
+
+Baselines live under `e2e/visual/__screenshots__/<platform>/`. The theme is selected via the `theme_choice` cookie (the same cookie #57 wired into `app/layout.tsx`), so each route is captured against the rendered SSR theme — no FOUC, no animation noise (the spec pauses every animation + applies `prefers-reduced-motion: reduce` before sampling).
+
+When an intentional design change lands:
+
+1. Make the visual change (token tweak, layout edit, etc.).
+2. Run `pnpm test:visual:update` to regenerate baselines.
+3. Review the regenerated PNGs in the diff — every changed pixel should be expected.
+4. Commit the baselines alongside the design change. CI will compare future PRs against the new baseline.
+
+Authenticated routes are NOT covered today. They require a session-plus-daemon mock harness which is a separate slice; once that exists, a sibling `e2e/visual/auth-routes.spec.ts` extends coverage with the same theme-cookie + screenshot pattern.
+
 ## Logging
 
 The dashboard uses a single canonical structured logger at
