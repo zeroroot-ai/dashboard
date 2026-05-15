@@ -36,11 +36,11 @@ const STEP_LABELS: Record<string, string> = {
 function StepIcon({ status }: { status: ProvisioningStep["status"] }) {
   switch (status) {
     case "running":
-      return <Loader2 className="h-5 w-5 animate-spin text-blue-500 shrink-0" />;
+      return <Loader2 className="h-5 w-5 animate-spin text-link shrink-0" />;
     case "completed":
-      return <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />;
+      return <CheckCircle2 className="h-5 w-5 text-highlight shrink-0" />;
     case "failed":
-      return <XCircle className="h-5 w-5 text-red-500 shrink-0" />;
+      return <XCircle className="h-5 w-5 text-destructive shrink-0" />;
     case "pending":
     default:
       return <Circle className="h-5 w-5 text-muted-foreground shrink-0" />;
@@ -202,7 +202,7 @@ function ProvisioningStatus() {
                         step.status === "completed"
                           ? "text-sm"
                           : step.status === "failed"
-                          ? "text-sm text-red-500"
+                          ? "text-sm text-destructive"
                           : step.status === "running"
                           ? "text-sm font-medium"
                           : "text-sm text-muted-foreground"
@@ -217,7 +217,7 @@ function ProvisioningStatus() {
               {/* "Almost done..." — shown when all three real steps complete */}
               {allStepsCompleted && (
                 <li className="flex items-center gap-3">
-                  <Loader2 className="h-5 w-5 animate-spin text-blue-500 shrink-0" />
+                  <Loader2 className="h-5 w-5 animate-spin text-link shrink-0" />
                   <span className="text-sm font-medium">Almost done...</span>
                 </li>
               )}
@@ -227,16 +227,16 @@ function ProvisioningStatus() {
           {/* Loading state before first response */}
           {!status && !networkError && !timedOut && (
             <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin text-blue-500 shrink-0" />
+              <Loader2 className="h-5 w-5 animate-spin text-link shrink-0" />
               <span className="text-sm text-muted-foreground">Starting provisioning...</span>
             </div>
           )}
 
           {/* Success message — briefly visible before auto-login redirect */}
           {isComplete && (
-            <div className="flex items-center gap-3 rounded-md bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 px-4 py-3">
-              <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
-              <p className="text-sm text-green-700 dark:text-green-400">
+            <div className="flex items-center gap-3 rounded-md bg-highlight/10 border border-highlight/40 px-4 py-3">
+              <CheckCircle2 className="h-5 w-5 text-highlight shrink-0" />
+              <p className="text-sm text-highlight">
                 Workspace provisioned. Signing you in...
               </p>
             </div>
@@ -244,14 +244,14 @@ function ProvisioningStatus() {
 
           {/* Failure message */}
           {isFailed && !isComplete && (
-            <div className="rounded-md bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 px-4 py-3 space-y-2">
+            <div className="rounded-md bg-destructive/10 border border-destructive/40 px-4 py-3 space-y-2">
               <div className="flex items-center gap-2">
-                <XCircle className="h-5 w-5 text-red-500 shrink-0" />
-                <p className="text-sm font-medium text-red-700 dark:text-red-400">
+                <XCircle className="h-5 w-5 text-destructive shrink-0" />
+                <p className="text-sm font-medium text-destructive">
                   We had trouble setting up your workspace.
                 </p>
               </div>
-              <p className="text-sm text-red-600 dark:text-red-500 pl-7">
+              <p className="text-sm text-destructive pl-7">
                 Your account has been created. Please{" "}
                 <Link
                   href="/login"

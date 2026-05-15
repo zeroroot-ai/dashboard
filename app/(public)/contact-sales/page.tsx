@@ -100,7 +100,7 @@ export default function ContactSalesPage() {
         <CardContent>
           {submitted ? (
             <div className="flex flex-col items-center gap-4 py-8 text-center">
-              <CheckCircle2 className="h-12 w-12 text-green-500" />
+              <CheckCircle2 className="h-12 w-12 text-highlight" />
               <p className="text-base font-medium">
                 Thanks! We&apos;ll be in touch within 24 hours.
               </p>

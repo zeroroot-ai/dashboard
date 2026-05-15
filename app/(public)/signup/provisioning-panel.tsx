@@ -157,7 +157,7 @@ function StepIcon({ status }: { status: GroupStatus }) {
     case "done":
       return (
         <CheckCircle2
-          className="h-5 w-5 shrink-0 text-green-500"
+          className="h-5 w-5 shrink-0 text-highlight"
           aria-hidden="true"
         />
       );
@@ -386,12 +386,12 @@ export function ProvisioningPanel({
 
         {/* Success state */}
         {isOk && (
-          <div className="flex items-center gap-3 rounded-md bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 px-4 py-3">
+          <div className="flex items-center gap-3 rounded-md bg-highlight/10 border border-highlight/40 px-4 py-3">
             <CheckCircle2
-              className="h-5 w-5 shrink-0 text-green-500"
+              className="h-5 w-5 shrink-0 text-highlight"
               aria-hidden="true"
             />
-            <p className="text-sm text-green-700 dark:text-green-400">
+            <p className="text-sm text-highlight">
               Workspace provisioned. Signing you in&hellip;
             </p>
           </div>
@@ -406,13 +406,13 @@ export function ProvisioningPanel({
           const isVaultFailure =
             progress?.error?.code === "SECRETS_NAMESPACE_FAILED";
           return (
-            <div className="rounded-md bg-amber-500/10 border border-amber-500/30 px-4 py-3 space-y-2">
+            <div className="rounded-md bg-alt/10 border border-alt/30 px-4 py-3 space-y-2">
               <div className="flex items-center gap-2">
                 <XCircle
-                  className="h-5 w-5 shrink-0 text-amber-500"
+                  className="h-5 w-5 shrink-0 text-alt"
                   aria-hidden="true"
                 />
-                <p className="text-sm font-medium font-mono text-amber-200">
+                <p className="text-sm font-medium font-mono text-alt">
                   {isVaultFailure
                     ? "# secrets backend provisioning failed"
                     : "# one of the daemons hiccupped"}
