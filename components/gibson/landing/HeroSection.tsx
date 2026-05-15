@@ -3,7 +3,11 @@ import { Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Typewriter } from "@/components/gibson/landing/Typewriter";
 import type { TypewriterMessage } from "@/components/gibson/landing/Typewriter";
-import { GraphBackground } from "@/components/gibson/landing/GraphBackground";
+// GraphBackground intentionally not imported here.
+// Per dashboard#48 the knowledge-graph hero graphic was dropped to
+// converge with the holding-page Hugo site's terminal-first aesthetic.
+// The component file is retained in this directory in case another
+// surface ever needs it.
 
 const messages: TypewriterMessage[] = [
   {
@@ -148,13 +152,14 @@ function TerminalCard() {
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden py-20 md:py-28 px-4">
-      <GraphBackground />
+      {/* Vignette overlay tinted to the new navy gradient so the hero
+          content reads cleanly against the bg-zd-gradient body. */}
       <div
         aria-hidden="true"
         className="absolute inset-0 z-[1] pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse 52% 58% at 50% 45%, rgba(2,6,4,0.92) 0%, rgba(2,6,4,0.55) 40%, rgba(2,6,4,0) 75%)",
+            "radial-gradient(ellipse 52% 58% at 50% 45%, rgba(10,14,39,0.85) 0%, rgba(10,14,39,0.50) 40%, rgba(10,14,39,0) 75%)",
         }}
       />
 
