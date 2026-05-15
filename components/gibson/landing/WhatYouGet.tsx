@@ -29,16 +29,16 @@ export function WhatYouGet() {
   return (
     <section className="mx-auto max-w-5xl px-4 py-20 md:py-24">
       <h2 className="mb-10 font-mono text-sm md:text-base">
-        <span className="text-green-400/50 select-none">$ </span>
-        <span className="text-green-300">cat what-you-get.md</span>
+        <span className="text-highlight/50 select-none">$ </span>
+        <span className="text-highlight">cat what-you-get.md</span>
       </h2>
       <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
         {items.map(({ term, body }) => (
-          <div key={term} className="border-l border-green-500/30 pl-4">
-            <dt className="mb-1 font-mono text-base md:text-lg text-green-300">
+          <div key={term} className="border-l border-highlight/30 pl-4">
+            <dt className="mb-1 font-mono text-base md:text-lg text-highlight">
               {term}
             </dt>
-            <dd className="text-sm md:text-base leading-relaxed text-green-50/85">
+            <dd className="text-sm md:text-base leading-relaxed text-foreground/85">
               {body}
             </dd>
           </div>

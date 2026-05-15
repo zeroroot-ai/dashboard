@@ -3,11 +3,6 @@ import { Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Typewriter } from "@/components/gibson/landing/Typewriter";
 import type { TypewriterMessage } from "@/components/gibson/landing/Typewriter";
-// GraphBackground intentionally not imported here.
-// Per dashboard#48 the knowledge-graph hero graphic was dropped to
-// converge with the holding-page Hugo site's terminal-first aesthetic.
-// The component file is retained in this directory in case another
-// surface ever needs it.
 
 const messages: TypewriterMessage[] = [
   {
@@ -57,10 +52,10 @@ const terminalLines: Array<[string, string, "cmd" | "ok" | "info" | "sandbox"]> 
 ];
 
 const lineColor: Record<"cmd" | "ok" | "info" | "sandbox", string> = {
-  cmd: "text-green-300",
-  ok: "text-emerald-300",
-  info: "text-cyan-300/90",
-  sandbox: "text-amber-300/90",
+  cmd: "text-highlight",
+  ok: "text-highlight",
+  info: "text-link/90",
+  sandbox: "text-alt/90",
 };
 
 function Pulse({
@@ -74,13 +69,13 @@ function Pulse({
     <span
       className={
         amber
-          ? "text-amber-300 motion-safe:animate-pulse"
-          : "text-emerald-300 motion-safe:animate-pulse"
+          ? "text-alt motion-safe:animate-pulse"
+          : "text-highlight motion-safe:animate-pulse"
       }
       style={{
         textShadow: amber
-          ? "0 0 6px rgba(252, 211, 77, 0.6)"
-          : "0 0 6px rgba(34, 197, 94, 0.6)",
+          ? "0 0 6px color-mix(in oklch, var(--alt) 60%, transparent)"
+          : "0 0 6px color-mix(in oklch, var(--highlight) 60%, transparent)",
       }}
     >
       {char}
@@ -90,21 +85,26 @@ function Pulse({
 
 function Schematic() {
   return (
-    <div className="relative rounded-lg border border-emerald-500/25 bg-emerald-950/15 p-5 shadow-[0_0_40px_rgba(16,185,129,0.18)] backdrop-blur-md">
-      {/* corner brackets — schematic vibe, not a terminal window */}
-      <span aria-hidden="true" className="pointer-events-none absolute left-1.5 top-1.5 font-mono text-xs text-emerald-400/50">┏</span>
-      <span aria-hidden="true" className="pointer-events-none absolute right-1.5 top-1.5 font-mono text-xs text-emerald-400/50">┓</span>
-      <span aria-hidden="true" className="pointer-events-none absolute bottom-1.5 left-1.5 font-mono text-xs text-emerald-400/50">┗</span>
-      <span aria-hidden="true" className="pointer-events-none absolute bottom-1.5 right-1.5 font-mono text-xs text-emerald-400/50">┛</span>
+    <div
+      className="relative rounded-lg border border-highlight/25 bg-highlight/5 p-5 backdrop-blur-md"
+      style={{
+        boxShadow:
+          "0 0 40px color-mix(in oklch, var(--highlight) 18%, transparent)",
+      }}
+    >
+      <span aria-hidden="true" className="pointer-events-none absolute left-1.5 top-1.5 font-mono text-xs text-highlight/50">┏</span>
+      <span aria-hidden="true" className="pointer-events-none absolute right-1.5 top-1.5 font-mono text-xs text-highlight/50">┓</span>
+      <span aria-hidden="true" className="pointer-events-none absolute bottom-1.5 left-1.5 font-mono text-xs text-highlight/50">┗</span>
+      <span aria-hidden="true" className="pointer-events-none absolute bottom-1.5 right-1.5 font-mono text-xs text-highlight/50">┛</span>
 
-      <div className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-400/70">
+      <div className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.2em] text-highlight/70">
         <span>◆ split control plane</span>
         <span className="flex items-center gap-1.5">
           <Pulse char="●" /> live
         </span>
       </div>
 
-      <pre className="overflow-x-auto font-mono text-[11px] md:text-xs leading-[1.7] text-emerald-200/85">
+      <pre className="overflow-x-auto font-mono text-[11px] md:text-xs leading-[1.7] text-highlight/85">
         <code>
 {` EXECUTION PLANE           ╎    CONTROL PLANE · api.zero-day.ai\n`}
 {` ┌──────────────────┐      ╎    ┌──────────────────────┐\n`}
@@ -126,12 +126,18 @@ function Schematic() {
 
 function TerminalCard() {
   return (
-    <div className="rounded-lg border border-green-500/40 bg-black/85 shadow-[0_0_24px_rgba(34,197,94,0.15)] backdrop-blur-sm">
-      <div className="flex items-center gap-2 border-b border-green-500/25 px-4 py-2">
-        <span className="h-3 w-3 rounded-full bg-red-500/70" />
-        <span className="h-3 w-3 rounded-full bg-yellow-500/70" />
-        <span className="h-3 w-3 rounded-full bg-green-500/70" />
-        <span className="ml-3 font-mono text-xs text-green-400/60">
+    <div
+      className="rounded-lg border border-highlight/40 bg-card/85 backdrop-blur-sm"
+      style={{
+        boxShadow:
+          "0 0 24px color-mix(in oklch, var(--highlight) 15%, transparent)",
+      }}
+    >
+      <div className="flex items-center gap-2 border-b border-highlight/25 px-4 py-2">
+        <span className="h-3 w-3 rounded-full bg-destructive/70" />
+        <span className="h-3 w-3 rounded-full bg-alt/70" />
+        <span className="h-3 w-3 rounded-full bg-highlight/70" />
+        <span className="ml-3 font-mono text-xs text-highlight/60">
           ~/zero-day
         </span>
       </div>
@@ -139,7 +145,7 @@ function TerminalCard() {
         <code>
           {terminalLines.map(([prefix, text, kind], i) => (
             <span key={i} className="block">
-              <span className="select-none text-green-400/50">{prefix} </span>
+              <span className="select-none text-highlight/50">{prefix} </span>
               <span className={lineColor[kind]}>{text}</span>
             </span>
           ))}
@@ -152,25 +158,21 @@ function TerminalCard() {
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden py-20 md:py-28 px-4">
-      {/* Vignette overlay tinted to the new navy gradient so the hero
-          content reads cleanly against the bg-zd-gradient body. */}
       <div
         aria-hidden="true"
         className="absolute inset-0 z-[1] pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse 52% 58% at 50% 45%, rgba(10,14,39,0.85) 0%, rgba(10,14,39,0.50) 40%, rgba(10,14,39,0) 75%)",
+            "radial-gradient(ellipse 52% 58% at 50% 45%, color-mix(in oklch, var(--background) 85%, transparent) 0%, color-mix(in oklch, var(--background) 50%, transparent) 40%, transparent 75%)",
         }}
       />
 
       <div className="relative z-10 mx-auto max-w-6xl flex flex-col items-center gap-10">
-        {/* Split control plane: schematic (left) + real terminal session (right) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
           <Schematic />
           <TerminalCard />
         </div>
 
-        {/* Big typewriter prompt */}
         <div className="w-full text-center">
           <Typewriter
             messages={messages}
@@ -181,7 +183,6 @@ export function HeroSection() {
           />
         </div>
 
-        {/* CTAs */}
         <div className="flex flex-col items-center gap-3">
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="default" size="lg" asChild>

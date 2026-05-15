@@ -37,7 +37,6 @@ export function Typewriter({
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Detect and watch prefers-reduced-motion on mount
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReducedMotion(mq.matches);
@@ -57,7 +56,6 @@ export function Typewriter({
     }
   }, []);
 
-  // Core animation loop
   useEffect(() => {
     if (reducedMotion || messages.length === 0) return;
 
@@ -72,7 +70,6 @@ export function Typewriter({
           setDisplayedText(fullText.slice(0, displayedText.length + 1));
         }, typingSpeed);
       } else {
-        // Finished typing — announce the full message to screen readers
         setAnnouncedText(`${currentMessage.label}: ${fullText}`);
         setPhase("pausing");
       }
@@ -110,7 +107,6 @@ export function Typewriter({
     clearPending,
   ]);
 
-  // Reduced-motion: render all messages statically, stacked
   if (reducedMotion) {
     return (
       <div className={cn("flex flex-col items-center gap-3", className)}>
@@ -118,11 +114,11 @@ export function Typewriter({
           <div key={i} className="flex flex-wrap items-center justify-center gap-2">
             <Badge
               variant="outline"
-              className="border-green-500/60 text-green-400 shadow-[0_0_6px_rgba(34,197,94,0.35)] shrink-0"
+              className="border-highlight/60 text-highlight text-glow-green-soft shrink-0"
             >
               {msg.label}
             </Badge>
-            <span className="font-mono text-emerald-100 text-glow-green-soft">{msg.text}</span>
+            <span className="font-mono text-foreground text-glow-green-soft">{msg.text}</span>
           </div>
         ))}
       </div>
@@ -138,7 +134,6 @@ export function Typewriter({
         className,
       )}
     >
-      {/* Visually-hidden live region — only updated when a full message completes */}
       <span
         role="status"
         aria-live="polite"
@@ -150,17 +145,16 @@ export function Typewriter({
 
       <Badge
         variant="outline"
-        className="border-green-500/60 text-green-400 shadow-[0_0_6px_rgba(34,197,94,0.35)] mt-0.5 shrink-0"
+        className="border-highlight/60 text-highlight text-glow-green-soft mt-0.5 shrink-0"
       >
         {currentLabel}
       </Badge>
 
-      {/* aria-hidden so screen readers only hear the sr-only live region */}
       <span aria-hidden="true" className="flex items-center font-mono">
-        <span className="text-emerald-100 text-glow-green-soft">{displayedText}</span>
+        <span className="text-foreground text-glow-green-soft">{displayedText}</span>
         <span
           aria-hidden="true"
-          className="ml-px text-green-400 animate-[typewriter-blink_1s_step-end_infinite]"
+          className="ml-px text-highlight animate-[typewriter-blink_1s_step-end_infinite]"
         >
           |
         </span>
