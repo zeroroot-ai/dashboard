@@ -212,7 +212,7 @@ describe('HttpZitadelAdminClient.finalizeAuthRequest', () => {
   });
 
   it(
-    'POSTs to /v2/oidc/auth_requests/:id/CreateCallback with the session in the body — issue dashboard#41',
+    'POSTs to /v2/oidc/auth_requests/:id with the session in the body — issue dashboard#41',
     async () => {
       const client = makeClient();
       const result = await client.finalizeAuthRequest({
@@ -224,8 +224,8 @@ describe('HttpZitadelAdminClient.finalizeAuthRequest', () => {
       const u = new URL(lastRequest!.url);
       expect(
         u.pathname,
-        'finalizeAuthRequest path must encode the authRequestId verbatim',
-      ).toBe('/v2/oidc/auth_requests/V2_AUTH_REQ_abc/CreateCallback');
+        'finalizeAuthRequest path must be /v2/oidc/auth_requests/{id} with no /CreateCallback suffix (gRPC method name is not part of the HTTP path)',
+      ).toBe('/v2/oidc/auth_requests/V2_AUTH_REQ_abc');
       expect(lastRequest!.method).toBe('POST');
 
       const body = lastRequest!.body as {
@@ -246,7 +246,7 @@ describe('HttpZitadelAdminClient.finalizeAuthRequest', () => {
     });
     const u = new URL(lastRequest!.url);
     expect(u.pathname).toBe(
-      '/v2/oidc/auth_requests/with%20spaces%2Fand%2Bplus/CreateCallback',
+      '/v2/oidc/auth_requests/with%20spaces%2Fand%2Bplus',
     );
   });
 

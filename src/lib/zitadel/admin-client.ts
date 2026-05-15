@@ -138,7 +138,9 @@ export interface ZitadelSession {
  * returned `callbackUrl` and lands on the relying party's `/api/auth/callback/*`
  * endpoint with the standard `code=...&state=...` query string.
  *
- * Spec: Zitadel V2 OIDC Service — `POST /v2/oidc/auth_requests/{authRequestId}/CreateCallback`.
+ * Spec: Zitadel V2 OIDC Service — `POST /v2/oidc/auth_requests/{authRequestId}`
+ * (the gRPC method name is `CreateCallback`; the HTTP path is just the
+ * resource with POST per Zitadel's `option (google.api.http)`).
  */
 export interface FinalizeAuthRequestInput {
   /**
@@ -253,8 +255,9 @@ export interface ZitadelAdminClient {
   createSession(input: CreateSessionInput): Promise<ZitadelSession>;
 
   /**
-   * POST /v2/oidc/auth_requests/{authRequestId}/CreateCallback — finalises
-   * a parked OIDC auth_request by binding it to an established session.
+   * POST /v2/oidc/auth_requests/{authRequestId} — finalises a parked OIDC
+   * auth_request by binding it to an established session (gRPC method
+   * `CreateCallback`; HTTP path is the resource with POST).
    * Returns the absolute URL the user agent must follow to complete the
    * code/state hand-off with the relying party.
    *
@@ -698,11 +701,22 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
   async finalizeAuthRequest(
     input: FinalizeAuthRequestInput,
   ): Promise<FinalizeAuthRequestResult> {
-    // The Zitadel V2 OIDC API for CreateCallback expects a `session` object
-    // carrying the freshly-minted sessionId + sessionToken. The endpoint
-    // path itself encodes the authRequestId — the same id that originally
-    // came back as the `authRequest` query param when the dashboard
-    // initiated /oauth/v2/authorize.
+    // Zitadel V2 OIDC's CreateCallback RPC is transcoded to
+    // `POST /v2/oidc/auth_requests/{auth_request_id}` (same resource path
+    // as the GET, just the POST verb). The gRPC method name `CreateCallback`
+    // is NOT part of the HTTP path — see
+    // proto/zitadel/oidc/v2/oidc_service.proto:
+    //
+    //   rpc CreateCallback (CreateCallbackRequest) returns (CreateCallbackResponse) {
+    //     option (google.api.http) = {
+    //       post: "/v2/oidc/auth_requests/{auth_request_id}"
+    //       body: "*"
+    //     };
+    //   }
+    //
+    // A `/CreateCallback` suffix produces a router 404
+    // (`{"code":5,"message":"Not Found"}`) and the auto-login dance silently
+    // falls back to /login.
     const body = {
       session: {
         sessionId: input.session.sessionId,
@@ -715,7 +729,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
       details?: unknown;
     }>(
       'POST',
-      `/v2/oidc/auth_requests/${encodeURIComponent(input.authRequestId)}/CreateCallback`,
+      `/v2/oidc/auth_requests/${encodeURIComponent(input.authRequestId)}`,
       body,
     );
 
