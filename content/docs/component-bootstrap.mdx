@@ -31,11 +31,16 @@ routes you to the right flow:
 
 - `kind=plugin` delegates to the plugin-register wizard (manifest upload
   + secret bindings + atomic register, ending in a bootstrap token + a
-  `gibson-cli plugin enroll --token <T>` command).
+  `gibson component register --kind plugin --token <T>` command).
 - `kind=agent` or `kind=tool` walks you through type/name selection,
   the **Permissions step** (per-action grants on components, plus
   plugin invocation grants for tools), credential issuance, and a
   polling step that confirms the component connects.
+
+> **Legacy shim.** The older per-kind verbs (`gibson plugin enroll`,
+> `gibson agent enroll`, `gibson tool enroll`) still work for
+> backwards-compatibility. New work should use the unified
+> `gibson component register --kind <kind>` form.
 
 ## Per-call auth handshake
 
@@ -65,7 +70,7 @@ the daemon's FGA Check doesn't care which path the caller took.
 
 | Term | What it is |
 |---|---|
-| **Bootstrap token** | Single-use credential the plugin path mints during dashboard register. 24 h expiry. Consumed once by `gibson-cli plugin enroll`, then discarded. |
+| **Bootstrap token** | Single-use credential the plugin path mints during dashboard register. 24 h expiry. Consumed once by `gibson component register --kind plugin`, then discarded. |
 | **Host key** | Persistent Ed25519 keypair stored on disk at `~/.gibson/plugin/<name>/host_key` (0600). Identifies a plugin install. Public-key thumbprint is the host_id. |
 | **Agent key** | Ephemeral Ed25519 keypair regenerated per-process. Signs the per-RPC agent+jwt; chained to the host key in the JWT's `cnf` claim. |
 | **client_id / client_secret** | OAuth2 credentials the dashboard issues for agents/tools via `TenantAdminService.CreateAgentIdentity`. The secret is shown exactly once. |
@@ -78,7 +83,7 @@ the daemon's FGA Check doesn't care which path the caller took.
 1. **Verify the credential file is intact.** Mode must be 0600.
    `oidc.LoadAgentCredentials` rejects looser permissions with
    `ErrInsecureCredentialFile`.
-2. **Run `gibson-cli inspect`.** Auto-detects the local credentials,
+2. **Run `gibson inspect`.** Auto-detects the local credentials,
    mints a JWT, calls `IdentityService.WhoAmI`, and prints the
    principal's effective grants. If `inspect` fails at the token
    exchange, the IdP rejected the credential — re-issue from the
@@ -94,5 +99,5 @@ the daemon's FGA Check doesn't care which path the caller took.
 ## Related code & CLI
 
 - SDK packages: [`core/sdk/capabilitygrant/`](https://github.com/zero-day-ai/sdk/tree/main/capabilitygrant), [`core/sdk/auth/oidc/`](https://github.com/zero-day-ai/sdk/tree/main/auth/oidc)
-- CLI commands: `gibson-cli plugin enroll`, `gibson-cli agent enroll`, `gibson-cli tool enroll`, `gibson-cli inspect`
+- CLI commands: `gibson component register --kind plugin`, `gibson component register --kind agent`, `gibson component register --kind tool`, `gibson inspect` (legacy shims: `gibson plugin enroll`, `gibson agent enroll`, `gibson tool enroll`)
 - Daemon RPCs: `TenantAdminService.CreateAgentIdentity`, `PluginsAdminService.RegisterPlugin`, `IdentityService.WhoAmI`, `GrantsAdminService.WriteAgentGrants` / `DeleteAgentGrants`
