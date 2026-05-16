@@ -26,15 +26,15 @@ Missions section, click into any run.
 | **Discoveries** | Knowledge-graph entities ingested during the run, grouped by type. |
 | **Logs** | Per-component logs (agent stdout/stderr, tool error output). |
 | **Secrets accessed** | Which credentials plugins read during the run — names only, never values. |
-| **LLM trace** | Every LLM call: prompt, response, tokens, latency, cost. Backed by Langfuse. |
+| **LLM trace** | Every LLM call: prompt, response, tokens, latency, cost. |
 
 Mission runs persist indefinitely by default (override under
 **Settings → Retention**).
 
 ## Tracing LLM calls
 
-Every `Harness.Complete` (and friends) is traced to **Langfuse**, your
-tenant's per-tenant Langfuse view.
+Every `Harness.Complete` (and friends) lands in **Gibson Traces**, your
+tenant's trace explorer.
 
 Each trace captures:
 
@@ -45,13 +45,12 @@ Each trace captures:
 - the slot the call used and the model it resolved to
 - the agent execution and mission node it came from
 
-Open the **LLM trace** tab on a mission detail page, or jump straight
-to your tenant's Langfuse project from
-[`/dashboard/observability/langfuse`](https://app.zero-day.ai/dashboard/observability/langfuse).
+Open the **LLM trace** tab on a mission detail page to drill into any
+mission's trace stream.
 
-Langfuse supports its own search, filtering, and dataset features —
-useful when you want to evaluate prompt changes, run regression
-tests, or share traces with your team.
+The trace explorer supports search, filtering, and dataset-style
+collections — useful when you want to evaluate prompt changes, run
+regression tests, or share traces with your team.
 
 ## Metrics
 
@@ -160,7 +159,7 @@ unhealthy component.
   rather than silently overspending.
 - **Pin a "missions failed" alert** to your team channel — failed
   missions stop being noticed once they're in the log.
-- **Use Langfuse datasets** when iterating on prompts. Capture a few
+- **Use trace datasets** when iterating on prompts. Capture a few
   representative mission traces, then re-run the prompt against the
   dataset to compare outputs before deploying.
 - **Audit-log retention** is configurable per tenant; default is two
