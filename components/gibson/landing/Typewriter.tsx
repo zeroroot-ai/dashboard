@@ -114,11 +114,11 @@ export function Typewriter({
           <div key={i} className="flex flex-wrap items-center justify-center gap-2">
             <Badge
               variant="outline"
-              className="border-highlight/60 text-highlight text-glow-green-soft shrink-0"
+              className="border-highlight/60 text-highlight shrink-0"
             >
               {msg.label}
             </Badge>
-            <span className="font-mono text-foreground text-glow-green-soft">{msg.text}</span>
+            <span className="font-mono text-foreground">{msg.text}</span>
           </div>
         ))}
       </div>
@@ -145,13 +145,13 @@ export function Typewriter({
 
       <Badge
         variant="outline"
-        className="border-highlight/60 text-highlight text-glow-green-soft mt-0.5 shrink-0"
+        className="border-highlight/60 text-highlight mt-0.5 shrink-0"
       >
         {currentLabel}
       </Badge>
 
       <span aria-hidden="true" className="flex items-center font-mono">
-        <span className="text-foreground text-glow-green-soft">{displayedText}</span>
+        <span className="text-foreground">{displayedText}</span>
         <span
           aria-hidden="true"
           className="ml-px text-highlight animate-[typewriter-blink_1s_step-end_infinite]"

@@ -119,7 +119,7 @@ function Tier({
               card.degraded
                 ? "text-lg font-medium text-muted-foreground"
                 : "font-display text-3xl font-semibold" +
-                  (featured ? " text-highlight text-zd-glow" : "")
+                  (featured ? " text-highlight" : "")
             }
           >
             {card.priceLabel}
@@ -148,7 +148,7 @@ function Tier({
         <Button
           asChild
           variant={cta.variant}
-          className={"w-full " + (featured ? "glow-green" : "")}
+          className="w-full"
         >
           <Link href={cta.href}>{cta.label}</Link>
         </Button>
@@ -159,7 +159,7 @@ function Tier({
 
 const onPremFeatures: { title: string; body: string }[] = [
   {
-    title: "Self-hosted in your VPC, datacentre, or air-gapped enclave",
+    title: "Self-hosted in your VPC, data center, or air-gapped enclave",
     body: "Helm chart deploys the full Gibson stack into your Kubernetes cluster. No egress, no telemetry, no callbacks home.",
   },
   {
@@ -176,18 +176,18 @@ const onPremFeatures: { title: string; body: string }[] = [
   },
   {
     title: "Audit log streaming",
-    body: "Export every authentication, authorisation, and orchestration event to your SIEM via syslog, Kafka, or OpenTelemetry.",
+    body: "Export every authentication, authorization, and orchestration event to your SIEM via syslog, Kafka, or OpenTelemetry.",
   },
   {
     title: "Capable of GovCloud, IL5 / IL6, and FIPS 140-3 environments",
-    body: "Ships against FIPS-validated cryptographic modules. Compatible with AWS GovCloud (US), Azure Government, and on-prem environments accredited to IL5 / IL6. Customer holds the ATO; we provide the artefacts.",
+    body: "Ships against FIPS-validated cryptographic modules. Compatible with AWS GovCloud (US), Azure Government, and on-prem environments accredited to IL5 / IL6. Customer holds the ATO; we provide the artifacts.",
   },
   {
     title: "Custom retention and data residency",
     body: "Pick where mission data, embeddings, and graph state live. Configurable retention windows per data class.",
   },
   {
-    title: "Dedicated support with named engineers",
+    title: "Dedicated forward-deployed engineers",
     body: "Direct Slack or Teams channel with the engineers who build Gibson. Defined response times, scheduled office hours, custom SLAs.",
   },
 ];

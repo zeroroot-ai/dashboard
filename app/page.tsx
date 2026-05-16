@@ -24,8 +24,8 @@ export default function RootPage() {
       <SiteHeader />
       <main>
         <HeroSection />
-        <WhatYouRunItOn />
         <WhatYouGet />
+        <WhatYouRunItOn />
         <Production />
         <section className="border-t border-border py-10">
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-4 gap-y-3 px-4 font-mono text-sm">

@@ -168,7 +168,7 @@ export function HeroSection() {
       />
 
       <div className="relative z-10 mx-auto max-w-6xl flex flex-col items-center gap-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+        <div className="grid grid-cols-2 gap-6 w-full">
           <Schematic />
           <TerminalCard />
         </div>
@@ -200,7 +200,7 @@ export function HeroSection() {
               </a>
             </Button>
           </div>
-          <p className="font-mono font-semibold text-glow-green-soft text-sm md:text-base lg:text-lg leading-snug text-center">
+          <p className="font-mono font-semibold text-sm md:text-base lg:text-lg leading-snug text-center">
             Stand up your security agent factory in under an hour.
           </p>
         </div>

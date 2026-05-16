@@ -53,3 +53,6 @@ next-env.d.ts
 # playwright
 /test-results/
 /playwright-report/
+
+# in-flight screenshot tooling + ad-hoc snap scripts
+/.tmp/

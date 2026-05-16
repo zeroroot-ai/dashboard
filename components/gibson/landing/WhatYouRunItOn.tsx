@@ -49,9 +49,13 @@ export function WhatYouRunItOn() {
             for orchestration, shared memory, and the knowledge graph.
             Your team decides what crosses the wire and what stays on
             the host. BYOK for LLM keys. Untrusted payloads detonate inside{" "}
-            <strong className="text-highlight font-semibold">
+            <a
+              href="https://github.com/zero-day-ai/setec"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-highlight font-semibold underline-offset-4 decoration-highlight/40 hover:underline hover:decoration-highlight">
               Setec microVMs
-            </strong>
+            </a>
             . Hardware isolation, not containers.
           </p>
           <div>
