@@ -1,19 +1,20 @@
 ---
 title: Install
-description: Sign up, install gibson-cli, point it at your Gibson tenant, and verify the connection.
+description: Sign up, install the gibson CLI, point it at your Gibson tenant, and verify the connection.
 ---
 
 This page gets your workstation talking to Gibson. Gibson itself is a
 hosted service — there's nothing to install on the server side. The only
-thing you install locally is the **`gibson-cli`** binary, which you'll
-use to scaffold and enroll your agents, tools, and plugins.
+thing you install locally is the **`gibson`** binary (shipped by the
+ADK), which you'll use to scaffold and register your agents, tools, and
+plugins.
 
 ## Prerequisites
 
 | Tool | Why |
 |---|---|
 | **Go** (the version listed in the SDK's `go.mod`) | Building agents, tools, and plugins |
-| **`gibson-cli`** | Scaffolding, enrollment, plugin runtime |
+| **`gibson`** | Scaffolding, registration, plugin runtime |
 | **Docker** | Optional — only needed if you'll run plugins as pods |
 | **`protoc`** | Optional — only if you're defining custom tool/plugin protos |
 
@@ -25,31 +26,31 @@ tenant is provisioned automatically; you'll be the **owner** of it.
 Trial accounts include 14 days of full platform access — see
 [zero-day.ai/pricing](https://zero-day.ai/pricing).
 
-## 2. Install `gibson-cli`
+## 2. Install the `gibson` CLI
 
 The fastest path:
 
 ```bash
-go install github.com/zero-day-ai/adk/cmd/gibson-cli@latest
+go install github.com/zero-day-ai/adk/cmd/gibson@latest
 ```
 
 Or build from source if you want to track `main`:
 
 ```bash
 git clone https://github.com/zero-day-ai/adk.git
-cd adk
-go build -o ./bin/gibson-cli ./cmd/gibson-cli
+cd adk/cli
+go build -o ./bin/gibson ./cmd/gibson
 export PATH="$PWD/bin:$PATH"
 ```
 
 Verify:
 
 ```bash
-gibson-cli --help
+gibson --help
 ```
 
-You should see the top-level command groups: `agent`, `tool`, `plugin`,
-`inspect`.
+You should see the top-level command groups: `init`, `component`,
+`docs`, `inspect`, `mission`.
 
 ## 3. Point at your tenant
 
@@ -62,7 +63,7 @@ export GIBSON_URL=https://api.zero-day.ai
 Add it to your shell profile (`~/.zshrc`, `~/.bashrc`, …) so it
 persists across sessions. The SDK reads `GIBSON_URL` from the
 environment when your component dials Gibson; the value can also be
-embedded in the credentials file written by `gibson-cli ... enroll`.
+embedded in the credentials file written by `gibson component register`.
 
 ## 4. Get a credential from the dashboard
 
@@ -82,27 +83,28 @@ are issued.
    - Plugins get a single-use **bootstrap token** (default 1 hour,
      configurable up to 24 hours).
 5. **Connect** — leave the wizard open. It polls until your local
-   `gibson-cli` reports back that the component connected.
+   `gibson` reports back that the component connected.
 
-## 5. Enroll on your machine
+## 5. Register on your machine
 
-Pick the command that matches your component kind:
+The modern CLI uses a single unified `component register` verb,
+parameterised by `--kind`:
 
 ```bash
 # Agents
-gibson-cli agent enroll \
+gibson component register --kind agent \
   --client-id     <from-wizard> \
   --client-secret <from-wizard> \
   --name          my-first-agent
 
 # Tools
-gibson-cli tool enroll \
+gibson component register --kind tool \
   --client-id     <from-wizard> \
   --client-secret <from-wizard> \
   --name          my-first-tool
 
 # Plugins
-gibson-cli plugin enroll --token <from-wizard>
+gibson component register --kind plugin --token <from-wizard>
 ```
 
 Each command writes a credential file at `~/.gibson/<kind>/credentials`
@@ -110,16 +112,21 @@ Each command writes a credential file at `~/.gibson/<kind>/credentials`
 to `~/.gibson/plugin/<name>/host_key` (mode `0600`). Treat both like
 private keys — they identify your component to Gibson.
 
-If `enroll` fails, see
+> **Legacy shims.** The older per-kind verbs (`gibson agent enroll`,
+> `gibson tool enroll`, `gibson plugin enroll`) still work for
+> backwards-compatibility with existing scripts. New work should use
+> the unified `gibson component register --kind <kind>` form above.
+
+If registration fails, see
 [Component bootstrap & auth](./component-bootstrap#troubleshooting-a-401)
 for the layered checks.
 
 ## 6. Verify with `inspect`
 
 ```bash
-gibson-cli inspect              # auto-detects the local credential
-gibson-cli inspect --kind agent --name my-first-agent
-gibson-cli inspect --json       # raw output, scriptable
+gibson inspect              # auto-detects the local credential
+gibson inspect --kind agent --name my-first-agent
+gibson inspect --json       # raw output, scriptable
 ```
 
 `inspect` exchanges your credential for a token, calls Gibson's
@@ -139,7 +146,7 @@ move on.
 ## Storing credentials safely
 
 Credential files live in `~/.gibson/` and are restricted to mode `0600`
-by `enroll`. Don't commit them. For CI and production deployments:
+by `register`. Don't commit them. For CI and production deployments:
 
 - **Agents and tools**: pass `client_id` and `client_secret` as
   environment variables (`OIDC_CLIENT_CREDENTIALS_CLIENT_ID`,
@@ -147,7 +154,7 @@ by `enroll`. Don't commit them. For CI and production deployments:
   `OIDC_CLIENT_CREDENTIALS_TOKEN_URL`) instead of writing a file. The
   SDK picks them up automatically.
 - **Plugins**: bake the host key into the deployment artifact, or
-  re-enroll on each fresh runtime instance using a freshly-issued
+  re-register on each fresh runtime instance using a freshly-issued
   bootstrap token.
 - **Workload identity** (e.g. SPIFFE): if your runtime exposes a
   workload-identity socket, the SDK auto-detects it and uses mTLS
@@ -158,5 +165,5 @@ by `enroll`. Don't commit them. For CI and production deployments:
 If you operate against more than one Gibson tenant (e.g. staging +
 production), point `GIBSON_URL` at the right tenant per shell session
 or per CI job, and keep credentials separated by passing
-`--credentials-path` to `gibson-cli` or by setting the SDK option
+`--credentials-path` to `gibson` or by setting the SDK option
 `agent.WithCredentialsPath(...)` from your component code.
