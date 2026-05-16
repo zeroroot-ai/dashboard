@@ -50,7 +50,7 @@ Names must match `^[a-z][a-z0-9-]{0,61}[a-z0-9]$` (DNS-label style).
 Validate the manifest before you register:
 
 ```bash
-gibson plugin validate
+gibson component validate
 ```
 
 ## The `plugin.yaml` manifest
@@ -137,19 +137,15 @@ gibson component register --kind plugin --token eyJ...
 gibson inspect --kind plugin
 
 # run
-gibson plugin run
+gibson component run
 ```
-
-> **Legacy shim.** `gibson plugin enroll --token <T>` still works for
-> backwards-compatibility. New work should use the unified
-> `gibson component register --kind plugin` form.
 
 `register` exchanges the bootstrap token for a persistent **Ed25519
 host key** at `~/.gibson/plugin/<name>/host_key` (mode `0600`). The
 host key is what the plugin uses for the rest of its life — the
 bootstrap token is consumed and discarded.
 
-`gibson plugin run` is equivalent to running your built binary, which
+`gibson component run` is equivalent to running your built binary, which
 calls `plugin.Serve(ctx)`. `Serve`:
 
 1. Loads and validates your manifest.
