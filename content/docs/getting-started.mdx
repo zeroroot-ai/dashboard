@@ -1,6 +1,6 @@
 ---
 title: Getting Started
-description: Stand up your first Gibson agent in under an hour — sign up, install gibson-cli, enroll, build, and run a mission.
+description: Stand up your first Gibson agent in under an hour — sign up, install the gibson CLI, register, build, and run a mission.
 ---
 
 This is the fast path: account → CLI → component → mission. If you get
@@ -11,13 +11,13 @@ stuck, jump to the linked deep-dive page; otherwise just keep going.
 If you haven't already, follow [Install](./install) to:
 
 - create a tenant at [zero-day.ai](https://zero-day.ai),
-- install `gibson-cli`,
+- install the **`gibson`** binary (`go install github.com/zero-day-ai/adk/cmd/gibson@latest`),
 - and set `GIBSON_URL=https://api.zero-day.ai`.
 
 Verify your shell:
 
 ```bash
-gibson-cli --help
+gibson --help
 echo "$GIBSON_URL"
 ```
 
@@ -36,10 +36,10 @@ The deploy wizard walks you through:
    `client_secret`. **Copy the secret now** — it's not shown again.
 5. **Connect** — leave the page open. It polls for the next step.
 
-## 3. Enroll on your machine
+## 3. Register on your machine
 
 ```bash
-gibson-cli agent enroll \
+gibson component register --kind agent \
   --client-id     <from-wizard> \
   --client-secret <from-wizard> \
   --name          my-first-agent
@@ -50,10 +50,14 @@ credential by calling Gibson's identity service. If the verification
 fails, the wizard does **not** advance — see
 [Component bootstrap & auth → Troubleshooting a 401](./component-bootstrap#troubleshooting-a-401).
 
+> **Legacy shim.** `gibson agent enroll …` still works for
+> backwards-compatibility with existing scripts. New work should use
+> the unified `gibson component register --kind <kind>` form.
+
 ## 4. Verify with `inspect`
 
 ```bash
-gibson-cli inspect             # auto-detects the local credential
+gibson inspect             # auto-detects the local credential
 ```
 
 You should see your agent's identity, the tenant it belongs to, and
@@ -137,6 +141,16 @@ The mission detail page streams events live: `mission.started`,
 mission concludes with `mission.completed`. See
 [Missions](./missions) for the full lifecycle.
 
+Missions can also be authored as files and submitted from the CLI:
+
+```bash
+gibson mission submit missions/recon.yaml --target example.com
+```
+
+The mission loader auto-detects the file format from the extension —
+`.cue`, `.yaml`, `.yml`, and `.json` are all supported. Use whichever
+format your team prefers.
+
 ## 7. Where to go next
 
 | You want to… | Read |
@@ -146,9 +160,9 @@ mission concludes with `mission.completed`. See
 | Store and rotate credentials | [Secrets management](./secrets-management) |
 | Auto-populate the knowledge graph from tool output | [Knowledge graph](./knowledge-graph) |
 | Submit and triage findings | [Findings](./findings) |
-| Wire your agent into CI / production | the Makefile produced by `gibson-cli plugin init` is the canonical template |
+| Wire your agent into CI / production | the Makefile produced by `gibson component init --kind plugin` is the canonical template |
 
 If you hit a wall, the
 [Component bootstrap & auth](./component-bootstrap) page covers the
 common 401 paths, and the [CLI reference](./cli-reference) lists every
-`gibson-cli` command.
+`gibson` command.
