@@ -1,22 +1,27 @@
 ---
 title: CLI Reference
-description: Every gibson-cli command — agents, tools, plugins, and inspect.
+description: Every gibson command — workspace, component, mission, inspect, docs — and the legacy verb-per-kind shims.
 ---
 
-`gibson-cli` is the local binary you use to scaffold components,
-enroll them with your tenant, validate manifests, run plugins, and
-verify credentials.
+`gibson` is the local binary you use to scaffold components, register
+them with your tenant, validate manifests, build and run components,
+submit missions, and verify credentials.
 
-This page lists every command, its required flags, and what it does.
-
-Top-level command groups:
+Modern CLI is unified under five top-level groups:
 
 | Group | Purpose |
 |---|---|
-| `agent` | Enroll an agent identity with your tenant. |
-| `tool` | Enroll a tool identity with your tenant. |
-| `plugin` | Scaffold, validate, enroll, and run plugins. |
+| `init` | Initialise a Gibson workspace. |
+| `component` | Scaffold, build, register, validate, and run agents / tools / plugins. |
+| `mission` | Author, validate, render, and submit missions. |
 | `inspect` | Print who you are and what permissions your local credential carries. |
+| `docs` | Emit machine-readable docs (JSON Schemas, etc.). |
+
+> **Legacy verbs.** The per-kind verbs (`gibson agent enroll`,
+> `gibson tool enroll`, `gibson plugin enroll`, `gibson plugin run`,
+> …) still work for backwards-compatibility — see the
+> [Legacy shims](#legacy-shims) appendix at the bottom of this page.
+> New work should use the unified `gibson component <verb>` form.
 
 Global flags available on every command:
 
@@ -29,143 +34,177 @@ Global flags available on every command:
 
 ---
 
-## `gibson-cli agent`
+## `gibson init`
 
-Group for agent identity management.
-
-### `gibson-cli agent enroll`
-
-Register an agent install with your tenant using OAuth2 client
-credentials issued by the dashboard's deploy wizard.
+Initialise a Gibson workspace in the current directory. Sets up the
+shared scaffolding (`.gibson/`, default manifests) that component-init
+commands expect.
 
 ```bash
-gibson-cli agent enroll \
+gibson init
+```
+
+---
+
+## `gibson component`
+
+Group for the component lifecycle. Replaces the legacy per-kind verbs.
+
+### `gibson component init`
+
+Scaffold a new component directory. The `--kind` flag picks the
+component shape (agent / tool / plugin); the generated files differ
+per kind.
+
+```bash
+gibson component init my-agent     --kind agent
+gibson component init my-portscan  --kind tool
+gibson component init my-shodan    --kind plugin --dir ./my-shodan
+```
+
+| Flag | Default | Notes |
+|---|---|---|
+| `--kind` | yes | One of `agent`, `tool`, `plugin`. |
+| `--dir` | `.` | Target directory. Created if missing. |
+| `--with-secret` | none | (Plugin) Pre-populate `spec.secrets` with one entry of the given name. |
+| `--force` | off | Overwrite existing files in the target directory. |
+
+For plugins the scaffold includes `plugin.yaml`, `main.go`, a sample
+proto, `Makefile`, `Dockerfile`, `.gitignore`, and `README.md`. Names
+must match `^[a-z][a-z0-9-]{0,61}[a-z0-9]$` (DNS-label style).
+
+### `gibson component build`
+
+Generate, validate, and compile the component binary in the current
+directory. Reads the component manifest, runs proto codegen, then
+`go build`.
+
+```bash
+gibson component build
+```
+
+This is the canonical "build my component" command. CI pipelines that
+used to invoke `make build` should call `gibson component build`
+instead — the ADK keeps the toolchain pinned, so the build output is
+reproducible across machines.
+
+### `gibson component register`
+
+Register a component install with your tenant. For agents and tools,
+exchanges OAuth2 client credentials issued by the dashboard's deploy
+wizard for a credentials file. For plugins, exchanges a single-use
+bootstrap token for a persistent Ed25519 host key.
+
+```bash
+# Agents and tools
+gibson component register --kind agent \
   --client-id     <id> \
   --client-secret <secret> \
-  --name          <agent-name>
+  --name          <component-name>
+
+gibson component register --kind tool \
+  --client-id     <id> \
+  --client-secret <secret> \
+  --name          <component-name>
+
+# Plugins
+gibson component register --kind plugin --token <bootstrap-token>
 ```
 
 | Flag | Required | Notes |
 |---|---|---|
-| `--client-id` | yes | OAuth2 client ID from the deploy wizard. |
-| `--client-secret` | yes | OAuth2 client secret. Shown exactly once at issuance. |
-| `--name` | yes | Agent name (kebab-case, unique within tenant). |
-| `--credentials-path` | no | Override the path the credentials file is written to. |
+| `--kind` | yes | `agent`, `tool`, or `plugin`. |
+| `--client-id` | agent / tool | OAuth2 client ID from the deploy wizard. |
+| `--client-secret` | agent / tool | OAuth2 client secret. Shown exactly once at issuance. |
+| `--name` | agent / tool | Component name (kebab-case, unique within tenant). |
+| `--token` | plugin | Single-use bootstrap token from the deploy wizard. |
+| `--credentials-path` | no | Override the credentials file location. |
 
 What it does:
 
-1. Writes a credentials file at `~/.gibson/agent/credentials` (mode
-   `0600`).
-2. Mints a JWT to verify the credential.
-3. Calls Gibson's identity service to confirm enrolment.
+1. Writes a credentials file at `~/.gibson/<kind>/credentials` (mode
+   `0600`). For plugins, also writes an Ed25519 host key at
+   `~/.gibson/plugin/<name>/host_key` (mode `0600`).
+2. Mints a JWT (or signs a capability-grant for plugins) to verify
+   the credential.
+3. Calls Gibson's identity service to confirm registration.
 4. Notifies the dashboard's deploy wizard so it can advance.
 
 If verification fails, the command exits non-zero and the file is
 removed. See
 [Component bootstrap & auth → Troubleshooting a 401](./component-bootstrap#troubleshooting-a-401).
 
----
+### `gibson component validate`
 
-## `gibson-cli tool`
-
-Group for tool identity management.
-
-### `gibson-cli tool enroll`
-
-Same shape as `agent enroll`, but writes to `~/.gibson/tool/credentials`.
+Validate the component manifest in the current directory against the
+schema, without contacting Gibson.
 
 ```bash
-gibson-cli tool enroll \
-  --client-id     <id> \
-  --client-secret <secret> \
-  --name          <tool-name>
+gibson component validate
 ```
 
-| Flag | Required | Notes |
-|---|---|---|
-| `--client-id` | yes | OAuth2 client ID. |
-| `--client-secret` | yes | OAuth2 client secret. |
-| `--name` | yes | Tool name (kebab-case, unique within tenant). |
-| `--credentials-path` | no | Override the credentials file location. |
+Useful in CI to catch manifest errors before they reach the
+register step. For plugins specifically, `gibson plugin validate`
+remains a legacy shim if you need it.
 
----
+### `gibson component run`
 
-## `gibson-cli plugin`
-
-Group for plugin scaffolding, validation, enrollment, and runtime.
-
-### `gibson-cli plugin init`
-
-Scaffold a new plugin directory.
+Run the built component binary. Equivalent to invoking the binary
+directly (which calls `agent.Serve`, `tool.Serve`, or `plugin.Serve`).
 
 ```bash
-gibson-cli plugin init --dir ./my-plugin
+gibson component run
 ```
 
 | Flag | Default | Notes |
 |---|---|---|
-| `--dir` | `.` | Target directory. Created if missing. |
-| `--with-secret` | none | Pre-populate `spec.secrets` with one entry of the given name. |
-| `--force` | off | Overwrite existing files in the target directory. |
+| `--manifest` | auto-detect | Use a non-default manifest path. |
 
-Generates `plugin.yaml`, `main.go`, a sample proto, `Makefile`,
-`Dockerfile`, `.gitignore`, and `README.md`. Plugin name must match
-`^[a-z][a-z0-9-]{0,61}[a-z0-9]$`.
+Useful in development; production deployments typically invoke the
+binary directly under their process manager (systemd, Kubernetes, …).
 
-### `gibson-cli plugin validate`
+---
 
-Validate `plugin.yaml` against the schema, without contacting Gibson.
+## `gibson mission`
 
-```bash
-gibson-cli plugin validate
-```
+Group for mission authoring, validation, rendering, and submission.
 
-Run from the plugin directory. Errors are printed with the offending
-field and reason.
+### `gibson mission submit`
 
-### `gibson-cli plugin enroll`
-
-Exchange a single-use bootstrap token for a persistent host key.
+Submit a mission file to the daemon. The file format is auto-detected
+from the extension — `.cue`, `.yaml`, `.yml`, and `.json` are all
+supported.
 
 ```bash
-gibson-cli plugin enroll --token <bootstrap-token>
+gibson mission submit missions/recon.yaml --target example.com
+gibson mission submit missions/triage.cue --target https://app.example.com
 ```
 
 | Flag | Required | Notes |
 |---|---|---|
-| `--token` | yes | Bootstrap token from the deploy wizard. |
-| `--credentials-path` | no | Override the host key location. Default: `~/.gibson/plugin/<name>/host_key`. |
+| `--target` | (depends on mission) | Target reference (URL, host, k8s cluster, …). The mission may declare its own default. |
+| `--variables` | no | Path to a variables file or inline `key=value` pairs. |
 
-Bootstrap tokens are single-use and have a default 1-hour TTL
-(configurable up to 24 hours by your tenant admin). Run from the
-plugin directory containing `plugin.yaml`.
+What it does:
 
-### `gibson-cli plugin run`
+1. Loads and parses the mission file (CUE / YAML / YML / JSON).
+2. Validates against the `MissionDefinition` schema.
+3. Submits to the daemon's `CreateMission` RPC.
+4. Calls `RunMission` and streams the lifecycle events to stdout.
 
-Run the plugin via its built binary (or `go run .` equivalent). Calls
-`plugin.Serve` from the SDK.
-
-```bash
-gibson-cli plugin run
-```
-
-| Flag | Default | Notes |
-|---|---|---|
-| `--manifest` | `./plugin.yaml` | Use a non-default manifest path. |
-
-Standard `make run` wraps this command.
+See [Missions](./missions) for the full lifecycle.
 
 ---
 
-## `gibson-cli inspect`
+## `gibson inspect`
 
 Print your effective identity and permissions.
 
 ```bash
-gibson-cli inspect                            # auto-detect
-gibson-cli inspect --kind agent               # specify kind
-gibson-cli inspect --kind plugin --name foo   # specify name when several plugins are enrolled locally
-gibson-cli inspect --json                     # machine-readable
+gibson inspect                            # auto-detect
+gibson inspect --kind agent               # specify kind
+gibson inspect --kind plugin --name foo   # specify name when several plugins are registered locally
+gibson inspect --json                     # machine-readable
 ```
 
 | Flag | Default | Notes |
@@ -184,10 +223,23 @@ What it does:
 If `inspect` fails:
 
 - **At credential load** — credential file is missing or has wrong
-  permissions. Fix the file mode (`chmod 600`) or re-enroll.
-- **At token mint** — credential is malformed. Re-enroll.
+  permissions. Fix the file mode (`chmod 600`) or re-register.
+- **At token mint** — credential is malformed. Re-register.
 - **At identity call** — Gibson rejected the credential (revoked,
   expired, wrong tenant). Re-issue from the dashboard.
+
+---
+
+## `gibson docs`
+
+Emit machine-readable docs — JSON Schemas for the component manifest,
+mission file format, taxonomy types, and similar. Useful for IDE
+plugins, codegen, and pinning your CI against a specific CLI version's
+contracts.
+
+```bash
+gibson docs
+```
 
 ---
 
@@ -224,10 +276,32 @@ no credential files on disk.
 
 ---
 
+## Legacy shims
+
+The per-kind verbs from earlier CLI versions still work for
+backwards-compatibility. New work should use `gibson component <verb> --kind <kind>`,
+but existing scripts and CI jobs don't have to change.
+
+| Legacy form | Modern equivalent |
+|---|---|
+| `gibson agent enroll …` | `gibson component register --kind agent …` |
+| `gibson tool enroll …` | `gibson component register --kind tool …` |
+| `gibson plugin enroll --token …` | `gibson component register --kind plugin --token …` |
+| `gibson plugin init …` | `gibson component init --kind plugin …` |
+| `gibson plugin validate` | `gibson component validate` (in a plugin directory) |
+| `gibson plugin run` | `gibson component run` |
+
+The shims dispatch to the same underlying logic; flag semantics are
+identical.
+
+---
+
 ## Related
 
-- [Install](./install) — initial setup of `gibson-cli`.
-- [Plugins](./plugins) — full lifecycle of `init` → `validate` →
-  `enroll` → `run`.
-- [Component bootstrap & auth](./component-bootstrap) — what `enroll`
+- [Install](./install) — initial setup of the `gibson` CLI.
+- [Component bootstrap & auth](./component-bootstrap) — what `register`
   is doing under the hood and how to debug a 401.
+- [Plugins](./plugins) — full lifecycle of `init` → `build` →
+  `validate` → `register` → `run`.
+- [Missions](./missions) — what `gibson mission submit` does once the
+  file reaches the daemon.
