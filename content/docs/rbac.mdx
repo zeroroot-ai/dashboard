@@ -96,17 +96,6 @@ This split (agent → tool → plugin) is intentional. It gives you a
 single point to audit and revoke plugin access without touching agent
 code.
 
-## Platform operator (zero-day staff)
-
-A small number of zero-day.ai operators have a **platform operator**
-role that spans tenants. It exists to support customers (impersonation
-for debugging, with consent) and to perform platform-level operations
-(rolling out a hotfix, investigating an incident).
-
-Platform operator access is logged separately and is visible in your
-tenant's audit log. You can disable cross-tenant support access for
-your tenant under **Settings → Privacy**.
-
 ## How the layers compose
 
 For any action, Gibson checks layers in order, **deny-wins**:
