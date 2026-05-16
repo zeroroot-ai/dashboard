@@ -62,7 +62,7 @@ you'd build by hand if you scripted mission creation against the SDK.
 Click **Run** in the editor (or call `RunMission` from your own
 client). Gibson:
 
-1. Validates that every component the mission references is enrolled
+1. Validates that every component the mission references is registered
    and that your principal has permission to run it.
 2. Allocates a mission ID, opens an event stream, and starts the
    orchestrator.
@@ -143,12 +143,21 @@ to hand context between agent / tool nodes; long-term memory to teach
 future missions from this one. You don't write Redis or vector queries
 yourself — the typed `Memory()` API handles that.
 
-## Triggering a mission programmatically
+## Triggering a mission
 
-There is no `gibson-cli mission` subcommand today. The two practical
-paths are:
+Three practical paths:
 
 - **Dashboard** — visual builder + Run button.
+- **CLI** — author a mission file and submit it:
+
+  ```bash
+  gibson mission submit missions/recon.yaml --target example.com
+  ```
+
+  The mission file format is auto-detected by extension: `.cue`,
+  `.yaml`, `.yml`, and `.json` are all supported. Use whichever your
+  team prefers. The CLI streams the same event log the dashboard
+  renders.
 - **gRPC** — `DaemonService.CreateMission` with a `MissionDefinition`,
   then `DaemonService.RunMission` with the returned ID. The streaming
   response gives you the event log directly. Useful for CI, schedulers,
