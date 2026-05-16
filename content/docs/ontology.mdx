@@ -66,7 +66,7 @@ Drop this at the root of your component repo, next to `taxonomy.yaml`.
    the tenant).
 3. The ADK emits `gen/ontology_extension.go` — an `OntologyExtension`
    value baked into your component binary.
-4. The component registers the extension at daemon enrollment.
+4. The component registers the extension with the daemon at component registration.
 5. The daemon's reasoner merges it into the tenant's closure and
    rebuilds derived indices.
 
@@ -100,7 +100,7 @@ What to do with each:
 When an assistant hits one of these, the right move is to read the
 validator output verbatim, fix the YAML, and rerun the build. Don't
 `--force` past it; the daemon will reject a non-validating extension
-at enrollment anyway.
+at registration anyway.
 
 ## Power-user note
 
