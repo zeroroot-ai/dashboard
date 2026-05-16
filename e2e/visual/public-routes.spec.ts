@@ -71,6 +71,14 @@ async function stabilise(page: Page) {
 }
 
 test.describe("visual regression — public routes", () => {
+  // Visual baselines are chromium-only — one browser as the source of truth.
+  // Firefox/webkit projects add per-browser font-rendering variance that
+  // bloats the diff without improving signal.
+  test.skip(
+    ({ browserName }) => browserName !== "chromium",
+    "visual baselines are chromium-only",
+  );
+
   for (const mode of MODES) {
     test.describe(`${mode} mode`, () => {
       for (const route of PUBLIC_ROUTES) {

@@ -1,39 +1,28 @@
 /**
  * Visual regression — authenticated surfaces.
  *
- * Spec: dashboard#60 acceptance criteria explicitly list /dashboard,
- * /dashboard/missions, /dashboard/findings, /dashboard/settings. This
- * file ships the scaffolding (route list, theme cookie, snapshot
- * matcher) for those captures.
+ * Spec: dashboard#60. Captures full-page screenshots of /dashboard,
+ * /dashboard/pages/missions, /dashboard/pages/findings, and
+ * /dashboard/pages/settings/account in both light and dark mode.
  *
- * STATUS: tests are gated behind `E2E_VISUAL_AUTH=1`. They require an
- * Auth.js session cookie established before the snapshot — minting
- * that cookie requires either:
+ * Authentication: synthesised via the test-only session encoder at
+ * src/lib/test-fixtures/encode-session.ts. The encoder mints a JWE
+ * under the dashboard's own AUTH_SECRET that decodes through the
+ * same Auth.js pipeline as a real sign-in. The encoder refuses to
+ * run unless BOTH NODE_ENV !== "production" AND TEST_AUTH_BYPASS=1
+ * are true — see #84 for the security rationale.
  *
- *   (a) a real signed-in browser context (Playwright global-setup
- *       walks through /signup or /login against the Kind dev cluster),
- *       OR
- *   (b) a test-only session-encoder that uses Auth.js's `encode` to
- *       mint a synthetic JWE under AUTH_SECRET for a mock user.
+ * Data: daemon proxy + memberships are stubbed via page.route() so
+ * the page renders empty-state content regardless of cluster state.
+ * Visual regression cares about chrome + layout + tokens, not
+ * specific data rows.
  *
- * Both approaches need a small piece of new infrastructure that's
- * outside the design-system slice's scope and is security-sensitive
- * (option (b) effectively forges a session — must be guarded against
- * accidental production activation). Tracked as a follow-up.
- *
- * Until that lands the spec runs only when E2E_VISUAL_AUTH=1 AND a
- * `__Secure-authjs.session-token` cookie is exported via the
- * `E2E_AUTH_COOKIE` env (developers running locally against a live
- * Kind cluster can paste their dev session cookie). CI doesn't set
- * those vars so this file is effectively no-op there until the
- * harness lands.
- *
- * When it does, drop the gating and the tests "just work" — the route
- * list, theme switching, daemon-proxy stubs, and screenshot
- * comparators are all in place.
+ * Theme: selected via the `theme_choice` cookie (same SSR-aware
+ * mechanism as the public-routes spec).
  */
 
 import { test, expect, type Page, type BrowserContext } from "@playwright/test";
+import { encodeTestSession } from "@/src/lib/test-fixtures/encode-session";
 
 const AUTH_ROUTES = [
   { name: "dashboard", path: "/dashboard" },
@@ -44,24 +33,31 @@ const AUTH_ROUTES = [
 
 const MODES = ["light", "dark"] as const;
 
-const SHOULD_RUN =
-  process.env.E2E_VISUAL_AUTH === "1" && !!process.env.E2E_AUTH_COOKIE;
+const MOCK_USER = {
+  sub: "test-user-visual-regression",
+  name: "Visual Regression",
+  email: "visual@test.zero-day.local",
+};
+const MOCK_TENANT_ID = "tenant-visual-test";
 
 async function setAuthSession(context: BrowserContext) {
-  const sessionCookie = process.env.E2E_AUTH_COOKIE;
-  if (!sessionCookie) {
-    throw new Error(
-      "E2E_AUTH_COOKIE not set. Export your dev __Secure-authjs.session-token (browser devtools → Application → Cookies) to run this suite locally.",
-    );
-  }
+  const { cookieName, cookieValue } = await encodeTestSession(MOCK_USER);
   await context.addCookies([
     {
-      name: "__Secure-authjs.session-token",
-      value: sessionCookie,
+      name: cookieName,
+      value: cookieValue,
       domain: "localhost",
       path: "/",
       httpOnly: true,
       secure: false,
+      sameSite: "Lax",
+    },
+    {
+      name: "gibson_active_tenant",
+      value: MOCK_TENANT_ID,
+      domain: "localhost",
+      path: "/",
+      httpOnly: false,
       sameSite: "Lax",
     },
   ]);
@@ -80,20 +76,14 @@ async function setTheme(context: BrowserContext, mode: (typeof MODES)[number]) {
   ]);
 }
 
-/**
- * Stub the daemon proxy + memberships so the page renders with stable
- * empty-state data regardless of cluster state. Visual regression cares
- * about the chrome + layout + token-driven styling, not specific
- * mission/finding rows.
- */
 async function stubDataLayer(page: Page) {
   await page.route("**/api/auth/my-memberships**", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        activeTenantId: "tenant-visual-test",
-        byTenant: { "tenant-visual-test": { role: "tenant_admin" } },
+        activeTenantId: MOCK_TENANT_ID,
+        byTenant: { [MOCK_TENANT_ID]: { role: "tenant_admin" } },
       }),
     });
   });
@@ -121,7 +111,18 @@ async function stabilise(page: Page) {
 }
 
 test.describe("visual regression — auth routes", () => {
-  test.skip(!SHOULD_RUN, "set E2E_VISUAL_AUTH=1 + E2E_AUTH_COOKIE to run");
+  // Chromium-only — same rationale as the public-routes spec.
+  test.skip(
+    ({ browserName }) => browserName !== "chromium",
+    "visual baselines are chromium-only",
+  );
+  // Encoder requires TEST_AUTH_BYPASS=1 + NODE_ENV !== production. Skip
+  // gracefully when those aren't set so CI doesn't fail on environments
+  // that haven't opted in.
+  test.skip(
+    () => process.env.TEST_AUTH_BYPASS !== "1",
+    "auth-route visual regression requires TEST_AUTH_BYPASS=1",
+  );
 
   for (const mode of MODES) {
     test.describe(`${mode} mode`, () => {

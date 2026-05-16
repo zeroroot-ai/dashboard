@@ -265,12 +265,15 @@ When an intentional design change lands:
 
 #### Auth-route coverage
 
-`e2e/visual/auth-routes.spec.ts` covers `/dashboard`, `/dashboard/pages/missions`, `/dashboard/pages/findings`, `/dashboard/pages/settings/account` in both modes. Tests are **gated behind `E2E_VISUAL_AUTH=1` + `E2E_AUTH_COOKIE`** because they need an Auth.js session cookie minted before navigation. Two ways to satisfy that prerequisite:
+`e2e/visual/auth-routes.spec.ts` covers `/dashboard`, `/dashboard/pages/missions`, `/dashboard/pages/findings`, `/dashboard/pages/settings/account` in both modes. Authentication is synthesised via the test-only session encoder at `src/lib/test-fixtures/encode-session.ts`, which mints a JWE under the dashboard's own `AUTH_SECRET` that decodes through the same Auth.js pipeline as a real sign-in.
 
-- **Local dev against the Kind cluster:** sign in to the dashboard in your browser, copy the `__Secure-authjs.session-token` cookie value from devtools (Application → Cookies → http://localhost:30443), export as `E2E_AUTH_COOKIE`. Run with `E2E_VISUAL_AUTH=1 pnpm test:visual`.
-- **CI / fully-offline:** requires a test-only session-encoder that uses Auth.js's `encode` helper to mint a synthetic JWE under `AUTH_SECRET` for a mock user. Adding that is a security-sensitive change (it effectively forges a session) and is tracked as a follow-up — must be guarded so it cannot activate in production.
+```bash
+TEST_AUTH_BYPASS=1 AUTH_SECRET=$YOUR_LOCAL_SECRET pnpm test:visual
+```
 
-Until the encoder lands, CI runs only the public-route visual suite. The auth-route spec is skipped by default; the scaffolding (route list, daemon-proxy stubs, theme cookie helper, stabilisation) is in place so flipping it on is a one-line change once the encoder ships.
+Two independent production guards on the encoder, AND-ed: `NODE_ENV !== "production"` and `TEST_AUTH_BYPASS=1`. Neither alone activates it. The helm chart never sets `TEST_AUTH_BYPASS` so even a misconfigured prod deploy with the wrong `NODE_ENV` cannot run the encoder. Adding the env var to any production-bound config path is a smell — flag in review.
+
+The spec also skips gracefully when `TEST_AUTH_BYPASS` is unset, so CI environments that haven't opted in don't fail; they just don't run the auth-route suite.
 
 ## Logging
 
