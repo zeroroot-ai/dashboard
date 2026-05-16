@@ -10,6 +10,7 @@ This file documents conventions specific to the `zero-day-ai/dashboard` reposito
 - Dashboard → daemon always goes through **Envoy + ext_authz**. Never open a direct gRPC channel to `:50051` / `:50002` or use `GIBSON_DAEMON_ADDRESS`. The guard script `scripts/check-no-direct-daemon-grpc.mjs` will fail the build if you do.
 - `pnpm prebuild` runs a chain of policy-guard scripts. Do not disable them. Fix the code instead.
 - **No hardcoded colors anywhere under `app/**` or `components/**`.** Every color goes through a token declared in `app/globals.css`. The guard `scripts/check-no-hardcoded-colors.mjs` rejects tailwind palette utilities (`text-emerald-*`, `bg-zinc-*`), tailwind arbitrary-value colors (`bg-[#...]`, `text-[oklch(...)]`), black/white utilities (`bg-white`, `text-black`), inline-style colors, and raw `#...`/`oklch(...)`/`rgb(...)`/`hsl(...)` in `.css` files. Two files are exempt because they declare the token system itself: `app/globals.css`, `app/themes.css`. See the design-system guide below.
+- **Customer-facing docs name product capabilities, not vendors.** `content/docs/**/*.mdx` must not mention Zitadel, OpenFGA / FGA, Envoy, ext-authz, jwt_authn, JWKS, x-gibson-identity-*, Langfuse, SPIFFE / SPIRE, Neo4j, CNPG, ArgoCD, cert-manager, ESO, OPA, or "Gibson-hosted Vault". Write product language instead — "Gibson identity service", "Gibson permissions", "Gibson Traces", "Gibson-managed secrets storage". See the Customer terminology section below; full deny-list ↔ replacement table at [docs.git → repos/dashboard/customer-doc-terminology.md](https://github.com/zero-day-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md). Internal developer docs at `enterprise/platform/dashboard/docs/*.md` and every `CLAUDE.md` are intentionally exempt.
 
 ## Commands
 
@@ -274,6 +275,32 @@ TEST_AUTH_BYPASS=1 AUTH_SECRET=$YOUR_LOCAL_SECRET pnpm test:visual
 Two independent production guards on the encoder, AND-ed: `NODE_ENV !== "production"` and `TEST_AUTH_BYPASS=1`. Neither alone activates it. The helm chart never sets `TEST_AUTH_BYPASS` so even a misconfigured prod deploy with the wrong `NODE_ENV` cannot run the encoder. Adding the env var to any production-bound config path is a smell — flag in review.
 
 The spec also skips gracefully when `TEST_AUTH_BYPASS` is unset, so CI environments that haven't opted in don't fail; they just don't run the auth-route suite.
+
+## Customer terminology
+
+Customer-facing docs at `content/docs/**/*.mdx` and the customer-visible UI surface name **product capabilities**, not the vendors implementing them. This is a hard constraint: vendor names dilute the brand, expose attack surface, and turn infrastructure choices into doc-migration contracts whenever we swap a dependency.
+
+Canonical reference: [docs.git → `repos/dashboard/customer-doc-terminology.md`](https://github.com/zero-day-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md). It carries the full deny-list ↔ replacement table, the allowlist of permitted BYO/protocol terms, and the structural rewrite pattern for the "how do I debug a 401" flow.
+
+The deny-list at a glance — these never appear in `content/docs/**/*.mdx`:
+
+- `Zitadel` → "Gibson identity service" / drop
+- `OpenFGA`, `FGA`, "FGA Check", "FGA tuple" → "Gibson permissions" / "grants"
+- `SPIFFE`, `SPIRE` → drop or generic "workload identity"
+- `Envoy`, `ext-authz`, `ext_authz`, `jwt_authn`, `JWKS`, `x-gibson-identity-*`, `cgjwt`, identity-chain HMAC → drop
+- `Langfuse` → "Gibson Traces"
+- `Neo4j`, `CNPG`, `ArgoCD`, `cert-manager`, `ESO` / "External Secrets Operator", `OPA` → drop
+- "Gibson-hosted Vault" → "Gibson-managed secrets storage"
+
+Permitted (customer-facing product surface):
+
+- BYO integrations — `HashiCorp Vault` (in customer-side context only), `AWS Secrets Manager`, `Azure Key Vault`, `GCP Secret Manager`, `Slack`, `PagerDuty`, `Discord`, `Microsoft Teams`, `Docker`, `Prometheus`.
+- Customer-runtime references — `Kubernetes`, `systemd` (must read unambiguously as "your runtime").
+- Standard protocol terms — `OAuth2`, `OIDC`, `JWT`, `client_id`, `client_secret`.
+
+**Out of scope** — internal developer docs at `enterprise/platform/dashboard/docs/*.md` (auth.md, forbidden-patterns.md, how-to-add-a-rpc.md, …) and every `CLAUDE.md` may name internal components freely. The CI guard (lands in #129 as `scripts/check-no-internal-tech-in-docs.mjs`) skips them.
+
+When you find yourself writing "Check Envoy's `jwt_authn` logs" in a customer-facing troubleshooting flow, stop. The customer cannot reach those logs. Replace with a dashboard action (re-issue from the deploy wizard, inspect grants in the Permissions tab) or a CLI invocation (`gibson inspect`). The general rule: if a step requires reading internal logs, it is the wrong step.
 
 ## Logging
 
