@@ -112,11 +112,6 @@ Each command writes a credential file at `~/.gibson/<kind>/credentials`
 to `~/.gibson/plugin/<name>/host_key` (mode `0600`). Treat both like
 private keys — they identify your component to Gibson.
 
-> **Legacy shims.** The older per-kind verbs (`gibson agent enroll`,
-> `gibson tool enroll`, `gibson plugin enroll`) still work for
-> backwards-compatibility with existing scripts. New work should use
-> the unified `gibson component register --kind <kind>` form above.
-
 If registration fails, see
 [Component bootstrap & auth](/docs/component-bootstrap#troubleshooting-a-401)
 for the layered checks.

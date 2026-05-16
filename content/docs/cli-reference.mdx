@@ -1,6 +1,6 @@
 ---
 title: CLI Reference
-description: Every gibson command — workspace, component, mission, inspect, docs — and the legacy verb-per-kind shims.
+description: Every gibson command — workspace, component, mission, inspect, docs.
 ---
 
 `gibson` is the local binary you use to scaffold components, register
@@ -16,12 +16,6 @@ Modern CLI is unified under five top-level groups:
 | `mission` | Author, validate, render, and submit missions. |
 | `inspect` | Print who you are and what permissions your local credential carries. |
 | `docs` | Emit machine-readable docs (JSON Schemas, etc.). |
-
-> **Legacy verbs.** The per-kind verbs (`gibson agent enroll`,
-> `gibson tool enroll`, `gibson plugin enroll`, `gibson plugin run`,
-> …) still work for backwards-compatibility — see the
-> [Legacy shims](#legacy-shims) appendix at the bottom of this page.
-> New work should use the unified `gibson component <verb>` form.
 
 Global flags available on every command:
 
@@ -144,8 +138,7 @@ gibson component validate
 ```
 
 Useful in CI to catch manifest errors before they reach the
-register step. For plugins specifically, `gibson plugin validate`
-remains a legacy shim if you need it.
+register step.
 
 ### `gibson component run`
 
@@ -273,26 +266,6 @@ CI scripts can rely on these. `2` and `3` indicate operator error;
 
 The env-variable path is the recommended way to ship CI workloads —
 no credential files on disk.
-
----
-
-## Legacy shims
-
-The per-kind verbs from earlier CLI versions still work for
-backwards-compatibility. New work should use `gibson component <verb> --kind <kind>`,
-but existing scripts and CI jobs don't have to change.
-
-| Legacy form | Modern equivalent |
-|---|---|
-| `gibson agent enroll …` | `gibson component register --kind agent …` |
-| `gibson tool enroll …` | `gibson component register --kind tool …` |
-| `gibson plugin enroll --token …` | `gibson component register --kind plugin --token …` |
-| `gibson plugin init …` | `gibson component init --kind plugin …` |
-| `gibson plugin validate` | `gibson component validate` (in a plugin directory) |
-| `gibson plugin run` | `gibson component run` |
-
-The shims dispatch to the same underlying logic; flag semantics are
-identical.
 
 ---
 
