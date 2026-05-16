@@ -156,9 +156,9 @@ by `register`. Don't commit them. For CI and production deployments:
 - **Plugins**: bake the host key into the deployment artifact, or
   re-register on each fresh runtime instance using a freshly-issued
   bootstrap token.
-- **Workload identity** (e.g. SPIFFE): if your runtime exposes a
-  workload-identity socket, the SDK auto-detects it and uses mTLS
-  alongside the bearer credential. No extra configuration needed.
+- **Workload identity**: if your runtime exposes a workload-identity
+  socket, the SDK auto-detects it and uses mTLS alongside the bearer
+  credential. No extra configuration needed.
 
 ## Multi-environment setups
 

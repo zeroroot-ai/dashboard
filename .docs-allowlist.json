@@ -1,14 +1,1 @@
-[
-  {
-    "file": "content/docs/install.mdx",
-    "line": 159,
-    "pattern": "spiffe",
-    "match": "SPIFFE"
-  },
-  {
-    "file": "content/docs/secrets-management.mdx",
-    "line": 43,
-    "pattern": "gibson-hosted-vault",
-    "match": "Gibson-hosted Vault"
-  }
-]
+[]
