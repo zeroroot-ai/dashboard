@@ -24,14 +24,14 @@ A plugin is:
 
 - a **`plugin.yaml`** manifest at the root of your plugin directory
 - a binary that calls `plugin.Serve(ctx)`
-- enrolled with `gibson-cli plugin enroll --token <bootstrap>`
+- registered with `gibson component register --kind plugin --token <bootstrap>`
 - invoked **by tools**, not directly by agents — see
   [Roles & permissions](./rbac#plugin-invocation).
 
 ## Scaffold a new plugin
 
 ```bash
-gibson-cli plugin init --dir ./my-plugin
+gibson component init --kind plugin --dir ./my-plugin
 ```
 
 The CLI generates a working starting point:
@@ -47,10 +47,10 @@ The CLI generates a working starting point:
 
 Names must match `^[a-z][a-z0-9-]{0,61}[a-z0-9]$` (DNS-label style).
 
-Validate the manifest before you enroll:
+Validate the manifest before you register:
 
 ```bash
-gibson-cli plugin validate
+gibson plugin validate
 ```
 
 ## The `plugin.yaml` manifest
@@ -125,28 +125,32 @@ declared** and nothing else. See
 your plugin will dial. It documents the plugin's network footprint for
 review and is enforced where the runtime supports it (e.g. Setec).
 
-## Enroll and run
+## Register and run
 
-After register, the deploy wizard hands you a single-use **bootstrap
+After the dashboard's deploy wizard, you have a single-use **bootstrap
 token** (default 1 hour, configurable up to 24 hours).
 
 ```bash
-gibson-cli plugin enroll --token eyJ...
+gibson component register --kind plugin --token eyJ...
 
 # verify
-gibson-cli inspect --kind plugin
+gibson inspect --kind plugin
 
 # run
-gibson-cli plugin run
+gibson plugin run
 ```
 
-`enroll` exchanges the bootstrap token for a persistent **Ed25519 host
-key** at `~/.gibson/plugin/<name>/host_key` (mode `0600`). The host
-key is what the plugin uses for the rest of its life — the bootstrap
-token is consumed and discarded.
+> **Legacy shim.** `gibson plugin enroll --token <T>` still works for
+> backwards-compatibility. New work should use the unified
+> `gibson component register --kind plugin` form.
 
-`gibson-cli plugin run` is equivalent to running your built binary,
-which calls `plugin.Serve(ctx)`. `Serve`:
+`register` exchanges the bootstrap token for a persistent **Ed25519
+host key** at `~/.gibson/plugin/<name>/host_key` (mode `0600`). The
+host key is what the plugin uses for the rest of its life — the
+bootstrap token is consumed and discarded.
+
+`gibson plugin run` is equivalent to running your built binary, which
+calls `plugin.Serve(ctx)`. `Serve`:
 
 1. Loads and validates your manifest.
 2. Loads the host key.
@@ -243,5 +247,4 @@ See [Roles & permissions](./rbac).
   token + host key in detail; 401 troubleshooting.
 - [Secrets management](./secrets-management) — operator-side flows
   for storing, binding, rotating, and auditing credentials.
-- [CLI reference](./cli-reference) — every `gibson-cli plugin`
-  subcommand.
+- [CLI reference](./cli-reference) — every `gibson` subcommand.
