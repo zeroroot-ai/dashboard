@@ -162,52 +162,10 @@
     "match": "FGA"
   },
   {
-    "file": "content/docs/index.mdx",
-    "line": 47,
-    "pattern": "langfuse",
-    "match": "Langfuse"
-  },
-  {
     "file": "content/docs/install.mdx",
     "line": 159,
     "pattern": "spiffe",
     "match": "SPIFFE"
-  },
-  {
-    "file": "content/docs/observability.mdx",
-    "line": 29,
-    "pattern": "langfuse",
-    "match": "Langfuse"
-  },
-  {
-    "file": "content/docs/observability.mdx",
-    "line": 36,
-    "pattern": "langfuse",
-    "match": "Langfuse"
-  },
-  {
-    "file": "content/docs/observability.mdx",
-    "line": 37,
-    "pattern": "langfuse",
-    "match": "Langfuse"
-  },
-  {
-    "file": "content/docs/observability.mdx",
-    "line": 49,
-    "pattern": "langfuse",
-    "match": "Langfuse"
-  },
-  {
-    "file": "content/docs/observability.mdx",
-    "line": 52,
-    "pattern": "langfuse",
-    "match": "Langfuse"
-  },
-  {
-    "file": "content/docs/observability.mdx",
-    "line": 163,
-    "pattern": "langfuse",
-    "match": "Langfuse"
   },
   {
     "file": "content/docs/secrets-management.mdx",
