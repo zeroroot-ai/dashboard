@@ -8,7 +8,7 @@ stuck, jump to the linked deep-dive page; otherwise just keep going.
 
 ## 1. Sign up and install the CLI
 
-If you haven't already, follow [Install](./install) to:
+If you haven't already, follow [Install](/docs/install) to:
 
 - create a tenant at [zero-day.ai](https://zero-day.ai),
 - install the **`gibson`** binary (`go install github.com/zero-day-ai/adk/cmd/gibson@latest`),
@@ -31,7 +31,7 @@ The deploy wizard walks you through:
 1. **Pick a kind** — start with **Agent** for this walkthrough.
 2. **Name your agent** — kebab-case, e.g. `my-first-agent`.
 3. **Permissions** — for the walkthrough, accept the defaults. You can
-   tighten them later. See [Roles & permissions](./rbac).
+   tighten them later. See [Roles & permissions](/docs/rbac).
 4. **Issue credentials** — the dashboard shows a `client_id` and a
    `client_secret`. **Copy the secret now** — it's not shown again.
 5. **Connect** — leave the page open. It polls for the next step.
@@ -48,7 +48,7 @@ gibson component register --kind agent \
 This writes `~/.gibson/agent/credentials` (mode `0600`) and verifies the
 credential by calling Gibson's identity service. If the verification
 fails, the wizard does **not** advance — see
-[Component bootstrap & auth → Troubleshooting a 401](./component-bootstrap#troubleshooting-a-401).
+[Component bootstrap & auth → Troubleshooting a 401](/docs/component-bootstrap#troubleshooting-a-401).
 
 > **Legacy shim.** `gibson agent enroll …` still works for
 > backwards-compatibility with existing scripts. New work should use
@@ -139,7 +139,7 @@ and create a one-node mission:
 The mission detail page streams events live: `mission.started`,
 `node.started`, your agent's output appears as `node.finished`, and the
 mission concludes with `mission.completed`. See
-[Missions](./missions) for the full lifecycle.
+[Missions](/docs/missions) for the full lifecycle.
 
 Missions can also be authored as files and submitted from the CLI:
 
@@ -155,14 +155,14 @@ format your team prefers.
 
 | You want to… | Read |
 |---|---|
-| Add a tool your agent can call | [Tools](./tools) |
-| Connect a stateful integration | [Plugins](./plugins) |
-| Store and rotate credentials | [Secrets management](./secrets-management) |
-| Auto-populate the knowledge graph from tool output | [Knowledge graph](./knowledge-graph) |
-| Submit and triage findings | [Findings](./findings) |
+| Add a tool your agent can call | [Tools](/docs/tools) |
+| Connect a stateful integration | [Plugins](/docs/plugins) |
+| Store and rotate credentials | [Secrets management](/docs/secrets-management) |
+| Auto-populate the knowledge graph from tool output | [Knowledge graph](/docs/knowledge-graph) |
+| Submit and triage findings | [Findings](/docs/findings) |
 | Wire your agent into CI / production | the Makefile produced by `gibson component init --kind plugin` is the canonical template |
 
 If you hit a wall, the
-[Component bootstrap & auth](./component-bootstrap) page covers the
-common 401 paths, and the [CLI reference](./cli-reference) lists every
+[Component bootstrap & auth](/docs/component-bootstrap) page covers the
+common 401 paths, and the [CLI reference](/docs/cli-reference) lists every
 `gibson` command.
