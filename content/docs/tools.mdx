@@ -18,7 +18,7 @@ Tools differ from plugins in two ways:
 | **Who calls it** | Agents. | Tools (and rarely, mission nodes directly). |
 
 If your capability needs to hold a Shodan API key or maintain a
-database connection, you want a [plugin](./plugins). If it's "give me
+database connection, you want a [plugin](/docs/plugins). If it's "give me
 the open ports on `1.2.3.4`," you want a tool.
 
 ## Tools are typed
@@ -64,7 +64,7 @@ message Response {
 `service`, `endpoint`, `domain`, `subdomain`, `technology`,
 `certificate`, `finding`, `evidence` — plus `custom_node` and
 `explicit_relationship` for shapes the standard taxonomy doesn't cover.
-See [Taxonomy](./taxonomy) for the full list.
+See [Taxonomy](/docs/taxonomy) for the full list.
 
 A tool that doesn't populate field 100 just won't auto-populate the
 graph. That's fine for tools whose output is purely tool-specific.
@@ -173,7 +173,7 @@ gibson component register --kind tool \
 
 The wizard at
 [`/dashboard/deploy`](https://app.zero-day.ai/dashboard/deploy) issues
-the credential. See [Install](./install#4-get-a-credential-from-the-dashboard).
+the credential. See [Install](/docs/install#4-get-a-credential-from-the-dashboard).
 
 > **Legacy shim.** `gibson tool enroll …` still works for
 > backwards-compatibility. New work should use the unified
@@ -215,7 +215,7 @@ When the tool responds, Gibson:
 ## Authorization
 
 Whether a given agent can call a given tool is controlled by your
-tenant's **Permissions** model — see [Roles & permissions](./rbac).
+tenant's **Permissions** model — see [Roles & permissions](/docs/rbac).
 The dashboard's deploy wizard sets up sensible defaults; you can
 tighten or loosen later.
 
@@ -238,9 +238,9 @@ schemas, so reviewers can see the contract at a glance.
 
 ## Related
 
-- [Plugins](./plugins) — the right answer when stateful, long-running,
+- [Plugins](/docs/plugins) — the right answer when stateful, long-running,
   or secret-bound is what you actually need.
-- [Knowledge graph](./knowledge-graph) — what `DiscoveryResult` field
+- [Knowledge graph](/docs/knowledge-graph) — what `DiscoveryResult` field
   100 unlocks.
-- [Taxonomy](./taxonomy) — the standard entity types you can populate.
-- [Missions](./missions) — how tool nodes fit into a DAG.
+- [Taxonomy](/docs/taxonomy) — the standard entity types you can populate.
+- [Missions](/docs/missions) — how tool nodes fit into a DAG.

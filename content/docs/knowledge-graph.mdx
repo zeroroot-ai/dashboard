@@ -18,7 +18,7 @@ graph for you, and the SDK exposes typed queries against it.
 
 The graph stores **entities** (nodes) and **relationships** (edges).
 The standard entity types Gibson ships with are described in
-[Taxonomy](./taxonomy). At a high level:
+[Taxonomy](/docs/taxonomy). At a high level:
 
 - **Asset entities** — hosts, ports, services, endpoints, domains,
   subdomains, technologies, certificates.
@@ -53,13 +53,13 @@ message Response {
 ```
 
 This is the recommended path for the bulk of discovery data. See
-[Tools](./tools) for the full pattern.
+[Tools](/docs/tools) for the full pattern.
 
 ### 2. Findings submitted by agents
 
 When your agent calls `h.SubmitFinding(...)`, Gibson stores the finding
 as a `:finding` node and links it via `AFFECTS` to the target asset.
-See [Findings](./findings).
+See [Findings](/docs/findings).
 
 ### 3. Manual writes from agents
 
@@ -191,13 +191,13 @@ embeddings. There is no "soft delete" path.
 
 ## Related
 
-- [Taxonomy](./taxonomy) — the full list of standard entities and
+- [Taxonomy](/docs/taxonomy) — the full list of standard entities and
   relationships, plus how to extend.
-- [Ontology](./ontology) — hierarchy-aware queries use the closure
+- [Ontology](/docs/ontology) — hierarchy-aware queries use the closure
   built from `ontology.yaml`.
-- [Tools](./tools) — populate the graph automatically via
+- [Tools](/docs/tools) — populate the graph automatically via
   `DiscoveryResult` field 100.
-- [Findings](./findings) — how findings become `:finding` nodes and
+- [Findings](/docs/findings) — how findings become `:finding` nodes and
   link into the rest of the graph.
-- [Missions](./missions) — replay uses graph provenance to know what
+- [Missions](/docs/missions) — replay uses graph provenance to know what
   to re-execute.

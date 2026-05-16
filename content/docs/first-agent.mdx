@@ -13,7 +13,7 @@ SDK.
 
 ## Prerequisites
 
-- You've completed [Install](./install) and `gibson inspect` returns
+- You've completed [Install](/docs/install) and `gibson inspect` returns
   successfully for a registered agent identity.
 - Go installed (the version pinned in the SDK's `go.mod`).
 
@@ -76,7 +76,7 @@ which is the agent's view of the platform. The harness is passed into
 
 LLM slot identifiers (`"primary"`, `"summarizer"`, …) are agent-defined.
 Your tenant's slot policy maps each one to a real provider + model at
-dispatch time. See [Observability](./observability) for cost and latency
+dispatch time. See [Observability](/docs/observability) for cost and latency
 metrics.
 
 ## A complete hello-world
@@ -136,7 +136,7 @@ go run .
 Leave the process running. In the dashboard's Missions section, add a
 node that points at your agent's name and click **Run**. The mission
 detail page streams events as your agent works — see
-[Missions](./missions) for the full event taxonomy.
+[Missions](/docs/missions) for the full event taxonomy.
 
 ## A more realistic example
 
@@ -190,7 +190,7 @@ func execute(ctx context.Context, h agent.Harness, t agent.Task) (agent.Result, 
 ```
 
 Tools, plugins, and the graph are explained on their own pages —
-[Tools](./tools), [Plugins](./plugins), [Knowledge graph](./knowledge-graph).
+[Tools](/docs/tools), [Plugins](/docs/plugins), [Knowledge graph](/docs/knowledge-graph).
 
 ## Lifecycle hooks
 
@@ -206,13 +206,13 @@ agents don't need to override them.
 
 ## What's next
 
-- **[Tools](./tools)** — define and call a tool from your agent.
-- **[Findings](./findings)** — what `SubmitFinding` does and how
+- **[Tools](/docs/tools)** — define and call a tool from your agent.
+- **[Findings](/docs/findings)** — what `SubmitFinding` does and how
   findings show up in the dashboard.
-- **[Knowledge graph](./knowledge-graph)** — querying and writing the
+- **[Knowledge graph](/docs/knowledge-graph)** — querying and writing the
   graph from inside an agent.
-- **[Missions](./missions)** — chain your agent with other components
+- **[Missions](/docs/missions)** — chain your agent with other components
   in a DAG.
-- **[Taxonomy](./taxonomy)** and **[Ontology](./ontology)** — extend
+- **[Taxonomy](/docs/taxonomy)** and **[Ontology](/docs/ontology)** — extend
   the type system with custom node types or industry-vocab mappings
   for your component.

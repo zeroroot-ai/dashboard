@@ -16,7 +16,7 @@ Reach for a plugin when you need to:
 - safely handle credentials that should never reach an agent
 
 If the work is stateless and contract-shaped — "given X, return Y" —
-build a [tool](./tools) instead.
+build a [tool](/docs/tools) instead.
 
 ## Plugin shape
 
@@ -26,7 +26,7 @@ A plugin is:
 - a binary that calls `plugin.Serve(ctx)`
 - registered with `gibson component register --kind plugin --token <bootstrap>`
 - invoked **by tools**, not directly by agents — see
-  [Roles & permissions](./rbac#plugin-invocation).
+  [Roles & permissions](/docs/rbac#plugin-invocation).
 
 ## Scaffold a new plugin
 
@@ -117,7 +117,7 @@ Each entry in `spec.secrets` declares a credential the plugin needs:
 Bindings are created at register time in the deploy wizard. Your
 plugin's identity is granted access to **exactly the secrets it
 declared** and nothing else. See
-[Secrets management](./secrets-management) for the operator side.
+[Secrets management](/docs/secrets-management) for the operator side.
 
 ### Egress declarations
 
@@ -173,7 +173,7 @@ Only **tools** can invoke plugins. Agents go through a tool when they
 need a plugin's capability — this keeps the agent path free of
 credential-bearing code paths and gives you a single point to gate
 plugin invocations from. See
-[Roles & permissions](./rbac#plugin-invocation).
+[Roles & permissions](/docs/rbac#plugin-invocation).
 
 ## Reading secrets at runtime
 
@@ -192,7 +192,7 @@ Internally:
    configured **secrets backend** (the built-in encrypted store, or
    your own Vault / AWS Secrets Manager / GCP Secret Manager / Azure
    Key Vault). See
-   [Secrets management](./secrets-management).
+   [Secrets management](/docs/secrets-management).
 
 Credential **values never appear in audit logs** — only the secret
 name and the requesting plugin identity.
@@ -239,12 +239,12 @@ recent invocation counts.
 | Invoke a plugin method | A tool with a `can_invoke` grant for that plugin, or a tenant member. |
 | Register / configure / delete a plugin | Tenant admins. |
 
-See [Roles & permissions](./rbac).
+See [Roles & permissions](/docs/rbac).
 
 ## Related
 
-- [Component bootstrap & auth](./component-bootstrap) — bootstrap
+- [Component bootstrap & auth](/docs/component-bootstrap) — bootstrap
   token + host key in detail; 401 troubleshooting.
-- [Secrets management](./secrets-management) — operator-side flows
+- [Secrets management](/docs/secrets-management) — operator-side flows
   for storing, binding, rotating, and auditing credentials.
-- [CLI reference](./cli-reference) — every `gibson` subcommand.
+- [CLI reference](/docs/cli-reference) — every `gibson` subcommand.

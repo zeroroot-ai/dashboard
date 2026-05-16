@@ -37,13 +37,20 @@ import { fileURLToPath } from "node:url";
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SCAN_DIR = join(ROOT, "content", "docs");
 
-// Match Markdown links pointing at relative docs slugs:
-//   [label](./slug)
-//   [label](./slug#anchor)
-// We deliberately ignore external (http://, https://) links and root-
-// relative paths (e.g. /dashboard/...) — those are exercised by the
-// dashboard's existing route smoke tests.
-const LINK_RE = /\[[^\]]+\]\(\.\/([a-z0-9-]+)(#[a-z0-9-]+)?\)/g;
+// Match Markdown links pointing at absolute /docs/ slugs:
+//   [label](/docs/slug)
+//   [label](/docs/slug#anchor)
+// Absolute paths are required because Next.js's Link component does not
+// resolve relative hrefs (`./slug`) the way a plain <a> tag would —
+// `<Link href="./ontology">` clicked from /docs/first-agent does NOT
+// navigate to /docs/ontology. See dashboard#97 follow-up sweep.
+const LINK_RE = /\[[^\]]+\]\(\/docs\/([a-z0-9-]+)(#[a-z0-9-]+)?\)/g;
+
+// Regression guard: relative `./slug` references inside docs MDX render
+// as `<a href="./slug">` which Next.js's client-side router refuses to
+// navigate. We forbid them entirely and the absolute /docs/ form above
+// is the canonical pattern.
+const FORBIDDEN_RELATIVE_RE = /\[[^\]]+\]\(\.\/[a-z0-9-]+/g;
 
 // Headings — capture top-level Markdown headings (any level) and slugify
 // them the way fumadocs / GitHub renders anchors: lower-case, strip
@@ -92,6 +99,18 @@ function scan() {
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+
+      // Forbid `./slug` relative form — won't navigate via Next.js Link.
+      for (const m of line.matchAll(FORBIDDEN_RELATIVE_RE)) {
+        broken.push({
+          file: relative(ROOT, file),
+          line: i + 1,
+          link: m[0] + "…)",
+          reason: `relative href won't navigate via Next.js Link — use absolute "/docs/<slug>" instead`,
+        });
+      }
+
+      // Validate absolute /docs/slug references.
       for (const m of line.matchAll(LINK_RE)) {
         const slug = m[1];
         const anchor = m[2] ? m[2].slice(1) : null;
@@ -130,13 +149,18 @@ function scan() {
 function selftest() {
   const tempBadSlug = join(SCAN_DIR, "__selftest_bad_slug__.mdx");
   const tempBadAnchor = join(SCAN_DIR, "__selftest_bad_anchor__.mdx");
+  const tempRelative = join(SCAN_DIR, "__selftest_relative__.mdx");
   writeFileSync(
     tempBadSlug,
-    "See [the missing page](./this-slug-does-not-exist).\n",
+    "See [the missing page](/docs/this-slug-does-not-exist).\n",
   );
   writeFileSync(
     tempBadAnchor,
-    "See [bogus anchor](./install#this-anchor-does-not-exist).\n",
+    "See [bogus anchor](/docs/install#this-anchor-does-not-exist).\n",
+  );
+  writeFileSync(
+    tempRelative,
+    "See [relative form](./install) — should be forbidden.\n",
   );
   try {
     const broken = scan();
@@ -148,6 +172,9 @@ function selftest() {
         b.file.endsWith("__selftest_bad_anchor__.mdx") &&
         /anchor "#this-anchor-does-not-exist" not found/.test(b.reason),
     );
+    const relForbidden = broken.find(
+      (b) => b.file.endsWith("__selftest_relative__.mdx") && /won't navigate via Next.js Link/.test(b.reason),
+    );
     if (!slugMiss) {
       console.error("✗ selftest FAILED: scanner did not catch missing slug");
       process.exit(1);
@@ -156,10 +183,15 @@ function selftest() {
       console.error("✗ selftest FAILED: scanner did not catch missing anchor");
       process.exit(1);
     }
-    console.log("✓ selftest passed (scanner catches missing slug + missing anchor)");
+    if (!relForbidden) {
+      console.error("✗ selftest FAILED: scanner did not catch relative ./slug form");
+      process.exit(1);
+    }
+    console.log("✓ selftest passed (scanner catches missing slug + missing anchor + forbidden relative form)");
   } finally {
     if (existsSync(tempBadSlug)) unlinkSync(tempBadSlug);
     if (existsSync(tempBadAnchor)) unlinkSync(tempBadAnchor);
+    if (existsSync(tempRelative)) unlinkSync(tempRelative);
   }
 }
 
