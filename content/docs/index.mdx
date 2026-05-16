@@ -22,8 +22,9 @@ of work:
 | **Tool** | You have a stateless capability with a fixed input/output contract — a port scan, an HTTP probe, a CVE lookup. Tools are called by agents. |
 | **Plugin** | You need a long-running, stateful integration — a Shodan client, a SIEM connector, a custom database. Plugins hold credentials and are called by tools. |
 
-You write components against the **Gibson SDK** (Go), enroll them with
-`gibson-cli`, and they connect to your tenant on `api.zero-day.ai`.
+You write components against the **Gibson SDK** (Go), register them
+with `gibson component register`, and they connect to your tenant on
+`api.zero-day.ai`.
 
 ## What Gibson does for you
 
@@ -46,7 +47,22 @@ You write components against the **Gibson SDK** (Go), enroll them with
 - **Observability** — Langfuse-backed traces, cost/latency metrics,
   per-mission replay.
 
-## Where to start
+## Start here
+
+The fastest path from "signed up" to "my first agent is running",
+roughly 60 minutes:
+
+1. **[Install](./install)** — sign up, install the `gibson` CLI, point
+   it at your tenant.
+2. **[Getting Started](./getting-started)** — the 7-step walkthrough:
+   issue a credential, register on your machine, build the agent, run
+   a mission.
+3. **[Your First Agent](./first-agent)** — go deeper on the Agent
+   builder, the Harness, and a more realistic example.
+4. **[Component bootstrap & auth](./component-bootstrap)** — only if
+   you hit a 401; the layered checks for the credential lifecycle.
+
+If you want to jump straight to a specific task:
 
 | If you want to… | Read |
 |---|---|
@@ -59,21 +75,28 @@ You write components against the **Gibson SDK** (Go), enroll them with
 
 ## Reference
 
-- **[Component bootstrap & auth](./component-bootstrap)** — how
-  components log in and how to debug a 401.
-- **[Missions](./missions)** — DAG model, lifecycle, replay.
+Depth-on-demand pages — read when you need them:
+
+- **[Missions](./missions)** — DAG model, lifecycle, replay, supported
+  file formats.
+- **[Tools](./tools)** — define and call a stateless capability.
+- **[Plugins](./plugins)** — build a stateful integration with secret
+  bindings.
+- **[Secrets management](./secrets-management)** — bind, rotate, audit.
 - **[Findings](./findings)** — submitting, triaging, exporting.
 - **[Knowledge graph](./knowledge-graph)** — how the graph is
-  populated, how to query it.
+  populated, how to query it from the Harness API.
 - **[Taxonomy](./taxonomy)** — the standard entity types Gibson
   recognizes, and how to extend them.
+- **[Ontology](./ontology)** — industry-vocab mappings on top of the
+  taxonomy.
 - **[Roles & permissions](./rbac)** — tenant roles, per-component
   grants, plugin invocation gates.
 - **[Observability](./observability)** — traces, metrics, audit log,
   replay.
-- **[CLI reference](./cli-reference)** — every `gibson-cli` command.
+- **[CLI reference](./cli-reference)** — every `gibson` command.
 
 The Gibson SDK is at
 [`github.com/zero-day-ai/sdk`](https://github.com/zero-day-ai/sdk).
-The ADK (which ships `gibson-cli`) is at
+The ADK (which ships the `gibson` CLI) is at
 [`github.com/zero-day-ai/adk`](https://github.com/zero-day-ai/adk).
