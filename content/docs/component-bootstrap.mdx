@@ -1,103 +1,107 @@
 ---
 title: Component bootstrap & auth
-description: How agents, tools, and plugins authenticate against the Gibson platform — the two enrollment paths, the per-call handshake, and where to look when a 401 lands.
+description: How agents, tools, and plugins authenticate against Gibson — the two enrollment paths, the per-call protocol, and where to look when a 401 lands.
 ---
 
 A "component" in Gibson is the umbrella for **agents**, **tools**, and
-**plugins**. They register with the daemon's component registry, are
-addressed by name, and are dispatched by `dispatch_mode`. They share
-one wire-level identity model — **all calls land on Envoy with a Bearer
-JWT** — but they take **two different routes** to mint that JWT,
-because the audiences and lifecycles are different.
+**plugins**. They register with Gibson by name and are addressed by name
+at dispatch time. They share one identity model on the wire — every call
+to Gibson carries a Bearer JWT — but they take two different routes to
+mint that JWT, because the audiences and lifecycles are different.
 
 ## The two enrollment paths
 
 | Kind | Bootstrap | Long-lived credential | Per-call token |
 |---|---|---|---|
-| **Plugin** | One-shot bootstrap token, single-use, 24 h expiry | Persistent **Ed25519 host key** at `~/.gibson/plugin/<name>/host_key` (mode 0600) | Plugin signs a fresh **agent+jwt** every RPC (55 s expiry) |
+| **Plugin** | One-shot bootstrap token, single-use, 24 h expiry | Persistent **Ed25519 host key** at `~/.gibson/plugin/<name>/host_key` (mode 0600) | Plugin signs a fresh per-RPC token (55 s expiry) |
 | **Agent / Tool** | Dashboard-issued **OAuth2 `client_id` + `client_secret`** (one-time) | Credentials JSON at `~/.gibson/<kind>/credentials` (mode 0600) | OAuth2 `client_credentials` grant returns a JWT (~1 h expiry, refreshed 5 min before TTL) |
 
 Why two paths? Plugins are admin-installed service integrations with
 manifest-declared secret bindings — the bootstrap-token-then-host-key
-pattern matches that workflow, and per-RPC ephemeral signing minimizes
-replay window. Agents and tools are user-built executables that need
-**standard OIDC compatibility** so third-party SDKs and frameworks can
-talk to the platform — OAuth2 `client_credentials` is the right protocol
+pattern matches that workflow, and per-RPC ephemeral signing minimises
+the replay window. Agents and tools are user-built executables that
+need **standard OIDC compatibility** so third-party SDKs and frameworks
+can talk to Gibson — OAuth2 `client_credentials` is the right protocol
 for that audience.
 
 The dashboard's **deploy wizard** at `/dashboard/deploy` handles both
 paths via a per-type dispatcher. Pick the kind in step 1, the wizard
 routes you to the right flow:
 
-- `kind=plugin` delegates to the plugin-register wizard (manifest upload
-  + secret bindings + atomic register, ending in a bootstrap token + a
-  `gibson component register --kind plugin --token <T>` command).
-- `kind=agent` or `kind=tool` walks you through type/name selection,
-  the **Permissions step** (per-action grants on components, plus
-  plugin invocation grants for tools), credential issuance, and a
-  polling step that confirms the component connects.
+- `kind=plugin` walks through manifest upload, secret bindings, and
+  atomic register, ending with a bootstrap token and a
+  `gibson component register --kind plugin --token <T>` command to run
+  on the host you'll deploy from.
+- `kind=agent` or `kind=tool` walks through type/name selection, the
+  **Permissions** step (per-action grants on components, plus plugin
+  invocation grants for tools), credential issuance, and a polling
+  step that confirms the component connects.
 
-> **Legacy shim.** The older per-kind verbs (`gibson plugin enroll`,
-> `gibson agent enroll`, `gibson tool enroll`) still work for
-> backwards-compatibility. New work should use the unified
-> `gibson component register --kind <kind>` form.
+## Per-call protocol
 
-## Per-call auth handshake
+Each component-to-Gibson RPC is a standard authenticated gRPC call:
 
-Every component-to-daemon RPC takes the same shape on the wire:
+- Plugins sign a fresh short-lived token per RPC with their host key
+  and send it as a Bearer credential. Gibson validates the signature
+  against the host key recorded at enrolment.
+- Agents and tools use **OAuth2 `client_credentials`** to exchange
+  their `client_id` / `client_secret` for a JWT (about an hour of
+  TTL), then present that JWT as a Bearer credential on every call.
+  The SDK refreshes the token automatically, ~5 minutes before
+  expiry.
 
-```
-component
-  └─▶ Bearer JWT in `authorization` header
-       └─▶ Envoy (jwt_authn filter, plus cgjwt verifier for plugin path)
-             └─▶ ext-authz (emits `x-gibson-identity-*` headers)
-                   └─▶ daemon (FGA Check + handler)
-```
-
-Two parallel JWT validators run inside Envoy:
-
-- **Zitadel JWTs** for agents/tools — validated by Envoy's `jwt_authn`
-  filter against Zitadel's JWKS (issued by `oauth2.TokenSource` from
-  the SDK's `core/sdk/auth/oidc/agent_credentials.go`).
-- **Capability-grant JWTs** for plugins — validated by ext-authz's
-  `cgjwt.Verifier` against the daemon's published JWKS (one entry per
-  enrolled host key). See `core/sdk/capabilitygrant/`.
-
-Both paths emit the same `x-gibson-identity-*` headers downstream, so
-the daemon's FGA Check doesn't care which path the caller took.
+The SDK handles all of this transparently — your code calls
+`agent.New(...)` (or the equivalent for tools and plugins), passes a
+context, and Gibson sees a fully-authenticated request. You do not
+write any of the token plumbing yourself.
 
 ## Glossary
 
 | Term | What it is |
 |---|---|
 | **Bootstrap token** | Single-use credential the plugin path mints during dashboard register. 24 h expiry. Consumed once by `gibson component register --kind plugin`, then discarded. |
-| **Host key** | Persistent Ed25519 keypair stored on disk at `~/.gibson/plugin/<name>/host_key` (0600). Identifies a plugin install. Public-key thumbprint is the host_id. |
-| **Agent key** | Ephemeral Ed25519 keypair regenerated per-process. Signs the per-RPC agent+jwt; chained to the host key in the JWT's `cnf` claim. |
-| **client_id / client_secret** | OAuth2 credentials the dashboard issues for agents/tools via `TenantAdminService.CreateAgentIdentity`. The secret is shown exactly once. |
-| **Capability-grant JWT (CG-JWT)** | Per-mission task JWT minted by the daemon, scoped to a specific RPC set. Presented alongside the primary credential. ext-authz can short-circuit FGA when the CG-JWT covers the requested method. |
-| **Component grant (FGA)** | Per-action read / configure / execute permission on a registered component, written as an FGA tuple (`component_<action>_enabled`). Editable via the dashboard's Permissions tab. |
-| **Plugin invocation grant (FGA)** | Binary `can_invoke` permission on a plugin. Only **tools** can hold this; agents do not directly invoke plugins. |
+| **Host key** | Persistent Ed25519 keypair stored on disk at `~/.gibson/plugin/<name>/host_key` (mode 0600). Identifies a plugin install. Public-key thumbprint is the host_id. |
+| **Agent key** | Ephemeral Ed25519 keypair regenerated per-process. Signs the per-RPC token; chained to the host key in the token's `cnf` claim. |
+| **client_id / client_secret** | OAuth2 credentials the dashboard issues for agents/tools through the deploy wizard. The secret is shown exactly once. |
+| **Capability-grant token (CG-JWT)** | Per-mission task token Gibson mints, scoped to a specific RPC set. Presented alongside the primary credential during mission execution. |
+| **Component grant** | Per-action read / configure / execute permission on a registered component, granted via the dashboard's Permissions tab. |
+| **Plugin invocation grant** | Binary `can_invoke` permission on a plugin. Only **tools** can hold this; agents do not directly invoke plugins. |
 
 ## Troubleshooting a 401
 
-1. **Verify the credential file is intact.** Mode must be 0600.
-   `oidc.LoadAgentCredentials` rejects looser permissions with
-   `ErrInsecureCredentialFile`.
+A 401 means Gibson rejected your component's credential. The customer
+debug surface for this is the **dashboard** plus `gibson inspect` — you
+should not need to read any server-side logs.
+
+1. **Verify the credential file is intact.** Mode must be 0600. The
+   SDK refuses to load a credential file with looser permissions and
+   surfaces a clear error if you try.
 2. **Run `gibson inspect`.** Auto-detects the local credentials,
-   mints a JWT, calls `IdentityService.WhoAmI`, and prints the
-   principal's effective grants. If `inspect` fails at the token
-   exchange, the IdP rejected the credential — re-issue from the
-   dashboard.
-3. **Check Envoy's `jwt_authn` logs** for the relevant route. A
-   missing `aud` or invalid signature shows here before reaching
-   ext-authz.
-4. **Confirm ext-authz's identity headers downstream.** When the
-   daemon logs `denied user:<numeric>`, it's an FGA decision —
-   inspect the principal's grants in the dashboard's Permissions
-   tab on the agent / tool detail page.
+   exchanges them for a token, calls Gibson's identity service, and
+   prints who you are along with the permissions you hold.
+3. **If `inspect` fails at the token exchange step**, your credential
+   was rejected at issuance time — re-issue from the dashboard's
+   deploy wizard. (`client_secret` and bootstrap tokens are one-time;
+   if you lost them or they expired, issuing a fresh credential is
+   the path forward.)
+4. **If `inspect` succeeds but a specific RPC still gets denied**,
+   you have a credential but not the grant the RPC needs. Open the
+   relevant component's detail page in the dashboard and check the
+   **Permissions** tab — the missing grant will be listed there with
+   a one-click toggle to add it (subject to your own role's
+   permissions to edit grants).
 
-## Related code & CLI
+If you've worked through these and the call still fails, the credential
+issuance flow has misfired — file a bug with the output of
+`gibson inspect --json` so we can correlate it on our side.
 
-- SDK packages: [`core/sdk/capabilitygrant/`](https://github.com/zero-day-ai/sdk/tree/main/capabilitygrant), [`core/sdk/auth/oidc/`](https://github.com/zero-day-ai/sdk/tree/main/auth/oidc)
-- CLI commands: `gibson component register --kind plugin`, `gibson component register --kind agent`, `gibson component register --kind tool`, `gibson inspect` (legacy shims: `gibson plugin enroll`, `gibson agent enroll`, `gibson tool enroll`)
-- Daemon RPCs: `TenantAdminService.CreateAgentIdentity`, `PluginsAdminService.RegisterPlugin`, `IdentityService.WhoAmI`, `GrantsAdminService.WriteAgentGrants` / `DeleteAgentGrants`
+## Related
+
+- **SDK packages** — [`auth/oidc`](https://github.com/zero-day-ai/sdk/tree/main/auth/oidc),
+  [`capabilitygrant`](https://github.com/zero-day-ai/sdk/tree/main/capabilitygrant)
+- **CLI commands** — `gibson component register --kind plugin`,
+  `gibson component register --kind agent`,
+  `gibson component register --kind tool`,
+  `gibson inspect`
+- **In-product surfaces** — the deploy wizard at `/dashboard/deploy`,
+  the Permissions tab on each component's detail page
