@@ -1,4 +1,5 @@
 {
+  "$comment": "DO NOT EDIT — generated from opensource/sdk/gen/mission-definition.schema.json by scripts/gen-mission-schema.mjs. Run `node scripts/gen-mission-schema.mjs` to regenerate.",
   "$defs": {
     "AgentNodeConfig": {
       "additionalProperties": false,
@@ -273,6 +274,10 @@
           "$ref": "#/$defs/RetryPolicy",
           "description": "RetryPolicy defines retry behavior for this node"
         },
+        "reusePolicy": {
+          "$ref": "#/$defs/ReusePolicy",
+          "description": "ReusePolicy declares how this node's I/O is scoped + reused across mission runs. Optional; defaults to run-scoped no-reuse when absent. Spec: mission-schema-canonicalization (mirror migration)."
+        },
         "timeout": {
           "description": "Timeout is the maximum execution time for this node",
           "type": "string"
@@ -339,6 +344,40 @@
       },
       "type": "object"
     },
+    "RepositoryConfig": {
+      "additionalProperties": false,
+      "description": "RepositoryConfig defines a single repository to clone. Maps directly to the SDK's workspace.RepositoryConfig type.",
+      "properties": {
+        "branch": {
+          "description": "Branch is the Git branch to checkout after cloning. Defaults to the repository's default branch when empty.",
+          "type": "string"
+        },
+        "credentialName": {
+          "description": "CredentialName references a credential in the credential store. Optional — public repos don't need credentials.",
+          "type": "string"
+        },
+        "dependsOn": {
+          "description": "DependsOn lists repository names that must clone first. Enables topological ordering for multi-repo missions.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "description": "Name is the unique identifier for this repository within the mission. Required.",
+          "type": "string"
+        },
+        "shallow": {
+          "description": "Shallow enables `git clone --depth 1`.",
+          "type": "boolean"
+        },
+        "url": {
+          "description": "URL is the Git repository URL (HTTPS or SSH). Required.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "RetryPolicy": {
       "additionalProperties": false,
       "description": "RetryPolicy defines the retry behavior for a mission node",
@@ -369,6 +408,25 @@
           "description": "Multiplier is the factor by which the delay increases (used for exponential backoff)",
           "format": "double",
           "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "ReusePolicy": {
+      "additionalProperties": false,
+      "description": "ReusePolicy declares how a node's I/O is scoped + reused across mission runs. Distinct from DataPolicy (which governs storage/encryption); the two policies are layered.  Spec: mission-schema-canonicalization (mirror migration — lifts mission.DataPolicy's OutputScope/InputScope/Reuse fields into the canonical proto schema as a separately-named message to avoid collision with the existing DataPolicy).",
+      "properties": {
+        "inputScope": {
+          "description": "InputScope: \"mission_run\" | \"mission\" | \"global\". Default: \"mission\".",
+          "type": "string"
+        },
+        "outputScope": {
+          "description": "OutputScope: \"mission_run\" | \"mission\" | \"global\". Default: \"mission\".",
+          "type": "string"
+        },
+        "reuse": {
+          "description": "Reuse: \"skip\" | \"rerun\" | \"merge\". Controls behavior when an existing output is found in scope. Default: \"rerun\".",
+          "type": "string"
         }
       },
       "type": "object"
@@ -572,6 +630,51 @@
         }
       ],
       "type": "object"
+    },
+    "WorkspaceConfig": {
+      "additionalProperties": false,
+      "description": "WorkspaceConfig configures repository cloning + workspace management for missions whose agents need to interact with code. The daemon's workspace manager honors this at mission start (initializeWorkspaces).  Spec: mission-schema-canonicalization (mirror migration — lifts mission.WorkspaceConfig from the daemon's hand-written mirror into the canonical proto schema).",
+      "properties": {
+        "repositories": {
+          "description": "Repositories to clone for this mission. Each entry becomes a workspace addressable from agents via harness.Workspace(name).",
+          "items": {
+            "$ref": "#/$defs/RepositoryConfig"
+          },
+          "type": "array"
+        },
+        "settings": {
+          "$ref": "#/$defs/WorkspaceSettings",
+          "description": "Settings carries workspace-wide knobs (cleanup, LSP, isolation)."
+        }
+      },
+      "type": "object"
+    },
+    "WorkspaceSettings": {
+      "additionalProperties": false,
+      "description": "WorkspaceSettings carries workspace-wide options.",
+      "properties": {
+        "baseDirectory": {
+          "description": "BaseDirectory is the workspace clone root. When empty the daemon uses a temp directory.",
+          "type": "string"
+        },
+        "cleanupOnComplete": {
+          "description": "CleanupOnComplete deletes workspace directories after the mission ends. Defaults to true at the daemon when unset (cleanup is the safe default).",
+          "type": "boolean"
+        },
+        "lspEnabled": {
+          "description": "LSPEnabled starts language servers for code validation.",
+          "type": "boolean"
+        },
+        "lspTimeout": {
+          "description": "LSPTimeout caps LSP validation duration. Encoded as a protobuf Duration to preserve sub-second precision.",
+          "type": "string"
+        },
+        "useWorktrees": {
+          "description": "UseWorktrees enables Git worktrees for per-agent isolation — concurrent modifications without conflicts.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
     }
   },
   "$id": "https://gibson.zero-day.ai/schemas/mission-definition.json",
@@ -651,6 +754,10 @@
     "version": {
       "description": "Version is the semantic version of the mission definition",
       "type": "string"
+    },
+    "workspace": {
+      "$ref": "#/$defs/WorkspaceConfig",
+      "description": "Workspace configures repository cloning + workspace management for agents that need code access. Optional; missions without code interaction omit this field.  Spec: mission-schema-canonicalization (mirror migration)."
     }
   },
   "title": "MissionDefinition",

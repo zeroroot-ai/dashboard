@@ -25,6 +25,36 @@ pnpm lint           # eslint
 pnpm proto:generate # regenerate src/gen/ TS proto bindings
 ```
 
+## Mission schema copy
+
+`src/data/mission-definition.schema.json` is a generated copy of
+`opensource/sdk/gen/mission-definition.schema.json`. It is NOT
+hand-maintained. The file carries a `$comment` field ("DO NOT EDIT — generated
+…") as the first key.
+
+**Source of truth:** `opensource/sdk/gen/mission-definition.schema.json`
+(produced by the SDK's proto → JSON Schema pipeline).
+
+**Generator (workstation-only):**
+```bash
+node scripts/gen-mission-schema.mjs
+# or
+pnpm gen:mission-schema
+```
+Requires the `opensource/sdk/` sibling clone to be present in the polyrepo
+workspace. Exits with a clear error if the sibling is absent.
+
+**Freshness gate (runs in `pnpm prebuild`):**
+`scripts/check-mission-schema-fresh.mjs`
+- When the SDK sibling is present: regenerates in memory and byte-diffs against
+  the committed file. Fails on any drift.
+- When the SDK sibling is absent (dashboard-only CI): validates that the
+  committed file is valid JSON with the `$comment` header present.
+- No `--skip` / `--permissive` flag exists. Drift fails the build, period.
+
+When the SDK schema changes: run `pnpm gen:mission-schema` and commit
+`src/data/mission-definition.schema.json` alongside the SDK change.
+
 ## Proto regeneration
 
 The dashboard's TS proto bindings at `src/gen/` are generated from
