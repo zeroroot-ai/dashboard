@@ -15,7 +15,7 @@ const messages: TypewriterMessage[] = [
   },
   {
     label: "SRE",
-    text: "Cursor, build me a gibson agent to monitor our payments service, troubleshoot with kubectl, and fix config via Argo CD — trigger it from Alertmanager webhooks.",
+    text: "Cursor, build me a gibson agent to monitor our payments service, troubleshoot with kubectl, and reconcile config via GitOps — trigger it from Alertmanager webhooks.",
   },
   {
     label: "Bug Bounty",
@@ -110,7 +110,7 @@ function Schematic() {
 {` EXECUTION PLANE           ╎    CONTROL PLANE · api.zero-day.ai\n`}
 {` ┌──────────────────┐      ╎    ┌──────────────────────┐\n`}
 {` │ `}<Pulse />{` agent binary   │      ╎    │ `}<Pulse />{` gibson      LIVE   │\n`}
-{` │   runs on:       │      ╎    │ `}<Pulse />{` neo4j       READY  │\n`}
+{` │   runs on:       │      ╎    │ `}<Pulse />{` graph store READY  │\n`}
 {` │   laptop · ci ·  │ ═════╪═══►│ `}<Pulse />{` redis       READY  │\n`}
 {` │   vps · k8s      │ gRPC ╎    │ `}<Pulse />{` langfuse    READY  │\n`}
 {` └────────┬─────────┘      ╎    │ `}<Pulse char="◢" amber />{` setec       ARMED  │\n`}

@@ -30,19 +30,19 @@ interface DataPlaneProgressPanelProps {
 
 /** True when every store is no longer in an active provisioning state. */
 function allSettled(status: DataPlaneStatus): boolean {
-  const stores = [status.postgres, status.redis, status.neo4j];
+  const stores = [status.postgres, status.redis, status.graph];
   return stores.every((s) => s.state === 'ready' || s.state === 'failed');
 }
 
 /** True when every store is `ready`. */
 function allReady(status: DataPlaneStatus): boolean {
-  const stores = [status.postgres, status.redis, status.neo4j];
+  const stores = [status.postgres, status.redis, status.graph];
   return stores.every((s) => s.state === 'ready');
 }
 
 /** True when at least one store is `failed`. */
 function anyFailed(status: DataPlaneStatus): boolean {
-  return [status.postgres, status.redis, status.neo4j].some(
+  return [status.postgres, status.redis, status.graph].some(
     (s) => s.state === 'failed',
   );
 }
@@ -155,7 +155,7 @@ export function DataPlaneProgressPanel({ onAllReady }: DataPlaneProgressPanelPro
         <StoreRow
           label="Knowledge graph"
           hint="(~60s)…"
-          status={data.neo4j}
+          status={data.graph}
         />
       </ul>
 
