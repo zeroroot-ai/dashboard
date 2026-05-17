@@ -61,15 +61,30 @@ export class LokiClient {
     // pass an explicit baseUrl skip the env read entirely (used in tests).
     // We read process.env directly here rather than through the env-validator
     // proxy to avoid module-load-time throws when this class is instantiated
-    // outside of the production boot path (e.g. in unit tests).
+    // outside of the production boot path (e.g. in unit tests, OR during
+    // `next build` page-data collection which import-evaluates modules with
+    // no runtime env).
     const fromEnv = process.env.LOKI_URL;
+    const isBuildPhase =
+      process.env.NEXT_PHASE === 'phase-production-build' ||
+      process.env.npm_lifecycle_event === 'build' ||
+      process.env.npm_lifecycle_event === 'prebuild';
     if (!baseUrl && !fromEnv) {
-      throw new Error(
-        '[LokiClient] LOKI_URL is required (or pass an explicit baseUrl). ' +
-          'See src/lib/env-validator.ts — validateEnv() should have caught this at boot.',
-      );
+      if (isBuildPhase) {
+        // Synthetic placeholder so `next build`'s page-data probe can
+        // import this module. Runtime requests never reach this branch
+        // because validateEnv() fail-fasts the pod when LOKI_URL is
+        // missing.
+        this.baseUrl = '__BUILD_TIME_STUB_LOKI_URL__';
+      } else {
+        throw new Error(
+          '[LokiClient] LOKI_URL is required (or pass an explicit baseUrl). ' +
+            'See src/lib/env-validator.ts — validateEnv() should have caught this at boot.',
+        );
+      }
+    } else {
+      this.baseUrl = baseUrl ?? (fromEnv as string);
     }
-    this.baseUrl = baseUrl ?? (fromEnv as string);
     // LOKI_TENANT_ID is OPTIONAL (single-tenant Loki deployments omit it).
     this.defaultTenantId = defaultTenantId || process.env.LOKI_TENANT_ID;
   }
