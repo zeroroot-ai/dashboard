@@ -351,11 +351,11 @@ export const OPTIONAL_ENV = [
   'NEXT_PUBLIC_APP_URL',
   'NEXT_PUBLIC_API_URL',
   'NEXT_PUBLIC_IDENTITY_PROVIDER_URL',
-  'NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV',
 
-  // ---- Permissive-dev knob ----
-  // Read by instrumentation; production codepath fail-fasts when set.
-  'DASHBOARD_AUTHZ_PERMISSIVE_DEV',
+  // NOTE: the previous *_AUTHZ_PERMISSIVE_DEV escape hatches were deleted by
+  // spec "eliminate-permissive-authz" Requirement 2. The check-no-permissive-
+  // flags.mjs prebuild guard rejects any literal reference here, so they are
+  // intentionally absent from this allowlist — never re-add them.
 
   // ---- Runtime-supplied (set by Node / Next.js itself) ----
   'NODE_ENV',
