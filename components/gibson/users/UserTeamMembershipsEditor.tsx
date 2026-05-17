@@ -17,8 +17,12 @@
  * dashboard#151 (S7).
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
+import { queryKeys } from "@/src/lib/query/keys";
+import { useTenantId } from "@/src/lib/auth/tenant";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,12 +31,11 @@ import { UsersIcon } from "lucide-react";
 
 import {
   addTeamMemberAction,
-  listTeamMembersAction,
-  listTeamsAction,
   removeTeamMemberAction,
   type Team,
 } from "@/app/actions/crd/teams";
 import { setTeamAdminAction } from "@/app/actions/crd/role";
+import { useOrgGraph } from "@/src/hooks/use-org-graph";
 
 interface RowState {
   team: Team;
@@ -51,47 +54,51 @@ interface Props {
 }
 
 export function UserTeamMembershipsEditor({ userId, canEdit }: Props) {
+  // Source of truth: useOrgGraph (React Query, shared with UsersContent).
+  // Local row state layers optimistic toggles on top of the cached graph so
+  // checkbox flips feel instant; on every cache refetch we re-derive from
+  // the underlying graph + carry over any in-flight pending markers.
+  // dashboard#174.
+  const { data: orgGraph, loading: graphLoading, error: graphError } = useOrgGraph();
+  const queryClient = useQueryClient();
+  const tenantId = useTenantId() ?? "";
+
+  function invalidateGraph() {
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.orgGraph.full(tenantId),
+    });
+  }
+
+  const derivedRows = useMemo<RowState[]>(() => {
+    return orgGraph.teams.map<RowState>((team) => {
+      const members = orgGraph.byTeam[team.id] ?? [];
+      const m = members.find((mm) => mm.userId === userId);
+      return {
+        team,
+        isMember: !!m,
+        isAdmin: !!m?.isAdmin,
+        pending: false,
+      };
+    });
+  }, [orgGraph, userId]);
+
   const [rows, setRows] = useState<RowState[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const error = graphError;
 
+  // Sync derived rows whenever the underlying graph refreshes. Preserve
+  // pending flags on rows that the user just clicked (those server actions
+  // are in-flight — their optimistic state shouldn't get clobbered by an
+  // unrelated graph refresh).
   useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      setError(null);
-      try {
-        const teamsResp = await listTeamsAction();
-        if (!teamsResp.ok) throw new Error(teamsResp.error);
-        if (cancelled) return;
-
-        const built: RowState[] = await Promise.all(
-          teamsResp.data.map(async (team) => {
-            const membersResp = await listTeamMembersAction(team.id);
-            if (!membersResp.ok) {
-              return { team, isMember: false, isAdmin: false, pending: false };
-            }
-            const m = membersResp.data.find((mm) => mm.userId === userId);
-            return {
-              team,
-              isMember: !!m,
-              isAdmin: !!m?.isAdmin,
-              pending: false,
-            };
-          }),
-        );
-        if (cancelled) return;
-        setRows(built);
-      } catch (err) {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : String(err));
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
+    if (graphLoading) return;
+    setRows((prev) => {
+      if (!prev) return derivedRows;
+      const pendingByTeam = new Map(
+        prev.filter((r) => r.pending).map((r) => [r.team.id, r]),
+      );
+      return derivedRows.map((next) => pendingByTeam.get(next.team.id) ?? next);
+    });
+  }, [derivedRows, graphLoading]);
 
   function updateRow(teamId: string, patch: Partial<RowState>) {
     setRows((prev) =>
@@ -125,6 +132,7 @@ export function UserTeamMembershipsEditor({ userId, canEdit }: Props) {
           ? `Added to ${row.team.displayName}.`
           : `Removed from ${row.team.displayName}.`,
       );
+      invalidateGraph();
     } catch (err) {
       // Roll back to previous state on failure.
       updateRow(row.team.id, { isMember: prev.isMember, isAdmin: prev.isAdmin });
@@ -154,6 +162,7 @@ export function UserTeamMembershipsEditor({ userId, canEdit }: Props) {
           ? `Promoted to admin in ${row.team.displayName}.`
           : `Demoted to member in ${row.team.displayName}.`,
       );
+      invalidateGraph();
     } catch (err) {
       updateRow(row.team.id, { isAdmin: prev });
       toast.error(
@@ -180,7 +189,7 @@ export function UserTeamMembershipsEditor({ userId, canEdit }: Props) {
           <p className="text-sm text-destructive">
             Failed to load teams: {error}
           </p>
-        ) : rows === null ? (
+        ) : rows === null || graphLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : rows.length === 0 ? (
           <EmptyState

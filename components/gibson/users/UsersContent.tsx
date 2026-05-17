@@ -46,7 +46,7 @@ import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import { InviteUserDialog } from "./InviteUserDialog";
 import { TeamMembershipChips } from "./TeamMembershipChips";
 import { useCRDWatch } from "@/src/hooks/useCRDWatch";
-import { useTeamMembershipMap } from "@/src/hooks/use-team-membership-map";
+import { useOrgGraph } from "@/src/hooks/use-org-graph";
 import { revokeMemberAction } from "@/app/actions/crd/member";
 import { setTenantRoleAction } from "@/app/actions/crd/role";
 import type { TenantMember } from "@/src/lib/k8s/types";
@@ -123,7 +123,8 @@ export function UsersContent() {
     enabled: !!tenantId,
   });
 
-  const { byUser: teamsByUser, loading: teamsLoading } = useTeamMembershipMap();
+  const { data: orgGraph, loading: teamsLoading } = useOrgGraph();
+  const teamsByUser = orgGraph.byUser;
 
   const [search, setSearch] = React.useState("");
   const [inviteOpen, setInviteOpen] = React.useState(false);
