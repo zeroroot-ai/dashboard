@@ -25,9 +25,11 @@
  * Throws a {@link ZitadelBearerError} with a machine-readable `code` on every
  * failure. The bearer token bytes are NEVER included in the error message.
  *
- * Env vars:
- *   ZITADEL_ISSUER             — Zitadel issuer URL (required).
- *   ZITADEL_AUDIENCE           — Expected audience claim (default "gibson-platform").
+ * Env vars (Zitadel-related ones are STRUCTURALLY REQUIRED per epic
+ * one-code-path / deploy#196 — the previous `?? ""` / `?? "gibson-platform"`
+ * fallbacks have been removed; missing values throw at first access):
+ *   ZITADEL_ISSUER             — Zitadel issuer URL.
+ *   ZITADEL_AUDIENCE           — Expected audience claim.
  *   ALLOWED_SERVICE_SUBJECTS   — Comma-separated NUMERIC Zitadel subs allowed
  *                                to call service-acting routes. Populated at
  *                                pod start by the resolve-sa-identity-map
@@ -72,14 +74,36 @@ export class ZitadelBearerError extends Error {
 // ---------------------------------------------------------------------------
 // Configuration — read lazily at call time so tests can override env vars
 // before the first invocation.
+//
+// Per epic one-code-path / deploy#196: ZITADEL_ISSUER and ZITADEL_AUDIENCE
+// are structurally required. The previous `?? ""` / `?? "gibson-platform"`
+// fallbacks have been deleted; missing values throw the moment the verifier
+// is exercised, surfacing the misconfiguration as a CrashLoopBackOff on
+// first request rather than a silent "every JWT is rejected" failure mode.
+// Throws are wired through ZitadelBearerError(signature-failed, ...) so the
+// existing 401-with-machine-readable-code surface is preserved.
 // ---------------------------------------------------------------------------
 
 function getIssuer(): string {
-  return process.env.ZITADEL_ISSUER ?? '';
+  const v = process.env.ZITADEL_ISSUER;
+  if (typeof v !== 'string' || v.length === 0) {
+    throw new ZitadelBearerError(
+      'signature-failed',
+      'ZITADEL_ISSUER is not configured (one-code-path / deploy#196)',
+    );
+  }
+  return v;
 }
 
 function getAudience(): string {
-  return process.env.ZITADEL_AUDIENCE ?? 'gibson-platform';
+  const v = process.env.ZITADEL_AUDIENCE;
+  if (typeof v !== 'string' || v.length === 0) {
+    throw new ZitadelBearerError(
+      'audience-mismatch',
+      'ZITADEL_AUDIENCE is not configured (one-code-path / deploy#196)',
+    );
+  }
+  return v;
 }
 
 function getAllowedSubjects(): ReadonlySet<string> {
@@ -136,13 +160,7 @@ let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 let _jwksIssuer = '';
 
 function getJWKS(): ReturnType<typeof createRemoteJWKSet> {
-  const issuer = getIssuer();
-  if (!issuer) {
-    throw new ZitadelBearerError(
-      'signature-failed',
-      'ZITADEL_ISSUER is not configured',
-    );
-  }
+  const issuer = getIssuer(); // throws if ZITADEL_ISSUER missing (one-code-path / deploy#196)
   if (_jwks && _jwksIssuer === issuer) return _jwks;
   _jwks = createRemoteJWKSet(new URL(`${issuer}/oauth/v2/keys`), {
     cacheMaxAge: 600_000,
