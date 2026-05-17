@@ -494,9 +494,29 @@ type EnvShape = {
   readonly [K in OptionalEnvName]: string | undefined;
 };
 
+// isBuildPhase returns true while `next build` is running. Mirrors the
+// helper inside auth.ts (slice #196 pattern). Page-data collection inside
+// `next build` import-evaluates every route module with no runtime env;
+// returning a namespaced synthetic value lets the build complete instead
+// of crashing at module-load when an API route reads env.X at call-time
+// inside the page-data probe. Runtime / dev / test still throws so a
+// misconfigured pod CrashLoopBackOffs at boot.
+function isBuildPhase(): boolean {
+  return (
+    process.env.NEXT_PHASE === 'phase-production-build' ||
+    process.env.npm_lifecycle_event === 'build' ||
+    process.env.npm_lifecycle_event === 'prebuild'
+  );
+}
+
 function readRequired(name: RequiredEnvName): string {
   const raw = process.env[name];
   if (raw === undefined || raw === '') {
+    if (isBuildPhase()) {
+      // Synthetic placeholder — clearly identifiable in logs / network
+      // requests if it ever leaks past the build into a running request.
+      return `__BUILD_TIME_STUB_${name}__`;
+    }
     // validateEnv() should have caught this — but if a test reaches in via
     // delete-then-import we want a loud throw rather than silently returning
     // empty-string. Mirrors the inline requireEnv() pattern slice #196 used.
