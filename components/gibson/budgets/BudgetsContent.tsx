@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { WalletIcon } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -18,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import {
   Table,
   TableBody,
@@ -221,9 +223,11 @@ function BudgetTableCard({
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No {scope} budgets configured. Tenant defaults apply.
-          </p>
+          <EmptyState
+            icon={WalletIcon}
+            title={`No ${scope} budgets configured`}
+            description={`Tenant defaults apply to every ${scope} until you set a custom budget. Per-${scope} overrides appear here once they exist.`}
+          />
         ) : (
           <Table>
             <TableHeader>

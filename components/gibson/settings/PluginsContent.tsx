@@ -8,7 +8,8 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { Settings2 } from "lucide-react";
+import Link from "next/link";
+import { PlugIcon, PlusIcon, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ErrorAlert } from "@/components/gibson/shared";
+import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import {
   AccessScopeSelector,
   type AccessScopeSelection,
@@ -263,14 +265,26 @@ export function PluginsContent() {
           )}
 
           {!loading && !error && items.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No plugins available for this scope. Deploy a plugin binary and
-              register it via{" "}
-              <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">
-                component.yaml
-              </code>
-              .
-            </p>
+            <EmptyState
+              icon={PlugIcon}
+              title="No plugins available for this scope"
+              description="Plugins are stateful service integrations with Initialize/Shutdown lifecycle hooks. Deploy one to enable per-action access controls here."
+              primaryCta={
+                canManage ? (
+                  <Button asChild>
+                    <Link href="/dashboard/deploy?type=plugin">
+                      <PlusIcon className="size-4" />
+                      Deploy your first plugin
+                    </Link>
+                  </Button>
+                ) : undefined
+              }
+              secondaryCta={
+                <Button asChild variant="ghost">
+                  <Link href="/docs/plugins">Read the docs</Link>
+                </Button>
+              }
+            />
           )}
 
           {!loading && !error && items.length > 0 && (

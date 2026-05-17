@@ -17,6 +17,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { KeyIcon, ScrollTextIcon } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -27,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import {
   Select,
   SelectContent,
@@ -277,7 +279,11 @@ function GrantsViewerCard() {
             </TableBody>
           </Table>
         ) : subjectId && !loading ? (
-          <p className="text-sm text-muted-foreground">No grants for this subject.</p>
+          <EmptyState
+            icon={KeyIcon}
+            title="No grants for this subject"
+            description="This subject has no explicit model-access grants. Use the form above to grant access to a specific provider or model."
+          />
         ) : null}
       </CardContent>
     </Card>
@@ -322,7 +328,11 @@ function AuditTrailCard() {
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No events in range.</p>
+          <EmptyState
+            icon={ScrollTextIcon}
+            title="No model resolutions in the last 30 days"
+            description="Audit events are emitted every time an agent slot is resolved to a concrete provider/model. Run a mission to populate this trail."
+          />
         ) : (
           <Table>
             <TableHeader>
