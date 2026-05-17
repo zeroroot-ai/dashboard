@@ -3,19 +3,27 @@
 /**
  * DeployLauncher
  *
- * Small admin-gated CTA that links to the unified deploy wizard
- * (`/dashboard/deploy?type=<type>`). Renders nothing for non-admin users
- * so the wizard launcher does not flash on member views — the wizard
- * itself enforces server-side authz on submit, this is purely UX hygiene.
+ * Primary CTA on the agents, tools, and plugins list pages that opens
+ * the unified deploy wizard at `/dashboard/deploy?type=<type>`.
  *
- * Used by `/dashboard/agents`, `/dashboard/plugins`, and `/dashboard/tools`
- * to surface the new enrollment wizard from each component-type landing page.
+ * Visibility contract — see components/gibson/auth/AuthGatedButton.tsx
+ * for the three-state design rationale:
+ *
+ *   allowed (admin)  → clickable Link button
+ *   denied (member)  → disabled Button with tooltip explaining the
+ *                       permission they need. The button stays visible
+ *                       so non-admin users can see the affordance and
+ *                       know who to ask for access.
+ *
+ * The wizard itself enforces server-side authz on submit; this gate is
+ * purely UX. The membership check is sync (server-hydrated tenant
+ * context), so the loading state of AuthGatedButton is unreachable here.
  */
 
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { AuthGatedButton } from "@/components/gibson/auth";
 import { usePermitted } from "@/src/lib/auth/tenant";
 
 const LABELS: Record<"agent" | "plugin" | "tool", string> = {
@@ -24,22 +32,37 @@ const LABELS: Record<"agent" | "plugin" | "tool", string> = {
   tool: "Deploy tool",
 };
 
+const DENIED_TOOLTIP =
+  "You need component-management permission to deploy. Ask your tenant admin to grant it.";
+
 export function DeployLauncher({
   type,
 }: {
   type: "agent" | "plugin" | "tool";
 }) {
   const canManage = usePermitted("components:manage");
-  if (!canManage) return null;
 
   return (
     <div className="flex items-center justify-end">
-      <Button asChild size="sm" className="gap-1.5">
-        <Link href={`/dashboard/deploy?type=${type}`}>
-          <PlusIcon className="size-3.5" aria-hidden="true" />
-          {LABELS[type]}
-        </Link>
-      </Button>
+      <AuthGatedButton
+        state={canManage ? "allowed" : "denied"}
+        disabledTooltip={DENIED_TOOLTIP}
+        size="sm"
+        className="gap-1.5"
+        asChild={canManage}
+      >
+        {canManage ? (
+          <Link href={`/dashboard/deploy?type=${type}`}>
+            <PlusIcon className="size-3.5" aria-hidden="true" />
+            {LABELS[type]}
+          </Link>
+        ) : (
+          <>
+            <PlusIcon className="size-3.5" aria-hidden="true" />
+            {LABELS[type]}
+          </>
+        )}
+      </AuthGatedButton>
     </div>
   );
 }

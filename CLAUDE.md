@@ -176,6 +176,52 @@ The query result is cached for 60 seconds and shared across all hooks on the pag
 
 ---
 
+### Three-state visibility — `AuthGatedButton` (dashboard#145)
+
+The hide-on-loading + return-null pattern is correct for **admin scaffolding** the user shouldn't even know exists (Secrets backend, Grants admin, internal tooling). It is **wrong** for primary CTAs that every user benefits from discovering, even when their current role can't take the action — e.g. the Deploy launcher on agents/tools/plugins pages. Hiding such buttons leads to "where is the Deploy button?" support tickets from non-admins who don't realise the feature exists at all.
+
+For those CTAs use `<AuthGatedButton>` from `components/gibson/auth/`. It has three render states:
+
+- `state="loading"` → `<Skeleton aria-busy />` placeholder so the layout doesn't shift; the affordance stays in the DOM.
+- `state="denied"` → disabled `<Button>` wrapped in a tooltip carrying `disabledTooltip` copy. The user sees the action and learns the permission they need.
+- `state="allowed"` → full clickable `<Button>` (forwards `asChild` for `<Link>` wrapping).
+
+The component is agnostic about how `state` is computed. For sync callers (server-hydrated `usePermitted`) pass `state={canManage ? "allowed" : "denied"}`. For async callers (`useAuthorize` against an RPC name) derive `state` from `{ allowed, loading }`.
+
+```tsx
+import { AuthGatedButton } from "@/components/gibson/auth";
+import { usePermitted } from "@/src/lib/auth/tenant";
+
+function DeployCta({ type }: { type: "agent" | "plugin" | "tool" }) {
+  const canManage = usePermitted("components:manage");
+  return (
+    <AuthGatedButton
+      state={canManage ? "allowed" : "denied"}
+      disabledTooltip="Ask your tenant admin for permission to deploy components."
+      asChild={canManage}
+      size="sm"
+    >
+      {canManage ? (
+        <Link href={`/dashboard/deploy?type=${type}`}>Deploy {type}</Link>
+      ) : (
+        <>Deploy {type}</>
+      )}
+    </AuthGatedButton>
+  );
+}
+```
+
+**When to reach for `<AuthGatedButton>` vs. the hide-on-loading hook:**
+
+| User mental model | Pattern |
+|---|---|
+| "This action exists, but I'm not authorised — who do I ask?" | `<AuthGatedButton state="denied" disabledTooltip="..." />` |
+| "This action shouldn't be visible at all to me — it's internal admin scaffolding." | `useAuthorize` + `if (loading \|\| !allowed) return null` |
+
+E2E coverage for the three states lives in `e2e/authz/admin.spec.ts` (asserts allowed) and `e2e/authz/non-admin.spec.ts` (asserts denied wrapper with tooltip-bearing CTA).
+
+---
+
 ### Adding a new admin RPC
 
 1. In `core/sdk/`, add the `(gibson.auth.v1.authz)` extension to the new method in the proto file. Set `relation: "admin"` and `allowed_identities: [USER]`.
