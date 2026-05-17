@@ -94,7 +94,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     // Factory throws if env vars are missing (dev without chart, unit tests).
     // Fall back to the default policy so the form still renders.
     console.warn(
-      "[signup/page] Could not initialise Zitadel admin client; using default password policy.",
+      "[signup/page] Could not initialise Gibson identity admin client; using default password policy.",
     );
   }
 

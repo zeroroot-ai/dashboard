@@ -168,7 +168,7 @@ const onPremFeatures: { title: string; body: string }[] = [
   },
   {
     title: "Bring your own secrets backend",
-    body: "Integrate with HashiCorp Vault, AWS KMS, or your existing PKI. Per-tenant KEK derivation and SPIFFE workload identity built in.",
+    body: "Integrate with HashiCorp Vault, AWS KMS, or your existing PKI. Per-tenant KEK derivation and workload identity built in.",
   },
   {
     title: "SSO and SCIM",

@@ -72,14 +72,17 @@ describe('verifyCaptcha', () => {
   });
 
   describe('disabled mode', () => {
-    it('returns ok:true without calling fetch when provider is unset', async () => {
-      const { fetch } = captureFetch(async () =>
-        jsonResponse({ success: true }),
+    it('throws when provider env var is unset (one-code-path/206 — explicit choice required)', async () => {
+      // Spec one-code-path/206: DASHBOARD_CAPTCHA_PROVIDER is REQUIRED at
+      // boot. An unset provider is no longer silently equivalent to
+      // "disabled" — operators must opt in or out explicitly. The
+      // env-validator catches this at instrumentation.register(); this
+      // test asserts the per-call defence stays consistent with the
+      // boot-time contract.
+      delete process.env.DASHBOARD_CAPTCHA_PROVIDER;
+      await expect(verifyCaptcha('anything')).rejects.toThrow(
+        /DASHBOARD_CAPTCHA_PROVIDER is required/,
       );
-
-      const result = await verifyCaptcha('anything');
-      expect(result).toEqual({ ok: true });
-      expect(fetch).not.toHaveBeenCalled();
     });
 
     it('returns ok:true and emits the startup warning exactly once', async () => {

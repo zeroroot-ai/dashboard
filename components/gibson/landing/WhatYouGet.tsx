@@ -17,7 +17,7 @@ const items = [
   {
     term: "Knowledge graph",
     slug: "knowledge-graph",
-    body: "Every discovery — hosts, ports, findings, techniques, attack chains — lands in Neo4j under a YAML-driven taxonomy with CEL-validated schemas. What one agent learns, the next one starts from.",
+    body: "Every discovery — hosts, ports, findings, techniques, attack chains — lands in the platform's knowledge graph under a YAML-driven taxonomy with CEL-validated schemas. What one agent learns, the next one starts from.",
   },
   {
     term: "RBAC",
@@ -27,7 +27,7 @@ const items = [
   {
     term: "Observability",
     slug: "observability",
-    body: "Langfuse captures every prompt, response, tool call, and graph write. Replay any mission step-by-step — see why the agent chose Action X, what each step cost, and where the reasoning went sideways. Tagged per mission, agent, team.",
+    body: "Gibson Traces captures every prompt, response, tool call, and graph write. Replay any mission step-by-step — see why the agent chose Action X, what each step cost, and where the reasoning went sideways. Tagged per mission, agent, team.",
   },
 ] as const;
 

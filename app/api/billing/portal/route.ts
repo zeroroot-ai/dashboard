@@ -97,7 +97,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const publicUrl = process.env.PUBLIC_URL ?? 'http://localhost:3000';
+  // PUBLIC_URL is REQUIRED at boot (src/lib/env-validator.ts) — instrumentation
+  // crashes the pod before this handler can run if it's missing.
+  const publicUrl = process.env.PUBLIC_URL;
+  if (!publicUrl) {
+    return NextResponse.json(
+      { error: 'PUBLIC_URL not configured (see env-validator)' },
+      { status: 500 },
+    );
+  }
   const idempotencyKey = `tenant:${tenantSlug}:portal:${Math.floor(Date.now() / 10000)}`;
 
   try {

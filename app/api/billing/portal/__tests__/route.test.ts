@@ -93,6 +93,9 @@ function makeRequest(): NextRequest {
 describe('POST /api/billing/portal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // PUBLIC_URL is REQUIRED at boot per one-code-path/206 — set it here so
+    // the route's defence check doesn't short-circuit every test.
+    process.env.PUBLIC_URL = 'https://app.zero-day.local:30443';
     mockRateLimitAllowed = true;
     mockAssertAuthorizedShouldThrow = null;
     mockReadRawActiveTenant.mockResolvedValue({

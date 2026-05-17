@@ -48,9 +48,9 @@ export async function GET(
       ? new Date(isNaN(Number(endParam)) ? endParam : Number(endParam))
       : new Date();
 
-    // Initialize Loki client with URL from env
-    const lokiUrl = process.env.LOKI_URL || 'http://gibson-loki:3100';
-    const loki = new LokiClient(lokiUrl);
+    // Initialize Loki client. LOKI_URL is REQUIRED (src/lib/env-validator.ts).
+    const { env } = await import('@/src/lib/env-validator');
+    const loki = new LokiClient(env.LOKI_URL);
 
     // Check if Loki is available
     const isReady = await loki.isReady();

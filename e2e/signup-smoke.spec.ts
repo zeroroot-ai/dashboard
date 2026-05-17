@@ -98,12 +98,12 @@ test.describe('signup smoke', () => {
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
 
-    // /api/onboarding/data-plane returns { postgres, redis, neo4j } where
+    // /api/onboarding/data-plane returns { postgres, redis, graph } where
     // each is { state, reason, lastUpdated }. state is one of
     // "provisioning" | "ready" | "failed" | null. Ready = all three "ready".
     type StoreState = 'provisioning' | 'ready' | 'failed' | null;
     interface StoreSnap { state: StoreState; reason: string | null }
-    interface PlaneSnap { postgres: StoreSnap; redis: StoreSnap; neo4j: StoreSnap }
+    interface PlaneSnap { postgres: StoreSnap; redis: StoreSnap; graph: StoreSnap }
 
     let lastSnapshot: PlaneSnap | undefined;
     const deadline = Date.now() + READY_TIMEOUT_MS;
@@ -117,7 +117,7 @@ test.describe('signup smoke', () => {
       if (resp.ok()) {
         const snapshot = (await resp.json()) as PlaneSnap;
         lastSnapshot = snapshot;
-        const stores = [snapshot.postgres, snapshot.redis, snapshot.neo4j];
+        const stores = [snapshot.postgres, snapshot.redis, snapshot.graph];
         if (stores.every(s => s?.state === 'ready')) {
           ready = true;
           break;

@@ -10,6 +10,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { env } from '@/src/lib/env-validator';
 
 interface PublicConfig {
   /** Public Envoy URL the agent / tool / plugin will dial. */
@@ -20,22 +21,10 @@ export const dynamic = 'force-static';
 export const revalidate = 300;
 
 export function GET(): NextResponse<PublicConfig> {
-  // GIBSON_PUBLIC_URL is provided by the Helm chart at pod start and
-  // points at the Envoy edge (e.g. https://api.zero-day.ai in prod,
-  // http://localhost:30002 in kind dev).
-  //
-  // We deliberately do not fall back to a default — surfacing a 500
-  // when the env var is missing is louder than silently shipping a
-  // broken default.
-  const platformUrl = process.env.GIBSON_PUBLIC_URL ?? '';
-
-  if (!platformUrl) {
-    return NextResponse.json(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      { error: { code: 'CONFIG_MISSING', message: 'GIBSON_PUBLIC_URL not set in pod env' } } as any,
-      { status: 500 },
-    );
-  }
+  // GIBSON_PUBLIC_URL is REQUIRED at boot (src/lib/env-validator.ts) — the
+  // pod fail-fasts via instrumentation.ts if it is absent. By the time this
+  // handler runs, the var is guaranteed to be present and shape-valid.
+  const platformUrl = env.GIBSON_PUBLIC_URL;
 
   return NextResponse.json({ platformUrl }, {
     headers: { 'Cache-Control': 'public, max-age=300' },
