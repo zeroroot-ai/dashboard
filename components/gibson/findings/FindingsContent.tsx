@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ArrowUpDown, ChevronDown, ChevronUp, Download, Search } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpDown, ChevronDown, ChevronUp, Download, Search, ShieldAlertIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
+import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { useFindings } from "@/src/hooks/useFindings";
 import type { Finding, FindingSeverity } from "@/src/types";
 import { FindingsExportDialog } from "./FindingsExportDialog";
@@ -282,8 +284,27 @@ export function FindingsContent() {
       {/* ── Loading state ── */}
       {isLoading && <TableSkeleton rows={8} cols={6} />}
 
+      {/* ── Empty state — no findings at all (dataset empty, not just filtered) ── */}
+      {!isLoading && !isError && (data?.total ?? 0) === 0 && (
+        <EmptyState
+          icon={ShieldAlertIcon}
+          title="No findings yet"
+          description="Findings are created as missions run agents against your targets. Once a mission produces a result, it will land here for triage and export."
+          primaryCta={
+            <Button asChild>
+              <Link href="/dashboard/missions/create">Create a mission</Link>
+            </Button>
+          }
+          secondaryCta={
+            <Button asChild variant="ghost">
+              <Link href="/docs/missions">Read the docs</Link>
+            </Button>
+          }
+        />
+      )}
+
       {/* ── Table ── */}
-      {!isLoading && !isError && (
+      {!isLoading && !isError && (data?.total ?? 0) > 0 && (
         <div className="glass-hack rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
@@ -360,7 +381,7 @@ export function FindingsContent() {
       )}
 
       {/* Results count */}
-      {!isLoading && !isError && (
+      {!isLoading && !isError && (data?.total ?? 0) > 0 && (
         <p className="text-muted-foreground px-1 text-xs">
           Showing{" "}
           <span className="text-highlight font-medium">{visibleFindings.length}</span> of{" "}

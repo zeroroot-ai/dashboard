@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { BotIcon, PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorAlert } from "@/components/gibson/shared";
+import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import {
   AccessScopeSelector,
   type AccessScopeSelection,
@@ -200,9 +204,26 @@ export function AgentsContent() {
           )}
 
           {!loading && !error && items.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No agents available for this scope.
-            </p>
+            <EmptyState
+              icon={BotIcon}
+              title="No agents available for this scope"
+              description="Agents are the autonomous recon workers that run inside missions. Deploy one to populate this access matrix."
+              primaryCta={
+                canManage ? (
+                  <Button asChild>
+                    <Link href="/dashboard/deploy?type=agent">
+                      <PlusIcon className="size-4" />
+                      Deploy your first agent
+                    </Link>
+                  </Button>
+                ) : undefined
+              }
+              secondaryCta={
+                <Button asChild variant="ghost">
+                  <Link href="/docs/agents">Read the docs</Link>
+                </Button>
+              }
+            />
           )}
 
           {!loading && !error && items.length > 0 && (

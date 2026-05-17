@@ -43,6 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
+import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { InviteUserDialog } from "./InviteUserDialog";
 import { TeamMembershipChips } from "./TeamMembershipChips";
 import { useCRDWatch } from "@/src/hooks/useCRDWatch";
@@ -232,8 +233,25 @@ export function UsersContent() {
       {/* Loading state */}
       {isLoading && <TableSkeleton rows={5} cols={5} />}
 
+      {/* Empty state — no users at all (not just filtered) */}
+      {!isLoading && !isError && items.length === 0 && (
+        <EmptyState
+          icon={UserPlus}
+          title="No users yet"
+          description="Invite teammates so they can sign in to this workspace. Roles control what each user can manage."
+          primaryCta={
+            canEdit ? (
+              <Button onClick={() => setInviteOpen(true)}>
+                <UserPlus className="size-4" />
+                Invite your first user
+              </Button>
+            ) : undefined
+          }
+        />
+      )}
+
       {/* Table */}
-      {!isLoading && !isError && (
+      {!isLoading && !isError && items.length > 0 && (
         <div className="rounded-md border border-border">
           <Table>
             <TableHeader>

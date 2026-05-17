@@ -10,11 +10,15 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { PlusIcon, WrenchIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorAlert } from "@/components/gibson/shared";
+import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import {
   AccessScopeSelector,
   type AccessScopeSelection,
@@ -209,9 +213,26 @@ export function ToolsContent() {
           )}
 
           {!loading && !error && items.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No tools available for this scope.
-            </p>
+            <EmptyState
+              icon={WrenchIcon}
+              title="No tools available for this scope"
+              description="Tools are the building blocks agents call during a mission. Deploy one to populate this access matrix."
+              primaryCta={
+                canManage ? (
+                  <Button asChild>
+                    <Link href="/dashboard/deploy?type=tool">
+                      <PlusIcon className="size-4" />
+                      Deploy your first tool
+                    </Link>
+                  </Button>
+                ) : undefined
+              }
+              secondaryCta={
+                <Button asChild variant="ghost">
+                  <Link href="/docs/tools">Read the docs</Link>
+                </Button>
+              }
+            />
           )}
 
           {!loading && !error && items.length > 0 && (
