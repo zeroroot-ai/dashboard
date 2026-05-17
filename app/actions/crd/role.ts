@@ -27,9 +27,15 @@
 
 import { PlatformOperatorService } from "@/src/gen/gibson/platform/v1/platform_operator_pb";
 import { serviceClient } from "@/src/lib/gibson-client";
+import { logger } from "@/src/lib/logger";
+import { listTenantMembers, patchTenantMember } from "@/src/lib/k8s/tenants";
 
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
+
+function tenantNamespace(slug: string): string {
+  return `tenant-${slug}`;
+}
 
 export type { ActionResult };
 
@@ -38,11 +44,21 @@ export type TenantRole = "admin" | "member";
 /**
  * Flip a user's tenant-level role between admin and member.
  *
- * The write is atomic: the inverse relation is deleted and the requested one
- * is written in a single WriteAccessTuples call, so the user is never
- * momentarily without a tenant role. Idempotent — re-writing the user's
- * current role is a no-op at the FGA level (FGA treats `add` of an existing
- * tuple as a no-op).
+ * Two writes, in order:
+ *   1. FGA WriteAccessTuples — the AUTHORITATIVE write. Adds the requested
+ *      relation, deletes the inverse, atomically. If this fails the action
+ *      returns the existing INTERNAL error path and the second write is
+ *      skipped.
+ *   2. patchTenantMember(spec.role) — a DISPLAY CACHE write so the users
+ *      list role badge (which reads from spec.role via useCRDWatch) stays
+ *      consistent across reloads. If this fails the action still returns
+ *      ok — the FGA gate is authoritative for actual access — but emits a
+ *      logger.warn so an operator can diagnose. The badge will briefly
+ *      show the stale role on the next hard-reload until either a
+ *      tenant-operator reconcile or the next role change repairs it.
+ *
+ * dashboard#173 documents the dual-write decision and the rationale for
+ * choosing this over an operator-side reconcile.
  */
 export async function setTenantRoleAction(input: {
   userId: string;
@@ -65,6 +81,8 @@ export async function setTenantRoleAction(input: {
     return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
   }
   const inverse: TenantRole = input.role === "admin" ? "member" : "admin";
+
+  // 1. Authoritative FGA write. Fail here returns INTERNAL with no mutation.
   try {
     const client = serviceClient(PlatformOperatorService, callerTenantId);
     await client.writeAccessTuples({
@@ -84,10 +102,44 @@ export async function setTenantRoleAction(input: {
       ],
       reason: `dashboard: set ${input.userId} tenant role to ${input.role}`,
     });
-    return { ok: true, data: { applied: true } };
   } catch (err) {
     return { ok: false, error: String(err), code: "INTERNAL" };
   }
+
+  // 2. Display-cache write on TenantMember.spec.role. FGA is already
+  // authoritative; this keeps the badge fresh across reloads. Best-effort:
+  // we look up the TenantMember by status.userId in the caller's tenant
+  // namespace, patch spec.role. If the lookup fails or the patch fails,
+  // log + continue. Some scenarios where the patch is legitimately a no-op:
+  // (a) the user has never had a TenantMember CR (signed in via a path that
+  // skipped invite), (b) the CR was deleted between FGA write + this patch.
+  try {
+    const ns = tenantNamespace(callerTenantId);
+    const members = await listTenantMembers(ns);
+    const target = members.find(
+      (m) => m.status?.userId === input.userId,
+    );
+    if (target) {
+      await patchTenantMember(ns, target.metadata.name, {
+        spec: { role: input.role },
+      });
+    } else {
+      logger.warn(
+        { userId: input.userId, tenantId: callerTenantId },
+        "[setTenantRoleAction] no TenantMember found for userId; FGA write succeeded but spec.role not updated",
+      );
+    }
+  } catch (err) {
+    logger.warn(
+      {
+        userId: input.userId,
+        tenantId: callerTenantId,
+        err: err instanceof Error ? err.message : String(err),
+      },
+      "[setTenantRoleAction] FGA write succeeded but TenantMember.spec.role patch failed; badge may show stale role on reload",
+    );
+  }
+  return { ok: true, data: { applied: true } };
 }
 
 /**
