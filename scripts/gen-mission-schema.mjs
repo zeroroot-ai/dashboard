@@ -55,18 +55,6 @@ function die(msg) {
 }
 
 function generate() {
-  if (!existsSync(SDK_SCHEMA)) {
-    die(
-      `SDK schema not found at ${SDK_SCHEMA}\n` +
-        "This script requires the polyrepo sibling clone of opensource/sdk.\n" +
-        "Ensure ~/Code/zero-day.ai/opensource/sdk/ is cloned (or the equivalent workspace path).\n" +
-        "If you are running this in a dashboard-only CI environment, you do not need to run\n" +
-        "the generator — the committed src/data/mission-definition.schema.json is already\n" +
-        "present. The freshness gate (check-mission-schema-fresh.mjs) validates structure only\n" +
-        "when the SDK sibling is absent.",
-    );
-  }
-
   let raw;
   try {
     raw = readFileSync(SDK_SCHEMA, "utf8");
@@ -92,6 +80,22 @@ function generate() {
 
 const argv = process.argv.slice(2);
 const stdoutMode = argv.includes("--stdout");
+
+if (!existsSync(SDK_SCHEMA)) {
+  if (stdoutMode) {
+    die(
+      `SDK schema not found at ${SDK_SCHEMA}\n` +
+        "--stdout mode requires the polyrepo sibling clone of opensource/sdk.\n" +
+        "The freshness check (check-mission-schema-fresh.mjs) should gate --stdout on SDK presence.",
+    );
+  }
+  process.stderr.write(
+    `${SCRIPT_NAME}: SKIPPED — SDK sibling not present at ${SDK_SCHEMA}.\n` +
+      "The committed src/data/mission-definition.schema.json is used as-is; " +
+      "the freshness gate validates its structure.\n",
+  );
+  process.exit(0);
+}
 
 const content = generate();
 
