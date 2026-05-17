@@ -94,28 +94,34 @@ declare module "next-auth" {
 // of `@/auth` instead of silently signing OIDC redirects with empty values.
 // ---------------------------------------------------------------------------
 
+// isBuildPhase returns true while `next build` is running (NEXT_PHASE is
+// set by the Next CLI before any user module evaluates, and inherited by
+// the workers it forks for page-data collection / static-export). The
+// `npm_lifecycle_event === 'build'` fallback covers harnesses that fork
+// next without setting NEXT_PHASE in the worker (observed in npm exec).
+function isBuildPhase(): boolean {
+  return (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.npm_lifecycle_event === "build" ||
+    process.env.npm_lifecycle_event === "prebuild"
+  );
+}
+
 // requireEnv reads a required env var. To preserve the "fail loud at first
 // import" semantics in production AND survive Next.js's page-data collection
 // phase (which import-evaluates routes inside `next build` with no runtime
-// env), missing values resolve to a TYPE-LEVEL sentinel — a Proxy that
-// throws on any access — when NEXT_PHASE === 'phase-production-build'.
-// Build-time imports succeed; first actual access (request, server-action,
-// instrumentation.register from slice #206) still crashloops loudly.
+// env), missing values resolve to a placeholder string during build only.
+// Runtime / dev / test still throws inline at first import of @/auth, so a
+// misconfigured pod crashloops at boot rather than silently signing OIDC
+// redirects with empty values.
+//
+// The placeholder is namespaced + clearly synthetic ("__BUILD_TIME_STUB_*")
+// so any code path that accidentally persists it surfaces in logs.
 function requireEnv(name: string): string {
   const v = process.env[name];
   if (typeof v === "string" && v.length > 0) return v;
-  if (process.env.NEXT_PHASE === "phase-production-build") {
-    // Build-time deferral: return a throwing sentinel so module evaluation
-    // succeeds; runtime access still surfaces the missing-env error.
-    return new Proxy({ name } as unknown as object, {
-      get() {
-        throw new Error(
-          `${name} is required (one-code-path / deploy#196). ` +
-            `The Zitadel-optional degradation surface has been deleted; this ` +
-            `process refuses to boot until the chart provides the value.`,
-        );
-      },
-    }) as unknown as string;
+  if (isBuildPhase()) {
+    return `__BUILD_TIME_STUB_${name}__`;
   }
   throw new Error(
     `${name} is required (one-code-path / deploy#196). ` +
