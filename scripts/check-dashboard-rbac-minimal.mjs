@@ -41,7 +41,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'yaml';
@@ -215,6 +215,19 @@ function selftest() {
 const argv = process.argv.slice(2);
 if (argv.includes('--selftest')) {
   selftest();
+  process.exit(0);
+}
+
+// Skip when the enterprise/deploy sibling repo is not cloned.
+// In dashboard-only CI the deploy repo is absent, so there is nothing to
+// render or diff against. The workstation and full-polyrepo CI paths always
+// have the sibling present and run the check end-to-end.
+// Closes: zero-day-ai/dashboard#166
+if (!existsSync(CHART_DIR)) {
+  process.stderr.write(
+    `[${SCRIPT_NAME}] SKIPPED — enterprise/deploy sibling not present at ${CHART_DIR}; ` +
+      `skipping the manifest-RBAC-minimal check.\n`,
+  );
   process.exit(0);
 }
 
