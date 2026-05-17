@@ -242,4 +242,6 @@ export const CRD_PERMISSIONS: Record<
   deleteTeamAction: { permission: "members:revoke" },
   addTeamMemberAction: { permission: "members:invite" },
   removeTeamMemberAction: { permission: "members:revoke" },
+  setTenantRoleAction: { permission: "members:invite" },
+  setTeamAdminAction: { permission: "members:invite" },
 };

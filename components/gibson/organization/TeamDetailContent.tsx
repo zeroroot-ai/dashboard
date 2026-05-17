@@ -43,6 +43,7 @@ import {
   removeTeamMemberAction,
   type TeamMember,
 } from "@/app/actions/crd/teams";
+import { setTeamAdminAction } from "@/app/actions/crd/role";
 
 interface Props {
   teamId: string;
@@ -105,39 +106,24 @@ export function TeamDetailContent({ teamId }: Props) {
   }
 
   async function onToggleAdmin(m: TeamMember) {
-    // Toggle = add or remove the admin relation while keeping membership.
-    // addTeamMemberAction(asAdmin: true) adds the admin tuple; removing
-    // admin status without removing the user requires a dedicated action.
-    // For now: removing admin demotes via remove+re-add as member, which
-    // briefly drops the user from the roster. Filed as follow-up if this
-    // race becomes a real problem.
-    if (m.isAdmin) {
-      const remove = await removeTeamMemberAction({ teamId, userId: m.userId });
-      if (!remove.ok) {
-        toast.error(`Demote failed: ${remove.error}`);
-        return;
-      }
-      const add = await addTeamMemberAction({
-        teamId,
-        userId: m.userId,
-        asAdmin: false,
-      });
-      if (!add.ok) {
-        toast.error(`Demote failed (re-add): ${add.error}`);
-      } else {
-        toast.success(`Demoted ${m.userId} to member.`);
-      }
+    // Single-tuple flip of the `admin` relation, no touch on `member` —
+    // setTeamAdminAction is the proper fix for the remove+re-add dance the
+    // earlier version used (dashboard#148 → #168).
+    const r = await setTeamAdminAction({
+      teamId,
+      userId: m.userId,
+      isAdmin: !m.isAdmin,
+    });
+    if (!r.ok) {
+      toast.error(
+        `${m.isAdmin ? "Demote" : "Promote"} failed: ${r.error}`,
+      );
     } else {
-      const r = await addTeamMemberAction({
-        teamId,
-        userId: m.userId,
-        asAdmin: true,
-      });
-      if (!r.ok) {
-        toast.error(`Promote failed: ${r.error}`);
-      } else {
-        toast.success(`Promoted ${m.userId} to admin.`);
-      }
+      toast.success(
+        m.isAdmin
+          ? `Demoted ${m.userId} to member.`
+          : `Promoted ${m.userId} to admin.`,
+      );
     }
     await refresh();
   }
