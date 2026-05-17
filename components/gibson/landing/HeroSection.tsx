@@ -112,7 +112,7 @@ function Schematic() {
 {` │ `}<Pulse />{` agent binary   │      ╎    │ `}<Pulse />{` gibson      LIVE   │\n`}
 {` │   runs on:       │      ╎    │ `}<Pulse />{` graph store READY  │\n`}
 {` │   laptop · ci ·  │ ═════╪═══►│ `}<Pulse />{` redis       READY  │\n`}
-{` │   vps · k8s      │ gRPC ╎    │ `}<Pulse />{` langfuse    READY  │\n`}
+{` │   vps · k8s      │ gRPC ╎    │ `}<Pulse />{` traces      READY  │\n`}
 {` └────────┬─────────┘      ╎    │ `}<Pulse char="◢" amber />{` setec       ARMED  │\n`}
 {`          │                ╎    └──────────────────────┘\n`}
 {`          ▼                ╎\n`}
