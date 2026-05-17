@@ -4,8 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useSession } from "@/src/lib/session-client";
-import { useTenantId } from "@/src/lib/auth/tenant";
+import { usePermitted, useTenantId } from "@/src/lib/auth/tenant";
 import { ArrowLeft, Shield } from "lucide-react";
+
+import { UserTeamMembershipsEditor } from "@/components/gibson/users/UserTeamMembershipsEditor";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +51,7 @@ export default function UserDetailPage() {
   const tenantId = useTenantId() ?? "";
   const currentUserId = session?.user?.id ?? "";
   const isSelf = userId === currentUserId;
+  const canEdit = usePermitted("team:manage") && !isSelf;
 
   const namespace = tenantId ? tenantNamespace(tenantId) : undefined;
   const { items, status } = useCRDWatch("TenantMember", namespace, {
@@ -187,7 +190,9 @@ export default function UserDetailPage() {
             </Card>
           </div>
 
-          <div>
+          <div className="space-y-6">
+            <UserTeamMembershipsEditor userId={userId} canEdit={canEdit} />
+
             <Card className="glass-hack border-0">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
