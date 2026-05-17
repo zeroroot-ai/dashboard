@@ -103,7 +103,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const session = await createPortalSession({
       customerId,
-      returnUrl: `${publicUrl}/dashboard/settings/billing`,
+      returnUrl: `${publicUrl}/dashboard/pages/settings/billing`,
       idempotencyKey,
     });
 

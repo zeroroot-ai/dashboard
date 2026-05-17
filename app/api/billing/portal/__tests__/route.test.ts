@@ -187,7 +187,7 @@ describe('POST /api/billing/portal', () => {
       expect(mockCreatePortalSession).toHaveBeenCalledOnce();
       const [params] = mockCreatePortalSession.mock.calls[0] as [{ customerId: string; returnUrl: string; idempotencyKey: string }];
       expect(params.customerId).toBe('cus_test123');
-      expect(params.returnUrl).toContain('/dashboard/settings/billing');
+      expect(params.returnUrl).toContain('/dashboard/pages/settings/billing');
     });
 
     it('uses 10-second bucket idempotency key', async () => {
