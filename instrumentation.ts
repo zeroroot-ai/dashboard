@@ -49,6 +49,40 @@ export async function register() {
     );
   }
 
+  // -------------------------------------------------------------------------
+  // one-code-path/206 — single required-env validator.
+  //
+  // Enumerates every dashboard-required env var, throws EnvValidationError
+  // listing every missing/malformed key at once. Replaces the per-module
+  // inline `process.env.X ?? "..."` fallbacks throughout the codebase.
+  // -------------------------------------------------------------------------
+  const { validateEnv, EnvValidationError } = await import(
+    '@/src/lib/env-validator'
+  );
+  try {
+    validateEnv();
+  } catch (err) {
+    if (err instanceof EnvValidationError) {
+      const { logger } = await import('@/src/lib/logger');
+      logger.error(
+        {
+          spec: 'one-code-path',
+          slice: 'deploy#206',
+          missing: err.missing.map((s) => s.name),
+          malformed: err.malformed.map((m) => ({
+            name: m.spec.name,
+            reason: m.reason,
+          })),
+        },
+        err.message,
+      );
+    }
+    throw err;
+  }
+
+  // Legacy validator kept for the warn-on-missing-NEO4J_PASSWORD path and
+  // for any callsite that still imports `validateEnvConfig`. Now a thin
+  // shim over env-validator semantics.
   const { validateEnvConfig } = await import('@/src/lib/config');
   validateEnvConfig();
 
@@ -57,16 +91,4 @@ export async function register() {
   // See spec stripe-billing-integration R8.1, R8.2.
   const { validateBillingConfig } = await import('@/src/lib/billing/stripe');
   validateBillingConfig();
-
-  // Production-only: assert the service-subject allow-list is configured.
-  // Local `pnpm dev` and `pnpm build` (no NODE_ENV=production) do not
-  // require this env to be set — Auth.js user-acting flows do not depend
-  // on it. The chart's resolve-sa-identity-map init container populates
-  // this env var on every production pod.
-  if (process.env.NODE_ENV === 'production') {
-    const { assertAllowedServiceSubjectsConfigured } = await import(
-      '@/src/lib/auth/zitadel-bearer-verifier'
-    );
-    assertAllowedServiceSubjectsConfigured();
-  }
 }

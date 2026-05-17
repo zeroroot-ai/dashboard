@@ -57,16 +57,44 @@ import { logger } from '@/src/lib/logger';
 import { incBillingEvent } from '@/src/lib/metrics/billing';
 
 // Price env var → tier display name mapping (for plan-changed email).
-const PRICE_TO_TIER_NAME: Record<string, string> = {
-  [process.env.STRIPE_PRICE_TEAM ?? '']: 'Team',
-  [process.env.STRIPE_PRICE_ORG ?? '']: 'Org',
-  [process.env.STRIPE_PRICE_ENTERPRISE ?? '']: 'Enterprise',
-};
+// STRIPE_PRICE_* are OPTIONAL — only set when billing is enabled. We omit
+// missing entries entirely rather than collapsing them onto a sentinel ''
+// key (which would conflate every absent tier into "Enterprise").
+function buildPriceToTierName(): Record<string, string> {
+  const out: Record<string, string> = {};
+  const team = process.env.STRIPE_PRICE_TEAM;
+  const org = process.env.STRIPE_PRICE_ORG;
+  const enterprise = process.env.STRIPE_PRICE_ENTERPRISE;
+  if (team) out[team] = 'Team';
+  if (org) out[org] = 'Org';
+  if (enterprise) out[enterprise] = 'Enterprise';
+  return out;
+}
+const PRICE_TO_TIER_NAME: Record<string, string> = buildPriceToTierName();
 
-const SUPPORT_EMAIL = process.env.DASHBOARD_SUPPORT_EMAIL ?? 'support@zero-day.ai';
-const DASHBOARD_URL = process.env.PUBLIC_URL ?? 'http://localhost:3000';
-const PORTAL_URL = `${DASHBOARD_URL}/dashboard/pages/settings/billing`;
-const PRICING_URL = `${DASHBOARD_URL}/pricing`;
+// PUBLIC_URL is REQUIRED at boot (src/lib/env-validator.ts) — no fallback.
+// DASHBOARD_SUPPORT_EMAIL is OPTIONAL (a brand default is acceptable).
+// We evaluate these lazily inside handlers because module-load happens
+// before instrumentation.ts validation in some Next.js configurations.
+function getSupportEmail(): string {
+  return process.env.DASHBOARD_SUPPORT_EMAIL ?? 'support@zero-day.ai';
+}
+function getDashboardUrl(): string {
+  // PUBLIC_URL is REQUIRED at boot (src/lib/env-validator.ts).
+  const publicUrl = process.env.PUBLIC_URL;
+  if (!publicUrl) {
+    throw new Error(
+      '[billing/webhook] PUBLIC_URL is required (see src/lib/env-validator.ts).',
+    );
+  }
+  return publicUrl;
+}
+function getPortalUrl(): string {
+  return `${getDashboardUrl()}/dashboard/pages/settings/billing`;
+}
+function getPricingUrl(): string {
+  return `${getDashboardUrl()}/pricing`;
+}
 
 // ---------------------------------------------------------------------------
 // Idempotency table helpers
@@ -222,8 +250,7 @@ async function handleCheckoutSessionCompleted(
       try {
         const amountTotal = session.amount_total ?? 0;
         const currency = (session.currency ?? 'usd').toUpperCase();
-        const supportEmail =
-          process.env.DASHBOARD_SUPPORT_EMAIL ?? 'support@zero-day.ai';
+        const supportEmail = getSupportEmail();
 
         await getEmailProvider().send(
           renderBillingRollbackEmail({
@@ -354,9 +381,9 @@ async function handleSubscriptionCreated(
           email: ownerEmail,
           tierName: PRICE_TO_TIER_NAME[priceId] ?? 'Gibson',
           trialEndDate: new Date(subscription.trial_end! * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-          dashboardUrl: DASHBOARD_URL,
-          portalUrl: PORTAL_URL,
-          supportEmail: SUPPORT_EMAIL,
+          dashboardUrl: getDashboardUrl(),
+          portalUrl: getPortalUrl(),
+          supportEmail: getSupportEmail(),
         }),
       );
     } catch (err) {
@@ -425,7 +452,7 @@ async function handleSubscriptionUpdated(
             newTierName: PRICE_TO_TIER_NAME[newPriceId] ?? 'New plan',
             newMonthlyAmount: 'see billing portal',
             effectiveDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-            supportEmail: SUPPORT_EMAIL,
+            supportEmail: getSupportEmail(),
           }),
         );
       } catch (err) {
@@ -484,8 +511,8 @@ async function handleSubscriptionDeleted(
         renderSubscriptionCancelledEmail({
           email: ownerEmail,
           gracePeriodEndDate: new Date(Date.now() + 7 * 86400_000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-          pricingUrl: PRICING_URL,
-          supportEmail: SUPPORT_EMAIL,
+          pricingUrl: getPricingUrl(),
+          supportEmail: getSupportEmail(),
         }),
       );
     } catch (err) {
@@ -544,9 +571,9 @@ async function handleTrialWillEnd(
             ? new Date(subscription.trial_end * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
             : 'soon',
           firstChargeAmount: 'see billing portal',
-          portalUrl: PORTAL_URL,
-          pricingUrl: PRICING_URL,
-          supportEmail: SUPPORT_EMAIL,
+          portalUrl: getPortalUrl(),
+          pricingUrl: getPricingUrl(),
+          supportEmail: getSupportEmail(),
         }),
       );
     } catch (err) {
@@ -646,8 +673,8 @@ async function handleInvoicePaymentFailed(
           email: ownerEmail,
           chargeAmount: invoice.amount_due,
           currency: (invoice.currency ?? 'usd').toUpperCase(),
-          portalUrl: PORTAL_URL,
-          supportEmail: SUPPORT_EMAIL,
+          portalUrl: getPortalUrl(),
+          supportEmail: getSupportEmail(),
         }),
       );
     } catch (err) {

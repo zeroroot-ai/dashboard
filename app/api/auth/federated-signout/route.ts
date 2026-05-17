@@ -149,8 +149,8 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
   // SSO cookie remains and silently re-authenticates the user on the next
   // /login. id_token_hint is the preferred shape; client_id is the documented
   // fallback when the hint is unavailable.
-  const zitadelIssuer =
-    process.env.ZITADEL_ISSUER ?? "https://auth.zero-day.local";
+  // ZITADEL_ISSUER is REQUIRED at boot (src/lib/env-validator.ts) — no fallback.
+  const zitadelIssuer = (await import("@/src/lib/env-validator")).env.ZITADEL_ISSUER;
   const endSession = new URL(`${zitadelIssuer}/oidc/v1/end_session`);
   if (idToken) {
     endSession.searchParams.set("id_token_hint", idToken);

@@ -57,7 +57,20 @@ export class LokiClient {
   private defaultTenantId?: string;
 
   constructor(baseUrl?: string, defaultTenantId?: string) {
-    this.baseUrl = baseUrl || process.env.LOKI_URL || 'http://gibson-loki:3100';
+    // LOKI_URL is REQUIRED at boot (src/lib/env-validator.ts). Callers that
+    // pass an explicit baseUrl skip the env read entirely (used in tests).
+    // We read process.env directly here rather than through the env-validator
+    // proxy to avoid module-load-time throws when this class is instantiated
+    // outside of the production boot path (e.g. in unit tests).
+    const fromEnv = process.env.LOKI_URL;
+    if (!baseUrl && !fromEnv) {
+      throw new Error(
+        '[LokiClient] LOKI_URL is required (or pass an explicit baseUrl). ' +
+          'See src/lib/env-validator.ts — validateEnv() should have caught this at boot.',
+      );
+    }
+    this.baseUrl = baseUrl ?? (fromEnv as string);
+    // LOKI_TENANT_ID is OPTIONAL (single-tenant Loki deployments omit it).
     this.defaultTenantId = defaultTenantId || process.env.LOKI_TENANT_ID;
   }
 

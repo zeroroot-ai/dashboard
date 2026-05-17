@@ -211,7 +211,16 @@ export async function createCheckoutSession(
   }
 
   const stripe = getStripeClient();
-  const publicUrl = process.env.PUBLIC_URL ?? 'http://localhost:3000';
+  // PUBLIC_URL is REQUIRED at boot (src/lib/env-validator.ts). We read
+  // process.env directly so this module's tests do not pull in the full
+  // env-validator dependency graph.
+  const publicUrl = process.env.PUBLIC_URL;
+  if (!publicUrl) {
+    throw new Error(
+      '[billing/stripe] PUBLIC_URL is required for Stripe checkout return URLs. ' +
+        'See src/lib/env-validator.ts — validateEnv() should have caught this at boot.',
+    );
+  }
 
   return stripe.checkout.sessions.create(
     {
@@ -349,6 +358,8 @@ export function validateBillingConfig(): void {
   // Enforce Stripe key mode consistency to prevent test keys in production
   // and live keys in non-production environments.
   // The key VALUE is never logged — only whether it starts with sk_test_ or sk_live_.
+  // STRIPE_SECRET_KEY presence already required above; the `?? ''` is a
+  // narrow defensive coercion (not a silent default) so .startsWith() is safe.
   const secretKey = process.env.STRIPE_SECRET_KEY ?? '';
   const isProduction = process.env.NODE_ENV === 'production';
 

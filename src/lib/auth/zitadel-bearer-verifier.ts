@@ -75,13 +75,17 @@ export class ZitadelBearerError extends Error {
 // Configuration — read lazily at call time so tests can override env vars
 // before the first invocation.
 //
-// Per epic one-code-path / deploy#196: ZITADEL_ISSUER and ZITADEL_AUDIENCE
-// are structurally required. The previous `?? ""` / `?? "gibson-platform"`
-// fallbacks have been deleted; missing values throw the moment the verifier
-// is exercised, surfacing the misconfiguration as a CrashLoopBackOff on
-// first request rather than a silent "every JWT is rejected" failure mode.
-// Throws are wired through ZitadelBearerError(signature-failed, ...) so the
-// existing 401-with-machine-readable-code surface is preserved.
+// All three env vars below are REQUIRED at boot per src/lib/env-validator.ts.
+//
+// Per epic one-code-path / deploy#196 + #206: ZITADEL_ISSUER and
+// ZITADEL_AUDIENCE are structurally required. The previous `?? ""` /
+// `?? "gibson-platform"` silent fallbacks are deleted; missing values
+// throw via ZitadelBearerError the moment the verifier is exercised,
+// surfacing the misconfiguration as a CrashLoopBackOff on first request
+// rather than a silent "every JWT is rejected" failure mode.
+//
+// Reads are at-call-time (not module-load) so unit tests can mutate
+// process.env per-case without making the whole module unimportable.
 // ---------------------------------------------------------------------------
 
 function getIssuer(): string {
@@ -89,7 +93,7 @@ function getIssuer(): string {
   if (typeof v !== 'string' || v.length === 0) {
     throw new ZitadelBearerError(
       'signature-failed',
-      'ZITADEL_ISSUER is not configured (one-code-path / deploy#196)',
+      'ZITADEL_ISSUER is not configured (one-code-path / deploy#206)',
     );
   }
   return v;
@@ -100,15 +104,21 @@ function getAudience(): string {
   if (typeof v !== 'string' || v.length === 0) {
     throw new ZitadelBearerError(
       'audience-mismatch',
-      'ZITADEL_AUDIENCE is not configured (one-code-path / deploy#196)',
+      'ZITADEL_AUDIENCE is not configured (one-code-path / deploy#206)',
     );
   }
   return v;
 }
 
 function getAllowedSubjects(): ReadonlySet<string> {
+  // ALLOWED_SERVICE_SUBJECTS is prodOnly in REQUIRED_ENV — outside production
+  // it may legitimately be undefined. verifyZitadelBearer() raises the
+  // `subject-not-allowed` ZitadelBearerError on its own when the parsed
+  // set is empty + a token presents an unrecognised sub, so we don't need
+  // to throw at parse time here.
+  const raw = process.env.ALLOWED_SERVICE_SUBJECTS ?? '';
   return new Set(
-    (process.env.ALLOWED_SERVICE_SUBJECTS ?? '')
+    raw
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean),

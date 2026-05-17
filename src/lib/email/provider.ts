@@ -26,7 +26,18 @@ let cached: EmailProvider | null = null;
 export function getEmailProvider(opts?: { force?: boolean }): EmailProvider {
   if (cached && !opts?.force) return cached;
 
-  const choice = (process.env.DASHBOARD_EMAIL_PROVIDER ?? 'log').toLowerCase();
+  // DASHBOARD_EMAIL_PROVIDER is REQUIRED at boot (src/lib/env-validator.ts).
+  // We read process.env directly here so this module is importable in unit
+  // tests that haven't pre-set the var (the throw below surfaces a clearer
+  // failure than env-validator's proxy would).
+  const raw = process.env.DASHBOARD_EMAIL_PROVIDER;
+  if (!raw) {
+    throw new Error(
+      '[email/provider] DASHBOARD_EMAIL_PROVIDER is required. ' +
+        'Set to "log" | "resend" | "smtp" | "ses". See src/lib/env-validator.ts.',
+    );
+  }
+  const choice = raw.toLowerCase();
 
   switch (choice) {
     case 'resend':

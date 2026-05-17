@@ -188,19 +188,22 @@ export interface InitiateOidcAuthRequestConfig {
  * the Auth.js callback handler will look for.
  */
 export function loadHandoffConfig(): InitiateOidcAuthRequestConfig | null {
-  const issuer = process.env.ZITADEL_ISSUER ?? 'https://auth.zero-day.local';
-  const internalIssuer = process.env.ZITADEL_INTERNAL_ISSUER ?? issuer;
-  const clientId = process.env.ZITADEL_CLIENT_ID ?? '';
-  const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? '';
-  // The redirect_uri is the standard Auth.js callback for the "zitadel"
-  // provider — auth.ts pins this provider id, so the path is invariant.
-  // The host comes from AUTH_URL / NEXTAUTH_URL exactly as Auth.js itself
-  // uses it for the redirect_uri it sends to Zitadel.
-  const baseUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? '';
-  if (!clientId || !authSecret || !baseUrl) {
-    // Missing config — caller will fall back to the standard /login redirect.
+  // The four required vars are validated at boot by `validateEnv()` in
+  // `src/lib/env-validator.ts` (instrumentation.ts). We read directly from
+  // process.env here to preserve the legacy "return null when missing →
+  // caller falls back to /login" semantics — a defensive layer for the
+  // narrow window between module-load and instrumentation-register, and
+  // for unit tests that mutate process.env after the validator ran.
+  const issuer = process.env.ZITADEL_ISSUER;
+  const internalIssuer = process.env.ZITADEL_INTERNAL_ISSUER || issuer;
+  const clientId = process.env.ZITADEL_CLIENT_ID;
+  const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  const baseUrl = process.env.AUTH_URL || process.env.NEXTAUTH_URL;
+  if (!issuer || !internalIssuer || !clientId || !authSecret || !baseUrl) {
     return null;
   }
+  // The redirect_uri is the standard Auth.js callback for the "zitadel"
+  // provider — auth.ts pins this provider id, so the path is invariant.
   const redirectUri = `${baseUrl.replace(/\/$/, '')}/api/auth/callback/zitadel`;
   return { issuer, internalIssuer, clientId, redirectUri, authSecret };
 }

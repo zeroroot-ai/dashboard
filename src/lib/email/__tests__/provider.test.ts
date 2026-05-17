@@ -88,7 +88,15 @@ const msg: EmailMessage = {
 // --- Factory -----------------------------------------------------------
 
 describe('getEmailProvider()', () => {
-  it('defaults to the log provider when DASHBOARD_EMAIL_PROVIDER is unset', () => {
+  it('throws when DASHBOARD_EMAIL_PROVIDER is unset (one-code-path/206 — explicit choice required)', () => {
+    delete process.env.DASHBOARD_EMAIL_PROVIDER;
+    expect(() => getEmailProvider()).toThrow(
+      /DASHBOARD_EMAIL_PROVIDER is required/,
+    );
+  });
+
+  it('returns the log provider when DASHBOARD_EMAIL_PROVIDER=log', () => {
+    process.env.DASHBOARD_EMAIL_PROVIDER = 'log';
     const p = getEmailProvider();
     expect(p).toBeInstanceOf(LogEmailProvider);
   });
@@ -120,6 +128,7 @@ describe('getEmailProvider()', () => {
   });
 
   it('caches the provider across calls until __resetEmailProviderForTests()', () => {
+    process.env.DASHBOARD_EMAIL_PROVIDER = 'log';
     const a = getEmailProvider();
     const b = getEmailProvider();
     expect(a).toBe(b);

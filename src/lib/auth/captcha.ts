@@ -75,9 +75,18 @@ export function __resetDisabledWarningForTests(): void {
 }
 
 function resolveProvider(): CaptchaProvider {
-  const raw = (process.env.DASHBOARD_CAPTCHA_PROVIDER ?? '').toLowerCase();
-  if (raw === 'turnstile') return 'turnstile';
-  if (raw === 'hcaptcha') return 'hcaptcha';
+  // DASHBOARD_CAPTCHA_PROVIDER is REQUIRED at boot (src/lib/env-validator.ts) —
+  // an explicit choice (including "disabled") is required, no implicit absence.
+  const raw = process.env.DASHBOARD_CAPTCHA_PROVIDER;
+  if (!raw) {
+    throw new Error(
+      '[captcha] DASHBOARD_CAPTCHA_PROVIDER is required. ' +
+        'Set to "turnstile" | "hcaptcha" | "disabled". See src/lib/env-validator.ts.',
+    );
+  }
+  const choice = raw.toLowerCase();
+  if (choice === 'turnstile') return 'turnstile';
+  if (choice === 'hcaptcha') return 'hcaptcha';
   return 'disabled';
 }
 
