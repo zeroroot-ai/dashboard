@@ -15,7 +15,7 @@ import { getGraphContext } from '@/src/lib/graph/context';
 import { getGraphSummary } from '@/src/lib/graph/summary';
 import { buildSystemPrompt } from '@/src/lib/ai/prompts';
 import { chatMessageSchema } from '@/src/lib/api-validation';
-import { validationErrorResponse, safeErrorResponse } from '@/src/lib/api-errors';
+import { validationErrorResponse, daemonErrorResponse } from '@/src/lib/api-errors';
 import { checkRateLimit, createRateLimitResponse } from '@/src/lib/rate-limiter';
 // getConversation removed — ListConversations/GetConversation DEFERRED per
 // admin-services-completion spec. Chat history will be wired once the
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     return result.toTextStreamResponse();
   } catch (error) {
-    return safeErrorResponse(error, 'Chat request failed');
+    return daemonErrorResponse(error, { headers: request.headers });
   }
 }
 
@@ -140,6 +140,6 @@ export async function GET(request: NextRequest): Promise<Response> {
     // Return empty messages until the chatbot-page spec ships.
     return NextResponse.json({ conversationId, messages: [] });
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to process chat request', 500);
+    return daemonErrorResponse(error, { headers: request.headers });
   }
 }

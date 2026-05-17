@@ -236,6 +236,23 @@ export function makeClient<T extends DescService>(
     if (tenant) {
       req.header.set('x-gibson-tenant', tenant);
     }
+    // Spec deploy#207: forward the per-request correlation ID to the
+    // daemon so the daemon's structured log line and the dashboard's
+    // log line share the same id. The dashboard reads / mints the ID
+    // at the route edge; here we just propagate the unstored ALS
+    // value when one exists.
+    try {
+      // Lazy-required so this module stays usable in tests that don't
+      // bind an AsyncLocalStorage context.
+      const { getCorrelationId } = await import('./correlation');
+      const cid = getCorrelationId();
+      if (cid && !req.header.has('x-correlation-id')) {
+        req.header.set('x-correlation-id', cid);
+      }
+    } catch {
+      // Non-fatal — correlation is best-effort. The daemon will mint
+      // its own ID when the header is absent.
+    }
     return next(req);
   };
 

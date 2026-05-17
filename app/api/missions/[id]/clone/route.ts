@@ -20,7 +20,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ConnectError, Code } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { getActiveTenant } from '@/src/lib/auth/active-tenant';
 import { userClient } from '@/src/lib/gibson-client';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
@@ -84,6 +84,6 @@ export async function GET(
       throw err;
     }
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to clone mission', 500);
+    return daemonErrorResponse(error);
   }
 }

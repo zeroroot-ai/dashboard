@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { listAgents } from '@/src/lib/gibson-client';
 
 // ============================================================================
@@ -107,6 +107,6 @@ export async function GET(request: NextRequest): Promise<Response> {
       defaultAgentId: 'general',
     });
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to process chat request', 500);
+    return daemonErrorResponse(error, { headers: request.headers });
   }
 }

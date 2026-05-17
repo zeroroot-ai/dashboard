@@ -13,7 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ConnectError, Code } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { userClient } from '@/src/lib/gibson-client';
 import { TenantAdminService } from '@/src/gen/gibson/tenant/v1/tenant_admin_pb';
 
@@ -91,6 +91,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         );
       }
     }
-    return safeErrorResponse(error, 'Failed to export findings', 500);
+    return daemonErrorResponse(error, { headers: request.headers });
   }
 }

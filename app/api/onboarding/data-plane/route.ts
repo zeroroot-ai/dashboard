@@ -21,7 +21,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { getTenant } from '@/src/lib/k8s/tenants';
 import { K8sNotFoundError } from '@/src/lib/k8s/errors';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import type { DataPlaneStatus, StoreStatus } from '@/src/types/onboarding';
 import type { DataPlaneStoreStatus } from '@/src/lib/k8s/types';
 
@@ -70,6 +70,6 @@ export async function GET() {
       return NextResponse.json(notStarted);
     }
 
-    return safeErrorResponse(error, 'Failed to read data-plane status', 500);
+    return daemonErrorResponse(error);
   }
 }

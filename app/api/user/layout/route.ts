@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { getJSON, setJSON, delKey } from '@/src/lib/redis-store';
 import type { WidgetLayout, WidgetType } from '@/src/types/analytics';
 
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(layout);
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to update settings', 500);
+    return daemonErrorResponse(error, { headers: request.headers });
   }
 }
 
@@ -143,7 +143,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true, layout });
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to update settings', 500);
+    return daemonErrorResponse(error, { headers: request.headers });
   }
 }
 
@@ -172,6 +172,6 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true, layout: DEFAULT_LAYOUT });
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to update settings', 500);
+    return daemonErrorResponse(error, { headers: request.headers });
   }
 }

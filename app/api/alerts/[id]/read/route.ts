@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 
 /**
  * PATCH /api/alerts/[id]/read
@@ -27,6 +27,6 @@ export async function PATCH(
     const { id: alertId } = await params;
     return NextResponse.json({ success: true, alertId, message: 'Alert marked as read' });
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to mark alert as read', 500);
+    return daemonErrorResponse(error);
   }
 }

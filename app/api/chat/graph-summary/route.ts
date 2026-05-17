@@ -8,7 +8,7 @@
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { getGraphSummary, type GraphSummaryResponse } from '@/src/lib/graph/summary';
 
 // ============================================================================
@@ -27,6 +27,6 @@ export async function GET(): Promise<Response> {
 
     return NextResponse.json(summary);
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to fetch graph summary');
+    return daemonErrorResponse(error);
   }
 }
