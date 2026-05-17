@@ -4,15 +4,23 @@
  * Implements a vanilla OIDC Relying Party against Zitadel using the generic
  * OIDC provider — no Zitadel-specific plugin, no vendor lock-in.
  *
- * Environment variables (all required in production):
+ * Environment variables (ALL required — pod fails to boot if any are missing
+ * per epic one-code-path / deploy#196):
  *   AUTH_SECRET          — random 32+ char secret (Helm: randAlphaNum 32, mounted via K8s Secret)
- *   ZITADEL_ISSUER       — OIDC issuer base URL  (default: https://auth.zero-day.local for Kind dev)
- *   ZITADEL_CLIENT_ID    — registered OIDC client ID (set by Helm post-install Job, task 2)
- *   ZITADEL_CLIENT_SECRET — OIDC client secret; may be empty for PKCE-only public clients
+ *   ZITADEL_ISSUER       — OIDC issuer base URL (browser-facing — appears in `iss` claim)
+ *   ZITADEL_INTERNAL_ISSUER — internal OIDC discovery URL (pod-side). Optional ONLY
+ *                             as a deliberate divergence hatch; when unset, the
+ *                             pod uses ZITADEL_ISSUER for both server and browser
+ *                             sides (the normal hostAliases-based deploy).
+ *   ZITADEL_CLIENT_ID    — registered OIDC client ID (set by Zitadel bootstrap Job)
+ *   ZITADEL_CLIENT_SECRET — OIDC client secret (registered as a confidential
+ *                          client; required at runtime). Auth.js v5 sends
+ *                          client_secret_basic on token exchange.
  *
- * The dashboard client was registered as a public PKCE client (auth method NONE),
- * so ZITADEL_CLIENT_SECRET is optional — Auth.js will omit the client_secret_basic
- * flow when the secret is absent.
+ * NOTE: full env-validator module that throws on `instrumentation.register()`
+ * is slice #206 — for THIS slice each value is read via a `requireEnv()` helper
+ * that throws at first access (defense in depth). When #206 lands the helpers
+ * stay; they become the inline checks behind the boot-time validator.
  *
  * Session strategy: "jwt" — Auth.js signs an encrypted JWT cookie; no server-side
  * session DB required. The cookie carries the gibson:tenant claim forwarded from
@@ -77,27 +85,49 @@ declare module "next-auth" {
 
 // ---------------------------------------------------------------------------
 // Environment variable resolution
+//
+// Per epic one-code-path / deploy#196: Zitadel is structurally required.
+// Empty-string fallbacks have been deleted; the pod fails to start when any
+// required ZITADEL_* env var is missing. Full env-validator module that
+// throws on `instrumentation.register()` is slice #206 — for now we throw
+// inline at module load so a misconfigured pod crashloops at first import
+// of `@/auth` instead of silently signing OIDC redirects with empty values.
 // ---------------------------------------------------------------------------
+
+function requireEnv(name: string): string {
+  const v = process.env[name];
+  if (typeof v !== "string" || v.length === 0) {
+    throw new Error(
+      `${name} is required (one-code-path / deploy#196). ` +
+        `The Zitadel-optional degradation surface has been deleted; this ` +
+        `process refuses to boot until the chart provides the value.`,
+    );
+  }
+  return v;
+}
+
 // The issuer is what the BROWSER sees (used for OIDC authorize redirects + what
-// Zitadel puts in the `iss` claim of issued tokens).
-const issuer =
-  process.env.ZITADEL_ISSUER ?? "https://auth.zero-day.local";
+// Zitadel puts in the `iss` claim of issued tokens). Required.
+const issuer = requireEnv("ZITADEL_ISSUER");
 
 // The internal issuer is what the DASHBOARD POD uses to fetch OIDC discovery
 // and exchange the authorization code for tokens. In the production deploy
 // this is the SAME URL the browser sees — the pod resolves the public
 // hostname to Envoy's pinned ClusterIP via Kubernetes hostAliases, so server-
 // and browser-side calls hit the same authority and Zitadel mints a single
-// consistent issuer claim. The env var stays as an override hatch for any
-// environment where the two URLs MUST diverge (rare).
+// consistent issuer claim. ZITADEL_INTERNAL_ISSUER stays as a deliberate
+// divergence hatch (rare); when unset we use the public issuer, NOT an empty
+// string fallback.
 const internalIssuer =
-  process.env.ZITADEL_INTERNAL_ISSUER ?? issuer;
+  process.env.ZITADEL_INTERNAL_ISSUER && process.env.ZITADEL_INTERNAL_ISSUER.length > 0
+    ? process.env.ZITADEL_INTERNAL_ISSUER
+    : issuer;
 
-const clientId = process.env.ZITADEL_CLIENT_ID ?? "";
+const clientId = requireEnv("ZITADEL_CLIENT_ID");
 
-// Public PKCE clients have no secret. Auth.js skips client_secret_basic when
-// clientSecret is an empty string, which is the correct behaviour for PKCE.
-const clientSecret = process.env.ZITADEL_CLIENT_SECRET ?? "";
+// Confidential client — secret is required at runtime; Auth.js v5 uses
+// client_secret_basic on the token-exchange POST.
+const clientSecret = requireEnv("ZITADEL_CLIENT_SECRET");
 
 // ---------------------------------------------------------------------------
 // Auth.js configuration
@@ -123,7 +153,7 @@ const config: NextAuthConfig = {
       issuer,
       wellKnown: `${internalIssuer}/.well-known/openid-configuration`,
       clientId,
-      clientSecret: clientSecret || undefined,
+      clientSecret,
       // Request the openid, profile, and email scopes. The gibson:tenant claim
       // is injected server-side by Zitadel's custom Action and arrives in the
       // ID token without a dedicated scope.
