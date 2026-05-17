@@ -46,7 +46,15 @@ const OUTPUT_PATH = resolve(DASHBOARD_ROOT, 'src/gen/authz/registry.ts');
 // Workspace root: ~/Code/zero-day.ai/. Sibling repos hang off here.
 // Gibson lives at enterprise/platform/gibson — the `core/` prefix was the
 // pre-refactor layout and is no longer present.
-const WORKSPACE_ROOT = resolve(DASHBOARD_ROOT, '..', '..', '..');
+//
+// Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ the naive
+// `../../..` walk lands short of the workspace root. Rewind to the main
+// checkout root before walking up. dashboard#148.
+const isWorktree = DASHBOARD_ROOT.includes('/.worktrees/');
+const MAIN_DASHBOARD_ROOT = isWorktree
+  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, '')
+  : DASHBOARD_ROOT;
+const WORKSPACE_ROOT = resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
 const GIBSON_REPO = resolve(WORKSPACE_ROOT, 'enterprise/platform/gibson');
 const GIBSON_LOCAL_PROTOS = resolve(GIBSON_REPO, 'internal/daemon/api');
 
@@ -121,6 +129,12 @@ function buildWorkspace() {
       '  - path: sdk-proto',
       '    excludes:',
       '      - sdk-proto/google',
+      // protovalidate provides the (buf.validate.field).* annotations
+      // adopted by the SDK from v1.5.0 onward. Pulled from the buf.build
+      // remote registry; resolved by `buf dep update` invoked below.
+      // Mirror of the proto-generate.mjs setup. dashboard#148.
+      'deps:',
+      '  - buf.build/bufbuild/protovalidate',
       'lint:',
       '  use:',
       '    - STANDARD',
@@ -129,6 +143,12 @@ function buildWorkspace() {
       '',
     ].join('\n'),
   );
+
+  // Resolve the protovalidate dep declared in buf.yaml. Writes a buf.lock
+  // alongside the generated buf.yaml so the subsequent `buf build` can
+  // resolve the (buf.validate.field).* import without contacting the
+  // remote registry on every invocation.
+  execSync('npx buf dep update', { cwd: WS, stdio: 'inherit' });
 
   return { ws: WS, sdkProtoDir };
 }

@@ -8,10 +8,13 @@
  * Spec: agent-authoring-and-tenant-entitlements task 35, R8 AC 3-5.
  */
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import { UsersIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { toast } from "sonner";
 import {
   createTeamAction,
@@ -104,16 +107,18 @@ export function TeamsContent() {
           {loading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
           ) : teams.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No teams yet. Use the form above to create one.
-            </p>
+            <EmptyState
+              icon={UsersIcon}
+              title="No teams yet"
+              description="Teams group members within your tenant. Use per-team denies in Security Policy to restrict access to specific plugins, tools, or agents."
+            />
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Team</TableHead>
                   <TableHead className="w-28 text-right">Members</TableHead>
-                  <TableHead className="w-20" />
+                  <TableHead className="w-40" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -124,7 +129,12 @@ export function TeamsContent() {
                       <div className="font-mono text-xs text-muted-foreground">{t.id}</div>
                     </TableCell>
                     <TableCell className="text-right">{t.memberCount}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="flex justify-end gap-1">
+                      <Button asChild size="sm" variant="ghost">
+                        <Link href={`/dashboard/organization/teams/${encodeURIComponent(t.id)}`}>
+                          Manage
+                        </Link>
+                      </Button>
                       <Button size="sm" variant="ghost" onClick={() => onDelete(t)}>
                         Delete
                       </Button>
