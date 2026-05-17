@@ -28,7 +28,9 @@ export type CrdActionName =
   | "createTeamAction"
   | "deleteTeamAction"
   | "addTeamMemberAction"
-  | "removeTeamMemberAction";
+  | "removeTeamMemberAction"
+  | "setTenantRoleAction"
+  | "setTeamAdminAction";
 
 export type ActionErrorCode =
   | "UNAUTHENTICATED"
