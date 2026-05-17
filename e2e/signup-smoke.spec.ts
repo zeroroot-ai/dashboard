@@ -153,5 +153,83 @@ test.describe('signup smoke', () => {
       await expect(page).not.toHaveURL(/\/onboarding/);
       await expect(page).toHaveURL(/\/dashboard/);
     });
+
+    // ---------------------------------------------------------------------
+    // Stages 4-5 — customer-flow round-trip (D1-E of polyrepo zero-dot-x
+    // reset, dashboard#189). OPT-IN via E2E_CUSTOMER_FLOW=1. Skipped on
+    // regular signup-smoke runs so existing CI cadence stays cheap; runs
+    // only when D1-F explicitly invokes the full customer journey.
+    //
+    // Coverage:
+    //   Stage 4 — register a customer agent via the dashboard's
+    //             /dashboard/agents/register form; capture the issued
+    //             client_id / client_secret / enroll_command from the
+    //             one-time credential panel.
+    //   Stage 5 — verify the captured credentials look usable: client_id
+    //             non-empty, client_secret non-empty, enroll_command
+    //             contains the captured values.
+    //
+    // Out of scope (deferred to a future extension or D1-F's smoke
+    // wrapper script): actually running `gibson component register`
+    // and `gibson mission submit` from within the test, then polling
+    // mission status. Both require either the gibson CLI binary in the
+    // test runner (CI burden) or a dashboard-side mission-submit API
+    // that doesn't exist as a clean Playwright-callable surface today.
+    // The D1-F wrapper shells out to the CLI directly with the
+    // credentials this spec captures.
+    // ---------------------------------------------------------------------
+
+    if (process.env.E2E_CUSTOMER_FLOW !== '1') {
+      return;
+    }
+
+    const agentName = `${slug}-agent`;
+    let capturedClientId = '';
+    let capturedClientSecret = '';
+    let capturedEnrollCommand = '';
+
+    await test.step('register a customer agent via Register Agent form', async () => {
+      await page.goto('/dashboard/agents/register');
+
+      // Form: name (lowercase-alphanumeric-hyphen, max 63) +
+      // optional description.
+      await page.locator('#register-agent-name').fill(agentName);
+      await page
+        .locator('#register-agent-description')
+        .fill(`E2E customer-flow smoke probe (${slug})`);
+      await page.getByRole('button', { name: /register agent/i }).click();
+
+      // The form submits to /api/agents/register; on 200 it swaps to
+      // the CredentialPanel which exposes the three fields by id.
+      await expect(page.locator('#register-agent-client-id')).toBeVisible({
+        timeout: 30_000,
+      });
+
+      capturedClientId = (await page
+        .locator('#register-agent-client-id')
+        .inputValue()) as string;
+      capturedClientSecret = (await page
+        .locator('#register-agent-client-secret')
+        .inputValue()) as string;
+      capturedEnrollCommand = (await page
+        .locator('#register-agent-enroll-command')
+        .inputValue()) as string;
+    });
+
+    await test.step('captured credentials look usable', async () => {
+      expect(capturedClientId, 'client_id should be non-empty').not.toEqual('');
+      expect(
+        capturedClientSecret,
+        'client_secret should be non-empty',
+      ).not.toEqual('');
+      expect(
+        capturedEnrollCommand,
+        'enroll_command should reference captured client_id',
+      ).toContain(capturedClientId);
+      expect(
+        capturedEnrollCommand,
+        'enroll_command should be a gibson component register invocation',
+      ).toMatch(/gibson(\s+|.*)component\s+register/);
+    });
   });
 });
