@@ -35,10 +35,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import { InviteUserDialog } from "./InviteUserDialog";
+import { TeamMembershipChips } from "./TeamMembershipChips";
 import { useCRDWatch } from "@/src/hooks/useCRDWatch";
+import { useTeamMembershipMap } from "@/src/hooks/use-team-membership-map";
 import { revokeMemberAction } from "@/app/actions/crd/member";
+import { setTenantRoleAction } from "@/app/actions/crd/role";
 import type { TenantMember } from "@/src/lib/k8s/types";
 
 // ── Styles ────────────────────────────────────────────────────────────────────
@@ -113,10 +123,22 @@ export function UsersContent() {
     enabled: !!tenantId,
   });
 
+  const { byUser: teamsByUser, loading: teamsLoading } = useTeamMembershipMap();
+
   const [search, setSearch] = React.useState("");
   const [inviteOpen, setInviteOpen] = React.useState(false);
   const [memberToRemove, setMemberToRemove] = React.useState<TenantMember | null>(null);
   const [removing, setRemoving] = React.useState(false);
+  // Local optimistic role overrides. The displayed role badge reads from
+  // member.spec.role normally, but setTenantRoleAction writes FGA tuples
+  // directly — the spec.role field is not updated by the operator yet.
+  // We track local overrides so the dropdown reflects the change without
+  // requiring a page reload. The mismatch between spec.role and the FGA
+  // tuple persists across reloads until a TenantMember-side reconciler
+  // (or a corresponding patchTenantMember call) is added — filed as a
+  // known follow-up.
+  const [roleOverrides, setRoleOverrides] = React.useState<Record<string, "admin" | "member">>({});
+  const [pendingRole, setPendingRole] = React.useState<Record<string, boolean>>({});
 
   const filtered = React.useMemo(() => {
     if (!search.trim()) return items;
@@ -125,6 +147,27 @@ export function UsersContent() {
       m.spec.email.toLowerCase().includes(q)
     );
   }, [items, search]);
+
+  async function handleRoleChange(member: TenantMember, role: "admin" | "member") {
+    const userId = member.status?.userId ?? member.metadata.name;
+    setPendingRole((prev) => ({ ...prev, [userId]: true }));
+    try {
+      const res = await setTenantRoleAction({ userId, role });
+      if (!res.ok) throw new Error(res.error ?? "failed");
+      setRoleOverrides((prev) => ({ ...prev, [userId]: role }));
+      toast.success(`${member.spec.email} is now ${role}.`);
+    } catch (err) {
+      toast.error(
+        `Failed to change role: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    } finally {
+      setPendingRole((prev) => {
+        const next = { ...prev };
+        delete next[userId];
+        return next;
+      });
+    }
+  }
 
   async function handleConfirmRemove() {
     if (!memberToRemove) return;
@@ -195,29 +238,62 @@ export function UsersContent() {
             <TableHeader>
               <TableRow>
                 <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Invited</TableHead>
+                <TableHead className="w-40">Role</TableHead>
+                <TableHead>Teams</TableHead>
+                <TableHead className="w-24">Status</TableHead>
+                <TableHead className="w-28">Invited</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((member) => {
                 const isSelf = member.status?.userId === currentUserId;
-                const role = member.spec.role;
+                const userId = member.status?.userId ?? member.metadata.name;
+                const specRole = member.spec.role;
+                const effectiveRole =
+                  roleOverrides[userId] ??
+                  (specRole === "admin" ? "admin" : "member");
                 const phase = member.status?.phase ?? "Pending";
+                const userTeams = teamsByUser[userId] ?? [];
+                const showDropdown = canEdit && !isSelf;
+                const isPending = !!pendingRole[userId];
                 return (
                   <TableRow key={member.metadata.name}>
                     <TableCell className="font-medium">
                       <span className="data-value text-xs">{member.spec.email}</span>
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs font-mono ${ROLE_BADGE_CLASS[role] ?? ROLE_BADGE_CLASS.viewer}`}
-                      >
-                        {role}
-                      </Badge>
+                      {showDropdown ? (
+                        <Select
+                          value={effectiveRole}
+                          onValueChange={(v) =>
+                            handleRoleChange(member, v as "admin" | "member")
+                          }
+                          disabled={isPending}
+                        >
+                          <SelectTrigger size="sm" className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">admin</SelectItem>
+                            <SelectItem value="member">member</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className={`text-xs font-mono ${ROLE_BADGE_CLASS[effectiveRole] ?? ROLE_BADGE_CLASS.viewer}`}
+                        >
+                          {effectiveRole}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {teamsLoading ? (
+                        <span className="text-xs text-muted-foreground">Loading…</span>
+                      ) : (
+                        <TeamMembershipChips teams={userTeams} />
+                      )}
                     </TableCell>
                     <TableCell>
                       <span className="text-xs font-mono text-muted-foreground">
@@ -243,7 +319,7 @@ export function UsersContent() {
               {filtered.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="h-24 text-center text-muted-foreground"
                   >
                     {search ? "No users matching your search." : "No users found."}
