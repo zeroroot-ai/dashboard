@@ -97,6 +97,45 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // /dashboard/users → /dashboard/organization/users (users moved into Organization group).
+      {
+        source: "/dashboard/users",
+        destination: "/dashboard/organization/users",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/users/:userId",
+        destination: "/dashboard/organization/users/:userId",
+        permanent: true,
+      },
+      // Old org pages lived in the `(dashboard)` segment group, which Next.js
+      // resolves at the root (/pages/...) — never under /dashboard. Redirect
+      // both the "what the sidebar pointed at" form and the "what actually
+      // resolved" form to the new canonical location.
+      {
+        source: "/dashboard/pages/settings/organization/teams",
+        destination: "/dashboard/organization/teams",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/pages/settings/organization/security-policy",
+        destination: "/dashboard/organization/security-policy",
+        permanent: true,
+      },
+      {
+        source: "/pages/settings/organization/teams",
+        destination: "/dashboard/organization/teams",
+        permanent: true,
+      },
+      {
+        source: "/pages/settings/organization/security-policy",
+        destination: "/dashboard/organization/security-policy",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 // Wrap with Fumadocs MDX adapter so `.mdx` content under `content/docs/`

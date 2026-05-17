@@ -77,7 +77,7 @@ function UserActionsMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <Link href={`/dashboard/users/${userId}`}>
+          <Link href={`/dashboard/organization/users/${userId}`}>
             <Eye className="size-4" />
             View Details
           </Link>
