@@ -351,4 +351,33 @@ test.describe("Authz gating — admin happy-path (tenant_admin) visibility", () 
         .first(),
     ).toBeVisible({ timeout: 10_000 });
   });
+
+  // -------------------------------------------------------------------------
+  // Deploy launcher — visible AND enabled for admins. Regression guard for
+  // dashboard#145: the DeployLauncher now renders via AuthGatedButton so
+  // admins must see an interactive CTA (not a disabled or skeleton variant).
+  // -------------------------------------------------------------------------
+
+  for (const [type, listUrl] of [
+    ["agent", `${BASE_URL}/dashboard/agents`],
+    ["plugin", PLUGINS_URL],
+    ["tool", `${BASE_URL}/dashboard/tools`],
+  ] as const) {
+    test(`Deploy ${type} CTA is visible and enabled for tenant_admin`, async ({
+      page,
+    }) => {
+      test.setTimeout(30_000);
+      await page.goto(listUrl);
+      await page.waitForLoadState("networkidle", { timeout: 15_000 });
+
+      const cta = page
+        .getByRole("link", { name: new RegExp(`deploy ${type}`, "i") })
+        .or(page.getByRole("button", { name: new RegExp(`deploy ${type}`, "i") }));
+      await expect(cta.first()).toBeVisible({ timeout: 10_000 });
+      // The denied variant marks the wrapper aria-disabled; for admins
+      // there must be no such wrapper around the CTA.
+      const deniedWrapper = page.getByTestId("auth-gated-button-denied");
+      await expect(deniedWrapper).toHaveCount(0, { timeout: 3_000 });
+    });
+  }
 });

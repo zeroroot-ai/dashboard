@@ -360,4 +360,39 @@ test.describe("Authz gating — non-admin (tenant_member) visibility", () => {
 
     await expect(addSecretBtn).toHaveCount(0, { timeout: 5_000 });
   });
+
+  // -------------------------------------------------------------------------
+  // Deploy launcher — visible BUT disabled, with tooltip, for non-admins.
+  // Regression guard for dashboard#145: the DeployLauncher used to render
+  // null for non-admins, which made users believe the feature did not
+  // exist. AuthGatedButton's "denied" state keeps the affordance in the
+  // DOM so non-admins see the action and learn the permission they need.
+  // -------------------------------------------------------------------------
+
+  for (const [type, listUrl] of [
+    ["agent", `${BASE_URL}/dashboard/agents`],
+    ["plugin", PLUGINS_URL],
+    ["tool", `${BASE_URL}/dashboard/tools`],
+  ] as const) {
+    test(`Deploy ${type} CTA renders disabled with tooltip for tenant_member`, async ({
+      page,
+    }) => {
+      test.setTimeout(30_000);
+      await page.goto(listUrl);
+      await page.waitForLoadState("networkidle", { timeout: 15_000 });
+
+      // The denied wrapper carries data-testid="auth-gated-button-denied"
+      // and renders the CTA label as text content (no link, no enabled
+      // button — see AuthGatedButton.tsx).
+      const deniedWrapper = page.getByTestId("auth-gated-button-denied");
+      await expect(deniedWrapper.first()).toBeVisible({ timeout: 10_000 });
+      await expect(deniedWrapper.first()).toContainText(
+        new RegExp(`deploy ${type}`, "i"),
+      );
+      // No clickable link to /dashboard/deploy.
+      const deployLink = page
+        .getByRole("link", { name: new RegExp(`deploy ${type}`, "i") });
+      await expect(deployLink).toHaveCount(0, { timeout: 3_000 });
+    });
+  }
 });
