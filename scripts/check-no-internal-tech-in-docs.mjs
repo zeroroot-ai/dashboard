@@ -3,10 +3,19 @@
  * check-no-internal-tech-in-docs.mjs
  *
  * Build-time guard enforcing the customer-doc terminology invariant from
- * zero-day-ai/dashboard#124. Customer-facing docs at `content/docs/**\/*.mdx`
- * name product capabilities (Gibson identity service, Gibson permissions,
- * Gibson Traces, Gibson-managed secrets storage), NOT the vendors implementing
- * them.
+ * zero-day-ai/dashboard#124. Customer-facing surfaces (MDX docs AND public
+ * marketing components) name product capabilities (Gibson identity service,
+ * Gibson permissions, Gibson Traces, Gibson-managed secrets storage), NOT
+ * the vendors implementing them.
+ *
+ * Scanned surfaces:
+ *   - content/docs/**\/*.mdx                  (rendered customer docs)
+ *   - components/gibson/landing/**\/*.{ts,tsx}  (marketing components)
+ *   - app/(public)/**\/*.{ts,tsx,mdx}          (public routes — pricing, signup, login)
+ *
+ * For .ts/.tsx files, JS comments (// line + block) are stripped before
+ * scanning. Engineering docstrings exempt; string literals + JSX text
+ * are still scanned (those render to the customer).
  *
  * Canonical reference for the deny-list + replacement vocabulary:
  * https://github.com/zero-day-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md
@@ -31,9 +40,11 @@
  *   --seed       One-shot: regenerate `.docs-allowlist.json` from the current
  *                scan. Use ONCE at land time to bootstrap the list; CI should
  *                reject this mode going forward.
- *   --selftest   Synthesises a temp .mdx file containing one fixture per
- *                deny-list pattern class, asserts the scanner catches each,
- *                cleans up. Exit 0 iff every pattern was caught.
+ *   --selftest   Synthesises temp fixtures (one .mdx, one .tsx) containing the
+ *                full deny-list, asserts the scanner catches each pattern in
+ *                both file kinds and ignores patterns inside JS comments.
+ *                Exit 0 iff every pattern was caught and no false positive
+ *                surfaced from comments.
  */
 
 import { readFileSync, writeFileSync, unlinkSync, readdirSync, statSync, existsSync, mkdirSync, rmSync } from "node:fs";
@@ -43,10 +54,15 @@ import { fileURLToPath } from "node:url";
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const ALLOWLIST_PATH = join(ROOT, ".docs-allowlist.json");
 
-// Only customer-facing docs are in scope.
-const SCAN_ROOTS = ["content/docs"];
-
-const SCAN_EXTENSIONS = new Set([".mdx"]);
+// Each scan root declares its own extension allowlist and whether JS-style
+// comments should be stripped before pattern matching. The rule of thumb:
+// scan whatever renders to a customer. For .ts/.tsx, that means JSX text +
+// string literals — engineering docstrings (// or /* */) are exempt.
+const SCAN_ROOTS = [
+  { root: "content/docs", extensions: new Set([".mdx"]), stripJsComments: false },
+  { root: "components/gibson/landing", extensions: new Set([".ts", ".tsx"]), stripJsComments: true },
+  { root: "app/(public)", extensions: new Set([".ts", ".tsx", ".mdx"]), stripJsComments: true },
+];
 
 const SKIP_DIR_NAMES = new Set([
   "node_modules", ".next", "dist", "build", ".turbo", "coverage", "__tests__",
@@ -154,7 +170,7 @@ const DENY_PATTERNS = [
   },
 ];
 
-function walk(dir, out = []) {
+function walk(dir, extensions, out = []) {
   let entries;
   try {
     entries = readdirSync(dir);
@@ -171,13 +187,13 @@ function walk(dir, out = []) {
       continue;
     }
     if (st.isDirectory()) {
-      walk(full, out);
+      walk(full, extensions, out);
       continue;
     }
     const dot = name.lastIndexOf(".");
     if (dot < 0) continue;
     const ext = name.slice(dot);
-    if (SCAN_EXTENSIONS.has(ext)) out.push(full);
+    if (extensions.has(ext)) out.push(full);
   }
   return out;
 }
@@ -186,13 +202,95 @@ function relPath(abs) {
   return relative(ROOT, abs).split(sep).join("/");
 }
 
-export function scanFile(absPath) {
+// stripJsComments replaces the contents of // line comments and /* */ block
+// comments with spaces (preserving line/column positions so violation line
+// numbers stay accurate). String literals (single, double, template) are
+// preserved verbatim — those render to the customer and must still be scanned.
+// JSX text-content is preserved verbatim too: outside string literals, a `//`
+// that is NOT followed by a `*` and is NOT inside a regex literal is treated
+// as a comment. Inside JSX text, '//' as content is uncommon enough that we
+// accept the false-negative risk in exchange for a small, dependency-free
+// implementation. Comments inside string literals are preserved (correct).
+function stripJsComments(src) {
+  let out = "";
+  let i = 0;
+  const n = src.length;
+  while (i < n) {
+    const c = src[i];
+    const next = i + 1 < n ? src[i + 1] : "";
+    // Line comment
+    if (c === "/" && next === "/") {
+      while (i < n && src[i] !== "\n") {
+        out += " ";
+        i++;
+      }
+      continue;
+    }
+    // Block comment
+    if (c === "/" && next === "*") {
+      out += "  ";
+      i += 2;
+      while (i < n && !(src[i] === "*" && i + 1 < n && src[i + 1] === "/")) {
+        out += src[i] === "\n" ? "\n" : " ";
+        i++;
+      }
+      if (i < n) {
+        out += "  ";
+        i += 2;
+      }
+      continue;
+    }
+    // String literals — preserve verbatim, including any // or /* inside.
+    if (c === "'" || c === '"' || c === "`") {
+      const quote = c;
+      out += c;
+      i++;
+      while (i < n && src[i] !== quote) {
+        if (src[i] === "\\" && i + 1 < n) {
+          out += src[i] + src[i + 1];
+          i += 2;
+          continue;
+        }
+        // Template-string `${ … }` interpolation: walk the expression with
+        // brace-counting so a `//` inside it is still treated as code.
+        if (quote === "`" && src[i] === "$" && i + 1 < n && src[i + 1] === "{") {
+          out += "${";
+          i += 2;
+          let depth = 1;
+          while (i < n && depth > 0) {
+            if (src[i] === "{") depth++;
+            else if (src[i] === "}") depth--;
+            if (depth > 0) out += src[i];
+            i++;
+          }
+          out += "}";
+          continue;
+        }
+        out += src[i];
+        i++;
+      }
+      if (i < n) {
+        out += src[i]; // closing quote
+        i++;
+      }
+      continue;
+    }
+    out += c;
+    i++;
+  }
+  return out;
+}
+
+export function scanFile(absPath, opts = {}) {
   const rel = relPath(absPath);
   let src;
   try {
     src = readFileSync(absPath, "utf8");
   } catch {
     return [];
+  }
+  if (opts.stripJsComments) {
+    src = stripJsComments(src);
   }
   const lines = src.split("\n");
   const violations = [];
@@ -217,8 +315,14 @@ export function scanFile(absPath) {
 }
 
 function scanAll() {
-  const files = SCAN_ROOTS.flatMap((root) => walk(join(ROOT, root)));
-  return files.flatMap(scanFile);
+  const violations = [];
+  for (const cfg of SCAN_ROOTS) {
+    const files = walk(join(ROOT, cfg.root), cfg.extensions);
+    for (const f of files) {
+      violations.push(...scanFile(f, { stripJsComments: cfg.stripJsComments }));
+    }
+  }
+  return violations;
 }
 
 function violationKey(v) {
@@ -355,16 +459,9 @@ function runSeed() {
 }
 
 function runSelftest() {
-  // One fixture per pattern class. The .mdx file is written into a temp dir
-  // *under* one of the SCAN_ROOTS so the walker picks it up.
-  const fixtureDir = join(ROOT, "content", "docs", "__selftest_dir");
-  const fixturePath = join(fixtureDir, "__selftest.mdx");
-  mkdirSync(fixtureDir, { recursive: true });
-  const body = [
-    "---",
-    "title: selftest",
-    "---",
-    "",
+  // The deny-list fixture body — one mention per pattern class so the scanner
+  // is required to catch each. Shared by the .mdx and .tsx fixtures.
+  const denyMentions = [
     "Signed in via Zitadel.",
     "OpenFGA holds the tuples.",
     "FGA decision.",
@@ -387,26 +484,114 @@ function runSelftest() {
     "External Secrets Operator pulls.",
     "OPA policies.",
     "Gibson-hosted Vault for default backend.",
-  ].join("\n");
-  writeFileSync(fixturePath, body);
+  ];
+
+  // Fixture 1: an .mdx file under content/docs — exercises the raw-scan path
+  // (no comment stripping). All deny-list patterns must be caught.
+  const mdxDir = join(ROOT, "content", "docs", "__selftest_dir");
+  const mdxPath = join(mdxDir, "__selftest.mdx");
+  mkdirSync(mdxDir, { recursive: true });
+  const mdxBody = ["---", "title: selftest", "---", "", ...denyMentions].join("\n");
+  writeFileSync(mdxPath, mdxBody);
+
+  // Fixture 2: a .tsx file under components/gibson/landing — exercises the
+  // comment-aware scan path. The deny-list patterns live in JSX text + string
+  // literals (which must be caught); the same patterns in // line and /* */
+  // block comments must be IGNORED.
+  const tsxDir = join(ROOT, "components", "gibson", "landing", "__selftest_dir");
+  const tsxPath = join(tsxDir, "__selftest.tsx");
+  mkdirSync(tsxDir, { recursive: true });
+  // Build a TSX module that:
+  //  - includes the full deny list in an exported string array (visible).
+  //  - repeats the full deny list inside a block comment (must be ignored).
+  //  - repeats the full deny list inside line comments (must be ignored).
+  const visibleArray =
+    "export const visible: string[] = [\n" +
+    denyMentions.map((s) => `  "${s.replace(/"/g, '\\"')}",`).join("\n") +
+    "\n];\n";
+  const blockComment =
+    "/*\n" + denyMentions.map((s) => " * " + s).join("\n") + "\n */\n";
+  const lineComments =
+    denyMentions.map((s) => `// ${s}`).join("\n") + "\n";
+  const tsxBody = lineComments + blockComment + visibleArray;
+  writeFileSync(tsxPath, tsxBody);
+
   try {
-    const violations = scanFile(fixturePath);
-    const patterns = new Set(violations.map((v) => v.pattern));
     const want = new Set(DENY_PATTERNS.map((d) => d.name));
-    const missing = [...want].filter((p) => !patterns.has(p));
-    if (missing.length > 0) {
+
+    // .mdx scan: scan as-is. Must catch every pattern at least once.
+    const mdxViolations = scanFile(mdxPath, { stripJsComments: false });
+    const mdxPatterns = new Set(mdxViolations.map((v) => v.pattern));
+    const mdxMissing = [...want].filter((p) => !mdxPatterns.has(p));
+    if (mdxMissing.length > 0) {
       process.stderr.write(
-        `❌ --selftest FAILED: scanner missed pattern(s): ${missing.join(", ")}\n`,
+        `❌ --selftest FAILED (.mdx fixture): scanner missed pattern(s): ${mdxMissing.join(", ")}\n`,
       );
       return 1;
     }
+
+    // .tsx scan WITH comment stripping. Each pattern must register at least
+    // once (from the visible array). Patterns with multiple OR alternatives
+    // (e.g. /ArgoCD|Argo CD/, /ext-authz|ext_authz/, /ESO|External Secrets Operator/)
+    // legitimately match more than once because all spellings appear in the
+    // array. The real comment-stripping invariant is the next check (raw vs
+    // stripped ratio).
+    const tsxViolations = scanFile(tsxPath, { stripJsComments: true });
+    const tsxPatterns = new Set(tsxViolations.map((v) => v.pattern));
+    const tsxMissing = [...want].filter((p) => !tsxPatterns.has(p));
+    if (tsxMissing.length > 0) {
+      process.stderr.write(
+        `❌ --selftest FAILED (.tsx visible-text fixture): scanner missed pattern(s) in string literals: ${tsxMissing.join(", ")}\n`,
+      );
+      return 1;
+    }
+    const tsxCounts = new Map();
+    for (const v of tsxViolations) {
+      tsxCounts.set(v.pattern, (tsxCounts.get(v.pattern) ?? 0) + 1);
+    }
+
+    // .tsx scan WITHOUT comment stripping (regression check). The fixture
+    // duplicates the deny list in 3 locations: line comments, block comments,
+    // visible array. With comment stripping ON we keep only the array, so
+    // every pattern's raw count must be exactly 3× its stripped count. Any
+    // other ratio means the comment stripper either leaked (raw > 3× stripped)
+    // or over-ate (raw < 3× stripped — would chew through string literals).
+    const tsxRawViolations = scanFile(tsxPath, { stripJsComments: false });
+    const tsxRawCounts = new Map();
+    for (const v of tsxRawViolations) {
+      tsxRawCounts.set(v.pattern, (tsxRawCounts.get(v.pattern) ?? 0) + 1);
+    }
+    const ratioWrong = [];
+    for (const p of want) {
+      const raw = tsxRawCounts.get(p) ?? 0;
+      const stripped = tsxCounts.get(p) ?? 0;
+      if (raw !== stripped * 3) {
+        ratioWrong.push(`${p} (raw=${raw}, stripped=${stripped}; expected raw == 3 * stripped)`);
+      }
+    }
+    if (ratioWrong.length > 0) {
+      process.stderr.write(
+        `❌ --selftest FAILED (.tsx comment-stripping ratio): ${ratioWrong.join("; ")}\n` +
+          `   the fixture has each deny-list mention in 3 places (line comment, block ` +
+          `comment, visible array). After stripping comments the raw count must drop by 2/3.\n`,
+      );
+      return 1;
+    }
+
     console.log(
-      `check-no-internal-tech-in-docs.mjs --selftest: OK (caught all ${want.size} pattern classes).`,
+      `check-no-internal-tech-in-docs.mjs --selftest: OK ` +
+        `(.mdx: caught all ${want.size}; .tsx visible: caught all ${want.size}; ` +
+        `comment stripping: raw = 3 × stripped for every pattern).`,
     );
     return 0;
   } finally {
     try {
-      rmSync(fixtureDir, { recursive: true, force: true });
+      rmSync(mdxDir, { recursive: true, force: true });
+    } catch {
+      // best-effort
+    }
+    try {
+      rmSync(tsxDir, { recursive: true, force: true });
     } catch {
       // best-effort
     }
