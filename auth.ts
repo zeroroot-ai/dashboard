@@ -94,16 +94,34 @@ declare module "next-auth" {
 // of `@/auth` instead of silently signing OIDC redirects with empty values.
 // ---------------------------------------------------------------------------
 
+// requireEnv reads a required env var. To preserve the "fail loud at first
+// import" semantics in production AND survive Next.js's page-data collection
+// phase (which import-evaluates routes inside `next build` with no runtime
+// env), missing values resolve to a TYPE-LEVEL sentinel — a Proxy that
+// throws on any access — when NEXT_PHASE === 'phase-production-build'.
+// Build-time imports succeed; first actual access (request, server-action,
+// instrumentation.register from slice #206) still crashloops loudly.
 function requireEnv(name: string): string {
   const v = process.env[name];
-  if (typeof v !== "string" || v.length === 0) {
-    throw new Error(
-      `${name} is required (one-code-path / deploy#196). ` +
-        `The Zitadel-optional degradation surface has been deleted; this ` +
-        `process refuses to boot until the chart provides the value.`,
-    );
+  if (typeof v === "string" && v.length > 0) return v;
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    // Build-time deferral: return a throwing sentinel so module evaluation
+    // succeeds; runtime access still surfaces the missing-env error.
+    return new Proxy({ name } as unknown as object, {
+      get() {
+        throw new Error(
+          `${name} is required (one-code-path / deploy#196). ` +
+            `The Zitadel-optional degradation surface has been deleted; this ` +
+            `process refuses to boot until the chart provides the value.`,
+        );
+      },
+    }) as unknown as string;
   }
-  return v;
+  throw new Error(
+    `${name} is required (one-code-path / deploy#196). ` +
+      `The Zitadel-optional degradation surface has been deleted; this ` +
+      `process refuses to boot until the chart provides the value.`,
+  );
 }
 
 // The issuer is what the BROWSER sees (used for OIDC authorize redirects + what
