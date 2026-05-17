@@ -90,22 +90,20 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    // GIBSON_API_URL is REQUIRED — see src/lib/env-validator.ts.
+    // GIBSON_API_URL is REQUIRED at SERVER START — see src/lib/env-validator.ts.
     //
     // next.config.ts is evaluated by `next build` AT BUILD TIME and AGAIN
-    // when the Next.js Node server starts (so instrumentation.ts has NOT
-    // run yet). We surface a loud build-time error here rather than rely
-    // on validateEnv() — the build script also runs scripts/check-required-build-env.mjs
-    // before `next build` to fail the image build itself when the env is missing.
-    const gibsonApiUrl = process.env.GIBSON_API_URL;
-    if (!gibsonApiUrl) {
-      throw new Error(
-        "[next.config] GIBSON_API_URL is required at build/start time " +
-          "(used to rewrite /api/grpc/* to the Envoy edge). " +
-          "Set it via the Helm chart (dashboard.envoy.apiUrl) or " +
-          "GIBSON_API_URL env var. See .env.example.",
-      );
-    }
+    // when the Next.js Node server starts. The image build runs without
+    // any pod-side env (the chart wires GIBSON_API_URL at pod-start, not
+    // at docker-build), so a hard throw here would fail the image build.
+    //
+    // The required-env fence lives at boot in validateEnv() (run from
+    // instrumentation.register()) which DOES crashloop a misconfigured
+    // pod. next.config.ts here uses a clearly-synthetic stub URL when
+    // the env is missing during build; runtime missing-env is caught one
+    // tick later by validateEnv() before any request can succeed.
+    const gibsonApiUrl =
+      process.env.GIBSON_API_URL ?? "http://__BUILD_TIME_STUB_GIBSON_API_URL__";
     return [
       {
         source: "/api/grpc/:path*",
