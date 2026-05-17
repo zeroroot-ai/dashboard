@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { PlusCircle, MoreHorizontal, Play, Pause, Square, Trash2, GripVertical } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Play, Pause, Square, Trash2, GripVertical, CrosshairIcon } from "lucide-react";
+import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -366,7 +367,27 @@ export function MissionsContent() {
       )}
 
       {/* View Toggle + Content */}
-      {!isLoading && !error && (
+      {!isLoading && !error && missions.length === 0 && (
+        <EmptyState
+          icon={CrosshairIcon}
+          title="No missions yet"
+          description="A mission orchestrates one or more agents against a target. Create one to see findings flow into the knowledge graph."
+          primaryCta={
+            <Button asChild>
+              <Link href="/dashboard/missions/create">
+                <PlusCircle className="size-4" />
+                Create your first mission
+              </Link>
+            </Button>
+          }
+          secondaryCta={
+            <Button asChild variant="ghost">
+              <Link href="/docs/missions">Read the docs</Link>
+            </Button>
+          }
+        />
+      )}
+      {!isLoading && !error && missions.length > 0 && (
         <Tabs defaultValue="table" className="w-full">
           <TabsList>
             <TabsTrigger value="table">Table</TabsTrigger>
