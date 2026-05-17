@@ -43,12 +43,13 @@ const terminalLines: Array<[string, string, "cmd" | "ok" | "info" | "sandbox"]> 
   ["$", "git clone https://github.com/zero-day-ai/adk gibson-adk", "cmd"],
   ["$", "cd gibson-adk", "cmd"],
   ["$", "gibson component init recon-agent", "cmd"],
-  ["$", "gibson component build", "cmd"],
+  ["$", "gibson component register --client-id ... --client-secret -", "cmd"],
+  ["✔", "enrolled recon-agent · OIDC client credentials · TLS 1.3", "ok"],
   ["$", "gibson mission submit missions/recon.yaml --target example.com", "cmd"],
-  ["✔", "connected · spiffe://zero-day.ai/agent · gRPC mTLS", "ok"],
+  ["✔", "authenticated · short-lived session token issued", "ok"],
   ["→", "mission queued · 3 steps running", "info"],
   ["↳", "untrusted payload detonated in setec microVM", "sandbox"],
-  ["✔", "graph: 47 hosts · 12 findings → neo4j", "ok"],
+  ["✔", "graph: 47 hosts · 12 findings indexed", "ok"],
 ];
 
 const lineColor: Record<"cmd" | "ok" | "info" | "sandbox", string> = {

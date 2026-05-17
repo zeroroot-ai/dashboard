@@ -4,17 +4,23 @@
  *
  * Build-time drift gate for `.docs-allowlist.json`. The main scanner
  * (`check-no-internal-tech-in-docs.mjs`) catches *new* violations as they
- * arrive; this companion enforces the opposite direction — when a customer-doc
- * file is rewritten and its allowlisted lines disappear, the allowlist MUST be
- * shrunk in the same PR. Otherwise the allowlist accumulates dead entries and
- * loses its monotonic-shrink discipline.
+ * arrive; this companion enforces the opposite direction — when a
+ * customer-facing file is rewritten and its allowlisted lines disappear,
+ * the allowlist MUST be shrunk in the same PR. Otherwise the allowlist
+ * accumulates dead entries and loses its monotonic-shrink discipline.
  *
  * Same shape as the existing `check-authz-registry-fresh.mjs`:
  *
- *   1. Re-run the scan against `content/docs/**\/*.mdx`.
+ *   1. Re-run the scan over the same scope as the main scanner
+ *      (content/docs MDX + landing/public TS/TSX with JS-comment stripping).
  *   2. Compute what `.docs-allowlist.json` would look like after `--shrink`.
  *   3. Byte-compare against the committed copy.
  *   4. Exit non-zero with a `--shrink` hint on any drift.
+ *
+ * SCAN_ROOTS, DENY_PATTERNS and the comment-stripping behaviour MUST stay
+ * in lockstep with check-no-internal-tech-in-docs.mjs. The two scripts
+ * duplicate the config so each stays self-contained; if you change one,
+ * change the other.
  *
  * Wired into `pnpm prebuild` immediately after the main scanner.
  */
@@ -25,8 +31,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const ALLOWLIST_PATH = join(ROOT, ".docs-allowlist.json");
-const SCAN_ROOTS = ["content/docs"];
-const SCAN_EXTENSIONS = new Set([".mdx"]);
+const SCAN_ROOTS = [
+  { root: "content/docs", extensions: new Set([".mdx"]), stripJsComments: false },
+  { root: "components/gibson/landing", extensions: new Set([".ts", ".tsx"]), stripJsComments: true },
+  { root: "app/(public)", extensions: new Set([".ts", ".tsx", ".mdx"]), stripJsComments: true },
+];
 const SKIP_DIR_NAMES = new Set([
   "node_modules", ".next", "dist", "build", ".turbo", "coverage", "__tests__",
 ]);
@@ -54,7 +63,7 @@ const DENY_PATTERNS = [
   { name: "gibson-hosted-vault", re: /Gibson-hosted Vault/g },
 ];
 
-function walk(dir, out = []) {
+function walk(dir, extensions, out = []) {
   let entries;
   try { entries = readdirSync(dir); } catch { return out; }
   for (const name of entries) {
@@ -62,11 +71,11 @@ function walk(dir, out = []) {
     const full = join(dir, name);
     let st;
     try { st = statSync(full); } catch { continue; }
-    if (st.isDirectory()) { walk(full, out); continue; }
+    if (st.isDirectory()) { walk(full, extensions, out); continue; }
     const dot = name.lastIndexOf(".");
     if (dot < 0) continue;
     const ext = name.slice(dot);
-    if (SCAN_EXTENSIONS.has(ext)) out.push(full);
+    if (extensions.has(ext)) out.push(full);
   }
   return out;
 }
@@ -75,10 +84,63 @@ function relPath(abs) {
   return relative(ROOT, abs).split(sep).join("/");
 }
 
-function scanFile(absPath) {
+// stripJsComments — same implementation as check-no-internal-tech-in-docs.mjs.
+// Replaces // line comments and /* */ block comments with spaces (preserving
+// line/column positions). String literals (single, double, template) and
+// JSX text are preserved verbatim — that content renders to the customer
+// and must still be scanned.
+function stripJsComments(src) {
+  let out = "";
+  let i = 0;
+  const n = src.length;
+  while (i < n) {
+    const c = src[i];
+    const next = i + 1 < n ? src[i + 1] : "";
+    if (c === "/" && next === "/") {
+      while (i < n && src[i] !== "\n") { out += " "; i++; }
+      continue;
+    }
+    if (c === "/" && next === "*") {
+      out += "  "; i += 2;
+      while (i < n && !(src[i] === "*" && i + 1 < n && src[i + 1] === "/")) {
+        out += src[i] === "\n" ? "\n" : " "; i++;
+      }
+      if (i < n) { out += "  "; i += 2; }
+      continue;
+    }
+    if (c === "'" || c === '"' || c === "`") {
+      const quote = c;
+      out += c; i++;
+      while (i < n && src[i] !== quote) {
+        if (src[i] === "\\" && i + 1 < n) { out += src[i] + src[i + 1]; i += 2; continue; }
+        if (quote === "`" && src[i] === "$" && i + 1 < n && src[i + 1] === "{") {
+          out += "${"; i += 2;
+          let depth = 1;
+          while (i < n && depth > 0) {
+            if (src[i] === "{") depth++;
+            else if (src[i] === "}") depth--;
+            if (depth > 0) out += src[i];
+            i++;
+          }
+          out += "}"; continue;
+        }
+        out += src[i]; i++;
+      }
+      if (i < n) { out += src[i]; i++; }
+      continue;
+    }
+    out += c; i++;
+  }
+  return out;
+}
+
+function scanFile(absPath, opts = {}) {
   const rel = relPath(absPath);
   let src;
   try { src = readFileSync(absPath, "utf8"); } catch { return []; }
+  if (opts.stripJsComments) {
+    src = stripJsComments(src);
+  }
   const lines = src.split("\n");
   const violations = [];
   for (let i = 0; i < lines.length; i++) {
@@ -92,8 +154,14 @@ function scanFile(absPath) {
 }
 
 function scanAll() {
-  const files = SCAN_ROOTS.flatMap((root) => walk(join(ROOT, root)));
-  return files.flatMap(scanFile);
+  const violations = [];
+  for (const cfg of SCAN_ROOTS) {
+    const files = walk(join(ROOT, cfg.root), cfg.extensions);
+    for (const f of files) {
+      violations.push(...scanFile(f, { stripJsComments: cfg.stripJsComments }));
+    }
+  }
+  return violations;
 }
 
 function violationKey(v) {
@@ -137,7 +205,7 @@ const expected = expectedAllowlistJson();
 const committed = committedJson();
 
 if (expected === committed) {
-  console.log("check-docs-allowlist-fresh.mjs: OK — .docs-allowlist.json is in sync with content/docs scan.");
+  console.log("check-docs-allowlist-fresh.mjs: OK — .docs-allowlist.json is in sync with customer-facing scan.");
   process.exit(0);
 }
 
