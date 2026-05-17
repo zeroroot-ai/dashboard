@@ -24,6 +24,7 @@ export type CrdActionName =
   | "setComponentAccessAction"
   | "installAgentAction"
   | "listTeamsAction"
+  | "listTeamMembersAction"
   | "createTeamAction"
   | "deleteTeamAction"
   | "addTeamMemberAction"

@@ -41,11 +41,83 @@ export async function listTeamsAction(): Promise<ActionResult<Team[]>> {
     permission: "members:invite",
   });
   if (!gate.ok) return gate.result;
-  // Enumerate teams whose parent is the caller's tenant. Backed by
-  // FGA ListObjects(tenant:X, parent, team). The daemon admin client
-  // doesn't expose a dedicated "list teams" RPC yet — we stub by
-  // returning an empty list. A follow-on task adds the RPC.
-  return { ok: true, data: [] };
+  const callerTenantId = gate.session.user.tenantId;
+  if (!callerTenantId) {
+    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
+  }
+  // Backed by gibson PlatformOperatorService.ListTeams (gibson#118) which
+  // wraps FGA ListObjects(tenant:X, parent, team) + per-team member counts.
+  // Pagination is opaque at the wire level; the dashboard surfaces the full
+  // list to UI consumers (the realistic per-tenant team count is well under
+  // the daemon's default page size of 50). If a tenant ever exceeds that,
+  // we can swap to client-side pagination without a server-action shape
+  // change.
+  try {
+    const client = serviceClient(PlatformOperatorService, callerTenantId);
+    const teams: Team[] = [];
+    let pageToken = "";
+    do {
+      const resp = await client.listTeams({
+        tenantId: `tenant:${callerTenantId}`,
+        pageToken,
+        pageSize: 0, // daemon picks default
+      });
+      for (const t of resp.teams) {
+        teams.push({
+          id: t.id,
+          displayName: t.displayName || t.id,
+          memberCount: t.memberCount,
+        });
+      }
+      pageToken = resp.nextPageToken;
+    } while (pageToken);
+    return { ok: true, data: teams };
+  } catch (err) {
+    return { ok: false, error: String(err), code: "INTERNAL" };
+  }
+}
+
+export async function listTeamMembersAction(
+  teamId: string,
+): Promise<ActionResult<TeamMember[]>> {
+  if (!teamId) {
+    return { ok: false, error: "teamId required", code: "BAD_INPUT" };
+  }
+  const gate = await requireCrdSession<TeamMember[]>({
+    action: "listTeamMembersAction",
+    permission: "members:invite",
+    inputKeys: ["teamId"],
+  });
+  if (!gate.ok) return gate.result;
+  const callerTenantId = gate.session.user.tenantId;
+  if (!callerTenantId) {
+    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
+  }
+  try {
+    const client = serviceClient(PlatformOperatorService, callerTenantId);
+    const members: TeamMember[] = [];
+    let pageToken = "";
+    do {
+      const resp = await client.listTeamMembers({
+        tenantId: `tenant:${callerTenantId}`,
+        teamId,
+        pageToken,
+        pageSize: 0,
+      });
+      for (const m of resp.members) {
+        members.push({
+          userId: m.userId,
+          email: m.email || undefined,
+          displayName: m.displayName || undefined,
+          isAdmin: m.isAdmin,
+        });
+      }
+      pageToken = resp.nextPageToken;
+    } while (pageToken);
+    return { ok: true, data: members };
+  } catch (err) {
+    return { ok: false, error: String(err), code: "INTERNAL" };
+  }
 }
 
 export async function createTeamAction(input: {

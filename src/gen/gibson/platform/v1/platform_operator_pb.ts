@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/platform/v1/platform_operator.proto.
  */
 export const file_gibson_platform_v1_platform_operator: GenFile = /*@__PURE__*/
-  fileDesc("CipnaWJzb24vcGxhdGZvcm0vdjEvcGxhdGZvcm1fb3BlcmF0b3IucHJvdG8SEmdpYnNvbi5wbGF0Zm9ybS52MSI5Cg9TaHV0ZG93blJlcXVlc3QSDQoFZm9yY2UYASABKAgSFwoPdGltZW91dF9zZWNvbmRzGAIgASgFIjQKEFNodXRkb3duUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIi0KGEltcGVyc29uYXRlVGVuYW50UmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiKgoZSW1wZXJzb25hdGVUZW5hbnRSZXNwb25zZRINCgV0b2tlbhgBIAEoCSIqChlSZWZyZXNoVG9vbENhdGFsb2dSZXF1ZXN0Eg0KBWZvcmNlGAEgASgIIj0KGlJlZnJlc2hUb29sQ2F0YWxvZ1Jlc3BvbnNlEg4KBnF1ZXVlZBgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIj0KC0FjY2Vzc1R1cGxlEgwKBHVzZXIYASABKAkSEAoIcmVsYXRpb24YAiABKAkSDgoGb2JqZWN0GAMgASgJIokBChhXcml0ZUFjY2Vzc1R1cGxlc1JlcXVlc3QSLAoDYWRkGAEgAygLMh8uZ2lic29uLnBsYXRmb3JtLnYxLkFjY2Vzc1R1cGxlEi8KBmRlbGV0ZRgCIAMoCzIfLmdpYnNvbi5wbGF0Zm9ybS52MS5BY2Nlc3NUdXBsZRIOCgZyZWFzb24YAyABKAkiOwoZV3JpdGVBY2Nlc3NUdXBsZXNSZXNwb25zZRINCgVhZGRlZBgBIAEoBRIPCgdkZWxldGVkGAIgASgFIrwBChhVcHNlcnRUZW5hbnRRdW90YVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhsKE2NvbmN1cnJlbnRfbWlzc2lvbnMYByABKAUSGQoRY29uY3VycmVudF9hZ2VudHMYAyABKAVKBAgCEANKBAgEEAVKBAgFEAZKBAgGEAdSBXNlYXRzUgpzdG9yYWdlX2diUg5yZXRlbnRpb25fZGF5c1Iac2FuZGJveF9sYXVuY2hlc19wZXJfbW9udGgiLwoZVXBzZXJ0VGVuYW50UXVvdGFSZXNwb25zZRISCgp1cGRhdGVkX2F0GAEgASgJIi0KGExpc3RGZWF0dXJlVHVwbGVzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiLgoZTGlzdEZlYXR1cmVUdXBsZXNSZXNwb25zZRIRCglyZWxhdGlvbnMYASADKAkiNAofU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiOgogU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVzcG9uc2USFgoOdHVwbGVzX3dyaXR0ZW4YASABKAUirwIKEUF1ZGl0RXZlbnRNZXNzYWdlEgwKBHR5cGUYASABKAkSFQoNYWN0b3Jfc3ViamVjdBgCIAEoCRIUCgxhY3Rvcl9zb3VyY2UYAyABKAkSDQoFdHVwbGUYBCABKAkSFAoMYWN0aW9uX2NsYXNzGAUgASgJEhIKCnNjb3BlX3R5cGUYBiABKAkSEQoJb3BlcmF0aW9uGAcgASgJEg4KBnJlYXNvbhgIIAEoCRIRCgl0aW1lc3RhbXAYCSABKAkSQQoGZmllbGRzGAogAygLMjEuZ2lic29uLnBsYXRmb3JtLnYxLkF1ZGl0RXZlbnRNZXNzYWdlLkZpZWxkc0VudHJ5Gi0KC0ZpZWxkc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiTQoVRW1pdEF1ZGl0RXZlbnRSZXF1ZXN0EjQKBWV2ZW50GAEgASgLMiUuZ2lic29uLnBsYXRmb3JtLnYxLkF1ZGl0RXZlbnRNZXNzYWdlIhgKFkVtaXRBdWRpdEV2ZW50UmVzcG9uc2UiGQoXR2V0UmVzZXJ2ZWROYW1lc1JlcXVlc3QiOQoYR2V0UmVzZXJ2ZWROYW1lc1Jlc3BvbnNlEg0KBWV4YWN0GAEgAygJEg4KBnByZWZpeBgCIAMoCTKWDAoXUGxhdGZvcm1PcGVyYXRvclNlcnZpY2USjgEKCFNodXRkb3duEiMuZ2lic29uLnBsYXRmb3JtLnYxLlNodXRkb3duUmVxdWVzdBokLmdpYnNvbi5wbGF0Zm9ybS52MS5TaHV0ZG93blJlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEqkBChFJbXBlcnNvbmF0ZVRlbmFudBIsLmdpYnNvbi5wbGF0Zm9ybS52MS5JbXBlcnNvbmF0ZVRlbmFudFJlcXVlc3QaLS5naWJzb24ucGxhdGZvcm0udjEuSW1wZXJzb25hdGVUZW5hbnRSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKsAQoSUmVmcmVzaFRvb2xDYXRhbG9nEi0uZ2lic29uLnBsYXRmb3JtLnYxLlJlZnJlc2hUb29sQ2F0YWxvZ1JlcXVlc3QaLi5naWJzb24ucGxhdGZvcm0udjEuUmVmcmVzaFRvb2xDYXRhbG9nUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSqQEKEVdyaXRlQWNjZXNzVHVwbGVzEiwuZ2lic29uLnBsYXRmb3JtLnYxLldyaXRlQWNjZXNzVHVwbGVzUmVxdWVzdBotLmdpYnNvbi5wbGF0Zm9ybS52MS5Xcml0ZUFjY2Vzc1R1cGxlc1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEqkBChFVcHNlcnRUZW5hbnRRdW90YRIsLmdpYnNvbi5wbGF0Zm9ybS52MS5VcHNlcnRUZW5hbnRRdW90YVJlcXVlc3QaLS5naWJzb24ucGxhdGZvcm0udjEuVXBzZXJ0VGVuYW50UXVvdGFSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKpAQoRTGlzdEZlYXR1cmVUdXBsZXMSLC5naWJzb24ucGxhdGZvcm0udjEuTGlzdEZlYXR1cmVUdXBsZXNSZXF1ZXN0Gi0uZ2lic29uLnBsYXRmb3JtLnYxLkxpc3RGZWF0dXJlVHVwbGVzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSvgEKGFNlZWRDYXRhbG9nVGVuYW50RW5hYmxlZBIzLmdpYnNvbi5wbGF0Zm9ybS52MS5TZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWRSZXF1ZXN0GjQuZ2lic29uLnBsYXRmb3JtLnYxLlNlZWRDYXRhbG9nVGVuYW50RW5hYmxlZFJlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEqABCg5FbWl0QXVkaXRFdmVudBIpLmdpYnNvbi5wbGF0Zm9ybS52MS5FbWl0QXVkaXRFdmVudFJlcXVlc3QaKi5naWJzb24ucGxhdGZvcm0udjEuRW1pdEF1ZGl0RXZlbnRSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKmAQoQR2V0UmVzZXJ2ZWROYW1lcxIrLmdpYnNvbi5wbGF0Zm9ybS52MS5HZXRSZXNlcnZlZE5hbWVzUmVxdWVzdBosLmdpYnNvbi5wbGF0Zm9ybS52MS5HZXRSZXNlcnZlZE5hbWVzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IANCUVpPZ2l0aHViLmNvbS96ZXJvLWRheS1haS9naWJzb24vaW50ZXJuYWwvZGFlbW9uL2FwaS9naWJzb24vcGxhdGZvcm0vdjE7cGxhdGZvcm12MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
+  fileDesc("CipnaWJzb24vcGxhdGZvcm0vdjEvcGxhdGZvcm1fb3BlcmF0b3IucHJvdG8SEmdpYnNvbi5wbGF0Zm9ybS52MSI5Cg9TaHV0ZG93blJlcXVlc3QSDQoFZm9yY2UYASABKAgSFwoPdGltZW91dF9zZWNvbmRzGAIgASgFIjQKEFNodXRkb3duUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIi0KGEltcGVyc29uYXRlVGVuYW50UmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiKgoZSW1wZXJzb25hdGVUZW5hbnRSZXNwb25zZRINCgV0b2tlbhgBIAEoCSIqChlSZWZyZXNoVG9vbENhdGFsb2dSZXF1ZXN0Eg0KBWZvcmNlGAEgASgIIj0KGlJlZnJlc2hUb29sQ2F0YWxvZ1Jlc3BvbnNlEg4KBnF1ZXVlZBgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIj0KC0FjY2Vzc1R1cGxlEgwKBHVzZXIYASABKAkSEAoIcmVsYXRpb24YAiABKAkSDgoGb2JqZWN0GAMgASgJIokBChhXcml0ZUFjY2Vzc1R1cGxlc1JlcXVlc3QSLAoDYWRkGAEgAygLMh8uZ2lic29uLnBsYXRmb3JtLnYxLkFjY2Vzc1R1cGxlEi8KBmRlbGV0ZRgCIAMoCzIfLmdpYnNvbi5wbGF0Zm9ybS52MS5BY2Nlc3NUdXBsZRIOCgZyZWFzb24YAyABKAkiOwoZV3JpdGVBY2Nlc3NUdXBsZXNSZXNwb25zZRINCgVhZGRlZBgBIAEoBRIPCgdkZWxldGVkGAIgASgFIrwBChhVcHNlcnRUZW5hbnRRdW90YVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhsKE2NvbmN1cnJlbnRfbWlzc2lvbnMYByABKAUSGQoRY29uY3VycmVudF9hZ2VudHMYAyABKAVKBAgCEANKBAgEEAVKBAgFEAZKBAgGEAdSBXNlYXRzUgpzdG9yYWdlX2diUg5yZXRlbnRpb25fZGF5c1Iac2FuZGJveF9sYXVuY2hlc19wZXJfbW9udGgiLwoZVXBzZXJ0VGVuYW50UXVvdGFSZXNwb25zZRISCgp1cGRhdGVkX2F0GAEgASgJIi0KGExpc3RGZWF0dXJlVHVwbGVzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiLgoZTGlzdEZlYXR1cmVUdXBsZXNSZXNwb25zZRIRCglyZWxhdGlvbnMYASADKAkiNAofU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiOgogU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVzcG9uc2USFgoOdHVwbGVzX3dyaXR0ZW4YASABKAUirwIKEUF1ZGl0RXZlbnRNZXNzYWdlEgwKBHR5cGUYASABKAkSFQoNYWN0b3Jfc3ViamVjdBgCIAEoCRIUCgxhY3Rvcl9zb3VyY2UYAyABKAkSDQoFdHVwbGUYBCABKAkSFAoMYWN0aW9uX2NsYXNzGAUgASgJEhIKCnNjb3BlX3R5cGUYBiABKAkSEQoJb3BlcmF0aW9uGAcgASgJEg4KBnJlYXNvbhgIIAEoCRIRCgl0aW1lc3RhbXAYCSABKAkSQQoGZmllbGRzGAogAygLMjEuZ2lic29uLnBsYXRmb3JtLnYxLkF1ZGl0RXZlbnRNZXNzYWdlLkZpZWxkc0VudHJ5Gi0KC0ZpZWxkc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiTQoVRW1pdEF1ZGl0RXZlbnRSZXF1ZXN0EjQKBWV2ZW50GAEgASgLMiUuZ2lic29uLnBsYXRmb3JtLnYxLkF1ZGl0RXZlbnRNZXNzYWdlIhgKFkVtaXRBdWRpdEV2ZW50UmVzcG9uc2UiGQoXR2V0UmVzZXJ2ZWROYW1lc1JlcXVlc3QiOQoYR2V0UmVzZXJ2ZWROYW1lc1Jlc3BvbnNlEg0KBWV4YWN0GAEgAygJEg4KBnByZWZpeBgCIAMoCSJMChBMaXN0VGVhbXNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRISCgpwYWdlX3Rva2VuGAIgASgJEhEKCXBhZ2Vfc2l6ZRgDIAEoBSI+CgRUZWFtEgoKAmlkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRIUCgxtZW1iZXJfY291bnQYAyABKAUiVQoRTGlzdFRlYW1zUmVzcG9uc2USJwoFdGVhbXMYASADKAsyGC5naWJzb24ucGxhdGZvcm0udjEuVGVhbRIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiYwoWTGlzdFRlYW1NZW1iZXJzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDwoHdGVhbV9pZBgCIAEoCRISCgpwYWdlX3Rva2VuGAMgASgJEhEKCXBhZ2Vfc2l6ZRgEIAEoBSJUCgpUZWFtTWVtYmVyEg8KB3VzZXJfaWQYASABKAkSDQoFZW1haWwYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJEhAKCGlzX2FkbWluGAQgASgIImMKF0xpc3RUZWFtTWVtYmVyc1Jlc3BvbnNlEi8KB21lbWJlcnMYASADKAsyHi5naWJzb24ucGxhdGZvcm0udjEuVGVhbU1lbWJlchIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAky0A4KF1BsYXRmb3JtT3BlcmF0b3JTZXJ2aWNlEo4BCghTaHV0ZG93bhIjLmdpYnNvbi5wbGF0Zm9ybS52MS5TaHV0ZG93blJlcXVlc3QaJC5naWJzb24ucGxhdGZvcm0udjEuU2h1dGRvd25SZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKpAQoRSW1wZXJzb25hdGVUZW5hbnQSLC5naWJzb24ucGxhdGZvcm0udjEuSW1wZXJzb25hdGVUZW5hbnRSZXF1ZXN0Gi0uZ2lic29uLnBsYXRmb3JtLnYxLkltcGVyc29uYXRlVGVuYW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSrAEKElJlZnJlc2hUb29sQ2F0YWxvZxItLmdpYnNvbi5wbGF0Zm9ybS52MS5SZWZyZXNoVG9vbENhdGFsb2dSZXF1ZXN0Gi4uZ2lic29uLnBsYXRmb3JtLnYxLlJlZnJlc2hUb29sQ2F0YWxvZ1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEqkBChFXcml0ZUFjY2Vzc1R1cGxlcxIsLmdpYnNvbi5wbGF0Zm9ybS52MS5Xcml0ZUFjY2Vzc1R1cGxlc1JlcXVlc3QaLS5naWJzb24ucGxhdGZvcm0udjEuV3JpdGVBY2Nlc3NUdXBsZXNSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKpAQoRVXBzZXJ0VGVuYW50UXVvdGESLC5naWJzb24ucGxhdGZvcm0udjEuVXBzZXJ0VGVuYW50UXVvdGFSZXF1ZXN0Gi0uZ2lic29uLnBsYXRmb3JtLnYxLlVwc2VydFRlbmFudFF1b3RhUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSqQEKEUxpc3RGZWF0dXJlVHVwbGVzEiwuZ2lic29uLnBsYXRmb3JtLnYxLkxpc3RGZWF0dXJlVHVwbGVzUmVxdWVzdBotLmdpYnNvbi5wbGF0Zm9ybS52MS5MaXN0RmVhdHVyZVR1cGxlc1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEr4BChhTZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWQSMy5naWJzb24ucGxhdGZvcm0udjEuU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVxdWVzdBo0LmdpYnNvbi5wbGF0Zm9ybS52MS5TZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWRSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKgAQoORW1pdEF1ZGl0RXZlbnQSKS5naWJzb24ucGxhdGZvcm0udjEuRW1pdEF1ZGl0RXZlbnRSZXF1ZXN0GiouZ2lic29uLnBsYXRmb3JtLnYxLkVtaXRBdWRpdEV2ZW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSpgEKEEdldFJlc2VydmVkTmFtZXMSKy5naWJzb24ucGxhdGZvcm0udjEuR2V0UmVzZXJ2ZWROYW1lc1JlcXVlc3QaLC5naWJzb24ucGxhdGZvcm0udjEuR2V0UmVzZXJ2ZWROYW1lc1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEpEBCglMaXN0VGVhbXMSJC5naWJzb24ucGxhdGZvcm0udjEuTGlzdFRlYW1zUmVxdWVzdBolLmdpYnNvbi5wbGF0Zm9ybS52MS5MaXN0VGVhbXNSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKjAQoPTGlzdFRlYW1NZW1iZXJzEiouZ2lic29uLnBsYXRmb3JtLnYxLkxpc3RUZWFtTWVtYmVyc1JlcXVlc3QaKy5naWJzb24ucGxhdGZvcm0udjEuTGlzdFRlYW1NZW1iZXJzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IANCUVpPZ2l0aHViLmNvbS96ZXJvLWRheS1haS9naWJzb24vaW50ZXJuYWwvZGFlbW9uL2FwaS9naWJzb24vcGxhdGZvcm0vdjE7cGxhdGZvcm12MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
 
 /**
  * ShutdownRequest requests graceful shutdown of the daemon.
@@ -529,6 +529,217 @@ export const GetReservedNamesResponseSchema: GenMessage<GetReservedNamesResponse
   messageDesc(file_gibson_platform_v1_platform_operator, 19);
 
 /**
+ * ListTeamsRequest enumerates the teams in the caller's tenant.
+ *
+ * @generated from message gibson.platform.v1.ListTeamsRequest
+ */
+export type ListTeamsRequest = Message<"gibson.platform.v1.ListTeamsRequest"> & {
+  /**
+   * tenant_id is the FGA id of the parent tenant (e.g. "tenant:acme").
+   * The daemon does not derive this from the caller identity — the dashboard
+   * server action supplies it explicitly to avoid silent cross-tenant reads.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * page_token is opaque. Empty for the first page; pass the
+   * next_page_token returned by the previous response to fetch the next page.
+   *
+   * @generated from field: string page_token = 2;
+   */
+  pageToken: string;
+
+  /**
+   * page_size caps the response. 0 → default (50). Maximum 200.
+   *
+   * @generated from field: int32 page_size = 3;
+   */
+  pageSize: number;
+};
+
+/**
+ * Describes the message gibson.platform.v1.ListTeamsRequest.
+ * Use `create(ListTeamsRequestSchema)` to create a new message.
+ */
+export const ListTeamsRequestSchema: GenMessage<ListTeamsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 20);
+
+/**
+ * Team is a single row in the ListTeams response.
+ *
+ * @generated from message gibson.platform.v1.Team
+ */
+export type Team = Message<"gibson.platform.v1.Team"> & {
+  /**
+   * id is the FGA team id without the type prefix (e.g. "red-team", not
+   * "team:red-team"). Stable across renames.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * display_name is reserved for the human-readable label. The current
+   * team data model stores only the id; this field is populated from a
+   * sidecar store once dashboard#148 wires display names through.
+   *
+   * @generated from field: string display_name = 2;
+   */
+  displayName: string;
+
+  /**
+   * member_count is the sum of `member` + `admin` relations on the team.
+   *
+   * @generated from field: int32 member_count = 3;
+   */
+  memberCount: number;
+};
+
+/**
+ * Describes the message gibson.platform.v1.Team.
+ * Use `create(TeamSchema)` to create a new message.
+ */
+export const TeamSchema: GenMessage<Team> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 21);
+
+/**
+ * ListTeamsResponse carries the paginated team list.
+ *
+ * @generated from message gibson.platform.v1.ListTeamsResponse
+ */
+export type ListTeamsResponse = Message<"gibson.platform.v1.ListTeamsResponse"> & {
+  /**
+   * @generated from field: repeated gibson.platform.v1.Team teams = 1;
+   */
+  teams: Team[];
+
+  /**
+   * next_page_token is empty on the final page.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
+};
+
+/**
+ * Describes the message gibson.platform.v1.ListTeamsResponse.
+ * Use `create(ListTeamsResponseSchema)` to create a new message.
+ */
+export const ListTeamsResponseSchema: GenMessage<ListTeamsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 22);
+
+/**
+ * ListTeamMembersRequest enumerates a team's members.
+ *
+ * @generated from message gibson.platform.v1.ListTeamMembersRequest
+ */
+export type ListTeamMembersRequest = Message<"gibson.platform.v1.ListTeamMembersRequest"> & {
+  /**
+   * tenant_id is the FGA id of the parent tenant (e.g. "tenant:acme").
+   * Required for cross-tenant denial.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * team_id is the FGA team id without the type prefix.
+   *
+   * @generated from field: string team_id = 2;
+   */
+  teamId: string;
+
+  /**
+   * page_token / page_size — same semantics as ListTeamsRequest.
+   *
+   * @generated from field: string page_token = 3;
+   */
+  pageToken: string;
+
+  /**
+   * @generated from field: int32 page_size = 4;
+   */
+  pageSize: number;
+};
+
+/**
+ * Describes the message gibson.platform.v1.ListTeamMembersRequest.
+ * Use `create(ListTeamMembersRequestSchema)` to create a new message.
+ */
+export const ListTeamMembersRequestSchema: GenMessage<ListTeamMembersRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 23);
+
+/**
+ * TeamMember is a single row in the ListTeamMembers response.
+ *
+ * @generated from message gibson.platform.v1.TeamMember
+ */
+export type TeamMember = Message<"gibson.platform.v1.TeamMember"> & {
+  /**
+   * user_id is the FGA user id without the type prefix (e.g. the Zitadel
+   * numeric sub).
+   *
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+
+  /**
+   * email + display_name come from the dashboard's identity-resolver lookup
+   * when the dashboard server action joins this response with Zitadel data.
+   * The daemon leaves them empty.
+   *
+   * @generated from field: string email = 2;
+   */
+  email: string;
+
+  /**
+   * @generated from field: string display_name = 3;
+   */
+  displayName: string;
+
+  /**
+   * is_admin is true when the user holds the team's `admin` relation;
+   * false for plain members.
+   *
+   * @generated from field: bool is_admin = 4;
+   */
+  isAdmin: boolean;
+};
+
+/**
+ * Describes the message gibson.platform.v1.TeamMember.
+ * Use `create(TeamMemberSchema)` to create a new message.
+ */
+export const TeamMemberSchema: GenMessage<TeamMember> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 24);
+
+/**
+ * ListTeamMembersResponse carries the paginated team roster.
+ *
+ * @generated from message gibson.platform.v1.ListTeamMembersResponse
+ */
+export type ListTeamMembersResponse = Message<"gibson.platform.v1.ListTeamMembersResponse"> & {
+  /**
+   * @generated from field: repeated gibson.platform.v1.TeamMember members = 1;
+   */
+  members: TeamMember[];
+
+  /**
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
+};
+
+/**
+ * Describes the message gibson.platform.v1.ListTeamMembersResponse.
+ * Use `create(ListTeamMembersResponseSchema)` to create a new message.
+ */
+export const ListTeamMembersResponseSchema: GenMessage<ListTeamMembersResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_platform_v1_platform_operator, 25);
+
+/**
  * PlatformOperatorService provides platform-team operations on the Gibson daemon.
  * This service is restricted to callers with the "platform_operator" FGA relation
  * on system_tenant:_system.
@@ -642,6 +853,36 @@ export const PlatformOperatorService: GenService<{
     methodKind: "unary";
     input: typeof GetReservedNamesRequestSchema;
     output: typeof GetReservedNamesResponseSchema;
+  },
+  /**
+   * ListTeams enumerates the teams in the caller's tenant. Backed by FGA
+   * ListObjects(tenant:X, parent, team). Each Team carries its display name
+   * and current member count (member + admin relations combined). Pagination
+   * is opaque — clients pass back the next_page_token from the previous
+   * response. dashboard#143/#148.
+   *
+   * The dashboard's Server Action gates this call on members:invite; the
+   * daemon-side authz is platform_operator, matching every other read/write
+   * RPC on this service.
+   *
+   * @generated from rpc gibson.platform.v1.PlatformOperatorService.ListTeams
+   */
+  listTeams: {
+    methodKind: "unary";
+    input: typeof ListTeamsRequestSchema;
+    output: typeof ListTeamsResponseSchema;
+  },
+  /**
+   * ListTeamMembers enumerates the members of a single team. Backed by FGA
+   * ListUsers(team:Y, member) ∪ ListUsers(team:Y, admin); is_admin reflects
+   * whether the user holds the admin relation. dashboard#143/#148.
+   *
+   * @generated from rpc gibson.platform.v1.PlatformOperatorService.ListTeamMembers
+   */
+  listTeamMembers: {
+    methodKind: "unary";
+    input: typeof ListTeamMembersRequestSchema;
+    output: typeof ListTeamMembersResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_platform_v1_platform_operator, 0);

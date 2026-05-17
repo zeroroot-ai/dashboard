@@ -48,7 +48,16 @@ const WS = path.join(DASHBOARD_ROOT, '.tmp/proto-ws');
 // Dashboard lives at enterprise/platform/dashboard so the workspace root
 // is three levels up. Gibson lives at enterprise/platform/gibson — the
 // `core/` prefix was the pre-refactor layout and is no longer present.
-const WORKSPACE_ROOT = path.resolve(DASHBOARD_ROOT, '..', '..', '..');
+//
+// Worktree-aware: when run from .worktrees/<name>/scripts/, DASHBOARD_ROOT
+// resolves to the worktree directory and the naive `../../..` walks short.
+// Detect that case and rewind to the main checkout root before computing
+// the workspace root. dashboard#148.
+const isWorktree = DASHBOARD_ROOT.includes('/.worktrees/');
+const MAIN_DASHBOARD_ROOT = isWorktree
+  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, '')
+  : DASHBOARD_ROOT;
+const WORKSPACE_ROOT = path.resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
 const GIBSON_REPO = path.join(WORKSPACE_ROOT, 'enterprise/platform/gibson');
 const GIBSON_LOCAL_PROTOS = path.join(GIBSON_REPO, 'internal/daemon/api');
 
