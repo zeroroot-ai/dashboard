@@ -99,7 +99,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // /dashboard/users → /dashboard/organization/users (users moved into Organization group).
+      // /dashboard/users → /dashboard/organization/users (users moved into Organization group; dashboard#144).
       {
         source: "/dashboard/users",
         destination: "/dashboard/organization/users",
@@ -132,6 +132,33 @@ const nextConfig: NextConfig = {
       {
         source: "/pages/settings/organization/security-policy",
         destination: "/dashboard/organization/security-policy",
+        permanent: true,
+      },
+      // /dashboard/settings/billing and /dashboard/billing/upgrade were
+      // duplicates of /dashboard/pages/settings/billing (dashboard#147).
+      // Send the legacy URLs to the canonical location so external links
+      // (Stripe portal return URLs, billing emails, bookmarks) keep working.
+      {
+        source: "/dashboard/settings/billing",
+        destination: "/dashboard/pages/settings/billing",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/billing/upgrade",
+        destination: "/dashboard/pages/settings/billing",
+        permanent: true,
+      },
+      // The pre-Zitadel signup flows at /dashboard/register/v1 and v2
+      // were retired when Auth.js took over signup at /signup. Direct
+      // any stragglers to the live signup page.
+      {
+        source: "/dashboard/register/v1",
+        destination: "/signup",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/register/v2",
+        destination: "/signup",
         permanent: true,
       },
     ];

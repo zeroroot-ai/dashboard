@@ -65,7 +65,7 @@ const PRICE_TO_TIER_NAME: Record<string, string> = {
 
 const SUPPORT_EMAIL = process.env.DASHBOARD_SUPPORT_EMAIL ?? 'support@zero-day.ai';
 const DASHBOARD_URL = process.env.PUBLIC_URL ?? 'http://localhost:3000';
-const PORTAL_URL = `${DASHBOARD_URL}/dashboard/settings/billing`;
+const PORTAL_URL = `${DASHBOARD_URL}/dashboard/pages/settings/billing`;
 const PRICING_URL = `${DASHBOARD_URL}/pricing`;
 
 // ---------------------------------------------------------------------------
