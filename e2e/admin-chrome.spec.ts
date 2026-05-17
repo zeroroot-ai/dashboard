@@ -36,7 +36,7 @@ const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000';
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? 'admin@example.com';
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? 'password';
 
-const USERS_URL = `${BASE_URL}/dashboard/users`;
+const USERS_URL = `${BASE_URL}/dashboard/organization/users`;
 const AGENTS_URL = `${BASE_URL}/dashboard/agents`;
 const TOOLS_URL = `${BASE_URL}/dashboard/tools`;
 const PLUGINS_URL = `${BASE_URL}/dashboard/plugins`;

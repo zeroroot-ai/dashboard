@@ -117,7 +117,7 @@ test.describe("Granular Permissions Admin Flow", () => {
   // -------------------------------------------------------------------------
   test("admin can revoke a component grant for a member", async ({ page }) => {
     // Navigate to users and find the member
-    await page.goto(`${BASE_URL}/dashboard/users`);
+    await page.goto(`${BASE_URL}/dashboard/organization/users`);
     const memberRow = page.getByRole("row").filter({ hasText: MEMBER_EMAIL });
     await memberRow.getByRole("link", { name: /permissions/i }).click();
     await page.waitForURL(/\/permissions/);
@@ -239,7 +239,7 @@ test.describe("Accessibility checks on new pages", () => {
   test("Permissions matrix checkboxes have aria-labels", async ({ page }) => {
     // This requires a user with permissions page
     // Find any user and navigate to their permissions page
-    await page.goto(`${BASE_URL}/dashboard/users`);
+    await page.goto(`${BASE_URL}/dashboard/organization/users`);
     const firstPermLink = page.getByRole("link", { name: /permissions/i }).first();
     if (await firstPermLink.isVisible()) {
       await firstPermLink.click();

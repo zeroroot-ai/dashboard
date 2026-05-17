@@ -75,7 +75,7 @@ export default function UserDetailPage() {
           asChild
           className="gap-1.5 text-muted-foreground"
         >
-          <Link href="/dashboard/users">
+          <Link href="/dashboard/organization/users">
             <ArrowLeft className="size-3.5" />
             Users
           </Link>
@@ -115,7 +115,7 @@ export default function UserDetailPage() {
         <Card className="glass-hack border-0">
           <CardContent className="py-12 text-center text-muted-foreground">
             User not found.{" "}
-            <Link href="/dashboard/users" className="text-primary hover:underline">
+            <Link href="/dashboard/organization/users" className="text-primary hover:underline">
               Back to users
             </Link>
           </CardContent>

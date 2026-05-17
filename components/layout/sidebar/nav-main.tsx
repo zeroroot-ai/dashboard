@@ -111,11 +111,6 @@ export const navItems: NavGroup[] = [
         title: "Events",
         href: "/dashboard/events",
         icon: ActivityIcon
-      },
-      {
-        title: "Users",
-        href: "/dashboard/users",
-        icon: UsersIcon
       }
     ]
   },
@@ -123,13 +118,18 @@ export const navItems: NavGroup[] = [
     title: "Organization",
     items: [
       {
+        title: "Users",
+        href: "/dashboard/organization/users",
+        icon: UsersIcon,
+      },
+      {
         title: "Teams",
-        href: "/dashboard/pages/settings/organization/teams",
+        href: "/dashboard/organization/teams",
         icon: UsersIcon,
       },
       {
         title: "Security Policy",
-        href: "/dashboard/pages/settings/organization/security-policy",
+        href: "/dashboard/organization/security-policy",
         icon: ShieldCheckIcon,
       },
     ],
