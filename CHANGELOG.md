@@ -5,6 +5,9 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.104.0](https:\/\/github.com\/zero-day-ai\/dashboard\/compare\/v0.X.Y...v0.104.0) (2026-05-17)
+
+Polyrepo zero-dot-x reset (PRD zero-day-ai\/.github#25, board #14). The v1.x line was cut prematurely; nothing in the platform is at 1.0 maturity yet. The v1.0.0 tag + release has been deleted; this repo lands at the polyrepo-wide v0.104.0 marker. Going forward, `bump-minor-pre-major: true` ensures `feat!:` commits bump minor not major.
 ## [1.12.0](https://github.com/zero-day-ai/dashboard/compare/v1.11.1...v1.12.0) (2026-05-15)
 
 
