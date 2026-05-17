@@ -80,6 +80,10 @@ import * as enrollmentActions from "../enrollment";
 import * as teamActions from "../teams";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import * as roleActions from "../role";
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+import * as accessActions from "../access";
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+import * as installAgentActions from "../installAgent";
 import { CRD_PERMISSIONS } from "../_authz";
 import type { CrdActionName } from "../types";
 import { getServerSession } from "@/src/lib/auth";
@@ -161,6 +165,8 @@ const allExportedActions = [
   ...Object.keys(enrollmentActions),
   ...Object.keys(teamActions),
   ...Object.keys(roleActions),
+  ...Object.keys(accessActions),
+  ...Object.keys(installAgentActions),
 ].filter((name) => name.endsWith("Action")) as CrdActionName[];
 
 const EXPECTED_ACTIONS: CrdActionName[] = Object.keys(CRD_PERMISSIONS) as CrdActionName[];
