@@ -26,7 +26,8 @@ import {
   type ScopeConfig,
   type MissionConfig,
 } from '@/src/types/mission-creation';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { ConnectError, Code } from '@connectrpc/connect';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { checkRateLimit, createRateLimitResponse } from '@/src/lib/rate-limiter';
 import type { CreateMissionRequest, CreateMissionResponse } from '@/src/types/mission-creation';
 
@@ -120,10 +121,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     if (!gibsonResponse.success) {
-      return safeErrorResponse(
-        new Error(gibsonResponse.error || 'Unknown daemon error'),
-        'Failed to launch mission — daemon unavailable',
-        502,
+      return daemonErrorResponse(
+        new ConnectError(
+          gibsonResponse.error || 'Unknown daemon error',
+          Code.Unavailable,
+        ),
+        { headers: request.headers, route: 'missions/create' },
       );
     }
 
@@ -133,7 +136,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       missionId: gibsonResponse.missionId,
     });
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to process mission request', 500);
+    return daemonErrorResponse(error, { headers: request.headers });
   }
 }
 

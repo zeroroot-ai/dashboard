@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, createRateLimitResponse } from '@/src/lib/rate-limiter';
-import { validationErrorResponse, safeErrorResponse } from '@/src/lib/api-errors';
+import { validationErrorResponse, daemonErrorResponse } from '@/src/lib/api-errors';
 import { getEmailProvider } from '@/src/lib/email/provider';
 
 const contactSchema = z.object({
@@ -102,6 +102,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to submit contact form', 500);
+    return daemonErrorResponse(error, { headers: request.headers });
   }
 }

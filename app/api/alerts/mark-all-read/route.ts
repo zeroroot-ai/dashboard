@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 
 /**
  * PATCH /api/alerts/mark-all-read
@@ -23,6 +23,6 @@ export async function PATCH(_request: NextRequest) {
 
     return NextResponse.json({ success: true, count: 0, message: 'All alerts marked as read' });
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to mark all alerts as read', 500);
+    return daemonErrorResponse(error);
   }
 }

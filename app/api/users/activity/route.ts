@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { getUserActivity } from '@/src/lib/gibson-client';
 import type {
   ListUserActivitiesResponse,
@@ -59,6 +59,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(response);
     }
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to update settings', 500);
+    return daemonErrorResponse(error, { headers: request.headers });
   }
 }

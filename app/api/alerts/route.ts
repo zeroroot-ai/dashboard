@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 
 /**
  * GET /api/alerts
@@ -24,6 +24,6 @@ export async function GET(_request: NextRequest) {
 
     return NextResponse.json({ alerts: [], total: 0 });
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to fetch alerts', 500);
+    return daemonErrorResponse(error);
   }
 }

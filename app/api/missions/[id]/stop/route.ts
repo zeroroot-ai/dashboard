@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { stopMission } from '@/src/lib/gibson-client';
 
 /**
@@ -46,6 +46,6 @@ export async function POST(
       missionId: id,
     });
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to process mission request', 500);
+    return daemonErrorResponse(error, { headers: request.headers });
   }
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getServerSession } from '@/src/lib/auth';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { TIER_CONFIGS, type TierLevel } from '@/src/lib/tier-checker';
 import { planIDs } from '@/src/generated/plans';
 
@@ -42,6 +42,6 @@ export async function GET(_request: NextRequest) {
 
     return NextResponse.json({ config, usage });
   } catch (error) {
-    return safeErrorResponse(error, 'Failed to fetch tier', 500);
+    return daemonErrorResponse(error);
   }
 }

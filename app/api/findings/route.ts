@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ConnectError, Code } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { userClient } from '@/src/lib/gibson-client';
 import { GraphService } from '@/src/gen/gibson/graph/v1/graph_pb';
 import type { Finding, PaginatedResponse } from '@/src/types';
@@ -90,6 +90,6 @@ export async function GET(request: NextRequest) {
         );
       }
     }
-    return safeErrorResponse(error, 'Failed to process findings request', 500);
+    return daemonErrorResponse(error, { headers: request.headers });
   }
 }

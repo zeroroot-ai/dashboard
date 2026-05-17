@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { safeErrorResponse } from '@/src/lib/api-errors';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { getTenantLangfuseCredentials, ConnectError, Code } from '@/src/lib/gibson-client';
 import { LangfuseClient, LangfuseUnavailableError, LangfuseNotFoundError } from '@/src/lib/langfuse-client';
 import { extractMessages } from '@/src/lib/trace-utils';
@@ -113,6 +113,6 @@ export async function GET(
       );
     }
 
-    return safeErrorResponse(error, 'Failed to process mission request', 500);
+    return daemonErrorResponse(error);
   }
 }
