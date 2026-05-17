@@ -146,6 +146,14 @@ export const queryKeys = {
     observation: (tenantId: string, missionId: string, obsId: string) =>
       ['traces', tenantId, 'observation', missionId, obsId] as const,
   },
+
+  // Organization graph — teams + memberships + per-user inverse map.
+  // Shared cache so /dashboard/organization/users + the user detail page
+  // hit the daemon once between navigations. dashboard#174.
+  orgGraph: {
+    all: ['org-graph'] as const,
+    full: (tenantId: string) => ['org-graph', tenantId, 'full'] as const,
+  },
 } as const;
 
 // Type helpers for query keys

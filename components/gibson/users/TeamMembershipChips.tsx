@@ -9,7 +9,7 @@
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
-import type { UserTeamMembership } from "@/src/hooks/use-team-membership-map";
+import type { UserTeamMembership } from "@/src/hooks/use-org-graph";
 
 const MAX_VISIBLE = 3;
 
