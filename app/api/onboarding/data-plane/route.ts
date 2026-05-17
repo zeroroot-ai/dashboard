@@ -4,10 +4,15 @@
  * Returns the data-plane provisioning status for the authenticated user's
  * tenant by reading `status.dataPlane.stores` from the Tenant CRD.
  *
- * Shape:
+ * Wire shape (customer-facing, vendor-agnostic):
  *   { postgres: { state, reason, lastUpdated },
  *     redis:    { state, reason, lastUpdated },
- *     neo4j:    { state, reason, lastUpdated } }
+ *     graph:    { state, reason, lastUpdated } }
+ *
+ * The CRD field for the knowledge-graph store is `stores.neo4j` (an
+ * implementation detail owned by the tenant-operator). This route translates
+ * that to `graph` in the response so the dashboard's wire shape stays
+ * agnostic of the backend choice — see the customer-doc terminology rule.
  *
  * Each `state` is one of: "provisioning" | "ready" | "failed" | null.
  * null means the field is absent on the CRD (legacy CR or not yet started).
@@ -55,7 +60,7 @@ export async function GET() {
     const payload: DataPlaneStatus = {
       postgres: mapStore(stores?.postgres),
       redis: mapStore(stores?.redis),
-      neo4j: mapStore(stores?.neo4j),
+      graph: mapStore(stores?.neo4j),
     };
 
     return NextResponse.json(payload);
@@ -65,7 +70,7 @@ export async function GET() {
       const notStarted: DataPlaneStatus = {
         postgres: { state: null, reason: null, lastUpdated: null },
         redis: { state: null, reason: null, lastUpdated: null },
-        neo4j: { state: null, reason: null, lastUpdated: null },
+        graph: { state: null, reason: null, lastUpdated: null },
       };
       return NextResponse.json(notStarted);
     }

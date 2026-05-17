@@ -30,13 +30,17 @@ export interface StoreStatus {
 /**
  * Response shape for GET /api/onboarding/data-plane.
  *
- * Each key maps to a logical data-plane store.
+ * Each key maps to a logical data-plane store. The `graph` field surfaces
+ * the knowledge-graph store; the underlying CRD field name is implementation
+ * detail and the dashboard's wire shape stays agnostic of the backend
+ * choice — see the customer-doc terminology rule.
+ *
  * A null `state` means not-yet-started (legacy CRD or pre-provisioning).
  */
 export interface DataPlaneStatus {
   postgres: StoreStatus;
   redis: StoreStatus;
-  neo4j: StoreStatus;
+  graph: StoreStatus;
 }
 
 // ============================================================================
