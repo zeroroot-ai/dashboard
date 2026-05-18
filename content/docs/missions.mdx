@@ -1,174 +1,681 @@
 ---
 title: Missions
-description: Build a mission DAG, run it, and use pause / resume / checkpoint replay to manage long-running work.
+description: Authoring reference for the mission DSL — DAG model, every node type, every constraint field, validation flow, and patterns you can copy-paste.
 ---
 
-A **mission** is the unit of work in Gibson. It describes — as a
-directed graph of nodes — which agents, tools, and plugins should run,
-in what order, against what target. Gibson takes that graph, dispatches
-the work, captures every observation into the knowledge graph, surfaces
-findings, and emits a structured event stream you can monitor in the
-dashboard.
+A **mission** is a directed acyclic graph (DAG) of work units that
+Gibson dispatches against a target. You write a mission file in YAML,
+CUE, or JSON, validate it locally, and submit it to the daemon — which
+walks the graph, captures observations, surfaces findings, and emits a
+structured event stream.
 
-## When to use a mission
+This page is the authoring reference. If you have not run your first
+mission yet, start with [Getting Started](/docs/getting-started) and
+come back here when you want the full field-by-field tour.
 
-- You want a recurring, repeatable workflow ("nightly subdomain sweep
-  with reproducible nuclei hits").
-- You want multiple components to coordinate ("recon agent feeds the
-  triage agent feeds the reporter agent").
-- You want pause / resume across long-running work, with an audit trail
-  of what happened.
+## What a mission is
 
-If you only need a single one-shot LLM call, you don't need a mission —
-just call your agent directly. Missions earn their keep when there's
-orchestration, retries, or evidence to preserve.
+A mission has three structural pieces:
 
-## Building a mission
+- A set of **nodes** — one per work unit. Each node is one of six
+  `NodeType` values (agent, tool, plugin, condition, parallel, join).
+- A set of **edges** — directed dependencies between nodes. The
+  orchestrator dispatches a node only when every predecessor has
+  finished.
+- **Entry and exit points** — node IDs that have no incoming edges
+  (entry) and no outgoing edges (exit). At least one of each is
+  required.
 
-The dashboard's mission editor at
-[`app.zero-day.ai/dashboard/missions/new`](https://app.zero-day.ai/dashboard/missions/new)
-is the easiest way to assemble a mission. The editor produces a
-`MissionDefinition` you can save, share, and re-run.
-
-A mission has:
-
-| Piece | Purpose |
-|---|---|
-| **Name & description** | Human-readable identity. |
-| **Target reference** | The system this mission acts against — a URL, a host, an LLM endpoint, a Kubernetes cluster. |
-| **Nodes** | The work units (see below). |
-| **Edges** | Dependencies between nodes. |
-| **Entry & exit points** | Where the run starts and ends. |
-| **Variables** | Inputs you supply at run time (e.g. a search query, a CVE ID). |
-| **Dependencies** | Required agents / tools / plugins. The mission won't run if any are missing or denied. |
+The DAG is keyed by stable string IDs you choose. The same IDs appear
+in `edges.from` / `edges.to`, in `entryPoints`, `exitPoints`, and in
+any node's `dependencies` list.
 
 ### Node types
 
 | Type | What it does |
 |---|---|
-| **Agent** | Dispatches an autonomous reasoning step. The agent receives a task, calls tools/plugins, and returns a result. |
-| **Tool** | Calls a tool's typed RPC directly. Use this when you don't need an LLM in the loop for a particular step. |
-| **Plugin** | Invokes a plugin method (e.g. "lookup host on Shodan"). |
-| **Condition** | Branches based on a CEL expression evaluated over prior node outputs. |
-| **Parallel** | Fans out to multiple successor nodes concurrently. |
-| **Join** | Barrier — waits for all predecessors before continuing. |
+| `NODE_TYPE_AGENT` | Dispatches an autonomous reasoning step. The agent receives a task, calls tools and plugins, and returns a result. |
+| `NODE_TYPE_TOOL` | Calls a tool's typed RPC directly — no LLM in the loop for this step. |
+| `NODE_TYPE_PLUGIN` | Invokes one named method on a multi-method plugin component (e.g. `shodan.host_lookup`). |
+| `NODE_TYPE_CONDITION` | Branches based on a CEL expression evaluated over prior node outputs. |
+| `NODE_TYPE_PARALLEL` | Fans out to multiple sub-nodes concurrently, capped by `max_concurrency`. Sibling failures are isolated. |
+| `NODE_TYPE_JOIN` | Barrier — waits for every node in `wait_for` to complete, then merges results via `MergeStrategy`. |
 
-The editor lets you wire these together visually. Behind the scenes,
-the mission is stored as a `MissionDefinition` proto — the same shape
-you'd build by hand if you scripted mission creation against the SDK.
+### Lifecycle states
 
-## Running a mission
+The daemon advances every mission through this state machine:
 
-Click **Run** in the editor (or call `RunMission` from your own
-client). Gibson:
-
-1. Validates that every component the mission references is registered
-   and that your principal has permission to run it.
-2. Allocates a mission ID, opens an event stream, and starts the
-   orchestrator.
-3. Walks the DAG: for every node whose predecessors have finished, it
-   dispatches the work — agents over their long-running streams, tools
-   directly, plugins through the plugin dispatcher.
-4. Captures everything tools and agents emit — `DiscoveryResult` field
-   100 of any tool response auto-populates the knowledge graph; agents
-   submit findings explicitly via the harness.
-5. Streams lifecycle events to the dashboard's mission detail page.
-
-## The event stream
-
-Every mission emits a typed event stream:
-
-| Event | Meaning |
+| State | Meaning |
 |---|---|
-| `mission.started` | Orchestrator began the run. |
-| `node.started` | A node was dispatched. |
-| `node.finished` | A node returned (success or failure). |
-| `agent.delegated` | An agent spawned a subtask via `DelegateToAgent`. |
-| `finding.submitted` | An agent or tool submitted a finding. |
-| `secret.read` | A plugin retrieved a credential — the secret name is logged, never the value. |
-| `checkpoint.written` | A checkpoint was persisted. |
-| `mission.paused` | The mission was suspended; resumable. |
-| `mission.completed` | All exit points reached. |
-| `mission.failed` | A non-recoverable failure terminated the mission. |
+| `PENDING` | Definition accepted, not yet dispatched. |
+| `RUNNING` | Orchestrator is walking the DAG. |
+| `PAUSED` | Suspended at a clean node boundary; resumable from the latest checkpoint. |
+| `COMPLETED` | Every exit point reached without a terminal failure. |
+| `FAILED` | A non-recoverable failure terminated the run. |
+| `CANCELLED` | A cancel request stopped the run; active grants for in-flight components expire. |
 
-The dashboard's mission detail page renders these in real time. You can
-also consume the stream programmatically by calling `RunMission` from
-your own gRPC client.
+The event stream renders these transitions in real time on the mission
+detail page; see [Observability](/docs/observability) for the trace
+side.
 
-## Pause, resume, cancel
+## Top-level fields reference
 
-Long-running missions don't have to be all-or-nothing.
+These fields belong to the root `MissionDefinition`. The schema is
+generated from the SDK protos and lives at
+`src/data/mission-definition.schema.json` — every field below has a
+description there.
 
-| Action | What happens | Where |
+| Field | Type | Notes |
 |---|---|---|
-| **Pause** | Suspends at the next clean node boundary. With `force=true`, suspends immediately and rolls back any in-flight node. | Mission detail page → **Pause**, or `PauseMission` RPC. |
-| **Resume** | Continues from the latest checkpoint by default, or from a specific one. | Mission detail page → **Resume**, or `ResumeMission` RPC. |
-| **Cancel** | Hard stop. Active grants for components in the run expire. | Mission detail page → **Cancel**, or `CancelMission` RPC. |
+| `name` | string | Human-readable identity. Required. |
+| `description` | string | One-paragraph summary. Recommended. |
+| `version` | string | Semantic version of the definition (e.g. `1.0.0`). |
+| `target_ref` | string | Target name or ID. Required at dispatch unless overridden by `CreateMissionRequest.target_id`. |
+| `nodes` | map\<string, MissionNode\> | The work units, keyed by node ID. |
+| `edges` | MissionEdge[] | Directed dependencies. Each edge is `{from, to, condition?, metadata?}`. |
+| `entry_points` | string[] | Node IDs with no incoming edges. At least one required. |
+| `exit_points` | string[] | Node IDs with no outgoing edges. At least one required. |
+| `constraints` | MissionConstraints | Baked-in operational limits — see [Constraints](#constraints-reference). |
+| `workspace` | WorkspaceConfig | Repository cloning + workspace knobs for code-touching missions — see [Workspace config](#workspace-config). |
+| `dependencies` | MissionDependencies | Lists of required agents / tools / plugins; the mission refuses to dispatch if any are missing or denied. |
+| `metadata` | map\<string, string\> | Free-form labels for filtering and search. |
+| `id` | string | Server-assigned on `CreateMissionDefinition`. Leave empty when authoring. |
+| `source` | string | Git URL the definition was installed from, if any. Daemon-set. |
+| `created_at` / `installed_at` | timestamp | Daemon-set on persist. |
 
-Checkpoints are written automatically after every clean node
-completion. Each checkpoint snapshots:
+Per-node fields live on `MissionNode` and are documented under each
+node type below. Node-level fields shared across types:
 
-- which nodes are done, in-flight, pending
-- mission memory at that point
-- node outputs accumulated so far
-
-## Replay
-
-The mission detail page exposes **Replay from checkpoint X**. Replay is
-how you ask "what if the mission had taken a different branch?" — pick
-a checkpoint, choose the node to resume from, and Gibson re-executes
-the downstream work fresh.
-
-Common uses:
-
-- The triage agent flagged the wrong thing — fix the prompt, replay
-  from the triage node.
-- A tool returned a flaky result — replay the tool call without
-  re-running the prior recon nodes.
-- You want to compare two LLM slots on the same mission — replay with
-  a different slot binding.
-
-## Memory across the mission
-
-Gibson exposes three memory tiers via `Harness.Memory()`:
-
-| Tier | Scope | Lifetime |
+| Field | Type | Notes |
 |---|---|---|
-| **Working memory** | One agent invocation | Cleared when `Execute` returns |
-| **Mission memory** | Every node in this mission | Lives as long as the mission |
-| **Long-term memory** | Tenant-wide across missions | Persists; semantic search over embeddings |
+| `id` | string | Stable identifier; must match the map key. |
+| `name` | string | Human-readable label rendered in the dashboard. |
+| `description` | string | Free-form context for reviewers. |
+| `type` | enum | One of the six `NODE_TYPE_*` values. |
+| `dependencies` | string[] | Node IDs that must complete before this node executes. |
+| `timeout` | duration string | Per-node wall-clock cap (e.g. `"10m"`). |
+| `retry_policy` | RetryPolicy | Backoff + retry count — see [Retry policy](#retry-policy). |
+| `reuse_policy` | ReusePolicy | Scope and re-use across runs — see [Reuse policy](#reuse-policy). |
+| `data_policy` | DataPolicy | Knowledge-graph storage + retention. |
+| `metadata` | map\<string, string\> | Per-node labels. |
 
-Use working memory as a scratchpad inside one agent run; mission memory
-to hand context between agent / tool nodes; long-term memory to teach
-future missions from this one. You don't write Redis or vector queries
-yourself — the typed `Memory()` API handles that.
+## Per-NodeType config
 
-## Triggering a mission
+Each example is a complete, copy-pasteable YAML mission with one node
+of the type in question. Submit any of them with:
 
-Three practical paths:
+```bash
+gibson mission validate path/to/mission.yaml
+gibson mission submit   path/to/mission.yaml --target example.com
+```
 
-- **Dashboard** — visual builder + Run button.
-- **CLI** — author a mission file and submit it:
+### Agent — `agent_config`
 
-  ```bash
-  gibson mission submit missions/recon.yaml --target example.com
-  ```
+`AgentNodeConfig` selects an agent component by name and dispatches a
+`Task`. The agent calls tools and plugins on the author's behalf; the
+task's `goal`, `context`, and per-task `constraints` shape what it
+does.
 
-  The mission file format is auto-detected by extension: `.cue`,
-  `.yaml`, `.yml`, and `.json` are all supported. Use whichever your
-  team prefers. The CLI streams the same event log the dashboard
-  renders.
-- **gRPC** — `DaemonService.CreateMission` with a `MissionDefinition`,
-  then `DaemonService.RunMission` with the returned ID. The streaming
-  response gives you the event log directly. Useful for CI, schedulers,
-  or integrating Gibson into another product.
+```yaml
+name: webapp-scan-agent
+description: Run the webapp-scan agent against a single target.
+version: "1.0.0"
+target_ref: example.com
+
+nodes:
+  scan:
+    id: scan
+    type: NODE_TYPE_AGENT
+    agent_config:
+      agent_name: webapp-scan
+      task:
+        goal: "Enumerate auth surfaces and flag any unauthenticated admin routes."
+        context:
+          depth:
+            string_value: "shallow"
+        constraints:
+          max_turns: 20
+          allowed_tools: ["nuclei", "ffuf"]
+
+entry_points: ["scan"]
+exit_points: ["scan"]
+```
+
+`agent_config.max_tokens_per_call` overrides the mission-level cap
+(see [Per-call token cap cascade](#per-call-token-cap-cascade)).
+
+### Tool — `tool_config`
+
+`ToolNodeConfig` invokes one named tool with a typed input map. Use
+this when you do not need an LLM in the loop for the step — e.g. an
+nmap scan whose output you only feed forward.
+
+```yaml
+name: port-scan
+description: nmap against the target's well-known web ports.
+version: "1.0.0"
+target_ref: example.com
+
+nodes:
+  ports:
+    id: ports
+    type: NODE_TYPE_TOOL
+    tool_config:
+      tool_name: nmap
+      input:
+        target: "example.com"
+        ports: "22,80,443,8080,8443"
+
+entry_points: ["ports"]
+exit_points: ["ports"]
+```
+
+`input` values are strings; tool components are responsible for
+parsing them per their declared schema.
+
+### Plugin — `plugin_config`
+
+`PluginNodeConfig` calls one method on a multi-method plugin
+component. Plugins differ from tools in that one plugin advertises
+several callable methods behind a single component identity.
+
+```yaml
+name: shodan-enrich
+description: Look up host metadata via the shodan plugin.
+version: "1.0.0"
+target_ref: example.com
+
+nodes:
+  enrich:
+    id: enrich
+    type: NODE_TYPE_PLUGIN
+    plugin_config:
+      plugin_name: shodan
+      method: host_lookup
+      params:
+        host: "example.com"
+
+entry_points: ["enrich"]
+exit_points: ["enrich"]
+```
+
+### Condition — `condition_config`
+
+`ConditionNodeConfig` branches on a CEL expression evaluated over
+prior node outputs. `true_branch` and `false_branch` list the
+downstream node IDs to run for each outcome; the unchosen branch is
+skipped.
+
+```yaml
+name: triage-on-findings
+description: Only enrich when the scan produced findings.
+version: "1.0.0"
+target_ref: example.com
+
+nodes:
+  scan:
+    id: scan
+    type: NODE_TYPE_AGENT
+    agent_config:
+      agent_name: webapp-scan
+
+  has_findings:
+    id: has_findings
+    type: NODE_TYPE_CONDITION
+    condition_config:
+      expression: "nodes.scan.findings_count > 0"
+      language: LANGUAGE_CEL
+      true_branch:  ["enrich"]
+      false_branch: ["report_empty"]
+    dependencies: ["scan"]
+
+  enrich:
+    id: enrich
+    type: NODE_TYPE_AGENT
+    agent_config:
+      agent_name: shodan-enrich
+
+  report_empty:
+    id: report_empty
+    type: NODE_TYPE_AGENT
+    agent_config:
+      agent_name: empty-report
+
+edges:
+  - from: scan
+    to: has_findings
+
+entry_points: ["scan"]
+exit_points: ["enrich", "report_empty"]
+```
+
+`language` defaults to `LANGUAGE_CEL`; the unspecified value is
+treated as CEL for backwards compatibility with older documents.
+
+### Parallel — `parallel_config`
+
+`ParallelNodeConfig` runs `sub_nodes` concurrently, gated by
+`max_concurrency` (0 = unlimited). Sibling failures are isolated —
+one sub-node failing does not cancel its siblings. Sub-nodes are
+inline `MissionNode` values, not references.
+
+```yaml
+name: parallel-recon
+description: Fan out three reconnaissance agents at once.
+version: "1.0.0"
+target_ref: example.com
+
+nodes:
+  fanout:
+    id: fanout
+    type: NODE_TYPE_PARALLEL
+    parallel_config:
+      max_concurrency: 3
+      sub_nodes:
+        - id: nmap
+          type: NODE_TYPE_AGENT
+          agent_config:
+            agent_name: nmap-recon
+        - id: webcrawl
+          type: NODE_TYPE_AGENT
+          agent_config:
+            agent_name: webcrawl-recon
+        - id: shodan
+          type: NODE_TYPE_AGENT
+          agent_config:
+            agent_name: shodan-recon
+
+entry_points: ["fanout"]
+exit_points: ["fanout"]
+```
+
+### Join — `join_config`
+
+`JoinNodeConfig` waits until every node ID in `wait_for` has finished,
+then merges their results per `strategy`. JOIN is separable from
+PARALLEL — it can merge non-parallel branches.
+
+```yaml
+name: scan-and-merge
+description: Two independent scans merged in document order.
+version: "1.0.0"
+target_ref: example.com
+
+nodes:
+  network_scan:
+    id: network_scan
+    type: NODE_TYPE_AGENT
+    agent_config:
+      agent_name: nmap-recon
+
+  web_scan:
+    id: web_scan
+    type: NODE_TYPE_AGENT
+    agent_config:
+      agent_name: webapp-scan
+
+  merge:
+    id: merge
+    type: NODE_TYPE_JOIN
+    join_config:
+      wait_for: ["network_scan", "web_scan"]
+      strategy: MERGE_STRATEGY_CONCAT
+    dependencies: ["network_scan", "web_scan"]
+
+edges:
+  - from: network_scan
+    to: merge
+  - from: web_scan
+    to: merge
+
+entry_points: ["network_scan", "web_scan"]
+exit_points: ["merge"]
+```
+
+`MergeStrategy` values:
+
+| Value | Meaning |
+|---|---|
+| `MERGE_STRATEGY_CONCAT` | Preserve source order in the merged output. |
+| `MERGE_STRATEGY_REDUCE` | Built-in reducer (semantics defined per executor). |
+| `MERGE_STRATEGY_FIRST` | Return the first source to complete. |
+| `MERGE_STRATEGY_LAST` | Return the last source to complete. |
+| `MERGE_STRATEGY_CUSTOM` | Evaluate the `aggregator` CEL expression against the source results. |
+
+When `strategy` is `MERGE_STRATEGY_CUSTOM`, set `aggregator` to a CEL
+expression — it sees `sources` (a map from node ID to that node's
+result) and returns the merged value.
+
+## Constraints reference
+
+`MissionConstraints` declares mission-level operational limits.
+Baking them into the definition makes the mission self-describing —
+callers do not have to supply limits out-of-band at dispatch time.
+
+Every numeric field treats **zero as unlimited**. Set a positive value
+to enforce a limit.
+
+```yaml
+constraints:
+  max_duration: "30m"          # wall-clock cap (Duration string)
+  max_tokens: 200000           # cumulative LLM tokens across all agent nodes
+  max_cost: 5.00               # cumulative USD across all agent nodes
+  max_findings: 50             # stop after this many findings
+  severity_threshold: "medium" # drop findings below this severity
+  require_evidence: true       # reject findings that omit evidence
+  blocked_tools:
+    - "rm-rf"
+  blocked_domains:
+    - "prod.example.com"
+  max_turns_per_agent: 30      # per-agent-node turn cap
+  allowed_techniques:          # taxonomy ID allowlist (empty = any)
+    - "T1190"
+  blocked_techniques:          # taxonomy ID blocklist
+    - "T1486"
+  max_tokens_per_call: 8000    # cap per individual LLM invocation
+```
+
+Field-by-field:
+
+| Field | Type | Notes |
+|---|---|---|
+| `max_duration` | Duration string | Wall-clock limit for the entire mission (`"30m"`, `"2h"`, `"90s"`). 0 = no time limit. **Minimum 1 minute** when set. |
+| `max_tokens` | int64 | Cumulative LLM token budget across all agent nodes. 0 = unlimited. **Minimum 1000** when set. |
+| `max_cost` | double | Cumulative LLM cost ceiling in USD. 0 = unlimited. **Minimum $0.01** when set. |
+| `max_findings` | int32 | Stop the mission after this many findings. 0 = unlimited. |
+| `severity_threshold` | string | Minimum severity to record (`"low"`, `"medium"`, `"high"`, `"critical"`). Empty = accept all. |
+| `require_evidence` | bool | Reject findings that omit evidence. |
+| `blocked_tools` | string[] | Tool names that must not be invoked. Enforced at dispatch time. |
+| `blocked_domains` | string[] | Network domains agents must not contact. Best-effort, enforced at the tool level. |
+| `max_turns_per_agent` | int32 | Cap on Observe→Think→Act iterations for any single agent node. 0 = unlimited. |
+| `allowed_techniques` | string[] | Allowlist of taxonomy attack-technique IDs. Empty = any technique allowed (unless blocked). |
+| `blocked_techniques` | string[] | Blocklist of taxonomy attack-technique IDs. Wins over `allowed_techniques`. |
+| `max_tokens_per_call` | int32 | Cap on tokens consumed per individual LLM invocation. 0 = unlimited. |
+
+### Per-call token cap cascade
+
+`max_tokens_per_call` cascades from mission to node:
+
+- The mission's `constraints.max_tokens_per_call` applies to every
+  agent / tool / plugin LLM call unless the node overrides it.
+- Each node's `*_config.max_tokens_per_call` overrides the
+  mission-level value for that node only.
+- Absence on a node means "cascade from the mission level"; a
+  zero on a node means "unlimited from this mechanism".
+
+### Dispatch-time override
+
+The constraints baked into a `MissionDefinition` are the **default**.
+At dispatch, a caller may pass `CreateMissionRequest.constraints` to
+override them — the daemon merges the two, with **dispatch winning on
+conflict**. This lets you ship a strict definition and loosen it for a
+specific run without editing the definition.
+
+## Workspace config
+
+`WorkspaceConfig` clones repositories into per-mission workspaces that
+agents access through `Harness.Workspace(name)`. Use it whenever your
+agents need to read code, run an LSP, or modify files.
+
+```yaml
+workspace:
+  repositories:
+    - name: app
+      url: "https://github.com/example/webapp.git"
+      branch: main
+      shallow: true
+    - name: infra
+      url: "git@github.com:example/infra.git"
+      branch: main
+      credential_name: github-readonly
+      depends_on: ["app"]      # clones after `app` finishes
+  settings:
+    cleanup_on_complete: true  # delete workspace dirs when the mission ends
+    use_worktrees: true        # per-agent isolation via Git worktrees
+    lsp_enabled: true
+    lsp_timeout: "30s"
+    base_directory: ""         # daemon uses a temp dir when empty
+```
+
+`RepositoryConfig` fields:
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | string | Unique workspace name. Required. |
+| `url` | string | Git URL (HTTPS or SSH). Required. |
+| `branch` | string | Branch to check out. Defaults to the repository's default branch. |
+| `shallow` | bool | Enable `git clone --depth 1`. |
+| `credential_name` | string | Reference to a Gibson-managed credential. Optional for public repos. |
+| `depends_on` | string[] | Repository names that must clone first — enables topological ordering for multi-repo missions. |
+
+`WorkspaceSettings` fields:
+
+| Field | Type | Notes |
+|---|---|---|
+| `base_directory` | string | Workspace clone root. Daemon uses a temp directory when empty. |
+| `cleanup_on_complete` | bool | Delete workspace directories after the mission ends. Defaults to true at the daemon. |
+| `use_worktrees` | bool | Per-agent isolation via Git worktrees — concurrent modifications without conflicts. |
+| `lsp_enabled` | bool | Start language servers for code validation. |
+| `lsp_timeout` | Duration string | Cap LSP validation duration. |
+
+## Validation flow
+
+A mission passes through four validation layers before it begins
+running. Each layer fails closed; an error at any layer aborts the
+submit.
+
+1. **Schema / structural — `gibson mission validate`.** The CLI
+   parses the file (CUE / YAML / JSON), structurally validates against
+   the embedded `#MissionDefinition` schema, then runs the same
+   protovalidate rules the daemon enforces server-side. Catches typos,
+   missing required fields, wrong enum values.
+
+   ```text
+   validate: validation error: - definition.target_ref: value is required
+   ```
+
+2. **Server-side protovalidate.** `CreateMissionDefinition` re-runs
+   protovalidate on the wire — every `(buf.validate.field).*`
+   annotation declared in the SDK protos. Identical to layer 1; the
+   server does not trust the client.
+
+   ```text
+   invalid argument: nodes[scan].agent_config.agent_name: value is required
+   ```
+
+3. **Semantic.** The daemon's mission service applies platform
+   minimums and cross-field invariants. Confirmed checks include:
+
+   - `max_duration` < 1 minute → reject (`max_duration too short: minimum 1 minute required`)
+   - `max_cost` < $0.01 → reject (`max_cost too low: minimum $0.01 required`)
+   - `max_tokens` < 1000 → reject (`max_tokens too low: minimum 1000 tokens required`)
+   - `target_id` and `definition_id` both required on `CreateMission`
+   - DAG must be acyclic; every `dependencies` / `wait_for` / edge
+     endpoint must resolve to a known node ID.
+
+4. **Authorization.** The Gibson permissions layer checks the caller
+   against the action:
+
+   - `CreateMissionDefinition` requires the **writer** relation on the
+     tenant.
+   - `CreateMission` (dispatch) requires the **member** relation on the
+     tenant plus a grant for every component the mission references.
+
+   ```text
+   permission_denied: caller lacks writer on tenant
+   ```
+
+Run all four locally before submit:
+
+```bash
+gibson mission validate missions/triage.yaml   # layers 1 + 2 logic
+gibson mission render   missions/triage.yaml   # see the proto-shaped JSON
+gibson mission submit   missions/triage.yaml --target example.com
+```
+
+## Common patterns
+
+### Parallel + join fan-out
+
+Run independent recon agents in parallel, then merge their findings
+into a single downstream triage step. Pair `NODE_TYPE_PARALLEL` (to
+schedule the fan-out) with `NODE_TYPE_JOIN` (to wait + merge).
+
+```yaml
+nodes:
+  recon:
+    id: recon
+    type: NODE_TYPE_PARALLEL
+    parallel_config:
+      max_concurrency: 3
+      sub_nodes:
+        - id: r_nmap
+          type: NODE_TYPE_AGENT
+          agent_config: { agent_name: nmap-recon }
+        - id: r_web
+          type: NODE_TYPE_AGENT
+          agent_config: { agent_name: webcrawl-recon }
+        - id: r_shodan
+          type: NODE_TYPE_AGENT
+          agent_config: { agent_name: shodan-recon }
+
+  collect:
+    id: collect
+    type: NODE_TYPE_JOIN
+    join_config:
+      wait_for: ["recon"]
+      strategy: MERGE_STRATEGY_CONCAT
+    dependencies: ["recon"]
+
+  triage:
+    id: triage
+    type: NODE_TYPE_AGENT
+    agent_config:
+      agent_name: triage
+    dependencies: ["collect"]
+
+edges:
+  - { from: recon,   to: collect }
+  - { from: collect, to: triage  }
+
+entry_points: ["recon"]
+exit_points: ["triage"]
+```
+
+### Condition branching
+
+Cheap probe first, expensive deep-dive only on a hit.
+
+```yaml
+nodes:
+  probe:
+    id: probe
+    type: NODE_TYPE_TOOL
+    tool_config:
+      tool_name: nmap
+      input: { target: "example.com", ports: "443" }
+
+  is_open:
+    id: is_open
+    type: NODE_TYPE_CONDITION
+    condition_config:
+      expression: "nodes.probe.findings_count > 0"
+      true_branch:  ["deep_scan"]
+      false_branch: ["report_clean"]
+    dependencies: ["probe"]
+
+  deep_scan:
+    id: deep_scan
+    type: NODE_TYPE_AGENT
+    agent_config: { agent_name: webapp-scan }
+
+  report_clean:
+    id: report_clean
+    type: NODE_TYPE_AGENT
+    agent_config: { agent_name: empty-report }
+
+edges:
+  - { from: probe, to: is_open }
+
+entry_points: ["probe"]
+exit_points: ["deep_scan", "report_clean"]
+```
+
+### Retry policy
+
+Wrap a flaky tool in exponential backoff. `RetryPolicy` accepts
+constant / linear / exponential strategies.
+
+```yaml
+nodes:
+  flaky_lookup:
+    id: flaky_lookup
+    type: NODE_TYPE_PLUGIN
+    plugin_config:
+      plugin_name: shodan
+      method: host_lookup
+      params: { host: "example.com" }
+    retry_policy:
+      max_retries: 5
+      backoff_strategy: BACKOFF_STRATEGY_EXPONENTIAL
+      initial_delay: "1s"
+      max_delay: "30s"
+      multiplier: 2.0
+```
+
+### Reuse policy — `skip` / `rerun` / `merge`
+
+`ReusePolicy` controls what happens when an existing output is found
+in the configured scope. Use it to avoid re-running expensive
+recon on every iteration.
+
+| `reuse` | Behavior |
+|---|---|
+| `skip` | If a previous output exists in scope, skip this node and use the cached value. |
+| `rerun` | (default) Always re-execute, even if an output exists. |
+| `merge` | Re-execute and merge new output into the existing one. |
+
+```yaml
+nodes:
+  recon:
+    id: recon
+    type: NODE_TYPE_AGENT
+    agent_config: { agent_name: nmap-recon }
+    reuse_policy:
+      input_scope:  "mission"     # mission_run | mission | global
+      output_scope: "global"
+      reuse:        "skip"
+```
+
+`input_scope` and `output_scope` accept `"mission_run"`, `"mission"`,
+or `"global"`. `"mission"` is the default — outputs are reusable
+across runs of the same mission definition but not across definitions.
+
+## Authoring loop
+
+1. **Scaffold.** `gibson mission new --template webapp-scan
+   missions/scan.yaml`. Templates ship with the ADK; see
+   `opensource/adk/templates/`.
+2. **Edit.** Pick a node type per the [per-NodeType](#per-nodetype-config)
+   examples; wire dependencies via `edges` and `dependencies`.
+3. **Validate.** `gibson mission validate missions/scan.yaml`. Iterate
+   until the CLI prints `ok`.
+4. **Render.** `gibson mission render missions/scan.yaml` if you want
+   to inspect the proto-shaped JSON the daemon will see.
+5. **Submit.** `gibson mission submit missions/scan.yaml --target
+   example.com`. The CLI streams the event log the dashboard renders.
 
 ## Related
 
-- [Findings](/docs/findings) — what `finding.submitted` events represent
-  and how findings show up in the dashboard.
-- [Knowledge graph](/docs/knowledge-graph) — what gets auto-populated as
-  your mission runs.
-- [Observability](/docs/observability) — traces, metrics, and replay in
-  more detail.
-- [Roles & permissions](/docs/rbac) — what controls who can run a mission.
+- [Getting Started](/docs/getting-started) — the fast path from
+  install to first mission.
+- [Findings](/docs/findings) — what `finding.submitted` events
+  represent and how findings show up in the dashboard.
+- [Knowledge graph](/docs/knowledge-graph) — what tool output
+  auto-populates as your mission runs.
+- [Observability](/docs/observability) — traces, metrics, and replay
+  in more detail.
+- [Roles & permissions](/docs/rbac) — what controls who can author,
+  dispatch, and replay a mission.
+- [CLI reference](/docs/cli-reference) — every `gibson` command,
+  including the full `gibson mission` subcommand surface.
