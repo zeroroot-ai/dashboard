@@ -158,7 +158,7 @@ describe('initiateOidcAuthRequest', () => {
     expect(result?.authRequestId).toBe('AR_legacy_999');
   });
 
-  it('sets the authjs.state and authjs.pkce.code_verifier cookies (dev / no __Secure- prefix)', async () => {
+  it('sets the authjs.state, authjs.pkce.code_verifier, and authjs.callback-url cookies (dev / no __Secure- prefix)', async () => {
     vi.stubGlobal(
       'fetch',
       stubFetchWith302('https://auth.test.local/ui/v2/login?authRequest=A1'),
@@ -171,22 +171,53 @@ describe('initiateOidcAuthRequest', () => {
     const pkceCookie = setCalls.find(
       (c) => c.name === 'authjs.pkce.code_verifier',
     );
+    const callbackUrlCookie = setCalls.find(
+      (c) => c.name === 'authjs.callback-url',
+    );
 
     expect(stateCookie, 'state cookie must be set').toBeTruthy();
     expect(pkceCookie, 'pkceCodeVerifier cookie must be set').toBeTruthy();
+    expect(
+      callbackUrlCookie,
+      'callback-url cookie must be set so Auth.js redirects to /dashboard post-OIDC instead of /',
+    ).toBeTruthy();
 
     // Cookies must be httpOnly + lax (sameSite strict would break the OIDC
     // 302 round-trip — see auth.ts cookies block).
-    for (const c of [stateCookie!, pkceCookie!]) {
+    for (const c of [stateCookie!, pkceCookie!, callbackUrlCookie!]) {
       expect(c.options.httpOnly).toBe(true);
       expect(c.options.sameSite).toBe('lax');
       expect(c.options.path).toBe('/');
       expect(c.options.maxAge).toBeGreaterThan(0);
     }
 
-    // Values are JWEs (4 dots → 5 segments).
+    // State and PKCE values are JWEs (4 dots → 5 segments).
     expect(stateCookie!.value.split('.').length).toBe(5);
     expect(pkceCookie!.value.split('.').length).toBe(5);
+    // callback-url is a plain absolute path — Auth.js reads it raw.
+    expect(callbackUrlCookie!.value).toBe('/dashboard');
+  });
+
+  it('uses __Secure- prefixed cookie names in production', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubGlobal(
+      'fetch',
+      stubFetchWith302('https://auth.test.local/ui/v2/login?authRequest=A1'),
+    );
+
+    const sut = await importSut();
+    await sut.initiateOidcAuthRequest(TEST_CONFIG);
+
+    const names = setCalls.map((c) => c.name);
+    expect(names).toContain('__Secure-authjs.state');
+    expect(names).toContain('__Secure-authjs.pkce.code_verifier');
+    expect(names).toContain('__Secure-authjs.callback-url');
+
+    const callbackUrlCookie = setCalls.find(
+      (c) => c.name === '__Secure-authjs.callback-url',
+    );
+    expect(callbackUrlCookie!.value).toBe('/dashboard');
+    expect(callbackUrlCookie!.options.secure).toBe(true);
   });
 
   it('returns null when Location header is missing', async () => {
