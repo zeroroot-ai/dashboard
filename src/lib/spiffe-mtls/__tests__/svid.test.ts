@@ -23,7 +23,7 @@
  */
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { existsSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -77,7 +77,7 @@ function generateFixtureCertDer(): Buffer | null {
         ],
         { stdio: ['ignore', 'ignore', 'ignore'] },
       );
-      const pem = require('node:fs').readFileSync(certPath, 'utf8');
+      const pem = readFileSync(certPath, 'utf8');
       const cert = new X509Certificate(pem);
       return Buffer.from(cert.raw);
     } finally {

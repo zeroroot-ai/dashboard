@@ -274,9 +274,10 @@ export function ChatContent() {
             >
               {messages.map((msg) => {
                 const isUser = msg.role === 'user';
+                const msgUnknown = msg as unknown as Record<string, unknown>;
                 const content =
-                  typeof (msg as any).content === 'string'
-                    ? (msg as any).content
+                  typeof msgUnknown.content === 'string'
+                    ? msgUnknown.content
                     : Array.isArray(msg.parts)
                       ? msg.parts
                           .filter((p): p is { type: 'text'; text: string } => p.type === 'text')

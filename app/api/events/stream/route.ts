@@ -75,10 +75,18 @@ export async function GET() {
                 : new Date().toISOString(),
               severity: 'info',
               payload: (() => {
-                const dataAny = event.data as any;
-                if (dataAny?.fields) {
+                const dataUnknown = event.data as unknown;
+                if (
+                  dataUnknown !== null &&
+                  typeof dataUnknown === 'object' &&
+                  'fields' in dataUnknown &&
+                  dataUnknown.fields !== null &&
+                  typeof dataUnknown.fields === 'object'
+                ) {
                   return Object.fromEntries(
-                    Object.entries(dataAny.fields).map(([k, v]: [string, any]) => [k, v?.stringValue ?? v?.intValue?.toString() ?? ''])
+                    Object.entries(dataUnknown.fields as Record<string, { stringValue?: string; intValue?: number }>).map(
+                      ([k, v]) => [k, v?.stringValue ?? v?.intValue?.toString() ?? '']
+                    )
                   );
                 }
                 return {};

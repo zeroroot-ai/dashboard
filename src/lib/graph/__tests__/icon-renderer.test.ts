@@ -223,7 +223,7 @@ describe('IconRenderer', () => {
     it('should restore context state even if error occurs', () => {
       // Create a context that throws during drawing
       const faultyCtx = createMockCanvasContext();
-      (faultyCtx.fill as any) = vi.fn(() => {
+      (faultyCtx as unknown as Record<string, unknown>).fill = vi.fn(() => {
         throw new Error('Canvas error');
       });
 

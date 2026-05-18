@@ -10,6 +10,7 @@
  * builder UI continues to function.
  */
 
+import { MarkerType } from '@xyflow/react';
 import type { Node, Edge } from '@xyflow/react';
 import { create } from '@bufbuild/protobuf';
 import { DurationSchema } from '@bufbuild/protobuf/wkt';
@@ -42,6 +43,8 @@ import type {
   ConditionStepConfig,
   ParallelStepConfig,
   JoinStepConfig,
+  MissionExecutionMode,
+  ErrorHandlingStrategy,
 } from '@/src/types/mission-creation';
 
 // ============================================================================
@@ -453,7 +456,7 @@ export function missionToReactFlow(
         target: step.id,
         type: 'smoothstep',
         animated: true,
-        markerEnd: { type: 'arrowclosed' as any },
+        markerEnd: { type: MarkerType.ArrowClosed },
       });
     }
 
@@ -468,7 +471,7 @@ export function missionToReactFlow(
           type: 'smoothstep',
           animated: true,
           label: 'true',
-          markerEnd: { type: 'arrowclosed' as any },
+          markerEnd: { type: MarkerType.ArrowClosed },
           style: { stroke: '#22c55e' },
         });
       }
@@ -480,7 +483,7 @@ export function missionToReactFlow(
           type: 'smoothstep',
           animated: true,
           label: 'false',
-          markerEnd: { type: 'arrowclosed' as any },
+          markerEnd: { type: MarkerType.ArrowClosed },
           style: { stroke: '#ef4444' },
         });
       }
@@ -621,7 +624,7 @@ function determineExecutionMode(steps: MissionStep[]): 'sequential' | 'parallel'
  * Parse an authored mission fragment (the `mission:` block of the user's
  * YAML) into the structured {@link MissionConfig} model.
  */
-export function parseMissionYAML(missionData: any): MissionConfig {
+export function parseMissionYAML(missionData: unknown): MissionConfig {
   const steps: MissionStep[] = [];
 
   // Handle array of steps
@@ -651,14 +654,15 @@ export function parseMissionYAML(missionData: any): MissionConfig {
 
   // Handle object with type and steps
   if (typeof missionData === 'object' && missionData !== null) {
-    const executionMode = missionData.type || 'sequential';
+    const missionObj = missionData as Record<string, unknown>;
+    const executionMode = (missionObj.type as string | undefined) || 'sequential';
 
     // Sequential/DAG steps
-    if (missionData.steps) {
+    if (Array.isArray(missionObj.steps)) {
       let prevStepId: string | null = null;
 
-      for (let i = 0; i < missionData.steps.length; i++) {
-        const stepData = missionData.steps[i];
+      for (let i = 0; i < missionObj.steps.length; i++) {
+        const stepData = missionObj.steps[i];
         const step = parseStepYAML(stepData, i);
 
         // If sequential and no explicit dependencies, depend on previous
@@ -672,17 +676,17 @@ export function parseMissionYAML(missionData: any): MissionConfig {
     }
 
     // Parallel agents
-    if (missionData.agents) {
-      for (let i = 0; i < missionData.agents.length; i++) {
-        const agentData = missionData.agents[i];
+    if (Array.isArray(missionObj.agents)) {
+      for (let i = 0; i < missionObj.agents.length; i++) {
+        const agentData = missionObj.agents[i] as Record<string, unknown>;
         steps.push({
-          id: agentData.name || `agent-${i}`,
+          id: (agentData.name as string | undefined) || `agent-${i}`,
           type: 'agent',
-          name: agentData.name || `Agent ${i + 1}`,
+          name: (agentData.name as string | undefined) || `Agent ${i + 1}`,
           config: {
             type: 'agent',
-            agentId: agentData.name,
-            task: agentData.task || '',
+            agentId: (agentData.name as string | undefined) ?? '',
+            task: (agentData.task as string | undefined) || '',
           },
           dependsOn: [],
         });
@@ -692,8 +696,8 @@ export function parseMissionYAML(missionData: any): MissionConfig {
     return {
       type: 'inline',
       steps,
-      executionMode: executionMode as any,
-      errorHandling: missionData.errorHandling || 'continue',
+      executionMode: executionMode as MissionExecutionMode,
+      errorHandling: ((missionObj.errorHandling as string | undefined) || 'continue') as ErrorHandlingStrategy,
     };
   }
 
@@ -709,68 +713,69 @@ export function parseMissionYAML(missionData: any): MissionConfig {
 /**
  * Parse individual step from YAML
  */
-function parseStepYAML(stepData: any, index: number): MissionStep {
-  const id = stepData.id || `step-${index}`;
+function parseStepYAML(stepData: unknown, index: number): MissionStep {
+  const sd = (typeof stepData === 'object' && stepData !== null ? stepData : {}) as Record<string, unknown>;
+  const id = (sd.id as string | undefined) || `step-${index}`;
   let type: MissionStepType = 'agent';
   let config: MissionStepConfig;
 
-  if (stepData.agent) {
+  if (sd.agent) {
     type = 'agent';
     config = {
       type: 'agent',
-      agentId: stepData.agent,
-      task: stepData.task || '',
-      parameters: stepData.parameters,
+      agentId: sd.agent as string,
+      task: (sd.task as string | undefined) || '',
+      parameters: sd.parameters as Record<string, unknown> | undefined,
     };
-  } else if (stepData.tool) {
+  } else if (sd.tool) {
     type = 'tool';
     config = {
       type: 'tool',
-      toolId: stepData.tool,
-      inputs: stepData.parameters || stepData.inputs || {},
+      toolId: sd.tool as string,
+      inputs: (sd.parameters ?? sd.inputs ?? {}) as Record<string, unknown>,
     };
-  } else if (stepData.type === 'condition') {
+  } else if (sd.type === 'condition') {
     type = 'condition';
     config = {
       type: 'condition',
-      expression: stepData.expression || '',
-      ifTrue: stepData.ifTrue || '',
-      ifFalse: stepData.ifFalse || '',
+      expression: (sd.expression as string | undefined) || '',
+      ifTrue: (sd.ifTrue as string | undefined) || '',
+      ifFalse: (sd.ifFalse as string | undefined) || '',
     };
-  } else if (stepData.type === 'parallel') {
+  } else if (sd.type === 'parallel') {
     type = 'parallel';
     config = {
       type: 'parallel',
-      branches: stepData.branches || [],
-      maxConcurrency: stepData.maxConcurrency,
+      branches: (sd.branches as string[] | undefined) || [],
+      maxConcurrency: sd.maxConcurrency as number | undefined,
     };
-  } else if (stepData.type === 'join') {
+  } else if (sd.type === 'join') {
     type = 'join';
     config = {
       type: 'join',
-      waitFor: stepData.waitFor || [],
-      mergeStrategy: stepData.mergeStrategy || 'all',
+      waitFor: (sd.waitFor as string[] | undefined) || [],
+      mergeStrategy: ((sd.mergeStrategy as string | undefined) || 'all') as 'all' | 'any' | 'majority',
     };
   } else {
     // Default to agent
     config = {
       type: 'agent',
       agentId: '',
-      task: stepData.task || '',
+      task: (sd.task as string | undefined) || '',
     };
   }
 
   return {
     id,
     type,
-    name: stepData.name || stepData.agent || stepData.tool || `Step ${index + 1}`,
+    name: (sd.name as string | undefined) || (sd.agent as string | undefined) || (sd.tool as string | undefined) || `Step ${index + 1}`,
     config,
-    dependsOn: stepData.dependsOn || [],
-    timeout: stepData.timeout,
-    condition: stepData.condition
-      ? { type: 'cel', expression: stepData.condition }
+    dependsOn: (sd.dependsOn as string[] | undefined) || [],
+    timeout: sd.timeout as number | undefined,
+    condition: sd.condition
+      ? { type: 'cel', expression: sd.condition as string }
       : undefined,
-    retry: stepData.retry,
+    retry: sd.retry as MissionStep['retry'],
   };
 }
 
@@ -783,7 +788,7 @@ function parseStepYAML(stepData: any, index: number): MissionStep {
  * suitable for display in the Monaco editor. This is the *authoring* shape —
  * it is NOT what the daemon sees.
  */
-export function serializeMissionYAML(mission: MissionConfig): any {
+export function serializeMissionYAML(mission: MissionConfig): Record<string, unknown> | Record<string, unknown>[] | undefined {
   if (mission.steps.length === 0) {
     return undefined;
   }
@@ -802,7 +807,7 @@ export function serializeMissionYAML(mission: MissionConfig): any {
     // Output as simple array
     return mission.steps.map((step) => {
       const config = step.config as AgentStepConfig;
-      const output: any = {
+      const output: Record<string, unknown> = {
         agent: config.agentId,
         task: config.task,
       };
@@ -814,7 +819,7 @@ export function serializeMissionYAML(mission: MissionConfig): any {
   }
 
   // Output as object with type and steps
-  const output: any = {};
+  const output: Record<string, unknown> = {};
 
   if (mission.executionMode !== 'sequential') {
     output.type = mission.executionMode;
@@ -828,8 +833,8 @@ export function serializeMissionYAML(mission: MissionConfig): any {
 /**
  * Serialize individual step to YAML-ready object
  */
-function serializeStepYAML(step: MissionStep): any {
-  const output: any = {};
+function serializeStepYAML(step: MissionStep): Record<string, unknown> {
+  const output: Record<string, unknown> = {};
 
   if (step.id) {
     output.id = step.id;

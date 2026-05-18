@@ -233,9 +233,10 @@ async function createMissionInGibson(
     const missionId = createResp.mission.id;
 
     return { success: true, missionId };
-  } catch (err: any) {
-    console.error('[Missions] gRPC mission-create failed:', err?.message || err);
-    return { success: false, error: err?.message || 'Daemon unavailable' };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[Missions] gRPC mission-create failed:', message);
+    return { success: false, error: message || 'Daemon unavailable' };
   }
 }
 

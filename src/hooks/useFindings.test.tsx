@@ -261,8 +261,8 @@ describe('useFindings', () => {
         readyState: 1, // OPEN
       };
 
-      // Mock EventSource
-      global.EventSource = vi.fn(() => eventSourceMock as any) as any;
+      // Mock EventSource — vi.fn return type doesn't match typeof EventSource so cast through unknown
+      global.EventSource = vi.fn(() => eventSourceMock as unknown as EventSource) as unknown as typeof EventSource;
     });
 
     afterEach(() => {

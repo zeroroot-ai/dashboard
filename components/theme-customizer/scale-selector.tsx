@@ -2,6 +2,7 @@
 
 import { Label } from "@/components/ui/label";
 import { useThemeConfig } from "@/components/active-theme";
+import type { ThemeType } from "@/lib/themes";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { BanIcon } from "lucide-react";
 
@@ -16,7 +17,7 @@ export function ThemeScaleSelector() {
           className="w-full"
           value={theme.scale}
           type="single"
-          onValueChange={(value) => setTheme({ ...theme, scale: value as any })}>
+          onValueChange={(value) => setTheme({ ...theme, scale: value as ThemeType["scale"] })}>
           <ToggleGroupItem variant="outline" className="grow" value="none">
             <BanIcon />
           </ToggleGroupItem>

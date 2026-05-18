@@ -2,6 +2,7 @@
 
 import { Label } from "@/components/ui/label";
 import { useThemeConfig } from "@/components/active-theme";
+import type { ThemeType } from "@/lib/themes";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { BanIcon } from "lucide-react";
 
@@ -15,7 +16,7 @@ export function ThemeRadiusSelector() {
         className="w-full"
         value={theme.radius}
         type="single"
-        onValueChange={(value) => setTheme({ ...theme, radius: value as any })}>
+        onValueChange={(value) => setTheme({ ...theme, radius: value as ThemeType["radius"] })}>
         <ToggleGroupItem variant="outline" className="grow" value="none">
           <BanIcon />
         </ToggleGroupItem>

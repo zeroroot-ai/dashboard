@@ -11,6 +11,7 @@ import "./globals.css";
 
 import { ActiveThemeProvider } from "@/components/active-theme";
 import { DEFAULT_THEME } from "@/lib/themes";
+import type { ThemeType } from "@/lib/themes";
 import { Toaster } from "@/components/ui/sonner";
 
 export default async function RootLayout({
@@ -38,12 +39,11 @@ export default async function RootLayout({
   const initialThemeClass = themeChoice === "light" ? "" : "dark";
 
   const themeSettings = {
-    preset: (cookieStore.get("theme_preset")?.value ?? DEFAULT_THEME.preset) as any,
-    scale: (cookieStore.get("theme_scale")?.value ?? DEFAULT_THEME.scale) as any,
-    radius: (cookieStore.get("theme_radius")?.value ?? DEFAULT_THEME.radius) as any,
-    contentLayout: (cookieStore.get("theme_content_layout")?.value ??
-      DEFAULT_THEME.contentLayout) as any
-  };
+    preset: cookieStore.get("theme_preset")?.value ?? DEFAULT_THEME.preset,
+    scale: cookieStore.get("theme_scale")?.value ?? DEFAULT_THEME.scale,
+    radius: cookieStore.get("theme_radius")?.value ?? DEFAULT_THEME.radius,
+    contentLayout: cookieStore.get("theme_content_layout")?.value ?? DEFAULT_THEME.contentLayout,
+  } as ThemeType;
 
   const bodyAttributes = Object.fromEntries(
     Object.entries(themeSettings)

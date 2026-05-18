@@ -35,6 +35,7 @@ describe("EmptyState", () => {
       <EmptyState
         title="No agents yet"
         primaryCta={<button>Deploy</button>}
+        // eslint-disable-next-line @next/next/no-html-link-for-pages -- test verifies component accepts arbitrary CTA children; not a real navigation anchor
         secondaryCta={<a href="/docs">Read docs</a>}
       />,
     );

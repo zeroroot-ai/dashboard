@@ -1,6 +1,7 @@
 "use client";
 
 import { DEFAULT_THEME, THEMES } from "@/lib/themes";
+import type { ThemeType } from "@/lib/themes";
 import { useThemeConfig } from "@/components/active-theme";
 import {
   Select,
@@ -15,7 +16,7 @@ export function PresetSelector() {
   const { theme, setTheme } = useThemeConfig();
 
   const handlePreset = (value: string) => {
-    setTheme({ ...theme, ...DEFAULT_THEME, preset: value as any });
+    setTheme({ ...theme, ...DEFAULT_THEME, preset: value as ThemeType["preset"] });
   };
 
   return (

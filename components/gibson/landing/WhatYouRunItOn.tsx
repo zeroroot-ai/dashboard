@@ -60,7 +60,7 @@ export function WhatYouRunItOn() {
           </p>
           <div>
             <div className="mb-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-highlight/60">
-              <span>// what a mission looks like</span>
+              <span>{'// what a mission looks like'}</span>
               <span>recon.cue</span>
             </div>
             <pre className="overflow-x-auto rounded-lg border border-highlight/25 bg-card/60 p-5 font-mono text-[10px] md:text-[11px] leading-[1.55] text-highlight/90">
