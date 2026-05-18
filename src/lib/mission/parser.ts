@@ -114,13 +114,9 @@ export interface MissionYAMLBlock {
  * Parse YAML string to JSON object
  */
 export function parseYAML<T = unknown>(yamlContent: string): ParseResult<T> {
-  if (!yamlContent.trim()) {
-    return {
-      success: false,
-      error: { message: 'YAML content is empty' },
-    };
-  }
-
+  // Empty/whitespace-only content is valid YAML (null document). Skip the
+  // early-exit so callers get {success: true, data: null} rather than an
+  // error — an empty editor buffer is not a parse failure.
   try {
     const doc = YAML.parseDocument(yamlContent);
 
@@ -155,6 +151,9 @@ export function serializeYAML(data: unknown, options?: { indent?: number }): str
   const doc = new YAML.Document(data);
   if (doc.directives) doc.directives.yaml.explicit = false;
 
+  // The yaml library always appends a trailing newline. Strip it so callers
+  // get a clean string (e.g. "{}" not "{}\n") and string equality assertions
+  // behave predictably in tests.
   return doc.toString({
     indent: options?.indent ?? 2,
     lineWidth: 0, // Disable line wrapping
@@ -162,7 +161,7 @@ export function serializeYAML(data: unknown, options?: { indent?: number }): str
     singleQuote: false,
     defaultStringType: 'PLAIN',
     defaultKeyType: 'PLAIN',
-  });
+  }).trimEnd();
 }
 
 // ============================================================================
