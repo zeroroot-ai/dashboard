@@ -994,6 +994,15 @@ export const AuthRegistry: Record<string, AuthEntry> = {
     allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
     unauthenticated: false,
   },
+  "/gibson.daemon.v1.DaemonService/GetMissionDefinition": {
+    method: "/gibson.daemon.v1.DaemonService/GetMissionDefinition",
+    service: "gibson.daemon.v1.DaemonService",
+    relation: "member",
+    objectType: "tenant",
+    objectDeriver: "tenant_from_identity",
+    allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
+    unauthenticated: false,
+  },
   "/gibson.daemon.v1.DaemonService/GetMissionHistory": {
     method: "/gibson.daemon.v1.DaemonService/GetMissionHistory",
     service: "gibson.daemon.v1.DaemonService",

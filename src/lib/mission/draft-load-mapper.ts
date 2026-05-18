@@ -17,10 +17,23 @@
  *
  * Spec: mission-dashboard-rewrite Requirements 2 AC 2 + 7 AC 4
  *       + Task 17.
+ *
+ * ADR 0004 (M2-dashboard, dashboard#186): the daemon-local
+ * `gibson.daemon.v1.MissionConstraints` shape was deleted and the
+ * canonical type `gibson.mission.v1.MissionConstraints` is the
+ * single platform-wide shape. The earlier "bridge mapping" path
+ * (the mapper used to emit the daemon-local shape and a separate
+ * serializer translated it on the way out) is gone — we now emit
+ * the canonical SDK type directly. Legacy `maxDurationSeconds`
+ * (int seconds, daemon-local) is translated into the canonical
+ * `maxDuration` (google.protobuf.Duration) here so old drafts
+ * still open cleanly.
  */
 
-import type { MissionDefinition } from "@/src/gen/gibson/mission/v1/mission_definition_pb";
-import type { MissionConstraints } from "@/src/gen/gibson/daemon/v1/daemon_pb";
+import type {
+  MissionDefinition,
+  MissionConstraints,
+} from "@/src/gen/gibson/mission/v1/mission_definition_pb";
 
 /** Fields removed by the rewrite; documented for grep-ability. */
 export const REMOVED_LEGACY_FIELDS = [
@@ -124,16 +137,28 @@ export function loadLegacyDraft(legacy: unknown): LoadedDraft {
   }
 
   // Constraints — pre-rewrite drafts may have flat values OR a
-  // nested `constraints` block.
+  // nested `constraints` block. Per ADR 0004 (dashboard#186) the
+  // canonical type is `gibson.mission.v1.MissionConstraints`.
+  // Field shape differences vs. the deleted daemon-local type:
+  //   - `maxDurationSeconds: int` → `maxDuration: Duration`
+  //   - `maxTokens: int32`        → `maxTokens: bigint` (int64)
+  // The 4 fields promoted under ADR 0004 (maxTurnsPerAgent,
+  // allowedTechniques, blockedTechniques, maxTokensPerCall) keep
+  // their names, just moved namespace.
   const constraintsRaw = (obj.constraints ?? {}) as Record<string, unknown>;
   if (typeof constraintsRaw.maxDurationSeconds === "number") {
-    draft.constraints.maxDurationSeconds =
-      constraintsRaw.maxDurationSeconds;
+    // Translate legacy int-seconds into google.protobuf.Duration.
+    draft.constraints.maxDuration = {
+      seconds: BigInt(constraintsRaw.maxDurationSeconds),
+      nanos: 0,
+    } as MissionConstraints["maxDuration"];
   }
   if (typeof constraintsRaw.maxFindings === "number") {
     draft.constraints.maxFindings = constraintsRaw.maxFindings;
   }
   if (typeof constraintsRaw.maxTokens === "number") {
+    draft.constraints.maxTokens = BigInt(constraintsRaw.maxTokens);
+  } else if (typeof constraintsRaw.maxTokens === "bigint") {
     draft.constraints.maxTokens = constraintsRaw.maxTokens;
   }
   if (typeof constraintsRaw.maxTurnsPerAgent === "number") {
@@ -141,6 +166,31 @@ export function loadLegacyDraft(legacy: unknown): LoadedDraft {
   }
   if (typeof constraintsRaw.maxTokensPerCall === "number") {
     draft.constraints.maxTokensPerCall = constraintsRaw.maxTokensPerCall;
+  }
+  if (Array.isArray(constraintsRaw.allowedTechniques)) {
+    draft.constraints.allowedTechniques = constraintsRaw.allowedTechniques
+      .filter((v): v is string => typeof v === "string");
+  }
+  if (Array.isArray(constraintsRaw.blockedTechniques)) {
+    draft.constraints.blockedTechniques = constraintsRaw.blockedTechniques
+      .filter((v): v is string => typeof v === "string");
+  }
+  if (typeof constraintsRaw.maxCost === "number") {
+    draft.constraints.maxCost = constraintsRaw.maxCost;
+  }
+  if (typeof constraintsRaw.severityThreshold === "string") {
+    draft.constraints.severityThreshold = constraintsRaw.severityThreshold;
+  }
+  if (typeof constraintsRaw.requireEvidence === "boolean") {
+    draft.constraints.requireEvidence = constraintsRaw.requireEvidence;
+  }
+  if (Array.isArray(constraintsRaw.blockedTools)) {
+    draft.constraints.blockedTools = constraintsRaw.blockedTools
+      .filter((v): v is string => typeof v === "string");
+  }
+  if (Array.isArray(constraintsRaw.blockedDomains)) {
+    draft.constraints.blockedDomains = constraintsRaw.blockedDomains
+      .filter((v): v is string => typeof v === "string");
   }
   // Guardrails surface — confirmationRequired explicitly dropped.
   const guardrails = (obj.guardrails ?? {}) as Record<string, unknown>;

@@ -12,10 +12,12 @@
 
 import type { Node, Edge } from '@xyflow/react';
 import { create } from '@bufbuild/protobuf';
+import { DurationSchema } from '@bufbuild/protobuf/wkt';
 import {
   MissionDefinitionSchema,
   MissionNodeSchema,
   MissionEdgeSchema,
+  MissionConstraintsSchema,
   AgentNodeConfigSchema,
   ToolNodeConfigSchema,
   ConditionNodeConfigSchema,
@@ -24,6 +26,7 @@ import {
   type MissionDefinition,
   type MissionNode,
   type MissionEdge,
+  type MissionConstraints,
 } from '@/src/gen/gibson/mission/v1/mission_definition_pb';
 import { TaskSchema } from '@/src/gen/gibson/types/v1/types_pb';
 import type {
@@ -94,6 +97,41 @@ export interface AuthoredMissionInput {
    * does not carry one.
    */
   version?: string;
+  /**
+   * Optional mission-level operational constraints. When supplied, populates
+   * `MissionDefinition.constraints` (gibson.mission.v1.MissionConstraints).
+   * ADR 0004 (M2-dashboard, dashboard#186) — emits the canonical SDK type
+   * directly; the prior daemon-local bridge mapping is deleted.
+   *
+   * Plain-object input is preferred (every field optional, types align with
+   * the proto except `maxDuration` may be specified either as a Duration or
+   * as `{seconds, nanos}`); the serializer normalises into the live proto
+   * message.
+   */
+  constraints?: PartialMissionConstraintsInput;
+}
+
+/**
+ * Plain-object author-side input for MissionConstraints. Mirrors the proto
+ * field names but accepts the bigint-vs-number ambiguity that comes from JSON
+ * deserialisation (e.g. legacy drafts), and accepts the duration as either a
+ * `{seconds, nanos}` literal or an already-constructed `Duration`. All fields
+ * are optional; missing fields stay at the proto zero-value (which means
+ * "unlimited" for the numeric caps).
+ */
+export interface PartialMissionConstraintsInput {
+  maxDuration?: { seconds: bigint | number; nanos?: number };
+  maxTokens?: bigint | number;
+  maxCost?: number;
+  maxFindings?: number;
+  severityThreshold?: string;
+  requireEvidence?: boolean;
+  blockedTools?: string[];
+  blockedDomains?: string[];
+  maxTurnsPerAgent?: number;
+  allowedTechniques?: string[];
+  blockedTechniques?: string[];
+  maxTokensPerCall?: number;
 }
 
 // ============================================================================
@@ -144,6 +182,10 @@ export function serializeToMissionDefinition(
 
   const targetRef = input.scope.seeds?.[0]?.value ?? '';
 
+  const constraints = input.constraints
+    ? buildMissionConstraints(input.constraints)
+    : undefined;
+
   return create(MissionDefinitionSchema, {
     id: input.id ?? '',
     name: input.metadata.name,
@@ -155,8 +197,53 @@ export function serializeToMissionDefinition(
     entryPoints,
     exitPoints,
     metadata,
+    constraints,
     // `dependencies`, `source`, `installedAt`, `createdAt` are server-managed —
     // leave unset on create.
+  });
+}
+
+/**
+ * Build a `gibson.mission.v1.MissionConstraints` proto message from the
+ * plain-object author input. Every field defaults to the proto zero-value
+ * (which the daemon treats as "unlimited" for the numeric caps).
+ *
+ * ADR 0004 (dashboard#186): this used to translate into the deleted
+ * `gibson.daemon.v1.MissionConstraints` shape. The canonical SDK type is
+ * now the single platform-wide constraint shape.
+ */
+function buildMissionConstraints(
+  input: PartialMissionConstraintsInput,
+): MissionConstraints {
+  const maxDuration =
+    input.maxDuration !== undefined
+      ? create(DurationSchema, {
+          seconds:
+            typeof input.maxDuration.seconds === 'bigint'
+              ? input.maxDuration.seconds
+              : BigInt(input.maxDuration.seconds),
+          nanos: input.maxDuration.nanos ?? 0,
+        })
+      : undefined;
+
+  return create(MissionConstraintsSchema, {
+    maxDuration,
+    maxTokens:
+      input.maxTokens === undefined
+        ? BigInt(0)
+        : typeof input.maxTokens === 'bigint'
+          ? input.maxTokens
+          : BigInt(input.maxTokens),
+    maxCost: input.maxCost ?? 0,
+    maxFindings: input.maxFindings ?? 0,
+    severityThreshold: input.severityThreshold ?? '',
+    requireEvidence: input.requireEvidence ?? false,
+    blockedTools: input.blockedTools ?? [],
+    blockedDomains: input.blockedDomains ?? [],
+    maxTurnsPerAgent: input.maxTurnsPerAgent ?? 0,
+    allowedTechniques: input.allowedTechniques ?? [],
+    blockedTechniques: input.blockedTechniques ?? [],
+    maxTokensPerCall: input.maxTokensPerCall ?? 0,
   });
 }
 
@@ -305,7 +392,11 @@ function computeEntryExitPoints(steps: MissionStep[]): {
  */
 export function serializeStateToMissionDefinition(
   state: Pick<MissionCreationState, 'metadata' | 'scope' | 'mission'>,
-  overrides: { id?: string; version?: string } = {},
+  overrides: {
+    id?: string;
+    version?: string;
+    constraints?: PartialMissionConstraintsInput;
+  } = {},
 ): MissionDefinition {
   return serializeToMissionDefinition({
     metadata: state.metadata,

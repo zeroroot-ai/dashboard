@@ -114,6 +114,82 @@
       },
       "type": "object"
     },
+    "MissionConstraints": {
+      "additionalProperties": false,
+      "description": "MissionConstraints declares the operational limits baked into a mission definition. Making constraints part of the schema lets mission authors publish self-describing missions (e.g., \"stop after 50 findings\") without requiring callers to supply limits out-of-band at dispatch time.  Semantics (zero means unlimited): - max_duration  : 0 duration  → no time limit - max_tokens    : 0           → no token budget - max_cost      : 0.0         → no cost ceiling - max_findings  : 0           → no finding count limit  Spec: sdk#47 (MissionConstraints proto promotion).",
+      "properties": {
+        "allowedTechniques": {
+          "description": "allowed_techniques is the allowlist of attack technique IDs (taxonomy) that agents may use during the mission. Empty list means no allowlist (any technique may be used unless blocked).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "blockedDomains": {
+          "description": "blocked_domains lists network domains (e.g., \"prod.example.com\") that agents must not contact. Enforcement is best-effort at the tool level.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "blockedTechniques": {
+          "description": "blocked_techniques is the blocklist of attack technique IDs that agents must not use, regardless of allowed_techniques. Empty list means no blocklist.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "blockedTools": {
+          "description": "blocked_tools lists tool names that must not be invoked during this mission. The daemon enforces this at dispatch time.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "maxCost": {
+          "description": "max_cost is the cumulative LLM cost ceiling in USD across all agent nodes. 0.0 means unlimited.",
+          "format": "double",
+          "type": "number"
+        },
+        "maxDuration": {
+          "description": "max_duration is the wall-clock limit for the entire mission. Uses google.protobuf.Duration for sub-second precision. Absent or zero-value means no time limit.",
+          "type": "string"
+        },
+        "maxFindings": {
+          "description": "max_findings is the maximum number of findings to collect before the mission stops. 0 means unlimited.",
+          "format": "int32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "maxTokens": {
+          "description": "max_tokens is the cumulative LLM token budget across all agent nodes. 0 means unlimited.",
+          "format": "int64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "maxTokensPerCall": {
+          "description": "max_tokens_per_call is the mission-level cap on tokens consumed per individual LLM invocation. Overridden by per-node *NodeConfig. max_tokens_per_call when set on a specific node. 0 means unlimited from this mechanism. Spec: mission-schema-canonicalization Requirement 5. Enforced by internal/harness/per_call_cap.go's EffectivePerCallCap() in the daemon (wired in M4, gibson#133).",
+          "format": "int32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "maxTurnsPerAgent": {
+          "description": "max_turns_per_agent caps the number of agent turns (Observe→Think→Act iterations) for any single agent node in the mission. 0 means unlimited.",
+          "format": "int32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "requireEvidence": {
+          "description": "require_evidence indicates whether all findings must include proof-of-concept evidence before being recorded.",
+          "type": "boolean"
+        },
+        "severityThreshold": {
+          "description": "severity_threshold is the minimum severity level required to record a finding. Common values: \"low\", \"medium\", \"high\", \"critical\". Empty string means accept all severities.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "MissionDependencies": {
       "additionalProperties": false,
       "description": "MissionDependencies specifies required components for a mission",
@@ -682,6 +758,10 @@
   "additionalProperties": false,
   "description": "MissionDefinition represents a mission template/definition. This is the shareable mission specification that can be created via the CreateMissionDefinition API and referenced by mission runs.",
   "properties": {
+    "constraints": {
+      "$ref": "#/$defs/MissionConstraints",
+      "description": "Constraints declares mission-level operational limits. When present, these are the authoritative constraints for the mission DAG — they make the mission self-describing so authors do not have to supply limits out-of-band at dispatch time. The daemon merges these with any dispatch-time overrides (dispatch wins on conflict). Optional: absent means no constraints are baked into the definition.  Spec: sdk#47 (MissionConstraints proto promotion)."
+    },
     "createdAt": {
       "description": "CreatedAt is the timestamp when the mission definition was created",
       "format": "date-time",
