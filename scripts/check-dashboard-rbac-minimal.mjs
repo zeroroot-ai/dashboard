@@ -50,14 +50,22 @@ const SCRIPT_NAME = 'check-dashboard-rbac-minimal.mjs';
 const SPEC_NAME = 'auth-resolution-hardening';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const DASHBOARD_ROOT = resolve(__dirname, '..');
+// Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ the naive
+// `../../..` walk lands short of the workspace root. Rewind to the main
+// checkout root before walking up. dashboard#197 (same pattern as #175).
+const isWorktree = DASHBOARD_ROOT.includes('/.worktrees/');
+const MAIN_DASHBOARD_ROOT = isWorktree
+  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, '')
+  : DASHBOARD_ROOT;
 // When running inside the Docker build context (dashboard dir as root),
-// __dirname is /app/scripts and 4 levels up is / (filesystem root).
+// __dirname is /app/scripts and 3 levels up from DASHBOARD_ROOT is / (filesystem root).
 // Detect this and fall back to looking for the chart relative to the build
 // context (dashboard dir = /app). The allowlist is staged at
 // enterprise/deploy/helm/gibson/ inside the build context for Docker builds.
 // Spec: signup-zitadel-permissions-fix (Docker build fix for auth-resolution-hardening).
-const _repoRootCandidate = resolve(__dirname, '..', '..', '..', '..');
-const REPO_ROOT = _repoRootCandidate === '/' ? resolve(__dirname, '..') : _repoRootCandidate;
+const _repoRootCandidate = resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
+const REPO_ROOT = _repoRootCandidate === '/' ? DASHBOARD_ROOT : _repoRootCandidate;
 const CHART_DIR = resolve(REPO_ROOT, 'enterprise/deploy/helm/gibson');
 const ALLOWLIST_PATH = resolve(CHART_DIR, '.dashboard-rbac-allowlist.yaml');
 

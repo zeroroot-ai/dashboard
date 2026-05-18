@@ -65,6 +65,14 @@ import { parseArgs } from "node:util";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "..");
+// Worktree-aware: when REPO_ROOT (== DASHBOARD_ROOT here) is .worktrees/<name>/
+// the naive `../../..` walk below for the default --out path lands short of the
+// workspace root. Rewind to the main checkout root before walking up.
+// dashboard#197 (same pattern as #175).
+const _isWorktree = REPO_ROOT.includes("/.worktrees/");
+const _MAIN_REPO_ROOT = _isWorktree
+  ? REPO_ROOT.replace(/\/\.worktrees\/[^/]+$/, "")
+  : REPO_ROOT;
 
 // ---------------------------------------------------------------------------
 // SLO targets (spec R8)
@@ -91,7 +99,7 @@ const N_ITERS = parseInt(args["n"], 10);
 const DRIVE_LOAD = args["drive-load"];
 const OUT_PATH =
   args["out"] ||
-  resolve(REPO_ROOT, "..", "..", "..", "enterprise", "docs", "auth-latency-baseline.json");
+  resolve(_MAIN_REPO_ROOT, "..", "..", "..", "enterprise", "docs", "auth-latency-baseline.json");
 
 // ---------------------------------------------------------------------------
 // Prometheus text-format parser — histogram buckets
