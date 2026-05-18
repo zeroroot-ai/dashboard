@@ -44,7 +44,14 @@ import { parse as parseYaml } from "yaml";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(HERE, "..");
-const REPO_ROOT = resolve(DASHBOARD_ROOT, "..", "..", "..");
+// Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ the naive
+// `../../..` walk lands short of the workspace root. Rewind to the main
+// checkout root before walking up. dashboard#175.
+const isWorktree = DASHBOARD_ROOT.includes("/.worktrees/");
+const MAIN_DASHBOARD_ROOT = isWorktree
+  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, "")
+  : DASHBOARD_ROOT;
+const REPO_ROOT = resolve(MAIN_DASHBOARD_ROOT, "..", "..", "..");
 const PLANS_YAML = resolve(
   REPO_ROOT,
   "enterprise/platform/tenant-operator/plans/plans.yaml",

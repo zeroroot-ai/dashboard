@@ -201,5 +201,10 @@
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "vitest": "^4.1.2"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "next-auth": "patches/next-auth.patch"
+    }
   }
 }
