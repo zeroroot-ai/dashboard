@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
  * vendor-mission-authoring-bundle — pulls the mission-authoring
- * OCI artifact (published by core/sdk's
+ * OCI artifact (published by opensource/sdk's
  * publish-mission-authoring.yml workflow) into local
  * src/data/ and src/app/dashboard/(auth)/docs/ at build time.
  *
  * Bundle layout (produced by `make mission-authoring-bundle` in
- * core/sdk):
+ * opensource/sdk):
  *
  *   mission-authoring-bundle.tar.gz
  *     ├── mission-definition.schema.json
@@ -29,13 +29,21 @@
  *   1. `MISSION_AUTHORING_BUNDLE_PATH` env var — local tarball path
  *      (used by tests, dev, and CI to skip the OCI pull).
  *   2. `MISSION_AUTHORING_BUNDLE_DIR` env var — pre-extracted dir.
- *   3. Sibling SDK checkout at ../../../core/sdk/gen — used by
- *      developers in the canonical polyrepo layout. Falls back to
- *      this when no env var is set, before attempting the OCI pull.
+ *   3. Sibling SDK checkout at $WORKSPACE_ROOT/opensource/sdk/gen —
+ *      used by developers in the canonical polyrepo layout. Falls
+ *      back to this when no env var is set, before attempting the
+ *      OCI pull.
  *   4. `oras pull ghcr.io/zero-day-ai/mission-authoring:${MISSION_AUTHORING_VERSION}`.
  *
  * MISSION_AUTHORING_VERSION defaults to the SDK version pinned in
  * the sibling gibson repo's go.mod (resolved via `go list -m`).
+ *
+ * Worktree-aware: when run from .worktrees/<name>/scripts/, the
+ * naive `../../..` walk lands short of the workspace root. Strip
+ * the `.worktrees/<name>` suffix to recover the canonical
+ * dashboard root before walking up (same pattern as
+ * scripts/gen-plans.mjs, gen-mission-schema.mjs,
+ * check-mission-schema-fresh.mjs, proto-generate.mjs).
  *
  * Spec: mission-dashboard-rewrite Requirement 4.1 + 5.3 + 6.1.
  */
@@ -54,7 +62,15 @@ import path from 'node:path';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = path.resolve(HERE, '..');
-const WORKSPACE_ROOT = path.resolve(DASHBOARD_ROOT, '..', '..', '..');
+// Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ the naive
+// `../../..` walk lands short of the workspace root. Rewind to the main
+// checkout root before walking up. dashboard#193 (matches the pattern
+// landed in #162 / #175 / PR-for-#186).
+const isWorktree = DASHBOARD_ROOT.includes('/.worktrees/');
+const MAIN_DASHBOARD_ROOT = isWorktree
+  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, '')
+  : DASHBOARD_ROOT;
+const WORKSPACE_ROOT = path.resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
 
 const SRC_DATA = path.join(DASHBOARD_ROOT, 'src/data');
 const DOCS_ROUTE = path.join(
@@ -90,7 +106,7 @@ function resolveBundleSourceDir() {
   }
 
   // 3. Sibling SDK checkout.
-  const siblingGen = path.join(WORKSPACE_ROOT, 'core/sdk/gen');
+  const siblingGen = path.join(WORKSPACE_ROOT, 'opensource/sdk/gen');
   if (
     existsSync(path.join(siblingGen, 'mission-definition.schema.json')) &&
     existsSync(path.join(siblingGen, 'mission-docs'))
