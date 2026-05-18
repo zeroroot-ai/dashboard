@@ -26,7 +26,15 @@ import { fileURLToPath } from 'node:url';
 import yaml from 'yaml';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(__dirname, '..', '..', '..', '..');
+const DASHBOARD_ROOT = resolve(__dirname, '..');
+// Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ the naive
+// `../../..` walk lands short of the workspace root. Rewind to the main
+// checkout root before walking up. dashboard#197 (same pattern as #175).
+const isWorktree = DASHBOARD_ROOT.includes('/.worktrees/');
+const MAIN_DASHBOARD_ROOT = isWorktree
+  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, '')
+  : DASHBOARD_ROOT;
+const REPO_ROOT = resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
 const CHART_DIR = resolve(REPO_ROOT, 'enterprise/deploy/helm/gibson');
 const FGA_INIT = resolve(CHART_DIR, 'templates/openfga/init-job.yaml');
 const OUTPUT_PATH = resolve(REPO_ROOT, 'enterprise/docs/AUTH_RBAC_INVENTORY.md');
