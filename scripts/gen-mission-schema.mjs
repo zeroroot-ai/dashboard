@@ -35,7 +35,18 @@ const SCRIPT_NAME = "gen-mission-schema.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, "..");
-const REPO_ROOT = resolve(DASHBOARD_ROOT, "..", "..", "..");
+
+// Worktree-aware: when run from .worktrees/<name>/scripts/, DASHBOARD_ROOT
+// resolves to the worktree directory and the naive `../../..` walks short
+// of the polyrepo workspace root. Strip the `.worktrees/<name>` suffix to
+// reach the canonical dashboard checkout, then walk up to the workspace.
+// Sister scripts proto-generate.mjs + gen-authz-registry.mjs use the same
+// pattern.
+const isWorktree = DASHBOARD_ROOT.includes("/.worktrees/");
+const MAIN_DASHBOARD_ROOT = isWorktree
+  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, "")
+  : DASHBOARD_ROOT;
+const REPO_ROOT = resolve(MAIN_DASHBOARD_ROOT, "..", "..", "..");
 
 const SDK_SCHEMA = resolve(
   REPO_ROOT,

@@ -34,7 +34,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/mission/v1/mission_definition.proto.
  */
 export const file_gibson_mission_v1_mission_definition: GenFile = /*@__PURE__*/
-  fileDesc("CipnaWJzb24vbWlzc2lvbi92MS9taXNzaW9uX2RlZmluaXRpb24ucHJvdG8SEWdpYnNvbi5taXNzaW9uLnYxIq0FChFNaXNzaW9uRGVmaW5pdGlvbhIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEg8KB3ZlcnNpb24YBCABKAkSEgoKdGFyZ2V0X3JlZhgFIAEoCRI+CgVub2RlcxgGIAMoCzIvLmdpYnNvbi5taXNzaW9uLnYxLk1pc3Npb25EZWZpbml0aW9uLk5vZGVzRW50cnkSLQoFZWRnZXMYByADKAsyHi5naWJzb24ubWlzc2lvbi52MS5NaXNzaW9uRWRnZRIUCgxlbnRyeV9wb2ludHMYCCADKAkSEwoLZXhpdF9wb2ludHMYCSADKAkSRAoIbWV0YWRhdGEYCiADKAsyMi5naWJzb24ubWlzc2lvbi52MS5NaXNzaW9uRGVmaW5pdGlvbi5NZXRhZGF0YUVudHJ5EjwKDGRlcGVuZGVuY2llcxgLIAEoCzImLmdpYnNvbi5taXNzaW9uLnYxLk1pc3Npb25EZXBlbmRlbmNpZXMSDgoGc291cmNlGAwgASgJEjAKDGluc3RhbGxlZF9hdBgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKY3JlYXRlZF9hdBgOIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNQoJd29ya3NwYWNlGA8gASgLMiIuZ2lic29uLm1pc3Npb24udjEuV29ya3NwYWNlQ29uZmlnGkwKCk5vZGVzRW50cnkSCwoDa2V5GAEgASgJEi0KBXZhbHVlGAIgASgLMh4uZ2lic29uLm1pc3Npb24udjEuTWlzc2lvbk5vZGU6AjgBGi8KDU1ldGFkYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJFChNNaXNzaW9uRGVwZW5kZW5jaWVzEg4KBmFnZW50cxgBIAMoCRINCgV0b29scxgCIAMoCRIPCgdwbHVnaW5zGAMgAygJIrgGCgtNaXNzaW9uTm9kZRIKCgJpZBgBIAEoCRIpCgR0eXBlGAIgASgOMhsuZ2lic29uLm1pc3Npb24udjEuTm9kZVR5cGUSDAoEbmFtZRgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRI6CgxhZ2VudF9jb25maWcYBSABKAsyIi5naWJzb24ubWlzc2lvbi52MS5BZ2VudE5vZGVDb25maWdIABI4Cgt0b29sX2NvbmZpZxgGIAEoCzIhLmdpYnNvbi5taXNzaW9uLnYxLlRvb2xOb2RlQ29uZmlnSAASPAoNcGx1Z2luX2NvbmZpZxgHIAEoCzIjLmdpYnNvbi5taXNzaW9uLnYxLlBsdWdpbk5vZGVDb25maWdIABJCChBjb25kaXRpb25fY29uZmlnGAggASgLMiYuZ2lic29uLm1pc3Npb24udjEuQ29uZGl0aW9uTm9kZUNvbmZpZ0gAEkAKD3BhcmFsbGVsX2NvbmZpZxgJIAEoCzIlLmdpYnNvbi5taXNzaW9uLnYxLlBhcmFsbGVsTm9kZUNvbmZpZ0gAEjgKC2pvaW5fY29uZmlnGA8gASgLMiEuZ2lic29uLm1pc3Npb24udjEuSm9pbk5vZGVDb25maWdIABIUCgxkZXBlbmRlbmNpZXMYCiADKAkSKgoHdGltZW91dBgLIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhI0CgxyZXRyeV9wb2xpY3kYDCABKAsyHi5naWJzb24ubWlzc2lvbi52MS5SZXRyeVBvbGljeRIyCgtkYXRhX3BvbGljeRgNIAEoCzIdLmdpYnNvbi5taXNzaW9uLnYxLkRhdGFQb2xpY3kSPgoIbWV0YWRhdGEYDiADKAsyLC5naWJzb24ubWlzc2lvbi52MS5NaXNzaW9uTm9kZS5NZXRhZGF0YUVudHJ5EjQKDHJldXNlX3BvbGljeRgQIAEoCzIeLmdpYnNvbi5taXNzaW9uLnYxLlJldXNlUG9saWN5Gi8KDU1ldGFkYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIICgZjb25maWcijQEKD0FnZW50Tm9kZUNvbmZpZxISCgphZ2VudF9uYW1lGAEgASgJEiMKBHRhc2sYAiABKAsyFS5naWJzb24udHlwZXMudjEuVGFzaxIpChNtYXhfdG9rZW5zX3Blcl9jYWxsGAMgASgFQge6SAQaAigASACIAQFCFgoUX21heF90b2tlbnNfcGVyX2NhbGwi0QEKDlRvb2xOb2RlQ29uZmlnEhEKCXRvb2xfbmFtZRgBIAEoCRI7CgVpbnB1dBgCIAMoCzIsLmdpYnNvbi5taXNzaW9uLnYxLlRvb2xOb2RlQ29uZmlnLklucHV0RW50cnkSKQoTbWF4X3Rva2Vuc19wZXJfY2FsbBgDIAEoBUIHukgEGgIoAEgAiAEBGiwKCklucHV0RW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIWChRfbWF4X3Rva2Vuc19wZXJfY2FsbCLqAQoQUGx1Z2luTm9kZUNvbmZpZxITCgtwbHVnaW5fbmFtZRgBIAEoCRIOCgZtZXRob2QYAiABKAkSPwoGcGFyYW1zGAMgAygLMi8uZ2lic29uLm1pc3Npb24udjEuUGx1Z2luTm9kZUNvbmZpZy5QYXJhbXNFbnRyeRIpChNtYXhfdG9rZW5zX3Blcl9jYWxsGAQgASgFQge6SAQaAigASACIAQEaLQoLUGFyYW1zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIWChRfbWF4X3Rva2Vuc19wZXJfY2FsbCKDAQoTQ29uZGl0aW9uTm9kZUNvbmZpZxISCgpleHByZXNzaW9uGAEgASgJEhMKC3RydWVfYnJhbmNoGAIgAygJEhQKDGZhbHNlX2JyYW5jaBgDIAMoCRItCghsYW5ndWFnZRgEIAEoDjIbLmdpYnNvbi5taXNzaW9uLnYxLkxhbmd1YWdlImAKElBhcmFsbGVsTm9kZUNvbmZpZxIxCglzdWJfbm9kZXMYASADKAsyHi5naWJzb24ubWlzc2lvbi52MS5NaXNzaW9uTm9kZRIXCg9tYXhfY29uY3VycmVuY3kYAiABKAUidAoOSm9pbk5vZGVDb25maWcSGgoId2FpdF9mb3IYASADKAlCCLpIBZIBAggBEjIKCHN0cmF0ZWd5GAIgASgOMiAuZ2lic29uLm1pc3Npb24udjEuTWVyZ2VTdHJhdGVneRISCgphZ2dyZWdhdG9yGAMgASgJIoQBCg9Xb3Jrc3BhY2VDb25maWcSOQoMcmVwb3NpdG9yaWVzGAEgAygLMiMuZ2lic29uLm1pc3Npb24udjEuUmVwb3NpdG9yeUNvbmZpZxI2CghzZXR0aW5ncxgCIAEoCzIkLmdpYnNvbi5taXNzaW9uLnYxLldvcmtzcGFjZVNldHRpbmdzInsKEFJlcG9zaXRvcnlDb25maWcSDAoEbmFtZRgBIAEoCRILCgN1cmwYAiABKAkSDgoGYnJhbmNoGAMgASgJEhcKD2NyZWRlbnRpYWxfbmFtZRgEIAEoCRIPCgdzaGFsbG93GAUgASgIEhIKCmRlcGVuZHNfb24YBiADKAkipAEKEVdvcmtzcGFjZVNldHRpbmdzEhsKE2NsZWFudXBfb25fY29tcGxldGUYASABKAgSFQoNdXNlX3dvcmt0cmVlcxgCIAEoCBITCgtsc3BfZW5hYmxlZBgDIAEoCBIuCgtsc3BfdGltZW91dBgEIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhIWCg5iYXNlX2RpcmVjdG9yeRgFIAEoCSJHCgtSZXVzZVBvbGljeRIUCgxvdXRwdXRfc2NvcGUYASABKAkSEwoLaW5wdXRfc2NvcGUYAiABKAkSDQoFcmV1c2UYAyABKAki1AEKC1JldHJ5UG9saWN5EhMKC21heF9yZXRyaWVzGAEgASgFEjwKEGJhY2tvZmZfc3RyYXRlZ3kYAiABKA4yIi5naWJzb24ubWlzc2lvbi52MS5CYWNrb2ZmU3RyYXRlZ3kSMAoNaW5pdGlhbF9kZWxheRgDIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhIsCgltYXhfZGVsYXkYBCABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SEgoKbXVsdGlwbGllchgFIAEoASKRAQoKRGF0YVBvbGljeRITCgtzdG9yZV9pbnB1dBgBIAEoCBIUCgxzdG9yZV9vdXRwdXQYAiABKAgSLAoJcmV0ZW50aW9uGAMgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEhIKCmVuY3J5cHRpb24YBCABKAgSFgoOYWNjZXNzX2NvbnRyb2wYBSADKAkiqwEKC01pc3Npb25FZGdlEgwKBGZyb20YASABKAkSCgoCdG8YAiABKAkSEQoJY29uZGl0aW9uGAMgASgJEj4KCG1ldGFkYXRhGAQgAygLMiwuZ2lic29uLm1pc3Npb24udjEuTWlzc2lvbkVkZ2UuTWV0YWRhdGFFbnRyeRovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEqqQEKCE5vZGVUeXBlEhkKFU5PREVfVFlQRV9VTlNQRUNJRklFRBAAEhMKD05PREVfVFlQRV9BR0VOVBABEhIKDk5PREVfVFlQRV9UT09MEAISFAoQTk9ERV9UWVBFX1BMVUdJThADEhcKE05PREVfVFlQRV9DT05ESVRJT04QBBIWChJOT0RFX1RZUEVfUEFSQUxMRUwQBRISCg5OT0RFX1RZUEVfSk9JThAGKjYKCExhbmd1YWdlEhgKFExBTkdVQUdFX1VOU1BFQ0lGSUVEEAASEAoMTEFOR1VBR0VfQ0VMEAEqswEKDU1lcmdlU3RyYXRlZ3kSHgoaTUVSR0VfU1RSQVRFR1lfVU5TUEVDSUZJRUQQABIZChVNRVJHRV9TVFJBVEVHWV9DT05DQVQQARIZChVNRVJHRV9TVFJBVEVHWV9SRURVQ0UQAhIYChRNRVJHRV9TVFJBVEVHWV9GSVJTVBADEhcKE01FUkdFX1NUUkFURUdZX0xBU1QQBBIZChVNRVJHRV9TVFJBVEVHWV9DVVNUT00QBSqRAQoPQmFja29mZlN0cmF0ZWd5EiAKHEJBQ0tPRkZfU1RSQVRFR1lfVU5TUEVDSUZJRUQQABIdChlCQUNLT0ZGX1NUUkFURUdZX0NPTlNUQU5UEAESGwoXQkFDS09GRl9TVFJBVEVHWV9MSU5FQVIQAhIgChxCQUNLT0ZGX1NUUkFURUdZX0VYUE9ORU5USUFMEANCU1ABWj5naXRodWIuY29tL3plcm8tZGF5LWFpL3Nkay9hcGkvZ2VuL2dpYnNvbi9taXNzaW9uL3YxO21pc3Npb25wYqoCDkdpYnNvbi5NaXNzaW9uYgZwcm90bzM", [file_google_protobuf_duration, file_google_protobuf_timestamp, file_gibson_types_v1_types, file_buf_validate_validate]);
+  fileDesc("CipnaWJzb24vbWlzc2lvbi92MS9taXNzaW9uX2RlZmluaXRpb24ucHJvdG8SEWdpYnNvbi5taXNzaW9uLnYxIv4FChFNaXNzaW9uRGVmaW5pdGlvbhIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEg8KB3ZlcnNpb24YBCABKAkSEgoKdGFyZ2V0X3JlZhgFIAEoCRI+CgVub2RlcxgGIAMoCzIvLmdpYnNvbi5taXNzaW9uLnYxLk1pc3Npb25EZWZpbml0aW9uLk5vZGVzRW50cnkSLQoFZWRnZXMYByADKAsyHi5naWJzb24ubWlzc2lvbi52MS5NaXNzaW9uRWRnZRIUCgxlbnRyeV9wb2ludHMYCCADKAkSEwoLZXhpdF9wb2ludHMYCSADKAkSRAoIbWV0YWRhdGEYCiADKAsyMi5naWJzb24ubWlzc2lvbi52MS5NaXNzaW9uRGVmaW5pdGlvbi5NZXRhZGF0YUVudHJ5EjwKDGRlcGVuZGVuY2llcxgLIAEoCzImLmdpYnNvbi5taXNzaW9uLnYxLk1pc3Npb25EZXBlbmRlbmNpZXMSDgoGc291cmNlGAwgASgJEjAKDGluc3RhbGxlZF9hdBgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKY3JlYXRlZF9hdBgOIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNQoJd29ya3NwYWNlGA8gASgLMiIuZ2lic29uLm1pc3Npb24udjEuV29ya3NwYWNlQ29uZmlnEj8KC2NvbnN0cmFpbnRzGBAgASgLMiUuZ2lic29uLm1pc3Npb24udjEuTWlzc2lvbkNvbnN0cmFpbnRzSACIAQEaTAoKTm9kZXNFbnRyeRILCgNrZXkYASABKAkSLQoFdmFsdWUYAiABKAsyHi5naWJzb24ubWlzc2lvbi52MS5NaXNzaW9uTm9kZToCOAEaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQg4KDF9jb25zdHJhaW50cyKNAwoSTWlzc2lvbkNvbnN0cmFpbnRzEi8KDG1heF9kdXJhdGlvbhgBIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhIbCgptYXhfdG9rZW5zGAIgASgDQge6SAQiAigAEiAKCG1heF9jb3N0GAMgASgBQg66SAsSCSkAAAAAAAAAABIdCgxtYXhfZmluZGluZ3MYBCABKAVCB7pIBBoCKAASGgoSc2V2ZXJpdHlfdGhyZXNob2xkGAUgASgJEhgKEHJlcXVpcmVfZXZpZGVuY2UYBiABKAgSFQoNYmxvY2tlZF90b29scxgHIAMoCRIXCg9ibG9ja2VkX2RvbWFpbnMYCCADKAkSJAoTbWF4X3R1cm5zX3Blcl9hZ2VudBgJIAEoBUIHukgEGgIoABIaChJhbGxvd2VkX3RlY2huaXF1ZXMYCiADKAkSGgoSYmxvY2tlZF90ZWNobmlxdWVzGAsgAygJEiQKE21heF90b2tlbnNfcGVyX2NhbGwYDCABKAVCB7pIBBoCKAAiRQoTTWlzc2lvbkRlcGVuZGVuY2llcxIOCgZhZ2VudHMYASADKAkSDQoFdG9vbHMYAiADKAkSDwoHcGx1Z2lucxgDIAMoCSK4BgoLTWlzc2lvbk5vZGUSCgoCaWQYASABKAkSKQoEdHlwZRgCIAEoDjIbLmdpYnNvbi5taXNzaW9uLnYxLk5vZGVUeXBlEgwKBG5hbWUYAyABKAkSEwoLZGVzY3JpcHRpb24YBCABKAkSOgoMYWdlbnRfY29uZmlnGAUgASgLMiIuZ2lic29uLm1pc3Npb24udjEuQWdlbnROb2RlQ29uZmlnSAASOAoLdG9vbF9jb25maWcYBiABKAsyIS5naWJzb24ubWlzc2lvbi52MS5Ub29sTm9kZUNvbmZpZ0gAEjwKDXBsdWdpbl9jb25maWcYByABKAsyIy5naWJzb24ubWlzc2lvbi52MS5QbHVnaW5Ob2RlQ29uZmlnSAASQgoQY29uZGl0aW9uX2NvbmZpZxgIIAEoCzImLmdpYnNvbi5taXNzaW9uLnYxLkNvbmRpdGlvbk5vZGVDb25maWdIABJACg9wYXJhbGxlbF9jb25maWcYCSABKAsyJS5naWJzb24ubWlzc2lvbi52MS5QYXJhbGxlbE5vZGVDb25maWdIABI4Cgtqb2luX2NvbmZpZxgPIAEoCzIhLmdpYnNvbi5taXNzaW9uLnYxLkpvaW5Ob2RlQ29uZmlnSAASFAoMZGVwZW5kZW5jaWVzGAogAygJEioKB3RpbWVvdXQYCyABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SNAoMcmV0cnlfcG9saWN5GAwgASgLMh4uZ2lic29uLm1pc3Npb24udjEuUmV0cnlQb2xpY3kSMgoLZGF0YV9wb2xpY3kYDSABKAsyHS5naWJzb24ubWlzc2lvbi52MS5EYXRhUG9saWN5Ej4KCG1ldGFkYXRhGA4gAygLMiwuZ2lic29uLm1pc3Npb24udjEuTWlzc2lvbk5vZGUuTWV0YWRhdGFFbnRyeRI0CgxyZXVzZV9wb2xpY3kYECABKAsyHi5naWJzb24ubWlzc2lvbi52MS5SZXVzZVBvbGljeRovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCCAoGY29uZmlnIo0BCg9BZ2VudE5vZGVDb25maWcSEgoKYWdlbnRfbmFtZRgBIAEoCRIjCgR0YXNrGAIgASgLMhUuZ2lic29uLnR5cGVzLnYxLlRhc2sSKQoTbWF4X3Rva2Vuc19wZXJfY2FsbBgDIAEoBUIHukgEGgIoAEgAiAEBQhYKFF9tYXhfdG9rZW5zX3Blcl9jYWxsItEBCg5Ub29sTm9kZUNvbmZpZxIRCgl0b29sX25hbWUYASABKAkSOwoFaW5wdXQYAiADKAsyLC5naWJzb24ubWlzc2lvbi52MS5Ub29sTm9kZUNvbmZpZy5JbnB1dEVudHJ5EikKE21heF90b2tlbnNfcGVyX2NhbGwYAyABKAVCB7pIBBoCKABIAIgBARosCgpJbnB1dEVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCFgoUX21heF90b2tlbnNfcGVyX2NhbGwi6gEKEFBsdWdpbk5vZGVDb25maWcSEwoLcGx1Z2luX25hbWUYASABKAkSDgoGbWV0aG9kGAIgASgJEj8KBnBhcmFtcxgDIAMoCzIvLmdpYnNvbi5taXNzaW9uLnYxLlBsdWdpbk5vZGVDb25maWcuUGFyYW1zRW50cnkSKQoTbWF4X3Rva2Vuc19wZXJfY2FsbBgEIAEoBUIHukgEGgIoAEgAiAEBGi0KC1BhcmFtc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCFgoUX21heF90b2tlbnNfcGVyX2NhbGwigwEKE0NvbmRpdGlvbk5vZGVDb25maWcSEgoKZXhwcmVzc2lvbhgBIAEoCRITCgt0cnVlX2JyYW5jaBgCIAMoCRIUCgxmYWxzZV9icmFuY2gYAyADKAkSLQoIbGFuZ3VhZ2UYBCABKA4yGy5naWJzb24ubWlzc2lvbi52MS5MYW5ndWFnZSJgChJQYXJhbGxlbE5vZGVDb25maWcSMQoJc3ViX25vZGVzGAEgAygLMh4uZ2lic29uLm1pc3Npb24udjEuTWlzc2lvbk5vZGUSFwoPbWF4X2NvbmN1cnJlbmN5GAIgASgFInQKDkpvaW5Ob2RlQ29uZmlnEhoKCHdhaXRfZm9yGAEgAygJQgi6SAWSAQIIARIyCghzdHJhdGVneRgCIAEoDjIgLmdpYnNvbi5taXNzaW9uLnYxLk1lcmdlU3RyYXRlZ3kSEgoKYWdncmVnYXRvchgDIAEoCSKEAQoPV29ya3NwYWNlQ29uZmlnEjkKDHJlcG9zaXRvcmllcxgBIAMoCzIjLmdpYnNvbi5taXNzaW9uLnYxLlJlcG9zaXRvcnlDb25maWcSNgoIc2V0dGluZ3MYAiABKAsyJC5naWJzb24ubWlzc2lvbi52MS5Xb3Jrc3BhY2VTZXR0aW5ncyJ7ChBSZXBvc2l0b3J5Q29uZmlnEgwKBG5hbWUYASABKAkSCwoDdXJsGAIgASgJEg4KBmJyYW5jaBgDIAEoCRIXCg9jcmVkZW50aWFsX25hbWUYBCABKAkSDwoHc2hhbGxvdxgFIAEoCBISCgpkZXBlbmRzX29uGAYgAygJIqQBChFXb3Jrc3BhY2VTZXR0aW5ncxIbChNjbGVhbnVwX29uX2NvbXBsZXRlGAEgASgIEhUKDXVzZV93b3JrdHJlZXMYAiABKAgSEwoLbHNwX2VuYWJsZWQYAyABKAgSLgoLbHNwX3RpbWVvdXQYBCABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SFgoOYmFzZV9kaXJlY3RvcnkYBSABKAkiRwoLUmV1c2VQb2xpY3kSFAoMb3V0cHV0X3Njb3BlGAEgASgJEhMKC2lucHV0X3Njb3BlGAIgASgJEg0KBXJldXNlGAMgASgJItQBCgtSZXRyeVBvbGljeRITCgttYXhfcmV0cmllcxgBIAEoBRI8ChBiYWNrb2ZmX3N0cmF0ZWd5GAIgASgOMiIuZ2lic29uLm1pc3Npb24udjEuQmFja29mZlN0cmF0ZWd5EjAKDWluaXRpYWxfZGVsYXkYAyABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SLAoJbWF4X2RlbGF5GAQgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEhIKCm11bHRpcGxpZXIYBSABKAEikQEKCkRhdGFQb2xpY3kSEwoLc3RvcmVfaW5wdXQYASABKAgSFAoMc3RvcmVfb3V0cHV0GAIgASgIEiwKCXJldGVudGlvbhgDIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhISCgplbmNyeXB0aW9uGAQgASgIEhYKDmFjY2Vzc19jb250cm9sGAUgAygJIqsBCgtNaXNzaW9uRWRnZRIMCgRmcm9tGAEgASgJEgoKAnRvGAIgASgJEhEKCWNvbmRpdGlvbhgDIAEoCRI+CghtZXRhZGF0YRgEIAMoCzIsLmdpYnNvbi5taXNzaW9uLnYxLk1pc3Npb25FZGdlLk1ldGFkYXRhRW50cnkaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBKqkBCghOb2RlVHlwZRIZChVOT0RFX1RZUEVfVU5TUEVDSUZJRUQQABITCg9OT0RFX1RZUEVfQUdFTlQQARISCg5OT0RFX1RZUEVfVE9PTBACEhQKEE5PREVfVFlQRV9QTFVHSU4QAxIXChNOT0RFX1RZUEVfQ09ORElUSU9OEAQSFgoSTk9ERV9UWVBFX1BBUkFMTEVMEAUSEgoOTk9ERV9UWVBFX0pPSU4QBio2CghMYW5ndWFnZRIYChRMQU5HVUFHRV9VTlNQRUNJRklFRBAAEhAKDExBTkdVQUdFX0NFTBABKrMBCg1NZXJnZVN0cmF0ZWd5Eh4KGk1FUkdFX1NUUkFURUdZX1VOU1BFQ0lGSUVEEAASGQoVTUVSR0VfU1RSQVRFR1lfQ09OQ0FUEAESGQoVTUVSR0VfU1RSQVRFR1lfUkVEVUNFEAISGAoUTUVSR0VfU1RSQVRFR1lfRklSU1QQAxIXChNNRVJHRV9TVFJBVEVHWV9MQVNUEAQSGQoVTUVSR0VfU1RSQVRFR1lfQ1VTVE9NEAUqkQEKD0JhY2tvZmZTdHJhdGVneRIgChxCQUNLT0ZGX1NUUkFURUdZX1VOU1BFQ0lGSUVEEAASHQoZQkFDS09GRl9TVFJBVEVHWV9DT05TVEFOVBABEhsKF0JBQ0tPRkZfU1RSQVRFR1lfTElORUFSEAISIAocQkFDS09GRl9TVFJBVEVHWV9FWFBPTkVOVElBTBADQlNQAVo+Z2l0aHViLmNvbS96ZXJvLWRheS1haS9zZGsvYXBpL2dlbi9naWJzb24vbWlzc2lvbi92MTttaXNzaW9ucGKqAg5HaWJzb24uTWlzc2lvbmIGcHJvdG8z", [file_google_protobuf_duration, file_google_protobuf_timestamp, file_gibson_types_v1_types, file_buf_validate_validate]);
 
 /**
  * MissionDefinition represents a mission template/definition.
@@ -155,6 +155,20 @@ export type MissionDefinition = Message<"gibson.mission.v1.MissionDefinition"> &
    * @generated from field: gibson.mission.v1.WorkspaceConfig workspace = 15;
    */
   workspace?: WorkspaceConfig;
+
+  /**
+   * Constraints declares mission-level operational limits. When present,
+   * these are the authoritative constraints for the mission DAG — they
+   * make the mission self-describing so authors do not have to supply limits
+   * out-of-band at dispatch time. The daemon merges these with any
+   * dispatch-time overrides (dispatch wins on conflict).
+   * Optional: absent means no constraints are baked into the definition.
+   *
+   * Spec: sdk#47 (MissionConstraints proto promotion).
+   *
+   * @generated from field: optional gibson.mission.v1.MissionConstraints constraints = 16;
+   */
+  constraints?: MissionConstraints;
 };
 
 /**
@@ -163,6 +177,135 @@ export type MissionDefinition = Message<"gibson.mission.v1.MissionDefinition"> &
  */
 export const MissionDefinitionSchema: GenMessage<MissionDefinition> = /*@__PURE__*/
   messageDesc(file_gibson_mission_v1_mission_definition, 0);
+
+/**
+ * MissionConstraints declares the operational limits baked into a mission
+ * definition. Making constraints part of the schema lets mission authors
+ * publish self-describing missions (e.g., "stop after 50 findings") without
+ * requiring callers to supply limits out-of-band at dispatch time.
+ *
+ * Semantics (zero means unlimited):
+ *   - max_duration  : 0 duration  → no time limit
+ *   - max_tokens    : 0           → no token budget
+ *   - max_cost      : 0.0         → no cost ceiling
+ *   - max_findings  : 0           → no finding count limit
+ *
+ * Spec: sdk#47 (MissionConstraints proto promotion).
+ *
+ * @generated from message gibson.mission.v1.MissionConstraints
+ */
+export type MissionConstraints = Message<"gibson.mission.v1.MissionConstraints"> & {
+  /**
+   * max_duration is the wall-clock limit for the entire mission.
+   * Uses google.protobuf.Duration for sub-second precision.
+   * Absent or zero-value means no time limit.
+   *
+   * @generated from field: google.protobuf.Duration max_duration = 1;
+   */
+  maxDuration?: Duration;
+
+  /**
+   * max_tokens is the cumulative LLM token budget across all agent nodes.
+   * 0 means unlimited.
+   *
+   * @generated from field: int64 max_tokens = 2;
+   */
+  maxTokens: bigint;
+
+  /**
+   * max_cost is the cumulative LLM cost ceiling in USD across all agent
+   * nodes. 0.0 means unlimited.
+   *
+   * @generated from field: double max_cost = 3;
+   */
+  maxCost: number;
+
+  /**
+   * max_findings is the maximum number of findings to collect before the
+   * mission stops. 0 means unlimited.
+   *
+   * @generated from field: int32 max_findings = 4;
+   */
+  maxFindings: number;
+
+  /**
+   * severity_threshold is the minimum severity level required to record a
+   * finding. Common values: "low", "medium", "high", "critical".
+   * Empty string means accept all severities.
+   *
+   * @generated from field: string severity_threshold = 5;
+   */
+  severityThreshold: string;
+
+  /**
+   * require_evidence indicates whether all findings must include
+   * proof-of-concept evidence before being recorded.
+   *
+   * @generated from field: bool require_evidence = 6;
+   */
+  requireEvidence: boolean;
+
+  /**
+   * blocked_tools lists tool names that must not be invoked during this
+   * mission. The daemon enforces this at dispatch time.
+   *
+   * @generated from field: repeated string blocked_tools = 7;
+   */
+  blockedTools: string[];
+
+  /**
+   * blocked_domains lists network domains (e.g., "prod.example.com") that
+   * agents must not contact. Enforcement is best-effort at the tool level.
+   *
+   * @generated from field: repeated string blocked_domains = 8;
+   */
+  blockedDomains: string[];
+
+  /**
+   * max_turns_per_agent caps the number of agent turns (Observe→Think→Act
+   * iterations) for any single agent node in the mission. 0 means unlimited.
+   *
+   * @generated from field: int32 max_turns_per_agent = 9;
+   */
+  maxTurnsPerAgent: number;
+
+  /**
+   * allowed_techniques is the allowlist of attack technique IDs (taxonomy)
+   * that agents may use during the mission. Empty list means no allowlist
+   * (any technique may be used unless blocked).
+   *
+   * @generated from field: repeated string allowed_techniques = 10;
+   */
+  allowedTechniques: string[];
+
+  /**
+   * blocked_techniques is the blocklist of attack technique IDs that
+   * agents must not use, regardless of allowed_techniques. Empty list
+   * means no blocklist.
+   *
+   * @generated from field: repeated string blocked_techniques = 11;
+   */
+  blockedTechniques: string[];
+
+  /**
+   * max_tokens_per_call is the mission-level cap on tokens consumed per
+   * individual LLM invocation. Overridden by per-node *NodeConfig.
+   * max_tokens_per_call when set on a specific node. 0 means unlimited
+   * from this mechanism. Spec: mission-schema-canonicalization
+   * Requirement 5. Enforced by internal/harness/per_call_cap.go's
+   * EffectivePerCallCap() in the daemon (wired in M4, gibson#133).
+   *
+   * @generated from field: int32 max_tokens_per_call = 12;
+   */
+  maxTokensPerCall: number;
+};
+
+/**
+ * Describes the message gibson.mission.v1.MissionConstraints.
+ * Use `create(MissionConstraintsSchema)` to create a new message.
+ */
+export const MissionConstraintsSchema: GenMessage<MissionConstraints> = /*@__PURE__*/
+  messageDesc(file_gibson_mission_v1_mission_definition, 1);
 
 /**
  * MissionDependencies specifies required components for a mission
@@ -197,7 +340,7 @@ export type MissionDependencies = Message<"gibson.mission.v1.MissionDependencies
  * Use `create(MissionDependenciesSchema)` to create a new message.
  */
 export const MissionDependenciesSchema: GenMessage<MissionDependencies> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 1);
+  messageDesc(file_gibson_mission_v1_mission_definition, 2);
 
 /**
  * MissionNode represents a single node in a mission DAG
@@ -341,7 +484,7 @@ export type MissionNode = Message<"gibson.mission.v1.MissionNode"> & {
  * Use `create(MissionNodeSchema)` to create a new message.
  */
 export const MissionNodeSchema: GenMessage<MissionNode> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 2);
+  messageDesc(file_gibson_mission_v1_mission_definition, 3);
 
 /**
  * AgentNodeConfig contains configuration for agent nodes.
@@ -381,7 +524,7 @@ export type AgentNodeConfig = Message<"gibson.mission.v1.AgentNodeConfig"> & {
  * Use `create(AgentNodeConfigSchema)` to create a new message.
  */
 export const AgentNodeConfigSchema: GenMessage<AgentNodeConfig> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 3);
+  messageDesc(file_gibson_mission_v1_mission_definition, 4);
 
 /**
  * ToolNodeConfig contains configuration for tool nodes.
@@ -421,7 +564,7 @@ export type ToolNodeConfig = Message<"gibson.mission.v1.ToolNodeConfig"> & {
  * Use `create(ToolNodeConfigSchema)` to create a new message.
  */
 export const ToolNodeConfigSchema: GenMessage<ToolNodeConfig> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 4);
+  messageDesc(file_gibson_mission_v1_mission_definition, 5);
 
 /**
  * PluginNodeConfig contains configuration for plugin nodes.
@@ -469,7 +612,7 @@ export type PluginNodeConfig = Message<"gibson.mission.v1.PluginNodeConfig"> & {
  * Use `create(PluginNodeConfigSchema)` to create a new message.
  */
 export const PluginNodeConfigSchema: GenMessage<PluginNodeConfig> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 5);
+  messageDesc(file_gibson_mission_v1_mission_definition, 6);
 
 /**
  * ConditionNodeConfig contains configuration for condition nodes
@@ -513,7 +656,7 @@ export type ConditionNodeConfig = Message<"gibson.mission.v1.ConditionNodeConfig
  * Use `create(ConditionNodeConfigSchema)` to create a new message.
  */
 export const ConditionNodeConfigSchema: GenMessage<ConditionNodeConfig> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 6);
+  messageDesc(file_gibson_mission_v1_mission_definition, 7);
 
 /**
  * ParallelNodeConfig contains configuration for parallel nodes.
@@ -545,7 +688,7 @@ export type ParallelNodeConfig = Message<"gibson.mission.v1.ParallelNodeConfig">
  * Use `create(ParallelNodeConfigSchema)` to create a new message.
  */
 export const ParallelNodeConfigSchema: GenMessage<ParallelNodeConfig> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 7);
+  messageDesc(file_gibson_mission_v1_mission_definition, 8);
 
 /**
  * JoinNodeConfig blocks until every node ID in `wait_for` has
@@ -590,7 +733,7 @@ export type JoinNodeConfig = Message<"gibson.mission.v1.JoinNodeConfig"> & {
  * Use `create(JoinNodeConfigSchema)` to create a new message.
  */
 export const JoinNodeConfigSchema: GenMessage<JoinNodeConfig> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 8);
+  messageDesc(file_gibson_mission_v1_mission_definition, 9);
 
 /**
  * WorkspaceConfig configures repository cloning + workspace
@@ -626,7 +769,7 @@ export type WorkspaceConfig = Message<"gibson.mission.v1.WorkspaceConfig"> & {
  * Use `create(WorkspaceConfigSchema)` to create a new message.
  */
 export const WorkspaceConfigSchema: GenMessage<WorkspaceConfig> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 9);
+  messageDesc(file_gibson_mission_v1_mission_definition, 10);
 
 /**
  * RepositoryConfig defines a single repository to clone. Maps
@@ -687,7 +830,7 @@ export type RepositoryConfig = Message<"gibson.mission.v1.RepositoryConfig"> & {
  * Use `create(RepositoryConfigSchema)` to create a new message.
  */
 export const RepositoryConfigSchema: GenMessage<RepositoryConfig> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 10);
+  messageDesc(file_gibson_mission_v1_mission_definition, 11);
 
 /**
  * WorkspaceSettings carries workspace-wide options.
@@ -741,7 +884,7 @@ export type WorkspaceSettings = Message<"gibson.mission.v1.WorkspaceSettings"> &
  * Use `create(WorkspaceSettingsSchema)` to create a new message.
  */
 export const WorkspaceSettingsSchema: GenMessage<WorkspaceSettings> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 11);
+  messageDesc(file_gibson_mission_v1_mission_definition, 12);
 
 /**
  * ReusePolicy declares how a node's I/O is scoped + reused
@@ -786,7 +929,7 @@ export type ReusePolicy = Message<"gibson.mission.v1.ReusePolicy"> & {
  * Use `create(ReusePolicySchema)` to create a new message.
  */
 export const ReusePolicySchema: GenMessage<ReusePolicy> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 12);
+  messageDesc(file_gibson_mission_v1_mission_definition, 13);
 
 /**
  * RetryPolicy defines the retry behavior for a mission node
@@ -835,7 +978,7 @@ export type RetryPolicy = Message<"gibson.mission.v1.RetryPolicy"> & {
  * Use `create(RetryPolicySchema)` to create a new message.
  */
 export const RetryPolicySchema: GenMessage<RetryPolicy> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 13);
+  messageDesc(file_gibson_mission_v1_mission_definition, 14);
 
 /**
  * DataPolicy defines how data is handled for a node
@@ -884,7 +1027,7 @@ export type DataPolicy = Message<"gibson.mission.v1.DataPolicy"> & {
  * Use `create(DataPolicySchema)` to create a new message.
  */
 export const DataPolicySchema: GenMessage<DataPolicy> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 14);
+  messageDesc(file_gibson_mission_v1_mission_definition, 15);
 
 /**
  * MissionEdge represents a directed edge in the mission DAG
@@ -926,7 +1069,7 @@ export type MissionEdge = Message<"gibson.mission.v1.MissionEdge"> & {
  * Use `create(MissionEdgeSchema)` to create a new message.
  */
 export const MissionEdgeSchema: GenMessage<MissionEdge> = /*@__PURE__*/
-  messageDesc(file_gibson_mission_v1_mission_definition, 15);
+  messageDesc(file_gibson_mission_v1_mission_definition, 16);
 
 /**
  * NodeType defines the type of mission node

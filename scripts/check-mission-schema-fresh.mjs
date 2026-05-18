@@ -40,7 +40,17 @@ const SCRIPT_NAME = "check-mission-schema-fresh.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, "..");
-const REPO_ROOT = resolve(DASHBOARD_ROOT, "..", "..", "..");
+
+// Worktree-aware: same pattern as gen-mission-schema.mjs (and the sister
+// scripts proto-generate.mjs / gen-authz-registry.mjs). When the dashboard
+// is checked out at `.worktrees/<name>/`, the naive `../../..` walk would
+// short-cut and miss the SDK sibling, causing the freshness gate to
+// silently skip in STRUCTURAL mode in every worktree.
+const isWorktree = DASHBOARD_ROOT.includes("/.worktrees/");
+const MAIN_DASHBOARD_ROOT = isWorktree
+  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, "")
+  : DASHBOARD_ROOT;
+const REPO_ROOT = resolve(MAIN_DASHBOARD_ROOT, "..", "..", "..");
 
 const COMMITTED = resolve(
   DASHBOARD_ROOT,
