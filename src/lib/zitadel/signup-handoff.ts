@@ -281,6 +281,13 @@ export async function initiateOidcAuthRequest(
   };
   jar.set(names.state, stateCookieValue, baseCookieOpts);
   jar.set(names.pkceCodeVerifier, pkceCookieValue, baseCookieOpts);
+  // authjs.callback-url tells Auth.js's callback handler where to send the
+  // user after the OIDC roundtrip completes. The /login path mints this
+  // cookie client-side via signIn("zitadel", { callbackUrl }); the
+  // server-side auto-login path has to mint it here for parity. Without
+  // it, Auth.js falls back to the site root ("/"), so a successful sign-in
+  // dumps the user on the marketing landing instead of /dashboard.
+  jar.set(names.callbackUrl, '/dashboard', baseCookieOpts);
 
   // -------------------------------------------------------------------------
   // 4. Hit /oauth/v2/authorize server-side with redirect:manual to extract
