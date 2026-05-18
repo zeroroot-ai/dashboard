@@ -532,6 +532,18 @@ export async function getMissionHistory(name: string, limit = 100, offset = 0, u
   return response;
 }
 
+export async function listMissionDefinitions(userId?: string, tenantId?: string) {
+  const client = await getClient(userId, tenantId);
+  const response = await client.listMissionDefinitions({});
+  return response;
+}
+
+export async function getMissionDefinition(name: string, userId?: string, tenantId?: string) {
+  const client = await getClient(userId, tenantId);
+  const response = await client.getMissionDefinition({ name });
+  return response;
+}
+
 export interface TenantLangfuseCredentials {
   publicKey: string;
   secretKey: string;
