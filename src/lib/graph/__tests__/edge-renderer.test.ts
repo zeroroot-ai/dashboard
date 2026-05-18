@@ -447,7 +447,7 @@ describe('EdgeRenderer', () => {
       it('should restore context even if error occurs', () => {
         // Create a context that throws during stroke
         const faultyCtx = createMockCanvasContext();
-        (faultyCtx.stroke as any) = vi.fn(() => {
+        (faultyCtx as unknown as Record<string, unknown>).stroke = vi.fn(() => {
           throw new Error('Canvas error');
         });
 

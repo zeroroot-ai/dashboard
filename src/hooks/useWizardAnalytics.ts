@@ -27,6 +27,7 @@ import {
   type ErrorEncounteredPayload,
   type WizardStartedPayload,
   type WizardResumedPayload,
+  type WizardSkippedPayload,
   type AgentSelectedPayload,
   type TemplateSelectedPayload,
 } from '@/src/lib/analytics/onboarding-events';
@@ -191,7 +192,7 @@ export function useWizardAnalytics(context: WizardAnalyticsContext): UseWizardAn
         currentStepId,
         currentStep,
         completedSteps,
-        reason as any
+        reason as WizardSkippedPayload['skipReason']
       );
       timingTracker.reset();
     },

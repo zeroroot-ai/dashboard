@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { SlidersHorizontal, Settings2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -229,7 +230,7 @@ export default function GraphPage() {
                   : 'Run a mission to populate the knowledge graph.'}
               </p>
               <Button asChild variant="outline" size="sm">
-                <a href="/dashboard/missions">Go to Missions</a>
+                <Link href="/dashboard/missions">Go to Missions</Link>
               </Button>
             </div>
           </div>

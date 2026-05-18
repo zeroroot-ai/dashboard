@@ -2,6 +2,7 @@
 
 import { Label } from "@/components/ui/label";
 import { useThemeConfig } from "@/components/active-theme";
+import type { ThemeType } from "@/lib/themes";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export function ContentLayoutSelector() {
@@ -14,7 +15,7 @@ export function ContentLayoutSelector() {
         className="w-full"
         value={theme.contentLayout}
         type="single"
-        onValueChange={(value) => setTheme({ ...theme, contentLayout: value as any })}>
+        onValueChange={(value) => setTheme({ ...theme, contentLayout: value as ThemeType["contentLayout"] })}>
         <ToggleGroupItem variant="outline" className="grow" value="full">
           Full
         </ToggleGroupItem>

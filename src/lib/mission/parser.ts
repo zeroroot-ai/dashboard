@@ -18,10 +18,15 @@ import type {
   ScopePattern,
   MissionConfig,
   MissionStep,
+  MissionStepType,
   GuardrailsConfig,
   RateLimitConfig,
   ConfirmationRule,
   ScopeTargetType,
+  ScopeExpansionMode,
+  SeverityLevel,
+  ReportFormat,
+  MissionPriority,
 } from '@/src/types/mission-creation';
 
 // ============================================================================
@@ -178,9 +183,9 @@ export function extractMetadata(yaml: MissionYAML): Partial<MissionMetadata> {
     tags: yaml.tags || [],
     maxDuration: yaml.maxDuration || null,
     maxCost: yaml.maxCost || null,
-    severityThreshold: yaml.reporting?.severityThreshold as any || null,
-    reportFormats: (yaml.reporting?.formats || ['json']) as any[],
-    priority: (yaml.priority || 'normal') as any,
+    severityThreshold: (yaml.reporting?.severityThreshold as SeverityLevel | undefined) ?? null,
+    reportFormats: (yaml.reporting?.formats as ReportFormat[] | undefined) ?? ['json'],
+    priority: (yaml.priority as MissionPriority | undefined) ?? 'normal',
   };
 }
 
@@ -248,7 +253,7 @@ export function extractScope(yaml: MissionYAML): Partial<ScopeConfig> {
     exclude,
     maxDepth: scope.depth ?? 3,
     followRedirects: scope.followRedirects ?? true,
-    expansionMode: (scope.expansionMode || 'subdomain') as any,
+    expansionMode: (scope.expansionMode || 'subdomain') as ScopeExpansionMode,
   };
 }
 
@@ -266,16 +271,17 @@ export function extractMission(yaml: MissionYAML): Partial<MissionConfig> {
   // Handle bare array of steps — `mission:` followed directly by a list.
   if (Array.isArray(mission)) {
     for (const step of mission as Array<NonNullable<MissionYAMLBlock['steps']>[number]>) {
+      const stepType: MissionStepType = (step.type as MissionStepType | undefined) || (step.agent ? 'agent' : step.tool ? 'tool' : 'agent');
       steps.push({
         id: step.id || generateId(),
-        type: (step.type as any) || (step.agent ? 'agent' : step.tool ? 'tool' : 'agent'),
+        type: stepType,
         name: step.name || step.agent || step.tool || 'Step',
         config: {
           type: 'agent',
           agentId: step.agent || '',
           task: step.task || '',
           parameters: step.parameters,
-        } as any,
+        },
         dependsOn: step.dependsOn || [],
       });
     }
@@ -285,16 +291,17 @@ export function extractMission(yaml: MissionYAML): Partial<MissionConfig> {
   // Handle sequential steps array
   if (mission.steps) {
     for (const step of mission.steps) {
+      const stepType: MissionStepType = (step.type as MissionStepType | undefined) || (step.agent ? 'agent' : step.tool ? 'tool' : 'agent');
       steps.push({
         id: step.id || generateId(),
-        type: step.type as any || (step.agent ? 'agent' : step.tool ? 'tool' : 'agent'),
+        type: stepType,
         name: step.name || step.agent || step.tool || 'Step',
         config: {
           type: 'agent',
           agentId: step.agent || '',
           task: step.task || '',
           parameters: step.parameters,
-        } as any,
+        },
         dependsOn: step.dependsOn || [],
       });
     }
@@ -311,7 +318,7 @@ export function extractMission(yaml: MissionYAML): Partial<MissionConfig> {
           type: 'agent',
           agentId: agent.name,
           task: agent.task,
-        } as any,
+        },
         dependsOn: [],
       });
     }
@@ -503,29 +510,29 @@ function buildMissionYAMLBlock(mission: MissionConfig): MissionYAMLBlock {
   const result: MissionYAMLBlock = {};
 
   if (mission.executionMode !== 'sequential') {
-    result.type = mission.executionMode as any;
+    result.type = mission.executionMode;
   }
 
   if (mission.steps.length > 0) {
     result.steps = mission.steps.map((step) => {
-      const stepYAML: any = {};
+      const stepYAML: NonNullable<MissionYAMLBlock['steps']>[number] & Record<string, unknown> = {};
 
       if (step.id) {
         stepYAML.id = step.id;
       }
 
       if (step.type === 'agent' && step.config.type === 'agent') {
-        const config = step.config as any;
+        const config = step.config;
         stepYAML.agent = config.agentId;
         stepYAML.task = config.task;
         if (config.parameters && Object.keys(config.parameters).length > 0) {
           stepYAML.parameters = config.parameters;
         }
       } else if (step.type === 'tool' && step.config.type === 'tool') {
-        const config = step.config as any;
+        const config = step.config;
         stepYAML.type = 'tool';
         stepYAML.tool = config.toolId;
-        stepYAML.parameters = config.inputs;
+        (stepYAML as Record<string, unknown>).parameters = config.inputs;
       } else {
         stepYAML.type = step.type;
         stepYAML.name = step.name;
@@ -612,12 +619,16 @@ export function yamlToState(yamlContent: string): ParseResult<Partial<MissionCre
   const yaml = parseResult.data;
 
   try {
+    // The extract* helpers return Partial<X> but the state requires full X —
+    // YAML may omit fields that have defaults; callers must fill gaps before
+    // submission. The casts suppress the TS structural mismatch without
+    // hiding the intent of the partial extraction.
     const state: Partial<MissionCreationState> = {
       yamlContent,
-      metadata: extractMetadata(yaml) as any,
-      scope: extractScope(yaml) as any,
-      mission: extractMission(yaml) as any,
-      guardrails: extractGuardrails(yaml) as any,
+      metadata: extractMetadata(yaml) as unknown as MissionMetadata,
+      scope: extractScope(yaml) as unknown as ScopeConfig,
+      mission: extractMission(yaml) as unknown as MissionConfig,
+      guardrails: extractGuardrails(yaml) as unknown as GuardrailsConfig,
     };
 
     return { success: true, data: state };

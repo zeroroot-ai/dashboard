@@ -71,6 +71,22 @@ const MY_MEMBERSHIPS_QUERY_KEY = ['my-memberships'] as const;
 export function useAuthorize(method: string): AuthorizeResult {
   const entry = AuthRegistry[method];
 
+  // useQuery must be called unconditionally (React hooks rules). The `enabled`
+  // flag prevents the network request when we already have a definitive answer
+  // without async data (unknown method, unauthenticated RPC, service-only RPC).
+  const needsMembershipCheck =
+    !!entry &&
+    !entry.unauthenticated &&
+    (entry.allowedIdentities & IdentityClass.USER) !== 0;
+
+  const { data: memberships, isLoading, isError } = useQuery({
+    queryKey: MY_MEMBERSHIPS_QUERY_KEY,
+    queryFn: fetchMyMemberships,
+    staleTime: 60_000,
+    retry: 1,
+    enabled: needsMembershipCheck,
+  });
+
   // Unknown method: DENY (fail-closed). No environment-dependent escape
   // hatch. Same behaviour in dev and prod: a registry miss is always a
   // programming error.
@@ -87,16 +103,6 @@ export function useAuthorize(method: string): AuthorizeResult {
   if ((entry.allowedIdentities & IdentityClass.USER) === 0) {
     return { allowed: false, loading: false };
   }
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks -- hook is called
-  // unconditionally at this point; the early returns above only apply when
-  // we already have a definitive answer without async data.
-  const { data: memberships, isLoading, isError } = useQuery({
-    queryKey: MY_MEMBERSHIPS_QUERY_KEY,
-    queryFn: fetchMyMemberships,
-    staleTime: 60_000,
-    retry: 1,
-  });
 
   // While loading (or on error), treat as denied to prevent FOUC.
   if (isLoading || isError || !memberships) {

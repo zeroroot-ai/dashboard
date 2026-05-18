@@ -66,6 +66,7 @@ vi.mock('sonner', () => ({
 // Radix DropdownMenu uses portals + pointer events that jsdom handles poorly.
 // Replace with a minimal inline test double driven by an open-state context.
 vi.mock('@/components/ui/dropdown-menu', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- vi.mock factory runs after hoisting; ES import is unavailable here
   const ReactImpl = require('react') as typeof import('react');
   const Ctx = ReactImpl.createContext<{
     open: boolean;

@@ -9,6 +9,7 @@ import {
   filterGraphData,
   type GraphData,
 } from './useGraph';
+import type { GraphNodeType } from '@/src/types';
 import { createTestQueryClient } from '@/src/test/test-utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -463,7 +464,7 @@ describe('useGraph hooks', () => {
     });
 
     it('should return empty result when filtering with non-existent type', () => {
-      const filtered = filterGraphData(mockGraphData, ['nonexistent' as any]);
+      const filtered = filterGraphData(mockGraphData, ['nonexistent' as unknown as GraphNodeType]);
 
       expect(filtered.nodes.length).toBe(0);
       expect(filtered.edges.length).toBe(0);

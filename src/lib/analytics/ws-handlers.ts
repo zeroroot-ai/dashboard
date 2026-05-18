@@ -317,8 +317,11 @@ export function handleWebSocketMessage(message: WebSocketMessage): void {
         handleKPIUpdate(event);
         break;
 
-      default:
-        logger.warn({ event: 'ws.handler.unknown_type', messageType: (event as any).type }, 'received unknown WebSocket event type');
+      default: {
+        // Capture type before TypeScript narrows to never at the exhausted switch end
+        const unknownType = (event as { type?: string }).type;
+        logger.warn({ event: 'ws.handler.unknown_type', messageType: unknownType }, 'received unknown WebSocket event type');
+      }
     }
   } catch (error) {
     // Do NOT log the full message payload — it may contain finding titles,

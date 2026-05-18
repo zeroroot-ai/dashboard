@@ -30,8 +30,8 @@ describe('useEventStream', () => {
       readyState: 1, // OPEN
     };
 
-    // Mock EventSource
-    global.EventSource = vi.fn(() => eventSourceMock as any) as any;
+    // Mock EventSource — vi.fn return type doesn't match typeof EventSource so cast through unknown
+    global.EventSource = vi.fn(() => eventSourceMock as unknown as EventSource) as unknown as typeof EventSource;
   });
 
   afterEach(() => {
@@ -404,13 +404,14 @@ describe('useEventStream', () => {
 
       unmount();
 
-      const callsBefore = (global.EventSource as any).mock.calls.length;
+      const mockedEventSource = vi.mocked(global.EventSource);
+      const callsBefore = mockedEventSource.mock.calls.length;
 
       act(() => {
         vi.advanceTimersByTime(5000);
       });
 
-      expect((global.EventSource as any).mock.calls.length).toBe(callsBefore);
+      expect(mockedEventSource.mock.calls.length).toBe(callsBefore);
     });
   });
 
