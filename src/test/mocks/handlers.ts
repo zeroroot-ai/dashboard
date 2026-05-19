@@ -113,10 +113,29 @@ export const handlers = [
     }, { status: 201 });
   }),
 
+  // Supported-provider catalogue consumed by useSupportedProviders. Hook
+  // expects `{ providers: SupportedProviderDescriptor[] }`. An empty list
+  // is a valid successful response — the test asserts data === [].
+  http.get('/api/settings/providers/supported', () => {
+    return HttpResponse.json({ providers: [] });
+  }),
+
+  // Mission lifecycle transitions consumed by useStartMission / usePauseMission
+  // / useResumeMission / useStopMission. Each handler returns the post-
+  // transition state so the optimistic update + final-state assertions agree.
+  http.post('/api/missions/:id/start', ({ params }) => {
+    return HttpResponse.json({
+      id: params.id,
+      status: 'running',
+      startedAt: new Date().toISOString(),
+    });
+  }),
+
   http.post('/api/missions/:id/stop', ({ params }) => {
     return HttpResponse.json({
       id: params.id,
       status: 'stopped',
+      completedAt: new Date().toISOString(),
     });
   }),
 
@@ -134,7 +153,11 @@ export const handlers = [
     });
   }),
 
-  // Findings endpoints
+  // Findings endpoints. Response shape must match PaginatedResponse<Finding>:
+  // `{ data: Finding[], total: number, nextCursor?: string }` — see
+  // src/types/index.ts. Earlier the handler returned `{ findings, ... }`
+  // which made every test that read `result.current.data?.data` fail with
+  // "expected undefined to be defined".
   http.get('/api/findings', ({ request }) => {
     const url = new URL(request.url);
     const severity = url.searchParams.get('severity');
@@ -155,15 +178,21 @@ export const handlers = [
     }
 
     return HttpResponse.json({
-      findings: findings.slice(0, limit),
+      data: findings.slice(0, limit),
       total: findings.length,
-      counts: {
-        critical: findings.filter(f => f.severity === 'critical').length,
-        high: findings.filter(f => f.severity === 'high').length,
-        medium: findings.filter(f => f.severity === 'medium').length,
-        low: findings.filter(f => f.severity === 'low').length,
-        info: findings.filter(f => f.severity === 'info').length,
-      },
+    });
+  }),
+
+  // Severity-counts endpoint consumed by useFindingsCounts. Hook expects
+  // a bare FindingsCountsBySeverity record, no envelope.
+  http.get('/api/findings/counts', () => {
+    const findings = Array.from({ length: 50 }, (_, i) => generateFinding(`finding-${i + 1}`));
+    return HttpResponse.json({
+      critical: findings.filter(f => f.severity === 'critical').length,
+      high: findings.filter(f => f.severity === 'high').length,
+      medium: findings.filter(f => f.severity === 'medium').length,
+      low: findings.filter(f => f.severity === 'low').length,
+      info: findings.filter(f => f.severity === 'info').length,
     });
   }),
 
@@ -212,32 +241,47 @@ export const handlers = [
   }),
 
   // Graph endpoints
-  http.get('/api/graph', ({ request }) => {
-    const url = new URL(request.url);
-    const missionId = url.searchParams.get('missionId');
-
+  // Graph nodes/edges. Hook expects `{ nodes: GraphNode[], edges: GraphEdge[] }`
+  // where GraphNode has { id, labels[], properties{} } (Neo4j-style) — see
+  // src/types/graph.ts.
+  http.get('/api/graph', () => {
     return HttpResponse.json({
       nodes: [
-        { id: 'mission-1', type: 'mission', label: 'Mission 1', data: {} },
-        { id: 'agent-1', type: 'agent', label: 'Agent 1', data: {} },
-        { id: 'host-1', type: 'host', label: 'example.com', data: {} },
-        { id: 'finding-1', type: 'finding', label: 'SQL Injection', data: {} },
+        { id: 'mission-1', labels: ['Mission'], properties: { name: 'Mission 1' } },
+        { id: 'agent-1', labels: ['Agent'], properties: { name: 'Recon Agent' } },
+        { id: 'host-1', labels: ['Host'], properties: { name: 'example.com' } },
+        { id: 'finding-1', labels: ['Finding'], properties: { title: 'SQL Injection' } },
       ],
       edges: [
-        { id: 'e1', source: 'mission-1', target: 'agent-1', type: 'uses' },
-        { id: 'e2', source: 'agent-1', target: 'host-1', type: 'scans' },
-        { id: 'e3', source: 'agent-1', target: 'finding-1', type: 'discovered' },
+        { id: 'e1', source: 'mission-1', target: 'agent-1', type: 'uses', properties: {} },
+        { id: 'e2', source: 'agent-1', target: 'host-1', type: 'scans', properties: {} },
+        { id: 'e3', source: 'agent-1', target: 'finding-1', type: 'discovered', properties: {} },
       ],
-      stats: {
-        nodes: 4,
-        edges: 3,
-        byType: {
-          mission: 1,
-          agent: 1,
-          host: 1,
-          finding: 1,
-        },
-      },
+    });
+  }),
+
+  // Mission-scoped graph fetched by useMissionGraph.
+  http.get('/api/graph/mission/:missionId', ({ params }) => {
+    const missionId = params.missionId as string;
+    return HttpResponse.json({
+      nodes: [
+        { id: missionId, labels: ['Mission'], properties: { name: 'Test Mission' } },
+        { id: 'agent-1', labels: ['Agent'], properties: { name: 'Recon Agent' } },
+      ],
+      edges: [
+        { id: 'e1', source: missionId, target: 'agent-1', type: 'uses', properties: {} },
+      ],
+    });
+  }),
+
+  // Aggregate stats fetched by useGraphStats. Hook expects GraphStats shape
+  // { totalNodes, totalEdges, nodesByType, relationshipTypes } from useGraph.ts.
+  http.get('/api/graph/stats', () => {
+    return HttpResponse.json({
+      totalNodes: 4,
+      totalEdges: 3,
+      nodesByType: { Mission: 1, Agent: 1, Host: 1, Finding: 1 },
+      relationshipTypes: { uses: 1, scans: 1, discovered: 1 },
     });
   }),
 ];

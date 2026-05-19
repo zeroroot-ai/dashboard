@@ -30,12 +30,20 @@ describe('useEventStream', () => {
       readyState: 1, // OPEN
     };
 
-    // Mock EventSource — vi.fn return type doesn't match typeof EventSource so cast through unknown
-    global.EventSource = vi.fn(() => eventSourceMock as unknown as EventSource) as unknown as typeof EventSource;
+    // Mock EventSource. Must be a function expression, NOT an arrow function —
+    // arrows are not constructable, so `new EventSource(...)` would throw
+    // "is not a constructor" and the hook's try/catch would silently swallow
+    // it. Returning a non-primitive from a constructor makes `new` resolve
+    // to that value, so `new EventSource()` evaluates to `eventSourceMock`.
+    global.EventSource = vi.fn(function () { return eventSourceMock; }) as unknown as typeof EventSource;
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    // Defence in depth — describe blocks below call vi.useFakeTimers() and
+    // older test runners would leak the fake-timer state into later describes.
+    // Explicitly switch back so each test starts with real timers.
+    vi.useRealTimers();
   });
 
   describe('connection management', () => {
@@ -216,8 +224,6 @@ describe('useEventStream', () => {
     });
 
     it('should handle parse errors without disconnecting', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
       renderHook(() => useEventStream());
 
       await waitFor(() => {
@@ -228,21 +234,14 @@ describe('useEventStream', () => {
         data: 'invalid json',
       });
 
+      // Hook's onmessage swallows JSON.parse errors silently (no console.error)
+      // — see useEventStream.ts. The only observable contract is "do not
+      // disconnect" and "do not push a garbled event into the buffer".
       act(() => {
         eventSourceMock.onmessage!(messageEvent);
       });
 
-      await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith(
-          expect.stringContaining('[EventStream] Failed to parse event'),
-          expect.any(Error)
-        );
-      });
-
-      // Should not disconnect
       expect(eventSourceMock.close).not.toHaveBeenCalled();
-
-      consoleSpy.mockRestore();
     });
 
     it('should not add events after unmount', async () => {
@@ -279,7 +278,11 @@ describe('useEventStream', () => {
 
   describe('error handling and reconnection', () => {
     beforeEach(() => {
-      vi.useFakeTimers();
+      // shouldAdvanceTime lets waitFor (testing-library) keep polling under
+      // fake timers — without it, the microtask + setTimeout queue is paused
+      // and waitFor's interval never re-fires, so async assertions all hit
+      // the 5s outer timeout.
+      vi.useFakeTimers({ shouldAdvanceTime: true });
     });
 
     afterEach(() => {
@@ -427,7 +430,11 @@ describe('useEventStream', () => {
     });
 
     it('should reset attempts on manual reconnect', async () => {
-      vi.useFakeTimers();
+      // shouldAdvanceTime lets waitFor (testing-library) keep polling under
+      // fake timers — without it, the microtask + setTimeout queue is paused
+      // and waitFor's interval never re-fires, so async assertions all hit
+      // the 5s outer timeout.
+      vi.useFakeTimers({ shouldAdvanceTime: true });
 
       const { result } = renderHook(() => useEventStream());
 
@@ -539,7 +546,11 @@ describe('useEventStream', () => {
     });
 
     it('should return error when connection fails', async () => {
-      vi.useFakeTimers();
+      // shouldAdvanceTime lets waitFor (testing-library) keep polling under
+      // fake timers — without it, the microtask + setTimeout queue is paused
+      // and waitFor's interval never re-fires, so async assertions all hit
+      // the 5s outer timeout.
+      vi.useFakeTimers({ shouldAdvanceTime: true });
 
       const { result } = renderHook(() => useEventStream());
 

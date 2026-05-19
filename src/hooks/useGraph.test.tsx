@@ -10,8 +10,9 @@ import {
   type GraphData,
 } from './useGraph';
 import type { GraphNodeType } from '@/src/types';
-import { createTestQueryClient, createHookWrapper } from '@/src/test/test-utils';
+import { createTestQueryClient, createHookWrapper, TEST_TENANT } from '@/src/test/test-utils';
 import { QueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/src/lib/query/keys';
 
 const mockGraphData: GraphData = {
   nodes: [
@@ -131,8 +132,11 @@ describe('useGraph hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      // Query should have 2 minute staleTime (expensive query)
-      const queryState = queryClient.getQueryState(['graph', 'mission', 'mission-1']);
+      // Query should have 2 minute staleTime (expensive query).
+      // useMissionGraph keys by queryKeys.graph.mission(tenantId, missionId).
+      const queryState = queryClient.getQueryState(
+        queryKeys.graph.mission(TEST_TENANT.id, 'mission-1'),
+      );
       expect(queryState).toBeDefined();
     });
   });

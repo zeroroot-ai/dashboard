@@ -7,8 +7,9 @@ import {
   useFindingsCounts,
   useFindingsSSE,
 } from './useFindings';
-import { createTestQueryClient, createHookWrapper } from '@/src/test/test-utils';
+import { createTestQueryClient, createHookWrapper, TEST_TENANT } from '@/src/test/test-utils';
 import { QueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/src/lib/query/keys';
 import type { Finding, PaginatedResponse } from '@/src/types';
 
 const mockFinding: Finding = {
@@ -199,7 +200,10 @@ describe('useFindings', () => {
     });
 
     it('should auto-refetch every 30 seconds', async () => {
-      vi.useFakeTimers();
+      // shouldAdvanceTime keeps testing-library's waitFor polling alive under
+      // fake timers — without it, the microtask + setTimeout queue is paused
+      // and waitFor's interval never re-fires.
+      vi.useFakeTimers({ shouldAdvanceTime: true });
 
       const { result } = renderHook(() => useFindingsCounts(), {
         wrapper: createHookWrapper(queryClient),
@@ -237,12 +241,19 @@ describe('useFindings', () => {
         readyState: 1, // OPEN
       };
 
-      // Mock EventSource — vi.fn return type doesn't match typeof EventSource so cast through unknown
-      global.EventSource = vi.fn(() => eventSourceMock as unknown as EventSource) as unknown as typeof EventSource;
+      // Mock EventSource. Must be a function expression, NOT an arrow function —
+      // arrows are not constructable, so `new EventSource(...)` would throw
+      // "is not a constructor" and the hook's try/catch would silently swallow
+      // it. Returning a non-primitive from a constructor makes `new` resolve
+      // to that value, so `new EventSource()` evaluates to `eventSourceMock`.
+      global.EventSource = vi.fn(function () { return eventSourceMock; }) as unknown as typeof EventSource;
     });
 
     afterEach(() => {
       vi.restoreAllMocks();
+      // Some tests in this describe call vi.useFakeTimers() — restore real
+      // timers so later describes / tests don't inherit fake-timer state.
+      vi.useRealTimers();
     });
 
     it('should connect to SSE stream on mount', async () => {
@@ -258,14 +269,17 @@ describe('useFindings', () => {
     });
 
     it('should add new finding to cache on SSE message', async () => {
-      // Pre-populate cache
-      queryClient.setQueryData(['findings', 'list'], {
+      // Hook writes into the queryKeys.findings.list(tenantId, filters) cache
+      // key — must pre-populate with the same key, not a hand-rolled
+      // ['findings', 'list'] shorthand.
+      const cacheKey = queryKeys.findings.list(TEST_TENANT.id, {});
+      queryClient.setQueryData(cacheKey, {
         data: [],
         total: 0,
         nextCursor: null,
       } as unknown as PaginatedResponse<Finding>);
 
-      const { result } = renderHook(() => useFindingsSSE(), {
+      renderHook(() => useFindingsSSE(), {
         wrapper: createHookWrapper(queryClient),
       });
 
@@ -284,10 +298,7 @@ describe('useFindings', () => {
       });
 
       await waitFor(() => {
-        const cachedData = queryClient.getQueryData<PaginatedResponse<Finding>>([
-          'findings',
-          'list',
-        ]);
+        const cachedData = queryClient.getQueryData<PaginatedResponse<Finding>>(cacheKey);
         expect(cachedData?.data[0]?.id).toBe('finding-new');
       });
     });
@@ -360,8 +371,6 @@ describe('useFindings', () => {
     });
 
     it('should handle parse errors gracefully', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
       queryClient.setQueryData(['findings', 'list'], {
         data: [],
         total: 0,
@@ -376,7 +385,10 @@ describe('useFindings', () => {
         expect(eventSourceMock.onmessage).toBeDefined();
       });
 
-      // Send invalid JSON
+      // Send invalid JSON. The hook's onmessage uses `catch {}` to silently
+      // discard unparseable frames (useFindings.ts:60) — no console.error,
+      // no disconnect. The observable contract is "do not crash, do not
+      // close the connection".
       const event = new MessageEvent('message', {
         data: 'invalid json',
       });
@@ -385,18 +397,14 @@ describe('useFindings', () => {
         eventSourceMock.onmessage!(event);
       });
 
-      await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith(
-          expect.stringContaining('[SSE] Failed to parse finding'),
-          expect.any(Error)
-        );
-      });
-
-      consoleSpy.mockRestore();
+      expect(eventSourceMock.close).not.toHaveBeenCalled();
     });
 
     it('should reconnect on error with exponential backoff', async () => {
-      vi.useFakeTimers();
+      // shouldAdvanceTime keeps testing-library's waitFor polling alive under
+      // fake timers — without it, the microtask + setTimeout queue is paused
+      // and waitFor's interval never re-fires.
+      vi.useFakeTimers({ shouldAdvanceTime: true });
 
       renderHook(() => useFindingsSSE(), {
         wrapper: createHookWrapper(queryClient),

@@ -125,8 +125,12 @@ describe('useProviders Hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
+      // apiFetch invokes fetch(url, init) where init is undefined for GET.
+      // toHaveBeenCalledWith does strict arg-length matching, so pass undefined
+      // as the second arg too. Avoids "expected 1 arg, got 2".
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('includeDisabled=true')
+        expect.stringContaining('includeDisabled=true'),
+        undefined
       );
     });
 
@@ -340,8 +344,10 @@ describe('useProviders Hooks', () => {
         expect(global.fetch).toHaveBeenCalled();
       });
 
+      // See note above on includeDisabled — same arg-length contract.
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('provider=anthropic-primary')
+        expect.stringContaining('provider=anthropic-primary'),
+        undefined
       );
     });
   });
