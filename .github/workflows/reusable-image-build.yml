@@ -1,0 +1,139 @@
+name: Reusable image build
+
+# Reusable workflow for building + signing + SBOM + scanning platform images.
+# Spec: ci-pipelines-fully-green, task 17.
+#
+# Job 1 (build-and-push): build → push → SBOM → cosign sign.
+#   Controls the workflow conclusion; failure here = image NOT published.
+# Job 2 (vuln-scan): Trivy scan + SARIF upload.
+#   continue-on-error: true — scan failure does not affect the workflow badge.
+#   Runs only on non-PR events (no image to scan on PRs).
+
+on:
+  workflow_call:
+    inputs:
+      component_name:
+        required: true
+        type: string
+        description: Short name used for metadata tag patterns and image URL (e.g. gibson, dashboard).
+      component_path:
+        required: true
+        type: string
+        description: Path to the build context (e.g. core/gibson).
+      dockerfile_path:
+        required: true
+        type: string
+        description: Path to the Dockerfile relative to repo root.
+      image_name:
+        required: true
+        type: string
+        description: Fully qualified image name (e.g. ghcr.io/zero-day-ai/gibson).
+      tag_pattern:
+        required: true
+        type: string
+        description: Regex pattern for semver tag extraction (e.g. `gibson/v(.*)`).
+      build_args:
+        required: false
+        type: string
+        default: ""
+        description: Newline-separated BUILD_ARGS passed to docker/build-push-action.
+      trivy_severity:
+        required: false
+        type: string
+        default: "HIGH,CRITICAL"
+        description: Comma-separated Trivy severities that fail the build.
+    secrets:
+      ghtoken:
+        required: false
+        description: >
+          GitHub PAT with read access to private sibling repos that the
+          Dockerfile fetches at build time (e.g. plans.yaml from
+          zero-day-ai/tenant-operator). When supplied it is exposed to the
+          docker build as the BuildKit secret id=ghtoken; the Dockerfile is
+          responsible for mounting it under /run/secrets/ghtoken with
+          required=true if it actually needs the value.
+
+jobs:
+  build-and-push:
+    name: Build and push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+      attestations: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: zero-day-ai/.github/.github/actions/ghcr-login@main
+        with:
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ inputs.image_name }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=match,pattern=${{ inputs.tag_pattern }},group=1
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.component_path }}
+          file: ${{ inputs.dockerfile_path }}
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          push: ${{ github.event_name != 'pull_request' }}
+          provenance: true
+          sbom: true
+          build-args: ${{ inputs.build_args }}
+          # ghtoken — BuildKit secret. Mounted iff the caller supplied
+          # `secrets.ghtoken`; when unset the value is empty and any
+          # `--mount=type=secret,id=ghtoken,required=true` clause in the
+          # Dockerfile will fail loudly (as it should — image builds that
+          # fetch private cross-repo content must not silently degrade).
+          secrets: |
+            ghtoken=${{ secrets.ghtoken }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - if: github.event_name != 'pull_request'
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ inputs.image_name }}@${{ steps.build.outputs.digest }}
+          format: spdx-json
+          artifact-name: ${{ inputs.component_name }}-sbom.spdx.json
+          upload-release-assets: 'false'
+      - if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3
+      - if: github.event_name != 'pull_request'
+        run: |
+          cosign sign --yes ${{ inputs.image_name }}@${{ steps.build.outputs.digest }}
+
+  vuln-scan:
+    name: Vulnerability scan
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    continue-on-error: true   # ← decouples scan failure from workflow conclusion
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    steps:
+      - uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ inputs.image_name }}@${{ needs.build-and-push.outputs.digest }}
+          format: sarif
+          output: trivy-${{ inputs.component_name }}.sarif
+          severity: ${{ inputs.trivy_severity }}
+          exit-code: 1
+      - if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ inputs.component_name }}.sarif
+          category: trivy-${{ inputs.component_name }}
