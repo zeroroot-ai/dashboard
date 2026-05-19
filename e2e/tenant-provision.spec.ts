@@ -24,6 +24,7 @@
  */
 
 import { test, expect } from "@playwright/test";
+import * as crypto from "crypto";
 import { injectAuthSession, stubMemberships } from "./page-objects/auth.po";
 import { stubDaemonProxy, stubTierEndpoint } from "./page-objects/dashboard.po";
 
@@ -220,9 +221,9 @@ test.describe("tenant provisioning — integration (kind cluster)", () => {
         "e2e-prov-" +
         Date.now().toString(36) +
         "-" +
-        Math.random().toString(36).slice(2, 6);
+        crypto.randomBytes(2).toString("hex");
       const email = `${slug}@e2e.zero-day.local`;
-      const password = `Ae1!${slug.slice(0, 12)}`;
+      const password = `Ae1!${crypto.randomBytes(8).toString("hex")}`;
       const workspaceName = `Provision ${slug}`;
 
       // Stage 1 — submit signup form.

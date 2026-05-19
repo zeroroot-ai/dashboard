@@ -24,6 +24,7 @@
  */
 
 import { test, expect } from "@playwright/test";
+import * as crypto from "crypto";
 import { injectAuthSession, stubMemberships } from "./page-objects/auth.po";
 import { stubDaemonProxy } from "./page-objects/dashboard.po";
 
@@ -274,7 +275,7 @@ test.describe("agent enrollment — integration (kind cluster)", () => {
         "e2e-" +
         Date.now().toString(36) +
         "-" +
-        Math.random().toString(36).slice(2, 6);
+        crypto.randomBytes(2).toString("hex");
 
       let capturedClientId = "";
       let capturedEnrollCommand = "";
