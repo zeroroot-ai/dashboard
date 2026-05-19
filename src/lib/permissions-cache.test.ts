@@ -75,8 +75,10 @@ describe('getMyPermissions', () => {
 
     expect(result.role).toBe('member');
     expect(fetchMock).toHaveBeenCalledOnce();
+    // dashboard#209: tenant slug is NOT in the URL. The route reads
+    // tenant context from the session cookie server-side.
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/auth/my-permissions?tenantId=test-tenant',
+      '/api/auth/my-permissions',
       expect.objectContaining({ method: 'GET', credentials: 'same-origin' }),
     );
   });
