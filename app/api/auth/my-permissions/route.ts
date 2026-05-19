@@ -1,10 +1,16 @@
 /**
- * GET /api/auth/my-permissions?tenantId=<id>
+ * GET /api/auth/my-permissions
  *
  * Server-side endpoint that returns the authenticated user's permissions
- * within the given tenant. The endpoint exists so the browser never has
- * to hold a daemon-direct gRPC transport — every call to the daemon flows
- * through Envoy via the server-side `userClient` wrapper.
+ * within the active session tenant. The endpoint exists so the browser
+ * never has to hold a daemon-direct gRPC transport — every call to the
+ * daemon flows through Envoy via the server-side `userClient` wrapper.
+ *
+ * Tenant context is read from `session.user.tenantId` (set by Auth.js
+ * from the `gibson_active_tenant` cookie per spec
+ * `tenant-membership-not-in-jwt`); it is NOT accepted from a URL query
+ * string. Putting the slug in the URL leaked the tenant identifier into
+ * browser history / referer / access logs (dashboard#209).
  *
  * Spec: zero-trust-hardening Requirements 6.1, 6.2 — restore the
  * "always through Envoy" doctrine in code by removing the browser-side
@@ -13,7 +19,8 @@
  *
  * Behaviour:
  *   - Returns `401 { error: 'unauthenticated' }` when no Auth.js session.
- *   - Returns `400 { error: 'tenantId-required' }` when `?tenantId=` is missing.
+ *   - Returns `400 { error: 'no-active-tenant' }` when the session has no
+ *     active tenant (user has not yet selected one).
  *   - On success, returns the JSON-serialized `GetMyPermissionsResponse`
  *     with `Cache-Control: private, max-age=<NEXT_PUBLIC_PERMISSIONS_CACHE_TTL_MS / 1000>`.
  *     The response is per-user; the server itself does NOT cache across
@@ -25,7 +32,7 @@
 
 import 'server-only';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { toJson } from '@bufbuild/protobuf';
 
 import { getServerSession } from '@/src/lib/auth';
@@ -48,15 +55,17 @@ function getTtlSeconds(): number {
   return Math.floor(DEFAULT_TTL_MS / 1000);
 }
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(): Promise<NextResponse> {
   const session = await getServerSession();
   if (!session?.user) {
     return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
   }
 
-  const tenantId = request.nextUrl.searchParams.get('tenantId') ?? '';
+  // Tenant context comes from the session (active-tenant cookie), never
+  // from URL params (dashboard#209). See route module doc.
+  const tenantId = session.user.tenantId ?? '';
   if (!tenantId) {
-    return NextResponse.json({ error: 'tenantId-required' }, { status: 400 });
+    return NextResponse.json({ error: 'no-active-tenant' }, { status: 400 });
   }
 
   try {

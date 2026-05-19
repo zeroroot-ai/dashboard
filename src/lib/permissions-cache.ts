@@ -100,9 +100,15 @@ export function invalidateTenantPermissions(tenantId: string): void {
 // identical to what the gRPC client previously returned.
 
 async function fetchMyPermissionsViaRoute(
-  tenantId: string,
+  _tenantId: string,
 ): Promise<GetMyPermissionsResponse> {
-  const url = `/api/auth/my-permissions?tenantId=${encodeURIComponent(tenantId)}`;
+  // Tenant context is NOT passed via the URL (dashboard#209). The
+  // /api/auth/my-permissions route reads `session.user.tenantId`
+  // server-side. Leaving the slug in the URL would only leak it into
+  // browser history / referer / access logs. `_tenantId` is kept in
+  // the signature so the in-process Map cache can key entries per
+  // tenant (callers must pass the active session tenant).
+  const url = `/api/auth/my-permissions`;
   const resp = await fetch(url, {
     method: 'GET',
     credentials: 'same-origin',
@@ -147,6 +153,9 @@ export async function getMyPermissions(
   }
 
   const resp = await fetchMyPermissionsViaRoute(tenantId);
+  // The route returns permissions for the active session tenant.
+  // Callers are expected to pass that same tenant (used only as the
+  // cache key here).
 
   _cache.set(tenantId, {
     value: resp,
