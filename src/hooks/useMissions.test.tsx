@@ -8,8 +8,8 @@ import {
   useResumeMission,
   useStopMission,
 } from './useMissions';
-import { createTestQueryClient, renderWithQueryClient } from '@/src/test/test-utils';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createTestQueryClient, createHookWrapper } from '@/src/test/test-utils';
+import { QueryClient } from '@tanstack/react-query';
 import type { Mission } from '@/src/types';
 
 const mockMission: Mission = {
@@ -39,9 +39,7 @@ describe('useMissions', () => {
   describe('useMissions (list)', () => {
     it('should fetch missions successfully', async () => {
       const { result } = renderHook(() => useMissions(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -54,9 +52,7 @@ describe('useMissions', () => {
       const filters = { status: ['running' as const], search: 'test' };
 
       const { result } = renderHook(() => useMissions(filters), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -76,9 +72,7 @@ describe('useMissions', () => {
       );
 
       const { result } = renderHook(() => useMissions(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -93,9 +87,7 @@ describe('useMissions', () => {
       vi.useFakeTimers();
 
       const { result } = renderHook(() => useMissions(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -116,9 +108,7 @@ describe('useMissions', () => {
   describe('useMission (single)', () => {
     it('should fetch single mission successfully', async () => {
       const { result } = renderHook(() => useMission('mission-1'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -129,9 +119,7 @@ describe('useMissions', () => {
 
     it('should not fetch when id is empty', () => {
       const { result } = renderHook(() => useMission(''), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       expect(result.current.isPending).toBe(true);
@@ -149,9 +137,7 @@ describe('useMissions', () => {
       );
 
       const { result } = renderHook(() => useMission('nonexistent'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -172,9 +158,7 @@ describe('useMissions', () => {
 
     it('should start mission with optimistic update', async () => {
       const { result } = renderHook(() => useStartMission(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       result.current.mutate('mission-1');
@@ -193,9 +177,7 @@ describe('useMissions', () => {
       });
 
       const { result } = renderHook(() => useStartMission(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       result.current.mutate('mission-1');
@@ -216,9 +198,7 @@ describe('useMissions', () => {
       );
 
       const { result } = renderHook(() => useStartMission(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       result.current.mutate('mission-1');
@@ -236,9 +216,7 @@ describe('useMissions', () => {
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
       const { result } = renderHook(() => useStartMission(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       result.current.mutate('mission-1');
@@ -264,9 +242,7 @@ describe('useMissions', () => {
 
     it('should pause mission with optimistic update', async () => {
       const { result } = renderHook(() => usePauseMission(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       result.current.mutate('mission-1');
@@ -287,9 +263,7 @@ describe('useMissions', () => {
       );
 
       const { result } = renderHook(() => usePauseMission(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       result.current.mutate('mission-1');
@@ -311,9 +285,7 @@ describe('useMissions', () => {
 
     it('should resume mission with optimistic update', async () => {
       const { result } = renderHook(() => useResumeMission(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       result.current.mutate('mission-1');
@@ -334,9 +306,7 @@ describe('useMissions', () => {
 
     it('should stop mission with optimistic update', async () => {
       const { result } = renderHook(() => useStopMission(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       result.current.mutate('mission-1');
@@ -350,9 +320,7 @@ describe('useMissions', () => {
 
     it('should set completedAt timestamp', async () => {
       const { result } = renderHook(() => useStopMission(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       const beforeTime = Date.now();
@@ -372,9 +340,7 @@ describe('useMissions', () => {
       queryClient.setQueryData(['missions', 'detail', 'mission-1'], mockMission);
 
       const { result } = renderHook(() => useStartMission(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       result.current.mutate('mission-1');

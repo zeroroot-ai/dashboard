@@ -7,8 +7,8 @@ import {
   useFindingsCounts,
   useFindingsSSE,
 } from './useFindings';
-import { createTestQueryClient } from '@/src/test/test-utils';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createTestQueryClient, createHookWrapper } from '@/src/test/test-utils';
+import { QueryClient } from '@tanstack/react-query';
 import type { Finding, PaginatedResponse } from '@/src/types';
 
 const mockFinding: Finding = {
@@ -40,9 +40,7 @@ describe('useFindings', () => {
   describe('useFindings (list)', () => {
     it('should fetch findings successfully', async () => {
       const { result } = renderHook(() => useFindings(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -59,9 +57,7 @@ describe('useFindings', () => {
       };
 
       const { result } = renderHook(() => useFindings(filters), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -72,9 +68,7 @@ describe('useFindings', () => {
 
     it('should apply pagination options', async () => {
       const { result } = renderHook(() => useFindings({}, { limit: 10 }), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -92,9 +86,7 @@ describe('useFindings', () => {
       );
 
       const { result } = renderHook(() => useFindings(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -109,9 +101,7 @@ describe('useFindings', () => {
   describe('useInfiniteFindings', () => {
     it('should fetch findings with infinite scroll', async () => {
       const { result } = renderHook(() => useInfiniteFindings(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -123,9 +113,7 @@ describe('useFindings', () => {
 
     it('should fetch next page when hasNextPage is true', async () => {
       const { result } = renderHook(() => useInfiniteFindings({}, 10), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -145,9 +133,7 @@ describe('useFindings', () => {
       const filters = { severity: ['critical' as const] };
 
       const { result } = renderHook(() => useInfiniteFindings(filters), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -159,9 +145,7 @@ describe('useFindings', () => {
   describe('useFinding (single)', () => {
     it('should fetch single finding successfully', async () => {
       const { result } = renderHook(() => useFinding('finding-1'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -172,9 +156,7 @@ describe('useFindings', () => {
 
     it('should not fetch when id is null', () => {
       const { result } = renderHook(() => useFinding(null), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       expect(result.current.isPending).toBe(true);
@@ -191,9 +173,7 @@ describe('useFindings', () => {
       );
 
       const { result } = renderHook(() => useFinding('nonexistent'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -205,9 +185,7 @@ describe('useFindings', () => {
   describe('useFindingsCounts', () => {
     it('should fetch severity counts successfully', async () => {
       const { result } = renderHook(() => useFindingsCounts(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -224,9 +202,7 @@ describe('useFindings', () => {
       vi.useFakeTimers();
 
       const { result } = renderHook(() => useFindingsCounts(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -271,9 +247,7 @@ describe('useFindings', () => {
 
     it('should connect to SSE stream on mount', async () => {
       renderHook(() => useFindingsSSE(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => {
@@ -292,9 +266,7 @@ describe('useFindings', () => {
       } as unknown as PaginatedResponse<Finding>);
 
       const { result } = renderHook(() => useFindingsSSE(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => {
@@ -330,9 +302,7 @@ describe('useFindings', () => {
       } as unknown as PaginatedResponse<Finding>);
 
       renderHook(() => useFindingsSSE({}, onNewFinding), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => {
@@ -363,9 +333,7 @@ describe('useFindings', () => {
       } as unknown as PaginatedResponse<Finding>);
 
       renderHook(() => useFindingsSSE(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => {
@@ -401,9 +369,7 @@ describe('useFindings', () => {
       } as unknown as PaginatedResponse<Finding>);
 
       renderHook(() => useFindingsSSE(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => {
@@ -433,9 +399,7 @@ describe('useFindings', () => {
       vi.useFakeTimers();
 
       renderHook(() => useFindingsSSE(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => {
@@ -461,9 +425,7 @@ describe('useFindings', () => {
 
     it('should close connection on unmount', async () => {
       const { unmount } = renderHook(() => useFindingsSSE(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => {
@@ -477,9 +439,7 @@ describe('useFindings', () => {
 
     it('should provide disconnect function', async () => {
       const { result } = renderHook(() => useFindingsSSE(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => {
@@ -495,9 +455,7 @@ describe('useFindings', () => {
 
     it('should indicate connection status', async () => {
       const { result } = renderHook(() => useFindingsSSE(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => {

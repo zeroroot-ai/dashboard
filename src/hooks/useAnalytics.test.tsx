@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
+import { createHookWrapper } from '@/src/test/test-utils';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/src/test/mocks/server';
 import {
@@ -134,9 +135,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useKPIs(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -158,9 +157,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useKPIs(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -182,9 +179,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useKPIs(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -212,9 +207,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useFindingsTimeSeries('24h'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -234,9 +227,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useFindingsTimeSeries('7d'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -255,9 +246,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useFindingsTimeSeries('30d'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -275,9 +264,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useFindingsTimeSeries('90d'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -296,9 +283,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useFindingsTimeSeries('7d'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -317,9 +302,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useFindingsSeverity(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -343,9 +326,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useFindingsSeverity(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -363,9 +344,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useFindingsCategory(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -387,9 +366,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useFindingsCategory(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -407,9 +384,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useMissionHeatmap(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -431,9 +406,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useMissionHeatmap(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -451,9 +424,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useAgentPerformance(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -476,9 +447,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useAgentPerformance(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -501,9 +470,7 @@ describe('useAnalytics hooks', () => {
       );
 
       const { result } = renderHook(() => useAgentPerformance(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));

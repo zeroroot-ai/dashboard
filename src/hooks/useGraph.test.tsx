@@ -10,8 +10,8 @@ import {
   type GraphData,
 } from './useGraph';
 import type { GraphNodeType } from '@/src/types';
-import { createTestQueryClient } from '@/src/test/test-utils';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createTestQueryClient, createHookWrapper } from '@/src/test/test-utils';
+import { QueryClient } from '@tanstack/react-query';
 
 const mockGraphData: GraphData = {
   nodes: [
@@ -75,9 +75,7 @@ describe('useGraph hooks', () => {
   describe('useMissionGraph', () => {
     it('should fetch mission graph successfully', async () => {
       const { result } = renderHook(() => useMissionGraph('mission-1'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -89,9 +87,7 @@ describe('useGraph hooks', () => {
 
     it('should not fetch when missionId is null', () => {
       const { result } = renderHook(() => useMissionGraph(null), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       expect(result.current.isPending).toBe(true);
@@ -100,9 +96,7 @@ describe('useGraph hooks', () => {
 
     it('should not fetch when missionId is undefined', () => {
       const { result } = renderHook(() => useMissionGraph(undefined), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       expect(result.current.isPending).toBe(true);
@@ -119,9 +113,7 @@ describe('useGraph hooks', () => {
       );
 
       const { result } = renderHook(() => useMissionGraph('mission-1'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -134,9 +126,7 @@ describe('useGraph hooks', () => {
 
     it('should use longer staleTime for expensive query', async () => {
       const { result } = renderHook(() => useMissionGraph('mission-1'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -150,9 +140,7 @@ describe('useGraph hooks', () => {
   describe('useFullGraph', () => {
     it('should fetch full graph successfully', async () => {
       const { result } = renderHook(() => useFullGraph(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -168,9 +156,7 @@ describe('useGraph hooks', () => {
       };
 
       const { result } = renderHook(() => useFullGraph(filters), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -184,9 +170,7 @@ describe('useGraph hooks', () => {
       };
 
       const { result } = renderHook(() => useFullGraph(filters), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -200,9 +184,7 @@ describe('useGraph hooks', () => {
       };
 
       const { result } = renderHook(() => useFullGraph(filters), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -216,9 +198,7 @@ describe('useGraph hooks', () => {
       };
 
       const { result } = renderHook(() => useFullGraph(filters), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -234,9 +214,7 @@ describe('useGraph hooks', () => {
       };
 
       const { result } = renderHook(() => useFullGraph(filters), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -248,9 +226,7 @@ describe('useGraph hooks', () => {
   describe('useGraphStats', () => {
     it('should fetch graph statistics successfully', async () => {
       const { result } = renderHook(() => useGraphStats(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -272,9 +248,7 @@ describe('useGraph hooks', () => {
       );
 
       const { result } = renderHook(() => useGraphStats(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -288,9 +262,7 @@ describe('useGraph hooks', () => {
   describe('useGraph (convenience hook)', () => {
     it('should use mission graph when missionId is provided', async () => {
       const { result } = renderHook(() => useGraph('mission-1'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -300,9 +272,7 @@ describe('useGraph hooks', () => {
 
     it('should use full graph when missionId is null', async () => {
       const { result } = renderHook(() => useGraph(null), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -312,9 +282,7 @@ describe('useGraph hooks', () => {
 
     it('should use full graph when missionId is undefined', async () => {
       const { result } = renderHook(() => useGraph(undefined), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -328,9 +296,7 @@ describe('useGraph hooks', () => {
       };
 
       const { result } = renderHook(() => useGraph(null, filters), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -494,9 +460,7 @@ describe('useGraph hooks', () => {
   describe('caching behavior', () => {
     it('should cache mission graph data', async () => {
       const { result, rerender } = renderHook(() => useMissionGraph('mission-1'), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -513,9 +477,7 @@ describe('useGraph hooks', () => {
       const fetchSpy = vi.spyOn(global, 'fetch');
 
       const { result, rerender } = renderHook(() => useFullGraph(), {
-        wrapper: ({ children }) => (
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        ),
+        wrapper: createHookWrapper(queryClient),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
