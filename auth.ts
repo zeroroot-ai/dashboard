@@ -45,6 +45,7 @@ import {
   getThemeFromZitadel,
   THEME_COOKIE_NAME,
 } from "@/src/lib/user-prefs/theme";
+import { resolvePostSignInRedirect } from "@/src/lib/auth/post-signin-redirect";
 
 // ---------------------------------------------------------------------------
 // Module augmentation — extend the built-in Session/JWT types with the
@@ -343,6 +344,37 @@ const config: NextAuthConfig = {
      */
     async authorized({ auth }) {
       return !!auth?.user;
+    },
+
+    /**
+     * redirect — resolves the post-sign-in destination.
+     *
+     * Auth.js v5's default callback returns `baseUrl` (the site root) when
+     * the `__Secure-authjs.callback-url` cookie is missing, empty, or points
+     * at the site root. That cookie is set in two places:
+     *   - client-side `signIn("zitadel", { callbackUrl })` (see login-form.tsx)
+     *   - server-side handoff for the V2 auto-login path (see
+     *     src/lib/zitadel/signup-handoff.ts:284-290 — which explicitly notes
+     *     that without this cookie "a successful sign-in dumps the user on
+     *     the marketing landing instead of /dashboard").
+     *
+     * Either of those paths can race, get stripped by a strict cookie policy,
+     * or simply be skipped (user navigates straight to /login). The fallback
+     * for an authenticated user must be the product, not the marketing page.
+     *
+     * Behaviour:
+     *   - Relative paths beginning with `/` (excluding `/`) → preserved.
+     *     "/dashboard/pages/findings" round-trips intact when a deep link is
+     *     in flight.
+     *   - Same-origin absolute URLs → normalised to their path + search.
+     *   - Bare baseUrl, `/`, or cross-origin URLs → `${baseUrl}/dashboard`.
+     *
+     * dashboard#228 — this collapses two prior reports of "I signed up but
+     * landed on the marketing site". The unit test in
+     * src/lib/auth/__tests__/redirect-callback.test.ts asserts each case.
+     */
+    async redirect({ url, baseUrl }) {
+      return resolvePostSignInRedirect(url, baseUrl);
     },
   },
 
