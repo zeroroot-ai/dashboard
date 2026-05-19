@@ -69,22 +69,46 @@ test.describe('signup smoke', () => {
     // until the operator reports Ready.
     await test.step('submit signup form', async () => {
       await page.goto(`/signup?plan=${encodeURIComponent(PLAN)}`);
-      // The form has 7 named fields plus 2 acceptance checkboxes.
-      await page.locator('input[name="firstName"]').fill('Ada');
-      await page.locator('input[name="lastName"]').fill(slug);
-      await page.locator('input[name="email"]').fill(email);
-      await page.locator('input[name="password"]').fill(password);
-      await page.locator('input[name="passwordConfirm"]').fill(password);
-      await page.locator('input[name="workspaceName"]').fill(workspaceName);
-      await page.locator('input[name="acceptToS"]').check();
-      await page.locator('input[name="acceptPrivacy"]').check();
+
+      // The acceptToS / acceptPrivacy fields render as Radix Checkbox
+      // components, which do NOT expose a native `<input name="...">`
+      // element — they use a button[role=checkbox] with the field name
+      // surfaced only via the wrapping form. Selectors must therefore
+      // target the checkbox by `#acceptToS` / `#acceptPrivacy` (the form
+      // sets these as ids on the rendered control), matching the
+      // working pattern in e2e/auth/helpers/signup-via-form.ts.
+      //
+      // The text-field selectors use getByLabel so they tolerate any
+      // future tweak to the underlying input markup (shadcn often wraps
+      // inputs in their own element tree).
+      await page.getByLabel(/first name/i).fill('Ada');
+      await page.getByLabel(/last name/i).fill(slug);
+      await page.getByLabel(/work email/i).fill(email);
+      const pwInputs = page.locator('input[type="password"]');
+      await pwInputs.first().fill(password);
+      if ((await pwInputs.count()) >= 2) {
+        await pwInputs.nth(1).fill(password);
+      } else {
+        await page.getByLabel(/confirm password/i).fill(password);
+      }
+      await page.getByLabel(/workspace name|company name/i).fill(workspaceName);
+      await page.locator('#acceptToS').check();
+      await page.locator('#acceptPrivacy').check();
       await page.getByRole('button', { name: /create account|sign up/i }).click();
 
-      // Successful signup lands on /signup/provisioning OR redirects to
-      // the dashboard once Ready (depending on race). Either is fine.
-      await expect(page).toHaveURL(/\/signup\/provisioning|\/dashboard|\/select-tenant/, {
-        timeout: 30_000,
-      });
+      // The ProvisioningPanel renders IN-PAGE; the URL stays
+      // /signup?plan=<plan> until the panel finishes its
+      // /api/signup/progress/:id polling and then calls
+      // window.location.assign(redirectOnSuccess), which lands at
+      // /login?callbackUrl=/dashboard (or /api/auth/callback/zitadel?...
+      // when auto-login completes the parked auth_request, which then
+      // bounces to /dashboard).
+      //
+      // We assert the panel actually appeared. Stage 2 then takes over
+      // the long wait via /api/onboarding/data-plane polling.
+      await expect(
+        page.getByText(/provisioning|initializing|setting up|spinning up/i).first(),
+      ).toBeVisible({ timeout: 30_000 });
     });
 
     // Stage 2 — poll the data-plane status endpoint until the operator's
