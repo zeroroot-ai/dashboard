@@ -12,13 +12,18 @@ import { useTenantStore } from '@/src/stores/tenant-store';
 import type { Mission, MissionFilters, PaginatedResponse } from '@/src/types';
 
 // API client functions
-async function fetchMissions(filters?: MissionFilters, tenantId?: string): Promise<Mission[]> {
+//
+// Tenant context is NOT passed via the URL (dashboard#209). The
+// /api/missions route reads `session.user.tenantId` server-side and
+// the daemon trusts the HMAC-signed X-Gibson-Identity-Tenant header
+// from ext-authz, not URL params. Leaving tenantId in the URL would
+// only leak the tenant slug into browser history / referer / access
+// logs.
+//
+// `_tenantId` is kept as a parameter for query-key compatibility with
+// existing useTenantStore usage; the value is unused.
+async function fetchMissions(filters?: MissionFilters, _tenantId?: string): Promise<Mission[]> {
   const params = new URLSearchParams();
-
-  // Include tenant ID in the request for tenant isolation
-  if (tenantId) {
-    params.set('tenantId', tenantId);
-  }
 
   if (filters?.status && filters.status.length > 0) {
     params.set('status', filters.status.join(','));

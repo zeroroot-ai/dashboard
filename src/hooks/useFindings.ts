@@ -36,10 +36,11 @@ async function fetchFindings(
 ): Promise<PaginatedResponse<Finding>> {
   const params = new URLSearchParams();
 
-  // Include tenant ID for tenant isolation
-  if (filters.tenantId) {
-    params.set('tenantId', filters.tenantId);
-  }
+  // Tenant context is NOT passed via URL (dashboard#209). The
+  // /api/findings route reads `session.user.tenantId` server-side and
+  // the daemon trusts the HMAC-signed X-Gibson-Identity-Tenant header
+  // from ext-authz. Including the slug in the URL would only leak it
+  // into browser history / referer / access logs.
   if (filters.severity && filters.severity.length > 0) {
     params.set('severity', filters.severity.join(','));
   }
