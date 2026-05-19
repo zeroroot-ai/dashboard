@@ -386,9 +386,9 @@ describe('useFindings', () => {
       });
 
       // Send invalid JSON. The hook's onmessage uses `catch {}` to silently
-      // discard unparseable frames (useFindings.ts:60) — no console.error,
-      // no disconnect. The observable contract is "do not crash, do not
-      // close the connection".
+      // discard unparseable frames (useFindings.ts:60) — no log emitted, no
+      // disconnect. The observable contract is "do not crash, do not close
+      // the connection".
       const event = new MessageEvent('message', {
         data: 'invalid json',
       });

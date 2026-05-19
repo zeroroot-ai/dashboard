@@ -234,9 +234,10 @@ describe('useEventStream', () => {
         data: 'invalid json',
       });
 
-      // Hook's onmessage swallows JSON.parse errors silently (no console.error)
-      // — see useEventStream.ts. The only observable contract is "do not
-      // disconnect" and "do not push a garbled event into the buffer".
+      // Hook's onmessage swallows JSON.parse errors silently — see
+      // useEventStream.ts (catch with empty body). The observable contract
+      // is "do not disconnect" and "do not push a garbled event into the
+      // buffer"; no log call is emitted.
       act(() => {
         eventSourceMock.onmessage!(messageEvent);
       });
