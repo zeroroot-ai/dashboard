@@ -8,9 +8,17 @@ import {
   useResumeMission,
   useStopMission,
 } from './useMissions';
-import { createTestQueryClient, createHookWrapper } from '@/src/test/test-utils';
+import { createTestQueryClient, createHookWrapper, TEST_TENANT } from '@/src/test/test-utils';
 import { QueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/src/lib/query/keys';
 import type { Mission } from '@/src/types';
+
+// Hooks scope every cache key to the active tenant via queryKeys.missions.*.
+// Tests must pre-seed and read the same key, not hand-rolled
+// MISSIONS_LIST_KEY shorthand — the literal key never matches what the
+// hook writes, so optimistic updates appear to do nothing.
+const MISSIONS_LIST_KEY = queryKeys.missions.lists(TEST_TENANT.id);
+const missionDetailKey = (id: string) => queryKeys.missions.detail(TEST_TENANT.id, id);
 
 const mockMission: Mission = {
   id: 'mission-1',
@@ -34,6 +42,10 @@ describe('useMissions', () => {
 
   afterEach(() => {
     queryClient.clear();
+    // Defence in depth — one test in this file calls vi.useFakeTimers().
+    // Without this restore, subsequent tests inherit fake-timer state and
+    // waitFor times out at 5s on every async assertion.
+    vi.useRealTimers();
   });
 
   describe('useMissions (list)', () => {
@@ -84,7 +96,10 @@ describe('useMissions', () => {
     });
 
     it('should refetch at intervals', async () => {
-      vi.useFakeTimers();
+      // shouldAdvanceTime keeps testing-library's waitFor polling alive
+      // under fake timers — without it, the microtask + setTimeout queue is
+      // paused and waitFor never re-polls.
+      vi.useFakeTimers({ shouldAdvanceTime: true });
 
       const { result } = renderHook(() => useMissions(), {
         wrapper: createHookWrapper(queryClient),
@@ -100,8 +115,6 @@ describe('useMissions', () => {
       await waitFor(() => {
         expect(result.current.dataUpdatedAt).toBeGreaterThan(initialDataUpdatedAt);
       });
-
-      vi.restoreAllMocks();
     });
   });
 
@@ -151,7 +164,7 @@ describe('useMissions', () => {
   describe('useStartMission', () => {
     beforeEach(() => {
       // Seed cache with initial missions
-      queryClient.setQueryData(['missions', 'lists'], [
+      queryClient.setQueryData(MISSIONS_LIST_KEY, [
         { ...mockMission, status: 'pending' as const },
       ]);
     });
@@ -163,15 +176,18 @@ describe('useMissions', () => {
 
       result.current.mutate('mission-1');
 
-      // Check optimistic update immediately
-      const cachedData = queryClient.getQueryData<Mission[]>(['missions', 'lists']);
-      expect(cachedData?.[0].status).toBe('running');
+      // onMutate awaits queryClient.cancelQueries — must wait for the
+      // optimistic setQueriesData to flush before reading the cache.
+      await waitFor(() => {
+        const cachedData = queryClient.getQueryData<Mission[]>(MISSIONS_LIST_KEY);
+        expect(cachedData?.[0].status).toBe('running');
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
     });
 
     it('should update single mission cache', async () => {
-      queryClient.setQueryData(['missions', 'detail', 'mission-1'], {
+      queryClient.setQueryData(missionDetailKey('mission-1'), {
         ...mockMission,
         status: 'pending' as const,
       });
@@ -182,8 +198,10 @@ describe('useMissions', () => {
 
       result.current.mutate('mission-1');
 
-      const cachedDetail = queryClient.getQueryData<Mission>(['missions', 'detail', 'mission-1']);
-      expect(cachedDetail?.status).toBe('running');
+      await waitFor(() => {
+        const cachedDetail = queryClient.getQueryData<Mission>(missionDetailKey('mission-1'));
+        expect(cachedDetail?.status).toBe('running');
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
     });
@@ -206,7 +224,7 @@ describe('useMissions', () => {
       await waitFor(() => expect(result.current.isError).toBe(true));
 
       // Cache should be rolled back to pending
-      const cachedData = queryClient.getQueryData<Mission[]>(['missions', 'lists']);
+      const cachedData = queryClient.getQueryData<Mission[]>(MISSIONS_LIST_KEY);
       expect(cachedData?.[0].status).toBe('pending');
 
       global.fetch = originalFetch;
@@ -235,7 +253,7 @@ describe('useMissions', () => {
 
   describe('usePauseMission', () => {
     beforeEach(() => {
-      queryClient.setQueryData(['missions', 'lists'], [
+      queryClient.setQueryData(MISSIONS_LIST_KEY, [
         { ...mockMission, status: 'running' as const },
       ]);
     });
@@ -247,8 +265,10 @@ describe('useMissions', () => {
 
       result.current.mutate('mission-1');
 
-      const cachedData = queryClient.getQueryData<Mission[]>(['missions', 'lists']);
-      expect(cachedData?.[0].status).toBe('paused');
+      await waitFor(() => {
+        const cachedData = queryClient.getQueryData<Mission[]>(MISSIONS_LIST_KEY);
+        expect(cachedData?.[0].status).toBe('paused');
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
     });
@@ -278,7 +298,7 @@ describe('useMissions', () => {
 
   describe('useResumeMission', () => {
     beforeEach(() => {
-      queryClient.setQueryData(['missions', 'lists'], [
+      queryClient.setQueryData(MISSIONS_LIST_KEY, [
         { ...mockMission, status: 'paused' as const },
       ]);
     });
@@ -290,8 +310,10 @@ describe('useMissions', () => {
 
       result.current.mutate('mission-1');
 
-      const cachedData = queryClient.getQueryData<Mission[]>(['missions', 'lists']);
-      expect(cachedData?.[0].status).toBe('running');
+      await waitFor(() => {
+        const cachedData = queryClient.getQueryData<Mission[]>(MISSIONS_LIST_KEY);
+        expect(cachedData?.[0].status).toBe('running');
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
     });
@@ -299,7 +321,7 @@ describe('useMissions', () => {
 
   describe('useStopMission', () => {
     beforeEach(() => {
-      queryClient.setQueryData(['missions', 'lists'], [
+      queryClient.setQueryData(MISSIONS_LIST_KEY, [
         { ...mockMission, status: 'running' as const },
       ]);
     });
@@ -311,9 +333,11 @@ describe('useMissions', () => {
 
       result.current.mutate('mission-1');
 
-      const cachedData = queryClient.getQueryData<Mission[]>(['missions', 'lists']);
-      expect(cachedData?.[0].status).toBe('stopped');
-      expect(cachedData?.[0].completedAt).toBeDefined();
+      await waitFor(() => {
+        const cachedData = queryClient.getQueryData<Mission[]>(MISSIONS_LIST_KEY);
+        expect(cachedData?.[0].status).toBe('stopped');
+        expect(cachedData?.[0].completedAt).toBeDefined();
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
     });
@@ -326,18 +350,19 @@ describe('useMissions', () => {
       const beforeTime = Date.now();
       result.current.mutate('mission-1');
 
-      const cachedData = queryClient.getQueryData<Mission[]>(['missions', 'lists']);
-      const completedAt = cachedData?.[0].completedAt;
-
-      expect(completedAt).toBeDefined();
-      expect(new Date(completedAt!).getTime()).toBeGreaterThanOrEqual(beforeTime);
+      await waitFor(() => {
+        const cachedData = queryClient.getQueryData<Mission[]>(MISSIONS_LIST_KEY);
+        const completedAt = cachedData?.[0].completedAt;
+        expect(completedAt).toBeDefined();
+        expect(new Date(completedAt!).getTime()).toBeGreaterThanOrEqual(beforeTime);
+      });
     });
   });
 
   describe('cache invalidation', () => {
     it('should invalidate all mission queries on mutation', async () => {
-      queryClient.setQueryData(['missions', 'lists'], [mockMission]);
-      queryClient.setQueryData(['missions', 'detail', 'mission-1'], mockMission);
+      queryClient.setQueryData(MISSIONS_LIST_KEY, [mockMission]);
+      queryClient.setQueryData(missionDetailKey('mission-1'), mockMission);
 
       const { result } = renderHook(() => useStartMission(), {
         wrapper: createHookWrapper(queryClient),
@@ -349,7 +374,7 @@ describe('useMissions', () => {
 
       // Queries should be marked as stale/invalidated
       const queryCache = queryClient.getQueryCache();
-      const queries = queryCache.findAll({ queryKey: ['missions'] });
+      const queries = queryCache.findAll({ queryKey: queryKeys.missions.all });
 
       queries.forEach((query) => {
         expect(query.isStale() || query.state.dataUpdatedAt > 0).toBe(true);

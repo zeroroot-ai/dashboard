@@ -4,8 +4,10 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { useSupportedProviders } from '../useSupportedProviders';
 import { createTestQueryClient } from '@/src/test/test-utils';
 
-// GetSupportedProviders RPC was deleted in admin-services-completion spec.
-// The hook now returns an empty list as a static no-op.
+// The hook fetches /api/settings/providers/supported (which the daemon
+// services via gibson.tenant.v1.TenantAdminService/GetSupportedProviders);
+// the MSW handler returns `{ providers: [] }` in tests so the hook resolves
+// with an empty array.
 
 function wrapper(queryClient = createTestQueryClient()) {
   return function Wrapper({ children }: { children: React.ReactNode }) {
@@ -14,7 +16,7 @@ function wrapper(queryClient = createTestQueryClient()) {
 }
 
 describe('useSupportedProviders', () => {
-  it('returns an empty list (GetSupportedProviders RPC deleted)', async () => {
+  it('returns an empty list when the MSW handler reports zero providers', async () => {
     const { result } = renderHook(() => useSupportedProviders(), { wrapper: wrapper() });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
