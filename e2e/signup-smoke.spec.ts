@@ -154,6 +154,120 @@ test.describe('signup smoke', () => {
       await expect(page).toHaveURL(/\/dashboard/);
     });
 
+    // -----------------------------------------------------------------------
+    // Stage 3b — daemon-RPC reachability under the freshly-provisioned
+    // tenant's session.
+    //
+    // This is the regression cordon for gibson#167 / deploy#352. Stage 2
+    // proves the saga reaches Ready — but for the entire history of
+    // signup, Ready=True coexisted with 412/500 on every authenticated
+    // daemon call because the daemon's per-tenant Vault broker failed to
+    // construct (missing SPIRE JWT-SVID audience, missing role, etc).
+    //
+    // The four endpoints below all round-trip through:
+    //   Auth.js session → dashboard server-side → Envoy + ext-authz
+    //     → daemon RPC handler → per-tenant Vault broker → daemon answer
+    //
+    // 200 with the documented empty-list envelope proves that ENTIRE
+    // chain is intact. A regression at any link (broker init, JWT
+    // audience drift, FGA tuple absence, etc.) flips the 200 to 412 or
+    // 500 and this step fails BEFORE the PR introducing the regression
+    // can merge.
+    //
+    // Empty bodies are EXPECTED on a fresh tenant — we only assert the
+    // status code and that the envelope shape is what the dashboard
+    // contract promises (`{ data: [], total: 0 }` for paginated lists,
+    // `[]` for the providers list).
+    //
+    // Refs: gibson#167 (PRD), docs#33 + #34 (ADR-0009 + amendment),
+    //       deploy#360 (the fix this step regression-tests),
+    //       gibson#187 (daemon SPIRE JWT source).
+    // -----------------------------------------------------------------------
+
+    await test.step('authenticated daemon RPCs return 200 (regression cordon for gibson#167)', async () => {
+      // Helper: pull the body whether the response is OK or not, so an
+      // assertion failure carries the daemon's actual error envelope
+      // ({ error: { code: 'failed_precondition', ... } } on the 412 we
+      // are guarding against).
+      async function probe(path: string): Promise<{ status: number; body: unknown }> {
+        const resp = await request.get(path);
+        let body: unknown = null;
+        try {
+          body = await resp.json();
+        } catch {
+          body = await resp.text().catch(() => null);
+        }
+        return { status: resp.status(), body };
+      }
+
+      // /api/findings — calls GraphService.GetFindings via the per-tenant
+      // Vault broker. The broker is what gibson#167 fixes — any drift in
+      // the JWT/audience/role chain flips this to 412 (failed_precondition)
+      // or 500.
+      const findings = await probe('/api/findings?limit=50');
+      expect(
+        findings.status,
+        `GET /api/findings?limit=50 returned ${findings.status} ` +
+          `(want 200; body: ${JSON.stringify(findings.body)?.slice(0, 400)}). ` +
+          `412/500 here indicates the daemon's per-tenant Vault broker did ` +
+          `not construct — regression of gibson#167 / deploy#360.`,
+      ).toBe(200);
+      const findingsBody = findings.body as {
+        data?: unknown[];
+        total?: number;
+      } | null;
+      expect(
+        Array.isArray(findingsBody?.data),
+        'findings response should be a PaginatedResponse with .data array',
+      ).toBe(true);
+      expect(
+        findingsBody?.data?.length,
+        'fresh tenant should have zero findings',
+      ).toBe(0);
+      expect(typeof findingsBody?.total).toBe('number');
+
+      // /api/missions — calls MissionService.ListMissions via the same
+      // broker path.
+      const missions = await probe('/api/missions');
+      expect(
+        missions.status,
+        `GET /api/missions returned ${missions.status} ` +
+          `(want 200; body: ${JSON.stringify(missions.body)?.slice(0, 400)})`,
+      ).toBe(200);
+      const missionsBody = missions.body as { data?: unknown[] } | null;
+      expect(
+        Array.isArray(missionsBody?.data),
+        'missions response should be a PaginatedResponse with .data array',
+      ).toBe(true);
+      expect(
+        missionsBody?.data?.length,
+        'fresh tenant should have zero missions',
+      ).toBe(0);
+
+      // /api/settings/providers — calls TenantAdminService.ListProviders
+      // through the same per-tenant broker (LLM-provider configuration
+      // is what deploy#352's user-prompt names "llm-config"). The route
+      // returns a bare `{ providers: [...] }` envelope — see
+      // app/api/settings/providers/route.ts.
+      const providers = await probe('/api/settings/providers');
+      expect(
+        providers.status,
+        `GET /api/settings/providers returned ${providers.status} ` +
+          `(want 200; body: ${JSON.stringify(providers.body)?.slice(0, 400)})`,
+      ).toBe(200);
+      const providersBody = providers.body as {
+        providers?: unknown[];
+      } | null;
+      expect(
+        Array.isArray(providersBody?.providers),
+        'providers response should include a .providers array',
+      ).toBe(true);
+      expect(
+        providersBody?.providers?.length,
+        'fresh tenant should have zero LLM provider configs',
+      ).toBe(0);
+    });
+
     // ---------------------------------------------------------------------
     // Stages 4-5 — customer-flow round-trip (D1-E of polyrepo zero-dot-x
     // reset, dashboard#189). OPT-IN via E2E_CUSTOMER_FLOW=1. Skipped on
