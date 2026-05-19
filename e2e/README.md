@@ -11,7 +11,81 @@ pnpm test:e2e:auth-errors
 
 # All auth regression checks (static + e2e)
 pnpm check:auth-regression
+
+# Individual specs (compile + list without running — no cluster required)
+pnpm exec playwright test --list e2e/tenant-provision.spec.ts
+pnpm exec playwright test --list e2e/agent-enrollment.spec.ts
+pnpm exec playwright test --list e2e/mission-execute.spec.ts
+pnpm exec playwright test --list e2e/billing-webhook.spec.ts
+pnpm exec playwright test --list e2e/plan-change.spec.ts
+
+# Stubbed tests only (require TEST_AUTH_BYPASS=1 but no kind cluster)
+TEST_AUTH_BYPASS=1 AUTH_SECRET=<your-local-secret> pnpm test:e2e e2e/tenant-provision.spec.ts
+TEST_AUTH_BYPASS=1 AUTH_SECRET=<your-local-secret> pnpm test:e2e e2e/agent-enrollment.spec.ts
+TEST_AUTH_BYPASS=1 AUTH_SECRET=<your-local-secret> pnpm test:e2e e2e/mission-execute.spec.ts
+
+# Integration tests (require kind cluster)
+E2E_KIND_AVAILABLE=1 PLAYWRIGHT_BASE_URL=https://app.zero-day.local:30443 \
+  pnpm test:e2e e2e/tenant-provision.spec.ts
+
+# Billing webhook tests against the kind cluster
+E2E_KIND_AVAILABLE=1 PLAYWRIGHT_BASE_URL=https://app.zero-day.local:30443 \
+  STRIPE_WEBHOOK_SECRET=whsec_testonly_e2e_playwright_secret_1234567890 \
+  pnpm test:e2e e2e/billing-webhook.spec.ts
+E2E_KIND_AVAILABLE=1 PLAYWRIGHT_BASE_URL=https://app.zero-day.local:30443 \
+  STRIPE_WEBHOOK_SECRET=whsec_testonly_e2e_playwright_secret_1234567890 \
+  pnpm test:e2e e2e/plan-change.spec.ts
 ```
+
+## New specs (slices 5.7, 5.8, 5.9)
+
+### Spec inventory
+
+| Spec | Slice | Description |
+|---|---|---|
+| `e2e/tenant-provision.spec.ts` | 5.7 p1 | Tenant provisioning: signup → saga → dashboard state at each checkpoint |
+| `e2e/agent-enrollment.spec.ts` | 5.7 p2 | Agent enrollment: Register Agent form → credential panel → agent list |
+| `e2e/mission-execute.spec.ts` | 5.8 | Mission execution: submit → pending → completed → findings → audit |
+| `e2e/billing-webhook.spec.ts` | 5.9 p1 | Stripe webhook: subscription.updated, invoice.payment_failed, idempotency |
+| `e2e/plan-change.spec.ts` | 5.9 p2 | Plan change: checkout stub → callback → quota adjustment → audit |
+
+### Page objects (shared helpers)
+
+Located under `e2e/page-objects/`:
+
+| File | Purpose |
+|---|---|
+| `auth.po.ts` | Inject synthetic Auth.js sessions; stub `/api/auth/my-memberships` |
+| `dashboard.po.ts` | Navigate to dashboard; stub daemon proxy and tier endpoints |
+| `billing.po.ts` | Sign Stripe webhooks with HMAC-SHA256; stub checkout; build event payloads |
+
+### Skip gate conventions
+
+Every spec uses `test.skip()` at the describe level for blocks that require
+infrastructure. The two gates used across these specs are:
+
+- `test.skip(!process.env.TEST_AUTH_BYPASS, ...)` — for tests that inject
+  synthetic session cookies (requires `TEST_AUTH_BYPASS=1` on the server).
+- `test.skip(!process.env.E2E_KIND_AVAILABLE, ...)` — for integration tests
+  that require a live kind cluster.
+
+Tests with neither gate run unconditionally (e.g., the billing UI-stub tests
+that use only `page.route()` interception).
+
+### Stripe webhook secret wiring
+
+The billing webhook endpoint verifies the `Stripe-Signature` header using
+`STRIPE_WEBHOOK_SECRET`. For integration tests to exercise the full path:
+
+1. Set `STRIPE_WEBHOOK_SECRET=whsec_testonly_e2e_playwright_secret_1234567890`
+   on the kind cluster's dashboard pod (via Helm values override or kubectl patch).
+2. The spec uses the same constant (`STRIPE_WEBHOOK_TEST_SECRET` from
+   `e2e/page-objects/billing.po.ts`) to sign payloads.
+
+This secret is a test-only constant. It MUST NOT be set in production.
+
+A follow-up issue (`dashboard#223`) tracks wiring this secret into the
+`dispatch-auth-e2e` workflow so billing webhook tests run automatically on CI.
 
 ## Environment variables
 
