@@ -18,6 +18,7 @@ import { SecretsAccessedPanel } from "@/src/components/missions/SecretsAccessedP
 import { CheckpointTimeline } from "@/src/components/mission/CheckpointTimeline";
 import { CheckpointBadge } from "@/src/components/mission/CheckpointBadge";
 import { ToolStreamProgress } from "@/src/components/mission/ToolStreamProgress";
+import { MissionFindingsTab } from "@/components/gibson/missions/MissionFindingsTab";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import type { CheckpointMetadata } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 
@@ -400,15 +401,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
 
         {/* Findings */}
         <TabsContent value="findings" className="mt-4">
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground font-mono">
-                {mission.findings > 0
-                  ? `${mission.findings} findings recorded for this mission. Detailed view is loading from the findings stream; if it does not appear, refresh the page.`
-                  : "No findings yet."}
-              </p>
-            </CardContent>
-          </Card>
+          <MissionFindingsTab missionId={mission.id} />
         </TabsContent>
 
         {/* Logs */}
