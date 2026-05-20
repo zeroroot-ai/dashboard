@@ -61,14 +61,6 @@ export const HEALTH_STATUS_CONFIG: Record<ProviderHealthStatus, {
   },
 };
 
-// ============================================================================
-// Provider-Specific Configuration Types
-// ============================================================================
-// Note: AzureConfig, AWSConfig (BedrockConfig), OllamaConfig, OpenAIConfig
-// removed in spec 25-daemon-driven-provider-config. Use the descriptor
-// returned by useSupportedProviders() / getSupportedProviders() from
-// gibson-client.ts instead.
-
 /**
  * Rate limiting configuration for a provider.
  */
