@@ -5,6 +5,44 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.105.0](https://github.com/zero-day-ai/dashboard/compare/v0.104.0...v0.105.0) (2026-05-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* drop MissionConstraints bridge mapping; emit SDK type directly (M2-dashboard) ([#196](https://github.com/zero-day-ai/dashboard/issues/196))
+
+### Features
+
+* add 2 ts ast walkers for server-action + hook-shape contracts (slice 3.8) ([#236](https://github.com/zero-day-ai/dashboard/issues/236)) ([7f53505](https://github.com/zero-day-ai/dashboard/commit/7f5350576cc81527c09414c858ff29cac85b5264))
+* add 4 custom eslint rules + strict typescript additions (slice 2.3) ([#234](https://github.com/zero-day-ai/dashboard/issues/234)) ([51a3ace](https://github.com/zero-day-ai/dashboard/commit/51a3ace9e956168843440485ab2941faad7cd2f4))
+* add mission start route wrapping RunMission/ResumeMission ([#243](https://github.com/zero-day-ai/dashboard/issues/243)) ([4bb551f](https://github.com/zero-day-ai/dashboard/commit/4bb551f66cb489d29d7bb18d085e5f3e157a42f6))
+* add Traces tab to mission-detail page ([#245](https://github.com/zero-day-ai/dashboard/issues/245)) ([21c4db4](https://github.com/zero-day-ai/dashboard/commit/21c4db491b96f0777c3847f84c4a32419cc99e10))
+* consume daemonadminservice from platform-sdk ([#249](https://github.com/zero-day-ai/dashboard/issues/249)) ([7d5419a](https://github.com/zero-day-ai/dashboard/commit/7d5419a38688f7225c48f94c6ccaf2d1c63d8468))
+* **dashboard:** EmptyState sweep across 7 list pages — PRD [#143](https://github.com/zero-day-ai/dashboard/issues/143) trailing child ([#191](https://github.com/zero-day-ai/dashboard/issues/191)) ([8e8b540](https://github.com/zero-day-ai/dashboard/commit/8e8b540eb621c216c816d592199538aa11bca841))
+* drop MissionConstraints bridge mapping; emit SDK type directly (M2-dashboard) ([#196](https://github.com/zero-day-ai/dashboard/issues/196)) ([d9d53ab](https://github.com/zero-day-ai/dashboard/commit/d9d53ab4353cd998e4d4c580dc57e149b8c95cf8)), closes [#186](https://github.com/zero-day-ai/dashboard/issues/186)
+* mission detail surfaces all author-facing fields (M6) ([#200](https://github.com/zero-day-ai/dashboard/issues/200)) ([0fb7828](https://github.com/zero-day-ai/dashboard/commit/0fb78282d5512d87f60840f30368c38a6f214166)), closes [#187](https://github.com/zero-day-ai/dashboard/issues/187)
+* one-click demo mission targeting scanme.nmap.org ([#246](https://github.com/zero-day-ai/dashboard/issues/246)) ([d89217d](https://github.com/zero-day-ai/dashboard/commit/d89217d6851fa05645428e45ee2dc08b3fd2fa41))
+* subsume brand-guide design system across dashboard ([#248](https://github.com/zero-day-ai/dashboard/issues/248)) ([487bee3](https://github.com/zero-day-ai/dashboard/commit/487bee3011ccb0cad4f367e8a67c54f9a894294d))
+* wire mission-detail Findings tab to real data ([#244](https://github.com/zero-day-ai/dashboard/issues/244)) ([947b085](https://github.com/zero-day-ai/dashboard/commit/947b085c06ec30e7672774e8a31b6c93a7c470e5))
+
+
+### Bug Fixes
+
+* **auth:** set authjs.callback-url cookie in signup auto-login handoff ([#208](https://github.com/zero-day-ai/dashboard/issues/208)) ([b0fae0c](https://github.com/zero-day-ai/dashboard/commit/b0fae0c9c121526835f64dc5f2580951a0ba3adb))
+* **ci:** disable anchore/sbom-action release-asset upload ([#185](https://github.com/zero-day-ai/dashboard/issues/185)) ([0c4f983](https://github.com/zero-day-ai/dashboard/commit/0c4f983336e521ceeb42270506b8b74edaa3e076))
+* dashboard worktree green — gen-plans.mjs worktree-aware + pnpm patchedDependencies ([#195](https://github.com/zero-day-ai/dashboard/issues/195)) ([5d43e28](https://github.com/zero-day-ai/dashboard/commit/5d43e28e55297c1cc1f4c79338f3d0955d72736c))
+* **eslint:** extend next/typescript so [@typescript-eslint](https://github.com/typescript-eslint) plugin rules load ([#198](https://github.com/zero-day-ai/dashboard/issues/198)) ([#203](https://github.com/zero-day-ai/dashboard/issues/203)) ([8d2aa03](https://github.com/zero-day-ai/dashboard/commit/8d2aa032c71c9c071d12dc3c4ee3e1f988576dad))
+* **landing:** replace 'langfuse' vendor name in HeroSection ASCII terminal mock ([#192](https://github.com/zero-day-ai/dashboard/issues/192)) ([7b80487](https://github.com/zero-day-ai/dashboard/commit/7b8048782d705808c161167fb34fcb96b43e31cb))
+* **lint:** resolve all 58 ESLint errors exposed by [#203](https://github.com/zero-day-ai/dashboard/issues/203) plugin fix ([#206](https://github.com/zero-day-ai/dashboard/issues/206)) ([5c94561](https://github.com/zero-day-ai/dashboard/commit/5c945616eee370c6f2d8fdbada6045c3df3548bb))
+* **parser:** empty YAML succeeds with null; serialize trims trailing newline ([#194](https://github.com/zero-day-ai/dashboard/issues/194)) ([#204](https://github.com/zero-day-ai/dashboard/issues/204)) ([7a6ebdf](https://github.com/zero-day-ai/dashboard/commit/7a6ebdf7b13fd8650e744f5d953169e14e564b12))
+* post-signup redirect lands on / instead of /dashboard ([#230](https://github.com/zero-day-ai/dashboard/issues/230)) ([156dad4](https://github.com/zero-day-ai/dashboard/commit/156dad48d119b7c5a0385b935daf3f43dd99168f))
+* **routing:** drop tenant slug from /api/findings + /api/missions URL params ([#210](https://github.com/zero-day-ai/dashboard/issues/210)) ([62c3417](https://github.com/zero-day-ai/dashboard/commit/62c3417d8edeaa8fa30548c1df3b0b2b20d4cb9c))
+* **routing:** drop tenant slug from client URLs (Phase 1 of [#209](https://github.com/zero-day-ai/dashboard/issues/209)) ([#211](https://github.com/zero-day-ai/dashboard/issues/211)) ([9115492](https://github.com/zero-day-ai/dashboard/commit/9115492859ccc90f9d94db6ef9589fd14a35e9df))
+* **scripts:** correct stale path + worktree-aware vendor-mission-authoring-bundle ([#193](https://github.com/zero-day-ai/dashboard/issues/193)) ([#202](https://github.com/zero-day-ai/dashboard/issues/202)) ([4055175](https://github.com/zero-day-ai/dashboard/commit/40551759f6b5bc64a9089aae078fbbd9c18aa57e))
+* **scripts:** make 5 prebuild scripts worktree-aware ([#197](https://github.com/zero-day-ai/dashboard/issues/197)) ([#201](https://github.com/zero-day-ai/dashboard/issues/201)) ([3f05910](https://github.com/zero-day-ai/dashboard/commit/3f05910461f7aa2a66398d07b39687681dfc513b))
+* signup consent checkboxes invisible against card background ([#231](https://github.com/zero-day-ai/dashboard/issues/231)) ([dd01d7a](https://github.com/zero-day-ai/dashboard/commit/dd01d7a1fbfd95936ef17aacdab9993c215d5f3d))
+
 ## [0.104.0](https:\/\/github.com\/zero-day-ai\/dashboard\/compare\/v0.X.Y...v0.104.0) (2026-05-17)
 
 Polyrepo zero-dot-x reset (PRD zero-day-ai\/.github#25, board #14). The v1.x line was cut prematurely; nothing in the platform is at 1.0 maturity yet. The v1.0.0 tag + release has been deleted; this repo lands at the polyrepo-wide v0.104.0 marker. Going forward, `bump-minor-pre-major: true` ensures `feat!:` commits bump minor not major.
