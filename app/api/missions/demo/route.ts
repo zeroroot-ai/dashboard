@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { create } from '@bufbuild/protobuf';
+import { create, toBinary } from '@bufbuild/protobuf';
 import { getServerSession } from '@/src/lib/auth';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { userClient, runMission } from '@/src/lib/gibson-client';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
+import { DaemonAdminService } from '@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb';
 import {
   MissionDefinitionSchema,
   MissionNodeSchema,
@@ -92,10 +93,24 @@ export async function POST(request: NextRequest) {
     // Authz enforced by daemon ext-authz on the downstream RPCs.
 
     const client = userClient(DaemonService);
+    // DaemonAdminService is the platform-sdk-published surface for admin /
+    // writer RPCs (parent PRD zero-day-ai/.github#101). CreateMissionDefinition
+    // is now an admin-tier RPC; the member-facing DaemonService no longer
+    // owns it after sdk#105 lands. Use a separate typed client so the request
+    // path is /gibson.daemon.admin.v1.DaemonAdminService/CreateMissionDefinition
+    // and FGA in ext-authz applies the admin-tier rule.
+    const adminClient = userClient(DaemonAdminService);
     const definition = buildDemoMissionDefinition();
+    // DaemonAdminService.CreateMissionDefinition carries the OSS
+    // gibson.mission.v1.MissionDefinition as `definition_serialized: bytes`
+    // (wire-equivalent to the legacy `definition` slot). See the platform-sdk
+    // proto comment for the rationale.
+    const definitionSerialized = toBinary(MissionDefinitionSchema, definition);
 
-    // Step 1: register the mission definition.
-    const defResp = await client.createMissionDefinition({ definition });
+    // Step 1: register the mission definition (admin-tier).
+    const defResp = await adminClient.createMissionDefinition({
+      definitionSerialized,
+    });
     const missionDefinitionId = defResp.missionDefinitionId;
     if (!missionDefinitionId) {
       return NextResponse.json(

@@ -16,107 +16,18 @@
 // Spec: secrets-tenant-lifecycle Requirement 8.1, Requirement 4;
 //       component-bootstrap-e2e Requirement 9.
 
-import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_gibson_auth_v1_options } from "../../auth/v1/options_pb";
+import type { CapabilityGrantInfo, RecipientClass } from "../../capability/v1/capability_pb";
+import { file_gibson_capability_v1_capability } from "../../capability/v1/capability_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file gibson/admin/v1/grants.proto.
  */
 export const file_gibson_admin_v1_grants: GenFile = /*@__PURE__*/
-  fileDesc("ChxnaWJzb24vYWRtaW4vdjEvZ3JhbnRzLnByb3RvEg9naWJzb24uYWRtaW4udjEikwIKE0NhcGFiaWxpdHlHcmFudEluZm8SCwoDanRpGAEgASgJEhwKFHJlY2lwaWVudF9pbnN0YWxsX2lkGAIgASgJEjgKD3JlY2lwaWVudF9jbGFzcxgDIAEoDjIfLmdpYnNvbi5hZG1pbi52MS5SZWNpcGllbnRDbGFzcxIWCg5yZWNpcGllbnRfbmFtZRgEIAEoCRIUCgxhbGxvd2VkX3JwY3MYBSADKAkSEgoKbWlzc2lvbl9pZBgGIAEoCRIPCgd0YXNrX2lkGAcgASgJEhYKDmlzc3VlZF9hdF91bml4GAggASgDEhcKD2V4cGlyZXNfYXRfdW5peBgJIAEoAxITCgtuZWFyX2V4cGlyeRgKIAEoCCKvAQoXTGlzdEFjdGl2ZUdyYW50c1JlcXVlc3QSPwoWcmVjaXBpZW50X2NsYXNzX2ZpbHRlchgBIAEoDjIfLmdpYnNvbi5hZG1pbi52MS5SZWNpcGllbnRDbGFzcxISCgpycGNfZmlsdGVyGAIgASgJEiAKGGluY2x1ZGVfbmVhcl9leHBpcnlfb25seRgDIAEoCBINCgVsaW1pdBgEIAEoBRIOCgZvZmZzZXQYBSABKAUiXwoYTGlzdEFjdGl2ZUdyYW50c1Jlc3BvbnNlEjQKBmdyYW50cxgBIAMoCzIkLmdpYnNvbi5hZG1pbi52MS5DYXBhYmlsaXR5R3JhbnRJbmZvEg0KBXRvdGFsGAIgASgFIi4KCkdyYW50VHVwbGUSDgoGb2JqZWN0GAEgASgJEhAKCHJlbGF0aW9uGAIgASgJImMKF1dyaXRlQWdlbnRHcmFudHNSZXF1ZXN0EhsKE3RhcmdldF9wcmluY2lwYWxfaWQYASABKAkSKwoGZ3JhbnRzGAIgAygLMhsuZ2lic29uLmFkbWluLnYxLkdyYW50VHVwbGUiRAoYV3JpdGVBZ2VudEdyYW50c1Jlc3BvbnNlEg8KB3dyaXR0ZW4YASABKAUSFwoPYWxyZWFkeV9wcmVzZW50GAIgASgFImQKGERlbGV0ZUFnZW50R3JhbnRzUmVxdWVzdBIbChN0YXJnZXRfcHJpbmNpcGFsX2lkGAEgASgJEisKBmdyYW50cxgCIAMoCzIbLmdpYnNvbi5hZG1pbi52MS5HcmFudFR1cGxlIkEKGURlbGV0ZUFnZW50R3JhbnRzUmVzcG9uc2USDwoHZGVsZXRlZBgBIAEoBRITCgtub3RfcHJlc2VudBgCIAEoBSqCAQoOUmVjaXBpZW50Q2xhc3MSHwobUkVDSVBJRU5UX0NMQVNTX1VOU1BFQ0lGSUVEEAASGQoVUkVDSVBJRU5UX0NMQVNTX0FHRU5UEAESGAoUUkVDSVBJRU5UX0NMQVNTX1RPT0wQAhIaChZSRUNJUElFTlRfQ0xBU1NfUExVR0lOEAMy3AMKEkdyYW50c0FkbWluU2VydmljZRKUAQoQTGlzdEFjdGl2ZUdyYW50cxIoLmdpYnNvbi5hZG1pbi52MS5MaXN0QWN0aXZlR3JhbnRzUmVxdWVzdBopLmdpYnNvbi5hZG1pbi52MS5MaXN0QWN0aXZlR3JhbnRzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESlAEKEFdyaXRlQWdlbnRHcmFudHMSKC5naWJzb24uYWRtaW4udjEuV3JpdGVBZ2VudEdyYW50c1JlcXVlc3QaKS5naWJzb24uYWRtaW4udjEuV3JpdGVBZ2VudEdyYW50c1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpcBChFEZWxldGVBZ2VudEdyYW50cxIpLmdpYnNvbi5hZG1pbi52MS5EZWxldGVBZ2VudEdyYW50c1JlcXVlc3QaKi5naWJzb24uYWRtaW4udjEuRGVsZXRlQWdlbnRHcmFudHNSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAUJNUAFaOmdpdGh1Yi5jb20vemVyby1kYXktYWkvc2RrL2FwaS9nZW4vZ2lic29uL2FkbWluL3YxO2FkbWludjGqAgxHaWJzb24uQWRtaW5iBnByb3RvMw", [file_gibson_auth_v1_options]);
-
-/**
- * CapabilityGrantInfo is the wire-shape returned by ListActiveGrants. It is
- * derived from the daemon's grant store and is suitable for rendering one
- * row per grant in the dashboard's grants table.
- *
- * @generated from message gibson.admin.v1.CapabilityGrantInfo
- */
-export type CapabilityGrantInfo = Message<"gibson.admin.v1.CapabilityGrantInfo"> & {
-  /**
-   * jti is the JWT ID claim of the CG-JWT — the canonical identifier the
-   * dashboard uses for filtering and per-row drill-down.
-   *
-   * @generated from field: string jti = 1;
-   */
-  jti: string;
-
-  /**
-   * recipient_install_id is the install ID this grant was minted for.
-   *
-   * @generated from field: string recipient_install_id = 2;
-   */
-  recipientInstallId: string;
-
-  /**
-   * recipient_class is the class of the install (AGENT / TOOL / PLUGIN).
-   *
-   * @generated from field: gibson.admin.v1.RecipientClass recipient_class = 3;
-   */
-  recipientClass: RecipientClass;
-
-  /**
-   * recipient_name is the display name (component name) of the install.
-   *
-   * @generated from field: string recipient_name = 4;
-   */
-  recipientName: string;
-
-  /**
-   * allowed_rpcs is the set of method strings the grant authorizes
-   * (e.g. ["GetCredential", "RecordFinding"]).
-   *
-   * @generated from field: repeated string allowed_rpcs = 5;
-   */
-  allowedRpcs: string[];
-
-  /**
-   * mission_id is the mission this grant scopes the recipient to. Empty
-   * for non-mission-scoped grants.
-   *
-   * @generated from field: string mission_id = 6;
-   */
-  missionId: string;
-
-  /**
-   * task_id is the task within the mission. Empty when mission_id is
-   * empty or the grant is mission-wide.
-   *
-   * @generated from field: string task_id = 7;
-   */
-  taskId: string;
-
-  /**
-   * issued_at_unix is the iat claim, Unix seconds.
-   *
-   * @generated from field: int64 issued_at_unix = 8;
-   */
-  issuedAtUnix: bigint;
-
-  /**
-   * expires_at_unix is the exp claim, Unix seconds.
-   *
-   * @generated from field: int64 expires_at_unix = 9;
-   */
-  expiresAtUnix: bigint;
-
-  /**
-   * near_expiry is true when the grant expires within 5 minutes from now.
-   * The dashboard renders these rows with a warning highlight.
-   *
-   * @generated from field: bool near_expiry = 10;
-   */
-  nearExpiry: boolean;
-};
-
-/**
- * Describes the message gibson.admin.v1.CapabilityGrantInfo.
- * Use `create(CapabilityGrantInfoSchema)` to create a new message.
- */
-export const CapabilityGrantInfoSchema: GenMessage<CapabilityGrantInfo> = /*@__PURE__*/
-  messageDesc(file_gibson_admin_v1_grants, 0);
+  fileDesc("ChxnaWJzb24vYWRtaW4vdjEvZ3JhbnRzLnByb3RvEg9naWJzb24uYWRtaW4udjEitAEKF0xpc3RBY3RpdmVHcmFudHNSZXF1ZXN0EkQKFnJlY2lwaWVudF9jbGFzc19maWx0ZXIYASABKA4yJC5naWJzb24uY2FwYWJpbGl0eS52MS5SZWNpcGllbnRDbGFzcxISCgpycGNfZmlsdGVyGAIgASgJEiAKGGluY2x1ZGVfbmVhcl9leHBpcnlfb25seRgDIAEoCBINCgVsaW1pdBgEIAEoBRIOCgZvZmZzZXQYBSABKAUiZAoYTGlzdEFjdGl2ZUdyYW50c1Jlc3BvbnNlEjkKBmdyYW50cxgBIAMoCzIpLmdpYnNvbi5jYXBhYmlsaXR5LnYxLkNhcGFiaWxpdHlHcmFudEluZm8SDQoFdG90YWwYAiABKAUiLgoKR3JhbnRUdXBsZRIOCgZvYmplY3QYASABKAkSEAoIcmVsYXRpb24YAiABKAkiYwoXV3JpdGVBZ2VudEdyYW50c1JlcXVlc3QSGwoTdGFyZ2V0X3ByaW5jaXBhbF9pZBgBIAEoCRIrCgZncmFudHMYAiADKAsyGy5naWJzb24uYWRtaW4udjEuR3JhbnRUdXBsZSJEChhXcml0ZUFnZW50R3JhbnRzUmVzcG9uc2USDwoHd3JpdHRlbhgBIAEoBRIXCg9hbHJlYWR5X3ByZXNlbnQYAiABKAUiZAoYRGVsZXRlQWdlbnRHcmFudHNSZXF1ZXN0EhsKE3RhcmdldF9wcmluY2lwYWxfaWQYASABKAkSKwoGZ3JhbnRzGAIgAygLMhsuZ2lic29uLmFkbWluLnYxLkdyYW50VHVwbGUiQQoZRGVsZXRlQWdlbnRHcmFudHNSZXNwb25zZRIPCgdkZWxldGVkGAEgASgFEhMKC25vdF9wcmVzZW50GAIgASgFMtwDChJHcmFudHNBZG1pblNlcnZpY2USlAEKEExpc3RBY3RpdmVHcmFudHMSKC5naWJzb24uYWRtaW4udjEuTGlzdEFjdGl2ZUdyYW50c1JlcXVlc3QaKS5naWJzb24uYWRtaW4udjEuTGlzdEFjdGl2ZUdyYW50c1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpQBChBXcml0ZUFnZW50R3JhbnRzEiguZ2lic29uLmFkbWluLnYxLldyaXRlQWdlbnRHcmFudHNSZXF1ZXN0GikuZ2lic29uLmFkbWluLnYxLldyaXRlQWdlbnRHcmFudHNSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKXAQoRRGVsZXRlQWdlbnRHcmFudHMSKS5naWJzb24uYWRtaW4udjEuRGVsZXRlQWdlbnRHcmFudHNSZXF1ZXN0GiouZ2lic29uLmFkbWluLnYxLkRlbGV0ZUFnZW50R3JhbnRzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAFCUlABWj9naXRodWIuY29tL3plcm8tZGF5LWFpL3BsYXRmb3JtLXNkay9nZW4vZ2lic29uL2FkbWluL3YxO2FkbWludjGqAgxHaWJzb24uQWRtaW5iBnByb3RvMw", [file_gibson_auth_v1_options, file_gibson_capability_v1_capability]);
 
 /**
  * ListActiveGrantsRequest queries the active grants list. Tenant is derived
@@ -129,7 +40,7 @@ export type ListActiveGrantsRequest = Message<"gibson.admin.v1.ListActiveGrantsR
    * recipient_class_filter restricts to one recipient class.
    * RECIPIENT_CLASS_UNSPECIFIED means all.
    *
-   * @generated from field: gibson.admin.v1.RecipientClass recipient_class_filter = 1;
+   * @generated from field: gibson.capability.v1.RecipientClass recipient_class_filter = 1;
    */
   recipientClassFilter: RecipientClass;
 
@@ -169,7 +80,7 @@ export type ListActiveGrantsRequest = Message<"gibson.admin.v1.ListActiveGrantsR
  * Use `create(ListActiveGrantsRequestSchema)` to create a new message.
  */
 export const ListActiveGrantsRequestSchema: GenMessage<ListActiveGrantsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_admin_v1_grants, 1);
+  messageDesc(file_gibson_admin_v1_grants, 0);
 
 /**
  * ListActiveGrantsResponse returns a page of grant infos.
@@ -180,7 +91,7 @@ export type ListActiveGrantsResponse = Message<"gibson.admin.v1.ListActiveGrants
   /**
    * grants is the page of grant infos.
    *
-   * @generated from field: repeated gibson.admin.v1.CapabilityGrantInfo grants = 1;
+   * @generated from field: repeated gibson.capability.v1.CapabilityGrantInfo grants = 1;
    */
   grants: CapabilityGrantInfo[];
 
@@ -197,7 +108,7 @@ export type ListActiveGrantsResponse = Message<"gibson.admin.v1.ListActiveGrants
  * Use `create(ListActiveGrantsResponseSchema)` to create a new message.
  */
 export const ListActiveGrantsResponseSchema: GenMessage<ListActiveGrantsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_admin_v1_grants, 2);
+  messageDesc(file_gibson_admin_v1_grants, 1);
 
 /**
  * GrantTuple is a single (object, relation) pair to write or delete.
@@ -233,7 +144,7 @@ export type GrantTuple = Message<"gibson.admin.v1.GrantTuple"> & {
  * Use `create(GrantTupleSchema)` to create a new message.
  */
 export const GrantTupleSchema: GenMessage<GrantTuple> = /*@__PURE__*/
-  messageDesc(file_gibson_admin_v1_grants, 3);
+  messageDesc(file_gibson_admin_v1_grants, 2);
 
 /**
  * WriteAgentGrantsRequest writes per-action grants additively for a
@@ -265,7 +176,7 @@ export type WriteAgentGrantsRequest = Message<"gibson.admin.v1.WriteAgentGrantsR
  * Use `create(WriteAgentGrantsRequestSchema)` to create a new message.
  */
 export const WriteAgentGrantsRequestSchema: GenMessage<WriteAgentGrantsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_admin_v1_grants, 4);
+  messageDesc(file_gibson_admin_v1_grants, 3);
 
 /**
  * WriteAgentGrantsResponse reports the disposition of each requested
@@ -292,7 +203,7 @@ export type WriteAgentGrantsResponse = Message<"gibson.admin.v1.WriteAgentGrants
  * Use `create(WriteAgentGrantsResponseSchema)` to create a new message.
  */
 export const WriteAgentGrantsResponseSchema: GenMessage<WriteAgentGrantsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_admin_v1_grants, 5);
+  messageDesc(file_gibson_admin_v1_grants, 4);
 
 /**
  * DeleteAgentGrantsRequest removes per-action grants. Spec:
@@ -317,7 +228,7 @@ export type DeleteAgentGrantsRequest = Message<"gibson.admin.v1.DeleteAgentGrant
  * Use `create(DeleteAgentGrantsRequestSchema)` to create a new message.
  */
 export const DeleteAgentGrantsRequestSchema: GenMessage<DeleteAgentGrantsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_admin_v1_grants, 6);
+  messageDesc(file_gibson_admin_v1_grants, 5);
 
 /**
  * DeleteAgentGrantsResponse reports the disposition. The two counters
@@ -342,47 +253,7 @@ export type DeleteAgentGrantsResponse = Message<"gibson.admin.v1.DeleteAgentGran
  * Use `create(DeleteAgentGrantsResponseSchema)` to create a new message.
  */
 export const DeleteAgentGrantsResponseSchema: GenMessage<DeleteAgentGrantsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_admin_v1_grants, 7);
-
-/**
- * RecipientClass is the class of caller a capability grant is issued to.
- *
- * @generated from enum gibson.admin.v1.RecipientClass
- */
-export enum RecipientClass {
-  /**
-   * @generated from enum value: RECIPIENT_CLASS_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * RECIPIENT_CLASS_AGENT: the grant authorizes an agent install to invoke
-   * a per-mission RPC set.
-   *
-   * @generated from enum value: RECIPIENT_CLASS_AGENT = 1;
-   */
-  AGENT = 1,
-
-  /**
-   * RECIPIENT_CLASS_TOOL: the grant authorizes a tool install.
-   *
-   * @generated from enum value: RECIPIENT_CLASS_TOOL = 2;
-   */
-  TOOL = 2,
-
-  /**
-   * RECIPIENT_CLASS_PLUGIN: the grant authorizes a plugin install.
-   *
-   * @generated from enum value: RECIPIENT_CLASS_PLUGIN = 3;
-   */
-  PLUGIN = 3,
-}
-
-/**
- * Describes the enum gibson.admin.v1.RecipientClass.
- */
-export const RecipientClassSchema: GenEnum<RecipientClass> = /*@__PURE__*/
-  enumDesc(file_gibson_admin_v1_grants, 0);
+  messageDesc(file_gibson_admin_v1_grants, 6);
 
 /**
  * GrantsAdminService is the dashboard's grants surface — both the

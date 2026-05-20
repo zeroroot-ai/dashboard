@@ -60,6 +60,14 @@ const MAIN_DASHBOARD_ROOT = isWorktree
 const WORKSPACE_ROOT = path.resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
 const GIBSON_REPO = path.join(WORKSPACE_ROOT, 'enterprise/platform/gibson');
 const GIBSON_LOCAL_PROTOS = path.join(GIBSON_REPO, 'internal/daemon/api');
+// platform-sdk is a sibling repo at opensource/platform-sdk. Unlike the
+// OSS SDK (resolved via `go list -m` against gibson's go.mod), platform-sdk's
+// proto tree is consumed directly from the sibling checkout — it's the
+// authoritative home for daemon-admin / authz / budget / usage / discovery
+// protos that previously lived under sdk/api/proto. Parent PRD
+// zero-day-ai/.github#101.
+const PLATFORM_SDK_REPO = path.join(WORKSPACE_ROOT, 'opensource/platform-sdk');
+const PLATFORM_SDK_PROTOS = path.join(PLATFORM_SDK_REPO, 'proto');
 
 function run(cmd, opts = {}) {
   return execSync(cmd, {
@@ -70,11 +78,24 @@ function run(cmd, opts = {}) {
 }
 
 function resolveSdkProtoDir() {
-  // `go list -m` against the gibson repo resolves the SDK to its
-  // module-cache directory regardless of which version it is pinned
-  // to. This avoids hard-coding a sibling-checkout assumption for the
-  // SDK side of the workspace; only the daemon-local protos require a
-  // sibling checkout (because they are not published).
+  // Prefer the sibling checkout at opensource/sdk when present — it
+  // tracks main and avoids the "gibson go.mod pin lags one minor
+  // version behind the latest sdk release" hazard during multi-repo
+  // migrations (e.g. capability extraction in sdk#103 vs admin
+  // removal in sdk#105). Sibling checkout is also the standard layout
+  // for this workspace; the module-cache fallback exists for the case
+  // where the dashboard repo is being regen'd outside the polyrepo.
+  const SDK_SIBLING = path.join(WORKSPACE_ROOT, 'opensource/sdk/api/proto');
+  try {
+    const stat = run(`stat ${SDK_SIBLING}`);
+    if (stat) return SDK_SIBLING;
+  } catch {
+    // fall through to module-cache resolution
+  }
+
+  // Module-cache fallback: `go list -m` against the gibson repo
+  // resolves the SDK to whichever version gibson is pinned to. Only
+  // hit when the sibling checkout is absent.
   try {
     const dir = run('go list -m -f "{{.Dir}}" github.com/zero-day-ai/sdk', {
       cwd: GIBSON_REPO,
@@ -83,10 +104,11 @@ function resolveSdkProtoDir() {
     return path.join(dir, 'api/proto');
   } catch (err) {
     console.error(
-      'proto-generate: failed to resolve github.com/zero-day-ai/sdk via `go list -m`.\n' +
-        '  This script expects the gibson daemon repo cloned at:\n' +
-        `    ${GIBSON_REPO}\n` +
-        '  with `go.mod` resolving the SDK as a Go module dependency.\n' +
+      'proto-generate: failed to resolve github.com/zero-day-ai/sdk.\n' +
+        `  Tried sibling checkout at: ${SDK_SIBLING}\n` +
+        `  Tried module-cache via gibson at: ${GIBSON_REPO}\n` +
+        '  Clone zero-day-ai/sdk at opensource/sdk in your workspace,\n' +
+        '  or run from the canonical workspace at ~/Code/zero-day.ai/.\n' +
         `  Underlying error: ${err.message ?? err}`,
     );
     process.exit(1);
@@ -112,26 +134,54 @@ function ensureGibsonLocalProtos() {
   }
 }
 
+function ensurePlatformSdkProtos() {
+  // Sibling-checkout sanity check for the platform-sdk proto tree
+  // (zero-day-ai/platform-sdk → opensource/platform-sdk). The dashboard
+  // pulls daemon-admin / authz / budget / usage / daemon-discovery
+  // protos from here as part of the OSS-SDK → platform-sdk migration
+  // (parent PRD zero-day-ai/.github#101).
+  try {
+    const stat = run(`stat ${PLATFORM_SDK_PROTOS}`);
+    if (!stat) throw new Error('stat empty');
+  } catch (err) {
+    console.error(
+      'proto-generate: platform-sdk protos not found at:\n' +
+        `    ${PLATFORM_SDK_PROTOS}\n` +
+        '  Clone zero-day-ai/platform-sdk at opensource/platform-sdk in your\n' +
+        '  workspace, or run from the canonical workspace at\n' +
+        '  ~/Code/zero-day.ai/.\n' +
+        `  Underlying error: ${err.message ?? err}`,
+    );
+    process.exit(1);
+  }
+}
+
 function buildWorkspace() {
   rmSync(WS, { recursive: true, force: true });
   mkdirSync(WS, { recursive: true });
 
   const sdkProtoDir = resolveSdkProtoDir();
-  ensureGibsonLocalProtos();
+  ensurePlatformSdkProtos();
 
-  // Symlinks bring the two proto trees inside the buf.yaml's context
+  // Symlinks bring the three proto trees inside the buf.yaml's context
   // directory (the .tmp/proto-ws root). Buf v2 follows symlinks; this
   // satisfies the "modules must be inside the workspace" rule without
   // copying files.
-  symlinkSync(GIBSON_LOCAL_PROTOS, path.join(WS, 'gibson-local'));
+  // gibson-local is no longer a proto source for the dashboard:
+  // platform_operator / tenant_admin / user were promoted into
+  // platform-sdk by slice gibson#226 (daemon-internal protos →
+  // platform-sdk). The gibson-local proto files survive in the daemon
+  // repo only until the matching daemon flip lands; dashboard reads
+  // them from platform-sdk in the meantime, and the eventual deletion
+  // in the daemon repo is a no-op for this script.
   symlinkSync(sdkProtoDir, path.join(WS, 'sdk-proto'));
+  symlinkSync(PLATFORM_SDK_PROTOS, path.join(WS, 'platform-sdk-proto'));
 
   writeFileSync(
     path.join(WS, 'buf.yaml'),
     [
       'version: v2',
       'modules:',
-      '  - path: gibson-local',
       // The SDK vendors well-known google/* protos with a
       // non-conforming go_package; excluding them from the module is
       // critical (otherwise protoc-gen-* plugins choke on them and
@@ -140,6 +190,34 @@ function buildWorkspace() {
       '  - path: sdk-proto',
       '    excludes:',
       '      - sdk-proto/google',
+      // The following proto packages were migrated to platform-sdk
+      // (parent PRD zero-day-ai/.github#101). The OSS SDK still ships
+      // them at module level until sdk#105 lands; exclude them here
+      // so buf does not see two copies of each file. After sdk#105
+      // merges, these directories vanish from the OSS SDK and the
+      // exclude becomes a no-op (kept for tag-skew safety).
+      '      - sdk-proto/gibson/admin',
+      '      - sdk-proto/gibson/authz',
+      '      - sdk-proto/gibson/budget',
+      '      - sdk-proto/gibson/daemon/discovery',
+      '      - sdk-proto/gibson/usage',
+      // platform-sdk is the new authoritative home for daemon-admin /
+      // authz / budget / usage / daemon-discovery protos (parent PRD
+      // zero-day-ai/.github#101). Listed after sdk-proto so its
+      // descriptors win on the conflict-free namespaces it owns.
+      // gibson/auth/v1/options.proto is intentionally shared between
+      // OSS SDK and platform-sdk via the same on-disk file (see the
+      // platform-sdk "share gibson.auth.v1 with oss sdk" change) —
+      // exclude here so buf doesn't see two copies under the two
+      // module roots.
+      '  - path: platform-sdk-proto',
+      '    excludes:',
+      '      - platform-sdk-proto/gibson/auth',
+      // gibson.capability.v1 is canonically OSS-SDK-owned (sdk#103
+      // extraction). platform-sdk vendors a copy purely so its
+      // gibson.admin.v1 services can resolve the import; we read
+      // capability.proto from the OSS SDK side instead.
+      '      - platform-sdk-proto/gibson/capability',
       // protovalidate provides the (buf.validate.field).* annotations
       // adopted by the SDK from v1.5.0 onward. Pulled from the buf.build
       // remote registry; resolved by `buf dep update` invoked below.
@@ -151,8 +229,9 @@ function buildWorkspace() {
       '  ignore:',
       // Daemon admin proto deliberately doesn\'t carry the standard
       // suffix lint contract; same exclusion the daemon-side
-      // `make authz-registry` uses.
-      '    - gibson-local/gibson/daemon/admin/v1/daemon_admin.proto',
+      // `make authz-registry` uses. The proto lives in platform-sdk
+      // post-migration (parent PRD zero-day-ai/.github#101).
+      '    - platform-sdk-proto/gibson/daemon/admin/v1/daemon_admin.proto',
       '',
     ].join('\n'),
   );
@@ -168,8 +247,8 @@ function buildWorkspace() {
       '      - target=ts',
       '      - import_extension=none',
       'inputs:',
-      '  - directory: gibson-local',
       '  - directory: sdk-proto',
+      '  - directory: platform-sdk-proto',
       // Generate TS bindings for the protovalidate annotation proto so
       // imports of file_buf_validate_validate from generated SDK files
       // resolve. Without this, src/gen/buf/validate/validate_pb.ts is

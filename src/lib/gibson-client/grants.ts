@@ -11,14 +11,16 @@ import 'server-only';
 
 import { userClient } from '../gibson-client';
 import { GrantsAdminService } from '@/src/gen/gibson/admin/v1/grants_pb';
-import type {
-  CapabilityGrantInfo,
-  ListActiveGrantsResponse,
-  RecipientClass,
-} from '@/src/gen/gibson/admin/v1/grants_pb';
+import type { ListActiveGrantsResponse } from '@/src/gen/gibson/admin/v1/grants_pb';
+// CapabilityGrantInfo + RecipientClass were extracted from
+// gibson.admin.v1 → gibson.capability.v1 (sdk#103) so non-admin
+// callers can describe a grant without pulling the admin surface.
+import type { CapabilityGrantInfo } from '@/src/gen/gibson/capability/v1/capability_pb';
+import { RecipientClass } from '@/src/gen/gibson/capability/v1/capability_pb';
 import { throwMapped } from './secrets';
 
-export type { CapabilityGrantInfo, ListActiveGrantsResponse, RecipientClass };
+export type { CapabilityGrantInfo, ListActiveGrantsResponse };
+export { RecipientClass };
 
 export interface ListActiveGrantsOptions {
   /** Filter by recipient class; UNSPECIFIED (0) means all. */

@@ -2469,10 +2469,27 @@ export type CreateMissionRequest = Message<"gibson.daemon.v1.CreateMissionReques
   missionDefinitionId: string;
 
   /**
-   * constraints defines execution constraints. Canonical type per ADR 0004:
-   * gibson.mission.v1.MissionConstraints is the single platform-wide shape.
-   * When set, these dispatch-time constraints override the definition-level
-   * constraints baked into the referenced MissionDefinition.
+   * constraints defines dispatch-time execution constraints. Canonical type
+   * per ADR 0004: gibson.mission.v1.MissionConstraints is the single
+   * platform-wide shape.
+   *
+   * Precedence: dispatch-time constraints (this field) take full precedence
+   * over any constraints baked into the referenced MissionDefinition. There
+   * is NO per-field merge — if this field is set, the entire dispatch
+   * constraint set wins; any field absent from this message reverts to 0
+   * (unlimited), not to the definition's value.
+   *
+   * To inherit the definition's constraints, leave this field unset (the
+   * zero-value message is NOT the same as "absent"). Callers that want
+   * partial overrides must read the definition's constraints first and
+   * re-supply all fields they wish to preserve.
+   *
+   * Token budget precedence for per-call caps:
+   *   dispatch constraints.max_tokens_per_call
+   *     > definition constraints.max_tokens_per_call
+   *     > per-node *NodeConfig.max_tokens_per_call (lowest; wins if set)
+   *
+   * Spec: ADR 0004, mission-schema-canonicalization; gibson#133 (M4).
    *
    * @generated from field: gibson.mission.v1.MissionConstraints constraints = 5;
    */
