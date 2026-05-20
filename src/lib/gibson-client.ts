@@ -522,6 +522,31 @@ export async function resumeMission(missionId: string, userId?: string, tenantId
   return { success: true };
 }
 
+export async function runMission(
+  missionDefinitionId: string,
+  targetId: string,
+  variables: Record<string, string> = {},
+  memoryContinuity = 'isolated',
+  userId?: string,
+  tenantId?: string
+) {
+  const client = await getClient(userId, tenantId);
+  // RunMission returns a stream. The dashboard route is unary: open the
+  // stream, read the first event to confirm dispatch, then return. The
+  // detail page's /events SSE subscription picks up subsequent frames
+  // (mission_started, tool_started, tool_completed, mission_completed).
+  const stream = client.runMission({
+    missionDefinitionId,
+    targetId,
+    variables,
+    memoryContinuity,
+  });
+  for await (const event of stream) {
+    return { success: true, missionId: event.missionId, event };
+  }
+  return { success: true };
+}
+
 export async function getMissionHistory(name: string, limit = 100, offset = 0, userId?: string, tenantId?: string) {
   const client = await getClient(userId, tenantId);
   const response = await client.getMissionHistory({
