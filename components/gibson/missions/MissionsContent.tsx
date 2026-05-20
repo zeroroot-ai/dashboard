@@ -28,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import * as Kanban from "@/components/ui/kanban";
 
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
+import { RunDemoMissionButton } from "./RunDemoMissionButton";
 import {
   useMissions,
   useStartMission,
@@ -342,14 +343,17 @@ export function MissionsContent() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <h1 className="text-xl font-bold tracking-tight font-mono lg:text-2xl">Missions</h1>
-        <Button asChild>
-          <Link href="/dashboard/missions/create">
-            <PlusCircle className="size-4" />
-            New Mission
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <RunDemoMissionButton variant="outline" />
+          <Button asChild>
+            <Link href="/dashboard/missions/create">
+              <PlusCircle className="size-4" />
+              New Mission
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Error state */}
@@ -371,18 +375,14 @@ export function MissionsContent() {
         <EmptyState
           icon={CrosshairIcon}
           title="No missions yet"
-          description="A mission orchestrates one or more agents against a target. Create one to see findings flow into the knowledge graph."
-          primaryCta={
-            <Button asChild>
-              <Link href="/dashboard/missions/create">
-                <PlusCircle className="size-4" />
-                Create your first mission
-              </Link>
-            </Button>
-          }
+          description="A mission orchestrates one or more agents against a target. Run the one-click demo to see findings flow in, or author your own."
+          primaryCta={<RunDemoMissionButton />}
           secondaryCta={
             <Button asChild variant="ghost">
-              <Link href="/docs/missions">Read the docs</Link>
+              <Link href="/dashboard/missions/create">
+                <PlusCircle className="size-4" />
+                Create your own
+              </Link>
             </Button>
           }
         />
