@@ -73,7 +73,6 @@ function scopeParam(
 export function ToolsContent() {
   const canManage = usePermitted("components:manage");
   const { data: tier } = useTierLimits();
-  const isProsumer = false // removed by spec plans-and-quotas-simplification;
 
   const [scope, setScope] = useState<AccessScopeSelection>({
     scope: canManage ? "tenant-wide" : "my-access",
@@ -182,21 +181,11 @@ export function ToolsContent() {
         </CardHeader>
         <CardContent className="space-y-4">
           {canManage ? (
-            <AccessScopeSelector
-              value={scope}
-              onChange={setScope}
-              disablePerTeam={isProsumer}
-            />
+            <AccessScopeSelector value={scope} onChange={setScope} />
           ) : (
             <p className="text-xs text-muted-foreground">
               Showing the tools currently accessible to you. Tenant admins can
               manage per-team, per-user, and per-agent scopes.
-            </p>
-          )}
-
-          {isProsumer && canManage && scope.scope === "per-team" && (
-            <p className="text-xs text-muted-foreground">
-              Upgrade for team policies.
             </p>
           )}
 

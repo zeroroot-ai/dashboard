@@ -105,7 +105,6 @@ function parseManifestPermissions(yaml: string): PermissionRequest[] {
 function groupRequests(
   requests: PermissionRequest[],
   callerAccessMap: Map<string, { read: boolean; write: boolean; execute: boolean }>,
-  prosumer: boolean,
 ): ApprovalRow[] {
   const byTarget = new Map<string, ApprovalRow>();
   for (const req of requests) {
@@ -125,8 +124,8 @@ function groupRequests(
     slot.required = slot.required || req.required;
     const caller = callerAccessMap.get(req.target);
     slot.canGrant = caller ? caller[req.action] === true : false;
-    // Default check: prosumer = all requested; enterprise = requested && canGrant.
-    slot.approved = prosumer ? true : slot.canGrant;
+    // Default check: requested && canGrant (caller has the grant authority).
+    slot.approved = slot.canGrant;
   }
   return Array.from(byTarget.values());
 }
@@ -195,7 +194,6 @@ export function AgentInstallDialog({
   permissionsYaml,
 }: AgentInstallDialogProps) {
   const { data: tier } = useTierLimits();
-  const prosumer = false // removed by spec plans-and-quotas-simplification;
 
   const [validation, setValidation] = useState<
     ManifestValidationResult | null
@@ -231,9 +229,9 @@ export function AgentInstallDialog({
     }
 
     const requests = parseManifestPermissions(permissionsYaml);
-    setRows(groupRequests(requests, map, prosumer));
+    setRows(groupRequests(requests, map));
     setLoading(false);
-  }, [componentYaml, permissionsYaml, prosumer]);
+  }, [componentYaml, permissionsYaml]);
 
   useEffect(() => {
     if (!open) return;

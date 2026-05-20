@@ -32,8 +32,6 @@ export type AccessScopeSelection = {
 export interface AccessScopeSelectorProps {
   value: AccessScopeSelection;
   onChange: (v: AccessScopeSelection) => void;
-  /** If true, hide the Per-team tab. Set when the caller's tenant is single-seat. */
-  disablePerTeam?: boolean;
   /** Teams, users, or components the secondary dropdown picks from. */
   teams?: { id: string; name: string }[];
   users?: { id: string; name: string }[];
@@ -43,7 +41,6 @@ export interface AccessScopeSelectorProps {
 export function AccessScopeSelector({
   value,
   onChange,
-  disablePerTeam,
   teams = [],
   users = [],
   agents = [],
@@ -63,9 +60,7 @@ export function AccessScopeSelector({
       <Tabs value={value.scope} onValueChange={(s) => updateScope(s as AccessScope)}>
         <TabsList>
           <TabsTrigger value="tenant-wide">Tenant-wide</TabsTrigger>
-          <TabsTrigger value="per-team" disabled={disablePerTeam}>
-            Per-team
-          </TabsTrigger>
+          <TabsTrigger value="per-team">Per-team</TabsTrigger>
           <TabsTrigger value="per-user">Per-user</TabsTrigger>
           <TabsTrigger value="per-agent">Per-agent</TabsTrigger>
           <TabsTrigger value="my-access">My access</TabsTrigger>
