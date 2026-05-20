@@ -81,6 +81,17 @@
 }
 
 /*
+ * Suppress Fumadocs' built-in sticky header. `nav={{ enabled: false }}`
+ * on DocsLayout was meant to do this, but in Fumadocs UI v15+ it only
+ * blanks the navbar contents — the wrapper `<header>` still renders a
+ * sticky shell that visually crowds the shared SiteHeader. Hide it
+ * outright; our SiteHeader is the only header on the docs route.
+ */
+.docs-root header.bg-fd-background\/80 {
+  display: none;
+}
+
+/*
  * Honour the OS-level motion preference. Fumadocs animates sidebar item
  * hover and search-dialog open/close by default; zeroing those transitions
  * here is the usability NFR (`prefers-reduced-motion`) contract.

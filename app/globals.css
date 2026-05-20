@@ -55,53 +55,57 @@
   --secondary-950: oklch(0.302 0.056 195);
   --secondary-1000: oklch(0.218 0.040 195);
 
-  --background: var(--base-50);
-  --foreground: var(--base-800);
-  --card: oklch(1 0 0);
-  --card-foreground: var(--base-800);
-  --popover: oklch(1 0 0);
-  --popover-foreground: var(--base-800);
-  --primary: var(--primary-700);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: var(--secondary-700);
-  --secondary-foreground: oklch(1 0 0);
-  --muted: var(--base-100);
-  --muted-foreground: var(--base-600);
-  --accent: var(--base-200);
-  --accent-foreground: var(--base-800);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(1 0 0);
-  --warning: oklch(0.70 0.15 70);
-  --warning-foreground: oklch(0.18 0.02 70);
-  --success-foreground: oklch(1 0 0);
-  --overlay: oklch(0 0 0 / 0.5);
-  --border: var(--base-200);
-  --input: var(--base-300);
-  --ring: var(--primary-700);
-  --chart-1: var(--primary-700);
-  --chart-2: var(--secondary-700);
-  --chart-3: var(--primary-500);
-  --chart-4: var(--secondary-500);
-  --chart-5: var(--primary-300);
-  --radius: 0.375rem;
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: var(--base-800);
-  --sidebar-primary: var(--primary-700);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: var(--base-100);
-  --sidebar-accent-foreground: var(--base-800);
-  --sidebar-border: var(--base-200);
-  --sidebar-ring: var(--primary-700);
+  /* Brand-guide light mode: warm cream paper + deep ink-green text.
+   * The brand color is the accent (rare), not the body. */
+  --background: oklch(0.96 0.012 95);          /* warm cream */
+  --foreground: oklch(0.20 0.06 145);          /* deep ink green */
+  --card: oklch(0.99 0.008 95);                /* paper white */
+  --card-foreground: oklch(0.20 0.06 145);
+  --popover: oklch(0.99 0.008 95);
+  --popover-foreground: oklch(0.20 0.06 145);
+  --primary: oklch(0.48 0.22 145);             /* darker green for paper contrast */
+  --primary-foreground: oklch(0.98 0.02 145);
+  --secondary: oklch(0.58 0.16 80);            /* amber (2nd-monitor color) */
+  --secondary-foreground: oklch(0.98 0.02 80);
+  --muted: oklch(0.92 0.012 95);               /* code wells */
+  --muted-foreground: oklch(0.55 0.06 145);    /* fg-dim */
+  --accent: oklch(0.93 0.014 95);              /* light cream hover */
+  --accent-foreground: oklch(0.20 0.06 145);
+  --destructive: oklch(0.50 0.22 22);          /* crt red, darker for paper */
+  --destructive-foreground: oklch(0.98 0.02 22);
+  --warning: oklch(0.58 0.16 80);              /* = amber */
+  --warning-foreground: oklch(0.98 0.02 80);
+  --success-foreground: oklch(0.98 0.02 145);
+  --overlay: oklch(0.20 0.06 145 / 0.40);
+  --border: oklch(0.55 0.10 145);
+  --input: oklch(0.78 0.04 145);
+  --ring: oklch(0.48 0.22 145);
+  --chart-1: oklch(0.48 0.22 145);             /* primary */
+  --chart-2: oklch(0.58 0.16 80);              /* amber */
+  --chart-3: oklch(0.50 0.18 230);             /* cyan/info */
+  --chart-4: oklch(0.50 0.22 22);              /* crt red */
+  --chart-5: oklch(0.62 0.18 145);             /* primary-dim */
+  --radius: 0.25rem;                            /* terminal-square: 4px */
+  --sidebar: oklch(0.99 0.008 95);
+  --sidebar-foreground: oklch(0.20 0.06 145);
+  --sidebar-primary: oklch(0.48 0.22 145);
+  --sidebar-primary-foreground: oklch(0.98 0.02 145);
+  --sidebar-accent: oklch(0.93 0.014 95);
+  --sidebar-accent-foreground: oklch(0.20 0.06 145);
+  --sidebar-border: oklch(0.55 0.10 145);
+  --sidebar-ring: oklch(0.48 0.22 145);
 
-  --highlight: oklch(0.55 0.17 152);
-  --alt: oklch(0.50 0.13 175);
-  --link: oklch(0.55 0.16 220);
-  --glow-strength: 0;
-  --scanline-opacity: 0.02;
-  --scanline-color: var(--primary-700);
+  /* Specialty — brand character. */
+  --highlight: oklch(0.48 0.22 145);           /* phosphor → ink in light */
+  --alt: oklch(0.58 0.16 80);                  /* amber */
+  --link: oklch(0.50 0.18 230);                /* ice / cyan */
+  --glow-strength: 0;                          /* paper doesn't glow */
+  --scanline-opacity: 0;                       /* paper grain instead, see body::after */
+  --scanline-color: oklch(0.48 0.22 145);
+  --paper-grain-opacity: 1;
 
   --display-family: var(--font-jetbrains-mono), 'Fira Code', 'Cascadia Code', monospace;
-  --display-weight: 700;
+  --display-weight: 800;
   --text-family: var(--font-jetbrains-mono), 'Fira Code', 'Cascadia Code', monospace;
 
   --fc-button-bg-color: var(--primary);
@@ -118,49 +122,54 @@
 }
 
 .dark {
-  --background: var(--base-1000);
-  --foreground: var(--primary-400);
-  --card: var(--base-950);
-  --card-foreground: var(--base-200);
-  --popover: var(--base-950);
-  --popover-foreground: var(--base-200);
-  --primary: var(--primary-500);
-  --primary-foreground: var(--base-1000);
-  --secondary: var(--secondary-500);
-  --secondary-foreground: var(--base-1000);
-  --muted: var(--base-900);
-  --muted-foreground: var(--base-400);
-  --accent: var(--base-900);
-  --accent-foreground: var(--base-200);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(1 0 0);
-  --warning: oklch(0.80 0.16 75);
-  --warning-foreground: oklch(0.18 0.02 70);
-  --success-foreground: var(--base-1000);
-  --overlay: oklch(0 0 0 / 0.7);
-  --border: var(--base-800);
-  --input: var(--base-700);
-  --ring: var(--primary-500);
-  --chart-1: var(--primary-500);
-  --chart-2: var(--secondary-500);
-  --chart-3: var(--primary-300);
-  --chart-4: var(--secondary-300);
-  --chart-5: var(--primary-100);
-  --sidebar: var(--base-950);
-  --sidebar-foreground: var(--primary-400);
-  --sidebar-primary: var(--primary-500);
-  --sidebar-primary-foreground: var(--base-1000);
-  --sidebar-accent: var(--base-900);
-  --sidebar-accent-foreground: var(--base-200);
-  --sidebar-border: var(--base-800);
-  --sidebar-ring: var(--primary-500);
+  /* Brand-guide dark mode: near-black with very faint green tint;
+   * phosphor-green accent + amber 2nd-monitor; body text near-pure-white
+   * (low chroma) so it reads as neutral, not phosphor. */
+  --background: oklch(0.13 0.008 145);         /* near-black, faint green */
+  --foreground: oklch(0.97 0.01 145);          /* near-white, low chroma */
+  --card: oklch(0.17 0.010 145);               /* bg-elev */
+  --card-foreground: oklch(0.97 0.01 145);
+  --popover: oklch(0.17 0.010 145);
+  --popover-foreground: oklch(0.97 0.01 145);
+  --primary: oklch(0.86 0.28 145);             /* phosphor green */
+  --primary-foreground: oklch(0.16 0.012 145); /* black-on-green */
+  --secondary: oklch(0.82 0.18 80);            /* amber */
+  --secondary-foreground: oklch(0.16 0.012 80);
+  --muted: oklch(0.10 0.006 145);              /* code wells */
+  --muted-foreground: oklch(0.64 0.03 145);    /* fg-dim */
+  --accent: oklch(0.22 0.014 145);             /* hover / dialog */
+  --accent-foreground: oklch(0.97 0.01 145);
+  --destructive: oklch(0.68 0.24 18);          /* crt red */
+  --destructive-foreground: oklch(0.98 0.02 18);
+  --warning: oklch(0.82 0.18 80);              /* = amber */
+  --warning-foreground: oklch(0.16 0.012 80);
+  --success-foreground: oklch(0.16 0.012 145);
+  --overlay: oklch(0.06 0 0 / 0.75);
+  --border: oklch(0.38 0.06 145);
+  --input: oklch(0.28 0.03 145);
+  --ring: oklch(0.86 0.28 145);
+  --chart-1: oklch(0.86 0.28 145);             /* primary */
+  --chart-2: oklch(0.82 0.18 80);              /* amber */
+  --chart-3: oklch(0.78 0.16 220);             /* info / cyan */
+  --chart-4: oklch(0.68 0.24 18);              /* crt red */
+  --chart-5: oklch(0.66 0.22 145);             /* primary-dim */
+  --sidebar: oklch(0.17 0.010 145);
+  --sidebar-foreground: oklch(0.97 0.01 145);
+  --sidebar-primary: oklch(0.86 0.28 145);
+  --sidebar-primary-foreground: oklch(0.16 0.012 145);
+  --sidebar-accent: oklch(0.22 0.014 145);
+  --sidebar-accent-foreground: oklch(0.97 0.01 145);
+  --sidebar-border: oklch(0.38 0.06 145);
+  --sidebar-ring: oklch(0.86 0.28 145);
 
-  --highlight: oklch(0.917 0.213 152);
-  --alt: oklch(0.920 0.130 175);
-  --link: oklch(0.810 0.155 213);
+  /* Specialty — phosphor + amber. */
+  --highlight: oklch(0.86 0.28 145);
+  --alt: oklch(0.82 0.18 80);
+  --link: oklch(0.78 0.16 220);
   --glow-strength: 1;
-  --scanline-opacity: 0.04;
-  --scanline-color: var(--primary-500);
+  --scanline-opacity: 0.010;                   /* brand-guide-exact: barely visible */
+  --scanline-color: oklch(0.86 0.28 145);
+  --paper-grain-opacity: 0;                    /* no paper on phosphor */
 }
 
 /* Legacy --color-zd-* aliases. Existing consumers (#54 home + landing,
@@ -266,6 +275,16 @@
   51%, 100% { opacity: 0; }
 }
 
+/* Brand-guide CRT flicker — used on hero lockups + standalone marks
+ * to evoke an unstable phosphor monitor. 92% of the cycle is steady so
+ * the flicker reads as a glitch, not a flash. */
+@keyframes zda-flicker {
+  0%, 92%, 100% { opacity: 1; }
+  93%           { opacity: 0.62; }
+  94%           { opacity: 1; }
+  95%           { opacity: 0.84; }
+}
+
 @utility zd-cursor {
   display: inline-block;
   width: 0.6em;
@@ -287,6 +306,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Brand-guide body weight: mono needs the heft, 400 reads thin. */
+    font-weight: 500;
   }
 
   .font-display {
@@ -314,8 +335,8 @@
   }
 }
 
-/* Global CRT scanline overlay — opacity drives per-mode visibility
- * (#52 decision: scanlines on every surface). */
+/* Global CRT scanline overlay — opacity drives per-mode visibility.
+ * Dark: 0.010 brand-guide-exact. Light: 0 (paper grain takes over). */
 body::before {
   content: '';
   position: fixed;
@@ -330,6 +351,22 @@ body::before {
     var(--scanline-color) 4px
   );
   opacity: var(--scanline-opacity);
+}
+
+/* Light-mode paper grain — radial dot overlay, brand-guide-exact.
+ * Driven by --paper-grain-opacity (1 in light, 0 in dark) so the
+ * rule itself is always live but invisible on dark/phosphor surfaces. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background-image:
+    radial-gradient(circle at 25% 35%, color-mix(in oklch, var(--foreground) 6%, transparent) 1px, transparent 1px),
+    radial-gradient(circle at 75% 65%, color-mix(in oklch, var(--foreground) 6%, transparent) 1px, transparent 1px);
+  background-size: 3px 3px, 5px 5px;
+  opacity: var(--paper-grain-opacity, 0);
 }
 
 .glow-green {
@@ -371,7 +408,7 @@ body::before {
 ::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--primary) 50%, transparent); }
 
 @media (prefers-reduced-motion: reduce) {
-  body::before { display: none; }
+  body::before, body::after { display: none; }
   .text-glow-green, .text-glow-green-soft { text-shadow: none; }
   .glow-green, .border-glow-green { box-shadow: none; }
 }
