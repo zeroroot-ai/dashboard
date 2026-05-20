@@ -195,12 +195,31 @@ async function createMissionInGibson(
     // jwt_authn + ext_authz + SPIFFE mTLS upstream of the daemon; a
     // direct channel from this route bypasses every one of those checks.
     const { DaemonService } = await import('@/src/gen/gibson/daemon/v1/daemon_pb');
+    const { DaemonAdminService } = await import(
+      '@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb'
+    );
+    const { MissionDefinitionSchema } = await import(
+      '@/src/gen/gibson/mission/v1/mission_definition_pb'
+    );
+    const { toBinary } = await import('@bufbuild/protobuf');
     const { userClient } = await import('@/src/lib/gibson-client');
 
     const client = userClient(DaemonService);
+    // DaemonAdminService is the platform-sdk-published admin/writer surface
+    // (parent PRD zero-day-ai/.github#101). CreateMissionDefinition moved
+    // off the member-facing DaemonService; the member RPCs (CreateMission,
+    // RunMission, etc.) stay on DaemonService. The admin request type carries
+    // the structured MissionDefinition as `definition_serialized: bytes` (the
+    // OSS gibson.mission.v1.MissionDefinition encoded with proto2 wire format)
+    // — wire-equivalent to the old `definition: MissionDefinition` slot, but
+    // it keeps platform-sdk free of the 600-line vendored mission proto.
+    const adminClient = userClient(DaemonAdminService);
+    const definitionSerialized = toBinary(MissionDefinitionSchema, definition);
 
-    // Step 1: Register the mission definition.
-    const defResp = await client.createMissionDefinition({ definition });
+    // Step 1: Register the mission definition (admin-tier).
+    const defResp = await adminClient.createMissionDefinition({
+      definitionSerialized,
+    });
     const missionDefinitionId = defResp.missionDefinitionId;
     if (!missionDefinitionId) {
       return {

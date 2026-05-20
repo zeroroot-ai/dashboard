@@ -205,8 +205,11 @@ export type MissionConstraints = Message<"gibson.mission.v1.MissionConstraints">
   maxDuration?: Duration;
 
   /**
-   * max_tokens is the cumulative LLM token budget across all agent nodes.
-   * 0 means unlimited.
+   * max_tokens is the cumulative LLM token budget across the entire mission
+   * (all agent nodes combined). The daemon accumulates usage on every LLM
+   * invocation and stops the mission when the budget is exceeded.
+   * 0 means unlimited. This is a mission-wide budget, not a per-call limit;
+   * use max_tokens_per_call to cap individual invocations.
    *
    * @generated from field: int64 max_tokens = 2;
    */
@@ -288,12 +291,25 @@ export type MissionConstraints = Message<"gibson.mission.v1.MissionConstraints">
   blockedTechniques: string[];
 
   /**
-   * max_tokens_per_call is the mission-level cap on tokens consumed per
-   * individual LLM invocation. Overridden by per-node *NodeConfig.
-   * max_tokens_per_call when set on a specific node. 0 means unlimited
-   * from this mechanism. Spec: mission-schema-canonicalization
-   * Requirement 5. Enforced by internal/harness/per_call_cap.go's
-   * EffectivePerCallCap() in the daemon (wired in M4, gibson#133).
+   * max_tokens_per_call is the per-invocation cap on LLM tokens for any
+   * single LLM call within this mission. Applied by the daemon before every
+   * provider call; the provider never sees more than this many output tokens.
+   *
+   * Precedence cascade (highest → lowest):
+   *   1. Per-node *NodeConfig.max_tokens_per_call (when set on a specific node)
+   *   2. This field (mission-level default)
+   *   3. 0 — no cap from this mechanism
+   *
+   * When a per-node override is set it completely supersedes this field for
+   * that node (including 0, which explicitly disables the cap for that node
+   * while this field may still apply to all other nodes).
+   *
+   * This field is different from max_tokens: max_tokens is a cumulative
+   * budget for the entire mission; max_tokens_per_call is a ceiling on each
+   * individual LLM call.
+   *
+   * 0 means unlimited at this level. Spec: mission-schema-canonicalization
+   * Requirement 5. Enforced by EffectivePerCallCap() (wired in M4, gibson#133).
    *
    * @generated from field: int32 max_tokens_per_call = 12;
    */
@@ -510,9 +526,20 @@ export type AgentNodeConfig = Message<"gibson.mission.v1.AgentNodeConfig"> & {
   task?: Task;
 
   /**
-   * max_tokens_per_call overrides MissionConstraints.max_tokens_per_call
-   * for this node only. 0 means unlimited; absence means cascade
-   * from the mission level.
+   * max_tokens_per_call is the per-node override of
+   * MissionConstraints.max_tokens_per_call for this agent node only.
+   *
+   * When present (non-nil), this value is used as the effective cap for
+   * all LLM calls made by this node, regardless of the mission-level
+   * MissionConstraints.max_tokens_per_call value. Setting this to 0
+   * explicitly disables the cap for this node (the mission-level cap is
+   * NOT applied as a fallback when this field is explicitly set to 0).
+   *
+   * When absent (nil / proto3 optional not set), the mission-level
+   * MissionConstraints.max_tokens_per_call applies instead.
+   *
+   * 0 = inherit from mission-level (when this field is absent).
+   * Spec: mission-schema-canonicalization Requirement 5; gibson#133.
    *
    * @generated from field: optional int32 max_tokens_per_call = 3;
    */
@@ -550,9 +577,12 @@ export type ToolNodeConfig = Message<"gibson.mission.v1.ToolNodeConfig"> & {
   input: { [key: string]: string };
 
   /**
-   * max_tokens_per_call overrides MissionConstraints.max_tokens_per_call
-   * for this node only. 0 means unlimited; absence means cascade
-   * from the mission level.
+   * max_tokens_per_call is the per-node override of
+   * MissionConstraints.max_tokens_per_call for this tool node only.
+   * Follows the same semantics as AgentNodeConfig.max_tokens_per_call:
+   * present and non-zero caps the call; present and 0 disables the cap for
+   * this node; absent means fall through to the mission-level constraint.
+   * Spec: mission-schema-canonicalization Requirement 5; gibson#133.
    *
    * @generated from field: optional int32 max_tokens_per_call = 3;
    */
@@ -598,9 +628,12 @@ export type PluginNodeConfig = Message<"gibson.mission.v1.PluginNodeConfig"> & {
   params: { [key: string]: string };
 
   /**
-   * max_tokens_per_call overrides MissionConstraints.max_tokens_per_call
-   * for this node only. 0 means unlimited; absence means cascade
-   * from the mission level.
+   * max_tokens_per_call is the per-node override of
+   * MissionConstraints.max_tokens_per_call for this plugin node only.
+   * Follows the same semantics as AgentNodeConfig.max_tokens_per_call:
+   * present and non-zero caps the call; present and 0 disables the cap for
+   * this node; absent means fall through to the mission-level constraint.
+   * Spec: mission-schema-canonicalization Requirement 5; gibson#133.
    *
    * @generated from field: optional int32 max_tokens_per_call = 4;
    */

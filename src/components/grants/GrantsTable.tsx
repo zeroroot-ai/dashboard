@@ -42,7 +42,8 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import type { CapabilityGrantInfo, RecipientClass } from "@/src/lib/gibson-client/grants";
-import { RecipientClass as RC } from "@/src/gen/gibson/admin/v1/grants_pb";
+// RecipientClass moved to gibson.capability.v1 (sdk#103); same wire enum.
+import { RecipientClass as RC } from "@/src/gen/gibson/capability/v1/capability_pb";
 
 // ---------------------------------------------------------------------------
 // Helpers
