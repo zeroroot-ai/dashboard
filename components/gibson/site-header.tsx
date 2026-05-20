@@ -1,25 +1,28 @@
 import Link from "next/link";
 import { getServerSession } from "@/src/lib/auth";
+import { Lockup } from "@/components/layout/logo";
+import { ModeToggle } from "@/components/layout/header/mode-toggle";
 
+/**
+ * Public chrome — landing, pricing, docs.
+ *
+ * Brand lockup: full BrainCRT mark (with monitor stand, "the actual terminal")
+ * sitting next to the "zero-day.ai" wordmark. Same treatment as the square
+ * 75mm sticker in the brand guide. Mark uses var(--primary); wordmark uses
+ * var(--foreground); ".ai" dims to var(--muted-foreground).
+ */
 export async function SiteHeader() {
   const session = await getServerSession();
 
   return (
     <header className="border-b border-border bg-background/80 backdrop-blur">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
         <Link
           href="/"
-          className="text-zd-glow font-mono text-base font-bold sm:text-lg"
           aria-label="Zero Day AI — home"
+          className="inline-flex items-center"
         >
-          <span className="text-highlight">[</span>
-          <span className="text-alt">gibson</span>
-          <span className="text-highlight">@</span>
-          <span className="text-highlight">zero-day</span>
-          <span className="text-alt">]: </span>
-          <span className="text-highlight"> ~ </span>
-          <span className="text-alt">$</span>
-          <span className="zd-cursor ml-1" aria-hidden="true" />
+          <Lockup size="md" />
         </Link>
         <nav className="flex items-center gap-6 font-mono text-sm" aria-label="Primary">
           <Link
@@ -49,6 +52,7 @@ export async function SiteHeader() {
               sign in
             </Link>
           )}
+          <ModeToggle />
         </nav>
       </div>
     </header>

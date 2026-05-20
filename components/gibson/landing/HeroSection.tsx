@@ -3,6 +3,38 @@ import { Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Typewriter } from "@/components/gibson/landing/Typewriter";
 import type { TypewriterMessage } from "@/components/gibson/landing/Typewriter";
+import { Brain } from "@/components/layout/logo";
+
+/**
+ * Proper nouns the Typewriter paints in primary (brand green). Listed by
+ * category so future edits stay grouped. Case-sensitive; longest matches
+ * win (sorted internally).
+ */
+const highlightTerms: readonly string[] = [
+  // AI coding tools addressed at the start of each message
+  "Claude",
+  "Amp",
+  "Cursor",
+  "Codex",
+  "Gemini",
+  "Aider",
+  "Crush",
+  "opencode",
+  // Product
+  "gibson mission submit",
+  "gibson",
+  // Recon / scan / triage tooling
+  "amass",
+  "httpx",
+  "nuclei",
+  "Trivy",
+  // Workflow / infra
+  "Jira",
+  "kubectl",
+  "GitOps",
+  "Alertmanager",
+  "CloudTrail",
+];
 
 const messages: TypewriterMessage[] = [
   {
@@ -141,6 +173,11 @@ function TerminalCard() {
         <span className="ml-3 font-mono text-xs text-highlight/60">
           ~/zero-day
         </span>
+        {/* Brand mark inline in the title bar so the terminal reads as a
+            zero-day.ai terminal, not a generic macOS one. */}
+        <span className="ml-auto text-highlight/55">
+          <Brain size={14} aria-hidden />
+        </span>
       </div>
       <pre className="overflow-x-auto px-5 py-5 font-mono text-[12px] md:text-sm leading-relaxed">
         <code>
@@ -169,6 +206,27 @@ export function HeroSection() {
       />
 
       <div className="relative z-10 mx-auto max-w-6xl flex flex-col items-center gap-10">
+        {/* Brand-led opener — section tag + the page's value claim promoted
+         *  from below the CTAs to the focal point. One phrase highlighted in
+         *  primary, brand-guide-style. No fake version strings or telemetry. */}
+        <div className="flex w-full flex-col items-start gap-0">
+          <div className="font-mono text-[11px] uppercase tracking-[0.32em] text-muted-foreground">
+            // agent development kit
+          </div>
+          <h1
+            className="m-0 font-mono font-extrabold tracking-tight text-foreground whitespace-nowrap"
+            style={{
+              fontSize: "clamp(17px, 2.9vw, 38px)",
+              lineHeight: 1,
+              letterSpacing: "-0.03em",
+              marginBlock: 0,
+            }}
+          >
+            Stand up your security{" "}
+            <span className="text-highlight">agent factory</span> in under an hour.
+          </h1>
+        </div>
+
         <div className="grid grid-cols-2 gap-6 w-full">
           <Schematic />
           <TerminalCard />
@@ -180,30 +238,26 @@ export function HeroSection() {
             typingSpeed={30}
             pauseDuration={5000}
             instantDelete
-            className="min-h-[14rem] md:min-h-[12rem] lg:min-h-[10rem] text-xl md:text-2xl lg:text-3xl font-semibold leading-snug max-w-4xl mx-auto"
+            highlightTerms={highlightTerms}
+            className="min-h-[14rem] md:min-h-[12rem] lg:min-h-[10rem] text-xl md:text-2xl lg:text-3xl font-mono font-extrabold tracking-tight leading-snug max-w-4xl mx-auto"
           />
         </div>
 
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="default" size="lg" asChild>
-              <Link href="/pricing">Start Free</Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <a
-                href="https://github.com/zero-day-ai/adk"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2"
-              >
-                <Github className="h-4 w-4" />
-                Star the ADK
-              </a>
-            </Button>
-          </div>
-          <p className="font-mono font-semibold text-sm md:text-base lg:text-lg leading-snug text-center">
-            Stand up your security agent factory in under an hour.
-          </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button variant="default" size="lg" asChild>
+            <Link href="/pricing">Start Free</Link>
+          </Button>
+          <Button variant="outline" size="lg" asChild>
+            <a
+              href="https://github.com/zero-day-ai/adk"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2"
+            >
+              <Github className="h-4 w-4" />
+              Star the ADK
+            </a>
+          </Button>
         </div>
       </div>
     </section>

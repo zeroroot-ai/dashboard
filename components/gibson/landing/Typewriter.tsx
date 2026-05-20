@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +17,37 @@ export interface TypewriterProps {
   pauseDuration?: number;
   /** If true, clear the message in one frame instead of backspacing char-by-char. */
   instantDelete?: boolean;
+  /**
+   * Whole-word matches against this list paint as `text-highlight` (brand
+   * primary). Everything else stays `text-foreground`. Case-sensitive;
+   * longest matches win (the regex sorts by length internally). Use for
+   * proper nouns — tool names, product names, CLI commands.
+   */
+  highlightTerms?: readonly string[];
   className?: string;
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function renderWithHighlights(text: string, re: RegExp | null): ReactNode {
+  if (!re) return <span className="text-foreground">{text}</span>;
+  const parts = text.split(re);
+  return parts.map((part, i) => {
+    if (i % 2 === 1) {
+      return (
+        <span key={i} className="text-highlight">
+          {part}
+        </span>
+      );
+    }
+    return (
+      <span key={i} className="text-foreground">
+        {part}
+      </span>
+    );
+  });
 }
 
 type AnimationPhase = "typing" | "pausing" | "deleting" | "switching";
@@ -27,8 +58,20 @@ export function Typewriter({
   deletingSpeed = 35,
   pauseDuration = 2500,
   instantDelete = false,
+  highlightTerms,
   className,
 }: TypewriterProps) {
+  /**
+   * Compile the highlight regex once per term-list change. Longest terms
+   * first so "gibson mission submit" wins over a bare "gibson". The capture
+   * group is what makes split() return matches interleaved with non-matches.
+   */
+  const highlightRe = useMemo(() => {
+    if (!highlightTerms || highlightTerms.length === 0) return null;
+    const sorted = [...highlightTerms].sort((a, b) => b.length - a.length);
+    return new RegExp(`(${sorted.map(escapeRegex).join("|")})`, "g");
+  }, [highlightTerms]);
+
   const [reducedMotion, setReducedMotion] = useState(false);
   const [messageIndex, setMessageIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState("");
@@ -118,7 +161,9 @@ export function Typewriter({
             >
               {msg.label}
             </Badge>
-            <span className="font-mono text-foreground">{msg.text}</span>
+            <span className="font-mono">
+              {renderWithHighlights(msg.text, highlightRe)}
+            </span>
           </div>
         ))}
       </div>
@@ -151,7 +196,7 @@ export function Typewriter({
       </Badge>
 
       <span aria-hidden="true" className="flex items-center font-mono">
-        <span className="text-foreground">{displayedText}</span>
+        <span>{renderWithHighlights(displayedText, highlightRe)}</span>
         <span
           aria-hidden="true"
           className="ml-px text-highlight animate-[typewriter-blink_1s_step-end_infinite]"
