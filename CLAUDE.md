@@ -12,6 +12,17 @@ This file documents conventions specific to the `zero-day-ai/dashboard` reposito
 - **No hardcoded colors anywhere under `app/**` or `components/**`.** Every color goes through a token declared in `app/globals.css`. The guard `scripts/check-no-hardcoded-colors.mjs` rejects tailwind palette utilities (`text-emerald-*`, `bg-zinc-*`), tailwind arbitrary-value colors (`bg-[#...]`, `text-[oklch(...)]`), black/white utilities (`bg-white`, `text-black`), inline-style colors, and raw `#...`/`oklch(...)`/`rgb(...)`/`hsl(...)` in `.css` files. Two files are exempt because they declare the token system itself: `app/globals.css`, `app/themes.css`. See the design-system guide below.
 - **Customer-facing docs name product capabilities, not vendors.** `content/docs/**/*.mdx` must not mention Zitadel, OpenFGA / FGA, Envoy, ext-authz, jwt_authn, JWKS, x-gibson-identity-*, Langfuse, SPIFFE / SPIRE, Neo4j, CNPG, ArgoCD, cert-manager, ESO, OPA, or "Gibson-hosted Vault". Write product language instead — "Gibson identity service", "Gibson permissions", "Gibson Traces", "Gibson-managed secrets storage". See the Customer terminology section below; full deny-list ↔ replacement table at [docs.git → repos/dashboard/customer-doc-terminology.md](https://github.com/zero-day-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md). Internal developer docs at `enterprise/platform/dashboard/docs/*.md` and every `CLAUDE.md` are intentionally exempt.
 
+## Two-surface platform contract (post-2026-05 refactor)
+
+Daemon protos consumed here come from two Go modules, both pinned in the sibling `gibson` repo's `go.mod` (the dashboard's proto-regen workspace resolves them via `go list -m`):
+
+- **OSS SDK** (`github.com/zero-day-ai/sdk`) — customer-facing. `DaemonService` (FGA `member` / `can_use`), mission / finding / discovery / budget types, the `gibson.auth.v1` annotation extension.
+- **platform-sdk** (`github.com/zero-day-ai/platform-sdk`) — PRIVATE. `DaemonAdminService` (FGA `admin` / `writer`), `PlatformOperatorService`, `TenantAdminService`, `gibson.user.v1`, `gibson.usage.v1`.
+
+Admin server-actions (`CreateMissionDefinition`, tenant management, plugin install, secrets backend management) call into `DaemonAdminService` via bindings generated from `platform-sdk`. The dashboard never re-exports admin types through any customer-visible path.
+
+Cross-module proto sharing flows through BSR (`buf.build/zero-day-ai-platform/...`). The two-surface contract is captured in `docs/adr/0025-two-surface-platform-contract.md` (private docs repo).
+
 ## Commands
 
 ```bash
@@ -58,14 +69,25 @@ When the SDK schema changes: run `pnpm gen:mission-schema` and commit
 ## Proto regeneration
 
 The dashboard's TS proto bindings at `src/gen/` are generated from
-**two** proto trees:
+**three** proto trees after the two-surface refactor (docs ADR-0025):
 
-- the SDK protos at `core/sdk/api/proto/` (resolved via `go list -m`
-  against the gibson repo's `go.mod`, so they track whatever SDK
-  version gibson is pinned to), and
-- the daemon-local protos at `core/gibson/internal/daemon/api/`,
-  which are not published anywhere and are only consumable via a
-  sibling checkout.
+- the **OSS SDK** protos at `core/sdk/api/proto/` (resolved via `go list -m`
+  against the gibson repo's `go.mod`). The customer-facing OSS module
+  (`github.com/zero-day-ai/sdk`) hosts `DaemonService`, the customer-callable
+  mission / finding / discovery / budget types, and the `gibson.auth.v1`
+  annotation extension.
+- the **platform-sdk** protos at `core/platform-sdk/proto/` (resolved
+  via `go list -m github.com/zero-day-ai/platform-sdk` against the gibson
+  repo's `go.mod`). The PRIVATE internal proto module hosts the admin
+  surfaces: `DaemonAdminService`, `PlatformOperatorService`,
+  `TenantAdminService`, `gibson.user.v1`, `gibson.usage.v1`. Admin
+  server-actions (`CreateMissionDefinition`, tenant management, plugin
+  install) call into these stubs.
+- the **daemon-local** protos at `core/gibson/internal/daemon/api/`,
+  which are not published anywhere and are only consumable via a sibling
+  checkout. If a daemon-local type needs to reach the dashboard, the right
+  shape is to promote it to `platform-sdk` and consume via BSR — not to
+  vendor it through the dashboard's regen workspace.
 
 Buf v2 has a hard rule that every module path in `buf.yaml` must
 resolve **inside** the directory containing the `buf.yaml`. The
@@ -77,10 +99,11 @@ builds a self-contained workspace:
 
 ```
 .tmp/proto-ws/
-├── buf.yaml              # generated, lists gibson-local + sdk-proto
-├── buf.gen.yaml          # generated, drives protoc-gen-es
-├── gibson-local -> .../core/gibson/internal/daemon/api    (symlink)
-└── sdk-proto    -> $(go list -m ...)/api/proto            (symlink)
+├── buf.yaml                # generated, lists gibson-local + sdk-proto + platform-sdk-proto
+├── buf.gen.yaml            # generated, drives protoc-gen-es
+├── gibson-local     -> .../core/gibson/internal/daemon/api    (symlink)
+├── sdk-proto        -> $(go list -m github.com/zero-day-ai/sdk)/api/proto             (symlink)
+└── platform-sdk-proto -> $(go list -m github.com/zero-day-ai/platform-sdk)/proto      (symlink)
 ```
 
 Then `buf generate` runs from inside `.tmp/proto-ws/`, the output
@@ -115,14 +138,15 @@ Admin chrome is hidden from `tenant_member` users at two layers:
 1. **Client layer** (`useAuthorize` hook) — hides buttons/entries while loading and when denied.
 2. **Server layer** (`assertAuthorized` helper) — throws before any daemon call, providing defense-in-depth even if a non-admin bypasses the UI.
 
-Both layers read from a single static map — the `AuthRegistry` — generated from SDK proto annotations at build time.
+Both layers read from a single static map — the `AuthRegistry` — generated from OSS SDK + platform-sdk proto annotations at build time.
 
 ---
 
-### Pipeline: SDK protos → registry
+### Pipeline: OSS SDK + platform-sdk protos → registry
 
 ```
-core/sdk/proto/**/*.proto
+core/sdk/proto/**/*.proto           (OSS SDK — DaemonService)
+core/platform-sdk/proto/**/*.proto  (platform-sdk — DaemonAdminService, PlatformOperatorService, TenantAdminService)
   └─ (gibson.auth.v1.authz) extension on each method
        │
        ▼
@@ -132,7 +156,7 @@ scripts/gen-authz-registry.mjs    ← runs as part of pnpm prebuild
 src/gen/authz/registry.ts         ← committed, regenerated on every build
 ```
 
-`gen-authz-registry.mjs` invokes `buf build` against the SDK module directory to produce a FileDescriptorSet, walks every service method, decodes the authz annotation, and emits a TypeScript module with the `AuthRegistry` record.
+`gen-authz-registry.mjs` invokes `buf build` against BOTH module directories to produce a single FileDescriptorSet, walks every service method, decodes the authz annotation, and emits a TypeScript module with the unified `AuthRegistry` record. Customer-callable `DaemonService` RPCs and admin `DaemonAdminService` RPCs land in the same registry; the FGA relation distinguishes them.
 
 `scripts/check-authz-registry-fresh.mjs` regenerates to a temp file and diffs against the committed copy — CI fails on drift.
 
@@ -254,15 +278,22 @@ E2E coverage for the three states lives in `e2e/authz/admin.spec.ts` (asserts al
 
 ### Adding a new admin RPC
 
-1. In `core/sdk/`, add the `(gibson.auth.v1.authz)` extension to the new method in the proto file. Set `relation: "admin"` and `allowed_identities: [USER]`.
-   <!-- # Sister-spec cross-repo-cohesion-fixes Requirement 3 — every committed SDK proto uses relation: "admin", not "tenant_admin". -->
-2. Run `make proto` in `core/sdk/`, commit and tag a new SDK release.
-3. In this dashboard repo, run `pnpm prebuild` — `gen-authz-registry.mjs` regenerates `src/gen/authz/registry.ts` with the new entry.
-4. In the UI, call `useAuthorize("/your.service.v1.ServiceName/MethodName")` on the new button/action.
-5. In the server action, call `await assertAuthorized("/your.service.v1.ServiceName/MethodName")` before the daemon call.
-6. Commit `src/gen/authz/registry.ts` alongside the code changes — the CI drift gate will fail if you forget.
+Admin RPCs (FGA relation `admin` or `writer`) live in the **platform-sdk** proto module (`github.com/zero-day-ai/platform-sdk`), NOT the OSS SDK. The OSS SDK hosts customer-callable RPCs only (relation `member` / `can_use`).
+
+1. In `core/platform-sdk/proto/gibson/<package>/v1/<file>.proto`, add the new RPC to the appropriate admin service (`DaemonAdminService`, `PlatformOperatorService`, or `TenantAdminService`). Add the `(gibson.auth.v1.authz)` extension with `relation: "admin"` (or `"writer"`) and `allowed_identities: [USER]`. Import the extension via the BSR dep:
+   ```proto
+   import "gibson/auth/v1/options.proto";  // resolved via buf.build/zero-day-ai-platform/sdk BSR dep
+   ```
+2. Run `buf generate && go build ./...` in `core/platform-sdk/`. Commit + open the platform-sdk PR. Merge to cut a new platform-sdk release.
+3. The release-please tag triggers the platform-sdk fan-out, which opens consumer-bump PRs across `gibson`, `dashboard`, `tenant-operator`, `platform-operator`, `ext-authz`, `gibson-tool-runner`, `spiffe-jwks-exporter`. Wait for those to merge.
+4. In this dashboard repo, the bump PR runs `pnpm prebuild` — `gen-authz-registry.mjs` regenerates `src/gen/authz/registry.ts` with the new entry, and `proto-generate.mjs` regenerates the TypeScript bindings under `src/gen/`.
+5. In the UI, call `useAuthorize("/gibson.daemon.admin.v1.DaemonAdminService/YourMethod")` on the new button/action.
+6. In the server action, call `await assertAuthorized(...)` before the daemon call, then dial `DaemonAdminService` via the ConnectRPC client.
+7. Commit `src/gen/authz/registry.ts` + the new `src/gen/gibson/...` bindings alongside the code changes — the CI drift gate will fail if you forget.
 
 No other files need editing. The registry is the only source of authz rules.
+
+**Customer-callable RPC?** Same flow, but the proto lives in `core/sdk/proto/...` (OSS SDK) and the relation is `member` or `can_use`. The two-surface contract (docs ADR-0025) keeps the proto files split.
 
 ---
 
