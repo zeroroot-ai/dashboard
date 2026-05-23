@@ -18,6 +18,4 @@ jobs:
           node-version: "20"
 
       - name: Audit production dependencies
-        # continue-on-error until swiper@12 bump lands (dashboard#258)
-        continue-on-error: true
         run: npm audit --audit-level=critical --omit=dev --package-lock-only
