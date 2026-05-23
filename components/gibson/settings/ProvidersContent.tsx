@@ -46,25 +46,53 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+import { formatDistanceToNow } from "date-fns";
 
 import { useSupportedProviders } from "@/src/hooks/useSupportedProviders";
 import { useProviders, providerQueryKeys } from "@/src/hooks/useProviders";
 import { useCreateProvider, useDeleteProvider, useSetDefaultProvider } from "@/src/hooks/useProviderMutations";
+import { useProviderHealth } from "@/src/hooks/useProviderHealth";
 import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
-import type { ProviderConfig } from "@/src/types/provider";
+import type { ProviderConfig, ProviderHealthStatus } from "@/src/types/provider";
+import { HEALTH_STATUS_CONFIG } from "@/src/types/provider";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { ProviderWizard } from "./ProviderWizard";
+
+// ---------------------------------------------------------------------------
+// Health badge helpers
+// ---------------------------------------------------------------------------
+
+const HEALTH_BADGE_VARIANT: Record<
+  ProviderHealthStatus,
+  "success" | "warning" | "destructive" | "outline"
+> = {
+  healthy: "success",
+  degraded: "warning",
+  unhealthy: "destructive",
+  unknown: "outline",
+};
+
+function formatRelativeTime(iso: string): string {
+  try {
+    return formatDistanceToNow(new Date(iso), { addSuffix: true });
+  } catch {
+    return iso;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // DynamicCredentialForm — retained for backward-compat with tests + the
 // onboarding flow. The Settings → Providers page uses ProviderWizard now.
 // ---------------------------------------------------------------------------
 
-/**
- * Form values shape — credentials keyed by field.key plus display fields.
- * Using Record<string, string> keeps the form agnostic to provider type.
- */
 interface DynamicFormValues {
   name: string;
   defaultModel: string;
@@ -95,7 +123,6 @@ export function DynamicCredentialForm({ descriptor, onSubmit, isPending }: Dynam
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        {/* Provider instance name */}
         <FormField
           control={form.control}
           name="name"
@@ -119,7 +146,6 @@ export function DynamicCredentialForm({ descriptor, onSubmit, isPending }: Dynam
           )}
         />
 
-        {/* Dynamic credential fields from descriptor */}
         {descriptor.credentials.map((field) => (
           <FormField
             key={field.key}
@@ -137,12 +163,6 @@ export function DynamicCredentialForm({ descriptor, onSubmit, isPending }: Dynam
                   )}
                 </FormLabel>
                 <FormControl>
-                  {/*
-                   * Password inputs are uncontrolled via ref forwarding inside
-                   * react-hook-form. The value is read from the DOM on submit
-                   * via form.handleSubmit — React never stores the plaintext
-                   * in component state beyond that single submit handler call.
-                   */}
                   <Input
                     {...formField}
                     type={field.secret ? "password" : "text"}
@@ -162,7 +182,6 @@ export function DynamicCredentialForm({ descriptor, onSubmit, isPending }: Dynam
           />
         ))}
 
-        {/* Default model selection */}
         {descriptor.defaultModels.length > 0 && (
           <FormField
             control={form.control}
@@ -225,6 +244,12 @@ function ConfiguredProviderRow({ provider }: ConfiguredProviderRowProps) {
 
   const { mutate: deleteProvider, isPending: isDeleting } = useDeleteProvider();
   const { mutate: setDefault, isPending: isSettingDefault } = useSetDefaultProvider();
+
+  // Live health badge — polls every 60 s, pauses when the tab is hidden.
+  const { data: health } = useProviderHealth(provider.name);
+  const healthStatus = health?.status ?? 'unknown';
+  const healthConfig = HEALTH_STATUS_CONFIG[healthStatus];
+  const healthVariant = HEALTH_BADGE_VARIANT[healthStatus];
 
   const isConfigured = provider.isEnabled && !!provider.apiKeyMasked;
 
@@ -327,11 +352,38 @@ function ConfiguredProviderRow({ provider }: ConfiguredProviderRowProps) {
                 </>
               )}
             </Badge>
+
+            {/* Live health badge — auto-polls every 60 s */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant={healthVariant}
+                    className="text-xs"
+                    data-testid="health-badge"
+                  >
+                    {healthConfig.label}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {health?.lastCheckAt
+                    ? `Last checked ${formatRelativeTime(health.lastCheckAt)}`
+                    : 'Checking…'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-3">
+        {/* Unhealthy error detail */}
+        {healthStatus === 'unhealthy' && health?.lastError && (
+          <Alert variant="destructive" className="py-2">
+            <AlertDescription className="text-xs">{health.lastError}</AlertDescription>
+          </Alert>
+        )}
+
         {/* Masked credential chips — read-only display */}
         {provider.apiKeyMasked && (
           <div className="flex flex-wrap gap-2">
@@ -361,7 +413,7 @@ function ConfiguredProviderRow({ provider }: ConfiguredProviderRowProps) {
               <Plug className="size-3" />
             )}
             {testState === "testing"
-              ? "Testing\u2026"
+              ? "Testing…"
               : testState === "ok"
                 ? "Connected"
                 : testState === "fail"
