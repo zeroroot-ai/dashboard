@@ -695,12 +695,10 @@ export function ProviderWizard({
   const createMutation = useCreateProvider();
   const descriptor = supported.find((d) => d.type === selectedType);
 
-  // step: 1 = pick type, 2 = creds, 3 = model + save
-  const step: 1 | 2 | 3 = !selectedType
-    ? 1
-    : probeResult?.ok
-      ? 3
-      : 2;
+  // step: 1 = pick type, 2 = creds, 3 = model + save.
+  // Any completed probe result (pass or fail) advances to step 3; the probe
+  // is advisory — a failed test does not block saving (dashboard#288).
+  const step: 1 | 2 | 3 = !selectedType ? 1 : probeResult !== null ? 3 : 2;
 
   function reset() {
     setSelectedType("");
@@ -852,13 +850,19 @@ export function ProviderWizard({
         </div>
       )}
 
-      {step === 3 && descriptor && probeResult?.ok && (
+      {step === 3 && descriptor && (
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="size-3.5 text-highlight" />
+              {probeResult?.ok ? (
+                <CheckCircle2 className="size-3.5 text-highlight" />
+              ) : (
+                <Sparkles className="size-3.5" />
+              )}
               <span className="text-sm font-medium">
-                {descriptor.displayName} verified
+                {probeResult?.ok
+                  ? `${descriptor.displayName} verified`
+                  : descriptor.displayName}
               </span>
             </div>
             <Button
@@ -872,9 +876,23 @@ export function ProviderWizard({
               Edit credentials
             </Button>
           </div>
+
+          {probeResult?.ok && (
+            <Alert variant="default" className="border-highlight">
+              <AlertDescription>Connection test passed.</AlertDescription>
+            </Alert>
+          )}
+          {probeResult && !probeResult.ok && (
+            <Alert>
+              <AlertDescription>
+                Connection test did not pass — you can still save and troubleshoot later.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <ModelPickerAndSave
             descriptor={descriptor}
-            liveModels={probeResult.models}
+            liveModels={probeResult?.models ?? []}
             pickedModel={pickedModel}
             setPickedModel={setPickedModel}
             setAsDefault={setAsDefault}

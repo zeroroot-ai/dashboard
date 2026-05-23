@@ -6,9 +6,9 @@
  */
 
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { ProviderWizard, CredentialsAndTest } from "./ProviderWizard";
@@ -564,5 +564,172 @@ describe("ProviderWizard — IRSA toggle (dashboard#287)", () => {
     expect(submittedValues.credentials).toHaveProperty("aws_access_key_id");
     expect(submittedValues.credentials).toHaveProperty("aws_secret_access_key");
     expect(submittedValues.credentials).toHaveProperty("aws_session_token");
+  });
+});
+
+// ===========================================================================
+// dashboard#288 — probe result is advisory
+// ===========================================================================
+//
+// After dashboard#288 the probe result is advisory: the Save button is
+// enabled whenever the wizard is on step 3 and not currently saving,
+// regardless of probe outcome. Step 3 is entered once ANY probe result is
+// received (ok OR failed). The wizard advances from step 2 → step 3 when
+// the user clicks "Test connection" and the fetch resolves (pass or fail).
+
+const anthropicDescriptor: SupportedProviderDescriptor = {
+  type: "anthropic",
+  displayName: "Anthropic (Claude)",
+  docsUrl: "https://docs.anthropic.com/",
+  selfHosted: false,
+  credentials: [
+    {
+      key: "api_key",
+      label: "Anthropic API Key",
+      required: true,
+      secret: true,
+      placeholder: "sk-ant-...",
+      help: "Find your key at console.anthropic.com",
+    },
+  ],
+  defaultModels: [
+    { name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000 },
+  ],
+};
+
+function makeFetchMock(responseBody: unknown, ok = true) {
+  return vi.fn().mockResolvedValue({
+    ok,
+    json: async () => responseBody,
+  });
+}
+
+function setupWizardAtStep2Advisory() {
+  const user = userEvent.setup();
+  render(
+    <ProviderWizard supported={[anthropicDescriptor]} initialType="anthropic" />,
+    { wrapper },
+  );
+  return { user };
+}
+
+/**
+ * Stubs fetch with the given response, fills the required api_key field so
+ * react-hook-form validation passes, clicks "Test connection", and waits
+ * for the wizard to advance to step 3. The "Edit credentials" button in the
+ * step-3 header is the indicator that step 3 is active.
+ */
+async function advanceToStep3Advisory(
+  user: ReturnType<typeof userEvent.setup>,
+  opts: { fetchBody: unknown; fetchOk?: boolean },
+) {
+  vi.stubGlobal("fetch", makeFetchMock(opts.fetchBody, opts.fetchOk ?? true));
+
+  // Fill the required api_key field so the form's required-validation passes.
+  const apiKeyInput = screen.getByPlaceholderText("sk-ant-...");
+  await user.type(apiKeyInput, "sk-ant-test-key");
+
+  await act(async () => {
+    await user.click(screen.getByRole("button", { name: /test connection/i }));
+  });
+
+  // Wait for the async fetch + React state update to drive the wizard to step 3.
+  // "Edit credentials" only appears in the step-3 header.
+  await waitFor(() => {
+    expect(screen.getByRole("button", { name: /edit credentials/i })).toBeInTheDocument();
+  }, { timeout: 3000 });
+}
+
+describe("ProviderWizard step 3 — probe result is advisory (dashboard#288)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("Save button is enabled after a PASSING probe", async () => {
+    const { user } = setupWizardAtStep2Advisory();
+
+    await advanceToStep3Advisory(user, {
+      fetchBody: {
+        result: {
+          ok: true,
+          latencyMs: 42,
+          models: [{ name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000 }],
+        },
+      },
+      fetchOk: true,
+    });
+
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
+  });
+
+  it("Save button is enabled after a FAILING probe (no longer gated on ok)", async () => {
+    const { user } = setupWizardAtStep2Advisory();
+
+    await advanceToStep3Advisory(user, {
+      fetchBody: { error: { message: "Connection refused" } },
+      fetchOk: false,
+    });
+
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
+  });
+
+  it("advisory warning is shown when probe result is { ok: false }", async () => {
+    const { user } = setupWizardAtStep2Advisory();
+
+    await advanceToStep3Advisory(user, {
+      fetchBody: { error: { message: "Connection refused" } },
+      fetchOk: false,
+    });
+
+    expect(
+      screen.getByText(/connection test did not pass/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/connection test passed/i)).not.toBeInTheDocument();
+  });
+
+  it("advisory warning is NOT shown when probe result is { ok: true }", async () => {
+    const { user } = setupWizardAtStep2Advisory();
+
+    await advanceToStep3Advisory(user, {
+      fetchBody: {
+        result: {
+          ok: true,
+          latencyMs: 42,
+          models: [{ name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000 }],
+        },
+      },
+      fetchOk: true,
+    });
+
+    expect(screen.queryByText(/connection test did not pass/i)).not.toBeInTheDocument();
+  });
+
+  it("positive confirmation is shown when probe result is { ok: true }", async () => {
+    const { user } = setupWizardAtStep2Advisory();
+
+    await advanceToStep3Advisory(user, {
+      fetchBody: {
+        result: {
+          ok: true,
+          latencyMs: 42,
+          models: [{ name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000 }],
+        },
+      },
+      fetchOk: true,
+    });
+
+    expect(screen.getByText(/connection test passed/i)).toBeInTheDocument();
+    expect(screen.queryByText(/connection test did not pass/i)).not.toBeInTheDocument();
+  });
+
+  it("positive confirmation is NOT shown when probe result is { ok: false }", async () => {
+    const { user } = setupWizardAtStep2Advisory();
+
+    await advanceToStep3Advisory(user, {
+      fetchBody: { error: { message: "Connection refused" } },
+      fetchOk: false,
+    });
+
+    expect(screen.queryByText(/connection test passed/i)).not.toBeInTheDocument();
   });
 });
