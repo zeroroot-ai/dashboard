@@ -128,7 +128,7 @@
     "fumadocs-core": "^16.7.16",
     "fumadocs-mdx": "^14.3.0",
     "fumadocs-ui": "^16.7.16",
-    "immer": "^11.1.4",
+    "immer": "^11.1.8",
     "input-otp": "^1.4.2",
     "isomorphic-dompurify": "^3.7.1",
     "lottie-react": "^2.4.1",
