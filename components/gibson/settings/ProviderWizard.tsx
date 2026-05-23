@@ -171,11 +171,14 @@ function CredentialInput({
   cf,
   field,
   id,
+  secretFieldPlaceholder,
 }: {
   cf: CredentialFieldDescriptor;
   field: FieldProps;
   /** Forwarded from FormControl's Slot so the input gets the form item id for label association. */
   id?: string;
+  /** Override placeholder for secret fields (e.g. edit-dialog mode). */
+  secretFieldPlaceholder?: string;
 }) {
   const rawFieldType = cf.fieldType ?? CREDENTIAL_FIELD_TYPE.UNSPECIFIED;
   const effectiveType =
@@ -247,12 +250,17 @@ function CredentialInput({
   }
 
   // TEXT or PASSWORD
+  const isPassword = effectiveType === CREDENTIAL_FIELD_TYPE.PASSWORD;
+  const placeholder =
+    isPassword && secretFieldPlaceholder
+      ? secretFieldPlaceholder
+      : (cf.placeholder || undefined);
   return (
     <Input
       {...field}
       id={id}
-      type={effectiveType === CREDENTIAL_FIELD_TYPE.PASSWORD ? "password" : "text"}
-      placeholder={cf.placeholder || undefined}
+      type={isPassword ? "password" : "text"}
+      placeholder={placeholder}
       className="font-mono text-xs"
       autoComplete="off"
       autoCorrect="off"
@@ -426,36 +434,53 @@ function IrsaAwareCredentialFields({
 // Step 2: credentials + test connection
 // ---------------------------------------------------------------------------
 
+export interface CredentialsAndTestProps {
+  descriptor: SupportedProviderDescriptor;
+
+  // Wizard-mode props (used by ProviderWizard)
+  formValues?: CredentialFormValues;
+  setFormValues?: (v: CredentialFormValues) => void;
+  probeResult?: ProbeResult | null;
+  onTest?: (values: CredentialFormValues) => void;
+  isTestPending?: boolean;
+
+  // Edit-dialog-mode props (used by ConfiguredProviderRow edit dialog)
+  /** Pre-populate non-secret fields (secret fields always start blank). */
+  initialValues?: Record<string, string>;
+  /** Placeholder text for secret inputs, e.g. "Leave blank to keep existing value". */
+  secretFieldPlaceholder?: string;
+  /** Called after every form-value change — lets the parent read current values. */
+  onValuesChange?: (values: CredentialFormValues) => void;
+  /** Called with the probe result banner data after a test. */
+  onTestResult?: (result: ProbeResult | null) => void;
+  /** Override the provider name shown in the form's Name field (edit mode). */
+  providerName?: string;
+}
+
 export function CredentialsAndTest({
   descriptor,
-  formValues,
+  formValues: externalFormValues,
   setFormValues,
-  probeResult,
+  probeResult: externalProbeResult,
   onTest,
-  isTestPending,
-}: {
-  descriptor: SupportedProviderDescriptor;
-  formValues: CredentialFormValues;
-  setFormValues: (v: CredentialFormValues) => void;
-  probeResult: ProbeResult | null;
-  onTest: (values: CredentialFormValues) => void;
-  isTestPending: boolean;
-}) {
-  // Seed defaultValues for every credential key so that hidden fields still
-  // appear in the submitted payload with their zero-value ("" for text,
-  // "false" for bool). react-hook-form only includes a field in the submit
-  // payload if it was registered (i.e. rendered); by seeding the defaultValues
-  // we ensure the zero-values are present even when a field is hidden.
-  const seededCredentials: Record<string, string> = {};
+  isTestPending: externalIsTestPending,
+  initialValues,
+  secretFieldPlaceholder,
+  onValuesChange,
+  onTestResult,
+  providerName,
+}: CredentialsAndTestProps) {
+  // Build default values: non-secret fields pre-populated from initialValues;
+  // secret fields always start blank (user must re-enter to change).
+  const defaultCredentials: Record<string, string> = {};
   for (const cf of descriptor.credentials) {
-    seededCredentials[cf.key] = formValues.credentials[cf.key] ??
-      (cf.fieldType === CREDENTIAL_FIELD_TYPE.BOOL ? 'false' : '');
+    defaultCredentials[cf.key] = !cf.secret ? (initialValues?.[cf.key] ?? "") : "";
   }
 
   const form = useForm<CredentialFormValues>({
-    defaultValues: {
-      name: formValues.name,
-      credentials: seededCredentials,
+    defaultValues: externalFormValues ?? {
+      name: providerName ?? descriptor.type,
+      credentials: defaultCredentials,
     },
     mode: "onChange",
   });
@@ -464,21 +489,28 @@ export function CredentialsAndTest({
   // can read the credentials at "Save" time.
   React.useEffect(() => {
     const sub = form.watch((value) => {
-      setFormValues({
+      const vals: CredentialFormValues = {
         name: value.name ?? "",
         credentials: (value.credentials as Record<string, string>) ?? {},
-      });
+      };
+      setFormValues?.(vals);
+      onValuesChange?.(vals);
     });
     return () => sub.unsubscribe();
-  }, [form, setFormValues]);
+  }, [form, setFormValues, onValuesChange]);
 
   function handleSubmit(values: CredentialFormValues) {
-    onTest(values);
+    if (onTest) {
+      onTest(values);
+    }
+    // Edit-dialog mode: no-op submit (Save is triggered externally via DialogFooter)
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        {/* Name field: shown only in wizard (create) mode */}
+        {!providerName && (
         <FormField
           control={form.control}
           name="name"
@@ -501,31 +533,33 @@ export function CredentialsAndTest({
             </FormItem>
           )}
         />
+        )}
 
         <IrsaAwareCredentialFields
           descriptor={descriptor}
           control={form.control}
+          secretFieldPlaceholder={secretFieldPlaceholder}
         />
 
         {/* Probe result banner */}
-        {probeResult && probeResult.ok && (
+        {externalProbeResult != null && externalProbeResult.ok && (
           <Alert>
             <CheckCircle2 className="size-4 text-highlight" />
             <AlertDescription className="text-xs">
-              Connection verified ({probeResult.latencyMs} ms).{" "}
-              {probeResult.models.length > 0 ? (
-                <>Found {probeResult.models.length} model{probeResult.models.length === 1 ? "" : "s"}.</>
+              Connection verified ({externalProbeResult!.latencyMs} ms).{" "}
+              {externalProbeResult!.models.length > 0 ? (
+                <>Found {externalProbeResult!.models.length} model{externalProbeResult!.models.length === 1 ? "" : "s"}.</>
               ) : (
                 "No live model list — using the provider's static catalogue."
               )}
             </AlertDescription>
           </Alert>
         )}
-        {probeResult && !probeResult.ok && (
+        {externalProbeResult != null && !externalProbeResult.ok && (
           <Alert variant="destructive">
             <WifiOff className="size-4" />
             <AlertDescription className="text-xs">
-              {probeResult.error ?? "Connection failed."}
+              {externalProbeResult!.error ?? "Connection failed."}
             </AlertDescription>
             {probeResult.error?.includes("allow_private_llm_endpoints") && (
               <p className="mt-2 text-xs">
@@ -545,9 +579,9 @@ export function CredentialsAndTest({
             size="sm"
             variant="outline"
             className="text-xs"
-            disabled={isTestPending}
+            disabled={externalIsTestPending}
           >
-            {isTestPending ? (
+            {externalIsTestPending ? (
               <Loader2 className="size-3 animate-spin" />
             ) : (
               <Plug className="size-3" />
