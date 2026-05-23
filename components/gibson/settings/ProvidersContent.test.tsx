@@ -8,8 +8,8 @@
  */
 
 import React from "react";
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ProvidersContent, DynamicCredentialForm } from "./ProvidersContent";
@@ -17,6 +17,7 @@ import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types'
 import type { ListProvidersResponse } from "@/src/types/provider";
 import { useSupportedProviders } from "@/src/hooks/useSupportedProviders";
 import { useProviders } from "@/src/hooks/useProviders";
+import { useProviderHealth } from "@/src/hooks/useProviderHealth";
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -60,6 +61,10 @@ vi.mock("@/src/hooks/useProviderMutations", () => ({
     mutate: mockSetDefaultMutate,
     isPending: false,
   })),
+}));
+
+vi.mock("@/src/hooks/useProviderHealth", () => ({
+  useProviderHealth: vi.fn(),
 }));
 
 // Sonner toast - silence in tests
@@ -202,6 +207,7 @@ function renderWithProviders(ui: React.ReactElement) {
 describe("ProvidersContent", () => {
   const mockedUseSupportedProviders = vi.mocked(useSupportedProviders);
   const mockedUseProviders = vi.mocked(useProviders);
+  const mockedUseProviderHealth = vi.mocked(useProviderHealth);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -215,6 +221,11 @@ describe("ProvidersContent", () => {
       isLoading: false,
       isError: false,
     } as ReturnType<typeof useProviders>);
+    mockedUseProviderHealth.mockReturnValue({
+      data: { status: 'unknown' },
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviderHealth>);
   });
 
   it("renders the section heading and Add Provider button", () => {
@@ -230,9 +241,7 @@ describe("ProvidersContent", () => {
       isError: false,
     } as ReturnType<typeof useProviders>);
     renderWithProviders(<ProvidersContent />);
-    // The provider name appears in the card title
     expect(screen.getByText(/my-anthropic/)).toBeInTheDocument();
-    // Masked credential chip
     expect(screen.getByText("sk-ant-****xyz")).toBeInTheDocument();
   });
 
@@ -247,10 +256,8 @@ describe("ProvidersContent", () => {
 
     await user.click(screen.getByRole("button", { name: /add provider/i }));
 
-    // Dialog should be open
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText(/Add LLM Provider/i)).toBeInTheDocument();
-    // Provider type select trigger should be visible
     expect(screen.getByTestId("provider-type-select")).toBeInTheDocument();
   });
 
@@ -269,8 +276,120 @@ describe("ProvidersContent", () => {
     mockedUseSupportedProviders.mockReturnValue({ data: undefined, isLoading: true, isError: false } as ReturnType<typeof useSupportedProviders>);
     mockedUseProviders.mockReturnValue({ data: undefined, isLoading: true, isError: false } as ReturnType<typeof useProviders>);
     renderWithProviders(<ProvidersContent />);
-    // Skeleton cards are rendered, no provider cards
     expect(screen.queryByText(/add provider/i)).not.toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ConfiguredProviderRow — health badge (dashboard#283)
+// ---------------------------------------------------------------------------
+
+describe("ConfiguredProviderRow — health badge", () => {
+  const mockedUseSupportedProviders = vi.mocked(useSupportedProviders);
+  const mockedUseProviders = vi.mocked(useProviders);
+  const mockedUseProviderHealth = vi.mocked(useProviderHealth);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedUseSupportedProviders.mockReturnValue({
+      data: mockSupportedDescriptors,
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useSupportedProviders>);
+    mockedUseProviders.mockReturnValue({
+      data: mockListProvidersResponse,
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviders>);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("renders the health badge with 'Unknown' label when status is unknown", () => {
+    mockedUseProviderHealth.mockReturnValue({
+      data: { status: 'unknown' },
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviderHealth>);
+
+    renderWithProviders(<ProvidersContent />);
+
+    expect(screen.getByTestId("health-badge")).toBeInTheDocument();
+    expect(screen.getByTestId("health-badge")).toHaveTextContent("Unknown");
+  });
+
+  it("renders the health badge with 'Healthy' label when status is healthy", () => {
+    mockedUseProviderHealth.mockReturnValue({
+      data: { status: 'healthy', lastCheckAt: '2026-01-01T00:00:00Z' },
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviderHealth>);
+
+    renderWithProviders(<ProvidersContent />);
+
+    expect(screen.getByTestId("health-badge")).toHaveTextContent("Healthy");
+  });
+
+  it("renders the health badge with 'Degraded' label when status is degraded", () => {
+    mockedUseProviderHealth.mockReturnValue({
+      data: { status: 'degraded' },
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviderHealth>);
+
+    renderWithProviders(<ProvidersContent />);
+
+    expect(screen.getByTestId("health-badge")).toHaveTextContent("Degraded");
+  });
+
+  it("renders the health badge with 'Unhealthy' label when status is unhealthy", () => {
+    mockedUseProviderHealth.mockReturnValue({
+      data: { status: 'unhealthy' },
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviderHealth>);
+
+    renderWithProviders(<ProvidersContent />);
+
+    expect(screen.getByTestId("health-badge")).toHaveTextContent("Unhealthy");
+  });
+
+  it("shows a destructive Alert with lastError when status is unhealthy and error is present", () => {
+    mockedUseProviderHealth.mockReturnValue({
+      data: { status: 'unhealthy', lastError: 'Connection refused' },
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviderHealth>);
+
+    renderWithProviders(<ProvidersContent />);
+
+    expect(screen.getByText("Connection refused")).toBeInTheDocument();
+  });
+
+  it("does not show the error Alert when status is healthy", () => {
+    mockedUseProviderHealth.mockReturnValue({
+      data: { status: 'healthy', lastCheckAt: '2026-01-01T00:00:00Z' },
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviderHealth>);
+
+    renderWithProviders(<ProvidersContent />);
+
+    expect(screen.queryByText("Connection refused")).not.toBeInTheDocument();
+  });
+
+  it("calls useProviderHealth with the provider name", () => {
+    mockedUseProviderHealth.mockReturnValue({
+      data: { status: 'unknown' },
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviderHealth>);
+
+    renderWithProviders(<ProvidersContent />);
+
+    expect(mockedUseProviderHealth).toHaveBeenCalledWith("my-anthropic");
   });
 });
 
@@ -295,7 +414,6 @@ describe("DynamicCredentialForm", () => {
       />
     );
 
-    // The api_key field should be a password input
     const apiKeyInput = screen.getByLabelText(/Anthropic API Key/i);
     expect(apiKeyInput).toHaveAttribute("type", "password");
     expect(apiKeyInput).toHaveAttribute("autoComplete", "off");
@@ -310,15 +428,12 @@ describe("DynamicCredentialForm", () => {
       />
     );
 
-    // AWS Region: non-secret → text
     const regionInput = screen.getByLabelText(/AWS Region/i);
     expect(regionInput).toHaveAttribute("type", "text");
 
-    // Access Key ID: secret → password
     const accessKeyInput = screen.getByLabelText(/AWS Access Key ID/i);
     expect(accessKeyInput).toHaveAttribute("type", "password");
 
-    // Secret Access Key: secret → password
     const secretKeyInput = screen.getByLabelText(/AWS Secret Access Key/i);
     expect(secretKeyInput).toHaveAttribute("type", "password");
   });
@@ -357,7 +472,6 @@ describe("DynamicCredentialForm", () => {
       />
     );
 
-    // Required field has aria-label="required" on the asterisk span
     expect(screen.getByLabelText("required")).toBeInTheDocument();
   });
 
@@ -371,16 +485,13 @@ describe("DynamicCredentialForm", () => {
       />
     );
 
-    // Fill name field (pre-filled with descriptor.type by default)
     const nameInput = screen.getByLabelText(/^Name$/i);
     await user.clear(nameInput);
     await user.type(nameInput, "my-claude");
 
-    // Fill api_key
     const apiKeyInput = screen.getByLabelText(/Anthropic API Key/i);
     await user.type(apiKeyInput, "sk-ant-test-key-123");
 
-    // Submit
     const submitButton = screen.getByRole("button", { name: /add provider/i });
     await user.click(submitButton);
 
@@ -392,28 +503,20 @@ describe("DynamicCredentialForm", () => {
     expect(callArgs.name).toBe("my-claude");
     expect(typeof callArgs.credentials).toBe("object");
     expect(callArgs.credentials.api_key).toBe("sk-ant-test-key-123");
-    // Must NOT have typed per-provider fields
     expect(callArgs).not.toHaveProperty("apiKey");
     expect(callArgs).not.toHaveProperty("isEnabled");
     expect(callArgs).not.toHaveProperty("displayName");
   });
 
   it("verifies that the mutation called from AddProviderDialog uses the generic payload shape", async () => {
-    /**
-     * Verifies the AddProviderDialog wraps DynamicCredentialForm and passes
-     * credentials through in the DaemonProviderConfigInput shape:
-     * { type, name, defaultModel, credentials: Record<string,string>, setAsDefault? }
-     * with NO legacy fields like apiKey, isEnabled, or displayName.
-     */
+    const mockCreateMutateLocal = vi.fn();
     const user = userEvent.setup();
 
-    // Test DynamicCredentialForm directly since it processes the submit
     renderWithProviders(
       <DynamicCredentialForm
         descriptor={anthropicDescriptor}
         onSubmit={(values) => {
-          // Simulate what AddProviderDialog.handleSubmit does
-          mockCreateMutate({
+          mockCreateMutateLocal({
             config: {
               type: anthropicDescriptor.type,
               name: values.name,
@@ -434,27 +537,19 @@ describe("DynamicCredentialForm", () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockCreateMutate).toHaveBeenCalledTimes(1);
+      expect(mockCreateMutateLocal).toHaveBeenCalledTimes(1);
     });
 
-    const callArgs = mockCreateMutate.mock.calls[0][0];
-    // Must have generic shape: type, name, defaultModel, credentials
+    const callArgs = mockCreateMutateLocal.mock.calls[0][0];
     expect(callArgs.config.type).toBe("anthropic");
     expect(typeof callArgs.config.credentials).toBe("object");
     expect(callArgs.config.credentials.api_key).toBe("sk-ant-test-key-123");
-    // The config must NOT have typed per-provider fields
     expect(callArgs.config).not.toHaveProperty("apiKey");
     expect(callArgs.config).not.toHaveProperty("isEnabled");
     expect(callArgs.config).not.toHaveProperty("displayName");
   });
 
   it("password inputs are uncontrolled — react does not hold plaintext in state beyond submit", async () => {
-    /**
-     * Verifies that password inputs use the ref-forwarding pattern from
-     * react-hook-form (uncontrolled). After the form submit handler runs,
-     * the input's DOM value is still accessible via the input element, but
-     * the component state does not contain a plaintext copy.
-     */
     const user = userEvent.setup();
     renderWithProviders(
       <DynamicCredentialForm
@@ -466,20 +561,12 @@ describe("DynamicCredentialForm", () => {
 
     const apiKeyInput = screen.getByLabelText(/Anthropic API Key/i) as HTMLInputElement;
 
-    // An uncontrolled input has no `value` property driven by React state;
-    // the default value comes from react-hook-form's defaultValues (empty string).
-    // We confirm the input exists and is of password type.
     expect(apiKeyInput.type).toBe("password");
 
-    // Type a credential value
     await user.type(apiKeyInput, "sk-ant-secret");
     expect(apiKeyInput.value).toBe("sk-ant-secret");
 
-    // After reading the value the component should not persist it in
-    // a state variable — confirmed by the lack of a `data-value` or
-    // `value={...}` prop that would indicate controlled state.
     expect(apiKeyInput).not.toHaveAttribute("data-value");
-    // The autoComplete="off" attribute prevents browser persistence
     expect(apiKeyInput).toHaveAttribute("autoComplete", "off");
   });
 
@@ -492,9 +579,7 @@ describe("DynamicCredentialForm", () => {
       />
     );
 
-    // No password inputs
     expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
-    // But the name field and submit button should still be there
     expect(screen.getByLabelText(/^Name$/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /add provider/i })).toBeInTheDocument();
   });
