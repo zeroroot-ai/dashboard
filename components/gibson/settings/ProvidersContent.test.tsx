@@ -26,6 +26,7 @@ import { useProviderHealth } from "@/src/hooks/useProviderHealth";
 const mockCreateMutate = vi.fn();
 const mockDeleteMutate = vi.fn();
 const mockSetDefaultMutate = vi.fn();
+const mockUpdateMutate = vi.fn();
 
 vi.mock("@/src/hooks/useSupportedProviders", () => ({
   useSupportedProviders: vi.fn(),
@@ -62,6 +63,10 @@ vi.mock("@/src/hooks/useProviderMutations", () => ({
     mutate: mockSetDefaultMutate,
     isPending: false,
   })),
+  useUpdateProvider: vi.fn(() => ({
+    mutate: mockUpdateMutate,
+    isPending: false,
+  })),
 }));
 
 vi.mock("@/src/hooks/useProviderHealth", () => ({
@@ -78,6 +83,27 @@ vi.mock("sonner", () => ({
 
 // Stub FallbackChainEditor so this suite stays isolated
 vi.mock("./FallbackChainEditor", () => ({ FallbackChainEditor: () => null }));
+
+// Stub ProviderWizard and CredentialsAndTest to isolate ProvidersContent tests.
+// CredentialsAndTest stub lets edit-flow tests drive onValuesChange.
+vi.mock("./ProviderWizard", () => ({
+  ProviderWizard: () => null,
+  CredentialsAndTest: ({
+    onValuesChange,
+  }: {
+    onValuesChange?: (v: { name: string; credentials: Record<string, string> }) => void;
+  }) => (
+    <button
+      type="button"
+      data-testid="credentials-and-test-stub"
+      onClick={() =>
+        onValuesChange?.({ name: "my-anthropic", credentials: { api_key: "sk-ant-new-key" } })
+      }
+    >
+      Enter credentials
+    </button>
+  ),
+}));
 
 // ---------------------------------------------------------------------------
 // Fixture data
@@ -687,5 +713,127 @@ describe("ConfiguredProviderRow — credentialsMasked display", () => {
     } as unknown as ReturnType<typeof useProviders>);
     renderWithProviders(<ProvidersContent />);
     expect(screen.getByText("****1234")).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ConfiguredProviderRow — edit credentials (dashboard#281)
+// ---------------------------------------------------------------------------
+
+describe("ConfiguredProviderRow — edit credentials", () => {
+  const mockedUseSupportedProviders = vi.mocked(useSupportedProviders);
+  const mockedUseProviders = vi.mocked(useProviders);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedUseSupportedProviders.mockReturnValue({
+      data: mockSupportedDescriptors,
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useSupportedProviders>);
+    mockedUseProviders.mockReturnValue({
+      data: mockListProvidersResponse,
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviders>);
+  });
+
+  it("renders the Edit credentials button when a matching descriptor is available", () => {
+    renderWithProviders(<ProvidersContent />);
+    // anthropicDescriptor.type === "anthropic" matches the configured provider
+    expect(screen.getByRole("button", { name: /edit credentials/i })).toBeInTheDocument();
+  });
+
+  it("opens the edit dialog when Edit credentials is clicked", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ProvidersContent />);
+
+    await user.click(screen.getByRole("button", { name: /edit credentials/i }));
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText(/Edit my-anthropic credentials/i)).toBeInTheDocument();
+    expect(screen.getByText(/Leave secret fields blank/i)).toBeInTheDocument();
+  });
+
+  it("renders CredentialsAndTest stub inside the edit dialog", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ProvidersContent />);
+
+    await user.click(screen.getByRole("button", { name: /edit credentials/i }));
+
+    expect(screen.getByTestId("credentials-and-test-stub")).toBeInTheDocument();
+  });
+
+  it("calls updateProvider mutation with credentials when Save is clicked", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ProvidersContent />);
+
+    await user.click(screen.getByRole("button", { name: /edit credentials/i }));
+
+    // Simulate credential entry via the stub — fires onValuesChange
+    await user.click(screen.getByTestId("credentials-and-test-stub"));
+
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(mockUpdateMutate).toHaveBeenCalledTimes(1);
+    });
+
+    const call = mockUpdateMutate.mock.calls[0][0];
+    expect(call.name).toBe("my-anthropic");
+    expect(call.config.credentials).toEqual({ api_key: "sk-ant-new-key" });
+  });
+
+  it("closes the dialog on successful save", async () => {
+    const { useUpdateProvider } = await import("@/src/hooks/useProviderMutations");
+    const mockedUseUpdateProvider = vi.mocked(useUpdateProvider);
+    mockedUseUpdateProvider.mockReturnValue({
+      mutate: (
+        _args: unknown,
+        opts?: { onSuccess?: () => void },
+      ) => {
+        opts?.onSuccess?.();
+      },
+      isPending: false,
+    } as unknown as ReturnType<typeof useUpdateProvider>);
+
+    const user = userEvent.setup();
+    renderWithProviders(<ProvidersContent />);
+
+    await user.click(screen.getByRole("button", { name: /edit credentials/i }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  it("keeps the dialog open when the mutation errors", async () => {
+    const { useUpdateProvider } = await import("@/src/hooks/useProviderMutations");
+    const mockedUseUpdateProvider = vi.mocked(useUpdateProvider);
+    mockedUseUpdateProvider.mockReturnValue({
+      mutate: (
+        _args: unknown,
+        opts?: { onError?: (err: Error) => void },
+      ) => {
+        opts?.onError?.(new Error("network error"));
+      },
+      isPending: false,
+    } as unknown as ReturnType<typeof useUpdateProvider>);
+
+    const user = userEvent.setup();
+    renderWithProviders(<ProvidersContent />);
+
+    await user.click(screen.getByRole("button", { name: /edit credentials/i }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
+
+    // Dialog stays open on error
+    await waitFor(() => {
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
   });
 });

@@ -12,7 +12,7 @@
  */
 
 import * as React from "react";
-import { AlertCircle, CheckCircle2, Circle, Loader2, Plug, Star, Trash2, WifiOff } from "lucide-react";
+import { AlertCircle, CheckCircle2, Circle, Loader2, Pencil, Plug, Star, Trash2, WifiOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -24,6 +24,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -58,7 +59,7 @@ import { formatDistanceToNow } from "date-fns";
 
 import { useSupportedProviders } from "@/src/hooks/useSupportedProviders";
 import { useProviders, useFallbackChain, providerQueryKeys } from "@/src/hooks/useProviders";
-import { useCreateProvider, useDeleteProvider, useSetDefaultProvider } from "@/src/hooks/useProviderMutations";
+import { useCreateProvider, useDeleteProvider, useSetDefaultProvider, useUpdateProvider } from "@/src/hooks/useProviderMutations";
 import { useProviderHealth } from "@/src/hooks/useProviderHealth";
 import { CREDENTIAL_FIELD_TYPE } from '@/src/lib/gibson-client-types';
 import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
@@ -66,7 +67,7 @@ import type { ProviderConfig, ProviderHealthStatus } from "@/src/types/provider"
 import { HEALTH_STATUS_CONFIG } from "@/src/types/provider";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { ProviderWizard } from "./ProviderWizard";
+import { ProviderWizard, CredentialsAndTest } from "./ProviderWizard";
 import { FallbackChainEditor } from "./FallbackChainEditor";
 
 // ---------------------------------------------------------------------------
@@ -296,13 +297,19 @@ interface ConfiguredProviderRowProps {
   provider: ProviderConfig;
   fallbackRank?: number;
   onDeleted?: (name: string) => void;
+  /** Matching descriptor from the supported providers list, used by the edit dialog. */
+  descriptor?: SupportedProviderDescriptor;
 }
 
-function ConfiguredProviderRow({ provider, fallbackRank, onDeleted }: ConfiguredProviderRowProps) {
+function ConfiguredProviderRow({ provider, fallbackRank, onDeleted, descriptor }: ConfiguredProviderRowProps) {
   const [testState, setTestState] = React.useState<"idle" | "testing" | "ok" | "fail">("idle");
 
   const { mutate: deleteProvider, isPending: isDeleting } = useDeleteProvider();
   const { mutate: setDefault, isPending: isSettingDefault } = useSetDefaultProvider();
+  const { mutate: updateProvider, isPending: isUpdating } = useUpdateProvider();
+  const queryClient = useQueryClient();
+  const [editOpen, setEditOpen] = React.useState(false);
+  const [editCredentials, setEditCredentials] = React.useState<Record<string, string>>({});
 
   // Live health badge — polls every 60 s, pauses when the tab is hidden.
   const { data: health } = useProviderHealth(provider.name);
@@ -315,6 +322,24 @@ function ConfiguredProviderRow({ provider, fallbackRank, onDeleted }: Configured
     (provider.credentialsMasked
       ? Object.values(provider.credentialsMasked).some((v) => v !== "")
       : !!provider.apiKeyMasked);
+
+  function onSaveCredentials() {
+    updateProvider(
+      { name: provider.name, config: { credentials: editCredentials } },
+      {
+        onSuccess: () => {
+          toast.success(`${provider.displayName} credentials updated`);
+          setEditOpen(false);
+          void queryClient.invalidateQueries({ queryKey: providerQueryKeys.lists() });
+        },
+        onError: (err) => {
+          toast.error(`Failed to update ${provider.displayName} credentials`, {
+            description: err.message,
+          });
+        },
+      },
+    );
+  }
 
   async function onTestConnection() {
     setTestState("testing");
@@ -516,6 +541,61 @@ function ConfiguredProviderRow({ provider, fallbackRank, onDeleted }: Configured
             </Button>
           )}
 
+          {descriptor && (
+            <>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="text-xs"
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil className="size-3" />
+                Edit credentials
+              </Button>
+              <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                <DialogContent className="sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="text-sm">
+                      Edit {provider.displayName} credentials
+                    </DialogTitle>
+                    <DialogDescription className="text-xs">
+                      Leave secret fields blank to keep the existing stored value.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <CredentialsAndTest
+                    descriptor={descriptor}
+                    providerName={provider.name}
+                    secretFieldPlaceholder="Leave blank to keep existing value"
+                    onValuesChange={(vals) => setEditCredentials(vals.credentials)}
+                  />
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setEditOpen(false)}
+                      disabled={isUpdating}
+                      className="text-xs"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={onSaveCredentials}
+                      disabled={isUpdating}
+                      className="text-xs"
+                    >
+                      {isUpdating && <Loader2 className="size-3 animate-spin" />}
+                      Save
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
+
           <Button
             type="button"
             size="sm"
@@ -685,6 +765,7 @@ export function ProvidersContent() {
                 provider={provider}
                 fallbackRank={chainIndex >= 0 ? chainIndex + 1 : undefined}
                 onDeleted={handleProviderDeleted}
+                descriptor={supported?.find((d) => d.type === provider.type)}
               />
             );
           })
