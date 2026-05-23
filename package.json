@@ -153,7 +153,7 @@
     "react-grid-layout": "^2.2.3",
     "react-hook-form": "^7.69.0",
     "react-markdown": "^10.1.0",
-    "react-medium-image-zoom": "^5.4.0",
+    "react-medium-image-zoom": "^5.4.5",
     "react-resizable-panels": "^4.6.5",
     "react-world-flags": "^1.6.0",
     "recharts": "2.15.4",
