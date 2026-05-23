@@ -38,7 +38,7 @@ import type { MemberRole } from "@/src/lib/k8s/types";
 
 const inviteSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  role: z.enum(["viewer", "member", "admin"], {
+  role: z.enum(["member", "admin"], {
     required_error: "Please select a role",
   }),
   message: z.string().max(500).optional(),
@@ -58,7 +58,7 @@ export function InviteUserDialog({ open, onOpenChange, tenantId }: InviteUserDia
 
   const form = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema),
-    defaultValues: { email: "", role: "viewer", message: "" },
+    defaultValues: { email: "", role: "member", message: "" },
   });
 
   async function onSubmit(values: InviteFormValues) {
@@ -136,7 +136,6 @@ export function InviteUserDialog({ open, onOpenChange, tenantId }: InviteUserDia
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="viewer">Viewer</SelectItem>
                       <SelectItem value="member">Member</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
