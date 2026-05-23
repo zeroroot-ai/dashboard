@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.actor != 'dependabot[bot]'
     uses: zero-day-ai/.github/.github/workflows/reusable-image-build.yml@main
     permissions:
       contents: write
