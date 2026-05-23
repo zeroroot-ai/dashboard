@@ -4,9 +4,10 @@
  * Supported LLM Providers hook
  *
  * Fetches from `/api/settings/providers/supported`, which delegates to the
- * daemon's `gibson.tenant.v1.TenantAdminService/GetSupportedProviders` RPC
- * (added in SDK v0.91.0 — spec providers-wizard). Powers the Settings →
- * Providers wizard's type picker and dynamic credential form.
+ * daemon's `gibson.admin.v1.TenantAdminService/GetSupportedProviders` RPC
+ * (spec providers-wizard). The RPC carries relation: "member" so any
+ * authenticated user can fetch the static provider catalogue. Powers the
+ * Settings → Providers wizard's type picker and dynamic credential form.
  *
  * The static TS mirror that briefly lived at
  * `src/lib/llm/provider-descriptors.ts` is gone — the daemon is the single

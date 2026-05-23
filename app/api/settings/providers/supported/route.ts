@@ -6,13 +6,19 @@
  * Settings → Providers wizard.
  *
  * Spec: providers-wizard. Daemon RPC:
- *   gibson.tenant.v1.TenantAdminService/GetSupportedProviders
+ *   gibson.admin.v1.TenantAdminService/GetSupportedProviders
+ *
+ * Uses the member-accessible client (user's session token). The FGA
+ * annotation on GetSupportedProviders carries relation: "member" so any
+ * signed-in user — not just tenant admins — can retrieve the static
+ * provider catalogue. The service descriptor must be the gibson.admin.v1
+ * binding so the gRPC path matches the ext-authz registry entry.
  */
 
 import 'server-only';
 import { type NextRequest } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { TenantAdminService } from '@/src/gen/gibson/tenant/v1/tenant_admin_pb';
+import { TenantAdminService } from '@/src/gen/gibson/admin/v1/tenant_pb';
 import { userClient } from '@/src/lib/gibson-client';
 import { translateError } from '@/src/lib/providers-route-error';
 import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
