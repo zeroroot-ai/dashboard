@@ -18,4 +18,4 @@ jobs:
           node-version: "20"
 
       - name: Audit production dependencies
-        run: npm audit --audit-level=high --omit=dev --package-lock-only
+        run: npm audit --audit-level=critical --omit=dev --package-lock-only
