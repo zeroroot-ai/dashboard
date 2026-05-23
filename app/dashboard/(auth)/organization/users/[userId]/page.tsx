@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/src/lib/session-client";
 import { usePermitted, useTenantId } from "@/src/lib/auth/tenant";
-import { ArrowLeft, Shield } from "lucide-react";
+import { useTenantContext } from "@/src/lib/tenant-context";
+import { ArrowLeft, Shield, ArrowRightLeft } from "lucide-react";
+import { toast } from "sonner";
 
 import { UserTeamMembershipsEditor } from "@/components/gibson/users/UserTeamMembershipsEditor";
 
@@ -18,10 +20,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCRDWatch } from "@/src/hooks/useCRDWatch";
+import { transferOwnershipAction } from "@/app/actions/crd/transfer-ownership";
 
 const ROLE_BADGE_CLASS: Record<string, string> = {
   admin: "border-primary/50 bg-primary/10 text-primary",
@@ -45,13 +58,21 @@ function tenantNamespace(name: string): string {
 
 export default function UserDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const userId = params.userId as string;
 
   const { data: session } = useSession();
   const tenantId = useTenantId() ?? "";
+  const { rolesByTenant } = useTenantContext();
   const currentUserId = session?.user?.id ?? "";
   const isSelf = userId === currentUserId;
   const canEdit = usePermitted("team:manage") && !isSelf;
+
+  // Derive whether the viewing user is the tenant owner from the FGA-resolved
+  // rolesByTenant map. This is populated server-side via getMyMemberships() +
+  // the active-tenant cookie and passed through TenantContextProvider.
+  const viewerRole = tenantId ? (rolesByTenant[tenantId] ?? "") : "";
+  const viewerIsOwner = viewerRole === "owner";
 
   const namespace = tenantId ? tenantNamespace(tenantId) : undefined;
   const { items, status } = useCRDWatch("TenantMember", namespace, {
@@ -67,6 +88,40 @@ export default function UserDetailPage() {
   );
 
   const isLoading = status === "connecting" || status === "idle";
+
+  // Transfer ownership dialog state.
+  const [transferOpen, setTransferOpen] = React.useState(false);
+  const [transferring, setTransferring] = React.useState(false);
+
+  // Conditions for showing "Transfer Ownership":
+  //   1. canEdit is true (viewer has team:manage permission AND is not viewing self)
+  //   2. viewer is the owner
+  //   3. target is an Active admin
+  //   4. target is not the current user (already covered by canEdit)
+  const targetIsActiveAdmin =
+    member?.spec.role === "admin" && member?.status?.phase === "Active";
+  const showTransferOwnership = canEdit && viewerIsOwner && targetIsActiveAdmin;
+
+  async function handleTransferOwnership() {
+    setTransferring(true);
+    try {
+      const targetUserId = member?.status?.userId;
+      if (!targetUserId) {
+        toast.error("Cannot determine target user ID.");
+        return;
+      }
+      const result = await transferOwnershipAction(targetUserId);
+      if (result.ok) {
+        toast.success(`Ownership transferred to ${member?.spec.email ?? targetUserId}.`);
+        router.push("/dashboard/organization/users");
+      } else {
+        toast.error(result.error || "Transfer failed.");
+      }
+    } finally {
+      setTransferring(false);
+      setTransferOpen(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -186,6 +241,30 @@ export default function UserDetailPage() {
                     </p>
                   </div>
                 </div>
+
+                {/* Transfer Ownership entry point */}
+                {showTransferOwnership && (
+                  <>
+                    <Separator className="bg-highlight/20" />
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <p className="font-mono text-sm">Transfer Ownership</p>
+                        <p className="text-xs text-muted-foreground">
+                          Make {member.spec.email} the workspace owner. You will become an admin.
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 border-destructive/50 text-destructive hover:bg-destructive/10"
+                        onClick={() => setTransferOpen(true)}
+                      >
+                        <ArrowRightLeft className="size-3.5" />
+                        Transfer Ownership
+                      </Button>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -226,6 +305,28 @@ export default function UserDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Transfer Ownership confirmation dialog */}
+      <AlertDialog open={transferOpen} onOpenChange={setTransferOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Transfer ownership to {member?.spec.email}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will become an admin. This cannot be undone without another transfer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={transferring}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleTransferOwnership}
+              disabled={transferring}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {transferring ? "Transferring..." : "Transfer Ownership"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
