@@ -115,7 +115,18 @@ export interface ProviderConfig {
   displayName: string;
   /** Provider vendor type string (e.g. "anthropic", "bedrock") */
   type: string;
-  /** Masked API key (e.g., "sk-****abc") - never the full key */
+  /**
+   * Masked credential values keyed by field name
+   * (e.g. { aws_region: "us-**-1", aws_access_key_id: "****XAID" }).
+   * Supersedes apiKeyMasked for multi-credential providers. An absent map
+   * means the daemon has not yet returned per-field masked values.
+   */
+  credentialsMasked?: Record<string, string>;
+  /**
+   * @deprecated Use credentialsMasked instead. Kept for one release cycle so
+   * running agents that read ProviderConfig continue to compile without change.
+   * Will be removed once all call sites have migrated to credentialsMasked.
+   */
   apiKeyMasked?: string;
   /** API endpoint URL (optional, uses provider defaults if empty) */
   baseUrl?: string;

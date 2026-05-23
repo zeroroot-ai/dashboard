@@ -588,3 +588,104 @@ describe("DynamicCredentialForm", () => {
     expect(screen.getByRole("button", { name: /add provider/i })).toBeInTheDocument();
   });
 });
+
+// ---------------------------------------------------------------------------
+// ConfiguredProviderRow — credentialsMasked display
+// ---------------------------------------------------------------------------
+
+describe("ConfiguredProviderRow — credentialsMasked display", () => {
+  const mockedUseSupportedProviders = vi.mocked(useSupportedProviders);
+  const mockedUseProviders = vi.mocked(useProviders);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedUseSupportedProviders.mockReturnValue({
+      data: mockSupportedDescriptors,
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useSupportedProviders>);
+  });
+
+  it("renders two chips for a Bedrock-shaped provider with credentialsMasked", () => {
+    mockedUseProviders.mockReturnValue({
+      data: {
+        providers: [
+          {
+            name: "my-bedrock",
+            displayName: "my-bedrock",
+            type: "bedrock",
+            credentialsMasked: {
+              aws_region: "us-**-1",
+              aws_access_key_id: "****XAID",
+            },
+            isDefault: false,
+            isEnabled: true,
+            version: 1,
+            createdAt: "2024-01-01T00:00:00Z",
+            updatedAt: "2024-01-01T00:00:00Z",
+          },
+        ],
+        defaultProvider: undefined,
+        fallbackChain: [],
+      },
+      isLoading: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useProviders>);
+    renderWithProviders(<ProvidersContent />);
+    expect(screen.getByText("aws_region: us-**-1")).toBeInTheDocument();
+    expect(screen.getByText("aws_access_key_id: ****XAID")).toBeInTheDocument();
+  });
+
+  it("renders zero chips when credentialsMasked is an empty object", () => {
+    mockedUseProviders.mockReturnValue({
+      data: {
+        providers: [
+          {
+            name: "my-empty",
+            displayName: "my-empty",
+            type: "bedrock",
+            credentialsMasked: {},
+            isDefault: false,
+            isEnabled: true,
+            version: 1,
+            createdAt: "2024-01-01T00:00:00Z",
+            updatedAt: "2024-01-01T00:00:00Z",
+          },
+        ],
+        defaultProvider: undefined,
+        fallbackChain: [],
+      },
+      isLoading: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useProviders>);
+    renderWithProviders(<ProvidersContent />);
+    // No credential chips rendered for empty credentialsMasked
+    expect(screen.queryByText(/: /)).not.toBeInTheDocument();
+  });
+
+  it("renders legacy fallback chip when only apiKeyMasked is present (no credentialsMasked)", () => {
+    mockedUseProviders.mockReturnValue({
+      data: {
+        providers: [
+          {
+            name: "my-legacy",
+            displayName: "my-legacy",
+            type: "anthropic",
+            apiKeyMasked: "****1234",
+            isDefault: false,
+            isEnabled: true,
+            version: 1,
+            createdAt: "2024-01-01T00:00:00Z",
+            updatedAt: "2024-01-01T00:00:00Z",
+          },
+        ],
+        defaultProvider: undefined,
+        fallbackChain: [],
+      },
+      isLoading: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useProviders>);
+    renderWithProviders(<ProvidersContent />);
+    expect(screen.getByText("****1234")).toBeInTheDocument();
+  });
+});
