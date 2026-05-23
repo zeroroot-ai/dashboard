@@ -17,7 +17,7 @@
 
 import { getBudgetClient } from "@/src/lib/gibson-client";
 import { getServerSession } from "@/src/lib/auth";
-import { BudgetScope } from "@/src/gen/gibson/budget/v1/budget_pb";
+import { BudgetScope } from "@/src/gen/gibson/budget_status/v1/budget_status_pb";
 
 export type ActionResult<T> =
   | { ok: true; data: T }

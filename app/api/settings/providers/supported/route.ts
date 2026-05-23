@@ -48,9 +48,8 @@ export async function GET(_req: NextRequest) {
           secret: c.secret,
           placeholder: c.placeholder,
           help: c.help,
-          // c.type will be present once the daemon proto is updated with the
-          // CredentialFieldType enum field. Until then it is undefined and the
-          // dashboard falls back to the secret flag for field type inference.
+          // admin/v1 CredentialField predates the `type` field; the wire value
+          // is present when the daemon sends it (field 7). Read via assertion.
           fieldType: ((c as unknown as { type?: number }).type ?? 0) as CredentialFieldType,
         })),
         defaultModels: (p.defaultModels ?? []).map((m) => ({

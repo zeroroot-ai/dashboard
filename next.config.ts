@@ -34,6 +34,11 @@ const nextConfig: NextConfig = {
   // pulls in native Node.js modules that Turbopack cannot resolve in a browser
   // or Edge bundle. Spec: signup-zitadel-permissions-fix (Docker build fix).
   serverExternalPackages: [
+    // @aws-sdk/client-ses: optional runtime dep for SES email. webpack
+    // statically resolves the require() in ses.ts; marking external lets
+    // Node's native require() handle it at runtime, where ses.ts's try-catch
+    // handles the missing package gracefully. See dashboard#301.
+    "@aws-sdk/client-ses",
     "@connectrpc/connect-node",
     "@connectrpc/connect",
     "@grpc/grpc-js",

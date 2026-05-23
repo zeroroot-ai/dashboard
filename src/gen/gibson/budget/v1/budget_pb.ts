@@ -2,24 +2,38 @@
 // @generated from file gibson/budget/v1/budget.proto (package gibson.budget.v1, syntax proto3)
 /* eslint-disable */
 
-// Package gibson.budget.v1 defines token and spend budget types for
-// per-user and per-team enforcement around LLM execution.
+// Package gibson.budget.v1 — dashboard-facing admin surface for
+// configuring per-user / per-team / per-tenant token + spend budgets
+// around LLM execution.
+//
+// This package was migrated from the OSS SDK (github.com/zero-day-ai/sdk)
+// under sdk#106 PR A. The customer-visible wire shapes BudgetScope +
+// BudgetExceeded (parsed by `llm.IsBudgetExceeded` agent-side) live in
+// the public gibson.budget_status.v1 package owned by the OSS SDK and
+// are reached through the BSR dep on `buf.build/zero-day-ai-platform/sdk`.
 //
 // Spec: llm-user-attribution-governance (Requirement 3).
-// Enforcement happens in the daemon's ExecuteLLM handler via the internal
-// budget.Enforcer; this package defines the dashboard-facing contract for
-// configuring budgets and reading current usage.
+// Enforcement happens in the daemon's ExecuteLLM handler via the
+// internal budget.Enforcer; this package defines the dashboard-facing
+// contract for configuring budgets and reading current usage.
+//
+// All RPCs here are gated by ext-authz on a `member` FGA relation
+// scoped to `tenant`, with `tenant_from_identity` deriver. Mutations
+// further require tenant-admin entitlement enforced inside the daemon
+// handler.
 
-import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_gibson_auth_v1_options } from "../../auth/v1/options_pb";
+import type { BudgetScope } from "../../budget_status/v1/budget_status_pb";
+import { file_gibson_budget_status_v1_budget_status } from "../../budget_status/v1/budget_status_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file gibson/budget/v1/budget.proto.
  */
 export const file_gibson_budget_v1_budget: GenFile = /*@__PURE__*/
-  fileDesc("Ch1naWJzb24vYnVkZ2V0L3YxL2J1ZGdldC5wcm90bxIQZ2lic29uLmJ1ZGdldC52MSLIAQoGQnVkZ2V0EhEKCXRlbmFudF9pZBgBIAEoCRIsCgVzY29wZRgCIAEoDjIdLmdpYnNvbi5idWRnZXQudjEuQnVkZ2V0U2NvcGUSEgoKc3ViamVjdF9pZBgDIAEoCRIWCg5tb250aGx5X3Rva2VucxgEIAEoAxIfChdtb250aGx5X3NwZW5kX3VzZF9jZW50cxgFIAEoAxIVCg1vdmVycmlkZV9kZW55GAYgASgIEhkKEXdhcm5pbmdfdGhyZXNob2xkGAcgASgBIvQBCgxCdWRnZXRTdGF0dXMSLAoFc2NvcGUYASABKA4yHS5naWJzb24uYnVkZ2V0LnYxLkJ1ZGdldFNjb3BlEhIKCnN1YmplY3RfaWQYAiABKAkSFgoOY3VycmVudF90b2tlbnMYAyABKAMSHwoXY3VycmVudF9zcGVuZF91c2RfY2VudHMYBCABKAMSEwoLdG9rZW5fbGltaXQYBSABKAMSHQoVc3BlbmRfbGltaXRfdXNkX2NlbnRzGAYgASgDEhwKFHBlcmlvZF9yZXNldF9hdF91bml4GAcgASgDEhcKD3dhcm5pbmdfY3Jvc3NlZBgIIAEoCCKpAQoOQnVkZ2V0RXhjZWVkZWQSLAoFc2NvcGUYASABKA4yHS5naWJzb24uYnVkZ2V0LnYxLkJ1ZGdldFNjb3BlEhEKCWRpbWVuc2lvbhgCIAEoCRIVCg1jdXJyZW50X3VzYWdlGAMgASgDEg0KBWxpbWl0GAQgASgDEhwKFHBlcmlvZF9yZXNldF9hdF91bml4GAUgASgDEhIKCnN1YmplY3RfaWQYBiABKAkiVAoQR2V0QnVkZ2V0UmVxdWVzdBIsCgVzY29wZRgBIAEoDjIdLmdpYnNvbi5idWRnZXQudjEuQnVkZ2V0U2NvcGUSEgoKc3ViamVjdF9pZBgCIAEoCSJMChFHZXRCdWRnZXRSZXNwb25zZRIoCgZidWRnZXQYASABKAsyGC5naWJzb24uYnVkZ2V0LnYxLkJ1ZGdldBINCgVmb3VuZBgCIAEoCCI8ChBTZXRCdWRnZXRSZXF1ZXN0EigKBmJ1ZGdldBgBIAEoCzIYLmdpYnNvbi5idWRnZXQudjEuQnVkZ2V0Ij0KEVNldEJ1ZGdldFJlc3BvbnNlEigKBmJ1ZGdldBgBIAEoCzIYLmdpYnNvbi5idWRnZXQudjEuQnVkZ2V0IkIKEkxpc3RCdWRnZXRzUmVxdWVzdBIsCgVzY29wZRgBIAEoDjIdLmdpYnNvbi5idWRnZXQudjEuQnVkZ2V0U2NvcGUiQAoTTGlzdEJ1ZGdldHNSZXNwb25zZRIpCgdidWRnZXRzGAEgAygLMhguZ2lic29uLmJ1ZGdldC52MS5CdWRnZXQiQQoRTGlzdFN0YXR1c1JlcXVlc3QSLAoFc2NvcGUYASABKA4yHS5naWJzb24uYnVkZ2V0LnYxLkJ1ZGdldFNjb3BlIkQKEkxpc3RTdGF0dXNSZXNwb25zZRIuCgZzdGF0dXMYASADKAsyHi5naWJzb24uYnVkZ2V0LnYxLkJ1ZGdldFN0YXR1cyLjAQoYU2V0VGVuYW50RGVmYXVsdHNSZXF1ZXN0EiMKG2RlZmF1bHRfdXNlcl9tb250aGx5X3Rva2VucxgBIAEoAxIsCiRkZWZhdWx0X3VzZXJfbW9udGhseV9zcGVuZF91c2RfY2VudHMYAiABKAMSIwobZGVmYXVsdF90ZWFtX21vbnRobHlfdG9rZW5zGAMgASgDEiwKJGRlZmF1bHRfdGVhbV9tb250aGx5X3NwZW5kX3VzZF9jZW50cxgEIAEoAxIhChlkZWZhdWx0X3dhcm5pbmdfdGhyZXNob2xkGAUgASgBIjQKGVNldFRlbmFudERlZmF1bHRzUmVzcG9uc2USFwoPYXBwbGllZF9hdF91bml4GAEgASgDIhoKGEdldFRlbmFudERlZmF1bHRzUmVxdWVzdCLkAQoZR2V0VGVuYW50RGVmYXVsdHNSZXNwb25zZRIjChtkZWZhdWx0X3VzZXJfbW9udGhseV90b2tlbnMYASABKAMSLAokZGVmYXVsdF91c2VyX21vbnRobHlfc3BlbmRfdXNkX2NlbnRzGAIgASgDEiMKG2RlZmF1bHRfdGVhbV9tb250aGx5X3Rva2VucxgDIAEoAxIsCiRkZWZhdWx0X3RlYW1fbW9udGhseV9zcGVuZF91c2RfY2VudHMYBCABKAMSIQoZZGVmYXVsdF93YXJuaW5nX3RocmVzaG9sZBgFIAEoASpyCgtCdWRnZXRTY29wZRIcChhCVURHRVRfU0NPUEVfVU5TUEVDSUZJRUQQABIVChFCVURHRVRfU0NPUEVfVVNFUhABEhUKEUJVREdFVF9TQ09QRV9URUFNEAISFwoTQlVER0VUX1NDT1BFX1RFTkFOVBADMuYGCg1CdWRnZXRTZXJ2aWNlEoIBCglHZXRCdWRnZXQSIi5naWJzb24uYnVkZ2V0LnYxLkdldEJ1ZGdldFJlcXVlc3QaIy5naWJzb24uYnVkZ2V0LnYxLkdldEJ1ZGdldFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKCAQoJU2V0QnVkZ2V0EiIuZ2lic29uLmJ1ZGdldC52MS5TZXRCdWRnZXRSZXF1ZXN0GiMuZ2lic29uLmJ1ZGdldC52MS5TZXRCdWRnZXRSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSiAEKC0xpc3RCdWRnZXRzEiQuZ2lic29uLmJ1ZGdldC52MS5MaXN0QnVkZ2V0c1JlcXVlc3QaJS5naWJzb24uYnVkZ2V0LnYxLkxpc3RCdWRnZXRzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoUBCgpMaXN0U3RhdHVzEiMuZ2lic29uLmJ1ZGdldC52MS5MaXN0U3RhdHVzUmVxdWVzdBokLmdpYnNvbi5idWRnZXQudjEuTGlzdFN0YXR1c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKaAQoRR2V0VGVuYW50RGVmYXVsdHMSKi5naWJzb24uYnVkZ2V0LnYxLkdldFRlbmFudERlZmF1bHRzUmVxdWVzdBorLmdpYnNvbi5idWRnZXQudjEuR2V0VGVuYW50RGVmYXVsdHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSmgEKEVNldFRlbmFudERlZmF1bHRzEiouZ2lic29uLmJ1ZGdldC52MS5TZXRUZW5hbnREZWZhdWx0c1JlcXVlc3QaKy5naWJzb24uYnVkZ2V0LnYxLlNldFRlbmFudERlZmF1bHRzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADQlVQAVpBZ2l0aHViLmNvbS96ZXJvLWRheS1haS9wbGF0Zm9ybS1zZGsvZ2VuL2dpYnNvbi9idWRnZXQvdjE7YnVkZ2V0cGKqAg1HaWJzb24uQnVkZ2V0YgZwcm90bzM", [file_gibson_auth_v1_options]);
+  fileDesc("Ch1naWJzb24vYnVkZ2V0L3YxL2J1ZGdldC5wcm90bxIQZ2lic29uLmJ1ZGdldC52MSLPAQoGQnVkZ2V0EhEKCXRlbmFudF9pZBgBIAEoCRIzCgVzY29wZRgCIAEoDjIkLmdpYnNvbi5idWRnZXRfc3RhdHVzLnYxLkJ1ZGdldFNjb3BlEhIKCnN1YmplY3RfaWQYAyABKAkSFgoObW9udGhseV90b2tlbnMYBCABKAMSHwoXbW9udGhseV9zcGVuZF91c2RfY2VudHMYBSABKAMSFQoNb3ZlcnJpZGVfZGVueRgGIAEoCBIZChF3YXJuaW5nX3RocmVzaG9sZBgHIAEoASL7AQoMQnVkZ2V0U3RhdHVzEjMKBXNjb3BlGAEgASgOMiQuZ2lic29uLmJ1ZGdldF9zdGF0dXMudjEuQnVkZ2V0U2NvcGUSEgoKc3ViamVjdF9pZBgCIAEoCRIWCg5jdXJyZW50X3Rva2VucxgDIAEoAxIfChdjdXJyZW50X3NwZW5kX3VzZF9jZW50cxgEIAEoAxITCgt0b2tlbl9saW1pdBgFIAEoAxIdChVzcGVuZF9saW1pdF91c2RfY2VudHMYBiABKAMSHAoUcGVyaW9kX3Jlc2V0X2F0X3VuaXgYByABKAMSFwoPd2FybmluZ19jcm9zc2VkGAggASgIIlsKEEdldEJ1ZGdldFJlcXVlc3QSMwoFc2NvcGUYASABKA4yJC5naWJzb24uYnVkZ2V0X3N0YXR1cy52MS5CdWRnZXRTY29wZRISCgpzdWJqZWN0X2lkGAIgASgJIkwKEUdldEJ1ZGdldFJlc3BvbnNlEigKBmJ1ZGdldBgBIAEoCzIYLmdpYnNvbi5idWRnZXQudjEuQnVkZ2V0Eg0KBWZvdW5kGAIgASgIIjwKEFNldEJ1ZGdldFJlcXVlc3QSKAoGYnVkZ2V0GAEgASgLMhguZ2lic29uLmJ1ZGdldC52MS5CdWRnZXQiPQoRU2V0QnVkZ2V0UmVzcG9uc2USKAoGYnVkZ2V0GAEgASgLMhguZ2lic29uLmJ1ZGdldC52MS5CdWRnZXQiSQoSTGlzdEJ1ZGdldHNSZXF1ZXN0EjMKBXNjb3BlGAEgASgOMiQuZ2lic29uLmJ1ZGdldF9zdGF0dXMudjEuQnVkZ2V0U2NvcGUiQAoTTGlzdEJ1ZGdldHNSZXNwb25zZRIpCgdidWRnZXRzGAEgAygLMhguZ2lic29uLmJ1ZGdldC52MS5CdWRnZXQiSAoRTGlzdFN0YXR1c1JlcXVlc3QSMwoFc2NvcGUYASABKA4yJC5naWJzb24uYnVkZ2V0X3N0YXR1cy52MS5CdWRnZXRTY29wZSJEChJMaXN0U3RhdHVzUmVzcG9uc2USLgoGc3RhdHVzGAEgAygLMh4uZ2lic29uLmJ1ZGdldC52MS5CdWRnZXRTdGF0dXMi4wEKGFNldFRlbmFudERlZmF1bHRzUmVxdWVzdBIjChtkZWZhdWx0X3VzZXJfbW9udGhseV90b2tlbnMYASABKAMSLAokZGVmYXVsdF91c2VyX21vbnRobHlfc3BlbmRfdXNkX2NlbnRzGAIgASgDEiMKG2RlZmF1bHRfdGVhbV9tb250aGx5X3Rva2VucxgDIAEoAxIsCiRkZWZhdWx0X3RlYW1fbW9udGhseV9zcGVuZF91c2RfY2VudHMYBCABKAMSIQoZZGVmYXVsdF93YXJuaW5nX3RocmVzaG9sZBgFIAEoASI0ChlTZXRUZW5hbnREZWZhdWx0c1Jlc3BvbnNlEhcKD2FwcGxpZWRfYXRfdW5peBgBIAEoAyIaChhHZXRUZW5hbnREZWZhdWx0c1JlcXVlc3Qi5AEKGUdldFRlbmFudERlZmF1bHRzUmVzcG9uc2USIwobZGVmYXVsdF91c2VyX21vbnRobHlfdG9rZW5zGAEgASgDEiwKJGRlZmF1bHRfdXNlcl9tb250aGx5X3NwZW5kX3VzZF9jZW50cxgCIAEoAxIjChtkZWZhdWx0X3RlYW1fbW9udGhseV90b2tlbnMYAyABKAMSLAokZGVmYXVsdF90ZWFtX21vbnRobHlfc3BlbmRfdXNkX2NlbnRzGAQgASgDEiEKGWRlZmF1bHRfd2FybmluZ190aHJlc2hvbGQYBSABKAEy5gYKDUJ1ZGdldFNlcnZpY2USggEKCUdldEJ1ZGdldBIiLmdpYnNvbi5idWRnZXQudjEuR2V0QnVkZ2V0UmVxdWVzdBojLmdpYnNvbi5idWRnZXQudjEuR2V0QnVkZ2V0UmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoIBCglTZXRCdWRnZXQSIi5naWJzb24uYnVkZ2V0LnYxLlNldEJ1ZGdldFJlcXVlc3QaIy5naWJzb24uYnVkZ2V0LnYxLlNldEJ1ZGdldFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKIAQoLTGlzdEJ1ZGdldHMSJC5naWJzb24uYnVkZ2V0LnYxLkxpc3RCdWRnZXRzUmVxdWVzdBolLmdpYnNvbi5idWRnZXQudjEuTGlzdEJ1ZGdldHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMShQEKCkxpc3RTdGF0dXMSIy5naWJzb24uYnVkZ2V0LnYxLkxpc3RTdGF0dXNSZXF1ZXN0GiQuZ2lic29uLmJ1ZGdldC52MS5MaXN0U3RhdHVzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpoBChFHZXRUZW5hbnREZWZhdWx0cxIqLmdpYnNvbi5idWRnZXQudjEuR2V0VGVuYW50RGVmYXVsdHNSZXF1ZXN0GisuZ2lic29uLmJ1ZGdldC52MS5HZXRUZW5hbnREZWZhdWx0c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKaAQoRU2V0VGVuYW50RGVmYXVsdHMSKi5naWJzb24uYnVkZ2V0LnYxLlNldFRlbmFudERlZmF1bHRzUmVxdWVzdBorLmdpYnNvbi5idWRnZXQudjEuU2V0VGVuYW50RGVmYXVsdHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IANCVVABWkFnaXRodWIuY29tL3plcm8tZGF5LWFpL3BsYXRmb3JtLXNkay9nZW4vZ2lic29uL2J1ZGdldC92MTtidWRnZXRwYqoCDUdpYnNvbi5CdWRnZXRiBnByb3RvMw", [file_gibson_auth_v1_options, file_gibson_budget_status_v1_budget_status]);
 
 /**
  * Budget describes the token + spend ceilings for a single subject in a
@@ -35,7 +49,7 @@ export type Budget = Message<"gibson.budget.v1.Budget"> & {
   tenantId: string;
 
   /**
-   * @generated from field: gibson.budget.v1.BudgetScope scope = 2;
+   * @generated from field: gibson.budget_status.v1.BudgetScope scope = 2;
    */
   scope: BudgetScope;
 
@@ -94,7 +108,7 @@ export const BudgetSchema: GenMessage<Budget> = /*@__PURE__*/
  */
 export type BudgetStatus = Message<"gibson.budget.v1.BudgetStatus"> & {
   /**
-   * @generated from field: gibson.budget.v1.BudgetScope scope = 1;
+   * @generated from field: gibson.budget_status.v1.BudgetScope scope = 1;
    */
   scope: BudgetScope;
 
@@ -148,61 +162,11 @@ export const BudgetStatusSchema: GenMessage<BudgetStatus> = /*@__PURE__*/
   messageDesc(file_gibson_budget_v1_budget, 1);
 
 /**
- * BudgetExceeded is the status-detail payload returned inside the
- * codes.ResourceExhausted gRPC status when an LLM call is denied for
- * budget reasons. Consumers unmarshal via SDK helper IsBudgetExceeded.
- *
- * @generated from message gibson.budget.v1.BudgetExceeded
- */
-export type BudgetExceeded = Message<"gibson.budget.v1.BudgetExceeded"> & {
-  /**
-   * @generated from field: gibson.budget.v1.BudgetScope scope = 1;
-   */
-  scope: BudgetScope;
-
-  /**
-   * dimension is one of "tokens" or "spend".
-   *
-   * @generated from field: string dimension = 2;
-   */
-  dimension: string;
-
-  /**
-   * @generated from field: int64 current_usage = 3;
-   */
-  currentUsage: bigint;
-
-  /**
-   * @generated from field: int64 limit = 4;
-   */
-  limit: bigint;
-
-  /**
-   * @generated from field: int64 period_reset_at_unix = 5;
-   */
-  periodResetAtUnix: bigint;
-
-  /**
-   * subject_id is the limiting subject (user or team ID; empty for tenant).
-   *
-   * @generated from field: string subject_id = 6;
-   */
-  subjectId: string;
-};
-
-/**
- * Describes the message gibson.budget.v1.BudgetExceeded.
- * Use `create(BudgetExceededSchema)` to create a new message.
- */
-export const BudgetExceededSchema: GenMessage<BudgetExceeded> = /*@__PURE__*/
-  messageDesc(file_gibson_budget_v1_budget, 2);
-
-/**
  * @generated from message gibson.budget.v1.GetBudgetRequest
  */
 export type GetBudgetRequest = Message<"gibson.budget.v1.GetBudgetRequest"> & {
   /**
-   * @generated from field: gibson.budget.v1.BudgetScope scope = 1;
+   * @generated from field: gibson.budget_status.v1.BudgetScope scope = 1;
    */
   scope: BudgetScope;
 
@@ -217,7 +181,7 @@ export type GetBudgetRequest = Message<"gibson.budget.v1.GetBudgetRequest"> & {
  * Use `create(GetBudgetRequestSchema)` to create a new message.
  */
 export const GetBudgetRequestSchema: GenMessage<GetBudgetRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_budget_v1_budget, 3);
+  messageDesc(file_gibson_budget_v1_budget, 2);
 
 /**
  * @generated from message gibson.budget.v1.GetBudgetResponse
@@ -242,7 +206,7 @@ export type GetBudgetResponse = Message<"gibson.budget.v1.GetBudgetResponse"> & 
  * Use `create(GetBudgetResponseSchema)` to create a new message.
  */
 export const GetBudgetResponseSchema: GenMessage<GetBudgetResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_budget_v1_budget, 4);
+  messageDesc(file_gibson_budget_v1_budget, 3);
 
 /**
  * @generated from message gibson.budget.v1.SetBudgetRequest
@@ -259,7 +223,7 @@ export type SetBudgetRequest = Message<"gibson.budget.v1.SetBudgetRequest"> & {
  * Use `create(SetBudgetRequestSchema)` to create a new message.
  */
 export const SetBudgetRequestSchema: GenMessage<SetBudgetRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_budget_v1_budget, 5);
+  messageDesc(file_gibson_budget_v1_budget, 4);
 
 /**
  * @generated from message gibson.budget.v1.SetBudgetResponse
@@ -276,14 +240,14 @@ export type SetBudgetResponse = Message<"gibson.budget.v1.SetBudgetResponse"> & 
  * Use `create(SetBudgetResponseSchema)` to create a new message.
  */
 export const SetBudgetResponseSchema: GenMessage<SetBudgetResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_budget_v1_budget, 6);
+  messageDesc(file_gibson_budget_v1_budget, 5);
 
 /**
  * @generated from message gibson.budget.v1.ListBudgetsRequest
  */
 export type ListBudgetsRequest = Message<"gibson.budget.v1.ListBudgetsRequest"> & {
   /**
-   * @generated from field: gibson.budget.v1.BudgetScope scope = 1;
+   * @generated from field: gibson.budget_status.v1.BudgetScope scope = 1;
    */
   scope: BudgetScope;
 };
@@ -293,7 +257,7 @@ export type ListBudgetsRequest = Message<"gibson.budget.v1.ListBudgetsRequest"> 
  * Use `create(ListBudgetsRequestSchema)` to create a new message.
  */
 export const ListBudgetsRequestSchema: GenMessage<ListBudgetsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_budget_v1_budget, 7);
+  messageDesc(file_gibson_budget_v1_budget, 6);
 
 /**
  * @generated from message gibson.budget.v1.ListBudgetsResponse
@@ -310,14 +274,14 @@ export type ListBudgetsResponse = Message<"gibson.budget.v1.ListBudgetsResponse"
  * Use `create(ListBudgetsResponseSchema)` to create a new message.
  */
 export const ListBudgetsResponseSchema: GenMessage<ListBudgetsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_budget_v1_budget, 8);
+  messageDesc(file_gibson_budget_v1_budget, 7);
 
 /**
  * @generated from message gibson.budget.v1.ListStatusRequest
  */
 export type ListStatusRequest = Message<"gibson.budget.v1.ListStatusRequest"> & {
   /**
-   * @generated from field: gibson.budget.v1.BudgetScope scope = 1;
+   * @generated from field: gibson.budget_status.v1.BudgetScope scope = 1;
    */
   scope: BudgetScope;
 };
@@ -327,7 +291,7 @@ export type ListStatusRequest = Message<"gibson.budget.v1.ListStatusRequest"> & 
  * Use `create(ListStatusRequestSchema)` to create a new message.
  */
 export const ListStatusRequestSchema: GenMessage<ListStatusRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_budget_v1_budget, 9);
+  messageDesc(file_gibson_budget_v1_budget, 8);
 
 /**
  * @generated from message gibson.budget.v1.ListStatusResponse
@@ -344,7 +308,7 @@ export type ListStatusResponse = Message<"gibson.budget.v1.ListStatusResponse"> 
  * Use `create(ListStatusResponseSchema)` to create a new message.
  */
 export const ListStatusResponseSchema: GenMessage<ListStatusResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_budget_v1_budget, 10);
+  messageDesc(file_gibson_budget_v1_budget, 9);
 
 /**
  * @generated from message gibson.budget.v1.SetTenantDefaultsRequest
@@ -383,7 +347,7 @@ export type SetTenantDefaultsRequest = Message<"gibson.budget.v1.SetTenantDefaul
  * Use `create(SetTenantDefaultsRequestSchema)` to create a new message.
  */
 export const SetTenantDefaultsRequestSchema: GenMessage<SetTenantDefaultsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_budget_v1_budget, 11);
+  messageDesc(file_gibson_budget_v1_budget, 10);
 
 /**
  * @generated from message gibson.budget.v1.SetTenantDefaultsResponse
@@ -400,7 +364,7 @@ export type SetTenantDefaultsResponse = Message<"gibson.budget.v1.SetTenantDefau
  * Use `create(SetTenantDefaultsResponseSchema)` to create a new message.
  */
 export const SetTenantDefaultsResponseSchema: GenMessage<SetTenantDefaultsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_budget_v1_budget, 12);
+  messageDesc(file_gibson_budget_v1_budget, 11);
 
 /**
  * @generated from message gibson.budget.v1.GetTenantDefaultsRequest
@@ -413,7 +377,7 @@ export type GetTenantDefaultsRequest = Message<"gibson.budget.v1.GetTenantDefaul
  * Use `create(GetTenantDefaultsRequestSchema)` to create a new message.
  */
 export const GetTenantDefaultsRequestSchema: GenMessage<GetTenantDefaultsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_budget_v1_budget, 13);
+  messageDesc(file_gibson_budget_v1_budget, 12);
 
 /**
  * @generated from message gibson.budget.v1.GetTenantDefaultsResponse
@@ -450,41 +414,7 @@ export type GetTenantDefaultsResponse = Message<"gibson.budget.v1.GetTenantDefau
  * Use `create(GetTenantDefaultsResponseSchema)` to create a new message.
  */
 export const GetTenantDefaultsResponseSchema: GenMessage<GetTenantDefaultsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_budget_v1_budget, 14);
-
-/**
- * BudgetScope identifies the subject class a budget applies to. Tenant is
- * the rollup ceiling; user and team are subdivisions within a tenant.
- *
- * @generated from enum gibson.budget.v1.BudgetScope
- */
-export enum BudgetScope {
-  /**
-   * @generated from enum value: BUDGET_SCOPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: BUDGET_SCOPE_USER = 1;
-   */
-  USER = 1,
-
-  /**
-   * @generated from enum value: BUDGET_SCOPE_TEAM = 2;
-   */
-  TEAM = 2,
-
-  /**
-   * @generated from enum value: BUDGET_SCOPE_TENANT = 3;
-   */
-  TENANT = 3,
-}
-
-/**
- * Describes the enum gibson.budget.v1.BudgetScope.
- */
-export const BudgetScopeSchema: GenEnum<BudgetScope> = /*@__PURE__*/
-  enumDesc(file_gibson_budget_v1_budget, 0);
+  messageDesc(file_gibson_budget_v1_budget, 13);
 
 /**
  * BudgetService is the dashboard-facing API for configuring budgets and

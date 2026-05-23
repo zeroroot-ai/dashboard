@@ -58,7 +58,7 @@ export interface CredentialFieldDescriptor {
   /**
    * Semantic field type from the daemon's CredentialFieldType enum.
    * Optional — absent (or 0/UNSPECIFIED) falls back to the secret flag:
-   * secret=true → PASSWORD, secret=false → TEXT.
+   * secret=true → PASSWORD, secret=false → TEXT. BOOL renders as a Checkbox.
    */
   fieldType?: CredentialFieldType;
 }
