@@ -837,3 +837,96 @@ describe("ConfiguredProviderRow — edit credentials", () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// ConfiguredProviderRow — deprecated model badge (dashboard#289)
+// ---------------------------------------------------------------------------
+
+describe("ConfiguredProviderRow — deprecated model badge (dashboard#289)", () => {
+  const mockedUseSupportedProviders = vi.mocked(useSupportedProviders);
+  const mockedUseProviders = vi.mocked(useProviders);
+  const mockedUseProviderHealth = vi.mocked(useProviderHealth);
+
+  const descriptorWithDeprecated: SupportedProviderDescriptor = {
+    ...anthropicDescriptor,
+    defaultModels: [
+      { name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000, deprecated: false },
+      { name: "claude-2-0", family: "Claude 2", contextWindow: 100000, deprecated: true },
+    ],
+  };
+
+  const providerWithDeprecatedModel = {
+    ...mockConfiguredProvider,
+    defaultModel: "claude-2-0",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedUseProviderHealth.mockReturnValue({
+      data: { status: "unknown" },
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviderHealth>);
+  });
+
+  it("shows 'Model deprecated' badge when configured model is deprecated", () => {
+    mockedUseSupportedProviders.mockReturnValue({
+      data: [descriptorWithDeprecated],
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useSupportedProviders>);
+    const deprecatedProviderList: ListProvidersResponse = {
+      providers: [providerWithDeprecatedModel],
+      defaultProvider: providerWithDeprecatedModel.name,
+      fallbackChain: [],
+    };
+    mockedUseProviders.mockReturnValue({
+      data: deprecatedProviderList,
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviders>);
+
+    renderWithProviders(<ProvidersContent />);
+
+    expect(screen.getByText("Model deprecated")).toBeInTheDocument();
+  });
+
+  it("does NOT show 'Model deprecated' badge when configured model is not deprecated", () => {
+    mockedUseSupportedProviders.mockReturnValue({
+      data: [descriptorWithDeprecated],
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useSupportedProviders>);
+    mockedUseProviders.mockReturnValue({
+      data: mockListProvidersResponse,
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviders>);
+
+    renderWithProviders(<ProvidersContent />);
+
+    expect(screen.queryByText("Model deprecated")).not.toBeInTheDocument();
+  });
+
+  it("does NOT show 'Model deprecated' badge when descriptor has no matching model", () => {
+    mockedUseSupportedProviders.mockReturnValue({
+      data: [anthropicDescriptor],
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useSupportedProviders>);
+    const unknownModelList: ListProvidersResponse = {
+      providers: [{ ...mockConfiguredProvider, defaultModel: "unknown-model" }],
+      defaultProvider: mockConfiguredProvider.name,
+      fallbackChain: [],
+    };
+    mockedUseProviders.mockReturnValue({
+      data: unknownModelList,
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviders>);
+
+    renderWithProviders(<ProvidersContent />);
+
+    expect(screen.queryByText("Model deprecated")).not.toBeInTheDocument();
+  });
+});

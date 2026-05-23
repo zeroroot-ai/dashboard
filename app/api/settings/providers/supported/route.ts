@@ -56,6 +56,7 @@ export async function GET(_req: NextRequest) {
           name: m.name,
           family: m.family ?? '',
           contextWindow: m.contextWindow,
+          deprecated: (m as unknown as { deprecated?: boolean }).deprecated ?? false,
         })),
       }),
     );

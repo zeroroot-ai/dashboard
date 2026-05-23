@@ -73,6 +73,8 @@ export interface ModelDescriptor {
   family: string;
   /** Maximum input tokens; 0 when unknown. */
   contextWindow: number;
+  /** True when the provider catalogue marks this model as superseded. */
+  deprecated?: boolean;
 }
 
 /**

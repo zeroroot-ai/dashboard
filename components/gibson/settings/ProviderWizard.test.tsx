@@ -733,3 +733,170 @@ describe("ProviderWizard step 3 — probe result is advisory (dashboard#288)", (
     expect(screen.queryByText(/connection test passed/i)).not.toBeInTheDocument();
   });
 });
+
+// ===========================================================================
+// dashboard#289 — deprecated model display in catalogue picker
+// ===========================================================================
+
+const mixedModelsDescriptor: SupportedProviderDescriptor = {
+  type: "anthropic",
+  displayName: "Anthropic (Claude)",
+  docsUrl: "https://docs.anthropic.com/",
+  selfHosted: false,
+  credentials: [
+    {
+      key: "api_key",
+      label: "Anthropic API Key",
+      required: true,
+      secret: true,
+      placeholder: "sk-ant-...",
+      help: "Find your key at console.anthropic.com",
+    },
+  ],
+  defaultModels: [
+    { name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000, deprecated: false },
+    { name: "claude-2-0", family: "Claude 2", contextWindow: 100000, deprecated: true },
+  ],
+};
+
+function setupWizardAtStep2Mixed() {
+  const user = userEvent.setup();
+  render(
+    <ProviderWizard supported={[mixedModelsDescriptor]} initialType="anthropic" />,
+    { wrapper },
+  );
+  return { user };
+}
+
+async function advanceToStep3Mixed(
+  user: ReturnType<typeof userEvent.setup>,
+  fetchBody: unknown,
+  fetchOk = true,
+) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({ ok: fetchOk, json: async () => fetchBody }),
+  );
+
+  const apiKeyInput = screen.getByPlaceholderText("sk-ant-...");
+  await user.type(apiKeyInput, "sk-ant-test-key");
+
+  await act(async () => {
+    await user.click(screen.getByRole("button", { name: /test connection/i }));
+  });
+
+  await waitFor(
+    () => {
+      expect(screen.getByRole("button", { name: /edit credentials/i })).toBeInTheDocument();
+    },
+    { timeout: 3000 },
+  );
+}
+
+describe("ModelPickerAndSave — deprecated model display (dashboard#289)", () => {
+  beforeEach(() => {
+    // Radix Select pointer-event polyfills required for jsdom.
+    // Pattern matches src/components/secrets-backend/__tests__/SecretsBackendForm.test.tsx.
+    Element.prototype.hasPointerCapture ??= vi.fn(() => false);
+    Element.prototype.setPointerCapture ??= vi.fn();
+    Element.prototype.releasePointerCapture ??= vi.fn();
+    if (!Element.prototype.scrollIntoView) {
+      Element.prototype.scrollIntoView = vi.fn();
+    }
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("renders a Deprecated badge for deprecated models in the picker", async () => {
+    const { user } = setupWizardAtStep2Mixed();
+
+    await advanceToStep3Mixed(user, {
+      result: { ok: true, latencyMs: 10, models: [] },
+    });
+
+    // Open the Select dropdown so SelectItem content is in the DOM.
+    const trigger = screen.getByRole("combobox");
+    fireEvent.click(trigger);
+
+    await waitFor(() => {
+      expect(screen.getByText("Deprecated")).toBeInTheDocument();
+    });
+  });
+
+  it("does NOT render a Deprecated badge for non-deprecated models", async () => {
+    const { user } = setupWizardAtStep2Mixed();
+
+    await advanceToStep3Mixed(user, {
+      result: { ok: true, latencyMs: 10, models: [] },
+    });
+
+    const trigger = screen.getByRole("combobox");
+    fireEvent.click(trigger);
+
+    // There is exactly ONE "Deprecated" badge (for claude-2-0, not claude-3-5-sonnet).
+    await waitFor(() => {
+      const badges = screen.getAllByText("Deprecated");
+      expect(badges).toHaveLength(1);
+    });
+  });
+
+  it("sorts non-deprecated models before deprecated models", async () => {
+    const { user } = setupWizardAtStep2Mixed();
+
+    await advanceToStep3Mixed(user, {
+      result: { ok: true, latencyMs: 10, models: [] },
+    });
+
+    const trigger = screen.getByRole("combobox");
+    fireEvent.click(trigger);
+
+    await waitFor(() => {
+      const items = screen.getAllByRole("option");
+      const names = items.map((el) => el.textContent ?? "");
+      const nonDeprecatedIdx = names.findIndex((n) => n.includes("claude-3-5-sonnet-20241022"));
+      const deprecatedIdx = names.findIndex((n) => n.includes("claude-2-0"));
+      expect(nonDeprecatedIdx).toBeGreaterThanOrEqual(0);
+      expect(deprecatedIdx).toBeGreaterThanOrEqual(0);
+      expect(nonDeprecatedIdx).toBeLessThan(deprecatedIdx);
+    });
+  });
+
+  it("shows the deprecated advisory when a deprecated model is selected", async () => {
+    const { user } = setupWizardAtStep2Mixed();
+
+    await advanceToStep3Mixed(user, {
+      result: { ok: true, latencyMs: 10, models: [] },
+    });
+
+    // Open picker, wait for options, then pick the deprecated model.
+    const trigger = screen.getByRole("combobox");
+    fireEvent.click(trigger);
+
+    await waitFor(() => {
+      expect(screen.getByRole("option", { name: /claude-2-0/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("option", { name: /claude-2-0/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/this model is deprecated — consider switching to a newer model/i),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("does NOT show the deprecated advisory when a non-deprecated model is selected", async () => {
+    const { user } = setupWizardAtStep2Mixed();
+
+    await advanceToStep3Mixed(user, {
+      result: { ok: true, latencyMs: 10, models: [] },
+    });
+
+    // The default selection is the first (non-deprecated) model — advisory should be absent.
+    expect(
+      screen.queryByText(/this model is deprecated — consider switching to a newer model/i),
+    ).not.toBeInTheDocument();
+  });
+});
