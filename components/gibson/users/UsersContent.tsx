@@ -4,8 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import { useSession } from "@/src/lib/session-client";
 import { usePermitted, useTenantId } from "@/src/lib/auth/tenant";
-import { MoreHorizontal, Search, Trash2, UserPlus, Eye } from "lucide-react";
+import { MoreHorizontal, Search, Trash2, UserPlus, Eye, Mail, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +49,7 @@ import { InviteUserDialog } from "./InviteUserDialog";
 import { TeamMembershipChips } from "./TeamMembershipChips";
 import { useCRDWatch } from "@/src/hooks/useCRDWatch";
 import { useOrgGraph } from "@/src/hooks/use-org-graph";
-import { revokeMemberAction } from "@/app/actions/crd/member";
+import { revokeMemberAction, resendInvitationAction } from "@/app/actions/crd/member";
 import { setTenantRoleAction } from "@/app/actions/crd/role";
 import type { TenantMember } from "@/src/lib/k8s/types";
 
@@ -71,13 +72,18 @@ function UserActionsMenu({
   canEdit,
   isSelf,
   onRemove,
+  onResend,
+  onCancel,
 }: {
   member: TenantMember;
   canEdit: boolean;
   isSelf: boolean;
   onRemove: (member: TenantMember) => void;
+  onResend: (member: TenantMember) => void;
+  onCancel: (member: TenantMember) => void;
 }) {
   const userId = member.status?.userId ?? member.metadata.name;
+  const isInvited = member.status?.phase === "Invited";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -93,7 +99,23 @@ function UserActionsMenu({
             View Details
           </Link>
         </DropdownMenuItem>
-        {canEdit && !isSelf && (
+        {canEdit && !isSelf && isInvited && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onResend(member)}>
+              <Mail className="size-4" />
+              Resend invitation
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => onCancel(member)}
+            >
+              <XCircle className="size-4" />
+              Cancel invitation
+            </DropdownMenuItem>
+          </>
+        )}
+        {canEdit && !isSelf && !isInvited && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -131,6 +153,8 @@ export function UsersContent() {
   const [inviteOpen, setInviteOpen] = React.useState(false);
   const [memberToRemove, setMemberToRemove] = React.useState<TenantMember | null>(null);
   const [removing, setRemoving] = React.useState(false);
+  const [memberToCancel, setMemberToCancel] = React.useState<TenantMember | null>(null);
+  const [cancelling, setCancelling] = React.useState(false);
   // Local optimistic role overrides. The displayed role badge reads from
   // member.spec.role normally, but setTenantRoleAction writes FGA tuples
   // directly — the spec.role field is not updated by the operator yet.
@@ -185,6 +209,35 @@ export function UsersContent() {
     } finally {
       setRemoving(false);
       setMemberToRemove(null);
+    }
+  }
+
+  async function handleResend(member: TenantMember) {
+    try {
+      const res = await resendInvitationAction(tenantId, member.metadata.name);
+      if (!res.ok) throw new Error(res.error);
+      toast.success(`Invitation resent to ${member.spec.email}.`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to resend invitation."
+      );
+    }
+  }
+
+  async function handleConfirmCancel() {
+    if (!memberToCancel) return;
+    setCancelling(true);
+    try {
+      const res = await revokeMemberAction(tenantId, memberToCancel.metadata.name);
+      if (!res.ok) throw new Error(res.error);
+      toast.success(`Invitation for ${memberToCancel.spec.email} has been cancelled.`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to cancel invitation."
+      );
+    } finally {
+      setCancelling(false);
+      setMemberToCancel(null);
     }
   }
 
@@ -315,9 +368,22 @@ export function UsersContent() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className="text-xs font-mono text-muted-foreground">
-                        {phase}
-                      </span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs font-mono text-muted-foreground">
+                          {phase}
+                        </span>
+                        {phase === "Invited" && member.status?.invitationExpiresAt && (() => {
+                          const expiresAt = new Date(member.status!.invitationExpiresAt!);
+                          const isExpired = expiresAt < new Date();
+                          return (
+                            <span className="text-xs text-muted-foreground">
+                              {isExpired
+                                ? "Expired"
+                                : `expires in ${formatDistanceToNow(expiresAt)}`}
+                            </span>
+                          );
+                        })()}
+                      </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm tabular-nums">
                       {member.metadata.creationTimestamp
@@ -330,6 +396,8 @@ export function UsersContent() {
                         canEdit={canEdit}
                         isSelf={isSelf}
                         onRemove={setMemberToRemove}
+                        onResend={handleResend}
+                        onCancel={setMemberToCancel}
                       />
                     </TableCell>
                   </TableRow>
@@ -383,6 +451,35 @@ export function UsersContent() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {removing ? "Removing..." : "Remove"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel invitation confirmation dialog */}
+      <AlertDialog
+        open={!!memberToCancel}
+        onOpenChange={(open) => { if (!open) setMemberToCancel(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel invitation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cancel invitation for{" "}
+              <strong>{memberToCancel?.spec.email}</strong>? They will not be
+              able to use the invitation link.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling}>
+              Keep invitation
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmCancel}
+              disabled={cancelling}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {cancelling ? "Cancelling..." : "Cancel invitation"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
