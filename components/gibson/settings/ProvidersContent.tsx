@@ -37,6 +37,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -59,6 +60,7 @@ import { useSupportedProviders } from "@/src/hooks/useSupportedProviders";
 import { useProviders, useFallbackChain, providerQueryKeys } from "@/src/hooks/useProviders";
 import { useCreateProvider, useDeleteProvider, useSetDefaultProvider } from "@/src/hooks/useProviderMutations";
 import { useProviderHealth } from "@/src/hooks/useProviderHealth";
+import { CREDENTIAL_FIELD_TYPE } from '@/src/lib/gibson-client-types';
 import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
 import type { ProviderConfig, ProviderHealthStatus } from "@/src/types/provider";
 import { HEALTH_STATUS_CONFIG } from "@/src/types/provider";
@@ -147,41 +149,95 @@ export function DynamicCredentialForm({ descriptor, onSubmit, isPending }: Dynam
           )}
         />
 
-        {descriptor.credentials.map((field) => (
-          <FormField
-            key={field.key}
-            control={form.control}
-            name={`credentials.${field.key}`}
-            rules={{ required: field.required ? `${field.label} is required` : false }}
-            render={({ field: formField }) => (
-              <FormItem>
-                <FormLabel className="text-xs">
-                  {field.label}
-                  {field.required && (
-                    <span className="text-destructive ml-1" aria-label="required">
-                      *
-                    </span>
+        {/* Dynamic credential fields from descriptor */}
+        {descriptor.credentials.map((field) => {
+          const rawFieldType = field.fieldType ?? CREDENTIAL_FIELD_TYPE.UNSPECIFIED;
+          const effectiveType =
+            rawFieldType !== CREDENTIAL_FIELD_TYPE.UNSPECIFIED
+              ? rawFieldType
+              : field.secret
+                ? CREDENTIAL_FIELD_TYPE.PASSWORD
+                : CREDENTIAL_FIELD_TYPE.TEXT;
+          const isBool = effectiveType === CREDENTIAL_FIELD_TYPE.BOOL;
+          const isRegion = effectiveType === CREDENTIAL_FIELD_TYPE.REGION;
+          const isUrl = effectiveType === CREDENTIAL_FIELD_TYPE.URL;
+          const listId = `${field.key}-regions`;
+          return (
+            <FormField
+              key={field.key}
+              control={form.control}
+              name={`credentials.${field.key}`}
+              rules={{ required: field.required ? `${field.label} is required` : false }}
+              render={({ field: formField }) => (
+                <FormItem>
+                  {!isBool && (
+                    <FormLabel className="text-xs">
+                      {field.label}
+                      {field.required && (
+                        <span className="text-destructive ml-1" aria-label="required">
+                          *
+                        </span>
+                      )}
+                    </FormLabel>
                   )}
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    {...formField}
-                    type={field.secret ? "password" : "text"}
-                    placeholder={field.placeholder || undefined}
-                    className="font-mono text-xs"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    spellCheck={false}
-                  />
-                </FormControl>
-                {field.help && (
-                  <FormDescription className="text-xs">{field.help}</FormDescription>
-                )}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        ))}
+                  <FormControl>
+                    {isBool ? (
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id={field.key}
+                          checked={formField.value === "true"}
+                          onCheckedChange={(checked) => {
+                            formField.onChange({
+                              target: { value: checked ? "true" : "false" },
+                            } as React.ChangeEvent<HTMLInputElement>);
+                          }}
+                        />
+                        <label htmlFor={field.key} className="cursor-pointer text-xs">
+                          {field.label}
+                        </label>
+                      </div>
+                    ) : isRegion ? (
+                      <>
+                        <Input
+                          {...formField}
+                          type="text"
+                          list={listId}
+                          placeholder={field.placeholder || undefined}
+                          className="font-mono text-xs"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          spellCheck={false}
+                        />
+                        <datalist id={listId}>
+                          {["us-east-1","us-east-2","us-west-1","us-west-2","ca-central-1","eu-west-1","eu-west-2","eu-central-1","eu-north-1","ap-southeast-1","ap-southeast-2","ap-northeast-1","ap-south-1","sa-east-1"].map((r) => (
+                            <option key={r} value={r} />
+                          ))}
+                          {["us-central1","us-east1","us-east4","us-west1","europe-west1","europe-west2","asia-east1","asia-northeast1","asia-south1","australia-southeast1"].map((r) => (
+                            <option key={r} value={r} />
+                          ))}
+                        </datalist>
+                      </>
+                    ) : (
+                      <Input
+                        {...formField}
+                        type={isUrl ? "url" : effectiveType === CREDENTIAL_FIELD_TYPE.PASSWORD ? "password" : "text"}
+                        placeholder={field.placeholder || undefined}
+                        className="font-mono text-xs"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        spellCheck={false}
+                      />
+                    )}
+                  </FormControl>
+                  {field.help && (
+                    <FormDescription className="text-xs">{field.help}</FormDescription>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          );
+        })}
 
         {descriptor.defaultModels.length > 0 && (
           <FormField

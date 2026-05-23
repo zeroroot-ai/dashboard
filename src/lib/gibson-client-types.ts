@@ -20,6 +20,25 @@
  */
 
 /**
+ * Mirrors gibson.tenant.v1.CredentialFieldType proto enum values.
+ * 0=UNSPECIFIED, 1=TEXT, 2=PASSWORD, 3=URL, 4=REGION, 5=BOOL.
+ *
+ * Defined here rather than imported from the proto-generated file so that
+ * client components can use the numeric values without pulling
+ * @bufbuild/protobuf (and transitively @grpc/grpc-js) into the browser bundle.
+ */
+export type CredentialFieldType = 0 | 1 | 2 | 3 | 4 | 5;
+
+export const CREDENTIAL_FIELD_TYPE = {
+  UNSPECIFIED: 0,
+  TEXT: 1,
+  PASSWORD: 2,
+  URL: 3,
+  REGION: 4,
+  BOOL: 5,
+} as const satisfies Record<string, CredentialFieldType>;
+
+/**
  * Credential field descriptor returned by the daemon's GetSupportedProviders
  * RPC. One entry per input the operator must supply in the provider form.
  */
@@ -36,6 +55,12 @@ export interface CredentialFieldDescriptor {
   placeholder: string;
   /** Short description rendered beneath the field. */
   help: string;
+  /**
+   * Semantic field type from the daemon's CredentialFieldType enum.
+   * Optional — absent (or 0/UNSPECIFIED) falls back to the secret flag:
+   * secret=true → PASSWORD, secret=false → TEXT.
+   */
+  fieldType?: CredentialFieldType;
 }
 
 /**

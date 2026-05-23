@@ -41,11 +41,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -66,7 +66,11 @@ import {
 import { Separator } from "@/components/ui/separator";
 
 import { useCreateProvider } from "@/src/hooks/useProviderMutations";
-import type { SupportedProviderDescriptor } from "@/src/lib/gibson-client-types";
+import {
+  CREDENTIAL_FIELD_TYPE,
+  type CredentialFieldDescriptor,
+  type SupportedProviderDescriptor,
+} from "@/src/lib/gibson-client-types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -98,6 +102,156 @@ export interface ProviderWizardProps {
   initialType?: string;
   /** Optional cancel button — present in the dialog form, absent in empty-state. */
   onCancel?: () => void;
+}
+
+// ---------------------------------------------------------------------------
+// Region datalist values
+// ---------------------------------------------------------------------------
+
+const AWS_REGIONS = [
+  "us-east-1",
+  "us-east-2",
+  "us-west-1",
+  "us-west-2",
+  "ca-central-1",
+  "eu-west-1",
+  "eu-west-2",
+  "eu-west-3",
+  "eu-central-1",
+  "eu-north-1",
+  "ap-southeast-1",
+  "ap-southeast-2",
+  "ap-northeast-1",
+  "ap-northeast-2",
+  "ap-northeast-3",
+  "ap-south-1",
+  "sa-east-1",
+  "me-south-1",
+  "af-south-1",
+];
+
+const GCP_REGIONS = [
+  "us-central1",
+  "us-east1",
+  "us-east4",
+  "us-west1",
+  "us-west2",
+  "us-west3",
+  "us-west4",
+  "northamerica-northeast1",
+  "southamerica-east1",
+  "europe-west1",
+  "europe-west2",
+  "europe-west3",
+  "europe-west4",
+  "europe-west6",
+  "europe-north1",
+  "asia-east1",
+  "asia-east2",
+  "asia-northeast1",
+  "asia-northeast2",
+  "asia-northeast3",
+  "asia-south1",
+  "asia-southeast1",
+  "asia-southeast2",
+  "australia-southeast1",
+];
+
+// ---------------------------------------------------------------------------
+// CredentialInput — dispatches to the right input widget by field type
+// ---------------------------------------------------------------------------
+
+type FieldProps = React.InputHTMLAttributes<HTMLInputElement> & {
+  onChange: React.ChangeEventHandler<HTMLInputElement>;
+  value?: string;
+};
+
+function CredentialInput({
+  cf,
+  field,
+}: {
+  cf: CredentialFieldDescriptor;
+  field: FieldProps;
+}) {
+  const rawFieldType = cf.fieldType ?? CREDENTIAL_FIELD_TYPE.UNSPECIFIED;
+  const effectiveType =
+    rawFieldType !== CREDENTIAL_FIELD_TYPE.UNSPECIFIED
+      ? rawFieldType
+      : cf.secret
+        ? CREDENTIAL_FIELD_TYPE.PASSWORD
+        : CREDENTIAL_FIELD_TYPE.TEXT;
+
+  if (effectiveType === CREDENTIAL_FIELD_TYPE.BOOL) {
+    return (
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id={cf.key}
+          checked={field.value === "true"}
+          onCheckedChange={(checked) => {
+            field.onChange({
+              target: { value: checked ? "true" : "false" },
+            } as React.ChangeEvent<HTMLInputElement>);
+          }}
+        />
+        <label htmlFor={cf.key} className="cursor-pointer text-xs">
+          {cf.label}
+        </label>
+      </div>
+    );
+  }
+
+  if (effectiveType === CREDENTIAL_FIELD_TYPE.REGION) {
+    const listId = `${cf.key}-regions`;
+    return (
+      <>
+        <Input
+          {...field}
+          type="text"
+          list={listId}
+          placeholder={cf.placeholder || undefined}
+          className="font-mono text-xs"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+        <datalist id={listId}>
+          {AWS_REGIONS.map((r) => (
+            <option key={r} value={r} />
+          ))}
+          {GCP_REGIONS.map((r) => (
+            <option key={r} value={r} />
+          ))}
+        </datalist>
+      </>
+    );
+  }
+
+  if (effectiveType === CREDENTIAL_FIELD_TYPE.URL) {
+    return (
+      <Input
+        {...field}
+        type="url"
+        placeholder={cf.placeholder || undefined}
+        className="font-mono text-xs"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+      />
+    );
+  }
+
+  // TEXT or PASSWORD
+  return (
+    <Input
+      {...field}
+      type={effectiveType === CREDENTIAL_FIELD_TYPE.PASSWORD ? "password" : "text"}
+      placeholder={cf.placeholder || undefined}
+      className="font-mono text-xs"
+      autoComplete="off"
+      autoCorrect="off"
+      spellCheck={false}
+    />
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -141,6 +295,11 @@ function ProviderTypePicker({
                 ? "No credentials required"
                 : `${d.credentials.length} credential field${d.credentials.length === 1 ? "" : "s"}`}
             </CardDescription>
+            {d.type === "openai" && (
+              <p className="text-muted-foreground mt-1 text-xs">
+                Also works with Azure OpenAI, Ask Sage, and other compatible providers.
+              </p>
+            )}
           </CardHeader>
         </Card>
       ))}
@@ -214,41 +373,45 @@ function CredentialsAndTest({
           )}
         />
 
-        {descriptor.credentials.map((cf) => (
-          <FormField
-            key={cf.key}
-            control={form.control}
-            name={`credentials.${cf.key}`}
-            rules={{ required: cf.required ? `${cf.label} is required` : false }}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs">
-                  {cf.label}
-                  {cf.required && (
-                    <span className="text-destructive ml-1" aria-label="required">
-                      *
-                    </span>
+        {descriptor.credentials.map((cf) => {
+          const rawFieldType = cf.fieldType ?? CREDENTIAL_FIELD_TYPE.UNSPECIFIED;
+          const effectiveType =
+            rawFieldType !== CREDENTIAL_FIELD_TYPE.UNSPECIFIED
+              ? rawFieldType
+              : cf.secret
+                ? CREDENTIAL_FIELD_TYPE.PASSWORD
+                : CREDENTIAL_FIELD_TYPE.TEXT;
+          const isBool = effectiveType === CREDENTIAL_FIELD_TYPE.BOOL;
+          return (
+            <FormField
+              key={cf.key}
+              control={form.control}
+              name={`credentials.${cf.key}`}
+              rules={{ required: cf.required ? `${cf.label} is required` : false }}
+              render={({ field }) => (
+                <FormItem>
+                  {!isBool && (
+                    <FormLabel className="text-xs">
+                      {cf.label}
+                      {cf.required && (
+                        <span className="text-destructive ml-1" aria-label="required">
+                          *
+                        </span>
+                      )}
+                    </FormLabel>
                   )}
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type={cf.secret ? "password" : "text"}
-                    placeholder={cf.placeholder || undefined}
-                    className="font-mono text-xs"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    spellCheck={false}
-                  />
-                </FormControl>
-                {cf.help && (
-                  <FormDescription className="text-xs">{cf.help}</FormDescription>
-                )}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        ))}
+                  <FormControl>
+                    <CredentialInput cf={cf} field={field as FieldProps} />
+                  </FormControl>
+                  {cf.help && (
+                    <FormDescription className="text-xs">{cf.help}</FormDescription>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          );
+        })}
 
         {/* Probe result banner */}
         {probeResult && probeResult.ok && (
@@ -270,6 +433,15 @@ function CredentialsAndTest({
             <AlertDescription className="text-xs">
               {probeResult.error ?? "Connection failed."}
             </AlertDescription>
+            {probeResult.error?.includes("allow_private_llm_endpoints") && (
+              <p className="mt-2 text-xs">
+                To allow private or on-premise endpoints, set{" "}
+                <code className="font-mono">
+                  security.allow_private_llm_endpoints = true
+                </code>{" "}
+                in your daemon configuration.
+              </p>
+            )}
           </Alert>
         )}
 

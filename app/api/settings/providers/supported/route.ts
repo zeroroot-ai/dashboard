@@ -21,7 +21,7 @@ import { getServerSession } from '@/src/lib/auth';
 import { TenantAdminService } from '@/src/gen/gibson/admin/v1/tenant_pb';
 import { userClient } from '@/src/lib/gibson-client';
 import { translateError } from '@/src/lib/providers-route-error';
-import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
+import type { SupportedProviderDescriptor, CredentialFieldType } from '@/src/lib/gibson-client-types';
 
 export async function GET(_req: NextRequest) {
   const session = await getServerSession();
@@ -48,6 +48,10 @@ export async function GET(_req: NextRequest) {
           secret: c.secret,
           placeholder: c.placeholder,
           help: c.help,
+          // c.type will be present once the daemon proto is updated with the
+          // CredentialFieldType enum field. Until then it is undefined and the
+          // dashboard falls back to the secret flag for field type inference.
+          fieldType: ((c as unknown as { type?: number }).type ?? 0) as CredentialFieldType,
         })),
         defaultModels: (p.defaultModels ?? []).map((m) => ({
           name: m.name,
