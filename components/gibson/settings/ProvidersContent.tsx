@@ -411,11 +411,19 @@ function ConfiguredProviderRow({ provider, fallbackRank, onDeleted, descriptor }
                   / {provider.type}
                 </span>
               </CardTitle>
-              {provider.defaultModel && (
-                <CardDescription className="mt-0.5 text-xs">
-                  Default model: {provider.defaultModel}
-                </CardDescription>
-              )}
+              {provider.defaultModel && (() => {
+                const configuredModelMeta = descriptor?.defaultModels.find(
+                  (m) => m.name === provider.defaultModel,
+                );
+                return (
+                  <CardDescription className="mt-0.5 text-xs flex items-center gap-1.5">
+                    Default model: {provider.defaultModel}
+                    {configuredModelMeta?.deprecated === true && (
+                      <Badge variant="destructive" className="text-[10px]">Model deprecated</Badge>
+                    )}
+                  </CardDescription>
+                );
+              })()}
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">

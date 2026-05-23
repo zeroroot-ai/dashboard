@@ -81,6 +81,7 @@ interface FoundModel {
   name: string;
   family: string;
   contextWindow: number;
+  deprecated?: boolean;
 }
 
 interface ProbeResult {
@@ -624,14 +625,35 @@ function ModelPickerAndSave({
 }) {
   // Prefer live models when present; otherwise fall back to the descriptor's
   // default catalogue (e.g. Bedrock has a static list, Anthropic does not).
-  const models: FoundModel[] =
-    liveModels.length > 0
-      ? liveModels
-      : descriptor.defaultModels.map((m) => ({
-          name: m.name,
-          family: m.family ?? "",
-          contextWindow: m.contextWindow ?? 0,
-        }));
+  // When using live models, cross-reference with the descriptor's defaultModels
+  // to annotate them with the deprecated flag.
+  const models: FoundModel[] = React.useMemo(() => {
+    let base: FoundModel[];
+    if (liveModels.length > 0) {
+      base = liveModels.map((m) => {
+        const meta = descriptor.defaultModels.find((d) => d.name === m.name);
+        return {
+          ...m,
+          deprecated: m.deprecated ?? meta?.deprecated ?? false,
+        };
+      });
+    } else {
+      base = descriptor.defaultModels.map((m) => ({
+        name: m.name,
+        family: m.family ?? "",
+        contextWindow: m.contextWindow ?? 0,
+        deprecated: m.deprecated ?? false,
+      }));
+    }
+    // Sort: non-deprecated first, deprecated last.
+    return [...base].sort((a, b) => {
+      const aD = a.deprecated ? 1 : 0;
+      const bD = b.deprecated ? 1 : 0;
+      return aD - bD;
+    });
+  }, [liveModels, descriptor.defaultModels]);
+
+  const pickedModelMeta = models.find((m) => m.name === pickedModel);
 
   React.useEffect(() => {
     if (!pickedModel && models.length > 0) {
@@ -660,13 +682,20 @@ function ModelPickerAndSave({
             <SelectContent>
               {models.map((m) => (
                 <SelectItem key={m.name} value={m.name} className="font-mono text-xs">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span>{m.name}</span>
-                    {m.contextWindow > 0 && (
-                      <span className="text-muted-foreground text-[10px]">
-                        {m.contextWindow.toLocaleString()} ctx
-                      </span>
-                    )}
+                  <div className="flex items-center justify-between gap-3">
+                    <span className={m.deprecated ? "text-muted-foreground" : undefined}>
+                      {m.name}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {m.contextWindow > 0 && (
+                        <span className="text-muted-foreground text-[10px]">
+                          {m.contextWindow.toLocaleString()} ctx
+                        </span>
+                      )}
+                      {m.deprecated && (
+                        <Badge variant="secondary" className="text-[10px]">Deprecated</Badge>
+                      )}
+                    </div>
                   </div>
                 </SelectItem>
               ))}
@@ -680,6 +709,13 @@ function ModelPickerAndSave({
             placeholder="model-name"
             className="font-mono text-xs"
           />
+        )}
+        {pickedModelMeta?.deprecated && (
+          <Alert>
+            <AlertDescription className="text-xs">
+              This model is deprecated — consider switching to a newer model.
+            </AlertDescription>
+          </Alert>
         )}
       </div>
 
