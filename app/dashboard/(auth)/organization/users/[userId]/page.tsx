@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/src/lib/session-client";
 import { usePermitted, useTenantId } from "@/src/lib/auth/tenant";
 import { useTenantContext } from "@/src/lib/tenant-context";
-import { ArrowLeft, Shield, ArrowRightLeft } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft, Mail, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { UserTeamMembershipsEditor } from "@/components/gibson/users/UserTeamMembershipsEditor";
@@ -30,13 +30,25 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCRDWatch } from "@/src/hooks/useCRDWatch";
 import { transferOwnershipAction } from "@/app/actions/crd/transfer-ownership";
+import { revokeMemberAction, resendInvitationAction } from "@/app/actions/crd/member";
+import { setTenantRoleAction } from "@/app/actions/crd/role";
+import type { TenantRole } from "@/app/actions/crd/role";
+import type { MemberRole } from "@/src/lib/k8s/types";
 
 const ROLE_BADGE_CLASS: Record<string, string> = {
+  owner: "border-alt/50 bg-alt/10 text-alt",
   admin: "border-primary/50 bg-primary/10 text-primary",
   member: "border-link/50 bg-link/10/20 text-link",
   viewer: "border-border bg-muted/50 text-muted-foreground",
@@ -69,8 +81,7 @@ export default function UserDetailPage() {
   const canEdit = usePermitted("team:manage") && !isSelf;
 
   // Derive whether the viewing user is the tenant owner from the FGA-resolved
-  // rolesByTenant map. This is populated server-side via getMyMemberships() +
-  // the active-tenant cookie and passed through TenantContextProvider.
+  // rolesByTenant map populated by TenantContextProvider.
   const viewerRole = tenantId ? (rolesByTenant[tenantId] ?? "") : "";
   const viewerIsOwner = viewerRole === "owner";
 
@@ -89,18 +100,37 @@ export default function UserDetailPage() {
 
   const isLoading = status === "connecting" || status === "idle";
 
+  const phase = member?.status?.phase ?? "Pending";
+  const isActive = phase === "Active";
+  const isInvited = phase === "Invited";
+  const isOwner = member?.spec.role === "owner";
+
   // Transfer ownership dialog state.
   const [transferOpen, setTransferOpen] = React.useState(false);
   const [transferring, setTransferring] = React.useState(false);
 
-  // Conditions for showing "Transfer Ownership":
-  //   1. canEdit is true (viewer has team:manage permission AND is not viewing self)
-  //   2. viewer is the owner
-  //   3. target is an Active admin
-  //   4. target is not the current user (already covered by canEdit)
+  // Revoke access dialog state.
+  const [revokeOpen, setRevokeOpen] = React.useState(false);
+  const [revoking, setRevoking] = React.useState(false);
+
+  // Role change state. The override is a TenantRole because setTenantRoleAction
+  // only accepts admin|member — owners cannot be set via this dropdown.
+  const [roleOverride, setRoleOverride] = React.useState<TenantRole | null>(null);
+  const [changingRole, setChangingRole] = React.useState(false);
+
+  // Displayed role: local override after a successful change, else spec.role.
+  const effectiveRole: MemberRole | undefined =
+    roleOverride ?? member?.spec.role;
+
   const targetIsActiveAdmin =
-    member?.spec.role === "admin" && member?.status?.phase === "Active";
-  const showTransferOwnership = canEdit && viewerIsOwner && targetIsActiveAdmin;
+    member?.spec.role === "admin" && isActive;
+  const showTransferOwnership =
+    canEdit && viewerIsOwner && targetIsActiveAdmin;
+  const showRevokeAccess =
+    canEdit && isActive && !isOwner;
+  const showResendInvitation = canEdit && isInvited;
+  const showRoleDropdown =
+    canEdit && isActive && !isOwner;
 
   async function handleTransferOwnership() {
     setTransferring(true);
@@ -112,7 +142,9 @@ export default function UserDetailPage() {
       }
       const result = await transferOwnershipAction(targetUserId);
       if (result.ok) {
-        toast.success(`Ownership transferred to ${member?.spec.email ?? targetUserId}.`);
+        toast.success(
+          `Ownership transferred to ${member?.spec.email ?? targetUserId}.`,
+        );
         router.push("/dashboard/organization/users");
       } else {
         toast.error(result.error || "Transfer failed.");
@@ -122,6 +154,66 @@ export default function UserDetailPage() {
       setTransferOpen(false);
     }
   }
+
+  async function handleRevokeAccess() {
+    if (!member) return;
+    setRevoking(true);
+    try {
+      const result = await revokeMemberAction(tenantId, member.metadata.name);
+      if (result.ok) {
+        toast.success(`${member.spec.email} has been removed from the workspace.`);
+        router.push("/dashboard/organization/users");
+      } else {
+        toast.error(result.error || "Failed to revoke access.");
+      }
+    } finally {
+      setRevoking(false);
+      setRevokeOpen(false);
+    }
+  }
+
+  async function handleResendInvitation() {
+    if (!member) return;
+    try {
+      const result = await resendInvitationAction(tenantId, member.metadata.name);
+      if (result.ok) {
+        toast.success(`Invitation resent to ${member.spec.email}.`);
+      } else {
+        toast.error(result.error || "Failed to resend invitation.");
+      }
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to resend invitation.",
+      );
+    }
+  }
+
+  async function handleRoleChange(role: TenantRole) {
+    if (!member) return;
+    const targetUserId = member.status?.userId ?? member.metadata.name;
+    setChangingRole(true);
+    try {
+      const result = await setTenantRoleAction({ userId: targetUserId, role });
+      if (result.ok) {
+        setRoleOverride(role);
+        toast.success(`${member.spec.email} is now ${role}.`);
+      } else {
+        toast.error(result.error || "Failed to change role.");
+      }
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to change role.",
+      );
+    } finally {
+      setChangingRole(false);
+    }
+  }
+
+  const hasAnyAction =
+    showRoleDropdown ||
+    showResendInvitation ||
+    showTransferOwnership ||
+    showRevokeAccess;
 
   return (
     <div className="space-y-4">
@@ -173,7 +265,10 @@ export default function UserDetailPage() {
         <Card className="glass-hack border-0">
           <CardContent className="py-12 text-center text-muted-foreground">
             User not found.{" "}
-            <Link href="/dashboard/organization/users" className="text-primary hover:underline">
+            <Link
+              href="/dashboard/organization/users"
+              className="text-primary hover:underline"
+            >
               Back to users
             </Link>
           </CardContent>
@@ -183,7 +278,8 @@ export default function UserDetailPage() {
       {/* Content */}
       {!isLoading && member && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
+          <div className="space-y-6 lg:col-span-2">
+            {/* Profile card */}
             <Card className="glass-hack border-0">
               <CardHeader>
                 <CardTitle className="font-mono text-base">Profile</CardTitle>
@@ -208,100 +304,186 @@ export default function UserDetailPage() {
 
                 <Separator className="bg-highlight/20" />
 
-                <div className="space-y-2">
-                  <label className="font-mono text-sm text-muted-foreground">
-                    Role
-                  </label>
-                  <Badge
-                    variant="outline"
-                    className={`text-xs font-mono ${ROLE_BADGE_CLASS[member.spec.role] ?? ROLE_BADGE_CLASS.viewer}`}
-                  >
-                    {member.spec.role}
-                    {isSelf && " (you)"}
-                  </Badge>
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
+                    <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
+                      Role
+                    </p>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs font-mono ${ROLE_BADGE_CLASS[effectiveRole ?? "viewer"] ?? ROLE_BADGE_CLASS.viewer}`}
+                    >
+                      {effectiveRole ?? member.spec.role}
+                      {isSelf && " (you)"}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1.5">
                     <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
                       Status
                     </p>
-                    <p className="text-sm">
-                      {member.status?.phase ?? "Pending"}
-                    </p>
+                    <p className="text-sm font-mono">{phase}</p>
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
-                      Invited
+                      Member since
                     </p>
                     <p className="text-sm tabular-nums">
                       {member.metadata.creationTimestamp
-                        ? new Date(member.metadata.creationTimestamp).toLocaleDateString()
+                        ? new Date(
+                            member.metadata.creationTimestamp,
+                          ).toLocaleDateString()
                         : "—"}
                     </p>
                   </div>
+                  {isInvited && member.status?.invitationExpiresAt && (
+                    <div className="space-y-1.5">
+                      <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
+                        Invitation expires
+                      </p>
+                      <p className="text-sm tabular-nums">
+                        {new Date(
+                          member.status.invitationExpiresAt,
+                        ).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                {/* Transfer Ownership entry point */}
-                {showTransferOwnership && (
-                  <>
-                    <Separator className="bg-highlight/20" />
+                <Separator className="bg-highlight/20" />
+
+                {/* Collapsible user ID — useful for support without cluttering primary UI */}
+                <details className="group">
+                  <summary className="cursor-pointer list-none">
+                    <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider select-none">
+                      User ID{" "}
+                      <span className="group-open:hidden">▸</span>
+                      <span className="hidden group-open:inline">▾</span>
+                    </span>
+                  </summary>
+                  <p className="data-value mt-2 text-xs break-all">
+                    {member.status?.userId ?? member.metadata.name}
+                  </p>
+                </details>
+              </CardContent>
+            </Card>
+
+            {/* Actions card — only rendered when at least one action is available */}
+            {hasAnyAction && (
+              <Card className="glass-hack border-0">
+                <CardHeader>
+                  <CardTitle className="font-mono text-base">Actions</CardTitle>
+                  <CardDescription>
+                    Manage this user&apos;s role and workspace access.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {showRoleDropdown && (
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <p className="font-mono text-sm">Transfer Ownership</p>
+                        <p className="font-mono text-sm">Change role</p>
                         <p className="text-xs text-muted-foreground">
-                          Make {member.spec.email} the workspace owner. You will become an admin.
+                          Promote or demote this user within the workspace.
                         </p>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5 border-destructive/50 text-destructive hover:bg-destructive/10"
-                        onClick={() => setTransferOpen(true)}
+                      <Select
+                        value={(effectiveRole === "admin" || effectiveRole === "member") ? effectiveRole : "member"}
+                        onValueChange={(v) => handleRoleChange(v as TenantRole)}
+                        disabled={changingRole}
                       >
-                        <ArrowRightLeft className="size-3.5" />
-                        Transfer Ownership
-                      </Button>
+                        <SelectTrigger size="sm" className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">admin</SelectItem>
+                          <SelectItem value="member">member</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                  )}
+
+                  {showResendInvitation && (
+                    <>
+                      {showRoleDropdown && <Separator className="bg-highlight/20" />}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <p className="font-mono text-sm">Resend invitation</p>
+                          <p className="text-xs text-muted-foreground">
+                            Send a new invitation email to {member.spec.email}.
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5"
+                          onClick={handleResendInvitation}
+                        >
+                          <Mail className="size-3.5" />
+                          Resend
+                        </Button>
+                      </div>
+                    </>
+                  )}
+
+                  {showTransferOwnership && (
+                    <>
+                      {(showRoleDropdown || showResendInvitation) && (
+                        <Separator className="bg-highlight/20" />
+                      )}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <p className="font-mono text-sm">Transfer ownership</p>
+                          <p className="text-xs text-muted-foreground">
+                            Make {member.spec.email} the workspace owner. You
+                            will become an admin.
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 border-destructive/50 text-destructive hover:bg-destructive/10"
+                          onClick={() => setTransferOpen(true)}
+                        >
+                          <ArrowRightLeft className="size-3.5" />
+                          Transfer
+                        </Button>
+                      </div>
+                    </>
+                  )}
+
+                  {showRevokeAccess && (
+                    <>
+                      {(showRoleDropdown ||
+                        showResendInvitation ||
+                        showTransferOwnership) && (
+                        <Separator className="bg-highlight/20" />
+                      )}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <p className="font-mono text-sm">Revoke access</p>
+                          <p className="text-xs text-muted-foreground">
+                            Remove {member.spec.email} from this workspace
+                            immediately.
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 border-destructive/50 text-destructive hover:bg-destructive/10"
+                          onClick={() => setRevokeOpen(true)}
+                        >
+                          <ShieldOff className="size-3.5" />
+                          Revoke
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
 
-          <div className="space-y-6">
+          <div>
             <UserTeamMembershipsEditor userId={userId} canEdit={canEdit} />
-
-            <Card className="glass-hack border-0">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Shield className="size-4 text-highlight" aria-hidden="true" />
-                  <CardTitle className="font-mono text-base">
-                    Account Management
-                  </CardTitle>
-                </div>
-                <CardDescription>
-                  Session management, password, and MFA are handled by your identity provider.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  To view or revoke active sessions and manage account security, visit your identity provider&apos;s profile page.
-                </p>
-                <a
-                  href={
-                    (process.env.NEXT_PUBLIC_IDENTITY_PROVIDER_URL
-                      ? `${process.env.NEXT_PUBLIC_IDENTITY_PROVIDER_URL}/ui/console`
-                      : '#')
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                >
-                  Manage account at provider
-                </a>
-              </CardContent>
-            </Card>
           </div>
         </div>
       )}
@@ -310,9 +492,12 @@ export default function UserDetailPage() {
       <AlertDialog open={transferOpen} onOpenChange={setTransferOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Transfer ownership to {member?.spec.email}?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Transfer ownership to {member?.spec.email}?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              You will become an admin. This cannot be undone without another transfer.
+              You will become an admin. This cannot be undone without another
+              transfer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -323,6 +508,31 @@ export default function UserDetailPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {transferring ? "Transferring..." : "Transfer Ownership"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Revoke Access confirmation dialog */}
+      <AlertDialog open={revokeOpen} onOpenChange={setRevokeOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Remove {member?.spec.email} from the workspace?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              They will lose access immediately. This cannot be undone — you
+              will need to re-invite them to restore access.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={revoking}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRevokeAccess}
+              disabled={revoking}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {revoking ? "Removing..." : "Remove"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
