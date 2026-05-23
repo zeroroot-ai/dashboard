@@ -12,6 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Table,
   TableBody,
   TableCell,
@@ -88,7 +94,12 @@ function UserActionsMenu({
   const userId = member.status?.userId ?? member.metadata.name;
   const isInvited = member.status?.phase === "Invited";
   const canRemove = canEdit && !isSelf && !isOwner;
-  return (
+
+  // For owner rows there are no destructive actions — wrap the trigger with a
+  // tooltip so admins know why the row is protected.
+  const ownerNoActions = isOwner && !isSelf;
+
+  const menu = (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="size-8">
@@ -134,6 +145,23 @@ function UserActionsMenu({
       </DropdownMenuContent>
     </DropdownMenu>
   );
+
+  if (ownerNoActions) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>{menu}</span>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            Owner — transfer ownership before making changes
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return menu;
 }
 
 // ── Main component ────────────────────────────────────────────────────────────

@@ -28,6 +28,15 @@ vi.mock("@/src/lib/k8s/tenants", () => ({
   deleteTenant: vi.fn(async () => undefined),
   patchTenant: vi.fn(async (name: string) => ({ metadata: { name } })),
   applyTenantMember: vi.fn(async (_ns: string, name: string) => ({ metadata: { name } })),
+  // Default: one admin member named "invite-1" so the last-owner guard in
+  // revokeMemberAction doesn't block the test cases that verify the authz matrix.
+  listTenantMembers: vi.fn(async () => [
+    {
+      metadata: { name: "invite-1" },
+      spec: { email: "alice@example.com", role: "admin" },
+      status: { userId: "user-1", phase: "Active" },
+    },
+  ]),
   deleteTenantMember: vi.fn(async () => undefined),
   patchTenantMember: vi.fn(async (_ns: string, name: string) => ({ metadata: { name } })),
   applyAgentEnrollment: vi.fn(async (_ns: string, name: string) => ({ metadata: { name } })),
