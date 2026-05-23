@@ -7,23 +7,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  pnpm-audit:
-    name: pnpm audit
+  npm-audit:
+    name: npm audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: "9"
-          run_install: false
 
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
       - name: Audit production dependencies
-        run: pnpm audit --prod
+        run: npm audit --audit-level=high --omit=dev
