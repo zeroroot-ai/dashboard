@@ -17,6 +17,8 @@
  * src/lib/auth.ts.
  */
 
+import { satisfiesRelation } from './relation-hierarchy';
+
 // GetAuthSchema RPC was removed from the daemon proto. Authorization
 // decisions are now FGA-backed via DaemonService.GetMyPermissions, and the
 // dashboard does not consume a declarative schema. We retain the
@@ -246,14 +248,49 @@ function normalizeResponse(resp: GetAuthSchemaResponse): AuthSchema {
 // sign-in / refresh, not per request.
 // ---------------------------------------------------------------------------
 
+// Static permission closure for each FGA role.
+// GetAuthSchema was removed from the daemon proto; the schema fetch always
+// returns an empty role list. Rather than let every server action fail with
+// "Not authorized" (session.user.permissions === []), we derive permissions
+// directly from the FGA role using the known role→permission mapping.
+// Keep this list in sync with the action gating in app/actions/crd/_authz.ts.
+const ADMIN_PERMISSIONS = [
+  'enrollments:create',
+  'enrollments:delete',
+  'enrollments:read_bootstrap',
+  'grants:create',
+  'grants:delete',
+  'members:invite',
+  'members:revoke',
+  'tenants:delete',
+  'tenants:update',
+] as const;
+
+// platform_operator is a cross-tenant role that can provision new tenants.
+// It is set alongside crossTenant=true; tenants:provision is its only
+// additional permission beyond the standard admin set.
+const PLATFORM_OPERATOR_EXTRA_PERMISSIONS = ['tenants:provision'] as const;
+
+function derivePermissionsFromRoles(roles: string[]): string[] {
+  const out = new Set<string>();
+  for (const role of roles) {
+    if (satisfiesRelation(role, 'admin')) {
+      for (const p of ADMIN_PERMISSIONS) out.add(p);
+    }
+    if (role === 'platform_operator') {
+      for (const p of PLATFORM_OPERATOR_EXTRA_PERMISSIONS) out.add(p);
+      for (const p of ADMIN_PERMISSIONS) out.add(p);
+    }
+  }
+  return [...out].sort();
+}
+
 /**
- * Resolve the union of effective permissions granted by the supplied roles
- * against the live daemon schema. Used by the auth.ts JWT callback.
+ * Resolve the union of effective permissions granted by the supplied roles.
+ * Used by the auth.ts JWT callback to populate session.user.permissions.
  *
- * Returns an empty array if the schema fetch fails — the route handlers
- * will then fail every permission check, which is the correct default-deny
- * behavior. Errors are logged but never thrown so a transient daemon
- * outage doesn't break the sign-in flow entirely.
+ * GetAuthSchema was removed from the daemon; the schema is always empty so
+ * we fall back to the static role-based derivation above.
  */
 export async function resolveEffectivePermissions(
   roles: string[],
@@ -266,12 +303,12 @@ export async function resolveEffectivePermissions(
     const out = new Set<string>();
     for (const role of roles) {
       const closure = schema.effectivePermissionsByRole.get(role);
-      if (!closure) {
-        continue;
-      }
-      for (const p of closure) {
-        out.add(p);
-      }
+      if (!closure) continue;
+      for (const p of closure) out.add(p);
+    }
+    // Schema is a no-op (empty roles list) — fall back to static derivation.
+    if (out.size === 0) {
+      return derivePermissionsFromRoles(roles);
     }
     return [...out].sort();
   } catch (err) {

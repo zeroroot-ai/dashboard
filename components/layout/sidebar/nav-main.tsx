@@ -18,6 +18,7 @@ import {
   AlertTriangleIcon,
   BotIcon,
   UsersIcon,
+  UsersRoundIcon,
   ChevronRight,
   CrosshairIcon,
   LayoutDashboardIcon,
@@ -125,7 +126,7 @@ export const navItems: NavGroup[] = [
       {
         title: "Teams",
         href: "/dashboard/organization/teams",
-        icon: UsersIcon,
+        icon: UsersRoundIcon,
       },
       {
         title: "Security Policy",
