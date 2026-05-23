@@ -32,6 +32,7 @@ vi.mock("@/src/hooks/useSupportedProviders", () => ({
 
 vi.mock("@/src/hooks/useProviders", () => ({
   useProviders: vi.fn(),
+  useFallbackChain: vi.fn(() => ({ data: [], isLoading: false, isError: false })),
   providerQueryKeys: {
     all: ["providers"],
     lists: () => ["providers", "list"],
@@ -69,6 +70,9 @@ vi.mock("sonner", () => ({
     error: vi.fn(),
   },
 }));
+
+// Stub FallbackChainEditor so this suite stays isolated
+vi.mock("./FallbackChainEditor", () => ({ FallbackChainEditor: () => null }));
 
 // ---------------------------------------------------------------------------
 // Fixture data

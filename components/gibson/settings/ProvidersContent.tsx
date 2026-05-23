@@ -48,13 +48,14 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useSupportedProviders } from "@/src/hooks/useSupportedProviders";
-import { useProviders, providerQueryKeys } from "@/src/hooks/useProviders";
+import { useProviders, useFallbackChain, providerQueryKeys } from "@/src/hooks/useProviders";
 import { useCreateProvider, useDeleteProvider, useSetDefaultProvider } from "@/src/hooks/useProviderMutations";
 import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
 import type { ProviderConfig } from "@/src/types/provider";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { ProviderWizard } from "./ProviderWizard";
+import { FallbackChainEditor } from "./FallbackChainEditor";
 
 // ---------------------------------------------------------------------------
 // DynamicCredentialForm — retained for backward-compat with tests + the
@@ -218,9 +219,11 @@ export function DynamicCredentialForm({ descriptor, onSubmit, isPending }: Dynam
 
 interface ConfiguredProviderRowProps {
   provider: ProviderConfig;
+  fallbackRank?: number;
+  onDeleted?: (name: string) => void;
 }
 
-function ConfiguredProviderRow({ provider }: ConfiguredProviderRowProps) {
+function ConfiguredProviderRow({ provider, fallbackRank, onDeleted }: ConfiguredProviderRowProps) {
   const [testState, setTestState] = React.useState<"idle" | "testing" | "ok" | "fail">("idle");
 
   const { mutate: deleteProvider, isPending: isDeleting } = useDeleteProvider();
@@ -260,6 +263,7 @@ function ConfiguredProviderRow({ provider }: ConfiguredProviderRowProps) {
     deleteProvider(provider.name, {
       onSuccess: () => {
         toast.success(`${provider.displayName} removed`);
+        onDeleted?.(provider.name);
       },
       onError: (err) => {
         toast.error(`Failed to remove ${provider.displayName}`, {
@@ -305,6 +309,11 @@ function ConfiguredProviderRow({ provider }: ConfiguredProviderRowProps) {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {fallbackRank !== undefined && (
+              <Badge variant="outline" className="text-xs tabular-nums">
+                #{fallbackRank}
+              </Badge>
+            )}
             {provider.isDefault && (
               <Badge variant="secondary" className="text-xs gap-1">
                 <Star className="size-3" />
@@ -361,7 +370,7 @@ function ConfiguredProviderRow({ provider }: ConfiguredProviderRowProps) {
               <Plug className="size-3" />
             )}
             {testState === "testing"
-              ? "Testing\u2026"
+              ? "Testing…"
               : testState === "ok"
                 ? "Connected"
                 : testState === "fail"
@@ -444,14 +453,30 @@ export function ProvidersContent() {
     includeDisabled: true,
     includeHealth: true,
   });
+  const { data: fallbackChain } = useFallbackChain();
   const [wizardOpen, setWizardOpen] = React.useState(false);
 
   const isLoading = isSupportedLoading || isProvidersLoading;
   const providers = data?.providers ?? [];
   const isEmpty = !isLoading && !isError && providers.length === 0;
+  const chain = fallbackChain ?? [];
 
   function refresh() {
     void queryClient.invalidateQueries({ queryKey: providerQueryKeys.lists() });
+  }
+
+  async function handleProviderDeleted(deletedName: string) {
+    const newChain = chain.filter((n) => n !== deletedName);
+    try {
+      await fetch("/api/settings/providers/fallback-chain", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chain: newChain }),
+      });
+      void queryClient.invalidateQueries({ queryKey: providerQueryKeys.fallback() });
+    } catch {
+      // best-effort; the chain will resync on next load
+    }
   }
 
   return (
@@ -528,11 +553,21 @@ export function ProvidersContent() {
             </CardContent>
           </Card>
         ) : (
-          providers.map((provider) => (
-            <ConfiguredProviderRow key={provider.name} provider={provider} />
-          ))
+          providers.map((provider) => {
+            const chainIndex = chain.indexOf(provider.name);
+            return (
+              <ConfiguredProviderRow
+                key={provider.name}
+                provider={provider}
+                fallbackRank={chainIndex >= 0 ? chainIndex + 1 : undefined}
+                onDeleted={handleProviderDeleted}
+              />
+            );
+          })
         )}
       </div>
+
+      <FallbackChainEditor providers={providers} />
     </div>
   );
 }
