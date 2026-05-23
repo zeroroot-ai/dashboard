@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import {
   applyTenantMember,
   deleteTenantMember,
+  listTenantMembers,
   patchTenantMember,
   tenantNamespace,
 } from '@/src/lib/k8s/tenants';
@@ -186,6 +187,49 @@ export async function revokeMemberAction(
       errorMessage: parsed.error.issues[0]?.message,
     });
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
+  }
+
+  // Safeguard: prevent removing the last active owner. This guard runs
+  // before any mutation so it holds even if the client-side gate is bypassed.
+  try {
+    const allMembers = await listTenantMembers(tenantNamespace(parsed.data.tenantName));
+    const activeOwners = allMembers.filter(
+      (m) => m.spec.role === 'owner' && m.status?.phase === 'Active',
+    );
+    const targetMember = allMembers.find((m) => m.metadata.name === parsed.data.memberName);
+    if (activeOwners.length === 1 && targetMember?.spec.role === 'owner') {
+      emitCrdAuditFromGate({
+        session: gate.session,
+        userId: gate.userId,
+        action: 'revokeMemberAction',
+        outcome: 'bad_input',
+        targetTenant: parsed.data.tenantName,
+        inputKeys,
+        errorCode: 'FORBIDDEN',
+        errorMessage: 'Cannot remove the last owner of a workspace. Transfer ownership first.',
+        resourceRef: parsed.data.memberName,
+      });
+      return {
+        ok: false,
+        error: 'Cannot remove the last owner of a workspace. Transfer ownership first.',
+        code: 'FORBIDDEN',
+      };
+    }
+  } catch (e) {
+    const err = e as K8sError;
+    const code = classifyK8sError(err);
+    emitCrdAuditFromGate({
+      session: gate.session,
+      userId: gate.userId,
+      action: 'revokeMemberAction',
+      outcome: 'internal',
+      targetTenant: parsed.data.tenantName,
+      inputKeys,
+      errorCode: code,
+      errorMessage: `last-owner check failed: ${err.message}`,
+      resourceRef: parsed.data.memberName,
+    });
+    return { ok: false, error: err.message, code };
   }
 
   try {
