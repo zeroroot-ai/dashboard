@@ -561,7 +561,7 @@ export function CredentialsAndTest({
             <AlertDescription className="text-xs">
               {externalProbeResult!.error ?? "Connection failed."}
             </AlertDescription>
-            {probeResult.error?.includes("allow_private_llm_endpoints") && (
+            {externalProbeResult!.error?.includes("allow_private_llm_endpoints") && (
               <p className="mt-2 text-xs">
                 To allow private or on-premise endpoints, set{" "}
                 <code className="font-mono">
