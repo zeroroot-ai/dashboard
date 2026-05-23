@@ -244,4 +244,7 @@ export const CRD_PERMISSIONS: Record<
   removeTeamMemberAction: { permission: "members:revoke" },
   setTenantRoleAction: { permission: "members:invite" },
   setTeamAdminAction: { permission: "members:invite" },
+  // TODO: replace "members:invite" with a dedicated "org:transfer_ownership"
+  // permission once it has been added to the RBAC schema (permissions.yaml).
+  transferOwnershipAction: { permission: "members:invite" },
 };

@@ -30,7 +30,8 @@ export type CrdActionName =
   | "addTeamMemberAction"
   | "removeTeamMemberAction"
   | "setTenantRoleAction"
-  | "setTeamAdminAction";
+  | "setTeamAdminAction"
+  | "transferOwnershipAction";
 
 export type ActionErrorCode =
   | "UNAUTHENTICATED"
