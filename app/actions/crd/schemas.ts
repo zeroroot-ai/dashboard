@@ -60,7 +60,7 @@ export const componentRefSchema = z
   })
   .strict();
 
-export const memberRoleSchema = z.enum(["admin", "member", "viewer"]);
+export const memberRoleSchema = z.enum(["admin", "member"]);
 
 // Canonical Gibson plan IDs — derived from the generated plan registry
 // (src/generated/plans.ts), which mirrors the operator's plans.PlanID Go

@@ -127,11 +127,14 @@ describe("displayNameSchema", () => {
 });
 
 describe("memberRoleSchema", () => {
-  it.each(["admin", "member", "viewer"])("accepts %s", (r) => {
+  it.each(["admin", "member"])("accepts %s", (r) => {
     expect(memberRoleSchema.safeParse(r).success).toBe(true);
   });
   it("rejects 'owner'", () => {
     expect(memberRoleSchema.safeParse("owner").success).toBe(false);
+  });
+  it("rejects 'viewer'", () => {
+    expect(memberRoleSchema.safeParse("viewer").success).toBe(false);
   });
 });
 

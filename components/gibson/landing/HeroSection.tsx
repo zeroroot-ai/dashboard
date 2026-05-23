@@ -211,7 +211,7 @@ export function HeroSection() {
          *  primary, brand-guide-style. No fake version strings or telemetry. */}
         <div className="flex w-full flex-col items-start gap-0">
           <div className="font-mono text-[11px] uppercase tracking-[0.32em] text-muted-foreground">
-            // agent development kit
+            {"// agent development kit"}
           </div>
           <h1
             className="m-0 font-mono font-extrabold tracking-tight text-foreground whitespace-nowrap"
