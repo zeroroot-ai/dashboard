@@ -56,6 +56,7 @@ import type { TenantMember } from "@/src/lib/k8s/types";
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const ROLE_BADGE_CLASS: Record<string, string> = {
+  owner: "border-alt/50 bg-alt/10 text-alt",
   admin: "border-primary/50 bg-primary/10 text-primary",
   member: "border-link/50 bg-link/10/20 text-link",
   viewer: "border-border bg-muted/50 text-muted-foreground",
@@ -71,6 +72,7 @@ function UserActionsMenu({
   member,
   canEdit,
   isSelf,
+  isOwner,
   onRemove,
   onResend,
   onCancel,
@@ -78,12 +80,14 @@ function UserActionsMenu({
   member: TenantMember;
   canEdit: boolean;
   isSelf: boolean;
+  isOwner: boolean;
   onRemove: (member: TenantMember) => void;
   onResend: (member: TenantMember) => void;
   onCancel: (member: TenantMember) => void;
 }) {
   const userId = member.status?.userId ?? member.metadata.name;
   const isInvited = member.status?.phase === "Invited";
+  const canRemove = canEdit && !isSelf && !isOwner;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -99,7 +103,7 @@ function UserActionsMenu({
             View Details
           </Link>
         </DropdownMenuItem>
-        {canEdit && !isSelf && isInvited && (
+        {canRemove && isInvited && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onResend(member)}>
@@ -115,7 +119,7 @@ function UserActionsMenu({
             </DropdownMenuItem>
           </>
         )}
-        {canEdit && !isSelf && !isInvited && (
+        {canRemove && !isInvited && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -322,12 +326,11 @@ export function UsersContent() {
                 const isSelf = member.status?.userId === currentUserId;
                 const userId = member.status?.userId ?? member.metadata.name;
                 const specRole = member.spec.role;
-                const effectiveRole =
-                  roleOverrides[userId] ??
-                  (specRole === "admin" ? "admin" : "member");
+                const isOwner = specRole === "owner";
+                const effectiveRole = roleOverrides[userId] ?? specRole ?? "member";
                 const phase = member.status?.phase ?? "Pending";
                 const userTeams = teamsByUser[userId] ?? [];
-                const showDropdown = canEdit && !isSelf;
+                const showDropdown = canEdit && !isSelf && !isOwner;
                 const isPending = !!pendingRole[userId];
                 return (
                   <TableRow key={member.metadata.name}>
@@ -356,7 +359,7 @@ export function UsersContent() {
                           variant="outline"
                           className={`text-xs font-mono ${ROLE_BADGE_CLASS[effectiveRole] ?? ROLE_BADGE_CLASS.viewer}`}
                         >
-                          {effectiveRole}
+                          {effectiveRole}{isSelf ? " (you)" : ""}
                         </Badge>
                       )}
                     </TableCell>
@@ -395,6 +398,7 @@ export function UsersContent() {
                         member={member}
                         canEdit={canEdit}
                         isSelf={isSelf}
+                        isOwner={isOwner}
                         onRemove={setMemberToRemove}
                         onResend={handleResend}
                         onCancel={setMemberToCancel}
