@@ -310,7 +310,11 @@ function ConfiguredProviderRow({ provider, fallbackRank, onDeleted }: Configured
   const healthConfig = HEALTH_STATUS_CONFIG[healthStatus];
   const healthVariant = HEALTH_BADGE_VARIANT[healthStatus];
 
-  const isConfigured = provider.isEnabled && !!provider.apiKeyMasked;
+  const isConfigured =
+    provider.isEnabled &&
+    (provider.credentialsMasked
+      ? Object.values(provider.credentialsMasked).some((v) => v !== "")
+      : !!provider.apiKeyMasked);
 
   async function onTestConnection() {
     setTestState("testing");
@@ -450,12 +454,24 @@ function ConfiguredProviderRow({ provider, fallbackRank, onDeleted }: Configured
         )}
 
         {/* Masked credential chips — read-only display */}
-        {provider.apiKeyMasked && (
-          <div className="flex flex-wrap gap-2">
-            <div className="border-border/40 bg-muted/30 inline-flex items-center gap-1.5 rounded px-2 py-1 font-mono text-xs">
-              <span className="text-muted-foreground">api_key</span>
-              <span>{provider.apiKeyMasked}</span>
+        {provider.credentialsMasked &&
+          Object.entries(provider.credentialsMasked).some(([, v]) => v !== "") && (
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(provider.credentialsMasked).map(([key, masked]) =>
+                masked ? (
+                  <Badge key={key} variant="outline" className="font-mono text-xs">
+                    {key}: {masked}
+                  </Badge>
+                ) : null
+              )}
             </div>
+          )}
+        {/* Fallback: legacy apiKeyMasked chip when credentialsMasked is absent */}
+        {!provider.credentialsMasked && provider.apiKeyMasked && (
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline" className="font-mono text-xs">
+              {provider.apiKeyMasked}
+            </Badge>
           </div>
         )}
 
