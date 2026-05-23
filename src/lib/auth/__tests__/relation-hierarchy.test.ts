@@ -17,6 +17,22 @@ import { describe, it, expect } from 'vitest';
 import { satisfiesRelation, relationHierarchy } from '../relation-hierarchy';
 
 describe('satisfiesRelation — hierarchy ordering', () => {
+  it('owner satisfies admin (owner implies admin)', () => {
+    expect(satisfiesRelation('owner', 'admin')).toBe(true);
+  });
+
+  it('owner satisfies member (owner implies member)', () => {
+    expect(satisfiesRelation('owner', 'member')).toBe(true);
+  });
+
+  it('owner satisfies owner (same tier)', () => {
+    expect(satisfiesRelation('owner', 'owner')).toBe(true);
+  });
+
+  it('admin does NOT satisfy owner (admin does not imply owner)', () => {
+    expect(satisfiesRelation('admin', 'owner')).toBe(false);
+  });
+
   it('admin satisfies admin (same tier)', () => {
     expect(satisfiesRelation('admin', 'admin')).toBe(true);
   });
@@ -62,6 +78,12 @@ describe('satisfiesRelation — unknown roles', () => {
 });
 
 describe('relationHierarchy export', () => {
+  it('encodes owner > admin', () => {
+    expect(relationHierarchy['owner']).toBeGreaterThan(
+      relationHierarchy['admin'] ?? 0,
+    );
+  });
+
   it('encodes admin > member', () => {
     expect(relationHierarchy['admin']).toBeGreaterThan(
       relationHierarchy['member'] ?? 0,

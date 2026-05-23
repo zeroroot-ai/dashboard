@@ -2,7 +2,7 @@
  * FGA relation hierarchy for tenant-scoped role comparisons.
  *
  * Encodes the privilege tier ordering used by the authz registry:
- *   admin > member
+ *   owner > admin > member
  *   platform_operator > admin (cross-tenant ops)
  *
  * Every authz check in the dashboard (`useAuthorize`, `assertAuthorized`)
@@ -33,6 +33,7 @@
 const RELATION_ORDER: Readonly<Record<string, number>> = {
   // Proto-emitted relation names (canonical — these match what the SDK/daemon
   // proto annotations emit verbatim).
+  owner: 150,  // tenant owner — highest tenant-scoped role; FGA: admin = [user] or owner
   admin: 100,
   member: 10,
   platform_operator: 1000, // cross-tenant ops tier — higher than any tenant-scoped relation
