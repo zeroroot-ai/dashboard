@@ -47,7 +47,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/daemon/admin/v1/daemon_admin.proto.
  */
 export const file_gibson_daemon_admin_v1_daemon_admin: GenFile = /*@__PURE__*/
-  fileDesc("CilnaWJzb24vZGFlbW9uL2FkbWluL3YxL2RhZW1vbl9hZG1pbi5wcm90bxIWZ2lic29uLmRhZW1vbi5hZG1pbi52MSIzChVTdGFydENvbXBvbmVudFJlcXVlc3QSDAoEa2luZBgBIAEoCRIMCgRuYW1lGAIgASgJImcKFlN0YXJ0Q29tcG9uZW50UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBILCgNwaWQYAiABKAUSDAoEcG9ydBgDIAEoBRIPCgdtZXNzYWdlGAQgASgJEhAKCGxvZ19wYXRoGAUgASgJIkEKFFN0b3BDb21wb25lbnRSZXF1ZXN0EgwKBGtpbmQYASABKAkSDAoEbmFtZRgCIAEoCRINCgVmb3JjZRgDIAEoCCJlChVTdG9wQ29tcG9uZW50UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIVCg1zdG9wcGVkX2NvdW50GAIgASgFEhMKC3RvdGFsX2NvdW50GAMgASgFEg8KB21lc3NhZ2UYBCABKAkiMwoVQnVpbGRDb21wb25lbnRSZXF1ZXN0EgwKBGtpbmQYASABKAkSDAoEbmFtZRgCIAEoCSJvChZCdWlsZENvbXBvbmVudFJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgSDgoGc3Rkb3V0GAIgASgJEg4KBnN0ZGVychgDIAEoCRITCgtkdXJhdGlvbl9tcxgEIAEoAxIPCgdtZXNzYWdlGAUgASgJIj8KHkNyZWF0ZU1pc3Npb25EZWZpbml0aW9uUmVxdWVzdBIdChVkZWZpbml0aW9uX3NlcmlhbGl6ZWQYASABKAwiXwofQ3JlYXRlTWlzc2lvbkRlZmluaXRpb25SZXNwb25zZRIdChVtaXNzaW9uX2RlZmluaXRpb25faWQYASABKAkSDAoEbmFtZRgCIAEoCRIPCgd2ZXJzaW9uGAMgASgJMqkFChJEYWVtb25BZG1pblNlcnZpY2USnAEKDlN0YXJ0Q29tcG9uZW50Ei0uZ2lic29uLmRhZW1vbi5hZG1pbi52MS5TdGFydENvbXBvbmVudFJlcXVlc3QaLi5naWJzb24uZGFlbW9uLmFkbWluLnYxLlN0YXJ0Q29tcG9uZW50UmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSmQEKDVN0b3BDb21wb25lbnQSLC5naWJzb24uZGFlbW9uLmFkbWluLnYxLlN0b3BDb21wb25lbnRSZXF1ZXN0Gi0uZ2lic29uLmRhZW1vbi5hZG1pbi52MS5TdG9wQ29tcG9uZW50UmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSnAEKDkJ1aWxkQ29tcG9uZW50Ei0uZ2lic29uLmRhZW1vbi5hZG1pbi52MS5CdWlsZENvbXBvbmVudFJlcXVlc3QaLi5naWJzb24uZGFlbW9uLmFkbWluLnYxLkJ1aWxkQ29tcG9uZW50UmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSuAEKF0NyZWF0ZU1pc3Npb25EZWZpbml0aW9uEjYuZ2lic29uLmRhZW1vbi5hZG1pbi52MS5DcmVhdGVNaXNzaW9uRGVmaW5pdGlvblJlcXVlc3QaNy5naWJzb24uZGFlbW9uLmFkbWluLnYxLkNyZWF0ZU1pc3Npb25EZWZpbml0aW9uUmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADQk5aTGdpdGh1Yi5jb20vemVyby1kYXktYWkvcGxhdGZvcm0tc2RrL2dlbi9naWJzb24vZGFlbW9uL2FkbWluL3YxO2RhZW1vbmFkbWludjFiBnByb3RvMw", [file_gibson_auth_v1_options]);
+  fileDesc("CilnaWJzb24vZGFlbW9uL2FkbWluL3YxL2RhZW1vbl9hZG1pbi5wcm90bxIWZ2lic29uLmRhZW1vbi5hZG1pbi52MSIzChVTdGFydENvbXBvbmVudFJlcXVlc3QSDAoEa2luZBgBIAEoCRIMCgRuYW1lGAIgASgJImcKFlN0YXJ0Q29tcG9uZW50UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBILCgNwaWQYAiABKAUSDAoEcG9ydBgDIAEoBRIPCgdtZXNzYWdlGAQgASgJEhAKCGxvZ19wYXRoGAUgASgJIkEKFFN0b3BDb21wb25lbnRSZXF1ZXN0EgwKBGtpbmQYASABKAkSDAoEbmFtZRgCIAEoCRINCgVmb3JjZRgDIAEoCCJlChVTdG9wQ29tcG9uZW50UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIVCg1zdG9wcGVkX2NvdW50GAIgASgFEhMKC3RvdGFsX2NvdW50GAMgASgFEg8KB21lc3NhZ2UYBCABKAkiMwoVQnVpbGRDb21wb25lbnRSZXF1ZXN0EgwKBGtpbmQYASABKAkSDAoEbmFtZRgCIAEoCSJvChZCdWlsZENvbXBvbmVudFJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgSDgoGc3Rkb3V0GAIgASgJEg4KBnN0ZGVychgDIAEoCRITCgtkdXJhdGlvbl9tcxgEIAEoAxIPCgdtZXNzYWdlGAUgASgJImEKHkNyZWF0ZU1pc3Npb25EZWZpbml0aW9uUmVxdWVzdBIfChVkZWZpbml0aW9uX3NlcmlhbGl6ZWQYASABKAxIABIUCgpjdWVfc291cmNlGAIgASgJSABCCAoGc291cmNlIl8KH0NyZWF0ZU1pc3Npb25EZWZpbml0aW9uUmVzcG9uc2USHQoVbWlzc2lvbl9kZWZpbml0aW9uX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDwoHdmVyc2lvbhgDIAEoCSJNCg1DVUVEaWFnbm9zdGljEgwKBGxpbmUYASABKAUSCwoDY29sGAIgASgFEg8KB21lc3NhZ2UYAyABKAkSEAoIc2V2ZXJpdHkYBCABKAkiVwoRQ1VFQ29tcGxldGlvbkl0ZW0SDQoFbGFiZWwYASABKAkSDgoGZGV0YWlsGAIgASgJEhUKDWRvY3VtZW50YXRpb24YAyABKAkSDAoEa2luZBgEIAEoCSIvChlWYWxpZGF0ZU1pc3Npb25DVUVSZXF1ZXN0EhIKCmN1ZV9zb3VyY2UYASABKAkiWAoaVmFsaWRhdGVNaXNzaW9uQ1VFUmVzcG9uc2USOgoLZGlhZ25vc3RpY3MYASADKAsyJS5naWJzb24uZGFlbW9uLmFkbWluLnYxLkNVRURpYWdub3N0aWMiSgoZQ29tcGxldGVNaXNzaW9uQ1VFUmVxdWVzdBISCgpjdWVfc291cmNlGAEgASgJEgwKBGxpbmUYAiABKAUSCwoDY29sGAMgASgFIlYKGkNvbXBsZXRlTWlzc2lvbkNVRVJlc3BvbnNlEjgKBWl0ZW1zGAEgAygLMikuZ2lic29uLmRhZW1vbi5hZG1pbi52MS5DVUVDb21wbGV0aW9uSXRlbSJHChZIb3Zlck1pc3Npb25DVUVSZXF1ZXN0EhIKCmN1ZV9zb3VyY2UYASABKAkSDAoEbGluZRgCIAEoBRILCgNjb2wYAyABKAUiKwoXSG92ZXJNaXNzaW9uQ1VFUmVzcG9uc2USEAoIbWFya2Rvd24YASABKAkypAkKEkRhZW1vbkFkbWluU2VydmljZRKcAQoOU3RhcnRDb21wb25lbnQSLS5naWJzb24uZGFlbW9uLmFkbWluLnYxLlN0YXJ0Q29tcG9uZW50UmVxdWVzdBouLmdpYnNvbi5kYWVtb24uYWRtaW4udjEuU3RhcnRDb21wb25lbnRSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKZAQoNU3RvcENvbXBvbmVudBIsLmdpYnNvbi5kYWVtb24uYWRtaW4udjEuU3RvcENvbXBvbmVudFJlcXVlc3QaLS5naWJzb24uZGFlbW9uLmFkbWluLnYxLlN0b3BDb21wb25lbnRSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKcAQoOQnVpbGRDb21wb25lbnQSLS5naWJzb24uZGFlbW9uLmFkbWluLnYxLkJ1aWxkQ29tcG9uZW50UmVxdWVzdBouLmdpYnNvbi5kYWVtb24uYWRtaW4udjEuQnVpbGRDb21wb25lbnRSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxK4AQoXQ3JlYXRlTWlzc2lvbkRlZmluaXRpb24SNi5naWJzb24uZGFlbW9uLmFkbWluLnYxLkNyZWF0ZU1pc3Npb25EZWZpbml0aW9uUmVxdWVzdBo3LmdpYnNvbi5kYWVtb24uYWRtaW4udjEuQ3JlYXRlTWlzc2lvbkRlZmluaXRpb25SZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSqQEKElZhbGlkYXRlTWlzc2lvbkNVRRIxLmdpYnNvbi5kYWVtb24uYWRtaW4udjEuVmFsaWRhdGVNaXNzaW9uQ1VFUmVxdWVzdBoyLmdpYnNvbi5kYWVtb24uYWRtaW4udjEuVmFsaWRhdGVNaXNzaW9uQ1VFUmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEqkBChJDb21wbGV0ZU1pc3Npb25DVUUSMS5naWJzb24uZGFlbW9uLmFkbWluLnYxLkNvbXBsZXRlTWlzc2lvbkNVRVJlcXVlc3QaMi5naWJzb24uZGFlbW9uLmFkbWluLnYxLkNvbXBsZXRlTWlzc2lvbkNVRVJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKgAQoPSG92ZXJNaXNzaW9uQ1VFEi4uZ2lic29uLmRhZW1vbi5hZG1pbi52MS5Ib3Zlck1pc3Npb25DVUVSZXF1ZXN0Gi8uZ2lic29uLmRhZW1vbi5hZG1pbi52MS5Ib3Zlck1pc3Npb25DVUVSZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAFCTlpMZ2l0aHViLmNvbS96ZXJvLWRheS1haS9wbGF0Zm9ybS1zZGsvZ2VuL2dpYnNvbi9kYWVtb24vYWRtaW4vdjE7ZGFlbW9uYWRtaW52MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
 
 /**
  * StartComponentRequest requests starting a component.
@@ -285,27 +285,55 @@ export const BuildComponentResponseSchema: GenMessage<BuildComponentResponse> = 
  * CreateMissionDefinitionRequest registers a structured mission
  * definition with the daemon.
  *
- * The `definition_serialized` field carries a serialized
- * gibson.mission.v1.MissionDefinition (from the OSS SDK). It is
- * wire-equivalent to the OSS
- * gibson.daemon.v1.CreateMissionDefinitionRequest.definition
- * (field 1, LENGTH_DELIMITED) — both encode the same bytes on the
- * wire. The daemon handler unmarshals via proto.Unmarshal into the
- * OSS MissionDefinition type. Carrying it as `bytes` here keeps
- * platform-sdk free of the 600-line gibson.mission.v1 vendored copy
- * that would otherwise drift against the OSS source of truth.
+ * The `source` oneof carries the mission definition in one of two forms:
+ *
+ *   - `definition_serialized` (field 1): a wire-encoded
+ *     gibson.mission.v1.MissionDefinition (from the OSS SDK). Wire-
+ *     equivalent to the OSS gibson.daemon.v1.CreateMissionDefinitionRequest
+ *     .definition (field 1, LENGTH_DELIMITED). The daemon unmarshals via
+ *     proto.Unmarshal into the OSS MissionDefinition type. Keeps
+ *     platform-sdk free of the 600-line gibson.mission.v1 vendored copy.
+ *
+ *   - `cue_source` (field 2): raw CUE source text. The daemon compiles the
+ *     CUE against the embedded schema, validates it, and persists the
+ *     resulting MissionDefinition. This is the canonical path for all new
+ *     dashboard-originated and CLI-originated mission authoring; the
+ *     serialized-bytes path remains for programmatic callers that construct
+ *     definitions natively.
+ *
+ * BREAKING CHANGE: `definition_serialized` was previously a top-level
+ * field. It is now inside a `oneof source` block. Callers that set
+ * `definition_serialized` directly must be updated to use the oneof.
  *
  * @generated from message gibson.daemon.admin.v1.CreateMissionDefinitionRequest
  */
 export type CreateMissionDefinitionRequest = Message<"gibson.daemon.admin.v1.CreateMissionDefinitionRequest"> & {
   /**
-   * definition_serialized is the wire-encoded
-   * gibson.mission.v1.MissionDefinition. The daemon unmarshals this
-   * into the canonical OSS MissionDefinition type before dispatch.
+   * source carries the mission definition as either pre-serialized proto
+   * bytes or raw CUE source text. Exactly one must be set.
    *
-   * @generated from field: bytes definition_serialized = 1;
+   * @generated from oneof gibson.daemon.admin.v1.CreateMissionDefinitionRequest.source
    */
-  definitionSerialized: Uint8Array;
+  source: {
+    /**
+     * definition_serialized is the wire-encoded
+     * gibson.mission.v1.MissionDefinition. The daemon unmarshals this
+     * into the canonical OSS MissionDefinition type before dispatch.
+     *
+     * @generated from field: bytes definition_serialized = 1;
+     */
+    value: Uint8Array;
+    case: "definitionSerialized";
+  } | {
+    /**
+     * cue_source is raw CUE source text. The daemon compiles and validates
+     * the CUE against the embedded mission schema before persisting.
+     *
+     * @generated from field: string cue_source = 2;
+     */
+    value: string;
+    case: "cueSource";
+  } | { case: undefined; value?: undefined };
 };
 
 /**
@@ -357,6 +385,249 @@ export const CreateMissionDefinitionResponseSchema: GenMessage<CreateMissionDefi
   messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 7);
 
 /**
+ * CUEDiagnostic is a single error or warning produced by CUE compilation or
+ * schema validation. Line and col are 1-based.
+ *
+ * @generated from message gibson.daemon.admin.v1.CUEDiagnostic
+ */
+export type CUEDiagnostic = Message<"gibson.daemon.admin.v1.CUEDiagnostic"> & {
+  /**
+   * line is the 1-based source line number.
+   *
+   * @generated from field: int32 line = 1;
+   */
+  line: number;
+
+  /**
+   * col is the 1-based column offset.
+   *
+   * @generated from field: int32 col = 2;
+   */
+  col: number;
+
+  /**
+   * message is the human-readable diagnostic text.
+   *
+   * @generated from field: string message = 3;
+   */
+  message: string;
+
+  /**
+   * severity is "error" or "warning".
+   *
+   * @generated from field: string severity = 4;
+   */
+  severity: string;
+};
+
+/**
+ * Describes the message gibson.daemon.admin.v1.CUEDiagnostic.
+ * Use `create(CUEDiagnosticSchema)` to create a new message.
+ */
+export const CUEDiagnosticSchema: GenMessage<CUEDiagnostic> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 8);
+
+/**
+ * CUECompletionItem is a single completion suggestion from CompleteMissionCUE.
+ *
+ * @generated from message gibson.daemon.admin.v1.CUECompletionItem
+ */
+export type CUECompletionItem = Message<"gibson.daemon.admin.v1.CUECompletionItem"> & {
+  /**
+   * label is the text to insert (the completion token).
+   *
+   * @generated from field: string label = 1;
+   */
+  label: string;
+
+  /**
+   * detail is a short type annotation or signature hint.
+   *
+   * @generated from field: string detail = 2;
+   */
+  detail: string;
+
+  /**
+   * documentation is the Markdown documentation for this item.
+   *
+   * @generated from field: string documentation = 3;
+   */
+  documentation: string;
+
+  /**
+   * kind classifies the item: "field" | "value" | "keyword".
+   *
+   * @generated from field: string kind = 4;
+   */
+  kind: string;
+};
+
+/**
+ * Describes the message gibson.daemon.admin.v1.CUECompletionItem.
+ * Use `create(CUECompletionItemSchema)` to create a new message.
+ */
+export const CUECompletionItemSchema: GenMessage<CUECompletionItem> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 9);
+
+/**
+ * ValidateMissionCUERequest carries raw CUE source text to validate.
+ *
+ * @generated from message gibson.daemon.admin.v1.ValidateMissionCUERequest
+ */
+export type ValidateMissionCUERequest = Message<"gibson.daemon.admin.v1.ValidateMissionCUERequest"> & {
+  /**
+   * cue_source is the raw CUE source text.
+   *
+   * @generated from field: string cue_source = 1;
+   */
+  cueSource: string;
+};
+
+/**
+ * Describes the message gibson.daemon.admin.v1.ValidateMissionCUERequest.
+ * Use `create(ValidateMissionCUERequestSchema)` to create a new message.
+ */
+export const ValidateMissionCUERequestSchema: GenMessage<ValidateMissionCUERequest> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 10);
+
+/**
+ * ValidateMissionCUEResponse returns the diagnostics produced by compiling
+ * the submitted CUE source against the mission schema. An empty list means
+ * the source is valid.
+ *
+ * @generated from message gibson.daemon.admin.v1.ValidateMissionCUEResponse
+ */
+export type ValidateMissionCUEResponse = Message<"gibson.daemon.admin.v1.ValidateMissionCUEResponse"> & {
+  /**
+   * diagnostics is the list of errors and warnings. Empty on success.
+   *
+   * @generated from field: repeated gibson.daemon.admin.v1.CUEDiagnostic diagnostics = 1;
+   */
+  diagnostics: CUEDiagnostic[];
+};
+
+/**
+ * Describes the message gibson.daemon.admin.v1.ValidateMissionCUEResponse.
+ * Use `create(ValidateMissionCUEResponseSchema)` to create a new message.
+ */
+export const ValidateMissionCUEResponseSchema: GenMessage<ValidateMissionCUEResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 11);
+
+/**
+ * CompleteMissionCUERequest requests completion items at a cursor position.
+ *
+ * @generated from message gibson.daemon.admin.v1.CompleteMissionCUERequest
+ */
+export type CompleteMissionCUERequest = Message<"gibson.daemon.admin.v1.CompleteMissionCUERequest"> & {
+  /**
+   * cue_source is the raw CUE source text at the time of the request.
+   *
+   * @generated from field: string cue_source = 1;
+   */
+  cueSource: string;
+
+  /**
+   * line is the 1-based cursor line number.
+   *
+   * @generated from field: int32 line = 2;
+   */
+  line: number;
+
+  /**
+   * col is the 1-based cursor column offset.
+   *
+   * @generated from field: int32 col = 3;
+   */
+  col: number;
+};
+
+/**
+ * Describes the message gibson.daemon.admin.v1.CompleteMissionCUERequest.
+ * Use `create(CompleteMissionCUERequestSchema)` to create a new message.
+ */
+export const CompleteMissionCUERequestSchema: GenMessage<CompleteMissionCUERequest> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 12);
+
+/**
+ * CompleteMissionCUEResponse returns the completion items for the cursor
+ * position.
+ *
+ * @generated from message gibson.daemon.admin.v1.CompleteMissionCUEResponse
+ */
+export type CompleteMissionCUEResponse = Message<"gibson.daemon.admin.v1.CompleteMissionCUEResponse"> & {
+  /**
+   * items is the list of completion candidates.
+   *
+   * @generated from field: repeated gibson.daemon.admin.v1.CUECompletionItem items = 1;
+   */
+  items: CUECompletionItem[];
+};
+
+/**
+ * Describes the message gibson.daemon.admin.v1.CompleteMissionCUEResponse.
+ * Use `create(CompleteMissionCUEResponseSchema)` to create a new message.
+ */
+export const CompleteMissionCUEResponseSchema: GenMessage<CompleteMissionCUEResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 13);
+
+/**
+ * HoverMissionCUERequest requests hover documentation for a cursor position.
+ *
+ * @generated from message gibson.daemon.admin.v1.HoverMissionCUERequest
+ */
+export type HoverMissionCUERequest = Message<"gibson.daemon.admin.v1.HoverMissionCUERequest"> & {
+  /**
+   * cue_source is the raw CUE source text at the time of the request.
+   *
+   * @generated from field: string cue_source = 1;
+   */
+  cueSource: string;
+
+  /**
+   * line is the 1-based cursor line number.
+   *
+   * @generated from field: int32 line = 2;
+   */
+  line: number;
+
+  /**
+   * col is the 1-based cursor column offset.
+   *
+   * @generated from field: int32 col = 3;
+   */
+  col: number;
+};
+
+/**
+ * Describes the message gibson.daemon.admin.v1.HoverMissionCUERequest.
+ * Use `create(HoverMissionCUERequestSchema)` to create a new message.
+ */
+export const HoverMissionCUERequestSchema: GenMessage<HoverMissionCUERequest> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 14);
+
+/**
+ * HoverMissionCUEResponse returns Markdown hover documentation for the
+ * symbol under the cursor, or an empty string if there is no hover info.
+ *
+ * @generated from message gibson.daemon.admin.v1.HoverMissionCUEResponse
+ */
+export type HoverMissionCUEResponse = Message<"gibson.daemon.admin.v1.HoverMissionCUEResponse"> & {
+  /**
+   * markdown is the hover documentation rendered as Markdown.
+   *
+   * @generated from field: string markdown = 1;
+   */
+  markdown: string;
+};
+
+/**
+ * Describes the message gibson.daemon.admin.v1.HoverMissionCUEResponse.
+ * Use `create(HoverMissionCUEResponseSchema)` to create a new message.
+ */
+export const HoverMissionCUEResponseSchema: GenMessage<HoverMissionCUEResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_admin_v1_daemon_admin, 15);
+
+/**
  * DaemonAdminService exposes the admin/writer RPCs that operate on
  * daemon-managed tenant resources. Every RPC carries an authz
  * annotation; the registry generator and ext-authz consume these to
@@ -405,11 +676,11 @@ export const DaemonAdminService: GenService<{
   },
   /**
    * CreateMissionDefinition registers a structured mission
-   * definition with the daemon. The daemon does not clone git
-   * repositories or parse YAML; callers submit a fully-formed
-   * MissionDefinition proto (serialized from JSON in the CLI via
-   * protojson, or constructed natively in the dashboard). Requires
-   * the writer FGA relation on the caller's tenant.
+   * definition with the daemon. Callers may submit a fully-formed
+   * MissionDefinition proto (serialized bytes) or raw CUE source text.
+   * When CUE source is provided the daemon compiles and validates it
+   * against the embedded schema before persisting. Requires the writer
+   * FGA relation on the caller's tenant.
    *
    * @generated from rpc gibson.daemon.admin.v1.DaemonAdminService.CreateMissionDefinition
    */
@@ -417,6 +688,46 @@ export const DaemonAdminService: GenService<{
     methodKind: "unary";
     input: typeof CreateMissionDefinitionRequestSchema;
     output: typeof CreateMissionDefinitionResponseSchema;
+  },
+  /**
+   * ValidateMissionCUE validates CUE source text against the mission
+   * schema and returns structured diagnostics. Used by the dashboard
+   * editor for real-time error squiggles. Returns an empty diagnostics
+   * list on success. Requires the writer FGA relation on the caller's
+   * tenant.
+   *
+   * @generated from rpc gibson.daemon.admin.v1.DaemonAdminService.ValidateMissionCUE
+   */
+  validateMissionCUE: {
+    methodKind: "unary";
+    input: typeof ValidateMissionCUERequestSchema;
+    output: typeof ValidateMissionCUEResponseSchema;
+  },
+  /**
+   * CompleteMissionCUE provides completion items at the given cursor
+   * position within CUE source text. Powers the dashboard editor's
+   * auto-complete. Requires the writer FGA relation on the caller's
+   * tenant.
+   *
+   * @generated from rpc gibson.daemon.admin.v1.DaemonAdminService.CompleteMissionCUE
+   */
+  completeMissionCUE: {
+    methodKind: "unary";
+    input: typeof CompleteMissionCUERequestSchema;
+    output: typeof CompleteMissionCUEResponseSchema;
+  },
+  /**
+   * HoverMissionCUE returns hover documentation (as Markdown) for the
+   * symbol at the given cursor position within CUE source text. Powers
+   * the dashboard editor's hover tooltip. Requires the writer FGA
+   * relation on the caller's tenant.
+   *
+   * @generated from rpc gibson.daemon.admin.v1.DaemonAdminService.HoverMissionCUE
+   */
+  hoverMissionCUE: {
+    methodKind: "unary";
+    input: typeof HoverMissionCUERequestSchema;
+    output: typeof HoverMissionCUEResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_daemon_admin_v1_daemon_admin, 0);
