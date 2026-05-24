@@ -4,14 +4,19 @@ import * as React from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Loader2, Rocket } from "lucide-react";
+import { ArrowLeft, Loader2, Rocket, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { useServerAutosave } from "@/src/hooks/useServerAutosave";
 import { SaveDraftButton } from "@/src/components/mission/create/save-draft-button";
 import { DraftsMenu } from "@/src/components/mission/create/drafts-menu";
-import { getMissionDraftAction } from "@/app/actions/missions/drafts";
+import { DefinitionPickerDropdown } from "@/src/components/mission/create/definition-picker-dropdown";
+import {
+  getMissionDraftAction,
+  listMissionDraftsAction,
+} from "@/app/actions/missions/drafts";
 import {
   createMissionFromCUEAction,
   getTemplateCUESourceAction,
@@ -40,11 +45,68 @@ name: "my-mission"
 description: "Describe what this mission does."
 `;
 
+interface DefinitionMeta {
+  name: string;
+  version: string;
+  description: string;
+  nodeCount: number;
+}
+
+function scaffoldCUE(def: {
+  name: string;
+  description: string;
+  version: string;
+}): string {
+  return `// Gibson Mission Definition (CUE)
+package mission
+
+name: "${def.name}"
+description: "${def.description}"
+version: "${def.version}"
+`;
+}
+
+interface DefinitionBannerProps {
+  meta: DefinitionMeta;
+  loadedFrom: "draft" | "template" | undefined;
+  onDismiss: () => void;
+}
+
+function DefinitionBanner({ meta, loadedFrom, onDismiss }: DefinitionBannerProps) {
+  return (
+    <div className="flex items-center justify-between rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="font-medium font-mono">{meta.name}</span>
+        <Badge variant="outline" className="font-mono text-xs">
+          v{meta.version}
+        </Badge>
+        {loadedFrom !== undefined && (
+          <span className="text-muted-foreground">
+            {loadedFrom === "draft"
+              ? "Loaded from draft"
+              : "No draft found — showing template"}
+          </span>
+        )}
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-6 shrink-0"
+        aria-label="Dismiss definition"
+        onClick={onDismiss}
+      >
+        <X className="size-3.5" />
+      </Button>
+    </div>
+  );
+}
+
 export default function CreateMissionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlDraftId = searchParams.get("draft") ?? undefined;
   const urlTemplateId = searchParams.get("template") ?? undefined;
+  const urlDefinitionName = searchParams.get("definition") ?? undefined;
 
   const [cueSource, setCueSource] = React.useState<string>(DEFAULT_CUE);
   const [errorCount, setErrorCount] = React.useState(0);
@@ -56,6 +118,14 @@ export default function CreateMissionPage() {
 
   const [savedSource, setSavedSource] = React.useState<string>(DEFAULT_CUE);
   const isDirty = cueSource !== savedSource;
+
+  // Definition-related state
+  const [currentDefinitionName, setCurrentDefinitionName] = React.useState<string | undefined>(undefined);
+  const [currentDefinitionMeta, setCurrentDefinitionMeta] = React.useState<DefinitionMeta | undefined>(undefined);
+  const [definitionLoadedFrom, setDefinitionLoadedFrom] = React.useState<"draft" | "template" | undefined>(undefined);
+
+  // Track the definition name that has already been hydrated to avoid re-runs
+  const [hydratedDefinitionName, setHydratedDefinitionName] = React.useState<string | undefined>(undefined);
 
   // URL-driven draft hydration
   React.useEffect(() => {
@@ -104,6 +174,85 @@ export default function CreateMissionPage() {
     // Only run once per template id change — don't re-run if user edits.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlTemplateId]);
+
+  // URL-driven definition hydration (?definition=<name>)
+  React.useEffect(() => {
+    if (!urlDefinitionName) return;
+    if (hydratedDefinitionName === urlDefinitionName) return;
+
+    let cancelled = false;
+    setDraftLoading(true);
+
+    void (async () => {
+      // 1. Fetch definition metadata
+      const defRes = await fetch(
+        "/api/missions/definitions/" + encodeURIComponent(urlDefinitionName)
+      );
+      if (cancelled) return;
+
+      if (!defRes.ok) {
+        if (defRes.status === 404) {
+          toast.error("Mission definition not found");
+          router.replace("/dashboard/missions/create");
+        } else {
+          toast.error("Could not load the mission definition");
+        }
+        setDraftLoading(false);
+        return;
+      }
+
+      const defJson = (await defRes.json()) as {
+        name?: string;
+        version?: string;
+        description?: string;
+        nodeCount?: number;
+      };
+      if (cancelled) return;
+
+      const meta: DefinitionMeta = {
+        name: defJson.name ?? urlDefinitionName,
+        version: defJson.version ?? "0.0.0",
+        description: defJson.description ?? "",
+        nodeCount: defJson.nodeCount ?? 0,
+      };
+      setCurrentDefinitionMeta(meta);
+
+      // 2. Scan for a matching draft
+      const draftsRes = await listMissionDraftsAction();
+      if (cancelled) return;
+
+      const match =
+        draftsRes.ok
+          ? draftsRes.data.find((d) => d.name === urlDefinitionName)
+          : undefined;
+
+      if (match) {
+        // 3a. Matching draft found — load it
+        const draftRes = await getMissionDraftAction(match.id);
+        if (cancelled) return;
+        if (draftRes.ok) {
+          setCueSource(draftRes.data.cueSource);
+          setSavedSource(draftRes.data.cueSource);
+          handleDraftSaved(match.id, match.name);
+          setDefinitionLoadedFrom("draft");
+        }
+      } else {
+        // 3b. No matching draft — scaffold a CUE template
+        const scaffolded = scaffoldCUE(meta);
+        setCueSource(scaffolded);
+        setSavedSource(scaffolded);
+        setDefinitionLoadedFrom("template");
+      }
+
+      setCurrentDefinitionName(urlDefinitionName);
+      setHydratedDefinitionName(urlDefinitionName);
+      setDraftLoading(false);
+    })();
+
+    return () => { cancelled = true; };
+    // handleDraftSaved is defined below and stable (no deps that change).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlDefinitionName]);
 
   const serverAutosave = useServerAutosave(
     { cueSource, draftId: currentDraftId },
@@ -169,6 +318,31 @@ export default function CreateMissionPage() {
     }
   }
 
+  function handleDefinitionDismiss() {
+    setCurrentDefinitionName(undefined);
+    setCurrentDefinitionMeta(undefined);
+    setDefinitionLoadedFrom(undefined);
+    setHydratedDefinitionName(undefined);
+    setCueSource(DEFAULT_CUE);
+    router.replace("/dashboard/missions/create");
+  }
+
+  function handleDefinitionChange(name: string | null) {
+    if (name === null) {
+      router.push("/dashboard/missions/create");
+    } else {
+      router.push(
+        "/dashboard/missions/create?definition=" + encodeURIComponent(name)
+      );
+    }
+  }
+
+  const pageTitle = currentDefinitionName
+    ? `Edit: ${currentDefinitionName}`
+    : currentDraftName
+      ? `Draft: ${currentDraftName}`
+      : "New Mission";
+
   const autosaveLabel =
     serverAutosave.status === "saved"
       ? "Saved"
@@ -196,19 +370,32 @@ export default function CreateMissionPage() {
 
       <div className="space-y-1">
         <h1 className="text-xl font-bold tracking-tight font-mono lg:text-2xl">
-          {currentDraftName ? `Draft: ${currentDraftName}` : "New Mission"}
+          {pageTitle}
         </h1>
         <p className="text-sm text-muted-foreground">
           {currentDraftId
             ? "Editing a saved draft. Changes are not synced to the server until you click Update Draft."
             : "Write a mission in CUE and launch — inline diagnostics appear as you type."}
         </p>
+        {currentDefinitionName !== undefined && currentDefinitionMeta !== undefined && (
+          <DefinitionBanner
+            meta={currentDefinitionMeta}
+            loadedFrom={definitionLoadedFrom}
+            onDismiss={handleDefinitionDismiss}
+          />
+        )}
       </div>
 
       <Separator />
 
       <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
+          <DefinitionPickerDropdown
+            value={urlDefinitionName ?? null}
+            onChange={handleDefinitionChange}
+            disabled={draftLoading}
+          />
+
           <DraftsMenu
             currentDraftId={currentDraftId}
             onDeleted={handleDraftDeleted}
