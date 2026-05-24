@@ -249,7 +249,7 @@ export default function CreateMissionPage() {
         </div>
       </div>
 
-      <div style={{ minHeight: "calc(100vh - 14rem)" }}>
+      <div style={{ height: "calc(100vh - 14rem)" }}>
         <MissionCUEEditor
           value={cueSource}
           onChange={setCueSource}
