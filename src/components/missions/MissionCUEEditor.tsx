@@ -25,6 +25,32 @@ import * as monacoEditor from "monaco-editor";
 // Use locally-installed monaco-editor instead of CDN (CSP blocks CDN scripts).
 loader.config({ monaco: monacoEditor });
 
+// CUE uses a Monarch tokenizer — no built-in Monaco language worker needed.
+// We only need editor.worker for Monaco's internal editor machinery (bracket
+// matching, autoindent, etc.). Without this, Monaco emits the
+// "MonacoEnvironment.getWorkerUrl not defined" error and falls back to running
+// on the main thread, which freezes the UI.
+// The new URL() syntax is webpack 5 / Next.js 13+ Worker syntax; webpack emits
+// the worker as a separate static chunk served from /_next/static/chunks/.
+if (typeof window !== "undefined") {
+  (
+    window as unknown as {
+      MonacoEnvironment?: {
+        getWorker: (moduleId: string, label: string) => Worker;
+      };
+    }
+  ).MonacoEnvironment = {
+    getWorker(_moduleId: string, _label: string): Worker {
+      return new Worker(
+        new URL(
+          "monaco-editor/esm/vs/editor/editor.worker",
+          import.meta.url
+        )
+      );
+    },
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
