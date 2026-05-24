@@ -37,6 +37,7 @@ export interface Mission {
   findings: number;
   events: number;
   tenantId: string;
+  missionDefinitionId?: string;
 }
 
 export interface MissionFilters {

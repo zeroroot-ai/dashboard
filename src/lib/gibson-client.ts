@@ -815,6 +815,8 @@ export interface SerializedMission {
   progress: number;
   /** Human-readable mission description. */
   description: string;
+  /** The mission definition this mission was launched from, or `undefined` when unset. */
+  missionDefinitionId?: string;
 }
 
 /** Serialized form of an AgentInfo proto message. */
@@ -989,6 +991,7 @@ export function serializeMission(m: MissionInfo): SerializedMission {
     findingCount: m.findingCount,
     progress: m.progress,
     description: m.description,
+    missionDefinitionId: m.missionDefinitionId || undefined,
   };
 }
 
