@@ -5,6 +5,44 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.106.0](https://github.com/zero-day-ai/dashboard/compare/v0.105.0...v0.106.0) (2026-05-24)
+
+
+### Features
+
+* add pnpm audit security workflow ([#256](https://github.com/zero-day-ai/dashboard/issues/256)) ([5736227](https://github.com/zero-day-ai/dashboard/commit/57362274a9258f1f358dbb86c7fbe53ca39c43dc))
+* **missions/templates:** vendor .cue sources; delete JSON; drift gate; CUE preview ([#311](https://github.com/zero-day-ai/dashboard/issues/311)) ([657a3c3](https://github.com/zero-day-ai/dashboard/commit/657a3c37008722585fc477148277dbcc31549a4b))
+* **missions:** move create page to src/app; delete API route; add ?template= support ([#308](https://github.com/zero-day-ai/dashboard/issues/308)) ([99ac65c](https://github.com/zero-day-ai/dashboard/commit/99ac65c21c453702b0320d590af36c83c57c29d3))
+* **missions:** replace Monaco YAML editor with CUE editor; delete YAML layer ([#307](https://github.com/zero-day-ai/dashboard/issues/307)) ([b9621f3](https://github.com/zero-day-ai/dashboard/commit/b9621f3f3f60e22e3473f543f0cab05e80f1f497))
+* **providers:** credentialsMasked multi-field display + delete validateApiKeyFormat ([#303](https://github.com/zero-day-ai/dashboard/issues/303)) ([1948f14](https://github.com/zero-day-ai/dashboard/commit/1948f147022d26ae85e41a137e5193302a822eb4)), closes [#284](https://github.com/zero-day-ai/dashboard/issues/284)
+* **providers:** edit credential flow — PATCH without delete-and-recreate ([#300](https://github.com/zero-day-ai/dashboard/issues/300)) ([de3f3ab](https://github.com/zero-day-ai/dashboard/commit/de3f3ab810025d4eed255d41fd002f8dd9578877))
+* **providers:** FallbackChainEditor drag-to-reorder ([#296](https://github.com/zero-day-ai/dashboard/issues/296)) ([d1f3316](https://github.com/zero-day-ai/dashboard/commit/d1f33169798841c900ca294b4c9c23faabda90de))
+* **providers:** health badge auto-polling on provider card ([#297](https://github.com/zero-day-ai/dashboard/issues/297)) ([e244f62](https://github.com/zero-day-ai/dashboard/commit/e244f624b58c84f451f947ab8789b38838da4a5a))
+* **users:** pending invite controls — expiry display, resend, cancel ([#269](https://github.com/zero-day-ai/dashboard/issues/269)) ([4097999](https://github.com/zero-day-ai/dashboard/commit/409799915175d380a8440d9689e2f3e12daf4eca)), closes [#265](https://github.com/zero-day-ai/dashboard/issues/265)
+* **users:** rebuild user detail page — remove IdP link, surface all user actions ([#274](https://github.com/zero-day-ai/dashboard/issues/274)) ([bd78d5e](https://github.com/zero-day-ai/dashboard/commit/bd78d5e14d88518e35515b90782d196b539d8e6f)), closes [#268](https://github.com/zero-day-ai/dashboard/issues/268)
+* **users:** transferOwnershipAction + UI entry point on user detail page ([#273](https://github.com/zero-day-ai/dashboard/issues/273)) ([6f866a8](https://github.com/zero-day-ai/dashboard/commit/6f866a8f9eb2d3846e41d0921cf1be942fd2eba7)), closes [#266](https://github.com/zero-day-ai/dashboard/issues/266)
+* **wizard:** add Bedrock IRSA toggle to provider credential UI ([#298](https://github.com/zero-day-ai/dashboard/issues/298)) ([5ba4e3c](https://github.com/zero-day-ai/dashboard/commit/5ba4e3c284873a47bfa3d0abc10bfc15db1ba801))
+* **wizard:** decouple step-3 from probe success — test becomes advisory ([#304](https://github.com/zero-day-ai/dashboard/issues/304)) ([3d0c6e3](https://github.com/zero-day-ai/dashboard/commit/3d0c6e34a2da80664922c1d697409d38c32dd644)), closes [#288](https://github.com/zero-day-ai/dashboard/issues/288)
+* **wizard:** deprecated model display in catalogue picker ([#305](https://github.com/zero-day-ai/dashboard/issues/305)) ([5bcc0f7](https://github.com/zero-day-ai/dashboard/commit/5bcc0f7a9554b7cc5dc229d11ec9cc5b27688331))
+* **wizard:** URL-typed credential fields + OpenAI-compatible guidance + SSRF hint ([#299](https://github.com/zero-day-ai/dashboard/issues/299)) ([4d27655](https://github.com/zero-day-ai/dashboard/commit/4d2765580ee495a19640248a6779fc7b5961cac5)), closes [#286](https://github.com/zero-day-ai/dashboard/issues/286)
+
+
+### Bug Fixes
+
+* **authz:** add owner tier to relation-hierarchy satisfiesRelation ([#276](https://github.com/zero-day-ai/dashboard/issues/276)) ([263173d](https://github.com/zero-day-ai/dashboard/commit/263173d01ba1c90bf350e64a7cb2e3601365102a)), closes [#275](https://github.com/zero-day-ai/dashboard/issues/275)
+* **authz:** derive permissions from FGA role when schema is empty ([#277](https://github.com/zero-day-ai/dashboard/issues/277)) ([8a4326c](https://github.com/zero-day-ai/dashboard/commit/8a4326cf23999ac42372bb449ec3173dfd754da6))
+* **ci:** add actions:read to dashboard.yml permissions — fixes startup_failure ([#279](https://github.com/zero-day-ai/dashboard/issues/279)) ([ef4f3b5](https://github.com/zero-day-ai/dashboard/commit/ef4f3b517e8160df7e300c9a9e47a9e2d3c38238))
+* **deps:** remove unused swiper dep (critical CVE GHSA-hmx5-qpq5-p643) ([#261](https://github.com/zero-day-ai/dashboard/issues/261)) ([c83cfdc](https://github.com/zero-day-ai/dashboard/commit/c83cfdc27b850fab57f7bec7f6cdb8823a536811))
+* **invite:** remove viewer from invite role options ([#270](https://github.com/zero-day-ai/dashboard/issues/270)) ([2310646](https://github.com/zero-day-ai/dashboard/commit/231064649cb8f4cf1efd8ab86e54e05f264df396)), closes [#264](https://github.com/zero-day-ai/dashboard/issues/264)
+* **missions/drafts:** hard-cutover localStorage + JSDoc from yaml to cueSource ([#312](https://github.com/zero-day-ai/dashboard/issues/312)) ([d44ce97](https://github.com/zero-day-ai/dashboard/commit/d44ce97f6bfb62b787fcd0d462117667d62ef8de))
+* **missions/editor:** configure MonacoEnvironment.getWorker to unfreeze CUE editor ([#315](https://github.com/zero-day-ai/dashboard/issues/315)) ([9c24036](https://github.com/zero-day-ai/dashboard/commit/9c24036a8e9ecdbf8a71a30e901fe18d69d131cd))
+* **missions:** move create+templates pages from src/app to app directory ([#313](https://github.com/zero-day-ai/dashboard/issues/313)) ([7720c88](https://github.com/zero-day-ai/dashboard/commit/7720c881e61ce5e5145d2997d0690230de6d11e8))
+* **providers:** switch GetSupportedProviders route to member-accessible client ([#295](https://github.com/zero-day-ai/dashboard/issues/295)) ([5a97595](https://github.com/zero-day-ai/dashboard/commit/5a97595e76aa4e02994a28350f7b939be1c7a496)), closes [#285](https://github.com/zero-day-ai/dashboard/issues/285)
+* **ui:** swap sidebar icons — single person for users, group for teams ([#290](https://github.com/zero-day-ai/dashboard/issues/290)) ([027a8b2](https://github.com/zero-day-ai/dashboard/commit/027a8b260a97ad3992054d106794676fab17a5c2))
+* **users:** owner removal safeguard — UI gate + server-layer last-owner check ([#272](https://github.com/zero-day-ai/dashboard/issues/272)) ([43742ca](https://github.com/zero-day-ai/dashboard/commit/43742ca11bd941528cb8438bceebbe1bdd13ddfc)), closes [#267](https://github.com/zero-day-ai/dashboard/issues/267)
+* **users:** owner role badge and row protection in user list ([#271](https://github.com/zero-day-ai/dashboard/issues/271)) ([7bbb29d](https://github.com/zero-day-ai/dashboard/commit/7bbb29d77980d5455b164543b41147d40b906a4f)), closes [#263](https://github.com/zero-day-ai/dashboard/issues/263)
+* **ux:** surface provisioning state instead of opaque 412 ([#306](https://github.com/zero-day-ai/dashboard/issues/306)) ([f601616](https://github.com/zero-day-ai/dashboard/commit/f601616eb7bd59c582c95d606d6883b582c0c546)), closes [#260](https://github.com/zero-day-ai/dashboard/issues/260)
+
 ## [0.105.0](https://github.com/zero-day-ai/dashboard/compare/v0.104.0...v0.105.0) (2026-05-20)
 
 
