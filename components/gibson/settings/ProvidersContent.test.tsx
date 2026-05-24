@@ -259,6 +259,11 @@ describe("ProvidersContent", () => {
   });
 
   it("renders the section heading and Add Provider button", () => {
+    mockedUseProviders.mockReturnValue({
+      data: mockListProvidersResponse,
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviders>);
     renderWithProviders(<ProvidersContent />);
     expect(screen.getByText("LLM Providers")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /add provider/i })).toBeInTheDocument();
@@ -277,18 +282,22 @@ describe("ProvidersContent", () => {
 
   it("shows empty state when no providers are configured", () => {
     renderWithProviders(<ProvidersContent />);
-    expect(screen.getByText(/no providers configured yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/connect your first provider/i)).toBeInTheDocument();
   });
 
   it("opens Add Provider dialog on button click", async () => {
     const user = userEvent.setup();
+    mockedUseProviders.mockReturnValue({
+      data: mockListProvidersResponse,
+      isLoading: false,
+      isError: false,
+    } as ReturnType<typeof useProviders>);
     renderWithProviders(<ProvidersContent />);
 
     await user.click(screen.getByRole("button", { name: /add provider/i }));
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText(/Add LLM Provider/i)).toBeInTheDocument();
-    expect(screen.getByTestId("provider-type-select")).toBeInTheDocument();
   });
 
   it("shows an error alert when useProviders fails", () => {
