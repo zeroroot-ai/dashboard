@@ -5,6 +5,23 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.108.0](https://github.com/zero-day-ai/dashboard/compare/v0.107.0...v0.108.0) (2026-05-24)
+
+
+### Features
+
+* **settings:** member picker and Members settings page ([#348](https://github.com/zero-day-ai/dashboard/issues/348)) ([69b9951](https://github.com/zero-day-ai/dashboard/commit/69b99513b07e0433f5697899c9984b0aef5fdda5))
+
+
+### Bug Fixes
+
+* **ci:** add path filter to PR image builds ([#345](https://github.com/zero-day-ai/dashboard/issues/345)) ([bc99821](https://github.com/zero-day-ai/dashboard/commit/bc998214a67a7206c20c90e8d355ff24cb8c7a24))
+* **ci:** remove PR trigger and use security-extended for CodeQL ([#346](https://github.com/zero-day-ai/dashboard/issues/346)) ([69dcb1a](https://github.com/zero-day-ai/dashboard/commit/69dcb1aa55086194c8d43a0203a2303b3c43adb3))
+* **docs:** move docs pages from src/app/ to app/ — Next.js ignores src/app when app/ exists ([#338](https://github.com/zero-day-ai/dashboard/issues/338)) ([acffd04](https://github.com/zero-day-ai/dashboard/commit/acffd046d40b4c5bbb1b6a26ac9b5b3fcb208e56))
+* **prebuild:** skip check-auth-rbac-inventory-fresh when enterprise/docs absent ([#349](https://github.com/zero-day-ai/dashboard/issues/349)) ([3d021de](https://github.com/zero-day-ai/dashboard/commit/3d021de4e4991364a477926a3f79c74b4a0c9f6f))
+* **settings:** profile name/email, billing errors, and nav overhaul ([#344](https://github.com/zero-day-ai/dashboard/issues/344)) ([c395364](https://github.com/zero-day-ai/dashboard/commit/c3953643ef870e8034ac3a5fd991bb0441cb160f))
+* **tests:** update stale ProvidersContent tests for ProviderWizard refactor ([#341](https://github.com/zero-day-ai/dashboard/issues/341)) ([c77c10d](https://github.com/zero-day-ai/dashboard/commit/c77c10dc450cd883264a52ba66210279a05b9b41))
+
 ## [0.107.0](https://github.com/zero-day-ai/dashboard/compare/v0.106.0...v0.107.0) (2026-05-24)
 
 
