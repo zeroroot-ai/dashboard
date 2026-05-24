@@ -64,10 +64,10 @@ export default async function TemplateDetailPage({ params }: PageProps) {
         <Card>
           <CardContent className="p-4">
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Mission JSON
+              Mission CUE
             </h2>
             <pre className="overflow-x-auto rounded bg-muted p-3 text-xs">
-              <code>{tpl.missionJson}</code>
+              <code>{tpl.cueSource}</code>
             </pre>
           </CardContent>
         </Card>
