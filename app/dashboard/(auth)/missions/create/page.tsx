@@ -8,7 +8,7 @@ import { ArrowLeft, Loader2, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useAutosave } from "@/src/hooks/useAutosave";
+import { useServerAutosave } from "@/src/hooks/useServerAutosave";
 import { SaveDraftButton } from "@/src/components/mission/create/save-draft-button";
 import { DraftsMenu } from "@/src/components/mission/create/drafts-menu";
 import { getMissionDraftAction } from "@/app/actions/missions/drafts";
@@ -32,7 +32,6 @@ const MissionCUEEditor = dynamic(
   }
 );
 
-const AUTOSAVE_KEY = "mission-create";
 const DEFAULT_CUE = `// Gibson Mission Definition (CUE)
 // Edit below — inline diagnostics appear as you type.
 package mission
@@ -41,25 +40,13 @@ name: "my-mission"
 description: "Describe what this mission does."
 `;
 
-function loadLocalDraft(): string {
-  if (typeof window === "undefined") return DEFAULT_CUE;
-  try {
-    const stored = localStorage.getItem(`gibson:draft:${AUTOSAVE_KEY}`);
-    if (stored) {
-      const d = JSON.parse(stored);
-      if (d?.cueSource) return d.cueSource;
-    }
-  } catch { /* ignore */ }
-  return DEFAULT_CUE;
-}
-
 export default function CreateMissionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlDraftId = searchParams.get("draft") ?? undefined;
   const urlTemplateId = searchParams.get("template") ?? undefined;
 
-  const [cueSource, setCueSource] = React.useState<string>(loadLocalDraft);
+  const [cueSource, setCueSource] = React.useState<string>(DEFAULT_CUE);
   const [errorCount, setErrorCount] = React.useState(0);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -118,10 +105,25 @@ export default function CreateMissionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlTemplateId]);
 
-  const autosave = useAutosave(
-    { cueSource, activeTab: "editor", savedAt: new Date().toISOString() },
-    { storageKey: AUTOSAVE_KEY, debounceMs: 30000 }
+  const serverAutosave = useServerAutosave(
+    { cueSource, draftId: currentDraftId },
+    { name: currentDraftName }
   );
+
+  // When useServerAutosave creates a new draft (draftId goes from undefined to
+  // a server-assigned id), register it in the page state and update the URL.
+  React.useEffect(() => {
+    if (
+      serverAutosave.draftId !== undefined &&
+      serverAutosave.draftId !== currentDraftId
+    ) {
+      handleDraftSaved(
+        serverAutosave.draftId,
+        currentDraftName ?? "Untitled Draft"
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverAutosave.draftId]);
 
   React.useEffect(() => {
     const handle = (e: BeforeUnloadEvent) => {
@@ -139,7 +141,6 @@ export default function CreateMissionPage() {
         toast.error(res.error);
         return;
       }
-      autosave.clear();
       toast.success("Mission launched");
       router.push("/dashboard/missions");
     } catch (err) {
@@ -169,12 +170,12 @@ export default function CreateMissionPage() {
   }
 
   const autosaveLabel =
-    autosave.status === "saved"
-      ? "Local autosave"
-      : autosave.status === "saving"
+    serverAutosave.status === "saved"
+      ? "Saved"
+      : serverAutosave.status === "saving"
         ? "Saving..."
-        : autosave.status === "error"
-          ? "Local autosave failed"
+        : serverAutosave.status === "error"
+          ? "Save failed"
           : "Unsaved changes";
 
   return (
