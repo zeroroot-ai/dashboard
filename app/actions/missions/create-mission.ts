@@ -130,6 +130,13 @@ export async function createMissionFromCUEAction(input: {
   }
 }
 
+const KNOWN_TEMPLATE_IDS = new Set([
+  "recon",
+  "webapp-scan",
+  "secrets-audit",
+  "compliance-check",
+]);
+
 /**
  * Load the CUE source for a vendored mission template.
  * Template .cue files land in dashboard#293. Returns null gracefully
@@ -138,10 +145,9 @@ export async function createMissionFromCUEAction(input: {
 export async function getTemplateCUESourceAction(
   templateId: string,
 ): Promise<string | null> {
-  const id = templateId.replace(/[^a-z0-9-]/gi, "");
-  if (!id) return null;
+  if (!KNOWN_TEMPLATE_IDS.has(templateId)) return null;
   try {
-    const path = join(process.cwd(), "src/data/templates", `${id}.cue`);
+    const path = join(process.cwd(), "src/data/templates", `${templateId}.cue`);
     return readFileSync(path, "utf-8");
   } catch {
     return null;
