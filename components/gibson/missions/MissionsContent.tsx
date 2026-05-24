@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { PlusCircle, MoreHorizontal, Play, Pause, Square, Trash2, GripVertical, CrosshairIcon } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Play, Pause, Square, Trash2, GripVertical, CrosshairIcon, Pencil } from "lucide-react";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { toast } from "sonner";
 
@@ -29,6 +29,8 @@ import * as Kanban from "@/components/ui/kanban";
 
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import { RunDemoMissionButton } from "./RunDemoMissionButton";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
+import { AuthGatedButton } from "@/components/gibson/auth/AuthGatedButton";
 import {
   useMissions,
   useStartMission,
@@ -70,6 +72,41 @@ function StatusBadge({ status }: { status: MissionStatus }) {
     <Badge variant="outline" className={STATUS_BADGE_CLASSES[status]}>
       {STATUS_LABELS[status]}
     </Badge>
+  );
+}
+
+function MissionEditButton({ mission }: { mission: Mission }) {
+  const { allowed, loading } = useAuthorize(
+    "/gibson.daemon.v1.DaemonService/CreateMissionDefinition",
+  );
+
+  if (!mission.missionDefinitionId) return null;
+
+  const state = loading ? "loading" : allowed ? "allowed" : "denied";
+  const href = `/dashboard/missions/create?definition=${encodeURIComponent(mission.name)}`;
+
+  return (
+    <AuthGatedButton
+      state={state}
+      disabledTooltip="Ask your tenant admin for permission to edit mission definitions."
+      variant="ghost"
+      size="icon"
+      className="size-7"
+      loadingSkeletonClassName="size-7 rounded-md"
+      asChild={state === "allowed"}
+    >
+      {state === "allowed" ? (
+        <Link href={href}>
+          <Pencil className="size-3.5" />
+          <span className="sr-only">Edit definition for {mission.name}</span>
+        </Link>
+      ) : (
+        <>
+          <Pencil className="size-3.5" />
+          <span className="sr-only">Edit definition for {mission.name}</span>
+        </>
+      )}
+    </AuthGatedButton>
   );
 }
 
@@ -175,7 +212,7 @@ function MissionsTable({ missions }: { missions: Mission[] }) {
             <TableHead>Target Scope</TableHead>
             <TableHead className="text-right">Findings</TableHead>
             <TableHead>Created</TableHead>
-            <TableHead className="w-12" />
+            <TableHead className="w-20" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -208,7 +245,10 @@ function MissionsTable({ missions }: { missions: Mission[] }) {
                   : "—"}
               </TableCell>
               <TableCell>
-                <MissionActionsMenu mission={mission} />
+                <div className="flex items-center gap-1 justify-end">
+                  <MissionEditButton mission={mission} />
+                  <MissionActionsMenu mission={mission} />
+                </div>
               </TableCell>
             </TableRow>
           ))}
@@ -242,7 +282,7 @@ function MissionKanbanCard({ mission }: { mission: Mission }) {
         <p className="text-xs text-muted-foreground font-mono truncate">
           {mission.config?.scope ?? mission.config?.target ?? "—"}
         </p>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-1">
           {mission.findings > 0 ? (
             <span className="text-xs text-primary font-semibold tabular-nums">
               {mission.findings} findings
@@ -255,6 +295,7 @@ function MissionKanbanCard({ mission }: { mission: Mission }) {
               ? new Date(mission.startedAt).toLocaleDateString()
               : "—"}
           </span>
+          <MissionEditButton mission={mission} />
         </div>
       </CardContent>
     </Card>
