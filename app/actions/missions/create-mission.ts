@@ -34,7 +34,7 @@ import {
 } from "@/app/actions/missions/drafts";
 
 const FGA_CREATE_DEFINITION =
-  "/gibson.daemon.admin.v1.DaemonAdminService/CreateMissionDefinition";
+  "/gibson.daemon.v1.DaemonService/CreateMissionDefinition";
 
 export type CreateMissionResult =
   | { ok: true; missionId: string }
