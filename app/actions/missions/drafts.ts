@@ -160,7 +160,7 @@ export async function saveMissionDraftAction(input: {
 
 /**
  * Returns the metadata-only list of saved drafts for the active tenant,
- * ordered by update time descending. YAML content is not included.
+ * ordered by update time descending. CUE source is not included.
  */
 export async function listMissionDraftsAction(): Promise<
   DraftActionResult<MissionDraft[]>
@@ -182,8 +182,8 @@ export async function listMissionDraftsAction(): Promise<
 }
 
 /**
- * Returns the full draft (including YAML) for the given draftId scoped to
- * the active tenant. Maps daemon NotFound to "not_found" so the page can
+ * Returns the full draft (including CUE source) for the given draftId scoped
+ * to the active tenant. Maps daemon NotFound to "not_found" so the page can
  * strip a stale ?draft=<id> from the URL and toast "draft expired."
  */
 export async function getMissionDraftAction(
