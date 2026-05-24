@@ -12,6 +12,7 @@ import { useAutosave } from "@/src/hooks/useAutosave";
 import { SaveDraftButton } from "@/src/components/mission/create/save-draft-button";
 import { DraftsMenu } from "@/src/components/mission/create/drafts-menu";
 import { getMissionDraftAction } from "@/app/actions/missions/drafts";
+import { createMissionFromCUEAction } from "@/app/actions/missions/create-mission";
 
 const MissionCUEEditor = dynamic(
   () =>
@@ -121,16 +122,10 @@ export default function CreateMissionPage() {
   async function handleRunMission() {
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/missions/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cueSource }),
-      });
+      const res = await createMissionFromCUEAction({ cueSource });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(
-          body?.error?.message ?? body?.message ?? `Request failed: ${res.statusText}`
-        );
+        toast.error(res.error);
+        return;
       }
       autosave.clear();
       toast.success("Mission launched");
