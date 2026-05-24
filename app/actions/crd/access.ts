@@ -17,8 +17,6 @@ import { serviceClient } from "@/src/lib/gibson-client";
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
 
-export type { ActionResult };
-
 export type AccessScope = "tenant" | "team" | "user" | "component" | "my";
 export type AccessAction = "read" | "write" | "execute";
 
