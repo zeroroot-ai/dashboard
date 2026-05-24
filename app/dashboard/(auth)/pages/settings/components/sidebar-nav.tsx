@@ -71,6 +71,12 @@ const workspaceAdminNav: AdminEntry[] = [
 
 const adminNav: AdminEntry[] = [
   {
+    title: "Members",
+    href: "/dashboard/pages/settings/members",
+    icon: UsersIcon,
+    method: "/gibson.admin.v1.TenantAdminService/GetBrokerConfig",
+  },
+  {
     title: "Secrets",
     href: "/dashboard/pages/settings/secrets",
     icon: KeyIcon,
