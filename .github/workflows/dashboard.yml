@@ -6,6 +6,18 @@ on:
     tags:
       - 'v*'
   pull_request:
+    paths:
+      - 'app/**'
+      - 'components/**'
+      - 'src/**'
+      - 'content/**'
+      - 'scripts/**'
+      - 'Dockerfile'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'next.config.*'
+      - 'tailwind.config.*'
+      - '.github/workflows/dashboard.yml'
   workflow_dispatch:
 
 concurrency:
