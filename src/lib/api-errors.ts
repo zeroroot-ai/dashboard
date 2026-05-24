@@ -109,18 +109,24 @@ export function correlationIdFromRequest(
 // ---------------------------------------------------------------------------
 
 /**
- * One of the 9 canonical error classes the dashboard surfaces.
+ * One of the 10 canonical error classes the dashboard surfaces.
  *
  * Every ConnectError code from the daemon maps to exactly one of
  * these. Every API route returns one of these shapes (or 2xx + body).
  * The error-state UI uses `class` to drive the affordance (retry,
  * sign-in link, upgrade link, ...).
+ *
+ * `provisioning` is a sub-classification of `failed_precondition`:
+ * it fires when the daemon message matches the data-plane-not-yet-
+ * provisioned pattern, surfaces HTTP 503 instead of 412, and adds
+ * a `Retry-After: 30` response header so the client can auto-retry.
  */
 export type ErrorClass =
   | 'unauthenticated'
   | 'permission_denied'
   | 'not_found'
   | 'failed_precondition'
+  | 'provisioning'
   | 'resource_exhausted'
   | 'unavailable'
   | 'deadline_exceeded'
@@ -191,6 +197,16 @@ export const ERROR_CLASS_TABLE: Record<ErrorClass, ErrorClassEntry> = {
     message:
       "Your account is still finishing setup. A few features may be unavailable for another moment — please try again shortly. If this keeps happening, share the reference below with support.",
     affordance: 'retry_with_support',
+  },
+  provisioning: {
+    class: 'provisioning',
+    httpStatus: 503,
+    // Distinct from the general failed_precondition message: this fires
+    // specifically when the tenant data-plane saga has not completed yet.
+    // "workspace" is the customer-facing term; avoids "data-plane" jargon.
+    message:
+      'Your workspace is being set up — this usually takes a few minutes. Refresh to check progress.',
+    affordance: 'retry',
   },
   resource_exhausted: {
     class: 'resource_exhausted',
@@ -358,6 +374,13 @@ export function daemonErrorResponse(
     // raw underlying message is what we want to log + (in the
     // InvalidArgument case) surface to the user.
     detail = err.rawMessage;
+    // Distinguish provisioning-in-progress from other precondition
+    // failures. The daemon emits this exact message when the
+    // DataPlaneProvisioned saga step is still running or has
+    // permanently failed for a tenant.
+    if (cls === 'failed_precondition' && /tenant data.?plane not provisioned/i.test(detail)) {
+      cls = 'provisioning';
+    }
   } else if (err instanceof Error) {
     cls = 'internal';
     detail = err.message;
@@ -414,9 +437,16 @@ export function daemonErrorResponse(
     (body.error as ApiErrorBody['error'] & { detail?: string }).detail = detail;
   }
 
+  const responseHeaders: Record<string, string> = { [CORRELATION_HEADER]: correlationId };
+  if (cls === 'provisioning') {
+    // Hint to the client that it can retry after 30 seconds; the
+    // data-plane saga typically completes within that window.
+    responseHeaders['Retry-After'] = '30';
+  }
+
   return NextResponse.json(body, {
     status: entry.httpStatus,
-    headers: { [CORRELATION_HEADER]: correlationId },
+    headers: responseHeaders,
   });
 }
 

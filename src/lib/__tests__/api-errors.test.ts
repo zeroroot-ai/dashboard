@@ -77,8 +77,8 @@ describe('correlationIdFromRequest', () => {
 // ---------------------------------------------------------------------------
 
 describe('ERROR_CLASS_TABLE', () => {
-  it('has exactly 9 classes', () => {
-    expect(Object.keys(ERROR_CLASS_TABLE)).toHaveLength(9);
+  it('has exactly 10 classes', () => {
+    expect(Object.keys(ERROR_CLASS_TABLE)).toHaveLength(10);
   });
 
   it.each(Object.entries(ERROR_CLASS_TABLE))(
@@ -247,6 +247,74 @@ describe('daemonErrorResponse — every ConnectError class', () => {
       ERROR_CLASS_TABLE.unavailable.message,
     );
     expect(body.error.message).not.toContain('postgres');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// daemonErrorResponse — provisioning sub-classification (dashboard#260)
+// ---------------------------------------------------------------------------
+
+describe('daemonErrorResponse — provisioning sub-classification', () => {
+  it('FailedPrecondition + "tenant data-plane not provisioned" → 503 with class provisioning', async () => {
+    const log = vi.fn();
+    const err = new ConnectError('tenant data-plane not provisioned', Code.FailedPrecondition);
+    const res = daemonErrorResponse(err, { log });
+
+    expect(res.status).toBe(503);
+
+    const body = await res.json();
+    expect(body.error.class).toBe('provisioning');
+    expect(body.error.affordance).toBe('retry');
+    expect(body.error.message).toContain('workspace is being set up');
+  });
+
+  it('provisioning response includes Retry-After: 30 header', async () => {
+    const log = vi.fn();
+    const err = new ConnectError('tenant data-plane not provisioned', Code.FailedPrecondition);
+    const res = daemonErrorResponse(err, { log });
+
+    expect(res.headers.get('Retry-After')).toBe('30');
+  });
+
+  it('provisioning regex matches "tenant dataplane not provisioned" (no hyphen)', async () => {
+    const log = vi.fn();
+    const err = new ConnectError('tenant dataplane not provisioned', Code.FailedPrecondition);
+    const res = daemonErrorResponse(err, { log });
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error.class).toBe('provisioning');
+  });
+
+  it('FailedPrecondition + unrelated message → 412 failed_precondition (unaffected)', async () => {
+    const log = vi.fn();
+    const err = new ConnectError('mission definition not found in namespace', Code.FailedPrecondition);
+    const res = daemonErrorResponse(err, { log });
+
+    expect(res.status).toBe(412);
+
+    const body = await res.json();
+    expect(body.error.class).toBe('failed_precondition');
+    // No Retry-After for ordinary precondition failures.
+    expect(res.headers.get('Retry-After')).toBeNull();
+  });
+
+  it('non-provisioning errors do not get Retry-After header', async () => {
+    const log = vi.fn();
+    const err = new ConnectError('backend offline', Code.Unavailable);
+    const res = daemonErrorResponse(err, { log });
+
+    expect(res.headers.get('Retry-After')).toBeNull();
+  });
+
+  it('provisioning: correlation ID still present in header and body', async () => {
+    const log = vi.fn();
+    const headers = new Headers({ [CORRELATION_HEADER]: 'req-PROVISIONING12345678901234' });
+    const err = new ConnectError('tenant data-plane not provisioned', Code.FailedPrecondition);
+    const res = daemonErrorResponse(err, { headers, log });
+
+    expect(res.headers.get(CORRELATION_HEADER)).toBe('req-PROVISIONING12345678901234');
+    const body = await res.json();
+    expect(body.error.correlationId).toBe('req-PROVISIONING12345678901234');
   });
 });
 
