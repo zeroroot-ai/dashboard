@@ -13,6 +13,7 @@ import {
   ScaleIcon,
   ShieldIcon,
   UserIcon,
+  UsersIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ import { useAuthorize } from "@/src/lib/auth/use-authorize";
  */
 
 const accountNav = [
-  { title: "Account", href: "/dashboard/pages/settings/account", icon: UserIcon },
+  { title: "Profile", href: "/dashboard/pages/settings/account", icon: UserIcon },
   { title: "Billing", href: "/dashboard/pages/settings/billing", icon: CreditCardIcon },
 ];
 
@@ -59,6 +60,15 @@ interface AdminEntry {
   method: string;
 }
 
+const workspaceAdminNav: AdminEntry[] = [
+  {
+    title: "Members",
+    href: "/dashboard/pages/settings/members",
+    icon: UsersIcon,
+    method: "/gibson.admin.v1.TenantAdminService/ListMembers",
+  },
+];
+
 const adminNav: AdminEntry[] = [
   {
     title: "Secrets",
@@ -67,13 +77,13 @@ const adminNav: AdminEntry[] = [
     method: "/gibson.admin.v1.SecretsAdminService/ListSecrets",
   },
   {
-    title: "Secrets Backend",
+    title: "Secret Broker",
     href: "/dashboard/pages/settings/secrets-backend",
     icon: DatabaseIcon,
     method: "/gibson.admin.v1.TenantAdminService/GetBrokerConfig",
   },
   {
-    title: "Grants",
+    title: "Permissions",
     href: "/dashboard/pages/settings/grants",
     icon: ShieldIcon,
     method: "/gibson.admin.v1.GrantsAdminService/ListActiveGrants",
@@ -138,6 +148,7 @@ export function SidebarNav() {
     <Card className="py-0">
       <CardContent className="p-2">
         <nav className="flex flex-col space-y-0.5 space-x-2 lg:space-x-0">
+          <SectionLabel>Personal</SectionLabel>
           {accountNav.map((item) => (
             <NavLink key={item.href} {...item} pathname={pathname} />
           ))}
@@ -146,8 +157,11 @@ export function SidebarNav() {
           {workspaceNav.map((item) => (
             <NavLink key={item.href} {...item} pathname={pathname} />
           ))}
+          {workspaceAdminNav.map((item) => (
+            <GatedNavLink key={item.href} {...item} pathname={pathname} />
+          ))}
 
-          <SectionLabel>Admin</SectionLabel>
+          <SectionLabel>Administration</SectionLabel>
           {adminNav.map((item) => (
             <GatedNavLink key={item.href} {...item} pathname={pathname} />
           ))}

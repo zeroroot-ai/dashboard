@@ -31,6 +31,7 @@ import { cache } from 'react';
 import { Code, ConnectError } from '@connectrpc/connect';
 
 import { auth } from '@/auth';
+import { logger } from '@/src/lib/logger';
 
 /**
  * Returns the Zitadel access token for the current request.
@@ -48,6 +49,16 @@ export const requireUserToken = cache(async (): Promise<string> => {
     throw new ConnectError(
       'No Zitadel access token in session — user must be signed in via Zitadel OIDC',
       Code.Unauthenticated,
+    );
+  }
+  // Defensive shape check: a valid Zitadel access token is a JWT (three
+  // dot-delimited base64url segments). Non-JWT tokens will fail ext-authz
+  // validation. Log a warning so the issue surfaces in structured logs
+  // without breaking the request flow.
+  if (session.accessToken.split('.').length !== 3) {
+    logger.warn(
+      { tokenLength: session.accessToken.length },
+      '[session-debug] access token is not JWT-shaped; daemon auth may fail',
     );
   }
   return session.accessToken;

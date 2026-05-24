@@ -154,14 +154,46 @@ export function BillingContent({ initialPlanId }: { initialPlanId?: string }) {
     );
   }
 
-  if (error || !plan) {
+  if (error) {
     return (
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          {error ?? "Plan information unavailable."}
+          {error}
         </AlertDescription>
       </Alert>
+    );
+  }
+
+  if (!plan) {
+    // Unknown plan ID — show the raw ID as a fallback rather than an error
+    // state so the page is usable even when plan metadata hasn't propagated yet.
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <CardTitle className="text-2xl">
+                  {initialPlanId ?? "Unknown plan"}
+                </CardTitle>
+                <CardDescription>
+                  Plan details are loading. Refresh in a moment.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Plan information for &quot;{initialPlanId ?? "this tenant"}&quot; is not
+                yet available. Contact support if this persists.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
