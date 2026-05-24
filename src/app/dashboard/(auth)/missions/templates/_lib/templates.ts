@@ -1,19 +1,16 @@
 /**
  * Server-side helpers for the mission templates gallery. Reads
- * the vendored template.json + template.mdx pairs from
+ * the vendored template.cue + template.mdx pairs from
  * src/data/templates/ and exposes a typed catalog.
  *
- * Vendored from opensource/adk/templates/<name>/{template.json,template.mdx}
- * by scripts/vendor-mission-authoring-bundle.mjs (and a sibling
- * fallback for sibling-checkout dev workflows).
+ * Vendored from opensource/adk/templates/<name>/{template.cue,template.mdx}
+ * by scripts/vendor-mission-templates.mjs (sibling-checkout dev workflow).
  *
  * Spec: mission-dashboard-rewrite Requirement 6 ACs 1, 2, 3.
  */
 
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-
-import type { MissionDefinition } from "@/src/gen/gibson/mission/v1/mission_definition_pb";
 
 export interface TemplateCatalogEntry {
   /** kebab-case template id (filename stem). */
@@ -28,11 +25,6 @@ export interface TemplateCatalogEntry {
 
 const TEMPLATES_DIR = "src/data/templates";
 
-// Hard-coded catalog so the gallery page is deterministic and
-// can fail-fast if a template goes missing. Adding a template
-// means: vendor template.json + template.mdx into src/data/templates,
-// then add an entry here. The CI drift gate ensures the JSON
-// matches the CUE source.
 const KNOWN_TEMPLATE_IDS = [
   "recon",
   "webapp-scan",
@@ -56,36 +48,26 @@ export interface LoadedTemplate {
   meta: TemplateCatalogEntry;
   /** Body of the MDX file with frontmatter stripped. */
   mdxBody: string;
-  /** Parsed mission JSON the user will fork. */
-  mission: MissionDefinition;
-  /** Raw JSON string (for "view source" disclosure). */
-  missionJson: string;
+  /** Raw CUE source (for the "Use this template" editor seeding and preview panel). */
+  cueSource: string;
 }
 
 export function loadTemplate(id: string): LoadedTemplate {
   const meta = loadTemplateMeta(id);
   const mdxPath = join(process.cwd(), TEMPLATES_DIR, `${id}.mdx`);
-  const jsonPath = join(process.cwd(), TEMPLATES_DIR, `${id}.json`);
+  const cuePath = join(process.cwd(), TEMPLATES_DIR, `${id}.cue`);
   const rawMdx = readFileSync(mdxPath, "utf-8");
-  const rawJson = readFileSync(jsonPath, "utf-8");
+  const cueSource = readFileSync(cuePath, "utf-8");
   const { body } = splitFrontmatter(rawMdx);
-  // We deliberately skip protojson.Unmarshal here — the gallery's
-  // detail page only needs the shape for "Use this template" form
-  // pre-fill, which happens client-side after the user clicks.
-  // Keep the JSON as raw bytes here; the client component does
-  // the protojson decode.
-  const mission = JSON.parse(rawJson) as MissionDefinition;
   return {
     meta,
     mdxBody: body,
-    mission,
-    missionJson: rawJson,
+    cueSource,
   };
 }
 
 function parseFrontmatter(id: string, raw: string): TemplateCatalogEntry {
   const { frontmatter, body } = splitFrontmatter(raw);
-  // First non-blank, non-heading line of the body is the synopsis.
   const firstPara = body
     .split("\n\n")
     .map((p) => p.trim())
@@ -117,20 +99,16 @@ function splitFrontmatter(raw: string): {
   return { frontmatter: obj, body };
 }
 
-// Surface for static-route generation in [name]/page.tsx.
 export function knownTemplateIds(): TemplateId[] {
   return [...KNOWN_TEMPLATE_IDS];
 }
 
-// Defensive: warn if the templates dir on disk has more files
-// than the hard-coded list. Helps catch additions made without
-// updating KNOWN_TEMPLATE_IDS. Logged via console on import in dev.
 if (process.env.NODE_ENV !== "production") {
   try {
     const files = readdirSync(join(process.cwd(), TEMPLATES_DIR));
     const stems = new Set<string>();
     for (const f of files) {
-      const m = f.match(/^(.+)\.(json|mdx)$/);
+      const m = f.match(/^(.+)\.(cue|mdx)$/);
       if (m) stems.add(m[1]);
     }
     for (const s of stems) {
