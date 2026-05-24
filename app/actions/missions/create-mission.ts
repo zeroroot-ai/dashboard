@@ -28,6 +28,10 @@ import { userClient } from "@/src/lib/gibson-client";
 import { DaemonAdminService } from "@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 import { logger } from "@/src/lib/logger";
+import {
+  listMissionDraftsAction,
+  saveMissionDraftAction,
+} from "@/app/actions/missions/drafts";
 
 const FGA_CREATE_DEFINITION =
   "/gibson.daemon.admin.v1.DaemonAdminService/CreateMissionDefinition";
@@ -103,6 +107,25 @@ export async function createMissionFromCUEAction(input: {
         code: "rpc_failed",
       };
     }
+
+    // Non-blocking: upsert a server-side draft for this definition so Edit button can find it
+    const definitionName =
+      /^name:\s*["']?([^"'\n]+)["']?/m.exec(cueSource)?.[1]?.trim() ?? name;
+    void (async () => {
+      try {
+        const existingDrafts = await listMissionDraftsAction();
+        const match = existingDrafts.ok
+          ? existingDrafts.data.find((d) => d.name === definitionName)
+          : undefined;
+        await saveMissionDraftAction({
+          name: definitionName,
+          cueSource,
+          draftId: match?.id,
+        });
+      } catch (err) {
+        logger.warn({ err }, "draft upsert after run: non-fatal");
+      }
+    })();
 
     return { ok: true, missionId };
   } catch (err) {
