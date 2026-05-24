@@ -323,32 +323,34 @@ function FirstMissionStep({
   async function onSubmit(values: FirstMissionFormValues) {
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/missions/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          target: values.targetDomain,
-          templateId: values.template,
-          name: `${values.template} — ${values.targetDomain}`,
-        }),
+      // Load template CUE source (lands in dashboard#293; no-ops gracefully
+      // until template .cue files are vendored).
+      const { getTemplateCUESourceAction, createMissionFromCUEAction } =
+        await import("@/app/actions/missions/create-mission");
+      const templateCUE = await getTemplateCUESourceAction(values.template);
+      const cueSource = templateCUE ?? [
+        "package mission",
+        `name: "${values.template} — ${values.targetDomain}"`,
+        `description: "Onboarding mission seeded from template ${values.template}"`,
+      ].join("\n");
+
+      const res = await createMissionFromCUEAction({
+        cueSource,
+        name: `${values.template} — ${values.targetDomain}`,
       });
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `Request failed (${res.status})`);
+        throw new Error(res.error);
       }
-
-      const data = await res.json();
-      const missionId: string | undefined = data.id ?? data.missionId;
 
       store.setMissionTarget(values.targetDomain);
       store.setUsedTemplateId(values.template);
-      if (missionId) store.setCreatedMissionId(missionId);
+      store.setCreatedMissionId(res.missionId);
 
       onStateChange({
         targetDomain: values.targetDomain,
         missionTemplate: values.template,
-        missionId,
+        missionId: res.missionId,
       });
       onNext();
     } catch (err) {

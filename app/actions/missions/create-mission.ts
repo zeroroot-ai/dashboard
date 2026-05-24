@@ -15,6 +15,8 @@
 
 import "server-only";
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { z } from "zod";
 import { ConnectError, Code } from "@connectrpc/connect";
 
@@ -125,5 +127,29 @@ export async function createMissionFromCUEAction(input: {
     const msg = err instanceof Error ? err.message : "Unexpected error";
     logger.error({ err: { message: msg } }, "createMissionFromCUE: unexpected error");
     return { ok: false, error: msg, code: "rpc_failed" };
+  }
+}
+
+const KNOWN_TEMPLATE_IDS = new Set([
+  "recon",
+  "webapp-scan",
+  "secrets-audit",
+  "compliance-check",
+]);
+
+/**
+ * Load the CUE source for a vendored mission template.
+ * Template .cue files land in dashboard#293. Returns null gracefully
+ * until then so the create page can no-op on ?template=<id>.
+ */
+export async function getTemplateCUESourceAction(
+  templateId: string,
+): Promise<string | null> {
+  if (!KNOWN_TEMPLATE_IDS.has(templateId)) return null;
+  try {
+    const path = join(process.cwd(), "src/data/templates", `${templateId}.cue`);
+    return readFileSync(path, "utf-8");
+  } catch {
+    return null;
   }
 }

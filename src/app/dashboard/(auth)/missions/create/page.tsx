@@ -12,7 +12,10 @@ import { useAutosave } from "@/src/hooks/useAutosave";
 import { SaveDraftButton } from "@/src/components/mission/create/save-draft-button";
 import { DraftsMenu } from "@/src/components/mission/create/drafts-menu";
 import { getMissionDraftAction } from "@/app/actions/missions/drafts";
-import { createMissionFromCUEAction } from "@/app/actions/missions/create-mission";
+import {
+  createMissionFromCUEAction,
+  getTemplateCUESourceAction,
+} from "@/app/actions/missions/create-mission";
 
 const MissionCUEEditor = dynamic(
   () =>
@@ -44,7 +47,6 @@ function loadLocalDraft(): string {
     const stored = localStorage.getItem(`gibson:draft:${AUTOSAVE_KEY}`);
     if (stored) {
       const d = JSON.parse(stored);
-      // Accept both legacy `yaml` field and new `cueSource` field.
       if (d?.cueSource) return d.cueSource;
       if (d?.yaml) return d.yaml;
     }
@@ -56,12 +58,12 @@ export default function CreateMissionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlDraftId = searchParams.get("draft") ?? undefined;
+  const urlTemplateId = searchParams.get("template") ?? undefined;
 
   const [cueSource, setCueSource] = React.useState<string>(loadLocalDraft);
   const [errorCount, setErrorCount] = React.useState(0);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  // Server-side draft state
   const [currentDraftId, setCurrentDraftId] = React.useState<string | undefined>(undefined);
   const [currentDraftName, setCurrentDraftName] = React.useState<string | undefined>(undefined);
   const [draftLoading, setDraftLoading] = React.useState(false);
@@ -99,13 +101,24 @@ export default function CreateMissionPage() {
       }
       setDraftLoading(false);
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [urlDraftId, currentDraftId, router]);
 
-  // Local-storage autosave — stored under the legacy `yaml` key for back-compat
-  // with existing drafts in browser storage; value is CUE source.
+  // URL-driven template hydration (?template=<id>) — graceful no-op if .cue
+  // file not yet vendored (lands in dashboard#293).
+  React.useEffect(() => {
+    if (!urlTemplateId || urlDraftId) return;
+    void (async () => {
+      const src = await getTemplateCUESourceAction(urlTemplateId);
+      if (src) {
+        setCueSource(src);
+        setSavedSource(src);
+      }
+    })();
+    // Only run once per template id change — don't re-run if user edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlTemplateId]);
+
   const autosave = useAutosave(
     { yaml: cueSource, activeTab: "editor", savedAt: new Date().toISOString() },
     { storageKey: AUTOSAVE_KEY, debounceMs: 30000 }
