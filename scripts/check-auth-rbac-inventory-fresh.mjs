@@ -49,6 +49,10 @@ let committed;
 try {
   committed = readFileSync(COMMITTED, 'utf8');
 } catch (err) {
+  if (err.code === 'ENOENT') {
+    console.log(`[${SCRIPT_NAME}] SKIP — enterprise/docs sibling not present at ${COMMITTED}; skipping freshness check (dashboard-only workspace).`);
+    process.exit(0);
+  }
   console.error(`[${SCRIPT_NAME}] FAIL — cannot read committed inventory at ${COMMITTED}: ${err.message}`);
   console.error('Run: npm run gen:auth-rbac-inventory');
   process.exit(1);
