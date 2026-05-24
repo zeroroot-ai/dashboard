@@ -5,6 +5,25 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.107.0](https://github.com/zero-day-ai/dashboard/compare/v0.106.0...v0.107.0) (2026-05-24)
+
+
+### Features
+
+* **missions/create:** DefinitionPickerDropdown + ?definition= hydration ([#323](https://github.com/zero-day-ai/dashboard/issues/323)) ([#331](https://github.com/zero-day-ai/dashboard/issues/331)) ([7765af7](https://github.com/zero-day-ai/dashboard/commit/7765af742fb627042b6ef4110ff46a60708f7037))
+* **missions/create:** DefinitionPickerDropdown component ([#322](https://github.com/zero-day-ai/dashboard/issues/322)) ([#330](https://github.com/zero-day-ai/dashboard/issues/330)) ([cf1cfa2](https://github.com/zero-day-ai/dashboard/commit/cf1cfa22f04028d0d3f41b72362bff58910515aa))
+* **missions/create:** replace localStorage autosave with useServerAutosave, upsert draft on run ([#325](https://github.com/zero-day-ai/dashboard/issues/325)) ([#329](https://github.com/zero-day-ai/dashboard/issues/329)) ([c309898](https://github.com/zero-day-ai/dashboard/commit/c3098986225a37ad8da51c371c5a4056d1856bea))
+* **missions:** definition list API route and useListMissionDefinitions hook ([#327](https://github.com/zero-day-ai/dashboard/issues/327)) ([0bb5ada](https://github.com/zero-day-ai/dashboard/commit/0bb5adad299938bb3178354a27fcac991894d260))
+* **missions:** edit definition button on missions list ([#324](https://github.com/zero-day-ai/dashboard/issues/324)) ([#332](https://github.com/zero-day-ai/dashboard/issues/332)) ([6527277](https://github.com/zero-day-ai/dashboard/commit/6527277b2101428e13d7b8d843d0fe28cc58261a))
+* **missions:** expose missionDefinitionId on missions API and Mission type ([#326](https://github.com/zero-day-ai/dashboard/issues/326)) ([c380f13](https://github.com/zero-day-ai/dashboard/commit/c380f13e869b1c3b380987010a04014aa0e81d5e))
+* **missions:** useServerAutosave hook — daemon-backed draft autosave ([#328](https://github.com/zero-day-ai/dashboard/issues/328)) ([2a1951d](https://github.com/zero-day-ai/dashboard/commit/2a1951db51ed70c416d908d8416701137ed90fdd))
+
+
+### Bug Fixes
+
+* **missions/editor:** set explicit height so Monaco renders above 0px ([#316](https://github.com/zero-day-ai/dashboard/issues/316)) ([ca48c89](https://github.com/zero-day-ai/dashboard/commit/ca48c89f837fd9c6d480d2b5e4d70d872acdbc23))
+* remove dead ActionResult re-export from use server file ([#333](https://github.com/zero-day-ai/dashboard/issues/333)) ([54bf61d](https://github.com/zero-day-ai/dashboard/commit/54bf61d7ea8cfeebc33998771d27f52490981be2))
+
 ## [0.106.0](https://github.com/zero-day-ai/dashboard/compare/v0.105.0...v0.106.0) (2026-05-24)
 
 
