@@ -12,7 +12,7 @@
  * are removed end-to-end.
  */
 
-import { TenantAdminService } from "@/src/gen/gibson/tenant/v1/tenant_admin_pb";
+import { TenantService } from "@/src/gen/gibson/tenant/v1/tenant_pb";
 import { serviceClient } from "@/src/lib/gibson-client";
 import { getServerSession } from "@/src/lib/auth";
 
@@ -47,7 +47,7 @@ export async function getTenantQuotaAction(): Promise<
   }
 
   try {
-    const client = serviceClient(TenantAdminService, tenantId);
+    const client = serviceClient(TenantService, tenantId);
     const [limits, usage] = await Promise.all([
       client.getTenantQuota({ tenantId }),
       client.getTenantQuotaUsage({ tenantId }),

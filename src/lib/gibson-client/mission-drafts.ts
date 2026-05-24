@@ -2,9 +2,9 @@ import 'server-only';
 
 /**
  * Typed dashboard client methods for the mission-draft RPCs on
- * gibson.tenant.v1.TenantAdminService.
+ * gibson.tenant.v1.TenantService.
  *
- * Each wrapper calls userClient(TenantAdminService) so the call flows
+ * Each wrapper calls userClient(TenantService) so the call flows
  * dashboard → Envoy (JWT + SPIFFE mTLS) → daemon, never direct.
  *
  * Spec: mission-draft-dashboard-wiring.
@@ -12,11 +12,11 @@ import 'server-only';
 
 import { Code, ConnectError } from '@connectrpc/connect';
 import { userClient } from '../gibson-client';
-import { TenantAdminService } from '@/src/gen/gibson/tenant/v1/tenant_admin_pb';
+import { TenantService } from '@/src/gen/gibson/tenant/v1/tenant_pb';
 import type {
   MissionDraft,
   MissionDraftFull,
-} from '@/src/gen/gibson/tenant/v1/tenant_admin_pb';
+} from '@/src/gen/gibson/tenant/v1/tenant_pb';
 
 export type { MissionDraft, MissionDraftFull };
 
@@ -66,7 +66,7 @@ export async function saveMissionDraft(
   args: { name: string; cueSource: string; draftId?: string },
 ): Promise<{ draftId: string }> {
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(TenantService);
     const res = await client.saveMissionDraft({
       tenantId,
       name: args.name,
@@ -81,7 +81,7 @@ export async function saveMissionDraft(
 
 export async function listMissionDrafts(tenantId: string): Promise<MissionDraft[]> {
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(TenantService);
     const res = await client.listMissionDrafts({ tenantId });
     return res.drafts;
   } catch (err) {
@@ -94,7 +94,7 @@ export async function getMissionDraft(
   draftId: string,
 ): Promise<MissionDraftFull> {
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(TenantService);
     const res = await client.getMissionDraft({ tenantId, draftId });
     if (!res.draft) {
       throw new MissionDraftNotFoundError();
@@ -110,7 +110,7 @@ export async function deleteMissionDraft(
   draftId: string,
 ): Promise<void> {
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(TenantService);
     await client.deleteMissionDraft({ tenantId, draftId });
   } catch (err) {
     mapErr(err);

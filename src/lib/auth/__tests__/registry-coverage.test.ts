@@ -5,7 +5,7 @@
  * dual-tree workspace-synthesis pipeline (task 12) has populated entries for
  * all four expected service namespaces:
  *
- *   - /gibson.tenant.v1.*   — daemon-local TenantAdminService
+ *   - /gibson.tenant.v1.*   — OSS SDK TenantService (ADR-0037: migrated from TenantAdminService)
  *   - /gibson.platform.v1.* — daemon-local PlatformOperatorService
  *   - /gibson.user.v1.*     — daemon-local UserService
  *   - /gibson.admin.v1.*    — SDK AdminService regression net

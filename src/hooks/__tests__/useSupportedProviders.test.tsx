@@ -5,7 +5,7 @@ import { useSupportedProviders } from '../useSupportedProviders';
 import { createTestQueryClient } from '@/src/test/test-utils';
 
 // The hook fetches /api/settings/providers/supported (which the daemon
-// services via gibson.tenant.v1.TenantAdminService/GetSupportedProviders);
+// services via gibson.tenant.v1.TenantService/GetSupportedProviders);
 // the MSW handler returns `{ providers: [] }` in tests so the hook resolves
 // with an empty array.
 

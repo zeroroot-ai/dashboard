@@ -32,8 +32,8 @@ vi.mock("@/src/lib/gibson-client", () => ({
 vi.mock("@/src/gen/gibson/daemon/discovery/v1/discovery_pb", () => ({
   DiscoveryService: { typeName: "discovery" },
 }));
-vi.mock("@/src/gen/gibson/platform/v1/platform_operator_pb", () => ({
-  PlatformOperatorService: { typeName: "platform_operator" },
+vi.mock("@/src/gen/gibson/daemon/operator/v1/operator_pb", () => ({
+  DaemonOperatorService: { typeName: "platform_operator" },
 }));
 
 const mockList = vi.fn();

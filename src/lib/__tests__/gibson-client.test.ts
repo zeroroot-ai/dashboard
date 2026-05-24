@@ -47,7 +47,7 @@ vi.mock('@connectrpc/connect', async (importActual) => {
 
 // Stub out proto-generated service descriptors.
 vi.mock('@/src/gen/gibson/daemon/v1/daemon_pb', () => ({ DaemonService: {} }));
-vi.mock('@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb', () => ({ DaemonAdminService: {} }));
+vi.mock('@/src/gen/gibson/tenant/v1/tenant_pb', () => ({ TenantService: {} }));
 
 // Stub out server-config. `gibsonDaemonUrl` was removed in
 // spec headline-feature-completion R11; the field below is left here so

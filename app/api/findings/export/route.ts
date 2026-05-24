@@ -15,7 +15,7 @@ import { ConnectError, Code } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { userClient } from '@/src/lib/gibson-client';
-import { TenantAdminService } from '@/src/gen/gibson/tenant/v1/tenant_admin_pb';
+import { TenantService } from '@/src/gen/gibson/tenant/v1/tenant_pb';
 
 const CONTENT_TYPES: Record<string, string> = {
   csv: 'text/csv; charset=utf-8',
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const missionId = request.nextUrl.searchParams.get('missionId') ?? '';
     const search = request.nextUrl.searchParams.get('search') ?? '';
 
-    const resp = await userClient(TenantAdminService).exportFindings({
+    const resp = await userClient(TenantService).exportFindings({
       tenantId,
       format,
       findingIds: [],

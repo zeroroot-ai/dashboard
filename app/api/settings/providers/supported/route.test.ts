@@ -8,7 +8,7 @@
  * - ConnectErrors are translated to correct HTTP status codes
  * - The route calls userClient (user's session JWT), not a service-account client
  *
- * The gRPC path used is gibson.admin.v1.TenantAdminService/GetSupportedProviders
+ * The gRPC path used is gibson.tenant.v1.TenantService/GetSupportedProviders
  * which is registered in the authz registry with relation: "member". This test
  * confirms the route uses the member-accessible client path.
  */
@@ -33,9 +33,9 @@ vi.mock('@/src/lib/gibson-client', () => ({
   })),
 }));
 
-// Stub the admin/v1 service descriptor imported by the route
-vi.mock('@/src/gen/gibson/admin/v1/tenant_pb', () => ({
-  TenantAdminService: { typeName: 'gibson.admin.v1.TenantAdminService' },
+// Stub the tenant/v1 service descriptor imported by the route
+vi.mock('@/src/gen/gibson/tenant/v1/tenant_pb', () => ({
+  TenantService: { typeName: 'gibson.tenant.v1.TenantService' },
 }));
 
 // ---------------------------------------------------------------------------

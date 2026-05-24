@@ -25,7 +25,7 @@
  * Spec: dashboard#168.
  */
 
-import { PlatformOperatorService } from "@/src/gen/gibson/platform/v1/platform_operator_pb";
+import { DaemonOperatorService } from "@/src/gen/gibson/daemon/operator/v1/operator_pb";
 import { serviceClient } from "@/src/lib/gibson-client";
 import { logger } from "@/src/lib/logger";
 import { listTenantMembers, patchTenantMember } from "@/src/lib/k8s/tenants";
@@ -84,7 +84,7 @@ export async function setTenantRoleAction(input: {
 
   // 1. Authoritative FGA write. Fail here returns INTERNAL with no mutation.
   try {
-    const client = serviceClient(PlatformOperatorService, callerTenantId);
+    const client = serviceClient(DaemonOperatorService, callerTenantId);
     await client.writeAccessTuples({
       add: [
         {
@@ -181,7 +181,7 @@ export async function setTeamAdminAction(input: {
     object: `team:${input.teamId}`,
   };
   try {
-    const client = serviceClient(PlatformOperatorService, callerTenantId);
+    const client = serviceClient(DaemonOperatorService, callerTenantId);
     await client.writeAccessTuples({
       add: input.isAdmin ? [adminTuple] : [],
       delete: input.isAdmin ? [] : [adminTuple],

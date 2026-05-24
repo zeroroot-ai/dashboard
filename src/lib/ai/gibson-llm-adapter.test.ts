@@ -2,16 +2,21 @@
  * Unit tests for {@link GibsonLLMAdapter}.
  *
  * The adapter is a pure translation shim between Vercel AI SDK shapes
- * and the Gibson daemon's `ExecuteLLM` / `StreamLLM` RPCs. These tests
- * mock the daemon client functions and assert every direction of the
- * translation table in spec 25 §5.
+ * and the Gibson daemon's `ExecuteLLM` RPC. These tests mock the daemon
+ * client functions and assert every direction of the translation table
+ * in spec 25 §5.
+ *
+ * ADR-0037: StreamLLM was removed from TenantService. doStream is now
+ * implemented by wrapping ExecuteLLM in a ReadableStream. The streaming
+ * tests assert the correct sequence of LanguageModelV2StreamPart values
+ * emitted from a single non-streaming response.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import {
   GibsonLLMAdapter,
-  daemonChunkToVercelPart,
   daemonResponseToVercelContent,
+  daemonResponseToVercelStreamParts,
   mapFinishReason,
   mapUsage,
   vercelPromptToDaemonMessages,
@@ -21,25 +26,19 @@ import {
 
 // Must be declared BEFORE the vi.mock call because the factory is hoisted.
 const executeLLMMock = vi.fn();
-const streamLLMMock = vi.fn();
 
 vi.mock('@/src/lib/gibson-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/src/lib/gibson-client')>();
   return {
     ...actual,
     executeLLM: (...args: unknown[]) => executeLLMMock(...args),
-    streamLLM: (...args: unknown[]) => streamLLMMock(...args),
   };
 });
 
-import type {
-  DaemonExecuteLLMResponse,
-  DaemonStreamLLMChunk,
-} from '@/src/lib/gibson-client';
+import type { DaemonExecuteLLMResponse } from '@/src/lib/gibson-client';
 
 beforeEach(() => {
   executeLLMMock.mockReset();
-  streamLLMMock.mockReset();
 });
 
 // ---------------------------------------------------------------------------
@@ -225,18 +224,17 @@ describe('GibsonLLMAdapter.doGenerate', () => {
 });
 
 // ---------------------------------------------------------------------------
-// doStream
+// doStream (ADR-0037: non-incremental, wraps ExecuteLLM in a ReadableStream)
 // ---------------------------------------------------------------------------
 
 describe('GibsonLLMAdapter.doStream', () => {
-  it('emits text-delta parts in order followed by finish', async () => {
-    streamLLMMock.mockReturnValueOnce(
-      (async function* () {
-        yield textDelta('hel');
-        yield textDelta('lo ');
-        yield textDelta('world');
-        yield finishChunk('stop', { inputTokens: 3, outputTokens: 2, totalTokens: 5 });
-      })(),
+  it('emits text-delta, then finish from a single ExecuteLLM response', async () => {
+    executeLLMMock.mockResolvedValueOnce(
+      makeExecuteResponse({
+        content: 'hello world',
+        finishReason: 'stop',
+        usage: { inputTokens: 3, outputTokens: 2, totalTokens: 5 },
+      }),
     );
 
     const adapter = new GibsonLLMAdapter('anthropic');
@@ -245,9 +243,7 @@ describe('GibsonLLMAdapter.doStream', () => {
     expect(warnings).toEqual([]);
     const parts = await readAll(stream);
     expect(parts).toEqual([
-      { type: 'text-delta', id: '0', delta: 'hel' },
-      { type: 'text-delta', id: '0', delta: 'lo ' },
-      { type: 'text-delta', id: '0', delta: 'world' },
+      { type: 'text-delta', id: '0', delta: 'hello world' },
       {
         type: 'finish',
         finishReason: 'stop',
@@ -256,38 +252,52 @@ describe('GibsonLLMAdapter.doStream', () => {
     ]);
   });
 
-  it('propagates generator errors into ReadableStream.error', async () => {
-    streamLLMMock.mockReturnValueOnce(
-      (async function* () {
-        yield textDelta('first');
-        throw new Error('upstream exploded');
-      })(),
+  it('emits tool-input-start + tool-input-delta for each tool call', async () => {
+    executeLLMMock.mockResolvedValueOnce(
+      makeExecuteResponse({
+        content: '',
+        toolCalls: [{ id: 'call_1', name: 'get_weather', arguments: '{"city":"SF"}' }],
+        finishReason: 'tool_calls',
+        usage: { inputTokens: 4, outputTokens: 6, totalTokens: 10 },
+      }),
+    );
+
+    const adapter = new GibsonLLMAdapter('openai');
+    const { stream } = await adapter.doStream({ prompt: userTextPrompt('weather?') });
+
+    const parts = await readAll(stream);
+    expect(parts).toEqual([
+      { type: 'tool-input-start', id: 'call_1', toolName: 'get_weather' },
+      { type: 'tool-input-delta', id: 'call_1', delta: '{"city":"SF"}' },
+      {
+        type: 'finish',
+        finishReason: 'tool-calls',
+        usage: { inputTokens: 4, outputTokens: 6, totalTokens: 10 },
+      },
+    ]);
+  });
+
+  it('emits only finish when content and tool calls are empty', async () => {
+    executeLLMMock.mockResolvedValueOnce(
+      makeExecuteResponse({
+        content: '',
+        toolCalls: [],
+        finishReason: 'stop',
+        usage: { inputTokens: 1, outputTokens: 0, totalTokens: 1 },
+      }),
     );
 
     const adapter = new GibsonLLMAdapter('anthropic');
     const { stream } = await adapter.doStream({ prompt: userTextPrompt('hi') });
 
-    const reader = stream.getReader();
-    const first = await reader.read();
-    expect(first.value).toEqual({ type: 'text-delta', id: '0', delta: 'first' });
-
-    await expect(reader.read()).rejects.toThrow(/upstream exploded/);
-  });
-
-  it('propagates daemon-side error chunks via controller.error', async () => {
-    streamLLMMock.mockReturnValueOnce(
-      (async function* () {
-        yield textDelta('partial');
-        yield errorChunk('rate limited');
-      })(),
-    );
-
-    const adapter = new GibsonLLMAdapter('openai');
-    const { stream } = await adapter.doStream({ prompt: userTextPrompt('hi') });
-    const reader = stream.getReader();
-    await reader.read(); // consume the text delta
-
-    await expect(reader.read()).rejects.toThrow(/rate limited/);
+    const parts = await readAll(stream);
+    expect(parts).toEqual([
+      {
+        type: 'finish',
+        finishReason: 'stop',
+        usage: { inputTokens: 1, outputTokens: 0, totalTokens: 1 },
+      },
+    ]);
   });
 });
 
@@ -350,35 +360,41 @@ describe('daemonResponseToVercelContent', () => {
   });
 });
 
-describe('daemonChunkToVercelPart', () => {
-  it('translates textDelta', () => {
-    expect(daemonChunkToVercelPart(textDelta('abc'))).toEqual({
-      type: 'text-delta',
-      id: '0',
-      delta: 'abc',
+describe('daemonResponseToVercelStreamParts', () => {
+  it('emits text-delta followed by finish for text-only response', () => {
+    const parts = daemonResponseToVercelStreamParts({
+      content: 'hello',
+      toolCalls: [],
+      finishReason: 'stop',
+      usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 },
     });
+    expect(parts).toEqual([
+      { type: 'text-delta', id: '0', delta: 'hello' },
+      { type: 'finish', finishReason: 'stop', usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 } },
+    ]);
   });
 
-  it('translates toolCallDelta with an arguments delta', () => {
-    const p = daemonChunkToVercelPart({
-      payload: {
-        case: 'toolCallDelta',
-        value: { index: 0, id: 'call_1', argumentsDelta: '{"x":' },
-      },
+  it('emits tool-input-start + tool-input-delta + finish for tool-call response', () => {
+    const parts = daemonResponseToVercelStreamParts({
+      content: '',
+      toolCalls: [{ id: 'c1', name: 'search', arguments: '{"q":"test"}' }],
+      finishReason: 'tool_calls',
+      usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
     });
-    expect(p).toEqual({ type: 'tool-input-delta', id: 'call_1', delta: '{"x":' });
+    expect(parts[0]).toEqual({ type: 'tool-input-start', id: 'c1', toolName: 'search' });
+    expect(parts[1]).toEqual({ type: 'tool-input-delta', id: 'c1', delta: '{"q":"test"}' });
+    expect(parts[2].type).toBe('finish');
   });
 
-  it('translates finish', () => {
-    expect(daemonChunkToVercelPart(finishChunk('length'))).toEqual({
-      type: 'finish',
+  it('always emits a finish part as the last element', () => {
+    const parts = daemonResponseToVercelStreamParts({
+      content: '',
+      toolCalls: [],
       finishReason: 'length',
       usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
     });
-  });
-
-  it('throws on an error chunk', () => {
-    expect(() => daemonChunkToVercelPart(errorChunk('boom'))).toThrow(/boom/);
+    expect(parts).toHaveLength(1);
+    expect(parts[0].type).toBe('finish');
   });
 });
 
@@ -501,27 +517,3 @@ describe('vercelPromptToDaemonMessages', () => {
     expect(messages[0].toolResults?.[0].content).toBe('72F');
   });
 });
-
-// ---------------------------------------------------------------------------
-// Chunk fixtures
-// ---------------------------------------------------------------------------
-
-function textDelta(value: string): DaemonStreamLLMChunk {
-  return { payload: { case: 'textDelta', value } };
-}
-
-function finishChunk(
-  finishReason: string,
-  usage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
-): DaemonStreamLLMChunk {
-  return { payload: { case: 'finish', value: { finishReason, usage } } };
-}
-
-function errorChunk(message: string): DaemonStreamLLMChunk {
-  return {
-    payload: {
-      case: 'error',
-      value: { code: 1, message, retryable: false },
-    },
-  };
-}

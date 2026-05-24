@@ -15,7 +15,7 @@ import {
   AuthzDeniedError,
 } from '@/src/lib/auth/assert-authorized';
 import { userClient } from '@/src/lib/gibson-client';
-import { TenantAdminService, PrincipalKind } from '@/src/gen/gibson/tenant/v1/tenant_admin_pb';
+import { TenantService, PrincipalKind } from '@/src/gen/gibson/tenant/v1/tenant_pb';
 import { IdentityService } from '@/src/gen/gibson/identity/v1/identity_pb';
 import { GrantsAdminService } from '@/src/gen/gibson/admin/v1/grants_pb';
 
@@ -55,7 +55,7 @@ export default async function Page({
 
   let principalId: string;
   try {
-    const tenantClient = userClient(TenantAdminService);
+    const tenantClient = userClient(TenantService);
     const list = await tenantClient.listAgentIdentities({
       pageSize: 200,
       kindFilter: PrincipalKind.TOOL,

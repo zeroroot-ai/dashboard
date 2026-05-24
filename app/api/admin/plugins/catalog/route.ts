@@ -3,6 +3,10 @@
  * tenant. Same daemon RPC as the components catalog; this endpoint
  * projects only the plugin set.
  *
+ * ADR-0037: ListCatalogComponents was removed from TenantService. This
+ * route returns an empty plugins list for now. A replacement RPC is
+ * tracked at dashboard#336.
+ *
  * Spec: component-bootstrap-dashboard-completion Requirement 2.
  */
 
@@ -11,12 +15,6 @@ import 'server-only';
 import { NextResponse } from 'next/server';
 
 import { auth } from '@/auth';
-import { userClient } from '@/src/lib/gibson-client';
-import { TenantAdminService } from '@/src/gen/gibson/tenant/v1/tenant_admin_pb';
-import {
-  assertAuthorized,
-  AuthzDeniedError,
-} from '@/src/lib/auth/assert-authorized';
 
 export interface CatalogPluginDTO {
   name: string;
@@ -34,36 +32,10 @@ export async function GET(): Promise<NextResponse> {
     );
   }
 
-  try {
-    await assertAuthorized('/gibson.tenant.v1.TenantAdminService/ListCatalogComponents');
-  } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return NextResponse.json(
-        { error: { code: 'FORBIDDEN', message: 'Permission denied' } },
-        { status: 403 },
-      );
-    }
-    throw err;
-  }
-
-  let plugins: CatalogPluginDTO[];
-  try {
-    const client = userClient(TenantAdminService);
-    const resp = await client.listCatalogComponents({});
-    plugins = resp.plugins.map((p) => ({
-      name: p.name,
-      ref: p.ref,
-      description: p.description,
-      version: p.version,
-    }));
-  } catch (err) {
-    console.error('[plugins/catalog] daemon RPC failed:', err instanceof Error ? err.name : typeof err);
-    return NextResponse.json(
-      { error: { code: 'DAEMON_ERROR', message: 'Failed to list catalog plugins' } },
-      { status: 502 },
-    );
-  }
-
+  // ListCatalogComponents deleted in ADR-0037 — return empty list gracefully.
+  // A replacement RPC that surfaces the catalog to member-level callers is
+  // tracked at dashboard#336.
+  const plugins: CatalogPluginDTO[] = [];
   return NextResponse.json({ plugins }, {
     headers: { 'Cache-Control': 'no-store' },
   });

@@ -9,7 +9,7 @@ import {
 import { createGrpcTransport } from '@connectrpc/connect-node';
 import type { DescService } from '@bufbuild/protobuf';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
-import { TenantAdminService } from '@/src/gen/gibson/tenant/v1/tenant_admin_pb';
+import { TenantService } from '@/src/gen/gibson/tenant/v1/tenant_pb';
 import { UserService } from '@/src/gen/gibson/user/v1/user_pb';
 import type {
   MissionInfo,
@@ -416,7 +416,7 @@ async function getClient(_userId?: string, _tenantId?: string) {
 
 async function getAdminClient(_userId?: string, _tenantId?: string) {
   await requireUserToken();
-  return userClient(TenantAdminService);
+  return userClient(TenantService);
 }
 
 async function getUserServiceClient(_userId?: string, _tenantId?: string) {
@@ -1723,22 +1723,7 @@ export interface DaemonResponseFormat {
 }
 
 /**
- * Incremental tool-call delta in a streaming response.
- * Maps to the proto gibson.tenant.v1.ToolCallDelta.
- */
-export interface DaemonToolCallDelta {
-  /** 0-based index identifying which tool call this delta belongs to. */
-  index: number;
-  /** Tool call identifier (present on the first delta for this index). */
-  id?: string;
-  /** Tool name (present on the first delta for this index). */
-  name?: string;
-  /** Incremental fragment of the JSON arguments string. */
-  argumentsDelta?: string;
-}
-
-/**
- * Parameters for executeLLM and streamLLM.
+ * Parameters for executeLLM.
  */
 export interface ExecuteLLMParams {
   providerName: string;
@@ -1766,26 +1751,12 @@ export interface DaemonExecuteLLMResponse {
   usage: DaemonLLMUsage;
 }
 
-/**
- * One chunk in a server-streaming LLM response from streamLLM.
- * Exactly one of the payload variants is set per chunk.
- * Maps to the proto gibson.tenant.v1.StreamLLMResponse oneof.
- */
-export interface DaemonStreamLLMChunk {
-  payload:
-    | { case: 'textDelta'; value: string }
-    | { case: 'toolCallDelta'; value: DaemonToolCallDelta }
-    | { case: 'finish'; value: { finishReason: string; usage: DaemonLLMUsage } }
-    | { case: 'error'; value: { code: number; message: string; retryable: boolean } }
-    | { case: undefined; value?: undefined };
-}
-
 // ---------------------------------------------------------------------------
 // Proto → friendly type helpers
 // ---------------------------------------------------------------------------
 
 function fromProtoProviderRecord(
-  p: import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').ProviderRecord,
+  p: import('@/src/gen/gibson/tenant/v1/tenant_pb').ProviderRecord,
 ): DaemonProviderRecord {
   return {
     id: p.id,
@@ -1802,18 +1773,18 @@ function fromProtoProviderRecord(
 
 function toProtoDaemonConfigInput(
   input: DaemonProviderConfigInput,
-): import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').ProviderConfigInput {
+): import('@/src/gen/gibson/tenant/v1/tenant_pb').ProviderConfigInput {
   return {
     name: input.name,
     type: input.type,
     defaultModel: input.defaultModel,
     credentials: { ...input.credentials },
     setAsDefault: input.setAsDefault ?? false,
-  } as import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').ProviderConfigInput;
+  } as import('@/src/gen/gibson/tenant/v1/tenant_pb').ProviderConfigInput;
 }
 
 function fromProtoLLMUsage(
-  u: import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMTokenUsage | undefined,
+  u: import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMTokenUsage | undefined,
 ): DaemonLLMUsage {
   return {
     inputTokens: u?.inputTokens ?? 0,
@@ -1823,14 +1794,14 @@ function fromProtoLLMUsage(
 }
 
 function fromProtoLLMToolCall(
-  tc: import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMToolCall,
+  tc: import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMToolCall,
 ): DaemonLLMToolCall {
   return { id: tc.id, name: tc.name, arguments: tc.arguments };
 }
 
 function toLLMMessageContent(
   msg: LLMMessage,
-): import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMMessageContent {
+): import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMMessageContent {
   return {
     role: msg.role,
     content: msg.content ?? '',
@@ -1838,35 +1809,35 @@ function toLLMMessageContent(
       id: tc.id,
       name: tc.name,
       arguments: tc.arguments,
-    })) as import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMToolCall[],
+    })) as import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMToolCall[],
     toolResults: (msg.toolResults ?? []).map((tr) => ({
       toolCallId: tr.toolCallId,
       content: tr.content,
       isError: tr.isError,
-    })) as import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMToolResult[],
+    })) as import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMToolResult[],
     name: msg.name ?? '',
-  } as import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMMessageContent;
+  } as import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMMessageContent;
 }
 
 function toLLMToolDef(
   def: DaemonLLMToolDef,
-): import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMToolDef {
+): import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMToolDef {
   return {
     name: def.name,
     description: def.description,
     parametersJson: def.parametersJson,
-  } as import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMToolDef;
+  } as import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMToolDef;
 }
 
 function toProtoResponseFormat(
   fmt: DaemonResponseFormat,
-): import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').ResponseFormat {
+): import('@/src/gen/gibson/tenant/v1/tenant_pb').ResponseFormat {
   return {
     type: fmt.type,
     name: fmt.name ?? '',
     schemaJson: fmt.schemaJson ?? '',
     strict: fmt.strict ?? false,
-  } as import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').ResponseFormat;
+  } as import('@/src/gen/gibson/tenant/v1/tenant_pb').ResponseFormat;
 }
 
 function buildExecRequest(
@@ -1874,9 +1845,9 @@ function buildExecRequest(
 ): {
   providerName: string;
   model: string;
-  messages: import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMMessageContent[];
-  tools: import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').LLMToolDef[];
-  responseFormat?: import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').ResponseFormat;
+  messages: import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMMessageContent[];
+  tools: import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMToolDef[];
+  responseFormat?: import('@/src/gen/gibson/tenant/v1/tenant_pb').ResponseFormat;
   temperature?: number;
   maxTokens?: number;
   topP?: number;
@@ -1893,51 +1864,6 @@ function buildExecRequest(
     topP: params.topP,
     stop: params.stop ?? [],
   };
-}
-
-function fromProtoStreamChunk(
-  chunk: import('@/src/gen/gibson/tenant/v1/tenant_admin_pb').StreamLLMResponse,
-): DaemonStreamLLMChunk {
-  const p = chunk.payload;
-  switch (p.case) {
-    case 'textDelta':
-      return { payload: { case: 'textDelta', value: p.value } };
-    case 'toolCallDelta':
-      return {
-        payload: {
-          case: 'toolCallDelta',
-          value: {
-            index: p.value.index,
-            id: p.value.id || undefined,
-            name: p.value.name || undefined,
-            argumentsDelta: p.value.argumentsDelta || undefined,
-          },
-        },
-      };
-    case 'finish':
-      return {
-        payload: {
-          case: 'finish',
-          value: {
-            finishReason: p.value.finishReason,
-            usage: fromProtoLLMUsage(p.value.usage),
-          },
-        },
-      };
-    case 'error':
-      return {
-        payload: {
-          case: 'error',
-          value: {
-            code: p.value.code,
-            message: p.value.message,
-            retryable: p.value.retryable,
-          },
-        },
-      };
-    default:
-      return { payload: { case: undefined } };
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -2158,29 +2084,6 @@ export async function executeLLM(
     finishReason: resp.finishReason,
     usage: fromProtoLLMUsage(resp.usage),
   };
-}
-
-/**
- * Issue a server-streaming LLM completion request via the daemon StreamLLM RPC.
- *
- * Returns an async iterable of {@link DaemonStreamLLMChunk} that the caller
- * can consume with `for await (const chunk of stream) {}`. The stream ends
- * naturally when the daemon emits a `finish` chunk, or throws a ConnectError
- * if the gRPC stream closes with an error.
- *
- * The `GibsonLLMAdapter` (task 10) wraps this iterable into a
- * `ReadableStream<LanguageModelV2StreamPart>` for the Vercel AI SDK.
- */
-export async function* streamLLM(
-  params: ExecuteLLMParams,
-  userId?: string,
-  tenantId?: string,
-): AsyncIterable<DaemonStreamLLMChunk> {
-  const client = await getAdminClient(userId, tenantId);
-  const grpcStream = client.streamLLM(buildExecRequest(params));
-  for await (const chunk of grpcStream) {
-    yield fromProtoStreamChunk(chunk);
-  }
 }
 
 // ---------------------------------------------------------------------------

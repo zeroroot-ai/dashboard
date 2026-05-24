@@ -24,7 +24,7 @@
  * Spec: dashboard#266.
  */
 
-import { PlatformOperatorService } from "@/src/gen/gibson/platform/v1/platform_operator_pb";
+import { DaemonOperatorService } from "@/src/gen/gibson/daemon/operator/v1/operator_pb";
 import { serviceClient } from "@/src/lib/gibson-client";
 import { logger } from "@/src/lib/logger";
 import { listTenantMembers, patchTenantMember } from "@/src/lib/k8s/tenants";
@@ -135,7 +135,7 @@ export async function transferOwnershipAction(
   // All four tuple mutations in a single WriteAccessTuples call so the
   // transition is atomic from the FGA perspective.
   try {
-    const client = serviceClient(PlatformOperatorService, callerTenantId);
+    const client = serviceClient(DaemonOperatorService, callerTenantId);
     await client.writeAccessTuples({
       add: [
         {

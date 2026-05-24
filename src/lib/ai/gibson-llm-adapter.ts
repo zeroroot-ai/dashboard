@@ -24,13 +24,11 @@ import type {
 
 import {
   executeLLM,
-  streamLLM,
   type DaemonExecuteLLMResponse,
   type DaemonLLMToolCall,
   type DaemonLLMToolDef,
   type DaemonLLMUsage,
   type DaemonResponseFormat,
-  type DaemonStreamLLMChunk,
   type ExecuteLLMParams,
   type LLMMessage as DaemonLLMMessage,
 } from '@/src/lib/gibson-client';
@@ -83,23 +81,22 @@ export class GibsonLLMAdapter implements LanguageModelV2 {
     stream: ReadableStream<LanguageModelV2StreamPart>;
     warnings: LanguageModelV2CallWarning[];
   }> {
+    // ADR-0037: StreamLLM was removed from TenantService. Implement doStream
+    // using ExecuteLLM (non-streaming) and wrap the single response into a
+    // ReadableStream so the Vercel AI SDK streaming contract is satisfied.
+    // This produces a non-incremental stream: the full response is enqueued
+    // in one shot after the daemon returns. A future streaming RPC will
+    // restore incremental token delivery.
     const warnings: LanguageModelV2CallWarning[] = [];
     const params = this.buildExecParams(options, warnings);
-    const grpcIterable = streamLLM(params, this.userId, this.tenantId);
+    const resp = await executeLLM(params, this.userId, this.tenantId);
 
     const stream = new ReadableStream<LanguageModelV2StreamPart>({
-      async start(controller) {
-        try {
-          for await (const chunk of grpcIterable) {
-            const part = daemonChunkToVercelPart(chunk);
-            if (part !== undefined) {
-              controller.enqueue(part);
-            }
-          }
-          controller.close();
-        } catch (err) {
-          controller.error(err instanceof Error ? err : new Error(String(err)));
+      start(controller) {
+        for (const part of daemonResponseToVercelStreamParts(resp)) {
+          controller.enqueue(part);
         }
+        controller.close();
       },
     });
 
@@ -421,53 +418,50 @@ export function mapUsage(u?: DaemonLLMUsage): LanguageModelV2Usage {
 }
 
 /**
- * Translate a single streaming chunk from the daemon into a Vercel
- * {@link LanguageModelV2StreamPart}. Returns `undefined` when the
- * chunk carries no forwardable payload (unknown oneof case).
+ * Convert a complete (non-streaming) daemon response into the sequence of
+ * {@link LanguageModelV2StreamPart} objects that {@link GibsonLLMAdapter.doStream}
+ * enqueues into its `ReadableStream`.
  *
- * `error` chunks throw — callers wrap this in try/catch around the
- * `for await` loop in {@link GibsonLLMAdapter.doStream}, which
- * forwards the error to `controller.error(...)`.
+ * ADR-0037: StreamLLM was removed from TenantService. doStream is implemented
+ * by wrapping the single ExecuteLLM response. The emitted sequence is:
+ *   - one `text-delta` part for the text content (if any)
+ *   - one `tool-input-start` + one `tool-input-delta` per tool call (if any)
+ *   - one `finish` part carrying finishReason + usage
+ *
+ * A future streaming RPC will restore incremental token delivery; the shape
+ * of this sequence is already compatible with the future streaming consumer.
  */
-export function daemonChunkToVercelPart(
-  chunk: DaemonStreamLLMChunk,
-): LanguageModelV2StreamPart | undefined {
-  const p = chunk.payload;
-  switch (p.case) {
-    case 'textDelta':
-      return { type: 'text-delta', id: TEXT_PART_ID, delta: p.value };
-    case 'toolCallDelta': {
-      const d = p.value;
-      // Vercel needs a stable `id` for tool-input-delta parts; the
-      // daemon's first delta for a given tool carries the call id, the
-      // subsequent deltas do not. Fall back to the 0-based index when
-      // the id is absent so re-assembly still works.
-      const id = d.id ?? `tool-${d.index}`;
-      if (d.argumentsDelta !== undefined) {
-        return { type: 'tool-input-delta', id, delta: d.argumentsDelta };
-      }
-      // First delta of a new tool call with no arguments yet — Vercel
-      // opens the stream with tool-input-start.
-      return {
-        type: 'tool-input-start',
-        id,
-        toolName: d.name ?? '',
-      };
-    }
-    case 'finish':
-      return {
-        type: 'finish',
-        finishReason: mapFinishReason(p.value.finishReason),
-        usage: mapUsage(p.value.usage),
-      };
-    case 'error':
-      // Thrown out of the generator loop so doStream's catch can route
-      // it to controller.error(...). The daemon-side error already
-      // carries a cleaned-up message; we just wrap it in an Error.
-      throw new Error(p.value.message);
-    default:
-      return undefined;
+export function daemonResponseToVercelStreamParts(
+  resp: DaemonExecuteLLMResponse,
+): LanguageModelV2StreamPart[] {
+  const parts: LanguageModelV2StreamPart[] = [];
+
+  if (resp.content && resp.content.length > 0) {
+    parts.push({ type: 'text-delta', id: TEXT_PART_ID, delta: resp.content });
   }
+
+  for (let i = 0; i < resp.toolCalls.length; i++) {
+    const call = resp.toolCalls[i];
+    const id = call.id || `tool-${i}`;
+    parts.push({
+      type: 'tool-input-start',
+      id,
+      toolName: call.name,
+    });
+    parts.push({
+      type: 'tool-input-delta',
+      id,
+      delta: call.arguments,
+    });
+  }
+
+  parts.push({
+    type: 'finish',
+    finishReason: mapFinishReason(resp.finishReason),
+    usage: mapUsage(resp.usage),
+  });
+
+  return parts;
 }
 
 // ---------------------------------------------------------------------------

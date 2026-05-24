@@ -12,8 +12,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { ConnectError, Code } from '@connectrpc/connect';
-import { fromBinary } from '@bufbuild/protobuf';
-import { MissionDefinitionSchema } from '@/src/gen/gibson/mission/v1/mission_definition_pb';
 
 const mockGetServerSession = vi.fn();
 const mockUserClient = vi.fn();
@@ -89,16 +87,15 @@ describe('POST /api/missions/demo', () => {
     expect(body.target).toBe('scanme.nmap.org');
 
     // Definition step: a single-node mission targeting scanme.nmap.org via nmap-agent.
-    // platform-sdk v0.7.0 moved definition_serialized under the `source` oneof.
-    // The request shape is: { source: { case: 'definitionSerialized', value: Uint8Array } }.
+    // ADR-0037 (OSS SDK v0.118.0): CreateMissionDefinitionRequest takes a structured
+    // MissionDefinition proto in the `definition` field — no source oneof.
     expect(mockCreateMissionDefinition).toHaveBeenCalledTimes(1);
     const defArg = mockCreateMissionDefinition.mock.calls[0][0];
-    expect(defArg.source?.case).toBe('definitionSerialized');
-    expect(defArg.source?.value).toBeInstanceOf(Uint8Array);
-    const decoded = fromBinary(MissionDefinitionSchema, defArg.source.value as Uint8Array);
-    expect(decoded.targetRef).toBe('scanme.nmap.org');
-    expect(decoded.entryPoints).toEqual(['scan']);
-    expect(decoded.exitPoints).toEqual(['scan']);
+    expect(defArg.definition).toBeDefined();
+    const def = defArg.definition;
+    expect(def.targetRef).toBe('scanme.nmap.org');
+    expect(def.entryPoints).toEqual(['scan']);
+    expect(def.exitPoints).toEqual(['scan']);
 
     // CreateMission step references the new definition + the demo target.
     expect(mockCreateMission).toHaveBeenCalledWith({

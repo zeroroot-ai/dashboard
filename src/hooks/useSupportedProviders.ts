@@ -4,7 +4,7 @@
  * Supported LLM Providers hook
  *
  * Fetches from `/api/settings/providers/supported`, which delegates to the
- * daemon's `gibson.admin.v1.TenantAdminService/GetSupportedProviders` RPC
+ * daemon's `gibson.tenant.v1.TenantService/GetSupportedProviders` RPC
  * (spec providers-wizard). The RPC carries relation: "member" so any
  * authenticated user can fetch the static provider catalogue. Powers the
  * Settings → Providers wizard's type picker and dynamic credential form.

@@ -53,10 +53,10 @@ export type DraftActionErrorCode =
 // FGA registry keys (mirror the daemon's authz annotations)
 // ---------------------------------------------------------------------------
 
-const FGA_SAVE = "/gibson.tenant.v1.TenantAdminService/SaveMissionDraft";
-const FGA_LIST = "/gibson.tenant.v1.TenantAdminService/ListMissionDrafts";
-const FGA_GET = "/gibson.tenant.v1.TenantAdminService/GetMissionDraft";
-const FGA_DELETE = "/gibson.tenant.v1.TenantAdminService/DeleteMissionDraft";
+const FGA_SAVE = "/gibson.tenant.v1.TenantService/SaveMissionDraft";
+const FGA_LIST = "/gibson.tenant.v1.TenantService/ListMissionDrafts";
+const FGA_GET = "/gibson.tenant.v1.TenantService/GetMissionDraft";
+const FGA_DELETE = "/gibson.tenant.v1.TenantService/DeleteMissionDraft";
 
 // ---------------------------------------------------------------------------
 // Input validation
