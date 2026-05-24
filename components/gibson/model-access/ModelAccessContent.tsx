@@ -56,6 +56,7 @@ import {
   type SubjectKindInput,
   type TargetKindInput,
 } from "@/app/actions/crud/modelAccess";
+import { MemberPicker } from "@/components/gibson/model-access/MemberPicker";
 
 export function ModelAccessContent() {
   return (
@@ -126,11 +127,20 @@ function GrantFormCard() {
           </div>
           <div className="space-y-1.5">
             <Label>Subject ID</Label>
-            <Input
-              placeholder="alice-uuid"
-              value={subjectId}
-              onChange={(e) => setSubjectId(e.target.value)}
-            />
+            {subjectKind === "user" ? (
+              <MemberPicker
+                value={subjectId}
+                onChange={(userId) => setSubjectId(userId)}
+              />
+            ) : (
+              <Input
+                placeholder={
+                  subjectKind === "team" ? "team-uuid" : "tenant-uuid"
+                }
+                value={subjectId}
+                onChange={(e) => setSubjectId(e.target.value)}
+              />
+            )}
           </div>
           <div className="space-y-1.5">
             <Label>Target kind</Label>
@@ -231,10 +241,17 @@ function GrantsViewerCard() {
           </div>
           <div className="flex-1 space-y-1.5">
             <Label>Subject ID</Label>
-            <Input
-              value={subjectId}
-              onChange={(e) => setSubjectId(e.target.value)}
-            />
+            {subjectKind === "user" ? (
+              <MemberPicker
+                value={subjectId}
+                onChange={(userId) => setSubjectId(userId)}
+              />
+            ) : (
+              <Input
+                value={subjectId}
+                onChange={(e) => setSubjectId(e.target.value)}
+              />
+            )}
           </div>
           <Button onClick={load} disabled={!subjectId || loading}>
             Load
