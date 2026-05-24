@@ -1,21 +1,17 @@
 /**
  * useMissionValidation Hook
  *
- * Real-time validation hook for mission YAML content.
+ * Real-time validation hook for mission CUE content.
  * Features:
- * - Debounced client-side validation (300ms default)
- * - Optional server-side validation via API
+ * - Debounced server-side CUE validation (300ms default)
  * - Integration with TanStack Query for caching
  * - Automatic validation state management
  */
 
+'use client';
+
 import * as React from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  validateMissionYAML,
-  addLineNumbers,
-  type ValidationResult,
-} from '@/src/lib/mission/validation';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useMissionCreationStore } from '@/src/stores/missionCreationStore';
 import type { ValidationError, ValidationWarning } from '@/src/types/mission-creation';
 
@@ -23,11 +19,22 @@ import type { ValidationError, ValidationWarning } from '@/src/types/mission-cre
 // Types
 // ============================================================================
 
+export interface ValidationResult {
+  /** Whether the CUE source is valid */
+  isValid: boolean;
+  /** Validation errors (must be fixed) */
+  errors: ValidationError[];
+  /** Validation warnings (suggestions) */
+  warnings: ValidationWarning[];
+  /** Parsed mission object (if parsing succeeded) — kept for ValidationPanel compat */
+  parsed: Record<string, unknown> | null;
+  /** Validation duration in ms */
+  duration: number;
+}
+
 export interface UseMissionValidationOptions {
   /** Debounce delay in ms (default: 300) */
   debounceMs?: number;
-  /** Whether to use server-side validation */
-  useServerValidation?: boolean;
   /** Auto-validate on content change */
   autoValidate?: boolean;
   /** Callback when validation completes */
@@ -54,16 +61,14 @@ export interface UseMissionValidationReturn {
 }
 
 // ============================================================================
-// Server Validation API
+// Server Validation API (CUE — via /api/missions/validate)
 // ============================================================================
 
-async function serverValidate(yamlContent: string): Promise<ValidationResult> {
+async function serverValidate(cueSource: string): Promise<ValidationResult> {
   const response = await fetch('/api/missions/validate', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ yaml: yamlContent }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cueSource }),
   });
 
   if (!response.ok) {
@@ -82,13 +87,14 @@ export function useMissionValidation(
 ): UseMissionValidationReturn {
   const {
     debounceMs = 300,
-    useServerValidation = false,
     autoValidate = true,
     onValidationComplete,
   } = options;
 
-  // Store state
-  const yamlContent = useMissionCreationStore((state) => state.yamlContent);
+  // Store state — yamlContent field still holds the CUE source (field name
+  // preserved for back-compat with the store shape; a rename requires a
+  // separate store-schema migration).
+  const cueSource = useMissionCreationStore((state) => state.yamlContent);
   const setValidationErrors = useMissionCreationStore((state) => state.setValidationErrors);
   const setValidationWarnings = useMissionCreationStore((state) => state.setValidationWarnings);
 
@@ -96,23 +102,6 @@ export function useMissionValidation(
   const [lastResult, setLastResult] = React.useState<ValidationResult | null>(null);
   const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
   const lastContentRef = React.useRef<string>('');
-  const queryClient = useQueryClient();
-
-  // Client-side validation function
-  const validateClientSide = React.useCallback(
-    (content: string): ValidationResult => {
-      const result = validateMissionYAML(content);
-
-      // Add line numbers to errors
-      const errorsWithLines = addLineNumbers(content, result.errors);
-
-      return {
-        ...result,
-        errors: errorsWithLines,
-      };
-    },
-    []
-  );
 
   // Server validation mutation
   const serverValidationMutation = useMutation({
@@ -128,41 +117,39 @@ export function useMissionValidation(
   // Main validation function
   const validateContent = React.useCallback(
     async (content: string): Promise<ValidationResult> => {
-      // Always do client-side validation first
-      const clientResult = validateClientSide(content);
-
-      // If client-side fails or server validation not enabled, return client result
-      if (!clientResult.isValid || !useServerValidation) {
-        setLastResult(clientResult);
-        setValidationErrors(clientResult.errors);
-        setValidationWarnings(clientResult.warnings);
-        onValidationComplete?.(clientResult);
-        return clientResult;
-      }
-
-      // Do server-side validation
       try {
-        const serverResult = await serverValidationMutation.mutateAsync(content);
-        return serverResult;
+        const result = await serverValidationMutation.mutateAsync(content);
+        return result;
       } catch {
-        // Fall back to client result on server error
-        return clientResult;
+        // Return a benign "unknown" result on network error; the mutation
+        // error state will be visible via serverValidationMutation.error.
+        const fallback: ValidationResult = {
+          isValid: false,
+          errors: [{
+            code: 'VALIDATION_UNAVAILABLE',
+            message: 'Validation service unavailable — check your connection.',
+            path: '',
+            severity: 'error',
+          }],
+          warnings: [],
+          parsed: null,
+          duration: 0,
+        };
+        setLastResult(fallback);
+        setValidationErrors(fallback.errors);
+        setValidationWarnings([]);
+        onValidationComplete?.(fallback);
+        return fallback;
       }
     },
-    [
-      validateClientSide,
-      useServerValidation,
-      serverValidationMutation,
-      setValidationErrors,
-      setValidationWarnings,
-      onValidationComplete,
-    ]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setValidationErrors, setValidationWarnings, onValidationComplete]
   );
 
   // Validate current store content
   const validate = React.useCallback(async (): Promise<ValidationResult> => {
-    return validateContent(yamlContent);
-  }, [validateContent, yamlContent]);
+    return validateContent(cueSource);
+  }, [validateContent, cueSource]);
 
   // Clear validation state
   const clearValidation = React.useCallback(() => {
@@ -176,8 +163,8 @@ export function useMissionValidation(
     if (!autoValidate) return;
 
     // Skip if content hasn't changed
-    if (yamlContent === lastContentRef.current) return;
-    lastContentRef.current = yamlContent;
+    if (cueSource === lastContentRef.current) return;
+    lastContentRef.current = cueSource;
 
     // Clear existing timer
     if (debounceTimerRef.current) {
@@ -186,7 +173,7 @@ export function useMissionValidation(
 
     // Debounce validation
     debounceTimerRef.current = setTimeout(() => {
-      validateContent(yamlContent);
+      validateContent(cueSource);
     }, debounceMs);
 
     return () => {
@@ -194,7 +181,7 @@ export function useMissionValidation(
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [yamlContent, autoValidate, debounceMs, validateContent]);
+  }, [cueSource, autoValidate, debounceMs, validateContent]);
 
   // Cleanup on unmount
   React.useEffect(() => {
@@ -240,32 +227,6 @@ export function useValidationStatus(missionId?: string) {
     enabled: !!missionId,
     staleTime: 30000, // 30 seconds
   });
-}
-
-/**
- * Hook for validation with immediate feedback
- * No debouncing - validates immediately on change
- */
-export function useImmediateValidation() {
-  const yamlContent = useMissionCreationStore((state) => state.yamlContent);
-  const [result, setResult] = React.useState<ValidationResult | null>(null);
-
-  React.useEffect(() => {
-    if (!yamlContent.trim()) {
-      setResult(null);
-      return;
-    }
-
-    const validationResult = validateMissionYAML(yamlContent);
-    const errorsWithLines = addLineNumbers(yamlContent, validationResult.errors);
-
-    setResult({
-      ...validationResult,
-      errors: errorsWithLines,
-    });
-  }, [yamlContent]);
-
-  return result;
 }
 
 /**

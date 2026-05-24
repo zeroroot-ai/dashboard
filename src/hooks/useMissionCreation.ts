@@ -20,7 +20,6 @@ import { useMissionCreationStore } from '@/src/stores/missionCreationStore';
 import { useMissionValidation } from './useMissionValidation';
 import { useMissionTemplate, useMissionTemplates } from './useMissionTemplates';
 import { substituteVariables } from '@/src/lib/mission/templates';
-import { yamlToState, stateToYAML } from '@/src/lib/mission/parser';
 import type {
   MissionCreationState,
   MissionTemplate,
@@ -31,7 +30,7 @@ import type {
   ValidationWarning,
   MissionCreationTab,
 } from '@/src/types/mission-creation';
-import type { ValidationResult } from '@/src/lib/mission/validation';
+import type { ValidationResult } from '@/src/hooks/useMissionValidation';
 
 // ============================================================================
 // Types
@@ -269,30 +268,17 @@ export function useMissionCreation(
     return result.draftId;
   }, [yamlContent, saveDraftMutation]);
 
-  // Sync to YAML from visual state
+  // Sync to CUE from visual state — no-op now that CUE is the source of truth.
+  // The visual builder writes to the store directly; the CUE editor is the
+  // canonical authoring surface. This stub preserves the return-type contract.
   const syncToYAML = React.useCallback(() => {
-    const newYaml = stateToYAML(store);
-    updateYaml(newYaml);
-  }, [store, updateYaml]);
+    // no-op: CUE source is authoritative; visual builder is read-only display
+  }, []);
 
-  // Sync from YAML to visual state
+  // Sync from CUE to visual state — no-op for the same reason.
   const syncFromYAML = React.useCallback(() => {
-    const result = yamlToState(yamlContent);
-    if (result.success && result.data) {
-      if (result.data.metadata) {
-        store.updateMetadata(result.data.metadata as Parameters<typeof store.updateMetadata>[0]);
-      }
-      if (result.data.scope) {
-        store.updateScope(result.data.scope as Parameters<typeof store.updateScope>[0]);
-      }
-      if (result.data.mission) {
-        store.updateMission(result.data.mission as Parameters<typeof store.updateMission>[0]);
-      }
-      if (result.data.guardrails) {
-        store.updateGuardrails(result.data.guardrails as Parameters<typeof store.updateGuardrails>[0]);
-      }
-    }
-  }, [yamlContent, store]);
+    // no-op: CUE parsing runs server-side (ValidateMissionCUE / daemon)
+  }, []);
 
   // Reset handler
   const reset = React.useCallback(() => {

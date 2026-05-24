@@ -68,10 +68,10 @@ const saveSchema = z.object({
     .min(1, "Draft name is required")
     .max(256, "Draft name must be at most 256 characters")
     .trim(),
-  yaml: z
+  cueSource: z
     .string()
-    .min(1, "Draft YAML is required")
-    .max(512 * 1024, "Draft YAML must be at most 512 KB"),
+    .min(1, "Draft CUE source is required")
+    .max(512 * 1024, "Draft CUE source must be at most 512 KB"),
   draftId: z.string().max(128).optional(),
 });
 
@@ -123,13 +123,13 @@ function rpcErrToResult(action: string, err: unknown): DraftActionResult<never> 
 // ---------------------------------------------------------------------------
 
 /**
- * Persists a mission YAML draft for the active tenant. When draftId is
+ * Persists a mission CUE draft for the active tenant. When draftId is
  * provided the existing draft is overwritten in place; otherwise a new
  * draft is created and its server-assigned ID is returned.
  */
 export async function saveMissionDraftAction(input: {
   name: string;
-  yaml: string;
+  cueSource: string;
   draftId?: string;
 }): Promise<DraftActionResult<{ draftId: string }>> {
   try {

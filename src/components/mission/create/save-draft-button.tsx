@@ -35,7 +35,7 @@ import { Label } from "@/components/ui/label";
 import { saveMissionDraftAction } from "@/app/actions/missions/drafts";
 
 interface SaveDraftButtonProps {
-  yaml: string;
+  cueSource: string;
   /** Current draft ID — when set, clicking saves in place; when undefined, prompts for a name. */
   currentDraftId?: string;
   /** Display name of the current draft (used for in-place overwrites). */
@@ -47,7 +47,7 @@ interface SaveDraftButtonProps {
 }
 
 export function SaveDraftButton({
-  yaml,
+  cueSource,
   currentDraftId,
   currentDraftName,
   isDirty,
@@ -62,7 +62,7 @@ export function SaveDraftButton({
     try {
       const res = await saveMissionDraftAction({
         name: args.name,
-        yaml,
+        cueSource,
         draftId: args.draftId,
       });
       if (res.ok) {

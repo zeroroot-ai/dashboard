@@ -3,40 +3,38 @@
  *
  * POST /api/missions/validate
  *
- * Server-side validation endpoint for mission YAML.
- * Performs comprehensive validation including:
- * - YAML syntax validation
- * - JSON Schema validation
- * - Custom business rules
- * - Optional integration with Gibson daemon for advanced checks
+ * Server-side validation endpoint for mission CUE source.
+ * Delegates to the daemon's ValidateMissionCUE RPC via the CUE editor
+ * server action and returns a ValidationResult-shaped response the
+ * useMissionValidation hook and Monaco marker pipeline can consume.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
-import { validateMissionYAML, addLineNumbers } from '@/src/lib/mission/validation';
-import type { ValidationResult } from '@/src/lib/mission/validation';
 import { logger } from '@/src/lib/logger';
+import { validateMissionCUEAction } from '@/app/actions/missions/cue-editor';
+import type { ValidationError, ValidationWarning } from '@/src/types/mission-creation';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface ValidateRequest {
-  yaml: string;
-  options?: {
-    /** Perform deep validation with Gibson daemon */
-    deepValidation?: boolean;
-    /** Include schema documentation in response */
-    includeDocumentation?: boolean;
-  };
+  /** CUE source text to validate */
+  cueSource?: string;
+  /** Legacy field — kept for one-cycle back-compat; ignored */
+  yaml?: string;
 }
 
-interface ValidateResponse extends ValidationResult {
-  /** Server timestamp */
+interface ValidateResponse {
+  isValid: boolean;
+  errors: ValidationError[];
+  warnings: ValidationWarning[];
+  parsed: Record<string, unknown> | null;
+  duration: number;
   timestamp: string;
-  /** Validation source */
-  source: 'client' | 'server';
+  source: 'server';
 }
 
 // ============================================================================
@@ -58,23 +56,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Check authentication
     const session = await getServerSession();
     if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Parse request body
     const body: ValidateRequest = await request.json();
+    const cueSource = body.cueSource ?? body.yaml ?? '';
 
-    // Validate request
-    if (!body.yaml || typeof body.yaml !== 'string') {
+    if (typeof cueSource !== 'string') {
       return NextResponse.json(
         {
           isValid: false,
           errors: [{
             code: 'INVALID_REQUEST',
-            message: 'Request body must include a "yaml" string field',
+            message: 'Request body must include a "cueSource" string field',
             path: '',
             severity: 'error',
           }],
@@ -89,13 +84,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Check content length (max 100KB)
-    if (body.yaml.length > 100 * 1024) {
+    if (cueSource.length > 100 * 1024) {
       return NextResponse.json(
         {
           isValid: false,
           errors: [{
             code: 'CONTENT_TOO_LARGE',
-            message: 'YAML content exceeds maximum size of 100KB',
+            message: 'CUE source exceeds maximum size of 100KB',
             path: '',
             severity: 'error',
           }],
@@ -109,31 +104,35 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Perform validation
-    const result = validateMissionYAML(body.yaml);
+    // Delegate to the daemon's ValidateMissionCUE RPC via the server action.
+    const diagnostics = await validateMissionCUEAction(cueSource);
 
-    // Add line numbers to errors
-    const errorsWithLines = addLineNumbers(body.yaml, result.errors);
-
-    // Deep validation is requested but not yet wired to the Gibson daemon.
-    // The ValidateMission RPC is still pending; until then, surface the
-    // unavailability honestly so the UI can render the toggle as a hint
-    // instead of pretending a full deep-validate ran.
-    if (body.options?.deepValidation) {
-      result.warnings.push({
-        code: 'DEEP_VALIDATION_UNAVAILABLE',
-        message:
-          'Deep validation is not yet wired to the Gibson daemon. ' +
-          'YAML, schema, and business-rule checks ran; daemon-side ' +
-          'agent/tool/scope checks were skipped.',
+    const errors: ValidationError[] = diagnostics
+      .filter((d) => d.severity === 'error' || d.severity === 'ERROR')
+      .map((d) => ({
+        code: 'CUE_ERROR',
+        message: d.message,
         path: '',
-        severity: 'warning',
-      });
-    }
+        line: d.line,
+        column: d.col,
+        severity: 'error' as const,
+      }));
+
+    const warnings: ValidationWarning[] = diagnostics
+      .filter((d) => d.severity !== 'error' && d.severity !== 'ERROR')
+      .map((d) => ({
+        code: 'CUE_WARNING',
+        message: d.message,
+        path: '',
+        line: d.line,
+        severity: 'warning' as const,
+      }));
 
     const response: ValidateResponse = {
-      ...result,
-      errors: errorsWithLines,
+      isValid: errors.length === 0,
+      errors,
+      warnings,
+      parsed: null,
       duration: performance.now() - startTime,
       timestamp: new Date().toISOString(),
       source: 'server',
@@ -141,7 +140,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(response);
   } catch (err) {
-    logger.error({ err, route: 'missions/validate' }, 'mission validation server error');
+    logger.error({ err, route: 'missions/validate' }, 'mission CUE validation server error');
 
     return NextResponse.json(
       {
