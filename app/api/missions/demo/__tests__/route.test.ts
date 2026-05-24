@@ -89,14 +89,13 @@ describe('POST /api/missions/demo', () => {
     expect(body.target).toBe('scanme.nmap.org');
 
     // Definition step: a single-node mission targeting scanme.nmap.org via nmap-agent.
-    // The platform-sdk DaemonAdminService request carries the OSS
-    // MissionDefinition as `definition_serialized: bytes`; decode it
-    // here to assert the structured content (wire-equivalent to the
-    // legacy `definition` field).
+    // platform-sdk v0.7.0 moved definition_serialized under the `source` oneof.
+    // The request shape is: { source: { case: 'definitionSerialized', value: Uint8Array } }.
     expect(mockCreateMissionDefinition).toHaveBeenCalledTimes(1);
     const defArg = mockCreateMissionDefinition.mock.calls[0][0];
-    expect(defArg.definitionSerialized).toBeInstanceOf(Uint8Array);
-    const decoded = fromBinary(MissionDefinitionSchema, defArg.definitionSerialized);
+    expect(defArg.source?.case).toBe('definitionSerialized');
+    expect(defArg.source?.value).toBeInstanceOf(Uint8Array);
+    const decoded = fromBinary(MissionDefinitionSchema, defArg.source.value as Uint8Array);
     expect(decoded.targetRef).toBe('scanme.nmap.org');
     expect(decoded.entryPoints).toEqual(['scan']);
     expect(decoded.exitPoints).toEqual(['scan']);

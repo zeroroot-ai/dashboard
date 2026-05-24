@@ -1,13 +1,13 @@
 /**
  * Mission Serializer
  *
- * Converts the dashboard's authored-mission model (produced by the Monaco
- * YAML editor + `parser.ts`) into a wire-format `MissionDefinition` proto
- * message. YAML remains a client-side authoring convenience; the wire
- * format sent to the daemon is proto JSON only, not YAML.
+ * Converts the dashboard's authored-mission model into a wire-format
+ * `MissionDefinition` proto message. The wire format sent to the daemon is
+ * proto binary only. CUE source is the authoring format (edited via
+ * MissionCUEEditor); YAML is no longer used.
  *
- * Also retains bidirectional React Flow helpers so the existing visual
- * builder UI continues to function.
+ * Also retains bidirectional React Flow helpers so the visual builder UI
+ * continues to function.
  */
 
 import { MarkerType } from '@xyflow/react';
@@ -37,14 +37,11 @@ import type {
   MissionConfig,
   MissionStep,
   MissionStepType,
-  MissionStepConfig,
   AgentStepConfig,
   ToolStepConfig,
   ConditionStepConfig,
   ParallelStepConfig,
   JoinStepConfig,
-  MissionExecutionMode,
-  ErrorHandlingStrategy,
 } from '@/src/types/mission-creation';
 
 // ============================================================================
@@ -617,290 +614,6 @@ function determineExecutionMode(steps: MissionStep[]): 'sequential' | 'parallel'
 }
 
 // ============================================================================
-// Client-side YAML Parsing (authoring convenience only — not wire format)
-// ============================================================================
-
-/**
- * Parse an authored mission fragment (the `mission:` block of the user's
- * YAML) into the structured {@link MissionConfig} model.
- */
-export function parseMissionYAML(missionData: unknown): MissionConfig {
-  const steps: MissionStep[] = [];
-
-  // Handle array of steps
-  if (Array.isArray(missionData)) {
-    let prevStepId: string | null = null;
-
-    for (let i = 0; i < missionData.length; i++) {
-      const stepData = missionData[i];
-      const step = parseStepYAML(stepData, i);
-
-      // If no explicit dependencies, depend on previous step
-      if ((step.dependsOn ?? []).length === 0 && prevStepId) {
-        step.dependsOn = [prevStepId];
-      }
-
-      steps.push(step);
-      prevStepId = step.id;
-    }
-
-    return {
-      type: 'inline',
-      steps,
-      executionMode: 'sequential',
-      errorHandling: 'continue',
-    };
-  }
-
-  // Handle object with type and steps
-  if (typeof missionData === 'object' && missionData !== null) {
-    const missionObj = missionData as Record<string, unknown>;
-    const executionMode = (missionObj.type as string | undefined) || 'sequential';
-
-    // Sequential/DAG steps
-    if (Array.isArray(missionObj.steps)) {
-      let prevStepId: string | null = null;
-
-      for (let i = 0; i < missionObj.steps.length; i++) {
-        const stepData = missionObj.steps[i];
-        const step = parseStepYAML(stepData, i);
-
-        // If sequential and no explicit dependencies, depend on previous
-        if (executionMode === 'sequential' && (step.dependsOn ?? []).length === 0 && prevStepId) {
-          step.dependsOn = [prevStepId];
-        }
-
-        steps.push(step);
-        prevStepId = step.id;
-      }
-    }
-
-    // Parallel agents
-    if (Array.isArray(missionObj.agents)) {
-      for (let i = 0; i < missionObj.agents.length; i++) {
-        const agentData = missionObj.agents[i] as Record<string, unknown>;
-        steps.push({
-          id: (agentData.name as string | undefined) || `agent-${i}`,
-          type: 'agent',
-          name: (agentData.name as string | undefined) || `Agent ${i + 1}`,
-          config: {
-            type: 'agent',
-            agentId: (agentData.name as string | undefined) ?? '',
-            task: (agentData.task as string | undefined) || '',
-          },
-          dependsOn: [],
-        });
-      }
-    }
-
-    return {
-      type: 'inline',
-      steps,
-      executionMode: executionMode as MissionExecutionMode,
-      errorHandling: ((missionObj.errorHandling as string | undefined) || 'continue') as ErrorHandlingStrategy,
-    };
-  }
-
-  // Empty or invalid mission
-  return {
-    type: 'inline',
-    steps: [],
-    executionMode: 'sequential',
-    errorHandling: 'continue',
-  };
-}
-
-/**
- * Parse individual step from YAML
- */
-function parseStepYAML(stepData: unknown, index: number): MissionStep {
-  const sd = (typeof stepData === 'object' && stepData !== null ? stepData : {}) as Record<string, unknown>;
-  const id = (sd.id as string | undefined) || `step-${index}`;
-  let type: MissionStepType = 'agent';
-  let config: MissionStepConfig;
-
-  if (sd.agent) {
-    type = 'agent';
-    config = {
-      type: 'agent',
-      agentId: sd.agent as string,
-      task: (sd.task as string | undefined) || '',
-      parameters: sd.parameters as Record<string, unknown> | undefined,
-    };
-  } else if (sd.tool) {
-    type = 'tool';
-    config = {
-      type: 'tool',
-      toolId: sd.tool as string,
-      inputs: (sd.parameters ?? sd.inputs ?? {}) as Record<string, unknown>,
-    };
-  } else if (sd.type === 'condition') {
-    type = 'condition';
-    config = {
-      type: 'condition',
-      expression: (sd.expression as string | undefined) || '',
-      ifTrue: (sd.ifTrue as string | undefined) || '',
-      ifFalse: (sd.ifFalse as string | undefined) || '',
-    };
-  } else if (sd.type === 'parallel') {
-    type = 'parallel';
-    config = {
-      type: 'parallel',
-      branches: (sd.branches as string[] | undefined) || [],
-      maxConcurrency: sd.maxConcurrency as number | undefined,
-    };
-  } else if (sd.type === 'join') {
-    type = 'join';
-    config = {
-      type: 'join',
-      waitFor: (sd.waitFor as string[] | undefined) || [],
-      mergeStrategy: ((sd.mergeStrategy as string | undefined) || 'all') as 'all' | 'any' | 'majority',
-    };
-  } else {
-    // Default to agent
-    config = {
-      type: 'agent',
-      agentId: '',
-      task: (sd.task as string | undefined) || '',
-    };
-  }
-
-  return {
-    id,
-    type,
-    name: (sd.name as string | undefined) || (sd.agent as string | undefined) || (sd.tool as string | undefined) || `Step ${index + 1}`,
-    config,
-    dependsOn: (sd.dependsOn as string[] | undefined) || [],
-    timeout: sd.timeout as number | undefined,
-    condition: sd.condition
-      ? { type: 'cel', expression: sd.condition as string }
-      : undefined,
-    retry: sd.retry as MissionStep['retry'],
-  };
-}
-
-// ============================================================================
-// Client-side YAML Serialization (authoring convenience only — not wire format)
-// ============================================================================
-
-/**
- * Serialize an authored {@link MissionConfig} into a YAML-ready object
- * suitable for display in the Monaco editor. This is the *authoring* shape —
- * it is NOT what the daemon sees.
- */
-export function serializeMissionYAML(mission: MissionConfig): Record<string, unknown> | Record<string, unknown>[] | undefined {
-  if (mission.steps.length === 0) {
-    return undefined;
-  }
-
-  // Check if it's a simple sequential mission
-  const isSimpleSequential = mission.steps.every((step, index) => {
-    const deps = step.dependsOn ?? [];
-    if (index === 0) return deps.length === 0;
-    return (
-      deps.length === 1 &&
-      deps[0] === mission.steps[index - 1].id
-    );
-  });
-
-  if (isSimpleSequential && mission.steps.every((s) => s.type === 'agent')) {
-    // Output as simple array
-    return mission.steps.map((step) => {
-      const config = step.config as AgentStepConfig;
-      const output: Record<string, unknown> = {
-        agent: config.agentId,
-        task: config.task,
-      };
-      if (config.parameters && Object.keys(config.parameters).length > 0) {
-        output.parameters = config.parameters;
-      }
-      return output;
-    });
-  }
-
-  // Output as object with type and steps
-  const output: Record<string, unknown> = {};
-
-  if (mission.executionMode !== 'sequential') {
-    output.type = mission.executionMode;
-  }
-
-  output.steps = mission.steps.map((step) => serializeStepYAML(step));
-
-  return output;
-}
-
-/**
- * Serialize individual step to YAML-ready object
- */
-function serializeStepYAML(step: MissionStep): Record<string, unknown> {
-  const output: Record<string, unknown> = {};
-
-  if (step.id) {
-    output.id = step.id;
-  }
-
-  switch (step.type) {
-    case 'agent': {
-      const config = step.config as AgentStepConfig;
-      output.agent = config.agentId;
-      output.task = config.task;
-      if (config.parameters && Object.keys(config.parameters).length > 0) {
-        output.parameters = config.parameters;
-      }
-      break;
-    }
-    case 'tool': {
-      const config = step.config as ToolStepConfig;
-      output.type = 'tool';
-      output.tool = config.toolId;
-      if (Object.keys(config.inputs).length > 0) {
-        output.parameters = config.inputs;
-      }
-      break;
-    }
-    case 'condition': {
-      const config = step.config as ConditionStepConfig;
-      output.type = 'condition';
-      output.expression = config.expression;
-      output.ifTrue = config.ifTrue;
-      output.ifFalse = config.ifFalse;
-      break;
-    }
-    case 'parallel': {
-      const config = step.config as ParallelStepConfig;
-      output.type = 'parallel';
-      output.branches = config.branches;
-      if (config.maxConcurrency) {
-        output.maxConcurrency = config.maxConcurrency;
-      }
-      break;
-    }
-    case 'join': {
-      const config = step.config as JoinStepConfig;
-      output.type = 'join';
-      output.waitFor = config.waitFor;
-      output.mergeStrategy = config.mergeStrategy;
-      break;
-    }
-  }
-
-  if ((step.dependsOn ?? []).length > 0) {
-    output.dependsOn = step.dependsOn;
-  }
-
-  if (step.timeout) {
-    output.timeout = step.timeout;
-  }
-
-  if (step.condition) {
-    output.condition = step.condition.expression;
-  }
-
-  return output;
-}
-
-// ============================================================================
 // Export
 // ============================================================================
 
@@ -909,6 +622,4 @@ export default {
   serializeStateToMissionDefinition,
   missionToReactFlow,
   reactFlowToMission,
-  parseMissionYAML,
-  serializeMissionYAML,
 };

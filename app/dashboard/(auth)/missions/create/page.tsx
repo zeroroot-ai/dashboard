@@ -4,36 +4,50 @@ import * as React from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Loader2, Rocket, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Loader2, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { ValidationPanel } from "@/components/gibson/missions/ValidationPanel";
-import { editorTemplates } from "@/src/lib/mission/editor-templates";
-import { validateMissionYAML, type ValidationResult } from "@/src/lib/mission/validation";
 import { useAutosave } from "@/src/hooks/useAutosave";
 import { SaveDraftButton } from "@/src/components/mission/create/save-draft-button";
 import { DraftsMenu } from "@/src/components/mission/create/drafts-menu";
 import { getMissionDraftAction } from "@/app/actions/missions/drafts";
+import { createMissionFromCUEAction } from "@/app/actions/missions/create-mission";
 
-const MissionYamlEditor = dynamic(
-  () => import("@/components/gibson/missions/MissionYamlEditor"),
-  { ssr: false, loading: () => <div className="flex h-full items-center justify-center text-muted-foreground">Loading editor...</div> }
+const MissionCUEEditor = dynamic(
+  () =>
+    import("@/src/components/missions/MissionCUEEditor").then(
+      (m) => m.MissionCUEEditor
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        Loading editor...
+      </div>
+    ),
+  }
 );
 
 const AUTOSAVE_KEY = "mission-create";
+const DEFAULT_CUE = `// Gibson Mission Definition (CUE)
+// Edit below — inline diagnostics appear as you type.
+package mission
+
+name: "my-mission"
+description: "Describe what this mission does."
+`;
 
 function loadLocalDraft(): string {
-  if (typeof window === "undefined") return editorTemplates[0].yamlContent;
+  if (typeof window === "undefined") return DEFAULT_CUE;
   try {
     const stored = localStorage.getItem(`gibson:draft:${AUTOSAVE_KEY}`);
     if (stored) {
       const d = JSON.parse(stored);
-      if (d?.yaml) return d.yaml;
+      if (d?.cueSource) return d.cueSource;
     }
   } catch { /* ignore */ }
-  return editorTemplates[0].yamlContent;
+  return DEFAULT_CUE;
 }
 
 export default function CreateMissionPage() {
@@ -41,57 +55,44 @@ export default function CreateMissionPage() {
   const searchParams = useSearchParams();
   const urlDraftId = searchParams.get("draft") ?? undefined;
 
-  const [yamlContent, setYamlContent] = React.useState<string>(loadLocalDraft);
-  const [validation, setValidation] = React.useState<ValidationResult | null>(null);
+  const [cueSource, setCueSource] = React.useState<string>(loadLocalDraft);
+  const [errorCount, setErrorCount] = React.useState(0);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [isValidating, setIsValidating] = React.useState(false);
 
-  // Server-side draft state. currentDraftId is the daemon-assigned ID
-  // when the page is bound to a saved draft (via ?draft=<id> or after
-  // a Save Draft create). currentDraftName mirrors the draft's
-  // human-readable name for the in-place "Update Draft" path.
+  // Server-side draft state
   const [currentDraftId, setCurrentDraftId] = React.useState<string | undefined>(undefined);
   const [currentDraftName, setCurrentDraftName] = React.useState<string | undefined>(undefined);
   const [draftLoading, setDraftLoading] = React.useState(false);
 
-  // Track the YAML content as it was when the current draft was last
-  // loaded or saved. Editor is "dirty" when yamlContent !== savedYaml.
-  // For a fresh page (no current draft), we treat anything other than
-  // the default template as dirty so Save Draft becomes enabled.
-  const [savedYaml, setSavedYaml] = React.useState<string>(editorTemplates[0].yamlContent);
-  const isDirty = yamlContent !== savedYaml;
+  const [savedSource, setSavedSource] = React.useState<string>(DEFAULT_CUE);
+  const isDirty = cueSource !== savedSource;
 
-  // ---------------------------------------------------------------------
-  // URL-driven draft hydration: when ?draft=<id> is present on load (or
-  // after a navigation), fetch the draft and hydrate the editor.
-  // ---------------------------------------------------------------------
+  // URL-driven draft hydration
   React.useEffect(() => {
     if (!urlDraftId) {
-      // Navigated away from a draft; reset draft binding.
       setCurrentDraftId(undefined);
       setCurrentDraftName(undefined);
       return;
     }
-    if (urlDraftId === currentDraftId) return; // already hydrated
+    if (urlDraftId === currentDraftId) return;
     let cancelled = false;
     setDraftLoading(true);
     void (async () => {
       const res = await getMissionDraftAction(urlDraftId);
       if (cancelled) return;
       if (res.ok) {
-        setYamlContent(res.data.yaml);
-        setSavedYaml(res.data.yaml);
+        setCueSource(res.data.cueSource);
+        setSavedSource(res.data.cueSource);
         setCurrentDraftId(res.data.id);
         setCurrentDraftName(res.data.name);
       } else if (res.code === "not_found") {
         toast.error("This draft no longer exists. It may have expired.");
-        // Strip the stale ?draft from the URL.
         router.replace("/dashboard/missions/create");
       } else {
         toast.error(
           res.code === "permission_denied"
             ? "Permission denied"
-            : "Could not load the draft",
+            : "Could not load the draft"
         );
       }
       setDraftLoading(false);
@@ -101,20 +102,9 @@ export default function CreateMissionPage() {
     };
   }, [urlDraftId, currentDraftId, router]);
 
-  // ---------------------------------------------------------------------
-  // YAML validation (debounced).
-  // ---------------------------------------------------------------------
-  React.useEffect(() => {
-    const t = setTimeout(() => setValidation(validateMissionYAML(yamlContent)), 400);
-    return () => clearTimeout(t);
-  }, [yamlContent]);
-
-  // ---------------------------------------------------------------------
-  // Local-storage autosave (transient, in-tab; daemon drafts are the
-  // long-term persistence path).
-  // ---------------------------------------------------------------------
+  // Local-storage autosave
   const autosave = useAutosave(
-    { yaml: yamlContent, activeTab: "editor", savedAt: new Date().toISOString() },
+    { cueSource, savedAt: new Date().toISOString() },
     { storageKey: AUTOSAVE_KEY, debounceMs: 30000 }
   );
 
@@ -126,81 +116,63 @@ export default function CreateMissionPage() {
     return () => window.removeEventListener("beforeunload", handle);
   }, [isDirty]);
 
-  // ---------------------------------------------------------------------
-  // Mission-create + validation handlers (unchanged from prior page).
-  // ---------------------------------------------------------------------
-  async function handleValidate() {
-    setIsValidating(true);
-    try {
-      const res = await fetch("/api/missions/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ yaml: yamlContent }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data) {
-        setValidation(data);
-        data.isValid ? toast.success("Mission YAML is valid") : toast.error(`Validation failed: ${data.errors?.length ?? 0} error(s)`);
-      } else {
-        toast.error(data?.message ?? "Validation request failed");
-      }
-    } catch { toast.error("Failed to reach validation service"); }
-    finally { setIsValidating(false); }
-  }
-
   async function handleRunMission() {
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/missions/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ yaml: yamlContent }),
-      });
+      const res = await createMissionFromCUEAction({ cueSource });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.message ?? `Request failed: ${res.statusText}`);
+        toast.error(
+          res.code === "permission_denied"
+            ? "Permission denied"
+            : res.code === "invalid"
+              ? `Mission definition invalid: ${res.error}`
+              : res.error
+        );
+        return;
       }
       autosave.clear();
       toast.success("Mission launched");
       router.push("/dashboard/missions");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "An unexpected error occurred");
-    } finally { setIsSubmitting(false); }
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
-  // ---------------------------------------------------------------------
-  // Save Draft callback — wires the SaveDraftButton's success path.
-  // ---------------------------------------------------------------------
   function handleDraftSaved(draftId: string, name: string) {
     setCurrentDraftId(draftId);
     setCurrentDraftName(name);
-    setSavedYaml(yamlContent);
+    setSavedSource(cueSource);
     if (urlDraftId !== draftId) {
-      // Reflect the draft binding in the URL so refresh / sharing
-      // resumes the same draft.
       router.replace(`/dashboard/missions/create?draft=${draftId}`);
     }
   }
 
   function handleDraftDeleted(draftId: string) {
     if (draftId === currentDraftId) {
-      // The draft we were editing was deleted; unbind.
       setCurrentDraftId(undefined);
       setCurrentDraftName(undefined);
       router.replace("/dashboard/missions/create");
     }
   }
 
-  const errors = validation?.errors ?? [];
-  const warnings = validation?.warnings ?? [];
-  const isValid = validation?.isValid ?? false;
-  const parsed = validation?.parsed ?? null;
-  const autosaveLabel = autosave.status === "saved" ? "Local autosave" : autosave.status === "saving" ? "Saving..." : autosave.status === "error" ? "Local autosave failed" : "Unsaved changes";
+  const autosaveLabel =
+    autosave.status === "saved"
+      ? "Local autosave"
+      : autosave.status === "saving"
+        ? "Saving..."
+        : autosave.status === "error"
+          ? "Local autosave failed"
+          : "Unsaved changes";
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          asChild
+          className="gap-1.5 text-muted-foreground"
+        >
           <Link href="/dashboard/missions">
             <ArrowLeft className="size-3.5" />
             Missions
@@ -215,7 +187,7 @@ export default function CreateMissionPage() {
         <p className="text-sm text-muted-foreground">
           {currentDraftId
             ? "Editing a saved draft. Changes are not synced to the server until you click Update Draft."
-            : "Write or load a mission YAML, validate, and launch."}
+            : "Write a mission in CUE and launch — inline diagnostics appear as you type."}
         </p>
       </div>
 
@@ -223,17 +195,6 @@ export default function CreateMissionPage() {
 
       <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
-          <Select onValueChange={(id) => { const tpl = editorTemplates.find((t) => t.id === id); if (tpl) { setYamlContent(tpl.yamlContent); setSavedYaml(tpl.yamlContent); } }} defaultValue={editorTemplates[0].id}>
-            <SelectTrigger className="w-52 font-mono text-sm">
-              <SelectValue placeholder="Load template..." />
-            </SelectTrigger>
-            <SelectContent>
-              {editorTemplates.map((tpl) => (
-                <SelectItem key={tpl.id} value={tpl.id} className="font-mono text-sm">{tpl.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
           <DraftsMenu
             currentDraftId={currentDraftId}
             onDeleted={handleDraftDeleted}
@@ -247,34 +208,40 @@ export default function CreateMissionPage() {
           )}
         </div>
 
-        <span className="text-xs text-muted-foreground select-none">{autosaveLabel}</span>
+        <span className="text-xs text-muted-foreground select-none">
+          {autosaveLabel}
+        </span>
 
         <div className="flex items-center gap-2">
           <SaveDraftButton
-            yaml={yamlContent}
+            cueSource={cueSource}
             currentDraftId={currentDraftId}
             currentDraftName={currentDraftName}
             isDirty={isDirty}
             onSaved={handleDraftSaved}
           />
-          <Button variant="outline" size="sm" onClick={handleValidate} disabled={isValidating} className="gap-1.5">
-            {isValidating ? <Loader2 className="size-3.5 animate-spin" /> : <ShieldCheck className="size-3.5" />}
-            Validate
-          </Button>
-          <Button size="sm" onClick={handleRunMission} disabled={isSubmitting || errors.length > 0} className="gap-1.5">
-            {isSubmitting ? <Loader2 className="size-3.5 animate-spin" /> : <Rocket className="size-3.5" />}
+          <Button
+            size="sm"
+            onClick={handleRunMission}
+            disabled={isSubmitting || errorCount > 0}
+            className="gap-1.5"
+          >
+            {isSubmitting ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Rocket className="size-3.5" />
+            )}
             Run Mission
           </Button>
         </div>
       </div>
 
-      <div className="flex gap-4" style={{ minHeight: "calc(100vh - 14rem)" }}>
-        <div className="flex-[7] min-w-0">
-          <MissionYamlEditor value={yamlContent} onChange={setYamlContent} errors={errors} />
-        </div>
-        <div className="flex-[3] min-w-[280px]">
-          <ValidationPanel errors={errors} warnings={warnings} parsed={parsed} isValid={isValid} />
-        </div>
+      <div style={{ minHeight: "calc(100vh - 14rem)" }}>
+        <MissionCUEEditor
+          value={cueSource}
+          onChange={setCueSource}
+          onDiagnosticsChange={setErrorCount}
+        />
       </div>
     </div>
   );

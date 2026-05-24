@@ -108,8 +108,9 @@ export async function POST(request: NextRequest) {
     const definitionSerialized = toBinary(MissionDefinitionSchema, definition);
 
     // Step 1: register the mission definition (admin-tier).
+    // platform-sdk v0.7.0 moved definition_serialized under the `source` oneof.
     const defResp = await adminClient.createMissionDefinition({
-      definitionSerialized,
+      source: { case: 'definitionSerialized', value: definitionSerialized },
     });
     const missionDefinitionId = defResp.missionDefinitionId;
     if (!missionDefinitionId) {

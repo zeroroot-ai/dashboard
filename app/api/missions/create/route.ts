@@ -3,29 +3,18 @@
  *
  * POST /api/missions/create
  *
- * Creates a new mission from an authored YAML document.
+ * Creates a new mission from CUE source authored in the MissionCUEEditor.
  *
- * The YAML is a *client-side authoring format only* — it is parsed in this
- * route into a structured `MissionDefinition` proto, registered with the
- * daemon via `CreateMissionDefinition`, and then the returned definition ID
- * is used in a second call to `CreateMission`. No YAML ever reaches the
- * daemon.
+ * The daemon's CreateMissionDefinition RPC accepts CUE source directly via
+ * the `cue_source` field (platform-sdk v0.7.0). The daemon compiles and
+ * validates the CUE against the embedded schema before persisting. No
+ * client-side parsing of mission content is needed — the daemon is the
+ * authoritative parser.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
-import { validateMissionYAML } from '@/src/lib/mission/validation';
-import { yamlToState } from '@/src/lib/mission/parser';
-import { serializeToMissionDefinition } from '@/src/lib/mission/mission-serializer';
-import {
-  DEFAULT_METADATA,
-  DEFAULT_SCOPE,
-  DEFAULT_MISSION,
-  type MissionMetadata,
-  type ScopeConfig,
-  type MissionConfig,
-} from '@/src/types/mission-creation';
 import { ConnectError, Code } from '@connectrpc/connect';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { checkRateLimit, createRateLimitResponse } from '@/src/lib/rate-limiter';
@@ -76,27 +65,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Parse request body
+    // Parse request body — accept `cueSource` (new) or legacy `yaml` field
     const body: CreateMissionRequest = await request.json();
-    const { yaml, startImmediately, name } = body;
+    const bodyAny = body as unknown as Record<string, unknown>;
+    const cueSource = (bodyAny.cueSource as string | undefined) ?? body.yaml;
+    const { startImmediately, name } = body;
 
-    if (!yaml || typeof yaml !== 'string') {
+    if (!cueSource || typeof cueSource !== 'string') {
       return NextResponse.json(
-        { success: false, error: 'YAML content is required' },
-        { status: 400 }
-      );
-    }
-
-    // Server-side validation — always enforced, cannot be skipped by clients
-    const validationResult = validateMissionYAML(yaml);
-
-    if (!validationResult.isValid) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Validation failed',
-          validationErrors: validationResult.errors,
-        },
+        { success: false, error: 'CUE source is required' },
         { status: 400 }
       );
     }
@@ -113,7 +90,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Forward to Gibson daemon
     const gibsonResponse = await createMissionInGibson({
-      yaml,
+      cueSource,
       name: name || 'Unnamed Mission',
       startImmediately: startImmediately ?? true,
       userId,
@@ -145,7 +122,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 // ============================================================================
 
 interface CreateMissionParams {
-  yaml: string;
+  cueSource: string;
   name: string;
   startImmediately: boolean;
   userId: string;
@@ -155,70 +132,23 @@ interface CreateMissionParams {
 async function createMissionInGibson(
   params: CreateMissionParams
 ): Promise<GibsonCreateMissionResponse> {
-  // Parse YAML client-side into the authored state, then serialize to a
-  // MissionDefinition proto. No YAML crosses the wire to the daemon.
-  const parsed = yamlToState(params.yaml);
-  if (!parsed.success || !parsed.data) {
-    return {
-      success: false,
-      error: parsed.error?.message || 'Failed to parse mission YAML',
-    };
-  }
-
-  const metadata: MissionMetadata = {
-    ...DEFAULT_METADATA,
-    ...(parsed.data.metadata ?? {}),
-    name: parsed.data.metadata?.name || params.name,
-  };
-  const scope: ScopeConfig = {
-    ...DEFAULT_SCOPE,
-    ...(parsed.data.scope ?? {}),
-  };
-  const mission: MissionConfig = {
-    ...DEFAULT_MISSION,
-    ...(parsed.data.mission ?? {}),
-  };
-
-  const definition = serializeToMissionDefinition({ metadata, scope, mission });
-
-  // Derive a target reference from the first scope seed for the
-  // CreateMission call. The daemon treats target_id as a reference — in
-  // this transitional phase the dashboard sends the seed value and the
-  // daemon resolves it against its target registry.
-  const targetId = scope.seeds[0]?.value ?? '';
-
   try {
-    // Spec headline-feature-completion R11 + dashboard-admin-via-envoy:
-    // route the daemon RPC through Envoy via the user-acting `userClient`
-    // factory rather than building a direct grpc-transport off the
-    // legacy `serverConfig.gibsonDaemonUrl`. The Envoy edge enforces
-    // jwt_authn + ext_authz + SPIFFE mTLS upstream of the daemon; a
-    // direct channel from this route bypasses every one of those checks.
+    // Route all daemon traffic through Envoy + SPIFFE mTLS via `userClient`.
+    // Direct channels to :50051 are rejected by the prebuild guard.
     const { DaemonService } = await import('@/src/gen/gibson/daemon/v1/daemon_pb');
     const { DaemonAdminService } = await import(
       '@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb'
     );
-    const { MissionDefinitionSchema } = await import(
-      '@/src/gen/gibson/mission/v1/mission_definition_pb'
-    );
-    const { toBinary } = await import('@bufbuild/protobuf');
     const { userClient } = await import('@/src/lib/gibson-client');
 
     const client = userClient(DaemonService);
-    // DaemonAdminService is the platform-sdk-published admin/writer surface
-    // (parent PRD zero-day-ai/.github#101). CreateMissionDefinition moved
-    // off the member-facing DaemonService; the member RPCs (CreateMission,
-    // RunMission, etc.) stay on DaemonService. The admin request type carries
-    // the structured MissionDefinition as `definition_serialized: bytes` (the
-    // OSS gibson.mission.v1.MissionDefinition encoded with proto2 wire format)
-    // — wire-equivalent to the old `definition: MissionDefinition` slot, but
-    // it keeps platform-sdk free of the 600-line vendored mission proto.
     const adminClient = userClient(DaemonAdminService);
-    const definitionSerialized = toBinary(MissionDefinitionSchema, definition);
 
-    // Step 1: Register the mission definition (admin-tier).
+    // Step 1: Register the mission definition via CUE source (platform-sdk
+    // v0.7.0). The daemon compiles and validates the CUE against the embedded
+    // mission schema before persisting the resulting MissionDefinition proto.
     const defResp = await adminClient.createMissionDefinition({
-      definitionSerialized,
+      source: { case: 'cueSource', value: params.cueSource },
     });
     const missionDefinitionId = defResp.missionDefinitionId;
     if (!missionDefinitionId) {
@@ -229,17 +159,14 @@ async function createMissionInGibson(
     }
 
     // Step 2: Create the mission referencing the registered definition.
-    // Pass source_yaml so the daemon can store it for the clone workflow
-    // (GetMissionSourceYAML). The daemon also does the Neo4j MERGE server-side
-    // after this call succeeds (spec: dashboard-neo4j-crud-removal Phase 2).
     const createResp = await client.createMission({
-      name: metadata.name,
-      description: metadata.description,
-      targetId,
+      name: params.name,
+      description: '',
+      targetId: '',
       missionDefinitionId,
       variables: {},
       memoryContinuity: 'isolated',
-      sourceYaml: params.yaml,
+      sourceYaml: params.cueSource,
     });
 
     if (!createResp.success || !createResp.mission?.id) {
@@ -249,9 +176,7 @@ async function createMissionInGibson(
       };
     }
 
-    const missionId = createResp.mission.id;
-
-    return { success: true, missionId };
+    return { success: true, missionId: createResp.mission.id };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[Missions] gRPC mission-create failed:', message);

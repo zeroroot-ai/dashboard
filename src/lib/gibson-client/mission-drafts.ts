@@ -63,14 +63,14 @@ function mapErr(err: unknown): never {
 
 export async function saveMissionDraft(
   tenantId: string,
-  args: { name: string; yaml: string; draftId?: string },
+  args: { name: string; cueSource: string; draftId?: string },
 ): Promise<{ draftId: string }> {
   try {
     const client = userClient(TenantAdminService);
     const res = await client.saveMissionDraft({
       tenantId,
       name: args.name,
-      yaml: args.yaml,
+      cueSource: args.cueSource,
       draftId: args.draftId ?? '',
     });
     return { draftId: res.draftId };
