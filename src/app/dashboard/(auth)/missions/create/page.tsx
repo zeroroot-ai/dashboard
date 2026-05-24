@@ -48,7 +48,6 @@ function loadLocalDraft(): string {
     if (stored) {
       const d = JSON.parse(stored);
       if (d?.cueSource) return d.cueSource;
-      if (d?.yaml) return d.yaml;
     }
   } catch { /* ignore */ }
   return DEFAULT_CUE;
@@ -120,7 +119,7 @@ export default function CreateMissionPage() {
   }, [urlTemplateId]);
 
   const autosave = useAutosave(
-    { yaml: cueSource, activeTab: "editor", savedAt: new Date().toISOString() },
+    { cueSource, activeTab: "editor", savedAt: new Date().toISOString() },
     { storageKey: AUTOSAVE_KEY, debounceMs: 30000 }
   );
 

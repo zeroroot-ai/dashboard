@@ -18,7 +18,7 @@ import * as React from 'react';
 // ============================================================================
 
 export interface AutosaveData {
-  yaml: string;
+  cueSource: string;
   activeTab: string;
   savedAt: string;
   metadata?: {
@@ -137,7 +137,7 @@ export function useAutosave(
       const parsed = JSON.parse(stored) as AutosaveData;
 
       // Validate saved data
-      if (!parsed.yaml || typeof parsed.yaml !== 'string') {
+      if (!parsed.cueSource || typeof parsed.cueSource !== 'string') {
         return null;
       }
 
@@ -163,7 +163,7 @@ export function useAutosave(
 
   // Debounced autosave effect
   React.useEffect(() => {
-    if (!enabled || !data.yaml) return;
+    if (!enabled || !data.cueSource) return;
 
     // Clear existing timer
     if (timerRef.current) {
@@ -180,7 +180,7 @@ export function useAutosave(
         clearTimeout(timerRef.current);
       }
     };
-  }, [data.yaml, data.activeTab, debounceMs, enabled, save]);
+  }, [data.cueSource, data.activeTab, debounceMs, enabled, save]);
 
   // Load existing draft on mount
   React.useEffect(() => {
@@ -257,7 +257,7 @@ export function getAllDrafts(prefix: string): AutosaveData[] {
 
       try {
         const parsed = JSON.parse(data) as AutosaveData;
-        if (parsed.yaml) {
+        if (parsed.cueSource) {
           drafts.push(parsed);
         }
       } catch {
