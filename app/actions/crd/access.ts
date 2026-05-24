@@ -11,7 +11,7 @@
  * Spec: agent-authoring-and-tenant-entitlements task 30, R8 AC 7.
  */
 
-import { PlatformOperatorService } from "@/src/gen/gibson/platform/v1/platform_operator_pb";
+import { DaemonOperatorService } from "@/src/gen/gibson/daemon/operator/v1/operator_pb";
 import { serviceClient } from "@/src/lib/gibson-client";
 
 import { requireCrdSession } from "./_authz";
@@ -110,7 +110,7 @@ export async function setComponentAccessAction(
   const wantAdd = isGrant ? input.enabled : !input.enabled;
 
   try {
-    const client = serviceClient(PlatformOperatorService, callerTenantId);
+    const client = serviceClient(DaemonOperatorService, callerTenantId);
     if (wantAdd) {
       await client.writeAccessTuples({
         add: [tuple],

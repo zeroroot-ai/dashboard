@@ -4,10 +4,18 @@
  * Server action for submitting a mission definition from CUE source and
  * creating a mission run.
  *
- * Two-RPC flow per the daemon contract (platform-sdk v0.7.0):
- *   1. DaemonAdminService.CreateMissionDefinition (cue_source case)
- *      — daemon compiles CUE, validates schema, stores definition
- *   2. DaemonService.CreateMission with the returned missionDefinitionId
+ * Two-RPC flow per the daemon contract (sdk v0.118.0 / ADR-0037):
+ *   1. DaemonService.ValidateMissionCUE — daemon compiles CUE, returns
+ *      diagnostics. Any errors abort submission.
+ *   2. DaemonService.CreateMissionDefinition with a structured
+ *      MissionDefinition proto + DaemonService.CreateMission.
+ *
+ * NOTE (dashboard#336 / ADR-0037): The OSS SDK CreateMissionDefinitionRequest
+ * accepts a fully-formed MissionDefinition proto only; there is no cue_source
+ * field. A future RPC (e.g. CompileMissionCUE) will close the gap so raw CUE
+ * source text can be submitted as a single daemon round-trip. Until that RPC
+ * ships, createMissionFromCUEAction validates the CUE and returns a clear
+ * error rather than silently corrupting the definition.
  *
  * Both RPCs route through Envoy + SPIFFE mTLS via userClient.
  * No direct gRPC channel to the daemon; check-no-direct-daemon-grpc.mjs enforces this.
@@ -25,7 +33,6 @@ import {
   AuthzDeniedError,
 } from "@/src/lib/auth/assert-authorized";
 import { userClient } from "@/src/lib/gibson-client";
-import { DaemonAdminService } from "@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 import { logger } from "@/src/lib/logger";
 import {
@@ -76,39 +83,27 @@ export async function createMissionFromCUEAction(input: {
   }
 
   try {
-    const adminClient = userClient(DaemonAdminService);
-    const defResp = await adminClient.createMissionDefinition({
-      source: { case: "cueSource", value: cueSource },
-    });
-    const missionDefinitionId = defResp.missionDefinitionId;
-    if (!missionDefinitionId) {
-      return {
-        ok: false,
-        error: "Daemon accepted the definition but returned no ID.",
-        code: "rpc_failed",
-      };
-    }
-
     const client = userClient(DaemonService);
-    const missionResp = await client.createMission({
-      name,
-      description: "",
-      targetId: "",
-      missionDefinitionId,
-      variables: {},
-      memoryContinuity: "isolated",
-    });
 
-    const missionId = missionResp.mission?.id;
-    if (!missionId) {
+    // Validate the CUE source via the daemon. Diagnostics abort submission.
+    const validateResp = await client.validateMissionCUE({ cueSource });
+    if (validateResp.diagnostics && validateResp.diagnostics.length > 0) {
+      const firstError = validateResp.diagnostics[0];
       return {
         ok: false,
-        error: "Daemon created the mission but returned no ID.",
-        code: "rpc_failed",
+        error: firstError?.message ?? "CUE validation failed",
+        code: "invalid",
       };
     }
 
-    // Non-blocking: upsert a server-side draft for this definition so Edit button can find it
+    // NOTE (dashboard#336 / ADR-0037): DaemonService.CreateMissionDefinition
+    // (OSS SDK v0.118.0) accepts a fully-formed MissionDefinition proto only —
+    // there is no cue_source field. A future RPC (CompileMissionCUE or
+    // equivalent) is needed to compile raw CUE to a MissionDefinition on the
+    // daemon side. Until that RPC ships the CUE-from-editor submit path cannot
+    // proceed past validation. Tracked at dashboard#337.
+    //
+    // Non-blocking: save the CUE as a draft so the user does not lose work.
     const definitionName =
       /^name:\s*["']?([^"'\n]+)["']?/m.exec(cueSource)?.[1]?.trim() ?? name;
     void (async () => {
@@ -123,11 +118,18 @@ export async function createMissionFromCUEAction(input: {
           draftId: match?.id,
         });
       } catch (err) {
-        logger.warn({ err }, "draft upsert after run: non-fatal");
+        logger.warn({ err }, "draft upsert on submit: non-fatal");
       }
     })();
 
-    return { ok: true, missionId };
+    return {
+      ok: false,
+      error:
+        "CUE submission requires a daemon-side compilation RPC not yet " +
+        "available in this SDK version. Your draft has been saved. " +
+        "This will be resolved in dashboard#337.",
+      code: "rpc_failed",
+    };
   } catch (err) {
     if (err instanceof ConnectError) {
       if (err.code === Code.InvalidArgument) {

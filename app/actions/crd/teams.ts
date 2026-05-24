@@ -14,7 +14,7 @@
  * Spec: agent-authoring-and-tenant-entitlements task 35, R8.
  */
 
-import { PlatformOperatorService } from "@/src/gen/gibson/platform/v1/platform_operator_pb";
+import { DaemonOperatorService } from "@/src/gen/gibson/daemon/operator/v1/operator_pb";
 import { serviceClient } from "@/src/lib/gibson-client";
 
 import { requireCrdSession } from "./_authz";
@@ -45,7 +45,7 @@ export async function listTeamsAction(): Promise<ActionResult<Team[]>> {
   if (!callerTenantId) {
     return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
   }
-  // Backed by gibson PlatformOperatorService.ListTeams (gibson#118) which
+  // Backed by gibson DaemonOperatorService.ListTeams (gibson#118) which
   // wraps FGA ListObjects(tenant:X, parent, team) + per-team member counts.
   // Pagination is opaque at the wire level; the dashboard surfaces the full
   // list to UI consumers (the realistic per-tenant team count is well under
@@ -53,7 +53,7 @@ export async function listTeamsAction(): Promise<ActionResult<Team[]>> {
   // we can swap to client-side pagination without a server-action shape
   // change.
   try {
-    const client = serviceClient(PlatformOperatorService, callerTenantId);
+    const client = serviceClient(DaemonOperatorService, callerTenantId);
     const teams: Team[] = [];
     let pageToken = "";
     do {
@@ -94,7 +94,7 @@ export async function listTeamMembersAction(
     return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
   }
   try {
-    const client = serviceClient(PlatformOperatorService, callerTenantId);
+    const client = serviceClient(DaemonOperatorService, callerTenantId);
     const members: TeamMember[] = [];
     let pageToken = "";
     do {
@@ -138,7 +138,7 @@ export async function createTeamAction(input: {
     return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
   }
   try {
-    const client = serviceClient(PlatformOperatorService, callerTenantId);
+    const client = serviceClient(DaemonOperatorService, callerTenantId);
     // Team objects are created implicitly when the first tuple referencing
     // them is written. For a "create team" UX we write the parent tuple
     // that binds the team to the caller's tenant.
@@ -185,7 +185,7 @@ export async function deleteTeamAction(
   // reconciler's next pass. Track as follow-on task if delete latency
   // is ever user-visible.
   try {
-    const client = serviceClient(PlatformOperatorService, callerTenantId);
+    const client = serviceClient(DaemonOperatorService, callerTenantId);
     await client.writeAccessTuples({
       add: [],
       delete: [
@@ -222,7 +222,7 @@ export async function addTeamMemberAction(input: {
     return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
   }
   try {
-    const client = serviceClient(PlatformOperatorService, callerTenantId);
+    const client = serviceClient(DaemonOperatorService, callerTenantId);
     await client.writeAccessTuples({
       add: [
         {
@@ -255,7 +255,7 @@ export async function removeTeamMemberAction(input: {
     return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
   }
   try {
-    const client = serviceClient(PlatformOperatorService, callerTenantId);
+    const client = serviceClient(DaemonOperatorService, callerTenantId);
     await client.writeAccessTuples({
       add: [],
       delete: [

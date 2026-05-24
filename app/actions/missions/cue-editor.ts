@@ -5,11 +5,12 @@
  * ValidateMissionCUE, CompleteMissionCUE, HoverMissionCUE.
  *
  * Each action: (1) calls assertAuthorized against the FGA registry entry for
- * the corresponding DaemonAdminService RPC; (2) dials the daemon through the
+ * the corresponding DaemonService RPC; (2) dials the daemon through the
  * Envoy + SPIFFE-mTLS path via userClient; (3) returns a plain-object result
  * that the editor's Monaco providers can consume directly.
  *
- * Spec: dashboard#291 (CUE editor / platform-sdk v0.7.0).
+ * Spec: dashboard#291 (CUE editor / platform-sdk v0.7.0). Migrated to
+ * DaemonService (OSS SDK) per ADR-0037 in dashboard#336.
  */
 
 import "server-only";
@@ -19,18 +20,18 @@ import {
   AuthzDeniedError,
 } from "@/src/lib/auth/assert-authorized";
 import { userClient } from "@/src/lib/gibson-client";
-import { DaemonAdminService } from "@/src/gen/gibson/daemon/admin/v1/daemon_admin_pb";
+import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 
 // ---------------------------------------------------------------------------
 // FGA registry keys (mirror the daemon's authz annotations)
 // ---------------------------------------------------------------------------
 
 const FGA_VALIDATE =
-  "/gibson.daemon.admin.v1.DaemonAdminService/ValidateMissionCUE";
+  "/gibson.daemon.v1.DaemonService/ValidateMissionCUE";
 const FGA_COMPLETE =
-  "/gibson.daemon.admin.v1.DaemonAdminService/CompleteMissionCUE";
+  "/gibson.daemon.v1.DaemonService/CompleteMissionCUE";
 const FGA_HOVER =
-  "/gibson.daemon.admin.v1.DaemonAdminService/HoverMissionCUE";
+  "/gibson.daemon.v1.DaemonService/HoverMissionCUE";
 
 // ---------------------------------------------------------------------------
 // Return types (plain objects safe to serialise across the server/client
@@ -72,7 +73,7 @@ export async function validateMissionCUEAction(
     throw err;
   }
 
-  const client = userClient(DaemonAdminService);
+  const client = userClient(DaemonService);
   const resp = await client.validateMissionCUE({ cueSource });
   return resp.diagnostics.map((d) => ({
     line: d.line,
@@ -100,7 +101,7 @@ export async function completeMissionCUEAction(
     throw err;
   }
 
-  const client = userClient(DaemonAdminService);
+  const client = userClient(DaemonService);
   const resp = await client.completeMissionCUE({ cueSource, line, col });
   return resp.items.map((item) => ({
     label: item.label,
@@ -127,7 +128,7 @@ export async function hoverMissionCUEAction(
     throw err;
   }
 
-  const client = userClient(DaemonAdminService);
+  const client = userClient(DaemonService);
   const resp = await client.hoverMissionCUE({ cueSource, line, col });
   return resp.markdown;
 }
