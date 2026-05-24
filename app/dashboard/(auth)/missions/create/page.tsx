@@ -12,7 +12,6 @@ import { useAutosave } from "@/src/hooks/useAutosave";
 import { SaveDraftButton } from "@/src/components/mission/create/save-draft-button";
 import { DraftsMenu } from "@/src/components/mission/create/drafts-menu";
 import { getMissionDraftAction } from "@/app/actions/missions/drafts";
-import { createMissionFromCUEAction } from "@/app/actions/missions/create-mission";
 
 const MissionCUEEditor = dynamic(
   () =>
@@ -44,7 +43,9 @@ function loadLocalDraft(): string {
     const stored = localStorage.getItem(`gibson:draft:${AUTOSAVE_KEY}`);
     if (stored) {
       const d = JSON.parse(stored);
+      // Accept both legacy `yaml` field and new `cueSource` field.
       if (d?.cueSource) return d.cueSource;
+      if (d?.yaml) return d.yaml;
     }
   } catch { /* ignore */ }
   return DEFAULT_CUE;
@@ -102,9 +103,10 @@ export default function CreateMissionPage() {
     };
   }, [urlDraftId, currentDraftId, router]);
 
-  // Local-storage autosave
+  // Local-storage autosave — stored under the legacy `yaml` key for back-compat
+  // with existing drafts in browser storage; value is CUE source.
   const autosave = useAutosave(
-    { cueSource, savedAt: new Date().toISOString() },
+    { yaml: cueSource, activeTab: "editor", savedAt: new Date().toISOString() },
     { storageKey: AUTOSAVE_KEY, debounceMs: 30000 }
   );
 
@@ -119,20 +121,24 @@ export default function CreateMissionPage() {
   async function handleRunMission() {
     setIsSubmitting(true);
     try {
-      const res = await createMissionFromCUEAction({ cueSource });
+      const res = await fetch("/api/missions/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cueSource }),
+      });
       if (!res.ok) {
-        toast.error(
-          res.code === "permission_denied"
-            ? "Permission denied"
-            : res.code === "invalid"
-              ? `Mission definition invalid: ${res.error}`
-              : res.error
+        const body = await res.json().catch(() => ({}));
+        throw new Error(
+          body?.error?.message ?? body?.message ?? `Request failed: ${res.statusText}`
         );
-        return;
       }
       autosave.clear();
       toast.success("Mission launched");
       router.push("/dashboard/missions");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "An unexpected error occurred"
+      );
     } finally {
       setIsSubmitting(false);
     }
