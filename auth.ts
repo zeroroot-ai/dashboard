@@ -286,6 +286,31 @@ const config: NextAuthConfig = {
         // without an additional Zitadel round-trip. Best-effort: if
         // Zitadel is unreachable the cookie stays whatever it was on
         // this device.
+        // Fetch OIDC userinfo to populate name and email.
+        // idToken: true makes Auth.js skip the userinfo endpoint; Zitadel
+        // does not include name/email in the ID token unless
+        // idTokenUserInfoAssertion is enabled on the app (an infra setting we
+        // cannot change from here). We call the userinfo endpoint ourselves
+        // on initial sign-in only. Best-effort: a failure falls through with
+        // null values — the Profile page degrades to "(not set)" rather than
+        // crashing.
+        if (typeof account.access_token === "string") {
+          try {
+            const userinfoRes = await fetch(
+              `${issuer}/oidc/v1/userinfo`,
+              { headers: { Authorization: `Bearer ${account.access_token}` } }
+            );
+            if (userinfoRes.ok) {
+              const userinfo = await userinfoRes.json() as Record<string, unknown>;
+              if (typeof userinfo.name === "string") token.name = userinfo.name;
+              else if (typeof userinfo.preferred_username === "string") token.name = userinfo.preferred_username;
+              if (typeof userinfo.email === "string") token.email = userinfo.email;
+            }
+          } catch {
+            // userinfo fetch is best-effort; fall through with null values
+          }
+        }
+
         if (typeof token.sub === "string" && token.sub.length > 0) {
           const remoteTheme = await getThemeFromZitadel(token.sub);
           if (remoteTheme) {
@@ -319,6 +344,16 @@ const config: NextAuthConfig = {
     async session({ session, token }) {
       if (token.sub) {
         session.user.id = token.sub;
+      }
+      // Auth.js v5 does not always auto-propagate custom token fields (name,
+      // email) into the session object. Explicitly copy them here so the
+      // Profile page sees the values fetched from the OIDC userinfo endpoint
+      // in the jwt callback above.
+      if (typeof token.name === "string") {
+        session.user.name = token.name;
+      }
+      if (typeof token.email === "string") {
+        session.user.email = token.email;
       }
       // Forward the Zitadel access token to server-side callers (gibson-client.ts).
       // This field is set on the Session type but is never included in the
