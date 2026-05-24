@@ -319,6 +319,7 @@ export function MissionCUEEditor({
 
   return (
     <Editor
+      height="100%"
       language="cue"
       theme="vs-dark"
       value={value}
