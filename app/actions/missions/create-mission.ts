@@ -4,18 +4,14 @@
  * Server action for submitting a mission definition from CUE source and
  * creating a mission run.
  *
- * Two-RPC flow per the daemon contract (sdk v0.118.0 / ADR-0037):
+ * Three-RPC flow (sdk v0.121.0 / ADR-0037):
  *   1. DaemonService.ValidateMissionCUE — daemon compiles CUE, returns
- *      diagnostics. Any errors abort submission.
- *   2. DaemonService.CreateMissionDefinition with a structured
- *      MissionDefinition proto + DaemonService.CreateMission.
- *
- * NOTE (dashboard#336 / ADR-0037): The OSS SDK CreateMissionDefinitionRequest
- * accepts a fully-formed MissionDefinition proto only; there is no cue_source
- * field. A future RPC (e.g. CompileMissionCUE) will close the gap so raw CUE
- * source text can be submitted as a single daemon round-trip. Until that RPC
- * ships, createMissionFromCUEAction validates the CUE and returns a clear
- * error rather than silently corrupting the definition.
+ *      diagnostics AND the compiled MissionDefinition proto. Any diagnostics
+ *      abort submission.
+ *   2. DaemonService.CreateMissionDefinition — register the compiled definition,
+ *      receive a missionDefinitionId.
+ *   3. DaemonService.CreateMission — create a mission run referencing the
+ *      definition and the targetRef from the compiled definition.
  *
  * Both RPCs route through Envoy + SPIFFE mTLS via userClient.
  * No direct gRPC channel to the daemon; check-no-direct-daemon-grpc.mjs enforces this.
@@ -35,10 +31,6 @@ import {
 import { userClient } from "@/src/lib/gibson-client";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 import { logger } from "@/src/lib/logger";
-import {
-  listMissionDraftsAction,
-  saveMissionDraftAction,
-} from "@/app/actions/missions/drafts";
 
 const FGA_CREATE_DEFINITION =
   "/gibson.daemon.v1.DaemonService/CreateMissionDefinition";
@@ -85,7 +77,8 @@ export async function createMissionFromCUEAction(input: {
   try {
     const client = userClient(DaemonService);
 
-    // Validate the CUE source via the daemon. Diagnostics abort submission.
+    // Step 1: Validate and compile. Diagnostics (including missing 'mission'
+    // field) abort submission. compiledDefinition is populated on success.
     const validateResp = await client.validateMissionCUE({ cueSource });
     if (validateResp.diagnostics && validateResp.diagnostics.length > 0) {
       const firstError = validateResp.diagnostics[0];
@@ -95,41 +88,45 @@ export async function createMissionFromCUEAction(input: {
         code: "invalid",
       };
     }
+    const compiledDefinition = validateResp.compiledDefinition;
+    if (!compiledDefinition) {
+      return {
+        ok: false,
+        error: "Compilation returned no definition — check your CUE source.",
+        code: "rpc_failed",
+      };
+    }
 
-    // NOTE (dashboard#336 / ADR-0037): DaemonService.CreateMissionDefinition
-    // (OSS SDK v0.118.0) accepts a fully-formed MissionDefinition proto only —
-    // there is no cue_source field. A future RPC (CompileMissionCUE or
-    // equivalent) is needed to compile raw CUE to a MissionDefinition on the
-    // daemon side. Until that RPC ships the CUE-from-editor submit path cannot
-    // proceed past validation. Tracked at dashboard#337.
-    //
-    // Non-blocking: save the CUE as a draft so the user does not lose work.
-    const definitionName =
-      /^name:\s*["']?([^"'\n]+)["']?/m.exec(cueSource)?.[1]?.trim() ?? name;
-    void (async () => {
-      try {
-        const existingDrafts = await listMissionDraftsAction();
-        const match = existingDrafts.ok
-          ? existingDrafts.data.find((d) => d.name === definitionName)
-          : undefined;
-        await saveMissionDraftAction({
-          name: definitionName,
-          cueSource,
-          draftId: match?.id,
-        });
-      } catch (err) {
-        logger.warn({ err }, "draft upsert on submit: non-fatal");
-      }
-    })();
+    // Step 2: Register the mission definition.
+    const defResp = await client.createMissionDefinition({ definition: compiledDefinition });
+    const missionDefinitionId = defResp.missionDefinitionId;
+    if (!missionDefinitionId) {
+      return {
+        ok: false,
+        error: "Daemon did not return a mission definition ID.",
+        code: "rpc_failed",
+      };
+    }
 
-    return {
-      ok: false,
-      error:
-        "CUE submission requires a daemon-side compilation RPC not yet " +
-        "available in this SDK version. Your draft has been saved. " +
-        "This will be resolved in dashboard#337.",
-      code: "rpc_failed",
-    };
+    // Step 3: Create a mission run. targetId comes from the compiled definition's
+    // targetRef (the target the mission author declared in their CUE source).
+    const missionName = compiledDefinition.name || name;
+    const targetId = compiledDefinition.targetRef || name;
+    const createResp = await client.createMission({
+      name: missionName,
+      missionDefinitionId,
+      targetId,
+      memoryContinuity: "isolated",
+    });
+    if (!createResp.success || !createResp.mission?.id) {
+      return {
+        ok: false,
+        error: createResp.message || "Failed to create mission run.",
+        code: "rpc_failed",
+      };
+    }
+
+    return { ok: true, missionId: createResp.mission.id };
   } catch (err) {
     if (err instanceof ConnectError) {
       if (err.code === Code.InvalidArgument) {

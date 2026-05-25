@@ -643,15 +643,6 @@ export const AuthRegistry: Record<string, AuthEntry> = {
     allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
     unauthenticated: false,
   },
-  "/gibson.daemon.v1.DaemonService/GetMissionSourceYAML": {
-    method: "/gibson.daemon.v1.DaemonService/GetMissionSourceYAML",
-    service: "gibson.daemon.v1.DaemonService",
-    relation: "member",
-    objectType: "tenant",
-    objectDeriver: "tenant_from_identity",
-    allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
-    unauthenticated: false,
-  },
   "/gibson.daemon.v1.DaemonService/GetMyPermissions": {
     method: "/gibson.daemon.v1.DaemonService/GetMyPermissions",
     service: "gibson.daemon.v1.DaemonService",
