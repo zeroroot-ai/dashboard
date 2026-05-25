@@ -24,7 +24,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/admin/v1/tenant.proto.
  */
 export const file_gibson_admin_v1_tenant: GenFile = /*@__PURE__*/
-  fileDesc("ChxnaWJzb24vYWRtaW4vdjEvdGVuYW50LnByb3RvEg9naWJzb24uYWRtaW4udjEiwAIKDlJlZGFjdGVkQ29uZmlnEjEKCHByb3ZpZGVyGAEgASgOMh8uZ2lic29uLmFkbWluLnYxLkJyb2tlclByb3ZpZGVyEg8KB2FkZHJlc3MYAiABKAkSGQoRbmFtZXNwYWNlX29yX3BhdGgYAyABKAkSDQoFbW91bnQYBCABKAkSEwoLYXV0aF9tZXRob2QYBSABKAkSDgoGcmVnaW9uGAYgASgJEg8KB3Byb2plY3QYByABKAkSGgoSdGVuYW50X2lkX2V4dGVybmFsGAggASgJEhEKCWNsaWVudF9pZBgJIAEoCRIQCghyb2xlX2FybhgKIAEoCRIcChRzZW5zaXRpdmVfZmllbGRzX3NldBgLIAMoCRIXCg91cGRhdGVkX2F0X3VuaXgYDCABKAMSEgoKdXBkYXRlZF9ieRgNIAEoCSLRAwoPQ2FuZGlkYXRlQ29uZmlnEjEKCHByb3ZpZGVyGAEgASgOMh8uZ2lic29uLmFkbWluLnYxLkJyb2tlclByb3ZpZGVyEg8KB2FkZHJlc3MYAiABKAkSGQoRbmFtZXNwYWNlX29yX3BhdGgYAyABKAkSDQoFbW91bnQYBCABKAkSEwoLYXV0aF9tZXRob2QYBSABKAkSDgoGcmVnaW9uGAYgASgJEg8KB3Byb2plY3QYByABKAkSGgoSdGVuYW50X2lkX2V4dGVybmFsGAggASgJEhEKCWNsaWVudF9pZBgJIAEoCRIQCghyb2xlX2FybhgKIAEoCRITCgt2YXVsdF90b2tlbhgUIAEoDBIXCg9hcHByb2xlX3JvbGVfaWQYFSABKAkSGQoRYXBwcm9sZV9zZWNyZXRfaWQYFiABKAwSGQoRYXdzX2FjY2Vzc19rZXlfaWQYFyABKAwSHQoVYXdzX3NlY3JldF9hY2Nlc3Nfa2V5GBggASgMEhcKD2F3c19leHRlcm5hbF9pZBgZIAEoDBIgChhnY3Bfc2VydmljZV9hY2NvdW50X2pzb24YGiABKAwSGwoTYXp1cmVfY2xpZW50X3NlY3JldBgbIAEoDCJaCgtQcm9iZVJlc3VsdBIKCgJvaxgBIAEoCBITCgtlcnJvcl9jbGFzcxgCIAEoCRIVCg1lcnJvcl9tZXNzYWdlGAMgASgJEhMKC2R1cmF0aW9uX21zGAQgASgDIhgKFkdldEJyb2tlckNvbmZpZ1JlcXVlc3QiXgoXR2V0QnJva2VyQ29uZmlnUmVzcG9uc2USLwoGY29uZmlnGAEgASgLMh8uZ2lic29uLmFkbWluLnYxLlJlZGFjdGVkQ29uZmlnEhIKCmNvbmZpZ3VyZWQYAiABKAgiTwoYUHJvYmVCcm9rZXJDb25maWdSZXF1ZXN0EjMKCWNhbmRpZGF0ZRgBIAEoCzIgLmdpYnNvbi5hZG1pbi52MS5DYW5kaWRhdGVDb25maWciSQoZUHJvYmVCcm9rZXJDb25maWdSZXNwb25zZRIsCgZyZXN1bHQYASABKAsyHC5naWJzb24uYWRtaW4udjEuUHJvYmVSZXN1bHQiTQoWU2V0QnJva2VyQ29uZmlnUmVxdWVzdBIzCgljYW5kaWRhdGUYASABKAsyIC5naWJzb24uYWRtaW4udjEuQ2FuZGlkYXRlQ29uZmlnIn4KF1NldEJyb2tlckNvbmZpZ1Jlc3BvbnNlEi8KBmNvbmZpZxgBIAEoCzIfLmdpYnNvbi5hZG1pbi52MS5SZWRhY3RlZENvbmZpZxIyCgxwcm9iZV9yZXN1bHQYAiABKAsyHC5naWJzb24uYWRtaW4udjEuUHJvYmVSZXN1bHQiFQoTQ291bnRTZWNyZXRzUmVxdWVzdCIlChRDb3VudFNlY3JldHNSZXNwb25zZRINCgVjb3VudBgBIAEoAyJyCg9DcmVkZW50aWFsRmllbGQSCwoDa2V5GAEgASgJEg0KBWxhYmVsGAIgASgJEhAKCHJlcXVpcmVkGAMgASgIEg4KBnNlY3JldBgEIAEoCBITCgtwbGFjZWhvbGRlchgFIAEoCRIMCgRoZWxwGAYgASgJIkcKD01vZGVsRGVzY3JpcHRvchIMCgRuYW1lGAEgASgJEg4KBmZhbWlseRgCIAEoCRIWCg5jb250ZXh0X3dpbmRvdxgDIAEoBSLPAQoRU3VwcG9ydGVkUHJvdmlkZXISDAoEdHlwZRgBIAEoCRIUCgxkaXNwbGF5X25hbWUYAiABKAkSEAoIZG9jc191cmwYAyABKAkSEwoLc2VsZl9ob3N0ZWQYBCABKAgSNQoLY3JlZGVudGlhbHMYBSADKAsyIC5naWJzb24uYWRtaW4udjEuQ3JlZGVudGlhbEZpZWxkEjgKDmRlZmF1bHRfbW9kZWxzGAYgAygLMiAuZ2lic29uLmFkbWluLnYxLk1vZGVsRGVzY3JpcHRvciIeChxHZXRTdXBwb3J0ZWRQcm92aWRlcnNSZXF1ZXN0IlYKHUdldFN1cHBvcnRlZFByb3ZpZGVyc1Jlc3BvbnNlEjUKCXByb3ZpZGVycxgBIAMoCzIiLmdpYnNvbi5hZG1pbi52MS5TdXBwb3J0ZWRQcm92aWRlciKlAQoUUHJvYmVQcm92aWRlclJlcXVlc3QSDAoEdHlwZRgBIAEoCRJLCgtjcmVkZW50aWFscxgCIAMoCzI2LmdpYnNvbi5hZG1pbi52MS5Qcm9iZVByb3ZpZGVyUmVxdWVzdC5DcmVkZW50aWFsc0VudHJ5GjIKEENyZWRlbnRpYWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKVAQoVUHJvYmVQcm92aWRlclJlc3BvbnNlEgoKAm9rGAEgASgIEhUKDWVycm9yX21lc3NhZ2UYAiABKAkSEwoLZXJyb3JfY2xhc3MYAyABKAkSMAoGbW9kZWxzGAQgAygLMiAuZ2lic29uLmFkbWluLnYxLk1vZGVsRGVzY3JpcHRvchISCgpsYXRlbmN5X21zGAUgASgDIikKGUxpc3RQcm92aWRlck1vZGVsc1JlcXVlc3QSDAoEbmFtZRgBIAEoCSKaAQoaTGlzdFByb3ZpZGVyTW9kZWxzUmVzcG9uc2USCgoCb2sYASABKAgSFQoNZXJyb3JfbWVzc2FnZRgCIAEoCRITCgtlcnJvcl9jbGFzcxgDIAEoCRIwCgZtb2RlbHMYBCADKAsyIC5naWJzb24uYWRtaW4udjEuTW9kZWxEZXNjcmlwdG9yEhIKCmxhdGVuY3lfbXMYBSABKAMiYwoSTGlzdE1lbWJlcnNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRISCgpwYWdlX3Rva2VuGAIgASgJEhEKCXBhZ2Vfc2l6ZRgDIAEoBRITCgtuYW1lX2ZpbHRlchgEIAEoCSJeChNMaXN0TWVtYmVyc1Jlc3BvbnNlEi4KB21lbWJlcnMYASADKAsyHS5naWJzb24uYWRtaW4udjEuVGVuYW50TWVtYmVyEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSKBAQoMVGVuYW50TWVtYmVyEg8KB3VzZXJfaWQYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEg0KBWVtYWlsGAMgASgJEgwKBHJvbGUYBCABKAkSLQoJam9pbmVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCq9AQoOQnJva2VyUHJvdmlkZXISHwobQlJPS0VSX1BST1ZJREVSX1VOU1BFQ0lGSUVEEAASHAoYQlJPS0VSX1BST1ZJREVSX1BPU1RHUkVTEAESGQoVQlJPS0VSX1BST1ZJREVSX1ZBVUxUEAISGQoVQlJPS0VSX1BST1ZJREVSX0FXU1NNEAMSGQoVQlJPS0VSX1BST1ZJREVSX0dDUFNNEAQSGwoXQlJPS0VSX1BST1ZJREVSX0FaVVJFS1YQBTK7CQoSVGVuYW50QWRtaW5TZXJ2aWNlEpEBCg9HZXRCcm9rZXJDb25maWcSJy5naWJzb24uYWRtaW4udjEuR2V0QnJva2VyQ29uZmlnUmVxdWVzdBooLmdpYnNvbi5hZG1pbi52MS5HZXRCcm9rZXJDb25maWdSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKXAQoRUHJvYmVCcm9rZXJDb25maWcSKS5naWJzb24uYWRtaW4udjEuUHJvYmVCcm9rZXJDb25maWdSZXF1ZXN0GiouZ2lic29uLmFkbWluLnYxLlByb2JlQnJva2VyQ29uZmlnUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESkQEKD1NldEJyb2tlckNvbmZpZxInLmdpYnNvbi5hZG1pbi52MS5TZXRCcm9rZXJDb25maWdSZXF1ZXN0GiguZ2lic29uLmFkbWluLnYxLlNldEJyb2tlckNvbmZpZ1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEogBCgxDb3VudFNlY3JldHMSJC5naWJzb24uYWRtaW4udjEuQ291bnRTZWNyZXRzUmVxdWVzdBolLmdpYnNvbi5hZG1pbi52MS5Db3VudFNlY3JldHNSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKkAQoVR2V0U3VwcG9ydGVkUHJvdmlkZXJzEi0uZ2lic29uLmFkbWluLnYxLkdldFN1cHBvcnRlZFByb3ZpZGVyc1JlcXVlc3QaLi5naWJzb24uYWRtaW4udjEuR2V0U3VwcG9ydGVkUHJvdmlkZXJzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEosBCg1Qcm9iZVByb3ZpZGVyEiUuZ2lic29uLmFkbWluLnYxLlByb2JlUHJvdmlkZXJSZXF1ZXN0GiYuZ2lic29uLmFkbWluLnYxLlByb2JlUHJvdmlkZXJSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKaAQoSTGlzdFByb3ZpZGVyTW9kZWxzEiouZ2lic29uLmFkbWluLnYxLkxpc3RQcm92aWRlck1vZGVsc1JlcXVlc3QaKy5naWJzb24uYWRtaW4udjEuTGlzdFByb3ZpZGVyTW9kZWxzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAEShQEKC0xpc3RNZW1iZXJzEiMuZ2lic29uLmFkbWluLnYxLkxpc3RNZW1iZXJzUmVxdWVzdBokLmdpYnNvbi5hZG1pbi52MS5MaXN0TWVtYmVyc1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABQlJQAVo/Z2l0aHViLmNvbS96ZXJvLWRheS1haS9wbGF0Zm9ybS1zZGsvZ2VuL2dpYnNvbi9hZG1pbi92MTthZG1pbnYxqgIMR2lic29uLkFkbWluYgZwcm90bzM", [file_gibson_auth_v1_options, file_google_protobuf_timestamp]);
+  fileDesc("ChxnaWJzb24vYWRtaW4vdjEvdGVuYW50LnByb3RvEg9naWJzb24uYWRtaW4udjEiwAIKDlJlZGFjdGVkQ29uZmlnEjEKCHByb3ZpZGVyGAEgASgOMh8uZ2lic29uLmFkbWluLnYxLkJyb2tlclByb3ZpZGVyEg8KB2FkZHJlc3MYAiABKAkSGQoRbmFtZXNwYWNlX29yX3BhdGgYAyABKAkSDQoFbW91bnQYBCABKAkSEwoLYXV0aF9tZXRob2QYBSABKAkSDgoGcmVnaW9uGAYgASgJEg8KB3Byb2plY3QYByABKAkSGgoSdGVuYW50X2lkX2V4dGVybmFsGAggASgJEhEKCWNsaWVudF9pZBgJIAEoCRIQCghyb2xlX2FybhgKIAEoCRIcChRzZW5zaXRpdmVfZmllbGRzX3NldBgLIAMoCRIXCg91cGRhdGVkX2F0X3VuaXgYDCABKAMSEgoKdXBkYXRlZF9ieRgNIAEoCSLRAwoPQ2FuZGlkYXRlQ29uZmlnEjEKCHByb3ZpZGVyGAEgASgOMh8uZ2lic29uLmFkbWluLnYxLkJyb2tlclByb3ZpZGVyEg8KB2FkZHJlc3MYAiABKAkSGQoRbmFtZXNwYWNlX29yX3BhdGgYAyABKAkSDQoFbW91bnQYBCABKAkSEwoLYXV0aF9tZXRob2QYBSABKAkSDgoGcmVnaW9uGAYgASgJEg8KB3Byb2plY3QYByABKAkSGgoSdGVuYW50X2lkX2V4dGVybmFsGAggASgJEhEKCWNsaWVudF9pZBgJIAEoCRIQCghyb2xlX2FybhgKIAEoCRITCgt2YXVsdF90b2tlbhgUIAEoDBIXCg9hcHByb2xlX3JvbGVfaWQYFSABKAkSGQoRYXBwcm9sZV9zZWNyZXRfaWQYFiABKAwSGQoRYXdzX2FjY2Vzc19rZXlfaWQYFyABKAwSHQoVYXdzX3NlY3JldF9hY2Nlc3Nfa2V5GBggASgMEhcKD2F3c19leHRlcm5hbF9pZBgZIAEoDBIgChhnY3Bfc2VydmljZV9hY2NvdW50X2pzb24YGiABKAwSGwoTYXp1cmVfY2xpZW50X3NlY3JldBgbIAEoDCJaCgtQcm9iZVJlc3VsdBIKCgJvaxgBIAEoCBITCgtlcnJvcl9jbGFzcxgCIAEoCRIVCg1lcnJvcl9tZXNzYWdlGAMgASgJEhMKC2R1cmF0aW9uX21zGAQgASgDIhgKFkdldEJyb2tlckNvbmZpZ1JlcXVlc3QiXgoXR2V0QnJva2VyQ29uZmlnUmVzcG9uc2USLwoGY29uZmlnGAEgASgLMh8uZ2lic29uLmFkbWluLnYxLlJlZGFjdGVkQ29uZmlnEhIKCmNvbmZpZ3VyZWQYAiABKAgiTwoYUHJvYmVCcm9rZXJDb25maWdSZXF1ZXN0EjMKCWNhbmRpZGF0ZRgBIAEoCzIgLmdpYnNvbi5hZG1pbi52MS5DYW5kaWRhdGVDb25maWciSQoZUHJvYmVCcm9rZXJDb25maWdSZXNwb25zZRIsCgZyZXN1bHQYASABKAsyHC5naWJzb24uYWRtaW4udjEuUHJvYmVSZXN1bHQiTQoWU2V0QnJva2VyQ29uZmlnUmVxdWVzdBIzCgljYW5kaWRhdGUYASABKAsyIC5naWJzb24uYWRtaW4udjEuQ2FuZGlkYXRlQ29uZmlnIn4KF1NldEJyb2tlckNvbmZpZ1Jlc3BvbnNlEi8KBmNvbmZpZxgBIAEoCzIfLmdpYnNvbi5hZG1pbi52MS5SZWRhY3RlZENvbmZpZxIyCgxwcm9iZV9yZXN1bHQYAiABKAsyHC5naWJzb24uYWRtaW4udjEuUHJvYmVSZXN1bHQiFQoTQ291bnRTZWNyZXRzUmVxdWVzdCIlChRDb3VudFNlY3JldHNSZXNwb25zZRINCgVjb3VudBgBIAEoAyJyCg9DcmVkZW50aWFsRmllbGQSCwoDa2V5GAEgASgJEg0KBWxhYmVsGAIgASgJEhAKCHJlcXVpcmVkGAMgASgIEg4KBnNlY3JldBgEIAEoCBITCgtwbGFjZWhvbGRlchgFIAEoCRIMCgRoZWxwGAYgASgJIkcKD01vZGVsRGVzY3JpcHRvchIMCgRuYW1lGAEgASgJEg4KBmZhbWlseRgCIAEoCRIWCg5jb250ZXh0X3dpbmRvdxgDIAEoBSLPAQoRU3VwcG9ydGVkUHJvdmlkZXISDAoEdHlwZRgBIAEoCRIUCgxkaXNwbGF5X25hbWUYAiABKAkSEAoIZG9jc191cmwYAyABKAkSEwoLc2VsZl9ob3N0ZWQYBCABKAgSNQoLY3JlZGVudGlhbHMYBSADKAsyIC5naWJzb24uYWRtaW4udjEuQ3JlZGVudGlhbEZpZWxkEjgKDmRlZmF1bHRfbW9kZWxzGAYgAygLMiAuZ2lic29uLmFkbWluLnYxLk1vZGVsRGVzY3JpcHRvciIeChxHZXRTdXBwb3J0ZWRQcm92aWRlcnNSZXF1ZXN0IlYKHUdldFN1cHBvcnRlZFByb3ZpZGVyc1Jlc3BvbnNlEjUKCXByb3ZpZGVycxgBIAMoCzIiLmdpYnNvbi5hZG1pbi52MS5TdXBwb3J0ZWRQcm92aWRlciKlAQoUUHJvYmVQcm92aWRlclJlcXVlc3QSDAoEdHlwZRgBIAEoCRJLCgtjcmVkZW50aWFscxgCIAMoCzI2LmdpYnNvbi5hZG1pbi52MS5Qcm9iZVByb3ZpZGVyUmVxdWVzdC5DcmVkZW50aWFsc0VudHJ5GjIKEENyZWRlbnRpYWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKVAQoVUHJvYmVQcm92aWRlclJlc3BvbnNlEgoKAm9rGAEgASgIEhUKDWVycm9yX21lc3NhZ2UYAiABKAkSEwoLZXJyb3JfY2xhc3MYAyABKAkSMAoGbW9kZWxzGAQgAygLMiAuZ2lic29uLmFkbWluLnYxLk1vZGVsRGVzY3JpcHRvchISCgpsYXRlbmN5X21zGAUgASgDIikKGUxpc3RQcm92aWRlck1vZGVsc1JlcXVlc3QSDAoEbmFtZRgBIAEoCSKaAQoaTGlzdFByb3ZpZGVyTW9kZWxzUmVzcG9uc2USCgoCb2sYASABKAgSFQoNZXJyb3JfbWVzc2FnZRgCIAEoCRITCgtlcnJvcl9jbGFzcxgDIAEoCRIwCgZtb2RlbHMYBCADKAsyIC5naWJzb24uYWRtaW4udjEuTW9kZWxEZXNjcmlwdG9yEhIKCmxhdGVuY3lfbXMYBSABKAMiYwoSTGlzdE1lbWJlcnNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRISCgpwYWdlX3Rva2VuGAIgASgJEhEKCXBhZ2Vfc2l6ZRgDIAEoBRITCgtuYW1lX2ZpbHRlchgEIAEoCSJeChNMaXN0TWVtYmVyc1Jlc3BvbnNlEi4KB21lbWJlcnMYASADKAsyHS5naWJzb24uYWRtaW4udjEuVGVuYW50TWVtYmVyEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSKBAQoMVGVuYW50TWVtYmVyEg8KB3VzZXJfaWQYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEg0KBWVtYWlsGAMgASgJEgwKBHJvbGUYBCABKAkSLQoJam9pbmVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIZChdHZXRSZXNlcnZlZE5hbWVzUmVxdWVzdCI5ChhHZXRSZXNlcnZlZE5hbWVzUmVzcG9uc2USDQoFZXhhY3QYASADKAkSDgoGcHJlZml4GAIgAygJIkMKCVRlYW1BZG1pbhIKCgJpZBgBIAEoCRIUCgxkaXNwbGF5X25hbWUYAiABKAkSFAoMbWVtYmVyX2NvdW50GAMgASgFIlkKD1RlYW1NZW1iZXJBZG1pbhIPCgd1c2VyX2lkGAEgASgJEg0KBWVtYWlsGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCRIQCghpc19hZG1pbhgEIAEoCCJMChBMaXN0VGVhbXNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRISCgpwYWdlX3Rva2VuGAIgASgJEhEKCXBhZ2Vfc2l6ZRgDIAEoBSJXChFMaXN0VGVhbXNSZXNwb25zZRIpCgV0ZWFtcxgBIAMoCzIaLmdpYnNvbi5hZG1pbi52MS5UZWFtQWRtaW4SFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJImMKFkxpc3RUZWFtTWVtYmVyc1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3RlYW1faWQYAiABKAkSEgoKcGFnZV90b2tlbhgDIAEoCRIRCglwYWdlX3NpemUYBCABKAUiZQoXTGlzdFRlYW1NZW1iZXJzUmVzcG9uc2USMQoHbWVtYmVycxgBIAMoCzIgLmdpYnNvbi5hZG1pbi52MS5UZWFtTWVtYmVyQWRtaW4SFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIk0KEUNyZWF0ZVRlYW1SZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd0ZWFtX2lkGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCSI+ChJDcmVhdGVUZWFtUmVzcG9uc2USKAoEdGVhbRgBIAEoCzIaLmdpYnNvbi5hZG1pbi52MS5UZWFtQWRtaW4iNwoRRGVsZXRlVGVhbVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3RlYW1faWQYAiABKAkiFAoSRGVsZXRlVGVhbVJlc3BvbnNlIksKFEFkZFRlYW1NZW1iZXJSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd0ZWFtX2lkGAIgASgJEg8KB3VzZXJfaWQYAyABKAkiFwoVQWRkVGVhbU1lbWJlclJlc3BvbnNlIk4KF1JlbW92ZVRlYW1NZW1iZXJSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd0ZWFtX2lkGAIgASgJEg8KB3VzZXJfaWQYAyABKAkiGgoYUmVtb3ZlVGVhbU1lbWJlclJlc3BvbnNlIlwKE1NldFRlYW1BZG1pblJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3RlYW1faWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCRIQCghpc19hZG1pbhgEIAEoCCIWChRTZXRUZWFtQWRtaW5SZXNwb25zZSJLChRDb21wb25lbnRBY2Nlc3NFbnRyeRIQCghyZWxhdGlvbhgBIAEoCRIPCgd0ZWFtX2lkGAIgASgJEhAKCGRpc2FibGVkGAMgASgIInkKGVNldENvbXBvbmVudEFjY2Vzc1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhEKCWNvbXBvbmVudBgCIAEoCRI2CgdlbnRyaWVzGAMgAygLMiUuZ2lic29uLmFkbWluLnYxLkNvbXBvbmVudEFjY2Vzc0VudHJ5IkwKGlNldENvbXBvbmVudEFjY2Vzc1Jlc3BvbnNlEhYKDnR1cGxlc193cml0dGVuGAEgASgFEhYKDnR1cGxlc19kZWxldGVkGAIgASgFIlgKFFNldFRlbmFudFJvbGVSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEgwKBHJvbGUYAyABKAkSDgoGcmVtb3ZlGAQgASgIIhcKFVNldFRlbmFudFJvbGVSZXNwb25zZSJIChhUcmFuc2Zlck93bmVyc2hpcFJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhkKEW5ld19vd25lcl91c2VyX2lkGAIgASgJIhsKGVRyYW5zZmVyT3duZXJzaGlwUmVzcG9uc2UiMwoRQ29tcG9uZW50QXBwcm92YWwSDgoGdGFyZ2V0GAEgASgJEg4KBmFjdGlvbhgCIAEoCSKIAQogR3JhbnRDb21wb25lbnRQZXJtaXNzaW9uc1JlcXVlc3QSHQoVYWdlbnRfaW5zdGFsbGF0aW9uX2lkGAEgASgJEjUKCWFwcHJvdmFscxgCIAMoCzIiLmdpYnNvbi5hZG1pbi52MS5Db21wb25lbnRBcHByb3ZhbBIOCgZyZWFzb24YAyABKAkiQgohR3JhbnRDb21wb25lbnRQZXJtaXNzaW9uc1Jlc3BvbnNlEh0KFWFnZW50X2luc3RhbGxhdGlvbl9pZBgBIAEoCSq/AQoOQnJva2VyUHJvdmlkZXISHwobQlJPS0VSX1BST1ZJREVSX1VOU1BFQ0lGSUVEEAASGQoVQlJPS0VSX1BST1ZJREVSX1ZBVUxUEAISGQoVQlJPS0VSX1BST1ZJREVSX0FXU1NNEAMSGQoVQlJPS0VSX1BST1ZJREVSX0dDUFNNEAQSGwoXQlJPS0VSX1BST1ZJREVSX0FaVVJFS1YQBSIECAEQASoYQlJPS0VSX1BST1ZJREVSX1BPU1RHUkVTMvMWChJUZW5hbnRBZG1pblNlcnZpY2USkQEKD0dldEJyb2tlckNvbmZpZxInLmdpYnNvbi5hZG1pbi52MS5HZXRCcm9rZXJDb25maWdSZXF1ZXN0GiguZ2lic29uLmFkbWluLnYxLkdldEJyb2tlckNvbmZpZ1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpcBChFQcm9iZUJyb2tlckNvbmZpZxIpLmdpYnNvbi5hZG1pbi52MS5Qcm9iZUJyb2tlckNvbmZpZ1JlcXVlc3QaKi5naWJzb24uYWRtaW4udjEuUHJvYmVCcm9rZXJDb25maWdSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKRAQoPU2V0QnJva2VyQ29uZmlnEicuZ2lic29uLmFkbWluLnYxLlNldEJyb2tlckNvbmZpZ1JlcXVlc3QaKC5naWJzb24uYWRtaW4udjEuU2V0QnJva2VyQ29uZmlnUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESiAEKDENvdW50U2VjcmV0cxIkLmdpYnNvbi5hZG1pbi52MS5Db3VudFNlY3JldHNSZXF1ZXN0GiUuZ2lic29uLmFkbWluLnYxLkNvdW50U2VjcmV0c1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEqQBChVHZXRTdXBwb3J0ZWRQcm92aWRlcnMSLS5naWJzb24uYWRtaW4udjEuR2V0U3VwcG9ydGVkUHJvdmlkZXJzUmVxdWVzdBouLmdpYnNvbi5hZG1pbi52MS5HZXRTdXBwb3J0ZWRQcm92aWRlcnNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSiwEKDVByb2JlUHJvdmlkZXISJS5naWJzb24uYWRtaW4udjEuUHJvYmVQcm92aWRlclJlcXVlc3QaJi5naWJzb24uYWRtaW4udjEuUHJvYmVQcm92aWRlclJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpoBChJMaXN0UHJvdmlkZXJNb2RlbHMSKi5naWJzb24uYWRtaW4udjEuTGlzdFByb3ZpZGVyTW9kZWxzUmVxdWVzdBorLmdpYnNvbi5hZG1pbi52MS5MaXN0UHJvdmlkZXJNb2RlbHNSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKFAQoLTGlzdE1lbWJlcnMSIy5naWJzb24uYWRtaW4udjEuTGlzdE1lbWJlcnNSZXF1ZXN0GiQuZ2lic29uLmFkbWluLnYxLkxpc3RNZW1iZXJzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESbwoQR2V0UmVzZXJ2ZWROYW1lcxIoLmdpYnNvbi5hZG1pbi52MS5HZXRSZXNlcnZlZE5hbWVzUmVxdWVzdBopLmdpYnNvbi5hZG1pbi52MS5HZXRSZXNlcnZlZE5hbWVzUmVzcG9uc2UiBoq1GAIoARJ/CglMaXN0VGVhbXMSIS5naWJzb24uYWRtaW4udjEuTGlzdFRlYW1zUmVxdWVzdBoiLmdpYnNvbi5hZG1pbi52MS5MaXN0VGVhbXNSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKRAQoPTGlzdFRlYW1NZW1iZXJzEicuZ2lic29uLmFkbWluLnYxLkxpc3RUZWFtTWVtYmVyc1JlcXVlc3QaKC5naWJzb24uYWRtaW4udjEuTGlzdFRlYW1NZW1iZXJzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESggEKCkNyZWF0ZVRlYW0SIi5naWJzb24uYWRtaW4udjEuQ3JlYXRlVGVhbVJlcXVlc3QaIy5naWJzb24uYWRtaW4udjEuQ3JlYXRlVGVhbVJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEoIBCgpEZWxldGVUZWFtEiIuZ2lic29uLmFkbWluLnYxLkRlbGV0ZVRlYW1SZXF1ZXN0GiMuZ2lic29uLmFkbWluLnYxLkRlbGV0ZVRlYW1SZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKLAQoNQWRkVGVhbU1lbWJlchIlLmdpYnNvbi5hZG1pbi52MS5BZGRUZWFtTWVtYmVyUmVxdWVzdBomLmdpYnNvbi5hZG1pbi52MS5BZGRUZWFtTWVtYmVyUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESlAEKEFJlbW92ZVRlYW1NZW1iZXISKC5naWJzb24uYWRtaW4udjEuUmVtb3ZlVGVhbU1lbWJlclJlcXVlc3QaKS5naWJzb24uYWRtaW4udjEuUmVtb3ZlVGVhbU1lbWJlclJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEogBCgxTZXRUZWFtQWRtaW4SJC5naWJzb24uYWRtaW4udjEuU2V0VGVhbUFkbWluUmVxdWVzdBolLmdpYnNvbi5hZG1pbi52MS5TZXRUZWFtQWRtaW5SZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKaAQoSU2V0Q29tcG9uZW50QWNjZXNzEiouZ2lic29uLmFkbWluLnYxLlNldENvbXBvbmVudEFjY2Vzc1JlcXVlc3QaKy5naWJzb24uYWRtaW4udjEuU2V0Q29tcG9uZW50QWNjZXNzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESiwEKDVNldFRlbmFudFJvbGUSJS5naWJzb24uYWRtaW4udjEuU2V0VGVuYW50Um9sZVJlcXVlc3QaJi5naWJzb24uYWRtaW4udjEuU2V0VGVuYW50Um9sZVJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpcBChFUcmFuc2Zlck93bmVyc2hpcBIpLmdpYnNvbi5hZG1pbi52MS5UcmFuc2Zlck93bmVyc2hpcFJlcXVlc3QaKi5naWJzb24uYWRtaW4udjEuVHJhbnNmZXJPd25lcnNoaXBSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKwAQoZR3JhbnRDb21wb25lbnRQZXJtaXNzaW9ucxIxLmdpYnNvbi5hZG1pbi52MS5HcmFudENvbXBvbmVudFBlcm1pc3Npb25zUmVxdWVzdBoyLmdpYnNvbi5hZG1pbi52MS5HcmFudENvbXBvbmVudFBlcm1pc3Npb25zUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABQlJQAVo/Z2l0aHViLmNvbS96ZXJvLWRheS1haS9wbGF0Zm9ybS1zZGsvZ2VuL2dpYnNvbi9hZG1pbi92MTthZG1pbnYxqgIMR2lic29uLkFkbWluYgZwcm90bzM", [file_gibson_auth_v1_options, file_google_protobuf_timestamp]);
 
 /**
  * RedactedConfig is the dashboard-safe view of a tenant's broker config.
@@ -975,9 +975,825 @@ export const TenantMemberSchema: GenMessage<TenantMember> = /*@__PURE__*/
   messageDesc(file_gibson_admin_v1_tenant, 22);
 
 /**
+ * GetReservedNamesRequest is empty — the list is global and public.
+ *
+ * @generated from message gibson.admin.v1.GetReservedNamesRequest
+ */
+export type GetReservedNamesRequest = Message<"gibson.admin.v1.GetReservedNamesRequest"> & {
+};
+
+/**
+ * Describes the message gibson.admin.v1.GetReservedNamesRequest.
+ * Use `create(GetReservedNamesRequestSchema)` to create a new message.
+ */
+export const GetReservedNamesRequestSchema: GenMessage<GetReservedNamesRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 23);
+
+/**
+ * GetReservedNamesResponse carries the chart-managed reserved-names
+ * denylist parsed from the gibson-reserved-names ConfigMap.
+ *
+ * @generated from message gibson.admin.v1.GetReservedNamesResponse
+ */
+export type GetReservedNamesResponse = Message<"gibson.admin.v1.GetReservedNamesResponse"> & {
+  /**
+   * exact is the list of exact tenant-name matches the admission webhook rejects.
+   * Examples: "default", "kube-system", "gibson", "argocd".
+   *
+   * @generated from field: repeated string exact = 1;
+   */
+  exact: string[];
+
+  /**
+   * prefix is the list of tenant-name prefixes the admission webhook rejects.
+   * Examples: "kube-", "system-", "gibson-".
+   *
+   * @generated from field: repeated string prefix = 2;
+   */
+  prefix: string[];
+};
+
+/**
+ * Describes the message gibson.admin.v1.GetReservedNamesResponse.
+ * Use `create(GetReservedNamesResponseSchema)` to create a new message.
+ */
+export const GetReservedNamesResponseSchema: GenMessage<GetReservedNamesResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 24);
+
+/**
+ * TeamAdmin is a single team row returned by ListTeams.
+ *
+ * @generated from message gibson.admin.v1.TeamAdmin
+ */
+export type TeamAdmin = Message<"gibson.admin.v1.TeamAdmin"> & {
+  /**
+   * id is the FGA team id without the type prefix (e.g. "red-team").
+   * Stable across renames.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * display_name is the human-readable label. Currently mirrors the id until
+   * a sidecar display-name store is wired.
+   *
+   * @generated from field: string display_name = 2;
+   */
+  displayName: string;
+
+  /**
+   * member_count is the sum of member + admin relations on the team.
+   *
+   * @generated from field: int32 member_count = 3;
+   */
+  memberCount: number;
+};
+
+/**
+ * Describes the message gibson.admin.v1.TeamAdmin.
+ * Use `create(TeamAdminSchema)` to create a new message.
+ */
+export const TeamAdminSchema: GenMessage<TeamAdmin> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 25);
+
+/**
+ * TeamMemberAdmin is a single member row returned by ListTeamMembers.
+ *
+ * @generated from message gibson.admin.v1.TeamMemberAdmin
+ */
+export type TeamMemberAdmin = Message<"gibson.admin.v1.TeamMemberAdmin"> & {
+  /**
+   * user_id is the FGA user id without the type prefix (e.g. the Zitadel
+   * numeric sub).
+   *
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+
+  /**
+   * email and display_name come from the dashboard's identity-resolver lookup
+   * when the server action joins this response with Zitadel data. The daemon
+   * leaves them empty.
+   *
+   * @generated from field: string email = 2;
+   */
+  email: string;
+
+  /**
+   * @generated from field: string display_name = 3;
+   */
+  displayName: string;
+
+  /**
+   * is_admin is true when the user holds the team's admin relation.
+   *
+   * @generated from field: bool is_admin = 4;
+   */
+  isAdmin: boolean;
+};
+
+/**
+ * Describes the message gibson.admin.v1.TeamMemberAdmin.
+ * Use `create(TeamMemberAdminSchema)` to create a new message.
+ */
+export const TeamMemberAdminSchema: GenMessage<TeamMemberAdmin> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 26);
+
+/**
+ * ListTeamsRequest enumerates the teams in the caller's tenant.
+ *
+ * @generated from message gibson.admin.v1.ListTeamsRequest
+ */
+export type ListTeamsRequest = Message<"gibson.admin.v1.ListTeamsRequest"> & {
+  /**
+   * tenant_id is the FGA id of the parent tenant (e.g. "tenant:acme").
+   * The daemon does not derive this from the caller identity — the dashboard
+   * server action supplies it explicitly to avoid silent cross-tenant reads.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * page_token is opaque. Empty for the first page; pass the next_page_token
+   * from the previous response to fetch the next page.
+   *
+   * @generated from field: string page_token = 2;
+   */
+  pageToken: string;
+
+  /**
+   * page_size caps the response. 0 → server default (50). Maximum 200.
+   *
+   * @generated from field: int32 page_size = 3;
+   */
+  pageSize: number;
+};
+
+/**
+ * Describes the message gibson.admin.v1.ListTeamsRequest.
+ * Use `create(ListTeamsRequestSchema)` to create a new message.
+ */
+export const ListTeamsRequestSchema: GenMessage<ListTeamsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 27);
+
+/**
+ * ListTeamsResponse carries the paginated team list.
+ *
+ * @generated from message gibson.admin.v1.ListTeamsResponse
+ */
+export type ListTeamsResponse = Message<"gibson.admin.v1.ListTeamsResponse"> & {
+  /**
+   * @generated from field: repeated gibson.admin.v1.TeamAdmin teams = 1;
+   */
+  teams: TeamAdmin[];
+
+  /**
+   * next_page_token is empty on the final page.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
+};
+
+/**
+ * Describes the message gibson.admin.v1.ListTeamsResponse.
+ * Use `create(ListTeamsResponseSchema)` to create a new message.
+ */
+export const ListTeamsResponseSchema: GenMessage<ListTeamsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 28);
+
+/**
+ * ListTeamMembersRequest enumerates a team's members.
+ *
+ * @generated from message gibson.admin.v1.ListTeamMembersRequest
+ */
+export type ListTeamMembersRequest = Message<"gibson.admin.v1.ListTeamMembersRequest"> & {
+  /**
+   * tenant_id is the FGA id of the parent tenant. Required for cross-tenant
+   * denial.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * team_id is the FGA team id without the type prefix.
+   *
+   * @generated from field: string team_id = 2;
+   */
+  teamId: string;
+
+  /**
+   * page_token / page_size — same semantics as ListTeamsAdminRequest.
+   *
+   * @generated from field: string page_token = 3;
+   */
+  pageToken: string;
+
+  /**
+   * @generated from field: int32 page_size = 4;
+   */
+  pageSize: number;
+};
+
+/**
+ * Describes the message gibson.admin.v1.ListTeamMembersRequest.
+ * Use `create(ListTeamMembersRequestSchema)` to create a new message.
+ */
+export const ListTeamMembersRequestSchema: GenMessage<ListTeamMembersRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 29);
+
+/**
+ * ListTeamMembersResponse carries the paginated team roster.
+ *
+ * @generated from message gibson.admin.v1.ListTeamMembersResponse
+ */
+export type ListTeamMembersResponse = Message<"gibson.admin.v1.ListTeamMembersResponse"> & {
+  /**
+   * @generated from field: repeated gibson.admin.v1.TeamMemberAdmin members = 1;
+   */
+  members: TeamMemberAdmin[];
+
+  /**
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
+};
+
+/**
+ * Describes the message gibson.admin.v1.ListTeamMembersResponse.
+ * Use `create(ListTeamMembersResponseSchema)` to create a new message.
+ */
+export const ListTeamMembersResponseSchema: GenMessage<ListTeamMembersResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 30);
+
+/**
+ * CreateTeamRequest creates a new team under the caller's tenant.
+ *
+ * @generated from message gibson.admin.v1.CreateTeamRequest
+ */
+export type CreateTeamRequest = Message<"gibson.admin.v1.CreateTeamRequest"> & {
+  /**
+   * tenant_id is the FGA id of the parent tenant (e.g. "tenant:acme").
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * team_id is the desired FGA team id (without the type prefix). Must be
+   * unique within the tenant. Clients typically use a slug derived from the
+   * display_name.
+   *
+   * @generated from field: string team_id = 2;
+   */
+  teamId: string;
+
+  /**
+   * display_name is the human-readable label for the team.
+   *
+   * @generated from field: string display_name = 3;
+   */
+  displayName: string;
+};
+
+/**
+ * Describes the message gibson.admin.v1.CreateTeamRequest.
+ * Use `create(CreateTeamRequestSchema)` to create a new message.
+ */
+export const CreateTeamRequestSchema: GenMessage<CreateTeamRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 31);
+
+/**
+ * CreateTeamResponse confirms the team was created.
+ *
+ * @generated from message gibson.admin.v1.CreateTeamResponse
+ */
+export type CreateTeamResponse = Message<"gibson.admin.v1.CreateTeamResponse"> & {
+  /**
+   * team is the newly created team record.
+   *
+   * @generated from field: gibson.admin.v1.TeamAdmin team = 1;
+   */
+  team?: TeamAdmin;
+};
+
+/**
+ * Describes the message gibson.admin.v1.CreateTeamResponse.
+ * Use `create(CreateTeamResponseSchema)` to create a new message.
+ */
+export const CreateTeamResponseSchema: GenMessage<CreateTeamResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 32);
+
+/**
+ * DeleteTeamRequest removes a team and all its associated FGA tuples.
+ *
+ * @generated from message gibson.admin.v1.DeleteTeamRequest
+ */
+export type DeleteTeamRequest = Message<"gibson.admin.v1.DeleteTeamRequest"> & {
+  /**
+   * tenant_id is the FGA id of the parent tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * team_id is the FGA team id without the type prefix.
+   *
+   * @generated from field: string team_id = 2;
+   */
+  teamId: string;
+};
+
+/**
+ * Describes the message gibson.admin.v1.DeleteTeamRequest.
+ * Use `create(DeleteTeamRequestSchema)` to create a new message.
+ */
+export const DeleteTeamRequestSchema: GenMessage<DeleteTeamRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 33);
+
+/**
+ * DeleteTeamResponse confirms the team was deleted.
+ *
+ * @generated from message gibson.admin.v1.DeleteTeamResponse
+ */
+export type DeleteTeamResponse = Message<"gibson.admin.v1.DeleteTeamResponse"> & {
+};
+
+/**
+ * Describes the message gibson.admin.v1.DeleteTeamResponse.
+ * Use `create(DeleteTeamResponseSchema)` to create a new message.
+ */
+export const DeleteTeamResponseSchema: GenMessage<DeleteTeamResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 34);
+
+/**
+ * AddTeamMemberRequest adds a user to a team with the member relation.
+ *
+ * @generated from message gibson.admin.v1.AddTeamMemberRequest
+ */
+export type AddTeamMemberRequest = Message<"gibson.admin.v1.AddTeamMemberRequest"> & {
+  /**
+   * tenant_id is the FGA id of the parent tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * team_id is the FGA team id without the type prefix.
+   *
+   * @generated from field: string team_id = 2;
+   */
+  teamId: string;
+
+  /**
+   * user_id is the FGA user id without the type prefix (the Zitadel numeric sub).
+   *
+   * @generated from field: string user_id = 3;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message gibson.admin.v1.AddTeamMemberRequest.
+ * Use `create(AddTeamMemberRequestSchema)` to create a new message.
+ */
+export const AddTeamMemberRequestSchema: GenMessage<AddTeamMemberRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 35);
+
+/**
+ * AddTeamMemberResponse confirms the member was added.
+ *
+ * @generated from message gibson.admin.v1.AddTeamMemberResponse
+ */
+export type AddTeamMemberResponse = Message<"gibson.admin.v1.AddTeamMemberResponse"> & {
+};
+
+/**
+ * Describes the message gibson.admin.v1.AddTeamMemberResponse.
+ * Use `create(AddTeamMemberResponseSchema)` to create a new message.
+ */
+export const AddTeamMemberResponseSchema: GenMessage<AddTeamMemberResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 36);
+
+/**
+ * RemoveTeamMemberRequest removes a user from a team, deleting both the
+ * member and admin FGA tuples for that user on the team.
+ *
+ * @generated from message gibson.admin.v1.RemoveTeamMemberRequest
+ */
+export type RemoveTeamMemberRequest = Message<"gibson.admin.v1.RemoveTeamMemberRequest"> & {
+  /**
+   * tenant_id is the FGA id of the parent tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * team_id is the FGA team id without the type prefix.
+   *
+   * @generated from field: string team_id = 2;
+   */
+  teamId: string;
+
+  /**
+   * user_id is the FGA user id without the type prefix.
+   *
+   * @generated from field: string user_id = 3;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message gibson.admin.v1.RemoveTeamMemberRequest.
+ * Use `create(RemoveTeamMemberRequestSchema)` to create a new message.
+ */
+export const RemoveTeamMemberRequestSchema: GenMessage<RemoveTeamMemberRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 37);
+
+/**
+ * RemoveTeamMemberResponse confirms the member was removed.
+ *
+ * @generated from message gibson.admin.v1.RemoveTeamMemberResponse
+ */
+export type RemoveTeamMemberResponse = Message<"gibson.admin.v1.RemoveTeamMemberResponse"> & {
+};
+
+/**
+ * Describes the message gibson.admin.v1.RemoveTeamMemberResponse.
+ * Use `create(RemoveTeamMemberResponseSchema)` to create a new message.
+ */
+export const RemoveTeamMemberResponseSchema: GenMessage<RemoveTeamMemberResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 38);
+
+/**
+ * SetTeamAdminRequest promotes or demotes a team member's admin status.
+ *
+ * @generated from message gibson.admin.v1.SetTeamAdminRequest
+ */
+export type SetTeamAdminRequest = Message<"gibson.admin.v1.SetTeamAdminRequest"> & {
+  /**
+   * tenant_id is the FGA id of the parent tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * team_id is the FGA team id without the type prefix.
+   *
+   * @generated from field: string team_id = 2;
+   */
+  teamId: string;
+
+  /**
+   * user_id is the FGA user id without the type prefix.
+   *
+   * @generated from field: string user_id = 3;
+   */
+  userId: string;
+
+  /**
+   * is_admin: when true, the admin relation is added; when false, it is
+   * removed. The member relation is not touched by this RPC.
+   *
+   * @generated from field: bool is_admin = 4;
+   */
+  isAdmin: boolean;
+};
+
+/**
+ * Describes the message gibson.admin.v1.SetTeamAdminRequest.
+ * Use `create(SetTeamAdminRequestSchema)` to create a new message.
+ */
+export const SetTeamAdminRequestSchema: GenMessage<SetTeamAdminRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 39);
+
+/**
+ * SetTeamAdminResponse confirms the admin status was updated.
+ *
+ * @generated from message gibson.admin.v1.SetTeamAdminResponse
+ */
+export type SetTeamAdminResponse = Message<"gibson.admin.v1.SetTeamAdminResponse"> & {
+};
+
+/**
+ * Describes the message gibson.admin.v1.SetTeamAdminResponse.
+ * Use `create(SetTeamAdminResponseSchema)` to create a new message.
+ */
+export const SetTeamAdminResponseSchema: GenMessage<SetTeamAdminResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 40);
+
+/**
+ * ComponentAccessEntry specifies the access control state for a single
+ * component relation (read, write, or execute).
+ *
+ * @generated from message gibson.admin.v1.ComponentAccessEntry
+ */
+export type ComponentAccessEntry = Message<"gibson.admin.v1.ComponentAccessEntry"> & {
+  /**
+   * relation is one of "team_read_disabled", "team_write_disabled", or
+   * "team_execute_disabled".
+   *
+   * @generated from field: string relation = 1;
+   */
+  relation: string;
+
+  /**
+   * team_id is the FGA team id without the type prefix. Empty means the
+   * restriction applies globally (tenant-level).
+   *
+   * @generated from field: string team_id = 2;
+   */
+  teamId: string;
+
+  /**
+   * disabled: when true, the restriction tuple is written; when false, it is
+   * deleted.
+   *
+   * @generated from field: bool disabled = 3;
+   */
+  disabled: boolean;
+};
+
+/**
+ * Describes the message gibson.admin.v1.ComponentAccessEntry.
+ * Use `create(ComponentAccessEntrySchema)` to create a new message.
+ */
+export const ComponentAccessEntrySchema: GenMessage<ComponentAccessEntry> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 41);
+
+/**
+ * SetComponentAccessRequest atomically replaces the access control tuples
+ * for a component. All existing team_read/write/execute_disabled tuples for
+ * the component are deleted before the new set is written.
+ *
+ * @generated from message gibson.admin.v1.SetComponentAccessRequest
+ */
+export type SetComponentAccessRequest = Message<"gibson.admin.v1.SetComponentAccessRequest"> & {
+  /**
+   * tenant_id is the FGA id of the tenant that owns the component.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * component is the FGA component reference (e.g. "component:plugin/gitlab").
+   *
+   * @generated from field: string component = 2;
+   */
+  component: string;
+
+  /**
+   * entries lists the access control state to write. Empty entries means
+   * all restrictions are removed (full access restored).
+   *
+   * @generated from field: repeated gibson.admin.v1.ComponentAccessEntry entries = 3;
+   */
+  entries: ComponentAccessEntry[];
+};
+
+/**
+ * Describes the message gibson.admin.v1.SetComponentAccessRequest.
+ * Use `create(SetComponentAccessRequestSchema)` to create a new message.
+ */
+export const SetComponentAccessRequestSchema: GenMessage<SetComponentAccessRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 42);
+
+/**
+ * SetComponentAccessResponse confirms the access control tuples were written.
+ *
+ * @generated from message gibson.admin.v1.SetComponentAccessResponse
+ */
+export type SetComponentAccessResponse = Message<"gibson.admin.v1.SetComponentAccessResponse"> & {
+  /**
+   * tuples_written is the number of FGA tuples created.
+   *
+   * @generated from field: int32 tuples_written = 1;
+   */
+  tuplesWritten: number;
+
+  /**
+   * tuples_deleted is the number of FGA tuples removed.
+   *
+   * @generated from field: int32 tuples_deleted = 2;
+   */
+  tuplesDeleted: number;
+};
+
+/**
+ * Describes the message gibson.admin.v1.SetComponentAccessResponse.
+ * Use `create(SetComponentAccessResponseSchema)` to create a new message.
+ */
+export const SetComponentAccessResponseSchema: GenMessage<SetComponentAccessResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 43);
+
+/**
+ * SetTenantRoleRequest writes or removes a role tuple on the tenant for a
+ * given user. Mutually exclusive roles (admin, member, writer) are enforced
+ * atomically: any existing role tuple is deleted before the new one is written.
+ *
+ * @generated from message gibson.admin.v1.SetTenantRoleRequest
+ */
+export type SetTenantRoleRequest = Message<"gibson.admin.v1.SetTenantRoleRequest"> & {
+  /**
+   * tenant_id is the FGA id of the tenant (e.g. "tenant:acme").
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the FGA user id without the type prefix.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+
+  /**
+   * role is the FGA relation to grant. Must be one of "admin", "member", or
+   * "writer". Use remove = true to remove the user's role entirely.
+   *
+   * @generated from field: string role = 3;
+   */
+  role: string;
+
+  /**
+   * remove: when true, all role tuples for the user on this tenant are
+   * deleted and role is ignored. When false, the specified role is written.
+   *
+   * @generated from field: bool remove = 4;
+   */
+  remove: boolean;
+};
+
+/**
+ * Describes the message gibson.admin.v1.SetTenantRoleRequest.
+ * Use `create(SetTenantRoleRequestSchema)` to create a new message.
+ */
+export const SetTenantRoleRequestSchema: GenMessage<SetTenantRoleRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 44);
+
+/**
+ * SetTenantRoleResponse confirms the role was updated.
+ *
+ * @generated from message gibson.admin.v1.SetTenantRoleResponse
+ */
+export type SetTenantRoleResponse = Message<"gibson.admin.v1.SetTenantRoleResponse"> & {
+};
+
+/**
+ * Describes the message gibson.admin.v1.SetTenantRoleResponse.
+ * Use `create(SetTenantRoleResponseSchema)` to create a new message.
+ */
+export const SetTenantRoleResponseSchema: GenMessage<SetTenantRoleResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 45);
+
+/**
+ * TransferOwnershipRequest atomically swaps the owner FGA tuple on the
+ * tenant from the current owner to new_owner_user_id.
+ *
+ * @generated from message gibson.admin.v1.TransferOwnershipRequest
+ */
+export type TransferOwnershipRequest = Message<"gibson.admin.v1.TransferOwnershipRequest"> & {
+  /**
+   * tenant_id is the FGA id of the tenant (e.g. "tenant:acme").
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * new_owner_user_id is the FGA user id (without type prefix) of the new
+   * owner.
+   *
+   * @generated from field: string new_owner_user_id = 2;
+   */
+  newOwnerUserId: string;
+};
+
+/**
+ * Describes the message gibson.admin.v1.TransferOwnershipRequest.
+ * Use `create(TransferOwnershipRequestSchema)` to create a new message.
+ */
+export const TransferOwnershipRequestSchema: GenMessage<TransferOwnershipRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 46);
+
+/**
+ * TransferOwnershipResponse confirms the ownership was transferred.
+ *
+ * @generated from message gibson.admin.v1.TransferOwnershipResponse
+ */
+export type TransferOwnershipResponse = Message<"gibson.admin.v1.TransferOwnershipResponse"> & {
+};
+
+/**
+ * Describes the message gibson.admin.v1.TransferOwnershipResponse.
+ * Use `create(TransferOwnershipResponseSchema)` to create a new message.
+ */
+export const TransferOwnershipResponseSchema: GenMessage<TransferOwnershipResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 47);
+
+/**
+ * ComponentApproval records the caller's approval for a single capability on
+ * a component.
+ *
+ * @generated from message gibson.admin.v1.ComponentApproval
+ */
+export type ComponentApproval = Message<"gibson.admin.v1.ComponentApproval"> & {
+  /**
+   * target is the FGA component reference (e.g. "component:plugin/gitlab").
+   *
+   * @generated from field: string target = 1;
+   */
+  target: string;
+
+  /**
+   * action is one of "read", "write", or "execute".
+   *
+   * @generated from field: string action = 2;
+   */
+  action: string;
+};
+
+/**
+ * Describes the message gibson.admin.v1.ComponentApproval.
+ * Use `create(ComponentApprovalSchema)` to create a new message.
+ */
+export const ComponentApprovalSchema: GenMessage<ComponentApproval> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 48);
+
+/**
+ * GrantComponentPermissionsRequest records the agent installation's approved
+ * component capabilities. The server enforces caller-access intersection:
+ * only capabilities the caller already holds (component_*_enabled tuples) may
+ * be forwarded to the agent installation principal.
+ *
+ * @generated from message gibson.admin.v1.GrantComponentPermissionsRequest
+ */
+export type GrantComponentPermissionsRequest = Message<"gibson.admin.v1.GrantComponentPermissionsRequest"> & {
+  /**
+   * agent_installation_id is the FGA agent installation principal id
+   * (without type prefix) that the approved capabilities are granted to.
+   *
+   * @generated from field: string agent_installation_id = 1;
+   */
+  agentInstallationId: string;
+
+  /**
+   * approvals is the list of component capabilities the caller approves.
+   *
+   * @generated from field: repeated gibson.admin.v1.ComponentApproval approvals = 2;
+   */
+  approvals: ComponentApproval[];
+
+  /**
+   * reason is a human-readable audit note for why these capabilities were
+   * granted.
+   *
+   * @generated from field: string reason = 3;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message gibson.admin.v1.GrantComponentPermissionsRequest.
+ * Use `create(GrantComponentPermissionsRequestSchema)` to create a new message.
+ */
+export const GrantComponentPermissionsRequestSchema: GenMessage<GrantComponentPermissionsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 49);
+
+/**
+ * GrantComponentPermissionsResponse confirms the grants were written.
+ *
+ * @generated from message gibson.admin.v1.GrantComponentPermissionsResponse
+ */
+export type GrantComponentPermissionsResponse = Message<"gibson.admin.v1.GrantComponentPermissionsResponse"> & {
+  /**
+   * agent_installation_id mirrors the request field for correlation.
+   *
+   * @generated from field: string agent_installation_id = 1;
+   */
+  agentInstallationId: string;
+};
+
+/**
+ * Describes the message gibson.admin.v1.GrantComponentPermissionsResponse.
+ * Use `create(GrantComponentPermissionsResponseSchema)` to create a new message.
+ */
+export const GrantComponentPermissionsResponseSchema: GenMessage<GrantComponentPermissionsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_admin_v1_tenant, 50);
+
+/**
  * BrokerProvider names the supported broker provider implementations. Per
- * Spec 1 R2.2 these are: postgres, vault, awssm, gcpsm, azurekv. The
- * dashboard's per-provider sub-form maps to one of these.
+ * Spec 1 R2.2 these are: vault, awssm, gcpsm, azurekv. The dashboard's
+ * per-provider sub-form maps to one of these.
  *
  * @generated from enum gibson.admin.v1.BrokerProvider
  */
@@ -986,14 +1802,6 @@ export enum BrokerProvider {
    * @generated from enum value: BROKER_PROVIDER_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
-
-  /**
-   * BROKER_PROVIDER_POSTGRES: dev-only Postgres provider; not for
-   * production tenants.
-   *
-   * @generated from enum value: BROKER_PROVIDER_POSTGRES = 1;
-   */
-  POSTGRES = 1,
 
   /**
    * BROKER_PROVIDER_VAULT: HashiCorp Vault, either Gibson-hosted (default
@@ -1149,6 +1957,150 @@ export const TenantAdminService: GenService<{
     methodKind: "unary";
     input: typeof ListMembersRequestSchema;
     output: typeof ListMembersResponseSchema;
+  },
+  /**
+   * GetReservedNames returns the chart-managed reserved-names denylist
+   * (exact + prefix matches) used by the Tenant CRD admission webhook and
+   * the dashboard signup form. Callable without authentication — the list is
+   * public and contains no tenant data.
+   *
+   * Spec: tenant-provisioning-unification-phase2 Requirement 4.5.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.GetReservedNames
+   */
+  getReservedNames: {
+    methodKind: "unary";
+    input: typeof GetReservedNamesRequestSchema;
+    output: typeof GetReservedNamesResponseSchema;
+  },
+  /**
+   * ListTeams enumerates the teams in the caller's tenant. Backed by FGA
+   * ListObjects(tenant:X, parent, team). Each Team carries its display name
+   * and current member count. Pagination is opaque.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.ListTeams
+   */
+  listTeams: {
+    methodKind: "unary";
+    input: typeof ListTeamsRequestSchema;
+    output: typeof ListTeamsResponseSchema;
+  },
+  /**
+   * ListTeamMembers enumerates the members of a single team. is_admin
+   * reflects whether the user holds the team's admin relation.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.ListTeamMembers
+   */
+  listTeamMembers: {
+    methodKind: "unary";
+    input: typeof ListTeamMembersRequestSchema;
+    output: typeof ListTeamMembersResponseSchema;
+  },
+  /**
+   * CreateTeam creates a new team under the caller's tenant and writes the
+   * (tenant:X, parent, team:Y) FGA tuple.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.CreateTeam
+   */
+  createTeam: {
+    methodKind: "unary";
+    input: typeof CreateTeamRequestSchema;
+    output: typeof CreateTeamResponseSchema;
+  },
+  /**
+   * DeleteTeam removes a team and all its member/admin FGA tuples.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.DeleteTeam
+   */
+  deleteTeam: {
+    methodKind: "unary";
+    input: typeof DeleteTeamRequestSchema;
+    output: typeof DeleteTeamResponseSchema;
+  },
+  /**
+   * AddTeamMember adds a user to a team with the member relation.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.AddTeamMember
+   */
+  addTeamMember: {
+    methodKind: "unary";
+    input: typeof AddTeamMemberRequestSchema;
+    output: typeof AddTeamMemberResponseSchema;
+  },
+  /**
+   * RemoveTeamMember removes a user from a team, deleting both member and
+   * admin FGA tuples for that user on the team.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.RemoveTeamMember
+   */
+  removeTeamMember: {
+    methodKind: "unary";
+    input: typeof RemoveTeamMemberRequestSchema;
+    output: typeof RemoveTeamMemberResponseSchema;
+  },
+  /**
+   * SetTeamAdmin promotes or demotes a team member's admin status. When
+   * is_admin is true, the admin relation is added (member relation kept for
+   * backward compat); when false, the admin relation is removed.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.SetTeamAdmin
+   */
+  setTeamAdmin: {
+    methodKind: "unary";
+    input: typeof SetTeamAdminRequestSchema;
+    output: typeof SetTeamAdminResponseSchema;
+  },
+  /**
+   * SetComponentAccess writes team_read_disabled / team_write_disabled /
+   * team_execute_disabled FGA tuples for a component. Replaces the current
+   * tuple-set atomically; any existing access tuples for the component are
+   * deleted before the new set is written.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.SetComponentAccess
+   */
+  setComponentAccess: {
+    methodKind: "unary";
+    input: typeof SetComponentAccessRequestSchema;
+    output: typeof SetComponentAccessResponseSchema;
+  },
+  /**
+   * SetTenantRole writes or removes admin / member / writer FGA tuples on
+   * the tenant for a given user. The role field must be one of "admin",
+   * "member", or "writer". Atomically removes any conflicting prior role
+   * tuple before writing the new one.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.SetTenantRole
+   */
+  setTenantRole: {
+    methodKind: "unary";
+    input: typeof SetTenantRoleRequestSchema;
+    output: typeof SetTenantRoleResponseSchema;
+  },
+  /**
+   * TransferOwnership atomically swaps the owner FGA tuple on the tenant
+   * from the current owner to new_owner_user_id. Fails if the caller is
+   * not the current owner.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.TransferOwnership
+   */
+  transferOwnership: {
+    methodKind: "unary";
+    input: typeof TransferOwnershipRequestSchema;
+    output: typeof TransferOwnershipResponseSchema;
+  },
+  /**
+   * GrantComponentPermissions records the agent installation's approved
+   * component capabilities. The server enforces caller-access intersection:
+   * only capabilities the caller already holds (component_read/write/execute_enabled)
+   * may be granted. Writes component_*_enabled FGA tuples for the agent
+   * installation principal.
+   *
+   * @generated from rpc gibson.admin.v1.TenantAdminService.GrantComponentPermissions
+   */
+  grantComponentPermissions: {
+    methodKind: "unary";
+    input: typeof GrantComponentPermissionsRequestSchema;
+    output: typeof GrantComponentPermissionsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_admin_v1_tenant, 0);

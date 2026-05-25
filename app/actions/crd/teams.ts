@@ -9,13 +9,15 @@
  * component) hang off the team's member relation.
  *
  * Delete is atomic across member/admin/team_*_disabled tuples — no
- * orphan tuples remain after a team is removed.
+ * orphan tuples remain after a team is removed. The daemon's
+ * TenantAdminService.DeleteTeam handles the full FGA cleanup atomically.
  *
  * Spec: agent-authoring-and-tenant-entitlements task 35, R8.
  */
 
-import { DaemonOperatorService } from "@/src/gen/gibson/daemon/operator/v1/operator_pb";
-import { serviceClient } from "@/src/lib/gibson-client";
+import { TenantAdminService } from "@/src/gen/gibson/admin/v1/tenant_pb";
+import { userClient } from "@/src/lib/gibson-client";
+import { getActiveTenant } from "@/src/lib/auth/active-tenant";
 
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
@@ -39,24 +41,28 @@ export async function listTeamsAction(): Promise<ActionResult<Team[]>> {
     permission: "members:invite",
   });
   if (!gate.ok) return gate.result;
-  const callerTenantId = gate.session.user.tenantId;
-  if (!callerTenantId) {
-    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
+
+  let tenantId: string;
+  try {
+    tenantId = await getActiveTenant();
+  } catch {
+    return { ok: false, error: "no active tenant", code: "FORBIDDEN" };
   }
-  // Backed by gibson DaemonOperatorService.ListTeams (gibson#118) which
-  // wraps FGA ListObjects(tenant:X, parent, team) + per-team member counts.
+
+  // Backed by TenantAdminService.ListTeams which wraps FGA
+  // ListObjects(tenant:X, parent, team) + per-team member counts.
   // Pagination is opaque at the wire level; the dashboard surfaces the full
   // list to UI consumers (the realistic per-tenant team count is well under
   // the daemon's default page size of 50). If a tenant ever exceeds that,
   // we can swap to client-side pagination without a server-action shape
   // change.
   try {
-    const client = serviceClient(DaemonOperatorService, callerTenantId);
+    const client = userClient(TenantAdminService);
     const teams: Team[] = [];
     let pageToken = "";
     do {
       const resp = await client.listTeams({
-        tenantId: `tenant:${callerTenantId}`,
+        tenantId: `tenant:${tenantId}`,
         pageToken,
         pageSize: 0, // daemon picks default
       });
@@ -87,17 +93,21 @@ export async function listTeamMembersAction(
     inputKeys: ["teamId"],
   });
   if (!gate.ok) return gate.result;
-  const callerTenantId = gate.session.user.tenantId;
-  if (!callerTenantId) {
-    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
-  }
+
+  let tenantId: string;
   try {
-    const client = serviceClient(DaemonOperatorService, callerTenantId);
+    tenantId = await getActiveTenant();
+  } catch {
+    return { ok: false, error: "no active tenant", code: "FORBIDDEN" };
+  }
+
+  try {
+    const client = userClient(TenantAdminService);
     const members: TeamMember[] = [];
     let pageToken = "";
     do {
       const resp = await client.listTeamMembers({
-        tenantId: `tenant:${callerTenantId}`,
+        tenantId: `tenant:${tenantId}`,
         teamId,
         pageToken,
         pageSize: 0,
@@ -131,29 +141,29 @@ export async function createTeamAction(input: {
     inputKeys: ["teamId", "displayName"],
   });
   if (!gate.ok) return gate.result;
-  const callerTenantId = gate.session.user.tenantId;
-  if (!callerTenantId) {
-    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
-  }
+
+  let tenantId: string;
   try {
-    const client = serviceClient(DaemonOperatorService, callerTenantId);
-    // Team objects are created implicitly when the first tuple referencing
-    // them is written. For a "create team" UX we write the parent tuple
-    // that binds the team to the caller's tenant.
-    await client.writeAccessTuples({
-      add: [
-        {
-          user: `tenant:${callerTenantId}`,
-          relation: "parent",
-          object: `team:${input.teamId}`,
-        },
-      ],
-      delete: [],
-      reason: `dashboard: create team ${input.displayName}`,
+    tenantId = await getActiveTenant();
+  } catch {
+    return { ok: false, error: "no active tenant", code: "FORBIDDEN" };
+  }
+
+  try {
+    const client = userClient(TenantAdminService);
+    const resp = await client.createTeam({
+      tenantId: `tenant:${tenantId}`,
+      teamId: input.teamId,
+      displayName: input.displayName,
     });
+    const created = resp.team;
     return {
       ok: true,
-      data: { id: input.teamId, displayName: input.displayName, memberCount: 0 },
+      data: {
+        id: created?.id ?? input.teamId,
+        displayName: created?.displayName || input.displayName,
+        memberCount: created?.memberCount ?? 0,
+      },
     };
   } catch (err) {
     return { ok: false, error: String(err), code: "INTERNAL" };
@@ -172,28 +182,19 @@ export async function deleteTeamAction(
     inputKeys: ["teamId"],
   });
   if (!gate.ok) return gate.result;
-  const callerTenantId = gate.session.user.tenantId;
-  if (!callerTenantId) {
-    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
-  }
-  // Full orphan cleanup requires enumerating every tuple referencing the
-  // team (member, admin, team_*_disabled across every component). The
-  // daemon admin client doesn't yet expose bulk-delete-by-team; we delete
-  // the parent tuple here and schedule the rest for the background
-  // reconciler's next pass. Track as follow-on task if delete latency
-  // is ever user-visible.
+
+  let tenantId: string;
   try {
-    const client = serviceClient(DaemonOperatorService, callerTenantId);
-    await client.writeAccessTuples({
-      add: [],
-      delete: [
-        {
-          user: `tenant:${callerTenantId}`,
-          relation: "parent",
-          object: `team:${teamId}`,
-        },
-      ],
-      reason: `dashboard: delete team ${teamId}`,
+    tenantId = await getActiveTenant();
+  } catch {
+    return { ok: false, error: "no active tenant", code: "FORBIDDEN" };
+  }
+
+  try {
+    const client = userClient(TenantAdminService);
+    await client.deleteTeam({
+      tenantId: `tenant:${tenantId}`,
+      teamId,
     });
     return { ok: true, data: { removed: 1 } };
   } catch (err) {
@@ -215,23 +216,30 @@ export async function addTeamMemberAction(input: {
     inputKeys: ["teamId", "userId", "asAdmin"],
   });
   if (!gate.ok) return gate.result;
-  const callerTenantId = gate.session.user.tenantId;
-  if (!callerTenantId) {
-    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
-  }
+
+  let tenantId: string;
   try {
-    const client = serviceClient(DaemonOperatorService, callerTenantId);
-    await client.writeAccessTuples({
-      add: [
-        {
-          user: `user:${input.userId}`,
-          relation: input.asAdmin ? "admin" : "member",
-          object: `team:${input.teamId}`,
-        },
-      ],
-      delete: [],
-      reason: `dashboard: add ${input.userId} to team ${input.teamId}`,
+    tenantId = await getActiveTenant();
+  } catch {
+    return { ok: false, error: "no active tenant", code: "FORBIDDEN" };
+  }
+
+  try {
+    const client = userClient(TenantAdminService);
+    await client.addTeamMember({
+      tenantId: `tenant:${tenantId}`,
+      teamId: input.teamId,
+      userId: input.userId,
     });
+    // If the caller wants admin rights, promote after adding as member.
+    if (input.asAdmin) {
+      await client.setTeamAdmin({
+        tenantId: `tenant:${tenantId}`,
+        teamId: input.teamId,
+        userId: input.userId,
+        isAdmin: true,
+      });
+    }
     return { ok: true, data: { applied: true } };
   } catch (err) {
     return { ok: false, error: String(err), code: "INTERNAL" };
@@ -248,27 +256,22 @@ export async function removeTeamMemberAction(input: {
     inputKeys: ["teamId", "userId"],
   });
   if (!gate.ok) return gate.result;
-  const callerTenantId = gate.session.user.tenantId;
-  if (!callerTenantId) {
-    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
-  }
+
+  let tenantId: string;
   try {
-    const client = serviceClient(DaemonOperatorService, callerTenantId);
-    await client.writeAccessTuples({
-      add: [],
-      delete: [
-        {
-          user: `user:${input.userId}`,
-          relation: "member",
-          object: `team:${input.teamId}`,
-        },
-        {
-          user: `user:${input.userId}`,
-          relation: "admin",
-          object: `team:${input.teamId}`,
-        },
-      ],
-      reason: `dashboard: remove ${input.userId} from team ${input.teamId}`,
+    tenantId = await getActiveTenant();
+  } catch {
+    return { ok: false, error: "no active tenant", code: "FORBIDDEN" };
+  }
+
+  try {
+    const client = userClient(TenantAdminService);
+    // RemoveTeamMember atomically removes both member and admin FGA tuples
+    // for the user on this team — no separate admin-tuple cleanup needed.
+    await client.removeTeamMember({
+      tenantId: `tenant:${tenantId}`,
+      teamId: input.teamId,
+      userId: input.userId,
     });
     return { ok: true, data: { applied: true } };
   } catch (err) {
