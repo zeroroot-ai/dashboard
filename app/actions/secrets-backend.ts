@@ -60,7 +60,6 @@ export type SetConfigActionResult = BrokerActionResult<RedactedConfig>;
 // ---------------------------------------------------------------------------
 
 const providerEnum = z.enum([
-  "BROKER_PROVIDER_POSTGRES",
   "BROKER_PROVIDER_VAULT",
   "BROKER_PROVIDER_AWSSM",
   "BROKER_PROVIDER_GCPSM",
@@ -104,8 +103,6 @@ type CandidateConfigInput = z.infer<typeof candidateConfigSchema>;
 
 function providerStringToProto(p: string): BrokerProvider {
   switch (p) {
-    case "BROKER_PROVIDER_POSTGRES":
-      return BrokerProvider.POSTGRES;
     case "BROKER_PROVIDER_VAULT":
       return BrokerProvider.VAULT;
     case "BROKER_PROVIDER_AWSSM":

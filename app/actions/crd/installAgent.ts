@@ -6,22 +6,23 @@
  * Re-validates the manifest server-side, intersects the requested
  * permissions with the caller's current access, mints a tenant-scoped
  * `agent_principal` id, and batch-writes `component_*_enabled` tuples via
- * DaemonOperatorService.WriteAccessTuples. On any failure, issues a
- * compensating delete before surfacing the error.
+ * TenantAdminService.GrantComponentPermissions. The server enforces
+ * caller-access intersection — only capabilities the caller already holds
+ * may be forwarded to the agent principal. The grant is atomic server-side
+ * so no client-side compensating delete is needed.
  *
  * Defence-in-depth: we refuse to write a tuple the caller lacks access to,
  * regardless of what `permissions.yaml` declared required.
  *
  * Spec: access-matrix-finish task 13, R5 AC 1-4, 6, 9.
- * Migration: admin-services-completion task 16 — WriteAccessTuples moved to
- * DaemonOperatorService.
+ * Migration: dashboard#359 — write path moved to userClient(TenantAdminService).
  */
 
 import { randomUUID } from "node:crypto";
 
-import { DaemonOperatorService } from "@/src/gen/gibson/daemon/operator/v1/operator_pb";
+import { TenantAdminService } from "@/src/gen/gibson/admin/v1/tenant_pb";
 import { DiscoveryService } from "@/src/gen/gibson/daemon/discovery/v1/discovery_pb";
-import { serviceClient } from "@/src/lib/gibson-client";
+import { userClient } from "@/src/lib/gibson-client";
 import {
   listAccessibleComponentsAction,
   type DiscoveredItem,
@@ -30,17 +31,12 @@ import {
 import { requireCrdSession } from "./_authz";
 import type {
   InstallAction,
-  InstallApproval,
   InstallAgentInput,
 } from "./installAgent.types";
 
 type ActionResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
-
-function relationFor(action: InstallAction): string {
-  return `component_${action}_enabled`;
-}
 
 function hasAccess(
   accessible: DiscoveredItem[],
@@ -76,7 +72,7 @@ export async function installAgentAction(
   }
 
   // 1. Re-validate the manifest server-side (defence in depth).
-  const validate = await serviceClient(DiscoveryService, tenantId).validateComponent({
+  const validate = await userClient(DiscoveryService).validateComponent({
     componentYaml: new TextEncoder().encode(input.componentYaml),
     permissionsYaml: new TextEncoder().encode(input.permissionsYaml),
   });
@@ -116,43 +112,30 @@ export async function installAgentAction(
   // 3. Mint the agent-installation principal (tenant-scoped UUIDv4 so
   //    FGA tuple collisions are impossible across tenants).
   const installationId = `${randomUUID()}-${tenantId}`;
-  const principal = `agent_principal:${installationId}`;
 
-  // 4. Build the batched tuple writes.
-  const tuples = input.approvals.map((a) => ({
-    user: principal,
-    relation: relationFor(a.action),
-    object: a.target,
+  // 4. Build the component approval list.
+  const approvals = input.approvals.map((a) => ({
+    target: a.target,
+    action: a.action,
   }));
-  if (tuples.length === 0) {
+  if (approvals.length === 0) {
     // Nothing to grant — approvals list may have been empty intentionally.
     return { ok: true, data: { agentInstallationId: installationId } };
   }
 
-  // 5. All-or-nothing: compensating delete on any batch failure.
-  const client = serviceClient(DaemonOperatorService, tenantId);
+  // 5. Atomic grant — server enforces caller-access intersection server-side.
+  //    No client-side compensating delete needed; the RPC is all-or-nothing.
   try {
-    await client.writeAccessTuples({
-      add: tuples,
-      delete: [],
+    await userClient(TenantAdminService).grantComponentPermissions({
+      agentInstallationId: installationId,
+      approvals,
       reason: `agent install: ${input.agentSlug}`,
     });
     return { ok: true, data: { agentInstallationId: installationId } };
   } catch (err) {
-    // Best-effort rollback — ignore rollback failure (the error surfaced
-    // to the user already names the compensating attempt).
-    try {
-      await client.writeAccessTuples({
-        add: [],
-        delete: tuples,
-        reason: `agent install rollback: ${input.agentSlug}`,
-      });
-    } catch {
-      // swallow
-    }
     return {
       ok: false,
-      error: `install rolled back: ${
+      error: `install failed: ${
         err instanceof Error ? err.message : String(err)
       }`,
     };

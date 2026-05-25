@@ -1,9 +1,9 @@
 /**
- * installAgentAction unit tests — covers the happy path, the adversarial
- * manifest case (caller lacks access), and the compensating-delete rollback
- * path.
+ * installAgentAction unit tests — covers the happy path and the adversarial
+ * manifest case (caller lacks access).
  *
  * Spec: access-matrix-finish task 23, R5 AC 4/7 + NFR Reliability.
+ * Migration: dashboard#359 — write path moved to userClient(TenantAdminService).
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -12,28 +12,22 @@ vi.mock("@/src/lib/auth", () => ({
   getServerSession: vi.fn(),
 }));
 
-// installAgentAction now uses serviceClient(svc, tenantId) for both the
-// PlatformOperatorService (writeAccessTuples) and the DiscoveryService
-// (validateComponent). One mock returns a stub keyed on the service it's
-// asked for so we don't have to mock the entire gibson-client surface.
-const mockWriteAccessTuples = vi.fn();
+// installAgentAction now uses userClient(TenantAdminService) for the write
+// path (grantComponentPermissions) and userClient(DiscoveryService) for
+// validateComponent. The mock returns a stub keyed on the RPC it exposes.
+const mockGrantComponentPermissions = vi.fn();
 const mockValidateComponent = vi.fn();
 vi.mock("@/src/lib/gibson-client", () => ({
-  serviceClient: (svc: { typeName?: string }) => {
-    // discovery validateComponent vs platform writeAccessTuples — the test
-    // matches on the property the SUT will reach for next.
-    return {
-      validateComponent: mockValidateComponent,
-      writeAccessTuples: mockWriteAccessTuples,
-      _svc: svc,
-    };
-  },
+  userClient: () => ({
+    validateComponent: mockValidateComponent,
+    grantComponentPermissions: mockGrantComponentPermissions,
+  }),
 }));
 vi.mock("@/src/gen/gibson/daemon/discovery/v1/discovery_pb", () => ({
   DiscoveryService: { typeName: "discovery" },
 }));
-vi.mock("@/src/gen/gibson/daemon/operator/v1/operator_pb", () => ({
-  DaemonOperatorService: { typeName: "platform_operator" },
+vi.mock("@/src/gen/gibson/admin/v1/tenant_pb", () => ({
+  TenantAdminService: { typeName: "gibson.admin.v1.TenantAdminService" },
 }));
 
 const mockList = vi.fn();
@@ -92,9 +86,11 @@ describe("installAgentAction", () => {
     expect(r.ok).toBe(false);
   });
 
-  it("happy path writes the batched tuples", async () => {
+  it("happy path calls grantComponentPermissions with the approval list", async () => {
     withSession();
-    mockWriteAccessTuples.mockResolvedValue({ added: 1, deleted: 0 });
+    mockGrantComponentPermissions.mockResolvedValue({
+      agentInstallationId: "mocked",
+    });
 
     const r = await installAgentAction({
       agentSlug: "test-agent",
@@ -109,12 +105,13 @@ describe("installAgentAction", () => {
     if (r.ok) {
       expect(r.data.agentInstallationId).toMatch(/-acme$/);
     }
-    expect(mockWriteAccessTuples).toHaveBeenCalledTimes(1);
-    const call = mockWriteAccessTuples.mock.calls[0][0];
-    expect(call.add).toHaveLength(1);
-    expect(call.add[0].relation).toBe("component_execute_enabled");
-    expect(call.add[0].object).toBe("component:plugin/gitlab");
-    expect(call.delete).toEqual([]);
+    expect(mockGrantComponentPermissions).toHaveBeenCalledTimes(1);
+    const call = mockGrantComponentPermissions.mock.calls[0][0];
+    expect(call.agentInstallationId).toMatch(/-acme$/);
+    expect(call.approvals).toHaveLength(1);
+    expect(call.approvals[0].target).toBe("component:plugin/gitlab");
+    expect(call.approvals[0].action).toBe("execute");
+    expect(call.reason).toContain("test-agent");
   });
 
   it("adversarial manifest — caller lacks access → refused pre-write", async () => {
@@ -145,16 +142,14 @@ describe("installAgentAction", () => {
       expect(r.error).toContain("cannot grant what you lack");
       expect(r.error).toContain("component:plugin/gitlab:execute");
     }
-    expect(mockWriteAccessTuples).not.toHaveBeenCalled();
+    expect(mockGrantComponentPermissions).not.toHaveBeenCalled();
   });
 
-  it("compensating delete fires on batch failure", async () => {
+  it("RPC failure → propagates error", async () => {
     withSession();
-    // First writeAccessTuples (the add) fails; second (the rollback delete)
-    // also gets called — we capture both.
-    mockWriteAccessTuples
-      .mockRejectedValueOnce(new Error("fga write failed after partial"))
-      .mockResolvedValueOnce({ added: 0, deleted: 1 });
+    mockGrantComponentPermissions.mockRejectedValueOnce(
+      new Error("fga write failed"),
+    );
 
     const r = await installAgentAction({
       agentSlug: "test-agent",
@@ -167,13 +162,11 @@ describe("installAgentAction", () => {
 
     expect(r.ok).toBe(false);
     if (!r.ok) {
-      expect(r.error).toContain("install rolled back");
+      expect(r.error).toContain("install failed");
+      expect(r.error).toContain("fga write failed");
     }
-    expect(mockWriteAccessTuples).toHaveBeenCalledTimes(2);
-    const rollback = mockWriteAccessTuples.mock.calls[1][0];
-    expect(rollback.add).toEqual([]);
-    expect(rollback.delete).toHaveLength(1);
-    expect(rollback.delete[0].object).toBe("component:plugin/gitlab");
+    // Only one call — no compensating delete since server is atomic
+    expect(mockGrantComponentPermissions).toHaveBeenCalledTimes(1);
   });
 
   it("empty approvals → no write, returns ok", async () => {
@@ -185,6 +178,6 @@ describe("installAgentAction", () => {
       approvals: [],
     });
     expect(r.ok).toBe(true);
-    expect(mockWriteAccessTuples).not.toHaveBeenCalled();
+    expect(mockGrantComponentPermissions).not.toHaveBeenCalled();
   });
 });

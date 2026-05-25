@@ -13,7 +13,7 @@
  */
 
 import { TenantService } from "@/src/gen/gibson/tenant/v1/tenant_pb";
-import { serviceClient } from "@/src/lib/gibson-client";
+import { userClient } from "@/src/lib/gibson-client";
 import { getServerSession } from "@/src/lib/auth";
 
 export type ActionResult<T> =
@@ -47,7 +47,7 @@ export async function getTenantQuotaAction(): Promise<
   }
 
   try {
-    const client = serviceClient(TenantService, tenantId);
+    const client = userClient(TenantService);
     const [limits, usage] = await Promise.all([
       client.getTenantQuota({ tenantId }),
       client.getTenantQuotaUsage({ tenantId }),
