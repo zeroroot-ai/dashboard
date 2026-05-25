@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RevealableInput } from "@/components/ui/revealable-input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Form,
@@ -249,8 +250,7 @@ function LLMProviderStep({
                 <FormItem>
                   <FormLabel className="font-mono">API Key</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
+                    <RevealableInput
                       placeholder="sk-..."
                       className="font-mono"
                       autoComplete="off"
