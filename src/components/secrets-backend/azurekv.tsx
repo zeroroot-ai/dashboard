@@ -24,6 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RevealableInput } from "@/components/ui/revealable-input";
 import {
   Select,
   SelectContent,
@@ -162,7 +163,7 @@ export function AzureKVForm({ control, authMethod }: AzureKVFormProps) {
                 <span className="text-destructive ml-1" aria-label="required">*</span>
               </FormLabel>
               <FormControl>
-                <Input
+                <RevealableInput
                   {...field}
                   type="password"
                   placeholder="••••••••••••••••••••••••••••••••"
