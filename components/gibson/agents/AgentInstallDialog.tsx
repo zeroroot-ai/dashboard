@@ -40,10 +40,8 @@ import {
   type ManifestValidationResult,
   type ValidationError,
 } from "@/app/actions/read/validateAgentManifest";
-import {
-  installAgentAction,
-  type InstallApproval,
-} from "@/app/actions/crd/installAgent";
+import { installAgentAction } from "@/app/actions/crd/installAgent";
+import type { InstallApproval } from "@/app/actions/crd/installAgent.types";
 import { listAccessibleComponentsAction } from "@/app/actions/read/listAccessibleComponents";
 
 export interface AgentInstallDialogProps {

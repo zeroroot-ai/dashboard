@@ -28,27 +28,15 @@ import {
 } from "@/app/actions/read/listAccessibleComponents";
 
 import { requireCrdSession } from "./_authz";
+import type {
+  InstallAction,
+  InstallApproval,
+  InstallAgentInput,
+} from "./installAgent.types";
 
-export type ActionResult<T> =
+type ActionResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
-
-export type InstallAction = "read" | "write" | "execute";
-
-export interface InstallApproval {
-  /** Target reference, e.g. "component:plugin/gitlab". */
-  target: string;
-  action: InstallAction;
-  /** From the manifest — used for error messaging only. */
-  required: boolean;
-}
-
-export interface InstallAgentInput {
-  agentSlug: string;
-  componentYaml: string;
-  permissionsYaml: string;
-  approvals: InstallApproval[];
-}
 
 function relationFor(action: InstallAction): string {
   return `component_${action}_enabled`;
