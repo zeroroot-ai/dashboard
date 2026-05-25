@@ -57,6 +57,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RevealableInput } from "@/components/ui/revealable-input";
 import {
   Select,
   SelectContent,
@@ -257,7 +258,7 @@ function CredentialInput({
       ? secretFieldPlaceholder
       : (cf.placeholder || undefined);
   return (
-    <Input
+    <RevealableInput
       {...field}
       id={id}
       type={isPassword ? "password" : "text"}
