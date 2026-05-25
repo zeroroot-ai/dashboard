@@ -25,8 +25,8 @@
  * Spec: dashboard#168.
  */
 
-import { DaemonOperatorService } from "@/src/gen/gibson/daemon/operator/v1/operator_pb";
-import { serviceClient } from "@/src/lib/gibson-client";
+import { TenantAdminService } from "@/src/gen/gibson/admin/v1/tenant_pb";
+import { userClient } from "@/src/lib/gibson-client";
 import { logger } from "@/src/lib/logger";
 import { listTenantMembers, patchTenantMember } from "@/src/lib/k8s/tenants";
 
@@ -78,27 +78,14 @@ export async function setTenantRoleAction(input: {
   if (!callerTenantId) {
     return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
   }
-  const inverse: TenantRole = input.role === "admin" ? "member" : "admin";
-
   // 1. Authoritative FGA write. Fail here returns INTERNAL with no mutation.
   try {
-    const client = serviceClient(DaemonOperatorService, callerTenantId);
-    await client.writeAccessTuples({
-      add: [
-        {
-          user: `user:${input.userId}`,
-          relation: input.role,
-          object: `tenant:${callerTenantId}`,
-        },
-      ],
-      delete: [
-        {
-          user: `user:${input.userId}`,
-          relation: inverse,
-          object: `tenant:${callerTenantId}`,
-        },
-      ],
-      reason: `dashboard: set ${input.userId} tenant role to ${input.role}`,
+    const client = userClient(TenantAdminService);
+    await client.setTenantRole({
+      tenantId: callerTenantId,
+      userId: input.userId,
+      role: input.role,
+      remove: false,
     });
   } catch (err) {
     return { ok: false, error: String(err), code: "INTERNAL" };
@@ -173,17 +160,13 @@ export async function setTeamAdminAction(input: {
   if (!callerTenantId) {
     return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
   }
-  const adminTuple = {
-    user: `user:${input.userId}`,
-    relation: "admin",
-    object: `team:${input.teamId}`,
-  };
   try {
-    const client = serviceClient(DaemonOperatorService, callerTenantId);
-    await client.writeAccessTuples({
-      add: input.isAdmin ? [adminTuple] : [],
-      delete: input.isAdmin ? [] : [adminTuple],
-      reason: `dashboard: ${input.isAdmin ? "promote" : "demote"} ${input.userId} on team ${input.teamId}`,
+    const client = userClient(TenantAdminService);
+    await client.setTeamAdmin({
+      tenantId: callerTenantId,
+      teamId: input.teamId,
+      userId: input.userId,
+      isAdmin: input.isAdmin,
     });
     return { ok: true, data: { applied: true } };
   } catch (err) {

@@ -24,8 +24,8 @@
  * Spec: dashboard#266.
  */
 
-import { DaemonOperatorService } from "@/src/gen/gibson/daemon/operator/v1/operator_pb";
-import { serviceClient } from "@/src/lib/gibson-client";
+import { TenantAdminService } from "@/src/gen/gibson/admin/v1/tenant_pb";
+import { userClient } from "@/src/lib/gibson-client";
 import { logger } from "@/src/lib/logger";
 import { listTenantMembers, patchTenantMember } from "@/src/lib/k8s/tenants";
 
@@ -130,36 +130,14 @@ export async function transferOwnershipAction(
   }
 
   // ── 1. Authoritative FGA write ─────────────────────────────────────────────
-  // All four tuple mutations in a single WriteAccessTuples call so the
-  // transition is atomic from the FGA perspective.
+  // TransferOwnership atomically swaps the owner tuple from the current
+  // owner to new_owner_user_id — all four tuple mutations happen server-side
+  // in a single atomic call.
   try {
-    const client = serviceClient(DaemonOperatorService, callerTenantId);
-    await client.writeAccessTuples({
-      add: [
-        {
-          user: `user:${newOwnerUserId}`,
-          relation: "owner",
-          object: `tenant:${callerTenantId}`,
-        },
-        {
-          user: `user:${callerUserId}`,
-          relation: "admin",
-          object: `tenant:${callerTenantId}`,
-        },
-      ],
-      delete: [
-        {
-          user: `user:${callerUserId}`,
-          relation: "owner",
-          object: `tenant:${callerTenantId}`,
-        },
-        {
-          user: `user:${newOwnerUserId}`,
-          relation: "admin",
-          object: `tenant:${callerTenantId}`,
-        },
-      ],
-      reason: `dashboard: transfer ownership from ${callerUserId} to ${newOwnerUserId}`,
+    const client = userClient(TenantAdminService);
+    await client.transferOwnership({
+      tenantId: callerTenantId,
+      newOwnerUserId,
     });
   } catch (err) {
     return { ok: false, error: String(err), code: "INTERNAL" };

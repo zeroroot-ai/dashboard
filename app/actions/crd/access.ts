@@ -11,8 +11,8 @@
  * Spec: agent-authoring-and-tenant-entitlements task 30, R8 AC 7.
  */
 
-import { DaemonOperatorService } from "@/src/gen/gibson/daemon/operator/v1/operator_pb";
-import { serviceClient } from "@/src/lib/gibson-client";
+import { TenantAdminService } from "@/src/gen/gibson/admin/v1/tenant_pb";
+import { userClient } from "@/src/lib/gibson-client";
 
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
@@ -32,52 +32,55 @@ export interface SetComponentAccessInput {
 }
 
 /**
- * Compute the FGA tuple that expresses the requested change for this
- * (scope, action) pair. The caller's tenant is baked into the subject
- * for tenant-scope denies; other scopes use the explicit target.
+ * Derive the FGA relation name and optional team id for this (scope, action)
+ * pair. Returns null when the scope/targetId combination is invalid.
  */
-function tupleForScope(
+function entryForScope(
   input: SetComponentAccessInput,
   callerTenantId: string,
   callerUserId: string,
-): { user: string; relation: string; object: string } | null {
+): { relation: string; teamId: string; disabled: boolean } | null {
   const { scope, targetId, componentRef, action } = input;
   if (!componentRef) return null;
-  const denyRelation = `${action === "write" ? "write" : action}_disabled`;
-  const grantRelation = `component_${action === "write" ? "write" : action}_enabled`;
+  const denyRelation = `${action}_disabled`;
+
   switch (scope) {
     case "tenant":
+      // tenant_read/write/execute_disabled — tenant-level, no teamId
       return {
-        user: `tenant:${callerTenantId}`,
         relation: `tenant_${denyRelation}`,
-        object: componentRef,
+        teamId: callerTenantId,
+        // disabled=true installs the deny; disabled=false removes it
+        disabled: !input.enabled,
       };
     case "team":
       if (!targetId) return null;
       return {
-        user: `team:${targetId}#member`,
         relation: `team_${denyRelation}`,
-        object: componentRef,
+        teamId: targetId,
+        disabled: !input.enabled,
       };
     case "user":
       if (!targetId) return null;
       return {
-        user: `user:${targetId}`,
         relation: `user_${denyRelation}`,
-        object: componentRef,
+        teamId: targetId,
+        disabled: !input.enabled,
       };
     case "my":
       return {
-        user: `user:${callerUserId}`,
         relation: `user_${denyRelation}`,
-        object: componentRef,
+        teamId: callerUserId,
+        disabled: !input.enabled,
       };
     case "component":
       if (!targetId) return null;
+      // component_*_enabled is a grant relation — enabled=true adds it
       return {
-        user: `agent_principal:${targetId}`,
-        relation: grantRelation,
-        object: componentRef,
+        relation: `component_${action}_enabled`,
+        teamId: targetId,
+        // disabled semantics are inverted for grant relations
+        disabled: input.enabled,
       };
   }
 }
@@ -97,33 +100,24 @@ export async function setComponentAccessAction(
     return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
   }
 
-  const tuple = tupleForScope(input, callerTenantId, callerUserId);
-  if (!tuple) {
+  const entry = entryForScope(input, callerTenantId, callerUserId);
+  if (!entry) {
     return { ok: false, error: "invalid scope/targetId combination", code: "BAD_INPUT" };
   }
 
-  // For deny-style tuples: enabled=true removes the tuple (re-enables
-  // access), enabled=false adds the tuple (installs the deny). For
-  // grant-style component_*_enabled: enabled=true adds the grant,
-  // enabled=false removes it.
-  const isGrant = tuple.relation.startsWith("component_");
-  const wantAdd = isGrant ? input.enabled : !input.enabled;
-
   try {
-    const client = serviceClient(DaemonOperatorService, callerTenantId);
-    if (wantAdd) {
-      await client.writeAccessTuples({
-        add: [tuple],
-        delete: [],
-        reason: `dashboard: ${input.scope} ${input.action} ${input.enabled ? "enable" : "deny"}`,
-      });
-    } else {
-      await client.writeAccessTuples({
-        add: [],
-        delete: [tuple],
-        reason: `dashboard: ${input.scope} ${input.action} revert`,
-      });
-    }
+    const client = userClient(TenantAdminService);
+    await client.setComponentAccess({
+      tenantId: callerTenantId,
+      component: input.componentRef,
+      entries: [
+        {
+          relation: entry.relation,
+          teamId: entry.teamId,
+          disabled: entry.disabled,
+        },
+      ],
+    });
     return { ok: true, data: { applied: true } };
   } catch (err) {
     return {
