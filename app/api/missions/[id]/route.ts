@@ -112,6 +112,7 @@ export async function GET(
       findings: graphFindingCount || serialized.findingCount,
       events: 0,
       tenantId: session.user.tenantId || '',
+      missionDefinitionId: serialized.missionDefinitionId,
     };
 
     return NextResponse.json(mission);

@@ -107,6 +107,7 @@ export default function CreateMissionPage() {
   const urlDraftId = searchParams.get("draft") ?? undefined;
   const urlTemplateId = searchParams.get("template") ?? undefined;
   const urlDefinitionName = searchParams.get("definition") ?? undefined;
+  const urlCloneMissionId = searchParams.get("clone") ?? undefined;
 
   const [cueSource, setCueSource] = React.useState<string>(DEFAULT_CUE);
   const [errorCount, setErrorCount] = React.useState(0);
@@ -174,6 +175,48 @@ export default function CreateMissionPage() {
     // Only run once per template id change — don't re-run if user edits.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlTemplateId]);
+
+  // URL-driven clone hydration (?clone=<missionId>) — fetches the CUE source
+  // from the existing mission's registered definition and pre-populates the
+  // editor. Closes dashboard#352.
+  React.useEffect(() => {
+    if (!urlCloneMissionId || urlDraftId) return;
+    let cancelled = false;
+    setDraftLoading(true);
+    void (async () => {
+      const res = await fetch(
+        `/api/missions/${encodeURIComponent(urlCloneMissionId)}/clone`,
+      );
+      if (cancelled) return;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        toast.error(
+          res.status === 410
+            ? "This mission cannot be cloned — it was not created from a CUE definition."
+            : body.error ?? "Could not load the mission for cloning",
+        );
+        router.replace("/dashboard/missions/create");
+        setDraftLoading(false);
+        return;
+      }
+      const data = (await res.json()) as { cueSource?: string; name?: string };
+      if (cancelled) return;
+      if (data.cueSource) {
+        // Append " (copy)" to the name field in the CUE source so the new
+        // submission does not conflict with the original definition name.
+        const withCopyName = data.cueSource.replace(
+          /^(\s*name:\s*)"([^"]*)"/m,
+          (_m: string, prefix: string, name: string) => `${prefix}"${name} (copy)"`,
+        );
+        setCueSource(withCopyName);
+        setSavedSource(withCopyName);
+      }
+      setDraftLoading(false);
+    })();
+    return () => { cancelled = true; };
+    // Only run once per clone id — don't re-run if user edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlCloneMissionId]);
 
   // URL-driven definition hydration (?definition=<name>)
   React.useEffect(() => {
