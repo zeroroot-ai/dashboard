@@ -16,11 +16,12 @@
  */
 
 import { useEffect, useState } from "react";
-import { EyeIcon, EyeOffIcon, PlusIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RevealableInput } from "@/components/ui/revealable-input";
 import {
   Select,
   SelectContent,
@@ -69,8 +70,6 @@ interface BindingRowProps {
 }
 
 function BindingRow({ entry, onChange }: BindingRowProps) {
-  const [showValue, setShowValue] = useState(false);
-
   function setMode(mode: BindingMode) {
     onChange({ ...entry, mode, existingRef: "", createValue: "" });
   }
@@ -147,29 +146,15 @@ function BindingRow({ entry, onChange }: BindingRowProps) {
             <Label htmlFor={`create-value-${entry.declaredName}`} className="text-xs">
               Secret value
             </Label>
-            <div className="relative">
-              <Input
-                id={`create-value-${entry.declaredName}`}
-                type={showValue ? "text" : "password"}
-                placeholder="Paste value here"
-                value={entry.createValue}
-                onChange={(e) => setCreateValue(e.target.value)}
-                className="pr-9 font-mono text-xs"
-                autoComplete="off"
-              />
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground absolute right-2.5 top-1/2 -translate-y-1/2"
-                onClick={() => setShowValue((v) => !v)}
-                aria-label={showValue ? "Hide secret value" : "Show secret value"}
-              >
-                {showValue ? (
-                  <EyeOffIcon className="size-3.5" aria-hidden="true" />
-                ) : (
-                  <EyeIcon className="size-3.5" aria-hidden="true" />
-                )}
-              </button>
-            </div>
+            <RevealableInput
+              id={`create-value-${entry.declaredName}`}
+              type="password"
+              placeholder="Paste value here"
+              value={entry.createValue}
+              onChange={(e) => setCreateValue(e.target.value)}
+              className="font-mono text-xs"
+              autoComplete="off"
+            />
             <p className="text-muted-foreground text-xs">
               This value will be stored in your tenant broker under the name{" "}
               <code className="bg-muted rounded px-1 font-mono">{entry.declaredName}</code>.
