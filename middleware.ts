@@ -97,6 +97,35 @@ export default auth(async (req) => {
     return NextResponse.next({ request: { headers: reqHeaders } });
   }
 
+  // 1b. Opaque-token detection (dashboard#357).
+  //
+  // Auth.js stores account.access_token at sign-in and never refreshes it.
+  // Users who signed in before EnsureJWTAccessToken was applied to the
+  // gibson-dashboard Zitadel OIDC app hold opaque (non-JWT) bearer tokens.
+  // Envoy's jwt_authn filter rejects those with "Jwt is not in the form of
+  // Header.Payload.Signature", causing every userClient RPC to fail.
+  //
+  // A valid JWT has exactly 3 dot-separated segments. Anything else is
+  // treated as stale/opaque and the user is bounced to sign-in so Auth.js
+  // mints a fresh session with a proper JWT access token.
+  //
+  // This check runs for ALL authenticated requests (protected and otherwise)
+  // so that stale-token holders are redirected even before they reach
+  // /dashboard and trigger an RPC.
+  if (session.accessToken && session.accessToken.split('.').length !== 3) {
+    logger.warn(
+      {
+        scope: "middleware.opaque_token_detected",
+        correlation_id: correlationId,
+        token_length: session.accessToken.length,
+      },
+      "auth.opaque_token_redirect",
+    );
+    const signInUrl = new URL("/api/auth/signin", req.nextUrl.origin);
+    signInUrl.searchParams.set("callbackUrl", pathname + (search || ""));
+    return NextResponse.redirect(signInUrl);
+  }
+
   // 2. Authenticated requests outside the protected area — let through.
   if (!pathname.startsWith(PROTECTED_PREFIX)) {
     return NextResponse.next({ request: { headers: reqHeaders } });

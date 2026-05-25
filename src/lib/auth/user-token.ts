@@ -52,13 +52,16 @@ export const requireUserToken = cache(async (): Promise<string> => {
     );
   }
   // Defensive shape check: a valid Zitadel access token is a JWT (three
-  // dot-delimited base64url segments). Non-JWT tokens will fail ext-authz
-  // validation. Log a warning so the issue surfaces in structured logs
-  // without breaking the request flow.
+  // dot-delimited base64url segments). Middleware (middleware.ts step 1b)
+  // redirects opaque-token sessions to sign-in before they reach a Server
+  // Component or Server Action, so this branch should never fire in
+  // normal operation. Log at debug level only — a warn here would be a
+  // false alarm for any path that legitimately bypasses middleware (e.g.
+  // route handlers excluded from the matcher).
   if (session.accessToken.split('.').length !== 3) {
     logger.warn(
       { tokenLength: session.accessToken.length },
-      '[session-debug] access token is not JWT-shaped; daemon auth may fail',
+      '[session-debug] access token is not JWT-shaped; middleware should have redirected — check matcher config',
     );
   }
   return session.accessToken;
