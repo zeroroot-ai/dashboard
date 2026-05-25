@@ -29,6 +29,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RevealableInput } from "@/components/ui/revealable-input";
 
 import type { BrokerFormValues } from "./types";
 
@@ -96,7 +97,7 @@ export function AwsSMForm({ control }: AwsSMFormProps) {
           <FormItem>
             <FormLabel className="text-xs">External ID</FormLabel>
             <FormControl>
-              <Input
+              <RevealableInput
                 {...field}
                 type="password"
                 placeholder="optional STS external ID"
@@ -123,7 +124,7 @@ export function AwsSMForm({ control }: AwsSMFormProps) {
           <FormItem>
             <FormLabel className="text-xs">Access Key ID</FormLabel>
             <FormControl>
-              <Input
+              <RevealableInput
                 {...field}
                 type="password"
                 placeholder="AKIA••••••••••••••••"
@@ -150,7 +151,7 @@ export function AwsSMForm({ control }: AwsSMFormProps) {
           <FormItem>
             <FormLabel className="text-xs">Secret Access Key</FormLabel>
             <FormControl>
-              <Input
+              <RevealableInput
                 {...field}
                 type="password"
                 placeholder="••••••••••••••••••••••••••••••••••••••••"
