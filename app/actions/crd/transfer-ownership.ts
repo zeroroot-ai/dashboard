@@ -32,8 +32,6 @@ import { listTenantMembers, patchTenantMember } from "@/src/lib/k8s/tenants";
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
 
-export type { ActionResult };
-
 function tenantNamespace(slug: string): string {
   return `tenant-${slug}`;
 }

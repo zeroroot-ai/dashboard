@@ -20,8 +20,6 @@ import { serviceClient } from "@/src/lib/gibson-client";
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
 
-export type { ActionResult };
-
 export interface Team {
   id: string; // the FGA object id, e.g. "red-team"
   displayName: string;

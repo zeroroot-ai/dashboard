@@ -69,8 +69,6 @@ import {
 import { k8s } from "@/src/lib/k8s/client";
 import { logger } from "@/src/lib/logger";
 
-// Re-export types so callers can import everything from one module.
-export type { SignupInput, SignupActionResult };
 
 // ---------------------------------------------------------------------------
 // Configuration

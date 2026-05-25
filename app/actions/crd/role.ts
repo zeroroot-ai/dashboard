@@ -37,8 +37,6 @@ function tenantNamespace(slug: string): string {
   return `tenant-${slug}`;
 }
 
-export type { ActionResult };
-
 export type TenantRole = "admin" | "member";
 
 /**
