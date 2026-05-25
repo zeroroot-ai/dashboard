@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
         findings: serialized.findingCount,
         events: 0,
         tenantId: session.user.tenantId || '',
+        missionDefinitionId: serialized.missionDefinitionId,
       };
     });
 

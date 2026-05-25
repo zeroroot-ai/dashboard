@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { PlusCircle, MoreHorizontal, Play, Pause, Square, Trash2, GripVertical, CrosshairIcon, Pencil } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Play, Pause, Square, Trash2, GripVertical, CrosshairIcon, Pencil, Copy } from "lucide-react";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { toast } from "sonner";
 
@@ -114,6 +114,7 @@ function MissionActionsMenu({ mission }: { mission: Mission }) {
   const canStart = mission.status === "pending" || mission.status === "paused";
   const canPause = mission.status === "running";
   const canStop = mission.status === "running" || mission.status === "paused";
+  const canClone = Boolean(mission.missionDefinitionId);
 
   const startMutation = useStartMission();
   const pauseMutation = usePauseMission();
@@ -186,6 +187,23 @@ function MissionActionsMenu({ mission }: { mission: Mission }) {
         <DropdownMenuItem disabled={!canStop || isWorking} onClick={handleStop}>
           <Square className="size-4" />
           Stop
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          disabled={!canClone || isWorking}
+          asChild={canClone}
+        >
+          {canClone ? (
+            <Link href={`/dashboard/missions/create?clone=${encodeURIComponent(mission.id)}`}>
+              <Copy className="size-4" />
+              Clone
+            </Link>
+          ) : (
+            <>
+              <Copy className="size-4" />
+              Clone
+            </>
+          )}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
