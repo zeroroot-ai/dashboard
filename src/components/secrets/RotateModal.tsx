@@ -15,7 +15,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2Icon, EyeOffIcon } from "lucide-react";
+import { Loader2Icon } from "lucide-react";
 
 import {
   Dialog,
@@ -26,7 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { RevealableInput } from "@/components/ui/revealable-input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { rotateSecretAction } from "@/app/actions/secrets";
@@ -113,8 +113,7 @@ export function RotateModal({
               New value
               <span className="text-destructive ml-1" aria-hidden="true">*</span>
             </Label>
-            <div className="relative">
-              <Input
+            <RevealableInput
                 id="rotate-value"
                 name="value"
                 type="password"
@@ -128,11 +127,6 @@ export function RotateModal({
                 disabled={pending}
                 data-testid="rotate-value-input"
               />
-              <EyeOffIcon
-                className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden="true"
-              />
-            </div>
             <p className="text-muted-foreground text-xs">
               Transmitted securely over TLS. Never displayed after rotation.
             </p>

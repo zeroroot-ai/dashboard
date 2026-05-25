@@ -18,11 +18,12 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, EyeOffIcon, Loader2Icon } from "lucide-react";
+import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RevealableInput } from "@/components/ui/revealable-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -159,8 +160,7 @@ export function AddSecretForm() {
           Value
           <span className="text-destructive ml-1" aria-hidden="true">*</span>
         </Label>
-        <div className="relative">
-          <Input
+        <RevealableInput
             id="secret-value"
             name="value"
             type="password"
@@ -175,11 +175,6 @@ export function AddSecretForm() {
             disabled={pending}
             data-testid="secret-value-input"
           />
-          <EyeOffIcon
-            className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
-        </div>
         <p id="secret-value-hint" className="text-muted-foreground text-xs">
           Transmitted securely to the broker over TLS. Never displayed after submission.
         </p>
