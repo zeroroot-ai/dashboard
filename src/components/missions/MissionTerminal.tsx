@@ -139,19 +139,25 @@ export const MissionTerminal = React.forwardRef<
     if (!isOpen) return;
     if (!containerRef.current) return;
 
-    // Read the CSS custom property at runtime so the terminal background
-    // always matches the design-token value, including after theme switches.
-    const bg = getComputedStyle(document.documentElement)
-      .getPropertyValue("--terminal-bg")
-      .trim();
+    // Read CSS custom properties at runtime so terminal colors always match
+    // the design-token values, including after theme switches.
+    const style = getComputedStyle(document.documentElement);
+    const bg = style.getPropertyValue("--terminal-bg").trim();
+    const fg = style.getPropertyValue("--foreground").trim();
+    const sel = style.getPropertyValue("--accent").trim();
 
     const terminal = new Terminal({
-      theme: { background: bg || "#000000" },
+      theme: {
+        background: bg || "#000000",
+        foreground: fg || "#ffffff",
+        selectionBackground: sel || "#3a3a3a",
+      },
       convertEol: true,
       scrollback: 5000,
       fontFamily:
         'var(--font-jetbrains-mono), "Fira Code", "Cascadia Code", monospace',
-      fontSize: 13,
+      fontSize: 14,
+      lineHeight: 1.4,
     });
     const fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
