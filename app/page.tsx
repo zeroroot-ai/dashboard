@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { HeroSection } from '@/components/gibson/landing/HeroSection';
 import { WhatYouGet } from '@/components/gibson/landing/WhatYouGet';
+import { ArchitectureDiagram } from '@/components/gibson/landing/ArchitectureDiagram';
 import { WhatYouRunItOn } from '@/components/gibson/landing/WhatYouRunItOn';
 import { Production } from '@/components/gibson/landing/Production';
 import { SiteHeader } from '@/components/gibson/site-header';
@@ -25,6 +26,7 @@ export default function RootPage() {
       <main>
         <HeroSection />
         <WhatYouGet />
+        <ArchitectureDiagram />
         <WhatYouRunItOn />
         <Production />
         <section className="border-t border-border py-10">

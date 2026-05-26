@@ -4,3 +4,4 @@ export { HeroSection } from './HeroSection';
 export { WhatYouGet } from './WhatYouGet';
 export { WhatYouRunItOn } from './WhatYouRunItOn';
 export { Production } from './Production';
+export { ArchitectureDiagram } from './ArchitectureDiagram';
