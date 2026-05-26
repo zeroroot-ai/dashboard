@@ -154,6 +154,8 @@ export default function CreateMissionPage() {
       return;
     }
     if (urlDraftId === currentDraftId) return;
+    // Switching drafts starts a fresh context — clear any in-flight mission.
+    setActiveMissionId(undefined);
     let cancelled = false;
     setDraftLoading(true);
     void (async () => {
@@ -347,6 +349,11 @@ export default function CreateMissionPage() {
   }, [isDirty]);
 
   async function handleRunMission() {
+    // Reset state from any previous run so the terminal re-opens cleanly
+    // even if the user collapsed it between runs.
+    setActiveMissionId(undefined);
+    terminalRef.current?.clear();
+    setTerminalOpen(false);
     // Open the terminal immediately before the action resolves.
     setTerminalOpen(true);
     terminalRef.current?.write('\x1b[36mLaunching mission…\x1b[0m\r\n');
@@ -520,6 +527,7 @@ export default function CreateMissionPage() {
         title="Mission Output"
         defaultOpen={true}
         imperativeOpen={terminalOpen}
+        onClose={() => setTerminalOpen(false)}
       />
     </div>
   );

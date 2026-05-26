@@ -54,6 +54,8 @@ interface MissionTerminalProps {
    * reaching into localStorage directly.
    */
   imperativeOpen?: boolean;
+  /** Called when the user collapses the panel via the chevron button. */
+  onClose?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -87,7 +89,7 @@ export const MissionTerminal = React.forwardRef<
   MissionTerminalHandle,
   MissionTerminalProps
 >(function MissionTerminal(
-  { title = "Terminal", defaultOpen = false, imperativeOpen },
+  { title = "Terminal", defaultOpen = false, imperativeOpen, onClose },
   ref
 ) {
   // --- open/collapsed state ---
@@ -284,7 +286,11 @@ export const MissionTerminal = React.forwardRef<
             size="icon"
             className="size-6"
             aria-label={isOpen ? "Collapse terminal" : "Expand terminal"}
-            onClick={() => setIsOpen((prev) => !prev)}
+            onClick={() => setIsOpen((prev) => {
+              const next = !prev;
+              if (!next) onClose?.();
+              return next;
+            })}
           >
             {isOpen ? (
               <ChevronDown className="size-3.5" />
