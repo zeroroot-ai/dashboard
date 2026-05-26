@@ -14,7 +14,6 @@ import type {
   UpdateProviderResponse,
   DeleteProviderResponse,
   SetDefaultProviderResponse,
-  SetFallbackChainResponse,
   GetHealthStatusResponse,
   ExportFormat,
   ImportMergeStrategy,
@@ -268,28 +267,6 @@ export async function setDefaultProvider(name: string): Promise<SetDefaultProvid
   });
 
   return handleResponse<SetDefaultProviderResponse>(response);
-}
-
-/**
- * Configure the fallback chain order
- */
-export async function setFallbackChain(providerNames: string[]): Promise<SetFallbackChainResponse> {
-  const response = await apiFetch('/api/settings/providers/fallback-chain', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ providerNames }),
-  });
-
-  return handleResponse<SetFallbackChainResponse>(response);
-}
-
-/**
- * Get the current fallback chain
- */
-export async function getFallbackChain(): Promise<string[]> {
-  const response = await apiFetch('/api/settings/providers/fallback-chain');
-  const data = await handleResponse<{ fallbackChain: string[] }>(response);
-  return data.fallbackChain;
 }
 
 // ============================================================================

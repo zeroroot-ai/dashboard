@@ -144,8 +144,6 @@ export interface ProviderConfig {
   timeoutSeconds?: number;
   /** Number of retry attempts on failure */
   maxRetries?: number;
-  /** Position in the fallback chain (0 = not in chain) */
-  fallbackPosition?: number;
   /** Additional provider metadata */
   metadata?: Record<string, string>;
   /** Version for optimistic locking */
@@ -218,7 +216,6 @@ export type ProviderAuditEventType =
   | 'provider_deleted'
   | 'api_key_rotated'
   | 'default_changed'
-  | 'fallback_chain_updated'
   | 'config_imported'
   | 'config_exported'
   | 'connection_tested';
@@ -260,12 +257,6 @@ export const PROVIDER_AUDIT_EVENT_CONFIG: Record<ProviderAuditEventType, {
     label: 'Default Changed',
     description: 'Default provider was changed',
     icon: 'Star',
-    severity: 'info',
-  },
-  fallback_chain_updated: {
-    label: 'Fallback Updated',
-    description: 'Fallback chain order was modified',
-    icon: 'ArrowsSort',
     severity: 'info',
   },
   config_imported: {
@@ -402,8 +393,6 @@ export interface ListProvidersResponse {
   providers: ProviderConfig[];
   /** Name of the default provider */
   defaultProvider?: string;
-  /** Ordered list of fallback provider names */
-  fallbackChain?: string[];
 }
 
 /**
@@ -502,24 +491,6 @@ export interface SetDefaultProviderResponse {
   previousDefault?: string;
   /** New default provider */
   newDefault: string;
-}
-
-/**
- * Request to set fallback chain.
- */
-export interface SetFallbackChainRequest {
-  /** Ordered list of fallback provider names */
-  providerNames: string[];
-}
-
-/**
- * Response from setting fallback chain.
- */
-export interface SetFallbackChainResponse {
-  /** Whether the update was successful */
-  success: boolean;
-  /** Configured fallback order */
-  fallbackChain: string[];
 }
 
 /**

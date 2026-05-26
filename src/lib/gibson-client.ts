@@ -1123,20 +1123,16 @@ export interface ProviderRecord {
 export interface ListProvidersResult {
   providers: ProviderRecord[];
   defaultProvider: string | null;
-  fallbackChain: string[];
 }
 
 /**
  * List all LLM provider configurations for a tenant.
  *
- * Thin wrapper over {@link daemonListProviders} + {@link daemonGetFallbackChain}.
+ * Thin wrapper over {@link daemonListProviders}.
  * Credentials are never returned — only masked values are included.
  */
 export async function listProviders(tenantId: string, userId?: string): Promise<ListProvidersResult> {
-  const [records, fallbackChain] = await Promise.all([
-    daemonListProviders(userId, tenantId),
-    daemonGetFallbackChain(userId, tenantId).catch(() => [] as string[]),
-  ]);
+  const records = await daemonListProviders(userId, tenantId);
 
   const providers: ProviderRecord[] = records.map((r) => ({
     name: r.name,
@@ -1153,7 +1149,7 @@ export async function listProviders(tenantId: string, userId?: string): Promise<
 
   const defaultProvider = records.find((r) => r.isDefault)?.name ?? null;
 
-  return { providers, defaultProvider, fallbackChain };
+  return { providers, defaultProvider };
 }
 
 // ============================================================================
@@ -2026,34 +2022,6 @@ export async function daemonSetDefaultProvider(
 ): Promise<void> {
   const client = await getAdminClient(userId, tenantId);
   await client.setDefaultProvider({ name });
-}
-
-/**
- * Retrieve the tenant's ordered provider fallback chain via the daemon
- * GetFallbackChain RPC. Returns an ordered list of provider names.
- */
-export async function daemonGetFallbackChain(
-  userId?: string,
-  tenantId?: string,
-): Promise<string[]> {
-  const client = await getAdminClient(userId, tenantId);
-  const resp = await client.getFallbackChain({});
-  return resp.providerNames ?? [];
-}
-
-/**
- * Replace the tenant's provider fallback chain via the daemon SetFallbackChain RPC.
- * All names must refer to existing stored providers.
- * Throws a ConnectError (Code.InvalidArgument) when a name references a
- * non-existent or deleted provider.
- */
-export async function daemonSetFallbackChain(
-  names: string[],
-  userId?: string,
-  tenantId?: string,
-): Promise<void> {
-  const client = await getAdminClient(userId, tenantId);
-  await client.setFallbackChain({ providerNames: names });
 }
 
 // ---------------------------------------------------------------------------
