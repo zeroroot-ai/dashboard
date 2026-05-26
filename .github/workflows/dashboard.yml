@@ -27,7 +27,7 @@ concurrency:
 jobs:
   build:
     if: github.actor != 'dependabot[bot]'
-    uses: zero-day-ai/.github/.github/workflows/reusable-image-build.yml@main
+    uses: zeroroot-ai/.github/.github/workflows/reusable-image-build.yml@main
     permissions:
       contents: write
       packages: write
@@ -39,10 +39,10 @@ jobs:
       component_name: dashboard
       component_path: .
       dockerfile_path: Dockerfile
-      image_name: ghcr.io/zero-day-ai/dashboard
+      image_name: ghcr.io/zeroroot-ai/dashboard
       tag_pattern: v(.*)
     secrets:
-      # PAT with read access to zero-day-ai/tenant-operator (private). The
+      # PAT with read access to zeroroot-ai/tenant-operator (private). The
       # Dockerfile fetches plans/plans.yaml + plans/plans.schema.json from
       # that repo at build time via gen-plans.mjs PLANS_SOURCE=remote.
       # Provisioned out of band in repo settings (Settings → Secrets and

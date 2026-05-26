@@ -10,7 +10,7 @@
 # ============================================================================
 # Stage 1: Dependencies - Install node modules
 # ============================================================================
-FROM ghcr.io/zero-day-ai/mirror/node:20-alpine AS deps
+FROM ghcr.io/zeroroot-ai/mirror/node:20-alpine AS deps
 
 WORKDIR /app
 
@@ -27,7 +27,7 @@ RUN npm ci --ignore-scripts --legacy-peer-deps && \
 # ============================================================================
 # Stage 2: Builder - Build Next.js application
 # ============================================================================
-FROM ghcr.io/zero-day-ai/mirror/node:20-alpine AS builder
+FROM ghcr.io/zeroroot-ai/mirror/node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -44,10 +44,10 @@ ENV NEXTAUTH_SECRET="build-placeholder"
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 
 # The prebuild gen-plans step needs plans.yaml from the canonical source —
-# the tenant-operator repo (zero-day-ai/tenant-operator), which is private.
+# the tenant-operator repo (zeroroot-ai/tenant-operator), which is private.
 # We fetch it at build time via gen-plans.mjs remote mode (PLANS_SOURCE=remote).
 # Auth: the optional `ghtoken` BuildKit secret (a GitHub PAT with read access
-# to zero-day-ai/tenant-operator). Same pattern as gibson + tenant-operator
+# to zeroroot-ai/tenant-operator). Same pattern as gibson + tenant-operator
 # Dockerfiles for cross-repo private content.
 ENV PLANS_SOURCE=remote
 # PLANS_REF can be overridden at build time (--build-arg) to pin against a
@@ -87,7 +87,7 @@ ENV SKIP_STRIPE_TIERS_FRESH_CHECK=1
 
 # Build the standalone application. The `ghtoken` BuildKit secret is mounted
 # only for the duration of this RUN; gen-plans.mjs reads it via GITHUB_TOKEN
-# to fetch plans.yaml + plans.schema.json from zero-day-ai/tenant-operator
+# to fetch plans.yaml + plans.schema.json from zeroroot-ai/tenant-operator
 # (per PLANS_SOURCE=remote / PLANS_REF above). When the secret is absent,
 # gen-plans exits non-zero and the build fails loudly — we never want to
 # ship a stale plans.ts baked from a phantom YAML.
@@ -97,7 +97,7 @@ RUN --mount=type=secret,id=ghtoken,target=/run/secrets/ghtoken,required=true \
 # ============================================================================
 # Stage 3: Runtime - Minimal production image
 # ============================================================================
-FROM ghcr.io/zero-day-ai/mirror/node:20-alpine AS runner
+FROM ghcr.io/zeroroot-ai/mirror/node:20-alpine AS runner
 
 WORKDIR /app
 
