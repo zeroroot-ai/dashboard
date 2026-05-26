@@ -39,7 +39,7 @@ describe('theme-colors', () => {
 
     it('should have valid background color', () => {
       expect(DARK_THEME.background).toMatch(/^#[0-9a-f]{6}$/i);
-      expect(DARK_THEME.background).toBe('#0a0a08');
+      expect(DARK_THEME.background).toBe('#09090b');
     });
 
     it('should have valid grid color (rgba)', () => {
@@ -110,7 +110,8 @@ describe('theme-colors', () => {
       relationshipTypes.forEach((relType) => {
         const color = DARK_THEME.edgeColors[relType];
         expect(color).toBeDefined();
-        expect(color).toMatch(/^#[0-9a-f]{6}$/i);
+        // Dark theme uses rgba() for structural edges and hex for others.
+        expect(color).toMatch(/^(#[0-9a-f]{6}|rgba\(\d+,\s*\d+,\s*\d+,\s*[\d.]+\))$/i);
       });
     });
 

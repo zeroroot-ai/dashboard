@@ -15,13 +15,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const mockGetServerSession = vi.fn();
-const mockListMissions = vi.fn();
-const mockListCheckpoints = vi.fn();
-const mockUserClient = vi.fn();
-
-const mockIsReady = vi.fn();
-const mockQuery = vi.fn();
+// vi.hoisted() runs before vi.mock() factories execute, so these refs are
+// available when the factory closures are evaluated.
+const {
+  mockGetServerSession,
+  mockListMissions,
+  mockListCheckpoints,
+  mockUserClient,
+  mockIsReady,
+  mockQuery,
+} = vi.hoisted(() => ({
+  mockGetServerSession: vi.fn(),
+  mockListMissions: vi.fn(),
+  mockListCheckpoints: vi.fn(),
+  mockUserClient: vi.fn(),
+  mockIsReady: vi.fn(),
+  mockQuery: vi.fn(),
+}));
 
 vi.mock('@/src/lib/auth', () => ({
   getServerSession: mockGetServerSession,
@@ -38,6 +48,11 @@ vi.mock('@/src/lib/loki-client', () => ({
     query = mockQuery;
   },
 }));
+
+// Static import — GET creates all state per-call (no module-level mutation),
+// so a single import shared across tests is safe and avoids the expensive
+// vi.resetModules() + dynamic import() re-evaluation on each test.
+import { GET } from '../route';
 
 function makeRequest(): NextRequest {
   return new NextRequest('http://test.local/api/missions/m1/events');
@@ -73,7 +88,6 @@ async function readUntil(
 }
 
 beforeEach(() => {
-  vi.resetModules();
   mockGetServerSession.mockReset();
   mockListMissions.mockReset();
   mockListCheckpoints.mockReset();
@@ -115,7 +129,6 @@ describe('GET /api/missions/:id/events — Loki log tail', () => {
       },
     ]);
 
-    const { GET } = await import('../route');
     const res = await GET(makeRequest(), makeParams('m1'));
     expect(res.body).toBeTruthy();
 
@@ -144,7 +157,6 @@ describe('GET /api/missions/:id/events — Loki log tail', () => {
     });
     mockIsReady.mockResolvedValue(false);
 
-    const { GET } = await import('../route');
     const res = await GET(makeRequest(), makeParams('m1'));
 
     // Read a short window; we expect the open frame but no log frames.
