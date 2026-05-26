@@ -753,7 +753,7 @@
       "type": "object"
     }
   },
-  "$id": "https://gibson.zero-day.ai/schemas/mission-definition.json",
+  "$id": "https://gibson.zeroroot.ai/schemas/mission-definition.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "description": "MissionDefinition represents a mission template/definition. This is the shareable mission specification that can be created via the CreateMissionDefinition API and referenced by mission runs.",

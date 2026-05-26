@@ -24,7 +24,7 @@ const AUTH_URL_VARS = ['AUTH_URL', 'NEXTAUTH_URL'] as const;
 
 // Safe baseline values that satisfy all required vars.
 const BASELINE_ENV: Record<string, string> = {
-  GIBSON_PLATFORM_PUBLIC_URL: 'https://api.zero-day.local:30443',
+  GIBSON_PLATFORM_PUBLIC_URL: 'https://api.zeroroot.local:30443',
   NEO4J_URI: 'bolt://neo4j-service:7687',
   AUTH_URL: 'http://localhost:3000',
 };

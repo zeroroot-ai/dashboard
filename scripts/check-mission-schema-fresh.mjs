@@ -28,7 +28,7 @@
  *   Run `node scripts/gen-mission-schema.mjs` and commit
  *   src/data/mission-definition.schema.json alongside the SDK schema change.
  *
- * Closes: zero-day-ai/dashboard#165
+ * Closes: zeroroot-ai/dashboard#165
  */
 
 import { execFileSync } from "node:child_process";

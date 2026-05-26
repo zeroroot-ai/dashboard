@@ -18,7 +18,7 @@
  * see the same answer. The client never opens a direct gRPC channel —
  * it only fetches this Next.js route.
  *
- * Spec / issue: zero-day-ai/dashboard#44.
+ * Spec / issue: zeroroot-ai/dashboard#44.
  */
 
 import { NextRequest, NextResponse } from "next/server";

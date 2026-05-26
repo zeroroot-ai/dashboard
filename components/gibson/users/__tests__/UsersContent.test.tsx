@@ -96,7 +96,7 @@ import type { TenantMember } from "@/src/lib/k8s/types";
 
 function makeOwnerMember(overrides: Partial<TenantMember> = {}): TenantMember {
   return {
-    apiVersion: "gibson.zero-day.ai/v1alpha1",
+    apiVersion: "gibson.zeroroot.ai/v1alpha1",
     kind: "TenantMember",
     metadata: {
       name: "owner-member",
@@ -118,7 +118,7 @@ function makeOwnerMember(overrides: Partial<TenantMember> = {}): TenantMember {
 
 function makeAdminMember(): TenantMember {
   return {
-    apiVersion: "gibson.zero-day.ai/v1alpha1",
+    apiVersion: "gibson.zeroroot.ai/v1alpha1",
     kind: "TenantMember",
     metadata: {
       name: "admin-member",

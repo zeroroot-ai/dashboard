@@ -261,10 +261,10 @@ function ProvisioningStatus() {
                 </Link>
                 , or contact{" "}
                 <a
-                  href="mailto:support@zero-day.ai"
+                  href="mailto:support@zeroroot.ai"
                   className="underline underline-offset-4 hover:no-underline"
                 >
-                  support@zero-day.ai
+                  support@zeroroot.ai
                 </a>{" "}
                 for assistance.
               </p>

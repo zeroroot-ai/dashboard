@@ -42,7 +42,7 @@ export interface SignUpOptions {
   lastName?: string;
   /** Plan to select (default: "solo"). */
   plan?: "solo" | "squad" | "enterprise";
-  /** Base URL of the cluster (default: PLAYWRIGHT_BASE_URL env var or https://app.zero-day.local:30443). */
+  /** Base URL of the cluster (default: PLAYWRIGHT_BASE_URL env var or https://app.zeroroot.local:30443). */
   baseURL?: string;
   /** How long to wait for the provisioning panel to redirect (ms, default: 120_000). */
   provisioningTimeoutMs?: number;
@@ -60,7 +60,7 @@ export interface SignUpResult {
 // ---------------------------------------------------------------------------
 
 const DEFAULT_BASE_URL =
-  process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zero-day.local:30443";
+  process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
 
 /**
  * signUpViaForm — drives the Gibson signup form against the live cluster.

@@ -40,7 +40,7 @@ import {
  */
 const VALID_ENV: Record<string, string> = {
   // Identity
-  ZITADEL_ISSUER: 'https://auth.zero-day.local:30443',
+  ZITADEL_ISSUER: 'https://auth.zeroroot.local:30443',
   ZITADEL_CLIENT_ID: 'gibson-dashboard',
   ZITADEL_CLIENT_SECRET: 'shh-test',
   ZITADEL_AUDIENCE: 'gibson-platform',
@@ -48,14 +48,14 @@ const VALID_ENV: Record<string, string> = {
 
   // Auth.js
   AUTH_SECRET: 'a'.repeat(32),
-  AUTH_URL: 'https://app.zero-day.local:30443',
-  POST_LOGOUT_REDIRECT_URI: 'https://app.zero-day.local:30443',
+  AUTH_URL: 'https://app.zeroroot.local:30443',
+  POST_LOGOUT_REDIRECT_URI: 'https://app.zeroroot.local:30443',
 
   // Daemon front door
-  GIBSON_PLATFORM_PUBLIC_URL: 'https://api.zero-day.local:30443',
-  GIBSON_PUBLIC_URL: 'https://api.zero-day.local:30443',
+  GIBSON_PLATFORM_PUBLIC_URL: 'https://api.zeroroot.local:30443',
+  GIBSON_PUBLIC_URL: 'https://api.zeroroot.local:30443',
   GIBSON_API_URL: 'http://gibson-envoy:30443',
-  PUBLIC_URL: 'https://app.zero-day.local:30443',
+  PUBLIC_URL: 'https://app.zeroroot.local:30443',
 
   // Stores
   DATABASE_URL: 'postgres://user:pass@db:5432/gibson_dashboard',
@@ -217,7 +217,7 @@ describe('env-validator: validateEnv()', () => {
 
 describe('env-validator: typed accessor (env.X)', () => {
   it('returns the value when the required var is set', () => {
-    expect(env.ZITADEL_ISSUER).toBe('https://auth.zero-day.local:30443');
+    expect(env.ZITADEL_ISSUER).toBe('https://auth.zeroroot.local:30443');
     expect(env.AUTH_SECRET).toBe('a'.repeat(32));
   });
 

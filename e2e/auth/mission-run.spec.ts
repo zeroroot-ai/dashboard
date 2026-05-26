@@ -23,7 +23,7 @@
  *   SIGNUP_SLUG      — tenant slug (set by Makefile orchestrator)
  *   SIGNUP_EMAIL     — tenant email
  *   SIGNUP_PASSWORD  — password (falls back to SYNTHETIC_PASSWORD constant)
- *   PLAYWRIGHT_BASE_URL — target cluster URL (default: https://app.zero-day.local:30443)
+ *   PLAYWRIGHT_BASE_URL — target cluster URL (default: https://app.zeroroot.local:30443)
  *
  * Security:
  *   - Cookie values are NEVER logged.
@@ -44,7 +44,7 @@ import { securePassword } from "./helpers/fixtures";
 // ---------------------------------------------------------------------------
 
 const CLUSTER_URL =
-  process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zero-day.local:30443";
+  process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
 
 const SLUG = process.env.SIGNUP_SLUG ?? "";
 const EMAIL = process.env.SIGNUP_EMAIL ?? "";

@@ -28,7 +28,7 @@ export interface K8sObjectMeta {
 }
 
 export interface K8sResource<Spec, Status> {
-  apiVersion: 'gibson.zero-day.ai/v1alpha1';
+  apiVersion: 'gibson.zeroroot.ai/v1alpha1';
   kind: string;
   metadata: K8sObjectMeta;
   spec: Spec;

@@ -36,7 +36,7 @@ export interface LoginOptions {
   email: string;
   /** Password for Zitadel. Must match Zitadel password policy. */
   password: string;
-  /** Base URL of the cluster (default: PLAYWRIGHT_BASE_URL env or https://app.zero-day.local:30443). */
+  /** Base URL of the cluster (default: PLAYWRIGHT_BASE_URL env or https://app.zeroroot.local:30443). */
   baseURL?: string;
   /** Milliseconds to wait for Zitadel loginname form to appear (default: 30_000). */
   loginFormTimeoutMs?: number;
@@ -66,7 +66,7 @@ export interface LoginResult {
 // ---------------------------------------------------------------------------
 
 const DEFAULT_BASE_URL =
-  process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zero-day.local:30443";
+  process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
 
 /** Redact OIDC code/state/id_token from a URL for safe logging. */
 function redactOIDCParams(url: string): string {

@@ -1,8 +1,8 @@
 # Stripe Webhook Cutover Runbook
 
 This document describes the three-phase migration from the legacy webhook path
-(`app.zero-day.ai/api/billing/webhook`) to the dedicated webhook subdomain
-(`webhooks.zero-day.ai/stripe`).
+(`app.zeroroot.ai/api/billing/webhook`) to the dedicated webhook subdomain
+(`webhooks.zeroroot.ai/stripe`).
 
 **Status:** Phase 0 (parallel listen) — both endpoints are active.
 
@@ -10,7 +10,7 @@ This document describes the three-phase migration from the legacy webhook path
 
 ## Why migrate?
 
-The new `webhooks.zero-day.ai` Ingress provides:
+The new `webhooks.zeroroot.ai` Ingress provides:
 - Stricter WAFv2 WebACL scoped to Stripe IP ranges only.
 - TLS 1.3-only policy on the webhook subdomain.
 - Independent rate limiting and traffic isolation from the main dashboard.
@@ -26,13 +26,13 @@ correctly before decommissioning the old one.
 
 **Stripe Dashboard actions:**
 1. Navigate to **Developers** → **Webhooks** → **Add endpoint**.
-2. URL: `https://webhooks.zero-day.ai/stripe`
+2. URL: `https://webhooks.zeroroot.ai/stripe`
 3. Events: select all events (or mirror the current endpoint's selection).
 4. Note the new webhook signing secret — add it as a second env var
    (`STRIPE_WEBHOOK_SECRET_NEW`) and update the dashboard to accept both
    until Phase 1 is complete. Alternatively, reuse the same secret if the
    Stripe account supports it.
-5. Leave the existing `app.zero-day.ai/api/billing/webhook` endpoint active.
+5. Leave the existing `app.zeroroot.ai/api/billing/webhook` endpoint active.
 
 **Validation (must pass before Phase 1):**
 - Trigger a test event via Stripe CLI: `stripe trigger customer.subscription.created`
@@ -45,7 +45,7 @@ correctly before decommissioning the old one.
 ## Phase 1: Cutover
 
 **Goal:** Remove the old endpoint from Stripe Dashboard. All traffic now
-flows exclusively through `webhooks.zero-day.ai/stripe`.
+flows exclusively through `webhooks.zeroroot.ai/stripe`.
 
 **Prerequisites:**
 - Phase 0 parallel-listen has been running for at least 7 days with zero errors
@@ -54,13 +54,13 @@ flows exclusively through `webhooks.zero-day.ai/stripe`.
 
 **Stripe Dashboard actions:**
 1. Navigate to **Developers** → **Webhooks**.
-2. Select the `app.zero-day.ai/api/billing/webhook` endpoint.
+2. Select the `app.zeroroot.ai/api/billing/webhook` endpoint.
 3. Click **Delete endpoint**. Confirm deletion.
 4. Update `STRIPE_WEBHOOK_SECRET` env var to the new endpoint's signing secret
    (if they differ). Rolling restart the dashboard pod to pick up the new secret.
 
 **Validation:**
-- Trigger another test event and verify it arrives at `webhooks.zero-day.ai/stripe` only.
+- Trigger another test event and verify it arrives at `webhooks.zeroroot.ai/stripe` only.
 - Confirm the old endpoint receives no events for 24 hours (check Loki).
 
 ---
@@ -72,7 +72,7 @@ flows exclusively through `webhooks.zero-day.ai/stripe`.
 
 **Prerequisites:**
 - Phase 1 has been active for at least 30 days.
-- Zero events received at `app.zero-day.ai/api/billing/webhook` for 72 hours.
+- Zero events received at `app.zeroroot.ai/api/billing/webhook` for 72 hours.
 
 **Dashboard code change:**
 1. In `app/api/billing/webhook/route.ts`, replace the POST handler body with:
@@ -88,9 +88,9 @@ flows exclusively through `webhooks.zero-day.ai/stripe`.
 2. Open a PR; ArgoCD will sync the tombstone Ingress to the cluster.
 
 **Validation:**
-- `GET https://app.zero-day.ai/api/billing/webhook` returns 410 with `{"gone":true}`.
-- `POST https://app.zero-day.ai/api/billing/webhook` returns 410 with `{"gone":true}`.
-- `POST https://webhooks.zero-day.ai/stripe` continues to work normally.
+- `GET https://app.zeroroot.ai/api/billing/webhook` returns 410 with `{"gone":true}`.
+- `POST https://app.zeroroot.ai/api/billing/webhook` returns 410 with `{"gone":true}`.
+- `POST https://webhooks.zeroroot.ai/stripe` continues to work normally.
 
 ---
 
@@ -107,4 +107,4 @@ If either Phase 1 or Phase 2 causes issues:
 ## Contact
 
 For questions about this migration, contact the platform team
-(`platform@zero-day.ai`) or open an issue in `zero-day-ai/dashboard`.
+(`platform@zeroroot.ai`) or open an issue in `zeroroot-ai/dashboard`.

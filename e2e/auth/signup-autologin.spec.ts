@@ -12,7 +12,7 @@
  *   - Session cookie established before dashboard home renders.
  *
  * Live dependency:
- *   - zero-day-ai/gitops#90 grants `IAM_LOGIN_CLIENT` on the
+ *   - zeroroot-ai/gitops#90 grants `IAM_LOGIN_CLIENT` on the
  *     `gibson-signup-bot` machine user. Without that grant the
  *     `POST /v2/sessions` call in app/actions/signup.ts returns 403
  *     PERMISSION_DENIED and the signup action falls back to the

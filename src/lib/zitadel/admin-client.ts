@@ -305,7 +305,7 @@ export interface ZitadelAdminClientConfig {
   pat: string;
   /**
    * The external domain that Zitadel uses for Host-header-based routing,
-   * e.g. auth.zero-day.ai. Must be forwarded as the Host header so that
+   * e.g. auth.zeroroot.ai. Must be forwarded as the Host header so that
    * internal traffic reaches the right virtual host.
    */
   externalDomain: string;

@@ -160,7 +160,7 @@ test.describe("Signup happy path — pricing → dashboard via Envoy admin chann
     // -----------------------------------------------------------------------
     try {
       execSync(
-        `kubectl delete tenant.gibson.zero-day.ai ${creds.slug} --ignore-not-found`,
+        `kubectl delete tenant.gibson.zeroroot.ai ${creds.slug} --ignore-not-found`,
         { stdio: "pipe", timeout: 10_000 },
       );
     } catch (err) {

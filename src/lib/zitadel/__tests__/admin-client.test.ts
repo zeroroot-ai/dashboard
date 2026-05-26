@@ -202,7 +202,7 @@ describe('HttpZitadelAdminClient.finalizeAuthRequest', () => {
         return new Response(
           JSON.stringify({
             callbackUrl:
-              'https://app.zero-day.local/api/auth/callback/zitadel?code=AUTH_CODE&state=STATE_VAL',
+              'https://app.zeroroot.local/api/auth/callback/zitadel?code=AUTH_CODE&state=STATE_VAL',
             details: { sequence: '42' },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },

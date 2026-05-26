@@ -88,7 +88,7 @@ export const ERROR_COPY: Record<LoginErrorReason, LoginErrorCopy> = {
     title: "Something went wrong",
     description:
       "An unexpected error interrupted your sign-in. The correlation ID below will help support track it down.",
-    cta: { label: "Contact support", href: "mailto:support@zero-day.ai" },
+    cta: { label: "Contact support", href: "mailto:support@zeroroot.ai" },
   },
 };
 

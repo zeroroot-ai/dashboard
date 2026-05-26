@@ -74,8 +74,8 @@ describe('GET /api/auth/federated-signout', () => {
     vi.clearAllMocks();
     mockSignOut.mockResolvedValue(undefined);
     mockAuth.mockResolvedValue({ idToken: 'test-id-token' });
-    process.env.POST_LOGOUT_REDIRECT_URI = 'https://app.zero-day.local:30443';
-    process.env.ZITADEL_ISSUER = 'https://auth.zero-day.local:30443';
+    process.env.POST_LOGOUT_REDIRECT_URI = 'https://app.zeroroot.local:30443';
+    process.env.ZITADEL_ISSUER = 'https://auth.zeroroot.local:30443';
     // dashboard#76: the route reads ZITADEL_CLIENT_ID (the user-flow OIDC App)
     // for the client_id fallback, NOT ZITADEL_DASHBOARD_CLIENT_ID (a MACHINE_USER
     // for s2s client_credentials, which has no postLogoutRedirectURIs).
@@ -96,10 +96,10 @@ describe('GET /api/auth/federated-signout', () => {
     expect(location).toBeTruthy();
     const url = new URL(location!);
     // Zitadel end_session
-    expect(url.origin + url.pathname).toBe('https://auth.zero-day.local:30443/oidc/v1/end_session');
+    expect(url.origin + url.pathname).toBe('https://auth.zeroroot.local:30443/oidc/v1/end_session');
     // The post_logout_redirect_uri is the env value exactly.
     expect(url.searchParams.get('post_logout_redirect_uri')).toBe(
-      'https://app.zero-day.local:30443',
+      'https://app.zeroroot.local:30443',
     );
     // Regression guard: the trailing-slash form that origin-synthesis used to
     // produce must never reach the wire.
@@ -122,7 +122,7 @@ describe('GET /api/auth/federated-signout', () => {
     expect(url.searchParams.get('client_id')).toBe('test-user-flow-client-id');
     expect(url.searchParams.get('client_id')).not.toBe('wrong-machine-user-client-id');
     expect(url.searchParams.get('post_logout_redirect_uri')).toBe(
-      'https://app.zero-day.local:30443',
+      'https://app.zeroroot.local:30443',
     );
   });
 

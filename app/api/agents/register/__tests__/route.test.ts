@@ -182,9 +182,9 @@ describe('POST /api/agents/register — happy path', () => {
       principalId: 'agent_principal:uuid-123',
       clientId: 'cid-abc',
       clientSecret: 'csecret-xyz',
-      gibsonUrl: 'https://api.zero-day.local:30443',
+      gibsonUrl: 'https://api.zeroroot.local:30443',
       enrollCommand:
-        'gibson-cli agent enroll --client-id cid-abc --client-secret csecret-xyz --gibson-url https://api.zero-day.local:30443',
+        'gibson-cli agent enroll --client-id cid-abc --client-secret csecret-xyz --gibson-url https://api.zeroroot.local:30443',
     });
 
     const { POST } = await import('../route');
@@ -199,9 +199,9 @@ describe('POST /api/agents/register — happy path', () => {
     expect(body).toEqual({
       clientId: 'cid-abc',
       clientSecret: 'csecret-xyz',
-      gibsonUrl: 'https://api.zero-day.local:30443',
+      gibsonUrl: 'https://api.zeroroot.local:30443',
       enrollCommand:
-        'gibson-cli agent enroll --client-id cid-abc --client-secret csecret-xyz --gibson-url https://api.zero-day.local:30443',
+        'gibson-cli agent enroll --client-id cid-abc --client-secret csecret-xyz --gibson-url https://api.zeroroot.local:30443',
     });
 
     // Verify the daemon received the correct input.
@@ -218,7 +218,7 @@ describe('POST /api/agents/register — happy path', () => {
       principalId: 'agent_principal:uuid-1',
       clientId: 'cid-1',
       clientSecret: 'topsecret-do-not-leak',
-      gibsonUrl: 'https://api.zero-day.local:30443',
+      gibsonUrl: 'https://api.zeroroot.local:30443',
       enrollCommand: 'gibson-cli agent enroll ...',
     });
 

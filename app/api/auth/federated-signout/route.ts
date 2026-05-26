@@ -11,7 +11,7 @@
  * `post_logout_redirect_uri` pointing back at our landing page. Zitadel then:
  *
  *  1. Validates the hint
- *  2. Kills its own session cookie on `auth.zero-day.local`
+ *  2. Kills its own session cookie on `auth.zeroroot.local`
  *  3. Redirects the browser back to our post_logout URL
  *
  * Multi-tenant note: Zitadel maintains one SSO session per user, not one per

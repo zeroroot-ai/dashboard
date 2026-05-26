@@ -22,7 +22,7 @@ export const serverConfig = {
   // dashboard-admin-via-envoy / zero-trust-hardening / security-hardening
   // doctrine forbids. All daemon RPCs now go through the Envoy edge via
   // `userClient` / `serviceClient` in `src/lib/gibson-client.ts`, which
-  // dial `ADMIN_ENVOY_BASE_URL` (default `https://api.zero-day.local:30443`).
+  // dial `ADMIN_ENVOY_BASE_URL` (default `https://api.zeroroot.local:30443`).
   // The two API routes that still composed a direct transport were
   // migrated to `userClient` in the same change.
   //
@@ -34,7 +34,7 @@ export const serverConfig = {
   // browsers via this field.
   //
   // REQUIRED: set GIBSON_PLATFORM_PUBLIC_URL to the Envoy ingress URL
-  // (e.g. https://api.zero-day.local:30443). See .env.example.
+  // (e.g. https://api.zeroroot.local:30443). See .env.example.
   gibsonPlatformPublicUrl: process.env.GIBSON_PLATFORM_PUBLIC_URL,
 
   // Neo4j Database Configuration
@@ -101,7 +101,7 @@ export function validateEnvConfig(): void {
   if (!serverConfig.gibsonPlatformPublicUrl) {
     errors.push(
       'GIBSON_PLATFORM_PUBLIC_URL is required (used for platform links; set to your ' +
-      'Envoy ingress URL, e.g. https://api.zero-day.local:30443). See .env.example.',
+      'Envoy ingress URL, e.g. https://api.zeroroot.local:30443). See .env.example.',
     );
   }
 

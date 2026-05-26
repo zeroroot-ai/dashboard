@@ -45,7 +45,7 @@ const needsCluster = !process.env.E2E_KIND_AVAILABLE;
 const MOCK_USER = {
   sub: "e2e-tenant-provision-user",
   name: "Provision Test",
-  email: "provision@e2e.zero-day.local",
+  email: "provision@e2e.zeroroot.local",
 };
 const MOCK_TENANT_ID = "tenant-e2e-provision-test";
 
@@ -222,7 +222,7 @@ test.describe("tenant provisioning — integration (kind cluster)", () => {
         Date.now().toString(36) +
         "-" +
         crypto.randomBytes(2).toString("hex");
-      const email = `${slug}@e2e.zero-day.local`;
+      const email = `${slug}@e2e.zeroroot.local`;
       const password = `Ae1!${crypto.randomBytes(8).toString("hex")}`;
       const workspaceName = `Provision ${slug}`;
 

@@ -26,7 +26,7 @@
  *   SIGNUP_PASSWORD    — shared password for synthetic test tenants
  *   SMOKE_CONCURRENCY  — number of parallel route loads (default: 4)
  *   MANIFEST_PATH      — path to dashboard-routes.yaml
- *   PLAYWRIGHT_BASE_URL — target cluster URL (default: https://app.zero-day.local:30443)
+ *   PLAYWRIGHT_BASE_URL — target cluster URL (default: https://app.zeroroot.local:30443)
  *
  * Security:
  *   - Cookie values are NEVER logged (only presence and name).
@@ -57,7 +57,7 @@ import { securePassword } from "./helpers/fixtures";
 // ---------------------------------------------------------------------------
 
 const CLUSTER_URL =
-  process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zero-day.local:30443";
+  process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
 
 const SLUG_A = process.env.SIGNUP_SLUG_A ?? "";
 const EMAIL_A = process.env.SIGNUP_EMAIL_A ?? "";

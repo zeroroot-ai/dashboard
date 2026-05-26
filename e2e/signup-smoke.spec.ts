@@ -20,7 +20,7 @@
  * log archaeology after the fact.
  *
  * Run against kind locally:
- *   PLAYWRIGHT_BASE_URL=https://app.zero-day.local:30443 \
+ *   PLAYWRIGHT_BASE_URL=https://app.zeroroot.local:30443 \
  *     SIGNUP_SMOKE_PLAN=team \
  *     pnpm playwright test e2e/signup-smoke.spec.ts
  *
@@ -58,7 +58,7 @@ test.describe('signup smoke', () => {
 
   test('completes 13-step saga end-to-end and reaches Ready: True', async ({ page, request }) => {
     const slug = fixtureSlug();
-    const email = `${slug}@e2e.zero-day.local`;
+    const email = `${slug}@e2e.zeroroot.local`;
     const password = 'CorrectHorseBatteryStaple-' + slug;
     const workspaceName = `Smoke ${slug}`;
 

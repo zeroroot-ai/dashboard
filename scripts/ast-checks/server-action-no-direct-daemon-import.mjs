@@ -9,7 +9,7 @@
  * Envoy + ext-authz handling happens in one place.
  *
  * This is the file-system / CI-time variant of the ESLint rule
- * `zero-day-ai/no-direct-daemon-import`. The ESLint rule is editor-time
+ * `zeroroot-ai/no-direct-daemon-import`. The ESLint rule is editor-time
  * (PR-blocking via eslint); the walker is invoked by
  * `pnpm test:ast-checks` as a faster targeted scan and is friendly to
  * zda-ast-style retrieval.

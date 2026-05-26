@@ -26,7 +26,7 @@ channel to the daemon.
 ## Clone
 
 ```bash
-git clone https://github.com/zero-day-ai/dashboard.git
+git clone https://github.com/zeroroot-ai/dashboard.git
 cd dashboard
 pnpm install
 ```
@@ -63,4 +63,4 @@ conventions see [`CLAUDE.md`](./CLAUDE.md), which covers:
 
 ## Repository
 
-`https://github.com/zero-day-ai/dashboard`
+`https://github.com/zeroroot-ai/dashboard`

@@ -7,7 +7,7 @@ import { ModeToggle } from "@/components/layout/header/mode-toggle";
  * Public chrome — landing, pricing, docs.
  *
  * Brand lockup: full BrainCRT mark (with monitor stand, "the actual terminal")
- * sitting next to the "zero-day.ai" wordmark. Same treatment as the square
+ * sitting next to the "zeroroot.ai" wordmark. Same treatment as the square
  * 75mm sticker in the brand guide. Mark uses var(--primary); wordmark uses
  * var(--foreground); ".ai" dims to var(--muted-foreground).
  */

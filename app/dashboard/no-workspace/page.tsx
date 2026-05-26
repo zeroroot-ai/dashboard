@@ -69,10 +69,10 @@ export default async function NoWorkspacePage() {
 
           <p className="text-muted-foreground text-sm leading-relaxed">
             <a
-              href="mailto:support@zero-day.ai"
+              href="mailto:support@zeroroot.ai"
               className="underline underline-offset-4 hover:text-foreground"
             >
-              support@zero-day.ai
+              support@zeroroot.ai
             </a>
           </p>
         </CardContent>

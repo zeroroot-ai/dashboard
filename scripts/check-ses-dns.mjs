@@ -2,7 +2,7 @@
 /**
  * check-ses-dns.mjs
  *
- * Manual DNS validation script for SES deliverability records on mail.zero-day.ai.
+ * Manual DNS validation script for SES deliverability records on mail.zeroroot.ai.
  *
  * Checks for:
  *   - SPF TXT record: v=spf1 include:amazonses.com
@@ -14,7 +14,7 @@
  *   VALIDATE_SES_DNS=1 node scripts/check-ses-dns.mjs
  *
  * Also validates using dnsx if available:
- *   dnsx -d mail.zero-day.ai -t TXT
+ *   dnsx -d mail.zeroroot.ai -t TXT
  *
  * Spec: stripe-billing-integration R6.5, AC 12.
  */
@@ -22,7 +22,7 @@
 import { promises as dns } from 'node:dns';
 import { execSync } from 'node:child_process';
 
-const DOMAIN = 'mail.zero-day.ai';
+const DOMAIN = 'mail.zeroroot.ai';
 const DMARC_DOMAIN = `_dmarc.${DOMAIN}`;
 
 if (!process.env.VALIDATE_SES_DNS) {
@@ -59,7 +59,7 @@ async function checkDMARC() {
     const dmarcRecord = records.flat().find((r) => r.startsWith('v=DMARC1'));
     if (!dmarcRecord) {
       console.error(`❌ No DMARC record found at ${DMARC_DOMAIN}`);
-      console.error('   Expected: v=DMARC1; p=quarantine; rua=mailto:dmarc-reports@zero-day.ai');
+      console.error('   Expected: v=DMARC1; p=quarantine; rua=mailto:dmarc-reports@zeroroot.ai');
       return false;
     }
     console.log(`✓ DMARC record present at ${DMARC_DOMAIN}: ${dmarcRecord}`);

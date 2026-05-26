@@ -134,7 +134,7 @@ function loadSpiffe(): SpiffeMod | null {
 
 /**
  * Envoy edge URL the dashboard dials for every daemon RPC. Dev:
- * `https://api.zero-day.local:30443`. Staging/prod: `https://api.<domain>`.
+ * `https://api.zeroroot.local:30443`. Staging/prod: `https://api.<domain>`.
  * Set via `ADMIN_ENVOY_BASE_URL` in the chart.
  *
  * The env-var name is preserved from the older `dashboard-admin-via-envoy`
@@ -142,7 +142,7 @@ function loadSpiffe(): SpiffeMod | null {
  * user-acting and service-acting transports — there is one Envoy edge.
  */
 const ENVOY_BASE_URL =
-  process.env['ADMIN_ENVOY_BASE_URL'] ?? 'https://api.zero-day.local:30443';
+  process.env['ADMIN_ENVOY_BASE_URL'] ?? 'https://api.zeroroot.local:30443';
 
 // ---------------------------------------------------------------------------
 // Telemetry interceptor (preserved metric names: `gibson_admin_rpc_total`

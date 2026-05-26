@@ -1,4 +1,4 @@
-# auth.md — `zero-day-ai/dashboard`
+# auth.md — `zeroroot-ai/dashboard`
 
 Auth model from the dashboard's perspective. AI-agent-facing.
 Spec: `unified-identity-and-authorization`.
@@ -90,7 +90,7 @@ Env vars:
 
 ```
 SPIFFE_JWKS_URL            sidecar URL (default http://127.0.0.1:9091/jwks)
-SPIFFE_TRUST_DOMAIN        expected trust domain (e.g. zero-day.ai)
+SPIFFE_TRUST_DOMAIN        expected trust domain (e.g. zeroroot.ai)
 DASHBOARD_ADMIN_AUDIENCE   expected JWT audience (e.g. gibson-dashboard)
 ```
 

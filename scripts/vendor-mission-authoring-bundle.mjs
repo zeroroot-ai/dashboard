@@ -33,7 +33,7 @@
  *      used by developers in the canonical polyrepo layout. Falls
  *      back to this when no env var is set, before attempting the
  *      OCI pull.
- *   4. `oras pull ghcr.io/zero-day-ai/mission-authoring:${MISSION_AUTHORING_VERSION}`.
+ *   4. `oras pull ghcr.io/zeroroot-ai/mission-authoring:${MISSION_AUTHORING_VERSION}`.
  *
  * MISSION_AUTHORING_VERSION defaults to the SDK version pinned in
  * the sibling gibson repo's go.mod (resolved via `go list -m`).
@@ -123,7 +123,7 @@ function resolveBundleSourceDir() {
   rmSync(pullDir, { recursive: true, force: true });
   mkdirSync(pullDir, { recursive: true });
 
-  const ref = `ghcr.io/zero-day-ai/mission-authoring:${version}`;
+  const ref = `ghcr.io/zeroroot-ai/mission-authoring:${version}`;
   console.log(`mission-authoring-bundle: oras pull ${ref}`);
   try {
     run(`oras pull ${ref}`, { cwd: pullDir, stdio: 'inherit' });
@@ -159,7 +159,7 @@ function resolveVersion() {
   if (existsSync(path.join(gibsonRepo, 'go.mod'))) {
     try {
       const v = run(
-        'go list -m -f "{{.Version}}" github.com/zero-day-ai/sdk',
+        'go list -m -f "{{.Version}}" github.com/zeroroot-ai/sdk',
         { cwd: gibsonRepo },
       ).trim();
       if (v) return v;

@@ -12,7 +12,7 @@
  * Inputs (env):
  *   TRACE_EMAIL    — pre-existing Zitadel user email (required)
  *   TRACE_PASSWORD — that user's password (required)
- *   PLAYWRIGHT_BASE_URL — defaults to https://app.zero-day.local:30443
+ *   PLAYWRIGHT_BASE_URL — defaults to https://app.zeroroot.local:30443
  *
  * Output:
  *   /tmp/login-trace-chain.json    — every response observed during the flow
@@ -20,8 +20,8 @@
  *   /tmp/login-trace-cookies.json  — cookies at end of flow (values redacted)
  *
  * Run via:
- *   TRACE_EMAIL=anthony@zero-day.ai TRACE_PASSWORD='…' \
- *   PLAYWRIGHT_BASE_URL=https://app.zero-day.local:30443 \
+ *   TRACE_EMAIL=anthony@zeroroot.ai TRACE_PASSWORD='…' \
+ *   PLAYWRIGHT_BASE_URL=https://app.zeroroot.local:30443 \
  *   E2E_AUTH_SUITE=1 \
  *   npx playwright test e2e/auth/login-trace.spec.ts \
  *     --project=chromium --reporter=list --timeout=120000 --workers=1
@@ -30,7 +30,7 @@
 import { test, expect } from "@playwright/test";
 import * as fs from "fs";
 
-const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zero-day.local:30443";
+const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
 
 interface Hop {
   ts: string;

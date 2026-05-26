@@ -36,7 +36,7 @@ const MODES = ["light", "dark"] as const;
 const MOCK_USER = {
   sub: "test-user-visual-regression",
   name: "Visual Regression",
-  email: "visual@test.zero-day.local",
+  email: "visual@test.zeroroot.local",
 };
 const MOCK_TENANT_ID = "tenant-visual-test";
 

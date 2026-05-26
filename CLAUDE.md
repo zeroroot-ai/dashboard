@@ -1,8 +1,8 @@
 # CLAUDE.md — Dashboard
 
-> **Workflow rules:** see [`github.com/zero-day-ai/.github` → `AGENTS.md`](https://github.com/zero-day-ai/.github/blob/main/AGENTS.md) for branch / PR / commit / release / rebase rules. Repo-local rules below override only when explicitly noted.
+> **Workflow rules:** see [`github.com/zeroroot-ai/.github` → `AGENTS.md`](https://github.com/zeroroot-ai/.github/blob/main/AGENTS.md) for branch / PR / commit / release / rebase rules. Repo-local rules below override only when explicitly noted.
 
-This file documents conventions specific to the `zero-day-ai/dashboard` repository for AI assistants and engineers.
+This file documents conventions specific to the `zeroroot-ai/dashboard` repository for AI assistants and engineers.
 
 ## Key constraints (read first)
 
@@ -10,18 +10,18 @@ This file documents conventions specific to the `zero-day-ai/dashboard` reposito
 - Dashboard → daemon always goes through **Envoy + ext_authz**. Never open a direct gRPC channel to `:50051` / `:50002` or use `GIBSON_DAEMON_ADDRESS`. The guard script `scripts/check-no-direct-daemon-grpc.mjs` will fail the build if you do.
 - `pnpm prebuild` runs a chain of policy-guard scripts. Do not disable them. Fix the code instead.
 - **No hardcoded colors anywhere under `app/**` or `components/**`.** Every color goes through a token declared in `app/globals.css`. The guard `scripts/check-no-hardcoded-colors.mjs` rejects tailwind palette utilities (`text-emerald-*`, `bg-zinc-*`), tailwind arbitrary-value colors (`bg-[#...]`, `text-[oklch(...)]`), black/white utilities (`bg-white`, `text-black`), inline-style colors, and raw `#...`/`oklch(...)`/`rgb(...)`/`hsl(...)` in `.css` files. Two files are exempt because they declare the token system itself: `app/globals.css`, `app/themes.css`. See the design-system guide below.
-- **Customer-facing docs name product capabilities, not vendors.** `content/docs/**/*.mdx` must not mention Zitadel, OpenFGA / FGA, Envoy, ext-authz, jwt_authn, JWKS, x-gibson-identity-*, Langfuse, SPIFFE / SPIRE, Neo4j, CNPG, ArgoCD, cert-manager, ESO, OPA, or "Gibson-hosted Vault". Write product language instead — "Gibson identity service", "Gibson permissions", "Gibson Traces", "Gibson-managed secrets storage". See the Customer terminology section below; full deny-list ↔ replacement table at [docs.git → repos/dashboard/customer-doc-terminology.md](https://github.com/zero-day-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md). Internal developer docs at `enterprise/platform/dashboard/docs/*.md` and every `CLAUDE.md` are intentionally exempt.
+- **Customer-facing docs name product capabilities, not vendors.** `content/docs/**/*.mdx` must not mention Zitadel, OpenFGA / FGA, Envoy, ext-authz, jwt_authn, JWKS, x-gibson-identity-*, Langfuse, SPIFFE / SPIRE, Neo4j, CNPG, ArgoCD, cert-manager, ESO, OPA, or "Gibson-hosted Vault". Write product language instead — "Gibson identity service", "Gibson permissions", "Gibson Traces", "Gibson-managed secrets storage". See the Customer terminology section below; full deny-list ↔ replacement table at [docs.git → repos/dashboard/customer-doc-terminology.md](https://github.com/zeroroot-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md). Internal developer docs at `enterprise/platform/dashboard/docs/*.md` and every `CLAUDE.md` are intentionally exempt.
 
 ## Two-surface platform contract (post-2026-05 refactor)
 
 Daemon protos consumed here come from two Go modules, both pinned in the sibling `gibson` repo's `go.mod` (the dashboard's proto-regen workspace resolves them via `go list -m`):
 
-- **OSS SDK** (`github.com/zero-day-ai/sdk`) — customer-facing. `DaemonService` (FGA `member` / `can_use`), mission / finding / discovery / budget types, the `gibson.auth.v1` annotation extension.
-- **platform-sdk** (`github.com/zero-day-ai/platform-sdk`) — PRIVATE. `DaemonAdminService` (FGA `admin` / `writer`), `PlatformOperatorService`, `TenantAdminService`, `gibson.user.v1`, `gibson.usage.v1`.
+- **OSS SDK** (`github.com/zeroroot-ai/sdk`) — customer-facing. `DaemonService` (FGA `member` / `can_use`), mission / finding / discovery / budget types, the `gibson.auth.v1` annotation extension.
+- **platform-sdk** (`github.com/zeroroot-ai/platform-sdk`) — PRIVATE. `DaemonAdminService` (FGA `admin` / `writer`), `PlatformOperatorService`, `TenantAdminService`, `gibson.user.v1`, `gibson.usage.v1`.
 
 Admin server-actions (`CreateMissionDefinition`, tenant management, plugin install, secrets backend management) call into `DaemonAdminService` via bindings generated from `platform-sdk`. The dashboard never re-exports admin types through any customer-visible path.
 
-Cross-module proto sharing flows through BSR (`buf.build/zero-day-ai-platform/...`). The two-surface contract is captured in `docs/adr/0025-two-surface-platform-contract.md` (private docs repo).
+Cross-module proto sharing flows through BSR (`buf.build/zeroroot-ai-platform/...`). The two-surface contract is captured in `docs/adr/0025-two-surface-platform-contract.md` (private docs repo).
 
 ## Commands
 
@@ -73,11 +73,11 @@ The dashboard's TS proto bindings at `src/gen/` are generated from
 
 - the **OSS SDK** protos at `core/sdk/api/proto/` (resolved via `go list -m`
   against the gibson repo's `go.mod`). The customer-facing OSS module
-  (`github.com/zero-day-ai/sdk`) hosts `DaemonService`, the customer-callable
+  (`github.com/zeroroot-ai/sdk`) hosts `DaemonService`, the customer-callable
   mission / finding / discovery / budget types, and the `gibson.auth.v1`
   annotation extension.
 - the **platform-sdk** protos at `core/platform-sdk/proto/` (resolved
-  via `go list -m github.com/zero-day-ai/platform-sdk` against the gibson
+  via `go list -m github.com/zeroroot-ai/platform-sdk` against the gibson
   repo's `go.mod`). The PRIVATE internal proto module hosts the admin
   surfaces: `DaemonAdminService`, `PlatformOperatorService`,
   `TenantAdminService`, `gibson.user.v1`, `gibson.usage.v1`. Admin
@@ -102,8 +102,8 @@ builds a self-contained workspace:
 ├── buf.yaml                # generated, lists gibson-local + sdk-proto + platform-sdk-proto
 ├── buf.gen.yaml            # generated, drives protoc-gen-es
 ├── gibson-local     -> .../core/gibson/internal/daemon/api    (symlink)
-├── sdk-proto        -> $(go list -m github.com/zero-day-ai/sdk)/api/proto             (symlink)
-└── platform-sdk-proto -> $(go list -m github.com/zero-day-ai/platform-sdk)/proto      (symlink)
+├── sdk-proto        -> $(go list -m github.com/zeroroot-ai/sdk)/api/proto             (symlink)
+└── platform-sdk-proto -> $(go list -m github.com/zeroroot-ai/platform-sdk)/proto      (symlink)
 ```
 
 Then `buf generate` runs from inside `.tmp/proto-ws/`, the output
@@ -117,7 +117,7 @@ root — they only exist transiently inside `.tmp/proto-ws/`.
 
 **Workstation-only.** The script assumes `core/gibson/` is cloned
 as a sibling of this repo (i.e. you're in the canonical
-`~/Code/zero-day.ai/` polyrepo workspace). CI does not regenerate
+`~/Code/zeroroot.ai/` polyrepo workspace). CI does not regenerate
 proto bindings — `src/gen/` is committed and CI just typechecks
 it. Run `pnpm proto:generate` locally whenever you change a
 `.proto` file in either tree, then commit the regenerated
@@ -278,11 +278,11 @@ E2E coverage for the three states lives in `e2e/authz/admin.spec.ts` (asserts al
 
 ### Adding a new admin RPC
 
-Admin RPCs (FGA relation `admin` or `writer`) live in the **platform-sdk** proto module (`github.com/zero-day-ai/platform-sdk`), NOT the OSS SDK. The OSS SDK hosts customer-callable RPCs only (relation `member` / `can_use`).
+Admin RPCs (FGA relation `admin` or `writer`) live in the **platform-sdk** proto module (`github.com/zeroroot-ai/platform-sdk`), NOT the OSS SDK. The OSS SDK hosts customer-callable RPCs only (relation `member` / `can_use`).
 
 1. In `core/platform-sdk/proto/gibson/<package>/v1/<file>.proto`, add the new RPC to the appropriate admin service (`DaemonAdminService`, `PlatformOperatorService`, or `TenantAdminService`). Add the `(gibson.auth.v1.authz)` extension with `relation: "admin"` (or `"writer"`) and `allowed_identities: [USER]`. Import the extension via the BSR dep:
    ```proto
-   import "gibson/auth/v1/options.proto";  // resolved via buf.build/zero-day-ai-platform/sdk BSR dep
+   import "gibson/auth/v1/options.proto";  // resolved via buf.build/zeroroot-ai-platform/sdk BSR dep
    ```
 2. Run `buf generate && go build ./...` in `core/platform-sdk/`. Commit + open the platform-sdk PR. Merge to cut a new platform-sdk release.
 3. The release-please tag triggers the platform-sdk fan-out, which opens consumer-bump PRs across `gibson`, `dashboard`, `tenant-operator`, `platform-operator`, `ext-authz`, `gibson-tool-runner`, `spiffe-jwks-exporter`. Wait for those to merge.
@@ -327,7 +327,7 @@ Three token layers, narrowing from raw to semantic:
 - **Semantic** (`--background`, `--foreground`, `--card`, `--primary`, `--secondary`, `--muted`, `--accent`, `--destructive`, `--border`, `--input`, `--ring`, `--sidebar-*`, `--chart-*`) — the default choice. Maps directly to tailwind utilities (`bg-background`, `text-foreground`, `border-border`).
 - **Specialty** (`--highlight`, `--alt`, `--link`, `--glow-strength`, `--scanline-opacity`) — reach for these only when the design intent is the terminal-hacker accent itself. Available as `text-highlight`, `text-alt`, `text-link`.
 
-Full architectural rationale + when-to-update: [docs.git → repos/dashboard/design-system.md](https://github.com/zero-day-ai/docs/blob/main/repos/dashboard/design-system.md).
+Full architectural rationale + when-to-update: [docs.git → repos/dashboard/design-system.md](https://github.com/zeroroot-ai/docs/blob/main/repos/dashboard/design-system.md).
 
 ### No hardcoded colors — the CI guard
 
@@ -387,7 +387,7 @@ The spec also skips gracefully when `TEST_AUTH_BYPASS` is unset, so CI environme
 
 Customer-facing docs at `content/docs/**/*.mdx` and the customer-visible UI surface name **product capabilities**, not the vendors implementing them. This is a hard constraint: vendor names dilute the brand, expose attack surface, and turn infrastructure choices into doc-migration contracts whenever we swap a dependency.
 
-Canonical reference: [docs.git → `repos/dashboard/customer-doc-terminology.md`](https://github.com/zero-day-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md). It carries the full deny-list ↔ replacement table, the allowlist of permitted BYO/protocol terms, and the structural rewrite pattern for the "how do I debug a 401" flow.
+Canonical reference: [docs.git → `repos/dashboard/customer-doc-terminology.md`](https://github.com/zeroroot-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md). It carries the full deny-list ↔ replacement table, the allowlist of permitted BYO/protocol terms, and the structural rewrite pattern for the "how do I debug a 401" flow.
 
 The deny-list at a glance — these never appear in `content/docs/**/*.mdx`:
 

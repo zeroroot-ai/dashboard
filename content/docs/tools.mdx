@@ -78,7 +78,7 @@ In a fresh module:
 ```bash
 mkdir my-portscan && cd my-portscan
 go mod init example.com/my-portscan
-go get github.com/zero-day-ai/sdk/tool@latest
+go get github.com/zeroroot-ai/sdk/tool@latest
 ```
 
 Define `proto/portscan.proto`:
@@ -120,11 +120,11 @@ import (
     "context"
     "log"
 
-    "github.com/zero-day-ai/sdk/tool"
+    "github.com/zeroroot-ai/sdk/tool"
     "google.golang.org/protobuf/proto"
 
     portscanv1 "example.com/my-portscan/api/portscan/v1"
-    graphragv1 "github.com/zero-day-ai/sdk/api/proto/gibson/graphrag/v1"
+    graphragv1 "github.com/zeroroot-ai/sdk/api/proto/gibson/graphrag/v1"
 )
 
 type portScan struct{}
@@ -172,7 +172,7 @@ gibson component register --kind tool \
 ```
 
 The wizard at
-[`/dashboard/deploy`](https://app.zero-day.ai/dashboard/deploy) issues
+[`/dashboard/deploy`](https://app.zeroroot.ai/dashboard/deploy) issues
 the credential. See [Install](/docs/install#4-get-a-credential-from-the-dashboard).
 
 ### 4. Run

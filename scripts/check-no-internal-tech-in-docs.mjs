@@ -3,7 +3,7 @@
  * check-no-internal-tech-in-docs.mjs
  *
  * Build-time guard enforcing the customer-doc terminology invariant from
- * zero-day-ai/dashboard#124. Customer-facing surfaces (MDX docs AND public
+ * zeroroot-ai/dashboard#124. Customer-facing surfaces (MDX docs AND public
  * marketing components) name product capabilities (Gibson identity service,
  * Gibson permissions, Gibson Traces, Gibson-managed secrets storage), NOT
  * the vendors implementing them.
@@ -18,7 +18,7 @@
  * are still scanned (those render to the customer).
  *
  * Canonical reference for the deny-list + replacement vocabulary:
- * https://github.com/zero-day-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md
+ * https://github.com/zeroroot-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md
  *
  * Out of scope:
  *   - `enterprise/platform/dashboard/docs/**\/*.md`  (internal developer docs)

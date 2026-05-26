@@ -77,7 +77,7 @@ const PRICE_TO_TIER_NAME: Record<string, string> = buildPriceToTierName();
 // We evaluate these lazily inside handlers because module-load happens
 // before instrumentation.ts validation in some Next.js configurations.
 function getSupportEmail(): string {
-  return process.env.DASHBOARD_SUPPORT_EMAIL ?? 'support@zero-day.ai';
+  return process.env.DASHBOARD_SUPPORT_EMAIL ?? 'support@zeroroot.ai';
 }
 function getDashboardUrl(): string {
   // PUBLIC_URL is REQUIRED at boot (src/lib/env-validator.ts).
@@ -286,7 +286,7 @@ async function handleCheckoutSessionCompleted(
     await patchTenant(tenantSlug, {
       metadata: {
         annotations: {
-          'gibson.zero-day.ai/billing-active': 'true',
+          'gibson.zeroroot.ai/billing-active': 'true',
         },
       },
     });
@@ -491,7 +491,7 @@ async function handleSubscriptionDeleted(
   await patchTenant(tenantSlug, {
     metadata: {
       annotations: {
-        'gibson.zero-day.ai/teardown-after': teardownAfter,
+        'gibson.zeroroot.ai/teardown-after': teardownAfter,
       },
     },
     status: {
@@ -709,7 +709,7 @@ export const dynamic = 'force-dynamic';
  * pointing at this path that they should be updated.
  *
  * Migration Phase 2 cutover: once the 30-day parallel-listen window closes
- * and all Stripe webhook traffic has been moved to webhooks.zero-day.ai/stripe,
+ * and all Stripe webhook traffic has been moved to webhooks.zeroroot.ai/stripe,
  * the body of the POST handler below can be replaced with this same 410
  * response to fully retire the endpoint.
  *

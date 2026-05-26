@@ -1,10 +1,10 @@
 /**
- * Brand marks — ported from the design handoff (`zero-day-ai/project/marks.jsx`).
+ * Brand marks — ported from the design handoff (`zeroroot-ai/project/marks.jsx`).
  *
  * Five exports:
  *   • Brain      — standalone slashed-zero (compact icon, favicon scale)
  *   • BrainCRT   — primary mark: CRT bezel + slashed-zero on screen + stand
- *   • Wordmark   — "zero-day.ai" with .ai dimmed
+ *   • Wordmark   — "zeroroot.ai" with .ai dimmed
  *   • Lockup     — mark + wordmark, horizontal
  *   • Avatar     — square tile with the slashed-zero (GitHub org, app icon)
  *
@@ -29,7 +29,7 @@ interface BrainProps {
 export function Brain({
   size = 64,
   className,
-  "aria-label": ariaLabel = "zero-day mark",
+  "aria-label": ariaLabel = "zeroroot mark",
   "aria-hidden": ariaHidden,
 }: BrainProps) {
   return (
@@ -74,7 +74,7 @@ export function BrainCRT({
   glow = true,
   stem = true,
   className,
-  "aria-label": ariaLabel = "zero-day.ai",
+  "aria-label": ariaLabel = "zeroroot.ai",
   "aria-hidden": ariaHidden,
 }: BrainCRTProps) {
   // Glow uses currentColor + --glow-strength so light mode (strength: 0)
@@ -164,7 +164,7 @@ interface WordmarkProps {
   className?: string;
 }
 
-/** "zero-day.ai" with .ai dimmed; "0d.ai" if `variant="short"`. */
+/** "zeroroot.ai" with .ai dimmed; "0d.ai" if `variant="short"`. */
 export function Wordmark({
   size = 32,
   dim = true,
@@ -195,7 +195,7 @@ export function Wordmark({
 
   return (
     <span className={className} style={baseStyle}>
-      <span>zero-day</span>
+      <span>zeroroot</span>
       <span style={dimStyle}>.ai</span>
     </span>
   );

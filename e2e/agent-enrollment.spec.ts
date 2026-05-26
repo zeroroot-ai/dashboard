@@ -42,7 +42,7 @@ const needsCluster = !process.env.E2E_KIND_AVAILABLE;
 const MOCK_USER = {
   sub: "e2e-agent-enrollment-user",
   name: "Agent Enrollment Test",
-  email: "agent-enrollment@e2e.zero-day.local",
+  email: "agent-enrollment@e2e.zeroroot.local",
 };
 const MOCK_TENANT_ID = "tenant-e2e-agent-test";
 
@@ -50,9 +50,9 @@ const MOCK_TENANT_ID = "tenant-e2e-agent-test";
 const MOCK_AGENT_CREDENTIALS = {
   clientId: "e2e-agent-client-id-12345",
   clientSecret: "e2e-agent-secret-abc123",
-  gibsonUrl: "https://api.zero-day.local:30443",
+  gibsonUrl: "https://api.zeroroot.local:30443",
   enrollCommand:
-    "gibson component register --client-id e2e-agent-client-id-12345 --client-secret e2e-agent-secret-abc123 --url https://api.zero-day.local:30443",
+    "gibson component register --client-id e2e-agent-client-id-12345 --client-secret e2e-agent-secret-abc123 --url https://api.zeroroot.local:30443",
 };
 
 /** Synthetic agent list response (mirrors /api/components/agents). */

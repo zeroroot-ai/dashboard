@@ -14,9 +14,9 @@ const contactSchema = z.object({
   timeline: z.enum(['asap', '1-3-months', '3-6-months', 'evaluating']),
 });
 
-const SALES_INBOX = process.env.CONTACT_SALES_INBOX ?? 'sales@zero-day.ai';
+const SALES_INBOX = process.env.CONTACT_SALES_INBOX ?? 'sales@zeroroot.ai';
 const FROM_ADDR =
-  process.env.DASHBOARD_EMAIL_FROM ?? 'noreply@zero-day.ai';
+  process.env.DASHBOARD_EMAIL_FROM ?? 'noreply@zeroroot.ai';
 
 function escapeHtml(s: string): string {
   return s

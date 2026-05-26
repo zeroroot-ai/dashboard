@@ -54,7 +54,7 @@ describe("GET /api/auth/tenant-available", () => {
 
   it("K8sNotFoundError → available: true (slug is free)", async () => {
     getTenantImpl.mockRejectedValue(
-      new K8sNotFoundError('tenants.gibson.zero-day.ai "acme-security" not found'),
+      new K8sNotFoundError('tenants.gibson.zeroroot.ai "acme-security" not found'),
     );
 
     const res = await GET(buildReq("Acme Security"));

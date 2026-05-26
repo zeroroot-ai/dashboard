@@ -264,7 +264,7 @@ describe('POST /api/billing/webhook — checkout.session.completed (confirm path
     expect(patch).toMatchObject({
       metadata: {
         annotations: {
-          'gibson.zero-day.ai/billing-active': 'true',
+          'gibson.zeroroot.ai/billing-active': 'true',
         },
       },
     });
@@ -715,7 +715,7 @@ describe('POST /api/billing/webhook — customer.subscription.deleted', () => {
     const billing = (patch as { status?: { billing?: Record<string, unknown> } }).status?.billing;
     expect(billing?.status).toBe('cancelled');
     const annotations = (patch as { metadata?: { annotations?: Record<string, string> } }).metadata?.annotations;
-    expect(annotations?.['gibson.zero-day.ai/teardown-after']).toBeDefined();
+    expect(annotations?.['gibson.zeroroot.ai/teardown-after']).toBeDefined();
   });
 
   it('emits billing.subscription_cancelled audit event', async () => {

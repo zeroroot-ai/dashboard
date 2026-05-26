@@ -25,14 +25,14 @@ TEST_AUTH_BYPASS=1 AUTH_SECRET=<your-local-secret> pnpm test:e2e e2e/agent-enrol
 TEST_AUTH_BYPASS=1 AUTH_SECRET=<your-local-secret> pnpm test:e2e e2e/mission-execute.spec.ts
 
 # Integration tests (require kind cluster)
-E2E_KIND_AVAILABLE=1 PLAYWRIGHT_BASE_URL=https://app.zero-day.local:30443 \
+E2E_KIND_AVAILABLE=1 PLAYWRIGHT_BASE_URL=https://app.zeroroot.local:30443 \
   pnpm test:e2e e2e/tenant-provision.spec.ts
 
 # Billing webhook tests against the kind cluster
-E2E_KIND_AVAILABLE=1 PLAYWRIGHT_BASE_URL=https://app.zero-day.local:30443 \
+E2E_KIND_AVAILABLE=1 PLAYWRIGHT_BASE_URL=https://app.zeroroot.local:30443 \
   STRIPE_WEBHOOK_SECRET=whsec_testonly_e2e_playwright_secret_1234567890 \
   pnpm test:e2e e2e/billing-webhook.spec.ts
-E2E_KIND_AVAILABLE=1 PLAYWRIGHT_BASE_URL=https://app.zero-day.local:30443 \
+E2E_KIND_AVAILABLE=1 PLAYWRIGHT_BASE_URL=https://app.zeroroot.local:30443 \
   STRIPE_WEBHOOK_SECRET=whsec_testonly_e2e_playwright_secret_1234567890 \
   pnpm test:e2e e2e/plan-change.spec.ts
 ```

@@ -17,7 +17,7 @@ import { securePassword } from "./helpers/fixtures";
 import { signUpViaForm } from "./helpers/signup-via-form";
 import { loginViaZitadelV2 } from "./helpers/login-via-zitadel-v2";
 
-const CLUSTER_URL = process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zero-day.local:30443";
+const CLUSTER_URL = process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
 
 /** One 3xx hop in the OIDC redirect chain (matches Go helpers.RedirectStep). */
 interface RedirectStep { from: string; to: string; status: number; method: string; }

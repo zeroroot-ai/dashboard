@@ -33,7 +33,7 @@ const TENANT_A_EMAIL = process.env.E2E_TENANT_A_EMAIL ?? "alice@tenant-a.example
 const TENANT_A_PASSWORD = process.env.E2E_TENANT_A_PASSWORD ?? "password";
 const TENANT_A_NAME = process.env.E2E_TENANT_A_NAME ?? "tenant-a";
 const TENANT_B_NAME = process.env.E2E_TENANT_B_NAME ?? "tenant-b";
-const OPERATOR_EMAIL = process.env.E2E_PLATFORM_OPERATOR_EMAIL ?? "ops@zero-day.ai";
+const OPERATOR_EMAIL = process.env.E2E_PLATFORM_OPERATOR_EMAIL ?? "ops@zeroroot.ai";
 const OPERATOR_PASSWORD = process.env.E2E_PLATFORM_OPERATOR_PASSWORD ?? "password";
 const ENROLLMENT_NAME = process.env.E2E_ENROLLMENT_NAME ?? "e2e-agent";
 

@@ -15,7 +15,7 @@
 import type { MissionDefinition, MissionNode } from '@/src/gen/gibson/mission/v1/mission_definition_pb';
 import { NodeType } from '@/src/gen/gibson/mission/v1/mission_definition_pb';
 
-const IMPORT_LINE = 'import missionv1 "github.com/zero-day-ai/sdk/api/proto/gibson/mission/v1"';
+const IMPORT_LINE = 'import missionv1 "github.com/zeroroot-ai/sdk/api/proto/gibson/mission/v1"';
 
 function q(s: string): string {
   return `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '')}"`;

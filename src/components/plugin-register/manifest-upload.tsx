@@ -75,11 +75,11 @@ function validateManifestClientSide(yaml: string): ClientValidationResult {
     });
   } else {
     const val = lines[apiVersionLine]!.split(":").slice(1).join(":").trim();
-    if (!val.includes("plugin.gibson.zero-day.ai")) {
+    if (!val.includes("plugin.gibson.zeroroot.ai")) {
       errors.push({
         line: apiVersionLine + 1,
         field: "apiVersion",
-        message: `Expected plugin.gibson.zero-day.ai/v1, got: ${val}`,
+        message: `Expected plugin.gibson.zeroroot.ai/v1, got: ${val}`,
       });
     }
   }
@@ -318,7 +318,7 @@ export function ManifestUpload({
 // Placeholder YAML shown in the empty textarea
 // ---------------------------------------------------------------------------
 
-const MANIFEST_PLACEHOLDER = `apiVersion: plugin.gibson.zero-day.ai/v1
+const MANIFEST_PLACEHOLDER = `apiVersion: plugin.gibson.zeroroot.ai/v1
 kind: Plugin
 metadata:
   name: my-plugin

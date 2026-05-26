@@ -20,7 +20,7 @@ const DEPRECATION_END = new Date('2026-08-01T00:00:00Z');
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // Workspace root is two levels up from enterprise/platform/dashboard/scripts
-// (dashboard/scripts -> dashboard -> platform -> enterprise -> zero-day.ai).
+// (dashboard/scripts -> dashboard -> platform -> enterprise -> zeroroot.ai).
 const WORKSPACE_ROOT = path.resolve(HERE, '..', '..', '..', '..');
 
 const SCHEMAS = [

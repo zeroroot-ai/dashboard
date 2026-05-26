@@ -27,7 +27,7 @@
  *   DASHBOARD_CAPTCHA_PROVIDER=disabled
  *
  * Env vars:
- *   PLAYWRIGHT_BASE_URL  — cluster URL (default: https://app.zero-day.local:30443)
+ *   PLAYWRIGHT_BASE_URL  — cluster URL (default: https://app.zeroroot.local:30443)
  *   VAULT_ADDR           — Vault address (optional, e.g. https://vault.cluster.local)
  *   VAULT_TOKEN          — Vault root/admin token for namespace verification (optional)
  *   VAULT_NAMESPACE_PREFIX — Tenant namespace prefix used by the provisioner (default: "tenants/")
@@ -262,7 +262,7 @@ test.describe("Signup — Vault namespace provisioning step (R7)", () => {
     try {
       execSync(
         `kubectl config use-context kind-gibson && ` +
-          `kubectl delete tenant.gibson.zero-day.ai ${creds.slug} --ignore-not-found`,
+          `kubectl delete tenant.gibson.zeroroot.ai ${creds.slug} --ignore-not-found`,
         { stdio: "pipe", timeout: 15_000 },
       );
       console.log(`[signup-vault] Cleanup: deleted tenant ${creds.slug}`);
@@ -377,7 +377,7 @@ test.describe("Signup — Vault namespace provisioning step (R7)", () => {
     try {
       execSync(
         `kubectl config use-context kind-gibson && ` +
-          `kubectl delete tenant.gibson.zero-day.ai ${creds.slug} --ignore-not-found`,
+          `kubectl delete tenant.gibson.zeroroot.ai ${creds.slug} --ignore-not-found`,
         { stdio: "pipe", timeout: 15_000 },
       );
     } catch {
@@ -493,7 +493,7 @@ test.describe("Signup — Vault namespace provisioning step (R7)", () => {
     try {
       execSync(
         `kubectl config use-context kind-gibson && ` +
-          `kubectl delete tenant.gibson.zero-day.ai ${creds.slug} --ignore-not-found`,
+          `kubectl delete tenant.gibson.zeroroot.ai ${creds.slug} --ignore-not-found`,
         { stdio: "pipe", timeout: 15_000 },
       );
     } catch {

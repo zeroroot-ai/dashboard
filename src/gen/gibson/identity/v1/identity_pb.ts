@@ -231,7 +231,7 @@ export type GrantSource = Message<"gibson.identity.v1.GrantSource"> & {
 
   /**
    * source_object is the FGA object the inheritance flowed from
-   * (e.g. "tenant:zero-day-ai", "team:red"). Empty for KIND_DIRECT.
+   * (e.g. "tenant:zeroroot-ai", "team:red"). Empty for KIND_DIRECT.
    *
    * @generated from field: string source_object = 2;
    */

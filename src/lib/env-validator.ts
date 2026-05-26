@@ -78,7 +78,7 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
     name: 'ZITADEL_ISSUER',
     kind: 'url',
     hint:
-      'Zitadel OIDC issuer URL the browser sees (e.g. https://auth.zero-day.local:30443). ' +
+      'Zitadel OIDC issuer URL the browser sees (e.g. https://auth.zeroroot.local:30443). ' +
       'Auth.js uses this for authorize redirects + iss-claim validation.',
   },
   {
@@ -127,7 +127,7 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
     kind: 'url',
     hint:
       'Public dashboard URL Auth.js uses for OIDC callback construction. ' +
-      'e.g. https://app.zero-day.local:30443 (kind) or https://app.zero-day.ai (prod).',
+      'e.g. https://app.zeroroot.local:30443 (kind) or https://app.zeroroot.ai (prod).',
   },
   {
     name: 'POST_LOGOUT_REDIRECT_URI',
@@ -144,7 +144,7 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
     kind: 'url',
     hint:
       'Envoy ingress URL operators use to reach the platform API ' +
-      '(e.g. https://api.zero-day.local:30443). Used for user-facing links.',
+      '(e.g. https://api.zeroroot.local:30443). Used for user-facing links.',
   },
   {
     name: 'GIBSON_PUBLIC_URL',
