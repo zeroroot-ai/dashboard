@@ -1633,15 +1633,6 @@ export const AuthRegistry: Record<string, AuthEntry> = {
     allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
     unauthenticated: false,
   },
-  "/gibson.tenant.v1.TenantService/GetFallbackChain": {
-    method: "/gibson.tenant.v1.TenantService/GetFallbackChain",
-    service: "gibson.tenant.v1.TenantService",
-    relation: "member",
-    objectType: "tenant",
-    objectDeriver: "tenant_from_identity",
-    allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
-    unauthenticated: false,
-  },
   "/gibson.tenant.v1.TenantService/GetMissionDraft": {
     method: "/gibson.tenant.v1.TenantService/GetMissionDraft",
     service: "gibson.tenant.v1.TenantService",
@@ -1779,15 +1770,6 @@ export const AuthRegistry: Record<string, AuthEntry> = {
   },
   "/gibson.tenant.v1.TenantService/SetDefaultProvider": {
     method: "/gibson.tenant.v1.TenantService/SetDefaultProvider",
-    service: "gibson.tenant.v1.TenantService",
-    relation: "writer",
-    objectType: "tenant",
-    objectDeriver: "tenant_from_identity",
-    allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
-    unauthenticated: false,
-  },
-  "/gibson.tenant.v1.TenantService/SetFallbackChain": {
-    method: "/gibson.tenant.v1.TenantService/SetFallbackChain",
     service: "gibson.tenant.v1.TenantService",
     relation: "writer",
     objectType: "tenant",

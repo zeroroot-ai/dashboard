@@ -238,7 +238,6 @@ export function useDeleteProvider(): UseMutationResult<
         queryClient.setQueryData<ListProvidersResponse>(providerQueryKeys.list(), {
           ...previousProviders,
           providers: previousProviders.providers.filter((p) => p.name !== name),
-          fallbackChain: previousProviders.fallbackChain?.filter((n) => n !== name),
         });
       }
 
@@ -253,7 +252,6 @@ export function useDeleteProvider(): UseMutationResult<
       // Remove from detail cache
       queryClient.removeQueries({ queryKey: providerQueryKeys.detail(name) });
       queryClient.invalidateQueries({ queryKey: providerQueryKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: providerQueryKeys.fallback() });
     },
   });
 }

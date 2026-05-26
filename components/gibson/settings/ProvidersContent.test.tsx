@@ -34,7 +34,6 @@ vi.mock("@/src/hooks/useSupportedProviders", () => ({
 
 vi.mock("@/src/hooks/useProviders", () => ({
   useProviders: vi.fn(),
-  useFallbackChain: vi.fn(() => ({ data: [], isLoading: false, isError: false })),
   providerQueryKeys: {
     all: ["providers"],
     lists: () => ["providers", "list"],
@@ -44,7 +43,6 @@ vi.mock("@/src/hooks/useProviders", () => ({
     health: () => ["providers", "health"],
     healthForProvider: (name: string) => ["providers", "health", name],
     healthAll: () => ["providers", "health", "all"],
-    fallback: () => ["providers", "fallback"],
     audit: () => ["providers", "audit"],
     auditFiltered: () => ["providers", "audit", {}],
   },
@@ -80,9 +78,6 @@ vi.mock("sonner", () => ({
     error: vi.fn(),
   },
 }));
-
-// Stub FallbackChainEditor so this suite stays isolated
-vi.mock("./FallbackChainEditor", () => ({ FallbackChainEditor: () => null }));
 
 // Stub ProviderWizard and CredentialsAndTest to isolate ProvidersContent tests.
 // CredentialsAndTest stub lets edit-flow tests drive onValuesChange.
@@ -201,13 +196,11 @@ const mockConfiguredProvider = {
 const mockListProvidersResponse: ListProvidersResponse = {
   providers: [mockConfiguredProvider],
   defaultProvider: "my-anthropic",
-  fallbackChain: [],
 };
 
 const emptyListResponse: ListProvidersResponse = {
   providers: [],
   defaultProvider: undefined,
-  fallbackChain: [],
 };
 
 // ---------------------------------------------------------------------------
@@ -661,8 +654,7 @@ describe("ConfiguredProviderRow — credentialsMasked display", () => {
           },
         ],
         defaultProvider: undefined,
-        fallbackChain: [],
-      },
+            },
       isLoading: false,
       isError: false,
     } as unknown as ReturnType<typeof useProviders>);
@@ -688,8 +680,7 @@ describe("ConfiguredProviderRow — credentialsMasked display", () => {
           },
         ],
         defaultProvider: undefined,
-        fallbackChain: [],
-      },
+            },
       isLoading: false,
       isError: false,
     } as unknown as ReturnType<typeof useProviders>);
@@ -715,8 +706,7 @@ describe("ConfiguredProviderRow — credentialsMasked display", () => {
           },
         ],
         defaultProvider: undefined,
-        fallbackChain: [],
-      },
+            },
       isLoading: false,
       isError: false,
     } as unknown as ReturnType<typeof useProviders>);
@@ -887,8 +877,7 @@ describe("ConfiguredProviderRow — deprecated model badge (dashboard#289)", () 
     const deprecatedProviderList: ListProvidersResponse = {
       providers: [providerWithDeprecatedModel],
       defaultProvider: providerWithDeprecatedModel.name,
-      fallbackChain: [],
-    };
+        };
     mockedUseProviders.mockReturnValue({
       data: deprecatedProviderList,
       isLoading: false,
@@ -926,8 +915,7 @@ describe("ConfiguredProviderRow — deprecated model badge (dashboard#289)", () 
     const unknownModelList: ListProvidersResponse = {
       providers: [{ ...mockConfiguredProvider, defaultModel: "unknown-model" }],
       defaultProvider: mockConfiguredProvider.name,
-      fallbackChain: [],
-    };
+        };
     mockedUseProviders.mockReturnValue({
       data: unknownModelList,
       isLoading: false,

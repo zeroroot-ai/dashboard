@@ -469,8 +469,6 @@ export type {
   TestConnectionRequest,
   SetDefaultProviderRequest,
   SetDefaultProviderResponse,
-  SetFallbackChainRequest,
-  SetFallbackChainResponse,
   GetHealthStatusRequest,
   GetHealthStatusResponse,
   ExportConfigRequest,

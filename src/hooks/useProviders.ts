@@ -14,7 +14,6 @@ import {
   getProvider,
   getHealthStatus,
   getAuditLog,
-  getFallbackChain,
 } from '@/src/lib/api/providers';
 import type {
   ProviderConfig,
@@ -39,7 +38,6 @@ export const providerQueryKeys = {
   health: () => [...providerQueryKeys.all, 'health'] as const,
   healthForProvider: (name: string) => [...providerQueryKeys.health(), name] as const,
   healthAll: () => [...providerQueryKeys.health(), 'all'] as const,
-  fallback: () => [...providerQueryKeys.all, 'fallback'] as const,
   audit: () => [...providerQueryKeys.all, 'audit'] as const,
   auditFiltered: (filters?: AuditFilters) => [...providerQueryKeys.audit(), filters] as const,
 };
@@ -170,43 +168,6 @@ export function useProviderHealth(name: string): UseQueryResult<HealthStatus | u
     ...query,
     data: query.data?.statuses[name],
   } as unknown as UseQueryResult<HealthStatus | undefined, Error>;
-}
-
-// ============================================================================
-// Fallback Chain Hook
-// ============================================================================
-
-/**
- * Hook for fetching the fallback chain
- *
- * @returns Query result with fallback chain
- */
-export function useFallbackChain(): UseQueryResult<string[], Error> {
-  return useQuery({
-    queryKey: providerQueryKeys.fallback(),
-    queryFn: getFallbackChain,
-    staleTime: 30000,
-    gcTime: 300000,
-  });
-}
-
-/**
- * Hook for fetching fallback chain with provider details
- *
- * @returns Query result with fallback providers
- */
-export function useFallbackChainWithDetails(): UseQueryResult<ProviderConfig[], Error> {
-  const providersQuery = useProviders({ includeDisabled: false, includeHealth: true });
-
-  // Get providers in fallback order
-  const fallbackProviders = providersQuery.data?.fallbackChain
-    ?.map((name) => providersQuery.data?.providers.find((p) => p.name === name))
-    .filter((p): p is ProviderConfig => p !== undefined);
-
-  return {
-    ...providersQuery,
-    data: fallbackProviders,
-  } as unknown as UseQueryResult<ProviderConfig[], Error>;
 }
 
 // ============================================================================

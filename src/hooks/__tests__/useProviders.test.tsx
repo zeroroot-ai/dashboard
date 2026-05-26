@@ -8,7 +8,6 @@ import {
   useProvider,
   useProvidersHealth,
   useProviderHealth,
-  useFallbackChain,
   useProviderAuditLog,
   useProvidersByType,
   useAnyProviderUnhealthy,
@@ -57,7 +56,6 @@ const mockOpenAIProvider: ProviderConfig = {
 const mockProvidersResponse: ListProvidersResponse = {
   providers: [mockProvider, mockOpenAIProvider],
   defaultProvider: 'anthropic-primary',
-  fallbackChain: ['openai-backup'],
 };
 
 describe('useProviders Hooks', () => {
@@ -87,7 +85,6 @@ describe('useProviders Hooks', () => {
       ]);
       expect(providerQueryKeys.detail('test')).toEqual(['providers', 'detail', 'test']);
       expect(providerQueryKeys.health()).toEqual(['providers', 'health']);
-      expect(providerQueryKeys.fallback()).toEqual(['providers', 'fallback']);
       expect(providerQueryKeys.audit()).toEqual(['providers', 'audit']);
     });
   });
@@ -274,23 +271,6 @@ describe('useProviders Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data?.status).toBe('healthy');
-    });
-  });
-
-  describe('useFallbackChain', () => {
-    it('should fetch fallback chain', async () => {
-      global.fetch = vi.fn(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ fallbackChain: ['openai-backup', 'google'] }),
-        } as Response)
-      );
-
-      const { result } = renderHook(() => useFallbackChain(), { wrapper });
-
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-      expect(result.current.data).toEqual(['openai-backup', 'google']);
     });
   });
 
