@@ -152,7 +152,7 @@ export interface OnboardingState {
   isStepComplete: (stepId: WizardStepId) => boolean;
 
   // ========================================
-  // Compatibility Aliases (test-friendly interface)
+  // Compatibility Aliases (plain fields kept in sync by actions)
   // ========================================
 
   /** Current step index (0-based numeric alias for currentStepId) */
@@ -319,6 +319,17 @@ export const useOnboardingStore = create<OnboardingState>()(
       currentStepStartedAt: null,
 
       // ========================================
+      // Compatibility Alias Plain Fields (kept in sync by actions)
+      // ========================================
+
+      currentStep: 0,
+      llmProvider: null,
+      selectedAgent: null,
+      startedAt: null,
+      completedAt: null,
+      selectedMissionTemplate: null,
+
+      // ========================================
       // Navigation Actions
       // ========================================
 
@@ -327,8 +338,10 @@ export const useOnboardingStore = create<OnboardingState>()(
         set({
           wizardInProgress: true,
           wizardStartedAt: now,
+          startedAt: now,
           currentStepStartedAt: now,
           currentStepId: 'welcome',
+          currentStep: 0,
         });
       },
 
@@ -353,6 +366,7 @@ export const useOnboardingStore = create<OnboardingState>()(
         if (nextStepId) {
           set({
             currentStepId: nextStepId,
+            currentStep: getStepIndex(nextStepId),
             completedSteps: updatedCompletedSteps,
             stepTimes: updatedStepTimes,
             currentStepStartedAt: new Date().toISOString(),
@@ -367,6 +381,7 @@ export const useOnboardingStore = create<OnboardingState>()(
         if (previousStepId) {
           set({
             currentStepId: previousStepId,
+            currentStep: getStepIndex(previousStepId),
             currentStepStartedAt: new Date().toISOString(),
             validationError: null,
           });
@@ -376,6 +391,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       goToStep: (stepId: WizardStepId) => {
         set({
           currentStepId: stepId,
+          currentStep: getStepIndex(stepId),
           currentStepStartedAt: new Date().toISOString(),
           validationError: null,
         });
@@ -411,21 +427,25 @@ export const useOnboardingStore = create<OnboardingState>()(
           return task;
         });
 
+        const completedAt = new Date().toISOString();
         set({
           wizardCompleted: true,
           wizardInProgress: false,
           completedSteps: updatedCompletedSteps,
           stepTimes: updatedStepTimes,
-          wizardCompletedAt: new Date().toISOString(),
+          wizardCompletedAt: completedAt,
+          completedAt,
           setupTasks: updatedSetupTasks,
         });
       },
 
       skipWizard: () => {
+        const skippedAt = new Date().toISOString();
         set({
           wizardSkipped: true,
           wizardInProgress: false,
-          wizardCompletedAt: new Date().toISOString(),
+          wizardCompletedAt: skippedAt,
+          completedAt: skippedAt,
         });
       },
 
@@ -448,6 +468,7 @@ export const useOnboardingStore = create<OnboardingState>()(
         if (nextStepId) {
           set({
             currentStepId: nextStepId,
+            currentStep: getStepIndex(nextStepId),
             skippedSteps: updatedSkippedSteps,
             currentStepStartedAt: new Date().toISOString(),
             validationError: null,
@@ -485,7 +506,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       // ========================================
 
       setLLMConfig: (config: LLMConfig) => {
-        set({ llmConfig: config });
+        set({ llmConfig: config, llmProvider: config.provider });
       },
 
       setLLMProvider: (provider: LLMConfig['provider']) => {
@@ -493,6 +514,7 @@ export const useOnboardingStore = create<OnboardingState>()(
           llmConfig: state.llmConfig
             ? { ...state.llmConfig, provider }
             : { provider, model: '', isValidated: false },
+          llmProvider: provider,
         }));
       },
 
@@ -525,7 +547,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       },
 
       setSelectedAgentId: (agentId: string) => {
-        set({ selectedAgentId: agentId });
+        set({ selectedAgentId: agentId, selectedAgent: agentId });
       },
 
       setCreatedMissionId: (missionId: string) => {
@@ -533,7 +555,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       },
 
       setUsedTemplateId: (templateId: string) => {
-        set({ usedTemplateId: templateId });
+        set({ usedTemplateId: templateId, selectedMissionTemplate: templateId });
       },
 
       setMissionTarget: (target: string) => {
@@ -571,34 +593,6 @@ export const useOnboardingStore = create<OnboardingState>()(
       },
 
       // ========================================
-      // Compatibility Alias Properties
-      // ========================================
-
-      get currentStep() {
-        return getStepIndex(get().currentStepId);
-      },
-
-      get llmProvider() {
-        return get().llmConfig?.provider ?? null;
-      },
-
-      get selectedAgent() {
-        return get().selectedAgentId;
-      },
-
-      get startedAt() {
-        return get().wizardStartedAt;
-      },
-
-      get completedAt() {
-        return get().wizardCompletedAt;
-      },
-
-      get selectedMissionTemplate() {
-        return get().usedTemplateId;
-      },
-
-      // ========================================
       // Compatibility Alias Actions
       // ========================================
 
@@ -607,11 +601,11 @@ export const useOnboardingStore = create<OnboardingState>()(
       },
 
       setSelectedAgent: (agentId: string | null) => {
-        set({ selectedAgentId: agentId });
+        set({ selectedAgentId: agentId, selectedAgent: agentId });
       },
 
       setSelectedMissionTemplate: (templateId: string | null) => {
-        set({ usedTemplateId: templateId });
+        set({ usedTemplateId: templateId, selectedMissionTemplate: templateId });
       },
 
       restoreState: (persistedState) => {
@@ -620,20 +614,34 @@ export const useOnboardingStore = create<OnboardingState>()(
         if (persistedState.wizardSkipped !== undefined) updates.wizardSkipped = persistedState.wizardSkipped;
         if (persistedState.completedSteps !== undefined) updates.completedSteps = persistedState.completedSteps as WizardStepId[];
         if (persistedState.llmValidated !== undefined) updates.llmValidated = persistedState.llmValidated;
-        if (persistedState.startedAt !== undefined) updates.wizardStartedAt = persistedState.startedAt;
-        if (persistedState.completedAt !== undefined) updates.wizardCompletedAt = persistedState.completedAt;
+        if (persistedState.startedAt !== undefined) {
+          updates.wizardStartedAt = persistedState.startedAt;
+          updates.startedAt = persistedState.startedAt;
+        }
+        if (persistedState.completedAt !== undefined) {
+          updates.wizardCompletedAt = persistedState.completedAt;
+          updates.completedAt = persistedState.completedAt;
+        }
         if (persistedState.createdMissionId !== undefined) updates.createdMissionId = persistedState.createdMissionId;
-        if (persistedState.selectedAgent !== undefined) updates.selectedAgentId = persistedState.selectedAgent;
-        if (persistedState.selectedMissionTemplate !== undefined) updates.usedTemplateId = persistedState.selectedMissionTemplate;
+        if (persistedState.selectedAgent !== undefined) {
+          updates.selectedAgentId = persistedState.selectedAgent;
+          updates.selectedAgent = persistedState.selectedAgent;
+        }
+        if (persistedState.selectedMissionTemplate !== undefined) {
+          updates.usedTemplateId = persistedState.selectedMissionTemplate;
+          updates.selectedMissionTemplate = persistedState.selectedMissionTemplate;
+        }
         if (persistedState.currentStep !== undefined) {
           const stepId = STEP_ORDER[persistedState.currentStep] ?? 'welcome';
           updates.currentStepId = stepId;
+          updates.currentStep = persistedState.currentStep;
         }
         if (persistedState.llmProvider !== undefined) {
           const currentConfig = get().llmConfig;
           updates.llmConfig = currentConfig
             ? { ...currentConfig, provider: persistedState.llmProvider as LLMConfig['provider'] }
             : { provider: persistedState.llmProvider as LLMConfig['provider'], model: '', isValidated: false };
+          updates.llmProvider = persistedState.llmProvider as LLMConfig['provider'];
         }
         set(updates);
       },
@@ -666,6 +674,13 @@ export const useOnboardingStore = create<OnboardingState>()(
           wizardCompletedAt: null,
           stepTimes: { ...initialStepTimes },
           currentStepStartedAt: null,
+          // Reset alias fields
+          currentStep: 0,
+          llmProvider: null,
+          selectedAgent: null,
+          startedAt: null,
+          completedAt: null,
+          selectedMissionTemplate: null,
         });
       },
 
@@ -737,6 +752,32 @@ export const useOnboardingStore = create<OnboardingState>()(
     }
   )
 );
+
+// ============================================================================
+// Plain Selector Functions
+// ============================================================================
+
+/**
+ * Selects the current step index (0-based) from the store state.
+ * Prefer reading `state.currentStep` directly; this selector is provided
+ * for callers that want an explicit selector reference.
+ */
+export const selectCurrentStep = (s: OnboardingState): number => s.currentStep;
+
+/** Selects the LLM provider alias from the store state. */
+export const selectLLMProvider = (s: OnboardingState): LLMConfig['provider'] | null => s.llmProvider;
+
+/** Selects the selected agent alias from the store state. */
+export const selectSelectedAgent = (s: OnboardingState): string | null => s.selectedAgent;
+
+/** Selects the wizard started timestamp alias from the store state. */
+export const selectStartedAt = (s: OnboardingState): string | null => s.startedAt;
+
+/** Selects the wizard completed timestamp alias from the store state. */
+export const selectCompletedAt = (s: OnboardingState): string | null => s.completedAt;
+
+/** Selects the selected mission template alias from the store state. */
+export const selectSelectedMissionTemplate = (s: OnboardingState): string | null => s.selectedMissionTemplate;
 
 // ============================================================================
 // Convenience Hooks
