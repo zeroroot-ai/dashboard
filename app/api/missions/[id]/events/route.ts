@@ -146,6 +146,9 @@ export async function GET(
 
   const encoder = new TextEncoder();
 
+  // Shared handle so both start() and cancel() can clear the heartbeat.
+  let heartbeatHandle: ReturnType<typeof setInterval> | undefined;
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       logger.info(baseLog, "mission events SSE bridge opened");
@@ -157,11 +160,11 @@ export async function GET(
         return;
       }
 
-      const heartbeat = setInterval(() => {
+      heartbeatHandle = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(`: heartbeat\n\n`));
         } catch {
-          clearInterval(heartbeat);
+          clearInterval(heartbeatHandle);
         }
       }, HEARTBEAT_INTERVAL_MS);
 
@@ -185,7 +188,7 @@ export async function GET(
       // ReadableStream `cancel` hook below.
       const stopPolling = () => {
         cancelled = true;
-        clearInterval(heartbeat);
+        clearInterval(heartbeatHandle);
       };
 
       const userId = session.user?.id ?? undefined;
@@ -417,6 +420,7 @@ export async function GET(
         { route: "missions/events", missionId },
         "mission events SSE bridge cancelled by client",
       );
+      clearInterval(heartbeatHandle);
       const handle = (
         stream as unknown as { __pollInterval?: ReturnType<typeof setInterval> }
       ).__pollInterval;
