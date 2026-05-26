@@ -77,7 +77,7 @@ describe('ConversationList', () => {
     const activeBtn = screen.getAllByRole('button').find(
       (btn) => btn.textContent?.includes('Attack surface analysis'),
     );
-    expect(activeBtn?.className).toContain('bg-primary');
+    expect(activeBtn?.className).toContain('bg-primary/10');
   });
 
   it('calls onSelect when a conversation is clicked', () => {

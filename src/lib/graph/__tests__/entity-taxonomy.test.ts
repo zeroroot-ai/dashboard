@@ -69,14 +69,14 @@ describe('entity-taxonomy', () => {
 
     it('should return expected colors for specific entity types', () => {
       // Dark theme samples
-      expect(getEntityColor('mission', 'dark')).toBe('#ffb000');
-      expect(getEntityColor('domain', 'dark')).toBe('#00bfff');
-      expect(getEntityColor('finding', 'dark')).toBe('#ff6b6b');
+      expect(getEntityColor('mission', 'dark')).toBe('#22c55e');
+      expect(getEntityColor('domain', 'dark')).toBe('#3b82f6');
+      expect(getEntityColor('finding', 'dark')).toBe('#ef4444');
 
       // Light theme samples
-      expect(getEntityColor('mission', 'light')).toBe('#b8860b');
-      expect(getEntityColor('domain', 'light')).toBe('#0077b6');
-      expect(getEntityColor('finding', 'light')).toBe('#c62828');
+      expect(getEntityColor('mission', 'light')).toBe('#16a34a');
+      expect(getEntityColor('domain', 'light')).toBe('#2563eb');
+      expect(getEntityColor('finding', 'light')).toBe('#dc2626');
     });
   });
 

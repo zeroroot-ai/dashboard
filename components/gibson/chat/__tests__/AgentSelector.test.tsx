@@ -3,6 +3,12 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { AgentSelector } from '../AgentSelector';
 import type { ChatAgent } from '@/src/stores/chat-store';
 
+/** Open the RadixUI dropdown trigger (requires pointerdown before click). */
+function openDropdown(triggerEl: HTMLElement) {
+  fireEvent.pointerDown(triggerEl, { button: 0 });
+  fireEvent.click(triggerEl);
+}
+
 const mockAgents: ChatAgent[] = [
   {
     id: 'general',
@@ -44,11 +50,11 @@ describe('AgentSelector', () => {
       <AgentSelector agents={mockAgents} selectedId="general" onSelect={vi.fn()} />,
     );
 
-    // Click the trigger button
-    const trigger = screen.getByText('General Assistant');
-    fireEvent.click(trigger);
+    // Open the dropdown — Radix requires pointerdown before click to change state
+    const trigger = screen.getByRole('button');
+    openDropdown(trigger);
 
-    // All agents should be visible
+    // All agents should be visible in the portal
     expect(screen.getByText('Reconnaissance Agent')).toBeDefined();
     expect(screen.getByText('Exploit Agent')).toBeDefined();
   });
@@ -59,7 +65,7 @@ describe('AgentSelector', () => {
       <AgentSelector agents={mockAgents} selectedId="general" onSelect={onSelect} />,
     );
 
-    fireEvent.click(screen.getByText('General Assistant'));
+    openDropdown(screen.getByRole('button'));
     fireEvent.click(screen.getByText('Reconnaissance Agent'));
 
     expect(onSelect).toHaveBeenCalledWith('recon');
@@ -70,7 +76,7 @@ describe('AgentSelector', () => {
       <AgentSelector agents={mockAgents} selectedId="general" onSelect={vi.fn()} />,
     );
 
-    fireEvent.click(screen.getByText('General Assistant'));
+    openDropdown(screen.getByRole('button'));
 
     expect(screen.getByText('Recon specialist')).toBeDefined();
     expect(screen.getByText('Exploitation analyst')).toBeDefined();
