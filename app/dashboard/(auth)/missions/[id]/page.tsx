@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { use } from "react";
+import dynamic from "next/dynamic";
 import { ArrowLeft } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,15 @@ import { MissionFindingsTab } from "@/components/gibson/missions/MissionFindings
 import { MissionTracesTab } from "@/components/gibson/missions/MissionTracesTab";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import type { CheckpointMetadata } from "@/src/gen/gibson/daemon/v1/daemon_pb";
+import type { MissionTerminalHandle } from "@/src/components/missions/MissionTerminal";
+
+const MissionTerminal = dynamic(
+  () =>
+    import("@/src/components/missions/MissionTerminal").then(
+      (m) => m.MissionTerminal,
+    ),
+  { ssr: false },
+);
 
 /**
  * In-flight tool tracking for `<ToolStreamProgress />`.
@@ -85,6 +95,88 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
   // re-dispatched. Spec week-4-handlers-ui-e2e §5 task 53.
   const [currentlyExecutingTools, setCurrentlyExecutingTools] =
     React.useState<Map<string, InFlightTool>>(new Map());
+
+  // Ref for the Logs tab terminal. Populated on mount; the log-fetch effect
+  // below writes entries once the ref is attached (xterm.js is client-only,
+  // hence MissionTerminal is dynamically imported with ssr: false).
+  const logsTerminalRef = React.useRef<MissionTerminalHandle>(null);
+
+  React.useEffect(() => {
+    const terminal = logsTerminalRef.current;
+    if (!terminal) return;
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/missions/${encodeURIComponent(id)}/logs`,
+        );
+        if (cancelled) return;
+
+        if (!res.ok) {
+          terminal.write(
+            "\x1b[33mLog service is not available. Try again later.\x1b[0m\r\n",
+          );
+          return;
+        }
+
+        const data = (await res.json()) as
+          | {
+              available: true;
+              entries: {
+                timestamp: string;
+                level: string;
+                message: string;
+                component: string;
+              }[];
+            }
+          | { available: false; message?: string };
+
+        if (cancelled) return;
+
+        if (!data.available) {
+          terminal.write(
+            "\x1b[33mLog service is not available. Try again later.\x1b[0m\r\n",
+          );
+          return;
+        }
+
+        if (data.entries.length === 0) {
+          terminal.write(
+            "\x1b[2mNo log entries for this mission.\x1b[0m\r\n",
+          );
+          return;
+        }
+
+        const levelPrefix: Record<string, string> = {
+          error: "\x1b[31m[ERR]\x1b[0m",
+          warn: "\x1b[33m[WRN]\x1b[0m",
+          info: "\x1b[36m[INF]\x1b[0m",
+          debug: "\x1b[2m[DBG]\x1b[0m",
+        };
+
+        for (const entry of data.entries) {
+          const prefix = levelPrefix[entry.level] ?? "\x1b[2m[   ]\x1b[0m";
+          const ts = new Date(entry.timestamp).toLocaleTimeString();
+          terminal.write(`${prefix} ${ts} ${entry.message}\r\n`);
+        }
+      } catch {
+        if (!cancelled) {
+          terminal.write(
+            "\x1b[33mLog service is not available. Try again later.\x1b[0m\r\n",
+          );
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // Run once on mount when the ref is attached; id is stable for the
+    // lifetime of this page instance.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -408,13 +500,13 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
 
         {/* Logs */}
         <TabsContent value="logs" className="mt-4">
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground font-mono">
-                No logs yet.
-              </p>
-            </CardContent>
-          </Card>
+          <div style={{ height: "400px" }}>
+            <MissionTerminal
+              ref={logsTerminalRef}
+              title="Mission Logs"
+              defaultOpen={true}
+            />
+          </div>
         </TabsContent>
 
         {/* Traces */}
