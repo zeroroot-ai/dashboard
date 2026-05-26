@@ -119,6 +119,10 @@
   --fc-border-color: var(--border);
   --fc-page-bg-color: var(--muted);
   --fc-today-bg-color: var(--muted);
+
+  /* Terminal component background — near-black even in light mode so the
+   * xterm.js canvas reads as a terminal, not a page element. */
+  --terminal-bg: var(--base-1000);
 }
 
 .dark {
@@ -170,6 +174,9 @@
   --scanline-opacity: 0.010;                   /* brand-guide-exact: barely visible */
   --scanline-color: oklch(0.86 0.28 145);
   --paper-grain-opacity: 0;                    /* no paper on phosphor */
+
+  /* Terminal component background — darkest available palette value. */
+  --terminal-bg: var(--base-1000);
 }
 
 /* Legacy --color-zd-* aliases. Existing consumers (#54 home + landing,

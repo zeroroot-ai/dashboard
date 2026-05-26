@@ -117,6 +117,8 @@
     "@tiptap/react": "^3.15.3",
     "@tiptap/starter-kit": "^3.15.3",
     "@uidotdev/usehooks": "^2.4.1",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
     "@xyflow/react": "^12.10.1",
     "ai": "^6.0.141",
     "ajv": "^8.18.0",
