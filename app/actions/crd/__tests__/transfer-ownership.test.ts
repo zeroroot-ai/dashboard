@@ -30,6 +30,9 @@ vi.mock("@/src/lib/auth", () => ({
 
 vi.mock("@/src/lib/gibson-client", () => ({
   serviceClient: vi.fn(() => ({ writeAccessTuples: mocks.writeAccessTuples })),
+  userClient: vi.fn(() => ({
+    transferOwnership: mocks.writeAccessTuples,
+  })),
 }));
 
 vi.mock("@/src/lib/auth/schema", () => ({
@@ -127,35 +130,18 @@ describe("transferOwnershipAction — happy path", () => {
     expect(result).toEqual({ ok: true, data: { applied: true } });
   });
 
-  it("issues exactly one WriteAccessTuples call with 2 adds and 2 deletes", async () => {
+  it("issues exactly one transferOwnership call with the correct tenantId and newOwnerUserId", async () => {
     withSession();
 
     await transferOwnershipAction("user-target");
 
     expect(mocks.writeAccessTuples).toHaveBeenCalledOnce();
     const [payload] = mocks.writeAccessTuples.mock.calls[0] as unknown as [
-      { add: unknown[]; delete: unknown[]; reason: string },
+      { tenantId: string; newOwnerUserId: string },
     ];
 
-    // New owner gains `owner`; outgoing owner gains `admin`.
-    expect(payload.add).toEqual(
-      expect.arrayContaining([
-        { user: "user:user-target", relation: "owner", object: "tenant:acme" },
-        { user: "user:user-caller", relation: "admin", object: "tenant:acme" },
-      ]),
-    );
-    expect(payload.add).toHaveLength(2);
-
-    // Outgoing owner loses `owner`; new owner loses `admin`.
-    expect(payload.delete).toEqual(
-      expect.arrayContaining([
-        { user: "user:user-caller", relation: "owner", object: "tenant:acme" },
-        { user: "user:user-target", relation: "admin", object: "tenant:acme" },
-      ]),
-    );
-    expect(payload.delete).toHaveLength(2);
-    expect(payload.reason).toContain("user-caller");
-    expect(payload.reason).toContain("user-target");
+    expect(payload.tenantId).toBe("acme");
+    expect(payload.newOwnerUserId).toBe("user-target");
   });
 
   it("patches both TenantMember CRs for the display-cache update", async () => {

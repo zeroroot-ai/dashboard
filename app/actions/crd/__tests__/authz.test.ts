@@ -23,6 +23,20 @@ vi.mock("@/src/lib/auth", () => ({
   getServerSession: vi.fn(),
 }));
 
+vi.mock("@/src/lib/gibson-client", () => ({
+  userClient: vi.fn(() => ({
+    setTenantRole: vi.fn(async () => ({})),
+    setTeamAdmin: vi.fn(async () => ({})),
+    transferOwnership: vi.fn(async () => ({})),
+    writeAccessTuples: vi.fn(async () => ({})),
+    validateComponent: vi.fn(async () => ({})),
+    grantComponentPermissions: vi.fn(async () => ({})),
+  })),
+  serviceClient: vi.fn(() => ({
+    writeAccessTuples: vi.fn(async () => ({})),
+  })),
+}));
+
 vi.mock("@/src/lib/k8s/tenants", () => ({
   applyTenant: vi.fn(async (name: string) => ({ metadata: { name } })),
   deleteTenant: vi.fn(async () => undefined),
@@ -93,6 +107,8 @@ import * as roleActions from "../role";
 import * as accessActions from "../access";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import * as installAgentActions from "../installAgent";
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+import * as transferOwnershipActions from "../transfer-ownership";
 import { CRD_PERMISSIONS } from "../_authz";
 import type { CrdActionName } from "../types";
 import { getServerSession } from "@/src/lib/auth";
@@ -176,6 +192,7 @@ const allExportedActions = [
   ...Object.keys(roleActions),
   ...Object.keys(accessActions),
   ...Object.keys(installAgentActions),
+  ...Object.keys(transferOwnershipActions),
 ].filter((name) => name.endsWith("Action")) as CrdActionName[];
 
 const EXPECTED_ACTIONS: CrdActionName[] = Object.keys(CRD_PERMISSIONS) as CrdActionName[];

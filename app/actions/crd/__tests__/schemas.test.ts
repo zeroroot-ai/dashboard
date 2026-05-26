@@ -5,6 +5,7 @@
 
 import { describe, it, expect } from "vitest";
 
+import { planIDs } from "@/src/generated/plans";
 import {
   dns1123Label,
   emailSchema,
@@ -139,18 +140,10 @@ describe("memberRoleSchema", () => {
 });
 
 describe("tenantTierSchema", () => {
-  it.each([
-    "solo",
-    "squad",
-    "org",
-    "platform",
-    "enterprise-cloud",
-    "enterprise-onprem",
-    "public-sector",
-  ])("accepts %s", (t) => {
+  it.each(planIDs)("accepts %s", (t) => {
     expect(tenantTierSchema.safeParse(t).success).toBe(true);
   });
-  it.each(["free", "pro", "enterprise", "paid"])(
+  it.each(["free", "pro", "solo", "paid"])(
     "rejects deprecated/unknown tier %s",
     (t) => {
       expect(tenantTierSchema.safeParse(t).success).toBe(false);
@@ -173,7 +166,7 @@ describe("provisionTenantInput", () => {
     expect(r.success).toBe(true);
   });
   it("accepts with tier", () => {
-    const r = provisionTenantInput.safeParse({ displayName: "Acme", owner: "user-1", tier: "squad" });
+    const r = provisionTenantInput.safeParse({ displayName: "Acme", owner: "user-1", tier: planIDs[0] });
     expect(r.success).toBe(true);
   });
   it("rejects extra key", () => {
@@ -203,7 +196,7 @@ describe("deleteTenantInput", () => {
 
 describe("updateTenantInput", () => {
   it("accepts partial patch", () => {
-    const r = updateTenantInput.safeParse({ name: "acme", patch: { tier: "platform" } });
+    const r = updateTenantInput.safeParse({ name: "acme", patch: { tier: planIDs[0] } });
     expect(r.success).toBe(true);
   });
   it("rejects extra key on patch", () => {

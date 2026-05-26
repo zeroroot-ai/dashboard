@@ -25,6 +25,10 @@ vi.mock("@/src/lib/auth", () => ({
 
 vi.mock("@/src/lib/gibson-client", () => ({
   serviceClient: vi.fn(() => ({ writeAccessTuples: mocks.writeAccessTuples })),
+  userClient: vi.fn(() => ({
+    setTenantRole: mocks.writeAccessTuples,
+    setTeamAdmin: mocks.writeAccessTuples,
+  })),
 }));
 
 // hasPermission lives in src/lib/auth/schema; the action surface calls into
@@ -97,36 +101,30 @@ beforeEach(() => {
 });
 
 describe("setTenantRoleAction", () => {
-  it("admin → member writes member + deletes admin in a single call", async () => {
+  it("admin → member writes member role via setTenantRole", async () => {
     withSession("acme");
     const r = await setTenantRoleAction({ userId: "alice", role: "member" });
     expect(r).toEqual({ ok: true, data: { applied: true } });
     expect(mocks.writeAccessTuples).toHaveBeenCalledOnce();
     const [payload] = mocks.writeAccessTuples.mock.calls[0] as unknown as [
-      { add: unknown[]; delete: unknown[]; reason: string },
+      { tenantId: string; userId: string; role: string; remove: boolean },
     ];
-    expect(payload.add).toEqual([
-      { user: "user:alice", relation: "member", object: "tenant:acme" },
-    ]);
-    expect(payload.delete).toEqual([
-      { user: "user:alice", relation: "admin", object: "tenant:acme" },
-    ]);
-    expect(payload.reason).toContain("alice");
-    expect(payload.reason).toContain("member");
+    expect(payload.tenantId).toBe("acme");
+    expect(payload.userId).toBe("alice");
+    expect(payload.role).toBe("member");
+    expect(payload.remove).toBe(false);
   });
 
-  it("member → admin writes admin + deletes member in a single call", async () => {
+  it("member → admin writes admin role via setTenantRole", async () => {
     withSession("acme");
     await setTenantRoleAction({ userId: "alice", role: "admin" });
     const [payload] = mocks.writeAccessTuples.mock.calls[0] as unknown as [
-      { add: unknown[]; delete: unknown[] },
+      { tenantId: string; userId: string; role: string; remove: boolean },
     ];
-    expect(payload.add).toEqual([
-      { user: "user:alice", relation: "admin", object: "tenant:acme" },
-    ]);
-    expect(payload.delete).toEqual([
-      { user: "user:alice", relation: "member", object: "tenant:acme" },
-    ]);
+    expect(payload.tenantId).toBe("acme");
+    expect(payload.userId).toBe("alice");
+    expect(payload.role).toBe("admin");
+    expect(payload.remove).toBe(false);
   });
 
   it("rejects an empty userId before calling the daemon", async () => {
@@ -228,7 +226,7 @@ describe("setTenantRoleAction", () => {
 });
 
 describe("setTeamAdminAction", () => {
-  it("isAdmin=true adds the admin tuple, does NOT touch member", async () => {
+  it("isAdmin=true promotes via setTeamAdmin", async () => {
     withSession("acme");
     const r = await setTeamAdminAction({
       teamId: "red",
@@ -237,16 +235,15 @@ describe("setTeamAdminAction", () => {
     });
     expect(r).toEqual({ ok: true, data: { applied: true } });
     const [payload] = mocks.writeAccessTuples.mock.calls[0] as unknown as [
-      { add: unknown[]; delete: unknown[]; reason: string },
+      { tenantId: string; teamId: string; userId: string; isAdmin: boolean },
     ];
-    expect(payload.add).toEqual([
-      { user: "user:alice", relation: "admin", object: "team:red" },
-    ]);
-    expect(payload.delete).toEqual([]);
-    expect(payload.reason).toContain("promote");
+    expect(payload.tenantId).toBe("acme");
+    expect(payload.teamId).toBe("red");
+    expect(payload.userId).toBe("alice");
+    expect(payload.isAdmin).toBe(true);
   });
 
-  it("isAdmin=false deletes the admin tuple, leaves member intact", async () => {
+  it("isAdmin=false demotes via setTeamAdmin", async () => {
     withSession("acme");
     await setTeamAdminAction({
       teamId: "red",
@@ -254,19 +251,12 @@ describe("setTeamAdminAction", () => {
       isAdmin: false,
     });
     const [payload] = mocks.writeAccessTuples.mock.calls[0] as unknown as [
-      { add: unknown[]; delete: unknown[]; reason: string },
+      { tenantId: string; teamId: string; userId: string; isAdmin: boolean },
     ];
-    expect(payload.add).toEqual([]);
-    expect(payload.delete).toEqual([
-      { user: "user:alice", relation: "admin", object: "team:red" },
-    ]);
-    expect(payload.reason).toContain("demote");
-    // Crucial: member relation must NOT appear in either add or delete —
-    // this is the whole reason setTeamAdminAction exists vs. the dance.
-    const allTuples = [...payload.add, ...payload.delete] as Array<{
-      relation: string;
-    }>;
-    expect(allTuples.every((t) => t.relation !== "member")).toBe(true);
+    expect(payload.tenantId).toBe("acme");
+    expect(payload.teamId).toBe("red");
+    expect(payload.userId).toBe("alice");
+    expect(payload.isAdmin).toBe(false);
   });
 
   it("rejects empty teamId or userId before calling the daemon", async () => {
