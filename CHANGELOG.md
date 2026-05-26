@@ -5,6 +5,35 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.109.0](https://github.com/zero-day-ai/dashboard/compare/v0.108.0...v0.109.0) (2026-05-26)
+
+
+### Features
+
+* **crd:** migrate access/role/ownership/install actions to userClient(TenantAdminService) ([#362](https://github.com/zero-day-ai/dashboard/issues/362)) ([05a0488](https://github.com/zero-day-ai/dashboard/commit/05a0488031239cd16cb69a78657676ba424765b3))
+* **landing:** update H1 to "Zero Trust agent factory in under an hour" ([#388](https://github.com/zero-day-ai/dashboard/issues/388)) ([77c4d85](https://github.com/zero-day-ai/dashboard/commit/77c4d85c742f03c4c3b0ff9272d4fbfdb06d4c71))
+* **missions/create:** stay on page after Run Mission; show result in terminal ([#390](https://github.com/zero-day-ai/dashboard/issues/390)) ([c99a043](https://github.com/zero-day-ai/dashboard/commit/c99a04365eff35b28dd4332bbc2e3768e71613e9))
+* **missions/create:** useMissionTerminal hook — live SSE status and tool events ([#391](https://github.com/zero-day-ai/dashboard/issues/391)) ([3350306](https://github.com/zero-day-ai/dashboard/commit/3350306cb8c2b4a0f1ea41a8b95f2076da6a93a0)), closes [#384](https://github.com/zero-day-ai/dashboard/issues/384)
+* **missions:** MissionTerminal component — xterm.js shell with resize and collapse ([#387](https://github.com/zero-day-ai/dashboard/issues/387)) ([a8b5aa5](https://github.com/zero-day-ai/dashboard/commit/a8b5aa55d8090aa513678a566eebad2f3230b8e4))
+* **missions:** replace Logs tab placeholder with MissionTerminal snapshot view ([#389](https://github.com/zero-day-ai/dashboard/issues/389)) ([825b348](https://github.com/zero-day-ai/dashboard/commit/825b3484cb9d61c1a9c81b03dd319ac4fb38e604))
+* **missions:** restore mission clone via CUE source path ([#354](https://github.com/zero-day-ai/dashboard/issues/354)) ([46a9100](https://github.com/zero-day-ai/dashboard/commit/46a91006e1ed577160cc4650c2a3dd24615fc478))
+* **missions:** wire CUE submit path — ValidateMissionCUE now returns compiled definition ([#351](https://github.com/zero-day-ai/dashboard/issues/351)) ([397c2ad](https://github.com/zero-day-ai/dashboard/commit/397c2adefd886665b9388dbc54d201a27234c78b))
+* **onboarding:** use RevealableInput for LLM API key field ([#374](https://github.com/zero-day-ai/dashboard/issues/374)) ([1803aab](https://github.com/zero-day-ai/dashboard/commit/1803aab398cdef75cdc53d7f24725f964d475a3c))
+* **providers:** use RevealableInput for PASSWORD-type credential fields ([#373](https://github.com/zero-day-ai/dashboard/issues/373)) ([3564df1](https://github.com/zero-day-ai/dashboard/commit/3564df122674640735840dd61485e455c533fa47))
+* **secrets-backend:** use RevealableInput for sensitive credential fields ([#375](https://github.com/zero-day-ai/dashboard/issues/375)) ([1c769e8](https://github.com/zero-day-ai/dashboard/commit/1c769e870c0352bea18b7b0055eafa2932aecc8e))
+* **secrets:** use RevealableInput for secret value and rotation fields ([#371](https://github.com/zero-day-ai/dashboard/issues/371)) ([01e5412](https://github.com/zero-day-ai/dashboard/commit/01e5412c36caf257e37ac2c19d22738b1fa10033))
+* **teams:** migrate team CRD actions to userClient(TenantAdminService) ([#361](https://github.com/zero-day-ai/dashboard/issues/361)) ([0e594f8](https://github.com/zero-day-ai/dashboard/commit/0e594f8a33c0a0ea31c882ea2f94da02c10fce89))
+* **ui:** add RevealableInput component with eye-toggle for password fields ([#370](https://github.com/zero-day-ai/dashboard/issues/370)) ([cd01b39](https://github.com/zero-day-ai/dashboard/commit/cd01b397a279a79097020863206b11c908c5fdd7))
+
+
+### Bug Fixes
+
+* **missions/create:** two-row toolbar so Run Mission button is always visible ([#386](https://github.com/zero-day-ai/dashboard/issues/386)) ([c895748](https://github.com/zero-day-ai/dashboard/commit/c895748fe47449a56c235e461766c35d03764027))
+* **missions:** wrap DEFAULT_CUE and scaffoldCUE under mission: {} field ([#377](https://github.com/zero-day-ai/dashboard/issues/377)) ([e7aa080](https://github.com/zero-day-ai/dashboard/commit/e7aa080ab4fb01dacc7fd8fbf8524b556c2a1bd1))
+* **providers:** correct fallback-chain API client URL ([#393](https://github.com/zero-day-ai/dashboard/issues/393)) ([6241c2e](https://github.com/zero-day-ai/dashboard/commit/6241c2e00dbb521f141eae827d01482d7c5a516d)), closes [#392](https://github.com/zero-day-ai/dashboard/issues/392)
+* redirect to sign-in when session carries opaque (non-JWT) access token ([#360](https://github.com/zero-day-ai/dashboard/issues/360)) ([79e1795](https://github.com/zero-day-ai/dashboard/commit/79e179569c01d0d37b764c57f484293c599efb32))
+* remove export type re-exports from use server files (Turbopack crash) ([#356](https://github.com/zero-day-ai/dashboard/issues/356)) ([1f17441](https://github.com/zero-day-ai/dashboard/commit/1f17441c561270dd2ede239296e2b159daa6e072))
+
 ## [0.108.0](https://github.com/zero-day-ai/dashboard/compare/v0.107.0...v0.108.0) (2026-05-24)
 
 
