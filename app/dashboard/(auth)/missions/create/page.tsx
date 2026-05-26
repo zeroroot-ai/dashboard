@@ -3,6 +3,7 @@
 import * as React from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import type { MissionTerminalHandle } from "@/src/components/missions/MissionTerminal";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Loader2, Rocket, X } from "lucide-react";
 import { toast } from "sonner";
@@ -35,6 +36,14 @@ const MissionCUEEditor = dynamic(
       </div>
     ),
   }
+);
+
+const MissionTerminal = dynamic(
+  () =>
+    import("@/src/components/missions/MissionTerminal").then(
+      (m) => m.MissionTerminal
+    ),
+  { ssr: false }
 );
 
 const DEFAULT_CUE = `// Gibson Mission Definition (CUE)
@@ -108,6 +117,8 @@ export default function CreateMissionPage() {
   const urlTemplateId = searchParams.get("template") ?? undefined;
   const urlDefinitionName = searchParams.get("definition") ?? undefined;
   const urlCloneMissionId = searchParams.get("clone") ?? undefined;
+
+  const terminalRef = React.useRef<MissionTerminalHandle>(null);
 
   const [cueSource, setCueSource] = React.useState<string>(DEFAULT_CUE);
   const [errorCount, setErrorCount] = React.useState(0);
@@ -487,6 +498,8 @@ export default function CreateMissionPage() {
           onDiagnosticsChange={setErrorCount}
         />
       </div>
+
+      <MissionTerminal ref={terminalRef} title="Mission Output" defaultOpen={false} />
     </div>
   );
 }
