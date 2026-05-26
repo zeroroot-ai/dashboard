@@ -127,6 +127,8 @@ export default function CreateMissionPage() {
   const [cueSource, setCueSource] = React.useState<string>(DEFAULT_CUE);
   const [errorCount, setErrorCount] = React.useState(0);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [activeMissionId, setActiveMissionId] = React.useState<string | undefined>(undefined);
+  const [terminalOpen, setTerminalOpen] = React.useState(false);
 
   const [currentDraftId, setCurrentDraftId] = React.useState<string | undefined>(undefined);
   const [currentDraftName, setCurrentDraftName] = React.useState<string | undefined>(undefined);
@@ -341,19 +343,27 @@ export default function CreateMissionPage() {
   }, [isDirty]);
 
   async function handleRunMission() {
+    // Open the terminal immediately before the action resolves.
+    setTerminalOpen(true);
+    terminalRef.current?.write('\x1b[36mLaunching mission…\x1b[0m\r\n');
+
     setIsSubmitting(true);
     try {
       const res = await createMissionFromCUEAction({ cueSource });
       if (!res.ok) {
+        terminalRef.current?.write('\x1b[31m✗ ' + res.error + '\x1b[0m\r\n');
         toast.error(res.error);
         return;
       }
+      const missionId = res.missionId;
+      setActiveMissionId(missionId);
+      terminalRef.current?.write('\x1b[32m✓ Mission started — ID: ' + missionId + '\x1b[0m\r\n');
+      terminalRef.current?.write('\x1b[2mUse the Missions list to view full details.\x1b[0m\r\n');
       toast.success("Mission launched");
-      router.push("/dashboard/missions");
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "An unexpected error occurred"
-      );
+      const msg = err instanceof Error ? err.message : "An unexpected error occurred";
+      terminalRef.current?.write('\x1b[31m✗ ' + msg + '\x1b[0m\r\n');
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -501,7 +511,12 @@ export default function CreateMissionPage() {
         />
       </div>
 
-      <MissionTerminal ref={terminalRef} title="Mission Output" defaultOpen={false} />
+      <MissionTerminal
+        ref={terminalRef}
+        title="Mission Output"
+        defaultOpen={false}
+        imperativeOpen={terminalOpen}
+      />
     </div>
   );
 }

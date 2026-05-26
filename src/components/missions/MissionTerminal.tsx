@@ -47,6 +47,13 @@ interface MissionTerminalProps {
   title?: string;
   /** Whether the panel starts open. Persisted in localStorage. */
   defaultOpen?: boolean;
+  /**
+   * When this prop transitions to `true`, the panel opens regardless of the
+   * persisted localStorage state. The parent can set it to `true` to
+   * programmatically open the terminal (e.g. on "Run Mission" click) without
+   * reaching into localStorage directly.
+   */
+  imperativeOpen?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -79,11 +86,21 @@ function readStoredOpen(defaultOpen: boolean): boolean {
 export const MissionTerminal = React.forwardRef<
   MissionTerminalHandle,
   MissionTerminalProps
->(function MissionTerminal({ title = "Terminal", defaultOpen = false }, ref) {
+>(function MissionTerminal(
+  { title = "Terminal", defaultOpen = false, imperativeOpen },
+  ref
+) {
   // --- open/collapsed state ---
   const [isOpen, setIsOpen] = React.useState<boolean>(() =>
     readStoredOpen(defaultOpen)
   );
+
+  // --- imperativeOpen: open the panel whenever the prop flips to true ---
+  React.useEffect(() => {
+    if (imperativeOpen) {
+      setIsOpen(true);
+    }
+  }, [imperativeOpen]);
 
   // --- panel height ---
   const [height, setHeight] = React.useState<number>(() => readStoredHeight());
@@ -92,6 +109,12 @@ export const MissionTerminal = React.forwardRef<
   const containerRef = React.useRef<HTMLDivElement>(null);
   const terminalRef = React.useRef<Terminal | null>(null);
   const fitAddonRef = React.useRef<FitAddon | null>(null);
+
+  // --- pending writes queue ---
+  // Writes that arrive before the xterm instance is initialized (e.g. because
+  // the panel was just opened and the effect hasn't run yet) are buffered here
+  // and flushed once the terminal is ready.
+  const pendingWritesRef = React.useRef<string[]>([]);
 
   // --- persist open state ---
   React.useEffect(() => {
@@ -138,6 +161,12 @@ export const MissionTerminal = React.forwardRef<
     terminalRef.current = terminal;
     fitAddonRef.current = fitAddon;
 
+    // Flush any writes that arrived before this effect ran.
+    for (const text of pendingWritesRef.current) {
+      terminal.write(text);
+    }
+    pendingWritesRef.current = [];
+
     const observer = new ResizeObserver(() => {
       fitAddonRef.current?.fit();
     });
@@ -165,10 +194,16 @@ export const MissionTerminal = React.forwardRef<
   // --- imperative handle ---
   React.useImperativeHandle(ref, () => ({
     write(text: string) {
-      terminalRef.current?.write(text);
+      if (terminalRef.current) {
+        terminalRef.current.write(text);
+      } else {
+        // Buffer for when the panel opens and xterm initializes.
+        pendingWritesRef.current.push(text);
+      }
     },
     clear() {
       terminalRef.current?.clear();
+      pendingWritesRef.current = [];
     },
   }));
 
