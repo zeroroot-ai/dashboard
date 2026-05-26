@@ -7,7 +7,7 @@
  * the component incurs zero re-renders per incoming line.
  *
  * Named event listeners are used (not onmessage) because the SSE bridge emits
- * typed frames: status, tool_started, tool_completed, error.
+ * typed frames: status, tool_started, tool_completed, error, log.
  *
  * The EventSource is closed automatically when the mission reaches a terminal
  * status (completed, failed, stopped) and on useEffect cleanup.
@@ -54,6 +54,36 @@ interface ErrorPayload {
   message?: string;
   code?: string;
   missionId?: string;
+}
+
+interface LogPayload {
+  timestamp: string;
+  level: string;
+  message: string;
+  component?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps a structured log level to a coloured, fixed-width ANSI prefix so the
+ * terminal renders an aligned `[LVL] HH:MM:SS message` gutter.
+ */
+function levelPrefix(level: string): string {
+  switch (level) {
+    case "error":
+      return "\x1b[31m[ERR]\x1b[0m";
+    case "warn":
+      return "\x1b[33m[WRN]\x1b[0m";
+    case "info":
+      return "\x1b[36m[INF]\x1b[0m";
+    case "debug":
+      return "\x1b[2m[DBG]\x1b[0m";
+    default:
+      return "\x1b[2m[   ]\x1b[0m";
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -147,10 +177,28 @@ export function useMissionTerminal(
       write("\x1b[31m! " + message + "\x1b[0m\r\n");
     };
 
+    // ---- log ----
+    const handleLog = (e: MessageEvent<string>) => {
+      let payload: LogPayload;
+      try {
+        payload = JSON.parse(e.data) as LogPayload;
+      } catch {
+        return;
+      }
+      const prefix = levelPrefix(payload.level);
+      const time = new Date(payload.timestamp).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+      write(`${prefix} ${time} ${payload.message}\r\n`);
+    };
+
     es.addEventListener("status", handleStatus);
     es.addEventListener("tool_started", handleToolStarted);
     es.addEventListener("tool_completed", handleToolCompleted);
     es.addEventListener("error", handleError);
+    es.addEventListener("log", handleLog);
 
     return () => {
       es.close();
