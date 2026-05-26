@@ -41,8 +41,10 @@ const DEFAULT_CUE = `// Gibson Mission Definition (CUE)
 // Edit below — inline diagnostics appear as you type.
 package mission
 
-name: "my-mission"
-description: "Describe what this mission does."
+mission: {
+	name:        "my-mission"
+	description: "Describe what this mission does."
+}
 `;
 
 interface DefinitionMeta {
@@ -60,9 +62,11 @@ function scaffoldCUE(def: {
   return `// Gibson Mission Definition (CUE)
 package mission
 
-name: "${def.name}"
-description: "${def.description}"
-version: "${def.version}"
+mission: {
+\tname:        "${def.name}"
+\tdescription: "${def.description}"
+\tversion:     "${def.version}"
+}
 `;
 }
 
