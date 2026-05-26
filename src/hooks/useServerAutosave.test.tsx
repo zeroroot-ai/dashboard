@@ -283,6 +283,26 @@ describe("useServerAutosave", () => {
     expect(callArgs.name).toBe("Recon Mission");
   });
 
+  it("parses the draft name from an indented name: field inside mission: {}", async () => {
+    mockSaveMissionDraftAction.mockReturnValue(makeSuccessResult("draft-indented-name"));
+
+    const indentedCUE = `package mission\n\nmission: {\n\tname: "my-mission-1"\n\tdescription: "test"\n}`;
+    renderHook(() =>
+      useServerAutosave(
+        { cueSource: indentedCUE },
+        { debounceMs: 100 },
+      ),
+    );
+
+    await act(async () => {
+      vi.advanceTimersByTime(200);
+      await Promise.resolve();
+    });
+
+    const callArgs = mockSaveMissionDraftAction.mock.calls[0][0];
+    expect(callArgs.name).toBe("my-mission-1");
+  });
+
   it('falls back to "Untitled Draft" when no name: field is present in CUE', async () => {
     mockSaveMissionDraftAction.mockReturnValue(makeSuccessResult("draft-fallback"));
 
