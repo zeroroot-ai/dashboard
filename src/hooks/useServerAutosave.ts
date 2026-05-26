@@ -58,7 +58,7 @@ const DEFAULT_DEBOUNCE_MS = 30000;
  * Returns undefined when not found.
  */
 function parseCueName(cueSource: string): string | undefined {
-  const match = /^name:\s*["']?([^"'\n]+)["']?/m.exec(cueSource);
+  const match = /^\s*name:\s*["']?([^"'\n]+)["']?/m.exec(cueSource);
   return match?.[1]?.trim() || undefined;
 }
 
