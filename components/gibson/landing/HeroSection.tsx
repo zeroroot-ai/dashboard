@@ -222,8 +222,8 @@ export function HeroSection() {
               marginBlock: 0,
             }}
           >
-            Stand up your security{" "}
-            <span className="text-highlight">agent factory</span> in under an hour.
+            <span className="text-highlight">Zero Trust</span>{" "}
+            agent factory in under an hour.
           </h1>
         </div>
 
