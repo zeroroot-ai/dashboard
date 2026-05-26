@@ -194,7 +194,7 @@ function envoyStatusFrom(err: unknown): string | null {
  * failures still produce a meaningful status label.
  */
 const telemetryInterceptor: Interceptor = (next) => async (req) => {
-  const method = req.method.name;
+  const method = req.method?.name ?? 'unknown';
   try {
     const res = await next(req);
     adminRpcTotal.inc({ method, status: 'ok' });

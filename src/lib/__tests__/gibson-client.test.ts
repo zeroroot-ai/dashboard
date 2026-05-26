@@ -63,6 +63,15 @@ vi.mock('@/src/gen/gibson/graph/v1/graph_pb', () => ({
   FindingCountGroupBy: { SEVERITY: 1, CATEGORY: 2, FINDING_COUNT_GROUP_BY_UNSPECIFIED: 0 },
 }));
 
+// Stub out the active-tenant cookie helper so that runInterceptors() can
+// exercise the auth interceptor without a real Next.js request context.
+// Returns an empty string so the conditional `if (tenant)` in the auth
+// interceptor is falsy — x-gibson-tenant is therefore not injected, which
+// matches the "Removes all x-gibson-* header injection" contract the tests verify.
+vi.mock('@/src/lib/auth/active-tenant', () => ({
+  getActiveTenant: vi.fn(async () => ''),
+}));
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
