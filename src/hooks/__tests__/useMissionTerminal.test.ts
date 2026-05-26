@@ -127,6 +127,27 @@ describe("useMissionTerminal", () => {
     );
   });
 
+  it("writes a coloured, timestamped line on a log frame", () => {
+    const writeMock = vi.fn();
+    const ref = makeRef(writeMock);
+
+    renderHook(() => useMissionTerminal("mission-log", ref));
+
+    act(() => {
+      fakeES.emit("log", {
+        timestamp: "2024-01-01T10:30:45.000Z",
+        level: "info",
+        message: "agent started",
+      });
+    });
+
+    expect(writeMock).toHaveBeenCalledTimes(1);
+    const line = writeMock.mock.calls[0][0] as string;
+    expect(line).toContain("[INF]");
+    expect(line).toContain("agent started");
+    expect(line.endsWith("\r\n")).toBe(true);
+  });
+
   it("writes a red error line on an error frame", () => {
     const writeMock = vi.fn();
     const ref = makeRef(writeMock);

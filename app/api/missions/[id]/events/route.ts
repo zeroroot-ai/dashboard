@@ -48,6 +48,7 @@ import { create } from "@bufbuild/protobuf";
 
 import { logger } from "@/src/lib/logger";
 import { getServerSession } from "@/src/lib/auth";
+import { LokiClient } from "@/src/lib/loki-client";
 import { listMissions, userClient } from "@/src/lib/gibson-client";
 import {
   DaemonService,
@@ -64,6 +65,10 @@ import {
 const POLL_INTERVAL_MS = 3000;
 const HEARTBEAT_INTERVAL_MS = 15000;
 const LIST_PAGE_SIZE = 50;
+
+// Nanoseconds-per-millisecond, as a BigInt. The tsconfig target is ES2017,
+// which disallows BigInt literals (`1_000_000n`), so we construct via BigInt().
+const NS_PER_MS = BigInt(1_000_000);
 
 /**
  * SSE frame builder. Splits multi-line payloads on `\n` per the spec
@@ -164,6 +169,17 @@ export async function GET(
       let lastStatus: string | null = null;
       let cancelled = false;
       let seq = 0;
+
+      // ---- Loki log tail ----
+      // While the mission is `running` we tail Loki for this mission's log
+      // lines and forward each as an `event: log` frame. We initialise the
+      // cursor to "now" so we never replay historical lines on connect — the
+      // logs tab (GET .../logs) owns the backfill; this bridge is live-only.
+      // `LokiClient` reads env.LOKI_URL via process.env (same path as
+      // logs/route.ts). If Loki isn't ready we skip silently — log frames are
+      // best-effort and must never crash the status/checkpoint bridge.
+      const loki = new LokiClient();
+      let lastLokiTimestampNs = BigInt(Date.now()) * NS_PER_MS;
 
       // Tear down state shared between the polling loop and the
       // ReadableStream `cancel` hook below.
@@ -290,6 +306,92 @@ export async function GET(
             { ...baseLog, err },
             "listMissions poll failed; will retry",
           );
+        }
+
+        if (cancelled) return;
+
+        // ---- Loki log tail ----
+        // Only tail while the mission is actively running. When status leaves
+        // `running` this branch is skipped, so log frames naturally stop. The
+        // tail is best-effort: any Loki error (including an unavailable
+        // backend) is swallowed so the status/checkpoint bridge keeps polling.
+        // NOTE: the Loki-tail branch is exercised by this route's __tests__
+        // suite (LokiClient mocked) and end-to-end against a live Kind cluster;
+        // transient backend failures are intentionally silent here.
+        if (lastStatus === "running") {
+          try {
+            const ready = await loki.isReady();
+            if (ready) {
+              const entries = await loki.query({
+                query: `{mission_id="${missionId}"}`,
+                start: new Date(Number(lastLokiTimestampNs / NS_PER_MS)),
+                end: new Date(),
+                limit: 100,
+                direction: "forward",
+                tenantId,
+              });
+
+              let maxTsNs = lastLokiTimestampNs;
+              for (const entry of entries) {
+                const tsNs = BigInt(entry.timestamp.getTime()) * NS_PER_MS;
+                // Skip lines at or before the cursor — Loki's `start` is
+                // inclusive, so the most recent already-emitted line can come
+                // back again on the next poll.
+                if (tsNs < lastLokiTimestampNs) continue;
+
+                // `LokiLogEntry` carries the raw line + labels; the level /
+                // message / component live inside the structured JSON payload
+                // (same parse shape as GET .../logs).
+                let parsed: Record<string, unknown> = {};
+                try {
+                  parsed = JSON.parse(entry.line);
+                } catch {
+                  parsed = { msg: entry.line };
+                }
+                const level =
+                  (parsed.level as string)?.toLowerCase() || "info";
+                const message =
+                  (parsed.msg as string) ||
+                  (parsed.message as string) ||
+                  entry.line;
+                const component = parsed.component as string | undefined;
+
+                try {
+                  controller.enqueue(
+                    encoder.encode(
+                      sseFrame(
+                        "log",
+                        {
+                          timestamp: entry.timestamp.toISOString(),
+                          level,
+                          message,
+                          component,
+                        },
+                        String(seq++),
+                      ),
+                    ),
+                  );
+                } catch {
+                  stopPolling();
+                  return;
+                }
+
+                if (tsNs > maxTsNs) maxTsNs = tsNs;
+              }
+
+              // Advance the cursor past the newest line seen (+1ns) so the
+              // next poll never re-emits it.
+              if (maxTsNs >= lastLokiTimestampNs) {
+                lastLokiTimestampNs = maxTsNs + BigInt(1);
+              }
+            }
+            // isReady() === false → skip silently (no error frame).
+          } catch (err) {
+            logger.warn(
+              { ...baseLog, err },
+              "Loki tail poll failed; will retry",
+            );
+          }
         }
       };
 
