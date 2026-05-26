@@ -27,7 +27,7 @@ const LS_HEIGHT_KEY = "mission-terminal-height";
 const LS_OPEN_KEY = "mission-terminal-open";
 const MIN_HEIGHT = 80;
 const CLAMP_FRACTION = 0.6;
-const DEFAULT_HEIGHT = 200;
+const DEFAULT_HEIGHT = 280;
 
 // ---------------------------------------------------------------------------
 // Imperative handle
