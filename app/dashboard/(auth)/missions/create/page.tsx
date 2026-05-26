@@ -435,56 +435,54 @@ export default function CreateMissionPage() {
 
       <Separator />
 
-      <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
-        <div className="flex items-center gap-2 flex-wrap">
-          <DefinitionPickerDropdown
-            value={urlDefinitionName ?? null}
-            onChange={handleDefinitionChange}
-            disabled={draftLoading}
-          />
+      <div className="flex items-center gap-2 flex-wrap mb-2">
+        <DefinitionPickerDropdown
+          value={urlDefinitionName ?? null}
+          onChange={handleDefinitionChange}
+          disabled={draftLoading}
+        />
 
-          <DraftsMenu
-            currentDraftId={currentDraftId}
-            onDeleted={handleDraftDeleted}
-          />
+        <DraftsMenu
+          currentDraftId={currentDraftId}
+          onDeleted={handleDraftDeleted}
+        />
 
-          {draftLoading && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Loader2 className="size-3 animate-spin" />
-              Loading draft...
-            </span>
-          )}
-        </div>
+        {draftLoading && (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Loader2 className="size-3 animate-spin" />
+            Loading draft...
+          </span>
+        )}
 
-        <span className="text-xs text-muted-foreground select-none">
+        <span className="ml-auto text-xs text-muted-foreground select-none">
           {autosaveLabel}
         </span>
-
-        <div className="flex items-center gap-2">
-          <SaveDraftButton
-            cueSource={cueSource}
-            currentDraftId={currentDraftId}
-            currentDraftName={currentDraftName}
-            isDirty={isDirty}
-            onSaved={handleDraftSaved}
-          />
-          <Button
-            size="sm"
-            onClick={handleRunMission}
-            disabled={isSubmitting || errorCount > 0}
-            className="gap-1.5"
-          >
-            {isSubmitting ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Rocket className="size-3.5" />
-            )}
-            Run Mission
-          </Button>
-        </div>
       </div>
 
-      <div style={{ height: "calc(100vh - 14rem)" }}>
+      <div className="flex items-center gap-2 mb-4">
+        <SaveDraftButton
+          cueSource={cueSource}
+          currentDraftId={currentDraftId}
+          currentDraftName={currentDraftName}
+          isDirty={isDirty}
+          onSaved={handleDraftSaved}
+        />
+        <Button
+          size="sm"
+          onClick={handleRunMission}
+          disabled={isSubmitting || errorCount > 0}
+          className="gap-1.5"
+        >
+          {isSubmitting ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Rocket className="size-3.5" />
+          )}
+          Run Mission
+        </Button>
+      </div>
+
+      <div style={{ height: "calc(100vh - 18rem)" }}>
         <MissionCUEEditor
           value={cueSource}
           onChange={setCueSource}
