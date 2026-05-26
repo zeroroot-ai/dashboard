@@ -56,7 +56,7 @@ const DASHBOARD_ROOT = resolve(__dirname, '..');
 const WS = resolve(DASHBOARD_ROOT, '.tmp/proto-ws');
 const OUTPUT_PATH = resolve(DASHBOARD_ROOT, 'src/gen/authz/registry.ts');
 
-// Workspace root: ~/Code/zero-day.ai/. Sibling repos hang off here.
+// Workspace root: ~/Code/zeroroot.ai/. Sibling repos hang off here.
 // Gibson lives at enterprise/platform/gibson — the `core/` prefix was the
 // pre-refactor layout and is no longer present.
 //
@@ -105,7 +105,7 @@ function resolveSdkProtoDir() {
   // Module-cache fallback: `go list -m` against the gibson repo resolves
   // the SDK to whichever version gibson is pinned to.
   try {
-    const dir = execSync('go list -m -f "{{.Dir}}" github.com/zero-day-ai/sdk', {
+    const dir = execSync('go list -m -f "{{.Dir}}" github.com/zeroroot-ai/sdk', {
       cwd: GIBSON_REPO,
       encoding: 'utf8',
       stdio: 'pipe',
@@ -114,11 +114,11 @@ function resolveSdkProtoDir() {
     return resolve(dir, 'api/proto');
   } catch (err) {
     process.stderr.write(
-      '[gen-authz-registry] FATAL: failed to resolve github.com/zero-day-ai/sdk.\n' +
+      '[gen-authz-registry] FATAL: failed to resolve github.com/zeroroot-ai/sdk.\n' +
         `  Tried sibling checkout at: ${SDK_SIBLING}\n` +
         `  Tried module-cache via gibson at: ${GIBSON_REPO}\n` +
-        '  Clone zero-day-ai/sdk at opensource/sdk in your workspace, or\n' +
-        '  run from the canonical workspace at ~/Code/zero-day.ai/.\n' +
+        '  Clone zeroroot-ai/sdk at opensource/sdk in your workspace, or\n' +
+        '  run from the canonical workspace at ~/Code/zeroroot.ai/.\n' +
         `  Underlying error: ${err.message ?? err}\n`,
     );
     process.exit(1);
@@ -132,8 +132,8 @@ function ensureGibsonLocalProtos() {
     process.stderr.write(
       '[gen-authz-registry] FATAL: daemon-local protos not found at:\n' +
         `    ${GIBSON_LOCAL_PROTOS}\n` +
-        '  Clone zero-day-ai/gibson alongside this dashboard checkout, or\n' +
-        '  run from the canonical workspace at ~/Code/zero-day.ai/.\n' +
+        '  Clone zeroroot-ai/gibson alongside this dashboard checkout, or\n' +
+        '  run from the canonical workspace at ~/Code/zeroroot.ai/.\n' +
         `  Underlying error: ${err.message ?? err}\n`,
     );
     process.exit(1);
@@ -147,8 +147,8 @@ function ensurePlatformSdkProtos() {
     process.stderr.write(
       '[gen-authz-registry] FATAL: platform-sdk protos not found at:\n' +
         `    ${PLATFORM_SDK_PROTOS}\n` +
-        '  Clone zero-day-ai/platform-sdk at opensource/platform-sdk in your\n' +
-        '  workspace, or run from the canonical workspace at ~/Code/zero-day.ai/.\n' +
+        '  Clone zeroroot-ai/platform-sdk at opensource/platform-sdk in your\n' +
+        '  workspace, or run from the canonical workspace at ~/Code/zeroroot.ai/.\n' +
         `  Underlying error: ${err.message ?? err}\n`,
     );
     process.exit(1);
@@ -189,7 +189,7 @@ function buildWorkspace() {
       '    excludes:',
       '      - sdk-proto/google',
       // The following proto packages were migrated to platform-sdk
-      // (parent PRD zero-day-ai/.github#101). Exclude from the OSS SDK
+      // (parent PRD zeroroot-ai/.github#101). Exclude from the OSS SDK
       // module so buf does not see two copies of each file. After
       // sdk#105 merges, these directories vanish from the OSS SDK and
       // the excludes become no-ops (kept for tag-skew safety).
@@ -200,7 +200,7 @@ function buildWorkspace() {
       '      - sdk-proto/gibson/usage',
       // platform-sdk is the authoritative home for daemon-admin /
       // authz / budget / usage / daemon-discovery / daemon-operator
-      // protos (parent PRD zero-day-ai/.github#101). dashboard#406.
+      // protos (parent PRD zeroroot-ai/.github#101). dashboard#406.
       '  - path: platform-sdk-proto',
       '    excludes:',
       // gibson/auth/v1/options.proto is intentionally shared between

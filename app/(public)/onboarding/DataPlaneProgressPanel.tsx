@@ -137,7 +137,7 @@ export function DataPlaneProgressPanel({ onAllReady }: DataPlaneProgressPanelPro
       <p className="text-sm text-destructive">
         Unable to read provisioning status. Please refresh or{' '}
         <a
-          href="mailto:support@zero-day.ai"
+          href="mailto:support@zeroroot.ai"
           className="underline"
         >
           contact support
@@ -164,10 +164,10 @@ export function DataPlaneProgressPanel({ onAllReady }: DataPlaneProgressPanelPro
           <p>One or more stores failed to provision. Please contact support.</p>
           <p className="font-medium">
             <a
-              href="mailto:support@zero-day.ai"
+              href="mailto:support@zeroroot.ai"
               className="underline"
             >
-              support@zero-day.ai
+              support@zeroroot.ai
             </a>
           </p>
         </div>

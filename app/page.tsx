@@ -13,8 +13,8 @@ type FooterLink = {
 
 const footerLinks: FooterLink[] = [
   { label: 'docs', href: '/docs' },
-  { label: 'discord', href: 'https://discord.gg/zero-day-ai', external: true },
-  { label: 'github', href: 'https://github.com/zero-day-ai/adk', external: true },
+  { label: 'discord', href: 'https://discord.gg/zeroroot-ai', external: true },
+  { label: 'github', href: 'https://github.com/zeroroot-ai/adk', external: true },
   { label: 'pricing', href: '/pricing' },
 ];
 
@@ -66,7 +66,7 @@ export default function RootPage() {
         </section>
       </main>
       <footer className="border-t border-border py-8 text-center font-mono text-xs text-foreground opacity-70">
-        <p>&copy; {new Date().getFullYear()} zero-day.ai</p>
+        <p>&copy; {new Date().getFullYear()} zeroroot.ai</p>
       </footer>
     </div>
   );

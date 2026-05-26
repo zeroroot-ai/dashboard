@@ -9,9 +9,9 @@
  *
  * Inputs (env):
  *   TRACE_SLUG     — workspace slug to use (defaults to trace-<timestamp>)
- *   TRACE_EMAIL    — email to use (defaults to <slug>@trace.zero-day.local)
+ *   TRACE_EMAIL    — email to use (defaults to <slug>@trace.zeroroot.local)
  *   TRACE_PASSWORD — password (defaults to a generated secure password)
- *   PLAYWRIGHT_BASE_URL — defaults to https://app.zero-day.local:30443
+ *   PLAYWRIGHT_BASE_URL — defaults to https://app.zeroroot.local:30443
  *
  * Outputs:
  *   /tmp/signup-trace-result.json  — per-step status, final URL, panel state
@@ -25,11 +25,11 @@
 import { test, expect } from "@playwright/test";
 import * as fs from "fs";
 
-const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zero-day.local:30443";
+const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
 
 const now = Date.now();
 const SLUG = process.env.TRACE_SLUG ?? `trace-${String(now).slice(-8)}`;
-const EMAIL = process.env.TRACE_EMAIL ?? `${SLUG}@trace.zero-day.local`;
+const EMAIL = process.env.TRACE_EMAIL ?? `${SLUG}@trace.zeroroot.local`;
 const PASSWORD = process.env.TRACE_PASSWORD ?? `Ae1!trace${String(now).slice(-6)}`;
 
 interface TraceResult {

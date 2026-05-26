@@ -292,7 +292,7 @@ function EffectsShowcase() {
           <span className="text-highlight">[</span>
           <span className="text-alt">gibson</span>
           <span className="text-highlight">@</span>
-          <span className="text-highlight">zero-day</span>
+          <span className="text-highlight">zeroroot</span>
           <span className="text-alt">]: </span>
           <span className="text-highlight"> ~ </span>
           <span className="text-alt">$</span>

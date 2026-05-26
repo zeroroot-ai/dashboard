@@ -72,7 +72,7 @@ const messages: TypewriterMessage[] = [
 ];
 
 const terminalLines: Array<[string, string, "cmd" | "ok" | "info" | "sandbox"]> = [
-  ["$", "git clone https://github.com/zero-day-ai/adk gibson-adk", "cmd"],
+  ["$", "git clone https://github.com/zeroroot-ai/adk gibson-adk", "cmd"],
   ["$", "cd gibson-adk", "cmd"],
   ["$", "gibson component init recon-agent", "cmd"],
   ["$", "gibson component register --client-id ... --client-secret -", "cmd"],
@@ -139,7 +139,7 @@ function Schematic() {
 
       <pre className="overflow-x-auto font-mono text-[11px] md:text-xs leading-[1.7] text-highlight/85">
         <code>
-{` EXECUTION PLANE           ╎    CONTROL PLANE · api.zero-day.ai\n`}
+{` EXECUTION PLANE           ╎    CONTROL PLANE · api.zeroroot.ai\n`}
 {` ┌──────────────────┐      ╎    ┌──────────────────────┐\n`}
 {` │ `}<Pulse />{` agent binary   │      ╎    │ `}<Pulse />{` gibson      LIVE   │\n`}
 {` │   runs on:       │      ╎    │ `}<Pulse />{` graph store READY  │\n`}
@@ -171,10 +171,10 @@ function TerminalCard() {
         <span className="h-3 w-3 rounded-full bg-alt/70" />
         <span className="h-3 w-3 rounded-full bg-highlight/70" />
         <span className="ml-3 font-mono text-xs text-highlight/60">
-          ~/zero-day
+          ~/zeroroot
         </span>
         {/* Brand mark inline in the title bar so the terminal reads as a
-            zero-day.ai terminal, not a generic macOS one. */}
+            zeroroot.ai terminal, not a generic macOS one. */}
         <span className="ml-auto text-highlight/55">
           <Brain size={14} aria-hidden />
         </span>
@@ -249,7 +249,7 @@ export function HeroSection() {
           </Button>
           <Button variant="outline" size="lg" asChild>
             <a
-              href="https://github.com/zero-day-ai/adk"
+              href="https://github.com/zeroroot-ai/adk"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2"

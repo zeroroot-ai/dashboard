@@ -108,8 +108,8 @@ async function main() {
       features,
       business_profile: {
         headline: 'Gibson — AI Security Research Platform',
-        privacy_policy_url: 'https://zero-day.ai/privacy',
-        terms_of_service_url: 'https://zero-day.ai/terms',
+        privacy_policy_url: 'https://zeroroot.ai/privacy',
+        terms_of_service_url: 'https://zeroroot.ai/terms',
       },
     });
 
@@ -123,8 +123,8 @@ async function main() {
       features,
       business_profile: {
         headline: 'Gibson — AI Security Research Platform',
-        privacy_policy_url: 'https://zero-day.ai/privacy',
-        terms_of_service_url: 'https://zero-day.ai/terms',
+        privacy_policy_url: 'https://zeroroot.ai/privacy',
+        terms_of_service_url: 'https://zeroroot.ai/terms',
       },
     });
 

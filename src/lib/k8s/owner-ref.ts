@@ -47,7 +47,7 @@ export async function getTenantOwnerRef(
     const uid = t.metadata.uid;
     if (!uid) return null;
     const ref: K8sOwnerReference = {
-      apiVersion: 'gibson.zero-day.ai/v1alpha1',
+      apiVersion: 'gibson.zeroroot.ai/v1alpha1',
       kind: 'Tenant',
       name: t.metadata.name,
       uid,

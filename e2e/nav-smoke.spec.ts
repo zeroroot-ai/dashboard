@@ -20,7 +20,7 @@ import { encodeTestSession } from "@/src/lib/test-fixtures/encode-session";
 const MOCK_USER = {
   sub: "test-user-nav-smoke",
   name: "Nav Smoke",
-  email: "nav-smoke@test.zero-day.local",
+  email: "nav-smoke@test.zeroroot.local",
 };
 const MOCK_TENANT_ID = "tenant-nav-smoke";
 

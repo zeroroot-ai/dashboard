@@ -56,7 +56,7 @@ gibson component validate
 ## The `plugin.yaml` manifest
 
 ```yaml
-apiVersion: plugin.gibson.zero-day.ai/v1
+apiVersion: plugin.gibson.zeroroot.ai/v1
 kind: Plugin
 
 metadata:
@@ -101,7 +101,7 @@ spec:
 |---|---|---|
 | `process` (default) | Bare process — laptop, VM, sidecar container | Fastest dev loop, simplest deploy. |
 | `pod` | A Kubernetes pod, scheduled by your runtime of choice | Production-style isolation. The included `Dockerfile` is wired for this. |
-| `setec` | A microVM under the [Setec](https://github.com/zero-day-ai/setec) sandbox operator | Strong isolation for sensitive workloads. `policy.setec_required: true` forces this. |
+| `setec` | A microVM under the [Setec](https://github.com/zeroroot-ai/setec) sandbox operator | Strong isolation for sensitive workloads. `policy.setec_required: true` forces this. |
 
 ### Secret declarations
 

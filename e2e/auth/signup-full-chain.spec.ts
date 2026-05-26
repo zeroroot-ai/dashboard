@@ -26,7 +26,7 @@
  * Env vars consumed:
  *   SIGNUP_SLUG    — unique DNS-safe slug (set by orchestrator; e.g. "e2e-abc123")
  *   SIGNUP_EMAIL   — unique email matching the slug (set by orchestrator)
- *   PLAYWRIGHT_BASE_URL — target cluster URL (default: https://app.zero-day.local:30443)
+ *   PLAYWRIGHT_BASE_URL — target cluster URL (default: https://app.zeroroot.local:30443)
  *
  * Security:
  *   - Uses a synthetic email + generated password that are NEVER reused.
@@ -45,7 +45,7 @@ import { signUpViaForm } from "./helpers/signup-via-form";
 // ---------------------------------------------------------------------------
 
 const CLUSTER_URL =
-  process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zero-day.local:30443";
+  process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
 
 // ---------------------------------------------------------------------------
 // Test

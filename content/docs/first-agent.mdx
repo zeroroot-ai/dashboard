@@ -23,7 +23,7 @@ deploy wizard issues the credential the SDK needs.
 ## What an agent looks like
 
 In the SDK, an agent is anything that satisfies the `agent.Agent`
-contract from `github.com/zero-day-ai/sdk/agent`. Don't write the
+contract from `github.com/zeroroot-ai/sdk/agent`. Don't write the
 struct by hand — use the **builder**:
 
 ```go
@@ -88,8 +88,8 @@ import (
     "context"
     "log"
 
-    "github.com/zero-day-ai/sdk/agent"
-    "github.com/zero-day-ai/sdk/llm"
+    "github.com/zeroroot-ai/sdk/agent"
+    "github.com/zeroroot-ai/sdk/llm"
 )
 
 func execute(ctx context.Context, h agent.Harness, t agent.Task) (agent.Result, error) {

@@ -9,7 +9,7 @@
  *                      Used for local dev where the workspace has both clones.
  *
  *   remote             fetch plans.yaml + plans.schema.json from GitHub raw at
- *                      https://raw.githubusercontent.com/zero-day-ai/tenant-operator/{ref}/plans/...
+ *                      https://raw.githubusercontent.com/zeroroot-ai/tenant-operator/{ref}/plans/...
  *                      Used in Docker / CI where the sibling clone is not on disk.
  *                      Auth: GITHUB_TOKEN env var (tenant-operator is private).
  *                      Ref:  PLANS_REF env var, default "main".
@@ -62,7 +62,7 @@ const PLANS_SCHEMA = resolve(
 );
 const OUTPUT = resolve(DASHBOARD_ROOT, "src/generated/plans.ts");
 
-const REMOTE_REPO = "zero-day-ai/tenant-operator";
+const REMOTE_REPO = "zeroroot-ai/tenant-operator";
 const REMOTE_PATHS = {
   yaml: "plans/plans.yaml",
   schema: "plans/plans.schema.json",

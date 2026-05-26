@@ -10,9 +10,9 @@ stuck, jump to the linked deep-dive page; otherwise just keep going.
 
 If you haven't already, follow [Install](/docs/install) to:
 
-- create a tenant at [zero-day.ai](https://zero-day.ai),
-- install the **`gibson`** binary (`go install github.com/zero-day-ai/adk/cmd/gibson@latest`),
-- and set `GIBSON_URL=https://api.zero-day.ai`.
+- create a tenant at [zeroroot.ai](https://zeroroot.ai),
+- install the **`gibson`** binary (`go install github.com/zeroroot-ai/adk/cmd/gibson@latest`),
+- and set `GIBSON_URL=https://api.zeroroot.ai`.
 
 Verify your shell:
 
@@ -24,7 +24,7 @@ echo "$GIBSON_URL"
 ## 2. Issue a credential from the dashboard
 
 Open
-[`app.zero-day.ai/dashboard/deploy`](https://app.zero-day.ai/dashboard/deploy).
+[`app.zeroroot.ai/dashboard/deploy`](https://app.zeroroot.ai/dashboard/deploy).
 
 The deploy wizard walks you through:
 
@@ -66,8 +66,8 @@ In a fresh Go module:
 ```bash
 mkdir my-first-agent && cd my-first-agent
 go mod init example.com/my-first-agent
-go get github.com/zero-day-ai/sdk/agent@latest
-go get github.com/zero-day-ai/sdk/llm@latest
+go get github.com/zeroroot-ai/sdk/agent@latest
+go get github.com/zeroroot-ai/sdk/llm@latest
 ```
 
 Create `main.go`:
@@ -79,8 +79,8 @@ import (
     "context"
     "log"
 
-    "github.com/zero-day-ai/sdk/agent"
-    "github.com/zero-day-ai/sdk/llm"
+    "github.com/zeroroot-ai/sdk/agent"
+    "github.com/zeroroot-ai/sdk/llm"
 )
 
 func main() {

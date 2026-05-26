@@ -46,9 +46,9 @@ describe('templates/billing-checkout-completed', () => {
     email: 'alice@example.com',
     tierName: 'Squad',
     trialEndDate: '2026-05-24',
-    dashboardUrl: 'https://app.zero-day.ai/dashboard',
+    dashboardUrl: 'https://app.zeroroot.ai/dashboard',
     portalUrl: 'https://billing.stripe.com/session/test_123',
-    supportEmail: 'support@zero-day.ai',
+    supportEmail: 'support@zeroroot.ai',
   };
   const msg = renderCheckoutCompleted(ctx);
 
@@ -73,7 +73,7 @@ describe('templates/billing-checkout-completed', () => {
   });
 
   it('HTML includes dashboard link', () => {
-    expect(msg.html).toContain('https://app.zero-day.ai/dashboard');
+    expect(msg.html).toContain('https://app.zeroroot.ai/dashboard');
   });
 
   it('subject and html match snapshot', () => {
@@ -95,8 +95,8 @@ describe('templates/billing-trial-will-end', () => {
     firstChargeDate: 'May 24, 2026',
     firstChargeAmount: '$199/month',
     portalUrl: 'https://billing.stripe.com/session/test_456',
-    pricingUrl: 'https://app.zero-day.ai/pricing',
-    supportEmail: 'support@zero-day.ai',
+    pricingUrl: 'https://app.zeroroot.ai/pricing',
+    supportEmail: 'support@zeroroot.ai',
   };
   const msg = renderTrialWillEnd(ctx);
 
@@ -139,7 +139,7 @@ describe('templates/billing-payment-failed', () => {
     failureReason: 'insufficient_funds',
     portalUrl: 'https://billing.stripe.com/session/test_789',
     nextRetryDate: 'May 15, 2026',
-    supportEmail: 'support@zero-day.ai',
+    supportEmail: 'support@zeroroot.ai',
   };
   const msg = renderPaymentFailed(ctx);
 
@@ -175,7 +175,7 @@ describe('templates/billing-payment-failed', () => {
       chargeAmount: 4900,
       currency: 'USD',
       portalUrl: 'https://billing.stripe.com/session/test_789',
-      supportEmail: 'support@zero-day.ai',
+      supportEmail: 'support@zeroroot.ai',
     };
     const minMsg = renderPaymentFailed(minCtx);
     assertBasics(minMsg);
@@ -196,8 +196,8 @@ describe('templates/billing-subscription-cancelled', () => {
   const ctx = {
     email: 'dave@example.com',
     gracePeriodEndDate: 'May 31, 2026',
-    pricingUrl: 'https://app.zero-day.ai/pricing',
-    supportEmail: 'support@zero-day.ai',
+    pricingUrl: 'https://app.zeroroot.ai/pricing',
+    supportEmail: 'support@zeroroot.ai',
   };
   const msg = renderSubscriptionCancelled(ctx);
 
@@ -218,7 +218,7 @@ describe('templates/billing-subscription-cancelled', () => {
   });
 
   it('HTML includes pricing link', () => {
-    expect(msg.html).toContain('https://app.zero-day.ai/pricing');
+    expect(msg.html).toContain('https://app.zeroroot.ai/pricing');
   });
 
   it('subject and html match snapshot', () => {
@@ -240,7 +240,7 @@ describe('templates/billing-plan-changed', () => {
     prorationInvoiceUrl: 'https://invoice.stripe.com/i/test_proration',
     newMonthlyAmount: '$199/month',
     effectiveDate: 'May 10, 2026',
-    supportEmail: 'support@zero-day.ai',
+    supportEmail: 'support@zeroroot.ai',
   };
   const msg = renderPlanChanged(ctx);
 
@@ -272,7 +272,7 @@ describe('templates/billing-plan-changed', () => {
       newTierName: 'Org',
       newMonthlyAmount: '$199/month',
       effectiveDate: 'May 10, 2026',
-      supportEmail: 'support@zero-day.ai',
+      supportEmail: 'support@zeroroot.ai',
     };
     const minMsg = renderPlanChanged(minCtx);
     assertBasics(minMsg);

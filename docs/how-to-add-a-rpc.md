@@ -1,4 +1,4 @@
-# how-to-add-a-rpc.md — `zero-day-ai/dashboard`
+# how-to-add-a-rpc.md — `zeroroot-ai/dashboard`
 
 The dashboard does not own RPCs in the same sense the SDK or the daemon
 do — it consumes them. "Adding an RPC" from the dashboard's perspective
@@ -24,7 +24,7 @@ the method.
 ## Step 2 — Bump the SDK pin and regenerate TS bindings
 
 ```
-pnpm add @zero-day-ai/sdk@vX.Y.Z   # or the npm distribution name
+pnpm add @zeroroot-ai/sdk@vX.Y.Z   # or the npm distribution name
 pnpm buf generate                  # regenerates src/gen/...
 ```
 

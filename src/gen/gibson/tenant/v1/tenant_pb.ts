@@ -9,7 +9,7 @@
 // quota, audit, findings export, mission drafts, LLM providers, LLM
 // execution, and observability config) with a single user token.
 //
-// Part of the one-customer-surface epic (zero-day-ai/.github#143), slice
+// Part of the one-customer-surface epic (zeroroot-ai/.github#143), slice
 // sdk#204.
 //
 // Authorization: every RPC carries a (gibson.auth.v1.authz) annotation. The

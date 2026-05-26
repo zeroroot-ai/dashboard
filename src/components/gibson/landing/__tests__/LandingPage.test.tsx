@@ -26,7 +26,7 @@ describe('HeroSection', () => {
     render(<HeroSection />);
 
     expect(
-      screen.getByText(/git clone https:\/\/github\.com\/zero-day-ai\/adk gibson-adk/),
+      screen.getByText(/git clone https:\/\/github\.com\/zeroroot-ai\/adk gibson-adk/),
     ).toBeInTheDocument();
     expect(screen.getByText('cd gibson-adk')).toBeInTheDocument();
     expect(screen.getByText('gibson component init recon-agent')).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe('WhatYouRunItOn', () => {
   it('calls out the SaaS endpoint and Setec sandbox', () => {
     render(<WhatYouRunItOn />);
 
-    expect(screen.getByText('api.zero-day.ai')).toBeInTheDocument();
+    expect(screen.getByText('api.zeroroot.ai')).toBeInTheDocument();
     expect(screen.getByText(/Setec microVMs/)).toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-# forbidden-patterns.md — `zero-day-ai/dashboard`
+# forbidden-patterns.md — `zeroroot-ai/dashboard`
 
 Companion to [`rules.yaml`](./rules.yaml). Wrong vs right code shapes for
 the dashboard's auth surface. Spec: `unified-identity-and-authorization`.
@@ -40,7 +40,7 @@ import { FetchJWTSVID } from '@spiffe/workload-api';      // forbidden
 
 async function adminBearer(): Promise<string> {
   const svid = await FetchJWTSVID({
-    audience: 'spiffe://zero-day.ai/platform/daemon',
+    audience: 'spiffe://zeroroot.ai/platform/daemon',
   });
   return svid.svid;
 }

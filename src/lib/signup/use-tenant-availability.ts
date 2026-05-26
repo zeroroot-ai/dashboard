@@ -43,7 +43,7 @@ interface ApiResponse {
  * spinner). When `available` is `null`, render no inline state and let
  * the form's existing client-side checks handle the case.
  *
- * Spec / issue: zero-day-ai/dashboard#44.
+ * Spec / issue: zeroroot-ai/dashboard#44.
  *
  * @param rawName  the user's input value (un-slugified).
  * @param opts.debounceMs  override the 400ms default; mainly for tests.

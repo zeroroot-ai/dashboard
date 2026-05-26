@@ -10,7 +10,7 @@
  *
  * Requirements at runtime:
  *   - A running Envoy edge reachable at ADMIN_ENVOY_BASE_URL (defaults to
- *     https://api.zero-day.local:30443) routing to the daemon + FGA.
+ *     https://api.zeroroot.local:30443) routing to the daemon + FGA.
  *   - A Zitadel-issued session cookie fixture (INTEGRATION_SESSION_COOKIE env).
  *   - The dashboard pod's Zitadel SA env vars (ZITADEL_DASHBOARD_CLIENT_ID +
  *     ZITADEL_DASHBOARD_CLIENT_SECRET) so serviceClient can mint its bearer.
@@ -116,7 +116,7 @@ describeOrSkip("installAgentAction — integration", () => {
 });
 
 const VALID_COMPONENT_YAML = `
-apiVersion: gibson.zero-day.ai/v1
+apiVersion: gibson.zeroroot.ai/v1
 kind: Agent
 metadata:
   name: integration-test-agent

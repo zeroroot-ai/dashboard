@@ -197,7 +197,7 @@ function selftest() {
     metadata: { name: 'gibson-dashboard-crd' },
     rules: [
       {
-        apiGroups: ['gibson.zero-day.ai'],
+        apiGroups: ['gibson.zeroroot.ai'],
         resources: ['tenants'],
         verbs: ['get', 'watch', 'delete'], // 'delete' is not in allow-list
       },
@@ -230,7 +230,7 @@ if (argv.includes('--selftest')) {
 // In dashboard-only CI the deploy repo is absent, so there is nothing to
 // render or diff against. The workstation and full-polyrepo CI paths always
 // have the sibling present and run the check end-to-end.
-// Closes: zero-day-ai/dashboard#166
+// Closes: zeroroot-ai/dashboard#166
 if (!existsSync(CHART_DIR)) {
   process.stderr.write(
     `[${SCRIPT_NAME}] SKIPPED — enterprise/deploy sibling not present at ${CHART_DIR}; ` +

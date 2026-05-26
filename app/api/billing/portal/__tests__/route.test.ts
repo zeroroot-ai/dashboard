@@ -95,7 +95,7 @@ describe('POST /api/billing/portal', () => {
     vi.clearAllMocks();
     // PUBLIC_URL is REQUIRED at boot per one-code-path/206 — set it here so
     // the route's defence check doesn't short-circuit every test.
-    process.env.PUBLIC_URL = 'https://app.zero-day.local:30443';
+    process.env.PUBLIC_URL = 'https://app.zeroroot.local:30443';
     mockRateLimitAllowed = true;
     mockAssertAuthorizedShouldThrow = null;
     mockReadRawActiveTenant.mockResolvedValue({
@@ -103,7 +103,7 @@ describe('POST /api/billing/portal', () => {
       tenantId: 'acme',
     });
     mockGetTenant.mockResolvedValue({
-      apiVersion: 'gibson.zero-day.ai/v1alpha1',
+      apiVersion: 'gibson.zeroroot.ai/v1alpha1',
       kind: 'Tenant',
       metadata: { name: 'acme' },
       spec: {
@@ -151,7 +151,7 @@ describe('POST /api/billing/portal', () => {
   describe('tenant validation', () => {
     it('returns 400 when stripeCustomerId is missing on tenant', async () => {
       mockGetTenant.mockResolvedValue({
-        apiVersion: 'gibson.zero-day.ai/v1alpha1',
+        apiVersion: 'gibson.zeroroot.ai/v1alpha1',
         kind: 'Tenant',
         metadata: { name: 'acme' },
         spec: {

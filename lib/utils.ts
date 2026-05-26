@@ -27,7 +27,7 @@ export function generateMeta({
   return {
     title: `${title} — Zero Day AI`,
     description: description,
-    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.zero-day.ai'),
+    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.zeroroot.ai'),
     alternates: {
       canonical: `/dashboard${canonical}`
     },

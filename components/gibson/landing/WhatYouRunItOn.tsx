@@ -45,12 +45,12 @@ export function WhatYouRunItOn() {
             devsecops, red teamers, IR) for the workflows they already
             own. That&apos;s the force multiplier. Agents run where you
             work (laptop, CI, VPS, k8s) and dial out to{" "}
-            <code className="font-mono text-highlight">api.zero-day.ai</code>{" "}
+            <code className="font-mono text-highlight">api.zeroroot.ai</code>{" "}
             for orchestration, shared memory, and the knowledge graph.
             Your team decides what crosses the wire and what stays on
             the host. BYOK for LLM keys. Untrusted payloads detonate inside{" "}
             <a
-              href="https://github.com/zero-day-ai/setec"
+              href="https://github.com/zeroroot-ai/setec"
               target="_blank"
               rel="noopener noreferrer"
               className="text-highlight font-semibold underline-offset-4 decoration-highlight/40 hover:underline hover:decoration-highlight">

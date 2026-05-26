@@ -7,7 +7,7 @@ const items = [
   {
     term: "gibson CLI",
     slug: "gibson-cli",
-    body: "Scaffolds projects, installs agents and tools, launches missions, inspects graph state. The client you script against api.zero-day.ai.",
+    body: "Scaffolds projects, installs agents and tools, launches missions, inspects graph state. The client you script against api.zeroroot.ai.",
   },
   {
     term: "DAG missions",

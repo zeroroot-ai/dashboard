@@ -424,10 +424,10 @@ export function ProvisioningPanel({
                     your account is ready but the secrets backend didn&apos;t
                     come up — retry to try again, or ping{" "}
                     <a
-                      href="mailto:support@zero-day.ai"
+                      href="mailto:support@zeroroot.ai"
                       className="underline underline-offset-4 hover:no-underline"
                     >
-                      support@zero-day.ai
+                      support@zeroroot.ai
                     </a>{" "}
                     if it keeps happening.
                   </>
@@ -436,10 +436,10 @@ export function ProvisioningPanel({
                     hit the button again — usually clears it. if it sticks,
                     ping{" "}
                     <a
-                      href="mailto:support@zero-day.ai"
+                      href="mailto:support@zeroroot.ai"
                       className="underline underline-offset-4 hover:no-underline"
                     >
-                      support@zero-day.ai
+                      support@zeroroot.ai
                     </a>{" "}
                     and we&apos;ll dig in.
                   </>

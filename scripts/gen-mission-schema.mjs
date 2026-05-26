@@ -5,7 +5,7 @@
  *
  * Source of truth:
  *   opensource/sdk/gen/mission-definition.schema.json
- *   (sibling checkout at ~/Code/zero-day.ai/ polyrepo workspace root)
+ *   (sibling checkout at ~/Code/zeroroot.ai/ polyrepo workspace root)
  *
  * Output:
  *   enterprise/platform/dashboard/src/data/mission-definition.schema.json
@@ -19,12 +19,12 @@
  * byte-identical output.
  *
  * Workstation-only. Requires the polyrepo sibling clone of opensource/sdk at
- *   ~/Code/zero-day.ai/opensource/sdk/gen/mission-definition.schema.json
+ *   ~/Code/zeroroot.ai/opensource/sdk/gen/mission-definition.schema.json
  * CI does not run this generator; the freshness gate (check-mission-schema-fresh.mjs)
  * verifies the committed file is structurally valid and carries the $comment header.
  * Full regeneration + diff only runs when the SDK sibling is present.
  *
- * Closes: zero-day-ai/dashboard#165
+ * Closes: zeroroot-ai/dashboard#165
  */
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";

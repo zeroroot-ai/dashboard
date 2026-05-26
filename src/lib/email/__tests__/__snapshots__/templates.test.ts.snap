@@ -2,7 +2,7 @@
 
 exports[`templates/account-locked > matches snapshot 1`] = `
 {
-  "html": "<!doctype html><html lang="en"><body style="margin:0;padding:24px;background:#0b0b0f;color:#e6e6ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto;background:#15151c;border-radius:8px;padding:32px;border-left:4px solid #e11d48;"><tr><td><h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:#ffffff;">Account temporarily locked</h1><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">We detected several failed sign-in attempts for <strong style="color:#ffffff;">dave@example.com</strong> and have temporarily locked the account as a security precaution.</p><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">The lockout will lift automatically at <strong style="color:#ffffff;">2026-04-17T12:00:00.000Z</strong> (UTC).</p><p style="margin:0 0 24px;"><a href="https://dash.gibson.zero-day.ai/reset?token=q" style="display:inline-block;padding:10px 16px;background:#6366f1;color:#ffffff;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Reset password now</a></p><p style="margin:0 0 8px;font-size:12px;color:#9999a3;">Or paste this link in your browser:</p><p style="margin:0 0 24px;font-size:12px;color:#c5c5cc;word-break:break-all;">https://dash.gibson.zero-day.ai/reset?token=q</p><p style="margin:0;font-size:12px;color:#9999a3;">If you don't recognize this activity, reset your password and review recent sign-in activity immediately.</p></td></tr></table></body></html>",
+  "html": "<!doctype html><html lang="en"><body style="margin:0;padding:24px;background:#0b0b0f;color:#e6e6ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto;background:#15151c;border-radius:8px;padding:32px;border-left:4px solid #e11d48;"><tr><td><h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:#ffffff;">Account temporarily locked</h1><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">We detected several failed sign-in attempts for <strong style="color:#ffffff;">dave@example.com</strong> and have temporarily locked the account as a security precaution.</p><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">The lockout will lift automatically at <strong style="color:#ffffff;">2026-04-17T12:00:00.000Z</strong> (UTC).</p><p style="margin:0 0 24px;"><a href="https://dash.gibson.zeroroot.ai/reset?token=q" style="display:inline-block;padding:10px 16px;background:#6366f1;color:#ffffff;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Reset password now</a></p><p style="margin:0 0 8px;font-size:12px;color:#9999a3;">Or paste this link in your browser:</p><p style="margin:0 0 24px;font-size:12px;color:#c5c5cc;word-break:break-all;">https://dash.gibson.zeroroot.ai/reset?token=q</p><p style="margin:0;font-size:12px;color:#9999a3;">If you don't recognize this activity, reset your password and review recent sign-in activity immediately.</p></td></tr></table></body></html>",
   "subject": "Your Gibson account has been temporarily locked",
   "text": "Hi,
 
@@ -10,7 +10,7 @@ We detected several failed sign-in attempts for your Gibson account (dave@exampl
 
 The lockout will lift automatically at 2026-04-17T12:00:00.000Z (UTC). If that was you, please wait and try again then — or reset your password now to regain access immediately:
 
-https://dash.gibson.zero-day.ai/reset?token=q
+https://dash.gibson.zeroroot.ai/reset?token=q
 
 If you don't recognize this activity, reset your password immediately and review recent sign-in activity.
 
@@ -21,7 +21,7 @@ If you don't recognize this activity, reset your password immediately and review
 
 exports[`templates/billing-rollback > matches snapshot 1`] = `
 {
-  "html": "<!doctype html><html lang="en"><body style="margin:0;padding:24px;background:#0b0b0f;color:#e6e6ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto;background:#15151c;border-radius:8px;padding:32px;"><tr><td><h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:#ffffff;">Charge reversed</h1><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">We reversed a recent charge of <strong style="color:#ffffff;">19.99 USD</strong> on the payment method associated with <strong style="color:#ffffff;">erin@example.com</strong>.</p><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">This happened because we could not fully provision the resource you purchased. You have <strong>not</strong> been billed and no further action is required on your part.</p><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">The reversal may take several business days to appear on your statement depending on your bank.</p><p style="margin:0;font-size:12px;color:#9999a3;">Questions? Contact <a href="mailto:billing@zero-day.ai" style="color:#c5c5cc;text-decoration:underline;">billing@zero-day.ai</a>.</p></td></tr></table></body></html>",
+  "html": "<!doctype html><html lang="en"><body style="margin:0;padding:24px;background:#0b0b0f;color:#e6e6ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto;background:#15151c;border-radius:8px;padding:32px;"><tr><td><h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:#ffffff;">Charge reversed</h1><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">We reversed a recent charge of <strong style="color:#ffffff;">19.99 USD</strong> on the payment method associated with <strong style="color:#ffffff;">erin@example.com</strong>.</p><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">This happened because we could not fully provision the resource you purchased. You have <strong>not</strong> been billed and no further action is required on your part.</p><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">The reversal may take several business days to appear on your statement depending on your bank.</p><p style="margin:0;font-size:12px;color:#9999a3;">Questions? Contact <a href="mailto:billing@zeroroot.ai" style="color:#c5c5cc;text-decoration:underline;">billing@zeroroot.ai</a>.</p></td></tr></table></body></html>",
   "subject": "Your Gibson charge was reversed",
   "text": "Hi,
 
@@ -29,7 +29,7 @@ We reversed a recent charge of 19.99 USD on the payment method associated with y
 
 This happened because we could not fully provision the resource you purchased. You have not been billed, and no further action is required on your part. The reversal may take several business days to appear on your card statement depending on your bank.
 
-If you have questions, or if the charge still appears on your statement after 7 business days, contact billing@zero-day.ai.
+If you have questions, or if the charge still appears on your statement after 7 business days, contact billing@zeroroot.ai.
 
 — The Gibson team",
   "to": "erin@example.com",
@@ -38,7 +38,7 @@ If you have questions, or if the charge still appears on your statement after 7 
 
 exports[`templates/claim > matches snapshot 1`] = `
 {
-  "html": "<!doctype html><html lang="en"><body style="margin:0;padding:24px;background:#0b0b0f;color:#e6e6ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto;background:#15151c;border-radius:8px;padding:32px;"><tr><td><h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:#ffffff;">You're invited to Acme R&amp;D</h1><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">You have been invited to join the organization <strong style="color:#ffffff;">Acme R&amp;D</strong> on Gibson as <strong style="color:#ffffff;">admin</strong>.</p><p style="margin:0 0 24px;"><a href="https://dash.gibson.zero-day.ai/claim?token=q" style="display:inline-block;padding:10px 16px;background:#6366f1;color:#ffffff;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Accept invitation</a></p><p style="margin:0 0 8px;font-size:12px;color:#9999a3;">Or paste this link in your browser:</p><p style="margin:0 0 24px;font-size:12px;color:#c5c5cc;word-break:break-all;">https://dash.gibson.zero-day.ai/claim?token=q</p><p style="margin:0 0 8px;font-size:12px;color:#9999a3;">This invitation expires in 7 days.</p><p style="margin:0;font-size:12px;color:#9999a3;">If you weren't expecting this, contact <a href="mailto:support@zero-day.ai" style="color:#c5c5cc;text-decoration:underline;">support@zero-day.ai</a>.</p></td></tr></table></body></html>",
+  "html": "<!doctype html><html lang="en"><body style="margin:0;padding:24px;background:#0b0b0f;color:#e6e6ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto;background:#15151c;border-radius:8px;padding:32px;"><tr><td><h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:#ffffff;">You're invited to Acme R&amp;D</h1><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">You have been invited to join the organization <strong style="color:#ffffff;">Acme R&amp;D</strong> on Gibson as <strong style="color:#ffffff;">admin</strong>.</p><p style="margin:0 0 24px;"><a href="https://dash.gibson.zeroroot.ai/claim?token=q" style="display:inline-block;padding:10px 16px;background:#6366f1;color:#ffffff;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Accept invitation</a></p><p style="margin:0 0 8px;font-size:12px;color:#9999a3;">Or paste this link in your browser:</p><p style="margin:0 0 24px;font-size:12px;color:#c5c5cc;word-break:break-all;">https://dash.gibson.zeroroot.ai/claim?token=q</p><p style="margin:0 0 8px;font-size:12px;color:#9999a3;">This invitation expires in 7 days.</p><p style="margin:0;font-size:12px;color:#9999a3;">If you weren't expecting this, contact <a href="mailto:support@zeroroot.ai" style="color:#c5c5cc;text-decoration:underline;">support@zeroroot.ai</a>.</p></td></tr></table></body></html>",
   "subject": "You're invited to join Acme R&D on Gibson",
   "text": "Hi,
 
@@ -46,11 +46,11 @@ You have been invited to join the organization "Acme R&D" on Gibson as an admin.
 
 Accept the invitation and set up your account by opening the link below:
 
-https://dash.gibson.zero-day.ai/claim?token=q
+https://dash.gibson.zeroroot.ai/claim?token=q
 
 This invitation expires in 7 days.
 
-If you weren't expecting this invitation or have questions, contact support@zero-day.ai.
+If you weren't expecting this invitation or have questions, contact support@zeroroot.ai.
 
 — The Gibson team",
   "to": "carol@example.com",
@@ -59,13 +59,13 @@ If you weren't expecting this invitation or have questions, contact support@zero
 
 exports[`templates/reset > matches snapshot 1`] = `
 {
-  "html": "<!doctype html><html lang="en"><body style="margin:0;padding:24px;background:#0b0b0f;color:#e6e6ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto;background:#15151c;border-radius:8px;padding:32px;"><tr><td><h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:#ffffff;">Reset your password</h1><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">We received a request to reset the password for <strong style="color:#ffffff;">bob@example.com</strong>.</p><p style="margin:0 0 24px;"><a href="https://dash.gibson.zero-day.ai/reset?token=xyz" style="display:inline-block;padding:10px 16px;background:#6366f1;color:#ffffff;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Choose a new password</a></p><p style="margin:0 0 8px;font-size:12px;color:#9999a3;">Or paste this link in your browser:</p><p style="margin:0 0 24px;font-size:12px;color:#c5c5cc;word-break:break-all;">https://dash.gibson.zero-day.ai/reset?token=xyz</p><p style="margin:0 0 8px;font-size:12px;color:#9999a3;">This link expires in 1 hour.</p><p style="margin:0;font-size:12px;color:#9999a3;">If you didn't request this, you can ignore the email — your current password remains active.</p></td></tr></table></body></html>",
+  "html": "<!doctype html><html lang="en"><body style="margin:0;padding:24px;background:#0b0b0f;color:#e6e6ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto;background:#15151c;border-radius:8px;padding:32px;"><tr><td><h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:#ffffff;">Reset your password</h1><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">We received a request to reset the password for <strong style="color:#ffffff;">bob@example.com</strong>.</p><p style="margin:0 0 24px;"><a href="https://dash.gibson.zeroroot.ai/reset?token=xyz" style="display:inline-block;padding:10px 16px;background:#6366f1;color:#ffffff;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Choose a new password</a></p><p style="margin:0 0 8px;font-size:12px;color:#9999a3;">Or paste this link in your browser:</p><p style="margin:0 0 24px;font-size:12px;color:#c5c5cc;word-break:break-all;">https://dash.gibson.zeroroot.ai/reset?token=xyz</p><p style="margin:0 0 8px;font-size:12px;color:#9999a3;">This link expires in 1 hour.</p><p style="margin:0;font-size:12px;color:#9999a3;">If you didn't request this, you can ignore the email — your current password remains active.</p></td></tr></table></body></html>",
   "subject": "Reset your Gibson password",
   "text": "Hi,
 
 We received a request to reset the password for your Gibson account (bob@example.com). Open the link below to choose a new password:
 
-https://dash.gibson.zero-day.ai/reset?token=xyz
+https://dash.gibson.zeroroot.ai/reset?token=xyz
 
 This link expires in 1 hour.
 
@@ -78,13 +78,13 @@ If you did NOT request a password reset, you can ignore this email — your curr
 
 exports[`templates/verify > matches snapshot 1`] = `
 {
-  "html": "<!doctype html><html lang="en"><body style="margin:0;padding:24px;background:#0b0b0f;color:#e6e6ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto;background:#15151c;border-radius:8px;padding:32px;"><tr><td><h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:#ffffff;">Verify your email address</h1><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">Please verify the email address <strong style="color:#ffffff;">alice@example.com</strong> you used to sign up for Gibson.</p><p style="margin:0 0 24px;"><a href="https://dash.gibson.zero-day.ai/verify-email/confirm?token=abc" style="display:inline-block;padding:10px 16px;background:#6366f1;color:#ffffff;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Verify email</a></p><p style="margin:0 0 8px;font-size:12px;color:#9999a3;">Or paste this link in your browser:</p><p style="margin:0 0 24px;font-size:12px;color:#c5c5cc;word-break:break-all;">https://dash.gibson.zero-day.ai/verify-email/confirm?token=abc</p><p style="margin:0 0 8px;font-size:12px;color:#9999a3;">This link expires in 24 hours.</p><p style="margin:0;font-size:12px;color:#9999a3;">If you didn't create a Gibson account you can ignore this message — no account will be created without verification.</p></td></tr></table></body></html>",
+  "html": "<!doctype html><html lang="en"><body style="margin:0;padding:24px;background:#0b0b0f;color:#e6e6ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto;background:#15151c;border-radius:8px;padding:32px;"><tr><td><h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:#ffffff;">Verify your email address</h1><p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">Please verify the email address <strong style="color:#ffffff;">alice@example.com</strong> you used to sign up for Gibson.</p><p style="margin:0 0 24px;"><a href="https://dash.gibson.zeroroot.ai/verify-email/confirm?token=abc" style="display:inline-block;padding:10px 16px;background:#6366f1;color:#ffffff;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Verify email</a></p><p style="margin:0 0 8px;font-size:12px;color:#9999a3;">Or paste this link in your browser:</p><p style="margin:0 0 24px;font-size:12px;color:#c5c5cc;word-break:break-all;">https://dash.gibson.zeroroot.ai/verify-email/confirm?token=abc</p><p style="margin:0 0 8px;font-size:12px;color:#9999a3;">This link expires in 24 hours.</p><p style="margin:0;font-size:12px;color:#9999a3;">If you didn't create a Gibson account you can ignore this message — no account will be created without verification.</p></td></tr></table></body></html>",
   "subject": "Verify your email address",
   "text": "Hi,
 
 Please verify the email address (alice@example.com) you used to sign up for Gibson by opening the link below:
 
-https://dash.gibson.zero-day.ai/verify-email/confirm?token=abc
+https://dash.gibson.zeroroot.ai/verify-email/confirm?token=abc
 
 This link expires in 24 hours.
 

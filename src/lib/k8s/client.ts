@@ -22,7 +22,7 @@ import {
 } from './types';
 import { mapK8sError } from './errors';
 
-const GIBSON_GROUP = 'gibson.zero-day.ai';
+const GIBSON_GROUP = 'gibson.zeroroot.ai';
 const GIBSON_VERSION = 'v1alpha1';
 
 type AbortLike = { abort: () => void };

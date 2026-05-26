@@ -598,7 +598,7 @@ export function SignupForm({
                       <FormLabel htmlFor="acceptToS" className="font-normal cursor-pointer">
                         I agree to the{" "}
                         <Link
-                          href="https://zero-day.ai/terms"
+                          href="https://zeroroot.ai/terms"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="underline underline-offset-4 hover:no-underline"
@@ -637,7 +637,7 @@ export function SignupForm({
                       <FormLabel htmlFor="acceptPrivacy" className="font-normal cursor-pointer">
                         I agree to the{" "}
                         <Link
-                          href="https://zero-day.ai/privacy"
+                          href="https://zeroroot.ai/privacy"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="underline underline-offset-4 hover:no-underline"

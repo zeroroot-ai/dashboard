@@ -6,11 +6,11 @@
 // configuring per-user / per-team / per-tenant token + spend budgets
 // around LLM execution.
 //
-// This package was migrated from the OSS SDK (github.com/zero-day-ai/sdk)
+// This package was migrated from the OSS SDK (github.com/zeroroot-ai/sdk)
 // under sdk#106 PR A. The customer-visible wire shapes BudgetScope +
 // BudgetExceeded (parsed by `llm.IsBudgetExceeded` agent-side) live in
 // the public gibson.budget_status.v1 package owned by the OSS SDK and
-// are reached through the BSR dep on `buf.build/zero-day-ai-platform/sdk`.
+// are reached through the BSR dep on `buf.build/zeroroot-ai-platform/sdk`.
 //
 // Spec: llm-user-attribution-governance (Requirement 3).
 // Enforcement happens in the daemon's ExecuteLLM handler via the

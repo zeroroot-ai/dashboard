@@ -84,7 +84,7 @@ export function buildSubscriptionUpdatedEvent(opts: {
     metadata: {
       tenantId: opts.tenantId,
       userId: "e2e-test-user",
-      ownerEmail: "e2e@test.zero-day.local",
+      ownerEmail: "e2e@test.zeroroot.local",
     },
   };
 
@@ -131,7 +131,7 @@ export function buildCheckoutCompletedEvent(opts: {
         id: sessionId,
         object: "checkout.session",
         client_reference_id: opts.tenantSlug,
-        customer_details: { email: "e2e@test.zero-day.local" },
+        customer_details: { email: "e2e@test.zeroroot.local" },
         payment_intent: `pi_e2e_${Date.now()}`,
         amount_total: opts.amount ?? 4900,
         currency: "usd",
@@ -164,7 +164,7 @@ export function buildPaymentFailedEvent(opts: {
         currency: "usd",
         metadata: {
           tenantId: opts.tenantId,
-          ownerEmail: "e2e@test.zero-day.local",
+          ownerEmail: "e2e@test.zeroroot.local",
         },
         lines: {
           data: [

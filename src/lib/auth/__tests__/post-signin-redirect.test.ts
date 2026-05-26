@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { resolvePostSignInRedirect } from "../post-signin-redirect";
 
-const BASE = "https://app.zero-day.local:30443";
+const BASE = "https://app.zeroroot.local:30443";
 
 describe("resolvePostSignInRedirect — default to /dashboard", () => {
   it("falls back to /dashboard when url is the bare baseUrl", () => {

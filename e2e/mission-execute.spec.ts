@@ -46,7 +46,7 @@ const needsCluster = !process.env.E2E_KIND_AVAILABLE;
 const MOCK_USER = {
   sub: "e2e-mission-execute-user",
   name: "Mission Execute Test",
-  email: "mission-execute@e2e.zero-day.local",
+  email: "mission-execute@e2e.zeroroot.local",
 };
 const MOCK_TENANT_ID = "tenant-e2e-mission-test";
 

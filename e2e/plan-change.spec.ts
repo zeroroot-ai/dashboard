@@ -353,7 +353,7 @@ test.describe("plan change — webhook + quota (kind cluster)", () => {
           id: `cs_e2e_${Date.now()}`,
           object: "checkout.session",
           client_reference_id: tenantSlug,
-          customer_details: { email: "e2e@test.zero-day.local" },
+          customer_details: { email: "e2e@test.zeroroot.local" },
           metadata: { user_id: "e2e-user" },
         },
       },

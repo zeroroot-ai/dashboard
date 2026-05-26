@@ -40,7 +40,7 @@ describe('definitionToCUE', () => {
   it('emits the CUE import line', () => {
     const def = create(MissionDefinitionSchema, { name: 'test', version: '1.0.0' });
     const cue = definitionToCUE(def);
-    expect(cue).toContain('import missionv1 "github.com/zero-day-ai/sdk/api/proto/gibson/mission/v1"');
+    expect(cue).toContain('import missionv1 "github.com/zeroroot-ai/sdk/api/proto/gibson/mission/v1"');
   });
 
   it('wraps output in missionv1.#MissionDefinition & { }', () => {
