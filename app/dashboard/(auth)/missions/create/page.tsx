@@ -507,7 +507,7 @@ export default function CreateMissionPage() {
         </Button>
       </div>
 
-      <div style={{ height: "calc(100vh - 18rem)" }}>
+      <div style={{ height: "35vh" }}>
         <MissionCUEEditor
           value={cueSource}
           onChange={setCueSource}
@@ -518,7 +518,7 @@ export default function CreateMissionPage() {
       <MissionTerminal
         ref={terminalRef}
         title="Mission Output"
-        defaultOpen={false}
+        defaultOpen={true}
         imperativeOpen={terminalOpen}
       />
     </div>
