@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useServerAutosave } from "@/src/hooks/useServerAutosave";
+import { useMissionTerminal } from "@/src/hooks/useMissionTerminal";
 import { SaveDraftButton } from "@/src/components/mission/create/save-draft-button";
 import { DraftsMenu } from "@/src/components/mission/create/drafts-menu";
 import { DefinitionPickerDropdown } from "@/src/components/mission/create/definition-picker-dropdown";
@@ -318,6 +319,9 @@ export default function CreateMissionPage() {
     { cueSource, draftId: currentDraftId },
     { name: currentDraftName }
   );
+
+  // Wire SSE mission events to the terminal — zero re-renders per incoming line.
+  useMissionTerminal(activeMissionId, terminalRef);
 
   // When useServerAutosave creates a new draft (draftId goes from undefined to
   // a server-assigned id), register it in the page state and update the URL.
