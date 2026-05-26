@@ -26,10 +26,10 @@ describe('HeroSection', () => {
     render(<HeroSection />);
 
     expect(
-      screen.getByText(/git clone https:\/\/github\.com\/zero-day-ai\/gibson-adk/),
+      screen.getByText(/git clone https:\/\/github\.com\/zero-day-ai\/adk gibson-adk/),
     ).toBeInTheDocument();
     expect(screen.getByText('cd gibson-adk')).toBeInTheDocument();
-    expect(screen.getByText('gibson-cli init')).toBeInTheDocument();
+    expect(screen.getByText('gibson component init recon-agent')).toBeInTheDocument();
   });
 
   it('renders primary and secondary CTAs', () => {

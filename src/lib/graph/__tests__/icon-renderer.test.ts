@@ -1,4 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// Path2D is not available in jsdom — provide a minimal stub so icon-renderer
+// can construct Path2D objects without throwing.
+if (typeof globalThis.Path2D === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).Path2D = class Path2D {
+    constructor(_pathData?: string) {}
+  };
+}
+
 import { IconRenderer, type EntityType, type IconOptions } from '../icon-renderer';
 
 // Mock canvas context for testing

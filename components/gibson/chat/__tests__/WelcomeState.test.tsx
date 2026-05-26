@@ -50,7 +50,9 @@ describe('WelcomeState', () => {
       <WelcomeState agent={mockAgent} graphSummary={null} onSendPrompt={vi.fn()} />,
     );
 
-    expect(screen.queryByText(/hosts/)).toBeNull();
+    // Use a specific regex that matches the stats paragraph (e.g. "42 hosts") but not
+    // the suggested prompt button "What hosts have critical vulnerabilities?"
+    expect(screen.queryByText(/\d+ hosts/)).toBeNull();
   });
 
   it('renders suggested prompts', () => {
