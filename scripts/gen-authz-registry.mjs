@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Generate src/gen/authz/registry.ts from both the SDK proto FileDescriptorSet
- * and the daemon-local proto FileDescriptorSet.
+ * Generate src/gen/authz/registry.ts from the SDK, platform-sdk, and
+ * daemon-local proto FileDescriptorSets.
  *
- * Reads every service method in both proto trees, decodes the
+ * Reads every service method in all three proto trees, decodes the
  * (gibson.auth.v1.authz) extension (field 50001 on MethodOptions), and emits
  * a TypeScript module with the AuthEntry type, IdentityClass constants, and
  * AuthRegistry record.
@@ -12,13 +12,26 @@
  * -------------------
  * Buf v2 has a hard rule that every module path in buf.yaml must resolve INSIDE
  * the directory containing the buf.yaml. The SDK protos (resolved from the
- * gibson repo's go.mod) and daemon-local protos live outside this dashboard
- * repo, so they cannot be referenced with ../../ paths. Instead, this script
- * synthesises a temporary workspace at .tmp/proto-ws/ (same pattern as
- * proto-generate.mjs), populates it with symlinks, and runs buf build from
- * inside that workspace. The workspace is always cleaned up in a finally block.
+ * gibson repo's go.mod), platform-sdk protos (sibling checkout), and
+ * daemon-local protos live outside this dashboard repo, so they cannot be
+ * referenced with ../../ paths. Instead, this script synthesises a temporary
+ * workspace at .tmp/proto-ws/ (same pattern as proto-generate.mjs), populates
+ * it with symlinks, and runs buf build from inside that workspace. The
+ * workspace is always cleaned up in a finally block.
+ *
+ * Three proto trees
+ * -----------------
+ * 1. sdk-proto       — OSS SDK (DaemonService, gibson.tenant.v1, etc.)
+ * 2. platform-sdk-proto — PRIVATE platform-sdk (gibson.admin.v1,
+ *                        gibson.daemon.operator.v1, gibson.user.v1, etc.)
+ * 3. gibson-local    — daemon-internal protos not yet promoted to platform-sdk
+ *
+ * This mirrors the three-tree pattern in proto-generate.mjs and ensures that
+ * admin + operator service methods are present in the registry for the
+ * assertAuthorized / useAuthorize gating layer.
  *
  * Spec: cross-repo-cohesion-fixes Requirement 2.1–2.3.
+ * Dashboard issue: #406 (gibson.admin.v1 and gibson.daemon.operator.v1 absent).
  *
  * Usage
  * -----
@@ -47,16 +60,25 @@ const OUTPUT_PATH = resolve(DASHBOARD_ROOT, 'src/gen/authz/registry.ts');
 // Gibson lives at enterprise/platform/gibson — the `core/` prefix was the
 // pre-refactor layout and is no longer present.
 //
-// Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ the naive
+// Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ or
+// .claude/worktrees/<name>/ (the Claude Code harness layout) the naive
 // `../../..` walk lands short of the workspace root. Rewind to the main
-// checkout root before walking up. dashboard#148.
-const isWorktree = DASHBOARD_ROOT.includes('/.worktrees/');
+// checkout root before walking up. dashboard#148, dashboard#406.
+const isWorktree =
+  DASHBOARD_ROOT.includes('/.worktrees/') || DASHBOARD_ROOT.includes('/.claude/worktrees/');
 const MAIN_DASHBOARD_ROOT = isWorktree
-  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, '')
+  ? DASHBOARD_ROOT.replace(/\/(?:\.claude\/)?worktrees\/[^/]+$/, '')
   : DASHBOARD_ROOT;
 const WORKSPACE_ROOT = resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
 const GIBSON_REPO = resolve(WORKSPACE_ROOT, 'enterprise/platform/gibson');
 const GIBSON_LOCAL_PROTOS = resolve(GIBSON_REPO, 'internal/daemon/api');
+// platform-sdk is a sibling repo at opensource/platform-sdk. It is the
+// authoritative home for gibson.admin.v1, gibson.daemon.operator.v1,
+// gibson.user.v1, and other private admin/operator proto packages. These
+// namespaces must be present in the AuthRegistry so assertAuthorized /
+// useAuthorize can gate access to those RPCs. dashboard#406.
+const PLATFORM_SDK_REPO = resolve(WORKSPACE_ROOT, 'opensource/platform-sdk');
+const PLATFORM_SDK_PROTOS = resolve(PLATFORM_SDK_REPO, 'proto');
 
 // Extension field number for (gibson.auth.v1.authz) on MethodOptions.
 // Hard-coded per spec: "Field number 50001 is reserved for Gibson's authorization
@@ -68,6 +90,20 @@ const AUTHZ_EXTENSION_FIELD = 50001;
 // ---------------------------------------------------------------------------
 
 function resolveSdkProtoDir() {
+  // Prefer the sibling checkout at opensource/sdk when present — it
+  // tracks main and avoids the "gibson go.mod pin lags one minor
+  // version behind the latest sdk release" hazard. Mirrors the pattern
+  // in proto-generate.mjs.
+  const SDK_SIBLING = resolve(WORKSPACE_ROOT, 'opensource/sdk/api/proto');
+  try {
+    execSync(`stat ${SDK_SIBLING}`, { stdio: 'pipe' });
+    return SDK_SIBLING;
+  } catch {
+    // fall through to module-cache resolution
+  }
+
+  // Module-cache fallback: `go list -m` against the gibson repo resolves
+  // the SDK to whichever version gibson is pinned to.
   try {
     const dir = execSync('go list -m -f "{{.Dir}}" github.com/zero-day-ai/sdk', {
       cwd: GIBSON_REPO,
@@ -78,10 +114,11 @@ function resolveSdkProtoDir() {
     return resolve(dir, 'api/proto');
   } catch (err) {
     process.stderr.write(
-      '[gen-authz-registry] FATAL: failed to resolve github.com/zero-day-ai/sdk via `go list -m`.\n' +
-        '  This script expects the gibson daemon repo cloned at:\n' +
-        `    ${GIBSON_REPO}\n` +
-        '  with `go.mod` resolving the SDK as a Go module dependency.\n' +
+      '[gen-authz-registry] FATAL: failed to resolve github.com/zero-day-ai/sdk.\n' +
+        `  Tried sibling checkout at: ${SDK_SIBLING}\n` +
+        `  Tried module-cache via gibson at: ${GIBSON_REPO}\n` +
+        '  Clone zero-day-ai/sdk at opensource/sdk in your workspace, or\n' +
+        '  run from the canonical workspace at ~/Code/zero-day.ai/.\n' +
         `  Underlying error: ${err.message ?? err}\n`,
     );
     process.exit(1);
@@ -103,32 +140,84 @@ function ensureGibsonLocalProtos() {
   }
 }
 
+function ensurePlatformSdkProtos() {
+  try {
+    execSync(`stat ${PLATFORM_SDK_PROTOS}`, { stdio: 'pipe' });
+  } catch (err) {
+    process.stderr.write(
+      '[gen-authz-registry] FATAL: platform-sdk protos not found at:\n' +
+        `    ${PLATFORM_SDK_PROTOS}\n` +
+        '  Clone zero-day-ai/platform-sdk at opensource/platform-sdk in your\n' +
+        '  workspace, or run from the canonical workspace at ~/Code/zero-day.ai/.\n' +
+        `  Underlying error: ${err.message ?? err}\n`,
+    );
+    process.exit(1);
+  }
+}
+
 /**
- * Build the .tmp/proto-ws/ workspace with symlinks to both proto trees,
- * exactly mirroring the pattern in proto-generate.mjs.
+ * Build the .tmp/proto-ws/ workspace with symlinks to two proto trees:
+ * sdk-proto and platform-sdk-proto. The daemon-local proto tree
+ * (gibson-local) is intentionally omitted — its only file
+ * (gibson/user/v1/user.proto) duplicates the platform-sdk copy and causes
+ * a "contained in multiple modules" buf error. See dashboard#406.
+ *
+ * Two modules:
+ *   sdk-proto          — OSS SDK (gibson.tenant.v1, DaemonService, etc.)
+ *   platform-sdk-proto — PRIVATE admin/operator protos (gibson.admin.v1,
+ *                        gibson.daemon.operator.v1, gibson.user.v1, etc.)
  */
 function buildWorkspace() {
   rmSync(WS, { recursive: true, force: true });
   mkdirSync(WS, { recursive: true });
 
   const sdkProtoDir = resolveSdkProtoDir();
-  ensureGibsonLocalProtos();
+  ensurePlatformSdkProtos();
 
   // Symlinks bring both proto trees inside the buf.yaml's context directory.
   // Buf v2 follows symlinks; this satisfies the "modules must be inside the
   // workspace" rule without copying files.
-  symlinkSync(GIBSON_LOCAL_PROTOS, resolve(WS, 'gibson-local'));
   symlinkSync(sdkProtoDir, resolve(WS, 'sdk-proto'));
+  symlinkSync(PLATFORM_SDK_PROTOS, resolve(WS, 'platform-sdk-proto'));
 
   writeFileSync(
     resolve(WS, 'buf.yaml'),
     [
       'version: v2',
       'modules:',
-      '  - path: gibson-local',
       '  - path: sdk-proto',
       '    excludes:',
       '      - sdk-proto/google',
+      // The following proto packages were migrated to platform-sdk
+      // (parent PRD zero-day-ai/.github#101). Exclude from the OSS SDK
+      // module so buf does not see two copies of each file. After
+      // sdk#105 merges, these directories vanish from the OSS SDK and
+      // the excludes become no-ops (kept for tag-skew safety).
+      '      - sdk-proto/gibson/admin',
+      '      - sdk-proto/gibson/authz',
+      '      - sdk-proto/gibson/budget',
+      '      - sdk-proto/gibson/daemon/discovery',
+      '      - sdk-proto/gibson/usage',
+      // platform-sdk is the authoritative home for daemon-admin /
+      // authz / budget / usage / daemon-discovery / daemon-operator
+      // protos (parent PRD zero-day-ai/.github#101). dashboard#406.
+      '  - path: platform-sdk-proto',
+      '    excludes:',
+      // gibson/auth/v1/options.proto is intentionally shared between
+      // OSS SDK and platform-sdk; exclude here so buf doesn't see two
+      // copies under the two module roots.
+      '      - platform-sdk-proto/gibson/auth',
+      // gibson.capability.v1 is canonically OSS-SDK-owned (sdk#103
+      // extraction). platform-sdk vendors a copy purely so its
+      // gibson.admin.v1 services can resolve the import; we read
+      // capability.proto from the OSS SDK side instead.
+      '      - platform-sdk-proto/gibson/capability',
+      // Note: gibson-local (enterprise/platform/gibson/internal/daemon/api)
+      // is intentionally omitted. Its only proto file (gibson/user/v1/user.proto)
+      // is byte-identical to the platform-sdk copy (different go_package only).
+      // Including it would cause a "contained in multiple modules" error.
+      // The daemon-local tree has no unique authz-annotated methods that
+      // aren't already covered by platform-sdk. dashboard#406.
       // protovalidate provides the (buf.validate.field).* annotations
       // adopted by the SDK from v1.5.0 onward. Pulled from the buf.build
       // remote registry; resolved by `buf dep update` invoked below.
@@ -139,7 +228,7 @@ function buildWorkspace() {
       '  use:',
       '    - STANDARD',
       '  ignore:',
-      '    - gibson-local/gibson/daemon/admin/v1/daemon_admin.proto',
+      '    - platform-sdk-proto/gibson/daemon/admin/v1/daemon_admin.proto',
       '',
     ].join('\n'),
   );
@@ -150,7 +239,7 @@ function buildWorkspace() {
   // remote registry on every invocation.
   execSync('npx buf dep update', { cwd: WS, stdio: 'inherit' });
 
-  return { ws: WS, sdkProtoDir };
+  return { ws: WS };
 }
 
 // ---------------------------------------------------------------------------
@@ -406,7 +495,7 @@ function main() {
 
   let ws;
   try {
-    // Synthesize workspace (verbatim pattern from proto-generate.mjs).
+    // Synthesize workspace.
     ({ ws } = buildWorkspace());
 
     if (!stdout) {
@@ -414,55 +503,55 @@ function main() {
       process.stdout.write('[gen-authz-registry] Building sdk-proto FDS...\n');
     }
 
-    // Build each FDS from within the workspace. Fails loudly if either tree
+    // Build each FDS from within the workspace. Fails loudly if any tree
     // fails to build or produces zero file descriptors.
     const sdkFDS = buildFDSFromWorkspace(ws, 'sdk-proto', 'sdk-proto');
 
     if (!stdout) {
-      process.stdout.write('[gen-authz-registry] Building gibson-local FDS...\n');
+      process.stdout.write('[gen-authz-registry] Building platform-sdk-proto FDS...\n');
     }
 
-    const gibsonFDS = buildFDSFromWorkspace(ws, 'gibson-local', 'gibson-local');
+    const platformFDS = buildFDSFromWorkspace(ws, 'platform-sdk-proto', 'platform-sdk-proto');
 
     // Scan both trees for authz annotations.
     const sdkEntries = scanFDS(sdkFDS);
-    const gibsonEntries = scanFDS(gibsonFDS);
+    const platformEntries = scanFDS(platformFDS);
 
     // Detect cross-tree method-name collisions (defense-in-depth gate).
     // Same fully-qualified method with conflicting annotation data = fatal.
+    // Order of authority: sdk > platform-sdk.
     const sdkByMethod = new Map(sdkEntries.map((e) => [e.method, e]));
-    for (const ge of gibsonEntries) {
-      const se = sdkByMethod.get(ge.method);
+    for (const pe of platformEntries) {
+      const se = sdkByMethod.get(pe.method);
       if (se) {
-        // Same method in both trees. Check if annotations differ.
         const seKey = `${se.relation}|${se.objectType}|${se.objectDeriver}|${se.allowedIdentities}|${se.unauthenticated}`;
-        const geKey = `${ge.relation}|${ge.objectType}|${ge.objectDeriver}|${ge.allowedIdentities}|${ge.unauthenticated}`;
-        if (seKey !== geKey) {
+        const peKey = `${pe.relation}|${pe.objectType}|${pe.objectDeriver}|${pe.allowedIdentities}|${pe.unauthenticated}`;
+        if (seKey !== peKey) {
           process.stderr.write(
-            `[gen-authz-registry] FATAL: conflicting annotations for ${ge.method}\n` +
-              `  sdk-proto:     ${seKey}\n` +
-              `  gibson-local:  ${geKey}\n`,
+            `[gen-authz-registry] FATAL: conflicting annotations for ${pe.method}\n` +
+              `  sdk-proto:          ${seKey}\n` +
+              `  platform-sdk-proto: ${peKey}\n`,
           );
           process.exit(1);
         }
       }
     }
 
-    // Merge: SDK entries first; gibson-local entries de-dup on method name
+    // Merge: SDK entries first, then platform-sdk. De-dup on method name
     // (sdk wins on collision with identical annotations, per above check).
     const seenMethods = new Set(sdkEntries.map((e) => e.method));
     const allEntries = [...sdkEntries];
-    for (const ge of gibsonEntries) {
-      if (!seenMethods.has(ge.method)) {
-        seenMethods.add(ge.method);
-        allEntries.push(ge);
+    for (const pe of platformEntries) {
+      if (!seenMethods.has(pe.method)) {
+        seenMethods.add(pe.method);
+        allEntries.push(pe);
       }
     }
 
     if (!stdout) {
       process.stdout.write(
         `[gen-authz-registry] Found ${allEntries.length} annotated methods ` +
-          `(sdk: ${sdkEntries.length}, gibson-local: ${gibsonEntries.length}).\n`,
+          `(sdk: ${sdkEntries.length}, platform-sdk: ${platformEntries.length}).\n`,
       );
     }
 
