@@ -458,7 +458,7 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
                     {healthConfig.label}
                   </Badge>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent suppressHydrationWarning>
                   {health?.lastCheckAt
                     ? `Last checked ${formatRelativeTime(health.lastCheckAt)}`
                     : 'Checking…'}

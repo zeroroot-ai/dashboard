@@ -150,9 +150,8 @@ export async function createProvider(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      config,
-      testConnection: options?.testConnection,
-      setAsDefault: options?.setAsDefault,
+      ...config,
+      ...(options?.setAsDefault !== undefined ? { setAsDefault: options.setAsDefault } : {}),
     }),
   });
 
