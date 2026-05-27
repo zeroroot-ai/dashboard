@@ -7,7 +7,7 @@
  * This adapter is the ONLY way the dashboard talks to an LLM. Plaintext
  * credentials never enter the dashboard process: the daemon resolves the
  * tenant-scoped provider config, decrypts it in its own address space,
- * dispatches to langchaingo, and streams the response back. This file
+ * dispatches to the Eino-backed provider, and streams the response back. This file
  * must remain free of any direct provider SDK imports (`@ai-sdk/anthropic`,
  * `@anthropic-ai/sdk`, `openai`, etc.); a static-analysis guard enforces
  * this at `npm run build` time.

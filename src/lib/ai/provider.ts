@@ -4,7 +4,7 @@
  * Thin factory that returns a GibsonLLMAdapter for a named provider config.
  * Credentials never cross into the dashboard process — the adapter proxies
  * every call to the Gibson daemon over gRPC, which holds the decrypted
- * credential, constructs the upstream langchaingo provider, makes the call,
+ * credential, constructs the upstream Eino-backed provider, makes the call,
  * and streams back.
  *
  * Design: spec 25 (`25-daemon-driven-provider-config`) §6.
@@ -19,7 +19,7 @@ import type { LanguageModelV2 } from '@ai-sdk/provider';
  * The returned adapter proxies every call to the Gibson daemon over
  * gRPC. Credentials never cross into the dashboard process — the
  * daemon holds the decrypted credential, constructs the upstream
- * langchaingo provider, makes the call, and streams back.
+ * Eino-backed provider, makes the call, and streams back.
  *
  * @param providerName - name of a configured provider (from CreateProvider)
  * @param opts - optional userId/tenantId; defaults to server session
