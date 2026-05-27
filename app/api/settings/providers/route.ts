@@ -64,7 +64,13 @@ export async function GET(_req: NextRequest) {
  * and are never persisted by the dashboard.
  */
 export async function POST(req: NextRequest) {
-  const session = await getServerSession();
+  let session: Awaited<ReturnType<typeof getServerSession>>;
+  try {
+    session = await getServerSession();
+  } catch (err) {
+    return translateError(err);
+  }
+
   if (!session) {
     return Response.json(
       { error: { code: 'unauthenticated', message: 'Authentication required' } },
