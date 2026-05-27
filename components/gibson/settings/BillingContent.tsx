@@ -85,7 +85,7 @@ function QuotaCard({ label, description, used, limit }: QuotaCardProps) {
   );
 }
 
-export function BillingContent({ initialPlanId }: { initialPlanId?: string }) {
+export function BillingContent() {
   const [data, setData] = useState<TenantQuotaRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -109,13 +109,14 @@ export function BillingContent({ initialPlanId }: { initialPlanId?: string }) {
   }, [refresh]);
 
   const plan = useMemo(() => {
-    const id = (initialPlanId ?? "team") as PlanID;
+    const id = (data?.planId ?? "") as PlanID;
+    if (!id) return null;
     try {
       return lookupPlan(id);
     } catch {
       return null;
     }
-  }, [initialPlanId]);
+  }, [data?.planId]);
 
   const upgrade = getUpgradeTarget(plan?.id);
 
@@ -166,8 +167,9 @@ export function BillingContent({ initialPlanId }: { initialPlanId?: string }) {
   }
 
   if (!plan) {
-    // Unknown plan ID — show the raw ID as a fallback rather than an error
-    // state so the page is usable even when plan metadata hasn't propagated yet.
+    // Unknown or empty plan ID — show the raw ID as a fallback rather than an
+    // error state so the page is usable even when plan metadata hasn't
+    // propagated yet.
     return (
       <div className="space-y-6">
         <Card>
@@ -175,7 +177,7 @@ export function BillingContent({ initialPlanId }: { initialPlanId?: string }) {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <CardTitle className="text-2xl">
-                  {initialPlanId ?? "Unknown plan"}
+                  {data?.planId ?? "Unknown plan"}
                 </CardTitle>
                 <CardDescription>
                   Plan details are loading. Refresh in a moment.
@@ -187,7 +189,7 @@ export function BillingContent({ initialPlanId }: { initialPlanId?: string }) {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Plan information for &quot;{initialPlanId ?? "this tenant"}&quot; is not
+                Plan information for &quot;{data?.planId ?? "this tenant"}&quot; is not
                 yet available. Contact support if this persists.
               </AlertDescription>
             </Alert>

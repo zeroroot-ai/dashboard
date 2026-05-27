@@ -3,7 +3,7 @@
  *
  * Returns the chart-managed reserved-names denylist used by the signup form
  * to validate the workspace slug before submission. Proxies to the daemon's
- * `gibson.daemon.operator.v1.DaemonOperatorService/GetReservedNames` via Envoy
+ * `gibson.admin.v1.TenantAdminService/GetReservedNames` via Envoy
  * with the dashboard pod's service identity.
  *
  * Public route — no user auth required. The denylist is non-sensitive
@@ -23,9 +23,9 @@ import { create } from '@bufbuild/protobuf';
 
 import { serviceClient } from '@/src/lib/gibson-client';
 import {
-  DaemonOperatorService,
+  TenantAdminService,
   GetReservedNamesRequestSchema,
-} from '@/src/gen/gibson/daemon/operator/v1/operator_pb';
+} from '@/src/gen/gibson/admin/v1/tenant_pb';
 
 interface CachedDenylist {
   exact: string[];
@@ -40,7 +40,7 @@ async function fetchDenylist(): Promise<CachedDenylist> {
   // The signup form runs unauthenticated, so we need the service-acting
   // path. Tenant header is irrelevant here (the RPC is rule-mode and only
   // the caller's identity is checked), so we pass an empty string.
-  const client = serviceClient(DaemonOperatorService, '');
+  const client = serviceClient(TenantAdminService, '');
   const resp = await client.getReservedNames(create(GetReservedNamesRequestSchema));
   return {
     exact: resp.exact ?? [],

@@ -31,6 +31,8 @@ export interface TenantQuotaRow {
   currentConcurrentMissions: number;
   /** Live agents-active counter from Redis. */
   currentConcurrentAgents: number;
+  /** Canonical plan identifier (e.g. "team", "org", "enterprise"). */
+  planId: string;
 }
 
 export async function getTenantQuotaAction(): Promise<
@@ -60,6 +62,7 @@ export async function getTenantQuotaAction(): Promise<
         updatedAt: limits.updatedAt ?? "",
         currentConcurrentMissions: Number(usage.missionsActive ?? 0),
         currentConcurrentAgents: Number(usage.agentsActive ?? 0),
+        planId: limits.planId ?? "",
       },
     };
   } catch (err) {

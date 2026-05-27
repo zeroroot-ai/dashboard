@@ -21,7 +21,7 @@ import { file_google_protobuf_descriptor } from "@bufbuild/protobuf/wkt";
  * Describes the file gibson/tool/v1/options.proto.
  */
 export const file_gibson_tool_v1_options: GenFile = /*@__PURE__*/
-  fileDesc("ChxnaWJzb24vdG9vbC92MS9vcHRpb25zLnByb3RvEg5naWJzb24udG9vbC52MTpLChBpc190b29sX3Jlc3BvbnNlEh8uZ29vZ2xlLnByb3RvYnVmLk1lc3NhZ2VPcHRpb25zGLSHAyABKAhSDmlzVG9vbFJlc3BvbnNlQjpaOGdpdGh1Yi5jb20vemVyby1kYXktYWkvc2RrL2FwaS9nZW4vZ2lic29uL3Rvb2wvdjE7dG9vbHBiYgZwcm90bzM", [file_google_protobuf_descriptor]);
+  fileDesc("ChxnaWJzb24vdG9vbC92MS9vcHRpb25zLnByb3RvEg5naWJzb24udG9vbC52MTpLChBpc190b29sX3Jlc3BvbnNlEh8uZ29vZ2xlLnByb3RvYnVmLk1lc3NhZ2VPcHRpb25zGLSHAyABKAhSDmlzVG9vbFJlc3BvbnNlQjpaOGdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvc2RrL2FwaS9nZW4vZ2lic29uL3Rvb2wvdjE7dG9vbHBiYgZwcm90bzM", [file_google_protobuf_descriptor]);
 
 /**
  * @generated from extension: bool is_tool_response = 50100;
