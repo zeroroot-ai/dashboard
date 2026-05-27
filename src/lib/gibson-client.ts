@@ -2033,7 +2033,7 @@ export async function daemonSetDefaultProvider(
  *
  * The daemon resolves the provider name to an encrypted credential record,
  * decrypts it in process memory, and dispatches to the appropriate
- * langchaingo provider. Plaintext credentials never leave daemon memory.
+ * Eino-backed provider. Plaintext credentials never leave daemon memory.
  *
  * Throws a ConnectError on any gRPC-level failure (NotFound when the provider
  * name is unknown, ResourceExhausted on rate-limit, Internal on upstream
