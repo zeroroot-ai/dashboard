@@ -250,6 +250,63 @@ describe('HttpZitadelAdminClient.finalizeAuthRequest', () => {
     );
   });
 
+  // Regression lock: dashboard#<filed below> — Zitadel v4 emits standard-base64
+  // auth codes (which contain '+') in callbackUrl without percent-encoding them.
+  // URLSearchParams.get('code') decodes '+' as space, causing Zitadel's token
+  // endpoint to return "illegal base64 data at input byte N" (~40% of logins).
+  it(
+    'sanitises + in callbackUrl code/state params to %2B — dashboard base64-code-corruption fix',
+    async () => {
+      // Simulate a Zitadel callbackUrl with a standard-base64 auth code containing '+'.
+      // Position 16 is where the real failure was observed (OIDC-ahLi2).
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () =>
+          new Response(
+            JSON.stringify({
+              callbackUrl:
+                'https://app.zeroroot.local/api/auth/callback/zitadel?code=ABCDEFGHIJKLMNOPabc+def&state=state+val',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          ),
+        ),
+      );
+      const client = makeClient();
+      const result = await client.finalizeAuthRequest({
+        authRequestId: 'ar1',
+        session: { sessionId: 's', sessionToken: 't' },
+      });
+      // '+' must be '%2B' so URLSearchParams.get() returns the correct char.
+      expect(result.callbackUrl).toContain('code=ABCDEFGHIJKLMNOPabc%2Bdef');
+      expect(result.callbackUrl).toContain('state=state%2Bval');
+      // No bare '+' must remain in the query string.
+      expect(result.callbackUrl.slice(result.callbackUrl.indexOf('?'))).not.toContain('+');
+    },
+  );
+
+  it('does not double-encode %2B already in callbackUrl', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            callbackUrl:
+              'https://app.zeroroot.local/api/auth/callback/zitadel?code=abc%2Bdef&state=xyz',
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      ),
+    );
+    const client = makeClient();
+    const result = await client.finalizeAuthRequest({
+      authRequestId: 'ar1',
+      session: { sessionId: 's', sessionToken: 't' },
+    });
+    // %2B stays %2B (no %252B).
+    expect(result.callbackUrl).toContain('code=abc%2Bdef');
+    expect(result.callbackUrl).not.toContain('%252B');
+  });
+
   it('throws ZitadelApiError with NO_CALLBACK_URL when response is malformed', async () => {
     vi.stubGlobal(
       'fetch',

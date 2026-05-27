@@ -295,6 +295,24 @@ export interface ZitadelAdminClient {
 }
 
 // ---------------------------------------------------------------------------
+// URL sanitisation helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Re-encodes bare '+' in a URL's query string as '%2B'.
+ * Zitadel v4 may emit standard-base64 auth codes (which contain '+') in
+ * callback URLs without percent-encoding them.  URLSearchParams.get() then
+ * decodes '+' as space, corrupting the code before it reaches the token
+ * endpoint.  See the full root-cause writeup in route.ts.
+ */
+function reencodeQueryPlus(url: string): string {
+  if (!url.includes('+')) return url;
+  const qi = url.indexOf('?');
+  if (qi === -1) return url;
+  return url.slice(0, qi) + '?' + url.slice(qi + 1).replace(/\+/g, '%2B');
+}
+
+// ---------------------------------------------------------------------------
 // Constructor config
 // ---------------------------------------------------------------------------
 
@@ -765,7 +783,13 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
       );
     }
 
-    return { callbackUrl: response.callbackUrl };
+    // Zitadel v4 may include standard-base64 auth codes (containing '+') in
+    // the callbackUrl without percent-encoding them.  Re-encode '+' as '%2B'
+    // so that URLSearchParams.get('code') in the Auth.js callback handler
+    // returns the correct base64 character rather than a space.
+    // Primary fix is in app/api/auth/[...nextauth]/route.ts; this is
+    // defence-in-depth for the auto-login path.
+    return { callbackUrl: reencodeQueryPlus(response.callbackUrl) };
   }
 
   /**
