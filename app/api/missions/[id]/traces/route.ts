@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
-import { getMissionHistory, getTenantLangfuseCredentials, ConnectError, Code } from '@/src/lib/gibson-client';
-import { LangfuseClient, LangfuseUnavailableError, LangfuseAuthError, LangfuseNotFoundError } from '@/src/lib/langfuse-client';
+import { getMissionHistory } from '@/src/lib/gibson-client';
+import { LangfuseUnavailableError, LangfuseAuthError, LangfuseNotFoundError } from '@/src/lib/langfuse-client';
+import { resolveLangfuseClient } from '@/src/lib/langfuse-tenant-service';
 import { buildTraceTree, aggregateTokenUsage, extractDecisions } from '@/src/lib/trace-utils';
-import { serverConfig } from '@/src/lib/config';
 
 /**
  * GET /api/missions/[id]/traces
@@ -50,49 +50,20 @@ export async function GET(
       );
     }
 
-    // Resolve Langfuse credentials: prefer per-tenant, fall back to platform level.
-    // A NOT_FOUND gRPC error means the tenant has not been provisioned yet.
-    const tenantId = session.user.tenantId;
-    let langfuseHost: string | null;
-    let publicKey: string | undefined;
-    let secretKey: string | undefined;
+    // Resolve a tenant-scoped Langfuse client. All credential resolution
+    // (per-tenant preferred, platform fallback, NOT_FOUND handling) lives in
+    // LangfuseTenantService — this route owns none of it.
+    const langfuse = await resolveLangfuseClient(
+      session.user.tenantId,
+      session?.user?.id,
+    );
 
-    if (tenantId) {
-      try {
-        const creds = await getTenantLangfuseCredentials(tenantId, session?.user?.id);
-        langfuseHost = creds.host || serverConfig.langfuseHost;
-        publicKey = creds.publicKey;
-        secretKey = creds.secretKey;
-      } catch (err) {
-        if (err instanceof ConnectError && err.code === Code.NotFound) {
-          // Tenant not provisioned yet — fall back to platform credentials
-          langfuseHost = serverConfig.langfuseHost;
-          publicKey = serverConfig.langfuseAdminPublicKey;
-          secretKey = serverConfig.langfuseAdminSecretKey;
-        } else {
-          throw err;
-        }
-      }
-    } else {
-      langfuseHost = serverConfig.langfuseHost;
-      publicKey = serverConfig.langfuseAdminPublicKey;
-      secretKey = serverConfig.langfuseAdminSecretKey;
-    }
-
-    if (!langfuseHost || !publicKey || !secretKey) {
+    if (!langfuse) {
       return NextResponse.json(
         { error: { code: 'NOT_CONFIGURED', message: 'LLM trace viewing requires observability configuration. Contact your administrator.' } },
         { status: 404 }
       );
     }
-
-    // Construct Langfuse client with resolved credentials
-    // langfuseHost is narrowed to string by the guard above
-    const langfuse = new LangfuseClient({
-      host: langfuseHost as string,
-      publicKey,
-      secretKey,
-    });
 
     // Fetch trace and observations from Langfuse
     const [trace, observations] = await Promise.all([

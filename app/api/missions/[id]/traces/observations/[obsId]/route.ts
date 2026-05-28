@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
-import { getTenantLangfuseCredentials, ConnectError, Code } from '@/src/lib/gibson-client';
-import { LangfuseClient, LangfuseUnavailableError, LangfuseNotFoundError } from '@/src/lib/langfuse-client';
+import { LangfuseUnavailableError, LangfuseNotFoundError } from '@/src/lib/langfuse-client';
+import { resolveLangfuseClient } from '@/src/lib/langfuse-tenant-service';
 import { extractMessages } from '@/src/lib/trace-utils';
-import { serverConfig } from '@/src/lib/config';
 
 /**
  * GET /api/missions/[id]/traces/observations/[obsId]
@@ -17,7 +16,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string; obsId: string }> }
 ) {
   try {
-    const { id: missionId, obsId } = await params;
+    const { obsId } = await params;
 
     // Validate authentication
     const session = await getServerSession();
@@ -30,48 +29,19 @@ export async function GET(
 
     // Authz enforced by daemon ext-authz on the downstream RPC.
 
-    // Resolve Langfuse credentials: prefer per-tenant, fall back to platform level.
-    // A NOT_FOUND gRPC error means the tenant has not been provisioned yet.
-    const tenantId = session.user.tenantId;
-    let langfuseHost: string | null;
-    let publicKey: string | undefined;
-    let secretKey: string | undefined;
+    // Resolve a tenant-scoped Langfuse client. Credential resolution lives
+    // entirely in LangfuseTenantService — this route owns none of it.
+    const langfuse = await resolveLangfuseClient(
+      session.user.tenantId,
+      session?.user?.id,
+    );
 
-    if (tenantId) {
-      try {
-        const creds = await getTenantLangfuseCredentials(tenantId, session?.user?.id);
-        langfuseHost = creds.host || serverConfig.langfuseHost;
-        publicKey = creds.publicKey;
-        secretKey = creds.secretKey;
-      } catch (err) {
-        if (err instanceof ConnectError && err.code === Code.NotFound) {
-          // Tenant not provisioned yet — fall back to platform credentials
-          langfuseHost = serverConfig.langfuseHost;
-          publicKey = serverConfig.langfuseAdminPublicKey;
-          secretKey = serverConfig.langfuseAdminSecretKey;
-        } else {
-          throw err;
-        }
-      }
-    } else {
-      langfuseHost = serverConfig.langfuseHost;
-      publicKey = serverConfig.langfuseAdminPublicKey;
-      secretKey = serverConfig.langfuseAdminSecretKey;
-    }
-
-    if (!langfuseHost || !publicKey || !secretKey) {
+    if (!langfuse) {
       return NextResponse.json(
         { error: { code: 'NOT_CONFIGURED', message: 'Observability not configured' } },
         { status: 404 }
       );
     }
-
-    // langfuseHost is narrowed to string by the guard above
-    const langfuse = new LangfuseClient({
-      host: langfuseHost as string,
-      publicKey,
-      secretKey,
-    });
 
     // Fetch the observation
     const observation = await langfuse.getObservation(obsId);
