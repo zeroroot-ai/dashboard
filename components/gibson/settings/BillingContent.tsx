@@ -167,34 +167,43 @@ export function BillingContent() {
   }
 
   if (!plan) {
-    // Unknown or empty plan ID — show the raw ID as a fallback rather than an
-    // error state so the page is usable even when plan metadata hasn't
-    // propagated yet.
+    const planLabel = data?.planId || "No plan assigned";
+    const planMsg = data?.planId
+      ? `Plan "${data.planId}" is not recognised. Contact support if this persists.`
+      : "No plan has been assigned to this tenant yet. Contact support.";
     return (
       <div className="space-y-6">
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <CardTitle className="text-2xl">
-                  {data?.planId ?? "Unknown plan"}
-                </CardTitle>
-                <CardDescription>
-                  Plan details are loading. Refresh in a moment.
-                </CardDescription>
+                <CardTitle className="text-2xl">{planLabel}</CardTitle>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <Alert>
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Plan information for &quot;{data?.planId ?? "this tenant"}&quot; is not
-                yet available. Contact support if this persists.
-              </AlertDescription>
+              <AlertDescription>{planMsg}</AlertDescription>
             </Alert>
           </CardContent>
         </Card>
+        {data ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            <QuotaCard
+              label="Concurrent missions"
+              description="Missions in non-terminal execution at any moment."
+              used={data.currentConcurrentMissions}
+              limit={data.concurrentMissions}
+            />
+            <QuotaCard
+              label="Concurrent agents"
+              description="Agents currently bound to an in-flight mission task."
+              used={data.currentConcurrentAgents}
+              limit={data.concurrentAgents}
+            />
+          </div>
+        ) : null}
       </div>
     );
   }
