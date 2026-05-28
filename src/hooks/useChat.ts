@@ -54,12 +54,39 @@ export function useChat() {
 
   const { messages, status, error, sendMessage, stop, setMessages } = aiChat;
 
-  // Persist messages to Zustand when stream completes
+  // Persist messages to Zustand AND daemon-backed Redis when stream completes.
   const prevStatusRef = useRef(status);
   useEffect(() => {
     if (prevStatusRef.current === 'streaming' && status === 'ready') {
-      if (activeConvRef.current && messages.length > 0) {
-        saveMessages(activeConvRef.current, messages);
+      const convId = activeConvRef.current;
+      if (convId && messages.length > 0) {
+        saveMessages(convId, messages);
+        // Fire-and-forget persist to Redis for cross-session durability.
+        const conv = useChatStore.getState().conversations.find((c) => c.id === convId);
+        if (conv) {
+          const payload = {
+            conversationId: convId,
+            title: conv.title ?? `Conversation ${convId}`,
+            agentId: conv.agentId,
+            messages: messages.map((m) => ({
+              id: m.id,
+              role: m.role as 'user' | 'assistant' | 'system' | 'tool',
+              content: m.parts
+                .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+                .map((p) => p.text)
+                .join(''),
+            })),
+          };
+          fetch('/api/chat/conversation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          }).catch((err) => {
+            if (process.env.NODE_ENV !== 'production') {
+              console.warn('[useChat] Failed to persist conversation to Redis:', err);
+            }
+          });
+        }
       }
     }
     prevStatusRef.current = status;

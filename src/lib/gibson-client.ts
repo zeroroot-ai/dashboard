@@ -764,11 +764,8 @@ export interface AlertRecord {
 // markAllAlertsRead removed — DEFER per design.md. Call site in /api/alerts/mark-all-read/route.ts returns ok.
 
 // ============================================================================
-// Conversation History — DEFERRED per admin-services-completion spec
+// Conversation History — UserService RPCs (spec: chat-conversation-persistence)
 // ============================================================================
-// ListConversations / GetConversation have been deferred per design.md.
-// The chatbot-page spec will implement these. Dashboard call sites are removed;
-// the chat route handler returns empty messages for unknown conversationIds.
 
 export interface ConversationRecord {
   id: string;
@@ -787,8 +784,45 @@ export interface ConversationMessageRecord {
   createdAt: string;
 }
 
-// listConversations removed — DEFER per design.md.
-// getConversation removed — DEFER per design.md. /api/chat GET returns empty messages.
+export async function listConversations(limit = 50, userId = '', tenantId = ''): Promise<ConversationRecord[]> {
+  const client = await getUserServiceClient();
+  const resp = await client.listConversations({ tenantId, userId, limit });
+  return (resp.conversations ?? []).map((c) => ({
+    id: c.id,
+    tenantId: c.tenantId,
+    userId: c.userId,
+    title: c.title,
+    createdAt: c.createdAtUnix ? new Date(Number(c.createdAtUnix) * 1000).toISOString() : new Date().toISOString(),
+    updatedAt: c.updatedAtUnix ? new Date(Number(c.updatedAtUnix) * 1000).toISOString() : new Date().toISOString(),
+    messageCount: c.messageCount,
+  }));
+}
+
+export async function getConversation(conversationId: string, userId = '', tenantId = ''): Promise<{ conversation: ConversationRecord; messages: ConversationMessageRecord[] }> {
+  const client = await getUserServiceClient();
+  const resp = await client.getConversation({ conversationId, tenantId });
+  const c = resp.conversation;
+  if (!c) {
+    throw new ConnectError(`Conversation '${conversationId}' not found`, Code.NotFound);
+  }
+  return {
+    conversation: {
+      id: c.id,
+      tenantId: c.tenantId,
+      userId: c.userId,
+      title: c.title,
+      createdAt: c.createdAtUnix ? new Date(Number(c.createdAtUnix) * 1000).toISOString() : new Date().toISOString(),
+      updatedAt: c.updatedAtUnix ? new Date(Number(c.updatedAtUnix) * 1000).toISOString() : new Date().toISOString(),
+      messageCount: c.messageCount,
+    },
+    messages: (resp.messages ?? []).map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      createdAt: m.createdAtUnix ? new Date(Number(m.createdAtUnix) * 1000).toISOString() : new Date().toISOString(),
+    })),
+  };
+}
 
 // ============================================================================
 // Serialization Helpers

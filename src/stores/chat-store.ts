@@ -72,6 +72,7 @@ export interface ChatState {
   deleteConversation: (id: string) => void;
   clearConversations: () => void;
   saveMessages: (conversationId: string, messages: UIMessage[]) => void;
+  hydrateConversations: (conversations: Conversation[]) => void;
 
   // Actions - Agents
   setAgents: (agents: ChatAgent[]) => void;
@@ -208,6 +209,14 @@ export const useChatStore = create<ChatState>()(
         }));
       },
 
+      hydrateConversations: (incoming) => {
+        set((state) => {
+          const existingIds = new Set(state.conversations.map((c) => c.id));
+          const newConvs = incoming.filter((c) => !existingIds.has(c.id));
+          return { conversations: [...state.conversations, ...newConvs] };
+        });
+      },
+
       // Agent actions
       setAgents: (agents) => {
         set({ agents });
@@ -269,9 +278,11 @@ export const useChatStore = create<ChatState>()(
     {
       name: 'gibson-chat-store',
       // Only persist conversations and selected agent
+      // Conversation durability is now daemon-backed (Redis via UserService).
+      // conversations and activeConversationId are NOT persisted here.
       partialize: (state) => ({
-        conversations: state.conversations.slice(0, 50), // Keep last 50 conversations
         selectedAgentId: state.selectedAgentId,
+        agents: state.agents,
       }),
     }
   )
