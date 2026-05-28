@@ -128,10 +128,9 @@ export function useChat(config?: UseChatConfig) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-          }).catch((err) => {
-            if (process.env.NODE_ENV !== 'production') {
-              console.error('[useChat] Failed to persist conversation to Redis:', err);
-            }
+          }).catch(() => {
+            // Redis persistence failure is a silent degradation; conversation
+            // stays in Zustand for the current session.
           });
 
           // Auto-title: fire once after the FIRST exchange (1 user + 1 assistant
