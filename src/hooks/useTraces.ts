@@ -41,6 +41,20 @@ function deserializeTraceNode(node: RawTraceNode): TraceNode {
   };
 }
 
+/** Shared deserialization of the TraceData JSON returned by both trace routes. */
+function deserializeTraceData(json: TraceApiResponse): TraceData {
+  return {
+    ...json,
+    startTime: new Date(json.startTime),
+    endTime: json.endTime ? new Date(json.endTime) : undefined,
+    decisions: json.decisions.map((d) => ({
+      ...d,
+      timestamp: new Date(d.timestamp),
+    })),
+    traceTree: json.traceTree.map(deserializeTraceNode),
+  };
+}
+
 async function fetchMissionTrace(missionId: string): Promise<TraceData> {
   const response = await fetch(`/api/missions/${missionId}/traces`);
 
@@ -54,18 +68,23 @@ async function fetchMissionTrace(missionId: string): Promise<TraceData> {
     throw new Error(`Failed to fetch traces: ${response.statusText}`);
   }
 
-  const json: TraceApiResponse = await response.json();
+  return deserializeTraceData((await response.json()) as TraceApiResponse);
+}
 
-  return {
-    ...json,
-    startTime: new Date(json.startTime),
-    endTime: json.endTime ? new Date(json.endTime) : undefined,
-    decisions: json.decisions.map((d) => ({
-      ...d,
-      timestamp: new Date(d.timestamp),
-    })),
-    traceTree: json.traceTree.map(deserializeTraceNode),
-  };
+async function fetchTraceById(traceId: string): Promise<TraceData> {
+  const response = await fetch(`/api/traces/${traceId}`);
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('Trace not available');
+    }
+    if (response.status === 503) {
+      throw new Error('Trace data temporarily unavailable');
+    }
+    throw new Error(`Failed to fetch trace: ${response.statusText}`);
+  }
+
+  return deserializeTraceData((await response.json()) as TraceApiResponse);
 }
 
 interface ObservationDetailResponse {
@@ -78,12 +97,9 @@ interface ObservationDetailResponse {
 }
 
 async function fetchObservationDetail(
-  missionId: string,
   observationId: string
 ): Promise<ObservationDetailResponse['observation']> {
-  const response = await fetch(
-    `/api/missions/${missionId}/traces/observations/${observationId}`
-  );
+  const response = await fetch(`/api/traces/observations/${observationId}`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch observation: ${response.statusText}`);
@@ -127,12 +143,37 @@ export function useMissionTrace(
 }
 
 /**
+ * Fetch the full trace for a trace id directly (no mission correlation).
+ * Backs the standalone /dashboard/traces/[id] detail page. Trace content is
+ * immutable once recorded, so staleTime is 60s.
+ */
+export function useTraceDetail(
+  traceId: string
+): UseQueryResult<TraceData, Error> {
+  const currentTenant = useTenantStore((state) => state.currentTenant);
+  const tenantId = currentTenant?.id;
+
+  return useQuery({
+    queryKey: queryKeys.traces.detail(tenantId ?? '', traceId),
+    queryFn: () => fetchTraceById(traceId),
+    staleTime: 60_000,
+    enabled: !!traceId,
+    retry: (failureCount, error) => {
+      if (error.message.includes('not available') || error.message.includes('Forbidden')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+  });
+}
+
+/**
  * Fetch a single observation's detail (conversation content).
- * Used for on-demand loading when user expands a decision.
- * staleTime is Infinity since observation content is immutable.
+ * Used for on-demand loading when user expands a decision. Mission-agnostic —
+ * the observation id alone identifies the record. staleTime is Infinity since
+ * observation content is immutable.
  */
 export function useObservationDetail(
-  missionId: string,
   observationId: string,
   enabled: boolean
 ): UseQueryResult<ObservationDetailResponse['observation'], Error> {
@@ -140,9 +181,9 @@ export function useObservationDetail(
   const tenantId = currentTenant?.id;
 
   return useQuery({
-    queryKey: queryKeys.traces.observation(tenantId ?? '', missionId, observationId),
-    queryFn: () => fetchObservationDetail(missionId, observationId),
+    queryKey: queryKeys.traces.observation(tenantId ?? '', observationId),
+    queryFn: () => fetchObservationDetail(observationId),
     staleTime: Infinity,
-    enabled: enabled && !!missionId && !!observationId,
+    enabled: enabled && !!observationId,
   });
 }

@@ -130,18 +130,12 @@ function StaticTraceRow({ node, depth }: { node: TraceNode; depth: number }) {
 function TraceDecisionRow({
   node,
   depth,
-  missionId,
 }: {
   node: TraceNode;
   depth: number;
-  missionId: string;
 }) {
   const [open, setOpen] = React.useState(false);
-  const { data, isLoading, isError } = useObservationDetail(
-    missionId,
-    node.id,
-    open,
-  );
+  const { data, isLoading, isError } = useObservationDetail(node.id, open);
 
   return (
     <>
@@ -199,29 +193,16 @@ function TraceDecisionRow({
 }
 
 /** Recursive walker — one renderer for the whole tree, no parallel path. */
-function TraceTreeRow({
-  node,
-  depth,
-  missionId,
-}: {
-  node: TraceNode;
-  depth: number;
-  missionId: string;
-}) {
+function TraceTreeRow({ node, depth }: { node: TraceNode; depth: number }) {
   return (
     <>
       {isExpandable(node.type) ? (
-        <TraceDecisionRow node={node} depth={depth} missionId={missionId} />
+        <TraceDecisionRow node={node} depth={depth} />
       ) : (
         <StaticTraceRow node={node} depth={depth} />
       )}
       {node.children.map((child) => (
-        <TraceTreeRow
-          key={child.id}
-          node={child}
-          depth={depth + 1}
-          missionId={missionId}
-        />
+        <TraceTreeRow key={child.id} node={child} depth={depth + 1} />
       ))}
     </>
   );
@@ -229,8 +210,6 @@ function TraceTreeRow({
 
 export interface TraceTreeProps {
   nodes: TraceNode[];
-  /** Mission id used to resolve observation detail when a node is expanded. */
-  missionId: string;
 }
 
 /**
@@ -239,11 +218,11 @@ export interface TraceTreeProps {
  * as static rows. Shared by the mission Traces tab and the standalone trace
  * detail page.
  */
-export function TraceTree({ nodes, missionId }: TraceTreeProps) {
+export function TraceTree({ nodes }: TraceTreeProps) {
   return (
     <div>
       {nodes.map((node) => (
-        <TraceTreeRow key={node.id} node={node} depth={0} missionId={missionId} />
+        <TraceTreeRow key={node.id} node={node} depth={0} />
       ))}
     </div>
   );

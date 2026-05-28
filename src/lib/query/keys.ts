@@ -143,8 +143,9 @@ export const queryKeys = {
   traces: {
     all: ['traces'] as const,
     mission: (tenantId: string, missionId: string) => ['traces', tenantId, 'mission', missionId] as const,
-    observation: (tenantId: string, missionId: string, obsId: string) =>
-      ['traces', tenantId, 'observation', missionId, obsId] as const,
+    detail: (tenantId: string, traceId: string) => ['traces', tenantId, 'detail', traceId] as const,
+    observation: (tenantId: string, obsId: string) =>
+      ['traces', tenantId, 'observation', obsId] as const,
   },
 
   // Organization graph — teams + memberships + per-user inverse map.
