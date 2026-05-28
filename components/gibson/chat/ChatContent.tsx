@@ -42,6 +42,7 @@ import {
   PinOff,
   Pencil,
   Check,
+  Download,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -74,6 +75,12 @@ import { renameConversation } from '@/app/actions/chat';
 import type { GraphSummaryResponse } from '@/src/lib/graph/summary';
 import { SystemPromptDebugPanel } from '@/components/gibson/chat/SystemPromptDebugPanel';
 import { GraphCitationChip } from './GraphCitationChip';
+import {
+  conversationToMarkdown,
+  conversationToPlaintext,
+  downloadText,
+  titleToFilename,
+} from '@/src/lib/chat/export';
 
 // ============================================================================
 // Agent icon mapping
@@ -1025,6 +1032,27 @@ export function ChatContent() {
     [updateConversationTitle],
   );
 
+  const handleExport = useCallback(
+    (format: 'markdown' | 'plaintext') => {
+      if (!activeConversation) return;
+      const stem = titleToFilename(activeConversation.title || '');
+      if (format === 'markdown') {
+        downloadText(
+          conversationToMarkdown(activeConversation),
+          `${stem}.md`,
+          'text/markdown;charset=utf-8',
+        );
+      } else {
+        downloadText(
+          conversationToPlaintext(activeConversation),
+          `${stem}.txt`,
+          'text/plain;charset=utf-8',
+        );
+      }
+    },
+    [activeConversation],
+  );
+
   // Send a suggested prompt via the runtime
   const handleSuggestion = useCallback(
     (text: string) => {
@@ -1110,6 +1138,27 @@ export function ChatContent() {
             {/* Graph context badge */}
             {graphContext && (
               <GraphContextBadge context={graphContext} onDismiss={clearGraphContext} />
+            )}
+
+            {/* Export conversation */}
+            {activeConversation && activeConversation.messages.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Export conversation">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Export as</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleExport('markdown')}>
+                    Markdown (.md)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('plaintext')}>
+                    Plain text (.txt)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
 
             {/* Debug panel toggle */}
