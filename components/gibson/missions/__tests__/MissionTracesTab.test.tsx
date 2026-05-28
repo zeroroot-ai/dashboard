@@ -169,8 +169,8 @@ describe('MissionTracesTab', () => {
     // Error message on the failed tool node renders.
     expect(screen.getByText('host unreachable')).toBeDefined();
 
-    // Summary line shows LLM call count + total tokens.
+    // Token summary panel shows LLM call count + total tokens (abbreviated).
     expect(screen.getByText('3')).toBeDefined();
-    expect(screen.getByText('1,680')).toBeDefined();
+    expect(screen.getByText('1.7k')).toBeDefined();
   });
 });

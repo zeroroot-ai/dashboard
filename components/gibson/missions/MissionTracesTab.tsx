@@ -4,7 +4,8 @@ import { ActivityIcon } from "lucide-react";
 
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
-import { TraceTree, formatDuration } from "@/components/gibson/traces/TraceTree";
+import { TraceTree } from "@/components/gibson/traces/TraceTree";
+import { TokenSummaryPanel } from "@/components/gibson/traces/TokenSummaryPanel";
 import { useMissionTrace } from "@/src/hooks/useTraces";
 import type { MissionStatus } from "@/src/types";
 
@@ -70,29 +71,11 @@ export function MissionTracesTab({ missionId, missionStatus }: MissionTracesTabP
 
   return (
     <div className="space-y-3">
+      <TokenSummaryPanel
+        summary={data.tokenSummary}
+        totalDurationMs={data.totalDurationMs}
+      />
       <div className="glass-hack rounded-lg p-3">
-        <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
-          <div className="flex items-center gap-4 text-xs font-mono tabular-nums">
-            <span className="text-muted-foreground">
-              Total{" "}
-              <span className="text-highlight font-medium">
-                {formatDuration(data.totalDurationMs)}
-              </span>
-            </span>
-            <span className="text-muted-foreground">
-              LLM calls{" "}
-              <span className="text-highlight font-medium">
-                {data.tokenSummary.llmCallCount}
-              </span>
-            </span>
-            <span className="text-muted-foreground">
-              Tokens{" "}
-              <span className="text-highlight font-medium">
-                {data.tokenSummary.totalTokens.toLocaleString()}
-              </span>
-            </span>
-          </div>
-        </div>
         <div className="text-[10px] font-mono uppercase tracking-wide text-muted-foreground pb-2 border-b border-highlight/30 flex justify-between">
           <span>Trace</span>
           <span>input/output · duration</span>
