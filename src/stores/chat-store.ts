@@ -66,6 +66,9 @@ export interface ChatState {
   // (no persistence) — feedback for past sessions isn't a use case.
   currentTraceId: string | null;
 
+  // Debug
+  systemPromptDebug: string | null;
+
   // Actions - Conversations
   createConversation: (agentId: string, graphContext?: GraphContext) => string;
   setActiveConversation: (id: string | null) => void;
@@ -88,6 +91,9 @@ export interface ChatState {
 
   // Actions - Trace
   setCurrentTraceId: (id: string | null) => void;
+
+  // Actions - Debug
+  setSystemPromptDebug: (value: string | null) => void;
 
   // Selectors
   getActiveConversation: () => Conversation | undefined;
@@ -150,6 +156,7 @@ export const useChatStore = create<ChatState>()(
       connectionStatus: 'disconnected',
       lastError: null,
       currentTraceId: null,
+      systemPromptDebug: null,
 
       // Conversation actions
       createConversation: (agentId, graphContext) => {
@@ -245,6 +252,11 @@ export const useChatStore = create<ChatState>()(
 
       setCurrentTraceId: (id) => {
         set({ currentTraceId: id });
+      },
+
+      // Debug actions
+      setSystemPromptDebug: (value) => {
+        set({ systemPromptDebug: value });
       },
 
       // Selectors

@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useChat as useAIChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import {
   AssistantRuntimeProvider,
   ThreadPrimitive,
@@ -17,6 +18,7 @@ import type { SyntaxHighlighterProps } from '@assistant-ui/react-markdown';
 import { MermaidBlock } from '@/components/gibson/chat/MermaidBlock';
 import {
   Bot,
+  Bug,
   Search,
   Zap,
   Activity,
@@ -60,6 +62,7 @@ import {
 } from '@/src/stores/chat-store';
 import type { Conversation, ChatAgent, GraphContext } from '@/src/stores/chat-store';
 import type { GraphSummaryResponse } from '@/src/lib/graph/summary';
+import { SystemPromptDebugPanel } from '@/components/gibson/chat/SystemPromptDebugPanel';
 
 // ============================================================================
 // Agent icon mapping
@@ -469,16 +472,42 @@ export function ChatContent() {
   const [graphSummary, setGraphSummary] = useState<GraphSummaryResponse | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [providerError, setProviderError] = useState<string | null>(null);
+  const [isDebugOpen, setIsDebugOpen] = useState(false);
+
+  const { setSystemPromptDebug } = useChatStore();
 
   const activeConvRef = useRef(activeConversationId);
   activeConvRef.current = activeConversationId;
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId);
 
+  // Keep a stable ref to setSystemPromptDebug so the fetch closure doesn't
+  // need to be recreated on every render.
+  const setDebugRef = useRef(setSystemPromptDebug);
+  setDebugRef.current = setSystemPromptDebug;
+
+  // Transport memoised on isDebugOpen — only recreated when the flag changes.
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        headers: isDebugOpen ? { 'X-Gibson-Debug': '1' } : undefined,
+        fetch: async (input, init) => {
+          const response = await fetch(input, init);
+          const debugPayload = response.headers.get('X-Gibson-System-Prompt-Debug');
+          if (debugPayload) {
+            setDebugRef.current(decodeURIComponent(debugPayload));
+          }
+          return response;
+        },
+      }),
+    [isDebugOpen],
+  );
+
   // Wire to AI SDK useChat — assistant-ui wraps this via useAISDKRuntime
   const aiChat = useAIChat({
     id: activeConversationId || undefined,
     messages: activeConversation?.messages,
+    transport,
     onError: (err) => {
       setConnectionStatus('error');
       setLastError(err.message);
@@ -668,7 +697,22 @@ export function ChatContent() {
             {graphContext && (
               <GraphContextBadge context={graphContext} onDismiss={clearGraphContext} />
             )}
+
+            {/* Debug panel toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-8 w-8 ${isDebugOpen ? 'text-highlight' : ''}`}
+              onClick={() => setIsDebugOpen((v) => !v)}
+              aria-label="Toggle system prompt debug panel"
+              aria-pressed={isDebugOpen}
+            >
+              <Bug className="h-4 w-4" />
+            </Button>
           </div>
+
+          {/* Debug panel — rendered below header, above message area */}
+          {isDebugOpen && <SystemPromptDebugPanel />}
 
           {/* Messages area */}
           <div className="relative flex-1 overflow-hidden">

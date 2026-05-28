@@ -127,8 +127,13 @@ export async function POST(request: NextRequest): Promise<Response> {
     // before that hook lands. The client reads this header via a custom
     // transport `fetch` in `ChatContent.tsx` and stashes it on the chat
     // store so the per-message feedback buttons can submit against it.
+    const debugRequested = request.headers.get('X-Gibson-Debug') === '1';
     const response = result.toTextStreamResponse();
     response.headers.set('X-Gibson-Trace-Id', crypto.randomUUID());
+    if (debugRequested) {
+      const debugPayload = system.slice(0, 8192); // 8 KB cap
+      response.headers.set('X-Gibson-System-Prompt-Debug', encodeURIComponent(debugPayload));
+    }
     return response;
   } catch (error) {
     return daemonErrorResponse(error, { headers: request.headers });
