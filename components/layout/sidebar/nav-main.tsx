@@ -22,6 +22,7 @@ import {
   ChevronRight,
   CrosshairIcon,
   LayoutDashboardIcon,
+  ListTreeIcon,
   MessageSquareIcon,
   NetworkIcon,
   Plug2Icon,
@@ -76,6 +77,11 @@ export const navItems: NavGroup[] = [
         title: "Findings",
         href: "/dashboard/findings",
         icon: AlertTriangleIcon
+      },
+      {
+        title: "Traces",
+        href: "/dashboard/traces",
+        icon: ListTreeIcon
       },
       {
         title: "Knowledge Graph",
