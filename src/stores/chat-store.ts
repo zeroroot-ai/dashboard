@@ -48,6 +48,8 @@ export interface ChatState {
   // Conversations
   conversations: Conversation[];
   activeConversationId: string | null;
+  /** IDs of conversations pinned to the top of the sidebar. Persisted locally. */
+  pinnedConversationIds: string[];
 
   // Agent selection
   agents: ChatAgent[];
@@ -77,6 +79,8 @@ export interface ChatState {
   saveMessages: (conversationId: string, messages: UIMessage[]) => void;
   hydrateConversations: (conversations: Conversation[]) => void;
   updateConversationTitle: (id: string, title: string) => void;
+  togglePinConversation: (id: string) => void;
+  isConversationPinned: (id: string) => boolean;
 
   // Actions - Agents
   setAgents: (agents: ChatAgent[]) => void;
@@ -152,6 +156,7 @@ export const useChatStore = create<ChatState>()(
       // Initial state
       conversations: [],
       activeConversationId: null,
+      pinnedConversationIds: [],
       agents: DEFAULT_AGENTS,
       selectedAgentId: 'general',
       graphContext: null,
@@ -233,6 +238,21 @@ export const useChatStore = create<ChatState>()(
         }));
       },
 
+      togglePinConversation: (id) => {
+        set((state) => {
+          const pinned = state.pinnedConversationIds.includes(id);
+          return {
+            pinnedConversationIds: pinned
+              ? state.pinnedConversationIds.filter((pid) => pid !== id)
+              : [...state.pinnedConversationIds, id],
+          };
+        });
+      },
+
+      isConversationPinned: (id) => {
+        return get().pinnedConversationIds.includes(id);
+      },
+
       // Agent actions
       setAgents: (agents) => {
         set({ agents });
@@ -298,12 +318,12 @@ export const useChatStore = create<ChatState>()(
     }),
     {
       name: 'gibson-chat-store',
-      // Only persist conversations and selected agent
-      // Conversation durability is now daemon-backed (Redis via UserService).
-      // conversations and activeConversationId are NOT persisted here.
+      // conversations/activeConversationId are daemon-backed (Redis via UserService).
+      // Pin preferences are local-only: no cross-device sync needed for a UI sort hint.
       partialize: (state) => ({
         selectedAgentId: state.selectedAgentId,
         agents: state.agents,
+        pinnedConversationIds: state.pinnedConversationIds,
       }),
     }
   )

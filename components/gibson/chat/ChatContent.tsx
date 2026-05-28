@@ -38,6 +38,10 @@ import {
   ChevronDown,
   Paperclip,
   Loader2,
+  Pin,
+  PinOff,
+  Pencil,
+  Check,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -66,6 +70,7 @@ import {
   useChatGraphContext,
 } from '@/src/stores/chat-store';
 import type { Conversation, ChatAgent, GraphContext } from '@/src/stores/chat-store';
+import { renameConversation } from '@/app/actions/chat';
 import type { GraphSummaryResponse } from '@/src/lib/graph/summary';
 import { SystemPromptDebugPanel } from '@/components/gibson/chat/SystemPromptDebugPanel';
 import { GraphCitationChip } from './GraphCitationChip';
@@ -134,9 +139,12 @@ interface ConversationSidebarProps {
   conversations: Conversation[];
   activeId: string | null;
   agents: ChatAgent[];
+  pinnedIds: string[];
   onSelect: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
+  onRename: (id: string, title: string) => void;
+  onTogglePin: (id: string) => void;
   searchRef: React.RefObject<HTMLInputElement | null>;
 }
 
@@ -152,16 +160,27 @@ function ConversationSidebar({
   conversations,
   activeId,
   agents,
+  pinnedIds,
   onSelect,
   onNew,
   onDelete,
+  onRename,
+  onTogglePin,
   searchRef,
 }: ConversationSidebarProps) {
   const [query, setQuery] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const editInputRef = useRef<HTMLInputElement>(null);
 
-  const sorted = [...conversations].sort(
-    (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime(),
-  );
+  const pinnedSet = new Set(pinnedIds);
+
+  const sorted = [...conversations].sort((a, b) => {
+    const aPin = pinnedSet.has(a.id) ? 1 : 0;
+    const bPin = pinnedSet.has(b.id) ? 1 : 0;
+    if (bPin !== aPin) return bPin - aPin;
+    return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime();
+  });
 
   interface FilteredConversation {
     conv: Conversation;
@@ -176,7 +195,6 @@ function ConversationSidebar({
           acc.push({ conv, excerpt: null });
           return acc;
         }
-        // Check messages for a content match
         for (const msg of conv.messages) {
           const text = getMessageText(msg);
           if (text.toLowerCase().includes(lowerQuery)) {
@@ -188,6 +206,22 @@ function ConversationSidebar({
       }, [])
     : sorted.map((conv) => ({ conv, excerpt: null }));
 
+  const startRename = useCallback((conv: Conversation) => {
+    setEditingId(conv.id);
+    setEditValue(conv.title || '');
+    // Focus after render
+    setTimeout(() => editInputRef.current?.select(), 0);
+  }, []);
+
+  const commitRename = useCallback(
+    (id: string) => {
+      const trimmed = editValue.trim();
+      if (trimmed) onRename(id, trimmed);
+      setEditingId(null);
+    },
+    [editValue, onRename],
+  );
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex flex-col gap-2 p-3">
@@ -195,7 +229,6 @@ function ConversationSidebar({
           <Plus className="mr-2 h-4 w-4" />
           New Chat
         </Button>
-        {/* Search input */}
         <div className="relative">
           <Search className="text-muted-foreground absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
           <Input
@@ -229,47 +262,120 @@ function ConversationSidebar({
             const agent = agents.find((a) => a.id === conv.agentId);
             const AgentIcon = getAgentIcon(agent?.icon);
             const isActive = conv.id === activeId;
+            const isPinned = pinnedSet.has(conv.id);
+            const isEditing = editingId === conv.id;
+
             return (
-              <button
+              <div
                 key={conv.id}
-                onClick={() => onSelect(conv.id)}
-                className={`group flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                className={`group relative flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
                   isActive
                     ? 'bg-primary/10 text-foreground'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
               >
-                <AgentIcon className="h-4 w-4 shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">
-                    {query ? (
-                      <HighlightedText text={conv.title || 'New Chat'} query={query} />
-                    ) : (
-                      conv.title || 'New Chat'
-                    )}
-                  </p>
-                  {excerpt ? (
-                    <p className="text-muted-foreground truncate text-xs">
-                      <HighlightedText text={excerpt} query={query} />
-                    </p>
-                  ) : (
-                    <p className="text-muted-foreground truncate text-xs">
-                      {formatRelativeTime(conv.lastMessageAt)}
-                    </p>
-                  )}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(conv.id);
-                  }}
+                <button
+                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                  onClick={() => !isEditing && onSelect(conv.id)}
                 >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </button>
+                  <AgentIcon className="h-4 w-4 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    {isEditing ? (
+                      <input
+                        ref={editInputRef}
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onBlur={() => commitRename(conv.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') commitRename(conv.id);
+                          if (e.key === 'Escape') setEditingId(null);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-background border-input w-full rounded border px-1 py-0.5 text-xs outline-none focus:ring-1 focus:ring-ring"
+                        data-testid="conversation-rename-input"
+                      />
+                    ) : (
+                      <>
+                        <p className="flex items-center gap-1 truncate font-medium">
+                          {isPinned && (
+                            <Pin className="text-highlight h-2.5 w-2.5 shrink-0" aria-label="Pinned" />
+                          )}
+                          {query ? (
+                            <HighlightedText text={conv.title || 'New Chat'} query={query} />
+                          ) : (
+                            conv.title || 'New Chat'
+                          )}
+                        </p>
+                        {excerpt ? (
+                          <p className="text-muted-foreground truncate text-xs">
+                            <HighlightedText text={excerpt} query={query} />
+                          </p>
+                        ) : (
+                          <p className="text-muted-foreground truncate text-xs">
+                            {formatRelativeTime(conv.lastMessageAt)}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </button>
+
+                {/* Hover action buttons */}
+                {!isEditing && (
+                  <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onTogglePin(conv.id);
+                      }}
+                      aria-label={isPinned ? 'Unpin conversation' : 'Pin conversation'}
+                    >
+                      {isPinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startRename(conv);
+                      }}
+                      aria-label="Rename conversation"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(conv.id);
+                      }}
+                      aria-label="Delete conversation"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+                {isEditing && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      commitRename(conv.id);
+                    }}
+                    aria-label="Save rename"
+                  >
+                    <Check className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
             );
           })}
         </div>
@@ -692,6 +798,7 @@ export function ChatContent() {
   const {
     conversations,
     activeConversationId,
+    pinnedConversationIds,
     agents,
     selectedAgentId,
     setAgents,
@@ -702,6 +809,8 @@ export function ChatContent() {
     saveMessages,
     setConnectionStatus,
     setLastError,
+    togglePinConversation,
+    updateConversationTitle,
   } = useChatStore();
 
   const selectedAgent = useSelectedAgent();
@@ -810,23 +919,8 @@ export function ChatContent() {
   // Build the assistant-ui runtime from the AI SDK chat helpers
   const runtime = useAISDKRuntime(aiChat);
 
-  // Fetch agents on mount
-  useEffect(() => {
-    async function fetchAgents() {
-      try {
-        const res = await fetch('/api/chat/agents');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.agents?.length > 0) {
-            setAgents(data.agents);
-          }
-        }
-      } catch {
-        // Fall back to default agents in store
-      }
-    }
-    fetchAgents();
-  }, [setAgents]);
+  // Agents come from the static store defaults; no remote fetch needed
+  // (the /api/chat/agents route was removed when personas replaced agents).
 
   // Fetch graph summary on mount
   useEffect(() => {
@@ -922,6 +1016,15 @@ export function ChatContent() {
     setAttachment(null);
   }, []);
 
+  const handleRename = useCallback(
+    (id: string, title: string) => {
+      // Optimistic update — persist to Redis fire-and-forget
+      updateConversationTitle(id, title);
+      void renameConversation(id, title);
+    },
+    [updateConversationTitle],
+  );
+
   // Send a suggested prompt via the runtime
   const handleSuggestion = useCallback(
     (text: string) => {
@@ -940,9 +1043,12 @@ export function ChatContent() {
       conversations={conversations}
       activeId={activeConversationId}
       agents={agents}
+      pinnedIds={pinnedConversationIds}
       onSelect={handleSwitchConversation}
       onNew={handleNewConversation}
       onDelete={(id) => deleteConversation(id)}
+      onRename={handleRename}
+      onTogglePin={togglePinConversation}
       searchRef={searchInputRef}
     />
   );
