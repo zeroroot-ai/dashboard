@@ -80,6 +80,7 @@ export async function GET(request: NextRequest) {
     const page = parsePositiveInt(sp.get('page'), 1);
     const limit = Math.min(parsePositiveInt(sp.get('limit'), DEFAULT_LIMIT), MAX_LIMIT);
     const name = sp.get('name')?.trim() || undefined;
+    const userId = sp.get('userId')?.trim() || undefined;
 
     const result = await listTenantTraces(langfuse, {
       page,
@@ -87,6 +88,7 @@ export async function GET(request: NextRequest) {
       fromTimestamp: startOfDayIso(sp.get('from')),
       toTimestamp: endOfDayIso(sp.get('to')),
       name,
+      userId,
     });
 
     const data: TraceSummary[] = result.data.map((trace) => ({

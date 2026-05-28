@@ -54,6 +54,8 @@ export function TraceListTable() {
   const from = searchParams.get("from") ?? "";
   const to = searchParams.get("to") ?? "";
   const name = searchParams.get("name") ?? "";
+  // Set by the Usage → Traces deep-link to scope to a single end-user.
+  const userId = searchParams.get("userId") ?? "";
   const page = Math.max(1, Number.parseInt(searchParams.get("page") ?? "1", 10) || 1);
 
   const [data, setData] = React.useState<TraceListResponse | null>(null);
@@ -95,6 +97,7 @@ export function TraceListTable() {
     if (from) qs.set("from", from);
     if (to) qs.set("to", to);
     if (name) qs.set("name", name);
+    if (userId) qs.set("userId", userId);
 
     (async () => {
       try {
@@ -117,7 +120,7 @@ export function TraceListTable() {
     return () => {
       cancelled = true;
     };
-  }, [page, from, to, name]);
+  }, [page, from, to, name, userId]);
 
   const rows: TraceSummary[] = data?.data ?? [];
   const totalPages = data?.meta.totalPages ?? 1;
@@ -132,6 +135,20 @@ export function TraceListTable() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {userId && (
+          <div className="flex items-center gap-2 text-xs">
+            <Badge variant="outline" className="font-mono border-highlight/50 text-highlight">
+              Scoped to user {userId}
+            </Badge>
+            <button
+              type="button"
+              className="text-link hover:underline"
+              onClick={() => setParam({ userId: null })}
+            >
+              Clear
+            </button>
+          </div>
+        )}
         <div className="grid gap-4 sm:grid-cols-3 max-w-2xl">
           <div className="space-y-1.5">
             <Label htmlFor="from">From</Label>
