@@ -30,14 +30,22 @@ vi.mock('@/src/lib/config', () => ({
   },
 }));
 
-// Mock at the LangfuseClient class boundary so we can spy on createScore
-// without spinning up an HTTP fetch.
+// Shared spy for createScore — installed on the LangfuseClient prototype
+// so all instances created within the route share the same mock fn.
+const createScoreSpy = vi.fn();
+
+// Spy on the LangfuseClient constructor + replace its prototype method.
+// We avoid a wholesale `vi.fn()` replacement because the route checks
+// `instanceof LangfuseUnavailableError` and we want the genuine error
+// classes to remain importable from the same module specifier.
 vi.mock('@/src/lib/langfuse-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/src/lib/langfuse-client')>();
-  return {
-    ...actual,
-    LangfuseClient: vi.fn(),
-  };
+  // Replace createScore on the prototype so every `new LangfuseClient()`
+  // instance constructed inside the route uses our spy.
+  actual.LangfuseClient.prototype.createScore = (
+    ...args: Parameters<typeof actual.LangfuseClient.prototype.createScore>
+  ) => createScoreSpy(...args);
+  return actual;
 });
 
 // ---------------------------------------------------------------------------
@@ -46,7 +54,7 @@ vi.mock('@/src/lib/langfuse-client', async (importOriginal) => {
 
 import { POST } from '../route';
 import { getServerSession } from '@/src/lib/auth';
-import { LangfuseClient, LangfuseUnavailableError } from '@/src/lib/langfuse-client';
+import { LangfuseUnavailableError } from '@/src/lib/langfuse-client';
 import { serverConfig } from '@/src/lib/config';
 
 // ---------------------------------------------------------------------------
@@ -81,14 +89,12 @@ function makeRequest(body: unknown): Request {
 // ---------------------------------------------------------------------------
 
 describe('POST /api/chat/feedback', () => {
-  let createScore: ReturnType<typeof vi.fn>;
+  // Convenience alias to the module-scoped spy installed above.
+  const createScore = createScoreSpy;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    createScore = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(LangfuseClient).mockImplementation(
-      () => ({ createScore }) as unknown as LangfuseClient,
-    );
+    createScore.mockReset();
+    createScore.mockResolvedValue(undefined);
     // Reset serverConfig.langfuseHost to the default — individual tests
     // may override it.
     serverConfig.langfuseHost = 'http://langfuse.test';
@@ -103,14 +109,21 @@ describe('POST /api/chat/feedback', () => {
     expect(createScore).not.toHaveBeenCalled();
   });
 
+  it('returns 401 before mockSession is set for any later auth call', async () => {
+    // Sanity guard so a future refactor cannot silently call createScore
+    // for an unauthenticated request — that would be a privacy bug.
+    vi.mocked(getServerSession).mockResolvedValue(null);
+    await POST(
+      makeRequest({ messageId: 'msg-1', traceId: 'trace-1', rating: 'down' }) as Parameters<typeof POST>[0],
+    );
+    expect(createScore).not.toHaveBeenCalled();
+  });
+
   it('records a thumbs-up as value 1 and returns 204', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
     const res = await POST(
       makeRequest({ messageId: 'msg-1', traceId: 'trace-1', rating: 'up' }) as Parameters<typeof POST>[0],
     );
-    if (res.status !== 204) {
-      console.error('Body:', await res.clone().text());
-    }
     expect(res.status).toBe(204);
     expect(createScore).toHaveBeenCalledWith({
       traceId: 'trace-1',
@@ -183,7 +196,6 @@ describe('POST /api/chat/feedback', () => {
       makeRequest({ messageId: 'msg-1', traceId: 'trace-1', rating: 'up' }) as Parameters<typeof POST>[0],
     );
     expect(res.status).toBe(204);
-    expect(LangfuseClient).not.toHaveBeenCalled();
     expect(createScore).not.toHaveBeenCalled();
   });
 });
