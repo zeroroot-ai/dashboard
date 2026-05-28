@@ -17,6 +17,7 @@ import { useAISDKRuntime } from '@assistant-ui/react-ai-sdk';
 import { MarkdownTextPrimitive } from '@assistant-ui/react-markdown';
 import type { SyntaxHighlighterProps } from '@assistant-ui/react-markdown';
 import { MermaidBlock } from '@/components/gibson/chat/MermaidBlock';
+import { toast } from 'sonner';
 import {
   Bot,
   Bug,
@@ -35,6 +36,8 @@ import {
   X,
   MessageSquare,
   ChevronDown,
+  Paperclip,
+  Loader2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -467,34 +470,118 @@ function AssistantMessage() {
 // Composer (input area)
 // ============================================================================
 
-interface ChatComposerProps {
-  placeholder: string;
+interface AttachmentState {
+  /** Server-issued id; null until upload completes. */
+  id: string | null;
+  /** Original filename, kept for the chip label. */
+  filename: string;
 }
 
-function ChatComposer({ placeholder }: ChatComposerProps) {
+interface ChatComposerProps {
+  placeholder: string;
+  attachment: AttachmentState | null;
+  attachmentUploading: boolean;
+  onAttachFile: (file: File) => void;
+  onClearAttachment: () => void;
+}
+
+function ChatComposer({
+  placeholder,
+  attachment,
+  attachmentUploading,
+  onAttachFile,
+  onClearAttachment,
+}: ChatComposerProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePaperclipClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) onAttachFile(file);
+      // Reset so the same file can be re-selected if the user clears + re-picks.
+      e.target.value = '';
+    },
+    [onAttachFile],
+  );
+
   return (
-    <ComposerPrimitive.Root className="border-input bg-background flex items-end gap-2 rounded-2xl border p-2 shadow-xs">
-      {/* ComposerPrimitive.Input handles ⌘+Enter to send and Escape to cancel */}
-      <ComposerPrimitive.Input
-        autoFocus
-        placeholder={placeholder}
-        rows={1}
-        className="min-h-[44px] flex-1 resize-none border-none bg-transparent text-sm shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-      />
-      {/* Send — automatically disabled when thread is running */}
-      <ComposerPrimitive.Send asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-          <Send className="h-4 w-4" />
-          <span className="sr-only">Send message</span>
+    <ComposerPrimitive.Root className="border-input bg-background flex flex-col gap-2 rounded-2xl border p-2 shadow-xs">
+      {/* Attachment chip — sits above the textarea while a file is staged */}
+      {(attachment || attachmentUploading) && (
+        <div className="flex flex-wrap items-center gap-2 px-1">
+          <Badge variant="secondary" className="gap-1.5">
+            {attachmentUploading ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Paperclip className="h-3 w-3" />
+            )}
+            <span className="max-w-[16rem] truncate">
+              {attachment?.filename ?? 'Uploading…'}
+            </span>
+            {!attachmentUploading && (
+              <button
+                type="button"
+                onClick={onClearAttachment}
+                className="ml-1 rounded-sm hover:opacity-70"
+                aria-label="Remove attachment"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </Badge>
+        </div>
+      )}
+      <div className="flex items-end gap-2">
+        {/* Hidden native input; the paperclip button proxies clicks */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="text/*,application/json,application/pdf"
+          className="hidden"
+          onChange={handleFileChange}
+          data-testid="chat-attachment-input"
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 shrink-0"
+          onClick={handlePaperclipClick}
+          disabled={attachmentUploading}
+          aria-label="Attach file"
+        >
+          {attachmentUploading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Paperclip className="h-4 w-4" />
+          )}
         </Button>
-      </ComposerPrimitive.Send>
-      {/* Cancel — automatically disabled when thread is not running */}
-      <ComposerPrimitive.Cancel asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-          <Square className="h-4 w-4" />
-          <span className="sr-only">Stop generating</span>
-        </Button>
-      </ComposerPrimitive.Cancel>
+        {/* ComposerPrimitive.Input handles ⌘+Enter to send and Escape to cancel */}
+        <ComposerPrimitive.Input
+          autoFocus
+          placeholder={placeholder}
+          rows={1}
+          className="min-h-[44px] flex-1 resize-none border-none bg-transparent text-sm shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+        />
+        {/* Send — automatically disabled when thread is running */}
+        <ComposerPrimitive.Send asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+            <Send className="h-4 w-4" />
+            <span className="sr-only">Send message</span>
+          </Button>
+        </ComposerPrimitive.Send>
+        {/* Cancel — automatically disabled when thread is not running */}
+        <ComposerPrimitive.Cancel asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+            <Square className="h-4 w-4" />
+            <span className="sr-only">Stop generating</span>
+          </Button>
+        </ComposerPrimitive.Cancel>
+      </div>
     </ComposerPrimitive.Root>
   );
 }
@@ -526,11 +613,18 @@ export function ChatContent() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [providerError, setProviderError] = useState<string | null>(null);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
+  const [attachment, setAttachment] = useState<AttachmentState | null>(null);
+  const [attachmentUploading, setAttachmentUploading] = useState(false);
 
   const { setSystemPromptDebug } = useChatStore();
 
   const activeConvRef = useRef(activeConversationId);
   activeConvRef.current = activeConversationId;
+
+  // Keep the latest attachmentId reachable from the transport closure without
+  // re-instantiating the transport on every render.
+  const attachmentIdRef = useRef<string | null>(null);
+  attachmentIdRef.current = attachment?.id ?? null;
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId);
 
@@ -539,11 +633,18 @@ export function ChatContent() {
   const setDebugRef = useRef(setSystemPromptDebug);
   setDebugRef.current = setSystemPromptDebug;
 
-  // Transport memoised on isDebugOpen — only recreated when the flag changes.
+  // Transport — recreated only when the debug flag changes. The body callback
+  // and fetch wrapper read the latest attachment / debug state from refs so we
+  // don't churn the transport on every render.
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
+        api: '/api/chat',
         headers: isDebugOpen ? { 'X-Gibson-Debug': '1' } : undefined,
+        body: () => {
+          const id = attachmentIdRef.current;
+          return id ? { attachmentId: id } : {};
+        },
         fetch: async (input, init) => {
           const response = await fetch(input, init);
           const debugPayload = response.headers.get('X-Gibson-System-Prompt-Debug');
@@ -573,6 +674,8 @@ export function ChatContent() {
     onFinish: () => {
       setConnectionStatus('connected');
       setLastError(null);
+      // Attachments are single-use; clear once the message round-trip finishes.
+      setAttachment(null);
     },
   });
 
@@ -667,6 +770,39 @@ export function ChatContent() {
     },
     [setSelectedAgent, createConversation, graphContext, setActiveConversation, setMessages],
   );
+
+  const handleAttachFile = useCallback(async (file: File) => {
+    setAttachmentUploading(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/chat/attachment', {
+        method: 'POST',
+        body: form,
+      });
+      if (!res.ok) {
+        let message = `Upload failed (${res.status})`;
+        try {
+          const data = (await res.json()) as { error?: string };
+          if (data?.error) message = data.error;
+        } catch {
+          // Non-JSON error body; keep the generic message.
+        }
+        toast.error(message);
+        return;
+      }
+      const data = (await res.json()) as { attachmentId: string };
+      setAttachment({ id: data.attachmentId, filename: file.name });
+    } catch {
+      toast.error('Could not upload the attachment.');
+    } finally {
+      setAttachmentUploading(false);
+    }
+  }, []);
+
+  const handleClearAttachment = useCallback(() => {
+    setAttachment(null);
+  }, []);
 
   // Send a suggested prompt via the runtime
   const handleSuggestion = useCallback(
@@ -813,6 +949,10 @@ export function ChatContent() {
           <div className="border-t p-4">
             <ChatComposer
               placeholder={`Message ${selectedAgent?.name || 'Zero Day AI'}...`}
+              attachment={attachment}
+              attachmentUploading={attachmentUploading}
+              onAttachFile={handleAttachFile}
+              onClearAttachment={handleClearAttachment}
             />
           </div>
         </div>
