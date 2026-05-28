@@ -76,6 +76,7 @@ export interface ChatState {
   clearConversations: () => void;
   saveMessages: (conversationId: string, messages: UIMessage[]) => void;
   hydrateConversations: (conversations: Conversation[]) => void;
+  updateConversationTitle: (id: string, title: string) => void;
 
   // Actions - Agents
   setAgents: (agents: ChatAgent[]) => void;
@@ -222,6 +223,14 @@ export const useChatStore = create<ChatState>()(
           const newConvs = incoming.filter((c) => !existingIds.has(c.id));
           return { conversations: [...state.conversations, ...newConvs] };
         });
+      },
+
+      updateConversationTitle: (id, title) => {
+        set((state) => ({
+          conversations: state.conversations.map((conv) =>
+            conv.id === id ? { ...conv, title } : conv
+          ),
+        }));
       },
 
       // Agent actions

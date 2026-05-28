@@ -12,6 +12,7 @@ import { useChat as useAIChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
 import { useChatStore } from '@/src/stores/chat-store';
+import { generateConversationTitle } from '@/app/actions/chat';
 
 export interface UseChatConfig {
   /** When true, the X-Gibson-Debug header is sent and the system prompt debug panel is populated. */
@@ -21,6 +22,14 @@ export interface UseChatConfig {
 // Re-exported convenience types
 export type UseChatOptions = Parameters<typeof useAIChat>[0];
 export type SendMessageOptions = Parameters<ReturnType<typeof useAIChat>['sendMessage']>[0];
+
+/** Default placeholder titles that should be replaced by the auto-title. */
+const DEFAULT_TITLE_PREFIXES = ['New conversation', 'Chat with ', 'Chat about '];
+
+function isDefaultTitle(title: string | undefined): boolean {
+  if (!title) return true;
+  return DEFAULT_TITLE_PREFIXES.some((prefix) => title.startsWith(prefix));
+}
 
 export function useChat(config?: UseChatConfig) {
   const {
@@ -34,7 +43,12 @@ export function useChat(config?: UseChatConfig) {
     setLastError,
     saveMessages,
     setSystemPromptDebug,
+    updateConversationTitle,
   } = useChatStore();
+
+  // Track which conversationIds have already been auto-titled this session.
+  // Using a ref (not state) so the check never triggers a re-render.
+  const titledConversations = useRef<Set<string>>(new Set());
 
   const debugMode = config?.debugMode ?? false;
 
@@ -119,11 +133,45 @@ export function useChat(config?: UseChatConfig) {
               console.warn('[useChat] Failed to persist conversation to Redis:', err);
             }
           });
+
+          // Auto-title: fire once after the FIRST exchange (1 user + 1 assistant
+          // message) if the conversation still has its default placeholder title.
+          const userMessages = messages.filter((m) => m.role === 'user');
+          const assistantMessages = messages.filter((m) => m.role === 'assistant');
+          const isFirstExchange = userMessages.length === 1 && assistantMessages.length === 1;
+          const hasDefaultTitle = isDefaultTitle(conv.title);
+
+          if (
+            isFirstExchange &&
+            hasDefaultTitle &&
+            !titledConversations.current.has(convId)
+          ) {
+            // Mark immediately — before the async call — to prevent duplicate requests
+            // if the effect fires more than once in the same session.
+            titledConversations.current.add(convId);
+
+            const firstUserText = userMessages[0].parts
+              .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+              .map((p) => p.text)
+              .join('');
+            const firstAssistantText = assistantMessages[0].parts
+              .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+              .map((p) => p.text)
+              .join('');
+
+            void generateConversationTitle(convId, firstUserText, firstAssistantText).then(
+              (title) => {
+                if (title) {
+                  updateConversationTitle(convId, title);
+                }
+              },
+            );
+          }
         }
       }
     }
     prevStatusRef.current = status;
-  }, [status, messages, saveMessages]);
+  }, [status, messages, saveMessages, updateConversationTitle]);
 
   // Update connection status based on chat status
   useEffect(() => {
