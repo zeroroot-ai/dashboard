@@ -17,6 +17,7 @@ import {
   type DaemonProviderConfigInput,
 } from '@/src/lib/gibson-client';
 import { translateError } from '@/src/lib/providers-route-error';
+import { toProviderConfig } from '@/src/lib/providers-adapter';
 
 type RouteContext = { params: Promise<{ name: string }> };
 
@@ -43,8 +44,8 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
   const tenantId = session.user.tenantId ?? undefined;
 
   try {
-    const provider = await daemonGetProvider(name, userId, tenantId);
-    return Response.json({ provider });
+    const record = await daemonGetProvider(name, userId, tenantId);
+    return Response.json({ provider: toProviderConfig(record) });
   } catch (err) {
     return translateError(err);
   }
@@ -88,8 +89,8 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   }
 
   try {
-    const provider = await daemonUpdateProvider(name, body, userId, tenantId);
-    return Response.json({ provider });
+    const record = await daemonUpdateProvider(name, body, userId, tenantId);
+    return Response.json({ provider: toProviderConfig(record) });
   } catch (err) {
     return translateError(err);
   }

@@ -16,6 +16,7 @@ import {
   type DaemonProviderConfigInput,
 } from '@/src/lib/gibson-client';
 import { translateError } from '@/src/lib/providers-route-error';
+import { toProviderConfig } from '@/src/lib/providers-adapter';
 
 // ---------------------------------------------------------------------------
 // GET /api/settings/providers
@@ -38,8 +39,8 @@ export async function GET(_req: NextRequest) {
     const userId = session.user.id;
     const tenantId = session.user.tenantId ?? undefined;
 
-    const providers = await daemonListProviders(userId, tenantId);
-    return Response.json({ providers });
+    const records = await daemonListProviders(userId, tenantId);
+    return Response.json({ providers: records.map(toProviderConfig) });
   } catch (err) {
     return translateError(err);
   }
@@ -92,8 +93,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const provider = await daemonCreateProvider(body, userId, tenantId);
-    return Response.json({ provider }, { status: 201 });
+    const record = await daemonCreateProvider(body, userId, tenantId);
+    return Response.json({ provider: toProviderConfig(record) }, { status: 201 });
   } catch (err) {
     return translateError(err);
   }
