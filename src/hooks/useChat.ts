@@ -7,16 +7,22 @@
 
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useChat as useAIChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
 import { useChatStore } from '@/src/stores/chat-store';
+
+export interface UseChatConfig {
+  /** When true, the X-Gibson-Debug header is sent and the system prompt debug panel is populated. */
+  debugMode?: boolean;
+}
 
 // Re-exported convenience types
 export type UseChatOptions = Parameters<typeof useAIChat>[0];
 export type SendMessageOptions = Parameters<ReturnType<typeof useAIChat>['sendMessage']>[0];
 
-export function useChat() {
+export function useChat(config?: UseChatConfig) {
   const {
     activeConversationId,
     selectedAgentId,
@@ -27,11 +33,38 @@ export function useChat() {
     setConnectionStatus,
     setLastError,
     saveMessages,
+    setSystemPromptDebug,
   } = useChatStore();
+
+  const debugMode = config?.debugMode ?? false;
 
   // Track the current conversation to avoid stale closures
   const activeConvRef = useRef(activeConversationId);
   activeConvRef.current = activeConversationId;
+
+  // Keep a stable ref to setSystemPromptDebug so the fetch closure doesn't
+  // need to be recreated on every render.
+  const setDebugRef = useRef(setSystemPromptDebug);
+  setDebugRef.current = setSystemPromptDebug;
+
+  // Build a transport that optionally attaches the debug header and reads the
+  // debug response header back. The transport is memoised on debugMode so it
+  // is only recreated when that flag changes — not on every render.
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        headers: debugMode ? { 'X-Gibson-Debug': '1' } : undefined,
+        fetch: async (input, init) => {
+          const response = await fetch(input, init);
+          const debugPayload = response.headers.get('X-Gibson-System-Prompt-Debug');
+          if (debugPayload) {
+            setDebugRef.current(decodeURIComponent(debugPayload));
+          }
+          return response;
+        },
+      }),
+    [debugMode],
+  );
 
   // Load initial messages from the active conversation
   const activeConversation = conversations.find(
@@ -41,7 +74,7 @@ export function useChat() {
   const aiChat = useAIChat({
     id: activeConversationId || undefined,
     messages: activeConversation?.messages,
-    // body is passed via transport in AI SDK v6 — agent/context forwarded server-side
+    transport,
     onError: (error) => {
       setConnectionStatus('error');
       setLastError(error.message);
