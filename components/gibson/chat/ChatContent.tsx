@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useChat as useAIChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import {
   AssistantRuntimeProvider,
   ThreadPrimitive,
@@ -9,10 +10,12 @@ import {
   ComposerPrimitive,
   ActionBarPrimitive,
   MessagePartPrimitive,
+  useMessage,
   type TextMessagePartProps,
 } from '@assistant-ui/react';
 import { useAISDKRuntime } from '@assistant-ui/react-ai-sdk';
 import { MarkdownTextPrimitive } from '@assistant-ui/react-markdown';
+import { MermaidBlock } from './MermaidBlock';
 import {
   Bot,
   Search,
@@ -27,6 +30,8 @@ import {
   PanelLeftOpen,
   Copy,
   RefreshCw,
+  ThumbsUp,
+  ThumbsDown,
   X,
   MessageSquare,
   ChevronDown,
@@ -328,8 +333,17 @@ function WelcomeState({ agent, graphSummary, onSendPrompt }: WelcomeStateProps) 
  * MarkdownTextPrimitive reads text from the MessagePartContext established
  * by MessagePrimitive.Parts — no explicit prop-passing required.
  */
+const MERMAID_COMPONENTS_BY_LANGUAGE = {
+  mermaid: { SyntaxHighlighter: MermaidBlock },
+};
+
 function AssistantTextPart(_props: TextMessagePartProps) {
-  return <MarkdownTextPrimitive className="prose prose-sm dark:prose-invert max-w-none" />;
+  return (
+    <MarkdownTextPrimitive
+      className="prose prose-sm dark:prose-invert max-w-none"
+      componentsByLanguage={MERMAID_COMPONENTS_BY_LANGUAGE}
+    />
+  );
 }
 
 /** Renders a user text part as plain text. */
@@ -351,7 +365,47 @@ function UserMessage() {
   );
 }
 
+/**
+ * Per-message feedback hook. Reads the message ID from the assistant-ui
+ * MessageContext and the streaming `X-Gibson-Trace-Id` from the chat
+ * store. Submits to /api/chat/feedback. Optimistic — flips the locally
+ * stored rating immediately, then disables both buttons.
+ *
+ * The traceId flows from the response header into `currentTraceId` via
+ * the custom transport `fetch` wrapper in `ChatContent`. When no trace
+ * ID is available (e.g. no assistant turn yet), submission is silently
+ * suppressed and the buttons stay enabled.
+ */
+function useFeedback() {
+  const messageId = useMessage((s) => s.id);
+  const traceId = useChatStore((s) => s.currentTraceId);
+  const [rating, setRating] = useState<'up' | 'down' | null>(null);
+
+  const submit = useCallback(
+    async (next: 'up' | 'down') => {
+      if (rating !== null) return; // single-shot per render
+      if (!traceId) return; // no trace to score against
+      setRating(next); // optimistic flip
+      try {
+        await fetch('/api/chat/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messageId, traceId, rating: next }),
+        });
+      } catch {
+        // Network error — keep the optimistic state; a refresh resets it.
+        // We deliberately don't surface a toast: feedback is a side
+        // affordance and failure shouldn't interrupt the chat flow.
+      }
+    },
+    [messageId, traceId, rating],
+  );
+
+  return { rating, submit, disabled: rating !== null || !traceId };
+}
+
 function AssistantMessage() {
+  const { rating, submit, disabled } = useFeedback();
   return (
     <MessagePrimitive.Root className="group/message mb-4 flex items-end gap-2">
       <div className="bg-secondary text-secondary-foreground max-w-[80%] rounded-lg px-4 py-2 text-sm">
@@ -365,7 +419,7 @@ function AssistantMessage() {
           </span>
         </MessagePartPrimitive.InProgress>
       </div>
-      {/* Action bar — copy + regenerate; hidden while running or on non-last messages */}
+      {/* Action bar — copy + regenerate + feedback; hidden while running or on non-last messages */}
       <ActionBarPrimitive.Root
         hideWhenRunning
         autohide="not-last"
@@ -383,6 +437,28 @@ function AssistantMessage() {
             <span className="sr-only">Regenerate</span>
           </Button>
         </ActionBarPrimitive.Reload>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-6 w-6 ${rating === 'up' ? 'text-highlight' : ''}`}
+          onClick={() => submit('up')}
+          disabled={disabled}
+          aria-pressed={rating === 'up'}
+        >
+          <ThumbsUp className="h-3 w-3" />
+          <span className="sr-only">Good response</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-6 w-6 ${rating === 'down' ? 'text-destructive' : ''}`}
+          onClick={() => submit('down')}
+          disabled={disabled}
+          aria-pressed={rating === 'down'}
+        >
+          <ThumbsDown className="h-3 w-3" />
+          <span className="sr-only">Bad response</span>
+        </Button>
       </ActionBarPrimitive.Root>
     </MessagePrimitive.Root>
   );
@@ -441,6 +517,7 @@ export function ChatContent() {
     saveMessages,
     setConnectionStatus,
     setLastError,
+    setCurrentTraceId,
   } = useChatStore();
 
   // Persona is derived from the selectedAgentId — no API call needed.
@@ -456,10 +533,32 @@ export function ChatContent() {
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId);
 
+  // Custom transport that intercepts the streaming response so we can
+  // capture the X-Gibson-Trace-Id header into the chat store. The
+  // per-message feedback buttons read it from there. AI SDK v6 doesn't
+  // expose an `onResponse` callback any more, so wrapping `fetch` on
+  // the transport is the canonical extension point.
+  const chatTransport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: '/api/chat',
+        fetch: async (input, init) => {
+          const response = await fetch(input, init);
+          const traceId = response.headers.get('X-Gibson-Trace-Id');
+          if (traceId) {
+            setCurrentTraceId(traceId);
+          }
+          return response;
+        },
+      }),
+    [setCurrentTraceId],
+  );
+
   // Wire to AI SDK useChat — assistant-ui wraps this via useAISDKRuntime
   const aiChat = useAIChat({
     id: activeConversationId || undefined,
     messages: activeConversation?.messages,
+    transport: chatTransport,
     onError: (err) => {
       setConnectionStatus('error');
       setLastError(err.message);

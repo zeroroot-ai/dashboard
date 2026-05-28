@@ -110,6 +110,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       userActivityContext,
       langfuseContext,
       platformContext,
+      nodeId,
     });
 
     // Stream the response — cast validated messages to the SDK type
@@ -119,7 +120,16 @@ export async function POST(request: NextRequest): Promise<Response> {
       messages: messages as ModelMessage[],
     });
 
-    return result.toTextStreamResponse();
+    // Expose a per-response trace ID so the client can echo it back when
+    // the user clicks thumbs-up / thumbs-down. The real Langfuse trace
+    // wiring happens server-side via the provider's telemetry hooks;
+    // here we mint a placeholder so the feedback round-trip works even
+    // before that hook lands. The client reads this header via a custom
+    // transport `fetch` in `ChatContent.tsx` and stashes it on the chat
+    // store so the per-message feedback buttons can submit against it.
+    const response = result.toTextStreamResponse();
+    response.headers.set('X-Gibson-Trace-Id', crypto.randomUUID());
+    return response;
   } catch (error) {
     return daemonErrorResponse(error, { headers: request.headers });
   }
