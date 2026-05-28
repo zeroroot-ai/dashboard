@@ -41,7 +41,7 @@ beforeEach(() => {
 describe('TraceTree', () => {
   it('renders a static (non-expandable) row for non-LLM nodes', () => {
     render(
-      <TraceTree nodes={[node({ id: 'tool-1', type: 'tool', name: 'nmap.scan' })]} missionId="m1" />,
+      <TraceTree nodes={[node({ id: 'tool-1', type: 'tool', name: 'nmap.scan' })]} />,
     );
     expect(screen.getByText('nmap.scan')).toBeDefined();
     // A static row is not a button.
@@ -52,7 +52,6 @@ describe('TraceTree', () => {
     render(
       <TraceTree
         nodes={[node({ id: 'g1', type: 'generation', name: 'gpt-4o.complete' })]}
-        missionId="m1"
       />,
     );
     const button = screen.getByRole('button');
@@ -62,10 +61,10 @@ describe('TraceTree', () => {
 
   it('does not fetch observation detail until the row is expanded', () => {
     render(
-      <TraceTree nodes={[node({ id: 'g1', type: 'generation' })]} missionId="m1" />,
+      <TraceTree nodes={[node({ id: 'g1', type: 'generation' })]} />,
     );
     // Hook is called (collapsed), but with enabled=false.
-    expect(mockUseObservationDetail).toHaveBeenCalledWith('m1', 'g1', false);
+    expect(mockUseObservationDetail).toHaveBeenCalledWith('g1', false);
   });
 
   it('shows a loading skeleton while the expanded conversation loads', () => {
@@ -75,7 +74,7 @@ describe('TraceTree', () => {
       isError: false,
     });
     const { container } = render(
-      <TraceTree nodes={[node({ id: 'g1', type: 'generation' })]} missionId="m1" />,
+      <TraceTree nodes={[node({ id: 'g1', type: 'generation' })]} />,
     );
     fireEvent.click(screen.getByRole('button'));
     expect(container.querySelector('[class*="animate-pulse"]')).not.toBeNull();
@@ -87,7 +86,7 @@ describe('TraceTree', () => {
       isLoading: false,
       isError: true,
     });
-    render(<TraceTree nodes={[node({ id: 'g1', type: 'generation' })]} missionId="m1" />);
+    render(<TraceTree nodes={[node({ id: 'g1', type: 'generation' })]} />);
     fireEvent.click(screen.getByRole('button'));
     expect(screen.getByText(/Could not load this call/i)).toBeDefined();
   });
@@ -103,7 +102,7 @@ describe('TraceTree', () => {
       isLoading: false,
       isError: false,
     });
-    render(<TraceTree nodes={[node({ id: 'g1', type: 'generation' })]} missionId="m1" />);
+    render(<TraceTree nodes={[node({ id: 'g1', type: 'generation' })]} />);
     fireEvent.click(screen.getByRole('button'));
     expect(screen.getByText('find open ports')).toBeDefined();
   });
@@ -119,7 +118,7 @@ describe('TraceTree', () => {
       isLoading: false,
       isError: false,
     });
-    render(<TraceTree nodes={[node({ id: 'g1', type: 'generation' })]} missionId="m1" />);
+    render(<TraceTree nodes={[node({ id: 'g1', type: 'generation' })]} />);
     fireEvent.click(screen.getByRole('button'));
     expect(screen.getByText(/content logging is disabled/i)).toBeDefined();
   });
@@ -135,7 +134,6 @@ describe('TraceTree', () => {
             children: [node({ id: 'g1', type: 'generation', name: 'llm.call' })],
           }),
         ]}
-        missionId="m1"
       />,
     );
     expect(screen.getByText('recon-agent')).toBeDefined();

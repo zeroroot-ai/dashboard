@@ -4,7 +4,7 @@ import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { getMissionHistory } from '@/src/lib/gibson-client';
 import { LangfuseUnavailableError, LangfuseAuthError, LangfuseNotFoundError } from '@/src/lib/langfuse-client';
 import { resolveLangfuseClient } from '@/src/lib/langfuse-tenant-service';
-import { buildTraceTree, aggregateTokenUsage, extractDecisions } from '@/src/lib/trace-utils';
+import { assembleTraceData } from '@/src/lib/trace-detail';
 
 /**
  * GET /api/missions/[id]/traces
@@ -65,37 +65,9 @@ export async function GET(
       );
     }
 
-    // Fetch trace and observations from Langfuse
-    const [trace, observations] = await Promise.all([
-      langfuse.getTrace(traceId),
-      langfuse.getObservations(traceId),
-    ]);
-
-    // Transform data
-    const traceTree = buildTraceTree(observations);
-    const tokenSummary = aggregateTokenUsage(observations);
-    const decisions = extractDecisions(observations);
-
-    const startTime = trace.timestamp;
-    const endTime = observations.length > 0
-      ? observations.reduce((latest, obs) => {
-          const end = obs.endTime || obs.startTime;
-          return end > latest ? end : latest;
-        }, observations[0].startTime)
-      : trace.timestamp;
-
-    const totalDurationMs = new Date(endTime).getTime() - new Date(startTime).getTime();
-
-    return NextResponse.json({
-      traceId: trace.id,
-      missionId,
-      startTime,
-      endTime,
-      totalDurationMs,
-      tokenSummary,
-      decisions,
-      traceTree,
-    });
+    // Assemble the canonical TraceData (shared with /api/traces/[traceId]).
+    const traceData = await assembleTraceData(langfuse, traceId, missionId);
+    return NextResponse.json(traceData);
   } catch (error) {
     if (error instanceof LangfuseUnavailableError) {
       return NextResponse.json(

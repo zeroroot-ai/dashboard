@@ -80,7 +80,7 @@ export function MissionTracesTab({ missionId, missionStatus }: MissionTracesTabP
           <span>Trace</span>
           <span>input/output · duration</span>
         </div>
-        <TraceTree nodes={data.traceTree} missionId={missionId} />
+        <TraceTree nodes={data.traceTree} />
       </div>
     </div>
   );
