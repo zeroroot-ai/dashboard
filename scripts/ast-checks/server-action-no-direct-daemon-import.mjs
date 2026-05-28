@@ -42,6 +42,7 @@ const IGNORE_DIRS = new Set([
   "out",
   "coverage",
   ".worktrees",
+  ".claude", // exclude parallel-agent worktrees (.claude/worktrees)
   "playwright-report",
   "test-results",
   "scripts", // the walker's own fixtures

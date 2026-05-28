@@ -1,5 +1,10 @@
-import { ChatContent } from '@/components/gibson/chat/ChatContent';
+import { ChatContent } from "@/components/gibson/chat/ChatContent";
+import { ConversationListProvider } from "@/components/gibson/chat/ConversationListProvider";
 
 export default function ChatPage() {
-  return <ChatContent />;
+  return (
+    <ConversationListProvider>
+      <ChatContent />
+    </ConversationListProvider>
+  );
 }
