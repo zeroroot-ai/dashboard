@@ -259,6 +259,45 @@ export interface SaveConversationInput {
   messages: ConversationMessagePayload[];
 }
 
+/**
+ * Update only the `title` field of an existing conversation hash.
+ *
+ * Used by the auto-title server action so the full message payload is not
+ * re-serialised on every title update. Returns `true` on success, `false`
+ * when Redis is unavailable or the key does not exist.
+ */
+export async function updateConversationTitle(
+  tenantId: string,
+  conversationId: string,
+  title: string,
+): Promise<boolean> {
+  try {
+    const redis = await getRedis();
+    if (!redis) {
+      console.warn(
+        '[redis-store] Redis unavailable; cannot update title for conversation:',
+        conversationId,
+      );
+      return false;
+    }
+    const hashKey = `conv:${tenantId}:${conversationId}`;
+    // Only update if the hash exists — hSetField on a missing key would
+    // silently create a partial record.
+    const exists = await redis.exists(hashKey);
+    if (!exists) return false;
+    const now = new Date().toISOString();
+    await redis.hSet(hashKey, { title, updated_at: now });
+    return true;
+  } catch (err) {
+    console.warn(
+      '[redis-store] Error updating title for conversation',
+      conversationId,
+      err instanceof Error ? err.message : err,
+    );
+    return false;
+  }
+}
+
 export async function saveConversation(input: SaveConversationInput): Promise<boolean> {
   try {
     const redis = await getRedis();
