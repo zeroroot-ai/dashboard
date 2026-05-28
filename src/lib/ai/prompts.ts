@@ -84,6 +84,10 @@ export interface BuildSystemPromptOpts {
   userActivityContext?: UserActivityContext;
   langfuseContext?: LangfuseUserContext;
   platformContext?: PlatformContext;
+  /** The graph node ID the operator currently has focused, if any. When
+   * present it is included in the layer-7 citation instruction so the model
+   * can reference the exact node in its answers. */
+  nodeId?: string;
 }
 
 /**
@@ -96,10 +100,10 @@ export interface BuildSystemPromptOpts {
  *   4. Langfuse recent agent traces
  *   5. Redis user activity
  *   6. Platform inventory (agents / tools / plugins)
- *   7. Focused knowledge-graph node
+ *   7. Focused knowledge-graph node + citation instruction
  */
 export function buildSystemPrompt(opts: BuildSystemPromptOpts): string {
-  const { agentId, graphContext, graphSummary, userActivityContext, langfuseContext, platformContext } = opts;
+  const { agentId, graphContext, graphSummary, userActivityContext, langfuseContext, platformContext, nodeId } = opts;
 
   const parts: string[] = [];
 
@@ -134,10 +138,13 @@ export function buildSystemPrompt(opts: BuildSystemPromptOpts): string {
     if (rendered) parts.push(rendered);
   }
 
-  // 7. Focused node context
+  // 7. Focused node context + citation instruction
   if (graphContext?.summary) {
+    const citationHint = nodeId
+      ? ` When referencing this node in your response, cite it by its graph ID: ${nodeId}.`
+      : '';
     parts.push(
-      `The operator currently has the following node selected in the knowledge graph. Use this context to inform your answers:\n\n${graphContext.summary}`,
+      `The operator currently has the following node selected in the knowledge graph. Use this context to inform your answers.${citationHint}\n\n${graphContext.summary}`,
     );
   }
 
