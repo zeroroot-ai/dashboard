@@ -81,6 +81,17 @@ interface LangfuseClientOptions {
   secretKey: string;
 }
 
+/** Page envelope returned by the paginated trace-list endpoint. */
+export interface LangfuseTracePage {
+  data: LangfuseTrace[];
+  meta: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+  };
+}
+
 export class LangfuseClient {
   private readonly baseUrl: string;
   private readonly authHeader: string;
@@ -176,6 +187,50 @@ export class LangfuseClient {
       `/api/public/traces?${params.toString()}`,
     );
     return result.data ?? [];
+  }
+
+  /**
+   * List traces in the project with pagination + optional filters, newest
+   * first. Unlike {@link listTraces}, this does NOT constrain to a single
+   * userId — project scoping comes from the credentials themselves, so this
+   * returns every trace in the tenant's project. Returns the page envelope
+   * (data + meta) so callers can drive pagination controls.
+   */
+  async listTracesPaged(opts: {
+    page?: number;
+    limit?: number;
+    fromTimestamp?: string;
+    toTimestamp?: string;
+    name?: string;
+    userId?: string;
+  }): Promise<LangfuseTracePage> {
+    const params = new URLSearchParams({
+      orderBy: 'timestamp',
+      order: 'DESC',
+    });
+    if (opts.page != null) params.set('page', String(opts.page));
+    if (opts.limit != null) params.set('limit', String(opts.limit));
+    if (opts.fromTimestamp) params.set('fromTimestamp', opts.fromTimestamp);
+    if (opts.toTimestamp) params.set('toTimestamp', opts.toTimestamp);
+    if (opts.name) params.set('name', opts.name);
+    if (opts.userId) params.set('userId', opts.userId);
+
+    const result = await this.request<{
+      data: LangfuseTrace[];
+      meta?: Partial<LangfuseTracePage['meta']>;
+    }>(`/api/public/traces?${params.toString()}`);
+
+    const data = result.data ?? [];
+    const meta = result.meta ?? {};
+    return {
+      data,
+      meta: {
+        page: meta.page ?? opts.page ?? 1,
+        limit: meta.limit ?? opts.limit ?? data.length,
+        totalItems: meta.totalItems ?? data.length,
+        totalPages: meta.totalPages ?? 1,
+      },
+    };
   }
 
   /**
