@@ -1,8 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useChat as useAIChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
 import {
   AssistantRuntimeProvider,
   ThreadPrimitive,
@@ -10,12 +9,12 @@ import {
   ComposerPrimitive,
   ActionBarPrimitive,
   MessagePartPrimitive,
-  useMessage,
   type TextMessagePartProps,
 } from '@assistant-ui/react';
 import { useAISDKRuntime } from '@assistant-ui/react-ai-sdk';
 import { MarkdownTextPrimitive } from '@assistant-ui/react-markdown';
-import { MermaidBlock } from './MermaidBlock';
+import type { SyntaxHighlighterProps } from '@assistant-ui/react-markdown';
+import { MermaidBlock } from '@/components/gibson/chat/MermaidBlock';
 import {
   Bot,
   Search,
@@ -30,16 +29,9 @@ import {
   PanelLeftOpen,
   Copy,
   RefreshCw,
-  ThumbsUp,
-  ThumbsDown,
   X,
   MessageSquare,
   ChevronDown,
-  Crosshair,
-  Briefcase,
-  Monitor,
-  Code,
-  ClipboardCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -54,51 +46,48 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   useChatStore,
+  useSelectedAgent,
   useChatGraphContext,
 } from '@/src/stores/chat-store';
 import type { Conversation, ChatAgent, GraphContext } from '@/src/stores/chat-store';
-import { PERSONAS_LIST, getPersona } from '@/src/lib/chat/personas';
-import type { Persona } from '@/src/lib/chat/personas';
 import type { GraphSummaryResponse } from '@/src/lib/graph/summary';
 
 // ============================================================================
 // Agent icon mapping
 // ============================================================================
 
-const PERSONA_ICONS: Record<string, LucideIcon> = {
+const AGENT_ICONS: Record<string, LucideIcon> = {
   bot: Bot,
   search: Search,
   zap: Zap,
   activity: Activity,
   shield: Shield,
-  crosshair: Crosshair,
-  briefcase: Briefcase,
-  monitor: Monitor,
-  code: Code,
-  'clipboard-check': ClipboardCheck,
 };
 
-function getPersonaIcon(iconName?: string): LucideIcon {
-  return PERSONA_ICONS[iconName ?? 'bot'] ?? Bot;
+function getAgentIcon(iconName?: string): LucideIcon {
+  return AGENT_ICONS[iconName ?? 'bot'] ?? Bot;
 }
 
-/** @deprecated Use getPersonaIcon — kept for ConversationSidebar which reads ChatAgent.icon */
-function getAgentIcon(iconName?: string): LucideIcon {
-  return getPersonaIcon(iconName);
+function agentStatusClass(status: ChatAgent['status']): string {
+  switch (status) {
+    case 'online':
+      return 'bg-highlight';
+    case 'busy':
+      return 'bg-alt';
+    case 'offline':
+      return 'bg-destructive';
+    default:
+      return 'bg-muted';
+  }
 }
 
 // ============================================================================
@@ -199,56 +188,53 @@ function formatRelativeTime(date: Date | string): string {
 }
 
 // ============================================================================
-// Persona selector
+// Agent selector
 // ============================================================================
 
-interface PersonaSelectorProps {
+interface AgentSelectorProps {
+  agents: ChatAgent[];
   selectedId: string;
-  onSelect: (personaId: string) => void;
+  onSelect: (agentId: string) => void;
 }
 
-function PersonaSelector({ selectedId, onSelect }: PersonaSelectorProps) {
-  const selected = getPersona(selectedId);
-  const SelectedIcon = getPersonaIcon(selected.icon);
+function AgentSelector({ agents, selectedId, onSelect }: AgentSelectorProps) {
+  const selected = agents.find((a) => a.id === selectedId) ?? agents[0];
+  if (!selected) return null;
+  const SelectedIcon = getAgentIcon(selected.icon);
 
   return (
-    <TooltipProvider>
-      <Select value={selectedId} onValueChange={onSelect}>
-        <SelectTrigger size="sm" className="gap-2 border-none bg-transparent shadow-none focus:ring-0 focus-visible:ring-0">
-          <SelectValue>
-            <span className="flex items-center gap-2">
-              <SelectedIcon className="h-4 w-4 shrink-0" />
-              <span>{selected.label}</span>
-            </span>
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent align="start" className="w-80">
-          {PERSONAS_LIST.map((persona) => {
-            const Icon = getPersonaIcon(persona.icon);
-            return (
-              <Tooltip key={persona.id}>
-                <TooltipTrigger asChild>
-                  <SelectItem value={persona.id} className="py-2.5">
-                    <div className="flex items-start gap-3">
-                      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-foreground" />
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium leading-none">{persona.label}</div>
-                        <div className="text-muted-foreground mt-1 text-xs leading-snug">
-                          {persona.description}
-                        </div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="max-w-60">
-                  {persona.description}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </SelectContent>
-      </Select>
-    </TooltipProvider>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="gap-2">
+          <SelectedIcon className="h-4 w-4" />
+          <span>{selected.name}</span>
+          <span className={`h-2 w-2 rounded-full ${agentStatusClass(selected.status)}`} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-72">
+        <DropdownMenuLabel>Select Agent</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {agents.map((agent) => {
+          const Icon = getAgentIcon(agent.icon);
+          return (
+            <DropdownMenuItem
+              key={agent.id}
+              onClick={() => onSelect(agent.id)}
+              className="flex items-start gap-3 py-2"
+            >
+              <Icon className="mt-0.5 h-4 w-4 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{agent.name}</span>
+                  <span className={`h-2 w-2 rounded-full ${agentStatusClass(agent.status)}`} />
+                </div>
+                <p className="text-muted-foreground text-xs">{agent.description}</p>
+              </div>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -282,8 +268,15 @@ function GraphContextBadge({ context, onDismiss }: GraphContextBadgeProps) {
 // Welcome state
 // ============================================================================
 
+const SUGGESTED_PROMPTS = [
+  'Summarize my latest mission findings',
+  'What hosts have critical vulnerabilities?',
+  'Show me the attack surface overview',
+  'What did the last scan discover?',
+];
+
 interface WelcomeStateProps {
-  agent: Persona;
+  agent: ChatAgent | undefined;
   graphSummary: GraphSummaryResponse | null;
   onSendPrompt: (text: string) => void;
 }
@@ -296,10 +289,10 @@ function WelcomeState({ agent, graphSummary, onSendPrompt }: WelcomeStateProps) 
           <MessageSquare className="text-primary h-8 w-8" />
         </div>
         <h2 className="mb-2 text-xl font-semibold">
-          Chat with {agent.label}
+          Chat with {agent?.name || 'Zero Day AI'}
         </h2>
         <p className="text-muted-foreground mb-1 text-sm">
-          {agent.description}
+          {agent?.description || 'AI-powered security assistant'}
         </p>
         {graphSummary && graphSummary.stats.hosts > 0 && (
           <p className="text-muted-foreground mb-4 text-xs">
@@ -309,7 +302,7 @@ function WelcomeState({ agent, graphSummary, onSendPrompt }: WelcomeStateProps) 
           </p>
         )}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          {agent.suggestedPrompts.map((prompt) => (
+          {SUGGESTED_PROMPTS.map((prompt) => (
             <button
               key={prompt}
               onClick={() => onSendPrompt(prompt)}
@@ -325,6 +318,22 @@ function WelcomeState({ agent, graphSummary, onSendPrompt }: WelcomeStateProps) 
 }
 
 // ============================================================================
+// Mermaid syntax highlighter for MarkdownTextPrimitive
+// ============================================================================
+
+/**
+ * Renders a ```mermaid code block as a live diagram via MermaidBlock.
+ * Passed to MarkdownTextPrimitive via componentsByLanguage.
+ */
+function MermaidSyntaxHighlighter({ code }: SyntaxHighlighterProps) {
+  return <MermaidBlock code={code} />;
+}
+
+const MARKDOWN_COMPONENTS_BY_LANGUAGE = {
+  mermaid: { SyntaxHighlighter: MermaidSyntaxHighlighter },
+} as const;
+
+// ============================================================================
 // Message part components
 // ============================================================================
 
@@ -333,15 +342,11 @@ function WelcomeState({ agent, graphSummary, onSendPrompt }: WelcomeStateProps) 
  * MarkdownTextPrimitive reads text from the MessagePartContext established
  * by MessagePrimitive.Parts — no explicit prop-passing required.
  */
-const MERMAID_COMPONENTS_BY_LANGUAGE = {
-  mermaid: { SyntaxHighlighter: MermaidBlock },
-};
-
 function AssistantTextPart(_props: TextMessagePartProps) {
   return (
     <MarkdownTextPrimitive
       className="prose prose-sm dark:prose-invert max-w-none"
-      componentsByLanguage={MERMAID_COMPONENTS_BY_LANGUAGE}
+      componentsByLanguage={MARKDOWN_COMPONENTS_BY_LANGUAGE}
     />
   );
 }
@@ -365,47 +370,7 @@ function UserMessage() {
   );
 }
 
-/**
- * Per-message feedback hook. Reads the message ID from the assistant-ui
- * MessageContext and the streaming `X-Gibson-Trace-Id` from the chat
- * store. Submits to /api/chat/feedback. Optimistic — flips the locally
- * stored rating immediately, then disables both buttons.
- *
- * The traceId flows from the response header into `currentTraceId` via
- * the custom transport `fetch` wrapper in `ChatContent`. When no trace
- * ID is available (e.g. no assistant turn yet), submission is silently
- * suppressed and the buttons stay enabled.
- */
-function useFeedback() {
-  const messageId = useMessage((s) => s.id);
-  const traceId = useChatStore((s) => s.currentTraceId);
-  const [rating, setRating] = useState<'up' | 'down' | null>(null);
-
-  const submit = useCallback(
-    async (next: 'up' | 'down') => {
-      if (rating !== null) return; // single-shot per render
-      if (!traceId) return; // no trace to score against
-      setRating(next); // optimistic flip
-      try {
-        await fetch('/api/chat/feedback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messageId, traceId, rating: next }),
-        });
-      } catch {
-        // Network error — keep the optimistic state; a refresh resets it.
-        // We deliberately don't surface a toast: feedback is a side
-        // affordance and failure shouldn't interrupt the chat flow.
-      }
-    },
-    [messageId, traceId, rating],
-  );
-
-  return { rating, submit, disabled: rating !== null || !traceId };
-}
-
 function AssistantMessage() {
-  const { rating, submit, disabled } = useFeedback();
   return (
     <MessagePrimitive.Root className="group/message mb-4 flex items-end gap-2">
       <div className="bg-secondary text-secondary-foreground max-w-[80%] rounded-lg px-4 py-2 text-sm">
@@ -419,7 +384,7 @@ function AssistantMessage() {
           </span>
         </MessagePartPrimitive.InProgress>
       </div>
-      {/* Action bar — copy + regenerate + feedback; hidden while running or on non-last messages */}
+      {/* Action bar — copy + regenerate; hidden while running or on non-last messages */}
       <ActionBarPrimitive.Root
         hideWhenRunning
         autohide="not-last"
@@ -437,28 +402,6 @@ function AssistantMessage() {
             <span className="sr-only">Regenerate</span>
           </Button>
         </ActionBarPrimitive.Reload>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`h-6 w-6 ${rating === 'up' ? 'text-highlight' : ''}`}
-          onClick={() => submit('up')}
-          disabled={disabled}
-          aria-pressed={rating === 'up'}
-        >
-          <ThumbsUp className="h-3 w-3" />
-          <span className="sr-only">Good response</span>
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`h-6 w-6 ${rating === 'down' ? 'text-destructive' : ''}`}
-          onClick={() => submit('down')}
-          disabled={disabled}
-          aria-pressed={rating === 'down'}
-        >
-          <ThumbsDown className="h-3 w-3" />
-          <span className="sr-only">Bad response</span>
-        </Button>
       </ActionBarPrimitive.Root>
     </MessagePrimitive.Root>
   );
@@ -510,6 +453,7 @@ export function ChatContent() {
     activeConversationId,
     agents,
     selectedAgentId,
+    setAgents,
     setSelectedAgent,
     setActiveConversation,
     createConversation,
@@ -517,11 +461,9 @@ export function ChatContent() {
     saveMessages,
     setConnectionStatus,
     setLastError,
-    setCurrentTraceId,
   } = useChatStore();
 
-  // Persona is derived from the selectedAgentId — no API call needed.
-  const selectedPersona = getPersona(selectedAgentId);
+  const selectedAgent = useSelectedAgent();
   const { graphContext, clearGraphContext } = useChatGraphContext();
 
   const [graphSummary, setGraphSummary] = useState<GraphSummaryResponse | null>(null);
@@ -533,32 +475,10 @@ export function ChatContent() {
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId);
 
-  // Custom transport that intercepts the streaming response so we can
-  // capture the X-Gibson-Trace-Id header into the chat store. The
-  // per-message feedback buttons read it from there. AI SDK v6 doesn't
-  // expose an `onResponse` callback any more, so wrapping `fetch` on
-  // the transport is the canonical extension point.
-  const chatTransport = useMemo(
-    () =>
-      new DefaultChatTransport({
-        api: '/api/chat',
-        fetch: async (input, init) => {
-          const response = await fetch(input, init);
-          const traceId = response.headers.get('X-Gibson-Trace-Id');
-          if (traceId) {
-            setCurrentTraceId(traceId);
-          }
-          return response;
-        },
-      }),
-    [setCurrentTraceId],
-  );
-
   // Wire to AI SDK useChat — assistant-ui wraps this via useAISDKRuntime
   const aiChat = useAIChat({
     id: activeConversationId || undefined,
     messages: activeConversation?.messages,
-    transport: chatTransport,
     onError: (err) => {
       setConnectionStatus('error');
       setLastError(err.message);
@@ -604,6 +524,24 @@ export function ChatContent() {
   // Build the assistant-ui runtime from the AI SDK chat helpers
   const runtime = useAISDKRuntime(aiChat);
 
+  // Fetch agents on mount
+  useEffect(() => {
+    async function fetchAgents() {
+      try {
+        const res = await fetch('/api/chat/agents');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.agents?.length > 0) {
+            setAgents(data.agents);
+          }
+        }
+      } catch {
+        // Fall back to default agents in store
+      }
+    }
+    fetchAgents();
+  }, [setAgents]);
+
   // Fetch graph summary on mount
   useEffect(() => {
     async function fetchSummary() {
@@ -638,10 +576,10 @@ export function ChatContent() {
     [conversations, setActiveConversation, setMessages],
   );
 
-  const handleSelectPersona = useCallback(
-    (personaId: string) => {
-      setSelectedAgent(personaId);
-      const newId = createConversation(personaId, graphContext || undefined);
+  const handleSelectAgent = useCallback(
+    (agentId: string) => {
+      setSelectedAgent(agentId);
+      const newId = createConversation(agentId, graphContext || undefined);
       setActiveConversation(newId);
       setMessages([]);
     },
@@ -717,10 +655,11 @@ export function ChatContent() {
               </Button>
             </div>
 
-            {/* Persona selector */}
-            <PersonaSelector
+            {/* Agent selector */}
+            <AgentSelector
+              agents={agents}
               selectedId={selectedAgentId}
-              onSelect={handleSelectPersona}
+              onSelect={handleSelectAgent}
             />
 
             <div className="flex-1" />
@@ -736,7 +675,7 @@ export function ChatContent() {
             {/* Welcome state when thread is empty */}
             <ThreadPrimitive.If empty>
               <WelcomeState
-                agent={selectedPersona}
+                agent={selectedAgent}
                 graphSummary={graphSummary}
                 onSendPrompt={handleSuggestion}
               />
@@ -776,7 +715,7 @@ export function ChatContent() {
           {/* Input area */}
           <div className="border-t p-4">
             <ChatComposer
-              placeholder={`Message ${selectedPersona.label}...`}
+              placeholder={`Message ${selectedAgent?.name || 'Zero Day AI'}...`}
             />
           </div>
         </div>
