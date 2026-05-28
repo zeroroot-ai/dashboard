@@ -60,6 +60,12 @@ export interface ChatState {
   connectionStatus: 'connected' | 'connecting' | 'disconnected' | 'error';
   lastError: string | null;
 
+  // Last X-Gibson-Trace-Id surfaced by the streaming chat response. The
+  // value is overwritten on every assistant turn so the feedback buttons
+  // on the latest message always post the right ID. Stored in-memory only
+  // (no persistence) — feedback for past sessions isn't a use case.
+  currentTraceId: string | null;
+
   // Actions - Conversations
   createConversation: (agentId: string, graphContext?: GraphContext) => string;
   setActiveConversation: (id: string | null) => void;
@@ -79,6 +85,9 @@ export interface ChatState {
   // Actions - Connection
   setConnectionStatus: (status: ChatState['connectionStatus']) => void;
   setLastError: (error: string | null) => void;
+
+  // Actions - Trace
+  setCurrentTraceId: (id: string | null) => void;
 
   // Selectors
   getActiveConversation: () => Conversation | undefined;
@@ -140,6 +149,7 @@ export const useChatStore = create<ChatState>()(
       graphContext: null,
       connectionStatus: 'disconnected',
       lastError: null,
+      currentTraceId: null,
 
       // Conversation actions
       createConversation: (agentId, graphContext) => {
@@ -231,6 +241,10 @@ export const useChatStore = create<ChatState>()(
 
       setLastError: (error) => {
         set({ lastError: error });
+      },
+
+      setCurrentTraceId: (id) => {
+        set({ currentTraceId: id });
       },
 
       // Selectors
