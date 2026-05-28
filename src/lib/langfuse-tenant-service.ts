@@ -96,15 +96,18 @@ export interface ListTenantTracesOpts {
   toTimestamp?: string;
   /** Substring filter on trace name. */
   name?: string;
+  /** Restrict to traces attributed to a single end-user id. */
+  userId?: string;
 }
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 25;
 
 /**
- * List every trace in the tenant's project (no userId filter), applying
- * pagination + optional date / name filters. Project scoping comes from the
- * client's credentials.
+ * List traces in the tenant's project, applying pagination + optional
+ * date / name / userId filters. Project scoping comes from the client's
+ * credentials; an explicit userId further narrows to one end-user (used by
+ * the Usage → Traces deep-link).
  */
 export async function listTenantTraces(
   client: LangfuseClient,
@@ -116,5 +119,6 @@ export async function listTenantTraces(
     fromTimestamp: opts.fromTimestamp,
     toTimestamp: opts.toTimestamp,
     name: opts.name,
+    userId: opts.userId,
   });
 }

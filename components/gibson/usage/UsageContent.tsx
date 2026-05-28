@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -62,6 +63,24 @@ function formatDollars(cents: number): string {
 
 function formatTokens(n: number): string {
   return n.toLocaleString();
+}
+
+/**
+ * Deep-link from a by-user usage row to the Gibson Traces list scoped to that
+ * end-user, carrying the current date range. Only the user scope maps cleanly
+ * to a trace-list filter — agent/team/mission attribution lives at observation
+ * granularity, which the trace-list API does not filter on (see dashboard
+ * follow-up).
+ */
+function tracesHrefForUser(
+  subjectId: string,
+  fromParam?: string,
+  toParam?: string,
+): string {
+  const qs = new URLSearchParams({ userId: subjectId });
+  if (fromParam) qs.set("from", fromParam);
+  if (toParam) qs.set("to", toParam);
+  return `/dashboard/traces?${qs.toString()}`;
 }
 
 export function UsageContent({ fromParam, toParam, scopeParam }: Props) {
@@ -185,7 +204,16 @@ export function UsageContent({ fromParam, toParam, scopeParam }: Props) {
                       {rows.map((r) => (
                         <TableRow key={r.subjectId}>
                           <TableCell className="font-mono text-xs">
-                            {r.displayName || r.subjectId}
+                            {s === "user" ? (
+                              <Link
+                                href={tracesHrefForUser(r.subjectId, fromParam, toParam)}
+                                className="text-link hover:underline"
+                              >
+                                {r.displayName || r.subjectId}
+                              </Link>
+                            ) : (
+                              r.displayName || r.subjectId
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
                             {formatTokens(r.inputTokens)}

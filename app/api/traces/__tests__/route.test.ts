@@ -130,6 +130,18 @@ describe('GET /api/traces', () => {
     });
   });
 
+  it('passes a userId filter through (Usage → Traces deep-link)', async () => {
+    mockListTenantTraces.mockResolvedValueOnce({
+      data: [],
+      meta: { page: 1, limit: 25, totalItems: 0, totalPages: 0 },
+    });
+    await GET(req('http://test.local/api/traces?userId=user-42'));
+    expect(mockListTenantTraces).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ userId: 'user-42' }),
+    );
+  });
+
   it('caps the page size at 100', async () => {
     mockListTenantTraces.mockResolvedValueOnce({
       data: [],
