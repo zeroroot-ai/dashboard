@@ -15,6 +15,15 @@ const mockUseMissionTrace = vi.fn();
 
 vi.mock('@/src/hooks/useTraces', () => ({
   useMissionTrace: (...args: unknown[]) => mockUseMissionTrace(...args),
+  // The shared <TraceTree> renders expandable rows for generation/decision
+  // nodes, which call useObservationDetail unconditionally (collapsed by
+  // default → no fetch). A static collapsed-state stub keeps the tree-render
+  // assertions below focused on MissionTracesTab's own behaviour.
+  useObservationDetail: () => ({
+    data: undefined,
+    isLoading: false,
+    isError: false,
+  }),
 }));
 
 function leaf(type: TraceNode['type'], id: string, name: string, durationMs = 200): TraceNode {
