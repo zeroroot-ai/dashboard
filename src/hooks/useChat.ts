@@ -130,7 +130,7 @@ export function useChat(config?: UseChatConfig) {
             body: JSON.stringify(payload),
           }).catch((err) => {
             if (process.env.NODE_ENV !== 'production') {
-              console.warn('[useChat] Failed to persist conversation to Redis:', err);
+              console.error('[useChat] Failed to persist conversation to Redis:', err);
             }
           });
 
