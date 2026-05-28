@@ -20,6 +20,8 @@ import { getPlatformContext } from '@/src/lib/chat/platform-context';
 import { chatMessageSchema } from '@/src/lib/api-validation';
 import { validationErrorResponse, daemonErrorResponse } from '@/src/lib/api-errors';
 import { checkRateLimit, createRateLimitResponse } from '@/src/lib/rate-limiter';
+import { getStr, delKey } from '@/src/lib/redis-store';
+import { logger } from '@/src/lib/logger';
 // getConversation removed — ListConversations/GetConversation DEFERRED per
 // admin-services-completion spec. Chat history will be wired once the
 // chatbot-page spec implements these RPCs on UserService.
@@ -32,6 +34,7 @@ const chatRequestSchema = z.object({
   messages: z.array(chatMessageSchema).min(1).max(50),
   agentId: z.string().optional(),
   context: z.record(z.unknown()).optional(),
+  attachmentId: z.string().uuid().optional(),
 });
 
 // ============================================================================
@@ -62,10 +65,26 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (!parseResult.success) {
       return validationErrorResponse(parseResult.error);
     }
-    const { messages, agentId, context } = parseResult.data;
+    const { messages, agentId, context, attachmentId } = parseResult.data;
 
     const tenantId = session.user.tenantId ?? '';
     const userId = session.user.id ?? '';
+
+    // Fetch + consume any attached-file content. Single-use: the key is
+    // deleted after read so a stolen attachmentId can't be replayed.
+    let attachmentText: string | null = null;
+    if (attachmentId) {
+      const key = `chatattach:${attachmentId}`;
+      try {
+        attachmentText = await getStr(key);
+        await delKey(key);
+      } catch (err) {
+        logger.warn(
+          { err, route: 'chat', attachmentId },
+          'failed to load chat attachment',
+        );
+      }
+    }
 
     // Resolve the configured LLM provider via daemon — credentials never
     // enter the dashboard process. We look up the tenant's default provider
@@ -113,11 +132,23 @@ export async function POST(request: NextRequest): Promise<Response> {
       nodeId,
     });
 
-    // Stream the response — cast validated messages to the SDK type
+    // Stream the response — cast validated messages to the SDK type. If an
+    // attachment came along, prepend its content as a user message so the
+    // model has the file context before the user's actual prompt.
+    const conversation: ModelMessage[] = attachmentText
+      ? [
+          {
+            role: 'user',
+            content: `[Attached file content]:\n\n${attachmentText}`,
+          } as ModelMessage,
+          ...(messages as ModelMessage[]),
+        ]
+      : (messages as ModelMessage[]);
+
     const result = streamText({
       model,
       system,
-      messages: messages as ModelMessage[],
+      messages: conversation,
     });
 
     // Expose a per-response trace ID so the client can echo it back when
