@@ -42,6 +42,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -99,6 +100,33 @@ function agentStatusClass(status: ChatAgent['status']): string {
 }
 
 // ============================================================================
+// Search excerpt highlighting — no dangerouslySetInnerHTML
+// ============================================================================
+
+interface HighlightedTextProps {
+  text: string;
+  query: string;
+}
+
+function HighlightedText({ text, query }: HighlightedTextProps) {
+  if (!query) return <>{text}</>;
+  const lower = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  const idx = lower.indexOf(lowerQuery);
+  if (idx === -1) return <>{text}</>;
+  const before = text.slice(0, idx);
+  const match = text.slice(idx, idx + query.length);
+  const after = text.slice(idx + query.length);
+  return (
+    <>
+      {before}
+      <span className="text-highlight font-medium">{match}</span>
+      {after}
+    </>
+  );
+}
+
+// ============================================================================
 // Conversation list sidebar
 // ============================================================================
 
@@ -109,6 +137,15 @@ interface ConversationSidebarProps {
   onSelect: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
+  searchRef: React.RefObject<HTMLInputElement | null>;
+}
+
+/** Extract the first text content from a UIMessage's parts array. */
+function getMessageText(msg: Conversation['messages'][number]): string {
+  for (const part of msg.parts) {
+    if (part.type === 'text') return part.text;
+  }
+  return '';
 }
 
 function ConversationSidebar({
@@ -118,28 +155,77 @@ function ConversationSidebar({
   onSelect,
   onNew,
   onDelete,
+  searchRef,
 }: ConversationSidebarProps) {
+  const [query, setQuery] = useState('');
+
   const sorted = [...conversations].sort(
     (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime(),
   );
 
+  interface FilteredConversation {
+    conv: Conversation;
+    excerpt: string | null;
+  }
+
+  const filtered: FilteredConversation[] = query
+    ? sorted.reduce<FilteredConversation[]>((acc, conv) => {
+        const lowerQuery = query.toLowerCase();
+        const titleMatch = (conv.title ?? '').toLowerCase().includes(lowerQuery);
+        if (titleMatch) {
+          acc.push({ conv, excerpt: null });
+          return acc;
+        }
+        // Check messages for a content match
+        for (const msg of conv.messages) {
+          const text = getMessageText(msg);
+          if (text.toLowerCase().includes(lowerQuery)) {
+            acc.push({ conv, excerpt: text.slice(0, 80) });
+            return acc;
+          }
+        }
+        return acc;
+      }, [])
+    : sorted.map((conv) => ({ conv, excerpt: null }));
+
   return (
     <div className="flex h-full flex-col">
-      <div className="p-3">
+      <div className="flex flex-col gap-2 p-3">
         <Button onClick={onNew} className="w-full" variant="outline" size="sm">
           <Plus className="mr-2 h-4 w-4" />
           New Chat
         </Button>
+        {/* Search input */}
+        <div className="relative">
+          <Search className="text-muted-foreground absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
+          <Input
+            ref={searchRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search conversations..."
+            className="h-8 pl-8 pr-8 text-xs"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="text-muted-foreground hover:text-foreground absolute right-2.5 top-1/2 -translate-y-1/2 rounded-sm"
+              aria-label="Clear search"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
       </div>
       <Separator />
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-1 p-2">
-          {sorted.length === 0 && (
+          {filtered.length === 0 && (
             <p className="text-muted-foreground px-3 py-6 text-center text-sm">
-              No conversations yet
+              {query ? 'No matching conversations' : 'No conversations yet'}
             </p>
           )}
-          {sorted.map((conv) => {
+          {filtered.map(({ conv, excerpt }) => {
             const agent = agents.find((a) => a.id === conv.agentId);
             const AgentIcon = getAgentIcon(agent?.icon);
             const isActive = conv.id === activeId;
@@ -155,10 +241,22 @@ function ConversationSidebar({
               >
                 <AgentIcon className="h-4 w-4 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{conv.title || 'New Chat'}</p>
-                  <p className="text-muted-foreground truncate text-xs">
-                    {formatRelativeTime(conv.lastMessageAt)}
+                  <p className="truncate font-medium">
+                    {query ? (
+                      <HighlightedText text={conv.title || 'New Chat'} query={query} />
+                    ) : (
+                      conv.title || 'New Chat'
+                    )}
                   </p>
+                  {excerpt ? (
+                    <p className="text-muted-foreground truncate text-xs">
+                      <HighlightedText text={excerpt} query={query} />
+                    </p>
+                  ) : (
+                    <p className="text-muted-foreground truncate text-xs">
+                      {formatRelativeTime(conv.lastMessageAt)}
+                    </p>
+                  )}
                 </div>
                 <Button
                   variant="ghost"
@@ -621,6 +719,9 @@ export function ChatContent() {
   const activeConvRef = useRef(activeConversationId);
   activeConvRef.current = activeConversationId;
 
+  // Ref for the sidebar search input — used by the ⌘+F / Ctrl+F shortcut
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   // Keep the latest attachmentId reachable from the transport closure without
   // re-instantiating the transport on every render.
   const attachmentIdRef = useRef<string | null>(null);
@@ -743,6 +844,23 @@ export function ChatContent() {
     fetchSummary();
   }, []);
 
+  // ⌘+F / Ctrl+F focuses the sidebar search input when focus is not already
+  // in a text field. Prevents interfering with native browser find-in-page when
+  // the user is already typing in a chat input or textarea.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        const target = e.target as HTMLElement;
+        const tag = target.tagName.toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || target.isContentEditable) return;
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   // Handlers
   const handleNewConversation = useCallback(() => {
     const newId = createConversation(selectedAgentId, graphContext || undefined);
@@ -825,6 +943,7 @@ export function ChatContent() {
       onSelect={handleSwitchConversation}
       onNew={handleNewConversation}
       onDelete={(id) => deleteConversation(id)}
+      searchRef={searchInputRef}
     />
   );
 
