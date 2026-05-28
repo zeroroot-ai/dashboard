@@ -161,4 +161,40 @@ export class LangfuseClient {
   async getObservation(observationId: string): Promise<LangfuseObservation> {
     return this.request<LangfuseObservation>(`/api/public/observations/${observationId}`);
   }
+
+  /**
+   * List traces filtered by userId, newest first.
+   */
+  async listTraces(userId: string, limit = 5): Promise<LangfuseTrace[]> {
+    const params = new URLSearchParams({
+      userId,
+      limit: String(limit),
+      orderBy: 'timestamp',
+      order: 'DESC',
+    });
+    const result = await this.request<{ data: LangfuseTrace[] }>(
+      `/api/public/traces?${params.toString()}`,
+    );
+    return result.data ?? [];
+  }
+
+  /**
+   * Create a score (feedback) on a trace.
+   * value: 1 = positive, 0 = negative.
+   */
+  async createScore(opts: {
+    traceId: string;
+    name: string;
+    value: number;
+    comment?: string;
+  }): Promise<void> {
+    await fetch(`${this.baseUrl}/api/public/scores`, {
+      method: 'POST',
+      headers: {
+        Authorization: this.authHeader,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(opts),
+    });
+  }
 }

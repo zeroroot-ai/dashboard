@@ -173,3 +173,67 @@ export async function delKey(key: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Prepend a string value to a Redis list, trim it to `maxLen` entries,
+ * and (re)set its TTL. Silently no-ops when Redis is unavailable.
+ */
+export async function listPrepend(
+  key: string,
+  value: string,
+  maxLen: number,
+  ttlSeconds: number,
+): Promise<void> {
+  try {
+    const redis = await getRedis();
+    if (!redis) return;
+    await redis.lPush(key, value);
+    await redis.lTrim(key, 0, maxLen - 1);
+    await redis.expire(key, ttlSeconds);
+  } catch (err) {
+    console.warn('[redis-store] Error in listPrepend for key', key, err instanceof Error ? err.message : err);
+  }
+}
+
+/**
+ * Retrieve all string entries from a Redis list (up to `limit`).
+ * Returns an empty array when the key does not exist or Redis is unavailable.
+ */
+export async function listGetAll(key: string, limit = 100): Promise<string[]> {
+  try {
+    const redis = await getRedis();
+    if (!redis) return [];
+    return await redis.lRange(key, 0, limit - 1);
+  } catch (err) {
+    console.warn('[redis-store] Error in listGetAll for key', key, err instanceof Error ? err.message : err);
+    return [];
+  }
+}
+
+/**
+ * Store a plain string in Redis with a TTL. Silently no-ops when Redis is unavailable.
+ */
+export async function setStr(key: string, value: string, ttlSeconds: number): Promise<void> {
+  try {
+    const redis = await getRedis();
+    if (!redis) return;
+    await redis.setEx(key, ttlSeconds, value);
+  } catch (err) {
+    console.warn('[redis-store] Error in setStr for key', key, err instanceof Error ? err.message : err);
+  }
+}
+
+/**
+ * Retrieve a plain string from Redis.
+ * Returns `null` when the key does not exist or Redis is unavailable.
+ */
+export async function getStr(key: string): Promise<string | null> {
+  try {
+    const redis = await getRedis();
+    if (!redis) return null;
+    return await redis.get(key);
+  } catch (err) {
+    console.warn('[redis-store] Error in getStr for key', key, err instanceof Error ? err.message : err);
+    return null;
+  }
+}
