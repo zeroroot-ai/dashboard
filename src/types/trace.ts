@@ -112,3 +112,35 @@ export interface TraceNode {
   model?: string;
   children: TraceNode[];
 }
+
+// ============================================================================
+// Tenant-wide trace list types
+// ============================================================================
+
+/**
+ * A trace as it appears in the tenant-wide trace list — a projection of the
+ * upstream trace record with no observations (those load on detail open).
+ */
+export interface TraceSummary {
+  id: string;
+  name: string;
+  timestamp: string;
+  status: 'ok' | 'error';
+  totalTokens: number;
+  promptTokens: number;
+  completionTokens: number;
+  latencyMs: number;
+  tags: string[];
+  sessionId?: string;
+}
+
+export interface TraceListMeta {
+  page: number;
+  totalPages: number;
+  totalItems: number;
+}
+
+export interface TraceListResponse {
+  data: TraceSummary[];
+  meta: TraceListMeta;
+}
