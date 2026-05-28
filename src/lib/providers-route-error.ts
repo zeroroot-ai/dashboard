@@ -10,6 +10,7 @@
  */
 
 import { ConnectError, Code } from '@connectrpc/connect';
+import { logger } from '@/src/lib/logger';
 
 /**
  * Map a Connect gRPC status code to an HTTP status code.
@@ -52,6 +53,15 @@ export function mapCodeToHttpStatus(code: Code): number {
 export function translateError(err: unknown): Response {
   if (err instanceof ConnectError) {
     const status = mapCodeToHttpStatus(err.code);
+    // 5xx codes mean the daemon hit an internal failure (e.g. secrets circuit
+    // open, KEK unavailable). Log so the pod log shows something — without
+    // this the caller sees a 500 with zero diagnostic output in the dashboard.
+    if (status >= 500) {
+      logger.error(
+        { code: err.code, httpStatus: status, daemonMessage: err.rawMessage, route: 'providers' },
+        'daemon RPC returned 5xx',
+      );
+    }
     return Response.json(
       { error: { code: err.code, message: err.rawMessage } },
       { status },
@@ -62,11 +72,12 @@ export function translateError(err: unknown): Response {
   // request body content or credentials.
   if (err instanceof Error) {
     const stack = (err.stack ?? '').split('\n').slice(0, 3).join(' | ');
-    console.error(
-      `[providers route] unexpected error: name=${err.name} message=${err.message} stack=${stack}`,
+    logger.error(
+      { errorName: err.name, errorMessage: err.message, stack, route: 'providers' },
+      'unexpected error in providers route',
     );
   } else {
-    console.error('[providers route] unexpected non-Error throw:', String(err));
+    logger.error({ thrown: String(err), route: 'providers' }, 'unexpected non-Error throw in providers route');
   }
   return Response.json(
     { error: { code: 'internal', message: 'Internal server error' } },
