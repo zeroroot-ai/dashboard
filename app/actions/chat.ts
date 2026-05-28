@@ -7,7 +7,9 @@
  * ≤6-word title from the first exchange. Called fire-and-forget from useChat
  * after the first assistant turn completes; never blocks the UI render path.
  *
- * Spec: dashboard#448 (auto-title from first exchange)
+ * renameConversation — user-initiated title update; persists to Redis.
+ *
+ * Spec: dashboard#448 (auto-title), dashboard#435 (rename thread)
  */
 
 import "server-only";
@@ -31,6 +33,33 @@ import { updateConversationTitle } from "@/src/lib/redis-store";
  * The caller is expected to use `void generateConversationTitle(...).then(...)`
  * so it never blocks the render path.
  */
+/**
+ * Persist a user-supplied conversation title to Redis.
+ *
+ * Returns `true` on success, `false` when the session is absent, tenantId is
+ * missing, or Redis is unavailable. The caller should update the Zustand store
+ * optimistically and treat a `false` return as a silent degradation.
+ */
+export async function renameConversation(
+  conversationId: string,
+  title: string,
+): Promise<boolean> {
+  try {
+    const session = await getServerSession();
+    if (!session) return false;
+
+    const tenantId = session.user.tenantId ?? '';
+    if (!tenantId) return false;
+
+    const trimmed = title.trim().slice(0, 500);
+    if (!trimmed) return false;
+
+    return await updateConversationTitle(tenantId, conversationId, trimmed);
+  } catch {
+    return false;
+  }
+}
+
 export async function generateConversationTitle(
   conversationId: string,
   userMessage: string,
