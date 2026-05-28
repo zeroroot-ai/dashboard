@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { streamText, type ModelMessage } from 'ai';
+import { streamText, convertToModelMessages, type ModelMessage, type UIMessage } from 'ai';
 import { getServerSession } from '@/src/lib/auth';
 import { resolveProvider } from '@/src/lib/ai/provider';
 import { listProviders } from '@/src/lib/gibson-client';
@@ -17,7 +17,6 @@ import { buildSystemPrompt } from '@/src/lib/ai/prompts';
 import { getUserActivityContext } from '@/src/lib/chat/user-activity-context';
 import { getLangfuseUserContext } from '@/src/lib/chat/langfuse-session-context';
 import { getPlatformContext } from '@/src/lib/chat/platform-context';
-import { chatMessageSchema } from '@/src/lib/api-validation';
 import { validationErrorResponse, daemonErrorResponse } from '@/src/lib/api-errors';
 import { checkRateLimit, createRateLimitResponse } from '@/src/lib/rate-limiter';
 import { getStr, delKey } from '@/src/lib/redis-store';
@@ -30,8 +29,18 @@ import { logger } from '@/src/lib/logger';
 // Request Validation
 // ============================================================================
 
+// AI SDK v6 UIMessage — uses parts[] instead of content: string.
+// We accept the full shape permissively and let convertToModelMessages
+// do the normalisation before handing off to streamText.
+const uiMessageSchema = z.object({
+  id: z.string(),
+  role: z.enum(['user', 'assistant', 'system']),
+  parts: z.array(z.record(z.unknown())).default([]),
+  metadata: z.record(z.unknown()).optional(),
+});
+
 const chatRequestSchema = z.object({
-  messages: z.array(chatMessageSchema).min(1).max(50),
+  messages: z.array(uiMessageSchema).min(1).max(50),
   agentId: z.string().optional(),
   context: z.record(z.unknown()).optional(),
   attachmentId: z.string().uuid().optional(),
@@ -132,18 +141,18 @@ export async function POST(request: NextRequest): Promise<Response> {
       nodeId,
     });
 
-    // Stream the response — cast validated messages to the SDK type. If an
-    // attachment came along, prepend its content as a user message so the
-    // model has the file context before the user's actual prompt.
+    // Convert AI SDK v6 UIMessage[] → ModelMessage[] for streamText.
+    // convertToModelMessages handles the parts[] → content normalisation.
+    const coreMessages = await convertToModelMessages(messages as UIMessage[]);
     const conversation: ModelMessage[] = attachmentText
       ? [
           {
             role: 'user',
             content: `[Attached file content]:\n\n${attachmentText}`,
           } as ModelMessage,
-          ...(messages as ModelMessage[]),
+          ...coreMessages,
         ]
-      : (messages as ModelMessage[]);
+      : coreMessages;
 
     const result = streamText({
       model,
