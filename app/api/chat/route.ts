@@ -14,6 +14,9 @@ import { listProviders } from '@/src/lib/gibson-client';
 import { getGraphContext } from '@/src/lib/graph/context';
 import { getGraphSummary } from '@/src/lib/graph/summary';
 import { buildSystemPrompt } from '@/src/lib/ai/prompts';
+import { getUserActivityContext } from '@/src/lib/chat/user-activity-context';
+import { getLangfuseUserContext } from '@/src/lib/chat/langfuse-session-context';
+import { getPlatformContext } from '@/src/lib/chat/platform-context';
 import { chatMessageSchema } from '@/src/lib/api-validation';
 import { validationErrorResponse, daemonErrorResponse } from '@/src/lib/api-errors';
 import { checkRateLimit, createRateLimitResponse } from '@/src/lib/rate-limiter';
@@ -62,7 +65,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     const { messages, agentId, context } = parseResult.data;
 
     const tenantId = session.user.tenantId ?? '';
-    const userId = session.user.id;
+    const userId = session.user.id ?? '';
 
     // Resolve the configured LLM provider via daemon — credentials never
     // enter the dashboard process. We look up the tenant's default provider
@@ -88,18 +91,25 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     const model = resolveProvider(providerName, { userId, tenantId });
 
-    // Fetch graph context and tenant summary in parallel (non-blocking on failure)
+    // Fetch all context sources in parallel (each fails silently)
     const nodeId = typeof context?.nodeId === 'string' ? context.nodeId : undefined;
-    const [graphContext, graphSummaryResult] = await Promise.all([
-      nodeId ? getGraphContext(nodeId) : Promise.resolve(undefined),
-      getGraphSummary(tenantId).catch(() => null),
-    ]);
+    const [graphContext, graphSummaryResult, userActivityContext, langfuseContext, platformContext] =
+      await Promise.all([
+        nodeId ? getGraphContext(nodeId) : Promise.resolve(undefined),
+        getGraphSummary(tenantId).catch(() => null),
+        getUserActivityContext(userId, tenantId),
+        getLangfuseUserContext(userId, tenantId),
+        getPlatformContext(userId, tenantId),
+      ]);
 
-    // Build the system prompt with layered context
+    // Build the layered system prompt
     const system = buildSystemPrompt({
       agentId: agentId || 'general',
       graphContext,
       graphSummary: graphSummaryResult?.summary || undefined,
+      userActivityContext,
+      langfuseContext,
+      platformContext,
     });
 
     // Stream the response — cast validated messages to the SDK type
