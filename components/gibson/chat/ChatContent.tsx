@@ -10,6 +10,7 @@ import {
   ComposerPrimitive,
   ActionBarPrimitive,
   MessagePartPrimitive,
+  useMessage,
   type TextMessagePartProps,
 } from '@assistant-ui/react';
 import { useAISDKRuntime } from '@assistant-ui/react-ai-sdk';
@@ -63,6 +64,7 @@ import {
 import type { Conversation, ChatAgent, GraphContext } from '@/src/stores/chat-store';
 import type { GraphSummaryResponse } from '@/src/lib/graph/summary';
 import { SystemPromptDebugPanel } from '@/components/gibson/chat/SystemPromptDebugPanel';
+import { GraphCitationChip } from './GraphCitationChip';
 
 // ============================================================================
 // Agent icon mapping
@@ -337,19 +339,43 @@ const MARKDOWN_COMPONENTS_BY_LANGUAGE = {
 } as const;
 
 // ============================================================================
+// Citation marker utilities
+// ============================================================================
+
+const CITATION_MARKER_RE = /\[cite:node:[^\]]+\]/g;
+
+/** Strip all [cite:node:...] markers from a text string before markdown rendering. */
+function stripCitationMarkers(text: string): string {
+  return text.replace(CITATION_MARKER_RE, '').trimEnd();
+}
+
+/** Extract unique node IDs from citation markers in a text string. */
+function extractCitedNodeIds(text: string): string[] {
+  const ids = new Set<string>();
+  let match: RegExpExecArray | null;
+  const re = /\[cite:node:([^\]]+)\]/g;
+  while ((match = re.exec(text)) !== null) {
+    ids.add(match[1]);
+  }
+  return Array.from(ids);
+}
+
+// ============================================================================
 // Message part components
 // ============================================================================
 
 /**
  * Renders an assistant text part as markdown.
- * MarkdownTextPrimitive reads text from the MessagePartContext established
- * by MessagePrimitive.Parts — no explicit prop-passing required.
+ * Uses preprocess to strip citation markers before rendering (the markers
+ * are surfaced as chips at the message level) and componentsByLanguage for
+ * live Mermaid diagram rendering.
  */
 function AssistantTextPart(_props: TextMessagePartProps) {
   return (
     <MarkdownTextPrimitive
       className="prose prose-sm dark:prose-invert max-w-none"
       componentsByLanguage={MARKDOWN_COMPONENTS_BY_LANGUAGE}
+      preprocess={stripCitationMarkers}
     />
   );
 }
@@ -373,6 +399,30 @@ function UserMessage() {
   );
 }
 
+function AssistantMessageCitations() {
+  const { graphContext } = useChatGraphContext();
+  const content = useMessage((state) => state.content);
+
+  // Only surface citations when a focused graph node is active
+  if (!graphContext?.nodeId) return null;
+
+  const fullText = content
+    .filter((part): part is { type: 'text'; text: string } => part.type === 'text')
+    .map((part) => part.text)
+    .join('');
+
+  const nodeIds = extractCitedNodeIds(fullText);
+  if (nodeIds.length === 0) return null;
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-1">
+      {nodeIds.map((id) => (
+        <GraphCitationChip key={id} nodeId={id} />
+      ))}
+    </div>
+  );
+}
+
 function AssistantMessage() {
   return (
     <MessagePrimitive.Root className="group/message mb-4 flex items-end gap-2">
@@ -386,6 +436,9 @@ function AssistantMessage() {
             <span className="bg-muted-foreground h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:300ms]" />
           </span>
         </MessagePartPrimitive.InProgress>
+        {/* Citation chips — rendered below the message body when the model
+            cited data from a focused knowledge-graph node */}
+        <AssistantMessageCitations />
       </div>
       {/* Action bar — copy + regenerate; hidden while running or on non-last messages */}
       <ActionBarPrimitive.Root

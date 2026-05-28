@@ -84,6 +84,9 @@ export interface BuildSystemPromptOpts {
   userActivityContext?: UserActivityContext;
   langfuseContext?: LangfuseUserContext;
   platformContext?: PlatformContext;
+  /** The focused node ID if a graph context is active. When set, the model is
+   *  instructed to emit a citation marker when it uses data from this node. */
+  nodeId?: string;
 }
 
 /**
@@ -99,7 +102,7 @@ export interface BuildSystemPromptOpts {
  *   7. Focused knowledge-graph node
  */
 export function buildSystemPrompt(opts: BuildSystemPromptOpts): string {
-  const { agentId, graphContext, graphSummary, userActivityContext, langfuseContext, platformContext } = opts;
+  const { agentId, graphContext, graphSummary, userActivityContext, langfuseContext, platformContext, nodeId } = opts;
 
   const parts: string[] = [];
 
@@ -136,9 +139,14 @@ export function buildSystemPrompt(opts: BuildSystemPromptOpts): string {
 
   // 7. Focused node context
   if (graphContext?.summary) {
-    parts.push(
-      `The operator currently has the following node selected in the knowledge graph. Use this context to inform your answers:\n\n${graphContext.summary}`,
-    );
+    let focusedNodeSection = `The operator currently has the following node selected in the knowledge graph. Use this context to inform your answers:\n\n${graphContext.summary}`;
+
+    if (nodeId) {
+      focusedNodeSection +=
+        `\n\nWhen you reference specific information from this node in your answer, append a citation marker at the very end of your response in the format: [cite:node:${nodeId}]\nOnly emit a citation if you actually used data from this node. Do not emit citations when answering from general knowledge.`;
+    }
+
+    parts.push(focusedNodeSection);
   }
 
   return parts.join('\n\n');
