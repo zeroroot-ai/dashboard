@@ -70,7 +70,7 @@ export async function createMissionFromCUEAction(input: {
       code: "invalid",
     };
   }
-  const { cueSource, name } = parsed.data;
+  const { cueSource } = parsed.data;
 
   try {
     await assertAuthorized(FGA_CREATE_DEFINITION);
@@ -154,7 +154,6 @@ export async function createMissionFromCUEAction(input: {
     //     metadata (the automatic pre-step) and use the daemon-assigned UUID.
     //   - targetRef is empty: no target was attached — fail with a clear,
     //     actionable message instead of leaking a name into target_id.
-    const missionName = compiledDefinition.name || name;
     const targetRef = (compiledDefinition.targetRef ?? "").trim();
     if (!targetRef) {
       return {
@@ -180,21 +179,31 @@ export async function createMissionFromCUEAction(input: {
       targetId = targetResp.targetId;
     }
 
-    const createResp = await client.createMission({
-      name: missionName,
+    // Step 4: Dispatch + execute the mission. RunMission is what actually runs
+    // it — the daemon find-or-creates the run record (keyed by definition),
+    // stamps the tenant, and streams lifecycle events. We read the first event
+    // to confirm dispatch, then return the running mission's id; the detail
+    // page's SSE relay carries the remaining frames. (Previously this called
+    // CreateMission, which only registered a pending record and never ran it —
+    // missions sat stuck in Pending forever.)
+    let runMissionId = "";
+    for await (const event of client.runMission({
       missionDefinitionId,
       targetId,
       memoryContinuity: "isolated",
-    });
-    if (!createResp.success || !createResp.mission?.id) {
+    })) {
+      runMissionId = event.missionId;
+      break;
+    }
+    if (!runMissionId) {
       return {
         ok: false,
-        error: createResp.message || "Failed to create mission run.",
+        error: "Mission dispatch returned no run id.",
         code: "rpc_failed",
       };
     }
 
-    return { ok: true, missionId: createResp.mission.id };
+    return { ok: true, missionId: runMissionId };
   } catch (err) {
     if (err instanceof ConnectError) {
       if (err.code === Code.InvalidArgument) {

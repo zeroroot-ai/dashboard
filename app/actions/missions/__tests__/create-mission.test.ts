@@ -14,7 +14,7 @@ vi.mock("@/src/lib/auth/assert-authorized", () => ({
 
 const mockCreateMissionDefinition = vi.fn();
 const mockUpdateMissionDefinition = vi.fn();
-const mockCreateMission = vi.fn();
+const mockRunMission = vi.fn();
 const mockValidateMissionCUE = vi.fn();
 const mockCreateTarget = vi.fn();
 
@@ -23,10 +23,18 @@ vi.mock("@/src/lib/gibson-client", () => ({
     validateMissionCUE: mockValidateMissionCUE,
     createMissionDefinition: mockCreateMissionDefinition,
     updateMissionDefinition: mockUpdateMissionDefinition,
-    createMission: mockCreateMission,
+    runMission: mockRunMission,
     createTarget: mockCreateTarget,
   })),
 }));
+
+// runMission is a server-stream; the action reads the first event. Build an
+// async iterable that yields one lifecycle event carrying the run mission id.
+function runStream(missionId: string) {
+  return (async function* () {
+    yield { missionId };
+  })();
+}
 
 vi.mock("@/src/lib/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn() },
@@ -62,23 +70,27 @@ describe("createMissionFromCUEAction", () => {
     makeValidateOk();
     // COMPILED_DEF.targetRef is a non-UUID, so the pre-step mints a target.
     mockCreateTarget.mockResolvedValue({ targetId: "11111111-1111-1111-1111-111111111111" });
+    // Default dispatch: RunMission streams one event carrying the run id.
+    mockRunMission.mockReturnValue(runStream("run-001"));
   });
 
-  it("succeeds end-to-end: validate → create definition → create mission", async () => {
+  it("succeeds end-to-end: validate → create definition → dispatch run", async () => {
     mockCreateMissionDefinition.mockResolvedValue({ missionDefinitionId: "def-001" });
-    mockCreateMission.mockResolvedValue({ success: true, mission: { id: "run-001" } });
 
     const result = await createMissionFromCUEAction({ cueSource: VALID_CUE });
 
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.missionId).toBe("run-001");
     expect(mockCreateMissionDefinition).toHaveBeenCalledOnce();
-    expect(mockCreateMission).toHaveBeenCalledOnce();
+    // "Run" must actually dispatch execution, not just register a pending record.
+    expect(mockRunMission).toHaveBeenCalledOnce();
+    expect(mockRunMission).toHaveBeenCalledWith(
+      expect.objectContaining({ missionDefinitionId: "def-001", targetId: "11111111-1111-1111-1111-111111111111" }),
+    );
   });
 
   it("passes the raw cueSource to CreateMissionDefinition so the daemon persists it", async () => {
     mockCreateMissionDefinition.mockResolvedValue({ missionDefinitionId: "def-001" });
-    mockCreateMission.mockResolvedValue({ success: true, mission: { id: "run-001" } });
 
     await createMissionFromCUEAction({ cueSource: VALID_CUE });
 
@@ -92,7 +104,7 @@ describe("createMissionFromCUEAction", () => {
       new ConnectError("already exists", Code.AlreadyExists),
     );
     mockUpdateMissionDefinition.mockResolvedValue({ missionDefinitionId: "def-stable" });
-    mockCreateMission.mockResolvedValue({ success: true, mission: { id: "run-002" } });
+    mockRunMission.mockReturnValue(runStream("run-002"));
 
     const result = await createMissionFromCUEAction({ cueSource: VALID_CUE });
 
@@ -102,7 +114,7 @@ describe("createMissionFromCUEAction", () => {
     expect(mockUpdateMissionDefinition).toHaveBeenCalledWith(
       expect.objectContaining({ cueSource: VALID_CUE }),
     );
-    expect(mockCreateMission).toHaveBeenCalledOnce();
+    expect(mockRunMission).toHaveBeenCalledOnce();
   });
 
   it("returns rpc_failed on generic ConnectError from CreateMissionDefinition", async () => {
@@ -134,7 +146,7 @@ describe("createMissionFromCUEAction", () => {
 
   it("mints a target from a non-UUID targetRef and sends the minted UUID as target_id", async () => {
     mockCreateMissionDefinition.mockResolvedValue({ missionDefinitionId: "def-001" });
-    mockCreateMission.mockResolvedValue({ success: true, mission: { id: "run-003" } });
+    mockRunMission.mockReturnValue(runStream("run-003"));
 
     const result = await createMissionFromCUEAction({ cueSource: VALID_CUE });
 
@@ -143,7 +155,7 @@ describe("createMissionFromCUEAction", () => {
     expect(mockCreateTarget).toHaveBeenCalledWith(
       expect.objectContaining({ target: expect.objectContaining({ name: "target-1" }) }),
     );
-    expect(mockCreateMission).toHaveBeenCalledWith(
+    expect(mockRunMission).toHaveBeenCalledWith(
       expect.objectContaining({ targetId: "11111111-1111-1111-1111-111111111111" }),
     );
   });
@@ -157,13 +169,13 @@ describe("createMissionFromCUEAction", () => {
       },
     });
     mockCreateMissionDefinition.mockResolvedValue({ missionDefinitionId: "def-001" });
-    mockCreateMission.mockResolvedValue({ success: true, mission: { id: "run-004" } });
+    mockRunMission.mockReturnValue(runStream("run-004"));
 
     const result = await createMissionFromCUEAction({ cueSource: VALID_CUE });
 
     expect(result.ok).toBe(true);
     expect(mockCreateTarget).not.toHaveBeenCalled();
-    expect(mockCreateMission).toHaveBeenCalledWith(
+    expect(mockRunMission).toHaveBeenCalledWith(
       expect.objectContaining({ targetId: "22222222-2222-2222-2222-222222222222" }),
     );
   });
@@ -182,7 +194,7 @@ describe("createMissionFromCUEAction", () => {
       expect(result.code).toBe("invalid");
       expect(result.error).toMatch(/attach a target/i);
     }
-    // Never leaks a name into target_id.
-    expect(mockCreateMission).not.toHaveBeenCalled();
+    // Never leaks a name into target_id, and nothing is dispatched.
+    expect(mockRunMission).not.toHaveBeenCalled();
   });
 });
