@@ -314,11 +314,13 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
   const healthConfig = HEALTH_STATUS_CONFIG[healthStatus];
   const healthVariant = HEALTH_BADGE_VARIANT[healthStatus];
 
-  const isConfigured =
-    provider.isEnabled &&
-    (provider.credentialsMasked
-      ? Object.values(provider.credentialsMasked).some((v) => v !== "")
-      : !!provider.apiKeyMasked);
+  // isEnabled is the proto3 default false when the daemon doesn't explicitly
+  // set it; fall back to checking whether any credential values are non-empty
+  // so the badge reflects reality when the field is omitted.
+  const hasCredentials = provider.credentialsMasked
+    ? Object.values(provider.credentialsMasked).some((v) => v !== "")
+    : !!provider.apiKeyMasked;
+  const isConfigured = hasCredentials || provider.isEnabled;
 
   function onSaveCredentials() {
     updateProvider(
@@ -341,21 +343,30 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
   async function onTestConnection() {
     setTestState("testing");
     try {
-      const res = await fetch("/api/settings/providers/test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: provider.name }),
-      });
-      const result = await res.json();
-      if (result.ok ?? result.success) {
-        setTestState("ok");
-        toast.success(`${provider.displayName} connection verified`, {
-          description: result.latencyMs ? `${result.latencyMs} ms` : undefined,
+      const res = await fetch(
+        `/api/settings/providers/${encodeURIComponent(provider.name)}/health`,
+      );
+      const json = await res.json();
+      if (!res.ok) {
+        setTestState("fail");
+        // json.error may be { code, message } — always extract the string
+        const msg =
+          typeof json.error === "string"
+            ? json.error
+            : (json.error?.message ?? "Unknown error");
+        toast.error(`Connection to ${provider.displayName} failed`, {
+          description: msg,
         });
+        return;
+      }
+      const health = json.health;
+      if (health?.status === "healthy") {
+        setTestState("ok");
+        toast.success(`${provider.displayName} connection verified`);
       } else {
         setTestState("fail");
         toast.error(`Connection to ${provider.displayName} failed`, {
-          description: result.error ?? "Unknown error",
+          description: health?.lastError ?? "Provider is not healthy",
         });
       }
     } catch (err) {
