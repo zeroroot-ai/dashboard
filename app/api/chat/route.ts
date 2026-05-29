@@ -160,15 +160,11 @@ export async function POST(request: NextRequest): Promise<Response> {
       messages: conversation,
     });
 
-    // Expose a per-response trace ID so the client can echo it back when
-    // the user clicks thumbs-up / thumbs-down. The real Langfuse trace
-    // wiring happens server-side via the provider's telemetry hooks;
-    // here we mint a placeholder so the feedback round-trip works even
-    // before that hook lands. The client reads this header via a custom
-    // transport `fetch` in `ChatContent.tsx` and stashes it on the chat
-    // store so the per-message feedback buttons can submit against it.
+    // AI SDK v6 requires toUIMessageStreamResponse() — DefaultChatTransport
+    // on the client parses UIMessageChunk JSON events. toTextStreamResponse()
+    // returns plain SSE text which the client can't parse into parts[].
     const debugRequested = request.headers.get('X-Gibson-Debug') === '1';
-    const response = result.toTextStreamResponse();
+    const response = result.toUIMessageStreamResponse();
     response.headers.set('X-Gibson-Trace-Id', crypto.randomUUID());
     if (debugRequested) {
       const debugPayload = system.slice(0, 8192); // 8 KB cap
