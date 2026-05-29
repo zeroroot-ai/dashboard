@@ -16,6 +16,7 @@ const mockCreateMissionDefinition = vi.fn();
 const mockUpdateMissionDefinition = vi.fn();
 const mockCreateMission = vi.fn();
 const mockValidateMissionCUE = vi.fn();
+const mockCreateTarget = vi.fn();
 
 vi.mock("@/src/lib/gibson-client", () => ({
   userClient: vi.fn(() => ({
@@ -23,6 +24,7 @@ vi.mock("@/src/lib/gibson-client", () => ({
     createMissionDefinition: mockCreateMissionDefinition,
     updateMissionDefinition: mockUpdateMissionDefinition,
     createMission: mockCreateMission,
+    createTarget: mockCreateTarget,
   })),
 }));
 
@@ -58,6 +60,8 @@ describe("createMissionFromCUEAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     makeValidateOk();
+    // COMPILED_DEF.targetRef is a non-UUID, so the pre-step mints a target.
+    mockCreateTarget.mockResolvedValue({ targetId: "11111111-1111-1111-1111-111111111111" });
   });
 
   it("succeeds end-to-end: validate → create definition → create mission", async () => {
@@ -126,5 +130,59 @@ describe("createMissionFromCUEAction", () => {
       expect(result.error).toBe("missing mission field");
     }
     expect(mockCreateMissionDefinition).not.toHaveBeenCalled();
+  });
+
+  it("mints a target from a non-UUID targetRef and sends the minted UUID as target_id", async () => {
+    mockCreateMissionDefinition.mockResolvedValue({ missionDefinitionId: "def-001" });
+    mockCreateMission.mockResolvedValue({ success: true, mission: { id: "run-003" } });
+
+    const result = await createMissionFromCUEAction({ cueSource: VALID_CUE });
+
+    expect(result.ok).toBe(true);
+    // targetRef "target-1" (a name) is minted into a target, not sent as an id.
+    expect(mockCreateTarget).toHaveBeenCalledWith(
+      expect.objectContaining({ target: expect.objectContaining({ name: "target-1" }) }),
+    );
+    expect(mockCreateMission).toHaveBeenCalledWith(
+      expect.objectContaining({ targetId: "11111111-1111-1111-1111-111111111111" }),
+    );
+  });
+
+  it("uses targetRef directly when it is already a UUID (no mint)", async () => {
+    mockValidateMissionCUE.mockResolvedValue({
+      diagnostics: [],
+      compiledDefinition: {
+        name: "my-mission",
+        targetRef: "22222222-2222-2222-2222-222222222222",
+      },
+    });
+    mockCreateMissionDefinition.mockResolvedValue({ missionDefinitionId: "def-001" });
+    mockCreateMission.mockResolvedValue({ success: true, mission: { id: "run-004" } });
+
+    const result = await createMissionFromCUEAction({ cueSource: VALID_CUE });
+
+    expect(result.ok).toBe(true);
+    expect(mockCreateTarget).not.toHaveBeenCalled();
+    expect(mockCreateMission).toHaveBeenCalledWith(
+      expect.objectContaining({ targetId: "22222222-2222-2222-2222-222222222222" }),
+    );
+  });
+
+  it("returns invalid with a clear message when no target is attached", async () => {
+    mockValidateMissionCUE.mockResolvedValue({
+      diagnostics: [],
+      compiledDefinition: { name: "my-mission", targetRef: "" },
+    });
+    mockCreateMissionDefinition.mockResolvedValue({ missionDefinitionId: "def-001" });
+
+    const result = await createMissionFromCUEAction({ cueSource: VALID_CUE });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("invalid");
+      expect(result.error).toMatch(/attach a target/i);
+    }
+    // Never leaks a name into target_id.
+    expect(mockCreateMission).not.toHaveBeenCalled();
   });
 });

@@ -35,6 +35,13 @@ import { logger } from "@/src/lib/logger";
 const FGA_CREATE_DEFINITION =
   "/gibson.daemon.v1.DaemonService/CreateMissionDefinition";
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUUID(s: string): boolean {
+  return UUID_RE.test(s);
+}
+
 export type CreateMissionResult =
   | { ok: true; missionId: string }
   | { ok: false; error: string; code: "permission_denied" | "invalid" | "rpc_failed" };
@@ -138,10 +145,41 @@ export async function createMissionFromCUEAction(input: {
       }
     }
 
-    // Step 3: Create a mission run. targetId comes from the compiled definition's
-    // targetRef (the target the mission author declared in their CUE source).
+    // Step 3: Resolve the target to a UUID (UUID-canonical contract). A target
+    // is referenced by UUID only — a name is never used as an id.
+    //
+    //   - targetRef is already a target UUID (the editor's picker writes one):
+    //     use it directly.
+    //   - targetRef is a free-form host/name: mint a real Target from it as
+    //     metadata (the automatic pre-step) and use the daemon-assigned UUID.
+    //   - targetRef is empty: no target was attached — fail with a clear,
+    //     actionable message instead of leaking a name into target_id.
     const missionName = compiledDefinition.name || name;
-    const targetId = compiledDefinition.targetRef || name;
+    const targetRef = (compiledDefinition.targetRef ?? "").trim();
+    if (!targetRef) {
+      return {
+        ok: false,
+        error: "Attach a target before running this mission.",
+        code: "invalid",
+      };
+    }
+    let targetId: string;
+    if (isUUID(targetRef)) {
+      targetId = targetRef;
+    } else {
+      const targetResp = await client.createTarget({
+        target: { name: targetRef, url: targetRef },
+      });
+      if (!targetResp.targetId) {
+        return {
+          ok: false,
+          error: "Failed to register the mission target.",
+          code: "rpc_failed",
+        };
+      }
+      targetId = targetResp.targetId;
+    }
+
     const createResp = await client.createMission({
       name: missionName,
       missionDefinitionId,
