@@ -92,16 +92,33 @@ async function handleUpdate(req: NextRequest, { params }: RouteContext): Promise
   }
 
   // Unwrap { config: {...} } wrapper if present, otherwise treat as direct input.
-  const body = (
+  const partial = (
     raw !== null &&
     typeof raw === 'object' &&
     'config' in (raw as Record<string, unknown>)
-      ? (raw as { config: DaemonProviderConfigInput }).config
+      ? (raw as { config: Partial<DaemonProviderConfigInput> }).config
       : raw
-  ) as DaemonProviderConfigInput;
+  ) as Partial<DaemonProviderConfigInput>;
 
   try {
-    const record = await daemonUpdateProvider(name, body, userId, tenantId);
+    // If the client only supplied credentials (edit-credentials flow), fetch
+    // the existing record so we can merge name/type/defaultModel and send a
+    // complete ProviderConfigInput to the daemon.
+    let merged: DaemonProviderConfigInput;
+    if (!partial.type || !partial.name) {
+      const existing = await daemonGetProvider(name, userId, tenantId);
+      merged = {
+        name: partial.name ?? existing.name,
+        type: partial.type ?? existing.type,
+        defaultModel: partial.defaultModel ?? existing.defaultModel,
+        credentials: { ...partial.credentials },
+        setAsDefault: partial.setAsDefault ?? existing.isDefault,
+      };
+    } else {
+      merged = partial as DaemonProviderConfigInput;
+    }
+
+    const record = await daemonUpdateProvider(name, merged, userId, tenantId);
     return Response.json({ provider: toProviderConfig(record) });
   } catch (err) {
     return translateError(err);
