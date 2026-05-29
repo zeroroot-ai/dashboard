@@ -85,7 +85,7 @@ interface FoundModel {
   deprecated?: boolean;
 }
 
-interface ProbeResult {
+export interface ProbeResult {
   ok: boolean;
   latencyMs: number;
   error?: string;
