@@ -56,6 +56,9 @@ export function TraceListTable() {
   const name = searchParams.get("name") ?? "";
   // Set by the Usage → Traces deep-link to scope to a single end-user.
   const userId = searchParams.get("userId") ?? "";
+  // Set by the by-agent / by-mission deep-link (e.g. "agent:recon", "mission:m1").
+  const tags = searchParams.getAll("tags").filter(Boolean);
+  const tagsKey = tags.join("|");
   const page = Math.max(1, Number.parseInt(searchParams.get("page") ?? "1", 10) || 1);
 
   const [data, setData] = React.useState<TraceListResponse | null>(null);
@@ -98,6 +101,7 @@ export function TraceListTable() {
     if (to) qs.set("to", to);
     if (name) qs.set("name", name);
     if (userId) qs.set("userId", userId);
+    for (const tag of tags) qs.append("tags", tag);
 
     (async () => {
       try {
@@ -120,7 +124,8 @@ export function TraceListTable() {
     return () => {
       cancelled = true;
     };
-  }, [page, from, to, name, userId]);
+    // tagsKey is the stable string form of the tags array for dep comparison.
+  }, [page, from, to, name, userId, tagsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const rows: TraceSummary[] = data?.data ?? [];
   const totalPages = data?.meta.totalPages ?? 1;
@@ -135,15 +140,26 @@ export function TraceListTable() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {userId && (
-          <div className="flex items-center gap-2 text-xs">
-            <Badge variant="outline" className="font-mono border-highlight/50 text-highlight">
-              Scoped to user {userId}
-            </Badge>
+        {(userId || tags.length > 0) && (
+          <div className="flex items-center gap-2 text-xs flex-wrap">
+            {userId && (
+              <Badge variant="outline" className="font-mono border-highlight/50 text-highlight">
+                Scoped to user {userId}
+              </Badge>
+            )}
+            {tags.map((tag) => (
+              <Badge
+                key={tag}
+                variant="outline"
+                className="font-mono border-highlight/50 text-highlight"
+              >
+                {tag}
+              </Badge>
+            ))}
             <button
               type="button"
               className="text-link hover:underline"
-              onClick={() => setParam({ userId: null })}
+              onClick={() => setParam({ userId: null, tags: null })}
             >
               Clear
             </button>

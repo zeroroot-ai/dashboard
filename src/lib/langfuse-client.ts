@@ -203,6 +203,7 @@ export class LangfuseClient {
     toTimestamp?: string;
     name?: string;
     userId?: string;
+    tags?: string[];
   }): Promise<LangfuseTracePage> {
     const params = new URLSearchParams({
       orderBy: 'timestamp',
@@ -214,6 +215,11 @@ export class LangfuseClient {
     if (opts.toTimestamp) params.set('toTimestamp', opts.toTimestamp);
     if (opts.name) params.set('name', opts.name);
     if (opts.userId) params.set('userId', opts.userId);
+    // Langfuse accepts a repeated `tags` param (AND semantics); a trace must
+    // carry every requested tag to match.
+    for (const tag of opts.tags ?? []) {
+      if (tag) params.append('tags', tag);
+    }
 
     const result = await this.request<{
       data: LangfuseTrace[];
