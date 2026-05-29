@@ -13,6 +13,7 @@ vi.mock("@/src/lib/auth/assert-authorized", () => ({
 }));
 
 const mockCreateMissionDefinition = vi.fn();
+const mockUpdateMissionDefinition = vi.fn();
 const mockCreateMission = vi.fn();
 const mockValidateMissionCUE = vi.fn();
 
@@ -20,6 +21,7 @@ vi.mock("@/src/lib/gibson-client", () => ({
   userClient: vi.fn(() => ({
     validateMissionCUE: mockValidateMissionCUE,
     createMissionDefinition: mockCreateMissionDefinition,
+    updateMissionDefinition: mockUpdateMissionDefinition,
     createMission: mockCreateMission,
   })),
 }));
@@ -70,20 +72,33 @@ describe("createMissionFromCUEAction", () => {
     expect(mockCreateMission).toHaveBeenCalledOnce();
   });
 
-  it("returns actionable error when CreateMissionDefinition returns AlreadyExists", async () => {
+  it("passes the raw cueSource to CreateMissionDefinition so the daemon persists it", async () => {
+    mockCreateMissionDefinition.mockResolvedValue({ missionDefinitionId: "def-001" });
+    mockCreateMission.mockResolvedValue({ success: true, mission: { id: "run-001" } });
+
+    await createMissionFromCUEAction({ cueSource: VALID_CUE });
+
+    expect(mockCreateMissionDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({ cueSource: VALID_CUE }),
+    );
+  });
+
+  it("is iteration-safe: AlreadyExists falls back to UpdateMissionDefinition in place", async () => {
     mockCreateMissionDefinition.mockRejectedValue(
       new ConnectError("already exists", Code.AlreadyExists),
     );
+    mockUpdateMissionDefinition.mockResolvedValue({ missionDefinitionId: "def-stable" });
+    mockCreateMission.mockResolvedValue({ success: true, mission: { id: "run-002" } });
 
     const result = await createMissionFromCUEAction({ cueSource: VALID_CUE });
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.code).toBe("invalid");
-      expect(result.error).toContain("my-mission");
-      expect(result.error).toContain("already registered");
-    }
-    expect(mockCreateMission).not.toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.missionId).toBe("run-002");
+    // The edited CUE is written in place, not rejected.
+    expect(mockUpdateMissionDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({ cueSource: VALID_CUE }),
+    );
+    expect(mockCreateMission).toHaveBeenCalledOnce();
   });
 
   it("returns rpc_failed on generic ConnectError from CreateMissionDefinition", async () => {
