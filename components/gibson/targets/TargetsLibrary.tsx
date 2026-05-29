@@ -16,6 +16,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -56,28 +63,55 @@ interface FormState {
   type: string;
   url: string;
   provider: string;
+  model: string;
+  authType: string;
+  status: string;
   description: string;
   tags: string;
+  capabilities: string;
+  timeout: string;
 }
+
+const TYPE_OPTIONS = ["llm_chat", "llm_api", "rag", "agent", "embedding", "multimodal", "custom"];
+const PROVIDER_OPTIONS = ["", "openai", "anthropic", "google", "azure", "ollama", "custom"];
+const AUTH_OPTIONS = ["none", "api_key", "bearer", "basic", "oauth"];
+const STATUS_OPTIONS = ["active", "inactive", "error"];
 
 const EMPTY_FORM: FormState = {
   name: "",
-  type: "",
+  type: "custom",
   url: "",
   provider: "",
+  model: "",
+  authType: "none",
+  status: "active",
   description: "",
   tags: "",
+  capabilities: "",
+  timeout: "30",
 };
 
 function toForm(t: TargetView): FormState {
   return {
     name: t.name,
-    type: t.type,
+    type: t.type || "custom",
     url: t.url,
     provider: t.provider,
+    model: t.model,
+    authType: t.authType || "none",
+    status: t.status || "active",
     description: t.description,
     tags: t.tags.join(", "),
+    capabilities: t.capabilities.join(", "),
+    timeout: String(t.timeout || 30),
   };
+}
+
+function splitList(s: string): string[] {
+  return s
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
 }
 
 export function TargetsLibrary() {
@@ -119,16 +153,19 @@ export function TargetsLibrary() {
       toast.error("Target name is required");
       return;
     }
+    const parsedTimeout = parseInt(form.timeout, 10);
     const input = {
       name: form.name.trim(),
       type: form.type.trim(),
       url: form.url.trim(),
       provider: form.provider.trim(),
+      model: form.model.trim(),
+      authType: form.authType.trim(),
+      status: form.status.trim(),
       description: form.description.trim(),
-      tags: form.tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
+      tags: splitList(form.tags),
+      capabilities: splitList(form.capabilities),
+      timeout: Number.isFinite(parsedTimeout) && parsedTimeout > 0 ? parsedTimeout : 30,
     };
     startSave(async () => {
       const res =
@@ -265,7 +302,7 @@ export function TargetsLibrary() {
               missions reference.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-1">
             <div className="space-y-1.5">
               <Label htmlFor="target-name">Name</Label>
               <Input
@@ -277,22 +314,37 @@ export function TargetsLibrary() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="target-type">Type</Label>
-                <Input
-                  id="target-type"
-                  value={form.type}
-                  onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-                  placeholder="llm_chat"
-                />
+                <Label>Type</Label>
+                <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TYPE_OPTIONS.map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="target-provider">Provider</Label>
-                <Input
-                  id="target-provider"
-                  value={form.provider}
-                  onChange={(e) => setForm((f) => ({ ...f, provider: e.target.value }))}
-                  placeholder="openai"
-                />
+                <Label>Provider</Label>
+                <Select
+                  value={form.provider || "none"}
+                  onValueChange={(v) => setForm((f) => ({ ...f, provider: v === "none" ? "" : v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="(none)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROVIDER_OPTIONS.map((o) => (
+                      <SelectItem key={o || "none"} value={o || "none"}>
+                        {o || "(none)"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="space-y-1.5">
@@ -302,6 +354,72 @@ export function TargetsLibrary() {
                 value={form.url}
                 onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
                 placeholder="https://example.com"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="target-model">Model</Label>
+                <Input
+                  id="target-model"
+                  value={form.model}
+                  onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
+                  placeholder="gpt-4o"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="target-timeout">Timeout (seconds)</Label>
+                <Input
+                  id="target-timeout"
+                  type="number"
+                  min={1}
+                  value={form.timeout}
+                  onChange={(e) => setForm((f) => ({ ...f, timeout: e.target.value }))}
+                  placeholder="30"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Auth type</Label>
+                <Select
+                  value={form.authType}
+                  onValueChange={(v) => setForm((f) => ({ ...f, authType: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AUTH_OPTIONS.map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="target-capabilities">Capabilities (comma-separated)</Label>
+              <Input
+                id="target-capabilities"
+                value={form.capabilities}
+                onChange={(e) => setForm((f) => ({ ...f, capabilities: e.target.value }))}
+                placeholder="vision, tools"
               />
             </div>
             <div className="space-y-1.5">

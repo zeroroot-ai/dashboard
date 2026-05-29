@@ -35,9 +35,13 @@ export interface TargetView {
   type: string;
   url: string;
   provider: string;
+  model: string;
+  authType: string;
   status: string;
   description: string;
   tags: string[];
+  capabilities: string[];
+  timeout: number;
 }
 
 /** TargetInput is the author-supplied metadata for create/update. */
@@ -46,8 +50,13 @@ export interface TargetInput {
   type?: string;
   url?: string;
   provider?: string;
+  model?: string;
+  authType?: string;
+  status?: string;
   description?: string;
   tags?: string[];
+  capabilities?: string[];
+  timeout?: number;
 }
 
 export type TargetActionResult<T> =
@@ -65,9 +74,13 @@ function toView(t: {
   type?: string;
   url?: string;
   provider?: string;
+  model?: string;
+  authType?: string;
   status?: string;
   description?: string;
   tags?: string[];
+  capabilities?: string[];
+  timeout?: number;
 }): TargetView {
   return {
     id: t.id ?? "",
@@ -75,9 +88,42 @@ function toView(t: {
     type: t.type ?? "",
     url: t.url ?? "",
     provider: t.provider ?? "",
+    model: t.model ?? "",
+    authType: t.authType ?? "",
     status: t.status ?? "",
     description: t.description ?? "",
     tags: t.tags ?? [],
+    capabilities: t.capabilities ?? [],
+    timeout: t.timeout ?? 0,
+  };
+}
+
+// targetMsg builds the wire Target init from author input (shared by create/update).
+function targetMsg(input: TargetInput): {
+  name: string;
+  type: string;
+  url: string;
+  provider: string;
+  model: string;
+  authType: string;
+  status: string;
+  description: string;
+  tags: string[];
+  capabilities: string[];
+  timeout: number;
+} {
+  return {
+    name: input.name,
+    type: input.type ?? "",
+    url: input.url ?? "",
+    provider: input.provider ?? "",
+    model: input.model ?? "",
+    authType: input.authType ?? "",
+    status: input.status ?? "",
+    description: input.description ?? "",
+    tags: input.tags ?? [],
+    capabilities: input.capabilities ?? [],
+    timeout: input.timeout ?? 0,
   };
 }
 
@@ -108,16 +154,7 @@ export async function createTargetAction(
   try {
     await assertAuthorized(FGA_CREATE_TARGET);
     const client = userClient(DaemonService);
-    const resp = await client.createTarget({
-      target: {
-        name: input.name,
-        type: input.type ?? "",
-        url: input.url ?? "",
-        provider: input.provider ?? "",
-        description: input.description ?? "",
-        tags: input.tags ?? [],
-      },
-    });
+    const resp = await client.createTarget({ target: targetMsg(input) });
     if (!resp.target?.id && !resp.targetId) {
       return { ok: false, error: "Daemon did not return a target", code: "rpc_failed" };
     }
@@ -187,15 +224,7 @@ export async function updateTargetAction(
     await assertAuthorized(FGA_UPDATE_TARGET);
     const client = userClient(DaemonService);
     const resp = await client.updateTarget({
-      target: {
-        id: targetId,
-        name: input.name,
-        type: input.type ?? "",
-        url: input.url ?? "",
-        provider: input.provider ?? "",
-        description: input.description ?? "",
-        tags: input.tags ?? [],
-      },
+      target: { id: targetId, ...targetMsg(input) },
     });
     return { ok: true, data: toView(resp.target ?? { id: targetId }) };
   } catch (err) {
