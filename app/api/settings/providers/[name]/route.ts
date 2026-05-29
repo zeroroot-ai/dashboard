@@ -1,6 +1,7 @@
 /**
  * GET    /api/settings/providers/[name] — retrieve a single provider config
  * PATCH  /api/settings/providers/[name] — update an existing provider config
+ * PUT    /api/settings/providers/[name] — alias for PATCH (client compat)
  * DELETE /api/settings/providers/[name] — permanently delete a provider config
  *
  * All handlers delegate to the daemon TenantAdminService RPCs.
@@ -52,20 +53,22 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 }
 
 // ---------------------------------------------------------------------------
-// PATCH /api/settings/providers/[name]
+// PATCH / PUT /api/settings/providers/[name]
 // ---------------------------------------------------------------------------
 
 /**
  * Update an existing provider config.
  *
- * Request body shape matches DaemonProviderConfigInput. The daemon accepts a
- * full record on update; empty credential values mean "retain stored value".
- * Returns the updated provider record with masked credentials.
+ * Accepts two body shapes for compatibility:
+ *   - Direct:  DaemonProviderConfigInput  (used by server actions)
+ *   - Wrapped: { config: DaemonProviderConfigInput, testConnection?: boolean }
+ *              (used by the providers page client hook)
  *
+ * Empty credential values mean "retain stored value" in the daemon.
  * The plaintext credentials transit this handler's memory for one request
  * and are never persisted by the dashboard.
  */
-export async function PATCH(req: NextRequest, { params }: RouteContext) {
+async function handleUpdate(req: NextRequest, { params }: RouteContext): Promise<Response> {
   const session = await getServerSession();
   if (!session) {
     return Response.json(
@@ -78,15 +81,24 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   const userId = session.user.id;
   const tenantId = session.user.tenantId ?? undefined;
 
-  let body: DaemonProviderConfigInput;
+  let raw: unknown;
   try {
-    body = await req.json() as DaemonProviderConfigInput;
+    raw = await req.json();
   } catch {
     return Response.json(
       { error: { code: 'invalid_argument', message: 'Request body must be valid JSON' } },
       { status: 400 },
     );
   }
+
+  // Unwrap { config: {...} } wrapper if present, otherwise treat as direct input.
+  const body = (
+    raw !== null &&
+    typeof raw === 'object' &&
+    'config' in (raw as Record<string, unknown>)
+      ? (raw as { config: DaemonProviderConfigInput }).config
+      : raw
+  ) as DaemonProviderConfigInput;
 
   try {
     const record = await daemonUpdateProvider(name, body, userId, tenantId);
@@ -95,6 +107,9 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     return translateError(err);
   }
 }
+
+export const PATCH = handleUpdate;
+export const PUT = handleUpdate;
 
 // ---------------------------------------------------------------------------
 // DELETE /api/settings/providers/[name]
