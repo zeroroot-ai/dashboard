@@ -98,6 +98,8 @@ export interface ListTenantTracesOpts {
   name?: string;
   /** Restrict to traces attributed to a single end-user id. */
   userId?: string;
+  /** Restrict to traces carrying ALL of these tags (e.g. "agent:recon"). */
+  tags?: string[];
 }
 
 const DEFAULT_PAGE = 1;
@@ -120,5 +122,6 @@ export async function listTenantTraces(
     toTimestamp: opts.toTimestamp,
     name: opts.name,
     userId: opts.userId,
+    tags: opts.tags,
   });
 }

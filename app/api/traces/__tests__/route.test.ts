@@ -142,6 +142,18 @@ describe('GET /api/traces', () => {
     );
   });
 
+  it('passes repeated tags filters through (by-agent / by-mission deep-link)', async () => {
+    mockListTenantTraces.mockResolvedValueOnce({
+      data: [],
+      meta: { page: 1, limit: 25, totalItems: 0, totalPages: 0 },
+    });
+    await GET(req('http://test.local/api/traces?tags=agent:recon&tags=mission:m1'));
+    expect(mockListTenantTraces).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ tags: ['agent:recon', 'mission:m1'] }),
+    );
+  });
+
   it('caps the page size at 100', async () => {
     mockListTenantTraces.mockResolvedValueOnce({
       data: [],

@@ -66,18 +66,30 @@ function formatTokens(n: number): string {
 }
 
 /**
- * Deep-link from a by-user usage row to the Gibson Traces list scoped to that
- * end-user, carrying the current date range. Only the user scope maps cleanly
- * to a trace-list filter — agent/team/mission attribution lives at observation
- * granularity, which the trace-list API does not filter on (see dashboard
- * follow-up).
+ * Deep-link from a usage row to the Gibson Traces list scoped to that subject,
+ * carrying the current date range. Returns null for scopes the trace-list can't
+ * filter on:
+ *   - user    → ?userId=<id>            (Langfuse trace.userId)
+ *   - agent   → ?tags=agent:<name>      (Langfuse trace.tags, emitted by daemon)
+ *   - mission → ?tags=mission:<id>      (Langfuse trace.tags, emitted by daemon)
+ *   - team    → null                    (no team tag is emitted on traces)
  */
-function tracesHrefForUser(
+function tracesHrefForScope(
+  scope: UsageScopeInput,
   subjectId: string,
   fromParam?: string,
   toParam?: string,
-): string {
-  const qs = new URLSearchParams({ userId: subjectId });
+): string | null {
+  const qs = new URLSearchParams();
+  if (scope === "user") {
+    qs.set("userId", subjectId);
+  } else if (scope === "agent") {
+    qs.set("tags", `agent:${subjectId}`);
+  } else if (scope === "mission") {
+    qs.set("tags", `mission:${subjectId}`);
+  } else {
+    return null;
+  }
   if (fromParam) qs.set("from", fromParam);
   if (toParam) qs.set("to", toParam);
   return `/dashboard/traces?${qs.toString()}`;
@@ -204,16 +216,22 @@ export function UsageContent({ fromParam, toParam, scopeParam }: Props) {
                       {rows.map((r) => (
                         <TableRow key={r.subjectId}>
                           <TableCell className="font-mono text-xs">
-                            {s === "user" ? (
-                              <Link
-                                href={tracesHrefForUser(r.subjectId, fromParam, toParam)}
-                                className="text-link hover:underline"
-                              >
-                                {r.displayName || r.subjectId}
-                              </Link>
-                            ) : (
-                              r.displayName || r.subjectId
-                            )}
+                            {(() => {
+                              const href = tracesHrefForScope(
+                                s,
+                                r.subjectId,
+                                fromParam,
+                                toParam,
+                              );
+                              const label = r.displayName || r.subjectId;
+                              return href ? (
+                                <Link href={href} className="text-link hover:underline">
+                                  {label}
+                                </Link>
+                              ) : (
+                                label
+                              );
+                            })()}
                           </TableCell>
                           <TableCell className="text-right">
                             {formatTokens(r.inputTokens)}
