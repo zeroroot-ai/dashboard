@@ -28,6 +28,7 @@ import {
   NetworkIcon,
   Plug2Icon,
   RocketIcon,
+  ServerIcon,
   SettingsIcon,
   ShieldCheckIcon,
   WrenchIcon,
@@ -73,6 +74,11 @@ export const navItems: NavGroup[] = [
         title: "Missions",
         href: "/dashboard/missions",
         icon: CrosshairIcon
+      },
+      {
+        title: "Targets",
+        href: "/dashboard/targets",
+        icon: ServerIcon
       },
       {
         title: "Mission Results",
