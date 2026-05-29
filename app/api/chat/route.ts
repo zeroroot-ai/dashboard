@@ -164,7 +164,16 @@ export async function POST(request: NextRequest): Promise<Response> {
     // on the client parses UIMessageChunk JSON events. toTextStreamResponse()
     // returns plain SSE text which the client can't parse into parts[].
     const debugRequested = request.headers.get('X-Gibson-Debug') === '1';
-    const response = result.toUIMessageStreamResponse();
+    const response = result.toUIMessageStreamResponse({
+      onError: (error: unknown) => {
+        // By default the AI SDK masks stream errors as a generic string.
+        // Log the real error server-side and surface its message to the client
+        // so chat failures are diagnosable instead of "Something went wrong".
+        const message = error instanceof Error ? error.message : String(error);
+        logger.error({ err: error, route: 'chat' }, 'chat stream error');
+        return message;
+      },
+    });
     response.headers.set('X-Gibson-Trace-Id', crypto.randomUUID());
     if (debugRequested) {
       const debugPayload = system.slice(0, 8192); // 8 KB cap
