@@ -25,7 +25,7 @@ const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "admin@example.com";
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "password";
 
 const MISSION_ID = "mission-cp-e2e-001";
-const MISSION_DETAIL_URL = `${BASE_URL}/dashboard/missions/${MISSION_ID}`;
+const MISSION_DETAIL_URL = `${BASE_URL}/dashboard/results/${MISSION_ID}`;
 
 const NEWER_CP = "ckpt-newer-aaaaaaaa";
 const TARGET_CP = "ckpt-target-bbbbbbbb";
@@ -70,7 +70,7 @@ async function mockCheckpointActions(page: Page) {
   // pattern-match on URL fragments and the action name string the
   // Next.js bundler embeds. Because this E2E targets the dashboard's
   // Server Action machinery, the mock layer is intentionally permissive.
-  await page.route("**/dashboard/missions/**", async (route) => {
+  await page.route("**/dashboard/results/**", async (route) => {
     if (route.request().method() !== "POST") {
       await route.continue();
       return;

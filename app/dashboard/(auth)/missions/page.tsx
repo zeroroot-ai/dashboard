@@ -1,5 +1,5 @@
-import { MissionsContent } from '@/components/gibson/missions/MissionsContent';
+import { MissionsLibrary } from '@/components/gibson/missions/MissionsLibrary';
 
 export default function MissionsPage() {
-  return <MissionsContent />;
+  return <MissionsLibrary />;
 }

@@ -126,7 +126,7 @@ export function NodeDetailPanel({ node, onClose, onFindPaths }: NodeDetailPanelP
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground w-28 flex-shrink-0">Mission</span>
               <a
-                href={`/dashboard/missions?id=${missionId}`}
+                href={`/dashboard/results/${missionId}`}
                 className="flex items-center gap-1 text-xs text-primary hover:underline"
               >
                 Open in mission view

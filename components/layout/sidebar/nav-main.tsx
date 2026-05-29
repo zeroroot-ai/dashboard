@@ -21,6 +21,7 @@ import {
   UsersIcon,
   ChevronRight,
   CrosshairIcon,
+  ClipboardListIcon,
   LayoutDashboardIcon,
   ListTreeIcon,
   MessageSquareIcon,
@@ -72,6 +73,11 @@ export const navItems: NavGroup[] = [
         title: "Missions",
         href: "/dashboard/missions",
         icon: CrosshairIcon
+      },
+      {
+        title: "Mission Results",
+        href: "/dashboard/results",
+        icon: ClipboardListIcon
       },
       {
         title: "Findings",
