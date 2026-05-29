@@ -64,7 +64,6 @@ const ALLOWLIST = new Set([
   "src/components/secrets/SecretsList.tsx",
   "src/components/secrets-backend/SecretsBackendForm.tsx",
   "src/components/gibson/settings/PluginDetailContent.tsx",
-  "app/dashboard/(auth)/missions/[id]/page.tsx",
 ]);
 
 function* walk(dir) {

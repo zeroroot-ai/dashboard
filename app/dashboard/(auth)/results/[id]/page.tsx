@@ -76,7 +76,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
 
   // FGA gating for the Checkpoints tab — viewer is required to even see
   // the tab. Spec week-4-handlers-ui-e2e §4 task 40 / R17.1.
-  const checkpointAuth = useAuthorize(
+  const { allowed: canViewCheckpoints, loading } = useAuthorize(
     "/gibson.daemon.v1.DaemonService/ListCheckpoints",
   );
 
@@ -343,7 +343,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
           <TabsTrigger value="logs">Logs</TabsTrigger>
           <TabsTrigger value="traces">Traces</TabsTrigger>
           <TabsTrigger value="secrets">Secrets</TabsTrigger>
-          {!checkpointAuth.loading && checkpointAuth.allowed && (
+          {!loading && canViewCheckpoints && (
             <TabsTrigger value="checkpoints">Checkpoints</TabsTrigger>
           )}
         </TabsList>
@@ -524,7 +524,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
         </TabsContent>
 
         {/* Checkpoints — week-4-handlers-ui-e2e §4 R17.1 */}
-        {checkpointAuth.allowed && (
+        {canViewCheckpoints && (
           <TabsContent value="checkpoints" className="mt-4">
             <Card>
               <CardContent className="pt-6">
