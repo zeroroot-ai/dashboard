@@ -12,9 +12,9 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useMissionEditor } from "@/src/hooks/useMissionEditor";
 import { useMissionTerminal } from "@/src/hooks/useMissionTerminal";
-import { DraftsMenu } from "@/src/components/mission/create/drafts-menu";
+import { SavedMissionsMenu } from "@/src/components/mission/create/saved-missions-menu";
 import { DefinitionPickerDropdown } from "@/src/components/mission/create/definition-picker-dropdown";
-import { getMissionDraftAction } from "@/app/actions/missions/drafts";
+import { getMissionSourceAction } from "@/app/actions/missions/source-store";
 import { getTemplateCUESourceAction } from "@/app/actions/missions/create-mission";
 import { NEW_MISSION_CUE } from "@/src/data/new-mission-template";
 
@@ -50,7 +50,7 @@ interface DefinitionMeta {
 
 interface DefinitionBannerProps {
   meta: DefinitionMeta;
-  loadedFrom: "draft" | "template" | undefined;
+  loadedFrom: "saved" | "template" | undefined;
   onDismiss: () => void;
 }
 
@@ -64,9 +64,9 @@ function DefinitionBanner({ meta, loadedFrom, onDismiss }: DefinitionBannerProps
         </Badge>
         {loadedFrom !== undefined && (
           <span className="text-muted-foreground">
-            {loadedFrom === "draft"
-              ? "Loaded from draft"
-              : "No draft found — showing template"}
+            {loadedFrom === "saved"
+              ? "Loaded saved version"
+              : "New mission — not yet saved"}
           </span>
         )}
       </div>
@@ -86,7 +86,7 @@ function DefinitionBanner({ meta, loadedFrom, onDismiss }: DefinitionBannerProps
 export default function CreateMissionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const urlDraftId = searchParams.get("draft") ?? undefined;
+  const urlMissionId = searchParams.get("mission") ?? undefined;
   const urlTemplateId = searchParams.get("template") ?? undefined;
   const urlDefinitionName = searchParams.get("definition") ?? undefined;
   const urlCloneMissionId = searchParams.get("clone") ?? undefined;
@@ -99,26 +99,26 @@ export default function CreateMissionPage() {
   const editor = useMissionEditor();
 
   const [terminalOpen, setTerminalOpen] = React.useState(false);
-  const [draftLoading, setDraftLoading] = React.useState(false);
+  const [hydrating, setHydrating] = React.useState(false);
 
   // Definition-related chrome (banner + picker) — removed in D5/D4.
   const [currentDefinitionName, setCurrentDefinitionName] = React.useState<string | undefined>(undefined);
   const [currentDefinitionMeta, setCurrentDefinitionMeta] = React.useState<DefinitionMeta | undefined>(undefined);
-  const [definitionLoadedFrom, setDefinitionLoadedFrom] = React.useState<"draft" | "template" | undefined>(undefined);
+  const [definitionLoadedFrom, setDefinitionLoadedFrom] = React.useState<"saved" | "template" | undefined>(undefined);
   const [hydratedDefinitionName, setHydratedDefinitionName] = React.useState<string | undefined>(undefined);
 
   // Keep the most recent loadSource so effects can hydrate without depending
   // on the editor identity (which is stable across renders anyway).
   const loadSource = editor.loadSource;
 
-  // URL-driven draft hydration (?draft=<id>)
+  // URL-driven saved-mission hydration (?mission=<id>)
   React.useEffect(() => {
-    if (!urlDraftId) return;
-    if (urlDraftId === editor.missionId) return;
+    if (!urlMissionId) return;
+    if (urlMissionId === editor.missionId) return;
     let cancelled = false;
-    setDraftLoading(true);
+    setHydrating(true);
     void (async () => {
-      const res = await getMissionDraftAction(urlDraftId);
+      const res = await getMissionSourceAction(urlMissionId);
       if (cancelled) return;
       if (res.ok) {
         loadSource({
@@ -127,24 +127,24 @@ export default function CreateMissionPage() {
           cueSource: res.data.cueSource,
         });
       } else if (res.code === "not_found") {
-        toast.error("This draft no longer exists. It may have expired.");
+        toast.error("This mission no longer exists.");
         router.replace("/dashboard/missions/create");
       } else {
         toast.error(
           res.code === "permission_denied"
             ? "Permission denied"
-            : "Could not load the draft"
+            : "Could not load the mission"
         );
       }
-      setDraftLoading(false);
+      setHydrating(false);
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlDraftId]);
+  }, [urlMissionId]);
 
   // URL-driven template hydration (?template=<id>)
   React.useEffect(() => {
-    if (!urlTemplateId || urlDraftId) return;
+    if (!urlTemplateId || urlMissionId) return;
     void (async () => {
       const src = await getTemplateCUESourceAction(urlTemplateId);
       if (src) loadSource({ cueSource: src });
@@ -154,9 +154,9 @@ export default function CreateMissionPage() {
 
   // URL-driven clone hydration (?clone=<missionId>)
   React.useEffect(() => {
-    if (!urlCloneMissionId || urlDraftId) return;
+    if (!urlCloneMissionId || urlMissionId) return;
     let cancelled = false;
-    setDraftLoading(true);
+    setHydrating(true);
     void (async () => {
       const res = await fetch(
         `/api/missions/${encodeURIComponent(urlCloneMissionId)}/clone`,
@@ -170,7 +170,7 @@ export default function CreateMissionPage() {
             : body.error ?? "Could not load the mission for cloning",
         );
         router.replace("/dashboard/missions/create");
-        setDraftLoading(false);
+        setHydrating(false);
         return;
       }
       const data = (await res.json()) as { cueSource?: string; name?: string };
@@ -184,7 +184,7 @@ export default function CreateMissionPage() {
         );
         loadSource({ cueSource: withCopyName });
       }
-      setDraftLoading(false);
+      setHydrating(false);
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -196,7 +196,7 @@ export default function CreateMissionPage() {
     if (hydratedDefinitionName === urlDefinitionName) return;
 
     let cancelled = false;
-    setDraftLoading(true);
+    setHydrating(true);
 
     void (async () => {
       const defRes = await fetch(
@@ -211,7 +211,7 @@ export default function CreateMissionPage() {
         } else {
           toast.error("Could not load the mission definition");
         }
-        setDraftLoading(false);
+        setHydrating(false);
         return;
       }
 
@@ -237,7 +237,7 @@ export default function CreateMissionPage() {
       // back to the valid New Mission template so Run stays enabled.
       if (defJson.cueSource) {
         loadSource({ name: meta.name, cueSource: defJson.cueSource });
-        setDefinitionLoadedFrom("draft");
+        setDefinitionLoadedFrom("saved");
       } else {
         loadSource({ name: meta.name, cueSource: NEW_MISSION_CUE });
         setDefinitionLoadedFrom("template");
@@ -245,7 +245,7 @@ export default function CreateMissionPage() {
 
       setCurrentDefinitionName(urlDefinitionName);
       setHydratedDefinitionName(urlDefinitionName);
-      setDraftLoading(false);
+      setHydrating(false);
     })();
 
     return () => { cancelled = true; };
@@ -258,8 +258,8 @@ export default function CreateMissionPage() {
   // Once autosave assigns an id, reflect it in the URL so a reload restores
   // the same mission.
   React.useEffect(() => {
-    if (editor.missionId !== undefined && urlDraftId !== editor.missionId) {
-      router.replace(`/dashboard/missions/create?draft=${editor.missionId}`);
+    if (editor.missionId !== undefined && urlMissionId !== editor.missionId) {
+      router.replace(`/dashboard/missions/create?mission=${editor.missionId}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor.missionId]);
@@ -296,8 +296,8 @@ export default function CreateMissionPage() {
     else toast.error("Save failed");
   }
 
-  function handleDraftDeleted(draftId: string) {
-    if (draftId === editor.missionId) {
+  function handleMissionDeleted(missionId: string) {
+    if (missionId === editor.missionId) {
       editor.newMission();
       router.replace("/dashboard/missions/create");
     }
@@ -380,15 +380,15 @@ export default function CreateMissionPage() {
         <DefinitionPickerDropdown
           value={urlDefinitionName ?? null}
           onChange={handleDefinitionChange}
-          disabled={draftLoading}
+          disabled={hydrating}
         />
 
-        <DraftsMenu
-          currentDraftId={editor.missionId}
-          onDeleted={handleDraftDeleted}
+        <SavedMissionsMenu
+          currentMissionId={editor.missionId}
+          onDeleted={handleMissionDeleted}
         />
 
-        {draftLoading && (
+        {hydrating && (
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Loader2 className="size-3 animate-spin" />
             Loading...

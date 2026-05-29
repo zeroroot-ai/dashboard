@@ -18,17 +18,17 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 import { useMissionEditor } from "./useMissionEditor";
 import { NEW_MISSION_CUE } from "@/src/data/new-mission-template";
 
-vi.mock("@/app/actions/missions/drafts", () => ({
-  saveMissionDraftAction: vi.fn(),
+vi.mock("@/app/actions/missions/source-store", () => ({
+  saveMissionSourceAction: vi.fn(),
 }));
 vi.mock("@/app/actions/missions/create-mission", () => ({
   createMissionFromCUEAction: vi.fn(),
 }));
 
-import { saveMissionDraftAction } from "@/app/actions/missions/drafts";
+import { saveMissionSourceAction } from "@/app/actions/missions/source-store";
 import { createMissionFromCUEAction } from "@/app/actions/missions/create-mission";
 
-const mockSave = vi.mocked(saveMissionDraftAction);
+const mockSave = vi.mocked(saveMissionSourceAction);
 const mockRun = vi.mocked(createMissionFromCUEAction);
 
 describe("useMissionEditor", () => {

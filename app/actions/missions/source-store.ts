@@ -27,7 +27,7 @@ import {
   MissionDraftRpcError,
   type MissionDraft,
   type MissionDraftFull,
-} from "@/src/lib/gibson-client/mission-drafts";
+} from "@/src/lib/gibson-client/mission-source";
 import {
   assertAuthorized,
   AuthzDeniedError,
@@ -127,7 +127,7 @@ function rpcErrToResult(action: string, err: unknown): DraftActionResult<never> 
  * provided the existing draft is overwritten in place; otherwise a new
  * draft is created and its server-assigned ID is returned.
  */
-export async function saveMissionDraftAction(input: {
+export async function saveMissionSourceAction(input: {
   name: string;
   cueSource: string;
   draftId?: string;
@@ -162,7 +162,7 @@ export async function saveMissionDraftAction(input: {
  * Returns the metadata-only list of saved drafts for the active tenant,
  * ordered by update time descending. CUE source is not included.
  */
-export async function listMissionDraftsAction(): Promise<
+export async function listMissionSourcesAction(): Promise<
   DraftActionResult<MissionDraft[]>
 > {
   try {
@@ -186,7 +186,7 @@ export async function listMissionDraftsAction(): Promise<
  * to the active tenant. Maps daemon NotFound to "not_found" so the page can
  * strip a stale ?draft=<id> from the URL and toast "draft expired."
  */
-export async function getMissionDraftAction(
+export async function getMissionSourceAction(
   draftId: string,
 ): Promise<DraftActionResult<MissionDraftFull>> {
   try {
@@ -218,7 +218,7 @@ export async function getMissionDraftAction(
  * Removes a draft scoped to the active tenant. Idempotent on the daemon
  * side — deleting a missing draft returns OK.
  */
-export async function deleteMissionDraftAction(
+export async function deleteMissionSourceAction(
   draftId: string,
 ): Promise<DraftActionResult<null>> {
   try {
