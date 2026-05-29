@@ -97,15 +97,20 @@ export async function createMissionFromCUEAction(input: {
       };
     }
 
-    // Step 2: Register the mission definition. AlreadyExists means a prior run
-    // partially failed after this step, leaving the definition registered. The
-    // daemon's GetMissionDefinition response does not currently return the
-    // server-assigned ID (tracked in gibson#438), so we cannot fall back to the
-    // existing record — instead surface a clear, actionable message.
-    // UpdateMissionDefinition (gibson#437) will enable true in-place updates.
+    // Step 2: Register the mission definition, iteration-safe. Re-running an
+    // edited mission under the same name is the normal path, not an error:
+    // CreateMissionDefinition is keyed by name and returns AlreadyExists when
+    // the definition is already registered, so we fall back to
+    // UpdateMissionDefinition (gibson#437) to overwrite it in place under its
+    // stable id. cueSource is passed on both so the daemon persists the
+    // author's exact CUE (gibson#504), which GetMissionDefinition returns for
+    // the editor's load path.
     let missionDefinitionId: string;
     try {
-      const defResp = await client.createMissionDefinition({ definition: compiledDefinition });
+      const defResp = await client.createMissionDefinition({
+        definition: compiledDefinition,
+        cueSource,
+      });
       if (!defResp.missionDefinitionId) {
         return {
           ok: false,
@@ -116,14 +121,21 @@ export async function createMissionFromCUEAction(input: {
       missionDefinitionId = defResp.missionDefinitionId;
     } catch (defErr) {
       if (defErr instanceof ConnectError && defErr.code === Code.AlreadyExists) {
-        const defName = compiledDefinition.name ?? "unknown";
-        return {
-          ok: false,
-          error: `Definition "${defName}" is already registered. Change the name: field in your CUE to create a new version, or wait for in-place update support (gibson#437).`,
-          code: "invalid",
-        };
+        const updateResp = await client.updateMissionDefinition({
+          definition: compiledDefinition,
+          cueSource,
+        });
+        if (!updateResp.missionDefinitionId) {
+          return {
+            ok: false,
+            error: "Daemon did not return a mission definition ID on update.",
+            code: "rpc_failed",
+          };
+        }
+        missionDefinitionId = updateResp.missionDefinitionId;
+      } else {
+        throw defErr;
       }
-      throw defErr;
     }
 
     // Step 3: Create a mission run. targetId comes from the compiled definition's
