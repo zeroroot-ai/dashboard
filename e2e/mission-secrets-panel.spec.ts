@@ -30,7 +30,7 @@ const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "admin@example.com";
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "password";
 
 const MISSION_ID = "mission-e2e-001";
-const MISSION_DETAIL_URL = `${BASE_URL}/dashboard/missions/${MISSION_ID}`;
+const MISSION_DETAIL_URL = `${BASE_URL}/dashboard/results/${MISSION_ID}`;
 
 /** A distinctive credential value string that must NEVER appear in the DOM. */
 const SECRET_VALUE_SENTINEL = "SHOULD_NEVER_APPEAR_IN_DOM_sk-api-key-abc123";

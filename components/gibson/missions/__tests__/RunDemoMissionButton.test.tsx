@@ -70,7 +70,7 @@ describe('RunDemoMissionButton', () => {
         expect.stringContaining('scanme.nmap.org'),
       );
     });
-    expect(mockPush).toHaveBeenCalledWith('/dashboard/missions/m-demo-1');
+    expect(mockPush).toHaveBeenCalledWith('/dashboard/results/m-demo-1');
   });
 
   it('shows a pending label while the request is in flight', async () => {

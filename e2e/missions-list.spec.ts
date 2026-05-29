@@ -50,7 +50,9 @@ test.describe('Missions list fires tenant-scoped queries', () => {
       { timeout: 20_000 },
     );
 
-    await page.goto(`${BASE_URL}/dashboard/missions`);
+    // The runs list (which fires the tenant-scoped /api/missions query) lives
+    // under Mission Results after the authoring/execution split (dashboard#497).
+    await page.goto(`${BASE_URL}/dashboard/results`);
 
     // We just need any missions-scoped fetch to fire — that proves
     // currentTenant?.id was non-null at React-Query-enable time.

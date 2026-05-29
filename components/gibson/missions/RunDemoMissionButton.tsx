@@ -59,7 +59,7 @@ export function RunDemoMissionButton({
       }
 
       toast.success(`Demo mission started against ${body.target ?? "scanme.nmap.org"}`);
-      router.push(`/dashboard/missions/${missionId}`);
+      router.push(`/dashboard/results/${missionId}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       toast.error(`Failed to start demo mission: ${message}`);

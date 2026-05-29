@@ -238,7 +238,7 @@ function MissionsTable({ missions }: { missions: Mission[] }) {
             <TableRow key={mission.id}>
               <TableCell className="font-medium font-mono">
                 <Link
-                  href={`/dashboard/missions/${mission.id}`}
+                  href={`/dashboard/results/${mission.id}`}
                   className="hover:text-primary transition-colors"
                 >
                   {mission.name}
@@ -289,7 +289,7 @@ function MissionKanbanCard({ mission }: { mission: Mission }) {
       <CardHeader className="pb-2 pt-3 px-3">
         <CardTitle className="text-sm font-medium font-mono leading-snug">
           <Link
-            href={`/dashboard/missions/${mission.id}`}
+            href={`/dashboard/results/${mission.id}`}
             className="hover:text-primary transition-colors"
           >
             {mission.name}
@@ -403,7 +403,7 @@ export function MissionsContent() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h1 className="text-xl font-bold tracking-tight font-mono lg:text-2xl">Missions</h1>
+        <h1 className="text-xl font-bold tracking-tight font-mono lg:text-2xl">Mission Results</h1>
         <div className="flex items-center gap-2">
           <RunDemoMissionButton variant="outline" />
           <Button asChild>

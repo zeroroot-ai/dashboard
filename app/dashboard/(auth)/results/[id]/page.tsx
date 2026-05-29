@@ -245,9 +245,9 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground">
-            <Link href="/dashboard/missions">
+            <Link href="/dashboard/results">
               <ArrowLeft className="size-3.5" />
-              Missions
+              Results
             </Link>
           </Button>
         </div>
@@ -261,9 +261,9 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground">
-            <Link href="/dashboard/missions">
+            <Link href="/dashboard/results">
               <ArrowLeft className="size-3.5" />
-              Missions
+              Results
             </Link>
           </Button>
         </div>
@@ -295,9 +295,9 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
       {/* Back navigation */}
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground">
-          <Link href="/dashboard/missions">
+          <Link href="/dashboard/results">
             <ArrowLeft className="size-3.5" />
-            Missions
+            Results
           </Link>
         </Button>
       </div>
