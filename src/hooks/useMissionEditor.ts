@@ -19,7 +19,7 @@
 
 import * as React from "react";
 
-import { saveMissionDraftAction } from "@/app/actions/missions/drafts";
+import { saveMissionSourceAction } from "@/app/actions/missions/source-store";
 import { createMissionFromCUEAction } from "@/app/actions/missions/create-mission";
 import { NEW_MISSION_CUE } from "@/src/data/new-mission-template";
 
@@ -101,7 +101,7 @@ export function useMissionEditor(
   const isDirty = cueSource !== savedSource;
 
   // Refs so the debounce timer always sees the latest values without being
-  // rescheduled on every keystroke (mirrors useServerAutosave's pattern).
+  // rescheduled on every keystroke (ref-snapshot debounce pattern).
   const latest = React.useRef({ cueSource, missionId, missionName });
   latest.current = { cueSource, missionId, missionName };
   const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -117,7 +117,7 @@ export function useMissionEditor(
     setSaveStatus("saving");
     setSaveError(null);
 
-    const result = await saveMissionDraftAction({
+    const result = await saveMissionSourceAction({
       name,
       cueSource: src,
       ...(id !== undefined ? { draftId: id } : {}),

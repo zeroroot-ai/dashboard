@@ -1,22 +1,16 @@
 "use client";
 
 /**
- * DraftsMenu — dropdown surfaced next to the mission-create page's
- * template selector. Lists daemon-persisted drafts for the active
- * tenant and exposes load + delete actions.
- *
- * Spec: mission-draft-dashboard-wiring.
+ * SavedMissionsMenu — dropdown on the mission editor that lists the tenant's
+ * saved missions and opens one in the editor. Authored missions are durable
+ * (gibson#505), so there is no "draft" concept and nothing expires.
  *
  * Lifecycle:
- *   - On open, calls listMissionDraftsAction (server action) and
- *     populates the menu.
- *   - Clicking a row navigates to `?draft=<id>` so the parent
- *     page's URL-driven hydration kicks in.
- *   - Clicking the trash icon opens an AlertDialog; on confirm,
- *     calls deleteMissionDraftAction and refreshes the list.
+ *   - On open, calls listMissionSourcesAction and populates the menu.
+ *   - Clicking a row navigates to `?mission=<id>` so the editor hydrates it.
+ *   - The trash icon opens a confirm dialog, then calls deleteMissionSourceAction.
  *
- * The "no saved drafts" empty state takes a single line so the menu
- * doesn't bloat the toolbar when the tenant has none.
+ * dashboard#496 (D5).
  */
 
 import * as React from "react";
@@ -44,22 +38,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  listMissionDraftsAction,
-  deleteMissionDraftAction,
-} from "@/app/actions/missions/drafts";
-import type { MissionDraft } from "@/src/lib/gibson-client/mission-drafts";
+  listMissionSourcesAction,
+  deleteMissionSourceAction,
+} from "@/app/actions/missions/source-store";
+import type { MissionDraft } from "@/src/lib/gibson-client/mission-source";
 
-interface DraftsMenuProps {
+interface SavedMissionsMenuProps {
   /** When set, the menu marks the matching row as "current". */
-  currentDraftId?: string;
-  /** Called after a successful delete. Lets the parent clear hot state if the deleted draft was the current one. */
-  onDeleted?: (draftId: string) => void;
+  currentMissionId?: string;
+  /** Called after a successful delete, so the parent can clear hot state. */
+  onDeleted?: (missionId: string) => void;
 }
 
-export function DraftsMenu({ currentDraftId, onDeleted }: DraftsMenuProps) {
+export function SavedMissionsMenu({ currentMissionId, onDeleted }: SavedMissionsMenuProps) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const [drafts, setDrafts] = React.useState<MissionDraft[] | null>(null);
+  const [missions, setMissions] = React.useState<MissionDraft[] | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [pendingDelete, setPendingDelete] = React.useState<MissionDraft | null>(
     null,
@@ -69,16 +63,16 @@ export function DraftsMenu({ currentDraftId, onDeleted }: DraftsMenuProps) {
   const refresh = React.useCallback(async () => {
     setLoading(true);
     try {
-      const res = await listMissionDraftsAction();
+      const res = await listMissionSourcesAction();
       if (res.ok) {
-        setDrafts(res.data);
+        setMissions(res.data);
       } else {
         toast.error(
           res.code === "permission_denied"
             ? "Permission denied"
-            : "Could not load drafts",
+            : "Could not load saved missions",
         );
-        setDrafts([]);
+        setMissions([]);
       }
     } finally {
       setLoading(false);
@@ -86,32 +80,30 @@ export function DraftsMenu({ currentDraftId, onDeleted }: DraftsMenuProps) {
   }, []);
 
   React.useEffect(() => {
-    if (open && drafts === null) {
+    if (open && missions === null) {
       void refresh();
     }
-  }, [open, drafts, refresh]);
+  }, [open, missions, refresh]);
 
-  function handleLoad(draft: MissionDraft) {
+  function handleOpenMission(mission: MissionDraft) {
     setOpen(false);
-    router.push(`/dashboard/missions/create?draft=${draft.id}`);
+    router.push(`/dashboard/missions/create?mission=${mission.id}`);
   }
 
   function handleConfirmDelete() {
-    const draft = pendingDelete;
-    if (!draft) return;
+    const mission = pendingDelete;
+    if (!mission) return;
     startDelete(async () => {
-      const res = await deleteMissionDraftAction(draft.id);
+      const res = await deleteMissionSourceAction(mission.id);
       if (res.ok) {
-        toast.success("Draft deleted");
-        // Optimistically remove it from the local list so the menu
-        // updates without a round trip.
-        setDrafts((prev) => prev?.filter((d) => d.id !== draft.id) ?? null);
-        onDeleted?.(draft.id);
+        toast.success("Mission deleted");
+        setMissions((prev) => prev?.filter((m) => m.id !== mission.id) ?? null);
+        onDeleted?.(mission.id);
       } else {
         toast.error(
           res.code === "permission_denied"
             ? "Permission denied"
-            : "Could not delete draft",
+            : "Could not delete mission",
         );
       }
       setPendingDelete(null);
@@ -124,46 +116,44 @@ export function DraftsMenu({ currentDraftId, onDeleted }: DraftsMenuProps) {
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="gap-1.5">
             <FolderOpen className="size-3.5" />
-            Drafts
+            Open
             <ChevronDown className="size-3.5 opacity-60" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-72">
           <DropdownMenuLabel className="font-mono text-xs">
-            Saved Drafts
+            Saved Missions
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           {loading ? (
             <DropdownMenuItem disabled className="justify-center">
               <Loader2 className="size-3.5 animate-spin" />
             </DropdownMenuItem>
-          ) : !drafts || drafts.length === 0 ? (
+          ) : !missions || missions.length === 0 ? (
             <DropdownMenuItem disabled className="text-xs text-muted-foreground">
-              No saved drafts.
+              No saved missions.
             </DropdownMenuItem>
           ) : (
-            drafts.map((d) => (
+            missions.map((m) => (
               <DropdownMenuItem
-                key={d.id}
+                key={m.id}
                 className="flex items-center justify-between gap-2"
-                // Prevent the row click from triggering when the trash
-                // icon is the actual click target.
                 onSelect={(e) => {
                   e.preventDefault();
-                  handleLoad(d);
+                  handleOpenMission(m);
                 }}
               >
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-mono text-sm">
-                    {d.name || "(unnamed)"}
-                    {d.id === currentDraftId && (
+                    {m.name || "(unnamed)"}
+                    {m.id === currentMissionId && (
                       <span className="ml-2 text-xs text-muted-foreground">
                         current
                       </span>
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Updated {formatRelative(d.updatedAt)}
+                    Updated {formatRelative(m.updatedAt)}
                   </div>
                 </div>
                 <Button
@@ -171,7 +161,7 @@ export function DraftsMenu({ currentDraftId, onDeleted }: DraftsMenuProps) {
                   variant="ghost"
                   size="icon"
                   className="size-7 shrink-0"
-                  aria-label={`Delete draft ${d.name}`}
+                  aria-label={`Delete mission ${m.name}`}
                 >
                   <span
                     role="button"
@@ -179,14 +169,14 @@ export function DraftsMenu({ currentDraftId, onDeleted }: DraftsMenuProps) {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setPendingDelete(d);
+                      setPendingDelete(m);
                       setOpen(false);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
                         e.stopPropagation();
-                        setPendingDelete(d);
+                        setPendingDelete(m);
                         setOpen(false);
                       }
                     }}
@@ -206,19 +196,16 @@ export function DraftsMenu({ currentDraftId, onDeleted }: DraftsMenuProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete draft?</AlertDialogTitle>
+            <AlertDialogTitle>Delete mission?</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently removes the saved draft
+              This permanently removes the saved mission
               {pendingDelete ? ` "${pendingDelete.name}"` : ""} for your tenant.
               The action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              disabled={deleting}
-            >
+            <AlertDialogAction onClick={handleConfirmDelete} disabled={deleting}>
               {deleting ? (
                 <Loader2 className="size-3.5 animate-spin" />
               ) : (
@@ -231,12 +218,6 @@ export function DraftsMenu({ currentDraftId, onDeleted }: DraftsMenuProps) {
     </>
   );
 }
-
-// Imperative refresh handle so the parent page can reload the list
-// after Save Draft creates a new entry.
-export type DraftsMenuHandle = {
-  refresh: () => Promise<void>;
-};
 
 function formatRelative(rfc3339: string): string {
   if (!rfc3339) return "";
