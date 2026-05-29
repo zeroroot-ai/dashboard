@@ -23,6 +23,7 @@ import {
   createMissionFromCUEAction,
   getTemplateCUESourceAction,
 } from "@/app/actions/missions/create-mission";
+import { NEW_MISSION_CUE } from "@/src/data/new-mission-template";
 
 const MissionCUEEditor = dynamic(
   () =>
@@ -47,37 +48,11 @@ const MissionTerminal = dynamic(
   { ssr: false }
 );
 
-const DEFAULT_CUE = `// Gibson Mission Definition (CUE)
-// Edit below — inline diagnostics appear as you type.
-package mission
-
-mission: {
-	name:        "my-mission"
-	description: "Describe what this mission does."
-}
-`;
-
 interface DefinitionMeta {
   name: string;
   version: string;
   description: string;
   nodeCount: number;
-}
-
-function scaffoldCUE(def: {
-  name: string;
-  description: string;
-  version: string;
-}): string {
-  return `// Gibson Mission Definition (CUE)
-package mission
-
-mission: {
-\tname:        "${def.name}"
-\tdescription: "${def.description}"
-\tversion:     "${def.version}"
-}
-`;
 }
 
 interface DefinitionBannerProps {
@@ -125,7 +100,7 @@ export default function CreateMissionPage() {
 
   const terminalRef = React.useRef<MissionTerminalHandle>(null);
 
-  const [cueSource, setCueSource] = React.useState<string>(DEFAULT_CUE);
+  const [cueSource, setCueSource] = React.useState<string>(NEW_MISSION_CUE);
   const [errorCount, setErrorCount] = React.useState(0);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [activeMissionId, setActiveMissionId] = React.useState<string | undefined>(undefined);
@@ -135,7 +110,7 @@ export default function CreateMissionPage() {
   const [currentDraftName, setCurrentDraftName] = React.useState<string | undefined>(undefined);
   const [draftLoading, setDraftLoading] = React.useState(false);
 
-  const [savedSource, setSavedSource] = React.useState<string>(DEFAULT_CUE);
+  const [savedSource, setSavedSource] = React.useState<string>(NEW_MISSION_CUE);
   const isDirty = cueSource !== savedSource;
 
   // Definition-related state
@@ -300,10 +275,12 @@ export default function CreateMissionPage() {
           setDefinitionLoadedFrom("draft");
         }
       } else {
-        // 3b. No matching draft — scaffold a CUE template
-        const scaffolded = scaffoldCUE(meta);
-        setCueSource(scaffolded);
-        setSavedSource(scaffolded);
+        // 3b. No matching draft — seed the valid New Mission template so the
+        // editor opens with compilable CUE and Run is enabled. Loading the
+        // definition's real CUE source is dashboard#495 (D4), gated on the
+        // daemon returning cue_source (gibson#504).
+        setCueSource(NEW_MISSION_CUE);
+        setSavedSource(NEW_MISSION_CUE);
         setDefinitionLoadedFrom("template");
       }
 
@@ -402,7 +379,7 @@ export default function CreateMissionPage() {
     setCurrentDefinitionMeta(undefined);
     setDefinitionLoadedFrom(undefined);
     setHydratedDefinitionName(undefined);
-    setCueSource(DEFAULT_CUE);
+    setCueSource(NEW_MISSION_CUE);
     router.replace("/dashboard/missions/create");
   }
 
