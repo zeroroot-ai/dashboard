@@ -44,7 +44,15 @@ export async function GET(
     }
     // Serialize via protobuf JSON so bigint / Timestamp / Duration fields
     // are handled correctly (bigint → string, Timestamp → RFC3339, etc.).
-    const json = toJson(MissionDefinitionSchema, resp.definition);
+    const json = toJson(MissionDefinitionSchema, resp.definition) as Record<
+      string,
+      unknown
+    >;
+    // cueSource is the author's raw CUE, returned by GetMissionDefinition since
+    // gibson#504. Empty for definitions registered before source persistence;
+    // the editor falls back to the New Mission template in that case.
+    json.cueSource = resp.cueSource ?? "";
+    json.missionDefinitionId = resp.missionDefinitionId ?? "";
     return NextResponse.json(json);
   } catch (err) {
     logger.error({ err, name }, "GetMissionDefinition RPC failed");

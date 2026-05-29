@@ -14,10 +14,7 @@ import { useMissionEditor } from "@/src/hooks/useMissionEditor";
 import { useMissionTerminal } from "@/src/hooks/useMissionTerminal";
 import { DraftsMenu } from "@/src/components/mission/create/drafts-menu";
 import { DefinitionPickerDropdown } from "@/src/components/mission/create/definition-picker-dropdown";
-import {
-  getMissionDraftAction,
-  listMissionDraftsAction,
-} from "@/app/actions/missions/drafts";
+import { getMissionDraftAction } from "@/app/actions/missions/drafts";
 import { getTemplateCUESourceAction } from "@/app/actions/missions/create-mission";
 import { NEW_MISSION_CUE } from "@/src/data/new-mission-template";
 
@@ -223,6 +220,7 @@ export default function CreateMissionPage() {
         version?: string;
         description?: string;
         nodeCount?: number;
+        cueSource?: string;
       };
       if (cancelled) return;
 
@@ -234,30 +232,14 @@ export default function CreateMissionPage() {
       };
       setCurrentDefinitionMeta(meta);
 
-      const draftsRes = await listMissionDraftsAction();
-      if (cancelled) return;
-
-      const match =
-        draftsRes.ok
-          ? draftsRes.data.find((d) => d.name === urlDefinitionName)
-          : undefined;
-
-      if (match) {
-        const draftRes = await getMissionDraftAction(match.id);
-        if (cancelled) return;
-        if (draftRes.ok) {
-          loadSource({
-            id: match.id,
-            name: match.name,
-            cueSource: draftRes.data.cueSource,
-          });
-          setDefinitionLoadedFrom("draft");
-        }
+      // Load the definition's real CUE source (gibson#504). Definitions
+      // registered before source persistence return an empty cue_source — fall
+      // back to the valid New Mission template so Run stays enabled.
+      if (defJson.cueSource) {
+        loadSource({ name: meta.name, cueSource: defJson.cueSource });
+        setDefinitionLoadedFrom("draft");
       } else {
-        // No matching draft — seed the valid New Mission template so Run is
-        // enabled. Loading the definition's real CUE source is dashboard#495
-        // (D4), gated on the daemon returning cue_source (gibson#504).
-        loadSource({ cueSource: NEW_MISSION_CUE });
+        loadSource({ name: meta.name, cueSource: NEW_MISSION_CUE });
         setDefinitionLoadedFrom("template");
       }
 
