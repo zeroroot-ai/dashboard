@@ -135,7 +135,19 @@ export class LangfuseClient {
       );
     }
 
-    return response.json();
+    // A 2xx response whose body is not valid JSON (a proxy HTML error page,
+    // an empty body, a gateway interstitial) makes response.json() throw a
+    // raw SyntaxError. Left unguarded it escapes the route's typed-error
+    // handling and surfaces as the generic "something went wrong" 500 banner;
+    // wrap it as a typed unavailable error so callers map it to a 503
+    // instead (dashboard#515).
+    try {
+      return await response.json();
+    } catch {
+      throw new LangfuseUnavailableError(
+        `Langfuse returned an unparseable response for ${path}`
+      );
+    }
   }
 
   /**
