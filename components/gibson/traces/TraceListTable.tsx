@@ -34,6 +34,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatTokenCount } from "@/src/lib/trace-utils";
+import { ErrorAlert } from "@/components/gibson/shared";
 import type { TraceListResponse, TraceSummary } from "@/src/types/trace";
 
 function formatTimestamp(iso: string): string {
@@ -64,6 +65,9 @@ export function TraceListTable() {
   const [data, setData] = React.useState<TraceListResponse | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  // Support/correlation id from the API error envelope, surfaced so users can
+  // quote it to support (the banner copy promises a reference).
+  const [errorRef, setErrorRef] = React.useState<string | null>(null);
 
   // Local controlled value for the debounced name filter.
   const [nameInput, setNameInput] = React.useState(name);
@@ -94,6 +98,7 @@ export function TraceListTable() {
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setErrorRef(null);
 
     const qs = new URLSearchParams();
     qs.set("page", String(page));
@@ -110,6 +115,7 @@ export function TraceListTable() {
         if (!res.ok) {
           const body = await res.json().catch(() => null);
           setError(body?.error?.message ?? "Failed to load traces");
+          setErrorRef(body?.error?.correlationId ?? null);
           setData(null);
         } else {
           setData((await res.json()) as TraceListResponse);
@@ -203,7 +209,7 @@ export function TraceListTable() {
             <Skeleton className="h-9 w-full" />
           </div>
         ) : error ? (
-          <p className="text-sm text-destructive">{error}</p>
+          <ErrorAlert error={{ message: error }} reference={errorRef ?? undefined} />
         ) : rows.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No traces found for the selected filters.
