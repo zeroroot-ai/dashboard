@@ -41,6 +41,31 @@ describe('LangfuseClient.request JSON handling', () => {
     );
   });
 
+  // Regression: Langfuse v3 parses `orderBy` as a JSON object { column, order }
+  // (order ∈ ASC|DESC) and 400s on the legacy `orderBy=timestamp&order=DESC`
+  // pair (ZodError at path ["orderBy","order"]). listTracesPaged must send the
+  // JSON form and no bare `order` param.
+  it('sends orderBy as a Langfuse v3 JSON object (not legacy orderBy/order pair)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({ data: [], meta: { page: 1, limit: 25, totalItems: 0, totalPages: 1 } }),
+      text: async () => '',
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await makeClient().listTracesPaged({ page: 1, limit: 25 });
+
+    const calledUrl = new URL(fetchMock.mock.calls[0][0] as string);
+    expect(JSON.parse(calledUrl.searchParams.get('orderBy') ?? '{}')).toEqual({
+      column: 'timestamp',
+      order: 'DESC',
+    });
+    // No separate legacy `order` param.
+    expect(calledUrl.searchParams.has('order')).toBe(false);
+  });
+
   it('returns the parsed page envelope on a well-formed 2xx body', async () => {
     vi.stubGlobal(
       'fetch',
