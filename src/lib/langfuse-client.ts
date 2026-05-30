@@ -192,9 +192,11 @@ export class LangfuseClient {
     const params = new URLSearchParams({
       userId,
       limit: String(limit),
-      // Langfuse v3 expects orderBy as a JSON object { column, order } (order
-      // ∈ ASC|DESC), not separate orderBy/order string params.
-      orderBy: JSON.stringify({ column: 'timestamp', order: 'DESC' }),
+      // Langfuse v3 expects orderBy as a single `column.DIRECTION` string
+      // (DIRECTION ∈ ASC|DESC), e.g. `timestamp.DESC`. Neither the legacy
+      // `orderBy=timestamp&order=DESC` pair nor a JSON object is accepted —
+      // both 400 with a ZodError at path ["orderBy","order"].
+      orderBy: 'timestamp.DESC',
     });
     const result = await this.request<{ data: LangfuseTrace[] }>(
       `/api/public/traces?${params.toString()}`,
@@ -219,9 +221,11 @@ export class LangfuseClient {
     tags?: string[];
   }): Promise<LangfuseTracePage> {
     const params = new URLSearchParams({
-      // Langfuse v3 expects orderBy as a JSON object { column, order } (order
-      // ∈ ASC|DESC), not separate orderBy/order string params.
-      orderBy: JSON.stringify({ column: 'timestamp', order: 'DESC' }),
+      // Langfuse v3 expects orderBy as a single `column.DIRECTION` string
+      // (DIRECTION ∈ ASC|DESC), e.g. `timestamp.DESC`. Neither the legacy
+      // `orderBy=timestamp&order=DESC` pair nor a JSON object is accepted —
+      // both 400 with a ZodError at path ["orderBy","order"].
+      orderBy: 'timestamp.DESC',
     });
     if (opts.page != null) params.set('page', String(opts.page));
     if (opts.limit != null) params.set('limit', String(opts.limit));
