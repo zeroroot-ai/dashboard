@@ -192,8 +192,9 @@ export class LangfuseClient {
     const params = new URLSearchParams({
       userId,
       limit: String(limit),
-      orderBy: 'timestamp',
-      order: 'DESC',
+      // Langfuse v3 expects orderBy as a JSON object { column, order } (order
+      // ∈ ASC|DESC), not separate orderBy/order string params.
+      orderBy: JSON.stringify({ column: 'timestamp', order: 'DESC' }),
     });
     const result = await this.request<{ data: LangfuseTrace[] }>(
       `/api/public/traces?${params.toString()}`,
@@ -218,8 +219,9 @@ export class LangfuseClient {
     tags?: string[];
   }): Promise<LangfuseTracePage> {
     const params = new URLSearchParams({
-      orderBy: 'timestamp',
-      order: 'DESC',
+      // Langfuse v3 expects orderBy as a JSON object { column, order } (order
+      // ∈ ASC|DESC), not separate orderBy/order string params.
+      orderBy: JSON.stringify({ column: 'timestamp', order: 'DESC' }),
     });
     if (opts.page != null) params.set('page', String(opts.page));
     if (opts.limit != null) params.set('limit', String(opts.limit));
