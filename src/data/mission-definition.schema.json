@@ -9,6 +9,10 @@
           "description": "AgentName is the name of the agent to execute",
           "type": "string"
         },
+        "llm": {
+          "$ref": "#/$defs/LLMSlotConfig",
+          "description": "llm optionally pins the LLM provider/model this agent node resolves to. Absent → the node inherits the tenant's default provider (then slot-name constraint search). The dashboard prepopulates this from the tenant's default provider on a new mission, as editable metadata. Precedence at resolution: this explicit binding > tenant default > constraint search over the tenant's permitted providers."
+        },
         "maxTokensPerCall": {
           "description": "max_tokens_per_call is the per-node override of MissionConstraints.max_tokens_per_call for this agent node only.  When present (non-nil), this value is used as the effective cap for all LLM calls made by this node, regardless of the mission-level MissionConstraints.max_tokens_per_call value. Setting this to 0 explicitly disables the cap for this node (the mission-level cap is NOT applied as a fallback when this field is explicitly set to 0).  When absent (nil / proto3 optional not set), the mission-level MissionConstraints.max_tokens_per_call applies instead.  0 = inherit from mission-level (when this field is absent). Spec: mission-schema-canonicalization Requirement 5; gibson#133.",
           "format": "int32",
@@ -110,6 +114,25 @@
           },
           "minItems": 1,
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "LLMSlotConfig": {
+      "additionalProperties": false,
+      "description": "LLMSlotConfig pins the provider/model for an agent node's LLM slot. It is a tenant-scoped reference: the provider name must be one the tenant has configured (gibson.tenant provider config); model is the provider's model id (empty = the provider's default model). Leave the whole message unset to inherit the tenant default.",
+      "properties": {
+        "model": {
+          "description": "model is the model id; empty uses the provider's default model.",
+          "type": "string"
+        },
+        "provider": {
+          "description": "provider is the configured provider's name for the calling tenant.",
+          "type": "string"
+        },
+        "slot": {
+          "description": "slot is the slot name this binding targets. Empty defaults to \"primary\".",
+          "type": "string"
         }
       },
       "type": "object"

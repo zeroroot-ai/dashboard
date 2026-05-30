@@ -16,7 +16,8 @@ import { SavedMissionsMenu } from "@/src/components/mission/create/saved-mission
 import { DefinitionPickerDropdown } from "@/src/components/mission/create/definition-picker-dropdown";
 import { getMissionSourceAction } from "@/app/actions/missions/source-store";
 import { getTemplateCUESourceAction } from "@/app/actions/missions/create-mission";
-import { NEW_MISSION_CUE } from "@/src/data/new-mission-template";
+import { NEW_MISSION_CUE, buildNewMissionCue } from "@/src/data/new-mission-template";
+import { useDefaultProvider } from "@/src/hooks/useProviders";
 
 const MissionCUEEditor = dynamic(
   () =>
@@ -110,6 +111,27 @@ export default function CreateMissionPage() {
   // Keep the most recent loadSource so effects can hydrate without depending
   // on the editor identity (which is stable across renders anyway).
   const loadSource = editor.loadSource;
+
+  // Prepopulate a fresh New Mission's agent node with the tenant's default
+  // provider/model as editable metadata (dashboard#521). Only for the fresh
+  // case (no url-driven saved/template/clone/definition hydration), and only
+  // once, so we never clobber the author's edits.
+  const { data: defaultProvider } = useDefaultProvider();
+  const seededDefaultRef = React.useRef(false);
+  React.useEffect(() => {
+    if (seededDefaultRef.current) return;
+    if (urlMissionId || urlTemplateId || urlCloneMissionId || urlDefinitionName) return;
+    if (!defaultProvider?.name) return;
+    seededDefaultRef.current = true;
+    loadSource({
+      name: "new-mission",
+      cueSource: buildNewMissionCue({
+        provider: defaultProvider.name,
+        model: defaultProvider.defaultModel,
+      }),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultProvider, urlMissionId, urlTemplateId, urlCloneMissionId, urlDefinitionName]);
 
   // URL-driven saved-mission hydration (?mission=<id>)
   React.useEffect(() => {
