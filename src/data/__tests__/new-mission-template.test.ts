@@ -2,7 +2,27 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 
-import { NEW_MISSION_CUE } from "../new-mission-template";
+import { NEW_MISSION_CUE, buildNewMissionCue } from "../new-mission-template";
+
+describe("buildNewMissionCue (default-provider prepopulation)", () => {
+  it("seeds the agent node's llm block from a provider/model", () => {
+    const cue = buildNewMissionCue({ provider: "anthropic", model: "claude-sonnet-4-5" });
+    expect(cue).toContain("llm: {");
+    expect(cue).toContain('provider: "anthropic"');
+    expect(cue).toContain('model:    "claude-sonnet-4-5"');
+  });
+
+  it("omits the model line when no model is given", () => {
+    const cue = buildNewMissionCue({ provider: "anthropic" });
+    expect(cue).toContain('provider: "anthropic"');
+    expect(cue).not.toContain("model:");
+  });
+
+  it("omits the llm block entirely with no seed (inherit tenant default at run)", () => {
+    expect(buildNewMissionCue()).not.toContain("llm: {");
+    expect(NEW_MISSION_CUE).not.toContain("llm: {");
+  });
+});
 
 /**
  * The New Mission default must compile cleanly via ValidateMissionCUE so Run is

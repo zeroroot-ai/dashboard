@@ -10,9 +10,35 @@
  *
  * The author fills in `targetRef` (and tunes the node) before running.
  *
- * dashboard#492 (D1).
+ * dashboard#492 (D1). LLM prepopulation: dashboard#521 — when the tenant has a
+ * default provider, the agent node's `llm` block is seeded from it as editable
+ * metadata.
  */
-export const NEW_MISSION_CUE = `// Gibson Mission Definition (CUE)
+
+/** Optional LLM seed used to prepopulate the agent node's provider/model. */
+export interface NewMissionLLMSeed {
+  provider?: string;
+  model?: string;
+}
+
+/**
+ * buildNewMissionCue returns the New Mission CUE. When `seed.provider` is set
+ * (the tenant's default provider), the agent node carries an `llm` block
+ * pinning that provider/model — editable metadata the author can change or
+ * delete. With no seed, the node inherits the tenant default at run time.
+ */
+export function buildNewMissionCue(seed?: NewMissionLLMSeed): string {
+  let llmBlock = "";
+  if (seed?.provider) {
+    const modelLine = seed.model
+      ? `\n\t\t\t\t\tmodel:    ${JSON.stringify(seed.model)}`
+      : "";
+    llmBlock = `\n\t\t\t\tllm: {\n\t\t\t\t\tprovider: ${JSON.stringify(
+      seed.provider,
+    )}${modelLine}\n\t\t\t\t}`;
+  }
+
+  return `// Gibson Mission Definition (CUE)
 //
 // A mission orchestrates one or more agents against a target. Inline
 // diagnostics appear as you type; Run stays disabled until the definition
@@ -34,7 +60,7 @@ mission: missionv1.#MissionDefinition & {
 \t\t\tid:   "assess"
 \t\t\ttype: missionv1.#NODE_TYPE_AGENT
 \t\t\tagentConfig: {
-\t\t\t\tagentName: "recon-agent"
+\t\t\t\tagentName: "recon-agent"${llmBlock}
 \t\t\t}
 \t\t}
 \t}
@@ -42,3 +68,7 @@ mission: missionv1.#MissionDefinition & {
 \texitPoints: ["assess"]
 }
 `;
+}
+
+/** Static default (no LLM seed) — back-compat for existing imports. */
+export const NEW_MISSION_CUE = buildNewMissionCue();
