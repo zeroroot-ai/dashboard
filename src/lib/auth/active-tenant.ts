@@ -11,6 +11,23 @@
  *
  * Cookie format: `<tenant_id>.<hex_hmac_sha256(tenant_id, AUTH_SECRET)>`.
  *
+ * ## Canonical resolver
+ *
+ * Use `requireActiveTenant()` as the single fail-closed resolver for the
+ * active tenant. It is an alias for `getActiveTenant()` with an explicit
+ * name that makes the fail-closed contract visible at the call-site.
+ *
+ * ### Error-mapping helpers
+ *
+ * Never invent missing-tenant behavior inline. Use the three typed helpers:
+ *
+ * - `activeTenantApiResponse(err, opts)` — for API route handlers;
+ *   returns `NextResponse` with 412 + `{ error, code: 'no_active_tenant' }`.
+ * - `activeTenantActionResult(err)` — for Server Actions;
+ *   returns `{ ok: false, code: 'no_active_tenant' | 'stale_active_tenant' }`.
+ * - `activeTenantPageRedirect()` — for RSC pages;
+ *   calls `redirect('/select-tenant')` (throws Next.js `NEXT_REDIRECT`).
+ *
  * @module auth/active-tenant
  */
 
@@ -18,7 +35,9 @@ import 'server-only';
 
 import { createHmac, timingSafeEqual } from 'crypto';
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { cache } from 'react';
+import { NextResponse } from 'next/server';
 
 import { getMyMemberships, type Membership } from './membership';
 
@@ -101,7 +120,7 @@ function decodeCookie(value: string | undefined): string | null {
 }
 
 // ---------------------------------------------------------------------------
-// Public API
+// Core resolver (memoized per request)
 // ---------------------------------------------------------------------------
 
 /**
@@ -127,6 +146,164 @@ export const getActiveTenant = cache(async (): Promise<string> => {
   }
   return tenantId;
 });
+
+/**
+ * Canonical fail-closed resolver for the active tenant.
+ *
+ * This is the ONE function all handlers should call to obtain the acting
+ * tenant ID. It is per-request memoized (via `react.cache()`) so the
+ * FGA membership lookup is shared across Server Components within a single
+ * render.
+ *
+ * When the cookie is absent, tampered, or names a revoked tenant the
+ * function throws typed errors — use the error-mapping helpers below to
+ * translate those errors into the appropriate response for each layer:
+ *   - API route handler  → `activeTenantApiResponse(err, opts)`
+ *   - Server Action      → `activeTenantActionResult(err)`
+ *   - RSC page           → `activeTenantPageRedirect()`
+ *
+ * @throws {NoActiveTenantError} — cookie absent or HMAC tampered.
+ * @throws {StaleActiveTenantError} — cookie valid but tenant revoked.
+ */
+export const requireActiveTenant = getActiveTenant;
+
+// ---------------------------------------------------------------------------
+// Error-mapping helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Response body shape for a missing-active-tenant API error.
+ *
+ * HTTP status: 412 Precondition Failed.
+ * The `code` field is stable; clients can branch on it programmatically.
+ */
+export interface NoActiveTenantApiBody {
+  error: string;
+  code: 'no_active_tenant' | 'stale_active_tenant';
+}
+
+interface ApiResponseOptions {
+  /**
+   * Outgoing headers bag, e.g. `{ [CORRELATION_HEADER]: id }`.
+   * Merged into the 412 response headers.
+   */
+  headers?: Record<string, string>;
+}
+
+/**
+ * Translate a `NoActiveTenantError` or `StaleActiveTenantError` thrown by
+ * `requireActiveTenant()` into a canonical 412 `NextResponse` for use in
+ * API route handlers.
+ *
+ * Any other error type is re-thrown — this helper only handles the two
+ * tenant-resolver errors.
+ *
+ * @example
+ * ```ts
+ * export async function GET(request: NextRequest) {
+ *   let tenantId: string;
+ *   try {
+ *     tenantId = await requireActiveTenant();
+ *   } catch (err) {
+ *     return activeTenantApiResponse(err, { headers: { [CORRELATION_HEADER]: id } });
+ *   }
+ *   // ...
+ * }
+ * ```
+ */
+export function activeTenantApiResponse(
+  err: unknown,
+  opts: ApiResponseOptions = {},
+): NextResponse<NoActiveTenantApiBody> {
+  if (err instanceof NoActiveTenantError) {
+    return NextResponse.json(
+      { error: 'No active tenant. Select a tenant before making this request.', code: 'no_active_tenant' },
+      { status: 412, headers: opts.headers },
+    );
+  }
+  if (err instanceof StaleActiveTenantError) {
+    return NextResponse.json(
+      { error: 'Active tenant is no longer valid. Please re-select a tenant.', code: 'stale_active_tenant' },
+      { status: 412, headers: opts.headers },
+    );
+  }
+  throw err;
+}
+
+/**
+ * Structured result type returned by `activeTenantActionResult`.
+ *
+ * Server Actions that call `requireActiveTenant()` should catch errors and
+ * return this shape to the client, which maps `code` to a user-visible
+ * message without inventing its own missing-tenant behavior.
+ */
+export type ActiveTenantActionError =
+  | { ok: false; code: 'no_active_tenant' }
+  | { ok: false; code: 'stale_active_tenant' };
+
+/**
+ * Translate a `NoActiveTenantError` or `StaleActiveTenantError` thrown by
+ * `requireActiveTenant()` into a structured `{ ok: false, code }` result for
+ * use in Server Actions.
+ *
+ * Any other error type is re-thrown — this helper only handles the two
+ * tenant-resolver errors.
+ *
+ * @example
+ * ```ts
+ * "use server";
+ * export async function myAction(formData: FormData) {
+ *   let tenantId: string;
+ *   try {
+ *     tenantId = await requireActiveTenant();
+ *   } catch (err) {
+ *     return activeTenantActionResult(err);
+ *   }
+ *   // ...
+ *   return { ok: true };
+ * }
+ * ```
+ */
+export function activeTenantActionResult(err: unknown): ActiveTenantActionError {
+  if (err instanceof NoActiveTenantError) {
+    return { ok: false, code: 'no_active_tenant' };
+  }
+  if (err instanceof StaleActiveTenantError) {
+    return { ok: false, code: 'stale_active_tenant' };
+  }
+  throw err;
+}
+
+/**
+ * RSC page handler for a missing active tenant: redirect to `/select-tenant`.
+ *
+ * Call this from RSC page components that have resolved a missing-tenant
+ * error via `requireActiveTenant()`. The function calls Next.js `redirect()`
+ * which throws a `NEXT_REDIRECT` exception — it never returns normally.
+ *
+ * @example
+ * ```ts
+ * export default async function Page() {
+ *   let tenantId: string;
+ *   try {
+ *     tenantId = await requireActiveTenant();
+ *   } catch (err) {
+ *     if (err instanceof NoActiveTenantError || err instanceof StaleActiveTenantError) {
+ *       activeTenantPageRedirect();
+ *     }
+ *     throw err;
+ *   }
+ *   // ...
+ * }
+ * ```
+ */
+export function activeTenantPageRedirect(): never {
+  redirect('/select-tenant');
+}
+
+// ---------------------------------------------------------------------------
+// Cookie write helpers
+// ---------------------------------------------------------------------------
 
 /**
  * Server Action helper: writes the active-tenant cookie after validating
