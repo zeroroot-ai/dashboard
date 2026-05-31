@@ -5,9 +5,10 @@ import { describe, it, expect } from "vitest";
 import { NEW_MISSION_CUE, buildNewMissionCue } from "../new-mission-template";
 
 describe("buildNewMissionCue (default-provider prepopulation)", () => {
-  it("seeds the agent node's llm block from a provider/model", () => {
+  it("seeds the agent node's llmSlots block from a provider/model", () => {
     const cue = buildNewMissionCue({ provider: "anthropic", model: "claude-sonnet-4-5" });
-    expect(cue).toContain("llm: {");
+    expect(cue).toContain("llmSlots: [{");
+    expect(cue).toContain('slot:     "primary"');
     expect(cue).toContain('provider: "anthropic"');
     expect(cue).toContain('model:    "claude-sonnet-4-5"');
   });
@@ -18,9 +19,25 @@ describe("buildNewMissionCue (default-provider prepopulation)", () => {
     expect(cue).not.toContain("model:");
   });
 
-  it("omits the llm block entirely with no seed (inherit tenant default at run)", () => {
-    expect(buildNewMissionCue()).not.toContain("llm: {");
-    expect(NEW_MISSION_CUE).not.toContain("llm: {");
+  it("omits the llmSlots block entirely with no seed (inherit tenant default at run)", () => {
+    expect(buildNewMissionCue()).not.toContain("llmSlots:");
+    expect(NEW_MISSION_CUE).not.toContain("llmSlots:");
+  });
+
+  it("never emits the removed singular llm field regardless of seed", () => {
+    const withSeed = buildNewMissionCue({ provider: "anthropic", model: "claude-opus-4-5" });
+    // The singular `llm: { ... }` block was retired in sdk v0.128.0 (field 4).
+    // llm_slots (field 5) is the replacement — as `llmSlots: [...]` in CUE.
+    expect(withSeed).not.toMatch(/\bllm:\s*\{/);
+    expect(NEW_MISSION_CUE).not.toMatch(/\bllm:\s*\{/);
+  });
+
+  it("seeds the primary slot even when provider is an empty string (valid fall-through marker)", () => {
+    // An explicit empty provider is a valid fall-through per the proto contract
+    // (sdk v0.128.0, LLMSlotConfig: empty provider = daemon resolves from tenant default).
+    const cue = buildNewMissionCue({ provider: "" });
+    expect(cue).toContain("llmSlots: [{");
+    expect(cue).toContain('provider: ""');
   });
 });
 
@@ -77,5 +94,9 @@ describe("NEW_MISSION_CUE", () => {
     // The pre-#492 stub used `package mission` with only name/description and
     // failed validation. Ensure we never ship that shape again.
     expect(NEW_MISSION_CUE).not.toMatch(/^\s*package mission\s*$/m);
+  });
+
+  it("does not emit the removed singular llm field (sdk v0.128.0, field 4 retired)", () => {
+    expect(NEW_MISSION_CUE).not.toMatch(/\bllm:\s*\{/);
   });
 });
