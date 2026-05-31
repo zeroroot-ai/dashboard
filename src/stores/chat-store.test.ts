@@ -1,5 +1,6 @@
 /**
- * Chat Store — pin, rename, stop+persist-partial, and edit+regenerate unit tests
+ * Chat Store — pin, rename, stop+persist-partial, edit+regenerate, and
+ * interrupted-stream finalization / mid-stream-switch unit tests (dashboard#555)
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -446,5 +447,212 @@ describe('Chat Store — edit-and-regenerate full sequence', () => {
       | undefined;
     expect(storedTextPart?.text).toBe('What is A?');
     expect(stored[1].id).toBe('a1-new');
+  });
+});
+
+// ============================================================================
+// dashboard#555 — interrupted-stream finalization on reload
+// ============================================================================
+//
+// A conversation whose last assistant message was persisted mid-stream (via the
+// stop+persist path from dashboard#563) is loaded from the daemon via
+// saveMessages (the path useChat.switchConversation uses after calling
+// loadConversationMessages). The store must:
+//  - accept the trailing assistant message without adding a duplicate
+//  - expose it as a normal completed message (no spinner, no in-progress flag)
+//  - leave regenerate available (all assistant messages support it by design)
+//
+// There is no `isStreaming` / `inProgress` field on the Conversation type —
+// the "no spinner" guarantee is structural: the store never marks messages as
+// in-progress; the only streaming indicator is the AI SDK's `status` field in
+// the hook, which is reset to 'ready' on page reload.
+
+describe('Chat Store — interrupted-stream finalization on reload (dashboard#555)', () => {
+  const userMsg = makeMsg('u1', 'user', 'Tell me about streams');
+  const interruptedAssistantMsg = makeMsg(
+    'a1',
+    'assistant',
+    'Streams are sequences of data that can be processed incrementally. For example',
+  );
+
+  beforeEach(() => {
+    useChatStore.setState({
+      conversations: [makeConv('conv-interrupted', { messages: [] })],
+      activeConversationId: null,
+    });
+  });
+
+  it('loading interrupted messages via saveMessages produces a clean conversation', () => {
+    // Simulate what useChat.switchConversation does after loadConversationMessages
+    // returns the daemon-persisted messages for a conversation reloaded post-interrupt.
+    const daemonMessages: UIMessage[] = [userMsg, interruptedAssistantMsg];
+
+    useChatStore.getState().saveMessages('conv-interrupted', daemonMessages);
+
+    const conv = useChatStore.getState().conversations.find((c) => c.id === 'conv-interrupted');
+    expect(conv).toBeDefined();
+    expect(conv!.messages).toHaveLength(2);
+  });
+
+  it('the trailing interrupted assistant message is accessible with no in-progress state', () => {
+    const daemonMessages: UIMessage[] = [userMsg, interruptedAssistantMsg];
+    useChatStore.getState().saveMessages('conv-interrupted', daemonMessages);
+
+    const conv = useChatStore.getState().conversations.find((c) => c.id === 'conv-interrupted')!;
+    const lastMsg = conv.messages[conv.messages.length - 1];
+
+    // Trailing message is the assistant message.
+    expect(lastMsg.role).toBe('assistant');
+    // The text is the partial content exactly as persisted — no truncation.
+    const textPart = lastMsg.parts.find((p) => p.type === 'text') as
+      | { type: 'text'; text: string }
+      | undefined;
+    expect(textPart).toBeDefined();
+    expect(textPart!.text).toBe(
+      'Streams are sequences of data that can be processed incrementally. For example',
+    );
+    // The Conversation type has no isStreaming / inProgress / status field —
+    // the message is structurally identical to any completed assistant message.
+    // Cast through unknown so TypeScript allows the structural property probe.
+    const convAny = conv as unknown as Record<string, unknown>;
+    expect(convAny['isStreaming']).toBeUndefined();
+    expect(convAny['inProgress']).toBeUndefined();
+  });
+
+  it('calling saveMessages twice (idempotent reload) does not duplicate the assistant message', () => {
+    const daemonMessages: UIMessage[] = [userMsg, interruptedAssistantMsg];
+
+    useChatStore.getState().saveMessages('conv-interrupted', daemonMessages);
+    useChatStore.getState().saveMessages('conv-interrupted', daemonMessages);
+
+    const conv = useChatStore.getState().conversations.find((c) => c.id === 'conv-interrupted')!;
+    // Atomic replacement — always exactly 2 messages, never 3 or 4.
+    expect(conv.messages).toHaveLength(2);
+  });
+
+  it('getConversationMessages returns the interrupted assistant message without mutation', () => {
+    const daemonMessages: UIMessage[] = [userMsg, interruptedAssistantMsg];
+    useChatStore.getState().saveMessages('conv-interrupted', daemonMessages);
+
+    const retrieved = useChatStore.getState().getConversationMessages('conv-interrupted');
+    expect(retrieved).toHaveLength(2);
+    expect(retrieved[1].role).toBe('assistant');
+    // getConversationMessages is a pure read — no mutation side-effect.
+    const convAfter = useChatStore.getState().conversations.find((c) => c.id === 'conv-interrupted')!;
+    expect(convAfter.messages).toHaveLength(2);
+  });
+
+  it('other conversations are unaffected when loading interrupted messages', () => {
+    useChatStore.setState({
+      conversations: [
+        makeConv('conv-interrupted', { messages: [] }),
+        makeConv('conv-other', { messages: [makeMsg('x1', 'user', 'Unrelated')] }),
+      ],
+    });
+
+    const daemonMessages: UIMessage[] = [userMsg, interruptedAssistantMsg];
+    useChatStore.getState().saveMessages('conv-interrupted', daemonMessages);
+
+    const other = useChatStore.getState().conversations.find((c) => c.id === 'conv-other')!;
+    expect(other.messages).toHaveLength(1);
+    expect(other.messages[0].id).toBe('x1');
+  });
+});
+
+// ============================================================================
+// dashboard#555 — mid-stream conversation switch: origin isolation
+// ============================================================================
+//
+// The actual streaming-origin tracking lives in useChat (streamingOriginConvRef).
+// These store-level tests verify that saveMessages(originId, ...) does NOT
+// corrupt the conversation that was switched to, and that the origin conversation
+// receives the correct messages.
+//
+// The hook-level "streaming → ready fires saveMessages on origin not active"
+// behavior is an integration concern; here we verify the underlying store
+// primitives are safe for that pattern.
+
+describe('Chat Store — mid-stream switch: origin isolation (dashboard#555)', () => {
+  const originUserMsg = makeMsg('ou1', 'user', 'Question for origin');
+  const originStreamedMsg = makeMsg('oa1', 'assistant', 'Streaming answer for origin');
+  const switchedUserMsg = makeMsg('su1', 'user', 'Question for switched');
+
+  beforeEach(() => {
+    useChatStore.setState({
+      conversations: [
+        makeConv('conv-origin', { messages: [originUserMsg] }),
+        makeConv('conv-switched', { messages: [switchedUserMsg] }),
+      ],
+      activeConversationId: 'conv-switched', // user has already switched
+    });
+  });
+
+  it('saveMessages to origin does not affect the switched-to conversation', () => {
+    // Simulate: stream finishes for conv-origin while conv-switched is active.
+    const originFinalMessages: UIMessage[] = [originUserMsg, originStreamedMsg];
+    useChatStore.getState().saveMessages('conv-origin', originFinalMessages);
+
+    // The switched-to conversation must be untouched.
+    const switched = useChatStore.getState().conversations.find((c) => c.id === 'conv-switched')!;
+    expect(switched.messages).toHaveLength(1);
+    expect(switched.messages[0].id).toBe('su1');
+  });
+
+  it('the origin conversation receives the streaming messages correctly', () => {
+    const originFinalMessages: UIMessage[] = [originUserMsg, originStreamedMsg];
+    useChatStore.getState().saveMessages('conv-origin', originFinalMessages);
+
+    const origin = useChatStore.getState().conversations.find((c) => c.id === 'conv-origin')!;
+    expect(origin.messages).toHaveLength(2);
+    expect(origin.messages[1].role).toBe('assistant');
+    const textPart = origin.messages[1].parts.find((p) => p.type === 'text') as
+      | { type: 'text'; text: string }
+      | undefined;
+    expect(textPart!.text).toBe('Streaming answer for origin');
+  });
+
+  it('activeConversationId stays on the switched-to conversation after origin save', () => {
+    const originFinalMessages: UIMessage[] = [originUserMsg, originStreamedMsg];
+    useChatStore.getState().saveMessages('conv-origin', originFinalMessages);
+
+    // activeConversationId must remain 'conv-switched' — saveMessages must not
+    // change which conversation is active.
+    expect(useChatStore.getState().activeConversationId).toBe('conv-switched');
+  });
+
+  it('returning to the origin conversation after the stream completes shows the correct messages', () => {
+    // 1. Save the completed stream to the origin.
+    const originFinalMessages: UIMessage[] = [originUserMsg, originStreamedMsg];
+    useChatStore.getState().saveMessages('conv-origin', originFinalMessages);
+
+    // 2. Simulate the user switching back to the origin.
+    useChatStore.getState().setActiveConversation('conv-origin');
+
+    // 3. getConversationMessages returns the origin's messages — the completed stream.
+    const msgs = useChatStore.getState().getConversationMessages('conv-origin');
+    expect(msgs).toHaveLength(2);
+    expect(msgs[0].id).toBe('ou1');
+    expect(msgs[1].id).toBe('oa1');
+  });
+
+  it('saveMessages to wrong conversation (the bug this slice fixes) would corrupt switched-to conv', () => {
+    // This test documents the pre-fix invariant: if saveMessages were accidentally
+    // called with the switched-to ID instead of the origin ID (the old bug), the
+    // switched-to conversation would receive the origin messages. This must NOT
+    // happen with the corrected streamingOriginConvRef logic in useChat.
+    //
+    // We test the negative case here to confirm the store primitives alone cannot
+    // prevent misattribution — the protection lives in the hook's streamingOriginConvRef.
+
+    // Simulate the old bug: save origin messages to the switched-to conversation.
+    const originFinalMessages: UIMessage[] = [originUserMsg, originStreamedMsg];
+    useChatStore.getState().saveMessages('conv-switched', originFinalMessages); // BUG: wrong id
+
+    const switched = useChatStore.getState().conversations.find((c) => c.id === 'conv-switched')!;
+    // This is what the BUG would produce: the switched conversation gets origin messages.
+    expect(switched.messages).toHaveLength(2); // corrupted — 2 instead of 1
+    // Ensure that the correct fix (saving to origin) avoids this.
+    // The correct behavior is tested in "saveMessages to origin does not affect the switched-to conversation"
+    // above. The hook ensures saveMessages is called with the origin id, not active id.
   });
 });

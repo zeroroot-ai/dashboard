@@ -14,7 +14,15 @@
  * deleteConversationAction — removes a conversation permanently via the daemon
  * DeleteConversation RPC (added in dashboard#551 / gibson PR #550).
  *
- * Spec: dashboard#448 (auto-title), dashboard#435 (rename thread), dashboard#551 (delete)
+ * loadConversationMessages — fetches the full message list for a conversation
+ * from the daemon via GetConversation and converts proto parts → UIMessage[].
+ * Called by useChat.switchConversation when the conversation has no in-memory
+ * messages (post-reload state). Also surfaces interrupted trailing assistant
+ * messages cleanly — they load as normal completed messages with regenerate
+ * available (dashboard#555).
+ *
+ * Spec: dashboard#448 (auto-title), dashboard#435 (rename thread),
+ *       dashboard#551 (delete), dashboard#555 (reload/switch correctness)
  */
 
 import "server-only";
@@ -28,7 +36,9 @@ import {
   saveConversation,
   renameConversation as rpcRenameConversation,
   deleteConversation as rpcDeleteConversation,
+  getConversation,
 } from "@/src/lib/gibson-client";
+import { protoToUiMessages } from "@/src/lib/chat/message-normalizer";
 import { uiMessagesToProto } from "@/src/lib/chat/message-normalizer";
 import { logger } from "@/src/lib/logger";
 
@@ -190,6 +200,51 @@ export async function generateConversationTitle(
   } catch {
     // Swallow all errors — this action is fire-and-forget; it must never
     // surface an exception to the client render path.
+    return null;
+  }
+}
+
+/**
+ * Load the full message history for a conversation from the daemon.
+ *
+ * Called by `useChat.switchConversation` when the in-memory message list is
+ * empty (the normal post-reload state after `ConversationListProvider` hydrates
+ * only conversation metadata, not full message history).
+ *
+ * Converts proto ConversationMessage parts → AI SDK v6 `UIMessage[]` via the
+ * canonical `protoToUiMessages` normalizer so all part types (tool calls,
+ * citations, attachments, reasoning) are preserved losslessly.
+ *
+ * If the conversation's trailing message is an assistant message that was
+ * persisted mid-stream (e.g. via the stop+persist path from dashboard#563),
+ * it loads as a normal completed message — no spinner state, no duplication.
+ * Regenerate is available on all assistant messages via the existing #564 UX.
+ *
+ * Returns `null` on any error (session absent, conversation not found, daemon
+ * unreachable). Callers should treat null as "keep the empty message list" and
+ * not surface an error — degraded to empty is acceptable.
+ *
+ * Spec: dashboard#555 (finalize interrupted streams on reload)
+ */
+export async function loadConversationMessages(
+  conversationId: string,
+): Promise<UIMessage[] | null> {
+  if (!conversationId) return null;
+
+  try {
+    const session = await getServerSession();
+    if (!session) return null;
+
+    const { messages: protoMessages } = await getConversation(conversationId);
+    // protoToUiMessages takes ConversationMessage[] from the proto; the RPC client
+    // wrapper returns ConversationMessageRecord[] which carries the same id/role/parts
+    // fields — the fields protoToUiMessage actually reads. The createdAtUnix field
+    // is unused by the normalizer. The cast is structurally safe and avoids leaking
+    // proto types through the gibson-client wrapper boundary.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return protoToUiMessages(protoMessages as any);
+  } catch (err) {
+    logger.warn({ err, conversationId }, "[chat] loadConversationMessages: RPC failed");
     return null;
   }
 }
