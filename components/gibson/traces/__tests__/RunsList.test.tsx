@@ -50,13 +50,17 @@ describe("RunsList", () => {
     render(<RunsList runs={[r]} />);
 
     // collapsed: child trace links not shown yet
-    expect(screen.queryByRole("link", { name: "t1" })).toBeNull();
+    expect(screen.queryByRole("link", { name: /t1/ })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: /m1/ }));
 
-    const t1 = screen.getByRole("link", { name: "t1" });
+    // child trace links use a name regex since the accessible name also
+    // includes the token/timestamp/status text in the row.
+    const t1 = screen.getByRole("link", { name: /t1/ });
     expect(t1.getAttribute("href")).toBe("/dashboard/traces/t1");
-    expect(screen.getByRole("link", { name: "t2" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /t2/ }).getAttribute("href")).toBe(
+      "/dashboard/traces/t2",
+    );
   });
 
   it("surfaces error status on a run", () => {
