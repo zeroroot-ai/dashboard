@@ -12,7 +12,7 @@ import { useChat as useAIChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
 import { useChatStore } from '@/src/stores/chat-store';
-import { generateConversationTitle, saveConversationAction } from '@/app/actions/chat';
+import { generateConversationTitle, saveConversationAction, loadConversationMessages } from '@/app/actions/chat';
 
 export interface UseChatConfig {
   /** When true, the X-Gibson-Debug header is sent and the system prompt debug panel is populated. */
@@ -55,6 +55,22 @@ export function useChat(config?: UseChatConfig) {
   // Track the current conversation to avoid stale closures
   const activeConvRef = useRef(activeConversationId);
   activeConvRef.current = activeConversationId;
+
+  // Track the conversation that ORIGINATED the current in-flight stream.
+  //
+  // This ref is set when a stream starts (status transitions to 'submitted')
+  // and read when the stream ends (status transitions back to 'ready'). It is
+  // intentionally separate from activeConvRef so that a mid-stream conversation
+  // switch does NOT misattribute the completing stream to the newly selected
+  // conversation.
+  //
+  // Without this, the following race corrupts data:
+  //   1. Stream starts on conv-A (activeConvRef = 'conv-A')
+  //   2. User switches to conv-B (activeConvRef = 'conv-B')
+  //   3. Stream for conv-A finishes → saveMessages('conv-B', messages) ← WRONG
+  //
+  // With streamingOriginConvRef, step 3 becomes saveMessages('conv-A', messages).
+  const streamingOriginConvRef = useRef<string | null>(null);
 
   // Keep a stable ref to setSystemPromptDebug so the fetch closure doesn't
   // need to be recreated on every render.
@@ -102,10 +118,32 @@ export function useChat(config?: UseChatConfig) {
   const { messages, status, error, sendMessage, stop, setMessages } = aiChat;
 
   // Persist messages to Zustand and daemon (via SaveConversation RPC) when stream completes.
+  //
+  // streamingOriginConvRef captures the conversation ID at stream START and is
+  // used at stream END so that a mid-stream conversation switch cannot misattribute
+  // the completing stream to the newly selected conversation (dashboard#555).
   const prevStatusRef = useRef(status);
   useEffect(() => {
-    if (prevStatusRef.current === 'streaming' && status === 'ready') {
-      const convId = activeConvRef.current;
+    const prevStatus = prevStatusRef.current;
+
+    // Capture the streaming origin when the stream begins. We record it on the
+    // 'submitted' → * transition (i.e. when the user sends a message) so the
+    // origin is fixed for the duration of this stream, regardless of any
+    // activeConversationId changes caused by the user switching conversations.
+    if (prevStatus === 'ready' && (status === 'submitted' || status === 'streaming')) {
+      streamingOriginConvRef.current = activeConvRef.current;
+    }
+
+    // When the stream finishes, persist to the ORIGIN conversation — not the
+    // currently active one. This prevents misattribution when the user has
+    // switched to another conversation while a stream was in flight.
+    if (prevStatus === 'streaming' && status === 'ready') {
+      // Use streamingOriginConvRef if set; fall back to activeConvRef for
+      // callers that started a stream without going through 'submitted' first
+      // (e.g. if the AI SDK skips the submitted state in certain transports).
+      const convId = streamingOriginConvRef.current ?? activeConvRef.current;
+      streamingOriginConvRef.current = null;
+
       if (convId && messages.length > 0) {
         saveMessages(convId, messages);
         // Persist to the daemon conversation store for cross-session durability.
@@ -160,6 +198,7 @@ export function useChat(config?: UseChatConfig) {
         }
       }
     }
+
     prevStatusRef.current = status;
   }, [status, messages, saveMessages, updateConversationTitle]);
 
@@ -194,16 +233,50 @@ export function useChat(config?: UseChatConfig) {
 
   /**
    * Switch to a different conversation by loading its messages.
+   *
+   * If the conversation has no in-memory messages (the normal post-reload state
+   * after ConversationListProvider hydrates only conversation metadata), messages
+   * are fetched from the daemon via loadConversationMessages. This is the
+   * "finalize interrupted streams on reload" path: a conversation whose last
+   * assistant message was persisted as a partial (via the stop+persist machinery
+   * from dashboard#563) loads cleanly — no spinner, no duplication, regenerate
+   * available (dashboard#555).
+   *
+   * An in-flight stream on another conversation is not affected by this switch
+   * because the persist effect uses streamingOriginConvRef (set at stream start)
+   * rather than activeConvRef (which this call updates).
    */
   const switchConversation = useCallback(
     (conversationId: string) => {
       const conversation = conversations.find((c) => c.id === conversationId);
-      if (conversation) {
-        setActiveConversation(conversationId);
+      if (!conversation) return;
+
+      setActiveConversation(conversationId);
+
+      if (conversation.messages.length > 0) {
+        // Messages already in memory (e.g. conversation was active this session
+        // or was loaded before). No daemon fetch needed.
         setMessages(conversation.messages);
+        return;
       }
+
+      // Empty message list: this is a post-reload conversation stub. Fetch the
+      // full message history from the daemon so the user sees their history and
+      // any interrupted trailing assistant message loads cleanly as a completed
+      // message. We call setMessages with the empty array first so the UI
+      // transitions away from the previous conversation immediately, then
+      // update again when the daemon responds.
+      setMessages([]);
+      void loadConversationMessages(conversationId).then((loaded) => {
+        if (loaded && loaded.length > 0) {
+          // Write to the Zustand store so the messages survive future
+          // in-session switches without hitting the daemon again.
+          saveMessages(conversationId, loaded);
+          setMessages(loaded);
+        }
+      });
     },
-    [conversations, setActiveConversation, setMessages]
+    [conversations, setActiveConversation, setMessages, saveMessages]
   );
 
   /**
