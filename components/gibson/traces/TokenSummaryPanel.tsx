@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatTokenCount } from "@/src/lib/trace-utils";
+import { formatTokenCount, formatUsd } from "@/src/lib/trace-utils";
 import type { TokenSummary } from "@/src/types/trace";
 import { formatDuration } from "./TraceTree";
 
@@ -22,12 +22,6 @@ import { formatDuration } from "./TraceTree";
  * TokenSummary); when supplied it is shown alongside the token totals so the
  * panel fully subsumes the old inline summary line.
  */
-
-function formatUsd(usd: number): string {
-  if (usd <= 0) return "$0.00";
-  if (usd < 0.01) return "<$0.01";
-  return `$${usd.toFixed(2)}`;
-}
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (

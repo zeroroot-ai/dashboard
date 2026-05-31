@@ -586,11 +586,25 @@ function extractCitedNodeIds(text: string): string[] {
  */
 function AssistantTextPart(_props: TextMessagePartProps) {
   return (
-    <MarkdownTextPrimitive
-      className="prose prose-sm dark:prose-invert max-w-none"
-      componentsByLanguage={MARKDOWN_COMPONENTS_BY_LANGUAGE}
-      preprocess={stripCitationMarkers}
-    />
+    <>
+      <MarkdownTextPrimitive
+        className="prose prose-sm dark:prose-invert max-w-none"
+        componentsByLanguage={MARKDOWN_COMPONENTS_BY_LANGUAGE}
+        preprocess={stripCitationMarkers}
+      />
+      {/* Streaming dots — shown on this text part while it is still being
+          generated. MessagePartPrimitive.InProgress reads the `part` scope,
+          which only exists inside a part component (the one passed to
+          MessagePrimitive.Parts). Rendering it at the message level throws
+          'The current scope does not have a "part" property'. */}
+      <MessagePartPrimitive.InProgress>
+        <span className="ml-1 inline-flex items-center gap-1">
+          <span className="bg-muted-foreground h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:0ms]" />
+          <span className="bg-muted-foreground h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:150ms]" />
+          <span className="bg-muted-foreground h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:300ms]" />
+        </span>
+      </MessagePartPrimitive.InProgress>
+    </>
   );
 }
 
@@ -603,7 +617,7 @@ function UserTextPart({ text }: TextMessagePartProps) {
 // Message components
 // ============================================================================
 
-function UserMessage() {
+export function UserMessage() {
   return (
     <MessagePrimitive.Root className="mb-4 flex flex-row-reverse items-end gap-2">
       <div className="bg-primary text-primary-foreground max-w-[80%] rounded-lg px-4 py-2 text-sm">
@@ -637,19 +651,11 @@ function AssistantMessageCitations() {
   );
 }
 
-function AssistantMessage() {
+export function AssistantMessage() {
   return (
     <MessagePrimitive.Root className="group/message mb-4 flex items-end gap-2">
       <div className="bg-secondary text-secondary-foreground max-w-[80%] rounded-lg px-4 py-2 text-sm">
         <MessagePrimitive.Parts components={{ Text: AssistantTextPart }} />
-        {/* Streaming dots — shown on the last text part while generating */}
-        <MessagePartPrimitive.InProgress>
-          <span className="ml-1 inline-flex items-center gap-1">
-            <span className="bg-muted-foreground h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:0ms]" />
-            <span className="bg-muted-foreground h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:150ms]" />
-            <span className="bg-muted-foreground h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:300ms]" />
-          </span>
-        </MessagePartPrimitive.InProgress>
         {/* Citation chips — rendered below the message body when the model
             cited data from a focused knowledge-graph node */}
         <AssistantMessageCitations />

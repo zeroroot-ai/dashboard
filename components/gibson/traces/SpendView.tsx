@@ -111,7 +111,7 @@ export function SpendView({ summary }: { summary: TokenSummary }) {
                     {formatTokenCount(m.outputTokens)}
                   </td>
                   <td className="py-1.5 text-right font-mono tabular-nums">
-                    {m.estimatedCostUsd > 0 ? `$${formatUsd(m.estimatedCostUsd)}` : "—"}
+                    {m.estimatedCostUsd > 0 ? formatUsd(m.estimatedCostUsd) : "—"}
                   </td>
                 </tr>
               ))}

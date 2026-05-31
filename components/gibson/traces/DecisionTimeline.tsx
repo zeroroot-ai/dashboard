@@ -116,7 +116,7 @@ function DecisionRow({ decision }: { decision: DecisionEntry }) {
             {costUsd > 0 && (
               <>
                 <span>·</span>
-                <span title="estimated step cost">${formatUsd(costUsd)}</span>
+                <span title="estimated step cost">{formatUsd(costUsd)}</span>
               </>
             )}
           </span>
