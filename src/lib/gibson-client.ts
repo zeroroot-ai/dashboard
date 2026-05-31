@@ -767,6 +767,8 @@ export interface AlertRecord {
 // Conversation History — UserService RPCs (spec: chat-conversation-persistence)
 // ============================================================================
 
+import type { MessagePart } from '@/src/gen/gibson/user/v1/user_pb';
+
 export interface ConversationRecord {
   id: string;
   tenantId: string;
@@ -777,10 +779,16 @@ export interface ConversationRecord {
   messageCount: number;
 }
 
+/**
+ * A single message as returned by `getConversation`.
+ * Parts carry the lossless ordered content — the canonical shape since
+ * dashboard#550 replaced the flat `content` string.
+ */
 export interface ConversationMessageRecord {
   id: string;
   role: string;
-  content: string;
+  /** Ordered proto parts — the lossless representation. */
+  parts: MessagePart[];
   createdAt: string;
 }
 
@@ -815,19 +823,28 @@ export async function getConversation(conversationId: string, userId = '', tenan
       updatedAt: c.updatedAtUnix ? new Date(Number(c.updatedAtUnix) * 1000).toISOString() : new Date().toISOString(),
       messageCount: c.messageCount,
     },
+    // Pass through the proto parts array directly — the normalizer converts
+    // them to UIMessages on the load path (protoToUiMessages in message-normalizer.ts).
     messages: (resp.messages ?? []).map((m) => ({
       id: m.id,
       role: m.role,
-      content: m.content,
+      parts: m.parts,
       createdAt: m.createdAtUnix ? new Date(Number(m.createdAtUnix) * 1000).toISOString() : new Date().toISOString(),
     })),
   };
 }
 
+/**
+ * Persist a conversation via the daemon SaveConversation RPC.
+ *
+ * `messages` must be the output of `uiMessagesToProto()` from
+ * `src/lib/chat/message-normalizer.ts` — the normalizer is the single
+ * source of truth for the UIMessage ↔ proto parts mapping.
+ */
 export async function saveConversation(
   conversationId: string,
   title: string,
-  messages: { id: string; role: string; content: string; createdAtUnix?: number }[],
+  messages: { id: string; role: string; parts: MessagePart[]; createdAtUnix?: bigint }[],
   agentId = '',
 ): Promise<void> {
   const client = await getUserServiceClient();
@@ -838,8 +855,8 @@ export async function saveConversation(
     messages: messages.map((m) => ({
       id: m.id,
       role: m.role,
-      content: m.content,
-      createdAtUnix: BigInt(m.createdAtUnix ?? Math.floor(Date.now() / 1000)),
+      parts: m.parts,
+      createdAtUnix: m.createdAtUnix ?? BigInt(Math.floor(Date.now() / 1000)),
     })),
   });
 }
