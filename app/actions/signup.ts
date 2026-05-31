@@ -1,6 +1,10 @@
 "use server";
 
 /**
+ * @server-action-authz-exempt: pre-authentication — signup runs before any
+ * session or tenant exists; it is the action that creates them. Abuse is
+ * gated by CAPTCHA + email-nonce, not session authz.
+ *
  * signupAction — the dashboard-native signup pipeline.
  *
  * A single linear orchestration: form input → Zitadel user → Tenant CR →
