@@ -8,8 +8,8 @@
  * standalone trace page and the mission Traces tab render through this — there
  * is one run renderer, not two.
  *
- * Spend currently shows as the compact summary strip; dashboard#534 promotes it
- * to a first-class view in this same shell.
+ * The compact totals strip stays pinned on top; the Spend tab adds the
+ * by-agent / by-model breakdown (dashboard#534).
  */
 
 import * as React from "react";
@@ -17,10 +17,11 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { TokenSummaryPanel } from "@/components/gibson/traces/TokenSummaryPanel";
 import { DecisionTimeline } from "@/components/gibson/traces/DecisionTimeline";
+import { SpendView } from "@/components/gibson/traces/SpendView";
 import { TraceTree } from "@/components/gibson/traces/TraceTree";
 import type { TraceData } from "@/src/types/trace";
 
-type RunTab = "timeline" | "advanced";
+type RunTab = "timeline" | "spend" | "advanced";
 
 function TabButton({
   active,
@@ -62,14 +63,17 @@ export function RunView({ data }: { data: TraceData }) {
         <TabButton active={tab === "timeline"} onClick={() => setTab("timeline")}>
           Timeline
         </TabButton>
+        <TabButton active={tab === "spend"} onClick={() => setTab("spend")}>
+          Spend
+        </TabButton>
         <TabButton active={tab === "advanced"} onClick={() => setTab("advanced")}>
           Advanced (raw trace)
         </TabButton>
       </div>
 
-      {tab === "timeline" ? (
-        <DecisionTimeline decisions={data.decisions} />
-      ) : (
+      {tab === "timeline" && <DecisionTimeline decisions={data.decisions} />}
+      {tab === "spend" && <SpendView summary={data.tokenSummary} />}
+      {tab === "advanced" && (
         <div className="glass-hack rounded-lg p-3">
           <div className="flex justify-between border-b border-highlight/30 pb-2 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
             <span>Raw trace</span>
