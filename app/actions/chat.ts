@@ -17,7 +17,7 @@ import "server-only";
 import { generateText } from "ai";
 import { getServerSession } from "@/src/lib/auth";
 import { resolveProvider } from "@/src/lib/ai/provider";
-import { listProviders } from "@/src/lib/gibson-client";
+import { listProviders, saveConversation } from "@/src/lib/gibson-client";
 import { updateConversationTitle } from "@/src/lib/redis-store";
 
 /**
@@ -56,6 +56,41 @@ export async function renameConversation(
 
     return await updateConversationTitle(tenantId, conversationId, trimmed);
   } catch {
+    return false;
+  }
+}
+
+/**
+ * Persist a conversation and its messages via the daemon SaveConversation RPC.
+ *
+ * Returns `true` on success, `false` when the session is absent, tenantId is
+ * missing, or the RPC fails. The caller should treat a `false` return as a
+ * silent degradation — the conversation remains in Zustand in-memory state.
+ *
+ * This is the only sanctioned conversation write path on the dashboard.
+ * Dashboard direct-Redis conversation writes were removed in dashboard#549.
+ */
+export async function saveConversationAction(
+  conversationId: string,
+  title: string,
+  messages: { id: string; role: string; content: string; createdAtUnix?: number }[],
+  agentId = "",
+): Promise<boolean> {
+  try {
+    const session = await getServerSession();
+    if (!session) return false;
+
+    if (!conversationId) return false;
+    if (messages.length === 0) return false;
+
+    await saveConversation(conversationId, title, messages, agentId);
+    return true;
+  } catch (err) {
+    // RPC failures are degraded — the conversation stays in Zustand.
+    // Log at warn so operators can spot connectivity gaps without surfacing
+    // errors to users.
+    const { logger } = await import("@/src/lib/logger");
+    logger.warn({ err, conversationId }, "[chat] saveConversationAction: RPC failed");
     return false;
   }
 }

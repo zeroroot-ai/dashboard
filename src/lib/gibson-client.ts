@@ -824,6 +824,26 @@ export async function getConversation(conversationId: string, userId = '', tenan
   };
 }
 
+export async function saveConversation(
+  conversationId: string,
+  title: string,
+  messages: { id: string; role: string; content: string; createdAtUnix?: number }[],
+  agentId = '',
+): Promise<void> {
+  const client = await getUserServiceClient();
+  await client.saveConversation({
+    conversationId,
+    title,
+    agentId,
+    messages: messages.map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      createdAtUnix: BigInt(m.createdAtUnix ?? Math.floor(Date.now() / 1000)),
+    })),
+  });
+}
+
 // ============================================================================
 // Serialization Helpers
 // Convert proto message objects (with BigInt timestamps) to plain JS objects

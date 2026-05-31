@@ -12,7 +12,7 @@ import { useChat as useAIChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { UIMessage } from 'ai';
 import { useChatStore } from '@/src/stores/chat-store';
-import { generateConversationTitle } from '@/app/actions/chat';
+import { generateConversationTitle, saveConversationAction } from '@/app/actions/chat';
 
 export interface UseChatConfig {
   /** When true, the X-Gibson-Debug header is sent and the system prompt debug panel is populated. */
@@ -101,14 +101,14 @@ export function useChat(config?: UseChatConfig) {
 
   const { messages, status, error, sendMessage, stop, setMessages } = aiChat;
 
-  // Persist messages to Zustand AND daemon-backed Redis when stream completes.
+  // Persist messages to Zustand and daemon (via SaveConversation RPC) when stream completes.
   const prevStatusRef = useRef(status);
   useEffect(() => {
     if (prevStatusRef.current === 'streaming' && status === 'ready') {
       const convId = activeConvRef.current;
       if (convId && messages.length > 0) {
         saveMessages(convId, messages);
-        // Fire-and-forget persist to Redis for cross-session durability.
+        // Persist to the daemon conversation store for cross-session durability.
         const conv = useChatStore.getState().conversations.find((c) => c.id === convId);
         if (conv) {
           const payload = {
@@ -124,14 +124,15 @@ export function useChat(config?: UseChatConfig) {
                 .join(''),
             })),
           };
-          fetch('/api/chat/conversation', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          }).catch(() => {
-            // Redis persistence failure is a silent degradation; conversation
-            // stays in Zustand for the current session.
-          });
+          // Persist via daemon SaveConversation RPC (dashboard#549).
+          // Fire-and-forget: RPC failures are a silent degradation; the
+          // conversation stays in Zustand for the current session.
+          void saveConversationAction(
+            payload.conversationId,
+            payload.title,
+            payload.messages,
+            payload.agentId,
+          );
 
           // Auto-title: fire once after the FIRST exchange (1 user + 1 assistant
           // message) if the conversation still has its default placeholder title.
