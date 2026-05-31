@@ -15,10 +15,12 @@
 import "server-only";
 
 import { generateText } from "ai";
+import type { UIMessage } from "ai";
 import { getServerSession } from "@/src/lib/auth";
 import { resolveProvider } from "@/src/lib/ai/provider";
 import { listProviders, saveConversation } from "@/src/lib/gibson-client";
 import { updateConversationTitle } from "@/src/lib/redis-store";
+import { uiMessagesToProto } from "@/src/lib/chat/message-normalizer";
 
 /**
  * Generate a ≤6-word title from the first user/assistant exchange and
@@ -63,17 +65,23 @@ export async function renameConversation(
 /**
  * Persist a conversation and its messages via the daemon SaveConversation RPC.
  *
+ * `messages` is the AI SDK v6 `UIMessage[]` array from the chat store. The
+ * action converts it to proto parts via the canonical message normalizer
+ * (`uiMessagesToProto`) before sending — ensuring all part types (tool calls,
+ * citations, attachments, reasoning) are preserved losslessly.
+ *
  * Returns `true` on success, `false` when the session is absent, tenantId is
  * missing, or the RPC fails. The caller should treat a `false` return as a
  * silent degradation — the conversation remains in Zustand in-memory state.
  *
  * This is the only sanctioned conversation write path on the dashboard.
  * Dashboard direct-Redis conversation writes were removed in dashboard#549.
+ * Flat-text message mapping was replaced by the parts normalizer in dashboard#550.
  */
 export async function saveConversationAction(
   conversationId: string,
   title: string,
-  messages: { id: string; role: string; content: string; createdAtUnix?: number }[],
+  messages: UIMessage[],
   agentId = "",
 ): Promise<boolean> {
   try {
@@ -83,7 +91,10 @@ export async function saveConversationAction(
     if (!conversationId) return false;
     if (messages.length === 0) return false;
 
-    await saveConversation(conversationId, title, messages, agentId);
+    // Convert UIMessage[] → proto parts via the canonical normalizer.
+    const protoMessages = uiMessagesToProto(messages);
+
+    await saveConversation(conversationId, title, protoMessages, agentId);
     return true;
   } catch (err) {
     // RPC failures are degraded — the conversation stays in Zustand.

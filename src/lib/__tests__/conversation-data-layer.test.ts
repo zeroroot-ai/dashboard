@@ -57,6 +57,7 @@ vi.mock('ai', () => ({ generateText: vi.fn() }));
 
 import { saveConversationAction } from '@/app/actions/chat';
 import { listConversations, type ConversationRecord } from '@/src/lib/gibson-client';
+import type { UIMessage } from 'ai';
 
 // ---------------------------------------------------------------------------
 // Test 1 — hydrate-from-daemon: RPC records map to UI Conversation shapes
@@ -115,10 +116,18 @@ describe('save-on-completion: saveConversationAction calls SaveConversation RPC'
     mockSaveConversationRpc.mockResolvedValue(undefined);
   });
 
-  it('calls saveConversation with the mapped payload and returns true on success', async () => {
-    const messages = [
-      { id: 'msg-1', role: 'user', content: 'Hello', createdAtUnix: 1700000001 },
-      { id: 'msg-2', role: 'assistant', content: 'Hi there', createdAtUnix: 1700000002 },
+  it('calls saveConversation with parts-based payload and returns true on success', async () => {
+    const messages: UIMessage[] = [
+      {
+        id: 'msg-1',
+        role: 'user',
+        parts: [{ type: 'text', text: 'Hello' }],
+      },
+      {
+        id: 'msg-2',
+        role: 'assistant',
+        parts: [{ type: 'text', text: 'Hi there' }],
+      },
     ];
 
     const result = await saveConversationAction('conv-xyz', 'Test Chat', messages, 'agent-general');
@@ -127,35 +136,45 @@ describe('save-on-completion: saveConversationAction calls SaveConversation RPC'
     expect(mockSaveConversationRpc).toHaveBeenCalledOnce();
 
     const [convId, title, mappedMessages, agentId] =
-      mockSaveConversationRpc.mock.calls[0] as [string, string, Array<{ id: string; role: string; content: string }>, string];
+      mockSaveConversationRpc.mock.calls[0] as [string, string, Array<{ id: string; role: string; parts: unknown[] }>, string];
     expect(convId).toBe('conv-xyz');
     expect(title).toBe('Test Chat');
     expect(agentId).toBe('agent-general');
     expect(mappedMessages).toHaveLength(2);
     expect(mappedMessages[0].role).toBe('user');
-    expect(mappedMessages[0].content).toBe('Hello');
     expect(mappedMessages[1].role).toBe('assistant');
-    expect(mappedMessages[1].content).toBe('Hi there');
+    // The normalizer converts text parts to proto MessagePartText.
+    expect(mappedMessages[0].parts).toHaveLength(1);
+    expect(mappedMessages[1].parts).toHaveLength(1);
   });
 
-  it('maps flat text content (not parts-based) — parts-based is slice #550', async () => {
-    const messages = [
-      { id: 'msg-1', role: 'user', content: 'Plain text message' },
+  it('maps UIMessage text part to proto parts (dashboard#550: parts-based, not flat content)', async () => {
+    const messages: UIMessage[] = [
+      {
+        id: 'msg-1',
+        role: 'user',
+        parts: [{ type: 'text', text: 'Plain text message' }],
+      },
     ];
 
     await saveConversationAction('conv-1', 'Title', messages);
 
     const [, , mappedMessages] =
-      mockSaveConversationRpc.mock.calls[0] as [string, string, Array<{ content: string }>];
-    expect(mappedMessages[0].content).toBe('Plain text message');
+      mockSaveConversationRpc.mock.calls[0] as [string, string, Array<{ parts: Array<{ part?: { case?: string; value?: { text?: string } } }> }>];
+    // proto MessagePartText has part.case === 'text' and part.value.text
+    const part = mappedMessages[0].parts[0];
+    expect(part?.part?.case).toBe('text');
+    expect(part?.part?.value?.text).toBe('Plain text message');
   });
 
   it('returns false when the session is absent', async () => {
     mockGetServerSession.mockResolvedValueOnce(null);
 
-    const result = await saveConversationAction('conv-1', 'Title', [
-      { id: 'msg-1', role: 'user', content: 'Hello' },
-    ]);
+    const messages: UIMessage[] = [
+      { id: 'msg-1', role: 'user', parts: [{ type: 'text', text: 'Hello' }] },
+    ];
+
+    const result = await saveConversationAction('conv-1', 'Title', messages);
 
     expect(result).toBe(false);
     expect(mockSaveConversationRpc).not.toHaveBeenCalled();
@@ -168,9 +187,10 @@ describe('save-on-completion: saveConversationAction calls SaveConversation RPC'
   });
 
   it('returns false when conversationId is empty string', async () => {
-    const result = await saveConversationAction('', 'Title', [
-      { id: 'msg-1', role: 'user', content: 'Hello' },
-    ]);
+    const messages: UIMessage[] = [
+      { id: 'msg-1', role: 'user', parts: [{ type: 'text', text: 'Hello' }] },
+    ];
+    const result = await saveConversationAction('', 'Title', messages);
     expect(result).toBe(false);
     expect(mockSaveConversationRpc).not.toHaveBeenCalled();
   });
@@ -195,9 +215,10 @@ describe('store-unavailable: RPC failure surfaces an error state, not a silent e
     });
     mockSaveConversationRpc.mockRejectedValueOnce(rpcError);
 
-    const result = await saveConversationAction('conv-1', 'Title', [
-      { id: 'msg-1', role: 'user', content: 'Hello' },
-    ]);
+    const msgs: UIMessage[] = [
+      { id: 'msg-1', role: 'user', parts: [{ type: 'text', text: 'Hello' }] },
+    ];
+    const result = await saveConversationAction('conv-1', 'Title', msgs);
 
     // Must be false — NOT a thrown exception (which would crash the client)
     // and NOT silent (which would make it look like a successful save).
@@ -210,9 +231,10 @@ describe('store-unavailable: RPC failure surfaces an error state, not a silent e
     });
     mockSaveConversationRpc.mockRejectedValueOnce(rpcError);
 
-    const result = await saveConversationAction('conv-1', 'Title', [
-      { id: 'msg-1', role: 'user', content: 'Hello' },
-    ]);
+    const msgs: UIMessage[] = [
+      { id: 'msg-1', role: 'user', parts: [{ type: 'text', text: 'Hello' }] },
+    ];
+    const result = await saveConversationAction('conv-1', 'Title', msgs);
 
     expect(result).toBe(false);
   });
@@ -221,9 +243,10 @@ describe('store-unavailable: RPC failure surfaces an error state, not a silent e
     const rpcError = new Error('connection refused');
     mockSaveConversationRpc.mockRejectedValueOnce(rpcError);
 
-    await saveConversationAction('conv-1', 'Title', [
-      { id: 'msg-1', role: 'user', content: 'Hello' },
-    ]);
+    const msgs: UIMessage[] = [
+      { id: 'msg-1', role: 'user', parts: [{ type: 'text', text: 'Hello' }] },
+    ];
+    await saveConversationAction('conv-1', 'Title', msgs);
 
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({ err: rpcError, conversationId: 'conv-1' }),

@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/user/v1/user.proto.
  */
 export const file_gibson_user_v1_user: GenFile = /*@__PURE__*/
-  fileDesc("ChlnaWJzb24vdXNlci92MS91c2VyLnByb3RvEg5naWJzb24udXNlci52MSI7ChVHZXRVc2VyUHJvZmlsZVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkilAEKD1VzZXJQcm9maWxlRGF0YRIKCgJpZBgBIAEoCRINCgVlbWFpbBgCIAEoCRIUCgxkaXNwbGF5X25hbWUYAyABKAkSEgoKYXZhdGFyX3VybBgEIAEoCRIOCgZzdGF0dXMYBSABKAkSEgoKY3JlYXRlZF9hdBgGIAEoCRIYChBwcmVmZXJyZWRfbG9jYWxlGAcgASgJIkoKFkdldFVzZXJQcm9maWxlUmVzcG9uc2USMAoHcHJvZmlsZRgBIAEoCzIfLmdpYnNvbi51c2VyLnYxLlVzZXJQcm9maWxlRGF0YSJuChhVcGRhdGVVc2VyUHJvZmlsZVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJEhgKEHByZWZlcnJlZF9sb2NhbGUYBCABKAkiTQoZVXBkYXRlVXNlclByb2ZpbGVSZXNwb25zZRIwCgdwcm9maWxlGAEgASgLMh8uZ2lic29uLnVzZXIudjEuVXNlclByb2ZpbGVEYXRhIrABCgVBbGVydBIKCgJpZBgBIAEoCRIRCgl0ZW5hbnRfaWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCRINCgV0aXRsZRgEIAEoCRIMCgRib2R5GAUgASgJEhAKCHNldmVyaXR5GAYgASgJEgwKBHJlYWQYByABKAgSFwoPY3JlYXRlZF9hdF91bml4GAggASgDEg4KBnNvdXJjZRgJIAEoCRIRCglzb3VyY2VfaWQYCiABKAkiWwoRTGlzdEFsZXJ0c1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSEwoLdW5yZWFkX29ubHkYAyABKAgSDQoFbGltaXQYBCABKAUiOwoSTGlzdEFsZXJ0c1Jlc3BvbnNlEiUKBmFsZXJ0cxgBIAMoCzIVLmdpYnNvbi51c2VyLnYxLkFsZXJ0IjsKFE1hcmtBbGVydFJlYWRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIQCghhbGVydF9pZBgCIAEoCSIXChVNYXJrQWxlcnRSZWFkUmVzcG9uc2UiPgoYTWFya0FsbEFsZXJ0c1JlYWRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJIioKGU1hcmtBbGxBbGVydHNSZWFkUmVzcG9uc2USDQoFY291bnQYASABKAUinQEKE0NvbnZlcnNhdGlvblN1bW1hcnkSCgoCaWQYASABKAkSEQoJdGVuYW50X2lkGAIgASgJEg8KB3VzZXJfaWQYAyABKAkSDQoFdGl0bGUYBCABKAkSFwoPY3JlYXRlZF9hdF91bml4GAUgASgDEhcKD3VwZGF0ZWRfYXRfdW5peBgGIAEoAxIVCg1tZXNzYWdlX2NvdW50GAcgASgFIlkKE0NvbnZlcnNhdGlvbk1lc3NhZ2USCgoCaWQYASABKAkSDAoEcm9sZRgCIAEoCRIPCgdjb250ZW50GAMgASgJEhcKD2NyZWF0ZWRfYXRfdW5peBgEIAEoAyJNChhMaXN0Q29udmVyc2F0aW9uc1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSDQoFbGltaXQYAyABKAUiVwoZTGlzdENvbnZlcnNhdGlvbnNSZXNwb25zZRI6Cg1jb252ZXJzYXRpb25zGAEgAygLMiMuZ2lic29uLnVzZXIudjEuQ29udmVyc2F0aW9uU3VtbWFyeSJEChZHZXRDb252ZXJzYXRpb25SZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRIRCgl0ZW5hbnRfaWQYAiABKAkiiwEKF0dldENvbnZlcnNhdGlvblJlc3BvbnNlEjkKDGNvbnZlcnNhdGlvbhgBIAEoCzIjLmdpYnNvbi51c2VyLnYxLkNvbnZlcnNhdGlvblN1bW1hcnkSNQoIbWVzc2FnZXMYAiADKAsyIy5naWJzb24udXNlci52MS5Db252ZXJzYXRpb25NZXNzYWdlIq4BChdTYXZlQ29udmVyc2F0aW9uUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCRIXCg9jb252ZXJzYXRpb25faWQYAyABKAkSDQoFdGl0bGUYBCABKAkSEAoIYWdlbnRfaWQYBSABKAkSNQoIbWVzc2FnZXMYBiADKAsyIy5naWJzb24udXNlci52MS5Db252ZXJzYXRpb25NZXNzYWdlIhoKGFNhdmVDb252ZXJzYXRpb25SZXNwb25zZTKiCQoLVXNlclNlcnZpY2USjQEKDkdldFVzZXJQcm9maWxlEiUuZ2lic29uLnVzZXIudjEuR2V0VXNlclByb2ZpbGVSZXF1ZXN0GiYuZ2lic29uLnVzZXIudjEuR2V0VXNlclByb2ZpbGVSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSlgEKEVVwZGF0ZVVzZXJQcm9maWxlEiguZ2lic29uLnVzZXIudjEuVXBkYXRlVXNlclByb2ZpbGVSZXF1ZXN0GikuZ2lic29uLnVzZXIudjEuVXBkYXRlVXNlclByb2ZpbGVSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgQEKCkxpc3RBbGVydHMSIS5naWJzb24udXNlci52MS5MaXN0QWxlcnRzUmVxdWVzdBoiLmdpYnNvbi51c2VyLnYxLkxpc3RBbGVydHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSigEKDU1hcmtBbGVydFJlYWQSJC5naWJzb24udXNlci52MS5NYXJrQWxlcnRSZWFkUmVxdWVzdBolLmdpYnNvbi51c2VyLnYxLk1hcmtBbGVydFJlYWRSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSlgEKEU1hcmtBbGxBbGVydHNSZWFkEiguZ2lic29uLnVzZXIudjEuTWFya0FsbEFsZXJ0c1JlYWRSZXF1ZXN0GikuZ2lic29uLnVzZXIudjEuTWFya0FsbEFsZXJ0c1JlYWRSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSlgEKEUxpc3RDb252ZXJzYXRpb25zEiguZ2lic29uLnVzZXIudjEuTGlzdENvbnZlcnNhdGlvbnNSZXF1ZXN0GikuZ2lic29uLnVzZXIudjEuTGlzdENvbnZlcnNhdGlvbnNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkAEKD0dldENvbnZlcnNhdGlvbhImLmdpYnNvbi51c2VyLnYxLkdldENvbnZlcnNhdGlvblJlcXVlc3QaJy5naWJzb24udXNlci52MS5HZXRDb252ZXJzYXRpb25SZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkwEKEFNhdmVDb252ZXJzYXRpb24SJy5naWJzb24udXNlci52MS5TYXZlQ29udmVyc2F0aW9uUmVxdWVzdBooLmdpYnNvbi51c2VyLnYxLlNhdmVDb252ZXJzYXRpb25SZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IANCP1o9Z2l0aHViLmNvbS96ZXJvcm9vdC1haS9wbGF0Zm9ybS1zZGsvZ2VuL2dpYnNvbi91c2VyL3YxO3VzZXJ2MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
+  fileDesc("ChlnaWJzb24vdXNlci92MS91c2VyLnByb3RvEg5naWJzb24udXNlci52MSI7ChVHZXRVc2VyUHJvZmlsZVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkilAEKD1VzZXJQcm9maWxlRGF0YRIKCgJpZBgBIAEoCRINCgVlbWFpbBgCIAEoCRIUCgxkaXNwbGF5X25hbWUYAyABKAkSEgoKYXZhdGFyX3VybBgEIAEoCRIOCgZzdGF0dXMYBSABKAkSEgoKY3JlYXRlZF9hdBgGIAEoCRIYChBwcmVmZXJyZWRfbG9jYWxlGAcgASgJIkoKFkdldFVzZXJQcm9maWxlUmVzcG9uc2USMAoHcHJvZmlsZRgBIAEoCzIfLmdpYnNvbi51c2VyLnYxLlVzZXJQcm9maWxlRGF0YSJuChhVcGRhdGVVc2VyUHJvZmlsZVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJEhgKEHByZWZlcnJlZF9sb2NhbGUYBCABKAkiTQoZVXBkYXRlVXNlclByb2ZpbGVSZXNwb25zZRIwCgdwcm9maWxlGAEgASgLMh8uZ2lic29uLnVzZXIudjEuVXNlclByb2ZpbGVEYXRhIrABCgVBbGVydBIKCgJpZBgBIAEoCRIRCgl0ZW5hbnRfaWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCRINCgV0aXRsZRgEIAEoCRIMCgRib2R5GAUgASgJEhAKCHNldmVyaXR5GAYgASgJEgwKBHJlYWQYByABKAgSFwoPY3JlYXRlZF9hdF91bml4GAggASgDEg4KBnNvdXJjZRgJIAEoCRIRCglzb3VyY2VfaWQYCiABKAkiWwoRTGlzdEFsZXJ0c1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSEwoLdW5yZWFkX29ubHkYAyABKAgSDQoFbGltaXQYBCABKAUiOwoSTGlzdEFsZXJ0c1Jlc3BvbnNlEiUKBmFsZXJ0cxgBIAMoCzIVLmdpYnNvbi51c2VyLnYxLkFsZXJ0IjsKFE1hcmtBbGVydFJlYWRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIQCghhbGVydF9pZBgCIAEoCSIXChVNYXJrQWxlcnRSZWFkUmVzcG9uc2UiPgoYTWFya0FsbEFsZXJ0c1JlYWRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJIioKGU1hcmtBbGxBbGVydHNSZWFkUmVzcG9uc2USDQoFY291bnQYASABKAUiHwoPTWVzc2FnZVBhcnRUZXh0EgwKBHRleHQYASABKAkiTAoTTWVzc2FnZVBhcnRUb29sQ2FsbBIUCgx0b29sX2NhbGxfaWQYASABKAkSDAoEbmFtZRgCIAEoCRIRCglhcmd1bWVudHMYAyABKAkiPQoVTWVzc2FnZVBhcnRUb29sUmVzdWx0EhQKDHRvb2xfY2FsbF9pZBgBIAEoCRIOCgZyZXN1bHQYAiABKAkiRgoTTWVzc2FnZVBhcnRDaXRhdGlvbhITCgtjaXRhdGlvbl9pZBgBIAEoCRINCgVsYWJlbBgCIAEoCRILCgN1cmwYAyABKAkiUwoYTWVzc2FnZVBhcnRBdHRhY2htZW50UmVmEhUKDWF0dGFjaG1lbnRfaWQYASABKAkSEgoKbWVkaWFfdHlwZRgCIAEoCRIMCgRuYW1lGAMgASgJIiQKFE1lc3NhZ2VQYXJ0UmVhc29uaW5nEgwKBHRleHQYASABKAki9gIKC01lc3NhZ2VQYXJ0Ei8KBHRleHQYASABKAsyHy5naWJzb24udXNlci52MS5NZXNzYWdlUGFydFRleHRIABI4Cgl0b29sX2NhbGwYAiABKAsyIy5naWJzb24udXNlci52MS5NZXNzYWdlUGFydFRvb2xDYWxsSAASPAoLdG9vbF9yZXN1bHQYAyABKAsyJS5naWJzb24udXNlci52MS5NZXNzYWdlUGFydFRvb2xSZXN1bHRIABI3CghjaXRhdGlvbhgEIAEoCzIjLmdpYnNvbi51c2VyLnYxLk1lc3NhZ2VQYXJ0Q2l0YXRpb25IABJCCg5hdHRhY2htZW50X3JlZhgFIAEoCzIoLmdpYnNvbi51c2VyLnYxLk1lc3NhZ2VQYXJ0QXR0YWNobWVudFJlZkgAEjkKCXJlYXNvbmluZxgGIAEoCzIkLmdpYnNvbi51c2VyLnYxLk1lc3NhZ2VQYXJ0UmVhc29uaW5nSABCBgoEcGFydCKdAQoTQ29udmVyc2F0aW9uU3VtbWFyeRIKCgJpZBgBIAEoCRIRCgl0ZW5hbnRfaWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCRINCgV0aXRsZRgEIAEoCRIXCg9jcmVhdGVkX2F0X3VuaXgYBSABKAMSFwoPdXBkYXRlZF9hdF91bml4GAYgASgDEhUKDW1lc3NhZ2VfY291bnQYByABKAUidAoTQ29udmVyc2F0aW9uTWVzc2FnZRIKCgJpZBgBIAEoCRIMCgRyb2xlGAIgASgJEioKBXBhcnRzGAMgAygLMhsuZ2lic29uLnVzZXIudjEuTWVzc2FnZVBhcnQSFwoPY3JlYXRlZF9hdF91bml4GAQgASgDIk0KGExpc3RDb252ZXJzYXRpb25zUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCRINCgVsaW1pdBgDIAEoBSJXChlMaXN0Q29udmVyc2F0aW9uc1Jlc3BvbnNlEjoKDWNvbnZlcnNhdGlvbnMYASADKAsyIy5naWJzb24udXNlci52MS5Db252ZXJzYXRpb25TdW1tYXJ5IkQKFkdldENvbnZlcnNhdGlvblJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEhEKCXRlbmFudF9pZBgCIAEoCSKLAQoXR2V0Q29udmVyc2F0aW9uUmVzcG9uc2USOQoMY29udmVyc2F0aW9uGAEgASgLMiMuZ2lic29uLnVzZXIudjEuQ29udmVyc2F0aW9uU3VtbWFyeRI1CghtZXNzYWdlcxgCIAMoCzIjLmdpYnNvbi51c2VyLnYxLkNvbnZlcnNhdGlvbk1lc3NhZ2UirgEKF1NhdmVDb252ZXJzYXRpb25SZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEhcKD2NvbnZlcnNhdGlvbl9pZBgDIAEoCRINCgV0aXRsZRgEIAEoCRIQCghhZ2VudF9pZBgFIAEoCRI1CghtZXNzYWdlcxgGIAMoCzIjLmdpYnNvbi51c2VyLnYxLkNvbnZlcnNhdGlvbk1lc3NhZ2UiGgoYU2F2ZUNvbnZlcnNhdGlvblJlc3BvbnNlIlYKGVJlbmFtZUNvbnZlcnNhdGlvblJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhcKD2NvbnZlcnNhdGlvbl9pZBgCIAEoCRINCgV0aXRsZRgDIAEoCSIcChpSZW5hbWVDb252ZXJzYXRpb25SZXNwb25zZSJHChlEZWxldGVDb252ZXJzYXRpb25SZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIXCg9jb252ZXJzYXRpb25faWQYAiABKAkiHAoaRGVsZXRlQ29udmVyc2F0aW9uUmVzcG9uc2Uy2gsKC1VzZXJTZXJ2aWNlEo0BCg5HZXRVc2VyUHJvZmlsZRIlLmdpYnNvbi51c2VyLnYxLkdldFVzZXJQcm9maWxlUmVxdWVzdBomLmdpYnNvbi51c2VyLnYxLkdldFVzZXJQcm9maWxlUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpYBChFVcGRhdGVVc2VyUHJvZmlsZRIoLmdpYnNvbi51c2VyLnYxLlVwZGF0ZVVzZXJQcm9maWxlUmVxdWVzdBopLmdpYnNvbi51c2VyLnYxLlVwZGF0ZVVzZXJQcm9maWxlUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoEBCgpMaXN0QWxlcnRzEiEuZ2lic29uLnVzZXIudjEuTGlzdEFsZXJ0c1JlcXVlc3QaIi5naWJzb24udXNlci52MS5MaXN0QWxlcnRzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEooBCg1NYXJrQWxlcnRSZWFkEiQuZ2lic29uLnVzZXIudjEuTWFya0FsZXJ0UmVhZFJlcXVlc3QaJS5naWJzb24udXNlci52MS5NYXJrQWxlcnRSZWFkUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpYBChFNYXJrQWxsQWxlcnRzUmVhZBIoLmdpYnNvbi51c2VyLnYxLk1hcmtBbGxBbGVydHNSZWFkUmVxdWVzdBopLmdpYnNvbi51c2VyLnYxLk1hcmtBbGxBbGVydHNSZWFkUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpYBChFMaXN0Q29udmVyc2F0aW9ucxIoLmdpYnNvbi51c2VyLnYxLkxpc3RDb252ZXJzYXRpb25zUmVxdWVzdBopLmdpYnNvbi51c2VyLnYxLkxpc3RDb252ZXJzYXRpb25zUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpABCg9HZXRDb252ZXJzYXRpb24SJi5naWJzb24udXNlci52MS5HZXRDb252ZXJzYXRpb25SZXF1ZXN0GicuZ2lic29uLnVzZXIudjEuR2V0Q29udmVyc2F0aW9uUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpMBChBTYXZlQ29udmVyc2F0aW9uEicuZ2lic29uLnVzZXIudjEuU2F2ZUNvbnZlcnNhdGlvblJlcXVlc3QaKC5naWJzb24udXNlci52MS5TYXZlQ29udmVyc2F0aW9uUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpkBChJSZW5hbWVDb252ZXJzYXRpb24SKS5naWJzb24udXNlci52MS5SZW5hbWVDb252ZXJzYXRpb25SZXF1ZXN0GiouZ2lic29uLnVzZXIudjEuUmVuYW1lQ29udmVyc2F0aW9uUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpkBChJEZWxldGVDb252ZXJzYXRpb24SKS5naWJzb24udXNlci52MS5EZWxldGVDb252ZXJzYXRpb25SZXF1ZXN0GiouZ2lic29uLnVzZXIudjEuRGVsZXRlQ29udmVyc2F0aW9uUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADQj9aPWdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvcGxhdGZvcm0tc2RrL2dlbi9naWJzb24vdXNlci92MTt1c2VydjFiBnByb3RvMw", [file_gibson_auth_v1_options]);
 
 /**
  * GetUserProfileRequest queries a user's profile from the identity provider.
@@ -429,6 +429,250 @@ export const MarkAllAlertsReadResponseSchema: GenMessage<MarkAllAlertsReadRespon
   messageDesc(file_gibson_user_v1_user, 11);
 
 /**
+ * MessagePartText carries a plain-text segment of a message.
+ *
+ * @generated from message gibson.user.v1.MessagePartText
+ */
+export type MessagePartText = Message<"gibson.user.v1.MessagePartText"> & {
+  /**
+   * text is the textual content.
+   *
+   * @generated from field: string text = 1;
+   */
+  text: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.MessagePartText.
+ * Use `create(MessagePartTextSchema)` to create a new message.
+ */
+export const MessagePartTextSchema: GenMessage<MessagePartText> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 12);
+
+/**
+ * MessagePartToolCall carries a tool invocation.
+ *
+ * @generated from message gibson.user.v1.MessagePartToolCall
+ */
+export type MessagePartToolCall = Message<"gibson.user.v1.MessagePartToolCall"> & {
+  /**
+   * tool_call_id is the opaque identifier for this tool call (used to correlate with the result).
+   *
+   * @generated from field: string tool_call_id = 1;
+   */
+  toolCallId: string;
+
+  /**
+   * name is the tool function name.
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * arguments is the JSON-serialised argument object passed to the tool.
+   *
+   * @generated from field: string arguments = 3;
+   */
+  arguments: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.MessagePartToolCall.
+ * Use `create(MessagePartToolCallSchema)` to create a new message.
+ */
+export const MessagePartToolCallSchema: GenMessage<MessagePartToolCall> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 13);
+
+/**
+ * MessagePartToolResult carries the result of a tool invocation.
+ *
+ * @generated from message gibson.user.v1.MessagePartToolResult
+ */
+export type MessagePartToolResult = Message<"gibson.user.v1.MessagePartToolResult"> & {
+  /**
+   * tool_call_id correlates this result with its originating tool call.
+   *
+   * @generated from field: string tool_call_id = 1;
+   */
+  toolCallId: string;
+
+  /**
+   * result is the JSON-serialised result payload.
+   *
+   * @generated from field: string result = 2;
+   */
+  result: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.MessagePartToolResult.
+ * Use `create(MessagePartToolResultSchema)` to create a new message.
+ */
+export const MessagePartToolResultSchema: GenMessage<MessagePartToolResult> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 14);
+
+/**
+ * MessagePartCitation carries a graph or document reference inline in a message.
+ *
+ * @generated from message gibson.user.v1.MessagePartCitation
+ */
+export type MessagePartCitation = Message<"gibson.user.v1.MessagePartCitation"> & {
+  /**
+   * citation_id is the stable ID of the referenced entity.
+   *
+   * @generated from field: string citation_id = 1;
+   */
+  citationId: string;
+
+  /**
+   * label is the human-readable display label for the citation.
+   *
+   * @generated from field: string label = 2;
+   */
+  label: string;
+
+  /**
+   * url is an optional deep-link URL to the referenced resource.
+   *
+   * @generated from field: string url = 3;
+   */
+  url: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.MessagePartCitation.
+ * Use `create(MessagePartCitationSchema)` to create a new message.
+ */
+export const MessagePartCitationSchema: GenMessage<MessagePartCitation> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 15);
+
+/**
+ * MessagePartAttachmentRef carries a reference to an attachment by ID.
+ *
+ * @generated from message gibson.user.v1.MessagePartAttachmentRef
+ */
+export type MessagePartAttachmentRef = Message<"gibson.user.v1.MessagePartAttachmentRef"> & {
+  /**
+   * attachment_id is the stable ID of the attachment.
+   *
+   * @generated from field: string attachment_id = 1;
+   */
+  attachmentId: string;
+
+  /**
+   * media_type is the MIME type of the attachment (e.g. "image/png").
+   *
+   * @generated from field: string media_type = 2;
+   */
+  mediaType: string;
+
+  /**
+   * name is the human-readable filename or display name of the attachment.
+   *
+   * @generated from field: string name = 3;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.MessagePartAttachmentRef.
+ * Use `create(MessagePartAttachmentRefSchema)` to create a new message.
+ */
+export const MessagePartAttachmentRefSchema: GenMessage<MessagePartAttachmentRef> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 16);
+
+/**
+ * MessagePartReasoning carries an internal reasoning / chain-of-thought segment.
+ *
+ * @generated from message gibson.user.v1.MessagePartReasoning
+ */
+export type MessagePartReasoning = Message<"gibson.user.v1.MessagePartReasoning"> & {
+  /**
+   * text is the reasoning text produced by the model.
+   *
+   * @generated from field: string text = 1;
+   */
+  text: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.MessagePartReasoning.
+ * Use `create(MessagePartReasoningSchema)` to create a new message.
+ */
+export const MessagePartReasoningSchema: GenMessage<MessagePartReasoning> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 17);
+
+/**
+ * MessagePart is a single ordered element within a ConversationMessage.
+ * Exactly one of the part fields is set; callers should handle any unrecognised
+ * oneof variant explicitly rather than silently dropping it.
+ *
+ * @generated from message gibson.user.v1.MessagePart
+ */
+export type MessagePart = Message<"gibson.user.v1.MessagePart"> & {
+  /**
+   * @generated from oneof gibson.user.v1.MessagePart.part
+   */
+  part: {
+    /**
+     * text carries a plain-text segment.
+     *
+     * @generated from field: gibson.user.v1.MessagePartText text = 1;
+     */
+    value: MessagePartText;
+    case: "text";
+  } | {
+    /**
+     * tool_call carries a tool invocation.
+     *
+     * @generated from field: gibson.user.v1.MessagePartToolCall tool_call = 2;
+     */
+    value: MessagePartToolCall;
+    case: "toolCall";
+  } | {
+    /**
+     * tool_result carries the result of a tool invocation.
+     *
+     * @generated from field: gibson.user.v1.MessagePartToolResult tool_result = 3;
+     */
+    value: MessagePartToolResult;
+    case: "toolResult";
+  } | {
+    /**
+     * citation carries a graph or document reference.
+     *
+     * @generated from field: gibson.user.v1.MessagePartCitation citation = 4;
+     */
+    value: MessagePartCitation;
+    case: "citation";
+  } | {
+    /**
+     * attachment_ref carries a reference to an attached file or image.
+     *
+     * @generated from field: gibson.user.v1.MessagePartAttachmentRef attachment_ref = 5;
+     */
+    value: MessagePartAttachmentRef;
+    case: "attachmentRef";
+  } | {
+    /**
+     * reasoning carries a chain-of-thought or internal reasoning segment.
+     *
+     * @generated from field: gibson.user.v1.MessagePartReasoning reasoning = 6;
+     */
+    value: MessagePartReasoning;
+    case: "reasoning";
+  } | { case: undefined; value?: undefined };
+};
+
+/**
+ * Describes the message gibson.user.v1.MessagePart.
+ * Use `create(MessagePartSchema)` to create a new message.
+ */
+export const MessagePartSchema: GenMessage<MessagePart> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 18);
+
+/**
  * ConversationSummary carries metadata for a single conversation.
  *
  * @generated from message gibson.user.v1.ConversationSummary
@@ -489,10 +733,12 @@ export type ConversationSummary = Message<"gibson.user.v1.ConversationSummary"> 
  * Use `create(ConversationSummarySchema)` to create a new message.
  */
 export const ConversationSummarySchema: GenMessage<ConversationSummary> = /*@__PURE__*/
-  messageDesc(file_gibson_user_v1_user, 12);
+  messageDesc(file_gibson_user_v1_user, 19);
 
 /**
  * ConversationMessage is a single message within a conversation.
+ * Messages are composed of an ordered list of typed parts so that tool calls,
+ * graph citations, attachments, and reasoning are preserved losslessly.
  *
  * @generated from message gibson.user.v1.ConversationMessage
  */
@@ -512,11 +758,13 @@ export type ConversationMessage = Message<"gibson.user.v1.ConversationMessage"> 
   role: string;
 
   /**
-   * content is the message text content.
+   * parts is the ordered list of message content parts.
+   * Every element of a message is represented here; no part type is silently
+   * dropped on save or load.
    *
-   * @generated from field: string content = 3;
+   * @generated from field: repeated gibson.user.v1.MessagePart parts = 3;
    */
-  content: string;
+  parts: MessagePart[];
 
   /**
    * created_at_unix is the message creation time as a Unix timestamp.
@@ -531,7 +779,7 @@ export type ConversationMessage = Message<"gibson.user.v1.ConversationMessage"> 
  * Use `create(ConversationMessageSchema)` to create a new message.
  */
 export const ConversationMessageSchema: GenMessage<ConversationMessage> = /*@__PURE__*/
-  messageDesc(file_gibson_user_v1_user, 13);
+  messageDesc(file_gibson_user_v1_user, 20);
 
 /**
  * ListConversationsRequest queries the conversation list for a user.
@@ -566,7 +814,7 @@ export type ListConversationsRequest = Message<"gibson.user.v1.ListConversations
  * Use `create(ListConversationsRequestSchema)` to create a new message.
  */
 export const ListConversationsRequestSchema: GenMessage<ListConversationsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_user_v1_user, 14);
+  messageDesc(file_gibson_user_v1_user, 21);
 
 /**
  * ListConversationsResponse carries the list of conversation summaries.
@@ -587,7 +835,7 @@ export type ListConversationsResponse = Message<"gibson.user.v1.ListConversation
  * Use `create(ListConversationsResponseSchema)` to create a new message.
  */
 export const ListConversationsResponseSchema: GenMessage<ListConversationsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_user_v1_user, 15);
+  messageDesc(file_gibson_user_v1_user, 22);
 
 /**
  * GetConversationRequest fetches the full message history for a conversation.
@@ -615,7 +863,7 @@ export type GetConversationRequest = Message<"gibson.user.v1.GetConversationRequ
  * Use `create(GetConversationRequestSchema)` to create a new message.
  */
 export const GetConversationRequestSchema: GenMessage<GetConversationRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_user_v1_user, 16);
+  messageDesc(file_gibson_user_v1_user, 23);
 
 /**
  * GetConversationResponse carries the conversation and its messages.
@@ -643,7 +891,7 @@ export type GetConversationResponse = Message<"gibson.user.v1.GetConversationRes
  * Use `create(GetConversationResponseSchema)` to create a new message.
  */
 export const GetConversationResponseSchema: GenMessage<GetConversationResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_user_v1_user, 17);
+  messageDesc(file_gibson_user_v1_user, 24);
 
 /**
  * SaveConversationRequest carries a conversation and its messages to persist.
@@ -700,7 +948,7 @@ export type SaveConversationRequest = Message<"gibson.user.v1.SaveConversationRe
  * Use `create(SaveConversationRequestSchema)` to create a new message.
  */
 export const SaveConversationRequestSchema: GenMessage<SaveConversationRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_user_v1_user, 18);
+  messageDesc(file_gibson_user_v1_user, 25);
 
 /**
  * SaveConversationResponse is returned on successful save.
@@ -715,7 +963,100 @@ export type SaveConversationResponse = Message<"gibson.user.v1.SaveConversationR
  * Use `create(SaveConversationResponseSchema)` to create a new message.
  */
 export const SaveConversationResponseSchema: GenMessage<SaveConversationResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_user_v1_user, 19);
+  messageDesc(file_gibson_user_v1_user, 26);
+
+/**
+ * RenameConversationRequest updates the title of a conversation.
+ *
+ * @generated from message gibson.user.v1.RenameConversationRequest
+ */
+export type RenameConversationRequest = Message<"gibson.user.v1.RenameConversationRequest"> & {
+  /**
+   * tenant_id is the tenant context. If empty, the caller's tenant is used.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * conversation_id is the unique identifier of the conversation to rename.
+   *
+   * @generated from field: string conversation_id = 2;
+   */
+  conversationId: string;
+
+  /**
+   * title is the new human-readable title for the conversation.
+   *
+   * @generated from field: string title = 3;
+   */
+  title: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.RenameConversationRequest.
+ * Use `create(RenameConversationRequestSchema)` to create a new message.
+ */
+export const RenameConversationRequestSchema: GenMessage<RenameConversationRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 27);
+
+/**
+ * RenameConversationResponse is returned on successful rename.
+ *
+ * @generated from message gibson.user.v1.RenameConversationResponse
+ */
+export type RenameConversationResponse = Message<"gibson.user.v1.RenameConversationResponse"> & {
+};
+
+/**
+ * Describes the message gibson.user.v1.RenameConversationResponse.
+ * Use `create(RenameConversationResponseSchema)` to create a new message.
+ */
+export const RenameConversationResponseSchema: GenMessage<RenameConversationResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 28);
+
+/**
+ * DeleteConversationRequest removes a conversation permanently.
+ *
+ * @generated from message gibson.user.v1.DeleteConversationRequest
+ */
+export type DeleteConversationRequest = Message<"gibson.user.v1.DeleteConversationRequest"> & {
+  /**
+   * tenant_id is the tenant context. If empty, the caller's tenant is used.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * conversation_id is the unique identifier of the conversation to delete.
+   *
+   * @generated from field: string conversation_id = 2;
+   */
+  conversationId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.DeleteConversationRequest.
+ * Use `create(DeleteConversationRequestSchema)` to create a new message.
+ */
+export const DeleteConversationRequestSchema: GenMessage<DeleteConversationRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 29);
+
+/**
+ * DeleteConversationResponse is returned on successful deletion.
+ *
+ * @generated from message gibson.user.v1.DeleteConversationResponse
+ */
+export type DeleteConversationResponse = Message<"gibson.user.v1.DeleteConversationResponse"> & {
+};
+
+/**
+ * Describes the message gibson.user.v1.DeleteConversationResponse.
+ * Use `create(DeleteConversationResponseSchema)` to create a new message.
+ */
+export const DeleteConversationResponseSchema: GenMessage<DeleteConversationResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 30);
 
 /**
  * UserService provides user self-service operations.
@@ -821,6 +1162,28 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof SaveConversationRequestSchema;
     output: typeof SaveConversationResponseSchema;
+  },
+  /**
+   * RenameConversation updates the title of an existing conversation.
+   * Only the owning user within their tenant may rename a conversation.
+   *
+   * @generated from rpc gibson.user.v1.UserService.RenameConversation
+   */
+  renameConversation: {
+    methodKind: "unary";
+    input: typeof RenameConversationRequestSchema;
+    output: typeof RenameConversationResponseSchema;
+  },
+  /**
+   * DeleteConversation removes a conversation and its list-index entry.
+   * Only the owning user within their tenant may delete a conversation.
+   *
+   * @generated from rpc gibson.user.v1.UserService.DeleteConversation
+   */
+  deleteConversation: {
+    methodKind: "unary";
+    input: typeof DeleteConversationRequestSchema;
+    output: typeof DeleteConversationResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_user_v1_user, 0);

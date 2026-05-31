@@ -111,27 +111,17 @@ export function useChat(config?: UseChatConfig) {
         // Persist to the daemon conversation store for cross-session durability.
         const conv = useChatStore.getState().conversations.find((c) => c.id === convId);
         if (conv) {
-          const payload = {
-            conversationId: convId,
-            title: conv.title ?? `Conversation ${convId}`,
-            agentId: conv.agentId,
-            messages: messages.map((m) => ({
-              id: m.id,
-              role: m.role as 'user' | 'assistant' | 'system' | 'tool',
-              content: m.parts
-                .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-                .map((p) => p.text)
-                .join(''),
-            })),
-          };
-          // Persist via daemon SaveConversation RPC (dashboard#549).
+          // Persist via daemon SaveConversation RPC (dashboard#549 + #550).
+          // The action converts UIMessage[] → proto parts via the canonical
+          // message normalizer so all part types (tool calls, citations,
+          // attachments, reasoning) are preserved losslessly.
           // Fire-and-forget: RPC failures are a silent degradation; the
           // conversation stays in Zustand for the current session.
           void saveConversationAction(
-            payload.conversationId,
-            payload.title,
-            payload.messages,
-            payload.agentId,
+            convId,
+            conv.title ?? `Conversation ${convId}`,
+            messages,
+            conv.agentId,
           );
 
           // Auto-title: fire once after the FIRST exchange (1 user + 1 assistant
