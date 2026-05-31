@@ -10,7 +10,6 @@
  */
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import {
@@ -20,33 +19,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatTokenCount } from "@/src/lib/trace-utils";
 import { ErrorAlert } from "@/components/gibson/shared";
+import { RunsList } from "@/components/gibson/traces/RunsList";
+import { groupTracesIntoRuns } from "@/src/lib/trace-runs";
 import type { TraceListResponse, TraceSummary } from "@/src/types/trace";
-
-function formatTimestamp(iso: string): string {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
-}
-
-function formatLatency(ms: number): string {
-  if (ms <= 0) return "—";
-  if (ms < 1000) return `${Math.round(ms)}ms`;
-  return `${(ms / 1000).toFixed(2)}s`;
-}
 
 export function TraceListTable() {
   const router = useRouter();
@@ -134,6 +114,7 @@ export function TraceListTable() {
   }, [page, from, to, name, userId, tagsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const rows: TraceSummary[] = data?.data ?? [];
+  const runs = groupTracesIntoRuns(rows);
   const totalPages = data?.meta.totalPages ?? 1;
 
   return (
@@ -210,68 +191,13 @@ export function TraceListTable() {
           </div>
         ) : error ? (
           <ErrorAlert error={{ message: error }} reference={errorRef ?? undefined} />
-        ) : rows.length === 0 ? (
+        ) : runs.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No traces found for the selected filters.
+            No runs found for the selected filters.
           </p>
         ) : (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Trace</TableHead>
-                  <TableHead>When</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Tokens</TableHead>
-                  <TableHead className="text-right">Latency</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((trace) => (
-                  <TableRow
-                    key={trace.id}
-                    className="cursor-pointer"
-                    onClick={() => router.push(`/dashboard/traces/${trace.id}`)}
-                  >
-                    <TableCell className="font-mono text-xs">
-                      <Link
-                        href={`/dashboard/traces/${trace.id}`}
-                        className="text-link hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {trace.name || trace.id}
-                      </Link>
-                      {trace.sessionId && (
-                        <span className="block text-muted-foreground">
-                          {trace.sessionId}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground tabular-nums">
-                      {formatTimestamp(trace.timestamp)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={
-                          trace.status === "error"
-                            ? "border-destructive/50 text-destructive"
-                            : "border-highlight/50 text-highlight"
-                        }
-                      >
-                        {trace.status === "error" ? "Error" : "OK"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
-                      {formatTokenCount(trace.totalTokens)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
-                      {formatLatency(trace.latencyMs)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <RunsList runs={runs} />
 
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
