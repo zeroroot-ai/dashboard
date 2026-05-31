@@ -350,6 +350,17 @@ function estimateCost(
 }
 
 /**
+ * Format a USD amount for display, including the currency symbol:
+ * 0 → "$0.00", 0.004 → "<$0.01", 1.2345 → "$1.23". The returned string already
+ * carries the leading "$" — callers must not prepend their own.
+ */
+export function formatUsd(usd: number): string {
+  if (usd <= 0) return '$0.00';
+  if (usd < 0.01) return '<$0.01';
+  return `$${usd.toFixed(2)}`;
+}
+
+/**
  * Format token count for display: 12432 → "12.4k", 1234567 → "1.2M"
  */
 export function formatTokenCount(count: number): string {
