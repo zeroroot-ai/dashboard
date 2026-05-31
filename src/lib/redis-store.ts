@@ -241,22 +241,11 @@ export async function getStr(key: string): Promise<string | null> {
 // Conversation persistence — spec: chat-conversation-persistence (dashboard#446)
 // ============================================================================
 
-const CONV_TTL_SECONDS = 7_776_000; // 90 days
-
 export interface ConversationMessagePayload {
   id: string;
   role: string;
   content: string;
   created_at_unix?: number;
-}
-
-export interface SaveConversationInput {
-  tenantId: string;
-  userId: string;
-  conversationId: string;
-  title: string;
-  agentId: string;
-  messages: ConversationMessagePayload[];
 }
 
 /**
@@ -294,47 +283,6 @@ export async function updateConversationTitle(
       conversationId,
       err instanceof Error ? err.message : err,
     );
-    return false;
-  }
-}
-
-export async function saveConversation(input: SaveConversationInput): Promise<boolean> {
-  try {
-    const redis = await getRedis();
-    if (!redis) {
-      console.warn('[redis-store] Redis unavailable; cannot save conversation:', input.conversationId);
-      return false;
-    }
-    const now = Math.floor(Date.now() / 1000);
-    const hashKey = `conv:${input.tenantId}:${input.conversationId}`;
-    const indexKey = `convindex:${input.tenantId}:${input.userId}`;
-    const messages: ConversationMessagePayload[] = input.messages.map((m, i) => ({
-      ...m,
-      created_at_unix: m.created_at_unix ?? now - (input.messages.length - i),
-    }));
-    let createdAt: string;
-    try {
-      const existing = await redis.hGet(hashKey, 'created_at');
-      createdAt = existing ?? new Date(now * 1000).toISOString();
-    } catch {
-      createdAt = new Date(now * 1000).toISOString();
-    }
-    const pipeline = redis.multi();
-    pipeline.hSet(hashKey, {
-      title: input.title,
-      agent_id: input.agentId,
-      user_id: input.userId,
-      created_at: createdAt,
-      updated_at: new Date(now * 1000).toISOString(),
-      messages: JSON.stringify(messages),
-    });
-    pipeline.expire(hashKey, CONV_TTL_SECONDS);
-    pipeline.zAdd(indexKey, [{ score: now, value: input.conversationId }]);
-    pipeline.expire(indexKey, CONV_TTL_SECONDS);
-    await pipeline.exec();
-    return true;
-  } catch (err) {
-    console.warn('[redis-store] Error saving conversation', input.conversationId, err instanceof Error ? err.message : err);
     return false;
   }
 }

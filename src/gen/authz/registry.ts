@@ -2533,6 +2533,15 @@ export const AuthRegistry: Record<string, AuthEntry> = {
     allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
     unauthenticated: false,
   },
+  "/gibson.user.v1.UserService/SaveConversation": {
+    method: "/gibson.user.v1.UserService/SaveConversation",
+    service: "gibson.user.v1.UserService",
+    relation: "member",
+    objectType: "tenant",
+    objectDeriver: "tenant_from_identity",
+    allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
+    unauthenticated: false,
+  },
   "/gibson.user.v1.UserService/UpdateUserProfile": {
     method: "/gibson.user.v1.UserService/UpdateUserProfile",
     service: "gibson.user.v1.UserService",
