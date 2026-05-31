@@ -361,16 +361,6 @@ export function formatUsd(usd: number): string {
 }
 
 /**
- * Format a USD amount for display. Bare number (no leading "$") so callers
- * control the sign placement: 0 → "0.00", <0.01 → "<0.01", else "N.NN".
- */
-export function formatUsd(usd: number): string {
-  if (usd <= 0) return '0.00';
-  if (usd < 0.01) return '<0.01';
-  return usd.toFixed(2);
-}
-
-/**
  * Format token count for display: 12432 → "12.4k", 1234567 → "1.2M"
  */
 export function formatTokenCount(count: number): string {
