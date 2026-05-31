@@ -16,8 +16,7 @@ import { Button } from "@/components/ui/button";
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { ActivityIcon } from "lucide-react";
-import { TokenSummaryPanel } from "@/components/gibson/traces/TokenSummaryPanel";
-import { TraceTree } from "@/components/gibson/traces/TraceTree";
+import { RunView } from "@/components/gibson/traces/RunView";
 import { useTraceDetail } from "@/src/hooks/useTraces";
 
 export function TraceDetailView({ traceId }: { traceId: string }) {
@@ -75,14 +74,16 @@ export function TraceDetailView({ traceId }: { traceId: string }) {
     );
   }
 
-  if (!data || data.traceTree.length === 0) {
+  const hasContent =
+    !!data && (data.decisions.length > 0 || data.traceTree.length > 0);
+  if (!hasContent) {
     return (
       <div className="space-y-4">
         {backLink}
         <EmptyState
           icon={ActivityIcon}
-          title="No trace content"
-          description="This trace recorded no LLM activity."
+          title="No run activity"
+          description="This run recorded no agent activity."
         />
       </div>
     );
@@ -92,23 +93,11 @@ export function TraceDetailView({ traceId }: { traceId: string }) {
     <div className="space-y-4">
       {backLink}
       <div>
-        <h1 className="text-xl font-bold tracking-tight font-mono lg:text-2xl">
-          Trace
-        </h1>
-        <p className="text-xs text-muted-foreground font-mono">{data.traceId}</p>
+        <h1 className="text-xl font-bold tracking-tight lg:text-2xl">Run</h1>
+        <p className="font-mono text-xs text-muted-foreground">{data.traceId}</p>
       </div>
 
-      <TokenSummaryPanel
-        summary={data.tokenSummary}
-        totalDurationMs={data.totalDurationMs}
-      />
-      <div className="glass-hack rounded-lg p-3">
-        <div className="text-[10px] font-mono uppercase tracking-wide text-muted-foreground pb-2 border-b border-highlight/30 flex justify-between">
-          <span>Trace</span>
-          <span>input/output · duration</span>
-        </div>
-        <TraceTree nodes={data.traceTree} />
-      </div>
+      <RunView data={data} />
     </div>
   );
 }

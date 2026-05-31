@@ -308,7 +308,18 @@ export function aggregateTokenUsage(observations: LangfuseObservation[]): TokenS
 /**
  * Estimate cost in USD based on model name and token counts.
  * Uses approximate per-model pricing. Returns 0 for unknown models.
+ *
+ * Exported as estimateStepCostUsd for client-side per-step cost display
+ * (e.g. the train-of-thought timeline); the aggregate path uses it too.
  */
+export function estimateStepCostUsd(
+  model: string,
+  inputTokens: number,
+  outputTokens: number,
+): number {
+  return estimateCost(model, inputTokens, outputTokens);
+}
+
 function estimateCost(
   model: string,
   inputTokens: number,
