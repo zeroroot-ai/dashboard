@@ -7,9 +7,14 @@
  * ≤6-word title from the first exchange. Called fire-and-forget from useChat
  * after the first assistant turn completes; never blocks the UI render path.
  *
- * renameConversation — user-initiated title update; persists to Redis.
+ * renameConversation — user-initiated title update; persists via daemon
+ * RenameConversation RPC. Direct Redis conversation writes were removed in
+ * dashboard#549; auto-title Redis writes removed in dashboard#551.
  *
- * Spec: dashboard#448 (auto-title), dashboard#435 (rename thread)
+ * deleteConversationAction — removes a conversation permanently via the daemon
+ * DeleteConversation RPC (added in dashboard#551 / gibson PR #550).
+ *
+ * Spec: dashboard#448 (auto-title), dashboard#435 (rename thread), dashboard#551 (delete)
  */
 
 import "server-only";
@@ -18,28 +23,20 @@ import { generateText } from "ai";
 import type { UIMessage } from "ai";
 import { getServerSession } from "@/src/lib/auth";
 import { resolveProvider } from "@/src/lib/ai/provider";
-import { listProviders, saveConversation } from "@/src/lib/gibson-client";
-import { updateConversationTitle } from "@/src/lib/redis-store";
+import {
+  listProviders,
+  saveConversation,
+  renameConversation as rpcRenameConversation,
+  deleteConversation as rpcDeleteConversation,
+} from "@/src/lib/gibson-client";
 import { uiMessagesToProto } from "@/src/lib/chat/message-normalizer";
+import { logger } from "@/src/lib/logger";
 
 /**
- * Generate a ≤6-word title from the first user/assistant exchange and
- * persist it to Redis.
- *
- * Returns the generated title string on success, or `null` when:
- *  - the session is absent
- *  - no LLM provider is configured
- *  - the LLM returns an empty response
- *  - Redis is unavailable (title update silently degrades)
- *
- * The caller is expected to use `void generateConversationTitle(...).then(...)`
- * so it never blocks the render path.
- */
-/**
- * Persist a user-supplied conversation title to Redis.
+ * Persist a user-supplied conversation title via the daemon RenameConversation RPC.
  *
  * Returns `true` on success, `false` when the session is absent, tenantId is
- * missing, or Redis is unavailable. The caller should update the Zustand store
+ * missing, or the RPC fails. The caller should update the Zustand store
  * optimistically and treat a `false` return as a silent degradation.
  */
 export async function renameConversation(
@@ -50,14 +47,42 @@ export async function renameConversation(
     const session = await getServerSession();
     if (!session) return false;
 
-    const tenantId = session.user.tenantId ?? '';
-    if (!tenantId) return false;
-
     const trimmed = title.trim().slice(0, 500);
     if (!trimmed) return false;
 
-    return await updateConversationTitle(tenantId, conversationId, trimmed);
-  } catch {
+    // tenantId empty — daemon resolves from authenticated identity.
+    await rpcRenameConversation(conversationId, trimmed);
+    return true;
+  } catch (err) {
+    logger.warn({ err, conversationId }, "[chat] renameConversation: RPC failed");
+    return false;
+  }
+}
+
+/**
+ * Delete a conversation permanently via the daemon DeleteConversation RPC.
+ *
+ * Returns `true` on success, `false` when the session is absent or the RPC
+ * fails. The caller should update the Zustand store optimistically and revert
+ * on `false`.
+ *
+ * The daemon resolves ownership from the authenticated identity; no `user_id`
+ * is sent in the request (see RPC shape: DeleteConversationRequest).
+ */
+export async function deleteConversationAction(
+  conversationId: string,
+): Promise<boolean> {
+  try {
+    const session = await getServerSession();
+    if (!session) return false;
+
+    if (!conversationId) return false;
+
+    // tenantId empty — daemon resolves from authenticated identity.
+    await rpcDeleteConversation(conversationId);
+    return true;
+  } catch (err) {
+    logger.warn({ err, conversationId }, "[chat] deleteConversationAction: RPC failed");
     return false;
   }
 }
@@ -100,7 +125,6 @@ export async function saveConversationAction(
     // RPC failures are degraded — the conversation stays in Zustand.
     // Log at warn so operators can spot connectivity gaps without surfacing
     // errors to users.
-    const { logger } = await import("@/src/lib/logger");
     logger.warn({ err, conversationId }, "[chat] saveConversationAction: RPC failed");
     return false;
   }
@@ -150,9 +174,17 @@ export async function generateConversationTitle(
     const title = text.trim();
     if (!title) return null;
 
-    // Best-effort Redis update — failures are logged by redis-store and
-    // silently swallowed here so the caller never sees an error.
-    await updateConversationTitle(tenantId, conversationId, title);
+    // Best-effort RPC update — failures are logged and silently swallowed
+    // so the caller never sees an error. tenantId empty — daemon resolves
+    // from authenticated identity.
+    try {
+      await rpcRenameConversation(conversationId, title);
+    } catch (err) {
+      logger.warn(
+        { err, conversationId },
+        "[chat] generateConversationTitle: RenameConversation RPC failed",
+      );
+    }
 
     return title;
   } catch {

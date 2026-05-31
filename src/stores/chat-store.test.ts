@@ -80,4 +80,39 @@ describe('Chat Store — updateConversationTitle (rename)', () => {
     const convB = useChatStore.getState().conversations.find((c) => c.id === 'b');
     expect(convB?.title).toBe('Conv b');
   });
+
+  it('can be reverted by calling updateConversationTitle with the old title', () => {
+    useChatStore.getState().updateConversationTitle('a', 'New Title');
+    // Simulate RPC failure revert
+    useChatStore.getState().updateConversationTitle('a', 'Old Title');
+    const conv = useChatStore.getState().conversations.find((c) => c.id === 'a');
+    expect(conv?.title).toBe('Old Title');
+  });
+});
+
+describe('Chat Store — deleteConversation', () => {
+  beforeEach(() => {
+    useChatStore.setState({
+      conversations: [makeConv('a'), makeConv('b'), makeConv('c')],
+      activeConversationId: 'a',
+    });
+  });
+
+  it('removes the targeted conversation from the list', () => {
+    useChatStore.getState().deleteConversation('a');
+    const ids = useChatStore.getState().conversations.map((c) => c.id);
+    expect(ids).not.toContain('a');
+    expect(ids).toContain('b');
+    expect(ids).toContain('c');
+  });
+
+  it('clears activeConversationId when the active conversation is deleted', () => {
+    useChatStore.getState().deleteConversation('a');
+    expect(useChatStore.getState().activeConversationId).toBeNull();
+  });
+
+  it('preserves activeConversationId when a different conversation is deleted', () => {
+    useChatStore.getState().deleteConversation('b');
+    expect(useChatStore.getState().activeConversationId).toBe('a');
+  });
 });

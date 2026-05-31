@@ -861,6 +861,40 @@ export async function saveConversation(
   });
 }
 
+/**
+ * Rename a conversation via the daemon RenameConversation RPC.
+ *
+ * `tenantId` may be empty — the daemon resolves it from the authenticated
+ * identity when empty. Returns void on success; throws a ConnectError on
+ * failure so callers can revert optimistic updates.
+ */
+export async function renameConversation(
+  conversationId: string,
+  title: string,
+  tenantId = '',
+): Promise<void> {
+  const client = await getUserServiceClient();
+  await client.renameConversation({ tenantId, conversationId, title });
+}
+
+/**
+ * Delete a conversation via the daemon DeleteConversation RPC.
+ *
+ * `tenantId` may be empty — the daemon resolves it from the authenticated
+ * identity when empty. Returns void on success; throws a ConnectError on
+ * failure so callers can revert optimistic updates.
+ *
+ * NOTE: The RPC has no `user_id` field — the daemon resolves the caller from
+ * the authenticated identity and only allows deletion of their own conversations.
+ */
+export async function deleteConversation(
+  conversationId: string,
+  tenantId = '',
+): Promise<void> {
+  const client = await getUserServiceClient();
+  await client.deleteConversation({ tenantId, conversationId });
+}
+
 // ============================================================================
 // Serialization Helpers
 // Convert proto message objects (with BigInt timestamps) to plain JS objects

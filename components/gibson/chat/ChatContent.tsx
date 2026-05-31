@@ -71,7 +71,7 @@ import {
   useChatGraphContext,
 } from '@/src/stores/chat-store';
 import type { Conversation, ChatAgent, GraphContext } from '@/src/stores/chat-store';
-import { renameConversation } from '@/app/actions/chat';
+import { renameConversation, deleteConversationAction } from '@/app/actions/chat';
 import type { GraphSummaryResponse } from '@/src/lib/graph/summary';
 import { SystemPromptDebugPanel } from '@/components/gibson/chat/SystemPromptDebugPanel';
 import { GraphCitationChip } from './GraphCitationChip';
@@ -1031,11 +1031,35 @@ export function ChatContent() {
 
   const handleRename = useCallback(
     (id: string, title: string) => {
-      // Optimistic update — persist to Redis fire-and-forget
+      // Optimistic update — immediately reflected in the store.
+      // Persist via daemon RPC; revert on failure.
+      const prev = conversations.find((c) => c.id === id)?.title ?? '';
       updateConversationTitle(id, title);
-      void renameConversation(id, title);
+      void renameConversation(id, title).then((ok) => {
+        if (!ok) {
+          // Revert the optimistic update.
+          updateConversationTitle(id, prev);
+          toast.error('Could not rename the conversation. Please try again.');
+        }
+      });
     },
-    [updateConversationTitle],
+    [updateConversationTitle, conversations],
+  );
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      // Optimistic update — remove from store immediately.
+      deleteConversation(id);
+      void deleteConversationAction(id).then((ok) => {
+        if (!ok) {
+          // The daemon rejected the delete. Re-hydrate the store from the
+          // daemon would require a full conversation fetch; instead surface
+          // an error and let the user reload to restore the list.
+          toast.error('Could not delete the conversation. Please refresh to see its current state.');
+        }
+      });
+    },
+    [deleteConversation],
   );
 
   const handleExport = useCallback(
@@ -1080,7 +1104,7 @@ export function ChatContent() {
       pinnedIds={pinnedConversationIds}
       onSelect={handleSwitchConversation}
       onNew={handleNewConversation}
-      onDelete={(id) => deleteConversation(id)}
+      onDelete={handleDelete}
       onRename={handleRename}
       onTogglePin={togglePinConversation}
       searchRef={searchInputRef}
