@@ -93,8 +93,12 @@ export function TraceDetailView({ traceId }: { traceId: string }) {
     <div className="space-y-4">
       {backLink}
       <div>
-        <h1 className="text-xl font-bold tracking-tight lg:text-2xl">Run</h1>
-        <p className="font-mono text-xs text-muted-foreground">{data.traceId}</p>
+        <h1 className="text-xl font-bold tracking-tight lg:text-2xl">
+          {data.missionId ? `Mission ${data.missionId}` : "Run"}
+        </h1>
+        <p className="font-mono text-[10px] text-muted-foreground/70">
+          Reference: {data.traceId}
+        </p>
       </div>
 
       <RunView data={data} />
