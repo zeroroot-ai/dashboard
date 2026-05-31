@@ -21,6 +21,7 @@ const empty: AgentNodeConfig = {
   agentName: "",
   task: undefined,
   maxTokensPerCall: undefined,
+  llmSlots: [],
 };
 
 export function AgentConfigEditor({ value, onChange }: AgentConfigEditorProps) {

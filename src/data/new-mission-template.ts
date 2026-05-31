@@ -10,12 +10,13 @@
  *
  * The author fills in `targetRef` (and tunes the node) before running.
  *
- * dashboard#492 (D1). LLM prepopulation: dashboard#521 — when the tenant has a
- * default provider, the agent node's `llm` block is seeded from it as editable
- * metadata.
+ * dashboard#492 (D1). LLM prepopulation: dashboard#532 — when the tenant has a
+ * default provider, the agent node's `llm_slots` array is seeded with the
+ * primary slot binding as editable metadata. The singular `llm` field was
+ * removed in sdk v0.128.0 (field 4 retired, field 5 = repeated llm_slots).
  */
 
-/** Optional LLM seed used to prepopulate the agent node's provider/model. */
+/** Optional LLM seed used to prepopulate the agent node's primary slot. */
 export interface NewMissionLLMSeed {
   provider?: string;
   model?: string;
@@ -23,19 +24,21 @@ export interface NewMissionLLMSeed {
 
 /**
  * buildNewMissionCue returns the New Mission CUE. When `seed.provider` is set
- * (the tenant's default provider), the agent node carries an `llm` block
- * pinning that provider/model — editable metadata the author can change or
- * delete. With no seed, the node inherits the tenant default at run time.
+ * (the tenant's default provider), the agent node carries an `llm_slots` array
+ * with a single "primary" entry pinning that provider/model — editable metadata
+ * the author can change or delete. An empty `provider` is a valid fall-through
+ * marker; the daemon resolves it against the tenant's configured defaults.
+ * With no seed, the node inherits the tenant default at run time.
  */
 export function buildNewMissionCue(seed?: NewMissionLLMSeed): string {
-  let llmBlock = "";
-  if (seed?.provider) {
+  let llmSlotsBlock = "";
+  if (seed?.provider !== undefined) {
     const modelLine = seed.model
-      ? `\n\t\t\t\t\tmodel:    ${JSON.stringify(seed.model)}`
+      ? `\n\t\t\t\t\t\tmodel:    ${JSON.stringify(seed.model)}`
       : "";
-    llmBlock = `\n\t\t\t\tllm: {\n\t\t\t\t\tprovider: ${JSON.stringify(
+    llmSlotsBlock = `\n\t\t\t\tllmSlots: [{\n\t\t\t\t\t\tslot:     "primary"\n\t\t\t\t\t\tprovider: ${JSON.stringify(
       seed.provider,
-    )}${modelLine}\n\t\t\t\t}`;
+    )}${modelLine}\n\t\t\t\t}]`;
   }
 
   return `// Gibson Mission Definition (CUE)
@@ -60,7 +63,7 @@ mission: missionv1.#MissionDefinition & {
 \t\t\tid:   "assess"
 \t\t\ttype: missionv1.#NODE_TYPE_AGENT
 \t\t\tagentConfig: {
-\t\t\t\tagentName: "recon-agent"${llmBlock}
+\t\t\t\tagentName: "recon-agent"${llmSlotsBlock}
 \t\t\t}
 \t\t}
 \t}

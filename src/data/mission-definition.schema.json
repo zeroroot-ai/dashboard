@@ -9,9 +9,12 @@
           "description": "AgentName is the name of the agent to execute",
           "type": "string"
         },
-        "llm": {
-          "$ref": "#/$defs/LLMSlotConfig",
-          "description": "llm optionally pins the LLM provider/model this agent node resolves to. Absent → the node inherits the tenant's default provider (then slot-name constraint search). The dashboard prepopulates this from the tenant's default provider on a new mission, as editable metadata. Precedence at resolution: this explicit binding > tenant default > constraint search over the tenant's permitted providers."
+        "llmSlots": {
+          "description": "llm_slots pins LLM provider/model bindings per named slot for this agent node. Each entry maps a slot name to a specific provider+model. Multiple entries allow different slots to use different providers/models on the same node. Empty list → the node inherits the tenant's default provider for all slots. Absent slot entries fall through to tenant default + constraint search over the tenant's permitted providers.  Empty provider or model within an entry is a valid fall-through marker: the daemon resolves it against the tenant's configured defaults.  Precedence at resolution per slot: explicit binding in llm_slots > tenant default > constraint search over the tenant's permitted providers.  Spec: sdk#260 (multi-slot LLM binding contract); consumer: gibson#524.",
+          "items": {
+            "$ref": "#/$defs/LLMSlotConfig"
+          },
+          "type": "array"
         },
         "maxTokensPerCall": {
           "description": "max_tokens_per_call is the per-node override of MissionConstraints.max_tokens_per_call for this agent node only.  When present (non-nil), this value is used as the effective cap for all LLM calls made by this node, regardless of the mission-level MissionConstraints.max_tokens_per_call value. Setting this to 0 explicitly disables the cap for this node (the mission-level cap is NOT applied as a fallback when this field is explicitly set to 0).  When absent (nil / proto3 optional not set), the mission-level MissionConstraints.max_tokens_per_call applies instead.  0 = inherit from mission-level (when this field is absent). Spec: mission-schema-canonicalization Requirement 5; gibson#133.",
