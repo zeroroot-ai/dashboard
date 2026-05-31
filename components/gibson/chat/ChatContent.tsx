@@ -43,6 +43,8 @@ import {
   Pencil,
   Check,
   Download,
+  AlertTriangle,
+  Cpu,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -153,6 +155,9 @@ interface ConversationSidebarProps {
   onRename: (id: string, title: string) => void;
   onTogglePin: (id: string) => void;
   searchRef: React.RefObject<HTMLInputElement | null>;
+  /** True when the daemon conversation store is unreachable. Renders a distinct
+   *  error state instead of the empty-conversations affordance. */
+  storeUnavailable?: boolean;
 }
 
 /** Extract the first text content from a UIMessage's parts array. */
@@ -174,6 +179,7 @@ function ConversationSidebar({
   onRename,
   onTogglePin,
   searchRef,
+  storeUnavailable = false,
 }: ConversationSidebarProps) {
   const [query, setQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -260,10 +266,24 @@ function ConversationSidebar({
       <Separator />
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-1 p-2">
-          {filtered.length === 0 && (
-            <p className="text-muted-foreground px-3 py-6 text-center text-sm">
+          {filtered.length === 0 && !storeUnavailable && (
+            <p
+              className="text-muted-foreground px-3 py-6 text-center text-sm"
+              data-testid="sidebar-empty-text"
+            >
               {query ? 'No matching conversations' : 'No conversations yet'}
             </p>
+          )}
+          {filtered.length === 0 && storeUnavailable && (
+            <div
+              className="flex flex-col items-center gap-2 px-3 py-6 text-center"
+              data-testid="sidebar-store-error"
+            >
+              <AlertTriangle className="text-destructive h-5 w-5" />
+              <p className="text-muted-foreground text-xs">
+                History unavailable — reload to retry.
+              </p>
+            </div>
           )}
           {filtered.map(({ conv, excerpt }) => {
             const agent = agents.find((a) => a.id === conv.agentId);
@@ -537,6 +557,76 @@ function WelcomeState({ agent, graphSummary, onSendPrompt }: WelcomeStateProps) 
 }
 
 // ============================================================================
+// Empty conversations state (no conversations; daemon is reachable)
+// ============================================================================
+
+interface EmptyConversationsStateProps {
+  onNew: () => void;
+}
+
+function EmptyConversationsState({ onNew }: EmptyConversationsStateProps) {
+  return (
+    <div
+      className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center"
+      data-testid="empty-conversations-state"
+    >
+      <div className="bg-muted mx-auto flex h-16 w-16 items-center justify-center rounded-full">
+        <MessageSquare className="text-muted-foreground h-8 w-8" />
+      </div>
+      <div>
+        <h2 className="mb-1 text-lg font-semibold">No conversations yet</h2>
+        <p className="text-muted-foreground text-sm">
+          Start a new chat to begin a conversation with your AI security assistant.
+        </p>
+      </div>
+      <Button onClick={onNew} size="sm" variant="outline">
+        <Plus className="mr-2 h-4 w-4" />
+        New Chat
+      </Button>
+    </div>
+  );
+}
+
+// ============================================================================
+// Conversation store unavailable error state
+// ============================================================================
+
+/**
+ * Shown when the daemon's conversation store is unreachable (codes.Unavailable /
+ * codes.Internal). Visually distinct from the empty-conversations state so the
+ * user is never left thinking their history is gone when the daemon is simply
+ * down or starting up.
+ */
+function ConversationStoreErrorState() {
+  return (
+    <div
+      className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center"
+      data-testid="conversation-store-error-state"
+    >
+      <div className="bg-destructive/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full">
+        <AlertTriangle className="text-destructive h-8 w-8" />
+      </div>
+      <div>
+        <h2 className="mb-1 text-lg font-semibold">Conversation history unavailable</h2>
+        <p className="text-muted-foreground text-sm">
+          Your conversation history could not be loaded. The service may be
+          starting up — reload the page to try again. Your existing
+          conversations are not lost.
+        </p>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => window.location.reload()}
+      >
+        <RefreshCw className="mr-2 h-4 w-4" />
+        Reload
+      </Button>
+    </div>
+  );
+}
+
+// ============================================================================
 // Mermaid syntax highlighter for MarkdownTextPrimitive
 // ============================================================================
 
@@ -623,12 +713,18 @@ export function UserMessage() {
       <div className="bg-primary text-primary-foreground max-w-[80%] rounded-lg px-4 py-2 text-sm">
         <MessagePrimitive.Parts components={{ Text: UserTextPart }} />
       </div>
-      {/* Edit affordance — truncates downstream and re-streams from the edited message */}
+      {/* Action bar — copy + edit; hidden while running or on non-last messages */}
       <ActionBarPrimitive.Root
         hideWhenRunning
         autohide="not-last"
         className="flex items-center gap-1 opacity-0 transition-opacity group-hover/message:opacity-100"
       >
+        <ActionBarPrimitive.Copy asChild>
+          <Button variant="ghost" size="icon" className="h-6 w-6">
+            <Copy className="h-3 w-3" />
+            <span className="sr-only">Copy</span>
+          </Button>
+        </ActionBarPrimitive.Copy>
         <ActionBarPrimitive.Edit asChild>
           <Button variant="ghost" size="icon" className="h-6 w-6">
             <Pencil className="h-3 w-3" />
@@ -838,6 +934,9 @@ export function ChatContent() {
     setLastError,
     togglePinConversation,
     updateConversationTitle,
+    conversationStoreError,
+    activeProviderName,
+    setActiveProviderName,
   } = useChatStore();
 
   const selectedAgent = useSelectedAgent();
@@ -846,6 +945,7 @@ export function ChatContent() {
   const [graphSummary, setGraphSummary] = useState<GraphSummaryResponse | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [providerError, setProviderError] = useState<string | null>(null);
+  const [streamError, setStreamError] = useState<string | null>(null);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [attachment, setAttachment] = useState<AttachmentState | null>(null);
   const [attachmentUploading, setAttachmentUploading] = useState(false);
@@ -865,10 +965,12 @@ export function ChatContent() {
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId);
 
-  // Keep a stable ref to setSystemPromptDebug so the fetch closure doesn't
-  // need to be recreated on every render.
+  // Keep stable refs to store setters so the fetch closure doesn't need to
+  // be recreated on every render.
   const setDebugRef = useRef(setSystemPromptDebug);
   setDebugRef.current = setSystemPromptDebug;
+  const setActiveProviderRef = useRef(setActiveProviderName);
+  setActiveProviderRef.current = setActiveProviderName;
 
   // Transport — recreated only when the debug flag changes. The body callback
   // and fetch wrapper read the latest attachment / debug state from refs so we
@@ -888,6 +990,11 @@ export function ChatContent() {
           if (debugPayload) {
             setDebugRef.current(decodeURIComponent(debugPayload));
           }
+          // Capture the resolved provider name for visibility in the header.
+          const activeProvider = response.headers.get('X-Gibson-Active-Provider');
+          if (activeProvider) {
+            setActiveProviderRef.current(activeProvider);
+          }
           return response;
         },
       }),
@@ -906,17 +1013,21 @@ export function ChatContent() {
         setProviderError(
           'No LLM provider configured. Go to Settings > Providers to set up your API key.',
         );
+      } else {
+        // Surface a transient error banner with a retry affordance.
+        setStreamError(err.message);
       }
     },
     onFinish: () => {
       setConnectionStatus('connected');
       setLastError(null);
+      setStreamError(null);
       // Attachments are single-use; clear once the message round-trip finishes.
       setAttachment(null);
     },
   });
 
-  const { messages, status, setMessages } = aiChat;
+  const { messages, status, setMessages, regenerate } = aiChat;
 
   // Single effect that tracks all status transitions relevant to persistence.
   //
@@ -1158,6 +1269,7 @@ export function ChatContent() {
       onRename={handleRename}
       onTogglePin={togglePinConversation}
       searchRef={searchInputRef}
+      storeUnavailable={conversationStoreError}
     />
   );
 
@@ -1213,6 +1325,18 @@ export function ChatContent() {
               onSelect={handleSelectAgent}
             />
 
+            {/* Active provider / model visibility */}
+            {activeProviderName && (
+              <Badge
+                variant="secondary"
+                className="hidden gap-1.5 text-xs sm:flex"
+                aria-label={`Active provider: ${activeProviderName}`}
+              >
+                <Cpu className="h-3 w-3" />
+                {activeProviderName}
+              </Badge>
+            )}
+
             <div className="flex-1" />
 
             {/* Graph context badge */}
@@ -1259,38 +1383,81 @@ export function ChatContent() {
 
           {/* Messages area */}
           <div className="relative flex-1 overflow-hidden">
-            {/* Welcome state when thread is empty */}
-            <ThreadPrimitive.If empty>
-              <WelcomeState
-                agent={selectedAgent}
-                graphSummary={graphSummary}
-                onSendPrompt={handleSuggestion}
-              />
-            </ThreadPrimitive.If>
+            {/* Conversation store unavailable — shown when the daemon could not
+                be reached on page load; distinctly different from the empty state */}
+            {conversationStoreError && conversations.length === 0 && (
+              <ConversationStoreErrorState />
+            )}
 
-            {/* Message list */}
-            <ThreadPrimitive.If empty={false}>
-              <ThreadPrimitive.Viewport className="h-full overflow-y-auto px-4 py-4">
-                <ThreadPrimitive.Messages
-                  components={{
-                    UserMessage,
-                    AssistantMessage,
-                  }}
-                />
-                {/* Scroll-to-bottom button */}
-                <ThreadPrimitive.ScrollToBottom asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute bottom-4 left-1/2 h-8 w-8 -translate-x-1/2 rounded-full"
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                    <span className="sr-only">Scroll to bottom</span>
-                  </Button>
-                </ThreadPrimitive.ScrollToBottom>
-              </ThreadPrimitive.Viewport>
-            </ThreadPrimitive.If>
+            {/* No conversations yet (daemon is reachable, user just has none) */}
+            {!conversationStoreError && conversations.length === 0 && (
+              <EmptyConversationsState onNew={handleNewConversation} />
+            )}
+
+            {/* Active conversation — welcome state when thread is empty */}
+            {conversations.length > 0 && (
+              <>
+                <ThreadPrimitive.If empty>
+                  <WelcomeState
+                    agent={selectedAgent}
+                    graphSummary={graphSummary}
+                    onSendPrompt={handleSuggestion}
+                  />
+                </ThreadPrimitive.If>
+
+                {/* Message list */}
+                <ThreadPrimitive.If empty={false}>
+                  <ThreadPrimitive.Viewport className="h-full overflow-y-auto px-4 py-4">
+                    <ThreadPrimitive.Messages
+                      components={{
+                        UserMessage,
+                        AssistantMessage,
+                      }}
+                    />
+                    {/* Scroll-to-bottom — auto-scrolls during streaming; visible
+                        only when the user has scrolled up (auto-scroll is paused).
+                        Clicking it jumps to the latest message and resumes auto-scroll. */}
+                    <ThreadPrimitive.ScrollToBottom asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="absolute bottom-4 left-1/2 h-8 w-8 -translate-x-1/2 rounded-full"
+                        aria-label="Jump to latest message"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                        <span className="sr-only">Jump to latest message</span>
+                      </Button>
+                    </ThreadPrimitive.ScrollToBottom>
+                  </ThreadPrimitive.Viewport>
+                </ThreadPrimitive.If>
+              </>
+            )}
           </div>
+
+          {/* Transient stream error banner with retry affordance.
+              Retry calls aiChat.regenerate() which re-submits the last turn —
+              the AI SDK v6 equivalent of reloading after an error. */}
+          {streamError && !providerError && (
+            <div className="flex items-center justify-between border-t border-destructive/30 bg-destructive/10 px-4 py-2 text-sm">
+              <span className="text-destructive flex items-center gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                {streamError}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-2 h-7 shrink-0 text-xs"
+                onClick={() => {
+                  setStreamError(null);
+                  void regenerate();
+                }}
+                aria-label="Retry last message"
+              >
+                <RefreshCw className="mr-1.5 h-3 w-3" />
+                Retry
+              </Button>
+            </div>
+          )}
 
           {/* Provider error banner */}
           {providerError && (

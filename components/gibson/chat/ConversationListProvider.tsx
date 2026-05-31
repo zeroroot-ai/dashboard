@@ -5,11 +5,13 @@
  * daemon (via UserService.ListConversations) and passes the hydrated list
  * to ConversationListHydrator for merge into the Zustand chat store.
  *
- * Rendering failures are caught and silenced — the chat page must always
- * render even when the daemon is unreachable (the user still gets an empty
- * conversation list, not an error page).
+ * When the daemon is unreachable (codes.Unavailable / codes.Internal), the
+ * component passes `storeUnavailable={true}` to the hydrator so the chat UI
+ * can render a distinct error state — never a silent empty list that looks
+ * like data loss.
  *
  * spec: chat-conversation-persistence (dashboard#446)
+ * spec: chat-interaction-polish (dashboard#554)
  */
 
 import { listConversations } from '@/src/lib/gibson-client';
@@ -22,6 +24,7 @@ interface ConversationListProviderProps {
 
 export async function ConversationListProvider({ children }: ConversationListProviderProps) {
   let conversations: Conversation[] = [];
+  let storeUnavailable = false;
 
   try {
     const records = await listConversations(50);
@@ -38,13 +41,17 @@ export async function ConversationListProvider({ children }: ConversationListPro
       title: r.title || 'Conversation',
     }));
   } catch {
-    // Daemon unreachable or unauthenticated — degrade gracefully.
-    // The chat page will still render; the store stays empty.
+    // Daemon unreachable or unauthenticated — mark the store as unavailable
+    // so the UI can show a distinct error state instead of an empty list.
+    storeUnavailable = true;
   }
 
   return (
     <>
-      <ConversationListHydrator conversations={conversations} />
+      <ConversationListHydrator
+        conversations={conversations}
+        storeUnavailable={storeUnavailable}
+      />
       {children}
     </>
   );

@@ -175,6 +175,9 @@ export async function POST(request: NextRequest): Promise<Response> {
       },
     });
     response.headers.set('X-Gibson-Trace-Id', crypto.randomUUID());
+    // Surface the resolved provider name so the client can display which
+    // provider/model is answering the active conversation.
+    response.headers.set('X-Gibson-Active-Provider', providerName);
     if (debugRequested) {
       const debugPayload = system.slice(0, 8192); // 8 KB cap
       response.headers.set('X-Gibson-System-Prompt-Debug', encodeURIComponent(debugPayload));
