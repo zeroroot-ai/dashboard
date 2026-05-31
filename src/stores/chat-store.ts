@@ -68,6 +68,24 @@ export interface ChatState {
   // (no persistence) — feedback for past sessions isn't a use case.
   currentTraceId: string | null;
 
+  /**
+   * True when the daemon conversation store (UserService.ListConversations)
+   * returned codes.Unavailable or codes.Internal on page load. Distinct from
+   * an empty conversation list (zero conversations) — this flag means the
+   * history could not be fetched at all, not that the user has no history.
+   *
+   * The chat page renders a distinct error state when this is true, so the
+   * user is never silently shown an empty history that looks like data loss.
+   */
+  conversationStoreError: boolean;
+
+  /**
+   * The provider name resolved by the most recent successful chat stream.
+   * Read from the X-Gibson-Active-Provider response header.
+   * Displayed in the chat header as provider/model visibility.
+   */
+  activeProviderName: string | null;
+
   // Debug
   systemPromptDebug: string | null;
 
@@ -136,6 +154,10 @@ export interface ChatState {
   // Actions - Trace
   setCurrentTraceId: (id: string | null) => void;
 
+  // Actions - Store error / provider visibility
+  setConversationStoreError: (error: boolean) => void;
+  setActiveProviderName: (name: string | null) => void;
+
   // Actions - Debug
   setSystemPromptDebug: (value: string | null) => void;
 
@@ -201,6 +223,8 @@ export const useChatStore = create<ChatState>()(
       connectionStatus: 'disconnected',
       lastError: null,
       currentTraceId: null,
+      conversationStoreError: false,
+      activeProviderName: null,
       systemPromptDebug: null,
 
       // Conversation actions
@@ -384,6 +408,14 @@ export const useChatStore = create<ChatState>()(
 
       setCurrentTraceId: (id) => {
         set({ currentTraceId: id });
+      },
+
+      setConversationStoreError: (error) => {
+        set({ conversationStoreError: error });
+      },
+
+      setActiveProviderName: (name) => {
+        set({ activeProviderName: name });
       },
 
       // Debug actions
