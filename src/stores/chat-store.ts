@@ -77,6 +77,19 @@ export interface ChatState {
   deleteConversation: (id: string) => void;
   clearConversations: () => void;
   saveMessages: (conversationId: string, messages: UIMessage[]) => void;
+  /**
+   * Finalize an in-progress (partially streamed) assistant message.
+   *
+   * Called when the user stops a stream mid-flight. The provided `messages`
+   * array is the snapshot from the AI SDK at the moment of stop — it already
+   * contains the partial assistant text. This action writes that snapshot
+   * atomically to the conversation in Zustand, identical to `saveMessages`,
+   * but is named distinctly so call-sites and tests can express intent clearly.
+   *
+   * Idempotent: calling it multiple times with the same messages array is safe
+   * and always results in a single, consistent conversation record.
+   */
+  finalizePartialMessage: (conversationId: string, messages: UIMessage[]) => void;
   hydrateConversations: (conversations: Conversation[]) => void;
   updateConversationTitle: (id: string, title: string) => void;
   togglePinConversation: (id: string) => void;
@@ -209,6 +222,26 @@ export const useChatStore = create<ChatState>()(
       },
 
       saveMessages: (conversationId, messages) => {
+        set((state) => ({
+          conversations: state.conversations.map((conv) =>
+            conv.id === conversationId
+              ? {
+                  ...conv,
+                  messages,
+                  lastMessageAt: new Date(),
+                }
+              : conv
+          ),
+        }));
+      },
+
+      finalizePartialMessage: (conversationId, messages) => {
+        // Atomic replacement of the message list. The messages array from the
+        // AI SDK already contains the partial assistant text at the moment of
+        // stop — we do not need to mutate any individual message; the SDK has
+        // already materialized the streamed content into the parts array.
+        // Using the same replacement semantics as saveMessages ensures there
+        // is never a dangling partial or a duplicate entry.
         set((state) => ({
           conversations: state.conversations.map((conv) =>
             conv.id === conversationId
