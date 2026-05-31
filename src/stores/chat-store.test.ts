@@ -1,5 +1,5 @@
 /**
- * Chat Store — pin, rename, and stop+persist-partial unit tests
+ * Chat Store — pin, rename, stop+persist-partial, and edit+regenerate unit tests
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -257,5 +257,194 @@ describe('Chat Store — stopped message reloads intact via saveMessages', () =>
     expect(textPart).toBeDefined();
     // The partial text is preserved exactly once — no truncation, no duplication.
     expect(textPart!.text).toBe('X is a concept that encompasses many fields. In particular');
+  });
+});
+
+// ============================================================================
+// Edit + regenerate — truncateMessages
+// ============================================================================
+
+describe('Chat Store — truncateMessages (edit/regenerate)', () => {
+  const userMsg1 = makeMsg('u1', 'user', 'First question');
+  const assistantMsg1 = makeMsg('a1', 'assistant', 'First answer');
+  const userMsg2 = makeMsg('u2', 'user', 'Follow-up question');
+  const assistantMsg2 = makeMsg('a2', 'assistant', 'Follow-up answer');
+
+  beforeEach(() => {
+    useChatStore.setState({
+      conversations: [
+        makeConv('conv-edit', {
+          messages: [userMsg1, assistantMsg1, userMsg2, assistantMsg2],
+        }),
+        makeConv('conv-other', { messages: [makeMsg('o1', 'user', 'Other')] }),
+      ],
+    });
+  });
+
+  it('truncates downstream messages when editing a user message (keep up to and including the edited message)', () => {
+    // Edit userMsg2 at index 2 — this should drop assistantMsg2 (index 3)
+    useChatStore.getState().truncateMessages('conv-edit', 2);
+    const msgs = useChatStore.getState().conversations.find((c) => c.id === 'conv-edit')!.messages;
+    expect(msgs).toHaveLength(3); // u1, a1, u2
+    expect(msgs[2].id).toBe('u2');
+  });
+
+  it('truncating to the first message leaves exactly one message', () => {
+    useChatStore.getState().truncateMessages('conv-edit', 0);
+    const msgs = useChatStore.getState().conversations.find((c) => c.id === 'conv-edit')!.messages;
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0].id).toBe('u1');
+  });
+
+  it('truncating to the last index leaves all messages unchanged', () => {
+    useChatStore.getState().truncateMessages('conv-edit', 3);
+    const msgs = useChatStore.getState().conversations.find((c) => c.id === 'conv-edit')!.messages;
+    expect(msgs).toHaveLength(4);
+  });
+
+  it('truncating to an out-of-range index is a no-op', () => {
+    useChatStore.getState().truncateMessages('conv-edit', 99);
+    const msgs = useChatStore.getState().conversations.find((c) => c.id === 'conv-edit')!.messages;
+    expect(msgs).toHaveLength(4);
+  });
+
+  it('truncating to a negative index is a no-op', () => {
+    useChatStore.getState().truncateMessages('conv-edit', -1);
+    const msgs = useChatStore.getState().conversations.find((c) => c.id === 'conv-edit')!.messages;
+    expect(msgs).toHaveLength(4);
+  });
+
+  it('does not affect other conversations', () => {
+    useChatStore.getState().truncateMessages('conv-edit', 1);
+    const otherMsgs = useChatStore.getState().conversations.find((c) => c.id === 'conv-other')!.messages;
+    expect(otherMsgs).toHaveLength(1);
+  });
+});
+
+// ============================================================================
+// Edit + regenerate — editMessageText
+// ============================================================================
+
+describe('Chat Store — editMessageText', () => {
+  const userMsg = makeMsg('u1', 'user', 'Original text');
+  const assistantMsg = makeMsg('a1', 'assistant', 'Some answer');
+
+  beforeEach(() => {
+    useChatStore.setState({
+      conversations: [
+        makeConv('conv-edit2', { messages: [userMsg, assistantMsg] }),
+      ],
+    });
+  });
+
+  it('replaces the text of the targeted user message', () => {
+    useChatStore.getState().editMessageText('conv-edit2', 'u1', 'Updated text');
+    const msgs = useChatStore.getState().conversations.find((c) => c.id === 'conv-edit2')!.messages;
+    const textPart = msgs[0].parts.find((p) => p.type === 'text') as
+      | { type: 'text'; text: string }
+      | undefined;
+    expect(textPart?.text).toBe('Updated text');
+  });
+
+  it('leaves messages for an unknown messageId untouched', () => {
+    useChatStore.getState().editMessageText('conv-edit2', 'nonexistent', 'Changed');
+    const msgs = useChatStore.getState().conversations.find((c) => c.id === 'conv-edit2')!.messages;
+    const textPart = msgs[0].parts.find((p) => p.type === 'text') as
+      | { type: 'text'; text: string }
+      | undefined;
+    expect(textPart?.text).toBe('Original text');
+  });
+
+  it('does not modify the assistant message when editing the user message', () => {
+    useChatStore.getState().editMessageText('conv-edit2', 'u1', 'New question');
+    const msgs = useChatStore.getState().conversations.find((c) => c.id === 'conv-edit2')!.messages;
+    const assistantPart = msgs[1].parts.find((p) => p.type === 'text') as
+      | { type: 'text'; text: string }
+      | undefined;
+    expect(assistantPart?.text).toBe('Some answer');
+  });
+});
+
+// ============================================================================
+// Edit + regenerate — full edit-truncate-persist sequence
+// ============================================================================
+
+describe('Chat Store — edit-and-regenerate full sequence', () => {
+  const u1 = makeMsg('u1', 'user', 'What is X?');
+  const a1 = makeMsg('a1', 'assistant', 'X is a thing');
+  const u2 = makeMsg('u2', 'user', 'Tell me more about Y');
+  const a2 = makeMsg('a2', 'assistant', 'Y is another thing');
+
+  beforeEach(() => {
+    useChatStore.setState({
+      conversations: [
+        makeConv('conv-seq', { messages: [u1, a1, u2, a2] }),
+      ],
+    });
+  });
+
+  it('edit user message + truncate downstream + re-stream produces coherent thread', () => {
+    // Step 1: edit the second user message text
+    useChatStore.getState().editMessageText('conv-seq', 'u2', 'Tell me about Z instead');
+
+    // Step 2: truncate everything after the edited user message (index 2)
+    useChatStore.getState().truncateMessages('conv-seq', 2);
+
+    // After truncation: [u1, a1, u2-edited]; no downstream assistant message
+    const afterTruncate = useChatStore.getState().conversations.find((c) => c.id === 'conv-seq')!.messages;
+    expect(afterTruncate).toHaveLength(3);
+    expect(afterTruncate[2].id).toBe('u2');
+    const editedPart = afterTruncate[2].parts.find((p) => p.type === 'text') as
+      | { type: 'text'; text: string }
+      | undefined;
+    expect(editedPart?.text).toBe('Tell me about Z instead');
+
+    // Step 3: simulate re-stream completion — finalizePartialMessage writes the
+    // new assistant response (no a2; new a3 replaces it)
+    const newAssistant = makeMsg('a3', 'assistant', 'Z is a completely different topic');
+    const newMessages: UIMessage[] = [u1, a1, { ...u2, parts: [{ type: 'text', text: 'Tell me about Z instead' }] } as UIMessage, newAssistant];
+    useChatStore.getState().finalizePartialMessage('conv-seq', newMessages);
+
+    const final = useChatStore.getState().conversations.find((c) => c.id === 'conv-seq')!.messages;
+    // Exactly 4 messages — no orphaned a2
+    expect(final).toHaveLength(4);
+    expect(final[3].id).toBe('a3');
+    expect(final.find((m) => m.id === 'a2')).toBeUndefined();
+  });
+
+  it('regenerate assistant message produces coherent thread with no duplicate assistant response', () => {
+    // Regenerate = truncate up to and including the preceding user message (index 2)
+    // then re-stream. Simulate: truncate to index 2 (u2), then finalize with new assistant.
+    useChatStore.getState().truncateMessages('conv-seq', 2);
+
+    const newAssistant = makeMsg('a3', 'assistant', 'A regenerated answer about Y');
+    const regenMessages: UIMessage[] = [u1, a1, u2, newAssistant];
+    useChatStore.getState().finalizePartialMessage('conv-seq', regenMessages);
+
+    const final = useChatStore.getState().conversations.find((c) => c.id === 'conv-seq')!.messages;
+    // Exactly 4 messages — no duplicate a2 + a3
+    expect(final).toHaveLength(4);
+    expect(final[3].id).toBe('a3');
+    expect(final.find((m) => m.id === 'a2')).toBeUndefined();
+  });
+
+  it('new thread persists and survives reload: finalizePartialMessage is the single write path', () => {
+    // Simulate full edit-then-complete cycle
+    useChatStore.getState().editMessageText('conv-seq', 'u1', 'What is A?');
+    useChatStore.getState().truncateMessages('conv-seq', 0);
+
+    const editedU1 = makeMsg('u1', 'user', 'What is A?');
+    const newA1 = makeMsg('a1-new', 'assistant', 'A is the first letter');
+    useChatStore.getState().finalizePartialMessage('conv-seq', [editedU1, newA1]);
+
+    // Reload simulation: read from store
+    const stored = useChatStore.getState().conversations.find((c) => c.id === 'conv-seq')!.messages;
+    expect(stored).toHaveLength(2);
+
+    const storedTextPart = stored[0].parts.find((p) => p.type === 'text') as
+      | { type: 'text'; text: string }
+      | undefined;
+    expect(storedTextPart?.text).toBe('What is A?');
+    expect(stored[1].id).toBe('a1-new');
   });
 });
