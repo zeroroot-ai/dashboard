@@ -90,6 +90,31 @@ export interface ChatState {
    * and always results in a single, consistent conversation record.
    */
   finalizePartialMessage: (conversationId: string, messages: UIMessage[]) => void;
+  /**
+   * Truncate a conversation's message list to include only messages up to and
+   * including the message at `upToIndex` (0-based). All messages after that
+   * index are dropped atomically.
+   *
+   * This is the store mirror of what `useAISDKRuntime`'s `onEdit`/`onReload`
+   * does to the AI SDK's own messages array before re-streaming: truncate first,
+   * then submit. Calling `truncateMessages` on the store ensures Zustand stays
+   * coherent with the AI SDK state so that if the page reloads between truncate
+   * and re-stream completion no orphaned downstream messages survive.
+   *
+   * The action is a no-op when `upToIndex` is out of range or the conversation
+   * does not exist.
+   */
+  truncateMessages: (conversationId: string, upToIndex: number) => void;
+  /**
+   * Edit the text of a specific user message in a conversation.
+   *
+   * Replaces the first text part of the message at `messageIndex` with
+   * `newText`. Does not truncate downstream messages — callers that need
+   * truncation should call `truncateMessages` after editing.
+   *
+   * The action is a no-op when the message is not found or has no text part.
+   */
+  editMessageText: (conversationId: string, messageId: string, newText: string) => void;
   hydrateConversations: (conversations: Conversation[]) => void;
   updateConversationTitle: (id: string, title: string) => void;
   togglePinConversation: (id: string) => void;
@@ -252,6 +277,42 @@ export const useChatStore = create<ChatState>()(
                 }
               : conv
           ),
+        }));
+      },
+
+      truncateMessages: (conversationId, upToIndex) => {
+        set((state) => ({
+          conversations: state.conversations.map((conv) => {
+            if (conv.id !== conversationId) return conv;
+            if (upToIndex < 0 || upToIndex >= conv.messages.length) return conv;
+            return {
+              ...conv,
+              messages: conv.messages.slice(0, upToIndex + 1),
+              lastMessageAt: new Date(),
+            };
+          }),
+        }));
+      },
+
+      editMessageText: (conversationId, messageId, newText) => {
+        set((state) => ({
+          conversations: state.conversations.map((conv) => {
+            if (conv.id !== conversationId) return conv;
+            const msgIdx = conv.messages.findIndex((m) => m.id === messageId);
+            if (msgIdx === -1) return conv;
+            const updated = conv.messages.map((msg, idx) => {
+              if (idx !== msgIdx) return msg;
+              // Replace the first text part; leave all other parts intact.
+              const parts = msg.parts.map((part, pIdx) => {
+                if (part.type === 'text' && pIdx === msg.parts.findIndex((p) => p.type === 'text')) {
+                  return { ...part, text: newText };
+                }
+                return part;
+              });
+              return { ...msg, parts };
+            });
+            return { ...conv, messages: updated };
+          }),
         }));
       },
 

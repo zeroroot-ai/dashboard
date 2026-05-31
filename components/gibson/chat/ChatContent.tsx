@@ -619,10 +619,23 @@ function UserTextPart({ text }: TextMessagePartProps) {
 
 export function UserMessage() {
   return (
-    <MessagePrimitive.Root className="mb-4 flex flex-row-reverse items-end gap-2">
+    <MessagePrimitive.Root className="group/message mb-4 flex flex-row-reverse items-end gap-2">
       <div className="bg-primary text-primary-foreground max-w-[80%] rounded-lg px-4 py-2 text-sm">
         <MessagePrimitive.Parts components={{ Text: UserTextPart }} />
       </div>
+      {/* Edit affordance — truncates downstream and re-streams from the edited message */}
+      <ActionBarPrimitive.Root
+        hideWhenRunning
+        autohide="not-last"
+        className="flex items-center gap-1 opacity-0 transition-opacity group-hover/message:opacity-100"
+      >
+        <ActionBarPrimitive.Edit asChild>
+          <Button variant="ghost" size="icon" className="h-6 w-6">
+            <Pencil className="h-3 w-3" />
+            <span className="sr-only">Edit message</span>
+          </Button>
+        </ActionBarPrimitive.Edit>
+      </ActionBarPrimitive.Root>
     </MessagePrimitive.Root>
   );
 }
@@ -820,6 +833,7 @@ export function ChatContent() {
     createConversation,
     deleteConversation,
     finalizePartialMessage,
+    saveMessages,
     setConnectionStatus,
     setLastError,
     togglePinConversation,
@@ -904,38 +918,52 @@ export function ChatContent() {
 
   const { messages, status, setMessages } = aiChat;
 
-  // Persist messages to Zustand (and daemon) when streaming completes.
-  // This fires on BOTH natural completion and user-initiated stop: the AI SDK
-  // transitions status streaming → ready in both cases with the partial (or
-  // full) assistant message already materialized in the messages array.
-  // `finalizePartialMessage` and `saveMessages` share the same replacement
-  // semantics (atomic full-list write) so either path is idempotent and
-  // produces exactly one consistent record — no dangling or duplicate message.
+  // Single effect that tracks all status transitions relevant to persistence.
+  //
+  // ready → submitted:
+  //   The assistant-ui runtime has already called setMessages to truncate the
+  //   AI SDK's messages array (onEdit/onReload handlers). Mirror that truncated
+  //   snapshot to Zustand immediately so a reload during re-stream can't
+  //   resurrect orphaned downstream messages from the persisted state.
+  //
+  // streaming → ready:
+  //   Streaming completed (naturally or via user stop). Write the full message
+  //   list to Zustand and persist to the daemon via SaveConversation RPC.
+  //   finalizePartialMessage has atomic-replacement semantics — no dangling or
+  //   duplicate messages regardless of how many times this fires.
   const prevStatusRef = useRef(status);
   useEffect(() => {
-    if (prevStatusRef.current === 'streaming' && status === 'ready') {
-      const convId = activeConvRef.current;
-      if (convId && messages.length > 0) {
-        // Write to Zustand — finalizePartialMessage covers both the stop case
-        // and natural-completion case with the same atomic replacement semantics.
-        finalizePartialMessage(convId, messages);
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = status;
 
-        // Persist to the daemon conversation store so the partial (or full)
-        // response survives reload. Fire-and-forget: RPC failures degrade
-        // silently; the conversation remains in Zustand for the current session.
-        const conv = useChatStore.getState().conversations.find((c) => c.id === convId);
-        if (conv) {
-          void saveConversationAction(
-            convId,
-            conv.title ?? `Conversation ${convId}`,
-            messages,
-            conv.agentId,
-          );
-        }
+    const convId = activeConvRef.current;
+    if (!convId || messages.length === 0) return;
+
+    if (prev === 'ready' && status === 'submitted') {
+      // Mirror the already-truncated AI SDK messages to Zustand so the store
+      // is coherent before re-stream begins.
+      saveMessages(convId, messages);
+      return;
+    }
+
+    if (prev === 'streaming' && status === 'ready') {
+      // Atomic write of the completed (or stopped) message list to Zustand.
+      finalizePartialMessage(convId, messages);
+
+      // Persist to the daemon conversation store so the response (partial or
+      // full) survives reload. Fire-and-forget: RPC failures degrade silently;
+      // the conversation remains in Zustand for the current session.
+      const conv = useChatStore.getState().conversations.find((c) => c.id === convId);
+      if (conv) {
+        void saveConversationAction(
+          convId,
+          conv.title ?? `Conversation ${convId}`,
+          messages,
+          conv.agentId,
+        );
       }
     }
-    prevStatusRef.current = status;
-  }, [status, messages, finalizePartialMessage]);
+  }, [status, messages, saveMessages, finalizePartialMessage]);
 
   // Update connection status
   useEffect(() => {
