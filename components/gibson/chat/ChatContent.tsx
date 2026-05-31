@@ -71,7 +71,7 @@ import {
   useChatGraphContext,
 } from '@/src/stores/chat-store';
 import type { Conversation, ChatAgent, GraphContext } from '@/src/stores/chat-store';
-import { renameConversation, deleteConversationAction } from '@/app/actions/chat';
+import { renameConversation, deleteConversationAction, saveConversationAction } from '@/app/actions/chat';
 import type { GraphSummaryResponse } from '@/src/lib/graph/summary';
 import { SystemPromptDebugPanel } from '@/components/gibson/chat/SystemPromptDebugPanel';
 import { GraphCitationChip } from './GraphCitationChip';
@@ -819,7 +819,7 @@ export function ChatContent() {
     setActiveConversation,
     createConversation,
     deleteConversation,
-    saveMessages,
+    finalizePartialMessage,
     setConnectionStatus,
     setLastError,
     togglePinConversation,
@@ -904,16 +904,38 @@ export function ChatContent() {
 
   const { messages, status, setMessages } = aiChat;
 
-  // Persist messages to Zustand when streaming completes
+  // Persist messages to Zustand (and daemon) when streaming completes.
+  // This fires on BOTH natural completion and user-initiated stop: the AI SDK
+  // transitions status streaming → ready in both cases with the partial (or
+  // full) assistant message already materialized in the messages array.
+  // `finalizePartialMessage` and `saveMessages` share the same replacement
+  // semantics (atomic full-list write) so either path is idempotent and
+  // produces exactly one consistent record — no dangling or duplicate message.
   const prevStatusRef = useRef(status);
   useEffect(() => {
     if (prevStatusRef.current === 'streaming' && status === 'ready') {
-      if (activeConvRef.current && messages.length > 0) {
-        saveMessages(activeConvRef.current, messages);
+      const convId = activeConvRef.current;
+      if (convId && messages.length > 0) {
+        // Write to Zustand — finalizePartialMessage covers both the stop case
+        // and natural-completion case with the same atomic replacement semantics.
+        finalizePartialMessage(convId, messages);
+
+        // Persist to the daemon conversation store so the partial (or full)
+        // response survives reload. Fire-and-forget: RPC failures degrade
+        // silently; the conversation remains in Zustand for the current session.
+        const conv = useChatStore.getState().conversations.find((c) => c.id === convId);
+        if (conv) {
+          void saveConversationAction(
+            convId,
+            conv.title ?? `Conversation ${convId}`,
+            messages,
+            conv.agentId,
+          );
+        }
       }
     }
     prevStatusRef.current = status;
-  }, [status, messages, saveMessages]);
+  }, [status, messages, finalizePartialMessage]);
 
   // Update connection status
   useEffect(() => {
