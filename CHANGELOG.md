@@ -5,6 +5,18 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.111.0](https://github.com/zeroroot-ai/dashboard/compare/v0.110.0...v0.111.0) (2026-06-01)
+
+
+### Features
+
+* **authz:** route UI gates through useAuthorize and delete usePermitted (closes [#604](https://github.com/zeroroot-ai/dashboard/issues/604)) ([#610](https://github.com/zeroroot-ai/dashboard/issues/610)) ([ca81676](https://github.com/zeroroot-ai/dashboard/commit/ca816768e68bc6c056a660db6a13f2ef63dce41b))
+
+
+### Bug Fixes
+
+* **nav:** dedupe Members entry and remove the GetBrokerConfig mis-gate (closes [#606](https://github.com/zeroroot-ai/dashboard/issues/606)) ([#612](https://github.com/zeroroot-ai/dashboard/issues/612)) ([01f539d](https://github.com/zeroroot-ai/dashboard/commit/01f539da18c4cb3e4cc7686fd9902ea3722617d6))
+
 ## [0.110.0](https://github.com/zeroroot-ai/dashboard/compare/v0.109.0...v0.110.0) (2026-06-01)
 
 
