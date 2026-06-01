@@ -93,7 +93,7 @@ export class GibsonLLMAdapter implements LanguageModelV2 {
 
     const stream = new ReadableStream<LanguageModelV2StreamPart>({
       start(controller) {
-        for (const part of daemonResponseToVercelStreamParts(resp)) {
+        for (const part of daemonResponseToVercelStreamParts(resp, warnings)) {
           controller.enqueue(part);
         }
         controller.close();
@@ -424,20 +424,37 @@ export function mapUsage(u?: DaemonLLMUsage): LanguageModelV2Usage {
  *
  * ADR-0037: StreamLLM was removed from TenantService. doStream is implemented
  * by wrapping the single ExecuteLLM response. The emitted sequence is:
- *   - one `text-delta` part for the text content (if any)
- *   - one `tool-input-start` + one `tool-input-delta` per tool call (if any)
+ *   - one `stream-start` part carrying any call warnings
+ *   - `text-start` → `text-delta` → `text-end` for the text content (if any)
+ *   - `tool-input-start` → `tool-input-delta` → `tool-input-end` → `tool-call`
+ *     per tool call (if any)
  *   - one `finish` part carrying finishReason + usage
+ *
+ * The `text-start` / `text-end` framing is mandatory: the AI SDK
+ * (`@ai-sdk/provider` v2 stream contract) drops any `text-delta` whose `id`
+ * was not opened by a preceding `text-start` ("Received text-delta for missing
+ * text part"). Emitting a bare `text-delta` — as this function previously did —
+ * made `streamText` discard the assistant text entirely, so the chat UI
+ * rendered an empty reply even though ExecuteLLM returned content.
  *
  * A future streaming RPC will restore incremental token delivery; the shape
  * of this sequence is already compatible with the future streaming consumer.
  */
 export function daemonResponseToVercelStreamParts(
   resp: DaemonExecuteLLMResponse,
+  warnings: LanguageModelV2CallWarning[] = [],
 ): LanguageModelV2StreamPart[] {
   const parts: LanguageModelV2StreamPart[] = [];
 
+  // The stream must open with stream-start; streamText reads call warnings
+  // from this part. It is consumed (not forwarded), so there is no duplication
+  // with the warnings returned separately by doStream.
+  parts.push({ type: 'stream-start', warnings });
+
   if (resp.content && resp.content.length > 0) {
+    parts.push({ type: 'text-start', id: TEXT_PART_ID });
     parts.push({ type: 'text-delta', id: TEXT_PART_ID, delta: resp.content });
+    parts.push({ type: 'text-end', id: TEXT_PART_ID });
   }
 
   for (let i = 0; i < resp.toolCalls.length; i++) {
@@ -452,6 +469,16 @@ export function daemonResponseToVercelStreamParts(
       type: 'tool-input-delta',
       id,
       delta: call.arguments,
+    });
+    parts.push({
+      type: 'tool-input-end',
+      id,
+    });
+    parts.push({
+      type: 'tool-call',
+      toolCallId: id,
+      toolName: call.name,
+      input: call.arguments,
     });
   }
 
