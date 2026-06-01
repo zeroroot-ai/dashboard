@@ -36,7 +36,6 @@ export async function createEnrollmentAction(input: {
   const inputKeys = Object.keys(input ?? {});
   const gate = await requireCrdSession<{ name: string }>({
     action: 'createEnrollmentAction',
-    permission: 'enrollments:create',
     tenantName: input?.tenantName,
     inputKeys,
   });
@@ -105,7 +104,6 @@ export async function revokeEnrollmentAction(
   const inputKeys = ['tenantName', 'name'];
   const gate = await requireCrdSession({
     action: 'revokeEnrollmentAction',
-    permission: 'enrollments:delete',
     tenantName,
     inputKeys,
   });
@@ -172,9 +170,7 @@ export async function fetchBootstrapTokenAction(
   const inputKeys = ['tenantName', 'name'];
   const gate = await requireCrdSession<{ token: string; platformUrl: string }>({
     action: 'fetchBootstrapTokenAction',
-    permission: 'enrollments:read_bootstrap',
     tenantName,
-    rateLimit: 'fetchBootstrapToken',
     inputKeys,
   });
   if (!gate.ok) return gate.result;

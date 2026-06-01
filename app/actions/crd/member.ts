@@ -32,9 +32,7 @@ export async function inviteMemberAction(input: {
   const inputKeys = Object.keys(input ?? {});
   const gate = await requireCrdSession<{ memberName: string }>({
     action: 'inviteMemberAction',
-    permission: 'members:invite',
     tenantName: input?.tenantName,
-    rateLimit: 'inviteMember',
     inputKeys,
   });
   if (!gate.ok) return gate.result;
@@ -168,7 +166,6 @@ export async function revokeMemberAction(
   const inputKeys = ['tenantName', 'memberName'];
   const gate = await requireCrdSession({
     action: 'revokeMemberAction',
-    permission: 'members:revoke',
     tenantName,
     inputKeys,
   });
@@ -269,9 +266,7 @@ export async function resendInvitationAction(
   const inputKeys = ['tenantName', 'memberName'];
   const gate = await requireCrdSession({
     action: 'resendInvitationAction',
-    permission: 'members:invite',
     tenantName,
-    rateLimit: 'inviteMember',
     inputKeys,
   });
   if (!gate.ok) return gate.result;

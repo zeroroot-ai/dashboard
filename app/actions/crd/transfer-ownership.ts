@@ -64,7 +64,6 @@ export async function transferOwnershipAction(
   const gate = await requireCrdSession<{ applied: boolean }>({
     action: "transferOwnershipAction",
     // TODO: replace with "org:transfer_ownership" once the RBAC schema has it.
-    permission: "members:invite",
     inputKeys: ["newOwnerUserId"],
   });
   if (!gate.ok) return gate.result;

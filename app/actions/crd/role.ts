@@ -75,7 +75,6 @@ export async function setTenantRoleAction(input: {
   }
   const gate = await requireCrdSession<{ applied: boolean }>({
     action: "setTenantRoleAction",
-    permission: "members:invite",
     inputKeys: ["userId", "role"],
   });
   if (!gate.ok) return gate.result;
@@ -162,7 +161,6 @@ export async function setTeamAdminAction(input: {
   }
   const gate = await requireCrdSession<{ applied: boolean }>({
     action: "setTeamAdminAction",
-    permission: "members:invite",
     inputKeys: ["teamId", "userId", "isAdmin"],
   });
   if (!gate.ok) return gate.result;

@@ -38,7 +38,6 @@ export interface TeamMember {
 export async function listTeamsAction(): Promise<ActionResult<Team[]>> {
   const gate = await requireCrdSession<Team[]>({
     action: "listTeamsAction",
-    permission: "members:invite",
   });
   if (!gate.ok) return gate.result;
 
@@ -89,7 +88,6 @@ export async function listTeamMembersAction(
   }
   const gate = await requireCrdSession<TeamMember[]>({
     action: "listTeamMembersAction",
-    permission: "members:invite",
     inputKeys: ["teamId"],
   });
   if (!gate.ok) return gate.result;
@@ -137,7 +135,6 @@ export async function createTeamAction(input: {
   }
   const gate = await requireCrdSession<Team>({
     action: "createTeamAction",
-    permission: "members:invite",
     inputKeys: ["teamId", "displayName"],
   });
   if (!gate.ok) return gate.result;
@@ -178,7 +175,6 @@ export async function deleteTeamAction(
   }
   const gate = await requireCrdSession<{ removed: number }>({
     action: "deleteTeamAction",
-    permission: "members:revoke",
     inputKeys: ["teamId"],
   });
   if (!gate.ok) return gate.result;
@@ -212,7 +208,6 @@ export async function addTeamMemberAction(input: {
   }
   const gate = await requireCrdSession<{ applied: boolean }>({
     action: "addTeamMemberAction",
-    permission: "members:invite",
     inputKeys: ["teamId", "userId", "asAdmin"],
   });
   if (!gate.ok) return gate.result;
@@ -252,7 +247,6 @@ export async function removeTeamMemberAction(input: {
 }): Promise<ActionResult<{ applied: boolean }>> {
   const gate = await requireCrdSession<{ applied: boolean }>({
     action: "removeTeamMemberAction",
-    permission: "members:revoke",
     inputKeys: ["teamId", "userId"],
   });
   if (!gate.ok) return gate.result;
