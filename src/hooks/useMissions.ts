@@ -14,11 +14,11 @@ import type { Mission, MissionFilters, PaginatedResponse } from '@/src/types';
 // API client functions
 //
 // Tenant context is NOT passed via the URL (dashboard#209). The
-// /api/missions route reads `session.user.tenantId` server-side and
-// the daemon trusts the HMAC-signed X-Gibson-Identity-Tenant header
-// from ext-authz, not URL params. Leaving tenantId in the URL would
-// only leak the tenant slug into browser history / referer / access
-// logs.
+// /api/missions route resolves the active tenant via requireActiveTenant()
+// (HMAC-signed cookie). The daemon trusts the X-Gibson-Identity-Tenant
+// header injected by ext-authz, not URL params. Leaving tenantId in
+// the URL would only leak the tenant slug into browser history /
+// referer / access logs.
 //
 // `_tenantId` is kept as a parameter for query-key compatibility with
 // existing useTenantStore usage; the value is unused.

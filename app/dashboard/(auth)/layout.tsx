@@ -9,6 +9,7 @@ import { TenantHydrator } from "@/components/layout/tenant-hydrator";
 import { TenantSwitcher } from "@/components/gibson/shared/TenantSwitcher";
 import { QuotaWidget } from "@/src/components/quota/quota-widget";
 import { getServerSession } from "@/src/lib/auth";
+import { readRawActiveTenant } from "@/src/lib/auth/active-tenant";
 import { resolveTenant } from "@/src/lib/resolve-tenant";
 import { getTenant } from "@/src/lib/k8s/tenants";
 import { lookupPlan, type PlanID } from "@/src/generated/plans";
@@ -43,7 +44,7 @@ export default async function AuthLayout({
   // Zero memberships → onboarding. Middleware handles this earlier in the
   // request lifecycle, but keeping the gate here protects against direct
   // rendering paths.
-  if (!session.user?.tenantId && (!session.user?.tenants || session.user.tenants.length === 0)) {
+  if (!session.user?.tenants || session.user.tenants.length === 0) {
     redirect('/onboarding');
   }
 
@@ -59,7 +60,15 @@ export default async function AuthLayout({
     (t): t is Tenant => t !== null,
   );
 
-  const activeTenantId = session.user.tenantId ?? null;
+  // Read the active tenant from the HMAC-signed cookie (read-only; no auto-pick).
+  // Pages that need the active tenant to be required call requireActiveTenant()
+  // themselves. The layout only needs it for CRD resolution (quota widget, etc.).
+  const rawActiveTenant = await readRawActiveTenant();
+  const activeTenantId: string | null =
+    rawActiveTenant.status === 'present' && session.user.tenants.includes(rawActiveTenant.tenantId!)
+      ? rawActiveTenant.tenantId!
+      : null;
+
   const currentTenant: Tenant | null = activeTenantId
     ? (availableTenants.find((t) => t.id === activeTenantId) ?? null)
     : null;

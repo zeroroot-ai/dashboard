@@ -103,11 +103,11 @@ async function fetchMyPermissionsViaRoute(
   _tenantId: string,
 ): Promise<GetMyPermissionsResponse> {
   // Tenant context is NOT passed via the URL (dashboard#209). The
-  // /api/auth/my-permissions route reads `session.user.tenantId`
-  // server-side. Leaving the slug in the URL would only leak it into
-  // browser history / referer / access logs. `_tenantId` is kept in
-  // the signature so the in-process Map cache can key entries per
-  // tenant (callers must pass the active session tenant).
+  // /api/auth/my-permissions route resolves the active tenant via
+  // requireActiveTenant() (HMAC-signed cookie). Leaving the slug in
+  // the URL would only leak it into browser history / referer / access
+  // logs. `_tenantId` is kept in the signature so the in-process Map
+  // cache can key entries per tenant (callers must pass the active tenant).
   const url = `/api/auth/my-permissions`;
   const resp = await fetch(url, {
     method: 'GET',
