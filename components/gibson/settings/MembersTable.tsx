@@ -65,9 +65,31 @@ function RoleBadge({ role }: { role: string }) {
 
 export interface MembersTableProps {
   members: MemberRow[];
+  /**
+   * The signed-in user's identity. Used to fall back to the session's own
+   * name/email for the caller's row when directory enrichment returned blank,
+   * so the page is never empty for the person looking at it.
+   */
+  currentUser?: { id: string; name: string; email: string };
 }
 
-export function MembersTable({ members }: MembersTableProps) {
+/**
+ * Resolve the name/email to display for a member row. For the caller's own
+ * row, fall back to the session identity when the directory lookup returned
+ * blank. `enriched` is false when neither a name nor an email is known — the
+ * row renders a "profile unavailable" state rather than an empty cell.
+ */
+function resolveIdentity(
+  m: MemberRow,
+  currentUser?: MembersTableProps["currentUser"],
+): { name: string; email: string; enriched: boolean } {
+  const isSelf = !!currentUser && m.userId === currentUser.id;
+  const name = m.displayName || (isSelf ? currentUser!.name : "");
+  const email = m.email || (isSelf ? currentUser!.email : "");
+  return { name, email, enriched: Boolean(name || email) };
+}
+
+export function MembersTable({ members, currentUser }: MembersTableProps) {
   return (
     <Table>
       <TableHeader>
@@ -80,29 +102,46 @@ export function MembersTable({ members }: MembersTableProps) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {members.map((m) => (
-          <TableRow key={m.userId}>
-            <TableCell>
-              <Avatar className="size-8">
-                <AvatarFallback className="text-xs">
-                  {initials(m.displayName, m.email)}
-                </AvatarFallback>
-              </Avatar>
-            </TableCell>
-            <TableCell className="font-medium">
-              {m.displayName || <span className="text-muted-foreground italic">unnamed</span>}
-            </TableCell>
-            <TableCell className="text-sm text-muted-foreground">
-              {m.email}
-            </TableCell>
-            <TableCell>
-              <RoleBadge role={m.role} />
-            </TableCell>
-            <TableCell className="text-sm text-muted-foreground">
-              {formatDate(m.joinedAt)}
-            </TableCell>
-          </TableRow>
-        ))}
+        {members.map((m) => {
+          const { name, email, enriched } = resolveIdentity(m, currentUser);
+          return (
+            <TableRow key={m.userId}>
+              <TableCell>
+                <Avatar className="size-8">
+                  <AvatarFallback className="text-xs">
+                    {enriched ? initials(name, email) : "?"}
+                  </AvatarFallback>
+                </Avatar>
+              </TableCell>
+              <TableCell className="font-medium">
+                {name ? (
+                  name
+                ) : enriched ? (
+                  <span className="text-muted-foreground italic">unnamed</span>
+                ) : (
+                  <span className="text-muted-foreground italic">
+                    Profile unavailable
+                  </span>
+                )}
+              </TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {email ? (
+                  email
+                ) : (
+                  // No email known — surface the stable user id so the row is
+                  // still identifiable rather than blank.
+                  <span className="font-mono text-xs">{m.userId}</span>
+                )}
+              </TableCell>
+              <TableCell>
+                <RoleBadge role={m.role} />
+              </TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {formatDate(m.joinedAt)}
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
