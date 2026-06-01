@@ -7,7 +7,6 @@ import {
   useTenantId,
   useAvailableTenants,
   useHasMultipleTenants,
-  usePermitted,
   useIsCrossTenant,
   useGroups,
 } from '@/src/lib/auth/tenant';
@@ -42,8 +41,6 @@ interface ProbeResult {
   tenantId: string | null;
   available: string[];
   hasMultiple: boolean;
-  canManageTeam: boolean;
-  canManageComponents: boolean;
   isCross: boolean;
   groups: string[];
 }
@@ -55,8 +52,6 @@ function Probe() {
     tenantId: useTenantId(),
     available: useAvailableTenants(),
     hasMultiple: useHasMultipleTenants(),
-    canManageTeam: usePermitted('team:manage'),
-    canManageComponents: usePermitted('components:manage'),
     isCross: useIsCrossTenant(),
     groups: useGroups(),
   };
@@ -85,41 +80,10 @@ function renderWith(props: {
 }
 
 describe('client authz hooks (src/lib/auth/tenant.ts)', () => {
-  it('admin user with team:manage sees the manage gate as allowed', () => {
+  it('useTenantId reflects the active tenant', () => {
     const acme = makeTenant('acme');
-    renderWith({
-      currentTenant: acme,
-      availableTenants: [acme],
-      permissions: ['team:manage'],
-    });
-
+    renderWith({ currentTenant: acme, availableTenants: [acme] });
     expect(probe.result?.tenantId).toBe('acme');
-    expect(probe.result?.canManageTeam).toBe(true);
-    expect(probe.result?.canManageComponents).toBe(false);
-  });
-
-  it('member user (no permissions) sees every manage gate as denied', () => {
-    const acme = makeTenant('acme');
-    renderWith({
-      currentTenant: acme,
-      availableTenants: [acme],
-      permissions: [],
-    });
-
-    expect(probe.result?.canManageTeam).toBe(false);
-    expect(probe.result?.canManageComponents).toBe(false);
-  });
-
-  it('exposes every permission in the array', () => {
-    const acme = makeTenant('acme');
-    renderWith({
-      currentTenant: acme,
-      availableTenants: [acme],
-      permissions: ['team:manage', 'components:manage', 'missions:execute'],
-    });
-
-    expect(probe.result?.canManageTeam).toBe(true);
-    expect(probe.result?.canManageComponents).toBe(true);
   });
 
   it('useAvailableTenants returns slugs in order', () => {

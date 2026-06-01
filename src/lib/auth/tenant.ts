@@ -43,19 +43,6 @@ export function useHasMultipleTenants(): boolean {
   return useTenantContext().availableTenants.length > 1;
 }
 
-/**
- * Hook to check whether the current user holds the given permission on
- * the active tenant. Permission strings follow the canonical
- * "resource:action" form declared in
- * core/gibson/internal/auth/permissions.yaml.
- *
- * @example
- *   const canExecute = usePermitted('missions:execute');
- *   if (!canExecute) return null;
- */
-export function usePermitted(permission: string): boolean {
-  return useTenantContext().permissions.includes(permission);
-}
 
 /**
  * Hook returning true when the user holds at least one role flagged

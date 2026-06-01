@@ -15,7 +15,8 @@
  *     `gibson_active_tenant` cookie + FGA on every request.
  *   - Client-side reads use the React context surfaced via
  *     `TenantContextProvider` (mounted in the auth layout). Hooks:
- *     `useTenant`, `useTenantId`, `usePermitted`, `useIsCrossTenant`, etc.
+ *     `useTenant`, `useTenantId`, `useIsCrossTenant`, etc. Authorization
+ *     gating uses `useAuthorize('/gibson...Method')` against the AuthRegistry.
  *
  * Reading `session.user.tenant` / `tenants` / `permissions` / `crossTenant`
  * here is a bug — the auth callback does not put those fields on the

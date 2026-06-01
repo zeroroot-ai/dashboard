@@ -3,21 +3,25 @@
  *
  * For server-side session access, use '@/src/lib/auth' instead.
  *
- * Permission gating is fully driven by the daemon's permissions.yaml
- * schema. Permission strings are the canonical "resource:action" form —
- * never role names.
+ * Authorization gating is driven by the generated AuthRegistry: gate UI on
+ * the RPC the action invokes via `useAuthorize('/gibson...Method')`. The
+ * registry maps each RPC to its FGA relation, which is checked against the
+ * caller's role on the active tenant.
  *
  * @example
  * ```tsx
  * 'use client';
  *
- * import { useTenantId, usePermitted } from '@/src/lib/auth';
+ * import { useTenantId } from '@/src/lib/auth';
+ * import { useAuthorize } from '@/src/lib/auth/use-authorize';
  *
  * export function MissionControls() {
  *   const tenantId = useTenantId();
- *   const canExecute = usePermitted('missions:execute');
+ *   const { allowed, loading } = useAuthorize(
+ *     '/gibson.daemon.v1.DaemonService/DispatchMission',
+ *   );
  *
- *   if (!canExecute) return null;
+ *   if (loading || !allowed) return null;
  *
  *   return <button>Run Mission</button>;
  * }
@@ -27,7 +31,6 @@ export {
   useTenantId,
   useAvailableTenants,
   useHasMultipleTenants,
-  usePermitted,
   useIsCrossTenant,
   useGroups,
 } from './tenant';

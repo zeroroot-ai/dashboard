@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { BotIcon, PlusIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -24,8 +24,13 @@ import {
   listAccessibleComponentsAction,
   type DiscoveredItem,
 } from "@/app/actions/read/listAccessibleComponents";
-import { usePermitted } from "@/src/lib/auth/tenant";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { useTierLimits } from "@/src/hooks/useTierLimits";
+
+// Tenant-wide component management is gated on the component-management RPC
+// (relation: admin). Non-admins default to the "my-access" scope.
+const COMPONENT_MANAGE_RPC =
+  "/gibson.admin.v1.TenantAdminService/SetComponentAccess";
 
 type Scope = AccessScopeSelection["scope"];
 
@@ -62,12 +67,22 @@ function scopeParam(
 }
 
 export function AgentsContent() {
-  const canManage = usePermitted("components:manage");
+  const { allowed: canManage, loading: authLoading } =
+    useAuthorize(COMPONENT_MANAGE_RPC);
   const { data: tier } = useTierLimits();
 
   const [scope, setScope] = useState<AccessScopeSelection>({
-    scope: canManage ? "tenant-wide" : "my-access",
+    scope: "my-access",
   });
+  // Once admin authorization resolves, default admins to the tenant-wide
+  // scope (one-shot, so a later manual scope change is respected).
+  const appliedAdminDefault = useRef(false);
+  useEffect(() => {
+    if (!authLoading && canManage && !appliedAdminDefault.current) {
+      appliedAdminDefault.current = true;
+      setScope({ scope: "tenant-wide" });
+    }
+  }, [authLoading, canManage]);
   const [items, setItems] = useState<RWXItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);

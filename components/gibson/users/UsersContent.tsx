@@ -3,7 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { useSession } from "@/src/lib/session-client";
-import { usePermitted, useTenantId } from "@/src/lib/auth/tenant";
+import { useTenantId } from "@/src/lib/auth/tenant";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { MoreHorizontal, Search, Trash2, UserPlus, Eye, Mail, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -170,7 +171,10 @@ export function UsersContent() {
   const { data: session } = useSession();
   const tenantId = useTenantId() ?? "";
   const currentUserId = session?.user?.id ?? "";
-  const canEdit = usePermitted("team:manage");
+  // Member/role management is gated on the role-assignment RPC (relation: admin).
+  const { allowed: canEdit } = useAuthorize(
+    "/gibson.admin.v1.TenantAdminService/SetTenantRole",
+  );
 
   const namespace = tenantId ? tenantNamespace(tenantId) : undefined;
 

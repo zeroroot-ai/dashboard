@@ -16,15 +16,23 @@
  *                       know who to ask for access.
  *
  * The wizard itself enforces server-side authz on submit; this gate is
- * purely UX. The membership check is sync (server-hydrated tenant
- * context), so the loading state of AuthGatedButton is unreachable here.
+ * purely UX. Authorization is resolved via `useAuthorize` against the
+ * tenant component-management RPC (SetComponentAccess, relation: admin);
+ * while the membership query is in flight the AuthGatedButton renders its
+ * loading skeleton.
  */
 
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
 
 import { AuthGatedButton } from "@/components/gibson/auth";
-import { usePermitted } from "@/src/lib/auth/tenant";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
+
+// Component deploy/management is gated on the tenant component-management
+// RPC (relation: admin); the deploy wizard enforces the real per-type authz
+// on submit.
+const COMPONENT_MANAGE_RPC =
+  "/gibson.admin.v1.TenantAdminService/SetComponentAccess";
 
 const LABELS: Record<"agent" | "plugin" | "tool", string> = {
   agent: "Deploy agent",
@@ -40,12 +48,13 @@ export function DeployLauncher({
 }: {
   type: "agent" | "plugin" | "tool";
 }) {
-  const canManage = usePermitted("components:manage");
+  const { allowed: canManage, loading } = useAuthorize(COMPONENT_MANAGE_RPC);
+  const state = loading ? "loading" : canManage ? "allowed" : "denied";
 
   return (
     <div className="flex items-center justify-end">
       <AuthGatedButton
-        state={canManage ? "allowed" : "denied"}
+        state={state}
         disabledTooltip={DENIED_TOOLTIP}
         size="sm"
         className="gap-1.5"
