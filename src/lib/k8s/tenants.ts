@@ -10,11 +10,9 @@ import {
   Tenant,
   TenantMember,
   AgentEnrollment,
-  ComponentGrant,
   TenantSpec,
   TenantMemberSpec,
   AgentEnrollmentSpec,
-  ComponentGrantSpec,
 } from './types';
 import type { K8sOwnerReference } from './owner-ref';
 
@@ -142,38 +140,6 @@ export async function getBootstrapToken(
     token: data.token ? decode(data.token) : '',
     platformUrl: data['platform-url'] ? decode(data['platform-url']) : '',
   };
-}
-
-// ---- ComponentGrant ----
-
-export async function applyComponentGrant(
-  namespace: string,
-  name: string,
-  spec: ComponentGrantSpec,
-  ownerRef?: K8sOwnerReference | null,
-): Promise<ComponentGrant> {
-  const metadata: ComponentGrant['metadata'] = { name, namespace };
-  if (ownerRef) metadata.ownerReferences = [ownerRef];
-  return k8s().apply<ComponentGrant>(
-    {
-      apiVersion: 'gibson.zeroroot.ai/v1alpha1',
-      kind: 'ComponentGrant',
-      metadata,
-      spec,
-    } as ComponentGrant,
-    false,
-  );
-}
-
-export async function listComponentGrants(namespace: string): Promise<ComponentGrant[]> {
-  return k8s().list<ComponentGrant>('ComponentGrant', namespace);
-}
-
-export async function deleteComponentGrant(
-  namespace: string,
-  name: string,
-): Promise<void> {
-  return k8s().delete('ComponentGrant', name, namespace);
 }
 
 // ---- utilities ----
