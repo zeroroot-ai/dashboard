@@ -125,7 +125,7 @@ function walk(dir) {
 }
 
 function selftest() {
-  const methods = new Set(["/gibson.admin.v1.TenantAdminService/SetComponentAccess"]);
+  const methods = new Set(["/gibson.tenant.v1.MembershipService/SetComponentAccess"]);
   const cases = [
     { name: "usePermitted", src: `const ok = usePermitted("components:manage");`, expect: true },
     { name: "hasPermission", src: `if (hasPermission(s, "x")) {}`, expect: true },
@@ -133,7 +133,7 @@ function selftest() {
     { name: "ADMIN_PERMISSIONS", src: `import { ADMIN_PERMISSIONS } from "x";`, expect: true },
     { name: "unknown authz method", src: `useAuthorize("/gibson.foo/Bar");`, expect: true },
     { name: "comment mentioning usePermitted is OK", src: `// usePermitted was removed`, expect: false },
-    { name: "valid useAuthorize", src: `useAuthorize("/gibson.admin.v1.TenantAdminService/SetComponentAccess");`, expect: false },
+    { name: "valid useAuthorize", src: `useAuthorize("/gibson.tenant.v1.MembershipService/SetComponentAccess");`, expect: false },
   ];
   let failed = false;
   for (const c of cases) {

@@ -31,7 +31,7 @@ import { z } from 'zod';
 
 import { auth } from '@/auth';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
-import { UserService } from '@/src/gen/gibson/user/v1/user_pb';
+import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
 import { makeClient } from '@/src/lib/gibson-client';
 import { requireUserToken } from '@/src/lib/auth/user-token';
 import { getFaultMode } from '@/src/lib/test-fixtures/fault-injection';

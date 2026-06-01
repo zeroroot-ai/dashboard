@@ -17,9 +17,9 @@ import {
   AuthzDeniedError,
 } from '@/src/lib/auth/assert-authorized';
 import { userClient } from '@/src/lib/gibson-client';
-import { TenantService, PrincipalKind } from '@/src/gen/gibson/tenant/v1/tenant_pb';
+import { AgentIdentityService, PrincipalKind } from '@/src/gen/gibson/tenant/v1/agent_identity_pb';
 import { IdentityService } from '@/src/gen/gibson/identity/v1/identity_pb';
-import { GrantsAdminService } from '@/src/gen/gibson/admin/v1/grants_pb';
+import { GrantsService } from '@/src/gen/gibson/tenant/v1/grants_pb';
 
 import {
   PermissionsTab,
@@ -75,7 +75,7 @@ export default async function Page({
   // server-side.
   let principalId: string;
   try {
-    const tenantClient = userClient(TenantService);
+    const tenantClient = userClient(AgentIdentityService);
     const list = await tenantClient.listAgentIdentities({
       pageSize: 200,
       kindFilter: PrincipalKind.AGENT,
@@ -109,7 +109,7 @@ export default async function Page({
   // Step 3: also fetch active CG-JWTs filtered to this principal.
   let activeGrants: ActiveGrantVM[] = [];
   try {
-    const grantsClient = userClient(GrantsAdminService);
+    const grantsClient = userClient(GrantsService);
     const ag = await grantsClient.listActiveGrants({});
     activeGrants = ag.grants
       .filter((g) => g.recipientInstallId === principalId)

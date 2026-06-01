@@ -36,7 +36,7 @@ describe("fetchMissionAudit authorization (#616)", () => {
     const r = await fetchMissionAudit("mission-1");
 
     expect(assertAuthorizedMock).toHaveBeenCalledWith(
-      "/gibson.admin.v1.SecretsAdminService/GetMissionAudit",
+      "/gibson.tenant.v1.SecretsService/GetMissionAudit",
     );
     expect(r.accesses).toHaveLength(1);
     expect(r.aggregationLagSeconds).toBe(3);
@@ -45,7 +45,7 @@ describe("fetchMissionAudit authorization (#616)", () => {
   it("throws permission_denied for an unauthorized caller and never hits the daemon", async () => {
     assertAuthorizedMock.mockRejectedValueOnce(
       new AuthzDeniedError(
-        "/gibson.admin.v1.SecretsAdminService/GetMissionAudit",
+        "/gibson.tenant.v1.SecretsService/GetMissionAudit",
         "relation-not-met",
       ),
     );

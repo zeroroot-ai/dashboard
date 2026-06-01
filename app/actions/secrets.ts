@@ -30,7 +30,7 @@ import {
   type SecretMetadata,
 } from "@/src/lib/gibson-client/secrets";
 import { getServerSession } from "@/src/lib/auth";
-import { SecretCategory } from "@/src/gen/gibson/admin/v1/secrets_pb";
+import { SecretCategory } from "@/src/gen/gibson/tenant/v1/secrets_pb";
 import {
   assertAuthorized,
   AuthzDeniedError,
@@ -116,7 +116,7 @@ export async function createSecretAction(
   formData: FormData,
 ): Promise<SecretActionResult<SecretMetadata>> {
   try {
-    await assertAuthorized("/gibson.admin.v1.SecretsAdminService/SetSecret");
+    await assertAuthorized("/gibson.tenant.v1.SecretsService/SetSecret");
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
       return { ok: false, error: "Permission denied", code: "permission_denied" };
@@ -180,7 +180,7 @@ export async function rotateSecretAction(
   formData: FormData,
 ): Promise<SecretActionResult<SecretMetadata>> {
   try {
-    await assertAuthorized("/gibson.admin.v1.SecretsAdminService/RotateSecret");
+    await assertAuthorized("/gibson.tenant.v1.SecretsService/RotateSecret");
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
       return { ok: false, error: "Permission denied", code: "permission_denied" };
@@ -238,7 +238,7 @@ export async function deleteSecretAction(
   secretName: string,
 ): Promise<SecretActionResult<null>> {
   try {
-    await assertAuthorized("/gibson.admin.v1.SecretsAdminService/DeleteSecret");
+    await assertAuthorized("/gibson.tenant.v1.SecretsService/DeleteSecret");
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
       return { ok: false, error: "Permission denied", code: "permission_denied" };

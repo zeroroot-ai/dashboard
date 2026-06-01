@@ -1,17 +1,19 @@
 import 'server-only';
 
 /**
- * Typed dashboard client methods for gibson.admin.v1.PluginsAdminService.
+ * Typed dashboard client methods for gibson.tenant.v1.PluginAdminService.
  *
  * Backs the dashboard's plugin registration wizard and plugin detail page.
  * RegisterPlugin is atomic per Spec 2 R3.1 — any partial failure rolls back
  * all created state (Zitadel SA, FGA tuples, inline secrets).
  *
  * Spec: secrets-tenant-lifecycle Task 6, Requirements 8.1.
+ * NOTE: PluginAdminService is not yet served by the daemon (gibson#565);
+ * expect Unavailable until that issue ships.
  */
 
 import { userClient } from '../gibson-client';
-import { PluginsAdminService } from '@/src/gen/gibson/admin/v1/plugins_pb';
+import { PluginAdminService } from '@/src/gen/gibson/tenant/v1/plugin_admin_pb';
 import type {
   PluginInstallSummary,
   PluginSecretBinding,
@@ -22,7 +24,7 @@ import type {
   EditPluginSecretBindingResponse,
   RevokePluginSecretBindingResponse,
   PluginInstallStatus,
-} from '@/src/gen/gibson/admin/v1/plugins_pb';
+} from '@/src/gen/gibson/tenant/v1/plugin_admin_pb';
 import { throwMapped } from './secrets';
 
 export type {
@@ -55,7 +57,7 @@ export async function listPluginInstalls(
   opts: ListPluginInstallsOptions = {},
 ): Promise<ListPluginInstallsResponse> {
   try {
-    const client = userClient(PluginsAdminService);
+    const client = userClient(PluginAdminService);
     return await client.listPluginInstalls({
       nameFilter: opts.nameFilter ?? '',
       statusFilter: opts.statusFilter ?? 0,
@@ -72,7 +74,7 @@ export async function listPluginInstalls(
  */
 export async function getPluginInstall(installId: string): Promise<GetPluginInstallResponse> {
   try {
-    const client = userClient(PluginsAdminService);
+    const client = userClient(PluginAdminService);
     return await client.getPluginInstall({ installId });
   } catch (err) {
     throwMapped(err);
@@ -108,7 +110,7 @@ export interface RegisterPluginOptions {
  */
 export async function registerPlugin(opts: RegisterPluginOptions): Promise<RegisterPluginResponse> {
   try {
-    const client = userClient(PluginsAdminService);
+    const client = userClient(PluginAdminService);
     return await client.registerPlugin({
       manifestYaml: opts.manifestYaml,
       bindings: opts.bindings,
@@ -129,7 +131,7 @@ export async function editPluginSecretBinding(
   newExistingRef: string,
 ): Promise<EditPluginSecretBindingResponse> {
   try {
-    const client = userClient(PluginsAdminService);
+    const client = userClient(PluginAdminService);
     return await client.editPluginSecretBinding({
       installId,
       declaredName,
@@ -149,7 +151,7 @@ export async function revokePluginSecretBinding(
   declaredName: string,
 ): Promise<RevokePluginSecretBindingResponse> {
   try {
-    const client = userClient(PluginsAdminService);
+    const client = userClient(PluginAdminService);
     return await client.revokePluginSecretBinding({ installId, declaredName });
   } catch (err) {
     throwMapped(err);

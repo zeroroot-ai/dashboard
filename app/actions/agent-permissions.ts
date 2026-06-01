@@ -21,8 +21,8 @@ import { ConnectError, Code } from '@connectrpc/connect';
 import { auth } from '@/auth';
 import { userClient } from '@/src/lib/gibson-client';
 import {
-  GrantsAdminService,
-} from '@/src/gen/gibson/admin/v1/grants_pb';
+  GrantsService,
+} from '@/src/gen/gibson/tenant/v1/grants_pb';
 import {
   assertAuthorized,
   AuthzDeniedError,
@@ -118,7 +118,7 @@ export async function writeAgentGrantsAction(
   targetPrincipalId: string,
   grantsInput: unknown,
 ): Promise<ActionResult<WriteResult>> {
-  const pre = await preflight('/gibson.admin.v1.GrantsAdminService/WriteAgentGrants');
+  const pre = await preflight('/gibson.tenant.v1.GrantsService/WriteAgentGrants');
   if (pre) return pre;
 
   const targetParsed = targetSchema.safeParse(targetPrincipalId);
@@ -140,7 +140,7 @@ export async function writeAgentGrantsAction(
   }
 
   try {
-    const client = userClient(GrantsAdminService);
+    const client = userClient(GrantsService);
     const resp = await client.writeAgentGrants({
       targetPrincipalId: targetParsed.data,
       grants: grantsParsed.data.map((g) => ({
@@ -167,7 +167,7 @@ export async function deleteAgentGrantsAction(
   targetPrincipalId: string,
   grantsInput: unknown,
 ): Promise<ActionResult<DeleteResult>> {
-  const pre = await preflight('/gibson.admin.v1.GrantsAdminService/DeleteAgentGrants');
+  const pre = await preflight('/gibson.tenant.v1.GrantsService/DeleteAgentGrants');
   if (pre) return pre;
 
   const targetParsed = targetSchema.safeParse(targetPrincipalId);
@@ -189,7 +189,7 @@ export async function deleteAgentGrantsAction(
   }
 
   try {
-    const client = userClient(GrantsAdminService);
+    const client = userClient(GrantsService);
     const resp = await client.deleteAgentGrants({
       targetPrincipalId: targetParsed.data,
       grants: grantsParsed.data.map((g) => ({

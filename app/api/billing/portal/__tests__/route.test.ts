@@ -133,7 +133,7 @@ describe('POST /api/billing/portal', () => {
   describe('auth gating', () => {
     it('returns 403 when assertAuthorized throws AuthzDeniedError', async () => {
       mockAssertAuthorizedShouldThrow = new AuthzDeniedError(
-        '/gibson.admin.v1.TenantAdminService/CountSecrets',
+        '/gibson.tenant.v1.SecretsService/CountSecrets',
         'not-a-member',
       );
       const res = await POST(makeRequest());

@@ -42,7 +42,7 @@ import { useAuthorize } from "@/src/lib/auth/use-authorize";
 // Tenant-wide component management is gated on the component-management RPC
 // (relation: admin). Non-admins default to the "my-access" scope.
 const COMPONENT_MANAGE_RPC =
-  "/gibson.admin.v1.TenantAdminService/SetComponentAccess";
+  "/gibson.tenant.v1.MembershipService/SetComponentAccess";
 import { useTierLimits } from "@/src/hooks/useTierLimits";
 
 type Scope = AccessScopeSelection["scope"];

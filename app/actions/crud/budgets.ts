@@ -106,7 +106,7 @@ export async function listBudgetStatusAction(
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const client = await getBudgetClient();
-    const resp = await client.listStatus({ scope: scopeToProto(scope) });
+    const resp = await client.listBudgetStatus({ scope: scopeToProto(scope) });
     return {
       ok: true,
       data: resp.status.map((s) => ({
@@ -182,7 +182,7 @@ export async function getTenantBudgetDefaultsAction(): Promise<
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const client = await getBudgetClient();
-    const resp = await client.getTenantDefaults({});
+    const resp = await client.getTenantBudgetDefaults({});
     return {
       ok: true,
       data: {
@@ -209,7 +209,7 @@ export async function setTenantBudgetDefaultsAction(
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const client = await getBudgetClient();
-    await client.setTenantDefaults({
+    await client.setTenantBudgetDefaults({
       defaultUserMonthlyTokens: BigInt(input.defaultUserMonthlyTokens),
       defaultUserMonthlySpendUsdCents: BigInt(
         input.defaultUserMonthlySpendUsdCents,

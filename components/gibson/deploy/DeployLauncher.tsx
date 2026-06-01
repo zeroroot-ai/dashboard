@@ -32,7 +32,7 @@ import { useAuthorize } from "@/src/lib/auth/use-authorize";
 // RPC (relation: admin); the deploy wizard enforces the real per-type authz
 // on submit.
 const COMPONENT_MANAGE_RPC =
-  "/gibson.admin.v1.TenantAdminService/SetComponentAccess";
+  "/gibson.tenant.v1.MembershipService/SetComponentAccess";
 
 const LABELS: Record<"agent" | "plugin" | "tool", string> = {
   agent: "Deploy agent",

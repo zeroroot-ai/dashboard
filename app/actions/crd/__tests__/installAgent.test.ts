@@ -38,8 +38,8 @@ vi.mock("@/src/lib/gibson-client", () => ({
 vi.mock("@/src/gen/gibson/daemon/discovery/v1/discovery_pb", () => ({
   DiscoveryService: { typeName: "discovery" },
 }));
-vi.mock("@/src/gen/gibson/admin/v1/tenant_pb", () => ({
-  TenantAdminService: { typeName: "gibson.admin.v1.TenantAdminService" },
+vi.mock("@/src/gen/gibson/tenant/v1/membership_pb", () => ({
+  MembershipService: { typeName: "gibson.tenant.v1.MembershipService" },
 }));
 
 const mockList = vi.fn();

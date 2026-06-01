@@ -39,20 +39,30 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = join(__dirname, '..');
 
 /**
- * Paths inside src/gen/ that are forbidden after ADR-0037:
+ * Paths inside src/gen/ that are forbidden after ADR-0037 and ADR-0039:
  *   - DaemonAdminService was deleted from platform-sdk; its RPCs moved to
  *     DaemonService (OSS SDK). Importing daemon_admin_pb is now forbidden.
- *   - TenantAdminService (platform-sdk tenant.v1) was deleted; its RPCs
- *     moved to TenantService (OSS SDK tenant.v1). Importing tenant_admin_pb
- *     as the primary service source is now forbidden.
+ *   - PlatformOperatorService was moved to DaemonOperatorService (daemon/operator/v1).
+ *   - gibson.admin.v1 was decomposed into gibson.tenant.v1.* (ADR-0039).
+ *     TenantAdminService, SecretsAdminService, GrantsAdminService, PluginsAdminService
+ *     are now MembershipService, SecretsService, GrantsService, PluginAdminService.
+ *   - gibson.authz.v1, gibson.budget.v1, gibson.usage.v1, gibson.user.v1 were
+ *     all moved to gibson.tenant.v1.* (ADR-0039).
  *
- * NOT listed as forbidden:
- *   - src/gen/gibson/admin/v1   — BrokerConfig/TenantAdminService (admin.v1) still lives here
- *   - src/gen/gibson/tenant/v1  — new TenantService (tenant_pb.ts) lives here
+ * All callers must import from src/gen/gibson/tenant/v1/ instead.
  */
+// Each path includes a trailing path separator so e.g. `budget` does not
+// accidentally match `budget_status` (which is a distinct OSS SDK package
+// and remains valid). The check tests for substring containment, so
+// appending `/v1/` or `/` ensures only the intended directory is matched.
 const FORBIDDEN_GEN_PATHS = [
   'src/gen/gibson/daemon/admin',
-  'src/gen/gibson/platform',   // PlatformOperatorService — moved to DaemonOperatorService (daemon/operator/v1)
+  'src/gen/gibson/platform',     // PlatformOperatorService — moved to DaemonOperatorService (daemon/operator/v1)
+  'src/gen/gibson/admin/v1/',    // gibson.admin.v1 — decomposed into gibson.tenant.v1.* (ADR-0039)
+  'src/gen/gibson/authz/v1/',    // gibson.authz.v1 — moved to gibson.tenant.v1.ModelAccessService (ADR-0039)
+  'src/gen/gibson/budget/v1/',   // gibson.budget.v1 — moved to gibson.tenant.v1.BudgetService (ADR-0039)
+  'src/gen/gibson/usage/v1/',    // gibson.usage.v1 — moved to gibson.tenant.v1.UsageService (ADR-0039)
+  'src/gen/gibson/user/v1/',     // gibson.user.v1 — moved to gibson.tenant.v1.UserService (ADR-0039)
 ];
 
 /** Directories and file patterns to skip entirely. */
@@ -152,8 +162,13 @@ function main() {
   if (violations > 0) {
     process.stderr.write(
       `\ncheck-no-direct-admin-rpc: ${violations} violation(s) found.\n` +
-        '  src/gen/gibson/daemon/admin was deleted by ADR-0037. Migrate callers:\n' +
-        '    DaemonAdminService CUE/CreateMissionDefinition → DaemonService (src/gen/gibson/daemon/v1/daemon_pb)\n',
+        '  Forbidden gen paths detected. Migration guide:\n' +
+        '    ADR-0037: src/gen/gibson/daemon/admin → src/gen/gibson/daemon/v1/daemon_pb\n' +
+        '    ADR-0039: src/gen/gibson/admin/v1 → src/gen/gibson/tenant/v1/{membership,secrets,grants,plugin_admin}_pb\n' +
+        '    ADR-0039: src/gen/gibson/authz/v1 → src/gen/gibson/tenant/v1/model_access_pb\n' +
+        '    ADR-0039: src/gen/gibson/budget/v1 → src/gen/gibson/tenant/v1/budget_pb\n' +
+        '    ADR-0039: src/gen/gibson/usage/v1 → src/gen/gibson/tenant/v1/usage_pb\n' +
+        '    ADR-0039: src/gen/gibson/user/v1 → src/gen/gibson/tenant/v1/user_pb\n',
     );
     process.exit(1);
   }

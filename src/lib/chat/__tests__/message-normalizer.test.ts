@@ -16,7 +16,7 @@
 
 import { describe, it, expect } from 'vitest';
 import type { UIMessage } from 'ai';
-import type { ConversationMessage } from '@/src/gen/gibson/user/v1/user_pb';
+import type { ConversationMessage } from '@/src/gen/gibson/tenant/v1/user_pb';
 import { create } from '@bufbuild/protobuf';
 import {
   ConversationMessageSchema,
@@ -27,7 +27,7 @@ import {
   MessagePartCitationSchema,
   MessagePartAttachmentRefSchema,
   MessagePartReasoningSchema,
-} from '@/src/gen/gibson/user/v1/user_pb';
+} from '@/src/gen/gibson/tenant/v1/user_pb';
 import {
   uiMessageToProto,
   protoToUiMessage,

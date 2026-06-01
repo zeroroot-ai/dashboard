@@ -14,7 +14,7 @@
 
 import { getUsageClient } from "@/src/lib/gibson-client";
 import { getServerSession } from "@/src/lib/auth";
-import { UsageScope } from "@/src/gen/gibson/usage/v1/usage_pb";
+import { UsageScope } from "@/src/gen/gibson/tenant/v1/usage_pb";
 
 export type UsageRow = {
   subjectId: string;

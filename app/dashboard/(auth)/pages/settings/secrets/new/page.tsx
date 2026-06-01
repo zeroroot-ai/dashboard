@@ -30,7 +30,7 @@ export default async function NewSecretPage() {
   // Non-admins are redirected to the secrets list.
   // Spec: dashboard-authz-ui-gating Task 14, Requirement 5.5.
   try {
-    await assertAuthorized("/gibson.admin.v1.SecretsAdminService/SetSecret");
+    await assertAuthorized("/gibson.tenant.v1.SecretsService/SetSecret");
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
       redirect("/dashboard/pages/settings/secrets");

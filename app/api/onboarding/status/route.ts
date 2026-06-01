@@ -16,9 +16,9 @@ import { ConnectError } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
 import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { userClient } from '@/src/lib/gibson-client';
-import { UserService } from '@/src/gen/gibson/user/v1/user_pb';
+import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
 import { create } from '@bufbuild/protobuf';
-import { UserOnboardingStateSchema } from '@/src/gen/gibson/user/v1/user_pb';
+import { UserOnboardingStateSchema } from '@/src/gen/gibson/tenant/v1/user_pb';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import type {
   OnboardingState,
@@ -77,7 +77,7 @@ function shouldShowSetupWidget(state: OnboardingState): boolean {
 // Conversion: daemon proto → local OnboardingState
 // ============================================================================
 
-import type { UserOnboardingState } from '@/src/gen/gibson/user/v1/user_pb';
+import type { UserOnboardingState } from '@/src/gen/gibson/tenant/v1/user_pb';
 
 /** Index of default task metadata by id for fast lookup during proto conversion. */
 const DEFAULT_TASK_META: Map<string, SetupTask> = new Map(

@@ -65,7 +65,7 @@ const workspaceAdminNav: AdminEntry[] = [
     title: "Members",
     href: "/dashboard/pages/settings/members",
     icon: UsersIcon,
-    method: "/gibson.admin.v1.TenantAdminService/ListMembers",
+    method: "/gibson.tenant.v1.MembershipService/ListMembers",
   },
 ];
 
@@ -77,19 +77,19 @@ const adminNav: AdminEntry[] = [
     title: "Secrets",
     href: "/dashboard/pages/settings/secrets",
     icon: KeyIcon,
-    method: "/gibson.admin.v1.SecretsAdminService/ListSecrets",
+    method: "/gibson.tenant.v1.SecretsService/ListSecrets",
   },
   {
     title: "Secret Broker",
     href: "/dashboard/pages/settings/secrets-backend",
     icon: DatabaseIcon,
-    method: "/gibson.admin.v1.TenantAdminService/GetBrokerConfig",
+    method: "/gibson.tenant.v1.SecretsService/GetBrokerConfig",
   },
   {
     title: "Permissions",
     href: "/dashboard/pages/settings/grants",
     icon: ShieldIcon,
-    method: "/gibson.admin.v1.GrantsAdminService/ListActiveGrants",
+    method: "/gibson.tenant.v1.GrantsService/ListActiveGrants",
   },
 ];
 

@@ -23,9 +23,9 @@ import { create } from '@bufbuild/protobuf';
 
 import { serviceClient } from '@/src/lib/gibson-client';
 import {
-  TenantAdminService,
+  MembershipService,
   GetReservedNamesRequestSchema,
-} from '@/src/gen/gibson/admin/v1/tenant_pb';
+} from '@/src/gen/gibson/tenant/v1/membership_pb';
 
 interface CachedDenylist {
   exact: string[];
@@ -40,7 +40,7 @@ async function fetchDenylist(): Promise<CachedDenylist> {
   // The signup form runs unauthenticated, so we need the service-acting
   // path. Tenant header is irrelevant here (the RPC is rule-mode and only
   // the caller's identity is checked), so we pass an empty string.
-  const client = serviceClient(TenantAdminService, '');
+  const client = serviceClient(MembershipService, '');
   const resp = await client.getReservedNames(create(GetReservedNamesRequestSchema));
   return {
     exact: resp.exact ?? [],

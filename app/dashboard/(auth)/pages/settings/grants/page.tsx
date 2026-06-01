@@ -41,7 +41,7 @@ export default async function GrantsPage() {
   // Defense-in-depth: block direct URL navigation by non-admins even if the
   // sidebar entry is hidden. Spec: dashboard-authz-ui-gating Task 16, Req 5.7.
   try {
-    await assertAuthorized("/gibson.admin.v1.GrantsAdminService/ListActiveGrants");
+    await assertAuthorized("/gibson.tenant.v1.GrantsService/ListActiveGrants");
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
       redirect("/dashboard/pages/settings");

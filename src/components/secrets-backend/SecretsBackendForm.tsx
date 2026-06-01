@@ -236,10 +236,10 @@ export function SecretsBackendForm({
   // Disable inputs for non-admins (read-only view).
   // Spec: dashboard-authz-ui-gating Task 15, Requirement 5.6.
   const { allowed: canProbe, loading: probeAuthLoading } = useAuthorize(
-    "/gibson.admin.v1.TenantAdminService/ProbeBrokerConfig",
+    "/gibson.tenant.v1.SecretsService/ProbeBrokerConfig",
   );
   const { allowed: canSave, loading: saveAuthLoading } = useAuthorize(
-    "/gibson.admin.v1.TenantAdminService/SetBrokerConfig",
+    "/gibson.tenant.v1.SecretsService/SetBrokerConfig",
   );
   const isReadOnly = probeAuthLoading || saveAuthLoading || (!canProbe && !canSave);
 

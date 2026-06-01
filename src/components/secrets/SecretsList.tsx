@@ -41,8 +41,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { SecretMetadata } from "@/src/gen/gibson/admin/v1/secrets_pb";
-import { SecretCategory } from "@/src/gen/gibson/admin/v1/secrets_pb";
+import type { SecretMetadata } from "@/src/gen/gibson/tenant/v1/secrets_pb";
+import { SecretCategory } from "@/src/gen/gibson/tenant/v1/secrets_pb";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 
 // ---------------------------------------------------------------------------
@@ -213,7 +213,7 @@ export function SecretsList({
   // Gate "Add secret" on SetSecret RPC. Hide on loading=true (no FOUC).
   // Spec: dashboard-authz-ui-gating Task 14, Requirement 5.4.
   const { allowed: canAddSecret, loading: addSecretLoading } = useAuthorize(
-    "/gibson.admin.v1.SecretsAdminService/SetSecret",
+    "/gibson.tenant.v1.SecretsService/SetSecret",
   );
 
   const table = useReactTable({

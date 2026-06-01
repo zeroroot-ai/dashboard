@@ -15,7 +15,7 @@
  * Spec: agent-authoring-and-tenant-entitlements task 35, R8.
  */
 
-import { TenantAdminService } from "@/src/gen/gibson/admin/v1/tenant_pb";
+import { MembershipService } from "@/src/gen/gibson/tenant/v1/membership_pb";
 import { userClient } from "@/src/lib/gibson-client";
 import { getActiveTenant } from "@/src/lib/auth/active-tenant";
 
@@ -56,7 +56,7 @@ export async function listTeamsAction(): Promise<ActionResult<Team[]>> {
   // we can swap to client-side pagination without a server-action shape
   // change.
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(MembershipService);
     const teams: Team[] = [];
     let pageToken = "";
     do {
@@ -100,7 +100,7 @@ export async function listTeamMembersAction(
   }
 
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(MembershipService);
     const members: TeamMember[] = [];
     let pageToken = "";
     do {
@@ -147,7 +147,7 @@ export async function createTeamAction(input: {
   }
 
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(MembershipService);
     const resp = await client.createTeam({
       tenantId: tenantId,
       teamId: input.teamId,
@@ -187,7 +187,7 @@ export async function deleteTeamAction(
   }
 
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(MembershipService);
     await client.deleteTeam({
       tenantId: tenantId,
       teamId,
@@ -220,7 +220,7 @@ export async function addTeamMemberAction(input: {
   }
 
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(MembershipService);
     await client.addTeamMember({
       tenantId: tenantId,
       teamId: input.teamId,
@@ -259,7 +259,7 @@ export async function removeTeamMemberAction(input: {
   }
 
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(MembershipService);
     // RemoveTeamMember atomically removes both member and admin FGA tuples
     // for the user on this team — no separate admin-tuple cleanup needed.
     await client.removeTeamMember({

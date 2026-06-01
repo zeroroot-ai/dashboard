@@ -21,7 +21,7 @@ import { getPlatformContext } from '@/src/lib/chat/platform-context';
 import { validationErrorResponse, daemonErrorResponse } from '@/src/lib/api-errors';
 import { checkRateLimit, createRateLimitResponse } from '@/src/lib/rate-limiter';
 import { userClient } from '@/src/lib/gibson-client';
-import { UserService } from '@/src/gen/gibson/user/v1/user_pb';
+import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
 import { logger } from '@/src/lib/logger';
 // getConversation removed — ListConversations/GetConversation DEFERRED per
 // admin-services-completion spec. Chat history will be wired once the

@@ -54,7 +54,7 @@ import type { UIMessage } from 'ai';
 import type {
   MessagePart,
   ConversationMessage,
-} from '@/src/gen/gibson/user/v1/user_pb';
+} from '@/src/gen/gibson/tenant/v1/user_pb';
 import { create } from '@bufbuild/protobuf';
 import {
   MessagePartSchema,
@@ -64,7 +64,7 @@ import {
   MessagePartCitationSchema,
   MessagePartAttachmentRefSchema,
   MessagePartReasoningSchema,
-} from '@/src/gen/gibson/user/v1/user_pb';
+} from '@/src/gen/gibson/tenant/v1/user_pb';
 
 // ---------------------------------------------------------------------------
 // Public surface types

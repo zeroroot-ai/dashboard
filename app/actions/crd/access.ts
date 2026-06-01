@@ -11,7 +11,7 @@
  * Spec: agent-authoring-and-tenant-entitlements task 30, R8 AC 7.
  */
 
-import { TenantAdminService } from "@/src/gen/gibson/admin/v1/tenant_pb";
+import { MembershipService } from "@/src/gen/gibson/tenant/v1/membership_pb";
 import { userClient } from "@/src/lib/gibson-client";
 import {
   requireActiveTenant,
@@ -115,7 +115,7 @@ export async function setComponentAccessAction(
   }
 
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(MembershipService);
     await client.setComponentAccess({
       tenantId: callerTenantId,
       component: input.componentRef,

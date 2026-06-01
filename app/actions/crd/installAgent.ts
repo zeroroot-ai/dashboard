@@ -20,7 +20,7 @@
 
 import { randomUUID } from "node:crypto";
 
-import { TenantAdminService } from "@/src/gen/gibson/admin/v1/tenant_pb";
+import { MembershipService } from "@/src/gen/gibson/tenant/v1/membership_pb";
 import { DiscoveryService } from "@/src/gen/gibson/daemon/discovery/v1/discovery_pb";
 import { userClient } from "@/src/lib/gibson-client";
 import { requireActiveTenant } from "@/src/lib/auth/active-tenant";
@@ -128,7 +128,7 @@ export async function installAgentAction(
   // 5. Atomic grant — server enforces caller-access intersection server-side.
   //    No client-side compensating delete needed; the RPC is all-or-nothing.
   try {
-    await userClient(TenantAdminService).grantComponentPermissions({
+    await userClient(MembershipService).grantComponentPermissions({
       agentInstallationId: installationId,
       approvals,
       reason: `agent install: ${input.agentSlug}`,

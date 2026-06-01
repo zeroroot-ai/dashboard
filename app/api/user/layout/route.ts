@@ -15,10 +15,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { userClient } from '@/src/lib/gibson-client';
-import { UserService } from '@/src/gen/gibson/user/v1/user_pb';
+import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import type { WidgetLayout, WidgetType } from '@/src/types/analytics';
-import type { UserLayoutPreferences, WidgetConfig } from '@/src/gen/gibson/user/v1/user_pb';
+import type { UserLayoutPreferences, WidgetConfig } from '@/src/gen/gibson/tenant/v1/user_pb';
 
 // ============================================================================
 // Conversion helpers — proto ↔ local WidgetLayout
@@ -44,15 +44,15 @@ function protoToLayout(proto: UserLayoutPreferences): WidgetLayout {
 
 function layoutToProto(layout: WidgetLayout): UserLayoutPreferences {
   return {
-    $typeName: 'gibson.user.v1.UserLayoutPreferences' as const,
+    $typeName: 'gibson.tenant.v1.UserLayoutPreferences' as const,
     cols: layout.cols,
     rowHeight: layout.rowHeight,
     widgets: layout.widgets.map((w): WidgetConfig => ({
-      $typeName: 'gibson.user.v1.WidgetConfig' as const,
+      $typeName: 'gibson.tenant.v1.WidgetConfig' as const,
       id: w.id,
       type: w.type,
       position: {
-        $typeName: 'gibson.user.v1.WidgetPosition' as const,
+        $typeName: 'gibson.tenant.v1.WidgetPosition' as const,
         x: w.position.x,
         y: w.position.y,
         w: w.position.w,

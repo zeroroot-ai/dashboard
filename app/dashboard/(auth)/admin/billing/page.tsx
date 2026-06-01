@@ -72,7 +72,7 @@ function formatDate(iso?: string): string {
 export default async function AdminBillingPage() {
   // Auth gate: platform-operator only.
   try {
-    await assertAuthorized('/gibson.admin.v1.PluginsAdminService/RegisterPlugin');
+    await assertAuthorized('/gibson.tenant.v1.PluginAdminService/RegisterPlugin');
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
       // The layout error boundary will catch this and render an access-denied page.

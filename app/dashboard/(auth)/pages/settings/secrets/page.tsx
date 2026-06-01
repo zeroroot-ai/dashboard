@@ -6,7 +6,7 @@ import { getServerSession } from "@/src/lib/auth";
 import { getActiveTenant } from "@/src/lib/auth/active-tenant";
 import { listSecrets } from "@/src/lib/gibson-client/secrets";
 import { getBrokerConfig } from "@/src/lib/gibson-client/tenant-broker-config";
-import { BrokerProvider } from "@/src/gen/gibson/admin/v1/tenant_pb";
+import { BrokerProvider } from "@/src/gen/gibson/tenant/v1/secrets_pb";
 import { SecretsList } from "@/src/components/secrets/SecretsList";
 import { SecretsEmptyState } from "@/src/components/secrets/EmptyState";
 import {
@@ -45,7 +45,7 @@ export default async function SecretsPage({ searchParams }: SecretsPageProps) {
   // Authz: ListSecrets is tenant_member, so all members can view the list.
   // Non-members are redirected. Spec: dashboard-authz-ui-gating Task 14.
   try {
-    await assertAuthorized("/gibson.admin.v1.SecretsAdminService/ListSecrets");
+    await assertAuthorized("/gibson.tenant.v1.SecretsService/ListSecrets");
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
       redirect("/dashboard/pages/settings");

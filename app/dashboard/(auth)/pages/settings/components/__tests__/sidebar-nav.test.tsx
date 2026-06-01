@@ -23,10 +23,10 @@ describe("settings SidebarNav — member-management IA (#606)", () => {
     // duplicate Members entry mis-gated on GetBrokerConfig still existed, it
     // would be hidden here (broker denied) while the canonical one shows —
     // so a single match proves the dedup AND the correct gate.
-    allowByMethod["/gibson.admin.v1.TenantAdminService/ListMembers"] = true;
-    allowByMethod["/gibson.admin.v1.TenantAdminService/GetBrokerConfig"] = false;
-    allowByMethod["/gibson.admin.v1.SecretsAdminService/ListSecrets"] = true;
-    allowByMethod["/gibson.admin.v1.GrantsAdminService/ListActiveGrants"] = true;
+    allowByMethod["/gibson.tenant.v1.MembershipService/ListMembers"] = true;
+    allowByMethod["/gibson.tenant.v1.SecretsService/GetBrokerConfig"] = false;
+    allowByMethod["/gibson.tenant.v1.SecretsService/ListSecrets"] = true;
+    allowByMethod["/gibson.tenant.v1.GrantsService/ListActiveGrants"] = true;
 
     render(<SidebarNav />);
 
@@ -45,8 +45,8 @@ describe("settings SidebarNav — member-management IA (#606)", () => {
   });
 
   it("hides Members when the member-list RPC is denied", () => {
-    allowByMethod["/gibson.admin.v1.TenantAdminService/ListMembers"] = false;
-    allowByMethod["/gibson.admin.v1.TenantAdminService/GetBrokerConfig"] = true;
+    allowByMethod["/gibson.tenant.v1.MembershipService/ListMembers"] = false;
+    allowByMethod["/gibson.tenant.v1.SecretsService/GetBrokerConfig"] = true;
 
     render(<SidebarNav />);
 

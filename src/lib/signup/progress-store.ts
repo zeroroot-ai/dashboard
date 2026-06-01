@@ -22,7 +22,7 @@
 import 'server-only';
 
 import { userClient } from '@/src/lib/gibson-client';
-import { UserService } from '@/src/gen/gibson/user/v1/user_pb';
+import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
 import type {
   ProvisioningProgress,
   ProvisioningStep,

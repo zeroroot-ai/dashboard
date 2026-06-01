@@ -36,9 +36,9 @@ import { hasRoleAtLeast } from '@/src/lib/auth/roles';
 import { getActiveTenant } from '@/src/lib/auth/active-tenant';
 import { userClient } from '@/src/lib/gibson-client';
 import {
-  TenantService,
+  AgentIdentityService,
   PrincipalKind,
-} from '@/src/gen/gibson/tenant/v1/tenant_pb';
+} from '@/src/gen/gibson/tenant/v1/agent_identity_pb';
 
 // ---------------------------------------------------------------------------
 // Request validation
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     enrollCommand: string;
   };
   try {
-    const client = userClient(TenantService);
+    const client = userClient(AgentIdentityService);
     const resp = await client.createAgentIdentity({
       name: parsedBody.name,
       kind: principalKindFromString(parsedBody.kind),

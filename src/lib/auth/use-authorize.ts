@@ -66,7 +66,7 @@ const MY_MEMBERSHIPS_QUERY_KEY = ['my-memberships'] as const;
  * Determine whether the current session is allowed to call `method`.
  *
  * @param method - Fully-qualified gRPC method path, e.g.
- *   `"/gibson.admin.v1.SecretsAdminService/SetSecret"`.
+ *   `"/gibson.tenant.v1.SecretsService/SetSecret"`.
  */
 export function useAuthorize(method: string): AuthorizeResult {
   const entry = AuthRegistry[method];

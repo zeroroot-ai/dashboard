@@ -14,7 +14,7 @@ import { userClient } from '@/src/lib/gibson-client';
 import {
   UserService,
   ActivityKind,
-} from '@/src/gen/gibson/user/v1/user_pb';
+} from '@/src/gen/gibson/tenant/v1/user_pb';
 import { logger } from '@/src/lib/logger';
 
 // ============================================================================
