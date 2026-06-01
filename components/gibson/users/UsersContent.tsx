@@ -172,9 +172,12 @@ export function UsersContent() {
   const tenantId = useTenantId() ?? "";
   const currentUserId = session?.user?.id ?? "";
   // Member/role management is gated on the role-assignment RPC (relation: admin).
-  const { allowed: canEdit } = useAuthorize(
+  // Destructure `loading` to satisfy the hide-on-loading contract (see CLAUDE.md
+  // "Frontend authz"). Until resolved, treat as not allowed.
+  const { allowed: canEditResolved, loading: authLoading } = useAuthorize(
     "/gibson.admin.v1.TenantAdminService/SetTenantRole",
   );
+  const canEdit = !authLoading && canEditResolved;
 
   const namespace = tenantId ? tenantNamespace(tenantId) : undefined;
 

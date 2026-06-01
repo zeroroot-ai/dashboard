@@ -160,6 +160,13 @@ function analyse(filePath, source) {
       } else {
         const bound = new Set();
         for (const el of p.name.elements) {
+          // The property key is either `el.propertyName.text` (when aliased,
+          // e.g. `loading: authLoading`) or `el.name.text` (when unaliased,
+          // e.g. `loading`). Collect both so that `{ loading: someAlias }`
+          // satisfies the contract the same way `{ loading }` does.
+          if (el.propertyName && ts.isIdentifier(el.propertyName)) {
+            bound.add(el.propertyName.text);
+          }
           if (ts.isIdentifier(el.name)) bound.add(el.name.text);
           else if (ts.isObjectBindingPattern(el.name)) {
             // unsupported nested binding — flag
