@@ -228,7 +228,7 @@ describe('GibsonLLMAdapter.doGenerate', () => {
 // ---------------------------------------------------------------------------
 
 describe('GibsonLLMAdapter.doStream', () => {
-  it('emits text-delta, then finish from a single ExecuteLLM response', async () => {
+  it('emits stream-start, framed text, then finish from a single ExecuteLLM response', async () => {
     executeLLMMock.mockResolvedValueOnce(
       makeExecuteResponse({
         content: 'hello world',
@@ -243,7 +243,10 @@ describe('GibsonLLMAdapter.doStream', () => {
     expect(warnings).toEqual([]);
     const parts = await readAll(stream);
     expect(parts).toEqual([
+      { type: 'stream-start', warnings: [] },
+      { type: 'text-start', id: '0' },
       { type: 'text-delta', id: '0', delta: 'hello world' },
+      { type: 'text-end', id: '0' },
       {
         type: 'finish',
         finishReason: 'stop',
@@ -252,7 +255,7 @@ describe('GibsonLLMAdapter.doStream', () => {
     ]);
   });
 
-  it('emits tool-input-start + tool-input-delta for each tool call', async () => {
+  it('emits framed tool-input parts and a tool-call for each tool call', async () => {
     executeLLMMock.mockResolvedValueOnce(
       makeExecuteResponse({
         content: '',
@@ -267,8 +270,11 @@ describe('GibsonLLMAdapter.doStream', () => {
 
     const parts = await readAll(stream);
     expect(parts).toEqual([
+      { type: 'stream-start', warnings: [] },
       { type: 'tool-input-start', id: 'call_1', toolName: 'get_weather' },
       { type: 'tool-input-delta', id: 'call_1', delta: '{"city":"SF"}' },
+      { type: 'tool-input-end', id: 'call_1' },
+      { type: 'tool-call', toolCallId: 'call_1', toolName: 'get_weather', input: '{"city":"SF"}' },
       {
         type: 'finish',
         finishReason: 'tool-calls',
@@ -277,7 +283,7 @@ describe('GibsonLLMAdapter.doStream', () => {
     ]);
   });
 
-  it('emits only finish when content and tool calls are empty', async () => {
+  it('emits stream-start then finish when content and tool calls are empty', async () => {
     executeLLMMock.mockResolvedValueOnce(
       makeExecuteResponse({
         content: '',
@@ -292,6 +298,7 @@ describe('GibsonLLMAdapter.doStream', () => {
 
     const parts = await readAll(stream);
     expect(parts).toEqual([
+      { type: 'stream-start', warnings: [] },
       {
         type: 'finish',
         finishReason: 'stop',
@@ -361,7 +368,7 @@ describe('daemonResponseToVercelContent', () => {
 });
 
 describe('daemonResponseToVercelStreamParts', () => {
-  it('emits text-delta followed by finish for text-only response', () => {
+  it('frames text with text-start/text-end after stream-start, before finish', () => {
     const parts = daemonResponseToVercelStreamParts({
       content: 'hello',
       toolCalls: [],
@@ -369,32 +376,55 @@ describe('daemonResponseToVercelStreamParts', () => {
       usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 },
     });
     expect(parts).toEqual([
+      { type: 'stream-start', warnings: [] },
+      { type: 'text-start', id: '0' },
       { type: 'text-delta', id: '0', delta: 'hello' },
+      { type: 'text-end', id: '0' },
       { type: 'finish', finishReason: 'stop', usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 } },
     ]);
   });
 
-  it('emits tool-input-start + tool-input-delta + finish for tool-call response', () => {
+  it('frames tool input and emits a tool-call for tool-call response', () => {
     const parts = daemonResponseToVercelStreamParts({
       content: '',
       toolCalls: [{ id: 'c1', name: 'search', arguments: '{"q":"test"}' }],
       finishReason: 'tool_calls',
       usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
     });
-    expect(parts[0]).toEqual({ type: 'tool-input-start', id: 'c1', toolName: 'search' });
-    expect(parts[1]).toEqual({ type: 'tool-input-delta', id: 'c1', delta: '{"q":"test"}' });
-    expect(parts[2].type).toBe('finish');
+    expect(parts[0]).toEqual({ type: 'stream-start', warnings: [] });
+    expect(parts[1]).toEqual({ type: 'tool-input-start', id: 'c1', toolName: 'search' });
+    expect(parts[2]).toEqual({ type: 'tool-input-delta', id: 'c1', delta: '{"q":"test"}' });
+    expect(parts[3]).toEqual({ type: 'tool-input-end', id: 'c1' });
+    expect(parts[4]).toEqual({ type: 'tool-call', toolCallId: 'c1', toolName: 'search', input: '{"q":"test"}' });
+    expect(parts[5].type).toBe('finish');
   });
 
-  it('always emits a finish part as the last element', () => {
+  it('forwards call warnings in the stream-start part', () => {
+    const parts = daemonResponseToVercelStreamParts(
+      {
+        content: 'hi',
+        toolCalls: [],
+        finishReason: 'stop',
+        usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+      },
+      [{ type: 'other', message: 'image input dropped' }],
+    );
+    expect(parts[0]).toEqual({
+      type: 'stream-start',
+      warnings: [{ type: 'other', message: 'image input dropped' }],
+    });
+  });
+
+  it('always emits stream-start first and finish as the last element', () => {
     const parts = daemonResponseToVercelStreamParts({
       content: '',
       toolCalls: [],
       finishReason: 'length',
       usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
     });
-    expect(parts).toHaveLength(1);
-    expect(parts[0].type).toBe('finish');
+    expect(parts).toHaveLength(2);
+    expect(parts[0].type).toBe('stream-start');
+    expect(parts[1].type).toBe('finish');
   });
 });
 
