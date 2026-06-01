@@ -16,10 +16,10 @@ import { getServerSession } from "@/src/lib/auth";
  * Post-`dashboard-native-signup` this page should be unreachable during
  * normal operation: `signupAction` always applies a Tenant CR + TenantMember
  * before redirecting the user to OIDC sign-in, so every signed-in user
- * arrives at `/dashboard` with `getServerSession().user.tenantId` populated
- * (resolved from the `gibson_active_tenant` cookie + FGA membership lookup
- * — see `tenant-membership-not-in-jwt`). Middleware additionally redirects
- * tenantless users to `/api/auth/federated-signout`.
+ * arrives at `/dashboard` with an active tenant cookie set (resolved via
+ * `requireActiveTenant()` from the `gibson_active_tenant` HMAC-signed cookie
+ * + FGA membership lookup — see `tenant-membership-not-in-jwt`, dashboard#583).
+ * Middleware additionally redirects tenantless users to `/api/auth/federated-signout`.
  *
  * This page exists only for a narrow diagnostic case: an operator-side
  * failure after signup completed (Tenant CR deleted out from under the
@@ -37,11 +37,10 @@ export default async function NoWorkspacePage() {
     redirect("/login");
   }
 
-  // Has a tenant — page should not have been reached.
-  if (
-    session.user?.tenantId ||
-    (session.user?.tenants && session.user.tenants.length > 0)
-  ) {
+  // Has a tenant membership — page should not have been reached.
+  // session.user.tenantId was removed in dashboard#583 lock-in;
+  // use the membership list instead.
+  if (session.user?.tenants && session.user.tenants.length > 0) {
     redirect("/dashboard");
   }
 

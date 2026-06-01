@@ -52,11 +52,12 @@
  *
  * ## Usage
  *
- *   node scripts/check-no-lenient-tenant.mjs            # WARN mode (exits 0)
+ *   node scripts/check-no-lenient-tenant.mjs            # FAIL mode (exits 1 on any violation)
  *   node scripts/check-no-lenient-tenant.mjs --selftest # assert detection (exits 0/1)
  *
- * Wired into `pnpm prebuild` in WARN mode so the build never fails here.
- * The lock-in slice (dashboard#583) will change this to a hard FAIL.
+ * Hard-fail mode: any lenient-tenant pattern found causes a non-zero exit.
+ * Flipped from WARN to FAIL in dashboard#583 (lock-in slice).
+ * All endpoints are now on requireActiveTenant(); no lenient path remains.
  */
 
 import { readFileSync, writeFileSync, unlinkSync, readdirSync, statSync } from 'node:fs';
@@ -268,7 +269,7 @@ function runScan() {
 
   if (allViolations.length === 0) {
     console.log(
-      `[${SCRIPT_NAME}] WARN-mode clean: no lenient-tenant patterns found (${files.length} files scanned)`,
+      `[${SCRIPT_NAME}] OK: no lenient-tenant patterns found (${files.length} files scanned)`,
     );
     return 0;
   }
@@ -281,26 +282,27 @@ function runScan() {
     byFile.get(key).push(v);
   }
 
-  console.warn(
-    `\n[${SCRIPT_NAME}] WARN — ${allViolations.length} lenient-tenant pattern(s) found.`,
+  console.error(
+    `\n[${SCRIPT_NAME}] FAIL — ${allViolations.length} lenient-tenant pattern(s) found.`,
   );
-  console.warn(
-    'These will become HARD FAILURES in dashboard#583 (lock-in slice).',
+  console.error(
+    'All endpoints must use requireActiveTenant() from src/lib/auth/active-tenant.',
   );
-  console.warn('Migrate each call-site to requireActiveTenant() from src/lib/auth/active-tenant.\n',
+  console.error(
+    'session.user.tenantId was removed in dashboard#583 (lock-in slice).\n',
   );
 
   for (const [file, vs] of byFile) {
-    console.warn(`  ${file}`);
+    console.error(`  ${file}`);
     for (const v of vs) {
-      console.warn(`    L${v.line}: ${v.label}`);
-      console.warn(`      ${v.text}`);
+      console.error(`    L${v.line}: ${v.label}`);
+      console.error(`      ${v.text}`);
     }
   }
 
-  console.warn(`\n[${SCRIPT_NAME}] Total violations: ${allViolations.length} (exit 0 — WARN mode)`);
-  // WARN mode: always exit 0 so the build is not blocked.
-  return 0;
+  console.error(`\n[${SCRIPT_NAME}] Total violations: ${allViolations.length} (exit 1 — HARD FAIL)`);
+  // HARD FAIL: exit 1 on any violation (dashboard#583 lock-in).
+  return 1;
 }
 
 // ---------------------------------------------------------------------------

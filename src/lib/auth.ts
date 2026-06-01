@@ -26,6 +26,12 @@ import { auth } from '@/auth';
  *
  * Shape is intentionally preserved from the pre-Auth.js session so
  * that all existing callers can use this type without changes.
+ *
+ * NOTE (dashboard#583 lock-in): `tenantId` has been removed as an authority
+ * field. The active tenant is now only resolvable via `requireActiveTenant()`
+ * from `src/lib/auth/active-tenant`. Session no longer carries a tenant
+ * identity — it carries the membership list (`tenants`) for role lookup and
+ * the tenant-switcher UI.
  */
 export interface GibsonSession {
   user: {
@@ -42,7 +48,6 @@ export interface GibsonSession {
     emailVerified: boolean;
     groups: string[];
     roles: string[];
-    tenantId: string | null | undefined;
     tenants: string[];
     rolesByTenant: Record<string, string>;
     permissions: string[];
@@ -73,10 +78,13 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
 
   // Tenant + memberships now come from FGA (via the daemon) plus the
   // gibson_active_tenant cookie — see spec `tenant-membership-not-in-jwt`.
+  // The active tenant is NOT resolved here; every endpoint calls
+  // requireActiveTenant() directly (dashboard#583 lock-in). The session only
+  // carries the membership list (for role lookup and switcher UI).
   // Lazily import to avoid a hard dep cycle through the membership module.
-  let tenantId: string | null = null;
   const tenants: string[] = [];
   const rolesByTenant: Record<string, string> = {};
+  let activeTenantId: string | null = null;
   try {
     const [{ getMyMemberships }, { readRawActiveTenant }] = await Promise.all([
       import('@/src/lib/auth/membership'),
@@ -87,11 +95,12 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
       tenants.push(m.tenantId);
       rolesByTenant[m.tenantId] = m.role;
     }
+    // Read the active-tenant cookie to populate roles for this render.
+    // This is read-only; no auto-pick fallback — a missing cookie means
+    // no active tenant and the endpoint will throw via requireActiveTenant().
     const raw = await readRawActiveTenant();
     if (raw.status === 'present' && tenants.includes(raw.tenantId!)) {
-      tenantId = raw.tenantId!;
-    } else if (memberships.length === 1) {
-      tenantId = memberships[0]!.tenantId;
+      activeTenantId = raw.tenantId!;
     }
   } catch (err) {
     // Transient FGA/daemon errors degrade to "no tenant" — middleware will
@@ -99,7 +108,8 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
     console.error('[auth] membership resolution failed:', err);
   }
 
-  const roles: string[] = tenantId && rolesByTenant[tenantId] ? [rolesByTenant[tenantId]!] : [];
+  // Derive roles from the cookie-confirmed active tenant only (no auto-pick).
+  const roles: string[] = activeTenantId && rolesByTenant[activeTenantId] ? [rolesByTenant[activeTenantId]!] : [];
   let permissions: string[] = [];
   let crossTenant = false;
 
@@ -121,7 +131,6 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
       emailVerified: true,
       groups: [],
       roles,
-      tenantId,
       tenants,
       rolesByTenant,
       permissions,

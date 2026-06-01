@@ -70,8 +70,13 @@ export function emitCrdAudit(event: CrdAuditEvent): void {
 /**
  * Convenience helper — emit an audit event using a successful gate's
  * session context. Callers after a successful `requireCrdSession` call use
- * this to avoid re-specifying userId / sessionTenantId / crossTenant on
- * every emission.
+ * this to avoid re-specifying userId / crossTenant on every emission.
+ *
+ * `sessionTenantId` is recorded as the gate-resolved targetTenant (the
+ * active tenant confirmed by requireActiveTenant() inside requireCrdSession).
+ * The session object is no longer an authority for the active tenant
+ * (dashboard#583 lock-in) — the resolved tenant always comes from the
+ * request-scoped cookie validation.
  */
 export function emitCrdAuditFromGate(args: {
   session: GibsonSession;
@@ -89,7 +94,9 @@ export function emitCrdAuditFromGate(args: {
     action: args.action,
     outcome: args.outcome,
     userId: args.userId,
-    sessionTenantId: args.session.user.tenantId ?? null,
+    // Record the gate-resolved tenant, not a session field.
+    // session.user.tenantId was removed in dashboard#583 lock-in.
+    sessionTenantId: args.targetTenant,
     targetTenant: args.targetTenant,
     crossTenant: args.session.user.crossTenant,
     inputKeys: args.inputKeys,

@@ -20,7 +20,6 @@ function makeSession(overrides: Partial<GibsonSession['user']> = {}): GibsonSess
       emailVerified: true,
       groups: [],
       roles: [],
-      tenantId: 'acme',
       tenants: ['acme', 'beta'],
       rolesByTenant: { acme: 'member', beta: 'admin' },
       permissions: [],
@@ -54,7 +53,7 @@ describe('switchTenantAction', () => {
 
   it('surfaces resolution failure when memberships list is empty', async () => {
     mockGetServerSession.mockResolvedValueOnce(
-      makeSession({ tenants: [], tenantId: null }),
+      makeSession({ tenants: [] }),
     );
     const result = await switchTenantAction('acme');
 

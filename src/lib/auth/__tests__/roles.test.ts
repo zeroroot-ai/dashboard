@@ -26,7 +26,6 @@ function makeSession(rolesByTenant: Record<string, string>): GibsonSession {
       emailVerified: true,
       groups: [],
       roles: [],
-      tenantId: 'tenant-a',
       tenants: Object.keys(rolesByTenant),
       rolesByTenant,
       permissions: [],

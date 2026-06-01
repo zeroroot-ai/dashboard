@@ -74,7 +74,9 @@ export async function requireCrdSession<T = void>(
       action: params.action,
       outcome,
       userId: session?.user?.id ?? "anonymous",
-      sessionTenantId: session?.user?.tenantId ?? null,
+      // Active tenant is not yet resolved on the denial path — record null.
+      // session.user.tenantId was removed in dashboard#583 lock-in.
+      sessionTenantId: null,
       targetTenant: params.tenantName ?? null,
       crossTenant: Boolean(session?.user?.crossTenant),
       inputKeys: params.inputKeys ?? [],
@@ -188,7 +190,9 @@ export async function requireCrdSessionForSelfAction<T = void>(
       action,
       outcome,
       userId: session?.user?.id ?? "anonymous",
-      sessionTenantId: session?.user?.tenantId ?? null,
+      // Active tenant is not yet resolved on the denial path — record null.
+      // session.user.tenantId was removed in dashboard#583 lock-in.
+      sessionTenantId: null,
       targetTenant: null,
       crossTenant: Boolean(session?.user?.crossTenant),
       inputKeys,

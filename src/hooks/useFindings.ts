@@ -37,10 +37,10 @@ async function fetchFindings(
   const params = new URLSearchParams();
 
   // Tenant context is NOT passed via URL (dashboard#209). The
-  // /api/findings route reads `session.user.tenantId` server-side and
-  // the daemon trusts the HMAC-signed X-Gibson-Identity-Tenant header
-  // from ext-authz. Including the slug in the URL would only leak it
-  // into browser history / referer / access logs.
+  // /api/findings route resolves the active tenant via requireActiveTenant()
+  // (HMAC-signed cookie). The daemon trusts the X-Gibson-Identity-Tenant
+  // header injected by ext-authz. Including the slug in the URL would
+  // only leak it into browser history / referer / access logs.
   if (filters.severity && filters.severity.length > 0) {
     params.set('severity', filters.severity.join(','));
   }

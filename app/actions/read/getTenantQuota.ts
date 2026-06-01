@@ -15,6 +15,11 @@
 import { TenantService } from "@/src/gen/gibson/tenant/v1/tenant_pb";
 import { userClient } from "@/src/lib/gibson-client";
 import { getServerSession } from "@/src/lib/auth";
+import {
+  requireActiveTenant,
+  NoActiveTenantError,
+  StaleActiveTenantError,
+} from "@/src/lib/auth/active-tenant";
 
 export type ActionResult<T> =
   | { ok: true; data: T }
@@ -42,10 +47,18 @@ export async function getTenantQuotaAction(): Promise<
   if (!session?.user) {
     return { ok: false, error: "unauthenticated" };
   }
-  const tenantId =
-    (session.user as { tenantId?: string }).tenantId ?? "";
-  if (!tenantId) {
-    return { ok: false, error: "no tenant in session" };
+
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    if (err instanceof NoActiveTenantError) {
+      return { ok: false, error: "no_active_tenant" };
+    }
+    if (err instanceof StaleActiveTenantError) {
+      return { ok: false, error: "stale_active_tenant" };
+    }
+    throw err;
   }
 
   try {
