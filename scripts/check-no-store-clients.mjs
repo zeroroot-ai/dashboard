@@ -19,10 +19,11 @@
  * 1. **package.json dependencies** — `dependencies`, `devDependencies`, and
  *    `peerDependencies` must not contain any of the banned package names.
  *
- * 2. **Source file imports** — non-type runtime imports of banned packages
+ * 2. **Source file imports** — any import (type OR value) of a banned package
  *    in any `.ts` / `.tsx` file under the scan roots. Type-only imports
- *    (`import type { ... } from 'pkg'`) are excluded because they disappear
- *    at runtime and never cause the package to be instantiated.
+ *    (`import type { ... } from 'pkg'`) are also banned: they break the
+ *    typecheck once `@types/<pkg>` is removed and signal lingering
+ *    backing-store coupling that should go through the daemon instead.
  *
  * ## Banned packages
  *
@@ -110,20 +111,24 @@ const SKIP_FILE_MARKERS = ['.test.', '.spec.', '.stories.'];
 // ---------------------------------------------------------------------------
 
 /**
- * Matches a non-type-only import whose module specifier is a banned package.
+ * Matches any import (type OR value) whose module specifier is a banned package.
  *
  * We match the module specifier at the END of the import statement. A banned
  * import looks like:
  *   import { something } from 'pkg';       → banned
  *   import * as foo from "pkg/sub/path";   → banned
  *   import 'pkg';                          → banned (side-effect import)
- *   import type { T } from 'pkg';          → allowed (type-only)
+ *   import type { T } from 'pkg';          → banned (a type-only import of a
+ *                                            store package still breaks the
+ *                                            typecheck once @types/<pkg> is
+ *                                            removed, and signals lingering
+ *                                            backing-store coupling)
  *   // import { something } from 'pkg';    → allowed (comment)
  *
  * The pattern captures the trailing module specifier so we can check against
  * BANNED_PACKAGE_NAMES.
  */
-const IMPORT_RE = /^(?!.*\bimport\s+type\b).*\bfrom\s+['"]([^'"]+)['"]/;
+const IMPORT_RE = /^.*\bfrom\s+['"]([^'"]+)['"]/;
 const SIDE_EFFECT_IMPORT_RE = /^\s*import\s+['"]([^'"]+)['"]/;
 
 function isCommentLine(line) {
