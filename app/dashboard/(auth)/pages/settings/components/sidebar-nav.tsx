@@ -70,12 +70,9 @@ const workspaceAdminNav: AdminEntry[] = [
 ];
 
 const adminNav: AdminEntry[] = [
-  {
-    title: "Members",
-    href: "/dashboard/pages/settings/members",
-    icon: UsersIcon,
-    method: "/gibson.admin.v1.TenantAdminService/GetBrokerConfig",
-  },
+  // NOTE: "Members" is intentionally NOT here — it is the single canonical
+  // entry in workspaceAdminNav, gated on ListMembers. A duplicate entry
+  // mis-gated on GetBrokerConfig (a secrets-broker RPC) was removed (#606).
   {
     title: "Secrets",
     href: "/dashboard/pages/settings/secrets",
