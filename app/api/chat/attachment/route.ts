@@ -1,23 +1,31 @@
 /**
  * Chat Attachment API Route
  *
- * POST /api/chat/attachment - Upload a single file, extract its text content,
- * and stash it in Redis under a short-lived token. The chatbot then passes
- * the returned `attachmentId` on its next message so the chat route can
- * inject the file content into the conversation as a user message.
+ * POST /api/chat/attachment — Upload a single file, extract its text content,
+ * and stage it in the daemon via UserService.StageAttachment under a
+ * short-lived token. The chatbot then passes the returned `attachmentId` on
+ * its next message so the chat route can inject the file content into the
+ * conversation as a user message.
  *
  * Limits:
  * - Max size: 4 MB
  * - Allowed types: text/*, application/json, application/pdf
  *
  * Storage:
- * - Key: chatattach:{uuid}
- * - TTL: 1 hour (single-use; chat route deletes after read)
+ * - Daemon-managed Redis via StageAttachment RPC (single-use GETDEL).
+ * - TTL: 1 hour (daemon default).
+ *
+ * Replaces the previous direct-Redis implementation.
+ * Spec: dashboard-no-backing-store-clients (Module 5 / issue #589).
  */
+
+import 'server-only';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { setStr } from '@/src/lib/redis-store';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
+import { userClient } from '@/src/lib/gibson-client';
+import { UserService } from '@/src/gen/gibson/user/v1/user_pb';
 import { logger } from '@/src/lib/logger';
 
 // ============================================================================
@@ -25,8 +33,6 @@ import { logger } from '@/src/lib/logger';
 // ============================================================================
 
 const MAX_SIZE_BYTES = 4 * 1024 * 1024; // 4 MB
-const TTL_SECONDS = 60 * 60; // 1 hour
-const REDIS_KEY_PREFIX = 'chatattach:';
 
 const ALLOWED_NON_TEXT_MIME = new Set<string>([
   'application/json',
@@ -47,6 +53,13 @@ export async function POST(request: NextRequest): Promise<Response> {
   const session = await getServerSession();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
   }
 
   // Parse multipart form
@@ -110,11 +123,21 @@ export async function POST(request: NextRequest): Promise<Response> {
     );
   }
 
-  // Stash in Redis
-  const id = crypto.randomUUID();
-  await setStr(`${REDIS_KEY_PREFIX}${id}`, text, TTL_SECONDS);
-
-  return NextResponse.json({ attachmentId: id }, { status: 200 });
+  // Stage in daemon (single-use, TTL 1 hour by default).
+  try {
+    const resp = await userClient(UserService).stageAttachment({
+      tenantId,
+      text,
+      ttlSeconds: 0, // 0 = daemon default (3600s)
+    });
+    return NextResponse.json({ attachmentId: resp.attachmentId }, { status: 200 });
+  } catch (err) {
+    logger.error({ err, route: 'chat/attachment' }, 'stageAttachment RPC failed');
+    return NextResponse.json(
+      { error: 'Could not stage attachment.' },
+      { status: 500 },
+    );
+  }
 }
 
 // ============================================================================

@@ -20,7 +20,8 @@ import { getLangfuseUserContext } from '@/src/lib/chat/langfuse-session-context'
 import { getPlatformContext } from '@/src/lib/chat/platform-context';
 import { validationErrorResponse, daemonErrorResponse } from '@/src/lib/api-errors';
 import { checkRateLimit, createRateLimitResponse } from '@/src/lib/rate-limiter';
-import { getStr, delKey } from '@/src/lib/redis-store';
+import { userClient } from '@/src/lib/gibson-client';
+import { UserService } from '@/src/gen/gibson/user/v1/user_pb';
 import { logger } from '@/src/lib/logger';
 // getConversation removed — ListConversations/GetConversation DEFERRED per
 // admin-services-completion spec. Chat history will be wired once the
@@ -85,18 +86,20 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
     const userId = session.user.id ?? '';
 
-    // Fetch + consume any attached-file content. Single-use: the key is
-    // deleted after read so a stolen attachmentId can't be replayed.
+    // Fetch + consume any attached-file content via the daemon's ConsumeAttachment
+    // RPC (single-use GETDEL — daemon deletes the key atomically on read).
     let attachmentText: string | null = null;
     if (attachmentId) {
-      const key = `chatattach:${attachmentId}`;
       try {
-        attachmentText = await getStr(key);
-        await delKey(key);
+        const attachResp = await userClient(UserService).consumeAttachment({
+          tenantId,
+          attachmentId,
+        });
+        attachmentText = attachResp.text || null;
       } catch (err) {
         logger.warn(
           { err, route: 'chat', attachmentId },
-          'failed to load chat attachment',
+          'failed to consume chat attachment',
         );
       }
     }

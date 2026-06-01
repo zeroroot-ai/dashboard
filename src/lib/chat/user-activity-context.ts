@@ -1,5 +1,21 @@
+/**
+ * user-activity-context.ts
+ *
+ * Retrieves and records per-user platform activity via the daemon's
+ * UserService.GetUserActivity / RecordUserActivity RPCs.
+ *
+ * Replaces the previous direct-Redis implementation.
+ * Spec: dashboard-no-backing-store-clients (Module 5 / issue #589).
+ */
+
 import 'server-only';
-import { listPrepend, listGetAll, setStr, getStr } from '@/src/lib/redis-store';
+
+import { userClient } from '@/src/lib/gibson-client';
+import {
+  UserService,
+  ActivityKind,
+} from '@/src/gen/gibson/user/v1/user_pb';
+import { logger } from '@/src/lib/logger';
 
 // ============================================================================
 // Types
@@ -25,57 +41,55 @@ const EMPTY: UserActivityContext = {
   lastActiveAt: null,
 };
 
-const TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
-const MAX_ITEMS = 5;
-
-// ============================================================================
-// Keys
-// ============================================================================
-
-type ActivityKind = 'mission' | 'node' | 'finding';
-
-function activityKey(userId: string, tenantId: string, kind: ActivityKind): string {
-  return `useract:${tenantId}:${userId}:${kind}`;
-}
-
-function lastActiveKey(userId: string, tenantId: string): string {
-  return `useract:${tenantId}:${userId}:lastActive`;
-}
-
 // ============================================================================
 // Activity recording (fire-and-forget side-effect)
 // ============================================================================
 
+type ActivityKindLabel = 'mission' | 'node' | 'finding';
+
+function toProtoKind(kind: ActivityKindLabel): ActivityKind {
+  switch (kind) {
+    case 'mission': return ActivityKind.MISSION;
+    case 'node': return ActivityKind.NODE;
+    case 'finding': return ActivityKind.FINDING;
+  }
+}
+
 /**
- * Record a user activity event. Call fire-and-forget (void) on the render path.
- * Silently no-ops when Redis is unavailable.
+ * Record a user activity event via the daemon. Call fire-and-forget (void)
+ * on the render path. Silently no-ops on any error.
  */
 export async function recordUserActivity(
   userId: string,
   tenantId: string,
-  kind: ActivityKind,
+  kind: ActivityKindLabel,
   item: ActivityItem,
 ): Promise<void> {
-  await Promise.all([
-    listPrepend(activityKey(userId, tenantId, kind), JSON.stringify(item), MAX_ITEMS, TTL_SECONDS),
-    setStr(lastActiveKey(userId, tenantId), String(Date.now()), TTL_SECONDS),
-  ]);
+  try {
+    await userClient(UserService).recordUserActivity({
+      tenantId,
+      userId,
+      kind: toProtoKind(kind),
+      item: {
+        id: item.id,
+        label: item.label,
+        timestampUnix: BigInt(item.timestamp),
+      },
+    });
+  } catch (err) {
+    logger.warn(
+      { err, scope: 'chat.user-activity-context.record' },
+      'recordUserActivity RPC failed (non-fatal)',
+    );
+  }
 }
 
 // ============================================================================
 // Context retrieval
 // ============================================================================
 
-function parseItems(raw: string[]): ActivityItem[] {
-  return raw
-    .map((r) => {
-      try { return JSON.parse(r) as ActivityItem; } catch { return null; }
-    })
-    .filter((x): x is ActivityItem => x !== null);
-}
-
 /**
- * Fetch the user's recent platform activity from Redis.
+ * Fetch the user's recent platform activity from the daemon.
  * Returns empty context on any failure — never throws.
  */
 export async function getUserActivityContext(
@@ -83,18 +97,29 @@ export async function getUserActivityContext(
   tenantId: string,
 ): Promise<UserActivityContext> {
   try {
-    const [missions, nodes, findings, lastActiveRaw] = await Promise.all([
-      listGetAll(activityKey(userId, tenantId, 'mission'), MAX_ITEMS),
-      listGetAll(activityKey(userId, tenantId, 'node'), MAX_ITEMS),
-      listGetAll(activityKey(userId, tenantId, 'finding'), MAX_ITEMS),
-      getStr(lastActiveKey(userId, tenantId)),
-    ]);
-
+    const resp = await userClient(UserService).getUserActivity({
+      tenantId,
+      userId,
+    });
+    const a = resp.activity;
+    if (!a) return EMPTY;
     return {
-      recentMissions: parseItems(missions),
-      recentNodes: parseItems(nodes),
-      recentFindings: parseItems(findings),
-      lastActiveAt: lastActiveRaw ? Number(lastActiveRaw) : null,
+      recentMissions: a.recentMissions.map((it) => ({
+        id: it.id,
+        label: it.label,
+        timestamp: Number(it.timestampUnix),
+      })),
+      recentNodes: a.recentNodes.map((it) => ({
+        id: it.id,
+        label: it.label,
+        timestamp: Number(it.timestampUnix),
+      })),
+      recentFindings: a.recentFindings.map((it) => ({
+        id: it.id,
+        label: it.label,
+        timestamp: Number(it.timestampUnix),
+      })),
+      lastActiveAt: a.lastActiveAtUnix ? Number(a.lastActiveAtUnix) : null,
     };
   } catch {
     return EMPTY;

@@ -34,16 +34,6 @@ vi.mock('react', () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Stub the Redis layer with an empty in-memory store. We don't exercise
-// caching in this suite — every test goes daemon-ward.
-// ---------------------------------------------------------------------------
-vi.mock('@/src/lib/redis-store', () => ({
-  getJSON: vi.fn(async () => null),
-  setJSON: vi.fn(async () => true),
-  delKey: vi.fn(async () => true),
-}));
-
-// ---------------------------------------------------------------------------
 // Auth.js session — a signed-in user. Tests don't exercise the
 // unauthenticated-by-no-session branch.
 // ---------------------------------------------------------------------------

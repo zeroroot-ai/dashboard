@@ -53,6 +53,7 @@ vi.mock('@/src/lib/ai/prompts', () => ({
 
 vi.mock('ai', () => ({
   streamText: mockStreamText,
+  convertToModelMessages: vi.fn(async (messages: unknown[]) => messages),
 }));
 
 vi.mock('@/src/lib/graph/context', () => ({
@@ -80,13 +81,19 @@ vi.mock('@/src/lib/rate-limiter', () => ({
   createRateLimitResponse: vi.fn(),
 }));
 
+const { mockDaemonErrorResponse } = vi.hoisted(() => ({
+  mockDaemonErrorResponse: vi.fn((err: unknown) => {
+    // Log the error to help diagnose test failures.
+    if (process.env['DEBUG_TEST']) console.error('[test] daemonErrorResponse called with:', err);
+    return new Response(JSON.stringify({ error: String(err) }), { status: 500 });
+  }),
+}));
+
 vi.mock('@/src/lib/api-errors', () => ({
-  validationErrorResponse: vi.fn((err) =>
+  validationErrorResponse: vi.fn((err: unknown) =>
     new Response(JSON.stringify({ error: String(err) }), { status: 400 }),
   ),
-  daemonErrorResponse: vi.fn((err) =>
-    new Response(JSON.stringify({ error: String(err) }), { status: 500 }),
-  ),
+  daemonErrorResponse: mockDaemonErrorResponse,
 }));
 
 // ---------------------------------------------------------------------------
@@ -131,8 +138,10 @@ function makeRequest(opts?: { debugHeader?: boolean; messages?: unknown[] }): Ne
 // ---------------------------------------------------------------------------
 
 beforeEach(() => {
+  // Set up return values BEFORE clearAllMocks so they persist after the reset.
+  // The order matters: clearAllMocks clears implementations, so wire them
+  // back up immediately after.
   vi.resetModules();
-  vi.clearAllMocks();
 
   mockCheckRateLimit.mockResolvedValue({ allowed: true });
   mockGetServerSession.mockResolvedValue({

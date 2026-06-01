@@ -18,12 +18,15 @@
  * null means the field is absent on the CRD (legacy CR or not yet started).
  *
  * Used by the onboarding page to poll live provisioning progress (D8).
+ *
+ * Tenant resolved via requireActiveTenant() — fail-closed, no default fallback.
+ * Spec: dashboard-no-backing-store-clients (issue #579).
  */
 
 import 'server-only';
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { getTenant } from '@/src/lib/k8s/tenants';
 import { K8sNotFoundError } from '@/src/lib/k8s/errors';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
@@ -43,14 +46,11 @@ function mapStore(entry: DataPlaneStoreStatus | undefined): StoreStatus {
 }
 
 export async function GET() {
-  const session = await getServerSession();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const tenantId = session.user?.tenantId;
-  if (!tenantId) {
-    return NextResponse.json({ error: 'No tenant context' }, { status: 403 });
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
   }
 
   try {

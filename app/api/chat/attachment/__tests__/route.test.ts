@@ -5,7 +5,8 @@
  *
  * Strategy:
  *  - Mock getServerSession so the auth gate is controllable.
- *  - Mock the Redis store helpers so we never hit a real Redis.
+ *  - Mock requireActiveTenant so the tenant gate is controllable.
+ *  - Mock the UserService.stageAttachment RPC via userClient.
  *  - Mock pdf-parse so we don't load pdfjs-dist in unit tests.
  *  - Exercise the four canonical paths: accepted text, accepted PDF,
  *    413 (too large), 415 (disallowed type).
@@ -17,14 +18,12 @@ import { NextRequest } from 'next/server';
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
-//
-// `vi.mock` calls are hoisted above the top-level imports — any vi.fn() they
-// reference must be declared via `vi.hoisted` so it lifts with them.
 
-const { mockGetServerSession, mockSetStr, mockPdfGetText, mockPdfDestroy } =
+const { mockGetServerSession, mockRequireActiveTenant, mockStageAttachment, mockPdfGetText, mockPdfDestroy } =
   vi.hoisted(() => ({
     mockGetServerSession: vi.fn(),
-    mockSetStr: vi.fn(),
+    mockRequireActiveTenant: vi.fn(),
+    mockStageAttachment: vi.fn(),
     mockPdfGetText: vi.fn(),
     mockPdfDestroy: vi.fn(),
   }));
@@ -33,8 +32,20 @@ vi.mock('@/src/lib/auth', () => ({
   getServerSession: mockGetServerSession,
 }));
 
-vi.mock('@/src/lib/redis-store', () => ({
-  setStr: (...args: unknown[]) => mockSetStr(...args),
+vi.mock('@/src/lib/auth/active-tenant', () => ({
+  requireActiveTenant: mockRequireActiveTenant,
+  activeTenantApiResponse: (_err: unknown) =>
+    new Response(JSON.stringify({ error: 'no_active_tenant', code: 'no_active_tenant' }), { status: 412 }),
+}));
+
+vi.mock('@/src/lib/gibson-client', () => ({
+  userClient: () => ({
+    stageAttachment: (...args: unknown[]) => mockStageAttachment(...args),
+  }),
+}));
+
+vi.mock('@/src/gen/gibson/user/v1/user_pb', () => ({
+  UserService: {},
 }));
 
 vi.mock('@/src/lib/logger', () => ({
@@ -46,8 +57,6 @@ vi.mock('@/src/lib/logger', () => ({
 }));
 
 // pdf-parse v2 ships a class API: new PDFParse({ data }).getText() → { text }.
-// Use a real function class so that `new PDFParse(...)` doesn't trip the
-// "did not use 'function' or 'class' in its implementation" warning.
 vi.mock('pdf-parse', () => ({
   PDFParse: class {
     getText() {
@@ -69,16 +78,9 @@ import { POST } from '../route';
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Build a NextRequest carrying a multipart/form-data body with a single `file`
- * field. We construct via the global FormData / File primitives so the
- * runtime parses the boundary itself.
- */
 function makeRequest(file: File | null): NextRequest {
   const form = new FormData();
   if (file) form.append('file', file);
-
-  // `Request` accepts a FormData body directly and sets the boundary header.
   const req = new Request('http://localhost:3000/api/chat/attachment', {
     method: 'POST',
     body: form,
@@ -93,12 +95,13 @@ function makeRequest(file: File | null): NextRequest {
 describe('POST /api/chat/attachment', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default: authenticated user.
+    // Default: authenticated user with active tenant.
     mockGetServerSession.mockResolvedValue({
       user: { id: 'user-1', tenantId: 'tenant-1' },
     });
-    // Default: Redis write succeeds.
-    mockSetStr.mockResolvedValue(undefined);
+    mockRequireActiveTenant.mockResolvedValue('tenant-1');
+    // Default: daemon stageAttachment succeeds.
+    mockStageAttachment.mockResolvedValue({ attachmentId: 'test-attachment-id-1234' });
     mockPdfDestroy.mockResolvedValue(undefined);
   });
 
@@ -112,32 +115,27 @@ describe('POST /api/chat/attachment', () => {
   });
 
   describe('accepted file types', () => {
-    it('accepts a text/plain file, writes Redis, and returns an attachmentId', async () => {
+    it('accepts a text/plain file, calls stageAttachment, and returns an attachmentId', async () => {
       const content = 'the quick brown fox';
       const file = new File([content], 'note.txt', { type: 'text/plain' });
       const res = await POST(makeRequest(file));
 
       expect(res.status).toBe(200);
       const json = (await res.json()) as { attachmentId: string };
+      expect(json.attachmentId).toBe('test-attachment-id-1234');
 
-      // UUID v4 shape — randomUUID format.
-      expect(json.attachmentId).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-      );
-
-      // Redis key + value + TTL written.
-      expect(mockSetStr).toHaveBeenCalledOnce();
-      const [key, value, ttl] = mockSetStr.mock.calls[0] as [string, string, number];
-      expect(key).toBe(`chatattach:${json.attachmentId}`);
-      expect(value).toBe(content);
-      expect(ttl).toBe(3600);
+      // stageAttachment called with correct args.
+      expect(mockStageAttachment).toHaveBeenCalledOnce();
+      const [req] = mockStageAttachment.mock.calls[0] as [{ tenantId: string; text: string; ttlSeconds: number }];
+      expect(req.tenantId).toBe('tenant-1');
+      expect(req.text).toBe(content);
+      expect(req.ttlSeconds).toBe(0); // daemon default
     });
 
-    it('accepts a PDF file, calls pdf-parse, and stores the extracted text', async () => {
+    it('accepts a PDF file, calls pdf-parse, and stages the extracted text', async () => {
       const extracted = 'Extracted PDF body text.';
       mockPdfGetText.mockResolvedValue({ text: extracted });
 
-      // The bytes don't need to be a valid PDF since pdf-parse is mocked.
       const file = new File([new Uint8Array([0x25, 0x50, 0x44, 0x46])], 'doc.pdf', {
         type: 'application/pdf',
       });
@@ -145,12 +143,9 @@ describe('POST /api/chat/attachment', () => {
 
       expect(res.status).toBe(200);
       expect(mockPdfGetText).toHaveBeenCalledOnce();
-
-      expect(mockSetStr).toHaveBeenCalledOnce();
-      const [key, value, ttl] = mockSetStr.mock.calls[0] as [string, string, number];
-      expect(key).toMatch(/^chatattach:[0-9a-f-]+$/i);
-      expect(value).toBe(extracted);
-      expect(ttl).toBe(3600);
+      expect(mockStageAttachment).toHaveBeenCalledOnce();
+      const [req] = mockStageAttachment.mock.calls[0] as [{ text: string }];
+      expect(req.text).toBe(extracted);
     });
 
     it('returns 422 when PDF text extraction throws', async () => {
@@ -164,22 +159,20 @@ describe('POST /api/chat/attachment', () => {
       expect(res.status).toBe(422);
       const json = (await res.json()) as { error: string };
       expect(json.error).toBe('Could not extract text from PDF.');
-      expect(mockSetStr).not.toHaveBeenCalled();
+      expect(mockStageAttachment).not.toHaveBeenCalled();
     });
   });
 
   describe('size limit', () => {
     it('returns 413 when the file is larger than 4 MB', async () => {
-      // Synthesise a >4 MB blob without allocating an actual 4 MB string in
-      // every test loop — File.size from the constructor reflects byte length.
-      const big = new Uint8Array(4 * 1024 * 1024 + 1).fill(0x41); // 'A'
+      const big = new Uint8Array(4 * 1024 * 1024 + 1).fill(0x41);
       const file = new File([big], 'big.txt', { type: 'text/plain' });
       const res = await POST(makeRequest(file));
 
       expect(res.status).toBe(413);
       const json = (await res.json()) as { error: string };
       expect(json.error).toBe('File too large. Maximum size is 4 MB.');
-      expect(mockSetStr).not.toHaveBeenCalled();
+      expect(mockStageAttachment).not.toHaveBeenCalled();
     });
   });
 
@@ -193,7 +186,7 @@ describe('POST /api/chat/attachment', () => {
       expect(res.status).toBe(415);
       const json = (await res.json()) as { error: string };
       expect(json.error).toBe('Unsupported file type. Allowed: text, JSON, PDF.');
-      expect(mockSetStr).not.toHaveBeenCalled();
+      expect(mockStageAttachment).not.toHaveBeenCalled();
     });
 
     it('accepts application/json as a text-shaped payload', async () => {

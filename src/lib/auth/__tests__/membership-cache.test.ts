@@ -1,54 +1,26 @@
 /**
- * Unit tests for the cross-request membership cache (security-hardening R17).
+ * Unit tests for the membership resolution module (security-hardening R17).
  *
- * Two assertions:
+ * After the Redis-cutover (dashboard#589 / #579) the dashboard no longer holds
+ * a Redis client. The cross-request cache is now managed by the daemon.
+ * The dashboard side retains only per-render memoization via react.cache().
  *
- *   1. **Request-collapse:** 100 sequential `getMyMemberships()` invocations
- *      for one user → exactly ONE daemon RPC. The other 99 read from the
- *      Redis cache. Counts are tracked via the test-only helpers
- *      `__getDaemonCallCountForTests` / `__resetDaemonCallCountForTests`.
+ * Two assertions remain:
  *
- *   2. **Invalidation:** an explicit `invalidateMembershipCache(userId)` call
- *      drops the cache entry, so the next read re-fetches from the daemon.
- *      This simulates what happens when an FGA-write event fires in
- *      cluster (the daemon-Go agent is the producer; this agent's wiring
- *      is downstream of that work).
+ *   1. **Daemon call tracking:** getMyMemberships() reaches the daemon and
+ *      returns the expected shape.
  *
- * The Redis layer is stubbed by mocking `@/src/lib/redis-store` with an
- * in-memory Map — we don't want to depend on a live Redis for unit tests.
- * The TTL is left at the default; tests don't exercise expiry, only
- * explicit invalidation.
+ *   2. **Invalidation:** invalidateMembershipCache(userId) delegates to the
+ *      daemon's InvalidateMembershipCache RPC (fire-and-forget, non-fatal).
  *
- * react.cache() is also stubbed to NOT memoize — without this, only the
- * first call within the test would hit our Redis-mock layer (vitest runs
- * each test in a fresh "render"-like scope, but the cache function is
- * created at module load time, so the memoization survives across calls).
+ * react.cache() is still stubbed to NOT memoize — each test call is
+ * treated as a fresh render so we can assert per-call daemon counts.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
-// In-memory Redis mock — the cache layer reads/writes via these helpers.
-// ---------------------------------------------------------------------------
-const redisStore = new Map<string, unknown>();
-
-vi.mock('@/src/lib/redis-store', () => ({
-  getJSON: vi.fn(async (key: string) => {
-    return redisStore.has(key) ? (redisStore.get(key) as unknown) : null;
-  }),
-  setJSON: vi.fn(async (key: string, value: unknown) => {
-    redisStore.set(key, value);
-    return true;
-  }),
-  delKey: vi.fn(async (key: string) => {
-    redisStore.delete(key);
-    return true;
-  }),
-}));
-
-// ---------------------------------------------------------------------------
-// react.cache must NOT memoize — pass through directly so we can control
-// per-call behaviour from the Redis-mock layer.
+// react.cache must NOT memoize — pass through directly for test determinism.
 // ---------------------------------------------------------------------------
 vi.mock('react', () => ({
   cache: <T extends (...args: never[]) => unknown>(fn: T) => fn,
@@ -65,8 +37,7 @@ vi.mock('@/auth', () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// gibson-client — mock the daemon RPC. Each call returns a fixed response;
-// we count invocations via the daemon-call counter inside membership.ts.
+// gibson-client — mock the daemon RPCs.
 // ---------------------------------------------------------------------------
 const FAKE_LIST_MEMBERSHIPS_RESPONSE = {
   memberships: [
@@ -74,13 +45,18 @@ const FAKE_LIST_MEMBERSHIPS_RESPONSE = {
     { tenantId: 't-2', tenantName: 'Tenant Two', role: 'member' },
   ],
 };
+
+const mockListMyMemberships = vi.fn(async () => FAKE_LIST_MEMBERSHIPS_RESPONSE);
+const mockInvalidateMembershipCache = vi.fn(async () => ({}));
+
 vi.mock('@/src/lib/gibson-client', () => ({
   makeClient: vi.fn(() => ({
-    listMyMemberships: vi.fn(async () => FAKE_LIST_MEMBERSHIPS_RESPONSE),
+    listMyMemberships: mockListMyMemberships,
+    invalidateMembershipCache: mockInvalidateMembershipCache,
   })),
 }));
 
-// User-token requirer — return a constant placeholder; not asserted.
+// User-token requirer — return a constant placeholder.
 vi.mock('@/src/lib/auth/user-token', () => ({
   requireUserToken: vi.fn(async () => 'fake-token'),
 }));
@@ -115,86 +91,59 @@ import {
 // ---------------------------------------------------------------------------
 
 beforeEach(() => {
-  redisStore.clear();
   __resetDaemonCallCountForTests();
+  vi.clearAllMocks();
+  // Re-attach mocks after clearAllMocks (which resets mock fn call counts
+  // but also resets the mock implementations to their default no-op).
+  mockListMyMemberships.mockResolvedValue(FAKE_LIST_MEMBERSHIPS_RESPONSE);
+  mockInvalidateMembershipCache.mockResolvedValue({});
 });
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('R17 membership cache — request collapse', () => {
-  it('100 sequential reads collapse to ONE daemon RPC', async () => {
-    // First read: Redis miss → daemon call → write to Redis.
-    const first = await getMyMemberships();
-    expect(first).toHaveLength(2);
-    expect(__getDaemonCallCountForTests()).toBe(1);
-
-    // 99 subsequent reads should ALL hit the Redis cache.
-    for (let i = 0; i < 99; i++) {
-      const result = await getMyMemberships();
-      expect(result).toHaveLength(2);
-    }
-
-    // Daemon should have been called exactly once across all 100 reads.
+describe('getMyMemberships — basic fetch', () => {
+  it('calls the daemon and returns the membership array', async () => {
+    const result = await getMyMemberships();
+    expect(result).toHaveLength(2);
     expect(__getDaemonCallCountForTests()).toBe(1);
   });
 
-  it('the cached payload matches the daemon response shape', async () => {
+  it('the payload matches the daemon response shape', async () => {
     const result = await getMyMemberships();
     expect(result).toEqual([
       { tenantId: 't-1', tenantName: 'Tenant One', role: 'admin' },
       { tenantId: 't-2', tenantName: 'Tenant Two', role: 'member' },
     ]);
   });
-});
 
-describe('R17 membership cache — invalidation', () => {
-  it('invalidateMembershipCache forces a re-fetch on the next read', async () => {
-    // Prime the cache.
-    await getMyMemberships();
-    expect(__getDaemonCallCountForTests()).toBe(1);
-
-    // Read again — cache hit.
-    await getMyMemberships();
-    expect(__getDaemonCallCountForTests()).toBe(1);
-
-    // Simulate an FGA-write event: invalidate the user's cache.
-    await invalidateMembershipCache(TEST_USER_ID);
-
-    // Next read must hit the daemon again.
-    await getMyMemberships();
-    expect(__getDaemonCallCountForTests()).toBe(2);
-  });
-
-  it('invalidateMembershipCache is a no-op for an unknown user id', async () => {
-    await invalidateMembershipCache('not-a-real-user');
-    // Sanity: the call did not throw and the daemon was not touched.
-    expect(__getDaemonCallCountForTests()).toBe(0);
-  });
-
-  it('invalidateMembershipCache with empty string is a no-op', async () => {
-    await invalidateMembershipCache('');
-    expect(__getDaemonCallCountForTests()).toBe(0);
-  });
-});
-
-describe('R17 membership cache — Redis unavailability degrades to no-cache', () => {
-  it('falls through to the daemon on every read when Redis writes fail silently', async () => {
-    // Reconfigure the redis-store mock to return null on every read AND
-    // refuse writes. This is the dev-mode failure mode: the pod has no
-    // Redis side-car, so the cache is effectively disabled.
-    const redisStoreModule = await import('@/src/lib/redis-store');
-    vi.mocked(redisStoreModule.getJSON).mockImplementation(async () => null);
-    vi.mocked(redisStoreModule.setJSON).mockImplementation(async () => false);
-
+  it('each read hits the daemon (no cross-request cache on the dashboard side)', async () => {
     await getMyMemberships();
     await getMyMemberships();
     await getMyMemberships();
-
-    // Three reads, three daemon calls — no cache collapse without Redis.
-    // The per-render react.cache() layer would collapse these in a real
-    // request, but we mocked it out for this test.
+    // Dashboard no longer has a Redis cross-request cache.
+    // Each call reaches the daemon (which applies its own server-side cache).
     expect(__getDaemonCallCountForTests()).toBe(3);
+  });
+});
+
+describe('invalidateMembershipCache — delegation to daemon', () => {
+  it('delegates to the daemon InvalidateMembershipCache RPC', async () => {
+    await invalidateMembershipCache(TEST_USER_ID);
+    expect(mockInvalidateMembershipCache).toHaveBeenCalledOnce();
+    const req = (mockInvalidateMembershipCache.mock.calls[0] as unknown[])[0] as { userId: string };
+    expect(req.userId).toBe(TEST_USER_ID);
+  });
+
+  it('is a no-op for an empty user id (no RPC call)', async () => {
+    await invalidateMembershipCache('');
+    expect(mockInvalidateMembershipCache).not.toHaveBeenCalled();
+    expect(__getDaemonCallCountForTests()).toBe(0);
+  });
+
+  it('does not throw when the daemon RPC fails (non-fatal)', async () => {
+    mockInvalidateMembershipCache.mockRejectedValue(new Error('daemon unreachable'));
+    await expect(invalidateMembershipCache(TEST_USER_ID)).resolves.toBeUndefined();
   });
 });

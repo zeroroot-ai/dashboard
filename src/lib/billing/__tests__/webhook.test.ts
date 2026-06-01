@@ -41,14 +41,20 @@ vi.mock('@/src/lib/k8s/tenants', () => ({
   patchTenant: (...args: unknown[]) => mockPatchTenant(...args),
 }));
 
-// DB pool mock — tracks SQL calls without a real PG connection.
-// mockDbQuery MUST be declared via vi.hoisted() so vi.mock() factory can reference it.
-const mockDbQuery = vi.hoisted(() => vi.fn());
-let dbInsertRowCount = 1;
-const dbQueries: Array<{ text: string; values?: unknown[] }> = [];
+// BillingService daemon RPC mocks — replaces the DB pool.
+// The route now calls serviceClient(BillingService, ...) for idempotency.
+const mockRecordWebhookEvent = vi.hoisted(() => vi.fn());
+const mockDeleteWebhookEvent = vi.hoisted(() => vi.fn());
 
-vi.mock('@/src/lib/db', () => ({
-  getPool: () => ({ query: mockDbQuery }),
+vi.mock('@/src/lib/gibson-client', () => ({
+  serviceClient: () => ({
+    recordWebhookEvent: (...args: unknown[]) => mockRecordWebhookEvent(...args),
+    deleteWebhookEvent: (...args: unknown[]) => mockDeleteWebhookEvent(...args),
+  }),
+}));
+
+vi.mock('@/src/gen/gibson/billing/v1/billing_pb', () => ({
+  BillingService: {},
 }));
 
 const mockEmailSend = vi.fn();
@@ -186,17 +192,10 @@ function failedTenant() {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  dbQueries.length = 0;
   auditEvents.length = 0;
-  dbInsertRowCount = 1; // default: new event
-  // Re-wire mockDbQuery after vi.clearAllMocks() resets it.
-  mockDbQuery.mockImplementation((text: string, values?: unknown[]) => {
-    dbQueries.push({ text, values });
-    if (/INSERT.*ON CONFLICT/i.test(text)) {
-      return Promise.resolve({ rowCount: dbInsertRowCount });
-    }
-    return Promise.resolve({ rowCount: 1 });
-  });
+  // Default: new event (isNew=true), deletion succeeds.
+  mockRecordWebhookEvent.mockResolvedValue({ isNew: true });
+  mockDeleteWebhookEvent.mockResolvedValue({});
   mockRefundCharge.mockResolvedValue({ id: 're_test_123', status: 'succeeded' });
   mockEmailSend.mockResolvedValue(undefined);
   mockPatchTenant.mockResolvedValue({});
@@ -431,12 +430,8 @@ describe('POST /api/billing/webhook — idempotency', () => {
     const session = makeSession();
     const event = makeEvent('checkout.session.completed', session);
     mockVerifyWebhookSignature.mockReturnValue(event);
-    // Simulate duplicate: override mockDbQuery for SELECT (table check) and INSERT.
-    // SELECT sanity check: rowCount=1 (table exists)
-    // INSERT ON CONFLICT: rowCount=0 (duplicate)
-    mockDbQuery
-      .mockResolvedValueOnce({ rowCount: 1 }) // ensureEventsTable SELECT
-      .mockResolvedValueOnce({ rowCount: 0 }); // recordEventIfNew INSERT → duplicate
+    // Simulate duplicate: recordWebhookEvent returns isNew=false.
+    mockRecordWebhookEvent.mockResolvedValue({ isNew: false });
 
     const res = await POST(makeRequest(JSON.stringify(session)));
 
@@ -451,11 +446,8 @@ describe('POST /api/billing/webhook — idempotency', () => {
     expect(mockEmailSend).not.toHaveBeenCalled();
   });
 
-  it('records event_id in the idempotency table on first receipt (returns 200)', async () => {
-    // This test verifies the route correctly processes a new event (INSERT rowCount=1).
-    // The DB call tracking uses mock.calls which may not be populated in all vitest
-    // versions due to hoisting order. We verify observable behavior instead:
-    // the route returns 200 OK (not 500) and patchTenant is called.
+  it('records event_id via daemon RPC on first receipt (returns 200)', async () => {
+    // Default: isNew=true (set in beforeEach).
     const session = makeSession();
     const event = makeEvent('checkout.session.completed', session);
     mockVerifyWebhookSignature.mockReturnValue(event);
@@ -463,31 +455,33 @@ describe('POST /api/billing/webhook — idempotency', () => {
 
     const res = await POST(makeRequest(JSON.stringify(session)));
 
-    // A new event should return 200 (not 500) and should patch the tenant.
+    // A new event should return 200 and process the event.
     expect(res.status).toBe(200);
     const body = await res.json() as { ok: boolean; duplicate?: boolean };
     expect(body.ok).toBe(true);
     expect(body.duplicate).toBeUndefined();
+    // recordWebhookEvent was called.
+    expect(mockRecordWebhookEvent).toHaveBeenCalledOnce();
+    const [req] = mockRecordWebhookEvent.mock.calls[0] as [{ eventId: string; eventType: string }];
+    expect(req.eventId).toBe(event.id);
+    expect(req.eventType).toBe('checkout.session.completed');
     // Patch was called — event was processed (not duplicate-skipped).
     expect(mockPatchTenant).toHaveBeenCalled();
   });
 
-  it('removes the idempotency record when processing fails (allows retry)', async () => {
+  it('removes the idempotency record via daemon RPC when processing fails (allows retry)', async () => {
     const session = makeSession();
     const event = makeEvent('checkout.session.completed', session);
     mockVerifyWebhookSignature.mockReturnValue(event);
-    // getTenant throws → processing fails → idempotency row should be deleted.
+    // getTenant throws → processing fails → deleteWebhookEvent should be called.
     mockGetTenant.mockRejectedValue(new Error('k8s transient'));
-    // mockDbQuery is already wired in beforeEach to return rowCount=1.
 
     await POST(makeRequest(JSON.stringify(session)));
 
-    // Verify the DELETE was called (idempotency record cleaned up).
-    const deleteCall = mockDbQuery.mock.calls.find(
-      (call) => /DELETE.*WHERE event_id/i.test(call[0] as string),
-    );
-    expect(deleteCall).toBeDefined();
-    expect((deleteCall![1] as string[]).includes(event.id)).toBe(true);
+    // Verify deleteWebhookEvent was called with the event ID.
+    expect(mockDeleteWebhookEvent).toHaveBeenCalledOnce();
+    const [req] = mockDeleteWebhookEvent.mock.calls[0] as [{ eventId: string }];
+    expect(req.eventId).toBe(event.id);
   });
 });
 
@@ -793,13 +787,12 @@ describe('POST /api/billing/webhook — invoice.payment_failed', () => {
     const event = makeEvent('invoice.payment_failed', invoice);
     const originalPastDueSince = '2026-05-01T00:00:00.000Z';
 
-    // First delivery: simulate existing pastDueSince
+    // First delivery: simulate existing pastDueSince; isNew=true (default).
     mockVerifyWebhookSignature.mockReturnValue(event);
     mockGetTenant.mockResolvedValue({
       ...healthyTenant(),
       status: { billing: { pastDueSince: originalPastDueSince } },
     });
-    dbInsertRowCount = 1;
 
     await POST(makeRequest(JSON.stringify(invoice)));
 
@@ -834,19 +827,15 @@ describe('POST /api/billing/webhook — idempotency replay (all new event types)
     const subscription = makeSubscription();
     const event = makeEvent('customer.subscription.created', subscription);
 
-    // First delivery — new event (INSERT rowCount=1, default mock).
+    // First delivery — new event (isNew=true, default mock).
     mockVerifyWebhookSignature.mockReturnValue(event);
-    // beforeEach wires mockDbQuery to return rowCount=1 by default.
     await POST(makeRequest(JSON.stringify(subscription)));
     const countAfterFirst = mockPatchTenant.mock.calls.length;
     expect(countAfterFirst).toBeGreaterThanOrEqual(1);
 
-    // Second delivery (same event ID) — duplicate (INSERT rowCount=0).
+    // Second delivery (same event ID) — duplicate (isNew=false).
     mockVerifyWebhookSignature.mockReturnValue(event);
-    // Override: SELECT (table sanity) → rowCount=1, INSERT → rowCount=0 (duplicate).
-    mockDbQuery
-      .mockResolvedValueOnce({ rowCount: 1 }) // ensureEventsTable SELECT
-      .mockResolvedValueOnce({ rowCount: 0 }); // recordEventIfNew INSERT → duplicate
+    mockRecordWebhookEvent.mockResolvedValueOnce({ isNew: false });
     await POST(makeRequest(JSON.stringify(subscription)));
     // patchTenant should NOT have been called again.
     const countAfterSecond = mockPatchTenant.mock.calls.length;
