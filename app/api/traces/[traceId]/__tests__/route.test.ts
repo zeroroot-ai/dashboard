@@ -2,35 +2,58 @@
  * Per-route contract test for GET /api/traces/[traceId] (direct trace lookup).
  *
  * Verifies the canonical TraceData shape comes through assembleTraceData and
- * the distinct error responses (401 / 404 not-configured / 404 not-found /
- * 503). The service + assembly helper are mocked so this is a pure route
- * contract.
+ * the distinct error responses (401 / 412 / 404). TracesService is mocked via
+ * userClient; assembleTraceData is mocked from traces-client. Pure route
+ * contract test.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { ConnectError, Code } from '@connectrpc/connect';
 
-const { mockGetServerSession, mockResolveLangfuseClient, mockAssembleTraceData } =
-  vi.hoisted(() => ({
-    mockGetServerSession: vi.fn(),
-    mockResolveLangfuseClient: vi.fn(),
-    mockAssembleTraceData: vi.fn(),
-  }));
+const mockGetTrace = vi.fn();
+const mockGetObservation = vi.fn();
+const mockAssembleTraceData = vi.fn();
+
+const { mockGetServerSession, mockRequireActiveTenant } = vi.hoisted(() => ({
+  mockGetServerSession: vi.fn(),
+  mockRequireActiveTenant: vi.fn(),
+}));
 
 vi.mock('@/src/lib/auth', () => ({
   getServerSession: mockGetServerSession,
 }));
 
-vi.mock('@/src/lib/langfuse-tenant-service', () => ({
-  resolveLangfuseClient: (...args: unknown[]) => mockResolveLangfuseClient(...args),
+vi.mock('@/src/lib/auth/active-tenant', () => ({
+  requireActiveTenant: (...args: unknown[]) => mockRequireActiveTenant(...args),
+  activeTenantApiResponse: vi.fn((err: unknown) => {
+    const msg = err instanceof Error ? err.message : 'no tenant';
+    return new Response(JSON.stringify({ error: { code: 'no_active_tenant', message: msg } }), {
+      status: 412,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }),
 }));
 
-vi.mock('@/src/lib/trace-detail', () => ({
+vi.mock('@/src/lib/gibson-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/src/lib/gibson-client')>();
+  return {
+    ...actual,
+    userClient: vi.fn().mockReturnValue({
+      getTrace: (...args: unknown[]) => mockGetTrace(...args),
+      getObservation: (...args: unknown[]) => mockGetObservation(...args),
+    }),
+    timestampToISO: actual.timestampToISO,
+  };
+});
+
+vi.mock('@/src/lib/traces-client', () => ({
   assembleTraceData: (...args: unknown[]) => mockAssembleTraceData(...args),
 }));
 
+vi.mock('server-only', () => ({}));
+
 import { GET } from '../route';
-import { LangfuseNotFoundError, LangfuseUnavailableError } from '@/src/lib/langfuse-client';
 
 const SESSION = { user: { id: 'u1', tenantId: 't1' } };
 
@@ -42,10 +65,38 @@ function req(): NextRequest {
   return new NextRequest('http://test.local/api/traces/tr-1');
 }
 
+const TRACE_RECORD = {
+  id: 'tr-1',
+  name: 'recon-run',
+  timestamp: { seconds: BigInt(1748433600), nanos: 0 },
+  tags: [],
+  userId: '',
+  sessionId: '',
+  totalTokens: BigInt(0),
+  promptTokens: BigInt(0),
+  completionTokens: BigInt(0),
+  latencyMs: 0,
+  observationIds: [],
+};
+
+const TRACE_DATA = {
+  traceId: 'tr-1',
+  missionId: '',
+  startTime: '2026-05-28T10:00:00.000Z',
+  endTime: '2026-05-28T10:00:05.000Z',
+  totalDurationMs: 5000,
+  tokenSummary: { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0, llmCallCount: 0, byAgent: [], byModel: [] },
+  decisions: [],
+  traceTree: [],
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetServerSession.mockResolvedValue(SESSION);
-  mockResolveLangfuseClient.mockResolvedValue({});
+  mockRequireActiveTenant.mockResolvedValue('t1');
+  mockGetTrace.mockResolvedValue({ trace: TRACE_RECORD });
+  mockGetObservation.mockResolvedValue({ observation: null });
+  mockAssembleTraceData.mockReturnValue(TRACE_DATA);
 });
 
 describe('GET /api/traces/[traceId]', () => {
@@ -53,46 +104,35 @@ describe('GET /api/traces/[traceId]', () => {
     mockGetServerSession.mockResolvedValueOnce(null);
     const res = await GET(req(), ctx('tr-1'));
     expect(res.status).toBe(401);
-    expect(mockResolveLangfuseClient).not.toHaveBeenCalled();
+    expect(mockGetTrace).not.toHaveBeenCalled();
   });
 
-  it('returns 404 NOT_CONFIGURED when no credentials resolve', async () => {
-    mockResolveLangfuseClient.mockResolvedValueOnce(null);
+  it('returns 412 when no active tenant', async () => {
+    mockRequireActiveTenant.mockRejectedValueOnce(new Error('no tenant'));
     const res = await GET(req(), ctx('tr-1'));
-    expect(res.status).toBe(404);
-    expect((await res.json()).error.code).toBe('NOT_CONFIGURED');
+    expect(res.status).toBe(412);
+    expect(mockGetTrace).not.toHaveBeenCalled();
   });
 
-  it('returns the assembled TraceData for the trace id', async () => {
-    const traceData = {
-      traceId: 'tr-1',
-      missionId: '',
-      startTime: '2026-05-28T10:00:00.000Z',
-      endTime: '2026-05-28T10:00:05.000Z',
-      totalDurationMs: 5000,
-      tokenSummary: { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0, llmCallCount: 0, byAgent: [], byModel: [] },
-      decisions: [],
-      traceTree: [],
-    };
-    mockAssembleTraceData.mockResolvedValueOnce(traceData);
-
-    const res = await GET(req(), ctx('tr-1'));
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual(traceData);
-    expect(mockAssembleTraceData).toHaveBeenCalledWith(expect.anything(), 'tr-1');
-  });
-
-  it('maps a missing trace to 404 NOT_FOUND', async () => {
-    mockAssembleTraceData.mockRejectedValueOnce(new LangfuseNotFoundError('trace'));
+  it('returns 404 NOT_FOUND when the daemon returns NOT_FOUND', async () => {
+    mockGetTrace.mockRejectedValueOnce(
+      new ConnectError('trace not found', Code.NotFound),
+    );
     const res = await GET(req(), ctx('tr-1'));
     expect(res.status).toBe(404);
     expect((await res.json()).error.code).toBe('NOT_FOUND');
   });
 
-  it('maps an unavailable observability store to 503', async () => {
-    mockAssembleTraceData.mockRejectedValueOnce(new LangfuseUnavailableError('down'));
+  it('returns 404 NOT_FOUND when trace is absent in response', async () => {
+    mockGetTrace.mockResolvedValueOnce({ trace: undefined });
     const res = await GET(req(), ctx('tr-1'));
-    expect(res.status).toBe(503);
-    expect((await res.json()).error.code).toBe('SERVICE_UNAVAILABLE');
+    expect(res.status).toBe(404);
+  });
+
+  it('returns the assembled TraceData for the trace id', async () => {
+    const res = await GET(req(), ctx('tr-1'));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual(TRACE_DATA);
+    expect(mockAssembleTraceData).toHaveBeenCalled();
   });
 });

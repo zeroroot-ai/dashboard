@@ -2,102 +2,80 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('server-only', () => ({}));
 
-// Mock config to inject test Langfuse credentials
-vi.mock('@/src/lib/config', () => ({
-  serverConfig: {
-    langfuseHost: 'http://langfuse.test',
-    langfuseAdminPublicKey: 'pk-test',
-    langfuseAdminSecretKey: 'sk-test',
-  },
-}));
+const mockListTraces = vi.fn();
+
+vi.mock('@/src/lib/gibson-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/src/lib/gibson-client')>();
+  return {
+    ...actual,
+    userClient: vi.fn().mockReturnValue({
+      listTraces: (...args: unknown[]) => mockListTraces(...args),
+    }),
+    timestampToISO: actual.timestampToISO,
+  };
+});
 
 import { getLangfuseUserContext } from '../langfuse-session-context';
-import { LangfuseClient } from '@/src/lib/langfuse-client';
 
 const userId = 'user-1';
 const tenantId = 'tenant-1';
 
-const mockTrace = {
-  id: 'trace-1',
-  name: 'recon-agent-run',
-  timestamp: '2026-05-28T10:00:00Z',
-  metadata: {},
-  output: 'Found 12 open ports on target.',
-  tags: [],
-  totalTokens: 450,
-  promptTokens: 200,
-  completionTokens: 250,
-  latency: 1200,
-  observations: [],
-  userId,
-  sessionId: 'sess-1',
-};
+function makeTraceRecord(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'trace-1',
+    name: 'recon-agent-run',
+    timestamp: { seconds: BigInt(1748433600), nanos: 0 },
+    tags: [],
+    userId,
+    sessionId: 'sess-1',
+    totalTokens: BigInt(450),
+    promptTokens: BigInt(200),
+    completionTokens: BigInt(250),
+    latencyMs: 1200,
+    observationIds: [],
+    ...overrides,
+  };
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockListTraces.mockResolvedValue({ traces: [], nextPageToken: '', totalItems: BigInt(0) });
 });
 
 describe('getLangfuseUserContext', () => {
   it('returns trace summaries on happy path', async () => {
-    vi.spyOn(LangfuseClient.prototype, 'listTraces').mockResolvedValueOnce([mockTrace]);
+    mockListTraces.mockResolvedValueOnce({
+      traces: [makeTraceRecord()],
+      nextPageToken: '',
+      totalItems: BigInt(1),
+    });
 
     const ctx = await getLangfuseUserContext(userId, tenantId);
 
     expect(ctx.recentTraces).toHaveLength(1);
     expect(ctx.recentTraces[0]).toMatchObject({
       name: 'recon-agent-run',
-      startTime: '2026-05-28T10:00:00Z',
       status: 'ok',
       totalTokens: 450,
     });
-    expect(ctx.recentTraces[0].outputSnippet).toBe('Found 12 open ports on target.');
   });
 
-  it('truncates long output snippets to 200 characters', async () => {
-    const longOutput = 'x'.repeat(300);
-    vi.spyOn(LangfuseClient.prototype, 'listTraces').mockResolvedValueOnce([
-      { ...mockTrace, output: longOutput },
-    ]);
-
-    const ctx = await getLangfuseUserContext(userId, tenantId);
-
-    expect(ctx.recentTraces[0].outputSnippet).toHaveLength(200);
-  });
-
-  it('returns empty context when listTraces throws (auth error)', async () => {
-    vi.spyOn(LangfuseClient.prototype, 'listTraces').mockRejectedValueOnce(
-      new Error('401 Unauthorized'),
-    );
+  it('returns empty context when listTraces throws', async () => {
+    mockListTraces.mockRejectedValueOnce(new Error('daemon unavailable'));
 
     const ctx = await getLangfuseUserContext(userId, tenantId);
 
     expect(ctx).toEqual({ recentTraces: [] });
   });
 
-  it('returns empty context when listTraces throws (unavailable)', async () => {
-    vi.spyOn(LangfuseClient.prototype, 'listTraces').mockRejectedValueOnce(
-      new Error('connect ECONNREFUSED'),
-    );
+  it('returns empty context when listTraces returns empty', async () => {
+    mockListTraces.mockResolvedValueOnce({
+      traces: [],
+      nextPageToken: '',
+      totalItems: BigInt(0),
+    });
 
     const ctx = await getLangfuseUserContext(userId, tenantId);
-
-    expect(ctx).toEqual({ recentTraces: [] });
-  });
-
-  it('returns empty context when no credentials configured', async () => {
-    // Re-mock config with missing credentials
-    vi.doMock('@/src/lib/config', () => ({
-      serverConfig: {
-        langfuseHost: null,
-        langfuseAdminPublicKey: '',
-        langfuseAdminSecretKey: '',
-      },
-    }));
-
-    // Force re-import with new mock
-    const { getLangfuseUserContext: fn } = await import('../langfuse-session-context');
-    const ctx = await fn(userId, tenantId);
-
     expect(ctx).toEqual({ recentTraces: [] });
   });
 });

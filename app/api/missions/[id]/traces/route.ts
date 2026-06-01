@@ -2,16 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
-import { getMissionHistory } from '@/src/lib/gibson-client';
-import { LangfuseUnavailableError, LangfuseAuthError, LangfuseNotFoundError } from '@/src/lib/langfuse-client';
-import { resolveLangfuseClient } from '@/src/lib/langfuse-tenant-service';
-import { assembleTraceData } from '@/src/lib/trace-detail';
+import { getMissionHistory, userClient } from '@/src/lib/gibson-client';
+import { TracesService } from '@/src/gen/gibson/traces/v1/traces_pb';
+import { ConnectError, Code } from '@connectrpc/connect';
+import { assembleTraceData } from '@/src/lib/traces-client';
+import { timestampToISO } from '@/src/lib/gibson-client';
 
 /**
  * GET /api/missions/[id]/traces
  *
- * Fetch the full LLM trace tree for a mission.
- * Uses the requesting tenant's Langfuse project credentials.
+ * Fetch the full LLM trace tree for a mission, routed through the daemon's
+ * TracesService. The daemon resolves per-tenant Langfuse credentials
+ * server-side; the dashboard never sees Langfuse host/keys.
  */
 export async function GET(
   _request: NextRequest,
@@ -29,17 +31,16 @@ export async function GET(
       );
     }
 
-    // Authz enforced by daemon ext-authz on the downstream RPC.
-
-    let tenantId: string;
+    // Resolve active tenant (fail-closed).
     try {
-      tenantId = await requireActiveTenant();
+      await requireActiveTenant();
     } catch (err) {
       return activeTenantApiResponse(err);
     }
 
+    // Authz enforced by daemon ext-authz on the downstream RPC.
+
     // Get mission history to find trace_id
-    // The mission name is the missionId in this context
     let traceId: string | undefined;
     try {
       const history = await getMissionHistory(missionId, 1, 0, session?.user?.id);
@@ -48,7 +49,7 @@ export async function GET(
         traceId = run.traceId;
       }
     } catch {
-      // If getMissionHistory fails, try using missionId directly as trace lookup
+      // If getMissionHistory fails, no trace available
     }
 
     if (!traceId) {
@@ -58,44 +59,45 @@ export async function GET(
       );
     }
 
-    // Resolve a tenant-scoped Langfuse client. All credential resolution
-    // (per-tenant preferred, platform fallback, NOT_FOUND handling) lives in
-    // LangfuseTenantService — this route owns none of it.
-    const langfuse = await resolveLangfuseClient(
-      tenantId,
-      session?.user?.id,
-    );
+    const client = userClient(TracesService);
 
-    if (!langfuse) {
+    // Fetch the trace record.
+    let traceResp: Awaited<ReturnType<typeof client.getTrace>>;
+    try {
+      traceResp = await client.getTrace({ traceId });
+    } catch (err) {
+      if (err instanceof ConnectError && err.code === Code.NotFound) {
+        return NextResponse.json(
+          { error: { code: 'NOT_FOUND', message: 'Trace not found in trace store' } },
+          { status: 404 }
+        );
+      }
+      throw err;
+    }
+
+    const trace = traceResp.trace;
+    if (!trace) {
       return NextResponse.json(
-        { error: { code: 'NOT_CONFIGURED', message: 'LLM trace viewing requires observability configuration. Contact your administrator.' } },
+        { error: { code: 'NOT_FOUND', message: 'Trace not found in trace store' } },
         { status: 404 }
       );
     }
 
-    // Assemble the canonical TraceData (shared with /api/traces/[traceId]).
-    const traceData = await assembleTraceData(langfuse, traceId, missionId);
+    // Fetch all observations for the trace in parallel.
+    const observationIds = trace.observationIds ?? [];
+    const observations = await Promise.all(
+      observationIds.map((obsId) =>
+        client.getObservation({ observationId: obsId }).then((r) => r.observation),
+      ),
+    );
+    const validObservations = observations.filter(Boolean) as NonNullable<
+      (typeof observations)[number]
+    >[];
+
+    const traceTimestamp = timestampToISO(trace.timestamp) ?? new Date().toISOString();
+    const traceData = assembleTraceData(traceTimestamp, validObservations, traceId, missionId);
     return NextResponse.json(traceData);
   } catch (error) {
-    if (error instanceof LangfuseUnavailableError) {
-      return NextResponse.json(
-        { error: { code: 'SERVICE_UNAVAILABLE', message: 'Trace data temporarily unavailable' } },
-        { status: 503 }
-      );
-    }
-    if (error instanceof LangfuseAuthError) {
-      return NextResponse.json(
-        { error: { code: 'CONFIG_ERROR', message: 'Invalid Langfuse credentials for this tenant' } },
-        { status: 500 }
-      );
-    }
-    if (error instanceof LangfuseNotFoundError) {
-      return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: 'Trace not found in Langfuse' } },
-        { status: 404 }
-      );
-    }
-
     return daemonErrorResponse(error);
   }
 }
