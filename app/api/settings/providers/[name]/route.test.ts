@@ -19,6 +19,15 @@ vi.mock('@/src/lib/auth', () => ({
   getServerSession: vi.fn(),
 }));
 
+vi.mock('@/src/lib/auth/active-tenant', () => ({
+  requireActiveTenant: vi.fn(),
+  activeTenantApiResponse: vi.fn((err: unknown) => {
+    return Response.json({ error: 'no_active_tenant', code: 'no_active_tenant' }, { status: 412 });
+  }),
+  NoActiveTenantError: class extends Error { constructor() { super('no active tenant'); } },
+  StaleActiveTenantError: class extends Error { constructor() { super('stale active tenant'); } },
+}));
+
 vi.mock('@/src/lib/gibson-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/src/lib/gibson-client')>();
   return {
@@ -35,6 +44,7 @@ vi.mock('@/src/lib/gibson-client', async (importOriginal) => {
 
 import { GET, PATCH, DELETE } from './route';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant } from '@/src/lib/auth/active-tenant';
 import { daemonGetProvider, daemonUpdateProvider, daemonDeleteProvider } from '@/src/lib/gibson-client';
 
 // ---------------------------------------------------------------------------
@@ -77,12 +87,22 @@ function makeRequest(method = 'GET', body?: unknown): Request {
 // ---------------------------------------------------------------------------
 
 describe('GET /api/settings/providers/[name]', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(requireActiveTenant).mockResolvedValue('tenant-1');
+  });
 
   it('returns 401 when unauthenticated', async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
     const res = await GET(makeRequest() as Parameters<typeof GET>[0], makeCtx('my-anthropic'));
     expect(res.status).toBe(401);
+  });
+
+  it('returns 412 when no active tenant cookie', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(requireActiveTenant).mockRejectedValue(new Error('no active tenant'));
+    const res = await GET(makeRequest() as Parameters<typeof GET>[0], makeCtx('my-anthropic'));
+    expect(res.status).toBe(412);
   });
 
   it('returns the provider on success', async () => {
@@ -118,7 +138,10 @@ describe('GET /api/settings/providers/[name]', () => {
 // ---------------------------------------------------------------------------
 
 describe('PATCH /api/settings/providers/[name]', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(requireActiveTenant).mockResolvedValue('tenant-1');
+  });
 
   const updateInput = {
     name: 'my-anthropic',
@@ -185,7 +208,10 @@ describe('PATCH /api/settings/providers/[name]', () => {
 // ---------------------------------------------------------------------------
 
 describe('DELETE /api/settings/providers/[name]', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(requireActiveTenant).mockResolvedValue('tenant-1');
+  });
 
   it('returns 401 when unauthenticated', async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);

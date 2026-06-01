@@ -19,6 +19,15 @@ vi.mock('@/src/lib/auth', () => ({
   getServerSession: vi.fn(),
 }));
 
+vi.mock('@/src/lib/auth/active-tenant', () => ({
+  requireActiveTenant: vi.fn(),
+  activeTenantApiResponse: vi.fn((err: unknown) => {
+    return Response.json({ error: 'no_active_tenant', code: 'no_active_tenant' }, { status: 412 });
+  }),
+  NoActiveTenantError: class extends Error { constructor() { super('no active tenant'); } },
+  StaleActiveTenantError: class extends Error { constructor() { super('stale active tenant'); } },
+}));
+
 vi.mock('@/src/lib/gibson-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/src/lib/gibson-client')>();
   return {
@@ -34,6 +43,7 @@ vi.mock('@/src/lib/gibson-client', async (importOriginal) => {
 
 import { GET, POST } from './route';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant } from '@/src/lib/auth/active-tenant';
 import { daemonListProviders, daemonCreateProvider } from '@/src/lib/gibson-client';
 
 // ---------------------------------------------------------------------------
@@ -72,6 +82,7 @@ function makeRequest(method = 'GET', body?: unknown): Request {
 describe('GET /api/settings/providers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(requireActiveTenant).mockResolvedValue('tenant-1');
   });
 
   it('returns 401 when unauthenticated', async () => {
@@ -80,6 +91,13 @@ describe('GET /api/settings/providers', () => {
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.error.code).toBe('unauthenticated');
+  });
+
+  it('returns 412 when no active tenant cookie', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(requireActiveTenant).mockRejectedValue(new Error('no active tenant'));
+    const res = await GET(makeRequest() as Parameters<typeof GET>[0]);
+    expect(res.status).toBe(412);
   });
 
   it('returns providers list on success', async () => {
@@ -146,6 +164,7 @@ describe('GET /api/settings/providers', () => {
 describe('POST /api/settings/providers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(requireActiveTenant).mockResolvedValue('tenant-1');
   });
 
   const validInput = {
@@ -160,6 +179,13 @@ describe('POST /api/settings/providers', () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
     const res = await POST(makeRequest('POST', validInput) as Parameters<typeof POST>[0]);
     expect(res.status).toBe(401);
+  });
+
+  it('returns 412 when no active tenant cookie', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(requireActiveTenant).mockRejectedValue(new Error('no active tenant'));
+    const res = await POST(makeRequest('POST', validInput) as Parameters<typeof POST>[0]);
+    expect(res.status).toBe(412);
   });
 
   it('returns 201 with the created provider on success', async () => {
