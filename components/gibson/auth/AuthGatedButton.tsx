@@ -19,8 +19,8 @@
  *   "allowed"  → full clickable <Button> rendering the caller's children.
  *
  * The component is intentionally agnostic about how state is computed —
- * callers wire it up against either `usePermitted` (sync, returns boolean)
- * or `useAuthorize` (async, returns `{ allowed, loading }`). See the
+ * callers derive `state` from `useAuthorize` (async, returns
+ * `{ allowed, loading }`) against the RPC the gated action invokes. See the
  * Frontend authz section in CLAUDE.md for guidance on when to use this
  * vs. the hide-on-loading pattern.
  */

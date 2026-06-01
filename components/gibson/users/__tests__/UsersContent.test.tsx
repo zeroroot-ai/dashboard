@@ -22,8 +22,13 @@ vi.mock("@/src/lib/session-client", () => ({
 }));
 
 vi.mock("@/src/lib/auth/tenant", () => ({
-  usePermitted: () => true,   // canEdit=true so dropdown WOULD show on non-owner rows
   useTenantId: () => "test-tenant",
+}));
+
+// canEdit is derived from useAuthorize against SetTenantRole; allow it so the
+// row dropdown WOULD show on non-owner rows.
+vi.mock("@/src/lib/auth/use-authorize", () => ({
+  useAuthorize: () => ({ allowed: true, loading: false }),
 }));
 
 // useCRDWatch: returns the member list we control per-test via the spy.

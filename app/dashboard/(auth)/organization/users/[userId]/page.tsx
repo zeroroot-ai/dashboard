@@ -4,7 +4,8 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/src/lib/session-client";
-import { usePermitted, useTenantId } from "@/src/lib/auth/tenant";
+import { useTenantId } from "@/src/lib/auth/tenant";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { useTenantContext } from "@/src/lib/tenant-context";
 import { ArrowLeft, ArrowRightLeft, Mail, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
@@ -78,7 +79,11 @@ export default function UserDetailPage() {
   const { rolesByTenant } = useTenantContext();
   const currentUserId = session?.user?.id ?? "";
   const isSelf = userId === currentUserId;
-  const canEdit = usePermitted("team:manage") && !isSelf;
+  // Member/role management is gated on the role-assignment RPC (relation: admin).
+  const { allowed: canManageMembers } = useAuthorize(
+    "/gibson.admin.v1.TenantAdminService/SetTenantRole",
+  );
+  const canEdit = canManageMembers && !isSelf;
 
   // Derive whether the viewing user is the tenant owner from the FGA-resolved
   // rolesByTenant map populated by TenantContextProvider.
