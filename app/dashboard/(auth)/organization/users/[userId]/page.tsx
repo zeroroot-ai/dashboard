@@ -275,7 +275,7 @@ export default function UserDetailPage() {
               href="/dashboard/organization/users"
               className="text-primary hover:underline"
             >
-              Back to users
+              Back to members
             </Link>
           </CardContent>
         </Card>

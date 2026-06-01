@@ -289,10 +289,10 @@ export function UsersContent() {
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
           <h1 className="text-xl font-bold tracking-tight font-mono text-glow-green lg:text-2xl">
-            User Management
+            Members
           </h1>
           <p className="text-sm text-muted-foreground">
-            Manage users and roles for your workspace.
+            Manage members and roles for your workspace.
           </p>
         </div>
         {canEdit && (
@@ -318,7 +318,7 @@ export function UsersContent() {
       {isError && error && (
         <ErrorAlert
           error={new Error(error)}
-          title="Failed to load users"
+          title="Failed to load members"
         />
       )}
 
@@ -329,7 +329,7 @@ export function UsersContent() {
       {!isLoading && !isError && items.length === 0 && (
         <EmptyState
           icon={UserPlus}
-          title="No users yet"
+          title="No members yet"
           description="Invite teammates so they can sign in to this workspace. Roles control what each user can manage."
           primaryCta={
             canEdit ? (
