@@ -40,9 +40,6 @@ export async function provisionTenantAction(input: {
   const inputKeys = Object.keys(input ?? {});
   const gate = await requireCrdSession<{ name: string; namespace: string }>({
     action: 'provisionTenantAction',
-    permission: 'tenants:provision',
-    requireCrossTenant: true,
-    rateLimit: 'provisionTenant',
     inputKeys,
   });
   if (!gate.ok) return gate.result;
@@ -124,7 +121,6 @@ export async function deleteTenantAction(
   const inputKeys = ['name', 'confirmationText'];
   const gate = await requireCrdSession({
     action: 'deleteTenantAction',
-    permission: 'tenants:delete',
     tenantName: name,
     inputKeys,
   });
@@ -185,7 +181,6 @@ export async function updateTenantAction(
   const inputKeys = ['name', 'patch'];
   const gate = await requireCrdSession({
     action: 'updateTenantAction',
-    permission: 'tenants:update',
     tenantName: name,
     inputKeys,
   });

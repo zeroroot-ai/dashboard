@@ -95,7 +95,6 @@ export async function setComponentAccessAction(
 ): Promise<ActionResult<{ applied: boolean }>> {
   const gate = await requireCrdSession<{ applied: boolean }>({
     action: "setComponentAccessAction",
-    permission: "grants:create",
     inputKeys: ["scope", "targetId", "componentRef", "action", "enabled"],
   });
   if (!gate.ok) return gate.result;

@@ -23,6 +23,21 @@ vi.mock("@/src/lib/auth", () => ({
   getServerSession: vi.fn(),
 }));
 
+// Active-tenant resolution reads an HMAC cookie via next/headers `cookies()`,
+// which has no request scope under vitest. Mock the resolver to return a fixed
+// tenant ("other-tenant") so the tenant-scope check in requireCrdSession is
+// deterministic: the "(c) wrong tenant" cases target a different tenant and
+// must be FORBIDDEN. The real NoActiveTenantError/StaleActiveTenantError
+// classes are preserved so the gate's instanceof checks still work.
+vi.mock("@/src/lib/auth/active-tenant", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/src/lib/auth/active-tenant")>();
+  return {
+    ...actual,
+    requireActiveTenant: vi.fn(async () => "other-tenant"),
+  };
+});
+
 vi.mock("@/src/lib/gibson-client", () => ({
   userClient: vi.fn(() => ({
     setTenantRole: vi.fn(async () => ({})),
@@ -109,7 +124,7 @@ import * as accessActions from "../access";
 import * as installAgentActions from "../installAgent";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import * as transferOwnershipActions from "../transfer-ownership";
-import { CRD_PERMISSIONS } from "../_authz";
+import { CRD_PERMISSIONS, requireCrdSession } from "../_authz";
 import type { CrdActionName } from "../types";
 import { getServerSession } from "@/src/lib/auth";
 import * as k8sTenants from "@/src/lib/k8s/tenants";
@@ -141,7 +156,10 @@ function anonymous(): null {
   return null;
 }
 
-function tenantSession(tenantId: string, permissions: string[]): TestSession {
+// Authorization gates on the caller's active-tenant role (session.user.roles)
+// against the action's required relation — no permission closure. `role`
+// defaults to "admin"; pass "member" to model an under-privileged caller.
+function tenantSession(tenantId: string, role: string = "admin"): TestSession {
   return {
     user: {
       id: "user-1",
@@ -149,18 +167,18 @@ function tenantSession(tenantId: string, permissions: string[]): TestSession {
       email: "alice@example.com",
       image: null,
       groups: [],
-      roles: ["admin"],
+      roles: [role],
       tenantId,
       tenants: [tenantId],
-      rolesByTenant: { [tenantId]: "admin" },
-      permissions,
+      rolesByTenant: { [tenantId]: role },
+      permissions: [],
       crossTenant: false,
     },
     expires: new Date(Date.now() + 3600_000).toISOString(),
   };
 }
 
-function crossTenantSession(permissions: string[]): TestSession {
+function crossTenantSession(): TestSession {
   return {
     user: {
       id: "user-admin",
@@ -172,7 +190,7 @@ function crossTenantSession(permissions: string[]): TestSession {
       tenantId: null,
       tenants: [],
       rolesByTenant: {},
-      permissions,
+      permissions: [],
       crossTenant: true,
     },
     expires: new Date(Date.now() + 3600_000).toISOString(),
@@ -417,7 +435,7 @@ describe.each(MANIFESTS)("$name", (m) => {
     describe("(b) wrong permission", () => {
       it("returns FORBIDDEN and does not call k8s", async () => {
         getSessionMock.mockResolvedValueOnce(
-          tenantSession(m.tenantName, ["unrelated:permission"]),
+          tenantSession(m.tenantName, "member"),
         );
         const r = await m.invokeValid(m.tenantName)();
         expect(r.ok).toBe(false);
@@ -430,7 +448,7 @@ describe.each(MANIFESTS)("$name", (m) => {
       describe("(c) wrong tenant", () => {
         it("returns FORBIDDEN and does not call k8s", async () => {
           getSessionMock.mockResolvedValueOnce(
-            tenantSession("other-tenant", [m.permission]),
+            tenantSession("other-tenant", "admin"),
           );
           const r = await m.invokeValid(m.tenantName)();
           expect(r.ok).toBe(false);
@@ -445,9 +463,9 @@ describe.each(MANIFESTS)("$name", (m) => {
     it("returns ok and calls k8s", async () => {
       if (m.isSelfCheck) {
         // Self-check: session.user.id must match input.userId ("user-1").
-        getSessionMock.mockResolvedValueOnce(tenantSession(m.tenantName, []));
+        getSessionMock.mockResolvedValueOnce(tenantSession(m.tenantName));
       } else {
-        getSessionMock.mockResolvedValueOnce(crossTenantSession([m.permission]));
+        getSessionMock.mockResolvedValueOnce(crossTenantSession());
       }
       const r = await m.invokeValid(m.tenantName)();
       expect(r.ok).toBe(true);
@@ -458,9 +476,9 @@ describe.each(MANIFESTS)("$name", (m) => {
   describe("(e) bad input", () => {
     it("returns BAD_INPUT and does not call k8s", async () => {
       if (m.isSelfCheck) {
-        getSessionMock.mockResolvedValueOnce(tenantSession(m.tenantName, []));
+        getSessionMock.mockResolvedValueOnce(tenantSession(m.tenantName));
       } else {
-        getSessionMock.mockResolvedValueOnce(crossTenantSession([m.permission]));
+        getSessionMock.mockResolvedValueOnce(crossTenantSession());
       }
       const r = await m.invokeBadInput(m.tenantName)();
       expect(r.ok).toBe(false);
@@ -476,7 +494,7 @@ describe.each(MANIFESTS)("$name", (m) => {
 
 describe("provisionTenantAction — cross-tenant-only", () => {
   it("denies a tenant-scoped session even with tenants:provision permission", async () => {
-    getSessionMock.mockResolvedValueOnce(tenantSession("acme", ["tenants:provision"]));
+    getSessionMock.mockResolvedValueOnce(tenantSession("acme", "admin"));
     const r = await tenantActions.provisionTenantAction({
       displayName: "NewCo",
       owner: "x@y.io",
@@ -487,9 +505,37 @@ describe("provisionTenantAction — cross-tenant-only", () => {
   });
 });
 
+// Direct role×relation table for the gate decision. The active-tenant mock
+// returns "other-tenant", so a tenantName of "other-tenant" passes the
+// tenant-scope check and the outcome turns purely on the relation gate.
+describe("requireCrdSession — active-tenant role × required relation", () => {
+  const adminAction = "deleteTeamAction" as const; // relation: "admin"
+  it("allows an admin on the active tenant", async () => {
+    getSessionMock.mockResolvedValueOnce(tenantSession("other-tenant", "admin"));
+    const r = await requireCrdSession({ action: adminAction, tenantName: "other-tenant" });
+    expect(r.ok).toBe(true);
+  });
+  it("allows an owner (owner implies admin)", async () => {
+    getSessionMock.mockResolvedValueOnce(tenantSession("other-tenant", "owner"));
+    const r = await requireCrdSession({ action: adminAction, tenantName: "other-tenant" });
+    expect(r.ok).toBe(true);
+  });
+  it("denies a member (insufficient relation)", async () => {
+    getSessionMock.mockResolvedValueOnce(tenantSession("other-tenant", "member"));
+    const r = await requireCrdSession({ action: adminAction, tenantName: "other-tenant" });
+    expect(r.ok).toBe(false);
+    if (!r.ok && !r.result.ok) expect(r.result.code).toBe("FORBIDDEN");
+  });
+  it("denies when the session carries no active-tenant role", async () => {
+    getSessionMock.mockResolvedValueOnce(tenantSession("other-tenant", ""));
+    const r = await requireCrdSession({ action: adminAction, tenantName: "other-tenant" });
+    expect(r.ok).toBe(false);
+  });
+});
+
 describe("acceptInvitationAction — self-check", () => {
   it("rejects mismatched userId with FORBIDDEN", async () => {
-    getSessionMock.mockResolvedValueOnce(tenantSession("acme", []));
+    getSessionMock.mockResolvedValueOnce(tenantSession("acme"));
     const r = await memberActions.acceptInvitationAction({
       tenantName: "acme",
       memberName: "invite-1",
@@ -504,7 +550,7 @@ describe("acceptInvitationAction — self-check", () => {
 describe("fetchBootstrapTokenAction — token scrubbed from audit", () => {
   it("audit event for a successful fetch does not contain the token value", async () => {
     getSessionMock.mockResolvedValueOnce(
-      crossTenantSession(["enrollments:read_bootstrap"]),
+      crossTenantSession(),
     );
     const r = await enrollmentActions.fetchBootstrapTokenAction("acme", "agent-1");
     expect(r.ok).toBe(true);

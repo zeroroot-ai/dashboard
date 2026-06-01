@@ -61,7 +61,6 @@ export async function installAgentAction(
 ): Promise<ActionResult<{ agentInstallationId: string }>> {
   const gate = await requireCrdSession<{ agentInstallationId: string }>({
     action: "installAgentAction",
-    permission: "grants:create",
     inputKeys: ["agentSlug", "approvals"],
   });
   if (!gate.ok) {

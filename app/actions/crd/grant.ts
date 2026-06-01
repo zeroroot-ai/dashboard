@@ -28,7 +28,6 @@ export async function grantComponentAction(input: {
   const inputKeys = Object.keys(input ?? {});
   const gate = await requireCrdSession<{ name: string }>({
     action: 'grantComponentAction',
-    permission: 'grants:create',
     tenantName: input?.tenantName,
     inputKeys,
   });
@@ -93,7 +92,6 @@ export async function revokeGrantAction(
   const inputKeys = ['tenantName', 'componentRef'];
   const gate = await requireCrdSession({
     action: 'revokeGrantAction',
-    permission: 'grants:delete',
     tenantName,
     inputKeys,
   });

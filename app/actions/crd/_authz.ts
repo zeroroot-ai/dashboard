@@ -15,7 +15,8 @@ import {
   NoActiveTenantError,
   StaleActiveTenantError,
 } from "@/src/lib/auth/active-tenant";
-import { hasPermission, isCrossTenant } from "@/src/lib/auth/schema";
+import { isCrossTenant } from "@/src/lib/auth/schema";
+import { satisfiesRelation } from "@/src/lib/auth/relation-hierarchy";
 
 import { emitCrdAudit } from "@/src/lib/audit/crd";
 
@@ -28,16 +29,8 @@ import type { ActionErrorCode, ActionResult, CrdActionName } from "./types";
 
 export interface CrdAuthzParams {
   action: CrdActionName;
-  permission: string;
   /** Tenant scope to enforce; omit for create-time actions like provision. */
   tenantName?: string;
-  /**
-   * When true, the session MUST be cross-tenant (platform-operator etc.).
-   * Used for `provisionTenantAction` where no existing scope can authorize
-   * the call.
-   */
-  requireCrossTenant?: boolean;
-  rateLimit?: CrdRateLimitPreset;
   /**
    * Input keys (field names, never values) to record in any denial audit
    * event emitted by the gate. Callers pass their input keys so denial
@@ -100,25 +93,34 @@ export async function requireCrdSession<T = void>(
       session,
     );
   }
-  // Fail closed if the permissions array was not populated (schema-cache
-  // miss or partial-session fallback from auth.ts).
-  if (!Array.isArray(session.user.permissions)) {
-    return denial(
-      "unauthenticated",
-      "UNAUTHENTICATED",
-      "Session incomplete.",
-      session,
-    );
+
+  // The required relation (and any cross-tenant / rate-limit policy) for this
+  // action is declared once in CRD_PERMISSIONS — the single source of truth.
+  // An action missing from the map fails closed.
+  const policy = CRD_PERMISSIONS[params.action];
+  if (!policy) {
+    return denial("forbidden", "FORBIDDEN", "Not authorized.", session);
   }
 
   // 2. Cross-tenant-only actions (e.g. provisionTenantAction)
-  if (params.requireCrossTenant && !isCrossTenant(session)) {
+  if (policy.requireCrossTenant && !isCrossTenant(session)) {
     return denial("forbidden", "FORBIDDEN", "Not authorized.", session);
   }
 
-  // 3. Permission
-  if (!hasPermission(session, params.permission)) {
-    return denial("forbidden", "FORBIDDEN", "Not authorized.", session);
+  // 3. Relation — authorize on the caller's role for the cookie-confirmed
+  //    active tenant (session.user.roles holds that single role) against the
+  //    action's required relation. This is the server mirror of the client's
+  //    useAuthorize(method) check: one authorization source (the FGA relation
+  //    hierarchy), no static permission closure. Cross-tenant callers are
+  //    already authorized by the requireCrossTenant check above.
+  //    Cross-tenant callers (platform-operator) are authorized for any tenant
+  //    and bypass the per-tenant relation check, exactly as before when they
+  //    held the full admin permission set.
+  if (!policy.requireCrossTenant && !isCrossTenant(session)) {
+    const activeRole = session.user.roles?.[0] ?? "";
+    if (!satisfiesRelation(activeRole, policy.relation)) {
+      return denial("forbidden", "FORBIDDEN", "Not authorized.", session);
+    }
   }
 
   // 4. Tenant-scope match — skipped when params.tenantName is omitted.
@@ -143,8 +145,8 @@ export async function requireCrdSession<T = void>(
   }
 
   // 5. Rate-limit
-  if (params.rateLimit) {
-    const verdict = await consumeRateLimit(session.user.id, params.rateLimit);
+  if (policy.rateLimit) {
+    const verdict = await consumeRateLimit(session.user.id, policy.rateLimit);
     if (!verdict.ok) {
       return denial(
         "rate_limited",
@@ -226,46 +228,52 @@ export async function requireCrdSessionForSelfAction<T = void>(
 }
 
 // ---------------------------------------------------------------------------
-// Permission → action mapping (ground truth). Used by the coverage test
-// to assert every CrdActionName has an entry and vice versa.
+// Action → required FGA relation (single source of truth). requireCrdSession
+// authorizes the caller's active-tenant role against `relation`; the coverage
+// test asserts every CrdActionName has an entry and vice versa.
+//
+// Every CRD action is admin-scoped today (creating/removing members, teams,
+// roles, grants, enrollments, and tenant lifecycle), so the required relation
+// is "admin" — admin/owner satisfy it, plain members do not. Exceptions:
+//   - provisionTenantAction: no existing tenant scope can authorize it; gated
+//     on cross-tenant (platform-operator) instead of a relation.
+//   - acceptInvitationAction: not relation-gated — it uses the self-action
+//     helper (identity equality). The "__self__" sentinel is never evaluated
+//     by requireCrdSession; the entry exists only for coverage.
 // ---------------------------------------------------------------------------
 
 export const CRD_PERMISSIONS: Record<
   CrdActionName,
-  { permission: string; requireCrossTenant?: boolean; rateLimit?: CrdRateLimitPreset }
+  { relation: string; requireCrossTenant?: boolean; rateLimit?: CrdRateLimitPreset }
 > = {
   provisionTenantAction: {
-    permission: "tenants:provision",
+    relation: "admin",
     requireCrossTenant: true,
     rateLimit: "provisionTenant",
   },
-  deleteTenantAction: { permission: "tenants:delete" },
-  updateTenantAction: { permission: "tenants:update" },
-  grantComponentAction: { permission: "grants:create" },
-  revokeGrantAction: { permission: "grants:delete" },
-  inviteMemberAction: { permission: "members:invite", rateLimit: "inviteMember" },
-  // acceptInvitationAction is NOT permission-gated — it uses the self-check
-  // helper. Still listed so the coverage test finds it.
-  acceptInvitationAction: { permission: "__self__" },
-  revokeMemberAction: { permission: "members:revoke" },
-  resendInvitationAction: { permission: "members:invite", rateLimit: "inviteMember" },
-  createEnrollmentAction: { permission: "enrollments:create" },
-  revokeEnrollmentAction: { permission: "enrollments:delete" },
+  deleteTenantAction: { relation: "admin" },
+  updateTenantAction: { relation: "admin" },
+  grantComponentAction: { relation: "admin" },
+  revokeGrantAction: { relation: "admin" },
+  inviteMemberAction: { relation: "admin", rateLimit: "inviteMember" },
+  acceptInvitationAction: { relation: "__self__" },
+  revokeMemberAction: { relation: "admin" },
+  resendInvitationAction: { relation: "admin", rateLimit: "inviteMember" },
+  createEnrollmentAction: { relation: "admin" },
+  revokeEnrollmentAction: { relation: "admin" },
   fetchBootstrapTokenAction: {
-    permission: "enrollments:read_bootstrap",
+    relation: "admin",
     rateLimit: "fetchBootstrapToken",
   },
-  setComponentAccessAction: { permission: "grants:create" },
-  installAgentAction: { permission: "grants:create" },
-  listTeamsAction: { permission: "members:invite" },
-  listTeamMembersAction: { permission: "members:invite" },
-  createTeamAction: { permission: "members:invite" },
-  deleteTeamAction: { permission: "members:revoke" },
-  addTeamMemberAction: { permission: "members:invite" },
-  removeTeamMemberAction: { permission: "members:revoke" },
-  setTenantRoleAction: { permission: "members:invite" },
-  setTeamAdminAction: { permission: "members:invite" },
-  // TODO: replace "members:invite" with a dedicated "org:transfer_ownership"
-  // permission once it has been added to the RBAC schema (permissions.yaml).
-  transferOwnershipAction: { permission: "members:invite" },
+  setComponentAccessAction: { relation: "admin" },
+  installAgentAction: { relation: "admin" },
+  listTeamsAction: { relation: "admin" },
+  listTeamMembersAction: { relation: "admin" },
+  createTeamAction: { relation: "admin" },
+  deleteTeamAction: { relation: "admin" },
+  addTeamMemberAction: { relation: "admin" },
+  removeTeamMemberAction: { relation: "admin" },
+  setTenantRoleAction: { relation: "admin" },
+  setTeamAdminAction: { relation: "admin" },
+  transferOwnershipAction: { relation: "admin" },
 };
