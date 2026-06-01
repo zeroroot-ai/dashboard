@@ -15,8 +15,13 @@
 
 import { getMissionAudit } from "@/src/lib/gibson-client/secrets";
 import type { MissionSecretAccess } from "@/src/lib/gibson-client/secrets";
-import { getServerSession } from "@/src/lib/auth";
-import { hasPermission } from "@/src/lib/auth/schema";
+import { assertAuthorized, AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
+
+// The RPC this action wraps. Authorization derives from its AuthRegistry
+// relation (member — any tenant member may read mission secret-access audit),
+// the single authorization source of truth shared with useAuthorize.
+const GET_MISSION_AUDIT_RPC =
+  "/gibson.admin.v1.SecretsAdminService/GetMissionAudit";
 
 export interface MissionAuditResult {
   accesses: MissionSecretAccess[];
@@ -28,18 +33,23 @@ export interface MissionAuditResult {
  *
  * Called from SecretsAccessedPanel (client component) via server action.
  *
- * Server-side authz pre-check (defense-in-depth): requires an authenticated
- * session carrying `missions:read` before touching the daemon. The daemon
- * still performs the authoritative FGA check on GetMissionAudit; this gate
- * ensures the dashboard layer never proxies an unauthenticated/under-permitted
- * read of mission secret-access audit.
+ * Server-side authz pre-check (defense-in-depth): authorizes the caller for
+ * the GetMissionAudit RPC via the AuthRegistry (member relation) before
+ * touching the daemon. The daemon still performs the authoritative FGA check;
+ * this gate ensures the dashboard layer never proxies an unauthenticated /
+ * under-permitted read. The "permission_denied" error contract is preserved
+ * for the calling panel.
  */
 export async function fetchMissionAudit(
   missionId: string,
 ): Promise<MissionAuditResult> {
-  const session = await getServerSession();
-  if (!session?.user?.id || !hasPermission(session, "missions:read")) {
-    throw new Error("permission_denied");
+  try {
+    await assertAuthorized(GET_MISSION_AUDIT_RPC);
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      throw new Error("permission_denied");
+    }
+    throw err;
   }
   const resp = await getMissionAudit(missionId);
   return {
