@@ -5,13 +5,12 @@
  * Server Actions. Uses Auth.js v5 (next-auth) with Zitadel OIDC as the
  * identity backend.
  *
- * The GibsonSession interface shape is preserved so all downstream callers
- * (hasPermission, canCallRpc, isCrossTenant, resolveTenant) continue to work
- * without change.
- *
- * Permission checks live in '@/src/lib/auth/schema' (hasPermission,
- * isCrossTenant, canCallRpc). The daemon's permissions.yaml is the only
- * source of truth for authorization.
+ * Authorization is sourced from the generated AuthRegistry relation model, not
+ * from a static permission closure on the session:
+ *   - client gates → useAuthorize(rpcMethod)
+ *   - server gates → assertAuthorized(rpcMethod) / requireCrdSession(action)
+ *   - cross-tenant  → isCrossTenant(session) (src/lib/auth/schema), with the
+ *     crossTenant flag derived from the role via rolesAreCrossTenant.
  */
 
 import { cache } from 'react';
@@ -50,7 +49,6 @@ export interface GibsonSession {
     roles: string[];
     tenants: string[];
     rolesByTenant: Record<string, string>;
-    permissions: string[];
     crossTenant: boolean;
   };
   error?: string;
@@ -110,21 +108,14 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
 
   // Derive roles from the cookie-confirmed active tenant only (no auto-pick).
   const roles: string[] = activeTenantId && rolesByTenant[activeTenantId] ? [rolesByTenant[activeTenantId]!] : [];
-  let permissions: string[] = [];
 
   // crossTenant is derived DIRECTLY from the active-tenant role — not from the
-  // daemon auth schema. The schema lookup (resolveCrossTenant → GetAuthSchema)
-  // was removed and always returned false, silently breaking platform-operator
-  // provisioning. See rolesAreCrossTenant / CROSS_TENANT_ROLES.
+  // (deleted) daemon auth schema, which always returned false and silently
+  // broke platform-operator provisioning. Authorization itself is sourced from
+  // the AuthRegistry relation model (useAuthorize / assertAuthorized /
+  // requireCrdSession), not a static permission closure.
   const { rolesAreCrossTenant } = await import('@/src/lib/auth/relation-hierarchy');
   const crossTenant = rolesAreCrossTenant(roles);
-
-  try {
-    const { resolveEffectivePermissions } = await import('@/src/lib/auth/schema');
-    permissions = await resolveEffectivePermissions(roles);
-  } catch (err) {
-    console.error('[auth] Failed to resolve permissions:', err);
-  }
 
   return {
     user: {
@@ -138,7 +129,6 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
       roles,
       tenants,
       rolesByTenant,
-      permissions,
       crossTenant,
     },
     expires: session.expires,
@@ -165,7 +155,7 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
  * export default async function Page() {
  *   const session = await getServerSession();
  *   if (!session) redirect('/login');
- *   if (!hasPermission(session, 'missions:read')) redirect('/forbidden');
+ *   await assertAuthorized('/gibson.admin.v1.SecretsAdminService/GetMissionAudit');
  *   return <div>Hello, {session.user.name}</div>;
  * }
  * ```

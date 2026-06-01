@@ -96,7 +96,6 @@ function renderProbe(props: {
     <TenantContextProvider
       currentTenant={props.currentTenant}
       availableTenants={props.availableTenants}
-      permissions={[]}
       crossTenant={false}
       rolesByTenant={{}}
       groups={[]}

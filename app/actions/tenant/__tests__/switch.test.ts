@@ -22,7 +22,6 @@ function makeSession(overrides: Partial<GibsonSession['user']> = {}): GibsonSess
       roles: [],
       tenants: ['acme', 'beta'],
       rolesByTenant: { acme: 'member', beta: 'admin' },
-      permissions: [],
       crossTenant: false,
       ...overrides,
     },

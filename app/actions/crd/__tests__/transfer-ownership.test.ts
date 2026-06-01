@@ -36,17 +36,21 @@ vi.mock("@/src/lib/gibson-client", () => ({
 }));
 
 vi.mock("@/src/lib/auth/schema", () => ({
-  hasPermission: vi.fn(() => true),
   isCrossTenant: vi.fn(() => false),
-  loadSchema: vi.fn(async () => ({
-    schemaVersion: "",
-    roles: [],
-    permissions: [],
-    rpcRequirements: {},
-  })),
-  resolveEffectivePermissions: vi.fn(async () => []),
-  resolveCrossTenant: vi.fn(async () => false),
 }));
+
+// The gate + action resolve the active tenant via requireActiveTenant()
+// (next/headers cookies, no request scope under vitest). Pin it to "acme" so
+// the tenant-scope check is deterministic.
+vi.mock("@/src/lib/auth/active-tenant", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/src/lib/auth/active-tenant")>();
+  return {
+    ...actual,
+    requireActiveTenant: vi.fn(async () => "acme"),
+    getActiveTenant: vi.fn(async () => "acme"),
+  };
+});
 
 vi.mock("@/src/lib/audit/crd", () => ({
   emitCrdAudit: vi.fn(),
@@ -67,11 +71,9 @@ vi.mock("@/src/lib/logger", () => ({
 }));
 
 import { getServerSession } from "@/src/lib/auth";
-import { hasPermission } from "@/src/lib/auth/schema";
 import { transferOwnershipAction } from "../transfer-ownership";
 
 const sessionMock = getServerSession as Mock;
-const hasPermissionMock = hasPermission as Mock;
 
 /** An active admin TenantMember fixture for the target user. */
 const ACTIVE_ADMIN_TARGET = {
@@ -87,7 +89,11 @@ const ACTIVE_OWNER_CALLER = {
   status: { userId: "user-caller", phase: "Active" },
 };
 
-function withSession(opts: { hasPermission?: boolean } = {}) {
+// `role` is the caller's active-tenant role; the gate authorizes it against
+// the action's required relation (admin). Defaults to "owner" (allowed); pass
+// "member" to model an under-privileged caller.
+function withSession(opts: { role?: string } = {}) {
+  const role = opts.role ?? "owner";
   sessionMock.mockResolvedValue({
     user: {
       id: "user-caller",
@@ -96,17 +102,13 @@ function withSession(opts: { hasPermission?: boolean } = {}) {
       emailVerified: true,
       tenantId: "acme",
       tenants: ["acme"],
-      rolesByTenant: { acme: "owner" },
-      roles: ["owner"],
+      rolesByTenant: { acme: role },
+      roles: [role],
       groups: [],
-      permissions: ["members:invite"],
       crossTenant: false,
     },
     expires: new Date(Date.now() + 3600_000).toISOString(),
   });
-
-  // By default allow; caller scenario 2 overrides to false.
-  hasPermissionMock.mockReturnValue(opts.hasPermission ?? true);
 }
 
 beforeEach(() => {
@@ -116,7 +118,6 @@ beforeEach(() => {
   mocks.patchTenantMember.mockReset();
   mocks.patchTenantMember.mockResolvedValue({});
   sessionMock.mockReset();
-  hasPermissionMock.mockReturnValue(true);
 });
 
 // ── Scenario 1 ──────────────────────────────────────────────────────────────
@@ -163,8 +164,8 @@ describe("transferOwnershipAction — happy path", () => {
 // ── Scenario 2 ──────────────────────────────────────────────────────────────
 
 describe("transferOwnershipAction — caller lacks permission", () => {
-  it("returns FORBIDDEN when hasPermission is false", async () => {
-    withSession({ hasPermission: false });
+  it("returns FORBIDDEN when the caller's role does not satisfy admin", async () => {
+    withSession({ role: "member" });
 
     const result = await transferOwnershipAction("user-target");
 

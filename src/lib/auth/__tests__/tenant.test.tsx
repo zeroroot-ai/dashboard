@@ -61,7 +61,6 @@ function Probe() {
 function renderWith(props: {
   currentTenant: Tenant | null;
   availableTenants: Tenant[];
-  permissions?: string[];
   crossTenant?: boolean;
   groups?: string[];
 }) {
@@ -69,7 +68,6 @@ function renderWith(props: {
     <TenantContextProvider
       currentTenant={props.currentTenant}
       availableTenants={props.availableTenants}
-      permissions={props.permissions ?? []}
       crossTenant={props.crossTenant ?? false}
       rolesByTenant={{}}
       groups={props.groups ?? []}

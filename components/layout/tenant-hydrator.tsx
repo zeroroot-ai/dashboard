@@ -25,8 +25,6 @@ interface TenantHydratorProps {
   currentTenant: Tenant | null;
   /** Every tenant the user is a member of (resolved CRDs, nulls dropped). */
   availableTenants: Tenant[];
-  /** Effective permissions for the active tenant (deny when missing). */
-  permissions: string[];
   /** True when the user holds at least one role flagged cross_tenant. */
   crossTenant: boolean;
   /** Map of tenantId → role string ("admin" | "member"). */
@@ -39,7 +37,6 @@ interface TenantHydratorProps {
 export function TenantHydrator({
   currentTenant,
   availableTenants,
-  permissions,
   crossTenant,
   rolesByTenant,
   groups,
@@ -49,7 +46,6 @@ export function TenantHydrator({
     <TenantContextProvider
       currentTenant={currentTenant}
       availableTenants={availableTenants}
-      permissions={permissions}
       crossTenant={crossTenant}
       rolesByTenant={rolesByTenant}
       groups={groups}

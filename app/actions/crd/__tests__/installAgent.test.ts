@@ -12,6 +12,18 @@ vi.mock("@/src/lib/auth", () => ({
   getServerSession: vi.fn(),
 }));
 
+// Tenant-scope resolution reads next/headers cookies(), which has no request
+// scope under vitest. Pin the active tenant to "acme".
+vi.mock("@/src/lib/auth/active-tenant", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/src/lib/auth/active-tenant")>();
+  return {
+    ...actual,
+    requireActiveTenant: vi.fn(async () => "acme"),
+    getActiveTenant: vi.fn(async () => "acme"),
+  };
+});
+
 // installAgentAction now uses userClient(TenantAdminService) for the write
 // path (grantComponentPermissions) and userClient(DiscoveryService) for
 // validateComponent. The mock returns a stub keyed on the RPC it exposes.
@@ -40,15 +52,15 @@ vi.mock("@/app/actions/read/listAccessibleComponents", () => ({
 import { installAgentAction } from "../installAgent";
 import { getServerSession } from "@/src/lib/auth";
 
-function withSession(tenantId = "acme") {
+function withSession(tenantId = "acme", role = "admin") {
   (getServerSession as ReturnType<typeof vi.fn>).mockResolvedValue({
     user: {
       id: "user-1",
       tenantId,
-      // requireCrdSession permission gate consults user.permissions /
-      // user.crossTenant; grants:create is the install-flow permission
-      // installAgentAction asks for.
-      permissions: ["grants:create"],
+      // requireCrdSession authorizes the active-tenant role against the
+      // action's required relation (installAgentAction → admin).
+      roles: [role],
+      rolesByTenant: { [tenantId]: role },
       crossTenant: false,
     },
   });

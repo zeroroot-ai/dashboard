@@ -50,7 +50,6 @@ function makeTenant(slug: string, displayName?: string): Tenant {
 interface ProbeResult {
   currentTenantId: string | null;
   availableSlugs: string[];
-  permissions: string[];
   crossTenant: boolean;
   rolesByTenant: Record<string, string>;
   groups: string[];
@@ -67,7 +66,6 @@ function Probe() {
   probe.result = {
     currentTenantId: ctx.currentTenant?.id ?? null,
     availableSlugs: ctx.availableTenants.map((t) => t.id),
-    permissions: ctx.permissions,
     crossTenant: ctx.crossTenant,
     rolesByTenant: ctx.rolesByTenant,
     groups: ctx.groups,
@@ -87,7 +85,6 @@ function Probe() {
 function renderWithCtx(props: {
   currentTenant: Tenant | null;
   availableTenants: Tenant[];
-  permissions?: string[];
   crossTenant?: boolean;
   rolesByTenant?: Record<string, string>;
   groups?: string[];
@@ -96,7 +93,6 @@ function renderWithCtx(props: {
     <TenantContextProvider
       currentTenant={props.currentTenant}
       availableTenants={props.availableTenants}
-      permissions={props.permissions ?? []}
       crossTenant={props.crossTenant ?? false}
       rolesByTenant={props.rolesByTenant ?? {}}
       groups={props.groups ?? []}
@@ -118,7 +114,6 @@ describe('TenantContextProvider', () => {
     renderWithCtx({
       currentTenant: acme,
       availableTenants: [acme, beta],
-      permissions: ['team:manage', 'missions:execute'],
       crossTenant: true,
       rolesByTenant: { acme: 'admin', beta: 'member' },
       groups: ['platform-ops'],
@@ -127,7 +122,6 @@ describe('TenantContextProvider', () => {
     expect(probe.result).toMatchObject({
       currentTenantId: 'acme',
       availableSlugs: ['acme', 'beta'],
-      permissions: ['team:manage', 'missions:execute'],
       crossTenant: true,
       rolesByTenant: { acme: 'admin', beta: 'member' },
       groups: ['platform-ops'],

@@ -38,8 +38,6 @@ export interface TenantContextValue {
   currentTenant: Tenant | null;
   /** Every tenant the user is a member of (resolved CRDs). */
   availableTenants: Tenant[];
-  /** Effective permission strings for the active tenant. */
-  permissions: string[];
   /** True when the user holds at least one role flagged cross_tenant. */
   crossTenant: boolean;
   /** Map of tenantId → role string ("admin" | "member"). */
@@ -69,7 +67,6 @@ export interface TenantContextValue {
 export interface TenantProviderProps {
   currentTenant: Tenant | null;
   availableTenants: Tenant[];
-  permissions: string[];
   crossTenant: boolean;
   rolesByTenant: Record<string, string>;
   groups: string[];
@@ -89,7 +86,6 @@ const TenantContext = createContext<TenantContextValue | null>(null);
 export function TenantContextProvider({
   currentTenant,
   availableTenants,
-  permissions,
   crossTenant,
   rolesByTenant,
   groups,
@@ -127,7 +123,6 @@ export function TenantContextProvider({
   const contextValue: TenantContextValue = {
     currentTenant,
     availableTenants,
-    permissions,
     crossTenant,
     rolesByTenant,
     groups,
