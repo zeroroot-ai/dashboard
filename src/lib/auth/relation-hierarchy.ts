@@ -74,3 +74,22 @@ export function satisfiesRelation(userRole: string, requiredRelation: string): b
  * `satisfiesRelation` instead.
  */
 export const relationHierarchy: Readonly<Record<string, number>> = RELATION_ORDER;
+
+/**
+ * Roles that operate ACROSS tenant boundaries (not scoped to a single tenant).
+ * Holding one of these is what authorizes tenant-lifecycle operations like
+ * provisioning a new tenant, which no per-tenant relation can grant.
+ */
+export const CROSS_TENANT_ROLES: ReadonlySet<string> = new Set(["platform_operator"]);
+
+/**
+ * Report whether any of the supplied roles is a cross-tenant role.
+ *
+ * This replaces the removed daemon-schema lookup (`GetAuthSchema` →
+ * `resolveCrossTenant`), which always returned false and silently broke
+ * platform-operator provisioning. Cross-tenant status is derived directly from
+ * the role here.
+ */
+export function rolesAreCrossTenant(roles: readonly string[]): boolean {
+  return roles.some((r) => CROSS_TENANT_ROLES.has(r));
+}
