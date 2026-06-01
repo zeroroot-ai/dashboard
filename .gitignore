@@ -56,3 +56,6 @@ next-env.d.ts
 
 # in-flight screenshot tooling + ad-hoc snap scripts
 /.tmp/
+
+# Claude Code agent worktrees / local state
+.claude/
