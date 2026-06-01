@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { getMissionHistory } from '@/src/lib/gibson-client';
 import { LangfuseUnavailableError, LangfuseAuthError, LangfuseNotFoundError } from '@/src/lib/langfuse-client';
 import { resolveLangfuseClient } from '@/src/lib/langfuse-tenant-service';
@@ -30,6 +31,13 @@ export async function GET(
 
     // Authz enforced by daemon ext-authz on the downstream RPC.
 
+    let tenantId: string;
+    try {
+      tenantId = await requireActiveTenant();
+    } catch (err) {
+      return activeTenantApiResponse(err);
+    }
+
     // Get mission history to find trace_id
     // The mission name is the missionId in this context
     let traceId: string | undefined;
@@ -54,7 +62,7 @@ export async function GET(
     // (per-tenant preferred, platform fallback, NOT_FOUND handling) lives in
     // LangfuseTenantService — this route owns none of it.
     const langfuse = await resolveLangfuseClient(
-      session.user.tenantId,
+      tenantId,
       session?.user?.id,
     );
 

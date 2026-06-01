@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { getMissionHeatmap } from '@/src/lib/gibson-client';
 import { logger } from '@/src/lib/logger';
 
@@ -23,12 +24,11 @@ export async function GET(request: NextRequest) {
 
   // Authz enforced by daemon ext-authz on the downstream RPC.
 
-  const tenantId = session.user.tenantId;
-  if (!tenantId) {
-    return NextResponse.json(
-      { error: { code: 'UNAUTHORIZED', message: 'No tenant context in session' } },
-      { status: 401 }
-    );
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
   }
 
   try {

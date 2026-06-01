@@ -18,12 +18,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { ConnectError, Code } from '@connectrpc/connect';
 
-const mockGetServerSession = vi.fn();
+const { mockGetServerSession, mockRequireActiveTenant } = vi.hoisted(() => ({
+  mockGetServerSession: vi.fn(),
+  mockRequireActiveTenant: vi.fn(),
+}));
+
 const mockListMissions = vi.fn();
 const mockSerializeMission = vi.fn();
 
 vi.mock('@/src/lib/auth', () => ({
   getServerSession: mockGetServerSession,
+}));
+
+vi.mock('@/src/lib/auth/active-tenant', () => ({
+  requireActiveTenant: mockRequireActiveTenant,
+  activeTenantApiResponse: vi.fn(),
 }));
 
 vi.mock('@/src/lib/gibson-client', () => ({
@@ -38,8 +47,12 @@ function makeRequest(url = 'http://test.local/api/missions'): NextRequest {
 beforeEach(() => {
   vi.resetModules();
   mockGetServerSession.mockReset();
+  mockRequireActiveTenant.mockReset();
   mockListMissions.mockReset();
   mockSerializeMission.mockReset();
+
+  // Default: active tenant resolves to t1.
+  mockRequireActiveTenant.mockResolvedValue('t1');
 });
 
 describe('GET /api/missions — canonical error mapping', () => {
