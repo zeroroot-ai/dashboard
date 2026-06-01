@@ -44,7 +44,7 @@ vi.mock('@/src/lib/gibson-client', () => ({
   }),
 }));
 
-vi.mock('@/src/gen/gibson/user/v1/user_pb', () => ({
+vi.mock('@/src/gen/gibson/tenant/v1/user_pb', () => ({
   UserService: {},
 }));
 

@@ -1,7 +1,7 @@
 import 'server-only';
 
 /**
- * Typed dashboard client methods for gibson.admin.v1.TenantAdminService.
+ * Typed dashboard client methods for gibson.tenant.v1.SecretsService (broker config RPCs).
  *
  * Backs the dashboard's secrets-backend page. Get / Probe / Set semantics:
  *  - getBrokerConfig: returns redacted (non-sensitive) current config.
@@ -18,7 +18,7 @@ import 'server-only';
  */
 
 import { userClient } from '../gibson-client';
-import { TenantAdminService } from '@/src/gen/gibson/admin/v1/tenant_pb';
+import { SecretsService } from '@/src/gen/gibson/tenant/v1/secrets_pb';
 import type {
   RedactedConfig,
   CandidateConfig,
@@ -27,7 +27,7 @@ import type {
   ProbeBrokerConfigResponse,
   SetBrokerConfigResponse,
   BrokerProvider,
-} from '@/src/gen/gibson/admin/v1/tenant_pb';
+} from '@/src/gen/gibson/tenant/v1/secrets_pb';
 import { throwMapped } from './secrets';
 
 export type {
@@ -48,7 +48,7 @@ export type {
  */
 export async function getBrokerConfig(): Promise<GetBrokerConfigResponse> {
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(SecretsService);
     return await client.getBrokerConfig({});
   } catch (err) {
     throwMapped(err);
@@ -66,7 +66,7 @@ export async function probeBrokerConfig(
   candidate: CandidateConfig,
 ): Promise<ProbeBrokerConfigResponse> {
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(SecretsService);
     return await client.probeBrokerConfig({ candidate });
   } catch (err) {
     throwMapped(err);
@@ -87,7 +87,7 @@ export async function setBrokerConfig(
   candidate: CandidateConfig,
 ): Promise<SetBrokerConfigResponse> {
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(SecretsService);
     return await client.setBrokerConfig({ candidate });
   } catch (err) {
     throwMapped(err);
@@ -110,7 +110,7 @@ export async function setBrokerConfig(
  */
 export async function countSecrets(): Promise<number> {
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(SecretsService);
     const resp = await client.countSecrets({});
     return Number(resp.count);
   } catch (err) {
@@ -119,4 +119,4 @@ export async function countSecrets(): Promise<number> {
 }
 
 // Re-export the BrokerProvider enum for convenience in action files.
-export { BrokerProvider } from '@/src/gen/gibson/admin/v1/tenant_pb';
+export { BrokerProvider } from '@/src/gen/gibson/tenant/v1/secrets_pb';

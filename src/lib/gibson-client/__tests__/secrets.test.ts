@@ -35,8 +35,8 @@ vi.mock('@/src/lib/gibson-client', () => ({
 }));
 
 // Mock the proto service descriptor (not needed at runtime in tests).
-vi.mock('@/src/gen/gibson/admin/v1/secrets_pb', () => ({
-  SecretsAdminService: {},
+vi.mock('@/src/gen/gibson/tenant/v1/secrets_pb', () => ({
+  SecretsService: {},
   SecretCategory: { UNSPECIFIED: 0, CRED: 1, PROVIDER_CONFIG: 2 },
 }));
 
@@ -51,7 +51,7 @@ import {
   deleteSecret,
   getMissionAudit,
 } from '../secrets';
-import { SecretCategory } from '@/src/gen/gibson/admin/v1/secrets_pb';
+import { SecretCategory } from '@/src/gen/gibson/tenant/v1/secrets_pb';
 
 // ---------------------------------------------------------------------------
 // Helpers

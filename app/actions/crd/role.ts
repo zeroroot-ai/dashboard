@@ -25,7 +25,7 @@
  * Spec: dashboard#168.
  */
 
-import { TenantAdminService } from "@/src/gen/gibson/admin/v1/tenant_pb";
+import { MembershipService } from "@/src/gen/gibson/tenant/v1/membership_pb";
 import { userClient } from "@/src/lib/gibson-client";
 import { logger } from "@/src/lib/logger";
 import { listTenantMembers, patchTenantMember } from "@/src/lib/k8s/tenants";
@@ -89,7 +89,7 @@ export async function setTenantRoleAction(input: {
   }
   // 1. Authoritative FGA write. Fail here returns INTERNAL with no mutation.
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(MembershipService);
     await client.setTenantRole({
       tenantId: callerTenantId,
       userId: input.userId,
@@ -174,7 +174,7 @@ export async function setTeamAdminAction(input: {
     throw err;
   }
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(MembershipService);
     await client.setTeamAdmin({
       tenantId: callerTenantId,
       teamId: input.teamId,

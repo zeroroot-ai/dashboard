@@ -25,7 +25,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { userClient } from '@/src/lib/gibson-client';
-import { UserService } from '@/src/gen/gibson/user/v1/user_pb';
+import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
 import { logger } from '@/src/lib/logger';
 
 // ============================================================================

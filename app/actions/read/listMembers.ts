@@ -16,9 +16,9 @@
 
 import { ConnectError, Code } from "@connectrpc/connect";
 import {
-  TenantAdminService,
+  MembershipService,
   type TenantMember,
-} from "@/src/gen/gibson/admin/v1/tenant_pb";
+} from "@/src/gen/gibson/tenant/v1/membership_pb";
 import { userClient } from "@/src/lib/gibson-client";
 import { getActiveTenant } from "@/src/lib/auth/active-tenant";
 import { auth } from "@/auth";
@@ -74,7 +74,7 @@ export async function listMembersAction(
   }
 
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(MembershipService);
     const resp = await client.listMembers({
       tenantId,
       pageToken: "",

@@ -18,7 +18,7 @@
 import 'server-only';
 import { type NextRequest } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
-import { TenantService } from '@/src/gen/gibson/tenant/v1/tenant_pb';
+import { ProviderService } from '@/src/gen/gibson/tenant/v1/provider_pb';
 import { userClient } from '@/src/lib/gibson-client';
 import { translateError } from '@/src/lib/providers-route-error';
 import type { SupportedProviderDescriptor, CredentialFieldType } from '@/src/lib/gibson-client-types';
@@ -33,7 +33,7 @@ export async function GET(_req: NextRequest) {
   }
 
   try {
-    const client = userClient(TenantService);
+    const client = userClient(ProviderService);
     const resp = await client.getSupportedProviders({});
     const providers: SupportedProviderDescriptor[] = (resp.providers ?? []).map(
       (p) => ({

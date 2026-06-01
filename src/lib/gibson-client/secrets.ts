@@ -1,9 +1,9 @@
 import 'server-only';
 
 /**
- * Typed dashboard client methods for gibson.admin.v1.SecretsAdminService.
+ * Typed dashboard client methods for gibson.tenant.v1.SecretsService.
  *
- * Each method wraps one admin RPC using the existing userClient() factory so
+ * Each method wraps one tenant RPC using the existing userClient() factory so
  * all calls flow dashboard → Envoy (JWT + SPIFFE mTLS) → daemon, never direct.
  *
  * SECURITY: The value field on setSecret / rotateSecret is passed through to
@@ -15,7 +15,7 @@ import 'server-only';
 
 import { ConnectError } from '@connectrpc/connect';
 import { userClient } from '../gibson-client';
-import { SecretsAdminService } from '@/src/gen/gibson/admin/v1/secrets_pb';
+import { SecretsService } from '@/src/gen/gibson/tenant/v1/secrets_pb';
 import type {
   SecretMetadata,
   ListSecretsResponse,
@@ -26,7 +26,7 @@ import type {
   GetMissionAuditResponse,
   MissionSecretAccess,
   SecretCategory,
-} from '@/src/gen/gibson/admin/v1/secrets_pb';
+} from '@/src/gen/gibson/tenant/v1/secrets_pb';
 
 export type { SecretMetadata, SecretCategory, MissionSecretAccess };
 export type {
@@ -81,7 +81,7 @@ export interface ListSecretsOptions {
  */
 export async function listSecrets(opts: ListSecretsOptions = {}): Promise<ListSecretsResponse> {
   try {
-    const client = userClient(SecretsAdminService);
+    const client = userClient(SecretsService);
     return await client.listSecrets({
       categoryFilter: opts.categoryFilter ?? 0,
       limit: opts.limit ?? 50,
@@ -98,7 +98,7 @@ export async function listSecrets(opts: ListSecretsOptions = {}): Promise<ListSe
  */
 export async function getSecret(name: string): Promise<GetSecretResponse> {
   try {
-    const client = userClient(SecretsAdminService);
+    const client = userClient(SecretsService);
     return await client.getSecret({ name });
   } catch (err) {
     throwMapped(err);
@@ -110,7 +110,7 @@ export async function getSecret(name: string): Promise<GetSecretResponse> {
  */
 export async function getMissionAudit(missionId: string): Promise<GetMissionAuditResponse> {
   try {
-    const client = userClient(SecretsAdminService);
+    const client = userClient(SecretsService);
     return await client.getMissionAudit({ missionId });
   } catch (err) {
     throwMapped(err);
@@ -134,7 +134,7 @@ export async function setSecret(
   value: Uint8Array,
 ): Promise<SetSecretResponse> {
   try {
-    const client = userClient(SecretsAdminService);
+    const client = userClient(SecretsService);
     return await client.setSecret({ name, category, value });
   } catch (err) {
     throwMapped(err);
@@ -151,7 +151,7 @@ export async function rotateSecret(
   value: Uint8Array,
 ): Promise<RotateSecretResponse> {
   try {
-    const client = userClient(SecretsAdminService);
+    const client = userClient(SecretsService);
     return await client.rotateSecret({ name, value });
   } catch (err) {
     throwMapped(err);
@@ -164,7 +164,7 @@ export async function rotateSecret(
  */
 export async function deleteSecret(name: string): Promise<DeleteSecretResponse> {
   try {
-    const client = userClient(SecretsAdminService);
+    const client = userClient(SecretsService);
     return await client.deleteSecret({ name });
   } catch (err) {
     throwMapped(err);

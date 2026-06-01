@@ -81,7 +81,7 @@ export default function UserDetailPage() {
   const isSelf = userId === currentUserId;
   // Member/role management is gated on the role-assignment RPC (relation: admin).
   const { allowed: canManageMembers, loading: authLoading } = useAuthorize(
-    "/gibson.admin.v1.TenantAdminService/SetTenantRole",
+    "/gibson.tenant.v1.MembershipService/SetTenantRole",
   );
   // During the auth query, treat as not allowed (hide-on-loading contract).
   const canEdit = !authLoading && canManageMembers && !isSelf;

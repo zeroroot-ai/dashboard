@@ -15,7 +15,7 @@ import { getServerSession } from "@/src/lib/auth";
 import {
   GrantSubjectKind,
   GrantTargetKind,
-} from "@/src/gen/gibson/authz/v1/model_access_pb";
+} from "@/src/gen/gibson/tenant/v1/model_access_pb";
 
 export type ActionResult<T> =
   | { ok: true; data: T }

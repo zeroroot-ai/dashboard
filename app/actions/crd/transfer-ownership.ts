@@ -24,7 +24,7 @@
  * Spec: dashboard#266.
  */
 
-import { TenantAdminService } from "@/src/gen/gibson/admin/v1/tenant_pb";
+import { MembershipService } from "@/src/gen/gibson/tenant/v1/membership_pb";
 import { userClient } from "@/src/lib/gibson-client";
 import { logger } from "@/src/lib/logger";
 import { listTenantMembers, patchTenantMember } from "@/src/lib/k8s/tenants";
@@ -143,7 +143,7 @@ export async function transferOwnershipAction(
   // owner to new_owner_user_id — all four tuple mutations happen server-side
   // in a single atomic call.
   try {
-    const client = userClient(TenantAdminService);
+    const client = userClient(MembershipService);
     await client.transferOwnership({
       tenantId: callerTenantId,
       newOwnerUserId,

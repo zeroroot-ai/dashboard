@@ -75,7 +75,7 @@ export class AuthzDeniedError extends Error {
  * Assert that the current session is authorized to call `method`.
  *
  * @param method - Fully-qualified gRPC method path, e.g.
- *   `"/gibson.admin.v1.SecretsAdminService/SetSecret"`.
+ *   `"/gibson.tenant.v1.SecretsService/SetSecret"`.
  *
  * @throws {AuthzDeniedError} with a structured `reason` when the check fails.
  *

@@ -175,7 +175,7 @@ export function UsersContent() {
   // Destructure `loading` to satisfy the hide-on-loading contract (see CLAUDE.md
   // "Frontend authz"). Until resolved, treat as not allowed.
   const { allowed: canEditResolved, loading: authLoading } = useAuthorize(
-    "/gibson.admin.v1.TenantAdminService/SetTenantRole",
+    "/gibson.tenant.v1.MembershipService/SetTenantRole",
   );
   const canEdit = !authLoading && canEditResolved;
 

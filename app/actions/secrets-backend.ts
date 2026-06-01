@@ -33,7 +33,7 @@ import {
   type RedactedConfig,
   type ProbeResult,
 } from "@/src/lib/gibson-client/tenant-broker-config";
-import type { CandidateConfig } from "@/src/gen/gibson/admin/v1/tenant_pb";
+import type { CandidateConfig } from "@/src/gen/gibson/tenant/v1/secrets_pb";
 import { getServerSession } from "@/src/lib/auth";
 import {
   assertAuthorized,
@@ -193,7 +193,7 @@ export async function probeBrokerConfigAction(
   formData: FormData,
 ): Promise<ProbeActionResult> {
   try {
-    await assertAuthorized("/gibson.admin.v1.TenantAdminService/ProbeBrokerConfig");
+    await assertAuthorized("/gibson.tenant.v1.SecretsService/ProbeBrokerConfig");
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
       return { ok: false, error: "Permission denied", code: "permission_denied" };
@@ -249,7 +249,7 @@ export async function setBrokerConfigAction(
   formData: FormData,
 ): Promise<SetConfigActionResult> {
   try {
-    await assertAuthorized("/gibson.admin.v1.TenantAdminService/SetBrokerConfig");
+    await assertAuthorized("/gibson.tenant.v1.SecretsService/SetBrokerConfig");
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
       return { ok: false, error: "Permission denied", code: "permission_denied" };

@@ -37,10 +37,10 @@ import { useAuthorize } from '../use-authorize';
 // ---------------------------------------------------------------------------
 
 /** A known admin-only method from the generated registry. */
-const ADMIN_METHOD = '/gibson.admin.v1.SecretsAdminService/SetSecret';
+const ADMIN_METHOD = '/gibson.tenant.v1.SecretsService/SetSecret';
 
 /** A known member-tier method. */
-const MEMBER_METHOD = '/gibson.admin.v1.SecretsAdminService/ListSecrets';
+const MEMBER_METHOD = '/gibson.tenant.v1.SecretsService/ListSecrets';
 
 /** A method with unauthenticated: true (Ping or equivalent). */
 // We test the unauthenticated path by mocking the registry instead.
@@ -56,18 +56,18 @@ const SERVICE_METHOD_SENTINEL = '__test_service_only__';
 vi.mock('@/src/gen/authz/registry', () => ({
   IdentityClass: { USER: 1, SERVICE: 2, COMPONENT: 4, PLATFORM_OPERATOR: 8 } as const,
   AuthRegistry: {
-    '/gibson.admin.v1.SecretsAdminService/SetSecret': {
-      method: '/gibson.admin.v1.SecretsAdminService/SetSecret',
-      service: 'gibson.admin.v1.SecretsAdminService',
+    '/gibson.tenant.v1.SecretsService/SetSecret': {
+      method: '/gibson.tenant.v1.SecretsService/SetSecret',
+      service: 'gibson.tenant.v1.SecretsService',
       relation: 'admin',
       objectType: 'tenant',
       objectDeriver: 'tenant_from_identity',
       allowedIdentities: 1,
       unauthenticated: false,
     },
-    '/gibson.admin.v1.SecretsAdminService/ListSecrets': {
-      method: '/gibson.admin.v1.SecretsAdminService/ListSecrets',
-      service: 'gibson.admin.v1.SecretsAdminService',
+    '/gibson.tenant.v1.SecretsService/ListSecrets': {
+      method: '/gibson.tenant.v1.SecretsService/ListSecrets',
+      service: 'gibson.tenant.v1.SecretsService',
       relation: 'member',
       objectType: 'tenant',
       objectDeriver: 'tenant_from_identity',

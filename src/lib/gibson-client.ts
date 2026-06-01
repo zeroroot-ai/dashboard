@@ -10,7 +10,8 @@ import { createGrpcTransport } from '@connectrpc/connect-node';
 import type { DescService } from '@bufbuild/protobuf';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
 import { TenantService } from '@/src/gen/gibson/tenant/v1/tenant_pb';
-import { UserService } from '@/src/gen/gibson/user/v1/user_pb';
+import { ProviderService } from '@/src/gen/gibson/tenant/v1/provider_pb';
+import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
 import type {
   MissionInfo,
   AgentInfo,
@@ -416,12 +417,17 @@ async function getClient(_userId?: string, _tenantId?: string) {
 
 async function getAdminClient(_userId?: string, _tenantId?: string) {
   await requireUserToken();
-  return userClient(TenantService);
+  return userClient(ProviderService);
 }
 
 async function getUserServiceClient(_userId?: string, _tenantId?: string) {
   await requireUserToken();
   return userClient(UserService);
+}
+
+async function getTenantServiceClient(_userId?: string, _tenantId?: string) {
+  await requireUserToken();
+  return userClient(TenantService);
 }
 
 // ---------------------------------------------------------------------------
@@ -430,21 +436,21 @@ async function getUserServiceClient(_userId?: string, _tenantId?: string) {
 
 export async function getBudgetClient() {
   await requireUserToken();
-  const { BudgetService } = await import('@/src/gen/gibson/budget/v1/budget_pb');
+  const { BudgetService } = await import('@/src/gen/gibson/tenant/v1/budget_pb');
   return userClient(BudgetService);
 }
 
 export async function getModelAccessClient() {
   await requireUserToken();
   const { ModelAccessService } = await import(
-    '@/src/gen/gibson/authz/v1/model_access_pb'
+    '@/src/gen/gibson/tenant/v1/model_access_pb'
   );
   return userClient(ModelAccessService);
 }
 
 export async function getUsageClient() {
   await requireUserToken();
-  const { UsageService } = await import('@/src/gen/gibson/usage/v1/usage_pb');
+  const { UsageService } = await import('@/src/gen/gibson/tenant/v1/usage_pb');
   return userClient(UsageService);
 }
 
@@ -701,7 +707,7 @@ async function getTenantQuota(
   targetTenantId: string,
   userId?: string
 ): Promise<TenantQuota> {
-  const client = await getAdminClient(userId, tenantId);
+  const client = await getTenantServiceClient(userId, tenantId);
   const response = await client.getTenantQuota({ tenantId: targetTenantId });
   return {
     tenantId: targetTenantId,
@@ -723,7 +729,7 @@ export async function getTenantQuotaUsage(
   targetTenantId: string,
   userId?: string
 ): Promise<{ missionsActive: number; agentsActive: number }> {
-  const client = await getAdminClient(userId, tenantId);
+  const client = await getTenantServiceClient(userId, tenantId);
   const response = await client.getTenantQuotaUsage({ tenantId: targetTenantId });
   return {
     missionsActive: Number(response.missionsActive ?? 0),
@@ -767,7 +773,7 @@ export interface AlertRecord {
 // Conversation History — UserService RPCs (spec: chat-conversation-persistence)
 // ============================================================================
 
-import type { MessagePart } from '@/src/gen/gibson/user/v1/user_pb';
+import type { MessagePart } from '@/src/gen/gibson/tenant/v1/user_pb';
 
 export interface ConversationRecord {
   id: string;
@@ -1857,7 +1863,7 @@ export interface DaemonExecuteLLMResponse {
 // ---------------------------------------------------------------------------
 
 function fromProtoProviderRecord(
-  p: import('@/src/gen/gibson/tenant/v1/tenant_pb').ProviderRecord,
+  p: import('@/src/gen/gibson/tenant/v1/provider_pb').ProviderRecord,
 ): DaemonProviderRecord {
   return {
     id: p.id,
@@ -1874,18 +1880,18 @@ function fromProtoProviderRecord(
 
 function toProtoDaemonConfigInput(
   input: DaemonProviderConfigInput,
-): import('@/src/gen/gibson/tenant/v1/tenant_pb').ProviderConfigInput {
+): import('@/src/gen/gibson/tenant/v1/provider_pb').ProviderConfigInput {
   return {
     name: input.name,
     type: input.type,
     defaultModel: input.defaultModel,
     credentials: { ...input.credentials },
     setAsDefault: input.setAsDefault ?? false,
-  } as import('@/src/gen/gibson/tenant/v1/tenant_pb').ProviderConfigInput;
+  } as import('@/src/gen/gibson/tenant/v1/provider_pb').ProviderConfigInput;
 }
 
 function fromProtoLLMUsage(
-  u: import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMTokenUsage | undefined,
+  u: import('@/src/gen/gibson/tenant/v1/provider_pb').LLMTokenUsage | undefined,
 ): DaemonLLMUsage {
   return {
     inputTokens: u?.inputTokens ?? 0,
@@ -1895,14 +1901,14 @@ function fromProtoLLMUsage(
 }
 
 function fromProtoLLMToolCall(
-  tc: import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMToolCall,
+  tc: import('@/src/gen/gibson/tenant/v1/provider_pb').LLMToolCall,
 ): DaemonLLMToolCall {
   return { id: tc.id, name: tc.name, arguments: tc.arguments };
 }
 
 function toLLMMessageContent(
   msg: LLMMessage,
-): import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMMessageContent {
+): import('@/src/gen/gibson/tenant/v1/provider_pb').LLMMessageContent {
   return {
     role: msg.role,
     content: msg.content ?? '',
@@ -1910,35 +1916,35 @@ function toLLMMessageContent(
       id: tc.id,
       name: tc.name,
       arguments: tc.arguments,
-    })) as import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMToolCall[],
+    })) as import('@/src/gen/gibson/tenant/v1/provider_pb').LLMToolCall[],
     toolResults: (msg.toolResults ?? []).map((tr) => ({
       toolCallId: tr.toolCallId,
       content: tr.content,
       isError: tr.isError,
-    })) as import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMToolResult[],
+    })) as import('@/src/gen/gibson/tenant/v1/provider_pb').LLMToolResult[],
     name: msg.name ?? '',
-  } as import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMMessageContent;
+  } as import('@/src/gen/gibson/tenant/v1/provider_pb').LLMMessageContent;
 }
 
 function toLLMToolDef(
   def: DaemonLLMToolDef,
-): import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMToolDef {
+): import('@/src/gen/gibson/tenant/v1/provider_pb').LLMToolDef {
   return {
     name: def.name,
     description: def.description,
     parametersJson: def.parametersJson,
-  } as import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMToolDef;
+  } as import('@/src/gen/gibson/tenant/v1/provider_pb').LLMToolDef;
 }
 
 function toProtoResponseFormat(
   fmt: DaemonResponseFormat,
-): import('@/src/gen/gibson/tenant/v1/tenant_pb').ResponseFormat {
+): import('@/src/gen/gibson/tenant/v1/provider_pb').ResponseFormat {
   return {
     type: fmt.type,
     name: fmt.name ?? '',
     schemaJson: fmt.schemaJson ?? '',
     strict: fmt.strict ?? false,
-  } as import('@/src/gen/gibson/tenant/v1/tenant_pb').ResponseFormat;
+  } as import('@/src/gen/gibson/tenant/v1/provider_pb').ResponseFormat;
 }
 
 function buildExecRequest(
@@ -1946,9 +1952,9 @@ function buildExecRequest(
 ): {
   providerName: string;
   model: string;
-  messages: import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMMessageContent[];
-  tools: import('@/src/gen/gibson/tenant/v1/tenant_pb').LLMToolDef[];
-  responseFormat?: import('@/src/gen/gibson/tenant/v1/tenant_pb').ResponseFormat;
+  messages: import('@/src/gen/gibson/tenant/v1/provider_pb').LLMMessageContent[];
+  tools: import('@/src/gen/gibson/tenant/v1/provider_pb').LLMToolDef[];
+  responseFormat?: import('@/src/gen/gibson/tenant/v1/provider_pb').ResponseFormat;
   temperature?: number;
   maxTokens?: number;
   topP?: number;

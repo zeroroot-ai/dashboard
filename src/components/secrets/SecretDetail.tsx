@@ -23,8 +23,8 @@ import { ClipboardListIcon, RotateCcwIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import type { SecretMetadata } from "@/src/gen/gibson/admin/v1/secrets_pb";
-import { SecretCategory } from "@/src/gen/gibson/admin/v1/secrets_pb";
+import type { SecretMetadata } from "@/src/gen/gibson/tenant/v1/secrets_pb";
+import { SecretCategory } from "@/src/gen/gibson/tenant/v1/secrets_pb";
 import { RotateModal } from "./RotateModal";
 import { DeleteModal } from "./DeleteModal";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
@@ -84,10 +84,10 @@ export function SecretDetail({ metadata }: SecretDetailProps) {
   // Gate action buttons on their respective admin RPCs.
   // Hide on loading=true (no FOUC). Spec: dashboard-authz-ui-gating Task 14.
   const { allowed: canRotate, loading: rotateLoading } = useAuthorize(
-    "/gibson.admin.v1.SecretsAdminService/RotateSecret",
+    "/gibson.tenant.v1.SecretsService/RotateSecret",
   );
   const { allowed: canDelete, loading: deleteLoading } = useAuthorize(
-    "/gibson.admin.v1.SecretsAdminService/DeleteSecret",
+    "/gibson.tenant.v1.SecretsService/DeleteSecret",
   );
 
   return (

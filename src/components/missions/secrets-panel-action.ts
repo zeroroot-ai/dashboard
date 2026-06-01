@@ -21,7 +21,7 @@ import { assertAuthorized, AuthzDeniedError } from "@/src/lib/auth/assert-author
 // relation (member — any tenant member may read mission secret-access audit),
 // the single authorization source of truth shared with useAuthorize.
 const GET_MISSION_AUDIT_RPC =
-  "/gibson.admin.v1.SecretsAdminService/GetMissionAudit";
+  "/gibson.tenant.v1.SecretsService/GetMissionAudit";
 
 export interface MissionAuditResult {
   accesses: MissionSecretAccess[];

@@ -1,7 +1,7 @@
 import 'server-only';
 
 /**
- * Typed dashboard client methods for gibson.admin.v1.GrantsAdminService.
+ * Typed dashboard client methods for gibson.tenant.v1.GrantsService.
  *
  * Read-only in v1. Backs the dashboard's capability-grant inspector page
  * (Requirement 4). RBAC is gated on tenant_admin by the daemon's ext-authz.
@@ -10,8 +10,8 @@ import 'server-only';
  */
 
 import { userClient } from '../gibson-client';
-import { GrantsAdminService } from '@/src/gen/gibson/admin/v1/grants_pb';
-import type { ListActiveGrantsResponse } from '@/src/gen/gibson/admin/v1/grants_pb';
+import { GrantsService } from '@/src/gen/gibson/tenant/v1/grants_pb';
+import type { ListActiveGrantsResponse } from '@/src/gen/gibson/tenant/v1/grants_pb';
 // CapabilityGrantInfo + RecipientClass were extracted from
 // gibson.admin.v1 → gibson.capability.v1 (sdk#103) so non-admin
 // callers can describe a grant without pulling the admin surface.
@@ -43,7 +43,7 @@ export async function listActiveGrants(
   opts: ListActiveGrantsOptions = {},
 ): Promise<ListActiveGrantsResponse> {
   try {
-    const client = userClient(GrantsAdminService);
+    const client = userClient(GrantsService);
     return await client.listActiveGrants({
       recipientClassFilter: opts.recipientClassFilter ?? 0,
       rpcFilter: opts.rpcFilter ?? '',

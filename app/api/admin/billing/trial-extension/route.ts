@@ -33,7 +33,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Uses PluginsAdminService as the system_tenant#admin relation gate
   // (same pattern as existing admin routes).
   try {
-    await assertAuthorized('/gibson.admin.v1.PluginsAdminService/RegisterPlugin');
+    await assertAuthorized('/gibson.tenant.v1.PluginAdminService/RegisterPlugin');
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
       return NextResponse.json({ error: 'permission denied' }, { status: 403 });
