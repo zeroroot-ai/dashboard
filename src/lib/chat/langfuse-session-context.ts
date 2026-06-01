@@ -1,6 +1,7 @@
 import 'server-only';
-import { serverConfig } from '@/src/lib/config';
-import { LangfuseClient, LangfuseUnavailableError, LangfuseAuthError } from '@/src/lib/langfuse-client';
+import { userClient } from '@/src/lib/gibson-client';
+import { TracesService } from '@/src/gen/gibson/traces/v1/traces_pb';
+import { timestampToISO } from '@/src/lib/gibson-client';
 
 // ============================================================================
 // Types
@@ -25,38 +26,24 @@ const SNIPPET_MAX_CHARS = 200;
 const TIMEOUT_MS = 500;
 
 // ============================================================================
-// Helpers
-// ============================================================================
-
-function buildClient(): LangfuseClient | null {
-  const { langfuseHost, langfuseAdminPublicKey, langfuseAdminSecretKey } = serverConfig;
-  if (!langfuseHost || !langfuseAdminPublicKey || !langfuseAdminSecretKey) return null;
-  return new LangfuseClient({
-    host: langfuseHost,
-    publicKey: langfuseAdminPublicKey,
-    secretKey: langfuseAdminSecretKey,
-  });
-}
-
-// ============================================================================
 // Context retrieval
 // ============================================================================
 
 /**
- * Fetch the user's recent Langfuse agent traces.
- * Gated behind a 500 ms timeout — a slow Langfuse instance must never delay
+ * Fetch the user's recent agent traces via the daemon's TracesService.
+ * Gated behind a 500 ms timeout — a slow trace backend must never delay
  * the first streaming token. Returns empty context on any failure.
+ *
+ * The daemon resolves per-tenant Langfuse credentials server-side;
+ * the dashboard never constructs a direct Langfuse client (dashboard#588).
  */
 export async function getLangfuseUserContext(
   userId: string,
   _tenantId: string,
 ): Promise<LangfuseUserContext> {
-  const client = buildClient();
-  if (!client) return EMPTY;
-
   try {
     return await Promise.race([
-      fetchTraces(client, userId),
+      fetchTraces(userId),
       new Promise<LangfuseUserContext>((resolve) =>
         setTimeout(() => resolve(EMPTY), TIMEOUT_MS),
       ),
@@ -66,35 +53,30 @@ export async function getLangfuseUserContext(
   }
 }
 
-async function fetchTraces(
-  client: LangfuseClient,
-  userId: string,
-): Promise<LangfuseUserContext> {
+async function fetchTraces(userId: string): Promise<LangfuseUserContext> {
   try {
-    const traces = await client.listTraces(userId, FETCH_LIMIT);
+    const resp = await userClient(TracesService).listTraces({
+      pageSize: FETCH_LIMIT,
+      pageToken: '',
+      fromTimestamp: '',
+      toTimestamp: '',
+      name: '',
+      userId,
+      tags: [],
+    });
 
-    const recentTraces: LangfuseTraceSummary[] = traces.map((trace) => {
-      const outputStr =
-        typeof trace.output === 'string'
-          ? trace.output
-          : trace.output
-            ? JSON.stringify(trace.output)
-            : '';
-
+    const recentTraces: LangfuseTraceSummary[] = resp.traces.map((trace) => {
       return {
         name: trace.name,
-        startTime: trace.timestamp,
-        status: (trace.metadata?.error ? 'error' : 'ok') as 'ok' | 'error',
-        totalTokens: trace.totalTokens ?? 0,
-        outputSnippet: outputStr.slice(0, SNIPPET_MAX_CHARS),
+        startTime: timestampToISO(trace.timestamp) ?? new Date().toISOString(),
+        status: 'ok' as const,
+        totalTokens: Number(trace.totalTokens ?? 0),
+        outputSnippet: '',
       };
     });
 
     return { recentTraces };
-  } catch (err) {
-    if (err instanceof LangfuseUnavailableError || err instanceof LangfuseAuthError) {
-      return EMPTY;
-    }
+  } catch {
     return EMPTY;
   }
 }

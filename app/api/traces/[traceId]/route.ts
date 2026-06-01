@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
-import {
-  LangfuseUnavailableError,
-  LangfuseAuthError,
-  LangfuseNotFoundError,
-} from '@/src/lib/langfuse-client';
-import { resolveLangfuseClient } from '@/src/lib/langfuse-tenant-service';
-import { assembleTraceData } from '@/src/lib/trace-detail';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
+import { userClient } from '@/src/lib/gibson-client';
+import { TracesService } from '@/src/gen/gibson/traces/v1/traces_pb';
+import { ConnectError, Code } from '@connectrpc/connect';
+import { assembleTraceData } from '@/src/lib/traces-client';
+import { timestampToISO } from '@/src/lib/gibson-client';
 
 /**
  * GET /api/traces/[traceId]
@@ -16,6 +15,9 @@ import { assembleTraceData } from '@/src/lib/trace-detail';
  * click-through target from the tenant-wide trace list. Returns the same
  * canonical TraceData shape as /api/missions/[id]/traces via the shared
  * assembleTraceData helper.
+ *
+ * Calls TracesService.GetTrace + fetches observations by ID from the trace
+ * record's observation_ids list.
  */
 export async function GET(
   _request: NextRequest,
@@ -32,44 +34,50 @@ export async function GET(
       );
     }
 
-    const langfuse = await resolveLangfuseClient(
-      session.user.tenantId,
-      session?.user?.id,
-    );
-    if (!langfuse) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'NOT_CONFIGURED',
-            message:
-              'LLM trace viewing requires observability configuration. Contact your administrator.',
-          },
-        },
-        { status: 404 },
-      );
+    try {
+      await requireActiveTenant();
+    } catch (err) {
+      return activeTenantApiResponse(err);
     }
 
-    const traceData = await assembleTraceData(langfuse, traceId);
-    return NextResponse.json(traceData);
-  } catch (error) {
-    if (error instanceof LangfuseUnavailableError) {
-      return NextResponse.json(
-        { error: { code: 'SERVICE_UNAVAILABLE', message: 'Trace data temporarily unavailable' } },
-        { status: 503 },
-      );
+    const client = userClient(TracesService);
+
+    let traceResp: Awaited<ReturnType<typeof client.getTrace>>;
+    try {
+      traceResp = await client.getTrace({ traceId });
+    } catch (err) {
+      if (err instanceof ConnectError && err.code === Code.NotFound) {
+        return NextResponse.json(
+          { error: { code: 'NOT_FOUND', message: 'Trace not found' } },
+          { status: 404 },
+        );
+      }
+      throw err;
     }
-    if (error instanceof LangfuseAuthError) {
-      return NextResponse.json(
-        { error: { code: 'CONFIG_ERROR', message: 'Invalid trace credentials for this tenant' } },
-        { status: 500 },
-      );
-    }
-    if (error instanceof LangfuseNotFoundError) {
+
+    const trace = traceResp.trace;
+    if (!trace) {
       return NextResponse.json(
         { error: { code: 'NOT_FOUND', message: 'Trace not found' } },
         { status: 404 },
       );
     }
+
+    // Fetch all observations for the trace in parallel.
+    const observationIds = trace.observationIds ?? [];
+    const observations = await Promise.all(
+      observationIds.map((obsId) =>
+        client.getObservation({ observationId: obsId }).then((r) => r.observation),
+      ),
+    );
+    const validObservations = observations.filter(Boolean) as NonNullable<
+      (typeof observations)[number]
+    >[];
+
+    const traceTimestamp = timestampToISO(trace.timestamp) ?? new Date().toISOString();
+    const traceData = assembleTraceData(traceTimestamp, validObservations, traceId);
+    return NextResponse.json(traceData);
+  } catch (error) {
     return daemonErrorResponse(error);
   }
 }

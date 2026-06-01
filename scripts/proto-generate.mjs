@@ -49,13 +49,16 @@ const WS = path.join(DASHBOARD_ROOT, '.tmp/proto-ws');
 // is three levels up. Gibson lives at enterprise/platform/gibson — the
 // `core/` prefix was the pre-refactor layout and is no longer present.
 //
-// Worktree-aware: when run from .worktrees/<name>/scripts/, DASHBOARD_ROOT
-// resolves to the worktree directory and the naive `../../..` walks short.
-// Detect that case and rewind to the main checkout root before computing
-// the workspace root. dashboard#148.
-const isWorktree = DASHBOARD_ROOT.includes('/.worktrees/');
+// Worktree-aware: when run from .worktrees/<name>/scripts/ or
+// .claude/worktrees/<name>/scripts/, DASHBOARD_ROOT resolves to the
+// worktree directory and the naive `../../..` walks short. Detect both
+// patterns and rewind to the main checkout root before computing the
+// workspace root. dashboard#148.
+const isWorktree =
+  DASHBOARD_ROOT.includes('/.worktrees/') ||
+  DASHBOARD_ROOT.includes('/.claude/worktrees/');
 const MAIN_DASHBOARD_ROOT = isWorktree
-  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, '')
+  ? DASHBOARD_ROOT.replace(/\/\.claude\/worktrees\/[^/]+$/, '').replace(/\/\.worktrees\/[^/]+$/, '')
   : DASHBOARD_ROOT;
 const WORKSPACE_ROOT = path.resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
 const GIBSON_REPO = path.join(WORKSPACE_ROOT, 'enterprise/platform/gibson');
@@ -167,15 +170,14 @@ function buildWorkspace() {
   // directory (the .tmp/proto-ws root). Buf v2 follows symlinks; this
   // satisfies the "modules must be inside the workspace" rule without
   // copying files.
-  // gibson-local is no longer a proto source for the dashboard:
-  // platform_operator / tenant_admin / user were promoted into
-  // platform-sdk by slice gibson#226 (daemon-internal protos →
-  // platform-sdk). The gibson-local proto files survive in the daemon
-  // repo only until the matching daemon flip lands; dashboard reads
-  // them from platform-sdk in the meantime, and the eventual deletion
-  // in the daemon repo is a no-op for this script.
+  // gibson-local is included for daemon-internal protos that have not
+  // yet been promoted to platform-sdk. Currently: TracesService
+  // (dashboard#588 cutover). Once these protos are promoted to
+  // platform-sdk the gibson-local symlink can be removed again.
+  ensureGibsonLocalProtos();
   symlinkSync(sdkProtoDir, path.join(WS, 'sdk-proto'));
   symlinkSync(PLATFORM_SDK_PROTOS, path.join(WS, 'platform-sdk-proto'));
+  symlinkSync(GIBSON_LOCAL_PROTOS, path.join(WS, 'gibson-local'));
 
   writeFileSync(
     path.join(WS, 'buf.yaml'),
@@ -218,6 +220,16 @@ function buildWorkspace() {
       // gibson.admin.v1 services can resolve the import; we read
       // capability.proto from the OSS SDK side instead.
       '      - platform-sdk-proto/gibson/capability',
+      // gibson-local is the daemon-internal proto tree for services not yet
+      // promoted to platform-sdk. Only TracesService is consumed by the
+      // dashboard (dashboard#588). All other daemon-local packages
+      // (billing, user) duplicate platform-sdk namespaces or are not
+      // needed here; exclude them to avoid conflicts.
+      '  - path: gibson-local',
+      '    excludes:',
+      '      - gibson-local/gibson/auth',
+      '      - gibson-local/gibson/billing',
+      '      - gibson-local/gibson/user',
       // protovalidate provides the (buf.validate.field).* annotations
       // adopted by the SDK from v1.5.0 onward. Pulled from the buf.build
       // remote registry; resolved by `buf dep update` invoked below.
@@ -232,6 +244,9 @@ function buildWorkspace() {
       // `make authz-registry` uses. The proto lives in platform-sdk
       // post-migration (parent PRD zeroroot-ai/.github#101).
       '    - platform-sdk-proto/gibson/daemon/admin/v1/daemon_admin.proto',
+      // gibson-local protos follow daemon-internal conventions, not the
+      // dashboard OSS SDK lint rule. Ignore them to avoid false positives.
+      '    - gibson-local',
       '',
     ].join('\n'),
   );
@@ -249,6 +264,7 @@ function buildWorkspace() {
       'inputs:',
       '  - directory: sdk-proto',
       '  - directory: platform-sdk-proto',
+      '  - directory: gibson-local',
       // Generate TS bindings for the protovalidate annotation proto so
       // imports of file_buf_validate_validate from generated SDK files
       // resolve. Without this, src/gen/buf/validate/validate_pb.ts is
