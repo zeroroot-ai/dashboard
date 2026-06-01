@@ -62,7 +62,7 @@ export async function listTeamsAction(): Promise<ActionResult<Team[]>> {
     let pageToken = "";
     do {
       const resp = await client.listTeams({
-        tenantId: `tenant:${tenantId}`,
+        tenantId: tenantId,
         pageToken,
         pageSize: 0, // daemon picks default
       });
@@ -107,7 +107,7 @@ export async function listTeamMembersAction(
     let pageToken = "";
     do {
       const resp = await client.listTeamMembers({
-        tenantId: `tenant:${tenantId}`,
+        tenantId: tenantId,
         teamId,
         pageToken,
         pageSize: 0,
@@ -152,7 +152,7 @@ export async function createTeamAction(input: {
   try {
     const client = userClient(TenantAdminService);
     const resp = await client.createTeam({
-      tenantId: `tenant:${tenantId}`,
+      tenantId: tenantId,
       teamId: input.teamId,
       displayName: input.displayName,
     });
@@ -193,7 +193,7 @@ export async function deleteTeamAction(
   try {
     const client = userClient(TenantAdminService);
     await client.deleteTeam({
-      tenantId: `tenant:${tenantId}`,
+      tenantId: tenantId,
       teamId,
     });
     return { ok: true, data: { removed: 1 } };
@@ -227,14 +227,14 @@ export async function addTeamMemberAction(input: {
   try {
     const client = userClient(TenantAdminService);
     await client.addTeamMember({
-      tenantId: `tenant:${tenantId}`,
+      tenantId: tenantId,
       teamId: input.teamId,
       userId: input.userId,
     });
     // If the caller wants admin rights, promote after adding as member.
     if (input.asAdmin) {
       await client.setTeamAdmin({
-        tenantId: `tenant:${tenantId}`,
+        tenantId: tenantId,
         teamId: input.teamId,
         userId: input.userId,
         isAdmin: true,
@@ -269,7 +269,7 @@ export async function removeTeamMemberAction(input: {
     // RemoveTeamMember atomically removes both member and admin FGA tuples
     // for the user on this team — no separate admin-tuple cleanup needed.
     await client.removeTeamMember({
-      tenantId: `tenant:${tenantId}`,
+      tenantId: tenantId,
       teamId: input.teamId,
       userId: input.userId,
     });
