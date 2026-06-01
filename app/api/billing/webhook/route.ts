@@ -52,7 +52,8 @@ import {
   render as renderPlanChangedEmail,
 } from '@/src/lib/email/templates/billing-plan-changed';
 import { emitAuthAudit } from '@/src/lib/audit/auth';
-import { getPool } from '@/src/lib/db';
+import { serviceClient } from '@/src/lib/gibson-client';
+import { BillingService } from '@/src/gen/gibson/billing/v1/billing_pb';
 import { logger } from '@/src/lib/logger';
 import { incBillingEvent } from '@/src/lib/metrics/billing';
 
@@ -97,55 +98,18 @@ function getPricingUrl(): string {
 }
 
 // ---------------------------------------------------------------------------
-// Idempotency table helpers
+// Idempotency helpers — daemon-delegated via BillingService RPCs
 // ---------------------------------------------------------------------------
 
 /**
- * Migration 0042 replaced the original `gibson_stripe_events` inline table
- * with the schema-managed `webhook_idempotency` table. The constant below
- * references the new table name.
+ * Record the event ID via the daemon's BillingService.RecordWebhookEvent RPC.
+ * Returns true when this is the first (novel) occurrence; false on replay.
  *
- * The `gibson_stripe_events` name is preserved as a view alias in the
- * migration so any external tooling using the old name continues to work
- * during the transition window.
- */
-const EVENTS_TABLE = 'webhook_idempotency';
-
-/**
- * Validate that the idempotency table is accessible. After migration 0042 ships
- * this is effectively a no-op: the INSERT will fail with a recognizable error
- * if the table doesn't exist. This call serves as an early-check opportunity
- * (catches misconfigured environments at request time, not at INSERT time).
- *
- * Implementation: a lightweight EXISTS query that fails fast but does not
- * create the table inline (migration 0042 owns table creation).
- */
-async function ensureEventsTable(): Promise<void> {
-  // Lightweight sanity check: if this fails, we get a clear error message
-  // before attempting the INSERT. The real enforcement is migration 0042.
-  try {
-    await getPool().query(
-      `SELECT 1 FROM "${EVENTS_TABLE}" LIMIT 0`,
-    );
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(
-      `[billing/webhook] Idempotency table "${EVENTS_TABLE}" is not accessible: ${msg}. ` +
-      'Run migration 0042_webhook_idempotency.sql before enabling billing.',
-    );
-  }
-}
-
-/**
- * Attempt to record the event ID. Returns true if this is a novel event
- * (first time seen), false if it is a duplicate (Stripe retry).
- *
- * INSERT … ON CONFLICT DO NOTHING is the canonical idempotency primitive:
- * on the first delivery the row is inserted and rowCount=1; on any replay
- * the constraint fires, no row is written, rowCount=0.
+ * The daemon inserts into the `webhook_idempotency` table owned by the platform
+ * Postgres — the dashboard no longer holds a pg Pool.
  *
  * @param eventId   - Stripe event ID (evt_...).
- * @param eventType - Stripe event type string (e.g. 'customer.subscription.created').
+ * @param eventType - Stripe event type string.
  * @param tenantId  - Tenant slug this event is attributed to (may be empty).
  */
 async function recordEventIfNew(
@@ -153,13 +117,12 @@ async function recordEventIfNew(
   eventType: string,
   tenantId: string,
 ): Promise<boolean> {
-  const result = await getPool().query(
-    `INSERT INTO "${EVENTS_TABLE}" (event_id, event_type, tenant_id)
-     VALUES ($1, $2, $3)
-     ON CONFLICT DO NOTHING`,
-    [eventId, eventType, tenantId],
-  );
-  return (result.rowCount ?? 0) > 0;
+  // The BillingService RPCs use tenant_from_identity deriver; tenantId in
+  // the request body is informational metadata only — pass '' when the
+  // event predates tenant assignment (pre-tenant checkout events, etc.).
+  const client = serviceClient(BillingService, tenantId);
+  const resp = await client.recordWebhookEvent({ eventId, eventType, tenantId });
+  return resp.isNew;
 }
 
 // ---------------------------------------------------------------------------
@@ -737,15 +700,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'invalid signature' }, { status: 400 });
   }
 
-  // Ensure the idempotency table is present (cheap no-op after first call).
-  try {
-    await ensureEventsTable();
-  } catch (err) {
-    logger.error({ err: err instanceof Error ? err.message : String(err) }, '[billing/webhook] Failed to ensure events table');
-    // Return 500 so Stripe retries — this is a transient infrastructure failure.
-    return NextResponse.json({ error: 'storage error' }, { status: 500 });
-  }
-
   // Idempotency guard — silently ack duplicate deliveries.
   // Best-effort extract tenantId from event metadata for observability;
   // falls back to '' if not present (pre-tenant events, session events, etc.).
@@ -828,10 +782,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (err) {
     // Processing failed — remove the idempotency record so Stripe can retry.
     try {
-      await getPool().query(
-        `DELETE FROM "${EVENTS_TABLE}" WHERE event_id = $1`,
-        [event.id],
-      );
+      const rollbackClient = serviceClient(BillingService, resolvedTenantId);
+      await rollbackClient.deleteWebhookEvent({ eventId: event.id });
     } catch {
       // Best-effort cleanup.
     }

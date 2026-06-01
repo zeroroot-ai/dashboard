@@ -2,8 +2,8 @@
 // @generated from file gibson/user/v1/user.proto (package gibson.user.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_gibson_auth_v1_options } from "../../auth/v1/options_pb";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/user/v1/user.proto.
  */
 export const file_gibson_user_v1_user: GenFile = /*@__PURE__*/
-  fileDesc("ChlnaWJzb24vdXNlci92MS91c2VyLnByb3RvEg5naWJzb24udXNlci52MSI7ChVHZXRVc2VyUHJvZmlsZVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkilAEKD1VzZXJQcm9maWxlRGF0YRIKCgJpZBgBIAEoCRINCgVlbWFpbBgCIAEoCRIUCgxkaXNwbGF5X25hbWUYAyABKAkSEgoKYXZhdGFyX3VybBgEIAEoCRIOCgZzdGF0dXMYBSABKAkSEgoKY3JlYXRlZF9hdBgGIAEoCRIYChBwcmVmZXJyZWRfbG9jYWxlGAcgASgJIkoKFkdldFVzZXJQcm9maWxlUmVzcG9uc2USMAoHcHJvZmlsZRgBIAEoCzIfLmdpYnNvbi51c2VyLnYxLlVzZXJQcm9maWxlRGF0YSJuChhVcGRhdGVVc2VyUHJvZmlsZVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJEhgKEHByZWZlcnJlZF9sb2NhbGUYBCABKAkiTQoZVXBkYXRlVXNlclByb2ZpbGVSZXNwb25zZRIwCgdwcm9maWxlGAEgASgLMh8uZ2lic29uLnVzZXIudjEuVXNlclByb2ZpbGVEYXRhIrABCgVBbGVydBIKCgJpZBgBIAEoCRIRCgl0ZW5hbnRfaWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCRINCgV0aXRsZRgEIAEoCRIMCgRib2R5GAUgASgJEhAKCHNldmVyaXR5GAYgASgJEgwKBHJlYWQYByABKAgSFwoPY3JlYXRlZF9hdF91bml4GAggASgDEg4KBnNvdXJjZRgJIAEoCRIRCglzb3VyY2VfaWQYCiABKAkiWwoRTGlzdEFsZXJ0c1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSEwoLdW5yZWFkX29ubHkYAyABKAgSDQoFbGltaXQYBCABKAUiOwoSTGlzdEFsZXJ0c1Jlc3BvbnNlEiUKBmFsZXJ0cxgBIAMoCzIVLmdpYnNvbi51c2VyLnYxLkFsZXJ0IjsKFE1hcmtBbGVydFJlYWRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIQCghhbGVydF9pZBgCIAEoCSIXChVNYXJrQWxlcnRSZWFkUmVzcG9uc2UiPgoYTWFya0FsbEFsZXJ0c1JlYWRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJIioKGU1hcmtBbGxBbGVydHNSZWFkUmVzcG9uc2USDQoFY291bnQYASABKAUiHwoPTWVzc2FnZVBhcnRUZXh0EgwKBHRleHQYASABKAkiTAoTTWVzc2FnZVBhcnRUb29sQ2FsbBIUCgx0b29sX2NhbGxfaWQYASABKAkSDAoEbmFtZRgCIAEoCRIRCglhcmd1bWVudHMYAyABKAkiPQoVTWVzc2FnZVBhcnRUb29sUmVzdWx0EhQKDHRvb2xfY2FsbF9pZBgBIAEoCRIOCgZyZXN1bHQYAiABKAkiRgoTTWVzc2FnZVBhcnRDaXRhdGlvbhITCgtjaXRhdGlvbl9pZBgBIAEoCRINCgVsYWJlbBgCIAEoCRILCgN1cmwYAyABKAkiUwoYTWVzc2FnZVBhcnRBdHRhY2htZW50UmVmEhUKDWF0dGFjaG1lbnRfaWQYASABKAkSEgoKbWVkaWFfdHlwZRgCIAEoCRIMCgRuYW1lGAMgASgJIiQKFE1lc3NhZ2VQYXJ0UmVhc29uaW5nEgwKBHRleHQYASABKAki9gIKC01lc3NhZ2VQYXJ0Ei8KBHRleHQYASABKAsyHy5naWJzb24udXNlci52MS5NZXNzYWdlUGFydFRleHRIABI4Cgl0b29sX2NhbGwYAiABKAsyIy5naWJzb24udXNlci52MS5NZXNzYWdlUGFydFRvb2xDYWxsSAASPAoLdG9vbF9yZXN1bHQYAyABKAsyJS5naWJzb24udXNlci52MS5NZXNzYWdlUGFydFRvb2xSZXN1bHRIABI3CghjaXRhdGlvbhgEIAEoCzIjLmdpYnNvbi51c2VyLnYxLk1lc3NhZ2VQYXJ0Q2l0YXRpb25IABJCCg5hdHRhY2htZW50X3JlZhgFIAEoCzIoLmdpYnNvbi51c2VyLnYxLk1lc3NhZ2VQYXJ0QXR0YWNobWVudFJlZkgAEjkKCXJlYXNvbmluZxgGIAEoCzIkLmdpYnNvbi51c2VyLnYxLk1lc3NhZ2VQYXJ0UmVhc29uaW5nSABCBgoEcGFydCKdAQoTQ29udmVyc2F0aW9uU3VtbWFyeRIKCgJpZBgBIAEoCRIRCgl0ZW5hbnRfaWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCRINCgV0aXRsZRgEIAEoCRIXCg9jcmVhdGVkX2F0X3VuaXgYBSABKAMSFwoPdXBkYXRlZF9hdF91bml4GAYgASgDEhUKDW1lc3NhZ2VfY291bnQYByABKAUidAoTQ29udmVyc2F0aW9uTWVzc2FnZRIKCgJpZBgBIAEoCRIMCgRyb2xlGAIgASgJEioKBXBhcnRzGAMgAygLMhsuZ2lic29uLnVzZXIudjEuTWVzc2FnZVBhcnQSFwoPY3JlYXRlZF9hdF91bml4GAQgASgDIk0KGExpc3RDb252ZXJzYXRpb25zUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCRINCgVsaW1pdBgDIAEoBSJXChlMaXN0Q29udmVyc2F0aW9uc1Jlc3BvbnNlEjoKDWNvbnZlcnNhdGlvbnMYASADKAsyIy5naWJzb24udXNlci52MS5Db252ZXJzYXRpb25TdW1tYXJ5IkQKFkdldENvbnZlcnNhdGlvblJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEhEKCXRlbmFudF9pZBgCIAEoCSKLAQoXR2V0Q29udmVyc2F0aW9uUmVzcG9uc2USOQoMY29udmVyc2F0aW9uGAEgASgLMiMuZ2lic29uLnVzZXIudjEuQ29udmVyc2F0aW9uU3VtbWFyeRI1CghtZXNzYWdlcxgCIAMoCzIjLmdpYnNvbi51c2VyLnYxLkNvbnZlcnNhdGlvbk1lc3NhZ2UirgEKF1NhdmVDb252ZXJzYXRpb25SZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEhcKD2NvbnZlcnNhdGlvbl9pZBgDIAEoCRINCgV0aXRsZRgEIAEoCRIQCghhZ2VudF9pZBgFIAEoCRI1CghtZXNzYWdlcxgGIAMoCzIjLmdpYnNvbi51c2VyLnYxLkNvbnZlcnNhdGlvbk1lc3NhZ2UiGgoYU2F2ZUNvbnZlcnNhdGlvblJlc3BvbnNlIlYKGVJlbmFtZUNvbnZlcnNhdGlvblJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhcKD2NvbnZlcnNhdGlvbl9pZBgCIAEoCRINCgV0aXRsZRgDIAEoCSIcChpSZW5hbWVDb252ZXJzYXRpb25SZXNwb25zZSJHChlEZWxldGVDb252ZXJzYXRpb25SZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIXCg9jb252ZXJzYXRpb25faWQYAiABKAkiHAoaRGVsZXRlQ29udmVyc2F0aW9uUmVzcG9uc2Uy2gsKC1VzZXJTZXJ2aWNlEo0BCg5HZXRVc2VyUHJvZmlsZRIlLmdpYnNvbi51c2VyLnYxLkdldFVzZXJQcm9maWxlUmVxdWVzdBomLmdpYnNvbi51c2VyLnYxLkdldFVzZXJQcm9maWxlUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpYBChFVcGRhdGVVc2VyUHJvZmlsZRIoLmdpYnNvbi51c2VyLnYxLlVwZGF0ZVVzZXJQcm9maWxlUmVxdWVzdBopLmdpYnNvbi51c2VyLnYxLlVwZGF0ZVVzZXJQcm9maWxlUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoEBCgpMaXN0QWxlcnRzEiEuZ2lic29uLnVzZXIudjEuTGlzdEFsZXJ0c1JlcXVlc3QaIi5naWJzb24udXNlci52MS5MaXN0QWxlcnRzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEooBCg1NYXJrQWxlcnRSZWFkEiQuZ2lic29uLnVzZXIudjEuTWFya0FsZXJ0UmVhZFJlcXVlc3QaJS5naWJzb24udXNlci52MS5NYXJrQWxlcnRSZWFkUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpYBChFNYXJrQWxsQWxlcnRzUmVhZBIoLmdpYnNvbi51c2VyLnYxLk1hcmtBbGxBbGVydHNSZWFkUmVxdWVzdBopLmdpYnNvbi51c2VyLnYxLk1hcmtBbGxBbGVydHNSZWFkUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpYBChFMaXN0Q29udmVyc2F0aW9ucxIoLmdpYnNvbi51c2VyLnYxLkxpc3RDb252ZXJzYXRpb25zUmVxdWVzdBopLmdpYnNvbi51c2VyLnYxLkxpc3RDb252ZXJzYXRpb25zUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpABCg9HZXRDb252ZXJzYXRpb24SJi5naWJzb24udXNlci52MS5HZXRDb252ZXJzYXRpb25SZXF1ZXN0GicuZ2lic29uLnVzZXIudjEuR2V0Q29udmVyc2F0aW9uUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpMBChBTYXZlQ29udmVyc2F0aW9uEicuZ2lic29uLnVzZXIudjEuU2F2ZUNvbnZlcnNhdGlvblJlcXVlc3QaKC5naWJzb24udXNlci52MS5TYXZlQ29udmVyc2F0aW9uUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpkBChJSZW5hbWVDb252ZXJzYXRpb24SKS5naWJzb24udXNlci52MS5SZW5hbWVDb252ZXJzYXRpb25SZXF1ZXN0GiouZ2lic29uLnVzZXIudjEuUmVuYW1lQ29udmVyc2F0aW9uUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpkBChJEZWxldGVDb252ZXJzYXRpb24SKS5naWJzb24udXNlci52MS5EZWxldGVDb252ZXJzYXRpb25SZXF1ZXN0GiouZ2lic29uLnVzZXIudjEuRGVsZXRlQ29udmVyc2F0aW9uUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADQj9aPWdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvcGxhdGZvcm0tc2RrL2dlbi9naWJzb24vdXNlci92MTt1c2VydjFiBnByb3RvMw", [file_gibson_auth_v1_options]);
+  fileDesc("ChlnaWJzb24vdXNlci92MS91c2VyLnByb3RvEg5naWJzb24udXNlci52MSI7ChVHZXRVc2VyUHJvZmlsZVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkilAEKD1VzZXJQcm9maWxlRGF0YRIKCgJpZBgBIAEoCRINCgVlbWFpbBgCIAEoCRIUCgxkaXNwbGF5X25hbWUYAyABKAkSEgoKYXZhdGFyX3VybBgEIAEoCRIOCgZzdGF0dXMYBSABKAkSEgoKY3JlYXRlZF9hdBgGIAEoCRIYChBwcmVmZXJyZWRfbG9jYWxlGAcgASgJIkoKFkdldFVzZXJQcm9maWxlUmVzcG9uc2USMAoHcHJvZmlsZRgBIAEoCzIfLmdpYnNvbi51c2VyLnYxLlVzZXJQcm9maWxlRGF0YSJuChhVcGRhdGVVc2VyUHJvZmlsZVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJEhgKEHByZWZlcnJlZF9sb2NhbGUYBCABKAkiTQoZVXBkYXRlVXNlclByb2ZpbGVSZXNwb25zZRIwCgdwcm9maWxlGAEgASgLMh8uZ2lic29uLnVzZXIudjEuVXNlclByb2ZpbGVEYXRhIrABCgVBbGVydBIKCgJpZBgBIAEoCRIRCgl0ZW5hbnRfaWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCRINCgV0aXRsZRgEIAEoCRIMCgRib2R5GAUgASgJEhAKCHNldmVyaXR5GAYgASgJEgwKBHJlYWQYByABKAgSFwoPY3JlYXRlZF9hdF91bml4GAggASgDEg4KBnNvdXJjZRgJIAEoCRIRCglzb3VyY2VfaWQYCiABKAkiWwoRTGlzdEFsZXJ0c1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSEwoLdW5yZWFkX29ubHkYAyABKAgSDQoFbGltaXQYBCABKAUiOwoSTGlzdEFsZXJ0c1Jlc3BvbnNlEiUKBmFsZXJ0cxgBIAMoCzIVLmdpYnNvbi51c2VyLnYxLkFsZXJ0IjsKFE1hcmtBbGVydFJlYWRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIQCghhbGVydF9pZBgCIAEoCSIXChVNYXJrQWxlcnRSZWFkUmVzcG9uc2UiPgoYTWFya0FsbEFsZXJ0c1JlYWRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJIioKGU1hcmtBbGxBbGVydHNSZWFkUmVzcG9uc2USDQoFY291bnQYASABKAUiHwoPTWVzc2FnZVBhcnRUZXh0EgwKBHRleHQYASABKAkiTAoTTWVzc2FnZVBhcnRUb29sQ2FsbBIUCgx0b29sX2NhbGxfaWQYASABKAkSDAoEbmFtZRgCIAEoCRIRCglhcmd1bWVudHMYAyABKAkiPQoVTWVzc2FnZVBhcnRUb29sUmVzdWx0EhQKDHRvb2xfY2FsbF9pZBgBIAEoCRIOCgZyZXN1bHQYAiABKAkiRgoTTWVzc2FnZVBhcnRDaXRhdGlvbhITCgtjaXRhdGlvbl9pZBgBIAEoCRINCgVsYWJlbBgCIAEoCRILCgN1cmwYAyABKAkiUwoYTWVzc2FnZVBhcnRBdHRhY2htZW50UmVmEhUKDWF0dGFjaG1lbnRfaWQYASABKAkSEgoKbWVkaWFfdHlwZRgCIAEoCRIMCgRuYW1lGAMgASgJIiQKFE1lc3NhZ2VQYXJ0UmVhc29uaW5nEgwKBHRleHQYASABKAki9gIKC01lc3NhZ2VQYXJ0Ei8KBHRleHQYASABKAsyHy5naWJzb24udXNlci52MS5NZXNzYWdlUGFydFRleHRIABI4Cgl0b29sX2NhbGwYAiABKAsyIy5naWJzb24udXNlci52MS5NZXNzYWdlUGFydFRvb2xDYWxsSAASPAoLdG9vbF9yZXN1bHQYAyABKAsyJS5naWJzb24udXNlci52MS5NZXNzYWdlUGFydFRvb2xSZXN1bHRIABI3CghjaXRhdGlvbhgEIAEoCzIjLmdpYnNvbi51c2VyLnYxLk1lc3NhZ2VQYXJ0Q2l0YXRpb25IABJCCg5hdHRhY2htZW50X3JlZhgFIAEoCzIoLmdpYnNvbi51c2VyLnYxLk1lc3NhZ2VQYXJ0QXR0YWNobWVudFJlZkgAEjkKCXJlYXNvbmluZxgGIAEoCzIkLmdpYnNvbi51c2VyLnYxLk1lc3NhZ2VQYXJ0UmVhc29uaW5nSABCBgoEcGFydCKdAQoTQ29udmVyc2F0aW9uU3VtbWFyeRIKCgJpZBgBIAEoCRIRCgl0ZW5hbnRfaWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCRINCgV0aXRsZRgEIAEoCRIXCg9jcmVhdGVkX2F0X3VuaXgYBSABKAMSFwoPdXBkYXRlZF9hdF91bml4GAYgASgDEhUKDW1lc3NhZ2VfY291bnQYByABKAUidAoTQ29udmVyc2F0aW9uTWVzc2FnZRIKCgJpZBgBIAEoCRIMCgRyb2xlGAIgASgJEioKBXBhcnRzGAMgAygLMhsuZ2lic29uLnVzZXIudjEuTWVzc2FnZVBhcnQSFwoPY3JlYXRlZF9hdF91bml4GAQgASgDIk0KGExpc3RDb252ZXJzYXRpb25zUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCRINCgVsaW1pdBgDIAEoBSJXChlMaXN0Q29udmVyc2F0aW9uc1Jlc3BvbnNlEjoKDWNvbnZlcnNhdGlvbnMYASADKAsyIy5naWJzb24udXNlci52MS5Db252ZXJzYXRpb25TdW1tYXJ5IkQKFkdldENvbnZlcnNhdGlvblJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEhEKCXRlbmFudF9pZBgCIAEoCSKLAQoXR2V0Q29udmVyc2F0aW9uUmVzcG9uc2USOQoMY29udmVyc2F0aW9uGAEgASgLMiMuZ2lic29uLnVzZXIudjEuQ29udmVyc2F0aW9uU3VtbWFyeRI1CghtZXNzYWdlcxgCIAMoCzIjLmdpYnNvbi51c2VyLnYxLkNvbnZlcnNhdGlvbk1lc3NhZ2UirgEKF1NhdmVDb252ZXJzYXRpb25SZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEhcKD2NvbnZlcnNhdGlvbl9pZBgDIAEoCRINCgV0aXRsZRgEIAEoCRIQCghhZ2VudF9pZBgFIAEoCRI1CghtZXNzYWdlcxgGIAMoCzIjLmdpYnNvbi51c2VyLnYxLkNvbnZlcnNhdGlvbk1lc3NhZ2UiGgoYU2F2ZUNvbnZlcnNhdGlvblJlc3BvbnNlIlYKGVJlbmFtZUNvbnZlcnNhdGlvblJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhcKD2NvbnZlcnNhdGlvbl9pZBgCIAEoCRINCgV0aXRsZRgDIAEoCSIcChpSZW5hbWVDb252ZXJzYXRpb25SZXNwb25zZSJHChlEZWxldGVDb252ZXJzYXRpb25SZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIXCg9jb252ZXJzYXRpb25faWQYAiABKAkiHAoaRGVsZXRlQ29udmVyc2F0aW9uUmVzcG9uc2UidAoTT25ib2FyZGluZ1NldHVwVGFzaxIKCgJpZBgBIAEoCRIOCgZzdGF0dXMYAiABKAkSFAoMY29tcGxldGVkX2F0GAMgASgJEhAKCGNhdGVnb3J5GAQgASgJEhkKEWVzdGltYXRlZF9taW51dGVzGAUgASgFIo0DChNVc2VyT25ib2FyZGluZ1N0YXRlEg8KB3VzZXJfaWQYASABKAkSEQoJdGVuYW50X2lkGAIgASgJEhgKEHdpemFyZF9jb21wbGV0ZWQYAyABKAgSFgoOd2l6YXJkX3NraXBwZWQYBCABKAgSFwoPY3VycmVudF9zdGVwX2lkGAUgASgJEhcKD2NvbXBsZXRlZF9zdGVwcxgGIAMoCRIVCg1za2lwcGVkX3N0ZXBzGAcgAygJEjgKC3NldHVwX3Rhc2tzGAggAygLMiMuZ2lic29uLnVzZXIudjEuT25ib2FyZGluZ1NldHVwVGFzaxIXCg9sbG1fY29uZmlnX2pzb24YCSABKAkSGQoRc2VsZWN0ZWRfYWdlbnRfaWQYCiABKAkSGgoSY3JlYXRlZF9taXNzaW9uX2lkGAsgASgJEhIKCnN0YXJ0ZWRfYXQYDCABKAkSFAoMY29tcGxldGVkX2F0GA0gASgJEhIKCnVwZGF0ZWRfYXQYDiABKAkSDwoHdmVyc2lvbhgPIAEoBSJDCh1HZXRVc2VyT25ib2FyZGluZ1N0YXRlUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCSJUCh5HZXRVc2VyT25ib2FyZGluZ1N0YXRlUmVzcG9uc2USMgoFc3RhdGUYASABKAsyIy5naWJzb24udXNlci52MS5Vc2VyT25ib2FyZGluZ1N0YXRlInoKIFVwZGF0ZVVzZXJPbmJvYXJkaW5nU3RhdGVSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEjIKBXN0YXRlGAMgASgLMiMuZ2lic29uLnVzZXIudjEuVXNlck9uYm9hcmRpbmdTdGF0ZSJXCiFVcGRhdGVVc2VyT25ib2FyZGluZ1N0YXRlUmVzcG9uc2USMgoFc3RhdGUYASABKAsyIy5naWJzb24udXNlci52MS5Vc2VyT25ib2FyZGluZ1N0YXRlIkUKH1Jlc2V0VXNlck9uYm9hcmRpbmdTdGF0ZVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkiVgogUmVzZXRVc2VyT25ib2FyZGluZ1N0YXRlUmVzcG9uc2USMgoFc3RhdGUYASABKAsyIy5naWJzb24udXNlci52MS5Vc2VyT25ib2FyZGluZ1N0YXRlIjwKDldpZGdldFBvc2l0aW9uEgkKAXgYASABKAUSCQoBeRgCIAEoBRIJCgF3GAMgASgFEgkKAWgYBCABKAUiggEKDFdpZGdldENvbmZpZxIKCgJpZBgBIAEoCRIMCgR0eXBlGAIgASgJEjAKCHBvc2l0aW9uGAMgASgLMh4uZ2lic29uLnVzZXIudjEuV2lkZ2V0UG9zaXRpb24SDwoHdmlzaWJsZRgEIAEoCBIVCg1zZXR0aW5nc19qc29uGAUgASgJImgKFVVzZXJMYXlvdXRQcmVmZXJlbmNlcxItCgd3aWRnZXRzGAEgAygLMhwuZ2lic29uLnVzZXIudjEuV2lkZ2V0Q29uZmlnEgwKBGNvbHMYAiABKAUSEgoKcm93X2hlaWdodBgDIAEoBSI6ChRHZXRVc2VyTGF5b3V0UmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCSJiChVHZXRVc2VyTGF5b3V0UmVzcG9uc2USNQoGbGF5b3V0GAEgASgLMiUuZ2lic29uLnVzZXIudjEuVXNlckxheW91dFByZWZlcmVuY2VzEhIKCmlzX2RlZmF1bHQYAiABKAgicgoVU2F2ZVVzZXJMYXlvdXRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEjUKBmxheW91dBgDIAEoCzIlLmdpYnNvbi51c2VyLnYxLlVzZXJMYXlvdXRQcmVmZXJlbmNlcyJPChZTYXZlVXNlckxheW91dFJlc3BvbnNlEjUKBmxheW91dBgBIAEoCzIlLmdpYnNvbi51c2VyLnYxLlVzZXJMYXlvdXRQcmVmZXJlbmNlcyI8ChZSZXNldFVzZXJMYXlvdXRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJIhkKF1Jlc2V0VXNlckxheW91dFJlc3BvbnNlIkEKDEFjdGl2aXR5SXRlbRIKCgJpZBgBIAEoCRINCgVsYWJlbBgCIAEoCRIWCg50aW1lc3RhbXBfdW5peBgDIAEoAyLUAQoTVXNlckFjdGl2aXR5Q29udGV4dBI1Cg9yZWNlbnRfbWlzc2lvbnMYASADKAsyHC5naWJzb24udXNlci52MS5BY3Rpdml0eUl0ZW0SMgoMcmVjZW50X25vZGVzGAIgAygLMhwuZ2lic29uLnVzZXIudjEuQWN0aXZpdHlJdGVtEjUKD3JlY2VudF9maW5kaW5ncxgDIAMoCzIcLmdpYnNvbi51c2VyLnYxLkFjdGl2aXR5SXRlbRIbChNsYXN0X2FjdGl2ZV9hdF91bml4GAQgASgDIjwKFkdldFVzZXJBY3Rpdml0eVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkiUAoXR2V0VXNlckFjdGl2aXR5UmVzcG9uc2USNQoIYWN0aXZpdHkYASABKAsyIy5naWJzb24udXNlci52MS5Vc2VyQWN0aXZpdHlDb250ZXh0IpcBChlSZWNvcmRVc2VyQWN0aXZpdHlSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEioKBGtpbmQYAyABKA4yHC5naWJzb24udXNlci52MS5BY3Rpdml0eUtpbmQSKgoEaXRlbRgEIAEoCzIcLmdpYnNvbi51c2VyLnYxLkFjdGl2aXR5SXRlbSIcChpSZWNvcmRVc2VyQWN0aXZpdHlSZXNwb25zZSKEAQoTU2lnbnVwUHJvZ3Jlc3NTdGF0ZRIMCgRzdGVwGAEgASgJEhwKFHN0ZXBfc3RhcnRlZF9hdF91bml4GAIgASgDEhYKDnRlcm1pbmFsX3N0YXRlGAMgASgJEhIKCmVycm9yX2NvZGUYBCABKAkSFQoNZXJyb3JfbWVzc2FnZRgFIAEoCSIuChhHZXRTaWdudXBQcm9ncmVzc1JlcXVlc3QSEgoKYXR0ZW1wdF9pZBgBIAEoCSJhChlHZXRTaWdudXBQcm9ncmVzc1Jlc3BvbnNlEjUKCHByb2dyZXNzGAEgASgLMiMuZ2lic29uLnVzZXIudjEuU2lnbnVwUHJvZ3Jlc3NTdGF0ZRINCgVmb3VuZBgCIAEoCCJ6ChhTZXRTaWdudXBQcm9ncmVzc1JlcXVlc3QSEgoKYXR0ZW1wdF9pZBgBIAEoCRI1Cghwcm9ncmVzcxgCIAEoCzIjLmdpYnNvbi51c2VyLnYxLlNpZ251cFByb2dyZXNzU3RhdGUSEwoLdHRsX3NlY29uZHMYAyABKAUiGwoZU2V0U2lnbnVwUHJvZ3Jlc3NSZXNwb25zZSIzCiBJbnZhbGlkYXRlTWVtYmVyc2hpcENhY2hlUmVxdWVzdBIPCgd1c2VyX2lkGAEgASgJIiMKIUludmFsaWRhdGVNZW1iZXJzaGlwQ2FjaGVSZXNwb25zZSJOChZTdGFnZUF0dGFjaG1lbnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIMCgR0ZXh0GAIgASgJEhMKC3R0bF9zZWNvbmRzGAMgASgFIjAKF1N0YWdlQXR0YWNobWVudFJlc3BvbnNlEhUKDWF0dGFjaG1lbnRfaWQYASABKAkiRAoYQ29uc3VtZUF0dGFjaG1lbnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIVCg1hdHRhY2htZW50X2lkGAIgASgJIikKGUNvbnN1bWVBdHRhY2htZW50UmVzcG9uc2USDAoEdGV4dBgBIAEoCSp7CgxBY3Rpdml0eUtpbmQSHQoZQUNUSVZJVFlfS0lORF9VTlNQRUNJRklFRBAAEhkKFUFDVElWSVRZX0tJTkRfTUlTU0lPThABEhYKEkFDVElWSVRZX0tJTkRfTk9ERRACEhkKFUFDVElWSVRZX0tJTkRfRklORElORxADMqgbCgtVc2VyU2VydmljZRKNAQoOR2V0VXNlclByb2ZpbGUSJS5naWJzb24udXNlci52MS5HZXRVc2VyUHJvZmlsZVJlcXVlc3QaJi5naWJzb24udXNlci52MS5HZXRVc2VyUHJvZmlsZVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKWAQoRVXBkYXRlVXNlclByb2ZpbGUSKC5naWJzb24udXNlci52MS5VcGRhdGVVc2VyUHJvZmlsZVJlcXVlc3QaKS5naWJzb24udXNlci52MS5VcGRhdGVVc2VyUHJvZmlsZVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKBAQoKTGlzdEFsZXJ0cxIhLmdpYnNvbi51c2VyLnYxLkxpc3RBbGVydHNSZXF1ZXN0GiIuZ2lic29uLnVzZXIudjEuTGlzdEFsZXJ0c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKKAQoNTWFya0FsZXJ0UmVhZBIkLmdpYnNvbi51c2VyLnYxLk1hcmtBbGVydFJlYWRSZXF1ZXN0GiUuZ2lic29uLnVzZXIudjEuTWFya0FsZXJ0UmVhZFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKWAQoRTWFya0FsbEFsZXJ0c1JlYWQSKC5naWJzb24udXNlci52MS5NYXJrQWxsQWxlcnRzUmVhZFJlcXVlc3QaKS5naWJzb24udXNlci52MS5NYXJrQWxsQWxlcnRzUmVhZFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKWAQoRTGlzdENvbnZlcnNhdGlvbnMSKC5naWJzb24udXNlci52MS5MaXN0Q29udmVyc2F0aW9uc1JlcXVlc3QaKS5naWJzb24udXNlci52MS5MaXN0Q29udmVyc2F0aW9uc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKQAQoPR2V0Q29udmVyc2F0aW9uEiYuZ2lic29uLnVzZXIudjEuR2V0Q29udmVyc2F0aW9uUmVxdWVzdBonLmdpYnNvbi51c2VyLnYxLkdldENvbnZlcnNhdGlvblJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKTAQoQU2F2ZUNvbnZlcnNhdGlvbhInLmdpYnNvbi51c2VyLnYxLlNhdmVDb252ZXJzYXRpb25SZXF1ZXN0GiguZ2lic29uLnVzZXIudjEuU2F2ZUNvbnZlcnNhdGlvblJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKZAQoSUmVuYW1lQ29udmVyc2F0aW9uEikuZ2lic29uLnVzZXIudjEuUmVuYW1lQ29udmVyc2F0aW9uUmVxdWVzdBoqLmdpYnNvbi51c2VyLnYxLlJlbmFtZUNvbnZlcnNhdGlvblJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKZAQoSRGVsZXRlQ29udmVyc2F0aW9uEikuZ2lic29uLnVzZXIudjEuRGVsZXRlQ29udmVyc2F0aW9uUmVxdWVzdBoqLmdpYnNvbi51c2VyLnYxLkRlbGV0ZUNvbnZlcnNhdGlvblJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKlAQoWR2V0VXNlck9uYm9hcmRpbmdTdGF0ZRItLmdpYnNvbi51c2VyLnYxLkdldFVzZXJPbmJvYXJkaW5nU3RhdGVSZXF1ZXN0Gi4uZ2lic29uLnVzZXIudjEuR2V0VXNlck9uYm9hcmRpbmdTdGF0ZVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKuAQoZVXBkYXRlVXNlck9uYm9hcmRpbmdTdGF0ZRIwLmdpYnNvbi51c2VyLnYxLlVwZGF0ZVVzZXJPbmJvYXJkaW5nU3RhdGVSZXF1ZXN0GjEuZ2lic29uLnVzZXIudjEuVXBkYXRlVXNlck9uYm9hcmRpbmdTdGF0ZVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKrAQoYUmVzZXRVc2VyT25ib2FyZGluZ1N0YXRlEi8uZ2lic29uLnVzZXIudjEuUmVzZXRVc2VyT25ib2FyZGluZ1N0YXRlUmVxdWVzdBowLmdpYnNvbi51c2VyLnYxLlJlc2V0VXNlck9uYm9hcmRpbmdTdGF0ZVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKKAQoNR2V0VXNlckxheW91dBIkLmdpYnNvbi51c2VyLnYxLkdldFVzZXJMYXlvdXRSZXF1ZXN0GiUuZ2lic29uLnVzZXIudjEuR2V0VXNlckxheW91dFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKNAQoOU2F2ZVVzZXJMYXlvdXQSJS5naWJzb24udXNlci52MS5TYXZlVXNlckxheW91dFJlcXVlc3QaJi5naWJzb24udXNlci52MS5TYXZlVXNlckxheW91dFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKQAQoPUmVzZXRVc2VyTGF5b3V0EiYuZ2lic29uLnVzZXIudjEuUmVzZXRVc2VyTGF5b3V0UmVxdWVzdBonLmdpYnNvbi51c2VyLnYxLlJlc2V0VXNlckxheW91dFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKQAQoPR2V0VXNlckFjdGl2aXR5EiYuZ2lic29uLnVzZXIudjEuR2V0VXNlckFjdGl2aXR5UmVxdWVzdBonLmdpYnNvbi51c2VyLnYxLkdldFVzZXJBY3Rpdml0eVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKZAQoSUmVjb3JkVXNlckFjdGl2aXR5EikuZ2lic29uLnVzZXIudjEuUmVjb3JkVXNlckFjdGl2aXR5UmVxdWVzdBoqLmdpYnNvbi51c2VyLnYxLlJlY29yZFVzZXJBY3Rpdml0eVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxJwChFHZXRTaWdudXBQcm9ncmVzcxIoLmdpYnNvbi51c2VyLnYxLkdldFNpZ251cFByb2dyZXNzUmVxdWVzdBopLmdpYnNvbi51c2VyLnYxLkdldFNpZ251cFByb2dyZXNzUmVzcG9uc2UiBoq1GAIoARKWAQoRU2V0U2lnbnVwUHJvZ3Jlc3MSKC5naWJzb24udXNlci52MS5TZXRTaWdudXBQcm9ncmVzc1JlcXVlc3QaKS5naWJzb24udXNlci52MS5TZXRTaWdudXBQcm9ncmVzc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKuAQoZSW52YWxpZGF0ZU1lbWJlcnNoaXBDYWNoZRIwLmdpYnNvbi51c2VyLnYxLkludmFsaWRhdGVNZW1iZXJzaGlwQ2FjaGVSZXF1ZXN0GjEuZ2lic29uLnVzZXIudjEuSW52YWxpZGF0ZU1lbWJlcnNoaXBDYWNoZVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKQAQoPU3RhZ2VBdHRhY2htZW50EiYuZ2lic29uLnVzZXIudjEuU3RhZ2VBdHRhY2htZW50UmVxdWVzdBonLmdpYnNvbi51c2VyLnYxLlN0YWdlQXR0YWNobWVudFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKWAQoRQ29uc3VtZUF0dGFjaG1lbnQSKC5naWJzb24udXNlci52MS5Db25zdW1lQXR0YWNobWVudFJlcXVlc3QaKS5naWJzb24udXNlci52MS5Db25zdW1lQXR0YWNobWVudFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgA0I/Wj1naXRodWIuY29tL3plcm9yb290LWFpL3BsYXRmb3JtLXNkay9nZW4vZ2lic29uL3VzZXIvdjE7dXNlcnYxYgZwcm90bzM", [file_gibson_auth_v1_options]);
 
 /**
  * GetUserProfileRequest queries a user's profile from the identity provider.
@@ -1059,6 +1059,1124 @@ export const DeleteConversationResponseSchema: GenMessage<DeleteConversationResp
   messageDesc(file_gibson_user_v1_user, 30);
 
 /**
+ * OnboardingSetupTask is a single item in the user's onboarding checklist.
+ *
+ * @generated from message gibson.user.v1.OnboardingSetupTask
+ */
+export type OnboardingSetupTask = Message<"gibson.user.v1.OnboardingSetupTask"> & {
+  /**
+   * id is the task identifier (e.g. "configure_llm", "select_agent").
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * status is the task status: "pending", "in_progress", "completed", or "skipped".
+   *
+   * @generated from field: string status = 2;
+   */
+  status: string;
+
+  /**
+   * completed_at is the RFC 3339 timestamp when the task was completed (empty if not done).
+   *
+   * @generated from field: string completed_at = 3;
+   */
+  completedAt: string;
+
+  /**
+   * category is the task group: "essential", "recommended", or "optional".
+   *
+   * @generated from field: string category = 4;
+   */
+  category: string;
+
+  /**
+   * estimated_minutes is the expected time to complete this task.
+   *
+   * @generated from field: int32 estimated_minutes = 5;
+   */
+  estimatedMinutes: number;
+};
+
+/**
+ * Describes the message gibson.user.v1.OnboardingSetupTask.
+ * Use `create(OnboardingSetupTaskSchema)` to create a new message.
+ */
+export const OnboardingSetupTaskSchema: GenMessage<OnboardingSetupTask> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 31);
+
+/**
+ * UserOnboardingState is the full per-user onboarding record.
+ *
+ * @generated from message gibson.user.v1.UserOnboardingState
+ */
+export type UserOnboardingState = Message<"gibson.user.v1.UserOnboardingState"> & {
+  /**
+   * user_id is the user this state belongs to.
+   *
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+
+  /**
+   * tenant_id is the tenant context.
+   *
+   * @generated from field: string tenant_id = 2;
+   */
+  tenantId: string;
+
+  /**
+   * wizard_completed indicates the onboarding wizard is done.
+   *
+   * @generated from field: bool wizard_completed = 3;
+   */
+  wizardCompleted: boolean;
+
+  /**
+   * wizard_skipped indicates the user dismissed the wizard without completing it.
+   *
+   * @generated from field: bool wizard_skipped = 4;
+   */
+  wizardSkipped: boolean;
+
+  /**
+   * current_step_id is the active wizard step (e.g. "welcome", "llm-provider").
+   *
+   * @generated from field: string current_step_id = 5;
+   */
+  currentStepId: string;
+
+  /**
+   * completed_steps lists wizard step IDs the user has finished.
+   *
+   * @generated from field: repeated string completed_steps = 6;
+   */
+  completedSteps: string[];
+
+  /**
+   * skipped_steps lists wizard step IDs the user has skipped.
+   *
+   * @generated from field: repeated string skipped_steps = 7;
+   */
+  skippedSteps: string[];
+
+  /**
+   * setup_tasks is the ordered checklist of onboarding tasks.
+   *
+   * @generated from field: repeated gibson.user.v1.OnboardingSetupTask setup_tasks = 8;
+   */
+  setupTasks: OnboardingSetupTask[];
+
+  /**
+   * llm_config_json is an opaque JSON blob for LLM provider configuration choices.
+   *
+   * @generated from field: string llm_config_json = 9;
+   */
+  llmConfigJson: string;
+
+  /**
+   * selected_agent_id is the agent the user picked during onboarding.
+   *
+   * @generated from field: string selected_agent_id = 10;
+   */
+  selectedAgentId: string;
+
+  /**
+   * created_mission_id is the first mission the user created during onboarding.
+   *
+   * @generated from field: string created_mission_id = 11;
+   */
+  createdMissionId: string;
+
+  /**
+   * started_at is the RFC 3339 timestamp when onboarding began.
+   *
+   * @generated from field: string started_at = 12;
+   */
+  startedAt: string;
+
+  /**
+   * completed_at is the RFC 3339 timestamp when onboarding finished.
+   *
+   * @generated from field: string completed_at = 13;
+   */
+  completedAt: string;
+
+  /**
+   * updated_at is the RFC 3339 timestamp of the last modification.
+   *
+   * @generated from field: string updated_at = 14;
+   */
+  updatedAt: string;
+
+  /**
+   * version is a monotonic schema version to guard against migration skew.
+   *
+   * @generated from field: int32 version = 15;
+   */
+  version: number;
+};
+
+/**
+ * Describes the message gibson.user.v1.UserOnboardingState.
+ * Use `create(UserOnboardingStateSchema)` to create a new message.
+ */
+export const UserOnboardingStateSchema: GenMessage<UserOnboardingState> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 32);
+
+/**
+ * GetUserOnboardingStateRequest fetches the per-user onboarding state.
+ *
+ * @generated from message gibson.user.v1.GetUserOnboardingStateRequest
+ */
+export type GetUserOnboardingStateRequest = Message<"gibson.user.v1.GetUserOnboardingStateRequest"> & {
+  /**
+   * tenant_id is the tenant context (derived from caller identity when empty).
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user whose state to retrieve (derived from caller identity when empty).
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.GetUserOnboardingStateRequest.
+ * Use `create(GetUserOnboardingStateRequestSchema)` to create a new message.
+ */
+export const GetUserOnboardingStateRequestSchema: GenMessage<GetUserOnboardingStateRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 33);
+
+/**
+ * GetUserOnboardingStateResponse carries the user's onboarding state.
+ *
+ * @generated from message gibson.user.v1.GetUserOnboardingStateResponse
+ */
+export type GetUserOnboardingStateResponse = Message<"gibson.user.v1.GetUserOnboardingStateResponse"> & {
+  /**
+   * state is the current onboarding state. A default is returned for new users.
+   *
+   * @generated from field: gibson.user.v1.UserOnboardingState state = 1;
+   */
+  state?: UserOnboardingState;
+};
+
+/**
+ * Describes the message gibson.user.v1.GetUserOnboardingStateResponse.
+ * Use `create(GetUserOnboardingStateResponseSchema)` to create a new message.
+ */
+export const GetUserOnboardingStateResponseSchema: GenMessage<GetUserOnboardingStateResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 34);
+
+/**
+ * UpdateUserOnboardingStateRequest replaces the user's onboarding state.
+ *
+ * @generated from message gibson.user.v1.UpdateUserOnboardingStateRequest
+ */
+export type UpdateUserOnboardingStateRequest = Message<"gibson.user.v1.UpdateUserOnboardingStateRequest"> & {
+  /**
+   * tenant_id is the tenant context.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user to update.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+
+  /**
+   * state is the full replacement state to persist.
+   *
+   * @generated from field: gibson.user.v1.UserOnboardingState state = 3;
+   */
+  state?: UserOnboardingState;
+};
+
+/**
+ * Describes the message gibson.user.v1.UpdateUserOnboardingStateRequest.
+ * Use `create(UpdateUserOnboardingStateRequestSchema)` to create a new message.
+ */
+export const UpdateUserOnboardingStateRequestSchema: GenMessage<UpdateUserOnboardingStateRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 35);
+
+/**
+ * UpdateUserOnboardingStateResponse carries the persisted state.
+ *
+ * @generated from message gibson.user.v1.UpdateUserOnboardingStateResponse
+ */
+export type UpdateUserOnboardingStateResponse = Message<"gibson.user.v1.UpdateUserOnboardingStateResponse"> & {
+  /**
+   * state is the persisted onboarding state after the update.
+   *
+   * @generated from field: gibson.user.v1.UserOnboardingState state = 1;
+   */
+  state?: UserOnboardingState;
+};
+
+/**
+ * Describes the message gibson.user.v1.UpdateUserOnboardingStateResponse.
+ * Use `create(UpdateUserOnboardingStateResponseSchema)` to create a new message.
+ */
+export const UpdateUserOnboardingStateResponseSchema: GenMessage<UpdateUserOnboardingStateResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 36);
+
+/**
+ * ResetUserOnboardingStateRequest wipes the user's onboarding state.
+ *
+ * @generated from message gibson.user.v1.ResetUserOnboardingStateRequest
+ */
+export type ResetUserOnboardingStateRequest = Message<"gibson.user.v1.ResetUserOnboardingStateRequest"> & {
+  /**
+   * tenant_id is the tenant context.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user to reset.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.ResetUserOnboardingStateRequest.
+ * Use `create(ResetUserOnboardingStateRequestSchema)` to create a new message.
+ */
+export const ResetUserOnboardingStateRequestSchema: GenMessage<ResetUserOnboardingStateRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 37);
+
+/**
+ * ResetUserOnboardingStateResponse carries the new default state.
+ *
+ * @generated from message gibson.user.v1.ResetUserOnboardingStateResponse
+ */
+export type ResetUserOnboardingStateResponse = Message<"gibson.user.v1.ResetUserOnboardingStateResponse"> & {
+  /**
+   * state is the freshly initialised default state.
+   *
+   * @generated from field: gibson.user.v1.UserOnboardingState state = 1;
+   */
+  state?: UserOnboardingState;
+};
+
+/**
+ * Describes the message gibson.user.v1.ResetUserOnboardingStateResponse.
+ * Use `create(ResetUserOnboardingStateResponseSchema)` to create a new message.
+ */
+export const ResetUserOnboardingStateResponseSchema: GenMessage<ResetUserOnboardingStateResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 38);
+
+/**
+ * WidgetPosition carries grid coordinates for a dashboard widget.
+ *
+ * @generated from message gibson.user.v1.WidgetPosition
+ */
+export type WidgetPosition = Message<"gibson.user.v1.WidgetPosition"> & {
+  /**
+   * x is the grid column origin (0-based).
+   *
+   * @generated from field: int32 x = 1;
+   */
+  x: number;
+
+  /**
+   * y is the grid row origin (0-based).
+   *
+   * @generated from field: int32 y = 2;
+   */
+  y: number;
+
+  /**
+   * w is the widget width in grid columns.
+   *
+   * @generated from field: int32 w = 3;
+   */
+  w: number;
+
+  /**
+   * h is the widget height in grid rows.
+   *
+   * @generated from field: int32 h = 4;
+   */
+  h: number;
+};
+
+/**
+ * Describes the message gibson.user.v1.WidgetPosition.
+ * Use `create(WidgetPositionSchema)` to create a new message.
+ */
+export const WidgetPositionSchema: GenMessage<WidgetPosition> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 39);
+
+/**
+ * WidgetConfig is the configuration and placement record for a single widget.
+ *
+ * @generated from message gibson.user.v1.WidgetConfig
+ */
+export type WidgetConfig = Message<"gibson.user.v1.WidgetConfig"> & {
+  /**
+   * id is the widget instance identifier.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * type is the widget type token (e.g. "kpi-summary", "findings-chart").
+   *
+   * @generated from field: string type = 2;
+   */
+  type: string;
+
+  /**
+   * position is the grid placement.
+   *
+   * @generated from field: gibson.user.v1.WidgetPosition position = 3;
+   */
+  position?: WidgetPosition;
+
+  /**
+   * visible indicates whether the widget is rendered.
+   *
+   * @generated from field: bool visible = 4;
+   */
+  visible: boolean;
+
+  /**
+   * settings_json is an opaque JSON blob for widget-specific settings.
+   *
+   * @generated from field: string settings_json = 5;
+   */
+  settingsJson: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.WidgetConfig.
+ * Use `create(WidgetConfigSchema)` to create a new message.
+ */
+export const WidgetConfigSchema: GenMessage<WidgetConfig> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 40);
+
+/**
+ * UserLayoutPreferences is the full widget layout for a user's dashboard.
+ *
+ * @generated from message gibson.user.v1.UserLayoutPreferences
+ */
+export type UserLayoutPreferences = Message<"gibson.user.v1.UserLayoutPreferences"> & {
+  /**
+   * widgets is the ordered list of widget configurations.
+   *
+   * @generated from field: repeated gibson.user.v1.WidgetConfig widgets = 1;
+   */
+  widgets: WidgetConfig[];
+
+  /**
+   * cols is the total number of grid columns.
+   *
+   * @generated from field: int32 cols = 2;
+   */
+  cols: number;
+
+  /**
+   * row_height is the height of each grid row in pixels.
+   *
+   * @generated from field: int32 row_height = 3;
+   */
+  rowHeight: number;
+};
+
+/**
+ * Describes the message gibson.user.v1.UserLayoutPreferences.
+ * Use `create(UserLayoutPreferencesSchema)` to create a new message.
+ */
+export const UserLayoutPreferencesSchema: GenMessage<UserLayoutPreferences> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 41);
+
+/**
+ * GetUserLayoutRequest fetches the user's saved layout.
+ *
+ * @generated from message gibson.user.v1.GetUserLayoutRequest
+ */
+export type GetUserLayoutRequest = Message<"gibson.user.v1.GetUserLayoutRequest"> & {
+  /**
+   * tenant_id is the tenant context.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user whose layout to retrieve.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.GetUserLayoutRequest.
+ * Use `create(GetUserLayoutRequestSchema)` to create a new message.
+ */
+export const GetUserLayoutRequestSchema: GenMessage<GetUserLayoutRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 42);
+
+/**
+ * GetUserLayoutResponse carries the user's layout.
+ *
+ * @generated from message gibson.user.v1.GetUserLayoutResponse
+ */
+export type GetUserLayoutResponse = Message<"gibson.user.v1.GetUserLayoutResponse"> & {
+  /**
+   * layout is the user's layout. A platform default is returned when none is saved.
+   *
+   * @generated from field: gibson.user.v1.UserLayoutPreferences layout = 1;
+   */
+  layout?: UserLayoutPreferences;
+
+  /**
+   * is_default is true when the response is the platform default (no user-saved layout).
+   *
+   * @generated from field: bool is_default = 2;
+   */
+  isDefault: boolean;
+};
+
+/**
+ * Describes the message gibson.user.v1.GetUserLayoutResponse.
+ * Use `create(GetUserLayoutResponseSchema)` to create a new message.
+ */
+export const GetUserLayoutResponseSchema: GenMessage<GetUserLayoutResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 43);
+
+/**
+ * SaveUserLayoutRequest persists a new widget layout.
+ *
+ * @generated from message gibson.user.v1.SaveUserLayoutRequest
+ */
+export type SaveUserLayoutRequest = Message<"gibson.user.v1.SaveUserLayoutRequest"> & {
+  /**
+   * tenant_id is the tenant context.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user to update.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+
+  /**
+   * layout is the layout to persist.
+   *
+   * @generated from field: gibson.user.v1.UserLayoutPreferences layout = 3;
+   */
+  layout?: UserLayoutPreferences;
+};
+
+/**
+ * Describes the message gibson.user.v1.SaveUserLayoutRequest.
+ * Use `create(SaveUserLayoutRequestSchema)` to create a new message.
+ */
+export const SaveUserLayoutRequestSchema: GenMessage<SaveUserLayoutRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 44);
+
+/**
+ * SaveUserLayoutResponse is returned on successful save.
+ *
+ * @generated from message gibson.user.v1.SaveUserLayoutResponse
+ */
+export type SaveUserLayoutResponse = Message<"gibson.user.v1.SaveUserLayoutResponse"> & {
+  /**
+   * layout is the persisted layout.
+   *
+   * @generated from field: gibson.user.v1.UserLayoutPreferences layout = 1;
+   */
+  layout?: UserLayoutPreferences;
+};
+
+/**
+ * Describes the message gibson.user.v1.SaveUserLayoutResponse.
+ * Use `create(SaveUserLayoutResponseSchema)` to create a new message.
+ */
+export const SaveUserLayoutResponseSchema: GenMessage<SaveUserLayoutResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 45);
+
+/**
+ * ResetUserLayoutRequest removes the user's saved layout.
+ *
+ * @generated from message gibson.user.v1.ResetUserLayoutRequest
+ */
+export type ResetUserLayoutRequest = Message<"gibson.user.v1.ResetUserLayoutRequest"> & {
+  /**
+   * tenant_id is the tenant context.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user whose layout to reset.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.ResetUserLayoutRequest.
+ * Use `create(ResetUserLayoutRequestSchema)` to create a new message.
+ */
+export const ResetUserLayoutRequestSchema: GenMessage<ResetUserLayoutRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 46);
+
+/**
+ * ResetUserLayoutResponse is returned on successful reset.
+ *
+ * @generated from message gibson.user.v1.ResetUserLayoutResponse
+ */
+export type ResetUserLayoutResponse = Message<"gibson.user.v1.ResetUserLayoutResponse"> & {
+};
+
+/**
+ * Describes the message gibson.user.v1.ResetUserLayoutResponse.
+ * Use `create(ResetUserLayoutResponseSchema)` to create a new message.
+ */
+export const ResetUserLayoutResponseSchema: GenMessage<ResetUserLayoutResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 47);
+
+/**
+ * ActivityItem is a single user activity event (a mission, node, or finding visit).
+ *
+ * @generated from message gibson.user.v1.ActivityItem
+ */
+export type ActivityItem = Message<"gibson.user.v1.ActivityItem"> & {
+  /**
+   * id is the unique identifier of the referenced entity.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * label is the human-readable display label.
+   *
+   * @generated from field: string label = 2;
+   */
+  label: string;
+
+  /**
+   * timestamp_unix is the event time as a Unix timestamp in milliseconds.
+   *
+   * @generated from field: int64 timestamp_unix = 3;
+   */
+  timestampUnix: bigint;
+};
+
+/**
+ * Describes the message gibson.user.v1.ActivityItem.
+ * Use `create(ActivityItemSchema)` to create a new message.
+ */
+export const ActivityItemSchema: GenMessage<ActivityItem> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 48);
+
+/**
+ * UserActivityContext is the aggregated recent activity for a user.
+ *
+ * @generated from message gibson.user.v1.UserActivityContext
+ */
+export type UserActivityContext = Message<"gibson.user.v1.UserActivityContext"> & {
+  /**
+   * recent_missions is the list of recently accessed missions (max 5).
+   *
+   * @generated from field: repeated gibson.user.v1.ActivityItem recent_missions = 1;
+   */
+  recentMissions: ActivityItem[];
+
+  /**
+   * recent_nodes is the list of recently accessed knowledge graph nodes (max 5).
+   *
+   * @generated from field: repeated gibson.user.v1.ActivityItem recent_nodes = 2;
+   */
+  recentNodes: ActivityItem[];
+
+  /**
+   * recent_findings is the list of recently accessed findings (max 5).
+   *
+   * @generated from field: repeated gibson.user.v1.ActivityItem recent_findings = 3;
+   */
+  recentFindings: ActivityItem[];
+
+  /**
+   * last_active_at_unix is the last activity timestamp in milliseconds.
+   * Zero when no activity has been recorded.
+   *
+   * @generated from field: int64 last_active_at_unix = 4;
+   */
+  lastActiveAtUnix: bigint;
+};
+
+/**
+ * Describes the message gibson.user.v1.UserActivityContext.
+ * Use `create(UserActivityContextSchema)` to create a new message.
+ */
+export const UserActivityContextSchema: GenMessage<UserActivityContext> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 49);
+
+/**
+ * GetUserActivityRequest fetches the user's recent activity.
+ *
+ * @generated from message gibson.user.v1.GetUserActivityRequest
+ */
+export type GetUserActivityRequest = Message<"gibson.user.v1.GetUserActivityRequest"> & {
+  /**
+   * tenant_id is the tenant context.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user whose activity to retrieve.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.GetUserActivityRequest.
+ * Use `create(GetUserActivityRequestSchema)` to create a new message.
+ */
+export const GetUserActivityRequestSchema: GenMessage<GetUserActivityRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 50);
+
+/**
+ * GetUserActivityResponse carries the user's activity context.
+ *
+ * @generated from message gibson.user.v1.GetUserActivityResponse
+ */
+export type GetUserActivityResponse = Message<"gibson.user.v1.GetUserActivityResponse"> & {
+  /**
+   * activity is the user's aggregated recent activity.
+   *
+   * @generated from field: gibson.user.v1.UserActivityContext activity = 1;
+   */
+  activity?: UserActivityContext;
+};
+
+/**
+ * Describes the message gibson.user.v1.GetUserActivityResponse.
+ * Use `create(GetUserActivityResponseSchema)` to create a new message.
+ */
+export const GetUserActivityResponseSchema: GenMessage<GetUserActivityResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 51);
+
+/**
+ * RecordUserActivityRequest appends one activity event to the user's feed.
+ *
+ * @generated from message gibson.user.v1.RecordUserActivityRequest
+ */
+export type RecordUserActivityRequest = Message<"gibson.user.v1.RecordUserActivityRequest"> & {
+  /**
+   * tenant_id is the tenant context.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the user performing the activity.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+
+  /**
+   * kind is the category of activity.
+   *
+   * @generated from field: gibson.user.v1.ActivityKind kind = 3;
+   */
+  kind: ActivityKind;
+
+  /**
+   * item is the activity event to record.
+   *
+   * @generated from field: gibson.user.v1.ActivityItem item = 4;
+   */
+  item?: ActivityItem;
+};
+
+/**
+ * Describes the message gibson.user.v1.RecordUserActivityRequest.
+ * Use `create(RecordUserActivityRequestSchema)` to create a new message.
+ */
+export const RecordUserActivityRequestSchema: GenMessage<RecordUserActivityRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 52);
+
+/**
+ * RecordUserActivityResponse is returned on successful recording.
+ *
+ * @generated from message gibson.user.v1.RecordUserActivityResponse
+ */
+export type RecordUserActivityResponse = Message<"gibson.user.v1.RecordUserActivityResponse"> & {
+};
+
+/**
+ * Describes the message gibson.user.v1.RecordUserActivityResponse.
+ * Use `create(RecordUserActivityResponseSchema)` to create a new message.
+ */
+export const RecordUserActivityResponseSchema: GenMessage<RecordUserActivityResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 53);
+
+/**
+ * SignupProgressState is the provisioning step record for a signup attempt.
+ *
+ * @generated from message gibson.user.v1.SignupProgressState
+ */
+export type SignupProgressState = Message<"gibson.user.v1.SignupProgressState"> & {
+  /**
+   * step is the current pipeline step name (e.g. "create_user", "apply_tenant", "done").
+   *
+   * @generated from field: string step = 1;
+   */
+  step: string;
+
+  /**
+   * step_started_at_unix is when the current step began, in Unix milliseconds.
+   *
+   * @generated from field: int64 step_started_at_unix = 2;
+   */
+  stepStartedAtUnix: bigint;
+
+  /**
+   * terminal_state is the final outcome marker: "ok", "failed", "timeout", or empty.
+   *
+   * @generated from field: string terminal_state = 3;
+   */
+  terminalState: string;
+
+  /**
+   * error_code is the typed failure code when terminal_state is "failed" or "timeout".
+   *
+   * @generated from field: string error_code = 4;
+   */
+  errorCode: string;
+
+  /**
+   * error_message is the user-safe description of the failure.
+   *
+   * @generated from field: string error_message = 5;
+   */
+  errorMessage: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.SignupProgressState.
+ * Use `create(SignupProgressStateSchema)` to create a new message.
+ */
+export const SignupProgressStateSchema: GenMessage<SignupProgressState> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 54);
+
+/**
+ * GetSignupProgressRequest polls provisioning state for an attempt.
+ *
+ * @generated from message gibson.user.v1.GetSignupProgressRequest
+ */
+export type GetSignupProgressRequest = Message<"gibson.user.v1.GetSignupProgressRequest"> & {
+  /**
+   * attempt_id is the opaque UUID-v4 capability minted by signupAction.
+   *
+   * @generated from field: string attempt_id = 1;
+   */
+  attemptId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.GetSignupProgressRequest.
+ * Use `create(GetSignupProgressRequestSchema)` to create a new message.
+ */
+export const GetSignupProgressRequestSchema: GenMessage<GetSignupProgressRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 55);
+
+/**
+ * GetSignupProgressResponse carries the provisioning state.
+ *
+ * @generated from message gibson.user.v1.GetSignupProgressResponse
+ */
+export type GetSignupProgressResponse = Message<"gibson.user.v1.GetSignupProgressResponse"> & {
+  /**
+   * progress is the current state. Nil when found is false.
+   *
+   * @generated from field: gibson.user.v1.SignupProgressState progress = 1;
+   */
+  progress?: SignupProgressState;
+
+  /**
+   * found is false when the attempt_id is unknown or has expired (TTL elapsed).
+   *
+   * @generated from field: bool found = 2;
+   */
+  found: boolean;
+};
+
+/**
+ * Describes the message gibson.user.v1.GetSignupProgressResponse.
+ * Use `create(GetSignupProgressResponseSchema)` to create a new message.
+ */
+export const GetSignupProgressResponseSchema: GenMessage<GetSignupProgressResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 56);
+
+/**
+ * SetSignupProgressRequest persists progress for a signup attempt.
+ *
+ * @generated from message gibson.user.v1.SetSignupProgressRequest
+ */
+export type SetSignupProgressRequest = Message<"gibson.user.v1.SetSignupProgressRequest"> & {
+  /**
+   * attempt_id is the opaque UUID for this attempt.
+   *
+   * @generated from field: string attempt_id = 1;
+   */
+  attemptId: string;
+
+  /**
+   * progress is the state to persist.
+   *
+   * @generated from field: gibson.user.v1.SignupProgressState progress = 2;
+   */
+  progress?: SignupProgressState;
+
+  /**
+   * ttl_seconds is the Redis TTL for this key. 0 uses the default (300 seconds).
+   *
+   * @generated from field: int32 ttl_seconds = 3;
+   */
+  ttlSeconds: number;
+};
+
+/**
+ * Describes the message gibson.user.v1.SetSignupProgressRequest.
+ * Use `create(SetSignupProgressRequestSchema)` to create a new message.
+ */
+export const SetSignupProgressRequestSchema: GenMessage<SetSignupProgressRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 57);
+
+/**
+ * SetSignupProgressResponse is returned on successful write.
+ *
+ * @generated from message gibson.user.v1.SetSignupProgressResponse
+ */
+export type SetSignupProgressResponse = Message<"gibson.user.v1.SetSignupProgressResponse"> & {
+};
+
+/**
+ * Describes the message gibson.user.v1.SetSignupProgressResponse.
+ * Use `create(SetSignupProgressResponseSchema)` to create a new message.
+ */
+export const SetSignupProgressResponseSchema: GenMessage<SetSignupProgressResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 58);
+
+/**
+ * InvalidateMembershipCacheRequest removes the cross-request membership cache entry.
+ *
+ * @generated from message gibson.user.v1.InvalidateMembershipCacheRequest
+ */
+export type InvalidateMembershipCacheRequest = Message<"gibson.user.v1.InvalidateMembershipCacheRequest"> & {
+  /**
+   * user_id is the Zitadel subject (numeric sub) whose cache entry to delete.
+   *
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.InvalidateMembershipCacheRequest.
+ * Use `create(InvalidateMembershipCacheRequestSchema)` to create a new message.
+ */
+export const InvalidateMembershipCacheRequestSchema: GenMessage<InvalidateMembershipCacheRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 59);
+
+/**
+ * InvalidateMembershipCacheResponse is returned on success.
+ * Deletion is idempotent — returning success even when no entry existed.
+ *
+ * @generated from message gibson.user.v1.InvalidateMembershipCacheResponse
+ */
+export type InvalidateMembershipCacheResponse = Message<"gibson.user.v1.InvalidateMembershipCacheResponse"> & {
+};
+
+/**
+ * Describes the message gibson.user.v1.InvalidateMembershipCacheResponse.
+ * Use `create(InvalidateMembershipCacheResponseSchema)` to create a new message.
+ */
+export const InvalidateMembershipCacheResponseSchema: GenMessage<InvalidateMembershipCacheResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 60);
+
+/**
+ * StageAttachmentRequest stores extracted file text for a single-use chat attachment.
+ *
+ * @generated from message gibson.user.v1.StageAttachmentRequest
+ */
+export type StageAttachmentRequest = Message<"gibson.user.v1.StageAttachmentRequest"> & {
+  /**
+   * tenant_id is the tenant context.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * text is the extracted plaintext content of the uploaded file.
+   *
+   * @generated from field: string text = 2;
+   */
+  text: string;
+
+  /**
+   * ttl_seconds is the key TTL. 0 uses the default (3600 seconds — 1 hour).
+   *
+   * @generated from field: int32 ttl_seconds = 3;
+   */
+  ttlSeconds: number;
+};
+
+/**
+ * Describes the message gibson.user.v1.StageAttachmentRequest.
+ * Use `create(StageAttachmentRequestSchema)` to create a new message.
+ */
+export const StageAttachmentRequestSchema: GenMessage<StageAttachmentRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 61);
+
+/**
+ * StageAttachmentResponse carries the opaque attachment token.
+ *
+ * @generated from message gibson.user.v1.StageAttachmentResponse
+ */
+export type StageAttachmentResponse = Message<"gibson.user.v1.StageAttachmentResponse"> & {
+  /**
+   * attachment_id is the UUID token the chat route passes back on the next message.
+   *
+   * @generated from field: string attachment_id = 1;
+   */
+  attachmentId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.StageAttachmentResponse.
+ * Use `create(StageAttachmentResponseSchema)` to create a new message.
+ */
+export const StageAttachmentResponseSchema: GenMessage<StageAttachmentResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 62);
+
+/**
+ * ConsumeAttachmentRequest reads and atomically deletes a staged attachment.
+ *
+ * @generated from message gibson.user.v1.ConsumeAttachmentRequest
+ */
+export type ConsumeAttachmentRequest = Message<"gibson.user.v1.ConsumeAttachmentRequest"> & {
+  /**
+   * tenant_id is the tenant context.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * attachment_id is the UUID token returned by StageAttachment.
+   *
+   * @generated from field: string attachment_id = 2;
+   */
+  attachmentId: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.ConsumeAttachmentRequest.
+ * Use `create(ConsumeAttachmentRequestSchema)` to create a new message.
+ */
+export const ConsumeAttachmentRequestSchema: GenMessage<ConsumeAttachmentRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 63);
+
+/**
+ * ConsumeAttachmentResponse carries the attachment text.
+ *
+ * @generated from message gibson.user.v1.ConsumeAttachmentResponse
+ */
+export type ConsumeAttachmentResponse = Message<"gibson.user.v1.ConsumeAttachmentResponse"> & {
+  /**
+   * text is the extracted file content.
+   *
+   * @generated from field: string text = 1;
+   */
+  text: string;
+};
+
+/**
+ * Describes the message gibson.user.v1.ConsumeAttachmentResponse.
+ * Use `create(ConsumeAttachmentResponseSchema)` to create a new message.
+ */
+export const ConsumeAttachmentResponseSchema: GenMessage<ConsumeAttachmentResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_user_v1_user, 64);
+
+/**
+ * ActivityKind is the category of activity event.
+ *
+ * @generated from enum gibson.user.v1.ActivityKind
+ */
+export enum ActivityKind {
+  /**
+   * ACTIVITY_KIND_UNSPECIFIED is unused; callers must set an explicit kind.
+   *
+   * @generated from enum value: ACTIVITY_KIND_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * ACTIVITY_KIND_MISSION represents a mission access event.
+   *
+   * @generated from enum value: ACTIVITY_KIND_MISSION = 1;
+   */
+  MISSION = 1,
+
+  /**
+   * ACTIVITY_KIND_NODE represents a knowledge graph node access event.
+   *
+   * @generated from enum value: ACTIVITY_KIND_NODE = 2;
+   */
+  NODE = 2,
+
+  /**
+   * ACTIVITY_KIND_FINDING represents a finding access event.
+   *
+   * @generated from enum value: ACTIVITY_KIND_FINDING = 3;
+   */
+  FINDING = 3,
+}
+
+/**
+ * Describes the enum gibson.user.v1.ActivityKind.
+ */
+export const ActivityKindSchema: GenEnum<ActivityKind> = /*@__PURE__*/
+  enumDesc(file_gibson_user_v1_user, 0);
+
+/**
  * UserService provides user self-service operations.
  * This service is restricted to the calling user acting on their own resources.
  *
@@ -1184,6 +2302,110 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof DeleteConversationRequestSchema;
     output: typeof DeleteConversationResponseSchema;
+  },
+  /**
+   * @generated from rpc gibson.user.v1.UserService.GetUserOnboardingState
+   */
+  getUserOnboardingState: {
+    methodKind: "unary";
+    input: typeof GetUserOnboardingStateRequestSchema;
+    output: typeof GetUserOnboardingStateResponseSchema;
+  },
+  /**
+   * @generated from rpc gibson.user.v1.UserService.UpdateUserOnboardingState
+   */
+  updateUserOnboardingState: {
+    methodKind: "unary";
+    input: typeof UpdateUserOnboardingStateRequestSchema;
+    output: typeof UpdateUserOnboardingStateResponseSchema;
+  },
+  /**
+   * @generated from rpc gibson.user.v1.UserService.ResetUserOnboardingState
+   */
+  resetUserOnboardingState: {
+    methodKind: "unary";
+    input: typeof ResetUserOnboardingStateRequestSchema;
+    output: typeof ResetUserOnboardingStateResponseSchema;
+  },
+  /**
+   * @generated from rpc gibson.user.v1.UserService.GetUserLayout
+   */
+  getUserLayout: {
+    methodKind: "unary";
+    input: typeof GetUserLayoutRequestSchema;
+    output: typeof GetUserLayoutResponseSchema;
+  },
+  /**
+   * @generated from rpc gibson.user.v1.UserService.SaveUserLayout
+   */
+  saveUserLayout: {
+    methodKind: "unary";
+    input: typeof SaveUserLayoutRequestSchema;
+    output: typeof SaveUserLayoutResponseSchema;
+  },
+  /**
+   * @generated from rpc gibson.user.v1.UserService.ResetUserLayout
+   */
+  resetUserLayout: {
+    methodKind: "unary";
+    input: typeof ResetUserLayoutRequestSchema;
+    output: typeof ResetUserLayoutResponseSchema;
+  },
+  /**
+   * @generated from rpc gibson.user.v1.UserService.GetUserActivity
+   */
+  getUserActivity: {
+    methodKind: "unary";
+    input: typeof GetUserActivityRequestSchema;
+    output: typeof GetUserActivityResponseSchema;
+  },
+  /**
+   * @generated from rpc gibson.user.v1.UserService.RecordUserActivity
+   */
+  recordUserActivity: {
+    methodKind: "unary";
+    input: typeof RecordUserActivityRequestSchema;
+    output: typeof RecordUserActivityResponseSchema;
+  },
+  /**
+   * @generated from rpc gibson.user.v1.UserService.GetSignupProgress
+   */
+  getSignupProgress: {
+    methodKind: "unary";
+    input: typeof GetSignupProgressRequestSchema;
+    output: typeof GetSignupProgressResponseSchema;
+  },
+  /**
+   * @generated from rpc gibson.user.v1.UserService.SetSignupProgress
+   */
+  setSignupProgress: {
+    methodKind: "unary";
+    input: typeof SetSignupProgressRequestSchema;
+    output: typeof SetSignupProgressResponseSchema;
+  },
+  /**
+   * @generated from rpc gibson.user.v1.UserService.InvalidateMembershipCache
+   */
+  invalidateMembershipCache: {
+    methodKind: "unary";
+    input: typeof InvalidateMembershipCacheRequestSchema;
+    output: typeof InvalidateMembershipCacheResponseSchema;
+  },
+  /**
+   * @generated from rpc gibson.user.v1.UserService.StageAttachment
+   */
+  stageAttachment: {
+    methodKind: "unary";
+    input: typeof StageAttachmentRequestSchema;
+    output: typeof StageAttachmentResponseSchema;
+  },
+  /**
+   * @generated from rpc gibson.user.v1.UserService.ConsumeAttachment
+   */
+  consumeAttachment: {
+    methodKind: "unary";
+    input: typeof ConsumeAttachmentRequestSchema;
+    output: typeof ConsumeAttachmentResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_user_v1_user, 0);

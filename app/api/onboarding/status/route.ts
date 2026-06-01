@@ -1,72 +1,54 @@
+/**
+ * GET/POST/DELETE /api/onboarding/status
+ *
+ * Proxies per-user onboarding state through the daemon's UserService RPCs
+ * (GetUserOnboardingState / UpdateUserOnboardingState / ResetUserOnboardingState).
+ * Tenant is resolved via requireActiveTenant() — fail-closed, no default fallback.
+ *
+ * Replaces the previous direct-Redis implementation.
+ * Spec: dashboard-no-backing-store-clients (Module 5 / issue #589 + #579).
+ */
+
+import 'server-only';
+
 import { NextRequest, NextResponse } from 'next/server';
+import { ConnectError } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
-import { getJSON, setJSON, delKey } from '@/src/lib/redis-store';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
+import { userClient } from '@/src/lib/gibson-client';
+import { UserService } from '@/src/gen/gibson/user/v1/user_pb';
+import { create } from '@bufbuild/protobuf';
+import { UserOnboardingStateSchema } from '@/src/gen/gibson/user/v1/user_pb';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import type {
   OnboardingState,
   OnboardingStatusResponse,
   UpdateOnboardingStateRequest,
   SetupProgress,
   SetupTask,
-  WizardStepId,
+  SetupTaskId,
   SetupTaskStatus,
+  WizardStepId,
 } from '@/src/types/onboarding';
-import { DEFAULT_SETUP_TASKS, ONBOARDING_STATE_VERSION } from '@/src/types/onboarding';
+import { DEFAULT_SETUP_TASKS } from '@/src/types/onboarding';
 
 // ============================================================================
-// Redis-backed state store (key: onboarding:{userId}, TTL 90 days)
+// Helpers — local-only presentation logic (no store access)
 // ============================================================================
 
-/** TTL for onboarding state in seconds (90 days). */
-const ONBOARDING_TTL_SECONDS = 7_776_000;
-
-/**
- * Create default onboarding state for a new user.
- */
-function createDefaultState(userId: string, tenantId: string): OnboardingState {
-  const now = new Date().toISOString();
-  return {
-    userId,
-    tenantId,
-    wizardCompleted: false,
-    wizardSkipped: false,
-    currentStepId: 'welcome',
-    completedSteps: [],
-    skippedSteps: [],
-    llmConfig: undefined,
-    selectedAgentId: undefined,
-    createdMissionId: undefined,
-    setupTasks: [...DEFAULT_SETUP_TASKS],
-    startedAt: now,
-    version: ONBOARDING_STATE_VERSION,
-    updatedAt: now,
-  };
-}
-
-/**
- * Calculate setup progress from state.
- */
 function calculateProgress(state: OnboardingState): SetupProgress {
   const tasks = state.setupTasks;
-
   const completedTasks = tasks.filter((t) => t.status === 'completed').length;
   const skippedTasks = tasks.filter((t) => t.status === 'skipped').length;
   const totalTasks = tasks.length;
-
-  const percentage = Math.round((completedTasks / totalTasks) * 100);
-
+  const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   const pendingTasks = tasks.filter(
-    (t) => t.status !== 'completed' && t.status !== 'skipped'
+    (t) => t.status !== 'completed' && t.status !== 'skipped',
   );
-  const estimatedMinutesRemaining = pendingTasks.reduce(
-    (sum, t) => sum + t.estimatedMinutes,
-    0
-  );
-
-  // Group by category
+  const estimatedMinutesRemaining = pendingTasks.reduce((sum, t) => sum + t.estimatedMinutes, 0);
   const essential = tasks.filter((t) => t.category === 'essential');
   const recommended = tasks.filter((t) => t.category === 'recommended');
   const optional = tasks.filter((t) => t.category === 'optional');
-
   return {
     percentage,
     totalTasks,
@@ -74,116 +56,126 @@ function calculateProgress(state: OnboardingState): SetupProgress {
     skippedTasks,
     estimatedMinutesRemaining,
     byCategory: {
-      essential: {
-        total: essential.length,
-        completed: essential.filter((t) => t.status === 'completed').length,
-      },
-      recommended: {
-        total: recommended.length,
-        completed: recommended.filter((t) => t.status === 'completed').length,
-      },
-      optional: {
-        total: optional.length,
-        completed: optional.filter((t) => t.status === 'completed').length,
-      },
+      essential: { total: essential.length, completed: essential.filter((t) => t.status === 'completed').length },
+      recommended: { total: recommended.length, completed: recommended.filter((t) => t.status === 'completed').length },
+      optional: { total: optional.length, completed: optional.filter((t) => t.status === 'completed').length },
     },
   };
 }
 
-/**
- * Determine if onboarding wizard should be shown.
- */
 function shouldShowOnboarding(state: OnboardingState): boolean {
   return !state.wizardCompleted && !state.wizardSkipped;
 }
 
-/**
- * Determine if setup widget should be shown.
- */
 function shouldShowSetupWidget(state: OnboardingState): boolean {
-  // Show widget if wizard is done but essential tasks remain
-  if (!state.wizardCompleted && !state.wizardSkipped) {
-    return false; // Show wizard instead
-  }
-
+  if (!state.wizardCompleted && !state.wizardSkipped) return false;
   const essentialTasks = state.setupTasks.filter((t) => t.category === 'essential');
-  const allEssentialComplete = essentialTasks.every(
-    (t) => t.status === 'completed' || t.status === 'skipped'
-  );
+  return !essentialTasks.every((t) => t.status === 'completed' || t.status === 'skipped');
+}
 
-  return !allEssentialComplete;
+// ============================================================================
+// Conversion: daemon proto → local OnboardingState
+// ============================================================================
+
+import type { UserOnboardingState } from '@/src/gen/gibson/user/v1/user_pb';
+
+/** Index of default task metadata by id for fast lookup during proto conversion. */
+const DEFAULT_TASK_META: Map<string, SetupTask> = new Map(
+  DEFAULT_SETUP_TASKS.map((t) => [t.id, t]),
+);
+
+function protoToState(proto: UserOnboardingState): OnboardingState {
+  // Merge proto task data with default task metadata.
+  // The proto stores only mutable fields (status, completedAt).
+  // Static fields (title, description, actionUrl, order) come from DEFAULT_SETUP_TASKS.
+  const setupTasks: SetupTask[] = proto.setupTasks.length > 0
+    ? proto.setupTasks.map((t) => {
+        const def = DEFAULT_TASK_META.get(t.id);
+        if (!def) {
+          // Unknown task id — should not happen in practice but handle gracefully.
+          return {
+            id: t.id as SetupTaskId,
+            title: t.id,
+            description: '',
+            status: (t.status || 'pending') as SetupTaskStatus,
+            category: (t.category || 'essential') as 'essential' | 'recommended' | 'optional',
+            actionUrl: '',
+            estimatedMinutes: t.estimatedMinutes,
+            order: 999,
+            completedAt: t.completedAt || undefined,
+          };
+        }
+        return {
+          ...def,
+          status: (t.status || def.status) as SetupTaskStatus,
+          category: (t.category || def.category) as 'essential' | 'recommended' | 'optional',
+          estimatedMinutes: t.estimatedMinutes || def.estimatedMinutes,
+          completedAt: t.completedAt || undefined,
+        };
+      })
+    : [...DEFAULT_SETUP_TASKS];
+
+  return {
+    userId: proto.userId,
+    tenantId: proto.tenantId,
+    wizardCompleted: proto.wizardCompleted,
+    wizardSkipped: proto.wizardSkipped,
+    currentStepId: (proto.currentStepId || 'welcome') as WizardStepId,
+    completedSteps: [...proto.completedSteps] as WizardStepId[],
+    skippedSteps: [...proto.skippedSteps] as WizardStepId[],
+    setupTasks,
+    llmConfig: proto.llmConfigJson ? JSON.parse(proto.llmConfigJson) : undefined,
+    selectedAgentId: proto.selectedAgentId || undefined,
+    createdMissionId: proto.createdMissionId || undefined,
+    startedAt: proto.startedAt || new Date().toISOString(),
+    completedAt: proto.completedAt || undefined,
+    updatedAt: proto.updatedAt || new Date().toISOString(),
+    version: proto.version,
+  };
 }
 
 // ============================================================================
 // GET /api/onboarding/status
 // ============================================================================
 
-/**
- * GET /api/onboarding/status
- *
- * Fetch the current onboarding state for the authenticated user.
- *
- * Returns:
- * - Current onboarding state
- * - Calculated setup progress
- * - Whether to show onboarding wizard or setup widget
- *
- * Requires authentication.
- */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
+  const session = await getServerSession();
+  if (!session) {
+    return NextResponse.json(
+      { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+      { status: 401 },
+    );
+  }
+  if (!session.user?.id) {
+    return NextResponse.json(
+      { error: { code: 'INVALID_SESSION', message: 'User ID not found in session' } },
+      { status: 400 },
+    );
+  }
+
+  let tenantId: string;
   try {
-    // Validate authentication
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json(
-        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
-        { status: 401 }
-      );
-    }
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
+  }
 
-    const userId = session.user?.id;
-    const tenantId = session.user?.tenantId || 'default';
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: { code: 'INVALID_SESSION', message: 'User ID not found in session' } },
-        { status: 400 }
-      );
-    }
-
-    // Pending: replace with daemon RPC call once GetOnboardingState is available.
-    // gibsonClient.getOnboardingState({ userId, tenantId }) will supersede this block.
-    let state = await getJSON<OnboardingState>(`onboarding:${userId}`);
-
-    if (!state) {
-      // New user — create default state and persist to Redis
-      state = createDefaultState(userId, tenantId);
-      await setJSON(`onboarding:${userId}`, state, ONBOARDING_TTL_SECONDS);
-    }
-
-    // Calculate progress
+  try {
+    const resp = await userClient(UserService).getUserOnboardingState({
+      tenantId,
+      userId: session.user.id,
+    });
+    const state = protoToState(resp.state ?? create(UserOnboardingStateSchema));
     const progress = calculateProgress(state);
-
-    // Build response
     const response: OnboardingStatusResponse = {
       state,
       progress,
       shouldShowOnboarding: shouldShowOnboarding(state),
       shouldShowSetupWidget: shouldShowSetupWidget(state),
     };
-
     return NextResponse.json(response);
-  } catch (error) {
-    console.error('Error fetching onboarding status:', error);
-    return NextResponse.json(
-      {
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to fetch onboarding status',
-        },
-      },
-      { status: 500 }
-    );
+  } catch (err) {
+    return daemonErrorResponse(err);
   }
 }
 
@@ -191,173 +183,138 @@ export async function GET(request: NextRequest) {
 // POST /api/onboarding/status
 // ============================================================================
 
-/**
- * POST /api/onboarding/status
- *
- * Update the onboarding state for the authenticated user.
- *
- * Request body: UpdateOnboardingStateRequest
- *
- * Requires authentication. User can only update their own state.
- */
 export async function POST(request: NextRequest) {
+  const session = await getServerSession();
+  if (!session) {
+    return NextResponse.json(
+      { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+      { status: 401 },
+    );
+  }
+  if (!session.user?.id) {
+    return NextResponse.json(
+      { error: { code: 'INVALID_SESSION', message: 'User ID not found in session' } },
+      { status: 400 },
+    );
+  }
+
+  let tenantId: string;
   try {
-    // Validate authentication
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json(
-        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
-        { status: 401 }
-      );
-    }
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
+  }
 
-    const userId = session.user?.id;
-    const tenantId = session.user?.tenantId || 'default';
+  let body: UpdateOnboardingStateRequest;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: { code: 'INVALID_REQUEST', message: 'Invalid JSON in request body' } },
+      { status: 400 },
+    );
+  }
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: { code: 'INVALID_SESSION', message: 'User ID not found in session' } },
-        { status: 400 }
-      );
-    }
+  try {
+    const client = userClient(UserService);
 
-    // Parse request body
-    const body: UpdateOnboardingStateRequest = await request.json();
-
-    // Pending: replace with daemon RPC call once GetOnboardingState is available.
-    let state = await getJSON<OnboardingState>(`onboarding:${userId}`);
-    if (!state) {
-      state = createDefaultState(userId, tenantId);
-    }
-
+    // Fetch current state first to apply partial updates.
+    const current = await client.getUserOnboardingState({
+      tenantId,
+      userId: session.user.id,
+    });
+    const state = protoToState(current.state ?? create(UserOnboardingStateSchema));
     const now = new Date().toISOString();
 
-    // Apply updates based on request
     if (body.completedStep) {
-      // Mark step as completed
       if (!state.completedSteps.includes(body.completedStep)) {
         state.completedSteps = [...state.completedSteps, body.completedStep];
       }
-      // Remove from skipped if it was there
       state.skippedSteps = state.skippedSteps.filter((s) => s !== body.completedStep);
     }
-
-    if (body.skippedStep) {
-      // Mark step as skipped
-      if (!state.skippedSteps.includes(body.skippedStep)) {
-        state.skippedSteps = [...state.skippedSteps, body.skippedStep];
-      }
+    if (body.skippedStep && !state.skippedSteps.includes(body.skippedStep)) {
+      state.skippedSteps = [...state.skippedSteps, body.skippedStep];
     }
-
-    if (body.navigateToStep) {
-      state.currentStepId = body.navigateToStep;
-    }
-
+    if (body.navigateToStep) state.currentStepId = body.navigateToStep;
     if (body.llmConfig) {
-      state.llmConfig = {
-        ...state.llmConfig,
-        ...body.llmConfig,
-      } as OnboardingState['llmConfig'];
-
-      // Update setup task if LLM configured
+      state.llmConfig = { ...state.llmConfig, ...body.llmConfig } as OnboardingState['llmConfig'];
       if (body.llmConfig.isValidated) {
-        state.setupTasks = state.setupTasks.map((task) =>
-          task.id === 'configure_llm'
-            ? { ...task, status: 'completed' as SetupTaskStatus, completedAt: now }
-            : task
+        state.setupTasks = state.setupTasks.map((t) =>
+          t.id === 'configure_llm' ? { ...t, status: 'completed' as SetupTaskStatus, completedAt: now } : t,
         );
       }
     }
-
     if (body.selectedAgentId) {
       state.selectedAgentId = body.selectedAgentId;
-
-      // Update setup task
-      state.setupTasks = state.setupTasks.map((task) =>
-        task.id === 'select_agent'
-          ? { ...task, status: 'completed' as SetupTaskStatus, completedAt: now }
-          : task
+      state.setupTasks = state.setupTasks.map((t) =>
+        t.id === 'select_agent' ? { ...t, status: 'completed' as SetupTaskStatus, completedAt: now } : t,
       );
     }
-
     if (body.createdMissionId) {
       state.createdMissionId = body.createdMissionId;
-
-      // Update setup task
-      state.setupTasks = state.setupTasks.map((task) =>
-        task.id === 'create_mission'
-          ? { ...task, status: 'completed' as SetupTaskStatus, completedAt: now }
-          : task
+      state.setupTasks = state.setupTasks.map((t) =>
+        t.id === 'create_mission' ? { ...t, status: 'completed' as SetupTaskStatus, completedAt: now } : t,
       );
     }
-
     if (body.setupTaskUpdate) {
       const { taskId, status } = body.setupTaskUpdate;
-      state.setupTasks = state.setupTasks.map((task) =>
-        task.id === taskId
-          ? {
-              ...task,
-              status,
-              completedAt: status === 'completed' ? now : task.completedAt,
-            }
-          : task
+      state.setupTasks = state.setupTasks.map((t) =>
+        t.id === taskId ? { ...t, status, completedAt: status === 'completed' ? now : t.completedAt } : t,
       );
     }
-
     if (body.completeWizard) {
       state.wizardCompleted = true;
       state.completedAt = now;
-
-      // Ensure completion step is marked
       if (!state.completedSteps.includes('completion')) {
         state.completedSteps = [...state.completedSteps, 'completion'];
       }
     }
-
     if (body.skipWizard) {
       state.wizardSkipped = true;
       state.completedAt = now;
     }
-
-    // Update timestamp and version
     state.updatedAt = now;
 
-    // Pending: replace with daemon RPC call once UpdateOnboardingState is available.
-    // gibsonClient.updateOnboardingState({ userId, tenantId, stateJson: JSON.stringify(state) })
-    await setJSON(`onboarding:${userId}`, state, ONBOARDING_TTL_SECONDS);
-
-    // Calculate progress
-    const progress = calculateProgress(state);
-
-    // Build response
-    const response: OnboardingStatusResponse = {
-      state,
-      progress,
-      shouldShowOnboarding: shouldShowOnboarding(state),
-      shouldShowSetupWidget: shouldShowSetupWidget(state),
-    };
-
-    return NextResponse.json(response);
-  } catch (error) {
-    console.error('Error updating onboarding status:', error);
-
-    // Check for JSON parse error
-    if (error instanceof SyntaxError) {
-      return NextResponse.json(
-        { error: { code: 'INVALID_REQUEST', message: 'Invalid JSON in request body' } },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to update onboarding status',
-        },
+    // Persist via daemon.
+    const updateResp = await client.updateUserOnboardingState({
+      tenantId,
+      userId: session.user.id,
+      state: {
+        userId: state.userId,
+        tenantId: state.tenantId,
+        wizardCompleted: state.wizardCompleted,
+        wizardSkipped: state.wizardSkipped,
+        currentStepId: state.currentStepId,
+        completedSteps: state.completedSteps,
+        skippedSteps: state.skippedSteps,
+        setupTasks: state.setupTasks.map((t) => ({
+          id: t.id,
+          status: t.status,
+          completedAt: t.completedAt ?? '',
+          category: t.category,
+          estimatedMinutes: t.estimatedMinutes,
+        })),
+        llmConfigJson: state.llmConfig ? JSON.stringify(state.llmConfig) : '',
+        selectedAgentId: state.selectedAgentId ?? '',
+        createdMissionId: state.createdMissionId ?? '',
+        startedAt: state.startedAt,
+        completedAt: state.completedAt ?? '',
+        updatedAt: state.updatedAt,
+        version: state.version,
       },
-      { status: 500 }
-    );
+    });
+
+    const saved = protoToState(updateResp.state ?? create(UserOnboardingStateSchema));
+    const progress = calculateProgress(saved);
+    const response: OnboardingStatusResponse = {
+      state: saved,
+      progress,
+      shouldShowOnboarding: shouldShowOnboarding(saved),
+      shouldShowSetupWidget: shouldShowSetupWidget(saved),
+    };
+    return NextResponse.json(response);
+  } catch (err) {
+    return daemonErrorResponse(err);
   }
 }
 
@@ -365,60 +322,43 @@ export async function POST(request: NextRequest) {
 // DELETE /api/onboarding/status
 // ============================================================================
 
-/**
- * DELETE /api/onboarding/status
- *
- * Reset onboarding state for the authenticated user.
- * This is mainly for testing/development purposes.
- *
- * Requires authentication.
- */
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
+  const session = await getServerSession();
+  if (!session) {
+    return NextResponse.json(
+      { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+      { status: 401 },
+    );
+  }
+  if (!session.user?.id) {
+    return NextResponse.json(
+      { error: { code: 'INVALID_SESSION', message: 'User ID not found in session' } },
+      { status: 400 },
+    );
+  }
+
+  let tenantId: string;
   try {
-    // Validate authentication
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json(
-        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
-        { status: 401 }
-      );
-    }
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
+  }
 
-    const userId = session.user?.id;
-    const tenantId = session.user?.tenantId || 'default';
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: { code: 'INVALID_SESSION', message: 'User ID not found in session' } },
-        { status: 400 }
-      );
-    }
-
-    // Pending: replace with daemon RPC UpdateOnboardingState once available.
-    // Reset is modelled as writing a fresh default state so the store always has a valid record.
-    const state = createDefaultState(userId, tenantId);
-    await setJSON(`onboarding:${userId}`, state, ONBOARDING_TTL_SECONDS);
-
+  try {
+    const resp = await userClient(UserService).resetUserOnboardingState({
+      tenantId,
+      userId: session.user.id,
+    });
+    const state = protoToState(resp.state ?? create(UserOnboardingStateSchema));
     const progress = calculateProgress(state);
-
     const response: OnboardingStatusResponse = {
       state,
       progress,
       shouldShowOnboarding: true,
       shouldShowSetupWidget: false,
     };
-
     return NextResponse.json(response);
-  } catch (error) {
-    console.error('Error resetting onboarding status:', error);
-    return NextResponse.json(
-      {
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to reset onboarding status',
-        },
-      },
-      { status: 500 }
-    );
+  } catch (err) {
+    return daemonErrorResponse(err);
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Signup progress store — Redis-backed state for the provisioning panel.
+ * Signup progress store — daemon-backed state for the provisioning panel.
  *
  * `signupAction` writes the current pipeline step after every transition;
  * the `/api/signup/progress/:id` endpoint reads it and the client-side
@@ -14,32 +14,77 @@
  * TTL: 5 minutes. Provisioning should finish in <30s; the extra window
  * gives the UI a chance to render the final "done" state before the key
  * expires.
+ *
+ * Replaces the previous direct-Redis implementation.
+ * Spec: dashboard-no-backing-store-clients (Module 5 / issue #589).
  */
-import { getJSON, setJSON } from "@/src/lib/redis-store";
+
+import 'server-only';
+
+import { userClient } from '@/src/lib/gibson-client';
+import { UserService } from '@/src/gen/gibson/user/v1/user_pb';
 import type {
   ProvisioningProgress,
   ProvisioningStep,
   SignupFailureCode,
-} from "@/app/(public)/signup/types";
+} from '@/app/(public)/signup/types';
 
-const PROGRESS_KEY_PREFIX = "signup-progress:";
 const PROGRESS_TTL_SECONDS = 300;
 
-function key(attemptId: string): string {
-  return `${PROGRESS_KEY_PREFIX}${attemptId}`;
+// ============================================================================
+// Core helpers
+// ============================================================================
+
+function progressToProto(progress: ProvisioningProgress) {
+  return {
+    step: progress.step,
+    stepStartedAtUnix: BigInt(progress.stepStartedAt ?? 0),
+    terminalState: progress.terminalState ?? '',
+    errorCode: progress.error?.code ?? '',
+    errorMessage: progress.error?.userMessage ?? '',
+  };
+}
+
+function protoToProgress(proto: {
+  step: string;
+  stepStartedAtUnix: bigint;
+  terminalState: string;
+  errorCode: string;
+  errorMessage: string;
+}): ProvisioningProgress {
+  const base: ProvisioningProgress = {
+    step: proto.step as ProvisioningStep,
+    stepStartedAt: Number(proto.stepStartedAtUnix),
+  };
+  if (proto.terminalState) {
+    (base as ProvisioningProgress).terminalState = proto.terminalState as ProvisioningProgress['terminalState'];
+  }
+  if (proto.errorCode && proto.errorMessage) {
+    (base as ProvisioningProgress).error = {
+      code: proto.errorCode as SignupFailureCode,
+      userMessage: proto.errorMessage,
+    };
+  }
+  return base;
 }
 
 export async function setProgress(
   attemptId: string,
   progress: ProvisioningProgress,
 ): Promise<void> {
-  await setJSON(key(attemptId), progress, PROGRESS_TTL_SECONDS);
+  await userClient(UserService).setSignupProgress({
+    attemptId,
+    progress: progressToProto(progress),
+    ttlSeconds: PROGRESS_TTL_SECONDS,
+  });
 }
 
 export async function getProgress(
   attemptId: string,
 ): Promise<ProvisioningProgress | null> {
-  return await getJSON<ProvisioningProgress>(key(attemptId));
+  const resp = await userClient(UserService).getSignupProgress({ attemptId });
+  if (!resp.found || !resp.progress) return null;
+  return protoToProgress(resp.progress);
 }
 
 /**
@@ -60,9 +105,9 @@ export async function advanceStep(
  */
 export async function completeProgress(attemptId: string): Promise<void> {
   await setProgress(attemptId, {
-    step: "done",
+    step: 'done',
     stepStartedAt: Date.now(),
-    terminalState: "ok",
+    terminalState: 'ok',
   });
 }
 
@@ -79,9 +124,9 @@ export async function failProgress(
   await setProgress(attemptId, {
     step,
     stepStartedAt: Date.now(),
-    terminalState: code === "PROVISIONING_TIMEOUT" || code === "MEMBERSHIP_TIMEOUT"
-      ? "timeout"
-      : "failed",
+    terminalState: code === 'PROVISIONING_TIMEOUT' || code === 'MEMBERSHIP_TIMEOUT'
+      ? 'timeout'
+      : 'failed',
     error: { code, userMessage },
   });
 }
