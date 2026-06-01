@@ -28,6 +28,11 @@ import { TenantAdminService } from "@/src/gen/gibson/admin/v1/tenant_pb";
 import { userClient } from "@/src/lib/gibson-client";
 import { logger } from "@/src/lib/logger";
 import { listTenantMembers, patchTenantMember } from "@/src/lib/k8s/tenants";
+import {
+  requireActiveTenant,
+  NoActiveTenantError,
+  StaleActiveTenantError,
+} from "@/src/lib/auth/active-tenant";
 
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
@@ -68,9 +73,14 @@ export async function transferOwnershipAction(
   if (!callerUserId) {
     return { ok: false, error: "session missing userId", code: "FORBIDDEN" };
   }
-  const callerTenantId = gate.session.user.tenantId;
-  if (!callerTenantId) {
-    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
+  let callerTenantId: string;
+  try {
+    callerTenantId = await requireActiveTenant();
+  } catch (err) {
+    if (err instanceof NoActiveTenantError || err instanceof StaleActiveTenantError) {
+      return { ok: false, error: "No active tenant.", code: "FORBIDDEN" };
+    }
+    throw err;
   }
 
   // Prevent self-transfer (no-op that would silently drop the owner relation

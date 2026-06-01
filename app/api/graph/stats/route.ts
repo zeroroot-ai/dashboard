@@ -11,8 +11,10 @@ import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { ConnectError, Code } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { userClient } from '@/src/lib/gibson-client';
 import { GraphService } from '@/src/gen/gibson/graph/v1/graph_pb';
+import { logger } from '@/src/lib/logger';
 
 /** Map ConnectError codes to HTTP status codes. */
 function grpcStatusToHttp(err: ConnectError): number {
@@ -38,9 +40,13 @@ export async function GET(_request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const tenantId = session.user.tenantId;
-  if (!tenantId) {
-    return NextResponse.json({ error: 'No tenant associated with session' }, { status: 403 });
+  // Fail closed: require an active tenant before querying graph stats.
+  // The daemon resolves tenant context from SPIFFE mTLS; tenantId is
+  // not passed to the RPC but guards against unauthenticated queries.
+  try {
+    await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
   }
 
   try {
@@ -71,7 +77,7 @@ export async function GET(_request: NextRequest) {
       const status = grpcStatusToHttp(err);
       return NextResponse.json({ error: err.message }, { status });
     }
-    console.error('[api/graph/stats] unexpected error', err);
+    logger.error({ err }, '[api/graph/stats] unexpected error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

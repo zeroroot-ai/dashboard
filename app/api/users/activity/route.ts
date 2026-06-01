@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { getUserActivity } from '@/src/lib/gibson-client';
 import type {
@@ -29,12 +30,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const tenantId = session.user.tenantId;
-    if (!tenantId) {
-      return NextResponse.json(
-        { error: { code: 'BAD_REQUEST', message: 'No tenant context available' } },
-        { status: 400 }
-      );
+    let tenantId: string;
+    try {
+      tenantId = await requireActiveTenant();
+    } catch (err) {
+      return activeTenantApiResponse(err);
     }
 
     const userId = session.user.id || session.user.email || 'unknown';

@@ -13,6 +13,11 @@
 
 import { TenantAdminService } from "@/src/gen/gibson/admin/v1/tenant_pb";
 import { userClient } from "@/src/lib/gibson-client";
+import {
+  requireActiveTenant,
+  NoActiveTenantError,
+  StaleActiveTenantError,
+} from "@/src/lib/auth/active-tenant";
 
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
@@ -94,11 +99,16 @@ export async function setComponentAccessAction(
     inputKeys: ["scope", "targetId", "componentRef", "action", "enabled"],
   });
   if (!gate.ok) return gate.result;
-  const callerTenantId = gate.session.user.tenantId;
-  const callerUserId = gate.userId;
-  if (!callerTenantId) {
-    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
+  let callerTenantId: string;
+  try {
+    callerTenantId = await requireActiveTenant();
+  } catch (err) {
+    if (err instanceof NoActiveTenantError || err instanceof StaleActiveTenantError) {
+      return { ok: false, error: "No active tenant.", code: "FORBIDDEN" };
+    }
+    throw err;
   }
+  const callerUserId = gate.userId;
 
   const entry = entryForScope(input, callerTenantId, callerUserId);
   if (!entry) {
