@@ -8,6 +8,7 @@
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { getGraphSummary, type GraphSummaryResponse } from '@/src/lib/graph/summary';
 
@@ -22,7 +23,12 @@ export async function GET(): Promise<Response> {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const tenantId = session.user.tenantId ?? '';
+    let tenantId: string;
+    try {
+      tenantId = await requireActiveTenant();
+    } catch (err) {
+      return activeTenantApiResponse(err);
+    }
     const summary = await getGraphSummary(tenantId);
 
     return NextResponse.json(summary);

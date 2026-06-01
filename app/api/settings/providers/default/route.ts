@@ -9,6 +9,7 @@
 import 'server-only';
 import { type NextRequest } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import {
   daemonGetDefaultProvider,
   daemonSetDefaultProvider,
@@ -34,7 +35,12 @@ export async function GET(_req: NextRequest) {
   }
 
   const userId = session.user.id;
-  const tenantId = session.user.tenantId ?? undefined;
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
+  }
 
   try {
     const provider = await daemonGetDefaultProvider(userId, tenantId);
@@ -67,7 +73,12 @@ export async function PUT(req: NextRequest) {
   }
 
   const userId = session.user.id;
-  const tenantId = session.user.tenantId ?? undefined;
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
+  }
 
   let body: { name: string };
   try {

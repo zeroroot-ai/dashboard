@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { streamText, convertToModelMessages, type ModelMessage, type UIMessage } from 'ai';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { resolveProvider } from '@/src/lib/ai/provider';
 import { listProviders } from '@/src/lib/gibson-client';
 import { getGraphContext } from '@/src/lib/graph/context';
@@ -76,7 +77,12 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
     const { messages, agentId, context, attachmentId } = parseResult.data;
 
-    const tenantId = session.user.tenantId ?? '';
+    let tenantId: string;
+    try {
+      tenantId = await requireActiveTenant();
+    } catch (err) {
+      return activeTenantApiResponse(err);
+    }
     const userId = session.user.id ?? '';
 
     // Fetch + consume any attached-file content. Single-use: the key is

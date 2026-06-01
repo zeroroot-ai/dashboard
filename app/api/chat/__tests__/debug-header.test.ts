@@ -30,6 +30,15 @@ vi.mock('@/src/lib/auth', () => ({
   getServerSession: mockGetServerSession,
 }));
 
+vi.mock('@/src/lib/auth/active-tenant', () => ({
+  requireActiveTenant: vi.fn().mockResolvedValue('tenant-1'),
+  activeTenantApiResponse: vi.fn((err: unknown) => {
+    return new Response(JSON.stringify({ error: 'no_active_tenant' }), { status: 412 });
+  }),
+  NoActiveTenantError: class extends Error { constructor() { super('no active tenant'); } },
+  StaleActiveTenantError: class extends Error { constructor() { super('stale active tenant'); } },
+}));
+
 vi.mock('@/src/lib/gibson-client', () => ({
   listProviders: mockListProviders,
 }));
@@ -86,7 +95,7 @@ vi.mock('@/src/lib/api-errors', () => ({
 
 const MOCK_SYSTEM_PROMPT = 'You are an AI assistant\n\nYou are the General Assistant';
 
-/** A mock streaming response that toTextStreamResponse() returns. */
+/** A mock streaming response that toUIMessageStreamResponse() returns. */
 function makeMockStreamResult() {
   const headers = new Headers({ 'content-type': 'text/plain; charset=utf-8' });
   const body = new ReadableStream({
@@ -95,8 +104,10 @@ function makeMockStreamResult() {
       controller.close();
     },
   });
+  const response = new Response(body, { status: 200, headers });
   return {
-    toTextStreamResponse: () => new Response(body, { status: 200, headers }),
+    toTextStreamResponse: () => response,
+    toUIMessageStreamResponse: () => response,
   };
 }
 

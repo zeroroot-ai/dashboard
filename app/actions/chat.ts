@@ -30,6 +30,7 @@ import "server-only";
 import { generateText } from "ai";
 import type { UIMessage } from "ai";
 import { getServerSession } from "@/src/lib/auth";
+import { requireActiveTenant, activeTenantActionResult } from "@/src/lib/auth/active-tenant";
 import { resolveProvider } from "@/src/lib/ai/provider";
 import {
   listProviders,
@@ -149,9 +150,13 @@ export async function generateConversationTitle(
     const session = await getServerSession();
     if (!session) return null;
 
-    const tenantId = session.user.tenantId ?? "";
+    let tenantId: string;
+    try {
+      tenantId = await requireActiveTenant();
+    } catch {
+      return null;
+    }
     const userId = session.user.id ?? "";
-    if (!tenantId) return null;
 
     // Resolve the default LLM provider — same path as /api/chat route.
     let providerName: string;

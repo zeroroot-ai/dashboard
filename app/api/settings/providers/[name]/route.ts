@@ -11,6 +11,7 @@
 import 'server-only';
 import { type NextRequest } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import {
   daemonGetProvider,
   daemonUpdateProvider,
@@ -42,7 +43,12 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 
   const { name } = await params;
   const userId = session.user.id;
-  const tenantId = session.user.tenantId ?? undefined;
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
+  }
 
   try {
     const record = await daemonGetProvider(name, userId, tenantId);
@@ -79,7 +85,12 @@ async function handleUpdate(req: NextRequest, { params }: RouteContext): Promise
 
   const { name } = await params;
   const userId = session.user.id;
-  const tenantId = session.user.tenantId ?? undefined;
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
+  }
 
   let raw: unknown;
   try {
@@ -147,7 +158,12 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
 
   const { name } = await params;
   const userId = session.user.id;
-  const tenantId = session.user.tenantId ?? undefined;
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
+  }
 
   try {
     await daemonDeleteProvider(name, userId, tenantId);

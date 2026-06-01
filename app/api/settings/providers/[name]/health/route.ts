@@ -8,6 +8,7 @@
 import 'server-only';
 import { type NextRequest } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { daemonGetProviderHealth } from '@/src/lib/gibson-client';
 import { translateError } from '@/src/lib/providers-route-error';
 
@@ -38,7 +39,12 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 
   const { name } = await params;
   const userId = session.user.id;
-  const tenantId = session.user.tenantId ?? undefined;
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
+  }
 
   try {
     const health = await daemonGetProviderHealth(name, userId, tenantId);
