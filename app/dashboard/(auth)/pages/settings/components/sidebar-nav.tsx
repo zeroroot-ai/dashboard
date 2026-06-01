@@ -13,7 +13,6 @@ import {
   ScaleIcon,
   ShieldIcon,
   UserIcon,
-  UsersIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -60,19 +59,11 @@ interface AdminEntry {
   method: string;
 }
 
-const workspaceAdminNav: AdminEntry[] = [
-  {
-    title: "Members",
-    href: "/dashboard/pages/settings/members",
-    icon: UsersIcon,
-    method: "/gibson.tenant.v1.MembershipService/ListMembers",
-  },
-];
+// Member management is NOT in Settings — it lives in the single "Members &
+// Access" home under the Organization nav (Members / Teams / Security Policy),
+// per ADR-0039 / dashboard#609. /dashboard/pages/settings/members redirects there.
 
 const adminNav: AdminEntry[] = [
-  // NOTE: "Members" is intentionally NOT here — it is the single canonical
-  // entry in workspaceAdminNav, gated on ListMembers. A duplicate entry
-  // mis-gated on GetBrokerConfig (a secrets-broker RPC) was removed (#606).
   {
     title: "Secrets",
     href: "/dashboard/pages/settings/secrets",
@@ -159,9 +150,6 @@ export function SidebarNav() {
           <SectionLabel>Workspace</SectionLabel>
           {workspaceNav.map((item) => (
             <NavLink key={item.href} {...item} pathname={pathname} />
-          ))}
-          {workspaceAdminNav.map((item) => (
-            <GatedNavLink key={item.href} {...item} pathname={pathname} />
           ))}
 
           <SectionLabel>Administration</SectionLabel>

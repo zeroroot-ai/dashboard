@@ -134,10 +134,13 @@ export const navItems: NavGroup[] = [
     ]
   },
   {
-    title: "Organization",
+    // Single "Members & Access" home (industry pattern — GitLab/Linear/Vercel
+    // keep people, teams, and access policy together in the workspace area
+    // instead of a second member list under personal Settings).
+    title: "Members & Access",
     items: [
       {
-        title: "Users",
+        title: "Members",
         href: "/dashboard/organization/users",
         icon: UserIcon,
       },

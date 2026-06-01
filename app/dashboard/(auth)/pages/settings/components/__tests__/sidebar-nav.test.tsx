@@ -17,39 +17,31 @@ vi.mock("next/navigation", () => ({
 
 import { SidebarNav } from "../sidebar-nav";
 
-describe("settings SidebarNav — member-management IA (#606)", () => {
-  it("renders Members exactly once, gated on ListMembers (not the secrets-broker RPC)", () => {
-    // Allow the member-list RPC; deny the secrets-broker config RPC. If the
-    // duplicate Members entry mis-gated on GetBrokerConfig still existed, it
-    // would be hidden here (broker denied) while the canonical one shows —
-    // so a single match proves the dedup AND the correct gate.
-    allowByMethod["/gibson.tenant.v1.MembershipService/ListMembers"] = true;
-    allowByMethod["/gibson.tenant.v1.SecretsService/GetBrokerConfig"] = false;
+describe("settings SidebarNav — member-management IA (#609)", () => {
+  it("does NOT render a Members entry — member management lives in the Organization 'Members & Access' home", () => {
+    // Allow everything; Members must still be absent from Settings (it was
+    // consolidated into the Organization nav per ADR-0039 / #609).
     allowByMethod["/gibson.tenant.v1.SecretsService/ListSecrets"] = true;
+    allowByMethod["/gibson.tenant.v1.SecretsService/GetBrokerConfig"] = true;
     allowByMethod["/gibson.tenant.v1.GrantsService/ListActiveGrants"] = true;
 
     render(<SidebarNav />);
 
-    const members = screen.getAllByRole("link", { name: /members/i });
-    expect(members).toHaveLength(1);
-    expect(members[0]).toHaveAttribute(
-      "href",
-      "/dashboard/pages/settings/members",
-    );
-
-    // Secret Broker is the GetBrokerConfig-gated entry — denied here, so it
-    // must be absent. This confirms Members is no longer riding that gate.
+    expect(screen.queryByRole("link", { name: /members/i })).toBeNull();
+    // The remaining admin entries still render and are gated on their real RPC.
     expect(
-      screen.queryByRole("link", { name: /secret broker/i }),
-    ).toBeNull();
+      screen.getByRole("link", { name: /secret broker/i }),
+    ).toBeInTheDocument();
   });
 
-  it("hides Members when the member-list RPC is denied", () => {
-    allowByMethod["/gibson.tenant.v1.MembershipService/ListMembers"] = false;
-    allowByMethod["/gibson.tenant.v1.SecretsService/GetBrokerConfig"] = true;
+  it("hides admin entries whose backing RPC is denied", () => {
+    allowByMethod["/gibson.tenant.v1.SecretsService/ListSecrets"] = false;
+    allowByMethod["/gibson.tenant.v1.SecretsService/GetBrokerConfig"] = false;
+    allowByMethod["/gibson.tenant.v1.GrantsService/ListActiveGrants"] = false;
 
     render(<SidebarNav />);
 
-    expect(screen.queryByRole("link", { name: /members/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /secret broker/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /permissions/i })).toBeNull();
   });
 });
