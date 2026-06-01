@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { LokiClient, LokiLogEntry } from '@/src/lib/loki-client';
 
 /**
@@ -29,6 +30,13 @@ export async function GET(
     }
 
     // Authz enforced by daemon ext-authz on the downstream RPC.
+
+    let tenantId: string;
+    try {
+      tenantId = await requireActiveTenant();
+    } catch (err) {
+      return activeTenantApiResponse(err);
+    }
 
     const { id: missionId } = await params;
     const searchParams = request.nextUrl.searchParams;
@@ -63,7 +71,6 @@ export async function GET(
     }
 
     // Query logs for this mission
-    const tenantId = session.user.tenantId || 'default';
     const logs = await loki.queryDaemonLogs(tenantId, {
       missionId,
       level: level || undefined,

@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ConnectError, Code } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { userClient } from '@/src/lib/gibson-client';
 import { TenantService } from '@/src/gen/gibson/tenant/v1/tenant_pb';
 
@@ -33,12 +34,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const tenantId = session.user.tenantId;
-    if (!tenantId) {
-      return NextResponse.json(
-        { error: { code: 'FORBIDDEN', message: 'No tenant associated with session' } },
-        { status: 403 },
-      );
+    let tenantId: string;
+    try {
+      tenantId = await requireActiveTenant();
+    } catch (err) {
+      return activeTenantApiResponse(err);
     }
 
     const format = (request.nextUrl.searchParams.get('format') ?? 'csv').toLowerCase();

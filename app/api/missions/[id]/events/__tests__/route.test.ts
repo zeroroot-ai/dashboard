@@ -19,6 +19,7 @@ import { NextRequest } from 'next/server';
 // available when the factory closures are evaluated.
 const {
   mockGetServerSession,
+  mockRequireActiveTenant,
   mockListMissions,
   mockListCheckpoints,
   mockUserClient,
@@ -26,6 +27,7 @@ const {
   mockQuery,
 } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
+  mockRequireActiveTenant: vi.fn(),
   mockListMissions: vi.fn(),
   mockListCheckpoints: vi.fn(),
   mockUserClient: vi.fn(),
@@ -35,6 +37,11 @@ const {
 
 vi.mock('@/src/lib/auth', () => ({
   getServerSession: mockGetServerSession,
+}));
+
+vi.mock('@/src/lib/auth/active-tenant', () => ({
+  requireActiveTenant: mockRequireActiveTenant,
+  activeTenantApiResponse: vi.fn(),
 }));
 
 vi.mock('@/src/lib/gibson-client', () => ({
@@ -89,11 +96,15 @@ async function readUntil(
 
 beforeEach(() => {
   mockGetServerSession.mockReset();
+  mockRequireActiveTenant.mockReset();
   mockListMissions.mockReset();
   mockListCheckpoints.mockReset();
   mockUserClient.mockReset();
   mockIsReady.mockReset();
   mockQuery.mockReset();
+
+  // Default: active tenant resolves to t1.
+  mockRequireActiveTenant.mockResolvedValue('t1');
 
   // userClient(DaemonService).listCheckpoints(...) — newest-first, empty here.
   mockListCheckpoints.mockResolvedValue({ checkpoints: [] });

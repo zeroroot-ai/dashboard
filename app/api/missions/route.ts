@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { listMissions, serializeMission } from '@/src/lib/gibson-client';
 import type { Mission, MissionStatus, PaginatedResponse } from '@/src/types';
 
@@ -32,6 +33,13 @@ export async function GET(request: NextRequest) {
     // The previous hasPermission() gate was a no-op since loadSchema() was
     // stubbed to empty after GetAuthSchema RPC was removed from the daemon.
 
+    let tenantId: string;
+    try {
+      tenantId = await requireActiveTenant();
+    } catch (err) {
+      return activeTenantApiResponse(err);
+    }
+
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams;
     const statusFilter = searchParams.get('status') as MissionStatus | null;
@@ -57,7 +65,7 @@ export async function GET(request: NextRequest) {
         agents: [],
         findings: serialized.findingCount,
         events: 0,
-        tenantId: session.user.tenantId || '',
+        tenantId,
         missionDefinitionId: serialized.missionDefinitionId,
       };
     });

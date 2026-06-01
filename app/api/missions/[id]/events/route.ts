@@ -48,6 +48,7 @@ import { create } from "@bufbuild/protobuf";
 
 import { logger } from "@/src/lib/logger";
 import { getServerSession } from "@/src/lib/auth";
+import { requireActiveTenant, activeTenantApiResponse } from "@/src/lib/auth/active-tenant";
 import { LokiClient } from "@/src/lib/loki-client";
 import { listMissions, userClient } from "@/src/lib/gibson-client";
 import {
@@ -130,6 +131,13 @@ export async function GET(
     });
   }
 
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
+  }
+
   const { id: missionId } = await params;
 
   if (!missionId) {
@@ -192,7 +200,6 @@ export async function GET(
       };
 
       const userId = session.user?.id ?? undefined;
-      const tenantId = session.user?.tenantId ?? undefined;
 
       // Single poll iteration: fetch the latest checkpoint page +
       // mission status + emit diffs.

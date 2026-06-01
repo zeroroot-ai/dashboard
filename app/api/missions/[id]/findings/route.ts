@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { userClient } from '@/src/lib/gibson-client';
 import { GraphService } from '@/src/gen/gibson/graph/v1/graph_pb';
 
@@ -21,12 +22,13 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
-
-    const tenantId = session.user.tenantId;
-    if (!tenantId) {
-      return NextResponse.json({ error: 'No tenant associated with session' }, { status: 403 });
+    try {
+      await requireActiveTenant();
+    } catch (err) {
+      return activeTenantApiResponse(err);
     }
+
+    const { id } = await params;
 
     // GetFindings with missionId filter returns findings reachable from this
     // mission within 3 hops — same semantics as the prior Cypher traversal.

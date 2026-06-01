@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { listMissions, serializeMission, userClient, stopMission } from '@/src/lib/gibson-client';
 import { GraphService } from '@/src/gen/gibson/graph/v1/graph_pb';
 import type { Mission, MissionStatus } from '@/src/types';
@@ -27,6 +28,13 @@ export async function GET(
     }
 
     // Authz enforced by daemon ext-authz on the downstream RPC.
+
+    let tenantId: string;
+    try {
+      tenantId = await requireActiveTenant();
+    } catch (err) {
+      return activeTenantApiResponse(err);
+    }
 
     const { id } = await params;
 
@@ -111,13 +119,13 @@ export async function GET(
       agents,
       findings: graphFindingCount || serialized.findingCount,
       events: 0,
-      tenantId: session.user.tenantId || '',
+      tenantId,
       missionDefinitionId: serialized.missionDefinitionId,
     };
 
     return NextResponse.json(mission);
   } catch (error) {
-    console.error('Failed to fetch mission:', error);
+    console.warn('Failed to fetch mission:', error);
     return NextResponse.json(
       { error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch mission' } },
       { status: 500 }
@@ -156,15 +164,14 @@ export async function DELETE(
 
     // Authz enforced by daemon ext-authz on the downstream RPC.
 
-    const { id } = await params;
-
-    const deleteTenantId = session.user.tenantId;
-    if (!deleteTenantId) {
-      return NextResponse.json(
-        { error: { code: 'FORBIDDEN', message: 'No tenant associated with session' } },
-        { status: 403 }
-      );
+    let deleteTenantId: string;
+    try {
+      deleteTenantId = await requireActiveTenant();
+    } catch (err) {
+      return activeTenantApiResponse(err);
     }
+
+    const { id } = await params;
 
     // Find the mission via daemon — listMissions is the daemon source of truth.
     const missionListResp = await listMissions(false, 1000, session?.user?.id);

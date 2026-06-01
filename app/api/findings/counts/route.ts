@@ -11,6 +11,7 @@ import 'server-only';
 import { NextResponse } from 'next/server';
 import { ConnectError, Code } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { userClient } from '@/src/lib/gibson-client';
 import {
   GraphService,
@@ -40,9 +41,10 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const tenantId = session.user.tenantId;
-  if (!tenantId) {
-    return NextResponse.json({ error: 'No tenant context' }, { status: 403 });
+  try {
+    await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
   }
 
   try {
