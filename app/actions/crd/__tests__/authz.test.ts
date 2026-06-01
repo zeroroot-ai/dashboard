@@ -46,6 +46,7 @@ vi.mock("@/src/lib/gibson-client", () => ({
     writeAccessTuples: vi.fn(async () => ({})),
     validateComponent: vi.fn(async () => ({})),
     grantComponentPermissions: vi.fn(async () => ({})),
+    setCatalogEnabled: vi.fn(async () => ({ written: true, deleted: false })),
   })),
   serviceClient: vi.fn(() => ({
     writeAccessTuples: vi.fn(async () => ({})),
@@ -75,8 +76,6 @@ vi.mock("@/src/lib/k8s/tenants", () => ({
     status: { bootstrapSecretRef: "boot-secret" },
   })),
   getBootstrapToken: vi.fn(async () => ({ token: "TESTTOKEN", platformUrl: "https://test" })),
-  applyComponentGrant: vi.fn(async (_ns: string, name: string) => ({ metadata: { name } })),
-  deleteComponentGrant: vi.fn(async () => undefined),
   tenantNamespace: (name: string) => `tenant-${name}`,
 }));
 
@@ -128,8 +127,11 @@ import { CRD_PERMISSIONS, requireCrdSession } from "../_authz";
 import type { CrdActionName } from "../types";
 import { getServerSession } from "@/src/lib/auth";
 import * as k8sTenants from "@/src/lib/k8s/tenants";
+import { userClient } from "@/src/lib/gibson-client";
 
 const getSessionMock = getServerSession as unknown as Mock;
+const userClientMock = userClient as unknown as Mock;
+const getCatalogClientMock = () => (userClientMock.mock.results[userClientMock.mock.results.length - 1]?.value as { setCatalogEnabled?: Mock })?.setCatalogEnabled ?? vi.fn();
 
 // ---------------------------------------------------------------------------
 // Session builders.
@@ -298,7 +300,9 @@ const MANIFESTS: ActionManifest[] = [
           tenantName: t,
           componentRef: { kind: "unknown" as "tool", name: "nmap" },
         }),
-    k8sMock: () => k8sTenants.applyComponentGrant as Mock,
+    // ADR-0041: grant actions now call the daemon via MembershipService.SetCatalogEnabled
+    // instead of writing ComponentGrant CRDs directly to K8s.
+    k8sMock: () => getCatalogClientMock(),
   },
   {
     name: "revokeGrantAction",
@@ -310,7 +314,9 @@ const MANIFESTS: ActionManifest[] = [
     invokeBadInput:
       (t) => () =>
         grantActions.revokeGrantAction(t, { kind: "tool", name: "UPPERCASE" }),
-    k8sMock: () => k8sTenants.deleteComponentGrant as Mock,
+    // ADR-0041: grant actions now call the daemon via MembershipService.SetCatalogEnabled
+    // instead of deleting ComponentGrant CRDs directly from K8s.
+    k8sMock: () => getCatalogClientMock(),
   },
   {
     name: "inviteMemberAction",

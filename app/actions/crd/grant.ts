@@ -1,23 +1,38 @@
 'use server';
 
+/**
+ * grant.ts — catalog-enablement server actions.
+ *
+ * Replaces the previous ComponentGrant CRD write (applyComponentGrant →
+ * k8s().apply) with a daemon RPC call to MembershipService.SetCatalogEnabled
+ * (ADR-0041 remaining gap). All backing-store access now routes through the
+ * daemon via Envoy + ext-authz; the dashboard no longer writes ComponentGrant
+ * CRDs directly to Kubernetes.
+ *
+ * Auth: requireActiveTenant() for active-tenant resolution; requireCrdSession
+ * enforces the admin relation (defined in CRD_PERMISSIONS as { relation: "admin" }).
+ */
+
 import { revalidatePath } from 'next/cache';
 
+import { MembershipService } from '@/src/gen/gibson/tenant/v1/membership_pb';
+import { userClient } from '@/src/lib/gibson-client';
 import {
-  applyComponentGrant,
-  deleteComponentGrant,
-  tenantNamespace,
-} from '@/src/lib/k8s/tenants';
-import { getTenantOwnerRef } from '@/src/lib/k8s/owner-ref';
-import { ComponentRef } from '@/src/lib/k8s/types';
-import { K8sError } from '@/src/lib/k8s/errors';
+  requireActiveTenant,
+  NoActiveTenantError,
+  StaleActiveTenantError,
+} from '@/src/lib/auth/active-tenant';
 import { emitCrdAuditFromGate } from '@/src/lib/audit/crd';
-
-import { classifyK8sError, type ActionResult } from './types';
+import type { ActionResult } from './types';
 import { requireCrdSession } from './_authz';
-import { grantComponentInput, revokeGrantInput } from './schemas';
+import { grantComponentInput, revokeGrantInput, componentRefSchema } from './schemas';
+import type { z } from 'zod';
 
-function grantName(ref: ComponentRef): string {
-  return `grant-${ref.kind}-${ref.name}`.slice(0, 63);
+/** ComponentRef is the domain type for a {kind, name} component reference. */
+type ComponentRef = z.infer<typeof componentRefSchema>;
+
+function componentKey(ref: ComponentRef): string {
+  return `${ref.kind}-${ref.name}`;
 }
 
 export async function grantComponentAction(input: {
@@ -48,40 +63,49 @@ export async function grantComponentAction(input: {
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
   }
 
-  const name = grantName(parsed.data.componentRef);
+  let activeTenantId: string;
   try {
-    const ownerRef = await getTenantOwnerRef(parsed.data.tenantName);
-    const cg = await applyComponentGrant(
-      tenantNamespace(parsed.data.tenantName),
-      name,
-      { componentRef: parsed.data.componentRef, scope: 'tenant' },
-      ownerRef,
-    );
+    activeTenantId = await requireActiveTenant();
+  } catch (err) {
+    if (err instanceof NoActiveTenantError || err instanceof StaleActiveTenantError) {
+      return { ok: false, error: 'No active tenant.', code: 'FORBIDDEN' };
+    }
+    throw err;
+  }
+
+  const ref = parsed.data.componentRef;
+  const key = componentKey(ref);
+
+  try {
+    const client = userClient(MembershipService);
+    await client.setCatalogEnabled({
+      componentRef: key,
+      enabled: true,
+    });
     revalidatePath(`/dashboard/tools`);
     emitCrdAuditFromGate({
       session: gate.session,
       userId: gate.userId,
       action: 'grantComponentAction',
       outcome: 'ok',
-      targetTenant: parsed.data.tenantName,
+      targetTenant: activeTenantId,
       inputKeys,
-      resourceRef: cg.metadata.name,
+      resourceRef: key,
     });
-    return { ok: true, data: { name: cg.metadata.name } };
+    return { ok: true, data: { name: key } };
   } catch (e) {
-    const err = e as K8sError;
-    const code = classifyK8sError(err);
+    const errMsg = e instanceof Error ? e.message : String(e);
     emitCrdAuditFromGate({
       session: gate.session,
       userId: gate.userId,
       action: 'grantComponentAction',
       outcome: 'internal',
-      targetTenant: parsed.data.tenantName,
+      targetTenant: activeTenantId,
       inputKeys,
-      errorCode: code,
-      errorMessage: err.message,
+      errorCode: 'INTERNAL',
+      errorMessage: errMsg,
     });
-    return { ok: false, error: err.message, code };
+    return { ok: false, error: errMsg, code: 'INTERNAL' };
   }
 }
 
@@ -112,35 +136,48 @@ export async function revokeGrantAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
   }
 
+  let activeTenantId: string;
   try {
-    await deleteComponentGrant(
-      tenantNamespace(parsed.data.tenantName),
-      grantName(parsed.data.componentRef),
-    );
+    activeTenantId = await requireActiveTenant();
+  } catch (err) {
+    if (err instanceof NoActiveTenantError || err instanceof StaleActiveTenantError) {
+      return { ok: false, error: 'No active tenant.', code: 'FORBIDDEN' };
+    }
+    throw err;
+  }
+
+  const ref = parsed.data.componentRef;
+  const key = componentKey(ref);
+
+  try {
+    const client = userClient(MembershipService);
+    await client.setCatalogEnabled({
+      componentRef: key,
+      enabled: false,
+    });
     revalidatePath(`/dashboard/tools`);
     emitCrdAuditFromGate({
       session: gate.session,
       userId: gate.userId,
       action: 'revokeGrantAction',
       outcome: 'ok',
-      targetTenant: parsed.data.tenantName,
+      targetTenant: activeTenantId,
       inputKeys,
-      resourceRef: grantName(parsed.data.componentRef),
+      resourceRef: key,
     });
     return { ok: true, data: undefined };
   } catch (e) {
-    const err = e as K8sError;
-    const code = classifyK8sError(err);
+    const errMsg = e instanceof Error ? e.message : String(e);
     emitCrdAuditFromGate({
       session: gate.session,
       userId: gate.userId,
       action: 'revokeGrantAction',
       outcome: 'internal',
-      targetTenant: parsed.data.tenantName,
+      targetTenant: activeTenantId,
       inputKeys,
-      errorCode: code,
-      errorMessage: err.message,
+      errorCode: 'INTERNAL',
+      errorMessage: errMsg,
     });
-    return { ok: false, error: err.message, code };
+    return { ok: false, error: errMsg, code: 'INTERNAL' };
   }
 }

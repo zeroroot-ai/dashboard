@@ -1993,6 +1993,15 @@ export const AuthRegistry: Record<string, AuthEntry> = {
     allowedIdentities: IdentityClass.USER,
     unauthenticated: false,
   },
+  "/gibson.tenant.v1.MembershipService/SetCatalogEnabled": {
+    method: "/gibson.tenant.v1.MembershipService/SetCatalogEnabled",
+    service: "gibson.tenant.v1.MembershipService",
+    relation: "admin",
+    objectType: "tenant",
+    objectDeriver: "tenant_from_identity",
+    allowedIdentities: IdentityClass.USER,
+    unauthenticated: false,
+  },
   "/gibson.tenant.v1.MembershipService/SetComponentAccess": {
     method: "/gibson.tenant.v1.MembershipService/SetComponentAccess",
     service: "gibson.tenant.v1.MembershipService",
