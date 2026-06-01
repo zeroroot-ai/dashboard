@@ -80,10 +80,11 @@ export default function UserDetailPage() {
   const currentUserId = session?.user?.id ?? "";
   const isSelf = userId === currentUserId;
   // Member/role management is gated on the role-assignment RPC (relation: admin).
-  const { allowed: canManageMembers } = useAuthorize(
+  const { allowed: canManageMembers, loading: authLoading } = useAuthorize(
     "/gibson.admin.v1.TenantAdminService/SetTenantRole",
   );
-  const canEdit = canManageMembers && !isSelf;
+  // During the auth query, treat as not allowed (hide-on-loading contract).
+  const canEdit = !authLoading && canManageMembers && !isSelf;
 
   // Derive whether the viewing user is the tenant owner from the FGA-resolved
   // rolesByTenant map populated by TenantContextProvider.

@@ -40,7 +40,7 @@ jobs:
       component_path: .
       dockerfile_path: Dockerfile
       image_name: ghcr.io/zeroroot-ai/dashboard
-      tag_pattern: v(.*)
+      tag_pattern: (v.*)
     secrets:
       # PAT with read access to zeroroot-ai/tenant-operator (private). The
       # Dockerfile fetches plans/plans.yaml + plans/plans.schema.json from
