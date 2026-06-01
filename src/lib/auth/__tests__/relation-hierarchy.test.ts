@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { satisfiesRelation, relationHierarchy } from '../relation-hierarchy';
+import { satisfiesRelation, relationHierarchy, rolesAreCrossTenant } from '../relation-hierarchy';
 
 describe('satisfiesRelation — hierarchy ordering', () => {
   it('owner satisfies admin (owner implies admin)', () => {
@@ -92,5 +92,27 @@ describe('relationHierarchy export', () => {
 
   it('member tier is a positive number (above deny floor)', () => {
     expect((relationHierarchy['member'] ?? 0)).toBeGreaterThan(0);
+  });
+});
+
+describe('rolesAreCrossTenant (#615)', () => {
+  it('is true for a platform_operator', () => {
+    expect(rolesAreCrossTenant(['platform_operator'])).toBe(true);
+  });
+
+  it('is false for a tenant admin', () => {
+    expect(rolesAreCrossTenant(['admin'])).toBe(false);
+  });
+
+  it('is false for a tenant member', () => {
+    expect(rolesAreCrossTenant(['member'])).toBe(false);
+  });
+
+  it('is false for no roles', () => {
+    expect(rolesAreCrossTenant([])).toBe(false);
+  });
+
+  it('is true when any role is cross-tenant', () => {
+    expect(rolesAreCrossTenant(['member', 'platform_operator'])).toBe(true);
   });
 });

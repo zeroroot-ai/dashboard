@@ -111,12 +111,17 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
   // Derive roles from the cookie-confirmed active tenant only (no auto-pick).
   const roles: string[] = activeTenantId && rolesByTenant[activeTenantId] ? [rolesByTenant[activeTenantId]!] : [];
   let permissions: string[] = [];
-  let crossTenant = false;
+
+  // crossTenant is derived DIRECTLY from the active-tenant role — not from the
+  // daemon auth schema. The schema lookup (resolveCrossTenant → GetAuthSchema)
+  // was removed and always returned false, silently breaking platform-operator
+  // provisioning. See rolesAreCrossTenant / CROSS_TENANT_ROLES.
+  const { rolesAreCrossTenant } = await import('@/src/lib/auth/relation-hierarchy');
+  const crossTenant = rolesAreCrossTenant(roles);
 
   try {
-    const { resolveEffectivePermissions, resolveCrossTenant } = await import('@/src/lib/auth/schema');
+    const { resolveEffectivePermissions } = await import('@/src/lib/auth/schema');
     permissions = await resolveEffectivePermissions(roles);
-    crossTenant = await resolveCrossTenant(roles);
   } catch (err) {
     console.error('[auth] Failed to resolve permissions:', err);
   }
