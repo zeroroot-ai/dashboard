@@ -84,7 +84,14 @@ export default async function MembersSettingsPage() {
           ) : members.length === 0 ? (
             <p className="text-sm text-muted-foreground">No members found.</p>
           ) : (
-            <MembersTable members={members} />
+            <MembersTable
+              members={members}
+              currentUser={{
+                id: session.user.id ?? "",
+                name: session.user.name ?? "",
+                email: session.user.email ?? "",
+              }}
+            />
           )}
         </CardContent>
       </Card>
