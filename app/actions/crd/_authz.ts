@@ -10,6 +10,11 @@ import "server-only";
  */
 
 import { getServerSession, type GibsonSession } from "@/src/lib/auth";
+import {
+  requireActiveTenant,
+  NoActiveTenantError,
+  StaleActiveTenantError,
+} from "@/src/lib/auth/active-tenant";
 import { hasPermission, isCrossTenant } from "@/src/lib/auth/schema";
 
 import { emitCrdAudit } from "@/src/lib/audit/crd";
@@ -116,9 +121,21 @@ export async function requireCrdSession<T = void>(
 
   // 4. Tenant-scope match — skipped when params.tenantName is omitted.
   //    Cross-tenant sessions bypass this check; the result is recorded in
-  //    the success-path audit by the caller.
+  //    the success-path audit by the caller. The active tenant is resolved
+  //    via requireActiveTenant() (HMAC-signed cookie) — not from the session
+  //    JWT — so a revoked membership cannot smuggle a stale tenantId past
+  //    this gate.
   if (params.tenantName && !isCrossTenant(session)) {
-    if (session.user.tenantId !== params.tenantName) {
+    let activeTenantId: string;
+    try {
+      activeTenantId = await requireActiveTenant();
+    } catch (err) {
+      if (err instanceof NoActiveTenantError || err instanceof StaleActiveTenantError) {
+        return denial("forbidden", "FORBIDDEN", "No active tenant.", session);
+      }
+      throw err;
+    }
+    if (activeTenantId !== params.tenantName) {
       return denial("forbidden", "FORBIDDEN", "Not authorized.", session);
     }
   }

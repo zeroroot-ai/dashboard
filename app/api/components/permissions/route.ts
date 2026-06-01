@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
+import { logger } from '@/src/lib/logger';
 
 /**
  * GET /api/components/permissions
@@ -26,7 +28,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const tenantId = session.user.tenantId;
+    let tenantId: string;
+    try {
+      tenantId = await requireActiveTenant();
+    } catch (err) {
+      return activeTenantApiResponse(err);
+    }
 
     const permissions = {
       plugins: {} as Record<string, { enabled: boolean; readEnabled: boolean; writeEnabled: boolean }>,
@@ -38,20 +45,18 @@ export async function GET() {
     // Per-tenant plugin enable flags moved to the Tenant CRD; for now we
     // surface every visible plugin as enabled and let the daemon deny at
     // call time.
-    if (tenantId) {
-      try {
-        const { listPlugins } = await import('@/src/lib/gibson-client');
-        const { plugins: pluginList } = await listPlugins(session?.user?.id, tenantId);
-        for (const plugin of pluginList ?? []) {
-          permissions.plugins[plugin.name] = {
-            enabled: true,
-            readEnabled: true,
-            writeEnabled: true,
-          };
-        }
-      } catch (err) {
-        console.warn('Failed to fetch plugins for permissions:', err);
+    try {
+      const { listPlugins } = await import('@/src/lib/gibson-client');
+      const { plugins: pluginList } = await listPlugins(session?.user?.id, tenantId);
+      for (const plugin of pluginList ?? []) {
+        permissions.plugins[plugin.name] = {
+          enabled: true,
+          readEnabled: true,
+          writeEnabled: true,
+        };
       }
+    } catch (err) {
+      logger.warn({ err, tenantId }, 'Failed to fetch plugins for permissions');
     }
 
     // Populate tool permissions — all visible tools are enabled by default
@@ -62,7 +67,7 @@ export async function GET() {
         permissions.tools[tool.name] = { enabled: true };
       }
     } catch (err) {
-      console.warn('Failed to fetch tools for permissions:', err);
+      logger.warn({ err }, 'Failed to fetch tools for permissions');
     }
 
     // Populate agent permissions — all visible agents are enabled by default
@@ -73,7 +78,7 @@ export async function GET() {
         permissions.agents[agent.name] = { enabled: true };
       }
     } catch (err) {
-      console.warn('Failed to fetch agents for permissions:', err);
+      logger.warn({ err }, 'Failed to fetch agents for permissions');
     }
 
     return NextResponse.json(permissions);

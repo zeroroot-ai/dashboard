@@ -6,11 +6,11 @@
  * never has to hold a daemon-direct gRPC transport — every call to the
  * daemon flows through Envoy via the server-side `userClient` wrapper.
  *
- * Tenant context is read from `session.user.tenantId` (set by Auth.js
- * from the `gibson_active_tenant` cookie per spec
- * `tenant-membership-not-in-jwt`); it is NOT accepted from a URL query
- * string. Putting the slug in the URL leaked the tenant identifier into
- * browser history / referer / access logs (dashboard#209).
+ * Tenant context is resolved via `requireActiveTenant()` (the HMAC-signed
+ * `gibson_active_tenant` cookie per spec `tenant-membership-not-in-jwt`);
+ * it is NOT accepted from a URL query string. Putting the slug in the URL
+ * leaked the tenant identifier into browser history / referer / access logs
+ * (dashboard#209).
  *
  * Spec: zero-trust-hardening Requirements 6.1, 6.2 — restore the
  * "always through Envoy" doctrine in code by removing the browser-side
@@ -36,6 +36,7 @@ import { NextResponse } from 'next/server';
 import { toJson } from '@bufbuild/protobuf';
 
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { userClient } from '@/src/lib/gibson-client';
 import {
   DaemonService,
@@ -61,11 +62,13 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
   }
 
-  // Tenant context comes from the session (active-tenant cookie), never
+  // Tenant context comes from the active-tenant cookie resolver, never
   // from URL params (dashboard#209). See route module doc.
-  const tenantId = session.user.tenantId ?? '';
-  if (!tenantId) {
-    return NextResponse.json({ error: 'no-active-tenant' }, { status: 400 });
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
   }
 
   try {

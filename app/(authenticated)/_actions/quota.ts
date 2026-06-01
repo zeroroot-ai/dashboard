@@ -11,6 +11,7 @@
  */
 
 import { getServerSession } from "@/src/lib/auth";
+import { requireActiveTenant } from "@/src/lib/auth/active-tenant";
 import { getTenantQuotaUsage } from "@/src/lib/gibson-client";
 import { logger } from "@/src/lib/logger";
 
@@ -21,15 +22,21 @@ export type QuotaUsage = {
 
 /**
  * getQuotaUsage returns a fresh usage snapshot for the current session's
- * tenant. Returns null when the session has no tenant or the daemon is
+ * tenant. Returns null when no active-tenant cookie is set or the daemon is
  * unreachable, so callers render gracefully.
  */
 export async function getQuotaUsage(): Promise<QuotaUsage | null> {
   const session = await getServerSession();
-  if (!session?.user?.tenantId) {
+  if (!session?.user) {
     return null;
   }
-  const tenantId = session.user.tenantId;
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch {
+    // No active tenant — caller renders gracefully without quota data.
+    return null;
+  }
   try {
     return await getTenantQuotaUsage(tenantId, tenantId, session.user.id);
   } catch (err) {

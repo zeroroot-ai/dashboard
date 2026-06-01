@@ -268,23 +268,23 @@ export async function measureTenantOperation<T>(
 // ============================================================================
 
 /**
- * Extracts tenant context from request headers or session.
- * This is a helper for API routes.
+ * Extracts tenant context from request headers for span annotation.
  *
- * @param headers - Request headers
- * @param session - Optional session object
- * @returns Tenant context or null
+ * This helper is for observability enrichment (span attributes) only — it is
+ * NOT an authorization gate. API route handlers that need a tenant ID for an
+ * RPC must call `requireActiveTenant()` from `@/src/lib/auth/active-tenant`
+ * directly; this function must not be used as a substitute.
+ *
+ * The `x-tenant-id` header is an internal tracing header set by Envoy when
+ * routing a request, not a trust boundary. No authorization decision may be
+ * based on it.
+ *
+ * @param headers - Request headers (for internal `x-tenant-id` tracing header)
+ * @returns Tenant ID string from the tracing header, or null
  */
 export function extractTenantFromRequest(
   headers: Headers,
-  session?: { user?: { tenantId?: string } }
 ): string | null {
-  // Try session first
-  if (session?.user?.tenantId) {
-    return session.user.tenantId;
-  }
-
-  // Try header (for API calls)
   const headerTenantId = headers.get('x-tenant-id');
   if (headerTenantId) {
     return headerTenantId;

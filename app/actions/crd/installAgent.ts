@@ -23,6 +23,7 @@ import { randomUUID } from "node:crypto";
 import { TenantAdminService } from "@/src/gen/gibson/admin/v1/tenant_pb";
 import { DiscoveryService } from "@/src/gen/gibson/daemon/discovery/v1/discovery_pb";
 import { userClient } from "@/src/lib/gibson-client";
+import { requireActiveTenant } from "@/src/lib/auth/active-tenant";
 import {
   listAccessibleComponentsAction,
   type DiscoveredItem,
@@ -66,9 +67,11 @@ export async function installAgentAction(
   if (!gate.ok) {
     return { ok: false, error: gate.result.ok ? "" : gate.result.error };
   }
-  const tenantId = gate.session.user.tenantId ?? "";
-  if (!tenantId) {
-    return { ok: false, error: "no tenant in session" };
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch {
+    return { ok: false, error: "no active tenant" };
   }
 
   // 1. Re-validate the manifest server-side (defence in depth).

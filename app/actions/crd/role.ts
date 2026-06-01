@@ -29,6 +29,11 @@ import { TenantAdminService } from "@/src/gen/gibson/admin/v1/tenant_pb";
 import { userClient } from "@/src/lib/gibson-client";
 import { logger } from "@/src/lib/logger";
 import { listTenantMembers, patchTenantMember } from "@/src/lib/k8s/tenants";
+import {
+  requireActiveTenant,
+  NoActiveTenantError,
+  StaleActiveTenantError,
+} from "@/src/lib/auth/active-tenant";
 
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
@@ -74,9 +79,14 @@ export async function setTenantRoleAction(input: {
     inputKeys: ["userId", "role"],
   });
   if (!gate.ok) return gate.result;
-  const callerTenantId = gate.session.user.tenantId;
-  if (!callerTenantId) {
-    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
+  let callerTenantId: string;
+  try {
+    callerTenantId = await requireActiveTenant();
+  } catch (err) {
+    if (err instanceof NoActiveTenantError || err instanceof StaleActiveTenantError) {
+      return { ok: false, error: "No active tenant.", code: "FORBIDDEN" };
+    }
+    throw err;
   }
   // 1. Authoritative FGA write. Fail here returns INTERNAL with no mutation.
   try {
@@ -156,9 +166,14 @@ export async function setTeamAdminAction(input: {
     inputKeys: ["teamId", "userId", "isAdmin"],
   });
   if (!gate.ok) return gate.result;
-  const callerTenantId = gate.session.user.tenantId;
-  if (!callerTenantId) {
-    return { ok: false, error: "session missing tenantId", code: "FORBIDDEN" };
+  let callerTenantId: string;
+  try {
+    callerTenantId = await requireActiveTenant();
+  } catch (err) {
+    if (err instanceof NoActiveTenantError || err instanceof StaleActiveTenantError) {
+      return { ok: false, error: "No active tenant.", code: "FORBIDDEN" };
+    }
+    throw err;
   }
   try {
     const client = userClient(TenantAdminService);

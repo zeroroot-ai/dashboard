@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { listPlugins, serializePlugin } from '@/src/lib/gibson-client';
 import type { ComponentHealth } from '@/src/types';
 
@@ -18,7 +19,14 @@ export async function GET() {
       );
     }
 
-    const tenantId = session.user.tenantId;
+    // Fail closed: require an active tenant before listing components.
+    // The daemon resolves tenant context from SPIFFE mTLS; tenantId is
+    // not passed to the RPC but guards against unauthenticated listing.
+    try {
+      await requireActiveTenant();
+    } catch (err) {
+      return activeTenantApiResponse(err);
+    }
 
     // Query plugins — SPIFFE mTLS transport resolves both _system and tenant components.
     const [systemResponse, tenantResponse] = await Promise.all([

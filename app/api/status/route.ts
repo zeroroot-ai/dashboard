@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import {
   getStatus,
   serializeStatus,
@@ -30,11 +31,16 @@ export async function GET() {
     );
   }
 
-  const tenantId = session.user.tenantId ?? undefined;
+  let tenantId: string;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
+  }
 
   // Fetch data from Gibson daemon — each call falls back to empty data on failure
   const [statusResponse, , agentsResponse] = await Promise.all([
-    getStatus(session?.user?.id, session?.user?.tenantId ?? undefined).catch(() => null),
+    getStatus(session?.user?.id, tenantId).catch(() => null),
     listMissions(true, 100, session?.user?.id).catch(() => ({ missions: [] })),
     listAgents(undefined, session?.user?.id).catch(() => ({ agents: [] })),
   ]);
