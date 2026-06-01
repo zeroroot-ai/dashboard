@@ -38,17 +38,20 @@ vi.mock("../_rate_limits", () => ({
 }));
 
 vi.mock("@/src/lib/auth/schema", () => ({
-  hasPermission: vi.fn(() => true),
   isCrossTenant: vi.fn(() => false),
-  loadSchema: vi.fn(async () => ({
-    schemaVersion: "",
-    roles: [],
-    permissions: [],
-    rpcRequirements: {},
-  })),
-  resolveEffectivePermissions: vi.fn(async () => []),
-  resolveCrossTenant: vi.fn(async () => false),
 }));
+
+// Tenant-scope resolution reads next/headers cookies(), which has no request
+// scope under vitest. Pin the active tenant to "acme".
+vi.mock("@/src/lib/auth/active-tenant", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/src/lib/auth/active-tenant")>();
+  return {
+    ...actual,
+    requireActiveTenant: vi.fn(async () => "acme"),
+    getActiveTenant: vi.fn(async () => "acme"),
+  };
+});
 
 vi.mock("@/src/lib/audit/crd", () => ({
   emitCrdAuditFromGate: vi.fn(),
@@ -76,10 +79,9 @@ function withSession(tenantId: string) {
       emailVerified: true,
       tenantId,
       tenants: [tenantId],
-      rolesByTenant: { [tenantId]: "tenant_admin" },
-      roles: ["tenant_admin"],
+      rolesByTenant: { [tenantId]: "admin" },
+      roles: ["admin"],
       groups: [],
-      permissions: ["members:revoke"],
       crossTenant: false,
     },
     expires: new Date(Date.now() + 3600_000).toISOString(),

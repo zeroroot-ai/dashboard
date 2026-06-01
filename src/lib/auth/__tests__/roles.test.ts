@@ -28,7 +28,6 @@ function makeSession(rolesByTenant: Record<string, string>): GibsonSession {
       roles: [],
       tenants: Object.keys(rolesByTenant),
       rolesByTenant,
-      permissions: [],
       crossTenant: false,
     },
     expires: new Date(Date.now() + 86400_000).toISOString(),

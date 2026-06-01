@@ -112,7 +112,6 @@ export default async function AuthLayout({
       <TenantHydrator
         currentTenant={currentTenant}
         availableTenants={availableTenants}
-        permissions={session.user.permissions ?? []}
         crossTenant={session.user.crossTenant ?? false}
         rolesByTenant={session.user.rolesByTenant ?? {}}
         groups={session.user.groups ?? []}

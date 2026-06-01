@@ -191,7 +191,6 @@ function renderSwitcher({
       <TenantContextProvider
         currentTenant={currentTenant}
         availableTenants={availableTenants}
-        permissions={[]}
         crossTenant={false}
         rolesByTenant={{}}
         groups={[]}

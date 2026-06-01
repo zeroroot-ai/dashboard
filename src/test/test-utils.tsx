@@ -56,7 +56,6 @@ export function createHookWrapper(queryClient: QueryClient, tenant: Tenant | nul
         <TenantContextProvider
           currentTenant={tenant}
           availableTenants={tenant ? [tenant] : []}
-          permissions={[]}
           crossTenant={false}
           rolesByTenant={tenant ? { [tenant.id]: 'admin' } : {}}
           groups={[]}
