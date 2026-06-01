@@ -142,6 +142,7 @@
     "immer": "^11.1.8",
     "input-otp": "^1.4.2",
     "isomorphic-dompurify": "^3.7.1",
+    "jose": "^6.2.3",
     "lottie-react": "^2.4.1",
     "lowlight": "^3.3.0",
     "lucide-react": "^0.522.0",
