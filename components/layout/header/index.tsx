@@ -7,8 +7,6 @@ import { Separator } from "@/components/ui/separator";
 import Notifications from "@/components/layout/header/notifications";
 import Search from "@/components/layout/header/search";
 import UserMenu from "@/components/layout/header/user-menu";
-import { ThemeCustomizerPanel } from "@/components/theme-customizer";
-import { ModeToggle } from "@/components/layout/header/mode-toggle";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { TenantDisplay } from "@/components/layout/header/tenant-display";
@@ -67,8 +65,6 @@ export function SiteHeader({ tenantSwitcher, quotaWidget }: SiteHeaderProps = {}
           {tenantSwitcher}
           <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
           <Notifications />
-          <ModeToggle />
-          <ThemeCustomizerPanel />
           <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
           <UserMenu />
         </div>

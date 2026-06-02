@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getServerSession } from "@/src/lib/auth";
 import { Lockup } from "@/components/layout/logo";
-import { ModeToggle } from "@/components/layout/header/mode-toggle";
 
 /**
  * Public chrome — landing, pricing, docs.
@@ -52,7 +51,6 @@ export async function SiteHeader() {
               sign in
             </Link>
           )}
-          <ModeToggle />
         </nav>
       </div>
     </header>

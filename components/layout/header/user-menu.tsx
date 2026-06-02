@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useTheme } from "next-themes";
-
 import { useSession } from "@/src/lib/session-client";
 // Logout uses the federated-signout route, not next-auth's client-side
 // signOut(). signOut() only clears the dashboard's Auth.js cookie — Zitadel
@@ -15,10 +12,6 @@ import {
   ChevronRightIcon,
   CreditCard,
   LogOut,
-  MonitorIcon,
-  MoonIcon,
-  Palette,
-  SunIcon,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -28,72 +21,12 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTierQuota } from "@/src/hooks/useTierQuota";
-
-import { setThemePreference } from "@/app/actions/theme";
-
-/**
- * Per-user theme cross-device sync (#57 sub-decision 2).
- *
- * The Server Action setThemePreference writes BOTH the same-device
- * `theme_choice` cookie (instant effect; what app/layout.tsx reads for
- * SSR) AND the user's Zitadel metadata (cross-device source of truth).
- * next-themes is still called to flip the live DOM class immediately
- * without waiting for the action to round-trip.
- */
-function ThemePicker() {
-  const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  return (
-    <DropdownMenuSub>
-      <DropdownMenuSubTrigger>
-        <Palette />
-        Theme
-      </DropdownMenuSubTrigger>
-      <DropdownMenuSubContent>
-        <DropdownMenuRadioGroup
-          value={mounted ? (theme ?? "system") : "system"}
-          onValueChange={(value) => {
-            setTheme(value);
-            // Fire-and-forget: the cookie is set on the next request,
-            // but next-themes already applied the live class so there's
-            // no visible delay. The Zitadel write also runs server-side
-            // inside the action.
-            void setThemePreference(value);
-          }}
-        >
-          <DropdownMenuRadioItem value="light">
-            <SunIcon className="mr-2 h-4 w-4" />
-            Light
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="dark">
-            <MoonIcon className="mr-2 h-4 w-4" />
-            Dark
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="system">
-            <MonitorIcon className="mr-2 h-4 w-4" />
-            System
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuSubContent>
-    </DropdownMenuSub>
-  );
-}
 
 function getInitials(name?: string | null): string {
   if (!name) return "??";
@@ -156,7 +89,6 @@ export default function UserMenu() {
             <Bell />
             Notifications
           </DropdownMenuItem>
-          <ThemePicker />
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem

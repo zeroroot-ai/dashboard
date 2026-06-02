@@ -277,8 +277,7 @@ export interface ZitadelAdminClient {
    * errors so the user-pref flow degrades gracefully rather than blocking
    * sign-in.
    *
-   * Used by the per-user theme cross-device sync — JWT signIn callback
-   * reads `theme_choice` here and seeds the cookie.
+   * Generic per-user metadata reader for Zitadel-canonical preferences.
    */
   getUserMetadata(userId: string, key: string): Promise<string | null>;
 
@@ -287,9 +286,7 @@ export interface ZitadelAdminClient {
    * value for a user. The value is base64-encoded for transport per
    * Zitadel's API contract.
    *
-   * Used by the per-user theme cross-device sync — the
-   * setThemePreference Server Action calls this on every theme change so
-   * the choice follows the user across devices.
+   * Generic per-user metadata writer for Zitadel-canonical preferences.
    */
   setUserMetadata(userId: string, key: string, value: string): Promise<void>;
 }

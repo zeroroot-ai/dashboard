@@ -4,7 +4,7 @@
  * Maps Fumadocs' `--color-fd-*` CSS custom properties onto the dashboard's
  * design-system tokens (#52) so the docs sidebar, code blocks, search
  * dialog, and content surface visually belong to the same product as the
- * marketing landing + authenticated chrome — light and dark both legible.
+ * marketing landing + authenticated chrome — the single dark brand.
  *
  * Every rule lives under `.docs-root` so no variable leaks into the
  * dashboard or the landing. Page chrome outside the docs root is
@@ -15,23 +15,21 @@
   /* Surfaces — map directly to the dashboard's semantic tokens. */
   --color-fd-background: var(--background);
 
-  /* Body prose contrast (#98).
+  /* Body prose contrast (#98, single dark brand #651).
    *
-   * --foreground in dark mode resolves to --primary-400 — a saturated
-   * terminal green that's atmospheric on the landing page but unreadable
-   * as sustained body text. Docs prose is the customer-developer's
-   * onboarding portal: clarity over atmosphere. Pin --color-fd-foreground
-   * (and the matching card/popover foregrounds) to desaturated base
-   * tokens that hit ≥4.5:1 contrast against the page background in both
-   * modes. Headings inherit this via Fumadocs' default styling; code
-   * fences and accents keep their green palette via separate tokens. */
-  --color-fd-foreground: var(--base-800);
+   * Docs prose is the customer-developer's onboarding portal: clarity over
+   * atmosphere. Pin --color-fd-foreground (and the matching card/popover
+   * foregrounds) to a high-luminance base token so sustained body text hits
+   * >=4.5:1 against the dark page background. Headings inherit this via
+   * Fumadocs' default styling; code fences and accents keep the brand
+   * palette via separate tokens. */
+  --color-fd-foreground: var(--base-200);
   --color-fd-muted: var(--muted);
   --color-fd-muted-foreground: var(--muted-foreground);
   --color-fd-popover: var(--popover);
-  --color-fd-popover-foreground: var(--base-800);
+  --color-fd-popover-foreground: var(--base-200);
   --color-fd-card: var(--card);
-  --color-fd-card-foreground: var(--base-800);
+  --color-fd-card-foreground: var(--base-200);
 
   /* Borders + focus ring */
   --color-fd-border: color-mix(in oklch, var(--highlight) 25%, transparent);
@@ -66,18 +64,6 @@
 
   color: var(--color-fd-foreground);
   background-color: var(--color-fd-background);
-}
-
-/*
- * Dark-mode prose overrides (#98). Flip --color-fd-foreground (and the
- * card/popover foregrounds) to the high-luminance base-200 so customer
- * developers can read the page without squinting. Light-mode keeps
- * --base-800 from the base .docs-root rule.
- */
-.dark .docs-root {
-  --color-fd-foreground: var(--base-200);
-  --color-fd-popover-foreground: var(--base-200);
-  --color-fd-card-foreground: var(--base-200);
 }
 
 /*
