@@ -1,24 +1,22 @@
 /**
  * Visual regression — docs routes.
  *
- * Spec: dashboard#98. Captures full-page screenshots of every page listed in
- * `content/docs/meta.json`, in both light and dark mode, against the local
- * dev server. Failures here mean the Fumadocs theme tokens drifted (most
- * commonly: an `--color-fd-*` mapping in `components/gibson/docs/docs-theme.css`
- * regressed to a saturated/atmospheric value that's unreadable as body prose).
+ * Spec: dashboard#98, single dark brand #654. Captures full-page screenshots
+ * of every page listed in `content/docs/meta.json` against the local dev
+ * server. There is one immutable dark brand — each route is captured once.
+ * Failures here mean the Fumadocs theme tokens drifted (most commonly: an
+ * `--color-fd-*` mapping in `components/gibson/docs/docs-theme.css` regressed
+ * to a saturated/atmospheric value that's unreadable as body prose).
  *
  * The body-text contrast fix in #98 remaps `--color-fd-foreground` (and the
- * matching card/popover foregrounds) to desaturated base tokens — base-800
- * in light, base-200 in dark — so customer developers can read the page
- * without squinting. These baselines lock that in.
- *
- * Theme is selected via the `theme_choice` cookie set before navigation, so
- * the SSR render picks up the chosen mode without dark-flash.
+ * matching card/popover foregrounds) to a high-luminance base token so
+ * customer developers can read the page without squinting. These baselines
+ * lock that in.
  *
  * Baselines live under e2e/visual/docs-routes.spec.ts-snapshots/. Regenerate
  * with `pnpm test:visual:update` and commit alongside the design change.
  *
- * Wall-clock budget: ≤ 120s on local dev (16 routes × 2 modes). CI runs
+ * Wall-clock budget: ≤ 60s on local dev (16 routes, dark only). CI runs
  * against the dev-server webServer in playwright.config.ts.
  */
 
@@ -44,22 +42,6 @@ const DOCS_ROUTES = [
   { name: "docs-observability", path: "/docs/observability" },
   { name: "docs-cli-reference", path: "/docs/cli-reference" },
 ] as const;
-
-const MODES = ["light", "dark"] as const;
-
-async function setTheme(page: Page, mode: (typeof MODES)[number]) {
-  await page.context().clearCookies();
-  await page.context().addCookies([
-    {
-      name: "theme_choice",
-      value: mode,
-      domain: "localhost",
-      path: "/",
-      httpOnly: false,
-      sameSite: "Lax",
-    },
-  ]);
-}
 
 /**
  * Steady-state wait: pause every animation + transition so intermediate
@@ -93,22 +75,17 @@ test.describe("visual regression — docs routes", () => {
   // they're prebuilt React pages.
   test.describe.configure({ timeout: 60_000 });
 
-  for (const mode of MODES) {
-    test.describe(`${mode} mode`, () => {
-      for (const route of DOCS_ROUTES) {
-        test(route.name, async ({ page }) => {
-          await setTheme(page, mode);
-          await page.goto(route.path);
-          await stabilise(page);
-          await expect(page).toHaveScreenshot(`${route.name}-${mode}.png`, {
-            fullPage: true,
-            maxDiffPixelRatio: 0.01,
-            // MDX routes can be slow on cold Turbopack compile. Public-route
-            // pages use the default 5s; docs routes need more breathing room.
-            timeout: 20_000,
-          });
-        });
-      }
+  for (const route of DOCS_ROUTES) {
+    test(route.name, async ({ page }) => {
+      await page.goto(route.path);
+      await stabilise(page);
+      await expect(page).toHaveScreenshot(`${route.name}-dark.png`, {
+        fullPage: true,
+        maxDiffPixelRatio: 0.01,
+        // MDX routes can be slow on cold Turbopack compile. Public-route
+        // pages use the default 5s; docs routes need more breathing room.
+        timeout: 20_000,
+      });
     });
   }
 });

@@ -25,10 +25,9 @@
  * are present. The visual regression tests the theme (background,
  * overlay chrome, token usage) rather than graph topology.
  *
- * Theme: dark mode only — the graph canvas uses a fixed dark palette
- * regardless of the theme_choice cookie (resolvedTheme = 'dark' in
- * KnowledgeGraph3D). We still set the cookie to dark to ensure the
- * surrounding UI chrome (sidebar, header) also renders in dark mode.
+ * Theme: there is one immutable dark brand. The graph canvas uses a fixed
+ * dark palette and the surrounding chrome is dark everywhere — no theme
+ * state to set.
  */
 
 import { test, expect, type Page, type BrowserContext } from "@playwright/test";
@@ -69,19 +68,6 @@ async function setAuthSession(context: BrowserContext) {
     {
       name: "gibson_active_tenant",
       value: MOCK_TENANT_ID,
-      domain: "localhost",
-      path: "/",
-      httpOnly: false,
-      sameSite: "Lax",
-    },
-  ]);
-}
-
-async function setDarkTheme(context: BrowserContext) {
-  await context.addCookies([
-    {
-      name: "theme_choice",
-      value: "dark",
       domain: "localhost",
       path: "/",
       httpOnly: false,
@@ -175,7 +161,6 @@ test.describe("visual regression — graph routes", () => {
     for (const route of GRAPH_ROUTES) {
       test(route.name, async ({ page, context }) => {
         await setAuthSession(context);
-        await setDarkTheme(context);
         await stubDataLayer(page);
         await page.goto(route.path);
         await stabilise(page);
