@@ -1063,13 +1063,8 @@ class Graph3DRenderer {
 
     this.drawStats();
 
-    // Draw FPS counter in dev mode
-    if (process.env.NODE_ENV === 'development') {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      ctx.font = '12px monospace';
-      ctx.textAlign = 'left';
-      ctx.fillText(`FPS: ${this.currentFps}`, 10, this.cssHeight - 10);
-    }
+    // Dev FPS counter is now shown in the Graph3DControls overlay (Stats/FPS HUD)
+    // with high-contrast color-coded display. This canvas fallback is no longer needed.
   }
 
   /**
@@ -1658,13 +1653,13 @@ export function KnowledgeGraph3D({
         </div>
       )}
 
-      {/* Controls hint */}
-      <div className="absolute bottom-4 left-4 text-xs text-muted-foreground bg-background/50 backdrop-blur-sm rounded px-2 py-1 pointer-events-none select-none">
+      {/* Controls hint — legible panel with border */}
+      <div className="absolute bottom-4 left-4 text-xs text-foreground/70 bg-background/80 backdrop-blur-md border border-border/60 rounded px-2 py-1 pointer-events-none select-none">
         Drag to pan &bull; Right-click drag to rotate &bull; Scroll to zoom &bull; Click node to select
       </div>
 
-      {/* Live zoom indicator */}
-      <div className="absolute bottom-4 right-4 text-xs text-muted-foreground bg-background/50 backdrop-blur-sm rounded px-2 py-1 pointer-events-none select-none tabular-nums">
+      {/* Live zoom indicator — high-contrast, monospace tabular nums */}
+      <div className="absolute bottom-4 right-4 text-xs text-foreground font-mono font-semibold tabular-nums bg-background/80 backdrop-blur-md border border-border/60 rounded px-2 py-1 pointer-events-none select-none">
         {zoomPct}%
       </div>
     </div>
