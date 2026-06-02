@@ -21,7 +21,6 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { useThemeConfig } from '@/components/active-theme';
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import { nodeRenderer, NODE_SIZES } from '@/src/lib/graph/node-renderer';
 import { parseEntityType, getRelationshipDashPattern, type RelationshipType } from '@/src/lib/graph/entity-taxonomy';
@@ -1384,10 +1383,7 @@ export function KnowledgeGraph3D({
   const rendererRef = useRef<Graph3DRenderer | null>(null);
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
   const [zoomPct, setZoomPct] = useState(100);
-  // The new dashboard's active-theme system manages visual presets, not a
-  // dark/light toggle. The graph always renders in dark-terminal style, matching
-  // the Gibson aesthetic regardless of theme preset.
-  useThemeConfig(); // consumed for potential future theme-reactive integration
+  // The graph always renders in the single dark brand.
   const resolvedTheme: 'dark' | 'light' = 'dark';
   const { performance } = useGraph3DPerformance();
 
