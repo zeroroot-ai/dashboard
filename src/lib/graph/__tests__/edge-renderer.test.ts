@@ -45,7 +45,6 @@ describe('EdgeRenderer', () => {
         glowEnabled: false,
         alpha: 1.0,
         lineWidth: 2,
-        theme: 'dark',
       };
 
       renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -62,7 +61,6 @@ describe('EdgeRenderer', () => {
         glowEnabled: false,
         alpha: 1.0,
         lineWidth: 2,
-        theme: 'dark',
       };
 
       renderer.drawEdge(mockCtx, 10, 20, 150, 200, options);
@@ -82,7 +80,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 1.0,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -98,7 +95,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 1.0,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -114,7 +110,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 1.0,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -130,7 +125,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 1.0,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -152,7 +146,6 @@ describe('EdgeRenderer', () => {
             glowEnabled: false,
             alpha: 1.0,
             lineWidth: 2,
-            theme: 'dark',
           };
 
           renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -172,7 +165,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 1.0,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -188,7 +180,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 1.0,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -205,7 +196,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 1.0,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -227,7 +217,6 @@ describe('EdgeRenderer', () => {
             glowEnabled: false,
             alpha: 1.0,
             lineWidth: 2,
-            theme: 'dark',
           };
 
           renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -246,24 +235,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: true,
           alpha: 1.0,
           lineWidth: 2,
-          theme: 'dark',
-        };
-
-        renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
-
-        expect(mockCtx.shadowBlur).toBeGreaterThan(0);
-        expect(mockCtx.shadowColor).toBeDefined();
-      });
-
-      it('should apply glow effect in light theme when enabled', () => {
-        const options: EdgeOptions = {
-          color: '#ffb000',
-          dashPattern: 'solid',
-          animated: false,
-          glowEnabled: true,
-          alpha: 1.0,
-          lineWidth: 2,
-          theme: 'light',
         };
 
         renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -280,7 +251,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 1.0,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -298,7 +268,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 0.5,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -316,7 +285,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 1.0,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -332,7 +300,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 0,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -358,7 +325,6 @@ describe('EdgeRenderer', () => {
             glowEnabled: false,
             alpha: 0.7,
             lineWidth: 2,
-            theme: 'dark',
           };
 
           expect(() => {
@@ -382,7 +348,6 @@ describe('EdgeRenderer', () => {
             glowEnabled: false,
             alpha: 1.0,
             lineWidth: width,
-            theme: 'dark',
           };
 
           renderer.drawEdge(mockCtx, 0, 0, 100, 100, options);
@@ -401,7 +366,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 1.0,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         expect(() => {
@@ -420,7 +384,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 1.0,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         expect(() => {
@@ -436,7 +399,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 1.0,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         expect(() => {
@@ -458,7 +420,6 @@ describe('EdgeRenderer', () => {
           glowEnabled: false,
           alpha: 1.0,
           lineWidth: 2,
-          theme: 'dark',
         };
 
         try {
@@ -482,7 +443,6 @@ describe('EdgeRenderer', () => {
             glowEnabled: false,
             alpha: 1.0,
             lineWidth: 2,
-            theme: 'dark',
           },
           {
             color: '#00bfff',
@@ -492,7 +452,6 @@ describe('EdgeRenderer', () => {
             glowEnabled: true,
             alpha: 0.8,
             lineWidth: 3,
-            theme: 'light',
           },
           {
             color: 'rgba(255, 0, 0, 0.5)',
@@ -502,7 +461,6 @@ describe('EdgeRenderer', () => {
             glowEnabled: true,
             alpha: 0.5,
             lineWidth: 1,
-            theme: 'dark',
           },
           {
             color: '#ff6b6b',
@@ -511,7 +469,6 @@ describe('EdgeRenderer', () => {
             glowEnabled: false,
             alpha: 0.3,
             lineWidth: 4,
-            theme: 'light',
           },
         ];
 

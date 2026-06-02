@@ -19,7 +19,6 @@ export interface EdgeOptions {
   glowEnabled: boolean;
   alpha: number;
   lineWidth: number;
-  theme: 'dark' | 'light';
 }
 
 /**
@@ -34,18 +33,12 @@ const DASH_PATTERNS: Record<DashPattern, number[]> = {
 };
 
 /**
- * Glow configuration by theme
- * Kept subtle for clean, readable edges
+ * Glow configuration for the single dark brand.
+ * Kept subtle for clean, readable edges.
  */
 const GLOW_CONFIG = {
-  dark: {
-    shadowBlur: 3,
-    shadowColor: 'rgba(255, 176, 0, 0.25)',  // Very subtle amber glow
-  },
-  light: {
-    shadowBlur: 2,
-    shadowColor: 'rgba(0, 0, 0, 0.1)',       // Very subtle drop shadow
-  },
+  shadowBlur: 3,
+  shadowColor: 'rgba(139, 92, 246, 0.25)',  // Very subtle brand-violet glow
 };
 
 export class EdgeRenderer {
@@ -84,9 +77,8 @@ export class EdgeRenderer {
 
       // Apply glow effect if enabled
       if (options.glowEnabled) {
-        const glowConfig = GLOW_CONFIG[options.theme];
-        ctx.shadowBlur = glowConfig.shadowBlur;
-        ctx.shadowColor = glowConfig.shadowColor;
+        ctx.shadowBlur = GLOW_CONFIG.shadowBlur;
+        ctx.shadowColor = GLOW_CONFIG.shadowColor;
       } else {
         ctx.shadowBlur = 0;
       }

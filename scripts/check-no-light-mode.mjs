@@ -9,15 +9,16 @@
  *   2. The `theme_choice` cookie/metadata key (per-user/-device theme state).
  *   3. In CSS: a `.dark` class selector, a `prefers-color-scheme` media
  *      query, or a class/media-based `@custom-variant dark` definition.
+ *   4. A `'light'`/`"light"` THEME string literal — i.e. one appearing on a
+ *      line that also mentions `dark`, `theme`, or `mode`. This catches
+ *      reintroduced theme machinery (`'dark' | 'light'` unions,
+ *      `theme: 'light'`, `mode="light"`) while leaving unrelated uses of the
+ *      word "light" alone (e.g. a "light scan" intensity option).
  *
  * The sanctioned dark-variant form is the always-on `@custom-variant
  * dark (&)` in app/globals.css — it makes every `dark:` utility apply
  * unconditionally with no `.dark` class and no media query. That form is
  * explicitly allowed.
- *
- * NOTE: the `'light'`/`"light"` theme-string-literal ban is added in #653
- * once the residual references (design-tokens page, graph color tables)
- * are drained. It is intentionally NOT enforced here yet.
  *
  * Scanned roots: app/, components/, src/, lib/, auth.ts, middleware.ts.
  * Skipped: node_modules/, .next/, e2e/ (covered by #654), this script.
@@ -68,6 +69,11 @@ export function scanContent(content, ext) {
     if (!isCss) {
       if (/\bfrom\s+['"]next-themes['"]/.test(line) || /require\(\s*['"]next-themes['"]\s*\)/.test(line)) {
         violations.push({ rule: "next-themes import", line: n });
+      }
+      // A `'light'`/`"light"` THEME literal — only when the line also mentions
+      // dark/theme/mode, so non-theme uses of "light" are left alone.
+      if (/['"]light['"]/.test(line) && /\bdark\b|\btheme\b|\bmode\b/i.test(line)) {
+        violations.push({ rule: "light theme literal", line: n });
       }
     }
 
@@ -138,12 +144,17 @@ async function selftest() {
     ["c.css", `.dark { --background: black; }`, ".css", ".dark selector"],
     ["d.css", `@media (prefers-color-scheme: light) { :root {} }`, ".css", "prefers-color-scheme media query"],
     ["e.css", `@custom-variant dark (&:is(.dark *));`, ".css", "class/media @custom-variant dark"],
+    ["f.ts", `let t: 'dark' | 'light' = 'dark';`, ".ts", "light theme literal"],
+    ["g.tsx", `<ModeCard mode="light">`, ".tsx", "light theme literal"],
+    ["h.ts", `theme: 'light',`, ".ts", "light theme literal"],
   ];
   // Sanctioned forms that must NOT trigger.
   const negatives = [
     ["ok1.css", `@custom-variant dark (&);`, ".css"],
     ["ok2.tsx", `// removed next-themes; see app/globals.css`, ".tsx"],
     ["ok3.css", `/* mirror :root/.dark in globals */ :root { --x: 0; }`, ".css"],
+    // A non-theme "light" value (scan intensity) must be left alone.
+    ["ok4.ts", `{ value: 'light', label: 'Quick scan, common subdomains only' },`, ".ts"],
   ];
 
   let ok = true;

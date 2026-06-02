@@ -47,8 +47,6 @@ export interface UIState {
   setContextPanelActiveTab: (tab: "findings" | "missions" | "events") => void;
 
   // Preferences
-  theme: "dark" | "light" | "system";
-  setTheme: (theme: "dark" | "light" | "system") => void;
   graphLayout: "2d" | "3d" | "force";
   setGraphLayout: (layout: "2d" | "3d" | "force") => void;
   graphViewMode: "2d" | "3d";
@@ -111,10 +109,6 @@ export const useUIStore = create<UIState>()(
       contextPanelActiveTab: "findings",
       setContextPanelActiveTab: (tab) => set({ contextPanelActiveTab: tab }),
 
-      // Theme preference (default: dark)
-      theme: "dark",
-      setTheme: (theme) => set({ theme }),
-
       // Graph layout preference (default: 2d force layout)
       graphLayout: "force",
       setGraphLayout: (layout) => set({ graphLayout: layout }),
@@ -167,7 +161,6 @@ export const useUIStore = create<UIState>()(
         chatPanelOpen: state.chatPanelOpen,
         contextPanelOpen: state.contextPanelOpen,
         contextPanelActiveTab: state.contextPanelActiveTab,
-        theme: state.theme,
         graphLayout: state.graphLayout,
         graphViewMode: state.graphViewMode,
         missionsView: state.missionsView,
@@ -206,15 +199,6 @@ export const useContextPanel = () => {
   const activeTab = useUIStore((state) => state.contextPanelActiveTab);
   const setActiveTab = useUIStore((state) => state.setContextPanelActiveTab);
   return { open, setOpen, activeTab, setActiveTab };
-};
-
-/**
- * Hook to get theme state
- */
-export const useTheme = () => {
-  const theme = useUIStore((state) => state.theme);
-  const setTheme = useUIStore((state) => state.setTheme);
-  return { theme, setTheme };
 };
 
 /**
