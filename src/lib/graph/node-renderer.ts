@@ -74,16 +74,17 @@ export const NODE_SIZES: Record<EntityType, number> = {
 // ---------------------------------------------------------------------------
 
 /**
- * Background fill colours for each category, designed for a dark terminal
- * aesthetic. These are intentionally darker than the icon stroke colour so
- * the icon remains the focal point.
+ * Background fill colours for each category, designed for the deep-navy
+ * terminal aesthetic (canvas bg #0f1714). These are intentionally darker
+ * than the icon stroke colour so the icon remains the focal point.
+ * Lifted slightly from their original values to pop against the new bg.
  */
 export const CATEGORY_COLORS: Record<string, string> = {
-  execution:      '#166534',  // green-800  — mission / runs / calls
-  dns:            '#1e3a5f',  // blue-900   — domain / subdomain
-  infrastructure: '#134e4a',  // teal-900   — host / port / service
-  technical:      '#164e63',  // cyan-900   — endpoint / technology / certificate
-  security:       '#7f1d1d',  // red-900    — finding / evidence / technique
+  execution:      '#1a4d2e',  // dark green (lifted from #166534)
+  dns:            '#1a3a6e',  // deep blue  (lifted from #1e3a5f)
+  infrastructure: '#0f4a44',  // dark teal  (lifted from #134e4a)
+  technical:      '#0f4060',  // dark cyan  (lifted from #164e63)
+  security:       '#6b1a1a',  // dark red   (slightly adjusted from #7f1d1d)
 };
 
 /** Maps each entity type to its visual category. */
@@ -377,7 +378,8 @@ export class NodeRenderer {
   ): void {
     const { isHovered, isSelected, isActive, pulsePhase, glowQuality } = state;
 
-    const GREEN = '#00ff41';
+    // Phosphor green — aligned to --primary token (oklch 0.86 0.28 145)
+    const GREEN = '#a6e22e';
 
     if (isHovered) {
       // Thicker green border + shadow glow

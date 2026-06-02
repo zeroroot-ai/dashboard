@@ -36,11 +36,17 @@ import {
   Plug, Cog, Link, Cpu, Shield, Bug, FileText, Crosshair, HelpCircle
 } from 'lucide-react';
 
-// Theme-aware colors for the graph
+// Theme-aware colors for the graph canvas.
+// These must stay in sync with DARK_THEME / LIGHT_THEME in theme-colors.ts —
+// that module is the single source of truth; these constants mirror the
+// background + grid values here so the Graph3DRenderer can access them
+// without importing from src/lib inside the React component.
 const THEME_COLORS = {
   dark: {
-    background: '#0a0a08',
-    grid: 'rgba(255, 176, 0, 0.08)',
+    // Deep-navy, aligned to brand --background dark (oklch 0.13 0.008 145)
+    background: '#0f1714',
+    // Faint cyan grid lines, aligned to --link (oklch 0.78 0.16 220)
+    grid: 'rgba(91, 203, 232, 0.06)',
   },
   light: {
     background: '#faf6eb',
