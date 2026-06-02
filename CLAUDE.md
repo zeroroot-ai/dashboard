@@ -16,10 +16,10 @@ This file documents conventions specific to the `zeroroot-ai/dashboard` reposito
 
 Daemon protos consumed here come from two Go modules, both pinned in the sibling `gibson` repo's `go.mod` (the dashboard's proto-regen workspace resolves them via `go list -m`):
 
-- **OSS SDK** (`github.com/zeroroot-ai/sdk`) — customer-facing. `DaemonService` (FGA `member` / `can_use`), mission / finding / discovery / budget types, the `gibson.auth.v1` annotation extension.
-- **platform-sdk** (`github.com/zeroroot-ai/platform-sdk`) — PRIVATE. `DaemonAdminService` (FGA `admin` / `writer`), `PlatformOperatorService`, `TenantAdminService`, `gibson.user.v1`, `gibson.usage.v1`.
+- **OSS SDK** (`github.com/zeroroot-ai/sdk`) — customer-facing. `DaemonService` plus the decomposed tenant-administration surface `gibson.tenant.v1.*` (`TenantService`, `MembershipService`, `GrantsService`, `ProviderService`, `SecretsService`, `PluginAdminService`, `BudgetService`, `AgentIdentityService`, `UserService`, `UsageService`, `ModelAccessService`), mission / finding / discovery / budget types, the `gibson.auth.v1` annotation extension. Per ADR-0039 (2026-06-01) tenant administration is **customer-facing** and lives in the OSS SDK.
+- **platform-sdk** (`github.com/zeroroot-ai/platform-sdk`) — PRIVATE. Only the genuinely-internal services: `DaemonOperatorService` (`gibson.daemon.operator.v1`), `BillingService` (`gibson.billing.v1`), `DiscoveryService` (`gibson.daemon.discovery.v1`).
 
-Admin server-actions (`CreateMissionDefinition`, tenant management, plugin install, secrets backend management) call into `DaemonAdminService` via bindings generated from `platform-sdk`. The dashboard never re-exports admin types through any customer-visible path.
+Admin server-actions (tenant management, plugin install, secrets management, grants) call the `gibson.tenant.v1.*` services. Each carries a `(gibson.auth.v1.authz)` annotation with an `admin`/`writer` relation, and Envoy gates those admin-relation prefixes behind the admin JWT requirement. The dashboard never opens a direct daemon channel.
 
 Cross-module proto sharing flows through BSR (`buf.build/zeroroot-ai-platform/...`). The two-surface contract is captured in `docs/adr/0025-two-surface-platform-contract.md` (private docs repo).
 
@@ -71,23 +71,21 @@ When the SDK schema changes: run `pnpm gen:mission-schema` and commit
 The dashboard's TS proto bindings at `src/gen/` are generated from
 **three** proto trees after the two-surface refactor (docs ADR-0025):
 
-- the **OSS SDK** protos at `core/sdk/api/proto/` (resolved via `go list -m`
-  against the gibson repo's `go.mod`). The customer-facing OSS module
-  (`github.com/zeroroot-ai/sdk`) hosts `DaemonService`, the customer-callable
-  mission / finding / discovery / budget types, and the `gibson.auth.v1`
-  annotation extension.
-- the **platform-sdk** protos at `core/platform-sdk/proto/` (resolved
-  via `go list -m github.com/zeroroot-ai/platform-sdk` against the gibson
-  repo's `go.mod`). The PRIVATE internal proto module hosts the admin
-  surfaces: `DaemonAdminService`, `PlatformOperatorService`,
-  `TenantAdminService`, `gibson.user.v1`, `gibson.usage.v1`. Admin
-  server-actions (`CreateMissionDefinition`, tenant management, plugin
-  install) call into these stubs.
-- the **daemon-local** protos at `core/gibson/internal/daemon/api/`,
-  which are not published anywhere and are only consumable via a sibling
-  checkout. If a daemon-local type needs to reach the dashboard, the right
-  shape is to promote it to `platform-sdk` and consume via BSR — not to
-  vendor it through the dashboard's regen workspace.
+- the **OSS SDK** protos at `<sdk-module>/api/proto/` (the module dir
+  resolved via `go list -m github.com/zeroroot-ai/sdk` against the gibson
+  repo's `go.mod`). The customer-facing OSS module hosts `DaemonService`, the
+  decomposed `gibson.tenant.v1.*` tenant-admin services (customer-facing per
+  ADR-0039), the customer-callable mission / finding / discovery / budget
+  types, and the `gibson.auth.v1` annotation extension.
+- the **platform-sdk** protos at the `opensource/platform-sdk/proto/` sibling
+  checkout. The PRIVATE internal proto module hosts only `DaemonOperatorService`
+  (`gibson.daemon.operator.v1`), `BillingService` (`gibson.billing.v1`), and
+  `DiscoveryService` (`gibson.daemon.discovery.v1`).
+- the **daemon-local** protos at the `enterprise/platform/gibson/internal/daemon/api/`
+  sibling checkout, which are not published anywhere. If a daemon-local type
+  needs to reach the dashboard, the right shape is to promote it to
+  `platform-sdk` and consume via BSR — not to vendor it through the
+  dashboard's regen workspace.
 
 Buf v2 has a hard rule that every module path in `buf.yaml` must
 resolve **inside** the directory containing the `buf.yaml`. The
@@ -101,23 +99,23 @@ builds a self-contained workspace:
 .tmp/proto-ws/
 ├── buf.yaml                # generated, lists gibson-local + sdk-proto + platform-sdk-proto
 ├── buf.gen.yaml            # generated, drives protoc-gen-es
-├── gibson-local     -> .../core/gibson/internal/daemon/api    (symlink)
+├── gibson-local     -> .../enterprise/platform/gibson/internal/daemon/api (symlink)
 ├── sdk-proto        -> $(go list -m github.com/zeroroot-ai/sdk)/api/proto             (symlink)
-└── platform-sdk-proto -> $(go list -m github.com/zeroroot-ai/platform-sdk)/proto      (symlink)
+└── platform-sdk-proto -> .../opensource/platform-sdk/proto                            (symlink)
 ```
 
 Then `buf generate` runs from inside `.tmp/proto-ws/`, the output
 is rsynced into `src/gen/`, and the workspace is removed. Same
 pattern as the daemon's `make authz-registry` recipe in
-`core/gibson/Makefile`, which faces the identical "two proto
+`enterprise/platform/gibson/Makefile`, which faces the identical "two proto
 trees, one buf invocation" constraint.
 
 **No checked-in `buf.yaml` or `buf.gen.yaml`** at the dashboard
 root — they only exist transiently inside `.tmp/proto-ws/`.
 
-**Workstation-only.** The script assumes `core/gibson/` is cloned
-as a sibling of this repo (i.e. you're in the canonical
-`~/Code/zeroroot.ai/` polyrepo workspace). CI does not regenerate
+**Workstation-only.** The script assumes `enterprise/platform/gibson/` and
+`opensource/platform-sdk/` are cloned as siblings of this repo (i.e. you're in
+the canonical `~/Code/zeroroot.ai/` polyrepo workspace). CI does not regenerate
 proto bindings — `src/gen/` is committed and CI just typechecks
 it. Run `pnpm proto:generate` locally whenever you change a
 `.proto` file in either tree, then commit the regenerated
@@ -145,8 +143,8 @@ Both layers read from a single static map — the `AuthRegistry` — generated f
 ### Pipeline: OSS SDK + platform-sdk protos → registry
 
 ```
-core/sdk/proto/**/*.proto           (OSS SDK — DaemonService)
-core/platform-sdk/proto/**/*.proto  (platform-sdk — DaemonAdminService, PlatformOperatorService, TenantAdminService)
+<sdk-module>/api/proto/**/*.proto       (OSS SDK — DaemonService + gibson.tenant.v1.* admin services)
+opensource/platform-sdk/proto/**/*.proto (platform-sdk — DaemonOperatorService, BillingService, DiscoveryService)
   └─ (gibson.auth.v1.authz) extension on each method
        │
        ▼
@@ -156,7 +154,7 @@ scripts/gen-authz-registry.mjs    ← runs as part of pnpm prebuild
 src/gen/authz/registry.ts         ← committed, regenerated on every build
 ```
 
-`gen-authz-registry.mjs` invokes `buf build` against BOTH module directories to produce a single FileDescriptorSet, walks every service method, decodes the authz annotation, and emits a TypeScript module with the unified `AuthRegistry` record. Customer-callable `DaemonService` RPCs and admin `DaemonAdminService` RPCs land in the same registry; the FGA relation distinguishes them.
+`gen-authz-registry.mjs` invokes `buf build` against BOTH module directories to produce a single FileDescriptorSet, walks every service method, decodes the authz annotation, and emits a TypeScript module with the unified `AuthRegistry` record. Customer-callable `DaemonService` RPCs and admin `gibson.tenant.v1.*` RPCs land in the same registry; the FGA relation (`member`/`can_use` vs `admin`/`writer`) distinguishes them.
 
 `scripts/check-authz-registry-fresh.mjs` regenerates to a temp file and diffs against the committed copy — CI fails on drift.
 
@@ -176,7 +174,7 @@ import { useAuthorize } from "@/lib/auth/use-authorize";
 
 function AddPluginButton() {
   const { allowed, loading } = useAuthorize(
-    "/gibson.admin.v1.PluginsAdminService/RegisterPlugin"
+    "/gibson.tenant.v1.PluginAdminService/RegisterPlugin"
   );
   if (loading || !allowed) return null;         // hide on loading — no FOUC
   return <Button onClick={openWizard}>Add Plugin</Button>;
@@ -202,7 +200,7 @@ import { AuthzDeniedError } from "@/lib/auth/assert-authorized";
 
 export async function createSecretAction(formData: FormData) {
   try {
-    await assertAuthorized("/gibson.admin.v1.SecretsAdminService/SetSecret");
+    await assertAuthorized("/gibson.tenant.v1.SecretsService/SetSecret");
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
       return { ok: false, error: "Permission denied", code: "permission_denied" };
@@ -278,22 +276,19 @@ E2E coverage for the three states lives in `e2e/authz/admin.spec.ts` (asserts al
 
 ### Adding a new admin RPC
 
-Admin RPCs (FGA relation `admin` or `writer`) live in the **platform-sdk** proto module (`github.com/zeroroot-ai/platform-sdk`), NOT the OSS SDK. The OSS SDK hosts customer-callable RPCs only (relation `member` / `can_use`).
+Since ADR-0039, tenant-administration RPCs (FGA relation `admin` or `writer`) live in the **OSS SDK** under `gibson.tenant.v1.*` — tenant administration is customer-facing. The genuinely-private operator surface (`DaemonOperatorService`, `BillingService`, `DiscoveryService`) is the only thing left in platform-sdk; you rarely add to it from the dashboard.
 
-1. In `core/platform-sdk/proto/gibson/<package>/v1/<file>.proto`, add the new RPC to the appropriate admin service (`DaemonAdminService`, `PlatformOperatorService`, or `TenantAdminService`). Add the `(gibson.auth.v1.authz)` extension with `relation: "admin"` (or `"writer"`) and `allowed_identities: [USER]`. Import the extension via the BSR dep:
-   ```proto
-   import "gibson/auth/v1/options.proto";  // resolved via buf.build/zeroroot-ai-platform/sdk BSR dep
-   ```
-2. Run `buf generate && go build ./...` in `core/platform-sdk/`. Commit + open the platform-sdk PR. Merge to cut a new platform-sdk release.
-3. The release-please tag triggers the platform-sdk fan-out, which opens consumer-bump PRs across `gibson`, `dashboard`, `tenant-operator`, `platform-operator`, `ext-authz`, `gibson-tool-runner`, `spiffe-jwks-exporter`. Wait for those to merge.
+1. In the OSS SDK at `<sdk-repo>/api/proto/gibson/tenant/v1/<file>.proto`, add the new RPC to the appropriate service (`MembershipService`, `GrantsService`, `ProviderService`, `SecretsService`, `PluginAdminService`, …). Add the `(gibson.auth.v1.authz)` extension with `relation: "admin"` (or `"writer"`) and `allowed_identities: [USER]`. The extension is defined locally in the OSS SDK (`gibson/auth/v1/options.proto`).
+2. Run `make generate && go build ./...` in the SDK repo. Commit + open the SDK PR. Merge to cut a new SDK release.
+3. The release-please tag triggers the SDK fan-out, which opens consumer-bump PRs across `gibson`, `dashboard`, `tenant-operator`, `ext-authz`, `gibson-tool-runner`, `adk`, etc. Wait for those to merge.
 4. In this dashboard repo, the bump PR runs `pnpm prebuild` — `gen-authz-registry.mjs` regenerates `src/gen/authz/registry.ts` with the new entry, and `proto-generate.mjs` regenerates the TypeScript bindings under `src/gen/`.
-5. In the UI, call `useAuthorize("/gibson.daemon.admin.v1.DaemonAdminService/YourMethod")` on the new button/action.
-6. In the server action, call `await assertAuthorized(...)` before the daemon call, then dial `DaemonAdminService` via the ConnectRPC client.
+5. In the UI, call `useAuthorize("/gibson.tenant.v1.<Service>/YourMethod")` on the new button/action.
+6. In the server action, call `await assertAuthorized(...)` before the daemon call, then dial the service via the ConnectRPC client (through Envoy).
 7. Commit `src/gen/authz/registry.ts` + the new `src/gen/gibson/...` bindings alongside the code changes — the CI drift gate will fail if you forget.
 
 No other files need editing. The registry is the only source of authz rules.
 
-**Customer-callable RPC?** Same flow, but the proto lives in `core/sdk/proto/...` (OSS SDK) and the relation is `member` or `can_use`. The two-surface contract (docs ADR-0025) keeps the proto files split.
+**Genuinely-private operator RPC?** Same flow, but the proto lives in `opensource/platform-sdk/proto/...` and it never surfaces in customer UI. The two-surface contract (docs ADR-0025, refined by ADR-0039) keeps the proto files split.
 
 ---
 
