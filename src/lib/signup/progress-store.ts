@@ -21,7 +21,7 @@
 
 import 'server-only';
 
-import { userClient } from '@/src/lib/gibson-client';
+import { serviceClient } from '@/src/lib/gibson-client';
 import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
 import type {
   ProvisioningProgress,
@@ -72,7 +72,12 @@ export async function setProgress(
   attemptId: string,
   progress: ProvisioningProgress,
 ): Promise<void> {
-  await userClient(UserService).setSignupProgress({
+  // Signup progress is written pre-tenant (no active-tenant cookie, no
+  // membership). Use the service-acting client with an empty tenant — the
+  // same pattern the unauthenticated reserved-names lookup uses — NOT
+  // userClient (which fail-closes via getActiveTenant). The daemon RPC is
+  // unauthenticated + attemptId-keyed (dashboard#646).
+  await serviceClient(UserService, '').setSignupProgress({
     attemptId,
     progress: progressToProto(progress),
     ttlSeconds: PROGRESS_TTL_SECONDS,
@@ -82,7 +87,7 @@ export async function setProgress(
 export async function getProgress(
   attemptId: string,
 ): Promise<ProvisioningProgress | null> {
-  const resp = await userClient(UserService).getSignupProgress({ attemptId });
+  const resp = await serviceClient(UserService, '').getSignupProgress({ attemptId });
   if (!resp.found || !resp.progress) return null;
   return protoToProgress(resp.progress);
 }
