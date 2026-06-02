@@ -239,15 +239,29 @@ export function Graph3DControls({
         )}
       </ControlGroup>
 
-      {/* Stats */}
-      <div className="flex flex-col gap-1 p-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border text-xs">
-        <div className="flex items-center justify-between gap-4 text-muted-foreground">
-          <span>Nodes: {nodeCount}</span>
-          <span>Edges: {edgeCount}</span>
+      {/* Stats / FPS HUD — high-contrast panel, WCAG AA text */}
+      <div className="flex flex-col gap-1 p-2 rounded-lg bg-background/90 backdrop-blur-md border border-border text-xs font-mono">
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-muted-foreground">Nodes</span>
+          <span className="text-foreground font-semibold tabular-nums">{nodeCount}</span>
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-muted-foreground">Edges</span>
+          <span className="text-foreground font-semibold tabular-nums">{edgeCount}</span>
         </div>
         {currentFPS > 0 && (
-          <div className="text-muted-foreground">
-            FPS: {currentFPS}
+          <div className="flex items-center justify-between gap-4 border-t border-border/50 pt-1 mt-0.5">
+            <span className="text-muted-foreground">FPS</span>
+            <span className={cn(
+              'font-semibold tabular-nums',
+              currentFPS >= 50
+                ? 'text-highlight'
+                : currentFPS >= 30
+                ? 'text-alt'
+                : 'text-destructive'
+            )}>
+              {currentFPS}
+            </span>
           </div>
         )}
       </div>
