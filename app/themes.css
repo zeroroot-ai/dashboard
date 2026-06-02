@@ -763,86 +763,50 @@ body {
 }
 
 /* Gibson preset = the brand-guide. Default cookie value is "gibson" so this
- * block is the source of truth for the app's "normal" theme. Both the light
- * and dark variants below mirror :root/.dark in globals.css verbatim; if
- * either drifts, the chrome flips on load.
- *
- * Why two definitions: the `theme_preset` cookie defaults to "gibson", so
- * data-theme-preset="gibson" wins specificity-wise over :root. Belt-and-
- * suspenders: globals.css is correct even if the cookie clears. */
+ * block currently wins specificity-wise over :root because the legacy
+ * `theme_preset` cookie still defaults to "gibson". It mirrors the single
+ * dark brand in globals.css :root verbatim so the chrome can't flip on
+ * load. The preset machinery (and this block) is removed in #651 once the
+ * theme customizer + ActiveThemeProvider are torn out, leaving globals.css
+ * :root as the sole source of truth. There is no light variant. */
 [data-theme-preset="gibson"] {
-    /* Light — warm cream paper + deep ink green. */
-    --background: oklch(0.96 0.012 95);
-    --foreground: oklch(0.20 0.06 145);
-    --card: oklch(0.99 0.008 95);
-    --card-foreground: oklch(0.20 0.06 145);
-    --popover: oklch(0.99 0.008 95);
-    --popover-foreground: oklch(0.20 0.06 145);
-    --primary: oklch(0.48 0.22 145);
-    --primary-foreground: oklch(0.98 0.02 145);
-    --secondary: oklch(0.58 0.16 80);
-    --secondary-foreground: oklch(0.98 0.02 80);
-    --muted: oklch(0.92 0.012 95);
-    --muted-foreground: oklch(0.55 0.06 145);
-    --accent: oklch(0.93 0.014 95);
-    --accent-foreground: oklch(0.20 0.06 145);
-    --destructive: oklch(0.50 0.22 22);
-    --border: oklch(0.55 0.10 145);
-    --input: oklch(0.78 0.04 145);
-    --ring: oklch(0.48 0.22 145);
-    --chart-1: oklch(0.48 0.22 145);
-    --chart-2: oklch(0.58 0.16 80);
-    --chart-3: oklch(0.50 0.18 230);
-    --chart-4: oklch(0.50 0.22 22);
-    --chart-5: oklch(0.62 0.18 145);
-    --radius: 0.25rem;
-    --sidebar: oklch(0.99 0.008 95);
-    --sidebar-foreground: oklch(0.20 0.06 145);
-    --sidebar-primary: oklch(0.48 0.22 145);
-    --sidebar-primary-foreground: oklch(0.98 0.02 145);
-    --sidebar-accent: oklch(0.93 0.014 95);
-    --sidebar-accent-foreground: oklch(0.20 0.06 145);
-    --sidebar-border: oklch(0.55 0.10 145);
-    --sidebar-ring: oklch(0.48 0.22 145);
+    /* Single dark brand — violet-led, mirrors globals.css :root. */
+    --background: oklch(0.17 0.012 280);
+    --foreground: oklch(0.96 0.008 280);
+    --card: oklch(0.21 0.014 280);
+    --card-foreground: oklch(0.96 0.008 280);
+    --popover: oklch(0.21 0.014 280);
+    --popover-foreground: oklch(0.96 0.008 280);
+    --primary: oklch(0.58 0.225 295);
+    --primary-foreground: oklch(0.99 0.004 295);
+    --secondary: oklch(0.30 0.040 250);
+    --secondary-foreground: oklch(0.96 0.008 280);
+    --muted: oklch(0.255 0.016 280);
+    --muted-foreground: oklch(0.76 0.020 280);
+    --accent: oklch(0.275 0.022 288);
+    --accent-foreground: oklch(0.96 0.008 280);
+    --destructive: oklch(0.54 0.210 22);
+    --border: oklch(0.34 0.020 280);
+    --input: oklch(0.50 0.024 280);
+    --ring: oklch(0.62 0.230 295);
+    --chart-1: oklch(0.62 0.230 295);
+    --chart-2: oklch(0.74 0.160 162);
+    --chart-3: oklch(0.78 0.150 235);
+    --chart-4: oklch(0.80 0.160 85);
+    --chart-5: oklch(0.62 0.215 22);
+    --radius: 0.40rem;
+    --sidebar: oklch(0.19 0.013 280);
+    --sidebar-foreground: oklch(0.96 0.008 280);
+    --sidebar-primary: oklch(0.58 0.225 295);
+    --sidebar-primary-foreground: oklch(0.99 0.004 295);
+    --sidebar-accent: oklch(0.275 0.022 288);
+    --sidebar-accent-foreground: oklch(0.96 0.008 280);
+    --sidebar-border: oklch(0.32 0.020 280);
+    --sidebar-ring: oklch(0.62 0.230 295);
 
     --display-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
     --display-weight: 800;
     --text-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-
-    @variant dark {
-        /* Dark — phosphor green on near-black; amber 2nd-monitor. */
-        --background: oklch(0.13 0.008 145);
-        --foreground: oklch(0.97 0.01 145);
-        --card: oklch(0.17 0.010 145);
-        --card-foreground: oklch(0.97 0.01 145);
-        --popover: oklch(0.17 0.010 145);
-        --popover-foreground: oklch(0.97 0.01 145);
-        --primary: oklch(0.86 0.28 145);
-        --primary-foreground: oklch(0.16 0.012 145);
-        --secondary: oklch(0.82 0.18 80);
-        --secondary-foreground: oklch(0.16 0.012 80);
-        --muted: oklch(0.10 0.006 145);
-        --muted-foreground: oklch(0.64 0.03 145);
-        --accent: oklch(0.22 0.014 145);
-        --accent-foreground: oklch(0.97 0.01 145);
-        --destructive: oklch(0.68 0.24 18);
-        --border: oklch(0.38 0.06 145);
-        --input: oklch(0.28 0.03 145);
-        --ring: oklch(0.86 0.28 145);
-        --chart-1: oklch(0.86 0.28 145);
-        --chart-2: oklch(0.82 0.18 80);
-        --chart-3: oklch(0.78 0.16 220);
-        --chart-4: oklch(0.68 0.24 18);
-        --chart-5: oklch(0.66 0.22 145);
-        --sidebar: oklch(0.17 0.010 145);
-        --sidebar-foreground: oklch(0.97 0.01 145);
-        --sidebar-primary: oklch(0.86 0.28 145);
-        --sidebar-primary-foreground: oklch(0.16 0.012 145);
-        --sidebar-accent: oklch(0.22 0.014 145);
-        --sidebar-accent-foreground: oklch(0.97 0.01 145);
-        --sidebar-border: oklch(0.38 0.06 145);
-        --sidebar-ring: oklch(0.86 0.28 145);
-    }
 }
 
 /* Theme presets */
