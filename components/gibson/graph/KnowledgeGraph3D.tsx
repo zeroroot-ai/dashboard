@@ -1019,14 +1019,22 @@ class Graph3DRenderer {
           ctx.textAlign = 'center';
           ctx.textBaseline = 'top';
 
-          // Dark outline for legibility
-          ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-          ctx.lineWidth = 3;
+          // Halo / outline pass: dark stroke wide enough to create a solid
+          // contrast border around every glyph. Works against both the
+          // deep-navy background AND bright-coloured node chips (issue #636).
           ctx.lineJoin = 'round';
           ctx.miterLimit = 2;
+          // Outer glow — very faint shadow so label lifts off the canvas
+          ctx.shadowColor  = 'rgba(0, 0, 0, 0.9)';
+          ctx.shadowBlur   = 4;
+          ctx.strokeStyle  = 'rgba(0, 0, 0, 0.9)';
+          ctx.lineWidth    = 4;
           ctx.strokeText(label, node.screenX!, labelY);
+          ctx.shadowBlur   = 0;
+          ctx.shadowColor  = 'transparent';
 
-          ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, alpha + 0.3)})`;
+          // Fill: near-white (#f0f5ef ≈ --foreground dark) at high-alpha
+          ctx.fillStyle = `rgba(240, 245, 239, ${Math.min(1, alpha + 0.3)})`;
           ctx.fillText(label, node.screenX!, labelY);
 
           // At high zoom, also draw a property line below the label
@@ -1035,10 +1043,11 @@ class Graph3DRenderer {
             if (propLine) {
               const propY = labelY + 13;
               ctx.font = '9px monospace';
-              ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
-              ctx.lineWidth = 2;
+              ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+              ctx.lineWidth = 3;
               ctx.strokeText(propLine, node.screenX!, propY);
-              ctx.fillStyle = `rgba(180, 180, 180, ${alpha})`;
+              // Muted cyan secondary text for property line (brand --link aligned)
+              ctx.fillStyle = `rgba(128, 216, 255, ${Math.min(0.9, alpha)})`;
               ctx.fillText(propLine, node.screenX!, propY);
             }
           }
@@ -1049,13 +1058,19 @@ class Graph3DRenderer {
           ctx.textAlign = 'center';
           ctx.textBaseline = 'top';
 
-          ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-          ctx.lineWidth = 3;
+          // Hover label: stronger halo + phosphor-green tint on the fill
           ctx.lineJoin = 'round';
           ctx.miterLimit = 2;
+          ctx.shadowColor  = 'rgba(0, 0, 0, 0.9)';
+          ctx.shadowBlur   = 6;
+          ctx.strokeStyle  = 'rgba(0, 0, 0, 0.9)';
+          ctx.lineWidth    = 4;
           ctx.strokeText(label, node.screenX!, labelY);
+          ctx.shadowBlur   = 0;
+          ctx.shadowColor  = 'transparent';
 
-          ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, alpha + 0.3)})`;
+          // Near-white fill — readable against any node color or the bg
+          ctx.fillStyle = `rgba(240, 245, 239, ${Math.min(1, alpha + 0.3)})`;
           ctx.fillText(label, node.screenX!, labelY);
         }
       }
