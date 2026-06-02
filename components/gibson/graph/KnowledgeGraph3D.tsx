@@ -382,6 +382,9 @@ class Graph3DRenderer {
   private oldColors: ThemeColors | null = null;
   // Connected-node set for selection dimming
   private connectedNodeIds: Set<string> = new Set();
+  // Cyber background: scanline y-offset (animated), reduced-motion flag
+  private scanlineOffset: number = 0;
+  private reducedMotion: boolean = false;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -405,6 +408,10 @@ class Graph3DRenderer {
     this.theme = theme;
     this.currentTheme = theme;
     this.targetTheme = theme;
+    // Detect prefers-reduced-motion — static at construction time.
+    this.reducedMotion = typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false;
 
     // Apply DPR scale once at construction — never again.
     this.ctx.scale(this.dpr, this.dpr);
@@ -801,6 +808,11 @@ class Graph3DRenderer {
     ctx.fillStyle = colors.background;
     ctx.fillRect(0, 0, this.cssWidth, this.cssHeight);
 
+    // Cyber background layer: vignette + scanline (dark theme only)
+    if (this.theme === 'dark') {
+      this.drawCyberBackground();
+    }
+
     this.drawGrid();
 
     // Project all nodes
@@ -1058,6 +1070,60 @@ class Graph3DRenderer {
       ctx.textAlign = 'left';
       ctx.fillText(`FPS: ${this.currentFps}`, 10, this.cssHeight - 10);
     }
+  }
+
+  /**
+   * Draw the cyber atmosphere layer (dark theme only).
+   *
+   * Layers (back to front):
+   *   1. Radial vignette — brighter centre → darker edges (depth perception)
+   *   2. CRT scanline — a single translucent horizontal band that scrolls
+   *      downward; paused when prefers-reduced-motion is set.
+   *
+   * All effects are low-opacity so node/label/HUD contrast (slice #633)
+   * is unaffected. The scanline opacity is intentionally minimal — its
+   * purpose is atmosphere, not visibility — and respects the brand
+   * `--scanline-opacity` token value (0.010 in dark mode).
+   */
+  private drawCyberBackground(): void {
+    const { ctx } = this;
+    const w = this.cssWidth;
+    const h = this.cssHeight;
+
+    // -- 1. Radial vignette --------------------------------------------------
+    // Brighter centre (transparent) → darker edges (deep-black overlay).
+    // Outer alpha 0.4 gives perceptible depth without washing out node colors.
+    const cx = w / 2;
+    const cy = h / 2;
+    const radius = Math.sqrt(cx * cx + cy * cy);
+
+    const vignette = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+    vignette.addColorStop(0,   'rgba(0, 0, 0, 0)');
+    vignette.addColorStop(0.6, 'rgba(0, 0, 0, 0.05)');
+    vignette.addColorStop(1,   'rgba(0, 0, 0, 0.40)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, w, h);
+
+    // -- 2. CRT scanline -----------------------------------------------------
+    // A single horizontal band, 2px tall, scrolls downward once per ~4 s.
+    // When prefers-reduced-motion is set the band is rendered static at the
+    // top of the frame (still visible as a subtle decoration, but not moving).
+    // Opacity 0.010 aligns to the --scanline-opacity brand token value.
+    const SCANLINE_OPACITY = 0.010;
+    const SCANLINE_HEIGHT  = 2;
+    const SCANLINE_SPEED   = h / 4; // px/s → one pass per 4 s
+
+    if (!this.reducedMotion) {
+      // Advance position each render call. animationManager.getDeltaTime()
+      // returns seconds since last frame.
+      const dt = animationManager.getDeltaTime();
+      this.scanlineOffset = (this.scanlineOffset + SCANLINE_SPEED * dt) % (h + SCANLINE_HEIGHT);
+    }
+
+    const scanlineY = this.reducedMotion ? 0 : this.scanlineOffset;
+
+    ctx.fillStyle = `rgba(158, 230, 64, ${SCANLINE_OPACITY})`; // phosphor green
+    ctx.fillRect(0, scanlineY, w, SCANLINE_HEIGHT);
   }
 
   private drawGrid(): void {
