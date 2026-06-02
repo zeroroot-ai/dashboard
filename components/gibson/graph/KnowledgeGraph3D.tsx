@@ -360,7 +360,6 @@ class Graph3DRenderer {
   private onNodeClick?: (node: GraphNode) => void;
   private onNodeHover?: (node: GraphNode | null) => void;
   private onZoomChange?: (zoom: number) => void;
-  private theme: 'dark' | 'light';
   private particlesEnabled: boolean = true;
   private activeEdges: Set<string> = new Set();
   // FPS counter for dev mode
@@ -381,8 +380,7 @@ class Graph3DRenderer {
     edges: GraphEdge[],
     onNodeClick?: (node: GraphNode) => void,
     onNodeHover?: (node: GraphNode | null) => void,
-    onZoomChange?: (zoom: number) => void,
-    theme: 'dark' | 'light' = 'dark'
+    onZoomChange?: (zoom: number) => void
   ) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
@@ -392,7 +390,6 @@ class Graph3DRenderer {
     this.onNodeClick = onNodeClick;
     this.onNodeHover = onNodeHover;
     this.onZoomChange = onZoomChange;
-    this.theme = theme;
     // Detect prefers-reduced-motion — static at construction time.
     this.reducedMotion = typeof window !== 'undefined'
       ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -890,7 +887,6 @@ class Graph3DRenderer {
             lineWidth: isHovered || (this.hasHighlight && this.highlightedEdgeIds.has(edge.id))
               ? Math.max(0.5, 0.8 * this.camera.zoom)
               : Math.max(0.2, 0.4 * this.camera.zoom),
-            theme: this.theme,
           }
         );
       }

@@ -104,49 +104,13 @@ const ENTITY_COLORS_DARK: Record<EntityType, string> = {
 };
 
 /**
- * Entity type colors for light theme (darker green variants for cream background).
- * Uses same hues as dark theme but at lower lightness for visibility on light backgrounds.
- */
-const ENTITY_COLORS_LIGHT: Record<EntityType, string> = {
-  mission: '#16a34a',        // green-600
-  mission_run: '#22c55e',    // green-500
-  agent_run: '#7c3aed',      // violet-600
-  tool_execution: '#d97706', // amber-600
-  llm_call: '#9333ea',       // purple-600
-
-  domain: '#2563eb',         // blue-600
-  subdomain: '#3b82f6',      // blue-500
-
-  host: '#059669',           // emerald-600
-  port: '#0d9488',           // teal-600
-  service: '#14b8a6',        // teal-500
-
-  endpoint: '#0891b2',       // cyan-600
-  technology: '#7c3aed',     // violet-600
-  certificate: '#0284c7',    // sky-600
-
-  finding: '#dc2626',        // red-600
-  evidence: '#4b5563',       // gray-600
-  technique: '#db2777',      // pink-600
-};
-
-/**
- * Severity colors for finding nodes.
- * These colors are theme-specific to ensure proper contrast.
+ * Severity colors for finding nodes — tuned for the single dark brand.
  */
 const SEVERITY_COLORS_DARK: Record<Severity, string> = {
   critical: '#ff4444',          // Intense red
   high: '#ff8c00',              // Orange
   medium: '#ffb000',            // Amber
   low: '#6b8aab',               // Muted blue-gray
-  info: '#6b7280',              // Gray
-};
-
-const SEVERITY_COLORS_LIGHT: Record<Severity, string> = {
-  critical: '#c82828',          // Dark red
-  high: '#d35400',              // Burnt orange
-  medium: '#b8860b',            // Dark gold
-  low: '#4a6fa5',               // Steel blue
   info: '#6b7280',              // Gray
 };
 
@@ -210,20 +174,18 @@ const RELATIONSHIP_DASH_PATTERNS: Record<RelationshipType, DashPattern> = {
 // ============================================================================
 
 /**
- * Get the color for an entity type based on the current theme.
+ * Get the brand color for an entity type. There is one locked dark brand.
  *
  * @param entityType - The entity type to get color for
- * @param theme - 'dark' for amber terminal theme, 'light' for cream paper theme
  * @returns Hex color string
  *
  * @example
  * ```ts
- * const color = getEntityColor('mission', 'dark'); // '#ffb000'
+ * const color = getEntityColor('mission'); // '#22c55e'
  * ```
  */
-export function getEntityColor(entityType: EntityType, theme: 'dark' | 'light'): string {
-  const colorMap = theme === 'dark' ? ENTITY_COLORS_DARK : ENTITY_COLORS_LIGHT;
-  return colorMap[entityType];
+export function getEntityColor(entityType: EntityType): string {
+  return ENTITY_COLORS_DARK[entityType];
 }
 
 /**
@@ -252,22 +214,20 @@ export function getRelationshipDashPattern(relationshipType: RelationshipType | 
 }
 
 /**
- * Get the color for a severity level based on the current theme.
+ * Get the brand color for a severity level. There is one locked dark brand.
  *
  * Used primarily for finding nodes to indicate risk level.
  *
  * @param severity - The severity level
- * @param theme - 'dark' or 'light' theme
  * @returns Hex color string
  *
  * @example
  * ```ts
- * const color = getSeverityColor('critical', 'dark'); // '#ff4444'
+ * const color = getSeverityColor('critical'); // '#ff4444'
  * ```
  */
-export function getSeverityColor(severity: Severity, theme: 'dark' | 'light'): string {
-  const colorMap = theme === 'dark' ? SEVERITY_COLORS_DARK : SEVERITY_COLORS_LIGHT;
-  return colorMap[severity];
+export function getSeverityColor(severity: Severity): string {
+  return SEVERITY_COLORS_DARK[severity];
 }
 
 /**

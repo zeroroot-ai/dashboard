@@ -34,49 +34,20 @@ describe('entity-taxonomy', () => {
       'technique',
     ];
 
-    it('should return valid colors for all 16 entity types in dark theme', () => {
+    it('should return valid colors for all 16 entity types', () => {
       allEntityTypes.forEach((entityType) => {
-        const color = getEntityColor(entityType, 'dark');
+        const color = getEntityColor(entityType);
 
         // Should return a hex color string
         expect(color).toBeDefined();
         expect(color).toMatch(/^#[0-9a-f]{6}$/i);
-      });
-    });
-
-    it('should return valid colors for all 16 entity types in light theme', () => {
-      allEntityTypes.forEach((entityType) => {
-        const color = getEntityColor(entityType, 'light');
-
-        // Should return a hex color string
-        expect(color).toBeDefined();
-        expect(color).toMatch(/^#[0-9a-f]{6}$/i);
-      });
-    });
-
-    it('should return different colors for dark vs light theme', () => {
-      // Test a few key entity types
-      const testTypes: EntityType[] = ['mission', 'domain', 'finding'];
-
-      testTypes.forEach((entityType) => {
-        const darkColor = getEntityColor(entityType, 'dark');
-        const lightColor = getEntityColor(entityType, 'light');
-
-        // Colors should be different between themes
-        expect(darkColor).not.toBe(lightColor);
       });
     });
 
     it('should return expected colors for specific entity types', () => {
-      // Dark theme samples
-      expect(getEntityColor('mission', 'dark')).toBe('#22c55e');
-      expect(getEntityColor('domain', 'dark')).toBe('#3b82f6');
-      expect(getEntityColor('finding', 'dark')).toBe('#ef4444');
-
-      // Light theme samples
-      expect(getEntityColor('mission', 'light')).toBe('#16a34a');
-      expect(getEntityColor('domain', 'light')).toBe('#2563eb');
-      expect(getEntityColor('finding', 'light')).toBe('#dc2626');
+      expect(getEntityColor('mission')).toBe('#22c55e');
+      expect(getEntityColor('domain')).toBe('#3b82f6');
+      expect(getEntityColor('finding')).toBe('#ef4444');
     });
   });
 
@@ -199,19 +170,9 @@ describe('entity-taxonomy', () => {
   describe('getSeverityColor', () => {
     const allSeverities: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
 
-    it('should return valid colors for all severity levels in dark theme', () => {
+    it('should return valid colors for all severity levels', () => {
       allSeverities.forEach((severity) => {
-        const color = getSeverityColor(severity, 'dark');
-
-        // Should return a hex color string
-        expect(color).toBeDefined();
-        expect(color).toMatch(/^#[0-9a-f]{6}$/i);
-      });
-    });
-
-    it('should return valid colors for all severity levels in light theme', () => {
-      allSeverities.forEach((severity) => {
-        const color = getSeverityColor(severity, 'light');
+        const color = getSeverityColor(severity);
 
         // Should return a hex color string
         expect(color).toBeDefined();
@@ -220,34 +181,11 @@ describe('entity-taxonomy', () => {
     });
 
     it('should return expected colors for each severity level', () => {
-      // Dark theme
-      expect(getSeverityColor('critical', 'dark')).toBe('#ff4444');
-      expect(getSeverityColor('high', 'dark')).toBe('#ff8c00');
-      expect(getSeverityColor('medium', 'dark')).toBe('#ffb000');
-      expect(getSeverityColor('low', 'dark')).toBe('#6b8aab');
-      expect(getSeverityColor('info', 'dark')).toBe('#6b7280');
-
-      // Light theme
-      expect(getSeverityColor('critical', 'light')).toBe('#c82828');
-      expect(getSeverityColor('high', 'light')).toBe('#d35400');
-      expect(getSeverityColor('medium', 'light')).toBe('#b8860b');
-      expect(getSeverityColor('low', 'light')).toBe('#4a6fa5');
-      expect(getSeverityColor('info', 'light')).toBe('#6b7280');
-    });
-
-    it('should return different colors for dark vs light theme (except info)', () => {
-      const testSeverities: Severity[] = ['critical', 'high', 'medium', 'low'];
-
-      testSeverities.forEach((severity) => {
-        const darkColor = getSeverityColor(severity, 'dark');
-        const lightColor = getSeverityColor(severity, 'light');
-
-        // Colors should be different between themes
-        expect(darkColor).not.toBe(lightColor);
-      });
-
-      // Info color is the same in both themes
-      expect(getSeverityColor('info', 'dark')).toBe(getSeverityColor('info', 'light'));
+      expect(getSeverityColor('critical')).toBe('#ff4444');
+      expect(getSeverityColor('high')).toBe('#ff8c00');
+      expect(getSeverityColor('medium')).toBe('#ffb000');
+      expect(getSeverityColor('low')).toBe('#6b8aab');
+      expect(getSeverityColor('info')).toBe('#6b7280');
     });
   });
 
