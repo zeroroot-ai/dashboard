@@ -29,28 +29,22 @@ import { animationManager } from '@/src/lib/graph/animation-manager';
 import { ParticleSystem } from '@/src/lib/graph/particle-system';
 import { useGraph3DPerformance } from '@/src/stores/graph3d-store';
 import { ClusterManager } from '@/src/lib/graph/cluster-manager';
-import { getThemeColors, type ThemeColors } from '@/src/lib/graph/theme-colors';
 import {
   Rocket, Play, Bot, Wrench, Sparkles, Globe, Server,
   Plug, Cog, Link, Cpu, Shield, Bug, FileText, Crosshair, HelpCircle
 } from 'lucide-react';
 
-// Theme-aware colors for the graph canvas.
-// These must stay in sync with DARK_THEME / LIGHT_THEME in theme-colors.ts —
-// that module is the single source of truth; these constants mirror the
-// background + grid values here so the Graph3DRenderer can access them
-// without importing from src/lib inside the React component.
+// Canvas colors for the graph. There is one locked dark brand; these mirror
+// the background + grid values from DARK_THEME in theme-colors.ts (the single
+// source of truth) so the Graph3DRenderer can access them without importing
+// from src/lib inside the React component.
+// Single locked dark brand (#652) — violet-led, mirrors src/lib/graph
+// theme-colors.ts and globals.css --background.
 const THEME_COLORS = {
-  dark: {
-    // Deep-navy, aligned to brand --background dark (oklch 0.13 0.008 145)
-    background: '#0f1714',
-    // Faint cyan grid lines, aligned to --link (oklch 0.78 0.16 220)
-    grid: 'rgba(91, 203, 232, 0.06)',
-  },
-  light: {
-    background: '#faf6eb',
-    grid: 'rgba(90, 77, 64, 0.1)',
-  },
+  // Near-black blue-violet, aligned to --background (oklch 0.17 0.012 280)
+  background: '#14121c',
+  // Faint violet grid lines, aligned to --primary (oklch 0.58 0.225 295)
+  grid: 'rgba(139, 92, 246, 0.07)',
 } as const;
 
 // ============================================================================
@@ -373,12 +367,6 @@ class Graph3DRenderer {
   private frameCount = 0;
   private lastFpsUpdate = 0;
   private currentFps = 0;
-  // Theme transition state
-  private currentTheme: 'dark' | 'light';
-  private targetTheme: 'dark' | 'light';
-  private themeTransitionProgress: number = 1; // 1 = complete
-  private themeTransitionDuration: number = 200; // ms
-  private oldColors: ThemeColors | null = null;
   // Connected-node set for selection dimming
   private connectedNodeIds: Set<string> = new Set();
   // Cyber background: scanline y-offset (animated), reduced-motion flag
@@ -405,8 +393,6 @@ class Graph3DRenderer {
     this.onNodeHover = onNodeHover;
     this.onZoomChange = onZoomChange;
     this.theme = theme;
-    this.currentTheme = theme;
-    this.targetTheme = theme;
     // Detect prefers-reduced-motion — static at construction time.
     this.reducedMotion = typeof window !== 'undefined'
       ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -800,17 +786,15 @@ class Graph3DRenderer {
 
   private render(): void {
     const { ctx } = this;
-    const colors = THEME_COLORS[this.theme];
+    const colors = THEME_COLORS;
     const zoom = this.camera.zoom;
 
     // Clear — draw in logical (CSS) pixel space because ctx was scaled by DPR at init.
     ctx.fillStyle = colors.background;
     ctx.fillRect(0, 0, this.cssWidth, this.cssHeight);
 
-    // Cyber background layer: vignette + scanline (dark theme only)
-    if (this.theme === 'dark') {
-      this.drawCyberBackground();
-    }
+    // Cyber background layer: vignette + scanline
+    this.drawCyberBackground();
 
     this.drawGrid();
 
@@ -914,7 +898,8 @@ class Graph3DRenderer {
 
     // Render particles (after edges, before nodes)
     // Disable particle effects below zoom threshold for performance
-    const shouldRenderParticles = this.particlesEnabled && this.camera.zoom > 0.3;
+    const shouldRenderParticles =
+      this.particlesEnabled && !this.reducedMotion && this.camera.zoom > 0.3;
     if (shouldRenderParticles) {
       this.particleSystem.render(ctx);
     }
@@ -1139,7 +1124,7 @@ class Graph3DRenderer {
     const { ctx } = this;
     const gridSize = 50;
     const gridCount = 10;
-    const colors = THEME_COLORS[this.theme];
+    const colors = THEME_COLORS;
 
     ctx.strokeStyle = colors.grid;
     ctx.lineWidth = 1;
@@ -1190,21 +1175,13 @@ class Graph3DRenderer {
       // Get delta time for particle system
       const deltaTime = animationManager.getDeltaTime();
 
-      // Update theme transition
-      if (this.themeTransitionProgress < 1) {
-        this.themeTransitionProgress += deltaTime / (this.themeTransitionDuration / 1000);
-        if (this.themeTransitionProgress >= 1) {
-          this.themeTransitionProgress = 1;
-          this.currentTheme = this.targetTheme;
-          this.oldColors = null;
-        }
+      // Update active edges for particle flow + the flowing-line particles.
+      // Both are skipped under prefers-reduced-motion so the graph stays
+      // static for motion-sensitive users.
+      if (!this.reducedMotion) {
+        this.updateActiveEdges();
+        this.particleSystem.update(deltaTime);
       }
-
-      // Update active edges for particle flow
-      this.updateActiveEdges();
-
-      // Update particle system
-      this.particleSystem.update(deltaTime);
 
       // Render frame
       this.render();
@@ -1293,15 +1270,6 @@ class Graph3DRenderer {
     if (this.onZoomChange) this.onZoomChange(1);
   }
 
-  setTheme(theme: 'dark' | 'light'): void {
-    if (theme !== this.currentTheme) {
-      this.oldColors = getThemeColors(this.currentTheme);
-      this.targetTheme = theme;
-      this.themeTransitionProgress = 0;
-    }
-    this.theme = theme;
-  }
-
   setParticlesEnabled(enabled: boolean): void {
     this.particlesEnabled = enabled;
     if (!enabled) {
@@ -1383,8 +1351,6 @@ export function KnowledgeGraph3D({
   const rendererRef = useRef<Graph3DRenderer | null>(null);
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
   const [zoomPct, setZoomPct] = useState(100);
-  // The graph always renders in the single dark brand.
-  const resolvedTheme: 'dark' | 'light' = 'dark';
   const { performance } = useGraph3DPerformance();
 
   const handleNodeHover = useCallback(
@@ -1428,8 +1394,7 @@ export function KnowledgeGraph3D({
       data.edges,
       onNodeClick,
       handleNodeHover,
-      handleZoomChange,
-      resolvedTheme
+      handleZoomChange
     );
     rendererRef.current = renderer;
     renderer.start();
@@ -1450,14 +1415,7 @@ export function KnowledgeGraph3D({
     // Intentionally exclude onNodeClick/handleNodeHover — they are stable refs
     // but we don't want to recreate the renderer when callbacks change identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.nodes, data.edges, loading, error, resolvedTheme]);
-
-  // Update renderer theme when it changes
-  useEffect(() => {
-    if (rendererRef.current) {
-      rendererRef.current.setTheme(resolvedTheme);
-    }
-  }, [resolvedTheme]);
+  }, [data.nodes, data.edges, loading, error]);
 
   // Update renderer particle settings when store changes
   useEffect(() => {
