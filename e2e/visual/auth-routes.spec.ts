@@ -1,9 +1,10 @@
 /**
  * Visual regression — authenticated surfaces.
  *
- * Spec: dashboard#60. Captures full-page screenshots of /dashboard,
- * /dashboard/pages/missions, /dashboard/pages/findings, and
- * /dashboard/pages/settings/account in both light and dark mode.
+ * Spec: dashboard#60, single dark brand #654. Captures full-page screenshots
+ * of /dashboard, /dashboard/pages/missions, /dashboard/pages/findings, and
+ * /dashboard/pages/settings/account. There is one immutable dark brand —
+ * each route is captured once.
  *
  * Authentication: synthesised via the test-only session encoder at
  * src/lib/test-fixtures/encode-session.ts. The encoder mints a JWE
@@ -16,9 +17,6 @@
  * the page renders empty-state content regardless of cluster state.
  * Visual regression cares about chrome + layout + tokens, not
  * specific data rows.
- *
- * Theme: selected via the `theme_choice` cookie (same SSR-aware
- * mechanism as the public-routes spec).
  */
 
 import { test, expect, type Page, type BrowserContext } from "@playwright/test";
@@ -30,8 +28,6 @@ const AUTH_ROUTES = [
   { name: "findings", path: "/dashboard/pages/findings" },
   { name: "settings", path: "/dashboard/pages/settings/account" },
 ] as const;
-
-const MODES = ["light", "dark"] as const;
 
 const MOCK_USER = {
   sub: "test-user-visual-regression",
@@ -55,19 +51,6 @@ async function setAuthSession(context: BrowserContext) {
     {
       name: "gibson_active_tenant",
       value: MOCK_TENANT_ID,
-      domain: "localhost",
-      path: "/",
-      httpOnly: false,
-      sameSite: "Lax",
-    },
-  ]);
-}
-
-async function setTheme(context: BrowserContext, mode: (typeof MODES)[number]) {
-  await context.addCookies([
-    {
-      name: "theme_choice",
-      value: mode,
       domain: "localhost",
       path: "/",
       httpOnly: false,
@@ -124,21 +107,16 @@ test.describe("visual regression — auth routes", () => {
     "auth-route visual regression requires TEST_AUTH_BYPASS=1",
   );
 
-  for (const mode of MODES) {
-    test.describe(`${mode} mode`, () => {
-      for (const route of AUTH_ROUTES) {
-        test(route.name, async ({ page, context }) => {
-          await setAuthSession(context);
-          await setTheme(context, mode);
-          await stubDataLayer(page);
-          await page.goto(route.path);
-          await stabilise(page);
-          await expect(page).toHaveScreenshot(`auth-${route.name}-${mode}.png`, {
-            fullPage: true,
-            maxDiffPixelRatio: 0.01,
-          });
-        });
-      }
+  for (const route of AUTH_ROUTES) {
+    test(route.name, async ({ page, context }) => {
+      await setAuthSession(context);
+      await stubDataLayer(page);
+      await page.goto(route.path);
+      await stabilise(page);
+      await expect(page).toHaveScreenshot(`auth-${route.name}-dark.png`, {
+        fullPage: true,
+        maxDiffPixelRatio: 0.01,
+      });
     });
   }
 });

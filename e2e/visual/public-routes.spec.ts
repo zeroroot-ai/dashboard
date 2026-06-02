@@ -1,15 +1,11 @@
 /**
  * Visual regression — public surfaces.
  *
- * Spec: dashboard#60. Captures full-page screenshots of every customer-facing
- * route that doesn't require an authenticated session, in both light and dark
- * mode, against the local dev server. Failures here mean the design system's
- * tokens drifted or a consumer started reaching outside them.
- *
- * Theme is selected via the `theme_choice` cookie that #57 wired into
- * app/layout.tsx — setting it before navigation causes the server render to
- * pick up the chosen mode without dark-flash, so the snapshot captures the
- * stable state.
+ * Spec: dashboard#60, single dark brand #654. Captures full-page screenshots
+ * of every customer-facing route that doesn't require an authenticated
+ * session, against the local dev server. There is one immutable dark brand —
+ * each route is captured once. Failures here mean the design system's tokens
+ * drifted or a consumer started reaching outside them.
  *
  * Auth routes (/dashboard, /dashboard/missions, …) are intentionally NOT in
  * this file. They require a complete session-plus-daemon mock harness which
@@ -34,22 +30,6 @@ const PUBLIC_ROUTES = [
   { name: "design-tokens", path: "/design-tokens" },
   { name: "contact-sales", path: "/contact-sales" },
 ] as const;
-
-const MODES = ["light", "dark"] as const;
-
-async function setTheme(page: Page, mode: (typeof MODES)[number]) {
-  await page.context().clearCookies();
-  await page.context().addCookies([
-    {
-      name: "theme_choice",
-      value: mode,
-      domain: "localhost",
-      path: "/",
-      httpOnly: false,
-      sameSite: "Lax",
-    },
-  ]);
-}
 
 /**
  * Steady-state wait: scanlines + glow utilities use animations whose
@@ -79,19 +59,14 @@ test.describe("visual regression — public routes", () => {
     "visual baselines are chromium-only",
   );
 
-  for (const mode of MODES) {
-    test.describe(`${mode} mode`, () => {
-      for (const route of PUBLIC_ROUTES) {
-        test(route.name, async ({ page }) => {
-          await setTheme(page, mode);
-          await page.goto(route.path);
-          await stabilise(page);
-          await expect(page).toHaveScreenshot(`${route.name}-${mode}.png`, {
-            fullPage: true,
-            maxDiffPixelRatio: 0.01,
-          });
-        });
-      }
+  for (const route of PUBLIC_ROUTES) {
+    test(route.name, async ({ page }) => {
+      await page.goto(route.path);
+      await stabilise(page);
+      await expect(page).toHaveScreenshot(`${route.name}-dark.png`, {
+        fullPage: true,
+        maxDiffPixelRatio: 0.01,
+      });
     });
   }
 });
