@@ -15,9 +15,12 @@ function createMockCanvasContext(): CanvasRenderingContext2D {
     translate: vi.fn(),
     scale: vi.fn(),
     setLineDash: vi.fn(),
+    // Comet-tail flowing lines (#652) stroke a gradient along the edge.
+    createLinearGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
     fillStyle: '',
     strokeStyle: '',
     lineWidth: 1,
+    lineCap: 'butt',
     globalAlpha: 1,
     shadowColor: '',
     shadowBlur: 0,

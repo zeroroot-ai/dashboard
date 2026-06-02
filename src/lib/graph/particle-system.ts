@@ -29,17 +29,27 @@ interface EdgeEndpoints {
 export class ParticleSystem {
   private pool: Particle[] = [];
   private activeEdges: Map<string, EdgeEndpoints> = new Map();
+  // Per-edge particle color, captured when the edge is activated so the flow
+  // takes on the edge's brand color instead of a single global default.
+  private edgeColors: Map<string, string> = new Map();
   private maxParticles: number;
-  private density: number = 0.5;
+  // Higher default density (#652) so active edges read as alive flowing lines.
+  private density: number = 0.7;
   private spawnAccumulator: Map<string, number> = new Map();
 
-  // Particle appearance settings
+  // Particle appearance settings — tuned (#652) for a brighter, more active
+  // flowing-line look while staying subtle enough not to drown the nodes.
   private readonly MIN_SIZE = 2;
   private readonly MAX_SIZE = 4;
-  private readonly MIN_SPEED = 0.15;  // 15% of edge per second
-  private readonly MAX_SPEED = 0.35;  // 35% of edge per second
-  private readonly BASE_ALPHA = 0.7;
+  private readonly MIN_SPEED = 0.18;  // 18% of edge per second
+  private readonly MAX_SPEED = 0.40;  // 40% of edge per second
+  private readonly BASE_ALPHA = 0.85;
   private readonly FADE_DURATION = 0.15; // 15% of progress for fade in/out
+  // Comet-tail length as a fraction of edge length — gives each particle a
+  // directional streak so the edge reads as a flowing line, not loose dots.
+  private readonly TAIL_LENGTH = 0.06;
+  // Brand violet — the default when an edge color can't be resolved.
+  private readonly DEFAULT_COLOR = '#a78bfa';
 
   constructor(maxParticles: number = 200) {
     this.maxParticles = maxParticles;
@@ -90,6 +100,7 @@ export class ParticleSystem {
     color: string
   ): void {
     this.activeEdges.set(edgeId, { x1, y1, x2, y2 });
+    this.edgeColors.set(edgeId, color || this.DEFAULT_COLOR);
 
     // Initialize spawn accumulator for this edge
     if (!this.spawnAccumulator.has(edgeId)) {
@@ -103,6 +114,7 @@ export class ParticleSystem {
    */
   deactivateEdge(edgeId: string): void {
     this.activeEdges.delete(edgeId);
+    this.edgeColors.delete(edgeId);
     this.spawnAccumulator.delete(edgeId);
   }
 
@@ -144,7 +156,7 @@ export class ParticleSystem {
    */
   private spawnParticles(deltaTime: number): void {
     // Calculate spawn rate: particles per second per edge
-    const baseSpawnRate = 2.0; // 2 particles/second at density 1.0
+    const baseSpawnRate = 3.2; // particles/second at density 1.0 (#652)
     const spawnRate = baseSpawnRate * this.density;
     const spawnInterval = 1.0 / spawnRate;
 
@@ -195,10 +207,9 @@ export class ParticleSystem {
    * @returns Color string
    */
   private getEdgeColor(edgeId: string): string {
-    // In a real implementation, this would look up the edge's actual color
-    // For now, we'll extract it when the edge is activated
-    // This is a placeholder that should be enhanced to store color per edge
-    return '#ffb000'; // Default amber color
+    // The edge's brand color, captured at activation. Falls back to brand
+    // violet if the edge was never given one.
+    return this.edgeColors.get(edgeId) ?? this.DEFAULT_COLOR;
   }
 
   /**
@@ -222,11 +233,29 @@ export class ParticleSystem {
       const x = edge.x1 + (edge.x2 - edge.x1) * particle.progress;
       const y = edge.y1 + (edge.y2 - edge.y1) * particle.progress;
 
-      // Parse color and add alpha
-      const color = this.addAlphaToColor(particle.color, particle.alpha);
+      // Comet tail: a short streak trailing behind the head along the edge
+      // direction, fading from the head color to transparent — this is what
+      // makes the flow read as a moving line rather than a string of dots.
+      const tailProgress = Math.max(0, particle.progress - this.TAIL_LENGTH);
+      const tailX = edge.x1 + (edge.x2 - edge.x1) * tailProgress;
+      const tailY = edge.y1 + (edge.y2 - edge.y1) * tailProgress;
 
-      // Draw particle with subtle glow
-      this.drawParticle(ctx, x, y, particle.size, color);
+      const headColor = this.addAlphaToColor(particle.color, particle.alpha);
+      const trailColor = this.addAlphaToColor(particle.color, 0);
+      const gradient = ctx.createLinearGradient(tailX, tailY, x, y);
+      gradient.addColorStop(0, trailColor);
+      gradient.addColorStop(1, headColor);
+
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = particle.size * 0.9;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(tailX, tailY);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+
+      // Draw the bright head on top of the streak.
+      this.drawParticle(ctx, x, y, particle.size, headColor);
     }
 
     ctx.restore();
@@ -304,6 +333,7 @@ export class ParticleSystem {
    */
   clear(): void {
     this.activeEdges.clear();
+    this.edgeColors.clear();
     this.spawnAccumulator.clear();
 
     // Deactivate all particles

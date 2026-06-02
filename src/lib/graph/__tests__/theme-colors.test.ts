@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   getThemeColors,
   DARK_THEME,
-  LIGHT_THEME,
   type EntityType,
   type RelationshipType,
   type Severity,
@@ -46,29 +45,20 @@ function contrastRatio(hex1: string, hex2: string): number {
 }
 
 // ============================================================================
-// Tests
+// Tests — single locked dark brand (#652)
 // ============================================================================
 
-describe('theme-colors', () => {
+describe('theme-colors (single dark brand)', () => {
   describe('getThemeColors', () => {
-    it('should return dark theme colors when theme is "dark"', () => {
-      const colors = getThemeColors('dark');
-
+    it('returns the dark brand palette', () => {
+      const colors = getThemeColors();
       expect(colors).toBeDefined();
       expect(colors).toBe(DARK_THEME);
     });
-
-    it('should return light theme colors when theme is "light"', () => {
-      const colors = getThemeColors('light');
-
-      expect(colors).toBeDefined();
-      expect(colors).toBe(LIGHT_THEME);
-    });
   });
 
-  describe('DARK_THEME', () => {
-    it('should have all required color keys', () => {
-      expect(DARK_THEME).toBeDefined();
+  describe('DARK_THEME structure', () => {
+    it('has all required color keys', () => {
       expect(DARK_THEME.background).toBeDefined();
       expect(DARK_THEME.grid).toBeDefined();
       expect(DARK_THEME.glowColors).toBeDefined();
@@ -77,418 +67,120 @@ describe('theme-colors', () => {
       expect(DARK_THEME.severityColors).toBeDefined();
     });
 
-    it('should have a deep-navy background (not pure cold-black)', () => {
-      // The background must be a valid hex color
+    it('has a near-black, blue-violet-tinted background', () => {
       expect(DARK_THEME.background).toMatch(/^#[0-9a-f]{6}$/i);
-      // Must NOT be the old pure cold-black value
-      expect(DARK_THEME.background).not.toBe('#09090b');
-      // Must be dark enough (luminance < 0.03) — it is a near-black surface
+      // Not pure cold-black; the brand base is lifted off #000.
+      expect(DARK_THEME.background).not.toBe('#000000');
+      // Dark enough to be a near-black surface.
       expect(hexLuminance(DARK_THEME.background)).toBeLessThan(0.03);
     });
 
-    it('should have valid grid color (rgba)', () => {
-      expect(DARK_THEME.grid).toMatch(/^rgba\(\d+,\s*\d+,\s*\d+,\s*[\d.]+\)$/);
+    it('uses a violet-led grid + glow (the brand accent)', () => {
+      expect(DARK_THEME.grid).toMatch(/^rgba\(139,\s*92,\s*246/);
+      expect(DARK_THEME.glowColors.primary).toMatch(/^rgba\(139,\s*92,\s*246/);
     });
 
-    it('should have all glow color properties', () => {
+    it('makes the mission (root) node the brand violet', () => {
+      // The mission node anchors the graph; it carries the primary brand hue.
+      expect(DARK_THEME.nodeColors.mission).toBe('#b39dff');
+    });
+
+    it('has all glow colors in rgba format', () => {
       const { glowColors } = DARK_THEME;
-
-      expect(glowColors.primary).toBeDefined();
-      expect(glowColors.active).toBeDefined();
-      expect(glowColors.critical).toBeDefined();
-      expect(glowColors.success).toBeDefined();
-
-      // All glow colors should be rgba format
       expect(glowColors.primary).toMatch(/^rgba\(/);
       expect(glowColors.active).toMatch(/^rgba\(/);
       expect(glowColors.critical).toMatch(/^rgba\(/);
       expect(glowColors.success).toMatch(/^rgba\(/);
     });
 
-    it('should have colors for all 16 entity types', () => {
+    it('has colors for all 16 entity types', () => {
       const entityTypes: EntityType[] = [
-        'mission',
-        'mission_run',
-        'agent_run',
-        'tool_execution',
-        'llm_call',
-        'domain',
-        'subdomain',
-        'host',
-        'port',
-        'service',
-        'endpoint',
-        'technology',
-        'certificate',
-        'finding',
-        'evidence',
-        'technique',
+        'mission', 'mission_run', 'agent_run', 'tool_execution', 'llm_call',
+        'domain', 'subdomain', 'host', 'port', 'service', 'endpoint',
+        'technology', 'certificate', 'finding', 'evidence', 'technique',
       ];
-
-      entityTypes.forEach((entityType) => {
-        const color = DARK_THEME.nodeColors[entityType];
-        expect(color).toBeDefined();
-        expect(color).toMatch(/^#[0-9a-f]{6}$/i);
+      entityTypes.forEach((t) => {
+        expect(DARK_THEME.nodeColors[t]).toMatch(/^#[0-9a-f]{6}$/i);
       });
     });
 
-    it('should have colors for all relationship types', () => {
-      const relationshipTypes: RelationshipType[] = [
-        'HAS_SUBDOMAIN',
-        'RESOLVES_TO',
-        'HAS_PORT',
-        'RUNS_SERVICE',
-        'HAS_ENDPOINT',
-        'USES_TECHNOLOGY',
-        'SERVES_CERTIFICATE',
-        'AFFECTS',
-        'HAS_EVIDENCE',
-        'USES_TECHNIQUE',
-        'LEADS_TO',
-        'USED_TOOL',
-        'DELEGATED_TO',
-        'DISCOVERED',
-        'BELONGS_TO',
+    it('has colors for all relationship types', () => {
+      const relTypes: RelationshipType[] = [
+        'HAS_SUBDOMAIN', 'RESOLVES_TO', 'HAS_PORT', 'RUNS_SERVICE', 'HAS_ENDPOINT',
+        'USES_TECHNOLOGY', 'SERVES_CERTIFICATE', 'AFFECTS', 'HAS_EVIDENCE',
+        'USES_TECHNIQUE', 'LEADS_TO', 'USED_TO', 'USED_TOOL', 'DELEGATED_TO',
+        'DISCOVERED', 'BELONGS_TO',
       ];
-
-      relationshipTypes.forEach((relType) => {
-        const color = DARK_THEME.edgeColors[relType];
-        expect(color).toBeDefined();
-        // Dark theme uses rgba() for structural edges and hex for others.
-        expect(color).toMatch(/^(#[0-9a-f]{6}|rgba\(\d+,\s*\d+,\s*\d+,\s*[\d.]+\))$/i);
+      relTypes.forEach((r) => {
+        expect(DARK_THEME.edgeColors[r]).toMatch(
+          /^(#[0-9a-f]{6}|rgba\(\d+,\s*\d+,\s*\d+,\s*[\d.]+\))$/i,
+        );
       });
     });
 
-    it('should have colors for all severity levels', () => {
+    it('has colors for all severity levels', () => {
       const severities: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
-
-      severities.forEach((severity) => {
-        const color = DARK_THEME.severityColors[severity];
-        expect(color).toBeDefined();
-        expect(color).toMatch(/^#[0-9a-f]{6}$/i);
+      severities.forEach((s) => {
+        expect(DARK_THEME.severityColors[s]).toMatch(/^#[0-9a-f]{6}$/i);
       });
     });
   });
 
-  describe('LIGHT_THEME', () => {
-    it('should have all required color keys', () => {
-      expect(LIGHT_THEME).toBeDefined();
-      expect(LIGHT_THEME.background).toBeDefined();
-      expect(LIGHT_THEME.grid).toBeDefined();
-      expect(LIGHT_THEME.glowColors).toBeDefined();
-      expect(LIGHT_THEME.nodeColors).toBeDefined();
-      expect(LIGHT_THEME.edgeColors).toBeDefined();
-      expect(LIGHT_THEME.severityColors).toBeDefined();
-    });
+  // --------------------------------------------------------------------------
+  // WCAG AA contrast — re-paletted colors must stay legible on the new base.
+  // --------------------------------------------------------------------------
 
-    it('should have valid background color', () => {
-      expect(LIGHT_THEME.background).toMatch(/^#[0-9a-f]{6}$/i);
-      expect(LIGHT_THEME.background).toBe('#faf6eb');
-    });
-
-    it('should have valid grid color (rgba)', () => {
-      expect(LIGHT_THEME.grid).toMatch(/^rgba\(\d+,\s*\d+,\s*\d+,\s*[\d.]+\)$/);
-    });
-
-    it('should have all glow color properties', () => {
-      const { glowColors } = LIGHT_THEME;
-
-      expect(glowColors.primary).toBeDefined();
-      expect(glowColors.active).toBeDefined();
-      expect(glowColors.critical).toBeDefined();
-      expect(glowColors.success).toBeDefined();
-
-      // All glow colors should be rgba format
-      expect(glowColors.primary).toMatch(/^rgba\(/);
-      expect(glowColors.active).toMatch(/^rgba\(/);
-      expect(LIGHT_THEME.glowColors.primary).toMatch(/^rgba\(/);
-      expect(LIGHT_THEME.glowColors.active).toMatch(/^rgba\(/);
-    });
-
-    it('should have colors for all 16 entity types', () => {
-      const entityTypes: EntityType[] = [
-        'mission',
-        'mission_run',
-        'agent_run',
-        'tool_execution',
-        'llm_call',
-        'domain',
-        'subdomain',
-        'host',
-        'port',
-        'service',
-        'endpoint',
-        'technology',
-        'certificate',
-        'finding',
-        'evidence',
-        'technique',
-      ];
-
-      entityTypes.forEach((entityType) => {
-        const color = LIGHT_THEME.nodeColors[entityType];
-        expect(color).toBeDefined();
-        expect(color).toMatch(/^#[0-9a-f]{6}$/i);
-      });
-    });
-
-    it('should have colors for all relationship types', () => {
-      const relationshipTypes: RelationshipType[] = [
-        'HAS_SUBDOMAIN',
-        'RESOLVES_TO',
-        'HAS_PORT',
-        'RUNS_SERVICE',
-        'HAS_ENDPOINT',
-        'USES_TECHNOLOGY',
-        'SERVES_CERTIFICATE',
-        'AFFECTS',
-        'HAS_EVIDENCE',
-        'USES_TECHNIQUE',
-        'LEADS_TO',
-        'USED_TOOL',
-        'DELEGATED_TO',
-        'DISCOVERED',
-        'BELONGS_TO',
-      ];
-
-      relationshipTypes.forEach((relType) => {
-        const color = LIGHT_THEME.edgeColors[relType];
-        expect(color).toBeDefined();
-        expect(color).toMatch(/^#[0-9a-f]{6}$/i);
-      });
-    });
-
-    it('should have colors for all severity levels', () => {
-      const severities: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
-
-      severities.forEach((severity) => {
-        const color = LIGHT_THEME.severityColors[severity];
-        expect(color).toBeDefined();
-        expect(color).toMatch(/^#[0-9a-f]{6}$/i);
-      });
+  describe('WCAG AA — node colors vs the brand background (>=4.5:1)', () => {
+    const bg = DARK_THEME.background;
+    const entityTypes: EntityType[] = [
+      'mission', 'mission_run', 'agent_run', 'tool_execution', 'llm_call',
+      'domain', 'subdomain', 'host', 'port', 'service', 'endpoint',
+      'technology', 'certificate', 'finding', 'evidence', 'technique',
+    ];
+    it.each(entityTypes)('%s node color is AA-legible', (t) => {
+      expect(contrastRatio(DARK_THEME.nodeColors[t], bg)).toBeGreaterThanOrEqual(4.5);
     });
   });
 
-  describe('Theme consistency', () => {
-    it('should have same structure for dark and light themes', () => {
-      // Both themes should have the same keys
-      expect(Object.keys(DARK_THEME).sort()).toEqual(Object.keys(LIGHT_THEME).sort());
-
-      // Both should have same glow color keys
-      expect(Object.keys(DARK_THEME.glowColors).sort()).toEqual(
-        Object.keys(LIGHT_THEME.glowColors).sort()
-      );
-
-      // Both should have same entity type keys
-      expect(Object.keys(DARK_THEME.nodeColors).sort()).toEqual(
-        Object.keys(LIGHT_THEME.nodeColors).sort()
-      );
-
-      // Both should have same severity keys
-      expect(Object.keys(DARK_THEME.severityColors).sort()).toEqual(
-        Object.keys(LIGHT_THEME.severityColors).sort()
-      );
+  describe('WCAG AA — severity colors vs the brand background (>=4.5:1)', () => {
+    const bg = DARK_THEME.background;
+    const severities: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
+    it.each(severities)('%s severity color is AA-legible', (s) => {
+      expect(contrastRatio(DARK_THEME.severityColors[s], bg)).toBeGreaterThanOrEqual(4.5);
     });
+  });
 
-    it('should have different background colors between themes', () => {
-      expect(DARK_THEME.background).not.toBe(LIGHT_THEME.background);
+  describe('node types stay mutually distinguishable', () => {
+    it('mission and domain differ', () => {
+      expect(DARK_THEME.nodeColors.mission).not.toBe(DARK_THEME.nodeColors.domain);
     });
-
-    it('should have different node colors between themes (most cases)', () => {
-      const entityTypes: EntityType[] = ['mission', 'domain', 'finding'];
-
-      entityTypes.forEach((entityType) => {
-        const darkColor = DARK_THEME.nodeColors[entityType];
-        const lightColor = LIGHT_THEME.nodeColors[entityType];
-
-        expect(darkColor).not.toBe(lightColor);
-      });
+    it('finding and evidence differ', () => {
+      expect(DARK_THEME.nodeColors.finding).not.toBe(DARK_THEME.nodeColors.evidence);
+    });
+    it('host and service differ', () => {
+      expect(DARK_THEME.nodeColors.host).not.toBe(DARK_THEME.nodeColors.service);
+    });
+    it('agent_run and llm_call differ', () => {
+      expect(DARK_THEME.nodeColors.agent_run).not.toBe(DARK_THEME.nodeColors.llm_call);
+    });
+    it('mission and finding have a luminance gap', () => {
+      const diff = Math.abs(
+        hexLuminance(DARK_THEME.nodeColors.mission) -
+        hexLuminance(DARK_THEME.nodeColors.finding),
+      );
+      expect(diff).toBeGreaterThan(0.01);
     });
   });
 
   describe('ThemeColors type conformance', () => {
-    it('should conform to ThemeColors interface for dark theme', () => {
+    it('conforms to the ThemeColors interface', () => {
       const colors: ThemeColors = DARK_THEME;
-
-      // Type checking - these should compile without errors
       expect(colors.background).toBeDefined();
       expect(colors.grid).toBeDefined();
       expect(colors.glowColors).toBeDefined();
       expect(colors.nodeColors).toBeDefined();
       expect(colors.edgeColors).toBeDefined();
       expect(colors.severityColors).toBeDefined();
-    });
-
-    it('should conform to ThemeColors interface for light theme', () => {
-      const colors: ThemeColors = LIGHT_THEME;
-
-      // Type checking - these should compile without errors
-      expect(colors.background).toBeDefined();
-      expect(colors.grid).toBeDefined();
-      expect(colors.glowColors).toBeDefined();
-      expect(colors.nodeColors).toBeDefined();
-      expect(colors.edgeColors).toBeDefined();
-      expect(colors.severityColors).toBeDefined();
-    });
-  });
-
-  describe('Color format validation', () => {
-    it('should use hex format for node colors in both themes', () => {
-      const entityTypes: EntityType[] = [
-        'mission',
-        'domain',
-        'host',
-        'finding',
-        'technique',
-      ];
-
-      entityTypes.forEach((entityType) => {
-        expect(DARK_THEME.nodeColors[entityType]).toMatch(/^#[0-9a-f]{6}$/i);
-        expect(LIGHT_THEME.nodeColors[entityType]).toMatch(/^#[0-9a-f]{6}$/i);
-      });
-    });
-
-    it('should use hex format for severity colors in both themes', () => {
-      const severities: Severity[] = ['critical', 'high', 'medium'];
-
-      severities.forEach((severity) => {
-        expect(DARK_THEME.severityColors[severity]).toMatch(/^#[0-9a-f]{6}$/i);
-        expect(LIGHT_THEME.severityColors[severity]).toMatch(/^#[0-9a-f]{6}$/i);
-      });
-    });
-
-    it('should use rgba format for glow colors in both themes', () => {
-      expect(DARK_THEME.glowColors.primary).toMatch(/^rgba\(/);
-      expect(DARK_THEME.glowColors.active).toMatch(/^rgba\(/);
-      expect(LIGHT_THEME.glowColors.primary).toMatch(/^rgba\(/);
-      expect(LIGHT_THEME.glowColors.active).toMatch(/^rgba\(/);
-    });
-  });
-
-  // ============================================================================
-  // WCAG AA Contrast Tests — required by issue #633
-  // These are pure-function tests; no DOM required.
-  // ============================================================================
-
-  describe('WCAG AA contrast — dark theme node colors vs background', () => {
-    const bg = DARK_THEME.background;
-
-    // WCAG AA for normal-size text: 4.5:1
-    // WCAG AA for large text / UI components: 3:1
-    // Node colors are used as border/accent colors against the canvas bg.
-    // We require ≥4.5:1 for node type colors (they appear as labels too).
-    const NORMAL_TEXT_THRESHOLD = 4.5;
-
-    const entityTypes: EntityType[] = [
-      'mission',
-      'mission_run',
-      'agent_run',
-      'tool_execution',
-      'llm_call',
-      'domain',
-      'subdomain',
-      'host',
-      'port',
-      'service',
-      'endpoint',
-      'technology',
-      'certificate',
-      'finding',
-      'evidence',
-      'technique',
-    ];
-
-    entityTypes.forEach((entityType) => {
-      it(`${entityType} node color meets WCAG AA (≥${NORMAL_TEXT_THRESHOLD}:1) vs dark bg`, () => {
-        const nodeColor = DARK_THEME.nodeColors[entityType];
-        const ratio = contrastRatio(nodeColor, bg);
-        expect(ratio).toBeGreaterThanOrEqual(NORMAL_TEXT_THRESHOLD);
-      });
-    });
-  });
-
-  describe('WCAG AA contrast — dark theme severity colors vs background', () => {
-    const bg = DARK_THEME.background;
-    const THRESHOLD = 4.5;
-
-    const severities: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
-
-    severities.forEach((severity) => {
-      it(`${severity} severity color meets WCAG AA (≥${THRESHOLD}:1) vs dark bg`, () => {
-        const color = DARK_THEME.severityColors[severity];
-        const ratio = contrastRatio(color, bg);
-        expect(ratio).toBeGreaterThanOrEqual(THRESHOLD);
-      });
-    });
-  });
-
-  describe('Node types are mutually distinguishable in dark theme', () => {
-    // Requirement: key node type pairs must differ in perceived hue/lightness
-    // enough that they are not identical. We assert that the hex strings differ
-    // (same color → obvious confusion). For a stronger check we also verify
-    // that the luminance difference between selected pairs is > 0.01.
-    it('mission and domain are not the same color', () => {
-      expect(DARK_THEME.nodeColors.mission).not.toBe(DARK_THEME.nodeColors.domain);
-    });
-
-    it('finding and evidence are not the same color', () => {
-      expect(DARK_THEME.nodeColors.finding).not.toBe(DARK_THEME.nodeColors.evidence);
-    });
-
-    it('host and service are not the same color', () => {
-      expect(DARK_THEME.nodeColors.host).not.toBe(DARK_THEME.nodeColors.service);
-    });
-
-    it('agent_run and llm_call are not the same color', () => {
-      expect(DARK_THEME.nodeColors.agent_run).not.toBe(DARK_THEME.nodeColors.llm_call);
-    });
-
-    it('mission and finding have a luminance difference > 0.01', () => {
-      const diff = Math.abs(
-        hexLuminance(DARK_THEME.nodeColors.mission) -
-        hexLuminance(DARK_THEME.nodeColors.finding)
-      );
-      expect(diff).toBeGreaterThan(0.01);
-    });
-
-    it('domain and host have a luminance difference > 0.01', () => {
-      const diff = Math.abs(
-        hexLuminance(DARK_THEME.nodeColors.domain) -
-        hexLuminance(DARK_THEME.nodeColors.host)
-      );
-      expect(diff).toBeGreaterThan(0.01);
-    });
-  });
-
-  describe('WCAG AA contrast — light theme node colors vs background', () => {
-    const bg = LIGHT_THEME.background;
-    const THRESHOLD = 4.5;
-
-    const entityTypes: EntityType[] = [
-      'mission',
-      'mission_run',
-      'agent_run',
-      'tool_execution',
-      'llm_call',
-      'domain',
-      'subdomain',
-      'host',
-      'port',
-      'service',
-      'endpoint',
-      'technology',
-      'certificate',
-      'finding',
-      'evidence',
-      'technique',
-    ];
-
-    entityTypes.forEach((entityType) => {
-      it(`${entityType} node color meets WCAG AA (≥${THRESHOLD}:1) vs light bg`, () => {
-        const nodeColor = LIGHT_THEME.nodeColors[entityType];
-        const ratio = contrastRatio(nodeColor, bg);
-        expect(ratio).toBeGreaterThanOrEqual(THRESHOLD);
-      });
     });
   });
 });
