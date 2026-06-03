@@ -27,6 +27,7 @@ import {
   GitBranch,
   Radar,
   Clock,
+  Settings,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -42,6 +43,8 @@ export interface GraphControlsProps {
   onZoomOut: () => void;
   onFit: () => void;
   onReset: () => void;
+  /** Open the Graph Settings panel. */
+  onOpenSettings?: () => void;
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
   className?: string;
 }
@@ -96,6 +99,7 @@ export function GraphControls({
   onZoomOut,
   onFit,
   onReset,
+  onOpenSettings,
   position = 'top-right',
   className,
 }: GraphControlsProps) {
@@ -147,6 +151,9 @@ export function GraphControls({
           label={particles ? 'Disable particles' : 'Enable particles'}
           active={particles}
         />
+        {onOpenSettings && (
+          <ControlButton onClick={onOpenSettings} icon={Settings} label="Settings" />
+        )}
       </ControlGroup>
 
       {/* Stats HUD */}

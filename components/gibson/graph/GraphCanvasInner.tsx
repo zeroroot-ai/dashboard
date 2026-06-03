@@ -139,6 +139,19 @@ export default function GraphCanvasInner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.layoutMode, signature]);
 
+  // Apply force-layout physics (repulsion + link distance) from settings.
+  // Only meaningful in force mode, but safe to set on the d3 forces regardless.
+  useEffect(() => {
+    const fg = fgRef.current;
+    if (!fg) return;
+    const charge = fg.d3Force('charge') as { strength?: (s: number) => void } | undefined;
+    charge?.strength?.(data.display.charge);
+    const link = fg.d3Force('link') as { distance?: (d: number) => void } | undefined;
+    link?.distance?.(data.display.linkDistance);
+    if (data.layoutMode === 'force') fg.d3ReheatSimulation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.display.charge, data.display.linkDistance, data.layoutMode, signature]);
+
   // ── Live interaction state via refs (so accessors see latest w/o rebuild) ──
   const selectedRef = useRef<string | null>(null);
   const hoveredRef = useRef<string | null>(null);
@@ -225,13 +238,16 @@ export default function GraphCanvasInner({
       const isSelected = selectedRef.current === g.id;
       const isHovered = hoveredRef.current === g.id;
       const alpha = nodeAlpha(g.id);
+      const d = displayRef.current;
 
       ctx.save();
       ctx.globalAlpha = alpha;
 
-      if (isSelected || isHovered) {
+      // Glow on focused nodes, scaled by the Glow setting; off in performance mode.
+      const glowOn = !d.performanceMode && d.glow > 0 && (isSelected || isHovered);
+      if (glowOn) {
         ctx.shadowColor = color;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 18 * d.glow;
       }
 
       ctx.beginPath();
@@ -247,8 +263,15 @@ export default function GraphCanvasInner({
       }
 
       // Labels — only when zoomed in enough to stay legible, or when focused.
-      const showLabels = displayRef.current.showLabels;
-      if ((showLabels && globalScale >= LABEL_ZOOM_THRESHOLD) || isSelected || isHovered) {
+      // Label density shifts the zoom threshold at which labels appear.
+      const showLabels = d.showLabels;
+      const labelThreshold =
+        d.labelDensity === 'dense'
+          ? LABEL_ZOOM_THRESHOLD * 0.45
+          : d.labelDensity === 'sparse'
+          ? LABEL_ZOOM_THRESHOLD * 1.8
+          : LABEL_ZOOM_THRESHOLD;
+      if ((showLabels && globalScale >= labelThreshold) || isSelected || isHovered) {
         const label = (g.properties?.name as string) || g.id;
         const fontSize = Math.max(2.5, 11 / globalScale);
         ctx.font = `${fontSize}px ui-monospace, monospace`;
@@ -307,7 +330,7 @@ export default function GraphCanvasInner({
   }, []);
 
   const linkParticles = useCallback((link: RFLink): number => {
-    if (!displayRef.current.particles) return 0;
+    if (!displayRef.current.particles || displayRef.current.performanceMode) return 0;
     const e = link.__g;
     const hp = highlightRef.current;
     if (hp.active) return hp.edges.has(e.id) ? 3 : 0;

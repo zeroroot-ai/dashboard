@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/sheet';
 import { GraphCanvas, type GraphCanvasHandle } from '@/components/gibson/graph/GraphCanvas';
 import { GraphControls } from '@/components/gibson/graph/GraphControls';
+import { GraphSettings } from '@/components/gibson/graph/GraphSettings';
 import { GraphFilters, type GraphFilters as GraphFiltersType } from '@/components/gibson/graph/GraphFilters';
 import { MissionSelector } from '@/components/gibson/graph/MissionSelector';
 import { NodeDetailPanel } from '@/components/gibson/graph/NodeDetailPanel';
@@ -50,6 +51,7 @@ export default function GraphPage() {
 
   const [filters, setFilters] = useState<GraphFiltersType>(DEFAULT_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [pathSourceNode, setPathSourceNode] = useState<GraphNode | null>(null);
   const [highlightedPaths, setHighlightedPaths] = useState<PathResult[]>([]);
@@ -302,8 +304,12 @@ export default function GraphPage() {
           onZoomOut={handleZoomOut}
           onFit={handleFit}
           onReset={handleReset}
+          onOpenSettings={() => setSettingsOpen(true)}
         />
       )}
+
+      {/* Settings panel */}
+      <GraphSettings open={settingsOpen} onOpenChange={setSettingsOpen} />
 
       {/* Filters Sheet — slide-in from left */}
       <div className="absolute top-4 left-4 z-20">
