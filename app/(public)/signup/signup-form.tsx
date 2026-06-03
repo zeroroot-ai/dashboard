@@ -47,6 +47,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { signupAction } from "@/app/actions/signup";
+import {
+  isServerActionDeploymentSkew,
+  reloadForDeploymentSkew,
+} from "@/src/lib/server-action-skew";
 import { pricingDisplays } from "@/src/lib/pricing-display";
 import type { PasswordPolicy } from "@/src/lib/zitadel/admin-client";
 import { isReservedSlug, slugify } from "@/src/lib/signup/slug";
@@ -312,10 +316,26 @@ export function SignupForm({
           message: err instanceof Error ? err.message : String(err),
           stack: err instanceof Error ? err.stack : undefined,
         });
-        toast.error("Something went wrong on our end. Please try again.");
-        // Drop the panel on uncaught exception so the user can retry the form.
+        // Drop the panel so the user is back on the form regardless of cause.
         setAttemptId(null);
         setIsProvisioning(false);
+        // Deployment skew: this tab's client bundle predates the running
+        // dashboard build, so its Server Action IDs are stale and Next.js
+        // rejects the call with "Failed to find Server Action". Retrying the
+        // same action from this tab can never succeed — only a reload, which
+        // fetches the current build's bundle, recovers it. See
+        // src/lib/server-action-skew.ts.
+        if (isServerActionDeploymentSkew(err)) {
+          if (reloadForDeploymentSkew()) {
+            toast.error("The app was updated — reloading…");
+          } else {
+            toast.error(
+              "The app was updated. Please refresh the page and try again.",
+            );
+          }
+          return;
+        }
+        toast.error("Something went wrong on our end. Please try again.");
       }
     },
     [form],

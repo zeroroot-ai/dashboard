@@ -64,12 +64,23 @@ const nextConfig: NextConfig = {
   ],
   // Server Action encryption key persistence is env-driven in Next.js 16:
   // setting NEXT_SERVER_ACTIONS_ENCRYPTION_KEY in the runtime environment
-  // is enough — no config wiring required. The Helm chart mounts the env
-  // var from the dashboard secret (auto-generated on first install,
-  // preserved across upgrades) so action IDs stay stable across rebuilds.
-  // Without this, every dashboard rebuild rotates action IDs and any browser
-  // tab loaded BEFORE the rebuild fails its next form submit with "Failed
-  // to find Server Action" → user-facing "Something went wrong on our end".
+  // is enough — no config wiring required. The Helm chart mounts the env var
+  // from the dashboard secret (delivered by External Secrets, preserved across
+  // upgrades) so the key is identical across replicas and survives redeploys.
+  //
+  // What this DOES fix: a stable key keeps the encryption of an action's bound
+  // arguments consistent, so multi-replica / rolling deploys don't hit
+  // "Failed to decrypt Server Action" when a request lands on a pod that
+  // didn't mint the payload.
+  //
+  // What this does NOT fix: it does NOT freeze Server Action *IDs* across
+  // rebuilds. Next.js derives action IDs from the build's module graph, so any
+  // code-changing rebuild rotates them. A browser tab loaded from an older
+  // build then POSTs an unknown ID and Next throws "Failed to find Server
+  // Action … older or newer deployment". That deployment skew is inherent to
+  // rolling a Next.js app; the recovery is client-side (reload to fetch the
+  // current bundle) — see src/lib/server-action-skew.ts. Do not assume this
+  // env var alone prevents the "Something went wrong" signup error.
   images: {
     remotePatterns: [
       {
