@@ -4,7 +4,7 @@
  * End-to-end tests for the /docs surface rendered by Fumadocs.
  *
  * Covered flows (design §Testing Strategy / Integration Testing):
- *   1. GET /docs renders 200 with the Zero Day AI brand in the header and a
+ *   1. GET /docs renders 200 with the Zero Root AI brand in the header and a
  *      sidebar entry for "Getting Started".
  *   2. Clicking "Getting Started" navigates to /docs/getting-started and the
  *      page title renders.
@@ -27,7 +27,7 @@ test.describe("/docs — Fumadocs rendering", () => {
 
     // Shared SiteHeader brand.
     await expect(
-      page.getByRole("link", { name: "Zero Day AI" }),
+      page.getByRole("link", { name: "Zero Root AI" }),
     ).toBeVisible();
 
     // Sidebar entry for Getting Started. Fumadocs renders sidebar items

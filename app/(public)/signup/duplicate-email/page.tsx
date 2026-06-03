@@ -14,7 +14,7 @@ import { ErrorDisplay } from "@/components/gibson/auth/ErrorDisplay";
 import { resolveUserFacingError } from "@/src/lib/errors/user-facing";
 
 export const metadata: Metadata = {
-  title: "Email already registered — Zero Day AI",
+  title: "Email already registered — Zero Root AI",
 };
 
 /**

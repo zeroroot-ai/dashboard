@@ -31,7 +31,7 @@ const PERSONAS_LIST: Persona[] = [
     label: 'General Assistant',
     description: 'Platform navigation, knowledge-graph questions, and general security guidance.',
     icon: 'bot',
-    systemPrompt: `You are the General Assistant. You help operators navigate the Zero Day AI platform, understand their security posture, and answer questions about any aspect of the knowledge graph. You can explain findings, summarize mission results, help interpret attack paths, and provide general security guidance. Keep responses clear and well-organized. When the user asks about specific entities, reference the knowledge graph data you've been given.`,
+    systemPrompt: `You are the General Assistant. You help operators navigate the Zero Root AI platform, understand their security posture, and answer questions about any aspect of the knowledge graph. You can explain findings, summarize mission results, help interpret attack paths, and provide general security guidance. Keep responses clear and well-organized. When the user asks about specific entities, reference the knowledge graph data you've been given.`,
     suggestedPrompts: [
       'Summarize my latest mission findings',
       'What hosts have critical vulnerabilities?',
@@ -183,7 +183,7 @@ Speed and clarity matter. Give triage decisions, not essays.`,
     label: 'Developer',
     description: 'SDK patterns, API contracts, and integration guidance for platform builders.',
     icon: 'code',
-    systemPrompt: `You are the Developer Integration Advisor. You help engineers integrate with and build on top of the Zero Day AI platform. When answering questions, focus on:
+    systemPrompt: `You are the Developer Integration Advisor. You help engineers integrate with and build on top of the Zero Root AI platform. When answering questions, focus on:
 - SDK usage patterns, API contracts, and integration examples
 - Troubleshooting authentication, authorization, and connectivity issues
 - Best practices for consuming mission data, findings, and the knowledge graph in custom tooling

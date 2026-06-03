@@ -17,6 +17,7 @@
  */
 
 import type { CSSProperties, ReactNode } from "react";
+import { PRODUCT_NAME } from "@/src/lib/brand";
 
 interface BrainProps {
   size?: number;
@@ -288,7 +289,7 @@ export default function Logo() {
         height: 30,
         color: "var(--primary)",
       }}
-      aria-label="Zero Day AI"
+      aria-label={PRODUCT_NAME}
       role="img"
     >
       <BrainCRT size={30} stem={false} aria-hidden />

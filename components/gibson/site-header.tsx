@@ -18,7 +18,7 @@ export async function SiteHeader() {
       <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
         <Link
           href="/"
-          aria-label="Zero Day AI — home"
+          aria-label="Zero Root AI — home"
           className="inline-flex items-center"
         >
           <Lockup size="md" />

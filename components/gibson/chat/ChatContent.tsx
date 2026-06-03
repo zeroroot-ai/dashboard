@@ -528,7 +528,7 @@ function WelcomeState({ agent, graphSummary, onSendPrompt }: WelcomeStateProps) 
           <MessageSquare className="text-primary h-8 w-8" />
         </div>
         <h2 className="mb-2 text-xl font-semibold">
-          Chat with {agent?.name || 'Zero Day AI'}
+          Chat with {agent?.name || 'Zero Root AI'}
         </h2>
         <p className="text-muted-foreground mb-1 text-sm">
           {agent?.description || 'AI-powered security assistant'}
@@ -1469,7 +1469,7 @@ export function ChatContent() {
           {/* Input area */}
           <div className="border-t p-4">
             <ChatComposer
-              placeholder={`Message ${selectedAgent?.name || 'Zero Day AI'}...`}
+              placeholder={`Message ${selectedAgent?.name || 'Zero Root AI'}...`}
               attachment={attachment}
               attachmentUploading={attachmentUploading}
               onAttachFile={handleAttachFile}

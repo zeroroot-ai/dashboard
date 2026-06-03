@@ -613,7 +613,7 @@ export function DeployDispatcher({ initialType }: DeployDispatcherProps = {}) {
           Deploy Component
         </h1>
         <p className="text-sm text-muted-foreground">
-          Register a new agent, tool, or plugin with the Zero Day AI platform.
+          Register a new agent, tool, or plugin with the Zero Root AI platform.
         </p>
       </div>
 
