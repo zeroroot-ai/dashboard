@@ -35,10 +35,7 @@ export function ErrorAlert({
   className,
 }: ErrorAlertProps) {
   return (
-    <Alert
-      variant="destructive"
-      className={cn('border-destructive/50', className)}
-    >
+    <Alert variant="destructive" className={cn(className)}>
       <AlertTriangle className="h-4 w-4" aria-hidden="true" />
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription className="flex flex-col gap-1">
@@ -49,7 +46,7 @@ export function ErrorAlert({
               variant="outline"
               size="sm"
               onClick={retry}
-              className="shrink-0 border-destructive/60 bg-destructive/10/30 text-destructive hover:bg-destructive/10/60 hover:text-destructive"
+              className="shrink-0 border-destructive-foreground/40 bg-transparent text-destructive-foreground hover:bg-destructive-foreground/15 hover:text-destructive-foreground"
             >
               Retry
             </Button>

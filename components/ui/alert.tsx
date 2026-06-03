@@ -9,8 +9,13 @@ const alertVariants = cva(
     variants: {
       variant: {
         default: "bg-card text-card-foreground",
+        // Bold filled error banner (#705): the old variant put dark
+        // `text-destructive` on a near-black card (the --destructive token is a
+        // FILL tuned for white text, so it read as muddy unreadable dark-red).
+        // Now it's a filled red banner with AA white text + icon, so real
+        // failures are unmissable and legible.
         destructive:
-          "text-destructive bg-card [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90",
+          "bg-destructive text-destructive-foreground border-destructive [&>svg]:text-current *:data-[slot=alert-description]:text-destructive-foreground/90",
       },
     },
     defaultVariants: {
