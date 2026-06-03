@@ -34,7 +34,11 @@ export function MissionFlowTab({
   missionDefinitionId,
   missionStatus,
 }: MissionFlowTabProps) {
-  const { allowed: canSave } = useAuthorize(FGA_SAVE_LAYOUT);
+  // Hide-on-loading: treat the save affordance as unavailable while the
+  // membership query is in flight, so drag/save never flashes for a user who
+  // turns out to be unauthorized.
+  const { allowed, loading: authzLoading } = useAuthorize(FGA_SAVE_LAYOUT);
+  const canSave = allowed && !authzLoading;
 
   const [graph, setGraph] = React.useState<MissionGraphData | null>(null);
   const [version, setVersion] = React.useState("");
