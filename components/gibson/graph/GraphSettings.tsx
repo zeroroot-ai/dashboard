@@ -210,6 +210,15 @@ export function GraphSettings({ open, onOpenChange }: GraphSettingsProps) {
             Color and enlarge finding nodes by severity so the riskiest parts stand out.
           </p>
 
+          <SwitchRow
+            label="Attack-path emphasis"
+            checked={display.attackPathEmphasis}
+            onCheckedChange={(v) => setDisplay({ attackPathEmphasis: v })}
+          />
+          <p className="text-xs text-muted-foreground -mt-3">
+            Highlight exploit / leads-to chains and dim everything else. A path query overrides this.
+          </p>
+
           <Separator />
 
           <Button variant="outline" size="sm" onClick={resetDisplay} className="self-start">

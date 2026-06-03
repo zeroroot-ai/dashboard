@@ -32,6 +32,7 @@ import {
   type GraphFilterState,
 } from '@/src/lib/graph/filters';
 import { applyNodeOps } from '@/src/lib/graph/node-ops';
+import { attackPathSets } from '@/src/lib/graph/attack-path';
 import { toGraphExportJSON } from '@/src/lib/graph/export';
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import { cn } from '@/lib/utils';
@@ -129,6 +130,17 @@ export default function GraphPage() {
     () => applyNodeOps(filteredData.nodes, filteredData.edges, { hiddenNodeIds, focusNodeId, focusDepth }),
     [filteredData, hiddenNodeIds, focusNodeId, focusDepth]
   );
+
+  // Highlight precedence: an explicit path query wins; otherwise attack-path
+  // emphasis derives a highlight set from the visible attack-relationship edges.
+  const effectiveHighlight = useMemo(() => {
+    if (highlightedPaths.length > 0) return highlightedPaths;
+    if (display.attackPathEmphasis) {
+      const sets = attackPathSets(opsData.edges);
+      return sets.edge_ids.length > 0 ? [sets] : [];
+    }
+    return [];
+  }, [highlightedPaths, display.attackPathEmphasis, opsData.edges]);
 
   // Live stream hook
   const [liveEnabled, setLiveEnabled] = useState(false);
@@ -338,7 +350,7 @@ export default function GraphPage() {
         <GraphCanvas
           ref={canvasRef}
           data={canvasData}
-          highlightedPaths={highlightedPaths}
+          highlightedPaths={effectiveHighlight}
           onNodeClick={handleNodeClick}
           onStats={setStats}
         />
