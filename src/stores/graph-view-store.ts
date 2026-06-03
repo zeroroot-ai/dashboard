@@ -67,6 +67,12 @@ export interface GraphViewState {
   showLegend: boolean;
   showMinimap: boolean;
 
+  // Node manipulation (session-only; not persisted)
+  pinnedNodeIds: string[];
+  hiddenNodeIds: string[];
+  focusNodeId: string | null;
+  focusDepth: number;
+
   // Live counts, pushed from the rendering engine
   nodeCount: number;
   edgeCount: number;
@@ -87,6 +93,14 @@ export interface GraphViewState {
   // Actions — Overlays
   toggleLegend: () => void;
   toggleMinimap: () => void;
+
+  // Actions — Node manipulation
+  togglePin: (id: string) => void;
+  hideNode: (id: string) => void;
+  isolateNode: (id: string) => void;
+  expandFocus: () => void;
+  clearFocus: () => void;
+  showAllNodes: () => void;
 
   // Actions — Stats
   setStats: (nodeCount: number, edgeCount: number) => void;
@@ -121,6 +135,10 @@ export const useGraphViewStore = create<GraphViewState>()(
       display: DEFAULT_DISPLAY,
       showLegend: false,
       showMinimap: true,
+      pinnedNodeIds: [],
+      hiddenNodeIds: [],
+      focusNodeId: null,
+      focusDepth: 1,
       nodeCount: 0,
       edgeCount: 0,
 
@@ -144,6 +162,26 @@ export const useGraphViewStore = create<GraphViewState>()(
       // Overlays
       toggleLegend: () => set((state) => ({ showLegend: !state.showLegend })),
       toggleMinimap: () => set((state) => ({ showMinimap: !state.showMinimap })),
+
+      // Node manipulation
+      togglePin: (id) =>
+        set((state) => ({
+          pinnedNodeIds: state.pinnedNodeIds.includes(id)
+            ? state.pinnedNodeIds.filter((p) => p !== id)
+            : [...state.pinnedNodeIds, id],
+        })),
+      hideNode: (id) =>
+        set((state) => ({
+          hiddenNodeIds: state.hiddenNodeIds.includes(id)
+            ? state.hiddenNodeIds
+            : [...state.hiddenNodeIds, id],
+          // hiding the focus node clears the focus
+          focusNodeId: state.focusNodeId === id ? null : state.focusNodeId,
+        })),
+      isolateNode: (id) => set({ focusNodeId: id, focusDepth: 1 }),
+      expandFocus: () => set((state) => ({ focusDepth: state.focusDepth + 1 })),
+      clearFocus: () => set({ focusNodeId: null, focusDepth: 1 }),
+      showAllNodes: () => set({ hiddenNodeIds: [], focusNodeId: null, focusDepth: 1 }),
 
       // Stats
       setStats: (nodeCount, edgeCount) => set({ nodeCount, edgeCount }),

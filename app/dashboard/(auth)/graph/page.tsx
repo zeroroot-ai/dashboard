@@ -31,6 +31,7 @@ import {
   DEFAULT_GRAPH_FILTERS,
   type GraphFilterState,
 } from '@/src/lib/graph/filters';
+import { applyNodeOps } from '@/src/lib/graph/node-ops';
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import { cn } from '@/lib/utils';
 
@@ -60,6 +61,16 @@ export default function GraphPage() {
   const layoutMode = useGraphViewStore((s) => s.layoutMode);
   const showLegend = useGraphViewStore((s) => s.showLegend);
   const showMinimap = useGraphViewStore((s) => s.showMinimap);
+  const pinnedNodeIds = useGraphViewStore((s) => s.pinnedNodeIds);
+  const hiddenNodeIds = useGraphViewStore((s) => s.hiddenNodeIds);
+  const focusNodeId = useGraphViewStore((s) => s.focusNodeId);
+  const focusDepth = useGraphViewStore((s) => s.focusDepth);
+  const togglePin = useGraphViewStore((s) => s.togglePin);
+  const hideNode = useGraphViewStore((s) => s.hideNode);
+  const isolateNode = useGraphViewStore((s) => s.isolateNode);
+  const expandFocus = useGraphViewStore((s) => s.expandFocus);
+  const clearFocus = useGraphViewStore((s) => s.clearFocus);
+  const showAllNodes = useGraphViewStore((s) => s.showAllNodes);
 
   // TanStack Query — mission graph or full tenant graph
   const {
@@ -110,6 +121,12 @@ export default function GraphPage() {
   const filteredData = useMemo(
     () => applyGraphFilters(mergedData.nodes, mergedData.edges, filters),
     [mergedData.nodes, mergedData.edges, filters]
+  );
+
+  // Node manipulation (hide / isolate-expand) applied on top of filters.
+  const opsData = useMemo(
+    () => applyNodeOps(filteredData.nodes, filteredData.edges, { hiddenNodeIds, focusNodeId, focusDepth }),
+    [filteredData, hiddenNodeIds, focusNodeId, focusDepth]
   );
 
   // Live stream hook
@@ -176,12 +193,20 @@ export default function GraphPage() {
   // Fit-to-selection: frame the node plus its direct neighbors.
   const handleFrameNode = useCallback((node: GraphNode) => {
     const ids = new Set<string>([node.id]);
-    for (const e of filteredData.edges) {
+    for (const e of opsData.edges) {
       if (e.source === node.id) ids.add(e.target);
       if (e.target === node.id) ids.add(e.source);
     }
     canvasRef.current?.fitToNodes([...ids]);
-  }, [filteredData.edges]);
+  }, [opsData.edges]);
+
+  // Node-manipulation handlers
+  const handleTogglePin = useCallback((node: GraphNode) => togglePin(node.id), [togglePin]);
+  const handleHide = useCallback((node: GraphNode) => hideNode(node.id), [hideNode]);
+  const handleIsolate = useCallback((node: GraphNode) => {
+    isolateNode(node.id);
+    setSelectedNode(null);
+  }, [isolateNode]);
 
   const handleMissionChange = useCallback((id: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -201,14 +226,15 @@ export default function GraphPage() {
 
   const canvasData = useMemo(
     () => ({
-      nodes: filteredData.nodes,
-      edges: filteredData.edges,
+      nodes: opsData.nodes,
+      edges: opsData.edges,
       display,
       selectedNodeId: selectedNode?.id ?? null,
       layoutMode,
       showMinimap,
+      pinnedNodeIds,
     }),
-    [filteredData, display, selectedNode, layoutMode, showMinimap]
+    [opsData, display, selectedNode, layoutMode, showMinimap, pinnedNodeIds]
   );
 
   // ─── Render states ──────────────────────────────────────────────────────────
@@ -242,7 +268,7 @@ export default function GraphPage() {
         <div className="absolute top-0 left-0 right-0 z-30 bg-alt/10 border-b border-alt/40/30 px-4 py-2 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-alt flex-shrink-0" />
           <p className="text-xs text-alt">
-            Showing {filteredData.nodes.length.toLocaleString()} of {totalNodeCount.toLocaleString()} nodes.
+            Showing {opsData.nodes.length.toLocaleString()} of {totalNodeCount.toLocaleString()} nodes.
             Use filters to narrow the scope.
           </p>
         </div>
@@ -319,6 +345,33 @@ export default function GraphPage() {
         </button>
       </div>
 
+      {/* Focus / hidden status bar */}
+      {hasData && (focusNodeId || hiddenNodeIds.length > 0) && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-background/90 backdrop-blur-sm border border-border text-xs">
+          {focusNodeId && (
+            <>
+              <span className="text-foreground">
+                Isolated <span className="text-muted-foreground">· depth {focusDepth}</span>
+              </span>
+              <Button variant="outline" size="sm" className="h-6 px-2" onClick={expandFocus}>
+                Expand
+              </Button>
+              <Button variant="outline" size="sm" className="h-6 px-2" onClick={clearFocus}>
+                Exit focus
+              </Button>
+            </>
+          )}
+          {hiddenNodeIds.length > 0 && (
+            <>
+              <span className="text-muted-foreground">{hiddenNodeIds.length} hidden</span>
+              <Button variant="outline" size="sm" className="h-6 px-2" onClick={showAllNodes}>
+                Show all
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Camera + view controls — top-right overlay */}
       {hasData && (
         <GraphControls
@@ -367,12 +420,12 @@ export default function GraphPage() {
             </div>
           </SheetContent>
         </Sheet>
-        {hasData && <GraphSearch nodes={filteredData.nodes} onFocusNode={handleFocusNode} />}
+        {hasData && <GraphSearch nodes={opsData.nodes} onFocusNode={handleFocusNode} />}
       </div>
 
       {/* Path Query Panel */}
       <PathQueryPanel
-        nodes={filteredData.nodes}
+        nodes={opsData.nodes}
         initialSourceNode={pathSourceNode}
         onPathsFound={setHighlightedPaths}
       />
@@ -383,6 +436,10 @@ export default function GraphPage() {
         onClose={() => setSelectedNode(null)}
         onFindPaths={handleFindPathsFromNode}
         onFrame={handleFrameNode}
+        onIsolate={handleIsolate}
+        onTogglePin={handleTogglePin}
+        isPinned={selectedNode ? pinnedNodeIds.includes(selectedNode.id) : false}
+        onHide={handleHide}
       />
     </div>
   );

@@ -158,6 +158,26 @@ export default function GraphCanvasInner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.display.charge, data.display.linkDistance, data.layoutMode, signature]);
 
+  // Pin/unpin: fix pinned nodes at their current position; release the rest
+  // (only in force mode — computed layouts manage fx/fy themselves). Runs after
+  // the layout effect so pins win on a layout change.
+  useEffect(() => {
+    const pinned = new Set(data.pinnedNodeIds);
+    for (const n of graphData.nodes) {
+      if (pinned.has(n.__g.id)) {
+        if (n.fx == null) {
+          n.fx = n.x;
+          n.fy = n.y;
+        }
+      } else if (data.layoutMode === 'force') {
+        n.fx = undefined;
+        n.fy = undefined;
+      }
+    }
+    fgRef.current?.d3ReheatSimulation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.pinnedNodeIds, data.layoutMode, signature]);
+
   // ── Live interaction state via refs (so accessors see latest w/o rebuild) ──
   const selectedRef = useRef<string | null>(null);
   const hoveredRef = useRef<string | null>(null);

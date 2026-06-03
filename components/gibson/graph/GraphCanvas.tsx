@@ -41,6 +41,8 @@ export interface GraphCanvasData {
   layoutMode: GraphLayoutMode;
   /** Render the overview minimap. */
   showMinimap: boolean;
+  /** Node ids the user has pinned (fixed in place). */
+  pinnedNodeIds: string[];
 }
 
 /** Imperative camera controls exposed to the controls panel / page. */
