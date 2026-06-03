@@ -251,5 +251,10 @@ export const config = {
      * is no ?error= param the middleware falls through immediately via step 1.
      */
     "/((?!_next/static|_next/image|favicon\\.ico|api/auth|api/health|api/signup|login/error|signup$|signup/|select-tenant$|select-tenant/|onboarding$|onboarding/).+)",
+    // The pattern above ends in `.+`, which requires ≥1 char after the leading
+    // slash, so it never matches the root path "/". The host split (deploy#630
+    // S11) MUST run on "/" — on the product host app.<domain> the landing page
+    // must redirect to /dashboard rather than render. Match it explicitly.
+    "/",
   ],
 };
