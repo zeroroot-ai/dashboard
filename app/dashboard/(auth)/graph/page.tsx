@@ -15,28 +15,22 @@ import {
 import { GraphCanvas, type GraphCanvasHandle } from '@/components/gibson/graph/GraphCanvas';
 import { GraphControls } from '@/components/gibson/graph/GraphControls';
 import { GraphSettings } from '@/components/gibson/graph/GraphSettings';
-import { GraphFilters, type GraphFilters as GraphFiltersType } from '@/components/gibson/graph/GraphFilters';
+import { GraphFilters } from '@/components/gibson/graph/GraphFilters';
 import { MissionSelector } from '@/components/gibson/graph/MissionSelector';
 import { NodeDetailPanel } from '@/components/gibson/graph/NodeDetailPanel';
 import { PathQueryPanel } from '@/components/gibson/graph/PathQueryPanel';
 import { useGraph } from '@/src/hooks/useGraph';
 import { useGraphStream } from '@/components/gibson/graph/useGraphStream';
 import { useGraphViewStore } from '@/src/stores/graph-view-store';
+import {
+  applyGraphFilters,
+  availableNodeTypes as deriveNodeTypes,
+  availableRelationshipTypes as deriveRelationshipTypes,
+  DEFAULT_GRAPH_FILTERS,
+  type GraphFilterState,
+} from '@/src/lib/graph/filters';
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import { cn } from '@/lib/utils';
-
-const ALL_NODE_TYPES = [
-  'Mission', 'Agent', 'Host', 'Service', 'Vulnerability',
-  'Finding', 'Endpoint', 'User', 'Credential',
-] as const;
-
-const DEFAULT_FILTERS: GraphFiltersType = {
-  nodeTypes: [...ALL_NODE_TYPES],
-  relationshipTypes: [],
-  layout: 'force',
-  depth: 3,
-  search: '',
-};
 
 /** Serialize a plain path result for highlight props. */
 interface PathResult {
@@ -49,7 +43,7 @@ export default function GraphPage() {
   const router = useRouter();
   const missionId = searchParams.get('mission') ?? undefined;
 
-  const [filters, setFilters] = useState<GraphFiltersType>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<GraphFilterState>(DEFAULT_GRAPH_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
@@ -71,10 +65,7 @@ export default function GraphPage() {
     error,
     refetch,
     dataUpdatedAt,
-  } = useGraph(missionId, {
-    limit: 1000,
-    nodeTypes: filters.nodeTypes?.length ? filters.nodeTypes : undefined,
-  });
+  } = useGraph(missionId, { limit: 1000 });
 
   // Local state for incremental stream merges
   const [extraNodes, setExtraNodes] = useState<GraphNode[]>([]);
@@ -105,6 +96,17 @@ export default function GraphPage() {
       edges: [...baseEdges, ...newEdges],
     };
   }, [queryData, extraNodes, extraEdges]);
+
+  // Toggle targets derived from the data actually present.
+  const availNodeTypes = useMemo(() => deriveNodeTypes(mergedData.nodes), [mergedData.nodes]);
+  const availRelTypes = useMemo(() => deriveRelationshipTypes(mergedData.edges), [mergedData.edges]);
+
+  // The visible subset after applying the filter contract (client-side; the
+  // graph endpoint only supports a row limit).
+  const filteredData = useMemo(
+    () => applyGraphFilters(mergedData.nodes, mergedData.edges, filters),
+    [mergedData.nodes, mergedData.edges, filters]
+  );
 
   // Live stream hook
   const [liveEnabled, setLiveEnabled] = useState(false);
@@ -148,7 +150,7 @@ export default function GraphPage() {
     return () => clearInterval(interval);
   }, [streamStale, refetch]);
 
-  const handleFiltersChange = useCallback((updated: GraphFiltersType) => {
+  const handleFiltersChange = useCallback((updated: GraphFilterState) => {
     setFilters(updated);
   }, []);
 
@@ -179,13 +181,13 @@ export default function GraphPage() {
 
   const canvasData = useMemo(
     () => ({
-      nodes: mergedData.nodes,
-      edges: mergedData.edges,
+      nodes: filteredData.nodes,
+      edges: filteredData.edges,
       display,
       selectedNodeId: selectedNode?.id ?? null,
       layoutMode,
     }),
-    [mergedData.nodes, mergedData.edges, display, selectedNode, layoutMode]
+    [filteredData, display, selectedNode, layoutMode]
   );
 
   // ─── Render states ──────────────────────────────────────────────────────────
@@ -219,7 +221,7 @@ export default function GraphPage() {
         <div className="absolute top-0 left-0 right-0 z-30 bg-alt/10 border-b border-alt/40/30 px-4 py-2 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-alt flex-shrink-0" />
           <p className="text-xs text-alt">
-            Showing {mergedData.nodes.length.toLocaleString()} of {totalNodeCount.toLocaleString()} nodes.
+            Showing {filteredData.nodes.length.toLocaleString()} of {totalNodeCount.toLocaleString()} nodes.
             Use filters to narrow the scope.
           </p>
         </div>
@@ -330,7 +332,12 @@ export default function GraphPage() {
               <SheetTitle>Graph Filters</SheetTitle>
             </SheetHeader>
             <div className="overflow-y-auto h-full pb-8">
-              <GraphFilters filters={filters} onFiltersChange={handleFiltersChange} />
+              <GraphFilters
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                availableNodeTypes={availNodeTypes}
+                availableRelationshipTypes={availRelTypes}
+              />
             </div>
           </SheetContent>
         </Sheet>
@@ -338,7 +345,7 @@ export default function GraphPage() {
 
       {/* Path Query Panel */}
       <PathQueryPanel
-        nodes={mergedData.nodes}
+        nodes={filteredData.nodes}
         initialSourceNode={pathSourceNode}
         onPathsFound={setHighlightedPaths}
       />
