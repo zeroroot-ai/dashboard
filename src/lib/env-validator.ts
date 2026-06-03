@@ -251,6 +251,13 @@ export const OPTIONAL_ENV = [
   'NEXTAUTH_URL',
   'NEXTAUTH_SECRET',
 
+  // ---- Marketing host (deploy#630 S11 www/app split) ----
+  // Full origin of the marketing host (e.g. https://www.zeroroot.ai:30443),
+  // wired by the chart from `global.domain` + `gibson.wwwHost`. When unset
+  // (single-origin local dev) the host split in middleware is disabled, so
+  // localhost:3000 serves both marketing and product unchanged.
+  'WWW_URL',
+
   // ---- Optional observability ----
   // Loki tenant ID for multi-tenant Loki; absent ⇒ single-tenant mode.
   'LOKI_TENANT_ID',
