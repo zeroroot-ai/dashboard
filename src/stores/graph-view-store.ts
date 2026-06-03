@@ -52,6 +52,8 @@ export interface GraphDisplaySettings {
   performanceMode: boolean;
   /** Color/size finding nodes by severity (heatmap). */
   severityHeatmap: boolean;
+  /** Emphasize exploit/leads-to attack chains, dimming the rest. */
+  attackPathEmphasis: boolean;
 }
 
 export interface GraphViewState {
@@ -123,6 +125,7 @@ export const DEFAULT_DISPLAY: GraphDisplaySettings = {
   linkDistance: 60,
   performanceMode: false,
   severityHeatmap: false,
+  attackPathEmphasis: false,
 };
 
 // ============================================================================
