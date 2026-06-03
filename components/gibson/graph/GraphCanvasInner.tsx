@@ -28,6 +28,8 @@ import {
   DIM_ALPHA,
   UNCONNECTED_ALPHA,
   LABEL_ZOOM_THRESHOLD,
+  MINIMAP_BG,
+  MINIMAP_VIEWPORT,
 } from '@/src/lib/graph/canvas-style';
 import type {
   GraphCanvasHandle,
@@ -38,6 +40,9 @@ import type {
 // Extra props we attach on top of what react-force-graph manages. The library
 // wraps these as NodeObject<…> / LinkObject<…> (adding id/x/y and resolving
 // source/target to node refs), so the engine-facing types are the wrapped forms.
+const MINIMAP_W = 150;
+const MINIMAP_H = 104;
+
 type GNodeExtra = { __g: GraphNode };
 type GLinkExtra = { id: string; __g: GraphEdge };
 type RFNode = NodeObject<GNodeExtra>;
@@ -65,6 +70,7 @@ export default function GraphCanvasInner({
 }: GraphCanvasInnerProps) {
   const fgRef = useRef<ForceGraphMethods<GNodeExtra, GLinkExtra> | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
+  const minimapRef = useRef<HTMLCanvasElement>(null);
   const theme = useMemo(() => getThemeColors(), []);
 
   const [size, setSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
@@ -212,6 +218,89 @@ export default function GraphCanvasInner({
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
+  }, []);
+
+  // ── Minimap ───────────────────────────────────────────────────────────────
+  // Overview of node positions + the current viewport, redrawn on a light
+  // interval (the engine runs its own loop; per-frame redraw is unnecessary).
+  const minimapTransformRef = useRef<{ ox: number; oy: number; scale: number } | null>(null);
+  useEffect(() => {
+    if (!data.showMinimap) {
+      minimapTransformRef.current = null;
+      return;
+    }
+    const draw = () => {
+      const cvs = minimapRef.current;
+      const fg = fgRef.current;
+      if (!cvs || !fg) return;
+      const ctx = cvs.getContext('2d');
+      if (!ctx) return;
+      const dpr = window.devicePixelRatio || 1;
+      if (cvs.width !== MINIMAP_W * dpr) {
+        cvs.width = MINIMAP_W * dpr;
+        cvs.height = MINIMAP_H * dpr;
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, MINIMAP_W, MINIMAP_H);
+      ctx.fillStyle = MINIMAP_BG;
+      ctx.fillRect(0, 0, MINIMAP_W, MINIMAP_H);
+
+      const nodes = graphData.nodes.filter(
+        (n) => typeof n.x === 'number' && typeof n.y === 'number'
+      );
+      if (nodes.length === 0) {
+        minimapTransformRef.current = null;
+        return;
+      }
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (const n of nodes) {
+        minX = Math.min(minX, n.x!); maxX = Math.max(maxX, n.x!);
+        minY = Math.min(minY, n.y!); maxY = Math.max(maxY, n.y!);
+      }
+      const pad = 8;
+      const bw = Math.max(1, maxX - minX);
+      const bh = Math.max(1, maxY - minY);
+      const scale = Math.min((MINIMAP_W - 2 * pad) / bw, (MINIMAP_H - 2 * pad) / bh);
+      const ox = pad + ((MINIMAP_W - 2 * pad) - bw * scale) / 2 - minX * scale;
+      const oy = pad + ((MINIMAP_H - 2 * pad) - bh * scale) / 2 - minY * scale;
+      minimapTransformRef.current = { ox, oy, scale };
+
+      for (const n of nodes) {
+        const g = n.__g;
+        ctx.fillStyle = g.color || theme.nodeColors[parseEntityType(g.labels)] || theme.nodeColors.host;
+        ctx.fillRect(ox + n.x! * scale - 0.75, oy + n.y! * scale - 0.75, 1.5, 1.5);
+      }
+
+      // Current viewport rectangle.
+      try {
+        const tl = fg.screen2GraphCoords(0, 0);
+        const br = fg.screen2GraphCoords(size.w, size.h);
+        const rx = ox + Math.min(tl.x, br.x) * scale;
+        const ry = oy + Math.min(tl.y, br.y) * scale;
+        const rw = Math.abs(br.x - tl.x) * scale;
+        const rh = Math.abs(br.y - tl.y) * scale;
+        ctx.strokeStyle = MINIMAP_VIEWPORT;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(rx, ry, rw, rh);
+      } catch {
+        /* coords unavailable before first paint */
+      }
+    };
+    draw();
+    const id = setInterval(draw, 250);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.showMinimap, signature, size.w, size.h]);
+
+  const handleMinimapClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const fg = fgRef.current;
+    const t = minimapTransformRef.current;
+    const cvs = minimapRef.current;
+    if (!fg || !t || !cvs) return;
+    const rect = cvs.getBoundingClientRect();
+    const gx = (e.clientX - rect.left - t.ox) / t.scale;
+    const gy = (e.clientY - rect.top - t.oy) / t.scale;
+    fg.centerAt(gx, gy, 400);
   }, []);
 
   // ── Accessors ─────────────────────────────────────────────────────────────
@@ -409,6 +498,15 @@ export default function GraphCanvasInner({
           onZoomEnd={handleZoomEnd}
           cooldownTicks={120}
           warmupTicks={20}
+        />
+      )}
+      {data.showMinimap && (
+        <canvas
+          ref={minimapRef}
+          onClick={handleMinimapClick}
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 rounded-md border border-border cursor-pointer"
+          style={{ width: MINIMAP_W, height: MINIMAP_H }}
+          aria-label="Graph minimap — click to recenter"
         />
       )}
     </div>

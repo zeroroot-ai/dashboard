@@ -28,6 +28,8 @@ import {
   Radar,
   Clock,
   Settings,
+  List,
+  Map as MapIcon,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -111,6 +113,10 @@ export function GraphControls({
   const edgeCount = useGraphViewStore((s) => s.edgeCount);
   const layoutMode = useGraphViewStore((s) => s.layoutMode);
   const setLayoutMode = useGraphViewStore((s) => s.setLayoutMode);
+  const showLegend = useGraphViewStore((s) => s.showLegend);
+  const showMinimap = useGraphViewStore((s) => s.showMinimap);
+  const toggleLegend = useGraphViewStore((s) => s.toggleLegend);
+  const toggleMinimap = useGraphViewStore((s) => s.toggleMinimap);
 
   const { avgFPS } = useGraph3DPerformance(nodeCount);
 
@@ -150,6 +156,18 @@ export function GraphControls({
           icon={Sparkles}
           label={particles ? 'Disable particles' : 'Enable particles'}
           active={particles}
+        />
+        <ControlButton
+          onClick={toggleLegend}
+          icon={List}
+          label={showLegend ? 'Hide legend' : 'Show legend'}
+          active={showLegend}
+        />
+        <ControlButton
+          onClick={toggleMinimap}
+          icon={MapIcon}
+          label={showMinimap ? 'Hide minimap' : 'Show minimap'}
+          active={showMinimap}
         />
         {onOpenSettings && (
           <ControlButton onClick={onOpenSettings} icon={Settings} label="Settings" />
