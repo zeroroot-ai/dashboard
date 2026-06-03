@@ -6,6 +6,7 @@
  */
 export { GraphCanvas } from './GraphCanvas';
 export { GraphControls } from './GraphControls';
+export { GraphSettings } from './GraphSettings';
 export { GraphFilters } from './GraphFilters';
 export { GraphHero } from './GraphHero';
 
@@ -17,4 +18,5 @@ export type {
   HighlightedPath,
 } from './GraphCanvas';
 export type { GraphControlsProps } from './GraphControls';
+export type { GraphSettingsProps } from './GraphSettings';
 export type { GraphFiltersProps, GraphFilters as GraphFiltersType } from './GraphFilters';
