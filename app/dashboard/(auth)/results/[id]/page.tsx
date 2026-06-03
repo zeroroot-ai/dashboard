@@ -519,6 +519,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
         {/* Flow — daemon-projected mission flow-chart */}
         <TabsContent value="flow" className="mt-4">
           <MissionFlowTab
+            missionId={mission.id}
             missionDefinitionId={mission.missionDefinitionId}
             missionStatus={mission.status}
           />

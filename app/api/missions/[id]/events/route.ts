@@ -18,15 +18,19 @@
  *   - `event: rewind`      — the daemon emitted a `mission.rewind.completed`
  *                            audit event for this mission. Payload mirrors
  *                            the audit event's metadata fields.
+ *   - `event: node`        — a mission DAG node changed lifecycle phase.
+ *                            Payload: { missionId, nodeId, phase } where
+ *                            phase is "started" | "completed" | "failed".
+ *                            Consumed by `<MissionFlowTab />` to paint the
+ *                            flow-chart run overlay live (gibson#604).
  *
- * Implementation note: the daemon does not yet expose a server-streaming
- * `MissionStream` RPC, so this bridge uses a short-interval poll over the
- * existing `DaemonService.ListCheckpoints` and `DaemonService.ListMissions`
- * RPCs (which are tenant-scoped via the userClient) and emits diffs.
- * When a daemon-side stream lands later, the route can swap the polling
- * loop for a `for await (const ev of upstream)` pump without any
- * dashboard caller change. Spec follow-up captured in the parent task's
- * "blocked work" section.
+ * Implementation note: the status / checkpoint / log frames use a short-interval
+ * poll over the unary `DaemonService.ListCheckpoints` and `ListMissions` RPCs
+ * (tenant-scoped via the userClient) and emit diffs. The `node` frames instead
+ * consume the daemon's server-streaming `DaemonService.Subscribe` RPC, filtered
+ * to this mission's `node.*` events — the orchestrator publishes those to the
+ * tenant Redis Stream backing Subscribe. Both run concurrently against the same
+ * SSE controller.
  *
  * Security model:
  *   - The userClient flows through Envoy + ext-authz + SPIFFE-mTLS per
@@ -192,14 +196,75 @@ export async function GET(
       const loki = new LokiClient();
       let lastLokiTimestampNs = BigInt(Date.now()) * NS_PER_MS;
 
+      // Aborts the daemon node-event subscription (below) on teardown so the
+      // upstream Subscribe stream is cancelled when the browser disconnects.
+      const nodeAbort = new AbortController();
+
       // Tear down state shared between the polling loop and the
       // ReadableStream `cancel` hook below.
       const stopPolling = () => {
         cancelled = true;
         clearInterval(heartbeatHandle);
+        nodeAbort.abort();
       };
 
       const userId = session.user?.id ?? undefined;
+
+      // ---- per-node lifecycle events (live flow-chart overlay) ----
+      // The orchestrator publishes node.started / node.completed / node.failed
+      // to the tenant Redis Stream that backs DaemonService.Subscribe, each
+      // carrying the mission node id on MissionEvent.nodeId. We forward them as
+      // `event: node` frames so MissionFlowTab can paint the flow-chart overlay
+      // ("checked lines") in real time as a run progresses (gibson#604).
+      //
+      // Best-effort and independent of the poll loop: if Subscribe is
+      // unavailable the status/checkpoint bridge keeps working and the overlay
+      // simply stays static. We run it as a detached pump rather than inside
+      // `tick` because Subscribe is a long-lived server stream, not a unary
+      // poll. The `for await` yields control between frames, so it shares the
+      // single-threaded controller with the poll loop without contention.
+      void (async () => {
+        try {
+          const nodeStream = userClient(DaemonService).subscribe(
+            {
+              eventTypes: ["node.started", "node.completed", "node.failed"],
+              missionId,
+            },
+            { signal: nodeAbort.signal },
+          );
+          for await (const ev of nodeStream) {
+            if (cancelled) break;
+            // node.* events arrive as MissionEvent on the response oneof.
+            const nodeId =
+              ev.event.case === "missionEvent" ? ev.event.value.nodeId : "";
+            if (!nodeId) continue;
+            const phase =
+              ev.eventType === "node.completed"
+                ? "completed"
+                : ev.eventType === "node.failed"
+                  ? "failed"
+                  : "started";
+            try {
+              controller.enqueue(
+                encoder.encode(
+                  sseFrame("node", { missionId, nodeId, phase }, String(seq++)),
+                ),
+              );
+            } catch {
+              stopPolling();
+              break;
+            }
+          }
+        } catch (err) {
+          // An abort on disconnect is expected; surface anything else.
+          if (!nodeAbort.signal.aborted) {
+            logger.warn(
+              { ...baseLog, err },
+              "node-event subscription unavailable; flow overlay stays static",
+            );
+          }
+        }
+      })();
 
       // Single poll iteration: fetch the latest checkpoint page +
       // mission status + emit diffs.
@@ -417,10 +482,20 @@ export async function GET(
         void tick();
       }, POLL_INTERVAL_MS);
 
-      // Stash the interval handle on the closure so cancel() can clear it.
+      // Stash the interval handle + node-stream aborter on the closure so
+      // cancel() can clear them when the browser disconnects.
       (
-        stream as unknown as { __pollInterval?: ReturnType<typeof setInterval> }
+        stream as unknown as {
+          __pollInterval?: ReturnType<typeof setInterval>;
+          __nodeAbort?: AbortController;
+        }
       ).__pollInterval = interval;
+      (
+        stream as unknown as {
+          __pollInterval?: ReturnType<typeof setInterval>;
+          __nodeAbort?: AbortController;
+        }
+      ).__nodeAbort = nodeAbort;
     },
     cancel() {
       logger.info(
@@ -428,10 +503,12 @@ export async function GET(
         "mission events SSE bridge cancelled by client",
       );
       clearInterval(heartbeatHandle);
-      const handle = (
-        stream as unknown as { __pollInterval?: ReturnType<typeof setInterval> }
-      ).__pollInterval;
-      if (handle) clearInterval(handle);
+      const stashed = stream as unknown as {
+        __pollInterval?: ReturnType<typeof setInterval>;
+        __nodeAbort?: AbortController;
+      };
+      if (stashed.__pollInterval) clearInterval(stashed.__pollInterval);
+      stashed.__nodeAbort?.abort();
     },
   });
 

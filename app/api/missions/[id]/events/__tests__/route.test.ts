@@ -22,6 +22,7 @@ const {
   mockRequireActiveTenant,
   mockListMissions,
   mockListCheckpoints,
+  mockSubscribe,
   mockUserClient,
   mockIsReady,
   mockQuery,
@@ -30,6 +31,7 @@ const {
   mockRequireActiveTenant: vi.fn(),
   mockListMissions: vi.fn(),
   mockListCheckpoints: vi.fn(),
+  mockSubscribe: vi.fn(),
   mockUserClient: vi.fn(),
   mockIsReady: vi.fn(),
   mockQuery: vi.fn(),
@@ -99,6 +101,7 @@ beforeEach(() => {
   mockRequireActiveTenant.mockReset();
   mockListMissions.mockReset();
   mockListCheckpoints.mockReset();
+  mockSubscribe.mockReset();
   mockUserClient.mockReset();
   mockIsReady.mockReset();
   mockQuery.mockReset();
@@ -108,7 +111,13 @@ beforeEach(() => {
 
   // userClient(DaemonService).listCheckpoints(...) — newest-first, empty here.
   mockListCheckpoints.mockResolvedValue({ checkpoints: [] });
-  mockUserClient.mockReturnValue({ listCheckpoints: mockListCheckpoints });
+  // userClient(DaemonService).subscribe(...) — empty node-event stream by
+  // default so the bridge emits no `node` frames unless a test opts in.
+  mockSubscribe.mockImplementation(async function* () {});
+  mockUserClient.mockReturnValue({
+    listCheckpoints: mockListCheckpoints,
+    subscribe: mockSubscribe,
+  });
 });
 
 describe('GET /api/missions/:id/events — Loki log tail', () => {
@@ -179,5 +188,86 @@ describe('GET /api/missions/:id/events — Loki log tail', () => {
 
     expect(text).not.toContain('event: log');
     expect(mockQuery).not.toHaveBeenCalled();
+  });
+});
+
+describe('GET /api/missions/:id/events — per-node lifecycle frames', () => {
+  it('forwards daemon node.* events as event: node frames carrying nodeId + phase', async () => {
+    mockGetServerSession.mockResolvedValue({
+      user: { id: 'u1', tenantId: 't1' },
+    });
+    mockListMissions.mockResolvedValue({
+      missions: [{ id: 'm1', status: 'MISSION_STATUS_RUNNING' }],
+    });
+    mockIsReady.mockResolvedValue(false);
+
+    // Daemon Subscribe yields node events as MissionEvent on the response
+    // oneof — mirror the protobuf-es shape the route reads.
+    mockSubscribe.mockImplementation(async function* () {
+      yield {
+        eventType: 'node.started',
+        event: { case: 'missionEvent', value: { nodeId: 'recon' } },
+      };
+      yield {
+        eventType: 'node.completed',
+        event: { case: 'missionEvent', value: { nodeId: 'recon' } },
+      };
+      yield {
+        eventType: 'node.failed',
+        event: { case: 'missionEvent', value: { nodeId: 'exploit' } },
+      };
+    });
+
+    const res = await GET(makeRequest(), makeParams('m1'));
+    expect(res.body).toBeTruthy();
+
+    const countNodeFrames = (t: string) =>
+      (t.match(/event: node/g) || []).length;
+
+    const text = await readUntil(
+      res.body as ReadableStream<Uint8Array>,
+      (t) => countNodeFrames(t) >= 3,
+    );
+
+    expect(countNodeFrames(text)).toBeGreaterThanOrEqual(3);
+    expect(text).toContain('"phase":"started"');
+    expect(text).toContain('"phase":"completed"');
+    expect(text).toContain('"phase":"failed"');
+    expect(text).toContain('"nodeId":"recon"');
+    expect(text).toContain('"nodeId":"exploit"');
+
+    // Subscribe must be filtered to this mission's node.* events.
+    expect(mockSubscribe).toHaveBeenCalled();
+    const subReq = mockSubscribe.mock.calls[0][0];
+    expect(subReq.missionId).toBe('m1');
+    expect(subReq.eventTypes).toContain('node.started');
+    expect(subReq.eventTypes).toContain('node.completed');
+    expect(subReq.eventTypes).toContain('node.failed');
+  });
+
+  it('skips node events that carry no nodeId', async () => {
+    mockGetServerSession.mockResolvedValue({
+      user: { id: 'u1', tenantId: 't1' },
+    });
+    mockListMissions.mockResolvedValue({
+      missions: [{ id: 'm1', status: 'MISSION_STATUS_RUNNING' }],
+    });
+    mockIsReady.mockResolvedValue(false);
+
+    mockSubscribe.mockImplementation(async function* () {
+      yield {
+        eventType: 'node.started',
+        event: { case: 'missionEvent', value: { nodeId: '' } },
+      };
+    });
+
+    const res = await GET(makeRequest(), makeParams('m1'));
+    const text = await readUntil(
+      res.body as ReadableStream<Uint8Array>,
+      (t) => t.includes(': open'),
+      3,
+    );
+
+    expect(text).not.toContain('event: node');
   });
 });
