@@ -18,6 +18,7 @@ import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import { parseEntityType, getSeverityColor } from '@/src/lib/graph/entity-taxonomy';
 import { getThemeColors } from '@/src/lib/graph/theme-colors';
 import { nodeSeverity, severityWeight } from '@/src/lib/graph/severity';
+import { isRunning, runningNodeIds, edgeIsLive } from '@/src/lib/graph/live';
 import { NODE_SIZES } from '@/src/lib/graph/node-renderer';
 import { computeLayout } from '@/src/lib/graph/layout-engine';
 import {
@@ -107,6 +108,27 @@ export default function GraphCanvasInner({
     }
     neighborRef.current = m;
   }, [data.edges]);
+
+  // Keep the engine nodes' attached graph-node refs fresh and track which nodes
+  // are running. Stream updates change node objects (new status) without
+  // changing the topology signature, so sync __g here so accessors see the
+  // latest status for the live-run overlay.
+  const runningRef = useRef<Set<string>>(new Set());
+  const reducedMotionRef = useRef(false);
+  useEffect(() => {
+    reducedMotionRef.current =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  }, []);
+  useEffect(() => {
+    const byId = new Map(data.nodes.map((n) => [n.id, n] as const));
+    for (const rn of graphData.nodes) {
+      const latest = byId.get(rn.__g.id);
+      if (latest) rn.__g = latest;
+    }
+    runningRef.current = runningNodeIds(data.nodes);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.nodes]);
 
   // Refresh stats + refit when topology changes.
   useEffect(() => {
@@ -388,6 +410,20 @@ export default function GraphCanvasInner({
         ctx.shadowBlur = glowBlur;
       }
 
+      // Live-run overlay: pulsing ring around running nodes.
+      if (isRunning(g) && !d.performanceMode && !reducedMotionRef.current) {
+        const phase = (Date.now() % 1500) / 1500; // 0..1, once per 1.5s
+        ctx.save();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = alpha * (1 - phase) * 0.6;
+        ctx.beginPath();
+        ctx.arc(x, y, radius * (1 + phase * 1.2), 0, Math.PI * 2);
+        ctx.lineWidth = 1.5 / globalScale;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+        ctx.restore();
+      }
+
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, Math.PI * 2);
       ctx.fillStyle = color;
@@ -469,9 +505,12 @@ export default function GraphCanvasInner({
 
   const linkParticles = useCallback((link: RFLink): number => {
     if (!displayRef.current.particles || displayRef.current.performanceMode) return 0;
+    if (reducedMotionRef.current) return 0;
     const e = link.__g;
     const hp = highlightRef.current;
     if (hp.active) return hp.edges.has(e.id) ? 3 : 0;
+    // Live-run overlay: flow particles along edges touching a running node.
+    if (edgeIsLive(e, runningRef.current)) return 4;
     const sel = selectedRef.current;
     if (sel && (e.source === sel || e.target === sel)) return 2;
     return 0;
