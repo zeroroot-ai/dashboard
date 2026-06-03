@@ -1,9 +1,10 @@
 /**
  * Visual regression — graph surfaces.
  *
- * Spec: dashboard#637. Captures full-page screenshots of:
+ * Spec: dashboard#637; graph rebuilt on react-force-graph-2d (dashboard#663).
+ * Captures full-page screenshots of:
  *   - /dashboard (GraphHero canvas + surrounding chrome)
- *   - /dashboard/graph (KnowledgeGraph3D full-page)
+ *   - /dashboard/graph (GraphCanvas full-page)
  * in dark mode (the graph always renders in dark-terminal style).
  *
  * Authentication: synthesised via the test-only session encoder
@@ -13,12 +14,13 @@
  *
  * Determinism: three techniques are combined so every run produces
  * the same pixels:
- *   1. prefers-reduced-motion: reduce — pauses the CRT scanline
- *      so it freezes at y=0 rather than scrolling.
+ *   1. prefers-reduced-motion: reduce — disables the live-run particle
+ *      flow and the running-node pulse, which the engine gates on it.
  *   2. All CSS animations + transitions are paused via injected style.
  *   3. Graph data API is stubbed to return the empty-state payload
- *      (nodes: [], edges: []) so the canvas renders the "no data"
- *      empty-state component, which is fully static.
+ *      (nodes: [], edges: []) so the page renders the static "no data"
+ *      empty-state (the overlay controls/legend/minimap are gated on
+ *      having data, so the empty state is fully deterministic).
  *
  * The empty-state approach is the cleanest for determinism: the
  * force-directed layout converges differently every run when nodes
