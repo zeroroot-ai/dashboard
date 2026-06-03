@@ -15,8 +15,9 @@
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import ForceGraph2D, { type ForceGraphMethods, type NodeObject, type LinkObject } from 'react-force-graph-2d';
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
-import { parseEntityType } from '@/src/lib/graph/entity-taxonomy';
+import { parseEntityType, getSeverityColor } from '@/src/lib/graph/entity-taxonomy';
 import { getThemeColors } from '@/src/lib/graph/theme-colors';
+import { nodeSeverity, severityWeight } from '@/src/lib/graph/severity';
 import { NODE_SIZES } from '@/src/lib/graph/node-renderer';
 import { computeLayout } from '@/src/lib/graph/layout-engine';
 import {
@@ -359,24 +360,32 @@ export default function GraphCanvasInner({
     (node: RFNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const g = node.__g;
       const et = parseEntityType(g.labels);
-      const radius = Math.max(2, ((NODE_SIZES[et] ?? 32) / 10) * displayRef.current.nodeSize);
-      const color = g.color || theme.nodeColors[et] || theme.nodeColors.host;
+      const d = displayRef.current;
       const x = node.x ?? 0;
       const y = node.y ?? 0;
+
+      // Severity heatmap: finding nodes are recolored + enlarged by severity.
+      const sev = d.severityHeatmap ? nodeSeverity(g) : null;
+      const sevWeight = sev ? severityWeight(sev) : 0;
+      const radius =
+        Math.max(2, ((NODE_SIZES[et] ?? 32) / 10) * d.nodeSize) * (sev ? 1 + 0.6 * sevWeight : 1);
+      const color = sev ? getSeverityColor(sev) : g.color || theme.nodeColors[et] || theme.nodeColors.host;
 
       const isSelected = selectedRef.current === g.id;
       const isHovered = hoveredRef.current === g.id;
       const alpha = nodeAlpha(g.id);
-      const d = displayRef.current;
 
       ctx.save();
       ctx.globalAlpha = alpha;
 
-      // Glow on focused nodes, scaled by the Glow setting; off in performance mode.
-      const glowOn = !d.performanceMode && d.glow > 0 && (isSelected || isHovered);
-      if (glowOn) {
+      // Glow: focus glow (selected/hovered) + a severity-weighted halo when the
+      // heatmap is on. Both are off in performance mode.
+      const focusGlow = d.glow > 0 && (isSelected || isHovered) ? 18 * d.glow : 0;
+      const sevGlow = sev ? 14 * sevWeight : 0;
+      const glowBlur = d.performanceMode ? 0 : Math.max(focusGlow, sevGlow);
+      if (glowBlur > 0) {
         ctx.shadowColor = color;
-        ctx.shadowBlur = 18 * d.glow;
+        ctx.shadowBlur = glowBlur;
       }
 
       ctx.beginPath();

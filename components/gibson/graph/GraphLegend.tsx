@@ -15,9 +15,10 @@ import {
   Cpu, Shield, Bug, FileText, Crosshair, Circle, type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getEntityColor, type EntityType } from '@/src/lib/graph/entity-taxonomy';
+import { getEntityColor, getSeverityColor, type EntityType } from '@/src/lib/graph/entity-taxonomy';
 import { getThemeColors } from '@/src/lib/graph/theme-colors';
 import { EDGE_FALLBACK } from '@/src/lib/graph/canvas-style';
+import { SEVERITY_LEVELS } from '@/src/lib/graph/severity';
 
 const ENTITY_ICONS: Record<string, LucideIcon> = {
   mission: Rocket,
@@ -45,12 +46,19 @@ function titleCase(s: string): string {
 export interface GraphLegendProps {
   nodeTypes: string[];
   relationshipTypes: string[];
+  /** Show the finding-severity scale (when the severity heatmap is on). */
+  showSeverityScale?: boolean;
   className?: string;
 }
 
-export function GraphLegend({ nodeTypes, relationshipTypes, className }: GraphLegendProps) {
+export function GraphLegend({
+  nodeTypes,
+  relationshipTypes,
+  showSeverityScale,
+  className,
+}: GraphLegendProps) {
   const theme = getThemeColors();
-  if (nodeTypes.length === 0 && relationshipTypes.length === 0) return null;
+  if (nodeTypes.length === 0 && relationshipTypes.length === 0 && !showSeverityScale) return null;
 
   return (
     <div
@@ -96,6 +104,21 @@ export function GraphLegend({ nodeTypes, relationshipTypes, className }: GraphLe
               </div>
             );
           })}
+        </div>
+      )}
+
+      {showSeverityScale && (
+        <div className="flex flex-col gap-1.5 mt-3">
+          <span className="text-muted-foreground uppercase tracking-wider text-[10px]">Severity</span>
+          {SEVERITY_LEVELS.map((sev) => (
+            <div key={sev} className="flex items-center gap-2">
+              <span
+                className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: getSeverityColor(sev) }}
+              />
+              <span className="text-foreground capitalize">{sev}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>

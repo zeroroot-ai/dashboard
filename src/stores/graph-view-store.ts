@@ -50,6 +50,8 @@ export interface GraphDisplaySettings {
   linkDistance: number;
   /** Performance mode: disable particles + glow for max frame rate. */
   performanceMode: boolean;
+  /** Color/size finding nodes by severity (heatmap). */
+  severityHeatmap: boolean;
 }
 
 export interface GraphViewState {
@@ -120,6 +122,7 @@ export const DEFAULT_DISPLAY: GraphDisplaySettings = {
   charge: -120,
   linkDistance: 60,
   performanceMode: false,
+  severityHeatmap: false,
 };
 
 // ============================================================================

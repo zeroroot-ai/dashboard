@@ -200,6 +200,18 @@ export function GraphSettings({ open, onOpenChange }: GraphSettingsProps) {
 
           <Separator />
 
+          {/* Visualizations */}
+          <SwitchRow
+            label="Severity heatmap"
+            checked={display.severityHeatmap}
+            onCheckedChange={(v) => setDisplay({ severityHeatmap: v })}
+          />
+          <p className="text-xs text-muted-foreground -mt-3">
+            Color and enlarge finding nodes by severity so the riskiest parts stand out.
+          </p>
+
+          <Separator />
+
           <Button variant="outline" size="sm" onClick={resetDisplay} className="self-start">
             <RotateCcw className="w-4 h-4 mr-2" />
             Reset to defaults
