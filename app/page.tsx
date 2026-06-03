@@ -3,6 +3,7 @@ import { HeroSection } from '@/components/gibson/landing/HeroSection';
 import { WhatYouGet } from '@/components/gibson/landing/WhatYouGet';
 import { WhatYouRunItOn } from '@/components/gibson/landing/WhatYouRunItOn';
 import { Production } from '@/components/gibson/landing/Production';
+import { DashboardShowcase } from '@/components/gibson/landing/DashboardShowcase';
 import { SiteHeader } from '@/components/gibson/site-header';
 
 type FooterLink = {
@@ -24,6 +25,7 @@ export default function RootPage() {
       <SiteHeader />
       <main>
         <HeroSection />
+        <DashboardShowcase />
         <WhatYouGet />
         <WhatYouRunItOn />
         <Production />
@@ -65,7 +67,7 @@ export default function RootPage() {
           </div>
         </section>
       </main>
-      <footer className="border-t border-border py-8 text-center font-mono text-xs text-foreground opacity-70">
+      <footer className="border-t border-border py-8 text-center font-mono text-xs text-foreground opacity-90">
         <p>&copy; {new Date().getFullYear()} zeroroot.ai</p>
       </footer>
     </div>
