@@ -32,6 +32,7 @@ import {
   type GraphFilterState,
 } from '@/src/lib/graph/filters';
 import { applyNodeOps } from '@/src/lib/graph/node-ops';
+import { toGraphExportJSON } from '@/src/lib/graph/export';
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import { cn } from '@/lib/utils';
 
@@ -218,6 +219,27 @@ export default function GraphPage() {
     router.push(`/dashboard/graph?${params.toString()}`);
   }, [searchParams, router]);
 
+  // Export the current (visible) view.
+  const handleExportJson = useCallback(() => {
+    const payload = toGraphExportJSON(opsData.nodes, opsData.edges);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gibson-graph-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [opsData]);
+
+  const handleExportPng = useCallback(() => {
+    const url = canvasRef.current?.exportPNG();
+    if (!url) return;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gibson-graph-${Date.now()}.png`;
+    a.click();
+  }, []);
+
   // Camera actions delegated to the engine handle
   const handleZoomIn = useCallback(() => canvasRef.current?.zoomBy(1.2), []);
   const handleZoomOut = useCallback(() => canvasRef.current?.zoomBy(1 / 1.2), []);
@@ -381,6 +403,8 @@ export default function GraphPage() {
           onFit={handleFit}
           onReset={handleReset}
           onOpenSettings={() => setSettingsOpen(true)}
+          onExportPng={handleExportPng}
+          onExportJson={handleExportJson}
         />
       )}
 

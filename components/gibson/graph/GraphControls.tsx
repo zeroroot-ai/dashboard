@@ -30,6 +30,8 @@ import {
   Settings,
   List,
   Map as MapIcon,
+  Image as ImageIcon,
+  Braces,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -47,6 +49,10 @@ export interface GraphControlsProps {
   onReset: () => void;
   /** Open the Graph Settings panel. */
   onOpenSettings?: () => void;
+  /** Export the current view as a PNG. */
+  onExportPng?: () => void;
+  /** Export the current view as JSON. */
+  onExportJson?: () => void;
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
   className?: string;
 }
@@ -102,6 +108,8 @@ export function GraphControls({
   onFit,
   onReset,
   onOpenSettings,
+  onExportPng,
+  onExportJson,
   position = 'top-right',
   className,
 }: GraphControlsProps) {
@@ -173,6 +181,18 @@ export function GraphControls({
           <ControlButton onClick={onOpenSettings} icon={Settings} label="Settings" />
         )}
       </ControlGroup>
+
+      {/* Export */}
+      {(onExportPng || onExportJson) && (
+        <ControlGroup>
+          {onExportPng && (
+            <ControlButton onClick={onExportPng} icon={ImageIcon} label="Export PNG" />
+          )}
+          {onExportJson && (
+            <ControlButton onClick={onExportJson} icon={Braces} label="Export JSON" />
+          )}
+        </ControlGroup>
+      )}
 
       {/* Stats HUD */}
       <div className="flex flex-col gap-1 p-2 rounded-lg bg-background/90 backdrop-blur-md border border-border text-xs font-mono">

@@ -227,6 +227,20 @@ export default function GraphCanvasInner({
         const set = new Set(nodeIds);
         fg.zoomToFit(500, 90, (n) => set.has(String(n.id)));
       },
+      exportPNG: () => {
+        // The engine renders into a <canvas> inside the container; the minimap
+        // is a separate canvas, so pick the one that isn't the minimap.
+        const container = containerRef.current;
+        if (!container) return null;
+        const canvases = Array.from(container.querySelectorAll('canvas'));
+        const graphCanvas = canvases.find((c) => c !== minimapRef.current);
+        if (!graphCanvas) return null;
+        try {
+          return graphCanvas.toDataURL('image/png');
+        } catch {
+          return null;
+        }
+      },
       getZoom: () => fgRef.current?.zoom() ?? 1,
     }),
     [graphData]

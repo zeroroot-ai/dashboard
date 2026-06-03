@@ -57,6 +57,8 @@ export interface GraphCanvasHandle {
   centerOn: (nodeId: string) => void;
   /** Frame exactly the given node ids in the viewport. */
   fitToNodes: (nodeIds: string[]) => void;
+  /** PNG data URL of the current graph canvas, or null if unavailable. */
+  exportPNG: () => string | null;
   /** Current zoom factor. */
   getZoom: () => number;
 }
