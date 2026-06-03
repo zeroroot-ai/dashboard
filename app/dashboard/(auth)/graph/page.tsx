@@ -413,7 +413,11 @@ export default function GraphPage() {
 
       {/* Legend overlay */}
       {hasData && showLegend && (
-        <GraphLegend nodeTypes={availNodeTypes} relationshipTypes={availRelTypes} />
+        <GraphLegend
+          nodeTypes={availNodeTypes}
+          relationshipTypes={availRelTypes}
+          showSeverityScale={display.severityHeatmap}
+        />
       )}
 
       {/* Top-left: filters + search */}
