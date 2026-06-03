@@ -1,0 +1,361 @@
+'use client';
+
+/**
+ * GraphCanvasInner
+ *
+ * The actual `react-force-graph-2d` integration. This module imports the engine
+ * directly (which touches `window` at module-eval time), so it must ONLY be
+ * loaded through `next/dynamic({ ssr: false })` from `GraphCanvas` — never on
+ * the server.
+ *
+ * All brand colors come from `src/lib/graph` (canvas can't read CSS variables),
+ * keeping `components/**` free of hardcoded color literals.
+ */
+
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import ForceGraph2D, { type ForceGraphMethods, type NodeObject, type LinkObject } from 'react-force-graph-2d';
+import type { GraphNode, GraphEdge } from '@/src/types/graph';
+import { parseEntityType } from '@/src/lib/graph/entity-taxonomy';
+import { getThemeColors } from '@/src/lib/graph/theme-colors';
+import { NODE_SIZES } from '@/src/lib/graph/node-renderer';
+import {
+  CANVAS_TEXT,
+  CANVAS_TEXT_HALO,
+  EDGE_FALLBACK,
+  EDGE_DIM,
+  NODE_RING,
+  DIM_ALPHA,
+  UNCONNECTED_ALPHA,
+  LABEL_ZOOM_THRESHOLD,
+} from '@/src/lib/graph/canvas-style';
+import type {
+  GraphCanvasHandle,
+  GraphCanvasProps,
+  HighlightState,
+} from './GraphCanvas';
+
+// Extra props we attach on top of what react-force-graph manages. The library
+// wraps these as NodeObject<…> / LinkObject<…> (adding id/x/y and resolving
+// source/target to node refs), so the engine-facing types are the wrapped forms.
+type GNodeExtra = { __g: GraphNode };
+type GLinkExtra = { id: string; __g: GraphEdge };
+type RFNode = NodeObject<GNodeExtra>;
+type RFLink = LinkObject<GNodeExtra, GLinkExtra>;
+
+interface GraphCanvasInnerProps extends GraphCanvasProps {
+  handleRef: React.Ref<GraphCanvasHandle>;
+}
+
+/** Stable signature of the graph topology — only rebuild engine data on change. */
+function topologySignature(nodes: GraphNode[], edges: GraphEdge[]): string {
+  return `${nodes.length}:${edges.length}:${nodes.map((n) => n.id).join(',')}|${edges
+    .map((e) => e.id)
+    .join(',')}`;
+}
+
+export default function GraphCanvasInner({
+  data,
+  onNodeClick,
+  onNodeHover,
+  onStats,
+  onZoomChange,
+  highlightedPaths,
+  handleRef,
+}: GraphCanvasInnerProps) {
+  const fgRef = useRef<ForceGraphMethods<GNodeExtra, GLinkExtra> | undefined>(undefined);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const theme = useMemo(() => getThemeColors(), []);
+
+  const [size, setSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  const fittedRef = useRef(false);
+
+  // ── Engine data (rebuilt only when topology changes, to preserve layout) ──
+  const signature = useMemo(
+    () => topologySignature(data.nodes, data.edges),
+    [data.nodes, data.edges]
+  );
+
+  const graphData = useMemo(() => {
+    const nodes: RFNode[] = data.nodes.map((n) => ({ id: n.id, __g: n }));
+    const links: RFLink[] = data.edges.map((e) => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      __g: e,
+    }));
+    return { nodes, links };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature]) as { nodes: RFNode[]; links: RFLink[] };
+
+  // Adjacency for selection-focus dimming (neighbor node ids per node).
+  const neighborRef = useRef<Map<string, Set<string>>>(new Map());
+  useEffect(() => {
+    const m = new Map<string, Set<string>>();
+    for (const e of data.edges) {
+      if (!m.has(e.source)) m.set(e.source, new Set());
+      if (!m.has(e.target)) m.set(e.target, new Set());
+      m.get(e.source)!.add(e.target);
+      m.get(e.target)!.add(e.source);
+    }
+    neighborRef.current = m;
+  }, [data.edges]);
+
+  // Refresh stats + refit when topology changes.
+  useEffect(() => {
+    onStats?.(data.nodes.length, data.edges.length);
+    fittedRef.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature]);
+
+  // ── Live interaction state via refs (so accessors see latest w/o rebuild) ──
+  const selectedRef = useRef<string | null>(null);
+  const hoveredRef = useRef<string | null>(null);
+  const highlightRef = useRef<HighlightState>({ active: false, nodes: new Set(), edges: new Set() });
+  const displayRef = useRef(data.display);
+  displayRef.current = data.display;
+
+  selectedRef.current = data.selectedNodeId ?? null;
+
+  useEffect(() => {
+    const nodes = new Set<string>();
+    const edges = new Set<string>();
+    for (const p of highlightedPaths ?? []) {
+      for (const n of p.node_ids) nodes.add(n);
+      for (const e of p.edge_ids) edges.add(e);
+    }
+    highlightRef.current = { active: nodes.size > 0 || edges.size > 0, nodes, edges };
+  }, [highlightedPaths]);
+
+  // ── Imperative handle ─────────────────────────────────────────────────────
+  useImperativeHandle(
+    handleRef,
+    (): GraphCanvasHandle => ({
+      zoomBy: (factor) => {
+        const fg = fgRef.current;
+        if (!fg) return;
+        const next = Math.max(0.05, Math.min(20, fg.zoom() * factor));
+        fg.zoom(next, 300);
+      },
+      fit: () => fgRef.current?.zoomToFit(400, 60),
+      resetView: () => {
+        fittedRef.current = false;
+        fgRef.current?.zoomToFit(400, 60);
+      },
+      centerOn: (nodeId) => {
+        const fg = fgRef.current;
+        if (!fg) return;
+        const node = graphData.nodes.find((n) => n.id === nodeId);
+        if (node && typeof node.x === 'number' && typeof node.y === 'number') {
+          fg.centerAt(node.x, node.y, 600);
+          fg.zoom(Math.max(fg.zoom(), 3), 600);
+        }
+      },
+      getZoom: () => fgRef.current?.zoom() ?? 1,
+    }),
+    [graphData]
+  );
+
+  // ── Container sizing ──────────────────────────────────────────────────────
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      setSize({ w: Math.round(r.width), h: Math.round(r.height) });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // ── Accessors ─────────────────────────────────────────────────────────────
+  const nodeAlpha = useCallback((id: string): number => {
+    const hp = highlightRef.current;
+    if (hp.active) return hp.nodes.has(id) ? 1 : DIM_ALPHA;
+    const sel = selectedRef.current;
+    if (sel) {
+      if (id === sel) return 1;
+      return neighborRef.current.get(sel)?.has(id) ? 1 : UNCONNECTED_ALPHA;
+    }
+    return 1;
+  }, []);
+
+  const drawNode = useCallback(
+    (node: RFNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
+      const g = node.__g;
+      const et = parseEntityType(g.labels);
+      const radius = Math.max(2, ((NODE_SIZES[et] ?? 32) / 10) * displayRef.current.nodeSize);
+      const color = g.color || theme.nodeColors[et] || theme.nodeColors.host;
+      const x = node.x ?? 0;
+      const y = node.y ?? 0;
+
+      const isSelected = selectedRef.current === g.id;
+      const isHovered = hoveredRef.current === g.id;
+      const alpha = nodeAlpha(g.id);
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      if (isSelected || isHovered) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 12;
+      }
+
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      if (isSelected || isHovered) {
+        ctx.shadowBlur = 0;
+        ctx.lineWidth = 2 / globalScale;
+        ctx.strokeStyle = NODE_RING;
+        ctx.stroke();
+      }
+
+      // Labels — only when zoomed in enough to stay legible, or when focused.
+      const showLabels = displayRef.current.showLabels;
+      if ((showLabels && globalScale >= LABEL_ZOOM_THRESHOLD) || isSelected || isHovered) {
+        const label = (g.properties?.name as string) || g.id;
+        const fontSize = Math.max(2.5, 11 / globalScale);
+        ctx.font = `${fontSize}px ui-monospace, monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        const ly = y + radius + 2 / globalScale;
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 3 / globalScale;
+        ctx.strokeStyle = CANVAS_TEXT_HALO;
+        ctx.strokeText(label, x, ly);
+        ctx.fillStyle = CANVAS_TEXT;
+        ctx.fillText(label, x, ly);
+      }
+
+      ctx.restore();
+    },
+    [theme, nodeAlpha]
+  );
+
+  const drawNodePointerArea = useCallback(
+    (node: RFNode, color: string, ctx: CanvasRenderingContext2D) => {
+      const g = node.__g;
+      const et = parseEntityType(g.labels);
+      const radius = Math.max(3, ((NODE_SIZES[et] ?? 32) / 10) * displayRef.current.nodeSize) + 2;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(node.x ?? 0, node.y ?? 0, radius, 0, Math.PI * 2);
+      ctx.fill();
+    },
+    []
+  );
+
+  const linkColor = useCallback(
+    (link: RFLink): string => {
+      const e = link.__g;
+      const base = theme.edgeColors[e.type as keyof typeof theme.edgeColors] || EDGE_FALLBACK;
+      const hp = highlightRef.current;
+      if (hp.active) return hp.edges.has(e.id) ? base : EDGE_DIM;
+      const sel = selectedRef.current;
+      if (sel) {
+        return e.source === sel || e.target === sel ? base : EDGE_DIM;
+      }
+      return base;
+    },
+    [theme]
+  );
+
+  const linkWidth = useCallback((link: RFLink): number => {
+    const e = link.__g;
+    const w = displayRef.current.linkWidth;
+    const hp = highlightRef.current;
+    if (hp.active && hp.edges.has(e.id)) return 2.5 * w;
+    const sel = selectedRef.current;
+    if (sel && (e.source === sel || e.target === sel)) return 2 * w;
+    return 1 * w;
+  }, []);
+
+  const linkParticles = useCallback((link: RFLink): number => {
+    if (!displayRef.current.particles) return 0;
+    const e = link.__g;
+    const hp = highlightRef.current;
+    if (hp.active) return hp.edges.has(e.id) ? 3 : 0;
+    const sel = selectedRef.current;
+    if (sel && (e.source === sel || e.target === sel)) return 2;
+    return 0;
+  }, []);
+
+  const nodeTooltip = useCallback((node: RFNode): string => {
+    const g = node.__g;
+    const name = (g.properties?.name as string) || g.id;
+    const type = g.labels?.[0] ?? '';
+    const esc = (s: string) => s.replace(/[<>&]/g, (c) => (c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&amp;'));
+    return `<div style="font:12px ui-monospace,monospace;padding:2px 4px"><strong>${esc(
+      name
+    )}</strong>${type ? `<br/><span style="opacity:.7">${esc(type)}</span>` : ''}</div>`;
+  }, []);
+
+  // ── Events ────────────────────────────────────────────────────────────────
+  const handleNodeClick = useCallback(
+    (node: RFNode) => {
+      onNodeClick?.(node.__g);
+    },
+    [onNodeClick]
+  );
+
+  const handleNodeHover = useCallback(
+    (node: RFNode | null) => {
+      hoveredRef.current = node?.id != null ? String(node.id) : null;
+      onNodeHover?.(node?.__g ?? null);
+    },
+    [onNodeHover]
+  );
+
+  const handleBackgroundClick = useCallback(() => {
+    onNodeClick?.(null); // page clears selection on background click
+  }, [onNodeClick]);
+
+  const handleEngineStop = useCallback(() => {
+    if (!fittedRef.current) {
+      fgRef.current?.zoomToFit(400, 60);
+      fittedRef.current = true;
+    }
+  }, []);
+
+  const handleZoomEnd = useCallback(
+    (t: { k: number }) => {
+      onZoomChange?.(t.k);
+    },
+    [onZoomChange]
+  );
+
+  return (
+    <div ref={containerRef} className="absolute inset-0">
+      {size.w > 0 && size.h > 0 && (
+        <ForceGraph2D<GNodeExtra, GLinkExtra>
+          ref={fgRef}
+          width={size.w}
+          height={size.h}
+          graphData={graphData}
+          backgroundColor={theme.background}
+          nodeRelSize={4}
+          nodeId="id"
+          nodeLabel={nodeTooltip}
+          nodeCanvasObject={drawNode}
+          nodeCanvasObjectMode={() => 'replace'}
+          nodePointerAreaPaint={drawNodePointerArea}
+          linkColor={linkColor}
+          linkWidth={linkWidth}
+          linkDirectionalParticles={linkParticles}
+          linkDirectionalParticleWidth={2}
+          onNodeClick={handleNodeClick}
+          onNodeHover={handleNodeHover}
+          onBackgroundClick={handleBackgroundClick}
+          onEngineStop={handleEngineStop}
+          onZoomEnd={handleZoomEnd}
+          cooldownTicks={120}
+          warmupTicks={20}
+        />
+      )}
+    </div>
+  );
+}
