@@ -9,6 +9,17 @@ describe('ErrorAlert', () => {
     expect(screen.getByText('Something went wrong on our end.')).toBeInTheDocument();
   });
 
+  // dashboard#705: real failures render as a BOLD FILLED banner (legible
+  // white-on-red), not muddy dark-red text on the near-black card, and carry
+  // the warning icon.
+  it('renders a bold filled error banner with an icon', () => {
+    const { container } = render(<ErrorAlert error={{ message: 'boom' }} title="Failed" />);
+    const alert = screen.getByRole('alert');
+    expect(alert.className).toContain('bg-destructive');
+    expect(alert.className).toContain('text-destructive-foreground');
+    expect(container.querySelector('svg')).toBeInTheDocument();
+  });
+
   // dashboard#516: the banner copy promises a reference; when the API error
   // envelope carries a correlationId, surface it so users can quote it.
   it('renders the reference id when provided', () => {

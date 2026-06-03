@@ -82,8 +82,9 @@
   --muted-foreground: oklch(0.76 0.020 280);    /* dim text — AA on muted/card/bg */
   --accent: oklch(0.275 0.022 288);             /* hover / dialog, faint violet */
   --accent-foreground: oklch(0.96 0.008 280);
-  --destructive: oklch(0.54 0.210 22);          /* alert red — darkened for AA white text */
+  --destructive: oklch(0.54 0.210 22);          /* alert-red FILL — dark enough for AA white text on it */
   --destructive-foreground: oklch(0.99 0.004 22);
+  --error-text: oklch(0.74 0.165 22);           /* legible red TEXT on dark card/bg (AA) — inline/field errors (#705) */
   --warning: oklch(0.80 0.155 85);              /* amber */
   --warning-foreground: oklch(0.20 0.030 85);
   --success-foreground: oklch(0.18 0.030 162);  /* on emerald accent */
@@ -191,6 +192,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-error-text: var(--error-text);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-success-foreground: var(--success-foreground);
