@@ -201,6 +201,12 @@ export default function GraphCanvasInner({
           fg.zoom(Math.max(fg.zoom(), 3), 600);
         }
       },
+      fitToNodes: (nodeIds) => {
+        const fg = fgRef.current;
+        if (!fg || nodeIds.length === 0) return;
+        const set = new Set(nodeIds);
+        fg.zoomToFit(500, 90, (n) => set.has(String(n.id)));
+      },
       getZoom: () => fgRef.current?.zoom() ?? 1,
     }),
     [graphData]

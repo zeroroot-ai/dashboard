@@ -19,7 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ExternalLink, GitBranch } from 'lucide-react';
+import { ExternalLink, GitBranch, Crosshair } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { GraphNode } from '@/src/types/graph';
 
@@ -28,6 +28,8 @@ interface NodeDetailPanelProps {
   onClose: () => void;
   /** Called when user clicks "Find paths from this node" */
   onFindPaths: (node: GraphNode) => void;
+  /** Called when user clicks "Frame this node" — fit the node + neighbors. */
+  onFrame?: (node: GraphNode) => void;
 }
 
 type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
@@ -60,7 +62,7 @@ function formatTimestamp(ts: unknown): string {
 /** Properties to skip in the generic table (rendered separately above). */
 const SKIP_PROPS = new Set(['name', 'severity', 'first_seen_at', 'firstSeenAt', 'addedAt', 'mission_id', 'missionId']);
 
-export function NodeDetailPanel({ node, onClose, onFindPaths }: NodeDetailPanelProps) {
+export function NodeDetailPanel({ node, onClose, onFindPaths, onFrame }: NodeDetailPanelProps) {
   const isOpen = node !== null;
 
   if (!node) {
@@ -168,6 +170,17 @@ export function NodeDetailPanel({ node, onClose, onFindPaths }: NodeDetailPanelP
               <GitBranch className="w-4 h-4 mr-2" />
               Find paths from this node
             </Button>
+            {onFrame && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => onFrame(node)}
+              >
+                <Crosshair className="w-4 h-4 mr-2" />
+                Frame this node
+              </Button>
+            )}
           </div>
         </div>
       </SheetContent>

@@ -53,6 +53,8 @@ export interface GraphCanvasHandle {
   resetView: () => void;
   /** Center + zoom onto a specific node. */
   centerOn: (nodeId: string) => void;
+  /** Frame exactly the given node ids in the viewport. */
+  fitToNodes: (nodeIds: string[]) => void;
   /** Current zoom factor. */
   getZoom: () => number;
 }
