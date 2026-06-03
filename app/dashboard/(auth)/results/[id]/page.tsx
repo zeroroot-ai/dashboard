@@ -21,6 +21,7 @@ import { CheckpointBadge } from "@/src/components/mission/CheckpointBadge";
 import { ToolStreamProgress } from "@/src/components/mission/ToolStreamProgress";
 import { MissionFindingsTab } from "@/components/gibson/missions/MissionFindingsTab";
 import { MissionTracesTab } from "@/components/gibson/missions/MissionTracesTab";
+import { MissionFlowTab } from "@/src/components/gibson/mission-graph/MissionFlowTab";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import type { CheckpointMetadata } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 import type { MissionTerminalHandle } from "@/src/components/missions/MissionTerminal";
@@ -342,6 +343,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
           </TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
           <TabsTrigger value="traces">Traces</TabsTrigger>
+          <TabsTrigger value="flow">Flow</TabsTrigger>
           <TabsTrigger value="secrets">Secrets</TabsTrigger>
           {!loading && canViewCheckpoints && (
             <TabsTrigger value="checkpoints">Checkpoints</TabsTrigger>
@@ -512,6 +514,14 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
         {/* Traces */}
         <TabsContent value="traces" className="mt-4">
           <MissionTracesTab missionId={mission.id} missionStatus={mission.status} />
+        </TabsContent>
+
+        {/* Flow — daemon-projected mission flow-chart */}
+        <TabsContent value="flow" className="mt-4">
+          <MissionFlowTab
+            missionDefinitionId={mission.missionDefinitionId}
+            missionStatus={mission.status}
+          />
         </TabsContent>
 
         {/* Secrets accessed */}
