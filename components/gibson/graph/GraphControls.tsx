@@ -32,6 +32,7 @@ import {
   Map as MapIcon,
   Image as ImageIcon,
   Braces,
+  History,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -53,6 +54,10 @@ export interface GraphControlsProps {
   onExportPng?: () => void;
   /** Export the current view as JSON. */
   onExportJson?: () => void;
+  /** Toggle the timeline scrubber. */
+  onToggleTimeline?: () => void;
+  /** Whether the timeline scrubber is currently active. */
+  timelineActive?: boolean;
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
   className?: string;
 }
@@ -110,6 +115,8 @@ export function GraphControls({
   onOpenSettings,
   onExportPng,
   onExportJson,
+  onToggleTimeline,
+  timelineActive,
   position = 'top-right',
   className,
 }: GraphControlsProps) {
@@ -177,6 +184,14 @@ export function GraphControls({
           label={showMinimap ? 'Hide minimap' : 'Show minimap'}
           active={showMinimap}
         />
+        {onToggleTimeline && (
+          <ControlButton
+            onClick={onToggleTimeline}
+            icon={History}
+            label={timelineActive ? 'Hide timeline' : 'Show timeline'}
+            active={timelineActive}
+          />
+        )}
         {onOpenSettings && (
           <ControlButton onClick={onOpenSettings} icon={Settings} label="Settings" />
         )}

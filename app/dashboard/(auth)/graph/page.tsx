@@ -17,6 +17,7 @@ import { GraphControls } from '@/components/gibson/graph/GraphControls';
 import { GraphSettings } from '@/components/gibson/graph/GraphSettings';
 import { GraphLegend } from '@/components/gibson/graph/GraphLegend';
 import { GraphSearch } from '@/components/gibson/graph/GraphSearch';
+import { GraphTimeline } from '@/components/gibson/graph/GraphTimeline';
 import { GraphFilters } from '@/components/gibson/graph/GraphFilters';
 import { MissionSelector } from '@/components/gibson/graph/MissionSelector';
 import { NodeDetailPanel } from '@/components/gibson/graph/NodeDetailPanel';
@@ -33,6 +34,7 @@ import {
 } from '@/src/lib/graph/filters';
 import { applyNodeOps } from '@/src/lib/graph/node-ops';
 import { attackPathSets } from '@/src/lib/graph/attack-path';
+import { timelineBounds, filterByTime } from '@/src/lib/graph/timeline';
 import { toGraphExportJSON } from '@/src/lib/graph/export';
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import { cn } from '@/lib/utils';
@@ -73,6 +75,13 @@ export default function GraphPage() {
   const expandFocus = useGraphViewStore((s) => s.expandFocus);
   const clearFocus = useGraphViewStore((s) => s.clearFocus);
   const showAllNodes = useGraphViewStore((s) => s.showAllNodes);
+  const timelineActive = useGraphViewStore((s) => s.timelineActive);
+  const timelineCutoff = useGraphViewStore((s) => s.timelineCutoff);
+  const timelinePlaying = useGraphViewStore((s) => s.timelinePlaying);
+  const openTimeline = useGraphViewStore((s) => s.openTimeline);
+  const closeTimeline = useGraphViewStore((s) => s.closeTimeline);
+  const setTimelineCutoff = useGraphViewStore((s) => s.setTimelineCutoff);
+  const setTimelinePlaying = useGraphViewStore((s) => s.setTimelinePlaying);
 
   // TanStack Query — mission graph or full tenant graph
   const {
@@ -131,16 +140,25 @@ export default function GraphPage() {
     [filteredData, hiddenNodeIds, focusNodeId, focusDepth]
   );
 
+  // Timeline scrubber: reveal the graph up to a cutoff time.
+  const tlBounds = useMemo(() => timelineBounds(opsData.nodes), [opsData.nodes]);
+  const timelineData = useMemo(() => {
+    if (timelineActive && timelineCutoff != null && tlBounds) {
+      return filterByTime(opsData.nodes, opsData.edges, timelineCutoff);
+    }
+    return opsData;
+  }, [timelineActive, timelineCutoff, tlBounds, opsData]);
+
   // Highlight precedence: an explicit path query wins; otherwise attack-path
   // emphasis derives a highlight set from the visible attack-relationship edges.
   const effectiveHighlight = useMemo(() => {
     if (highlightedPaths.length > 0) return highlightedPaths;
     if (display.attackPathEmphasis) {
-      const sets = attackPathSets(opsData.edges);
+      const sets = attackPathSets(timelineData.edges);
       return sets.edge_ids.length > 0 ? [sets] : [];
     }
     return [];
-  }, [highlightedPaths, display.attackPathEmphasis, opsData.edges]);
+  }, [highlightedPaths, display.attackPathEmphasis, timelineData.edges]);
 
   // Live stream hook
   const [liveEnabled, setLiveEnabled] = useState(false);
@@ -206,12 +224,12 @@ export default function GraphPage() {
   // Fit-to-selection: frame the node plus its direct neighbors.
   const handleFrameNode = useCallback((node: GraphNode) => {
     const ids = new Set<string>([node.id]);
-    for (const e of opsData.edges) {
+    for (const e of timelineData.edges) {
       if (e.source === node.id) ids.add(e.target);
       if (e.target === node.id) ids.add(e.source);
     }
     canvasRef.current?.fitToNodes([...ids]);
-  }, [opsData.edges]);
+  }, [timelineData.edges]);
 
   // Node-manipulation handlers
   const handleTogglePin = useCallback((node: GraphNode) => togglePin(node.id), [togglePin]);
@@ -233,7 +251,7 @@ export default function GraphPage() {
 
   // Export the current (visible) view.
   const handleExportJson = useCallback(() => {
-    const payload = toGraphExportJSON(opsData.nodes, opsData.edges);
+    const payload = toGraphExportJSON(timelineData.nodes, timelineData.edges);
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -241,7 +259,7 @@ export default function GraphPage() {
     a.download = `gibson-graph-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [opsData]);
+  }, [timelineData]);
 
   const handleExportPng = useCallback(() => {
     const url = canvasRef.current?.exportPNG();
@@ -260,16 +278,47 @@ export default function GraphPage() {
 
   const canvasData = useMemo(
     () => ({
-      nodes: opsData.nodes,
-      edges: opsData.edges,
+      nodes: timelineData.nodes,
+      edges: timelineData.edges,
       display,
       selectedNodeId: selectedNode?.id ?? null,
       layoutMode,
       showMinimap,
       pinnedNodeIds,
     }),
-    [opsData, display, selectedNode, layoutMode, showMinimap, pinnedNodeIds]
+    [timelineData, display, selectedNode, layoutMode, showMinimap, pinnedNodeIds]
   );
+
+  // Timeline play: advance the cutoff across the run, then pause at the end.
+  const handleToggleTimeline = useCallback(() => {
+    if (timelineActive) closeTimeline();
+    else openTimeline(tlBounds ? tlBounds.max : null);
+  }, [timelineActive, closeTimeline, openTimeline, tlBounds]);
+
+  const handleTogglePlay = useCallback(() => {
+    if (!tlBounds) return;
+    if (!timelinePlaying && (timelineCutoff == null || timelineCutoff >= tlBounds.max)) {
+      setTimelineCutoff(tlBounds.min); // restart from the beginning
+    }
+    setTimelinePlaying(!timelinePlaying);
+  }, [tlBounds, timelinePlaying, timelineCutoff, setTimelineCutoff, setTimelinePlaying]);
+
+  useEffect(() => {
+    if (!timelineActive || !timelinePlaying || !tlBounds) return;
+    const span = Math.max(1, tlBounds.max - tlBounds.min);
+    const stepMs = span / 60; // ~6s to play the whole run at 100ms ticks
+    const id = setInterval(() => {
+      const cur = useGraphViewStore.getState().timelineCutoff ?? tlBounds.min;
+      const next = cur + stepMs;
+      if (next >= tlBounds.max) {
+        setTimelineCutoff(tlBounds.max);
+        setTimelinePlaying(false);
+      } else {
+        setTimelineCutoff(next);
+      }
+    }, 100);
+    return () => clearInterval(id);
+  }, [timelineActive, timelinePlaying, tlBounds, setTimelineCutoff, setTimelinePlaying]);
 
   // ─── Render states ──────────────────────────────────────────────────────────
 
@@ -302,7 +351,7 @@ export default function GraphPage() {
         <div className="absolute top-0 left-0 right-0 z-30 bg-alt/10 border-b border-alt/40/30 px-4 py-2 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-alt flex-shrink-0" />
           <p className="text-xs text-alt">
-            Showing {opsData.nodes.length.toLocaleString()} of {totalNodeCount.toLocaleString()} nodes.
+            Showing {timelineData.nodes.length.toLocaleString()} of {totalNodeCount.toLocaleString()} nodes.
             Use filters to narrow the scope.
           </p>
         </div>
@@ -417,6 +466,24 @@ export default function GraphPage() {
           onOpenSettings={() => setSettingsOpen(true)}
           onExportPng={handleExportPng}
           onExportJson={handleExportJson}
+          onToggleTimeline={tlBounds ? handleToggleTimeline : undefined}
+          timelineActive={timelineActive}
+        />
+      )}
+
+      {/* Timeline scrubber */}
+      {hasData && timelineActive && tlBounds && (
+        <GraphTimeline
+          min={tlBounds.min}
+          max={tlBounds.max}
+          value={timelineCutoff ?? tlBounds.max}
+          playing={timelinePlaying}
+          onChange={(v) => {
+            setTimelinePlaying(false);
+            setTimelineCutoff(v);
+          }}
+          onTogglePlay={handleTogglePlay}
+          onClose={closeTimeline}
         />
       )}
 
@@ -460,12 +527,12 @@ export default function GraphPage() {
             </div>
           </SheetContent>
         </Sheet>
-        {hasData && <GraphSearch nodes={opsData.nodes} onFocusNode={handleFocusNode} />}
+        {hasData && <GraphSearch nodes={timelineData.nodes} onFocusNode={handleFocusNode} />}
       </div>
 
       {/* Path Query Panel */}
       <PathQueryPanel
-        nodes={opsData.nodes}
+        nodes={timelineData.nodes}
         initialSourceNode={pathSourceNode}
         onPathsFound={setHighlightedPaths}
       />
