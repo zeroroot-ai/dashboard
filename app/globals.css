@@ -108,11 +108,11 @@
   --sidebar-ring: oklch(0.62 0.230 295);
 
   /* Specialty — premium-security brand character. */
-  --highlight: oklch(0.62 0.230 295);           /* violet */
-  --alt: oklch(0.74 0.160 162);                 /* emerald */
-  --link: oklch(0.78 0.150 235);                /* cyan-blue */
-  --glow-strength: 0.6;                          /* restrained premium glow */
-  --scanline-opacity: 0.012;                     /* kept — barely-perceptible CRT */
+  --highlight: oklch(0.68 0.255 295);           /* violet — brighter, punchier accent (#708) */
+  --alt: oklch(0.76 0.170 162);                 /* emerald — crisper */
+  --link: oklch(0.80 0.160 235);                /* cyan-blue — crisper */
+  --glow-strength: 0.9;                          /* stronger terminal-hacker glow (#708) */
+  --scanline-opacity: 0.035;                     /* more visible CRT scanlines (#708) */
   --scanline-color: oklch(0.62 0.230 295);       /* violet scanline */
 
   --display-family: var(--font-jetbrains-mono), 'Fira Code', 'Cascadia Code', monospace;
