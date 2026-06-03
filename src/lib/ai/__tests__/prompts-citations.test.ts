@@ -90,7 +90,7 @@ describe('buildSystemPrompt — citation instructions', () => {
     });
 
     // Layer 1: identity
-    expect(system).toContain('Zero Day AI');
+    expect(system).toContain('Zero Root AI');
     // Layer 3: graph summary
     expect(system).toContain('Tenant graph summary text');
     // Layer 7: focused node + citation instruction

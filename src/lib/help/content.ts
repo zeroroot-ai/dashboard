@@ -151,7 +151,7 @@ Supported providers:
 ## Step 2: Run Your First Mission
 
 1. Go to **Missions > Templates**
-2. Select "Hello Zero Day AI" template
+2. Select "Hello Zero Root AI" template
 3. Click "Run Mission"
 4. Watch real-time progress
 
@@ -613,7 +613,7 @@ You can customize shortcuts in **Settings > Keyboard Shortcuts**.
     content: `
 # Your First Scan
 
-A detailed walkthrough of running your first security scan with Zero Day AI.
+A detailed walkthrough of running your first security scan with Zero Root AI.
 
 ## Prerequisites
 
@@ -624,7 +624,7 @@ Before you begin, ensure you have:
 ## Step 1: Choose a Template
 
 1. Navigate to **Missions > Templates**
-2. Look for "Hello Zero Day AI" or "Basic Web Scan"
+2. Look for "Hello Zero Root AI" or "Basic Web Scan"
 3. Click the template to view details
 
 ## Step 2: Configure the Mission

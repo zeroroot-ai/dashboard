@@ -4,6 +4,7 @@ import * as React from "react";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useIsTablet } from "@/hooks/use-mobile";
+import { PRODUCT_NAME } from "@/src/lib/brand";
 
 import {
   Sidebar,
@@ -53,7 +54,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </span>
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="font-display text-foreground truncate font-semibold">Zero Day AI</span>
+                <span className="font-display text-foreground truncate font-semibold">{PRODUCT_NAME}</span>
                 <span className="text-muted-foreground truncate text-xs">
                   {tenantLoading ? <Skeleton className="h-3 w-20" /> : (currentTenant?.displayName ?? "No workspace")}
                 </span>

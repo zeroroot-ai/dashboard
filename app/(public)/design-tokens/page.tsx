@@ -76,7 +76,7 @@ const specialtyTokens: Token[] = [
 ];
 
 const typographyScale: Array<{ name: string; className: string; sample: string }> = [
-  { name: "display / h1", className: "font-display text-4xl font-bold", sample: "Zero Day AI" },
+  { name: "display / h1", className: "font-display text-4xl font-bold", sample: "Zero Root AI" },
   { name: "h2", className: "font-display text-2xl font-bold", sample: "Section heading" },
   { name: "h3", className: "font-display text-xl font-semibold", sample: "Subsection" },
   { name: "body", className: "text-base", sample: "The quick brown fox jumps over the lazy dog." },

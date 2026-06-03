@@ -728,7 +728,7 @@ export function ProvidersContent() {
         <div>
           <h3 className="text-sm font-medium">LLM Providers</h3>
           <p className="text-muted-foreground mt-1 text-xs">
-            Configure API credentials for LLM providers. Zero Day AI resolves the active provider
+            Configure API credentials for LLM providers. Zero Root AI resolves the active provider
             at runtime based on agent slot requirements. Credentials are encrypted at rest by the
             daemon — they never persist in the dashboard.
           </p>

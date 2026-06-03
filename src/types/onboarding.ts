@@ -89,7 +89,7 @@ export const WIZARD_STEPS: WizardStep[] = [
   {
     id: 'welcome',
     title: 'Welcome',
-    description: 'Get an overview of Zero Day AI capabilities',
+    description: 'Get an overview of Zero Root AI capabilities',
     status: 'pending',
     isSkippable: false,
     order: 0,

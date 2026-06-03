@@ -8,7 +8,7 @@
  *
  * Remark-gfm is enabled for GitHub-flavored markdown (tables, strikethrough,
  * task lists). Syntax highlighting uses Fumadocs' built-in Shiki integration
- * with a dark theme that complements the Zero Day AI hacker palette.
+ * with a dark theme that complements the Zero Root AI hacker palette.
  *
  * We ship our own Zod v3 schema rather than extending Fumadocs' internal
  * zod v4 schema so the root project stays on a single zod major. Zod 3.24+

@@ -94,7 +94,7 @@ function ConnectionBanner() {
       {isConnected ? (
         <>
           <span className="mr-2 inline-block h-2 w-2 animate-[pulse-dot_1.5s_ease-in-out_infinite] rounded-full bg-highlight align-middle" />
-          Connected to Zero Day AI
+          Connected to Zero Root AI
         </>
       ) : (
         <>

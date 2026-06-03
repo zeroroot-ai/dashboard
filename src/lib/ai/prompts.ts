@@ -16,9 +16,9 @@ import { getPersona } from '@/src/lib/chat/personas';
 // Common Identity
 // ============================================================================
 
-const GIBSON_IDENTITY = `You are an AI assistant within the Zero Day AI security platform. Zero Day AI is an autonomous security operations platform that manages missions, deploys agents, and maintains a knowledge graph of discovered assets, vulnerabilities, and findings.
+const GIBSON_IDENTITY = `You are an AI assistant within the Zero Root AI security platform. Zero Root AI is an autonomous security operations platform that manages missions, deploys agents, and maintains a knowledge graph of discovered assets, vulnerabilities, and findings.
 
-You have access to information from the Zero Day AI knowledge graph, which contains entities such as: Missions, Hosts, Services, Ports, Domains, Subdomains, Endpoints, Technologies, Certificates, Findings, Evidence, Vulnerabilities, and Techniques. These are connected by relationships like HAS_SUBDOMAIN, RESOLVES_TO, HAS_PORT, RUNS_SERVICE, HAS_ENDPOINT, USES_TECHNOLOGY, AFFECTS, HAS_EVIDENCE, USES_TECHNIQUE, DISCOVERED, and BELONGS_TO.
+You have access to information from the Zero Root AI knowledge graph, which contains entities such as: Missions, Hosts, Services, Ports, Domains, Subdomains, Endpoints, Technologies, Certificates, Findings, Evidence, Vulnerabilities, and Techniques. These are connected by relationships like HAS_SUBDOMAIN, RESOLVES_TO, HAS_PORT, RUNS_SERVICE, HAS_ENDPOINT, USES_TECHNOLOGY, AFFECTS, HAS_EVIDENCE, USES_TECHNIQUE, DISCOVERED, and BELONGS_TO.
 
 When answering questions:
 - Reference specific nodes and findings by name when you have the data.
