@@ -27,6 +27,7 @@ import {
   MembershipResolutionError,
 } from "@/src/lib/auth/membership";
 import { membershipReasonToLoginErrorReason } from "@/src/lib/auth/login-error-mapping";
+import { decideHostSplit, loadHostSplitConfig } from "@/src/lib/host-routing";
 import { CORRELATION_HEADER, generateCorrelationId } from "@/src/lib/auth/correlation";
 import { popLastFiredSubsystem } from "@/src/lib/test-fixtures/fault-injection";
 import { logger } from "@/src/lib/logger";
@@ -40,8 +41,31 @@ export const runtime = "nodejs";
 
 const PROTECTED_PREFIX = "/dashboard";
 
+// Host split (deploy#630 S11). Computed once at module load — origins are
+// fixed for the pod's lifetime. Null in single-origin dev (no WWW_URL).
+const HOST_SPLIT = loadHostSplitConfig();
+
 export default auth(async (req) => {
   const { pathname, search } = req.nextUrl;
+
+  // 0. www/app host split. Runs before auth so marketing pages (www) never
+  //    touch tenant resolution, and the product host (app) never serves the
+  //    public landing. Cross-host requests 307 to the canonical host; app "/"
+  //    goes to /dashboard. See src/lib/host-routing.ts.
+  if (HOST_SPLIT) {
+    const decision = decideHostSplit(
+      req.headers.get("host") ?? "",
+      pathname,
+      search ?? "",
+      HOST_SPLIT,
+    );
+    if (decision.kind === "redirect") {
+      return NextResponse.redirect(new URL(decision.url, req.nextUrl.origin), {
+        status: 307,
+      });
+    }
+  }
+
   const session = req.auth;
 
   // Spec auth-resolution-hardening R2.5/R3.5 — every request through
