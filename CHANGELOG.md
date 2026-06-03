@@ -5,6 +5,50 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.112.0](https://github.com/zeroroot-ai/dashboard/compare/v0.111.0...v0.112.0) (2026-06-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* **authz:** consume decomposed tenant.v1 services; drop admin.v1 (ADR-0039) ([#628](https://github.com/zeroroot-ai/dashboard/issues/628))
+
+### Features
+
+* add MissionGraph flow-chart view to the run page ([#678](https://github.com/zeroroot-ai/dashboard/issues/678)) ([819240e](https://github.com/zeroroot-ai/dashboard/commit/819240e5cbf0197106d0b16e43d4217ff502966e))
+* **authz:** consume decomposed tenant.v1 services; drop admin.v1 (ADR-0039) ([#628](https://github.com/zeroroot-ai/dashboard/issues/628)) ([2772819](https://github.com/zeroroot-ai/dashboard/commit/2772819b19448331943233ec83f4da5649e83cd4))
+* **authz:** gate server CRD actions on active-tenant role + relation (closes [#614](https://github.com/zeroroot-ai/dashboard/issues/614)) ([#621](https://github.com/zeroroot-ai/dashboard/issues/621)) ([4f82366](https://github.com/zeroroot-ai/dashboard/commit/4f82366c6c76a12a3b73fea26667e9ff74915995))
+* **design:** collapse to single :root token tree + violet-led palette + WCAG contrast test ([#656](https://github.com/zeroroot-ai/dashboard/issues/656)) ([d347ef6](https://github.com/zeroroot-ai/dashboard/commit/d347ef60c7ede0778dd3f2520cf5eb608b338ef7)), closes [#650](https://github.com/zeroroot-ai/dashboard/issues/650)
+* **design:** rip light-mode machinery — next-themes, toggle, customizer; add check-no-light-mode guard ([#659](https://github.com/zeroroot-ai/dashboard/issues/659)) ([24255ab](https://github.com/zeroroot-ai/dashboard/commit/24255ab7bed6fad3f082b71179855ff5360f0dc9)), closes [#651](https://github.com/zeroroot-ai/dashboard/issues/651)
+* **grants:** daemon-route catalog-enablement, delete ComponentGrant K8s direct path (closes [#577](https://github.com/zeroroot-ai/dashboard/issues/577)) ([#632](https://github.com/zeroroot-ai/dashboard/issues/632)) ([91bb17b](https://github.com/zeroroot-ai/dashboard/commit/91bb17be236df2d5bc396ace08469ad6028ac576))
+* **graph:** attack-path emphasis + path-query highlight integration ([#689](https://github.com/zeroroot-ai/dashboard/issues/689)) ([a6ea99e](https://github.com/zeroroot-ai/dashboard/commit/a6ea99ef28a6eb0249d7bbcdba2935898d4d7b2a)), closes [#673](https://github.com/zeroroot-ai/dashboard/issues/673)
+* **graph:** consolidated filters that actually apply to the rendered graph ([#683](https://github.com/zeroroot-ai/dashboard/issues/683)) ([573736e](https://github.com/zeroroot-ai/dashboard/commit/573736e977099d810193d925c7d714285a890d16)), closes [#667](https://github.com/zeroroot-ai/dashboard/issues/667)
+* **graph:** cyber background layer — vignette + restrained scanline ([#639](https://github.com/zeroroot-ai/dashboard/issues/639)) ([2613c2c](https://github.com/zeroroot-ai/dashboard/commit/2613c2c7faaf429f304dbf2e8d5398c884dbd0a1)), closes [#634](https://github.com/zeroroot-ai/dashboard/issues/634)
+* **graph:** deep-navy palette foundation + contrast-tuned colors ([#638](https://github.com/zeroroot-ai/dashboard/issues/638)) ([377ea43](https://github.com/zeroroot-ai/dashboard/commit/377ea431181204949791c683c3b99233f213e3fe)), closes [#633](https://github.com/zeroroot-ai/dashboard/issues/633)
+* **graph:** export current view as PNG and JSON ([#687](https://github.com/zeroroot-ai/dashboard/issues/687)) ([46ec7b4](https://github.com/zeroroot-ai/dashboard/commit/46ec7b4770759dfa912d8c60c0c539e520b3864e)), closes [#671](https://github.com/zeroroot-ai/dashboard/issues/671)
+* **graph:** legend + minimap for orientation ([#684](https://github.com/zeroroot-ai/dashboard/issues/684)) ([86de059](https://github.com/zeroroot-ai/dashboard/commit/86de05970069ddc476608e57de31d22826d9e385)), closes [#668](https://github.com/zeroroot-ai/dashboard/issues/668)
+* **graph:** legible HUD + legend + overlay panels ([#640](https://github.com/zeroroot-ai/dashboard/issues/640)) ([7997b36](https://github.com/zeroroot-ai/dashboard/commit/7997b3681f2c2e11ab44283012a0587a022fb921)), closes [#635](https://github.com/zeroroot-ai/dashboard/issues/635)
+* **graph:** live-run overlay — directional particles + pulsing running nodes ([#690](https://github.com/zeroroot-ai/dashboard/issues/690)) ([7cf12fe](https://github.com/zeroroot-ai/dashboard/commit/7cf12fe38024939e63bee84b477da66a88e852c5)), closes [#674](https://github.com/zeroroot-ai/dashboard/issues/674)
+* **graph:** node manipulation — pin/unpin, hide, isolate + neighbor-expand ([#686](https://github.com/zeroroot-ai/dashboard/issues/686)) ([bfea173](https://github.com/zeroroot-ai/dashboard/commit/bfea173bb9e8a6c47c89335cee6ccce75cb16247)), closes [#670](https://github.com/zeroroot-ai/dashboard/issues/670)
+* **graph:** node-label readability — halo/outline against bg and nodes ([#641](https://github.com/zeroroot-ai/dashboard/issues/641)) ([06f934d](https://github.com/zeroroot-ai/dashboard/commit/06f934dcaa14fc202b59644627a5dc974300cc52)), closes [#636](https://github.com/zeroroot-ai/dashboard/issues/636)
+* **graph:** re-palette knowledge graph to violet brand + flowing-line edge flow ([#660](https://github.com/zeroroot-ai/dashboard/issues/660)) ([b7543af](https://github.com/zeroroot-ai/dashboard/commit/b7543af81a93870a1c1ac8f85b7e88eb8f5be957)), closes [#652](https://github.com/zeroroot-ai/dashboard/issues/652)
+* **graph:** real Settings panel with persisted display + physics controls ([#682](https://github.com/zeroroot-ai/dashboard/issues/682)) ([359d7fe](https://github.com/zeroroot-ai/dashboard/commit/359d7fea6c0dde359100cc897cdb917df385d34d)), closes [#666](https://github.com/zeroroot-ai/dashboard/issues/666)
+* **graph:** rebuild explorer on react-force-graph-2d with one view-state ([#679](https://github.com/zeroroot-ai/dashboard/issues/679)) ([e7e673b](https://github.com/zeroroot-ai/dashboard/commit/e7e673b10417b17f41eb77d9dcfa48b8d068c567)), closes [#664](https://github.com/zeroroot-ai/dashboard/issues/664)
+* **graph:** search-to-focus + fit-to-selection ([#685](https://github.com/zeroroot-ai/dashboard/issues/685)) ([b0d1471](https://github.com/zeroroot-ai/dashboard/commit/b0d1471a83c8b88a068a2cedf7989b0b37717071)), closes [#669](https://github.com/zeroroot-ai/dashboard/issues/669)
+* **graph:** severity heatmap for finding nodes ([#688](https://github.com/zeroroot-ai/dashboard/issues/688)) ([6a590e0](https://github.com/zeroroot-ai/dashboard/commit/6a590e0ea2cf55d619b08be005e9a8fe2cdbf5f7)), closes [#672](https://github.com/zeroroot-ai/dashboard/issues/672)
+* **graph:** timeline scrubber replaying graph growth ([#691](https://github.com/zeroroot-ai/dashboard/issues/691)) ([9e50cea](https://github.com/zeroroot-ai/dashboard/commit/9e50cea55cf257dac3f639c8226e0cfe7db50245)), closes [#675](https://github.com/zeroroot-ai/dashboard/issues/675)
+* **graph:** working layout switcher — force/hierarchy/radial/timeline ([#681](https://github.com/zeroroot-ai/dashboard/issues/681)) ([232d6b3](https://github.com/zeroroot-ai/dashboard/commit/232d6b3c207bac2704dc5558bd385bf883c7818a)), closes [#665](https://github.com/zeroroot-ai/dashboard/issues/665)
+* **nav:** consolidate member management into a single Members & Access home (closes [#609](https://github.com/zeroroot-ai/dashboard/issues/609)) ([#629](https://github.com/zeroroot-ai/dashboard/issues/629)) ([422fc66](https://github.com/zeroroot-ai/dashboard/commit/422fc6671435de8af1cb45f5a6f72cf7bebdc3f4))
+
+
+### Bug Fixes
+
+* **authz:** authorize mission secrets-audit via the AuthRegistry, not a dead permission (closes [#616](https://github.com/zeroroot-ai/dashboard/issues/616)) ([#625](https://github.com/zeroroot-ai/dashboard/issues/625)) ([d228ab7](https://github.com/zeroroot-ai/dashboard/commit/d228ab727a750c25e4844279e6c4d160d77c5f55))
+* **authz:** derive crossTenant from role, fixing the always-false gate (closes [#615](https://github.com/zeroroot-ai/dashboard/issues/615)) ([#624](https://github.com/zeroroot-ai/dashboard/issues/624)) ([fad947a](https://github.com/zeroroot-ai/dashboard/commit/fad947a452085b2675156302881318a71436bec4))
+* **chat:** frame text-delta with text-start/text-end in LLM adapter ([#631](https://github.com/zeroroot-ai/dashboard/issues/631)) ([072fc1a](https://github.com/zeroroot-ai/dashboard/commit/072fc1a59c5e2aaf58f0fba6799ffcb15de9a7d5)), closes [#630](https://github.com/zeroroot-ai/dashboard/issues/630)
+* destructure loading from useAuthorize in MissionFlowTab ([#680](https://github.com/zeroroot-ai/dashboard/issues/680)) ([1efded7](https://github.com/zeroroot-ai/dashboard/commit/1efded7ee48ad83f47b715072ff6aba85c270559))
+* **device:** wrap useSearchParams in a Suspense boundary ([#677](https://github.com/zeroroot-ai/dashboard/issues/677)) ([e4741c3](https://github.com/zeroroot-ai/dashboard/commit/e4741c3cd3f1e35e60a0ed90014b892f2d1ce4db))
+* **signup:** progress-store uses service client, not tenant-scoped userClient ([#646](https://github.com/zeroroot-ai/dashboard/issues/646)) ([#647](https://github.com/zeroroot-ai/dashboard/issues/647)) ([1f8c633](https://github.com/zeroroot-ai/dashboard/commit/1f8c633ce937cead02afa4b07982eea0e7b81535))
+
 ## [0.111.0](https://github.com/zeroroot-ai/dashboard/compare/v0.110.0...v0.111.0) (2026-06-01)
 
 
