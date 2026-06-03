@@ -19,4 +19,4 @@ export type {
 } from './GraphCanvas';
 export type { GraphControlsProps } from './GraphControls';
 export type { GraphSettingsProps } from './GraphSettings';
-export type { GraphFiltersProps, GraphFilters as GraphFiltersType } from './GraphFilters';
+export type { GraphFiltersProps, GraphFilterState } from './GraphFilters';
