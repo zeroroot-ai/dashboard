@@ -39,6 +39,8 @@ export interface GraphCanvasData {
   selectedNodeId: string | null;
   /** Active layout mode. Non-force modes pin nodes to computed positions. */
   layoutMode: GraphLayoutMode;
+  /** Render the overview minimap. */
+  showMinimap: boolean;
 }
 
 /** Imperative camera controls exposed to the controls panel / page. */

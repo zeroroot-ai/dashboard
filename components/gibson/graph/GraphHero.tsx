@@ -48,6 +48,7 @@ export function GraphHero() {
       display: HERO_DISPLAY,
       selectedNodeId: null,
       layoutMode: 'force' as const,
+      showMinimap: false,
     }),
     [data?.nodes, data?.edges]
   );

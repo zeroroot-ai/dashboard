@@ -30,3 +30,9 @@ export const UNCONNECTED_ALPHA = 0.3;
 
 /** Min on-screen scale before node labels are drawn. */
 export const LABEL_ZOOM_THRESHOLD = 1.2;
+
+/** Minimap panel background (translucent near-black blue-violet). */
+export const MINIMAP_BG = 'rgba(20, 18, 28, 0.65)';
+
+/** Minimap current-viewport rectangle stroke. */
+export const MINIMAP_VIEWPORT = 'rgba(240, 245, 239, 0.7)';

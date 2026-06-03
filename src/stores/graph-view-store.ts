@@ -63,6 +63,10 @@ export interface GraphViewState {
   // Appearance
   display: GraphDisplaySettings;
 
+  // Overlays
+  showLegend: boolean;
+  showMinimap: boolean;
+
   // Live counts, pushed from the rendering engine
   nodeCount: number;
   edgeCount: number;
@@ -79,6 +83,10 @@ export interface GraphViewState {
   toggleLabels: () => void;
   toggleParticles: () => void;
   resetDisplay: () => void;
+
+  // Actions — Overlays
+  toggleLegend: () => void;
+  toggleMinimap: () => void;
 
   // Actions — Stats
   setStats: (nodeCount: number, edgeCount: number) => void;
@@ -111,6 +119,8 @@ export const useGraphViewStore = create<GraphViewState>()(
       selectedNodeId: null,
       hoveredNodeId: null,
       display: DEFAULT_DISPLAY,
+      showLegend: false,
+      showMinimap: true,
       nodeCount: 0,
       edgeCount: 0,
 
@@ -131,6 +141,10 @@ export const useGraphViewStore = create<GraphViewState>()(
         set((state) => ({ display: { ...state.display, particles: !state.display.particles } })),
       resetDisplay: () => set({ display: DEFAULT_DISPLAY }),
 
+      // Overlays
+      toggleLegend: () => set((state) => ({ showLegend: !state.showLegend })),
+      toggleMinimap: () => set((state) => ({ showMinimap: !state.showMinimap })),
+
       // Stats
       setStats: (nodeCount, edgeCount) => set({ nodeCount, edgeCount }),
     }),
@@ -140,6 +154,8 @@ export const useGraphViewStore = create<GraphViewState>()(
       partialize: (state) => ({
         layoutMode: state.layoutMode,
         display: state.display,
+        showLegend: state.showLegend,
+        showMinimap: state.showMinimap,
       }),
       // Deep-merge persisted display over the current defaults so older
       // persisted state (missing newly-added settings) is forward-compatible

@@ -15,6 +15,7 @@ import {
 import { GraphCanvas, type GraphCanvasHandle } from '@/components/gibson/graph/GraphCanvas';
 import { GraphControls } from '@/components/gibson/graph/GraphControls';
 import { GraphSettings } from '@/components/gibson/graph/GraphSettings';
+import { GraphLegend } from '@/components/gibson/graph/GraphLegend';
 import { GraphFilters } from '@/components/gibson/graph/GraphFilters';
 import { MissionSelector } from '@/components/gibson/graph/MissionSelector';
 import { NodeDetailPanel } from '@/components/gibson/graph/NodeDetailPanel';
@@ -56,6 +57,8 @@ export default function GraphPage() {
   const display = useGraphViewStore((s) => s.display);
   const setStats = useGraphViewStore((s) => s.setStats);
   const layoutMode = useGraphViewStore((s) => s.layoutMode);
+  const showLegend = useGraphViewStore((s) => s.showLegend);
+  const showMinimap = useGraphViewStore((s) => s.showMinimap);
 
   // TanStack Query — mission graph or full tenant graph
   const {
@@ -186,8 +189,9 @@ export default function GraphPage() {
       display,
       selectedNodeId: selectedNode?.id ?? null,
       layoutMode,
+      showMinimap,
     }),
-    [filteredData, display, selectedNode, layoutMode]
+    [filteredData, display, selectedNode, layoutMode, showMinimap]
   );
 
   // ─── Render states ──────────────────────────────────────────────────────────
@@ -312,6 +316,11 @@ export default function GraphPage() {
 
       {/* Settings panel */}
       <GraphSettings open={settingsOpen} onOpenChange={setSettingsOpen} />
+
+      {/* Legend overlay */}
+      {hasData && showLegend && (
+        <GraphLegend nodeTypes={availNodeTypes} relationshipTypes={availRelTypes} />
+      )}
 
       {/* Filters Sheet — slide-in from left */}
       <div className="absolute top-4 left-4 z-20">
