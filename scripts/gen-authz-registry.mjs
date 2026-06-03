@@ -67,7 +67,10 @@ const OUTPUT_PATH = resolve(DASHBOARD_ROOT, 'src/gen/authz/registry.ts');
 const isWorktree =
   DASHBOARD_ROOT.includes('/.worktrees/') || DASHBOARD_ROOT.includes('/.claude/worktrees/');
 const MAIN_DASHBOARD_ROOT = isWorktree
-  ? DASHBOARD_ROOT.replace(/\/(?:\.claude\/)?worktrees\/[^/]+$/, '')
+  ? DASHBOARD_ROOT.replace(/\/\.claude\/worktrees\/[^/]+$/, '').replace(
+      /\/\.worktrees\/[^/]+$/,
+      '',
+    )
   : DASHBOARD_ROOT;
 const WORKSPACE_ROOT = resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
 const GIBSON_REPO = resolve(WORKSPACE_ROOT, 'enterprise/platform/gibson');
