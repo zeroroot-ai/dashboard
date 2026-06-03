@@ -77,6 +77,11 @@ export interface GraphViewState {
   focusNodeId: string | null;
   focusDepth: number;
 
+  // Timeline scrubber (session-only)
+  timelineActive: boolean;
+  timelineCutoff: number | null;
+  timelinePlaying: boolean;
+
   // Live counts, pushed from the rendering engine
   nodeCount: number;
   edgeCount: number;
@@ -105,6 +110,12 @@ export interface GraphViewState {
   expandFocus: () => void;
   clearFocus: () => void;
   showAllNodes: () => void;
+
+  // Actions — Timeline
+  openTimeline: (cutoff: number | null) => void;
+  closeTimeline: () => void;
+  setTimelineCutoff: (cutoff: number | null) => void;
+  setTimelinePlaying: (playing: boolean) => void;
 
   // Actions — Stats
   setStats: (nodeCount: number, edgeCount: number) => void;
@@ -145,6 +156,9 @@ export const useGraphViewStore = create<GraphViewState>()(
       hiddenNodeIds: [],
       focusNodeId: null,
       focusDepth: 1,
+      timelineActive: false,
+      timelineCutoff: null,
+      timelinePlaying: false,
       nodeCount: 0,
       edgeCount: 0,
 
@@ -188,6 +202,12 @@ export const useGraphViewStore = create<GraphViewState>()(
       expandFocus: () => set((state) => ({ focusDepth: state.focusDepth + 1 })),
       clearFocus: () => set({ focusNodeId: null, focusDepth: 1 }),
       showAllNodes: () => set({ hiddenNodeIds: [], focusNodeId: null, focusDepth: 1 }),
+
+      // Timeline
+      openTimeline: (cutoff) => set({ timelineActive: true, timelineCutoff: cutoff, timelinePlaying: false }),
+      closeTimeline: () => set({ timelineActive: false, timelineCutoff: null, timelinePlaying: false }),
+      setTimelineCutoff: (cutoff) => set({ timelineCutoff: cutoff }),
+      setTimelinePlaying: (playing) => set({ timelinePlaying: playing }),
 
       // Stats
       setStats: (nodeCount, edgeCount) => set({ nodeCount, edgeCount }),
