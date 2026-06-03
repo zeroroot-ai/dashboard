@@ -19,7 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ExternalLink, GitBranch, Crosshair } from 'lucide-react';
+import { ExternalLink, GitBranch, Crosshair, Pin, PinOff, EyeOff, Focus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { GraphNode } from '@/src/types/graph';
 
@@ -30,6 +30,14 @@ interface NodeDetailPanelProps {
   onFindPaths: (node: GraphNode) => void;
   /** Called when user clicks "Frame this node" — fit the node + neighbors. */
   onFrame?: (node: GraphNode) => void;
+  /** Pin/unpin the node's position. */
+  onTogglePin?: (node: GraphNode) => void;
+  /** Whether the node is currently pinned. */
+  isPinned?: boolean;
+  /** Hide the node from the view. */
+  onHide?: (node: GraphNode) => void;
+  /** Isolate the node + its neighbors. */
+  onIsolate?: (node: GraphNode) => void;
 }
 
 type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
@@ -62,7 +70,16 @@ function formatTimestamp(ts: unknown): string {
 /** Properties to skip in the generic table (rendered separately above). */
 const SKIP_PROPS = new Set(['name', 'severity', 'first_seen_at', 'firstSeenAt', 'addedAt', 'mission_id', 'missionId']);
 
-export function NodeDetailPanel({ node, onClose, onFindPaths, onFrame }: NodeDetailPanelProps) {
+export function NodeDetailPanel({
+  node,
+  onClose,
+  onFindPaths,
+  onFrame,
+  onTogglePin,
+  isPinned,
+  onHide,
+  onIsolate,
+}: NodeDetailPanelProps) {
   const isOpen = node !== null;
 
   if (!node) {
@@ -179,6 +196,42 @@ export function NodeDetailPanel({ node, onClose, onFindPaths, onFrame }: NodeDet
               >
                 <Crosshair className="w-4 h-4 mr-2" />
                 Frame this node
+              </Button>
+            )}
+            {onIsolate && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => onIsolate(node)}
+              >
+                <Focus className="w-4 h-4 mr-2" />
+                Isolate node + neighbors
+              </Button>
+            )}
+            {onTogglePin && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => onTogglePin(node)}
+              >
+                {isPinned ? <PinOff className="w-4 h-4 mr-2" /> : <Pin className="w-4 h-4 mr-2" />}
+                {isPinned ? 'Unpin node' : 'Pin node'}
+              </Button>
+            )}
+            {onHide && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => {
+                  onHide(node);
+                  onClose();
+                }}
+              >
+                <EyeOff className="w-4 h-4 mr-2" />
+                Hide node
               </Button>
             )}
           </div>

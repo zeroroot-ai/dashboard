@@ -49,6 +49,7 @@ export function GraphHero() {
       selectedNodeId: null,
       layoutMode: 'force' as const,
       showMinimap: false,
+      pinnedNodeIds: [],
     }),
     [data?.nodes, data?.edges]
   );
