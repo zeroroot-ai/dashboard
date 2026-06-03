@@ -8,7 +8,7 @@
  *
  * Spec: agent-authoring-and-tenant-entitlements task 44 + R1 AC 1.
  */
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "@/src/lib/session-client";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-export default function DevicePage() {
+function DeviceApproval() {
   const params = useSearchParams();
   const { data: session, isPending: isLoading } = useSession();
   const [code, setCode] = useState(params.get("code") ?? "");
@@ -75,5 +75,17 @@ export default function DevicePage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// useSearchParams() must sit under a Suspense boundary or static prerender of
+// this route fails. The root layout no longer reads cookies()/headers() (single
+// dark brand — no theme cookie), so this page is now statically prerendered and
+// needs its own boundary.
+export default function DevicePage() {
+  return (
+    <Suspense fallback={<div className="p-8">Loading…</div>}>
+      <DeviceApproval />
+    </Suspense>
   );
 }
