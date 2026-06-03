@@ -16,6 +16,7 @@ import { GraphCanvas, type GraphCanvasHandle } from '@/components/gibson/graph/G
 import { GraphControls } from '@/components/gibson/graph/GraphControls';
 import { GraphSettings } from '@/components/gibson/graph/GraphSettings';
 import { GraphLegend } from '@/components/gibson/graph/GraphLegend';
+import { GraphSearch } from '@/components/gibson/graph/GraphSearch';
 import { GraphFilters } from '@/components/gibson/graph/GraphFilters';
 import { MissionSelector } from '@/components/gibson/graph/MissionSelector';
 import { NodeDetailPanel } from '@/components/gibson/graph/NodeDetailPanel';
@@ -165,6 +166,22 @@ export default function GraphPage() {
     setPathSourceNode(node);
     setSelectedNode(null);
   }, []);
+
+  // Search-to-focus: select + center the chosen node.
+  const handleFocusNode = useCallback((node: GraphNode) => {
+    setSelectedNode(node);
+    canvasRef.current?.centerOn(node.id);
+  }, []);
+
+  // Fit-to-selection: frame the node plus its direct neighbors.
+  const handleFrameNode = useCallback((node: GraphNode) => {
+    const ids = new Set<string>([node.id]);
+    for (const e of filteredData.edges) {
+      if (e.source === node.id) ids.add(e.target);
+      if (e.target === node.id) ids.add(e.source);
+    }
+    canvasRef.current?.fitToNodes([...ids]);
+  }, [filteredData.edges]);
 
   const handleMissionChange = useCallback((id: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -322,8 +339,8 @@ export default function GraphPage() {
         <GraphLegend nodeTypes={availNodeTypes} relationshipTypes={availRelTypes} />
       )}
 
-      {/* Filters Sheet — slide-in from left */}
-      <div className="absolute top-4 left-4 z-20">
+      {/* Top-left: filters + search */}
+      <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
         <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
           <SheetTrigger asChild>
             <Button
@@ -350,6 +367,7 @@ export default function GraphPage() {
             </div>
           </SheetContent>
         </Sheet>
+        {hasData && <GraphSearch nodes={filteredData.nodes} onFocusNode={handleFocusNode} />}
       </div>
 
       {/* Path Query Panel */}
@@ -364,6 +382,7 @@ export default function GraphPage() {
         node={selectedNode}
         onClose={() => setSelectedNode(null)}
         onFindPaths={handleFindPathsFromNode}
+        onFrame={handleFrameNode}
       />
     </div>
   );
