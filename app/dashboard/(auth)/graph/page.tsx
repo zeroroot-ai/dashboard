@@ -59,6 +59,7 @@ export default function GraphPage() {
   // Consolidated view-state — single source of truth for display + stats.
   const display = useGraphViewStore((s) => s.display);
   const setStats = useGraphViewStore((s) => s.setStats);
+  const layoutMode = useGraphViewStore((s) => s.layoutMode);
 
   // TanStack Query — mission graph or full tenant graph
   const {
@@ -180,8 +181,9 @@ export default function GraphPage() {
       edges: mergedData.edges,
       display,
       selectedNodeId: selectedNode?.id ?? null,
+      layoutMode,
     }),
-    [mergedData.nodes, mergedData.edges, display, selectedNode]
+    [mergedData.nodes, mergedData.edges, display, selectedNode, layoutMode]
   );
 
   // ─── Render states ──────────────────────────────────────────────────────────

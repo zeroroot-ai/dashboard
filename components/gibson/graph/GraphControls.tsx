@@ -14,7 +14,7 @@
  */
 
 import { cn } from '@/lib/utils';
-import { useGraphViewStore } from '@/src/stores/graph-view-store';
+import { useGraphViewStore, type GraphLayoutMode } from '@/src/stores/graph-view-store';
 import { useGraph3DPerformance } from '@/src/hooks/useGraph3DPerformance';
 import {
   ZoomIn,
@@ -23,8 +23,19 @@ import {
   RotateCcw,
   Tag,
   Sparkles,
+  Network,
+  GitBranch,
+  Radar,
+  Clock,
   type LucideIcon,
 } from 'lucide-react';
+
+const LAYOUTS: { mode: GraphLayoutMode; label: string; icon: LucideIcon }[] = [
+  { mode: 'force', label: 'Force-directed', icon: Network },
+  { mode: 'hierarchy', label: 'Hierarchy', icon: GitBranch },
+  { mode: 'radial', label: 'Radial', icon: Radar },
+  { mode: 'timeline', label: 'Timeline', icon: Clock },
+];
 
 export interface GraphControlsProps {
   onZoomIn: () => void;
@@ -94,6 +105,8 @@ export function GraphControls({
   const toggleParticles = useGraphViewStore((s) => s.toggleParticles);
   const nodeCount = useGraphViewStore((s) => s.nodeCount);
   const edgeCount = useGraphViewStore((s) => s.edgeCount);
+  const layoutMode = useGraphViewStore((s) => s.layoutMode);
+  const setLayoutMode = useGraphViewStore((s) => s.setLayoutMode);
 
   const { avgFPS } = useGraph3DPerformance(nodeCount);
 
@@ -105,6 +118,19 @@ export function GraphControls({
         <ControlButton onClick={onZoomOut} icon={ZoomOut} label="Zoom out" />
         <ControlButton onClick={onFit} icon={Maximize} label="Fit to view" />
         <ControlButton onClick={onReset} icon={RotateCcw} label="Reset view" />
+      </ControlGroup>
+
+      {/* Layout switcher — always clickable, never disabled */}
+      <ControlGroup>
+        {LAYOUTS.map(({ mode, label, icon }) => (
+          <ControlButton
+            key={mode}
+            onClick={() => setLayoutMode(mode)}
+            icon={icon}
+            label={`${label} layout`}
+            active={layoutMode === mode}
+          />
+        ))}
       </ControlGroup>
 
       {/* View toggles */}

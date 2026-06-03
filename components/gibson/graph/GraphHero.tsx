@@ -47,6 +47,7 @@ export function GraphHero() {
       edges: data?.edges ?? [],
       display: HERO_DISPLAY,
       selectedNodeId: null,
+      layoutMode: 'force' as const,
     }),
     [data?.nodes, data?.edges]
   );

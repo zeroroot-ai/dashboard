@@ -18,6 +18,7 @@ import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import { parseEntityType } from '@/src/lib/graph/entity-taxonomy';
 import { getThemeColors } from '@/src/lib/graph/theme-colors';
 import { NODE_SIZES } from '@/src/lib/graph/node-renderer';
+import { computeLayout } from '@/src/lib/graph/layout-engine';
 import {
   CANVAS_TEXT,
   CANVAS_TEXT_HALO,
@@ -106,6 +107,37 @@ export default function GraphCanvasInner({
     fittedRef.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature]);
+
+  // Apply the active layout. Non-force modes pin nodes to deterministic
+  // positions (fx/fy); force mode unpins them so the simulation runs. Recomputed
+  // when the layout mode or the topology changes.
+  useEffect(() => {
+    const positions = computeLayout(data.nodes, data.edges, data.layoutMode);
+    for (const n of graphData.nodes) {
+      const p = positions?.get(n.__g.id);
+      if (p) {
+        n.fx = p.x;
+        n.fy = p.y;
+        n.x = p.x;
+        n.y = p.y;
+      } else {
+        n.fx = undefined;
+        n.fy = undefined;
+      }
+    }
+    const fg = fgRef.current;
+    if (!fg) return;
+    fg.d3ReheatSimulation();
+    fittedRef.current = false;
+    // Fully-pinned layouts settle instantly and may not emit onEngineStop,
+    // so frame the result on a short delay.
+    const t = setTimeout(() => {
+      fg.zoomToFit(400, 60);
+      fittedRef.current = true;
+    }, 80);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.layoutMode, signature]);
 
   // ── Live interaction state via refs (so accessors see latest w/o rebuild) ──
   const selectedRef = useRef<string | null>(null);

@@ -16,7 +16,7 @@
 import { forwardRef } from 'react';
 import dynamic from 'next/dynamic';
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
-import type { GraphDisplaySettings } from '@/src/stores/graph-view-store';
+import type { GraphDisplaySettings, GraphLayoutMode } from '@/src/stores/graph-view-store';
 
 /** A path returned by QueryPaths — highlighted on the graph when present. */
 export interface HighlightedPath {
@@ -37,6 +37,8 @@ export interface GraphCanvasData {
   edges: GraphEdge[];
   display: GraphDisplaySettings;
   selectedNodeId: string | null;
+  /** Active layout mode. Non-force modes pin nodes to computed positions. */
+  layoutMode: GraphLayoutMode;
 }
 
 /** Imperative camera controls exposed to the controls panel / page. */
