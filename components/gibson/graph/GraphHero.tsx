@@ -12,9 +12,11 @@
  * (nav, KPI cards, component cards, etc.) is NOT touched.
  */
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
-import { KnowledgeGraph3D } from '@/components/gibson/graph/KnowledgeGraph3D';
+import { GraphCanvas } from '@/components/gibson/graph/GraphCanvas';
+import { DEFAULT_DISPLAY } from '@/src/stores/graph-view-store';
 import { useFullGraph } from '@/src/hooks/useGraph';
 import { useTenantStore } from '@/src/stores/tenant-store';
 
@@ -23,6 +25,9 @@ function formatCount(n: number): string {
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
 }
+
+// A calm hero: labels + particles off so the landing view stays quiet.
+const HERO_DISPLAY = { ...DEFAULT_DISPLAY, showLabels: false, particles: false };
 
 export function GraphHero() {
   const currentTenant = useTenantStore((state) => state.currentTenant);
@@ -34,6 +39,17 @@ export function GraphHero() {
   const edgeCount = data?.edges.length ?? 0;
   const totalNodeCount = (data as { total_node_count?: number } | undefined)?.total_node_count;
   const truncated = (data as { truncated?: boolean } | undefined)?.truncated;
+  const hasData = nodeCount > 0;
+
+  const canvasData = useMemo(
+    () => ({
+      nodes: data?.nodes ?? [],
+      edges: data?.edges ?? [],
+      display: HERO_DISPLAY,
+      selectedNodeId: null,
+    }),
+    [data?.nodes, data?.edges]
+  );
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden border border-border bg-background" style={{ height: '420px' }}>
@@ -58,13 +74,22 @@ export function GraphHero() {
         </div>
       </div>
 
-      {/* 3D Graph — fills the container */}
-      <KnowledgeGraph3D
-        data={data}
-        loading={isLoading}
-        error={isError ? 'Failed to load graph' : undefined}
-        className="w-full h-full"
-      />
+      {/* Graph canvas — fills the container */}
+      {hasData && <GraphCanvas data={canvasData} />}
+
+      {/* Loading / empty / error states */}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+      {!isLoading && !hasData && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">
+            {isError ? 'Failed to load graph' : 'Run a mission to populate the knowledge graph.'}
+          </p>
+        </div>
+      )}
 
       {/* Bottom overlay: deep-link to full graph page */}
       <div className="absolute bottom-3 right-3 z-10 pointer-events-auto">

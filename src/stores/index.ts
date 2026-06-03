@@ -67,20 +67,10 @@ export type {
   AgentStatus,
 } from './chat-store';
 
-// Graph 3D store
-export {
-  useGraph3DStore,
-  useGraph3DCamera,
-  useGraph3DSelection,
-  useGraph3DLayout,
-  useGraph3DFilters,
-  useGraph3DPerformance,
-} from './graph3d-store';
+// Graph view store — single source of truth for the knowledge-graph explorer.
+export { useGraphViewStore, DEFAULT_DISPLAY } from './graph-view-store';
 export type {
-  Graph3DState,
-  LayoutMode,
-  CameraState,
-  Graph3DFilters as Graph3DFiltersType,
-  PerformanceSettings,
-  SelectedNode,
-} from './graph3d-store';
+  GraphViewState,
+  GraphLayoutMode,
+  GraphDisplaySettings,
+} from './graph-view-store';

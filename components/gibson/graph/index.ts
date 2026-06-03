@@ -1,15 +1,20 @@
 /**
- * Knowledge graph visualization components
- * KnowledgeGraph3D (3D canvas), KnowledgeGraphView (2D React Flow fallback),
- * GraphFilters, Graph3DControls
+ * Knowledge graph visualization components.
+ *
+ * GraphCanvas (react-force-graph-2d engine adapter), GraphControls (camera +
+ * view controls), GraphFilters, GraphHero (landing-route hero).
  */
-export { KnowledgeGraph3D } from './KnowledgeGraph3D';
-export { KnowledgeGraphView } from './KnowledgeGraphView';
+export { GraphCanvas } from './GraphCanvas';
+export { GraphControls } from './GraphControls';
 export { GraphFilters } from './GraphFilters';
-export { Graph3DControls } from './Graph3DControls';
+export { GraphHero } from './GraphHero';
 
 // Types
-export type { KnowledgeGraph3DProps } from './KnowledgeGraph3D';
-export type { KnowledgeGraphViewProps } from './KnowledgeGraphView';
+export type {
+  GraphCanvasProps,
+  GraphCanvasHandle,
+  GraphCanvasData,
+  HighlightedPath,
+} from './GraphCanvas';
+export type { GraphControlsProps } from './GraphControls';
 export type { GraphFiltersProps, GraphFilters as GraphFiltersType } from './GraphFilters';
-export type { Graph3DControlsProps } from './Graph3DControls';
