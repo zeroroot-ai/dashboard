@@ -106,6 +106,7 @@ export async function inviteMemberAction(input: {
  * AcceptInvitation is unauthenticated and provisions the invitee. Called from
  * the invitation accept page.
  */
+// @crd-authz-exempt: token-based redemption — the invitation token is the sole capability; AcceptInvitation is unauthenticated by design (gibson#633, ADR-0043). No CRD mutation; routes through the daemon RPC.
 export async function acceptInvitationAction(input: { token: string }): Promise<ActionResult> {
   const parsed = acceptInvitationInput.safeParse(input);
   if (!parsed.success) {
