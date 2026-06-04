@@ -1,76 +1,88 @@
 "use client";
 
 /**
- * /dashboard/device — the user-facing page that completes the Device
- * Authorization Grant. User enters the code printed by `gibson-mcp
- * login`, signs in if needed, and clicks Approve. On success the
- * browser tells gibson-mcp it can stop polling.
+ * /dashboard/device — branded landing for the OAuth2 Device Authorization
+ * Grant that `gibson login` runs.
  *
- * Spec: agent-authoring-and-tenant-entitlements task 44 + R1 AC 1.
+ * Post ADR-0043 the device grant is owned by the Gibson identity service
+ * (native device-grant app), NOT by the dashboard. The dashboard no longer
+ * mints or approves device tokens itself — the old dashboard-as-authority
+ * flow (device-auth-store + /api/auth/device/approve) is retired. This page is
+ * now a thin, on-brand entry point: it confirms the user_code printed in the
+ * terminal and hands it off to the identity service's verification page, which
+ * performs authentication + consent.
  */
-import { Suspense, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useSession } from "@/src/lib/session-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
+/**
+ * Build the identity-service device-verification URL. The Gibson identity
+ * service exposes device verification at `<issuer>/device`; passing the
+ * user_code pre-fills its form. Returns null when the issuer is unconfigured.
+ */
+function verificationUrl(userCode: string): string | null {
+  const base = process.env.NEXT_PUBLIC_IDENTITY_PROVIDER_URL;
+  if (!base) return null;
+  const u = new URL("/device", base);
+  if (userCode) u.searchParams.set("user_code", userCode);
+  return u.toString();
+}
+
 function DeviceApproval() {
   const params = useSearchParams();
-  const { data: session, isPending: isLoading } = useSession();
-  const [code, setCode] = useState(params.get("code") ?? "");
-  const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
+  // The verification_uri_complete the CLI prints carries `user_code`; accept
+  // the legacy `code` alias too.
+  const initial = params.get("user_code") ?? params.get("code") ?? "";
+  const [code, setCode] = useState(initial);
 
-  async function approve() {
-    if (!session?.user) {
-      toast.error("Sign in first, then return to this page.");
+  const target = useMemo(() => verificationUrl(code.trim().toUpperCase()), [code]);
+
+  function approve() {
+    const trimmed = code.trim();
+    if (!trimmed) {
+      toast.error("Enter the code printed by gibson login.");
       return;
     }
-    if (!code.trim()) {
-      toast.error("Enter the code printed by gibson-mcp login.");
+    const url = verificationUrl(trimmed.toUpperCase());
+    if (!url) {
+      toast.error("Identity service is not configured. Contact your administrator.");
       return;
     }
-    setSubmitting(true);
-    try {
-      const resp = await fetch("/api/auth/device/approve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_code: code.trim().toUpperCase() }),
-      });
-      if (!resp.ok) throw new Error(await resp.text());
-      setDone(true);
-      toast.success("Approved. You can return to your terminal.");
-    } catch (err) {
-      toast.error(`Approval failed: ${err instanceof Error ? err.message : String(err)}`);
-    } finally {
-      setSubmitting(false);
-    }
+    // Hand off to the identity service for authentication + consent.
+    window.location.assign(url);
   }
 
-  if (isLoading) return <div className="p-8">Loading…</div>;
-
   return (
-    <div className="max-w-lg mx-auto p-8">
+    <div className="mx-auto max-w-lg p-8">
       <Card>
         <CardHeader>
-          <CardTitle>Approve Claude Code access</CardTitle>
+          <CardTitle>Connect the Gibson CLI</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Enter the code <code className="font-mono">gibson-mcp login</code> printed
-            in your terminal, then click Approve.
+            Enter the code that{" "}
+            <code className="font-mono text-foreground">gibson login</code> printed
+            in your terminal, then continue to approve access. You&apos;ll confirm
+            with the Gibson identity service and can return to your terminal once
+            it&apos;s done.
           </p>
           <Input
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="XXXX-XXXX"
-            className="font-mono"
-            disabled={done}
+            className="font-mono uppercase"
+            autoFocus
+            aria-label="Device code"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") approve();
+            }}
           />
-          <Button onClick={approve} disabled={submitting || done} className="w-full">
-            {done ? "Approved — return to terminal" : submitting ? "Approving…" : "Approve"}
+          <Button onClick={approve} disabled={!target} className="w-full">
+            Continue
           </Button>
         </CardContent>
       </Card>
@@ -79,9 +91,7 @@ function DeviceApproval() {
 }
 
 // useSearchParams() must sit under a Suspense boundary or static prerender of
-// this route fails. The root layout no longer reads cookies()/headers() (single
-// dark brand — no theme cookie), so this page is now statically prerendered and
-// needs its own boundary.
+// this route fails.
 export default function DevicePage() {
   return (
     <Suspense fallback={<div className="p-8">Loading…</div>}>
