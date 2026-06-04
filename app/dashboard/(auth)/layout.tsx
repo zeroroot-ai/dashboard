@@ -11,8 +11,7 @@ import { QuotaWidget } from "@/src/components/quota/quota-widget";
 import { getServerSession } from "@/src/lib/auth";
 import { readRawActiveTenant } from "@/src/lib/auth/active-tenant";
 import { resolveTenant } from "@/src/lib/resolve-tenant";
-import { getTenant } from "@/src/lib/k8s/tenants";
-import { lookupPlan, type PlanID } from "@/src/generated/plans";
+import { getTenantQuotaAction } from "@/app/actions/read/getTenantQuota";
 import { logger } from "@/src/lib/logger";
 import type { Tenant } from "@/src/types/tenant";
 
@@ -73,20 +72,19 @@ export default async function AuthLayout({
     ? (availableTenants.find((t) => t.id === activeTenantId) ?? null)
     : null;
 
-  // Resolve plan limits for the in-app quota widget by reading the active
-  // tenant CR's spec.tier and looking up the generated plan registry.
-  // Failures degrade silently to zero (widget hides). Spec
-  // plans-and-quotas-simplification R9.B.3.
+  // Resolve plan limits for the in-app quota widget from the daemon's
+  // GetTenantQuota RPC (tenant_quotas Postgres row) — NOT the Tenant CR's
+  // spec.tier. Per ADR-0044 the dashboard's only K8s access is tenant
+  // provisioning; quota limits are a daemon read. Failures degrade silently
+  // to zero (widget hides). Spec plans-and-quotas-simplification R9.B.3.
   let missionsLimit = 0;
   let agentsLimit = 0;
   if (activeTenantId) {
     try {
-      const tenantCR = await getTenant(activeTenantId);
-      const tier = tenantCR?.spec?.tier;
-      if (tier) {
-        const plan = lookupPlan(tier as PlanID);
-        missionsLimit = plan.quotas.concurrent_missions;
-        agentsLimit = plan.quotas.concurrent_agents;
+      const quota = await getTenantQuotaAction();
+      if (quota.ok) {
+        missionsLimit = quota.data.concurrentMissions;
+        agentsLimit = quota.data.concurrentAgents;
       }
     } catch (err) {
       logger.warn(
