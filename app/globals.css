@@ -115,6 +115,20 @@
   --scanline-opacity: 0.035;                     /* more visible CRT scanlines (#708) */
   --scanline-color: oklch(0.62 0.230 295);       /* violet scanline */
 
+  /* Dracula terminal palette — scoped to the landing hero terminal panels
+   * (Schematic + TerminalCard). Canonical Dracula spec values; these are
+   * the only place raw Dracula hex lives, fanned out as text-dracula-*
+   * utilities via the @theme inline block below. */
+  --dracula-fg: #f8f8f2;
+  --dracula-comment: #6272a4;
+  --dracula-cyan: #8be9fd;
+  --dracula-green: #50fa7b;
+  --dracula-orange: #ffb86c;
+  --dracula-pink: #ff79c6;
+  --dracula-purple: #bd93f9;
+  --dracula-red: #ff5555;
+  --dracula-yellow: #f1fa8c;
+
   --display-family: var(--font-jetbrains-mono), 'Fira Code', 'Cascadia Code', monospace;
   --display-weight: 800;
   --text-family: var(--font-jetbrains-mono), 'Fira Code', 'Cascadia Code', monospace;
@@ -217,6 +231,16 @@
   --color-highlight: var(--highlight);
   --color-alt: var(--alt);
   --color-link: var(--link);
+
+  --color-dracula-fg: var(--dracula-fg);
+  --color-dracula-comment: var(--dracula-comment);
+  --color-dracula-cyan: var(--dracula-cyan);
+  --color-dracula-green: var(--dracula-green);
+  --color-dracula-orange: var(--dracula-orange);
+  --color-dracula-pink: var(--dracula-pink);
+  --color-dracula-purple: var(--dracula-purple);
+  --color-dracula-red: var(--dracula-red);
+  --color-dracula-yellow: var(--dracula-yellow);
 
   --font-display: var(--display-family);
   --display-weight: var(--display-weight);

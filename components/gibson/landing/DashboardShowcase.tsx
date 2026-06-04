@@ -2,18 +2,17 @@ import Image from 'next/image';
 
 /**
  * DashboardShowcase — a framed product screenshot on the public landing
- * (dashboard#707). The image is swappable: drop the real PNG at
+ * (dashboard#707). The image is swappable: the real PNG lives at
  * `public/dashboard-preview.png` (or pass `src`) and the frame stays.
- * Ships with a committed placeholder so the block renders today.
  */
 interface DashboardShowcaseProps {
-  /** Image path under public/. Defaults to the committed placeholder. */
+  /** Image path under public/. Defaults to the committed product screenshot. */
   src?: string;
   alt?: string;
 }
 
 export function DashboardShowcase({
-  src = '/dashboard-preview-placeholder.svg',
+  src = '/dashboard-preview.png',
   alt = 'Zero Root AI dashboard — mission control, knowledge graph, and findings',
 }: DashboardShowcaseProps) {
   return (
@@ -23,7 +22,7 @@ export function DashboardShowcase({
           // mission control
         </p>
         <h2 className="mb-8 text-center font-display text-2xl font-bold text-foreground md:text-3xl">
-          See the whole attack surface in one place
+          The shared OS for security agents
         </h2>
         {/* CRT-framed product visual. The terminal-glow ring + corner ticks
             echo the hero panel; the image itself is swappable. */}
@@ -37,8 +36,8 @@ export function DashboardShowcase({
           <Image
             src={src}
             alt={alt}
-            width={1280}
-            height={800}
+            width={2006}
+            height={1636}
             className="w-full rounded-lg border border-border"
             priority={false}
           />

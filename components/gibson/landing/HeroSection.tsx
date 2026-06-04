@@ -84,11 +84,13 @@ const terminalLines: Array<[string, string, "cmd" | "ok" | "info" | "sandbox"]> 
   ["✔", "graph: 47 hosts · 12 findings indexed", "ok"],
 ];
 
+// Dracula terminal palette: commands in foreground, success in green,
+// info in cyan, sandbox/detonation in orange.
 const lineColor: Record<"cmd" | "ok" | "info" | "sandbox", string> = {
-  cmd: "text-highlight",
-  ok: "text-highlight",
-  info: "text-link/90",
-  sandbox: "text-alt/90",
+  cmd: "text-dracula-fg",
+  ok: "text-dracula-green",
+  info: "text-dracula-cyan",
+  sandbox: "text-dracula-orange",
 };
 
 function Pulse({
@@ -102,13 +104,13 @@ function Pulse({
     <span
       className={
         amber
-          ? "text-alt motion-safe:animate-pulse"
-          : "text-highlight motion-safe:animate-pulse"
+          ? "text-dracula-orange motion-safe:animate-pulse"
+          : "text-dracula-green motion-safe:animate-pulse"
       }
       style={{
         textShadow: amber
-          ? "0 0 6px color-mix(in oklch, var(--alt) 60%, transparent)"
-          : "0 0 6px color-mix(in oklch, var(--highlight) 60%, transparent)",
+          ? "0 0 6px color-mix(in oklch, var(--dracula-orange) 60%, transparent)"
+          : "0 0 6px color-mix(in oklch, var(--dracula-green) 60%, transparent)",
       }}
     >
       {char}
@@ -125,19 +127,19 @@ function Schematic() {
           "0 0 40px color-mix(in oklch, var(--highlight) 18%, transparent)",
       }}
     >
-      <span aria-hidden="true" className="pointer-events-none absolute left-1.5 top-1.5 font-mono text-xs text-highlight/50">┏</span>
-      <span aria-hidden="true" className="pointer-events-none absolute right-1.5 top-1.5 font-mono text-xs text-highlight/50">┓</span>
-      <span aria-hidden="true" className="pointer-events-none absolute bottom-1.5 left-1.5 font-mono text-xs text-highlight/50">┗</span>
-      <span aria-hidden="true" className="pointer-events-none absolute bottom-1.5 right-1.5 font-mono text-xs text-highlight/50">┛</span>
+      <span aria-hidden="true" className="pointer-events-none absolute left-1.5 top-1.5 font-mono text-xs text-dracula-comment/60">┏</span>
+      <span aria-hidden="true" className="pointer-events-none absolute right-1.5 top-1.5 font-mono text-xs text-dracula-comment/60">┓</span>
+      <span aria-hidden="true" className="pointer-events-none absolute bottom-1.5 left-1.5 font-mono text-xs text-dracula-comment/60">┗</span>
+      <span aria-hidden="true" className="pointer-events-none absolute bottom-1.5 right-1.5 font-mono text-xs text-dracula-comment/60">┛</span>
 
-      <div className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.2em] text-highlight/70">
-        <span>◆ split control plane</span>
+      <div className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.2em] text-dracula-comment">
+        <span className="text-dracula-purple">◆ split control plane</span>
         <span className="flex items-center gap-1.5">
           <Pulse char="●" /> live
         </span>
       </div>
 
-      <pre className="overflow-x-auto font-mono text-[11px] md:text-xs leading-[1.7] text-highlight/85">
+      <pre className="overflow-x-auto font-mono text-[11px] md:text-xs leading-[1.7] text-dracula-fg/85">
         <code>
 {` EXECUTION PLANE           ╎    CONTROL PLANE · api.zeroroot.ai\n`}
 {` ┌──────────────────┐      ╎    ┌──────────────────────┐\n`}
@@ -167,15 +169,15 @@ function TerminalCard() {
       }}
     >
       <div className="flex items-center gap-2 border-b border-highlight/25 px-4 py-2">
-        <span className="h-3 w-3 rounded-full bg-destructive/70" />
-        <span className="h-3 w-3 rounded-full bg-alt/70" />
-        <span className="h-3 w-3 rounded-full bg-highlight/70" />
-        <span className="ml-3 font-mono text-xs text-highlight/60">
+        <span className="h-3 w-3 rounded-full bg-dracula-red/80" />
+        <span className="h-3 w-3 rounded-full bg-dracula-yellow/80" />
+        <span className="h-3 w-3 rounded-full bg-dracula-green/80" />
+        <span className="ml-3 font-mono text-xs text-dracula-comment">
           ~/zeroroot
         </span>
         {/* Brand mark inline in the title bar so the terminal reads as a
             zeroroot.ai terminal, not a generic macOS one. */}
-        <span className="ml-auto text-highlight/55">
+        <span className="ml-auto text-dracula-purple/70">
           <Brain size={14} aria-hidden />
         </span>
       </div>
@@ -183,7 +185,7 @@ function TerminalCard() {
         <code>
           {terminalLines.map(([prefix, text, kind], i) => (
             <span key={i} className="block">
-              <span className="select-none text-highlight/50">{prefix} </span>
+              <span className="select-none text-dracula-comment">{prefix} </span>
               <span className={lineColor[kind]}>{text}</span>
             </span>
           ))}
