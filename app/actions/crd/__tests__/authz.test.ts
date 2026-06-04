@@ -115,6 +115,7 @@ import * as accessActions from "../access";
 import * as installAgentActions from "../installAgent";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import * as transferOwnershipActions from "../transfer-ownership";
+import * as sessionActions from "../sessions";
 import { CRD_PERMISSIONS, requireCrdSession } from "../_authz";
 import type { CrdActionName } from "../types";
 import { getServerSession } from "@/src/lib/auth";
@@ -204,6 +205,7 @@ const allExportedActions = [
   ...Object.keys(accessActions),
   ...Object.keys(installAgentActions),
   ...Object.keys(transferOwnershipActions),
+  ...Object.keys(sessionActions),
 ].filter((name) => name.endsWith("Action")) as CrdActionName[];
 
 const EXPECTED_ACTIONS: CrdActionName[] = Object.keys(CRD_PERMISSIONS) as CrdActionName[];

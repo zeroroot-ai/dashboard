@@ -259,6 +259,10 @@ export const CRD_PERMISSIONS: Record<
   acceptInvitationAction: { relation: "__self__" },
   revokeMemberAction: { relation: "admin" },
   resendInvitationAction: { relation: "admin", rateLimit: "inviteMember" },
+  // member: any tenant member may call (self-revoke = "sign out everywhere");
+  // the daemon enforces the fine-grained can_revoke_sessions decision for
+  // revoking OTHER users (self / team-admin / tenant-admin). dashboard#717.
+  revokeUserSessionsAction: { relation: "member" },
   setComponentAccessAction: { relation: "admin" },
   installAgentAction: { relation: "admin" },
   listTeamsAction: { relation: "admin" },
