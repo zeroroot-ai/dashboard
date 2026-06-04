@@ -208,49 +208,18 @@ export interface TenantMember extends K8sResource<TenantMemberSpec, TenantMember
 }
 
 // ---------------------------------------------------------------------------
-// AgentEnrollment
+// Shared component types
 // ---------------------------------------------------------------------------
+//
+// The AgentEnrollment CRD types were removed (dashboard#713/#716): enrollment
+// is owned by gibson.tenant.v1.AgentIdentityService (no CRD). ComponentKind +
+// ComponentRef remain because ComponentGrant below references them.
 
-export type AgentMode = 'autonomous' | 'supervised';
 export type ComponentKind = 'agent' | 'tool' | 'plugin';
-
-export type AgentEnrollmentPhase =
-  | 'Pending'
-  | 'BootstrapReady'
-  | 'Enrolling'
-  | 'Active'
-  | 'Degraded'
-  | 'Revoked'
-  | 'Failed'
-  | 'Terminated';
 
 export interface ComponentRef {
   kind: ComponentKind;
   name: string;
-}
-
-export interface AgentEnrollmentSpec {
-  agentName: string;
-  mode: AgentMode;
-  componentGrants?: ComponentRef[];
-  maxRuntime?: string;
-  notes?: string;
-}
-
-export interface AgentEnrollmentStatus {
-  phase?: AgentEnrollmentPhase;
-  conditions?: K8sCondition[];
-  hostId?: string;
-  bootstrapSecretRef?: string;
-  bootstrapExpiresAt?: string;
-  lastHeartbeat?: string;
-  grantsAppliedCount?: number;
-  observedGeneration?: number;
-}
-
-export interface AgentEnrollment
-  extends K8sResource<AgentEnrollmentSpec, AgentEnrollmentStatus> {
-  kind: 'AgentEnrollment';
 }
 
 // ---------------------------------------------------------------------------
@@ -282,12 +251,11 @@ export interface ComponentGrant
 // CRD kind registry
 // ---------------------------------------------------------------------------
 
-export type GibsonCRD = Tenant | TenantMember | AgentEnrollment | ComponentGrant;
+export type GibsonCRD = Tenant | TenantMember | ComponentGrant;
 
 export const CRDPlurals = {
   Tenant: 'tenants',
   TenantMember: 'tenantmembers',
-  AgentEnrollment: 'agentenrollments',
   ComponentGrant: 'componentgrants',
 } as const;
 

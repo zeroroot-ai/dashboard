@@ -26,8 +26,7 @@
 
 import { MembershipService } from "@/src/gen/gibson/tenant/v1/membership_pb";
 import { userClient } from "@/src/lib/gibson-client";
-import { logger } from "@/src/lib/logger";
-import { listTenantMembers, patchTenantMember } from "@/src/lib/k8s/tenants";
+import { listMembersAction } from "@/app/actions/read/listMembers";
 import {
   requireActiveTenant,
   NoActiveTenantError,
@@ -36,10 +35,6 @@ import {
 
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
-
-function tenantNamespace(slug: string): string {
-  return `tenant-${slug}`;
-}
 
 /**
  * Transfer the `owner` FGA relation from the calling user to `newOwnerUserId`.
@@ -92,15 +87,16 @@ export async function transferOwnershipAction(
     };
   }
 
-  // ── Validate target ────────────────────────────────────────────────────────
-  let targetMemberName: string | undefined;
-  let currentOwnerMemberName: string | undefined;
-
+  // ── Validate target against the daemon roster (dashboard#716) ───────────────
+  // The daemon's TransferOwnership is authoritative + validates server-side;
+  // this pre-check gives a clear UX error before the RPC. Reads ListMembers
+  // (MemberRow), not the TenantMember CR.
   try {
-    const ns = tenantNamespace(callerTenantId);
-    const members = await listTenantMembers(ns);
-
-    const targetMember = members.find((m) => m.status?.userId === newOwnerUserId);
+    const roster = await listMembersAction();
+    if (!roster.ok) {
+      return { ok: false, error: roster.error, code: "INTERNAL" };
+    }
+    const targetMember = roster.data.find((m) => m.userId === newOwnerUserId);
     if (!targetMember) {
       return {
         ok: false,
@@ -108,40 +104,30 @@ export async function transferOwnershipAction(
         code: "BAD_INPUT",
       };
     }
-    if (targetMember.spec.role === "owner") {
+    if (targetMember.role === "owner") {
       return {
         ok: false,
         error: "Target user is already an owner.",
         code: "BAD_INPUT",
       };
     }
-    if (
-      targetMember.spec.role !== "admin" ||
-      targetMember.status?.phase !== "Active"
-    ) {
+    if (targetMember.role !== "admin" || targetMember.status !== "active") {
       return {
         ok: false,
         error: "Ownership can only be transferred to an Active admin.",
         code: "BAD_INPUT",
       };
     }
-
-    targetMemberName = targetMember.metadata.name;
-
-    const currentOwnerMember = members.find(
-      (m) => m.status?.userId === callerUserId,
-    );
-    if (currentOwnerMember) {
-      currentOwnerMemberName = currentOwnerMember.metadata.name;
-    }
   } catch (err) {
     return { ok: false, error: String(err), code: "INTERNAL" };
   }
 
-  // ── 1. Authoritative FGA write ─────────────────────────────────────────────
-  // TransferOwnership atomically swaps the owner tuple from the current
-  // owner to new_owner_user_id — all four tuple mutations happen server-side
-  // in a single atomic call.
+  // ── Authoritative MembershipService write ──────────────────────────────────
+  // TransferOwnership atomically swaps the owner tuple from the current owner
+  // to new_owner_user_id — all four tuple mutations happen server-side in a
+  // single atomic call. dashboard#716 removed the former TenantMember.spec.role
+  // display-cache patches: ListMembers derives role from FGA, so a roster
+  // refetch reflects the swap with no CR to keep in sync.
   try {
     const client = userClient(MembershipService);
     await client.transferOwnership({
@@ -150,53 +136,6 @@ export async function transferOwnershipAction(
     });
   } catch (err) {
     return { ok: false, error: String(err), code: "INTERNAL" };
-  }
-
-  // ── 2. Display-cache writes (best-effort) ──────────────────────────────────
-  // FGA is already authoritative after the write above. These patches keep
-  // the role badge consistent across reloads. Failures are swallowed with a
-  // warn — same pattern as setTenantRoleAction (dashboard#173).
-  const ns = tenantNamespace(callerTenantId);
-
-  try {
-    if (targetMemberName) {
-      await patchTenantMember(ns, targetMemberName, {
-        spec: { role: "owner" },
-      });
-    }
-  } catch (err) {
-    logger.warn(
-      {
-        userId: newOwnerUserId,
-        tenantId: callerTenantId,
-        memberName: targetMemberName,
-        err: err instanceof Error ? err.message : String(err),
-      },
-      "[transferOwnershipAction] FGA write succeeded but new-owner TenantMember.spec.role patch failed; badge may show stale role on reload",
-    );
-  }
-
-  try {
-    if (currentOwnerMemberName) {
-      await patchTenantMember(ns, currentOwnerMemberName, {
-        spec: { role: "admin" },
-      });
-    } else {
-      logger.warn(
-        { userId: callerUserId, tenantId: callerTenantId },
-        "[transferOwnershipAction] no TenantMember found for current owner userId; FGA write succeeded but spec.role not patched to admin",
-      );
-    }
-  } catch (err) {
-    logger.warn(
-      {
-        userId: callerUserId,
-        tenantId: callerTenantId,
-        memberName: currentOwnerMemberName,
-        err: err instanceof Error ? err.message : String(err),
-      },
-      "[transferOwnershipAction] FGA write succeeded but outgoing-owner TenantMember.spec.role patch failed; badge may show stale role on reload",
-    );
   }
 
   return { ok: true, data: { applied: true } };

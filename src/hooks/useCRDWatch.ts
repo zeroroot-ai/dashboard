@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 
 import {
-  AgentEnrollment,
   ComponentGrant,
   CRDKind,
   GibsonCRD,
@@ -16,11 +15,9 @@ type TypeForKind<K extends CRDKind> = K extends 'Tenant'
   ? Tenant
   : K extends 'TenantMember'
     ? TenantMember
-    : K extends 'AgentEnrollment'
-      ? AgentEnrollment
-      : K extends 'ComponentGrant'
-        ? ComponentGrant
-        : GibsonCRD;
+    : K extends 'ComponentGrant'
+      ? ComponentGrant
+      : GibsonCRD;
 
 interface UseCRDWatchOpts {
   enabled?: boolean;

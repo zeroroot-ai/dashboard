@@ -1,27 +1,20 @@
 /**
- * Tests for transferOwnershipAction.
+ * Tests for transferOwnershipAction (dashboard#716).
  *
- * Covers the six contract scenarios:
- *   1. Valid input, caller is owner, target is active admin → {ok: true}
- *   2. Caller lacks the gate permission → FORBIDDEN
- *   3. Target user not found → BAD_INPUT
- *   4. Target is already an owner → BAD_INPUT
- *   5. Target is a member (not admin) → BAD_INPUT
- *   6. FGA write throws → INTERNAL
+ * Post-cutover the action validates the target against the daemon roster
+ * (listMembersAction → MemberRow) and performs the ownership swap via
+ * MembershipService.TransferOwnership. The former TenantMember.spec.role
+ * display-cache patches were removed.
  *
- * Authz gating is exercised by the broader matrix in authz.test.ts; this
- * file is the targeted unit test for the action's own validation logic and
- * FGA wire-shape. dashboard#266.
+ * Scenarios: happy path, caller lacks gate → FORBIDDEN, target not found /
+ * already owner / not-active-admin → BAD_INPUT, RPC throws → INTERNAL.
  */
 
 import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 
-// vi.mock factories are hoisted above top-level `const` decls; hoist mock
-// handles via vi.hoisted so the factories below can close over them.
 const mocks = vi.hoisted(() => ({
-  writeAccessTuples: vi.fn(async () => ({})),
-  listTenantMembers: vi.fn(async () => [] as unknown[]),
-  patchTenantMember: vi.fn(async () => ({})),
+  transferOwnership: vi.fn(async (_req: Record<string, unknown>) => ({})),
+  listMembers: vi.fn(),
 }));
 
 vi.mock("@/src/lib/auth", () => ({
@@ -29,22 +22,18 @@ vi.mock("@/src/lib/auth", () => ({
 }));
 
 vi.mock("@/src/lib/gibson-client", () => ({
-  serviceClient: vi.fn(() => ({ writeAccessTuples: mocks.writeAccessTuples })),
-  userClient: vi.fn(() => ({
-    transferOwnership: mocks.writeAccessTuples,
-  })),
+  serviceClient: vi.fn(() => ({})),
+  userClient: vi.fn(() => ({ transferOwnership: mocks.transferOwnership })),
 }));
 
-vi.mock("@/src/lib/auth/schema", () => ({
-  isCrossTenant: vi.fn(() => false),
+vi.mock("@/app/actions/read/listMembers", () => ({
+  listMembersAction: mocks.listMembers,
 }));
 
-// The gate + action resolve the active tenant via requireActiveTenant()
-// (next/headers cookies, no request scope under vitest). Pin it to "acme" so
-// the tenant-scope check is deterministic.
+vi.mock("@/src/lib/auth/schema", () => ({ isCrossTenant: vi.fn(() => false) }));
+
 vi.mock("@/src/lib/auth/active-tenant", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/src/lib/auth/active-tenant")>();
+  const actual = await importOriginal<typeof import("@/src/lib/auth/active-tenant")>();
   return {
     ...actual,
     requireActiveTenant: vi.fn(async () => "acme"),
@@ -57,41 +46,25 @@ vi.mock("@/src/lib/audit/crd", () => ({
   emitCrdAuditFromGate: vi.fn(),
 }));
 
-vi.mock("@/src/lib/k8s/tenants", () => ({
-  listTenantMembers: mocks.listTenantMembers,
-  patchTenantMember: mocks.patchTenantMember,
-}));
-
-vi.mock("@/src/lib/logger", () => ({
-  logger: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 import { getServerSession } from "@/src/lib/auth";
 import { transferOwnershipAction } from "../transfer-ownership";
 
 const sessionMock = getServerSession as Mock;
 
-/** An active admin TenantMember fixture for the target user. */
-const ACTIVE_ADMIN_TARGET = {
-  metadata: { name: "member-target" },
-  spec: { email: "target@example.com", role: "admin" },
-  status: { userId: "user-target", phase: "Active" },
-};
+function memberRow(over: { userId: string; role: string; status?: string }) {
+  return {
+    userId: over.userId,
+    displayName: "",
+    email: `${over.userId}@example.com`,
+    role: over.role,
+    joinedAt: "",
+    status: over.status ?? "active",
+  };
+}
 
-/** An active owner TenantMember fixture for the caller. */
-const ACTIVE_OWNER_CALLER = {
-  metadata: { name: "member-caller" },
-  spec: { email: "caller@example.com", role: "owner" },
-  status: { userId: "user-caller", phase: "Active" },
-};
+const CALLER = memberRow({ userId: "user-caller", role: "owner" });
+const ACTIVE_ADMIN_TARGET = memberRow({ userId: "user-target", role: "admin" });
 
-// `role` is the caller's active-tenant role; the gate authorizes it against
-// the action's required relation (admin). Defaults to "owner" (allowed); pass
-// "member" to model an under-privileged caller.
 function withSession(opts: { role?: string } = {}) {
   const role = opts.role ?? "owner";
   sessionMock.mockResolvedValue({
@@ -112,201 +85,104 @@ function withSession(opts: { role?: string } = {}) {
 }
 
 beforeEach(() => {
-  mocks.writeAccessTuples.mockClear();
-  mocks.listTenantMembers.mockReset();
-  mocks.listTenantMembers.mockResolvedValue([ACTIVE_OWNER_CALLER, ACTIVE_ADMIN_TARGET]);
-  mocks.patchTenantMember.mockReset();
-  mocks.patchTenantMember.mockResolvedValue({});
+  mocks.transferOwnership.mockClear();
+  mocks.transferOwnership.mockResolvedValue({});
+  mocks.listMembers.mockReset();
+  mocks.listMembers.mockResolvedValue({ ok: true, data: [CALLER, ACTIVE_ADMIN_TARGET] });
   sessionMock.mockReset();
 });
 
-// ── Scenario 1 ──────────────────────────────────────────────────────────────
-
 describe("transferOwnershipAction — happy path", () => {
-  it("transfers owner to an active admin and returns {ok: true, data: {applied: true}}", async () => {
+  it("transfers ownership to an active admin and returns {ok: true}", async () => {
     withSession();
-
-    const result = await transferOwnershipAction("user-target");
-
-    expect(result).toEqual({ ok: true, data: { applied: true } });
+    expect(await transferOwnershipAction("user-target")).toEqual({ ok: true, data: { applied: true } });
   });
 
-  it("issues exactly one transferOwnership call with the correct tenantId and newOwnerUserId", async () => {
+  it("issues exactly one transferOwnership RPC with tenantId + newOwnerUserId", async () => {
     withSession();
-
     await transferOwnershipAction("user-target");
-
-    expect(mocks.writeAccessTuples).toHaveBeenCalledOnce();
-    const [payload] = mocks.writeAccessTuples.mock.calls[0] as unknown as [
-      { tenantId: string; newOwnerUserId: string },
-    ];
-
-    expect(payload.tenantId).toBe("acme");
-    expect(payload.newOwnerUserId).toBe("user-target");
-  });
-
-  it("patches both TenantMember CRs for the display-cache update", async () => {
-    withSession();
-
-    await transferOwnershipAction("user-target");
-
-    expect(mocks.patchTenantMember).toHaveBeenCalledTimes(2);
-
-    const calls = mocks.patchTenantMember.mock.calls as unknown as [string, string, { spec: { role: string } }][];
-    const newOwnerPatch = calls.find(([, name]) => name === "member-target");
-    const oldOwnerPatch = calls.find(([, name]) => name === "member-caller");
-
-    expect(newOwnerPatch?.[2].spec.role).toBe("owner");
-    expect(oldOwnerPatch?.[2].spec.role).toBe("admin");
+    expect(mocks.transferOwnership).toHaveBeenCalledOnce();
+    expect(mocks.transferOwnership.mock.calls[0][0]).toMatchObject({
+      tenantId: "acme",
+      newOwnerUserId: "user-target",
+    });
   });
 });
-
-// ── Scenario 2 ──────────────────────────────────────────────────────────────
 
 describe("transferOwnershipAction — caller lacks permission", () => {
-  it("returns FORBIDDEN when the caller's role does not satisfy admin", async () => {
+  it("returns FORBIDDEN and does not call the RPC", async () => {
     withSession({ role: "member" });
-
-    const result = await transferOwnershipAction("user-target");
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.code).toBe("FORBIDDEN");
-    }
-    expect(mocks.writeAccessTuples).not.toHaveBeenCalled();
+    const r = await transferOwnershipAction("user-target");
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.code).toBe("FORBIDDEN");
+    expect(mocks.transferOwnership).not.toHaveBeenCalled();
   });
 });
 
-// ── Scenario 3 ──────────────────────────────────────────────────────────────
-
-describe("transferOwnershipAction — target not found", () => {
-  it("returns BAD_INPUT when the target userId is not in the tenant members list", async () => {
+describe("transferOwnershipAction — target validation", () => {
+  it("BAD_INPUT when the target is not in the roster", async () => {
     withSession();
-    mocks.listTenantMembers.mockResolvedValue([ACTIVE_OWNER_CALLER]);
-
-    const result = await transferOwnershipAction("user-nobody");
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.code).toBe("BAD_INPUT");
-      expect(result.error).toContain("not found");
+    mocks.listMembers.mockResolvedValue({ ok: true, data: [CALLER] });
+    const r = await transferOwnershipAction("user-nobody");
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("BAD_INPUT");
+      expect(r.error).toContain("not found");
     }
-    expect(mocks.writeAccessTuples).not.toHaveBeenCalled();
+    expect(mocks.transferOwnership).not.toHaveBeenCalled();
   });
 
-  it("returns BAD_INPUT for an empty newOwnerUserId before any auth gate", async () => {
+  it("BAD_INPUT for an empty newOwnerUserId", async () => {
     withSession();
-
-    const result = await transferOwnershipAction("");
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.code).toBe("BAD_INPUT");
-    }
-    // Should fail before writing.
-    expect(mocks.writeAccessTuples).not.toHaveBeenCalled();
-  });
-});
-
-// ── Scenario 4 ──────────────────────────────────────────────────────────────
-
-describe("transferOwnershipAction — target is already an owner", () => {
-  it("returns BAD_INPUT when the target has spec.role === 'owner'", async () => {
-    withSession();
-    mocks.listTenantMembers.mockResolvedValue([
-      ACTIVE_OWNER_CALLER,
-      {
-        metadata: { name: "member-target" },
-        spec: { email: "target@example.com", role: "owner" },
-        status: { userId: "user-target", phase: "Active" },
-      },
-    ]);
-
-    const result = await transferOwnershipAction("user-target");
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.code).toBe("BAD_INPUT");
-      expect(result.error).toContain("already an owner");
-    }
-    expect(mocks.writeAccessTuples).not.toHaveBeenCalled();
-  });
-});
-
-// ── Scenario 5 ──────────────────────────────────────────────────────────────
-
-describe("transferOwnershipAction — target is a member, not an admin", () => {
-  it("returns BAD_INPUT when spec.role === 'member'", async () => {
-    withSession();
-    mocks.listTenantMembers.mockResolvedValue([
-      ACTIVE_OWNER_CALLER,
-      {
-        metadata: { name: "member-target" },
-        spec: { email: "target@example.com", role: "member" },
-        status: { userId: "user-target", phase: "Active" },
-      },
-    ]);
-
-    const result = await transferOwnershipAction("user-target");
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.code).toBe("BAD_INPUT");
-      expect(result.error).toContain("Active admin");
-    }
-    expect(mocks.writeAccessTuples).not.toHaveBeenCalled();
+    const r = await transferOwnershipAction("");
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.code).toBe("BAD_INPUT");
+    expect(mocks.transferOwnership).not.toHaveBeenCalled();
   });
 
-  it("returns BAD_INPUT when the target is an admin but not Active (e.g. Invited)", async () => {
+  it("BAD_INPUT when the target is already an owner", async () => {
     withSession();
-    mocks.listTenantMembers.mockResolvedValue([
-      ACTIVE_OWNER_CALLER,
-      {
-        metadata: { name: "member-target" },
-        spec: { email: "target@example.com", role: "admin" },
-        status: { userId: "user-target", phase: "Invited" },
-      },
-    ]);
+    mocks.listMembers.mockResolvedValue({
+      ok: true,
+      data: [CALLER, memberRow({ userId: "user-target", role: "owner" })],
+    });
+    const r = await transferOwnershipAction("user-target");
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toContain("already an owner");
+    expect(mocks.transferOwnership).not.toHaveBeenCalled();
+  });
 
-    const result = await transferOwnershipAction("user-target");
+  it("BAD_INPUT when the target is a member, not an admin", async () => {
+    withSession();
+    mocks.listMembers.mockResolvedValue({
+      ok: true,
+      data: [CALLER, memberRow({ userId: "user-target", role: "member" })],
+    });
+    const r = await transferOwnershipAction("user-target");
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toContain("Active admin");
+    expect(mocks.transferOwnership).not.toHaveBeenCalled();
+  });
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.code).toBe("BAD_INPUT");
-    }
-    expect(mocks.writeAccessTuples).not.toHaveBeenCalled();
+  it("BAD_INPUT when the target is an admin but not active (invited)", async () => {
+    withSession();
+    mocks.listMembers.mockResolvedValue({
+      ok: true,
+      data: [CALLER, memberRow({ userId: "user-target", role: "admin", status: "invited" })],
+    });
+    const r = await transferOwnershipAction("user-target");
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.code).toBe("BAD_INPUT");
+    expect(mocks.transferOwnership).not.toHaveBeenCalled();
   });
 });
 
-// ── Scenario 6 ──────────────────────────────────────────────────────────────
-
-describe("transferOwnershipAction — FGA write throws", () => {
-  it("returns INTERNAL and does NOT patch any TenantMember when writeAccessTuples rejects", async () => {
+describe("transferOwnershipAction — RPC throws", () => {
+  it("returns INTERNAL when transferOwnership rejects", async () => {
     withSession();
-    mocks.writeAccessTuples.mockRejectedValueOnce(new Error("FGA unavailable"));
-
-    const result = await transferOwnershipAction("user-target");
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.code).toBe("INTERNAL");
-    }
-    // Critical: display-cache patches must NOT run if FGA failed.
-    expect(mocks.patchTenantMember).not.toHaveBeenCalled();
-  });
-});
-
-// ── Display-cache resilience ─────────────────────────────────────────────────
-
-describe("transferOwnershipAction — display-cache patch failures are swallowed", () => {
-  it("returns {ok: true} even when patchTenantMember rejects for either member", async () => {
-    withSession();
-    mocks.patchTenantMember.mockRejectedValue(new Error("k8s 409 Conflict"));
-
-    const result = await transferOwnershipAction("user-target");
-
-    // FGA write succeeded; the action must still return ok.
-    expect(result).toEqual({ ok: true, data: { applied: true } });
-    expect(mocks.writeAccessTuples).toHaveBeenCalledOnce();
+    mocks.transferOwnership.mockRejectedValueOnce(new Error("daemon unavailable"));
+    const r = await transferOwnershipAction("user-target");
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.code).toBe("INTERNAL");
   });
 });
