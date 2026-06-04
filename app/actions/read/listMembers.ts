@@ -35,6 +35,8 @@ export interface MemberRow {
   role: string;
   /** ISO 8601 string, or empty string when the field is unset. */
   joinedAt: string;
+  /** "active" for joined members, "invited" for pending invitations. */
+  status: string;
 }
 
 function toMemberRow(m: TenantMember): MemberRow {
@@ -49,6 +51,7 @@ function toMemberRow(m: TenantMember): MemberRow {
     email: m.email,
     role: m.role,
     joinedAt,
+    status: m.status || "active",
   };
 }
 

@@ -253,31 +253,26 @@ describe("inviteMemberInput", () => {
 });
 
 describe("acceptInvitationInput", () => {
-  it("accepts valid input", () => {
-    const r = acceptInvitationInput.safeParse({
-      tenantName: "acme",
-      memberName: "invite-abc123",
-      userId: "user-1",
-    });
-    expect(r.success).toBe(true);
+  it("accepts a token (dashboard#715 — token-based redemption)", () => {
+    expect(acceptInvitationInput.safeParse({ token: "deadbeef" }).success).toBe(true);
   });
-  it("rejects empty userId", () => {
-    const r = acceptInvitationInput.safeParse({
-      tenantName: "acme",
-      memberName: "invite-abc123",
-      userId: "",
-    });
-    expect(r.success).toBe(false);
+  it("rejects an empty token", () => {
+    expect(acceptInvitationInput.safeParse({ token: "" }).success).toBe(false);
   });
 });
 
 describe("revokeMemberInput / resendInvitationInput", () => {
-  it("accepts valid member reference", () => {
+  it("accepts valid member / invitation references", () => {
+    // Active member: userId + status.
     expect(
-      revokeMemberInput.safeParse({ tenantName: "acme", memberName: "invite-1" }).success,
+      revokeMemberInput.safeParse({ userId: "u1", email: "u1@example.com", status: "active" }).success,
+    ).toBe(true);
+    // Pending invitation: empty userId, email + invited status.
+    expect(
+      revokeMemberInput.safeParse({ userId: "", email: "pending@example.com", status: "invited" }).success,
     ).toBe(true);
     expect(
-      resendInvitationInput.safeParse({ tenantName: "acme", memberName: "invite-1" }).success,
+      resendInvitationInput.safeParse({ email: "pending@example.com" }).success,
     ).toBe(true);
   });
 });

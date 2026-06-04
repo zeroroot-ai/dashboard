@@ -50,9 +50,11 @@ interface InviteUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   tenantId: string;
+  /** Called after a successful invite so the parent can refetch the roster. */
+  onInvited?: () => void;
 }
 
-export function InviteUserDialog({ open, onOpenChange, tenantId }: InviteUserDialogProps) {
+export function InviteUserDialog({ open, onOpenChange, tenantId, onInvited }: InviteUserDialogProps) {
   const [pending, setPending] = React.useState(false);
   const [conflictError, setConflictError] = React.useState<string | null>(null);
 
@@ -82,6 +84,7 @@ export function InviteUserDialog({ open, onOpenChange, tenantId }: InviteUserDia
       toast.success(`Invitation sent to ${values.email}`);
       form.reset();
       onOpenChange(false);
+      onInvited?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to invite user.");
     } finally {

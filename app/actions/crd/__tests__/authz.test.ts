@@ -311,63 +311,11 @@ const MANIFESTS: ActionManifest[] = [
     // instead of deleting ComponentGrant CRDs directly from K8s.
     k8sMock: () => getCatalogClientMock(),
   },
-  {
-    name: "inviteMemberAction",
-    permission: "members:invite",
-    tenantName: "acme",
-    invokeValid:
-      (t) => () =>
-        memberActions.inviteMemberAction({
-          tenantName: t,
-          email: "b@example.com",
-          role: "member",
-        }),
-    invokeBadInput:
-      (t) => () =>
-        memberActions.inviteMemberAction({
-          tenantName: t,
-          email: "not-an-email",
-          role: "member",
-        }),
-    k8sMock: () => k8sTenants.applyTenantMember as Mock,
-  },
-  {
-    name: "acceptInvitationAction",
-    permission: "__self__",
-    tenantName: "acme",
-    isSelfCheck: true,
-    invokeValid:
-      (t) => () =>
-        memberActions.acceptInvitationAction({
-          tenantName: t,
-          memberName: "invite-1",
-          userId: "user-1", // matches tenantSession().user.id
-        }),
-    invokeBadInput:
-      (t) => () =>
-        memberActions.acceptInvitationAction({
-          tenantName: t,
-          memberName: "UPPERCASE",
-          userId: "user-1",
-        }),
-    k8sMock: () => k8sTenants.patchTenantMember as Mock,
-  },
-  {
-    name: "revokeMemberAction",
-    permission: "members:revoke",
-    tenantName: "acme",
-    invokeValid: (t) => () => memberActions.revokeMemberAction(t, "invite-1"),
-    invokeBadInput: (t) => () => memberActions.revokeMemberAction(t, "UPPERCASE"),
-    k8sMock: () => k8sTenants.deleteTenantMember as Mock,
-  },
-  {
-    name: "resendInvitationAction",
-    permission: "members:invite",
-    tenantName: "acme",
-    invokeValid: (t) => () => memberActions.resendInvitationAction(t, "invite-1"),
-    invokeBadInput: (t) => () => memberActions.resendInvitationAction(t, "UPPERCASE"),
-    k8sMock: () => k8sTenants.patchTenantMember as Mock,
-  },
+  // Member actions (invite/accept/revoke/resend) removed from this k8s-mock
+  // table by dashboard#715: they now call the daemon's MembershipService, not
+  // the TenantMember CR. Their gating + behaviour is covered by member.test.ts
+  // with the RPC client mocked. acceptInvitationAction is token-based +
+  // unauthenticated (no self-gate).
   // Enrollment actions removed (dashboard#713): enrollment moved to
   // AgentIdentityService (/api/agents/register); the CR-based path is gone.
 ];
@@ -490,20 +438,6 @@ describe("requireCrdSession — active-tenant role × required relation", () => 
     getSessionMock.mockResolvedValueOnce(tenantSession("other-tenant", ""));
     const r = await requireCrdSession({ action: adminAction, tenantName: "other-tenant" });
     expect(r.ok).toBe(false);
-  });
-});
-
-describe("acceptInvitationAction — self-check", () => {
-  it("rejects mismatched userId with FORBIDDEN", async () => {
-    getSessionMock.mockResolvedValueOnce(tenantSession("acme"));
-    const r = await memberActions.acceptInvitationAction({
-      tenantName: "acme",
-      memberName: "invite-1",
-      userId: "different-user",
-    });
-    expect(r.ok).toBe(false);
-    expect((r as { code: string }).code).toBe("FORBIDDEN");
-    expect(k8sTenants.patchTenantMember).not.toHaveBeenCalled();
   });
 });
 

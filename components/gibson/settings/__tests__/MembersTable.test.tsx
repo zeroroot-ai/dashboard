@@ -11,6 +11,7 @@ function row(over: Partial<MemberRow>): MemberRow {
     email: "",
     role: "member",
     joinedAt: "",
+    status: "active",
     ...over,
   };
 }

@@ -150,79 +150,22 @@ describe("setTenantRoleAction", () => {
   // Dual-write — dashboard#173
   // ---------------------------------------------------------------------------
 
-  it("on FGA success, also patches the TenantMember spec.role when the CR exists", async () => {
+  // dashboard#715 removed the TenantMember.spec.role display-cache patch:
+  // ListMembers now derives role from FGA, so there is no CR to keep in sync.
+  it("does not touch any TenantMember CR (no display-cache patch)", async () => {
     withSession("acme");
-    mocks.listTenantMembers.mockResolvedValue([
-      {
-        metadata: { name: "invite-abc123" },
-        spec: { email: "alice@example.com", role: "member" },
-        status: { userId: "alice", phase: "Active" },
-      },
-    ]);
     const r = await setTenantRoleAction({ userId: "alice", role: "admin" });
     expect(r).toEqual({ ok: true, data: { applied: true } });
-    expect(mocks.writeAccessTuples).toHaveBeenCalledOnce();
-    expect(mocks.listTenantMembers).toHaveBeenCalledOnce();
-    expect(mocks.patchTenantMember).toHaveBeenCalledOnce();
-    const [ns, name, patch] = mocks.patchTenantMember.mock.calls[0] as unknown as [
-      string,
-      string,
-      { spec: { role: string } },
-    ];
-    expect(ns).toBe("tenant-acme");
-    expect(name).toBe("invite-abc123");
-    expect(patch.spec.role).toBe("admin");
-  });
-
-  it("returns ok even when no TenantMember CR matches the userId (FGA already authoritative)", async () => {
-    withSession("acme");
-    mocks.listTenantMembers.mockResolvedValue([
-      {
-        metadata: { name: "invite-other" },
-        spec: { email: "bob@example.com", role: "member" },
-        status: { userId: "bob", phase: "Active" },
-      },
-    ]);
-    const r = await setTenantRoleAction({ userId: "alice", role: "admin" });
-    expect(r).toEqual({ ok: true, data: { applied: true } });
-    // FGA write happened, patch did NOT.
-    expect(mocks.writeAccessTuples).toHaveBeenCalledOnce();
     expect(mocks.patchTenantMember).not.toHaveBeenCalled();
+    expect(mocks.listTenantMembers).not.toHaveBeenCalled();
   });
 
-  it("returns ok and swallows the error when patchTenantMember fails (badge will be stale, FGA is correct)", async () => {
+  it("when the daemon write fails, returns INTERNAL and does not touch the CR", async () => {
     withSession("acme");
-    mocks.listTenantMembers.mockResolvedValue([
-      {
-        metadata: { name: "invite-abc123" },
-        spec: { email: "alice@example.com", role: "member" },
-        status: { userId: "alice", phase: "Active" },
-      },
-    ]);
-    mocks.patchTenantMember.mockRejectedValue(new Error("k8s 409 Conflict"));
-    const r = await setTenantRoleAction({ userId: "alice", role: "admin" });
-    expect(r).toEqual({ ok: true, data: { applied: true } });
-    expect(mocks.writeAccessTuples).toHaveBeenCalledOnce();
-    expect(mocks.patchTenantMember).toHaveBeenCalledOnce();
-  });
-
-  it("when FGA write fails, neither side mutates (no patch attempt)", async () => {
-    withSession("acme");
-    mocks.writeAccessTuples.mockRejectedValueOnce(new Error("FGA unreachable"));
-    mocks.listTenantMembers.mockResolvedValue([
-      {
-        metadata: { name: "invite-abc123" },
-        spec: { email: "alice@example.com", role: "member" },
-        status: { userId: "alice", phase: "Active" },
-      },
-    ]);
+    mocks.writeAccessTuples.mockRejectedValueOnce(new Error("daemon unreachable"));
     const r = await setTenantRoleAction({ userId: "alice", role: "admin" });
     expect(r.ok).toBe(false);
     expect((r as { code: string }).code).toBe("INTERNAL");
-    expect(mocks.writeAccessTuples).toHaveBeenCalledOnce();
-    // Critical: spec.role must NOT be patched if FGA failed — otherwise the
-    // badge would lie about the user's actual access.
-    expect(mocks.listTenantMembers).not.toHaveBeenCalled();
     expect(mocks.patchTenantMember).not.toHaveBeenCalled();
   });
 });
