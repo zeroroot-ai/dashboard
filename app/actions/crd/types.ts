@@ -18,6 +18,7 @@ export type CrdActionName =
   | "acceptInvitationAction"
   | "revokeMemberAction"
   | "resendInvitationAction"
+  | "revokeUserSessionsAction"
   | "setComponentAccessAction"
   | "installAgentAction"
   | "listTeamsAction"

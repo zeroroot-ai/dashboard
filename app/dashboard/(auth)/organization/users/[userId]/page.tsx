@@ -7,7 +7,7 @@ import { useSession } from "@/src/lib/session-client";
 import { useTenantId } from "@/src/lib/auth/tenant";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { useTenantContext } from "@/src/lib/tenant-context";
-import { ArrowLeft, ArrowRightLeft, Mail, ShieldOff } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft, LogOut, Mail, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { UserTeamMembershipsEditor } from "@/components/gibson/users/UserTeamMembershipsEditor";
@@ -45,6 +45,7 @@ import { useCRDWatch } from "@/src/hooks/useCRDWatch";
 import { transferOwnershipAction } from "@/app/actions/crd/transfer-ownership";
 import { revokeMemberAction, resendInvitationAction } from "@/app/actions/crd/member";
 import { setTenantRoleAction } from "@/app/actions/crd/role";
+import { revokeUserSessionsAction } from "@/app/actions/crd/sessions";
 import type { TenantRole } from "@/app/actions/crd/role";
 import type { MemberRole } from "@/src/lib/k8s/types";
 
@@ -118,6 +119,7 @@ export default function UserDetailPage() {
   // Revoke access dialog state.
   const [revokeOpen, setRevokeOpen] = React.useState(false);
   const [revoking, setRevoking] = React.useState(false);
+  const [revokingSessions, setRevokingSessions] = React.useState(false);
 
   // Role change state. The override is a TenantRole because setTenantRoleAction
   // only accepts admin|member — owners cannot be set via this dropdown.
@@ -134,6 +136,10 @@ export default function UserDetailPage() {
     canEdit && viewerIsOwner && targetIsActiveAdmin;
   const showRevokeAccess =
     canEdit && isActive && !isOwner;
+  // Revoke sessions: admins may force-logout any active member; a member may
+  // always sign themselves out everywhere. The daemon enforces the
+  // can_revoke_sessions decision (gibson#622); this only controls visibility.
+  const showRevokeSessions = isActive && (canEdit || isSelf);
   const showResendInvitation = canEdit && isInvited;
   const showRoleDropdown =
     canEdit && isActive && !isOwner;
@@ -178,6 +184,26 @@ export default function UserDetailPage() {
     }
   }
 
+  async function handleRevokeSessions() {
+    if (!member) return;
+    const targetUserId = member.status?.userId ?? member.metadata.name;
+    setRevokingSessions(true);
+    try {
+      const result = await revokeUserSessionsAction({ targetUserId });
+      if (result.ok) {
+        toast.success(
+          isSelf
+            ? "You've been signed out of all sessions."
+            : `Revoked sessions for ${member.spec.email ?? targetUserId}.`,
+        );
+      } else {
+        toast.error(result.error || "Failed to revoke sessions.");
+      }
+    } finally {
+      setRevokingSessions(false);
+    }
+  }
+
   async function handleResendInvitation() {
     if (!member) return;
     try {
@@ -219,7 +245,8 @@ export default function UserDetailPage() {
     showRoleDropdown ||
     showResendInvitation ||
     showTransferOwnership ||
-    showRevokeAccess;
+    showRevokeAccess ||
+    showRevokeSessions;
 
   return (
     <div className="space-y-4">
@@ -456,11 +483,48 @@ export default function UserDetailPage() {
                     </>
                   )}
 
-                  {showRevokeAccess && (
+                  {showRevokeSessions && (
                     <>
                       {(showRoleDropdown ||
                         showResendInvitation ||
                         showTransferOwnership) && (
+                        <Separator className="bg-highlight/20" />
+                      )}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <p className="font-mono text-sm">
+                            {isSelf ? "Sign out everywhere" : "Revoke sessions"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {isSelf
+                              ? "End all of your active sessions and refresh tokens. You'll need to sign in again."
+                              : `End all active sessions and refresh tokens for ${member.spec.email}. New tokens are blocked immediately; any current token expires within 15 minutes.`}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 border-destructive/50 text-destructive hover:bg-destructive/10"
+                          disabled={revokingSessions}
+                          onClick={handleRevokeSessions}
+                        >
+                          <LogOut className="size-3.5" />
+                          {revokingSessions
+                            ? "Revoking…"
+                            : isSelf
+                              ? "Sign out everywhere"
+                              : "Revoke sessions"}
+                        </Button>
+                      </div>
+                    </>
+                  )}
+
+                  {showRevokeAccess && (
+                    <>
+                      {(showRoleDropdown ||
+                        showResendInvitation ||
+                        showTransferOwnership ||
+                        showRevokeSessions) && (
                         <Separator className="bg-highlight/20" />
                       )}
                       <div className="flex items-center justify-between">

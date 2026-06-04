@@ -688,6 +688,15 @@ export const AuthRegistry: Record<string, AuthEntry> = {
     allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
     unauthenticated: false,
   },
+  "/gibson.daemon.operator.v1.DaemonOperatorService/SetTenantZitadelOrg": {
+    method: "/gibson.daemon.operator.v1.DaemonOperatorService/SetTenantZitadelOrg",
+    service: "gibson.daemon.operator.v1.DaemonOperatorService",
+    relation: "platform_operator",
+    objectType: "system_tenant",
+    objectDeriver: "system_tenant",
+    allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
+    unauthenticated: false,
+  },
   "/gibson.daemon.operator.v1.DaemonOperatorService/Shutdown": {
     method: "/gibson.daemon.operator.v1.DaemonOperatorService/Shutdown",
     service: "gibson.daemon.operator.v1.DaemonOperatorService",
@@ -2630,6 +2639,15 @@ export const AuthRegistry: Record<string, AuthEntry> = {
     objectType: "tenant",
     objectDeriver: "tenant_from_identity",
     allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE,
+    unauthenticated: false,
+  },
+  "/gibson.tenant.v1.UserService/RevokeUserSessions": {
+    method: "/gibson.tenant.v1.UserService/RevokeUserSessions",
+    service: "gibson.tenant.v1.UserService",
+    relation: "member",
+    objectType: "tenant",
+    objectDeriver: "tenant_from_identity",
+    allowedIdentities: IdentityClass.USER,
     unauthenticated: false,
   },
   "/gibson.tenant.v1.UserService/SaveConversation": {
