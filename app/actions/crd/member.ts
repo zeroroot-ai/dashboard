@@ -19,7 +19,7 @@
 import { ConnectError, Code } from '@connectrpc/connect';
 
 import { MembershipService } from '@/src/gen/gibson/tenant/v1/membership_pb';
-import { userClient } from '@/src/lib/gibson-client';
+import { userClient, serviceClient } from '@/src/lib/gibson-client';
 import {
   requireActiveTenant,
   NoActiveTenantError,
@@ -113,7 +113,12 @@ export async function acceptInvitationAction(input: { token: string }): Promise<
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
   }
   try {
-    const client = userClient(MembershipService);
+    // serviceClient (dashboard SA), NOT userClient: the invitee is typically a
+    // brand-new user with no session/token. The dashboard SA authenticates the
+    // Envoy hop; the daemon's AcceptInvitation is unauthenticated:true so
+    // ext-authz skips the FGA check and redeems by token (gibson#633,
+    // dashboard#727). Empty tenant — the daemon derives it from the invitation.
+    const client = serviceClient(MembershipService, '');
     await client.acceptInvitation({ token: parsed.data.token });
     return { ok: true, data: undefined };
   } catch (e) {
