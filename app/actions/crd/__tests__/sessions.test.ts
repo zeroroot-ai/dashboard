@@ -81,7 +81,7 @@ describe("revokeUserSessionsAction", () => {
   it("rejects empty targetUserId before any RPC", async () => {
     const r = await revokeUserSessionsAction({ targetUserId: "" });
     expect(r.ok).toBe(false);
-    expect(r.code).toBe("BAD_INPUT");
+    if (!r.ok) expect(r.code).toBe("BAD_INPUT");
     expect(mocks.revokeUserSessions).not.toHaveBeenCalled();
   });
 });

@@ -38,10 +38,6 @@ export async function getTenant(name: string): Promise<Tenant> {
   return k8s().get<Tenant>('Tenant', name);
 }
 
-export async function listTenants(): Promise<Tenant[]> {
-  return k8s().list<Tenant>('Tenant');
-}
-
 export async function deleteTenant(name: string): Promise<void> {
   return k8s().delete('Tenant', name);
 }
