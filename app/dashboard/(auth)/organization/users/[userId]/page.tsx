@@ -41,11 +41,12 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCRDWatch } from "@/src/hooks/useCRDWatch";
+import { useQuery } from "@tanstack/react-query";
 import { transferOwnershipAction } from "@/app/actions/crd/transfer-ownership";
 import { revokeMemberAction, resendInvitationAction } from "@/app/actions/crd/member";
 import { setTenantRoleAction } from "@/app/actions/crd/role";
 import { revokeUserSessionsAction } from "@/app/actions/crd/sessions";
+import { listMembersAction, type MemberRow } from "@/app/actions/read/listMembers";
 import type { TenantRole } from "@/app/actions/crd/role";
 import type { MemberRole } from "@/src/lib/k8s/types";
 
@@ -66,9 +67,6 @@ function getInitials(name?: string | null): string {
     .slice(0, 2);
 }
 
-function tenantNamespace(name: string): string {
-  return `tenant-${name}`;
-}
 
 export default function UserDetailPage() {
   const params = useParams();
@@ -92,25 +90,24 @@ export default function UserDetailPage() {
   const viewerRole = tenantId ? (rolesByTenant[tenantId] ?? "") : "";
   const viewerIsOwner = viewerRole === "owner";
 
-  const namespace = tenantId ? tenantNamespace(tenantId) : undefined;
-  const { items, status } = useCRDWatch("TenantMember", namespace, {
+  // Member detail from the daemon roster (MembershipService.ListMembers) — the
+  // single source of truth post dashboard#715. The page keys on userId; pending
+  // invitations (no userId) are matched by email fallback.
+  const { data: membersResult, isLoading, refetch } = useQuery({
+    queryKey: ["tenant-members", tenantId],
+    queryFn: () => listMembersAction(),
     enabled: !!tenantId,
   });
+  const members: MemberRow[] = membersResult?.ok ? membersResult.data : [];
 
   const member = React.useMemo(
-    () =>
-      items.find(
-        (m) => m.status?.userId === userId || m.metadata.name === userId,
-      ),
-    [items, userId],
+    () => members.find((m) => m.userId === userId || m.email === userId),
+    [members, userId],
   );
 
-  const isLoading = status === "connecting" || status === "idle";
-
-  const phase = member?.status?.phase ?? "Pending";
-  const isActive = phase === "Active";
-  const isInvited = phase === "Invited";
-  const isOwner = member?.spec.role === "owner";
+  const isActive = member?.status === "active";
+  const isInvited = member?.status === "invited";
+  const isOwner = member?.role === "owner";
 
   // Transfer ownership dialog state.
   const [transferOpen, setTransferOpen] = React.useState(false);
@@ -126,12 +123,13 @@ export default function UserDetailPage() {
   const [roleOverride, setRoleOverride] = React.useState<TenantRole | null>(null);
   const [changingRole, setChangingRole] = React.useState(false);
 
-  // Displayed role: local override after a successful change, else spec.role.
+  // Displayed role: local override after a successful change, else the
+  // daemon-reported role.
   const effectiveRole: MemberRole | undefined =
-    roleOverride ?? member?.spec.role;
+    roleOverride ?? (member?.role as MemberRole | undefined);
 
   const targetIsActiveAdmin =
-    member?.spec.role === "admin" && isActive;
+    member?.role === "admin" && isActive;
   const showTransferOwnership =
     canEdit && viewerIsOwner && targetIsActiveAdmin;
   const showRevokeAccess =
@@ -147,7 +145,7 @@ export default function UserDetailPage() {
   async function handleTransferOwnership() {
     setTransferring(true);
     try {
-      const targetUserId = member?.status?.userId;
+      const targetUserId = member?.userId;
       if (!targetUserId) {
         toast.error("Cannot determine target user ID.");
         return;
@@ -155,7 +153,7 @@ export default function UserDetailPage() {
       const result = await transferOwnershipAction(targetUserId);
       if (result.ok) {
         toast.success(
-          `Ownership transferred to ${member?.spec.email ?? targetUserId}.`,
+          `Ownership transferred to ${member?.email ?? targetUserId}.`,
         );
         router.push("/dashboard/organization/users");
       } else {
@@ -171,9 +169,13 @@ export default function UserDetailPage() {
     if (!member) return;
     setRevoking(true);
     try {
-      const result = await revokeMemberAction(tenantId, member.metadata.name);
+      const result = await revokeMemberAction({
+        userId: member.userId,
+        email: member.email,
+        status: member.status,
+      });
       if (result.ok) {
-        toast.success(`${member.spec.email} has been removed from the workspace.`);
+        toast.success(`${member.email} has been removed from the workspace.`);
         router.push("/dashboard/organization/users");
       } else {
         toast.error(result.error || "Failed to revoke access.");
@@ -186,7 +188,7 @@ export default function UserDetailPage() {
 
   async function handleRevokeSessions() {
     if (!member) return;
-    const targetUserId = member.status?.userId ?? member.metadata.name;
+    const targetUserId = member.userId;
     setRevokingSessions(true);
     try {
       const result = await revokeUserSessionsAction({ targetUserId });
@@ -194,7 +196,7 @@ export default function UserDetailPage() {
         toast.success(
           isSelf
             ? "You've been signed out of all sessions."
-            : `Revoked sessions for ${member.spec.email ?? targetUserId}.`,
+            : `Revoked sessions for ${member.email ?? targetUserId}.`,
         );
       } else {
         toast.error(result.error || "Failed to revoke sessions.");
@@ -207,9 +209,9 @@ export default function UserDetailPage() {
   async function handleResendInvitation() {
     if (!member) return;
     try {
-      const result = await resendInvitationAction(tenantId, member.metadata.name);
+      const result = await resendInvitationAction({ email: member.email });
       if (result.ok) {
-        toast.success(`Invitation resent to ${member.spec.email}.`);
+        toast.success(`Invitation resent to ${member.email}.`);
       } else {
         toast.error(result.error || "Failed to resend invitation.");
       }
@@ -222,13 +224,14 @@ export default function UserDetailPage() {
 
   async function handleRoleChange(role: TenantRole) {
     if (!member) return;
-    const targetUserId = member.status?.userId ?? member.metadata.name;
+    const targetUserId = member.userId;
     setChangingRole(true);
     try {
       const result = await setTenantRoleAction({ userId: targetUserId, role });
       if (result.ok) {
         setRoleOverride(role);
-        toast.success(`${member.spec.email} is now ${role}.`);
+        toast.success(`${member.email} is now ${role}.`);
+        await refetch();
       } else {
         toast.error(result.error || "Failed to change role.");
       }
@@ -322,15 +325,15 @@ export default function UserDetailPage() {
                 <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16">
                     <AvatarFallback className="text-lg">
-                      {getInitials(member.spec.email)}
+                      {getInitials(member.email)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="text-lg font-medium">
-                      {member.spec.email.split("@")[0]}
+                      {member.email.split("@")[0]}
                     </p>
                     <p className="data-value text-sm text-muted-foreground">
-                      {member.spec.email}
+                      {member.email}
                     </p>
                   </div>
                 </div>
@@ -346,7 +349,7 @@ export default function UserDetailPage() {
                       variant="outline"
                       className={`text-xs font-mono ${ROLE_BADGE_CLASS[effectiveRole ?? "viewer"] ?? ROLE_BADGE_CLASS.viewer}`}
                     >
-                      {effectiveRole ?? member.spec.role}
+                      {effectiveRole ?? member.role}
                       {isSelf && " (you)"}
                     </Badge>
                   </div>
@@ -354,32 +357,18 @@ export default function UserDetailPage() {
                     <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
                       Status
                     </p>
-                    <p className="text-sm font-mono">{phase}</p>
+                    <p className="text-sm font-mono">{isInvited ? "Invited" : "Active"}</p>
                   </div>
                   <div className="space-y-1.5">
                     <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
                       Member since
                     </p>
                     <p className="text-sm tabular-nums">
-                      {member.metadata.creationTimestamp
-                        ? new Date(
-                            member.metadata.creationTimestamp,
-                          ).toLocaleDateString()
+                      {member.joinedAt
+                        ? new Date(member.joinedAt).toLocaleDateString()
                         : "—"}
                     </p>
                   </div>
-                  {isInvited && member.status?.invitationExpiresAt && (
-                    <div className="space-y-1.5">
-                      <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
-                        Invitation expires
-                      </p>
-                      <p className="text-sm tabular-nums">
-                        {new Date(
-                          member.status.invitationExpiresAt,
-                        ).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
                 </div>
 
                 <Separator className="bg-highlight/20" />
@@ -394,7 +383,7 @@ export default function UserDetailPage() {
                     </span>
                   </summary>
                   <p className="data-value mt-2 text-xs break-all">
-                    {member.status?.userId ?? member.metadata.name}
+                    {member.userId}
                   </p>
                 </details>
               </CardContent>
@@ -441,7 +430,7 @@ export default function UserDetailPage() {
                         <div className="space-y-0.5">
                           <p className="font-mono text-sm">Resend invitation</p>
                           <p className="text-xs text-muted-foreground">
-                            Send a new invitation email to {member.spec.email}.
+                            Send a new invitation email to {member.email}.
                           </p>
                         </div>
                         <Button
@@ -466,7 +455,7 @@ export default function UserDetailPage() {
                         <div className="space-y-0.5">
                           <p className="font-mono text-sm">Transfer ownership</p>
                           <p className="text-xs text-muted-foreground">
-                            Make {member.spec.email} the workspace owner. You
+                            Make {member.email} the workspace owner. You
                             will become an admin.
                           </p>
                         </div>
@@ -498,7 +487,7 @@ export default function UserDetailPage() {
                           <p className="text-xs text-muted-foreground">
                             {isSelf
                               ? "End all of your active sessions and refresh tokens. You'll need to sign in again."
-                              : `End all active sessions and refresh tokens for ${member.spec.email}. New tokens are blocked immediately; any current token expires within 15 minutes.`}
+                              : `End all active sessions and refresh tokens for ${member.email}. New tokens are blocked immediately; any current token expires within 15 minutes.`}
                           </p>
                         </div>
                         <Button
@@ -531,7 +520,7 @@ export default function UserDetailPage() {
                         <div className="space-y-0.5">
                           <p className="font-mono text-sm">Revoke access</p>
                           <p className="text-xs text-muted-foreground">
-                            Remove {member.spec.email} from this workspace
+                            Remove {member.email} from this workspace
                             immediately.
                           </p>
                         </div>
@@ -563,7 +552,7 @@ export default function UserDetailPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Transfer ownership to {member?.spec.email}?
+              Transfer ownership to {member?.email}?
             </AlertDialogTitle>
             <AlertDialogDescription>
               You will become an admin. This cannot be undone without another
@@ -588,7 +577,7 @@ export default function UserDetailPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Remove {member?.spec.email} from the workspace?
+              Remove {member?.email} from the workspace?
             </AlertDialogTitle>
             <AlertDialogDescription>
               They will lose access immediately. This cannot be undone — you

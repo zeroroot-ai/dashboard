@@ -142,25 +142,27 @@ export const inviteMemberInput = z
   })
   .strict();
 
+// Token redeemed by the invitation accept page. Hex token from the daemon
+// (GenerateInvitationToken → 32 random bytes → 64 hex chars).
 export const acceptInvitationInput = z
   .object({
-    tenantName: tenantNameSchema,
-    memberName: dns1123Label,
-    userId: z.string().min(1, "userId is required"),
+    token: z.string().min(1, "token is required"),
   })
   .strict();
 
+// Member removal / invitation cancellation. Active members carry a userId;
+// pending invitations carry an email. status discriminates the two paths.
 export const revokeMemberInput = z
   .object({
-    tenantName: tenantNameSchema,
-    memberName: dns1123Label,
+    userId: z.string(),
+    email: z.string(),
+    status: z.string().min(1),
   })
   .strict();
 
 export const resendInvitationInput = z
   .object({
-    tenantName: tenantNameSchema,
-    memberName: dns1123Label,
+    email: emailSchema,
   })
   .strict();
 

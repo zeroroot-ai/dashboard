@@ -1,163 +1,125 @@
 /**
- * Unit tests for the last-owner safeguard in revokeMemberAction.
+ * Unit tests for revokeMemberAction (dashboard#715).
  *
- * The guard runs a listTenantMembers call before any K8s mutation and blocks
- * removal when the target is the sole active owner. These tests cover the three
- * cases defined in dashboard#267.
+ * revokeMemberAction now calls the daemon's MembershipService — SetTenantRole
+ * (remove) for active members, CancelInvitation for pending invitations — and
+ * runs a last-active-owner safeguard against the daemon roster
+ * (listMembersAction) before any mutation.
  */
 
-import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
-// vi.hoisted so mock factories below can close over these without TDZ errors.
 const mocks = vi.hoisted(() => ({
-  listTenantMembers: vi.fn(async () => [] as unknown[]),
-  deleteTenantMember: vi.fn(async () => undefined),
-  patchTenantMember: vi.fn(async () => ({})),
-  applyTenantMember: vi.fn(async () => ({})),
+  listMembers: vi.fn(),
+  setTenantRole: vi.fn(async (_req: Record<string, unknown>) => ({})),
+  cancelInvitation: vi.fn(async (_req: Record<string, unknown>) => ({})),
+  requireCrdSession: vi.fn(),
 }));
 
-vi.mock("@/src/lib/auth", () => ({
-  getServerSession: vi.fn(),
+vi.mock("@/app/actions/read/listMembers", () => ({
+  listMembersAction: mocks.listMembers,
 }));
 
-vi.mock("@/src/lib/k8s/tenants", () => ({
-  listTenantMembers: mocks.listTenantMembers,
-  deleteTenantMember: mocks.deleteTenantMember,
-  patchTenantMember: mocks.patchTenantMember,
-  applyTenantMember: mocks.applyTenantMember,
-  tenantNamespace: (name: string) => `tenant-${name}`,
+vi.mock("@/src/lib/gibson-client", () => ({
+  userClient: () => ({
+    setTenantRole: mocks.setTenantRole,
+    cancelInvitation: mocks.cancelInvitation,
+  }),
 }));
 
-vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
+vi.mock("../_authz", () => ({
+  requireCrdSession: mocks.requireCrdSession,
 }));
 
-vi.mock("../_rate_limits", () => ({
-  CRD_RATE_LIMITS: {},
-  consumeRateLimit: vi.fn(async () => ({ ok: true })),
-}));
-
-vi.mock("@/src/lib/auth/schema", () => ({
-  isCrossTenant: vi.fn(() => false),
-}));
-
-// Tenant-scope resolution reads next/headers cookies(), which has no request
-// scope under vitest. Pin the active tenant to "acme".
 vi.mock("@/src/lib/auth/active-tenant", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/src/lib/auth/active-tenant")>();
-  return {
-    ...actual,
-    requireActiveTenant: vi.fn(async () => "acme"),
-    getActiveTenant: vi.fn(async () => "acme"),
-  };
+  const actual = await importOriginal<typeof import("@/src/lib/auth/active-tenant")>();
+  return { ...actual, requireActiveTenant: vi.fn(async () => "acme") };
 });
 
-vi.mock("@/src/lib/audit/crd", () => ({
-  emitCrdAuditFromGate: vi.fn(),
-}));
+vi.mock("@/src/lib/audit/crd", () => ({ emitCrdAuditFromGate: vi.fn() }));
 
-vi.mock("@/src/lib/logger", () => ({
-  logger: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
-import { getServerSession } from "@/src/lib/auth";
 import { revokeMemberAction } from "../member";
 
-const sessionMock = getServerSession as Mock;
-
-function withSession(tenantId: string) {
-  sessionMock.mockResolvedValue({
-    user: {
-      id: "user-1",
-      name: "Caller",
-      email: "caller@example.com",
-      emailVerified: true,
-      tenantId,
-      tenants: [tenantId],
-      rolesByTenant: { [tenantId]: "admin" },
-      roles: ["admin"],
-      groups: [],
-      crossTenant: false,
-    },
-    expires: new Date(Date.now() + 3600_000).toISOString(),
-  });
-}
-
-/** Build a minimal TenantMember fixture. */
-function makeMember(overrides: {
-  name: string;
-  role: "owner" | "admin" | "member";
-  phase?: string;
-}) {
+function member(over: { userId?: string; email?: string; role: string; status?: string }) {
   return {
-    metadata: { name: overrides.name },
-    spec: { email: `${overrides.name}@example.com`, role: overrides.role },
-    status: { userId: overrides.name, phase: overrides.phase ?? "Active" },
+    userId: over.userId ?? "",
+    displayName: "",
+    email: over.email ?? `${over.userId}@example.com`,
+    role: over.role,
+    joinedAt: "",
+    status: over.status ?? "active",
   };
 }
 
 beforeEach(() => {
-  mocks.listTenantMembers.mockReset();
-  mocks.deleteTenantMember.mockReset();
-  mocks.deleteTenantMember.mockResolvedValue(undefined);
-  sessionMock.mockReset();
+  mocks.listMembers.mockReset();
+  mocks.setTenantRole.mockReset();
+  mocks.setTenantRole.mockResolvedValue({});
+  mocks.cancelInvitation.mockReset();
+  mocks.cancelInvitation.mockResolvedValue({});
+  // Authz gate: allow.
+  mocks.requireCrdSession.mockResolvedValue({
+    ok: true,
+    session: { user: { id: "caller" } },
+    userId: "caller",
+  });
 });
 
 describe("revokeMemberAction — last-owner safeguard", () => {
-  it("(1) blocks removal of the last active owner", async () => {
-    withSession("acme");
-    const owner = makeMember({ name: "invite-owner", role: "owner" });
-    mocks.listTenantMembers.mockResolvedValue([owner]);
-
-    const result = await revokeMemberAction("acme", "invite-owner");
-
-    expect(result.ok).toBe(false);
-    expect((result as { code: string }).code).toBe("FORBIDDEN");
-    expect((result as { error: string }).error).toMatch(/last owner/i);
-    // K8s delete must NOT have been called.
-    expect(mocks.deleteTenantMember).not.toHaveBeenCalled();
+  it("blocks removal of the last active owner (no mutation)", async () => {
+    mocks.listMembers.mockResolvedValue({
+      ok: true,
+      data: [member({ userId: "o1", role: "owner" })],
+    });
+    const r = await revokeMemberAction({ userId: "o1", email: "o1@example.com", status: "active" });
+    expect(r.ok).toBe(false);
+    expect((r as { code: string }).code).toBe("FORBIDDEN");
+    expect((r as { error: string }).error).toMatch(/last owner/i);
+    expect(mocks.setTenantRole).not.toHaveBeenCalled();
   });
 
-  it("(2) allows removal when two active owners exist", async () => {
-    withSession("acme");
-    const owner1 = makeMember({ name: "invite-owner1", role: "owner" });
-    const owner2 = makeMember({ name: "invite-owner2", role: "owner" });
-    mocks.listTenantMembers.mockResolvedValue([owner1, owner2]);
-
-    const result = await revokeMemberAction("acme", "invite-owner1");
-
-    expect(result.ok).toBe(true);
-    expect(mocks.deleteTenantMember).toHaveBeenCalledOnce();
+  it("allows removal when two active owners exist", async () => {
+    mocks.listMembers.mockResolvedValue({
+      ok: true,
+      data: [member({ userId: "o1", role: "owner" }), member({ userId: "o2", role: "owner" })],
+    });
+    const r = await revokeMemberAction({ userId: "o1", email: "o1@example.com", status: "active" });
+    expect(r.ok).toBe(true);
+    expect(mocks.setTenantRole).toHaveBeenCalledOnce();
+    expect(mocks.setTenantRole.mock.calls[0][0]).toMatchObject({ userId: "o1", remove: true });
   });
 
-  it("(3) allows removal of an active admin even when only one active owner exists", async () => {
-    withSession("acme");
-    const owner = makeMember({ name: "invite-owner", role: "owner" });
-    const admin = makeMember({ name: "invite-admin", role: "admin" });
-    mocks.listTenantMembers.mockResolvedValue([owner, admin]);
-
-    const result = await revokeMemberAction("acme", "invite-admin");
-
-    expect(result.ok).toBe(true);
-    expect(mocks.deleteTenantMember).toHaveBeenCalledOnce();
+  it("allows removal of an admin even with a single owner", async () => {
+    mocks.listMembers.mockResolvedValue({
+      ok: true,
+      data: [member({ userId: "o1", role: "owner" }), member({ userId: "a1", role: "admin" })],
+    });
+    const r = await revokeMemberAction({ userId: "a1", email: "a1@example.com", status: "active" });
+    expect(r.ok).toBe(true);
+    expect(mocks.setTenantRole).toHaveBeenCalledOnce();
   });
 
-  it("does not count inactive (non-Active) owners toward the active-owner total", async () => {
-    withSession("acme");
-    // One active owner + one revoked owner; target is the active one → blocked.
-    const activeOwner = makeMember({ name: "invite-owner-active", role: "owner", phase: "Active" });
-    const revokedOwner = makeMember({ name: "invite-owner-revoked", role: "owner", phase: "Revoked" });
-    mocks.listTenantMembers.mockResolvedValue([activeOwner, revokedOwner]);
+  it("does not count invited owners toward the active-owner total", async () => {
+    mocks.listMembers.mockResolvedValue({
+      ok: true,
+      data: [
+        member({ userId: "o1", role: "owner", status: "active" }),
+        member({ email: "pending@example.com", role: "owner", status: "invited" }),
+      ],
+    });
+    const r = await revokeMemberAction({ userId: "o1", email: "o1@example.com", status: "active" });
+    expect(r.ok).toBe(false);
+    expect(mocks.setTenantRole).not.toHaveBeenCalled();
+  });
+});
 
-    const result = await revokeMemberAction("acme", "invite-owner-active");
-
-    expect(result.ok).toBe(false);
-    expect((result as { code: string }).code).toBe("FORBIDDEN");
-    expect(mocks.deleteTenantMember).not.toHaveBeenCalled();
+describe("revokeMemberAction — invitation cancel path", () => {
+  it("cancels a pending invitation by email (no roster lookup, no role strip)", async () => {
+    const r = await revokeMemberAction({ userId: "", email: "pending@example.com", status: "invited" });
+    expect(r.ok).toBe(true);
+    expect(mocks.cancelInvitation).toHaveBeenCalledOnce();
+    expect(mocks.cancelInvitation.mock.calls[0][0]).toMatchObject({ email: "pending@example.com" });
+    expect(mocks.setTenantRole).not.toHaveBeenCalled();
+    expect(mocks.listMembers).not.toHaveBeenCalled();
   });
 });

@@ -1,22 +1,36 @@
 'use server';
 
-import { randomUUID } from 'crypto';
-import { revalidatePath } from 'next/cache';
+/**
+ * Member-management Server Actions — backed by the daemon's MembershipService
+ * (gibson#621/#626), NOT the TenantMember CR. Per ADR-0043/0044 the daemon owns
+ * the membership + invitation lifecycle; the dashboard is a pure client.
+ *
+ *   inviteMemberAction     — MembershipService.InviteMember (issues a pending
+ *                            invitation + emails the accept link, gibson#632).
+ *   revokeMemberAction     — active member  → SetTenantRole(remove)
+ *                            pending invite  → CancelInvitation
+ *   resendInvitationAction — MembershipService.ResendInvitation
+ *   acceptInvitationAction — MembershipService.AcceptInvitation (token redeem)
+ *
+ * dashboard#715 ripped the TenantMember CR writes (applyTenantMember /
+ * patchTenantMember / deleteTenantMember).
+ */
 
+import { ConnectError, Code } from '@connectrpc/connect';
+
+import { MembershipService } from '@/src/gen/gibson/tenant/v1/membership_pb';
+import { userClient } from '@/src/lib/gibson-client';
 import {
-  applyTenantMember,
-  deleteTenantMember,
-  listTenantMembers,
-  patchTenantMember,
-  tenantNamespace,
-} from '@/src/lib/k8s/tenants';
-import { getTenantOwnerRef } from '@/src/lib/k8s/owner-ref';
+  requireActiveTenant,
+  NoActiveTenantError,
+  StaleActiveTenantError,
+} from '@/src/lib/auth/active-tenant';
 import { MemberRole } from '@/src/lib/k8s/types';
-import { K8sError } from '@/src/lib/k8s/errors';
 import { emitCrdAuditFromGate } from '@/src/lib/audit/crd';
+import { listMembersAction } from '@/app/actions/read/listMembers';
 
-import { classifyK8sError, type ActionResult } from './types';
-import { requireCrdSession, requireCrdSessionForSelfAction } from './_authz';
+import { type ActionResult } from './types';
+import { requireCrdSession } from './_authz';
 import {
   inviteMemberInput,
   acceptInvitationInput,
@@ -24,13 +38,33 @@ import {
   resendInvitationInput,
 } from './schemas';
 
+/** Map a daemon RPC error to the dashboard ActionResult error shape. */
+function rpcError<T>(e: unknown): ActionResult<T> {
+  if (e instanceof ConnectError) {
+    const code = e.code === Code.PermissionDenied ? 'FORBIDDEN' : 'INTERNAL';
+    return { ok: false, error: e.message, code };
+  }
+  return { ok: false, error: e instanceof Error ? e.message : String(e), code: 'INTERNAL' };
+}
+
+async function activeTenantOr<T>(): Promise<{ tenantId: string } | { result: ActionResult<T> }> {
+  try {
+    return { tenantId: await requireActiveTenant() };
+  } catch (err) {
+    if (err instanceof NoActiveTenantError || err instanceof StaleActiveTenantError) {
+      return { result: { ok: false, error: 'No active tenant.', code: 'FORBIDDEN' } };
+    }
+    throw err;
+  }
+}
+
 export async function inviteMemberAction(input: {
   tenantName: string;
   email: string;
   role: MemberRole;
-}): Promise<ActionResult<{ memberName: string }>> {
+}): Promise<ActionResult<{ invitationId: string }>> {
   const inputKeys = Object.keys(input ?? {});
-  const gate = await requireCrdSession<{ memberName: string }>({
+  const gate = await requireCrdSession<{ invitationId: string }>({
     action: 'inviteMemberAction',
     tenantName: input?.tenantName,
     inputKeys,
@@ -39,280 +73,143 @@ export async function inviteMemberAction(input: {
 
   const parsed = inviteMemberInput.safeParse(input);
   if (!parsed.success) {
-    emitCrdAuditFromGate({
-      session: gate.session,
-      userId: gate.userId,
-      action: 'inviteMemberAction',
-      outcome: 'bad_input',
-      targetTenant: input?.tenantName ?? null,
-      inputKeys,
-      errorCode: 'BAD_INPUT',
-      errorMessage: parsed.error.issues[0]?.message,
-    });
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
   }
 
-  const ns = tenantNamespace(parsed.data.tenantName);
-  const memberName = `invite-${randomUUID().slice(0, 8)}`;
-  // Read the inviter's email from the server-side session — never from
-  // client input. Empty string means the controller will fall back to a
-  // generic placeholder.
-  const inviterEmail =
-    typeof gate.session?.user?.email === 'string' ? gate.session.user.email : '';
+  const t = await activeTenantOr<{ invitationId: string }>();
+  if ('result' in t) return t.result;
+
   try {
-    const ownerRef = await getTenantOwnerRef(parsed.data.tenantName);
-    await applyTenantMember(ns, memberName, {
+    const client = userClient(MembershipService);
+    const resp = await client.inviteMember({
+      tenantId: t.tenantId,
       email: parsed.data.email,
       role: parsed.data.role,
-      tenantRef: { name: parsed.data.tenantName },
-      invitedByEmail: inviterEmail,
-    }, ownerRef);
-    revalidatePath(`/dashboard/settings/members`);
+    });
     emitCrdAuditFromGate({
       session: gate.session,
       userId: gate.userId,
       action: 'inviteMemberAction',
       outcome: 'ok',
-      targetTenant: parsed.data.tenantName,
+      targetTenant: t.tenantId,
       inputKeys,
-      resourceRef: memberName,
+      resourceRef: resp.invitationId,
     });
-    return { ok: true, data: { memberName } };
+    return { ok: true, data: { invitationId: resp.invitationId } };
   } catch (e) {
-    const err = e as K8sError;
-    const code = classifyK8sError(err);
-    emitCrdAuditFromGate({
-      session: gate.session,
-      userId: gate.userId,
-      action: 'inviteMemberAction',
-      outcome: 'internal',
-      targetTenant: parsed.data.tenantName,
-      inputKeys,
-      errorCode: code,
-      errorMessage: err.message,
-    });
-    return { ok: false, error: err.message, code };
+    return rpcError(e);
   }
 }
 
 /**
- * An invitee accepts their own invitation. Uses the self-action gate —
- * the caller's session.user.id MUST equal input.userId. No permission
- * string: the ability to accept an invite is inherent to being that user.
+ * Redeem an invitation token. The token is the sole capability — the daemon's
+ * AcceptInvitation is unauthenticated and provisions the invitee. Called from
+ * the invitation accept page.
  */
-export async function acceptInvitationAction(input: {
-  tenantName: string;
-  memberName: string;
-  userId: string;
-}): Promise<ActionResult> {
-  const inputKeys = Object.keys(input ?? {});
-  const gate = await requireCrdSessionForSelfAction(
-    'acceptInvitationAction',
-    input?.userId ?? '',
-    inputKeys,
-  );
-  if (!gate.ok) return gate.result;
-
+export async function acceptInvitationAction(input: { token: string }): Promise<ActionResult> {
   const parsed = acceptInvitationInput.safeParse(input);
   if (!parsed.success) {
-    emitCrdAuditFromGate({
-      session: gate.session,
-      userId: gate.userId,
-      action: 'acceptInvitationAction',
-      outcome: 'bad_input',
-      targetTenant: input?.tenantName ?? null,
-      inputKeys,
-      errorCode: 'BAD_INPUT',
-      errorMessage: parsed.error.issues[0]?.message,
-    });
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
   }
-
   try {
-    await patchTenantMember(tenantNamespace(parsed.data.tenantName), parsed.data.memberName, {
-      spec: { acceptedByUserId: parsed.data.userId },
-    });
-    emitCrdAuditFromGate({
-      session: gate.session,
-      userId: gate.userId,
-      action: 'acceptInvitationAction',
-      outcome: 'ok',
-      targetTenant: parsed.data.tenantName,
-      inputKeys,
-      resourceRef: parsed.data.memberName,
-    });
+    const client = userClient(MembershipService);
+    await client.acceptInvitation({ token: parsed.data.token });
     return { ok: true, data: undefined };
   } catch (e) {
-    const err = e as K8sError;
-    const code = classifyK8sError(err);
-    emitCrdAuditFromGate({
-      session: gate.session,
-      userId: gate.userId,
-      action: 'acceptInvitationAction',
-      outcome: 'internal',
-      targetTenant: parsed.data.tenantName,
-      inputKeys,
-      errorCode: code,
-      errorMessage: err.message,
-    });
-    return { ok: false, error: err.message, code };
+    return rpcError(e);
   }
 }
 
-export async function revokeMemberAction(
-  tenantName: string,
-  memberName: string,
-): Promise<ActionResult> {
-  const inputKeys = ['tenantName', 'memberName'];
-  const gate = await requireCrdSession({
-    action: 'revokeMemberAction',
-    tenantName,
-    inputKeys,
-  });
+/**
+ * Remove a member or cancel a pending invitation. Active members are removed by
+ * stripping their role tuples (SetTenantRole remove); pending invitations are
+ * cancelled by email. The last active owner cannot be removed.
+ */
+export async function revokeMemberAction(input: {
+  userId: string;
+  email: string;
+  status: string;
+}): Promise<ActionResult> {
+  const inputKeys = ['userId', 'email', 'status'];
+  const gate = await requireCrdSession({ action: 'revokeMemberAction', inputKeys });
   if (!gate.ok) return gate.result;
 
-  const parsed = revokeMemberInput.safeParse({ tenantName, memberName });
+  const parsed = revokeMemberInput.safeParse(input);
   if (!parsed.success) {
-    emitCrdAuditFromGate({
-      session: gate.session,
-      userId: gate.userId,
-      action: 'revokeMemberAction',
-      outcome: 'bad_input',
-      targetTenant: tenantName,
-      inputKeys,
-      errorCode: 'BAD_INPUT',
-      errorMessage: parsed.error.issues[0]?.message,
-    });
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
   }
 
-  // Safeguard: prevent removing the last active owner. This guard runs
-  // before any mutation so it holds even if the client-side gate is bypassed.
-  try {
-    const allMembers = await listTenantMembers(tenantNamespace(parsed.data.tenantName));
-    const activeOwners = allMembers.filter(
-      (m) => m.spec.role === 'owner' && m.status?.phase === 'Active',
-    );
-    const targetMember = allMembers.find((m) => m.metadata.name === parsed.data.memberName);
-    if (activeOwners.length === 1 && targetMember?.spec.role === 'owner') {
-      emitCrdAuditFromGate({
-        session: gate.session,
-        userId: gate.userId,
-        action: 'revokeMemberAction',
-        outcome: 'bad_input',
-        targetTenant: parsed.data.tenantName,
-        inputKeys,
-        errorCode: 'FORBIDDEN',
-        errorMessage: 'Cannot remove the last owner of a workspace. Transfer ownership first.',
-        resourceRef: parsed.data.memberName,
-      });
-      return {
-        ok: false,
-        error: 'Cannot remove the last owner of a workspace. Transfer ownership first.',
-        code: 'FORBIDDEN',
-      };
+  const t = await activeTenantOr<void>();
+  if ('result' in t) return t.result;
+
+  const isInvited = parsed.data.status === 'invited';
+
+  // Last-owner safeguard for active members. Reads the daemon roster (source of
+  // truth) so it holds even if the client gate is bypassed.
+  if (!isInvited) {
+    const roster = await listMembersAction();
+    if (roster.ok) {
+      const activeOwners = roster.data.filter((m) => m.role === 'owner' && m.status === 'active');
+      const target = roster.data.find((m) => m.userId === parsed.data.userId);
+      if (activeOwners.length === 1 && target?.role === 'owner') {
+        return {
+          ok: false,
+          error: 'Cannot remove the last owner of a workspace. Transfer ownership first.',
+          code: 'FORBIDDEN',
+        };
+      }
     }
-  } catch (e) {
-    const err = e as K8sError;
-    const code = classifyK8sError(err);
-    emitCrdAuditFromGate({
-      session: gate.session,
-      userId: gate.userId,
-      action: 'revokeMemberAction',
-      outcome: 'internal',
-      targetTenant: parsed.data.tenantName,
-      inputKeys,
-      errorCode: code,
-      errorMessage: `last-owner check failed: ${err.message}`,
-      resourceRef: parsed.data.memberName,
-    });
-    return { ok: false, error: err.message, code };
   }
 
   try {
-    await deleteTenantMember(tenantNamespace(parsed.data.tenantName), parsed.data.memberName);
-    revalidatePath(`/dashboard/settings/members`);
+    const client = userClient(MembershipService);
+    if (isInvited) {
+      await client.cancelInvitation({ tenantId: t.tenantId, email: parsed.data.email });
+    } else {
+      await client.setTenantRole({ tenantId: t.tenantId, userId: parsed.data.userId, role: '', remove: true });
+    }
     emitCrdAuditFromGate({
       session: gate.session,
       userId: gate.userId,
       action: 'revokeMemberAction',
       outcome: 'ok',
-      targetTenant: parsed.data.tenantName,
+      targetTenant: t.tenantId,
       inputKeys,
-      resourceRef: parsed.data.memberName,
+      resourceRef: parsed.data.userId || parsed.data.email,
     });
     return { ok: true, data: undefined };
   } catch (e) {
-    const err = e as K8sError;
-    const code = classifyK8sError(err);
-    emitCrdAuditFromGate({
-      session: gate.session,
-      userId: gate.userId,
-      action: 'revokeMemberAction',
-      outcome: 'internal',
-      targetTenant: parsed.data.tenantName,
-      inputKeys,
-      errorCode: code,
-      errorMessage: err.message,
-    });
-    return { ok: false, error: err.message, code };
+    return rpcError(e);
   }
 }
 
-export async function resendInvitationAction(
-  tenantName: string,
-  memberName: string,
-): Promise<ActionResult> {
-  const inputKeys = ['tenantName', 'memberName'];
-  const gate = await requireCrdSession({
-    action: 'resendInvitationAction',
-    tenantName,
-    inputKeys,
-  });
+export async function resendInvitationAction(input: { email: string }): Promise<ActionResult> {
+  const inputKeys = ['email'];
+  const gate = await requireCrdSession({ action: 'resendInvitationAction', inputKeys });
   if (!gate.ok) return gate.result;
 
-  const parsed = resendInvitationInput.safeParse({ tenantName, memberName });
+  const parsed = resendInvitationInput.safeParse(input);
   if (!parsed.success) {
-    emitCrdAuditFromGate({
-      session: gate.session,
-      userId: gate.userId,
-      action: 'resendInvitationAction',
-      outcome: 'bad_input',
-      targetTenant: tenantName,
-      inputKeys,
-      errorCode: 'BAD_INPUT',
-      errorMessage: parsed.error.issues[0]?.message,
-    });
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
   }
 
+  const t = await activeTenantOr<void>();
+  if ('result' in t) return t.result;
+
   try {
-    await patchTenantMember(tenantNamespace(parsed.data.tenantName), parsed.data.memberName, {
-      spec: { resendRequestedAt: new Date().toISOString() },
-    });
+    const client = userClient(MembershipService);
+    await client.resendInvitation({ tenantId: t.tenantId, email: parsed.data.email });
     emitCrdAuditFromGate({
       session: gate.session,
       userId: gate.userId,
       action: 'resendInvitationAction',
       outcome: 'ok',
-      targetTenant: parsed.data.tenantName,
+      targetTenant: t.tenantId,
       inputKeys,
-      resourceRef: parsed.data.memberName,
+      resourceRef: parsed.data.email,
     });
     return { ok: true, data: undefined };
   } catch (e) {
-    const err = e as K8sError;
-    const code = classifyK8sError(err);
-    emitCrdAuditFromGate({
-      session: gate.session,
-      userId: gate.userId,
-      action: 'resendInvitationAction',
-      outcome: 'internal',
-      targetTenant: parsed.data.tenantName,
-      inputKeys,
-      errorCode: code,
-      errorMessage: err.message,
-    });
-    return { ok: false, error: err.message, code };
+    return rpcError(e);
   }
 }

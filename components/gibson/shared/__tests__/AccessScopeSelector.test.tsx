@@ -105,6 +105,7 @@ describe("AccessScopeSelector", () => {
           email: "ada@example.com",
           role: "tenant_admin",
           joinedAt: "",
+          status: "active",
         },
       ],
     });

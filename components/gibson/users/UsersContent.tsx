@@ -2,12 +2,12 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/src/lib/session-client";
 import { useTenantId } from "@/src/lib/auth/tenant";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { MoreHorizontal, Search, Trash2, UserPlus, Eye, Mail, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { formatDistanceToNow } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,11 +54,10 @@ import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { InviteUserDialog } from "./InviteUserDialog";
 import { TeamMembershipChips } from "./TeamMembershipChips";
-import { useCRDWatch } from "@/src/hooks/useCRDWatch";
 import { useOrgGraph } from "@/src/hooks/use-org-graph";
 import { revokeMemberAction, resendInvitationAction } from "@/app/actions/crd/member";
 import { setTenantRoleAction } from "@/app/actions/crd/role";
-import type { TenantMember } from "@/src/lib/k8s/types";
+import { listMembersAction, type MemberRow } from "@/app/actions/read/listMembers";
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
@@ -69,8 +68,10 @@ const ROLE_BADGE_CLASS: Record<string, string> = {
   viewer: "border-border bg-muted/50 text-muted-foreground",
 };
 
-function tenantNamespace(name: string): string {
-  return `tenant-${name}`;
+/** A row key that is stable for both active members (userId) and pending
+ * invitations (email, where userId is empty). */
+function rowKey(m: MemberRow): string {
+  return m.userId || `invite:${m.email}`;
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -84,16 +85,15 @@ function UserActionsMenu({
   onResend,
   onCancel,
 }: {
-  member: TenantMember;
+  member: MemberRow;
   canEdit: boolean;
   isSelf: boolean;
   isOwner: boolean;
-  onRemove: (member: TenantMember) => void;
-  onResend: (member: TenantMember) => void;
-  onCancel: (member: TenantMember) => void;
+  onRemove: (member: MemberRow) => void;
+  onResend: (member: MemberRow) => void;
+  onCancel: (member: MemberRow) => void;
 }) {
-  const userId = member.status?.userId ?? member.metadata.name;
-  const isInvited = member.status?.phase === "Invited";
+  const isInvited = member.status === "invited";
   const canRemove = canEdit && !isSelf && !isOwner;
 
   // For owner rows there are no destructive actions — wrap the trigger with a
@@ -105,16 +105,18 @@ function UserActionsMenu({
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="size-8">
           <MoreHorizontal className="size-4" />
-          <span className="sr-only">Open actions for {member.spec.email}</span>
+          <span className="sr-only">Open actions for {member.email}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link href={`/dashboard/organization/users/${userId}`}>
-            <Eye className="size-4" />
-            View Details
-          </Link>
-        </DropdownMenuItem>
+        {member.userId && (
+          <DropdownMenuItem asChild>
+            <Link href={`/dashboard/organization/users/${member.userId}`}>
+              <Eye className="size-4" />
+              View Details
+            </Link>
+          </DropdownMenuItem>
+        )}
         {canRemove && isInvited && (
           <>
             <DropdownMenuSeparator />
@@ -179,48 +181,46 @@ export function UsersContent() {
   );
   const canEdit = !authLoading && canEditResolved;
 
-  const namespace = tenantId ? tenantNamespace(tenantId) : undefined;
-
-  const { items, status, error } = useCRDWatch("TenantMember", namespace, {
+  // Roster from the daemon (MembershipService.ListMembers) — the single source
+  // of truth post dashboard#715. Active members + pending invitations both
+  // arrive here; status discriminates them. Refetched after every mutation.
+  const {
+    data: membersResult,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["tenant-members", tenantId],
+    queryFn: () => listMembersAction(),
     enabled: !!tenantId,
   });
+  const items: MemberRow[] = membersResult?.ok ? membersResult.data : [];
+  const loadError = membersResult && !membersResult.ok ? membersResult.error : null;
 
   const { data: orgGraph, loading: teamsLoading } = useOrgGraph();
   const teamsByUser = orgGraph.byUser;
 
   const [search, setSearch] = React.useState("");
   const [inviteOpen, setInviteOpen] = React.useState(false);
-  const [memberToRemove, setMemberToRemove] = React.useState<TenantMember | null>(null);
+  const [memberToRemove, setMemberToRemove] = React.useState<MemberRow | null>(null);
   const [removing, setRemoving] = React.useState(false);
-  const [memberToCancel, setMemberToCancel] = React.useState<TenantMember | null>(null);
+  const [memberToCancel, setMemberToCancel] = React.useState<MemberRow | null>(null);
   const [cancelling, setCancelling] = React.useState(false);
-  // Local optimistic role overrides. The displayed role badge reads from
-  // member.spec.role normally, but setTenantRoleAction writes FGA tuples
-  // directly — the spec.role field is not updated by the operator yet.
-  // We track local overrides so the dropdown reflects the change without
-  // requiring a page reload. The mismatch between spec.role and the FGA
-  // tuple persists across reloads until a TenantMember-side reconciler
-  // (or a corresponding patchTenantMember call) is added — filed as a
-  // known follow-up.
-  const [roleOverrides, setRoleOverrides] = React.useState<Record<string, "admin" | "member">>({});
   const [pendingRole, setPendingRole] = React.useState<Record<string, boolean>>({});
 
   const filtered = React.useMemo(() => {
     if (!search.trim()) return items;
     const q = search.toLowerCase();
-    return items.filter((m) =>
-      m.spec.email.toLowerCase().includes(q)
-    );
+    return items.filter((m) => m.email.toLowerCase().includes(q));
   }, [items, search]);
 
-  async function handleRoleChange(member: TenantMember, role: "admin" | "member") {
-    const userId = member.status?.userId ?? member.metadata.name;
-    setPendingRole((prev) => ({ ...prev, [userId]: true }));
+  async function handleRoleChange(member: MemberRow, role: "admin" | "member") {
+    const key = rowKey(member);
+    setPendingRole((prev) => ({ ...prev, [key]: true }));
     try {
-      const res = await setTenantRoleAction({ userId, role });
+      const res = await setTenantRoleAction({ userId: member.userId, role });
       if (!res.ok) throw new Error(res.error ?? "failed");
-      setRoleOverrides((prev) => ({ ...prev, [userId]: role }));
-      toast.success(`${member.spec.email} is now ${role}.`);
+      toast.success(`${member.email} is now ${role}.`);
+      await refetch();
     } catch (err) {
       toast.error(
         `Failed to change role: ${err instanceof Error ? err.message : String(err)}`,
@@ -228,7 +228,7 @@ export function UsersContent() {
     } finally {
       setPendingRole((prev) => {
         const next = { ...prev };
-        delete next[userId];
+        delete next[key];
         return next;
       });
     }
@@ -238,28 +238,29 @@ export function UsersContent() {
     if (!memberToRemove) return;
     setRemoving(true);
     try {
-      const res = await revokeMemberAction(tenantId, memberToRemove.metadata.name);
+      const res = await revokeMemberAction({
+        userId: memberToRemove.userId,
+        email: memberToRemove.email,
+        status: memberToRemove.status,
+      });
       if (!res.ok) throw new Error(res.error);
-      toast.success(`${memberToRemove.spec.email} has been removed.`);
+      toast.success(`${memberToRemove.email} has been removed.`);
+      await refetch();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to remove user."
-      );
+      toast.error(err instanceof Error ? err.message : "Failed to remove user.");
     } finally {
       setRemoving(false);
       setMemberToRemove(null);
     }
   }
 
-  async function handleResend(member: TenantMember) {
+  async function handleResend(member: MemberRow) {
     try {
-      const res = await resendInvitationAction(tenantId, member.metadata.name);
+      const res = await resendInvitationAction({ email: member.email });
       if (!res.ok) throw new Error(res.error);
-      toast.success(`Invitation resent to ${member.spec.email}.`);
+      toast.success(`Invitation resent to ${member.email}.`);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to resend invitation."
-      );
+      toast.error(err instanceof Error ? err.message : "Failed to resend invitation.");
     }
   }
 
@@ -267,21 +268,23 @@ export function UsersContent() {
     if (!memberToCancel) return;
     setCancelling(true);
     try {
-      const res = await revokeMemberAction(tenantId, memberToCancel.metadata.name);
+      const res = await revokeMemberAction({
+        userId: "",
+        email: memberToCancel.email,
+        status: "invited",
+      });
       if (!res.ok) throw new Error(res.error);
-      toast.success(`Invitation for ${memberToCancel.spec.email} has been cancelled.`);
+      toast.success(`Invitation for ${memberToCancel.email} has been cancelled.`);
+      await refetch();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to cancel invitation."
-      );
+      toast.error(err instanceof Error ? err.message : "Failed to cancel invitation.");
     } finally {
       setCancelling(false);
       setMemberToCancel(null);
     }
   }
 
-  const isLoading = status === "connecting" || status === "idle";
-  const isError = status === "error";
+  const isError = !!loadError;
 
   return (
     <div className="space-y-4">
@@ -315,11 +318,8 @@ export function UsersContent() {
       </div>
 
       {/* Error state */}
-      {isError && error && (
-        <ErrorAlert
-          error={new Error(error)}
-          title="Failed to load members"
-        />
+      {isError && loadError && (
+        <ErrorAlert error={new Error(loadError)} title="Failed to load members" />
       )}
 
       {/* Loading state */}
@@ -352,30 +352,29 @@ export function UsersContent() {
                 <TableHead className="w-40">Role</TableHead>
                 <TableHead>Teams</TableHead>
                 <TableHead className="w-24">Status</TableHead>
-                <TableHead className="w-28">Invited</TableHead>
+                <TableHead className="w-28">Joined</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((member) => {
-                const isSelf = member.status?.userId === currentUserId;
-                const userId = member.status?.userId ?? member.metadata.name;
-                const specRole = member.spec.role;
-                const isOwner = specRole === "owner";
-                const effectiveRole = roleOverrides[userId] ?? specRole ?? "member";
-                const phase = member.status?.phase ?? "Pending";
-                const userTeams = teamsByUser[userId] ?? [];
-                const showDropdown = canEdit && !isSelf && !isOwner;
-                const isPending = !!pendingRole[userId];
+                const key = rowKey(member);
+                const isSelf = !!member.userId && member.userId === currentUserId;
+                const role = member.role || "member";
+                const isOwner = role === "owner";
+                const isInvited = member.status === "invited";
+                const userTeams = member.userId ? teamsByUser[member.userId] ?? [] : [];
+                const showDropdown = canEdit && !isSelf && !isOwner && !isInvited;
+                const isPending = !!pendingRole[key];
                 return (
-                  <TableRow key={member.metadata.name}>
+                  <TableRow key={key}>
                     <TableCell className="font-medium">
-                      <span className="data-value text-xs">{member.spec.email}</span>
+                      <span className="data-value text-xs">{member.email}</span>
                     </TableCell>
                     <TableCell>
                       {showDropdown ? (
                         <Select
-                          value={effectiveRole}
+                          value={role}
                           onValueChange={(v) =>
                             handleRoleChange(member, v as "admin" | "member")
                           }
@@ -392,9 +391,9 @@ export function UsersContent() {
                       ) : (
                         <Badge
                           variant="outline"
-                          className={`text-xs font-mono ${ROLE_BADGE_CLASS[effectiveRole] ?? ROLE_BADGE_CLASS.viewer}`}
+                          className={`text-xs font-mono ${ROLE_BADGE_CLASS[role] ?? ROLE_BADGE_CLASS.viewer}`}
                         >
-                          {effectiveRole}{isSelf ? " (you)" : ""}
+                          {role}{isSelf ? " (you)" : ""}
                         </Badge>
                       )}
                     </TableCell>
@@ -406,26 +405,13 @@ export function UsersContent() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-xs font-mono text-muted-foreground">
-                          {phase}
-                        </span>
-                        {phase === "Invited" && member.status?.invitationExpiresAt && (() => {
-                          const expiresAt = new Date(member.status!.invitationExpiresAt!);
-                          const isExpired = expiresAt < new Date();
-                          return (
-                            <span className="text-xs text-muted-foreground">
-                              {isExpired
-                                ? "Expired"
-                                : `expires in ${formatDistanceToNow(expiresAt)}`}
-                            </span>
-                          );
-                        })()}
-                      </div>
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {isInvited ? "Invited" : "Active"}
+                      </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm tabular-nums">
-                      {member.metadata.creationTimestamp
-                        ? new Date(member.metadata.creationTimestamp).toLocaleDateString()
+                      {member.joinedAt
+                        ? new Date(member.joinedAt).toLocaleDateString()
                         : "—"}
                     </TableCell>
                     <TableCell>
@@ -463,6 +449,7 @@ export function UsersContent() {
           open={inviteOpen}
           onOpenChange={setInviteOpen}
           tenantId={tenantId}
+          onInvited={() => refetch()}
         />
       )}
 
@@ -476,7 +463,7 @@ export function UsersContent() {
             <AlertDialogTitle>Remove user?</AlertDialogTitle>
             <AlertDialogDescription>
               This will remove{" "}
-              <strong>{memberToRemove?.spec.email}</strong> from this workspace.
+              <strong>{memberToRemove?.email}</strong> from this workspace.
               They will lose access immediately.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -505,7 +492,7 @@ export function UsersContent() {
             <AlertDialogTitle>Cancel invitation?</AlertDialogTitle>
             <AlertDialogDescription>
               Cancel invitation for{" "}
-              <strong>{memberToCancel?.spec.email}</strong>? They will not be
+              <strong>{memberToCancel?.email}</strong>? They will not be
               able to use the invitation link.
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -27,8 +27,6 @@
 
 import { MembershipService } from "@/src/gen/gibson/tenant/v1/membership_pb";
 import { userClient } from "@/src/lib/gibson-client";
-import { logger } from "@/src/lib/logger";
-import { listTenantMembers, patchTenantMember } from "@/src/lib/k8s/tenants";
 import {
   requireActiveTenant,
   NoActiveTenantError,
@@ -37,10 +35,6 @@ import {
 
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
-
-function tenantNamespace(slug: string): string {
-  return `tenant-${slug}`;
-}
 
 export type TenantRole = "admin" | "member";
 
@@ -87,7 +81,10 @@ export async function setTenantRoleAction(input: {
     }
     throw err;
   }
-  // 1. Authoritative FGA write. Fail here returns INTERNAL with no mutation.
+  // Authoritative MembershipService write (FGA tuples). dashboard#715 removed
+  // the former TenantMember.spec.role display-cache patch — the daemon's
+  // ListMembers derives role from FGA, so a roster refetch reflects the change
+  // with no CR to keep in sync.
   try {
     const client = userClient(MembershipService);
     await client.setTenantRole({
@@ -100,39 +97,6 @@ export async function setTenantRoleAction(input: {
     return { ok: false, error: String(err), code: "INTERNAL" };
   }
 
-  // 2. Display-cache write on TenantMember.spec.role. FGA is already
-  // authoritative; this keeps the badge fresh across reloads. Best-effort:
-  // we look up the TenantMember by status.userId in the caller's tenant
-  // namespace, patch spec.role. If the lookup fails or the patch fails,
-  // log + continue. Some scenarios where the patch is legitimately a no-op:
-  // (a) the user has never had a TenantMember CR (signed in via a path that
-  // skipped invite), (b) the CR was deleted between FGA write + this patch.
-  try {
-    const ns = tenantNamespace(callerTenantId);
-    const members = await listTenantMembers(ns);
-    const target = members.find(
-      (m) => m.status?.userId === input.userId,
-    );
-    if (target) {
-      await patchTenantMember(ns, target.metadata.name, {
-        spec: { role: input.role },
-      });
-    } else {
-      logger.warn(
-        { userId: input.userId, tenantId: callerTenantId },
-        "[setTenantRoleAction] no TenantMember found for userId; FGA write succeeded but spec.role not updated",
-      );
-    }
-  } catch (err) {
-    logger.warn(
-      {
-        userId: input.userId,
-        tenantId: callerTenantId,
-        err: err instanceof Error ? err.message : String(err),
-      },
-      "[setTenantRoleAction] FGA write succeeded but TenantMember.spec.role patch failed; badge may show stale role on reload",
-    );
-  }
   return { ok: true, data: { applied: true } };
 }
 
