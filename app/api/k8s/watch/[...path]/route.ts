@@ -7,7 +7,9 @@ import { CRDKind, GibsonCRD, WatchEvent } from '@/src/lib/k8s/types';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const VALID_KINDS: CRDKind[] = ['Tenant', 'TenantMember', 'AgentEnrollment', 'ComponentGrant'];
+// AgentEnrollment removed (dashboard#713): enrollment is no longer a CRD; it
+// mints credentials via AgentIdentityService. No dashboard path reads the CR.
+const VALID_KINDS: CRDKind[] = ['Tenant', 'TenantMember', 'ComponentGrant'];
 
 export async function GET(
   req: NextRequest,

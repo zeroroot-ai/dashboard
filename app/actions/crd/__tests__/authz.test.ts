@@ -69,13 +69,6 @@ vi.mock("@/src/lib/k8s/tenants", () => ({
   ]),
   deleteTenantMember: vi.fn(async () => undefined),
   patchTenantMember: vi.fn(async (_ns: string, name: string) => ({ metadata: { name } })),
-  applyAgentEnrollment: vi.fn(async (_ns: string, name: string) => ({ metadata: { name } })),
-  deleteAgentEnrollment: vi.fn(async () => undefined),
-  getAgentEnrollment: vi.fn(async (_ns: string, name: string) => ({
-    metadata: { name },
-    status: { bootstrapSecretRef: "boot-secret" },
-  })),
-  getBootstrapToken: vi.fn(async () => ({ token: "TESTTOKEN", platformUrl: "https://test" })),
   tenantNamespace: (name: string) => `tenant-${name}`,
 }));
 
@@ -112,7 +105,6 @@ import * as grantActions from "../grant";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import * as memberActions from "../member";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-import * as enrollmentActions from "../enrollment";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import * as teamActions from "../teams";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
@@ -207,7 +199,6 @@ const allExportedActions = [
   ...Object.keys(tenantActions),
   ...Object.keys(grantActions),
   ...Object.keys(memberActions),
-  ...Object.keys(enrollmentActions),
   ...Object.keys(teamActions),
   ...Object.keys(roleActions),
   ...Object.keys(accessActions),
@@ -375,47 +366,8 @@ const MANIFESTS: ActionManifest[] = [
     invokeBadInput: (t) => () => memberActions.resendInvitationAction(t, "UPPERCASE"),
     k8sMock: () => k8sTenants.patchTenantMember as Mock,
   },
-  {
-    name: "createEnrollmentAction",
-    permission: "enrollments:create",
-    tenantName: "acme",
-    invokeValid:
-      (t) => () =>
-        enrollmentActions.createEnrollmentAction({
-          tenantName: t,
-          name: "agent-1",
-          agentName: "breach-checker",
-          mode: "autonomous",
-        }),
-    invokeBadInput:
-      (t) => () =>
-        enrollmentActions.createEnrollmentAction({
-          tenantName: t,
-          name: "UPPERCASE",
-          agentName: "breach-checker",
-          mode: "autonomous",
-        }),
-    k8sMock: () => k8sTenants.applyAgentEnrollment as Mock,
-  },
-  {
-    name: "revokeEnrollmentAction",
-    permission: "enrollments:delete",
-    tenantName: "acme",
-    invokeValid: (t) => () => enrollmentActions.revokeEnrollmentAction(t, "agent-1"),
-    invokeBadInput:
-      (t) => () => enrollmentActions.revokeEnrollmentAction(t, "UPPERCASE"),
-    k8sMock: () => k8sTenants.deleteAgentEnrollment as Mock,
-  },
-  {
-    name: "fetchBootstrapTokenAction",
-    permission: "enrollments:read_bootstrap",
-    tenantName: "acme",
-    invokeValid:
-      (t) => () => enrollmentActions.fetchBootstrapTokenAction(t, "agent-1"),
-    invokeBadInput:
-      (t) => () => enrollmentActions.fetchBootstrapTokenAction(t, "UPPERCASE"),
-    k8sMock: () => k8sTenants.getAgentEnrollment as Mock,
-  },
+  // Enrollment actions removed (dashboard#713): enrollment moved to
+  // AgentIdentityService (/api/agents/register); the CR-based path is gone.
 ];
 
 // ---------------------------------------------------------------------------
@@ -553,14 +505,3 @@ describe("acceptInvitationAction — self-check", () => {
   });
 });
 
-describe("fetchBootstrapTokenAction — token scrubbed from audit", () => {
-  it("audit event for a successful fetch does not contain the token value", async () => {
-    getSessionMock.mockResolvedValueOnce(
-      crossTenantSession(),
-    );
-    const r = await enrollmentActions.fetchBootstrapTokenAction("acme", "agent-1");
-    expect(r.ok).toBe(true);
-    const audited = JSON.stringify(emitCrdAuditFromGateSpy.mock.calls);
-    expect(audited).not.toContain("TESTTOKEN");
-  });
-});
