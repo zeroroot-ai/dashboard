@@ -47,6 +47,13 @@ export async function patchTenant(name: string, patch: object): Promise<Tenant> 
 }
 
 // ---- TenantMember ----
+//
+// dashboard#716: the member-management writes/reads (list/patch/delete) were
+// ripped — membership is owned by the daemon's MembershipService (ADR-0043/0044)
+// and the dashboard reads ListMembers, not the CR. Only applyTenantMember
+// remains: it creates the FOUNDING owner during tenant provisioning at signup
+// (the one path ADR-0044 still permits a dashboard K8s write). New TenantMember
+// CR mutations are rejected by scripts/check-no-tenantmember-crd-writes.mjs.
 
 export async function applyTenantMember(
   namespace: string,
@@ -65,22 +72,6 @@ export async function applyTenantMember(
     } as TenantMember,
     false,
   );
-}
-
-export async function listTenantMembers(namespace: string): Promise<TenantMember[]> {
-  return k8s().list<TenantMember>('TenantMember', namespace);
-}
-
-export async function deleteTenantMember(namespace: string, name: string): Promise<void> {
-  return k8s().delete('TenantMember', name, namespace);
-}
-
-export async function patchTenantMember(
-  namespace: string,
-  name: string,
-  patch: object,
-): Promise<TenantMember> {
-  return k8s().patch<TenantMember>('TenantMember', name, patch, namespace);
 }
 
 // AgentEnrollment helpers were removed (dashboard#713): enrollment now mints
