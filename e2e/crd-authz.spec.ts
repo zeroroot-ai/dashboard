@@ -35,7 +35,6 @@ const TENANT_A_NAME = process.env.E2E_TENANT_A_NAME ?? "tenant-a";
 const TENANT_B_NAME = process.env.E2E_TENANT_B_NAME ?? "tenant-b";
 const OPERATOR_EMAIL = process.env.E2E_PLATFORM_OPERATOR_EMAIL ?? "ops@zeroroot.ai";
 const OPERATOR_PASSWORD = process.env.E2E_PLATFORM_OPERATOR_PASSWORD ?? "password";
-const ENROLLMENT_NAME = process.env.E2E_ENROLLMENT_NAME ?? "e2e-agent";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -118,38 +117,9 @@ test.describe("Journey 2 — cross-tenant success for operator", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Journey 3 — fetchBootstrapToken rate limit
-// ---------------------------------------------------------------------------
-
-test.describe("Journey 3 — bootstrap token rate-limit", () => {
-  test("sixth fetch within 5 minutes returns RATE_LIMITED", async ({ page, request }) => {
-    await loginAs(page, OPERATOR_EMAIL, OPERATOR_PASSWORD);
-    const cookie = await sessionCookie(page);
-
-    // Five allowed.
-    for (let i = 0; i < 5; i++) {
-      const ok = await callServerAction(request, cookie, "crd/fetchBootstrapTokenAction", [
-        TENANT_A_NAME,
-        ENROLLMENT_NAME,
-      ]);
-      expect(ok.status).toBe(200);
-      // Either ok:true or a non-RATE_LIMITED denial (e.g. consumed secret);
-      // both are acceptable here — we only assert budget is not exhausted.
-      const p = ok.json as { ok: boolean; code?: string };
-      if (!p.ok) expect(p.code).not.toBe("RATE_LIMITED");
-    }
-
-    const sixth = await callServerAction(request, cookie, "crd/fetchBootstrapTokenAction", [
-      TENANT_A_NAME,
-      ENROLLMENT_NAME,
-    ]);
-    expect(sixth.status).toBe(200);
-    const p = sixth.json as { ok: boolean; code?: string };
-    expect(p.ok).toBe(false);
-    expect(p.code).toBe("RATE_LIMITED");
-  });
-});
+// Journey 3 (bootstrap-token rate-limit) removed (dashboard#713): the
+// fetchBootstrapTokenAction + CR-based enrollment path no longer exists;
+// enrollment mints credentials once via AgentIdentityService.
 
 // ---------------------------------------------------------------------------
 // Build-time guard wiring — asserted here so this spec fails if the wiring

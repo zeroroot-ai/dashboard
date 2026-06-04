@@ -259,12 +259,6 @@ export const CRD_PERMISSIONS: Record<
   acceptInvitationAction: { relation: "__self__" },
   revokeMemberAction: { relation: "admin" },
   resendInvitationAction: { relation: "admin", rateLimit: "inviteMember" },
-  createEnrollmentAction: { relation: "admin" },
-  revokeEnrollmentAction: { relation: "admin" },
-  fetchBootstrapTokenAction: {
-    relation: "admin",
-    rateLimit: "fetchBootstrapToken",
-  },
   setComponentAccessAction: { relation: "admin" },
   installAgentAction: { relation: "admin" },
   listTeamsAction: { relation: "admin" },

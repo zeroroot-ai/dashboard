@@ -9,10 +9,8 @@ import { getCorrelationId } from '@/src/lib/correlation';
 import {
   Tenant,
   TenantMember,
-  AgentEnrollment,
   TenantSpec,
   TenantMemberSpec,
-  AgentEnrollmentSpec,
 } from './types';
 import type { K8sOwnerReference } from './owner-ref';
 
@@ -89,58 +87,11 @@ export async function patchTenantMember(
   return k8s().patch<TenantMember>('TenantMember', name, patch, namespace);
 }
 
-// ---- AgentEnrollment ----
-
-export async function applyAgentEnrollment(
-  namespace: string,
-  name: string,
-  spec: AgentEnrollmentSpec,
-  ownerRef?: K8sOwnerReference | null,
-): Promise<AgentEnrollment> {
-  const metadata: AgentEnrollment['metadata'] = { name, namespace };
-  if (ownerRef) metadata.ownerReferences = [ownerRef];
-  return k8s().apply<AgentEnrollment>(
-    {
-      apiVersion: 'gibson.zeroroot.ai/v1alpha1',
-      kind: 'AgentEnrollment',
-      metadata,
-      spec,
-    } as AgentEnrollment,
-    false,
-  );
-}
-
-export async function listAgentEnrollments(namespace: string): Promise<AgentEnrollment[]> {
-  return k8s().list<AgentEnrollment>('AgentEnrollment', namespace);
-}
-
-export async function getAgentEnrollment(
-  namespace: string,
-  name: string,
-): Promise<AgentEnrollment> {
-  return k8s().get<AgentEnrollment>('AgentEnrollment', name, namespace);
-}
-
-export async function deleteAgentEnrollment(
-  namespace: string,
-  name: string,
-): Promise<void> {
-  return k8s().delete('AgentEnrollment', name, namespace);
-}
-
-export async function getBootstrapToken(
-  namespace: string,
-  secretRef: string,
-): Promise<{ token: string; platformUrl: string } | null> {
-  const secret = await k8s().getSecret(namespace, secretRef);
-  const data = secret.data;
-  if (!data) return null;
-  const decode = (v: string) => Buffer.from(v, 'base64').toString('utf-8');
-  return {
-    token: data.token ? decode(data.token) : '',
-    platformUrl: data['platform-url'] ? decode(data['platform-url']) : '',
-  };
-}
+// AgentEnrollment helpers were removed (dashboard#713): enrollment now mints
+// credentials via gibson.tenant.v1.AgentIdentityService (the daemon owns the
+// IdP + FGA writes, no CRD, no bootstrap-token Secret) — see
+// app/api/agents/register/route.ts. Per ADR-0044, enrollment is not a
+// Kubernetes operation.
 
 // ---- utilities ----
 
