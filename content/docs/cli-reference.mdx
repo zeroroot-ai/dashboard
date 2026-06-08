@@ -22,7 +22,6 @@ Global flags available on every command:
 | Flag | Default | What it does |
 |---|---|---|
 | `--gibson-url` | `$GIBSON_URL` | Override the Gibson endpoint for one invocation. |
-| `--credentials-path` | `~/.gibson/<kind>/credentials` | Use credentials from a non-default location. |
 | `--quiet` | off | Suppress progress output; only print errors. |
 | `--json` | off | Emit machine-readable output where supported. |
 
@@ -84,48 +83,35 @@ reproducible across machines.
 
 ### `gibson component register`
 
-Register a component install with your tenant. For agents and tools,
-exchanges OAuth2 client credentials issued by the dashboard's deploy
-wizard for a credentials file. For plugins, exchanges a single-use
-bootstrap token for a persistent Ed25519 host key.
+Register a component install with your tenant. Every kind — agent, tool,
+plugin — exchanges a single-use bootstrap token (issued by the
+dashboard's deploy wizard) for a persistent Ed25519 host key and a
+runtime credential, via the capability-grant handshake.
 
 ```bash
-# Agents and tools
-gibson component register --kind agent \
-  --client-id     <id> \
-  --client-secret <secret> \
-  --name          <component-name>
-
-gibson component register --kind tool \
-  --client-id     <id> \
-  --client-secret <secret> \
-  --name          <component-name>
-
-# Plugins
+# Every kind enrolls the same way — paste the bootstrap token
+gibson component register --kind agent  --token <bootstrap-token> --name <component-name>
+gibson component register --kind tool   --token <bootstrap-token> --name <component-name>
 gibson component register --kind plugin --token <bootstrap-token>
 ```
 
 | Flag | Required | Notes |
 |---|---|---|
 | `--kind` | yes | `agent`, `tool`, or `plugin`. |
-| `--client-id` | agent / tool | OAuth2 client ID from the deploy wizard. |
-| `--client-secret` | agent / tool | OAuth2 client secret. Shown exactly once at issuance. |
+| `--token` | yes | Single-use bootstrap token from the deploy wizard. Pass `-` to read from stdin, or set `GIBSON_BOOTSTRAP_TOKEN`. |
 | `--name` | agent / tool | Component name (kebab-case, unique within tenant). |
-| `--token` | plugin | Single-use bootstrap token from the deploy wizard. |
-| `--credentials-path` | no | Override the credentials file location. |
 
 What it does:
 
-1. Writes a credentials file at `~/.gibson/<kind>/credentials` (mode
-   `0600`). For plugins, also writes an Ed25519 host key at
-   `~/.gibson/plugin/<name>/host_key` (mode `0600`).
-2. Mints a JWT (or signs a capability-grant for plugins) to verify
-   the credential.
+1. Runs the capability-grant Bootstrap → Discover → Register handshake.
+2. Writes two files at mode `0600`: an Ed25519 host key at
+   `~/.gibson/<kind>/<name>.host_key` and a runtime credential at
+   `~/.gibson/<kind>/<name>.runtime.json`.
 3. Calls Gibson's identity service to confirm registration.
 4. Notifies the dashboard's deploy wizard so it can advance.
 
-If verification fails, the command exits non-zero and the file is
-removed. See
+Re-running with the same install is a no-op success. If verification
+fails, the command exits non-zero. See
 [Component bootstrap & auth → Troubleshooting a 401](/docs/component-bootstrap#troubleshooting-a-401).
 
 ### `gibson component validate`
@@ -258,10 +244,9 @@ CI scripts can rely on these. `2` and `3` indicate operator error;
 | Variable | Used by | Effect |
 |---|---|---|
 | `GIBSON_URL` | every command, every component | Endpoint to dial. |
-| `OIDC_CLIENT_CREDENTIALS_CLIENT_ID` | agents, tools | Inline client ID — no credentials file needed. |
-| `OIDC_CLIENT_CREDENTIALS_CLIENT_SECRET` | agents, tools | Inline client secret. |
-| `OIDC_CLIENT_CREDENTIALS_TOKEN_URL` | agents, tools | Token endpoint when env-based credentials are in use. |
-| `GIBSON_CREDENTIALS_PATH` | every command | Override the default credentials path. |
+| `GIBSON_AGENT_KEY` | every component kind | Inline base64-encoded runtime credential — no on-disk file needed. Pair with `GIBSON_URL`. |
+| `GIBSON_BOOTSTRAP_TOKEN` | `component register` | Bootstrap token, as an alternative to the `--token` flag. |
+| `GIBSON_HOME` | every command | Relocate the config dir (default `~/.gibson`). |
 | `GIBSON_LOG_LEVEL` | every command | `debug` / `info` / `warn` / `error`. Default `info`. |
 
 The env-variable path is the recommended way to ship CI workloads —

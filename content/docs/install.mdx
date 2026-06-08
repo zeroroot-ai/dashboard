@@ -76,41 +76,35 @@ are issued.
 2. Name your component (kebab-case, unique within your tenant).
 3. **Permissions** — grant the component access to the data and
    capabilities it needs. See [Roles & permissions](/docs/rbac).
-4. **Issue credentials**:
-   - Agents and tools get an OAuth2 `client_id` + `client_secret`. The
-     **secret is shown exactly once** — copy it before you leave the
-     page.
-   - Plugins get a single-use **bootstrap token** (default 1 hour,
-     configurable up to 24 hours).
+4. **Issue a bootstrap token** — every kind (agent, tool, plugin) gets a
+   single-use **bootstrap token** (24-hour expiry). It's shown exactly
+   once — copy it before you leave the page.
 5. **Connect** — leave the wizard open. It polls until your local
    `gibson` reports back that the component connected.
 
 ## 5. Register on your machine
 
-The modern CLI uses a single unified `component register` verb,
-parameterised by `--kind`:
+The CLI uses a single unified `component register` verb. Every kind
+enrolls the same way — paste the bootstrap token:
 
 ```bash
 # Agents
-gibson component register --kind agent \
-  --client-id     <from-wizard> \
-  --client-secret <from-wizard> \
-  --name          my-first-agent
+gibson component register --kind agent --token <from-wizard> \
+  --name my-first-agent
 
 # Tools
-gibson component register --kind tool \
-  --client-id     <from-wizard> \
-  --client-secret <from-wizard> \
-  --name          my-first-tool
+gibson component register --kind tool --token <from-wizard> \
+  --name my-first-tool
 
 # Plugins
 gibson component register --kind plugin --token <from-wizard>
 ```
 
-Each command writes a credential file at `~/.gibson/<kind>/credentials`
-(file mode `0600`). For plugins, an Ed25519 host key is also written
-to `~/.gibson/plugin/<name>/host_key` (mode `0600`). Treat both like
-private keys — they identify your component to Gibson.
+Each command runs the capability-grant handshake and writes two files at
+mode `0600`: an Ed25519 **host key** at
+`~/.gibson/<kind>/<name>.host_key` and a **runtime credential** at
+`~/.gibson/<kind>/<name>.runtime.json`. Treat both like private keys —
+they identify your component to Gibson.
 
 If registration fails, see
 [Component bootstrap & auth](/docs/component-bootstrap#troubleshooting-a-401)
@@ -124,10 +118,9 @@ gibson inspect --kind agent --name my-first-agent
 gibson inspect --json       # raw output, scriptable
 ```
 
-`inspect` exchanges your credential for a token, calls Gibson's
-identity service, and prints who you are along with the permissions you
-hold. If `inspect` succeeds, your credential is healthy and you can
-move on.
+`inspect` reads your local runtime credential, calls Gibson's identity
+service, and prints who you are along with the permissions you hold. If
+`inspect` succeeds, your credential is healthy and you can move on.
 
 ## What's next
 
@@ -143,13 +136,13 @@ move on.
 Credential files live in `~/.gibson/` and are restricted to mode `0600`
 by `register`. Don't commit them. For CI and production deployments:
 
-- **Agents and tools**: pass `client_id` and `client_secret` as
-  environment variables (`OIDC_CLIENT_CREDENTIALS_CLIENT_ID`,
-  `OIDC_CLIENT_CREDENTIALS_CLIENT_SECRET`,
-  `OIDC_CLIENT_CREDENTIALS_TOKEN_URL`) instead of writing a file. The
-  SDK picks them up automatically.
-- **Plugins**: bake the host key into the deployment artifact, or
-  re-register on each fresh runtime instance using a freshly-issued
+- **Headless runtimes**: instead of writing files, pass the runtime
+  credential as `GIBSON_AGENT_KEY` (the base64-encoded credential) and
+  the daemon endpoint as `GIBSON_URL`, sourced from a secret. The SDK
+  picks them up automatically. This is the same for every component
+  kind.
+- **Fresh runtime instances**: bake the host key into the deployment
+  artifact, or re-register on each instance using a freshly-issued
   bootstrap token.
 - **Workload identity**: if your runtime exposes a workload-identity
   socket, the SDK auto-detects it and uses mTLS alongside the bearer
@@ -159,6 +152,6 @@ by `register`. Don't commit them. For CI and production deployments:
 
 If you operate against more than one Gibson tenant (e.g. staging +
 production), point `GIBSON_URL` at the right tenant per shell session
-or per CI job, and keep credentials separated by passing
-`--credentials-path` to `gibson` or by setting the SDK option
-`agent.WithCredentialsPath(...)` from your component code.
+or per CI job, and keep credentials separated by setting `GIBSON_HOME`
+to a distinct config dir per tenant (or by supplying a per-tenant
+`GIBSON_AGENT_KEY` in headless runtimes).
