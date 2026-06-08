@@ -4,6 +4,7 @@ import { generateMeta } from "@/lib/utils";
 import { env } from "@/src/lib/env-validator";
 import { readRawActiveTenant } from "@/src/lib/auth/active-tenant";
 import { CliCommandsCard } from "@/components/gibson/settings/CliCommandsCard";
+import { SessionsTable } from "@/components/gibson/settings/SessionsTable";
 import {
   Card,
   CardContent,
@@ -46,9 +47,12 @@ export default async function CliSettingsPage() {
   }
 
   return (
-    <CliCommandsCard
-      tenantSlug={active.tenantId}
-      gibsonUrl={env.GIBSON_PUBLIC_URL}
-    />
+    <div className="space-y-4">
+      <CliCommandsCard
+        tenantSlug={active.tenantId}
+        gibsonUrl={env.GIBSON_PUBLIC_URL}
+      />
+      <SessionsTable />
+    </div>
   );
 }
