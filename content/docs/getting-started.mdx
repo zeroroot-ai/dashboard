@@ -32,21 +32,20 @@ The deploy wizard walks you through:
 2. **Name your agent** — kebab-case, e.g. `my-first-agent`.
 3. **Permissions** — for the walkthrough, accept the defaults. You can
    tighten them later. See [Roles & permissions](/docs/rbac).
-4. **Issue credentials** — the dashboard shows a `client_id` and a
-   `client_secret`. **Copy the secret now** — it's not shown again.
+4. **Issue a bootstrap token** — the dashboard shows a single-use
+   bootstrap token. **Copy it now** — it's not shown again.
 5. **Connect** — leave the page open. It polls for the next step.
 
 ## 3. Register on your machine
 
 ```bash
-gibson component register --kind agent \
-  --client-id     <from-wizard> \
-  --client-secret <from-wizard> \
-  --name          my-first-agent
+gibson component register --kind agent --token <from-wizard> \
+  --name my-first-agent
 ```
 
-This writes `~/.gibson/agent/credentials` (mode `0600`) and verifies the
-credential by calling Gibson's identity service. If the verification
+This runs the capability-grant handshake, writes the host key and
+runtime credential under `~/.gibson/agent/` (mode `0600`), and verifies
+the credential by calling Gibson's identity service. If the verification
 fails, the wizard does **not** advance — see
 [Component bootstrap & auth → Troubleshooting a 401](/docs/component-bootstrap#troubleshooting-a-401).
 
