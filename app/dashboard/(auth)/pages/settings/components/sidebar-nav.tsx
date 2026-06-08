@@ -12,6 +12,7 @@ import {
   KeyIcon,
   ScaleIcon,
   ShieldIcon,
+  TerminalIcon,
   UserIcon,
 } from "lucide-react";
 
@@ -41,6 +42,7 @@ import { useAuthorize } from "@/src/lib/auth/use-authorize";
 const accountNav = [
   { title: "Profile", href: "/dashboard/pages/settings/account", icon: UserIcon },
   { title: "Billing", href: "/dashboard/pages/settings/billing", icon: CreditCardIcon },
+  { title: "CLI", href: "/dashboard/pages/settings/cli", icon: TerminalIcon },
 ];
 
 const workspaceNav = [
