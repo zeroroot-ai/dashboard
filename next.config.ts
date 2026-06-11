@@ -28,6 +28,12 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Dev-only (ignored by `next build`): Next.js 16 blocks /_next/* dev
+  // resources for origins other than localhost, which silently prevents
+  // hydration — client-driven UI (e.g. the landing Typewriter) renders
+  // frozen with no console error. Allow the hosts a workstation browser
+  // actually uses to reach `next dev`.
+  allowedDevOrigins: ["0.0.0.0", "127.0.0.1", "192.168.50.223"],
   // Tell Next.js not to bundle these Node-only server packages — they use
   // `node:http2` / `node:fs` and blow up Turbopack's module analyzer otherwise.
   // @grpc/grpc-js added here because the SPIFFE workload-api client (server-only)
