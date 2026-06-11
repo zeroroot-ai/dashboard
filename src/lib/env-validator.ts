@@ -300,6 +300,9 @@ export const OPTIONAL_ENV = [
   'STRIPE_PRICE_TEAM',
   'STRIPE_PRICE_ORG',
   'STRIPE_PRICE_ENTERPRISE',
+  // Narrow opt-in: allow a test-mode key under NODE_ENV=production (staging).
+  // Optional — validateBillingConfig()/stripe.ts owns the actual semantics.
+  'STRIPE_ALLOW_TEST_KEY',
 
   // ---- Social-provider creds (each pair is gated by its own pair of creds) ----
   // The dashboard's social-provider wiring refuses to start if exactly one of

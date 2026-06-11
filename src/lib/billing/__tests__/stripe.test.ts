@@ -41,7 +41,12 @@ function restoreEnv() {
 }
 
 beforeEach(() => {
-  saveEnv('NODE_ENV', 'DASHBOARD_BILLING_PAID_TIERS_ENABLED', ...REQUIRED_KEYS);
+  saveEnv(
+    'NODE_ENV',
+    'DASHBOARD_BILLING_PAID_TIERS_ENABLED',
+    'STRIPE_ALLOW_TEST_KEY',
+    ...REQUIRED_KEYS,
+  );
   __resetStripeClientForTests();
 });
 
@@ -90,6 +95,20 @@ describe('validateBillingConfig — key-mode guard', () => {
     setupWithKey('sk_test_testkey123', 'production');
     expect(() => validateBillingConfig()).toThrow(
       '[billing/stripe] Production deployment detected with test-mode Stripe key',
+    );
+  });
+
+  it('does NOT throw when NODE_ENV=production and sk_test_ key with STRIPE_ALLOW_TEST_KEY=true (staging opt-in)', () => {
+    setupWithKey('sk_test_testkey123', 'production');
+    process.env.STRIPE_ALLOW_TEST_KEY = 'true';
+    expect(() => validateBillingConfig()).not.toThrow();
+  });
+
+  it('STILL throws on NODE_ENV=test and sk_live_ key even with STRIPE_ALLOW_TEST_KEY=true (opt-in is test-key-direction only)', () => {
+    setupWithKey('sk_live_livekey123', 'test');
+    process.env.STRIPE_ALLOW_TEST_KEY = 'true';
+    expect(() => validateBillingConfig()).toThrow(
+      '[billing/stripe] Non-production deployment detected with live-mode Stripe key',
     );
   });
 
