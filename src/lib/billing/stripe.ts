@@ -363,7 +363,17 @@ export function validateBillingConfig(): void {
   const secretKey = process.env.STRIPE_SECRET_KEY ?? '';
   const isProduction = process.env.NODE_ENV === 'production';
 
-  if (isProduction && secretKey.startsWith('sk_test_')) {
+  // Staging runs a production-grade Next.js runtime (NODE_ENV=production) but
+  // INTENTIONALLY drives test-mode Stripe — it must never touch real cards.
+  // STRIPE_ALLOW_TEST_KEY is a narrow, default-OFF opt-in for exactly that
+  // case: it suppresses ONLY the test-key-in-production throw below. Real
+  // production leaves it unset, so the guard there is fully intact. It does
+  // NOT relax the live-key-in-non-production check (that direction is always
+  // a mistake). Wired from dashboard.billing.allowTestKey in the staging
+  // overlay.
+  const allowTestKey = process.env.STRIPE_ALLOW_TEST_KEY === 'true';
+
+  if (isProduction && secretKey.startsWith('sk_test_') && !allowTestKey) {
     throw new Error(
       '[billing/stripe] Production deployment detected with test-mode Stripe key',
     );
