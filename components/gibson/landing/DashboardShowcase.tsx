@@ -22,7 +22,7 @@ export function DashboardShowcase({
           // mission control
         </p>
         <h2 className="mb-8 text-center font-display text-2xl font-bold text-foreground md:text-3xl">
-          The shared OS for security agents
+          Mission control for every agent you run
         </h2>
         {/* CRT-framed product visual. The terminal-glow ring + corner ticks
             echo the hero panel; the image itself is swappable. */}

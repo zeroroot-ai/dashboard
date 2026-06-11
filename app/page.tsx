@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { HeroSection } from '@/components/gibson/landing/HeroSection';
+import { TrustBar } from '@/components/gibson/landing/TrustBar';
+import { WhyBlocked } from '@/components/gibson/landing/WhyBlocked';
 import { WhatYouGet } from '@/components/gibson/landing/WhatYouGet';
 import { WhatYouRunItOn } from '@/components/gibson/landing/WhatYouRunItOn';
 import { Production } from '@/components/gibson/landing/Production';
@@ -25,7 +27,9 @@ export default function RootPage() {
       <SiteHeader />
       <main>
         <HeroSection />
+        <TrustBar />
         <DashboardShowcase />
+        <WhyBlocked />
         <WhatYouGet />
         <WhatYouRunItOn />
         <Production />

@@ -71,15 +71,25 @@ const messages: TypewriterMessage[] = [
   },
 ];
 
+/**
+ * The real ADK happy path, in order — every command verified against the
+ * adk repo's verb surface (clone + install → workspace init → device-flow
+ * login → scaffold → enroll → capability-grant register → CUE mission
+ * submit). Keep in sync with opensource/adk README + the Settings → CLI card.
+ */
 const terminalLines: Array<[string, string, "cmd" | "ok" | "info" | "sandbox"]> = [
-  ["$", "git clone https://github.com/zeroroot-ai/adk gibson-adk", "cmd"],
-  ["$", "cd gibson-adk", "cmd"],
-  ["$", "gibson component init recon-agent", "cmd"],
-  ["$", "gibson component register --client-id ... --client-secret -", "cmd"],
-  ["✔", "enrolled recon-agent · OIDC client credentials · TLS 1.3", "ok"],
-  ["$", "gibson mission submit missions/recon.yaml --target example.com", "cmd"],
-  ["✔", "authenticated · short-lived session token issued", "ok"],
-  ["→", "mission queued · 3 steps running", "info"],
+  ["$", "git clone https://github.com/zeroroot-ai/adk", "cmd"],
+  ["$", "cd adk/cli && go install ./cmd/gibson", "cmd"],
+  ["$", "gibson init --gibson-url https://api.zeroroot.ai", "cmd"],
+  ["$", "gibson login", "cmd"],
+  ["✔", "device-flow sign-in · short-lived session stored", "ok"],
+  ["$", "gibson component init recon-agent --kind agent", "cmd"],
+  ["$", "gibson agent enroll --name recon-agent --kind agent", "cmd"],
+  ["✔", "one-time bootstrap token minted", "ok"],
+  ["$", "gibson component register --token …", "cmd"],
+  ["✔", "capability-grant verified · runtime credential issued", "ok"],
+  ["$", "gibson mission submit recon.cue", "cmd"],
+  ["→", "mission queued · 2 nodes running", "info"],
   ["↳", "untrusted payload detonated in setec microVM", "sandbox"],
   ["✔", "graph: 47 hosts · 12 findings indexed", "ok"],
 ];
@@ -213,7 +223,7 @@ export function HeroSection() {
          *  primary, brand-guide-style. No fake version strings or telemetry. */}
         <div className="flex w-full flex-col items-start gap-0">
           <div className="font-mono text-[11px] uppercase tracking-[0.32em] text-muted-foreground">
-            {"// agent development kit"}
+            {"// agent platform for security & ops teams"}
           </div>
           <h1
             className="m-0 font-mono font-extrabold tracking-tight text-foreground whitespace-nowrap"
@@ -227,6 +237,10 @@ export function HeroSection() {
             <span className="text-highlight">Zero Trust</span>{" "}
             agent control plane in under an hour.
           </h1>
+          <p className="mt-3 max-w-2xl font-mono text-sm md:text-base leading-relaxed text-muted-foreground">
+            Agents run where you work — laptop, CI, k8s. Identity, missions,
+            shared memory, and audit run in the control plane.
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-6 w-full">
@@ -245,21 +259,29 @@ export function HeroSection() {
           />
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button variant="default" size="lg" asChild>
-            <Link href="/pricing">Start Free</Link>
-          </Button>
-          <Button variant="outline" size="lg" asChild>
-            <a
-              href="https://github.com/zeroroot-ai/adk"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2"
-            >
-              <Github className="h-4 w-4" />
-              Star the ADK
-            </a>
-          </Button>
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button variant="default" size="lg" asChild>
+              <Link href="/pricing">Start Free</Link>
+            </Button>
+            <Button variant="outline" size="lg" asChild>
+              <a
+                href="https://github.com/zeroroot-ai/adk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2"
+              >
+                <Github className="h-4 w-4" />
+                Star the ADK
+              </a>
+            </Button>
+          </div>
+          <Link
+            href="/docs"
+            className="font-mono text-xs text-muted-foreground underline-offset-4 hover:text-link hover:underline"
+          >
+            first agent live in under an hour — see the quickstart →
+          </Link>
         </div>
       </div>
     </section>
