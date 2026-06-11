@@ -225,7 +225,7 @@ export function HeroSection() {
             }}
           >
             <span className="text-highlight">Zero Trust</span>{" "}
-            agent factory in under an hour.
+            agent control plane in under an hour.
           </h1>
         </div>
 
