@@ -14,7 +14,7 @@
  * next/headers) are mocked so the tests run without a cluster.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import type { Tenant } from '@/src/lib/k8s/types';
 
@@ -126,8 +126,8 @@ vi.mock('@/src/lib/k8s/client', () => ({
 }));
 
 // After mocks are set up, import the subject.
-import { signupAction } from '../signup';
-import { getTenant, applyTenant } from '@/src/lib/k8s/tenants';
+import { signupAction, resumeSignupAfterPayment } from '../signup';
+import { getTenant, applyTenant, applyTenantMember } from '@/src/lib/k8s/tenants';
 
 // ---------------------------------------------------------------------------
 // Test fixtures
@@ -156,6 +156,7 @@ function resetMocks() {
   mockFindUserByEmail.mockClear();
   vi.mocked(getTenant).mockRejectedValue(new Error('tenant not found: 404'));
   vi.mocked(applyTenant).mockResolvedValue(undefined as unknown as Tenant);
+  vi.mocked(applyTenantMember).mockClear();
 }
 
 // ---------------------------------------------------------------------------
@@ -330,10 +331,12 @@ describe('signupAction, V2 session + CreateCallback auto-login', () => {
 
       expect(result.ok).toBe(true);
       // The redirect is the V2 callbackUrl, not the /login fallback.
-      if (result.ok) {
+      if (result.ok && 'redirect' in result) {
         expect(result.redirect).toBe(
           'http://app.test.local/api/auth/callback/zitadel?code=ABC&state=XYZ',
         );
+      } else {
+        throw new Error('expected a redirect result');
       }
 
       // createSession was called with the email + password from the form.
@@ -382,8 +385,10 @@ describe('signupAction, V2 session + CreateCallback auto-login', () => {
       );
 
       expect(result.ok).toBe(true);
-      if (result.ok) {
+      if (result.ok && 'redirect' in result) {
         expect(result.redirect).toBe('/login?callbackUrl=%2Fdashboard');
+      } else {
+        throw new Error('expected a redirect result');
       }
       // The V2 methods should NOT have been called.
       expect(mockCreateSession).not.toHaveBeenCalled();
@@ -440,8 +445,10 @@ describe('signupAction, V2 session + CreateCallback auto-login', () => {
       );
 
       expect(result.ok).toBe(true);
-      if (result.ok) {
+      if (result.ok && 'redirect' in result) {
         expect(result.redirect).toBe('/login?callbackUrl=%2Fdashboard');
+      } else {
+        throw new Error('expected a redirect result');
       }
       // We attempted createSession but it failed; finalizeAuthRequest never ran.
       expect(mockCreateSession).toHaveBeenCalled();
@@ -449,3 +456,104 @@ describe('signupAction, V2 session + CreateCallback auto-login', () => {
     },
   );
 });
+
+// ---------------------------------------------------------------------------
+// Card-first signup: phase 1 awaitingPayment + phase 2 resume (dashboard#769)
+// ---------------------------------------------------------------------------
+
+const RESUME_INPUT = {
+  attemptId: 'aaaaaaaa-0000-0000-0000-0000000000aa',
+  tenantSlug: 'test-workspace',
+  tier: 'team',
+  zitadelUserId: 'zid-1',
+  email: 'test@example.com',
+  password: 'Passw0rd!Test',
+  workspaceName: 'test-workspace',
+};
+
+function trialingTenant(owner = 'test@example.com') {
+  return {
+    spec: { owner, displayName: 'Test', tier: 'team' },
+    status: {
+      zitadelOrgID: 'org-1',
+      stripeCustomerId: 'cus_1',
+      phase: 'Provisioning',
+      billing: { status: 'trialing' },
+    },
+  } as unknown as Tenant;
+}
+
+describe('card-first signup phase 1 (await_payment)', () => {
+  beforeEach(() => {
+    resetMocks();
+    process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
+  });
+  afterEach(() => {
+    delete process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
+  });
+
+  it('returns awaitingPayment once the Stripe customer is on status, without provisioning the owner', async () => {
+    let getCalls = 0;
+    vi.mocked(getTenant).mockImplementation(async () => {
+      getCalls += 1;
+      // First call is the step-3 workspace-availability check → must 404
+      // (available). Subsequent calls are waitForStripeCustomer.
+      if (getCalls === 1) throw new Error('tenant not found: 404');
+      return {
+        spec: { owner: 'test@example.com' },
+        status: { stripeCustomerId: 'cus_1' },
+      } as unknown as Tenant;
+    });
+    const result = await signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-0000000000b1');
+    expect(result.ok).toBe(true);
+    expect('awaitingPayment' in result && result.awaitingPayment).toBe(true);
+    if ('awaitingPayment' in result) {
+      expect(result.tenantSlug).toBe('test-workspace');
+      expect(result.tier).toBe('team');
+      expect(result.zitadelUserId).toBeTruthy();
+    }
+    // The owner member must NOT be applied yet — billing isn't confirmed.
+    expect(applyTenantMember).not.toHaveBeenCalled();
+  });
+});
+
+describe('card-first signup phase 2 (resumeSignupAfterPayment)', () => {
+  beforeEach(() => {
+    resetMocks();
+    process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
+  });
+  afterEach(() => {
+    delete process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
+  });
+
+  it('refuses to provision the owner when billing has not confirmed', async () => {
+    vi.mocked(getTenant).mockResolvedValue({
+      spec: { owner: 'test@example.com' },
+      status: { stripeCustomerId: 'cus_1', billing: { status: 'incomplete' } },
+    } as unknown as Tenant);
+    const result = await resumeSignupAfterPayment(RESUME_INPUT);
+    expect(result.ok).toBe(false);
+    expect(applyTenantMember).not.toHaveBeenCalled();
+  });
+
+  it('refuses when the payload owner does not match the tenant owner (anti-hijack)', async () => {
+    vi.mocked(getTenant).mockResolvedValue(trialingTenant('someone-else@example.com'));
+    const result = await resumeSignupAfterPayment(RESUME_INPUT);
+    expect(result.ok).toBe(false);
+    expect(applyTenantMember).not.toHaveBeenCalled();
+  });
+
+  it('refuses when the tenant does not exist', async () => {
+    vi.mocked(getTenant).mockRejectedValue(new Error('tenant not found: 404'));
+    const result = await resumeSignupAfterPayment(RESUME_INPUT);
+    expect(result.ok).toBe(false);
+  });
+
+  it('provisions the owner once billing is trialing', async () => {
+    vi.mocked(getTenant).mockResolvedValue(trialingTenant());
+    const result = await resumeSignupAfterPayment(RESUME_INPUT);
+    expect(result.ok).toBe(true);
+    expect(applyTenantMember).toHaveBeenCalled();
+  });
+});
+
