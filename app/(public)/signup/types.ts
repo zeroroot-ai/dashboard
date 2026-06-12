@@ -151,6 +151,15 @@ export type ProvisioningStep =
   | "create_user"
   | "send_verify_email"
   | "apply_tenant"
+  /**
+   * Card-first signup (dashboard#769): after the tenant CR is applied and
+   * the CreateStripeCustomer saga step has written the customer to status,
+   * the flow pauses here for in-page card collection via the Payment
+   * Element. The trialing subscription is created on confirmation, which
+   * stamps billing-active and lets the saga proceed. Absent (skipped) when
+   * paid tiers are disabled (kind dev autoconfirm).
+   */
+  | "await_payment"
   | "setup_workspace"
   | "apply_member"
   | "grant_owner_role"
