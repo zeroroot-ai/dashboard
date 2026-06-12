@@ -9,8 +9,14 @@ import type { EmailMessage, EmailProvider } from '../types';
  * picks up the pod's bound service account token automatically on EKS.
  *
  * Configuration:
- *   AWS_REGION      — AWS region for the SES endpoint (required).
- *   SES_FROM_ADDRESS — Verified SES identity to use as the From: address (required).
+ *   AWS_REGION            — AWS region for the SES endpoint (required).
+ *   SES_FROM_ADDRESS      — Verified SES identity to use as the From: address (required).
+ *   SES_CONFIGURATION_SET — Env-scoped SESv2 configuration set stamped on every
+ *                           send (required). IaC-owned per environment
+ *                           (deploy#880); never derived from NODE_ENV — that is
+ *                           a build-mode flag ("production" in every prod-mode
+ *                           build, staging included), not a deployment
+ *                           environment.
  *
  * The SDK is loaded lazily via dynamic import inside `send()` so installs using
  * the `log`, `smtp`, or `resend` providers never bundle `@aws-sdk/client-ses`.
@@ -21,10 +27,12 @@ import type { EmailMessage, EmailProvider } from '../types';
 export class SesEmailProvider implements EmailProvider {
   private readonly fromAddress: string;
   private readonly region: string;
+  private readonly configurationSet: string;
 
   constructor() {
     const fromAddress = process.env.SES_FROM_ADDRESS;
     const region = process.env.AWS_REGION;
+    const configurationSet = process.env.SES_CONFIGURATION_SET;
 
     if (!fromAddress) {
       throw new Error(
@@ -36,34 +44,23 @@ export class SesEmailProvider implements EmailProvider {
         'SES provider missing required env: AWS_REGION',
       );
     }
+    if (!configurationSet) {
+      throw new Error(
+        'SES provider missing required env: SES_CONFIGURATION_SET',
+      );
+    }
 
     this.fromAddress = fromAddress;
     this.region = region;
+    this.configurationSet = configurationSet;
   }
 
   async send(msg: EmailMessage): Promise<void> {
     // Dynamic import — keeps @aws-sdk/client-ses out of non-SES bundles.
-    let SESClient: new (config: Record<string, unknown>) => { send: (cmd: unknown) => Promise<unknown> };
-    let SendEmailCommand: new (input: Record<string, unknown>) => unknown;
-
-    try {
-      // Use dynamic require to avoid static type resolution errors when the
-      // package is not installed in non-SES deployments. The dynamic import()
-      // form triggers TypeScript's module resolution even with @types absent.
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const sesModule = require('@aws-sdk/client-ses') as {
-        SESClient: new (config: Record<string, unknown>) => { send: (cmd: unknown) => Promise<unknown> };
-        SendEmailCommand: new (input: Record<string, unknown>) => unknown;
-      };
-      SESClient = sesModule.SESClient;
-      SendEmailCommand = sesModule.SendEmailCommand;
-    } catch (err) {
-      throw new Error(
-        `[email/ses] @aws-sdk/client-ses is not installed. ` +
-          `Install it with: pnpm add @aws-sdk/client-ses. ` +
-          `Original error: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
+    // The package is a declared dependency since dashboard#748; the same
+    // import() pattern as the smtp/resend providers.
+    const { SESClient, SendEmailCommand } = await import('@aws-sdk/client-ses');
+    type SendEmailCommandInput = ConstructorParameters<typeof SendEmailCommand>[0];
 
     const client = new SESClient({ region: this.region });
 
@@ -89,7 +86,7 @@ export class SesEmailProvider implements EmailProvider {
         },
       },
       // Configuration set groups bounces/complaints/deliveries per environment.
-      ConfigurationSetName: `gibson-transactional-${process.env.NODE_ENV ?? 'development'}`,
+      ConfigurationSetName: this.configurationSet,
     };
 
     // Forward List-Unsubscribe header if present.
@@ -102,7 +99,9 @@ export class SesEmailProvider implements EmailProvider {
       ];
     }
 
-    const command = new SendEmailCommand(input);
+    // input is assembled as a Record because the optional Headers field
+    // below is not part of the v1 SendEmail input type.
+    const command = new SendEmailCommand(input as unknown as SendEmailCommandInput);
     await client.send(command);
   }
 }
