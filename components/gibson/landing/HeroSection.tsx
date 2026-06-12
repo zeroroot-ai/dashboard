@@ -79,7 +79,7 @@ const messages: TypewriterMessage[] = [
  */
 const terminalLines: Array<[string, string, "cmd" | "ok" | "info" | "sandbox"]> = [
   ["$", "git clone https://github.com/zeroroot-ai/adk", "cmd"],
-  ["$", "cd adk/cli && go install ./cmd/gibson", "cmd"],
+  ["$", "cd adk/gibson && go install ./cmd/gibson", "cmd"],
   ["$", "gibson init --gibson-url https://api.zeroroot.ai", "cmd"],
   ["$", "gibson login", "cmd"],
   ["✔", "device-flow sign-in · short-lived session stored", "ok"],
