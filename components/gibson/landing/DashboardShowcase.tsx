@@ -13,7 +13,7 @@ interface DashboardShowcaseProps {
 
 export function DashboardShowcase({
   src = '/dashboard-preview.png',
-  alt = 'Zero Root AI dashboard — mission control, knowledge graph, and findings',
+  alt = 'Zero Root AI dashboard: mission control, knowledge graph, and findings',
 }: DashboardShowcaseProps) {
   return (
     <section className="border-t border-border py-16">

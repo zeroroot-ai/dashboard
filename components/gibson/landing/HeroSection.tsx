@@ -39,35 +39,35 @@ const highlightTerms: readonly string[] = [
 const messages: TypewriterMessage[] = [
   {
     label: "Pentester",
-    text: "Claude, build me a gibson agent to hunt subdomains with amass + httpx + nuclei — kick it off with gibson mission submit.",
+    text: "Claude, build me a gibson agent to hunt subdomains with amass + httpx + nuclei. Kick it off with gibson mission submit.",
   },
   {
     label: "DevSecOps",
-    text: "Amp, build me a gibson agent to triage Trivy findings and open Jira tickets — trigger it from CI on every image build.",
+    text: "Amp, build me a gibson agent to triage Trivy findings and open Jira tickets. Trigger it from CI on every image build.",
   },
   {
     label: "SRE",
-    text: "Cursor, build me a gibson agent to monitor our payments service, troubleshoot with kubectl, and reconcile config via GitOps — trigger it from Alertmanager webhooks.",
+    text: "Cursor, build me a gibson agent to monitor our payments service, troubleshoot with kubectl, and reconcile config via GitOps. Trigger it from Alertmanager webhooks.",
   },
   {
     label: "Bug Bounty",
-    text: "Codex, build me a gibson agent to watch my private programs for new subdomains with reproducible nuclei hits — run it nightly via gibson mission submit.",
+    text: "Codex, build me a gibson agent to watch my private programs for new subdomains with reproducible nuclei hits. Run it nightly via gibson mission submit.",
   },
   {
     label: "AppSec",
-    text: "Gemini, build me a gibson agent to review PRs for auth-bypass + injection patterns with our org's custom rules — trigger it from CI on every PR.",
+    text: "Gemini, build me a gibson agent to review PRs for auth-bypass + injection patterns with our org's custom rules. Trigger it from CI on every PR.",
   },
   {
     label: "Red Teamer",
-    text: "Aider, build me a gibson agent to attempt and score prompt-injection techniques against our company website — trigger it weekly from CI.",
+    text: "Aider, build me a gibson agent to attempt and score prompt-injection techniques against our company website. Trigger it weekly from CI.",
   },
   {
     label: "Developer",
-    text: "Crush, build me a gibson agent that bumps stale dependencies, runs the test suite, and opens PRs only when green — run it nightly from CI.",
+    text: "Crush, build me a gibson agent that bumps stale dependencies, runs the test suite, and opens PRs only when green. Run it nightly from CI.",
   },
   {
     label: "IR / SOC",
-    text: "opencode, build me a gibson agent to sweep every new IOC across CloudTrail and k8s audit logs — trigger it from our SIEM webhook.",
+    text: "opencode, build me a gibson agent to sweep every new IOC across CloudTrail and k8s audit logs. Trigger it from our SIEM webhook.",
   },
 ];
 
@@ -238,7 +238,7 @@ export function HeroSection() {
             agent control plane in under an hour.
           </h1>
           <p className="mt-3 max-w-2xl font-mono text-sm md:text-base leading-relaxed text-muted-foreground">
-            Agents run where you work — laptop, CI, k8s. Identity, missions,
+            Agents run where you work: laptop, CI, k8s. Identity, missions,
             shared memory, and audit run in the control plane.
           </p>
         </div>
@@ -280,7 +280,7 @@ export function HeroSection() {
             href="/docs"
             className="font-mono text-xs text-muted-foreground underline-offset-4 hover:text-link hover:underline"
           >
-            first agent live in under an hour — see the quickstart →
+            first agent live in under an hour. See the quickstart →
           </Link>
         </div>
       </div>

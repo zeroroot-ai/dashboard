@@ -2,7 +2,7 @@ const items = [
   {
     term: "ADK",
     slug: "adk",
-    body: "Agent, Tool, and Plugin contracts. A single Harness wires LLMs, memory, tools, and the knowledge graph. Go today — Rust and Python in the works.",
+    body: "Agent, Tool, and Plugin contracts. A single Harness wires LLMs, memory, tools, and the knowledge graph. Go today, with Rust and Python in the works.",
   },
   {
     term: "gibson CLI",
@@ -12,22 +12,22 @@ const items = [
   {
     term: "DAG missions",
     slug: "missions",
-    body: "A mission is a CUE-typed DAG of agent + tool nodes wired by edges and parameterized by target. CUE catches misconfigurations at submit time — wrong agent name, missing field, bad enum — before the orchestrator ever runs the Observe → Think → Act → Recall → Reflect loop. Pausable, resumable, checkpointed.",
+    body: "A mission is a CUE-typed DAG of agent + tool nodes wired by edges and parameterized by target. CUE catches misconfigurations at submit time (wrong agent name, missing field, bad enum) before the orchestrator ever runs the Observe → Think → Act → Recall → Reflect loop. Pausable, resumable, checkpointed.",
   },
   {
     term: "Knowledge graph",
     slug: "knowledge-graph",
-    body: "Every discovery — hosts, ports, findings, techniques, attack chains — lands in the platform's knowledge graph under a YAML-driven taxonomy with CEL-validated schemas. What one agent learns, the next one starts from.",
+    body: "Every discovery (hosts, ports, findings, techniques, attack chains) lands in the platform's knowledge graph under a YAML-driven taxonomy with CEL-validated schemas. What one agent learns, the next one starts from.",
   },
   {
     term: "RBAC",
     slug: "rbac",
-    body: "Agents, users, teams, and components each have scoped permissions — your PR-review bot can't touch production, your red-team agent can't touch ServiceNow. Every action audited.",
+    body: "Agents, users, teams, and components each have scoped permissions. Your PR-review bot can't touch production, your red-team agent can't touch ServiceNow. Every action audited.",
   },
   {
     term: "Observability",
     slug: "observability",
-    body: "Gibson Traces captures every prompt, response, tool call, and graph write. Replay any mission step-by-step — see why the agent chose Action X, what each step cost, and where the reasoning went sideways. Tagged per mission, agent, team.",
+    body: "Gibson Traces captures every prompt, response, tool call, and graph write. Replay any mission step-by-step to see why the agent chose Action X, what each step cost, and where the reasoning went sideways. Tagged per mission, agent, team.",
   },
 ] as const;
 
