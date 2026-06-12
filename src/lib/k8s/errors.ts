@@ -18,11 +18,29 @@ export class K8sUnavailableError extends K8sError {}
 
 export function mapK8sError(err: unknown): Error {
   if (err instanceof K8sError) return err;
-  // @kubernetes/client-node throws HttpError with .statusCode + .body.
-  // Use duck typing to avoid importing the class directly.
-  const e = err as { statusCode?: number; body?: { message?: string; reason?: string } };
-  const status = e?.statusCode ?? 0;
-  const message = e?.body?.message ?? String((err as Error)?.message ?? err);
+  // @kubernetes/client-node throws ApiException with .code + .body (the
+  // body is the raw JSON string of the K8s Status object); older client
+  // versions threw HttpError with .statusCode + a parsed .body object.
+  // Duck-type both so a 404 never falls through to status 0, that
+  // misclassified every "tenant not found" as K8sUnavailableError and
+  // warn-spammed the slug-availability happy path (dashboard#751).
+  const e = err as {
+    statusCode?: number;
+    code?: number;
+    body?: { message?: string; reason?: string } | string;
+  };
+  const status = e?.statusCode ?? e?.code ?? 0;
+  let bodyMessage: string | undefined;
+  if (typeof e?.body === 'string') {
+    try {
+      bodyMessage = (JSON.parse(e.body) as { message?: string })?.message;
+    } catch {
+      // Non-JSON body, fall through to err.message.
+    }
+  } else {
+    bodyMessage = e?.body?.message;
+  }
+  const message = bodyMessage ?? String((err as Error)?.message ?? err);
   switch (status) {
     case 404:
       return new K8sNotFoundError(message, err);
