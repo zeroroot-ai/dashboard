@@ -69,7 +69,6 @@ export interface TenantSpec {
   displayName: string;
   owner: string;
   tier: PlanID;
-  stripeCustomerId?: string;
 }
 
 /** Provisioning state for a single data-plane store (Task 21). */
@@ -143,6 +142,14 @@ export interface TenantStatus {
   /** Zitadel primary-domain slug, typically equal to Tenant.metadata.name. */
   zitadelOrgSlug?: string;
   langfuseProjectId?: string;
+  /**
+   * Stripe customer ID created by the CreateStripeCustomer saga step
+   * (tenant-operator#354 moved this from spec to status — controller-
+   * populated). This is the customer the embedded SetupIntent + trialing
+   * subscription bind to. Distinct from billing.customerId, which the
+   * subscription webhook mirrors back.
+   */
+  stripeCustomerId?: string;
   observedGeneration?: number;
   tierObserved?: PlanID;
   /**
