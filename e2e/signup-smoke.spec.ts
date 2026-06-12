@@ -111,6 +111,39 @@ test.describe('signup smoke', () => {
       ).toBeVisible({ timeout: 30_000 });
     });
 
+    // Stage 1b (card-first signup, dashboard#769). When paid tiers are
+    // enabled (staging/prod), signup pauses at await_payment and renders the
+    // in-page Stripe Payment Element. Drive it with the 4242 test card and
+    // confirm the trialing subscription, which stamps billing-active and lets
+    // the saga proceed. SKIPPED on kind, where BILLING_DEV_AUTOCONFIRM carries
+    // the saga and no card step renders. Gate: SIGNUP_SMOKE_PAID=1.
+    if (process.env.SIGNUP_SMOKE_PAID === '1') {
+      await test.step('complete in-page Stripe card collection (4242)', async () => {
+        const cardHeading = page.getByText(/add a payment method/i);
+        await expect(cardHeading).toBeVisible({ timeout: 60_000 });
+
+        // The Payment Element mounts in a Stripe.js iframe. Card fields may be
+        // a single combined frame or split frames depending on the element
+        // version; fill via the frame that exposes each input.
+        const stripeFrame = page.frameLocator(
+          'iframe[title="Secure payment input frame"], iframe[name^="__privateStripeFrame"]',
+        );
+        await stripeFrame.getByPlaceholder(/card number|1234 1234/i).fill('4242424242424242');
+        await stripeFrame.getByPlaceholder(/mm ?\/ ?yy/i).fill('12 / 34');
+        await stripeFrame.getByPlaceholder(/cvc/i).fill('123');
+        // ZIP/postal — present for US cards; fill if shown.
+        const zip = stripeFrame.getByPlaceholder(/zip|postal/i);
+        if (await zip.count().catch(() => 0)) {
+          await zip.fill('42424').catch(() => undefined);
+        }
+
+        await page.getByRole('button', { name: /start.*trial|confirm/i }).click();
+
+        // After confirmation the card form goes away and the panel resumes.
+        await expect(cardHeading).toBeHidden({ timeout: 60_000 });
+      });
+    }
+
     // Stage 2, poll the data-plane status endpoint until the operator's
     // Tenant CR reaches Ready. The endpoint is dashboard-served and
     // already used by the in-product onboarding panel; reusing it here
