@@ -301,6 +301,8 @@ function renderTypeScript(doc) {
     "  displayName: string;",
     "  tagline: string;",
     "  stripeProductId: string | null;",
+    "  /** Card-first-signup trial length (days). 0/absent on contactSales tiers. */",
+    "  trialDays?: number;",
     "  pricing: Pricing;",
     "  quotas: Quotas;",
     "}",
@@ -340,6 +342,7 @@ function normalisePlan(p) {
     displayName: p.displayName,
     tagline: p.tagline,
     stripeProductId: p.stripeProductId ?? null,
+    ...(typeof p.trialDays === "number" && p.trialDays > 0 ? { trialDays: p.trialDays } : {}),
     pricing: {
       ...(typeof p.pricing.monthlyUSD === "number" ? { monthlyUSD: p.pricing.monthlyUSD } : {}),
       ...(typeof p.pricing.annualUSD === "number" ? { annualUSD: p.pricing.annualUSD } : {}),

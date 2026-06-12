@@ -89,7 +89,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const customerId = tenant.spec.stripeCustomerId;
+  // tenant-operator#354 moved stripeCustomerId from spec to status
+  // (controller-populated); prefer the saga-created customer, fall back to
+  // the webhook-mirrored billing.customerId.
+  const customerId =
+    tenant.status?.stripeCustomerId ?? tenant.status?.billing?.customerId;
   if (!customerId) {
     return NextResponse.json(
       { error: 'no billing customer' },

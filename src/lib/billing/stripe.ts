@@ -72,6 +72,15 @@ export function __resetStripeClientForTests(): void {
   _stripeClient = null;
 }
 
+/**
+ * Test-only: inject a fake Stripe client. getStripeClient() uses require()
+ * to defer the SDK, which vi.mock('stripe') does not reliably intercept;
+ * tests inject a stub here instead and the cached client short-circuits.
+ */
+export function __setStripeClientForTests(client: unknown): void {
+  _stripeClient = client as Stripe;
+}
+
 // ---------------------------------------------------------------------------
 // Webhook signature verification
 // ---------------------------------------------------------------------------
@@ -242,6 +251,103 @@ export async function createCheckoutSession(
       success_url: `${publicUrl}/onboarding/billing-confirmed?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${publicUrl}/pricing?canceled=1`,
       metadata: { tenantId: params.tenantSlug, tier: params.tier },
+    },
+    { idempotencyKey: params.idempotencyKey },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Embedded card collection (Payment Element + SetupIntent + trialing sub)
+//
+// Card-first signup (epic card-first-signup, dashboard#767/#769). Replaces
+// the hosted-Checkout redirect: the SetupIntent client secret drives an
+// in-page Payment Element, and once the card is confirmed client-side the
+// trialing subscription is created server-side with that payment method.
+// ---------------------------------------------------------------------------
+
+/** Parameters for the embedded SetupIntent that backs the Payment Element. */
+export interface SetupIntentParams {
+  /** Stripe customer ID (cus_...) the card is attached to. */
+  customerId: string;
+  /** Tenant slug, carried in metadata for traceability. */
+  tenantSlug: string;
+  /** Idempotency key for the Stripe API call. */
+  idempotencyKey: string;
+}
+
+/**
+ * Create a SetupIntent for in-page card collection. usage=off_session so the
+ * collected card can be charged when the trial ends. The returned
+ * client_secret is handed to the browser's Payment Element; card data is
+ * collected by Stripe.js and never reaches our servers.
+ */
+export async function createSetupIntent(
+  params: SetupIntentParams,
+): Promise<Stripe.SetupIntent> {
+  const stripe = getStripeClient();
+  return stripe.setupIntents.create(
+    {
+      customer: params.customerId,
+      usage: 'off_session',
+      automatic_payment_methods: { enabled: true },
+      metadata: { tenantId: params.tenantSlug },
+    },
+    { idempotencyKey: params.idempotencyKey },
+  );
+}
+
+/** Parameters for creating the trialing subscription after card confirmation. */
+export interface TrialingSubscriptionParams {
+  /** Self-serve tier (not contact-sales). */
+  tier: BillingTier;
+  /** Stripe Price ID for the tier. */
+  priceId: string;
+  /** Stripe customer ID (cus_...). */
+  customerId: string;
+  /** Payment method id (pm_...) confirmed by the Payment Element's SetupIntent. */
+  paymentMethodId: string;
+  /** Trial length in days, sourced from the plan registry (no hardcoded default). */
+  trialPeriodDays: number;
+  /** Tenant slug for client_reference_id-equivalent metadata. */
+  tenantSlug: string;
+  /** Idempotency key — same tenant must not yield two subscriptions. */
+  idempotencyKey: string;
+}
+
+/**
+ * Create the trialing subscription once the Payment Element has confirmed the
+ * card. The confirmed payment method becomes the subscription default, so the
+ * customer is charged automatically when the trial ends. The subscription
+ * carries a `trial_signup` metadata marker so Stripe Radar can score trial
+ * starts on the SetupIntent path (hosted Checkout would auto-detect this;
+ * the embedded path must tag it).
+ *
+ * @throws If called with a contact-sales tier.
+ */
+export async function createTrialingSubscription(
+  params: TrialingSubscriptionParams,
+): Promise<Stripe.Subscription> {
+  if (CONTACT_SALES_TIERS.has(params.tier)) {
+    throw new Error(
+      `[billing/stripe] createTrialingSubscription called with contact-sales tier "${params.tier}". ` +
+        'Enterprise tiers must go through the sales flow.',
+    );
+  }
+  const stripe = getStripeClient();
+  return stripe.subscriptions.create(
+    {
+      customer: params.customerId,
+      items: [{ price: params.priceId }],
+      trial_period_days: params.trialPeriodDays,
+      default_payment_method: params.paymentMethodId,
+      trial_settings: {
+        end_behavior: { missing_payment_method: 'cancel' },
+      },
+      metadata: {
+        tenantId: params.tenantSlug,
+        tier: params.tier,
+        trial_signup: 'true',
+      },
     },
     { idempotencyKey: params.idempotencyKey },
   );
