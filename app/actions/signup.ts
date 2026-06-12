@@ -301,7 +301,7 @@ export async function signupAction(
         return await finish(ctx, "await_payment", {
           code: "PROVISIONING_TIMEOUT",
           userMessage:
-            "Still setting up billing for your workspace — try again in a moment.",
+            "Still setting up billing for your workspace. Try again in a moment.",
         });
       }
       logger.info(
@@ -525,7 +525,7 @@ export async function resumeSignupAfterPayment(
     if (billingStatus !== "trialing" && billingStatus !== "active") {
       return await finish(ctx, "await_payment", {
         code: "PROVISIONING_TIMEOUT",
-        userMessage: "Still confirming your payment — try again in a moment.",
+        userMessage: "Still confirming your payment. Try again in a moment.",
       });
     }
 
