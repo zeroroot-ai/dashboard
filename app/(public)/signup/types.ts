@@ -124,6 +124,22 @@ export type SignupActionResult =
       redirect: string;
     }
   | {
+      /**
+       * Card-first signup (dashboard#769): phase 1 completed through tenant
+       * creation and the Stripe customer is ready; the flow now pauses for
+       * in-page card collection. The client renders <PaymentStep> with these
+       * fields and, on success, calls `resumeSignupAfterPayment` to finish
+       * provisioning (member + owner + auto-login). None of these are
+       * secrets; phase 2 re-validates them against the tenant CR.
+       */
+      ok: true;
+      awaitingPayment: true;
+      attemptId: string;
+      tenantSlug: string;
+      tier: string;
+      zitadelUserId: string;
+    }
+  | {
       ok: false;
       /** Same opaque UUID for error log correlation. */
       attemptId: string;
@@ -136,6 +152,23 @@ export type SignupActionResult =
        */
       fieldErrors?: Partial<Record<keyof SignupInput, string>>;
     };
+
+/**
+ * Input to `resumeSignupAfterPayment` (card-first signup phase 2,
+ * dashboard#769). The client passes back the phase-1 context plus the
+ * password (held in form state, never persisted server-side) so phase 2 can
+ * finish provisioning + auto-login. Phase 2 re-validates tenantSlug/owner and
+ * the confirmed billing state against the tenant CR before doing any work.
+ */
+export interface SignupResumeInput {
+  attemptId: string;
+  tenantSlug: string;
+  tier: string;
+  zitadelUserId: string;
+  email: string;
+  password: string;
+  workspaceName: string;
+}
 
 // ---------------------------------------------------------------------------
 // Provisioning progress

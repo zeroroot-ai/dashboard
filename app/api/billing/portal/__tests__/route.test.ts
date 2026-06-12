@@ -110,9 +110,9 @@ describe('POST /api/billing/portal', () => {
         displayName: 'Acme Inc',
         owner: 'alice',
         tier: 'team',
-        stripeCustomerId: 'cus_test123',
       },
-      status: {},
+      // tenant-operator#354: stripeCustomerId lives on status now.
+      status: { stripeCustomerId: 'cus_test123' },
     });
     mockCreatePortalSession.mockResolvedValue({
       id: 'bps_test123',

@@ -46,7 +46,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { signupAction } from "@/app/actions/signup";
+import { signupAction, resumeSignupAfterPayment } from "@/app/actions/signup";
+import { PaymentStep } from "./payment-step";
 import {
   isServerActionDeploymentSkew,
   reloadForDeploymentSkew,
@@ -172,6 +173,15 @@ export function SignupForm({
   const [isProvisioning, setIsProvisioning] = useState(false);
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [redirectOnSuccess, setRedirectOnSuccess] = useState<string>("");
+  // Card-first signup (dashboard#769): set when phase 1 returns
+  // awaitingPayment. Carries the phase-2 resume context plus the submitted
+  // form data (email/password/workspaceName) so onComplete can finish.
+  const [paymentCtx, setPaymentCtx] = useState<{
+    tenantSlug: string;
+    tier: string;
+    zitadelUserId: string;
+    data: SignupInput;
+  } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   // Track field refs for programmatic focus on server-side field errors.
@@ -239,6 +249,7 @@ export function SignupForm({
     setIsProvisioning(false);
     setAttemptId(null);
     setRedirectOnSuccess("");
+    setPaymentCtx(null);
     form.reset({
       firstName: form.getValues("firstName"),
       lastName: form.getValues("lastName"),
@@ -280,7 +291,16 @@ export function SignupForm({
       try {
         const result = await signupAction(data, newAttemptId);
 
-        if (result.ok) {
+        if (result.ok && "awaitingPayment" in result) {
+          // Phase 1 done; pause for in-page card collection. The panel keeps
+          // polling (await_payment step) while <PaymentStep> renders.
+          setPaymentCtx({
+            tenantSlug: result.tenantSlug,
+            tier: result.tier,
+            zitadelUserId: result.zitadelUserId,
+            data,
+          });
+        } else if (result.ok) {
           setRedirectOnSuccess(result.redirect);
           // Panel sees terminalState=ok in Redis and follows redirect.
         } else {
@@ -341,10 +361,48 @@ export function SignupForm({
     [form],
   );
 
-  // Show the provisioning panel once we have an attemptId.
+  // Card-first signup (dashboard#769): finish phase 2 once the card is
+  // confirmed and the trialing subscription created. resumeSignupAfterPayment
+  // re-validates against the tenant CR (owner + billing) server-side.
+  async function handlePaymentComplete() {
+    if (!paymentCtx) return;
+    const result = await resumeSignupAfterPayment({
+      attemptId: attemptId ?? crypto.randomUUID(),
+      tenantSlug: paymentCtx.tenantSlug,
+      tier: paymentCtx.tier,
+      zitadelUserId: paymentCtx.zitadelUserId,
+      email: paymentCtx.data.email,
+      password: paymentCtx.data.password,
+      workspaceName: paymentCtx.data.workspaceName,
+    });
+    setPaymentCtx(null);
+    if (result.ok && "redirect" in result) {
+      setRedirectOnSuccess(result.redirect);
+    } else if (!result.ok) {
+      toast.error(result.userMessage);
+    }
+  }
+
+  // Show the provisioning panel once we have an attemptId. When phase 1
+  // returned awaitingPayment, render the in-page Payment Element above it.
   if (attemptId) {
     return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
+      <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-6 px-4 py-12">
+        {paymentCtx ? (
+          <div className="w-full max-w-md rounded-lg border border-border bg-card p-6">
+            <h2 className="mb-1 text-lg font-semibold text-foreground">
+              Add a payment method
+            </h2>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Start your 14-day free trial. You won&apos;t be charged until it ends.
+            </p>
+            <PaymentStep
+              tenantSlug={paymentCtx.tenantSlug}
+              tier={paymentCtx.tier}
+              onComplete={handlePaymentComplete}
+            />
+          </div>
+        ) : null}
         <ProvisioningPanel
           attemptId={attemptId}
           redirectOnSuccess={redirectOnSuccess}
