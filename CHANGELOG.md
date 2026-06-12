@@ -5,6 +5,18 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.114.0](https://github.com/zeroroot-ai/dashboard/compare/v0.113.0...v0.114.0) (2026-06-12)
+
+
+### Features
+
+* **billing:** embedded card-collection server surface (Payment Element + SetupIntent + trialing subscription) ([#775](https://github.com/zeroroot-ai/dashboard/issues/775)) ([1aca84e](https://github.com/zeroroot-ai/dashboard/commit/1aca84efef48fdfbc92c864b3b538d033f0273e6))
+* **billing:** explicit STRIPE_EXPECTED_MODE guard replaces NODE_ENV inference ([#774](https://github.com/zeroroot-ai/dashboard/issues/774)) ([21f9d8d](https://github.com/zeroroot-ai/dashboard/commit/21f9d8d6d9d10c15a5ed4ddbbd09a689fa97d0c8))
+* **billing:** subscription.created stamps billing-active for the embedded flow ([#778](https://github.com/zeroroot-ai/dashboard/issues/778)) ([fc8e8ba](https://github.com/zeroroot-ai/dashboard/commit/fc8e8baabcca744273b9ea565d872d113576b491))
+* **copy:** remove em-dashes repo-wide; enforce on customer-facing surfaces ([#754](https://github.com/zeroroot-ai/dashboard/issues/754), [#755](https://github.com/zeroroot-ai/dashboard/issues/755)) ([#764](https://github.com/zeroroot-ai/dashboard/issues/764)) ([c2ee5e5](https://github.com/zeroroot-ai/dashboard/commit/c2ee5e509094ff606a40b29b04beb2a9d4e8c1ed))
+* **signup:** card-first two-phase split — pause for in-page card, resume after payment (epic card-first-signup S2 pt3) ([#777](https://github.com/zeroroot-ai/dashboard/issues/777)) ([27bbda3](https://github.com/zeroroot-ai/dashboard/commit/27bbda3155eaa2628d151f9faa1961040f7efac8))
+* **signup:** in-page Payment Element card UI + confirm/subscribe helper ([#776](https://github.com/zeroroot-ai/dashboard/issues/776)) ([97afc25](https://github.com/zeroroot-ai/dashboard/commit/97afc2579c07c3f74355dd285383a71182652f6a))
+
 ## [0.113.0](https://github.com/zeroroot-ai/dashboard/compare/v0.112.0...v0.113.0) (2026-06-12)
 
 
