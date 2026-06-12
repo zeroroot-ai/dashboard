@@ -17,8 +17,10 @@ SDK.
   successfully for a registered agent identity.
 - Go installed (the version pinned in the SDK's `go.mod`).
 
-If you haven't enrolled an agent yet, do that first, the dashboard's
-deploy wizard issues the credential the SDK needs.
+If you haven't enrolled an agent yet, do that first:
+`gibson agent enroll --name <name> --kind agent` mints a bootstrap token,
+and `gibson component register --token <T>` exchanges it for the runtime
+credential the SDK needs.
 
 ## What an agent looks like
 

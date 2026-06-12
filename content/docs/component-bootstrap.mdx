@@ -17,7 +17,7 @@ Enrollment is a single **capability-grant** handshake for every kind:
 
 | Step | What happens |
 |---|---|
-| **Mint** | The dashboard's deploy wizard issues a single-use **bootstrap token** (24 h expiry). |
+| **Mint** | `gibson agent enroll --name <name> --kind <kind>` provisions the machine identity and prints a single-use **bootstrap token** (24 h expiry, shown once). |
 | **Register** | `gibson component register --token <T>` exchanges the bootstrap token for a persistent **host key** and a **runtime credential**, written to `~/.gibson/<kind>/<name>.host_key` and `~/.gibson/<kind>/<name>.runtime.json` (both mode 0600). |
 | **Per-call** | The SDK signs a fresh short-lived token per RPC, chained to the host key, and presents it as a Bearer credential. Gibson validates the signature against the host key recorded at enrollment. |
 

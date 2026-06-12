@@ -1,6 +1,6 @@
 ---
 title: Getting Started
-description: Stand up your first Gibson agent in under an hour, sign up, install the gibson CLI, register, build, and run a mission.
+description: Stand up your first Gibson agent in under an hour, sign up, install the gibson CLI, sign in with the device flow, enroll, build, and run a mission.
 ---
 
 This is the fast path: account → CLI → component → mission. If you get
@@ -11,43 +11,60 @@ stuck, jump to the linked deep-dive page; otherwise just keep going.
 If you haven't already, follow [Install](/docs/install) to:
 
 - create a tenant at [zeroroot.ai](https://zeroroot.ai),
-- install the **`gibson`** binary (`go install github.com/zeroroot-ai/adk/cmd/gibson@latest`),
-- and set `GIBSON_URL=https://api.zeroroot.ai`.
+- and install the **`gibson`** binary (`go install github.com/zeroroot-ai/adk/cmd/gibson@latest`).
 
-Verify your shell:
+Point the CLI at the platform once per workspace. `gibson init` writes
+`.gibson/workspace.yaml`, which pins the platform URL so you don't repeat
+it on every command:
 
 ```bash
+gibson init --gibson-url https://api.zeroroot.ai
 gibson --help
-echo "$GIBSON_URL"
 ```
 
-## 2. Issue a credential from the dashboard
+## 2. Sign in
 
-Open
-[`app.zeroroot.ai/dashboard/deploy`](https://app.zeroroot.ai/dashboard/deploy).
-
-The deploy wizard walks you through:
-
-1. **Pick a kind**, start with **Agent** for this walkthrough.
-2. **Name your agent**, kebab-case, e.g. `my-first-agent`.
-3. **Permissions**, for the walkthrough, accept the defaults. You can
-   tighten them later. See [Roles & permissions](/docs/rbac).
-4. **Issue a bootstrap token**, the dashboard shows a single-use
-   bootstrap token. **Copy it now**, it's not shown again.
-5. **Connect**, leave the page open. It polls for the next step.
-
-## 3. Register on your machine
+Authenticate the CLI as yourself with the device flow. `gibson login`
+prints a URL and a short code, you approve in a browser, and the session
+is stored at `~/.gibson/auth/credentials` (mode `0600`). Every later
+`gibson` command then acts as you, and the session refreshes silently.
 
 ```bash
-gibson component register --kind agent --token <from-wizard> \
-  --name my-first-agent
+gibson login
 ```
 
-This runs the capability-grant handshake, writes the host key and
+```text
+Open https://app.zeroroot.ai/device and enter code: BDRX-WXKQ
+Waiting for approval... signed in as you@example.com
+```
+
+The CLI discovers the identity issuer from the platform automatically.
+Run `gibson logout` when you want to end the session.
+
+## 3. Scaffold and enroll an agent
+
+Scaffold a component directory, then enroll a machine identity for it.
+Enrollment mints a **single-use bootstrap token**, the one credential
+your agent needs to bootstrap itself, and there is no client secret to
+manage anywhere.
+
+```bash
+gibson component init my-first-agent --kind agent
+gibson agent enroll --name my-first-agent --kind agent
+```
+
+`enroll` prints the bootstrap token to stdout. **Copy it now**, it is
+shown once and expires in 24 hours. Exchange it for a persistent runtime
+credential:
+
+```bash
+gibson component register --token <bootstrap-token>
+```
+
+`register` runs the capability-grant handshake, writes the host key and
 runtime credential under `~/.gibson/agent/` (mode `0600`), and verifies
-the credential by calling Gibson's identity service. If the verification
-fails, the wizard does **not** advance, see
-[Component bootstrap & auth → Troubleshooting a 401](/docs/component-bootstrap#troubleshooting-a-401).
+the credential against Gibson's identity service. If verification fails,
+see [Component bootstrap & auth → Troubleshooting a 401](/docs/component-bootstrap#troubleshooting-a-401).
 
 ## 4. Verify with `inspect`
 
