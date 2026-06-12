@@ -14,7 +14,7 @@
  *     errors as collapsible cards so an operator (or an LLM agent) can
  *     diagnose without leaving the browser.
  *
- * Default OFF — production users see safeErrorResponse-style messages.
+ * Default OFF, production users see safeErrorResponse-style messages.
  */
 
 import { NextResponse } from "next/server";

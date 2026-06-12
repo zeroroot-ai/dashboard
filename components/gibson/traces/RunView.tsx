@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * RunView — the single, shared renderer for one run (dashboard#533).
+ * RunView, the single, shared renderer for one run (dashboard#533).
  *
  * Leads with the train-of-thought timeline (what the agents did and why) and
  * keeps the raw span tree behind an explicit "Advanced" toggle. Both the
- * standalone trace page and the mission Traces tab render through this — there
+ * standalone trace page and the mission Traces tab render through this, there
  * is one run renderer, not two.
  *
  * The compact totals strip stays pinned on top; the Spend tab adds the

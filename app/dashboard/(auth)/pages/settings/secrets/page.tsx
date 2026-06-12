@@ -16,7 +16,7 @@ import {
 
 export async function generateMetadata(): Promise<Metadata> {
   return generateMeta({
-    title: "Settings — Secrets",
+    title: "Settings | Secrets",
     additionalTitle: true,
     description: "Manage credentials and configuration secrets for your tenant.",
     canonical: "/pages/settings/secrets",
@@ -57,14 +57,14 @@ export default async function SecretsPage({ searchParams }: SecretsPageProps) {
   const offset = Math.max(0, parseInt(params.offset ?? "0", 10) || 0);
   const limit = Math.min(100, Math.max(1, parseInt(params.limit ?? String(PAGE_LIMIT), 10) || PAGE_LIMIT));
 
-  // Determine broker state first — drives the empty state variant.
+  // Determine broker state first, drives the empty state variant.
   let brokerConfigured = false;
   let isGibsonHosted = false;
   try {
     const brokerResp = await getBrokerConfig();
     brokerConfigured = brokerResp.configured;
     // Gibson-hosted Vault is BROKER_PROVIDER_VAULT with no explicit address
-    // (the platform sets it) — we infer "gibson-hosted" by the provider enum
+    // (the platform sets it), we infer "gibson-hosted" by the provider enum
     // and absence of a custom address. The platform always uses Vault, so any
     // VAULT provider with no custom address is Gibson-hosted.
     isGibsonHosted =
@@ -72,7 +72,7 @@ export default async function SecretsPage({ searchParams }: SecretsPageProps) {
       brokerResp.config?.provider === BrokerProvider.VAULT &&
       !brokerResp.config?.address;
   } catch {
-    // If the broker config call fails, treat as unconfigured — safe default.
+    // If the broker config call fails, treat as unconfigured, safe default.
     brokerConfigured = false;
   }
 

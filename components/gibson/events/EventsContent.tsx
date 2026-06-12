@@ -189,7 +189,7 @@ const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
 export function EventsContent() {
   const [filter, setFilter] = React.useState<FilterType>("all");
 
-  // Wire event stream — connects SSE and populates the store's eventBuffer
+  // Wire event stream, connects SSE and populates the store's eventBuffer
   const { isConnecting, isConnected, error, reconnect } = useEventStream();
 
   // Read pause state and event buffer from the shared UI store
@@ -232,7 +232,7 @@ export function EventsContent() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Auto-reconnect indicator — only show when disconnected and not already
+          {/* Auto-reconnect indicator, only show when disconnected and not already
               actively reconnecting */}
           {isDisconnected && (
             <Button

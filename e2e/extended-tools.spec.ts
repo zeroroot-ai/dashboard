@@ -1,7 +1,7 @@
 /**
  * extended-tools.spec.ts
  *
- * End-to-end smoke for /dashboard/tools — confirms the page renders the
+ * End-to-end smoke for /dashboard/tools, confirms the page renders the
  * shared AccessScopeSelector + RWXMatrix with Version/Endpoint metadata
  * preserved as row description content.
  *
@@ -37,7 +37,7 @@ async function mockListTools(page: Page) {
             kind: "tool",
             name: "nmap",
             displayName: "Nmap",
-            description: "Network mapper — https://tools.internal/nmap",
+            description: "Network mapper, https://tools.internal/nmap",
             rwx: { read: true, write: true, execute: true },
             denyingGates: [],
             version: "7.94",
@@ -48,7 +48,7 @@ async function mockListTools(page: Page) {
   });
 }
 
-test.describe("Tools page — matrix + metadata preservation", () => {
+test.describe("Tools page, matrix + metadata preservation", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });

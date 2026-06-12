@@ -25,7 +25,7 @@ export function generateMeta({
   canonical: string;
 }): Metadata {
   return {
-    title: `${title} — Zero Root AI`,
+    title: `${title}, Zero Root AI`,
     description: description,
     metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.zeroroot.ai'),
     alternates: {

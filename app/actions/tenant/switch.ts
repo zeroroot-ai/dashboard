@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * switchTenantAction — Server Action for tenant switching.
+ * switchTenantAction, Server Action for tenant switching.
  *
  * Two distinct flows live in this codebase:
  *
@@ -24,7 +24,7 @@
  * The validation below uses `getServerSession()` (the FGA-enriched
  * session) so an invalid slug is rejected immediately even before the
  * PAT path is wired up. Previously this read raw `auth().session.user`
- * tenant fields that the Auth.js session callback never sets — the
+ * tenant fields that the Auth.js session callback never sets, the
  * validation was decorative.
  */
 
@@ -52,7 +52,7 @@ export async function switchTenantAction(
 
   // Membership-resolution failure (empty list with non-null user) is
   // surfaced as a structured error rather than silently allowing the
-  // switch — the caller shows it as a toast.
+  // switch, the caller shows it as a toast.
   if (availableTenants.length === 0) {
     return {
       ok: false,
@@ -84,7 +84,7 @@ export async function switchTenantAction(
   //
   //    For the in-app cookie-only switch path, callers should use
   //    `switchActiveTenantAction` from
-  //    `@/components/gibson/shared/tenant-switcher-action` instead — that
+  //    `@/components/gibson/shared/tenant-switcher-action` instead, that
   //    path is fully implemented today and writes the HMAC-signed
   //    active-tenant cookie.
   // -------------------------------------------------------------------------

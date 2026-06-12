@@ -14,7 +14,7 @@ import {
 
 export async function generateMetadata(): Promise<Metadata> {
   return generateMeta({
-    title: "Settings — CLI",
+    title: "Settings | CLI",
     additionalTitle: true,
     description:
       "Connect the gibson CLI to this tenant: copy-pasteable login and component check-in commands.",
@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * /dashboard/pages/settings/cli — every member. Renders the CLI
+ * /dashboard/pages/settings/cli, every member. Renders the CLI
  * command-reference card pre-filled with this tenant's slug and the public
  * platform URL (PRD dashboard#738, slice S1). The active-sessions table
  * (S3/S4) layers onto this page once the SessionService RPC lands.

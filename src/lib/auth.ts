@@ -1,5 +1,5 @@
 /**
- * Gibson auth helpers — server side.
+ * Gibson auth helpers, server side.
  *
  * Provides getServerSession() for Server Components, Route Handlers, and
  * Server Actions. Uses Auth.js v5 (next-auth) with Zitadel OIDC as the
@@ -29,7 +29,7 @@ import { auth } from '@/auth';
  * NOTE (dashboard#583 lock-in): `tenantId` has been removed as an authority
  * field. The active tenant is now only resolvable via `requireActiveTenant()`
  * from `src/lib/auth/active-tenant`. Session no longer carries a tenant
- * identity — it carries the membership list (`tenants`) for role lookup and
+ * identity, it carries the membership list (`tenants`) for role lookup and
  * the tenant-switcher UI.
  */
 export interface GibsonSession {
@@ -40,7 +40,7 @@ export interface GibsonSession {
     image?: string | null;
     /**
      * Whether the user has verified their email address.
-     * Always true for Zitadel OIDC users — email_verified is asserted by
+     * Always true for Zitadel OIDC users, email_verified is asserted by
      * Zitadel before issuing the ID token. The dashboard layout gate continues
      * to check this field for forward compatibility.
      */
@@ -75,7 +75,7 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
   const { user } = session;
 
   // Tenant + memberships now come from FGA (via the daemon) plus the
-  // gibson_active_tenant cookie — see spec `tenant-membership-not-in-jwt`.
+  // gibson_active_tenant cookie, see spec `tenant-membership-not-in-jwt`.
   // The active tenant is NOT resolved here; every endpoint calls
   // requireActiveTenant() directly (dashboard#583 lock-in). The session only
   // carries the membership list (for role lookup and switcher UI).
@@ -94,14 +94,14 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
       rolesByTenant[m.tenantId] = m.role;
     }
     // Read the active-tenant cookie to populate roles for this render.
-    // This is read-only; no auto-pick fallback — a missing cookie means
+    // This is read-only; no auto-pick fallback, a missing cookie means
     // no active tenant and the endpoint will throw via requireActiveTenant().
     const raw = await readRawActiveTenant();
     if (raw.status === 'present' && tenants.includes(raw.tenantId!)) {
       activeTenantId = raw.tenantId!;
     }
   } catch (err) {
-    // Transient FGA/daemon errors degrade to "no tenant" — middleware will
+    // Transient FGA/daemon errors degrade to "no tenant", middleware will
     // route the next request to /login/error if the failure persists.
     console.error('[auth] membership resolution failed:', err);
   }
@@ -109,7 +109,7 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
   // Derive roles from the cookie-confirmed active tenant only (no auto-pick).
   const roles: string[] = activeTenantId && rolesByTenant[activeTenantId] ? [rolesByTenant[activeTenantId]!] : [];
 
-  // crossTenant is derived DIRECTLY from the active-tenant role — not from the
+  // crossTenant is derived DIRECTLY from the active-tenant role, not from the
   // (deleted) daemon auth schema, which always returned false and silently
   // broke platform-operator provisioning. Authorization itself is sourced from
   // the AuthRegistry relation model (useAuthorize / assertAuthorized /

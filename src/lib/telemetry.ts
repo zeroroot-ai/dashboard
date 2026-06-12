@@ -270,7 +270,7 @@ export async function measureTenantOperation<T>(
 /**
  * Extracts tenant context from request headers for span annotation.
  *
- * This helper is for observability enrichment (span attributes) only — it is
+ * This helper is for observability enrichment (span attributes) only, it is
  * NOT an authorization gate. API route handlers that need a tenant ID for an
  * RPC must call `requireActiveTenant()` from `@/src/lib/auth/active-tenant`
  * directly; this function must not be used as a substitute.

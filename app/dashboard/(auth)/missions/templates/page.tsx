@@ -1,5 +1,5 @@
 /**
- * /dashboard/missions/templates — gallery of mission templates
+ * /dashboard/missions/templates, gallery of mission templates
  * shipped from the ADK. Each card links to a detail page where
  * the user can preview the mission and click "Use this template"
  * to seed a new authoring session.

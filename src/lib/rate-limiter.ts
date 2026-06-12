@@ -538,7 +538,7 @@ export async function checkRateLimit(
 }
 
 /**
- * Check rate limit for a pre-generated key — for callers that already know
+ * Check rate limit for a pre-generated key, for callers that already know
  * the identity (e.g. Server Actions loading the session themselves) and do
  * not have a NextRequest to pass through `checkRateLimit`.
  *

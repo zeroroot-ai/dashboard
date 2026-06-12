@@ -11,7 +11,7 @@ import type { Finding, PaginatedResponse } from '@/src/types';
  * GET /api/findings
  *
  * Retrieve findings from the knowledge graph with filtering and pagination.
- * Calls GraphService.GetFindings — routes through Envoy + ext-authz.
+ * Calls GraphService.GetFindings, routes through Envoy + ext-authz.
  *
  * Spec: dashboard-neo4j-crud-removal (Phase 3, Task 11).
  */

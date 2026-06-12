@@ -1,9 +1,9 @@
 /**
- * Visual regression — docs routes.
+ * Visual regression, docs routes.
  *
  * Spec: dashboard#98, single dark brand #654. Captures full-page screenshots
  * of every page listed in `content/docs/meta.json` against the local dev
- * server. There is one immutable dark brand — each route is captured once.
+ * server. There is one immutable dark brand, each route is captured once.
  * Failures here mean the Fumadocs theme tokens drifted (most commonly: an
  * `--color-fd-*` mapping in `components/gibson/docs/docs-theme.css` regressed
  * to a saturated/atmospheric value that's unreadable as body prose).
@@ -62,8 +62,8 @@ async function stabilise(page: Page) {
   await page.waitForLoadState("networkidle");
 }
 
-test.describe("visual regression — docs routes", () => {
-  // Chromium-only — match the convention from public-routes + auth-routes
+test.describe("visual regression, docs routes", () => {
+  // Chromium-only, match the convention from public-routes + auth-routes
   // specs. Per-browser font rendering bloats diffs without adding signal.
   test.skip(
     ({ browserName }) => browserName !== "chromium",

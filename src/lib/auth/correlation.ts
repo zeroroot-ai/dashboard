@@ -12,7 +12,7 @@
  *     (`logAuthError`);
  *   - audit-event metadata when applicable.
  *
- * The ID is intentionally opaque — it does NOT reuse OTel trace IDs
+ * The ID is intentionally opaque, it does NOT reuse OTel trace IDs
  * (those are internal). It is HTTP-header-safe (UUID v4 hex with
  * hyphens, never quoted).
  *

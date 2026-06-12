@@ -8,13 +8,13 @@
  * traces type-only imports through the module graph at build time, so a
  * `'use client'` file that does `import type { Foo } from './gibson-client'`
  * still forces grpc-js (with its node:fs / node:dns / node:cluster requires)
- * into the browser bundle — fatally.
+ * into the browser bundle, fatally.
  *
  * This file MUST stay free of runtime imports. Anything that needs the
  * server-side machinery imports from gibson-client.ts directly; anything
  * that just needs the shape imports from here.
  *
- * Keep gibson-client.ts as the canonical source of these types — it
+ * Keep gibson-client.ts as the canonical source of these types, it
  * re-exports them so `import { Foo } from '@/src/lib/gibson-client'` keeps
  * working from server code; client code should prefer this file directly.
  */
@@ -57,7 +57,7 @@ export interface CredentialFieldDescriptor {
   help: string;
   /**
    * Semantic field type from the daemon's CredentialFieldType enum.
-   * Optional — absent (or 0/UNSPECIFIED) falls back to the secret flag:
+   * Optional, absent (or 0/UNSPECIFIED) falls back to the secret flag:
    * secret=true → PASSWORD, secret=false → TEXT. BOOL renders as a Checkbox.
    */
   fieldType?: CredentialFieldType;
@@ -78,7 +78,7 @@ export interface ModelDescriptor {
 }
 
 /**
- * Supported LLM provider descriptor — the client-side shape of the daemon's
+ * Supported LLM provider descriptor, the client-side shape of the daemon's
  * ProviderDescriptor proto message.
  */
 export interface SupportedProviderDescriptor {
@@ -90,7 +90,7 @@ export interface SupportedProviderDescriptor {
   docsUrl: string;
   /** True for providers running on operator-controlled infrastructure. */
   selfHosted: boolean;
-  /** Form schema — one entry per credential input. */
+  /** Form schema, one entry per credential input. */
   credentials: CredentialFieldDescriptor[];
   /** Default model catalogue the provider advertises. */
   defaultModels: ModelDescriptor[];
@@ -107,7 +107,7 @@ export interface DaemonProviderConfigInput {
   type: string;
   /** Model to use when none is specified by the caller. */
   defaultModel: string;
-  /** Plaintext credentials, e.g. {"api_key": "sk-..."}. Transient — not retained by dashboard. */
+  /** Plaintext credentials, e.g. {"api_key": "sk-..."}. Transient, not retained by dashboard. */
   credentials: Record<string, string>;
   /** When true, atomically designates this provider as the tenant's default. */
   setAsDefault?: boolean;

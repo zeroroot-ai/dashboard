@@ -1,8 +1,8 @@
 /**
  * Unit tests for revokeMemberAction (dashboard#715).
  *
- * revokeMemberAction now calls the daemon's MembershipService — SetTenantRole
- * (remove) for active members, CancelInvitation for pending invitations — and
+ * revokeMemberAction now calls the daemon's MembershipService, SetTenantRole
+ * (remove) for active members, CancelInvitation for pending invitations, and
  * runs a last-active-owner safeguard against the daemon roster
  * (listMembersAction) before any mutation.
  */
@@ -65,7 +65,7 @@ beforeEach(() => {
   });
 });
 
-describe("revokeMemberAction — last-owner safeguard", () => {
+describe("revokeMemberAction, last-owner safeguard", () => {
   it("blocks removal of the last active owner (no mutation)", async () => {
     mocks.listMembers.mockResolvedValue({
       ok: true,
@@ -113,7 +113,7 @@ describe("revokeMemberAction — last-owner safeguard", () => {
   });
 });
 
-describe("revokeMemberAction — invitation cancel path", () => {
+describe("revokeMemberAction, invitation cancel path", () => {
   it("cancels a pending invitation by email (no roster lookup, no role strip)", async () => {
     const r = await revokeMemberAction({ userId: "", email: "pending@example.com", status: "invited" });
     expect(r.ok).toBe(true);

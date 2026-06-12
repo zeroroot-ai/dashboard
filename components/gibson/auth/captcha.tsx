@@ -7,10 +7,10 @@
  * `NEXT_PUBLIC_DASHBOARD_CAPTCHA_PROVIDER`. The provider's JS is loaded
  * once per page; the widget calls `onToken` with the response token
  * produced by the user completing the challenge. Servers must still
- * re-verify the token via `verifyCaptcha` in src/lib/auth/captcha.ts —
+ * re-verify the token via `verifyCaptcha` in src/lib/auth/captcha.ts -
  * this component is a UI affordance only.
  *
- * Environment (all `NEXT_PUBLIC_*` — safe to ship to the browser):
+ * Environment (all `NEXT_PUBLIC_*`, safe to ship to the browser):
  *   - NEXT_PUBLIC_DASHBOARD_CAPTCHA_PROVIDER : "turnstile" | "hcaptcha" |
  *     "disabled" | unset. When `disabled` or unset the component renders
  *     null (nothing is mounted, no script is injected, no token is ever

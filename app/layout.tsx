@@ -16,7 +16,7 @@ export default async function RootLayout({
 }>) {
   // One immutable dark brand (#651). There is no light mode, no theme
   // toggle, and no theme cookie. The `dark` class is applied statically so
-  // the first paint is the brand on every cold load — no flash, no
+  // the first paint is the brand on every cold load, no flash, no
   // next-themes inline script, no per-user/per-device theme state.
   return (
     <html lang="en" className="dark">

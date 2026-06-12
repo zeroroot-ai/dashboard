@@ -53,25 +53,25 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 * **authz:** consume decomposed tenant.v1 services; drop admin.v1 (ADR-0039) ([#628](https://github.com/zeroroot-ai/dashboard/issues/628)) ([2772819](https://github.com/zeroroot-ai/dashboard/commit/2772819b19448331943233ec83f4da5649e83cd4))
 * **authz:** gate server CRD actions on active-tenant role + relation (closes [#614](https://github.com/zeroroot-ai/dashboard/issues/614)) ([#621](https://github.com/zeroroot-ai/dashboard/issues/621)) ([4f82366](https://github.com/zeroroot-ai/dashboard/commit/4f82366c6c76a12a3b73fea26667e9ff74915995))
 * **design:** collapse to single :root token tree + violet-led palette + WCAG contrast test ([#656](https://github.com/zeroroot-ai/dashboard/issues/656)) ([d347ef6](https://github.com/zeroroot-ai/dashboard/commit/d347ef60c7ede0778dd3f2520cf5eb608b338ef7)), closes [#650](https://github.com/zeroroot-ai/dashboard/issues/650)
-* **design:** rip light-mode machinery — next-themes, toggle, customizer; add check-no-light-mode guard ([#659](https://github.com/zeroroot-ai/dashboard/issues/659)) ([24255ab](https://github.com/zeroroot-ai/dashboard/commit/24255ab7bed6fad3f082b71179855ff5360f0dc9)), closes [#651](https://github.com/zeroroot-ai/dashboard/issues/651)
+* **design:** rip light-mode machinery, next-themes, toggle, customizer; add check-no-light-mode guard ([#659](https://github.com/zeroroot-ai/dashboard/issues/659)) ([24255ab](https://github.com/zeroroot-ai/dashboard/commit/24255ab7bed6fad3f082b71179855ff5360f0dc9)), closes [#651](https://github.com/zeroroot-ai/dashboard/issues/651)
 * **grants:** daemon-route catalog-enablement, delete ComponentGrant K8s direct path (closes [#577](https://github.com/zeroroot-ai/dashboard/issues/577)) ([#632](https://github.com/zeroroot-ai/dashboard/issues/632)) ([91bb17b](https://github.com/zeroroot-ai/dashboard/commit/91bb17be236df2d5bc396ace08469ad6028ac576))
 * **graph:** attack-path emphasis + path-query highlight integration ([#689](https://github.com/zeroroot-ai/dashboard/issues/689)) ([a6ea99e](https://github.com/zeroroot-ai/dashboard/commit/a6ea99ef28a6eb0249d7bbcdba2935898d4d7b2a)), closes [#673](https://github.com/zeroroot-ai/dashboard/issues/673)
 * **graph:** consolidated filters that actually apply to the rendered graph ([#683](https://github.com/zeroroot-ai/dashboard/issues/683)) ([573736e](https://github.com/zeroroot-ai/dashboard/commit/573736e977099d810193d925c7d714285a890d16)), closes [#667](https://github.com/zeroroot-ai/dashboard/issues/667)
-* **graph:** cyber background layer — vignette + restrained scanline ([#639](https://github.com/zeroroot-ai/dashboard/issues/639)) ([2613c2c](https://github.com/zeroroot-ai/dashboard/commit/2613c2c7faaf429f304dbf2e8d5398c884dbd0a1)), closes [#634](https://github.com/zeroroot-ai/dashboard/issues/634)
+* **graph:** cyber background layer, vignette + restrained scanline ([#639](https://github.com/zeroroot-ai/dashboard/issues/639)) ([2613c2c](https://github.com/zeroroot-ai/dashboard/commit/2613c2c7faaf429f304dbf2e8d5398c884dbd0a1)), closes [#634](https://github.com/zeroroot-ai/dashboard/issues/634)
 * **graph:** deep-navy palette foundation + contrast-tuned colors ([#638](https://github.com/zeroroot-ai/dashboard/issues/638)) ([377ea43](https://github.com/zeroroot-ai/dashboard/commit/377ea431181204949791c683c3b99233f213e3fe)), closes [#633](https://github.com/zeroroot-ai/dashboard/issues/633)
 * **graph:** export current view as PNG and JSON ([#687](https://github.com/zeroroot-ai/dashboard/issues/687)) ([46ec7b4](https://github.com/zeroroot-ai/dashboard/commit/46ec7b4770759dfa912d8c60c0c539e520b3864e)), closes [#671](https://github.com/zeroroot-ai/dashboard/issues/671)
 * **graph:** legend + minimap for orientation ([#684](https://github.com/zeroroot-ai/dashboard/issues/684)) ([86de059](https://github.com/zeroroot-ai/dashboard/commit/86de05970069ddc476608e57de31d22826d9e385)), closes [#668](https://github.com/zeroroot-ai/dashboard/issues/668)
 * **graph:** legible HUD + legend + overlay panels ([#640](https://github.com/zeroroot-ai/dashboard/issues/640)) ([7997b36](https://github.com/zeroroot-ai/dashboard/commit/7997b3681f2c2e11ab44283012a0587a022fb921)), closes [#635](https://github.com/zeroroot-ai/dashboard/issues/635)
-* **graph:** live-run overlay — directional particles + pulsing running nodes ([#690](https://github.com/zeroroot-ai/dashboard/issues/690)) ([7cf12fe](https://github.com/zeroroot-ai/dashboard/commit/7cf12fe38024939e63bee84b477da66a88e852c5)), closes [#674](https://github.com/zeroroot-ai/dashboard/issues/674)
-* **graph:** node manipulation — pin/unpin, hide, isolate + neighbor-expand ([#686](https://github.com/zeroroot-ai/dashboard/issues/686)) ([bfea173](https://github.com/zeroroot-ai/dashboard/commit/bfea173bb9e8a6c47c89335cee6ccce75cb16247)), closes [#670](https://github.com/zeroroot-ai/dashboard/issues/670)
-* **graph:** node-label readability — halo/outline against bg and nodes ([#641](https://github.com/zeroroot-ai/dashboard/issues/641)) ([06f934d](https://github.com/zeroroot-ai/dashboard/commit/06f934dcaa14fc202b59644627a5dc974300cc52)), closes [#636](https://github.com/zeroroot-ai/dashboard/issues/636)
+* **graph:** live-run overlay, directional particles + pulsing running nodes ([#690](https://github.com/zeroroot-ai/dashboard/issues/690)) ([7cf12fe](https://github.com/zeroroot-ai/dashboard/commit/7cf12fe38024939e63bee84b477da66a88e852c5)), closes [#674](https://github.com/zeroroot-ai/dashboard/issues/674)
+* **graph:** node manipulation, pin/unpin, hide, isolate + neighbor-expand ([#686](https://github.com/zeroroot-ai/dashboard/issues/686)) ([bfea173](https://github.com/zeroroot-ai/dashboard/commit/bfea173bb9e8a6c47c89335cee6ccce75cb16247)), closes [#670](https://github.com/zeroroot-ai/dashboard/issues/670)
+* **graph:** node-label readability, halo/outline against bg and nodes ([#641](https://github.com/zeroroot-ai/dashboard/issues/641)) ([06f934d](https://github.com/zeroroot-ai/dashboard/commit/06f934dcaa14fc202b59644627a5dc974300cc52)), closes [#636](https://github.com/zeroroot-ai/dashboard/issues/636)
 * **graph:** re-palette knowledge graph to violet brand + flowing-line edge flow ([#660](https://github.com/zeroroot-ai/dashboard/issues/660)) ([b7543af](https://github.com/zeroroot-ai/dashboard/commit/b7543af81a93870a1c1ac8f85b7e88eb8f5be957)), closes [#652](https://github.com/zeroroot-ai/dashboard/issues/652)
 * **graph:** real Settings panel with persisted display + physics controls ([#682](https://github.com/zeroroot-ai/dashboard/issues/682)) ([359d7fe](https://github.com/zeroroot-ai/dashboard/commit/359d7fea6c0dde359100cc897cdb917df385d34d)), closes [#666](https://github.com/zeroroot-ai/dashboard/issues/666)
 * **graph:** rebuild explorer on react-force-graph-2d with one view-state ([#679](https://github.com/zeroroot-ai/dashboard/issues/679)) ([e7e673b](https://github.com/zeroroot-ai/dashboard/commit/e7e673b10417b17f41eb77d9dcfa48b8d068c567)), closes [#664](https://github.com/zeroroot-ai/dashboard/issues/664)
 * **graph:** search-to-focus + fit-to-selection ([#685](https://github.com/zeroroot-ai/dashboard/issues/685)) ([b0d1471](https://github.com/zeroroot-ai/dashboard/commit/b0d1471a83c8b88a068a2cedf7989b0b37717071)), closes [#669](https://github.com/zeroroot-ai/dashboard/issues/669)
 * **graph:** severity heatmap for finding nodes ([#688](https://github.com/zeroroot-ai/dashboard/issues/688)) ([6a590e0](https://github.com/zeroroot-ai/dashboard/commit/6a590e0ea2cf55d619b08be005e9a8fe2cdbf5f7)), closes [#672](https://github.com/zeroroot-ai/dashboard/issues/672)
 * **graph:** timeline scrubber replaying graph growth ([#691](https://github.com/zeroroot-ai/dashboard/issues/691)) ([9e50cea](https://github.com/zeroroot-ai/dashboard/commit/9e50cea55cf257dac3f639c8226e0cfe7db50245)), closes [#675](https://github.com/zeroroot-ai/dashboard/issues/675)
-* **graph:** working layout switcher — force/hierarchy/radial/timeline ([#681](https://github.com/zeroroot-ai/dashboard/issues/681)) ([232d6b3](https://github.com/zeroroot-ai/dashboard/commit/232d6b3c207bac2704dc5558bd385bf883c7818a)), closes [#665](https://github.com/zeroroot-ai/dashboard/issues/665)
+* **graph:** working layout switcher, force/hierarchy/radial/timeline ([#681](https://github.com/zeroroot-ai/dashboard/issues/681)) ([232d6b3](https://github.com/zeroroot-ai/dashboard/commit/232d6b3c207bac2704dc5558bd385bf883c7818a)), closes [#665](https://github.com/zeroroot-ai/dashboard/issues/665)
 * **nav:** consolidate member management into a single Members & Access home (closes [#609](https://github.com/zeroroot-ai/dashboard/issues/609)) ([#629](https://github.com/zeroroot-ai/dashboard/issues/629)) ([422fc66](https://github.com/zeroroot-ai/dashboard/commit/422fc6671435de8af1cb45f5a6f72cf7bebdc3f4))
 
 
@@ -105,17 +105,17 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 * **authz:** chat + providers endpoints use the single tenant resolver ([#593](https://github.com/zeroroot-ai/dashboard/issues/593)) ([4a23ddd](https://github.com/zeroroot-ai/dashboard/commit/4a23dddfa7f597766747346cdb7193a432ac6916)), closes [#569](https://github.com/zeroroot-ai/dashboard/issues/569) [#570](https://github.com/zeroroot-ai/dashboard/issues/570) [#571](https://github.com/zeroroot-ai/dashboard/issues/571)
 * **authz:** CI guard bans backing-store client deps and imports ([#599](https://github.com/zeroroot-ai/dashboard/issues/599)) ([a1c0f3b](https://github.com/zeroroot-ai/dashboard/commit/a1c0f3b6da8133a455efdeb6a874a714f8171d33))
 * **authz:** components, CRD, graph, and misc endpoints use the single tenant resolver ([#595](https://github.com/zeroroot-ai/dashboard/issues/595)) ([1b62417](https://github.com/zeroroot-ai/dashboard/commit/1b62417792fe1f74228982f4f5dd2d552ea38082))
-* **authz:** lock in one code path — delete session tenant authority + fallback, guard hard-fails ([#598](https://github.com/zeroroot-ai/dashboard/issues/598)) ([b108862](https://github.com/zeroroot-ai/dashboard/commit/b1088629b3bc6c34e0c0b2d829dc5d77d39e6912))
+* **authz:** lock in one code path, delete session tenant authority + fallback, guard hard-fails ([#598](https://github.com/zeroroot-ai/dashboard/issues/598)) ([b108862](https://github.com/zeroroot-ai/dashboard/commit/b1088629b3bc6c34e0c0b2d829dc5d77d39e6912))
 * **authz:** missions, findings, and analytics endpoints use the single tenant resolver ([#594](https://github.com/zeroroot-ai/dashboard/issues/594)) ([f0f47d9](https://github.com/zeroroot-ai/dashboard/commit/f0f47d950beff03ae4815aed24a1531d2b9a4b5c)), closes [#572](https://github.com/zeroroot-ai/dashboard/issues/572) [#573](https://github.com/zeroroot-ai/dashboard/issues/573) [#574](https://github.com/zeroroot-ai/dashboard/issues/574) [#575](https://github.com/zeroroot-ai/dashboard/issues/575)
 * **authz:** route Redis + Postgres access through the daemon; delete both clients ([#597](https://github.com/zeroroot-ai/dashboard/issues/597)) ([c5bbd58](https://github.com/zeroroot-ai/dashboard/commit/c5bbd58fb4ed2a17f127e76586ca47612f107ec0))
 * **authz:** single fail-closed active-tenant resolver + error contract + CI guard (warn) ([#592](https://github.com/zeroroot-ai/dashboard/issues/592)) ([3d045ba](https://github.com/zeroroot-ai/dashboard/commit/3d045ba88cfa0b195d2f66bcfca54ff6237d740b)), closes [#568](https://github.com/zeroroot-ai/dashboard/issues/568)
-* **chat:** auto-title — generate conversation title from first exchange ([#463](https://github.com/zeroroot-ai/dashboard/issues/463)) ([6d92850](https://github.com/zeroroot-ai/dashboard/commit/6d928509d85e1901edd59bf7a8be45fc9b5e7f17)), closes [#448](https://github.com/zeroroot-ai/dashboard/issues/448)
-* **chat:** conversation search — filter thread list by content ([#462](https://github.com/zeroroot-ai/dashboard/issues/462)) ([998da2c](https://github.com/zeroroot-ai/dashboard/commit/998da2cd86a01c20564566411038c6e7ca95bb0c)), closes [#449](https://github.com/zeroroot-ai/dashboard/issues/449)
+* **chat:** auto-title, generate conversation title from first exchange ([#463](https://github.com/zeroroot-ai/dashboard/issues/463)) ([6d92850](https://github.com/zeroroot-ai/dashboard/commit/6d928509d85e1901edd59bf7a8be45fc9b5e7f17)), closes [#448](https://github.com/zeroroot-ai/dashboard/issues/448)
+* **chat:** conversation search, filter thread list by content ([#462](https://github.com/zeroroot-ai/dashboard/issues/462)) ([998da2c](https://github.com/zeroroot-ai/dashboard/commit/998da2cd86a01c20564566411038c6e7ca95bb0c)), closes [#449](https://github.com/zeroroot-ai/dashboard/issues/449)
 * **chat:** copy, retry, autoscroll, empty/error states, and provider visibility ([#566](https://github.com/zeroroot-ai/dashboard/issues/566)) ([8350036](https://github.com/zeroroot-ai/dashboard/commit/8350036b7d86c225e4c3b6bd6e979a5cb232a8ed))
 * **chat:** daemon-backed conversation persistence ([#460](https://github.com/zeroroot-ai/dashboard/issues/460)) ([c7a4ddf](https://github.com/zeroroot-ai/dashboard/commit/c7a4ddf36d06da38273bfe8ab5870e7ded880b39)), closes [#446](https://github.com/zeroroot-ai/dashboard/issues/446)
 * **chat:** edit a prior message and regenerate from that point ([#564](https://github.com/zeroroot-ai/dashboard/issues/564)) ([b61c92c](https://github.com/zeroroot-ai/dashboard/commit/b61c92c7de412e9097f35f86f8f674e3843f335f)), closes [#553](https://github.com/zeroroot-ai/dashboard/issues/553)
 * **chat:** export conversation as markdown or plaintext ([#473](https://github.com/zeroroot-ai/dashboard/issues/473)) ([633f888](https://github.com/zeroroot-ai/dashboard/commit/633f888bd815716013e43255b21ac2bb2d1f1650))
-* **chat:** file attachment upload — inject file content into chat context ([#458](https://github.com/zeroroot-ai/dashboard/issues/458)) ([e0a2489](https://github.com/zeroroot-ai/dashboard/commit/e0a24891bbb908cd680c3751b938ae77a8703c7b)), closes [#442](https://github.com/zeroroot-ai/dashboard/issues/442)
+* **chat:** file attachment upload, inject file content into chat context ([#458](https://github.com/zeroroot-ai/dashboard/issues/458)) ([e0a2489](https://github.com/zeroroot-ai/dashboard/commit/e0a24891bbb908cd680c3751b938ae77a8703c7b)), closes [#442](https://github.com/zeroroot-ai/dashboard/issues/442)
 * **chat:** finalize interrupted streams and handle mid-stream conversation switches ([#565](https://github.com/zeroroot-ai/dashboard/issues/565)) ([ccb2d2c](https://github.com/zeroroot-ai/dashboard/commit/ccb2d2cfef986bcf6fcfb0952e72614de8654f8b)), closes [#555](https://github.com/zeroroot-ai/dashboard/issues/555)
 * **chat:** inject Redis, Langfuse, and platform context into system prompt ([#451](https://github.com/zeroroot-ai/dashboard/issues/451)) ([481c831](https://github.com/zeroroot-ai/dashboard/commit/481c831994152be078f9cf581a6a2e32b320913b)), closes [#437](https://github.com/zeroroot-ai/dashboard/issues/437) [#438](https://github.com/zeroroot-ai/dashboard/issues/438) [#439](https://github.com/zeroroot-ai/dashboard/issues/439)
 * **chat:** knowledge-graph citations surface source nodes in assistant messages ([#454](https://github.com/zeroroot-ai/dashboard/issues/454)) ([a57675e](https://github.com/zeroroot-ai/dashboard/commit/a57675e25cc36b78976afc0f2a5b04cd3b612826))
@@ -123,11 +123,11 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 * **chat:** Mermaid diagram rendering in assistant messages ([#457](https://github.com/zeroroot-ai/dashboard/issues/457)) ([402c09c](https://github.com/zeroroot-ai/dashboard/commit/402c09c7a57d51492027b06fa80e0e599d6fbc6f))
 * **chat:** migrate chat UI shell to @assistant-ui/react ([#452](https://github.com/zeroroot-ai/dashboard/issues/452)) ([3a78972](https://github.com/zeroroot-ai/dashboard/commit/3a789720fd599fd1f74c5e02693ef4831aceae99)), closes [#436](https://github.com/zeroroot-ai/dashboard/issues/436)
 * **chat:** persist conversations via daemon SaveConversation RPC ([#556](https://github.com/zeroroot-ai/dashboard/issues/556)) ([9479683](https://github.com/zeroroot-ai/dashboard/commit/947968324bc09b3d5570ae4137cdfe6607ed5cb6))
-* **chat:** persona system — audience-aware dropdown replaces agent selector ([#453](https://github.com/zeroroot-ai/dashboard/issues/453)) ([1f5dbf4](https://github.com/zeroroot-ai/dashboard/commit/1f5dbf41e12e0a7b41093cd1900c4596f2aa2e59))
+* **chat:** persona system, audience-aware dropdown replaces agent selector ([#453](https://github.com/zeroroot-ai/dashboard/issues/453)) ([1f5dbf4](https://github.com/zeroroot-ai/dashboard/commit/1f5dbf41e12e0a7b41093cd1900c4596f2aa2e59))
 * **chat:** pin, rename, and delete conversation threads ([#472](https://github.com/zeroroot-ai/dashboard/issues/472)) ([d718796](https://github.com/zeroroot-ai/dashboard/commit/d7187963bf28347c752d72efa827ee7f05747383))
 * **chat:** rename and delete conversations via daemon RPCs ([#562](https://github.com/zeroroot-ai/dashboard/issues/562)) ([0f1c070](https://github.com/zeroroot-ai/dashboard/commit/0f1c070d55b7bc26e209c77bc9e3f6676e559206)), closes [#551](https://github.com/zeroroot-ai/dashboard/issues/551)
 * **chat:** stop streaming and persist the partial response ([#563](https://github.com/zeroroot-ai/dashboard/issues/563)) ([9295f3c](https://github.com/zeroroot-ai/dashboard/commit/9295f3c3dcfa886b08310e35a1b2329552529f35)), closes [#552](https://github.com/zeroroot-ai/dashboard/issues/552)
-* **chat:** system prompt viewer — debug panel showing injected context layers ([#455](https://github.com/zeroroot-ai/dashboard/issues/455)) ([af2aaf8](https://github.com/zeroroot-ai/dashboard/commit/af2aaf893db13ca1b8ecb359e82a90f011bbe332)), closes [#444](https://github.com/zeroroot-ai/dashboard/issues/444)
+* **chat:** system prompt viewer, debug panel showing injected context layers ([#455](https://github.com/zeroroot-ai/dashboard/issues/455)) ([af2aaf8](https://github.com/zeroroot-ai/dashboard/commit/af2aaf893db13ca1b8ecb359e82a90f011bbe332)), closes [#444](https://github.com/zeroroot-ai/dashboard/issues/444)
 * **chat:** thumbs-up/down feedback with trace-id round-trip ([#456](https://github.com/zeroroot-ai/dashboard/issues/456)) ([39d7457](https://github.com/zeroroot-ai/dashboard/commit/39d74573a89ac3a7ffe55d5ce70ce75ccebae987))
 * deep-link Usage by-user rows into the Traces list ([#483](https://github.com/zeroroot-ai/dashboard/issues/483)) ([f81be2c](https://github.com/zeroroot-ai/dashboard/commit/f81be2c3f3fff2745893d2df36b2d45b1102ad88)), closes [#471](https://github.com/zeroroot-ai/dashboard/issues/471)
 * **missions/events:** emit log frames from Loki tail; wire into terminal hook ([#394](https://github.com/zeroroot-ai/dashboard/issues/394)) ([89e39fa](https://github.com/zeroroot-ai/dashboard/commit/89e39fabd32f5575a440e8869b92a94adf9cbf3e))
@@ -174,7 +174,7 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 * **missions/create:** surface actionable error when definition name already exists ([#415](https://github.com/zeroroot-ai/dashboard/issues/415)) ([d76f089](https://github.com/zeroroot-ai/dashboard/commit/d76f0899005bb27c7395c497afb2f42b6731f976))
 * **missions:** destructure useAuthorize in results detail; drain allowlist ([#505](https://github.com/zeroroot-ai/dashboard/issues/505)) ([41bff11](https://github.com/zeroroot-ai/dashboard/commit/41bff1144b25d79904b7bb8dae79df22312f9ccf))
 * **missions:** editor Run dispatches execution (RunMission), not just create ([#514](https://github.com/zeroroot-ai/dashboard/issues/514)) ([efc0b2d](https://github.com/zeroroot-ai/dashboard/commit/efc0b2dabcd32bf47d1569c517dec9c588cef40c))
-* **missions:** improve terminal readability — font size, foreground, line-height ([#404](https://github.com/zeroroot-ai/dashboard/issues/404)) ([882885f](https://github.com/zeroroot-ai/dashboard/commit/882885f64790221b139434288ba37f7e11f7b6e4))
+* **missions:** improve terminal readability, font size, foreground, line-height ([#404](https://github.com/zeroroot-ai/dashboard/issues/404)) ([882885f](https://github.com/zeroroot-ai/dashboard/commit/882885f64790221b139434288ba37f7e11f7b6e4))
 * **missions:** parseCueName matches indented name: field inside mission: {} ([#413](https://github.com/zeroroot-ai/dashboard/issues/413)) ([dd37a0b](https://github.com/zeroroot-ai/dashboard/commit/dd37a0b7ec48a2647fa9f2b4d570d8ccacdbdb1c))
 * **proto:** populate gibson.platform.v1 and gibson.admin.v1 in AuthRegistry ([#417](https://github.com/zeroroot-ai/dashboard/issues/417)) ([45b6b5c](https://github.com/zeroroot-ai/dashboard/commit/45b6b5c8e2201a63b94b79bde19375ac2b8effda)), closes [#406](https://github.com/zeroroot-ai/dashboard/issues/406)
 * **providers:** add PUT alias + unwrap {config} body wrapper in update route ([#490](https://github.com/zeroroot-ai/dashboard/issues/490)) ([a600e4c](https://github.com/zeroroot-ai/dashboard/commit/a600e4c686a2202fc932b81fd2a2f5a652d43fbf))
@@ -211,11 +211,11 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 * **crd:** migrate access/role/ownership/install actions to userClient(TenantAdminService) ([#362](https://github.com/zeroroot-ai/dashboard/issues/362)) ([05a0488](https://github.com/zeroroot-ai/dashboard/commit/05a0488031239cd16cb69a78657676ba424765b3))
 * **landing:** update H1 to "Zero Trust agent factory in under an hour" ([#388](https://github.com/zeroroot-ai/dashboard/issues/388)) ([77c4d85](https://github.com/zeroroot-ai/dashboard/commit/77c4d85c742f03c4c3b0ff9272d4fbfdb06d4c71))
 * **missions/create:** stay on page after Run Mission; show result in terminal ([#390](https://github.com/zeroroot-ai/dashboard/issues/390)) ([c99a043](https://github.com/zeroroot-ai/dashboard/commit/c99a04365eff35b28dd4332bbc2e3768e71613e9))
-* **missions/create:** useMissionTerminal hook — live SSE status and tool events ([#391](https://github.com/zeroroot-ai/dashboard/issues/391)) ([3350306](https://github.com/zeroroot-ai/dashboard/commit/3350306cb8c2b4a0f1ea41a8b95f2076da6a93a0)), closes [#384](https://github.com/zeroroot-ai/dashboard/issues/384)
-* **missions:** MissionTerminal component — xterm.js shell with resize and collapse ([#387](https://github.com/zeroroot-ai/dashboard/issues/387)) ([a8b5aa5](https://github.com/zeroroot-ai/dashboard/commit/a8b5aa55d8090aa513678a566eebad2f3230b8e4))
+* **missions/create:** useMissionTerminal hook, live SSE status and tool events ([#391](https://github.com/zeroroot-ai/dashboard/issues/391)) ([3350306](https://github.com/zeroroot-ai/dashboard/commit/3350306cb8c2b4a0f1ea41a8b95f2076da6a93a0)), closes [#384](https://github.com/zeroroot-ai/dashboard/issues/384)
+* **missions:** MissionTerminal component, xterm.js shell with resize and collapse ([#387](https://github.com/zeroroot-ai/dashboard/issues/387)) ([a8b5aa5](https://github.com/zeroroot-ai/dashboard/commit/a8b5aa55d8090aa513678a566eebad2f3230b8e4))
 * **missions:** replace Logs tab placeholder with MissionTerminal snapshot view ([#389](https://github.com/zeroroot-ai/dashboard/issues/389)) ([825b348](https://github.com/zeroroot-ai/dashboard/commit/825b3484cb9d61c1a9c81b03dd319ac4fb38e604))
 * **missions:** restore mission clone via CUE source path ([#354](https://github.com/zeroroot-ai/dashboard/issues/354)) ([46a9100](https://github.com/zeroroot-ai/dashboard/commit/46a91006e1ed577160cc4650c2a3dd24615fc478))
-* **missions:** wire CUE submit path — ValidateMissionCUE now returns compiled definition ([#351](https://github.com/zeroroot-ai/dashboard/issues/351)) ([397c2ad](https://github.com/zeroroot-ai/dashboard/commit/397c2adefd886665b9388dbc54d201a27234c78b))
+* **missions:** wire CUE submit path, ValidateMissionCUE now returns compiled definition ([#351](https://github.com/zeroroot-ai/dashboard/issues/351)) ([397c2ad](https://github.com/zeroroot-ai/dashboard/commit/397c2adefd886665b9388dbc54d201a27234c78b))
 * **onboarding:** use RevealableInput for LLM API key field ([#374](https://github.com/zeroroot-ai/dashboard/issues/374)) ([1803aab](https://github.com/zeroroot-ai/dashboard/commit/1803aab398cdef75cdc53d7f24725f964d475a3c))
 * **providers:** use RevealableInput for PASSWORD-type credential fields ([#373](https://github.com/zeroroot-ai/dashboard/issues/373)) ([3564df1](https://github.com/zeroroot-ai/dashboard/commit/3564df122674640735840dd61485e455c533fa47))
 * **secrets-backend:** use RevealableInput for sensitive credential fields ([#375](https://github.com/zeroroot-ai/dashboard/issues/375)) ([1c769e8](https://github.com/zeroroot-ai/dashboard/commit/1c769e870c0352bea18b7b0055eafa2932aecc8e))
@@ -244,7 +244,7 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 * **ci:** add path filter to PR image builds ([#345](https://github.com/zeroroot-ai/dashboard/issues/345)) ([bc99821](https://github.com/zeroroot-ai/dashboard/commit/bc998214a67a7206c20c90e8d355ff24cb8c7a24))
 * **ci:** remove PR trigger and use security-extended for CodeQL ([#346](https://github.com/zeroroot-ai/dashboard/issues/346)) ([69dcb1a](https://github.com/zeroroot-ai/dashboard/commit/69dcb1aa55086194c8d43a0203a2303b3c43adb3))
-* **docs:** move docs pages from src/app/ to app/ — Next.js ignores src/app when app/ exists ([#338](https://github.com/zeroroot-ai/dashboard/issues/338)) ([acffd04](https://github.com/zeroroot-ai/dashboard/commit/acffd046d40b4c5bbb1b6a26ac9b5b3fcb208e56))
+* **docs:** move docs pages from src/app/ to app/, Next.js ignores src/app when app/ exists ([#338](https://github.com/zeroroot-ai/dashboard/issues/338)) ([acffd04](https://github.com/zeroroot-ai/dashboard/commit/acffd046d40b4c5bbb1b6a26ac9b5b3fcb208e56))
 * **prebuild:** skip check-auth-rbac-inventory-fresh when enterprise/docs absent ([#349](https://github.com/zeroroot-ai/dashboard/issues/349)) ([3d021de](https://github.com/zeroroot-ai/dashboard/commit/3d021de4e4991364a477926a3f79c74b4a0c9f6f))
 * **settings:** profile name/email, billing errors, and nav overhaul ([#344](https://github.com/zeroroot-ai/dashboard/issues/344)) ([c395364](https://github.com/zeroroot-ai/dashboard/commit/c3953643ef870e8034ac3a5fd991bb0441cb160f))
 * **tests:** update stale ProvidersContent tests for ProviderWizard refactor ([#341](https://github.com/zeroroot-ai/dashboard/issues/341)) ([c77c10d](https://github.com/zeroroot-ai/dashboard/commit/c77c10dc450cd883264a52ba66210279a05b9b41))
@@ -261,7 +261,7 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 * **missions:** definition list API route and useListMissionDefinitions hook ([#327](https://github.com/zeroroot-ai/dashboard/issues/327)) ([0bb5ada](https://github.com/zeroroot-ai/dashboard/commit/0bb5adad299938bb3178354a27fcac991894d260))
 * **missions:** edit definition button on missions list ([#324](https://github.com/zeroroot-ai/dashboard/issues/324)) ([#332](https://github.com/zeroroot-ai/dashboard/issues/332)) ([6527277](https://github.com/zeroroot-ai/dashboard/commit/6527277b2101428e13d7b8d843d0fe28cc58261a))
 * **missions:** expose missionDefinitionId on missions API and Mission type ([#326](https://github.com/zeroroot-ai/dashboard/issues/326)) ([c380f13](https://github.com/zeroroot-ai/dashboard/commit/c380f13e869b1c3b380987010a04014aa0e81d5e))
-* **missions:** useServerAutosave hook — daemon-backed draft autosave ([#328](https://github.com/zeroroot-ai/dashboard/issues/328)) ([2a1951d](https://github.com/zeroroot-ai/dashboard/commit/2a1951db51ed70c416d908d8416701137ed90fdd))
+* **missions:** useServerAutosave hook, daemon-backed draft autosave ([#328](https://github.com/zeroroot-ai/dashboard/issues/328)) ([2a1951d](https://github.com/zeroroot-ai/dashboard/commit/2a1951db51ed70c416d908d8416701137ed90fdd))
 
 
 ### Bug Fixes
@@ -280,14 +280,14 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 * **missions:** move create page to src/app; delete API route; add ?template= support ([#308](https://github.com/zeroroot-ai/dashboard/issues/308)) ([99ac65c](https://github.com/zeroroot-ai/dashboard/commit/99ac65c21c453702b0320d590af36c83c57c29d3))
 * **missions:** replace Monaco YAML editor with CUE editor; delete YAML layer ([#307](https://github.com/zeroroot-ai/dashboard/issues/307)) ([b9621f3](https://github.com/zeroroot-ai/dashboard/commit/b9621f3f3f60e22e3473f543f0cab05e80f1f497))
 * **providers:** credentialsMasked multi-field display + delete validateApiKeyFormat ([#303](https://github.com/zeroroot-ai/dashboard/issues/303)) ([1948f14](https://github.com/zeroroot-ai/dashboard/commit/1948f147022d26ae85e41a137e5193302a822eb4)), closes [#284](https://github.com/zeroroot-ai/dashboard/issues/284)
-* **providers:** edit credential flow — PATCH without delete-and-recreate ([#300](https://github.com/zeroroot-ai/dashboard/issues/300)) ([de3f3ab](https://github.com/zeroroot-ai/dashboard/commit/de3f3ab810025d4eed255d41fd002f8dd9578877))
+* **providers:** edit credential flow, PATCH without delete-and-recreate ([#300](https://github.com/zeroroot-ai/dashboard/issues/300)) ([de3f3ab](https://github.com/zeroroot-ai/dashboard/commit/de3f3ab810025d4eed255d41fd002f8dd9578877))
 * **providers:** FallbackChainEditor drag-to-reorder ([#296](https://github.com/zeroroot-ai/dashboard/issues/296)) ([d1f3316](https://github.com/zeroroot-ai/dashboard/commit/d1f33169798841c900ca294b4c9c23faabda90de))
 * **providers:** health badge auto-polling on provider card ([#297](https://github.com/zeroroot-ai/dashboard/issues/297)) ([e244f62](https://github.com/zeroroot-ai/dashboard/commit/e244f624b58c84f451f947ab8789b38838da4a5a))
-* **users:** pending invite controls — expiry display, resend, cancel ([#269](https://github.com/zeroroot-ai/dashboard/issues/269)) ([4097999](https://github.com/zeroroot-ai/dashboard/commit/409799915175d380a8440d9689e2f3e12daf4eca)), closes [#265](https://github.com/zeroroot-ai/dashboard/issues/265)
-* **users:** rebuild user detail page — remove IdP link, surface all user actions ([#274](https://github.com/zeroroot-ai/dashboard/issues/274)) ([bd78d5e](https://github.com/zeroroot-ai/dashboard/commit/bd78d5e14d88518e35515b90782d196b539d8e6f)), closes [#268](https://github.com/zeroroot-ai/dashboard/issues/268)
+* **users:** pending invite controls, expiry display, resend, cancel ([#269](https://github.com/zeroroot-ai/dashboard/issues/269)) ([4097999](https://github.com/zeroroot-ai/dashboard/commit/409799915175d380a8440d9689e2f3e12daf4eca)), closes [#265](https://github.com/zeroroot-ai/dashboard/issues/265)
+* **users:** rebuild user detail page, remove IdP link, surface all user actions ([#274](https://github.com/zeroroot-ai/dashboard/issues/274)) ([bd78d5e](https://github.com/zeroroot-ai/dashboard/commit/bd78d5e14d88518e35515b90782d196b539d8e6f)), closes [#268](https://github.com/zeroroot-ai/dashboard/issues/268)
 * **users:** transferOwnershipAction + UI entry point on user detail page ([#273](https://github.com/zeroroot-ai/dashboard/issues/273)) ([6f866a8](https://github.com/zeroroot-ai/dashboard/commit/6f866a8f9eb2d3846e41d0921cf1be942fd2eba7)), closes [#266](https://github.com/zeroroot-ai/dashboard/issues/266)
 * **wizard:** add Bedrock IRSA toggle to provider credential UI ([#298](https://github.com/zeroroot-ai/dashboard/issues/298)) ([5ba4e3c](https://github.com/zeroroot-ai/dashboard/commit/5ba4e3c284873a47bfa3d0abc10bfc15db1ba801))
-* **wizard:** decouple step-3 from probe success — test becomes advisory ([#304](https://github.com/zeroroot-ai/dashboard/issues/304)) ([3d0c6e3](https://github.com/zeroroot-ai/dashboard/commit/3d0c6e34a2da80664922c1d697409d38c32dd644)), closes [#288](https://github.com/zeroroot-ai/dashboard/issues/288)
+* **wizard:** decouple step-3 from probe success, test becomes advisory ([#304](https://github.com/zeroroot-ai/dashboard/issues/304)) ([3d0c6e3](https://github.com/zeroroot-ai/dashboard/commit/3d0c6e34a2da80664922c1d697409d38c32dd644)), closes [#288](https://github.com/zeroroot-ai/dashboard/issues/288)
 * **wizard:** deprecated model display in catalogue picker ([#305](https://github.com/zeroroot-ai/dashboard/issues/305)) ([5bcc0f7](https://github.com/zeroroot-ai/dashboard/commit/5bcc0f7a9554b7cc5dc229d11ec9cc5b27688331))
 * **wizard:** URL-typed credential fields + OpenAI-compatible guidance + SSRF hint ([#299](https://github.com/zeroroot-ai/dashboard/issues/299)) ([4d27655](https://github.com/zeroroot-ai/dashboard/commit/4d2765580ee495a19640248a6779fc7b5961cac5)), closes [#286](https://github.com/zeroroot-ai/dashboard/issues/286)
 
@@ -296,15 +296,15 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 * **authz:** add owner tier to relation-hierarchy satisfiesRelation ([#276](https://github.com/zeroroot-ai/dashboard/issues/276)) ([263173d](https://github.com/zeroroot-ai/dashboard/commit/263173d01ba1c90bf350e64a7cb2e3601365102a)), closes [#275](https://github.com/zeroroot-ai/dashboard/issues/275)
 * **authz:** derive permissions from FGA role when schema is empty ([#277](https://github.com/zeroroot-ai/dashboard/issues/277)) ([8a4326c](https://github.com/zeroroot-ai/dashboard/commit/8a4326cf23999ac42372bb449ec3173dfd754da6))
-* **ci:** add actions:read to dashboard.yml permissions — fixes startup_failure ([#279](https://github.com/zeroroot-ai/dashboard/issues/279)) ([ef4f3b5](https://github.com/zeroroot-ai/dashboard/commit/ef4f3b517e8160df7e300c9a9e47a9e2d3c38238))
+* **ci:** add actions:read to dashboard.yml permissions, fixes startup_failure ([#279](https://github.com/zeroroot-ai/dashboard/issues/279)) ([ef4f3b5](https://github.com/zeroroot-ai/dashboard/commit/ef4f3b517e8160df7e300c9a9e47a9e2d3c38238))
 * **deps:** remove unused swiper dep (critical CVE GHSA-hmx5-qpq5-p643) ([#261](https://github.com/zeroroot-ai/dashboard/issues/261)) ([c83cfdc](https://github.com/zeroroot-ai/dashboard/commit/c83cfdc27b850fab57f7bec7f6cdb8823a536811))
 * **invite:** remove viewer from invite role options ([#270](https://github.com/zeroroot-ai/dashboard/issues/270)) ([2310646](https://github.com/zeroroot-ai/dashboard/commit/231064649cb8f4cf1efd8ab86e54e05f264df396)), closes [#264](https://github.com/zeroroot-ai/dashboard/issues/264)
 * **missions/drafts:** hard-cutover localStorage + JSDoc from yaml to cueSource ([#312](https://github.com/zeroroot-ai/dashboard/issues/312)) ([d44ce97](https://github.com/zeroroot-ai/dashboard/commit/d44ce97f6bfb62b787fcd0d462117667d62ef8de))
 * **missions/editor:** configure MonacoEnvironment.getWorker to unfreeze CUE editor ([#315](https://github.com/zeroroot-ai/dashboard/issues/315)) ([9c24036](https://github.com/zeroroot-ai/dashboard/commit/9c24036a8e9ecdbf8a71a30e901fe18d69d131cd))
 * **missions:** move create+templates pages from src/app to app directory ([#313](https://github.com/zeroroot-ai/dashboard/issues/313)) ([7720c88](https://github.com/zeroroot-ai/dashboard/commit/7720c881e61ce5e5145d2997d0690230de6d11e8))
 * **providers:** switch GetSupportedProviders route to member-accessible client ([#295](https://github.com/zeroroot-ai/dashboard/issues/295)) ([5a97595](https://github.com/zeroroot-ai/dashboard/commit/5a97595e76aa4e02994a28350f7b939be1c7a496)), closes [#285](https://github.com/zeroroot-ai/dashboard/issues/285)
-* **ui:** swap sidebar icons — single person for users, group for teams ([#290](https://github.com/zeroroot-ai/dashboard/issues/290)) ([027a8b2](https://github.com/zeroroot-ai/dashboard/commit/027a8b260a97ad3992054d106794676fab17a5c2))
-* **users:** owner removal safeguard — UI gate + server-layer last-owner check ([#272](https://github.com/zeroroot-ai/dashboard/issues/272)) ([43742ca](https://github.com/zeroroot-ai/dashboard/commit/43742ca11bd941528cb8438bceebbe1bdd13ddfc)), closes [#267](https://github.com/zeroroot-ai/dashboard/issues/267)
+* **ui:** swap sidebar icons, single person for users, group for teams ([#290](https://github.com/zeroroot-ai/dashboard/issues/290)) ([027a8b2](https://github.com/zeroroot-ai/dashboard/commit/027a8b260a97ad3992054d106794676fab17a5c2))
+* **users:** owner removal safeguard, UI gate + server-layer last-owner check ([#272](https://github.com/zeroroot-ai/dashboard/issues/272)) ([43742ca](https://github.com/zeroroot-ai/dashboard/commit/43742ca11bd941528cb8438bceebbe1bdd13ddfc)), closes [#267](https://github.com/zeroroot-ai/dashboard/issues/267)
 * **users:** owner role badge and row protection in user list ([#271](https://github.com/zeroroot-ai/dashboard/issues/271)) ([7bbb29d](https://github.com/zeroroot-ai/dashboard/commit/7bbb29d77980d5455b164543b41147d40b906a4f)), closes [#263](https://github.com/zeroroot-ai/dashboard/issues/263)
 * **ux:** surface provisioning state instead of opaque 412 ([#306](https://github.com/zeroroot-ai/dashboard/issues/306)) ([f601616](https://github.com/zeroroot-ai/dashboard/commit/f601616eb7bd59c582c95d606d6883b582c0c546)), closes [#260](https://github.com/zeroroot-ai/dashboard/issues/260)
 
@@ -322,7 +322,7 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 * add mission start route wrapping RunMission/ResumeMission ([#243](https://github.com/zeroroot-ai/dashboard/issues/243)) ([4bb551f](https://github.com/zeroroot-ai/dashboard/commit/4bb551f66cb489d29d7bb18d085e5f3e157a42f6))
 * add Traces tab to mission-detail page ([#245](https://github.com/zeroroot-ai/dashboard/issues/245)) ([21c4db4](https://github.com/zeroroot-ai/dashboard/commit/21c4db491b96f0777c3847f84c4a32419cc99e10))
 * consume daemonadminservice from platform-sdk ([#249](https://github.com/zeroroot-ai/dashboard/issues/249)) ([7d5419a](https://github.com/zeroroot-ai/dashboard/commit/7d5419a38688f7225c48f94c6ccaf2d1c63d8468))
-* **dashboard:** EmptyState sweep across 7 list pages — PRD [#143](https://github.com/zeroroot-ai/dashboard/issues/143) trailing child ([#191](https://github.com/zeroroot-ai/dashboard/issues/191)) ([8e8b540](https://github.com/zeroroot-ai/dashboard/commit/8e8b540eb621c216c816d592199538aa11bca841))
+* **dashboard:** EmptyState sweep across 7 list pages, PRD [#143](https://github.com/zeroroot-ai/dashboard/issues/143) trailing child ([#191](https://github.com/zeroroot-ai/dashboard/issues/191)) ([8e8b540](https://github.com/zeroroot-ai/dashboard/commit/8e8b540eb621c216c816d592199538aa11bca841))
 * drop MissionConstraints bridge mapping; emit SDK type directly (M2-dashboard) ([#196](https://github.com/zeroroot-ai/dashboard/issues/196)) ([d9d53ab](https://github.com/zeroroot-ai/dashboard/commit/d9d53ab4353cd998e4d4c580dc57e149b8c95cf8)), closes [#186](https://github.com/zeroroot-ai/dashboard/issues/186)
 * mission detail surfaces all author-facing fields (M6) ([#200](https://github.com/zeroroot-ai/dashboard/issues/200)) ([0fb7828](https://github.com/zeroroot-ai/dashboard/commit/0fb78282d5512d87f60840f30368c38a6f214166)), closes [#187](https://github.com/zeroroot-ai/dashboard/issues/187)
 * one-click demo mission targeting scanme.nmap.org ([#246](https://github.com/zeroroot-ai/dashboard/issues/246)) ([d89217d](https://github.com/zeroroot-ai/dashboard/commit/d89217d6851fa05645428e45ee2dc08b3fd2fa41))
@@ -334,7 +334,7 @@ the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 * **auth:** set authjs.callback-url cookie in signup auto-login handoff ([#208](https://github.com/zeroroot-ai/dashboard/issues/208)) ([b0fae0c](https://github.com/zeroroot-ai/dashboard/commit/b0fae0c9c121526835f64dc5f2580951a0ba3adb))
 * **ci:** disable anchore/sbom-action release-asset upload ([#185](https://github.com/zeroroot-ai/dashboard/issues/185)) ([0c4f983](https://github.com/zeroroot-ai/dashboard/commit/0c4f983336e521ceeb42270506b8b74edaa3e076))
-* dashboard worktree green — gen-plans.mjs worktree-aware + pnpm patchedDependencies ([#195](https://github.com/zeroroot-ai/dashboard/issues/195)) ([5d43e28](https://github.com/zeroroot-ai/dashboard/commit/5d43e28e55297c1cc1f4c79338f3d0955d72736c))
+* dashboard worktree green, gen-plans.mjs worktree-aware + pnpm patchedDependencies ([#195](https://github.com/zeroroot-ai/dashboard/issues/195)) ([5d43e28](https://github.com/zeroroot-ai/dashboard/commit/5d43e28e55297c1cc1f4c79338f3d0955d72736c))
 * **eslint:** extend next/typescript so [@typescript-eslint](https://github.com/typescript-eslint) plugin rules load ([#198](https://github.com/zeroroot-ai/dashboard/issues/198)) ([#203](https://github.com/zeroroot-ai/dashboard/issues/203)) ([8d2aa03](https://github.com/zeroroot-ai/dashboard/commit/8d2aa032c71c9c071d12dc3c4ee3e1f988576dad))
 * **landing:** replace 'langfuse' vendor name in HeroSection ASCII terminal mock ([#192](https://github.com/zeroroot-ai/dashboard/issues/192)) ([7b80487](https://github.com/zeroroot-ai/dashboard/commit/7b8048782d705808c161167fb34fcb96b43e31cb))
 * **lint:** resolve all 58 ESLint errors exposed by [#203](https://github.com/zeroroot-ai/dashboard/issues/203) plugin fix ([#206](https://github.com/zeroroot-ai/dashboard/issues/206)) ([5c94561](https://github.com/zeroroot-ai/dashboard/commit/5c945616eee370c6f2d8fdbada6045c3df3548bb))
@@ -399,14 +399,14 @@ Polyrepo zero-dot-x reset (PRD zeroroot-ai\/.github#25, board #14). The v1.x lin
 
 ### Features
 
-* **billing:** Phase 1 foundations — types, stripe wrapper, idempotency table, guards, metrics ([7629c27](https://github.com/zeroroot-ai/dashboard/commit/7629c279f7226bbed6113309529258e46dec1aea))
-* **billing:** Phase 2 email infrastructure — SES provider, 5 billing templates, snapshot tests ([9dc6431](https://github.com/zeroroot-ai/dashboard/commit/9dc643174c9af53737476843b8ea2591b440cf1b))
-* **billing:** Phase 3 checkout endpoint — POST /api/billing/checkout with 16 unit tests ([1b32072](https://github.com/zeroroot-ai/dashboard/commit/1b3207211dc7df30822853755fac16c1f9c491cf))
-* **billing:** Phase 6 webhook subdomain — 410 tombstone, cutover runbook ([523edc5](https://github.com/zeroroot-ai/dashboard/commit/523edc5a6d7ed435d885e4cf69971c538b37bc6b))
-* **billing:** Phase 7 webhook lifecycle handlers — 7 event types, console migration, 38 tests ([84bdd01](https://github.com/zeroroot-ai/dashboard/commit/84bdd01bf7b82f5552ddce921b4491ac23b6f41c))
-* **billing:** Phases 14+15 — Grafana dashboard, Prometheus alerts, bootstrap script, cleanup guards ([544d95d](https://github.com/zeroroot-ai/dashboard/commit/544d95dee1f43196cb0b04b04653c548568abe5e))
-* **billing:** Phases 4+5 — CheckoutButton, pricing page CTAs, portal route, billing settings page ([8ccad87](https://github.com/zeroroot-ai/dashboard/commit/8ccad878441fd7eb462550dbb6853d8b6e596ee4))
-* **billing:** Phases 9+11 — admin tools, boot guard, Stripe test suite ([ea5f933](https://github.com/zeroroot-ai/dashboard/commit/ea5f933fa568c6bae28361aa6586c6920790f3aa))
+* **billing:** Phase 1 foundations, types, stripe wrapper, idempotency table, guards, metrics ([7629c27](https://github.com/zeroroot-ai/dashboard/commit/7629c279f7226bbed6113309529258e46dec1aea))
+* **billing:** Phase 2 email infrastructure, SES provider, 5 billing templates, snapshot tests ([9dc6431](https://github.com/zeroroot-ai/dashboard/commit/9dc643174c9af53737476843b8ea2591b440cf1b))
+* **billing:** Phase 3 checkout endpoint, POST /api/billing/checkout with 16 unit tests ([1b32072](https://github.com/zeroroot-ai/dashboard/commit/1b3207211dc7df30822853755fac16c1f9c491cf))
+* **billing:** Phase 6 webhook subdomain, 410 tombstone, cutover runbook ([523edc5](https://github.com/zeroroot-ai/dashboard/commit/523edc5a6d7ed435d885e4cf69971c538b37bc6b))
+* **billing:** Phase 7 webhook lifecycle handlers, 7 event types, console migration, 38 tests ([84bdd01](https://github.com/zeroroot-ai/dashboard/commit/84bdd01bf7b82f5552ddce921b4491ac23b6f41c))
+* **billing:** Phases 14+15, Grafana dashboard, Prometheus alerts, bootstrap script, cleanup guards ([544d95d](https://github.com/zeroroot-ai/dashboard/commit/544d95dee1f43196cb0b04b04653c548568abe5e))
+* **billing:** Phases 4+5, CheckoutButton, pricing page CTAs, portal route, billing settings page ([8ccad87](https://github.com/zeroroot-ai/dashboard/commit/8ccad878441fd7eb462550dbb6853d8b6e596ee4))
+* **billing:** Phases 9+11, admin tools, boot guard, Stripe test suite ([ea5f933](https://github.com/zeroroot-ai/dashboard/commit/ea5f933fa568c6bae28361aa6586c6920790f3aa))
 * dashboard W1+W2 hardening + Pino logger + R7/R9/R17/R18/R11 ([3d0d1f6](https://github.com/zeroroot-ai/dashboard/commit/3d0d1f6c30eec9e8b90a25da606d684a040234be))
 * **dashboard:** generate BillingTier + PRICE_ENV_MAP from plans.yaml ([e008898](https://github.com/zeroroot-ai/dashboard/commit/e0088986cd7311eecae508e91172b85c4cb1e06b))
 * **dashboard:** in-app quota UX + Phase 7.B sweep of legacy fields ([f0161ef](https://github.com/zeroroot-ai/dashboard/commit/f0161ef30893b253d6c82d95fd4f6d40a7a442c5))
@@ -417,7 +417,7 @@ Polyrepo zero-dot-x reset (PRD zeroroot-ai\/.github#25, board #14). The v1.x lin
 * **dashboard:** regen plans.ts for 3-plan schema + drift gate ([3cde94a](https://github.com/zeroroot-ai/dashboard/commit/3cde94a5a424d294a8ab0d15aeb4f41cdd159c5f))
 * **dashboard:** seed in-app quota UX hook + Server Action ([f8266a6](https://github.com/zeroroot-ai/dashboard/commit/f8266a6c67b0fe0e0e99aa02fb8782ff15287421))
 * **dashboard:** three-card pricing page driven by plans.yaml ([4b812c3](https://github.com/zeroroot-ai/dashboard/commit/4b812c30c9d37ad3cebbcb0f0c7dda2c5b617b48))
-* **dashboard:** v1.8.0 — eliminate permissive-dev paths, no localhost defaults, no console.* in hooks, no skipped tests ([7760e05](https://github.com/zeroroot-ai/dashboard/commit/7760e0544d0b74f3eb897cc0b70a9bdbfe064d9e))
+* **dashboard:** v1.8.0, eliminate permissive-dev paths, no localhost defaults, no console.* in hooks, no skipped tests ([7760e05](https://github.com/zeroroot-ai/dashboard/commit/7760e0544d0b74f3eb897cc0b70a9bdbfe064d9e))
 * install release-please and pr-title-lint ([#16](https://github.com/zeroroot-ai/dashboard/issues/16)) ([77709e6](https://github.com/zeroroot-ai/dashboard/commit/77709e6c5e05749d8c0aaab1316352eb894a2921))
 * **signup:** client-side reserved-names check via daemon GetReservedNames ([f918da4](https://github.com/zeroroot-ai/dashboard/commit/f918da4ade7d806480c7437cd1019e61b0f0788a))
 
@@ -433,7 +433,7 @@ Completes the dashboard side of the
 and SDK v0.99.0.
 
 The `/settings/secrets-backend` page now does what its UI has been
-claiming since `secrets-tenant-lifecycle` shipped — switching providers
+claiming since `secrets-tenant-lifecycle` shipped, switching providers
 actually changes the broker that serves the tenant's secrets. Before
 this change, calls landed as `Unimplemented` because the SDK admin v1
 service was never registered on the daemon side; that's now fixed in
@@ -476,7 +476,7 @@ understand" checkbox gates Save when switching with secrets present.
 When the daemon's `CountSecrets` RPC is unreachable
 (`Promise.allSettled` rejection on the count side),
 `SecretsBackendContent` substitutes `-1` for `secretCount`. The form
-treats `-1` as "conservative path — assume there might be secrets"
+treats `-1` as "conservative path, assume there might be secrets"
 and renders the warning + checkbox. A muted-text caveat "Could not
 load current secret count; assuming there may be existing secrets."
 is shown so operators understand why the warning is firing on what
@@ -486,7 +486,7 @@ R3.6 + design D4.
 ### Tests
 
 - New `src/components/secrets-backend/__tests__/SecretsBackendForm.test.tsx`
-  — four RTL tests covering all four R3 acceptance criteria. Required
+ , four RTL tests covering all four R3 acceptance criteria. Required
   jsdom polyfills for Radix Select internals (`scrollIntoView`,
   pointer-capture methods, class-based `ResizeObserver`).
 
@@ -528,12 +528,12 @@ and tenant-operator v0.1.0.
   `ListMyMemberships` derives `"owner"` as the highest tier and the
   active-workspace UI displays the correct role for tenant founders
   after sign-out / sign-in. (Req 4.1, 4.2, 4.4.)
-- **`TenantRole` doc comment refreshed** in `src/lib/auth/roles.ts` —
+- **`TenantRole` doc comment refreshed** in `src/lib/auth/roles.ts` -
   removed the now-stale claim that the daemon only emits `admin` /
   `member`; documents the full three-tier hierarchy with a spec
   cross-reference. The exported type and `ROLE_RANK` table are
   unchanged (both already encoded the `owner > admin > member`
-  hierarchy with ranks 3 / 2 / 1 — the previously-unreachable
+  hierarchy with ranks 3 / 2 / 1, the previously-unreachable
   rank-3 slot is now reachable end-to-end).
 
 ### Compatibility
@@ -604,7 +604,7 @@ and that left machine-to-machine auth silently degraded when the chart's
   - `prebuild` now runs `check-no-secrets-in-client.mjs` (was
     postbuild-only). (Req 6.4.)
   - `postbuild` now also runs the new bundle-scan script.
-- **`src/gen/authz/registry.ts`** regenerated against the latest SDK —
+- **`src/gen/authz/registry.ts`** regenerated against the latest SDK -
   agent / tool service RPCs now declare
   `allowedIdentities: COMPONENT` rather than `USER | SERVICE` (the SDK's
   cross-spec correction landed in zero-trust-hardening Req 2.5).
@@ -613,7 +613,7 @@ and that left machine-to-machine auth silently degraded when the chart's
 
 - Admin / provisioning routes (`app/api/admin/provisioning/**`) are
   service-acting (Zitadel `client_credentials` Bearer JWT) and are
-  intentionally **not** wired for CSRF — browser CSRF cookies do not
+  intentionally **not** wired for CSRF, browser CSRF cookies do not
   exist on those calls. Their CSRF equivalent is the JWT
   issuer/audience/sub allow-list check in `verifyZitadelBearer`.
   Documented in `src/lib/auth/csrf.ts`.

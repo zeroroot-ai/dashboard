@@ -12,7 +12,7 @@ import { SesEmailProvider } from './providers/ses';
  *   - `DASHBOARD_EMAIL_PROVIDER=smtp`   → nodemailer
  *   - `DASHBOARD_EMAIL_PROVIDER=log` (default) → stdout JSON line
  *
- * The provider *wrapper* classes are pulled in statically — they are
+ * The provider *wrapper* classes are pulled in statically, they are
  * tiny pure-TS files. The heavy SDK dependencies (`nodemailer`,
  * `resend`) are still loaded via dynamic `import()` inside each
  * wrapper's `send()` method, so a deployment using the `log` provider
@@ -59,7 +59,7 @@ export function getEmailProvider(opts?: { force?: boolean }): EmailProvider {
   }
 }
 
-/** Test-only — clears the cached provider so env changes take effect. */
+/** Test-only, clears the cached provider so env changes take effect. */
 export function __resetEmailProviderForTests(): void {
   cached = null;
 }

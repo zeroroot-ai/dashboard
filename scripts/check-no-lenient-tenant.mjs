@@ -25,23 +25,23 @@
  *
  * ## Detected patterns
  *
- *  Pattern A — `session.user.tenantId` used as a tenant value.
+ *  Pattern A, `session.user.tenantId` used as a tenant value.
  *    Matches `session.user.tenantId` and `session?.user?.tenantId`
  *    (non-comment code lines, non-test files).
  *
- *  Pattern B — tenant-id smear: `|| 'default'`, `|| ''` applied to a tenant id.
+ *  Pattern B, tenant-id smear: `|| 'default'`, `|| ''` applied to a tenant id.
  *    Matches the two most common smear patterns found in existing endpoints:
  *      `<expr>.tenantId || 'default'`
  *      `<expr>.tenantId || ''`
  *
- *  Pattern C — `?? undefined` applied to a tenantId expression.
+ *  Pattern C, `?? undefined` applied to a tenantId expression.
  *    Matches `<expr>.tenantId ?? undefined` (which defeats the optional-chaining
  *    type narrowing without providing a real value).
  *
- *  Pattern D — import of a second tenant-resolver (anything other than
+ *  Pattern D, import of a second tenant-resolver (anything other than
  *    `requireActiveTenant` / `getActiveTenant` / `readRawActiveTenant` from the
  *    active-tenant module that purports to return a tenantId).
- *    Currently not detected by pattern matching — tracked as a documentation
+ *    Currently not detected by pattern matching, tracked as a documentation
  *    requirement for the lock-in slice.
  *
  * ## Self-test
@@ -78,34 +78,34 @@ const SKIP_FILE_MARKERS = ['.test.', '.spec.', '.stories.'];
 
 /**
  * Forbidden patterns. Each entry has:
- *  - `id`      — stable identifier used in the selftest.
- *  - `pattern` — RegExp to match against each non-comment source line.
- *  - `label`   — human-readable description of the violation.
+ *  - `id`     , stable identifier used in the selftest.
+ *  - `pattern`, RegExp to match against each non-comment source line.
+ *  - `label`  , human-readable description of the violation.
  */
 const FORBIDDEN_PATTERNS = [
   {
     id: 'session-user-tenantId',
     pattern: /\bsession(?:\?\.|\.)user(?:\?\.|\.)tenantId\b/,
     label:
-      'session.user.tenantId used as a tenant value — use requireActiveTenant() from src/lib/auth/active-tenant instead',
+      'session.user.tenantId used as a tenant value, use requireActiveTenant() from src/lib/auth/active-tenant instead',
   },
   {
     id: 'tenantId-or-default',
     pattern: /\.tenantId\s*\|\|\s*'default'/,
     label:
-      ".tenantId || 'default' smear — requireActiveTenant() throws when tenant is absent; catch with activeTenantApiResponse/activeTenantActionResult/activeTenantPageRedirect instead",
+      ".tenantId || 'default' smear, requireActiveTenant() throws when tenant is absent; catch with activeTenantApiResponse/activeTenantActionResult/activeTenantPageRedirect instead",
   },
   {
     id: 'tenantId-or-empty',
     pattern: /\.tenantId\s*\|\|\s*''/,
     label:
-      ".tenantId || '' smear — requireActiveTenant() throws when tenant is absent; catch with the appropriate error-mapping helper instead",
+      ".tenantId || '' smear, requireActiveTenant() throws when tenant is absent; catch with the appropriate error-mapping helper instead",
   },
   {
     id: 'tenantId-nullish-undefined',
     pattern: /\.tenantId\s*\?\?\s*undefined\b/,
     label:
-      ".tenantId ?? undefined smear — this is a no-op coercion that hides the absent-tenant case; use requireActiveTenant() and handle the thrown error",
+      ".tenantId ?? undefined smear, this is a no-op coercion that hides the absent-tenant case; use requireActiveTenant() and handle the thrown error",
   },
 ];
 
@@ -185,7 +185,7 @@ function collectFiles() {
     try {
       if (statSync(abs).isFile()) files.push(abs);
     } catch {
-      // File doesn't exist — fine.
+      // File doesn't exist, fine.
     }
   }
   return files;
@@ -196,11 +196,11 @@ function collectFiles() {
 // ---------------------------------------------------------------------------
 
 /**
- * Fixture contents — one line per forbidden pattern + one clean line that
+ * Fixture contents, one line per forbidden pattern + one clean line that
  * must NOT be flagged (a comment that mentions the pattern).
  */
 const SELFTEST_FIXTURE = [
-  '// This is a comment — the guard must NOT flag the lines below from the comment:',
+  '// This is a comment, the guard must NOT flag the lines below from the comment:',
   '// session.user.tenantId is forbidden in live code',
   '',
   '// The following are REAL code lines that MUST be flagged:',
@@ -213,7 +213,7 @@ const SELFTEST_FIXTURE = [
 
 const SELFTEST_EXPECTED_IDS = new Set([
   'session-user-tenantId',   // line 5 (session.user.tenantId)
-  'session-user-tenantId',   // line 6 (session?.user?.tenantId — same id)
+  'session-user-tenantId',   // line 6 (session?.user?.tenantId, same id)
   'tenantId-or-default',     // line 7
   'tenantId-or-empty',       // line 8
   'tenantId-nullish-undefined', // line 9
@@ -234,7 +234,7 @@ function runSelftest() {
       }
     }
 
-    // Lines 1-4 are comments / blank — none should be flagged.
+    // Lines 1-4 are comments / blank, none should be flagged.
     const commentFalsePositives = violations.filter((v) => v.line <= 4);
     if (commentFalsePositives.length > 0) {
       console.error(`[${SCRIPT_NAME}] SELFTEST FAILED: comment lines were incorrectly flagged:`);
@@ -283,7 +283,7 @@ function runScan() {
   }
 
   console.error(
-    `\n[${SCRIPT_NAME}] FAIL — ${allViolations.length} lenient-tenant pattern(s) found.`,
+    `\n[${SCRIPT_NAME}] FAIL, ${allViolations.length} lenient-tenant pattern(s) found.`,
   );
   console.error(
     'All endpoints must use requireActiveTenant() from src/lib/auth/active-tenant.',
@@ -300,7 +300,7 @@ function runScan() {
     }
   }
 
-  console.error(`\n[${SCRIPT_NAME}] Total violations: ${allViolations.length} (exit 1 — HARD FAIL)`);
+  console.error(`\n[${SCRIPT_NAME}] Total violations: ${allViolations.length} (exit 1, HARD FAIL)`);
   // HARD FAIL: exit 1 on any violation (dashboard#583 lock-in).
   return 1;
 }

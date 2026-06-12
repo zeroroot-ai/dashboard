@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * useProviderHealth — per-provider live health polling hook.
+ * useProviderHealth, per-provider live health polling hook.
  *
  * Polls GET /api/settings/providers/[name]/health every 60 seconds
  * (background polling disabled when the tab is hidden).
@@ -9,7 +9,7 @@
  * Distinct from useProvidersHealth / useProviderHealth in useProviders.ts,
  * which batch-fetches all providers via the getHealthStatus API. This hook
  * calls the individual per-provider health endpoint and is intended for
- * the ConfiguredProviderRow badge — one call per rendered card, each
+ * the ConfiguredProviderRow badge, one call per rendered card, each
  * independently refreshing.
  */
 
@@ -43,7 +43,7 @@ export function useProviderHealth(providerName: string) {
     refetchInterval: 60_000,
     refetchIntervalInBackground: false,
     placeholderData: { status: 'unknown' },
-    // Don't retry on 401/404 — those are deterministic failures
+    // Don't retry on 401/404, those are deterministic failures
     retry: (failureCount, error) =>
       failureCount < 2 && !(error instanceof Error && error.message === 'health fetch failed'),
   });

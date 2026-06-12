@@ -23,7 +23,7 @@
  * Notes:
  *   - Always pass structured fields as the first argument and a short
  *     human-readable message as the second; pino handles the merge.
- *   - Do NOT inline PII inside the message string — only in the structured
+ *   - Do NOT inline PII inside the message string, only in the structured
  *     fields where the redactor can see them.
  *   - For browser-side hooks, prefer the dev-mode `NODE_ENV` console gate
  *     and stripped error payloads; this server logger is not safe to

@@ -3,7 +3,7 @@
  *
  * Computes deterministic node positions for the non-force layout modes used by
  * the knowledge-graph explorer. Lives under `src/lib/` so it can be unit-tested
- * in isolation from the canvas — given the same nodes/edges/mode it always
+ * in isolation from the canvas, given the same nodes/edges/mode it always
  * returns the same positions (no randomness, no time, no DOM).
  *
  * `force` returns `null`, meaning "let the rendering engine's force simulation

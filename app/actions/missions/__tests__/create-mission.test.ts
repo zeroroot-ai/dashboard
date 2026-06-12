@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Code, ConnectError } from "@connectrpc/connect";
 
 // ---------------------------------------------------------------------------
-// Module mocks — must be hoisted before the module under test is imported.
+// Module mocks, must be hoisted before the module under test is imported.
 // ---------------------------------------------------------------------------
 
 vi.mock("server-only", () => ({}));

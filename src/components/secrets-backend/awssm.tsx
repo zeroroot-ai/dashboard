@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AwsSMForm — per-provider sub-form for AWS Secrets Manager.
+ * AwsSMForm, per-provider sub-form for AWS Secrets Manager.
  *
  * Fields:
  *  - region (non-sensitive): AWS region
@@ -116,7 +116,7 @@ export function AwsSMForm({ control }: AwsSMFormProps) {
         )}
       />
 
-      {/* Static access key — optional fallback */}
+      {/* Static access key, optional fallback */}
       <FormField
         control={control}
         name="awsAccessKeyId"
@@ -135,7 +135,7 @@ export function AwsSMForm({ control }: AwsSMFormProps) {
               />
             </FormControl>
             <FormDescription className="text-xs">
-              Static access key — use only when role-based auth is not
+              Static access key, use only when role-based auth is not
               available. Write-only; leave blank to keep the stored value.
             </FormDescription>
             <FormMessage />
@@ -143,7 +143,7 @@ export function AwsSMForm({ control }: AwsSMFormProps) {
         )}
       />
 
-      {/* Static secret key — optional fallback */}
+      {/* Static secret key, optional fallback */}
       <FormField
         control={control}
         name="awsSecretAccessKey"

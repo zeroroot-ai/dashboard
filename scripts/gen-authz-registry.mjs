@@ -21,10 +21,10 @@
  *
  * Three proto trees
  * -----------------
- * 1. sdk-proto       — OSS SDK (DaemonService, gibson.tenant.v1, etc.)
- * 2. platform-sdk-proto — PRIVATE platform-sdk (gibson.admin.v1,
+ * 1. sdk-proto      , OSS SDK (DaemonService, gibson.tenant.v1, etc.)
+ * 2. platform-sdk-proto, PRIVATE platform-sdk (gibson.admin.v1,
  *                        gibson.daemon.operator.v1, gibson.user.v1, etc.)
- * 3. gibson-local    — daemon-internal protos not yet promoted to platform-sdk
+ * 3. gibson-local   , daemon-internal protos not yet promoted to platform-sdk
  *
  * This mirrors the three-tree pattern in proto-generate.mjs and ensures that
  * admin + operator service methods are present in the registry for the
@@ -41,7 +41,7 @@
  * Determinism
  * -----------
  * Entries are sorted by method name. The script MUST produce byte-identical
- * output for the same proto input — the drift gate relies on this.
+ * output for the same proto input, the drift gate relies on this.
  */
 
 import { execSync, execFileSync, spawnSync } from 'node:child_process';
@@ -57,7 +57,7 @@ const WS = resolve(DASHBOARD_ROOT, '.tmp/proto-ws');
 const OUTPUT_PATH = resolve(DASHBOARD_ROOT, 'src/gen/authz/registry.ts');
 
 // Workspace root: ~/Code/zeroroot.ai/. Sibling repos hang off here.
-// Gibson lives at enterprise/platform/gibson — the `core/` prefix was the
+// Gibson lives at enterprise/platform/gibson, the `core/` prefix was the
 // pre-refactor layout and is no longer present.
 //
 // Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ or
@@ -93,7 +93,7 @@ const AUTHZ_EXTENSION_FIELD = 50001;
 // ---------------------------------------------------------------------------
 
 function resolveSdkProtoDir() {
-  // Prefer the sibling checkout at opensource/sdk when present — it
+  // Prefer the sibling checkout at opensource/sdk when present, it
   // tracks main and avoids the "gibson go.mod pin lags one minor
   // version behind the latest sdk release" hazard. Mirrors the pattern
   // in proto-generate.mjs.
@@ -161,13 +161,13 @@ function ensurePlatformSdkProtos() {
 /**
  * Build the .tmp/proto-ws/ workspace with symlinks to two proto trees:
  * sdk-proto and platform-sdk-proto. The daemon-local proto tree
- * (gibson-local) is intentionally omitted — its only file
+ * (gibson-local) is intentionally omitted, its only file
  * (gibson/user/v1/user.proto) duplicates the platform-sdk copy and causes
  * a "contained in multiple modules" buf error. See dashboard#406.
  *
  * Two modules:
- *   sdk-proto          — OSS SDK (gibson.tenant.v1, DaemonService, etc.)
- *   platform-sdk-proto — PRIVATE admin/operator protos (gibson.admin.v1,
+ *   sdk-proto         , OSS SDK (gibson.tenant.v1, DaemonService, etc.)
+ *   platform-sdk-proto, PRIVATE admin/operator protos (gibson.admin.v1,
  *                        gibson.daemon.operator.v1, gibson.user.v1, etc.)
  */
 function buildWorkspace() {
@@ -312,7 +312,7 @@ function decodeAuthOptions(rawData) {
       if (fieldNo === 4) result.allowedIdentities = v;
       else if (fieldNo === 5) result.unauthenticated = v !== 0;
     } else {
-      // Unknown wire type — stop parsing this message.
+      // Unknown wire type, stop parsing this message.
       break;
     }
   }
@@ -354,7 +354,7 @@ function buildFDSFromWorkspace(ws, module, label) {
   const raw = result.stdout;
   if (!raw || raw.length === 0) {
     process.stderr.write(
-      `[gen-authz-registry] FATAL: ${label} produced an empty FDS — is the proto root present?\n`,
+      `[gen-authz-registry] FATAL: ${label} produced an empty FDS, is the proto root present?\n`,
     );
     process.exit(1);
   }
@@ -363,7 +363,7 @@ function buildFDSFromWorkspace(ws, module, label) {
 
   if (!fds.file || fds.file.length === 0) {
     process.stderr.write(
-      `[gen-authz-registry] FATAL: ${label} produced an empty FDS — is the proto root present?\n`,
+      `[gen-authz-registry] FATAL: ${label} produced an empty FDS, is the proto root present?\n`,
     );
     process.exit(1);
   }
@@ -486,7 +486,7 @@ function main() {
   if (process.env.SKIP_GEN_AUTHZ_REGISTRY === '1' && existsSync(OUTPUT_PATH)) {
     if (!stdout) {
       process.stdout.write(
-        `[gen-authz-registry] SKIP_GEN_AUTHZ_REGISTRY=1 — using pre-generated ${OUTPUT_PATH}\n`,
+        `[gen-authz-registry] SKIP_GEN_AUTHZ_REGISTRY=1, using pre-generated ${OUTPUT_PATH}\n`,
       );
     }
     return;

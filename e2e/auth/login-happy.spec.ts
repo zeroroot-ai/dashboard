@@ -83,7 +83,7 @@ async function loginWith(
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe("Login — happy path", () => {
+test.describe("Login, happy path", () => {
   test.afterAll(async () => {
     await closeDbPool();
   });
@@ -113,7 +113,7 @@ test.describe("Login — happy path", () => {
     if (!isLogSourceReachable()) {
       test.skip(
         true,
-        "Log source unreachable and no E2E_SEED_EMAIL set — skipping.",
+        "Log source unreachable and no E2E_SEED_EMAIL set, skipping.",
       );
       return;
     }

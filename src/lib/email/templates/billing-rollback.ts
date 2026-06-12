@@ -29,7 +29,7 @@ export function render(ctx: BillingRollbackCtx): EmailMessage {
     ``,
     `If you have questions, or if the charge still appears on your statement after 7 business days, contact ${ctx.supportEmail}.`,
     ``,
-    `— The Gibson team`,
+    `The Gibson team`,
   ].join('\n');
 
   const html = [
@@ -55,7 +55,7 @@ export function render(ctx: BillingRollbackCtx): EmailMessage {
 /**
  * Format a minor-unit amount (cents) as a human string. We avoid the
  * Intl.NumberFormat currency formatter because it may insert non-ASCII
- * currency symbols that some email clients mangle — an ISO code plus a
+ * currency symbols that some email clients mangle, an ISO code plus a
  * decimal string is universally safe.
  */
 function formatAmount(minorUnits: number, currency: string): string {

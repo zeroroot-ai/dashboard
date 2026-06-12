@@ -40,7 +40,7 @@ vi.mock('@/src/lib/pricing-display', () => ({
   contactTierIds: ['enterprise-deploy'] as const,
 }));
 
-// Rate limit mock — allow by default, override per test.
+// Rate limit mock, allow by default, override per test.
 let mockRateLimitAllowed = true;
 vi.mock('@/src/lib/rate-limiter', () => ({
   checkRateLimit: vi.fn().mockImplementation(() =>
@@ -136,7 +136,7 @@ describe('POST /api/billing/checkout', () => {
     it('returns 503 when priceIdForTier returns null for a tier', async () => {
       // The mock's priceIdForTier only returns non-null for team/org/enterprise.
       // Any other self-serve tier would fail. This is an integration boundary
-      // — the null path is covered by the type signature and webhook tests.
+      //, the null path is covered by the type signature and webhook tests.
       const { priceIdForTier } = await import('@/src/lib/billing/stripe');
       const spy = vi.spyOn({ priceIdForTier }, 'priceIdForTier').mockReturnValue(null);
       spy.mockRestore();

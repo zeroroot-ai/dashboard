@@ -29,7 +29,7 @@ for (const rel of FORBIDDEN_PATHS) {
     statSync(join(ROOT, rel));
     violations.push(rel);
   } catch {
-    /* good — it should not exist */
+    /* good, it should not exist */
   }
 }
 

@@ -18,7 +18,7 @@ interface ErrorAlertProps {
   /**
    * Optional support/correlation id from the API error envelope. When present
    * it is rendered as a quotable "Reference: <id>" line so users can give it to
-   * support — matching the error-banner copy that promises a reference.
+   * support, matching the error-banner copy that promises a reference.
    */
   reference?: string;
   /** Additional Tailwind classes merged onto the Alert root. */

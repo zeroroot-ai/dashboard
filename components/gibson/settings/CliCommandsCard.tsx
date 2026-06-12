@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * CliCommandsCard — renders the Settings → CLI command-reference card
+ * CliCommandsCard, renders the Settings → CLI command-reference card
  * (PRD dashboard#738, slice S1). Each command is shown with its label, a
  * monospace command line, a copy button, and a one-line description.
  *

@@ -15,7 +15,7 @@
  * which subsystem boundary actually broke. With this spec wired as a
  * required check on every PR touching `deploy / gitops / gibson /
  * tenant-operator / dashboard / sdk`, the 10-bug cascade pattern
- * cannot recur from the same root causes — any regression at any
+ * cannot recur from the same root causes, any regression at any
  * layer turns the green PR check red BEFORE merge, not 4 hours of
  * log archaeology after the fact.
  *
@@ -31,7 +31,7 @@
 import { test, expect } from '@playwright/test';
 
 // ---------------------------------------------------------------------------
-// Test config — env-driven so the same spec runs against kind and any
+// Test config, env-driven so the same spec runs against kind and any
 // other cluster overlay without code changes.
 // ---------------------------------------------------------------------------
 
@@ -62,7 +62,7 @@ test.describe('signup smoke', () => {
     const password = 'CorrectHorseBatteryStaple-' + slug;
     const workspaceName = `Smoke ${slug}`;
 
-    // Stage 1 — submit the signup form. The dashboard's Server Action
+    // Stage 1, submit the signup form. The dashboard's Server Action
     // creates the Zitadel user, fires the OIDC code-exchange round-trip,
     // and (on success) creates the Tenant CR. We end up on the
     // provisioning page where the dashboard polls /api/onboarding/data-plane
@@ -72,7 +72,7 @@ test.describe('signup smoke', () => {
 
       // The acceptToS / acceptPrivacy fields render as Radix Checkbox
       // components, which do NOT expose a native `<input name="...">`
-      // element — they use a button[role=checkbox] with the field name
+      // element, they use a button[role=checkbox] with the field name
       // surfaced only via the wrapping form. Selectors must therefore
       // target the checkbox by `#acceptToS` / `#acceptPrivacy` (the form
       // sets these as ids on the rendered control), matching the
@@ -111,7 +111,7 @@ test.describe('signup smoke', () => {
       ).toBeVisible({ timeout: 30_000 });
     });
 
-    // Stage 2 — poll the data-plane status endpoint until the operator's
+    // Stage 2, poll the data-plane status endpoint until the operator's
     // Tenant CR reaches Ready. The endpoint is dashboard-served and
     // already used by the in-product onboarding panel; reusing it here
     // means we don't hit the K8s API directly from the test runner
@@ -164,26 +164,26 @@ test.describe('signup smoke', () => {
       );
     }
 
-    // Stage 3 — navigate to the dashboard root. If the user's session
+    // Stage 3, navigate to the dashboard root. If the user's session
     // resolves to a tenant the user can act in, we should land on
-    // /dashboard (not /select-tenant — they have exactly one membership)
+    // /dashboard (not /select-tenant, they have exactly one membership)
     // and the page should render without an auth error.
     await test.step('user reaches dashboard with active tenant', async () => {
       await page.goto('/dashboard');
       // The dashboard chrome includes the tenant name in the header.
       // We assert it's NOT showing the "you have no organizations"
       // onboarding page (which would mean the saga finished but FGA
-      // tuples never propagated — a real regression class).
+      // tuples never propagated, a real regression class).
       await expect(page).not.toHaveURL(/\/onboarding/);
       await expect(page).toHaveURL(/\/dashboard/);
     });
 
     // -----------------------------------------------------------------------
-    // Stage 3b — daemon-RPC reachability under the freshly-provisioned
+    // Stage 3b, daemon-RPC reachability under the freshly-provisioned
     // tenant's session.
     //
     // This is the regression cordon for gibson#167 / deploy#352. Stage 2
-    // proves the saga reaches Ready — but for the entire history of
+    // proves the saga reaches Ready, but for the entire history of
     // signup, Ready=True coexisted with 412/500 on every authenticated
     // daemon call because the daemon's per-tenant Vault broker failed to
     // construct (missing SPIRE JWT-SVID audience, missing role, etc).
@@ -198,7 +198,7 @@ test.describe('signup smoke', () => {
     // 500 and this step fails BEFORE the PR introducing the regression
     // can merge.
     //
-    // Empty bodies are EXPECTED on a fresh tenant — we only assert the
+    // Empty bodies are EXPECTED on a fresh tenant, we only assert the
     // status code and that the envelope shape is what the dashboard
     // contract promises (`{ data: [], total: 0 }` for paginated lists,
     // `[]` for the providers list).
@@ -224,8 +224,8 @@ test.describe('signup smoke', () => {
         return { status: resp.status(), body };
       }
 
-      // /api/findings — calls GraphService.GetFindings via the per-tenant
-      // Vault broker. The broker is what gibson#167 fixes — any drift in
+      // /api/findings, calls GraphService.GetFindings via the per-tenant
+      // Vault broker. The broker is what gibson#167 fixes, any drift in
       // the JWT/audience/role chain flips this to 412 (failed_precondition)
       // or 500.
       const findings = await probe('/api/findings?limit=50');
@@ -234,7 +234,7 @@ test.describe('signup smoke', () => {
         `GET /api/findings?limit=50 returned ${findings.status} ` +
           `(want 200; body: ${JSON.stringify(findings.body)?.slice(0, 400)}). ` +
           `412/500 here indicates the daemon's per-tenant Vault broker did ` +
-          `not construct — regression of gibson#167 / deploy#360.`,
+          `not construct, regression of gibson#167 / deploy#360.`,
       ).toBe(200);
       const findingsBody = findings.body as {
         data?: unknown[];
@@ -250,7 +250,7 @@ test.describe('signup smoke', () => {
       ).toBe(0);
       expect(typeof findingsBody?.total).toBe('number');
 
-      // /api/missions — calls MissionService.ListMissions via the same
+      // /api/missions, calls MissionService.ListMissions via the same
       // broker path.
       const missions = await probe('/api/missions');
       expect(
@@ -268,10 +268,10 @@ test.describe('signup smoke', () => {
         'fresh tenant should have zero missions',
       ).toBe(0);
 
-      // /api/settings/providers — calls TenantAdminService.ListProviders
+      // /api/settings/providers, calls TenantAdminService.ListProviders
       // through the same per-tenant broker (LLM-provider configuration
       // is what deploy#352's user-prompt names "llm-config"). The route
-      // returns a bare `{ providers: [...] }` envelope — see
+      // returns a bare `{ providers: [...] }` envelope, see
       // app/api/settings/providers/route.ts.
       const providers = await probe('/api/settings/providers');
       expect(
@@ -293,17 +293,17 @@ test.describe('signup smoke', () => {
     });
 
     // ---------------------------------------------------------------------
-    // Stages 4-5 — customer-flow round-trip (D1-E of polyrepo zero-dot-x
+    // Stages 4-5, customer-flow round-trip (D1-E of polyrepo zero-dot-x
     // reset, dashboard#189). OPT-IN via E2E_CUSTOMER_FLOW=1. Skipped on
     // regular signup-smoke runs so existing CI cadence stays cheap; runs
     // only when D1-F explicitly invokes the full customer journey.
     //
     // Coverage:
-    //   Stage 4 — register a customer agent via the dashboard's
+    //   Stage 4, register a customer agent via the dashboard's
     //             /dashboard/agents/register form; capture the issued
     //             client_id / client_secret / enroll_command from the
     //             one-time credential panel.
-    //   Stage 5 — verify the captured credentials look usable: client_id
+    //   Stage 5, verify the captured credentials look usable: client_id
     //             non-empty, client_secret non-empty, enroll_command
     //             contains the captured values.
     //

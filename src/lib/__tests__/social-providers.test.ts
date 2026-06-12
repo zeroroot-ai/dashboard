@@ -6,7 +6,7 @@
  * enabled list and empty config.
  *
  * TODO(zitadel-envoy-gateway-migration): update tests if per-provider
- * IDP-hint buttons are implemented in future — see task 24 implementation log.
+ * IDP-hint buttons are implemented in future, see task 24 implementation log.
  */
 
 import { describe, expect, it } from "vitest";
@@ -24,7 +24,7 @@ describe("PROVIDER_ORDER", () => {
 });
 
 describe("buildSocialProviders (Zitadel mode)", () => {
-  it("returns empty enabled list — social IdPs are configured in Zitadel", () => {
+  it("returns empty enabled list, social IdPs are configured in Zitadel", () => {
     const result = buildSocialProviders();
     expect(result.enabled).toEqual([]);
   });

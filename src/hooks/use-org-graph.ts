@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * useOrgGraph — single source of truth for the tenant's team graph.
+ * useOrgGraph, single source of truth for the tenant's team graph.
  *
  * Loads `listTeamsAction` once and fans out `listTeamMembersAction` per
  * team, then derives two views from the same data:
  *
- *   - `teams`  — flat array of every Team in the tenant
- *   - `byTeam` — { teamId → TeamMember[] }
- *   - `byUser` — { userId → [{ teamId, displayName }, ...] }
+ *   - `teams` , flat array of every Team in the tenant
+ *   - `byTeam`, { teamId → TeamMember[] }
+ *   - `byUser`, { userId → [{ teamId, displayName }, ...] }
  *
  * Wrapped in React Query so navigating between the users list and any
  * user detail page in the same session hits the daemon once. 60-second

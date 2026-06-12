@@ -59,7 +59,7 @@ const REDACTED_SENTINEL = "[REDACTED]";
  *   returned as-is (they cannot contain sensitive keys by structure).
  *
  * Note: the function inspects keys, not values, so it cannot detect a
- * sensitive value stored under an innocent key — callers are responsible
+ * sensitive value stored under an innocent key, callers are responsible
  * for never placing secrets in unprotected fields.
  */
 export function redact(obj: unknown): unknown {

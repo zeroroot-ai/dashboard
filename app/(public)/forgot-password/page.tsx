@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * Forgot password — Zitadel redirect.
+ * Forgot password, Zitadel redirect.
  *
  * With Auth.js v5 + Zitadel, password reset is handled by Zitadel's hosted
  * login page (Forgot password link). This page redirects to Zitadel sign-in.
  *
- * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js — see task 24
+ * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js, see task 24
  * implementation log. The previous email-input form and forgotPasswordAction
  * are superseded by Zitadel's hosted password reset.
  */

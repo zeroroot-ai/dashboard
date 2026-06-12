@@ -10,7 +10,7 @@
  * Settings → Providers wizard's type picker and dynamic credential form.
  *
  * The static TS mirror that briefly lived at
- * `src/lib/llm/provider-descriptors.ts` is gone — the daemon is the single
+ * `src/lib/llm/provider-descriptors.ts` is gone, the daemon is the single
  * source of truth.
  */
 
@@ -25,7 +25,7 @@ export const supportedProvidersQueryKeys = {
 /**
  * Returns the daemon's static catalogue of supported LLM providers.
  *
- * `staleTime: 5min` — the catalogue only changes when the daemon image is
+ * `staleTime: 5min`, the catalogue only changes when the daemon image is
  * upgraded; a 5-minute cache keeps the wizard snappy without holding a
  * stale list across a deploy roll.
  */

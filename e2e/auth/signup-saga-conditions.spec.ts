@@ -39,7 +39,7 @@ import { BASE_URL, generateUserCredentials } from "./helpers/fixtures";
 // Conditions every Ready Tenant must carry post-saga in kind. Stripe
 // surfaces as `StripeReady=True (Skipped)` because the operator's
 // Stripe client is nil (capability declaration dropped per spec
-// Requirement 4) — the step's body returns done=true on nil deps.
+// Requirement 4), the step's body returns done=true on nil deps.
 // Stripe; BillingPending=True comes from BILLING_DEV_AUTOCONFIRM=true.
 const REQUIRED_CONDITIONS = [
   "LangfuseReady",
@@ -204,7 +204,7 @@ test.describe("Signup → all saga conditions True", () => {
     ).toBeTruthy();
 
     // ------------------------------------------------------------------
-    // 6. Cleanup — best-effort, never fails the test.
+    // 6. Cleanup, best-effort, never fails the test.
     // ------------------------------------------------------------------
     try {
       kubectl(["delete", "tenant", tenantSlug, "--ignore-not-found"]);

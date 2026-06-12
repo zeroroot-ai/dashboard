@@ -152,7 +152,7 @@ export async function getMissionLayoutVersionAction(
 }
 
 /**
- * Persist a hand-arranged layout. Layout-only — never touches the mission
+ * Persist a hand-arranged layout. Layout-only, never touches the mission
  * definition. A stale write (the layout changed underneath) returns
  * `{ ok: false, conflict: true }` rather than throwing, so the UI can prompt a
  * reload.

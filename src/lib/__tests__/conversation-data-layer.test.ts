@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ---------------------------------------------------------------------------
-// Mocks — must precede subject import. Use vi.hoisted() to lift variables
+// Mocks, must precede subject import. Use vi.hoisted() to lift variables
 // above the hoisted vi.mock() factory calls.
 // ---------------------------------------------------------------------------
 
@@ -60,7 +60,7 @@ import { listConversations, type ConversationRecord } from '@/src/lib/gibson-cli
 import type { UIMessage } from 'ai';
 
 // ---------------------------------------------------------------------------
-// Test 1 — hydrate-from-daemon: RPC records map to UI Conversation shapes
+// Test 1, hydrate-from-daemon: RPC records map to UI Conversation shapes
 // ---------------------------------------------------------------------------
 
 describe('hydrate-from-daemon: listConversations maps RPC records', () => {
@@ -103,7 +103,7 @@ describe('hydrate-from-daemon: listConversations maps RPC records', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Test 2 — save-on-completion: saveConversationAction calls the RPC with
+// Test 2, save-on-completion: saveConversationAction calls the RPC with
 //   the correct mapped shape
 // ---------------------------------------------------------------------------
 
@@ -197,7 +197,7 @@ describe('save-on-completion: saveConversationAction calls SaveConversation RPC'
 });
 
 // ---------------------------------------------------------------------------
-// Test 3 — store-unavailable: RPC failure returns false (explicit error
+// Test 3, store-unavailable: RPC failure returns false (explicit error
 //   state, not a silent empty list that masquerades as data loss)
 // ---------------------------------------------------------------------------
 
@@ -220,7 +220,7 @@ describe('store-unavailable: RPC failure surfaces an error state, not a silent e
     ];
     const result = await saveConversationAction('conv-1', 'Title', msgs);
 
-    // Must be false — NOT a thrown exception (which would crash the client)
+    // Must be false, NOT a thrown exception (which would crash the client)
     // and NOT silent (which would make it look like a successful save).
     expect(result).toBe(false);
   });
@@ -239,7 +239,7 @@ describe('store-unavailable: RPC failure surfaces an error state, not a silent e
     expect(result).toBe(false);
   });
 
-  it('does not swallow the error silently — a warn log is emitted', async () => {
+  it('does not swallow the error silently, a warn log is emitted', async () => {
     const rpcError = new Error('connection refused');
     mockSaveConversationRpc.mockRejectedValueOnce(rpcError);
 

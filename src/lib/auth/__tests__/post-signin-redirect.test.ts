@@ -1,5 +1,5 @@
 /**
- * Tests for resolvePostSignInRedirect — the Auth.js `redirect()` callback's
+ * Tests for resolvePostSignInRedirect, the Auth.js `redirect()` callback's
  * core logic, extracted as a pure function (dashboard#228).
  */
 
@@ -8,7 +8,7 @@ import { resolvePostSignInRedirect } from "../post-signin-redirect";
 
 const BASE = "https://app.zeroroot.local:30443";
 
-describe("resolvePostSignInRedirect — default to /dashboard", () => {
+describe("resolvePostSignInRedirect, default to /dashboard", () => {
   it("falls back to /dashboard when url is the bare baseUrl", () => {
     expect(resolvePostSignInRedirect(BASE, BASE)).toBe(`${BASE}/dashboard`);
   });
@@ -38,7 +38,7 @@ describe("resolvePostSignInRedirect — default to /dashboard", () => {
   });
 });
 
-describe("resolvePostSignInRedirect — preserves intentional deep links", () => {
+describe("resolvePostSignInRedirect, preserves intentional deep links", () => {
   it("preserves a relative deep-link path", () => {
     expect(
       resolvePostSignInRedirect("/dashboard/pages/findings", BASE),
@@ -73,7 +73,7 @@ describe("resolvePostSignInRedirect — preserves intentional deep links", () =>
   });
 });
 
-describe("resolvePostSignInRedirect — rejects open-redirect attempts", () => {
+describe("resolvePostSignInRedirect, rejects open-redirect attempts", () => {
   it("rejects cross-origin absolute URLs", () => {
     expect(
       resolvePostSignInRedirect("https://evil.example.com/x", BASE),

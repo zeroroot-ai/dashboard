@@ -18,9 +18,9 @@
  * Requirements: 1.1, NFR Security.
  *
  * Pre-conditions:
- *   PLAYWRIGHT_BASE_URL — target cluster URL (default: http://localhost:3000)
- *   E2E_ADMIN_EMAIL     — admin user email
- *   E2E_ADMIN_PASSWORD  — admin user password
+ *   PLAYWRIGHT_BASE_URL, target cluster URL (default: http://localhost:3000)
+ *   E2E_ADMIN_EMAIL    , admin user email
+ *   E2E_ADMIN_PASSWORD , admin user password
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -33,7 +33,7 @@ const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "admin@example.com";
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "password";
 
-// Secret under test — has two plugin associations
+// Secret under test, has two plugin associations
 const SECRET_ID = "secret-001";
 const SECRET_NAME = "anthropic_api_key";
 const SECRET_DETAIL_URL = `${BASE_URL}/dashboard/pages/settings/secrets/${SECRET_ID}`;
@@ -55,7 +55,7 @@ async function loginAs(page: Page, email: string, password: string) {
 
 /**
  * Mock GetSecret, ListPluginsForSecret (FGA tuples), and DeleteSecret RPCs.
- * The secret has two plugin associations — both must appear in the modal.
+ * The secret has two plugin associations, both must appear in the modal.
  */
 async function mockSecretDetailWithDelete(page: Page) {
   let deleted = false;
@@ -148,7 +148,7 @@ async function mockSecretDetailWithDelete(page: Page) {
 // Test suite: delete modal
 // ---------------------------------------------------------------------------
 
-test.describe("Secret delete — modal", () => {
+test.describe("Secret delete, modal", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockSecretDetailWithDelete(page);
@@ -319,7 +319,7 @@ test.describe("Secret delete — modal", () => {
 // Test suite: no value shown anywhere on detail page
 // ---------------------------------------------------------------------------
 
-test.describe("Secret detail — no value anywhere (NFR Security)", () => {
+test.describe("Secret detail, no value anywhere (NFR Security)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockSecretDetailWithDelete(page);

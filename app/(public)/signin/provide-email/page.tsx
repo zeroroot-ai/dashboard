@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * /signin/provide-email — redirects to Zitadel sign-in.
+ * /signin/provide-email, redirects to Zitadel sign-in.
  *
  * The GitHub private-email flow that this page served is no longer needed
- * with Zitadel as the IdP — Zitadel handles email collection for social IdPs.
+ * with Zitadel as the IdP, Zitadel handles email collection for social IdPs.
  *
- * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js — see task 24
+ * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js, see task 24
  * implementation log.
  */
 

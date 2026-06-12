@@ -1,5 +1,5 @@
 /**
- * Visual regression — graph surfaces.
+ * Visual regression, graph surfaces.
  *
  * Spec: dashboard#637; graph rebuilt on react-force-graph-2d (dashboard#663).
  * Captures full-page screenshots of:
@@ -14,7 +14,7 @@
  *
  * Determinism: three techniques are combined so every run produces
  * the same pixels:
- *   1. prefers-reduced-motion: reduce — disables the live-run particle
+ *   1. prefers-reduced-motion: reduce, disables the live-run particle
  *      flow and the running-node pulse, which the engine gates on it.
  *   2. All CSS animations + transitions are paused via injected style.
  *   3. Graph data API is stubbed to return the empty-state payload
@@ -28,7 +28,7 @@
  * overlay chrome, token usage) rather than graph topology.
  *
  * Theme: there is one immutable dark brand. The graph canvas uses a fixed
- * dark palette and the surrounding chrome is dark everywhere — no theme
+ * dark palette and the surrounding chrome is dark everywhere, no theme
  * state to set.
  */
 
@@ -86,7 +86,7 @@ async function setAuthSession(context: BrowserContext) {
  * - /api/graph               → empty graph data
  */
 async function stubDataLayer(page: Page) {
-  // Auth memberships — always admin so UI chrome is fully rendered
+  // Auth memberships, always admin so UI chrome is fully rendered
   await page.route("**/api/auth/my-memberships**", async (route) => {
     await route.fulfill({
       status: 200,
@@ -107,7 +107,7 @@ async function stubDataLayer(page: Page) {
     });
   });
 
-  // Graph data API — return empty graph so the canvas renders the
+  // Graph data API, return empty graph so the canvas renders the
   // "No graph data available" empty state (fully deterministic, no
   // force-directed layout to converge).
   await page.route("**/api/graph**", async (route) => {
@@ -143,8 +143,8 @@ async function stabilise(page: Page) {
 // Test suite
 // ============================================================================
 
-test.describe("visual regression — graph routes", () => {
-  // Chromium-only — same rationale as auth-routes spec:
+test.describe("visual regression, graph routes", () => {
+  // Chromium-only, same rationale as auth-routes spec:
   // baselines are single-browser per the platform convention.
   test.skip(
     ({ browserName }) => browserName !== "chromium",

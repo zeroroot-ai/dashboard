@@ -1,11 +1,11 @@
-# forbidden-patterns.md — `zeroroot-ai/dashboard`
+# forbidden-patterns.md, `zeroroot-ai/dashboard`
 
 Companion to [`rules.yaml`](./rules.yaml). Wrong vs right code shapes for
 the dashboard's auth surface. Spec: `unified-identity-and-authorization`.
 
 ## DASHBOARD-AUTH-001: dialing the daemon directly
 
-Wrong (pre-Phase-4 — `src/lib/gibson-admin-client.ts` and the various
+Wrong (pre-Phase-4, `src/lib/gibson-admin-client.ts` and the various
 admin route handlers):
 
 ```ts
@@ -33,7 +33,7 @@ time. Fix the call site, not the guard.
 
 ## DASHBOARD-AUTH-002: minting JWT-SVIDs from the dashboard
 
-Wrong (pre-Phase-4 — the deleted `src/lib/spiffe/jwt-svid.ts`):
+Wrong (pre-Phase-4, the deleted `src/lib/spiffe/jwt-svid.ts`):
 
 ```ts
 import { FetchJWTSVID } from '@spiffe/workload-api';      // forbidden
@@ -46,7 +46,7 @@ async function adminBearer(): Promise<string> {
 }
 ```
 
-Right — service-acting subject identity is Zitadel client_credentials
+Right, service-acting subject identity is Zitadel client_credentials
 ([`src/lib/auth/service-token.ts`](../src/lib/auth/service-token.ts)):
 
 ```ts
@@ -60,11 +60,11 @@ await client.shutdown({});
 The dashboard pod still presents an X509-SVID for in-cluster mTLS to
 Envoy ([`src/lib/spiffe-mtls/svid.ts`](../src/lib/spiffe-mtls/svid.ts)),
 but that is a transport concern composed by `gibson-client.ts`
-automatically — never call SPIFFE APIs directly from a route handler.
+automatically, never call SPIFFE APIs directly from a route handler.
 
 ## DASHBOARD-AUTH-003: importing BetterAuth
 
-Wrong (audit C13 — weak symmetric HMAC, no kid/iss/aud/jti):
+Wrong (audit C13, weak symmetric HMAC, no kid/iss/aud/jti):
 
 ```ts
 import { betterAuth } from 'better-auth';                 // forbidden
@@ -100,7 +100,7 @@ function isAgentKey(token: string): boolean {
 }
 ```
 
-Right — agent identities are Zitadel machine users created via the
+Right, agent identities are Zitadel machine users created via the
 Register Agent UI ([`app/api/agents/register/route.ts`](../app/api/agents/register/route.ts)):
 
 ```ts
@@ -112,7 +112,7 @@ const { clientId, clientSecret } = await zitadelAdmin.mintClientSecret(machineUs
 return Response.json({ clientId, clientSecret, /* ... */ });
 ```
 
-The dashboard never persists `clientSecret` — it is in the response
+The dashboard never persists `clientSecret`, it is in the response
 body once and gone.
 
 ## DASHBOARD-AUTH-005: direct fetch() to Zitadel
@@ -163,7 +163,7 @@ calls.
 
 ## DASHBOARD-AUTH-007: stale tenant resolution
 
-Wrong (audit C11 mirror — bypasses the FGA-membership check):
+Wrong (audit C11 mirror, bypasses the FGA-membership check):
 
 ```ts
 // Server Component / Server Action
@@ -196,7 +196,7 @@ const apiKey = decryptCredential(cred.encrypted, cred.iv);  // forbidden
 return Response.json({ apiKey });
 ```
 
-Right — the daemon owns the per-tenant key envelope; the dashboard
+Right, the daemon owns the per-tenant key envelope; the dashboard
 asks for status without ever seeing key material:
 
 ```ts
@@ -210,7 +210,7 @@ function call against credential payloads in dashboard code.
 
 ## DASHBOARD-AUTH-009: serviceClient from a user-facing route
 
-Wrong (silently widens the user's effective privileges — the
+Wrong (silently widens the user's effective privileges, the
 service-acting JWT carries the `dashboard-platform-operator` role at
 Zitadel, which a user-acting JWT never does):
 
@@ -220,14 +220,14 @@ const client = serviceClient(DaemonAdminService, currentTenant);   // forbidden
 const users = await client.listUsers({});
 ```
 
-Right — same page, user-acting:
+Right, same page, user-acting:
 
 ```ts
 const client = userClient(DaemonAdminService);
 const users = await client.listUsers({});  // ext-authz checks user's FGA tuples
 ```
 
-`serviceClient` belongs only in code paths with **no user context** —
+`serviceClient` belongs only in code paths with **no user context** -
 `/api/admin/provisioning/*` (tenant-operator callbacks),
 entitlement-driven CRD writes, the in-cluster signup webhook. Anywhere
 else, use `userClient`. Audit each `serviceClient` call site manually

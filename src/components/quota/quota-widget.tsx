@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * quota-widget.tsx — App-shell quota indicator. Spec
+ * quota-widget.tsx, App-shell quota indicator. Spec
  * plans-and-quotas-simplification R9.B.3.
  *
  * Shows compact "X / Y" + thin progress bar for each enforced quota.

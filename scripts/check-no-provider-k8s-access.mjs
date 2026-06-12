@@ -6,13 +6,13 @@
  *
  * Spec 25 (`daemon-driven-provider-config`) moves all LLM-credential
  * storage to the daemon. The dashboard must no longer:
- *   - reference the Secret name `llm-providers` (anywhere — as a string
+ *   - reference the Secret name `llm-providers` (anywhere, as a string
  *     literal, annotation value, label, etc.)
  *   - import or path-reference `src/lib/k8s/provider-storage`
- *   - call `readNamespacedSecret(...llm-provider...)` — even the
+ *   - call `readNamespacedSecret(...llm-provider...)`, even the
  *     single-line form is enough signal to block.
  *
- * SPIRE bundle Secrets and Langfuse Secrets are NOT affected — this
+ * SPIRE bundle Secrets and Langfuse Secrets are NOT affected, this
  * guard only looks for the `llm-providers` / `llm-provider` / provider
  * storage module references.
  *
@@ -23,12 +23,12 @@
  * family itself (they legitimately contain the banned patterns in
  * regex literals).
  *
- * Markdown (design docs, specs) is intentionally not scanned — docs
+ * Markdown (design docs, specs) is intentionally not scanned, docs
  * must be free to describe the removed surface.
  *
  * ## Comment-aware scanning
  * Whole-line comments (both `//` and C-style block comments) are
- * skipped — documentation describing what is banned is not itself a
+ * skipped, documentation describing what is banned is not itself a
  * violation.
  *
  * ## Escape valve
@@ -53,7 +53,7 @@ import { join, relative, resolve } from 'node:path';
 const argv = process.argv.slice(2);
 if (argv.includes('-h') || argv.includes('--help')) {
   process.stdout.write(
-    'check-no-provider-k8s-access — spec 25 static-analysis guard\n' +
+    'check-no-provider-k8s-access, spec 25 static-analysis guard\n' +
       '\n' +
       'Usage:\n' +
       '  node scripts/check-no-provider-k8s-access.mjs [path]\n' +
@@ -117,7 +117,7 @@ const BANNED = [
     regex: /readNamespacedSecret.*llm-provider/u,
     reason:
       '@kubernetes/client-node reads of the llm-provider Secret are ' +
-      'banned — the dashboard has no K8s Secret path to LLM credentials.',
+      'banned, the dashboard has no K8s Secret path to LLM credentials.',
   },
 ];
 
@@ -147,7 +147,7 @@ function walk(dir, out = []) {
 }
 
 // --------------------------------------------------------------------------
-// Comment-aware line classifier — whole-line comment detection only.
+// Comment-aware line classifier, whole-line comment detection only.
 // --------------------------------------------------------------------------
 function classifyLines(src) {
   const lines = src.split(/\r?\n/);

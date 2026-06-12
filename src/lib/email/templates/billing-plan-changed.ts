@@ -40,7 +40,7 @@ export function render(ctx: BillingPlanChangedCtx): EmailMessage {
     ``,
     `Questions? Contact ${ctx.supportEmail}.`,
     ``,
-    `— The Gibson team`,
+    `The Gibson team`,
   ].filter((line) => line !== undefined).join('\n');
 
   const html = [

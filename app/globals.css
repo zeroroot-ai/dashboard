@@ -15,7 +15,7 @@
 /* ----------------------------------------------------------------------
  * Canonical design system (#52, reauthored #650). ONE immutable dark
  * brand: violet-led on a near-black blue-tinted base, cyan-blue links,
- * emerald accent. Readability is the top priority — every semantic
+ * emerald accent. Readability is the top priority, every semantic
  * foreground/background pairing meets WCAG AA (verified by the
  * token-contrast unit test). Semantic tokens drive every Shadcn
  * primitive; specialty tokens (--highlight, --alt, --link,
@@ -25,7 +25,7 @@
  * ---------------------------------------------------------------------- */
 
 :root {
-  /* Neutral ramp — near-black, faintly blue-violet (hue 280). */
+  /* Neutral ramp, near-black, faintly blue-violet (hue 280). */
   --base-50: oklch(0.985 0.004 280);
   --base-100: oklch(0.945 0.008 280);
   --base-200: oklch(0.875 0.012 280);
@@ -39,7 +39,7 @@
   --base-950: oklch(0.130 0.012 280);
   --base-1000: oklch(0.090 0.010 280);
 
-  /* Primary ramp — electric violet (hue 295). */
+  /* Primary ramp, electric violet (hue 295). */
   --primary-50: oklch(0.970 0.020 295);
   --primary-100: oklch(0.935 0.045 295);
   --primary-200: oklch(0.880 0.090 295);
@@ -53,7 +53,7 @@
   --primary-950: oklch(0.260 0.085 295);
   --primary-1000: oklch(0.185 0.060 295);
 
-  /* Secondary ramp — cyan-blue (hue 235). */
+  /* Secondary ramp, cyan-blue (hue 235). */
   --secondary-50: oklch(0.980 0.014 235);
   --secondary-100: oklch(0.950 0.034 235);
   --secondary-200: oklch(0.905 0.064 235);
@@ -67,7 +67,7 @@
   --secondary-950: oklch(0.295 0.055 235);
   --secondary-1000: oklch(0.210 0.040 235);
 
-  /* Semantic — the single dark brand. */
+  /* Semantic, the single dark brand. */
   --background: oklch(0.17 0.012 280);          /* near-black, blue-violet tint */
   --foreground: oklch(0.96 0.008 280);          /* near-white, faint cool */
   --card: oklch(0.21 0.014 280);                /* elevated surface */
@@ -79,19 +79,19 @@
   --secondary: oklch(0.30 0.040 250);           /* muted dark-blue surface */
   --secondary-foreground: oklch(0.96 0.008 280);
   --muted: oklch(0.255 0.016 280);              /* code wells / muted surface */
-  --muted-foreground: oklch(0.76 0.020 280);    /* dim text — AA on muted/card/bg */
+  --muted-foreground: oklch(0.76 0.020 280);    /* dim text, AA on muted/card/bg */
   --accent: oklch(0.275 0.022 288);             /* hover / dialog, faint violet */
   --accent-foreground: oklch(0.96 0.008 280);
-  --destructive: oklch(0.54 0.210 22);          /* alert-red FILL — dark enough for AA white text on it */
+  --destructive: oklch(0.54 0.210 22);          /* alert-red FILL, dark enough for AA white text on it */
   --destructive-foreground: oklch(0.99 0.004 22);
-  --error-text: oklch(0.74 0.165 22);           /* legible red TEXT on dark card/bg (AA) — inline/field errors (#705) */
+  --error-text: oklch(0.74 0.165 22);           /* legible red TEXT on dark card/bg (AA), inline/field errors (#705) */
   --warning: oklch(0.80 0.155 85);              /* amber */
   --warning-foreground: oklch(0.20 0.030 85);
   --success-foreground: oklch(0.18 0.030 162);  /* on emerald accent */
   --overlay: oklch(0.05 0.010 280 / 0.75);
   --border: oklch(0.34 0.020 280);
-  --input: oklch(0.50 0.024 280);               /* input boundary — 3:1 on bg */
-  --ring: oklch(0.62 0.230 295);                /* violet focus ring — 3:1 on bg */
+  --input: oklch(0.50 0.024 280);               /* input boundary, 3:1 on bg */
+  --ring: oklch(0.62 0.230 295);                /* violet focus ring, 3:1 on bg */
   --chart-1: oklch(0.62 0.230 295);             /* violet */
   --chart-2: oklch(0.74 0.160 162);             /* emerald */
   --chart-3: oklch(0.78 0.150 235);             /* cyan-blue */
@@ -107,15 +107,15 @@
   --sidebar-border: oklch(0.32 0.020 280);
   --sidebar-ring: oklch(0.62 0.230 295);
 
-  /* Specialty — premium-security brand character. */
-  --highlight: oklch(0.68 0.255 295);           /* violet — brighter, punchier accent (#708) */
-  --alt: oklch(0.76 0.170 162);                 /* emerald — crisper */
-  --link: oklch(0.80 0.160 235);                /* cyan-blue — crisper */
+  /* Specialty, premium-security brand character. */
+  --highlight: oklch(0.68 0.255 295);           /* violet, brighter, punchier accent (#708) */
+  --alt: oklch(0.76 0.170 162);                 /* emerald, crisper */
+  --link: oklch(0.80 0.160 235);                /* cyan-blue, crisper */
   --glow-strength: 0.9;                          /* stronger terminal-hacker glow (#708) */
   --scanline-opacity: 0.035;                     /* more visible CRT scanlines (#708) */
   --scanline-color: oklch(0.62 0.230 295);       /* violet scanline */
 
-  /* Dracula terminal palette — scoped to the landing hero terminal panels
+  /* Dracula terminal palette, scoped to the landing hero terminal panels
    * (Schematic + TerminalCard). Canonical Dracula spec values; these are
    * the only place raw Dracula hex lives, fanned out as text-dracula-*
    * utilities via the @theme inline block below. */
@@ -145,7 +145,7 @@
   --fc-page-bg-color: var(--muted);
   --fc-today-bg-color: var(--muted);
 
-  /* Terminal component background — darkest available palette value. */
+  /* Terminal component background, darkest available palette value. */
   --terminal-bg: var(--base-1000);
 }
 
@@ -263,7 +263,7 @@
   51%, 100% { opacity: 0; }
 }
 
-/* Brand CRT flicker — used on hero lockups + standalone marks to evoke an
+/* Brand CRT flicker, used on hero lockups + standalone marks to evoke an
  * unstable phosphor monitor. 92% of the cycle is steady so the flicker
  * reads as a glitch, not a flash. */
 @keyframes zda-flicker {
@@ -323,7 +323,7 @@
   }
 }
 
-/* Global CRT scanline overlay — kept as a restrained premium texture.
+/* Global CRT scanline overlay, kept as a restrained premium texture.
  * --scanline-opacity is barely-perceptible (0.012). */
 body::before {
   content: '';

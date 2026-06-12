@@ -30,11 +30,11 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Dev-only (ignored by `next build`): Next.js 16 blocks /_next/* dev
   // resources for origins other than localhost, which silently prevents
-  // hydration — client-driven UI (e.g. the landing Typewriter) renders
+  // hydration, client-driven UI (e.g. the landing Typewriter) renders
   // frozen with no console error. Allow the hosts a workstation browser
   // actually uses to reach `next dev`.
   allowedDevOrigins: ["0.0.0.0", "127.0.0.1", "192.168.50.223"],
-  // Tell Next.js not to bundle these Node-only server packages — they use
+  // Tell Next.js not to bundle these Node-only server packages, they use
   // `node:http2` / `node:fs` and blow up Turbopack's module analyzer otherwise.
   // @grpc/grpc-js added here because the SPIFFE workload-api client (server-only)
   // pulls in native Node.js modules that Turbopack cannot resolve in a browser
@@ -57,8 +57,8 @@ const nextConfig: NextConfig = {
     // pino + transport stack: pino-pretty / thread-stream / pino-abstract-transport
     // ship test files (*.test.js) and ESLint configs that import dev-only
     // packages (`neostandard`, `pino-elasticsearch`). Next.js 16's Turbopack
-    // tracer follows ALL `require()` sites in the package — including those
-    // in test/eslint files — and fails to resolve them. Marking the entire
+    // tracer follows ALL `require()` sites in the package, including those
+    // in test/eslint files, and fails to resolve them. Marking the entire
     // pino transport graph as external defers their resolution to Node at
     // runtime (where the test/eslint files are never required by pino itself).
     "pino",
@@ -70,7 +70,7 @@ const nextConfig: NextConfig = {
   ],
   // Server Action encryption key persistence is env-driven in Next.js 16:
   // setting NEXT_SERVER_ACTIONS_ENCRYPTION_KEY in the runtime environment
-  // is enough — no config wiring required. The Helm chart mounts the env var
+  // is enough, no config wiring required. The Helm chart mounts the env var
   // from the dashboard secret (delivered by External Secrets, preserved across
   // upgrades) so the key is identical across replicas and survives redeploys.
   //
@@ -85,7 +85,7 @@ const nextConfig: NextConfig = {
   // build then POSTs an unknown ID and Next throws "Failed to find Server
   // Action … older or newer deployment". That deployment skew is inherent to
   // rolling a Next.js app; the recovery is client-side (reload to fetch the
-  // current bundle) — see src/lib/server-action-skew.ts. Do not assume this
+  // current bundle), see src/lib/server-action-skew.ts. Do not assume this
   // env var alone prevents the "Something went wrong" signup error.
   images: {
     remotePatterns: [
@@ -112,7 +112,7 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    // GIBSON_API_URL is REQUIRED at SERVER START — see src/lib/env-validator.ts.
+    // GIBSON_API_URL is REQUIRED at SERVER START, see src/lib/env-validator.ts.
     //
     // next.config.ts is evaluated by `next build` AT BUILD TIME and AGAIN
     // when the Next.js Node server starts. The image build runs without
@@ -147,7 +147,7 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       // Old org pages lived in the `(dashboard)` segment group, which Next.js
-      // resolves at the root (/pages/...) — never under /dashboard. Redirect
+      // resolves at the root (/pages/...), never under /dashboard. Redirect
       // both the "what the sidebar pointed at" form and the "what actually
       // resolved" form to the new canonical location.
       {

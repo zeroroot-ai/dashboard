@@ -49,10 +49,10 @@ export async function GET() {
 
       // Attempt to subscribe to the Gibson daemon's event stream.
       //
-      // This is a best-effort proxy — the Subscribe RPC may not be fully
+      // This is a best-effort proxy, the Subscribe RPC may not be fully
       // implemented. The transport goes through Envoy via the user-acting
       // `userClient` factory (spec headline-feature-completion R11 +
-      // dashboard-admin-via-envoy), NOT a direct daemon channel — the
+      // dashboard-admin-via-envoy), NOT a direct daemon channel, the
       // legacy `createGrpcTransport({ baseUrl: serverConfig.gibsonDaemonUrl })`
       // pattern that lived here previously skipped jwt_authn / ext_authz /
       // SPIFFE mTLS at the Envoy edge.
@@ -101,7 +101,7 @@ export async function GET() {
             }
           }
         } catch {
-          // Subscribe RPC not available — heartbeat-only mode is fine.
+          // Subscribe RPC not available, heartbeat-only mode is fine.
           // The dashboard will show "Connected" and events will appear
           // once the daemon's Subscribe RPC is implemented.
         }

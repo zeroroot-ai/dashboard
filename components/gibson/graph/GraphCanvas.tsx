@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * GraphCanvas — knowledge-graph rendering engine adapter.
+ * GraphCanvas, knowledge-graph rendering engine adapter.
  *
  * A deep module that wraps `react-force-graph-2d` behind a small, stable
  * interface so the rest of the app never touches the library directly (and the
@@ -18,7 +18,7 @@ import dynamic from 'next/dynamic';
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import type { GraphDisplaySettings, GraphLayoutMode } from '@/src/stores/graph-view-store';
 
-/** A path returned by QueryPaths — highlighted on the graph when present. */
+/** A path returned by QueryPaths, highlighted on the graph when present. */
 export interface HighlightedPath {
   node_ids: string[];
   edge_ids: string[];

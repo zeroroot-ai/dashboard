@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * VaultForm — per-provider sub-form for HashiCorp Vault (BYO).
+ * VaultForm, per-provider sub-form for HashiCorp Vault (BYO).
  *
  * Fields:
  *  - address (non-sensitive): Vault server URL
@@ -155,7 +155,7 @@ export function VaultForm({ control, authMethod }: VaultFormProps) {
         )}
       />
 
-      {/* Token — only for "token" auth method */}
+      {/* Token, only for "token" auth method */}
       {authMethod === "token" && (
         <FormField
           control={control}

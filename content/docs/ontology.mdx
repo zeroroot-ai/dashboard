@@ -1,12 +1,12 @@
 ---
 title: Ontology
-description: Map your custom node types into industry vocabularies — CWE, SOC 2, MITRE ATT&CK, OWASP — via ontology.yaml. Pure read-side enrichment over the taxonomy.
+description: Map your custom node types into industry vocabularies, CWE, SOC 2, MITRE ATT&CK, OWASP, via ontology.yaml. Pure read-side enrichment over the taxonomy.
 ---
 
 [Taxonomy](/docs/taxonomy) answers *"is this a valid node?"* Ontology
 answers *"is `CWE-79` a kind of injection? does `SOC2 CC6.1` roll
 up to `CC6`?"* It's pure read-side enrichment on top of the typed
-graph — the write path is unchanged.
+graph, the write path is unchanged.
 
 ## When you need it
 
@@ -16,7 +16,7 @@ graph — the write path is unchanged.
 - Declaring sub-control relationships in a compliance framework so
   filtering by `SOC2 CC6` returns everything under `CC6.1`, `CC6.2`, …
 - Telling Gibson that two scanners' outputs refer to the same host
-  or artifact (identity-forming properties — see IFPs below).
+  or artifact (identity-forming properties, see IFPs below).
 - Bridging your taxonomy to MITRE ATT&CK tactics so the dashboard's
   attack-pattern views pick up techniques your component contributes.
 
@@ -25,14 +25,14 @@ Taxonomy alone is enough.
 
 ## The four building blocks
 
-- **Prefixes** — short labels for the IRIs of external vocabularies
+- **Prefixes**, short labels for the IRIs of external vocabularies
   (`cwe:`, `attack:`, `asvs:`, `mycorp:`). One line each.
-- **Hierarchies** — `subClassOf` edges. *"`mycorp:LeakedSecret` is a
+- **Hierarchies**, `subClassOf` edges. *"`mycorp:LeakedSecret` is a
   kind of `mycorp:ProprietaryFinding`."*
-- **Equivalences** — `sameAs` / `equivalentClass` edges. *"`mycorp:LeakedSecret`
+- **Equivalences**, `sameAs` / `equivalentClass` edges. *"`mycorp:LeakedSecret`
   is the same class as `gibson:disclosure`."* Queries on either side
   pick up nodes labelled with the other.
-- **IFPs (identity-forming properties)** — the property set that
+- **IFPs (identity-forming properties)**, the property set that
   uniquely identifies a custom node. Lets Gibson deduplicate when
   two components emit the same conceptual entity.
 
@@ -64,7 +64,7 @@ Drop this at the root of your component repo, next to `taxonomy.yaml`.
    `node_type` exists in `core.yaml` or your `taxonomy.yaml`, no
    `equivalences` conflict with an extension already registered for
    the tenant).
-3. The ADK emits `gen/ontology_extension.go` — an `OntologyExtension`
+3. The ADK emits `gen/ontology_extension.go`, an `OntologyExtension`
    value baked into your component binary.
 4. The component registers the extension with the daemon at component registration.
 5. The daemon's reasoner merges it into the tenant's closure and
@@ -73,7 +73,7 @@ Drop this at the root of your component repo, next to `taxonomy.yaml`.
 ## What lights up in the dashboard
 
 - A dashboard user filters findings by **`SOC2 CC6`**. Your custom
-  finding category mapped under `CC6.2` now appears in the list —
+  finding category mapped under `CC6.2` now appears in the list -
   no UI change required on your side.
 - A user opens the **MITRE ATT&CK** matrix. Custom techniques you
   declared as `subClassOf` an existing tactic light up the
@@ -95,7 +95,7 @@ What to do with each:
 | `cycle in hierarchies` | Your `subClassOf` chain loops back on itself. | Read the cycle the validator prints. Drop one edge or restructure so the chain is a DAG. |
 | `unknown prefix: <p>` | You used `<p>:Foo` without declaring `<p>` in `prefixes`. | Add the prefix-to-IRI mapping. Use the canonical IRI for industry vocab (`cwe:` → `https://cwe.mitre.org/data/definitions/`, etc.). |
 | `IFP property <prop> not on node_type <n>` | The IFP references a property that doesn't exist on the named node type. | Either add the property in `taxonomy.yaml` first, or fix the IFP entry. Run `gibson component build` once after the taxonomy edit to refresh validation. |
-| `conflicting equivalence: <A> <-> <B>` | Another extension already registered an equivalence touching `<A>` or `<B>` that contradicts yours. | Decide whether your component should override or follow the existing mapping. If override, coordinate with the tenant admin — the daemon won't silently merge contradictions. |
+| `conflicting equivalence: <A> <-> <B>` | Another extension already registered an equivalence touching `<A>` or `<B>` that contradicts yours. | Decide whether your component should override or follow the existing mapping. If override, coordinate with the tenant admin, the daemon won't silently merge contradictions. |
 
 When an assistant hits one of these, the right move is to read the
 validator output verbatim, fix the YAML, and rerun the build. Don't
@@ -107,7 +107,7 @@ at registration anyway.
 A raw `.ttl` (Turtle) file can sit next to `ontology.yaml` for
 axioms the YAML shape doesn't express (e.g. property restrictions,
 cardinality, disjointness). The ADK passes it through to the daemon's
-reasoner unchanged. You don't need this for the common cases above —
+reasoner unchanged. You don't need this for the common cases above -
 it exists for teams already invested in OWL.
 
 ## Prompting your assistant
@@ -126,9 +126,9 @@ it exists for teams already invested in OWL.
 
 ## Related
 
-- [Taxonomy](/docs/taxonomy) — declare custom node types and
+- [Taxonomy](/docs/taxonomy), declare custom node types and
   relationships first; the ontology references them.
-- [Findings](/docs/findings) — what gets richer when ontology
+- [Findings](/docs/findings), what gets richer when ontology
   mappings exist.
-- [Knowledge graph](/docs/knowledge-graph) — hierarchy-aware queries
+- [Knowledge graph](/docs/knowledge-graph), hierarchy-aware queries
   use the closure built from `ontology.yaml`.

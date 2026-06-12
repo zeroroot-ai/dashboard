@@ -118,7 +118,7 @@ export interface TraceNode {
 // ============================================================================
 
 /**
- * A trace as it appears in the tenant-wide trace list — a projection of the
+ * A trace as it appears in the tenant-wide trace list, a projection of the
  * upstream trace record with no observations (those load on detail open).
  */
 export interface TraceSummary {

@@ -9,7 +9,7 @@
  *   - /api/debug/recent-errors    DASHBOARD_DEBUG=1            (error ring buffer)
  *   - (test-only auth)            TEST_AUTH_BYPASS=1
  *
- * The codebase deliberately does NOT gate these on `NODE_ENV` — that is the
+ * The codebase deliberately does NOT gate these on `NODE_ENV`, that is the
  * forbidden anti-pattern enforced by check-no-nodeenv-conditioned-auth.mjs
  * (a prod image misconfigured to NODE_ENV=development would silently unlock
  * everything). Instead the contract is: the flag defaults absent and NO
@@ -18,7 +18,7 @@
  * This guard locks that contract: it fails if any COMMITTED config file
  * (Dockerfile, .env.example, or any committed .env*) sets one of these flags
  * to its enabling value. Local-only `.env*.local` files are gitignored and
- * out of scope. The disabling value (e.g. `DASHBOARD_DEBUG=0`) is allowed —
+ * out of scope. The disabling value (e.g. `DASHBOARD_DEBUG=0`) is allowed -
  * documenting the default-off is encouraged.
  */
 
@@ -53,7 +53,7 @@ function trackedConfigFiles() {
       });
       tracked.push(c);
     } catch {
-      // not tracked (gitignored) — out of scope
+      // not tracked (gitignored), out of scope
     }
   }
   return tracked;

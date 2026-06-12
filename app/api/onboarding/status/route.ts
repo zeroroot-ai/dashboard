@@ -3,7 +3,7 @@
  *
  * Proxies per-user onboarding state through the daemon's UserService RPCs
  * (GetUserOnboardingState / UpdateUserOnboardingState / ResetUserOnboardingState).
- * Tenant is resolved via requireActiveTenant() — fail-closed, no default fallback.
+ * Tenant is resolved via requireActiveTenant(), fail-closed, no default fallback.
  *
  * Replaces the previous direct-Redis implementation.
  * Spec: dashboard-no-backing-store-clients (Module 5 / issue #589 + #579).
@@ -33,7 +33,7 @@ import type {
 import { DEFAULT_SETUP_TASKS } from '@/src/types/onboarding';
 
 // ============================================================================
-// Helpers — local-only presentation logic (no store access)
+// Helpers, local-only presentation logic (no store access)
 // ============================================================================
 
 function calculateProgress(state: OnboardingState): SetupProgress {
@@ -92,7 +92,7 @@ function protoToState(proto: UserOnboardingState): OnboardingState {
     ? proto.setupTasks.map((t) => {
         const def = DEFAULT_TASK_META.get(t.id);
         if (!def) {
-          // Unknown task id — should not happen in practice but handle gracefully.
+          // Unknown task id, should not happen in practice but handle gracefully.
           return {
             id: t.id as SetupTaskId,
             title: t.id,

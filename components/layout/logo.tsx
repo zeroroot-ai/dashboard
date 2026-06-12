@@ -1,12 +1,12 @@
 /**
- * Brand marks — ported from the design handoff (`zeroroot-ai/project/marks.jsx`).
+ * Brand marks, ported from the design handoff (`zeroroot-ai/project/marks.jsx`).
  *
  * Five exports:
- *   • Brain      — standalone slashed-zero (compact icon, favicon scale)
- *   • BrainCRT   — primary mark: CRT bezel + slashed-zero on screen + stand
- *   • Wordmark   — "zeroroot.ai" with .ai dimmed
- *   • Lockup     — mark + wordmark, horizontal
- *   • Avatar     — square tile with the slashed-zero (GitHub org, app icon)
+ *   • Brain     , standalone slashed-zero (compact icon, favicon scale)
+ *   • BrainCRT  , primary mark: CRT bezel + slashed-zero on screen + stand
+ *   • Wordmark  , "zeroroot.ai" with .ai dimmed
+ *   • Lockup    , mark + wordmark, horizontal
+ *   • Avatar    , square tile with the slashed-zero (GitHub org, app icon)
  *
  * All marks paint via `currentColor` and inherit from the surrounding
  * `color: var(--primary)` (or whatever class the parent sets), so they
@@ -69,7 +69,7 @@ interface BrainCRTProps extends BrainProps {
   stem?: boolean;
 }
 
-/** Primary mark — CRT bezel with the slashed zero on the screen. */
+/** Primary mark, CRT bezel with the slashed zero on the screen. */
 export function BrainCRT({
   size = 96,
   glow = true,
@@ -217,9 +217,9 @@ const LOCKUP_SIZES: Record<LockupSize, { mark: number; word: number; gap: number
   xl: { mark: 96, word: 56, gap: 24 },
 };
 
-/** Horizontal mark + wordmark — primary lockup for nav, headers, README.
+/** Horizontal mark + wordmark, primary lockup for nav, headers, README.
  *
- * The full mark (with stem) is the canonical brand mark — same as the
+ * The full mark (with stem) is the canonical brand mark, same as the
  * square 75mm sticker treatment in the brand guide. Stem stays on at
  * every size so the lockup reads as "a terminal next to a wordmark",
  * not "a screen next to a wordmark". */
@@ -249,7 +249,7 @@ interface AvatarProps {
   children?: ReactNode;
 }
 
-/** Square tile — GitHub org avatar, app icon, sticker. */
+/** Square tile, GitHub org avatar, app icon, sticker. */
 export function Avatar({ size = 96, radius = 12, className }: AvatarProps) {
   return (
     <span
@@ -276,7 +276,7 @@ export function Avatar({ size = 96, radius = 12, className }: AvatarProps) {
 }
 
 /**
- * Default export — drop-in replacement for the previous raster `/logo.png`.
+ * Default export, drop-in replacement for the previous raster `/logo.png`.
  * Sized to match the legacy 30px placeholder so the sidebar collapsible
  * doesn't reflow.
  */

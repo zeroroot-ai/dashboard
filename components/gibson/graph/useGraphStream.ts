@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * useGraphStream — Phase 7, Task 22
+ * useGraphStream, Phase 7, Task 22
  *
  * Opens an EventSource on /api/graph/stream when `enabled` is true.
  * On each `event: graph-update`, parses the JSON payload and calls
@@ -41,7 +41,7 @@ export function useGraphStream(
   const [healthy, setHealthy] = useState(false);
   const [lastEventAt, setLastEventAt] = useState<number>(0);
 
-  // Stable ref to onUpdate — avoids restart when callback identity changes
+  // Stable ref to onUpdate, avoids restart when callback identity changes
   const onUpdateRef = useRef<UpdateCallback>(onUpdate);
   useEffect(() => { onUpdateRef.current = onUpdate; }, [onUpdate]);
 
@@ -126,7 +126,7 @@ export function useGraphStream(
 
         onUpdateRef.current(update);
       } catch {
-        // Malformed event — ignore, stream is still considered healthy
+        // Malformed event, ignore, stream is still considered healthy
       }
     });
 

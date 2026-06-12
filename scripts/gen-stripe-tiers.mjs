@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * gen-stripe-tiers.mjs — emits src/lib/billing/stripe_gen.ts from
+ * gen-stripe-tiers.mjs, emits src/lib/billing/stripe_gen.ts from
  * plans.yaml. Single bridge between the operator's plan registry and the
  * dashboard's BillingTier union + PRICE_ENV_MAP. Spec
  * plans-and-quotas-simplification R8 / R3.1.
@@ -8,7 +8,7 @@
  * The generated file carries:
  *   - BillingTier   : TS union of every plan id whose pricing has
  *                     stripeProductId support (i.e. NOT contactSales-only).
- *   - PRICE_ENV_MAP : { [tier]: STRIPE_PRICE_<TIER_SLUG> } — the env-var
+ *   - PRICE_ENV_MAP : { [tier]: STRIPE_PRICE_<TIER_SLUG> }, the env-var
  *                     names required at runtime when paid tiers are enabled.
  *
  * stripe.ts imports these and keeps the runtime helpers (priceIdForTier /
@@ -57,7 +57,7 @@ function main() {
   // in gen-plans.mjs.
   if (!stdoutMode && process.env.SKIP_GEN_STRIPE_TIERS === "1" && existsSync(OUTPUT)) {
     process.stdout.write(
-      `gen-stripe-tiers: SKIP_GEN_STRIPE_TIERS=1 — using pre-generated ${OUTPUT}\n`,
+      `gen-stripe-tiers: SKIP_GEN_STRIPE_TIERS=1, using pre-generated ${OUTPUT}\n`,
     );
     return;
   }
@@ -77,7 +77,7 @@ function main() {
 
   const lines = [];
   lines.push(
-    "// GENERATED FILE — do not edit.",
+    "// GENERATED FILE, do not edit.",
     "// Source: enterprise/platform/tenant-operator/plans/plans.yaml",
     "// Generator: enterprise/platform/dashboard/scripts/gen-stripe-tiers.mjs",
     "// Spec: plans-and-quotas-simplification R8.",

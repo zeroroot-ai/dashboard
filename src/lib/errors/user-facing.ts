@@ -51,7 +51,7 @@ export type UserFacingErrorCode =
  * `correlationId`, when present, is the per-request ID for support reference.
  */
 export interface UserFacingError {
-  /** The originating error code — useful for programmatic switching in UI. */
+  /** The originating error code, useful for programmatic switching in UI. */
   code: UserFacingErrorCode;
   /** Short headline shown as an alert title. */
   title: string;
@@ -74,7 +74,7 @@ export interface UserFacingError {
 // ---------------------------------------------------------------------------
 
 /**
- * The static portion of an error entry — everything except the runtime
+ * The static portion of an error entry, everything except the runtime
  * `correlationId` which is injected by {@link resolveUserFacingError}.
  */
 type ErrorEntry = Omit<UserFacingError, "code" | "correlationId">;

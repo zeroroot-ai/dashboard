@@ -27,7 +27,7 @@ describe("buildNewMissionCue (default-provider prepopulation)", () => {
   it("never emits the removed singular llm field regardless of seed", () => {
     const withSeed = buildNewMissionCue({ provider: "anthropic", model: "claude-opus-4-5" });
     // The singular `llm: { ... }` block was retired in sdk v0.128.0 (field 4).
-    // llm_slots (field 5) is the replacement — as `llmSlots: [...]` in CUE.
+    // llm_slots (field 5) is the replacement, as `llmSlots: [...]` in CUE.
     expect(withSeed).not.toMatch(/\bllm:\s*\{/);
     expect(NEW_MISSION_CUE).not.toMatch(/\bllm:\s*\{/);
   });

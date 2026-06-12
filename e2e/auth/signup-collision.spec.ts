@@ -66,7 +66,7 @@ async function fillAndSubmitSignup(
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe("Signup — company name collision", () => {
+test.describe("Signup, company name collision", () => {
   test.afterAll(async () => {
     await closeDbPool();
   });
@@ -117,7 +117,7 @@ test.describe("Signup — company name collision", () => {
       // -------------------------------------------------------------------------
       // Step 3: Expect COMPANY_NAME_TAKEN inline error (should stay on /signup).
       // -------------------------------------------------------------------------
-      // The page should NOT navigate away — it should render an inline error.
+      // The page should NOT navigate away, it should render an inline error.
       await expect(pageB).toHaveURL(/\/signup/, { timeout: 15_000 });
 
       // The error could appear as:

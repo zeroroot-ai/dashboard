@@ -1,5 +1,5 @@
 /**
- * UsersContent — owner role badge and protection tests.
+ * UsersContent, owner role badge and protection tests.
  *
  * Post dashboard#715 the roster comes from the daemon via listMembersAction
  * (React Query), not the TenantMember CR. Verifies:
@@ -15,7 +15,7 @@ import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { MemberRow } from "@/app/actions/read/listMembers";
 
-// ── Hook mocks — must come before any component import ────────────────────────
+// ── Hook mocks, must come before any component import ────────────────────────
 
 vi.mock("@/src/lib/session-client", () => ({
   useSession: () => ({
@@ -115,7 +115,7 @@ const admin = () => member({ userId: "user-admin-id", email: "admin@example.com"
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe("UsersContent — owner role display", () => {
+describe("UsersContent, owner role display", () => {
   it('renders "owner" badge text (not "member") for an owner', async () => {
     mockMembers.mockResolvedValue({ ok: true, data: [owner()] });
     renderWithQuery();

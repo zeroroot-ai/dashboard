@@ -11,8 +11,8 @@
  * and `NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV` (client) env vars
  * that flipped registry-miss authz from DENY to ALLOW in non-production
  * NODE_ENV. Per the user directive on `docs/PRODUCTION-TODOS.md` Tier 3
- * high — *"there should be no more permissive anything any more, all
- * that code should be deleted"* — the flags were deleted entirely.
+ * high, *"there should be no more permissive anything any more, all
+ * that code should be deleted"*, the flags were deleted entirely.
  *
  * This guard prevents the flags (or a synonym under any new name) from
  * being re-introduced.
@@ -84,7 +84,7 @@ const TEST_FILE_PATTERN = /\.(?:test|spec)\./;
 /** Lines within this many lines of a `process.env` are "nearby". */
 const WINDOW = 3;
 
-/** Literal flag names — flagged anywhere in scanned source. */
+/** Literal flag names, flagged anywhere in scanned source. */
 const LITERAL_FLAGS = [
   'DASHBOARD_AUTHZ_PERMISSIVE_DEV',
   'NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV',
@@ -163,7 +163,7 @@ function scanFile(fullPath, rel) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // (1) Literal flag names — flagged ANYWHERE.
+    // (1) Literal flag names, flagged ANYWHERE.
     for (const flag of LITERAL_FLAGS) {
       if (line.includes(flag)) {
         violations.push({
@@ -237,7 +237,7 @@ function runScan(scanDirs = SCAN_DIRS) {
 function printViolations(violations) {
   for (const v of violations) {
     process.stderr.write(
-      `❌ ${v.rel}:${v.line} — permissive flag detected (${v.kind}: "${v.marker}")\n` +
+      `❌ ${v.rel}:${v.line}, permissive flag detected (${v.kind}: "${v.marker}")\n` +
         `   ${v.content}\n\n`,
     );
   }
@@ -269,7 +269,7 @@ function printViolations(violations) {
 function runSelfTest() {
   const fixturePath = join(ROOT, 'src', '_selftest_permissive_fixture.ts');
   const fixtureContent = [
-    '// SELFTEST FIXTURE — auto-deleted immediately after the guard runs',
+    '// SELFTEST FIXTURE, auto-deleted immediately after the guard runs',
     'export function bad(): boolean {',
     '  return process.env.DASHBOARD_AUTHZ_PERMISSIVE_DEV === "1";',
     '}',
@@ -296,12 +296,12 @@ function runSelfTest() {
 
   if (caught) {
     process.stdout.write(
-      `${SCRIPT_NAME} --selftest: PASS — guard correctly caught the synthetic violation.\n`,
+      `${SCRIPT_NAME} --selftest: PASS, guard correctly caught the synthetic violation.\n`,
     );
     process.exit(0);
   }
   process.stderr.write(
-    `${SCRIPT_NAME} --selftest: FAIL — guard did NOT catch a deliberate permissive flag in a fixture file.\n`,
+    `${SCRIPT_NAME} --selftest: FAIL, guard did NOT catch a deliberate permissive flag in a fixture file.\n`,
   );
   process.exit(1);
 }

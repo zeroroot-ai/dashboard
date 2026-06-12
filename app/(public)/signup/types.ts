@@ -1,12 +1,12 @@
 /**
- * types.ts — Signup form Zod schemas and shared TypeScript types.
+ * types.ts, Signup form Zod schemas and shared TypeScript types.
  *
  * Single source of truth for:
- *  - `signupInputSchema` — form shape validated by both the Client Component
+ *  - `signupInputSchema`, form shape validated by both the Client Component
  *    (React Hook Form resolver) and the Server Action (runtime guard).
- *  - `SignupFailureCode` — exhaustive union of all terminal error states.
- *  - `SignupActionResult` — discriminated union returned by `signupAction`.
- *  - `ProvisioningStep` / `ProvisioningProgress` — Redis progress state shape
+ *  - `SignupFailureCode`, exhaustive union of all terminal error states.
+ *  - `SignupActionResult`, discriminated union returned by `signupAction`.
+ *  - `ProvisioningStep` / `ProvisioningProgress`, Redis progress state shape
  *    consumed by `<ProvisioningPanel>` via the poll endpoint.
  *
  * No runtime imports from server-only modules. Safe for both client and server.
@@ -19,7 +19,7 @@ import { selfServeTierIds } from "@/src/lib/pricing-display";
 // Form schema
 // ---------------------------------------------------------------------------
 
-// `selfServeTierIds` is a readonly array — z.enum requires a non-empty tuple.
+// `selfServeTierIds` is a readonly array, z.enum requires a non-empty tuple.
 // Cast is safe because the array is guaranteed non-empty at build time.
 const tierTuple = selfServeTierIds as unknown as [string, ...string[]];
 
@@ -44,7 +44,7 @@ export const signupInputSchema = z.object({
     .min(12, "Password must be at least 12 characters")
     .max(256, "Password must be 256 characters or fewer"),
 
-  // Confirm-password field — validated below via .superRefine after both
+  // Confirm-password field, validated below via .superRefine after both
   // password fields are parsed so the user gets a "doesn't match" error tied
   // to the confirm field rather than the password field.
   passwordConfirm: z.string(),
@@ -128,7 +128,7 @@ export type SignupActionResult =
       /** Same opaque UUID for error log correlation. */
       attemptId: string;
       code: SignupFailureCode;
-      /** User-facing prose — safe to display verbatim. */
+      /** User-facing prose, safe to display verbatim. */
       userMessage: string;
       /**
        * Optional per-field error overrides keyed by `signupInputSchema` field

@@ -13,7 +13,7 @@
  * by this endpoint. Keeping the registry lean also bounds the scrape response
  * size on high-replica deployments.
  *
- * The singleton survives HMR in dev by memoising on a `globalThis` slot — a
+ * The singleton survives HMR in dev by memoising on a `globalThis` slot, a
  * fresh `Registry` per hot-reload would throw `A metric with the name ...
  * has already been registered` on the second load of every counter module.
  *
@@ -24,7 +24,7 @@
  * `fs`, `v8`) and any [Client Component SSR] context that transitively
  * reaches this module fails the build with `Module not found: Can't
  * resolve 'cluster'`. Even `serverExternalPackages: ["prom-client"]` was
- * insufficient — Turbopack's analyser still walked into prom-client's
+ * insufficient, Turbopack's analyser still walked into prom-client's
  * internal files. The `node:module.createRequire` + path-concat pattern
  * keeps prom-client out of the static graph entirely; it loads at runtime
  * in the Node bundle where the primitives exist.
@@ -70,7 +70,7 @@ function getOrCreateRegistry(): Registry {
   }
   const mod = loadRegistryClass();
   if (!mod) {
-    // Edge / browser context (defensive — this module is server-only by
+    // Edge / browser context (defensive, this module is server-only by
     // virtue of every caller running server-side, but the lazy fallback
     // ensures we don't crash the bundler in Client Component SSR even if
     // a transitive import accidentally reaches us). Return a no-op proxy

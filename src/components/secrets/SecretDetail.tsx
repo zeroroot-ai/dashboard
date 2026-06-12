@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * SecretDetail — client component that renders secret metadata and action buttons.
+ * SecretDetail, client component that renders secret metadata and action buttons.
  *
  * Receives the pre-fetched SecretMetadata from the server component page.
  *
@@ -34,7 +34,7 @@ import { useAuthorize } from "@/src/lib/auth/use-authorize";
 // ---------------------------------------------------------------------------
 
 function formatUnixTs(unixSeconds: bigint): string {
-  if (!unixSeconds || unixSeconds === BigInt(0)) return "—";
+  if (!unixSeconds || unixSeconds === BigInt(0)) return "-";
   const d = new Date(Number(unixSeconds) * 1000);
   return d.toLocaleString(undefined, {
     year: "numeric",

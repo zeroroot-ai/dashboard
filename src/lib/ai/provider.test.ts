@@ -1,7 +1,7 @@
 /**
  * Unit tests for the resolveProvider factory in src/lib/ai/provider.ts.
  *
- * The factory is a thin delegator to GibsonLLMAdapter — tests assert the
+ * The factory is a thin delegator to GibsonLLMAdapter, tests assert the
  * correct adapter is returned, error cases throw descriptively, and the
  * returned instance satisfies the LanguageModelV2 interface.
  */

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * MermaidBlock — renders a Mermaid diagram inside an assistant message.
+ * MermaidBlock, renders a Mermaid diagram inside an assistant message.
  *
  * Design constraints:
  * - Mermaid is dynamically imported so it never lands in the initial bundle.
@@ -39,7 +39,7 @@ export function MermaidBlock({ code }: MermaidBlockProps) {
           // mermaid.render returns an SVG string. We set it directly; DOMPurify
           // is intentionally not applied here because SVG diagrams contain
           // inline styles and scripts that DOMPurify strips, breaking the
-          // rendering. Mermaid's own output is trusted — it doesn't eval
+          // rendering. Mermaid's own output is trusted, it doesn't eval
           // user-controlled HTML, only diagram syntax.
           containerRef.current.innerHTML = svg;
         }

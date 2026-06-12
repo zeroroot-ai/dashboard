@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * CheckpointRewindModal — confirmation modal for `Mission.Resume` rewind.
+ * CheckpointRewindModal, confirmation modal for `Mission.Resume` rewind.
  *
  * Calls `resumeMissionAction({ missionId, targetCheckpointId })` to rewind a
  * mission to an earlier checkpoint.
@@ -147,7 +147,7 @@ export function CheckpointRewindModal({
               {target.checkpointId} · super-step {target.superStep.toString()}
             </p>
             <p className="font-mono text-muted-foreground">
-              captured {targetCaptured?.toISOString() ?? "—"}
+              captured {targetCaptured?.toISOString() ?? "-"}
             </p>
           </div>
 
@@ -158,7 +158,7 @@ export function CheckpointRewindModal({
             </p>
             {discarded.length === 0 ? (
               <p className="text-xs text-muted-foreground">
-                No newer checkpoints — rewinding to the latest checkpoint is a
+                No newer checkpoints, rewinding to the latest checkpoint is a
                 no-op for the timeline but still re-executes from this point.
               </p>
             ) : (
@@ -175,7 +175,7 @@ export function CheckpointRewindModal({
                         {d.superStep.toString()}
                       </span>
                       <span className="font-mono text-[10px] text-muted-foreground">
-                        {ts?.toISOString() ?? "—"}
+                        {ts?.toISOString() ?? "-"}
                       </span>
                     </li>
                   );

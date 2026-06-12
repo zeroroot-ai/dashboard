@@ -10,7 +10,7 @@ import { queryClient } from '@/src/lib/query-client';
  * Auth.js v5 (next-auth) requires SessionProvider to be mounted at (or above)
  * any Client Component that calls useSession(). Without it, useSession()
  * returns undefined and every consumer crashes with "Cannot destructure
- * property 'data' of '(0 , t.useSession)(...)' as it is undefined" — taking
+ * property 'data' of '(0 , t.useSession)(...)' as it is undefined", taking
  * down the whole dashboard with a client-side exception.
  *
  * The historical pre-Auth.js wiring did NOT need a provider (HTTP cookies
@@ -18,8 +18,8 @@ import { queryClient } from '@/src/lib/query-client';
  * that era. The Auth.js v5 migration re-adds it here.
  *
  * Provider order (outermost to innermost):
- * 1. SessionProvider     — Auth.js v5 client-side session context
- * 2. QueryClientProvider — React Query for tenant-scoped server state
+ * 1. SessionProvider    , Auth.js v5 client-side session context
+ * 2. QueryClientProvider, React Query for tenant-scoped server state
  */
 export function GibsonProviders({ children }: { children: React.ReactNode }) {
   return (

@@ -2,7 +2,7 @@
  * Server-side Kubernetes client singleton. Reads in-cluster credentials in
  * production (ServiceAccount + CA) and falls back to ~/.kube/config in dev.
  *
- * This module is Node.js runtime only — never import from Client Components.
+ * This module is Node.js runtime only, never import from Client Components.
  */
 
 import 'server-only';

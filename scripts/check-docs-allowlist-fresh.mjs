@@ -4,7 +4,7 @@
  *
  * Build-time drift gate for `.docs-allowlist.json`. The main scanner
  * (`check-no-internal-tech-in-docs.mjs`) catches *new* violations as they
- * arrive; this companion enforces the opposite direction — when a
+ * arrive; this companion enforces the opposite direction, when a
  * customer-facing file is rewritten and its allowlisted lines disappear,
  * the allowlist MUST be shrunk in the same PR. Otherwise the allowlist
  * accumulates dead entries and loses its monotonic-shrink discipline.
@@ -84,10 +84,10 @@ function relPath(abs) {
   return relative(ROOT, abs).split(sep).join("/");
 }
 
-// stripJsComments — same implementation as check-no-internal-tech-in-docs.mjs.
+// stripJsComments, same implementation as check-no-internal-tech-in-docs.mjs.
 // Replaces // line comments and /* */ block comments with spaces (preserving
 // line/column positions). String literals (single, double, template) and
-// JSX text are preserved verbatim — that content renders to the customer
+// JSX text are preserved verbatim, that content renders to the customer
 // and must still be scanned.
 function stripJsComments(src) {
   let out = "";
@@ -205,7 +205,7 @@ const expected = expectedAllowlistJson();
 const committed = committedJson();
 
 if (expected === committed) {
-  console.log("check-docs-allowlist-fresh.mjs: OK — .docs-allowlist.json is in sync with customer-facing scan.");
+  console.log("check-docs-allowlist-fresh.mjs: OK, .docs-allowlist.json is in sync with customer-facing scan.");
   process.exit(0);
 }
 

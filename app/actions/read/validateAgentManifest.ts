@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * validateAgentManifestAction — browser-callable wrapper around
+ * validateAgentManifestAction, browser-callable wrapper around
  * DiscoveryService.ValidateComponent. The install dialog renders the
  * response's schema/access error lists before displaying the permission
  * checklist.

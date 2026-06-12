@@ -30,7 +30,7 @@ function extractAgentToolNames(parsed: Record<string, unknown>): string {
     const name = (node.agent ?? node.tool ?? node.plugin) as string | undefined;
     if (name) names.add(name);
   }
-  return names.size > 0 ? Array.from(names).join(", ") : "—";
+  return names.size > 0 ? Array.from(names).join(", ") : "-";
 }
 
 function nodeCount(parsed: Record<string, unknown>): number {

@@ -1,7 +1,7 @@
 /**
  * Graph Statistics API Route
  *
- * GET /api/graph/stats — Fetch knowledge graph statistics via
+ * GET /api/graph/stats, Fetch knowledge graph statistics via
  * GraphService.GetGraphStats.
  *
  * Spec: dashboard-direct-neo4j-removal (Phase 3, Task 11).
@@ -66,7 +66,7 @@ export async function GET(_request: NextRequest) {
       totalNodes: Number(resp.totalNodes),
       totalEdges: Number(resp.totalEdges),
       nodesByLabel,
-      nodesByType: nodesByLabel,   // alias — useGraph.ts GraphStats interface uses nodesByType
+      nodesByType: nodesByLabel,   // alias, useGraph.ts GraphStats interface uses nodesByType
       relationshipTypes: {} as Record<string, number>,
       lastWriteAt: resp.lastWriteAt
         ? new Date(Number(resp.lastWriteAt.seconds) * 1000).toISOString()

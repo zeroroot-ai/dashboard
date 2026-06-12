@@ -7,7 +7,7 @@
  * unauthorized callers cannot mine validation messages as an enumeration
  * oracle.
  *
- * All object schemas are `.strict()` — unknown keys are rejected.
+ * All object schemas are `.strict()`, unknown keys are rejected.
  */
 
 import { z } from "zod";
@@ -48,7 +48,7 @@ export const emailSchema = z
 
 /**
  * Closed allowlist of component kinds. Update this list in the same PR when
- * the daemon adds a new kind — on purpose, so a rogue `kind` cannot be
+ * the daemon adds a new kind, on purpose, so a rogue `kind` cannot be
  * injected through the dashboard.
  */
 export const componentKindSchema = z.enum(["agent", "tool", "plugin"]);
@@ -62,7 +62,7 @@ export const componentRefSchema = z
 
 export const memberRoleSchema = z.enum(["admin", "member"]);
 
-// Canonical Gibson plan IDs — derived from the generated plan registry
+// Canonical Gibson plan IDs, derived from the generated plan registry
 // (src/generated/plans.ts), which mirrors the operator's plans.PlanID Go
 // enum via gen-plans.mjs reading plans.yaml. Legacy ids (solo / squad /
 // platform / enterprise-cloud / enterprise-onprem / public-sector / free /
@@ -84,7 +84,7 @@ export const displayNameSchema = z
   .regex(/^[^\x00-\x1f\x7f]*$/, "display name must not contain control characters");
 
 // ---------------------------------------------------------------------------
-// Per-action input schemas — one `strictObject` per exported action.
+// Per-action input schemas, one `strictObject` per exported action.
 // Naming convention: {actionName}Input (camelCase, matches the action).
 // ---------------------------------------------------------------------------
 

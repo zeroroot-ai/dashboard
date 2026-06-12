@@ -26,7 +26,7 @@ const MEMBER_EMAIL = process.env.E2E_MEMBER_EMAIL ?? "member@example.com";
 // ---------------------------------------------------------------------------
 
 async function loginAs(page: Page, email: string, password: string) {
-  // Dashboard uses Auth.js v5 Server Actions — sign-in is an email+password
+  // Dashboard uses Auth.js v5 Server Actions, sign-in is an email+password
   // form at /login that posts to the signInAction (see app/actions/auth/signin.ts).
   // NOTE: field selectors below match the current form markup; update them if
   // the login UI changes.
@@ -43,7 +43,7 @@ async function waitForToast(page: Page, text: RegExp | string) {
 }
 
 // ---------------------------------------------------------------------------
-// Test suite — Requirement 11
+// Test suite, Requirement 11
 // ---------------------------------------------------------------------------
 
 test.describe("Granular Permissions Admin Flow", () => {
@@ -52,7 +52,7 @@ test.describe("Granular Permissions Admin Flow", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Requirement 11.1 — Admin can log in after fresh cluster setup
+  // Requirement 11.1, Admin can log in after fresh cluster setup
   // -------------------------------------------------------------------------
   test("admin dashboard loads after login", async ({ page }) => {
     await expect(page).toHaveURL(/\/dashboard/);
@@ -60,7 +60,7 @@ test.describe("Granular Permissions Admin Flow", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Requirement 11.2 — Create three teams
+  // Requirement 11.2, Create three teams
   // -------------------------------------------------------------------------
   test("admin can create teams", async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard/teams`);
@@ -76,7 +76,7 @@ test.describe("Granular Permissions Admin Flow", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Requirement 11.2 — Teams appear in the list
+  // Requirement 11.2, Teams appear in the list
   // -------------------------------------------------------------------------
   test("teams list shows all created teams", async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard/teams`);
@@ -86,7 +86,7 @@ test.describe("Granular Permissions Admin Flow", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Requirement 11.4 — Configure crosstalk "blue can view data from red"
+  // Requirement 11.4, Configure crosstalk "blue can view data from red"
   // -------------------------------------------------------------------------
   test("admin can configure team crosstalk", async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard/teams`);
@@ -113,7 +113,7 @@ test.describe("Granular Permissions Admin Flow", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Requirement 11.5 — Revoke component grant via permissions matrix
+  // Requirement 11.5, Revoke component grant via permissions matrix
   // -------------------------------------------------------------------------
   test("admin can revoke a component grant for a member", async ({ page }) => {
     // Navigate to users and find the member
@@ -141,7 +141,7 @@ test.describe("Granular Permissions Admin Flow", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Requirement 11.6 — Audit log shows permission events
+  // Requirement 11.6, Audit log shows permission events
   // -------------------------------------------------------------------------
   test("audit log shows recent permission events", async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard/audit`);
@@ -157,7 +157,7 @@ test.describe("Granular Permissions Admin Flow", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Requirement 11.7 (client-side) — Non-admin does not see admin buttons
+  // Requirement 11.7 (client-side), Non-admin does not see admin buttons
   // -------------------------------------------------------------------------
   test("non-admin does not see Create Team or edit buttons", async ({
     browser,
@@ -185,7 +185,7 @@ test.describe("Granular Permissions Admin Flow", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Accessibility checks — Requirement 11.9 (basic Playwright a11y sweep)
+// Accessibility checks, Requirement 11.9 (basic Playwright a11y sweep)
 // ---------------------------------------------------------------------------
 
 test.describe("Accessibility checks on new pages", () => {
@@ -207,7 +207,7 @@ test.describe("Accessibility checks on new pages", () => {
 
       // Check that every interactive element within the main content area
       // has an accessible name (button, link, input, checkbox, select).
-      // This is a basic heuristic — full Lighthouse audit via CI workflow.
+      // This is a basic heuristic, full Lighthouse audit via CI workflow.
       const interactives = await page
         .locator(
           "main button:not([aria-hidden='true']), main a:not([aria-hidden='true']), main input, main select",

@@ -1,5 +1,5 @@
 /**
- * VersionBanner — non-blocking notice when the dashboard's
+ * VersionBanner, non-blocking notice when the dashboard's
  * vendored mission-authoring bundle version differs from the
  * daemon's reported SDK version. Hidden when versions match or
  * when no daemon version is supplied.
@@ -23,7 +23,7 @@ interface VersionBannerProps {
   /**
    * Daemon-reported SDK version. When undefined, the banner
    * stays hidden (the dashboard hasn't successfully probed the
-   * daemon yet — we don't want a pre-probe flash of warning).
+   * daemon yet, we don't want a pre-probe flash of warning).
    */
   daemonVersion?: string;
 }
@@ -40,7 +40,7 @@ export function VersionBanner({ daemonVersion }: VersionBannerProps) {
   if (meta.version === daemonVersion) return null;
 
   // Bundle versions like "sibling-checkout" or "tarball-override"
-  // are dev-mode signals — flag them differently than a true
+  // are dev-mode signals, flag them differently than a true
   // production version drift.
   const isDevBundle = !meta.version.startsWith("v");
 
@@ -65,7 +65,7 @@ export function VersionBanner({ daemonVersion }: VersionBannerProps) {
 }
 
 /**
- * useBundleVersion — convenience hook returning the vendored
+ * useBundleVersion, convenience hook returning the vendored
  * bundle's version string. Useful for surfacing the version in
  * settings / about pages.
  */

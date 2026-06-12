@@ -1,7 +1,7 @@
 /**
- * Graph Stream SSE Route — Phase 4, Task 16
+ * Graph Stream SSE Route, Phase 4, Task 16
  *
- * GET /api/graph/stream — bridges WatchGraphUpdates gRPC server-stream to
+ * GET /api/graph/stream, bridges WatchGraphUpdates gRPC server-stream to
  * browser-consumable SSE (text/event-stream). Each GraphUpdate from the daemon
  * is forwarded as:
  *

@@ -8,15 +8,15 @@
  *   - Each ref shows: name, category, first/last access, count, plugin install ID.
  *   - Ref links navigate to the correct /secrets/[id] detail page.
  *   - Lag-state placeholder appears when aggregationLagSeconds > 5.
- *   - No values are shown — refs only (NFR Security).
+ *   - No values are shown, refs only (NFR Security).
  *   - Refs-only assertion (no credential values in rendered DOM).
  *
  * Requirements: 6, R6.1–R6.6.
  *
  * Pre-conditions:
- *   PLAYWRIGHT_BASE_URL — target cluster URL (default: http://localhost:3000)
- *   E2E_ADMIN_EMAIL     — admin user email
- *   E2E_ADMIN_PASSWORD  — admin user password
+ *   PLAYWRIGHT_BASE_URL, target cluster URL (default: http://localhost:3000)
+ *   E2E_ADMIN_EMAIL    , admin user email
+ *   E2E_ADMIN_PASSWORD , admin user password
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -74,7 +74,7 @@ async function mockMissionAuditWithRefs(page: Page) {
               lastAccessAt: "2026-04-28T10:15:00Z",
               accessCount: 12,
               pluginInstallIds: ["plugin-install-gitlab-001"],
-              // NOTE: no 'value' field — refs only
+              // NOTE: no 'value' field, refs only
             },
             {
               secretId: "secret-002",
@@ -125,7 +125,7 @@ async function mockMissionAuditWithLag(page: Page) {
         contentType: "application/json",
         body: JSON.stringify({
           missionId: MISSION_ID,
-          aggregationLagSeconds: 8.5, // > 5 — should trigger lag placeholder
+          aggregationLagSeconds: 8.5, // > 5, should trigger lag placeholder
           refs: [],
           total: 0,
           lagState: "in_progress",
@@ -157,7 +157,7 @@ async function mockMissionAuditWithLag(page: Page) {
 // Test suite: panel renders refs
 // ---------------------------------------------------------------------------
 
-test.describe("Mission Secrets Panel — ref rendering (R6.1, R6.2)", () => {
+test.describe("Mission Secrets Panel, ref rendering (R6.1, R6.2)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockMissionAuditWithRefs(page);
@@ -240,7 +240,7 @@ test.describe("Mission Secrets Panel — ref rendering (R6.1, R6.2)", () => {
 // Test suite: ref links navigation
 // ---------------------------------------------------------------------------
 
-test.describe("Mission Secrets Panel — ref link navigation (R6.4)", () => {
+test.describe("Mission Secrets Panel, ref link navigation (R6.4)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockMissionAuditWithRefs(page);
@@ -278,7 +278,7 @@ test.describe("Mission Secrets Panel — ref link navigation (R6.4)", () => {
 // Test suite: lag-state placeholder (R6.6)
 // ---------------------------------------------------------------------------
 
-test.describe("Mission Secrets Panel — lag-state placeholder (R6.6)", () => {
+test.describe("Mission Secrets Panel, lag-state placeholder (R6.6)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockMissionAuditWithLag(page);
@@ -294,7 +294,7 @@ test.describe("Mission Secrets Panel — lag-state placeholder (R6.6)", () => {
       page.getByText(/secrets.*accessed|secrets/i).first(),
     ).toBeVisible({ timeout: 15_000 });
 
-    // R6.6 — lag > 5s must show the lag placeholder
+    // R6.6, lag > 5s must show the lag placeholder
     await expect(
       page
         .getByText(/aggregation.*in.*progress|aggregating|in.*progress|lag/i)
@@ -322,10 +322,10 @@ test.describe("Mission Secrets Panel — lag-state placeholder (R6.6)", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Test suite: refs-only (no values shown) — NFR Security
+// Test suite: refs-only (no values shown), NFR Security
 // ---------------------------------------------------------------------------
 
-test.describe("Mission Secrets Panel — refs only (NFR Security)", () => {
+test.describe("Mission Secrets Panel, refs only (NFR Security)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });
@@ -352,7 +352,7 @@ test.describe("Mission Secrets Panel — refs only (NFR Security)", () => {
                 lastAccessAt: "2026-04-28T10:15:00Z",
                 accessCount: 5,
                 pluginInstallIds: ["plugin-install-001"],
-                // value field intentionally injected — frontend must never render it
+                // value field intentionally injected, frontend must never render it
                 value: SECRET_VALUE_SENTINEL,
               },
             ],
@@ -389,7 +389,7 @@ test.describe("Mission Secrets Panel — refs only (NFR Security)", () => {
     expect(
       (bodyText ?? "").includes(SECRET_VALUE_SENTINEL),
       `SECURITY REGRESSION: Secret value "${SECRET_VALUE_SENTINEL}" found in mission secrets panel DOM. ` +
-        `The panel must render refs only — never credential values.`,
+        `The panel must render refs only, never credential values.`,
     ).toBe(false);
   });
 

@@ -49,7 +49,7 @@ const EMPTY_CONTEXT: GraphContextData = {
  * Retrieve graph context for a given node ID via the daemon.
  *
  * Returns the node and its neighborhood serialized for use in an LLM system prompt.
- * Returns empty data (does not throw) if the node doesn't exist or the RPC fails —
+ * Returns empty data (does not throw) if the node doesn't exist or the RPC fails -
  * matches the original soft-fail contract.
  */
 export async function getGraphContext(

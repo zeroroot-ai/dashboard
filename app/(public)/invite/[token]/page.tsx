@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * /invite/<token> — public invitation accept page (dashboard#727).
+ * /invite/<token>, public invitation accept page (dashboard#727).
  *
  * The invitee (typically brand-new, no session) lands here from the accept link
  * emailed by the daemon (gibson#632). On load it redeems the token via
  * acceptInvitationAction → MembershipService.AcceptInvitation: the daemon
  * provisions the member (FGA tuple + Zitadel org membership) and triggers the
- * identity service's credential-setup email. The token is the sole capability —
+ * identity service's credential-setup email. The token is the sole capability -
  * no dashboard session required (the page lives outside the /dashboard
  * auth-gated prefix; the server action calls the daemon as the dashboard SA).
  */

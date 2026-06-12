@@ -1,5 +1,5 @@
 /**
- * Docs route layout — sidebar nav for the mission-authoring docs
+ * Docs route layout, sidebar nav for the mission-authoring docs
  * pages vendored from the SDK's mission-authoring bundle.
  *
  * Spec: mission-dashboard-rewrite Requirement 5 ACs 1, 2, 3.

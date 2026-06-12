@@ -14,7 +14,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // CSRF — zero-trust-hardening Req 11.5
+    // CSRF, zero-trust-hardening Req 11.5
     try {
       await requireCsrf(request);
     } catch (err) {

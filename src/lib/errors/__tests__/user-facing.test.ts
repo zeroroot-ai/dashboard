@@ -36,7 +36,7 @@ const ALL_CODES = [
   "SLUG_OWNED_BY_OTHER_USER",
 ] as const satisfies readonly UserFacingErrorCode[];
 
-// Statically assert that ALL_CODES covers the full union — if the union gains
+// Statically assert that ALL_CODES covers the full union, if the union gains
 // a new member, the `satisfies` above will fail to compile.
 type _AssertAllCodesExhaustive = [UserFacingErrorCode] extends [
   (typeof ALL_CODES)[number]
@@ -50,7 +50,7 @@ void _exhaustiveCheck; // prevent unused-variable lint
 // Core exhaustiveness test
 // ---------------------------------------------------------------------------
 
-describe("resolveUserFacingError — exhaustiveness", () => {
+describe("resolveUserFacingError, exhaustiveness", () => {
   it.each(ALL_CODES)(
     "code %s resolves to non-empty title and description",
     (code) => {
@@ -74,7 +74,7 @@ describe("resolveUserFacingError — exhaustiveness", () => {
 // correlationId plumbing
 // ---------------------------------------------------------------------------
 
-describe("resolveUserFacingError — correlationId", () => {
+describe("resolveUserFacingError, correlationId", () => {
   it("omits correlationId when not provided", () => {
     const result = resolveUserFacingError("RATE_LIMITED");
     expect(result.correlationId).toBeUndefined();
@@ -98,7 +98,7 @@ describe("resolveUserFacingError — correlationId", () => {
 // action field
 // ---------------------------------------------------------------------------
 
-describe("resolveUserFacingError — action", () => {
+describe("resolveUserFacingError, action", () => {
   const codesWithAction: UserFacingErrorCode[] = [
     "EMAIL_ALREADY_REGISTERED",
     "INVALID_CREDENTIALS",
@@ -140,7 +140,7 @@ describe("resolveUserFacingError — action", () => {
 // Return shape integrity
 // ---------------------------------------------------------------------------
 
-describe("resolveUserFacingError — return shape", () => {
+describe("resolveUserFacingError, return shape", () => {
   it("always returns an object with the expected keys", () => {
     const result = resolveUserFacingError("INVALID_CREDENTIALS");
     // Required keys
@@ -177,7 +177,7 @@ describe("resolveUserFacingError — return shape", () => {
 // Spot-check specific copy expectations
 // ---------------------------------------------------------------------------
 
-describe("resolveUserFacingError — copy spot checks", () => {
+describe("resolveUserFacingError, copy spot checks", () => {
   it("ACCOUNT_LOCKED title mentions locking", () => {
     const { title } = resolveUserFacingError("ACCOUNT_LOCKED");
     expect(title.toLowerCase()).toMatch(/lock/);

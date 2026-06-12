@@ -31,7 +31,7 @@ export async function GET(
     const { id } = await params;
 
     // GetFindings with missionId filter returns findings reachable from this
-    // mission within 3 hops — same semantics as the prior Cypher traversal.
+    // mission within 3 hops, same semantics as the prior Cypher traversal.
     const resp = await userClient(GraphService).getFindings({
       severityFilter: '',
       categoryFilter: '',

@@ -146,7 +146,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // CSRF — zero-trust-hardening Req 11.5
+    // CSRF, zero-trust-hardening Req 11.5
     try {
       await requireCsrf(request);
     } catch (err) {
@@ -173,7 +173,7 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Find the mission via daemon — listMissions is the daemon source of truth.
+    // Find the mission via daemon, listMissions is the daemon source of truth.
     const missionListResp = await listMissions(false, 1000, session?.user?.id);
     const mission = missionListResp.missions.find(m => m.id === id);
 
@@ -198,7 +198,7 @@ export async function DELETE(
     try {
       await stopMission(id, false, session?.user?.id, deleteTenantId);
     } catch {
-      // Ignore stop errors for non-running missions — already stopped.
+      // Ignore stop errors for non-running missions, already stopped.
     }
 
     return NextResponse.json({ success: true });

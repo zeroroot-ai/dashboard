@@ -10,7 +10,7 @@
  * lookup; the client consumes the already-resolved props synchronously.
  *
  * IMPORTANT: this provider never reads `useSession()` tenant fields. The
- * Auth.js JWT cookie does NOT carry tenant / permission claims — they live
+ * Auth.js JWT cookie does NOT carry tenant / permission claims, they live
  * in the server-only `gibson_active_tenant` cookie + per-request FGA RPC.
  *
  * Tenant switching: `switchTenant` calls `switchActiveTenantAction`
@@ -44,9 +44,9 @@ export interface TenantContextValue {
   rolesByTenant: Record<string, string>;
   /** IdP-asserted groups (currently always empty). */
   groups: string[];
-  /** Always false — props arrive synchronously with the server render. */
+  /** Always false, props arrive synchronously with the server render. */
   isLoading: boolean;
-  /** Always null — failures surface via switchTenant return value / toasts. */
+  /** Always null, failures surface via switchTenant return value / toasts. */
   error: string | null;
   /**
    * Switch to a different tenant. Calls `switchActiveTenantAction` which
@@ -56,7 +56,7 @@ export interface TenantContextValue {
    */
   switchTenant: (tenantId: string) => Promise<void>;
   /**
-   * Refresh server-resolved state. Equivalent to `router.refresh()` —
+   * Refresh server-resolved state. Equivalent to `router.refresh()` -
    * forces the layout to re-fetch memberships from FGA.
    */
   refetchTenants: () => Promise<void>;

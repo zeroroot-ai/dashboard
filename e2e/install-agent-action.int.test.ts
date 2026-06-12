@@ -1,7 +1,7 @@
 /**
  * install-agent-action.int.test.ts
  *
- * Integration test for installAgentAction — exercises the full Server
+ * Integration test for installAgentAction, exercises the full Server
  * Action path against a live daemon + FGA testcontainers stack. Unlike
  * the unit test in app/actions/crd/__tests__/installAgent.test.ts, this
  * test does NOT mock the daemon client or the DiscoveryService client.
@@ -28,7 +28,7 @@ const TENANT = process.env.INTEGRATION_TENANT_ID ?? "integration-test";
 
 const describeOrSkip = ENVOY && SESSION ? describe : describe.skip;
 
-describeOrSkip("installAgentAction — integration", () => {
+describeOrSkip("installAgentAction, integration", () => {
   let installAgentAction: typeof import("@/app/actions/crd/installAgent").installAgentAction;
   let serviceClient: typeof import("@/src/lib/gibson-client").serviceClient;
   let PlatformOperatorService: typeof import("@/src/gen/gibson/platform/v1/platform_operator_pb").PlatformOperatorService;
@@ -41,7 +41,7 @@ describeOrSkip("installAgentAction — integration", () => {
     ));
   });
 
-  it("happy path — writes approved tuples against live FGA", async () => {
+  it("happy path, writes approved tuples against live FGA", async () => {
     const r = await installAgentAction({
       agentSlug: "integration-test-agent",
       componentYaml: VALID_COMPONENT_YAML,
@@ -69,7 +69,7 @@ describeOrSkip("installAgentAction — integration", () => {
     }
   });
 
-  it("adversarial manifest — caller lacks access on missing-plugin", async () => {
+  it("adversarial manifest, caller lacks access on missing-plugin", async () => {
     const r = await installAgentAction({
       agentSlug: "integration-test-agent",
       componentYaml: VALID_COMPONENT_YAML,

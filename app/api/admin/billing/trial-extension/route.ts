@@ -23,7 +23,7 @@ export const dynamic = 'force-dynamic';
  * Grants a trial extension to a tenant. Platform-operator only.
  *
  * Auth: assertAuthorized for system_tenant admin relation.
- * Body: { tenantId: string, days: number } — days must be 1–30.
+ * Body: { tenantId: string, days: number }, days must be 1–30.
  *
  * On success: updates the Stripe subscription trial_end and emits a
  * billing.trial_extension audit event.

@@ -1,5 +1,5 @@
 /**
- * <AgentConfigEditor /> — form for AgentNodeConfig.
+ * <AgentConfigEditor />, form for AgentNodeConfig.
  *
  * Spec: mission-dashboard-rewrite Requirement 1 AC 3 + Task 6.
  */

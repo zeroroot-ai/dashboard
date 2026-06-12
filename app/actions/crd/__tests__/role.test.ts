@@ -147,7 +147,7 @@ describe("setTenantRoleAction", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Dual-write — dashboard#173
+  // Dual-write, dashboard#173
   // ---------------------------------------------------------------------------
 
   // dashboard#715 removed the TenantMember.spec.role display-cache patch:

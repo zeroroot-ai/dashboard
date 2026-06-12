@@ -6,14 +6,14 @@
  * "Zero Day AI") reappears on the customer surface. The product is
  * **Zero Root AI** (dashboard#704); the name lives in src/lib/brand.ts.
  *
- * Matches the brand name only — the lowercase/hyphenated security term
+ * Matches the brand name only, the lowercase/hyphenated security term
  * "zero-day" (as in a zero-day vulnerability) and the legacy domain
  * "zero-day.ai" are NOT flagged.
  *
  * Scanned roots: app/, components/, src/, content/, middleware.ts.
  * Skipped: node_modules, .next, generated bindings, test files.
  *
- * Exit codes: 0 — clean; 1 — at least one hit; 2 — unexpected error.
+ * Exit codes: 0, clean; 1, at least one hit; 2, unexpected error.
  */
 
 import { readdir, readFile, stat } from "node:fs/promises";
@@ -122,11 +122,11 @@ async function main() {
   const hits = [];
   for (const entry of SEARCH_ROOTS) await checkEntry(entry, hits);
   if (hits.length === 0) {
-    console.log('[check-no-legacy-product-name] OK — no "Zero Day" brand literals.');
+    console.log('[check-no-legacy-product-name] OK, no "Zero Day" brand literals.');
     process.exit(0);
   }
   console.error(
-    `[check-no-legacy-product-name] FAIL — ${hits.length} "Zero Day" reference(s). ` +
+    `[check-no-legacy-product-name] FAIL, ${hits.length} "Zero Day" reference(s). ` +
       'The product is "Zero Root AI"; import PRODUCT_NAME from src/lib/brand.ts (chrome) ' +
       "or use the literal \"Zero Root AI\" (prose).\n",
   );

@@ -79,7 +79,7 @@ export class LokiClient {
       } else {
         throw new Error(
           '[LokiClient] LOKI_URL is required (or pass an explicit baseUrl). ' +
-            'See src/lib/env-validator.ts — validateEnv() should have caught this at boot.',
+            'See src/lib/env-validator.ts, validateEnv() should have caught this at boot.',
         );
       }
     } else {

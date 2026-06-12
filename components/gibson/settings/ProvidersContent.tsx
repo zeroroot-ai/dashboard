@@ -6,7 +6,7 @@
  * Descriptor-driven LLM provider configuration panel for Gibson settings.
  *
  * The form renders whatever credential fields the daemon's GetSupportedProviders
- * RPC descriptor returns for the selected provider type — no hard-coded
+ * RPC descriptor returns for the selected provider type, no hard-coded
  * per-provider configuration. Adding a new daemon provider automatically
  * surfaces in the dropdown and form without a dashboard code change.
  */
@@ -92,7 +92,7 @@ function formatRelativeTime(iso: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// DynamicCredentialForm — retained for backward-compat with tests + the
+// DynamicCredentialForm, retained for backward-compat with tests + the
 // onboarding flow. The Settings → Providers page uses ProviderWizard now.
 // ---------------------------------------------------------------------------
 
@@ -310,7 +310,7 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
   const [editProbeResult, setEditProbeResult] = React.useState<ProbeResult | null>(null);
   const [isEditTestPending, setIsEditTestPending] = React.useState(false);
 
-  // Live health badge — polls every 60 s, pauses when the tab is hidden.
+  // Live health badge, polls every 60 s, pauses when the tab is hidden.
   const { data: health } = useProviderHealth(provider.name);
   const healthStatus = health?.status ?? 'unknown';
   const healthConfig = HEALTH_STATUS_CONFIG[healthStatus];
@@ -391,7 +391,7 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
       const json = await res.json();
       if (!res.ok) {
         setTestState("fail");
-        // json.error may be { code, message } — always extract the string
+        // json.error may be { code, message }, always extract the string
         const msg =
           typeof json.error === "string"
             ? json.error
@@ -499,7 +499,7 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
               )}
             </Badge>
 
-            {/* Live health badge — auto-polls every 60 s */}
+            {/* Live health badge, auto-polls every 60 s */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -530,7 +530,7 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
           </Alert>
         )}
 
-        {/* Masked credential chips — read-only display */}
+        {/* Masked credential chips, read-only display */}
         {provider.credentialsMasked &&
           Object.entries(provider.credentialsMasked).some(([, v]) => v !== "") && (
             <div className="flex flex-wrap gap-2">
@@ -730,7 +730,7 @@ export function ProvidersContent() {
           <p className="text-muted-foreground mt-1 text-xs">
             Configure API credentials for LLM providers. Zero Root AI resolves the active provider
             at runtime based on agent slot requirements. Credentials are encrypted at rest by the
-            daemon — they never persist in the dashboard.
+            daemon, they never persist in the dashboard.
           </p>
         </div>
         {!isLoading && providers.length > 0 && (
@@ -783,7 +783,7 @@ export function ProvidersContent() {
               <CardTitle className="text-base">Connect your first provider</CardTitle>
               <CardDescription className="text-xs">
                 Gibson agents call into your LLM via configured providers.
-                You&apos;ll need at least one — pick a vendor below, paste your
+                You&apos;ll need at least one, pick a vendor below, paste your
                 key, and Gibson will pull the available models for you to
                 choose a default.
               </CardDescription>

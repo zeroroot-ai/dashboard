@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * GcpSMForm — per-provider sub-form for GCP Secret Manager.
+ * GcpSMForm, per-provider sub-form for GCP Secret Manager.
  *
  * Fields:
  *  - project (non-sensitive): GCP project ID
@@ -123,7 +123,7 @@ export function GcpSMForm({ control, authMethod }: GcpSMFormProps) {
         )}
       />
 
-      {/* Service account JSON — write-only, textarea */}
+      {/* Service account JSON, write-only, textarea */}
       {authMethod === "service_account" && (
         <FormField
           control={control}
@@ -137,7 +137,7 @@ export function GcpSMForm({ control, authMethod }: GcpSMFormProps) {
               <FormControl>
                 {/*
                  * Textarea used for JSON paste. The value is treated as
-                 * sensitive — it is encoded to bytes before the RPC and never
+                 * sensitive, it is encoded to bytes before the RPC and never
                  * returned to the client by the daemon.
                  */}
                 <Textarea
@@ -152,7 +152,7 @@ export function GcpSMForm({ control, authMethod }: GcpSMFormProps) {
               </FormControl>
               <FormDescription className="text-xs">
                 Paste the contents of your service account JSON key file.
-                Write-only — leave blank to keep the stored key.
+                Write-only, leave blank to keep the stored key.
               </FormDescription>
               <FormMessage />
             </FormItem>

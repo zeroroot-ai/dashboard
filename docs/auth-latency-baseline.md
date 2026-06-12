@@ -1,6 +1,6 @@
 # Auth sign-in latency baseline
 
-Spec: `auth-resolution-hardening` — Task 15a (R8.4).
+Spec: `auth-resolution-hardening`, Task 15a (R8.4).
 
 This document describes the baseline sign-in latency measurement for the
 `auth-resolution-hardening` spec and how to re-run it.
@@ -60,7 +60,7 @@ markdown file instead after each meaningful measurement.
 
   The `auth-latency-baseline.mjs` script will print a clear message explaining
   the 401 auth constraint when run against the cluster. This is the expected
-  behaviour — the guard correctly rejects unauthenticated scrapes.
+  behaviour, the guard correctly rejects unauthenticated scrapes.
 
   The baseline is deferred until `DASHBOARD_METRICS_ALLOWED_CIDRS` is set for
   the Kind cluster or the Prometheus scrape job carries SPIFFE identity.
@@ -74,16 +74,16 @@ ships. Update this table with the captured numbers:
 
 | Date | Environment | p50 | p95 | p99 | SLO p95 | SLO p99 |
 |---|---|---|---|---|---|---|
-| (pending) | kind-gibson | — | — | — | < 1.5s | < 3.0s |
-| (pending) | production | — | — | — | < 1.5s | < 3.0s |
+| (pending) | kind-gibson |, |, |, | < 1.5s | < 3.0s |
+| (pending) | production |, |, |, | < 1.5s | < 3.0s |
 
 ## Notes
 
 - The histogram uses prom-client's default label `outcome` (success/error) so
   both happy-path and error-path latencies are tracked separately.
 - The `scripts/auth-latency-baseline.mjs` script computes percentiles from the
-  cumulative bucket distribution using linear interpolation — the same method
+  cumulative bucket distribution using linear interpolation, the same method
   Prometheus uses for `histogram_quantile()`.
 - If p95 exceeds 1.5 s after the FGA roundtrip lands, investigate
-  `dashboard_membership_resolution_duration_seconds` first — that is the most
+  `dashboard_membership_resolution_duration_seconds` first, that is the most
   likely source of added latency.

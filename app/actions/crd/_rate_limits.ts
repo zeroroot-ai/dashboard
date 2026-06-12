@@ -4,11 +4,11 @@ import { checkRateLimitByKey, type RateLimitConfig } from "@/src/lib/rate-limite
 
 /**
  * Rate-limit presets for CRD Server Actions. Keys are stable identifiers
- * — never change them without a migration, or the existing Redis state for
+ *, never change them without a migration, or the existing Redis state for
  * in-flight users will drift into a parallel namespace.
  *
  * `failClosed: true` means a Redis error returns RATE_LIMITED. Anything
- * else returns ok with a warning — acceptable for actions where a Redis
+ * else returns ok with a warning, acceptable for actions where a Redis
  * outage shouldn't lock tenants out, not acceptable for bootstrap token
  * enumeration.
  */

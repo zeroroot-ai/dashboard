@@ -15,9 +15,9 @@
  * Requirements: 1.1, 1.6, NFR Security.
  *
  * Pre-conditions:
- *   PLAYWRIGHT_BASE_URL — target cluster URL (default: http://localhost:3000)
- *   E2E_ADMIN_EMAIL     — admin user email
- *   E2E_ADMIN_PASSWORD  — admin user password
+ *   PLAYWRIGHT_BASE_URL, target cluster URL (default: http://localhost:3000)
+ *   E2E_ADMIN_EMAIL    , admin user email
+ *   E2E_ADMIN_PASSWORD , admin user password
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -77,7 +77,7 @@ async function mockNoBroker(page: Page) {
 }
 
 /**
- * Mock broker configured but zero secrets (onboarding state — Gibson-hosted Vault).
+ * Mock broker configured but zero secrets (onboarding state, Gibson-hosted Vault).
  */
 async function mockBrokerNoSecrets(page: Page, provider = "gibson_vault") {
   await page.route("**/api/gibson-proxy**", async (route) => {
@@ -170,7 +170,7 @@ async function mockBrokerWithSecrets(page: Page) {
 // Test suite: no broker configured
 // ---------------------------------------------------------------------------
 
-test.describe("Secrets list — no broker configured", () => {
+test.describe("Secrets list, no broker configured", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });
@@ -181,7 +181,7 @@ test.describe("Secrets list — no broker configured", () => {
     await mockNoBroker(page);
     await page.goto(SECRETS_URL);
 
-    // R1.6 — no-broker empty state must link to secrets-backend page
+    // R1.6, no-broker empty state must link to secrets-backend page
     await expect(
       page.getByText(/configure.*secret.*backend|set up.*broker|no broker/i).first(),
     ).toBeVisible({ timeout: 15_000 });
@@ -219,7 +219,7 @@ test.describe("Secrets list — no broker configured", () => {
 // Test suite: broker configured, zero secrets (onboarding)
 // ---------------------------------------------------------------------------
 
-test.describe("Secrets list — broker configured, zero secrets (onboarding)", () => {
+test.describe("Secrets list, broker configured, zero secrets (onboarding)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });
@@ -230,7 +230,7 @@ test.describe("Secrets list — broker configured, zero secrets (onboarding)", (
     await mockBrokerNoSecrets(page);
     await page.goto(SECRETS_URL);
 
-    // R1.6 — onboarding empty state
+    // R1.6, onboarding empty state
     await expect(
       page.getByText(/add your first secret/i).first(),
     ).toBeVisible({ timeout: 15_000 });
@@ -242,7 +242,7 @@ test.describe("Secrets list — broker configured, zero secrets (onboarding)", (
     await mockBrokerNoSecrets(page, "gibson_vault");
     await page.goto(SECRETS_URL);
 
-    // R7.2 — onboarding state copy confirms Gibson-hosted Vault is ready
+    // R7.2, onboarding state copy confirms Gibson-hosted Vault is ready
     await expect(
       page.getByText(/secrets backend is ready|gibson.?hosted vault/i).first(),
     ).toBeVisible({ timeout: 15_000 });
@@ -271,10 +271,10 @@ test.describe("Secrets list — broker configured, zero secrets (onboarding)", (
 });
 
 // ---------------------------------------------------------------------------
-// Test suite: broker configured, secrets present — DataTable
+// Test suite: broker configured, secrets present, DataTable
 // ---------------------------------------------------------------------------
 
-test.describe("Secrets list — populated", () => {
+test.describe("Secrets list, populated", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });
@@ -316,7 +316,7 @@ test.describe("Secrets list — populated", () => {
     await expect(page.getByText("cred")).toBeVisible();
   });
 
-  test("NO value column exists (NFR Security — write-only)", async ({
+  test("NO value column exists (NFR Security, write-only)", async ({
     page,
   }) => {
     await mockBrokerWithSecrets(page);
@@ -348,7 +348,7 @@ test.describe("Secrets list — populated", () => {
 
     await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
 
-    // Per-row action should be visible — can be a link, button, or menu trigger
+    // Per-row action should be visible, can be a link, button, or menu trigger
     const rowAction = page
       .getByRole("row")
       .filter({ hasText: "anthropic_api_key" })
@@ -378,7 +378,7 @@ test.describe("Secrets list — populated", () => {
 // RBAC: non-admin sees permission gate
 // ---------------------------------------------------------------------------
 
-test.describe("Secrets list — non-admin access denied", () => {
+test.describe("Secrets list, non-admin access denied", () => {
   test("non-admin sees permission-required alert", async ({ browser }) => {
     const ctx = await browser.newContext();
     const page = await ctx.newPage();

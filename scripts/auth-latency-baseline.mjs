@@ -12,12 +12,12 @@
  * meaningful samples you need sign-ins to flow through the server while this
  * script is running; see the Usage section below.
  *
- * Spec: auth-resolution-hardening — Task 15a (R8)
+ * Spec: auth-resolution-hardening, Task 15a (R8)
  *
  * Usage
  * -----
  *   # 1. Start the dashboard server (dev or built):
- *   #      pnpm dev      — or —  pnpm build && pnpm start
+ *   #      pnpm dev     , or,  pnpm build && pnpm start
  *   #
  *   # 2. In a second terminal, drive N sign-ins via the e2e harness:
  *   #      PLAYWRIGHT_BASE_URL=http://localhost:3000 \
@@ -35,7 +35,7 @@
  *   --base-url <url>    Dashboard base URL (default: http://localhost:3000)
  *   --n <number>        Number of scrape iterations for --drive-load (default: 200)
  *   --drive-load        Use lightweight /api/metrics polling loop to collect
- *                       histogram snapshots (does not log in users — useful when
+ *                       histogram snapshots (does not log in users, useful when
  *                       the cluster already has active sign-in traffic)
  *   --out <path>        Write JSON result to this path (default: enterprise/docs/auth-latency-baseline.json)
  *
@@ -102,7 +102,7 @@ const OUT_PATH =
   resolve(_MAIN_REPO_ROOT, "..", "..", "..", "enterprise", "docs", "auth-latency-baseline.json");
 
 // ---------------------------------------------------------------------------
-// Prometheus text-format parser — histogram buckets
+// Prometheus text-format parser, histogram buckets
 // ---------------------------------------------------------------------------
 
 /**
@@ -285,7 +285,7 @@ async function main() {
   // -------------------------------------------------------------------------
   if (sampleCount > 0 && (!p95pass || !p99pass)) {
     console.error(
-      "[auth-latency-baseline] FAIL — SLO violation detected. " +
+      "[auth-latency-baseline] FAIL, SLO violation detected. " +
         `p95=${result.p95_seconds}s (limit=${SLO_P95_SECONDS}s), ` +
         `p99=${result.p99_seconds}s (limit=${SLO_P99_SECONDS}s).`,
     );

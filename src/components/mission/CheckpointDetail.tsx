@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * CheckpointDetail — side panel that fetches and renders a full checkpoint.
+ * CheckpointDetail, side panel that fetches and renders a full checkpoint.
  *
  * Calls the `getCheckpointAction` Server Action (which proxies to
  * `DaemonService.GetCheckpoint`) for the (missionId, checkpointId) pair
@@ -96,7 +96,7 @@ function timestampToDate(ts?: { seconds: bigint; nanos: number }): Date | null {
  * pass on the server upgrades known-string values to the literal
  * `<redacted:secret>` marker, which survives JSON.stringify cleanly so
  * the UI still gets a structured tree to walk. We don't ship a full
- * msgpack decoder client-side — keeping the bundle lean — and a "raw
+ * msgpack decoder client-side, keeping the bundle lean, and a "raw
  * bytes" fallback is the right thing on un-decodable payloads.
  */
 function decodeMemory(bytes: Uint8Array): {
@@ -287,8 +287,8 @@ function DagStepCard({ step }: { step: DagStep }) {
         </Badge>
       </div>
       <div className="mt-1 grid gap-1 text-[10px] text-muted-foreground">
-        <span>start: {startedAt?.toISOString() ?? "—"}</span>
-        <span>finish: {finishedAt?.toISOString() ?? "—"}</span>
+        <span>start: {startedAt?.toISOString() ?? "-"}</span>
+        <span>finish: {finishedAt?.toISOString() ?? "-"}</span>
       </div>
     </div>
   );
@@ -367,7 +367,7 @@ function SummaryHeader({ summary }: { summary: CheckpointSummary }) {
         <p className="text-[10px] uppercase text-muted-foreground">
           Captured at
         </p>
-        <p className="font-mono">{captured?.toISOString() ?? "—"}</p>
+        <p className="font-mono">{captured?.toISOString() ?? "-"}</p>
       </div>
       <div>
         <p className="text-[10px] uppercase text-muted-foreground">Size</p>

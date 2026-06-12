@@ -1,6 +1,6 @@
 ---
 title: Your First Agent
-description: Build a Gibson agent with the SDK — the Agent contract, the Harness, and a working hello-world example.
+description: Build a Gibson agent with the SDK, the Agent contract, the Harness, and a working hello-world example.
 ---
 
 An **agent** is the autonomous reasoning layer of a Gibson mission. It
@@ -17,14 +17,14 @@ SDK.
   successfully for a registered agent identity.
 - Go installed (the version pinned in the SDK's `go.mod`).
 
-If you haven't enrolled an agent yet, do that first — the dashboard's
+If you haven't enrolled an agent yet, do that first, the dashboard's
 deploy wizard issues the credential the SDK needs.
 
 ## What an agent looks like
 
 In the SDK, an agent is anything that satisfies the `agent.Agent`
 contract from `github.com/zeroroot-ai/sdk/agent`. Don't write the
-struct by hand — use the **builder**:
+struct by hand, use the **builder**:
 
 ```go
 cfg := agent.NewConfig().
@@ -51,7 +51,7 @@ What the fields mean:
 | `TargetTypes` | The shape of system this agent works against (`"web_app"`, `"k8s_cluster"`, `"llm_chat"`). |
 | `TechniqueTypes` | Attack techniques employed. |
 | `LLMSlots` | Slot identifiers + requirements. The mission binds each slot to a real model at dispatch time. |
-| `SetExecuteFunc` | The actual work — see below. |
+| `SetExecuteFunc` | The actual work, see below. |
 
 ## The Harness
 
@@ -135,7 +135,7 @@ go run .
 
 Leave the process running. In the dashboard's Missions section, add a
 node that points at your agent's name and click **Run**. The mission
-detail page streams events as your agent works — see
+detail page streams events as your agent works, see
 [Missions](/docs/missions) for the full event taxonomy.
 
 ## A more realistic example
@@ -189,16 +189,16 @@ func execute(ctx context.Context, h agent.Harness, t agent.Task) (agent.Result, 
 }
 ```
 
-Tools, plugins, and the graph are explained on their own pages —
+Tools, plugins, and the graph are explained on their own pages -
 [Tools](/docs/tools), [Plugins](/docs/plugins), [Knowledge graph](/docs/knowledge-graph).
 
 ## Lifecycle hooks
 
 Beyond `Execute`, the SDK supports optional lifecycle hooks:
 
-- `Initialize(ctx, cfg)` — runs once when the agent process starts.
-- `Shutdown(ctx)` — runs on graceful shutdown.
-- `Health(ctx)` — Gibson polls this to confirm the agent is still alive.
+- `Initialize(ctx, cfg)`, runs once when the agent process starts.
+- `Shutdown(ctx)`, runs on graceful shutdown.
+- `Health(ctx)`, Gibson polls this to confirm the agent is still alive.
 
 The builder accepts these via `SetInitializeFunc`, `SetShutdownFunc`,
 `SetHealthFunc`. The defaults are no-ops and a `Healthy` status; most
@@ -206,13 +206,13 @@ agents don't need to override them.
 
 ## What's next
 
-- **[Tools](/docs/tools)** — define and call a tool from your agent.
-- **[Findings](/docs/findings)** — what `SubmitFinding` does and how
+- **[Tools](/docs/tools)**, define and call a tool from your agent.
+- **[Findings](/docs/findings)**, what `SubmitFinding` does and how
   findings show up in the dashboard.
-- **[Knowledge graph](/docs/knowledge-graph)** — querying and writing the
+- **[Knowledge graph](/docs/knowledge-graph)**, querying and writing the
   graph from inside an agent.
-- **[Missions](/docs/missions)** — chain your agent with other components
+- **[Missions](/docs/missions)**, chain your agent with other components
   in a DAG.
-- **[Taxonomy](/docs/taxonomy)** and **[Ontology](/docs/ontology)** — extend
+- **[Taxonomy](/docs/taxonomy)** and **[Ontology](/docs/ontology)**, extend
   the type system with custom node types or industry-vocab mappings
   for your component.

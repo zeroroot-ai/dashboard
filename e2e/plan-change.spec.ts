@@ -1,5 +1,5 @@
 /**
- * plan-change.spec.ts — Slice 5.9 part 2
+ * plan-change.spec.ts, Slice 5.9 part 2
  *
  * Dashboard-side assertions for the plan change flow:
  *
@@ -21,7 +21,7 @@
  * Webhook delivery is simulated by posting directly to /api/billing/webhook
  * with a signed payload (see billing.po.ts). The STRIPE_WEBHOOK_SECRET on
  * the server must match STRIPE_WEBHOOK_TEST_SECRET for the webhook tests to
- * exercise the full path — those blocks are gated on E2E_KIND_AVAILABLE=1.
+ * exercise the full path, those blocks are gated on E2E_KIND_AVAILABLE=1.
  *
  * The UI-flow tests (checkout stub + billing page assertions) run without a
  * kind cluster.
@@ -86,10 +86,10 @@ async function postWebhook(
 }
 
 // ---------------------------------------------------------------------------
-// UI flow tests — Stripe checkout stub (no cluster required)
+// UI flow tests, Stripe checkout stub (no cluster required)
 // ---------------------------------------------------------------------------
 
-test.describe("plan change — Stripe checkout stub (no cluster required)", () => {
+test.describe("plan change, Stripe checkout stub (no cluster required)", () => {
   test("billing page renders upgrade CTA for self-serve plans", async ({
     page,
   }) => {
@@ -276,7 +276,7 @@ test.describe("plan change — Stripe checkout stub (no cluster required)", () =
 // Webhook + quota tests (kind cluster required)
 // ---------------------------------------------------------------------------
 
-test.describe("plan change — webhook + quota (kind cluster)", () => {
+test.describe("plan change, webhook + quota (kind cluster)", () => {
   test.skip(needsCluster, "requires kind cluster + E2E_KIND_AVAILABLE=1");
 
   test("upgrade webhook (team → org) returns 200 and quota reflects new plan", async ({
@@ -298,7 +298,7 @@ test.describe("plan change — webhook + quota (kind cluster)", () => {
     // 200 = webhook processed correctly; 400 = wrong secret config.
     if (result.status === 400) {
       console.warn(
-        "[plan-change] Got 400 — STRIPE_WEBHOOK_SECRET may not match STRIPE_WEBHOOK_TEST_SECRET. Skipping quota assertion.",
+        "[plan-change] Got 400, STRIPE_WEBHOOK_SECRET may not match STRIPE_WEBHOOK_TEST_SECRET. Skipping quota assertion.",
       );
       return;
     }
@@ -311,7 +311,7 @@ test.describe("plan change — webhook + quota (kind cluster)", () => {
     // We verify via the /api/settings/tier endpoint (which reads the CR).
     // This requires the tenantId to correspond to a real CR in the cluster.
     // If the CR doesn't exist (test tenant not provisioned), the endpoint
-    // returns 404 — we accept that as a "cluster pre-condition not met" outcome.
+    // returns 404, we accept that as a "cluster pre-condition not met" outcome.
     const tierResp = await request.get(`${BASE_URL}/api/settings/tier`);
     if (tierResp.ok()) {
       const tierBody = await tierResp.json() as { config?: { tier?: string } };
@@ -378,7 +378,7 @@ test.describe("plan change — webhook + quota (kind cluster)", () => {
     const webhookResult = await postWebhook(page, event);
     if (webhookResult.status !== 200) {
       console.warn(
-        "[plan-change] Webhook returned non-200 — audit trail assertion skipped.",
+        "[plan-change] Webhook returned non-200, audit trail assertion skipped.",
       );
       return;
     }
@@ -401,7 +401,7 @@ test.describe("plan change — webhook + quota (kind cluster)", () => {
       );
       if (!planChangeEvent) {
         console.warn(
-          "[plan-change] No billing audit event found — audit trail may not be wired for billing events yet.",
+          "[plan-change] No billing audit event found, audit trail may not be wired for billing events yet.",
         );
       }
     }

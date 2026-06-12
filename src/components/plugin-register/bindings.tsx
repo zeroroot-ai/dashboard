@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Step 3 — Secret Bindings
+ * Step 3, Secret Bindings
  *
  * Renders one binding control per secret declared in the manifest.
  * Each control lets the admin choose between:
@@ -211,7 +211,7 @@ export function BindingsStep({
         <div>
           <h3 className="text-sm font-medium">Secret bindings</h3>
           <p className="text-muted-foreground mt-1 text-xs">
-            This plugin declares no secrets — no bindings are required.
+            This plugin declares no secrets, no bindings are required.
           </p>
         </div>
         <div className="flex justify-between">

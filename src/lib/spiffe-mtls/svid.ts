@@ -179,7 +179,7 @@ export function tryGetCachedX509SvidContext(): SecureContextOptions | null {
 /**
  * Fire-and-forget warm-up: prefetches the X509-SVID into the cache so
  * the next sync caller of {@link tryGetCachedX509SvidContext} sees a
- * populated entry. Errors are swallowed (logged at WARN) — the warm-up
+ * populated entry. Errors are swallowed (logged at WARN), the warm-up
  * is best-effort and never blocks the first outbound RPC.
  */
 export function warmX509SvidContext(): void {
@@ -240,7 +240,7 @@ export function buildContext(svid: X509SVIDPayload): CachedSvid {
   // The `x509_svid` field is the leaf followed by any intermediates
   // concatenated in DER. We split per-cert and re-encode each as PEM
   // so Node's TLS stack can consume the chain. The trust bundle is
-  // similarly DER-concatenated — same treatment.
+  // similarly DER-concatenated, same treatment.
   const certPem = derChainToPem(svid.x509Svid, 'CERTIFICATE');
   const caPem = derChainToPem(svid.bundle, 'CERTIFICATE');
   const keyPem = derToPem(svid.x509SvidKey, 'PRIVATE KEY');
@@ -264,7 +264,7 @@ export function buildContext(svid: X509SVIDPayload): CachedSvid {
  * is the absolute upper bound; we refetch at 80% of (NotAfter - now)
  * so a steady stream of callers never observes an expired context.
  *
- * Falls back to a 60-minute default if the cert is unparseable — this
+ * Falls back to a 60-minute default if the cert is unparseable, this
  * shouldn't happen in practice (SPIRE always emits a valid X.509) but
  * we'd rather refetch too often than serve stale state.
  */
@@ -305,7 +305,7 @@ function derToPem(der: Uint8Array, label: string): string {
  * §8.1.3): if the high bit of the first length byte is clear, that byte
  * IS the length (short form, ≤ 127); otherwise the lower 7 bits give the
  * number of subsequent length bytes (long form). We only handle the
- * short and long forms used by valid X.509 — indefinite length is not
+ * short and long forms used by valid X.509, indefinite length is not
  * permitted in DER.
  */
 function derChainToPem(chain: Uint8Array, label: string): string {
@@ -365,7 +365,7 @@ function derChainToPem(chain: Uint8Array, label: string): string {
 //     bytes  x509_svid     = 2;   // leaf (+ intermediates), DER
 //     bytes  x509_svid_key = 3;   // PKCS#8 private key, DER
 //     bytes  bundle        = 4;   // trust bundle, DER (one or more certs)
-//     // hint = 5 — ignored
+//     // hint = 5, ignored
 //   }
 //   message X509SVIDResponse {
 //     repeated X509SVID svids = 1;
@@ -377,7 +377,7 @@ function derChainToPem(chain: Uint8Array, label: string): string {
 // avoided pulling in a runtime proto loader for the (now-deleted)
 // JWT-SVID fetcher; the same constraint applies here.
 
-/** Public payload type — the bytes the SPIRE agent returns for one SVID. */
+/** Public payload type, the bytes the SPIRE agent returns for one SVID. */
 export interface X509SVIDPayload {
   spiffeId: string;
   /** Leaf cert (and any intermediates), DER-encoded back-to-back. */
@@ -426,7 +426,7 @@ function decodeX509SVID(buf: Buffer): X509SVIDPayload {
       const [, p2] = readVarint(buf, pos);
       pos = p2;
     } else {
-      // 32-bit / 64-bit / unknown — give up rather than misinterpret.
+      // 32-bit / 64-bit / unknown, give up rather than misinterpret.
       break;
     }
   }
@@ -449,7 +449,7 @@ function decodeX509SVIDResponse(buf: Buffer): X509SVIDPayload | null {
       if (fieldNumber === 1) {
         return decodeX509SVID(slice);
       }
-      // field 2 (federated_bundles map) and field 3 (crl) — skip.
+      // field 2 (federated_bundles map) and field 3 (crl), skip.
     } else if (wireType === 0) {
       const [, p2] = readVarint(buf, pos);
       pos = p2;
@@ -466,7 +466,7 @@ const WORKLOAD_API_METHODS = {
     originalName: 'FetchX509SVID',
     requestStream: false,
     responseStream: true,
-    // X509SVIDRequest is the empty message — encode to zero bytes.
+    // X509SVIDRequest is the empty message, encode to zero bytes.
     requestSerialize: (_req: Record<string, never>): Buffer => Buffer.alloc(0),
     requestDeserialize: (_buf: Buffer): Record<string, never> => ({}),
     responseSerialize: (_res: X509SVIDPayload): Buffer => Buffer.alloc(0),
@@ -557,7 +557,7 @@ export async function fetchX509SVID(
 /**
  * Drop the cached SVID and any in-flight refresh. Vitest cases call
  * this between assertions so each test starts with a cold cache.
- * Production code MUST NOT call this — the cache is sized correctly
+ * Production code MUST NOT call this, the cache is sized correctly
  * for the pod's lifetime.
  */
 export function __resetForTests(): void {

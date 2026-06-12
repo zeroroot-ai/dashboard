@@ -67,7 +67,7 @@ export async function requireCrdSession<T = void>(
       action: params.action,
       outcome,
       userId: session?.user?.id ?? "anonymous",
-      // Active tenant is not yet resolved on the denial path — record null.
+      // Active tenant is not yet resolved on the denial path, record null.
       // session.user.tenantId was removed in dashboard#583 lock-in.
       sessionTenantId: null,
       targetTenant: params.tenantName ?? null,
@@ -95,7 +95,7 @@ export async function requireCrdSession<T = void>(
   }
 
   // The required relation (and any cross-tenant / rate-limit policy) for this
-  // action is declared once in CRD_PERMISSIONS — the single source of truth.
+  // action is declared once in CRD_PERMISSIONS, the single source of truth.
   // An action missing from the map fails closed.
   const policy = CRD_PERMISSIONS[params.action];
   if (!policy) {
@@ -107,7 +107,7 @@ export async function requireCrdSession<T = void>(
     return denial("forbidden", "FORBIDDEN", "Not authorized.", session);
   }
 
-  // 3. Relation — authorize on the caller's role for the cookie-confirmed
+  // 3. Relation, authorize on the caller's role for the cookie-confirmed
   //    active tenant (session.user.roles holds that single role) against the
   //    action's required relation. This is the server mirror of the client's
   //    useAuthorize(method) check: one authorization source (the FGA relation
@@ -123,11 +123,11 @@ export async function requireCrdSession<T = void>(
     }
   }
 
-  // 4. Tenant-scope match — skipped when params.tenantName is omitted.
+  // 4. Tenant-scope match, skipped when params.tenantName is omitted.
   //    Cross-tenant sessions bypass this check; the result is recorded in
   //    the success-path audit by the caller. The active tenant is resolved
-  //    via requireActiveTenant() (HMAC-signed cookie) — not from the session
-  //    JWT — so a revoked membership cannot smuggle a stale tenantId past
+  //    via requireActiveTenant() (HMAC-signed cookie), not from the session
+  //    JWT, so a revoked membership cannot smuggle a stale tenantId past
   //    this gate.
   if (params.tenantName && !isCrossTenant(session)) {
     let activeTenantId: string;
@@ -166,12 +166,12 @@ export async function requireCrdSession<T = void>(
 }
 
 // ---------------------------------------------------------------------------
-// Self-action variant — used only by acceptInvitationAction.
+// Self-action variant, used only by acceptInvitationAction.
 // ---------------------------------------------------------------------------
 
 /**
  * Gate for self-actions (the caller must be the user being acted on).
- * No permission string, no tenant-scope — just identity equality.
+ * No permission string, no tenant-scope, just identity equality.
  *
  * Used exclusively by `acceptInvitationAction`, which an invitee must be
  * able to call without holding any tenant permission first.
@@ -192,7 +192,7 @@ export async function requireCrdSessionForSelfAction<T = void>(
       action,
       outcome,
       userId: session?.user?.id ?? "anonymous",
-      // Active tenant is not yet resolved on the denial path — record null.
+      // Active tenant is not yet resolved on the denial path, record null.
       // session.user.tenantId was removed in dashboard#583 lock-in.
       sessionTenantId: null,
       targetTenant: null,
@@ -234,10 +234,10 @@ export async function requireCrdSessionForSelfAction<T = void>(
 //
 // Every CRD action is admin-scoped today (creating/removing members, teams,
 // roles, grants, enrollments, and tenant lifecycle), so the required relation
-// is "admin" — admin/owner satisfy it, plain members do not. Exceptions:
+// is "admin", admin/owner satisfy it, plain members do not. Exceptions:
 //   - provisionTenantAction: no existing tenant scope can authorize it; gated
 //     on cross-tenant (platform-operator) instead of a relation.
-//   - acceptInvitationAction: not relation-gated — it uses the self-action
+//   - acceptInvitationAction: not relation-gated, it uses the self-action
 //     helper (identity equality). The "__self__" sentinel is never evaluated
 //     by requireCrdSession; the entry exists only for coverage.
 // ---------------------------------------------------------------------------

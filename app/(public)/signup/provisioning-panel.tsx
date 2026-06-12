@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * ProvisioningPanel — Client Component.
+ * ProvisioningPanel, Client Component.
  *
  * Rendered by `<SignupForm>` immediately after `signupAction` returns an
  * `attemptId`. Polls `GET /api/signup/progress/:id` every 1 second, renders
@@ -52,7 +52,7 @@ interface StepGroup {
   label: string;
 }
 
-// Hacker-themed step labels — each maps to a real provisioning sub-phase
+// Hacker-themed step labels, each maps to a real provisioning sub-phase
 // but reads like a terminal session, matching the landing page's CRT-scanline
 // + monospace aesthetic. Keep these short; long lines wrap on mobile.
 const STEP_GROUPS: StepGroup[] = [
@@ -188,7 +188,7 @@ export interface ProvisioningPanelProps {
   attemptId: string;
   /** URL to navigate to when `terminalState === "ok"`. */
   redirectOnSuccess: string;
-  /** Called when the user clicks "Try again" — should reset the parent form. */
+  /** Called when the user clicks "Try again", should reset the parent form. */
   onRetry: () => void;
 }
 
@@ -253,7 +253,7 @@ export function ProvisioningPanel({
         if (cancelled) return;
 
         if (res.status === 404) {
-          // ID not yet written — normal for the first few ticks. Keep polling.
+          // ID not yet written, normal for the first few ticks. Keep polling.
           return;
         }
 
@@ -360,7 +360,7 @@ export function ProvisioningPanel({
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Step list — hidden on timeout to avoid confusion */}
+        {/* Step list, hidden on timeout to avoid confusion */}
         {!isTimeout && !pollError && (
           <ul className="space-y-3" aria-label="Provisioning steps">
             {groupStatuses.map((group) => (
@@ -397,7 +397,7 @@ export function ProvisioningPanel({
           </div>
         )}
 
-        {/* Failure state — keep it light + actionable. The hacker theme of
+        {/* Failure state, keep it light + actionable. The hacker theme of
             the rest of the page is the brand voice; failure messages should
             sound confident, not apologetic.
             SECRETS_NAMESPACE_FAILED gets a dedicated message because Vault
@@ -422,7 +422,7 @@ export function ProvisioningPanel({
                 {isVaultFailure ? (
                   <>
                     your account is ready but the secrets backend didn&apos;t
-                    come up — retry to try again, or ping{" "}
+                    come up, retry to try again, or ping{" "}
                     <a
                       href="mailto:support@zeroroot.ai"
                       className="underline underline-offset-4 hover:no-underline"
@@ -433,7 +433,7 @@ export function ProvisioningPanel({
                   </>
                 ) : (
                   <>
-                    hit the button again — usually clears it. if it sticks,
+                    hit the button again, usually clears it. if it sticks,
                     ping{" "}
                     <a
                       href="mailto:support@zeroroot.ai"
@@ -449,7 +449,7 @@ export function ProvisioningPanel({
           );
         })()}
 
-        {/* Timeout state — same vibe; the workspace IS coming, just slowly. */}
+        {/* Timeout state, same vibe; the workspace IS coming, just slowly. */}
         {isTimeout && (
           <div className="rounded-md bg-muted border border-border px-4 py-3 space-y-2">
             <div className="flex items-center gap-2">
@@ -462,14 +462,14 @@ export function ProvisioningPanel({
               </p>
             </div>
             <p className="text-sm text-muted-foreground pl-7 font-mono">
-              still wiring things up — we&apos;ll drop you an email the moment
+              still wiring things up, we&apos;ll drop you an email the moment
               your workspace is live.
             </p>
           </div>
         )}
       </CardContent>
 
-      {/* Action buttons — shown only on non-success terminal states */}
+      {/* Action buttons, shown only on non-success terminal states */}
       {(isFailed || pollError || isTimeout) && (
         <CardFooter className="flex gap-3 flex-wrap">
           {(isFailed || pollError) && (

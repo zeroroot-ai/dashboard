@@ -17,7 +17,7 @@ import { redact, truncate } from "./shared";
 
 /**
  * Every distinct authentication / authorisation event that can be audited.
- * The union is exhaustive — adding a new action requires updating this type
+ * The union is exhaustive, adding a new action requires updating this type
  * and the corresponding consumer (Loki alerting rules, SIEM, etc.).
  */
 export type AuthActionName =
@@ -93,7 +93,7 @@ const MAX_USER_AGENT_CHARS = 256;
  * includes one in a miscellaneous field.
  *
  * Output format: a single `console.info` call with the string
- * `[audit.auth] <JSON>` — one line per event, compatible with the existing
+ * `[audit.auth] <JSON>`, one line per event, compatible with the existing
  * Loki JSON-log pipeline.
  */
 export function emitAuthAudit(
@@ -114,6 +114,6 @@ export function emitAuthAudit(
 
     console.info(`[audit.auth] ${JSON.stringify(safe)}`);
   } catch {
-    // Swallow all errors — audit must never mask the caller's result.
+    // Swallow all errors, audit must never mask the caller's result.
   }
 }

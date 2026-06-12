@@ -13,12 +13,12 @@
  *   5. /docs/bogus-page returns a docs-scoped 404 with the sidebar still
  *      present.
  *
- * These are backend-free — docs pages serve static MDX + search index
+ * These are backend-free, docs pages serve static MDX + search index
  * baked in at build time. No daemon, Postgres, Neo4j, or Redis needed.
  */
 import { test, expect } from "@playwright/test";
 
-test.describe("/docs — Fumadocs rendering", () => {
+test.describe("/docs, Fumadocs rendering", () => {
   test("GET /docs renders 200 with brand header and Getting Started sidebar", async ({
     page,
   }) => {

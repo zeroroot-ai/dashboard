@@ -1,5 +1,5 @@
 /**
- * mission-execute.spec.ts — Slice 5.8
+ * mission-execute.spec.ts, Slice 5.8
  *
  * Dashboard-side assertions for the mission execution flow:
  *
@@ -10,11 +10,11 @@
  *
  * Two test groups:
  *
- *   1. Stubbed (runs without kind cluster) — intercepts the missions and
+ *   1. Stubbed (runs without kind cluster), intercepts the missions and
  *      findings API calls to verify the dashboard renders the expected states
  *      at each stage of the mission lifecycle.
  *
- *   2. Integration (requires kind cluster + E2E_KIND_AVAILABLE=1) — drives
+ *   2. Integration (requires kind cluster + E2E_KIND_AVAILABLE=1), drives
  *      the real mission submit form against a live cluster with the debug
  *      agent fixture.
  *
@@ -53,7 +53,7 @@ const MOCK_TENANT_ID = "tenant-e2e-mission-test";
 /** Deterministic mission ID used in stubs. */
 const MOCK_MISSION_ID = "mission-e2e-debug-001";
 
-/** Canned findings from the debug agent — fixed severity + taxonomy. */
+/** Canned findings from the debug agent, fixed severity + taxonomy. */
 const MOCK_FINDINGS = [
   {
     id: "finding-e2e-001",
@@ -163,7 +163,7 @@ async function stubMissionCreateApi(
 // Stubbed UI-state tests (no kind cluster required)
 // ---------------------------------------------------------------------------
 
-test.describe("mission execute — UI state (stubbed)", () => {
+test.describe("mission execute, UI state (stubbed)", () => {
   test.skip(needsBypass, "requires TEST_AUTH_BYPASS=1");
 
   test.beforeEach(async ({ context }) => {
@@ -201,7 +201,7 @@ test.describe("mission execute — UI state (stubbed)", () => {
       .catch(() => false);
     if (!statusVisible) {
       console.warn(
-        "[mission-execute] Mission status 'pending' indicator not found — may not be labelled explicitly.",
+        "[mission-execute] Mission status 'pending' indicator not found, may not be labelled explicitly.",
       );
     }
   });
@@ -230,7 +230,7 @@ test.describe("mission execute — UI state (stubbed)", () => {
       .catch(() => false);
     if (!countVisible) {
       console.warn(
-        "[mission-execute] Finding count not found as dedicated element — may be inline text.",
+        "[mission-execute] Finding count not found as dedicated element, may be inline text.",
       );
     }
   });
@@ -321,7 +321,7 @@ test.describe("mission execute — UI state (stubbed)", () => {
     page,
   }) => {
     // The audit trail is surfaced via /api/audit or similar. We verify
-    // the page renders without crashing — the exact URL depends on the
+    // the page renders without crashing, the exact URL depends on the
     // dashboard version.
     await page.route("**/api/audit**", async (route) => {
       await route.fulfill({
@@ -347,7 +347,7 @@ test.describe("mission execute — UI state (stubbed)", () => {
       .get("/api/audit?limit=10")
       .catch(() => null);
     if (auditResponse) {
-      // Accept 200 (stubbed) or 404 (route not implemented yet) — both are
+      // Accept 200 (stubbed) or 404 (route not implemented yet), both are
       // non-crash outcomes. 500 would indicate a regression.
       expect(auditResponse.status()).not.toBe(500);
     }
@@ -380,7 +380,7 @@ test.describe("mission execute — UI state (stubbed)", () => {
 // Integration tests (kind cluster required)
 // ---------------------------------------------------------------------------
 
-test.describe("mission execute — integration (kind cluster)", () => {
+test.describe("mission execute, integration (kind cluster)", () => {
   test.skip(needsCluster, "requires kind cluster + E2E_KIND_AVAILABLE=1");
 
   const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:30081";
@@ -444,7 +444,7 @@ test.describe("mission execute — integration (kind cluster)", () => {
         // navigate to the form instead.
         if (resp.status() === 403) {
           console.warn(
-            "[mission-execute] CSRF check blocked direct API call — using form navigation instead.",
+            "[mission-execute] CSRF check blocked direct API call, using form navigation instead.",
           );
           await page.goto(`${BASE_URL}/dashboard/pages/missions`);
           // Use the UI create flow.
@@ -455,7 +455,7 @@ test.describe("mission execute — integration (kind cluster)", () => {
           if (await createBtn.isVisible({ timeout: 5_000 })) {
             await createBtn.click();
           }
-          // Skip the rest of the integration test body — form flow would need
+          // Skip the rest of the integration test body, form flow would need
           // more UI-specific selectors that differ per cluster version.
           return;
         }
@@ -536,7 +536,7 @@ test.describe("mission execute — integration (kind cluster)", () => {
           );
           if (!missionEvent) {
             console.warn(
-              `[mission-execute] No audit event found for mission ${missionId} — audit trail may not be wired yet.`,
+              `[mission-execute] No audit event found for mission ${missionId}, audit trail may not be wired yet.`,
             );
           }
         }

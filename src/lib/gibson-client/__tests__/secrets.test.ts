@@ -14,7 +14,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ConnectError, Code } from '@connectrpc/connect';
 
 // ---------------------------------------------------------------------------
-// Mock server-only guard — vitest runs outside the Next.js runtime.
+// Mock server-only guard, vitest runs outside the Next.js runtime.
 // ---------------------------------------------------------------------------
 vi.mock('server-only', () => ({}));
 
@@ -41,7 +41,7 @@ vi.mock('@/src/gen/gibson/tenant/v1/secrets_pb', () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Subject under test — imported AFTER mocks.
+// Subject under test, imported AFTER mocks.
 // ---------------------------------------------------------------------------
 import {
   listSecrets,
@@ -148,7 +148,7 @@ describe('setSecret', () => {
     await setSecret('cred:api_key', SecretCategory.CRED, value);
 
     const call = mockSecretsClient.setSecret.mock.calls[0][0];
-    // Value bytes must be forwarded — this is the critical security check.
+    // Value bytes must be forwarded, this is the critical security check.
     expect(call.value).toBe(value);
     expect(call.name).toBe('cred:api_key');
     expect(call.category).toBe(SecretCategory.CRED);

@@ -7,7 +7,7 @@
  *
  * Use this as the outermost layout for any list page (agents, tools,
  * plugins, missions, findings, teams, users, etc.). The component does
- * not manage data, empty states, or pagination — that's the parent's
+ * not manage data, empty states, or pagination, that's the parent's
  * responsibility. It just wraps children in consistent chrome.
  *
  * dashboard#143/#146.
@@ -26,7 +26,7 @@ export interface ListPageShellProps {
   primaryCta?: ReactNode;
   /** Optional filter / search row below the header. */
   filters?: ReactNode;
-  /** The main content slot — usually a table, grid, or empty state. */
+  /** The main content slot, usually a table, grid, or empty state. */
   children: ReactNode;
   /** Optional className passed through to the outer wrapper. */
   className?: string;

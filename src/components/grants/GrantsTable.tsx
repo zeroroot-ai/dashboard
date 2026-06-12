@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * GrantsTable — Client component for the grants inspector page.
+ * GrantsTable, Client component for the grants inspector page.
  *
  * Renders active capability grants with filterable columns:
  *   - JTI
@@ -16,7 +16,7 @@
  * server-fetched data set (the server already applies any near-expiry-only
  * filter if requested).
  *
- * Read-only — no revoke surface per Requirement 4.2.
+ * Read-only, no revoke surface per Requirement 4.2.
  *
  * Spec: secrets-tenant-lifecycle Task 16, Requirement 4.
  */
@@ -57,7 +57,7 @@ const RECIPIENT_CLASS_LABELS: Record<number, string> = {
 };
 
 function formatUnixTs(unixSec: bigint): string {
-  if (unixSec === BigInt(0)) return "—";
+  if (unixSec === BigInt(0)) return "-";
   return new Date(Number(unixSec) * 1000).toLocaleString();
 }
 
@@ -176,7 +176,7 @@ export function GrantsTable({ grants }: GrantsTableProps) {
                 <TableCell>
                   <div className="space-y-0.5">
                     <p className="text-xs font-medium font-mono truncate max-w-[160px]" title={grant.recipientInstallId}>
-                      {grant.recipientInstallId || "—"}
+                      {grant.recipientInstallId || "-"}
                     </p>
                     <div className="flex items-center gap-1.5">
                       <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
@@ -195,7 +195,7 @@ export function GrantsTable({ grants }: GrantsTableProps) {
                 <TableCell>
                   <div className="flex flex-wrap gap-1 max-w-[240px]">
                     {grant.allowedRpcs.length === 0 ? (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-xs text-muted-foreground">-</span>
                     ) : (
                       grant.allowedRpcs.slice(0, 3).map((rpc) => (
                         <Badge

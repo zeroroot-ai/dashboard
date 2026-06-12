@@ -10,7 +10,7 @@
  *
  * All metrics register against the shared `registry` singleton and are
  * exposed via `/api/metrics`. Label cardinality is deliberately bounded:
- * no tenant-id, user-id, or SPIFFE subject appears as a label — those
+ * no tenant-id, user-id, or SPIFFE subject appears as a label, those
  * blow up on tenant counts and live in the audit stream instead.
  */
 
@@ -21,7 +21,7 @@ export type AdminRpcStatus =
   | "ok"
   | "denied" // upstream returned PermissionDenied / Unauthenticated
   | "unavailable" // transport/connect error (including Envoy 502/503)
-  | "error"; // everything else — deserialization, unexpected exceptions
+  | "error"; // everything else, deserialization, unexpected exceptions
 
 /** Why a JWT-SVID mint attempt ended. */
 export type JwtRefreshOutcome =
@@ -34,7 +34,7 @@ export type JwtRefreshOutcome =
 
 /**
  * Every admin RPC the dashboard issues. `method` is the short gRPC method
- * name (e.g. `UpsertTenantQuota`) — bounded by the TenantAdminService /
+ * name (e.g. `UpsertTenantQuota`), bounded by the TenantAdminService /
  * PlatformOperatorService / UserService proto definitions.
  */
 export const adminRpcTotal = getOrCreateCounter({
@@ -57,7 +57,7 @@ export const adminJwtRefreshTotal = getOrCreateCounter({
 /**
  * Upstream (Envoy) HTTP failures on the admin path. Distinct from
  * `adminRpcTotal{status=unavailable}` because this counter captures the
- * precise Envoy status (502, 503, 504) — the correlated signal to look
+ * precise Envoy status (502, 503, 504), the correlated signal to look
  * at when Envoy itself is the problem, not the daemon.
  */
 export const adminEnvoyUpstreamErrorsTotal = getOrCreateCounter({

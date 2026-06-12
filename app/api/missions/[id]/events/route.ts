@@ -6,19 +6,19 @@
  * Forwards the following daemon-derived events to the browser as named
  * SSE frames:
  *
- *   - `event: checkpoint`  — a new checkpoint has been captured for this
+ *   - `event: checkpoint` , a new checkpoint has been captured for this
  *                            mission. Payload: a `CheckpointSummary` JSON
  *                            shape (matches `gibson.daemon.v1.CheckpointSummary`).
  *                            Consumed by `<CheckpointTimeline />` to
  *                            prepend timeline rows without a full re-fetch
  *                            (mission-checkpointing R17.7).
- *   - `event: status`      — mission status transition (pending → running
+ *   - `event: status`     , mission status transition (pending → running
  *                            → paused → completed / failed / stopped).
  *                            Payload: { missionId, status }.
- *   - `event: rewind`      — the daemon emitted a `mission.rewind.completed`
+ *   - `event: rewind`     , the daemon emitted a `mission.rewind.completed`
  *                            audit event for this mission. Payload mirrors
  *                            the audit event's metadata fields.
- *   - `event: node`        — a mission DAG node changed lifecycle phase.
+ *   - `event: node`       , a mission DAG node changed lifecycle phase.
  *                            Payload: { missionId, nodeId, phase } where
  *                            phase is "started" | "completed" | "failed".
  *                            Consumed by `<MissionFlowTab />` to paint the
@@ -28,7 +28,7 @@
  * poll over the unary `DaemonService.ListCheckpoints` and `ListMissions` RPCs
  * (tenant-scoped via the userClient) and emit diffs. The `node` frames instead
  * consume the daemon's server-streaming `DaemonService.Subscribe` RPC, filtered
- * to this mission's `node.*` events — the orchestrator publishes those to the
+ * to this mission's `node.*` events, the orchestrator publishes those to the
  * tenant Redis Stream backing Subscribe. Both run concurrently against the same
  * SSE controller.
  *
@@ -38,7 +38,7 @@
  *   - The downstream `ListCheckpoints` RPC is gated by the FGA
  *     `mission#viewer` relation (mission-checkpointing R13.2) so a
  *     non-viewer caller sees an empty stream + a one-time error frame.
- *   - We do NOT propagate client `request.signal` aborts upstream — when
+ *   - We do NOT propagate client `request.signal` aborts upstream, when
  *     the browser disconnects we just stop the polling loop. The
  *     underlying daemon RPC has no in-flight stream to cancel.
  *
@@ -63,7 +63,7 @@ import {
 } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 
 // Polling cadence for the underlying daemon RPCs. 3s strikes a balance
-// between dashboard freshness and daemon load — checkpoints capture at
+// between dashboard freshness and daemon load, checkpoints capture at
 // the orchestrator's super-step boundary (default ≥ 30s cadence per
 // `checkpoint/policy.go:218`), so any 3s poll comfortably observes
 // every new checkpoint exactly once.
@@ -188,10 +188,10 @@ export async function GET(
       // ---- Loki log tail ----
       // While the mission is `running` we tail Loki for this mission's log
       // lines and forward each as an `event: log` frame. We initialise the
-      // cursor to "now" so we never replay historical lines on connect — the
+      // cursor to "now" so we never replay historical lines on connect, the
       // logs tab (GET .../logs) owns the backfill; this bridge is live-only.
       // `LokiClient` reads env.LOKI_URL via process.env (same path as
-      // logs/route.ts). If Loki isn't ready we skip silently — log frames are
+      // logs/route.ts). If Loki isn't ready we skip silently, log frames are
       // best-effort and must never crash the status/checkpoint bridge.
       const loki = new LokiClient();
       let lastLokiTimestampNs = BigInt(Date.now()) * NS_PER_MS;
@@ -311,7 +311,7 @@ export async function GET(
             }
           }
         } catch (err) {
-          // PermissionDenied is a hard stop — close the stream after
+          // PermissionDenied is a hard stop, close the stream after
           // forwarding the error so the client can surface a toast.
           if (err instanceof ConnectError && err.code === Code.PermissionDenied) {
             try {
@@ -409,7 +409,7 @@ export async function GET(
               let maxTsNs = lastLokiTimestampNs;
               for (const entry of entries) {
                 const tsNs = BigInt(entry.timestamp.getTime()) * NS_PER_MS;
-                // Skip lines at or before the cursor — Loki's `start` is
+                // Skip lines at or before the cursor, Loki's `start` is
                 // inclusive, so the most recent already-emitted line can come
                 // back again on the next poll.
                 if (tsNs < lastLokiTimestampNs) continue;

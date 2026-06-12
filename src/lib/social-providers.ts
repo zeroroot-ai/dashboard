@@ -12,7 +12,7 @@
  * without breaking. The enabled list is always empty in this implementation
  * because the social buttons are now rendered by Zitadel, not the dashboard.
  *
- * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js — see task 24
+ * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js, see task 24
  * implementation log. If per-provider buttons in the dashboard UI are
  * desired in future, map them to Auth.js signIn("zitadel", {}, { idp_hint: "<provider>" })
  * using Zitadel's IDP hint parameter.
@@ -25,7 +25,7 @@
 /** All provider identifiers supported by this build. */
 export type ProviderId = "github" | "gitlab" | "google" | "microsoft";
 
-/** Canonical display order — UI renders buttons in this sequence. */
+/** Canonical display order, UI renders buttons in this sequence. */
 export const PROVIDER_ORDER: ProviderId[] = ["github", "gitlab", "google", "microsoft"];
 
 export interface SocialProvidersResult {
@@ -33,7 +33,7 @@ export interface SocialProvidersResult {
   config: Record<string, any>;
   /**
    * Ordered list of provider IDs that are enabled (have full credentials).
-   * Always empty — social IdPs are configured in Zitadel, not the dashboard.
+   * Always empty, social IdPs are configured in Zitadel, not the dashboard.
    */
   enabled: ProviderId[];
 }

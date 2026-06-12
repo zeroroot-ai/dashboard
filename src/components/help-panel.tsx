@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * help-panel.tsx — Contextual help slide-out panel
+ * help-panel.tsx, Contextual help slide-out panel
  *
  * Uses shadcn Sheet to render a keyboard-accessible slide-out on the right
  * side of the screen. Content is supplied per-page (not hardcoded here).
@@ -24,7 +24,7 @@ interface HelpPanelProps {
   onOpenChange: (open: boolean) => void;
   /** Panel heading displayed at the top */
   title: string;
-  /** React node — per-page help content, may include headings, lists, links */
+  /** React node, per-page help content, may include headings, lists, links */
   content: React.ReactNode;
 }
 
@@ -37,7 +37,7 @@ export function HelpPanel({ open, onOpenChange, title, content }: HelpPanelProps
         aria-label={`${title} help panel`}
       >
         <SheetHeader className="pb-2">
-          <SheetTitle>{title} — Help</SheetTitle>
+          <SheetTitle>{title} Help</SheetTitle>
         </SheetHeader>
         <div
           className="px-4 pb-6 text-sm text-foreground space-y-4 leading-relaxed"

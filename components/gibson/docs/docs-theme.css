@@ -4,7 +4,7 @@
  * Maps Fumadocs' `--color-fd-*` CSS custom properties onto the dashboard's
  * design-system tokens (#52) so the docs sidebar, code blocks, search
  * dialog, and content surface visually belong to the same product as the
- * marketing landing + authenticated chrome — the single dark brand.
+ * marketing landing + authenticated chrome, the single dark brand.
  *
  * Every rule lives under `.docs-root` so no variable leaks into the
  * dashboard or the landing. Page chrome outside the docs root is
@@ -12,7 +12,7 @@
  */
 
 .docs-root {
-  /* Surfaces — map directly to the dashboard's semantic tokens. */
+  /* Surfaces, map directly to the dashboard's semantic tokens. */
   --color-fd-background: var(--background);
 
   /* Body prose contrast (#98, single dark brand #651).
@@ -35,7 +35,7 @@
   --color-fd-border: color-mix(in oklch, var(--highlight) 25%, transparent);
   --color-fd-ring: color-mix(in oklch, var(--highlight) 50%, transparent);
 
-  /* Primary accent — terminal-link cyan via the link specialty token. */
+  /* Primary accent, terminal-link cyan via the link specialty token. */
   --color-fd-primary: var(--link);
   --color-fd-primary-foreground: var(--background);
 
@@ -55,7 +55,7 @@
   --color-fd-error: var(--destructive);
   --color-fd-idea: var(--highlight);
 
-  /* Diff block tints — keep signed colors via the destructive token plus
+  /* Diff block tints, keep signed colors via the destructive token plus
    * highlight, reduce saturation through color-mix. */
   --color-fd-diff-add: color-mix(in oklch, var(--highlight) 10%, transparent);
   --color-fd-diff-add-symbol: var(--highlight);
@@ -69,7 +69,7 @@
 /*
  * Suppress Fumadocs' built-in sticky header. `nav={{ enabled: false }}`
  * on DocsLayout was meant to do this, but in Fumadocs UI v15+ it only
- * blanks the navbar contents — the wrapper `<header>` still renders a
+ * blanks the navbar contents, the wrapper `<header>` still renders a
  * sticky shell that visually crowds the shared SiteHeader. Hide it
  * outright; our SiteHeader is the only header on the docs route.
  */

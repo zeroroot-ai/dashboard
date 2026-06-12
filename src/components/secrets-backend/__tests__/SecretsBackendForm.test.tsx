@@ -24,7 +24,7 @@ import type { RedactedConfig } from "@/src/lib/gibson-client/tenant-broker-confi
 
 function makeVaultConfig(): RedactedConfig {
   return {
-    provider: 2, // BROKER_PROVIDER_VAULT — pre-existing config that's NOT gibson-hosted
+    provider: 2, // BROKER_PROVIDER_VAULT, pre-existing config that's NOT gibson-hosted
     address: "https://vault.example.com",
     namespaceOrPath: "",
     mount: "",

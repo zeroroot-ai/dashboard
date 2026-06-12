@@ -6,7 +6,7 @@
  * Overlay key mapping the node entity types and edge relationship types present
  * in the current graph to their colors/icons. Derived from the data, so it only
  * lists what's actually on screen. Colors come from `src/lib/graph` (canvas
- * palette); swatches use inline style with those values — `components/**` stays
+ * palette); swatches use inline style with those values, `components/**` stays
  * free of hardcoded color literals.
  */
 

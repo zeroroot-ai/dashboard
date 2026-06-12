@@ -1,5 +1,5 @@
 /**
- * Per-route contract test for GET /api/missions/:id/events — Loki log tail
+ * Per-route contract test for GET /api/missions/:id/events, Loki log tail
  * (dashboard#385).
  *
  * Verifies that while the mission is `running` and Loki is reachable, the SSE
@@ -58,7 +58,7 @@ vi.mock('@/src/lib/loki-client', () => ({
   },
 }));
 
-// Static import — GET creates all state per-call (no module-level mutation),
+// Static import, GET creates all state per-call (no module-level mutation),
 // so a single import shared across tests is safe and avoids the expensive
 // vi.resetModules() + dynamic import() re-evaluation on each test.
 import { GET } from '../route';
@@ -109,9 +109,9 @@ beforeEach(() => {
   // Default: active tenant resolves to t1.
   mockRequireActiveTenant.mockResolvedValue('t1');
 
-  // userClient(DaemonService).listCheckpoints(...) — newest-first, empty here.
+  // userClient(DaemonService).listCheckpoints(...), newest-first, empty here.
   mockListCheckpoints.mockResolvedValue({ checkpoints: [] });
-  // userClient(DaemonService).subscribe(...) — empty node-event stream by
+  // userClient(DaemonService).subscribe(...), empty node-event stream by
   // default so the bridge emits no `node` frames unless a test opts in.
   mockSubscribe.mockImplementation(async function* () {});
   mockUserClient.mockReturnValue({
@@ -120,7 +120,7 @@ beforeEach(() => {
   });
 });
 
-describe('GET /api/missions/:id/events — Loki log tail', () => {
+describe('GET /api/missions/:id/events, Loki log tail', () => {
   it('emits an event: log frame per Loki entry while the mission is running', async () => {
     mockGetServerSession.mockResolvedValue({
       user: { id: 'u1', tenantId: 't1' },
@@ -191,7 +191,7 @@ describe('GET /api/missions/:id/events — Loki log tail', () => {
   });
 });
 
-describe('GET /api/missions/:id/events — per-node lifecycle frames', () => {
+describe('GET /api/missions/:id/events, per-node lifecycle frames', () => {
   it('forwards daemon node.* events as event: node frames carrying nodeId + phase', async () => {
     mockGetServerSession.mockResolvedValue({
       user: { id: 'u1', tenantId: 't1' },
@@ -202,7 +202,7 @@ describe('GET /api/missions/:id/events — per-node lifecycle frames', () => {
     mockIsReady.mockResolvedValue(false);
 
     // Daemon Subscribe yields node events as MissionEvent on the response
-    // oneof — mirror the protobuf-es shape the route reads.
+    // oneof, mirror the protobuf-es shape the route reads.
     mockSubscribe.mockImplementation(async function* () {
       yield {
         eventType: 'node.started',

@@ -1,16 +1,16 @@
 ---
 title: Roles & Permissions
-description: How tenant roles, per-component grants, and plugin invocation gates work in Gibson — and how to set them up for your team.
+description: How tenant roles, per-component grants, and plugin invocation gates work in Gibson, and how to set them up for your team.
 ---
 
 Gibson's permission model has three layers:
 
-1. **Tenant roles** — who in your organisation can do what at the
+1. **Tenant roles**, who in your organisation can do what at the
    tenant level (invite users, configure secrets backends, enroll
    components, run missions).
-2. **Per-component grants** — which agents and tools can read,
+2. **Per-component grants**, which agents and tools can read,
    configure, or execute which other components.
-3. **Plugin invocation gates** — which tools can call which plugins.
+3. **Plugin invocation gates**, which tools can call which plugins.
 
 This page walks through each layer from the dashboard, then summarises
 how it composes.
@@ -49,7 +49,7 @@ Three actions are gated per component:
 | Action | What it allows |
 |---|---|
 | **Read** | The component can see the target component's state, recent runs, and metadata. |
-| **Configure** | The component can change the target component's settings — usually reserved for admin tooling. |
+| **Configure** | The component can change the target component's settings, usually reserved for admin tooling. |
 | **Execute** | The component can invoke the target component's methods (run an agent, call a tool). |
 
 Set grants in the dashboard:
@@ -100,11 +100,11 @@ code.
 
 For any action, Gibson checks layers in order, **deny-wins**:
 
-1. Tenant role — does this user / component belong to a tenant that's
+1. Tenant role, does this user / component belong to a tenant that's
    allowed this action?
-2. Component grants — for cross-component actions, does the caller
+2. Component grants, for cross-component actions, does the caller
    hold the necessary grant on the target?
-3. Plugin invocation — for plugin calls, does the calling tool hold
+3. Plugin invocation, for plugin calls, does the calling tool hold
    `can_invoke`?
 
 A denial at any layer fails the call, with a structured error you can
@@ -157,8 +157,8 @@ can export the filtered view as CSV or JSON for compliance evidence.
 
 ## Related
 
-- [Component bootstrap & auth](/docs/component-bootstrap) — how
+- [Component bootstrap & auth](/docs/component-bootstrap), how
   credentials are issued and how to debug a 401.
-- [Plugins](/docs/plugins) — manifest-bound secret access; only the
+- [Plugins](/docs/plugins), manifest-bound secret access; only the
   plugin's own identity can read its bound secrets.
-- [Observability](/docs/observability) — audit log and replay.
+- [Observability](/docs/observability), audit log and replay.

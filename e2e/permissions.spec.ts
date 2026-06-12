@@ -125,7 +125,7 @@ async function mockPermissionsRPCs(page: Page) {
 // Admin suite
 // ---------------------------------------------------------------------------
 
-test.describe("Permissions Settings — admin view", () => {
+test.describe("Permissions Settings, admin view", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });
@@ -398,7 +398,7 @@ test.describe("Permissions Settings — admin view", () => {
     await expect(detailBtn).toBeVisible();
     await detailBtn.click();
 
-    // The ComponentDetailPanel is a Sheet — it should appear
+    // The ComponentDetailPanel is a Sheet, it should appear
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 5_000 });
   });
 });
@@ -407,7 +407,7 @@ test.describe("Permissions Settings — admin view", () => {
 // Non-admin (member) suite
 // ---------------------------------------------------------------------------
 
-test.describe("Permissions Settings — non-admin access denied", () => {
+test.describe("Permissions Settings, non-admin access denied", () => {
   test("non-admin user sees the access-restricted message", async ({
     browser,
   }) => {
@@ -434,10 +434,10 @@ test.describe("Permissions Settings — non-admin access denied", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Accessibility — basic ARIA sanity on the permissions page
+// Accessibility, basic ARIA sanity on the permissions page
 // ---------------------------------------------------------------------------
 
-test.describe("Permissions Settings — accessibility checks", () => {
+test.describe("Permissions Settings, accessibility checks", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });

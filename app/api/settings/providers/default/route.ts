@@ -1,9 +1,9 @@
 /**
- * GET /api/settings/providers/default — retrieve the tenant's default provider
- * PUT /api/settings/providers/default — designate a provider as the default
+ * GET /api/settings/providers/default, retrieve the tenant's default provider
+ * PUT /api/settings/providers/default, designate a provider as the default
  *
  * Both handlers delegate to the daemon TenantAdminService RPCs.
- * No storage logic lives here — this file is delegation-only.
+ * No storage logic lives here, this file is delegation-only.
  */
 
 import 'server-only';
@@ -59,7 +59,7 @@ export async function GET(_req: NextRequest) {
  * All other providers are atomically demoted on the daemon side.
  *
  * Request body:
- *   name  string  (required) — the provider name to promote as default
+ *   name  string  (required), the provider name to promote as default
  *
  * Returns 404 when no provider with the given name exists for the tenant.
  */

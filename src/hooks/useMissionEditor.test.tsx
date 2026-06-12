@@ -1,5 +1,5 @@
 /**
- * useMissionEditor — unit tests (dashboard#493 / D2).
+ * useMissionEditor, unit tests (dashboard#493 / D2).
  *
  * Covers the externally observable behavior of the editor state machine:
  *   1. newMission loads a valid template (errorCount 0, Run enabled)

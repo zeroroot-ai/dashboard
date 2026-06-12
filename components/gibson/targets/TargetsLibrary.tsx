@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * TargetsLibrary — the /dashboard/targets page. Lists the tenant's targets and
+ * TargetsLibrary, the /dashboard/targets page. Lists the tenant's targets and
  * lets the user create, edit, and delete them. A target is the system a mission
- * assesses; it is identified by a server-minted UUID (shown read-only) — name
+ * assesses; it is identified by a server-minted UUID (shown read-only), name
  * and the other fields are metadata. Missions reference a target by its UUID.
  */
 
@@ -221,7 +221,7 @@ export function TargetsLibrary() {
         <EmptyState
           icon={CrosshairIcon}
           title="No targets yet"
-          description="A target is the system a mission assesses — a host, endpoint, or model. Create one, then reference it from a mission."
+          description="A target is the system a mission assesses, a host, endpoint, or model. Create one, then reference it from a mission."
           primaryCta={
             <Button onClick={openCreate}>
               <PlusCircle className="size-4" />
@@ -247,9 +247,9 @@ export function TargetsLibrary() {
               {targets.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="font-medium font-mono">{t.name || "(unnamed)"}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{t.type || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{t.type || "-"}</TableCell>
                   <TableCell className="text-muted-foreground text-sm font-mono break-all">
-                    {t.url || "—"}
+                    {t.url || "-"}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-xs font-mono">
                     <button

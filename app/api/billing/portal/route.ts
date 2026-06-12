@@ -97,7 +97,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // PUBLIC_URL is REQUIRED at boot (src/lib/env-validator.ts) — instrumentation
+  // PUBLIC_URL is REQUIRED at boot (src/lib/env-validator.ts), instrumentation
   // crashes the pod before this handler can run if it's missing.
   const publicUrl = process.env.PUBLIC_URL;
   if (!publicUrl) {

@@ -1,5 +1,5 @@
 /**
- * signup-handoff.ts — server-side helpers for the signup → auto-login
+ * signup-handoff.ts, server-side helpers for the signup → auto-login
  * pipeline (issue dashboard#41).
  *
  * After admin-API user provisioning succeeds we want the browser to land on
@@ -7,7 +7,7 @@
  * hosted login UI. Zitadel V2's "build your own login UI" flow is the
  * mechanism: the relying party initiates the OIDC auth_request itself, then
  * uses a freshly-minted session (mint-on-behalf via a privileged PAT) to
- * CreateCallback the parked auth_request — the resulting callbackUrl is
+ * CreateCallback the parked auth_request, the resulting callbackUrl is
  * the standard `?code=...&state=...` redirect Auth.js already knows how
  * to consume.
  *
@@ -24,7 +24,7 @@
  *     match the cookie names exactly, which is what the callback handler
  *     uses for AAD on decode (`@auth/core/lib/actions/callback/oauth/checks`).
  *   - We do NOT reach into Auth.js's private `lib/` paths for cookie
- *     creation — we replicate the small slice we need (sealCookie with the
+ *     creation, we replicate the small slice we need (sealCookie with the
  *     correct salt) on top of the public `@auth/core/jwt` API.
  *   - The state cookie payload SHAPE must match what Auth.js's state.decode
  *     expects: `{ origin, random }` encoded with salt `"encodedState"`,
@@ -40,11 +40,11 @@ import { cookies } from 'next/headers';
 import { encode as authjsEncode } from 'next-auth/jwt';
 
 // ---------------------------------------------------------------------------
-// Constants — mirror @auth/core defaults so the callback handler can decode
+// Constants, mirror @auth/core defaults so the callback handler can decode
 // cookies we set here.
 // ---------------------------------------------------------------------------
 
-const COOKIE_TTL_SECONDS = 60 * 15; // 15 minutes — matches @auth/core
+const COOKIE_TTL_SECONDS = 60 * 15; // 15 minutes, matches @auth/core
 const ENCODED_STATE_SALT = 'encodedState';
 
 /**
@@ -87,7 +87,7 @@ function generateCodeVerifier(): string {
   return base64Url(randomBytes(64));
 }
 
-/** S256 code_challenge = base64url(SHA-256(code_verifier)) — RFC 7636 §4.2. */
+/** S256 code_challenge = base64url(SHA-256(code_verifier)), RFC 7636 §4.2. */
 function deriveCodeChallenge(codeVerifier: string): string {
   return base64Url(createHash('sha256').update(codeVerifier).digest());
 }
@@ -101,13 +101,13 @@ function base64Url(buf: Buffer): string {
 }
 
 // ---------------------------------------------------------------------------
-// State helpers — match @auth/core/lib/actions/callback/oauth/checks.ts
+// State helpers, match @auth/core/lib/actions/callback/oauth/checks.ts
 // ---------------------------------------------------------------------------
 
 /**
  * Builds the inner state value Auth.js will hand to its `state.decode`
- * helper. The inner payload shape matches Auth.js verbatim — `{ origin,
- * random }` encoded with salt `"encodedState"` — so the callback handler's
+ * helper. The inner payload shape matches Auth.js verbatim, `{ origin,
+ * random }` encoded with salt `"encodedState"`, so the callback handler's
  * decode step succeeds when our cookie is the one in flight.
  */
 async function encodeStateInner(
@@ -155,7 +155,7 @@ async function sealForCookie(
  * been set on the calling response.
  */
 export interface OidcAuthRequestHandoff {
-  /** Zitadel's auth_request ID — the path-parameter for CreateCallback. */
+  /** Zitadel's auth_request ID, the path-parameter for CreateCallback. */
   authRequestId: string;
   /** The full Location URL Zitadel emitted; primarily for diagnostics. */
   zitadelLoginUrl: string;
@@ -178,7 +178,7 @@ export interface InitiateOidcAuthRequestConfig {
   clientId: string;
   /** Absolute redirect URI Zitadel will emit on the callbackUrl. */
   redirectUri: string;
-  /** AUTH_SECRET — used to encrypt the state/PKCE cookies. */
+  /** AUTH_SECRET, used to encrypt the state/PKCE cookies. */
   authSecret: string;
 }
 
@@ -191,7 +191,7 @@ export function loadHandoffConfig(): InitiateOidcAuthRequestConfig | null {
   // The four required vars are validated at boot by `validateEnv()` in
   // `src/lib/env-validator.ts` (instrumentation.ts). We read directly from
   // process.env here to preserve the legacy "return null when missing →
-  // caller falls back to /login" semantics — a defensive layer for the
+  // caller falls back to /login" semantics, a defensive layer for the
   // narrow window between module-load and instrumentation-register, and
   // for unit tests that mutate process.env after the validator ran.
   const issuer = process.env.ZITADEL_ISSUER;
@@ -203,7 +203,7 @@ export function loadHandoffConfig(): InitiateOidcAuthRequestConfig | null {
     return null;
   }
   // The redirect_uri is the standard Auth.js callback for the "zitadel"
-  // provider — auth.ts pins this provider id, so the path is invariant.
+  // provider, auth.ts pins this provider id, so the path is invariant.
   const redirectUri = `${baseUrl.replace(/\/$/, '')}/api/auth/callback/zitadel`;
   return { issuer, internalIssuer, clientId, redirectUri, authSecret };
 }
@@ -249,7 +249,7 @@ export async function initiateOidcAuthRequest(
   const codeChallenge = deriveCodeChallenge(codeVerifier);
 
   // -------------------------------------------------------------------------
-  // 2. State — inner value Auth.js's state.decode expects, then outer seal
+  // 2. State, inner value Auth.js's state.decode expects, then outer seal
   //    keyed by the cookie name (matches sealCookie() in @auth/core).
   // -------------------------------------------------------------------------
   const stateInner = await encodeStateInner(cfg.authSecret);
@@ -293,7 +293,7 @@ export async function initiateOidcAuthRequest(
   // 4. Hit /oauth/v2/authorize server-side with redirect:manual to extract
   //    the authRequestId from the 302 Location. NOTE: the `state` query
   //    param sent here is the INNER value (what Zitadel echoes back to
-  //    the RP on the callback) — Auth.js's callback handler compares
+  //    the RP on the callback), Auth.js's callback handler compares
   //    `state` query against the decrypted state cookie's inner value.
   // -------------------------------------------------------------------------
   const authorizeUrl = new URL(`${cfg.internalIssuer.replace(/\/$/, '')}/oauth/v2/authorize`);
@@ -319,7 +319,7 @@ export async function initiateOidcAuthRequest(
       headers: { Host: new URL(cfg.issuer).host },
     });
   } catch {
-    // Network failure — surface as null so caller falls back. Do not log
+    // Network failure, surface as null so caller falls back. Do not log
     // raw err.message (may contain credentials in dev .env strings).
     return null;
   }

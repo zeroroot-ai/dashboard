@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * setComponentAccessAction — unified Server Action for toggling the
+ * setComponentAccessAction, unified Server Action for toggling the
  * deny/grant relations on the extended /dashboard/{agents,tools,plugins}
  * pages plus the new Security Policy matrix. Mirrors the
  * grantComponentAction contract (requireCrdSession gate, ActionResult
@@ -51,7 +51,7 @@ function entryForScope(
 
   switch (scope) {
     case "tenant":
-      // tenant_read/write/execute_disabled — tenant-level, no teamId
+      // tenant_read/write/execute_disabled, tenant-level, no teamId
       return {
         relation: `tenant_${denyRelation}`,
         teamId: callerTenantId,
@@ -80,7 +80,7 @@ function entryForScope(
       };
     case "component":
       if (!targetId) return null;
-      // component_*_enabled is a grant relation — enabled=true adds it
+      // component_*_enabled is a grant relation, enabled=true adds it
       return {
         relation: `component_${action}_enabled`,
         teamId: targetId,

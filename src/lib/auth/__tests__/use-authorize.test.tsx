@@ -19,7 +19,7 @@
  *
  * Spec: dashboard-authz-ui-gating Requirement 2, 9.1.
  * Sister-spec: cross-repo-cohesion-fixes Requirement 1.
- * Sister-spec: eliminate-permissive-authz Requirement 2 — the
+ * Sister-spec: eliminate-permissive-authz Requirement 2, the
  *   `(b)` permissive-allow test was deleted; the `(c)` production-gate
  *   test is now the canonical regression sentinel.
  */
@@ -45,12 +45,12 @@ const MEMBER_METHOD = '/gibson.tenant.v1.SecretsService/ListSecrets';
 /** A method with unauthenticated: true (Ping or equivalent). */
 // We test the unauthenticated path by mocking the registry instead.
 
-/** A SERVICE-only method — allowed_identities excludes USER. */
+/** A SERVICE-only method, allowed_identities excludes USER. */
 const SERVICE_METHOD_SENTINEL = '__test_service_only__';
 
 // ---------------------------------------------------------------------------
 // Mock: registry
-// vi.mock factory is hoisted — use inline string literals, not constants.
+// vi.mock factory is hoisted, use inline string literals, not constants.
 // ---------------------------------------------------------------------------
 
 vi.mock('@/src/gen/authz/registry', () => ({
@@ -89,7 +89,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
       relation: 'platform_operator',
       objectType: 'system_tenant',
       objectDeriver: 'system_tenant',
-      allowedIdentities: 2, // SERVICE only — no USER bit
+      allowedIdentities: 2, // SERVICE only, no USER bit
       unauthenticated: false,
     },
   } as Record<string, import('@/src/gen/authz/registry').AuthEntry>,
@@ -138,7 +138,7 @@ function mockMembershipsError() {
 // Fail-closed: unknown method tests (cross-repo-cohesion-fixes Requirement 1)
 // ---------------------------------------------------------------------------
 
-describe('useAuthorize — unknown method (fail-closed)', () => {
+describe('useAuthorize, unknown method (fail-closed)', () => {
   it('(a) returns allowed: false, reason: unknown_method without fetching memberships', () => {
     const { result } = renderHook(() => useAuthorize('/unknown/Method'), {
       wrapper: createWrapper(),
@@ -147,7 +147,7 @@ describe('useAuthorize — unknown method (fail-closed)', () => {
   });
 });
 
-describe('useAuthorize — unknown method always denies regardless of NODE_ENV+flag', () => {
+describe('useAuthorize, unknown method always denies regardless of NODE_ENV+flag', () => {
   // Regression sentinel for spec eliminate-permissive-authz Req 2: the
   // `NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV` flag was deleted. Setting
   // it (in any NODE_ENV) MUST have no effect. If a future change
@@ -175,7 +175,7 @@ describe('useAuthorize — unknown method always denies regardless of NODE_ENV+f
   });
 });
 
-describe('useAuthorize — unauthenticated entry', () => {
+describe('useAuthorize, unauthenticated entry', () => {
   it('returns allowed: true, loading: false', () => {
     const { result } = renderHook(() => useAuthorize('__test_unauthenticated__'), {
       wrapper: createWrapper(),
@@ -184,7 +184,7 @@ describe('useAuthorize — unauthenticated entry', () => {
   });
 });
 
-describe('useAuthorize — service-only RPC', () => {
+describe('useAuthorize, service-only RPC', () => {
   it('returns allowed: false, loading: false without querying memberships', () => {
     const { result } = renderHook(() => useAuthorize(SERVICE_METHOD_SENTINEL), {
       wrapper: createWrapper(),
@@ -193,7 +193,7 @@ describe('useAuthorize — service-only RPC', () => {
   });
 });
 
-describe('useAuthorize — loading state', () => {
+describe('useAuthorize, loading state', () => {
   beforeEach(() => {
     // Slow the response so the hook stays in loading state.
     server.use(
@@ -213,7 +213,7 @@ describe('useAuthorize — loading state', () => {
   });
 });
 
-describe('useAuthorize — admin role', () => {
+describe('useAuthorize, admin role', () => {
   beforeEach(() => {
     mockMemberships('tenant-a', { 'tenant-a': { role: 'admin' } });
   });
@@ -235,7 +235,7 @@ describe('useAuthorize — admin role', () => {
   });
 });
 
-describe('useAuthorize — member role', () => {
+describe('useAuthorize, member role', () => {
   beforeEach(() => {
     mockMemberships('tenant-a', { 'tenant-a': { role: 'member' } });
   });
@@ -257,7 +257,7 @@ describe('useAuthorize — member role', () => {
   });
 });
 
-describe('useAuthorize — no active tenant', () => {
+describe('useAuthorize, no active tenant', () => {
   beforeEach(() => {
     mockMemberships(null, { 'tenant-a': { role: 'admin' } });
   });
@@ -271,7 +271,7 @@ describe('useAuthorize — no active tenant', () => {
   });
 });
 
-describe('useAuthorize — no membership for active tenant', () => {
+describe('useAuthorize, no membership for active tenant', () => {
   beforeEach(() => {
     // Active tenant set, but no matching entry in byTenant.
     mockMemberships('tenant-b', { 'tenant-a': { role: 'admin' } });
@@ -286,7 +286,7 @@ describe('useAuthorize — no membership for active tenant', () => {
   });
 });
 
-describe('useAuthorize — query error', () => {
+describe('useAuthorize, query error', () => {
   beforeEach(() => {
     mockMembershipsError();
   });

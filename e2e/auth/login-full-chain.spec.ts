@@ -1,5 +1,5 @@
 /**
- * login-full-chain.spec.ts — browser driver for the login full-chain e2e test.
+ * login-full-chain.spec.ts, browser driver for the login full-chain e2e test.
  *
  * Uses signUpViaForm (Task 4) + loginViaZitadelV2 (Task 9) helpers.
  * Writes /tmp/login-redirect-chain-<slug>.json and /tmp/login-storage-state-<slug>.json
@@ -45,7 +45,7 @@ function captureRedirectChain(page: Page): { chain: RedirectStep[]; stop: () => 
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe("Login — full chain (cluster e2e)", () => {
+test.describe("Login, full chain (cluster e2e)", () => {
   /**
    * login full chain
    *
@@ -65,7 +65,7 @@ test.describe("Login — full chain (cluster e2e)", () => {
     const password = process.env.SIGNUP_PASSWORD ?? securePassword();
 
     if (!slug || !email) {
-      test.fail(true, "SIGNUP_SLUG and SIGNUP_EMAIL must be set — run via `make test-login-e2e`");
+      test.fail(true, "SIGNUP_SLUG and SIGNUP_EMAIL must be set, run via `make test-login-e2e`");
       return;
     }
 
@@ -120,7 +120,7 @@ test.describe("Login — full chain (cluster e2e)", () => {
     console.log(`[login-full-chain] storage state written to ${statePath}`);
 
     // -----------------------------------------------------------------------
-    // 6. Assert terminal landing on dashboard (not /signedin — LOGIN-B1)
+    // 6. Assert terminal landing on dashboard (not /signedin, LOGIN-B1)
     // -----------------------------------------------------------------------
     await expect(page).toHaveURL(/(\/dashboard|\/)/, { timeout: 10_000 });
     await expect(
@@ -143,7 +143,7 @@ test.describe("Login — full chain (cluster e2e)", () => {
       return;
     }
 
-    // Drive Zitadel V2 with wrong password — expect failure (throw or no cookie).
+    // Drive Zitadel V2 with wrong password, expect failure (throw or no cookie).
     let failed = false;
     try {
       await loginViaZitadelV2(page, context, {
@@ -160,7 +160,7 @@ test.describe("Login — full chain (cluster e2e)", () => {
     const hasSession = cookies.some((c) => c.name.includes("authjs.session-token"));
     if (!failed && hasSession) {
       throw new Error(
-        "[login-full-chain] negative:wrong-password — session cookie SET with wrong password. " +
+        "[login-full-chain] negative:wrong-password, session cookie SET with wrong password. " +
           "Authentication MUST reject wrong credentials (R2.1).",
       );
     }
@@ -171,7 +171,7 @@ test.describe("Login — full chain (cluster e2e)", () => {
   });
 
   /**
-   * negative: nonexistent email — same generic error, no user enumeration.
+   * negative: nonexistent email, same generic error, no user enumeration.
    *
    * Requirements: R2.2.
    */
@@ -206,7 +206,7 @@ test.describe("Login — full chain (cluster e2e)", () => {
   });
 
   /**
-   * negative: expired session cookie — protected route redirects to /login.
+   * negative: expired session cookie, protected route redirects to /login.
    *
    * Requirements: R2.5.
    */

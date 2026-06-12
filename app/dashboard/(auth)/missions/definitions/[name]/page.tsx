@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * /dashboard/missions/definitions/[name] — mission definition detail page.
+ * /dashboard/missions/definitions/[name], mission definition detail page.
  *
  * Fetches a single mission definition via GET /api/missions/definitions/[name]
  * (DaemonService.GetMissionDefinition M5 RPC) and renders it via
@@ -9,7 +9,7 @@
  * MissionDefinition proto (constraints, workspace, per-node policies, all
  * config oneof variants).
  *
- * M6 — mission-author-experience. Closes #187.
+ * M6, mission-author-experience. Closes #187.
  */
 
 import * as React from "react";

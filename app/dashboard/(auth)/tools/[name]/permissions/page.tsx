@@ -1,5 +1,5 @@
 /**
- * Tool detail Permissions tab — server component.
+ * Tool detail Permissions tab, server component.
  *
  * Mirror of the agent permissions page (kind=TOOL). See the agent
  * page docstring for the resolution + WhoAmI flow.
@@ -125,7 +125,7 @@ export default async function Page({
     <div className="container mx-auto py-6 px-4 space-y-4">
       <header>
         <h1 className="text-2xl font-bold tracking-tight font-mono text-glow-green">
-          {name} — permissions
+          {name} permissions
         </h1>
         <p className="text-sm text-muted-foreground">
           principal_id: <code className="font-mono">{principalId}</code>
@@ -143,5 +143,5 @@ export default async function Page({
 }
 
 export function generateMetadata({ params }: { params: { name: string } }) {
-  return { title: `${params.name} — permissions` };
+  return { title: `${params.name} permissions` };
 }

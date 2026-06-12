@@ -16,7 +16,7 @@
  *
  * Build-time vs runtime split:
  *   `next.config.ts` is evaluated at `next build` time (and again at
- *   server start) — the only env var it reads, `GIBSON_API_URL`, is a
+ *   server start), the only env var it reads, `GIBSON_API_URL`, is a
  *   build-time concern. We surface it through `env.GIBSON_API_URL` so
  *   `next.config.ts` no longer carries an inline `?? "http://localhost"`
  *   fallback, AND we add a build-time check script
@@ -30,7 +30,7 @@
  *   validateEnv(); // throws EnvValidationError on missing required keys
  *
  * Calling pattern from anywhere else (do NOT use `process.env.X` for
- * required keys — use the typed accessor):
+ * required keys, use the typed accessor):
  *
  *   import { env } from '@/src/lib/env-validator';
  *   const issuer = env.ZITADEL_ISSUER;   // string (validated)
@@ -47,11 +47,11 @@ export type EnvKind = 'string' | 'url' | 'boolean' | 'number';
 /**
  * Single required-env entry.
  *
- * - `name`  — the env var name (matches `process.env[name]`).
- * - `kind`  — type contract; used to validate shape (not just presence).
- * - `hint`  — one-line operator hint. Surfaced verbatim in the failure log.
- * - `proddOnly` — when true, the var is only required when NODE_ENV === 'production'.
- *               Dev/local boots without it. Use sparingly — most things should
+ * - `name` , the env var name (matches `process.env[name]`).
+ * - `kind` , type contract; used to validate shape (not just presence).
+ * - `hint` , one-line operator hint. Surfaced verbatim in the failure log.
+ * - `proddOnly`, when true, the var is only required when NODE_ENV === 'production'.
+ *               Dev/local boots without it. Use sparingly, most things should
  *               be required everywhere so dev parity is structural.
  */
 export interface RequiredEnvSpec {
@@ -66,7 +66,7 @@ export interface RequiredEnvSpec {
  * The canonical required-env table.
  *
  * Adding a new entry here is the ONLY way to make a new env var "required."
- * Inline `process.env.X ?? "default"` patterns are forbidden — they are
+ * Inline `process.env.X ?? "default"` patterns are forbidden, they are
  * silent footguns and break the one-code-path invariant.
  *
  * If a callsite legitimately tolerates absence (e.g. it tries multiple email
@@ -159,7 +159,7 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
     hint:
       'Internal Envoy gRPC endpoint the Next.js rewrite at /api/grpc forwards to ' +
       '(e.g. http://gibson-envoy:30443). Read by next.config.ts at build time AND ' +
-      'startup — check-required-build-env.mjs enforces this in CI too.',
+      'startup, check-required-build-env.mjs enforces this in CI too.',
   },
   {
     name: 'PUBLIC_URL',
@@ -188,7 +188,7 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
     kind: 'string',
     hint:
       'Neo4j password mounted from the gibson-neo4j-auth secret. ' +
-      'No default — fail-fast per one-code-path.',
+      'No default, fail-fast per one-code-path.',
   },
   {
     name: 'REDIS_URL',
@@ -204,14 +204,14 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
     kind: 'string',
     hint:
       'CAPTCHA provider id: "turnstile" | "hcaptcha" | "disabled". ' +
-      'Explicit choice required — no implicit disable.',
+      'Explicit choice required, no implicit disable.',
   },
   {
     name: 'DASHBOARD_HIBP_ENABLED',
     kind: 'boolean',
     hint:
       'Whether to call the haveibeenpwned range API during signup. ' +
-      '"true" or "false" — no implicit on-by-default.',
+      '"true" or "false", no implicit on-by-default.',
   },
   {
     name: 'DASHBOARD_EMAIL_PROVIDER',
@@ -231,7 +231,7 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
 ];
 
 /**
- * Genuinely optional env vars — typed `string | undefined`. Each entry is
+ * Genuinely optional env vars, typed `string | undefined`. Each entry is
  * annotated with a one-line reason why absence is safe.
  *
  * Adding an entry here is a deliberate decision: prefer the REQUIRED_ENV
@@ -271,7 +271,7 @@ export const OPTIONAL_ENV = [
   'SPIFFE_ENDPOINT_SOCKET',
 
   // ---- Provider-specific email creds (gated by DASHBOARD_EMAIL_PROVIDER) ----
-  // The provider's constructor throws if its specific creds are missing —
+  // The provider's constructor throws if its specific creds are missing -
   // the validator enforces only that DASHBOARD_EMAIL_PROVIDER is set.
   'DASHBOARD_EMAIL_RESEND_API_KEY',
   'DASHBOARD_EMAIL_RESEND_FROM',
@@ -301,12 +301,12 @@ export const OPTIONAL_ENV = [
   'STRIPE_PRICE_ORG',
   'STRIPE_PRICE_ENTERPRISE',
   // Narrow opt-in: allow a test-mode key under NODE_ENV=production (staging).
-  // Optional — validateBillingConfig()/stripe.ts owns the actual semantics.
+  // Optional, validateBillingConfig()/stripe.ts owns the actual semantics.
   'STRIPE_ALLOW_TEST_KEY',
 
   // ---- Social-provider creds (each pair is gated by its own pair of creds) ----
   // The dashboard's social-provider wiring refuses to start if exactly one of
-  // a pair is set — the validator does not need to police that.
+  // a pair is set, the validator does not need to police that.
   'GITHUB_CLIENT_ID',
   'GITHUB_CLIENT_SECRET',
   'GITLAB_CLIENT_ID',
@@ -333,7 +333,7 @@ export const OPTIONAL_ENV = [
   'GIBSON_TIER',
 
   // ---- Misc dashboard knobs ----
-  // CIDR allow-list for /api/metrics — when unset the route is open to all.
+  // CIDR allow-list for /api/metrics, when unset the route is open to all.
   'DASHBOARD_METRICS_ALLOWED_CIDRS',
   // Auto-create personal org on first social-sign-in. Defaults true in code.
   'DASHBOARD_AUTO_CREATE_ORG',
@@ -365,7 +365,7 @@ export const OPTIONAL_ENV = [
   // NOTE: the previous *_AUTHZ_PERMISSIVE_DEV escape hatches were deleted by
   // spec "eliminate-permissive-authz" Requirement 2. The check-no-permissive-
   // flags.mjs prebuild guard rejects any literal reference here, so they are
-  // intentionally absent from this allowlist — never re-add them.
+  // intentionally absent from this allowlist, never re-add them.
 
   // ---- Runtime-supplied (set by Node / Next.js itself) ----
   'NODE_ENV',
@@ -401,13 +401,13 @@ export class EnvValidationError extends Error {
           malformed
             .map(
               (m) =>
-                `  - ${m.spec.name} (${m.spec.kind}): ${m.reason} — got ${JSON.stringify(m.value)}`,
+                `  - ${m.spec.name} (${m.spec.kind}): ${m.reason}, got ${JSON.stringify(m.value)}`,
             )
             .join('\n'),
       );
     }
     super(
-      `[env-validator] Refusing to start — environment is misconfigured.\n${parts.join('\n')}`,
+      `[env-validator] Refusing to start, environment is misconfigured.\n${parts.join('\n')}`,
     );
     this.name = 'EnvValidationError';
     this.missing = missing;
@@ -436,7 +436,7 @@ function validateShape(
     case 'url':
       try {
         // URL constructor throws on malformed strings.
-        // We accept any http(s)/bolt(s)/redis URL — the kind is a hint, not a scheme filter.
+        // We accept any http(s)/bolt(s)/redis URL, the kind is a hint, not a scheme filter.
         new URL(value);
         return { ok: true };
       } catch {
@@ -458,7 +458,7 @@ function validateShape(
  * all missing/malformed keys at once (single-pass, no early-exit) so an
  * operator fixing the env never has to run-fix-run-fix in a loop.
  *
- * Idempotent and side-effect-free — safe to call multiple times.
+ * Idempotent and side-effect-free, safe to call multiple times.
  */
 export function validateEnv(): void {
   const missing: RequiredEnvSpec[] = [];
@@ -483,7 +483,7 @@ export function validateEnv(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Typed accessors — callers import `env` and use named properties.
+// Typed accessors, callers import `env` and use named properties.
 // ---------------------------------------------------------------------------
 
 /**
@@ -495,7 +495,7 @@ export function validateEnv(): void {
  * - For OPTIONAL keys: returns `string | undefined`.
  *
  * Do NOT add `process.env.X ?? "..."` patterns anywhere else in the
- * codebase — extend this object instead, decide whether the key belongs in
+ * codebase, extend this object instead, decide whether the key belongs in
  * REQUIRED_ENV or OPTIONAL_ENV, and import `env.X` at the callsite.
  */
 type EnvShape = {
@@ -523,11 +523,11 @@ function readRequired(name: RequiredEnvName): string {
   const raw = process.env[name];
   if (raw === undefined || raw === '') {
     if (isBuildPhase()) {
-      // Synthetic placeholder — clearly identifiable in logs / network
+      // Synthetic placeholder, clearly identifiable in logs / network
       // requests if it ever leaks past the build into a running request.
       return `__BUILD_TIME_STUB_${name}__`;
     }
-    // validateEnv() should have caught this — but if a test reaches in via
+    // validateEnv() should have caught this, but if a test reaches in via
     // delete-then-import we want a loud throw rather than silently returning
     // empty-string. Mirrors the inline requireEnv() pattern slice #196 used.
     throw new EnvValidationError(
@@ -560,7 +560,7 @@ export const env: EnvShape = new Proxy({} as EnvShape, {
     if (OPTIONAL_NAMES.has(prop)) {
       return readOptional(prop);
     }
-    // Accessing a key not enumerated in either table is a bug — the whole
+    // Accessing a key not enumerated in either table is a bug, the whole
     // point of this module is that the env surface is closed-set.
     throw new Error(
       `[env-validator] env.${prop} is not declared. Add it to REQUIRED_ENV or OPTIONAL_ENV in src/lib/env-validator.ts.`,

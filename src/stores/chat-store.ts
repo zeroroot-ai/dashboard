@@ -3,7 +3,7 @@
  *
  * Manages chat state including conversations, agent selection,
  * and graph context integration. Message streaming state is managed
- * by the AI SDK's useChat hook — this store owns conversation
+ * by the AI SDK's useChat hook, this store owns conversation
  * persistence and metadata.
  */
 
@@ -65,13 +65,13 @@ export interface ChatState {
   // Last X-Gibson-Trace-Id surfaced by the streaming chat response. The
   // value is overwritten on every assistant turn so the feedback buttons
   // on the latest message always post the right ID. Stored in-memory only
-  // (no persistence) — feedback for past sessions isn't a use case.
+  // (no persistence), feedback for past sessions isn't a use case.
   currentTraceId: string | null;
 
   /**
    * True when the daemon conversation store (UserService.ListConversations)
    * returned codes.Unavailable or codes.Internal on page load. Distinct from
-   * an empty conversation list (zero conversations) — this flag means the
+   * an empty conversation list (zero conversations), this flag means the
    * history could not be fetched at all, not that the user has no history.
    *
    * The chat page renders a distinct error state when this is true, so the
@@ -99,7 +99,7 @@ export interface ChatState {
    * Finalize an in-progress (partially streamed) assistant message.
    *
    * Called when the user stops a stream mid-flight. The provided `messages`
-   * array is the snapshot from the AI SDK at the moment of stop — it already
+   * array is the snapshot from the AI SDK at the moment of stop, it already
    * contains the partial assistant text. This action writes that snapshot
    * atomically to the conversation in Zustand, identical to `saveMessages`,
    * but is named distinctly so call-sites and tests can express intent clearly.
@@ -127,7 +127,7 @@ export interface ChatState {
    * Edit the text of a specific user message in a conversation.
    *
    * Replaces the first text part of the message at `messageIndex` with
-   * `newText`. Does not truncate downstream messages — callers that need
+   * `newText`. Does not truncate downstream messages, callers that need
    * truncation should call `truncateMessages` after editing.
    *
    * The action is a no-op when the message is not found or has no text part.
@@ -287,7 +287,7 @@ export const useChatStore = create<ChatState>()(
       finalizePartialMessage: (conversationId, messages) => {
         // Atomic replacement of the message list. The messages array from the
         // AI SDK already contains the partial assistant text at the moment of
-        // stop — we do not need to mutate any individual message; the SDK has
+        // stop, we do not need to mutate any individual message; the SDK has
         // already materialized the streamed content into the parts array.
         // Using the same replacement semantics as saveMessages ensures there
         // is never a dangling partial or a duplicate entry.

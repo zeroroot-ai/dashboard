@@ -3,7 +3,7 @@
 /**
  * Shared empty-state card for list pages. Every list page across the
  * authenticated dashboard should reach for this primitive rather than
- * rolling its own — see CLAUDE.md "Design system" for the rationale.
+ * rolling its own, see CLAUDE.md "Design system" for the rationale.
  *
  * Pure presentation: the parent owns data fetching and decides when the
  * list is empty. The component renders an icon, a title, an optional

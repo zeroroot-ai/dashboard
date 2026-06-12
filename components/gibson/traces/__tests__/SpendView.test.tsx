@@ -84,7 +84,7 @@ describe("SpendView", () => {
       />,
     );
     const row = screen.getByText("mystery-model").closest("tr")!;
-    expect(within(row).getByText("—")).toBeInTheDocument();
+    expect(within(row).getByText("-")).toBeInTheDocument();
     expect(screen.queryByText("$0.00")).not.toBeInTheDocument();
   });
 

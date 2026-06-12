@@ -1,5 +1,5 @@
 /**
- * `useAuthorize` — client-side authz decision hook.
+ * `useAuthorize`, client-side authz decision hook.
  *
  * Looks up `method` in the generated `AuthRegistry` and checks whether the
  * current user is allowed to call it, based on their role on the active
@@ -7,7 +7,7 @@
  *
  * Decision flow:
  *   1. Unknown method → DENIED (fail-closed). No environment-dependent
- *      escape hatch — same behaviour in dev and prod.
+ *      escape hatch, same behaviour in dev and prod.
  *   2. entry.unauthenticated → allowed (public RPC; no identity required).
  *   3. allowedIdentities excludes USER → denied immediately (service-only RPC).
  *   4. Membership query loading → { allowed: false, loading: true } (hides UI,
@@ -20,7 +20,7 @@
  *
  * Spec: dashboard-authz-ui-gating Requirement 2.
  * Sister-spec: cross-repo-cohesion-fixes Requirement 1.
- * Sister-spec: eliminate-permissive-authz Requirement 2 — the
+ * Sister-spec: eliminate-permissive-authz Requirement 2, the
  *   non-prod escape-hatch env var was deleted.
  *
  * @module auth/use-authorize
@@ -99,7 +99,7 @@ export function useAuthorize(method: string): AuthorizeResult {
     return { allowed: true, loading: false };
   }
 
-  // SERVICE-only RPC: a browser session is always USER — deny immediately.
+  // SERVICE-only RPC: a browser session is always USER, deny immediately.
   if ((entry.allowedIdentities & IdentityClass.USER) === 0) {
     return { allowed: false, loading: false };
   }

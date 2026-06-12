@@ -1,7 +1,7 @@
 /**
- * login-via-zitadel-v2.ts — canonical helper that drives the Zitadel V2 login UI.
+ * login-via-zitadel-v2.ts, canonical helper that drives the Zitadel V2 login UI.
  *
- * ONE function — no per-spec Zitadel selector reimplementations. All login
+ * ONE function, no per-spec Zitadel selector reimplementations. All login
  * spec files import this instead of inline Zitadel UI logic.
  *
  * The Zitadel V2 login UI flow (source of truth: login-trace.spec.ts, commit 659678e):
@@ -77,7 +77,7 @@ function redactOIDCParams(url: string): string {
 }
 
 /**
- * loginViaZitadelV2 — drives the Zitadel V2 OIDC login UI against the live cluster.
+ * loginViaZitadelV2, drives the Zitadel V2 OIDC login UI against the live cluster.
  *
  * Returns the resolved { finalUrl, chain, sessionCookieSet } after the OIDC
  * flow completes (success or parked-at-signedin failure).
@@ -120,7 +120,7 @@ export async function loginViaZitadelV2(
 
   // If already on dashboard (previous session still valid), return early.
   if (page.url().includes("/dashboard")) {
-    console.log(`[loginViaZitadelV2] Already authenticated — landed on ${page.url()}`);
+    console.log(`[loginViaZitadelV2] Already authenticated, landed on ${page.url()}`);
     const cookies = await context.cookies();
     return {
       finalUrl: page.url(),
@@ -206,7 +206,7 @@ export async function loginViaZitadelV2(
     );
   } catch {
     console.log(
-      `[loginViaZitadelV2] terminal wait timed out — current URL=${page.url()}`,
+      `[loginViaZitadelV2] terminal wait timed out, current URL=${page.url()}`,
     );
   }
 

@@ -1,5 +1,5 @@
 /**
- * <GlossaryTerm term="..." /> — wraps its children in a Shadcn
+ * <GlossaryTerm term="..." />, wraps its children in a Shadcn
  * Tooltip whose content is the proto-derived definition for the
  * named term. If the term isn't in the glossary, falls back to
  * rendering children plain (silent graceful fallback per
@@ -10,7 +10,7 @@
  *   <GlossaryTerm term="NODE_TYPE_AGENT">Agent</GlossaryTerm>
  *
  * The term key is the canonical proto enum value name (or
- * message/verb name) — same shape glossary.json uses.
+ * message/verb name), same shape glossary.json uses.
  *
  * Spec: mission-dashboard-rewrite Requirement 5 AC 2.
  */
@@ -32,7 +32,7 @@ interface GlossaryTermProps {
   term: string;
   children: ReactNode;
   /**
-   * underlineOnHover — when true, shows a dotted underline on the
+   * underlineOnHover, when true, shows a dotted underline on the
    * inline term so users discover the tooltip affordance. Defaults
    * to true.
    */

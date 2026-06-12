@@ -1,5 +1,5 @@
 /**
- * Unit tests for app/actions/chat.ts — rename + delete RPC wiring.
+ * Unit tests for app/actions/chat.ts, rename + delete RPC wiring.
  *
  * Verifies that:
  *  - renameConversation calls RenameConversation RPC with the right args
@@ -13,7 +13,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ---------------------------------------------------------------------------
-// Hoisted mock factories — must be declared before vi.mock() calls.
+// Hoisted mock factories, must be declared before vi.mock() calls.
 // ---------------------------------------------------------------------------
 
 const {
@@ -42,7 +42,7 @@ vi.mock("@/src/lib/gibson-client", () => ({
   listProviders: vi.fn(async () => ({ providers: [], defaultProvider: null })),
 }));
 
-// generateText stub — not needed for rename/delete tests but prevents import
+// generateText stub, not needed for rename/delete tests but prevents import
 // errors from the 'ai' package in the server-only module graph.
 vi.mock("ai", () => ({
   generateText: vi.fn(async () => ({ text: "" })),
@@ -75,7 +75,7 @@ import { logger } from "@/src/lib/logger";
 // renameConversation
 // ---------------------------------------------------------------------------
 
-describe("renameConversation — RPC wiring", () => {
+describe("renameConversation, RPC wiring", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("calls RenameConversation RPC with conversationId and trimmed title", async () => {
@@ -111,7 +111,7 @@ describe("renameConversation — RPC wiring", () => {
 // deleteConversationAction
 // ---------------------------------------------------------------------------
 
-describe("deleteConversationAction — RPC wiring", () => {
+describe("deleteConversationAction, RPC wiring", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("calls DeleteConversation RPC with conversationId", async () => {

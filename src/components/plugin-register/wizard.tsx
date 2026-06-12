@@ -4,11 +4,11 @@
  * Plugin Registration Wizard
  *
  * Five-step wizard for atomic plugin registration:
- *   Step 1 — Manifest upload (client-side validation)
- *   Step 2 — Server-side validation (daemon dry-run)
- *   Step 3 — Secret bindings (per-secret existing-pick or inline-create)
- *   Step 4 — Confirm (manifest summary + bindings review; atomic submit)
- *   Step 5 — Enrollment (bootstrap token + CLI command)
+ *   Step 1, Manifest upload (client-side validation)
+ *   Step 2, Server-side validation (daemon dry-run)
+ *   Step 3, Secret bindings (per-secret existing-pick or inline-create)
+ *   Step 4, Confirm (manifest summary + bindings review; atomic submit)
+ *   Step 5, Enrollment (bootstrap token + CLI command)
  *
  * State is held in this client component and is NEVER persisted to
  * sessionStorage, localStorage, or any other browser storage. All values

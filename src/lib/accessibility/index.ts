@@ -1,5 +1,5 @@
 /**
- * Accessibility Utilities — Barrel Export
+ * Accessibility Utilities, Barrel Export
  *
  * Re-exports all utilities from onboarding-a11y and provides additional
  * generic accessibility helpers used by useAccessibility.tsx.

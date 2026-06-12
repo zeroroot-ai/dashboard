@@ -1,5 +1,5 @@
 /**
- * <StepConfigSwitcher /> — dispatches on the MissionNode.config
+ * <StepConfigSwitcher />, dispatches on the MissionNode.config
  * oneof discriminator and renders the matching per-noun
  * config editor.
  *
@@ -24,7 +24,7 @@ import { JoinConfigEditor } from "./join-config-editor";
 interface StepConfigSwitcherProps {
   /** The full MissionNode being edited. */
   node: MissionNode;
-  /** Setter for the whole node — config oneof + sibling fields. */
+  /** Setter for the whole node, config oneof + sibling fields. */
   onChange: (next: MissionNode) => void;
   /** Sibling node IDs the editor surfaces in pickers. */
   availableNodeIds: string[];

@@ -1,5 +1,5 @@
 /**
- * dashboard.po.ts — Dashboard page-object helpers.
+ * dashboard.po.ts, Dashboard page-object helpers.
  *
  * Shared helpers for navigating and asserting core dashboard chrome
  * (tenant display, membership list, quota panel, navigation).

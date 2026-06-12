@@ -126,7 +126,7 @@ export async function listBudgetStatusAction(
 }
 
 // ---------------------------------------------------------------------
-// Set (admin-only — daemon enforces; dashboard short-circuits obvious
+// Set (admin-only, daemon enforces; dashboard short-circuits obvious
 // non-admins for UX)
 // ---------------------------------------------------------------------
 

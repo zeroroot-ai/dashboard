@@ -6,7 +6,7 @@
  * ------------
  * All canvas-rendered literal colors live here. This file lives under
  * `src/lib/` (not `app/` or `components/`), so it is intentionally
- * outside the `check-no-hardcoded-colors` guard scope — canvas rendering
+ * outside the `check-no-hardcoded-colors` guard scope, canvas rendering
  * cannot consume CSS custom properties.
  *
  * Colors are aligned to the brand design tokens in `app/globals.css`:
@@ -112,14 +112,14 @@ export interface ThemeColors {
 }
 
 // ============================================================================
-// Dark Theme (single locked dark brand — violet-led)
+// Dark Theme (single locked dark brand, violet-led)
 // ============================================================================
 
 /**
  * The single locked dark brand (#652), violet-led on a near-black blue-violet
  * base, aligned to the globals.css design tokens. There is no light theme.
  *
- * Background: #14121c (≈ oklch(0.17 0.012 280)) — near-black with a faint
+ * Background: #14121c (≈ oklch(0.17 0.012 280)), near-black with a faint
  * blue-violet tint, matching --background. Canvas rendering can't read CSS
  * custom properties, so the brand is mirrored here as literals.
  *
@@ -132,24 +132,24 @@ export interface ThemeColors {
  * base without competing with nodes.
  */
 export const DARK_THEME: ThemeColors = {
-  // Near-black blue-violet, ≈ oklch(0.17 0.012 280) — aligns to --background
+  // Near-black blue-violet, ≈ oklch(0.17 0.012 280), aligns to --background
   background: '#14121c',
 
-  // Faint violet grid lines — aligned to --primary (oklch 0.58 0.225 295)
+  // Faint violet grid lines, aligned to --primary (oklch 0.58 0.225 295)
   grid: 'rgba(139, 92, 246, 0.07)',
 
   glowColors: {
-    // Electric violet — aligns to --primary / --highlight
+    // Electric violet, aligns to --primary / --highlight
     primary: 'rgba(139, 92, 246, 0.45)',
     // Brighter violet active/hover
     active: 'rgba(167, 139, 250, 0.40)',
-    // Alert red — aligns to --destructive
+    // Alert red, aligns to --destructive
     critical: 'rgba(244, 67, 54, 0.8)',
-    // Emerald success — aligns to --alt
+    // Emerald success, aligns to --alt
     success: 'rgba(105, 240, 174, 0.55)',
   },
 
-  // Severity colors — high contrast vs the dark base AND readable on node
+  // Severity colors, high contrast vs the dark base AND readable on node
   // chips. All hex values achieve ≥4.5:1 vs #14121c.
   severityColors: {
     critical: '#ff5252',  // red-A200
@@ -159,7 +159,7 @@ export const DARK_THEME: ThemeColors = {
     info:     '#90caf9',  // blue-200
   },
 
-  // Node type colors — bright enough to read over #14121c (≥4.5:1), biased
+  // Node type colors, bright enough to read over #14121c (≥4.5:1), biased
   // to the violet/blue/emerald/cyan brand family. Used as border/glow accent
   // colors; the node chip body uses dark fills so the icon + border carry the
   // contrast.
@@ -182,11 +182,11 @@ export const DARK_THEME: ThemeColors = {
     technique:      '#f48fb1',  // pink-200
   },
 
-  // Edge relationship colors — muted enough to not clutter the canvas, bright
+  // Edge relationship colors, muted enough to not clutter the canvas, bright
   // enough to be distinguishable. Structural edges use faint violet; execution
   // edges use emerald; semantic edges use distinct hues.
   edgeColors: {
-    // Structural relationships — faint brand violet
+    // Structural relationships, faint brand violet
     HAS_SUBDOMAIN:   'rgba(139, 92, 246, 0.25)',
     HAS_PORT:        'rgba(139, 92, 246, 0.25)',
     RUNS_SERVICE:    'rgba(139, 92, 246, 0.25)',
@@ -199,7 +199,7 @@ export const DARK_THEME: ThemeColors = {
     BELONGS_TO: '#80d8ff',   // cyan-A100
     RESOLVES_TO:'#69f0ae',   // emerald-A200
 
-    // Execution relationships — emerald
+    // Execution relationships, emerald
     USED_TO:      'rgba(105, 240, 174, 0.55)',
     USED_TOOL:    'rgba(105, 240, 174, 0.55)',
     DELEGATED_TO: '#b39dff',  // brand violet
@@ -218,7 +218,7 @@ export const DARK_THEME: ThemeColors = {
 
 /**
  * Return the graph color palette. There is one locked dark brand (#652), so
- * this always returns DARK_THEME — kept as a function for call-site clarity
+ * this always returns DARK_THEME, kept as a function for call-site clarity
  * and so the canvas renderer has a single accessor.
  *
  * @example

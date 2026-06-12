@@ -145,7 +145,7 @@ export function GraphControls({
         <ControlButton onClick={onReset} icon={RotateCcw} label="Reset view" />
       </ControlGroup>
 
-      {/* Layout switcher — always clickable, never disabled */}
+      {/* Layout switcher, always clickable, never disabled */}
       <ControlGroup>
         {LAYOUTS.map(({ mode, label, icon }) => (
           <ControlButton

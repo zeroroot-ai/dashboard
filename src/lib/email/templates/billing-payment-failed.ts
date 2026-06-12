@@ -47,7 +47,7 @@ export function render(ctx: BillingPaymentFailedCtx): EmailMessage {
     ``,
     `Questions? Contact ${ctx.supportEmail}.`,
     ``,
-    `— The Gibson team`,
+    `The Gibson team`,
   ].filter((line) => line !== undefined).join('\n');
 
   const html = [
@@ -59,7 +59,7 @@ export function render(ctx: BillingPaymentFailedCtx): EmailMessage {
     `<div style="background:#7f1d1d;border-radius:6px;padding:12px 16px;margin:0 0 20px;">`,
     `<p style="margin:0;font-size:14px;font-weight:600;color:#fca5a5;">Action required: payment failed</p>`,
     `</div>`,
-    `<p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">A payment of <strong style="color:#ffffff;">${escapeHtml(formatted)}</strong> for your Gibson subscription failed${ctx.failureReason ? ` — ${escapeHtml(ctx.failureReason)}` : ''}.`,
+    `<p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">A payment of <strong style="color:#ffffff;">${escapeHtml(formatted)}</strong> for your Gibson subscription failed${ctx.failureReason ? `, ${escapeHtml(ctx.failureReason)}` : ''}.`,
     `</p>`,
     `<p style="margin:0 0 24px;font-size:14px;line-height:1.5;color:#c5c5cc;">`,
     `<a href="${escapeAttr(ctx.portalUrl)}" style="display:inline-block;padding:10px 20px;background:#dc2626;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px;">Update payment method</a>`,

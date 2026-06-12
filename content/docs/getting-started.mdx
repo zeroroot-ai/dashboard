@@ -1,6 +1,6 @@
 ---
 title: Getting Started
-description: Stand up your first Gibson agent in under an hour — sign up, install the gibson CLI, register, build, and run a mission.
+description: Stand up your first Gibson agent in under an hour, sign up, install the gibson CLI, register, build, and run a mission.
 ---
 
 This is the fast path: account → CLI → component → mission. If you get
@@ -28,13 +28,13 @@ Open
 
 The deploy wizard walks you through:
 
-1. **Pick a kind** — start with **Agent** for this walkthrough.
-2. **Name your agent** — kebab-case, e.g. `my-first-agent`.
-3. **Permissions** — for the walkthrough, accept the defaults. You can
+1. **Pick a kind**, start with **Agent** for this walkthrough.
+2. **Name your agent**, kebab-case, e.g. `my-first-agent`.
+3. **Permissions**, for the walkthrough, accept the defaults. You can
    tighten them later. See [Roles & permissions](/docs/rbac).
-4. **Issue a bootstrap token** — the dashboard shows a single-use
-   bootstrap token. **Copy it now** — it's not shown again.
-5. **Connect** — leave the page open. It polls for the next step.
+4. **Issue a bootstrap token**, the dashboard shows a single-use
+   bootstrap token. **Copy it now**, it's not shown again.
+5. **Connect**, leave the page open. It polls for the next step.
 
 ## 3. Register on your machine
 
@@ -46,7 +46,7 @@ gibson component register --kind agent --token <from-wizard> \
 This runs the capability-grant handshake, writes the host key and
 runtime credential under `~/.gibson/agent/` (mode `0600`), and verifies
 the credential by calling Gibson's identity service. If the verification
-fails, the wizard does **not** advance — see
+fails, the wizard does **not** advance, see
 [Component bootstrap & auth → Troubleshooting a 401](/docs/component-bootstrap#troubleshooting-a-401).
 
 ## 4. Verify with `inspect`
@@ -125,9 +125,9 @@ The agent connects to your tenant and waits for work. Leave it running.
 Open the dashboard's **Missions** section (`/dashboard/missions/new`)
 and create a one-node mission:
 
-1. **Target** — pick or create a target. For a hello-world, the target
+1. **Target**, pick or create a target. For a hello-world, the target
    can be `none` if your agent doesn't need one.
-2. **Add a node** — type `Agent`, point it at `my-first-agent`, and
+2. **Add a node**, type `Agent`, point it at `my-first-agent`, and
    set a prompt like `"Greet a new Gibson user."`.
 3. **Run**.
 
@@ -142,7 +142,7 @@ Missions can also be authored as files and submitted from the CLI:
 gibson mission submit missions/recon.yaml --target example.com
 ```
 
-The mission loader auto-detects the file format from the extension —
+The mission loader auto-detects the file format from the extension -
 `.cue`, `.yaml`, `.yml`, and `.json` are all supported. Use whichever
 format your team prefers.
 

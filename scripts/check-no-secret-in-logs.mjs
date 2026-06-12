@@ -17,7 +17,7 @@
  *     test code, so a generic "no clientSecret anywhere" rule would
  *     misfire. We only catch the pattern when it is being passed to a
  *     logger (`console.*`, `logger.*`, etc.).
- *   - `__tests__/` and `*.test.*` files are exempt — tests legitimately
+ *   - `__tests__/` and `*.test.*` files are exempt, tests legitimately
  *     reference the field name in assertions.
  *
  * Self-test mode: `--selftest` writes a synthetic violator and asserts
@@ -45,7 +45,7 @@ const SKIP_FILE_MARKERS = ['.test.', '.spec.', '.stories.'];
 /**
  * The regex matches `<sink>.<method>(...args...)` where `<sink>` is one
  * of the known logger names and any argument literally contains a
- * forbidden token. It is intentionally line-scoped — multi-line log
+ * forbidden token. It is intentionally line-scoped, multi-line log
  * arguments are uncommon and the false-positive cost is too high to
  * scan with a full AST. If a multi-line log call appears in a future
  * change, fix the call to be single-line OR refactor the secret out
@@ -114,7 +114,7 @@ function runScan() {
     try {
       walk(abs, files);
     } catch {
-      // Directory missing — skip.
+      // Directory missing, skip.
     }
   }
   const violations = files.flatMap(scanFile);
@@ -124,10 +124,10 @@ function runScan() {
   }
   console.error('check-no-secret-in-logs.mjs found logger calls referencing a credential token:\n');
   for (const v of violations) {
-    console.error(`  ${v.file}:${v.line} — references '${v.token}' inside a logger call`);
+    console.error(`  ${v.file}:${v.line}, references '${v.token}' inside a logger call`);
     console.error(`    ${v.text}`);
   }
-  console.error('\nWhy this exists: spec unified-identity-and-authorization R9.8 —');
+  console.error('\nWhy this exists: spec unified-identity-and-authorization R9.8 -');
   console.error("the agent client_secret is emitted exactly once in the API response;");
   console.error('it must NEVER reach a logger. Move the field out of the log arg list.');
   return 1;
@@ -136,7 +136,7 @@ function runScan() {
 function runSelftest() {
   const fixturePath = join(ROOT, 'src', '__check_secret_log_fixture.ts');
   const body = [
-    '// Selftest fixture — references clientSecret inside a console.log call.',
+    '// Selftest fixture, references clientSecret inside a console.log call.',
     'export function bad() {',
     '  const clientSecret = "leaky";',
     '  console.log("registered agent", { clientSecret });',

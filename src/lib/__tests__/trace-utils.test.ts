@@ -169,10 +169,10 @@ describe('extractMessages', () => {
 
   it('appends a string output as an assistant message', () => {
     const messages = extractMessages(
-      obs({ id: 'g', type: 'GENERATION', output: 'Done — 12 ports open.' }),
+      obs({ id: 'g', type: 'GENERATION', output: 'Done, 12 ports open.' }),
     );
 
-    expect(messages).toEqual([{ role: 'assistant', content: 'Done — 12 ports open.' }]);
+    expect(messages).toEqual([{ role: 'assistant', content: 'Done, 12 ports open.' }]);
   });
 
   it('parses an object output that carries a role', () => {

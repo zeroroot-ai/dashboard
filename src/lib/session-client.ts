@@ -19,7 +19,7 @@
  *     gating uses `useAuthorize('/gibson...Method')` against the AuthRegistry.
  *
  * Reading `session.user.tenant` / `tenants` / `permissions` / `crossTenant`
- * here is a bug — the auth callback does not put those fields on the
+ * here is a bug, the auth callback does not put those fields on the
  * encrypted JWT cookie that drives `useSession`. Use the context instead.
  */
 

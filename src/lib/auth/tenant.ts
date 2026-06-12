@@ -6,14 +6,14 @@
  *
  * These hooks gate UI on the current user's tenant or permissions. The
  * underlying state is resolved server-side on every layout render via
- * `getServerSession()` — which reads the `gibson_active_tenant` cookie,
+ * `getServerSession()`, which reads the `gibson_active_tenant` cookie,
  * calls `getMyMemberships()` against FGA, and computes effective
  * permissions from the daemon's permissions schema. The resolved values
  * are passed through `<TenantHydrator>` and surfaced here.
  *
  * Permission resolution is fully driven by the daemon's permissions.yaml
  * schema (declarative-rbac-framework spec). The permissions array is
- * computed server-side and stored on the context — these hooks read that
+ * computed server-side and stored on the context, these hooks read that
  * flat array directly, no client-side role mapping.
  *
  * For Server Components, use hasPermission() / isCrossTenant() from

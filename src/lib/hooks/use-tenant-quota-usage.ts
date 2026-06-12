@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * useTenantQuotaUsage — React Query hook over the getQuotaUsage Server
+ * useTenantQuotaUsage, React Query hook over the getQuotaUsage Server
  * Action. Spec plans-and-quotas-simplification R9.B.
  *
  * Defaults: refetchInterval=30s, staleTime=30s. Call queryClient

@@ -45,7 +45,7 @@ export default function Page() {
         body: JSON.stringify({ email: data.email }),
       });
     } catch {
-      // Swallow network errors — always show success to prevent enumeration
+      // Swallow network errors, always show success to prevent enumeration
     } finally {
       setIsSubmitting(false);
       setIsSubmitted(true);

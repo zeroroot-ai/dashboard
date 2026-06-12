@@ -4,17 +4,17 @@
  * These are called by Next.js route handlers under /api/admin/provisioning/*
  * which are invoked by the tenant-operator via Zitadel JWT Bearer auth.
  *
- * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js — see task 24
+ * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js, see task 24
  * implementation log. The previous implementation used a local org adapter
  * directly. With Auth.js v5 + Zitadel, tenant CRUD goes through
  * the Zitadel Management API (create org, create user, assign role). This
  * rewrite is scoped to the tenant-switcher / provisioning tasks (task 25+).
  * Until then, all endpoints return 503 to make failures explicit.
  *
- * Auth migration: service-acting-auth task 9 — replaced verifySpiffeBearer
+ * Auth migration: service-acting-auth task 9, replaced verifySpiffeBearer
  * with verifyZitadelBearer.
  *
- * Authz: dashboard-authz-ui-gating Task 10 — verifyZitadelBearer is the
+ * Authz: dashboard-authz-ui-gating Task 10, verifyZitadelBearer is the
  * primary gate; all business handlers are stubbed 503 so no second-pass check
  * is needed here (stub file). The entitlements forwarders previously lived
  * at admin-provisioning-entitlements.ts; deleted in spec

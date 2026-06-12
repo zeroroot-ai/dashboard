@@ -1,18 +1,18 @@
 import type { EmailMessage, EmailProvider } from '../types';
 
 /**
- * SMTP provider — wraps `nodemailer`.
+ * SMTP provider, wraps `nodemailer`.
  *
  * The nodemailer SDK is loaded lazily via dynamic `import()` so that
  * installs running with `DASHBOARD_EMAIL_PROVIDER=log` (or unset) don't
  * pay the bundle / cold-start cost.
  *
  * Configuration (all read at construction time):
- *   DASHBOARD_EMAIL_SMTP_HOST   — SMTP host (required)
- *   DASHBOARD_EMAIL_SMTP_PORT   — SMTP port (required, numeric)
- *   DASHBOARD_EMAIL_SMTP_USER   — auth user (required)
- *   DASHBOARD_EMAIL_SMTP_PASS   — auth pass (required)
- *   DASHBOARD_EMAIL_SMTP_FROM   — default From: header (required)
+ *   DASHBOARD_EMAIL_SMTP_HOST  , SMTP host (required)
+ *   DASHBOARD_EMAIL_SMTP_PORT  , SMTP port (required, numeric)
+ *   DASHBOARD_EMAIL_SMTP_USER  , auth user (required)
+ *   DASHBOARD_EMAIL_SMTP_PASS  , auth pass (required)
+ *   DASHBOARD_EMAIL_SMTP_FROM  , default From: header (required)
  */
 export class SmtpEmailProvider implements EmailProvider {
   private readonly host: string;
@@ -50,7 +50,7 @@ export class SmtpEmailProvider implements EmailProvider {
 
   async send(msg: EmailMessage): Promise<void> {
     // Dynamic import keeps nodemailer out of the bundle for non-smtp
-    // deployments. Errors from the transport propagate to the caller —
+    // deployments. Errors from the transport propagate to the caller -
     // dispatch errors are NOT swallowed (callers pick retry strategy).
     const mod = await import('nodemailer');
     const nodemailer = ((mod as unknown) as { default?: typeof mod }).default ?? mod;

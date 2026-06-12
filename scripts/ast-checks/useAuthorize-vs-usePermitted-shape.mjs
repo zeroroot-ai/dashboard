@@ -4,10 +4,10 @@
  *
  * Asserts the hook split (see dashboard CLAUDE.md "Frontend authz"):
  *
- *   - `usePermitted("perm:string")`  — synchronous; reads server-hydrated
+ *   - `usePermitted("perm:string")` , synchronous; reads server-hydrated
  *     membership state. ALWAYS imported from `@/src/lib/auth/tenant`.
  *
- *   - `useAuthorize("rpcMethod")`    — asynchronous; React Query against
+ *   - `useAuthorize("rpcMethod")`   , asynchronous; React Query against
  *     `/api/auth/my-memberships`. ALWAYS imported from
  *     `@/lib/auth/use-authorize` AND must be inside a component that
  *     handles the `loading` field returned by the hook (hide-on-loading).
@@ -169,7 +169,7 @@ function analyse(filePath, source) {
           }
           if (ts.isIdentifier(el.name)) bound.add(el.name.text);
           else if (ts.isObjectBindingPattern(el.name)) {
-            // unsupported nested binding — flag
+            // unsupported nested binding, flag
           }
         }
         if (!bound.has("loading")) {

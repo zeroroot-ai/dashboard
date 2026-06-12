@@ -241,7 +241,7 @@ export default function DesignTokensPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Authoritative visual ledger for the dashboard&apos;s semantic + specialty tokens.
             Every Shadcn primitive auto-themes from these tokens. There is one immutable
-            dark brand — editing happens in{" "}
+            dark brand, editing happens in{" "}
             <code className="text-alt">app/globals.css</code> only.
           </p>
         </header>

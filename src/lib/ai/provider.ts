@@ -2,7 +2,7 @@
  * AI Provider Factory
  *
  * Thin factory that returns a GibsonLLMAdapter for a named provider config.
- * Credentials never cross into the dashboard process — the adapter proxies
+ * Credentials never cross into the dashboard process, the adapter proxies
  * every call to the Gibson daemon over gRPC, which holds the decrypted
  * credential, constructs the upstream Eino-backed provider, makes the call,
  * and streams back.
@@ -17,7 +17,7 @@ import type { LanguageModelV2 } from '@ai-sdk/provider';
  * Return a Vercel AI SDK LanguageModel for the named provider config.
  *
  * The returned adapter proxies every call to the Gibson daemon over
- * gRPC. Credentials never cross into the dashboard process — the
+ * gRPC. Credentials never cross into the dashboard process, the
  * daemon holds the decrypted credential, constructs the upstream
  * Eino-backed provider, makes the call, and streams back.
  *

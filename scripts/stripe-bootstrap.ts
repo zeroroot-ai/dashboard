@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 /**
- * stripe-bootstrap.ts — One-time Stripe environment bootstrap script.
+ * stripe-bootstrap.ts, One-time Stripe environment bootstrap script.
  *
  * Creates (or updates) the Stripe Customer Portal configuration for a
  * Gibson Stripe account (test or live mode). Run once per Stripe account
@@ -11,11 +11,11 @@
  *   npx ts-node scripts/stripe-bootstrap.ts --live   # live mode (sk_live_...)
  *
  * Environment variables required:
- *   STRIPE_SECRET_KEY   — Stripe API key for the target mode.
+ *   STRIPE_SECRET_KEY  , Stripe API key for the target mode.
  *
  * Product IDs for the portal features:
  *   STRIPE_PRODUCT_SQUAD, STRIPE_PRODUCT_ORG, STRIPE_PRODUCT_PLATFORM
- *   (optional — omit to skip subscription-update product list)
+ *   (optional, omit to skip subscription-update product list)
  *
  * On success: prints the configuration ID (bpc_...) to stdout.
  * Paste this value into the Helm chart as dashboard.billing.portalConfigurationId.
@@ -107,7 +107,7 @@ async function main() {
     await (stripe.billingPortal as { configurations: { update: (id: string, params: Record<string, unknown>) => Promise<{ id: string }> } }).configurations.update(existingId, {
       features,
       business_profile: {
-        headline: 'Gibson — AI Security Research Platform',
+        headline: 'Gibson, AI Security Research Platform',
         privacy_policy_url: 'https://zeroroot.ai/privacy',
         terms_of_service_url: 'https://zeroroot.ai/terms',
       },
@@ -122,7 +122,7 @@ async function main() {
     const config = await (stripe.billingPortal as unknown as { configurations: { create: (params: Record<string, unknown>) => Promise<{ id: string }> } }).configurations.create({
       features,
       business_profile: {
-        headline: 'Gibson — AI Security Research Platform',
+        headline: 'Gibson, AI Security Research Platform',
         privacy_policy_url: 'https://zeroroot.ai/privacy',
         terms_of_service_url: 'https://zeroroot.ai/terms',
       },

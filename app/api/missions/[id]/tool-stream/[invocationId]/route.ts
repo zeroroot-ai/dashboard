@@ -20,7 +20,7 @@
  *     `userClient(ComponentService)`. No direct daemon gRPC channel.
  *   - Errors and lifecycle events go to the canonical pino logger.
  *   - Client disconnect closes ONLY the SSE side; the upstream stream's
- *     context is NOT cancelled — the daemon's ring buffer retains events
+ *     context is NOT cancelled, the daemon's ring buffer retains events
  *     for late reconnect (design.md). We deliberately do not propagate
  *     `request.signal` aborts upstream.
  */
@@ -43,7 +43,7 @@ function sseFrame(event: string, data: unknown, id?: string): string {
   if (id) lines.push(`id: ${id}`);
   if (event) lines.push(`event: ${event}`);
   const json = typeof data === "string" ? data : JSON.stringify(data);
-  // SSE data lines must not contain raw newlines — split on \n.
+  // SSE data lines must not contain raw newlines, split on \n.
   for (const line of json.split("\n")) {
     lines.push(`data: ${line}`);
   }
@@ -131,7 +131,7 @@ export async function GET(
         let seq = 0;
         for await (const event of upstream) {
           // Map daemon event types to SSE event names. Empty string
-          // indicates a generic "message" event in SSE — for safety
+          // indicates a generic "message" event in SSE, for safety
           // we always emit a named event when the daemon has set one.
           const eventName = event.eventType || "message";
           const payload = {
@@ -185,7 +185,7 @@ export async function GET(
     },
     cancel() {
       // Browser-side disconnect. Spec headline-feature-completion R1.8:
-      // do NOT propagate the cancel upstream — the daemon's ring buffer
+      // do NOT propagate the cancel upstream, the daemon's ring buffer
       // keeps events for late reconnect. We just stop pumping the SSE
       // side; the for-await loop above will see the next enqueue throw
       // and break out without aborting the gRPC stream.

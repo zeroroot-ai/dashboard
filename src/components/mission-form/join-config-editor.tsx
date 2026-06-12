@@ -1,14 +1,14 @@
 /**
- * <JoinConfigEditor /> — form surface for the JOIN node config.
+ * <JoinConfigEditor />, form surface for the JOIN node config.
  *
  * Binds to the generated `JoinNodeConfig` proto type:
- *   wait_for[]    — multi-select from sibling node IDs.
- *   strategy      — Select for MergeStrategy enum.
- *   aggregator    — CEL expression, conditionally visible when
+ *   wait_for[]   , multi-select from sibling node IDs.
+ *   strategy     , Select for MergeStrategy enum.
+ *   aggregator   , CEL expression, conditionally visible when
  *                   strategy is MERGE_STRATEGY_CUSTOM.
  *
  * Inline validation surfaces in the controlled
- * `validationMessages` prop — non-empty wait_for is required,
+ * `validationMessages` prop, non-empty wait_for is required,
  * non-empty aggregator is required when strategy is CUSTOM.
  *
  * Spec: mission-dashboard-rewrite Requirement 1 AC 3 + Task 7.
@@ -246,7 +246,7 @@ export function JoinConfigEditor({
 }
 
 /**
- * validateJoinConfig — pure-function validator returning the
+ * validateJoinConfig, pure-function validator returning the
  * paths that violate constraints. Mirrors the daemon-side
  * protovalidate rules so the form gives author-time feedback.
  *

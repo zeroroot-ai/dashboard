@@ -148,7 +148,7 @@ export const queryKeys = {
       ['traces', tenantId, 'observation', obsId] as const,
   },
 
-  // Organization graph — teams + memberships + per-user inverse map.
+  // Organization graph, teams + memberships + per-user inverse map.
   // Shared cache so /dashboard/organization/users + the user detail page
   // hit the daemon once between navigations. dashboard#174.
   orgGraph: {

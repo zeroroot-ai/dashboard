@@ -72,10 +72,10 @@ describe('verifyCaptcha', () => {
   });
 
   describe('disabled mode', () => {
-    it('throws when provider env var is unset (one-code-path/206 — explicit choice required)', async () => {
+    it('throws when provider env var is unset (one-code-path/206, explicit choice required)', async () => {
       // Spec one-code-path/206: DASHBOARD_CAPTCHA_PROVIDER is REQUIRED at
       // boot. An unset provider is no longer silently equivalent to
-      // "disabled" — operators must opt in or out explicitly. The
+      // "disabled", operators must opt in or out explicitly. The
       // env-validator catches this at instrumentation.register(); this
       // test asserts the per-call defence stays consistent with the
       // boot-time contract.
@@ -283,7 +283,7 @@ describe('verifyCaptcha', () => {
 
     it('returns ok:false with reason:timeout when the request is aborted', async () => {
       captureFetch(async () => {
-        // Simulate the fetch call being aborted — the runtime would
+        // Simulate the fetch call being aborted, the runtime would
         // throw a DOMException with name 'AbortError'; we emulate that
         // contract here without relying on real timer plumbing.
         const err = new Error('The operation was aborted.');

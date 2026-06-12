@@ -5,7 +5,7 @@ import { useEffect } from "react";
 /**
  * Per-route error boundary for /docs/*.
  *
- * A render crash on one MDX page is contained here — the docs shell
+ * A render crash on one MDX page is contained here, the docs shell
  * (header + sidebar) stays mounted and the visitor can recover via the
  * reset button or navigate to another page via the sidebar.
  *
@@ -22,7 +22,7 @@ export default function DocsError({
   useEffect(() => {
     // Surface the error to the browser console for local debugging.
     // Production telemetry (Langfuse / Sentry) is wired at the app root,
-    // not here — this boundary is a UX-only concern.
+    // not here, this boundary is a UX-only concern.
     // eslint-disable-next-line no-console
     console.error("Docs page error:", error);
   }, [error]);

@@ -59,7 +59,7 @@ export default function GraphPage() {
 
   const canvasRef = useRef<GraphCanvasHandle>(null);
 
-  // Consolidated view-state — single source of truth for display + stats.
+  // Consolidated view-state, single source of truth for display + stats.
   const display = useGraphViewStore((s) => s.display);
   const setStats = useGraphViewStore((s) => s.setStats);
   const layoutMode = useGraphViewStore((s) => s.layoutMode);
@@ -83,7 +83,7 @@ export default function GraphPage() {
   const setTimelineCutoff = useGraphViewStore((s) => s.setTimelineCutoff);
   const setTimelinePlaying = useGraphViewStore((s) => s.setTimelinePlaying);
 
-  // TanStack Query — mission graph or full tenant graph
+  // TanStack Query, mission graph or full tenant graph
   const {
     data: queryData,
     isLoading,
@@ -103,7 +103,7 @@ export default function GraphPage() {
     setExtraEdges([]);
   }, [missionId, dataUpdatedAt]);
 
-  // Truncation detection — the daemon route returns total_node_count
+  // Truncation detection, the daemon route returns total_node_count
   const truncated = (queryData as { truncated?: boolean } | undefined)?.truncated ?? false;
   const totalNodeCount = (queryData as { total_node_count?: number } | undefined)?.total_node_count;
 
@@ -367,7 +367,7 @@ export default function GraphPage() {
         </div>
       )}
 
-      {/* Empty state — only shown when not loading and no data */}
+      {/* Empty state, only shown when not loading and no data */}
       {!isLoading && !hasData && (
         <div className="w-full h-full flex items-center justify-center">
           <div className="flex flex-col items-center gap-4 max-w-md text-center p-8">
@@ -394,7 +394,7 @@ export default function GraphPage() {
         </div>
       )}
 
-      {/* Graph canvas — fills the container */}
+      {/* Graph canvas, fills the container */}
       {hasData && (
         <GraphCanvas
           ref={canvasRef}
@@ -405,7 +405,7 @@ export default function GraphPage() {
         />
       )}
 
-      {/* Mission selector + Live toggle — top-center overlay */}
+      {/* Mission selector + Live toggle, top-center overlay */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
         <MissionSelector
           selectedMissionId={missionId ?? null}
@@ -455,7 +455,7 @@ export default function GraphPage() {
         </div>
       )}
 
-      {/* Camera + view controls — top-right overlay */}
+      {/* Camera + view controls, top-right overlay */}
       {hasData && (
         <GraphControls
           position="top-right"

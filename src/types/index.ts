@@ -441,13 +441,13 @@ export type {
 // ============================================================================
 
 export type {
-  // ProviderType removed — use string; see spec 25-daemon-driven-provider-config
+  // ProviderType removed, use string; see spec 25-daemon-driven-provider-config
   ProviderHealthStatus,
-  // AzureConfig, AWSConfig, OllamaConfig, OpenAIConfig removed — spec 25
+  // AzureConfig, AWSConfig, OllamaConfig, OpenAIConfig removed, spec 25
   RateLimitConfig,
   HealthStatus,
   ProviderConfig,
-  // ProviderConfigInput removed — use DaemonProviderConfigInput from gibson-client
+  // ProviderConfigInput removed, use DaemonProviderConfigInput from gibson-client
   ModelInfo,
   ConnectionTestResult,
   ProviderAuditEventType,
@@ -475,11 +475,11 @@ export type {
   ImportConfigRequest,
   GetAuditLogRequest,
   GetAuditLogResponse,
-  // ProviderFormData, ProviderFormErrors removed — spec 25
+  // ProviderFormData, ProviderFormErrors removed, spec 25
 } from './provider';
 
 export {
-  // PROVIDER_TYPE_CONFIG, PROVIDER_TYPES, PROVIDER_MODELS removed — spec 25
+  // PROVIDER_TYPE_CONFIG, PROVIDER_TYPES, PROVIDER_MODELS removed, spec 25
   HEALTH_STATUS_CONFIG,
   PROVIDER_AUDIT_EVENT_CONFIG,
 } from './provider';

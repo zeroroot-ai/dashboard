@@ -3,7 +3,7 @@
  *
  * Single source of truth for "what is a docs page" and how its MDX is
  * processed. Scanned content lives under `content/docs/` at the dashboard
- * root. Frontmatter is validated at build time against the schema below —
+ * root. Frontmatter is validated at build time against the schema below -
  * missing `title` or `description` fails the build with a clear error.
  *
  * Remark-gfm is enabled for GitHub-flavored markdown (tables, strikethrough,
@@ -21,9 +21,9 @@ import { z } from "zod";
 /**
  * Page frontmatter schema.
  *
- *   - `title` — required human-readable page title (sidebar, `<title>`, H1)
- *   - `description` — required short summary (SEO description, TOC preview)
- *   - `order` — optional sibling sort order in the sidebar (lower = earlier)
+ *   - `title`, required human-readable page title (sidebar, `<title>`, H1)
+ *   - `description`, required short summary (SEO description, TOC preview)
+ *   - `order`, optional sibling sort order in the sidebar (lower = earlier)
  */
 const pageSchema = z.object({
   title: z.string().min(1),

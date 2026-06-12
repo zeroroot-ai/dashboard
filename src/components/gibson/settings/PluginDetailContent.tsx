@@ -61,14 +61,14 @@ import { useAuthorize } from "@/src/lib/auth/use-authorize";
 // ---------------------------------------------------------------------------
 
 function formatUnixTs(unixBigInt: bigint | undefined): string {
-  if (!unixBigInt || unixBigInt === BigInt(0)) return "—";
+  if (!unixBigInt || unixBigInt === BigInt(0)) return "-";
   try {
     return new Date(Number(unixBigInt) * 1000).toLocaleString(undefined, {
       dateStyle: "medium",
       timeStyle: "short",
     });
   } catch {
-    return "—";
+    return "-";
   }
 }
 
@@ -218,7 +218,7 @@ function BindingRow({
           </div>
         ) : (
           <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">
-            {existingRef || "—"}
+            {existingRef || "-"}
           </code>
         )}
       </TableCell>
@@ -330,7 +330,7 @@ export function PluginDetailContent({ install }: PluginDetailContentProps) {
         <CardContent className="grid grid-cols-2 gap-3 pb-4 text-xs sm:grid-cols-3">
           <div>
             <p className="text-muted-foreground mb-0.5 font-medium">Version</p>
-            <p className="font-mono">{install.version || "—"}</p>
+            <p className="font-mono">{install.version || "-"}</p>
           </div>
           <div>
             <p className="text-muted-foreground mb-0.5 font-medium">Runtime</p>
@@ -441,7 +441,7 @@ export function PluginDetailContent({ install }: PluginDetailContentProps) {
            *
            * The daemon's plugin runtime registry (Spec 2) tracks per-install
            * invocation events. The dashboard admin RPC surface (Spec 4 Phase 1)
-           * does not yet expose a ListPluginInvocations RPC — add it to
+           * does not yet expose a ListPluginInvocations RPC, add it to
            * PluginsAdminService when the invocation tracking store is
            * implemented.
            *

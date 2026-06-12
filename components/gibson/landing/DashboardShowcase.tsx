@@ -1,7 +1,7 @@
 import Image from 'next/image';
 
 /**
- * DashboardShowcase — a framed product screenshot on the public landing
+ * DashboardShowcase, a framed product screenshot on the public landing
  * (dashboard#707). The image is swappable: the real PNG lives at
  * `public/dashboard-preview.png` (or pass `src`) and the frame stays.
  */

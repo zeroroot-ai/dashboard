@@ -5,19 +5,19 @@
  *
  * Three-step flow for adding an LLM provider:
  *
- *   1. Pick provider type    — descriptors come from the daemon's
+ *   1. Pick provider type   , descriptors come from the daemon's
  *                              GetSupportedProviders RPC.
- *   2. Enter credentials +   — fields rendered from the descriptor's
+ *   2. Enter credentials +  , fields rendered from the descriptor's
  *      Test connection         CredentialField list. "Test" hits the daemon
  *                              TestProvider RPC, which returns the live model
  *                              catalogue from the provider's API on success.
- *   3. Pick a default model  — populated from the live test result; falls back
+ *   3. Pick a default model , populated from the live test result; falls back
  *      and save                to the descriptor's static defaultModels for
  *                              providers (e.g. Bedrock) where the daemon
  *                              already knows the catalogue.
  *
  * The same component drives the empty-state first-run flow AND the
- * "Add Provider" dialog for subsequent providers — the only difference is
+ * "Add Provider" dialog for subsequent providers, the only difference is
  * the surrounding chrome (full panel vs. dialog).
  *
  * Spec: providers-wizard.
@@ -103,7 +103,7 @@ export interface ProviderWizardProps {
   onComplete?: () => void;
   /** Initial provider type, when launching directly into step 2 (e.g. preselected from a card). */
   initialType?: string;
-  /** Optional cancel button — present in the dialog form, absent in empty-state. */
+  /** Optional cancel button, present in the dialog form, absent in empty-state. */
   onCancel?: () => void;
 }
 
@@ -161,7 +161,7 @@ const GCP_REGIONS = [
 ];
 
 // ---------------------------------------------------------------------------
-// CredentialInput — dispatches to the right input widget by field type
+// CredentialInput, dispatches to the right input widget by field type
 // ---------------------------------------------------------------------------
 
 type FieldProps = React.InputHTMLAttributes<HTMLInputElement> & {
@@ -325,7 +325,7 @@ function ProviderTypePicker({
 }
 
 // ---------------------------------------------------------------------------
-// IrsaAwareCredentialFields — descriptor-driven field list with bool/checkbox
+// IrsaAwareCredentialFields, descriptor-driven field list with bool/checkbox
 // rendering and IRSA-based hidden-field logic.
 // ---------------------------------------------------------------------------
 
@@ -335,7 +335,7 @@ function ProviderTypePicker({
  * Bool-typed fields (fieldType === 'BOOL') render as a Checkbox. When a field
  * named `use_irsa` is checked, any sibling field that is both secret AND
  * optional is hidden from the form (but its default empty value is still
- * present in the form state so the daemon receives `key: ""` on submit — it
+ * present in the form state so the daemon receives `key: ""` on submit, it
  * needs that to understand the field was intentionally left blank).
  *
  * Hiding logic is generic: it applies whenever a descriptor contains a
@@ -451,7 +451,7 @@ export interface CredentialsAndTestProps {
   initialValues?: Record<string, string>;
   /** Placeholder text for secret inputs, e.g. "Leave blank to keep existing value". */
   secretFieldPlaceholder?: string;
-  /** Called after every form-value change — lets the parent read current values. */
+  /** Called after every form-value change, lets the parent read current values. */
   onValuesChange?: (values: CredentialFormValues) => void;
   /** Called with the probe result banner data after a test. */
   onTestResult?: (result: ProbeResult | null) => void;
@@ -487,7 +487,7 @@ export function CredentialsAndTest({
     mode: "onChange",
   });
 
-  // Keep the parent's state in sync — needed so the model picker on step 3
+  // Keep the parent's state in sync, needed so the model picker on step 3
   // can read the credentials at "Save" time.
   React.useEffect(() => {
     const sub = form.watch((value) => {
@@ -552,7 +552,7 @@ export function CredentialsAndTest({
               {externalProbeResult!.models.length > 0 ? (
                 <>Found {externalProbeResult!.models.length} model{externalProbeResult!.models.length === 1 ? "" : "s"}.</>
               ) : (
-                "No live model list — using the provider's static catalogue."
+                "No live model list, using the provider's static catalogue."
               )}
             </AlertDescription>
           </Alert>
@@ -671,7 +671,7 @@ function ModelPickerAndSave({
             <AlertCircle className="size-4" />
             <AlertDescription className="text-xs">
               The provider didn&apos;t return a model list. Type the model name
-              manually below — Gibson will use it for new agent slots that
+              manually below, Gibson will use it for new agent slots that
               reference this provider.
             </AlertDescription>
           </Alert>
@@ -714,7 +714,7 @@ function ModelPickerAndSave({
         {pickedModelMeta?.deprecated && (
           <Alert>
             <AlertDescription className="text-xs">
-              This model is deprecated — consider switching to a newer model.
+              This model is deprecated, consider switching to a newer model.
             </AlertDescription>
           </Alert>
         )}
@@ -768,7 +768,7 @@ export function ProviderWizard({
 
   // step: 1 = pick type, 2 = creds, 3 = model + save.
   // Any completed probe result (pass or fail) advances to step 3; the probe
-  // is advisory — a failed test does not block saving (dashboard#288).
+  // is advisory, a failed test does not block saving (dashboard#288).
   const step: 1 | 2 | 3 = !selectedType ? 1 : probeResult !== null ? 3 : 2;
 
   function reset() {
@@ -956,7 +956,7 @@ export function ProviderWizard({
           {probeResult && !probeResult.ok && (
             <Alert>
               <AlertDescription>
-                Connection test did not pass — you can still save and troubleshoot later.
+                Connection test did not pass, you can still save and troubleshoot later.
               </AlertDescription>
             </Alert>
           )}

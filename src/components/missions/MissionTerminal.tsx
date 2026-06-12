@@ -1,5 +1,5 @@
 /**
- * MissionTerminal — xterm.js-backed terminal panel with collapse and resize.
+ * MissionTerminal, xterm.js-backed terminal panel with collapse and resize.
  *
  * This component always runs client-side. Callers MUST load it via
  * next/dynamic with { ssr: false } to avoid SSR issues with xterm's DOM
@@ -70,7 +70,7 @@ function readStoredHeight(): number {
       if (!isNaN(n)) return n;
     }
   } catch {
-    // localStorage unavailable (SSR guard — should not reach here)
+    // localStorage unavailable (SSR guard, should not reach here)
   }
   return DEFAULT_HEIGHT;
 }
@@ -256,7 +256,7 @@ export const MissionTerminal = React.forwardRef<
         backgroundColor: "var(--terminal-bg)",
       }}
     >
-      {/* Drag handle — only shown when panel is open */}
+      {/* Drag handle, only shown when panel is open */}
       {isOpen && (
         <div
           onMouseDown={handleDragMouseDown}
@@ -301,7 +301,7 @@ export const MissionTerminal = React.forwardRef<
         </div>
       </div>
 
-      {/* xterm container — only rendered when open */}
+      {/* xterm container, only rendered when open */}
       {isOpen && (
         <div
           ref={containerRef}

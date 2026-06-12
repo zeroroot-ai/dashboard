@@ -1,17 +1,17 @@
 "use client";
 
 /**
- * permission-gate.tsx — Declarative permission gating for UI elements
+ * permission-gate.tsx, Declarative permission gating for UI elements
  *
  * Reads the permissions cache and conditionally renders children.
  * SSR-safe: renders `fallback` during loading so the server can hydrate
  * without flicker. The cache is populated client-side after mount.
  *
  * Supported `required` formats:
- *   "is_admin"                 — requires isAdmin === true
- *   "can_execute:tool:nmap"    — requires action on componentRef
- *   "can_read:agent:opencode"  — similar
- *   "can_write:plugin:gitlab"  — similar
+ *   "is_admin"                , requires isAdmin === true
+ *   "can_execute:tool:nmap"   , requires action on componentRef
+ *   "can_read:agent:opencode" , similar
+ *   "can_write:plugin:gitlab" , similar
  *
  * Usage:
  *   <PermissionGate tenantId={tenantId} required="is_admin">
@@ -46,7 +46,7 @@ interface PermissionGateProps {
   fallback?: React.ReactNode;
   /**
    * Rendered while the permissions cache is loading.
-   * Defaults to null (nothing rendered — avoids FOUC).
+   * Defaults to null (nothing rendered, avoids FOUC).
    */
   loadingFallback?: React.ReactNode;
 }
@@ -63,7 +63,7 @@ function parseRequired(spec: string): { kind: "admin" } | { kind: "component"; a
     const componentRef = parts.slice(1).join(":");
     return { kind: "component", action, ref: componentRef };
   }
-  // Unrecognized format — default to deny
+  // Unrecognized format, default to deny
   return { kind: "component", action: "", ref: "" };
 }
 

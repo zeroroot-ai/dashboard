@@ -1,11 +1,11 @@
 /**
- * fault-proxy.ts — worker-scoped Playwright test fixtures for JWKS and
+ * fault-proxy.ts, worker-scoped Playwright test fixtures for JWKS and
  * token-exchange fault injection.
  *
  * WHY a proxy instead of a server-side env-var toggle
  * ---------------------------------------------------
  * Auth.js performs JWKS fetches and OIDC token exchanges as server-side HTTP
- * calls from the Next.js process — they are NOT browser-initiated requests.
+ * calls from the Next.js process, they are NOT browser-initiated requests.
  * Playwright's `page.route()` / `page.on("request")` only intercept browser
  * requests; they cannot intercept server-side Node.js HTTP calls.
  *
@@ -23,7 +23,7 @@
  * into the relevant code paths (auth.ts JWKS fetch wrapper and token-exchange
  * wrapper) when TEST_FIXTURES_ENABLED=true is set in the cluster's Next.js pod.
  *
- * The proxy fixtures exported here are the ALTERNATIVE pattern — used when
+ * The proxy fixtures exported here are the ALTERNATIVE pattern, used when
  * running the suite against a local Next.js dev server (E2E_AUTH_SUITE is unset,
  * PLAYWRIGHT_BASE_URL=http://localhost:3000, and the webServer is started by
  * Playwright itself with TEST_FIXTURES_ENABLED=true injected). In that mode the
@@ -34,7 +34,7 @@
  * The test helpers in this file expose a unified interface that works in both
  * modes.
  *
- * Spec: auth-resolution-hardening — Task 14 (primitive 2: JWKS + token-exchange).
+ * Spec: auth-resolution-hardening, Task 14 (primitive 2: JWKS + token-exchange).
  *
  * @module e2e/auth/fixtures/fault-proxy
  */
@@ -92,7 +92,7 @@ export async function clearAllFaults(page: Page): Promise<void> {
         timeout: 5_000,
       });
     } catch {
-      // ignore — best effort cleanup
+      // ignore, best effort cleanup
     }
   }
 }
@@ -129,7 +129,7 @@ export async function isFaultInjectionAvailable(page: Page): Promise<boolean> {
  * @example
  * const ok = await revokeTestMembership(page, "user:abc", "tenant:xyz");
  * if (!ok) { test.skip(true, "fga-revoke not available"); return; }
- * // navigate to protected route — middleware should trigger federated signout
+ * // navigate to protected route, middleware should trigger federated signout
  */
 export async function revokeTestMembership(
   page: Page,

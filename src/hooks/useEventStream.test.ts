@@ -30,7 +30,7 @@ describe('useEventStream', () => {
       readyState: 1, // OPEN
     };
 
-    // Mock EventSource. Must be a function expression, NOT an arrow function —
+    // Mock EventSource. Must be a function expression, NOT an arrow function -
     // arrows are not constructable, so `new EventSource(...)` would throw
     // "is not a constructor" and the hook's try/catch would silently swallow
     // it. Returning a non-primitive from a constructor makes `new` resolve
@@ -40,7 +40,7 @@ describe('useEventStream', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-    // Defence in depth — describe blocks below call vi.useFakeTimers() and
+    // Defence in depth, describe blocks below call vi.useFakeTimers() and
     // older test runners would leak the fake-timer state into later describes.
     // Explicitly switch back so each test starts with real timers.
     vi.useRealTimers();
@@ -234,7 +234,7 @@ describe('useEventStream', () => {
         data: 'invalid json',
       });
 
-      // Hook's onmessage swallows JSON.parse errors silently — see
+      // Hook's onmessage swallows JSON.parse errors silently, see
       // useEventStream.ts (catch with empty body). The observable contract
       // is "do not disconnect" and "do not push a garbled event into the
       // buffer"; no log call is emitted.
@@ -280,7 +280,7 @@ describe('useEventStream', () => {
   describe('error handling and reconnection', () => {
     beforeEach(() => {
       // shouldAdvanceTime lets waitFor (testing-library) keep polling under
-      // fake timers — without it, the microtask + setTimeout queue is paused
+      // fake timers, without it, the microtask + setTimeout queue is paused
       // and waitFor's interval never re-fires, so async assertions all hit
       // the 5s outer timeout.
       vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -432,7 +432,7 @@ describe('useEventStream', () => {
 
     it('should reset attempts on manual reconnect', async () => {
       // shouldAdvanceTime lets waitFor (testing-library) keep polling under
-      // fake timers — without it, the microtask + setTimeout queue is paused
+      // fake timers, without it, the microtask + setTimeout queue is paused
       // and waitFor's interval never re-fires, so async assertions all hit
       // the 5s outer timeout.
       vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -548,7 +548,7 @@ describe('useEventStream', () => {
 
     it('should return error when connection fails', async () => {
       // shouldAdvanceTime lets waitFor (testing-library) keep polling under
-      // fake timers — without it, the microtask + setTimeout queue is paused
+      // fake timers, without it, the microtask + setTimeout queue is paused
       // and waitFor's interval never re-fires, so async assertions all hit
       // the 5s outer timeout.
       vi.useFakeTimers({ shouldAdvanceTime: true });

@@ -4,7 +4,7 @@
  * Resolves a tenantId from the session into a full Tenant object from the
  * caller's FGA-backed membership list (daemon `ListMyMemberships`), NOT by
  * reading the Tenant CRD from Kubernetes. Per ADR-0044, tenant resolution is
- * an FGA/identity concern, not a Kubernetes operation — the dashboard's only
+ * an FGA/identity concern, not a Kubernetes operation, the dashboard's only
  * remaining K8s access is Tenant *provisioning* (signup) + billing lifecycle.
  *
  * Resolving from the membership list is also fail-closed by construction: a
@@ -21,7 +21,7 @@ import type { Tenant } from '@/src/types/tenant';
  * Resolve a tenantId into a full Tenant object via the caller's memberships.
  *
  * Returns null if the caller is not a member of the tenant or membership
- * resolution fails (FGA/daemon unavailable) — callers handle null gracefully
+ * resolution fails (FGA/daemon unavailable), callers handle null gracefully
  * (the layout drops nulls so a single miss doesn't break chrome render).
  *
  * Note: rich CR-only fields (creationTimestamp, owner, exact memberCount) are

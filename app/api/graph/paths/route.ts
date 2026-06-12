@@ -1,7 +1,7 @@
 /**
- * Graph Paths API Route — Phase 4, Task 15
+ * Graph Paths API Route, Phase 4, Task 15
  *
- * POST /api/graph/paths — proxies QueryPaths through daemon.
+ * POST /api/graph/paths, proxies QueryPaths through daemon.
  */
 
 import 'server-only';

@@ -8,7 +8,7 @@ import { render as renderBillingRollback } from '../templates/billing-rollback';
 import type { EmailMessage } from '../types';
 
 /**
- * Deliverability guard — reject any template that references a remote
+ * Deliverability guard, reject any template that references a remote
  * image (tracking pixel, logo served over HTTP(S), etc.).
  */
 const REMOTE_IMG_RE = /<img[^>]+src=["']?https?:/i;
@@ -148,7 +148,7 @@ describe('templates/billing-rollback', () => {
   it('matches snapshot', () => expect(msg).toMatchSnapshot());
 });
 
-describe('all templates — deliverability audit', () => {
+describe('all templates, deliverability audit', () => {
   const renderers: Array<[string, () => EmailMessage]> = [
     [
       'verify',

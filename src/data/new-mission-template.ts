@@ -3,14 +3,14 @@
  *
  * Loaded into the editor when the user clicks "New Mission". Unlike the old
  * three-field stub, this is a complete, schema-bound mission that compiles
- * cleanly via ValidateMissionCUE — so the Run button is enabled the moment the
+ * cleanly via ValidateMissionCUE, so the Run button is enabled the moment the
  * editor opens. It mirrors the structure of the shipped single-node templates
  * (e.g. secrets-audit), which the daemon already validates as known-good, so
  * "validates clean on a fresh mission" holds by construction.
  *
  * The author fills in `targetRef` (and tunes the node) before running.
  *
- * dashboard#492 (D1). LLM prepopulation: dashboard#532 — when the tenant has a
+ * dashboard#492 (D1). LLM prepopulation: dashboard#532, when the tenant has a
  * default provider, the agent node's `llm_slots` array is seeded with the
  * primary slot binding as editable metadata. The singular `llm` field was
  * removed in sdk v0.128.0 (field 4 retired, field 5 = repeated llm_slots).
@@ -25,7 +25,7 @@ export interface NewMissionLLMSeed {
 /**
  * buildNewMissionCue returns the New Mission CUE. When `seed.provider` is set
  * (the tenant's default provider), the agent node carries an `llm_slots` array
- * with a single "primary" entry pinning that provider/model — editable metadata
+ * with a single "primary" entry pinning that provider/model, editable metadata
  * the author can change or delete. An empty `provider` is a valid fall-through
  * marker; the daemon resolves it against the tenant's configured defaults.
  * With no seed, the node inherits the tenant default at run time.
@@ -73,5 +73,5 @@ mission: missionv1.#MissionDefinition & {
 `;
 }
 
-/** Static default (no LLM seed) — back-compat for existing imports. */
+/** Static default (no LLM seed), back-compat for existing imports. */
 export const NEW_MISSION_CUE = buildNewMissionCue();

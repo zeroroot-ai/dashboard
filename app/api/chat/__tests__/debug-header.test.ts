@@ -162,7 +162,7 @@ beforeEach(() => {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('POST /api/chat — X-Gibson-Debug header', () => {
+describe('POST /api/chat, X-Gibson-Debug header', () => {
   it('includes X-Gibson-System-Prompt-Debug when X-Gibson-Debug: 1 is sent', async () => {
     const { POST } = await import('../route');
     const res = await POST(makeRequest({ debugHeader: true }));

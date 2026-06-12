@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * grant.ts — catalog-enablement server actions.
+ * grant.ts, catalog-enablement server actions.
  *
  * Replaces the previous ComponentGrant CRD write (applyComponentGrant →
  * k8s().apply) with a daemon RPC call to MembershipService.SetCatalogEnabled

@@ -37,7 +37,7 @@ export interface ListActiveGrantsOptions {
  * Returns active capability grants for the tenant resolved from identity.
  * Optionally filtered by recipient class, RPC, and near-expiry status.
  *
- * Read-only — there is no revoke surface in v1.
+ * Read-only, there is no revoke surface in v1.
  */
 export async function listActiveGrants(
   opts: ListActiveGrantsOptions = {},

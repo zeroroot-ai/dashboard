@@ -11,7 +11,7 @@
  * Flow:
  *   1. Sign up user A with email E (establishes the email in the system).
  *   2. Attempt signup with the same email E but a different company name.
- *   3. Expect EMAIL_ALREADY_REGISTERED response — either:
+ *   3. Expect EMAIL_ALREADY_REGISTERED response, either:
  *      (a) A page-level inline alert on /signup, or
  *      (b) A redirect to /signup/duplicate-email page.
  *   4. In either case, assert that a link to /login and /forgot-password
@@ -68,7 +68,7 @@ async function fillAndSubmitSignup(
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe("Signup — duplicate email", () => {
+test.describe("Signup, duplicate email", () => {
   test("duplicate email shows EMAIL_ALREADY_REGISTERED with sign-in and reset links", async ({
     browser,
   }) => {

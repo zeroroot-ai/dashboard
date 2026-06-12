@@ -1,5 +1,5 @@
 /**
- * /api/test/inject-fault — server-side fault-injection control endpoint.
+ * /api/test/inject-fault, server-side fault-injection control endpoint.
  *
  * ONLY active when `TEST_FIXTURES_ENABLED=true`. Returns 404 in all other
  * environments (production, staging, any build where the env var is absent
@@ -13,20 +13,20 @@
  *
  * POST /api/test/inject-fault
  *   Body (JSON):
- *     subsystem  — "fga" | "jwks" | "token-exchange"
- *     mode       — "503" | "malformed-200" | "timeout" | "clear"
- *     scope      — "all" | "next-N-calls"  (default: "all")
+ *     subsystem , "fga" | "jwks" | "token-exchange"
+ *     mode      , "503" | "malformed-200" | "timeout" | "clear"
+ *     scope     , "all" | "next-N-calls"  (default: "all")
  *
  *   Response 200 { ok: true, subsystem, mode, scope }
- *   Response 400 { error: "..." }  — invalid body
- *   Response 404                   — TEST_FIXTURES_ENABLED != "true"
+ *   Response 400 { error: "..." } , invalid body
+ *   Response 404                  , TEST_FIXTURES_ENABLED != "true"
  *
  * GET /api/test/inject-fault
  *   Returns 200 { faults: { [subsystem]: { mode, remaining } } } so tests
  *   can inspect active faults without needing side-channel knowledge.
  *   Returns 404 when not enabled.
  *
- * Spec: auth-resolution-hardening — Task 14 (primitive 1).
+ * Spec: auth-resolution-hardening, Task 14 (primitive 1).
  */
 
 import { NextResponse, type NextRequest } from "next/server";

@@ -20,7 +20,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("validateRedirectTo — empty / nullish input", () => {
+describe("validateRedirectTo, empty / nullish input", () => {
   it("returns '/' for null", () => {
     expect(validateRedirectTo(null)).toBe("/");
   });
@@ -38,7 +38,7 @@ describe("validateRedirectTo — empty / nullish input", () => {
   });
 });
 
-describe("validateRedirectTo — relative paths (always safe)", () => {
+describe("validateRedirectTo, relative paths (always safe)", () => {
   it("passes through a simple root-relative path", () => {
     expect(validateRedirectTo("/dashboard")).toBe("/dashboard");
   });
@@ -56,7 +56,7 @@ describe("validateRedirectTo — relative paths (always safe)", () => {
   });
 });
 
-describe("validateRedirectTo — protocol-relative and open-redirect vectors", () => {
+describe("validateRedirectTo, protocol-relative and open-redirect vectors", () => {
   it("rejects protocol-relative '//evil.com'", () => {
     expect(validateRedirectTo("//evil.com")).toBe("/");
   });
@@ -70,7 +70,7 @@ describe("validateRedirectTo — protocol-relative and open-redirect vectors", (
   });
 });
 
-describe("validateRedirectTo — forbidden schemes", () => {
+describe("validateRedirectTo, forbidden schemes", () => {
   it("rejects 'javascript:alert(1)'", () => {
     expect(validateRedirectTo("javascript:alert(1)")).toBe("/");
   });
@@ -84,7 +84,7 @@ describe("validateRedirectTo — forbidden schemes", () => {
   });
 });
 
-describe("validateRedirectTo — same-origin absolute URL (NEXTAUTH_URL set)", () => {
+describe("validateRedirectTo, same-origin absolute URL (NEXTAUTH_URL set)", () => {
   it("accepts a same-origin URL and returns only the path", () => {
     vi.stubEnv("NEXTAUTH_URL", "https://dashboard.example.com");
     expect(validateRedirectTo("https://dashboard.example.com/settings")).toBe("/settings");
@@ -101,7 +101,7 @@ describe("validateRedirectTo — same-origin absolute URL (NEXTAUTH_URL set)", (
   });
 });
 
-describe("validateRedirectTo — cross-origin rejection (NEXTAUTH_URL set)", () => {
+describe("validateRedirectTo, cross-origin rejection (NEXTAUTH_URL set)", () => {
   it("rejects a different-domain absolute URL", () => {
     vi.stubEnv("NEXTAUTH_URL", "https://dashboard.example.com");
     expect(validateRedirectTo("https://evil.com/steal")).toBe("/");
@@ -118,7 +118,7 @@ describe("validateRedirectTo — cross-origin rejection (NEXTAUTH_URL set)", () 
   });
 });
 
-describe("validateRedirectTo — no NEXTAUTH_URL configured", () => {
+describe("validateRedirectTo, no NEXTAUTH_URL configured", () => {
   beforeEach(() => {
     vi.stubEnv("NEXTAUTH_URL", "");
   });

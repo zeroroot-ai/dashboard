@@ -172,7 +172,7 @@ function KpiCards() {
         </CardContent>
       </Card>
 
-      {/* Graph Nodes — not yet backed by a hook; shows 0 until graph hook is wired */}
+      {/* Graph Nodes, not yet backed by a hook; shows 0 until graph hook is wired */}
       <Card className="glass-hack border-highlight/40">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
@@ -477,10 +477,10 @@ export function DashboardContent() {
       {/* KPI row */}
       {isLoading ? <KPICardsSkeleton /> : <KpiCards />}
 
-      {/* Attack-surface graph — dominant visual hero on the landing route */}
+      {/* Attack-surface graph, dominant visual hero on the landing route */}
       <GraphHero />
 
-      {/* Component cards — Agents, Tools, Plugins */}
+      {/* Component cards, Agents, Tools, Plugins */}
       <ComponentCards />
 
       {/* Activity split */}

@@ -5,7 +5,7 @@
  *
  * Client component that receives daemon-fetched conversations from
  * ConversationListProvider and merges them into the Zustand chat store on
- * mount. Renders nothing — it is purely a hydration side-effect.
+ * mount. Renders nothing, it is purely a hydration side-effect.
  *
  * When `storeUnavailable` is true, it sets `conversationStoreError` in the
  * store so the chat UI can render a distinct error state (never a silent
@@ -38,7 +38,7 @@ export function ConversationListHydrator({
     } else if (conversations.length > 0) {
       hydrateConversations(conversations);
     }
-    // Run once on mount — the props are stable (passed from a server component
+    // Run once on mount, the props are stable (passed from a server component
     // that only renders once per page load).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

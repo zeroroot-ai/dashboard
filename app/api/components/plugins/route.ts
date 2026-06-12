@@ -28,7 +28,7 @@ export async function GET() {
       return activeTenantApiResponse(err);
     }
 
-    // Query plugins — SPIFFE mTLS transport resolves both _system and tenant components.
+    // Query plugins, SPIFFE mTLS transport resolves both _system and tenant components.
     const [systemResponse, tenantResponse] = await Promise.all([
       listPlugins(session?.user?.id),
       Promise.resolve({ plugins: [] }),

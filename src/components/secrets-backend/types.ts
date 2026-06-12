@@ -36,7 +36,7 @@ export interface BrokerFormValues {
   /** Vault KV mount path */
   mount: string;
   /**
-   * Auth method string — provider-specific set of allowed values.
+   * Auth method string, provider-specific set of allowed values.
    * Vault: "token" | "approle" | "jwt" | "kubernetes" | "aws_iam"
    * GCP: "service_account" | "workload_identity"
    * Azure: "service_principal" | "workload_identity"
@@ -56,7 +56,7 @@ export interface BrokerFormValues {
   approleRoleId: string;
 
   // -------------------------------------------------------------------------
-  // Sensitive fields — never returned by GetBrokerConfig, write-only
+  // Sensitive fields, never returned by GetBrokerConfig, write-only
   // -------------------------------------------------------------------------
 
   /** Vault token (auth method = token) */
@@ -77,7 +77,7 @@ export interface BrokerFormValues {
   /**
    * UX-only acknowledgement that switching providers will not migrate
    * existing secrets. Required (true) when showMigrationWarning is true
-   * before the Save button is enabled. Never sent to the daemon — the
+   * before the Save button is enabled. Never sent to the daemon, the
    * server action's Zod schema strips unknown fields.
    *
    * Reset to false whenever the selected provider changes so an
@@ -100,7 +100,7 @@ export const BROKER_FORM_DEFAULTS: BrokerFormValues = {
   clientId: "",
   roleArn: "",
   approleRoleId: "",
-  // Sensitive — always start empty
+  // Sensitive, always start empty
   vaultToken: "",
   approleSecretId: "",
   awsAccessKeyId: "",

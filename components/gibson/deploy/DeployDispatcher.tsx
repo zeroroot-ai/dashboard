@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * DeployDispatcher — per-type dispatcher for the deploy wizard.
+ * DeployDispatcher, per-type dispatcher for the deploy wizard.
  *
  * Replaces the orphan DeployWizard.tsx (which showed generic helm /
  * docker / manual instructions referencing a non-existent component
@@ -281,11 +281,11 @@ function PermissionsStep({
               , and invoke {counts.invoke} plugin{counts.invoke === 1 ? '' : 's'}
             </>
           )}
-          {grants.length === 0 && ' — i.e. only tenant-member inherited access'}.
+          {grants.length === 0 && ', i.e. only tenant-member inherited access'}.
         </AlertDescription>
       </Alert>
 
-      {/* Show advanced — free-form (object_ref, relation) input for ops debugging */}
+      {/* Show advanced, free-form (object_ref, relation) input for ops debugging */}
       <details className="text-xs">
         <summary
           className="cursor-pointer text-muted-foreground hover:text-foreground"

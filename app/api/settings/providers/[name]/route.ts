@@ -1,11 +1,11 @@
 /**
- * GET    /api/settings/providers/[name] — retrieve a single provider config
- * PATCH  /api/settings/providers/[name] — update an existing provider config
- * PUT    /api/settings/providers/[name] — alias for PATCH (client compat)
- * DELETE /api/settings/providers/[name] — permanently delete a provider config
+ * GET    /api/settings/providers/[name], retrieve a single provider config
+ * PATCH  /api/settings/providers/[name], update an existing provider config
+ * PUT    /api/settings/providers/[name], alias for PATCH (client compat)
+ * DELETE /api/settings/providers/[name], permanently delete a provider config
  *
  * All handlers delegate to the daemon TenantAdminService RPCs.
- * No storage logic lives here — this file is delegation-only.
+ * No storage logic lives here, this file is delegation-only.
  */
 
 import 'server-only';

@@ -1,6 +1,6 @@
 ---
 title: Gibson ADK
-description: Build autonomous security agents with Gibson — the agent orchestration platform from zeroroot.ai. Get up and running in under an hour.
+description: Build autonomous security agents with Gibson, the agent orchestration platform from zeroroot.ai. Get up and running in under an hour.
 ---
 
 Gibson is **zeroroot.ai's** AI agent platform for security work. You
@@ -8,7 +8,7 @@ build agents, tools, and plugins; Gibson runs them as missions,
 captures everything they discover into a knowledge graph, and gives
 your team a dashboard to monitor, replay, and act on findings.
 
-These docs are for builders — engineers and security teams using
+These docs are for builders, engineers and security teams using
 Gibson to ship autonomous workflows.
 
 ## What you build
@@ -19,8 +19,8 @@ of work:
 | Component | Use it when… |
 |---|---|
 | **Agent** | You want autonomous reasoning. Agents pick what to do next, call tools, query the knowledge graph, and submit findings. They run inside a mission. |
-| **Tool** | You have a stateless capability with a fixed input/output contract — a port scan, an HTTP probe, a CVE lookup. Tools are called by agents. |
-| **Plugin** | You need a long-running, stateful integration — a Shodan client, a SIEM connector, a custom database. Plugins hold credentials and are called by tools. |
+| **Tool** | You have a stateless capability with a fixed input/output contract, a port scan, an HTTP probe, a CVE lookup. Tools are called by agents. |
+| **Plugin** | You need a long-running, stateful integration, a Shodan client, a SIEM connector, a custom database. Plugins hold credentials and are called by tools. |
 
 You write components against the **Gibson SDK** (Go), register them
 with `gibson component register`, and they connect to your tenant on
@@ -28,23 +28,23 @@ with `gibson component register`, and they connect to your tenant on
 
 ## What Gibson does for you
 
-- **Mission orchestration** — you describe work as a DAG of nodes
+- **Mission orchestration**, you describe work as a DAG of nodes
   (agents, tools, plugins, conditions, parallel branches). Gibson runs
   it, with pause/resume and checkpoint replay.
-- **Knowledge graph** — every host, port, service, finding, and attack
+- **Knowledge graph**, every host, port, service, finding, and attack
   pattern your agents see is stored in a per-tenant graph. Future
   agents query it before re-doing work.
-- **Three-tier memory** — working memory inside one agent invocation;
+- **Three-tier memory**, working memory inside one agent invocation;
   mission memory shared by every node in the run; long-term memory that
   persists across missions.
-- **LLM slot routing** — agents declare slots (`primary`,
+- **LLM slot routing**, agents declare slots (`primary`,
   `summarizer`, …); your tenant's policy maps each slot to a real
   model. Bring your own provider keys.
-- **Secrets management** — bind credentials to plugins; rotate without
+- **Secrets management**, bind credentials to plugins; rotate without
   redeploying.
-- **Findings + audit** — every discovery is structured, severity-tagged,
+- **Findings + audit**, every discovery is structured, severity-tagged,
   and tied back to the mission, agent, and target that produced it.
-- **Observability** — LLM tracing, cost/latency metrics,
+- **Observability**, LLM tracing, cost/latency metrics,
   per-mission replay.
 
 ## Start here
@@ -52,14 +52,14 @@ with `gibson component register`, and they connect to your tenant on
 The fastest path from "signed up" to "my first agent is running",
 roughly 60 minutes:
 
-1. **[Install](/docs/install)** — sign up, install the `gibson` CLI, point
+1. **[Install](/docs/install)**, sign up, install the `gibson` CLI, point
    it at your tenant.
-2. **[Getting Started](/docs/getting-started)** — the 7-step walkthrough:
+2. **[Getting Started](/docs/getting-started)**, the 7-step walkthrough:
    issue a credential, register on your machine, build the agent, run
    a mission.
-3. **[Your First Agent](/docs/first-agent)** — go deeper on the Agent
+3. **[Your First Agent](/docs/first-agent)**, go deeper on the Agent
    builder, the Harness, and a more realistic example.
-4. **[Component bootstrap & auth](/docs/component-bootstrap)** — only if
+4. **[Component bootstrap & auth](/docs/component-bootstrap)**, only if
    you hit a 401; the layered checks for the credential lifecycle.
 
 If you want to jump straight to a specific task:
@@ -75,26 +75,26 @@ If you want to jump straight to a specific task:
 
 ## Reference
 
-Depth-on-demand pages — read when you need them:
+Depth-on-demand pages, read when you need them:
 
-- **[Missions](/docs/missions)** — DAG model, lifecycle, replay, supported
+- **[Missions](/docs/missions)**, DAG model, lifecycle, replay, supported
   file formats.
-- **[Tools](/docs/tools)** — define and call a stateless capability.
-- **[Plugins](/docs/plugins)** — build a stateful integration with secret
+- **[Tools](/docs/tools)**, define and call a stateless capability.
+- **[Plugins](/docs/plugins)**, build a stateful integration with secret
   bindings.
-- **[Secrets management](/docs/secrets-management)** — bind, rotate, audit.
-- **[Findings](/docs/findings)** — submitting, triaging, exporting.
-- **[Knowledge graph](/docs/knowledge-graph)** — how the graph is
+- **[Secrets management](/docs/secrets-management)**, bind, rotate, audit.
+- **[Findings](/docs/findings)**, submitting, triaging, exporting.
+- **[Knowledge graph](/docs/knowledge-graph)**, how the graph is
   populated, how to query it from the Harness API.
-- **[Taxonomy](/docs/taxonomy)** — the standard entity types Gibson
+- **[Taxonomy](/docs/taxonomy)**, the standard entity types Gibson
   recognizes, and how to extend them.
-- **[Ontology](/docs/ontology)** — industry-vocab mappings on top of the
+- **[Ontology](/docs/ontology)**, industry-vocab mappings on top of the
   taxonomy.
-- **[Roles & permissions](/docs/rbac)** — tenant roles, per-component
+- **[Roles & permissions](/docs/rbac)**, tenant roles, per-component
   grants, plugin invocation gates.
-- **[Observability](/docs/observability)** — traces, metrics, audit log,
+- **[Observability](/docs/observability)**, traces, metrics, audit log,
   replay.
-- **[CLI reference](/docs/cli-reference)** — every `gibson` command.
+- **[CLI reference](/docs/cli-reference)**, every `gibson` command.
 
 The Gibson SDK is at
 [`github.com/zeroroot-ai/sdk`](https://github.com/zeroroot-ai/sdk).

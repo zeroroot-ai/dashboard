@@ -1,11 +1,11 @@
 ---
 title: Missions
-description: Authoring reference for the mission DSL — DAG model, every node type, every constraint field, validation flow, and patterns you can copy-paste.
+description: Authoring reference for the mission DSL, DAG model, every node type, every constraint field, validation flow, and patterns you can copy-paste.
 ---
 
 A **mission** is a directed acyclic graph (DAG) of work units that
 Gibson dispatches against a target. You write a mission file in YAML,
-CUE, or JSON, validate it locally, and submit it to the daemon — which
+CUE, or JSON, validate it locally, and submit it to the daemon, which
 walks the graph, captures observations, surfaces findings, and emits a
 structured event stream.
 
@@ -17,12 +17,12 @@ come back here when you want the full field-by-field tour.
 
 A mission has three structural pieces:
 
-- A set of **nodes** — one per work unit. Each node is one of six
+- A set of **nodes**, one per work unit. Each node is one of six
   `NodeType` values (agent, tool, plugin, condition, parallel, join).
-- A set of **edges** — directed dependencies between nodes. The
+- A set of **edges**, directed dependencies between nodes. The
   orchestrator dispatches a node only when every predecessor has
   finished.
-- **Entry and exit points** — node IDs that have no incoming edges
+- **Entry and exit points**, node IDs that have no incoming edges
   (entry) and no outgoing edges (exit). At least one of each is
   required.
 
@@ -35,11 +35,11 @@ any node's `dependencies` list.
 | Type | What it does |
 |---|---|
 | `NODE_TYPE_AGENT` | Dispatches an autonomous reasoning step. The agent receives a task, calls tools and plugins, and returns a result. |
-| `NODE_TYPE_TOOL` | Calls a tool's typed RPC directly — no LLM in the loop for this step. |
+| `NODE_TYPE_TOOL` | Calls a tool's typed RPC directly, no LLM in the loop for this step. |
 | `NODE_TYPE_PLUGIN` | Invokes one named method on a multi-method plugin component (e.g. `shodan.host_lookup`). |
 | `NODE_TYPE_CONDITION` | Branches based on a CEL expression evaluated over prior node outputs. |
 | `NODE_TYPE_PARALLEL` | Fans out to multiple sub-nodes concurrently, capped by `max_concurrency`. Sibling failures are isolated. |
-| `NODE_TYPE_JOIN` | Barrier — waits for every node in `wait_for` to complete, then merges results via `MergeStrategy`. |
+| `NODE_TYPE_JOIN` | Barrier, waits for every node in `wait_for` to complete, then merges results via `MergeStrategy`. |
 
 ### Lifecycle states
 
@@ -62,7 +62,7 @@ side.
 
 These fields belong to the root `MissionDefinition`. The schema is
 generated from the SDK protos and lives at
-`src/data/mission-definition.schema.json` — every field below has a
+`src/data/mission-definition.schema.json`, every field below has a
 description there.
 
 | Field | Type | Notes |
@@ -75,8 +75,8 @@ description there.
 | `edges` | MissionEdge[] | Directed dependencies. Each edge is `{from, to, condition?, metadata?}`. |
 | `entry_points` | string[] | Node IDs with no incoming edges. At least one required. |
 | `exit_points` | string[] | Node IDs with no outgoing edges. At least one required. |
-| `constraints` | MissionConstraints | Baked-in operational limits — see [Constraints](#constraints-reference). |
-| `workspace` | WorkspaceConfig | Repository cloning + workspace knobs for code-touching missions — see [Workspace config](#workspace-config). |
+| `constraints` | MissionConstraints | Baked-in operational limits, see [Constraints](#constraints-reference). |
+| `workspace` | WorkspaceConfig | Repository cloning + workspace knobs for code-touching missions, see [Workspace config](#workspace-config). |
 | `dependencies` | MissionDependencies | Lists of required agents / tools / plugins; the mission refuses to dispatch if any are missing or denied. |
 | `metadata` | map\<string, string\> | Free-form labels for filtering and search. |
 | `id` | string | Server-assigned on `CreateMissionDefinition`. Leave empty when authoring. |
@@ -94,8 +94,8 @@ node type below. Node-level fields shared across types:
 | `type` | enum | One of the six `NODE_TYPE_*` values. |
 | `dependencies` | string[] | Node IDs that must complete before this node executes. |
 | `timeout` | duration string | Per-node wall-clock cap (e.g. `"10m"`). |
-| `retry_policy` | RetryPolicy | Backoff + retry count — see [Retry policy](#retry-policy). |
-| `reuse_policy` | ReusePolicy | Scope and re-use across runs — see [Reuse policy](#reuse-policy). |
+| `retry_policy` | RetryPolicy | Backoff + retry count, see [Retry policy](#retry-policy). |
+| `reuse_policy` | ReusePolicy | Scope and re-use across runs, see [Reuse policy](#reuse-policy). |
 | `data_policy` | DataPolicy | Knowledge-graph storage + retention. |
 | `metadata` | map\<string, string\> | Per-node labels. |
 
@@ -109,7 +109,7 @@ gibson mission validate path/to/mission.yaml
 gibson mission submit   path/to/mission.yaml --target example.com
 ```
 
-### Agent — `agent_config`
+### Agent, `agent_config`
 
 `AgentNodeConfig` selects an agent component by name and dispatches a
 `Task`. The agent calls tools and plugins on the author's behalf; the
@@ -144,10 +144,10 @@ exit_points: ["scan"]
 `agent_config.max_tokens_per_call` overrides the mission-level cap
 (see [Per-call token cap cascade](#per-call-token-cap-cascade)).
 
-### Tool — `tool_config`
+### Tool, `tool_config`
 
 `ToolNodeConfig` invokes one named tool with a typed input map. Use
-this when you do not need an LLM in the loop for the step — e.g. an
+this when you do not need an LLM in the loop for the step, e.g. an
 nmap scan whose output you only feed forward.
 
 ```yaml
@@ -173,7 +173,7 @@ exit_points: ["ports"]
 `input` values are strings; tool components are responsible for
 parsing them per their declared schema.
 
-### Plugin — `plugin_config`
+### Plugin, `plugin_config`
 
 `PluginNodeConfig` calls one method on a multi-method plugin
 component. Plugins differ from tools in that one plugin advertises
@@ -199,7 +199,7 @@ entry_points: ["enrich"]
 exit_points: ["enrich"]
 ```
 
-### Condition — `condition_config`
+### Condition, `condition_config`
 
 `ConditionNodeConfig` branches on a CEL expression evaluated over
 prior node outputs. `true_branch` and `false_branch` list the
@@ -252,10 +252,10 @@ exit_points: ["enrich", "report_empty"]
 `language` defaults to `LANGUAGE_CEL`; the unspecified value is
 treated as CEL for backwards compatibility with older documents.
 
-### Parallel — `parallel_config`
+### Parallel, `parallel_config`
 
 `ParallelNodeConfig` runs `sub_nodes` concurrently, gated by
-`max_concurrency` (0 = unlimited). Sibling failures are isolated —
+`max_concurrency` (0 = unlimited). Sibling failures are isolated -
 one sub-node failing does not cancel its siblings. Sub-nodes are
 inline `MissionNode` values, not references.
 
@@ -289,11 +289,11 @@ entry_points: ["fanout"]
 exit_points: ["fanout"]
 ```
 
-### Join — `join_config`
+### Join, `join_config`
 
 `JoinNodeConfig` waits until every node ID in `wait_for` has finished,
 then merges their results per `strategy`. JOIN is separable from
-PARALLEL — it can merge non-parallel branches.
+PARALLEL, it can merge non-parallel branches.
 
 ```yaml
 name: scan-and-merge
@@ -343,13 +343,13 @@ exit_points: ["merge"]
 | `MERGE_STRATEGY_CUSTOM` | Evaluate the `aggregator` CEL expression against the source results. |
 
 When `strategy` is `MERGE_STRATEGY_CUSTOM`, set `aggregator` to a CEL
-expression — it sees `sources` (a map from node ID to that node's
+expression, it sees `sources` (a map from node ID to that node's
 result) and returns the merged value.
 
 ## Constraints reference
 
 `MissionConstraints` declares mission-level operational limits.
-Baking them into the definition makes the mission self-describing —
+Baking them into the definition makes the mission self-describing -
 callers do not have to supply limits out-of-band at dispatch time.
 
 Every numeric field treats **zero as unlimited**. Set a positive value
@@ -407,7 +407,7 @@ Field-by-field:
 
 The constraints baked into a `MissionDefinition` are the **default**.
 At dispatch, a caller may pass `CreateMissionRequest.constraints` to
-override them — the daemon merges the two, with **dispatch winning on
+override them, the daemon merges the two, with **dispatch winning on
 conflict**. This lets you ship a strict definition and loosen it for a
 specific run without editing the definition.
 
@@ -446,7 +446,7 @@ workspace:
 | `branch` | string | Branch to check out. Defaults to the repository's default branch. |
 | `shallow` | bool | Enable `git clone --depth 1`. |
 | `credential_name` | string | Reference to a Gibson-managed credential. Optional for public repos. |
-| `depends_on` | string[] | Repository names that must clone first — enables topological ordering for multi-repo missions. |
+| `depends_on` | string[] | Repository names that must clone first, enables topological ordering for multi-repo missions. |
 
 `WorkspaceSettings` fields:
 
@@ -454,7 +454,7 @@ workspace:
 |---|---|---|
 | `base_directory` | string | Workspace clone root. Daemon uses a temp directory when empty. |
 | `cleanup_on_complete` | bool | Delete workspace directories after the mission ends. Defaults to true at the daemon. |
-| `use_worktrees` | bool | Per-agent isolation via Git worktrees — concurrent modifications without conflicts. |
+| `use_worktrees` | bool | Per-agent isolation via Git worktrees, concurrent modifications without conflicts. |
 | `lsp_enabled` | bool | Start language servers for code validation. |
 | `lsp_timeout` | Duration string | Cap LSP validation duration. |
 
@@ -464,7 +464,7 @@ A mission passes through four validation layers before it begins
 running. Each layer fails closed; an error at any layer aborts the
 submit.
 
-1. **Schema / structural — `gibson mission validate`.** The CLI
+1. **Schema / structural, `gibson mission validate`.** The CLI
    parses the file (CUE / YAML / JSON), structurally validates against
    the embedded `#MissionDefinition` schema, then runs the same
    protovalidate rules the daemon enforces server-side. Catches typos,
@@ -475,7 +475,7 @@ submit.
    ```
 
 2. **Server-side protovalidate.** `CreateMissionDefinition` re-runs
-   protovalidate on the wire — every `(buf.validate.field).*`
+   protovalidate on the wire, every `(buf.validate.field).*`
    annotation declared in the SDK protos. Identical to layer 1; the
    server does not trust the client.
 
@@ -623,7 +623,7 @@ nodes:
       multiplier: 2.0
 ```
 
-### Reuse policy — `skip` / `rerun` / `merge`
+### Reuse policy, `skip` / `rerun` / `merge`
 
 `ReusePolicy` controls what happens when an existing output is found
 in the configured scope. Use it to avoid re-running expensive
@@ -648,7 +648,7 @@ nodes:
 ```
 
 `input_scope` and `output_scope` accept `"mission_run"`, `"mission"`,
-or `"global"`. `"mission"` is the default — outputs are reusable
+or `"global"`. `"mission"` is the default, outputs are reusable
 across runs of the same mission definition but not across definitions.
 
 ## Authoring loop
@@ -667,15 +667,15 @@ across runs of the same mission definition but not across definitions.
 
 ## Related
 
-- [Getting Started](/docs/getting-started) — the fast path from
+- [Getting Started](/docs/getting-started), the fast path from
   install to first mission.
-- [Findings](/docs/findings) — what `finding.submitted` events
+- [Findings](/docs/findings), what `finding.submitted` events
   represent and how findings show up in the dashboard.
-- [Knowledge graph](/docs/knowledge-graph) — what tool output
+- [Knowledge graph](/docs/knowledge-graph), what tool output
   auto-populates as your mission runs.
-- [Observability](/docs/observability) — traces, metrics, and replay
+- [Observability](/docs/observability), traces, metrics, and replay
   in more detail.
-- [Roles & permissions](/docs/rbac) — what controls who can author,
+- [Roles & permissions](/docs/rbac), what controls who can author,
   dispatch, and replay a mission.
-- [CLI reference](/docs/cli-reference) — every `gibson` command,
+- [CLI reference](/docs/cli-reference), every `gibson` command,
   including the full `gibson mission` subcommand surface.

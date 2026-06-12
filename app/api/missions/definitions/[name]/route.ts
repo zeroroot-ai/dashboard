@@ -2,9 +2,9 @@
  * GET /api/missions/definitions/[name]
  *
  * Fetches a single mission definition by name via
- * DaemonService.GetMissionDefinition (M5 RPC — ships full structured proto).
+ * DaemonService.GetMissionDefinition (M5 RPC, ships full structured proto).
  * Returns the definition as JSON; the client renders it via
- * MissionDefinitionDetail. M6 — mission-author-experience.
+ * MissionDefinitionDetail. M6, mission-author-experience.
  *
  * Closes #187.
  */

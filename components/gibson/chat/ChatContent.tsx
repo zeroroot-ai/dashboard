@@ -114,7 +114,7 @@ function agentStatusClass(status: ChatAgent['status']): string {
 }
 
 // ============================================================================
-// Search excerpt highlighting — no dangerouslySetInnerHTML
+// Search excerpt highlighting, no dangerouslySetInnerHTML
 // ============================================================================
 
 interface HighlightedTextProps {
@@ -281,7 +281,7 @@ function ConversationSidebar({
             >
               <AlertTriangle className="text-destructive h-5 w-5" />
               <p className="text-muted-foreground text-xs">
-                History unavailable — reload to retry.
+                History unavailable, reload to retry.
               </p>
             </div>
           )}
@@ -610,7 +610,7 @@ function ConversationStoreErrorState() {
         <h2 className="mb-1 text-lg font-semibold">Conversation history unavailable</h2>
         <p className="text-muted-foreground text-sm">
           Your conversation history could not be loaded. The service may be
-          starting up — reload the page to try again. Your existing
+          starting up, reload the page to try again. Your existing
           conversations are not lost.
         </p>
       </div>
@@ -682,7 +682,7 @@ function AssistantTextPart(_props: TextMessagePartProps) {
         componentsByLanguage={MARKDOWN_COMPONENTS_BY_LANGUAGE}
         preprocess={stripCitationMarkers}
       />
-      {/* Streaming dots — shown on this text part while it is still being
+      {/* Streaming dots, shown on this text part while it is still being
           generated. MessagePartPrimitive.InProgress reads the `part` scope,
           which only exists inside a part component (the one passed to
           MessagePrimitive.Parts). Rendering it at the message level throws
@@ -713,7 +713,7 @@ export function UserMessage() {
       <div className="bg-primary text-primary-foreground max-w-[80%] rounded-lg px-4 py-2 text-sm">
         <MessagePrimitive.Parts components={{ Text: UserTextPart }} />
       </div>
-      {/* Action bar — copy + edit; hidden while running or on non-last messages */}
+      {/* Action bar, copy + edit; hidden while running or on non-last messages */}
       <ActionBarPrimitive.Root
         hideWhenRunning
         autohide="not-last"
@@ -765,11 +765,11 @@ export function AssistantMessage() {
     <MessagePrimitive.Root className="group/message mb-4 flex items-end gap-2">
       <div className="bg-secondary text-secondary-foreground max-w-[80%] rounded-lg px-4 py-2 text-sm">
         <MessagePrimitive.Parts components={{ Text: AssistantTextPart }} />
-        {/* Citation chips — rendered below the message body when the model
+        {/* Citation chips, rendered below the message body when the model
             cited data from a focused knowledge-graph node */}
         <AssistantMessageCitations />
       </div>
-      {/* Action bar — copy + regenerate; hidden while running or on non-last messages */}
+      {/* Action bar, copy + regenerate; hidden while running or on non-last messages */}
       <ActionBarPrimitive.Root
         hideWhenRunning
         autohide="not-last"
@@ -836,7 +836,7 @@ function ChatComposer({
 
   return (
     <ComposerPrimitive.Root className="border-input bg-background flex flex-col gap-2 rounded-2xl border p-2 shadow-xs">
-      {/* Attachment chip — sits above the textarea while a file is staged */}
+      {/* Attachment chip, sits above the textarea while a file is staged */}
       {(attachment || attachmentUploading) && (
         <div className="flex flex-wrap items-center gap-2 px-1">
           <Badge variant="secondary" className="gap-1.5">
@@ -893,14 +893,14 @@ function ChatComposer({
           rows={1}
           className="min-h-[44px] flex-1 resize-none border-none bg-transparent text-sm shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
         />
-        {/* Send — automatically disabled when thread is running */}
+        {/* Send, automatically disabled when thread is running */}
         <ComposerPrimitive.Send asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
             <Send className="h-4 w-4" />
             <span className="sr-only">Send message</span>
           </Button>
         </ComposerPrimitive.Send>
-        {/* Cancel — automatically disabled when thread is not running */}
+        {/* Cancel, automatically disabled when thread is not running */}
         <ComposerPrimitive.Cancel asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
             <Square className="h-4 w-4" />
@@ -913,7 +913,7 @@ function ChatComposer({
 }
 
 // ============================================================================
-// ChatContent — root component
+// ChatContent, root component
 // ============================================================================
 
 export function ChatContent() {
@@ -955,7 +955,7 @@ export function ChatContent() {
   const activeConvRef = useRef(activeConversationId);
   activeConvRef.current = activeConversationId;
 
-  // Ref for the sidebar search input — used by the ⌘+F / Ctrl+F shortcut
+  // Ref for the sidebar search input, used by the ⌘+F / Ctrl+F shortcut
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Keep the latest attachmentId reachable from the transport closure without
@@ -972,7 +972,7 @@ export function ChatContent() {
   const setActiveProviderRef = useRef(setActiveProviderName);
   setActiveProviderRef.current = setActiveProviderName;
 
-  // Transport — recreated only when the debug flag changes. The body callback
+  // Transport, recreated only when the debug flag changes. The body callback
   // and fetch wrapper read the latest attachment / debug state from refs so we
   // don't churn the transport on every render.
   const transport = useMemo(
@@ -1001,7 +1001,7 @@ export function ChatContent() {
     [isDebugOpen],
   );
 
-  // Wire to AI SDK useChat — assistant-ui wraps this via useAISDKRuntime
+  // Wire to AI SDK useChat, assistant-ui wraps this via useAISDKRuntime
   const aiChat = useAIChat({
     id: activeConversationId || undefined,
     messages: activeConversation?.messages,
@@ -1040,7 +1040,7 @@ export function ChatContent() {
   // streaming → ready:
   //   Streaming completed (naturally or via user stop). Write the full message
   //   list to Zustand and persist to the daemon via SaveConversation RPC.
-  //   finalizePartialMessage has atomic-replacement semantics — no dangling or
+  //   finalizePartialMessage has atomic-replacement semantics, no dangling or
   //   duplicate messages regardless of how many times this fires.
   const prevStatusRef = useRef(status);
   useEffect(() => {
@@ -1192,7 +1192,7 @@ export function ChatContent() {
 
   const handleRename = useCallback(
     (id: string, title: string) => {
-      // Optimistic update — immediately reflected in the store.
+      // Optimistic update, immediately reflected in the store.
       // Persist via daemon RPC; revert on failure.
       const prev = conversations.find((c) => c.id === id)?.title ?? '';
       updateConversationTitle(id, title);
@@ -1209,7 +1209,7 @@ export function ChatContent() {
 
   const handleDelete = useCallback(
     (id: string) => {
-      // Optimistic update — remove from store immediately.
+      // Optimistic update, remove from store immediately.
       deleteConversation(id);
       void deleteConversationAction(id).then((ok) => {
         if (!ok) {
@@ -1378,12 +1378,12 @@ export function ChatContent() {
             </Button>
           </div>
 
-          {/* Debug panel — rendered below header, above message area */}
+          {/* Debug panel, rendered below header, above message area */}
           {isDebugOpen && <SystemPromptDebugPanel />}
 
           {/* Messages area */}
           <div className="relative flex-1 overflow-hidden">
-            {/* Conversation store unavailable — shown when the daemon could not
+            {/* Conversation store unavailable, shown when the daemon could not
                 be reached on page load; distinctly different from the empty state */}
             {conversationStoreError && conversations.length === 0 && (
               <ConversationStoreErrorState />
@@ -1394,7 +1394,7 @@ export function ChatContent() {
               <EmptyConversationsState onNew={handleNewConversation} />
             )}
 
-            {/* Active conversation — welcome state when thread is empty */}
+            {/* Active conversation, welcome state when thread is empty */}
             {conversations.length > 0 && (
               <>
                 <ThreadPrimitive.If empty>
@@ -1414,7 +1414,7 @@ export function ChatContent() {
                         AssistantMessage,
                       }}
                     />
-                    {/* Scroll-to-bottom — auto-scrolls during streaming; visible
+                    {/* Scroll-to-bottom, auto-scrolls during streaming; visible
                         only when the user has scrolled up (auto-scroll is paused).
                         Clicking it jumps to the latest message and resumes auto-scroll. */}
                     <ThreadPrimitive.ScrollToBottom asChild>
@@ -1435,7 +1435,7 @@ export function ChatContent() {
           </div>
 
           {/* Transient stream error banner with retry affordance.
-              Retry calls aiChat.regenerate() which re-submits the last turn —
+              Retry calls aiChat.regenerate() which re-submits the last turn -
               the AI SDK v6 equivalent of reloading after an error. */}
           {streamError && !providerError && (
             <div className="flex items-center justify-between border-t border-destructive/30 bg-destructive/10 px-4 py-2 text-sm">

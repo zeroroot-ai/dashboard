@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * gen-mission-schema.mjs — copy the SDK's mission-definition.schema.json
+ * gen-mission-schema.mjs, copy the SDK's mission-definition.schema.json
  * into src/data/ and prepend a "$comment" field marking it as generated.
  *
  * Source of truth:
@@ -58,7 +58,7 @@ const OUTPUT = resolve(
 );
 
 const GENERATED_COMMENT =
-  "DO NOT EDIT — generated from opensource/sdk/gen/mission-definition.schema.json by scripts/gen-mission-schema.mjs. Run `node scripts/gen-mission-schema.mjs` to regenerate.";
+  "DO NOT EDIT, generated from opensource/sdk/gen/mission-definition.schema.json by scripts/gen-mission-schema.mjs. Run `node scripts/gen-mission-schema.mjs` to regenerate.";
 
 function die(msg) {
   process.stderr.write(`${SCRIPT_NAME}: ${msg}\n`);
@@ -101,7 +101,7 @@ if (!existsSync(SDK_SCHEMA)) {
     );
   }
   process.stderr.write(
-    `${SCRIPT_NAME}: SKIPPED — SDK sibling not present at ${SDK_SCHEMA}.\n` +
+    `${SCRIPT_NAME}: SKIPPED, SDK sibling not present at ${SDK_SCHEMA}.\n` +
       "The committed src/data/mission-definition.schema.json is used as-is; " +
       "the freshness gate validates its structure.\n",
   );

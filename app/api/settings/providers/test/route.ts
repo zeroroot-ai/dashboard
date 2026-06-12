@@ -1,8 +1,8 @@
 /**
- * POST /api/settings/providers/test — test a proposed provider config
+ * POST /api/settings/providers/test, test a proposed provider config
  *
  * Accepts a DaemonProviderConfigInput, invokes the daemon TestProvider RPC,
- * and returns the structured test result. The config is NEVER persisted —
+ * and returns the structured test result. The config is NEVER persisted -
  * it transits daemon process memory for one request only.
  *
  * IMPORTANT: Credentials in the request body are NEVER logged, even on error.
@@ -30,10 +30,10 @@ import { translateError } from '@/src/lib/providers-route-error';
  * The config is validated and probed by the daemon without being stored.
  *
  * Returns a DaemonProviderTestResult:
- *   ok         boolean  — true when the upstream returned a successful response
- *   latencyMs  number   — round-trip time in milliseconds (always present)
- *   model      string   — model used for the test (when ok is true)
- *   error      string?  — cleaned upstream error message (when ok is false)
+ *   ok         boolean , true when the upstream returned a successful response
+ *   latencyMs  number  , round-trip time in milliseconds (always present)
+ *   model      string  , model used for the test (when ok is true)
+ *   error      string? , cleaned upstream error message (when ok is false)
  *
  * Rate-limited server-side by the daemon (ResourceExhausted → 429).
  */

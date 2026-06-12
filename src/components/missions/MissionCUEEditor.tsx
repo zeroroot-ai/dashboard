@@ -12,7 +12,7 @@
  *
  * CUE is registered as a Monarch-tokenised language. There is no npm-published
  * TextMate grammar for CUE, so a lightweight Monarch ruleset covers strings,
- * numbers, identifiers, keywords, comments, and delimiters — sufficient for
+ * numbers, identifiers, keywords, comments, and delimiters, sufficient for
  * syntax highlighting of the mission schema subset.
  *
  * Spec: dashboard#291.
@@ -25,7 +25,7 @@ import * as monacoEditor from "monaco-editor";
 // Use locally-installed monaco-editor instead of CDN (CSP blocks CDN scripts).
 loader.config({ monaco: monacoEditor });
 
-// CUE uses a Monarch tokenizer — no built-in Monaco language worker needed.
+// CUE uses a Monarch tokenizer, no built-in Monaco language worker needed.
 // We only need editor.worker for Monaco's internal editor machinery (bracket
 // matching, autoindent, etc.). Without this, Monaco emits the
 // "MonacoEnvironment.getWorkerUrl not defined" error and falls back to running
@@ -95,7 +95,7 @@ function registerCUELanguage(monaco: Monaco): void {
         [/"[^"\\]*(?:\\.[^"\\]*)*"/, "string"],
         // Single-quoted strings (bytes literals)
         [/'[^'\\]*(?:\\.[^'\\]*)*'/, "string"],
-        // Multi-line strings — simplified single-line match
+        // Multi-line strings, simplified single-line match
         [/"""[\s\S]*?"""/, "string"],
         // Numbers (integer and float)
         [/\b\d+(\.\d+)?\b/, "number"],
@@ -155,7 +155,7 @@ export function MissionCUEEditor({
   const hoverDisposableRef = useRef<{ dispose(): void } | null>(null);
 
   // ----- Server action imports (lazy to avoid SSR issues) -----
-  // These are server actions — they must be imported dynamically from a
+  // These are server actions, they must be imported dynamically from a
   // "use client" module. Because Next.js serialises server actions through the
   // React boundary, dynamic import is safe here; the bundler replaces the
   // function body with an RPC stub automatically.
@@ -199,7 +199,7 @@ export function MissionCUEEditor({
         monaco.editor.setModelMarkers(model, "cue-daemon", markers);
         onDiagnosticsChange?.(diagnostics.filter((d) => d.severity === "error" || d.severity === "ERROR").length);
       } catch {
-        // Network or authz error — clear markers silently
+        // Network or authz error, clear markers silently
         const model = editor.getModel();
         if (model) monaco.editor.setModelMarkers(model, "cue-daemon", []);
       }

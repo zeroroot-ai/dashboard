@@ -99,7 +99,7 @@ interface MissionFindingsTabProps {
  * MissionFindingsTab renders the findings produced by a single mission.
  *
  * Data source: the global findings endpoint (/api/findings) with a
- * missionId filter — same Finding shape, same hook (useFindings), same
+ * missionId filter, same Finding shape, same hook (useFindings), same
  * severity + sort affordances as the global findings page. The Mission
  * column is omitted (always the same mission) and the page-level search
  * / export / severity-filter chrome is left to the global page.
@@ -224,7 +224,7 @@ export function MissionFindingsTab({ missionId }: MissionFindingsTabProps) {
                 </TableCell>
                 <TableCell>
                   <span className="data-value text-xs">
-                    {finding.affectedAssets.join(", ") || "—"}
+                    {finding.affectedAssets.join(", ") || "-"}
                   </span>
                 </TableCell>
                 <TableCell>

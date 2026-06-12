@@ -114,7 +114,7 @@ describe("componentRefSchema (strict)", () => {
 
 describe("displayNameSchema", () => {
   it("accepts unicode and spaces", () => {
-    expect(displayNameSchema.safeParse("Acme Corp — Øst 2026").success).toBe(true);
+    expect(displayNameSchema.safeParse("Acme Corp, Øst 2026").success).toBe(true);
   });
   it("rejects empty", () => {
     expect(displayNameSchema.safeParse("").success).toBe(false);
@@ -253,7 +253,7 @@ describe("inviteMemberInput", () => {
 });
 
 describe("acceptInvitationInput", () => {
-  it("accepts a token (dashboard#715 — token-based redemption)", () => {
+  it("accepts a token (dashboard#715, token-based redemption)", () => {
     expect(acceptInvitationInput.safeParse({ token: "deadbeef" }).success).toBe(true);
   });
   it("rejects an empty token", () => {

@@ -7,8 +7,8 @@ import { logger } from "@/src/lib/logger";
  *
  * The error boundary component is "use client" and cannot import pino
  * directly (pino is not safe to bundle into client code). This action
- * receives only the opaque `digest` string — the Error object itself is
- * never forwarded from the client — and emits a structured log entry
+ * receives only the opaque `digest` string, the Error object itself is
+ * never forwarded from the client, and emits a structured log entry
  * through the dashboard's canonical logger.
  *
  * The caller should invoke this fire-and-forget (no await, no catch) so a

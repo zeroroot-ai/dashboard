@@ -10,13 +10,13 @@
  * is a UUIDv4 minted server-side at `signupAction` entry, stored only in
  * (a) the Redis progress key and (b) the browser tab that submitted the
  * form. The response body contains ONLY step names + terminal error codes
- * + user-safe messages — no PII, no Zitadel IDs, no stack traces.
+ * + user-safe messages, no PII, no Zitadel IDs, no stack traces.
  */
 import { NextResponse } from "next/server";
 import { getProgress } from "@/src/lib/signup/progress-store";
 
 export const runtime = "nodejs";
-// Disable caching — the whole point is real-time polling.
+// Disable caching, the whole point is real-time polling.
 export const dynamic = "force-dynamic";
 
 interface RouteParams {

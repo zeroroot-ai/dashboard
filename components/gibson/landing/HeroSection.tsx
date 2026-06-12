@@ -72,7 +72,7 @@ const messages: TypewriterMessage[] = [
 ];
 
 /**
- * The real ADK happy path, in order — every command verified against the
+ * The real ADK happy path, in order, every command verified against the
  * adk repo's verb surface (clone + install → workspace init → device-flow
  * login → scaffold → enroll → capability-grant register → CUE mission
  * submit). Keep in sync with opensource/adk README + the Settings → CLI card.
@@ -218,7 +218,7 @@ export function HeroSection() {
       />
 
       <div className="relative z-10 mx-auto max-w-6xl flex flex-col items-center gap-10">
-        {/* Brand-led opener — section tag + the page's value claim promoted
+        {/* Brand-led opener, section tag + the page's value claim promoted
          *  from below the CTAs to the focal point. One phrase highlighted in
          *  primary, brand-guide-style. No fake version strings or telemetry. */}
         <div className="flex w-full flex-col items-start gap-0">

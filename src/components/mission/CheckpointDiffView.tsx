@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * CheckpointDiffView — split-pane diff between two checkpoints.
+ * CheckpointDiffView, split-pane diff between two checkpoints.
  *
  * Calls `diffCheckpointsAction` first; on `ResourceExhausted` (gRPC code
  * 8) falls back to two `getCheckpointAction` calls and a client-side
@@ -69,7 +69,7 @@ function decodeBytes(bytes: Uint8Array): unknown {
 }
 
 function stringifyValue(v: unknown): string {
-  if (v === null || v === undefined) return "—";
+  if (v === null || v === undefined) return "-";
   if (typeof v === "string") return v;
   try {
     return JSON.stringify(v, null, 2);
@@ -505,7 +505,7 @@ export function CheckpointDiffView({
         setState({ kind: "error", error: r });
         return;
       }
-      // ok but missing diff — treat as empty
+      // ok but missing diff, treat as empty
       setState({
         kind: "server",
         diff: create(CheckpointDiffSchema, {

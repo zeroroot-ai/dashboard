@@ -70,7 +70,7 @@ export const ERROR_COPY: Record<LoginErrorReason, LoginErrorCopy> = {
   permission_denied: {
     // ConnectRPC code 7 from the daemon path: the user's session validated
     // fine at the JWT layer, but ext-authz / FGA denied the specific RPC.
-    // The CTA must NOT be "retry sign-in" — retrying just repeats the
+    // The CTA must NOT be "retry sign-in", retrying just repeats the
     // failing call. Sign-out-then-sign-in is the recovery path because
     // the user's group/role grants are loaded into the session at sign-in.
     title: "Your sign-in isn't authorized yet",

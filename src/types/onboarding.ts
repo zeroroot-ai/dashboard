@@ -4,7 +4,7 @@
  */
 
 // ============================================================================
-// Data-Plane Store Status Types (Task 34 — D8)
+// Data-Plane Store Status Types (Task 34, D8)
 // ============================================================================
 
 /**
@@ -33,7 +33,7 @@ export interface StoreStatus {
  * Each key maps to a logical data-plane store. The `graph` field surfaces
  * the knowledge-graph store; the underlying CRD field name is implementation
  * detail and the dashboard's wire shape stays agnostic of the backend
- * choice — see the customer-doc terminology rule.
+ * choice, see the customer-doc terminology rule.
  *
  * A null `state` means not-yet-started (legacy CRD or pre-provisioning).
  */

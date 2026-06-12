@@ -5,7 +5,7 @@
  * from the daemon's GetAuthSchema RPC and exposed a static permission closure
  * (hasPermission / canCallRpc / resolveEffectivePermissions / loadSchema).
  * That whole layer was a SECOND authorization source of truth that drifted
- * from the daemon once GetAuthSchema was removed — every lookup default-denied.
+ * from the daemon once GetAuthSchema was removed, every lookup default-denied.
  *
  * It has been deleted. Authorization is now sourced entirely from the
  * generated AuthRegistry relation model:

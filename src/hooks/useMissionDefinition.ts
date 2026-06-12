@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * useMissionDefinition — React Query hook that fetches a single mission
+ * useMissionDefinition, React Query hook that fetches a single mission
  * definition by name from GET /api/missions/definitions/[name].
  *
  * The route deserializes the proto via `toJson` (protobuf JSON encoding), so
  * all Duration / Timestamp / enum fields arrive as JSON-safe primitives.
  *
- * M6 — mission-author-experience (Closes #187).
+ * M6, mission-author-experience (Closes #187).
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -125,7 +125,7 @@ export interface MissionNodeJson {
   dataPolicy?: DataPolicyJson;
   reusePolicy?: ReusePolicyJson;
   metadata?: Record<string, string>;
-  // oneof config — at most one is set
+  // oneof config, at most one is set
   agentConfig?: AgentNodeConfigJson;
   toolConfig?: ToolNodeConfigJson;
   pluginConfig?: PluginNodeConfigJson;

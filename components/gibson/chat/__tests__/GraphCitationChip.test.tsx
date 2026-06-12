@@ -6,7 +6,7 @@ import { render, screen } from '@testing-library/react';
 import * as React from 'react';
 
 // ---------------------------------------------------------------------------
-// Mock next/link — jsdom has no routing, so render a plain <a>
+// Mock next/link, jsdom has no routing, so render a plain <a>
 // ---------------------------------------------------------------------------
 
 vi.mock('next/link', () => ({

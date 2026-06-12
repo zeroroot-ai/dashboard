@@ -1,9 +1,9 @@
 /**
- * Visual regression — public surfaces.
+ * Visual regression, public surfaces.
  *
  * Spec: dashboard#60, single dark brand #654. Captures full-page screenshots
  * of every customer-facing route that doesn't require an authenticated
- * session, against the local dev server. There is one immutable dark brand —
+ * session, against the local dev server. There is one immutable dark brand -
  * each route is captured once. Failures here mean the design system's tokens
  * drifted or a consumer started reaching outside them.
  *
@@ -50,8 +50,8 @@ async function stabilise(page: Page) {
   await page.waitForLoadState("networkidle");
 }
 
-test.describe("visual regression — public routes", () => {
-  // Visual baselines are chromium-only — one browser as the source of truth.
+test.describe("visual regression, public routes", () => {
+  // Visual baselines are chromium-only, one browser as the source of truth.
   // Firefox/webkit projects add per-browser font-rendering variance that
   // bloats the diff without improving signal.
   test.skip(

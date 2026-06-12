@@ -74,10 +74,10 @@ beforeEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// 401 — no session
+// 401, no session
 // ---------------------------------------------------------------------------
 
-describe('POST /api/agents/register — auth gate', () => {
+describe('POST /api/agents/register, auth gate', () => {
   it('returns 401 when there is no session', async () => {
     mockAuth.mockResolvedValue(null);
     const { POST } = await import('../route');
@@ -89,10 +89,10 @@ describe('POST /api/agents/register — auth gate', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 412 — no active tenant
+// 412, no active tenant
 // ---------------------------------------------------------------------------
 
-describe('POST /api/agents/register — tenant gate', () => {
+describe('POST /api/agents/register, tenant gate', () => {
   it('returns 412 when getActiveTenant throws', async () => {
     mockAuth.mockResolvedValue({ user: { id: 'u1' } });
     mockGetActiveTenant.mockRejectedValue(
@@ -107,10 +107,10 @@ describe('POST /api/agents/register — tenant gate', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 403 — non-admin role
+// 403, non-admin role
 // ---------------------------------------------------------------------------
 
-describe('POST /api/agents/register — role gate', () => {
+describe('POST /api/agents/register, role gate', () => {
   it('returns 403 when caller has only member role', async () => {
     mockAuth.mockResolvedValue({ user: { id: 'u1' } });
     mockGetActiveTenant.mockResolvedValue('acme');
@@ -131,10 +131,10 @@ describe('POST /api/agents/register — role gate', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 400 — bad input
+// 400, bad input
 // ---------------------------------------------------------------------------
 
-describe('POST /api/agents/register — input validation', () => {
+describe('POST /api/agents/register, input validation', () => {
   beforeEach(() => {
     mockAuth.mockResolvedValue({ user: { id: 'u1' } });
     mockGetActiveTenant.mockResolvedValue('acme');
@@ -166,10 +166,10 @@ describe('POST /api/agents/register — input validation', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 201 — happy path
+// 201, happy path
 // ---------------------------------------------------------------------------
 
-describe('POST /api/agents/register — happy path', () => {
+describe('POST /api/agents/register, happy path', () => {
   beforeEach(() => {
     mockAuth.mockResolvedValue({ user: { id: 'u1' } });
     mockGetActiveTenant.mockResolvedValue('acme');
@@ -252,7 +252,7 @@ describe('POST /api/agents/register — happy path', () => {
 // Daemon error mapping
 // ---------------------------------------------------------------------------
 
-describe('POST /api/agents/register — daemon error mapping', () => {
+describe('POST /api/agents/register, daemon error mapping', () => {
   beforeEach(() => {
     mockAuth.mockResolvedValue({ user: { id: 'u1' } });
     mockGetActiveTenant.mockResolvedValue('acme');

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * ModelAccessContent — admin-only UI for managing provider/model grants
+ * ModelAccessContent, admin-only UI for managing provider/model grants
  * plus inspecting the model_resolved audit trail.
  *
  * Spec: llm-user-attribution-governance (Requirement 4).
@@ -11,7 +11,7 @@
  *   2. Audit drawer listing recent model_resolved events
  *
  * The full (user × model) checkbox matrix from design.md is deferred
- * until we have a user/team enumeration RPC — today grants are added
+ * until we have a user/team enumeration RPC, today grants are added
  * one at a time from the form. Dashboard users who need to bulk-grant
  * can script it via the daemon API directly.
  */
@@ -277,10 +277,10 @@ function GrantsViewerCard() {
                   <TableCell className="text-xs text-muted-foreground">
                     {r.grantedAtUnix > 0
                       ? new Date(r.grantedAtUnix * 1000).toLocaleString()
-                      : "—"}
+                      : "-"}
                   </TableCell>
                   <TableCell className="font-mono text-xs">
-                    {r.grantedByUserId || "—"}
+                    {r.grantedByUserId || "-"}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -333,7 +333,7 @@ function AuditTrailCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Audit trail — model resolutions (last 30 days)</CardTitle>
+        <CardTitle>Audit trail, model resolutions (last 30 days)</CardTitle>
         <CardDescription>
           Every slot resolution, regardless of outcome. Empty rows mean
           the audit backend is not yet wired; events still fire via the
@@ -375,7 +375,7 @@ function AuditTrailCard() {
                     {r.chosenProvider}/{r.chosenModel}
                   </TableCell>
                   <TableCell className="font-mono text-xs">
-                    {r.missionId || "—"}
+                    {r.missionId || "-"}
                   </TableCell>
                 </TableRow>
               ))}

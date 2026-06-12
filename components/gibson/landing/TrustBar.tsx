@@ -1,5 +1,5 @@
 /**
- * TrustBar — a single strip of platform facts under the hero. Every item
+ * TrustBar, a single strip of platform facts under the hero. Every item
  * must be true of the shipping platform today; aspirational claims
  * (accreditations, certifications) do not belong here.
  */

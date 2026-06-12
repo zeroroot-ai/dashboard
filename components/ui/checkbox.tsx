@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 // Resting-state border uses `border-foreground/40` rather than the Shadcn
 // default `border-input`. In this dashboard's design system `--input`
 // resolves to `--base-300` (light gray) which is near-invisible against
-// `--card` (pure white) in light mode — the consent checkboxes on /signup
+// `--card` (pure white) in light mode, the consent checkboxes on /signup
 // rendered with no visible affordance until checked or focused.
 // `--foreground` is `--base-800` in light mode and `--primary-400` in dark
 // mode; the /40 opacity keeps it subtle while staying above WCAG 1.4.11

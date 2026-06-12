@@ -8,8 +8,8 @@ description: Reconnaissance across a target's exposed surface.
 Discover what the target exposes: open ports, running services,
 and reachable subdomains. Two agent nodes run sequentially:
 
-1. **`scan`** — runs the `nmap-agent` against the target.
-2. **`enrich`** — feeds the scan output into `shodan-agent` for
+1. **`scan`**, runs the `nmap-agent` against the target.
+2. **`enrich`**, feeds the scan output into `shodan-agent` for
    passive-source enrichment.
 
 ## Override before running
@@ -27,6 +27,6 @@ ListMissionFindings RPC.
 
 ## Customizations
 
-- Swap `nmap-agent` for a custom scanner agent — the rest of the
+- Swap `nmap-agent` for a custom scanner agent, the rest of the
   graph stays the same.
 - Add a third node downstream of `enrich` to summarize findings.

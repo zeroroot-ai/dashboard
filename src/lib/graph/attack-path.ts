@@ -3,7 +3,7 @@
  *
  * Derives the set of offensive-relationship edges (exploit / leads-to /
  * affects / technique chains) and their endpoint nodes, so the canvas can
- * highlight the kill chain and dim everything else — reusing the same highlight
+ * highlight the kill chain and dim everything else, reusing the same highlight
  * mechanism as a path query. Lives under `src/lib/` for unit testing.
  */
 

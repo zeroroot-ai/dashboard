@@ -4,7 +4,7 @@ import type { TraceSummary } from "@/src/types/trace";
  * A "run" is a mission execution: one or more traces sharing a sessionId.
  * The daemon sets sessionId = mission id on a run's traces; when a trace has
  * no sessionId we treat it as its own singleton run, so grouping degrades
- * gracefully and is never wrong — only coarser when sessions aren't recorded.
+ * gracefully and is never wrong, only coarser when sessions aren't recorded.
  *
  * This is a pure presentation grouping over the trace list payload (no extra
  * fetch). Per-run $ cost is not derivable from the list (needs per-call model
@@ -12,7 +12,7 @@ import type { TraceSummary } from "@/src/types/trace";
  * breakdown lives on the run view's Spend tab (dashboard#534).
  */
 export interface TraceRun {
-  /** Stable run id — the sessionId, or the lone trace id for singletons. */
+  /** Stable run id, the sessionId, or the lone trace id for singletons. */
   id: string;
   /** Human label for the run (session id, or the trace name for singletons). */
   label: string;

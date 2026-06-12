@@ -1,7 +1,7 @@
 /**
  * signup-autologin.spec.ts
  *
- * Issue: dashboard#41 — wire Zitadel V2 session+CreateCallback into the
+ * Issue: dashboard#41, wire Zitadel V2 session+CreateCallback into the
  * signup flow so the user lands on the dashboard authenticated immediately
  * after the signup form completes, without an intermediate hosted-login
  * bounce.
@@ -16,7 +16,7 @@
  *     `gibson-signup-bot` machine user. Without that grant the
  *     `POST /v2/sessions` call in app/actions/signup.ts returns 403
  *     PERMISSION_DENIED and the signup action falls back to the
- *     standard /login redirect — this test will fail to find a direct
+ *     standard /login redirect, this test will fail to find a direct
  *     /dashboard landing and skip with a clear message.
  *
  * Run instructions (full chart deployed to kind):
@@ -34,10 +34,10 @@ import { BASE_URL, generateUserCredentials } from "./helpers/fixtures";
 
 const SUITE_SKIPPED = process.env.SKIP_SIGNUP_AUTOLOGIN_E2E === "1";
 
-test.describe("Signup auto-login — V2 session + CreateCallback (issue dashboard#41)", () => {
+test.describe("Signup auto-login, V2 session + CreateCallback (issue dashboard#41)", () => {
   test.skip(
     SUITE_SKIPPED,
-    "SKIP_SIGNUP_AUTOLOGIN_E2E=1 — opt-out for unit-only local runs",
+    "SKIP_SIGNUP_AUTOLOGIN_E2E=1, opt-out for unit-only local runs",
   );
 
   test("fresh signup lands directly on /dashboard with an authenticated session", async ({
@@ -66,8 +66,8 @@ test.describe("Signup auto-login — V2 session + CreateCallback (issue dashboar
 
     // -----------------------------------------------------------------------
     // 3. Submit and wait for either:
-    //    (a) direct landing on /dashboard — the auto-login path worked, OR
-    //    (b) bounce to /login — gitops#90 hasn't merged yet, IAM_LOGIN_CLIENT
+    //    (a) direct landing on /dashboard, the auto-login path worked, OR
+    //    (b) bounce to /login, gitops#90 hasn't merged yet, IAM_LOGIN_CLIENT
     //        is missing, signup action fell back. In that case skip with
     //        an explicit reason so the test result is meaningful.
     // -----------------------------------------------------------------------
@@ -76,7 +76,7 @@ test.describe("Signup auto-login — V2 session + CreateCallback (issue dashboar
       .first()
       .click();
 
-    // Allow generous time — provisioning ~8-12s on kind, plus the V2 session
+    // Allow generous time, provisioning ~8-12s on kind, plus the V2 session
     // round-trip. 60s is the upper bound; anything slower is a real bug.
     const finalUrl = await page.waitForURL(
       (url) =>
@@ -89,12 +89,12 @@ test.describe("Signup auto-login — V2 session + CreateCallback (issue dashboar
 
     if (!reachedDashboard) {
       // We hit the fallback /login redirect. This is the gitops#90 dependency
-      // signature — surface as a SKIP so the result is unambiguous.
+      // signature, surface as a SKIP so the result is unambiguous.
       test.skip(
         true,
-        "signup auto-login bounced to /login — likely gitops#90 (IAM_LOGIN_CLIENT) not merged yet. " +
+        "signup auto-login bounced to /login, likely gitops#90 (IAM_LOGIN_CLIENT) not merged yet. " +
           "Verify by tailing the dashboard pod: " +
-          '`kubectl -n gibson logs deploy/dashboard | grep "auto-login V2 session"` — ' +
+          '`kubectl -n gibson logs deploy/dashboard | grep "auto-login V2 session"`, ' +
           "look for a `httpStatus: 403, zitadelErrorId: AUTHZ_*` warning line.",
       );
       // test.skip throws; the lines below never execute. The explicit
@@ -175,7 +175,7 @@ async function fillSignupForm(
     await confirmField.fill(creds.password);
   }
 
-  // Terms + privacy checkboxes — the form requires both.
+  // Terms + privacy checkboxes, the form requires both.
   for (const re of [/terms|tos/i, /privacy/i]) {
     const cb = page.getByRole("checkbox", { name: re }).first();
     if ((await cb.count()) > 0) {

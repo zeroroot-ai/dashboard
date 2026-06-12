@@ -14,9 +14,9 @@
  * Requirements: 4, R4.1–R4.3.
  *
  * Pre-conditions:
- *   PLAYWRIGHT_BASE_URL — target cluster URL (default: http://localhost:3000)
- *   E2E_ADMIN_EMAIL     — admin user email
- *   E2E_ADMIN_PASSWORD  — admin user password
+ *   PLAYWRIGHT_BASE_URL, target cluster URL (default: http://localhost:3000)
+ *   E2E_ADMIN_EMAIL    , admin user email
+ *   E2E_ADMIN_PASSWORD , admin user password
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -33,9 +33,9 @@ const GRANTS_URL = `${BASE_URL}/dashboard/pages/settings/grants`;
 
 // Time constants
 const NOW_EPOCH = Math.floor(Date.now() / 1000);
-/** A grant expiring in 3 minutes — within the 5-minute warning window. */
+/** A grant expiring in 3 minutes, within the 5-minute warning window. */
 const NEAR_EXPIRY_EPOCH = NOW_EPOCH + 3 * 60;
-/** A grant expiring in 30 minutes — outside the warning window. */
+/** A grant expiring in 30 minutes, outside the warning window. */
 const FAR_EXPIRY_EPOCH = NOW_EPOCH + 30 * 60;
 
 // ---------------------------------------------------------------------------
@@ -108,7 +108,7 @@ async function mockGrantsWithExpiry(page: Page) {
 // Test suite: grants list
 // ---------------------------------------------------------------------------
 
-test.describe("Grants — list page", () => {
+test.describe("Grants, list page", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });
@@ -128,7 +128,7 @@ test.describe("Grants — list page", () => {
 
     await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
 
-    // R4.1 — required columns
+    // R4.1, required columns
     await expect(
       page.getByRole("columnheader", { name: /jti|grant.*id/i }),
     ).toBeVisible();
@@ -179,7 +179,7 @@ test.describe("Grants — list page", () => {
 // Test suite: expiry highlighting
 // ---------------------------------------------------------------------------
 
-test.describe("Grants — expiry highlighting (R4.1)", () => {
+test.describe("Grants, expiry highlighting (R4.1)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockGrantsWithExpiry(page);
@@ -242,7 +242,7 @@ test.describe("Grants — expiry highlighting (R4.1)", () => {
 // Test suite: filters
 // ---------------------------------------------------------------------------
 
-test.describe("Grants — filters", () => {
+test.describe("Grants, filters", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockGrantsWithExpiry(page);
@@ -273,7 +273,7 @@ test.describe("Grants — filters", () => {
 // Test suite: read-only page (no revoke surface)
 // ---------------------------------------------------------------------------
 
-test.describe("Grants — read-only (R4.2)", () => {
+test.describe("Grants, read-only (R4.2)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockGrantsWithExpiry(page);
@@ -284,7 +284,7 @@ test.describe("Grants — read-only (R4.2)", () => {
 
     await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
 
-    // R4.2 — read-only in v1; no revoke surface
+    // R4.2, read-only in v1; no revoke surface
     await expect(
       page.getByRole("button", { name: /revoke/i }),
     ).not.toBeVisible();
@@ -295,7 +295,7 @@ test.describe("Grants — read-only (R4.2)", () => {
 // RBAC: non-admin access denied
 // ---------------------------------------------------------------------------
 
-test.describe("Grants — non-admin access denied", () => {
+test.describe("Grants, non-admin access denied", () => {
   test("non-admin sees permission-required alert", async ({ browser }) => {
     const ctx = await browser.newContext();
     const page = await ctx.newPage();

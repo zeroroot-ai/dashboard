@@ -10,7 +10,7 @@
  * component identity (`agent enroll`), check the component in over the
  * Capability-Grant handshake (`component register`), and confirm effective
  * grants (`inspect`). Placeholders (`<name>`, `<bootstrap-token>`) are left
- * literal — they vary per component and per enrollment, so the card teaches the
+ * literal, they vary per component and per enrollment, so the card teaches the
  * shape rather than pretending to fill them.
  */
 
@@ -64,7 +64,7 @@ export function buildCliCommands({
       label: "Confirm grants",
       command: "gibson inspect",
       description:
-        "Show what this principal can do — the effective grants the platform resolved for the checked-in component.",
+        "Show what this principal can do, the effective grants the platform resolved for the checked-in component.",
     },
   ];
 }

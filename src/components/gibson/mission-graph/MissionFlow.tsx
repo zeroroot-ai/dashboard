@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * MissionFlow — renders a daemon-projected MissionGraph as a flow-chart of
+ * MissionFlow, renders a daemon-projected MissionGraph as a flow-chart of
  * boxes and data-flow lines (React Flow). The dashboard is a pure client: all
  * topology + auto-layout comes from GetMissionGraph; this component only draws,
  * overlays run state, and (when permitted) lets the author drag boxes and Save
  * the layout via SaveMissionLayout.
  *
- * Spec: MissionGraph epic — dashboard#655 (render), #657 (run overlay),
+ * Spec: MissionGraph epic, dashboard#655 (render), #657 (run overlay),
  * #658 (drag + save).
  */
 
@@ -77,7 +77,7 @@ function toFlowNodes(
   }));
 }
 
-// Token-based edge stroke colors (CSS variable references — no raw color
+// Token-based edge stroke colors (CSS variable references, no raw color
 // literals, so the no-hardcoded-colors guard passes).
 const EDGE_COLOR: Record<EdgeRunState, string> = {
   traversed: "var(--primary)",
@@ -215,7 +215,7 @@ export function MissionFlow({
           <Panel position="top-right" className="flex items-center gap-2">
             {conflict && (
               <span className="text-xs text-destructive" role="alert">
-                Layout changed elsewhere — reload to edit.
+                Layout changed elsewhere, reload to edit.
               </span>
             )}
             <Button

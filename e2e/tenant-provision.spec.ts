@@ -1,5 +1,5 @@
 /**
- * tenant-provision.spec.ts — Slice 5.7 part 1
+ * tenant-provision.spec.ts, Slice 5.7 part 1
  *
  * Dashboard-side assertions for the tenant provisioning flow:
  *
@@ -9,11 +9,11 @@
  *
  * Two test groups:
  *
- *   1. Stubbed (runs without kind cluster) — tests the dashboard UI state at
+ *   1. Stubbed (runs without kind cluster), tests the dashboard UI state at
  *      each checkpoint by intercepting the API calls the dashboard makes and
  *      returning canned responses.
  *
- *   2. Integration (requires kind cluster + E2E_KIND_AVAILABLE=1) — drives the
+ *   2. Integration (requires kind cluster + E2E_KIND_AVAILABLE=1), drives the
  *      real signup form, polls /api/onboarding/data-plane until Ready, then
  *      asserts the membership list and quota panel populate correctly.
  *
@@ -53,7 +53,7 @@ const MOCK_TENANT_ID = "tenant-e2e-provision-test";
 // Stubbed UI-state tests (no kind cluster required)
 // ---------------------------------------------------------------------------
 
-test.describe("tenant provisioning — UI state (stubbed)", () => {
+test.describe("tenant provisioning, UI state (stubbed)", () => {
   test.skip(needsBypass, "requires TEST_AUTH_BYPASS=1");
 
   test.beforeEach(async ({ context }) => {
@@ -71,7 +71,7 @@ test.describe("tenant provisioning — UI state (stubbed)", () => {
     await page.goto("/dashboard");
     await page.waitForLoadState("domcontentloaded");
 
-    // The header should be visible — not a 404 or error boundary.
+    // The header should be visible, not a 404 or error boundary.
     await expect(page.getByRole("banner")).toBeVisible({ timeout: 10_000 });
     // "No workspace" would appear if FGA tuple propagation failed after signup.
     await expect(page.getByRole("banner")).not.toContainText("No workspace");
@@ -118,7 +118,7 @@ test.describe("tenant provisioning — UI state (stubbed)", () => {
     await page.waitForLoadState("domcontentloaded");
 
     // The Plan & Usage section heading is always rendered when the billing page
-    // is reachable — quota panel above-the-fold heading.
+    // is reachable, quota panel above-the-fold heading.
     await expect(page.getByText(/Plan & Usage/i)).toBeVisible({
       timeout: 15_000,
     });
@@ -180,7 +180,7 @@ test.describe("tenant provisioning — UI state (stubbed)", () => {
     const response = await page.request.get("/api/onboarding/data-plane");
     // The stub above fulfills before the real endpoint is hit; if the dashboard
     // is not running (CI without dev server), this may 404. Accept either 200
-    // or 404 — the important thing is the stub works, verified by the next assert.
+    // or 404, the important thing is the stub works, verified by the next assert.
     // In integration mode (E2E_AUTH_SUITE=1), we'd hit the real endpoint.
     // In local dev server mode (default), the stub intercepts it.
     if (response.status() === 200) {
@@ -201,7 +201,7 @@ test.describe("tenant provisioning — UI state (stubbed)", () => {
 // Integration tests (kind cluster required)
 // ---------------------------------------------------------------------------
 
-test.describe("tenant provisioning — integration (kind cluster)", () => {
+test.describe("tenant provisioning, integration (kind cluster)", () => {
   test.skip(needsCluster, "requires kind cluster + E2E_KIND_AVAILABLE=1");
 
   const PLAN = process.env.SIGNUP_SMOKE_PLAN ?? "team";
@@ -226,7 +226,7 @@ test.describe("tenant provisioning — integration (kind cluster)", () => {
       const password = `Ae1!${crypto.randomBytes(8).toString("hex")}`;
       const workspaceName = `Provision ${slug}`;
 
-      // Stage 1 — submit signup form.
+      // Stage 1, submit signup form.
       await test.step("submit signup form", async () => {
         await page.goto(`/signup?plan=${encodeURIComponent(PLAN)}`);
         await page.getByLabel(/first name/i).fill("Prov");
@@ -248,7 +248,7 @@ test.describe("tenant provisioning — integration (kind cluster)", () => {
         ).toBeVisible({ timeout: 30_000 });
       });
 
-      // Stage 2 — poll /api/onboarding/data-plane until all stores are ready.
+      // Stage 2, poll /api/onboarding/data-plane until all stores are ready.
       await test.step("wait for tenant saga to complete", async () => {
         const deadline = Date.now() + READY_TIMEOUT_MS;
         let ready = false;
@@ -281,7 +281,7 @@ test.describe("tenant provisioning — integration (kind cluster)", () => {
         ).toBe(true);
       });
 
-      // Stage 3 — navigate to dashboard; assert tenant chrome.
+      // Stage 3, navigate to dashboard; assert tenant chrome.
       await test.step("dashboard shows provisioned tenant (no 'No workspace')", async () => {
         await page.goto("/dashboard");
         await expect(page).toHaveURL(/\/dashboard/);
@@ -289,7 +289,7 @@ test.describe("tenant provisioning — integration (kind cluster)", () => {
         await expect(page.getByRole("banner")).not.toContainText("No workspace");
       });
 
-      // Stage 4 — quota panel on billing page.
+      // Stage 4, quota panel on billing page.
       await test.step("quota panel populates on billing page", async () => {
         await page.goto("/dashboard/pages/settings/billing");
         await page.waitForLoadState("domcontentloaded");

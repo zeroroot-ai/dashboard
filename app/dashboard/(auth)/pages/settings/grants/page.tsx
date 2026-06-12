@@ -13,7 +13,7 @@ import {
 } from "@/src/lib/auth/assert-authorized";
 
 /**
- * Grants inspector page — server component.
+ * Grants inspector page, server component.
  *
  * Fetches the tenant's active capability grants via the read-only
  * ListActiveGrants admin RPC, then delegates rendering to the client-side
@@ -22,14 +22,14 @@ import {
  * RBAC: gated on tenant#admin by the daemon's ext-authz. A 403 from the
  * daemon will surface as an error state below.
  *
- * Read-only — no revoke surface in v1 per Requirement 4.2.
+ * Read-only, no revoke surface in v1 per Requirement 4.2.
  *
  * Spec: secrets-tenant-lifecycle Task 16, Requirement 4.
  */
 
 export async function generateMetadata(): Promise<Metadata> {
   return generateMeta({
-    title: "Settings — Grants",
+    title: "Settings | Grants",
     additionalTitle: true,
     description:
       "Inspect active capability grants for your tenant. Read-only view of in-flight authorizations.",
@@ -70,7 +70,7 @@ export default async function GrantsPage() {
             Capability Grants
           </h3>
           <p className="text-sm text-muted-foreground">
-            Active capability-grant JWTs for your tenant. Read-only — grants are
+            Active capability-grant JWTs for your tenant. Read-only, grants are
             managed by the daemon during mission dispatch.
           </p>
         </div>

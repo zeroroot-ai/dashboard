@@ -17,8 +17,8 @@ vi.mock("next/navigation", () => ({
 
 import { SidebarNav } from "../sidebar-nav";
 
-describe("settings SidebarNav — member-management IA (#609)", () => {
-  it("does NOT render a Members entry — member management lives in the Organization 'Members & Access' home", () => {
+describe("settings SidebarNav, member-management IA (#609)", () => {
+  it("does NOT render a Members entry, member management lives in the Organization 'Members & Access' home", () => {
     // Allow everything; Members must still be absent from Settings (it was
     // consolidated into the Organization nav per ADR-0039 / #609).
     allowByMethod["/gibson.tenant.v1.SecretsService/ListSecrets"] = true;

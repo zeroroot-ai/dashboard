@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * useListMissionDefinitions — React Query hook that fetches the list of
+ * useListMissionDefinitions, React Query hook that fetches the list of
  * installed mission definitions from GET /api/missions/definitions.
  *
- * M6 — mission-author-experience (Closes #319).
+ * M6, mission-author-experience (Closes #319).
  */
 
 import { useQuery } from "@tanstack/react-query";

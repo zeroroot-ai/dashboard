@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * SessionsTable — the "My active sessions" surface on Settings → CLI
+ * SessionsTable, the "My active sessions" surface on Settings → CLI
  * (PRD dashboard#738, slices S3 read-only + S4 revoke).
  *
  * Lists the caller's own login sessions (browser / CLI), marks the current
@@ -47,9 +47,9 @@ import {
 } from "@/app/actions/sessions/mySessions";
 
 function formatWhen(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
+  return Number.isNaN(d.getTime()) ? "-" : d.toLocaleString();
 }
 
 export function SessionsTable() {
@@ -127,7 +127,7 @@ export function SessionsTable() {
                       {s.isCurrent && <Badge variant="secondary">This device</Badge>}
                     </span>
                   </TableCell>
-                  <TableCell className="font-mono text-sm">{s.ip || "—"}</TableCell>
+                  <TableCell className="font-mono text-sm">{s.ip || "-"}</TableCell>
                   <TableCell className="text-sm">{formatWhen(s.createdAt)}</TableCell>
                   <TableCell className="text-sm">{formatWhen(s.lastActiveAt)}</TableCell>
                   <TableCell className="text-right">
@@ -157,7 +157,7 @@ export function SessionsTable() {
             <AlertDialogTitle>Revoke this session?</AlertDialogTitle>
             <AlertDialogDescription>
               {toRevoke?.isCurrent
-                ? "This is the session you are using right now — revoking it will sign you out of this device."
+                ? "This is the session you are using right now, revoking it will sign you out of this device."
                 : "The selected browser or CLI will be signed out immediately and cannot mint new tokens."}
             </AlertDialogDescription>
           </AlertDialogHeader>

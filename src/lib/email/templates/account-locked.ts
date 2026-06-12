@@ -3,7 +3,7 @@ import type { EmailMessage } from '../types';
 /** Account-locked notification (too many failed sign-in attempts). */
 export interface AccountLockedCtx {
   email: string;
-  /** When the lockout window ends — formatted as an ISO 8601 string. */
+  /** When the lockout window ends, formatted as an ISO 8601 string. */
   lockoutEndsAt: Date | string;
   /** Reset-password URL the user can follow to regain access sooner. */
   resetUrl: string;
@@ -19,13 +19,13 @@ export function render(ctx: AccountLockedCtx): EmailMessage {
     ``,
     `We detected several failed sign-in attempts for your Gibson account (${ctx.email}) and have temporarily locked it as a security precaution.`,
     ``,
-    `The lockout will lift automatically at ${endsAt} (UTC). If that was you, please wait and try again then — or reset your password now to regain access immediately:`,
+    `The lockout will lift automatically at ${endsAt} (UTC). If that was you, please wait and try again then, or reset your password now to regain access immediately:`,
     ``,
     ctx.resetUrl,
     ``,
     `If you don't recognize this activity, reset your password immediately and review recent sign-in activity.`,
     ``,
-    `— The Gibson team`,
+    `The Gibson team`,
   ].join('\n');
 
   const html = [

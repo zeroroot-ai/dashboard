@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * DefinitionPickerDropdown — Shadcn Combobox (Popover + Command) that lets the
+ * DefinitionPickerDropdown, Shadcn Combobox (Popover + Command) that lets the
  * user pick an installed mission definition, or select "New Mission" (null) to
  * create one from scratch.
  *
- * M6 — mission-author-experience. Closes #322.
+ * M6, mission-author-experience. Closes #322.
  */
 
 import * as React from "react";

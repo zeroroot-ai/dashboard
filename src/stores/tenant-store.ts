@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Tenant store — context-backed compatibility shim.
+ * Tenant store, context-backed compatibility shim.
  *
  * The dashboard's nine tenant-scoped data hooks (useMissions, useFindings,
  * useAlerts, useAnalytics, useComponents, useTraces, useGraph,
@@ -13,7 +13,7 @@
  *
  * The store shape is kept identical so consumers compile unchanged. Only
  * the read fields (`currentTenant`, `availableTenants`, `isLoading`) are
- * live; mutation methods are no-ops — callers that need to switch tenants
+ * live; mutation methods are no-ops, callers that need to switch tenants
  * use `switchActiveTenantAction` from
  * `@/components/gibson/shared/tenant-switcher-action`, not the store.
  */
@@ -39,7 +39,7 @@ function useContextTenants(): {
 }
 
 // ---------------------------------------------------------------------------
-// useTenantStore — Zustand-selector-compatible shim.
+// useTenantStore, Zustand-selector-compatible shim.
 // ---------------------------------------------------------------------------
 
 interface TenantStateCompat {
@@ -63,7 +63,7 @@ interface TenantStateCompat {
  *
  * Reads live tenant state from `TenantContextProvider` and projects it
  * through the provided selector. Read-only fields are live; mutators are
- * no-ops — switching is performed by `switchActiveTenantAction`.
+ * no-ops, switching is performed by `switchActiveTenantAction`.
  *
  * @deprecated Direct callers should migrate to `useTenantContext()` or
  *   the named selector hooks below.
@@ -91,7 +91,7 @@ export function useTenantStore<T>(selector: (state: TenantStateCompat) => T): T 
 }
 
 // ---------------------------------------------------------------------------
-// Public selector hooks — same names as the deleted Zustand selectors.
+// Public selector hooks, same names as the deleted Zustand selectors.
 // ---------------------------------------------------------------------------
 
 /**
@@ -109,7 +109,7 @@ export function useAvailableTenants(): Tenant[] {
 }
 
 /**
- * Always false — server-resolved props arrive synchronously with the layout
+ * Always false, server-resolved props arrive synchronously with the layout
  * render. Retained for API compatibility.
  */
 export function useTenantLoading(): boolean {
@@ -117,14 +117,14 @@ export function useTenantLoading(): boolean {
 }
 
 /**
- * Always null — errors surface via the switch action result and toasts.
+ * Always null, errors surface via the switch action result and toasts.
  */
 export function useTenantError(): null {
   return null;
 }
 
 /**
- * Always false — switcher open state is local UI state inside the
+ * Always false, switcher open state is local UI state inside the
  * switcher component now.
  *
  * @deprecated Migrate callers to local useState.

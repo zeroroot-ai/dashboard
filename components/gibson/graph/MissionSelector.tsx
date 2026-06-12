@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * MissionSelector — Phase 5, Task 18
+ * MissionSelector, Phase 5, Task 18
  *
  * Dropdown over the tenant's most recent 50 missions. Reads ?mission=<id>
  * from URL search params (managed by the parent page). On change, calls

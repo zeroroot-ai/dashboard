@@ -43,7 +43,7 @@ function makeRequest(opts: {
   // Annotating as the DOM `RequestInit` pulls in `signal: AbortSignal | null`,
   // but Next 16's NextRequest constructor uses its own RequestInit shape with
   // `signal?: AbortSignal | undefined`. Letting TS infer the literal type
-  // sidesteps the incompatibility — `signal` isn't used in this test anyway.
+  // sidesteps the incompatibility, `signal` isn't used in this test anyway.
   const init: { method: string; headers: Headers; body?: string } = {
     method: 'POST',
     headers,

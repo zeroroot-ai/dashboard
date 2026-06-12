@@ -1,5 +1,5 @@
 /**
- * fault-injection.ts — server-side fault-injection state for e2e testing.
+ * fault-injection.ts, server-side fault-injection state for e2e testing.
  *
  * ONLY active when `TEST_FIXTURES_ENABLED=true`. In any other environment
  * every exported function is a no-op / always-clear. The module is imported
@@ -12,20 +12,20 @@
  * → assert → POST again with mode="clear" to disarm.
  *
  * Subsystems that can be faulted:
- *   "fga"            — getMyMemberships() in src/lib/auth/membership.ts
- *   "jwks"           — JWKS fetch in the OIDC provider (via env-var redirect)
- *   "token-exchange" — Zitadel token endpoint (via env-var redirect)
+ *   "fga"           , getMyMemberships() in src/lib/auth/membership.ts
+ *   "jwks"          , JWKS fetch in the OIDC provider (via env-var redirect)
+ *   "token-exchange", Zitadel token endpoint (via env-var redirect)
  *
  * Fault modes:
- *   "503"           — simulate HTTP 503 / gRPC Unavailable from the subsystem
- *   "malformed-200" — simulate a 200 response with a body that fails parsing
- *   "timeout"       — simulate a hung request (not currently wired to sleep;
+ *   "503"          , simulate HTTP 503 / gRPC Unavailable from the subsystem
+ *   "malformed-200", simulate a 200 response with a body that fails parsing
+ *   "timeout"      , simulate a hung request (not currently wired to sleep;
  *                     treated as equivalent to "503" for determinism)
- *   "clear"         — remove any active fault for this subsystem
+ *   "clear"        , remove any active fault for this subsystem
  *
  * Scope:
- *   "all"           — fault persists until explicitly cleared
- *   "next-N-calls"  — fault applies to the next N calls, then auto-clears
+ *   "all"          , fault persists until explicitly cleared
+ *   "next-N-calls" , fault applies to the next N calls, then auto-clears
  *
  * Spec: auth-resolution-hardening (Task 14, R7).
  *
@@ -55,7 +55,7 @@ export interface ActiveFault {
 }
 
 // ---------------------------------------------------------------------------
-// Guard — all state is no-op when TEST_FIXTURES_ENABLED is not "true"
+// Guard, all state is no-op when TEST_FIXTURES_ENABLED is not "true"
 // ---------------------------------------------------------------------------
 
 function isEnabled(): boolean {
@@ -169,7 +169,7 @@ export function getFaultMode(subsystem: FaultSubsystem): ActiveFault | undefined
   const entry = state.get(subsystem);
   if (!entry) return undefined;
 
-  // Scoped fault already exhausted — clean up and return undefined.
+  // Scoped fault already exhausted, clean up and return undefined.
   if (entry.remaining !== undefined && entry.remaining <= 0) {
     state.delete(subsystem);
     return undefined;

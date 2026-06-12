@@ -1,4 +1,4 @@
-# Auth-resolution-hardening — Post-deploy Soak Guide
+# Auth-resolution-hardening, Post-deploy Soak Guide
 
 Spec: `auth-resolution-hardening`. Audience: on-call SRE.
 
@@ -23,7 +23,7 @@ the in-cluster Prometheus.
 | `dashboard_membership_resolution_total{outcome="..."}` | Counter | FGA membership resolution outcomes (single/multi/zero/fga_error/daemon_error) | `fga_error` and `daemon_error` should be 0; sustained non-zero triggers `DashboardFGAUnreachable` |
 | `dashboard_membership_resolution_duration_seconds` | Histogram | ListMyMemberships RPC latency from dashboard | p99 < 500 ms under normal FGA load |
 | `dashboard_active_tenant_validation_total{outcome="..."}` | Counter | Cookie validation outcomes per protected request | `stale` and `forbidden` should be low; spikes indicate revocation events or cookie tampering |
-| `dashboard_user_token_forwarding_disabled_total` | Counter | Dashboard RPCs served via the SPIFFE-fallback transport | **Should be 0 in steady state.** Non-zero means `USE_USER_TOKEN_FORWARDING=false` is active — the SPIFFE-fallback transport is engaged and per-user FGA audit attribution is disabled. Non-zero during soak requires investigation before declaring the spec complete. |
+| `dashboard_user_token_forwarding_disabled_total` | Counter | Dashboard RPCs served via the SPIFFE-fallback transport | **Should be 0 in steady state.** Non-zero means `USE_USER_TOKEN_FORWARDING=false` is active, the SPIFFE-fallback transport is engaged and per-user FGA audit attribution is disabled. Non-zero during soak requires investigation before declaring the spec complete. |
 
 ---
 
@@ -65,9 +65,9 @@ Rules are committed under `enterprise/deploy/helm/gibson/files/prometheus/rules/
   sustainable rate (short + long burn windows both exceeded).
 - **During soak:** This alert fires when FGA roundtrips or Zitadel JWKS fetches
   slow down the OIDC callback. If latency is elevated, check:
-  1. `dashboard_membership_resolution_duration_seconds` — FGA slow?
+  1. `dashboard_membership_resolution_duration_seconds`, FGA slow?
   2. Zitadel JWKS endpoint latency (visible in Envoy access logs).
-  3. Prometheus recording rules `slo:dashboard_signin_p95_seconds` —
+  3. Prometheus recording rules `slo:dashboard_signin_p95_seconds` -
      confirm they are evaluating correctly.
 
 ---
@@ -102,7 +102,7 @@ UX. It does not change the core authentication code path. However, if the
    Auth.js config.
 
 2. **No code path rollback needed for error-UX only issues.** The `/login/error`
-   page is additive — it replaces the previous silent `federated-signout` loop.
+   page is additive, it replaces the previous silent `federated-signout` loop.
    Rolling back to the silent signout is strictly worse. Instead, fix the
    underlying error source.
 
@@ -111,7 +111,7 @@ UX. It does not change the core authentication code path. However, if the
    - Edit `enterprise/deploy/helm/gibson/files/prometheus/rules/auth-alerts.yaml`
      or `auth-slos.yaml` via a Helm values PR to `enterprise/deploy/`.
    - The Prometheus operator will reconcile within 60 seconds.
-   - Do NOT directly `kubectl edit` the PrometheusRule — use Helm/GitOps.
+   - Do NOT directly `kubectl edit` the PrometheusRule, use Helm/GitOps.
 
 4. **If `USE_USER_TOKEN_FORWARDING=false` was set as a soak backout** (from the
    `dashboard-fga-user-identity` spec):

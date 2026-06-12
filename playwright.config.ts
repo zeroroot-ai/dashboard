@@ -78,7 +78,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests.
    *
    * Auth e2e tests (e2e/auth/) target the kind `gibson` cluster at port
-   * 30081 and do NOT use the local dev server — they set PLAYWRIGHT_BASE_URL
+   * 30081 and do NOT use the local dev server, they set PLAYWRIGHT_BASE_URL
    * to http://localhost:30081 and start their own webServer configuration is
    * skipped for that sub-suite via the CI workflow.
    *

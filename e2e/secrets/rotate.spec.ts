@@ -8,14 +8,14 @@
  *   - New value field is password-type with autocomplete=off.
  *   - Submitting the rotation calls the RotateSecret RPC.
  *   - Version field increments after a successful rotation.
- *   - Storage isolation (same rules as create.spec.ts — no value in storage).
+ *   - Storage isolation (same rules as create.spec.ts, no value in storage).
  *
  * Requirements: 1.1, NFR Security.
  *
  * Pre-conditions:
- *   PLAYWRIGHT_BASE_URL — target cluster URL (default: http://localhost:3000)
- *   E2E_ADMIN_EMAIL     — admin user email
- *   E2E_ADMIN_PASSWORD  — admin user password
+ *   PLAYWRIGHT_BASE_URL, target cluster URL (default: http://localhost:3000)
+ *   E2E_ADMIN_EMAIL    , admin user email
+ *   E2E_ADMIN_PASSWORD , admin user password
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -32,7 +32,7 @@ const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "password";
 const SECRET_ID = "secret-001";
 const SECRET_DETAIL_URL = `${BASE_URL}/dashboard/pages/settings/secrets/${SECRET_ID}`;
 
-/** Distinctive value for rotation tests — never a real credential. */
+/** Distinctive value for rotation tests, never a real credential. */
 const ROTATE_SECRET_VALUE = "e2e-rotated-value-Yz4kL8wS!2m";
 
 // ---------------------------------------------------------------------------
@@ -118,7 +118,7 @@ async function mockSecretDetailWithRotate(page: Page) {
 // Test suite: rotate modal
 // ---------------------------------------------------------------------------
 
-test.describe("Secret rotate — modal", () => {
+test.describe("Secret rotate, modal", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockSecretDetailWithRotate(page);
@@ -228,7 +228,7 @@ test.describe("Secret rotate — modal", () => {
 // Security: storage isolation during rotation
 // ---------------------------------------------------------------------------
 
-test.describe("Secret rotate — storage isolation (NFR Security)", () => {
+test.describe("Secret rotate, storage isolation (NFR Security)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockSecretDetailWithRotate(page);
@@ -306,7 +306,7 @@ test.describe("Secret rotate — storage isolation (NFR Security)", () => {
 // Security: no "Show value" affordance on detail page
 // ---------------------------------------------------------------------------
 
-test.describe("Secret detail — no value reveal (NFR Security R1.2)", () => {
+test.describe("Secret detail, no value reveal (NFR Security R1.2)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockSecretDetailWithRotate(page);
@@ -322,7 +322,7 @@ test.describe("Secret detail — no value reveal (NFR Security R1.2)", () => {
       page.getByRole("button", { name: /rotate/i }).first(),
     ).toBeVisible({ timeout: 15_000 });
 
-    // R1.2 — no "Show value" affordance
+    // R1.2, no "Show value" affordance
     await expect(
       page.getByRole("button", { name: /show.?value|reveal.?value|view.?value/i }),
     ).not.toBeVisible();

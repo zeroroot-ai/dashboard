@@ -1,7 +1,7 @@
 /**
  * Conversation export utilities.
  *
- * Pure functions — no I/O, no side effects. The caller is responsible for
+ * Pure functions, no I/O, no side effects. The caller is responsible for
  * triggering the download (browser-side blob + anchor click).
  */
 

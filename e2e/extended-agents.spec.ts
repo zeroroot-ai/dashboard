@@ -1,7 +1,7 @@
 /**
  * extended-agents.spec.ts
  *
- * End-to-end smoke for /dashboard/agents — confirms the page renders the
+ * End-to-end smoke for /dashboard/agents, confirms the page renders the
  * shared AccessScopeSelector + RWXMatrix, that toggling each action class
  * reaches the setComponentAccessAction Server Action, and that the denying-
  * gate tooltip is non-empty on a denied action.
@@ -59,7 +59,7 @@ async function mockSetComponentAccess(page: Page) {
   });
 }
 
-test.describe("Agents page — scope selector + matrix", () => {
+test.describe("Agents page, scope selector + matrix", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });

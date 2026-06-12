@@ -8,7 +8,7 @@ import { render as renderPlanChanged } from '../templates/billing-plan-changed';
 import type { EmailMessage } from '../types';
 
 /**
- * Deliverability guard — reject any template that references a remote image.
+ * Deliverability guard, reject any template that references a remote image.
  */
 const REMOTE_IMG_RE = /<img[^>]+src=["']?https?:/i;
 
@@ -61,7 +61,7 @@ describe('templates/billing-checkout-completed', () => {
   });
 
   it('subject matches spec', () => {
-    expect(msg.subject).toBe('Your Gibson trial has started — Squad plan');
+    expect(msg.subject).toBe('Your Gibson trial has started, Squad plan');
   });
 
   it('HTML includes tier name', () => {

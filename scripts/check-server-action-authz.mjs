@@ -5,15 +5,15 @@
  * exemption marker with a reason.
  *
  * Recognised authz patterns (any one satisfies the gate):
- *   - assertAuthorized(...)                      — DaemonAdminService RPC gating
- *   - requireCrdSession / requireCrdSessionForSelfAction  — CRD/k8s actions
- *   - getServerSession(...)                      — minimum floor: the action
+ *   - assertAuthorized(...)                     , DaemonAdminService RPC gating
+ *   - requireCrdSession / requireCrdSessionForSelfAction , CRD/k8s actions
+ *   - getServerSession(...)                     , minimum floor: the action
  *       resolves the authenticated server session (and is expected to narrow
  *       to it / hasPermission). The two patterns above are preferred for
  *       mutations; this floor catches actions that proxy the daemon with no
  *       server-side identity at all.
  *
- * `app/actions/crd/**` is intentionally NOT covered here — it has its own,
+ * `app/actions/crd/**` is intentionally NOT covered here, it has its own,
  * stricter per-action gate in check-crd-action-authz.mjs.
  *
  * Exemption: place a marker anywhere in the file's top-of-file comment block:
@@ -100,8 +100,8 @@ if (violations.length > 0) {
   for (const v of violations) console.error(`  - ${v}`);
   console.error(
     "\nAdd assertAuthorized(...), requireCrdSession(...), or " +
-      "getServerSession()+hasPermission(...), or — only for genuinely " +
-      "pre-auth/non-sensitive actions — a\n  // @server-action-authz-exempt: <reason>\n" +
+      "getServerSession()+hasPermission(...), or, only for genuinely " +
+      "pre-auth/non-sensitive actions, a\n  // @server-action-authz-exempt: <reason>\n" +
       "marker in the top-of-file comment block.\n",
   );
   process.exit(1);

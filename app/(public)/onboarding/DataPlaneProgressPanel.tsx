@@ -1,14 +1,14 @@
 'use client';
 
 /**
- * DataPlaneProgressPanel — client component that polls
+ * DataPlaneProgressPanel, client component that polls
  * GET /api/onboarding/data-plane every 2 seconds while any store is in
  * `provisioning` state and renders per-store status with friendly text.
  *
  * Stops polling when all three stores are `ready` (then triggers the
  * supplied `onAllReady` callback) or when any store hits `failed`.
  *
- * Design D8 — Task 34.
+ * Design D8, Task 34.
  */
 
 import { useEffect } from 'react';
@@ -71,7 +71,7 @@ function StoreRow({ label, hint, status }: StoreRowProps) {
       <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent text-muted-foreground" />
     );
   } else {
-    // null — not started / legacy CRD
+    // null, not started / legacy CRD
     indicator = (
       <span className="text-muted-foreground text-sm">pending</span>
     );
@@ -86,7 +86,7 @@ function StoreRow({ label, hint, status }: StoreRowProps) {
           <span className="text-muted-foreground ml-1">{hint}</span>
         ) : null}
         {state === 'failed' && reason ? (
-          <span className="text-destructive ml-1 text-xs">— {reason}</span>
+          <span className="text-destructive ml-1 text-xs">- {reason}</span>
         ) : null}
       </span>
     </li>
@@ -175,7 +175,7 @@ export function DataPlaneProgressPanel({ onAllReady }: DataPlaneProgressPanelPro
 
       {allReady(data) && (
         <p className="text-sm text-highlight font-medium">
-          All systems ready — redirecting…
+          All systems ready, redirecting…
         </p>
       )}
     </div>

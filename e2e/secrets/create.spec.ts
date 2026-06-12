@@ -17,9 +17,9 @@
  * Requirements: 1.1, 1.3, NFR Security.
  *
  * Pre-conditions:
- *   PLAYWRIGHT_BASE_URL — target cluster URL (default: http://localhost:3000)
- *   E2E_ADMIN_EMAIL     — admin user email
- *   E2E_ADMIN_PASSWORD  — admin user password
+ *   PLAYWRIGHT_BASE_URL, target cluster URL (default: http://localhost:3000)
+ *   E2E_ADMIN_EMAIL    , admin user email
+ *   E2E_ADMIN_PASSWORD , admin user password
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -135,7 +135,7 @@ async function mockCreateError(page: Page) {
 // Test suite: create form rendering
 // ---------------------------------------------------------------------------
 
-test.describe("Secret create — form", () => {
+test.describe("Secret create, form", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockCreateSuccess(page);
@@ -155,7 +155,7 @@ test.describe("Secret create — form", () => {
   }) => {
     await page.goto(CREATE_URL);
 
-    // R1 NFR Usability — sensitive input must be password type with autocomplete off
+    // R1 NFR Usability, sensitive input must be password type with autocomplete off
     const valueInput = page
       .locator('input[type="password"]')
       .or(page.getByLabel(/^value$|secret.?value/i))
@@ -199,7 +199,7 @@ test.describe("Secret create — form", () => {
 // SECURITY-CRITICAL: localStorage and sessionStorage storage trace assertions
 // ---------------------------------------------------------------------------
 
-test.describe("Secret create — storage isolation (NFR Security)", () => {
+test.describe("Secret create, storage isolation (NFR Security)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });
@@ -365,7 +365,7 @@ test.describe("Secret create — storage isolation (NFR Security)", () => {
         const fieldValue = await valueFieldAfterSubmit.inputValue();
         expect(
           fieldValue,
-          "Value field must be cleared after submit — R1.3 security requirement",
+          "Value field must be cleared after submit, R1.3 security requirement",
         ).toBe("");
       }
     }
@@ -454,7 +454,7 @@ test.describe("Secret create — storage isolation (NFR Security)", () => {
           version: 1,
           createdAt: new Date().toISOString(),
           createdBy: "user-e2e-001",
-          // NOTE: no 'value' field — this is the correct wire shape
+          // NOTE: no 'value' field, this is the correct wire shape
         });
         responsePayloads.push(responseBody);
         await route.fulfill({
@@ -511,7 +511,7 @@ test.describe("Secret create — storage isolation (NFR Security)", () => {
 // Inline error rendering
 // ---------------------------------------------------------------------------
 
-test.describe("Secret create — error handling", () => {
+test.describe("Secret create, error handling", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockCreateError(page);

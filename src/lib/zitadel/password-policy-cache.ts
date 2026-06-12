@@ -2,7 +2,7 @@
  * In-process cache for the Zitadel instance password-complexity policy.
  *
  * TTL: 5 minutes. On upstream error the cache falls back to DEFAULT_PASSWORD_POLICY
- * and logs a warning — it does NOT throw, so the signup form still renders during
+ * and logs a warning, it does NOT throw, so the signup form still renders during
  * a Zitadel outage.
  *
  * No external dependencies. No module-level network calls.
@@ -71,7 +71,7 @@ export async function getCachedPasswordPolicy(
     cache.set('singleton', { policy, fetchedAt: now });
     return policy;
   } catch (err) {
-    // Log the error but do not throw — the form must still render.
+    // Log the error but do not throw, the form must still render.
     console.warn(
       '[password-policy-cache] Failed to fetch password policy from Zitadel; using defaults.',
       err instanceof Error ? err.message : String(err),

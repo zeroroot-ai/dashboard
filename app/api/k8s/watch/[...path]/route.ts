@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { k8s } from '@/src/lib/k8s/client';
 import { CRDKind, GibsonCRD, WatchEvent } from '@/src/lib/k8s/types';
 
-// Disable Next.js caching — SSE streams must not be cached.
+// Disable Next.js caching, SSE streams must not be cached.
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 

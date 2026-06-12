@@ -47,7 +47,7 @@ export function render(ctx: BillingTrialWillEndCtx): EmailMessage {
     ``,
     `Questions? Contact ${ctx.supportEmail}.`,
     ``,
-    `— The Gibson team`,
+    `The Gibson team`,
   ].join('\n');
 
   const html = [

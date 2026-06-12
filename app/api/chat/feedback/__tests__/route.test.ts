@@ -6,14 +6,14 @@
  * - Valid thumbs-up → addTraceScore(value=1) + 204
  * - Valid thumbs-down → addTraceScore(value=0) + 204
  * - Missing traceId → 400
- * - Daemon error on addTraceScore → 204 (no-op — optimistic fill-thumb)
+ * - Daemon error on addTraceScore → 204 (no-op, optimistic fill-thumb)
  * - No active tenant → 412
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ---------------------------------------------------------------------------
-// Mocks — hoisted before imports
+// Mocks, hoisted before imports
 // ---------------------------------------------------------------------------
 
 vi.mock('server-only', () => ({}));
@@ -177,7 +177,7 @@ describe('POST /api/chat/feedback', () => {
     const res = await POST(
       makeRequest({ messageId: 'msg-1', traceId: 'trace-1', rating: 'up' }) as Parameters<typeof POST>[0],
     );
-    // Must not revert the optimistic fill-thumb — 204 even on backend failure.
+    // Must not revert the optimistic fill-thumb, 204 even on backend failure.
     expect(res.status).toBe(204);
   });
 });

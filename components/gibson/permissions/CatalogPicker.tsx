@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * CatalogPicker — single source of truth for the catalog-driven grant
+ * CatalogPicker, single source of truth for the catalog-driven grant
  * UI. Used by both the deploy wizard's Permissions step (initial grants
  * at agent / tool creation time) and the agent / tool detail
  * Permissions tab's "Add grant" modal (post-creation grant management).
@@ -263,7 +263,7 @@ export function CatalogPicker({
                       <span>
                         <span className="font-mono">{p.name}</span>
                         {p.description ? (
-                          <span className="ml-2 text-muted-foreground/70">— {p.description}</span>
+                          <span className="ml-2 text-muted-foreground/70">- {p.description}</span>
                         ) : null}
                       </span>
                       <Checkbox

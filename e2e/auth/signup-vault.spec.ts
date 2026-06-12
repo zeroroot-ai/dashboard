@@ -15,7 +15,7 @@
  *   5. Navigate to /dashboard/pages/settings/secrets and confirm the onboarding
  *      empty state with "Your secrets backend is ready (Gibson-hosted Vault)".
  *
- * Sequential by design — signup is one-shot per tenant.
+ * Sequential by design, signup is one-shot per tenant.
  *
  * Cleanup:
  *   After the test, the Tenant CR is deleted via kubectl so re-runs stay
@@ -27,10 +27,10 @@
  *   DASHBOARD_CAPTCHA_PROVIDER=disabled
  *
  * Env vars:
- *   PLAYWRIGHT_BASE_URL  — cluster URL (default: https://app.zeroroot.local:30443)
- *   VAULT_ADDR           — Vault address (optional, e.g. https://vault.cluster.local)
- *   VAULT_TOKEN          — Vault root/admin token for namespace verification (optional)
- *   VAULT_NAMESPACE_PREFIX — Tenant namespace prefix used by the provisioner (default: "tenants/")
+ *   PLAYWRIGHT_BASE_URL , cluster URL (default: https://app.zeroroot.local:30443)
+ *   VAULT_ADDR          , Vault address (optional, e.g. https://vault.cluster.local)
+ *   VAULT_TOKEN         , Vault root/admin token for namespace verification (optional)
+ *   VAULT_NAMESPACE_PREFIX, Tenant namespace prefix used by the provisioner (default: "tenants/")
  *
  * Requirements: 7.1, 7.2, 7.3.
  */
@@ -72,7 +72,7 @@ const ONBOARDING_COPY_PATTERN =
   /secrets.?backend.*ready.*gibson.?hosted|gibson.?hosted.*vault/i;
 
 // ---------------------------------------------------------------------------
-// Vault namespace verification (optional — requires VAULT_ADDR + VAULT_TOKEN)
+// Vault namespace verification (optional, requires VAULT_ADDR + VAULT_TOKEN)
 // ---------------------------------------------------------------------------
 
 /**
@@ -92,7 +92,7 @@ async function verifyVaultNamespace(
 ): Promise<boolean> {
   if (!VAULT_ADDR || !VAULT_TOKEN) {
     console.log(
-      `[signup-vault] TODO: VAULT_ADDR or VAULT_TOKEN not set — skipping Vault namespace ` +
+      `[signup-vault] TODO: VAULT_ADDR or VAULT_TOKEN not set, skipping Vault namespace ` +
         `verification for tenant ${tenantSlug}. ` +
         `To enable: set VAULT_ADDR and VAULT_TOKEN pointing at the Kind cluster's Vault instance. ` +
         `Dashboard-side assertions still execute.`,
@@ -148,9 +148,9 @@ async function verifyVaultNamespace(
 // Main test
 // ---------------------------------------------------------------------------
 
-test.describe("Signup — Vault namespace provisioning step (R7)", () => {
+test.describe("Signup, Vault namespace provisioning step (R7)", () => {
   /**
-   * This is a sequential test — signup is one-shot per tenant.
+   * This is a sequential test, signup is one-shot per tenant.
    * Disable parallelism for this describe block.
    */
   test.describe.configure({ mode: "serial" });
@@ -195,10 +195,10 @@ test.describe("Signup — Vault namespace provisioning step (R7)", () => {
     //    (the panel transitions away). So we check via two strategies:
     //
     //    Strategy A: The step was visible during provisioning (captured via console
-    //    log or screenshot — not reliably assertable post-hoc).
+    //    log or screenshot, not reliably assertable post-hoc).
     //
     //    Strategy B: After landing in the dashboard, navigate to the secrets page
-    //    and verify the onboarding state (Gibson-hosted Vault ready) — this is the
+    //    and verify the onboarding state (Gibson-hosted Vault ready), this is the
     //    strongest dashboard-side evidence that the provisioning step ran.
     //
     //    We use Strategy B as the primary assertion.
@@ -257,7 +257,7 @@ test.describe("Signup — Vault namespace provisioning step (R7)", () => {
     await verifyVaultNamespace(request, creds.slug);
 
     // -------------------------------------------------------------------------
-    // 7. Cleanup — best-effort.
+    // 7. Cleanup, best-effort.
     // -------------------------------------------------------------------------
     try {
       execSync(
@@ -291,7 +291,7 @@ test.describe("Signup — Vault namespace provisioning step (R7)", () => {
     if (!faultCheckResp || faultCheckResp.status() !== 200) {
       test.skip(
         true,
-        "TEST_FIXTURES_ENABLED not set on this cluster — skipping fault injection test",
+        "TEST_FIXTURES_ENABLED not set on this cluster, skipping fault injection test",
       );
       return;
     }
@@ -314,14 +314,14 @@ test.describe("Signup — Vault namespace provisioning step (R7)", () => {
     if (!armResp.ok()) {
       test.skip(
         true,
-        "Could not arm secrets-namespace-provisioner fault — subsystem may not be wired",
+        "Could not arm secrets-namespace-provisioner fault, subsystem may not be wired",
       );
       return;
     }
 
     console.log(`[signup-vault] Fault armed: secrets-namespace-provisioner → 503`);
 
-    // Attempt signup — should fail with a clear error
+    // Attempt signup, should fail with a clear error
     await page.goto(`${BASE_URL}/signup?plan=solo`);
 
     // Fill the form
@@ -339,7 +339,7 @@ test.describe("Signup — Vault namespace provisioning step (R7)", () => {
     await page.locator("#acceptPrivacy").check();
     await page.getByRole("button", { name: /create account/i }).click();
 
-    // Wait for the provisioning panel — it should show an error state
+    // Wait for the provisioning panel, it should show an error state
     await page.waitForTimeout(5_000);
 
     // R7.3: rollback should occur and user should see an error message

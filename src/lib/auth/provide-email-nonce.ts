@@ -1,7 +1,7 @@
 /**
  * HMAC-signed nonce helpers for the "missing email" flow (GitHub private-email
  * case). Extracted from `app/actions/auth/provide-email.ts` because that file
- * carries `"use server"` — Turbopack rejects any sync export from a Server
+ * carries `"use server"`, Turbopack rejects any sync export from a Server
  * Action module, and these helpers are called synchronously from both the
  * GitHub callback route handler and the Server Action.
  */

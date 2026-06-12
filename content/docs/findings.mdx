@@ -1,10 +1,10 @@
 ---
 title: Findings
-description: Submit, triage, and export security findings — the structured output of every Gibson mission.
+description: Submit, triage, and export security findings, the structured output of every Gibson mission.
 ---
 
 A **finding** is the unit of work output that matters. Whatever your
-agents do — recon, triage, exploitation, monitoring — the durable
+agents do, recon, triage, exploitation, monitoring, the durable
 record is a list of findings: what was discovered, where, with what
 evidence, and how serious it is.
 
@@ -21,9 +21,9 @@ Every finding has the same shape:
 | **Title** | yes | One-line description (e.g. `"Exposed admin endpoint /admin/console"`). |
 | **Severity** | yes | `critical`, `high`, `medium`, `low`, `info`. Drives sorting and SLA timers. |
 | **Target reference** | yes | The asset the finding applies to. Usually populated automatically from the mission's target. |
-| **Description** | yes | Markdown. The full write-up — what was found, why it matters, suggested remediation. |
+| **Description** | yes | Markdown. The full write-up, what was found, why it matters, suggested remediation. |
 | **Evidence** | recommended | Structured payload (request/response excerpts, config snippets, traces). Stored verbatim. |
-| **Tags** | optional | Free-form labels — e.g. `pci`, `internal`, `bug-bounty`. Used for filtering. |
+| **Tags** | optional | Free-form labels, e.g. `pci`, `internal`, `bug-bounty`. Used for filtering. |
 | **CWE / CVE references** | optional | Standard identifiers Gibson links to upstream advisories. |
 | **Confidence** | optional | `confirmed`, `likely`, `tentative`. Triage uses this to prioritise. |
 
@@ -55,7 +55,7 @@ That's it. Gibson:
    webhook) based on the severity policy in your tenant's settings.
 
 You can also call `h.GetFindings(ctx, ...)` from inside an agent to
-retrieve findings already submitted in the current mission — useful
+retrieve findings already submitted in the current mission, useful
 for triage agents that aggregate or de-duplicate.
 
 ## Triaging in the dashboard
@@ -80,7 +80,7 @@ Click a row to open the detail page, where you can:
 | **Add a comment** | Threaded discussion. Comments are part of the audit log. |
 | **Link related findings** | Group duplicates or cluster a campaign. |
 | **Attach evidence** | Add screenshots, log excerpts, or reproduction steps post-hoc. |
-| **Replay the producing mission** | Jump to the mission detail page and replay from the checkpoint just before this finding was submitted — useful for verifying a fix or trying a different prompt. |
+| **Replay the producing mission** | Jump to the mission detail page and replay from the checkpoint just before this finding was submitted, useful for verifying a fix or trying a different prompt. |
 
 ## SLA and severity
 
@@ -121,7 +121,7 @@ view. Three formats:
 | **CSV** | Spreadsheet review. |
 | **SARIF** | GitHub / IDE integration; PR comment format. |
 
-Exports respect your filter — you get exactly the rows you see.
+Exports respect your filter, you get exactly the rows you see.
 **Evidence payloads are included in JSON and SARIF; CSV truncates
 evidence to a summary.**
 
@@ -134,7 +134,7 @@ Configure outbound destinations under **Settings → Integrations**:
 | **Slack** | Post a message on every finding above a chosen severity. |
 | **Email** | Send a digest (real-time, hourly, or daily) to a distribution list. |
 | **PagerDuty** | Open an incident on `critical` findings. |
-| **Generic webhook** | POST a JSON payload — same shape as the JSON export, one finding per request. |
+| **Generic webhook** | POST a JSON payload, same shape as the JSON export, one finding per request. |
 | **Jira / Linear / GitHub Issues** | Auto-create an issue with title + severity + a link back to the finding. |
 
 Each destination has its own filter so you only get the noise you've
@@ -155,12 +155,12 @@ and learn from history without you wiring anything yourself.
 
 ## Related
 
-- [Your First Agent](/docs/first-agent) — where `SubmitFinding` fits in
+- [Your First Agent](/docs/first-agent), where `SubmitFinding` fits in
   agent code.
-- [Missions](/docs/missions) — `finding.submitted` in the event stream.
-- [Knowledge graph](/docs/knowledge-graph) — how findings are linked to
+- [Missions](/docs/missions), `finding.submitted` in the event stream.
+- [Knowledge graph](/docs/knowledge-graph), how findings are linked to
   hosts, services, and attack patterns.
-- [Taxonomy](/docs/taxonomy) — the standard finding categories Gibson
+- [Taxonomy](/docs/taxonomy), the standard finding categories Gibson
   ships with.
-- [Ontology](/docs/ontology) — map custom finding categories into CWE,
+- [Ontology](/docs/ontology), map custom finding categories into CWE,
   SOC 2, MITRE ATT&CK, and other industry vocab.

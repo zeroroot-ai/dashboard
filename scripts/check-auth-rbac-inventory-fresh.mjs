@@ -41,7 +41,7 @@ const GENERATOR = resolve(__dirname, 'gen-auth-rbac-inventory.mjs');
 // build context). The check is a dev-host gate.
 // Spec: signup-zitadel-permissions-fix (Docker build fix for auth-resolution-hardening).
 if (process.env.SKIP_DASHBOARD_RBAC_CHECK === '1') {
-  console.log(`[${SCRIPT_NAME}] SKIPPED — SKIP_DASHBOARD_RBAC_CHECK=1`);
+  console.log(`[${SCRIPT_NAME}] SKIPPED, SKIP_DASHBOARD_RBAC_CHECK=1`);
   process.exit(0);
 }
 
@@ -50,10 +50,10 @@ try {
   committed = readFileSync(COMMITTED, 'utf8');
 } catch (err) {
   if (err.code === 'ENOENT') {
-    console.log(`[${SCRIPT_NAME}] SKIP — enterprise/docs sibling not present at ${COMMITTED}; skipping freshness check (dashboard-only workspace).`);
+    console.log(`[${SCRIPT_NAME}] SKIP, enterprise/docs sibling not present at ${COMMITTED}; skipping freshness check (dashboard-only workspace).`);
     process.exit(0);
   }
-  console.error(`[${SCRIPT_NAME}] FAIL — cannot read committed inventory at ${COMMITTED}: ${err.message}`);
+  console.error(`[${SCRIPT_NAME}] FAIL, cannot read committed inventory at ${COMMITTED}: ${err.message}`);
   console.error('Run: npm run gen:auth-rbac-inventory');
   process.exit(1);
 }
@@ -65,14 +65,14 @@ try {
     maxBuffer: 64 * 1024 * 1024,
   });
 } catch (err) {
-  console.error(`[${SCRIPT_NAME}] FAIL — generator errored: ${err.message}`);
+  console.error(`[${SCRIPT_NAME}] FAIL, generator errored: ${err.message}`);
   process.exit(2);
 }
 
 if (committed !== regenerated) {
-  console.error(`\n[${SCRIPT_NAME}] FAIL — ${COMMITTED} is stale. Spec: ${SPEC_NAME}`);
+  console.error(`\n[${SCRIPT_NAME}] FAIL, ${COMMITTED} is stale. Spec: ${SPEC_NAME}`);
   console.error('Resolve by running: npm run gen:auth-rbac-inventory');
   console.error('Then commit the regenerated file alongside your chart change.');
   process.exit(1);
 }
-console.log(`[${SCRIPT_NAME}] OK — inventory doc is in sync with rendered chart`);
+console.log(`[${SCRIPT_NAME}] OK, inventory doc is in sync with rendered chart`);

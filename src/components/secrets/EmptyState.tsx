@@ -6,17 +6,17 @@
  *
  * Three variants per Requirement 1.6 and 7.2:
  *
- *   1. `no-broker`   — Tenant has no broker configured yet.
+ *   1. `no-broker`  , Tenant has no broker configured yet.
  *                      CTA: configure broker first → /settings/secrets-backend
  *
- *   2. `onboarding`  — Tenant has a configured broker (default: Gibson-hosted
+ *   2. `onboarding` , Tenant has a configured broker (default: Gibson-hosted
  *                      Vault after signup) but zero secrets.
  *                      Shows the post-signup onboarding message per R7.2:
  *                      "Your secrets backend is ready (Gibson-hosted Vault)"
  *                      CTA: Add your first secret
  *                      Secondary: Or skip and register a plugin
  *
- *   3. `no-secrets`  — Tenant has a configured broker but zero secrets and the
+ *   3. `no-secrets` , Tenant has a configured broker but zero secrets and the
  *                      onboarding message has already been dismissed / doesn't
  *                      apply (BYO broker case).
  *                      CTA: Add your first secret
@@ -115,7 +115,7 @@ export function SecretsEmptyStateOnboarding({
             </Link>
           </Button>
         )}
-        {/* Secondary link: plugin wizard — requirements say "link to plugin wizard" */}
+        {/* Secondary link: plugin wizard, requirements say "link to plugin wizard" */}
         <Button asChild size="sm" variant="outline">
           <Link href="/dashboard/deploy?type=plugin">
             <PlugIcon className="size-3.5 mr-1.5" aria-hidden="true" />
@@ -168,7 +168,7 @@ export function SecretsEmptyStateNoSecrets({
 }
 
 // ---------------------------------------------------------------------------
-// Convenience union component — delegates to the right variant
+// Convenience union component, delegates to the right variant
 // ---------------------------------------------------------------------------
 
 export type SecretsEmptyStateVariant = "no-broker" | "onboarding" | "no-secrets";

@@ -4,7 +4,7 @@ import { TraceDetailView } from "@/components/gibson/traces/TraceDetailView";
 
 export async function generateMetadata(): Promise<Metadata> {
   return generateMeta({
-    title: "Trace detail — Gibson Traces",
+    title: "Trace detail | Gibson Traces",
     additionalTitle: true,
     description:
       "Token usage, model activity, and the full prompt/response detail for a single AI run.",

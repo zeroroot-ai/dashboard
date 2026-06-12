@@ -37,7 +37,7 @@ const EMPTY: PlatformContext = { agents: [], tools: [], plugins: [] };
 
 /**
  * Fetch the tenant's deployed agents, tools, and plugins in parallel.
- * Each slot fails independently — a single RPC failure does not suppress the others.
+ * Each slot fails independently, a single RPC failure does not suppress the others.
  * Returns empty context when all three fail or all lists are empty.
  */
 export async function getPlatformContext(

@@ -1,5 +1,5 @@
 /**
- * tier-checker.ts — Minimal plan-id helpers over the canonical plan
+ * tier-checker.ts, Minimal plan-id helpers over the canonical plan
  * registry (@/src/generated/plans).
  *
  * Spec plans-and-quotas-simplification reduces the registry to three

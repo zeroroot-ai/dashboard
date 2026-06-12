@@ -26,17 +26,17 @@ import { useAuthorize } from "@/src/lib/auth/use-authorize";
  *
  * Three sections, each a flat list (no nested items):
  *
- *   Account    — user-prefs / billing surfaces every member sees
- *   Workspace  — Gibson product surfaces (LLM providers, agents, plugins, …)
- *   Admin      — admin-gated surfaces hidden via useAuthorize() until the
+ *   Account   , user-prefs / billing surfaces every member sees
+ *   Workspace , Gibson product surfaces (LLM providers, agents, plugins, …)
+ *   Admin     , admin-gated surfaces hidden via useAuthorize() until the
  *                membership query confirms tenant_admin
  *
  * Items removed from the prior layout:
- *   - "Profile"     — duplicated /pages/settings/account; the index page
+ *   - "Profile"    , duplicated /pages/settings/account; the index page
  *                     now redirects there.
- *   - "Appearance"  — was a template form with no persistence.
- *   - "Notifications", "Display" — same.
- *   - "Audit Log", "Permissions" — pointed at routes that don't exist.
+ *   - "Appearance" , was a template form with no persistence.
+ *   - "Notifications", "Display", same.
+ *   - "Audit Log", "Permissions", pointed at routes that don't exist.
  */
 
 const accountNav = [
@@ -61,7 +61,7 @@ interface AdminEntry {
   method: string;
 }
 
-// Member management is NOT in Settings — it lives in the single "Members &
+// Member management is NOT in Settings, it lives in the single "Members &
 // Access" home under the Organization nav (Members / Teams / Security Policy),
 // per ADR-0039 / dashboard#609. /dashboard/pages/settings/members redirects there.
 

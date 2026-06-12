@@ -79,7 +79,7 @@ export function useChat(config?: UseChatConfig) {
 
   // Build a transport that optionally attaches the debug header and reads the
   // debug response header back. The transport is memoised on debugMode so it
-  // is only recreated when that flag changes — not on every render.
+  // is only recreated when that flag changes, not on every render.
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -134,7 +134,7 @@ export function useChat(config?: UseChatConfig) {
       streamingOriginConvRef.current = activeConvRef.current;
     }
 
-    // When the stream finishes, persist to the ORIGIN conversation — not the
+    // When the stream finishes, persist to the ORIGIN conversation, not the
     // currently active one. This prevents misattribution when the user has
     // switched to another conversation while a stream was in flight.
     if (prevStatus === 'streaming' && status === 'ready') {
@@ -174,7 +174,7 @@ export function useChat(config?: UseChatConfig) {
             hasDefaultTitle &&
             !titledConversations.current.has(convId)
           ) {
-            // Mark immediately — before the async call — to prevent duplicate requests
+            // Mark immediately, before the async call, to prevent duplicate requests
             // if the effect fires more than once in the same session.
             titledConversations.current.add(convId);
 
@@ -239,7 +239,7 @@ export function useChat(config?: UseChatConfig) {
    * are fetched from the daemon via loadConversationMessages. This is the
    * "finalize interrupted streams on reload" path: a conversation whose last
    * assistant message was persisted as a partial (via the stop+persist machinery
-   * from dashboard#563) loads cleanly — no spinner, no duplication, regenerate
+   * from dashboard#563) loads cleanly, no spinner, no duplication, regenerate
    * available (dashboard#555).
    *
    * An in-flight stream on another conversation is not affected by this switch

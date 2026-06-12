@@ -14,15 +14,15 @@
  *   gibson-proxy endpoints so pages render without a live daemon.
  *
  *   On a real Kind cluster the E2E_ADMIN_EMAIL user is by definition the
- *   tenant owner (created via signup) and therefore tenant_admin — the mock
+ *   tenant owner (created via signup) and therefore tenant_admin, the mock
  *   simply reinforces that and makes the suite deterministic without relying
  *   on cluster state drift.
  *
  * Pre-conditions (Kind cluster):
  *   make deploy-local running against `kind-gibson` context.
- *   PLAYWRIGHT_BASE_URL  — cluster URL (default: http://localhost:3000)
- *   E2E_ADMIN_EMAIL      — admin user email
- *   E2E_ADMIN_PASSWORD   — corresponding password
+ *   PLAYWRIGHT_BASE_URL , cluster URL (default: http://localhost:3000)
+ *   E2E_ADMIN_EMAIL     , admin user email
+ *   E2E_ADMIN_PASSWORD  , corresponding password
  *
  * Wall-clock budget: ≤ 2 minutes.
  * Requirements: 9.4.
@@ -172,7 +172,7 @@ async function mockAdminBackend(page: Page) {
 // Suite
 // ---------------------------------------------------------------------------
 
-test.describe("Authz gating — admin happy-path (tenant_admin) visibility", () => {
+test.describe("Authz gating, admin happy-path (tenant_admin) visibility", () => {
   test.describe.configure({ mode: "serial" });
 
   test.beforeEach(async ({ page }) => {
@@ -182,7 +182,7 @@ test.describe("Authz gating — admin happy-path (tenant_admin) visibility", () 
   });
 
   // -------------------------------------------------------------------------
-  // Sidebar entries — all three admin entries must be present
+  // Sidebar entries, all three admin entries must be present
   // -------------------------------------------------------------------------
 
   test("settings sidebar shows Secrets entry for tenant_admin", async ({
@@ -231,7 +231,7 @@ test.describe("Authz gating — admin happy-path (tenant_admin) visibility", () 
   });
 
   // -------------------------------------------------------------------------
-  // Plugins page — Add Plugin button
+  // Plugins page, Add Plugin button
   // -------------------------------------------------------------------------
 
   test("Add Plugin button is present on /plugins for tenant_admin", async ({
@@ -250,7 +250,7 @@ test.describe("Authz gating — admin happy-path (tenant_admin) visibility", () 
   });
 
   // -------------------------------------------------------------------------
-  // Secrets list — Add Secret button
+  // Secrets list, Add Secret button
   // -------------------------------------------------------------------------
 
   test("Add Secret button is present on /secrets for tenant_admin", async ({
@@ -270,7 +270,7 @@ test.describe("Authz gating — admin happy-path (tenant_admin) visibility", () 
   });
 
   // -------------------------------------------------------------------------
-  // Secrets backend — Probe and Save buttons
+  // Secrets backend, Probe and Save buttons
   // -------------------------------------------------------------------------
 
   test("Probe button is present on /secrets-backend for tenant_admin", async ({
@@ -304,7 +304,7 @@ test.describe("Authz gating — admin happy-path (tenant_admin) visibility", () 
   });
 
   // -------------------------------------------------------------------------
-  // Grants page — table renders
+  // Grants page, table renders
   // -------------------------------------------------------------------------
 
   test("/grants page renders the grants table for tenant_admin", async ({
@@ -325,7 +325,7 @@ test.describe("Authz gating — admin happy-path (tenant_admin) visibility", () 
   });
 
   // -------------------------------------------------------------------------
-  // Secrets detail — Rotate and Delete buttons (navigate to a secret detail page)
+  // Secrets detail, Rotate and Delete buttons (navigate to a secret detail page)
   // -------------------------------------------------------------------------
 
   test("Rotate and Delete buttons are present on secret detail page for tenant_admin", async ({
@@ -353,7 +353,7 @@ test.describe("Authz gating — admin happy-path (tenant_admin) visibility", () 
   });
 
   // -------------------------------------------------------------------------
-  // Deploy launcher — visible AND enabled for admins. Regression guard for
+  // Deploy launcher, visible AND enabled for admins. Regression guard for
   // dashboard#145: the DeployLauncher now renders via AuthGatedButton so
   // admins must see an interactive CTA (not a disabled or skeleton variant).
   // -------------------------------------------------------------------------

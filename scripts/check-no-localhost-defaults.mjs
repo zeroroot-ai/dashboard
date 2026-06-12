@@ -7,7 +7,7 @@
  *
  * The dashboard previously had || 'http://localhost:...' and
  * || 'bolt://localhost:...' fallbacks in src/lib/config.ts and
- * src/lib/redis-store.ts. These are silent production footguns — a missing
+ * src/lib/redis-store.ts. These are silent production footguns, a missing
  * env var would cause the dashboard to silently dial localhost instead of
  * crashing fast. This guard prevents their reintroduction.
  *
@@ -39,7 +39,7 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 
 const GUARD_NAME = "check-no-localhost-defaults";
 
-// Files to scan — intentionally narrow to avoid false positives in tests
+// Files to scan, intentionally narrow to avoid false positives in tests
 // or .env.example (which legitimately uses localhost values as dev defaults).
 const SCAN_FILES = [
   "src/lib/config.ts",
@@ -70,7 +70,7 @@ function scanFile(filePath) {
   try {
     src = readFileSync(filePath, "utf8");
   } catch {
-    // File doesn't exist — not a violation
+    // File doesn't exist, not a violation
     return [];
   }
   const violations = [];
@@ -109,13 +109,13 @@ function runScan() {
   console.error(`\n[${GUARD_NAME}] FAIL: localhost fallback expression(s) found:\n`);
   for (const v of allViolations) {
     const rel = v.file.replace(ROOT, "").replace(/^\//, "");
-    console.error(`  ${rel}:${v.line} — ${v.label}`);
+    console.error(`  ${rel}:${v.line}, ${v.label}`);
     console.error(`    ${v.text}`);
   }
   console.error(`
 Fix: remove the || 'http://localhost:...' (or bolt://, redis://) fallback
 expression. Required variables must be validated via validateEnvConfig() in
-src/lib/config.ts — the process should exit with a clear error if the env
+src/lib/config.ts, the process should exit with a clear error if the env
 var is unset. Optional variables should be typed as string | null with null
 checked by consumers. See .env.example for local-dev placeholder values.
 
@@ -126,7 +126,7 @@ Spec: naming-and-config-standardization Requirement 2.5.`);
 function runSelftest() {
   const fixturePath = join(ROOT, "src", "lib", "__check_no_localhost_defaults_fixture.ts");
   const body = [
-    "// Self-test fixture — intentionally references a forbidden pattern.",
+    "// Self-test fixture, intentionally references a forbidden pattern.",
     "// The scan SHOULD catch this and exit non-zero.",
     "export const badDefault = process.env.MY_URL || 'http://localhost:9999';",
     "",

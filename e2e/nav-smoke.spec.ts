@@ -1,8 +1,8 @@
 /**
- * Sidebar nav smoke — assert every visible sidebar link resolves to a
+ * Sidebar nav smoke, assert every visible sidebar link resolves to a
  * page rendered inside the authenticated app shell.
  *
- * Regression guard for issue #143 — the original Teams/Security Policy
+ * Regression guard for issue #143, the original Teams/Security Policy
  * 404 bug came from the sidebar pointing at URLs that didn't exist
  * inside the `app/dashboard/(auth)/` shell. A failing nav-smoke
  * indicates either:
@@ -122,8 +122,8 @@ test.describe("sidebar nav smoke", () => {
       }
       // The authenticated app shell is identified by the AppSidebar
       // mounting under [data-sidebar="sidebar"]. Pages rendered outside
-      // app/dashboard/(auth)/layout.tsx — e.g. left in the bare
-      // /(dashboard)/ segment group — will reach the DOM without it.
+      // app/dashboard/(auth)/layout.tsx, e.g. left in the bare
+      // /(dashboard)/ segment group, will reach the DOM without it.
       const shellVisible = await page
         .locator('[data-sidebar="sidebar"]')
         .isVisible()

@@ -1,5 +1,5 @@
 /**
- * checkpoint-browser.spec.ts — End-to-end test for the Checkpoint Browser
+ * checkpoint-browser.spec.ts, End-to-end test for the Checkpoint Browser
  * tab on the mission detail page.
  *
  * Covers (mission-checkpointing R17 / week-4-handlers-ui-e2e §4):
@@ -66,7 +66,7 @@ async function mockCheckpointActions(page: Page) {
   });
 
   // The Server Action invocations encode the function id and payload in
-  // the request body. We do not inspect them exhaustively — instead we
+  // the request body. We do not inspect them exhaustively, instead we
   // pattern-match on URL fragments and the action name string the
   // Next.js bundler embeds. Because this E2E targets the dashboard's
   // Server Action machinery, the mock layer is intentionally permissive.
@@ -301,7 +301,7 @@ test.describe("Checkpoint Browser (mission-checkpointing R17)", () => {
 
     await confirm.click();
 
-    // Toast surface — sonner emits a status region. Be permissive in the
+    // Toast surface, sonner emits a status region. Be permissive in the
     // matcher because sonner's DOM moves between renders.
     await expect(
       page.getByText(/Rewind started|Resumed from checkpoint/i),

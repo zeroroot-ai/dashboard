@@ -169,7 +169,7 @@ export function useTraceDetail(
 
 /**
  * Fetch a single observation's detail (conversation content).
- * Used for on-demand loading when user expands a decision. Mission-agnostic —
+ * Used for on-demand loading when user expands a decision. Mission-agnostic -
  * the observation id alone identifies the record. staleTime is Infinity since
  * observation content is immutable.
  */

@@ -1,14 +1,14 @@
 import type { EmailMessage, EmailProvider } from '../types';
 
 /**
- * Resend provider — wraps the `resend` SDK.
+ * Resend provider, wraps the `resend` SDK.
  *
  * The SDK is loaded lazily via dynamic `import()`; installs using the
  * `log` or `smtp` providers never bundle it.
  *
  * Configuration:
- *   DASHBOARD_EMAIL_RESEND_API_KEY — Resend API key (required)
- *   DASHBOARD_EMAIL_RESEND_FROM    — default From: address (required)
+ *   DASHBOARD_EMAIL_RESEND_API_KEY, Resend API key (required)
+ *   DASHBOARD_EMAIL_RESEND_FROM   , default From: address (required)
  */
 export class ResendEmailProvider implements EmailProvider {
   private readonly apiKey: string;
@@ -29,7 +29,7 @@ export class ResendEmailProvider implements EmailProvider {
   }
 
   async send(msg: EmailMessage): Promise<void> {
-    // Dynamic import — SDK stays out of non-resend bundles.
+    // Dynamic import, SDK stays out of non-resend bundles.
     const mod = await import('resend');
     const Resend = (mod as { Resend?: typeof mod.Resend }).Resend ?? mod.Resend;
 
@@ -44,7 +44,7 @@ export class ResendEmailProvider implements EmailProvider {
       headers: msg.headers,
     });
 
-    // Resend returns an { data, error } shape — surface errors to the
+    // Resend returns an { data, error } shape, surface errors to the
     // caller instead of swallowing. Callers own retry behaviour.
     const err = (result as { error?: { message?: string; name?: string } }).error;
     if (err) {

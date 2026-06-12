@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Step 1 — Manifest Upload
+ * Step 1, Manifest Upload
  *
  * Accepts a plugin manifest via file picker or paste textarea.
  * Performs client-side structural validation (YAML parse + required fields)
@@ -40,7 +40,7 @@ export interface ClientValidationResult {
 }
 
 // ---------------------------------------------------------------------------
-// Client-side validation (structural only — full semantic validation in Step 2)
+// Client-side validation (structural only, full semantic validation in Step 2)
 // ---------------------------------------------------------------------------
 
 /**

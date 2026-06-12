@@ -7,9 +7,9 @@
  *
  * File paths follow the SPIFFE Helper defaults (configurable via environment
  * variables):
- *   SPIFFE_CERT_PATH   — path to the PEM certificate  (default: /run/spire/sockets/svid.pem)
- *   SPIFFE_KEY_PATH    — path to the PEM private key   (default: /run/spire/sockets/svid-key.pem)
- *   SPIFFE_BUNDLE_PATH — path to the PEM trust bundle  (default: /run/spire/sockets/bundle.pem)
+ *   SPIFFE_CERT_PATH  , path to the PEM certificate  (default: /run/spire/sockets/svid.pem)
+ *   SPIFFE_KEY_PATH   , path to the PEM private key   (default: /run/spire/sockets/svid-key.pem)
+ *   SPIFFE_BUNDLE_PATH, path to the PEM trust bundle  (default: /run/spire/sockets/bundle.pem)
  *
  * SVID rotation:
  *   getSVID() always returns the latest in-memory snapshot. A background
@@ -22,7 +22,7 @@ import { readFileSync, watchFile, existsSync } from 'fs';
 import { logger } from './logger';
 
 // ---------------------------------------------------------------------------
-// Configuration — paths resolved from env with defaults
+// Configuration, paths resolved from env with defaults
 // ---------------------------------------------------------------------------
 
 const CERT_PATH =
@@ -55,12 +55,12 @@ let _watchStarted = false;
 /**
  * Load cert/key/bundle from disk into the in-memory cache.
  * Logs a warning and returns null when a file is missing (local dev without
- * a SPIRE Agent — transport falls back to plain TLS without client cert).
+ * a SPIRE Agent, transport falls back to plain TLS without client cert).
  */
 function loadSVID(): SVID | null {
   if (!existsSync(CERT_PATH) || !existsSync(KEY_PATH) || !existsSync(BUNDLE_PATH)) {
     console.warn(
-      '[spiffe] SVID files not found at expected paths — ' +
+      '[spiffe] SVID files not found at expected paths, ' +
         `cert=${CERT_PATH} key=${KEY_PATH} bundle=${BUNDLE_PATH}. ` +
         'Proceeding without mTLS client certificate (local dev mode).'
     );
@@ -85,7 +85,7 @@ function loadSVID(): SVID | null {
  */
 function startRotationWatcher(): void {
   if (_watchStarted) return;
-  if (!existsSync(CERT_PATH)) return; // No file — nothing to watch yet.
+  if (!existsSync(CERT_PATH)) return; // No file, nothing to watch yet.
 
   _watchStarted = true;
 
@@ -94,7 +94,7 @@ function startRotationWatcher(): void {
     const fresh = loadSVID();
     if (fresh) {
       _cached = fresh;
-      logger.info({ component: 'spiffe' }, 'SVID rotated — new certificate loaded');
+      logger.info({ component: 'spiffe' }, 'SVID rotated, new certificate loaded');
     }
   });
 }
@@ -107,7 +107,7 @@ function startRotationWatcher(): void {
  * Read the X.509-SVID from the paths written by the SPIFFE Helper sidecar.
  *
  * This is the explicit entry point used by gibson-client.ts on module init.
- * It is safe to call multiple times — results are cached.
+ * It is safe to call multiple times, results are cached.
  *
  * @param socketPath - Ignored in the file-based implementation. Present for
  *   interface compatibility with the design spec which mentions the Workload

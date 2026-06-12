@@ -102,7 +102,7 @@ function compare(hits, allowlist) {
       continue;
     }
     if (allowMap.get(k).source !== h.source) {
-      // Same file+line but content changed — treat as a new violation
+      // Same file+line but content changed, treat as a new violation
       // (the allowlist entry is for a different concrete violation).
       newViolations.push(h);
     }

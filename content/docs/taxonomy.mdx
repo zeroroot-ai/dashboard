@@ -1,6 +1,6 @@
 ---
 title: Taxonomy
-description: The standard entity types and relationships Gibson recognises — and how to extend the taxonomy from your component repo via taxonomy.yaml.
+description: The standard entity types and relationships Gibson recognises, and how to extend the taxonomy from your component repo via taxonomy.yaml.
 ---
 
 Gibson ships a **standard taxonomy** of entities and relationships
@@ -12,13 +12,13 @@ reason about data they didn't produce themselves.
 This page lists what Gibson recognises out of the box and explains
 how to add your own node types and relationships via `taxonomy.yaml`.
 
-For hierarchy, equivalence, and identity mappings — *"`CWE-79` is a
+For hierarchy, equivalence, and identity mappings, *"`CWE-79` is a
 kind of injection"*, *"our `LeakedSecret` category is equivalent to
-`gibson:disclosure`"* — see [Ontology](/docs/ontology).
+`gibson:disclosure`"*, see [Ontology](/docs/ontology).
 
 ## Standard entity types
 
-Asset entities — what the target system is and exposes:
+Asset entities, what the target system is and exposes:
 
 | Entity | What it represents |
 |---|---|
@@ -31,7 +31,7 @@ Asset entities — what the target system is and exposes:
 | **Technology** | A software / framework / library identified on a target (`nginx 1.25.0`, `Spring Boot 3.x`). |
 | **Certificate** | An X.509 certificate observed on a service. |
 
-Security entities — what's interesting about the target:
+Security entities, what's interesting about the target:
 
 | Entity | What it represents |
 |---|---|
@@ -40,7 +40,7 @@ Security entities — what's interesting about the target:
 | **Attack pattern** | A reusable attack pattern (e.g. "credential stuffing"). Often crosswalked to MITRE ATT&CK. |
 | **Technique** | A specific technique used by an attack pattern. |
 
-Provenance entities — who did what, when:
+Provenance entities, who did what, when:
 
 | Entity | What it represents |
 |---|---|
@@ -67,7 +67,7 @@ Don't duplicate it in your `taxonomy.yaml`.
 | `RUNS_SERVICE` | port → service | The service was identified on the port. |
 | `AFFECTS` | finding → (host \| service \| endpoint \| …) | The finding applies to this asset. |
 | `USES_TECHNIQUE` | attack pattern → technique | Composition. |
-| `DISCOVERED_IN` | (any) → mission | Provenance — which mission produced this node. |
+| `DISCOVERED_IN` | (any) → mission | Provenance, which mission produced this node. |
 | `PRODUCES` | agent execution → (any) | An agent execution emitted this node. |
 | `SIMILAR_TO` | (any) → (any) | Embedding-similarity edge written by the platform. |
 | `DEPENDS_ON` | mission node → mission node | Mirrors mission DAG edges in graph form. |
@@ -78,7 +78,7 @@ Don't duplicate it in your `taxonomy.yaml`.
 
 The bulk of nodes come from tool output. Reserve **field 100** of
 your tool's response proto for a `gibson.graphrag.v1.DiscoveryResult`
-— Gibson ingests it with the right labels, relationships, and
+- Gibson ingests it with the right labels, relationships, and
 provenance. From an agent, `h.SubmitFinding(...)` stores a finding
 linked via `AFFECTS` to its target. See [Findings](/docs/findings) and
 [Knowledge graph](/docs/knowledge-graph).
@@ -86,8 +86,8 @@ linked via `AFFECTS` to its target. See [Findings](/docs/findings) and
 ## Extending the taxonomy
 
 When you need a node or relationship the standard set doesn't cover
-— a `secret_finding` with team-specific fields, a `MANAGES` edge
-between hosts and IoT devices — declare it in a **`taxonomy.yaml`**
+- a `secret_finding` with team-specific fields, a `MANAGES` edge
+between hosts and IoT devices, declare it in a **`taxonomy.yaml`**
 at the root of your component repo.
 
 The build flow:
@@ -96,7 +96,7 @@ The build flow:
 2. `gibson component build` validates it against the SDK's
    `core.yaml` (no name collisions, properties typed correctly,
    parent/category references resolve).
-3. The ADK emits `gen/taxonomy_extension.go` — a `TaxonomyExtension`
+3. The ADK emits `gen/taxonomy_extension.go`, a `TaxonomyExtension`
    value baked into your component binary.
 4. Your component contributes the extension to the daemon at
    registration. The daemon merges it into the tenant's working
@@ -158,7 +158,7 @@ h.EmitComplianceSignal(ctx, agent.ComplianceSignal{
 ```
 
 To map a custom finding category to a control id, declare it in
-[`ontology.yaml`](/docs/ontology) — don't reinvent the framework in
+[`ontology.yaml`](/docs/ontology), don't reinvent the framework in
 `taxonomy.yaml`.
 
 ## Runtime escape hatch
@@ -188,10 +188,10 @@ it concrete shape. Examples:
 
 ## Related
 
-- [Ontology](/docs/ontology) — hierarchy, equivalence, and identity
+- [Ontology](/docs/ontology), hierarchy, equivalence, and identity
   mappings between your custom types and industry vocab.
-- [Knowledge graph](/docs/knowledge-graph) — what the graph is, how to
+- [Knowledge graph](/docs/knowledge-graph), what the graph is, how to
   query it.
-- [Findings](/docs/findings) — the highest-leverage entity in the
+- [Findings](/docs/findings), the highest-leverage entity in the
   taxonomy.
-- [Tools](/docs/tools) — how to populate `DiscoveryResult` field 100.
+- [Tools](/docs/tools), how to populate `DiscoveryResult` field 100.

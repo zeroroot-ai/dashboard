@@ -1,10 +1,10 @@
 ---
 title: Tools
-description: Build a stateless capability — define a typed input/output contract, ship the binary, and have your agents call it.
+description: Build a stateless capability, define a typed input/output contract, ship the binary, and have your agents call it.
 ---
 
 A **tool** is a stateless capability with a fixed input/output
-contract. Agents call tools to do well-defined work — port scans, HTTP
+contract. Agents call tools to do well-defined work, port scans, HTTP
 fingerprinting, CVE lookups, AST parsers, anything where the contract
 is "given X, return Y".
 
@@ -14,7 +14,7 @@ Tools differ from plugins in two ways:
 |---|---|---|
 | **State** | Stateless. Each call is independent. | Stateful. Holds connections, sessions, caches. |
 | **Lifetime** | Short-lived per call. | Long-running process. |
-| **Credentials** | None of its own — agents pass any data the tool needs. | Manifest-bound credentials, retrieved at runtime. |
+| **Credentials** | None of its own, agents pass any data the tool needs. | Manifest-bound credentials, retrieved at runtime. |
 | **Who calls it** | Agents. | Tools (and rarely, mission nodes directly). |
 
 If your capability needs to hold a Shodan API key or maintain a
@@ -24,7 +24,7 @@ the open ports on `1.2.3.4`," you want a tool.
 ## Tools are typed
 
 Every tool has a **proto-defined input and output**. The contract is
-explicit and discoverable — agents know exactly what they can pass in
+explicit and discoverable, agents know exactly what they can pass in
 and what they'll get back, without reading your implementation.
 
 A tool declares:
@@ -34,7 +34,7 @@ A tool declares:
 - an `ExecuteProto(ctx, input) → output` function
 
 Gibson registers your message schemas at registration time so any
-agent in your tenant can dynamically marshal calls to your tool — no
+agent in your tenant can dynamically marshal calls to your tool, no
 shared import required.
 
 ## Auto-populating the knowledge graph
@@ -54,15 +54,15 @@ message Response {
   // Tool-specific fields use 1..99.
   repeated PortScanRow rows = 1;
 
-  // Reserved for the standard discovery container — auto-ingested into
+  // Reserved for the standard discovery container, auto-ingested into
   // the knowledge graph. Optional, but highly recommended.
   gibson.graphrag.v1.DiscoveryResult discovery = 100;
 }
 ```
 
-`DiscoveryResult` carries the standard entity types — `host`, `port`,
+`DiscoveryResult` carries the standard entity types, `host`, `port`,
 `service`, `endpoint`, `domain`, `subdomain`, `technology`,
-`certificate`, `finding`, `evidence` — plus `custom_node` and
+`certificate`, `finding`, `evidence`, plus `custom_node` and
 `explicit_relationship` for shapes the standard taxonomy doesn't cover.
 See [Taxonomy](/docs/taxonomy) for the full list.
 
@@ -211,7 +211,7 @@ When the tool responds, Gibson:
 ## Authorization
 
 Whether a given agent can call a given tool is controlled by your
-tenant's **Permissions** model — see [Roles & permissions](/docs/rbac).
+tenant's **Permissions** model, see [Roles & permissions](/docs/rbac).
 The dashboard's deploy wizard sets up sensible defaults; you can
 tighten or loosen later.
 
@@ -234,9 +234,9 @@ schemas, so reviewers can see the contract at a glance.
 
 ## Related
 
-- [Plugins](/docs/plugins) — the right answer when stateful, long-running,
+- [Plugins](/docs/plugins), the right answer when stateful, long-running,
   or secret-bound is what you actually need.
-- [Knowledge graph](/docs/knowledge-graph) — what `DiscoveryResult` field
+- [Knowledge graph](/docs/knowledge-graph), what `DiscoveryResult` field
   100 unlocks.
-- [Taxonomy](/docs/taxonomy) — the standard entity types you can populate.
-- [Missions](/docs/missions) — how tool nodes fit into a DAG.
+- [Taxonomy](/docs/taxonomy), the standard entity types you can populate.
+- [Missions](/docs/missions), how tool nodes fit into a DAG.

@@ -1,7 +1,7 @@
 /**
- * Mission Graph API Route — Phase 4, Task 14
+ * Mission Graph API Route, Phase 4, Task 14
  *
- * GET /api/graph/mission/:id — proxies GetMissionGraph through daemon.
+ * GET /api/graph/mission/:id, proxies GetMissionGraph through daemon.
  * Does NOT import direct Neo4j driver.
  */
 

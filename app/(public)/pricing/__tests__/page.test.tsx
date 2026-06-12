@@ -1,5 +1,5 @@
 /**
- * Pricing page — Start-trial link contract.
+ * Pricing page, Start-trial link contract.
  *
  * The public /pricing page is the entry point for self-serve signup. Each
  * SaaS tier card has a "Start trial" CTA. The contract with the rest of
@@ -7,7 +7,7 @@
  * the param name `app/(public)/signup/page.tsx` validates against
  * `selfServeTierIds`. The signup page redirects back to
  * `/pricing?missing_plan=true` whenever the plan param is missing or
- * unknown — so getting the param name wrong here turns Start-trial into a
+ * unknown, so getting the param name wrong here turns Start-trial into a
  * silent redirect loop. (This test was added after exactly that bug.)
  */
 

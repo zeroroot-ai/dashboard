@@ -16,7 +16,7 @@
 import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 
 // ---------------------------------------------------------------------------
-// Mocks — installed BEFORE any SUT import.
+// Mocks, installed BEFORE any SUT import.
 // ---------------------------------------------------------------------------
 
 vi.mock("@/src/lib/auth", () => ({
@@ -85,7 +85,7 @@ vi.mock("../_rate_limits", () => ({
   consumeRateLimit: vi.fn(async () => ({ ok: true })),
 }));
 
-// Spy on audit emitters without changing their behavior — asserts that a
+// Spy on audit emitters without changing their behavior, asserts that a
 // denial path emits an event.
 const emitCrdAuditSpy = vi.fn();
 const emitCrdAuditFromGateSpy = vi.fn();
@@ -152,7 +152,7 @@ function anonymous(): null {
 }
 
 // Authorization gates on the caller's active-tenant role (session.user.roles)
-// against the action's required relation — no permission closure. `role`
+// against the action's required relation, no permission closure. `role`
 // defaults to "admin"; pass "member" to model an under-privileged caller.
 function tenantSession(tenantId: string, role: string = "admin"): TestSession {
   return {
@@ -193,7 +193,7 @@ function crossTenantSession(): TestSession {
 }
 
 // ---------------------------------------------------------------------------
-// Coverage guard — every *Action export must have a describe block below.
+// Coverage guard, every *Action export must have a describe block below.
 // ---------------------------------------------------------------------------
 
 const allExportedActions = [
@@ -400,7 +400,7 @@ describe.each(MANIFESTS)("$name", (m) => {
 // Cross-action invariants.
 // ---------------------------------------------------------------------------
 
-describe("provisionTenantAction — cross-tenant-only", () => {
+describe("provisionTenantAction, cross-tenant-only", () => {
   it("denies a tenant-scoped session even with tenants:provision permission", async () => {
     getSessionMock.mockResolvedValueOnce(tenantSession("acme", "admin"));
     const r = await tenantActions.provisionTenantAction({
@@ -416,7 +416,7 @@ describe("provisionTenantAction — cross-tenant-only", () => {
 // Direct role×relation table for the gate decision. The active-tenant mock
 // returns "other-tenant", so a tenantName of "other-tenant" passes the
 // tenant-scope check and the outcome turns purely on the relation gate.
-describe("requireCrdSession — active-tenant role × required relation", () => {
+describe("requireCrdSession, active-tenant role × required relation", () => {
   const adminAction = "deleteTeamAction" as const; // relation: "admin"
   it("allows an admin on the active tenant", async () => {
     getSessionMock.mockResolvedValueOnce(tenantSession("other-tenant", "admin"));

@@ -16,13 +16,13 @@ import { timestampToISO } from '@/src/lib/gibson-client';
  * Langfuse host/keys.
  *
  * Query params:
- *   page   — 1-based page number (default 1)
- *   limit  — page size (default 25, capped at 100)
- *   from   — inclusive lower bound on date (YYYY-MM-DD)
- *   to     — inclusive upper bound on date (YYYY-MM-DD)
- *   name   — substring filter on trace name
- *   userId — restrict to traces attributed to a specific end-user
- *   tags   — repeated param; restrict to traces carrying ALL specified tags
+ *   page  , 1-based page number (default 1)
+ *   limit , page size (default 25, capped at 100)
+ *   from  , inclusive lower bound on date (YYYY-MM-DD)
+ *   to    , inclusive upper bound on date (YYYY-MM-DD)
+ *   name  , substring filter on trace name
+ *   userId, restrict to traces attributed to a specific end-user
+ *   tags  , repeated param; restrict to traces carrying ALL specified tags
  */
 
 const DEFAULT_LIMIT = 25;

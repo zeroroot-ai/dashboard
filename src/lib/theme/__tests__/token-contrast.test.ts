@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 /**
- * Token-contrast invariant — the keystone readability test for the single
+ * Token-contrast invariant, the keystone readability test for the single
  * dark brand (#650). It parses the canonical `:root` token block out of
  * `app/globals.css` and asserts that every semantic foreground/background
  * pairing meets WCAG 2.1 AA: >=4.5:1 for normal text, >=3:1 for large text
@@ -109,7 +109,7 @@ const css = readFileSync(
 );
 const tokens = parseTokens(css);
 
-// Normal-text foreground/background pairs — must clear AA 4.5:1.
+// Normal-text foreground/background pairs, must clear AA 4.5:1.
 const TEXT_PAIRS: ReadonlyArray<[fg: string, bg: string]> = [
   ["--foreground", "--background"],
   ["--card-foreground", "--card"],
@@ -128,7 +128,7 @@ const TEXT_PAIRS: ReadonlyArray<[fg: string, bg: string]> = [
   ["--muted-foreground", "--card"],
 ];
 
-// Non-text UI affordances — must clear AA 3:1 against the base background.
+// Non-text UI affordances, must clear AA 3:1 against the base background.
 const UI_PAIRS: ReadonlyArray<[token: string, bg: string]> = [
   ["--ring", "--background"],
   ["--input", "--background"],

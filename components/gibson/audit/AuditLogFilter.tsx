@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AuditLogFilter — composable filter bar for the audit log page.
+ * AuditLogFilter, composable filter bar for the audit log page.
  *
  * Renders dropdowns for event type (with new secret/plugin/authz event types
  * per Spec 4 R5), authz sub-filter, tenant, date range, and actor. All
@@ -202,7 +202,7 @@ export function AuditLogFilter({
         </Select>
       </div>
 
-      {/* authz.deny sub-filter — only visible when authz.deny is selected */}
+      {/* authz.deny sub-filter, only visible when authz.deny is selected */}
       {showAuthzSubfilter && (
         <div className="flex flex-col gap-1.5 min-w-[200px]">
           <Label htmlFor="audit-decision-reason" className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
@@ -277,7 +277,7 @@ export function AuditLogFilter({
         />
       </div>
 
-      {/* Secret ID (free text) — for drill-down filter */}
+      {/* Secret ID (free text), for drill-down filter */}
       <div className="flex flex-col gap-1.5 min-w-[160px]">
         <Label htmlFor="audit-secret-id" className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
           Secret ID
@@ -370,7 +370,7 @@ export function AuditLogFilter({
  * audit entries.  Import alongside `AuditLogFilter` and mount in the row
  * expansion / detail panel.
  *
- * SECURITY: credential values are never present in `AuditLogEntry` — this
+ * SECURITY: credential values are never present in `AuditLogEntry`, this
  * component cannot inadvertently render them.
  */
 export interface AuditRowDetailProps {

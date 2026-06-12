@@ -73,7 +73,7 @@ describe('correlationIdFromRequest', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Class table — every entry has a unique HTTP status and message
+// Class table, every entry has a unique HTTP status and message
 // ---------------------------------------------------------------------------
 
 describe('ERROR_CLASS_TABLE', () => {
@@ -111,7 +111,7 @@ describe('ERROR_CLASS_TABLE', () => {
 });
 
 // ---------------------------------------------------------------------------
-// classifyConnectCode — 9-class collapse
+// classifyConnectCode, 9-class collapse
 // ---------------------------------------------------------------------------
 
 describe('classifyConnectCode', () => {
@@ -139,7 +139,7 @@ describe('classifyConnectCode', () => {
 });
 
 // ---------------------------------------------------------------------------
-// daemonErrorResponse — body shape + correlation ID + HTTP code
+// daemonErrorResponse, body shape + correlation ID + HTTP code
 // ---------------------------------------------------------------------------
 
 interface ExpectedShape {
@@ -159,7 +159,7 @@ const CODE_TO_EXPECTED: Array<[Code, ExpectedShape]> = [
   [Code.Internal, { cls: 'internal', http: 500 }],
 ];
 
-describe('daemonErrorResponse — every ConnectError class', () => {
+describe('daemonErrorResponse, every ConnectError class', () => {
   it.each(CODE_TO_EXPECTED)(
     'Code.%s → http %s with canonical body shape and correlation ID in header + body',
     async (code, expected) => {
@@ -251,10 +251,10 @@ describe('daemonErrorResponse — every ConnectError class', () => {
 });
 
 // ---------------------------------------------------------------------------
-// daemonErrorResponse — provisioning sub-classification (dashboard#260)
+// daemonErrorResponse, provisioning sub-classification (dashboard#260)
 // ---------------------------------------------------------------------------
 
-describe('daemonErrorResponse — provisioning sub-classification', () => {
+describe('daemonErrorResponse, provisioning sub-classification', () => {
   it('FailedPrecondition + "tenant data-plane not provisioned" → 503 with class provisioning', async () => {
     const log = vi.fn();
     const err = new ConnectError('tenant data-plane not provisioned', Code.FailedPrecondition);
@@ -319,7 +319,7 @@ describe('daemonErrorResponse — provisioning sub-classification', () => {
 });
 
 // ---------------------------------------------------------------------------
-// validationErrorResponse — 400 shape with fields
+// validationErrorResponse, 400 shape with fields
 // ---------------------------------------------------------------------------
 
 describe('validationErrorResponse', () => {
@@ -341,7 +341,7 @@ describe('validationErrorResponse', () => {
 });
 
 // ---------------------------------------------------------------------------
-// okResponse — 200 + correlation ID on happy path
+// okResponse, 200 + correlation ID on happy path
 // ---------------------------------------------------------------------------
 
 describe('okResponse', () => {
@@ -358,7 +358,7 @@ describe('okResponse', () => {
     expect(body.data).toHaveLength(1);
   });
 
-  it('empty-state — 200 with empty array, distinct from error-state', async () => {
+  it('empty-state, 200 with empty array, distinct from error-state', async () => {
     const res = okResponse({ data: [] });
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -369,7 +369,7 @@ describe('okResponse', () => {
 });
 
 // ---------------------------------------------------------------------------
-// safeErrorResponse — shim still produces canonical body
+// safeErrorResponse, shim still produces canonical body
 // ---------------------------------------------------------------------------
 
 describe('safeErrorResponse (deprecated shim)', () => {

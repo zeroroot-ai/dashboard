@@ -30,7 +30,7 @@ function escapeHtml(s: string): string {
 type Lead = z.infer<typeof contactSchema>;
 
 function renderLead(lead: Lead): { subject: string; html: string; text: string } {
-  const subject = `[Sales] ${lead.company} (${lead.companySize}) — ${lead.timeline}`;
+  const subject = `[Sales] ${lead.company} (${lead.companySize}), ${lead.timeline}`;
   const lines = [
     `Name:         ${lead.name}`,
     `Email:        ${lead.email}`,
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     // Dispatch via the configured email provider. In dev / kind clusters
     // DASHBOARD_EMAIL_PROVIDER defaults to "log" so the message is written
-    // as a structured stdout line — picked up by Loki/Grafana the same as
+    // as a structured stdout line, picked up by Loki/Grafana the same as
     // any other server log. In production overlays the provider is set to
     // smtp/resend and the message is delivered to CONTACT_SALES_INBOX.
     const { subject, html, text } = renderLead(lead);

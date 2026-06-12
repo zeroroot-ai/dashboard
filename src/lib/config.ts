@@ -16,7 +16,7 @@
 export const serverConfig = {
   // Gibson Daemon Configuration.
   //
-  // Spec headline-feature-completion R11 — `gibsonDaemonUrl` was removed.
+  // Spec headline-feature-completion R11, `gibsonDaemonUrl` was removed.
   // It existed only as a fallback for direct daemon-channel
   // `createGrpcTransport({ baseUrl })` callsites, which the
   // dashboard-admin-via-envoy / zero-trust-hardening / security-hardening
@@ -28,7 +28,7 @@ export const serverConfig = {
   //
   // `gibsonPlatformPublicUrl` is retained for callsites that render
   // user-facing links to the public platform host (settings page,
-  // documentation cross-links). It does NOT carry a daemon URL — the
+  // documentation cross-links). It does NOT carry a daemon URL, the
   // historical fallback to `GIBSON_DAEMON_URL` here is also dropped so
   // an ops engineer cannot accidentally surface a daemon endpoint to
   // browsers via this field.
@@ -43,7 +43,7 @@ export const serverConfig = {
   neo4jUser: process.env.NEO4J_USER || 'neo4j',
   neo4jPassword: process.env.NEO4J_PASSWORD || '',
 
-  // Auth.js + Zitadel — public dashboard URL Auth.js uses for OIDC
+  // Auth.js + Zitadel, public dashboard URL Auth.js uses for OIDC
   // redirect URIs and the email-nonce HMAC secret used by the
   // legacy missing-email recovery flow. The HMAC secret is just a
   // generic signing key; the env var name is retained at AUTH_SECRET
@@ -59,7 +59,7 @@ export const serverConfig = {
   databaseUrl: process.env.DATABASE_URL || '',
 
   // Langfuse Configuration (for trace viewer).
-  // Optional — when LANGFUSE_HOST is unset, langfuseHost is null and
+  // Optional, when LANGFUSE_HOST is unset, langfuseHost is null and
   // consumers must handle absence rather than receive a localhost-pointing URL.
   langfuseHost: process.env.LANGFUSE_HOST ?? null,
   langfuseAdminPublicKey: process.env.LANGFUSE_ADMIN_PUBLIC_KEY || '',
@@ -96,7 +96,7 @@ export const clientConfig = {
 export function validateEnvConfig(): void {
   const errors: string[] = [];
 
-  // Required in every environment — these variables have no safe fallback.
+  // Required in every environment, these variables have no safe fallback.
 
   if (!serverConfig.gibsonPlatformPublicUrl) {
     errors.push(

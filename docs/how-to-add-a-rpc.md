@@ -1,7 +1,7 @@
-# how-to-add-a-rpc.md — `zeroroot-ai/dashboard`
+# how-to-add-a-rpc.md, `zeroroot-ai/dashboard`
 
 The dashboard does not own RPCs in the same sense the SDK or the daemon
-do — it consumes them. "Adding an RPC" from the dashboard's perspective
+do, it consumes them. "Adding an RPC" from the dashboard's perspective
 means **calling a newly-shipped daemon RPC from a Next.js route**.
 
 Worked example: **"add a Server Action that lists the active tenant's
@@ -10,7 +10,7 @@ mission drafts using the new `ListMyDrafts` RPC."**
 Spec: `unified-identity-and-authorization`. Read [`auth.md`](./auth.md)
 first if you have not.
 
-## Step 1 — Wait for the SDK + daemon to ship the RPC
+## Step 1, Wait for the SDK + daemon to ship the RPC
 
 Adding the proto + handler is upstream work:
 
@@ -21,7 +21,7 @@ Don't add UI for an unshipped RPC. The dashboard's `pnpm prebuild`
 typecheck will fail because the generated proto bindings don't carry
 the method.
 
-## Step 2 — Bump the SDK pin and regenerate TS bindings
+## Step 2, Bump the SDK pin and regenerate TS bindings
 
 ```
 pnpm add @zeroroot-ai/sdk@vX.Y.Z   # or the npm distribution name
@@ -33,7 +33,7 @@ generate updates `src/gen/gibson/daemon/v1/daemon_pb.ts` with the new
 method type. The corresponding `permissions.ts` constant is also
 regenerated; UI gating uses it.
 
-## Step 3 — Decide which transport to use
+## Step 3, Decide which transport to use
 
 | Use | When |
 |---|---|
@@ -41,12 +41,12 @@ regenerated; UI gating uses it.
 | `serviceClient(svc, tenantId)` | The route has **no user context** (in-cluster admin-provisioning callback, entitlement-driven CRD reconciler, signup webhook). The bearer is the dashboard pod's own Zitadel JWT. |
 
 Default to `userClient`. Use `serviceClient` only when the call genuinely
-has no end user — and audit the choice manually before merging
+has no end user, and audit the choice manually before merging
 (rule `dashboard-auth-009`).
 
 For `ListMyDrafts` (user-facing), use `userClient`.
 
-## Step 4 — Implement the Server Action / route handler
+## Step 4, Implement the Server Action / route handler
 
 ```ts
 // app/dashboard/(auth)/missions/drafts/actions.ts
@@ -83,11 +83,11 @@ export default async function DraftsPage() {
 }
 ```
 
-## Step 5 — Gate UI controls on the regenerated permissions constant
+## Step 5, Gate UI controls on the regenerated permissions constant
 
 The SDK's registry codegen emits `permissions.ts`; the dashboard imports
 it and uses the matching constant to decide whether a control renders.
-UI gating is **informational** — ext-authz remains the authoritative
+UI gating is **informational**, ext-authz remains the authoritative
 enforcement point; if a user clicks a hidden button via DevTools, the
 RPC still rejects.
 
@@ -101,7 +101,7 @@ const canListDrafts = hasPermission(session, Permissions.DAEMON_LIST_MY_DRAFTS);
 return canListDrafts ? <DraftsTable ... /> : null;
 ```
 
-## Step 6 — Handle the standard error shapes
+## Step 6, Handle the standard error shapes
 
 Connect-RPC raises `ConnectError` with a `.code` property. The user-token
 helper raises `ConnectError(Unauthenticated)` when no session exists; the
@@ -122,10 +122,10 @@ try {
 }
 ```
 
-Don't echo internal detail to the browser — ext-authz already returns a
+Don't echo internal detail to the browser, ext-authz already returns a
 constant body. The dashboard surfaces user-friendly equivalents.
 
-## Step 7 — If the RPC is in `DaemonAdminService`
+## Step 7, If the RPC is in `DaemonAdminService`
 
 Same pattern, different generated symbol:
 
@@ -140,9 +140,9 @@ const client = serviceClient(DaemonAdminService, tenantId);  // workload-acting
 `DaemonAdminService` RPCs are FGA-gated to platform-operator role; if
 the calling user lacks the role, the call fails with `PermissionDenied`
 at ext-authz. The dashboard never decides admin authorisation locally
-— it forwards the bearer and trusts ext-authz.
+- it forwards the bearer and trusts ext-authz.
 
-## Step 8 — Run the full prebuild guard chain
+## Step 8, Run the full prebuild guard chain
 
 ```
 pnpm prebuild
@@ -152,7 +152,7 @@ The chain runs every guard listed in `auth.md` plus type-checking,
 ESLint, and the generated-permissions consistency check. Fix any failure
 at the call site; do not relax a guard.
 
-## Step 9 — End-to-end validation
+## Step 9, End-to-end validation
 
 For non-trivial flows, ship a Playwright test under `e2e/` that exercises
 the full path: sign in → set active tenant → trigger the new action →

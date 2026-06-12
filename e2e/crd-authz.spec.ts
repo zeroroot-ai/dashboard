@@ -6,21 +6,21 @@
  *
  * Journeys proven:
  *   1. Tenant-scoped user from tenant A gets FORBIDDEN when attempting a
- *      delete on tenant B. UI must NOT reveal whether tenant B exists —
+ *      delete on tenant B. UI must NOT reveal whether tenant B exists -
  *      FORBIDDEN is the observable, not NOT_FOUND.
  *   2. platform-operator (cross-tenant role) can operate across tenants.
  *   3. Sixth fetchBootstrapToken attempt within 5 minutes returns
  *      RATE_LIMITED.
  *
  * Environment variables:
- *   PLAYWRIGHT_BASE_URL     — dashboard URL (default http://localhost:30081)
- *   E2E_TENANT_A_EMAIL      — tenant-A admin email
- *   E2E_TENANT_A_PASSWORD   — tenant-A admin password
- *   E2E_TENANT_A_NAME       — tenant A's CR name (e.g. "acme-a")
- *   E2E_TENANT_B_NAME       — tenant B's CR name (target of the deny test)
- *   E2E_PLATFORM_OPERATOR_EMAIL    — cross-tenant account email
- *   E2E_PLATFORM_OPERATOR_PASSWORD — cross-tenant account password
- *   E2E_ENROLLMENT_NAME     — an AgentEnrollment in tenant A with a ready
+ *   PLAYWRIGHT_BASE_URL    , dashboard URL (default http://localhost:30081)
+ *   E2E_TENANT_A_EMAIL     , tenant-A admin email
+ *   E2E_TENANT_A_PASSWORD  , tenant-A admin password
+ *   E2E_TENANT_A_NAME      , tenant A's CR name (e.g. "acme-a")
+ *   E2E_TENANT_B_NAME      , tenant B's CR name (target of the deny test)
+ *   E2E_PLATFORM_OPERATOR_EMAIL   , cross-tenant account email
+ *   E2E_PLATFORM_OPERATOR_PASSWORD, cross-tenant account password
+ *   E2E_ENROLLMENT_NAME    , an AgentEnrollment in tenant A with a ready
  *                             bootstrap secret, used for the rate-limit test
  */
 
@@ -61,7 +61,7 @@ async function callServerAction(
 ): Promise<{ status: number; json: unknown }> {
   // React Server Action RPC is a POST to the enclosing page with headers that
   // encode the action reference. For robustness the dashboard exposes a thin
-  // RPC bridge under /api/test/server-action used only in E2E — the bridge
+  // RPC bridge under /api/test/server-action used only in E2E, the bridge
   // authenticates via Auth.js session cookies and forwards to the named
   // action. If the bridge is not present, tests should be skipped with
   // test.skip() by the caller.
@@ -73,10 +73,10 @@ async function callServerAction(
 }
 
 // ---------------------------------------------------------------------------
-// Journey 1 — tenant-scoped user cannot operate on another tenant
+// Journey 1, tenant-scoped user cannot operate on another tenant
 // ---------------------------------------------------------------------------
 
-test.describe("Journey 1 — cross-tenant deny", () => {
+test.describe("Journey 1, cross-tenant deny", () => {
   test("tenant-A user deleting tenant B sees FORBIDDEN (not NOT_FOUND)", async ({ page, request }) => {
     await loginAs(page, TENANT_A_EMAIL, TENANT_A_PASSWORD);
     const cookie = await sessionCookie(page);
@@ -99,10 +99,10 @@ test.describe("Journey 1 — cross-tenant deny", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Journey 2 — platform-operator can operate across tenants
+// Journey 2, platform-operator can operate across tenants
 // ---------------------------------------------------------------------------
 
-test.describe("Journey 2 — cross-tenant success for operator", () => {
+test.describe("Journey 2, cross-tenant success for operator", () => {
   test("platform-operator can update tenant A's tier", async ({ page, request }) => {
     await loginAs(page, OPERATOR_EMAIL, OPERATOR_PASSWORD);
     const cookie = await sessionCookie(page);
@@ -122,7 +122,7 @@ test.describe("Journey 2 — cross-tenant success for operator", () => {
 // enrollment mints credentials once via AgentIdentityService.
 
 // ---------------------------------------------------------------------------
-// Build-time guard wiring — asserted here so this spec fails if the wiring
+// Build-time guard wiring, asserted here so this spec fails if the wiring
 // ever regresses, even without running the guards themselves.
 // ---------------------------------------------------------------------------
 

@@ -1,5 +1,5 @@
 /**
- * Service-account identity resolver — readable-name lookup for log enrichment.
+ * Service-account identity resolver, readable-name lookup for log enrichment.
  *
  * Spec: canonical-service-identity Req 8.
  *
@@ -73,7 +73,7 @@ function ensureWatcher(): void {
 export function resolveServiceIdentity(numericSub: string): string | null {
   if (!numericSub) return null;
   ensureWatcher();
-  // Check mtime on every call — sub-microsecond stat(), and the once-per-60s
+  // Check mtime on every call, sub-microsecond stat(), and the once-per-60s
   // watchFile poll alone leaves the cache stale for up to a minute after a
   // post-install ConfigMap update propagates into the mounted volume.
   loadIfChanged();

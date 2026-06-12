@@ -20,7 +20,7 @@ export async function generateMetadata({
   const { id } = await params;
   const name = decodeURIComponent(id);
   return generateMeta({
-    title: `Settings — ${name}`,
+    title: `Settings | ${name}`,
     additionalTitle: true,
     description: `Manage the secret: ${name}`,
     canonical: `/pages/settings/secrets/${id}`,
@@ -37,7 +37,7 @@ export default async function SecretDetailPage({ params }: SecretDetailPageProps
     redirect("/login");
   }
 
-  // Authz: GetSecret is tenant_member — all members can view details.
+  // Authz: GetSecret is tenant_member, all members can view details.
   // Non-members are redirected.
   // Spec: dashboard-authz-ui-gating Task 14, Requirement 5.4.
   try {

@@ -1,7 +1,7 @@
 /**
  * Chat Feedback API Route
  *
- * POST /api/chat/feedback — record a thumbs-up / thumbs-down on a
+ * POST /api/chat/feedback, record a thumbs-up / thumbs-down on a
  * specific assistant message. The score is forwarded to the platform
  * trace store via TracesService.AddTraceScore, keyed by the provider
  * trace ID the streaming chat response surfaced via `X-Gibson-Trace-Id`.
@@ -33,7 +33,7 @@ const feedbackRequestSchema = z.object({
 });
 
 // ============================================================================
-// POST Handler — record user feedback
+// POST Handler, record user feedback
 // ============================================================================
 
 export async function POST(request: NextRequest): Promise<Response> {
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     } catch (err) {
       logger.warn(
         { traceId, rating, err: err instanceof Error ? err.message : String(err) },
-        'feedback unavailable — trace backend unreachable or not configured',
+        'feedback unavailable, trace backend unreachable or not configured',
       );
       // Return 204 so the UI optimistic fill-thumb isn't reverted: a
       // missing/unreachable trace backend must not block the feedback affordance.

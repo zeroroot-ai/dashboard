@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * SavedMissionsMenu — dropdown on the mission editor that lists the tenant's
+ * SavedMissionsMenu, dropdown on the mission editor that lists the tenant's
  * saved missions and opens one in the editor. Authored missions are durable
  * (gibson#505), so there is no "draft" concept and nothing expires.
  *

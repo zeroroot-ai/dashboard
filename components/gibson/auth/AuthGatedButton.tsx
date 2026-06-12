@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AuthGatedButton — render a primary CTA with deterministic visibility.
+ * AuthGatedButton, render a primary CTA with deterministic visibility.
  *
  * Use when an action should always be discoverable, but is sometimes
  * disallowed for the current user. Distinct from the `useAuthorize` +
@@ -18,7 +18,7 @@
  *                learns the permission they need.
  *   "allowed"  → full clickable <Button> rendering the caller's children.
  *
- * The component is intentionally agnostic about how state is computed —
+ * The component is intentionally agnostic about how state is computed -
  * callers derive `state` from `useAuthorize` (async, returns
  * `{ allowed, loading }`) against the RPC the gated action invokes. See the
  * Frontend authz section in CLAUDE.md for guidance on when to use this
@@ -81,7 +81,7 @@ export function AuthGatedButton({
             {/* The disabled button must remain in the DOM, focusable for
                 keyboard users, and pointer-event-receiving so the
                 tooltip can open on hover. asChild is intentionally not
-                forwarded — we always render the real <Button> here so
+                forwarded, we always render the real <Button> here so
                 disabled + aria semantics are correct. */}
             <span
               tabIndex={0}

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * useMissionEditor — the mission-authoring editor state machine.
+ * useMissionEditor, the mission-authoring editor state machine.
  *
  * Owns every piece of editor state behind one small, testable interface so the
  * page is a thin view: source + dirty tracking, debounced autosave (short

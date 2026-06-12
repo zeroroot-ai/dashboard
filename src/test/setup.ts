@@ -80,8 +80,8 @@ vi.mock('server-only', () => ({}));
 // on ZITADEL_* values and throws if they're missing. The dashboard intentionally
 // has no Zitadel-optional degradation surface (deploy#196), so the only way to
 // load the module under test is to provide placeholder values via env. The
-// values are never used — every test mocks @/src/lib/auth so the auth chain
-// never actually executes — but the import-time validation needs them present.
+// values are never used, every test mocks @/src/lib/auth so the auth chain
+// never actually executes, but the import-time validation needs them present.
 // dashboard#175.
 process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3000';
 process.env.ZITADEL_ISSUER ??= 'http://test.zitadel.invalid';

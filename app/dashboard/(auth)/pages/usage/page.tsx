@@ -4,7 +4,7 @@ import { UsageContent } from "@/components/gibson/usage/UsageContent";
 
 export async function generateMetadata(): Promise<Metadata> {
   return generateMeta({
-    title: "Usage — LLM cost & tokens",
+    title: "Usage | LLM cost & tokens",
     additionalTitle: true,
     description:
       "Cost and token rollups across users, teams, agents, and missions.",
@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * /dashboard/pages/usage — LLM usage rollups for the tenant.
+ * /dashboard/pages/usage, LLM usage rollups for the tenant.
  *
  * Spec: llm-user-attribution-governance (Requirement 2).
  */

@@ -1,7 +1,7 @@
 import type { EmailMessage } from '../types';
 
 /**
- * `verify` — sent on sign-up to confirm an email address belongs to the
+ * `verify`, sent on sign-up to confirm an email address belongs to the
  * user who supplied it. Links expire (`expiresInHours`).
  */
 export interface VerifyCtx {
@@ -23,9 +23,9 @@ export function render(ctx: VerifyCtx): EmailMessage {
     ``,
     `This link expires in ${ctx.expiresInHours} hour${ctx.expiresInHours === 1 ? '' : 's'}.`,
     ``,
-    `If you didn't create a Gibson account, you can ignore this message — no account will be created without verification.`,
+    `If you didn't create a Gibson account, you can ignore this message, no account will be created without verification.`,
     ``,
-    `— The Gibson team`,
+    `The Gibson team`,
   ].join('\n');
 
   const html = [
@@ -40,7 +40,7 @@ export function render(ctx: VerifyCtx): EmailMessage {
     `<p style="margin:0 0 8px;font-size:12px;color:#9999a3;">Or paste this link in your browser:</p>`,
     `<p style="margin:0 0 24px;font-size:12px;color:#c5c5cc;word-break:break-all;">${escapeHtml(ctx.verificationUrl)}</p>`,
     `<p style="margin:0 0 8px;font-size:12px;color:#9999a3;">This link expires in ${ctx.expiresInHours} hour${ctx.expiresInHours === 1 ? '' : 's'}.</p>`,
-    `<p style="margin:0;font-size:12px;color:#9999a3;">If you didn't create a Gibson account you can ignore this message — no account will be created without verification.</p>`,
+    `<p style="margin:0;font-size:12px;color:#9999a3;">If you didn't create a Gibson account you can ignore this message, no account will be created without verification.</p>`,
     `</td></tr>`,
     `</table>`,
     `</body>`,

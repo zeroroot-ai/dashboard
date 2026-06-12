@@ -1,5 +1,5 @@
 /**
- * fixtures.ts — shared test fixture generators for the auth e2e suite.
+ * fixtures.ts, shared test fixture generators for the auth e2e suite.
  *
  * Each test creates its own tenant / user so parallel runs never collide.
  * The slug generator encodes a timestamp + 6 random hex chars to stay
@@ -7,7 +7,7 @@
  * prefix).
  *
  * Env wiring:
- *   PLAYWRIGHT_BASE_URL  — overrides http://localhost:30081 (kind gibson)
+ *   PLAYWRIGHT_BASE_URL , overrides http://localhost:30081 (kind gibson)
  */
 
 import crypto from "crypto";
@@ -35,7 +35,7 @@ export const BASE_URL =
  * Example: `e2e-lhqvz12a-3f8b2c`
  *
  * All characters are lowercase alphanumeric or hyphens, starting with a
- * letter — satisfies the `/^[a-z0-9]([a-z0-9-]{0,58}[a-z0-9])?$/` rule.
+ * letter, satisfies the `/^[a-z0-9]([a-z0-9-]{0,58}[a-z0-9])?$/` rule.
  */
 export function uniqueSlug(): string {
   const ts = Date.now().toString(36); // base36 timestamp (~8 chars)

@@ -1,7 +1,7 @@
 /**
  * Unit tests for `auth.ts` cookie configuration.
  *
- * Spec security-hardening R18 — the dashboard session cookie MUST be
+ * Spec security-hardening R18, the dashboard session cookie MUST be
  * issued with `SameSite=Strict` so it is never carried on cross-origin
  * navigations. The OIDC state / PKCE / callback-URL / csrf cookies that
  * Auth.js sets during the sign-in round-trip MUST stay `SameSite=Lax`
@@ -9,8 +9,8 @@
  * dashboard will drop them and break sign-in.
  *
  * This test imports the auth.ts singleton's underlying NextAuthConfig
- * shape via a side-channel — re-exporting the config object directly
- * would introduce a circular module — and asserts the cookies.sessionToken
+ * shape via a side-channel, re-exporting the config object directly
+ * would introduce a circular module, and asserts the cookies.sessionToken
  * option matches the spec.
  *
  * Why a unit test (not just the Playwright e2e):
@@ -28,7 +28,7 @@ process.env.AUTH_SECRET = "test-secret-32-chars-long-enough!!";
 process.env.ZITADEL_CLIENT_ID = "dashboard-test-client";
 
 // Stub next-auth to capture the config passed to NextAuth(). We don't
-// actually want to boot Auth.js inside vitest — we just want to read the
+// actually want to boot Auth.js inside vitest, we just want to read the
 // configuration we hand it. The real auth.ts calls
 // `NextAuth(config)` once at module load, so capturing the argument
 // gives us the full config tree to assert on.
@@ -45,7 +45,7 @@ vi.mock("next-auth", () => ({
   },
 }));
 
-// Test-fixture helper imported by auth.ts must be stubbed too — it reads
+// Test-fixture helper imported by auth.ts must be stubbed too, it reads
 // process.env at call time but we don't exercise any fault paths here.
 vi.mock("@/src/lib/test-fixtures/fault-injection", () => ({
   getFaultMode: () => undefined,
@@ -69,7 +69,7 @@ describe("auth.ts cookie configuration (security-hardening R18)", () => {
   });
 
   it("session cookie is httpOnly", () => {
-    // Defence-in-depth pairing — strict alone is meaningless if the
+    // Defence-in-depth pairing, strict alone is meaningless if the
     // cookie is JS-readable.
     const sessionTokenOpts = captured.config?.cookies?.sessionToken?.options;
     expect(sessionTokenOpts?.httpOnly).toBe(true);

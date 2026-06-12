@@ -27,7 +27,7 @@ let committed;
 try {
   committed = readFileSync(COMMITTED, "utf8");
 } catch (err) {
-  process.stderr.write(`[${SCRIPT_NAME}] FAIL — cannot read ${COMMITTED}: ${err.message}\n`);
+  process.stderr.write(`[${SCRIPT_NAME}] FAIL, cannot read ${COMMITTED}: ${err.message}\n`);
   process.stderr.write("Run: node scripts/gen-stripe-tiers.mjs\n");
   process.exit(1);
 }
@@ -39,14 +39,14 @@ try {
     maxBuffer: 16 * 1024 * 1024,
   });
 } catch (err) {
-  process.stderr.write(`[${SCRIPT_NAME}] FAIL — generator errored: ${err.message}\n`);
+  process.stderr.write(`[${SCRIPT_NAME}] FAIL, generator errored: ${err.message}\n`);
   process.exit(2);
 }
 
 if (committed !== regenerated) {
-  process.stderr.write(`\n[${SCRIPT_NAME}] FAIL — ${COMMITTED} is stale.\n`);
+  process.stderr.write(`\n[${SCRIPT_NAME}] FAIL, ${COMMITTED} is stale.\n`);
   process.stderr.write("Run: node scripts/gen-stripe-tiers.mjs\n");
   process.exit(1);
 }
 
-process.stdout.write(`[${SCRIPT_NAME}] OK — stripe_gen.ts is in sync with plans.yaml\n`);
+process.stdout.write(`[${SCRIPT_NAME}] OK, stripe_gen.ts is in sync with plans.yaml\n`);

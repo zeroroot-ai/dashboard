@@ -2,7 +2,7 @@
  * Unit tests for HttpZitadelAdminClient.
  *
  * Spec: signup-zitadel-permissions-fix
- * Bug: SIGNUP-B23 — password-policy-cache HTTP 403 on every signup.
+ * Bug: SIGNUP-B23, password-policy-cache HTTP 403 on every signup.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -53,7 +53,7 @@ describe('HttpZitadelAdminClient.getPasswordComplexityPolicy', () => {
   });
 
   it(
-    'uses the auth API endpoint, not the admin endpoint — spec:signup-zitadel-permissions-fix SIGNUP-B23',
+    'uses the auth API endpoint, not the admin endpoint, spec:signup-zitadel-permissions-fix SIGNUP-B23',
     async () => {
       const client = makeClient();
       await client.getPasswordComplexityPolicy();
@@ -62,15 +62,15 @@ describe('HttpZitadelAdminClient.getPasswordComplexityPolicy', () => {
 
       // This is the regression lock. If anyone reverts the URL back to the
       // admin endpoint or the management endpoint (both require IAM_OWNER or
-      // higher — NOT covered by the signup-bot's IAM_USER_MANAGER role),
+      // higher, NOT covered by the signup-bot's IAM_USER_MANAGER role),
       // this test fails.
       //
       // Correct endpoint:  /auth/v1/policies/passwords/complexity
       // Broken endpoints:
-      //   /admin/v1/policies/password/complexity   — requires IAM_OWNER
-      //   /management/v1/policies/password/complexity — requires elevated role
+      //   /admin/v1/policies/password/complexity  , requires IAM_OWNER
+      //   /management/v1/policies/password/complexity, requires elevated role
       expect(requestedPath, [
-        'spec:signup-zitadel-permissions-fix SIGNUP-B23 — ',
+        'spec:signup-zitadel-permissions-fix SIGNUP-B23, ',
         'getPasswordComplexityPolicy must use /auth/v1/policies/passwords/complexity. ',
         `Actual path was: ${requestedPath}. `,
         'Reverting to /admin/v1/... or /management/v1/... causes HTTP 403 for the signup-bot.',
@@ -91,7 +91,7 @@ describe('HttpZitadelAdminClient.getPasswordComplexityPolicy', () => {
 });
 
 // ---------------------------------------------------------------------------
-// V2 Session API — signup auto-login (issue dashboard#41)
+// V2 Session API, signup auto-login (issue dashboard#41)
 // ---------------------------------------------------------------------------
 
 describe('HttpZitadelAdminClient.createSession', () => {
@@ -123,7 +123,7 @@ describe('HttpZitadelAdminClient.createSession', () => {
   });
 
   it(
-    'POSTs to /v2/sessions with combined user.loginName + password.password checks — issue dashboard#41',
+    'POSTs to /v2/sessions with combined user.loginName + password.password checks, issue dashboard#41',
     async () => {
       const client = makeClient();
       await client.createSession({
@@ -136,7 +136,7 @@ describe('HttpZitadelAdminClient.createSession', () => {
       // Value-lock: any drift away from /v2/sessions breaks the V2 flow.
       expect(
         u.pathname,
-        'createSession must POST /v2/sessions exactly — Zitadel V2 spec',
+        'createSession must POST /v2/sessions exactly, Zitadel V2 spec',
       ).toBe('/v2/sessions');
       expect(lastRequest!.method).toBe('POST');
 
@@ -212,7 +212,7 @@ describe('HttpZitadelAdminClient.finalizeAuthRequest', () => {
   });
 
   it(
-    'POSTs to /v2/oidc/auth_requests/:id with the session in the body — issue dashboard#41',
+    'POSTs to /v2/oidc/auth_requests/:id with the session in the body, issue dashboard#41',
     async () => {
       const client = makeClient();
       const result = await client.finalizeAuthRequest({
@@ -250,12 +250,12 @@ describe('HttpZitadelAdminClient.finalizeAuthRequest', () => {
     );
   });
 
-  // Regression lock: dashboard#<filed below> — Zitadel v4 emits standard-base64
+  // Regression lock: dashboard#<filed below>, Zitadel v4 emits standard-base64
   // auth codes (which contain '+') in callbackUrl without percent-encoding them.
   // URLSearchParams.get('code') decodes '+' as space, causing Zitadel's token
   // endpoint to return "illegal base64 data at input byte N" (~40% of logins).
   it(
-    'sanitises + in callbackUrl code/state params to %2B — dashboard base64-code-corruption fix',
+    'sanitises + in callbackUrl code/state params to %2B, dashboard base64-code-corruption fix',
     async () => {
       // Simulate a Zitadel callbackUrl with a standard-base64 auth code containing '+'.
       // Position 16 is where the real failure was observed (OIDC-ahLi2).

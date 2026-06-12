@@ -15,7 +15,7 @@ import type { Mission } from '@/src/types';
 
 // Hooks scope every cache key to the active tenant via queryKeys.missions.*.
 // Tests must pre-seed and read the same key, not hand-rolled
-// MISSIONS_LIST_KEY shorthand — the literal key never matches what the
+// MISSIONS_LIST_KEY shorthand, the literal key never matches what the
 // hook writes, so optimistic updates appear to do nothing.
 const MISSIONS_LIST_KEY = queryKeys.missions.lists(TEST_TENANT.id);
 const missionDetailKey = (id: string) => queryKeys.missions.detail(TEST_TENANT.id, id);
@@ -42,7 +42,7 @@ describe('useMissions', () => {
 
   afterEach(() => {
     queryClient.clear();
-    // Defence in depth — one test in this file calls vi.useFakeTimers().
+    // Defence in depth, one test in this file calls vi.useFakeTimers().
     // Without this restore, subsequent tests inherit fake-timer state and
     // waitFor times out at 5s on every async assertion.
     vi.useRealTimers();
@@ -97,7 +97,7 @@ describe('useMissions', () => {
 
     it('should refetch at intervals', async () => {
       // shouldAdvanceTime keeps testing-library's waitFor polling alive
-      // under fake timers — without it, the microtask + setTimeout queue is
+      // under fake timers, without it, the microtask + setTimeout queue is
       // paused and waitFor never re-polls.
       vi.useFakeTimers({ shouldAdvanceTime: true });
 
@@ -176,7 +176,7 @@ describe('useMissions', () => {
 
       result.current.mutate('mission-1');
 
-      // onMutate awaits queryClient.cancelQueries — must wait for the
+      // onMutate awaits queryClient.cancelQueries, must wait for the
       // optimistic setQueriesData to flush before reading the cache.
       await waitFor(() => {
         const cachedData = queryClient.getQueryData<Mission[]>(MISSIONS_LIST_KEY);

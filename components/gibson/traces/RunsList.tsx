@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * RunsList — the landing view for /dashboard/traces (dashboard#535).
+ * RunsList, the landing view for /dashboard/traces (dashboard#535).
  *
  * Shows one row per mission run (traces grouped by session). Each run row
- * reads as mission activity — label, agents involved, total tokens (spend
- * proxy), status, and when — and expands to its constituent traces, each of
+ * reads as mission activity, label, agents involved, total tokens (spend
+ * proxy), status, and when, and expands to its constituent traces, each of
  * which opens the run view (#533). No raw observation jargon in the default
  * list; per-$ spend lives on the run view's Spend tab (#534).
  */

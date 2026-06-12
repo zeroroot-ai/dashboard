@@ -4,7 +4,7 @@ import { BudgetsContent } from "@/components/gibson/budgets/BudgetsContent";
 
 export async function generateMetadata(): Promise<Metadata> {
   return generateMeta({
-    title: "Settings — Budgets",
+    title: "Settings | Budgets",
     additionalTitle: true,
     description:
       "Per-user and per-team token and spend budgets. Admin-only configuration; exceeding a budget denies the next LLM call with a typed error.",
@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * /dashboard/pages/settings/budgets — admin-only budget configuration.
+ * /dashboard/pages/settings/budgets, admin-only budget configuration.
  * Non-admins hitting this route see a read-only fallback (or redirect,
  * applied by the shared settings layout).
  *

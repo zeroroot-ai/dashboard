@@ -5,7 +5,7 @@
  *
  * The dashboard's session cookie is `sameSite: 'lax'` so that cross-tab
  * navigation from email/marketing pages still carries the session into
- * the app — switching to `'strict'` would break the OIDC sign-in flow.
+ * the app, switching to `'strict'` would break the OIDC sign-in flow.
  * To compensate, every mutating route handler under `app/api/**` must
  * call `requireCsrf(request)` before any state change.
  *
@@ -16,7 +16,7 @@
  *     forge the matching cookie value).
  *   - Compares the cookie value to the `x-csrf-token` request header
  *     OR to a `csrf` field in the request body (multipart or
- *     `application/x-www-form-urlencoded` form posts) — Auth.js v5's
+ *     `application/x-www-form-urlencoded` form posts), Auth.js v5's
  *     own action endpoints accept the same shape, so existing forms
  *     do not need to change.
  *   - Comparison is constant-time via `crypto.timingSafeEqual`.
@@ -25,7 +25,7 @@
  *     helper `csrfErrorResponse` builds the canonical body).
  *
  * Auth.js v5 mints its own CSRF token at `/api/auth/csrf` for its own
- * action routes. We do NOT reuse that token here — that token is bound
+ * action routes. We do NOT reuse that token here, that token is bound
  * to Auth.js's action protocol and rotates on its own schedule. The
  * proxy-seeded `csrf-token` cookie is a generic per-session token that
  * client code already echoes via `src/lib/api/fetch.ts`, so wiring this
@@ -81,7 +81,7 @@ function constantTimeEquals(a: string, b: string): boolean {
  *
  * For form-encoded payloads we read the body via `request.clone()` so the
  * route handler can still consume the original request. Multipart bodies
- * are NOT supported here — multipart-form mutating routes should set the
+ * are NOT supported here, multipart-form mutating routes should set the
  * `x-csrf-token` header explicitly via `src/lib/api/fetch.ts`.
  */
 async function readSubmittedToken(request: NextRequest): Promise<string | null> {
@@ -97,7 +97,7 @@ async function readSubmittedToken(request: NextRequest): Promise<string | null> 
       const formToken = params.get(CSRF_FORM_FIELD);
       if (formToken) return formToken;
     } catch {
-      // Body unavailable / already consumed — fall through to "missing".
+      // Body unavailable / already consumed, fall through to "missing".
     }
   }
 
@@ -112,7 +112,7 @@ async function readSubmittedToken(request: NextRequest): Promise<string | null> 
  * Call this at the top of every POST/PUT/PATCH/DELETE handler under
  * `app/api/**` whose effects are user-visible. Handlers that are
  * Auth.js-authoritative (e.g. `/api/auth/[...nextauth]`) do NOT need
- * this — Auth.js validates its own CSRF token on those routes.
+ * this, Auth.js validates its own CSRF token on those routes.
  *
  * Usage:
  *   try {
@@ -127,7 +127,7 @@ export async function requireCsrf(request: NextRequest): Promise<void> {
   if (!cookieToken) {
     throw new CsrfError(
       'csrf-cookie-missing',
-      `the ${CSRF_COOKIE_NAME} cookie is absent — the proxy did not seed it (browser may have third-party cookies blocked or the request bypassed the proxy)`,
+      `the ${CSRF_COOKIE_NAME} cookie is absent, the proxy did not seed it (browser may have third-party cookies blocked or the request bypassed the proxy)`,
     );
   }
 

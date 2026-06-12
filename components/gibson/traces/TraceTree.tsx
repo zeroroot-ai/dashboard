@@ -52,7 +52,7 @@ export function formatDuration(ms: number): string {
 }
 
 /**
- * Shared presentational header for a trace row — type icon, name, type badge,
+ * Shared presentational header for a trace row, type icon, name, type badge,
  * model, token counts, duration, and status. Used identically by the static
  * row and the expandable decision row so the two never visually diverge.
  */
@@ -192,7 +192,7 @@ function TraceDecisionRow({
   );
 }
 
-/** Recursive walker — one renderer for the whole tree, no parallel path. */
+/** Recursive walker, one renderer for the whole tree, no parallel path. */
 function TraceTreeRow({ node, depth }: { node: TraceNode; depth: number }) {
   return (
     <>

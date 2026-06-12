@@ -50,7 +50,7 @@ function toMatrixItem(d: DiscoveredItem): RWXItem {
   return {
     name: d.name,
     displayName: d.displayName ?? d.name,
-    description: meta.join(" — ") || undefined,
+    description: meta.join(", ") || undefined,
     rwx: d.rwx,
     denyingGates: d.denyingGates,
   };

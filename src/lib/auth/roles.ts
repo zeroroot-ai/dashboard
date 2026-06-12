@@ -37,7 +37,7 @@ import type { GibsonSession } from '@/src/lib/auth';
  * role string outside this set is treated as rank 0 (deny) by
  * `hasRoleAtLeast`.
  *
- * Spec: tenant-role-taxonomy — `owner` is now a first-class FGA relation
+ * Spec: tenant-role-taxonomy, `owner` is now a first-class FGA relation
  * emitted by the daemon for founding users; `admin` and `member` inherit
  * via the computed-union hierarchy (owner > admin > member).
  */
@@ -49,7 +49,7 @@ export type TenantRole = 'owner' | 'admin' | 'member';
  * owner (3) >= admin (2) >= member (1)
  *
  * Unknown or unrecognised role strings default to rank 0, which fails every
- * hasRoleAtLeast check — default-deny for unrecognised roles.
+ * hasRoleAtLeast check, default-deny for unrecognised roles.
  */
 export const ROLE_RANK: Record<TenantRole, number> = {
   owner: 3,
@@ -86,7 +86,7 @@ export function hasRoleAtLeast(
   const roleString = session.user.rolesByTenant[tenantId];
   if (!roleString) return false;
 
-  // Unknown role strings (not in ROLE_RANK) receive rank 0 — deny by default.
+  // Unknown role strings (not in ROLE_RANK) receive rank 0, deny by default.
   const actualRank = (ROLE_RANK as Record<string, number>)[roleString] ?? 0;
   const requiredRank = ROLE_RANK[required];
 

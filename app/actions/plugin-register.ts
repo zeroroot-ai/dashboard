@@ -114,7 +114,7 @@ function buildBindings(
  * Returns { valid: true } on clean manifest, or { valid: false, errors[] }
  * with per-field line numbers when the manifest fails validation.
  *
- * No state is created — dry_run=true.
+ * No state is created, dry_run=true.
  */
 export async function validatePluginManifestAction(
   manifestYaml: string,

@@ -1,5 +1,5 @@
 /**
- * <ConditionConfigEditor /> — form for ConditionNodeConfig.
+ * <ConditionConfigEditor />, form for ConditionNodeConfig.
  *
  * Spec: mission-dashboard-rewrite Requirement 1 AC 3 + Task 6.
  */

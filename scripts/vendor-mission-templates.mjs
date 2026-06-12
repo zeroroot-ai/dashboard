@@ -21,7 +21,7 @@ const OUT_DIR = "src/data/templates";
 const adkDir = resolve(process.cwd(), "../../../opensource/adk");
 if (!existsSync(adkDir)) {
   console.error(`[vendor-templates] ADK sibling not found at ${adkDir}. Run from the polyrepo workspace root or pass ADK_DIR env.`);
-  process.exit(0); // soft exit — CI doesn't have the sibling
+  process.exit(0); // soft exit, CI doesn't have the sibling
 }
 
 mkdirSync(OUT_DIR, { recursive: true });
@@ -37,4 +37,4 @@ for (const id of TEMPLATE_IDS) {
   console.log(`[vendor-templates] ${id}.cue vendored`);
   vendored++;
 }
-console.log(`[vendor-templates] done — ${vendored}/${TEMPLATE_IDS.length} templates vendored`);
+console.log(`[vendor-templates] done, ${vendored}/${TEMPLATE_IDS.length} templates vendored`);

@@ -1,7 +1,7 @@
 /**
  * Unit tests for src/lib/zitadel/signup-handoff.ts.
  *
- * Issue: dashboard#41 — wire Zitadel V2 session+CreateCallback into the
+ * Issue: dashboard#41, wire Zitadel V2 session+CreateCallback into the
  * signup flow so the user lands on /dashboard authenticated with no
  * intermediate hosted-login bounce.
  *
@@ -15,7 +15,7 @@
  *   - failures return null (caller falls back to /login).
  *
  * Not in scope:
- *   - End-to-end Auth.js callback handler decoding the cookies we set — that
+ *   - End-to-end Auth.js callback handler decoding the cookies we set, that
  *     is covered by the live-cluster Playwright spec at
  *     e2e/auth/signup-autologin.spec.ts.
  *
@@ -30,7 +30,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // ---------------------------------------------------------------------------
-// next/headers mock — captures cookie.set() calls so each test can assert
+// next/headers mock, captures cookie.set() calls so each test can assert
 // on the cookies emitted by initiateOidcAuthRequest.
 // ---------------------------------------------------------------------------
 
@@ -127,10 +127,10 @@ describe('initiateOidcAuthRequest', () => {
     );
     expect(u.searchParams.get('scope')).toBe('openid profile email');
     expect(u.searchParams.get('code_challenge_method')).toBe('S256');
-    // code_challenge is base64url of SHA-256(code_verifier) — 43 chars.
+    // code_challenge is base64url of SHA-256(code_verifier), 43 chars.
     const challenge = u.searchParams.get('code_challenge');
     expect(challenge).toMatch(/^[A-Za-z0-9_-]{43}$/);
-    // state is the JWE-encoded inner value — opaque but non-empty.
+    // state is the JWE-encoded inner value, opaque but non-empty.
     expect(u.searchParams.get('state')?.length ?? 0).toBeGreaterThan(20);
   });
 
@@ -183,7 +183,7 @@ describe('initiateOidcAuthRequest', () => {
     ).toBeTruthy();
 
     // Cookies must be httpOnly + lax (sameSite strict would break the OIDC
-    // 302 round-trip — see auth.ts cookies block).
+    // 302 round-trip, see auth.ts cookies block).
     for (const c of [stateCookie!, pkceCookie!, callbackUrlCookie!]) {
       expect(c.options.httpOnly).toBe(true);
       expect(c.options.sameSite).toBe('lax');
@@ -194,7 +194,7 @@ describe('initiateOidcAuthRequest', () => {
     // State and PKCE values are JWEs (4 dots → 5 segments).
     expect(stateCookie!.value.split('.').length).toBe(5);
     expect(pkceCookie!.value.split('.').length).toBe(5);
-    // callback-url is a plain absolute path — Auth.js reads it raw.
+    // callback-url is a plain absolute path, Auth.js reads it raw.
     expect(callbackUrlCookie!.value).toBe('/dashboard');
   });
 

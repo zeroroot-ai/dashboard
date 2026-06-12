@@ -49,10 +49,10 @@ describe('ROLE_RANK', () => {
 });
 
 // ---------------------------------------------------------------------------
-// hasRoleAtLeast — null / missing session
+// hasRoleAtLeast, null / missing session
 // ---------------------------------------------------------------------------
 
-describe('hasRoleAtLeast — null/undefined session', () => {
+describe('hasRoleAtLeast, null/undefined session', () => {
   const checks: TenantRole[] = ['member', 'admin', 'owner'];
 
   it('returns false for null session', () => {
@@ -76,10 +76,10 @@ describe('hasRoleAtLeast — null/undefined session', () => {
 });
 
 // ---------------------------------------------------------------------------
-// hasRoleAtLeast — owner passes all checks
+// hasRoleAtLeast, owner passes all checks
 // ---------------------------------------------------------------------------
 
-describe('hasRoleAtLeast — owner', () => {
+describe('hasRoleAtLeast, owner', () => {
   const session = makeSession({ [TENANT]: 'owner' });
 
   it('passes member check', () => {
@@ -96,10 +96,10 @@ describe('hasRoleAtLeast — owner', () => {
 });
 
 // ---------------------------------------------------------------------------
-// hasRoleAtLeast — admin passes member/admin, fails owner
+// hasRoleAtLeast, admin passes member/admin, fails owner
 // ---------------------------------------------------------------------------
 
-describe('hasRoleAtLeast — admin', () => {
+describe('hasRoleAtLeast, admin', () => {
   const session = makeSession({ [TENANT]: 'admin' });
 
   it('passes member check', () => {
@@ -116,10 +116,10 @@ describe('hasRoleAtLeast — admin', () => {
 });
 
 // ---------------------------------------------------------------------------
-// hasRoleAtLeast — member passes member only
+// hasRoleAtLeast, member passes member only
 // ---------------------------------------------------------------------------
 
-describe('hasRoleAtLeast — member', () => {
+describe('hasRoleAtLeast, member', () => {
   const session = makeSession({ [TENANT]: 'member' });
 
   it('passes member check', () => {
@@ -136,10 +136,10 @@ describe('hasRoleAtLeast — member', () => {
 });
 
 // ---------------------------------------------------------------------------
-// hasRoleAtLeast — unknown role string is deny
+// hasRoleAtLeast, unknown role string is deny
 // ---------------------------------------------------------------------------
 
-describe('hasRoleAtLeast — unknown role string', () => {
+describe('hasRoleAtLeast, unknown role string', () => {
   const session = makeSession({ [TENANT]: 'superuser' });
 
   it('fails member check', () => {
@@ -156,10 +156,10 @@ describe('hasRoleAtLeast — unknown role string', () => {
 });
 
 // ---------------------------------------------------------------------------
-// hasRoleAtLeast — multiple tenants
+// hasRoleAtLeast, multiple tenants
 // ---------------------------------------------------------------------------
 
-describe('hasRoleAtLeast — per-tenant isolation', () => {
+describe('hasRoleAtLeast, per-tenant isolation', () => {
   const session = makeSession({
     'tenant-a': 'member',
     'tenant-b': 'owner',

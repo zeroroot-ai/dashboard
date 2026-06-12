@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get('limit') || '100'), 500);
   const offset = parseInt(searchParams.get('offset') || '0');
 
-  // Event query RPC pending — return empty results
+  // Event query RPC pending, return empty results
   const result: PaginatedResponse<Event> = {
     data: [],
     total: 0,

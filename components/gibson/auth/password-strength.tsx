@@ -55,7 +55,7 @@ interface PasswordStrengthProps {
    */
   onCheckPassword?: CheckPasswordAction;
   /**
-   * Pass `false` to disable the HIBP live-check UI entirely — behaves as if
+   * Pass `false` to disable the HIBP live-check UI entirely, behaves as if
    * NEXT_PUBLIC_DASHBOARD_HIBP_ENABLED is not 'true'. Defaults to the env var.
    */
   hibpEnabled?: boolean;
@@ -107,7 +107,7 @@ export function PasswordStrength({
       return;
     }
 
-    // Rules all pass — schedule a debounced HIBP check.
+    // Rules all pass, schedule a debounced HIBP check.
     setBreach({ status: "checking" });
 
     timerRef.current = setTimeout(async () => {
@@ -200,7 +200,7 @@ export function PasswordStrength({
         })}
       </div>
 
-      {/* Breach indicator — only rendered when HIBP is active and there's something to show */}
+      {/* Breach indicator, only rendered when HIBP is active and there's something to show */}
       {hibpActive && password.length > 0 && breach.status !== "idle" && (
         <BreachIndicator breach={breach} />
       )}
@@ -268,7 +268,7 @@ function BreachIndicator({ breach }: BreachIndicatorProps) {
         aria-live="polite"
         className="text-sm text-muted-foreground"
       >
-        Breach check unavailable — you can still submit
+        Breach check unavailable, you can still submit
       </p>
     );
   }

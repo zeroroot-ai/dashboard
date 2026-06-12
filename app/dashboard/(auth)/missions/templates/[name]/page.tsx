@@ -1,5 +1,5 @@
 /**
- * /dashboard/missions/templates/[name] — detail page for a single
+ * /dashboard/missions/templates/[name], detail page for a single
  * mission template. Renders the template's MDX description, the
  * parsed JSON preview, and a "Use this template" button that
  * seeds the create flow with the template content.

@@ -90,7 +90,7 @@ export async function recordUserActivity(
 
 /**
  * Fetch the user's recent platform activity from the daemon.
- * Returns empty context on any failure — never throws.
+ * Returns empty context on any failure, never throws.
  */
 export async function getUserActivityContext(
   userId: string,

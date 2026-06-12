@@ -5,23 +5,23 @@ import type { EmailMessage, EmailProvider } from '../types';
  *
  * Sends transactional email via `@aws-sdk/client-ses` v3 `SendEmailCommand`.
  * Credentials are expected to come from IRSA (IAM Roles for Service Accounts)
- * — no explicit key env vars are read. The AWS SDK's default credential chain
+ *, no explicit key env vars are read. The AWS SDK's default credential chain
  * picks up the pod's bound service account token automatically on EKS.
  *
  * Configuration:
- *   AWS_REGION            — AWS region for the SES endpoint (required).
- *   SES_FROM_ADDRESS      — Verified SES identity to use as the From: address (required).
- *   SES_CONFIGURATION_SET — Env-scoped SESv2 configuration set stamped on every
- *                           send (required). IaC-owned per environment
- *                           (deploy#880); never derived from NODE_ENV — that is
- *                           a build-mode flag ("production" in every prod-mode
- *                           build, staging included), not a deployment
- *                           environment.
+ *   AWS_REGION:            AWS region for the SES endpoint (required).
+ *   SES_FROM_ADDRESS:      Verified SES identity to use as the From: address (required).
+ *   SES_CONFIGURATION_SET: Env-scoped SESv2 configuration set stamped on every
+ *                          send (required). IaC-owned per environment
+ *                          (deploy#880); never derived from NODE_ENV, that is
+ *                          a build-mode flag ("production" in every prod-mode
+ *                          build, staging included), not a deployment
+ *                          environment.
  *
  * The SDK is loaded lazily via dynamic import inside `send()` so installs using
  * the `log`, `smtp`, or `resend` providers never bundle `@aws-sdk/client-ses`.
  *
- * Email dispatch failures MUST be thrown (the caller — webhook handler — catches
+ * Email dispatch failures MUST be thrown (the caller, webhook handler, catches
  * and logs them as non-fatal per the existing pattern).
  */
 export class SesEmailProvider implements EmailProvider {
@@ -56,7 +56,7 @@ export class SesEmailProvider implements EmailProvider {
   }
 
   async send(msg: EmailMessage): Promise<void> {
-    // Dynamic import — keeps @aws-sdk/client-ses out of non-SES bundles.
+    // Dynamic import, keeps @aws-sdk/client-ses out of non-SES bundles.
     // The package is a declared dependency since dashboard#748; the same
     // import() pattern as the smtp/resend providers.
     const { SESClient, SendEmailCommand } = await import('@aws-sdk/client-ses');

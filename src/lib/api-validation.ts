@@ -57,7 +57,7 @@ export const safeUrlSchema = z
     },
     {
       message:
-        'URL is not allowed — cannot point to internal services or metadata endpoints',
+        'URL is not allowed, cannot point to internal services or metadata endpoints',
     },
   );
 

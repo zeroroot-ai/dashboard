@@ -46,7 +46,7 @@ const MissionTerminal = dynamic(
  * twice in quick succession produces two side-by-side progress bars.
  *
  * When the daemon's MissionStream lands (currently a placeholder, see
- * `/api/missions/:id/events/route.ts`), the same shape applies — the
+ * `/api/missions/:id/events/route.ts`), the same shape applies, the
  * route forwards each `tool_started` / `tool_completed` event verbatim
  * and the page's listener handles the set transitions identically.
  *
@@ -75,7 +75,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
   const { id } = use(params);
   const { data: mission, isLoading, error, refetch } = useMission(id);
 
-  // FGA gating for the Checkpoints tab — viewer is required to even see
+  // FGA gating for the Checkpoints tab, viewer is required to even see
   // the tab. Spec week-4-handlers-ui-e2e §4 task 40 / R17.1.
   const { allowed: canViewCheckpoints, loading } = useAuthorize(
     "/gibson.daemon.v1.DaemonService/ListCheckpoints",
@@ -281,11 +281,11 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
     mission.status.charAt(0).toUpperCase() + mission.status.slice(1);
 
   const targetScope =
-    mission.config?.scope ?? mission.config?.target ?? "—";
+    mission.config?.scope ?? mission.config?.target ?? "-";
 
   const createdDisplay = mission.startedAt
     ? new Date(mission.startedAt).toLocaleDateString()
-    : "—";
+    : "-";
 
   const completedDisplay = mission.completedAt
     ? new Date(mission.completedAt).toLocaleDateString()
@@ -468,7 +468,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
             </Card>
           )}
 
-          {/* In-flight tool streaming progress — week-4-handlers-ui-e2e §5
+          {/* In-flight tool streaming progress, week-4-handlers-ui-e2e §5
               task 53. One <ToolStreamProgress /> per active invocation. The
               set is fed by the mission events SSE bridge's tool_started /
               tool_completed frames; entries are removed automatically when
@@ -516,7 +516,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
           <MissionTracesTab missionId={mission.id} missionStatus={mission.status} />
         </TabsContent>
 
-        {/* Flow — daemon-projected mission flow-chart */}
+        {/* Flow, daemon-projected mission flow-chart */}
         <TabsContent value="flow" className="mt-4">
           <MissionFlowTab
             missionId={mission.id}
@@ -534,7 +534,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
           </Card>
         </TabsContent>
 
-        {/* Checkpoints — week-4-handlers-ui-e2e §4 R17.1 */}
+        {/* Checkpoints, week-4-handlers-ui-e2e §4 R17.1 */}
         {canViewCheckpoints && (
           <TabsContent value="checkpoints" className="mt-4">
             <Card>

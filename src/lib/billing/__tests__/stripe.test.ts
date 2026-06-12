@@ -1,7 +1,7 @@
 /**
  * @vitest-environment node
  *
- * Tests for the billing/stripe module — focusing on validateBillingConfig()
+ * Tests for the billing/stripe module, focusing on validateBillingConfig()
  * key-mode guards and the test/live key mode enforcement added in
  * spec stripe-billing-integration Task 2.
  *
@@ -59,7 +59,7 @@ afterEach(() => {
 // When billing is disabled, the guard is a no-op.
 // ---------------------------------------------------------------------------
 
-describe('validateBillingConfig — paid tiers disabled (default)', () => {
+describe('validateBillingConfig, paid tiers disabled (default)', () => {
   it('does not throw when DASHBOARD_BILLING_PAID_TIERS_ENABLED is unset', () => {
     delete process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
     expect(() => validateBillingConfig()).not.toThrow();
@@ -75,7 +75,7 @@ describe('validateBillingConfig — paid tiers disabled (default)', () => {
 // Key-mode guard tests (spec stripe-billing-integration Task 2, R8.2).
 // ---------------------------------------------------------------------------
 
-describe('validateBillingConfig — key-mode guard', () => {
+describe('validateBillingConfig, key-mode guard', () => {
   /**
    * Set all required env vars with a given stripe key.
    */
@@ -146,7 +146,7 @@ describe('validateBillingConfig — key-mode guard', () => {
 // Missing env var validation (existing behaviour, not regressed).
 // ---------------------------------------------------------------------------
 
-describe('validateBillingConfig — required env vars', () => {
+describe('validateBillingConfig, required env vars', () => {
   it('throws when paid tiers enabled but STRIPE_SECRET_KEY is missing', () => {
     process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
     delete process.env.STRIPE_SECRET_KEY;

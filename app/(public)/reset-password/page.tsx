@@ -1,5 +1,5 @@
 /**
- * Reset Password page — Server Component.
+ * Reset Password page, Server Component.
  *
  * Reads the `token` query parameter set by Zitadel's reset-password
  * callback redirect (`/reset-password/:token?callbackURL=/reset-password`
@@ -8,7 +8,7 @@
  * Also reads the `error` parameter: Zitadel sets `?error=INVALID_TOKEN`
  * when the token is missing or expired in the redirect path.
  *
- * This component does not make a network call to pre-validate the token —
+ * This component does not make a network call to pre-validate the token -
  * Zitadel has no separate "validate only" endpoint, and pre-validation
  * would consume the token. Actual validation happens in `resetPasswordAction`
  * on submit.

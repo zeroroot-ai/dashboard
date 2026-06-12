@@ -12,7 +12,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ConnectError, Code } from '@/src/lib/gibson-client';
 
 // ---------------------------------------------------------------------------
-// Mocks — hoisted before imports
+// Mocks, hoisted before imports
 // ---------------------------------------------------------------------------
 
 vi.mock('@/src/lib/auth', () => ({
@@ -109,7 +109,7 @@ describe('GET /api/settings/providers', () => {
     const body = await res.json();
     expect(body.providers).toHaveLength(1);
     expect(body.providers[0].name).toBe('my-anthropic');
-    // Credentials must be masked — no plaintext
+    // Credentials must be masked, no plaintext
     expect(body.providers[0].credentialsMasked.api_key).toBe('****abcd');
     expect(JSON.stringify(body)).not.toContain('sk-ant-api');
   });

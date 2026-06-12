@@ -83,7 +83,7 @@ function loadAllowlist() {
 }
 
 function renderChart() {
-  // Render with the kind overlay — the chart enforces several environment-
+  // Render with the kind overlay, the chart enforces several environment-
   // overlay-required values (idp.zitadel.issuer, vault.enabled, etc.) via
   // template guards. values-kind.yaml is the smallest overlay that satisfies
   // them, and the rendered RBAC under it matches the rendered RBAC under
@@ -131,7 +131,7 @@ function isDashboardRBAC(doc) {
 
 function findAllowlistEntry(allowlist, ruleApiGroups, ruleResources) {
   // Exact match on the (apiGroups, resources) pair. We don't try to
-  // partition rules — the allow-list is the canonical shape.
+  // partition rules, the allow-list is the canonical shape.
   return allowlist.find((entry) => {
     const apiMatch =
       ruleApiGroups.length === entry.apiGroups.size &&
@@ -177,7 +177,7 @@ function run() {
 
   if (docs.length === 0) {
     console.error(
-      `[${SCRIPT_NAME}] FAIL — no gibson-dashboard ClusterRole/Role rendered. Has the chart structure changed?`,
+      `[${SCRIPT_NAME}] FAIL, no gibson-dashboard ClusterRole/Role rendered. Has the chart structure changed?`,
     );
     process.exit(2);
   }
@@ -217,7 +217,7 @@ function selftest() {
     );
     process.exit(1);
   }
-  console.log(`[${SCRIPT_NAME}] selftest OK — guard caught the planted 'delete' verb`);
+  console.log(`[${SCRIPT_NAME}] selftest OK, guard caught the planted 'delete' verb`);
 }
 
 const argv = process.argv.slice(2);
@@ -233,7 +233,7 @@ if (argv.includes('--selftest')) {
 // Closes: zeroroot-ai/dashboard#166
 if (!existsSync(CHART_DIR)) {
   process.stderr.write(
-    `[${SCRIPT_NAME}] SKIPPED — enterprise/deploy sibling not present at ${CHART_DIR}; ` +
+    `[${SCRIPT_NAME}] SKIPPED, enterprise/deploy sibling not present at ${CHART_DIR}; ` +
       `skipping the manifest-RBAC-minimal check.\n`,
   );
   process.exit(0);
@@ -244,17 +244,17 @@ if (!existsSync(CHART_DIR)) {
 // the prebuild code-quality checks that don't require helm.
 // Spec: signup-zitadel-permissions-fix (Docker build fix for auth-resolution-hardening).
 if (process.env.SKIP_DASHBOARD_RBAC_CHECK === '1') {
-  console.log(`[${SCRIPT_NAME}] SKIPPED — SKIP_DASHBOARD_RBAC_CHECK=1`);
+  console.log(`[${SCRIPT_NAME}] SKIPPED, SKIP_DASHBOARD_RBAC_CHECK=1`);
   process.exit(0);
 }
 
 const violations = run();
 if (violations.length > 0) {
-  console.error(`\n[${SCRIPT_NAME}] FAIL — ${violations.length} violation(s). Spec: ${SPEC_NAME}`);
+  console.error(`\n[${SCRIPT_NAME}] FAIL, ${violations.length} violation(s). Spec: ${SPEC_NAME}`);
   for (const v of violations) console.error(`  ${v.kind}: ${v.detail}`);
   console.error(
     '\nResolve by either: (a) removing the verb from the chart template, OR (b) updating .dashboard-rbac-allowlist.yaml in the same PR with a justification.',
   );
   process.exit(1);
 }
-console.log(`[${SCRIPT_NAME}] OK — dashboard RBAC matches the allow-list`);
+console.log(`[${SCRIPT_NAME}] OK, dashboard RBAC matches the allow-list`);

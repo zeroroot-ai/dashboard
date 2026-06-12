@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Step 5 — Enrollment
+ * Step 5, Enrollment
  *
  * Displays the bootstrap token and the CLI enroll command the admin pastes on
  * the plugin host. Provides a one-click clipboard copy button.

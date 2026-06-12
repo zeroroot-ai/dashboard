@@ -10,7 +10,7 @@
  * relations are added to the proto annotations.
  *
  * Spec: dashboard-authz-ui-gating Requirement 4.
- * Sister-spec: cross-repo-cohesion-fixes Requirement 3.1 (end state b) — table
+ * Sister-spec: cross-repo-cohesion-fixes Requirement 3.1 (end state b), table
  * accepts proto-emitted names directly so no translation sites are needed.
  *
  * @module auth/relation-hierarchy
@@ -22,7 +22,7 @@
  * Higher number = more privilege. A user whose role maps to a higher tier
  * satisfies any requirement at an equal or lower tier.
  *
- * Unknown role strings receive tier 0 — default-deny for unrecognised values.
+ * Unknown role strings receive tier 0, default-deny for unrecognised values.
  *
  * To add a new relation:
  *   1. Annotate the RPC in the SDK proto with the new relation string
@@ -31,12 +31,12 @@
  *   3. Run `pnpm gen:authz` to regenerate the registry.
  */
 const RELATION_ORDER: Readonly<Record<string, number>> = {
-  // Proto-emitted relation names (canonical — these match what the SDK/daemon
+  // Proto-emitted relation names (canonical, these match what the SDK/daemon
   // proto annotations emit verbatim).
-  owner: 150,  // tenant owner — highest tenant-scoped role; FGA: admin = [user] or owner
+  owner: 150,  // tenant owner, highest tenant-scoped role; FGA: admin = [user] or owner
   admin: 100,
   member: 10,
-  platform_operator: 1000, // cross-tenant ops tier — higher than any tenant-scoped relation
+  platform_operator: 1000, // cross-tenant ops tier, higher than any tenant-scoped relation
 
   // writer: tenant-scoped write access (e.g. DaemonService/CreateMissionDefinition).
   writer: 20,
@@ -70,7 +70,7 @@ export function satisfiesRelation(userRole: string, requiredRelation: string): b
 
 /**
  * The full hierarchy as a readonly record, exported for introspection in tests
- * and documentation. Not intended for runtime use by authz checks — use
+ * and documentation. Not intended for runtime use by authz checks, use
  * `satisfiesRelation` instead.
  */
 export const relationHierarchy: Readonly<Record<string, number>> = RELATION_ORDER;

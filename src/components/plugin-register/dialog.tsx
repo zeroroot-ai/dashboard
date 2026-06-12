@@ -5,7 +5,7 @@
  *
  * Wraps the PluginRegisterWizard in a Shadcn Dialog. Closes and resets the
  * wizard state when the dialog is dismissed (either by the X button, pressing
- * Escape, or clicking outside — standard Radix Dialog behaviour).
+ * Escape, or clicking outside, standard Radix Dialog behaviour).
  *
  * Import this from the plugins page to add the "Add Plugin" button:
  *

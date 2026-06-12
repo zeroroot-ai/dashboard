@@ -117,7 +117,7 @@ export function FindingsExportDialog({
             <Label htmlFor="export-csv" className="cursor-pointer font-normal">
               CSV{" "}
               <span className="text-muted-foreground text-xs">
-                — spreadsheet-compatible
+               , spreadsheet-compatible
               </span>
             </Label>
           </div>
@@ -126,7 +126,7 @@ export function FindingsExportDialog({
             <Label htmlFor="export-json" className="cursor-pointer font-normal">
               JSON{" "}
               <span className="text-muted-foreground text-xs">
-                — machine-readable
+               , machine-readable
               </span>
             </Label>
           </div>

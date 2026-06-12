@@ -62,7 +62,7 @@ describe('useProviderHealth', () => {
       { wrapper: makeWrapper(queryClient) },
     );
 
-    // Wait for the real fetch to resolve — placeholderData starts as 'unknown'
+    // Wait for the real fetch to resolve, placeholderData starts as 'unknown'
     await waitFor(() => {
       expect(result.current.data?.status).toBe('healthy');
     });

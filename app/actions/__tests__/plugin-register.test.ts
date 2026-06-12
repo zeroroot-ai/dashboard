@@ -100,7 +100,7 @@ const successResponse = {
 // validatePluginManifestAction
 // ---------------------------------------------------------------------------
 
-describe("validatePluginManifestAction — validate-success", () => {
+describe("validatePluginManifestAction, validate-success", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns valid=true with empty errors on clean manifest", async () => {
@@ -123,7 +123,7 @@ describe("validatePluginManifestAction — validate-success", () => {
   });
 });
 
-describe("validatePluginManifestAction — validate-failure", () => {
+describe("validatePluginManifestAction, validate-failure", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns valid=false with structured errors with line numbers", async () => {
@@ -162,7 +162,7 @@ describe("validatePluginManifestAction — validate-failure", () => {
   });
 });
 
-describe("validatePluginManifestAction — RPC error", () => {
+describe("validatePluginManifestAction, RPC error", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns structured error on RPC failure", async () => {
@@ -184,7 +184,7 @@ describe("validatePluginManifestAction — RPC error", () => {
 // registerPluginAtomicAction
 // ---------------------------------------------------------------------------
 
-describe("registerPluginAtomicAction — register-atomic-success", () => {
+describe("registerPluginAtomicAction, register-atomic-success", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns bootstrap token and CLI command on success", async () => {
@@ -229,7 +229,7 @@ describe("registerPluginAtomicAction — register-atomic-success", () => {
   });
 });
 
-describe("registerPluginAtomicAction — register-atomic-rollback", () => {
+describe("registerPluginAtomicAction, register-atomic-rollback", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns manifest_invalid code on invalid_argument error", async () => {
@@ -280,7 +280,7 @@ describe("registerPluginAtomicAction — register-atomic-rollback", () => {
   });
 });
 
-describe("registerPluginAtomicAction — validation errors", () => {
+describe("registerPluginAtomicAction, validation errors", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns bad_input for empty manifest", async () => {
@@ -315,7 +315,7 @@ describe("registerPluginAtomicAction — validation errors", () => {
   });
 });
 
-describe("registerPluginAtomicAction — unauthenticated", () => {
+describe("registerPluginAtomicAction, unauthenticated", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -335,7 +335,7 @@ describe("registerPluginAtomicAction — unauthenticated", () => {
 // assertAuthorized gating
 // ---------------------------------------------------------------------------
 
-describe("validatePluginManifestAction — authz denied", () => {
+describe("validatePluginManifestAction, authz denied", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAssertAuthorized.mockRejectedValueOnce(
@@ -355,7 +355,7 @@ describe("validatePluginManifestAction — authz denied", () => {
   });
 });
 
-describe("registerPluginAtomicAction — authz denied", () => {
+describe("registerPluginAtomicAction, authz denied", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAssertAuthorized.mockRejectedValueOnce(

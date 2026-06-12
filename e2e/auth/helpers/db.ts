@@ -1,5 +1,5 @@
 /**
- * db.ts — direct Postgres helpers for e2e test assertions.
+ * db.ts, direct Postgres helpers for e2e test assertions.
  *
  * Used by tests that need to assert database state, e.g.:
  *   - "no user row was created for this email"
@@ -58,7 +58,7 @@ async function getPool(): Promise<PgPool | null> {
   } catch {
     _pgAvailable = false;
     console.warn(
-      "[e2e/db] `pg` package not available or DATABASE_URL not set — DB assertions will be skipped.",
+      "[e2e/db] `pg` package not available or DATABASE_URL not set, DB assertions will be skipped.",
     );
     return null;
   }

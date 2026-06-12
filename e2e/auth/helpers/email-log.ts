@@ -1,5 +1,5 @@
 /**
- * email-log.ts — helpers for extracting email tokens from the log provider.
+ * email-log.ts, helpers for extracting email tokens from the log provider.
  *
  * When `DASHBOARD_EMAIL_PROVIDER=log`, every sent email produces a single
  * JSON line on stdout:
@@ -184,7 +184,7 @@ function extractToken(
           }
         }
       } catch {
-        // Not valid JSON — skip.
+        // Not valid JSON, skip.
       }
     }
 
@@ -231,7 +231,7 @@ function extractToken(
  *
  * Returns the raw token string (not a full URL).
  *
- * Throws if no token is found within the timeout — the calling test will fail
+ * Throws if no token is found within the timeout, the calling test will fail
  * with a meaningful error.
  *
  * @example

@@ -9,7 +9,7 @@
  *   2. Click a finding and assert the detail view shows severity/evidence/mission_id.
  *   3. Apply a severity filter and assert the visible count updates.
  *
- * The Go test (mission_run_test.go) runs FIRST — it creates findings, persists
+ * The Go test (mission_run_test.go) runs FIRST, it creates findings, persists
  * them to Redis + Neo4j, then writes a coordination JSON file:
  *   /tmp/mission-run-<SIGNUP_SLUG>.json
  * with shape: { mission_id: string, slug: string, findings: Finding[] }
@@ -20,10 +20,10 @@
  * Cluster: values.yaml + values-kind.yaml (single-values-file rule; no overlay).
  *
  * Env vars consumed:
- *   SIGNUP_SLUG      — tenant slug (set by Makefile orchestrator)
- *   SIGNUP_EMAIL     — tenant email
- *   SIGNUP_PASSWORD  — password (falls back to SYNTHETIC_PASSWORD constant)
- *   PLAYWRIGHT_BASE_URL — target cluster URL (default: https://app.zeroroot.local:30443)
+ *   SIGNUP_SLUG     , tenant slug (set by Makefile orchestrator)
+ *   SIGNUP_EMAIL    , tenant email
+ *   SIGNUP_PASSWORD , password (falls back to SYNTHETIC_PASSWORD constant)
+ *   PLAYWRIGHT_BASE_URL, target cluster URL (default: https://app.zeroroot.local:30443)
  *
  * Security:
  *   - Cookie values are NEVER logged.
@@ -97,7 +97,7 @@ function loadCoordFile(slug: string): MissionCoordFile {
 /**
  * Ensure we have an authenticated session via the real Zitadel V2 OIDC flow.
  *
- * Uses loginViaZitadelV2 (Task 9 helper). Skips signup — the user must already
+ * Uses loginViaZitadelV2 (Task 9 helper). Skips signup, the user must already
  * exist (created by the Go test orchestrator in TestMission_Run_HappyPath via
  * the signup step, or by a prior make test-mission-run-e2e invocation).
  */
@@ -117,12 +117,12 @@ async function ensureLoggedIn(
     if (page.url().includes("/dashboard")) {
       const cookies = await context.cookies();
       if (cookies.some((c) => c.name.includes("authjs.session-token"))) {
-        console.log("[mission-run] Already authenticated — session cookie present");
+        console.log("[mission-run] Already authenticated, session cookie present");
         return;
       }
     }
 
-    // Not authenticated — drive Zitadel V2 OIDC login.
+    // Not authenticated, drive Zitadel V2 OIDC login.
     await loginViaZitadelV2(page, context, {
       email,
       password,
@@ -192,7 +192,7 @@ test.describe("mission run UI (R5)", () => {
         const currentURL = page.url();
         if (currentURL.includes("/login")) {
           throw new Error(
-            `mission-run: navigating to ${findingsURL} redirected to login — ` +
+            `mission-run: navigating to ${findingsURL} redirected to login, ` +
               `session cookie may have expired between Go test and Playwright spec.`,
           );
         }
@@ -236,7 +236,7 @@ test.describe("mission run UI (R5)", () => {
         }
 
         console.log(
-          `mission-run: PASS — all ${coordFile.findings.length} finding(s) visible on Findings page`,
+          `mission-run: PASS, all ${coordFile.findings.length} finding(s) visible on Findings page`,
         );
       } finally {
         await page.close();
@@ -302,7 +302,7 @@ test.describe("mission run UI (R5)", () => {
             await page.screenshot({ path: screenshotPath });
             throw new Error(
               `mission-run: finding detail view does not show severity "${firstFinding.severity}" ` +
-                `(R5.3 assertion: detail view must show severity — screenshot: ${screenshotPath})`,
+                `(R5.3 assertion: detail view must show severity, screenshot: ${screenshotPath})`,
             );
           });
 
@@ -316,12 +316,12 @@ test.describe("mission run UI (R5)", () => {
           .catch(() => {
             console.warn(
               `mission-run: mission_id "${coordFile.mission_id}" not directly visible ` +
-                `in finding detail view — may be truncated or linked (R5.3 partial pass)`,
+                `in finding detail view, may be truncated or linked (R5.3 partial pass)`,
             );
           });
 
         console.log(
-          `mission-run: PASS — finding ${firstFinding.id} detail view shows severity=${firstFinding.severity}`,
+          `mission-run: PASS, finding ${firstFinding.id} detail view shows severity=${firstFinding.severity}`,
         );
       } finally {
         await page.close();
@@ -370,7 +370,7 @@ test.describe("mission run UI (R5)", () => {
 
         if (!filterExists) {
           console.warn(
-            "mission-run: severity filter control not found on Findings page — " +
+            "mission-run: severity filter control not found on Findings page, " +
               "skipping R5.4 count-update assertion (filter may not be implemented yet)",
           );
           return;
@@ -411,7 +411,7 @@ test.describe("mission run UI (R5)", () => {
         }
 
         console.log(
-          `mission-run: PASS — severity filter "${targetSeverity}": ` +
+          `mission-run: PASS, severity filter "${targetSeverity}": ` +
             `${initialCount} → ${filteredCount} finding(s) visible ` +
             `(expected ~${expectedMatchCount} match(es) from coord file)`,
         );

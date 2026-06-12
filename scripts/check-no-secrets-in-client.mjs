@@ -24,13 +24,13 @@
  *
  * Runs as part of `prebuild` AFTER `next build` writes the output.
  * Important: this script is a no-op (succeeds silently) when the secret
- * env vars are not set — e.g. in a local build with no provider configured.
+ * env vars are not set, e.g. in a local build with no provider configured.
  * The check only activates when the secret is present in the environment,
  * which is precisely when it matters.
  *
  * Usage: node scripts/check-no-secrets-in-client.mjs
  *
- * Note: This script does NOT read secrets from any file on disk — only from
+ * Note: This script does NOT read secrets from any file on disk, only from
  * process.env at run time.
  */
 
@@ -54,7 +54,7 @@ const SECRET_ENV_VARS = [
 ];
 
 // Read the active secrets from env at run time. Only secrets that are
-// actually set (non-empty) are scanned for — if the secret is absent from
+// actually set (non-empty) are scanned for, if the secret is absent from
 // the environment there is nothing to leak so no scan is needed.
 const activeSecrets = SECRET_ENV_VARS
   .map((name) => ({ name, value: process.env[name] ?? "" }))
@@ -62,7 +62,7 @@ const activeSecrets = SECRET_ENV_VARS
 
 if (activeSecrets.length === 0) {
   console.log(
-    "✓ check-no-secrets-in-client: no provider secrets in env — nothing to scan",
+    "✓ check-no-secrets-in-client: no provider secrets in env, nothing to scan",
   );
   process.exit(0);
 }
@@ -75,14 +75,14 @@ try {
   statSync(staticDir);
   staticDirExists = true;
 } catch {
-  // .next/static doesn't exist — build hasn't run yet, or running in an
+  // .next/static doesn't exist, build hasn't run yet, or running in an
   // env without a prior `next build`. Skip silently; the guard is only
   // meaningful after a build.
 }
 
 if (!staticDirExists) {
   console.log(
-    "✓ check-no-secrets-in-client: .next/static not found — skipping (run after `next build`)",
+    "✓ check-no-secrets-in-client: .next/static not found, skipping (run after `next build`)",
   );
   process.exit(0);
 }
@@ -118,7 +118,7 @@ const jsFiles = walkJs(staticDir);
 
 if (jsFiles.length === 0) {
   console.log(
-    "✓ check-no-secrets-in-client: no .js files found in .next/static — nothing to scan",
+    "✓ check-no-secrets-in-client: no .js files found in .next/static, nothing to scan",
   );
   process.exit(0);
 }

@@ -9,7 +9,7 @@ import {
 } from '../theme-colors';
 
 // ============================================================================
-// WCAG Contrast Utilities (pure functions — no DOM required)
+// WCAG Contrast Utilities (pure functions, no DOM required)
 // ============================================================================
 
 /**
@@ -45,7 +45,7 @@ function contrastRatio(hex1: string, hex2: string): number {
 }
 
 // ============================================================================
-// Tests — single locked dark brand (#652)
+// Tests, single locked dark brand (#652)
 // ============================================================================
 
 describe('theme-colors (single dark brand)', () => {
@@ -127,10 +127,10 @@ describe('theme-colors (single dark brand)', () => {
   });
 
   // --------------------------------------------------------------------------
-  // WCAG AA contrast — re-paletted colors must stay legible on the new base.
+  // WCAG AA contrast, re-paletted colors must stay legible on the new base.
   // --------------------------------------------------------------------------
 
-  describe('WCAG AA — node colors vs the brand background (>=4.5:1)', () => {
+  describe('WCAG AA, node colors vs the brand background (>=4.5:1)', () => {
     const bg = DARK_THEME.background;
     const entityTypes: EntityType[] = [
       'mission', 'mission_run', 'agent_run', 'tool_execution', 'llm_call',
@@ -142,7 +142,7 @@ describe('theme-colors (single dark brand)', () => {
     });
   });
 
-  describe('WCAG AA — severity colors vs the brand background (>=4.5:1)', () => {
+  describe('WCAG AA, severity colors vs the brand background (>=4.5:1)', () => {
     const bg = DARK_THEME.background;
     const severities: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
     it.each(severities)('%s severity color is AA-legible', (s) => {

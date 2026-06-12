@@ -3,22 +3,22 @@
 /**
  * Server Actions for chat conversation management.
  *
- * generateConversationTitle — fires a non-streaming LLM call to produce a
+ * generateConversationTitle, fires a non-streaming LLM call to produce a
  * ≤6-word title from the first exchange. Called fire-and-forget from useChat
  * after the first assistant turn completes; never blocks the UI render path.
  *
- * renameConversation — user-initiated title update; persists via daemon
+ * renameConversation, user-initiated title update; persists via daemon
  * RenameConversation RPC. Direct Redis conversation writes were removed in
  * dashboard#549; auto-title Redis writes removed in dashboard#551.
  *
- * deleteConversationAction — removes a conversation permanently via the daemon
+ * deleteConversationAction, removes a conversation permanently via the daemon
  * DeleteConversation RPC (added in dashboard#551 / gibson PR #550).
  *
- * loadConversationMessages — fetches the full message list for a conversation
+ * loadConversationMessages, fetches the full message list for a conversation
  * from the daemon via GetConversation and converts proto parts → UIMessage[].
  * Called by useChat.switchConversation when the conversation has no in-memory
  * messages (post-reload state). Also surfaces interrupted trailing assistant
- * messages cleanly — they load as normal completed messages with regenerate
+ * messages cleanly, they load as normal completed messages with regenerate
  * available (dashboard#555).
  *
  * Spec: dashboard#448 (auto-title), dashboard#435 (rename thread),
@@ -61,7 +61,7 @@ export async function renameConversation(
     const trimmed = title.trim().slice(0, 500);
     if (!trimmed) return false;
 
-    // tenantId empty — daemon resolves from authenticated identity.
+    // tenantId empty, daemon resolves from authenticated identity.
     await rpcRenameConversation(conversationId, trimmed);
     return true;
   } catch (err) {
@@ -89,7 +89,7 @@ export async function deleteConversationAction(
 
     if (!conversationId) return false;
 
-    // tenantId empty — daemon resolves from authenticated identity.
+    // tenantId empty, daemon resolves from authenticated identity.
     await rpcDeleteConversation(conversationId);
     return true;
   } catch (err) {
@@ -103,12 +103,12 @@ export async function deleteConversationAction(
  *
  * `messages` is the AI SDK v6 `UIMessage[]` array from the chat store. The
  * action converts it to proto parts via the canonical message normalizer
- * (`uiMessagesToProto`) before sending — ensuring all part types (tool calls,
+ * (`uiMessagesToProto`) before sending, ensuring all part types (tool calls,
  * citations, attachments, reasoning) are preserved losslessly.
  *
  * Returns `true` on success, `false` when the session is absent, tenantId is
  * missing, or the RPC fails. The caller should treat a `false` return as a
- * silent degradation — the conversation remains in Zustand in-memory state.
+ * silent degradation, the conversation remains in Zustand in-memory state.
  *
  * This is the only sanctioned conversation write path on the dashboard.
  * Dashboard direct-Redis conversation writes were removed in dashboard#549.
@@ -133,7 +133,7 @@ export async function saveConversationAction(
     await saveConversation(conversationId, title, protoMessages, agentId);
     return true;
   } catch (err) {
-    // RPC failures are degraded — the conversation stays in Zustand.
+    // RPC failures are degraded, the conversation stays in Zustand.
     // Log at warn so operators can spot connectivity gaps without surfacing
     // errors to users.
     logger.warn({ err, conversationId }, "[chat] saveConversationAction: RPC failed");
@@ -158,7 +158,7 @@ export async function generateConversationTitle(
     }
     const userId = session.user.id ?? "";
 
-    // Resolve the default LLM provider — same path as /api/chat route.
+    // Resolve the default LLM provider, same path as /api/chat route.
     let providerName: string;
     try {
       const providerList = await listProviders(tenantId, userId);
@@ -189,8 +189,8 @@ export async function generateConversationTitle(
     const title = text.trim();
     if (!title) return null;
 
-    // Best-effort RPC update — failures are logged and silently swallowed
-    // so the caller never sees an error. tenantId empty — daemon resolves
+    // Best-effort RPC update, failures are logged and silently swallowed
+    // so the caller never sees an error. tenantId empty, daemon resolves
     // from authenticated identity.
     try {
       await rpcRenameConversation(conversationId, title);
@@ -203,7 +203,7 @@ export async function generateConversationTitle(
 
     return title;
   } catch {
-    // Swallow all errors — this action is fire-and-forget; it must never
+    // Swallow all errors, this action is fire-and-forget; it must never
     // surface an exception to the client render path.
     return null;
   }
@@ -222,12 +222,12 @@ export async function generateConversationTitle(
  *
  * If the conversation's trailing message is an assistant message that was
  * persisted mid-stream (e.g. via the stop+persist path from dashboard#563),
- * it loads as a normal completed message — no spinner state, no duplication.
+ * it loads as a normal completed message, no spinner state, no duplication.
  * Regenerate is available on all assistant messages via the existing #564 UX.
  *
  * Returns `null` on any error (session absent, conversation not found, daemon
  * unreachable). Callers should treat null as "keep the empty message list" and
- * not surface an error — degraded to empty is acceptable.
+ * not surface an error, degraded to empty is acceptable.
  *
  * Spec: dashboard#555 (finalize interrupted streams on reload)
  */
@@ -243,7 +243,7 @@ export async function loadConversationMessages(
     const { messages: protoMessages } = await getConversation(conversationId);
     // protoToUiMessages takes ConversationMessage[] from the proto; the RPC client
     // wrapper returns ConversationMessageRecord[] which carries the same id/role/parts
-    // fields — the fields protoToUiMessage actually reads. The createdAtUnix field
+    // fields, the fields protoToUiMessage actually reads. The createdAtUnix field
     // is unused by the normalizer. The cast is structurally safe and avoids leaking
     // proto types through the gibson-client wrapper boundary.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

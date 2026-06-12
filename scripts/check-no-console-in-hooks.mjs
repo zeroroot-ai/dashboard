@@ -16,7 +16,7 @@
  *   Any line containing `console.log`, `console.info`, `console.error`,
  *   or `console.warn` in a `.ts` or `.tsx` file under `src/hooks/`.
  *
- * Note: The guard is intentionally simple — it uses a line-level substring
+ * Note: The guard is intentionally simple, it uses a line-level substring
  * check, not an AST parser. A `// console.log` comment line will be flagged;
  * that is by design: even commented-out calls are noise and should be removed.
  * Spec maintainers who genuinely need a comment should rephrase it without the
@@ -26,7 +26,7 @@
  *   - `node_modules`, `.next`, `dist` directories inside src/hooks (none expected,
  *     but handled for safety).
  *   - Files that contain only type-level references (no executable call site)
- *     are still flagged if the substring appears on any line — keep call sites clean.
+ *     are still flagged if the substring appears on any line, keep call sites clean.
  *
  * Self-test mode: `--selftest`
  *   Creates `src/hooks/__selftest_console_guard.ts` with a single `console.log("test")`
@@ -124,7 +124,7 @@ function runScan() {
     process.stderr.write(`  ${v.file}:${v.line}: ${v.text}\n`);
   }
   process.stderr.write(
-    `\nWhy this exists: spec tier-0-cosmetic-cleanup Req 3.5 — hooks run in the\n` +
+    `\nWhy this exists: spec tier-0-cosmetic-cleanup Req 3.5, hooks run in the\n` +
     `customer's browser. Direct console.* calls produce visible chatter in devtools\n` +
     `on every page load. Remove the call or gate it:\n` +
     `  if (process.env.NODE_ENV !== 'production') { console.error(...); }\n\n`

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * MissionNodeBox — the custom React Flow node for a mission box. Styled by node
+ * MissionNodeBox, the custom React Flow node for a mission box. Styled by node
  * kind and overlaid with run state. Spec: dashboard#655 / #657.
  */
 
@@ -34,7 +34,7 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 // Accent border per kind so boxes are distinguishable at a glance. Tokens only
-// (no hardcoded palette utilities — enforced by check-no-hardcoded-colors).
+// (no hardcoded palette utilities, enforced by check-no-hardcoded-colors).
 const KIND_ACCENT: Record<string, string> = {
   agent: "border-l-primary",
   tool: "border-l-link",

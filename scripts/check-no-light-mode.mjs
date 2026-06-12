@@ -9,14 +9,14 @@
  *   2. The `theme_choice` cookie/metadata key (per-user/-device theme state).
  *   3. In CSS: a `.dark` class selector, a `prefers-color-scheme` media
  *      query, or a class/media-based `@custom-variant dark` definition.
- *   4. A `'light'`/`"light"` THEME string literal — i.e. one appearing on a
+ *   4. A `'light'`/`"light"` THEME string literal, i.e. one appearing on a
  *      line that also mentions `dark`, `theme`, or `mode`. This catches
  *      reintroduced theme machinery (`'dark' | 'light'` unions,
  *      `theme: 'light'`, `mode="light"`) while leaving unrelated uses of the
  *      word "light" alone (e.g. a "light scan" intensity option).
  *
  * The sanctioned dark-variant form is the always-on `@custom-variant
- * dark (&)` in app/globals.css — it makes every `dark:` utility apply
+ * dark (&)` in app/globals.css, it makes every `dark:` utility apply
  * unconditionally with no `.dark` class and no media query. That form is
  * explicitly allowed.
  *
@@ -70,7 +70,7 @@ export function scanContent(content, ext) {
       if (/\bfrom\s+['"]next-themes['"]/.test(line) || /require\(\s*['"]next-themes['"]\s*\)/.test(line)) {
         violations.push({ rule: "next-themes import", line: n });
       }
-      // A `'light'`/`"light"` THEME literal — only when the line also mentions
+      // A `'light'`/`"light"` THEME literal, only when the line also mentions
       // dark/theme/mode, so non-theme uses of "light" are left alone.
       if (/['"]light['"]/.test(line) && /\bdark\b|\btheme\b|\bmode\b/i.test(line)) {
         violations.push({ rule: "light theme literal", line: n });
@@ -89,7 +89,7 @@ export function scanContent(content, ext) {
       if (/prefers-color-scheme/.test(line)) {
         violations.push({ rule: "prefers-color-scheme media query", line: n });
       }
-      // class/media-based custom-variant dark — allow only the (&) form.
+      // class/media-based custom-variant dark, allow only the (&) form.
       if (/@custom-variant\s+dark\b/.test(line) && !/@custom-variant\s+dark\s*\(\s*&\s*\)/.test(line)) {
         violations.push({ rule: "class/media @custom-variant dark", line: n });
       }

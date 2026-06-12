@@ -1,5 +1,5 @@
 /**
- * GibsonLLMAdapter — Vercel AI SDK LanguageModelV2 implementation that
+ * GibsonLLMAdapter, Vercel AI SDK LanguageModelV2 implementation that
  * proxies every call to the Gibson daemon over gRPC.
  *
  * Design: spec 25 (`25-daemon-driven-provider-config`) §5.
@@ -38,7 +38,7 @@ import {
  *
  * Vercel AI SDK v2 groups text-delta stream parts by their `id` so
  * consumers can reassemble a multi-segment output. The Gibson daemon
- * emits a single logical text stream per call — one ID is sufficient.
+ * emits a single logical text stream per call, one ID is sufficient.
  */
 const TEXT_PART_ID = '0';
 
@@ -131,7 +131,7 @@ export class GibsonLLMAdapter implements LanguageModelV2 {
 }
 
 // ---------------------------------------------------------------------------
-// Translation helpers — Vercel prompt/tools/response-format → daemon types
+// Translation helpers, Vercel prompt/tools/response-format → daemon types
 // ---------------------------------------------------------------------------
 
 /**
@@ -301,7 +301,7 @@ export function vercelToolsToDaemonToolDefs(
       description: tool.description ?? '',
       // Vercel always ships JSON Schema 7 here (Zod schemas are converted
       // upstream by the `tool()` helper). JSON.stringify is the right
-      // serialisation — the daemon field is `parametersJson: string`.
+      // serialisation, the daemon field is `parametersJson: string`.
       parametersJson: safeStringify(tool.inputSchema),
     });
   }
@@ -333,7 +333,7 @@ export function vercelResponseFormatToDaemon(
 }
 
 // ---------------------------------------------------------------------------
-// Translation helpers — daemon response/stream → Vercel
+// Translation helpers, daemon response/stream → Vercel
 // ---------------------------------------------------------------------------
 
 /**
@@ -363,7 +363,7 @@ export function daemonResponseToVercelContent(
       toolCallId: call.id,
       toolName: call.name,
       // LanguageModelV2ToolCall.input is typed `string` (stringified
-      // JSON) in @ai-sdk/provider v3 — match that shape.
+      // JSON) in @ai-sdk/provider v3, match that shape.
       input: typeof input === 'string' ? input : safeStringify(input),
     });
   }
@@ -399,7 +399,7 @@ export function mapFinishReason(reason: string): LanguageModelV2FinishReason {
  * Map the daemon's flat {@link DaemonLLMUsage} to Vercel's
  * {@link LanguageModelV2Usage}. The Vercel type requires each field to
  * be `number | undefined`; when the daemon provides zero we forward
- * the zero rather than dropping it — the streaming path may later
+ * the zero rather than dropping it, the streaming path may later
  * update the value.
  */
 export function mapUsage(u?: DaemonLLMUsage): LanguageModelV2Usage {
@@ -433,7 +433,7 @@ export function mapUsage(u?: DaemonLLMUsage): LanguageModelV2Usage {
  * The `text-start` / `text-end` framing is mandatory: the AI SDK
  * (`@ai-sdk/provider` v2 stream contract) drops any `text-delta` whose `id`
  * was not opened by a preceding `text-start` ("Received text-delta for missing
- * text part"). Emitting a bare `text-delta` — as this function previously did —
+ * text part"). Emitting a bare `text-delta`, as this function previously did -
  * made `streamText` discard the assistant text entirely, so the chat UI
  * rendered an empty reply even though ExecuteLLM returned content.
  *

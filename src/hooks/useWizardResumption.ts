@@ -99,7 +99,7 @@ export function useWizardResumption(): WizardResumptionState {
           }
         }
       } catch {
-        // Resumable state check failed — wizard will not offer to resume
+        // Resumable state check failed, wizard will not offer to resume
       } finally {
         setIsChecking(false);
       }

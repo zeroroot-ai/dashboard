@@ -5,7 +5,7 @@
  * Static CSP hardening gate for the Gibson Dashboard build pipeline.
  *
  * After the zitadel-envoy-gateway-migration spec (task 22), CSP is no longer
- * generated in middleware.ts — Envoy sets response headers at the edge, and
+ * generated in middleware.ts, Envoy sets response headers at the edge, and
  * any static CSP is set via next.config.ts headers(). The middleware check
  * against middleware.ts is therefore skipped; this script now only scans
  * built .next/ artefacts for any CSP header that contains forbidden tokens.
@@ -14,8 +14,8 @@
  * banned anywhere they appear in the build output.
  *
  * Exit codes:
- *   0 — no forbidden tokens found (or no CSP headers in build output)
- *   1 — at least one forbidden token was found
+ *   0, no forbidden tokens found (or no CSP headers in build output)
+ *   1, at least one forbidden token was found
  */
 
 import { readdir, readFile, stat } from "node:fs/promises";
@@ -32,7 +32,7 @@ const MIDDLEWARE_PATH = join(DASHBOARD_ROOT, "middleware.ts");
 // Additional files that legitimately set a CSP header. Add more paths
 // here if a future refactor splits CSP generation out of middleware.
 const ADDITIONAL_CSP_SOURCES = [
-  // empty — keeping the array explicit so new CSP sites are obvious.
+  // empty, keeping the array explicit so new CSP sites are obvious.
 ];
 
 const FORBIDDEN_TOKENS = ["'unsafe-inline'", "'unsafe-eval'"];
@@ -55,7 +55,7 @@ function toPosix(p) {
  * conservative slice of the text that follows, up to the next semicolon OR
  * the end of the enclosing string literal (whichever comes first). The
  * dashboard's CSP is authored as an array of per-directive string literals
- * joined with `"; "` — so the directive value terminates at whichever
+ * joined with `"; "`, so the directive value terminates at whichever
  * boundary is nearer.
  *
  * Returns an array because a file may legitimately contain multiple CSP
@@ -89,7 +89,7 @@ function extractScriptSrcValues(source) {
  * Inspect the middleware source for forbidden CSP tokens.
  *
  * Since the zitadel-envoy-gateway-migration (task 22) CSP is no longer
- * generated in middleware.ts — middleware delegates to Envoy / next.config.ts.
+ * generated in middleware.ts, middleware delegates to Envoy / next.config.ts.
  * This function is kept as a no-op so the call-site in main() doesn't need to
  * change; it only logs when the middleware still happens to contain a CSP.
  */
@@ -99,7 +99,7 @@ async function checkMiddleware(hits) {
     content = await readFile(MIDDLEWARE_PATH, "utf8");
   } catch (err) {
     if (err && err.code === "ENOENT") {
-      // middleware.ts is gone — nothing to check.
+      // middleware.ts is gone, nothing to check.
       return;
     }
     throw err;
@@ -200,13 +200,13 @@ async function main() {
 
   if (hits.length === 0) {
     console.log(
-      "[check-csp] OK — no 'unsafe-inline' / 'unsafe-eval' in any CSP script-src."
+      "[check-csp] OK, no 'unsafe-inline' / 'unsafe-eval' in any CSP script-src."
     );
     process.exit(0);
   }
 
   console.error(
-    `[check-csp] FAIL — ${hits.length} CSP regression(s) detected.\n` +
+    `[check-csp] FAIL, ${hits.length} CSP regression(s) detected.\n` +
       "Nonce-based script-src must remain free of 'unsafe-inline' and 'unsafe-eval'.\n"
   );
   for (const hit of hits) {

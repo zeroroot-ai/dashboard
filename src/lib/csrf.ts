@@ -1,5 +1,5 @@
 /**
- * CSRF Protection — Double Submit Cookie Pattern
+ * CSRF Protection, Double Submit Cookie Pattern
  *
  * The client reads the csrf-token cookie and sends it back as the
  * x-csrf-token header on every mutating request. The server compares
