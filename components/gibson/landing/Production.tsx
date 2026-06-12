@@ -9,11 +9,11 @@ import { Button } from "@/components/ui/button";
 const posture = [
   {
     term: "short-lived credentials",
-    body: "agents enroll via OIDC client credentials and act on short-lived session tokens — no long-lived keys on disk",
+    body: "agents enroll once and act on short-lived session tokens, with no long-lived keys on disk",
   },
   {
     term: "tenant isolation",
-    body: "your graph, secrets, and traces are scoped to your tenant — never pooled",
+    body: "your graph, secrets, and traces are scoped to your tenant, never pooled",
   },
   {
     term: "full audit trail",
@@ -21,7 +21,7 @@ const posture = [
   },
   {
     term: "open-source core",
-    body: "the ADK, setec sandbox, tool runner, and SDK are public — inspect it, audit it, trust it",
+    body: "the ADK, setec sandbox, tool runner, and SDK are public, so you can inspect it, audit it, trust it",
   },
 ] as const;
 
@@ -37,7 +37,7 @@ export function Production() {
           Run on the hosted control plane at{" "}
           <code className="font-mono text-highlight">api.zeroroot.ai</code>,
           or deploy the entire platform into your own Kubernetes cluster with
-          a single Helm install —{" "}
+          a single Helm install,{" "}
           <span className="text-highlight">
             including the enclave your organization has already accredited
           </span>
@@ -53,7 +53,7 @@ export function Production() {
               </span>
               <p className="text-sm md:text-base leading-relaxed text-foreground/85">
                 <span className="font-mono text-highlight">{term}</span>
-                {" — "}
+                {": "}
                 {body}
               </p>
             </li>
@@ -66,8 +66,8 @@ export function Production() {
             </a>
           </Button>
           <p className="font-mono text-sm leading-relaxed text-foreground/85">
-            Every account starts with a 2-week free trial (card required) —
-            for production tiers (teams, SLAs, audit retention), see{" "}
+            Every account starts with a 2-week free trial (card required).
+            For production tiers (teams, SLAs, audit retention), see{" "}
             <Link
               href="/pricing"
               className="text-link underline underline-offset-4 hover:text-highlight"

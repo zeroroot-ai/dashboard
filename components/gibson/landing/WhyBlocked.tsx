@@ -21,7 +21,7 @@ const blockers = [
     title: "Integration drags on for months",
     pain: "Bolting AI onto existing infrastructure means custom glue that still doesn't fit your patterns.",
     resolve:
-      "Standard Kubernetes. Agents run where you already work — laptop, CI, VPS, k8s.",
+      "Standard Kubernetes. Agents run where you already work: laptop, CI, VPS, k8s.",
   },
   {
     title: "Engineers see a threat, not a tool",
