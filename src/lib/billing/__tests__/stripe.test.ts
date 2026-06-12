@@ -44,7 +44,6 @@ beforeEach(() => {
   saveEnv(
     'NODE_ENV',
     'DASHBOARD_BILLING_PAID_TIERS_ENABLED',
-    'STRIPE_ALLOW_TEST_KEY',
     ...REQUIRED_KEYS,
   );
   __resetStripeClientForTests();
@@ -72,77 +71,6 @@ describe('validateBillingConfig, paid tiers disabled (default)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Key-mode guard tests (spec stripe-billing-integration Task 2, R8.2).
-// ---------------------------------------------------------------------------
-
-describe('validateBillingConfig, key-mode guard', () => {
-  /**
-   * Set all required env vars with a given stripe key.
-   */
-  function setupWithKey(stripeKey: string, nodeEnv: string) {
-    process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
-    // NODE_ENV is normally read-only but we need to override it for tests.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (process.env as any).NODE_ENV = nodeEnv;
-    process.env.STRIPE_SECRET_KEY = stripeKey;
-    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
-    process.env.STRIPE_PRICE_TEAM = 'price_team';
-    process.env.STRIPE_PRICE_ORG = 'price_org';
-    process.env.STRIPE_PRICE_ENTERPRISE = 'price_enterprise';
-  }
-
-  it('throws with exact message when NODE_ENV=production and sk_test_ key', () => {
-    setupWithKey('sk_test_testkey123', 'production');
-    expect(() => validateBillingConfig()).toThrow(
-      '[billing/stripe] Production deployment detected with test-mode Stripe key',
-    );
-  });
-
-  it('does NOT throw when NODE_ENV=production and sk_test_ key with STRIPE_ALLOW_TEST_KEY=true (staging opt-in)', () => {
-    setupWithKey('sk_test_testkey123', 'production');
-    process.env.STRIPE_ALLOW_TEST_KEY = 'true';
-    expect(() => validateBillingConfig()).not.toThrow();
-  });
-
-  it('STILL throws on NODE_ENV=test and sk_live_ key even with STRIPE_ALLOW_TEST_KEY=true (opt-in is test-key-direction only)', () => {
-    setupWithKey('sk_live_livekey123', 'test');
-    process.env.STRIPE_ALLOW_TEST_KEY = 'true';
-    expect(() => validateBillingConfig()).toThrow(
-      '[billing/stripe] Non-production deployment detected with live-mode Stripe key',
-    );
-  });
-
-  it('throws when NODE_ENV=test and sk_live_ key', () => {
-    setupWithKey('sk_live_livekey123', 'test');
-    expect(() => validateBillingConfig()).toThrow(
-      '[billing/stripe] Non-production deployment detected with live-mode Stripe key',
-    );
-  });
-
-  it('throws when NODE_ENV=development and sk_live_ key', () => {
-    setupWithKey('sk_live_livekey123', 'development');
-    expect(() => validateBillingConfig()).toThrow(
-      '[billing/stripe] Non-production deployment detected with live-mode Stripe key',
-    );
-  });
-
-  it('does NOT throw when NODE_ENV=production and sk_live_ key', () => {
-    setupWithKey('sk_live_livekey123', 'production');
-    expect(() => validateBillingConfig()).not.toThrow();
-  });
-
-  it('does NOT throw when NODE_ENV=test and sk_test_ key', () => {
-    setupWithKey('sk_test_testkey123', 'test');
-    expect(() => validateBillingConfig()).not.toThrow();
-  });
-
-  it('does NOT throw when NODE_ENV=development and sk_test_ key', () => {
-    setupWithKey('sk_test_testkey123', 'development');
-    expect(() => validateBillingConfig()).not.toThrow();
-  });
-});
-
-// ---------------------------------------------------------------------------
 // Missing env var validation (existing behaviour, not regressed).
 // ---------------------------------------------------------------------------
 
@@ -159,5 +87,64 @@ describe('validateBillingConfig, required env vars', () => {
       delete process.env[key];
     }
     expect(() => validateBillingConfig()).toThrow('STRIPE_SECRET_KEY');
+  });
+});
+
+describe('validateBillingConfig — explicit STRIPE_EXPECTED_MODE guard (card-first-signup / dashboard#767)', () => {
+  function setupPaidTiers(stripeKey: string, expectedMode?: string) {
+    process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (process.env as any).NODE_ENV = 'production';
+    process.env.STRIPE_SECRET_KEY = stripeKey;
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
+    process.env.STRIPE_PRICE_TEAM = 'price_team';
+    process.env.STRIPE_PRICE_ORG = 'price_org';
+    process.env.STRIPE_PRICE_ENTERPRISE = 'price_enterprise';
+    if (expectedMode === undefined) {
+      delete process.env.STRIPE_EXPECTED_MODE;
+    } else {
+      process.env.STRIPE_EXPECTED_MODE = expectedMode;
+    }
+  }
+
+  it('throws when STRIPE_EXPECTED_MODE is unset and paid tiers are on', () => {
+    setupPaidTiers('sk_test_abc', undefined);
+    expect(() => validateBillingConfig()).toThrow('STRIPE_EXPECTED_MODE is required');
+  });
+
+  it('throws when STRIPE_EXPECTED_MODE is an unknown value', () => {
+    setupPaidTiers('sk_test_abc', 'sandbox');
+    expect(() => validateBillingConfig()).toThrow('must be "test" or "live"');
+  });
+
+  it('throws when expected=live but the key is a test key', () => {
+    setupPaidTiers('sk_test_abc', 'live');
+    expect(() => validateBillingConfig()).toThrow('key/mode mismatch');
+  });
+
+  it('throws when expected=test but the key is a live key', () => {
+    setupPaidTiers('sk_live_abc', 'test');
+    expect(() => validateBillingConfig()).toThrow('key/mode mismatch');
+  });
+
+  it('throws on an unrecognised key prefix', () => {
+    setupPaidTiers('pk_test_abc', 'test');
+    expect(() => validateBillingConfig()).toThrow('unrecognised prefix');
+  });
+
+  it('passes when expected=test matches a test key (staging — no allowTestKey needed)', () => {
+    setupPaidTiers('sk_test_abc', 'test');
+    delete process.env.STRIPE_ALLOW_TEST_KEY;
+    expect(() => validateBillingConfig()).not.toThrow();
+  });
+
+  it('passes when expected=live matches a live key (prod)', () => {
+    setupPaidTiers('sk_live_abc', 'live');
+    expect(() => validateBillingConfig()).not.toThrow();
+  });
+
+  it('accepts restricted (rk_) keys by mode', () => {
+    setupPaidTiers('rk_test_abc', 'test');
+    expect(() => validateBillingConfig()).not.toThrow();
   });
 });

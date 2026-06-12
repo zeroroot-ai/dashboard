@@ -361,27 +361,48 @@ export function validateBillingConfig(): void {
   // STRIPE_SECRET_KEY presence already required above; the `?? ''` is a
   // narrow defensive coercion (not a silent default) so .startsWith() is safe.
   const secretKey = process.env.STRIPE_SECRET_KEY ?? '';
-  const isProduction = process.env.NODE_ENV === 'production';
 
-  // Staging runs a production-grade Next.js runtime (NODE_ENV=production) but
-  // INTENTIONALLY drives test-mode Stripe, it must never touch real cards.
-  // STRIPE_ALLOW_TEST_KEY is a narrow, default-OFF opt-in for exactly that
-  // case: it suppresses ONLY the test-key-in-production throw below. Real
-  // production leaves it unset, so the guard there is fully intact. It does
-  // NOT relax the live-key-in-non-production check (that direction is always
-  // a mistake). Wired from dashboard.billing.allowTestKey in the staging
-  // overlay.
-  const allowTestKey = process.env.STRIPE_ALLOW_TEST_KEY === 'true';
-
-  if (isProduction && secretKey.startsWith('sk_test_') && !allowTestKey) {
+  // Card-first-signup mode guard (dashboard#767). The chart declares the
+  // environment's billing mode explicitly via STRIPE_EXPECTED_MODE
+  // (test on staging — dummy cards only; live in prod — real cards), so we
+  // assert the key prefix directly instead of inferring from NODE_ENV. This
+  // is the authoritative check: staging gets test-card-only safety WITHOUT
+  // the NODE_ENV/allowTestKey dance below, and a mis-mounted key fails the
+  // pod at boot. Required whenever paid tiers are on.
+  const expectedMode = process.env.STRIPE_EXPECTED_MODE;
+  if (!expectedMode) {
     throw new Error(
-      '[billing/stripe] Production deployment detected with test-mode Stripe key',
+      '[billing/stripe] STRIPE_EXPECTED_MODE is required when paid tiers are enabled ' +
+        '(epic card-first-signup / dashboard#767): set "test" (staging) or "live" (prod).',
+    );
+  }
+  if (expectedMode !== 'test' && expectedMode !== 'live') {
+    throw new Error(
+      `[billing/stripe] STRIPE_EXPECTED_MODE must be "test" or "live", got "${expectedMode}".`,
+    );
+  }
+  const keyMode = secretKey.startsWith('sk_test_') || secretKey.startsWith('rk_test_')
+    ? 'test'
+    : secretKey.startsWith('sk_live_') || secretKey.startsWith('rk_live_')
+      ? 'live'
+      : null;
+  if (keyMode === null) {
+    throw new Error(
+      '[billing/stripe] STRIPE_SECRET_KEY has an unrecognised prefix; ' +
+        'cannot determine test vs live for the card-first-signup mode guard.',
+    );
+  }
+  if (keyMode !== expectedMode) {
+    throw new Error(
+      `[billing/stripe] Stripe key/mode mismatch: STRIPE_EXPECTED_MODE="${expectedMode}" ` +
+        `but the key is ${keyMode}-mode — refusing to boot (the wrong cards would be accepted).`,
     );
   }
 
-  if (!isProduction && secretKey.startsWith('sk_live_')) {
-    throw new Error(
-      '[billing/stripe] Non-production deployment detected with live-mode Stripe key',
-    );
-  }
+  // NOTE: the prior NODE_ENV-inferred guard (+ STRIPE_ALLOW_TEST_KEY opt-in
+  // for staging's NODE_ENV=production/test-key combination) is intentionally
+  // gone. STRIPE_EXPECTED_MODE is the explicit, authoritative declaration of
+  // the environment's billing mode (dashboard#767), so staging no longer
+  // needs the allowTestKey escape hatch and there is no second, NODE_ENV-based
+  // codepath enforcing the same invariant (ADR-0027 — no parallel codepaths).
 }
