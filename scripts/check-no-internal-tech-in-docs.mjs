@@ -11,7 +11,7 @@
  * Scanned surfaces:
  *   - content/docs/**\/*.mdx                  (rendered customer docs)
  *   - components/gibson/landing/**\/*.{ts,tsx}  (marketing components)
- *   - app/(public)/**\/*.{ts,tsx,mdx}          (public routes — pricing, signup, login)
+ *   - app/(public)/**\/*.{ts,tsx,mdx}          (public routes, pricing, signup, login)
  *
  * For .ts/.tsx files, JS comments (// line + block) are stripped before
  * scanning. Engineering docstrings exempt; string literals + JSX text
@@ -25,7 +25,7 @@
  *   - every `CLAUDE.md`                              (intentionally architectural)
  *
  * Existing violations are captured in `.docs-allowlist.json` at the repo
- * root, monotonic-shrink only — the same discipline as
+ * root, monotonic-shrink only, the same discipline as
  * `.color-allowlist.json`:
  *
  *   - New violation (not in allowlist) → FAIL.
@@ -57,7 +57,7 @@ const ALLOWLIST_PATH = join(ROOT, ".docs-allowlist.json");
 // Each scan root declares its own extension allowlist and whether JS-style
 // comments should be stripped before pattern matching. The rule of thumb:
 // scan whatever renders to a customer. For .ts/.tsx, that means JSX text +
-// string literals — engineering docstrings (// or /* */) are exempt.
+// string literals, engineering docstrings (// or /* */) are exempt.
 const SCAN_ROOTS = [
   { root: "content/docs", extensions: new Set([".mdx"]), stripJsComments: false },
   { root: "components/gibson/landing", extensions: new Set([".ts", ".tsx"]), stripJsComments: true },
@@ -70,7 +70,7 @@ const SKIP_DIR_NAMES = new Set([
 
 // Each pattern names what to write instead. The `suggest` field is printed when
 // the scanner fails so the error doubles as a how-to. Patterns are
-// case-sensitive on purpose — these are proper nouns / technical identifiers,
+// case-sensitive on purpose, these are proper nouns / technical identifiers,
 // and lowercase variants (e.g. "envoyé") would otherwise trip false positives.
 const DENY_PATTERNS = [
   {
@@ -101,32 +101,32 @@ const DENY_PATTERNS = [
   {
     name: "envoy",
     re: /\bEnvoy\b/g,
-    suggest: 'drop — customer never sees the edge proxy',
+    suggest: 'drop, customer never sees the edge proxy',
   },
   {
     name: "ext-authz",
     re: /\bext[-_]authz\b/g,
-    suggest: 'drop — internal authorization-decision boundary',
+    suggest: 'drop, internal authorization-decision boundary',
   },
   {
     name: "jwt-authn",
     re: /\bjwt_authn\b/g,
-    suggest: 'drop — internal Envoy filter',
+    suggest: 'drop, internal Envoy filter',
   },
   {
     name: "jwks",
     re: /\bJWKS\b/g,
-    suggest: 'drop — internal validator surface',
+    suggest: 'drop, internal validator surface',
   },
   {
     name: "x-gibson-identity",
     re: /x-gibson-identity[-*\w]*/g,
-    suggest: 'drop — internal wire-header detail',
+    suggest: 'drop, internal wire-header detail',
   },
   {
     name: "cgjwt",
     re: /\bcgjwt(?:\.[A-Za-z]+)?\b/g,
-    suggest: 'drop — internal verifier package',
+    suggest: 'drop, internal verifier package',
   },
   {
     name: "langfuse",
@@ -136,37 +136,37 @@ const DENY_PATTERNS = [
   {
     name: "neo4j",
     re: /\bNeo4j\b/gi,
-    suggest: 'drop — customer never sees the knowledge-graph backend',
+    suggest: 'drop, customer never sees the knowledge-graph backend',
   },
   {
     name: "cnpg",
     re: /\bCNPG\b|\bCloudNativePG\b/g,
-    suggest: 'drop — customer never sees the Postgres operator',
+    suggest: 'drop, customer never sees the Postgres operator',
   },
   {
     name: "argocd",
     re: /\bArgoCD\b|\bArgo CD\b/g,
-    suggest: 'drop — customer never sees the GitOps controller',
+    suggest: 'drop, customer never sees the GitOps controller',
   },
   {
     name: "cert-manager",
     re: /\bcert-manager\b/g,
-    suggest: 'drop — internal TLS material lifecycle',
+    suggest: 'drop, internal TLS material lifecycle',
   },
   {
     name: "eso",
     re: /\bESO\b|\bExternal Secrets Operator\b/g,
-    suggest: 'drop — internal secret-syncing controller',
+    suggest: 'drop, internal secret-syncing controller',
   },
   {
     name: "opa",
     re: /\bOPA\b/g,
-    suggest: 'drop — internal policy-evaluation engine',
+    suggest: 'drop, internal policy-evaluation engine',
   },
   {
     name: "gibson-hosted-vault",
     re: /Gibson-hosted Vault/g,
-    suggest: '"Gibson-managed secrets storage" — drop the implementation detail',
+    suggest: '"Gibson-managed secrets storage", drop the implementation detail',
   },
 ];
 
@@ -205,7 +205,7 @@ function relPath(abs) {
 // stripJsComments replaces the contents of // line comments and /* */ block
 // comments with spaces (preserving line/column positions so violation line
 // numbers stay accurate). String literals (single, double, template) are
-// preserved verbatim — those render to the customer and must still be scanned.
+// preserved verbatim, those render to the customer and must still be scanned.
 // JSX text-content is preserved verbatim too: outside string literals, a `//`
 // that is NOT followed by a `*` and is NOT inside a regex literal is treated
 // as a comment. Inside JSX text, '//' as content is uncommon enough that we
@@ -240,7 +240,7 @@ function stripJsComments(src) {
       }
       continue;
     }
-    // String literals — preserve verbatim, including any // or /* inside.
+    // String literals, preserve verbatim, including any // or /* inside.
     if (c === "'" || c === '"' || c === "`") {
       const quote = c;
       out += c;
@@ -397,7 +397,7 @@ function runScan() {
   }
   if (stale.length > 0) {
     process.stderr.write(
-      `\n❌ ${stale.length} stale .docs-allowlist.json entry/entries — source line no longer matches:\n\n`,
+      `\n❌ ${stale.length} stale .docs-allowlist.json entry/entries, source line no longer matches:\n\n`,
     );
     for (const a of stale) {
       process.stderr.write(`  ${a.file}:${a.line} [${a.pattern}]  was: ${a.match}\n`);
@@ -459,7 +459,7 @@ function runSeed() {
 }
 
 function runSelftest() {
-  // The deny-list fixture body — one mention per pattern class so the scanner
+  // The deny-list fixture body, one mention per pattern class so the scanner
   // is required to catch each. Shared by the .mdx and .tsx fixtures.
   const denyMentions = [
     "Signed in via Zitadel.",
@@ -486,7 +486,7 @@ function runSelftest() {
     "Gibson-hosted Vault for default backend.",
   ];
 
-  // Fixture 1: an .mdx file under content/docs — exercises the raw-scan path
+  // Fixture 1: an .mdx file under content/docs, exercises the raw-scan path
   // (no comment stripping). All deny-list patterns must be caught.
   const mdxDir = join(ROOT, "content", "docs", "__selftest_dir");
   const mdxPath = join(mdxDir, "__selftest.mdx");
@@ -494,7 +494,7 @@ function runSelftest() {
   const mdxBody = ["---", "title: selftest", "---", "", ...denyMentions].join("\n");
   writeFileSync(mdxPath, mdxBody);
 
-  // Fixture 2: a .tsx file under components/gibson/landing — exercises the
+  // Fixture 2: a .tsx file under components/gibson/landing, exercises the
   // comment-aware scan path. The deny-list patterns live in JSX text + string
   // literals (which must be caught); the same patterns in // line and /* */
   // block comments must be IGNORED.
@@ -555,7 +555,7 @@ function runSelftest() {
     // visible array. With comment stripping ON we keep only the array, so
     // every pattern's raw count must be exactly 3× its stripped count. Any
     // other ratio means the comment stripper either leaked (raw > 3× stripped)
-    // or over-ate (raw < 3× stripped — would chew through string literals).
+    // or over-ate (raw < 3× stripped, would chew through string literals).
     const tsxRawViolations = scanFile(tsxPath, { stripJsComments: false });
     const tsxRawCounts = new Map();
     for (const v of tsxRawViolations) {

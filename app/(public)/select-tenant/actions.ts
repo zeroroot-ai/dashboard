@@ -15,7 +15,7 @@ import { validateRedirectTo } from "@/src/lib/auth/redirect-allowlist";
  * Returns `Promise<void>` so the type matches `<form action>`'s prop
  * shape in Next.js 16+. Earlier drafts returned `{ ok: false, reason }`
  * for inline rendering, but that contract is incompatible with the
- * form-action prop and the page never rendered the error UI anyway —
+ * form-action prop and the page never rendered the error UI anyway -
  * the error page is the canonical surface for these failures (per
  * spec auth-resolution-hardening R2).
  */

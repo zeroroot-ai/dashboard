@@ -1,4 +1,4 @@
-// GENERATED FILE — do not edit.
+// GENERATED FILE, do not edit.
 // Source: enterprise/platform/tenant-operator/plans/plans.yaml
 // Generator: enterprise/platform/dashboard/scripts/gen-stripe-tiers.mjs
 // Spec: plans-and-quotas-simplification R8.

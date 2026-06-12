@@ -3,7 +3,7 @@
  *
  * GET /api/findings/export[?format=csv|json]
  *
- * Delegates to TenantAdminService.ExportFindings — the daemon pages through
+ * Delegates to TenantAdminService.ExportFindings, the daemon pages through
  * all findings for the tenant (server-side, same Cypher as GetFindings), assembles
  * the requested format, and returns bytes + filename. Routes through Envoy + ext-authz.
  *

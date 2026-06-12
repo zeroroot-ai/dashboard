@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * proto-generate — regenerate the dashboard's TypeScript proto bindings
+ * proto-generate, regenerate the dashboard's TypeScript proto bindings
  * from the SDK's published protos plus the daemon-local protos at
  * `core/gibson/internal/daemon/api/`.
  *
@@ -18,14 +18,14 @@
  * output back into `src/gen/`.
  *
  * The pattern is the same one the daemon already uses for `make
- * authz-registry` — see `core/gibson/Makefile`'s `authz-registry`
+ * authz-registry`, see `core/gibson/Makefile`'s `authz-registry`
  * recipe, which builds a `.tmp/ws/` workspace by symlinking the SDK
  * proto root and the daemon-local proto root.
  *
  * **Workstation-only:** this script assumes the daemon repo is cloned
  * as a sibling of the dashboard repo, exactly as the rest of this
  * polyrepo workspace already requires. CI does not regenerate proto
- * bindings — `src/gen/` is committed and CI just typechecks it.
+ * bindings, `src/gen/` is committed and CI just typechecks it.
  *
  * Spec: component-bootstrap-dashboard-completion (proto-gen workflow).
  */
@@ -46,7 +46,7 @@ const WS = path.join(DASHBOARD_ROOT, '.tmp/proto-ws');
 
 // Workspace root: ~/Code/zeroroot.ai/. Sibling repos hang off here.
 // Dashboard lives at enterprise/platform/dashboard so the workspace root
-// is three levels up. Gibson lives at enterprise/platform/gibson — the
+// is three levels up. Gibson lives at enterprise/platform/gibson, the
 // `core/` prefix was the pre-refactor layout and is no longer present.
 //
 // Worktree-aware: when run from .worktrees/<name>/scripts/ or
@@ -65,7 +65,7 @@ const GIBSON_REPO = path.join(WORKSPACE_ROOT, 'enterprise/platform/gibson');
 const GIBSON_LOCAL_PROTOS = path.join(GIBSON_REPO, 'internal/daemon/api');
 // platform-sdk is a sibling repo at opensource/platform-sdk. Unlike the
 // OSS SDK (resolved via `go list -m` against gibson's go.mod), platform-sdk's
-// proto tree is consumed directly from the sibling checkout — it's the
+// proto tree is consumed directly from the sibling checkout, it's the
 // authoritative home for daemon-admin / authz / budget / usage / discovery
 // protos that previously lived under sdk/api/proto. Parent PRD
 // zeroroot-ai/.github#101.
@@ -81,7 +81,7 @@ function run(cmd, opts = {}) {
 }
 
 function resolveSdkProtoDir() {
-  // Prefer the sibling checkout at opensource/sdk when present — it
+  // Prefer the sibling checkout at opensource/sdk when present, it
   // tracks main and avoids the "gibson go.mod pin lags one minor
   // version behind the latest sdk release" hazard during multi-repo
   // migrations (e.g. capability extraction in sdk#103 vs admin
@@ -209,7 +209,7 @@ function buildWorkspace() {
       // descriptors win on the conflict-free namespaces it owns.
       // gibson/auth/v1/options.proto is intentionally shared between
       // OSS SDK and platform-sdk via the same on-disk file (see the
-      // platform-sdk "share gibson.auth.v1 with oss sdk" change) —
+      // platform-sdk "share gibson.auth.v1 with oss sdk" change) -
       // exclude here so buf doesn't see two copies under the two
       // module roots.
       '  - path: platform-sdk-proto',

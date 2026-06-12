@@ -9,7 +9,7 @@
  * Flow:
  *   1. Resolve the mission run by id via ListMissions.
  *   2. If the run has no missionDefinitionId the mission was created via the
- *      programmatic path (no author-managed definition) — return 410.
+ *      programmatic path (no author-managed definition), return 410.
  *   3. Call GetMissionDefinition(missionDefinitionId) to get the full proto.
  *   4. Serialise to CUE and return { cueSource, name }.
  */

@@ -1,16 +1,16 @@
 /**
  * Build guard: lock the single authorization path.
  *
- * Authorization in the dashboard has exactly ONE source of truth — the
+ * Authorization in the dashboard has exactly ONE source of truth, the
  * generated AuthRegistry relation model:
  *   - client gates → useAuthorize(rpcMethod)
  *   - server gates → assertAuthorized(rpcMethod) / requireCrdSession(action)
  *   - relation tiers → satisfiesRelation / rolesAreCrossTenant
  *
- * The legacy parallel system — the sync usePermitted hook, the static
+ * The legacy parallel system, the sync usePermitted hook, the static
  * permission closure (ADMIN_PERMISSIONS / session.user.permissions /
  * hasPermission), and the dead GetAuthSchema cache (loadSchema /
- * resolveEffectivePermissions / resolveCrossTenant) — was deleted because it
+ * resolveEffectivePermissions / resolveCrossTenant), was deleted because it
  * drifted from the daemon and silently denied. This guard fails the build if
  * any of it is reintroduced, and if any useAuthorize/assertAuthorized call
  * references a method that is not in the AuthRegistry (a fail-closed typo).
@@ -39,16 +39,16 @@ const EXCLUDE_DIRS = [
   join(ROOT, "scripts"),
 ];
 
-// Banned tokens — the deleted legacy authorization system. Each maps to a hint.
+// Banned tokens, the deleted legacy authorization system. Each maps to a hint.
 const BANNED = [
-  { re: /\busePermitted\b/, hint: "usePermitted was removed — gate UI on useAuthorize(rpcMethod)." },
-  { re: /\bhasPermission\b/, hint: "hasPermission was removed — use assertAuthorized / requireCrdSession." },
+  { re: /\busePermitted\b/, hint: "usePermitted was removed, gate UI on useAuthorize(rpcMethod)." },
+  { re: /\bhasPermission\b/, hint: "hasPermission was removed, use assertAuthorized / requireCrdSession." },
   { re: /\bresolveEffectivePermissions\b/, hint: "the static permission closure was removed." },
   { re: /\bresolveCrossTenant\b/, hint: "crossTenant is derived from the role (rolesAreCrossTenant)." },
   { re: /\bderivePermissionsFromRoles\b/, hint: "the static permission closure was removed." },
   { re: /\bADMIN_PERMISSIONS\b/, hint: "the static permission map was removed." },
   { re: /\bloadSchema\b/, hint: "the GetAuthSchema cache was removed." },
-  { re: /\.user\.permissions\b/, hint: "session.user.permissions was removed — authorization is relation-based." },
+  { re: /\.user\.permissions\b/, hint: "session.user.permissions was removed, authorization is relation-based." },
 ];
 
 const AUTHZ_CALL = /\b(?:useAuthorize|assertAuthorized)\s*\(\s*["'`]([^"'`]+)["'`]/g;
@@ -85,7 +85,7 @@ export function findViolations(path, src, registryMethods) {
   const code = stripComments(src);
   code.split("\n").forEach((line, i) => {
     for (const { re, hint } of BANNED) {
-      if (re.test(line)) out.push(`${path}:${i + 1} — ${hint}`);
+      if (re.test(line)) out.push(`${path}:${i + 1}, ${hint}`);
     }
   });
   // Method-name resolution for authz calls with string literals (code only).
@@ -95,7 +95,7 @@ export function findViolations(path, src, registryMethods) {
     const method = m[1];
     if (!registryMethods.has(method)) {
       out.push(
-        `${path} — useAuthorize/assertAuthorized references "${method}", which is not in the AuthRegistry (fail-closed typo).`,
+        `${path}, useAuthorize/assertAuthorized references "${method}", which is not in the AuthRegistry (fail-closed typo).`,
       );
     }
   }
@@ -172,7 +172,7 @@ function main() {
     }
   }
   if (violations.length > 0) {
-    console.error("check-single-authz-path: FAIL — the single authorization path was violated:\n");
+    console.error("check-single-authz-path: FAIL, the single authorization path was violated:\n");
     for (const v of violations) console.error("  " + v);
     console.error(
       "\nAuthorization is relation-based via the AuthRegistry (useAuthorize / assertAuthorized / requireCrdSession). The legacy permission system was deleted; do not reintroduce it.",

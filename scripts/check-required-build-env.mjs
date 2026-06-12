@@ -5,7 +5,7 @@
  * Build-time guard for env vars that `next.config.ts` (and other build-time
  * surfaces like generated content) evaluate BEFORE the Next.js Node server
  * starts. Those values cannot be validated by the runtime
- * `validateEnv()` hook in instrumentation.ts — by the time the hook runs,
+ * `validateEnv()` hook in instrumentation.ts, by the time the hook runs,
  * the rewrite has already been baked into the build artifact.
  *
  * Spec: one-code-path (deploy#186), slice deploy#206.
@@ -27,14 +27,14 @@
 
 const STRICT = process.env.CI === '1' || process.env.STRICT_BUILD_ENV === '1';
 
-// Build-time required env vars. KEEP IN SYNC with src/lib/env-validator.ts —
+// Build-time required env vars. KEEP IN SYNC with src/lib/env-validator.ts -
 // every entry here is a subset of REQUIRED_ENV that next.config.ts (or other
 // build-time evaluators) read at `next build` time.
 const BUILD_TIME_REQUIRED = ['GIBSON_API_URL'];
 
 if (!STRICT) {
   console.log(
-    '[check-required-build-env] non-strict mode (set CI=1 or STRICT_BUILD_ENV=1 to enforce) — skipping',
+    '[check-required-build-env] non-strict mode (set CI=1 or STRICT_BUILD_ENV=1 to enforce), skipping',
   );
   process.exit(0);
 }
@@ -43,7 +43,7 @@ const missing = BUILD_TIME_REQUIRED.filter((name) => !process.env[name]);
 
 if (missing.length === 0) {
   console.log(
-    `[check-required-build-env] OK — ${BUILD_TIME_REQUIRED.length} build-time required env var(s) present`,
+    `[check-required-build-env] OK, ${BUILD_TIME_REQUIRED.length} build-time required env var(s) present`,
   );
   process.exit(0);
 }

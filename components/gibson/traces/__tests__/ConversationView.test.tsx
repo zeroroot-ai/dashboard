@@ -1,5 +1,5 @@
 /**
- * Contract test for ConversationView — the readable prompt ↔ response renderer
+ * Contract test for ConversationView, the readable prompt ↔ response renderer
  * at the heart of the Gibson Traces viewer (dashboard#466).
  *
  * Asserts external rendering behaviour against the ConversationMessage[] shape:

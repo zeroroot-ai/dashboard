@@ -49,7 +49,7 @@ export async function patchTenant(name: string, patch: object): Promise<Tenant> 
 // ---- TenantMember ----
 //
 // dashboard#716: the member-management writes/reads (list/patch/delete) were
-// ripped — membership is owned by the daemon's MembershipService (ADR-0043/0044)
+// ripped, membership is owned by the daemon's MembershipService (ADR-0043/0044)
 // and the dashboard reads ListMembers, not the CR. Only applyTenantMember
 // remains: it creates the FOUNDING owner during tenant provisioning at signup
 // (the one path ADR-0044 still permits a dashboard K8s write). New TenantMember
@@ -76,7 +76,7 @@ export async function applyTenantMember(
 
 // AgentEnrollment helpers were removed (dashboard#713): enrollment now mints
 // credentials via gibson.tenant.v1.AgentIdentityService (the daemon owns the
-// IdP + FGA writes, no CRD, no bootstrap-token Secret) — see
+// IdP + FGA writes, no CRD, no bootstrap-token Secret), see
 // app/api/agents/register/route.ts. Per ADR-0044, enrollment is not a
 // Kubernetes operation.
 

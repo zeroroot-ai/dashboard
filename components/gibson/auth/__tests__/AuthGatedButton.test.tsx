@@ -84,7 +84,7 @@ describe("AuthGatedButton", () => {
     });
   });
 
-  it("never renders null — the affordance is always discoverable", () => {
+  it("never renders null, the affordance is always discoverable", () => {
     const { container, rerender } = render(
       <AuthGatedButton state="loading" disabledTooltip="nope">
         Deploy

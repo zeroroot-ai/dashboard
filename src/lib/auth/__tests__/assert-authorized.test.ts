@@ -19,7 +19,7 @@
  *
  * Spec: dashboard-authz-ui-gating Requirement 3, 9.2.
  * Sister-spec: cross-repo-cohesion-fixes Requirement 1.
- * Sister-spec: eliminate-permissive-authz Requirement 2 — the
+ * Sister-spec: eliminate-permissive-authz Requirement 2, the
  *   `(b)` permissive-allow test was deleted; the `(c)` production-gate
  *   test is now the canonical regression sentinel. The `(d)` warn-once
  *   test was deleted along with the warn-once memo it covered.
@@ -29,7 +29,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AuthzDeniedError, assertAuthorized } from '../assert-authorized';
 
 // ---------------------------------------------------------------------------
-// Mocks — hoisted before any imports
+// Mocks, hoisted before any imports
 // ---------------------------------------------------------------------------
 
 vi.mock('@/src/gen/authz/registry', () => ({
@@ -74,7 +74,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
   } as Record<string, import('@/src/gen/authz/registry').AuthEntry>,
 }));
 
-// Mock auth() — must be a default export factory
+// Mock auth(), must be a default export factory
 vi.mock('@/auth', () => ({
   auth: vi.fn(),
 }));
@@ -131,7 +131,7 @@ function setupMembershipsError() {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Default: happy path — admin on tenant-a.
+  // Default: happy path, admin on tenant-a.
   setupSession();
   setupActiveTenant('tenant-a');
   setupMemberships('tenant-a', 'admin');
@@ -145,7 +145,7 @@ beforeEach(() => {
 // Fail-closed: unknown method tests (cross-repo-cohesion-fixes Requirement 1)
 // ---------------------------------------------------------------------------
 
-describe('assertAuthorized — unknown method (fail-closed)', () => {
+describe('assertAuthorized, unknown method (fail-closed)', () => {
   it('(a) throws AuthzDeniedError with code unknown_method for an unrecognised method', async () => {
     await expect(assertAuthorized('/unknown/Service/FailClosed')).rejects.toThrow(AuthzDeniedError);
     await expect(assertAuthorized('/unknown/Service/FailClosed2')).rejects.toMatchObject({
@@ -155,7 +155,7 @@ describe('assertAuthorized — unknown method (fail-closed)', () => {
   });
 });
 
-describe('assertAuthorized — unknown method always throws regardless of NODE_ENV+flag', () => {
+describe('assertAuthorized, unknown method always throws regardless of NODE_ENV+flag', () => {
   // Regression sentinel for spec eliminate-permissive-authz Req 2: the
   // `DASHBOARD_AUTHZ_PERMISSIVE_DEV` flag was deleted. Setting it (in any
   // NODE_ENV) MUST have no effect. If a future change re-introduces an
@@ -181,7 +181,7 @@ describe('assertAuthorized — unknown method always throws regardless of NODE_E
   });
 });
 
-describe('assertAuthorized — unauthenticated entry', () => {
+describe('assertAuthorized, unauthenticated entry', () => {
   it('does not throw for a public RPC', async () => {
     await expect(assertAuthorized('/test/PublicService/PingMethod')).resolves.toBeUndefined();
   });
@@ -192,7 +192,7 @@ describe('assertAuthorized — unauthenticated entry', () => {
   });
 });
 
-describe('assertAuthorized — no session', () => {
+describe('assertAuthorized, no session', () => {
   it('throws AuthzDeniedError with reason no-session', async () => {
     setupNoSession();
     await expect(assertAuthorized('/test/AdminService/AdminMethod')).rejects.toThrow(
@@ -205,7 +205,7 @@ describe('assertAuthorized — no session', () => {
   });
 });
 
-describe('assertAuthorized — service-only RPC', () => {
+describe('assertAuthorized, service-only RPC', () => {
   it('throws AuthzDeniedError with reason service-only-rpc', async () => {
     await expect(assertAuthorized('/test/ServiceOnlyService/InternalMethod')).rejects.toMatchObject({
       reason: 'service-only-rpc',
@@ -214,7 +214,7 @@ describe('assertAuthorized — service-only RPC', () => {
   });
 });
 
-describe('assertAuthorized — no active tenant', () => {
+describe('assertAuthorized, no active tenant', () => {
   it('throws AuthzDeniedError with reason no-active-tenant', async () => {
     setupNoActiveTenant();
     await expect(assertAuthorized('/test/AdminService/AdminMethod')).rejects.toMatchObject({
@@ -223,7 +223,7 @@ describe('assertAuthorized — no active tenant', () => {
   });
 });
 
-describe('assertAuthorized — not a member', () => {
+describe('assertAuthorized, not a member', () => {
   it('throws not-a-member when memberships list is empty for active tenant', async () => {
     setupActiveTenant('tenant-b');
     setupMemberships('tenant-a', 'admin'); // wrong tenant
@@ -240,7 +240,7 @@ describe('assertAuthorized — not a member', () => {
   });
 });
 
-describe('assertAuthorized — relation-not-met', () => {
+describe('assertAuthorized, relation-not-met', () => {
   it('throws relation-not-met when member tries an admin-only method', async () => {
     setupMemberships('tenant-a', 'member');
     await expect(assertAuthorized('/test/AdminService/AdminMethod')).rejects.toMatchObject({
@@ -250,7 +250,7 @@ describe('assertAuthorized — relation-not-met', () => {
   });
 });
 
-describe('assertAuthorized — allowed paths', () => {
+describe('assertAuthorized, allowed paths', () => {
   it('resolves for admin on a admin method', async () => {
     setupMemberships('tenant-a', 'admin');
     await expect(assertAuthorized('/test/AdminService/AdminMethod')).resolves.toBeUndefined();
@@ -279,10 +279,10 @@ describe('AuthzDeniedError class', () => {
 
   it('error message contains method and reason but NOT role / tenant data', () => {
     const err = new AuthzDeniedError('/my/method', 'relation-not-met');
-    // Message only carries the reason and method — never role lists or tenant IDs.
+    // Message only carries the reason and method, never role lists or tenant IDs.
     expect(err.message).toContain('/my/method');
     expect(err.message).toContain('relation-not-met');
-    // Sanity: message should be short and structured — no dynamic tenant data.
+    // Sanity: message should be short and structured, no dynamic tenant data.
     expect(err.message).not.toMatch(/tenant-|user-|role:/);
   });
 });

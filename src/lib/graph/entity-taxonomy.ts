@@ -76,35 +76,35 @@ export type DashPattern = 'solid' | 'short-dash' | 'long-dash' | 'dot-dash';
  * cyan for technical layer, and red/pink for security findings.
  */
 const ENTITY_COLORS_DARK: Record<EntityType, string> = {
-  // Execution layer — green shades
+  // Execution layer, green shades
   mission: '#22c55e',        // green-500
   mission_run: '#4ade80',    // green-400
   agent_run: '#a78bfa',      // violet-400 (AI agent)
   tool_execution: '#fbbf24', // amber-400
   llm_call: '#c084fc',       // purple-400
 
-  // DNS/domain layer — blue
+  // DNS/domain layer, blue
   domain: '#3b82f6',         // blue-500
   subdomain: '#60a5fa',      // blue-400
 
-  // Infrastructure layer — emerald/teal
+  // Infrastructure layer, emerald/teal
   host: '#10b981',           // emerald-500
   port: '#14b8a6',           // teal-500
   service: '#2dd4bf',        // teal-400
 
-  // Technical layer — cyan
+  // Technical layer, cyan
   endpoint: '#06b6d4',       // cyan-500
   technology: '#8b5cf6',     // violet-500
   certificate: '#0ea5e9',    // sky-500
 
-  // Security layer — red/pink
+  // Security layer, red/pink
   finding: '#ef4444',        // red-500
   evidence: '#6b7280',       // gray-500
   technique: '#f472b6',      // pink-400
 };
 
 /**
- * Severity colors for finding nodes — tuned for the single dark brand.
+ * Severity colors for finding nodes, tuned for the single dark brand.
  */
 const SEVERITY_COLORS_DARK: Record<Severity, string> = {
   critical: '#ff4444',          // Intense red

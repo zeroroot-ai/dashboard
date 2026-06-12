@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AzureKVForm — per-provider sub-form for Azure Key Vault.
+ * AzureKVForm, per-provider sub-form for Azure Key Vault.
  *
  * Fields:
  *  - address (non-sensitive): vault URL
@@ -151,7 +151,7 @@ export function AzureKVForm({ control, authMethod }: AzureKVFormProps) {
         )}
       />
 
-      {/* Client secret — write-only, only for service principal */}
+      {/* Client secret, write-only, only for service principal */}
       {authMethod === "service_principal" && (
         <FormField
           control={control}
@@ -174,7 +174,7 @@ export function AzureKVForm({ control, authMethod }: AzureKVFormProps) {
                 />
               </FormControl>
               <FormDescription className="text-xs">
-                Service principal client secret. Write-only — leave blank to
+                Service principal client secret. Write-only, leave blank to
                 keep the stored value.
               </FormDescription>
               <FormMessage />

@@ -107,7 +107,7 @@ function mapDaemonError(err: unknown): FailureResult {
     }
   }
   console.error('[agent-permissions] daemon RPC failed:', err instanceof Error ? err.name : typeof err);
-  return { ok: false, error: 'Daemon error — please try again', code: 'daemon_error' };
+  return { ok: false, error: 'Daemon error, please try again', code: 'daemon_error' };
 }
 
 // ---------------------------------------------------------------------------

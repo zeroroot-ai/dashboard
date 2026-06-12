@@ -26,15 +26,15 @@ export default function SecurityPolicyPage() {
             </p>
             <p>
               Every toggle on this page is a <em>deny</em> at some scope. The
-              runtime evaluates a deny at every layer — tenant-wide, per-team,
-              per-user, and per-component — and refuses the action if any
+              runtime evaluates a deny at every layer (tenant-wide, per-team,
+              per-user, and per-component) and refuses the action if any
               layer denies it. A tenant admin who flips a tenant-wide deny on
               a plugin disables it everywhere; a per-team deny narrows the
               effect to that team only.
             </p>
             <p>
               If a user reports unexpected access, check this page for the
-              relevant scope and component. The matrix is the canonical view —
+              relevant scope and component. The matrix is the canonical view;
               there is no separate per-user override that bypasses it.{" "}
               <Link href="/docs/rbac" className="text-link hover:underline">
                 Read more about roles and permissions

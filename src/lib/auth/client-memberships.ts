@@ -1,7 +1,7 @@
 /**
  * Client-side membership fetcher for the `useAuthorize` hook.
  *
- * Fetches from `/api/auth/my-memberships` — the thin server-side route that
+ * Fetches from `/api/auth/my-memberships`, the thin server-side route that
  * calls `getMyMemberships()` + `readRawActiveTenant()` and returns:
  *
  *   { activeTenantId: string | null, byTenant: { [tenantId]: { role: string } } }

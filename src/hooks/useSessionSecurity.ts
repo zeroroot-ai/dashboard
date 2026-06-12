@@ -105,7 +105,7 @@ export function useSessionSecurity(options: SessionSecurityOptions = {}): Sessio
   reportActivity: () => void;
 } {
   const { data: baSessionData, isPending } = useSession();
-  // Auth.js returns { session, user } — cast to GibsonSession shape for
+  // Auth.js returns { session, user }, cast to GibsonSession shape for
   // downstream compatibility with the error/expires fields we depend on.
   const session = baSessionData as unknown as GibsonSession | null;
   const status = isPending ? 'loading' : baSessionData ? 'authenticated' : 'unauthenticated';
@@ -143,7 +143,7 @@ export function useSessionSecurity(options: SessionSecurityOptions = {}): Sessio
     setState((prev) => ({ ...prev, deviceFingerprint: fingerprint }));
   }, []);
 
-  // Session validity check — detect expired sessions.
+  // Session validity check, detect expired sessions.
   useEffect(() => {
     if (status === 'loading') return;
 
@@ -200,7 +200,7 @@ export function useSessionSecurity(options: SessionSecurityOptions = {}): Sessio
     }
   }, [session?.expires, baSessionData, onSessionExpiring, onSessionInvalidated]);
 
-  // Refresh session — Auth.js handles session renewal automatically via
+  // Refresh session, Auth.js handles session renewal automatically via
   // cookie expiry. To manually touch the session, call the /api/auth/session
   // endpoint which will update the cookie cache.
   const refreshSession = useCallback(async (): Promise<boolean> => {

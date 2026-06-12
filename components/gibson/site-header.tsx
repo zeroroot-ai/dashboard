@@ -3,7 +3,7 @@ import { getServerSession } from "@/src/lib/auth";
 import { Lockup } from "@/components/layout/logo";
 
 /**
- * Public chrome — landing, pricing, docs.
+ * Public chrome, landing, pricing, docs.
  *
  * Brand lockup: full BrainCRT mark (with monitor stand, "the actual terminal")
  * sitting next to the "zeroroot.ai" wordmark. Same treatment as the square
@@ -18,7 +18,7 @@ export async function SiteHeader() {
       <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
         <Link
           href="/"
-          aria-label="Zero Root AI — home"
+          aria-label="Zero Root AI, home"
           className="inline-flex items-center"
         >
           <Lockup size="md" />

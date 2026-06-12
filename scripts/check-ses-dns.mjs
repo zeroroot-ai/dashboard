@@ -74,7 +74,7 @@ function runDnsx() {
   try {
     execSync(`which dnsx`, { stdio: 'ignore' });
   } catch {
-    console.log('ℹ dnsx not found — skipping extended DNS check.');
+    console.log('ℹ dnsx not found, skipping extended DNS check.');
     console.log('  Install with: go install github.com/projectdiscovery/dnsx/cmd/dnsx@latest');
     return true;
   }

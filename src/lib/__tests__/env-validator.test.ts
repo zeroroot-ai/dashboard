@@ -13,7 +13,7 @@
  *   - all-keys-present → does not throw
  *   - shape validation: a malformed URL is rejected even if non-empty
  *   - typed accessor `env.X` throws when the var is missing at access time
- *     (defence in depth — same shape slice #196's `requireEnv()` had)
+ *     (defence in depth, same shape slice #196's `requireEnv()` had)
  *   - production-only entries are skipped when NODE_ENV !== 'production'
  *
  * The test isolates `process.env` via beforeEach/afterEach so it never
@@ -71,7 +71,7 @@ const VALID_ENV: Record<string, string> = {
   // Observability
   LOKI_URL: 'http://gibson-loki:3100',
 
-  // Force production codepath so prodOnly entries are enforced — the test
+  // Force production codepath so prodOnly entries are enforced, the test
   // suite must exercise every required key, including prodOnly ones.
   NODE_ENV: 'production',
 };
@@ -127,7 +127,7 @@ describe('env-validator: validateEnv()', () => {
         `EnvValidationError.missing should include ${spec.name}`,
       ).toContain(spec.name);
 
-      // The message must NAME the missing key — operators read this in pod logs.
+      // The message must NAME the missing key, operators read this in pod logs.
       expect(e.message).toContain(spec.name);
     }
   });
@@ -196,7 +196,7 @@ describe('env-validator: validateEnv()', () => {
   it('skips prodOnly entries when NODE_ENV is not production', () => {
     setProcessEnv({ ...VALID_ENV, NODE_ENV: 'development' });
     delete process.env.ALLOWED_SERVICE_SUBJECTS;
-    // prodOnly entry — should NOT cause a throw when NODE_ENV=development
+    // prodOnly entry, should NOT cause a throw when NODE_ENV=development
     expect(() => validateEnv()).not.toThrow();
   });
 
@@ -239,7 +239,7 @@ describe('env-validator: typed accessor (env.X)', () => {
   it('throws on an undeclared key', () => {
     expect(() => {
       // Access through an untyped cast so we exercise the Proxy's
-      // "unknown key" branch — the EnvShape type would otherwise let any
+      // "unknown key" branch, the EnvShape type would otherwise let any
       // string-keyed access through with `string | undefined`.
       (env as Record<string, unknown>).NOT_DECLARED_ANYWHERE;
     }).toThrow(/not declared/);

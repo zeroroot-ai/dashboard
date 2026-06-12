@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * MemberPicker — searchable combobox that enumerates the active tenant's
+ * MemberPicker, searchable combobox that enumerates the active tenant's
  * members and emits a userId + displayName on selection.
  *
  * Used in the Model Access grant form to replace the raw UUID text input

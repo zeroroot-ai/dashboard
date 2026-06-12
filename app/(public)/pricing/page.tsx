@@ -1,5 +1,5 @@
 /**
- * Public pricing page — three top cards driven by plans.yaml (via
+ * Public pricing page, three top cards driven by plans.yaml (via
  * gen-plans + pricing-display) plus a full-width bottom card for the
  * on-prem / air-gapped / federal deployment option.
  *
@@ -30,9 +30,9 @@ import {
 } from "@/components/ui/card";
 
 export const metadata = {
-  title: "Pricing — Gibson",
+  title: "Pricing | Gibson",
   description:
-    "Three Gibson plans for SaaS — Team, Org, and Enterprise — plus a self-hosted option for on-prem, air-gapped, and federal deployments.",
+    "Three Gibson plans for SaaS (Team, Org, and Enterprise), plus a self-hosted option for on-prem, air-gapped, and federal deployments.",
 };
 
 const SAAS_TIER_IDS = new Set(["team", "org", "enterprise"]);

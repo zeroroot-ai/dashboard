@@ -16,13 +16,13 @@ interface RunDemoMissionButtonProps extends Omit<ButtonProps, "onClick" | "type"
 }
 
 /**
- * RunDemoMissionButton — fires the one-click demo flow.
+ * RunDemoMissionButton, fires the one-click demo flow.
  *
  * Calls POST /api/missions/demo (CSRF-protected, mirrors /api/missions/[id]/start
  * shape). On success, navigates to the mission detail page so the user can
  * watch ToolStreamProgress + see Findings/Traces populate as the scan runs.
  *
- * On error, surfaces a toast with the daemon's affordance message — no
+ * On error, surfaces a toast with the daemon's affordance message, no
  * navigation. The button is disabled while in flight to prevent
  * double-dispatch.
  */

@@ -92,7 +92,7 @@ beforeEach(() => {
   sessionMock.mockReset();
 });
 
-describe("transferOwnershipAction — happy path", () => {
+describe("transferOwnershipAction, happy path", () => {
   it("transfers ownership to an active admin and returns {ok: true}", async () => {
     withSession();
     expect(await transferOwnershipAction("user-target")).toEqual({ ok: true, data: { applied: true } });
@@ -109,7 +109,7 @@ describe("transferOwnershipAction — happy path", () => {
   });
 });
 
-describe("transferOwnershipAction — caller lacks permission", () => {
+describe("transferOwnershipAction, caller lacks permission", () => {
   it("returns FORBIDDEN and does not call the RPC", async () => {
     withSession({ role: "member" });
     const r = await transferOwnershipAction("user-target");
@@ -119,7 +119,7 @@ describe("transferOwnershipAction — caller lacks permission", () => {
   });
 });
 
-describe("transferOwnershipAction — target validation", () => {
+describe("transferOwnershipAction, target validation", () => {
   it("BAD_INPUT when the target is not in the roster", async () => {
     withSession();
     mocks.listMembers.mockResolvedValue({ ok: true, data: [CALLER] });
@@ -177,7 +177,7 @@ describe("transferOwnershipAction — target validation", () => {
   });
 });
 
-describe("transferOwnershipAction — RPC throws", () => {
+describe("transferOwnershipAction, RPC throws", () => {
   it("returns INTERNAL when transferOwnership rejects", async () => {
     withSession();
     mocks.transferOwnership.mockRejectedValueOnce(new Error("daemon unavailable"));

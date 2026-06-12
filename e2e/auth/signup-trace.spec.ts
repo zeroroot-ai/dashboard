@@ -1,5 +1,5 @@
 /**
- * signup-trace.spec.ts — focused diagnostic for the signup chain.
+ * signup-trace.spec.ts, focused diagnostic for the signup chain.
  *
  * Single-purpose diagnostic tool. Drives the real signup form against the
  * live Kind cluster, waits for the ProvisioningPanel to reach its terminal
@@ -8,14 +8,14 @@
  * NOT a full e2e test. Invoked by signup-trace.sh (via `npx playwright test`).
  *
  * Inputs (env):
- *   TRACE_SLUG     — workspace slug to use (defaults to trace-<timestamp>)
- *   TRACE_EMAIL    — email to use (defaults to <slug>@trace.zeroroot.local)
- *   TRACE_PASSWORD — password (defaults to a generated secure password)
- *   PLAYWRIGHT_BASE_URL — defaults to https://app.zeroroot.local:30443
+ *   TRACE_SLUG    , workspace slug to use (defaults to trace-<timestamp>)
+ *   TRACE_EMAIL   , email to use (defaults to <slug>@trace.zeroroot.local)
+ *   TRACE_PASSWORD, password (defaults to a generated secure password)
+ *   PLAYWRIGHT_BASE_URL, defaults to https://app.zeroroot.local:30443
  *
  * Outputs:
- *   /tmp/signup-trace-result.json  — per-step status, final URL, panel state
- *   /tmp/signup-trace-final.png    — screenshot of final page state
+ *   /tmp/signup-trace-result.json , per-step status, final URL, panel state
+ *   /tmp/signup-trace-final.png   , screenshot of final page state
  *
  * Run via:
  *   E2E_AUTH_SUITE=1 npx playwright test e2e/auth/signup-trace.spec.ts \
@@ -134,7 +134,7 @@ test("signup-trace: drive real signup form and capture provisioning state", asyn
       result.panelState = "navigated-away";
       addStep("wait for ProvisioningPanel", "PASS");
     } catch {
-      // Maybe still on /signup with panel visible — check panel state
+      // Maybe still on /signup with panel visible, check panel state
       const currentUrl = page.url();
       if (currentUrl.includes("/signup")) {
         const panelText = await page.locator('[role="status"]').textContent().catch(() => "");

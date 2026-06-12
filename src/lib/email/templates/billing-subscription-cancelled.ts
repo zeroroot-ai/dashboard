@@ -36,7 +36,7 @@ export function render(ctx: BillingSubscriptionCancelledCtx): EmailMessage {
     ``,
     `Questions? Contact ${ctx.supportEmail}.`,
     ``,
-    `— The Gibson team`,
+    `The Gibson team`,
   ].join('\n');
 
   const html = [

@@ -3,7 +3,7 @@
  *
  * Verifies a CAPTCHA token produced by the client widget against the
  * configured provider's siteverify endpoint. Never exposes the provider
- * secret key to the client — it is read from `DASHBOARD_CAPTCHA_SECRET_KEY`
+ * secret key to the client, it is read from `DASHBOARD_CAPTCHA_SECRET_KEY`
  * at call time on the server.
  *
  * Provider switch via `DASHBOARD_CAPTCHA_PROVIDER`:
@@ -75,7 +75,7 @@ export function __resetDisabledWarningForTests(): void {
 }
 
 function resolveProvider(): CaptchaProvider {
-  // DASHBOARD_CAPTCHA_PROVIDER is REQUIRED at boot (src/lib/env-validator.ts) —
+  // DASHBOARD_CAPTCHA_PROVIDER is REQUIRED at boot (src/lib/env-validator.ts) -
   // an explicit choice (including "disabled") is required, no implicit absence.
   const raw = process.env.DASHBOARD_CAPTCHA_PROVIDER;
   if (!raw) {

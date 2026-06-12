@@ -1,7 +1,7 @@
 /**
- * Full Graph API Route — Phase 4, Task 13
+ * Full Graph API Route, Phase 4, Task 13
  *
- * GET /api/graph — proxies GetTenantGraph through Envoy + ext-authz + daemon.
+ * GET /api/graph, proxies GetTenantGraph through Envoy + ext-authz + daemon.
  * Does NOT import direct Neo4j driver.
  */
 

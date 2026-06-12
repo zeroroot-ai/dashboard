@@ -1,11 +1,11 @@
 /**
- * Signup progress store — daemon-backed state for the provisioning panel.
+ * Signup progress store, daemon-backed state for the provisioning panel.
  *
  * `signupAction` writes the current pipeline step after every transition;
  * the `/api/signup/progress/:id` endpoint reads it and the client-side
  * <ProvisioningPanel /> polls that endpoint every second.
  *
- * Keys are opaque UUIDs minted at action entry (the "attemptId") — they
+ * Keys are opaque UUIDs minted at action entry (the "attemptId"), they
  * function as single-use capabilities so the GET endpoint can stay
  * unauthenticated without leaking PII. Values carry only step names +
  * terminal codes + human-facing error messages, never raw Zitadel
@@ -73,8 +73,8 @@ export async function setProgress(
   progress: ProvisioningProgress,
 ): Promise<void> {
   // Signup progress is written pre-tenant (no active-tenant cookie, no
-  // membership). Use the service-acting client with an empty tenant — the
-  // same pattern the unauthenticated reserved-names lookup uses — NOT
+  // membership). Use the service-acting client with an empty tenant, the
+  // same pattern the unauthenticated reserved-names lookup uses, NOT
   // userClient (which fail-closes via getActiveTenant). The daemon RPC is
   // unauthenticated + attemptId-keyed (dashboard#646).
   await serviceClient(UserService, '').setSignupProgress({

@@ -11,8 +11,8 @@
  *   xit(        xdescribe(        xtest(
  *
  * Exclusions:
- *   - e2e/ Playwright directories (cluster-dependent — equivalent to build-tag gate)
- *   - src/lib/spiffe-mtls/__tests__/svid.test.ts (fixture-probe gate — itSkipIf)
+ *   - e2e/ Playwright directories (cluster-dependent, equivalent to build-tag gate)
+ *   - src/lib/spiffe-mtls/__tests__/svid.test.ts (fixture-probe gate, itSkipIf)
  *   - __tests__/ dirs are allowed if the skip pattern is part of an itSkipIf call
  *     (conditional skip using a predicate, not a permanent skip)
  *
@@ -36,7 +36,7 @@ const SKIP_DIR_NAMES = new Set([
   "dist",
   "build",
   "coverage",
-  "e2e",           // Playwright e2e — cluster-dependent, equivalent to build-tag gate
+  "e2e",           // Playwright e2e, cluster-dependent, equivalent to build-tag gate
 ]);
 
 // Files explicitly exempt (fixture-probe gates equivalent to build tags)
@@ -54,7 +54,7 @@ const FORBIDDEN_PATTERNS = [
   { pattern: /\bxtest\s*\(/, label: "xtest(" },
 ];
 
-// itSkipIf is a conditional skip (predicate-based) — exempt
+// itSkipIf is a conditional skip (predicate-based), exempt
 const EXEMPT_PATTERNS = [
   /\bit\.skipIf\b/,
   /\btest\.skipIf\b/,
@@ -127,7 +127,7 @@ function runScan() {
   try {
     walk(srcDir, files);
   } catch {
-    // src/ doesn't exist — nothing to scan
+    // src/ doesn't exist, nothing to scan
   }
 
   const allViolations = files.flatMap(scanFile);
@@ -140,13 +140,13 @@ function runScan() {
   console.error(`\n[${GUARD_NAME}] FAIL: skipped test(s) found:\n`);
   for (const v of allViolations) {
     const rel = v.file.replace(ROOT, "").replace(/^\//, "");
-    console.error(`  ${rel}:${v.line} — ${v.label}`);
+    console.error(`  ${rel}:${v.line}, ${v.label}`);
     console.error(`    ${v.text}`);
   }
   console.error(`
 Fix: remove the skip. Either delete the test (if the path under test no
 longer exists) or un-skip it so it runs. Playwright e2e tests that require
-a live cluster may use test.skip(condition, reason) — those live in e2e/
+a live cluster may use test.skip(condition, reason), those live in e2e/
 which is excluded from this scan.
 
 Spec: naming-and-config-standardization Requirements 3.5, 3.6.`);
@@ -156,7 +156,7 @@ Spec: naming-and-config-standardization Requirements 3.5, 3.6.`);
 function runSelftest() {
   const fixturePath = join(ROOT, "src", "__check_no_skipped_tests_fixture.test.ts");
   const body = [
-    "// Self-test fixture — intentionally uses a forbidden skip pattern.",
+    "// Self-test fixture, intentionally uses a forbidden skip pattern.",
     "import { it, describe } from 'vitest';",
     "describe('selftest', () => {",
     "  it.skip('this should be caught', () => {});",

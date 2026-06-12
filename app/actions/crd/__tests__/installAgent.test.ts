@@ -1,9 +1,9 @@
 /**
- * installAgentAction unit tests — covers the happy path and the adversarial
+ * installAgentAction unit tests, covers the happy path and the adversarial
  * manifest case (caller lacks access).
  *
  * Spec: access-matrix-finish task 23, R5 AC 4/7 + NFR Reliability.
- * Migration: dashboard#359 — write path moved to userClient(TenantAdminService).
+ * Migration: dashboard#359, write path moved to userClient(TenantAdminService).
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -47,7 +47,7 @@ vi.mock("@/app/actions/read/listAccessibleComponents", () => ({
   listAccessibleComponentsAction: (...args: unknown[]) => mockList(...args),
 }));
 
-// node:crypto is real — randomUUID works under vitest/jsdom-node.
+// node:crypto is real, randomUUID works under vitest/jsdom-node.
 
 import { installAgentAction } from "../installAgent";
 import { getServerSession } from "@/src/lib/auth";
@@ -126,7 +126,7 @@ describe("installAgentAction", () => {
     expect(call.reason).toContain("test-agent");
   });
 
-  it("adversarial manifest — caller lacks access → refused pre-write", async () => {
+  it("adversarial manifest, caller lacks access → refused pre-write", async () => {
     withSession();
     mockList.mockResolvedValue({
       ok: true,
@@ -177,7 +177,7 @@ describe("installAgentAction", () => {
       expect(r.error).toContain("install failed");
       expect(r.error).toContain("fga write failed");
     }
-    // Only one call — no compensating delete since server is atomic
+    // Only one call, no compensating delete since server is atomic
     expect(mockGrantComponentPermissions).toHaveBeenCalledTimes(1);
   });
 

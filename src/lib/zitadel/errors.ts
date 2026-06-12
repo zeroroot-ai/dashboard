@@ -34,7 +34,7 @@ export class ZitadelApiError extends Error {
     zitadelErrorId: ZitadelErrorId,
     zitadelErrorMessage: string,
   ) {
-    // Build a message that is safe for logs — no PAT, no passwords.
+    // Build a message that is safe for logs, no PAT, no passwords.
     const safeMessage = `Zitadel API error: HTTP ${httpStatus} [${zitadelErrorId || 'no-code'}] ${zitadelErrorMessage || '(no message)'}`;
     super(safeMessage);
     this.name = 'ZitadelApiError';

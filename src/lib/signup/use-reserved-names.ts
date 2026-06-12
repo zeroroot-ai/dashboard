@@ -17,7 +17,7 @@ const EMPTY: ReservedNamesDenylist = { exact: [], prefix: [] };
  * Fetches the chart-managed reserved-names denylist once on mount and
  * memoizes the result for the component's lifetime.
  *
- * Returns `EMPTY` while loading or on fetch failure — the K8s admission
+ * Returns `EMPTY` while loading or on fetch failure, the K8s admission
  * webhook is the authoritative gate, so a missed client-side check
  * surfaces as a server-side rejection rather than letting the user
  * submit a reserved name.
@@ -37,7 +37,7 @@ export function useReservedNames(): ReservedNamesDenylist {
         });
       })
       .catch(() => {
-        // Silent — fall back to empty denylist; admission webhook is authoritative.
+        // Silent, fall back to empty denylist; admission webhook is authoritative.
       });
     return () => {
       cancelled = true;

@@ -45,7 +45,7 @@ pnpm proto:generate # regenerate src/gen/ TS proto bindings (workstation-only)
 
 `pnpm prebuild` runs a chain of policy-guard scripts (no direct daemon
 gRPC, no legacy auth artefacts, RBAC minimality, authz-registry
-freshness, etc.). Do not disable them — fix the underlying code.
+freshness, etc.). Do not disable them, fix the underlying code.
 
 ## Architecture
 

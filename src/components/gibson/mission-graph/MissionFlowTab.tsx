@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * MissionFlowTab — the run page's "Flow" view. Loads the daemon-projected
+ * MissionFlowTab, the run page's "Flow" view. Loads the daemon-projected
  * MissionGraph + saved layout version, gates drag/save on the SaveMissionLayout
  * authz check, and renders MissionFlow. While a run is in flight it subscribes
  * to the mission event stream and paints completed nodes / traversed edges live
  * as the daemon emits per-node lifecycle events; a completed run paints its
  * final traversed path.
  *
- * Spec: MissionGraph epic — dashboard#655 / #657 / #658, gibson#604 (live).
+ * Spec: MissionGraph epic, dashboard#655 / #657 / #658, gibson#604 (live).
  */
 
 import * as React from "react";
@@ -33,7 +33,7 @@ import {
 const FGA_SAVE_LAYOUT = "/gibson.daemon.v1.DaemonService/SaveMissionLayout";
 
 export interface MissionFlowTabProps {
-  /** The mission *run* id — keys the live node-event stream. */
+  /** The mission *run* id, keys the live node-event stream. */
   missionId: string;
   missionDefinitionId?: string;
   missionStatus: MissionStatus;

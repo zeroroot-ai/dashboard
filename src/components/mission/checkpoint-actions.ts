@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * checkpoint-actions.ts — Server actions backing the Checkpoint Browser UI.
+ * checkpoint-actions.ts, Server actions backing the Checkpoint Browser UI.
  *
  * Wraps the daemon's `DaemonService.ListCheckpoints` / `GetCheckpoint` /
  * `DiffCheckpoints` / `ResumeMission` RPCs so client components can call
@@ -111,7 +111,7 @@ export interface ListCheckpointsActionInput {
   order?: "newest_first" | "oldest_first";
 }
 
-/** Daemon `ListCheckpoints` wrapper — paginated, RBAC-scoped. */
+/** Daemon `ListCheckpoints` wrapper, paginated, RBAC-scoped. */
 export async function listCheckpointsAction(
   input: ListCheckpointsActionInput,
 ): Promise<ListCheckpointsActionResult> {
@@ -166,7 +166,7 @@ export interface GetCheckpointActionInput {
   includeBlobs?: boolean;
 }
 
-/** Daemon `GetCheckpoint` wrapper — full decrypted payload. */
+/** Daemon `GetCheckpoint` wrapper, full decrypted payload. */
 export async function getCheckpointAction(
   input: GetCheckpointActionInput,
 ): Promise<GetCheckpointActionResult> {
@@ -219,7 +219,7 @@ export interface DiffCheckpointsActionInput {
   checkpointBId: string;
 }
 
-/** Daemon `DiffCheckpoints` wrapper — server-computed delta. */
+/** Daemon `DiffCheckpoints` wrapper, server-computed delta. */
 export async function diffCheckpointsAction(
   input: DiffCheckpointsActionInput,
 ): Promise<DiffCheckpointsActionResult> {

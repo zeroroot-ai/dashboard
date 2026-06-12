@@ -17,7 +17,7 @@ const badgeVariants = cva(
           "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         link: "text-primary underline-offset-4 [a&]:hover:underline",
-        // custom variants — subtle wash + token-coloured text. No dark:
+        // custom variants, subtle wash + token-coloured text. No dark:
         // overrides because the design system's tokens already adapt per mode.
         warning:
           "border border-warning/40 bg-warning/15 text-warning [a&]:hover:bg-warning/25 focus-visible:ring-warning/20",

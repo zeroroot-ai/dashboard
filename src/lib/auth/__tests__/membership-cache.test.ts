@@ -13,21 +13,21 @@
  *   2. **Invalidation:** invalidateMembershipCache(userId) delegates to the
  *      daemon's InvalidateMembershipCache RPC (fire-and-forget, non-fatal).
  *
- * react.cache() is still stubbed to NOT memoize — each test call is
+ * react.cache() is still stubbed to NOT memoize, each test call is
  * treated as a fresh render so we can assert per-call daemon counts.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
-// react.cache must NOT memoize — pass through directly for test determinism.
+// react.cache must NOT memoize, pass through directly for test determinism.
 // ---------------------------------------------------------------------------
 vi.mock('react', () => ({
   cache: <T extends (...args: never[]) => unknown>(fn: T) => fn,
 }));
 
 // ---------------------------------------------------------------------------
-// Auth.js session — return a stable signed-in user across all tests.
+// Auth.js session, return a stable signed-in user across all tests.
 // ---------------------------------------------------------------------------
 const TEST_USER_ID = 'zitadel-numeric-sub-12345';
 vi.mock('@/auth', () => ({
@@ -37,7 +37,7 @@ vi.mock('@/auth', () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// gibson-client — mock the daemon RPCs.
+// gibson-client, mock the daemon RPCs.
 // ---------------------------------------------------------------------------
 const FAKE_LIST_MEMBERSHIPS_RESPONSE = {
   memberships: [
@@ -56,17 +56,17 @@ vi.mock('@/src/lib/gibson-client', () => ({
   })),
 }));
 
-// User-token requirer — return a constant placeholder.
+// User-token requirer, return a constant placeholder.
 vi.mock('@/src/lib/auth/user-token', () => ({
   requireUserToken: vi.fn(async () => 'fake-token'),
 }));
 
-// Test-fixture fault injection — disabled.
+// Test-fixture fault injection, disabled.
 vi.mock('@/src/lib/test-fixtures/fault-injection', () => ({
   getFaultMode: () => undefined,
 }));
 
-// Logger — silence during tests.
+// Logger, silence during tests.
 vi.mock('@/src/lib/logger', () => ({
   logger: {
     info: vi.fn(),
@@ -103,7 +103,7 @@ beforeEach(() => {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('getMyMemberships — basic fetch', () => {
+describe('getMyMemberships, basic fetch', () => {
   it('calls the daemon and returns the membership array', async () => {
     const result = await getMyMemberships();
     expect(result).toHaveLength(2);
@@ -128,7 +128,7 @@ describe('getMyMemberships — basic fetch', () => {
   });
 });
 
-describe('invalidateMembershipCache — delegation to daemon', () => {
+describe('invalidateMembershipCache, delegation to daemon', () => {
   it('delegates to the daemon InvalidateMembershipCache RPC', async () => {
     await invalidateMembershipCache(TEST_USER_ID);
     expect(mockInvalidateMembershipCache).toHaveBeenCalledOnce();

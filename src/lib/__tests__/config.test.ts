@@ -19,7 +19,7 @@ const REQUIRED_VARS = [
   'NEO4J_URI',
 ] as const;
 
-// AUTH_URL or NEXTAUTH_URL — either satisfies the requirement.
+// AUTH_URL or NEXTAUTH_URL, either satisfies the requirement.
 const AUTH_URL_VARS = ['AUTH_URL', 'NEXTAUTH_URL'] as const;
 
 // Safe baseline values that satisfy all required vars.

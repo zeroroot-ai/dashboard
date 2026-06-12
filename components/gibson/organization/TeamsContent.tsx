@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Teams management surface — create / rename / delete teams and manage
+ * Teams management surface, create / rename / delete teams and manage
  * membership. Reuses existing UsersContent row patterns for consistency
  * with the rest of the Organization settings section.
  *

@@ -27,7 +27,7 @@ export async function generateMetadata({
     // fallback title
   }
   return generateMeta({
-    title: `Settings — ${title}`,
+    title: `Settings | ${title}`,
     additionalTitle: true,
     description: "Plugin installation detail and secret bindings.",
     canonical: `/pages/settings/plugins/${id}`,
@@ -35,7 +35,7 @@ export async function generateMetadata({
 }
 
 // ---------------------------------------------------------------------------
-// Page (server component — data fetch)
+// Page (server component, data fetch)
 // ---------------------------------------------------------------------------
 
 export default async function PluginDetailPage({

@@ -14,7 +14,7 @@ import { assembleObservationDetail } from '@/src/lib/traces-client';
  * loading when a trace row is expanded. Tenant-scoped via the daemon's
  * TracesService; the observation id alone identifies the record, so this is
  * mission-agnostic and shared by both the mission Traces tab and the
- * standalone trace detail page — one observation-fetch codepath.
+ * standalone trace detail page, one observation-fetch codepath.
  */
 export async function GET(
   _request: NextRequest,

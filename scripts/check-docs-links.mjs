@@ -12,7 +12,7 @@
  *   - For `#anchor`, verify a heading on the target page has the
  *     matching slug (lower-case, alphanumerics + dashes).
  *
- * No allowlist — broken internal links should never be acceptable on
+ * No allowlist, broken internal links should never be acceptable on
  * the customer-facing docs site.
  *
  * Modes:
@@ -41,7 +41,7 @@ const SCAN_DIR = join(ROOT, "content", "docs");
 //   [label](/docs/slug)
 //   [label](/docs/slug#anchor)
 // Absolute paths are required because Next.js's Link component does not
-// resolve relative hrefs (`./slug`) the way a plain <a> tag would —
+// resolve relative hrefs (`./slug`) the way a plain <a> tag would -
 // `<Link href="./ontology">` clicked from /docs/first-agent does NOT
 // navigate to /docs/ontology. See dashboard#97 follow-up sweep.
 const LINK_RE = /\[[^\]]+\]\(\/docs\/([a-z0-9-]+)(#[a-z0-9-]+)?\)/g;
@@ -52,7 +52,7 @@ const LINK_RE = /\[[^\]]+\]\(\/docs\/([a-z0-9-]+)(#[a-z0-9-]+)?\)/g;
 // is the canonical pattern.
 const FORBIDDEN_RELATIVE_RE = /\[[^\]]+\]\(\.\/[a-z0-9-]+/g;
 
-// Headings — capture top-level Markdown headings (any level) and slugify
+// Headings, capture top-level Markdown headings (any level) and slugify
 // them the way fumadocs / GitHub renders anchors: lower-case, strip
 // non-alphanumerics except dashes, collapse spaces to dashes.
 const HEADING_RE = /^#{1,6}\s+(.+?)\s*$/gm;
@@ -100,13 +100,13 @@ function scan() {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
-      // Forbid `./slug` relative form — won't navigate via Next.js Link.
+      // Forbid `./slug` relative form, won't navigate via Next.js Link.
       for (const m of line.matchAll(FORBIDDEN_RELATIVE_RE)) {
         broken.push({
           file: relative(ROOT, file),
           line: i + 1,
           link: m[0] + "…)",
-          reason: `relative href won't navigate via Next.js Link — use absolute "/docs/<slug>" instead`,
+          reason: `relative href won't navigate via Next.js Link, use absolute "/docs/<slug>" instead`,
         });
       }
 
@@ -160,7 +160,7 @@ function selftest() {
   );
   writeFileSync(
     tempRelative,
-    "See [relative form](./install) — should be forbidden.\n",
+    "See [relative form](./install), should be forbidden.\n",
   );
   try {
     const broken = scan();

@@ -8,7 +8,7 @@
  * (team_read_disabled / team_write_disabled / team_execute_disabled on
  * component) hang off the team's member relation.
  *
- * Delete is atomic across member/admin/team_*_disabled tuples — no
+ * Delete is atomic across member/admin/team_*_disabled tuples, no
  * orphan tuples remain after a team is removed. The daemon's
  * TenantAdminService.DeleteTeam handles the full FGA cleanup atomically.
  *
@@ -261,7 +261,7 @@ export async function removeTeamMemberAction(input: {
   try {
     const client = userClient(MembershipService);
     // RemoveTeamMember atomically removes both member and admin FGA tuples
-    // for the user on this team — no separate admin-tuple cleanup needed.
+    // for the user on this team, no separate admin-tuple cleanup needed.
     await client.removeTeamMember({
       tenantId: tenantId,
       teamId: input.teamId,

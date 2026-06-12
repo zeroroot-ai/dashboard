@@ -2,7 +2,7 @@
  * login-error-regression.spec.ts
  *
  * Regression suite for every LoginErrorReason value. Spec:
- * auth-resolution-hardening — Task 14 (R7).
+ * auth-resolution-hardening, Task 14 (R7).
  *
  * Coverage
  * --------
@@ -263,7 +263,7 @@ async function signInWithFault(
   // For FGA faults: sign up fully so Auth.js reaches the jwt callback,
   // which triggers the membership check fault.
   // For JWKS/token-exchange faults: signing in through the OIDC flow is
-  // sufficient — the fault fires in auth.ts's jwt callback before membership.
+  // sufficient, the fault fires in auth.ts's jwt callback before membership.
   const companyInput = page
     .getByLabel(/company name/i)
     .or(page.getByPlaceholder(/company|organization|workspace/i));
@@ -297,7 +297,7 @@ async function signInWithFault(
       { timeout: 60_000 },
     );
   } catch {
-    // Timeout — return current URL for the test to assert on.
+    // Timeout, return current URL for the test to assert on.
   }
 
   const finalUrl = page.url();
@@ -331,7 +331,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
         if (!faultable) {
           test.skip(
             true,
-            "TEST_FIXTURES_ENABLED not set on this cluster — skipping fga_unavailable test.",
+            "TEST_FIXTURES_ENABLED not set on this cluster, skipping fga_unavailable test.",
           );
           return;
         }
@@ -347,7 +347,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
           mode: "503",
         });
         if (skipped) {
-          test.skip(true, "Fault injection or signup unavailable — skipping.");
+          test.skip(true, "Fault injection or signup unavailable, skipping.");
           return;
         }
 
@@ -398,12 +398,12 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
         if (!faultable) {
           test.skip(
             true,
-            "TEST_FIXTURES_ENABLED not set on this cluster — skipping membership_resolution_failed test.",
+            "TEST_FIXTURES_ENABLED not set on this cluster, skipping membership_resolution_failed test.",
           );
           return;
         }
 
-        // 1. Scrape baseline — malformed-200 maps to fga_unavailable in membership.ts.
+        // 1. Scrape baseline, malformed-200 maps to fga_unavailable in membership.ts.
         const before = await scrapeCounter(BASE_URL, "dashboard_login_error_total", {
           reason: "fga_unavailable",
         });
@@ -414,7 +414,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
           mode: "malformed-200",
         });
         if (skipped) {
-          test.skip(true, "Fault injection or signup unavailable — skipping.");
+          test.skip(true, "Fault injection or signup unavailable, skipping.");
           return;
         }
 
@@ -428,7 +428,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
         const urlObj = new URL(finalUrl);
         const reason = urlObj.searchParams.get("reason");
         // Both fga_unavailable and the malformed-response path are acceptable
-        // outcomes — safeReason() collapses unknown codes to "unknown".
+        // outcomes, safeReason() collapses unknown codes to "unknown".
         expect(
           ["fga_unavailable", "unknown"],
           `reason must be fga_unavailable or unknown, got: ${reason}`,
@@ -466,7 +466,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
         if (!faultable) {
           test.skip(
             true,
-            "TEST_FIXTURES_ENABLED not set on this cluster — skipping zitadel_jwks_unavailable test.",
+            "TEST_FIXTURES_ENABLED not set on this cluster, skipping zitadel_jwks_unavailable test.",
           );
           return;
         }
@@ -485,7 +485,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
           mode: "503",
         });
         if (skipped) {
-          test.skip(true, "Fault injection or signup unavailable — skipping.");
+          test.skip(true, "Fault injection or signup unavailable, skipping.");
           return;
         }
 
@@ -497,7 +497,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
         const reason = urlObj.searchParams.get("reason");
         // The reason will be jwks_unavailable if the middleware correctly read
         // the lastFired subsystem, or oidc_token_exchange_failed as a fallback
-        // (both are acceptable — both get the user to a deterministic error page).
+        // (both are acceptable, both get the user to a deterministic error page).
         expect(
           ["jwks_unavailable", "oidc_token_exchange_failed"],
           `reason must be jwks_unavailable or oidc_token_exchange_failed, got: ${reason}`,
@@ -539,7 +539,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
         if (!faultable) {
           test.skip(
             true,
-            "TEST_FIXTURES_ENABLED not set on this cluster — skipping token_exchange_failed test.",
+            "TEST_FIXTURES_ENABLED not set on this cluster, skipping token_exchange_failed test.",
           );
           return;
         }
@@ -555,7 +555,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
           mode: "503",
         });
         if (skipped) {
-          test.skip(true, "Fault injection or signup unavailable — skipping.");
+          test.skip(true, "Fault injection or signup unavailable, skipping.");
           return;
         }
 
@@ -589,7 +589,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
   );
 
   // -------------------------------------------------------------------------
-  // session_expired — runs against the live cluster (no special fixture needed)
+  // session_expired, runs against the live cluster (no special fixture needed)
   // -------------------------------------------------------------------------
   test(
     "session_expired: cleared session cookie → /login/error with session_invalid reason or /login",
@@ -597,7 +597,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
       if (!isLogSourceReachable()) {
         test.skip(
           true,
-          "Cluster unreachable — skipping session_expired test.",
+          "Cluster unreachable, skipping session_expired test.",
         );
         return;
       }
@@ -631,7 +631,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
 
         // 5. Assert: user lands on /login/error?reason=session_invalid OR /login
         //    (middleware may redirect directly to /login for missing cookies in
-        //    some Auth.js configurations; both are acceptable — what matters is
+        //    some Auth.js configurations; both are acceptable, what matters is
         //    that the user is NOT sent to /api/auth/federated-signout silently).
         await page.waitForURL(
           (url) =>
@@ -670,7 +670,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
             expect(afterError).toBeGreaterThanOrEqual(beforeError + 1);
           }
         } else {
-          // Plain /login redirect — acceptable middleware behaviour for missing cookies.
+          // Plain /login redirect, acceptable middleware behaviour for missing cookies.
           await expect(page).toHaveURL(/\/login/, { timeout: 10_000 });
           // Sign-in form must be present (user can retry).
           await expect(
@@ -684,7 +684,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
   );
 
   // -------------------------------------------------------------------------
-  // tenant_revoked — mid-session FGA revocation
+  // tenant_revoked, mid-session FGA revocation
   // -------------------------------------------------------------------------
   // The spec requires that when a user is already signed in and their membership
   // is revoked, the dashboard triggers a federated signout (this is the ONE
@@ -709,7 +709,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
       if (!isLogSourceReachable()) {
         test.skip(
           true,
-          "Cluster unreachable — skipping tenant_revoked test.",
+          "Cluster unreachable, skipping tenant_revoked test.",
         );
         return;
       }
@@ -724,7 +724,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
         if (!faultable) {
           test.skip(
             true,
-            "TEST_FIXTURES_ENABLED not set on this cluster — skipping tenant_revoked test.",
+            "TEST_FIXTURES_ENABLED not set on this cluster, skipping tenant_revoked test.",
           );
           return;
         }
@@ -734,7 +734,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
         if (!signedUp) {
           test.skip(
             true,
-            "Signup flow unavailable — skipping tenant_revoked test.",
+            "Signup flow unavailable, skipping tenant_revoked test.",
           );
           return;
         }
@@ -759,7 +759,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
           `tenant:${creds.slug}`,
         );
         if (!revoked) {
-          test.skip(true, "fga-revoke endpoint unavailable — skipping.");
+          test.skip(true, "fga-revoke endpoint unavailable, skipping.");
           return;
         }
 
@@ -775,12 +775,12 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
             { timeout: 20_000 },
           );
         } catch {
-          // Timeout — assert on current URL.
+          // Timeout, assert on current URL.
         }
 
         const finalUrl = page.url();
 
-        // 8. The user MUST end up somewhere deterministic — not looping back to /dashboard
+        // 8. The user MUST end up somewhere deterministic, not looping back to /dashboard
         //    with a broken session. Either a /login/error page OR federated-signout is
         //    acceptable (both are correct outcomes depending on whether the implementation
         //    treats fga_unavailable as transient vs. irrecoverable).
@@ -826,7 +826,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
       if (!isLogSourceReachable()) {
         test.skip(
           true,
-          "Cluster unreachable — skipping happy-path counter test.",
+          "Cluster unreachable, skipping happy-path counter test.",
         );
         return;
       }
@@ -899,7 +899,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
       if (probe.status() === 404) {
         test.skip(
           true,
-          "/login/error returned 404 — cluster is running a pre-spec image. " +
+          "/login/error returned 404, cluster is running a pre-spec image. " +
             "Redeploy with the auth-resolution-hardening build to enable this test.",
         );
         return;
@@ -913,7 +913,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
         "session_invalid",
         "membership_revoked",
         "unknown",
-        // Unknown / injected value — safeReason() must collapse to "unknown".
+        // Unknown / injected value, safeReason() must collapse to "unknown".
         "some_injected_value",
       ];
 

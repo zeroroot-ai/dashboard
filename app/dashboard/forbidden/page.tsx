@@ -14,7 +14,7 @@ import { signOut } from "@/auth";
 import { resolveUserFacingError } from "@/src/lib/errors/user-facing";
 
 /**
- * Forbidden page — shown when a user tries to access a resource they do not
+ * Forbidden page, shown when a user tries to access a resource they do not
  * have permission for, or when a tenant-scoped user navigates to a workspace
  * they do not belong to.
  *

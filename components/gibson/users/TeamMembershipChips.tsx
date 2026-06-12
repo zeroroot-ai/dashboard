@@ -19,7 +19,7 @@ export function TeamMembershipChips({
   teams: UserTeamMembership[];
 }) {
   if (teams.length === 0) {
-    return <span className="text-xs text-muted-foreground">—</span>;
+    return <span className="text-xs text-muted-foreground">-</span>;
   }
   const visible = teams.slice(0, MAX_VISIBLE);
   const overflow = teams.length - visible.length;

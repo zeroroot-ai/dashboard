@@ -14,19 +14,19 @@
  * routes in parallel (concurrency: SMOKE_CONCURRENCY, default 4).
  *
  * Output files:
- *   /tmp/dashboard-smoke-report-<slug-a>.json   — full per-route results for Go side
- *   /tmp/dashboard-smoke-session-a-<slug-a>.json — session A cookie jar
- *   /tmp/dashboard-smoke-session-b-<slug-b>.json — session B cookie jar
+ *   /tmp/dashboard-smoke-report-<slug-a>.json  , full per-route results for Go side
+ *   /tmp/dashboard-smoke-session-a-<slug-a>.json, session A cookie jar
+ *   /tmp/dashboard-smoke-session-b-<slug-b>.json, session B cookie jar
  *
  * Env vars consumed:
- *   SIGNUP_SLUG_A      — tenant A slug (set by orchestrator)
- *   SIGNUP_EMAIL_A     — tenant A email (set by orchestrator)
- *   SIGNUP_SLUG_B      — tenant B slug (set by orchestrator)
- *   SIGNUP_EMAIL_B     — tenant B email (set by orchestrator)
- *   SIGNUP_PASSWORD    — shared password for synthetic test tenants
- *   SMOKE_CONCURRENCY  — number of parallel route loads (default: 4)
- *   MANIFEST_PATH      — path to dashboard-routes.yaml
- *   PLAYWRIGHT_BASE_URL — target cluster URL (default: https://app.zeroroot.local:30443)
+ *   SIGNUP_SLUG_A     , tenant A slug (set by orchestrator)
+ *   SIGNUP_EMAIL_A    , tenant A email (set by orchestrator)
+ *   SIGNUP_SLUG_B     , tenant B slug (set by orchestrator)
+ *   SIGNUP_EMAIL_B    , tenant B email (set by orchestrator)
+ *   SIGNUP_PASSWORD   , shared password for synthetic test tenants
+ *   SMOKE_CONCURRENCY , number of parallel route loads (default: 4)
+ *   MANIFEST_PATH     , path to dashboard-routes.yaml
+ *   PLAYWRIGHT_BASE_URL, target cluster URL (default: https://app.zeroroot.local:30443)
  *
  * Security:
  *   - Cookie values are NEVER logged (only presence and name).
@@ -155,7 +155,7 @@ function resolveURL(routePath: string, slugA: string): string {
  *
  * Uses signUpViaForm (Task 4) to create the tenant, then loginViaZitadelV2
  * (Task 9) to complete the OIDC exchange. Best-effort: signup may fail if the
- * tenant already exists — loginViaZitadelV2 is attempted regardless.
+ * tenant already exists, loginViaZitadelV2 is attempted regardless.
  */
 async function establishSession(
   context: BrowserContext,
@@ -165,7 +165,7 @@ async function establishSession(
 ): Promise<void> {
   const page = await context.newPage();
   try {
-    // Sign up (best-effort — tenant may already exist from a prior run).
+    // Sign up (best-effort, tenant may already exist from a prior run).
     try {
       await signUpViaForm(page, { slug, email, password, baseURL: CLUSTER_URL });
       // After signup, the page lands on /login?callbackUrl=/dashboard.
@@ -176,7 +176,7 @@ async function establishSession(
       });
     } catch (signupErr: unknown) {
       const msg = signupErr instanceof Error ? signupErr.message : String(signupErr);
-      console.log(`[dashboard-smoke] signUpViaForm failed (slug=${slug}): ${msg} — proceeding to login`);
+      console.log(`[dashboard-smoke] signUpViaForm failed (slug=${slug}): ${msg}, proceeding to login`);
     }
 
     // Drive Zitadel V2 login UI.
@@ -195,7 +195,7 @@ async function establishSession(
 /**
  * Test a single route as an authenticated user.
  *
- * Returns a RouteResult. Does NOT throw — all failures are captured in the result.
+ * Returns a RouteResult. Does NOT throw, all failures are captured in the result.
  */
 async function testRouteAuthenticated(
   context: BrowserContext,
@@ -315,7 +315,7 @@ async function testRouteAuthenticated(
       await page.screenshot({ path: screenshotPath });
       result.screenshotPath = screenshotPath;
     } catch {
-      // Screenshot failed too — ignore.
+      // Screenshot failed too, ignore.
     }
   } finally {
     await page.close();
@@ -385,7 +385,7 @@ async function testRouteUnauthenticated(
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     // For auth-required routes, a connection error (e.g., TLS rejection) may
-    // also indicate proper blocking — treat as pass.
+    // also indicate proper blocking, treat as pass.
     if (entry.auth === "required") {
       result.ok = true;
     } else {
@@ -416,7 +416,7 @@ test.describe("dashboard smoke", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Test 1: Authenticated probe — every non-excluded route as tenant A
+  // Test 1: Authenticated probe, every non-excluded route as tenant A
   // -------------------------------------------------------------------------
   test("authenticated route smoke (R1)", async ({ browser }) => {
     // signUpViaForm needs up to 120s provisioning; loginViaZitadelV2 needs 60s.
@@ -490,7 +490,7 @@ test.describe("dashboard smoke", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Test 2: Unauthenticated probe — every route without a session (R2)
+  // Test 2: Unauthenticated probe, every route without a session (R2)
   // -------------------------------------------------------------------------
   test("unauthenticated probe (R2)", async ({ browser }) => {
     const noAuthContext = await browser.newContext({ ignoreHTTPSErrors: true });
@@ -524,7 +524,7 @@ test.describe("dashboard smoke", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Test 3: Cross-tenant session setup — sign up + log in tenant B (R3 prep)
+  // Test 3: Cross-tenant session setup, sign up + log in tenant B (R3 prep)
   //
   // Actual cross-tenant assertions are on the Go side (TestDashboard_CrossTenantIsolation).
   // This spec establishes the session cookie jars via the real OIDC flow.

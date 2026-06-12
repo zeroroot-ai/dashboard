@@ -17,9 +17,9 @@
  * Requirements: 2, R2.1–R2.4.
  *
  * Pre-conditions:
- *   PLAYWRIGHT_BASE_URL — target cluster URL (default: http://localhost:3000)
- *   E2E_ADMIN_EMAIL     — admin user email
- *   E2E_ADMIN_PASSWORD  — admin user password
+ *   PLAYWRIGHT_BASE_URL, target cluster URL (default: http://localhost:3000)
+ *   E2E_ADMIN_EMAIL    , admin user email
+ *   E2E_ADMIN_PASSWORD , admin user password
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -225,7 +225,7 @@ async function mockBindingFailedRegistration(page: Page) {
           }),
         });
       } else {
-        // Binding step failure — atomic rollback
+        // Binding step failure, atomic rollback
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -302,7 +302,7 @@ async function openRegistrationWizard(page: Page): Promise<void> {
 // Test suite: wizard structure
 // ---------------------------------------------------------------------------
 
-test.describe("Plugin register — wizard structure", () => {
+test.describe("Plugin register, wizard structure", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockSuccessfulRegistration(page);
@@ -328,7 +328,7 @@ test.describe("Plugin register — wizard structure", () => {
 
     const wizard = page.getByRole("dialog").first();
 
-    // Step 1 — manifest upload / paste area
+    // Step 1, manifest upload / paste area
     await expect(
       wizard
         .getByText(/manifest|upload|paste.*yaml|plugin.yaml/i)
@@ -341,13 +341,13 @@ test.describe("Plugin register — wizard structure", () => {
 // Test suite: full wizard happy path
 // ---------------------------------------------------------------------------
 
-test.describe("Plugin register — full wizard end-to-end (happy path)", () => {
+test.describe("Plugin register, full wizard end-to-end (happy path)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockSuccessfulRegistration(page);
   });
 
-  test("wizard step 1 — paste manifest and advance to validate step", async ({
+  test("wizard step 1, paste manifest and advance to validate step", async ({
     page,
   }) => {
     await openRegistrationWizard(page);
@@ -376,7 +376,7 @@ test.describe("Plugin register — full wizard end-to-end (happy path)", () => {
     ).toBeVisible({ timeout: 10_000 });
   });
 
-  test("wizard step 2 — validation passes, advance to bindings", async ({
+  test("wizard step 2, validation passes, advance to bindings", async ({
     page,
   }) => {
     await openRegistrationWizard(page);
@@ -435,7 +435,7 @@ test.describe("Plugin register — full wizard end-to-end (happy path)", () => {
       }
     }
 
-    // Final step: enrollment — should show bootstrap token and CLI command
+    // Final step: enrollment, should show bootstrap token and CLI command
     await expect(
       wizard
         .getByText(/bootstrap.*token|enrollment.*token|enroll.*token/i)
@@ -453,7 +453,7 @@ test.describe("Plugin register — full wizard end-to-end (happy path)", () => {
 // Test suite: atomic rollback on binding_failed
 // ---------------------------------------------------------------------------
 
-test.describe("Plugin register — atomic rollback (R2.2)", () => {
+test.describe("Plugin register, atomic rollback (R2.2)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });
@@ -557,7 +557,7 @@ test.describe("Plugin register — atomic rollback (R2.2)", () => {
 // Test suite: manifest validation errors
 // ---------------------------------------------------------------------------
 
-test.describe("Plugin register — validation errors", () => {
+test.describe("Plugin register, validation errors", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockValidationFailure(page);

@@ -13,7 +13,7 @@
  * The `.source/server.ts` artifact produced by the `fumadocs-mdx` CLI
  * uses webpack/turbopack's `?collection=docs` query imports which
  * vitest does not understand. We stub the import here with a minimal
- * Fumadocs source built from the real MDX frontmatter on disk — the
+ * Fumadocs source built from the real MDX frontmatter on disk, the
  * tree shape and frontmatter are therefore genuine, only the compiled
  * MDX body (which this test does not exercise) is elided.
  */

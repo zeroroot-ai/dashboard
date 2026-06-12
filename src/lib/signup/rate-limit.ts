@@ -1,8 +1,8 @@
 /**
- * Signup rate limiter — wraps the existing sliding-window Redis limiter with
+ * Signup rate limiter, wraps the existing sliding-window Redis limiter with
  * signup-specific key namespacing and limits.
  *
- * Two independent counters per attempt — a violation of either trips the
+ * Two independent counters per attempt, a violation of either trips the
  * limit. This makes abuse harder:
  *   - IP counter: 5 attempts / 15 min / source IP
  *   - Email counter: 3 attempts / 1 hour / email (SHA-256'd so the key

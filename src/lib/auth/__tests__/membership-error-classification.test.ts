@@ -1,6 +1,6 @@
 /**
  * Unit tests for ConnectRPC code → MembershipResolutionReason classification
- * + ERROR_COPY page-copy guards. Regression coverage for dashboard#45 —
+ * + ERROR_COPY page-copy guards. Regression coverage for dashboard#45 -
  * pre-fix, every ConnectRPC code other than Unauthenticated/Unavailable/
  * DeadlineExceeded/Internal silently collapsed to `daemon_unavailable`,
  * which surfaced as "Service unavailable / on-call has been paged" on the
@@ -34,7 +34,7 @@ vi.mock('react', () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Auth.js session — a signed-in user. Tests don't exercise the
+// Auth.js session, a signed-in user. Tests don't exercise the
 // unauthenticated-by-no-session branch.
 // ---------------------------------------------------------------------------
 vi.mock('@/auth', () => ({
@@ -56,7 +56,7 @@ vi.mock('@/src/lib/logger', () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// The mock client — per-test we override what `listMyMemberships` throws.
+// The mock client, per-test we override what `listMyMemberships` throws.
 // ---------------------------------------------------------------------------
 let listMyMembershipsImpl: () => Promise<unknown>;
 
@@ -81,7 +81,7 @@ beforeEach(() => {
 // ConnectRPC code → MembershipResolutionReason
 // ---------------------------------------------------------------------------
 
-describe('membership error classification — ConnectRPC code mapping', () => {
+describe('membership error classification, ConnectRPC code mapping', () => {
   const cases: ReadonlyArray<{
     name: string;
     code: Code;
@@ -171,10 +171,10 @@ describe('membership error classification — ConnectRPC code mapping', () => {
 });
 
 // ---------------------------------------------------------------------------
-// ERROR_COPY — guard the page copy that users actually see.
+// ERROR_COPY, guard the page copy that users actually see.
 // ---------------------------------------------------------------------------
 
-describe('ERROR_COPY — permission_denied page copy', () => {
+describe('ERROR_COPY, permission_denied page copy', () => {
   it('does NOT contain the daemon_unavailable "Service unavailable" headline', () => {
     expect(ERROR_COPY.permission_denied.title).not.toMatch(/service unavailable/i);
   });
@@ -193,7 +193,7 @@ describe('ERROR_COPY — permission_denied page copy', () => {
   });
 });
 
-describe('ERROR_COPY — daemon_unavailable page copy (preserved for code 14)', () => {
+describe('ERROR_COPY, daemon_unavailable page copy (preserved for code 14)', () => {
   it('still contains the on-call paging copy (this branch is correct when the daemon really is unreachable)', () => {
     expect(ERROR_COPY.daemon_unavailable.description).toMatch(/on-call/i);
   });

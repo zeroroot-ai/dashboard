@@ -5,7 +5,7 @@
  *
  * The two type families are intentionally distinct. The first describes WHAT
  * happened at the daemon-call boundary; the second describes WHICH error-page
- * copy + CTA to render. Lumping them together is what caused dashboard#45 —
+ * copy + CTA to render. Lumping them together is what caused dashboard#45 -
  * `permission_denied` was silently coerced to `daemon_unavailable`, surfacing
  * "Service unavailable / on-call has been paged" to users whose actual
  * problem was a missing FGA grant. No on-call action would have helped.
@@ -21,7 +21,7 @@ export function membershipReasonToLoginErrorReason(
 ): LoginErrorReason {
   switch (reason) {
     case "unauthenticated":
-      // Session invalid at the JWT layer — sign in again is the recovery.
+      // Session invalid at the JWT layer, sign in again is the recovery.
       return "session_invalid";
     case "permission_denied":
       // Session valid; FGA / ext-authz denied this RPC. Sign-out CTA.

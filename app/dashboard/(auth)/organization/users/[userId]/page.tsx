@@ -90,7 +90,7 @@ export default function UserDetailPage() {
   const viewerRole = tenantId ? (rolesByTenant[tenantId] ?? "") : "";
   const viewerIsOwner = viewerRole === "owner";
 
-  // Member detail from the daemon roster (MembershipService.ListMembers) — the
+  // Member detail from the daemon roster (MembershipService.ListMembers), the
   // single source of truth post dashboard#715. The page keys on userId; pending
   // invitations (no userId) are matched by email fallback.
   const { data: membersResult, isLoading, refetch } = useQuery({
@@ -119,7 +119,7 @@ export default function UserDetailPage() {
   const [revokingSessions, setRevokingSessions] = React.useState(false);
 
   // Role change state. The override is a TenantRole because setTenantRoleAction
-  // only accepts admin|member — owners cannot be set via this dropdown.
+  // only accepts admin|member, owners cannot be set via this dropdown.
   const [roleOverride, setRoleOverride] = React.useState<TenantRole | null>(null);
   const [changingRole, setChangingRole] = React.useState(false);
 
@@ -366,14 +366,14 @@ export default function UserDetailPage() {
                     <p className="text-sm tabular-nums">
                       {member.joinedAt
                         ? new Date(member.joinedAt).toLocaleDateString()
-                        : "—"}
+                        : "-"}
                     </p>
                   </div>
                 </div>
 
                 <Separator className="bg-highlight/20" />
 
-                {/* Collapsible user ID — useful for support without cluttering primary UI */}
+                {/* Collapsible user ID, useful for support without cluttering primary UI */}
                 <details className="group">
                   <summary className="cursor-pointer list-none">
                     <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider select-none">
@@ -389,7 +389,7 @@ export default function UserDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Actions card — only rendered when at least one action is available */}
+            {/* Actions card, only rendered when at least one action is available */}
             {hasAnyAction && (
               <Card className="glass-hack border-0">
                 <CardHeader>
@@ -580,7 +580,7 @@ export default function UserDetailPage() {
               Remove {member?.email} from the workspace?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              They will lose access immediately. This cannot be undone — you
+              They will lose access immediately. This cannot be undone, you
               will need to re-invite them to restore access.
             </AlertDialogDescription>
           </AlertDialogHeader>

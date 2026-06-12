@@ -5,12 +5,12 @@
  * creating a mission run.
  *
  * Three-RPC flow (sdk v0.121.0 / ADR-0037):
- *   1. DaemonService.ValidateMissionCUE — daemon compiles CUE, returns
+ *   1. DaemonService.ValidateMissionCUE, daemon compiles CUE, returns
  *      diagnostics AND the compiled MissionDefinition proto. Any diagnostics
  *      abort submission.
- *   2. DaemonService.CreateMissionDefinition — register the compiled definition,
+ *   2. DaemonService.CreateMissionDefinition, register the compiled definition,
  *      receive a missionDefinitionId.
- *   3. DaemonService.CreateMission — create a mission run referencing the
+ *   3. DaemonService.CreateMission, create a mission run referencing the
  *      definition and the targetRef from the compiled definition.
  *
  * Both RPCs route through Envoy + SPIFFE mTLS via userClient.
@@ -99,7 +99,7 @@ export async function createMissionFromCUEAction(input: {
     if (!compiledDefinition) {
       return {
         ok: false,
-        error: "Compilation returned no definition — check your CUE source.",
+        error: "Compilation returned no definition, check your CUE source.",
         code: "rpc_failed",
       };
     }
@@ -146,13 +146,13 @@ export async function createMissionFromCUEAction(input: {
     }
 
     // Step 3: Resolve the target to a UUID (UUID-canonical contract). A target
-    // is referenced by UUID only — a name is never used as an id.
+    // is referenced by UUID only, a name is never used as an id.
     //
     //   - targetRef is already a target UUID (the editor's picker writes one):
     //     use it directly.
     //   - targetRef is a free-form host/name: mint a real Target from it as
     //     metadata (the automatic pre-step) and use the daemon-assigned UUID.
-    //   - targetRef is empty: no target was attached — fail with a clear,
+    //   - targetRef is empty: no target was attached, fail with a clear,
     //     actionable message instead of leaking a name into target_id.
     const targetRef = (compiledDefinition.targetRef ?? "").trim();
     if (!targetRef) {
@@ -180,11 +180,11 @@ export async function createMissionFromCUEAction(input: {
     }
 
     // Step 4: Dispatch + execute the mission. RunMission is what actually runs
-    // it — the daemon find-or-creates the run record (keyed by definition),
+    // it, the daemon find-or-creates the run record (keyed by definition),
     // stamps the tenant, and streams lifecycle events. We read the first event
     // to confirm dispatch, then return the running mission's id; the detail
     // page's SSE relay carries the remaining frames. (Previously this called
-    // CreateMission, which only registered a pending record and never ran it —
+    // CreateMission, which only registered a pending record and never ran it -
     // missions sat stuck in Pending forever.)
     let runMissionId = "";
     for await (const event of client.runMission({
@@ -219,7 +219,7 @@ export async function createMissionFromCUEAction(input: {
       );
       return {
         ok: false,
-        error: err.rawMessage || "Daemon unavailable — please try again.",
+        error: err.rawMessage || "Daemon unavailable, please try again.",
         code: "rpc_failed",
       };
     }

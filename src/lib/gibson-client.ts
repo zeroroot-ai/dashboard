@@ -53,11 +53,11 @@ import {
 // SPIFFE module is loaded lazily via require() to keep @grpc/grpc-js out of
 // the statically-traced module graph. Next.js 16 / Turbopack reports
 // Module-not-found for grpc-js's Node-only requires (`dns`, `fs`, `cluster`)
-// when statically reaching it from any non-Node bundle context — even with
+// when statically reaching it from any non-Node bundle context, even with
 // `serverExternalPackages` configured. The lazy load runs at first call,
 // in the Node.js runtime, where those modules exist natively.
 //
-// The type surface below is hand-defined — `typeof import('./spiffe-mtls/svid')`
+// The type surface below is hand-defined, `typeof import('./spiffe-mtls/svid')`
 // would itself be a static module reference that Turbopack traces, defeating
 // the lazy-load. Keep this type aligned with src/lib/spiffe-mtls/svid.ts
 // exports (changes there require updating these signatures).
@@ -95,7 +95,7 @@ function loadSpiffe(): SpiffeMod | null {
     return null;
   }
 }
-// Spec headline-feature-completion R11 — the legacy `void _serverConfig`
+// Spec headline-feature-completion R11, the legacy `void _serverConfig`
 // cast was removed alongside the `gibsonDaemonUrl` field it was guarding.
 // Direct daemon channels are no longer permitted at all; see the
 // `userClient` / `serviceClient` factories below for the only sanctioned
@@ -106,7 +106,7 @@ function loadSpiffe(): SpiffeMod | null {
 // longer exported by this module.
 
 // ---------------------------------------------------------------------------
-// Single-edge transport model — spec unified-identity-and-authorization
+// Single-edge transport model, spec unified-identity-and-authorization
 // Phase 4 (R4.1, R4.2, R4.3).
 // ---------------------------------------------------------------------------
 //
@@ -128,7 +128,7 @@ function loadSpiffe(): SpiffeMod | null {
 //     end user.
 //
 // `makeClient` is the low-level factory both wrappers compose. It does
-// NOT read env, session, or cookies — token + tenant resolution is the
+// NOT read env, session, or cookies, token + tenant resolution is the
 // caller's concern. This boundary keeps the file deterministic and
 // testable, and ensures no future code path can sneak a third sourcing
 // strategy in unnoticed.
@@ -140,7 +140,7 @@ function loadSpiffe(): SpiffeMod | null {
  *
  * The env-var name is preserved from the older `dashboard-admin-via-envoy`
  * spec for chart-overlay continuity even though it now drives both the
- * user-acting and service-acting transports — there is one Envoy edge.
+ * user-acting and service-acting transports, there is one Envoy edge.
  */
 const ENVOY_BASE_URL =
   process.env['ADMIN_ENVOY_BASE_URL'] ?? 'https://api.zeroroot.local:30443';
@@ -175,7 +175,7 @@ function classifyError(err: unknown): AdminRpcStatus {
 
 /**
  * Returns the HTTP status (as a string) when a transport error clearly
- * came from Envoy itself (502/503/504 — no healthy upstream / circuit
+ * came from Envoy itself (502/503/504, no healthy upstream / circuit
  * breaker / upstream timeout). Returns null for daemon-level errors so
  * we don't double-count.
  */
@@ -220,10 +220,10 @@ const telemetryInterceptor: Interceptor = (next) => async (req) => {
  * become `Authorization: Bearer <token>` and `x-gibson-tenant: <tenant>`
  * respectively.
  *
- * Per spec R4.1, this factory MUST NOT read env, session, or cookies —
+ * Per spec R4.1, this factory MUST NOT read env, session, or cookies -
  * the caller fully owns token + tenant sourcing. The helpers below
  * (`userClient`, `serviceClient`) compose this with concrete sourcing
- * strategies; if you need a different strategy, build a new wrapper —
+ * strategies; if you need a different strategy, build a new wrapper -
  * do not edit `makeClient`.
  */
 export function makeClient<T extends DescService>(
@@ -251,7 +251,7 @@ export function makeClient<T extends DescService>(
         req.header.set('x-correlation-id', cid);
       }
     } catch {
-      // Non-fatal — correlation is best-effort. The daemon will mint
+      // Non-fatal, correlation is best-effort. The daemon will mint
       // its own ID when the header is absent.
     }
     return next(req);
@@ -260,7 +260,7 @@ export function makeClient<T extends DescService>(
   // Spec unified-identity-and-authorization Phase 4 (R2.5, R9.12):
   // dashboard pod presents an X509-SVID on the mTLS handshake to Envoy
   // when SPIFFE is wired. The Workload API socket only exists in
-  // in-cluster deploys with SPIRE — local dev (no socket) gets plain
+  // in-cluster deploys with SPIRE, local dev (no socket) gets plain
   // HTTPS with a one-time WARN log naming SPIFFE_ENDPOINT_SOCKET so
   // the operator knows we're falling back.
   const transport = createGrpcTransport({
@@ -276,7 +276,7 @@ export function makeClient<T extends DescService>(
 }
 
 // ---------------------------------------------------------------------------
-// SPIFFE wiring — sync resolver for createGrpcTransport's nodeOptions
+// SPIFFE wiring, sync resolver for createGrpcTransport's nodeOptions
 // ---------------------------------------------------------------------------
 
 let spiffeWarmedUp = false;
@@ -326,7 +326,7 @@ function spiffeNodeOptions():
 }
 
 // ---------------------------------------------------------------------------
-// User-acting wrapper — bearer is the signed-in user's Zitadel access
+// User-acting wrapper, bearer is the signed-in user's Zitadel access
 // token; tenant comes from the active-tenant cookie. Throws
 // `ConnectError(Unauthenticated)` when no session exists, and
 // `NoActiveTenantError` / `StaleActiveTenantError` from the cookie path.
@@ -340,7 +340,7 @@ function spiffeNodeOptions():
  *
  * Per spec R4.2, this is the canonical wrapper for user-acting RPCs.
  * Internally composes {@link makeClient} with {@link requireUserToken}
- * and {@link getActiveTenant} — both of which are `react.cache()`-memoized
+ * and {@link getActiveTenant}, both of which are `react.cache()`-memoized
  * so multi-RPC renders share a single `auth()` + cookie read.
  */
 export function userClient<T extends DescService>(service: T): Client<T> {
@@ -350,7 +350,7 @@ export function userClient<T extends DescService>(service: T): Client<T> {
 /**
  * Returns a typed connect-rpc client that authenticates as the dashboard
  * pod's own Zitadel service account. Tenant header is set to the
- * `tenantId` argument explicitly — service callers know the tenant they
+ * `tenantId` argument explicitly, service callers know the tenant they
  * are acting on; there is no cookie context to fall back on.
  *
  * **MUST NEVER be called from user-facing route handlers.** The whole
@@ -371,7 +371,7 @@ export function serviceClient<T extends DescService>(
   // to the response status from inside the auth interceptor (Connect
   // wraps the fetch result before bubbling it up), so we instead
   // pre-emptively invalidate on the next call AFTER an Unauthenticated
-  // ConnectError has been observed by the caller — see the catch in
+  // ConnectError has been observed by the caller, see the catch in
   // `withServiceRetry` below.
   return makeClient(service, getServiceToken, async () => tenantId);
 }
@@ -379,7 +379,7 @@ export function serviceClient<T extends DescService>(
 /**
  * Wrap a service-acting RPC call so a single Unauthenticated/401 from
  * Envoy triggers a token re-mint and one retry. Most callers won't need
- * this — Zitadel tokens are valid for hours and we refresh proactively —
+ * this, Zitadel tokens are valid for hours and we refresh proactively -
  * but mid-flight signing-key rotation or clock skew can put a still-cached
  * token over the line.
  *
@@ -400,7 +400,7 @@ async function withServiceRetry<R>(fn: () => Promise<R>): Promise<R> {
 void withServiceRetry; // reserved for future migration callers
 
 // ---------------------------------------------------------------------------
-// Internal user-acting client builders — these preserve the signatures of
+// Internal user-acting client builders, these preserve the signatures of
 // the old `getClient` / `getAdminClient` so the dozens of helper functions
 // further down this file keep working unchanged. New code should call
 // `userClient(...)` directly.
@@ -634,7 +634,7 @@ export { ConnectError, Code };
 // Tenant Management API
 // ============================================================================
 
-// TenantUpdates removed — tenant mutation moved to the Tenant CRD operator.
+// TenantUpdates removed, tenant mutation moved to the Tenant CRD operator.
 
 export interface AuditLogQueryOptions {
   startTime?: Date;
@@ -669,30 +669,30 @@ export interface ProvisioningStep {
   message: string;
 }
 
-// listTenants / getTenant / updateTenant removed — tenant CRUD and lookup
+// listTenants / getTenant / updateTenant removed, tenant CRUD and lookup
 // have moved to the Tenant CRD operator. Use `@/src/lib/k8s/tenants` for
 // reads and `app/actions/crd/tenant.ts` for mutations.
 
-// createAPIKey / listAPIKeys / revokeAPIKey removed — the gsk_ API key
+// createAPIKey / listAPIKeys / revokeAPIKey removed, the gsk_ API key
 // system has been removed. Agent identity provisioning now goes through
 // TenantAdminService.CreateAgentIdentity (spec: agent-service-credentials).
 
-// listUserTenants / MembershipInfo removed — tenant membership is now
+// listUserTenants / MembershipInfo removed, tenant membership is now
 // served by the Tenant CRD operator (see @/src/lib/k8s/tenants).
 
-// getAuthSchema / getProvisioningStatus / deprovisionTenant removed —
+// getAuthSchema / getProvisioningStatus / deprovisionTenant removed -
 // auth schema is now served by the FGA-backed GetMyPermissions RPC, and
 // provisioning lifecycle moved to the Tenant CRD operator.
 
 // ============================================================================
-// Audit Log — ListAuditEvents RPC (DEFERRED — admin-services-completion spec)
+// Audit Log, ListAuditEvents RPC (DEFERRED, admin-services-completion spec)
 // ============================================================================
 // ListAuditEvents has been deferred per design.md disposition table.
 // Dashboard call sites that previously called queryAuditLog now return empty
 // results to avoid hitting the Unimplemented stub.
 
 // ============================================================================
-// Quota Management — GetTenantQuota RPC (TenantAdminService)
+// Quota Management, GetTenantQuota RPC (TenantAdminService)
 // ============================================================================
 
 /**
@@ -737,12 +737,12 @@ export async function getTenantQuotaUsage(
   };
 }
 
-// setTenantQuota removed — DEFERRED per admin-services-completion design.md.
+// setTenantQuota removed, DEFERRED per admin-services-completion design.md.
 // SetTenantQuota moved to PlatformOperatorService (platform-operator only; tenants
 // do not set their own quotas). Dashboard call site deleted per task 19.
 
 // ============================================================================
-// Alert Management — DEFERRED per admin-services-completion spec
+// Alert Management, DEFERRED per admin-services-completion spec
 // ============================================================================
 // ListAlerts / MarkAlertRead / MarkAllAlertsRead have been deferred.
 // No alert producer exists today; the daemon stubs return Unimplemented.
@@ -765,12 +765,12 @@ export interface AlertRecord {
   sourceId: string;
 }
 
-// listAlerts removed — DEFER per design.md. Call site in /api/alerts/route.ts returns empty.
-// markAlertRead removed — DEFER per design.md. Call site in /api/alerts/[id]/read/route.ts returns ok.
-// markAllAlertsRead removed — DEFER per design.md. Call site in /api/alerts/mark-all-read/route.ts returns ok.
+// listAlerts removed, DEFER per design.md. Call site in /api/alerts/route.ts returns empty.
+// markAlertRead removed, DEFER per design.md. Call site in /api/alerts/[id]/read/route.ts returns ok.
+// markAllAlertsRead removed, DEFER per design.md. Call site in /api/alerts/mark-all-read/route.ts returns ok.
 
 // ============================================================================
-// Conversation History — UserService RPCs (spec: chat-conversation-persistence)
+// Conversation History, UserService RPCs (spec: chat-conversation-persistence)
 // ============================================================================
 
 import type { MessagePart } from '@/src/gen/gibson/tenant/v1/user_pb';
@@ -787,13 +787,13 @@ export interface ConversationRecord {
 
 /**
  * A single message as returned by `getConversation`.
- * Parts carry the lossless ordered content — the canonical shape since
+ * Parts carry the lossless ordered content, the canonical shape since
  * dashboard#550 replaced the flat `content` string.
  */
 export interface ConversationMessageRecord {
   id: string;
   role: string;
-  /** Ordered proto parts — the lossless representation. */
+  /** Ordered proto parts, the lossless representation. */
   parts: MessagePart[];
   createdAt: string;
 }
@@ -829,7 +829,7 @@ export async function getConversation(conversationId: string, userId = '', tenan
       updatedAt: c.updatedAtUnix ? new Date(Number(c.updatedAtUnix) * 1000).toISOString() : new Date().toISOString(),
       messageCount: c.messageCount,
     },
-    // Pass through the proto parts array directly — the normalizer converts
+    // Pass through the proto parts array directly, the normalizer converts
     // them to UIMessages on the load path (protoToUiMessages in message-normalizer.ts).
     messages: (resp.messages ?? []).map((m) => ({
       id: m.id,
@@ -844,7 +844,7 @@ export async function getConversation(conversationId: string, userId = '', tenan
  * Persist a conversation via the daemon SaveConversation RPC.
  *
  * `messages` must be the output of `uiMessagesToProto()` from
- * `src/lib/chat/message-normalizer.ts` — the normalizer is the single
+ * `src/lib/chat/message-normalizer.ts`, the normalizer is the single
  * source of truth for the UIMessage ↔ proto parts mapping.
  */
 export async function saveConversation(
@@ -870,7 +870,7 @@ export async function saveConversation(
 /**
  * Rename a conversation via the daemon RenameConversation RPC.
  *
- * `tenantId` may be empty — the daemon resolves it from the authenticated
+ * `tenantId` may be empty, the daemon resolves it from the authenticated
  * identity when empty. Returns void on success; throws a ConnectError on
  * failure so callers can revert optimistic updates.
  */
@@ -886,11 +886,11 @@ export async function renameConversation(
 /**
  * Delete a conversation via the daemon DeleteConversation RPC.
  *
- * `tenantId` may be empty — the daemon resolves it from the authenticated
+ * `tenantId` may be empty, the daemon resolves it from the authenticated
  * identity when empty. Returns void on success; throws a ConnectError on
  * failure so callers can revert optimistic updates.
  *
- * NOTE: The RPC has no `user_id` field — the daemon resolves the caller from
+ * NOTE: The RPC has no `user_id` field, the daemon resolves the caller from
  * the authenticated identity and only allows deletion of their own conversations.
  */
 export async function deleteConversation(
@@ -934,7 +934,7 @@ export interface SerializedMission {
 export interface SerializedAgent {
   id: string;
   name: string;
-  /** Component kind — always `"agent"` for agents. */
+  /** Component kind, always `"agent"` for agents. */
   kind: string;
   version: string;
   /** gRPC endpoint address of the agent. */
@@ -1028,8 +1028,8 @@ export interface SerializedStatus {
 }
 
 /**
- * Convert a proto `google.protobuf.Timestamp`-shaped object — one that has a
- * `seconds` BigInt field and a `nanos` number field — to an ISO 8601 string.
+ * Convert a proto `google.protobuf.Timestamp`-shaped object, one that has a
+ * `seconds` BigInt field and a `nanos` number field, to an ISO 8601 string.
  *
  * This helper is intended for proto messages that embed actual
  * `google.protobuf.Timestamp` fields.  The daemon's `int64` Unix-epoch fields
@@ -1042,7 +1042,7 @@ export interface SerializedStatus {
  */
 export function timestampToISO(ts: { seconds: bigint; nanos: number } | undefined | null): string | null {
   if (ts == null) return null;
-  // seconds is BigInt — convert to ms and fold in the sub-second nanos portion.
+  // seconds is BigInt, convert to ms and fold in the sub-second nanos portion.
   const ms = Number(ts.seconds) * 1000 + Math.floor(ts.nanos / 1_000_000);
   return new Date(ms).toISOString();
 }
@@ -1051,7 +1051,7 @@ export function timestampToISO(ts: { seconds: bigint; nanos: number } | undefine
  * Convert a raw `int64` Unix epoch seconds BigInt field from the daemon proto
  * to a plain JS `number`.
  *
- * Returns `null` when the value is `0n` — the proto default, which signals
+ * Returns `null` when the value is `0n`, the proto default, which signals
  * "field not set" for optional timestamp fields in the daemon schema.
  *
  * The BigInt is always within the safe integer range for daemon timestamps
@@ -1089,7 +1089,7 @@ function serializeCapabilities(c: Capabilities | undefined): SerializedCapabilit
  * - `startTime` / `endTime`: `int64` BigInt Unix seconds → `number | null`
  *   (`null` when the proto default `0` indicates the field is not set).
  * - `status`: plain string (e.g. `"running"`, `"completed"`, `"failed"`).
- * - `progress`: `double` in [0.0, 1.0] — multiply by 100 for a percentage.
+ * - `progress`: `double` in [0.0, 1.0], multiply by 100 for a percentage.
  * - String fields carry the proto zero value (`''`) when unset.
  */
 export function serializeMission(m: MissionInfo): SerializedMission {
@@ -1110,7 +1110,7 @@ export function serializeMission(m: MissionInfo): SerializedMission {
  * Serialize an `AgentInfo` proto message to a plain JSON-safe object.
  *
  * All proto fields are mapped:
- * - `capabilities`: repeated string field — copied into a fresh array so the
+ * - `capabilities`: repeated string field, copied into a fresh array so the
  *   returned object holds no live references to the proto message.
  * - `lastSeen`: `int64` BigInt Unix seconds → `number | null`.
  */
@@ -1174,7 +1174,7 @@ export function serializePlugin(p: PluginInfo): SerializedPlugin {
  * All proto fields are mapped:
  * - `startTime`: `int64` BigInt Unix seconds → `number | null`.
  * - All `int32` counter fields (`pid`, `agentCount`, etc.) are used directly
- *   as JS numbers — they are always within `Number.MAX_SAFE_INTEGER`.
+ *   as JS numbers, they are always within `Number.MAX_SAFE_INTEGER`.
  */
 export function serializeStatus(s: StatusResponse): SerializedStatus {
   return {
@@ -1193,7 +1193,7 @@ export function serializeStatus(s: StatusResponse): SerializedStatus {
 }
 
 // ============================================================================
-// Provider Management — thin wrappers over the daemon gRPC client
+// Provider Management, thin wrappers over the daemon gRPC client
 //
 // spec 25-daemon-driven-provider-config (task 15): the legacy K8s Secret
 // storage layer (provider-storage.ts) has been deleted. Every provider
@@ -1203,7 +1203,7 @@ export function serializeStatus(s: StatusResponse): SerializedStatus {
 // changes.
 //
 // The daemon* prefixed functions added in task 9 remain as the canonical
-// implementations — they are called directly by the task-11 route handlers,
+// implementations, they are called directly by the task-11 route handlers,
 // the task-10 GibsonLLMAdapter, and the thin wrappers below.
 // ============================================================================
 
@@ -1240,7 +1240,7 @@ export interface ListProvidersResult {
  * List all LLM provider configurations for a tenant.
  *
  * Thin wrapper over {@link daemonListProviders}.
- * Credentials are never returned — only masked values are included.
+ * Credentials are never returned, only masked values are included.
  */
 export async function listProviders(tenantId: string, userId?: string): Promise<ListProvidersResult> {
   const records = await daemonListProviders(userId, tenantId);
@@ -1284,7 +1284,7 @@ export async function listAvailablePlugins(tenantId: string, userId?: string, te
   return response.plugins ?? [];
 }
 
-// listTenantPlugins / enable*/disable* / get*/updatePluginConfig removed —
+// listTenantPlugins / enable*/disable* / get*/updatePluginConfig removed -
 // these previously stored per-tenant flags inside the daemon's tenant config
 // map. Tenant config is now owned by the Tenant CRD; equivalent flag/config
 // management lives in `app/actions/crd/tenant.ts`.
@@ -1322,7 +1322,7 @@ export async function testPluginConnection(
   }
 }
 
-// updatePluginAccess removed — plugin read/write access flags are now
+// updatePluginAccess removed, plugin read/write access flags are now
 // managed via the Tenant CRD. See `app/actions/crd/tenant.ts`.
 
 // ============================================================================
@@ -1333,14 +1333,14 @@ export async function testPluginConnection(
 // `app/actions/crd/member.ts` and `useCRDWatch("TenantMember", ns)`.
 // ============================================================================
 
-// listUserSessions removed — DELETE per admin-services-completion design.md.
+// listUserSessions removed, DELETE per admin-services-completion design.md.
 // GetUserSessions / RevokeUserSessions belong in the IdP's hosted UI, not the dashboard.
 // The Active Sessions tab in the users/[userId] page now shows a link to the
 // provider's hosted profile page (label: "Manage account at provider").
 // The idp profile URL is derived from ZITADEL_ISSUER at render time.
 
 // ============================================================================
-// User Profile — daemon-RPC backed
+// User Profile, daemon-RPC backed
 //
 // All user identity operations (profile, sessions, activity) go through
 // daemon RPCs. Identities themselves are owned by Zitadel; the dashboard's
@@ -1419,12 +1419,12 @@ export async function getUserActivity(
 }
 
 // Invitation RPCs (ListInvitations / RevokeInvitation / ResendInvitation /
-// CreateInvitation) have moved to the TenantMember CRD — see
+// CreateInvitation) have moved to the TenantMember CRD, see
 // `app/actions/crd/member.ts` (inviteMemberAction / resendInvitationAction /
 // revokeMemberAction).
 
 // ============================================================================
-// Analytics — computed from daemon RPCs and Neo4j graph
+// Analytics, computed from daemon RPCs and Neo4j graph
 // ============================================================================
 
 import {
@@ -1446,7 +1446,7 @@ export interface KPIs {
  * Return high-level operational KPIs by combining daemon RPC data with
  * GraphService.GetFindingCounts.
  *
- * Finding count failures are handled gracefully — counts fall back to zero
+ * Finding count failures are handled gracefully, counts fall back to zero
  * so that the rest of the KPI data remains usable.
  */
 export async function getKPIs(tenantId: string, userId?: string): Promise<KPIs> {
@@ -1643,7 +1643,7 @@ export async function getAgentPerformance(tenantId: string, userId?: string): Pr
   });
 }
 
-// initiateSignup / getProvisioningStatusByUser removed — signup and
+// initiateSignup / getProvisioningStatusByUser removed, signup and
 // provisioning lifecycle moved to the Tenant CRD operator. See
 // `app/actions/crd/tenant.ts` for the equivalent CRD-backed flow.
 
@@ -1652,7 +1652,7 @@ export async function getAgentPerformance(tenantId: string, userId?: string): Pr
 
 // Capability Grant RPCs (RegisterCapabilityGrant / ExecuteAgentCapability / ListAgentCapabilities
 // / GetCapabilityGrantStatus / RevokeCapabilityGrant / ListCapabilityGrantAgents /
-// CreateHostRegistrationToken) have moved to the AgentEnrollment CRD — see
+// CreateHostRegistrationToken) have moved to the AgentEnrollment CRD, see
 // `app/actions/crd/enrollment.ts`.
 
 // ---------------------------------------------------------------------------
@@ -1664,7 +1664,7 @@ export async function getAgentPerformance(tenantId: string, userId?: string): Pr
 // without pulling grpc-js into the browser bundle. Re-exported at the top of
 // this file for back-compat with server-side callers.
 
-// getSupportedProviders removed — DELETE per admin-services-completion design.md.
+// getSupportedProviders removed, DELETE per admin-services-completion design.md.
 // GetSupportedProviders was a Bucket C RPC with no active caller path and is
 // deleted from the proto entirely. The /api/settings/providers/supported route
 // and useSupportedProviders hook are removed.
@@ -1717,7 +1717,7 @@ export interface DaemonProviderRecord {
  * Prefixed `Daemon` to avoid collision with the legacy ProviderConfigInput
  * from src/types/provider.ts.
  */
-// DaemonProviderConfigInput moved to ./gibson-client-types — see top-of-file note.
+// DaemonProviderConfigInput moved to ./gibson-client-types, see top-of-file note.
 
 /**
  * Structured result of a daemon-side provider connectivity test.
@@ -1752,7 +1752,7 @@ export interface DaemonProviderHealthStatus {
 }
 
 // ---------------------------------------------------------------------------
-// LLM execution types (spec 25 §5 — GibsonLLMAdapter inputs/outputs)
+// LLM execution types (spec 25 §5, GibsonLLMAdapter inputs/outputs)
 // ---------------------------------------------------------------------------
 
 /**
@@ -2015,7 +2015,7 @@ export async function daemonGetProvider(
 /**
  * Create a new provider config via the daemon CreateProvider RPC.
  * Credentials are transmitted as plaintext and encrypted immediately by
- * the daemon — the dashboard process never persists them.
+ * the daemon, the dashboard process never persists them.
  * Throws a ConnectError (Code.AlreadyExists) when the name is already in use.
  */
 export async function daemonCreateProvider(
@@ -2065,7 +2065,7 @@ export async function daemonDeleteProvider(
 
 /**
  * Test connectivity to a provider via the daemon TestProvider RPC.
- * The config is NOT persisted — the daemon validates and probes the upstream
+ * The config is NOT persisted, the daemon validates and probes the upstream
  * in process memory only.
  *
  * Note: the proto latencyMs field is int64 (bigint in TS); this function

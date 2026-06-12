@@ -1,4 +1,4 @@
-// @crd-authz-exempt-route: checkout-public — the pricing page CTAs are public.
+// @crd-authz-exempt-route: checkout-public, the pricing page CTAs are public.
 // Session data (customer email, existing customer ID) is opportunistically
 // extracted from the request body but is NOT required. The tenant slug comes
 // from the request body and is used as client_reference_id for the webhook

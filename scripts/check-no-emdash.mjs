@@ -31,9 +31,14 @@ import { tmpdir } from "node:os";
 const __filename = fileURLToPath(import.meta.url);
 const DASHBOARD_ROOT = join(__filename, "..", "..");
 
-// Scope grows slice-by-slice. #753: landing only.
+// Customer-facing rendered surfaces only (dashboard#752: guard enforces on
+// customer-facing text). Internal src/lib, scripts, comments, and generated
+// src/gen are swept once but not enforced here.
 const SCOPED_ROOTS = [
-  "components/gibson/landing",
+  "app",
+  "components",
+  "src/components",
+  "content/docs",
 ];
 
 const SKIP_DIRS = new Set(["node_modules", ".next", ".tmp", "test-results", "__tests__", "__snapshots__"]);

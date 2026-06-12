@@ -44,11 +44,11 @@ function getCachedPaths(entityType: EntityType, def: LucideIconDefinition): Path
  * Default half-size (radius equivalent) for each entity type.
  * The value is the full square side length in logical pixels.
  *
- * Tier 1 (64px) — primary entities: mission, domain, host, finding
- * Tier 2 (52px) — secondary entities: mission_run, agent_run, service
- * Tier 3 (46px) — detail entities: subdomain, technology, technique
- * Tier 4 (38px) — operational entities: tool_execution, llm_call, port
- * Tier 5 (34px) — leaf entities: endpoint, certificate, evidence
+ * Tier 1 (64px), primary entities: mission, domain, host, finding
+ * Tier 2 (52px), secondary entities: mission_run, agent_run, service
+ * Tier 3 (46px), detail entities: subdomain, technology, technique
+ * Tier 4 (38px), operational entities: tool_execution, llm_call, port
+ * Tier 5 (34px), leaf entities: endpoint, certificate, evidence
  */
 export const NODE_SIZES: Record<EntityType, number> = {
   mission:        64,
@@ -206,7 +206,7 @@ export interface NodeOptions {
   isActive?: boolean;
   /** Current animation phase for the pulse, 0–1 */
   pulsePhase?: number;
-  /** Severity level — draws a coloured left-edge stripe on `finding` nodes */
+  /** Severity level, draws a coloured left-edge stripe on `finding` nodes */
   severity?: 'critical' | 'high' | 'medium' | 'low' | 'info';
   /** Glow quality multiplier, 0.5–1.0 (default 1.0). Lower = cheaper blur. */
   glowQuality?: number;
@@ -378,7 +378,7 @@ export class NodeRenderer {
   ): void {
     const { isHovered, isSelected, isActive, pulsePhase, glowQuality } = state;
 
-    // Phosphor green — aligned to --primary token (oklch 0.86 0.28 145)
+    // Phosphor green, aligned to --primary token (oklch 0.86 0.28 145)
     const GREEN = '#a6e22e';
 
     if (isHovered) {
@@ -405,7 +405,7 @@ export class NodeRenderer {
     }
 
     if (isActive) {
-      // Pulsing border opacity — sine wave between 0.3 and 1.0
+      // Pulsing border opacity, sine wave between 0.3 and 1.0
       const pulse = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(pulsePhase * Math.PI * 2));
       roundedRect(ctx, left, top, size, size, radius);
       ctx.strokeStyle = hexToRgba(color, pulse * alpha);
@@ -421,7 +421,7 @@ export class NodeRenderer {
     ctx.stroke();
   }
 
-  /** Minimal fallback for very small nodes — just a filled rounded rect. */
+  /** Minimal fallback for very small nodes, just a filled rounded rect. */
   private drawFallback(
     ctx: CanvasRenderingContext2D,
     cx: number,

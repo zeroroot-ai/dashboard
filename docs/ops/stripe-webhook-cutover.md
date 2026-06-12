@@ -4,7 +4,7 @@ This document describes the three-phase migration from the legacy webhook path
 (`app.zeroroot.ai/api/billing/webhook`) to the dedicated webhook subdomain
 (`webhooks.zeroroot.ai/stripe`).
 
-**Status:** Phase 0 (parallel listen) — both endpoints are active.
+**Status:** Phase 0 (parallel listen), both endpoints are active.
 
 ---
 
@@ -28,7 +28,7 @@ correctly before decommissioning the old one.
 1. Navigate to **Developers** → **Webhooks** → **Add endpoint**.
 2. URL: `https://webhooks.zeroroot.ai/stripe`
 3. Events: select all events (or mirror the current endpoint's selection).
-4. Note the new webhook signing secret — add it as a second env var
+4. Note the new webhook signing secret, add it as a second env var
    (`STRIPE_WEBHOOK_SECRET_NEW`) and update the dashboard to accept both
    until Phase 1 is complete. Alternatively, reuse the same secret if the
    Stripe account supports it.
@@ -79,7 +79,7 @@ flows exclusively through `webhooks.zeroroot.ai/stripe`.
    ```typescript
    return NextResponse.json({ gone: true }, { status: 410 });
    ```
-   (The GET handler already returns 410 — this completes the tombstone.)
+   (The GET handler already returns 410, this completes the tombstone.)
 2. Commit and deploy.
 
 **GitOps Ingress change:**
@@ -99,7 +99,7 @@ flows exclusively through `webhooks.zeroroot.ai/stripe`.
 If either Phase 1 or Phase 2 causes issues:
 1. Re-add the old endpoint in Stripe Dashboard (Phase 1 rollback).
 2. Revert the code change and redeploy (Phase 2 rollback).
-3. The parallel-listen period provides a safety window — Stripe retries for up
+3. The parallel-listen period provides a safety window, Stripe retries for up
    to 72 hours, so a same-day rollback will not lose events.
 
 ---

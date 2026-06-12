@@ -89,7 +89,7 @@ describe('GET /api/auth/federated-signout', () => {
     process.env = { ...ORIG_ENV };
   });
 
-  it('sends POST_LOGOUT_REDIRECT_URI verbatim — no path append, no trailing slash from origin', async () => {
+  it('sends POST_LOGOUT_REDIRECT_URI verbatim, no path append, no trailing slash from origin', async () => {
     const res = await GET(makeRequest());
     expect(res.status).toBe(307);
     const location = res.headers.get('location');
@@ -115,7 +115,7 @@ describe('GET /api/auth/federated-signout', () => {
     const res = await GET(makeRequest());
     const url = new URL(res.headers.get('location')!);
     expect(url.searchParams.get('id_token_hint')).toBeNull();
-    // dashboard#76 regression guard — must NOT use the machine-user client
+    // dashboard#76 regression guard, must NOT use the machine-user client
     // (ZITADEL_DASHBOARD_CLIENT_ID), which has no postLogoutRedirectURIs and
     // would make Zitadel reject every logout with
     // {"error":"invalid_request","error_description":"post_logout_redirect_uri invalid"}.
@@ -126,7 +126,7 @@ describe('GET /api/auth/federated-signout', () => {
     );
   });
 
-  it('fails loud (500) when no idToken AND ZITADEL_CLIENT_ID is unset — no silent unauthenticated end_session', async () => {
+  it('fails loud (500) when no idToken AND ZITADEL_CLIENT_ID is unset, no silent unauthenticated end_session', async () => {
     // Both end_session client-resolution inputs are missing: an
     // unauthenticated end_session call would be rejected by Zitadel anyway
     // and would partially trash the user's local session in the process
@@ -139,7 +139,7 @@ describe('GET /api/auth/federated-signout', () => {
     const body = await res.json();
     expect(body).toEqual({ error: 'logout_misconfigured' });
     expect(mockLoggerError).toHaveBeenCalledTimes(1);
-    // signOut MUST NOT have been called — same invariant as the
+    // signOut MUST NOT have been called, same invariant as the
     // POST_LOGOUT_REDIRECT_URI-missing branch.
     expect(mockSignOut).not.toHaveBeenCalled();
   });
@@ -176,14 +176,14 @@ describe('GET /api/auth/federated-signout', () => {
     expect(mockSignOut).toHaveBeenCalledWith({ redirect: false });
   });
 
-  it('fails loud (500) when POST_LOGOUT_REDIRECT_URI is unset — no silent fallback', async () => {
+  it('fails loud (500) when POST_LOGOUT_REDIRECT_URI is unset, no silent fallback', async () => {
     delete process.env.POST_LOGOUT_REDIRECT_URI;
     const res = await GET(makeRequest());
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body).toEqual({ error: 'logout_misconfigured' });
     expect(mockLoggerError).toHaveBeenCalledTimes(1);
-    // signOut MUST NOT be called when configuration is broken — leaving the
+    // signOut MUST NOT be called when configuration is broken, leaving the
     // session intact is preferable to a partial logout that leaves the user
     // stuck without the Zitadel SSO termination half of the flow.
     expect(mockSignOut).not.toHaveBeenCalled();

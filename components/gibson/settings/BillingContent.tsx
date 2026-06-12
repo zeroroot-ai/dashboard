@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * BillingContent — Settings → Billing page.
+ * BillingContent, Settings → Billing page.
  *
  * Spec plans-and-quotas-simplification simplifies this surface: plan
  * name + the two enforced quotas (concurrent_missions, concurrent_agents)

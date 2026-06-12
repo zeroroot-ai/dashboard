@@ -23,7 +23,7 @@ export default function TeamsPage() {
             <p className="font-medium text-foreground">What teams are for</p>
             <p>
               A team is a named group of users inside your tenant. Membership
-              alone grants nothing — teams become useful when you write
+              alone grants nothing, teams become useful when you write
               per-team denies in{" "}
               <Link
                 href="/dashboard/organization/security-policy"
@@ -37,7 +37,7 @@ export default function TeamsPage() {
             </p>
             <p>
               Deleting a team also removes every member, admin, and per-team
-              deny tuple referencing it. Members keep their tenant access —
+              deny tuple referencing it. Members keep their tenant access -
               only the team binding goes away.
             </p>
           </div>

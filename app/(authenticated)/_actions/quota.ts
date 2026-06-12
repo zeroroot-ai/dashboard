@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * quota.ts — Server Action for the dashboard's in-app quota UX.
+ * quota.ts, Server Action for the dashboard's in-app quota UX.
  * Spec plans-and-quotas-simplification R9.B.
  *
  * Returns the live usage snapshot for the current session's tenant.
@@ -34,7 +34,7 @@ export async function getQuotaUsage(): Promise<QuotaUsage | null> {
   try {
     tenantId = await requireActiveTenant();
   } catch {
-    // No active tenant — caller renders gracefully without quota data.
+    // No active tenant, caller renders gracefully without quota data.
     return null;
   }
   try {

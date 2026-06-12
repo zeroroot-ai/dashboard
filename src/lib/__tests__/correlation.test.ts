@@ -9,7 +9,7 @@
 import { describe, it, expect } from "vitest";
 import { withCorrelation, getCorrelationId } from "../correlation";
 
-// UUID v4 pattern — matches what crypto.randomUUID() produces.
+// UUID v4 pattern, matches what crypto.randomUUID() produces.
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -24,7 +24,7 @@ describe("withCorrelation / getCorrelationId", () => {
       const a = getCorrelationId();
       const b = getCorrelationId();
       // Not strictly guaranteed but crypto.randomUUID() collision probability
-      // is negligible — two consecutive calls must differ.
+      // is negligible, two consecutive calls must differ.
       expect(a).not.toBe(b);
     });
   });

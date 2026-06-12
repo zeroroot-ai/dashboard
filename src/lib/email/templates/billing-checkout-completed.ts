@@ -23,7 +23,7 @@ export interface BillingCheckoutCompletedCtx {
 }
 
 export function render(ctx: BillingCheckoutCompletedCtx): EmailMessage {
-  const subject = `Your Gibson trial has started — ${ctx.tierName} plan`;
+  const subject = `Your Gibson trial has started, ${ctx.tierName} plan`;
 
   const text = [
     `Hi,`,
@@ -39,7 +39,7 @@ export function render(ctx: BillingCheckoutCompletedCtx): EmailMessage {
     ``,
     `Questions? Contact ${ctx.supportEmail}.`,
     ``,
-    `— The Gibson team`,
+    `The Gibson team`,
   ].join('\n');
 
   const html = [

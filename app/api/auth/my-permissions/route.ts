@@ -3,7 +3,7 @@
  *
  * Server-side endpoint that returns the authenticated user's permissions
  * within the active session tenant. The endpoint exists so the browser
- * never has to hold a daemon-direct gRPC transport — every call to the
+ * never has to hold a daemon-direct gRPC transport, every call to the
  * daemon flows through Envoy via the server-side `userClient` wrapper.
  *
  * Tenant context is resolved via `requireActiveTenant()` (the HMAC-signed
@@ -12,7 +12,7 @@
  * leaked the tenant identifier into browser history / referer / access logs
  * (dashboard#209).
  *
- * Spec: zero-trust-hardening Requirements 6.1, 6.2 — restore the
+ * Spec: zero-trust-hardening Requirements 6.1, 6.2, restore the
  * "always through Envoy" doctrine in code by removing the browser-side
  * `createGrpcWebTransport` constructor and replacing the call site with a
  * fetch to this route.
@@ -24,7 +24,7 @@
  *   - On success, returns the JSON-serialized `GetMyPermissionsResponse`
  *     with `Cache-Control: private, max-age=<NEXT_PUBLIC_PERMISSIONS_CACHE_TTL_MS / 1000>`.
  *     The response is per-user; the server itself does NOT cache across
- *     users — only the standard HTTP private-cache semantics apply.
+ *     users, only the standard HTTP private-cache semantics apply.
  *   - Returns `502 { error: 'daemon-unavailable' }` if the daemon RPC fails.
  *
  * @module api/auth/my-permissions
@@ -43,7 +43,7 @@ import {
   GetMyPermissionsResponseSchema,
 } from '@/src/gen/gibson/daemon/v1/daemon_pb';
 
-const DEFAULT_TTL_MS = 5 * 60 * 1_000; // 5 minutes — mirrors permissions-cache.ts
+const DEFAULT_TTL_MS = 5 * 60 * 1_000; // 5 minutes, mirrors permissions-cache.ts
 
 function getTtlSeconds(): number {
   const raw = process.env['NEXT_PUBLIC_PERMISSIONS_CACHE_TTL_MS'];
@@ -81,7 +81,7 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json(body, {
       status: 200,
       headers: {
-        // Per-user cache only — `private` keeps the response out of any
+        // Per-user cache only, `private` keeps the response out of any
         // shared (CDN / proxy) cache; `max-age` matches the in-memory TTL
         // the previous browser cache used.
         'Cache-Control': `private, max-age=${ttlSeconds}`,

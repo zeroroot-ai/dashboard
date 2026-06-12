@@ -7,7 +7,7 @@
  * /dashboard, /missions, /findings, /settings without a live Zitadel
  * sign-in flow.
  *
- * SECURITY — this module effectively forges a session. Two independent
+ * SECURITY, this module effectively forges a session. Two independent
  * production guards, AND-ed:
  *
  *   1. NODE_ENV must NOT be "production".
@@ -39,7 +39,7 @@ export interface TestSessionInput {
   sub: string;
   name?: string;
   email?: string;
-  /** Whether to use the secure cookie name (default: false — dev/HTTP). */
+  /** Whether to use the secure cookie name (default: false, dev/HTTP). */
   secureCookie?: boolean;
   /** Override the AUTH_SECRET. Falls back to env. */
   secret?: string;

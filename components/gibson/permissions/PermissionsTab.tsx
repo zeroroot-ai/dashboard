@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * PermissionsTab — agent / tool detail Permissions tab.
+ * PermissionsTab, agent / tool detail Permissions tab.
  *
  * Renders four sections from a WhoAmIResponse fetched server-side by
  * the page route: effective-access summary, direct grants (editable),
@@ -44,7 +44,7 @@ import {
 } from '@/app/actions/agent-permissions';
 
 // ---------------------------------------------------------------------------
-// Wire types — mirror WhoAmIResponse projection from the server
+// Wire types, mirror WhoAmIResponse projection from the server
 // ---------------------------------------------------------------------------
 
 export type SourceKind =
@@ -131,7 +131,7 @@ function sourceLabel(s: SourceVM) {
 }
 
 function formatTime(unix: number) {
-  if (!unix) return '—';
+  if (!unix) return '-';
   return new Date(unix * 1000).toLocaleString(undefined, {
     dateStyle: 'short',
     timeStyle: 'short',
@@ -217,7 +217,7 @@ function EffectiveSummary({
         {kind === 'tool' && (
           <>
             {' '}
-            — and invoke {summary.invoke} plugin{summary.invoke === 1 ? '' : 's'}
+           , and invoke {summary.invoke} plugin{summary.invoke === 1 ? '' : 's'}
           </>
         )}
         .
@@ -272,7 +272,7 @@ function DirectGrantsSection({
                 className="flex items-center justify-between rounded border border-highlight/20 px-3 py-1.5"
               >
                 <span>
-                  <span className="data-value">{g.componentRef}</span> — {g.relation}
+                  <span className="data-value">{g.componentRef}</span>, {g.relation}
                 </span>
                 <Button
                   type="button"
@@ -405,7 +405,7 @@ function InheritedGrantsSection({
                 className="rounded border border-highlight/10 px-3 py-1.5 font-mono"
               >
                 <div>
-                  <span className="data-value">{entry.grant.componentRef}</span> —{' '}
+                  <span className="data-value">{entry.grant.componentRef}</span> -{' '}
                   {entry.grant.relation}
                 </div>
                 <div className="mt-1 text-[0.65rem] text-muted-foreground">

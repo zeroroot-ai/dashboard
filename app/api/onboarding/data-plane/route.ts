@@ -12,14 +12,14 @@
  * The CRD field for the knowledge-graph store is `stores.neo4j` (an
  * implementation detail owned by the tenant-operator). This route translates
  * that to `graph` in the response so the dashboard's wire shape stays
- * agnostic of the backend choice — see the customer-doc terminology rule.
+ * agnostic of the backend choice, see the customer-doc terminology rule.
  *
  * Each `state` is one of: "provisioning" | "ready" | "failed" | null.
  * null means the field is absent on the CRD (legacy CR or not yet started).
  *
  * Used by the onboarding page to poll live provisioning progress (D8).
  *
- * Tenant resolved via requireActiveTenant() — fail-closed, no default fallback.
+ * Tenant resolved via requireActiveTenant(), fail-closed, no default fallback.
  * Spec: dashboard-no-backing-store-clients (issue #579).
  */
 
@@ -66,7 +66,7 @@ export async function GET() {
     return NextResponse.json(payload);
   } catch (error) {
     if (error instanceof K8sNotFoundError) {
-      // Tenant CR not yet created — provisioning hasn't started.
+      // Tenant CR not yet created, provisioning hasn't started.
       const notStarted: DataPlaneStatus = {
         postgres: { state: null, reason: null, lastUpdated: null },
         redis: { state: null, reason: null, lastUpdated: null },

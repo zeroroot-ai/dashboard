@@ -7,7 +7,7 @@
  *
  * When the daemon is unreachable (codes.Unavailable / codes.Internal), the
  * component passes `storeUnavailable={true}` to the hydrator so the chat UI
- * can render a distinct error state — never a silent empty list that looks
+ * can render a distinct error state, never a silent empty list that looks
  * like data loss.
  *
  * spec: chat-conversation-persistence (dashboard#446)
@@ -30,7 +30,7 @@ export async function ConversationListProvider({ children }: ConversationListPro
     const records = await listConversations(50);
     conversations = records.map((r) => ({
       id: r.id,
-      // agent_id is not in the ConversationSummary proto — default to 'general'
+      // agent_id is not in the ConversationSummary proto, default to 'general'
       // until GetConversation is fetched on demand.
       agentId: 'general',
       // Messages are empty on list hydration; they are loaded when the user
@@ -41,7 +41,7 @@ export async function ConversationListProvider({ children }: ConversationListPro
       title: r.title || 'Conversation',
     }));
   } catch {
-    // Daemon unreachable or unauthenticated — mark the store as unavailable
+    // Daemon unreachable or unauthenticated, mark the store as unavailable
     // so the UI can show a distinct error state instead of an empty list.
     storeUnavailable = true;
   }

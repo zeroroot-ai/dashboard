@@ -6,7 +6,7 @@
  * A target is identified by a server-minted UUID; name and the other fields are
  * metadata. These actions wrap the customer-facing DaemonService target RPCs
  * (CreateTarget / GetTarget / ListTargets / UpdateTarget / DeleteTarget) and
- * route through Envoy + SPIFFE mTLS via userClient — never a direct daemon
+ * route through Envoy + SPIFFE mTLS via userClient, never a direct daemon
  * channel.
  */
 

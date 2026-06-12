@@ -2,7 +2,7 @@
 
 /**
  * Shared Read/Write/Execute matrix rendered by the extended Agents /
- * Tools / Plugins pages plus the new Security Policy page. Pure UI —
+ * Tools / Plugins pages plus the new Security Policy page. Pure UI -
  * parent owns data fetching and state; this component emits onToggle
  * events with (item, action, newValue).
  *
@@ -36,7 +36,7 @@ export interface RWXMatrixProps {
   rowTrailingAction?: (item: RWXItem) => ReactNode;
   /**
    * `"toggle"` (default): Shadcn Switch, optimistic update expected.
-   * `"approve"`: Shadcn Checkbox — the parent collects approvals in local
+   * `"approve"`: Shadcn Checkbox, the parent collects approvals in local
    * state and only issues writes on confirm (no optimistic update).
    */
   mode?: "toggle" | "approve";

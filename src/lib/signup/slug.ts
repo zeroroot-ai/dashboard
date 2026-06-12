@@ -1,5 +1,5 @@
 /**
- * slugify — derives a tenant slug from a workspace display name.
+ * slugify, derives a tenant slug from a workspace display name.
  *
  * Mirrors the implementation in app/actions/signup.ts so the client can
  * preview the same slug the server will compute. Keep these in sync.
@@ -17,7 +17,7 @@ export function slugify(s: string): string {
 
 /**
  * isReservedSlug returns true when `slug` matches the chart-managed
- * denylist — either an exact entry or a registered prefix.
+ * denylist, either an exact entry or a registered prefix.
  */
 export function isReservedSlug(
   slug: string,

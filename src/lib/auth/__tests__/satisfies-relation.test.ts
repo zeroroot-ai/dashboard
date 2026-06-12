@@ -6,7 +6,7 @@
  * `relation: "tenant_viewer"` to a proto without first adding the relation to
  * RELATION_ORDER, this test fails at CI before the change can merge.
  *
- * The relation list is derived at runtime from the committed registry — do NOT
+ * The relation list is derived at runtime from the committed registry, do NOT
  * hard-code it. If new relations appear in the registry after regen, update
  * RELATION_ORDER and the test self-heals.
  *

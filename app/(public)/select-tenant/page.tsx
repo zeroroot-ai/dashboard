@@ -57,7 +57,7 @@ export default async function SelectTenantPage({ searchParams }: PageProps) {
       <h1 className="mb-2 text-2xl font-semibold">Select an organization</h1>
       <p className="mb-6 text-muted-foreground">
         You belong to multiple organizations. Pick which one to act in for this
-        session — you can switch at any time from the top bar.
+        session, you can switch at any time from the top bar.
       </p>
 
       <div className="space-y-3">

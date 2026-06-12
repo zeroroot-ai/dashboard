@@ -8,7 +8,7 @@
  *
  * This store owns layout mode, selection/hover, display settings, and the live
  * node/edge counts. The camera itself is owned imperatively by the rendering
- * engine adapter (`GraphCanvas`) and driven through its handle — there is no
+ * engine adapter (`GraphCanvas`) and driven through its handle, there is no
  * duplicate camera state here, and crucially no "layoutAnimating" flag that can
  * wedge the layout controls into a permanently-disabled state (dashboard#664).
  */
@@ -86,24 +86,24 @@ export interface GraphViewState {
   nodeCount: number;
   edgeCount: number;
 
-  // Actions — Layout
+  // Actions, Layout
   setLayoutMode: (mode: GraphLayoutMode) => void;
 
-  // Actions — Selection
+  // Actions, Selection
   selectNode: (id: string | null) => void;
   setHoveredNode: (id: string | null) => void;
 
-  // Actions — Display
+  // Actions, Display
   setDisplay: (settings: Partial<GraphDisplaySettings>) => void;
   toggleLabels: () => void;
   toggleParticles: () => void;
   resetDisplay: () => void;
 
-  // Actions — Overlays
+  // Actions, Overlays
   toggleLegend: () => void;
   toggleMinimap: () => void;
 
-  // Actions — Node manipulation
+  // Actions, Node manipulation
   togglePin: (id: string) => void;
   hideNode: (id: string) => void;
   isolateNode: (id: string) => void;
@@ -111,13 +111,13 @@ export interface GraphViewState {
   clearFocus: () => void;
   showAllNodes: () => void;
 
-  // Actions — Timeline
+  // Actions, Timeline
   openTimeline: (cutoff: number | null) => void;
   closeTimeline: () => void;
   setTimelineCutoff: (cutoff: number | null) => void;
   setTimelinePlaying: (playing: boolean) => void;
 
-  // Actions — Stats
+  // Actions, Stats
   setStats: (nodeCount: number, edgeCount: number) => void;
 }
 
@@ -162,7 +162,7 @@ export const useGraphViewStore = create<GraphViewState>()(
       nodeCount: 0,
       edgeCount: 0,
 
-      // Layout — a plain assignment. No animating/disabled side effect, so the
+      // Layout, a plain assignment. No animating/disabled side effect, so the
       // layout controls can be clicked any number of times without locking up.
       setLayoutMode: (mode) => set({ layoutMode: mode }),
 
@@ -214,7 +214,7 @@ export const useGraphViewStore = create<GraphViewState>()(
     }),
     {
       name: 'gibson-graph-view-store',
-      // Persist only durable user preferences — not selection or live counts.
+      // Persist only durable user preferences, not selection or live counts.
       partialize: (state) => ({
         layoutMode: state.layoutMode,
         display: state.display,

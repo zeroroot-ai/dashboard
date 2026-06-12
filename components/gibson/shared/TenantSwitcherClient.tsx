@@ -54,7 +54,7 @@ export function TenantSwitcherClient({
       if (result.ok) {
         router.refresh();
       }
-      // On failure (rare — usually means membership was just revoked), the
+      // On failure (rare, usually means membership was just revoked), the
       // next refresh will route to /select-tenant via middleware.
     });
   }

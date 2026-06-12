@@ -3,7 +3,7 @@
  *
  * Calls the daemon's `gibson.daemon.v1.DaemonService/ListMyMemberships` RPC
  * via the user-acting transport (`gibson-client.ts`'s shared transport). The
- * RPC is registered in ext-authz with `unauthenticated: true` — identity is
+ * RPC is registered in ext-authz with `unauthenticated: true`, identity is
  * required (validated by Envoy jwt_authn + ext-authz) but no per-tenant FGA
  * gate is performed (the response IS the tenant list).
  *
@@ -59,7 +59,7 @@ export type Membership = {
  *
  * `permission_denied` and `unauthenticated` cover the two ext-authz / FGA
  * deny shapes (ConnectRPC codes 7 and 16). They must NOT be conflated with
- * `daemon_unavailable` (code 14) — surfacing a permission failure as
+ * `daemon_unavailable` (code 14), surfacing a permission failure as
  * "service unreachable" misattributes the cause and triggers "on-call has
  * been paged" copy where no on-call action would help. See dashboard#45.
  */
@@ -107,7 +107,7 @@ const MembershipSchema = z.object({
 /**
  * Normalize an arbitrary role string from the daemon into the strict
  * `'owner' | 'admin' | 'member'` shape this module promises. Anything
- * outside that set is treated as `"member"` (lowest privilege) — the
+ * outside that set is treated as `"member"` (lowest privilege), the
  * daemon emits exactly these three today (`tenant.owner` was added in
  * gibson v0.27.0 / spec `tenant-role-taxonomy`), but defending against
  * drift is cheap.
@@ -126,7 +126,7 @@ function normalizeRole(raw: string): 'owner' | 'admin' | 'member' {
  * Build a daemon client that authenticates as the current user but does
  * NOT send `x-gibson-tenant`. ListMyMemberships is registered as
  * `unauthenticated: true` in ext-authz (identity is required, but no
- * per-tenant FGA gate runs — the response IS the tenant list), so a
+ * per-tenant FGA gate runs, the response IS the tenant list), so a
  * tenant header would only confuse audit logs. We can't compose
  * `userClient` here either: that helper reads the active-tenant cookie,
  * but the cookie's validity itself depends on the result of THIS RPC,
@@ -186,7 +186,7 @@ export async function invalidateMembershipCache(userId: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 /**
- * Inner fetch — calls the daemon and parses the response. No caching.
+ * Inner fetch, calls the daemon and parses the response. No caching.
  * Increments `_daemonCallCount` on every call, used by the R17 cache
  * tests to assert the request-collapse property.
  */
@@ -217,7 +217,7 @@ async function fetchMembershipsFromDaemon(): Promise<Membership[]> {
           // The daemon returns Internal when FGA fails inside ListMyMemberships.
           throw new MembershipResolutionError('fga_unavailable', err, codeLabel);
         default:
-          // Any other ConnectRPC code is genuinely unknown — surfacing as
+          // Any other ConnectRPC code is genuinely unknown, surfacing as
           // `daemon_unavailable` would falsely page on-call. The generic
           // error page is the honest UX.
           throw new MembershipResolutionError('unknown', err, codeLabel);
@@ -273,7 +273,7 @@ export const getMyMemberships = cache(async (): Promise<Membership[]> => {
 
   // The cross-request Redis cache is now managed by the daemon (via the
   // InvalidateMembershipCache RPC). The dashboard no longer holds a Redis
-  // client — the per-request react.cache() memoization above is the only
+  // client, the per-request react.cache() memoization above is the only
   // dashboard-side caching layer. Each request that isn't memoized within
   // the same render will hit the daemon, which applies its own server-side
   // cache (keyed on user sub, short TTL).

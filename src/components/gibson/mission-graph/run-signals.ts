@@ -1,15 +1,15 @@
 /**
- * run-signals.ts — pure accumulation of a mission run's live node-lifecycle
+ * run-signals.ts, pure accumulation of a mission run's live node-lifecycle
  * events into the {@link RunSignals} shape that {@link deriveOverlay} consumes.
  *
  * The daemon streams per-node `started` / `completed` / `failed` events as a
  * run progresses (gibson#604). MissionFlowTab folds each event into an
  * accumulator with this module, then snapshots it to RunSignals and hands it to
  * the (already-tested) overlay derivation. Kept free of React so the folding
- * rules are unit-testable in isolation — there is NO derivation logic here, only
+ * rules are unit-testable in isolation, there is NO derivation logic here, only
  * accumulation.
  *
- * Spec: MissionGraph epic — dashboard#657 (overlay) / gibson#604 (live events).
+ * Spec: MissionGraph epic, dashboard#657 (overlay) / gibson#604 (live events).
  */
 
 import type { RunSignals } from "./overlay";

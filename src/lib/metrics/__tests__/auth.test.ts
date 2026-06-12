@@ -35,7 +35,7 @@ beforeEach(() => {
 /**
  * Read the numeric value of a single (metric name, labels) combination from
  * the registry's JSON dump. Returns 0 when the combination has not been
- * observed — prom-client omits zero-valued series from `getMetricsAsJSON`
+ * observed, prom-client omits zero-valued series from `getMetricsAsJSON`
  * for counters, so missing rows are equivalent to a zero count.
  */
 async function readCounter(
@@ -58,7 +58,7 @@ async function readCounter(
 // Counters: assert `.inc()` increments the expected label combination only
 // ---------------------------------------------------------------------------
 
-describe("auth counters — label routing", () => {
+describe("auth counters, label routing", () => {
   it("signupAttempts{outcome,reason}: inc routes only to the labelled series", async () => {
     signupAttempts.inc({ outcome: "ok", reason: "" });
     signupAttempts.inc({ outcome: "failed", reason: "password_policy" });

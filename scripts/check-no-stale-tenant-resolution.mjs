@@ -3,7 +3,7 @@
  * Build guard: fail the build if any dashboard source file references the
  * removed tenant-resolution machinery.
  *
- * Spec: tenant-membership-not-in-jwt — task 18
+ * Spec: tenant-membership-not-in-jwt, task 18
  * Requirement: R9 criterion 1
  *
  * Background
@@ -20,7 +20,7 @@
  * Detection
  * ---------
  * Fails the build on any non-comment occurrence of:
- *   - `session.user.tenant`  (the removed type field — different from .tenantId
+ *   - `session.user.tenant`  (the removed type field, different from .tenantId
  *                             which the GibsonSession wrapper still exposes)
  *   - `gibson:tenant`        (deleted Zitadel claim tier 1)
  *   - `urn:zitadel:iam:user:resourceowner:id`  (deleted Zitadel claim tier 2)
@@ -74,13 +74,13 @@ const SKIP_FILES = new Set([`scripts/${SCRIPT_NAME}`]);
  * fields don't trip the guard.
  */
 const BANNED = [
-  [/\bsession\.user\.tenant(?![A-Za-z])/, 'removed Auth.js session field — use getActiveTenant() / getMyMemberships() instead'],
-  ['gibson:tenant', 'deleted Zitadel claim (tier 1) — tenant comes from the gibson_active_tenant cookie now'],
+  [/\bsession\.user\.tenant(?![A-Za-z])/, 'removed Auth.js session field, use getActiveTenant() / getMyMemberships() instead'],
+  ['gibson:tenant', 'deleted Zitadel claim (tier 1), tenant comes from the gibson_active_tenant cookie now'],
   ['urn:zitadel:iam:user:resourceowner:id', 'deleted Zitadel claim (tier 2)'],
   ['listTenantsForOwner', 'deleted K8s helper from src/lib/k8s/tenants-by-owner.ts'],
-  ['tenants-by-owner', 'deleted module — see spec tenant-membership-not-in-jwt'],
-  // Spec auth-resolution-hardening (R5.3) — legacy reason codes / comment terms.
-  ['tier 3', 'legacy fallback-chain language; removed under spec auth-resolution-hardening — describe the new path directly instead'],
+  ['tenants-by-owner', 'deleted module, see spec tenant-membership-not-in-jwt'],
+  // Spec auth-resolution-hardening (R5.3), legacy reason codes / comment terms.
+  ['tier 3', 'legacy fallback-chain language; removed under spec auth-resolution-hardening, describe the new path directly instead'],
   ['fallback chain', 'legacy fallback-chain language; removed under spec auth-resolution-hardening'],
 ];
 
@@ -161,7 +161,7 @@ function scan() {
     total += v.length;
     console.error(`\n${relative(ROOT, path)}`);
     for (const { line, needle, reason, snippet } of v) {
-      console.error(`  L${line}: ${needle} — ${reason}`);
+      console.error(`  L${line}: ${needle}, ${reason}`);
       console.error(`    ${snippet}`);
     }
   }
@@ -177,7 +177,7 @@ function selftest() {
       console.error(`[${SCRIPT_NAME}] SELFTEST FAILED: guard did not fire on planted violation`);
       process.exit(1);
     }
-    console.log(`[${SCRIPT_NAME}] selftest OK — guard caught the planted violation`);
+    console.log(`[${SCRIPT_NAME}] selftest OK, guard caught the planted violation`);
   } finally {
     try { unlinkSync(fixture); } catch { /* ignore */ }
   }
@@ -191,8 +191,8 @@ if (argv.includes('--selftest')) {
 
 const violations = scan();
 if (violations > 0) {
-  console.error(`\n[${SCRIPT_NAME}] FAIL — ${violations} violation(s). Spec: ${SPEC_NAME}`);
+  console.error(`\n[${SCRIPT_NAME}] FAIL, ${violations} violation(s). Spec: ${SPEC_NAME}`);
   console.error('Use the new auth modules: getActiveTenant() and getMyMemberships().');
   process.exit(1);
 }
-console.log(`[${SCRIPT_NAME}] OK — no banned tenant-resolution patterns found`);
+console.log(`[${SCRIPT_NAME}] OK, no banned tenant-resolution patterns found`);

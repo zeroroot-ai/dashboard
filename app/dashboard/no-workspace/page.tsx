@@ -11,20 +11,20 @@ import {
 import { getServerSession } from "@/src/lib/auth";
 
 /**
- * No-workspace page — defensive fallback.
+ * No-workspace page, defensive fallback.
  *
  * Post-`dashboard-native-signup` this page should be unreachable during
  * normal operation: `signupAction` always applies a Tenant CR + TenantMember
  * before redirecting the user to OIDC sign-in, so every signed-in user
  * arrives at `/dashboard` with an active tenant cookie set (resolved via
  * `requireActiveTenant()` from the `gibson_active_tenant` HMAC-signed cookie
- * + FGA membership lookup — see `tenant-membership-not-in-jwt`, dashboard#583).
+ * + FGA membership lookup, see `tenant-membership-not-in-jwt`, dashboard#583).
  * Middleware additionally redirects tenantless users to `/api/auth/federated-signout`.
  *
  * This page exists only for a narrow diagnostic case: an operator-side
  * failure after signup completed (Tenant CR deleted out from under the
  * user, Zitadel org removed manually, etc.). Showing a "Create workspace"
- * link would loop the user back through signup — wrong for this scenario.
+ * link would loop the user back through signup, wrong for this scenario.
  * Instead, we offer sign-out and a support hand-off.
  *
  * Spec: dashboard-native-signup task 20.
@@ -32,12 +32,12 @@ import { getServerSession } from "@/src/lib/auth";
 export default async function NoWorkspacePage() {
   const session = await getServerSession();
 
-  // Not signed in — normal flow.
+  // Not signed in, normal flow.
   if (!session) {
     redirect("/login");
   }
 
-  // Has a tenant membership — page should not have been reached.
+  // Has a tenant membership, page should not have been reached.
   // session.user.tenantId was removed in dashboard#583 lock-in;
   // use the membership list instead.
   if (session.user?.tenants && session.user.tenants.length > 0) {
@@ -62,7 +62,7 @@ export default async function NoWorkspacePage() {
         <CardContent className="flex flex-col gap-4">
           <p className="text-muted-foreground text-sm leading-relaxed">
             Your account is signed in but we can&apos;t find a workspace
-            associated with it. This is usually a temporary issue — please
+            associated with it. This is usually a temporary issue, please
             sign out and back in to retry. If it persists, contact support.
           </p>
 
@@ -78,7 +78,7 @@ export default async function NoWorkspacePage() {
 
         <CardFooter>
           {/*
-            Federated sign-out — clears the Auth.js cookie AND ends the
+            Federated sign-out, clears the Auth.js cookie AND ends the
             Zitadel session (so the next /login doesn't silently re-auth).
             Deliberately NO "Create workspace" button: workspace creation
             happens at /signup only, and linking here would loop a

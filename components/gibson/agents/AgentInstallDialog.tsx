@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AgentInstallDialog — per-action approval UI for agent installation.
+ * AgentInstallDialog, per-action approval UI for agent installation.
  *
  * Flow: validate the agent's manifest via DiscoveryService.ValidateComponent,
  * render the requested permissions as an RWXMatrix in `approve` mode
@@ -398,7 +398,7 @@ function SchemaErrorList({ errors }: { errors: ValidationError[] }) {
     <Alert variant="destructive">
       <AlertTriangle className="size-4" />
       <AlertDescription className="text-xs">
-        <p className="font-medium mb-1">Manifest schema errors — fix upstream and re-upload.</p>
+        <p className="font-medium mb-1">Manifest schema errors, fix upstream and re-upload.</p>
         <ul className="list-disc list-inside space-y-0.5">
           {errors.map((e, i) => (
             <li key={i}>
@@ -425,7 +425,7 @@ function AccessErrorList({ errors }: { errors: AccessError[] }) {
               <code>
                 {e.target}:{e.action}
               </code>{" "}
-              — {e.reason || "denied by current policy"}
+             , {e.reason || "denied by current policy"}
             </li>
           ))}
         </ul>

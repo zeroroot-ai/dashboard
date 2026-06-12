@@ -19,17 +19,17 @@ import { TaskSchema } from '@/src/gen/gibson/types/v1/types_pb';
  * One-click demo path. Skips the YAML authoring flow entirely:
  *
  *   1. Build a minimal MissionDefinition proto in-process (single nmap-agent
- *      node targeting scanme.nmap.org — the Nmap project's public scan
+ *      node targeting scanme.nmap.org, the Nmap project's public scan
  *      target, sanctioned for hands-off demos).
  *   2. Register the definition via daemon.CreateMissionDefinition.
  *   3. Create a mission instance via daemon.CreateMission.
  *   4. Dispatch via runMission (RunMission streaming RPC, first event then
- *      return — same pattern as /api/missions/[id]/start#239).
+ *      return, same pattern as /api/missions/[id]/start#239).
  *   5. Return the started mission's id so the client can navigate to the
  *      mission detail page.
  *
  * The dispatch creates a *new* mission record (RunMission has no
- * `mission_id` field by design — see #239 dispatch notes). Both records
+ * `mission_id` field by design, see #239 dispatch notes). Both records
  * land in the tenant's mission list; the response carries the *running*
  * one's id so the dashboard navigates to the live view.
  */
@@ -73,7 +73,7 @@ function buildDemoMissionDefinition() {
 
 export async function POST(request: NextRequest) {
   try {
-    // CSRF — zero-trust-hardening Req 11.5
+    // CSRF, zero-trust-hardening Req 11.5
     try {
       await requireCsrf(request);
     } catch (err) {
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     // Step 1: register the mission definition.
     // DaemonService.CreateMissionDefinition (OSS SDK, ADR-0037) accepts a
-    // fully-formed MissionDefinition proto in the `definition` field — no
+    // fully-formed MissionDefinition proto in the `definition` field, no
     // source oneof. Pass the in-process proto directly.
     const defResp = await client.createMissionDefinition({ definition });
     const missionDefinitionId = defResp.missionDefinitionId;

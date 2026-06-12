@@ -28,7 +28,7 @@ export default async function LoginErrorPage({ searchParams }: PageProps) {
   const copy = ERROR_COPY[reason];
   const correlationId = await readCorrelationId();
 
-  // Telemetry — fire-and-emit; never throws inside the renderer.
+  // Telemetry, fire-and-emit; never throws inside the renderer.
   try {
     incrementLoginError(reason);
     // Structured log; emitted to stderr so the platform's log shipper picks it up.

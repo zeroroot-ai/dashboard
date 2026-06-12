@@ -7,7 +7,7 @@
  * into the daemon. The dashboard process must:
  *   - never read an LLM-provider API key from `process.env`
  *   - never import `@ai-sdk/<provider>` (Vercel adapters for specific
- *     providers — they would talk to upstream directly)
+ *     providers, they would talk to upstream directly)
  *   - never import a vendor SDK directly (`@anthropic-ai/sdk`, bare
  *     `openai`, `@google/generative-ai`, `@aws-sdk/client-bedrock-runtime`,
  *     `cohere-ai`, `@mistralai/mistralai`, `@google/genai`)
@@ -29,7 +29,7 @@
  *
  * ## Comment-aware scanning
  * Lines that are entirely inside `//`-comments or C-style block
- * comments are skipped — regex literals that happen to live in JSDoc
+ * comments are skipped, regex literals that happen to live in JSDoc
  * (e.g. the adapter's own file header warning about these patterns)
  * are not violations.
  *
@@ -50,12 +50,12 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
 // --------------------------------------------------------------------------
-// Argument parsing — only `-h`/`--help` and an optional root path.
+// Argument parsing, only `-h`/`--help` and an optional root path.
 // --------------------------------------------------------------------------
 const argv = process.argv.slice(2);
 if (argv.includes('-h') || argv.includes('--help')) {
   process.stdout.write(
-    'check-no-llm-credential-reads — spec 25 static-analysis guard\n' +
+    'check-no-llm-credential-reads, spec 25 static-analysis guard\n' +
       '\n' +
       'Usage:\n' +
       '  node scripts/check-no-llm-credential-reads.mjs [path]\n' +
@@ -82,7 +82,7 @@ const EXCLUDE_DIRS = new Set([
 ]);
 
 // The two guard scripts legitimately list the banned patterns in regex
-// literals — excluding them prevents self-match. The test file for this
+// literals, excluding them prevents self-match. The test file for this
 // script also stages synthetic violations inside regex literals during
 // assertions, so it is excluded too.
 const EXCLUDE_FILES = new Set([
@@ -116,7 +116,7 @@ const BANNED = [
   {
     name: '@ai-sdk/<provider> import',
     // Matches @ai-sdk/<specific-provider>. Does NOT match @ai-sdk/provider
-    // (types) or @ai-sdk/react (client hooks) — those are allowed.
+    // (types) or @ai-sdk/react (client hooks), those are allowed.
     regex:
       /@ai-sdk\/(?:anthropic|openai|google|amazon-bedrock|cohere|huggingface|mistral|openai-compatible|google-vertex|azure|xai|groq|deepseek|deepinfra|together|fireworks|vercel)\b/u,
     reason:
@@ -131,7 +131,7 @@ const BANNED = [
   {
     name: 'bare `openai` import',
     // Match only `from 'openai'` / `from "openai"` / `require('openai')`
-    // — do not match `@ai-sdk/openai-compatible` or path imports.
+    //, do not match `@ai-sdk/openai-compatible` or path imports.
     regex: /(?:from|require\s*\()\s*['"]openai['"]/u,
     reason: 'Direct OpenAI SDK import banned in dashboard.',
   },
@@ -192,7 +192,7 @@ function walk(dir, out = []) {
 //
 // Produces, for each line, a flag indicating whether the line body is
 // entirely inside a comment. Lines that mix code and comments are still
-// scanned — the regex literal that lives in a JSDoc block is the case
+// scanned, the regex literal that lives in a JSDoc block is the case
 // we genuinely need to skip (whole-line comment), not inline `// todo`
 // tails on otherwise-code lines.
 // --------------------------------------------------------------------------
@@ -222,9 +222,9 @@ function classifyLines(src) {
       if (!trimmed.includes('*/') || trimmed.lastIndexOf('*/') < trimmed.indexOf('/*')) {
         inBlock = true;
       } else if (trimmed.endsWith('*/')) {
-        // Single-line /* ... */ — still a pure-comment line.
+        // Single-line /* ... */, still a pure-comment line.
       } else {
-        // /* ... */ ... code — re-enable for code on tail.
+        // /* ... */ ... code, re-enable for code on tail.
         flags[i] = false;
       }
       continue;

@@ -115,11 +115,11 @@ if (process.env.NODE_ENV !== "production") {
       if (!(KNOWN_TEMPLATE_IDS as readonly string[]).includes(s)) {
         // eslint-disable-next-line no-console
         console.warn(
-          `[templates] dir contains ${s}.* but it's missing from KNOWN_TEMPLATE_IDS — add to src/app/dashboard/(auth)/missions/templates/_lib/templates.ts`,
+          `[templates] dir contains ${s}.* but it's missing from KNOWN_TEMPLATE_IDS, add to src/app/dashboard/(auth)/missions/templates/_lib/templates.ts`,
         );
       }
     }
   } catch {
-    /* ignore — first-run before vendor */
+    /* ignore, first-run before vendor */
   }
 }

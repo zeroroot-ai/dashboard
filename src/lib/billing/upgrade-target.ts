@@ -1,5 +1,5 @@
 /**
- * upgrade-target.ts — Tier-aware upgrade routing for the in-app quota
+ * upgrade-target.ts, Tier-aware upgrade routing for the in-app quota
  * UX. Spec plans-and-quotas-simplification R9.B.6.
  *
  * - team               → "Upgrade to Org"        (Stripe portal)

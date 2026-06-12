@@ -1,5 +1,5 @@
 /**
- * auth.po.ts — Authentication page-object helpers.
+ * auth.po.ts, Authentication page-object helpers.
  *
  * Provides reusable helpers for setting up authenticated browser contexts
  * using the test-only session encoder (src/lib/test-fixtures/encode-session.ts).

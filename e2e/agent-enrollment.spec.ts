@@ -1,5 +1,5 @@
 /**
- * agent-enrollment.spec.ts — Slice 5.7 part 2
+ * agent-enrollment.spec.ts, Slice 5.7 part 2
  *
  * Dashboard-side assertions for the agent enrollment flow:
  *
@@ -9,11 +9,11 @@
  *
  * Two test groups:
  *
- *   1. Stubbed (runs without kind cluster) — asserts the Register Agent form,
+ *   1. Stubbed (runs without kind cluster), asserts the Register Agent form,
  *      the credential panel, and the agent list page behaviour using
  *      Playwright network interception.
  *
- *   2. Integration (requires kind cluster + E2E_KIND_AVAILABLE=1) — drives
+ *   2. Integration (requires kind cluster + E2E_KIND_AVAILABLE=1), drives
  *      the real registration form against the cluster, captures the issued
  *      credentials, and asserts the agent appears in the list.
  *
@@ -75,7 +75,7 @@ const MOCK_AGENTS_LIST = {
 // Stubbed UI-state tests (no kind cluster required)
 // ---------------------------------------------------------------------------
 
-test.describe("agent enrollment — UI state (stubbed)", () => {
+test.describe("agent enrollment, UI state (stubbed)", () => {
   test.skip(needsBypass, "requires TEST_AUTH_BYPASS=1");
 
   test.beforeEach(async ({ context }) => {
@@ -194,14 +194,14 @@ test.describe("agent enrollment — UI state (stubbed)", () => {
       .or(page.getByText(/connected|healthy/i))
       .first();
 
-    // Status indicator is a nice-to-have for this stubbed test — log a warning
+    // Status indicator is a nice-to-have for this stubbed test, log a warning
     // if absent but don't fail (the agent name being visible is the key assertion).
     const statusVisible = await statusIndicator
       .isVisible({ timeout: 5_000 })
       .catch(() => false);
     if (!statusVisible) {
       console.warn(
-        "[agent-enrollment] Agent status indicator not found — may not be implemented on this page yet.",
+        "[agent-enrollment] Agent status indicator not found, may not be implemented on this page yet.",
       );
     }
   });
@@ -250,7 +250,7 @@ test.describe("agent enrollment — UI state (stubbed)", () => {
 // Integration tests (kind cluster required)
 // ---------------------------------------------------------------------------
 
-test.describe("agent enrollment — integration (kind cluster)", () => {
+test.describe("agent enrollment, integration (kind cluster)", () => {
   test.skip(needsCluster, "requires kind cluster + E2E_KIND_AVAILABLE=1");
 
   const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:30081";

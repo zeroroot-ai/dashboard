@@ -3,7 +3,7 @@
  * Build guard: fail the build if any dashboard source file makes a direct
  * `fetch(` call to a Zitadel endpoint outside the canonical adapter module.
  *
- * Spec: dashboard-native-signup — task 24
+ * Spec: dashboard-native-signup, task 24
  * Requirement: R4 criterion 1
  *
  * Background
@@ -17,19 +17,19 @@
  * -------------------
  * A file is in violation when a `fetch(` call appears within 5 lines of any
  * line containing one of these Zitadel-identifying strings:
- *   - zitadel         (case-insensitive — catches env vars, URL literals, etc.)
+ *   - zitadel         (case-insensitive, catches env vars, URL literals, etc.)
  *   - gibson-zitadel  (the in-cluster service name)
  *   - /v2/users       (Zitadel User Service v2 path prefix)
  *   - /management/v1/ (Zitadel Management API v1 path prefix)
  *   - /admin/v1/      (Zitadel Admin API v1 path prefix)
  *
- * This is deliberately a heuristic (not an AST parser) — it will catch
+ * This is deliberately a heuristic (not an AST parser), it will catch
  * 99 % of accidental violations while remaining fast and dependency-free.
  *
  * What is scanned
  * ---------------
  * `.ts` and `.tsx` files under `app/` and `src/`, EXCLUDING:
- *   - `src/lib/zitadel/**`  — the authorised adapter home
+ *   - `src/lib/zitadel/**` , the authorised adapter home
  *   - `node_modules/`, `.next/`
  *   - `__tests__/` directories, `*.test.*`, `*.spec.*`
  *   - Comment-only lines (lines whose first non-whitespace chars are `//` or `*`)
@@ -66,7 +66,7 @@ const SCAN_DIRS = ['app', 'src'];
 
 const SKIP_DIRS = new Set(['node_modules', '.next', '__tests__']);
 
-/** The authorised adapter directory — fetch() calls here are expected. */
+/** The authorised adapter directory, fetch() calls here are expected. */
 const ADAPTER_DIR_REL = 'src/lib/zitadel';
 
 const SKIP_FILES = new Set([`scripts/${SCRIPT_NAME}`]);
@@ -130,7 +130,7 @@ function walk(dir, out = []) {
  * Returns true if a source line is purely a comment and should be ignored.
  * We only skip lines whose first non-whitespace content is `//` or `*`
  * (JSDoc continuation). Lines mixing code and inline comments are still
- * scanned — `const url = zitadelUrl; // safe` is worth flagging.
+ * scanned, `const url = zitadelUrl; // safe` is worth flagging.
  */
 function isCommentLine(line) {
   const trimmed = line.trim();
@@ -252,7 +252,7 @@ function runSelfTest() {
   // Write a fixture in src/ (not in src/lib/zitadel) so the scanner will pick it up.
   const fixturePath = join(ROOT, 'src', '_selftest_zitadel_fetch_fixture.ts');
   const fixtureContent = [
-    '// SELFTEST FIXTURE — auto-deleted immediately after the guard runs',
+    '// SELFTEST FIXTURE, auto-deleted immediately after the guard runs',
     'async function badExample() {',
     '  const url = `http://gibson-zitadel:8080/management/v1/users`;',
     '  const resp = await fetch(url, { method: "GET" });',
@@ -285,12 +285,12 @@ function runSelfTest() {
 
   if (caught) {
     process.stdout.write(
-      `${SCRIPT_NAME} --selftest: PASS — guard correctly caught the synthetic violation.\n`,
+      `${SCRIPT_NAME} --selftest: PASS, guard correctly caught the synthetic violation.\n`,
     );
     process.exit(0);
   } else {
     process.stderr.write(
-      `${SCRIPT_NAME} --selftest: FAIL — guard did NOT catch a deliberate fetch(zitadel) in a fixture file.\n` +
+      `${SCRIPT_NAME} --selftest: FAIL, guard did NOT catch a deliberate fetch(zitadel) in a fixture file.\n` +
         `The guard is broken and must be fixed before merging.\n`,
     );
     process.exit(1);

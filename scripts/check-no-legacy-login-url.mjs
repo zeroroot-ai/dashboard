@@ -8,14 +8,14 @@
  * The 308 redirect stub that previously lived at
  * `app/dashboard/(guest)/login/v2/page.tsx` was removed one release after
  * Phase A of the auth-flow-hardening spec shipped. The allowlist is now
- * empty — every occurrence of the legacy path is a regression.
+ * empty, every occurrence of the legacy path is a regression.
  *
  * Scanned roots: `app/`, `components/`, `src/`, `e2e/`, `middleware.ts`.
  * Skipped: `node_modules/`, `.next/`, `test-results/`, `*.bak` files.
  *
  * Exit codes:
- *   0 — no hits outside the allowlist
- *   1 — at least one unexpected hit (details printed to stderr)
+ *   0, no hits outside the allowlist
+ *   1, at least one unexpected hit (details printed to stderr)
  */
 
 import { readdir, readFile, stat } from "node:fs/promises";
@@ -36,7 +36,7 @@ const SEARCH_ROOTS = [
 ];
 
 // Files that are allowed to contain the literal `/dashboard/login/v2`.
-// The 308 stub that previously qualified has been removed — the allowlist
+// The 308 stub that previously qualified has been removed, the allowlist
 // is now empty. Any new hit is a regression.
 const ALLOWLIST = new Set();
 
@@ -54,7 +54,7 @@ const SKIP_DIRS = new Set([
 const SKIP_FILE_SUFFIXES = [".bak"];
 
 // Source extensions we care about. Config files, markdown, etc. are also
-// scanned — any type that could carry a URL should be flagged.
+// scanned, any type that could carry a URL should be flagged.
 const SOURCE_EXTENSIONS = new Set([
   ".ts",
   ".tsx",
@@ -150,13 +150,13 @@ async function main() {
 
   if (hits.length === 0) {
     console.log(
-      "[check-no-legacy-login-url] OK — no references to /dashboard/login/v2 outside the allowlisted stub."
+      "[check-no-legacy-login-url] OK, no references to /dashboard/login/v2 outside the allowlisted stub."
     );
     process.exit(0);
   }
 
   console.error(
-    `[check-no-legacy-login-url] FAIL — found ${hits.length} reference(s) to the legacy login URL.\n` +
+    `[check-no-legacy-login-url] FAIL, found ${hits.length} reference(s) to the legacy login URL.\n` +
       "Replace with '/login' (canonical). Allowlist is for the stub file only.\n"
   );
   for (const hit of hits) {

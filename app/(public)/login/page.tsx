@@ -1,5 +1,5 @@
 /**
- * Login page — Server Component.
+ * Login page, Server Component.
  *
  * Reads the list of enabled social providers server-side (via buildSocialProviders)
  * so that no provider client IDs are leaked beyond what is strictly necessary,
@@ -16,14 +16,14 @@ export default function LoginPage() {
   // buildSocialProviders() throws at startup if any provider has a partial
   // config, so by the time this render runs either everything is valid or
   // the process has already crashed. We only pass the enabled IDs to the
-  // client — client secrets stay server-only.
+  // client, client secrets stay server-only.
   const { enabled } = buildSocialProviders();
 
   // UI preview toggle: when DASHBOARD_SOCIAL_PREVIEW=true, render every
   // supported provider button regardless of backend wiring so operators can
   // see the layout before real OAuth credentials are plumbed in. Clicking a
   // non-configured button surfaces Auth.js's "provider not found" error
-  // — acceptable for preview, not for production.
+  //, acceptable for preview, not for production.
   const previewAll = process.env.DASHBOARD_SOCIAL_PREVIEW === "true";
   const providers = previewAll ? PROVIDER_ORDER : enabled;
 

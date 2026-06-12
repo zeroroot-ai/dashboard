@@ -4,7 +4,7 @@ import { k8s } from './client';
 import type { Tenant } from './types';
 
 /**
- * Minimal Kubernetes OwnerReference type — matches metav1.OwnerReference
+ * Minimal Kubernetes OwnerReference type, matches metav1.OwnerReference
  * shape. Only includes fields the operator's mutating webhook + GC need.
  */
 export interface K8sOwnerReference {
@@ -28,7 +28,7 @@ const cache = new Map<string, CacheEntry>();
  * Resolve the Tenant's ownerRef by name. Result is cached per-process for
  * 60s to avoid GET'ing the Tenant CR on every child-creating action call.
  *
- * Returns null on any k8s error — caller falls through to create the child
+ * Returns null on any k8s error, caller falls through to create the child
  * WITHOUT an ownerRef. The operator's reconciler backfill will attach it
  * on next reconcile, so this path is safe (no data loss, just a short
  * window where the child has no ownerRef).

@@ -4,7 +4,7 @@ description: Sign up, install the gibson CLI, point it at your Gibson tenant, an
 ---
 
 This page gets your workstation talking to Gibson. Gibson itself is a
-hosted service — there's nothing to install on the server side. The only
+hosted service, there's nothing to install on the server side. The only
 thing you install locally is the **`gibson`** binary (shipped by the
 ADK), which you'll use to scaffold and register your agents, tools, and
 plugins.
@@ -15,15 +15,15 @@ plugins.
 |---|---|
 | **Go** (the version listed in the SDK's `go.mod`) | Building agents, tools, and plugins |
 | **`gibson`** | Scaffolding, registration, plugin runtime |
-| **Docker** | Optional — only needed if you'll run plugins as pods |
-| **`protoc`** | Optional — only if you're defining custom tool/plugin protos |
+| **Docker** | Optional, only needed if you'll run plugins as pods |
+| **`protoc`** | Optional, only if you're defining custom tool/plugin protos |
 
 ## 1. Sign up for a Gibson tenant
 
 Go to [zeroroot.ai](https://zeroroot.ai) and create an account. Your
 tenant is provisioned automatically; you'll be the **owner** of it.
 
-Trial accounts include 14 days of full platform access — see
+Trial accounts include 14 days of full platform access, see
 [zeroroot.ai/pricing](https://zeroroot.ai/pricing).
 
 ## 2. Install the `gibson` CLI
@@ -69,23 +69,23 @@ embedded in the credentials file written by `gibson component register`.
 
 Open the dashboard at
 [`app.zeroroot.ai/dashboard/deploy`](https://app.zeroroot.ai/dashboard/deploy).
-This is the **deploy wizard** — the one place where component identities
+This is the **deploy wizard**, the one place where component identities
 are issued.
 
 1. Pick a kind: **Agent**, **Tool**, or **Plugin**.
 2. Name your component (kebab-case, unique within your tenant).
-3. **Permissions** — grant the component access to the data and
+3. **Permissions**, grant the component access to the data and
    capabilities it needs. See [Roles & permissions](/docs/rbac).
-4. **Issue a bootstrap token** — every kind (agent, tool, plugin) gets a
+4. **Issue a bootstrap token**, every kind (agent, tool, plugin) gets a
    single-use **bootstrap token** (24-hour expiry). It's shown exactly
-   once — copy it before you leave the page.
-5. **Connect** — leave the wizard open. It polls until your local
+   once, copy it before you leave the page.
+5. **Connect**, leave the wizard open. It polls until your local
    `gibson` reports back that the component connected.
 
 ## 5. Register on your machine
 
 The CLI uses a single unified `component register` verb. Every kind
-enrolls the same way — paste the bootstrap token:
+enrolls the same way, paste the bootstrap token:
 
 ```bash
 # Agents
@@ -103,7 +103,7 @@ gibson component register --kind plugin --token <from-wizard>
 Each command runs the capability-grant handshake and writes two files at
 mode `0600`: an Ed25519 **host key** at
 `~/.gibson/<kind>/<name>.host_key` and a **runtime credential** at
-`~/.gibson/<kind>/<name>.runtime.json`. Treat both like private keys —
+`~/.gibson/<kind>/<name>.runtime.json`. Treat both like private keys -
 they identify your component to Gibson.
 
 If registration fails, see
@@ -124,11 +124,11 @@ service, and prints who you are along with the permissions you hold. If
 
 ## What's next
 
-- **[Getting Started](/docs/getting-started)** — the 15-minute walkthrough
+- **[Getting Started](/docs/getting-started)**, the 15-minute walkthrough
   from zero to a running agent.
-- **[Your First Agent](/docs/first-agent)** — write and ship an agent with
+- **[Your First Agent](/docs/first-agent)**, write and ship an agent with
   the SDK.
-- **[Plugins](/docs/plugins)** — build a stateful integration with secret
+- **[Plugins](/docs/plugins)**, build a stateful integration with secret
   bindings.
 
 ## Storing credentials safely

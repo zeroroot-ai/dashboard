@@ -1,14 +1,14 @@
 "use server";
 
 /**
- * secrets-panel-action.ts — Server action backing SecretsAccessedPanel.
+ * secrets-panel-action.ts, Server action backing SecretsAccessedPanel.
  *
  * Wraps getMissionAudit so the client panel can call it without importing
  * the server-only gibson-client directly.
  *
  * Returns the raw GetMissionAuditResponse fields needed by the panel.
  * The value field is structurally absent from the response (enforced by the
- * proto definition) — refs only.
+ * proto definition), refs only.
  *
  * Spec: secrets-tenant-lifecycle Task 17, Requirement 6.
  */
@@ -18,7 +18,7 @@ import type { MissionSecretAccess } from "@/src/lib/gibson-client/secrets";
 import { assertAuthorized, AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
 
 // The RPC this action wraps. Authorization derives from its AuthRegistry
-// relation (member — any tenant member may read mission secret-access audit),
+// relation (member, any tenant member may read mission secret-access audit),
 // the single authorization source of truth shared with useAuthorize.
 const GET_MISSION_AUDIT_RPC =
   "/gibson.tenant.v1.SecretsService/GetMissionAudit";

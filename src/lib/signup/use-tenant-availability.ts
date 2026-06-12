@@ -98,7 +98,7 @@ export function useTenantAvailability(
           if (controller.signal.aborted) return;
           if (requestId !== latestRequestIdRef.current) return;
           // Network failure: treat the same as the server's `lookup_failed`
-          // degradation — no inline state, let the submit-time check run.
+          // degradation, no inline state, let the submit-time check run.
           setState({ slug, available: null, checking: false });
           // Surface the failure once per debounce window in dev so we can
           // spot a misconfigured route quickly.

@@ -1,9 +1,9 @@
 /**
- * Visual regression — authenticated surfaces.
+ * Visual regression, authenticated surfaces.
  *
  * Spec: dashboard#60, single dark brand #654. Captures full-page screenshots
  * of /dashboard, /dashboard/pages/missions, /dashboard/pages/findings, and
- * /dashboard/pages/settings/account. There is one immutable dark brand —
+ * /dashboard/pages/settings/account. There is one immutable dark brand -
  * each route is captured once.
  *
  * Authentication: synthesised via the test-only session encoder at
@@ -11,7 +11,7 @@
  * under the dashboard's own AUTH_SECRET that decodes through the
  * same Auth.js pipeline as a real sign-in. The encoder refuses to
  * run unless BOTH NODE_ENV !== "production" AND TEST_AUTH_BYPASS=1
- * are true — see #84 for the security rationale.
+ * are true, see #84 for the security rationale.
  *
  * Data: daemon proxy + memberships are stubbed via page.route() so
  * the page renders empty-state content regardless of cluster state.
@@ -93,8 +93,8 @@ async function stabilise(page: Page) {
   await page.waitForLoadState("networkidle");
 }
 
-test.describe("visual regression — auth routes", () => {
-  // Chromium-only — same rationale as the public-routes spec.
+test.describe("visual regression, auth routes", () => {
+  // Chromium-only, same rationale as the public-routes spec.
   test.skip(
     ({ browserName }) => browserName !== "chromium",
     "visual baselines are chromium-only",

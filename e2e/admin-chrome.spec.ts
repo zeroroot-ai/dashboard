@@ -14,7 +14,7 @@
  * exercises the admin path against the server's real FGA-driven
  * permission resolution. There is no parallel non-admin scenario in
  * this file because the `permissions` array on the context is computed
- * server-side from FGA membership — it cannot be mocked through the
+ * server-side from FGA membership, it cannot be mocked through the
  * `/api/auth/my-memberships` route the way useAuthorize-driven gates
  * (e2e/authz/non-admin.spec.ts) can. Non-admin coverage of the same
  * surface is provided by the unit-test suite at
@@ -22,9 +22,9 @@
  *
  * Pre-conditions (Kind cluster):
  *   make deploy-local running against `kind-gibson` context.
- *   PLAYWRIGHT_BASE_URL  — cluster URL (default: http://localhost:3000)
- *   E2E_ADMIN_EMAIL      — admin user email
- *   E2E_ADMIN_PASSWORD   — corresponding password
+ *   PLAYWRIGHT_BASE_URL , cluster URL (default: http://localhost:3000)
+ *   E2E_ADMIN_EMAIL     , admin user email
+ *   E2E_ADMIN_PASSWORD  , corresponding password
  *
  * Wall-clock budget: ≤ 2 minutes.
  */

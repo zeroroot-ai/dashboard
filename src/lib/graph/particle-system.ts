@@ -37,7 +37,7 @@ export class ParticleSystem {
   private density: number = 0.7;
   private spawnAccumulator: Map<string, number> = new Map();
 
-  // Particle appearance settings — tuned (#652) for a brighter, more active
+  // Particle appearance settings, tuned (#652) for a brighter, more active
   // flowing-line look while staying subtle enough not to drown the nodes.
   private readonly MIN_SIZE = 2;
   private readonly MAX_SIZE = 4;
@@ -45,10 +45,10 @@ export class ParticleSystem {
   private readonly MAX_SPEED = 0.40;  // 40% of edge per second
   private readonly BASE_ALPHA = 0.85;
   private readonly FADE_DURATION = 0.15; // 15% of progress for fade in/out
-  // Comet-tail length as a fraction of edge length — gives each particle a
+  // Comet-tail length as a fraction of edge length, gives each particle a
   // directional streak so the edge reads as a flowing line, not loose dots.
   private readonly TAIL_LENGTH = 0.06;
-  // Brand violet — the default when an edge color can't be resolved.
+  // Brand violet, the default when an edge color can't be resolved.
   private readonly DEFAULT_COLOR = '#a78bfa';
 
   constructor(maxParticles: number = 200) {
@@ -234,7 +234,7 @@ export class ParticleSystem {
       const y = edge.y1 + (edge.y2 - edge.y1) * particle.progress;
 
       // Comet tail: a short streak trailing behind the head along the edge
-      // direction, fading from the head color to transparent — this is what
+      // direction, fading from the head color to transparent, this is what
       // makes the flow read as a moving line rather than a string of dots.
       const tailProgress = Math.max(0, particle.progress - this.TAIL_LENGTH);
       const tailX = edge.x1 + (edge.x2 - edge.x1) * tailProgress;

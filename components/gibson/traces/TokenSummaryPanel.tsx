@@ -15,7 +15,7 @@ import { formatDuration } from "./TraceTree";
 /**
  * TokenSummaryPanel renders a TokenSummary as a top-level totals strip plus
  * by-model and by-agent breakdown tables. Shared between the mission Traces
- * tab and the standalone trace detail page (dashboard#470) — there is one
+ * tab and the standalone trace detail page (dashboard#470), there is one
  * token-summary renderer.
  *
  * `totalDurationMs` is the trace-level wall-clock duration (not part of

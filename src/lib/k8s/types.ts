@@ -55,7 +55,7 @@ export type TenantPhase =
 /**
  * Canonical Gibson plan IDs. Re-exported from the generated plan
  * registry (src/generated/plans.ts), which is the single source of
- * truth — operator's plans/registry.go → plans.yaml → gen-plans.mjs.
+ * truth, operator's plans/registry.go → plans.yaml → gen-plans.mjs.
  *
  * Legacy values (solo / squad / platform / enterprise-cloud /
  * enterprise-onprem / public-sector / free / pro) are NOT accepted;
@@ -184,7 +184,7 @@ export interface TenantMemberSpec {
   acceptedByUserId?: string;
   resendRequestedAt?: string;
   /**
-   * Email of the user who issued the invitation. Server-only — set from
+   * Email of the user who issued the invitation. Server-only, set from
    * the calling user's session in the dashboard server action. Empty
    * string means "system-issued"; the controller renders that as
    * "a Gibson admin" in the outgoing invitation email.

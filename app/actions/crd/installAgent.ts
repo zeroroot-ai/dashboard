@@ -1,13 +1,13 @@
 "use server";
 
 /**
- * installAgentAction — all-or-nothing agent install write path.
+ * installAgentAction, all-or-nothing agent install write path.
  *
  * Re-validates the manifest server-side, intersects the requested
  * permissions with the caller's current access, mints a tenant-scoped
  * `agent_principal` id, and batch-writes `component_*_enabled` tuples via
  * TenantAdminService.GrantComponentPermissions. The server enforces
- * caller-access intersection — only capabilities the caller already holds
+ * caller-access intersection, only capabilities the caller already holds
  * may be forwarded to the agent principal. The grant is atomic server-side
  * so no client-side compensating delete is needed.
  *
@@ -15,7 +15,7 @@
  * regardless of what `permissions.yaml` declared required.
  *
  * Spec: access-matrix-finish task 13, R5 AC 1-4, 6, 9.
- * Migration: dashboard#359 — write path moved to userClient(TenantAdminService).
+ * Migration: dashboard#359, write path moved to userClient(TenantAdminService).
  */
 
 import { randomUUID } from "node:crypto";
@@ -89,7 +89,7 @@ export async function installAgentAction(
 
   // 2. Intersect against caller's current access. Any approval for a
   //    (target, action) the caller lacks must be refused before we mint a
-  //    principal or touch FGA — prevents a compromised manifest from
+  //    principal or touch FGA, prevents a compromised manifest from
   //    widening access.
   const accessible = await listAccessibleComponentsAction({ kind: "all" });
   if (!accessible.ok) {
@@ -121,11 +121,11 @@ export async function installAgentAction(
     action: a.action,
   }));
   if (approvals.length === 0) {
-    // Nothing to grant — approvals list may have been empty intentionally.
+    // Nothing to grant, approvals list may have been empty intentionally.
     return { ok: true, data: { agentInstallationId: installationId } };
   }
 
-  // 5. Atomic grant — server enforces caller-access intersection server-side.
+  // 5. Atomic grant, server enforces caller-access intersection server-side.
   //    No client-side compensating delete needed; the RPC is all-or-nothing.
   try {
     await userClient(MembershipService).grantComponentPermissions({

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * vendor-mission-authoring-bundle — pulls the mission-authoring
+ * vendor-mission-authoring-bundle, pulls the mission-authoring
  * OCI artifact (published by opensource/sdk's
  * publish-mission-authoring.yml workflow) into local
  * src/data/ and src/app/dashboard/(auth)/docs/ at build time.
@@ -26,10 +26,10 @@
  *
  * Resolution order for the bundle source:
  *
- *   1. `MISSION_AUTHORING_BUNDLE_PATH` env var — local tarball path
+ *   1. `MISSION_AUTHORING_BUNDLE_PATH` env var, local tarball path
  *      (used by tests, dev, and CI to skip the OCI pull).
- *   2. `MISSION_AUTHORING_BUNDLE_DIR` env var — pre-extracted dir.
- *   3. Sibling SDK checkout at $WORKSPACE_ROOT/opensource/sdk/gen —
+ *   2. `MISSION_AUTHORING_BUNDLE_DIR` env var, pre-extracted dir.
+ *   3. Sibling SDK checkout at $WORKSPACE_ROOT/opensource/sdk/gen -
  *      used by developers in the canonical polyrepo layout. Falls
  *      back to this when no env var is set, before attempting the
  *      OCI pull.
@@ -99,7 +99,7 @@ function resolveBundleSourceDir() {
     return { dir: dirOverride, version: 'override' };
   }
 
-  // 2. Tarball override — extract to .tmp/ and return.
+  // 2. Tarball override, extract to .tmp/ and return.
   const tarOverride = process.env.MISSION_AUTHORING_BUNDLE_PATH;
   if (tarOverride) {
     return extractTarball(tarOverride, 'tarball-override');
@@ -136,7 +136,7 @@ function resolveBundleSourceDir() {
   const tarball = path.join(pullDir, 'mission-authoring-bundle.tar.gz');
   if (!existsSync(tarball)) {
     throw new Error(
-      `oras pull succeeded but ${tarball} is missing — bundle layout drift`,
+      `oras pull succeeded but ${tarball} is missing, bundle layout drift`,
     );
   }
   return extractTarball(tarball, version);

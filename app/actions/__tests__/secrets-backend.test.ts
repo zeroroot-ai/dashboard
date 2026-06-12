@@ -107,7 +107,7 @@ const vaultFormBase = {
 // probeBrokerConfigAction
 // ---------------------------------------------------------------------------
 
-describe("probeBrokerConfigAction — success (probe ok)", () => {
+describe("probeBrokerConfigAction, success (probe ok)", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns ok=true with ProbeResult on successful probe", async () => {
@@ -132,12 +132,12 @@ describe("probeBrokerConfigAction — success (probe ok)", () => {
 
     const candidate = mockProbeBrokerConfig.mock.calls[0][0];
     // The sensitive field must be forwarded as bytes (cross-realm Uint8Array
-    // instanceof is unreliable in jsdom — check content instead).
+    // instanceof is unreliable in jsdom, check content instead).
     expect(Buffer.from(candidate.vaultToken).toString()).toBe("my-vault-token");
   });
 });
 
-describe("probeBrokerConfigAction — probe fails (probe ok=false)", () => {
+describe("probeBrokerConfigAction, probe fails (probe ok=false)", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns ok=true with ProbeResult carrying ok=false on probe failure", async () => {
@@ -160,7 +160,7 @@ describe("probeBrokerConfigAction — probe fails (probe ok=false)", () => {
   });
 });
 
-describe("probeBrokerConfigAction — RPC error", () => {
+describe("probeBrokerConfigAction, RPC error", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns structured error without sensitive data in message", async () => {
@@ -183,7 +183,7 @@ describe("probeBrokerConfigAction — RPC error", () => {
   });
 });
 
-describe("probeBrokerConfigAction — bad_input", () => {
+describe("probeBrokerConfigAction, bad_input", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns bad_input when provider is missing", async () => {
@@ -200,7 +200,7 @@ describe("probeBrokerConfigAction — bad_input", () => {
 // setBrokerConfigAction
 // ---------------------------------------------------------------------------
 
-describe("setBrokerConfigAction — probe-fail aborts save", () => {
+describe("setBrokerConfigAction, probe-fail aborts save", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns probe_failed when SetBrokerConfig returns failed probe_result", async () => {
@@ -227,7 +227,7 @@ describe("setBrokerConfigAction — probe-fail aborts save", () => {
   });
 });
 
-describe("setBrokerConfigAction — probe-success-then-save", () => {
+describe("setBrokerConfigAction, probe-success-then-save", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns saved config and revalidates on success", async () => {
@@ -255,7 +255,7 @@ describe("setBrokerConfigAction — probe-success-then-save", () => {
   });
 });
 
-describe("setBrokerConfigAction — redacted error messages", () => {
+describe("setBrokerConfigAction, redacted error messages", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("does not include AWS keys in error message", async () => {
@@ -279,7 +279,7 @@ describe("setBrokerConfigAction — redacted error messages", () => {
   });
 });
 
-describe("setBrokerConfigAction — unauthenticated", () => {
+describe("setBrokerConfigAction, unauthenticated", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -300,7 +300,7 @@ describe("setBrokerConfigAction — unauthenticated", () => {
 // assertAuthorized gating
 // ---------------------------------------------------------------------------
 
-describe("probeBrokerConfigAction — authz denied", () => {
+describe("probeBrokerConfigAction, authz denied", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAssertAuthorized.mockRejectedValueOnce(
@@ -321,7 +321,7 @@ describe("probeBrokerConfigAction — authz denied", () => {
   });
 });
 
-describe("setBrokerConfigAction — authz denied", () => {
+describe("setBrokerConfigAction, authz denied", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAssertAuthorized.mockRejectedValueOnce(

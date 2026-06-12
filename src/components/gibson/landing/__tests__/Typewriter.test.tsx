@@ -9,7 +9,7 @@ const sampleMessages: TypewriterMessage[] = [
   { label: 'DevSecOps', text: 'Running security tools manually while attackers automate?' },
 ];
 
-// Default matchMedia mock — reduced motion OFF
+// Default matchMedia mock, reduced motion OFF
 beforeEach(() => {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,

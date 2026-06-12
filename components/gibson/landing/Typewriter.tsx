@@ -21,7 +21,7 @@ export interface TypewriterProps {
    * Whole-word matches against this list paint as `text-highlight` (brand
    * primary). Everything else stays `text-foreground`. Case-sensitive;
    * longest matches win (the regex sorts by length internally). Use for
-   * proper nouns — tool names, product names, CLI commands.
+   * proper nouns, tool names, product names, CLI commands.
    */
   highlightTerms?: readonly string[];
   className?: string;

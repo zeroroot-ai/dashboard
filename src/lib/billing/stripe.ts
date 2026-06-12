@@ -2,7 +2,7 @@
  * Centralized Stripe SDK wrapper for Gibson Dashboard.
  *
  * All Stripe interactions in the dashboard must go through this module.
- * Raw Stripe SDK usage outside this file is not permitted — it ensures
+ * Raw Stripe SDK usage outside this file is not permitted, it ensures
  * consistent idempotency, signature verification, and configuration
  * validation across every billing code path.
  *
@@ -24,7 +24,7 @@ import { logger } from '@/src/lib/logger';
 // ---------------------------------------------------------------------------
 
 // Paid plan tiers + their env-var price-id slots are generated from
-// plans.yaml — see scripts/gen-stripe-tiers.mjs. Drift is caught by
+// plans.yaml, see scripts/gen-stripe-tiers.mjs. Drift is caught by
 // scripts/check-stripe-tiers-fresh.mjs as part of pnpm prebuild.
 export type { BillingTier } from './stripe_gen';
 import { BillingTier, PRICE_ENV_MAP, CONTACT_SALES_TIERS as CONTACT_SALES_TIER_IDS, BILLING_TIER_IDS } from './stripe_gen';
@@ -60,7 +60,7 @@ export function getStripeClient(): Stripe {
   _stripeClient = new StripeSDK.default(key, {
     apiVersion: '2026-03-25.dahlia',
     typescript: true,
-    // Telemetry off — avoid leaking build/runtime metadata to Stripe's
+    // Telemetry off, avoid leaking build/runtime metadata to Stripe's
     // analytics pipeline. Unnecessary in a controlled SaaS environment.
     telemetry: false,
   });
@@ -93,7 +93,7 @@ export function verifyWebhookSignature(
 ): Stripe.Event | null {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret) {
-    logger.error('[billing/stripe] STRIPE_WEBHOOK_SECRET is not set — cannot verify webhook.');
+    logger.error('[billing/stripe] STRIPE_WEBHOOK_SECRET is not set, cannot verify webhook.');
     return null;
   }
 
@@ -143,7 +143,7 @@ export async function refundCharge(
 
 /** Parameters for creating a Stripe Checkout session. */
 export interface CheckoutSessionParams {
-  /** Billing tier — must be a self-serve tier (squad/org/platform), not a contact-sales tier. */
+  /** Billing tier, must be a self-serve tier (squad/org/platform), not a contact-sales tier. */
   tier: BillingTier;
   /** Stripe Price ID for the tier (resolved from PRICE_ENV_MAP). */
   priceId: string;
@@ -218,7 +218,7 @@ export async function createCheckoutSession(
   if (!publicUrl) {
     throw new Error(
       '[billing/stripe] PUBLIC_URL is required for Stripe checkout return URLs. ' +
-        'See src/lib/env-validator.ts — validateEnv() should have caught this at boot.',
+        'See src/lib/env-validator.ts, validateEnv() should have caught this at boot.',
     );
   }
 
@@ -357,14 +357,14 @@ export function validateBillingConfig(): void {
 
   // Enforce Stripe key mode consistency to prevent test keys in production
   // and live keys in non-production environments.
-  // The key VALUE is never logged — only whether it starts with sk_test_ or sk_live_.
+  // The key VALUE is never logged, only whether it starts with sk_test_ or sk_live_.
   // STRIPE_SECRET_KEY presence already required above; the `?? ''` is a
   // narrow defensive coercion (not a silent default) so .startsWith() is safe.
   const secretKey = process.env.STRIPE_SECRET_KEY ?? '';
   const isProduction = process.env.NODE_ENV === 'production';
 
   // Staging runs a production-grade Next.js runtime (NODE_ENV=production) but
-  // INTENTIONALLY drives test-mode Stripe — it must never touch real cards.
+  // INTENTIONALLY drives test-mode Stripe, it must never touch real cards.
   // STRIPE_ALLOW_TEST_KEY is a narrow, default-OFF opt-in for exactly that
   // case: it suppresses ONLY the test-key-in-production throw below. Real
   // production leaves it unset, so the guard there is fully intact. It does

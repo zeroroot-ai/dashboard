@@ -1,5 +1,5 @@
 /**
- * Secrets Backend settings page — Server Component.
+ * Secrets Backend settings page, Server Component.
  *
  * Fetches the current redacted broker config and renders the client-side
  * SecretsBackendForm. RBAC is enforced at two levels:
@@ -20,7 +20,7 @@ import { SecretsBackendContent } from "@/src/components/secrets-backend/SecretsB
 
 export async function generateMetadata(): Promise<Metadata> {
   return generateMeta({
-    title: "Settings — Secrets Backend",
+    title: "Settings | Secrets Backend",
     additionalTitle: true,
     description:
       "Configure the secrets backend provider for your tenant. Choose between Gibson-hosted Vault, HashiCorp Vault (BYO), AWS Secrets Manager, GCP Secret Manager, or Azure Key Vault.",

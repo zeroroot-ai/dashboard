@@ -75,7 +75,7 @@ export function SystemPromptDebugPanel() {
             <div key={label} className="flex items-center gap-1 text-xs text-muted-foreground">
               <span className="mr-1">&#9656;</span>
               {label}
-              <span className="italic">— not available</span>
+              <span className="italic">- not available</span>
             </div>
           ),
         )}

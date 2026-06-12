@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * RotateModal — Dialog form to rotate a secret's value.
+ * RotateModal, Dialog form to rotate a secret's value.
  *
  * Mirrors the AddSecretForm security model:
  *   - value field is type="password" autoComplete="off"

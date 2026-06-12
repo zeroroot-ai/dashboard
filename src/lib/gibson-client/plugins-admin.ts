@@ -4,7 +4,7 @@ import 'server-only';
  * Typed dashboard client methods for gibson.tenant.v1.PluginAdminService.
  *
  * Backs the dashboard's plugin registration wizard and plugin detail page.
- * RegisterPlugin is atomic per Spec 2 R3.1 — any partial failure rolls back
+ * RegisterPlugin is atomic per Spec 2 R3.1, any partial failure rolls back
  * all created state (Zitadel SA, FGA tuples, inline secrets).
  *
  * Spec: secrets-tenant-lifecycle Task 6, Requirements 8.1.

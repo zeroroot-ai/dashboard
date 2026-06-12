@@ -12,8 +12,8 @@
  *   Failed to find Server Action "<hash>". This request might be from an
  *   older or newer deployment.
  *
- * That rejection surfaces to the caller's `catch`, where — without this
- * helper — it becomes a generic "Something went wrong, please try again"
+ * That rejection surfaces to the caller's `catch`, where, without this
+ * helper, it becomes a generic "Something went wrong, please try again"
  * toast. Retrying from the SAME stale tab re-sends the SAME dead action ID
  * and fails forever; only a full reload (which fetches the current build's
  * bundle, with valid action IDs) recovers it.
@@ -33,7 +33,7 @@ const RELOAD_LOOP_GUARD_MS = 15_000;
 
 /**
  * True when `err` is Next.js's "Failed to find Server Action" deployment-skew
- * error — i.e. the tab's client bundle predates the running build.
+ * error, i.e. the tab's client bundle predates the running build.
  */
 export function isServerActionDeploymentSkew(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
@@ -48,7 +48,7 @@ export function isServerActionDeploymentSkew(err: unknown): boolean {
  *
  * Returns `true` if a reload was triggered, `false` if it was suppressed
  * because we already reloaded within {@link RELOAD_LOOP_GUARD_MS} (the reload
- * didn't fix it — reloading again would loop). Callers should show a
+ * didn't fix it, reloading again would loop). Callers should show a
  * "please refresh" message when this returns `false`.
  */
 export function reloadForDeploymentSkew(): boolean {

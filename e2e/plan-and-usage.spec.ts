@@ -118,7 +118,7 @@ async function mockQuota(
   });
 }
 
-test.describe("Plan & Usage — plan-id parametrisation", () => {
+test.describe("Plan & Usage, plan-id parametrisation", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });
@@ -151,7 +151,7 @@ test.describe("Plan & Usage — plan-id parametrisation", () => {
   }
 });
 
-test.describe("Plan & Usage — quota threshold colouring", () => {
+test.describe("Plan & Usage, quota threshold colouring", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });

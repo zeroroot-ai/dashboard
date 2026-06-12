@@ -18,14 +18,14 @@ import "@/components/gibson/docs/docs-theme.css";
  * cannot bleed into the dashboard or marketing routes.
  *
  * `data-no-scanlines` on the wrapper is an explicit opt-out from the
- * landing's CRT scanline overlay — long-form prose legibility takes
+ * landing's CRT scanline overlay, long-form prose legibility takes
  * precedence over the effect.
  *
  * `theme={{ enabled: false }}` prevents Fumadocs' internal next-themes
  * provider from double-wrapping the app-level one already mounted in
  * `app/layout.tsx`.
  *
- * `nav={{ enabled: false }}` suppresses Fumadocs' default top navbar —
+ * `nav={{ enabled: false }}` suppresses Fumadocs' default top navbar -
  * we use the shared `SiteHeader` instead. A copy of the site header
  * lives here rather than duplicating its markup.
  */

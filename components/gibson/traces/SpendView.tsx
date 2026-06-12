@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * SpendView — first-class spend breakdown for a run (dashboard#534).
+ * SpendView, first-class spend breakdown for a run (dashboard#534).
  *
  * Answers "where did the money go" using the already-aggregated TokenSummary:
  * a by-agent table (which agent burned what) and a by-model table (model,
@@ -73,7 +73,7 @@ export function SpendView({ summary }: { summary: TokenSummary }) {
                   <td className="py-1.5 text-right tabular-nums">
                     {totalTokens > 0
                       ? `${Math.round((a.totalTokens / totalTokens) * 100)}%`
-                      : "—"}
+                      : "-"}
                   </td>
                 </tr>
               ))}
@@ -111,7 +111,7 @@ export function SpendView({ summary }: { summary: TokenSummary }) {
                     {formatTokenCount(m.outputTokens)}
                   </td>
                   <td className="py-1.5 text-right font-mono tabular-nums">
-                    {m.estimatedCostUsd > 0 ? formatUsd(m.estimatedCostUsd) : "—"}
+                    {m.estimatedCostUsd > 0 ? formatUsd(m.estimatedCostUsd) : "-"}
                   </td>
                 </tr>
               ))}

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * UserTeamMembershipsEditor — per-user multi-select team-membership panel
+ * UserTeamMembershipsEditor, per-user multi-select team-membership panel
  * on the user detail page. Lists every team in the tenant and lets admins
  * toggle the user's membership + admin status on each team.
  *
@@ -87,7 +87,7 @@ export function UserTeamMembershipsEditor({ userId, canEdit }: Props) {
 
   // Sync derived rows whenever the underlying graph refreshes. Preserve
   // pending flags on rows that the user just clicked (those server actions
-  // are in-flight — their optimistic state shouldn't get clobbered by an
+  // are in-flight, their optimistic state shouldn't get clobbered by an
   // unrelated graph refresh).
   useEffect(() => {
     if (graphLoading) return;

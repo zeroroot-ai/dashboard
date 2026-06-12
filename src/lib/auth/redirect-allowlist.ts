@@ -29,7 +29,7 @@ export function validateRedirectTo(url: string | null | undefined): string {
 
   const raw = url.trim();
 
-  // Reject protocol-relative URLs ("//evil.com/...") — they are interpreted
+  // Reject protocol-relative URLs ("//evil.com/..."), they are interpreted
   // as absolute by browsers and would allow open-redirect.
   if (raw.startsWith("//")) return "/";
 
@@ -45,7 +45,7 @@ export function validateRedirectTo(url: string | null | undefined): string {
   // For absolute URLs, only accept same-origin redirects.
   const allowedOrigin = resolveAllowedOrigin();
   if (!allowedOrigin) {
-    // No origin configured — absolute URLs are not allowed.
+    // No origin configured, absolute URLs are not allowed.
     return "/";
   }
 
@@ -53,7 +53,7 @@ export function validateRedirectTo(url: string | null | undefined): string {
   try {
     parsed = new URL(raw);
   } catch {
-    // Unparseable — reject.
+    // Unparseable, reject.
     return "/";
   }
 
@@ -67,7 +67,7 @@ export function validateRedirectTo(url: string | null | undefined): string {
     return "/";
   }
 
-  // Same origin — return only the path + search + hash (no origin prefix).
+  // Same origin, return only the path + search + hash (no origin prefix).
   return parsed.pathname + parsed.search + parsed.hash;
 }
 
@@ -75,7 +75,7 @@ export function validateRedirectTo(url: string | null | undefined): string {
  * Resolve the dashboard's own origin from NEXTAUTH_URL / AUTH_URL.
  * Returns null if the env var is unset or the URL is unparseable.
  *
- * Spec: unified-identity-and-authorization Phase 4 — Auth.js owns the
+ * Spec: unified-identity-and-authorization Phase 4, Auth.js owns the
  * dashboard's session layer and uses the standard NEXTAUTH_URL / AUTH_URL
  * convention.
  */

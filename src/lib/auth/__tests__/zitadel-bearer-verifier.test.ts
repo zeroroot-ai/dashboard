@@ -15,11 +15,11 @@
  *   - issuer-mismatch
  *   - audience-mismatch
  *   - subject-not-allowed (numeric sub absent from allow-list)
- *   - subject-not-allowed (readable name in payload, numeric sub mismatch — regression guard)
+ *   - subject-not-allowed (readable name in payload, numeric sub mismatch, regression guard)
  *   - happy-path (numeric sub matches)
  *   - happy-path (case-insensitive Bearer prefix)
  *
- * Spec canonical-service-identity Req 5 — ALLOWED_SERVICE_SUBJECTS carries
+ * Spec canonical-service-identity Req 5, ALLOWED_SERVICE_SUBJECTS carries
  * NUMERIC Zitadel subs only; the verifier does a single equality check on
  * payload.sub. Tests assert this contract end-to-end.
  */
@@ -58,7 +58,7 @@ function setEnv(overrides: Partial<Record<string, string | undefined>>) {
   }
 }
 
-// A minimal valid-looking JWT structure (three segments) — content does not
+// A minimal valid-looking JWT structure (three segments), content does not
 // matter because jwtVerify is mocked.
 const FAKE_JWT = 'eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxMjM0NTYifQ.signature';
 const BEARER = `Bearer ${FAKE_JWT}`;
@@ -88,7 +88,7 @@ beforeEach(() => {
   setEnv({
     ZITADEL_ISSUER: 'https://zitadel.test',
     ZITADEL_AUDIENCE: 'gibson-platform',
-    // Spec canonical-service-identity Req 5 — NUMERIC subs only.
+    // Spec canonical-service-identity Req 5, NUMERIC subs only.
     ALLOWED_SERVICE_SUBJECTS: '123456789,987654321',
   });
 });
@@ -177,7 +177,7 @@ describe('signature-failed', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Error class: signature-failed (algorithm mismatch — security-hardening R7)
+// Error class: signature-failed (algorithm mismatch, security-hardening R7)
 // ---------------------------------------------------------------------------
 
 describe('algorithm pin (R7)', () => {
@@ -201,7 +201,7 @@ describe('algorithm pin (R7)', () => {
   it('passes algorithms: ["RS256"] option to jwtVerify', async () => {
     // Defence-in-depth: assert the option is actually wired through.
     // A regression in zitadel-bearer-verifier.ts that drops the option
-    // would silently re-open the alg-confusion vector — only this test
+    // would silently re-open the alg-confusion vector, only this test
     // would catch it.
     mockedJwtVerify.mockResolvedValueOnce({
       payload: okPayload(),
@@ -288,7 +288,7 @@ describe('subject-not-allowed', () => {
   });
 
   // Regression guard: a JWT carrying a readable preferred_username that's
-  // in the env (legacy shape) must STILL be rejected — only payload.sub
+  // in the env (legacy shape) must STILL be rejected, only payload.sub
   // is consulted.
   it('rejects readable preferred_username even if it appears in legacy env', async () => {
     setEnv({ ALLOWED_SERVICE_SUBJECTS: 'gibson-tenant-operator,123456789' });

@@ -58,7 +58,7 @@ afterEach(() => {
 // Shape tests
 // ---------------------------------------------------------------------------
 
-describe("emitAuthAudit — output shape", () => {
+describe("emitAuthAudit, output shape", () => {
   it("emits a line prefixed with [audit.auth]", () => {
     emitAuthAudit(minimalEvent());
 
@@ -129,7 +129,7 @@ describe("emitAuthAudit — output shape", () => {
 // Correlation tests
 // ---------------------------------------------------------------------------
 
-describe("emitAuthAudit — correlation", () => {
+describe("emitAuthAudit, correlation", () => {
   it("uses correlationId from withCorrelation context when available", async () => {
     const expectedId = "test-correlation-abc";
 
@@ -178,7 +178,7 @@ describe("emitAuthAudit — correlation", () => {
 // Truncation tests
 // ---------------------------------------------------------------------------
 
-describe("emitAuthAudit — field truncation", () => {
+describe("emitAuthAudit, field truncation", () => {
   it("truncates userAgent at 256 characters", () => {
     const long = "U".repeat(300);
     emitAuthAudit(minimalEvent({ userAgent: long }));
@@ -211,10 +211,10 @@ describe("emitAuthAudit — field truncation", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Redaction tests — fuzz each REDACT_KEY at multiple nesting levels
+// Redaction tests, fuzz each REDACT_KEY at multiple nesting levels
 // ---------------------------------------------------------------------------
 
-describe("emitAuthAudit — redaction via shared.redact()", () => {
+describe("emitAuthAudit, redaction via shared.redact()", () => {
   it("never logs the raw value of any REDACT_KEY at the top level", () => {
     const sensitiveValue = "super-secret-value-12345";
 
@@ -223,7 +223,7 @@ describe("emitAuthAudit — redaction via shared.redact()", () => {
 
       // Inject sensitive key into a field that accepts an object (reason is
       // a string field, so we test via a custom property on an extended event
-      // — we cast to bypass the type system for the fuzz scenario).
+      //, we cast to bypass the type system for the fuzz scenario).
       const event = {
         ...minimalEvent(),
         [key]: sensitiveValue,
@@ -237,7 +237,7 @@ describe("emitAuthAudit — redaction via shared.redact()", () => {
   });
 });
 
-describe("redact() utility — nesting levels", () => {
+describe("redact() utility, nesting levels", () => {
   const sensitiveValue = "hunter2";
 
   it("redacts at depth 0 (flat object)", () => {

@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * /verify-email — Zitadel handles email verification natively.
+ * /verify-email, Zitadel handles email verification natively.
  *
  * With Auth.js v5 + Zitadel, email verification is performed by Zitadel
  * before the OIDC token is issued. This page is a placeholder that redirects
  * to sign-in if the user somehow lands here.
  *
- * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js — see task 24
+ * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js, see task 24
  * implementation log. The resend-verification flow and signOutAction are
  * superseded by Zitadel's hosted verification flow. If a custom informational
  * page is needed post-registration, it should display without action buttons.

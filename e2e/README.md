@@ -12,7 +12,7 @@ pnpm test:e2e:auth-errors
 # All auth regression checks (static + e2e)
 pnpm check:auth-regression
 
-# Individual specs (compile + list without running — no cluster required)
+# Individual specs (compile + list without running, no cluster required)
 pnpm exec playwright test --list e2e/tenant-provision.spec.ts
 pnpm exec playwright test --list e2e/agent-enrollment.spec.ts
 pnpm exec playwright test --list e2e/mission-execute.spec.ts
@@ -64,9 +64,9 @@ Located under `e2e/page-objects/`:
 Every spec uses `test.skip()` at the describe level for blocks that require
 infrastructure. The two gates used across these specs are:
 
-- `test.skip(!process.env.TEST_AUTH_BYPASS, ...)` — for tests that inject
+- `test.skip(!process.env.TEST_AUTH_BYPASS, ...)`, for tests that inject
   synthetic session cookies (requires `TEST_AUTH_BYPASS=1` on the server).
-- `test.skip(!process.env.E2E_KIND_AVAILABLE, ...)` — for integration tests
+- `test.skip(!process.env.E2E_KIND_AVAILABLE, ...)`, for integration tests
   that require a live kind cluster.
 
 Tests with neither gate run unconditionally (e.g., the billing UI-stub tests

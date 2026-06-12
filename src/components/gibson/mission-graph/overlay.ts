@@ -1,5 +1,5 @@
 /**
- * overlay.ts — pure derivation of run-execution visual state for the
+ * overlay.ts, pure derivation of run-execution visual state for the
  * MissionGraph flow-chart. Given the static graph plus the signals a mission
  * run already emits (completed node ids, the currently-executing node, a failed
  * node, overall status), it computes per-node and per-edge visual state.
@@ -52,7 +52,7 @@ function entered(
 /**
  * deriveOverlay computes the visual run state for every node and edge. With no
  * run signals (empty completed set, no current/failed node) every node is
- * pending and every edge not-reached — the static authoring view.
+ * pending and every edge not-reached, the static authoring view.
  */
 export function deriveOverlay(
   graph: MissionGraphData,

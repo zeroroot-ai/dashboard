@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * Step 4 — Confirm
+ * Step 4, Confirm
  *
  * Renders a summary of the plugin manifest and secret bindings before the
  * final atomic registration submit. Shows what will be created:
  *   - Plugin name, version, methods
  *   - Per-binding: mode (existing / create) and the ref or placeholder
  *
- * SECURITY: "create" binding values are NEVER displayed — only the declared
+ * SECURITY: "create" binding values are NEVER displayed, only the declared
  * name is shown with a masked placeholder.
  *
  * On "Register plugin", calls registerPluginAtomicAction. On failure, maps
@@ -56,7 +56,7 @@ export interface ConfirmStepProps {
 }
 
 // ---------------------------------------------------------------------------
-// Manifest summary parser (minimal — for display only)
+// Manifest summary parser (minimal, for display only)
 // ---------------------------------------------------------------------------
 
 interface ManifestSummary {
@@ -153,7 +153,7 @@ export function ConfirmStep({
         <h3 className="text-sm font-medium">Review and register</h3>
         <p className="text-muted-foreground mt-1 text-xs">
           Review the manifest and bindings below, then click &quot;Register
-          plugin&quot;. This is atomic — if anything fails, all created state is
+          plugin&quot;. This is atomic, if anything fails, all created state is
           rolled back.
         </p>
       </div>
@@ -166,11 +166,11 @@ export function ConfirmStep({
         <CardContent className="space-y-2 pb-3 text-xs">
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground w-20 shrink-0">Name</span>
-            <span className="font-mono font-medium">{summary.name || "—"}</span>
+            <span className="font-mono font-medium">{summary.name || "-"}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground w-20 shrink-0">Version</span>
-            <span className="font-mono">{summary.version || "—"}</span>
+            <span className="font-mono">{summary.version || "-"}</span>
           </div>
           {summary.description && (
             <div className="flex items-start gap-2">

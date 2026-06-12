@@ -67,7 +67,7 @@ export type {
   AgentStatus,
 } from './chat-store';
 
-// Graph view store — single source of truth for the knowledge-graph explorer.
+// Graph view store, single source of truth for the knowledge-graph explorer.
 export { useGraphViewStore, DEFAULT_DISPLAY } from './graph-view-store';
 export type {
   GraphViewState,

@@ -1,7 +1,7 @@
 /**
  * Tests for fetchStripePricesUncached.
  *
- * Spec stripe-billing-integration Task 32 / R7.3 — graceful degrade.
+ * Spec stripe-billing-integration Task 32 / R7.3, graceful degrade.
  *
  * The cached export (`fetchStripePrices`) is not tested directly because
  * `unstable_cache`'s internals are framework-owned; the contract under

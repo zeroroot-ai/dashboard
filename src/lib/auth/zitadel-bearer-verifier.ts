@@ -4,7 +4,7 @@
  * Validates Bearer tokens presented by platform components (tenant-operator,
  * tool-runner, future SAs) against Zitadel's published JWKS. This is the
  * single verifier used by every dashboard route that accepts machine-to-machine
- * (service-acting) calls — no SPIFFE JWT-SVID code exists in this module.
+ * (service-acting) calls, no SPIFFE JWT-SVID code exists in this module.
  *
  * Checks performed (in order):
  *   1. Authorization header present and "Bearer …" shaped.
@@ -26,11 +26,11 @@
  * failure. The bearer token bytes are NEVER included in the error message.
  *
  * Env vars (Zitadel-related ones are STRUCTURALLY REQUIRED per epic
- * one-code-path / deploy#196 — the previous `?? ""` / `?? "gibson-platform"`
+ * one-code-path / deploy#196, the previous `?? ""` / `?? "gibson-platform"`
  * fallbacks have been removed; missing values throw at first access):
- *   ZITADEL_ISSUER             — Zitadel issuer URL.
- *   ZITADEL_AUDIENCE           — Expected audience claim.
- *   ALLOWED_SERVICE_SUBJECTS   — Comma-separated NUMERIC Zitadel subs allowed
+ *   ZITADEL_ISSUER            , Zitadel issuer URL.
+ *   ZITADEL_AUDIENCE          , Expected audience claim.
+ *   ALLOWED_SERVICE_SUBJECTS  , Comma-separated NUMERIC Zitadel subs allowed
  *                                to call service-acting routes. Populated at
  *                                pod start by the resolve-sa-identity-map
  *                                init container reading the chart-managed
@@ -48,7 +48,7 @@ import { createRemoteJWKSet, errors as joseErrors, jwtVerify } from 'jose';
 // Structured error
 // ---------------------------------------------------------------------------
 
-/** Machine-readable failure codes — surfaced in 401 response bodies. */
+/** Machine-readable failure codes, surfaced in 401 response bodies. */
 export type ZitadelBearerErrorCode =
   | 'missing-authorization'
   | 'invalid-format'
@@ -72,7 +72,7 @@ export class ZitadelBearerError extends Error {
 }
 
 // ---------------------------------------------------------------------------
-// Configuration — read lazily at call time so tests can override env vars
+// Configuration, read lazily at call time so tests can override env vars
 // before the first invocation.
 //
 // All three env vars below are REQUIRED at boot per src/lib/env-validator.ts.
@@ -111,7 +111,7 @@ function getAudience(): string {
 }
 
 function getAllowedSubjects(): ReadonlySet<string> {
-  // ALLOWED_SERVICE_SUBJECTS is prodOnly in REQUIRED_ENV — outside production
+  // ALLOWED_SERVICE_SUBJECTS is prodOnly in REQUIRED_ENV, outside production
   // it may legitimately be undefined. verifyZitadelBearer() raises the
   // `subject-not-allowed` ZitadelBearerError on its own when the parsed
   // set is empty + a token presents an unrecognised sub, so we don't need
@@ -133,7 +133,7 @@ function getAllowedSubjects(): ReadonlySet<string> {
  * The dashboard's `verifyZitadelBearer` checks every inbound service-acting
  * JWT's `sub` claim against `ALLOWED_SERVICE_SUBJECTS`. If that env var is
  * empty at runtime the verifier silently 401s every machine-to-machine
- * call — a CrashLoopBackOff-or-quiet-failure trade-off where "quiet"
+ * call, a CrashLoopBackOff-or-quiet-failure trade-off where "quiet"
  * always wins and the failure mode is "components silently can't reach
  * the dashboard."
  *
@@ -152,7 +152,7 @@ export function assertAllowedServiceSubjectsConfigured(): void {
   const subjects = getAllowedSubjects();
   if (subjects.size === 0) {
     throw new Error(
-      'ALLOWED_SERVICE_SUBJECTS missing or empty — fail-fast per zero-trust-hardening Req 11.3. ' +
+      'ALLOWED_SERVICE_SUBJECTS missing or empty, fail-fast per zero-trust-hardening Req 11.3. ' +
         'The chart\'s resolve-sa-identity-map init container should write a comma-joined list of ' +
         'numeric Zitadel subs into this env var; if the var is empty, no service-acting JWT can ' +
         'reach the dashboard, which silently breaks every machine-to-machine call. Refusing to start.',
@@ -161,8 +161,8 @@ export function assertAllowedServiceSubjectsConfigured(): void {
 }
 
 // ---------------------------------------------------------------------------
-// JWKS — lazily initialised; cached until __resetJWKSForTests is called.
-// The cache key is the issuer URL — if ZITADEL_ISSUER changes between calls
+// JWKS, lazily initialised; cached until __resetJWKSForTests is called.
+// The cache key is the issuer URL, if ZITADEL_ISSUER changes between calls
 // (test-only scenario), __resetJWKSForTests must be called first.
 // ---------------------------------------------------------------------------
 
@@ -179,7 +179,7 @@ function getJWKS(): ReturnType<typeof createRemoteJWKSet> {
   return _jwks;
 }
 
-/** Exposed for unit tests only — resets the cached JWKS singleton. */
+/** Exposed for unit tests only, resets the cached JWKS singleton. */
 export function __resetJWKSForTests(): void {
   _jwks = null;
   _jwksIssuer = '';
@@ -194,7 +194,7 @@ export interface VerifiedServiceIdentity {
   subject: string;
   /** Numeric Zitadel `sub` claim (the machine-user's internal ID). */
   clientId: string;
-  // Tenant intentionally omitted — service-acting JWTs do not carry a tenant
+  // Tenant intentionally omitted, service-acting JWTs do not carry a tenant
   // claim (per spec tenant-membership-not-in-jwt). The route handler must
   // resolve the tenant from request context.
 }
@@ -245,14 +245,14 @@ export async function verifyZitadelBearer(
 
   // Checks 3+4: signature, issuer, audience via jose.
   //
-  // Spec security-hardening R7 — pin the accepted JWS algorithms to the
+  // Spec security-hardening R7, pin the accepted JWS algorithms to the
   // asymmetric algorithm Zitadel uses to sign machine-user tokens (RS256).
   // Without this pin, a malicious caller who guesses the public-key bytes
   // could forge an HS256-signed token whose secret is the RSA modulus
   // material (the classic alg=none / alg-confusion attack family). jose's
   // default behaviour is to accept whatever `alg` header the token
   // declares, then look up a JWK with a matching `kid`/`alg` from the
-  // JWKS — combined with a JWKS that legitimately contains an RSA
+  // JWKS, combined with a JWKS that legitimately contains an RSA
   // public key, this is a real attack surface. Restricting the verifier
   // to RS256 closes it.
   let payload: Record<string, unknown>;
@@ -270,7 +270,7 @@ export async function verifyZitadelBearer(
     if (err instanceof joseErrors.JOSEAlgNotAllowed) {
       // R7: surface algorithm-mismatch as a signature failure (defence
       // against alg=none / alg-confusion). Don't include the rejected
-      // alg in the user-visible message — keep the failure mode opaque.
+      // alg in the user-visible message, keep the failure mode opaque.
       throw new ZitadelBearerError(
         'signature-failed',
         'JWT signing algorithm not allowed (RS256 required)',
@@ -301,7 +301,7 @@ export async function verifyZitadelBearer(
   }
 
   // Check 5: subject allow-list
-  // Spec canonical-service-identity Req 5.3 — single-claim numeric check.
+  // Spec canonical-service-identity Req 5.3, single-claim numeric check.
   // The JWT's `sub` claim is the Zitadel-issued numeric user_id. The chart's
   // resolve-sa-identity-map init container populates ALLOWED_SERVICE_SUBJECTS
   // with comma-joined numeric subs (resolved from the readable SA names in

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * gen-plans.mjs — canonical plan registry → TypeScript emitter.
+ * gen-plans.mjs, canonical plan registry → TypeScript emitter.
  *
  * Two source modes:
  *
@@ -185,10 +185,10 @@ async function main() {
 
   if (!stdoutMode && process.env.SKIP_GEN_PLANS === "1" && existsSync(OUTPUT)) {
     // Diagnostic to stderr so --stdout consumers never see it (defense in
-    // depth — the !stdoutMode guard already prevents this path, but stderr
+    // depth, the !stdoutMode guard already prevents this path, but stderr
     // is the right channel regardless).
     process.stderr.write(
-      `gen-plans: SKIP_GEN_PLANS=1 — using pre-generated ${OUTPUT}\n`,
+      `gen-plans: SKIP_GEN_PLANS=1, using pre-generated ${OUTPUT}\n`,
     );
     return;
   }
@@ -270,7 +270,7 @@ function validate(doc) {
 function renderTypeScript(doc) {
   const lines = [];
   lines.push(
-    "// GENERATED FILE — do not edit.",
+    "// GENERATED FILE, do not edit.",
     "// Source: enterprise/platform/tenant-operator/plans/plans.yaml",
     "// Generator: enterprise/platform/dashboard/scripts/gen-plans.mjs",
     "// Run `npm run build` (or the `prebuild` hook) to regenerate.",

@@ -1,5 +1,5 @@
 /**
- * /signup/duplicate-email — direct navigation target for the
+ * /signup/duplicate-email, direct navigation target for the
  * EMAIL_ALREADY_REGISTERED error case.
  *
  * Renders the ErrorDisplay card for users who arrive here via a direct link
@@ -14,12 +14,12 @@ import { ErrorDisplay } from "@/components/gibson/auth/ErrorDisplay";
 import { resolveUserFacingError } from "@/src/lib/errors/user-facing";
 
 export const metadata: Metadata = {
-  title: "Email already registered — Zero Root AI",
+  title: "Email already registered | Zero Root AI",
 };
 
 /**
  * Reads the optional `ref` search param (correlation ID) so the ErrorDisplay
- * card shows a "Reference: <id>" footer when it is available — useful for
+ * card shows a "Reference: <id>" footer when it is available, useful for
  * support escalations.
  */
 interface PageProps {

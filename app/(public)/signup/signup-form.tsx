@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * SignupForm — Client Component.
+ * SignupForm, Client Component.
  *
  * Controlled form built with react-hook-form + zodResolver(signupInputSchema).
  * Fields (in DOM order): firstName, lastName, email, password, workspaceName,
@@ -152,7 +152,7 @@ function PasswordStrengthMeter({
 // ---------------------------------------------------------------------------
 
 export interface SignupFormProps {
-  /** Validated plan ID — used both for the tier field and the read-only display. */
+  /** Validated plan ID, used both for the tier field and the read-only display. */
   plan: string;
   /** Human-readable plan name, e.g. "Squad". */
   planDisplayName: string;
@@ -187,7 +187,7 @@ export function SignupForm({
       workspaceName: "",
       // tier is pre-filled from the URL query param.
       tier: plan as SignupInput["tier"],
-      // Checkboxes start unchecked — the schema requires literal true.
+      // Checkboxes start unchecked, the schema requires literal true.
       acceptToS: undefined as unknown as true,
       acceptPrivacy: undefined as unknown as true,
     },
@@ -197,7 +197,7 @@ export function SignupForm({
   const passwordValue = watch("password");
   const workspaceNameValue = watch("workspaceName");
 
-  // Chart-managed reserved-names denylist — fetched once via
+  // Chart-managed reserved-names denylist, fetched once via
   // /api/auth/reserved-names which proxies to the daemon's
   // PlatformOperatorService.GetReservedNames RPC. The K8s admission webhook
   // remains the authoritative gate; this is a UX nicety so users get
@@ -220,7 +220,7 @@ export function SignupForm({
   // Prevent accidental navigation while provisioning is in progress.
   // Skip the guard once a success redirect URL is set: at that point the
   // panel is about to navigate intentionally (window.location.assign), and
-  // browsers fire beforeunload during that navigation too — without this
+  // browsers fire beforeunload during that navigation too, without this
   // skip, the user gets a "you will lose your saved information" popup
   // every successful signup right before landing on /login.
   useEffect(() => {
@@ -307,7 +307,7 @@ export function SignupForm({
           }
         }
       } catch (err) {
-        // Log the actual error so it shows up in browser devtools — without
+        // Log the actual error so it shows up in browser devtools, without
         // this the failure is invisible client-side and the dashboard pod
         // log only sees the Server Action layer's generic 500.
         console.error("[signup] action threw", {
@@ -322,12 +322,12 @@ export function SignupForm({
         // Deployment skew: this tab's client bundle predates the running
         // dashboard build, so its Server Action IDs are stale and Next.js
         // rejects the call with "Failed to find Server Action". Retrying the
-        // same action from this tab can never succeed — only a reload, which
+        // same action from this tab can never succeed, only a reload, which
         // fetches the current build's bundle, recovers it. See
         // src/lib/server-action-skew.ts.
         if (isServerActionDeploymentSkew(err)) {
           if (reloadForDeploymentSkew()) {
-            toast.error("The app was updated — reloading…");
+            toast.error("The app was updated, reloading…");
           } else {
             toast.error(
               "The app was updated. Please refresh the page and try again.",
@@ -392,7 +392,7 @@ export function SignupForm({
                 </div>
               </div>
 
-              {/* Name row — 2-col on sm+ */}
+              {/* Name row, 2-col on sm+ */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* First name */}
                 <FormField
@@ -543,7 +543,7 @@ export function SignupForm({
                 )}
               />
 
-              {/* Company name — the form-field name (`workspaceName`),
+              {/* Company name, the form-field name (`workspaceName`),
                   slugified Tenant CR name, and all downstream operator
                   wiring still use the workspace terminology. Only the
                   user-visible label/placeholder/helper text changed in
@@ -586,7 +586,7 @@ export function SignupForm({
                         role="alert"
                         aria-live="polite"
                       >
-                        That name is already in use — pick a different one.
+                        That name is already in use, pick a different one.
                       </p>
                     ) : null}
                     <FormMessage />

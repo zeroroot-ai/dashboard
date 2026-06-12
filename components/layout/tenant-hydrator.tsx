@@ -10,7 +10,7 @@
  * The auth layout (a Server Component) calls `getServerSession()` once per
  * render, resolves the active + member tenant CRDs, and passes the full
  * authz state through this component. The provider treats those props as
- * authoritative on every render — there are NO client-side `useSession()`
+ * authoritative on every render, there are NO client-side `useSession()`
  * reads of tenant / permission state. After a successful tenant switch
  * (`switchActiveTenantAction` + `router.refresh()`) the layout re-renders
  * with new props and the context re-hydrates.

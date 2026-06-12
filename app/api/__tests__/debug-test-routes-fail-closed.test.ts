@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 
 /**
  * Regression: the sensitive test/debug routes must be fail-closed (404) when
- * their enabling flag is absent — the production posture. These routes are
+ * their enabling flag is absent, the production posture. These routes are
  * gated ONLY by an explicit env flag (deliberately not NODE_ENV; see
  * check-no-nodeenv-conditioned-auth.mjs), and check-no-prod-debug-flags.mjs
  * guarantees no committed config sets those flags. This test locks the 404

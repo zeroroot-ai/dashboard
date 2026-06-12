@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * CredentialPanel — shared one-time credential surface.
+ * CredentialPanel, shared one-time credential surface.
  *
  * Lifted from components/gibson/agents/RegisterAgentForm.tsx so the
  * deploy wizard's per-type dispatcher can reuse the same display

@@ -24,7 +24,7 @@ interface MissionTracesTabProps {
  * mission / agent / tool / span nodes render as static rows, while LLM
  * and decision nodes are expandable into their full prompt ↔ response
  * conversation. The same <TraceTree> backs the standalone trace detail
- * page (dashboard#470) — there is one trace renderer.
+ * page (dashboard#470), there is one trace renderer.
  *
  * The underlying hook auto-refetches every 10s when the mission is
  * running or paused; completed missions are cached for 60s.

@@ -21,11 +21,11 @@ Missions section, click into any run.
 |---|---|
 | **Overview** | Mission name, status, target, start/end times, duration, total cost, total tokens. |
 | **DAG** | The mission graph with each node coloured by status. Click a node to see its inputs, outputs, and timing. |
-| **Events** | The lifecycle event stream in real time — `node.started`, `finding.submitted`, `secret.read`, `mission.completed`. |
+| **Events** | The lifecycle event stream in real time, `node.started`, `finding.submitted`, `secret.read`, `mission.completed`. |
 | **Findings** | Findings produced during this run, with severity and triage status. |
 | **Discoveries** | Knowledge-graph entities ingested during the run, grouped by type. |
 | **Logs** | Per-component logs (agent stdout/stderr, tool error output). |
-| **Secrets accessed** | Which credentials plugins read during the run — names only, never values. |
+| **Secrets accessed** | Which credentials plugins read during the run, names only, never values. |
 | **LLM trace** | Every LLM call: prompt, response, tokens, latency, cost. |
 
 Mission runs persist indefinitely by default (override under
@@ -49,7 +49,7 @@ Open the **LLM trace** tab on a mission detail page to drill into any
 mission's trace stream.
 
 The trace explorer supports search, filtering, and dataset-style
-collections — useful when you want to evaluate prompt changes, run
+collections, useful when you want to evaluate prompt changes, run
 regression tests, or share traces with your team.
 
 ## Metrics
@@ -88,7 +88,7 @@ action in your tenant:
 Filter by actor, action, target, outcome, date range. Export filtered
 views as CSV or JSON for compliance evidence.
 
-Credential **values are never in the audit log** — only secret names
+Credential **values are never in the audit log**, only secret names
 and the requesting identity.
 
 ## Replay
@@ -99,7 +99,7 @@ On a mission detail page, click **Replay from checkpoint**.
 | Choice | Effect |
 |---|---|
 | **Replay** | Re-runs the chosen checkpoint forward with the same inputs. Useful for retrying flaky steps. |
-| **Replay with override** | Re-runs forward with an override — different prompt, different LLM slot, different tool variant. Useful for evaluating changes. |
+| **Replay with override** | Re-runs forward with an override, different prompt, different LLM slot, different tool variant. Useful for evaluating changes. |
 
 Replays are stored as their own mission runs, linked to the original
 under **Replays of** on the mission detail page. The audit log
@@ -107,12 +107,12 @@ records who triggered the replay and what was overridden.
 
 Common uses:
 
-- The triage agent flagged the wrong thing — fix the prompt, replay
+- The triage agent flagged the wrong thing, fix the prompt, replay
   from the triage node.
-- A tool was flaky — replay just that node.
-- Compare two LLM slots on the same prior mission — replay each with
+- A tool was flaky, replay just that node.
+- Compare two LLM slots on the same prior mission, replay each with
   a different slot binding.
-- Verify a fix — re-run the discovery step against the patched
+- Verify a fix, re-run the discovery step against the patched
   target.
 
 ## Alerts
@@ -129,7 +129,7 @@ Alerts**:
 | Plugin restarted unexpectedly | Notify on `restart` rotations or crash-restarts. |
 | Secret rotated | Audit confirmation to a security mailbox. |
 
-Each destination has its own filter — you only get the alerts you
+Each destination has its own filter, you only get the alerts you
 asked for.
 
 ## Per-component status
@@ -157,7 +157,7 @@ unhealthy component.
 - **Set a cost budget** (`Settings → LLM budget`) for each tenant.
   Gibson will pause new mission dispatch when the budget is exceeded
   rather than silently overspending.
-- **Pin a "missions failed" alert** to your team channel — failed
+- **Pin a "missions failed" alert** to your team channel, failed
   missions stop being noticed once they're in the log.
 - **Use trace datasets** when iterating on prompts. Capture a few
   representative mission traces, then re-run the prompt against the
@@ -167,11 +167,11 @@ unhealthy component.
 
 ## Related
 
-- [Missions](/docs/missions) — the lifecycle and event stream replay
+- [Missions](/docs/missions), the lifecycle and event stream replay
   draws on.
-- [Findings](/docs/findings) — alerts on findings; severity-based
+- [Findings](/docs/findings), alerts on findings; severity-based
   routing.
-- [Secrets management](/docs/secrets-management) — `secret.read` events
+- [Secrets management](/docs/secrets-management), `secret.read` events
   in the audit log; rotation flows.
-- [Roles & permissions](/docs/rbac) — every authz decision lands in the
+- [Roles & permissions](/docs/rbac), every authz decision lands in the
   audit log.

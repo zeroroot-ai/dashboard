@@ -1,4 +1,4 @@
-# CLAUDE.md — Dashboard
+# CLAUDE.md, Dashboard
 
 > **Workflow rules:** see [`github.com/zeroroot-ai/.github` → `AGENTS.md`](https://github.com/zeroroot-ai/.github/blob/main/AGENTS.md) for branch / PR / commit / release / rebase rules. Repo-local rules below override only when explicitly noted.
 
@@ -6,18 +6,18 @@ This file documents conventions specific to the `zeroroot-ai/dashboard` reposito
 
 ## Key constraints (read first)
 
-- This is a **Shadcn UI Kit** template. Do not touch pages/components that are unrelated to the Gibson product surface — the template pages are intentionally untouched.
+- This is a **Shadcn UI Kit** template. Do not touch pages/components that are unrelated to the Gibson product surface, the template pages are intentionally untouched.
 - Dashboard → daemon always goes through **Envoy + ext_authz**. Never open a direct gRPC channel to `:50051` / `:50002` or use `GIBSON_DAEMON_ADDRESS`. The guard script `scripts/check-no-direct-daemon-grpc.mjs` will fail the build if you do.
 - `pnpm prebuild` runs a chain of policy-guard scripts. Do not disable them. Fix the code instead.
 - **No hardcoded colors anywhere under `app/**` or `components/**`.** Every color goes through a token declared in `app/globals.css`. The guard `scripts/check-no-hardcoded-colors.mjs` rejects tailwind palette utilities (`text-emerald-*`, `bg-zinc-*`), tailwind arbitrary-value colors (`bg-[#...]`, `text-[oklch(...)]`), black/white utilities (`bg-white`, `text-black`), inline-style colors, and raw `#...`/`oklch(...)`/`rgb(...)`/`hsl(...)` in `.css` files. Two files are exempt because they declare the token system itself: `app/globals.css`, `app/themes.css`. See the design-system guide below.
-- **Customer-facing docs name product capabilities, not vendors.** `content/docs/**/*.mdx` must not mention Zitadel, OpenFGA / FGA, Envoy, ext-authz, jwt_authn, JWKS, x-gibson-identity-*, Langfuse, SPIFFE / SPIRE, Neo4j, CNPG, ArgoCD, cert-manager, ESO, OPA, or "Gibson-hosted Vault". Write product language instead — "Gibson identity service", "Gibson permissions", "Gibson Traces", "Gibson-managed secrets storage". See the Customer terminology section below; full deny-list ↔ replacement table at [docs.git → repos/dashboard/customer-doc-terminology.md](https://github.com/zeroroot-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md). Internal developer docs at `enterprise/platform/dashboard/docs/*.md` and every `CLAUDE.md` are intentionally exempt.
+- **Customer-facing docs name product capabilities, not vendors.** `content/docs/**/*.mdx` must not mention Zitadel, OpenFGA / FGA, Envoy, ext-authz, jwt_authn, JWKS, x-gibson-identity-*, Langfuse, SPIFFE / SPIRE, Neo4j, CNPG, ArgoCD, cert-manager, ESO, OPA, or "Gibson-hosted Vault". Write product language instead, "Gibson identity service", "Gibson permissions", "Gibson Traces", "Gibson-managed secrets storage". See the Customer terminology section below; full deny-list ↔ replacement table at [docs.git → repos/dashboard/customer-doc-terminology.md](https://github.com/zeroroot-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md). Internal developer docs at `enterprise/platform/dashboard/docs/*.md` and every `CLAUDE.md` are intentionally exempt.
 
 ## Two-surface platform contract (post-2026-05 refactor)
 
 Daemon protos consumed here come from two Go modules, both pinned in the sibling `gibson` repo's `go.mod` (the dashboard's proto-regen workspace resolves them via `go list -m`):
 
-- **OSS SDK** (`github.com/zeroroot-ai/sdk`) — customer-facing. `DaemonService` plus the decomposed tenant-administration surface `gibson.tenant.v1.*` (`TenantService`, `MembershipService`, `GrantsService`, `ProviderService`, `SecretsService`, `PluginAdminService`, `BudgetService`, `AgentIdentityService`, `UserService`, `UsageService`, `ModelAccessService`), mission / finding / discovery / budget types, the `gibson.auth.v1` annotation extension. Per ADR-0039 (2026-06-01) tenant administration is **customer-facing** and lives in the OSS SDK.
-- **platform-sdk** (`github.com/zeroroot-ai/platform-sdk`) — PRIVATE. Only the genuinely-internal services: `DaemonOperatorService` (`gibson.daemon.operator.v1`), `BillingService` (`gibson.billing.v1`), `DiscoveryService` (`gibson.daemon.discovery.v1`).
+- **OSS SDK** (`github.com/zeroroot-ai/sdk`), customer-facing. `DaemonService` plus the decomposed tenant-administration surface `gibson.tenant.v1.*` (`TenantService`, `MembershipService`, `GrantsService`, `ProviderService`, `SecretsService`, `PluginAdminService`, `BudgetService`, `AgentIdentityService`, `UserService`, `UsageService`, `ModelAccessService`), mission / finding / discovery / budget types, the `gibson.auth.v1` annotation extension. Per ADR-0039 (2026-06-01) tenant administration is **customer-facing** and lives in the OSS SDK.
+- **platform-sdk** (`github.com/zeroroot-ai/platform-sdk`), PRIVATE. Only the genuinely-internal services: `DaemonOperatorService` (`gibson.daemon.operator.v1`), `BillingService` (`gibson.billing.v1`), `DiscoveryService` (`gibson.daemon.discovery.v1`).
 
 Admin server-actions (tenant management, plugin install, secrets management, grants) call the `gibson.tenant.v1.*` services. Each carries a `(gibson.auth.v1.authz)` annotation with an `admin`/`writer` relation, and Envoy gates those admin-relation prefixes behind the admin JWT requirement. The dashboard never opens a direct daemon channel.
 
@@ -40,7 +40,7 @@ pnpm proto:generate # regenerate src/gen/ TS proto bindings
 
 `src/data/mission-definition.schema.json` is a generated copy of
 `opensource/sdk/gen/mission-definition.schema.json`. It is NOT
-hand-maintained. The file carries a `$comment` field ("DO NOT EDIT — generated
+hand-maintained. The file carries a `$comment` field ("DO NOT EDIT, generated
 …") as the first key.
 
 **Source of truth:** `opensource/sdk/gen/mission-definition.schema.json`
@@ -84,13 +84,13 @@ The dashboard's TS proto bindings at `src/gen/` are generated from
 - the **daemon-local** protos at the `enterprise/platform/gibson/internal/daemon/api/`
   sibling checkout, which are not published anywhere. If a daemon-local type
   needs to reach the dashboard, the right shape is to promote it to
-  `platform-sdk` and consume via BSR — not to vendor it through the
+  `platform-sdk` and consume via BSR, not to vendor it through the
   dashboard's regen workspace.
 
 Buf v2 has a hard rule that every module path in `buf.yaml` must
 resolve **inside** the directory containing the `buf.yaml`. The
 two proto trees live outside this repo, so we cannot just point
-buf at them with `../../core/...` paths — buf rejects those.
+buf at them with `../../core/...` paths, buf rejects those.
 Instead, `pnpm proto:generate` runs
 [`scripts/proto-generate.mjs`](scripts/proto-generate.mjs) which
 builds a self-contained workspace:
@@ -111,12 +111,12 @@ pattern as the daemon's `make authz-registry` recipe in
 trees, one buf invocation" constraint.
 
 **No checked-in `buf.yaml` or `buf.gen.yaml`** at the dashboard
-root — they only exist transiently inside `.tmp/proto-ws/`.
+root, they only exist transiently inside `.tmp/proto-ws/`.
 
 **Workstation-only.** The script assumes `enterprise/platform/gibson/` and
 `opensource/platform-sdk/` are cloned as siblings of this repo (i.e. you're in
 the canonical `~/Code/zeroroot.ai/` polyrepo workspace). CI does not regenerate
-proto bindings — `src/gen/` is committed and CI just typechecks
+proto bindings, `src/gen/` is committed and CI just typechecks
 it. Run `pnpm proto:generate` locally whenever you change a
 `.proto` file in either tree, then commit the regenerated
 `src/gen/` alongside the proto edit.
@@ -133,18 +133,18 @@ top-level CLAUDE.md transient-dev guidance), then regen.
 
 Admin chrome is hidden from `tenant_member` users at two layers:
 
-1. **Client layer** (`useAuthorize` hook) — hides buttons/entries while loading and when denied.
-2. **Server layer** (`assertAuthorized` helper) — throws before any daemon call, providing defense-in-depth even if a non-admin bypasses the UI.
+1. **Client layer** (`useAuthorize` hook), hides buttons/entries while loading and when denied.
+2. **Server layer** (`assertAuthorized` helper), throws before any daemon call, providing defense-in-depth even if a non-admin bypasses the UI.
 
-Both layers read from a single static map — the `AuthRegistry` — generated from OSS SDK + platform-sdk proto annotations at build time.
+Both layers read from a single static map, the `AuthRegistry`, generated from OSS SDK + platform-sdk proto annotations at build time.
 
 ---
 
 ### Pipeline: OSS SDK + platform-sdk protos → registry
 
 ```
-<sdk-module>/api/proto/**/*.proto       (OSS SDK — DaemonService + gibson.tenant.v1.* admin services)
-opensource/platform-sdk/proto/**/*.proto (platform-sdk — DaemonOperatorService, BillingService, DiscoveryService)
+<sdk-module>/api/proto/**/*.proto       (OSS SDK, DaemonService + gibson.tenant.v1.* admin services)
+opensource/platform-sdk/proto/**/*.proto (platform-sdk, DaemonOperatorService, BillingService, DiscoveryService)
   └─ (gibson.auth.v1.authz) extension on each method
        │
        ▼
@@ -156,12 +156,12 @@ src/gen/authz/registry.ts         ← committed, regenerated on every build
 
 `gen-authz-registry.mjs` invokes `buf build` against BOTH module directories to produce a single FileDescriptorSet, walks every service method, decodes the authz annotation, and emits a TypeScript module with the unified `AuthRegistry` record. Customer-callable `DaemonService` RPCs and admin `gibson.tenant.v1.*` RPCs land in the same registry; the FGA relation (`member`/`can_use` vs `admin`/`writer`) distinguishes them.
 
-`scripts/check-authz-registry-fresh.mjs` regenerates to a temp file and diffs against the committed copy — CI fails on drift.
+`scripts/check-authz-registry-fresh.mjs` regenerates to a temp file and diffs against the committed copy, CI fails on drift.
 
 Both scripts run as part of `pnpm prebuild` before the existing `check-no-*` policy guards.
 
 **Spec reference:** `dashboard-authz-ui-gating` (Phase 1, Tasks 1-2).
-**Sister spec:** `private-authz-registry` Layer 1 annotates the SDK protos. This dashboard script is independent of that spec's OCI output — it reads annotations directly from the local proto source. The two specs can ship in either order.
+**Sister spec:** `private-authz-registry` Layer 1 annotates the SDK protos. This dashboard script is independent of that spec's OCI output, it reads annotations directly from the local proto source. The two specs can ship in either order.
 
 ---
 
@@ -176,14 +176,14 @@ function AddPluginButton() {
   const { allowed, loading } = useAuthorize(
     "/gibson.tenant.v1.PluginAdminService/RegisterPlugin"
   );
-  if (loading || !allowed) return null;         // hide on loading — no FOUC
+  if (loading || !allowed) return null;         // hide on loading, no FOUC
   return <Button onClick={openWizard}>Add Plugin</Button>;
 }
 ```
 
 Rules:
 - Pass the fully-qualified RPC name as the method string (matches the key in `AuthRegistry`).
-- Always return `null` (not a disabled element) when `loading || !allowed`. This is the **hide-on-loading** pattern — the element is never in the DOM while the membership query is in flight, which prevents a flash of unauthorized content.
+- Always return `null` (not a disabled element) when `loading || !allowed`. This is the **hide-on-loading** pattern, the element is never in the DOM while the membership query is in flight, which prevents a flash of unauthorized content.
 - Unknown methods (`AuthRegistry[method]` is undefined) are **denied** (fail-closed). Set `NEXT_PUBLIC_DASHBOARD_AUTHZ_PERMISSIVE_DEV=1` (client) or `DASHBOARD_AUTHZ_PERMISSIVE_DEV=1` (server) in non-production environments to fall back to permissive-allow with a warn-once log line per method. Production builds ignore these vars entirely (`NODE_ENV` is checked first).
 - Uses React Query with `staleTime: 60_000` ms; a single cache entry `"my-memberships"` is shared across all `useAuthorize` calls on a page.
 
@@ -220,17 +220,17 @@ export async function createSecretAction(formData: FormData) {
 The membership query (`/api/auth/my-memberships`) is asynchronous. During the initial load `loading` is `true`. Components **must** treat `loading` as denied:
 
 ```ts
-if (loading || !allowed) return null;   // correct — no element in DOM
-if (!loading && !allowed) return null;  // wrong — brief flash while loading
+if (loading || !allowed) return null;   // correct, no element in DOM
+if (!loading && !allowed) return null;  // wrong, brief flash while loading
 ```
 
 The query result is cached for 60 seconds and shared across all hooks on the page, so only one network request is made per page load.
 
 ---
 
-### Three-state visibility — `AuthGatedButton` (dashboard#145)
+### Three-state visibility, `AuthGatedButton` (dashboard#145)
 
-The hide-on-loading + return-null pattern is correct for **admin scaffolding** the user shouldn't even know exists (Secrets backend, Grants admin, internal tooling). It is **wrong** for primary CTAs that every user benefits from discovering, even when their current role can't take the action — e.g. the Deploy launcher on agents/tools/plugins pages. Hiding such buttons leads to "where is the Deploy button?" support tickets from non-admins who don't realise the feature exists at all.
+The hide-on-loading + return-null pattern is correct for **admin scaffolding** the user shouldn't even know exists (Secrets backend, Grants admin, internal tooling). It is **wrong** for primary CTAs that every user benefits from discovering, even when their current role can't take the action, e.g. the Deploy launcher on agents/tools/plugins pages. Hiding such buttons leads to "where is the Deploy button?" support tickets from non-admins who don't realise the feature exists at all.
 
 For those CTAs use `<AuthGatedButton>` from `components/gibson/auth/`. It has three render states:
 
@@ -267,8 +267,8 @@ function DeployCta({ type }: { type: "agent" | "plugin" | "tool" }) {
 
 | User mental model | Pattern |
 |---|---|
-| "This action exists, but I'm not authorised — who do I ask?" | `<AuthGatedButton state="denied" disabledTooltip="..." />` |
-| "This action shouldn't be visible at all to me — it's internal admin scaffolding." | `useAuthorize` + `if (loading \|\| !allowed) return null` |
+| "This action exists, but I'm not authorised, who do I ask?" | `<AuthGatedButton state="denied" disabledTooltip="..." />` |
+| "This action shouldn't be visible at all to me, it's internal admin scaffolding." | `useAuthorize` + `if (loading \|\| !allowed) return null` |
 
 E2E coverage for the three states lives in `e2e/authz/admin.spec.ts` (asserts allowed) and `e2e/authz/non-admin.spec.ts` (asserts denied wrapper with tooltip-bearing CTA).
 
@@ -276,15 +276,15 @@ E2E coverage for the three states lives in `e2e/authz/admin.spec.ts` (asserts al
 
 ### Adding a new admin RPC
 
-Since ADR-0039, tenant-administration RPCs (FGA relation `admin` or `writer`) live in the **OSS SDK** under `gibson.tenant.v1.*` — tenant administration is customer-facing. The genuinely-private operator surface (`DaemonOperatorService`, `BillingService`, `DiscoveryService`) is the only thing left in platform-sdk; you rarely add to it from the dashboard.
+Since ADR-0039, tenant-administration RPCs (FGA relation `admin` or `writer`) live in the **OSS SDK** under `gibson.tenant.v1.*`, tenant administration is customer-facing. The genuinely-private operator surface (`DaemonOperatorService`, `BillingService`, `DiscoveryService`) is the only thing left in platform-sdk; you rarely add to it from the dashboard.
 
 1. In the OSS SDK at `<sdk-repo>/api/proto/gibson/tenant/v1/<file>.proto`, add the new RPC to the appropriate service (`MembershipService`, `GrantsService`, `ProviderService`, `SecretsService`, `PluginAdminService`, …). Add the `(gibson.auth.v1.authz)` extension with `relation: "admin"` (or `"writer"`) and `allowed_identities: [USER]`. The extension is defined locally in the OSS SDK (`gibson/auth/v1/options.proto`).
 2. Run `make generate && go build ./...` in the SDK repo. Commit + open the SDK PR. Merge to cut a new SDK release.
 3. The release-please tag triggers the SDK fan-out, which opens consumer-bump PRs across `gibson`, `dashboard`, `tenant-operator`, `ext-authz`, `gibson-tool-runner`, `adk`, etc. Wait for those to merge.
-4. In this dashboard repo, the bump PR runs `pnpm prebuild` — `gen-authz-registry.mjs` regenerates `src/gen/authz/registry.ts` with the new entry, and `proto-generate.mjs` regenerates the TypeScript bindings under `src/gen/`.
+4. In this dashboard repo, the bump PR runs `pnpm prebuild`, `gen-authz-registry.mjs` regenerates `src/gen/authz/registry.ts` with the new entry, and `proto-generate.mjs` regenerates the TypeScript bindings under `src/gen/`.
 5. In the UI, call `useAuthorize("/gibson.tenant.v1.<Service>/YourMethod")` on the new button/action.
 6. In the server action, call `await assertAuthorized(...)` before the daemon call, then dial the service via the ConnectRPC client (through Envoy).
-7. Commit `src/gen/authz/registry.ts` + the new `src/gen/gibson/...` bindings alongside the code changes — the CI drift gate will fail if you forget.
+7. Commit `src/gen/authz/registry.ts` + the new `src/gen/gibson/...` bindings alongside the code changes, the CI drift gate will fail if you forget.
 
 No other files need editing. The registry is the only source of authz rules.
 
@@ -314,17 +314,17 @@ All three suites compile and lint cleanly without a live cluster.
 
 ## Design system
 
-The dashboard's design system is a single token tree in `app/globals.css` with **explicit light AND dark values for every token**. The terminal-hacker brand identity (deep navy + terminal green + cyan link + CRT scanline overlay) is enforced uniformly across marketing, public auth, the authenticated product, and in-app docs. The canonical reference page is `/design-tokens` — both modes render side-by-side.
+The dashboard's design system is a single token tree in `app/globals.css` with **explicit light AND dark values for every token**. The terminal-hacker brand identity (deep navy + terminal green + cyan link + CRT scanline overlay) is enforced uniformly across marketing, public auth, the authenticated product, and in-app docs. The canonical reference page is `/design-tokens`, both modes render side-by-side.
 
 Three token layers, narrowing from raw to semantic:
 
-- **Palette** (`--base-50` … `--base-1000`, `--primary-50` … `--primary-1000`, `--secondary-50` … `--secondary-1000`) — never reference these directly from a component.
-- **Semantic** (`--background`, `--foreground`, `--card`, `--primary`, `--secondary`, `--muted`, `--accent`, `--destructive`, `--border`, `--input`, `--ring`, `--sidebar-*`, `--chart-*`) — the default choice. Maps directly to tailwind utilities (`bg-background`, `text-foreground`, `border-border`).
-- **Specialty** (`--highlight`, `--alt`, `--link`, `--glow-strength`, `--scanline-opacity`) — reach for these only when the design intent is the terminal-hacker accent itself. Available as `text-highlight`, `text-alt`, `text-link`.
+- **Palette** (`--base-50` … `--base-1000`, `--primary-50` … `--primary-1000`, `--secondary-50` … `--secondary-1000`), never reference these directly from a component.
+- **Semantic** (`--background`, `--foreground`, `--card`, `--primary`, `--secondary`, `--muted`, `--accent`, `--destructive`, `--border`, `--input`, `--ring`, `--sidebar-*`, `--chart-*`), the default choice. Maps directly to tailwind utilities (`bg-background`, `text-foreground`, `border-border`).
+- **Specialty** (`--highlight`, `--alt`, `--link`, `--glow-strength`, `--scanline-opacity`), reach for these only when the design intent is the terminal-hacker accent itself. Available as `text-highlight`, `text-alt`, `text-link`.
 
 Full architectural rationale + when-to-update: [docs.git → repos/dashboard/design-system.md](https://github.com/zeroroot-ai/docs/blob/main/repos/dashboard/design-system.md).
 
-### No hardcoded colors — the CI guard
+### No hardcoded colors, the CI guard
 
 `scripts/check-no-hardcoded-colors.mjs` runs as part of `pnpm prebuild`. Modes:
 
@@ -346,9 +346,9 @@ When migrating a file (slices #54-#59), the drain procedure is:
 2. Run `node scripts/check-no-hardcoded-colors.mjs --shrink`.
 3. Commit both the source change and the updated `.color-allowlist.json`.
 
-Adding a new entry to the allowlist is intentionally NOT automated. If a genuine exception exists, hand-edit the JSON file — that forces a review-time conversation about why the token system can't accommodate the case.
+Adding a new entry to the allowlist is intentionally NOT automated. If a genuine exception exists, hand-edit the JSON file, that forces a review-time conversation about why the token system can't accommodate the case.
 
-### Visual regression — the snapshot suite
+### Visual regression, the snapshot suite
 
 `e2e/visual/` ships Playwright screenshot tests that capture every customer-facing route in both light and dark mode. The suite runs as part of `pnpm test:e2e`; visual diffs fail the run.
 
@@ -357,13 +357,13 @@ pnpm test:visual          # run snapshots; fail on diff
 pnpm test:visual:update   # regenerate baselines after an intentional design change
 ```
 
-Baselines live under `e2e/visual/__screenshots__/<platform>/`. The theme is selected via the `theme_choice` cookie (the same cookie #57 wired into `app/layout.tsx`), so each route is captured against the rendered SSR theme — no FOUC, no animation noise (the spec pauses every animation + applies `prefers-reduced-motion: reduce` before sampling).
+Baselines live under `e2e/visual/__screenshots__/<platform>/`. The theme is selected via the `theme_choice` cookie (the same cookie #57 wired into `app/layout.tsx`), so each route is captured against the rendered SSR theme, no FOUC, no animation noise (the spec pauses every animation + applies `prefers-reduced-motion: reduce` before sampling).
 
 When an intentional design change lands:
 
 1. Make the visual change (token tweak, layout edit, etc.).
 2. Run `pnpm test:visual:update` to regenerate baselines.
-3. Review the regenerated PNGs in the diff — every changed pixel should be expected.
+3. Review the regenerated PNGs in the diff, every changed pixel should be expected.
 4. Commit the baselines alongside the design change. CI will compare future PRs against the new baseline.
 
 #### Auth-route coverage
@@ -374,7 +374,7 @@ When an intentional design change lands:
 TEST_AUTH_BYPASS=1 AUTH_SECRET=$YOUR_LOCAL_SECRET pnpm test:visual
 ```
 
-Two independent production guards on the encoder, AND-ed: `NODE_ENV !== "production"` and `TEST_AUTH_BYPASS=1`. Neither alone activates it. The helm chart never sets `TEST_AUTH_BYPASS` so even a misconfigured prod deploy with the wrong `NODE_ENV` cannot run the encoder. Adding the env var to any production-bound config path is a smell — flag in review.
+Two independent production guards on the encoder, AND-ed: `NODE_ENV !== "production"` and `TEST_AUTH_BYPASS=1`. Neither alone activates it. The helm chart never sets `TEST_AUTH_BYPASS` so even a misconfigured prod deploy with the wrong `NODE_ENV` cannot run the encoder. Adding the env var to any production-bound config path is a smell, flag in review.
 
 The spec also skips gracefully when `TEST_AUTH_BYPASS` is unset, so CI environments that haven't opted in don't fail; they just don't run the auth-route suite.
 
@@ -384,7 +384,7 @@ Customer-facing docs at `content/docs/**/*.mdx` and the customer-visible UI surf
 
 Canonical reference: [docs.git → `repos/dashboard/customer-doc-terminology.md`](https://github.com/zeroroot-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md). It carries the full deny-list ↔ replacement table, the allowlist of permitted BYO/protocol terms, and the structural rewrite pattern for the "how do I debug a 401" flow.
 
-The deny-list at a glance — these never appear in `content/docs/**/*.mdx`:
+The deny-list at a glance, these never appear in `content/docs/**/*.mdx`:
 
 - `Zitadel` → "Gibson identity service" / drop
 - `OpenFGA`, `FGA`, "FGA Check", "FGA tuple" → "Gibson permissions" / "grants"
@@ -396,11 +396,11 @@ The deny-list at a glance — these never appear in `content/docs/**/*.mdx`:
 
 Permitted (customer-facing product surface):
 
-- BYO integrations — `HashiCorp Vault` (in customer-side context only), `AWS Secrets Manager`, `Azure Key Vault`, `GCP Secret Manager`, `Slack`, `PagerDuty`, `Discord`, `Microsoft Teams`, `Docker`, `Prometheus`.
-- Customer-runtime references — `Kubernetes`, `systemd` (must read unambiguously as "your runtime").
-- Standard protocol terms — `OAuth2`, `OIDC`, `JWT`, `client_id`, `client_secret`.
+- BYO integrations, `HashiCorp Vault` (in customer-side context only), `AWS Secrets Manager`, `Azure Key Vault`, `GCP Secret Manager`, `Slack`, `PagerDuty`, `Discord`, `Microsoft Teams`, `Docker`, `Prometheus`.
+- Customer-runtime references, `Kubernetes`, `systemd` (must read unambiguously as "your runtime").
+- Standard protocol terms, `OAuth2`, `OIDC`, `JWT`, `client_id`, `client_secret`.
 
-**Out of scope** — internal developer docs at `enterprise/platform/dashboard/docs/*.md` (auth.md, forbidden-patterns.md, how-to-add-a-rpc.md, …) and every `CLAUDE.md` may name internal components freely. The CI guard (lands in #129 as `scripts/check-no-internal-tech-in-docs.mjs`) skips them.
+**Out of scope**, internal developer docs at `enterprise/platform/dashboard/docs/*.md` (auth.md, forbidden-patterns.md, how-to-add-a-rpc.md, …) and every `CLAUDE.md` may name internal components freely. The CI guard (lands in #129 as `scripts/check-no-internal-tech-in-docs.mjs`) skips them.
 
 When you find yourself writing "Check Envoy's `jwt_authn` logs" in a customer-facing troubleshooting flow, stop. The customer cannot reach those logs. Replace with a dashboard action (re-issue from the deploy wizard, inspect grants in the Permissions tab) or a CLI invocation (`gibson inspect`). The general rule: if a step requires reading internal logs, it is the wrong step.
 

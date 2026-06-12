@@ -15,7 +15,7 @@
  *
  * Display-cache: both TenantMember CRs are patched for spec.role so the
  * users list badge stays consistent. Same best-effort pattern as
- * setTenantRoleAction — FGA is authoritative, the patch is cosmetic.
+ * setTenantRoleAction, FGA is authoritative, the patch is cosmetic.
  *
  * TODO: replace the "members:invite" permission gate with a dedicated
  * "org:transfer_ownership" permission once it has been added to the RBAC
@@ -40,7 +40,7 @@ import type { ActionResult } from "./types";
  * Transfer the `owner` FGA relation from the calling user to `newOwnerUserId`.
  *
  * Preconditions (enforced server-side, not delegated to the client):
- *   1. Caller holds "members:invite" permission (proxy for owner-only gate —
+ *   1. Caller holds "members:invite" permission (proxy for owner-only gate -
  *      TODO: add "org:transfer_ownership" to RBAC schema).
  *   2. `newOwnerUserId` is non-empty.
  *   3. Target is an Active admin (spec.role === "admin", status.phase === "Active").
@@ -124,7 +124,7 @@ export async function transferOwnershipAction(
 
   // ── Authoritative MembershipService write ──────────────────────────────────
   // TransferOwnership atomically swaps the owner tuple from the current owner
-  // to new_owner_user_id — all four tuple mutations happen server-side in a
+  // to new_owner_user_id, all four tuple mutations happen server-side in a
   // single atomic call. dashboard#716 removed the former TenantMember.spec.role
   // display-cache patches: ListMembers derives role from FGA, so a roster
   // refetch reflects the swap with no CR to keep in sync.

@@ -66,7 +66,7 @@ export interface AuditLogEntry {
   // Extended fields for secret/plugin/authz drill-down (Spec 4 R5.3)
   // NOTE: credential values are NEVER present in any of these fields.
   // ---------------------------------------------------------------------------
-  /** Opaque secret identifier — name/ref only, never the value. */
+  /** Opaque secret identifier, name/ref only, never the value. */
   secretId?: string;
   /** Capability-grant JWT ID (jti) associated with this event. */
   capabilityGrantId?: string;
@@ -539,7 +539,7 @@ export async function getUserAuditLog(
  */
 export function exportAuditLogAsCSV(entries: AuditLogEntry[]): string {
   // Extended headers include the new Spec 4 R5 fields.
-  // IMPORTANT: credential values are NEVER present in any audit row —
+  // IMPORTANT: credential values are NEVER present in any audit row -
   // the AuditLogEntry type has no value field by design.
   const headers = [
     'ID',
@@ -575,7 +575,7 @@ export function exportAuditLogAsCSV(entries: AuditLogEntry[]): string {
     entry.metadata.ipAddress || '',
     entry.metadata.userAgent || '',
     entry.errorMessage || '',
-    // Extended fields — empty string when absent so column count stays constant
+    // Extended fields, empty string when absent so column count stays constant
     entry.secretId || '',
     entry.capabilityGrantId || '',
     entry.requestId || '',

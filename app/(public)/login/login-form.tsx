@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * Login form — Zitadel OIDC redirect.
+ * Login form, Zitadel OIDC redirect.
  *
  * With Auth.js v5 + Zitadel, authentication is handled entirely by Zitadel's
  * hosted login page (email/password, MFA, social IdPs). The dashboard
  * redirects the user to the Zitadel-hosted login via Auth.js signIn().
  *
- * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js — see task 24
+ * TODO(zitadel-envoy-gateway-migration): rewrite for Auth.js, see task 24
  * implementation log. The email/password form, captcha, and social-provider
  * buttons previously rendered here are now rendered by Zitadel. This page
  * is a thin redirect shim until a branded Zitadel login theme is configured.
@@ -34,7 +34,7 @@ export function LoginForm({ providers }: LoginFormProps) {
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
 
   // Immediately redirect to Zitadel hosted login. No email/password form
-  // is rendered — credentials are collected by Zitadel.
+  // is rendered, credentials are collected by Zitadel.
   //
   // Hard guard against double-fire: React StrictMode (and any future
   // re-mounts triggered by router transitions) would otherwise call
@@ -42,7 +42,7 @@ export function LoginForm({ providers }: LoginFormProps) {
   // request, the second one fails with "Auth Request has already been
   // handled (COMMAND-Sx208nt)", and the V2 login UI's error path
   // parks the user on /ui/v2/login/signedin instead of completing the
-  // OIDC redirect back to /api/auth/callback/zitadel — leaving the
+  // OIDC redirect back to /api/auth/callback/zitadel, leaving the
   // dashboard with no session cookie despite Zitadel showing the
   // user as signed in.
   const initiated = useRef(false);

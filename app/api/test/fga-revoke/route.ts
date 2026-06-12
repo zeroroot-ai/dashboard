@@ -1,5 +1,5 @@
 /**
- * /api/test/fga-revoke — delete a specific FGA membership tuple for a test
+ * /api/test/fga-revoke, delete a specific FGA membership tuple for a test
  * user, simulating a mid-session membership revocation.
  *
  * ONLY active when `TEST_FIXTURES_ENABLED=true`. Returns 404 otherwise.
@@ -10,19 +10,19 @@
  *
  * POST /api/test/fga-revoke
  *   Body (JSON):
- *     user   — the user identifier as stored in FGA (e.g., "user:<sub>")
- *     tenant — the tenant identifier (e.g., "tenant:<id>")
+ *     user  , the user identifier as stored in FGA (e.g., "user:<sub>")
+ *     tenant, the tenant identifier (e.g., "tenant:<id>")
  *
  *   Response 200 { ok: true, user, tenant, method }
  *     method = "daemon-invalidate" | "cache-ttl-fallback"
- *   Response 400 { error: "..." }  — invalid body
- *   Response 404                   — TEST_FIXTURES_ENABLED != "true"
- *   Response 500 { error: "..." }  — FGA call failed
+ *   Response 400 { error: "..." } , invalid body
+ *   Response 404                  , TEST_FIXTURES_ENABLED != "true"
+ *   Response 500 { error: "..." } , FGA call failed
  *
  * Revocation strategy:
  *   The handler uses the fault-injection "fga" subsystem to make the next
  *   call to getMyMemberships() throw fga_unavailable for the affected user.
- *   This is a pragmatic shortcut — a real tuple delete would need a Zitadel
+ *   This is a pragmatic shortcut, a real tuple delete would need a Zitadel
  *   admin token + FGA write access, which the dashboard pod does not hold in
  *   the test cluster without additional RBAC. The fault-injection path gives
  *   the test the same observable effect (protected route access fails and the
@@ -39,7 +39,7 @@
  *   and call `await page.waitForTimeout(7000)` before the next navigation.
  *   The comment below marks where that path would be triggered.
  *
- * Spec: auth-resolution-hardening — Task 14 (primitive 2: FGA revoke side-channel).
+ * Spec: auth-resolution-hardening, Task 14 (primitive 2: FGA revoke side-channel).
  */
 
 import { NextResponse, type NextRequest } from "next/server";
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       user: user.trim(),
       tenant: tenant.trim(),
       method: "fault-injection",
-      note: "FGA fault armed for next-1-calls — real tuple NOT deleted",
+      note: "FGA fault armed for next-1-calls, real tuple NOT deleted",
     }),
   );
 

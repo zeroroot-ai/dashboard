@@ -52,7 +52,7 @@ vi.mock('@/src/gen/gibson/tenant/v1/tenant_pb', () => ({ TenantService: {} }));
 // Stub out server-config. `gibsonDaemonUrl` was removed in
 // spec headline-feature-completion R11; the field below is left here so
 // any unrelated test assertion that may consult `serverConfig` still
-// resolves an object — but no module under test reads it.
+// resolves an object, but no module under test reads it.
 vi.mock('@/src/lib/config', () => ({
   serverConfig: { gibsonPlatformPublicUrl: 'http://envoy.test:8080' },
 }));
@@ -66,7 +66,7 @@ vi.mock('@/src/gen/gibson/graph/v1/graph_pb', () => ({
 // Stub out the active-tenant cookie helper so that runInterceptors() can
 // exercise the auth interceptor without a real Next.js request context.
 // Returns an empty string so the conditional `if (tenant)` in the auth
-// interceptor is falsy — x-gibson-tenant is therefore not injected, which
+// interceptor is falsy, x-gibson-tenant is therefore not injected, which
 // matches the "Removes all x-gibson-* header injection" contract the tests verify.
 vi.mock('@/src/lib/auth/active-tenant', () => ({
   getActiveTenant: vi.fn(async () => ''),
@@ -84,7 +84,7 @@ async function runInterceptors(existingHeaders?: Record<string, string>): Promis
   const reqHeaders = new Headers(existingHeaders);
   const mockReq: MockReq = { header: reqHeaders };
 
-  // Build the terminal "next" handler (identity — just returns a resolved promise).
+  // Build the terminal "next" handler (identity, just returns a resolved promise).
   const terminal = async (req: MockReq) => req;
 
   // Compose the interceptor stack right-to-left (Connect-ES convention).

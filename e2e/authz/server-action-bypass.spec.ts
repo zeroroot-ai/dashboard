@@ -10,7 +10,7 @@
  *   Next.js Server Actions are exposed as POST requests to the same route that
  *   renders the page, with a special `Next-Action` header identifying the
  *   action. A determined non-admin could attempt to:
- *     1. Obtain a valid session cookie (they have one — they are logged in).
+ *     1. Obtain a valid session cookie (they have one, they are logged in).
  *     2. Discover the action ID (visible in the JS bundle or network tab).
  *     3. POST directly to the route with the session cookie.
  *
@@ -33,9 +33,9 @@
  *        or the `_rsc` / `Next-Action` fingerprint in inline scripts.
  *     B. Fall back to a known-stable route pattern: POST to
  *        /api/actions/plugin-register (if the dashboard exposes a dedicated
- *        API route wrapping the action) — check for this pattern first.
+ *        API route wrapping the action), check for this pattern first.
  *     C. If neither resolves cleanly, the test marks itself as a no-op with
- *        a descriptive message and passes — the test is best-effort for the
+ *        a descriptive message and passes, the test is best-effort for the
  *        action-ID discovery step; the assertAuthorized unit tests cover the
  *        server-side logic more precisely.
  *
@@ -47,9 +47,9 @@
  *
  * Pre-conditions (Kind cluster):
  *   make deploy-local running against `kind-gibson` context.
- *   PLAYWRIGHT_BASE_URL  — cluster URL (default: http://localhost:3000)
- *   E2E_ADMIN_EMAIL      — any valid user with a live session
- *   E2E_ADMIN_PASSWORD   — corresponding password
+ *   PLAYWRIGHT_BASE_URL , cluster URL (default: http://localhost:3000)
+ *   E2E_ADMIN_EMAIL     , any valid user with a live session
+ *   E2E_ADMIN_PASSWORD  , corresponding password
  *
  * Wall-clock budget: ≤ 2 minutes.
  * Requirements: 6.6, 9.3.
@@ -167,7 +167,7 @@ async function discoverActionId(page: Page): Promise<string | null> {
     }
   }
 
-  // Pattern 3: RSC payload in responses captured during navigation — handled
+  // Pattern 3: RSC payload in responses captured during navigation, handled
   // separately by inspecting response bodies.
   // This approach is fragile across Next.js versions, so we skip it here.
 
@@ -201,7 +201,7 @@ async function getPluginCount(request: APIRequestContext): Promise<number | null
 // Suite
 // ---------------------------------------------------------------------------
 
-test.describe("Authz gating — server-action bypass prevention (R6.6)", () => {
+test.describe("Authz gating, server-action bypass prevention (R6.6)", () => {
   test.describe.configure({ mode: "serial" });
 
   test(
@@ -348,7 +348,7 @@ test.describe("Authz gating — server-action bypass prevention (R6.6)", () => {
         );
       } else {
         console.log(
-          `[bypass] Daemon-state verification skipped — gibson-proxy not reachable ` +
+          `[bypass] Daemon-state verification skipped, gibson-proxy not reachable ` +
             `(no live cluster). assertAuthorized unit tests cover server-side isolation.`,
         );
       }

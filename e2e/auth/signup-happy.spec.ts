@@ -22,7 +22,7 @@ import { BASE_URL, generateUserCredentials } from "./helpers/fixtures";
 import { scrapeToken, isLogSourceReachable } from "./helpers/email-log";
 import { queryUser, closeDbPool } from "./helpers/db";
 
-test.describe("Signup — happy path", () => {
+test.describe("Signup, happy path", () => {
   test.afterAll(async () => {
     await closeDbPool();
   });
@@ -50,7 +50,7 @@ test.describe("Signup — happy path", () => {
     // Email field
     await page.getByLabel(/email/i).fill(creds.email);
 
-    // Password field — use the first password field (the confirm may be second)
+    // Password field, use the first password field (the confirm may be second)
     const passwordFields = page.getByLabel(/^password$/i);
     await passwordFields.first().fill(creds.password);
 
@@ -81,9 +81,9 @@ test.describe("Signup — happy path", () => {
       .click();
 
     // After submission we expect either:
-    //   (a) /verify-email — email verification gate
-    //   (b) /signup/provisioning — provisioning pending page
-    //   (c) /dashboard/* — direct dashboard (if email verification is bypassed)
+    //   (a) /verify-email, email verification gate
+    //   (b) /signup/provisioning, provisioning pending page
+    //   (c) /dashboard/*, direct dashboard (if email verification is bypassed)
     await page.waitForURL(
       (url) =>
         url.pathname.startsWith("/verify-email") ||
@@ -109,7 +109,7 @@ test.describe("Signup — happy path", () => {
     if (!isLogSourceReachable()) {
       test.skip(
         true,
-        "Log source unreachable — skipping token-scrape step (cluster not running?)",
+        "Log source unreachable, skipping token-scrape step (cluster not running?)",
       );
       return;
     }
@@ -144,7 +144,7 @@ test.describe("Signup — happy path", () => {
     const finalUrl = page.url();
 
     if (finalUrl.includes("/verify-email")) {
-      // Success card on verify page — look for success wording.
+      // Success card on verify page, look for success wording.
       await expect(
         page.getByText(/verified|success|welcome|confirmed/i),
       ).toBeVisible({ timeout: 15_000 });

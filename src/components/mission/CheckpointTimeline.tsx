@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * CheckpointTimeline — paginated checkpoint timeline for a mission.
+ * CheckpointTimeline, paginated checkpoint timeline for a mission.
  *
  * Renders one row per `CheckpointSummary` returned by
  * `DaemonService.ListCheckpoints`, newest-first by default. Loads more
@@ -16,7 +16,7 @@
  *   - View: opens {@link CheckpointDetail} side panel.
  *   - Rewind to here: opens {@link CheckpointRewindModal}; gated by FGA
  *     `mission#admin` (the button is rendered disabled with a tooltip
- *     when the user lacks the relation, per R17.8 — visibility, not
+ *     when the user lacks the relation, per R17.8, visibility, not
  *     existence, is the affordance).
  *
  * Spec: week-4-handlers-ui-e2e §4 tasks 35, 41, 43, 44.
@@ -98,13 +98,13 @@ function idempotencyLabel(i: ToolIdempotency): string {
     case ToolIdempotency.EXACTLY_ONCE:
       return "exactly-once";
     default:
-      return "—";
+      return "-";
   }
 }
 
 function formatBytes(bytes: bigint): string {
   const n = Number(bytes);
-  if (!Number.isFinite(n) || n <= 0) return "—";
+  if (!Number.isFinite(n) || n <= 0) return "-";
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KiB`;
   if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MiB`;
@@ -117,7 +117,7 @@ function timestampToDate(ts?: { seconds: bigint; nanos: number }): Date | null {
 }
 
 function timeAgo(d: Date | null): string {
-  if (!d) return "—";
+  if (!d) return "-";
   const seconds = Math.floor((Date.now() - d.getTime()) / 1000);
   if (seconds < 0) return "just now";
   if (seconds < 60) return `${seconds}s ago`;
@@ -427,7 +427,7 @@ export function CheckpointTimeline({
           if (prev.some((r) => r.checkpointId === summary.checkpointId)) {
             return prev;
           }
-          // Defensive cast — daemon event-stream payloads are encoded
+          // Defensive cast, daemon event-stream payloads are encoded
           // by the existing /events endpoint; the dashboard owns the
           // exact shape only loosely here.
           return dedupeAndSort([summary as CheckpointSummary, ...prev]);
@@ -523,7 +523,7 @@ export function CheckpointTimeline({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
           {rows.length} checkpoint{rows.length === 1 ? "" : "s"} loaded
-          {pageToken ? " — more available" : "."}
+          {pageToken ? ", more available" : "."}
         </p>
         <div className="flex items-center gap-2">
           {selected.length > 0 && (

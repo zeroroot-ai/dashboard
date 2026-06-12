@@ -1,23 +1,23 @@
 /**
- * login-trace.spec.ts — focused diagnostic for the OIDC redirect chain.
+ * login-trace.spec.ts, focused diagnostic for the OIDC redirect chain.
  *
  * NOT a full e2e test. Single-purpose tool to capture WHY the browser ends
  * up parked on Zitadel's /ui/v2/login/signedin instead of completing the
  * OIDC flow back to /api/auth/callback/zitadel.
  *
- * Skips signup entirely — assumes the user already exists. Drives /login,
+ * Skips signup entirely, assumes the user already exists. Drives /login,
  * watches every navigation + every response status, dumps the chain to
  * /tmp/login-trace-chain.json, and screenshots the final state.
  *
  * Inputs (env):
- *   TRACE_EMAIL    — pre-existing Zitadel user email (required)
- *   TRACE_PASSWORD — that user's password (required)
- *   PLAYWRIGHT_BASE_URL — defaults to https://app.zeroroot.local:30443
+ *   TRACE_EMAIL   , pre-existing Zitadel user email (required)
+ *   TRACE_PASSWORD, that user's password (required)
+ *   PLAYWRIGHT_BASE_URL, defaults to https://app.zeroroot.local:30443
  *
  * Output:
- *   /tmp/login-trace-chain.json    — every response observed during the flow
- *   /tmp/login-trace-final.png     — final page screenshot
- *   /tmp/login-trace-cookies.json  — cookies at end of flow (values redacted)
+ *   /tmp/login-trace-chain.json   , every response observed during the flow
+ *   /tmp/login-trace-final.png    , final page screenshot
+ *   /tmp/login-trace-cookies.json , cookies at end of flow (values redacted)
  *
  * Run via:
  *   TRACE_EMAIL=anthony@zeroroot.ai TRACE_PASSWORD='…' \
@@ -70,7 +70,7 @@ test("login-trace: capture OIDC redirect chain", async ({ page, context }) => {
   try {
     await page.waitForURL(/\/ui\/v2\/login\/loginname/, { timeout: 30_000 });
   } catch {
-    console.log(`[trace] never reached /ui/v2/login/loginname — current URL=${page.url()}`);
+    console.log(`[trace] never reached /ui/v2/login/loginname, current URL=${page.url()}`);
     await page.screenshot({ path: "/tmp/login-trace-final.png", fullPage: true });
     fs.writeFileSync("/tmp/login-trace-chain.json", JSON.stringify(chain, null, 2));
     throw new Error(`Step 2 failed. See /tmp/login-trace-{chain.json,final.png}`);
@@ -86,7 +86,7 @@ test("login-trace: capture OIDC redirect chain", async ({ page, context }) => {
   try {
     await page.waitForURL(/\/ui\/v2\/login\/password/, { timeout: 20_000 });
   } catch {
-    console.log(`[trace] never reached /ui/v2/login/password — current URL=${page.url()}`);
+    console.log(`[trace] never reached /ui/v2/login/password, current URL=${page.url()}`);
     await page.screenshot({ path: "/tmp/login-trace-final.png", fullPage: true });
     fs.writeFileSync("/tmp/login-trace-chain.json", JSON.stringify(chain, null, 2));
     throw new Error(`Step 4 failed. See /tmp/login-trace-{chain.json,final.png}`);
@@ -110,7 +110,7 @@ test("login-trace: capture OIDC redirect chain", async ({ page, context }) => {
       { timeout: 60_000 },
     );
   } catch (err) {
-    console.log(`[trace] terminal wait timed out — current URL=${page.url()}`);
+    console.log(`[trace] terminal wait timed out, current URL=${page.url()}`);
   }
 
   const finalUrl = redactCode(page.url());

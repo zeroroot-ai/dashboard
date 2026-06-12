@@ -49,7 +49,7 @@ function renderLangfuseContext(ctx: LangfuseUserContext): string | null {
   if (ctx.recentTraces.length === 0) return null;
   const lines = ctx.recentTraces.map((t) => {
     const tokens = t.totalTokens > 0 ? ` (${t.totalTokens} tokens)` : '';
-    const snippet = t.outputSnippet ? ` — "${t.outputSnippet}"` : '';
+    const snippet = t.outputSnippet ? `, "${t.outputSnippet}"` : '';
     return `- ${t.name} at ${t.startTime} [${t.status}]${tokens}${snippet}`;
   });
   return `Recent agent execution traces for this user:\n${lines.join('\n')}`;

@@ -20,7 +20,7 @@ import { BellIcon, CreditCardIcon, LogOutIcon, UserCircle2Icon } from "lucide-re
 import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import { useSession } from "@/src/lib/session-client";
 // Logout uses the federated-signout route, not next-auth's client-side
-// signOut(). signOut() only clears the dashboard's Auth.js cookie — Zitadel
+// signOut(). signOut() only clears the dashboard's Auth.js cookie, Zitadel
 // keeps a parallel SSO cookie that silently re-authenticates the next call
 // to /authorize. /api/auth/federated-signout clears Auth.js AND redirects
 // to Zitadel's end_session_endpoint with id_token_hint.

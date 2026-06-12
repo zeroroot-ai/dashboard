@@ -5,7 +5,7 @@
  *
  * The actual `react-force-graph-2d` integration. This module imports the engine
  * directly (which touches `window` at module-eval time), so it must ONLY be
- * loaded through `next/dynamic({ ssr: false })` from `GraphCanvas` — never on
+ * loaded through `next/dynamic({ ssr: false })` from `GraphCanvas`, never on
  * the server.
  *
  * All brand colors come from `src/lib/graph` (canvas can't read CSS variables),
@@ -54,7 +54,7 @@ interface GraphCanvasInnerProps extends GraphCanvasProps {
   handleRef: React.Ref<GraphCanvasHandle>;
 }
 
-/** Stable signature of the graph topology — only rebuild engine data on change. */
+/** Stable signature of the graph topology, only rebuild engine data on change. */
 function topologySignature(nodes: GraphNode[], edges: GraphEdge[]): string {
   return `${nodes.length}:${edges.length}:${nodes.map((n) => n.id).join(',')}|${edges
     .map((e) => e.id)
@@ -182,7 +182,7 @@ export default function GraphCanvasInner({
   }, [data.display.charge, data.display.linkDistance, data.layoutMode, signature]);
 
   // Pin/unpin: fix pinned nodes at their current position; release the rest
-  // (only in force mode — computed layouts manage fx/fy themselves). Runs after
+  // (only in force mode, computed layouts manage fx/fy themselves). Runs after
   // the layout effect so pins win on a layout change.
   useEffect(() => {
     const pinned = new Set(data.pinnedNodeIds);
@@ -436,7 +436,7 @@ export default function GraphCanvasInner({
         ctx.stroke();
       }
 
-      // Labels — only when zoomed in enough to stay legible, or when focused.
+      // Labels, only when zoomed in enough to stay legible, or when focused.
       // Label density shifts the zoom threshold at which labels appear.
       const showLabels = d.showLabels;
       const labelThreshold =
@@ -594,7 +594,7 @@ export default function GraphCanvasInner({
           onClick={handleMinimapClick}
           className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 rounded-md border border-border cursor-pointer"
           style={{ width: MINIMAP_W, height: MINIMAP_H }}
-          aria-label="Graph minimap — click to recenter"
+          aria-label="Graph minimap, click to recenter"
         />
       )}
     </div>

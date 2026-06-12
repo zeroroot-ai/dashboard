@@ -10,12 +10,12 @@ import { logger } from '@/src/lib/logger';
  * Return the current tenant's component-level permission map.
  *
  * For v1 the response is intentionally simple:
- *   - **plugins** — per-plugin enabled/read/write flags derived from the
+ *   - **plugins**, per-plugin enabled/read/write flags derived from the
  *     tenant plugin-access system (`listTenantPlugins`).
- *   - **tools** / **agents** — empty objects; the daemon enforces
+ *   - **tools** / **agents**, empty objects; the daemon enforces
  *     all-or-nothing access at runtime via API-key capabilities.
  *
- * Read-only endpoint — no admin role required.
+ * Read-only endpoint, no admin role required.
  */
 // BRIDGE: This route reads access state from tenant config flags.
 // When the daemon exposes a dedicated access query RPC, migrate to that.
@@ -41,7 +41,7 @@ export async function GET() {
       agents: {} as Record<string, { enabled: boolean }>,
     };
 
-    // Populate plugin permissions — daemon enforces actual access via FGA.
+    // Populate plugin permissions, daemon enforces actual access via FGA.
     // Per-tenant plugin enable flags moved to the Tenant CRD; for now we
     // surface every visible plugin as enabled and let the daemon deny at
     // call time.
@@ -59,7 +59,7 @@ export async function GET() {
       logger.warn({ err, tenantId }, 'Failed to fetch plugins for permissions');
     }
 
-    // Populate tool permissions — all visible tools are enabled by default
+    // Populate tool permissions, all visible tools are enabled by default
     try {
       const { listTools } = await import('@/src/lib/gibson-client');
       const { tools: toolList } = await listTools(session?.user?.id);
@@ -70,7 +70,7 @@ export async function GET() {
       logger.warn({ err }, 'Failed to fetch tools for permissions');
     }
 
-    // Populate agent permissions — all visible agents are enabled by default
+    // Populate agent permissions, all visible agents are enabled by default
     try {
       const { listAgents } = await import('@/src/lib/gibson-client');
       const { agents: agentList } = await listAgents(undefined, session?.user?.id);

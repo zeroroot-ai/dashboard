@@ -1,6 +1,6 @@
 ---
 title: CLI Reference
-description: Every gibson command — workspace, component, mission, inspect, docs.
+description: Every gibson command, workspace, component, mission, inspect, docs.
 ---
 
 `gibson` is the local binary you use to scaffold components, register
@@ -78,18 +78,18 @@ gibson component build
 
 This is the canonical "build my component" command. CI pipelines that
 used to invoke `make build` should call `gibson component build`
-instead — the ADK keeps the toolchain pinned, so the build output is
+instead, the ADK keeps the toolchain pinned, so the build output is
 reproducible across machines.
 
 ### `gibson component register`
 
-Register a component install with your tenant. Every kind — agent, tool,
-plugin — exchanges a single-use bootstrap token (issued by the
+Register a component install with your tenant. Every kind, agent, tool,
+plugin, exchanges a single-use bootstrap token (issued by the
 dashboard's deploy wizard) for a persistent Ed25519 host key and a
 runtime credential, via the capability-grant handshake.
 
 ```bash
-# Every kind enrolls the same way — paste the bootstrap token
+# Every kind enrolls the same way, paste the bootstrap token
 gibson component register --kind agent  --token <bootstrap-token> --name <component-name>
 gibson component register --kind tool   --token <bootstrap-token> --name <component-name>
 gibson component register --kind plugin --token <bootstrap-token>
@@ -151,7 +151,7 @@ Group for mission authoring, validation, rendering, and submission.
 ### `gibson mission submit`
 
 Submit a mission file to the daemon. The file format is auto-detected
-from the extension — `.cue`, `.yaml`, `.yml`, and `.json` are all
+from the extension, `.cue`, `.yaml`, `.yml`, and `.json` are all
 supported.
 
 ```bash
@@ -201,17 +201,17 @@ What it does:
 
 If `inspect` fails:
 
-- **At credential load** — credential file is missing or has wrong
+- **At credential load**, credential file is missing or has wrong
   permissions. Fix the file mode (`chmod 600`) or re-register.
-- **At token mint** — credential is malformed. Re-register.
-- **At identity call** — Gibson rejected the credential (revoked,
+- **At token mint**, credential is malformed. Re-register.
+- **At identity call**, Gibson rejected the credential (revoked,
   expired, wrong tenant). Re-issue from the dashboard.
 
 ---
 
 ## `gibson docs`
 
-Emit machine-readable docs — JSON Schemas for the component manifest,
+Emit machine-readable docs, JSON Schemas for the component manifest,
 mission file format, taxonomy types, and similar. Useful for IDE
 plugins, codegen, and pinning your CI against a specific CLI version's
 contracts.
@@ -244,22 +244,22 @@ CI scripts can rely on these. `2` and `3` indicate operator error;
 | Variable | Used by | Effect |
 |---|---|---|
 | `GIBSON_URL` | every command, every component | Endpoint to dial. |
-| `GIBSON_AGENT_KEY` | every component kind | Inline base64-encoded runtime credential — no on-disk file needed. Pair with `GIBSON_URL`. |
+| `GIBSON_AGENT_KEY` | every component kind | Inline base64-encoded runtime credential, no on-disk file needed. Pair with `GIBSON_URL`. |
 | `GIBSON_BOOTSTRAP_TOKEN` | `component register` | Bootstrap token, as an alternative to the `--token` flag. |
 | `GIBSON_HOME` | every command | Relocate the config dir (default `~/.gibson`). |
 | `GIBSON_LOG_LEVEL` | every command | `debug` / `info` / `warn` / `error`. Default `info`. |
 
-The env-variable path is the recommended way to ship CI workloads —
+The env-variable path is the recommended way to ship CI workloads -
 no credential files on disk.
 
 ---
 
 ## Related
 
-- [Install](/docs/install) — initial setup of the `gibson` CLI.
-- [Component bootstrap & auth](/docs/component-bootstrap) — what `register`
+- [Install](/docs/install), initial setup of the `gibson` CLI.
+- [Component bootstrap & auth](/docs/component-bootstrap), what `register`
   is doing under the hood and how to debug a 401.
-- [Plugins](/docs/plugins) — full lifecycle of `init` → `build` →
+- [Plugins](/docs/plugins), full lifecycle of `init` → `build` →
   `validate` → `register` → `run`.
-- [Missions](/docs/missions) — what `gibson mission submit` does once the
+- [Missions](/docs/missions), what `gibson mission submit` does once the
   file reaches the daemon.

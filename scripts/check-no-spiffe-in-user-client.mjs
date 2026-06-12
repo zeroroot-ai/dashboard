@@ -68,7 +68,7 @@ const USER_CLIENT_FILES = ['src/lib/gibson-client.ts'];
  * Patterns that flag a static import of the SPIFFE module. Each entry
  * is a regex applied to non-comment source lines.
  *
- * NOTE: These match `import ... from '...'` only — they do NOT match
+ * NOTE: These match `import ... from '...'` only, they do NOT match
  * `await import('...')`. The user-acting transport's backout branch is
  * allowed to dynamic-import the SPIFFE helper.
  */
@@ -117,7 +117,7 @@ function scan() {
     total += v.length;
     console.error(`\n${rel}`);
     for (const { line, snippet } of v) {
-      console.error(`  L${line}: static SPIFFE import — only the workload (admin) client may import the SPIFFE module statically`);
+      console.error(`  L${line}: static SPIFFE import, only the workload (admin) client may import the SPIFFE module statically`);
       console.error(`    ${snippet}`);
     }
   }
@@ -137,7 +137,7 @@ function selftest() {
       console.error(`[${SCRIPT_NAME}] SELFTEST FAILED: guard did not fire on a planted static SPIFFE import`);
       process.exit(1);
     }
-    console.log(`[${SCRIPT_NAME}] selftest OK — guard caught the planted violation`);
+    console.log(`[${SCRIPT_NAME}] selftest OK, guard caught the planted violation`);
   } finally {
     writeFileSync(target, original, 'utf8');
   }
@@ -151,12 +151,12 @@ if (argv.includes('--selftest')) {
 
 const violations = scan();
 if (violations > 0) {
-  console.error(`\n[${SCRIPT_NAME}] FAIL — ${violations} violation(s). Spec: ${SPEC_NAME}`);
+  console.error(`\n[${SCRIPT_NAME}] FAIL, ${violations} violation(s). Spec: ${SPEC_NAME}`);
   console.error('The user-acting daemon client must NOT statically import the SPIFFE module.');
   console.error('Use a dynamic `await import(...)` inside the backout branch only.');
   process.exit(1);
 }
-console.log(`[${SCRIPT_NAME}] OK — no static SPIFFE imports in user-client files`);
+console.log(`[${SCRIPT_NAME}] OK, no static SPIFFE imports in user-client files`);
 
-// Suppress unused warning on relative — used in stub-only build.
+// Suppress unused warning on relative, used in stub-only build.
 void relative;

@@ -138,7 +138,7 @@ export interface ErrorClassEntry {
   class: ErrorClass;
   /** HTTP status the route returns. */
   httpStatus: number;
-  /** Default user-facing message — exactly one per class. */
+  /** Default user-facing message, exactly one per class. */
   message: string;
   /** Affordance the error-state UI should render. */
   affordance:
@@ -160,12 +160,12 @@ export interface ErrorClassEntry {
 
 /**
  * The canonical contract. Every routing decision in this file branches
- * exclusively on this table — adding or repricing a class is a single
+ * exclusively on this table, adding or repricing a class is a single
  * source-of-truth edit.
  *
  * Wording rules:
  *   - Warm and actionable, never panicked.
- *   - Never say "Failed to load" — that was the old anti-pattern.
+ *   - Never say "Failed to load", that was the old anti-pattern.
  *   - The error-state component appends the correlation ID; copy
  *     here does not need to.
  */
@@ -195,7 +195,7 @@ export const ERROR_CLASS_TABLE: Record<ErrorClass, ErrorClassEntry> = {
     // Warm + actionable per the slice's UX note. Avoids panic words
     // ("error", "failed", "broken") and gives the user a next step.
     message:
-      "Your account is still finishing setup. A few features may be unavailable for another moment — please try again shortly. If this keeps happening, share the reference below with support.",
+      "Your account is still finishing setup. A few features may be unavailable for another moment, please try again shortly. If this keeps happening, share the reference below with support.",
     affordance: 'retry_with_support',
   },
   provisioning: {
@@ -205,7 +205,7 @@ export const ERROR_CLASS_TABLE: Record<ErrorClass, ErrorClassEntry> = {
     // specifically when the tenant data-plane saga has not completed yet.
     // "workspace" is the customer-facing term; avoids "data-plane" jargon.
     message:
-      'Your workspace is being set up — this usually takes a few minutes. Refresh to check progress.',
+      'Your workspace is being set up, this usually takes a few minutes. Refresh to check progress.',
     affordance: 'retry',
   },
   resource_exhausted: {
@@ -219,7 +219,7 @@ export const ERROR_CLASS_TABLE: Record<ErrorClass, ErrorClassEntry> = {
     class: 'unavailable',
     httpStatus: 503,
     message:
-      "Our backend is briefly unavailable. We're already on it — please try again in a moment.",
+      "Our backend is briefly unavailable. We're already on it, please try again in a moment.",
     affordance: 'status_page',
   },
   deadline_exceeded: {
@@ -239,7 +239,7 @@ export const ERROR_CLASS_TABLE: Record<ErrorClass, ErrorClassEntry> = {
     class: 'internal',
     httpStatus: 500,
     message:
-      "Something went wrong on our end. Our team has been notified — please share the reference below with support if this keeps happening.",
+      "Something went wrong on our end. Our team has been notified, please share the reference below with support if this keeps happening.",
     affordance: 'contact_support',
   },
 };
@@ -260,7 +260,7 @@ export function classifyConnectCode(code: Code): ErrorClass {
       return 'not_found';
     case Code.FailedPrecondition:
     case Code.Aborted:
-      // Aborted is "concurrent precondition mismatch" — surface the
+      // Aborted is "concurrent precondition mismatch", surface the
       // same retry-soon affordance as FailedPrecondition.
       return 'failed_precondition';
     case Code.ResourceExhausted:
@@ -289,7 +289,7 @@ export function classifyConnectCode(code: Code): ErrorClass {
 
 /**
  * Canonical error response body shape. Every error response from
- * `app/api/<path>/route.ts` matches this shape — the client-side
+ * `app/api/<path>/route.ts` matches this shape, the client-side
  * error-state component can render any error consistently.
  */
 export interface ApiErrorBody {
@@ -310,7 +310,7 @@ export interface ApiErrorBody {
 
 interface DaemonErrorOptions {
   /**
-   * Incoming request headers — used to forward an upstream
+   * Incoming request headers, used to forward an upstream
    * correlation ID when one is present. If omitted, a fresh ID is
    * minted at this edge.
    */
@@ -489,11 +489,11 @@ export function validationErrorResponse(
 
 /**
  * Wrap a successful response so the correlation ID also flows on
- * happy-path responses. Crucial for client-side tracing — the same
+ * happy-path responses. Crucial for client-side tracing, the same
  * ID lets a user file a ticket about "this loaded but looked wrong".
  *
  * If you need an empty-state ("no results yet"), return a 200 with
- * `{ data: [] }` — the client-side hooks distinguish empty-state
+ * `{ data: [] }`, the client-side hooks distinguish empty-state
  * (200 + empty array) from error-state (non-200) on the HTTP status.
  */
 export function okResponse<T>(
@@ -516,7 +516,7 @@ export function okResponse<T>(
 //
 // The legacy safeErrorResponse(error, "Failed to load", 500) pattern
 // collapsed every daemon failure to a generic 500 with no correlation
-// ID, no affordance, no class — which is the anti-pattern this module
+// ID, no affordance, no class, which is the anti-pattern this module
 // exists to delete. This shim routes through the canonical mapper so
 // any straggling caller still gets a correlation ID and a real class,
 // but every callsite is expected to migrate to daemonErrorResponse.

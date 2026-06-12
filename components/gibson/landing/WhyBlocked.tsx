@@ -1,5 +1,5 @@
 /**
- * WhyBlocked — problem-first section naming the real reasons agents stall
+ * WhyBlocked, problem-first section naming the real reasons agents stall
  * before production, each paired with the platform mechanism that resolves
  * it. Pain → resolve; the resolve must name a shipping mechanism, not a
  * promise.

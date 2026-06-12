@@ -1,5 +1,5 @@
 // Illegal: useAuthorize() result does not destructure `loading`, so the
-// hide-on-loading contract can't be enforced — caller will flash
+// hide-on-loading contract can't be enforced, caller will flash
 // unauthorized content during the initial query.
 import { useAuthorize } from "@/lib/auth/use-authorize";
 

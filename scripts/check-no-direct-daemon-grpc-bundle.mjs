@@ -5,8 +5,8 @@
  * Postbuild guard for spec `zero-trust-hardening` Req 6.5: scan the
  * compiled Next.js client bundle (`.next/static/**\/*.js`) for any literal
  * symbol that would indicate a browser-side direct-daemon transport made
- * it past the source-level guards. The first regression — a
- * `createGrpcWebTransport` constructor inside `permissions-cache.ts` —
+ * it past the source-level guards. The first regression, a
+ * `createGrpcWebTransport` constructor inside `permissions-cache.ts` -
  * shipped in production for several releases because the source-level
  * guards searched for `gibson:50051`, not for the constructor name.
  *
@@ -15,13 +15,13 @@
  * is published.
  *
  * Forbidden symbols (literal-string match):
- *   - `createGrpcWebTransport`  — `@connectrpc/connect-web` browser entry
- *   - `getBrowserClient`        — the deleted helper from
+ *   - `createGrpcWebTransport` , `@connectrpc/connect-web` browser entry
+ *   - `getBrowserClient`       , the deleted helper from
  *                                  `src/lib/permissions-cache.ts`
- *   - `NEXT_PUBLIC_GIBSON_DAEMON_URL` — the retired env-var name
+ *   - `NEXT_PUBLIC_GIBSON_DAEMON_URL`, the retired env-var name
  *
  * Skipped silently when `.next/static/` does not exist (no build was
- * produced — there is nothing to scan).
+ * produced, there is nothing to scan).
  *
  * Wired into `scripts.postbuild` in package.json so every `pnpm build`
  * runs it.
@@ -37,17 +37,17 @@ const FORBIDDEN_SYMBOLS = [
   {
     needle: "createGrpcWebTransport",
     label:
-      "createGrpcWebTransport — @connectrpc/connect-web entry must NOT appear in client bundles (use a server route)",
+      "createGrpcWebTransport, @connectrpc/connect-web entry must NOT appear in client bundles (use a server route)",
   },
   {
     needle: "getBrowserClient",
     label:
-      "getBrowserClient — deleted helper from src/lib/permissions-cache.ts; reintroduction is a regression",
+      "getBrowserClient, deleted helper from src/lib/permissions-cache.ts; reintroduction is a regression",
   },
   {
     needle: "NEXT_PUBLIC_GIBSON_DAEMON_URL",
     label:
-      "NEXT_PUBLIC_GIBSON_DAEMON_URL — browsers must NOT receive a daemon endpoint; route through Envoy via a Next.js server route",
+      "NEXT_PUBLIC_GIBSON_DAEMON_URL, browsers must NOT receive a daemon endpoint; route through Envoy via a Next.js server route",
   },
 ];
 
@@ -86,7 +86,7 @@ function walkJs(dir, out = []) {
 function main() {
   if (!staticDirExists()) {
     console.log(
-      "✓ check-no-direct-daemon-grpc-bundle: .next/static not found — skipping (run after `next build`)",
+      "✓ check-no-direct-daemon-grpc-bundle: .next/static not found, skipping (run after `next build`)",
     );
     return 0;
   }
@@ -94,7 +94,7 @@ function main() {
   const jsFiles = walkJs(STATIC_DIR);
   if (jsFiles.length === 0) {
     console.log(
-      "✓ check-no-direct-daemon-grpc-bundle: no .js files found in .next/static — nothing to scan",
+      "✓ check-no-direct-daemon-grpc-bundle: no .js files found in .next/static, nothing to scan",
     );
     return 0;
   }
@@ -130,7 +130,7 @@ function main() {
     console.error(`    why:      ${v.label}`);
   }
   console.error(
-    "\nSpec zero-trust-hardening Req 6.5 — every dashboard call to the daemon",
+    "\nSpec zero-trust-hardening Req 6.5, every dashboard call to the daemon",
   );
   console.error(
     "MUST go through Envoy. The browser bundle has no business holding a",

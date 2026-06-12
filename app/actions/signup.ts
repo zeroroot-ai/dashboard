@@ -1,18 +1,18 @@
 "use server";
 
 /**
- * @server-action-authz-exempt: pre-authentication — signup runs before any
+ * @server-action-authz-exempt: pre-authentication, signup runs before any
  * session or tenant exists; it is the action that creates them. Abuse is
  * gated by CAPTCHA + email-nonce, not session authz.
  *
- * signupAction — the dashboard-native signup pipeline.
+ * signupAction, the dashboard-native signup pipeline.
  *
  * A single linear orchestration: form input → Zitadel user → Tenant CR →
  * operator saga → TenantMember CR → redirect to OIDC. Each step emits
  * progress to Redis for the client-side ProvisioningPanel to poll; each
  * failure short-circuits and maps to a user-safe `SignupFailureCode`.
  *
- * The operator owns the heavy lifting once the Tenant CR is applied —
+ * The operator owns the heavy lifting once the Tenant CR is applied -
  * Zitadel org + FGA tuples + Langfuse/Stripe/Redis/Neo4j init all happen
  * downstream. This action stays focused on:
  *   (1) creating the Zitadel human user,
@@ -20,7 +20,7 @@
  *   (3) surfacing saga status back to the user as progress.
  *
  * The caller is always redirected through Zitadel's standard OIDC flow for
- * sign-in — this action never mints a dashboard session. Zitadel remains
+ * sign-in, this action never mints a dashboard session. Zitadel remains
  * the single source of truth for authenticated identity.
  *
  * Spec: dashboard-native-signup, task 13.
@@ -85,14 +85,14 @@ const MEMBER_READY_TIMEOUT_MS = 30_000;
 const POLL_INTERVAL_MS = 1_000;
 
 /**
- * Fallback post-signup destination — used when the V2 session auto-login
+ * Fallback post-signup destination, used when the V2 session auto-login
  * dance (issue dashboard#41) fails for ANY reason (config missing,
  * IAM_LOGIN_CLIENT not granted yet [pending gitops#90], auth_request
  * initiation failed, etc). Routes through /login so the LoginForm
  * client component invokes Auth.js v5's CSRF-protected signIn("zitadel"),
  * which POSTs to /api/auth/signin/zitadel with the required tokens.
  *
- * NOTE: don't redirect directly to /api/auth/signin/zitadel — Auth.js v5
+ * NOTE: don't redirect directly to /api/auth/signin/zitadel, Auth.js v5
  * removed the GET-based sign-in initiation that v4 supported, and a GET to
  * that endpoint now throws `UnknownAction` and bounces back to
  * /login?error=Configuration.
@@ -119,7 +119,7 @@ export async function signupAction(
       ? clientAttemptId
       : randomUUID();
 
-  // Pipeline context — mutable as steps run; never returned to the caller.
+  // Pipeline context, mutable as steps run; never returned to the caller.
   const ctx: Ctx = {
     attemptId,
     input: rawInput,
@@ -152,7 +152,7 @@ export async function signupAction(
     }
     ctx.input = parsed.data;
 
-    // Normalize email to lowercase + trim — every downstream comparison
+    // Normalize email to lowercase + trim, every downstream comparison
     // (existing-user lookup, tenant-owner list, rate-limit email key) must
     // use this canonical form.
     ctx.input = {
@@ -172,13 +172,13 @@ export async function signupAction(
     // Why it runs this early: the cookies must be committed on a response
     // sent to the user agent, and the next response is THIS action's
     // return. Initiation is also cheap and never blocks the user-facing
-    // outcome — failures (config missing, gitops#90 unmerged so
+    // outcome, failures (config missing, gitops#90 unmerged so
     // IAM_LOGIN_CLIENT not granted, network glitch) leave
     // ctx.oidcHandoff undefined and the action will fall back to the
     // standard /login redirect at the end.
     //
     // Issue: dashboard#41 (auto-login after signup).
-    // Blocker: gitops#90 — IAM_LOGIN_CLIENT grant on the signup-bot.
+    // Blocker: gitops#90, IAM_LOGIN_CLIENT grant on the signup-bot.
     ctx.oidcHandoff = await safeInitiateOidcAuthRequest(ctx.attemptId);
 
     // 1. Rate limit.
@@ -215,16 +215,16 @@ export async function signupAction(
         // internal code, error code, and field name stay as
         // workspaceName/WORKSPACE_TAKEN to avoid moving downstream wiring.
         code: "INTERNAL_ERROR",
-        userMessage: "That company name isn't available — pick another.",
+        userMessage: "That company name isn't available, pick another.",
         fieldErrors: { workspaceName: "Invalid company name" },
       });
     }
     const existingTenant = await safeGetTenant(ctx.tenantSlug);
     if (existingTenant) {
-      // Deliberately vague — no info-leak on whether the owner is someone else.
+      // Deliberately vague, no info-leak on whether the owner is someone else.
       return await finish(ctx, "policy", {
         code: "WORKSPACE_TAKEN",
-        userMessage: "That company name isn't available — pick another.",
+        userMessage: "That company name isn't available, pick another.",
         fieldErrors: { workspaceName: "Not available" },
       });
     }
@@ -240,7 +240,7 @@ export async function signupAction(
     // whether to call sendVerificationEmail. Spec: signup-zitadel-permissions-fix.
     ctx.emailVerifiedAtCreate = userResult.emailVerifiedAtCreate;
 
-    // 5. Kick off verification email — only when the user was created
+    // 5. Kick off verification email, only when the user was created
     // un-verified (future SMTP-enabled flow). With the current
     // emailVerified=true default per signup hotfix #5, the user has no
     // pending code to "resend"; calling Zitadel's /v2/users/.../email/resend
@@ -250,7 +250,7 @@ export async function signupAction(
     // the call automatically. Spec: signup-zitadel-permissions-fix / SIGNUP-B23.
     await advanceStep(attemptId, "send_verify_email");
     if (ctx.emailVerifiedAtCreate) {
-      console.info("[signup] verification email skipped — user created already verified", {
+      console.info("[signup] verification email skipped, user created already verified", {
         attemptId,
       });
     } else {
@@ -259,14 +259,14 @@ export async function signupAction(
       } catch (err) {
         // Zitadel in dev clusters without SMTP returns errors here. Log + keep
         // going; the user can complete verification later.
-        console.warn("[signup] sendVerificationEmail failed — non-fatal", {
+        console.warn("[signup] sendVerificationEmail failed, non-fatal", {
           attemptId,
           err: err instanceof Error ? err.message : String(err),
         });
       }
     }
 
-    // 6. Apply the Tenant CR — this triggers the operator saga.
+    // 6. Apply the Tenant CR, this triggers the operator saga.
     await advanceStep(attemptId, "apply_tenant");
     try {
       await applyTenant(ctx.tenantSlug, {
@@ -274,7 +274,7 @@ export async function signupAction(
         owner: ctx.input.email,
         // input.tier is already a canonical PlanID (validated by Zod against
         // selfServeTierIds, which mirrors plans.PlanID in the operator).
-        // No mapping — the operator's entitlements reconciler expects this
+        // No mapping, the operator's entitlements reconciler expects this
         // exact value; legacy free/pro/enterprise are explicitly rejected.
         tier: ctx.input.tier as TenantTier,
       });
@@ -292,7 +292,7 @@ export async function signupAction(
       return await finish(ctx, "setup_workspace", {
         code: "PROVISIONING_TIMEOUT",
         userMessage:
-          "Still setting up your workspace — we'll email you when it's ready.",
+          "Still setting up your workspace, we'll email you when it's ready.",
       });
     }
     if (tenant.status?.phase === "Failed") {
@@ -313,11 +313,11 @@ export async function signupAction(
           email: ctx.input.email,
           role: "owner",
           tenantRef: { name: ctx.tenantSlug },
-          // Self-signup: the signup user IS the workspace owner — pre-accept the
+          // Self-signup: the signup user IS the workspace owner, pre-accept the
           // membership so the operator promotes Invited → Active without
           // requiring the user to click an emailed invitation link. The
           // operator's invitation flow is for invitees, not the founding owner.
-          // Spec: tenant-role-taxonomy — founding user is granted the
+          // Spec: tenant-role-taxonomy, founding user is granted the
           // first-class `owner` FGA relation (admin/member inherit by union).
           acceptedByUserId: ctx.zitadelUserId,
         },
@@ -352,7 +352,7 @@ export async function signupAction(
     // 10. Optional auto-login (issue dashboard#41).
     //
     // If we successfully parked an OIDC auth_request at step 0.5 AND the
-    // signup-bot PAT can mint sessions (IAM_LOGIN_CLIENT — gitops#90),
+    // signup-bot PAT can mint sessions (IAM_LOGIN_CLIENT, gitops#90),
     // exchange the just-collected password for a Zitadel session and
     // CreateCallback the parked auth_request. The returned callbackUrl
     // lands the user on /api/auth/callback/zitadel?code=&state= which
@@ -360,7 +360,7 @@ export async function signupAction(
     // minting the dashboard session WITHOUT bouncing through Zitadel's
     // hosted login UI.
     //
-    // On any failure here we fall back to the standard /login redirect —
+    // On any failure here we fall back to the standard /login redirect -
     // the user has a valid Zitadel account and can sign in normally.
     // This is the graceful-failure UX the acceptance criteria require.
     const redirect = await finalizeAutoLoginOrFallback(ctx, client);
@@ -374,7 +374,7 @@ export async function signupAction(
       redirect,
     };
   } catch (err) {
-    // Catch-all — any uncaught exception becomes INTERNAL_ERROR.
+    // Catch-all, any uncaught exception becomes INTERNAL_ERROR.
     console.error("[signup] unhandled", {
       attemptId,
       err: err instanceof Error ? err.message : String(err),
@@ -403,7 +403,7 @@ interface Ctx {
    */
   emailVerifiedAtCreate: boolean | undefined;
   /**
-   * The parked OIDC auth_request — populated at step 0.5 IF
+   * The parked OIDC auth_request, populated at step 0.5 IF
    * `initiateOidcAuthRequest` succeeded. Used at step 10 to
    * CreateCallback the auth_request and auto-login the user.
    * Undefined on env-misconfig / network failure → caller falls back to
@@ -527,7 +527,7 @@ async function createOrResumeZitadelUser(
       // Mark verified at create-time. Zitadel keeps unverified users in
       // STATE_INITIAL which BLOCKS password sign-in ("Password is invalid"
       // even when the password matches). The user just typed the password
-      // moments ago and clicked Submit — that's our signal they own the
+      // moments ago and clicked Submit, that's our signal they own the
       // mailbox-as-identifier.  A separate post-signup verification email
       // (currently best-effort, fails silently in dev where SMTP is
       // unwired) handles real ownership confirmation; we don't gate
@@ -538,21 +538,21 @@ async function createOrResumeZitadelUser(
   } catch (err) {
     if (err instanceof ZitadelApiError) {
       if (err.httpStatus === 409) {
-        // User already exists — check if they have a tenant.
+        // User already exists, check if they have a tenant.
         const existing = await client.findUserByEmail(ctx.input.email);
         if (!existing) {
           return {
             fail: {
               code: "INTERNAL_ERROR",
               userMessage:
-                "Account state inconsistent — contact support with this attempt ID.",
+                "Account state inconsistent, contact support with this attempt ID.",
             },
           };
         }
         // The K8s `tenants-by-owner` lookup that previously gated this branch
         // was removed under spec `tenant-membership-not-in-jwt`. Per the new
         // architecture, an existing Zitadel user always means signup-resume
-        // is appropriate — the tenant-operator's reconcile is idempotent
+        // is appropriate, the tenant-operator's reconcile is idempotent
         // and keyed on zitadel_sub, so a user with an already-provisioned
         // Tenant CR will be detected at the operator layer rather than here.
         //
@@ -560,7 +560,7 @@ async function createOrResumeZitadelUser(
         // a retry after a first-attempt failure (e.g. tenant CR apply
         // errored after Zitadel user creation) leaves the user logging in
         // with the old password while the form thinks the new one was
-        // accepted — they get "Password is invalid" on first sign-in even
+        // accepted, they get "Password is invalid" on first sign-in even
         // though signup said success. Idempotent: setting the same password
         // twice is a no-op.
         try {
@@ -587,7 +587,7 @@ async function createOrResumeZitadelUser(
           },
         };
       }
-      // Other 4xx — treat password-policy errors as POLICY_VIOLATION.
+      // Other 4xx, treat password-policy errors as POLICY_VIOLATION.
       if (/password|complexity/i.test(err.zitadelErrorMessage ?? "")) {
         return {
           fail: {
@@ -620,7 +620,7 @@ async function waitForTenantReady(name: string): Promise<Tenant | null> {
         return t;
       }
     } catch {
-      // CR may not exist yet on the very first poll — retry.
+      // CR may not exist yet on the very first poll, retry.
     }
     await sleep(POLL_INTERVAL_MS);
   }
@@ -639,7 +639,7 @@ async function waitForMemberReady(
         return true;
       }
     } catch {
-      // Not yet created — retry.
+      // Not yet created, retry.
     }
     await sleep(POLL_INTERVAL_MS);
   }
@@ -651,28 +651,28 @@ function sleep(ms: number): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Auto-login (issue dashboard#41) — V2 session + CreateCallback handoff.
+// Auto-login (issue dashboard#41), V2 session + CreateCallback handoff.
 // ---------------------------------------------------------------------------
 
 /**
  * Wraps `initiateOidcAuthRequest` so a failure NEVER blocks signup. Returns
  * undefined when the handoff can't be set up (env misconfig, gitops#90
- * unmerged so the bot lacks IAM_LOGIN_CLIENT, network glitch, etc) — the
+ * unmerged so the bot lacks IAM_LOGIN_CLIENT, network glitch, etc), the
  * action then falls back to the standard /login redirect at the end.
  *
  * SECURITY: must not log error contents that might include the OIDC
- * client secret if it appears in error envelopes — we only log a stable
+ * client secret if it appears in error envelopes, we only log a stable
  * marker string and the attemptId.
  */
 async function safeInitiateOidcAuthRequest(
   attemptId: string,
 ): Promise<OidcAuthRequestHandoff | undefined> {
-  // Skip entirely when handoff config is missing — saves the cookie-set
+  // Skip entirely when handoff config is missing, saves the cookie-set
   // overhead in dev environments that don't have AUTH_URL set.
   if (loadHandoffConfig() === null) {
     logger.info(
       { attemptId, action: "signup_auto_login" },
-      "auth_request init skipped — handoff config missing (likely dev without ZITADEL_CLIENT_ID/AUTH_URL)",
+      "auth_request init skipped, handoff config missing (likely dev without ZITADEL_CLIENT_ID/AUTH_URL)",
     );
     return undefined;
   }
@@ -682,7 +682,7 @@ async function safeInitiateOidcAuthRequest(
     if (!handoff) {
       logger.info(
         { attemptId, action: "signup_auto_login" },
-        "auth_request init returned null — falling back to standard /login",
+        "auth_request init returned null, falling back to standard /login",
       );
       return undefined;
     }
@@ -694,7 +694,7 @@ async function safeInitiateOidcAuthRequest(
         action: "signup_auto_login",
         err: err instanceof Error ? err.message : String(err),
       },
-      "auth_request init threw — falling back to standard /login",
+      "auth_request init threw, falling back to standard /login",
     );
     return undefined;
   }
@@ -704,7 +704,7 @@ async function safeInitiateOidcAuthRequest(
  * Final-step auto-login. Returns the redirect URL the SignupForm follows
  * after the action completes. On any failure (no parked auth_request,
  * IAM_LOGIN_CLIENT 403, session API outage) returns the standard /login
- * redirect — the user has a valid Zitadel account and can sign in via the
+ * redirect, the user has a valid Zitadel account and can sign in via the
  * existing hosted-login fallback.
  */
 async function finalizeAutoLoginOrFallback(
@@ -722,13 +722,13 @@ async function finalizeAutoLoginOrFallback(
     //    SECURITY: ctx.input.password is consumed inline here and never
     //    leaves the action; ZitadelAdminClient is responsible for never
     //    logging the body. The signup-bot PAT must hold IAM_LOGIN_CLIENT
-    //    (gitops#90) — without it Zitadel returns 403 and we fall back.
+    //    (gitops#90), without it Zitadel returns 403 and we fall back.
     const session = await client.createSession({
       loginName: ctx.input.email,
       password: ctx.input.password,
     });
 
-    // 2. Bind the session to the parked auth_request — receive the
+    // 2. Bind the session to the parked auth_request, receive the
     //    callbackUrl pointing at /api/auth/callback/zitadel.
     const { callbackUrl } = await client.finalizeAuthRequest({
       authRequestId: ctx.oidcHandoff.authRequestId,
@@ -763,7 +763,7 @@ async function finalizeAutoLoginOrFallback(
         zitadelErrorMessage: isZitadelErr ? err.zitadelErrorMessage : undefined,
         err: !isZitadelErr && err instanceof Error ? err.message : undefined,
       },
-      "auto-login V2 session/CreateCallback failed — falling back to /login (likely gitops#90 not yet merged)",
+      "auto-login V2 session/CreateCallback failed, falling back to /login (likely gitops#90 not yet merged)",
     );
     return FALLBACK_POST_SIGNUP_REDIRECT;
   }

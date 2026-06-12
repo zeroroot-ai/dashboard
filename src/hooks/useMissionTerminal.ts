@@ -3,7 +3,7 @@
  *
  * Opens a native EventSource against `/api/missions/:id/events` and writes
  * formatted ANSI lines directly to a MissionTerminal ref. No React state is
- * mutated inside the hook — every incoming SSE frame is a direct ref call so
+ * mutated inside the hook, every incoming SSE frame is a direct ref call so
  * the component incurs zero re-renders per incoming line.
  *
  * Named event listeners are used (not onmessage) because the SSE bridge emits
@@ -12,7 +12,7 @@
  * The EventSource is closed automatically when the mission reaches a terminal
  * status (completed, failed, stopped) and on useEffect cleanup.
  *
- * Spec: dashboard#384 — live SSE status and tool events in MissionTerminal.
+ * Spec: dashboard#384, live SSE status and tool events in MissionTerminal.
  */
 
 import * as React from "react";
@@ -99,7 +99,7 @@ export function useMissionTerminal(
 
     const es = new EventSource("/api/missions/" + missionId + "/events");
 
-    // Convenience writer — direct ref call, no setState
+    // Convenience writer, direct ref call, no setState
     const write = (line: string) => {
       terminalRef.current?.write(line);
     };

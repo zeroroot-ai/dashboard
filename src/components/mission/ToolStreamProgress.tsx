@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * ToolStreamProgress — per-tool streaming progress affordance.
+ * ToolStreamProgress, per-tool streaming progress affordance.
  *
  * Subscribes to the dashboard SSE bridge at
  * `/api/missions/:missionId/tool-stream/:invocationId` (which proxies the
@@ -181,7 +181,7 @@ export function ToolStreamProgress({
     es.onerror = () => {
       if (closed) return;
       // Browser-level connection error (network drop). Surface a soft
-      // failed state but don't toast — the user already sees the bar
+      // failed state but don't toast, the user already sees the bar
       // turn red.
       setState((prev) =>
         prev.kind === "complete" || prev.kind === "failed"

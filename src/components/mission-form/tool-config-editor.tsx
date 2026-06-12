@@ -1,5 +1,5 @@
 /**
- * <ToolConfigEditor /> — form for ToolNodeConfig.
+ * <ToolConfigEditor />, form for ToolNodeConfig.
  *
  * Spec: mission-dashboard-rewrite Requirement 1 AC 3 + Task 6.
  */

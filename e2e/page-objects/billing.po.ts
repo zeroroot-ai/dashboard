@@ -1,5 +1,5 @@
 /**
- * billing.po.ts — Billing page-object helpers.
+ * billing.po.ts, Billing page-object helpers.
  *
  * Reusable helpers for:
  * - Crafting Stripe webhook payloads with a valid HMAC signature using a

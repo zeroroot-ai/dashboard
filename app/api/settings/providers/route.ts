@@ -1,10 +1,10 @@
 /**
- * GET  /api/settings/providers — list all configured providers (masked creds)
- * POST /api/settings/providers — create a new provider config
+ * GET  /api/settings/providers, list all configured providers (masked creds)
+ * POST /api/settings/providers, create a new provider config
  *
  * Both handlers delegate to the daemon TenantAdminService RPCs via
  * the typed client functions from gibson-client.ts. No storage logic lives
- * here — this file is delegation-only.
+ * here, this file is delegation-only.
  */
 
 import 'server-only';
@@ -25,7 +25,7 @@ import { toProviderConfig } from '@/src/lib/providers-adapter';
 
 /**
  * List all LLM provider configs for the current tenant.
- * Returns masked credential values only — plaintext is never returned.
+ * Returns masked credential values only, plaintext is never returned.
  */
 export async function GET(_req: NextRequest) {
   try {
@@ -63,7 +63,7 @@ export async function GET(_req: NextRequest) {
  *   name         string            (required)
  *   type         string            (required, e.g. "anthropic")
  *   defaultModel string            (required)
- *   credentials  Record<string,string>  (required, plaintext — daemon encrypts immediately)
+ *   credentials  Record<string,string>  (required, plaintext, daemon encrypts immediately)
  *   setAsDefault boolean           (optional)
  *
  * Returns the created provider record with masked credentials.

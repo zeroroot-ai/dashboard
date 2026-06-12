@@ -115,7 +115,7 @@ export const handlers = [
 
   // Supported-provider catalogue consumed by useSupportedProviders. Hook
   // expects `{ providers: SupportedProviderDescriptor[] }`. An empty list
-  // is a valid successful response — the test asserts data === [].
+  // is a valid successful response, the test asserts data === [].
   http.get('/api/settings/providers/supported', () => {
     return HttpResponse.json({ providers: [] });
   }),
@@ -154,7 +154,7 @@ export const handlers = [
   }),
 
   // Findings endpoints. Response shape must match PaginatedResponse<Finding>:
-  // `{ data: Finding[], total: number, nextCursor?: string }` — see
+  // `{ data: Finding[], total: number, nextCursor?: string }`, see
   // src/types/index.ts. Earlier the handler returned `{ findings, ... }`
   // which made every test that read `result.current.data?.data` fail with
   // "expected undefined to be defined".
@@ -242,7 +242,7 @@ export const handlers = [
 
   // Graph endpoints
   // Graph nodes/edges. Hook expects `{ nodes: GraphNode[], edges: GraphEdge[] }`
-  // where GraphNode has { id, labels[], properties{} } (Neo4j-style) — see
+  // where GraphNode has { id, labels[], properties{} } (Neo4j-style), see
   // src/types/graph.ts.
   http.get('/api/graph', () => {
     return HttpResponse.json({

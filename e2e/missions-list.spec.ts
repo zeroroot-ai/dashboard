@@ -9,15 +9,15 @@
  * it read dead session claims, so the missions list never fetched.
  *
  * This test asserts that on a real cluster the missions list page fires
- * at least one network request to a missions-scoped endpoint — proof
+ * at least one network request to a missions-scoped endpoint, proof
  * that `currentTenant?.id` is non-null on first render and the React
  * Query gate cleared.
  *
  * Pre-conditions (Kind cluster):
  *   make deploy-local running against `kind-gibson` context.
- *   PLAYWRIGHT_BASE_URL  — cluster URL (default: http://localhost:3000)
- *   E2E_ADMIN_EMAIL      — any valid user email
- *   E2E_ADMIN_PASSWORD   — corresponding password
+ *   PLAYWRIGHT_BASE_URL , cluster URL (default: http://localhost:3000)
+ *   E2E_ADMIN_EMAIL     , any valid user email
+ *   E2E_ADMIN_PASSWORD  , corresponding password
  *
  * Wall-clock budget: ≤ 1 minute.
  */
@@ -54,7 +54,7 @@ test.describe('Missions list fires tenant-scoped queries', () => {
     // under Mission Results after the authoring/execution split (dashboard#497).
     await page.goto(`${BASE_URL}/dashboard/results`);
 
-    // We just need any missions-scoped fetch to fire — that proves
+    // We just need any missions-scoped fetch to fire, that proves
     // currentTenant?.id was non-null at React-Query-enable time.
     await expect(missionsRequest).resolves.toBeTruthy();
   });

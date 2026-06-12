@@ -19,14 +19,14 @@
  * Realignment (e2e-harness-realignment spec):
  *   - Uses signUpViaForm canonical helper (no inline form logic).
  *   - Expects /login?callbackUrl=/dashboard as the post-signup landing (SIGNUP-B20).
- *   - No /verify-email route wait (emailVerified=true at creation — SIGNUP-B19).
+ *   - No /verify-email route wait (emailVerified=true at creation, SIGNUP-B19).
  *   - No /signup/provisioning route wait (panel is in-page, not a route).
  *   - Detects SIGNUP-B22 regression: no dialog/beforeunload popup on success path.
  *
  * Env vars consumed:
- *   SIGNUP_SLUG    — unique DNS-safe slug (set by orchestrator; e.g. "e2e-abc123")
- *   SIGNUP_EMAIL   — unique email matching the slug (set by orchestrator)
- *   PLAYWRIGHT_BASE_URL — target cluster URL (default: https://app.zeroroot.local:30443)
+ *   SIGNUP_SLUG   , unique DNS-safe slug (set by orchestrator; e.g. "e2e-abc123")
+ *   SIGNUP_EMAIL  , unique email matching the slug (set by orchestrator)
+ *   PLAYWRIGHT_BASE_URL, target cluster URL (default: https://app.zeroroot.local:30443)
  *
  * Security:
  *   - Uses a synthetic email + generated password that are NEVER reused.
@@ -51,7 +51,7 @@ const CLUSTER_URL =
 // Test
 // ---------------------------------------------------------------------------
 
-test.describe("Signup — full chain (cluster e2e)", () => {
+test.describe("Signup, full chain (cluster e2e)", () => {
   /**
    * signup full chain
    *
@@ -61,7 +61,7 @@ test.describe("Signup — full chain (cluster e2e)", () => {
    *   (b) No dialog/beforeunload popup fires on the success path (SIGNUP-B22).
    *
    * Does NOT assert cluster-side state (Tenant CR, FGA tuples, etc.)
-   * — those assertions are in the Go counterpart.
+   *, those assertions are in the Go counterpart.
    */
   test("signup full chain", async ({ page, context }) => {
     // -----------------------------------------------------------------------
@@ -73,7 +73,7 @@ test.describe("Signup — full chain (cluster e2e)", () => {
     if (!slug || !email) {
       test.fail(
         true,
-        "SIGNUP_SLUG and SIGNUP_EMAIL must be set — run via `make test-signup-e2e`",
+        "SIGNUP_SLUG and SIGNUP_EMAIL must be set, run via `make test-signup-e2e`",
       );
       return;
     }
@@ -89,7 +89,7 @@ test.describe("Signup — full chain (cluster e2e)", () => {
     page.on("dialog", async (dialog) => {
       dialogFired = true;
       console.warn(
-        `[signup-full-chain] SIGNUP-B22 REGRESSION: dialog fired during signup — ` +
+        `[signup-full-chain] SIGNUP-B22 REGRESSION: dialog fired during signup, ` +
           `type=${dialog.type()} message=${dialog.message().slice(0, 100)}`,
       );
       await dialog.dismiss().catch(() => {});
@@ -113,7 +113,7 @@ test.describe("Signup — full chain (cluster e2e)", () => {
     // -----------------------------------------------------------------------
     // 3. Assert post-signup landing is /login?callbackUrl=/dashboard (SIGNUP-B20).
     //    NOT /api/auth/signin/zitadel (old Auth.js v4 endpoint).
-    //    NOT /verify-email (emailVerified=true fixes that — SIGNUP-B19).
+    //    NOT /verify-email (emailVerified=true fixes that, SIGNUP-B19).
     // -----------------------------------------------------------------------
     await expect(page).toHaveURL(/\/login/, { timeout: 15_000 });
     const finalUrl = page.url();
@@ -134,7 +134,7 @@ test.describe("Signup — full chain (cluster e2e)", () => {
     // -----------------------------------------------------------------------
     expect(
       dialogFired,
-      "SIGNUP-B22 regression: beforeunload dialog fired during successful signup — " +
+      "SIGNUP-B22 regression: beforeunload dialog fired during successful signup, " +
         "fix: skip the beforeunload guard when redirectOnSuccess is set (commit 4be3d7a)",
     ).toBe(false);
   });

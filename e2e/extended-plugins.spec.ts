@@ -1,7 +1,7 @@
 /**
  * extended-plugins.spec.ts
  *
- * End-to-end smoke for /dashboard/plugins — confirms the page renders the
+ * End-to-end smoke for /dashboard/plugins, confirms the page renders the
  * shared AccessScopeSelector + RWXMatrix and that the Configure button is
  * preserved per plugin row via rowTrailingAction.
  *
@@ -48,7 +48,7 @@ async function mockListPlugins(page: Page) {
   });
 }
 
-test.describe("Plugins page — matrix + Configure preserved", () => {
+test.describe("Plugins page, matrix + Configure preserved", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });

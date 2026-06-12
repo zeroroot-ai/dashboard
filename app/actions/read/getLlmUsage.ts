@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * getLlmUsageAction — read-side Server Action for the /usage page.
+ * getLlmUsageAction, read-side Server Action for the /usage page.
  * Wraps the daemon's UsageService.ListUsage RPC so the dashboard
  * surfaces cost / token rollups grouped by user, team, agent, or
  * mission.
@@ -52,7 +52,7 @@ export interface GetLlmUsageRequest {
   fromUnix?: number;
   toUnix?: number;
   /**
-   * Optional subject-id filter (ignored for non-admin callers — they
+   * Optional subject-id filter (ignored for non-admin callers, they
    * are narrowed server-side to themselves).
    */
   subjectFilter?: string;

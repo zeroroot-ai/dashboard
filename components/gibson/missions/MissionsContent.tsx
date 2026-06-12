@@ -248,19 +248,19 @@ function MissionsTable({ missions }: { missions: Mission[] }) {
                 <StatusBadge status={mission.status} />
               </TableCell>
               <TableCell className="font-mono text-muted-foreground text-sm">
-                {mission.config?.scope ?? mission.config?.target ?? "—"}
+                {mission.config?.scope ?? mission.config?.target ?? "-"}
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 {mission.findings > 0 ? (
                   <span className="text-primary font-semibold">{mission.findings}</span>
                 ) : (
-                  <span className="text-muted-foreground">—</span>
+                  <span className="text-muted-foreground">-</span>
                 )}
               </TableCell>
               <TableCell className="text-muted-foreground text-sm tabular-nums">
                 {mission.startedAt
                   ? new Date(mission.startedAt).toLocaleDateString()
-                  : "—"}
+                  : "-"}
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-1 justify-end">
@@ -298,7 +298,7 @@ function MissionKanbanCard({ mission }: { mission: Mission }) {
       </CardHeader>
       <CardContent className="px-3 pb-3 space-y-2">
         <p className="text-xs text-muted-foreground font-mono truncate">
-          {mission.config?.scope ?? mission.config?.target ?? "—"}
+          {mission.config?.scope ?? mission.config?.target ?? "-"}
         </p>
         <div className="flex items-center justify-between gap-1">
           {mission.findings > 0 ? (
@@ -311,7 +311,7 @@ function MissionKanbanCard({ mission }: { mission: Mission }) {
           <span className="text-xs text-muted-foreground tabular-nums">
             {mission.startedAt
               ? new Date(mission.startedAt).toLocaleDateString()
-              : "—"}
+              : "-"}
           </span>
           <MissionEditButton mission={mission} />
         </div>

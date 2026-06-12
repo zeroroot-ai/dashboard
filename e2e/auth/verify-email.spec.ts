@@ -33,7 +33,7 @@ test.describe("Email verification", () => {
     if (!isLogSourceReachable()) {
       test.skip(
         true,
-        "Log source unreachable — skipping verify-email test (cluster not running?).",
+        "Log source unreachable, skipping verify-email test (cluster not running?).",
       );
       return;
     }
@@ -78,7 +78,7 @@ test.describe("Email verification", () => {
       if (!page.url().includes("/verify-email")) {
         test.skip(
           true,
-          "App did not redirect to /verify-email — email verification may be disabled in this environment.",
+          "App did not redirect to /verify-email, email verification may be disabled in this environment.",
         );
         return;
       }

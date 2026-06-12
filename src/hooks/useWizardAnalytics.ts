@@ -488,7 +488,7 @@ export function useAbandonmentTracking(context: WizardAnalyticsContext): void {
         // Clear the abandonment data
         sessionStorage.removeItem('gibson:onboarding:abandonment');
       } catch {
-        // Abandonment data parse error — skip resumption analytics
+        // Abandonment data parse error, skip resumption analytics
       }
     }
   }, [analytics]);

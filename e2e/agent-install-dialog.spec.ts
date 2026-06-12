@@ -2,11 +2,11 @@
  * agent-install-dialog.spec.ts
  *
  * End-to-end tests for the AgentInstallDialog component. Four scenarios:
- *   1. required-blocked       — required permission missing blocks Install
- *   2. optional-warned        — optional permissions the caller lacks are
+ *   1. required-blocked      , required permission missing blocks Install
+ *   2. optional-warned       , optional permissions the caller lacks are
  *                               silently dropped with a warning banner
- *   3. full-approval success  — happy path writes tuples and closes dialog
- *   4. prosumer-default       — solo-tier tenant has every approval checked
+ *   3. full-approval success , happy path writes tuples and closes dialog
+ *   4. prosumer-default      , solo-tier tenant has every approval checked
  *                               by default for minimum friction
  *
  * Spec: access-matrix-finish task 28, R5 AC 1-3, 7, 9.

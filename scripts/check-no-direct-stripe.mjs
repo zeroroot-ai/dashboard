@@ -21,11 +21,11 @@
  *   - `require("stripe")`
  *
  * Exemptions:
- *   - `src/lib/billing/stripe.ts` — the permitted wrapper
- *   - `node_modules`, `.next`, `dist`, `build`, `coverage` — generated
- *   - `__tests__/`, `*.test.*`, `*.spec.*` — test files may reference the
+ *   - `src/lib/billing/stripe.ts`, the permitted wrapper
+ *   - `node_modules`, `.next`, `dist`, `build`, `coverage`, generated
+ *   - `__tests__/`, `*.test.*`, `*.spec.*`, test files may reference the
  *     pattern when asserting the guard blocks a violation
- *   - `scripts/` — build scripts (this file, etc.) may import stripe for
+ *   - `scripts/`, build scripts (this file, etc.) may import stripe for
  *     one-time admin tasks like `stripe-bootstrap.ts`
  *
  * Wired into `scripts.prebuild` in package.json.
@@ -58,7 +58,7 @@ const SKIP_DIR_NAMES = new Set([
 const SKIP_FILE_MARKERS = ['.test.', '.spec.', '.stories.'];
 
 // Patterns that indicate a direct stripe import.
-// `import type` is exempted — type-only imports are erased at compile time
+// `import type` is exempted, type-only imports are erased at compile time
 // and do not cause the stripe SDK to load at runtime. The wrapper invariant
 // is about runtime loading, not type references.
 const STRIPE_IMPORT_PATTERNS = [
@@ -141,7 +141,7 @@ function runScan() {
     try {
       if (statSync(abs).isFile()) files.push(abs);
     } catch {
-      // File doesn't exist — fine.
+      // File doesn't exist, fine.
     }
   }
 

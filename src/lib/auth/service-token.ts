@@ -13,20 +13,20 @@
  *
  * Mirrors the user-side helper {@link requireUserToken} in
  * `src/lib/auth/user-token.ts` for the user-acting transport. The two
- * helpers are deliberately kept separate — service-token code never touches
+ * helpers are deliberately kept separate, service-token code never touches
  * `auth()` or session cookies, and user-token code never reads the SA
  * client secret.
  *
  * Caching:
  *   - Tokens are cached in a module-scoped variable shared across requests
  *     (the dashboard runs as a long-lived Node process under Next.js
- *     standalone), keyed on nothing — there is exactly one SA per pod.
+ *     standalone), keyed on nothing, there is exactly one SA per pod.
  *   - The cache is refreshed 60s before `expires_in` elapses so a hot
  *     request never hits Zitadel synchronously.
  *   - Concurrent callers during a refresh share a single in-flight
  *     `Promise<string>` to avoid stampeding Zitadel with N parallel
  *     `client_credentials` grants.
- *   - {@link invalidateServiceToken} forces the next call to refetch — the
+ *   - {@link invalidateServiceToken} forces the next call to refetch, the
  *     gRPC interceptor invokes it on a 401 from Envoy so a clock-skew or
  *     mid-flight key-rotation incident self-heals on retry.
  *
@@ -36,7 +36,7 @@
  *   - Zitadel returns non-2xx → throws {@link ServiceTokenFetchError} with
  *     the HTTP status; the bearer is NEVER logged.
  *
- * Spec: unified-identity-and-authorization Phase 4 — replaces the SPIFFE
+ * Spec: unified-identity-and-authorization Phase 4, replaces the SPIFFE
  * JWT-SVID outbound minter (`spiffe/jwt-svid.ts`) which is being deleted.
  *
  * @module auth/service-token
@@ -50,7 +50,7 @@ import 'server-only';
 
 /**
  * Thrown when one or more of {@link REQUIRED_ENV_VARS} are unset. Caller
- * should treat this as a permanent configuration error — there is no
+ * should treat this as a permanent configuration error, there is no
  * retry that can fix a missing client_id / client_secret.
  */
 export class MissingServiceTokenConfigError extends Error {
@@ -75,7 +75,7 @@ export class ServiceTokenFetchError extends Error {
   readonly status: number;
   constructor(status: number, body: string) {
     // Zitadel may echo the request `client_id` back in error responses but
-    // never the secret — still, we cap the body to a short snippet to
+    // never the secret, still, we cap the body to a short snippet to
     // avoid leaking verbose JWKS / dev-mode debug data into operator
     // dashboards.
     const snippet = body.length > 200 ? `${body.slice(0, 200)}…` : body;
@@ -132,7 +132,7 @@ function resolveTokenUrl(): string {
 // ---------------------------------------------------------------------------
 
 interface CacheEntry {
-  /** Compact JWT — never logged. */
+  /** Compact JWT, never logged. */
   token: string;
   /** Epoch milliseconds at which this token is considered "needs refresh". */
   refreshAtMs: number;
@@ -200,7 +200,7 @@ async function fetchToken(): Promise<{ access_token: string; expires_in: number 
       Accept: 'application/json',
     },
     body: body.toString(),
-    // Don't follow auth-bearing redirects — Zitadel never legitimately
+    // Don't follow auth-bearing redirects, Zitadel never legitimately
     // 30x's the token endpoint and we'd risk replaying the secret to a
     // different host.
     redirect: 'manual',
@@ -282,7 +282,7 @@ export async function getServiceToken(): Promise<string> {
 /**
  * Drop the cached token so the next {@link getServiceToken} call refetches.
  *
- * Called by the gRPC client interceptor when Envoy returns 401 — covers
+ * Called by the gRPC client interceptor when Envoy returns 401, covers
  * the rare case where we cached a token Envoy decides to reject (clock
  * skew across the cluster, mid-flight Zitadel signing-key rotation, etc.).
  * One unconditional re-mint is cheap insurance against operator pain.
@@ -296,7 +296,7 @@ export function invalidateServiceToken(): void {
 // ---------------------------------------------------------------------------
 
 /**
- * Exposed for unit tests only — flushes both the cache and any in-flight
+ * Exposed for unit tests only, flushes both the cache and any in-flight
  * refresh promise so each test starts from a known state. Production code
  * MUST NOT call this; use {@link invalidateServiceToken} for the
  * legitimate 401-handling case.

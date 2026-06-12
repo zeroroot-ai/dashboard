@@ -96,7 +96,7 @@ async function attemptLogin(
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe("Login — account lockout", () => {
+test.describe("Login, account lockout", () => {
   test.afterAll(async () => {
     await closeDbPool();
   });
@@ -107,7 +107,7 @@ test.describe("Login — account lockout", () => {
     if (!isLogSourceReachable()) {
       test.skip(
         true,
-        "Log source unreachable — cluster not running; skipping lockout test.",
+        "Log source unreachable, cluster not running; skipping lockout test.",
       );
       return;
     }
@@ -165,7 +165,7 @@ test.describe("Login — account lockout", () => {
         // UX might vary (the action returns a generic message throughout).
         const currentUrl = page.url();
         if (!currentUrl.includes("/login")) {
-          // We somehow got into the dashboard — fail fast.
+          // We somehow got into the dashboard, fail fast.
           throw new Error(
             `Unexpected redirect to ${currentUrl} after wrong password attempt ${i + 1}`,
           );
@@ -180,7 +180,7 @@ test.describe("Login — account lockout", () => {
       // Should still be on /login (not redirected to dashboard).
       await expect(page).toHaveURL(/\/login/, { timeout: 10_000 });
 
-      // Error message should be present (generic — enumeration resistant).
+      // Error message should be present (generic, enumeration resistant).
       const genericError = page.getByText(/invalid email or password/i).first();
       await expect(genericError).toBeVisible({ timeout: 10_000 });
 

@@ -106,7 +106,7 @@ export async function getSecret(name: string): Promise<GetSecretResponse> {
 }
 
 /**
- * Returns per-mission aggregated secret refs. Refs only — never values.
+ * Returns per-mission aggregated secret refs. Refs only, never values.
  */
 export async function getMissionAudit(missionId: string): Promise<GetMissionAuditResponse> {
   try {

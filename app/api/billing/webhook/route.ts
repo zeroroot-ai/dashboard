@@ -1,4 +1,4 @@
-// @crd-authz-exempt-route: stripe-signature-verified — every request is
+// @crd-authz-exempt-route: stripe-signature-verified, every request is
 // authenticated via Stripe-Signature header (HMAC with STRIPE_WEBHOOK_SECRET)
 // before any Tenant CR mutation runs. Returning 400 on invalid signature is
 // the auth boundary; the request never reaches a patchTenant call without a
@@ -58,7 +58,7 @@ import { logger } from '@/src/lib/logger';
 import { incBillingEvent } from '@/src/lib/metrics/billing';
 
 // Price env var → tier display name mapping (for plan-changed email).
-// STRIPE_PRICE_* are OPTIONAL — only set when billing is enabled. We omit
+// STRIPE_PRICE_* are OPTIONAL, only set when billing is enabled. We omit
 // missing entries entirely rather than collapsing them onto a sentinel ''
 // key (which would conflate every absent tier into "Enterprise").
 function buildPriceToTierName(): Record<string, string> {
@@ -73,7 +73,7 @@ function buildPriceToTierName(): Record<string, string> {
 }
 const PRICE_TO_TIER_NAME: Record<string, string> = buildPriceToTierName();
 
-// PUBLIC_URL is REQUIRED at boot (src/lib/env-validator.ts) — no fallback.
+// PUBLIC_URL is REQUIRED at boot (src/lib/env-validator.ts), no fallback.
 // DASHBOARD_SUPPORT_EMAIL is OPTIONAL (a brand default is acceptable).
 // We evaluate these lazily inside handlers because module-load happens
 // before instrumentation.ts validation in some Next.js configurations.
@@ -98,7 +98,7 @@ function getPricingUrl(): string {
 }
 
 // ---------------------------------------------------------------------------
-// Idempotency helpers — daemon-delegated via BillingService RPCs
+// Idempotency helpers, daemon-delegated via BillingService RPCs
 // ---------------------------------------------------------------------------
 
 /**
@@ -106,7 +106,7 @@ function getPricingUrl(): string {
  * Returns true when this is the first (novel) occurrence; false on replay.
  *
  * The daemon inserts into the `webhook_idempotency` table owned by the platform
- * Postgres — the dashboard no longer holds a pg Pool.
+ * Postgres, the dashboard no longer holds a pg Pool.
  *
  * @param eventId   - Stripe event ID (evt_...).
  * @param eventType - Stripe event type string.
@@ -118,7 +118,7 @@ async function recordEventIfNew(
   tenantId: string,
 ): Promise<boolean> {
   // The BillingService RPCs use tenant_from_identity deriver; tenantId in
-  // the request body is informational metadata only — pass '' when the
+  // the request body is informational metadata only, pass '' when the
   // event predates tenant assignment (pre-tenant checkout events, etc.).
   const client = serviceClient(BillingService, tenantId);
   const resp = await client.recordWebhookEvent({ eventId, eventType, tenantId });
@@ -134,9 +134,9 @@ async function recordEventIfNew(
  * definitively failed and the tenant should not be activated.
  *
  * Two failure conditions are recognised:
- *   1. Blocked=True  — the saga runner set a permanent block (e.g.
+ *   1. Blocked=True , the saga runner set a permanent block (e.g.
  *      SlugCollision or SagaFailed after max retries).
- *   2. Ready=False with reason=ProvisioningFailed — the foundation step
+ *   2. Ready=False with reason=ProvisioningFailed, the foundation step
  *      or a saga step reported a hard failure.
  */
 function isProvisioningFailed(tenant: Awaited<ReturnType<typeof getTenant>>): boolean {
@@ -169,7 +169,7 @@ async function handleCheckoutSessionCompleted(
   if (!tenantSlug) {
     logger.error(
       { sessionId: session.id },
-      '[billing/webhook] checkout.session.completed missing client_reference_id — cannot reconcile',
+      '[billing/webhook] checkout.session.completed missing client_reference_id, cannot reconcile',
     );
     return;
   }
@@ -183,14 +183,14 @@ async function handleCheckoutSessionCompleted(
       { tenantId: tenantSlug, err: err instanceof Error ? err.message : String(err) },
       '[billing/webhook] Failed to get Tenant CR',
     );
-    // If we cannot reach the K8s API we do NOT issue a refund speculatively —
+    // If we cannot reach the K8s API we do NOT issue a refund speculatively -
     // a transient API outage should not result in money movement. Stripe will
     // retry the event and we'll handle it on the next attempt.
     throw err;
   }
 
   if (isProvisioningFailed(tenant)) {
-    // Provisioning has definitively failed — refund the charge and notify the user.
+    // Provisioning has definitively failed, refund the charge and notify the user.
     if (paymentIntentId) {
       try {
         await refundCharge(paymentIntentId, 'requested_by_customer');
@@ -224,7 +224,7 @@ async function handleCheckoutSessionCompleted(
           }),
         );
       } catch (err) {
-        // Email failure is non-fatal for the webhook response — the refund has
+        // Email failure is non-fatal for the webhook response, the refund has
         // already been issued. Log but don't re-throw: we want Stripe to see a
         // 200 so it doesn't resend the event and trigger a duplicate refund.
         logger.error(
@@ -244,7 +244,7 @@ async function handleCheckoutSessionCompleted(
     return;
   }
 
-  // Provisioning is OK — activate billing on the Tenant CR.
+  // Provisioning is OK, activate billing on the Tenant CR.
   try {
     await patchTenant(tenantSlug, {
       metadata: {
@@ -300,7 +300,7 @@ function resolveOwnerEmail(subscription: Stripe.Subscription): string {
 }
 
 /**
- * Handle customer.subscription.created — patch billing status on Tenant CR.
+ * Handle customer.subscription.created, patch billing status on Tenant CR.
  */
 async function handleSubscriptionCreated(
   subscription: Stripe.Subscription,
@@ -367,7 +367,7 @@ async function handleSubscriptionCreated(
 }
 
 /**
- * Handle customer.subscription.updated — patch billing status; send plan-changed email if price changed.
+ * Handle customer.subscription.updated, patch billing status; send plan-changed email if price changed.
  */
 async function handleSubscriptionUpdated(
   subscription: Stripe.Subscription,
@@ -437,7 +437,7 @@ async function handleSubscriptionUpdated(
 }
 
 /**
- * Handle customer.subscription.deleted — cancel billing status, write teardown annotation.
+ * Handle customer.subscription.deleted, cancel billing status, write teardown annotation.
  */
 async function handleSubscriptionDeleted(
   subscription: Stripe.Subscription,
@@ -496,7 +496,7 @@ async function handleSubscriptionDeleted(
 }
 
 /**
- * Handle customer.subscription.trial_will_end — set trialEndsSoon flag.
+ * Handle customer.subscription.trial_will_end, set trialEndsSoon flag.
  */
 async function handleTrialWillEnd(
   subscription: Stripe.Subscription,
@@ -549,7 +549,7 @@ async function handleTrialWillEnd(
 }
 
 /**
- * Handle invoice.paid — clear past_due and trial states.
+ * Handle invoice.paid, clear past_due and trial states.
  */
 async function handleInvoicePaid(
   invoice: Stripe.Invoice,
@@ -613,7 +613,7 @@ async function handleInvoicePaymentFailed(
     const tenant = await getTenant(tenantSlug);
     currentPastDueSince = tenant.status?.billing?.pastDueSince;
   } catch {
-    // Non-fatal — proceed without the read; will write pastDueSince.
+    // Non-fatal, proceed without the read; will write pastDueSince.
   }
 
   await patchTenant(tenantSlug, {
@@ -664,7 +664,7 @@ async function handleInvoicePaymentFailed(
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/billing/webhook — 410 tombstone.
+ * GET /api/billing/webhook, 410 tombstone.
  *
  * This endpoint exists as a tombstone for the webhook migration plan
  * (spec: stripe-billing-integration R12.4, R12.5). It returns 410 Gone
@@ -686,7 +686,7 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  // Read raw body for signature verification — must happen before any parsing.
+  // Read raw body for signature verification, must happen before any parsing.
   const rawBody = await req.text();
   const signatureHeader = req.headers.get('stripe-signature') ?? '';
 
@@ -700,7 +700,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'invalid signature' }, { status: 400 });
   }
 
-  // Idempotency guard — silently ack duplicate deliveries.
+  // Idempotency guard, silently ack duplicate deliveries.
   // Best-effort extract tenantId from event metadata for observability;
   // falls back to '' if not present (pre-tenant events, session events, etc.).
   const eventObj = event.data.object as unknown as { metadata?: Record<string, string> };
@@ -776,11 +776,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         break;
 
       default:
-        // Unhandled event type — acknowledge without action.
+        // Unhandled event type, acknowledge without action.
         break;
     }
   } catch (err) {
-    // Processing failed — remove the idempotency record so Stripe can retry.
+    // Processing failed, remove the idempotency record so Stripe can retry.
     try {
       const rollbackClient = serviceClient(BillingService, resolvedTenantId);
       await rollbackClient.deleteWebhookEvent({ eventId: event.id });

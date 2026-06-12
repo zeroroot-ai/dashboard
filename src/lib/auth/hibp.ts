@@ -28,8 +28,8 @@ const USER_AGENT = 'gibson-dashboard';
 
 /**
  * Returns true if HIBP checking is enabled. Disabled only when the env var is
- * literally the string "false" (case-insensitive). Any other value — including
- * unset — is treated as enabled, matching the task's "configurable via env
+ * literally the string "false" (case-insensitive). Any other value, including
+ * unset, is treated as enabled, matching the task's "configurable via env
  * (`DASHBOARD_HIBP_ENABLED=false` short-circuits to unknown)" semantics.
  */
 function isEnabled(): boolean {

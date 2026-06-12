@@ -13,7 +13,7 @@ import { listMissions, resumeMission, runMission } from '@/src/lib/gibson-client
  *
  *   paused  -> ResumeMission(missionId)               (same id stays)
  *   pending -> RunMission(missionDefinitionId, targetId)
- *              (creates a new mission run; daemon has no execute-by-id path —
+ *              (creates a new mission run; daemon has no execute-by-id path -
  *               the original `pending` record is registered intent, the run
  *               is a separate record)
  *
@@ -26,7 +26,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // CSRF — zero-trust-hardening Req 11.5
+    // CSRF, zero-trust-hardening Req 11.5
     try {
       await requireCsrf(request);
     } catch (err) {

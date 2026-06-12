@@ -1,5 +1,5 @@
 /**
- * social-signin.spec.ts — Playwright e2e tests for social sign-in (GitHub)
+ * social-signin.spec.ts, Playwright e2e tests for social sign-in (GitHub)
  * and the Settings > Account linked-accounts panel.
  *
  * ## Running these tests
@@ -93,7 +93,7 @@ async function consentGitHub(page: Page): Promise<void> {
   const user = process.env.E2E_GITHUB_USER!;
   const password = process.env.E2E_GITHUB_PASSWORD!;
 
-  // GitHub login form — wait for the page to fully load.
+  // GitHub login form, wait for the page to fully load.
   await page.waitForURL(/github\.com/, { timeout: 15_000 });
 
   // Fill username.
@@ -121,11 +121,11 @@ async function consentGitHub(page: Page): Promise<void> {
       .getByLabel(/authentication code|otp|two-factor/i)
       .first();
     if ((await otpField.count()) > 0) {
-      // Dynamic import totp library — use a simple 6-digit code if available.
+      // Dynamic import totp library, use a simple 6-digit code if available.
       // For now, surface a skip if TOTP is required but we can't generate it.
       test.skip(
         true,
-        "TOTP-gated GitHub account — provide a pre-authenticated session cookie instead.",
+        "TOTP-gated GitHub account, provide a pre-authenticated session cookie instead.",
       );
       return;
     }
@@ -216,10 +216,10 @@ test.afterAll(async () => {
 // Suite 1: GitHub button → sign-in → personal org dashboard
 // ---------------------------------------------------------------------------
 
-test.describe("GitHub social sign-in — click-through flow", () => {
+test.describe("GitHub social sign-in, click-through flow", () => {
   test.skip(
     !isGitHubConfigured(),
-    "GitHub provider env vars (GITHUB_CLIENT_ID, E2E_GITHUB_USER, E2E_GITHUB_PASSWORD) not set — skipping.",
+    "GitHub provider env vars (GITHUB_CLIENT_ID, E2E_GITHUB_USER, E2E_GITHUB_PASSWORD) not set, skipping.",
   );
 
   test(
@@ -241,7 +241,7 @@ test.describe("GitHub social sign-in — click-through flow", () => {
 
         await expect(githubBtn).toBeVisible({ timeout: 5_000 });
 
-        // Click the button — signInSocialAction will run and window.location.assign
+        // Click the button, signInSocialAction will run and window.location.assign
         // the GitHub authorize URL.
         await Promise.all([
           page.waitForURL(/github\.com/, { timeout: 15_000 }),
@@ -261,7 +261,7 @@ test.describe("GitHub social sign-in — click-through flow", () => {
         );
 
         // If we hit the provide-email page (GitHub private-email case), that's
-        // also a success — the user is being guided through the flow.
+        // also a success, the user is being guided through the flow.
         if (page.url().includes("/signin/provide-email")) {
           expect(page.url()).toContain("token=");
           return;
@@ -285,19 +285,19 @@ test.describe("GitHub social sign-in — click-through flow", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Suite 2: Linked-accounts panel — link, refresh, unlink, re-link
+// Suite 2: Linked-accounts panel, link, refresh, unlink, re-link
 //
 // This suite uses an email+password user who then links GitHub from Settings.
 // Requires: a running dashboard AND GitHub provider configured.
 // ---------------------------------------------------------------------------
 
-test.describe("Settings > Account — linked accounts panel", () => {
+test.describe("Settings > Account, linked accounts panel", () => {
   // This suite requires either a pre-seeded user OR the ability to sign up
   // a fresh one (email log source). GitHub must also be configured.
   const canRun =
     isGitHubConfigured() && (hasSeedUser() || isLogSourceReachable());
 
-  test.skip(!canRun, "GitHub + email log source (or seed user) required — skipping.");
+  test.skip(!canRun, "GitHub + email log source (or seed user) required, skipping.");
 
   test(
     "signed-in user can link GitHub, see it listed, unlink it, and re-link it",
@@ -351,7 +351,7 @@ test.describe("Settings > Account — linked accounts panel", () => {
 
         await expect(linkGitHubBtn).toBeVisible({ timeout: 5_000 });
 
-        // Click Link GitHub — will redirect to GitHub.
+        // Click Link GitHub, will redirect to GitHub.
         await Promise.all([
           page.waitForURL(/github\.com/, { timeout: 15_000 }),
           linkGitHubBtn.click(),
@@ -395,7 +395,7 @@ test.describe("Settings > Account — linked accounts panel", () => {
           { timeout: 10_000 },
         );
 
-        // Reload final state — GitHub should be linked again.
+        // Reload final state, GitHub should be linked again.
         await page.reload();
         await expect(unlinkGitHubBtn).toBeVisible({ timeout: 5_000 });
 
@@ -407,7 +407,7 @@ test.describe("Settings > Account — linked accounts panel", () => {
   );
 
   test(
-    "last-credential guard — cannot unlink GitHub when it is the only sign-in method",
+    "last-credential guard, cannot unlink GitHub when it is the only sign-in method",
     async ({ browser }) => {
       // This test requires a user that has ONLY GitHub linked (no password).
       // Without the ability to create such a user programmatically (GitHub
@@ -415,7 +415,7 @@ test.describe("Settings > Account — linked accounts panel", () => {
       // social-only user.
       test.skip(
         !process.env.E2E_SOCIAL_ONLY_USER_EMAIL,
-        "E2E_SOCIAL_ONLY_USER_EMAIL not set — skipping last-credential guard e2e test.",
+        "E2E_SOCIAL_ONLY_USER_EMAIL not set, skipping last-credential guard e2e test.",
       );
 
       const ctx = await browser.newContext();
@@ -451,10 +451,10 @@ test.describe("Settings > Account — linked accounts panel", () => {
         // Either the button is disabled, or clicking it shows a toast.
         const isDisabled = await unlinkGitHubBtn.isDisabled();
         if (isDisabled) {
-          // Correct — the button is disabled for last-credential.
+          // Correct, the button is disabled for last-credential.
           expect(isDisabled).toBe(true);
         } else {
-          // Button is clickable — clicking should show a toast, NOT unlink.
+          // Button is clickable, clicking should show a toast, NOT unlink.
           await unlinkGitHubBtn.click();
           const toast = page
             .getByText(/must keep at least one|last sign-in method/i)

@@ -53,7 +53,7 @@ const MISSION_TEMPLATES = [
   { value: "subdomain-enum", label: "Subdomain Enumeration" },
   { value: "api-surface-scan", label: "API Surface Scan" },
   { value: "vuln-assessment", label: "Vulnerability Assessment" },
-  { value: "blank", label: "Blank — No Template" },
+  { value: "blank", label: "Blank, No Template" },
 ] as const;
 
 // ── Schemas ────────────────────────────────────────────────────────────────────
@@ -209,7 +209,7 @@ function LLMProviderStep({
           Configure your AI provider
         </h2>
         <p className="text-sm text-muted-foreground">
-          Zero Root AI uses LLM slots to abstract provider selection. Agents declare requirements —
+          Zero Root AI uses LLM slots to abstract provider selection. Agents declare requirements -
           never a specific model.
         </p>
       </div>
@@ -330,13 +330,13 @@ function FirstMissionStep({
       const templateCUE = await getTemplateCUESourceAction(values.template);
       const cueSource = templateCUE ?? [
         "package mission",
-        `name: "${values.template} — ${values.targetDomain}"`,
+        `name: "${values.template}, ${values.targetDomain}"`,
         `description: "Onboarding mission seeded from template ${values.template}"`,
       ].join("\n");
 
       const res = await createMissionFromCUEAction({
         cueSource,
-        name: `${values.template} — ${values.targetDomain}`,
+        name: `${values.template}, ${values.targetDomain}`,
       });
 
       if (!res.ok) {
@@ -369,7 +369,7 @@ function FirstMissionStep({
           Launch your first mission
         </h2>
         <p className="text-sm text-muted-foreground">
-          Define a target and pick a template — Zero Root AI will wire up the agent DAG automatically.
+          Define a target and pick a template, Zero Root AI will wire up the agent DAG automatically.
         </p>
       </div>
 
@@ -514,7 +514,7 @@ function CompleteStep({
         </div>
       ) : (
         <p className="text-sm text-muted-foreground italic">
-          No configuration saved — you can set things up in Settings.
+          No configuration saved, you can set things up in Settings.
         </p>
       )}
 
@@ -567,7 +567,7 @@ export function OnboardingWizard() {
         createdMissionId: store.createdMissionId ?? undefined,
       });
     } catch {
-      // Non-fatal — local store is already updated
+      // Non-fatal, local store is already updated
     }
 
     router.push("/dashboard");

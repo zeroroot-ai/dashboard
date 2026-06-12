@@ -13,9 +13,9 @@
  * Requirements: 3, R3.1–R3.5.
  *
  * Pre-conditions:
- *   PLAYWRIGHT_BASE_URL — target cluster URL (default: http://localhost:3000)
- *   E2E_ADMIN_EMAIL     — admin user email
- *   E2E_ADMIN_PASSWORD  — admin user password
+ *   PLAYWRIGHT_BASE_URL, target cluster URL (default: http://localhost:3000)
+ *   E2E_ADMIN_EMAIL    , admin user email
+ *   E2E_ADMIN_PASSWORD , admin user password
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -30,7 +30,7 @@ const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "password";
 
 const BACKEND_URL = `${BASE_URL}/dashboard/pages/settings/secrets-backend`;
 
-/** Vault token used in tests — not a real credential. */
+/** Vault token used in tests, not a real credential. */
 const TEST_VAULT_TOKEN = "e2e-vault-token-Xk9mN!";
 
 // ---------------------------------------------------------------------------
@@ -109,7 +109,7 @@ async function mockProbeFailure(page: Page, errorClass = "auth_failed") {
           errorClass,
           errorMessage:
             errorClass === "auth_failed"
-              ? "Vault returned 403 Forbidden — check token permissions"
+              ? "Vault returned 403 Forbidden, check token permissions"
               : "Cannot reach vault at https://vault.example.com:8200",
         }),
       });
@@ -179,7 +179,7 @@ async function mockProbeSuccess(page: Page) {
 // Test suite: page structure
 // ---------------------------------------------------------------------------
 
-test.describe("Secrets-backend — page structure", () => {
+test.describe("Secrets-backend, page structure", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockGibsonHostedBroker(page);
@@ -226,7 +226,7 @@ test.describe("Secrets-backend — page structure", () => {
 // Test suite: provider switch warning dialog
 // ---------------------------------------------------------------------------
 
-test.describe("Secrets-backend — provider switch warning", () => {
+test.describe("Secrets-backend, provider switch warning", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockGibsonHostedWithSecrets(page);
@@ -269,7 +269,7 @@ test.describe("Secrets-backend — provider switch warning", () => {
       }
     }
 
-    // R3.2 — warning about no automatic migration must appear
+    // R3.2, warning about no automatic migration must appear
     await expect(
       page
         .getByText(/switch.*provider.*not.*migrat|existing secrets remain/i)
@@ -322,7 +322,7 @@ test.describe("Secrets-backend — provider switch warning", () => {
 // Test suite: probe failure
 // ---------------------------------------------------------------------------
 
-test.describe("Secrets-backend — probe failure", () => {
+test.describe("Secrets-backend, probe failure", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockProbeFailure(page, "auth_failed");
@@ -336,7 +336,7 @@ test.describe("Secrets-backend — probe failure", () => {
       .first()
       .click();
 
-    // Structured error must appear inline — not generic "something went wrong"
+    // Structured error must appear inline, not generic "something went wrong"
     await expect(
       page
         .getByText(/auth_failed|403|forbidden|token.*permission|probe.*failed/i)
@@ -397,7 +397,7 @@ test.describe("Secrets-backend — probe failure", () => {
 // Test suite: probe success
 // ---------------------------------------------------------------------------
 
-test.describe("Secrets-backend — probe success", () => {
+test.describe("Secrets-backend, probe success", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockProbeSuccess(page);
@@ -448,7 +448,7 @@ test.describe("Secrets-backend — probe success", () => {
 // Test suite: sensitive field storage isolation
 // ---------------------------------------------------------------------------
 
-test.describe("Secrets-backend — sensitive field isolation (NFR Security)", () => {
+test.describe("Secrets-backend, sensitive field isolation (NFR Security)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockProbeSuccess(page);
@@ -465,7 +465,7 @@ test.describe("Secrets-backend — sensitive field isolation (NFR Security)", ()
       .first();
 
     if ((await tokenInput.count()) === 0) {
-      // Provider form may not render a token field by default — skip gracefully
+      // Provider form may not render a token field by default, skip gracefully
       test.skip();
       return;
     }
@@ -519,7 +519,7 @@ test.describe("Secrets-backend — sensitive field isolation (NFR Security)", ()
 // Test suite: sensitive fields rendered as password inputs
 // ---------------------------------------------------------------------------
 
-test.describe("Secrets-backend — sensitive field UI (NFR Usability)", () => {
+test.describe("Secrets-backend, sensitive field UI (NFR Usability)", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await mockGibsonHostedBroker(page);

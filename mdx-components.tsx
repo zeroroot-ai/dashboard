@@ -11,14 +11,14 @@
  * MDX shortcodes can be added under
  * `components/gibson/docs/mdx/` and merged in below.
  *
- * This file must stay a pure mapping — no client-side effects, no
+ * This file must stay a pure mapping, no client-side effects, no
  * business logic. It runs in both server and client MDX contexts.
  */
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { MDXComponents } from "mdx/types";
 
 /**
- * The component map itself. Plain object — safe to call from either a
+ * The component map itself. Plain object, safe to call from either a
  * Server Component (e.g. `app/docs/[[...slug]]/page.tsx`) or a client
  * MDX consumer.
  */
@@ -29,7 +29,7 @@ const mdxComponents: MDXComponents = {
 };
 
 /**
- * Convenience accessor for server components — returns the merged map.
+ * Convenience accessor for server components, returns the merged map.
  * The name is not prefixed with `use` on purpose (no React-hook semantics).
  */
 export function getMDXComponents(

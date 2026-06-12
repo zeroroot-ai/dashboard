@@ -30,7 +30,7 @@ const COMMITTED = resolve(DASHBOARD_ROOT, "src/generated/plans.ts");
 const GENERATOR = resolve(__dirname, "gen-plans.mjs");
 
 if (process.env.SKIP_PLANS_FRESH_CHECK === "1") {
-  process.stdout.write(`[${SCRIPT_NAME}] SKIPPED — SKIP_PLANS_FRESH_CHECK=1\n`);
+  process.stdout.write(`[${SCRIPT_NAME}] SKIPPED, SKIP_PLANS_FRESH_CHECK=1\n`);
   process.exit(0);
 }
 
@@ -39,7 +39,7 @@ try {
   committed = readFileSync(COMMITTED, "utf8");
 } catch (err) {
   process.stderr.write(
-    `[${SCRIPT_NAME}] FAIL — cannot read committed plans.ts at ${COMMITTED}: ${err.message}\n`,
+    `[${SCRIPT_NAME}] FAIL, cannot read committed plans.ts at ${COMMITTED}: ${err.message}\n`,
   );
   process.stderr.write("Run: pnpm gen:plans\n");
   process.exit(1);
@@ -53,13 +53,13 @@ try {
   });
 } catch (err) {
   process.stderr.write(
-    `[${SCRIPT_NAME}] FAIL — generator errored: ${err.message}\n`,
+    `[${SCRIPT_NAME}] FAIL, generator errored: ${err.message}\n`,
   );
   process.exit(2);
 }
 
 if (committed !== regenerated) {
-  process.stderr.write(`\n[${SCRIPT_NAME}] FAIL — ${COMMITTED} is stale.\n`);
+  process.stderr.write(`\n[${SCRIPT_NAME}] FAIL, ${COMMITTED} is stale.\n`);
   process.stderr.write(
     "src/generated/plans.ts does not match the current plans.yaml.\n",
   );
@@ -71,5 +71,5 @@ if (committed !== regenerated) {
 }
 
 process.stdout.write(
-  `[${SCRIPT_NAME}] OK — plans.ts is in sync with plans.yaml\n`,
+  `[${SCRIPT_NAME}] OK, plans.ts is in sync with plans.yaml\n`,
 );

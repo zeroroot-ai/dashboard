@@ -1,5 +1,5 @@
 /**
- * Graph filter tests — behavioral assertions on the visible subset.
+ * Graph filter tests, behavioral assertions on the visible subset.
  */
 
 import { describe, it, expect } from 'vitest';

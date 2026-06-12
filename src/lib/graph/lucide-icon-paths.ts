@@ -12,7 +12,7 @@
  */
 
 export interface LucideIconDefinition {
-  /** Array of SVG path 'd' attributes — one entry per path element */
+  /** Array of SVG path 'd' attributes, one entry per path element */
   paths: string[];
   /** ViewBox size (always 24 for Lucide icons) */
   viewBox: number;

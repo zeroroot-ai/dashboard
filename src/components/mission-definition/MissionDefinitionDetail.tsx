@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * MissionDefinitionDetail — renders every author-facing field from a
+ * MissionDefinitionDetail, renders every author-facing field from a
  * MissionDefinition proto (full structured view, M6, ADR 0004).
  *
  * All 12 MissionConstraints fields, WorkspaceConfig,
@@ -12,7 +12,7 @@
  * above the node list. Each node expands inline. No "raw YAML" tab;
  * the structured view is the only path.
  *
- * Closes #187 (M6 — mission-author-experience epic).
+ * Closes #187 (M6, mission-author-experience epic).
  */
 
 import * as React from "react";
@@ -55,7 +55,7 @@ function Unset({ label }: { label: string }) {
       className="text-muted-foreground italic text-sm"
       aria-label={`${label} not set`}
     >
-      —
+      -
     </span>
   );
 }

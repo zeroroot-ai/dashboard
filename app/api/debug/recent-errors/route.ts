@@ -2,7 +2,7 @@
  * /api/debug/recent-errors
  *
  * In-memory ring buffer of the last ~200 server-side errors. Returns 404
- * unless DASHBOARD_DEBUG=1 — never expose stack traces in prod.
+ * unless DASHBOARD_DEBUG=1, never expose stack traces in prod.
  *
  * Intended for `curl` from operators and LLM agents diagnosing a stuck
  * dashboard pod, plus the in-page DebugErrorPanel.

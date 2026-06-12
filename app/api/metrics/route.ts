@@ -7,7 +7,7 @@
  * inside one of the CIDR blocks listed in the
  * `DASHBOARD_METRICS_ALLOWED_CIDRS` environment variable (comma-separated).
  *
- * Either check alone is sufficient — the Zitadel path covers in-cluster
+ * Either check alone is sufficient, the Zitadel path covers in-cluster
  * scrapes from any service presenting a valid platform service-account JWT,
  * while the CIDR path covers Prometheus deployments where bearer auth is not
  * configured (e.g. a kube-prometheus-stack chart scraping via pod IP).
@@ -24,7 +24,7 @@
  *   ZITADEL_ISSUER, ZITADEL_AUDIENCE, ALLOWED_SERVICE_SUBJECTS
  *                                     See src/lib/auth/zitadel-bearer-verifier.ts.
  *
- * Auth migration: service-acting-auth task 9 — replaced verifySpiffeBearer
+ * Auth migration: service-acting-auth task 9, replaced verifySpiffeBearer
  * with verifyZitadelBearer.
  */
 
@@ -53,7 +53,7 @@ const PROM_CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
 // ---------------------------------------------------------------------------
 // CIDR parsing & matching
 //
-// IPv4 addresses fit in a 32-bit unsigned integer — we keep them as plain
+// IPv4 addresses fit in a 32-bit unsigned integer, we keep them as plain
 // JS `number` and use `>>> 0` to force unsigned 32-bit arithmetic where
 // needed (the sign bit otherwise flips for 128.0.0.0/1 and above). IPv6
 // is stored as a 16-byte Uint8Array; bitwise ops run byte-at-a-time.
@@ -181,7 +181,7 @@ function matchesCidr(ip: string, cidr: ParsedCidr): boolean {
 
 /**
  * Parse `DASHBOARD_METRICS_ALLOWED_CIDRS` once per request. Returns [] when
- * unset/empty — callers treat that as "CIDR gate disabled". Malformed entries
+ * unset/empty, callers treat that as "CIDR gate disabled". Malformed entries
  * are skipped silently (logged to stderr once per request to aid debugging
  * without filling Loki on every scrape).
  */
@@ -194,7 +194,7 @@ function loadAllowedCidrs(): ParsedCidr[] {
     if (parsed) {
       out.push(parsed);
     } else if (entry.trim()) {
-      // One-line warn; never throw — bad config shouldn't hide metrics
+      // One-line warn; never throw, bad config shouldn't hide metrics
       // availability from a correctly-configured scraper on the same gate.
       // eslint-disable-next-line no-console
       console.warn(
@@ -217,7 +217,7 @@ function loadAllowedCidrs(): ParsedCidr[] {
  *
  * NOTE: These headers are trustworthy only when set by an ingress we
  * control. In a public-ingress deployment the chart MUST terminate and
- * rewrite these headers at the edge — otherwise any caller can spoof
+ * rewrite these headers at the edge, otherwise any caller can spoof
  * `X-Forwarded-For: <whitelisted-ip>`. The Zitadel JWT path exists
  * precisely so operators who can't guarantee that do not need the CIDR gate.
  */
@@ -255,7 +255,7 @@ function isAllowedCidr(req: NextRequest, cidrs: ParsedCidr[]): boolean {
 // ---------------------------------------------------------------------------
 
 export async function GET(req: NextRequest): Promise<Response> {
-  // 1) Zitadel JWT Bearer — only attempted when the Authorization header is
+  // 1) Zitadel JWT Bearer, only attempted when the Authorization header is
   // present, to avoid paying a JWKS round-trip on CIDR-only scrapes.
   const authHeader = req.headers.get("authorization");
   if (authHeader) {

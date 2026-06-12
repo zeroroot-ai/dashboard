@@ -13,7 +13,7 @@
  *     exists or the token is empty.
  *
  * Mirrors the workload-side helper `src/lib/spiffe/jwt-svid.ts` for the
- * admin transport. The two helpers are deliberately separate — user-token
+ * admin transport. The two helpers are deliberately separate, user-token
  * code never touches the SPIRE Workload API; SPIFFE-token code never
  * touches `auth()`.
  *
@@ -47,7 +47,7 @@ export const requireUserToken = cache(async (): Promise<string> => {
   const session = await auth();
   if (!session?.accessToken) {
     throw new ConnectError(
-      'No Zitadel access token in session — user must be signed in via Zitadel OIDC',
+      'No Zitadel access token in session, user must be signed in via Zitadel OIDC',
       Code.Unauthenticated,
     );
   }
@@ -55,13 +55,13 @@ export const requireUserToken = cache(async (): Promise<string> => {
   // dot-delimited base64url segments). Middleware (middleware.ts step 1b)
   // redirects opaque-token sessions to sign-in before they reach a Server
   // Component or Server Action, so this branch should never fire in
-  // normal operation. Log at debug level only — a warn here would be a
+  // normal operation. Log at debug level only, a warn here would be a
   // false alarm for any path that legitimately bypasses middleware (e.g.
   // route handlers excluded from the matcher).
   if (session.accessToken.split('.').length !== 3) {
     logger.warn(
       { tokenLength: session.accessToken.length },
-      '[session-debug] access token is not JWT-shaped; middleware should have redirected — check matcher config',
+      '[session-debug] access token is not JWT-shaped; middleware should have redirected, check matcher config',
     );
   }
   return session.accessToken;

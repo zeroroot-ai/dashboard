@@ -35,7 +35,7 @@ interface Props {
  * - Muted "Reference: {correlationId}" footer when correlationId is present.
  * - Always-present "Return to sign in" escape hatch at the bottom.
  *
- * Accessibility: WCAG 2.2 AA — every interactive element carries a
+ * Accessibility: WCAG 2.2 AA, every interactive element carries a
  * focus-visible ring via the Shadcn button primitives; role="alert" on the
  * Card announces the error summary to assistive technology; logical heading
  * hierarchy starts at h1.

@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * MembersTable — renders the list of tenant members returned by
+ * MembersTable, renders the list of tenant members returned by
  * listMembersAction as a shadcn Table.
  *
  * Columns: Avatar (initials) | Name | Email | Role badge | Joined date
  *
- * No actions column in v1 — invite/remove is deferred per dashboard#340.
+ * No actions column in v1, invite/remove is deferred per dashboard#340.
  *
  * Spec: dashboard#340 Module E.
  */
@@ -35,7 +35,7 @@ function initials(displayName: string, email: string): string {
 }
 
 function formatDate(isoString: string): string {
-  if (!isoString) return "—";
+  if (!isoString) return "-";
   try {
     return new Date(isoString).toLocaleDateString(undefined, {
       year: "numeric",
@@ -43,7 +43,7 @@ function formatDate(isoString: string): string {
       day: "numeric",
     });
   } catch {
-    return "—";
+    return "-";
   }
 }
 
@@ -76,7 +76,7 @@ export interface MembersTableProps {
 /**
  * Resolve the name/email to display for a member row. For the caller's own
  * row, fall back to the session identity when the directory lookup returned
- * blank. `enriched` is false when neither a name nor an email is known — the
+ * blank. `enriched` is false when neither a name nor an email is known, the
  * row renders a "profile unavailable" state rather than an empty cell.
  */
 function resolveIdentity(
@@ -128,7 +128,7 @@ export function MembersTable({ members, currentUser }: MembersTableProps) {
                 {email ? (
                   email
                 ) : (
-                  // No email known — surface the stable user id so the row is
+                  // No email known, surface the stable user id so the row is
                   // still identifiable rather than blank.
                   <span className="font-mono text-xs">{m.userId}</span>
                 )}

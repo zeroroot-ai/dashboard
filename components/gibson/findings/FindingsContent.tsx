@@ -108,7 +108,7 @@ function getDiscoveredTs(date: Date | string): number {
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function FindingsContent() {
-  // Filter state — severity checkboxes
+  // Filter state, severity checkboxes
   const [enabledSeverities, setEnabledSeverities] = React.useState<Set<FindingSeverity>>(
     new Set(ALL_SEVERITIES),
   );
@@ -123,13 +123,13 @@ export function FindingsContent() {
   // Export dialog
   const [exportOpen, setExportOpen] = React.useState(false);
 
-  // Build severity filter array for the hook — pass only checked severities
+  // Build severity filter array for the hook, pass only checked severities
   const severityFilter = React.useMemo(
     () => ALL_SEVERITIES.filter((s) => enabledSeverities.has(s)),
     [enabledSeverities],
   );
 
-  // Fetch findings — severity filter is sent as query params; search is client-side
+  // Fetch findings, severity filter is sent as query params; search is client-side
   const {
     data,
     isLoading,
@@ -284,7 +284,7 @@ export function FindingsContent() {
       {/* ── Loading state ── */}
       {isLoading && <TableSkeleton rows={8} cols={6} />}
 
-      {/* ── Empty state — no findings at all (dataset empty, not just filtered) ── */}
+      {/* ── Empty state, no findings at all (dataset empty, not just filtered) ── */}
       {!isLoading && !isError && (data?.total ?? 0) === 0 && (
         <EmptyState
           icon={ShieldAlertIcon}
@@ -361,7 +361,7 @@ export function FindingsContent() {
                     </TableCell>
                     <TableCell>
                       <span className="data-value text-xs">
-                        {finding.affectedAssets.join(", ") || "—"}
+                        {finding.affectedAssets.join(", ") || "-"}
                       </span>
                     </TableCell>
                     <TableCell>

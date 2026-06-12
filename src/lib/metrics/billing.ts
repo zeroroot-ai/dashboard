@@ -6,12 +6,12 @@
  * `./registry.ts`) and are exposed via `/api/metrics`.
  *
  * Label cardinality is deliberately bounded. No tenant-id, user-id, email,
- * or IP address appears as a label — those explode cardinality and degrade
+ * or IP address appears as a label, those explode cardinality and degrade
  * Prometheus query performance. Per-principal detail belongs in the audit
  * event stream (`src/lib/audit/auth.ts`), not in metrics.
  *
  * Consumed by:
- *   - `app/api/billing/webhook/route.ts` — increment on every terminal outcome.
+ *   - `app/api/billing/webhook/route.ts`, increment on every terminal outcome.
  */
 
 import { getOrCreateCounter } from "./helpers";
@@ -66,7 +66,7 @@ export function incBillingEvent(
   try {
     stripeEventTotal.inc({ event_type: eventType, outcome });
   } catch {
-    // Defensive: never throw from a metrics helper — a prom-client failure
+    // Defensive: never throw from a metrics helper, a prom-client failure
     // must not cause the webhook handler to return a non-200 to Stripe.
   }
 }

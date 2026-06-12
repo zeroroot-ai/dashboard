@@ -1,8 +1,8 @@
 /**
- * Unit tests for signupAction — sendVerificationEmail conditional.
+ * Unit tests for signupAction, sendVerificationEmail conditional.
  *
  * Spec: signup-zitadel-permissions-fix
- * Bug: SIGNUP-B23 — sendVerificationEmail fired unconditionally causing
+ * Bug: SIGNUP-B23, sendVerificationEmail fired unconditionally causing
  * Zitadel 400 "Code is empty (EMAIL-5w5ilin4yt)" on every signup when
  * user was created with emailVerified=true.
  *
@@ -19,7 +19,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Tenant } from '@/src/lib/k8s/types';
 
 // ---------------------------------------------------------------------------
-// Mocks — must precede the subject import so Vitest's module registry sees them
+// Mocks, must precede the subject import so Vitest's module registry sees them
 // ---------------------------------------------------------------------------
 
 // Mock next/headers (not available outside the Next.js runtime)
@@ -39,7 +39,7 @@ const mockGetPasswordComplexityPolicy = vi.fn().mockResolvedValue({
   hasSymbol: false,
 });
 
-// Issue dashboard#41 — V2 session + CreateCallback methods. Use vi.hoisted
+// Issue dashboard#41, V2 session + CreateCallback methods. Use vi.hoisted
 // so the mock vars are initialised in the hoisted vi.mock factory phase
 // (vi.mock is hoisted to the top of the file by the vitest transform).
 const {
@@ -65,7 +65,7 @@ vi.mock('@/src/lib/zitadel/admin-client-factory', () => ({
   })),
 }));
 
-// Mock the signup-handoff module — default behaviour is "no handoff
+// Mock the signup-handoff module, default behaviour is "no handoff
 // parked" so legacy tests fall through to the existing /login redirect.
 // Individual tests in the auto-login describe-block override this.
 vi.mock('@/src/lib/zitadel/signup-handoff', () => ({
@@ -89,14 +89,14 @@ vi.mock('@/src/lib/signup/rate-limit', () => ({
   checkSignupRateLimit: vi.fn().mockResolvedValue({ allowed: true, retryAfterMs: 0 }),
 }));
 
-// Mock progress-store — no Redis needed.
+// Mock progress-store, no Redis needed.
 vi.mock('@/src/lib/signup/progress-store', () => ({
   advanceStep: vi.fn().mockResolvedValue(undefined),
   completeProgress: vi.fn().mockResolvedValue(undefined),
   failProgress: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock K8s tenants — no workspace conflict, tenant ready immediately.
+// Mock K8s tenants, no workspace conflict, tenant ready immediately.
 const mockTenant = {
   metadata: { name: 'test-workspace', namespace: 'gibson' },
   spec: {},
@@ -115,7 +115,7 @@ vi.mock('@/src/lib/k8s/tenants', () => ({
   tenantNamespace: vi.fn((slug: string) => `tenant-${slug}`),
 }));
 
-// Mock K8s client for TenantMember polling — immediately Active.
+// Mock K8s client for TenantMember polling, immediately Active.
 vi.mock('@/src/lib/k8s/client', () => ({
   k8s: vi.fn(() => ({
     get: vi.fn().mockResolvedValue({
@@ -162,15 +162,15 @@ function resetMocks() {
 // Tests: sendVerificationEmail conditional
 // ---------------------------------------------------------------------------
 
-describe('signupAction — sendVerificationEmail conditional', () => {
+describe('signupAction, sendVerificationEmail conditional', () => {
   beforeEach(() => {
     resetMocks();
   });
 
   it(
-    'spec:signup-zitadel-permissions-fix — skips sendVerificationEmail when user is created with emailVerified: true',
+    'spec:signup-zitadel-permissions-fix, skips sendVerificationEmail when user is created with emailVerified: true',
     async () => {
-      // createHumanUser returns a user (emailVerified: true path — the current
+      // createHumanUser returns a user (emailVerified: true path, the current
       // default per signup hotfix #5). The action should NOT call
       // sendVerificationEmail because the user has no pending code to resend.
       mockCreateHumanUser.mockResolvedValue({
@@ -183,7 +183,7 @@ describe('signupAction — sendVerificationEmail conditional', () => {
       // (first call returns null = no existing workspace; subsequent polls return ready).
       // First call simulates workspace-availability check ("not found" =
       // available); subsequent polls simulate operator-ready. Throw on the
-      // first to match real k8s 404 behavior — safeGetTenant catches it.
+      // first to match real k8s 404 behavior, safeGetTenant catches it.
       let tenantCallCount = 0;
       vi.mocked(getTenant).mockImplementation(async () => {
         tenantCallCount++;
@@ -198,7 +198,7 @@ describe('signupAction — sendVerificationEmail conditional', () => {
       expect(
         mockSendVerificationEmail.mock.calls.length,
         [
-          'spec:signup-zitadel-permissions-fix SIGNUP-B23 — ',
+          'spec:signup-zitadel-permissions-fix SIGNUP-B23, ',
           'sendVerificationEmail MUST NOT be called when the user was created with emailVerified=true. ',
           'Calling it causes Zitadel to return 400 "Code is empty (EMAIL-5w5ilin4yt)" on every signup.',
         ].join(''),
@@ -210,7 +210,7 @@ describe('signupAction — sendVerificationEmail conditional', () => {
   );
 
   it(
-    'spec:signup-zitadel-permissions-fix — calls sendVerificationEmail when emailVerified: false (future SMTP flow)',
+    'spec:signup-zitadel-permissions-fix, calls sendVerificationEmail when emailVerified: false (future SMTP flow)',
     async () => {
       // To exercise the emailVerified=false branch we need to manipulate the
       // createOrResumeZitadelUser logic. Since emailVerified is hardcoded to
@@ -229,7 +229,7 @@ describe('signupAction — sendVerificationEmail conditional', () => {
       //
       // The test assertion below verifies the CURRENT state: with emailVerified
       // hardcoded to true, sendVerificationEmail is always skipped. When a
-      // future spec sets emailVerified=false, this test will need updating —
+      // future spec sets emailVerified=false, this test will need updating -
       // which is exactly when the call should re-enable.
 
       mockCreateHumanUser.mockResolvedValue({
@@ -252,7 +252,7 @@ describe('signupAction — sendVerificationEmail conditional', () => {
 
       // With emailVerified=true (current production default), sendVerificationEmail
       // is NOT called. This branch test documents that the false-path exists
-      // in the code and is reachable — it WILL be called when emailVerified=false.
+      // in the code and is reachable, it WILL be called when emailVerified=false.
       const result = await signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-000000000002');
 
       // In the CURRENT production state, the call count is 0 because emailVerified
@@ -260,7 +260,7 @@ describe('signupAction — sendVerificationEmail conditional', () => {
       // and unconditionally calls sendVerificationEmail (causing SIGNUP-B23 to recur).
       expect(
         mockSendVerificationEmail.mock.calls.length,
-        'spec:signup-zitadel-permissions-fix — sendVerificationEmail call count should be 0 with emailVerified=true (current default). If this fails, the conditional was removed and SIGNUP-B23 will recur.',
+        'spec:signup-zitadel-permissions-fix, sendVerificationEmail call count should be 0 with emailVerified=true (current default). If this fails, the conditional was removed and SIGNUP-B23 will recur.',
       ).toBe(0);
 
       expect(result.ok).toBe(true);
@@ -272,7 +272,7 @@ describe('signupAction — sendVerificationEmail conditional', () => {
 // Tests: V2 session auto-login (issue dashboard#41)
 // ---------------------------------------------------------------------------
 
-describe('signupAction — V2 session + CreateCallback auto-login', () => {
+describe('signupAction, V2 session + CreateCallback auto-login', () => {
   beforeEach(() => {
     resetMocks();
     mockInitiateOidcAuthRequest.mockReset();
@@ -282,7 +282,7 @@ describe('signupAction — V2 session + CreateCallback auto-login', () => {
   });
 
   it(
-    'returns the V2 callbackUrl as redirect when the auto-login dance succeeds — issue dashboard#41',
+    'returns the V2 callbackUrl as redirect when the auto-login dance succeeds, issue dashboard#41',
     async () => {
       // Handoff config is present (production-like env).
       mockLoadHandoffConfig.mockReturnValue({
@@ -352,9 +352,9 @@ describe('signupAction — V2 session + CreateCallback auto-login', () => {
   );
 
   it(
-    'falls back to /login when initiateOidcAuthRequest returns null (handoff config missing / IAM_LOGIN_CLIENT 403) — issue dashboard#41',
+    'falls back to /login when initiateOidcAuthRequest returns null (handoff config missing / IAM_LOGIN_CLIENT 403), issue dashboard#41',
     async () => {
-      // No handoff config — typical in dev clusters where gitops#90 hasn't merged.
+      // No handoff config, typical in dev clusters where gitops#90 hasn't merged.
       mockLoadHandoffConfig.mockReturnValue(null);
       mockInitiateOidcAuthRequest.mockResolvedValue(null);
 
@@ -392,7 +392,7 @@ describe('signupAction — V2 session + CreateCallback auto-login', () => {
   );
 
   it(
-    'falls back to /login when createSession throws (e.g. IAM_LOGIN_CLIENT 403 from Zitadel) — issue dashboard#41',
+    'falls back to /login when createSession throws (e.g. IAM_LOGIN_CLIENT 403 from Zitadel), issue dashboard#41',
     async () => {
       mockLoadHandoffConfig.mockReturnValue({
         issuer: 'https://auth.test.local',

@@ -101,7 +101,7 @@ describe('getServiceToken', () => {
     expect(token).toBe('tok-1');
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(calls[0].url).toBe('https://zitadel.test/oauth/v2/token');
-    // Basic auth — we never want client_secret in the request body.
+    // Basic auth, we never want client_secret in the request body.
     const auth = (calls[0].init.headers as Record<string, string>)[
       'Authorization'
     ];
@@ -260,7 +260,7 @@ describe('getServiceToken', () => {
     await expect(getServiceToken()).rejects.toBeInstanceOf(
       ServiceTokenFetchError,
     );
-    // Second call should NOT see the stale rejected Promise — it must
+    // Second call should NOT see the stale rejected Promise, it must
     // re-enter the fetch path.
     const recovered = await getServiceToken();
     expect(recovered).toBe('tok-recovered');
@@ -299,13 +299,13 @@ describe('getServiceToken', () => {
     await getServiceToken();
 
     const body = String(calls[0].init.body ?? '');
-    // `scope` is URL-encoded in the form body — spaces become '+' or '%20,
+    // `scope` is URL-encoded in the form body, spaces become '+' or '%20,
     // URN colons become %3A, etc. Check both the param name and the two
     // mandatory scope values.
     expect(body).toContain('scope=');
-    // `openid` is a plain ASCII word — must appear verbatim in the encoded body.
+    // `openid` is a plain ASCII word, must appear verbatim in the encoded body.
     expect(body).toContain('openid');
-    // The project-audience URN — space-separated within the scope value,
+    // The project-audience URN, space-separated within the scope value,
     // so it appears URL-encoded. Verify the full URN is present.
     const AUD_URN = 'urn:zitadel:iam:org:project:id:gibson-platform:aud';
     expect(body).toContain(encodeURIComponent(AUD_URN));

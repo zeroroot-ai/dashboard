@@ -1,7 +1,7 @@
 /**
  * Email primitive types shared by every provider and template.
  *
- * Keep this file dependency-free — it is imported by the default `log`
+ * Keep this file dependency-free, it is imported by the default `log`
  * provider, every transactional template, and any server-side caller
  * that dispatches mail. Adding dependencies here forces them into the
  * bundle even for installs that only use the `log` provider.
@@ -31,7 +31,7 @@ export interface EmailMessage {
 /**
  * Common interface every provider implements.
  *
- * Dispatch errors MUST be thrown, never swallowed — callers decide
+ * Dispatch errors MUST be thrown, never swallowed, callers decide
  * retry behaviour (rate-limiter, audit log, user-visible error, etc.).
  */
 export interface EmailProvider {

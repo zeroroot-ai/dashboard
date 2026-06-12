@@ -1,5 +1,5 @@
 /**
- * SecretsBackendContent — server component.
+ * SecretsBackendContent, server component.
  *
  * Fetches the current broker config (server-side, via the admin RPC) and
  * passes the redacted config to the client-side SecretsBackendForm. Falls
@@ -27,7 +27,7 @@ import { SecretsBackendForm } from "./SecretsBackendForm";
 
 // SECRET_COUNT_UNKNOWN is the sentinel server-side fallback used when the
 // daemon's CountSecrets RPC is unreachable. The form treats it as
-// equivalent to "secrets present" (conservative — show the migration
+// equivalent to "secrets present" (conservative, show the migration
 // warning) so a transient daemon error never silently hides the warning.
 // See spec tenant-secrets-broker-completion R3.6 + design D4.
 const SECRET_COUNT_UNKNOWN = -1;
@@ -37,7 +37,7 @@ const SECRET_COUNT_UNKNOWN = -1;
 // ---------------------------------------------------------------------------
 
 // fetchCurrentState fetches the redacted broker config and the secret
-// count in parallel. countSecrets() failure is silent — it falls back to
+// count in parallel. countSecrets() failure is silent, it falls back to
 // SECRET_COUNT_UNKNOWN per Requirement 3.6 so the form renders the
 // warning conservatively. getBrokerConfig() failure surfaces in the
 // existing daemon-error banner.
@@ -74,7 +74,7 @@ async function fetchCurrentState(): Promise<{
 // ---------------------------------------------------------------------------
 
 export async function SecretsBackendContent() {
-  // Auth check — mirrors the pattern from secrets/page.tsx.
+  // Auth check, mirrors the pattern from secrets/page.tsx.
   const session = await getServerSession();
   if (!session?.user) {
     redirect("/login");

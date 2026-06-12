@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * validate-schema.mjs — long-running stdin/stdout Zod validation server.
+ * validate-schema.mjs, long-running stdin/stdout Zod validation server.
  *
  * Protocol (newline-delimited JSON on stdin/stdout):
  *
@@ -14,7 +14,7 @@
  * The process stays alive until stdin closes (EOF) or it receives a
  * { "op": "shutdown" } request.
  *
- * Requirements: R1.3, NFR Modularity (no third validation library — uses Zod
+ * Requirements: R1.3, NFR Modularity (no third validation library, uses Zod
  * which is already a dashboard dependency).
  *
  * Design: Component 4 (shape_validator.go shells out to this script once and
@@ -39,7 +39,7 @@ const DASHBOARD_ROOT = path.resolve(__dirname, '..')
 const require = createRequire(import.meta.url)
 
 // ---------------------------------------------------------------------------
-// Schema cache — import each schema module at most once per process lifetime.
+// Schema cache, import each schema module at most once per process lifetime.
 // ---------------------------------------------------------------------------
 
 /** @type {Map<string, import('zod').ZodTypeAny>} */
@@ -59,13 +59,13 @@ async function resolveSchema(schemaRef) {
 
   const colonIdx = schemaRef.lastIndexOf(':')
   if (colonIdx === -1) {
-    throw new Error(`validate-schema: invalid schemaRef "${schemaRef}" — must be "<path>:<export>"`)
+    throw new Error(`validate-schema: invalid schemaRef "${schemaRef}", must be "<path>:<export>"`)
   }
   const relPath = schemaRef.slice(0, colonIdx)
   const exportName = schemaRef.slice(colonIdx + 1)
 
   // Resolve to an absolute path from the dashboard root.
-  // Strip .ts extension and replace with nothing — the dashboard uses
+  // Strip .ts extension and replace with nothing, the dashboard uses
   // ts-node/esm or Next.js transforms that resolve .ts imports.
   // Since this script runs in Node.js without a transpiler, we attempt to
   // import the compiled .js output from .next/server or fall back to a
@@ -91,7 +91,7 @@ async function resolveSchema(schemaRef) {
   const schema = mod[exportName] ?? mod.default?.[exportName]
   if (!schema) {
     throw new Error(
-      `validate-schema: export "${exportName}" not found in "${relPath}" — available: ${Object.keys(mod).join(', ')}`
+      `validate-schema: export "${exportName}" not found in "${relPath}", available: ${Object.keys(mod).join(', ')}`
     )
   }
 
@@ -112,7 +112,7 @@ async function resolveSchema(schemaRef) {
  */
 async function validate(schemaRef, bodyJson) {
   if (!schemaRef) {
-    // No schema configured — skip validation.
+    // No schema configured, skip validation.
     return { ok: true }
   }
 
@@ -177,7 +177,7 @@ rl.on('line', async (line) => {
 })
 
 rl.on('close', () => {
-  // stdin closed — clean exit.
+  // stdin closed, clean exit.
   process.exit(0)
 })
 

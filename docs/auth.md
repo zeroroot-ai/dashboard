@@ -1,4 +1,4 @@
-# auth.md — `zeroroot-ai/dashboard`
+# auth.md, `zeroroot-ai/dashboard`
 
 Auth model from the dashboard's perspective. AI-agent-facing.
 Spec: `unified-identity-and-authorization`.
@@ -6,7 +6,7 @@ Spec: `unified-identity-and-authorization`.
 ## Three transports, one factory
 
 The dashboard talks to the Gibson daemon **only** through Envoy
-([`api/<domain>:<port>`](#)). There is no direct dial — the
+([`api/<domain>:<port>`](#)). There is no direct dial, the
 `scripts/check-no-direct-daemon-grpc.mjs` build guard rejects any
 `gibson:5005[012]` literal or `GIBSON_DAEMON_ADDRESS` reference at
 prebuild time.
@@ -20,7 +20,7 @@ The three transports compose one underlying factory:
 | `serviceClient(svc, tenantId)` | [`src/lib/gibson-client.ts:295`](../src/lib/gibson-client.ts) | Service-acting RPCs (in-cluster callbacks, entitlement reconcile, "Register Agent"). Bearer = dashboard pod's Zitadel `client_credentials` JWT; `x-gibson-tenant` = caller-supplied. |
 
 The two wrappers compose `makeClient` with concrete sourcing strategies.
-`makeClient` is the lock — adding a third sourcing strategy means a new
+`makeClient` is the lock, adding a third sourcing strategy means a new
 wrapper, never a new branch inside the factory.
 
 ```
@@ -51,7 +51,7 @@ Zitadel JWT) and forwards it as `Authorization: Bearer …` on every
 gRPC call via `userClient`.
 
 There is no BetterAuth integration. There are no `gsk_` API keys.
-There is no SPIFFE JWT-SVID minting in the dashboard — the deleted
+There is no SPIFFE JWT-SVID minting in the dashboard, the deleted
 file `src/lib/spiffe/jwt-svid.ts` is not coming back. SPIFFE in the
 dashboard is **X509-SVIDs only**, used for mTLS to the Envoy upstream
 cluster ([`src/lib/spiffe-mtls/svid.ts`](../src/lib/spiffe-mtls/svid.ts));
@@ -71,7 +71,7 @@ When the dashboard pod runs inside the cluster:
    `createGrpcTransport`'s `nodeOptions`.
 
 When the socket is missing (local dev), the factory logs **once** and
-falls back to plain HTTPS. The Bearer JWT auth path is unaffected — TLS
+falls back to plain HTTPS. The Bearer JWT auth path is unaffected, TLS
 is just edge-only instead of mutual.
 
 The `scripts/check-no-spiffe-in-user-client.mjs` build guard fails the
@@ -94,7 +94,7 @@ SPIFFE_TRUST_DOMAIN        expected trust domain (e.g. zeroroot.ai)
 DASHBOARD_ADMIN_AUDIENCE   expected JWT audience (e.g. gibson-dashboard)
 ```
 
-This is **not** the dashboard authenticating users — it is the dashboard
+This is **not** the dashboard authenticating users, it is the dashboard
 verifying a peer SPIFFE workload's JWT-SVID for admin callbacks. End
 users always come through Auth.js.
 
@@ -128,7 +128,7 @@ securely, you cannot view again" warning, plus a copy-paste
 |---|---|
 | `src/lib/gibson-admin-client.ts` | Collapsed into single `makeClient` factory + two wrappers. |
 | `src/lib/spiffe/jwt-svid.ts` | Outbound subject identity is Zitadel; SPIFFE is X509-SVID only. |
-| BetterAuth integration | Audit C13 — weak symmetric HMAC. Replaced by Zitadel. |
+| BetterAuth integration | Audit C13, weak symmetric HMAC. Replaced by Zitadel. |
 | `gsk_`-prefixed API keys | Replaced by Zitadel client_credentials and the Register Agent flow. |
 | `GIBSON_DAEMON_ADDRESS` env var | Direct dial deleted; replaced by `ADMIN_ENVOY_BASE_URL`. |
 | Direct `gibson:50051` / `:50002` literals | Same reason. |

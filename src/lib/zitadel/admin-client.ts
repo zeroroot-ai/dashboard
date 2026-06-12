@@ -45,7 +45,7 @@ export interface PasswordPolicy {
 }
 
 // ---------------------------------------------------------------------------
-// Machine user (service account) types — spec
+// Machine user (service account) types, spec
 // unified-identity-and-authorization Phase 4 (R1.4, R9.7, R9.8). Used by
 // the dashboard's "Register Agent" flow to provision Zitadel service
 // accounts for agents that authenticate via the OAuth2 client_credentials
@@ -60,7 +60,7 @@ export interface CreateMachineUserInput {
    * `ZitadelApiError` with `httpStatus: 409`).
    */
   username: string;
-  /** Display name shown in the Zitadel console — falls back to `username`. */
+  /** Display name shown in the Zitadel console, falls back to `username`. */
   name?: string;
   /**
    * Optional human-readable description. Stored on the Zitadel user
@@ -69,7 +69,7 @@ export interface CreateMachineUserInput {
   description?: string;
   /**
    * Org ID the machine user belongs to. When omitted, the user is created
-   * in the PAT's default org — which, for the signup-bot PAT, is the IAM
+   * in the PAT's default org, which, for the signup-bot PAT, is the IAM
    * instance org. For per-tenant agents, the caller MUST supply the
    * tenant's Zitadel org ID.
    */
@@ -84,18 +84,18 @@ export interface ZitadelMachineUser {
 export interface MachineSecret {
   /** OAuth2 `client_id` for the client_credentials grant. */
   clientId: string;
-  /** OAuth2 `client_secret` — emitted exactly once. NEVER logged. */
+  /** OAuth2 `client_secret`, emitted exactly once. NEVER logged. */
   clientSecret: string;
 }
 
 /**
- * Inputs to `createSession` — the V2 Session Service entry point used by the
+ * Inputs to `createSession`, the V2 Session Service entry point used by the
  * signup auto-login flow (spec/issue dashboard#41).
  *
  * Both `loginName` and `password` are forwarded to Zitadel as the two
  * authentication "checks" in a single POST /v2/sessions call:
- *   - `checks.user.loginName: <email>`     — identifies the human user
- *   - `checks.password.password: <pw>`     — proves the user knows the password
+ *   - `checks.user.loginName: <email>`    , identifies the human user
+ *   - `checks.password.password: <pw>`    , proves the user knows the password
  *
  * The signup form just collected the password from the user (they typed it
  * moments ago) AND we created the user with that exact password via the
@@ -109,14 +109,14 @@ export interface MachineSecret {
  * returns 403 PERMISSION_DENIED.
  */
 export interface CreateSessionInput {
-  /** The Zitadel loginName — the dashboard uses email as loginName at user-creation time. */
+  /** The Zitadel loginName, the dashboard uses email as loginName at user-creation time. */
   loginName: string;
   /** Plaintext password the user just typed in the signup form. NEVER logged. */
   password: string;
 }
 
 /**
- * Output of `createSession`. The `sessionToken` is opaque-but-secret — treat
+ * Output of `createSession`. The `sessionToken` is opaque-but-secret, treat
  * like a bearer credential, never log it, never expose to the browser. It
  * is the ONE input to `finalizeAuthRequest` and is single-use in that flow.
  */
@@ -133,12 +133,12 @@ export interface ZitadelSession {
 }
 
 /**
- * Input to `finalizeAuthRequest` — completes a parked OIDC auth_request by
+ * Input to `finalizeAuthRequest`, completes a parked OIDC auth_request by
  * pinning it to a pre-established V2 session. The browser receives the
  * returned `callbackUrl` and lands on the relying party's `/api/auth/callback/*`
  * endpoint with the standard `code=...&state=...` query string.
  *
- * Spec: Zitadel V2 OIDC Service — `POST /v2/oidc/auth_requests/{authRequestId}`
+ * Spec: Zitadel V2 OIDC Service, `POST /v2/oidc/auth_requests/{authRequestId}`
  * (the gRPC method name is `CreateCallback`; the HTTP path is just the
  * resource with POST per Zitadel's `option (google.api.http)`).
  */
@@ -159,7 +159,7 @@ export interface FinalizeAuthRequestInput {
  * the relying party's registered redirect_uri with `code=...&state=...`.
  */
 export interface FinalizeAuthRequestResult {
-  /** Absolute URL — typically `${ZITADEL_ISSUER}/oauth/v2/...` or directly the RP callback. */
+  /** Absolute URL, typically `${ZITADEL_ISSUER}/oauth/v2/...` or directly the RP callback. */
   callbackUrl: string;
 }
 
@@ -186,34 +186,34 @@ export interface AddProjectMemberInput {
 // ---------------------------------------------------------------------------
 
 export interface ZitadelAdminClient {
-  /** POST /v2/users/human — creates a new human user. On 409 throws ZitadelApiError with httpStatus 409. */
+  /** POST /v2/users/human, creates a new human user. On 409 throws ZitadelApiError with httpStatus 409. */
   createHumanUser(input: CreateHumanUserInput): Promise<ZitadelUser>;
 
-  /** POST /v2/users — search by email. Returns the first matching user or null. */
+  /** POST /v2/users, search by email. Returns the first matching user or null. */
   findUserByEmail(email: string): Promise<ZitadelUser | null>;
 
   /**
-   * POST /v2/users/:userId/email/resend — triggers a verification email.
+   * POST /v2/users/:userId/email/resend, triggers a verification email.
    * 404 is fatal. 5xx is retried.
    */
   sendVerificationEmail(userId: string): Promise<void>;
 
   /**
-   * POST /v2/users/:userId/password — set a new password without requiring
+   * POST /v2/users/:userId/password, set a new password without requiring
    * the current one. Used by signup-resume to update the password when the
    * user retries a failed signup attempt (the original password from the
    * first attempt would otherwise stick, even though the form accepted a
-   * new value). Idempotent — setting the same password twice is a no-op.
+   * new value). Idempotent, setting the same password twice is a no-op.
    * `changeRequired: false` so the user is not forced to change on first
    * sign-in.
    */
   setUserPassword(userId: string, password: string): Promise<void>;
 
-  /** GET /auth/v1/policies/passwords/complexity — fetches the effective password policy for the caller's org. */
+  /** GET /auth/v1/policies/passwords/complexity, fetches the effective password policy for the caller's org. */
   getPasswordComplexityPolicy(): Promise<PasswordPolicy>;
 
   /**
-   * POST /management/v1/users/machine — creates a new machine user (service
+   * POST /management/v1/users/machine, creates a new machine user (service
    * account) used for the OAuth2 client_credentials grant. The returned
    * userId is the Zitadel subject; the secret is minted separately by
    * {@link addMachineSecret}. Spec: unified-identity-and-authorization R1.4.
@@ -221,7 +221,7 @@ export interface ZitadelAdminClient {
   createMachineUser(input: CreateMachineUserInput): Promise<ZitadelMachineUser>;
 
   /**
-   * PUT /management/v1/users/{userId}/secret — generates a fresh
+   * PUT /management/v1/users/{userId}/secret, generates a fresh
    * client_secret for the machine user. The plaintext secret is returned
    * exactly once and CANNOT be retrieved again; it must be surfaced to
    * the registering admin in the same response. Spec: R9.8.
@@ -229,7 +229,7 @@ export interface ZitadelAdminClient {
   addMachineSecret(userId: string, orgId?: string): Promise<MachineSecret>;
 
   /**
-   * POST /management/v1/projects/{projectId}/members — adds a user
+   * POST /management/v1/projects/{projectId}/members, adds a user
    * (machine or human) to a Zitadel project with one or more project-level
    * role keys. The role grant is what makes the project's
    * `urn:zitadel:iam:org:project:roles` claim show up in the issued JWT.
@@ -238,7 +238,7 @@ export interface ZitadelAdminClient {
   addProjectMember(input: AddProjectMemberInput): Promise<void>;
 
   /**
-   * POST /v2/sessions — creates a Zitadel session for the supplied user,
+   * POST /v2/sessions, creates a Zitadel session for the supplied user,
    * authenticated by password. Used by the signup auto-login pipeline
    * (issue dashboard#41) to mint a session immediately after admin-API
    * user provisioning so the caller can complete a parked OIDC auth_request
@@ -255,7 +255,7 @@ export interface ZitadelAdminClient {
   createSession(input: CreateSessionInput): Promise<ZitadelSession>;
 
   /**
-   * POST /v2/oidc/auth_requests/{authRequestId} — finalises a parked OIDC
+   * POST /v2/oidc/auth_requests/{authRequestId}, finalises a parked OIDC
    * auth_request by binding it to an established session (gRPC method
    * `CreateCallback`; HTTP path is the resource with POST).
    * Returns the absolute URL the user agent must follow to complete the
@@ -263,14 +263,14 @@ export interface ZitadelAdminClient {
    *
    * Spec: Zitadel V2 OIDC Service. Requires `IAM_LOGIN_CLIENT` (gitops#90).
    * On any failure the caller should fall back to the standard hosted
-   * login flow — the user has a valid Zitadel account either way.
+   * login flow, the user has a valid Zitadel account either way.
    */
   finalizeAuthRequest(
     input: FinalizeAuthRequestInput,
   ): Promise<FinalizeAuthRequestResult>;
 
   /**
-   * GET /management/v1/users/{userId}/metadata/{key} — fetches a single
+   * GET /management/v1/users/{userId}/metadata/{key}, fetches a single
    * metadata value for a user. Zitadel returns the value base64-encoded;
    * this method decodes it before returning. Returns null on 404 so
    * callers can treat "never set" as a normal state, and on connection
@@ -282,7 +282,7 @@ export interface ZitadelAdminClient {
   getUserMetadata(userId: string, key: string): Promise<string | null>;
 
   /**
-   * POST /management/v1/users/{userId}/metadata/{key} — sets a metadata
+   * POST /management/v1/users/{userId}/metadata/{key}, sets a metadata
    * value for a user. The value is base64-encoded for transport per
    * Zitadel's API contract.
    *
@@ -432,7 +432,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
           lastError = new ZitadelApiError(0, code, 'Connection-level failure');
           continue;
         }
-        // Unknown fetch error — wrap but do not retry.
+        // Unknown fetch error, wrap but do not retry.
         throw new ZitadelApiError(0, 'FETCH_ERROR', 'Unexpected fetch failure');
       }
 
@@ -471,7 +471,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
         continue;
       }
 
-      // 4xx — permanent, throw immediately.
+      // 4xx, permanent, throw immediately.
       throw apiError;
     }
 
@@ -552,7 +552,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
 
   async setUserPassword(userId: string, password: string): Promise<void> {
     // POST /v2/users/:userId/password sets the password as IAM_USER_MANAGER
-    // — does NOT require the current password. The signup-bot PAT already
+    //, does NOT require the current password. The signup-bot PAT already
     // holds IAM_USER_MANAGER for createHumanUser; the same scope covers
     // this endpoint. SECURITY: password lives in the request body only;
     // never log it.
@@ -569,7 +569,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
     // (/management/v1/policies/password/complexity) also requires elevated
     // permissions not granted to IAM_USER_MANAGER (verified via live probe
     // 2026-04-23). The auth endpoint returns the EFFECTIVE policy for the
-    // caller's org — default when no org override is set — which is exactly
+    // caller's org, default when no org override is set, which is exactly
     // what the signup form validation needs. Spec: signup-zitadel-permissions-fix.
     const response = await this.request<{
       policy?: {
@@ -592,7 +592,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
   }
 
   // -----------------------------------------------------------------------
-  // Machine user (service account) — spec
+  // Machine user (service account), spec
   // unified-identity-and-authorization Phase 4 (R1.4, R9.7, R9.8).
   //
   // SECURITY:
@@ -609,7 +609,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
   async createMachineUser(input: CreateMachineUserInput): Promise<ZitadelMachineUser> {
     // Zitadel's machine-user accessTokenType controls whether the
     // resulting access tokens are opaque or JWT. For the OIDC chain we
-    // need JWTs so Envoy's jwt_authn provider can verify them — that is
+    // need JWTs so Envoy's jwt_authn provider can verify them, that is
     // the OIDC_TOKEN_TYPE_JWT enum, which the management API serialises
     // as the string `"OIDC_TOKEN_TYPE_JWT"` (vs the default
     // `"OIDC_TOKEN_TYPE_BEARER"` that yields opaque tokens).
@@ -628,7 +628,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
     if (!response.userId) {
       // Surface as a connection-shaped ZitadelApiError so callers can
       // unify on isRetryable() / httpStatus checks. We deliberately do
-      // NOT echo the username — the caller already has it.
+      // NOT echo the username, the caller already has it.
       throw new ZitadelApiError(0, 'NO_USER_ID', 'Zitadel response missing userId');
     }
     return { userId: response.userId, username: input.username };
@@ -645,7 +645,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
     }>('PUT', `/management/v1/users/${userId}/secret`, {}, orgId);
 
     if (!response.clientId || !response.clientSecret) {
-      // Do NOT include any field of `response` in the error message —
+      // Do NOT include any field of `response` in the error message -
       // it would leak the secret on the malformed-response path.
       throw new ZitadelApiError(
         0,
@@ -659,7 +659,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
   async addProjectMember(input: AddProjectMemberInput): Promise<void> {
     if (input.roles.length === 0) {
       // Zitadel requires at least one role on a project membership write
-      // — reject locally so the surfaced error is sharper than the API's.
+      //, reject locally so the surfaced error is sharper than the API's.
       throw new ZitadelApiError(0, 'NO_ROLES', 'addProjectMember requires at least one role');
     }
     const body = {
@@ -675,12 +675,12 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
   }
 
   // -----------------------------------------------------------------------
-  // V2 Session + OIDC callback methods (issue dashboard#41 — signup
+  // V2 Session + OIDC callback methods (issue dashboard#41, signup
   // auto-login). Both require the calling PAT to hold IAM_LOGIN_CLIENT.
   //
   // Why these live on the admin client and not a separate "login client":
   // the build-your-own-login-UI flow is, by Zitadel's design, an admin-API
-  // operation — the relying party uses a privileged service account to
+  // operation, the relying party uses a privileged service account to
   // mint a session on behalf of a user that just identified itself by
   // password. The role distinction (IAM_LOGIN_CLIENT vs IAM_USER_MANAGER)
   // is a Zitadel role grant; the dashboard's signup-bot service account
@@ -691,7 +691,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
   //     request body and NEVER logged. Same treatment as createHumanUser.
   //   - The returned `sessionToken` is bearer-credential-equivalent. The
   //     action layer is the single caller and consumes it inline in the
-  //     same Server Action invocation — it is never returned to the
+  //     same Server Action invocation, it is never returned to the
   //     browser, never persisted, never logged.
   // -----------------------------------------------------------------------
 
@@ -703,7 +703,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
     //       password: { password:  "..." }
     //     }
     //   }
-    // Both checks are combined in a single create call — Zitadel executes
+    // Both checks are combined in a single create call, Zitadel executes
     // them atomically and either returns a verified session or rejects.
     // SECURITY: input.password is in the body only, never in headers/URL.
     const body = {
@@ -720,7 +720,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
     }>('POST', '/v2/sessions', body);
 
     if (!response.sessionId || !response.sessionToken) {
-      // Do NOT echo `response` in the error message — the sessionToken
+      // Do NOT echo `response` in the error message, the sessionToken
       // would leak on the malformed-response path. The error type matches
       // the rest of the client so callers can use the same isRetryable()
       // / httpStatus discrimination.
@@ -743,7 +743,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
     // Zitadel V2 OIDC's CreateCallback RPC is transcoded to
     // `POST /v2/oidc/auth_requests/{auth_request_id}` (same resource path
     // as the GET, just the POST verb). The gRPC method name `CreateCallback`
-    // is NOT part of the HTTP path — see
+    // is NOT part of the HTTP path, see
     // proto/zitadel/oidc/v2/oidc_service.proto:
     //
     //   rpc CreateCallback (CreateCallbackRequest) returns (CreateCallbackResponse) {
@@ -791,7 +791,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
 
   /**
    * GET /management/v1/users/{userId}/metadata/{key}. Returns the decoded
-   * value or null on 404 / connection failure. Never throws — this is a
+   * value or null on 404 / connection failure. Never throws, this is a
    * preference read; if it fails the caller falls back to defaults.
    */
   async getUserMetadata(userId: string, key: string): Promise<string | null> {
@@ -807,7 +807,7 @@ export class HttpZitadelAdminClient implements ZitadelAdminClient {
       if (err instanceof ZitadelApiError && err.httpStatus === 404) {
         return null;
       }
-      // Connection or other transient — degrade to "never set".
+      // Connection or other transient, degrade to "never set".
       return null;
     }
   }

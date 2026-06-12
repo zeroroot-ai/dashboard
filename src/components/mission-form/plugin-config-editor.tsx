@@ -1,5 +1,5 @@
 /**
- * <PluginConfigEditor /> — form for PluginNodeConfig.
+ * <PluginConfigEditor />, form for PluginNodeConfig.
  *
  * PLUGIN = multi-method provider keyed by plugin_name + method.
  * Distinct from TOOL: a plugin advertises several callable

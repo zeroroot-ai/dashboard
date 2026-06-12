@@ -5,7 +5,7 @@
  *
  * Each action: (1) calls assertAuthorized against the corresponding daemon
  * RPC's authz registry entry; (2) resolves the active tenant server-side via
- * getActiveTenant — never accepts a tenantId from the client; (3) invokes
+ * getActiveTenant, never accepts a tenantId from the client; (3) invokes
  * the daemon RPC through the Envoy + SPIFFE-mTLS path; (4) maps daemon
  * NotFound to a typed DraftNotFound error so the UI can show a "draft
  * expired" toast.
@@ -102,11 +102,11 @@ function rpcErrToResult(action: string, err: unknown): DraftActionResult<never> 
     );
     return {
       ok: false,
-      error: "Could not reach the daemon — please try again.",
+      error: "Could not reach the daemon, please try again.",
       code: "rpc_failed",
     };
   }
-  // Unexpected error type — preserve stack via re-throw at callsite if needed.
+  // Unexpected error type, preserve stack via re-throw at callsite if needed.
   logger.error(
     { action, err: err instanceof Error ? { message: err.message } : err },
     "mission-draft action: unexpected error",
@@ -216,7 +216,7 @@ export async function getMissionSourceAction(
 
 /**
  * Removes a draft scoped to the active tenant. Idempotent on the daemon
- * side — deleting a missing draft returns OK.
+ * side, deleting a missing draft returns OK.
  */
 export async function deleteMissionSourceAction(
   draftId: string,

@@ -10,7 +10,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 
 // ============================================================================
-// Mock mermaid — must be declared before the component import
+// Mock mermaid, must be declared before the component import
 // ============================================================================
 
 const mockRender = vi.fn();

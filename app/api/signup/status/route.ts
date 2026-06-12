@@ -5,7 +5,7 @@ import { K8sNotFoundError } from '@/src/lib/k8s/errors';
 
 const STATUS_RATE_LIMIT = {
   maxRequests: 60,
-  windowSeconds: 60, // 60 req/min — polling every 2s = 30/min
+  windowSeconds: 60, // 60 req/min, polling every 2s = 30/min
   algorithm: 'fixed_window' as const,
   message: 'Too many status requests. Please slow down.',
 };
@@ -18,7 +18,7 @@ const STATUS_RATE_LIMIT = {
  * the legacy { status, currentStep, steps } shape consumed by the
  * provisioning page.
  *
- * The `user` parameter is no longer supported — provisioning is now keyed
+ * The `user` parameter is no longer supported, provisioning is now keyed
  * on the Tenant CR name (slugified company name).
  */
 export async function GET(request: NextRequest) {
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     const errMsg = error instanceof Error ? error.message : '';
 
     if (error instanceof K8sNotFoundError || errMsg.includes('not found')) {
-      // CR not yet created — still initializing
+      // CR not yet created, still initializing
       return NextResponse.json({
         status: 'provisioning',
         currentStep: '',

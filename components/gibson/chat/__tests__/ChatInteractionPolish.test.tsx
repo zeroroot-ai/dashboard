@@ -1,5 +1,5 @@
 /**
- * Tests for dashboard#554 — chat interaction polish.
+ * Tests for dashboard#554, chat interaction polish.
  *
  * Covers:
  * - Empty conversations state vs conversation-store-unavailable error state
@@ -88,10 +88,10 @@ beforeAll(() => {
 });
 
 // ============================================================================
-// ConversationListHydrator — empty vs store-error state flag
+// ConversationListHydrator, empty vs store-error state flag
 // ============================================================================
 
-describe('ConversationListHydrator — store error flag', () => {
+describe('ConversationListHydrator, store error flag', () => {
   beforeEach(() => {
     useChatStore.setState({
       conversations: [],
@@ -119,7 +119,7 @@ describe('ConversationListHydrator — store error flag', () => {
       title: 'Test',
     };
     render(<ConversationListHydrator conversations={[conv]} storeUnavailable={true} />);
-    // When store is unavailable the conversation list should remain empty —
+    // When store is unavailable the conversation list should remain empty -
     // partial data on a broken load is worse than no data.
     expect(useChatStore.getState().conversations).toHaveLength(0);
   });
@@ -140,10 +140,10 @@ describe('ConversationListHydrator — store error flag', () => {
 });
 
 // ============================================================================
-// Chat store — conversationStoreError and activeProviderName actions
+// Chat store, conversationStoreError and activeProviderName actions
 // ============================================================================
 
-describe('Chat Store — conversationStoreError', () => {
+describe('Chat Store, conversationStoreError', () => {
   beforeEach(() => {
     useChatStore.setState({ conversationStoreError: false });
   });
@@ -164,7 +164,7 @@ describe('Chat Store — conversationStoreError', () => {
   });
 });
 
-describe('Chat Store — activeProviderName', () => {
+describe('Chat Store, activeProviderName', () => {
   beforeEach(() => {
     useChatStore.setState({ activeProviderName: null });
   });
@@ -186,7 +186,7 @@ describe('Chat Store — activeProviderName', () => {
 });
 
 // ============================================================================
-// Empty vs error state — they render distinct test-ids
+// Empty vs error state, they render distinct test-ids
 // ============================================================================
 //
 // The ChatContent component itself relies on assistant-ui primitives that are
@@ -195,7 +195,7 @@ describe('Chat Store — activeProviderName', () => {
 // the two dedicated state components which are exported for this purpose.
 
 // Import the standalone state components through the same module path as the
-// parent ChatContent — they are defined in the same file and not directly
+// parent ChatContent, they are defined in the same file and not directly
 // exported, so we test their presence by rendering a minimal harness.
 
 // ConversationStoreErrorState renders data-testid="conversation-store-error-state"
@@ -203,7 +203,7 @@ describe('Chat Store — activeProviderName', () => {
 //
 // We verify these are mutually exclusive when the store has the right state.
 
-describe('Empty vs store-error state — store-flag driven', () => {
+describe('Empty vs store-error state, store-flag driven', () => {
   it('conversationStoreError=false, conversations=[] → store does NOT report error', () => {
     useChatStore.setState({ conversations: [], conversationStoreError: false });
     const { conversationStoreError } = useChatStore.getState();
@@ -236,17 +236,17 @@ describe('Empty vs store-error state — store-flag driven', () => {
 // ============================================================================
 //
 // ThreadPrimitive.ScrollToBottom (from @assistant-ui/react) renders its child
-// only when the viewport is NOT already at the bottom — i.e. when the user
+// only when the viewport is NOT already at the bottom, i.e. when the user
 // has scrolled up and auto-scroll is paused. Clicking the child scrolls back
 // to the bottom and re-enables auto-scroll.
 //
 // We cannot unit-test the actual scroll-position-tracking without a real DOM
 // scroll container, but we can assert the store-level invariants:
 // - A new message does not reset the user's scroll position in the store.
-// - The store has no scroll-position state — that responsibility lives in the
+// - The store has no scroll-position state, that responsibility lives in the
 //   assistant-ui Viewport primitive (the correct separation of concerns).
 
-describe('Auto-scroll — store invariants', () => {
+describe('Auto-scroll, store invariants', () => {
   it('the chat store has no scrollPosition field (scroll state lives in the UI)', () => {
     const state = useChatStore.getState() as unknown as Record<string, unknown>;
     // If a scrollPosition or scrollOffset or isScrolledToBottom field appears

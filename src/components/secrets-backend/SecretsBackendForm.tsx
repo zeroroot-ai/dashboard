@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * SecretsBackendForm — client component for the /settings/secrets-backend page.
+ * SecretsBackendForm, client component for the /settings/secrets-backend page.
  *
  * Renders a provider switcher (Select) and the matching per-provider sub-form.
  * Probe button calls probeBrokerConfigAction server action and displays the
@@ -156,7 +156,7 @@ export interface SecretsBackendFormProps {
    * Used to decide whether to show the migration warning + acknowledgement
    * checkbox when the user picks a different provider.
    *
-   * Sentinel -1 means "unknown" — the daemon's CountSecrets RPC was
+   * Sentinel -1 means "unknown", the daemon's CountSecrets RPC was
    * unreachable. In that case the form behaves conservatively: warning +
    * checkbox shown on any provider change. See spec
    * tenant-secrets-broker-completion R3.6 + design D4.
@@ -221,7 +221,7 @@ export function SecretsBackendForm({
   //                               there might be secrets and show the warning)
   //
   // The condition also requires the user to actually be switching providers
-  // — staying on the current provider does not orphan anything.
+  //, staying on the current provider does not orphan anything.
   const showMigrationWarning =
     selectedProvider !== initialProvider &&
     (secretCount > 0 || secretCount === -1);
@@ -246,7 +246,7 @@ export function SecretsBackendForm({
   // --------------------------------------------------------------------------
   // Provider switching
   //
-  // Switching providers is free (no dialog gate) — Save is what's gated by
+  // Switching providers is free (no dialog gate), Save is what's gated by
   // the acknowledgement checkbox when secretCount > 0. The reset clears
   // sensitive fields, the acknowledgement (back to false), and probe/save
   // state so stale values never leak across providers.
@@ -297,7 +297,7 @@ export function SecretsBackendForm({
         toast.success("Secrets backend configured", {
           description: "Your new provider settings have been saved.",
         });
-        // Reset sensitive fields only — keep non-sensitive populated for UX.
+        // Reset sensitive fields only, keep non-sensitive populated for UX.
         form.reset({
           ...values,
           vaultToken: "",
@@ -337,7 +337,7 @@ export function SecretsBackendForm({
     fd.set("clientId", values.clientId);
     fd.set("roleArn", values.roleArn);
     fd.set("approleRoleId", values.approleRoleId);
-    // Sensitive — the server action encodes these to Uint8Array before RPC.
+    // Sensitive, the server action encodes these to Uint8Array before RPC.
     fd.set("vaultToken", values.vaultToken);
     fd.set("approleSecretId", values.approleSecretId);
     fd.set("awsAccessKeyId", values.awsAccessKeyId);
@@ -446,7 +446,7 @@ export function SecretsBackendForm({
           {/* Migration warning + acknowledgement checkbox.
               Visible only when the user is switching providers AND the
               tenant currently has secrets (or the count RPC is unreachable
-              — sentinel -1 falls back to the conservative warning).
+             , sentinel -1 falls back to the conservative warning).
               Spec: tenant-secrets-broker-completion R3.3, R3.4, R3.6. */}
           {showMigrationWarning && (
             <Alert variant="default" className="border-amber-500/50" data-testid="migration-warning">
@@ -495,7 +495,7 @@ export function SecretsBackendForm({
             <ProbeBanner result={saveResult ?? probeResult} />
           )}
 
-          {/* Action buttons — hidden for Gibson-hosted (no config to save)
+          {/* Action buttons, hidden for Gibson-hosted (no config to save)
               and hidden for non-admins (read-only mode). */}
           {!isGibsonHosted && !isReadOnly && (
             <div className="flex items-center gap-2 pt-2">

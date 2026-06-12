@@ -4,7 +4,7 @@
  *
  * Build-time guard enforcing the dashboard#715/#716 cutover: member + role
  * management is owned by the daemon's MembershipService (ADR-0043/0044), and
- * the dashboard reads ListMembers — NOT the TenantMember CR.
+ * the dashboard reads ListMembers, NOT the TenantMember CR.
  *
  * ## What is checked
  *
@@ -12,9 +12,9 @@
  *   - call the removed TenantMember member-management helpers
  *     (listTenantMembers / patchTenantMember / deleteTenantMember), or
  *   - call applyTenantMember outside the single permitted provisioning path
- *     (app/actions/signup.ts — founding-owner creation, ADR-0044), or
+ *     (app/actions/signup.ts, founding-owner creation, ADR-0044), or
  *   - reference the removed AgentEnrollment CRD (type or 'agentenrollments'
- *     plural — enrollment is gibson.tenant.v1.AgentIdentityService, no CRD).
+ *     plural, enrollment is gibson.tenant.v1.AgentIdentityService, no CRD).
  *
  * Comment lines (// , * , /* ) are skipped so the historical references in
  * doc-comments don't trip the guard.
@@ -92,11 +92,11 @@ function scan() {
       lines.forEach((line, i) => {
         if (isCommentLine(line)) return;
         for (const re of FORBIDDEN_ALWAYS) {
-          if (re.test(line)) violations.push(`${rel}:${i + 1} — removed TenantMember helper: ${line.trim()}`);
+          if (re.test(line)) violations.push(`${rel}:${i + 1}, removed TenantMember helper: ${line.trim()}`);
         }
         if (!allowed) {
           for (const re of FORBIDDEN_UNLESS_ALLOWED) {
-            if (re.test(line)) violations.push(`${rel}:${i + 1} — TenantMember-write / AgentEnrollment outside allowlist: ${line.trim()}`);
+            if (re.test(line)) violations.push(`${rel}:${i + 1}, TenantMember-write / AgentEnrollment outside allowlist: ${line.trim()}`);
           }
         }
       });
@@ -113,7 +113,7 @@ function main() {
       const v = scan();
       const caught = v.some((x) => x.includes('__guard_selftest_'));
       if (!caught) {
-        console.error(`${SCRIPT_NAME}: SELFTEST FAILED — scanner did not catch the synthetic violation`);
+        console.error(`${SCRIPT_NAME}: SELFTEST FAILED, scanner did not catch the synthetic violation`);
         process.exit(1);
       }
       console.log(`${SCRIPT_NAME}: selftest ok`);
@@ -131,7 +131,7 @@ function main() {
       '\nMember/role management is owned by the daemon (MembershipService,\n' +
         'ADR-0043/0044). Read ListMembers; do not write TenantMember CRs. The only\n' +
         'permitted applyTenantMember caller is the signup provisioning path.\n' +
-        'AgentEnrollment is gone — enrollment is gibson.tenant.v1.AgentIdentityService.',
+        'AgentEnrollment is gone, enrollment is gibson.tenant.v1.AgentIdentityService.',
     );
     process.exit(1);
   }

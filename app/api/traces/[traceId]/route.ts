@@ -11,7 +11,7 @@ import { timestampToISO } from '@/src/lib/gibson-client';
 /**
  * GET /api/traces/[traceId]
  *
- * Direct trace lookup by id (no mission correlation required) — the
+ * Direct trace lookup by id (no mission correlation required), the
  * click-through target from the tenant-wide trace list. Returns the same
  * canonical TraceData shape as /api/missions/[id]/traces via the shared
  * assembleTraceData helper.

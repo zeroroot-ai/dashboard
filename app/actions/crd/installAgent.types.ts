@@ -4,7 +4,7 @@ export interface InstallApproval {
   /** Target reference, e.g. "component:plugin/gitlab". */
   target: string;
   action: InstallAction;
-  /** From the manifest — used for error messaging only. */
+  /** From the manifest, used for error messaging only. */
   required: boolean;
 }
 

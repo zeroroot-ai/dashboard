@@ -1,5 +1,5 @@
 /**
- * GET /api/admin/plugins/catalog — plugins available to the caller's
+ * GET /api/admin/plugins/catalog, plugins available to the caller's
  * tenant. Same daemon RPC as the components catalog; this endpoint
  * projects only the plugin set.
  *
@@ -32,7 +32,7 @@ export async function GET(): Promise<NextResponse> {
     );
   }
 
-  // ListCatalogComponents deleted in ADR-0037 — return empty list gracefully.
+  // ListCatalogComponents deleted in ADR-0037, return empty list gracefully.
   // A replacement RPC that surfaces the catalog to member-level callers is
   // tracked at dashboard#336.
   const plugins: CatalogPluginDTO[] = [];

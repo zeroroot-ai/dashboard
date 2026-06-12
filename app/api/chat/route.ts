@@ -23,7 +23,7 @@ import { checkRateLimit, createRateLimitResponse } from '@/src/lib/rate-limiter'
 import { userClient } from '@/src/lib/gibson-client';
 import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
 import { logger } from '@/src/lib/logger';
-// getConversation removed — ListConversations/GetConversation DEFERRED per
+// getConversation removed, ListConversations/GetConversation DEFERRED per
 // admin-services-completion spec. Chat history will be wired once the
 // chatbot-page spec implements these RPCs on UserService.
 
@@ -31,7 +31,7 @@ import { logger } from '@/src/lib/logger';
 // Request Validation
 // ============================================================================
 
-// AI SDK v6 UIMessage — uses parts[] instead of content: string.
+// AI SDK v6 UIMessage, uses parts[] instead of content: string.
 // We accept the full shape permissively and let convertToModelMessages
 // do the normalisation before handing off to streamText.
 const uiMessageSchema = z.object({
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     const userId = session.user.id ?? '';
 
     // Fetch + consume any attached-file content via the daemon's ConsumeAttachment
-    // RPC (single-use GETDEL — daemon deletes the key atomically on read).
+    // RPC (single-use GETDEL, daemon deletes the key atomically on read).
     let attachmentText: string | null = null;
     if (attachmentId) {
       try {
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       }
     }
 
-    // Resolve the configured LLM provider via daemon — credentials never
+    // Resolve the configured LLM provider via daemon, credentials never
     // enter the dashboard process. We look up the tenant's default provider
     // name from the daemon's list, then hand a GibsonLLMAdapter back from
     // resolveProvider so streamText can call through to StreamLLM.
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       messages: conversation,
     });
 
-    // AI SDK v6 requires toUIMessageStreamResponse() — DefaultChatTransport
+    // AI SDK v6 requires toUIMessageStreamResponse(), DefaultChatTransport
     // on the client parses UIMessageChunk JSON events. toTextStreamResponse()
     // returns plain SSE text which the client can't parse into parts[].
     const debugRequested = request.headers.get('X-Gibson-Debug') === '1';

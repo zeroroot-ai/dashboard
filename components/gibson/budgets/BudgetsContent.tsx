@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * BudgetsContent — admin-only UI for managing per-user and per-team
+ * BudgetsContent, admin-only UI for managing per-user and per-team
  * LLM budgets plus the tenant-level defaults.
  *
  * Spec: llm-user-attribution-governance (Requirement 3).
@@ -255,7 +255,7 @@ function BudgetTableCard({
                   <TableCell className="text-right">
                     {formatDollars(r.currentSpendUsdCents)} /{" "}
                     {r.spendLimitUsdCents === 0
-                      ? "—"
+                      ? "-"
                       : formatDollars(r.spendLimitUsdCents)}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">

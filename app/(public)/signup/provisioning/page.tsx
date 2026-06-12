@@ -22,7 +22,7 @@ interface ProvisioningStatusResponse {
   currentStep: string;
 }
 
-// Step display definitions — must match daemon step names exactly.
+// Step display definitions, must match daemon step names exactly.
 const STEP_LABELS: Record<string, string> = {
   org: "Creating organization",
   fga: "Setting up permissions",
@@ -137,7 +137,7 @@ function ProvisioningStatus() {
     poll();
     intervalRef.current = setInterval(poll, 2000);
 
-    // 60-second timeout — if not completed, show failure message
+    // 60-second timeout, if not completed, show failure message
     timeoutRef.current = setTimeout(() => {
       if (!isCompletedRef.current) {
         setTimedOut(true);
@@ -166,7 +166,7 @@ function ProvisioningStatus() {
           status: "pending" as const,
         }));
 
-  // "Almost done..." row — shown when all three steps are completed
+  // "Almost done..." row, shown when all three steps are completed
   const allStepsCompleted =
     steps.length >= 3 && steps.every((s) => s.status === "completed");
 
@@ -214,7 +214,7 @@ function ProvisioningStatus() {
                 );
               })}
 
-              {/* "Almost done..." — shown when all three real steps complete */}
+              {/* "Almost done...", shown when all three real steps complete */}
               {allStepsCompleted && (
                 <li className="flex items-center gap-3">
                   <Loader2 className="h-5 w-5 animate-spin text-link shrink-0" />
@@ -232,7 +232,7 @@ function ProvisioningStatus() {
             </div>
           )}
 
-          {/* Success message — briefly visible before auto-login redirect */}
+          {/* Success message, briefly visible before auto-login redirect */}
           {isComplete && (
             <div className="flex items-center gap-3 rounded-md bg-highlight/10 border border-highlight/40 px-4 py-3">
               <CheckCircle2 className="h-5 w-5 text-highlight shrink-0" />

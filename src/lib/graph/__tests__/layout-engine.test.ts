@@ -43,7 +43,7 @@ describe('computeLayout', () => {
     expect(computeLayout(NODES, EDGES, 'force')).toBeNull();
   });
 
-  it('is deterministic — identical inputs give identical output', () => {
+  it('is deterministic, identical inputs give identical output', () => {
     const a = computeLayout(NODES, EDGES, 'radial')!;
     const b = computeLayout(NODES, EDGES, 'radial')!;
     expect([...a.entries()]).toEqual([...b.entries()]);

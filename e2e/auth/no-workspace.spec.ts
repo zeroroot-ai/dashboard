@@ -107,7 +107,7 @@ test.describe("No-workspace page", () => {
     if (!dbAvail) {
       test.skip(
         true,
-        "DATABASE_URL not available — cannot delete memberships; skipping test.",
+        "DATABASE_URL not available, cannot delete memberships; skipping test.",
       );
       return;
     }
@@ -115,7 +115,7 @@ test.describe("No-workspace page", () => {
     if (!isLogSourceReachable()) {
       test.skip(
         true,
-        "Log source unreachable — cannot verify email; skipping test.",
+        "Log source unreachable, cannot verify email; skipping test.",
       );
       return;
     }

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * DeleteModal — Confirmation dialog to delete a secret.
+ * DeleteModal, Confirmation dialog to delete a secret.
  *
  * Shows affected plugin associations (from SecretMetadata.pluginAssociations)
  * and requires the user to type the secret name to confirm before deletion.

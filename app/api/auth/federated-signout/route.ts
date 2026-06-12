@@ -2,7 +2,7 @@
  * Federated sign-out route.
  *
  * Auth.js's `signOut()` only clears the dashboard's own session cookie. Zitadel
- * keeps a parallel session cookie — so on the next visit to `/login`, the OIDC
+ * keeps a parallel session cookie, so on the next visit to `/login`, the OIDC
  * `authorize` endpoint sees the still-active Zitadel session and silently
  * re-issues tokens, making it feel like sign-out never happened.
  *
@@ -26,7 +26,7 @@
  * client byte-for-byte. The chart owns both sides of that contract: the
  * `gibson-dashboard` OIDC client registration (gibson-operators chart) and the
  * `POST_LOGOUT_REDIRECT_URI` env on this pod (gibson-workloads chart) read from
- * the same source-of-truth value. This route sends the env verbatim — no path
+ * the same source-of-truth value. This route sends the env verbatim, no path
  * append, no origin synthesis from `req.nextUrl.origin`. The previous shape
  * appended a trailing slash and silently drifted from the registration, which
  * Zitadel rejected with `invalid_request / post_logout_redirect_uri invalid`.
@@ -114,7 +114,7 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
   if (!postLogoutRedirectUri) {
     logger.error(
       { route: "auth/federated-signout" },
-      "POST_LOGOUT_REDIRECT_URI env is unset — dashboard cannot complete RP-initiated logout. Check helm/gibson-workloads dashboard.auth.postLogoutRedirectURIs",
+      "POST_LOGOUT_REDIRECT_URI env is unset, dashboard cannot complete RP-initiated logout. Check helm/gibson-workloads dashboard.auth.postLogoutRedirectURIs",
     );
     return NextResponse.json(
       { error: "logout_misconfigured" },
@@ -127,13 +127,13 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
   // resolves the client by aud claim); client_id is the documented
   // fallback for sessions that have lost the id_token (refresh
   // cycles, JWT-shape changes, etc.). If neither is available we
-  // can't drive a real RP-initiated logout — fail loud rather than
+  // can't drive a real RP-initiated logout, fail loud rather than
   // silently sending an unauthenticated end_session that Zitadel
   // would reject anyway.
   if (!idToken && !clientId) {
     logger.error(
       { route: "auth/federated-signout" },
-      "ZITADEL_CLIENT_ID env is unset AND session has no idToken — cannot drive RP-initiated logout. Check helm/gibson-workloads dashboard ZITADEL_CLIENT_ID wiring.",
+      "ZITADEL_CLIENT_ID env is unset AND session has no idToken, cannot drive RP-initiated logout. Check helm/gibson-workloads dashboard ZITADEL_CLIENT_ID wiring.",
     );
     return NextResponse.json(
       { error: "logout_misconfigured" },
@@ -145,11 +145,11 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
   // the final redirect (to Zitadel's end_session_endpoint), not Auth.js.
   await signOut({ redirect: false });
 
-  // ALWAYS redirect through Zitadel's end_session — without it, Zitadel's
+  // ALWAYS redirect through Zitadel's end_session, without it, Zitadel's
   // SSO cookie remains and silently re-authenticates the user on the next
   // /login. id_token_hint is the preferred shape; client_id is the documented
   // fallback when the hint is unavailable.
-  // ZITADEL_ISSUER is REQUIRED at boot (src/lib/env-validator.ts) — no fallback.
+  // ZITADEL_ISSUER is REQUIRED at boot (src/lib/env-validator.ts), no fallback.
   const zitadelIssuer = (await import("@/src/lib/env-validator")).env.ZITADEL_ISSUER;
   const endSession = new URL(`${zitadelIssuer}/oidc/v1/end_session`);
   if (idToken) {
@@ -176,6 +176,6 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
   return res;
 }
 
-// Accept POST too — the sign-out form in no-workspace/page.tsx posts rather
+// Accept POST too, the sign-out form in no-workspace/page.tsx posts rather
 // than GETs, and this route should handle either method identically.
 export const POST = GET;

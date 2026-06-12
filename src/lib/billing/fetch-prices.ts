@@ -1,5 +1,5 @@
 /**
- * fetch-prices.ts — server-side Stripe price fetch with graceful degrade.
+ * fetch-prices.ts, server-side Stripe price fetch with graceful degrade.
  *
  * Spec stripe-billing-integration Task 16 / R7.3.
  *
@@ -16,7 +16,7 @@
  *   - If Stripe returns an error, that tier resolves to null.
  *   - Caller (the pricing page) MUST treat null as "show the
  *     'pricing temporarily unavailable' placeholder", not the
- *     plans.yaml fallback — see R7.3.
+ *     plans.yaml fallback, see R7.3.
  *
  * Cache invariants:
  *   - One cache entry covers all self-serve tiers; partial failures

@@ -71,7 +71,7 @@ test.describe("Forgot / reset password", () => {
     if (!isLogSourceReachable()) {
       test.skip(
         true,
-        "Log source unreachable — skipping reset flow (cluster not running?).",
+        "Log source unreachable, skipping reset flow (cluster not running?).",
       );
       return;
     }

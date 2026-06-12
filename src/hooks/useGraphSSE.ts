@@ -156,7 +156,7 @@ const INITIAL_CONNECTION_TIMEOUT = 30000; // 30 seconds
  *   useEffect(() => {
  *     if (lastEvent?.type === 'node-added') {
  *       // Handle new node
- *       // Handle new node — lastEvent.data contains the updated graph node
+ *       // Handle new node, lastEvent.data contains the updated graph node
  *     }
  *   }, [lastEvent]);
  *

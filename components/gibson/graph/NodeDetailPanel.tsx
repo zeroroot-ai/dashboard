@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * NodeDetailPanel — Phase 5, Task 19
+ * NodeDetailPanel, Phase 5, Task 19
  *
  * Shadcn Sheet panel that shows detail for the currently-selected graph node.
  * Portal-mounted so closing it does not affect the underlying canvas state
@@ -28,7 +28,7 @@ interface NodeDetailPanelProps {
   onClose: () => void;
   /** Called when user clicks "Find paths from this node" */
   onFindPaths: (node: GraphNode) => void;
-  /** Called when user clicks "Frame this node" — fit the node + neighbors. */
+  /** Called when user clicks "Frame this node", fit the node + neighbors. */
   onFrame?: (node: GraphNode) => void;
   /** Pin/unpin the node's position. */
   onTogglePin?: (node: GraphNode) => void;

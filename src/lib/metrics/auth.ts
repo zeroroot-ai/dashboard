@@ -7,22 +7,22 @@
  * and are exposed via `/api/metrics`.
  *
  * Label cardinality is deliberately bounded. No tenant-id, user-id, email,
- * IP address, or other per-principal identifier appears as a label — those
+ * IP address, or other per-principal identifier appears as a label, those
  * explode cardinality and degrade Prometheus query performance. Per-principal
  * detail belongs in the audit event stream (`src/lib/audit/auth.ts`), not in
  * metrics.
  *
  * Consumed by:
  *   - Server Actions in `app/actions/auth/*` (signup, signin, password reset,
- *     email verification) — increment on every terminal outcome.
- *   - `src/lib/auth/hibp.ts` / `captcha.ts` — increment on check outcomes.
- *   - `src/lib/admin-provisioning.ts` — observe `provisioningDuration`.
+ *     email verification), increment on every terminal outcome.
+ *   - `src/lib/auth/hibp.ts` / `captcha.ts`, increment on check outcomes.
+ *   - `src/lib/admin-provisioning.ts`, observe `provisioningDuration`.
  */
 
 import { getOrCreateCounter, getOrCreateHistogram } from "./helpers";
 
 // ---------------------------------------------------------------------------
-// Label type unions — enumerated so TypeScript catches typos at the call
+// Label type unions, enumerated so TypeScript catches typos at the call
 // site. prom-client itself does not constrain label values at the type level.
 // ---------------------------------------------------------------------------
 
@@ -74,7 +74,7 @@ export const accountLockouts = getOrCreateCounter({
 
 /**
  * Total password reset terminal outcomes. `outcome` in `{ok,failed,rate_limited}`.
- * `ok` covers both "reset email sent" and "reset completed" — the audit log
+ * `ok` covers both "reset email sent" and "reset completed", the audit log
  * distinguishes those two; the metric captures aggregate success rate.
  */
 export const passwordResets = getOrCreateCounter({
@@ -95,7 +95,7 @@ export const emailVerifications = getOrCreateCounter({
 /**
  * Total CAPTCHA verification failures, labelled by provider. A successful
  * CAPTCHA verification is implied by the parent action's `signupAttempts` /
- * `signinAttempts` success increment and is NOT counted here — this metric
+ * `signinAttempts` success increment and is NOT counted here, this metric
  * exists specifically to alert on abuse/outage of the CAPTCHA provider.
  */
 export const captchaFailures = getOrCreateCounter({
@@ -127,7 +127,7 @@ export const hibpChecks = getOrCreateCounter({
  *
  * Corresponding operator-side histogram lives in
  * `tenant-operator/internal/metrics/metrics.go` (declared but not yet
- * recorded — see task 17.1). Together they form the end-to-end view.
+ * recorded, see task 17.1). Together they form the end-to-end view.
  */
 export const provisioningDuration = getOrCreateHistogram({
   name: "dashboard_auth_provisioning_duration_seconds",
@@ -159,7 +159,7 @@ export const membershipResolutionDuration = getOrCreateHistogram({
   name: "dashboard_membership_resolution_duration_seconds",
   help: "Duration of the daemon ListMyMemberships RPC seen from the dashboard.",
   labelNames: ["outcome"] as const,
-  // 50ms baseline through 5s — anything past 5s is FGA-or-daemon-on-fire.
+  // 50ms baseline through 5s, anything past 5s is FGA-or-daemon-on-fire.
   buckets: [0.05, 0.1, 0.25, 0.5, 1, 2.5, 5],
 });
 
@@ -189,7 +189,7 @@ export const tenantSwitchTotal = getOrCreateCounter({
 /**
  * Increments on every dashboard daemon RPC made via the SPIFFE-fallback
  * (USE_USER_TOKEN_FORWARDING=false) branch. Non-zero in steady state
- * means the soak-mode backout is active — per-user FGA is disabled and
+ * means the soak-mode backout is active, per-user FGA is disabled and
  * audit attribution falls back to the dashboard workload identity.
  *
  * Phase 9 of the spec deletes both the flag and this counter.

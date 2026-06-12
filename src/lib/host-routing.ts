@@ -76,8 +76,8 @@ export function isNeutralPath(pathname: string): boolean {
 
 /**
  * Build the host-split config from the environment. Returns `null` when the
- * split is not configured — no WWW_URL, no app origin, or app === www
- * (single-origin local dev on localhost:3000) — so dev is unaffected.
+ * split is not configured, no WWW_URL, no app origin, or app === www
+ * (single-origin local dev on localhost:3000), so dev is unaffected.
  */
 export function loadHostSplitConfig(
   source: Record<string, string | undefined> = process.env,
@@ -116,7 +116,7 @@ export function decideHostSplit(
 
   const onApp = hostEquals(requestHost, cfg.appHost);
   const onWww = hostEquals(requestHost, cfg.wwwHost);
-  // Unknown host (raw service DNS, localhost, probes) — don't interfere.
+  // Unknown host (raw service DNS, localhost, probes), don't interfere.
   if (!onApp && !onWww) return { kind: "pass" };
 
   if (onWww) {
@@ -127,7 +127,7 @@ export function decideHostSplit(
 
   // onApp (product host).
   if (pathname === "/") {
-    // No landing on the product host — go straight to the dashboard.
+    // No landing on the product host, go straight to the dashboard.
     return { kind: "redirect", url: `${cfg.appOrigin}/dashboard` };
   }
   if (isMarketingPath(pathname)) {

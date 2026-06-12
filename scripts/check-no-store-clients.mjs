@@ -10,16 +10,16 @@
  * As part of the dashboard-no-backing-store-clients spec (dashboard#584), all
  * direct Postgres (pg/pg-pool), Redis (redis/ioredis), graph (neo4j/neo4j-driver),
  * and tracing (langfuse) client dependencies were removed. The dashboard is a
- * thin client — all backing-store access goes through the daemon via ConnectRPC.
+ * thin client, all backing-store access goes through the daemon via ConnectRPC.
  *
  * This guard prevents re-introduction of those dependencies.
  *
  * ## What is checked
  *
- * 1. **package.json dependencies** — `dependencies`, `devDependencies`, and
+ * 1. **package.json dependencies**, `dependencies`, `devDependencies`, and
  *    `peerDependencies` must not contain any of the banned package names.
  *
- * 2. **Source file imports** — any import (type OR value) of a banned package
+ * 2. **Source file imports**, any import (type OR value) of a banned package
  *    in any `.ts` / `.tsx` file under the scan roots. Type-only imports
  *    (`import type { ... } from 'pkg'`) are also banned: they break the
  *    typecheck once `@types/<pkg>` is removed and signal lingering
@@ -27,15 +27,15 @@
  *
  * ## Banned packages
  *
- *   - `langfuse`            — direct Langfuse API client
- *   - `redis`               — ioredis / node-redis client
- *   - `ioredis`             — ioredis client
- *   - `pg`                  — node-postgres client
- *   - `@types/pg`           — TypeScript types for pg (signals active pg usage)
- *   - `pg-pool`             — connection pool for pg
- *   - `@types/pg-pool`      — TypeScript types for pg-pool
- *   - `neo4j-driver`        — Neo4j JavaScript driver
- *   - `neogma`              — OGM wrapper for neo4j-driver
+ *   - `langfuse`           , direct Langfuse API client
+ *   - `redis`              , ioredis / node-redis client
+ *   - `ioredis`            , ioredis client
+ *   - `pg`                 , node-postgres client
+ *   - `@types/pg`          , TypeScript types for pg (signals active pg usage)
+ *   - `pg-pool`            , connection pool for pg
+ *   - `@types/pg-pool`     , TypeScript types for pg-pool
+ *   - `neo4j-driver`       , Neo4j JavaScript driver
+ *   - `neogma`             , OGM wrapper for neo4j-driver
  *
  * ## Self-test
  *
@@ -70,19 +70,19 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 /**
  * Each entry defines:
- *  - `name`  — exact package.json key (matches both bare deps and @scope/pkg)
- *  - `label` — human-readable reason shown in violation output
+ *  - `name` , exact package.json key (matches both bare deps and @scope/pkg)
+ *  - `label`, human-readable reason shown in violation output
  */
 const BANNED_PACKAGES = [
-  { name: 'langfuse', label: 'direct Langfuse API client — use Gibson Traces via the daemon RPC instead' },
-  { name: 'redis', label: 'node-redis client — backing-store access goes through the daemon' },
-  { name: 'ioredis', label: 'ioredis client — backing-store access goes through the daemon' },
-  { name: 'pg', label: 'node-postgres client — backing-store access goes through the daemon' },
-  { name: '@types/pg', label: 'TypeScript types for pg — signals pg is still an active dependency' },
-  { name: 'pg-pool', label: 'pg-pool — backing-store access goes through the daemon' },
-  { name: '@types/pg-pool', label: 'TypeScript types for pg-pool — signals pg-pool is still an active dependency' },
-  { name: 'neo4j-driver', label: 'Neo4j JavaScript driver — backing-store access goes through the daemon' },
-  { name: 'neogma', label: 'Neo4j OGM — backing-store access goes through the daemon' },
+  { name: 'langfuse', label: 'direct Langfuse API client, use Gibson Traces via the daemon RPC instead' },
+  { name: 'redis', label: 'node-redis client, backing-store access goes through the daemon' },
+  { name: 'ioredis', label: 'ioredis client, backing-store access goes through the daemon' },
+  { name: 'pg', label: 'node-postgres client, backing-store access goes through the daemon' },
+  { name: '@types/pg', label: 'TypeScript types for pg, signals pg is still an active dependency' },
+  { name: 'pg-pool', label: 'pg-pool, backing-store access goes through the daemon' },
+  { name: '@types/pg-pool', label: 'TypeScript types for pg-pool, signals pg-pool is still an active dependency' },
+  { name: 'neo4j-driver', label: 'Neo4j JavaScript driver, backing-store access goes through the daemon' },
+  { name: 'neogma', label: 'Neo4j OGM, backing-store access goes through the daemon' },
 ];
 
 /** Set of banned package names for quick lookup. */
@@ -277,7 +277,7 @@ function collectFiles() {
     try {
       if (statSync(abs).isFile()) files.push(abs);
     } catch {
-      // File doesn't exist — fine.
+      // File doesn't exist, fine.
     }
   }
   return files;
@@ -290,7 +290,7 @@ function collectFiles() {
 /**
  * The selftest creates:
  *  1. A fake package.json fragment that includes a banned dep entry (synthesised
- *     in-memory — we DON'T touch the real package.json).
+ *     in-memory, we DON'T touch the real package.json).
  *  2. A synthetic source fixture with a banned runtime import.
  *
  * Both are checked against the scanner and must be caught.
@@ -333,8 +333,8 @@ function runSelftest() {
 
   // --- 2. Banned import in source file ---
   const fixtureContent = [
-    '// This comment mentions redis — must NOT be flagged',
-    '// import { createClient } from "redis"; — comment, not code',
+    '// This comment mentions redis, must NOT be flagged',
+    '// import { createClient } from "redis";, comment, not code',
     '',
     '// The following MUST be flagged:',
     "import { createClient } from 'redis';",
@@ -411,7 +411,7 @@ function runScan() {
   }
 
   console.error(
-    `\n[${SCRIPT_NAME}] FAIL — ${total} backing-store client violation(s) found.`,
+    `\n[${SCRIPT_NAME}] FAIL, ${total} backing-store client violation(s) found.`,
   );
   console.error(
     'The dashboard is a thin client. All backing-store access goes through the daemon.',
@@ -445,7 +445,7 @@ function runScan() {
     }
   }
 
-  console.error(`\n[${SCRIPT_NAME}] Total violations: ${total} (exit 1 — HARD FAIL)`);
+  console.error(`\n[${SCRIPT_NAME}] Total violations: ${total} (exit 1, HARD FAIL)`);
   return 1;
 }
 

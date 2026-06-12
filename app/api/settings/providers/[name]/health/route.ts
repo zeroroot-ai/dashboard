@@ -1,8 +1,8 @@
 /**
- * GET /api/settings/providers/[name]/health — retrieve the health status of a provider
+ * GET /api/settings/providers/[name]/health, retrieve the health status of a provider
  *
  * Delegates to the daemon TenantAdminService GetProviderHealth RPC.
- * No storage logic lives here — this file is delegation-only.
+ * No storage logic lives here, this file is delegation-only.
  */
 
 import 'server-only';
@@ -23,8 +23,8 @@ type RouteContext = { params: Promise<{ name: string }> };
  *
  * Returns a DaemonProviderHealthStatus:
  *   status       "healthy" | "unhealthy" | "unknown"
- *   lastCheckAt  string?  — RFC 3339 timestamp of the last health check
- *   lastError    string?  — error message when status is unhealthy
+ *   lastCheckAt  string? , RFC 3339 timestamp of the last health check
+ *   lastError    string? , error message when status is unhealthy
  *
  * Returns 404 when no provider with the given name exists for the tenant.
  */

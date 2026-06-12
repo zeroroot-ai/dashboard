@@ -4,7 +4,7 @@
  * The dashboard removed `tenant` from the encrypted Auth.js JWT under spec
  * `tenant-membership-not-in-jwt`. Active tenant now lives in a separate
  * HMAC-signed `gibson_active_tenant` cookie that the user controls via the
- * tenant-switcher UI. The cookie is *a hint* — every read re-validates the
+ * tenant-switcher UI. The cookie is *a hint*, every read re-validates the
  * cookie's tenant against the user's current FGA memberships, so a revoked
  * membership immediately clears the cookie and bounces the user to the
  * picker on the next request.
@@ -21,11 +21,11 @@
  *
  * Never invent missing-tenant behavior inline. Use the three typed helpers:
  *
- * - `activeTenantApiResponse(err, opts)` — for API route handlers;
+ * - `activeTenantApiResponse(err, opts)`, for API route handlers;
  *   returns `NextResponse` with 412 + `{ error, code: 'no_active_tenant' }`.
- * - `activeTenantActionResult(err)` — for Server Actions;
+ * - `activeTenantActionResult(err)`, for Server Actions;
  *   returns `{ ok: false, code: 'no_active_tenant' | 'stale_active_tenant' }`.
- * - `activeTenantPageRedirect()` — for RSC pages;
+ * - `activeTenantPageRedirect()`, for RSC pages;
  *   calls `redirect('/select-tenant')` (throws Next.js `NEXT_REDIRECT`).
  *
  * @module auth/active-tenant
@@ -105,8 +105,8 @@ function encodeCookie(tenantId: string): string {
 
 /**
  * Returns the tenantId encoded in `value` if the HMAC is valid, else null.
- * Treats every malformed/tampered cookie as null — callers cannot
- * distinguish "absent" from "tampered" from this function (intentional —
+ * Treats every malformed/tampered cookie as null, callers cannot
+ * distinguish "absent" from "tampered" from this function (intentional -
  * tampering goes to the picker, not an error page).
  */
 function decodeCookie(value: string | undefined): string | null {
@@ -156,14 +156,14 @@ export const getActiveTenant = cache(async (): Promise<string> => {
  * render.
  *
  * When the cookie is absent, tampered, or names a revoked tenant the
- * function throws typed errors — use the error-mapping helpers below to
+ * function throws typed errors, use the error-mapping helpers below to
  * translate those errors into the appropriate response for each layer:
  *   - API route handler  → `activeTenantApiResponse(err, opts)`
  *   - Server Action      → `activeTenantActionResult(err)`
  *   - RSC page           → `activeTenantPageRedirect()`
  *
- * @throws {NoActiveTenantError} — cookie absent or HMAC tampered.
- * @throws {StaleActiveTenantError} — cookie valid but tenant revoked.
+ * @throws {NoActiveTenantError}, cookie absent or HMAC tampered.
+ * @throws {StaleActiveTenantError}, cookie valid but tenant revoked.
  */
 export const requireActiveTenant = getActiveTenant;
 
@@ -195,7 +195,7 @@ interface ApiResponseOptions {
  * `requireActiveTenant()` into a canonical 412 `NextResponse` for use in
  * API route handlers.
  *
- * Any other error type is re-thrown — this helper only handles the two
+ * Any other error type is re-thrown, this helper only handles the two
  * tenant-resolver errors.
  *
  * @example
@@ -246,7 +246,7 @@ export type ActiveTenantActionError =
  * `requireActiveTenant()` into a structured `{ ok: false, code }` result for
  * use in Server Actions.
  *
- * Any other error type is re-thrown — this helper only handles the two
+ * Any other error type is re-thrown, this helper only handles the two
  * tenant-resolver errors.
  *
  * @example
@@ -279,7 +279,7 @@ export function activeTenantActionResult(err: unknown): ActiveTenantActionError 
  *
  * Call this from RSC page components that have resolved a missing-tenant
  * error via `requireActiveTenant()`. The function calls Next.js `redirect()`
- * which throws a `NEXT_REDIRECT` exception — it never returns normally.
+ * which throws a `NEXT_REDIRECT` exception, it never returns normally.
  *
  * @example
  * ```ts
@@ -311,7 +311,7 @@ export function activeTenantPageRedirect(): never {
  * Server Action; it depends on `cookies()` being writable.
  *
  * Returns `{ ok: true }` on success, `{ ok: false, reason }` on failure
- * (membership not held, or daemon-side resolution failed). Never throws —
+ * (membership not held, or daemon-side resolution failed). Never throws -
  * the picker UI maps the reason to an inline error.
  */
 export async function setActiveTenant(
@@ -350,7 +350,7 @@ export async function clearActiveTenant(): Promise<void> {
 }
 
 // Internal export used by middleware to read the raw cookie without
-// throwing — it needs to distinguish "no cookie" from "stale cookie" from
+// throwing, it needs to distinguish "no cookie" from "stale cookie" from
 // "invalid HMAC" to choose the right error code, and `getActiveTenant`
 // collapses the latter two.
 export async function readRawActiveTenant(): Promise<{

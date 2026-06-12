@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Security Policy surface — unified deny-wins matrix across plugins /
+ * Security Policy surface, unified deny-wins matrix across plugins /
  * tools / agents at every scope. Composes AccessScopeSelector +
  * RWXMatrix and routes toggles through setComponentAccessAction.
  *
@@ -95,7 +95,7 @@ export function SecurityPolicyContent() {
       toast.error(`Toggle failed: ${r.error}`);
       return;
     }
-    // Optimistic update — re-fetch the matrix to reflect the write.
+    // Optimistic update, re-fetch the matrix to reflect the write.
     setItems((prev) =>
       prev.map((it) =>
         it.name === item.name ? { ...it, rwx: { ...it.rwx, [action]: enabled } } : it,
@@ -169,7 +169,7 @@ function confirmSelfRestriction(
 ): boolean {
   // Rough heuristic: any deny at My access scope, or a user-scope deny
   // targeting the current user. The full caller-id check happens server-
-  // side — this is just the "did you really mean it?" prompt.
+  // side, this is just the "did you really mean it?" prompt.
   if (!enabled && scope.scope === "my-access") return true;
   return false;
 }

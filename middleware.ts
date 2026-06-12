@@ -41,7 +41,7 @@ export const runtime = "nodejs";
 
 const PROTECTED_PREFIX = "/dashboard";
 
-// Host split (deploy#630 S11). Computed once at module load — origins are
+// Host split (deploy#630 S11). Computed once at module load, origins are
 // fixed for the pod's lifetime. Null in single-origin dev (no WWW_URL).
 const HOST_SPLIT = loadHostSplitConfig();
 
@@ -68,7 +68,7 @@ export default auth(async (req) => {
 
   const session = req.auth;
 
-  // Spec auth-resolution-hardening R2.5/R3.5 — every request through
+  // Spec auth-resolution-hardening R2.5/R3.5, every request through
   // middleware carries a correlation ID. Generate one if absent so all
   // downstream Server Components / route handlers / log lines can
   // correlate against the same request.
@@ -79,7 +79,7 @@ export default auth(async (req) => {
   const reqHeaders = new Headers(req.headers);
   reqHeaders.set(CORRELATION_HEADER, correlationId);
 
-  // 1a. Auth.js error redirect — when the jwt or signIn callback throws, Auth.js
+  // 1a. Auth.js error redirect, when the jwt or signIn callback throws, Auth.js
   //     redirects to pages.error (/login) with ?error=Callback or ?error=<name>.
   //     Intercept those and reroute to /login/error?reason=<machine-readable>
   //     so the user sees a deterministic error page rather than the login form
@@ -91,7 +91,7 @@ export default auth(async (req) => {
       // Map Auth.js error names to our LoginErrorReason codes.
       let reason: string;
       if (authError === "Callback") {
-        // jwt callback threw — could be token-exchange or jwks fault.
+        // jwt callback threw, could be token-exchange or jwks fault.
         // popLastFiredSubsystem() returns which fault subsystem last fired,
         // letting us pick the right reason code. Falls back to
         // oidc_token_exchange_failed for non-fixture causes.
@@ -115,7 +115,7 @@ export default auth(async (req) => {
     }
   }
 
-  // 1. Unauthenticated requests for protected routes — let Auth.js redirect
+  // 1. Unauthenticated requests for protected routes, let Auth.js redirect
   //    to /login via its default behavior.
   if (!session?.user) {
     return NextResponse.next({ request: { headers: reqHeaders } });
@@ -150,7 +150,7 @@ export default auth(async (req) => {
     return NextResponse.redirect(signInUrl);
   }
 
-  // 2. Authenticated requests outside the protected area — let through.
+  // 2. Authenticated requests outside the protected area, let through.
   if (!pathname.startsWith(PROTECTED_PREFIX)) {
     return NextResponse.next({ request: { headers: reqHeaders } });
   }
@@ -209,7 +209,7 @@ export default auth(async (req) => {
     url.searchParams.set("return_to", returnTo);
     const res = NextResponse.redirect(url);
     if (raw.status === "invalid") {
-      // Tampered/stale-secret cookie — drop it so the next request is clean.
+      // Tampered/stale-secret cookie, drop it so the next request is clean.
       res.cookies.delete(ACTIVE_TENANT_COOKIE_NAME);
     }
     return res;
@@ -225,7 +225,7 @@ export default auth(async (req) => {
     return res;
   }
 
-  // 7. Healthy state — let the route render.
+  // 7. Healthy state, let the route render.
   return NextResponse.next();
 });
 
@@ -233,17 +233,17 @@ export const config = {
   matcher: [
     /*
      * Run on all paths except:
-     *   - _next/static  — bundled JS / CSS chunks
-     *   - _next/image   — Next.js image optimiser
-     *   - favicon.ico   — browser favicon
-     *   - api/auth      — Auth.js OIDC callbacks
-     *   - api/health    — Kubernetes probes
-     *   - api/signup    — signup polling endpoint; opaque-capability protected
-     *   - login/error   — deterministic error page for auth failures (public)
-     *   - signup        — signup page (must stay public)
-     *   - select-tenant — tenant picker (auth required, but tenant deliberately
+     *   - _next/static , bundled JS / CSS chunks
+     *   - _next/image  , Next.js image optimiser
+     *   - favicon.ico  , browser favicon
+     *   - api/auth     , Auth.js OIDC callbacks
+     *   - api/health   , Kubernetes probes
+     *   - api/signup   , signup polling endpoint; opaque-capability protected
+     *   - login/error  , deterministic error page for auth failures (public)
+     *   - signup       , signup page (must stay public)
+     *   - select-tenant, tenant picker (auth required, but tenant deliberately
      *                     absent here)
-     *   - onboarding    — zero-membership state (auth required, no tenant)
+     *   - onboarding   , zero-membership state (auth required, no tenant)
      *
      * NOTE: /login itself is NOT excluded from the matcher. The middleware runs
      * on /login to intercept Auth.js ?error= redirects (e.g. ?error=Callback
@@ -253,7 +253,7 @@ export const config = {
     "/((?!_next/static|_next/image|favicon\\.ico|api/auth|api/health|api/signup|login/error|signup$|signup/|select-tenant$|select-tenant/|onboarding$|onboarding/).+)",
     // The pattern above ends in `.+`, which requires ≥1 char after the leading
     // slash, so it never matches the root path "/". The host split (deploy#630
-    // S11) MUST run on "/" — on the product host app.<domain> the landing page
+    // S11) MUST run on "/", on the product host app.<domain> the landing page
     // must redirect to /dashboard rather than render. Match it explicitly.
     "/",
   ],

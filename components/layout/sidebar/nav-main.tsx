@@ -134,7 +134,7 @@ export const navItems: NavGroup[] = [
     ]
   },
   {
-    // Single "Members & Access" home (industry pattern — GitLab/Linear/Vercel
+    // Single "Members & Access" home (industry pattern, GitLab/Linear/Vercel
     // keep people, teams, and access policy together in the workspace area
     // instead of a second member list under personal Settings).
     title: "Members & Access",

@@ -150,7 +150,7 @@ describe('TenantContextProvider', () => {
     });
 
     // probe.canSwitchOther uses the placeholder "__noop__" because there is
-    // no second tenant — that exercises the unknown-slug branch.
+    // no second tenant, that exercises the unknown-slug branch.
     expect(probe.result?.canSwitchOther).toBe(false);
   });
 

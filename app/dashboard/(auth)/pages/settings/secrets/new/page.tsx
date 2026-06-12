@@ -13,7 +13,7 @@ import {
 
 export async function generateMetadata(): Promise<Metadata> {
   return generateMeta({
-    title: "Settings — Add Secret",
+    title: "Settings | Add Secret",
     additionalTitle: true,
     description: "Add a new credential or configuration secret to your tenant secrets backend.",
     canonical: "/pages/settings/secrets/new",

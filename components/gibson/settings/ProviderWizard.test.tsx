@@ -45,7 +45,7 @@ vi.mock("sonner", () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Helpers — full wizard tests (S5)
+// Helpers, full wizard tests (S5)
 // ---------------------------------------------------------------------------
 
 function makeDescriptor(
@@ -75,7 +75,7 @@ function renderWizardAtStep2(descriptor: SupportedProviderDescriptor) {
 }
 
 // ---------------------------------------------------------------------------
-// Helpers — CredentialsAndTest direct tests (S9)
+// Helpers, CredentialsAndTest direct tests (S9)
 // ---------------------------------------------------------------------------
 
 function createTestQueryClient() {
@@ -157,7 +157,7 @@ const bedrockWithIrsa: SupportedProviderDescriptor = {
   defaultModels: [
     {
       name: "anthropic.claude-3-haiku-20240307-v1:0",
-      family: "Bedrock — Claude 3",
+      family: "Bedrock, Claude 3",
       contextWindow: 200000,
     },
   ],
@@ -191,7 +191,7 @@ const requiredSecretDescriptor: SupportedProviderDescriptor = {
 };
 
 // ===========================================================================
-// S5 suites — typed field rendering
+// S5 suites, typed field rendering
 // ===========================================================================
 
 describe("URL field type", () => {
@@ -459,10 +459,10 @@ describe("OpenAI-compatible guidance", () => {
 });
 
 // ===========================================================================
-// S9 suite — IRSA toggle
+// S9 suite, IRSA toggle
 // ===========================================================================
 
-describe("ProviderWizard — IRSA toggle (dashboard#287)", () => {
+describe("ProviderWizard, IRSA toggle (dashboard#287)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -559,7 +559,7 @@ describe("ProviderWizard — IRSA toggle (dashboard#287)", () => {
     };
 
     expect(submittedValues.credentials.use_irsa).toBe("true");
-    // Hidden fields appear in the payload with empty string defaults —
+    // Hidden fields appear in the payload with empty string defaults -
     // react-hook-form retains defaultValues for fields that return null.
     expect(submittedValues.credentials).toHaveProperty("aws_access_key_id");
     expect(submittedValues.credentials).toHaveProperty("aws_secret_access_key");
@@ -568,7 +568,7 @@ describe("ProviderWizard — IRSA toggle (dashboard#287)", () => {
 });
 
 // ===========================================================================
-// dashboard#288 — probe result is advisory
+// dashboard#288, probe result is advisory
 // ===========================================================================
 //
 // After dashboard#288 the probe result is advisory: the Save button is
@@ -640,7 +640,7 @@ async function advanceToStep3Advisory(
   }, { timeout: 3000 });
 }
 
-describe("ProviderWizard step 3 — probe result is advisory (dashboard#288)", () => {
+describe("ProviderWizard step 3, probe result is advisory (dashboard#288)", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
@@ -735,7 +735,7 @@ describe("ProviderWizard step 3 — probe result is advisory (dashboard#288)", (
 });
 
 // ===========================================================================
-// dashboard#289 — deprecated model display in catalogue picker
+// dashboard#289, deprecated model display in catalogue picker
 // ===========================================================================
 
 const mixedModelsDescriptor: SupportedProviderDescriptor = {
@@ -793,7 +793,7 @@ async function advanceToStep3Mixed(
   );
 }
 
-describe("ModelPickerAndSave — deprecated model display (dashboard#289)", () => {
+describe("ModelPickerAndSave, deprecated model display (dashboard#289)", () => {
   beforeEach(() => {
     // Radix Select pointer-event polyfills required for jsdom.
     // Pattern matches src/components/secrets-backend/__tests__/SecretsBackendForm.test.tsx.
@@ -882,7 +882,7 @@ describe("ModelPickerAndSave — deprecated model display (dashboard#289)", () =
 
     await waitFor(() => {
       expect(
-        screen.getByText(/this model is deprecated — consider switching to a newer model/i),
+        screen.getByText(/this model is deprecated, consider switching to a newer model/i),
       ).toBeInTheDocument();
     });
   });
@@ -894,9 +894,9 @@ describe("ModelPickerAndSave — deprecated model display (dashboard#289)", () =
       result: { ok: true, latencyMs: 10, models: [] },
     });
 
-    // The default selection is the first (non-deprecated) model — advisory should be absent.
+    // The default selection is the first (non-deprecated) model, advisory should be absent.
     expect(
-      screen.queryByText(/this model is deprecated — consider switching to a newer model/i),
+      screen.queryByText(/this model is deprecated, consider switching to a newer model/i),
     ).not.toBeInTheDocument();
   });
 });

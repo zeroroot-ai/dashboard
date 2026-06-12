@@ -19,9 +19,9 @@ export function render(ctx: ResetCtx): EmailMessage {
     ``,
     `This link expires in ${ctx.expiresInHours} hour${ctx.expiresInHours === 1 ? '' : 's'}.`,
     ``,
-    `If you did NOT request a password reset, you can ignore this email — your current password remains active. For added safety, consider reviewing your recent sign-in activity.`,
+    `If you did NOT request a password reset, you can ignore this email, your current password remains active. For added safety, consider reviewing your recent sign-in activity.`,
     ``,
-    `— The Gibson team`,
+    `The Gibson team`,
   ].join('\n');
 
   const html = [
@@ -36,7 +36,7 @@ export function render(ctx: ResetCtx): EmailMessage {
     `<p style="margin:0 0 8px;font-size:12px;color:#9999a3;">Or paste this link in your browser:</p>`,
     `<p style="margin:0 0 24px;font-size:12px;color:#c5c5cc;word-break:break-all;">${escapeHtml(ctx.resetUrl)}</p>`,
     `<p style="margin:0 0 8px;font-size:12px;color:#9999a3;">This link expires in ${ctx.expiresInHours} hour${ctx.expiresInHours === 1 ? '' : 's'}.</p>`,
-    `<p style="margin:0;font-size:12px;color:#9999a3;">If you didn't request this, you can ignore the email — your current password remains active.</p>`,
+    `<p style="margin:0;font-size:12px;color:#9999a3;">If you didn't request this, you can ignore the email, your current password remains active.</p>`,
     `</td></tr>`,
     `</table>`,
     `</body>`,

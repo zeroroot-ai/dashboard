@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * MissionsLibrary — the /dashboard/missions page. Lists the tenant's saved
+ * MissionsLibrary, the /dashboard/missions page. Lists the tenant's saved
  * (authored) missions and lets the user open one in the editor, create a new
  * one, or delete one. Execution history lives separately under Mission Results
  * (/dashboard/results). dashboard#497 (D6).
@@ -40,7 +40,7 @@ import {
 import type { MissionDraft } from "@/src/lib/gibson-client/mission-source";
 
 function formatRelative(rfc3339: string): string {
-  if (!rfc3339) return "—";
+  if (!rfc3339) return "-";
   const t = Date.parse(rfc3339);
   if (Number.isNaN(t)) return rfc3339;
   return new Date(t).toLocaleDateString();
@@ -122,7 +122,7 @@ export function MissionsLibrary() {
         <EmptyState
           icon={CrosshairIcon}
           title="No missions yet"
-          description="A mission is an agent workflow you author in CUE. Create one — it autosaves as you type and can be run any time."
+          description="A mission is an agent workflow you author in CUE. Create one, it autosaves as you type and can be run any time."
           primaryCta={
             <Button asChild>
               <Link href="/dashboard/missions/create">

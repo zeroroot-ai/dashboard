@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * SecretsAccessedPanel — per-mission resolved-secret refs panel.
+ * SecretsAccessedPanel, per-mission resolved-secret refs panel.
  *
  * Renders one row per secret ref accessed during a mission's lifetime,
  * aggregated by the daemon's audit pipeline via the GetMissionAudit admin RPC.
@@ -16,7 +16,7 @@
  *
  * Each ref links to /dashboard/pages/settings/secrets/<encoded-ref>.
  *
- * SECURITY: Refs only — credential values are NEVER shown, fetched, or logged.
+ * SECURITY: Refs only, credential values are NEVER shown, fetched, or logged.
  *
  * Aggregation lag: if the daemon reports aggregation_lag_seconds > 5 the panel
  * shows a placeholder. It auto-refreshes every 5 seconds until lag clears.
@@ -56,7 +56,7 @@ const LAG_THRESHOLD_SECONDS = 5;
 const AUTO_REFRESH_MS = 5_000;
 
 function formatUnixTs(unixSec: bigint): string {
-  if (unixSec === BigInt(0)) return "—";
+  if (unixSec === BigInt(0)) return "-";
   return new Date(Number(unixSec) * 1000).toLocaleString();
 }
 
@@ -144,7 +144,7 @@ function EmptyState() {
 function AccessRow({ access }: { access: MissionSecretAccess }) {
   return (
     <TableRow>
-      {/* Ref — links to secret detail */}
+      {/* Ref, links to secret detail */}
       <TableCell className="font-mono text-xs">
         <Link
           href={secretDetailHref(access.ref)}
@@ -179,7 +179,7 @@ function AccessRow({ access }: { access: MissionSecretAccess }) {
       <TableCell>
         <div className="flex flex-wrap gap-1 max-w-[200px]">
           {access.pluginInstallIds.length === 0 ? (
-            <span className="text-xs text-muted-foreground">—</span>
+            <span className="text-xs text-muted-foreground">-</span>
           ) : (
             access.pluginInstallIds.slice(0, 2).map((id) => (
               <Badge
@@ -294,7 +294,7 @@ export function SecretsAccessedPanel({ missionId }: SecretsAccessedPanelProps) {
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
           {accesses.length} secret ref{accesses.length !== 1 ? "s" : ""} resolved during this mission.
-          Refs only — values are never shown.
+          Refs only, values are never shown.
         </p>
         <Button
           size="sm"

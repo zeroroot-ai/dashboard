@@ -31,7 +31,7 @@ const TIMEOUT_MS = 500;
 
 /**
  * Fetch the user's recent agent traces via the daemon's TracesService.
- * Gated behind a 500 ms timeout — a slow trace backend must never delay
+ * Gated behind a 500 ms timeout, a slow trace backend must never delay
  * the first streaming token. Returns empty context on any failure.
  *
  * The daemon resolves per-tenant Langfuse credentials server-side;

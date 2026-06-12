@@ -1,6 +1,6 @@
 ---
 title: Knowledge Graph
-description: Gibson's per-tenant knowledge graph — what it captures, how it's auto-populated, and how to query it from your agents.
+description: Gibson's per-tenant knowledge graph, what it captures, how it's auto-populated, and how to query it from your agents.
 ---
 
 Every Gibson tenant has a **knowledge graph**: a durable, queryable
@@ -11,7 +11,7 @@ each one, and the relationships between them.
 The graph is the single biggest reason Gibson missions get smarter over
 time. Today's agent doesn't repeat yesterday's recon. Today's triage
 agent reads similar prior findings before deciding what to flag. None
-of that requires you to write retrieval code — Gibson maintains the
+of that requires you to write retrieval code, Gibson maintains the
 graph for you, and the SDK exposes typed queries against it.
 
 ## What's in the graph
@@ -20,13 +20,13 @@ The graph stores **entities** (nodes) and **relationships** (edges).
 The standard entity types Gibson ships with are described in
 [Taxonomy](/docs/taxonomy). At a high level:
 
-- **Asset entities** — hosts, ports, services, endpoints, domains,
+- **Asset entities**, hosts, ports, services, endpoints, domains,
   subdomains, technologies, certificates.
-- **Security entities** — findings, evidence, attack patterns,
+- **Security entities**, findings, evidence, attack patterns,
   techniques.
-- **Provenance entities** — missions, mission nodes, agent executions,
+- **Provenance entities**, missions, mission nodes, agent executions,
   decisions.
-- **Custom entities** — anything outside the standard taxonomy goes
+- **Custom entities**, anything outside the standard taxonomy goes
   here.
 
 Standard relationships connect them: a host **has port**; a port
@@ -70,7 +70,7 @@ nodes directly:
 err := h.StoreNode(ctx, agent.StoreNodeRequest{
     Label: "decision",
     Properties: map[string]any{
-        "reason":    "skipped this CVE — vendor disputed it",
+        "reason":    "skipped this CVE, vendor disputed it",
         "cve_id":    "CVE-2024-...",
     },
     Relationships: []agent.Relationship{
@@ -91,7 +91,7 @@ Every node Gibson ingests is automatically linked back to:
 - the **agent execution** that produced it
 - the **target reference** it pertains to
 
-You don't write provenance code — it's stamped on every node by the
+You don't write provenance code, it's stamped on every node by the
 ingestion pipeline. This is what powers the dashboard's "show me
 everything this mission discovered" view, and what lets `Replay from
 checkpoint` know which downstream nodes to invalidate when you replay
@@ -116,7 +116,7 @@ specific slice of the graph.
 
 ### Similarity search
 
-The two big ones — both backed by embedding similarity over your
+The two big ones, both backed by embedding similarity over your
 tenant's history:
 
 ```go
@@ -144,7 +144,7 @@ chains, err := h.GetAttackChains(ctx, agent.ChainQuery{
 })
 ```
 
-Walks attack-pattern relationships from a starting node — useful for
+Walks attack-pattern relationships from a starting node, useful for
 narrative reports ("here's the path from this exposed service to the
 data we care about").
 
@@ -163,15 +163,15 @@ Common patterns:
 
 The dashboard surfaces graph data wherever it's contextually useful:
 
-- **Mission detail page** — every node ingested during the run is
+- **Mission detail page**, every node ingested during the run is
   listed, grouped by entity type, with click-through to the entity
   detail page.
-- **Asset pages** — for any host / service / endpoint, see every
+- **Asset pages**, for any host / service / endpoint, see every
   finding ever filed against it, every mission that touched it, and
   every attack pattern that's been linked to it.
-- **Findings detail** — shows the affected asset, similar prior
+- **Findings detail**, shows the affected asset, similar prior
   findings, and the attack chain that led to it.
-- **Search** — global search across the graph, scoped to your tenant.
+- **Search**, global search across the graph, scoped to your tenant.
 
 ## Per-tenant isolation
 
@@ -182,8 +182,8 @@ history; embeddings are not pooled across customers.
 ## What about retention?
 
 Default retention is unlimited within a tenant. If you want to evict
-older data — for compliance reasons, or just to keep the graph
-focused — tenant admins can set retention policies under
+older data, for compliance reasons, or just to keep the graph
+focused, tenant admins can set retention policies under
 **Settings → Knowledge graph**.
 
 Evicted nodes are removed from the graph entirely, including their
@@ -191,13 +191,13 @@ embeddings. There is no "soft delete" path.
 
 ## Related
 
-- [Taxonomy](/docs/taxonomy) — the full list of standard entities and
+- [Taxonomy](/docs/taxonomy), the full list of standard entities and
   relationships, plus how to extend.
-- [Ontology](/docs/ontology) — hierarchy-aware queries use the closure
+- [Ontology](/docs/ontology), hierarchy-aware queries use the closure
   built from `ontology.yaml`.
-- [Tools](/docs/tools) — populate the graph automatically via
+- [Tools](/docs/tools), populate the graph automatically via
   `DiscoveryResult` field 100.
-- [Findings](/docs/findings) — how findings become `:finding` nodes and
+- [Findings](/docs/findings), how findings become `:finding` nodes and
   link into the rest of the graph.
-- [Missions](/docs/missions) — replay uses graph provenance to know what
+- [Missions](/docs/missions), replay uses graph provenance to know what
   to re-execute.

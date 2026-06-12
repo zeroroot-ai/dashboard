@@ -179,7 +179,7 @@ function scanFile(absPath) {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    // Skip pure comments early — they're noise we don't want to flag.
+    // Skip pure comments early, they're noise we don't want to flag.
     const trimmed = line.trim();
     if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) {
       continue;
@@ -263,7 +263,7 @@ function runScan() {
 
   if (fresh.length > 0) {
     process.stderr.write(
-      `\n❌ ${fresh.length} new hardcoded color violation(s) — every color goes through a token:\n\n`,
+      `\n❌ ${fresh.length} new hardcoded color violation(s), every color goes through a token:\n\n`,
     );
     for (const v of fresh) {
       process.stderr.write(`  ${v.file}:${v.line} [${v.pattern}]  ${v.match}\n`);
@@ -277,7 +277,7 @@ function runScan() {
   }
   if (stale.length > 0) {
     process.stderr.write(
-      `\n❌ ${stale.length} stale .color-allowlist.json entry/entries — source line no longer matches:\n\n`,
+      `\n❌ ${stale.length} stale .color-allowlist.json entry/entries, source line no longer matches:\n\n`,
     );
     for (const a of stale) {
       process.stderr.write(`  ${a.file}:${a.line} [${a.pattern}]  was: ${a.match}\n`);

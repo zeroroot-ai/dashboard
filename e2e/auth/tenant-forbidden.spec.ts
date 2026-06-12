@@ -9,7 +9,7 @@
  *
  * Flow:
  *   1. Create tenant A (userA + slugA).
- *   2. Create tenant B (userB + slugB) — logged in as userB.
+ *   2. Create tenant B (userB + slugB), logged in as userB.
  *   3. While authenticated as userB, navigate to a dashboard URL scoped to
  *      tenantA (e.g., `/dashboard/${slugA}/settings`).
  *   4. Expect redirect to /dashboard/forbidden (not a 500 or a data leak).
@@ -92,7 +92,7 @@ async function extractActiveTenantSlug(page: Page): Promise<string | null> {
   if (parts[0] === "dashboard" && parts[1] && parts[1] !== "default") {
     return parts[1];
   }
-  // Try /dashboard/default redirect — follow it.
+  // Try /dashboard/default redirect, follow it.
   if (parts[1] === "default") {
     // The default route typically resolves to the user's only tenant.
     // We can't easily get the slug from client side here; return null.
@@ -116,7 +116,7 @@ test.describe("Tenant forbidden", () => {
     if (!isLogSourceReachable()) {
       test.skip(
         true,
-        "Log source unreachable — skipping tenant-forbidden test.",
+        "Log source unreachable, skipping tenant-forbidden test.",
       );
       return;
     }

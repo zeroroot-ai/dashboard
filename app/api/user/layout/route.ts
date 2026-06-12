@@ -3,7 +3,7 @@
  *
  * Proxies per-user dashboard widget layout through the daemon's UserService RPCs
  * (GetUserLayout / SaveUserLayout / ResetUserLayout).
- * Tenant is resolved via requireActiveTenant() — fail-closed, no default fallback.
+ * Tenant is resolved via requireActiveTenant(), fail-closed, no default fallback.
  *
  * Replaces the previous direct-Redis implementation.
  * Spec: dashboard-no-backing-store-clients (Module 5 / issue #589).
@@ -21,7 +21,7 @@ import type { WidgetLayout, WidgetType } from '@/src/types/analytics';
 import type { UserLayoutPreferences, WidgetConfig } from '@/src/gen/gibson/tenant/v1/user_pb';
 
 // ============================================================================
-// Conversion helpers — proto ↔ local WidgetLayout
+// Conversion helpers, proto ↔ local WidgetLayout
 // ============================================================================
 
 function protoToLayout(proto: UserLayoutPreferences): WidgetLayout {

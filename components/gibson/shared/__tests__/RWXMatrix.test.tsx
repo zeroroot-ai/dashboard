@@ -19,7 +19,7 @@ function renderMatrix(props: RWXMatrixProps) {
 const baseItem: RWXItem = {
   name: "gitlab",
   displayName: "GitLab Plugin",
-  description: "v2.1.0 — Source control",
+  description: "v2.1.0, Source control",
   rwx: { read: true, write: false, execute: false },
   denyingGates: ["tenant:acme#tenant_write_disabled@component:plugin/gitlab"],
 };
@@ -29,7 +29,7 @@ describe("RWXMatrix", () => {
     renderMatrix({ items: [baseItem], onToggle: () => {} });
     expect(screen.getByText("GitLab Plugin")).toBeInTheDocument();
     expect(
-      screen.getByText(/v2\.1\.0 — Source control/),
+      screen.getByText(/v2\.1\.0, Source control/),
     ).toBeInTheDocument();
   });
 

@@ -29,7 +29,7 @@ import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { X509Certificate } from 'node:crypto';
 
-// Module under test — re-imported per test via dynamic import so each
+// Module under test, re-imported per test via dynamic import so each
 // case observes a fresh module-scoped cache.
 async function importSvid() {
   vi.resetModules();
@@ -84,7 +84,7 @@ function generateFixtureCertDer(): Buffer | null {
       rmSync(dir, { recursive: true, force: true });
     }
   } catch {
-    // openssl missing or unusable on this host — tests that depend on
+    // openssl missing or unusable on this host, tests that depend on
     // a real DER will skip themselves below.
     return null;
   }
@@ -141,7 +141,7 @@ describe('isSpiffeAvailable', () => {
 });
 
 // ---------------------------------------------------------------------------
-// getX509SvidContext — socket-absent path
+// getX509SvidContext, socket-absent path
 // ---------------------------------------------------------------------------
 
 describe('getX509SvidContext', () => {
@@ -162,7 +162,7 @@ describe('getX509SvidContext', () => {
 });
 
 // ---------------------------------------------------------------------------
-// buildContext — happy path, malformed input, refresh window
+// buildContext, happy path, malformed input, refresh window
 // ---------------------------------------------------------------------------
 
 describe('buildContext', () => {
@@ -181,7 +181,7 @@ describe('buildContext', () => {
   it.skipIf(!HAS_FIXTURE)('emits PEM context with cert/key/ca and TLS 1.3 minVersion', async () => {
     const { buildContext } = await importSvid();
     const der = FIXTURE_LEAF_DER!;
-    // Use the same DER for the key/bundle slots — derChainToPem only
+    // Use the same DER for the key/bundle slots, derChainToPem only
     // validates the SEQUENCE framing, and PKCS#8 keys also start with
     // 0x30. Reusing the leaf cert DER everywhere keeps the test free of
     // external fixtures while still exercising the parser.
@@ -230,7 +230,7 @@ describe('buildContext', () => {
 });
 
 // ---------------------------------------------------------------------------
-// tryGetCachedX509SvidContext — sync getter contract
+// tryGetCachedX509SvidContext, sync getter contract
 // ---------------------------------------------------------------------------
 
 describe('tryGetCachedX509SvidContext', () => {

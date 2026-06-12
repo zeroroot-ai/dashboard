@@ -67,7 +67,7 @@ function DefinitionBanner({ meta, loadedFrom, onDismiss }: DefinitionBannerProps
           <span className="text-muted-foreground">
             {loadedFrom === "saved"
               ? "Loaded saved version"
-              : "New mission — not yet saved"}
+              : "New mission, not yet saved"}
           </span>
         )}
       </div>
@@ -102,7 +102,7 @@ export default function CreateMissionPage() {
   const [terminalOpen, setTerminalOpen] = React.useState(false);
   const [hydrating, setHydrating] = React.useState(false);
 
-  // Definition-related chrome (banner + picker) — removed in D5/D4.
+  // Definition-related chrome (banner + picker), removed in D5/D4.
   const [currentDefinitionName, setCurrentDefinitionName] = React.useState<string | undefined>(undefined);
   const [currentDefinitionMeta, setCurrentDefinitionMeta] = React.useState<DefinitionMeta | undefined>(undefined);
   const [definitionLoadedFrom, setDefinitionLoadedFrom] = React.useState<"saved" | "template" | undefined>(undefined);
@@ -188,7 +188,7 @@ export default function CreateMissionPage() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         toast.error(
           res.status === 410
-            ? "This mission cannot be cloned — it was not created from a CUE definition."
+            ? "This mission cannot be cloned, it was not created from a CUE definition."
             : body.error ?? "Could not load the mission for cloning",
         );
         router.replace("/dashboard/missions/create");
@@ -255,7 +255,7 @@ export default function CreateMissionPage() {
       setCurrentDefinitionMeta(meta);
 
       // Load the definition's real CUE source (gibson#504). Definitions
-      // registered before source persistence return an empty cue_source — fall
+      // registered before source persistence return an empty cue_source, fall
       // back to the valid New Mission template so Run stays enabled.
       if (defJson.cueSource) {
         loadSource({ name: meta.name, cueSource: defJson.cueSource });
@@ -274,7 +274,7 @@ export default function CreateMissionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlDefinitionName]);
 
-  // Wire SSE mission events to the terminal — zero re-renders per incoming line.
+  // Wire SSE mission events to the terminal, zero re-renders per incoming line.
   useMissionTerminal(editor.activeMissionId, terminalRef);
 
   // Once autosave assigns an id, reflect it in the URL so a reload restores
@@ -307,7 +307,7 @@ export default function CreateMissionPage() {
       toast.error(res.error ?? "Failed to launch mission");
       return;
     }
-    terminalRef.current?.write('\x1b[32m✓ Mission started — ID: ' + res.missionId + '\x1b[0m\r\n');
+    terminalRef.current?.write('\x1b[32m✓ Mission started, ID: ' + res.missionId + '\x1b[0m\r\n');
     terminalRef.current?.write('\x1b[2mUse the Missions list to view full details.\x1b[0m\r\n');
     toast.success("Mission launched");
   }
@@ -384,7 +384,7 @@ export default function CreateMissionPage() {
           {pageTitle}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Write a mission in CUE and launch — changes autosave as you type, and
+          Write a mission in CUE and launch, changes autosave as you type, and
           inline diagnostics appear live.
         </p>
         {currentDefinitionName !== undefined && currentDefinitionMeta !== undefined && (

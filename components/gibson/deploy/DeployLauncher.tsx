@@ -6,7 +6,7 @@
  * Primary CTA on the agents, tools, and plugins list pages that opens
  * the unified deploy wizard at `/dashboard/deploy?type=<type>`.
  *
- * Visibility contract — see components/gibson/auth/AuthGatedButton.tsx
+ * Visibility contract, see components/gibson/auth/AuthGatedButton.tsx
  * for the three-state design rationale:
  *
  *   allowed (admin)  → clickable Link button

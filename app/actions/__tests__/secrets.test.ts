@@ -10,7 +10,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ---------------------------------------------------------------------------
-// Mocks — must precede subject import.
+// Mocks, must precede subject import.
 // vi.hoisted() lifts declarations above the hoisted vi.mock() factory calls.
 // ---------------------------------------------------------------------------
 
@@ -108,7 +108,7 @@ function makeSecretMeta(name: string) {
 // createSecretAction
 // ---------------------------------------------------------------------------
 
-describe("createSecretAction — success", () => {
+describe("createSecretAction, success", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("calls setSecret with encoded value bytes and returns metadata", async () => {
@@ -131,7 +131,7 @@ describe("createSecretAction — success", () => {
     expect(name).toBe("cred:api_key");
     expect(category).toBe(1); // SecretCategory.CRED
     // Cross-realm Uint8Array instanceof check is unreliable in jsdom; check
-    // the decoded content instead — same security guarantee.
+    // the decoded content instead, same security guarantee.
     expect(Buffer.from(valueBytes).toString("utf8")).toBe("s3cr3t");
 
     // revalidatePath called.
@@ -141,7 +141,7 @@ describe("createSecretAction — success", () => {
   });
 });
 
-describe("createSecretAction — validation errors", () => {
+describe("createSecretAction, validation errors", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns bad_input when name is empty", async () => {
@@ -173,7 +173,7 @@ describe("createSecretAction — validation errors", () => {
   });
 });
 
-describe("createSecretAction — RPC error", () => {
+describe("createSecretAction, RPC error", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns structured error without value in message", async () => {
@@ -199,7 +199,7 @@ describe("createSecretAction — RPC error", () => {
   });
 });
 
-describe("createSecretAction — unauthenticated", () => {
+describe("createSecretAction, unauthenticated", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -220,7 +220,7 @@ describe("createSecretAction — unauthenticated", () => {
 // rotateSecretAction
 // ---------------------------------------------------------------------------
 
-describe("rotateSecretAction — success", () => {
+describe("rotateSecretAction, success", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("calls rotateSecret with encoded value and returns updated metadata", async () => {
@@ -242,7 +242,7 @@ describe("rotateSecretAction — success", () => {
   });
 });
 
-describe("rotateSecretAction — validation errors", () => {
+describe("rotateSecretAction, validation errors", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns bad_input when new value is empty", async () => {
@@ -261,7 +261,7 @@ describe("rotateSecretAction — validation errors", () => {
   });
 });
 
-describe("rotateSecretAction — RPC error does not leak value", () => {
+describe("rotateSecretAction, RPC error does not leak value", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns error without new value in message", async () => {
@@ -284,7 +284,7 @@ describe("rotateSecretAction — RPC error does not leak value", () => {
 // deleteSecretAction
 // ---------------------------------------------------------------------------
 
-describe("deleteSecretAction — success", () => {
+describe("deleteSecretAction, success", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("calls deleteSecret with the name and revalidates", async () => {
@@ -298,7 +298,7 @@ describe("deleteSecretAction — success", () => {
   });
 });
 
-describe("deleteSecretAction — validation error", () => {
+describe("deleteSecretAction, validation error", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns bad_input for empty name", async () => {
@@ -310,7 +310,7 @@ describe("deleteSecretAction — validation error", () => {
   });
 });
 
-describe("deleteSecretAction — RPC error", () => {
+describe("deleteSecretAction, RPC error", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("returns structured error on RPC failure", async () => {
@@ -330,7 +330,7 @@ describe("deleteSecretAction — RPC error", () => {
 // assertAuthorized gating
 // ---------------------------------------------------------------------------
 
-describe("createSecretAction — authz denied", () => {
+describe("createSecretAction, authz denied", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAssertAuthorized.mockRejectedValueOnce(
@@ -351,7 +351,7 @@ describe("createSecretAction — authz denied", () => {
   });
 });
 
-describe("rotateSecretAction — authz denied", () => {
+describe("rotateSecretAction, authz denied", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAssertAuthorized.mockRejectedValueOnce(
@@ -372,7 +372,7 @@ describe("rotateSecretAction — authz denied", () => {
   });
 });
 
-describe("deleteSecretAction — authz denied", () => {
+describe("deleteSecretAction, authz denied", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAssertAuthorized.mockRejectedValueOnce(

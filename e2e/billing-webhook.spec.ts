@@ -1,5 +1,5 @@
 /**
- * billing-webhook.spec.ts — Slice 5.9 part 1
+ * billing-webhook.spec.ts, Slice 5.9 part 1
  *
  * Dashboard-side assertions for Stripe webhook processing:
  *
@@ -24,7 +24,7 @@
  * locally set TEST_STRIPE_WEBHOOK_SECRET=<same value> and the Makefile
  * passes it to the dev server.
  *
- * These tests POST directly to /api/billing/webhook — no browser UI
+ * These tests POST directly to /api/billing/webhook, no browser UI
  * interaction is needed. They compile cleanly without a cluster.
  *
  * Refs: dashboard#222 (slice 5.9 p1).
@@ -99,7 +99,7 @@ async function postWebhook(
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe("billing webhook — POST /api/billing/webhook", () => {
+test.describe("billing webhook, POST /api/billing/webhook", () => {
   test.skip(needsCluster, "requires kind cluster + E2E_KIND_AVAILABLE=1");
 
   test("GET /api/billing/webhook returns 410 (tombstone)", async ({ page }) => {
@@ -159,7 +159,7 @@ test.describe("billing webhook — POST /api/billing/webhook", () => {
     const result = await postWebhook(page, event);
 
     // The webhook handler returns 200 for valid events (even when K8s is not
-    // available — it logs errors but does not return 5xx for infrastructure
+    // available, it logs errors but does not return 5xx for infrastructure
     // issues during this migration phase). In a full cluster test environment
     // with STRIPE_WEBHOOK_SECRET correctly set, this should be 200.
     //
@@ -167,7 +167,7 @@ test.describe("billing webhook — POST /api/billing/webhook", () => {
     // for debugging.
     if (result.status === 400) {
       console.warn(
-        `[billing-webhook] Got 400 — STRIPE_WEBHOOK_SECRET may not match STRIPE_WEBHOOK_TEST_SECRET on the server. Body: ${JSON.stringify(result.body)}`,
+        `[billing-webhook] Got 400, STRIPE_WEBHOOK_SECRET may not match STRIPE_WEBHOOK_TEST_SECRET on the server. Body: ${JSON.stringify(result.body)}`,
       );
     }
     expect([200, 400]).toContain(result.status);
@@ -214,7 +214,7 @@ test.describe("billing webhook — POST /api/billing/webhook", () => {
       expect(secondBody.ok).toBe(true);
       expect(secondBody.duplicate).toBe(true);
     }
-    // If signature verification fails for env reasons, both return 400 — that's
+    // If signature verification fails for env reasons, both return 400, that's
     // acceptable in a non-full-cluster environment.
     expect([200, 400]).toContain(first.status);
     expect([200, 400]).toContain(second.status);
@@ -238,10 +238,10 @@ test.describe("billing webhook — POST /api/billing/webhook", () => {
 // Stubbed tests (runs without kind cluster, validates UI-layer quota updates)
 // ---------------------------------------------------------------------------
 
-test.describe("billing webhook — UI quota reflection (stubbed)", () => {
+test.describe("billing webhook, UI quota reflection (stubbed)", () => {
   // These tests verify the dashboard's billing page reflects the new plan
   // after an upgrade/downgrade by stubbing the /api/settings/tier endpoint.
-  // They do NOT test the webhook endpoint itself — they test the UI layer
+  // They do NOT test the webhook endpoint itself, they test the UI layer
   // that reads the plan state.
 
   test("billing page reflects org plan after subscription.updated event", async ({

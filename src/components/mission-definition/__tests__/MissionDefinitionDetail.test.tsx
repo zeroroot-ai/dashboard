@@ -1,17 +1,17 @@
 /**
- * MissionDefinitionDetail — component tests.
+ * MissionDefinitionDetail, component tests.
  *
  * Two fixtures:
- *   1. fullFixture — every author-facing field populated (constraints, workspace,
+ *   1. fullFixture, every author-facing field populated (constraints, workspace,
  *      all six oneof node-config variants, retry/data/reuse policies).
- *   2. minimalFixture — only the required fields set; verifies empty-state
+ *   2. minimalFixture, only the required fields set; verifies empty-state
  *      affordances render without error for absent optional sections.
  *
  * Collapsible sections (nodes, workspace) start closed; tests that need content
  * from within those sections use userEvent.click to expand them or use
  * getAllByText / getAllByRole variants to handle repeated text.
  *
- * M6 — mission-author-experience. Closes #187.
+ * M6, mission-author-experience. Closes #187.
  */
 
 import { describe, it, expect } from "vitest";
@@ -22,7 +22,7 @@ import { MissionDefinitionDetail } from "../MissionDefinitionDetail";
 import type { MissionDefinitionJson } from "@/src/hooks/useMissionDefinition";
 
 // -------------------------------------------------------------------------
-// Full fixture — every author-facing field populated
+// Full fixture, every author-facing field populated
 // -------------------------------------------------------------------------
 
 const fullFixture: MissionDefinitionJson = {
@@ -177,7 +177,7 @@ const fullFixture: MissionDefinitionJson = {
 };
 
 // -------------------------------------------------------------------------
-// Minimal fixture — only top-level id + name, no optional sections
+// Minimal fixture, only top-level id + name, no optional sections
 // -------------------------------------------------------------------------
 
 const minimalFixture: MissionDefinitionJson = {
@@ -189,7 +189,7 @@ const minimalFixture: MissionDefinitionJson = {
 // Tests
 // -------------------------------------------------------------------------
 
-describe("MissionDefinitionDetail — full fixture", () => {
+describe("MissionDefinitionDetail, full fixture", () => {
   it("renders the detail container", () => {
     render(<MissionDefinitionDetail definition={fullFixture} />);
     expect(screen.getByTestId("mission-definition-detail")).toBeTruthy();
@@ -213,7 +213,7 @@ describe("MissionDefinitionDetail — full fixture", () => {
   it("renders entry and exit points as badges", () => {
     render(<MissionDefinitionDetail definition={fullFixture} />);
     // "agent-node" appears as an entry-point badge AND as a node-card id.
-    // getAllByText is correct here — we only need at least one occurrence.
+    // getAllByText is correct here, we only need at least one occurrence.
     expect(screen.getAllByText("agent-node").length).toBeGreaterThan(0);
     expect(screen.getAllByText("join-node").length).toBeGreaterThan(0);
   });
@@ -315,7 +315,7 @@ describe("MissionDefinitionDetail — full fixture", () => {
   it("renders agent node config after expanding node card", async () => {
     const user = userEvent.setup();
     render(<MissionDefinitionDetail definition={fullFixture} />);
-    // Expand the "Web Crawler" node card — aria-label is "Toggle Web Crawler".
+    // Expand the "Web Crawler" node card, aria-label is "Toggle Web Crawler".
     const nodeToggle = screen.getByRole("button", { name: "Toggle Web Crawler" });
     await user.click(nodeToggle);
     expect(screen.getByText("web-crawler")).toBeTruthy();
@@ -381,7 +381,7 @@ describe("MissionDefinitionDetail — full fixture", () => {
   });
 });
 
-describe("MissionDefinitionDetail — minimal fixture (empty-state coverage)", () => {
+describe("MissionDefinitionDetail, minimal fixture (empty-state coverage)", () => {
   it("renders without crashing when optional fields are absent", () => {
     render(<MissionDefinitionDetail definition={minimalFixture} />);
     expect(screen.getByTestId("mission-definition-detail")).toBeTruthy();

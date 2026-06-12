@@ -1,5 +1,5 @@
 /**
- * Message Normalizer — lossless bidirectional mapping between the AI SDK v6
+ * Message Normalizer, lossless bidirectional mapping between the AI SDK v6
  * `UIMessage` parts model and the persisted `ConversationMessage` proto parts.
  *
  * This is the SINGLE source of truth for message shape on the dashboard side.
@@ -154,13 +154,13 @@ type KnownUIPart =
   | StaticToolUIPart
   | StepStartUIPart;
 
-// Use a looser type for internal manipulation — we cast from UIMessage['parts'][number]
+// Use a looser type for internal manipulation, we cast from UIMessage['parts'][number]
 // which is a strict union. The intersection with Record<string, unknown> is only
 // used for the fallback path where we stringify the whole part.
 type AnyUIPart = { type: string } & Record<string, unknown>;
 
 // ---------------------------------------------------------------------------
-// uiMessageToProto — UIMessage → proto ConversationMessage parts
+// uiMessageToProto, UIMessage → proto ConversationMessage parts
 // ---------------------------------------------------------------------------
 
 /**
@@ -170,7 +170,7 @@ type AnyUIPart = { type: string } & Record<string, unknown>;
  * Every part is mapped explicitly. Unknown part types are preserved as a text
  * fallback carrying a JSON representation, so they survive a round-trip.
  *
- * `step-start` parts are intentionally skipped — they carry no user-visible
+ * `step-start` parts are intentionally skipped, they carry no user-visible
  * data and would add noise to storage.
  */
 export function uiMessageToProto(msg: UIMessage, createdAtUnix?: number): ProtoMessageRecord {
@@ -302,7 +302,7 @@ export function uiMessageToProto(msg: UIMessage, createdAtUnix?: number): ProtoM
     }
 
     // -----------------------------------------------------------------------
-    // Unknown / unhandled part — preserve as JSON text so nothing is lost.
+    // Unknown / unhandled part, preserve as JSON text so nothing is lost.
     // -----------------------------------------------------------------------
     const fallbackText = `[unknown part: ${JSON.stringify(part)}]`;
     parts.push(
@@ -324,7 +324,7 @@ export function uiMessageToProto(msg: UIMessage, createdAtUnix?: number): ProtoM
 }
 
 // ---------------------------------------------------------------------------
-// protoToUiMessage — proto ConversationMessage parts → UIMessage
+// protoToUiMessage, proto ConversationMessage parts → UIMessage
 // ---------------------------------------------------------------------------
 
 /**
@@ -350,7 +350,7 @@ export function protoToUiMessage(msg: ConversationMessage): UIMessage {
   for (const protoPart of msg.parts) {
     const cas = protoPart.part;
     if (!cas || cas.case === undefined) {
-      // Empty or unrecognised oneof — preserve as text fallback.
+      // Empty or unrecognised oneof, preserve as text fallback.
       parts.push({ type: 'text', text: '[unknown proto part]' });
       continue;
     }
@@ -441,7 +441,7 @@ export function protoToUiMessage(msg: ConversationMessage): UIMessage {
       }
 
       default: {
-        // Unknown oneof case — preserve as text fallback.
+        // Unknown oneof case, preserve as text fallback.
         const unknownCase: string = (cas as { case: string }).case;
         parts.push({ type: 'text', text: `[unknown proto part case: ${unknownCase}]` });
         break;
@@ -450,7 +450,7 @@ export function protoToUiMessage(msg: ConversationMessage): UIMessage {
   }
 
   // UIMessage v6 shape: { id, role, metadata?, parts }
-  // No `content` or `createdAt` field — those are AI SDK v5 artifacts.
+  // No `content` or `createdAt` field, those are AI SDK v5 artifacts.
   return {
     id: msg.id,
     role: msg.role as UIMessage['role'],

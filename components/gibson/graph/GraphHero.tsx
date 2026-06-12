@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * GraphHero — Phase 6, Task 21
+ * GraphHero, Phase 6, Task 21
  *
  * Landing-route graph visualization. Renders the full tenant knowledge graph
  * in a fixed-height canvas with a header overlay showing key stats. Shares
@@ -77,7 +77,7 @@ export function GraphHero() {
         </div>
       </div>
 
-      {/* Graph canvas — fills the container */}
+      {/* Graph canvas, fills the container */}
       {hasData && <GraphCanvas data={canvasData} />}
 
       {/* Loading / empty / error states */}

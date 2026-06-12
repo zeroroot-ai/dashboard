@@ -24,7 +24,7 @@ export async function GET(): Promise<NextResponse> {
   try {
     memberships = await getMyMemberships();
   } catch {
-    // Unauthenticated or daemon unavailable — return empty so the hook
+    // Unauthenticated or daemon unavailable, return empty so the hook
     // treats every gated element as not-allowed.
     return NextResponse.json({ activeTenantId: null, byTenant: {} }, { status: 200 });
   }
@@ -35,7 +35,7 @@ export async function GET(): Promise<NextResponse> {
   }
 
   // Read the active tenant cookie without throwing (no membership validation
-  // needed here — the hook will simply find no matching role if the cookie is
+  // needed here, the hook will simply find no matching role if the cookie is
   // stale and return allowed=false).
   const { tenantId: activeTenantId } = await readRawActiveTenant().then(
     (r) => (r.status === 'present' ? { tenantId: r.tenantId! } : { tenantId: null }),

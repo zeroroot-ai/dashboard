@@ -1,5 +1,5 @@
 /**
- * CUE Serializer — converts a MissionDefinition proto back to CUE source text.
+ * CUE Serializer, converts a MissionDefinition proto back to CUE source text.
  *
  * The generated CUE is structurally equivalent to the templates under
  * src/data/templates/. It imports missionv1 and emits a

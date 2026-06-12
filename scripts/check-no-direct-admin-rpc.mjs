@@ -7,8 +7,8 @@
  * `src/` or `app/` may import generated TypeScript bindings from the
  * deleted admin-only paths inside `src/gen/`:
  *
- *   - src/gen/gibson/daemon/admin  (DaemonAdminService — moved to DaemonService)
- *   - src/gen/gibson/platform      (PlatformOperatorService — moved to DaemonOperatorService)
+ *   - src/gen/gibson/daemon/admin  (DaemonAdminService, moved to DaemonService)
+ *   - src/gen/gibson/platform      (PlatformOperatorService, moved to DaemonOperatorService)
  *   - src/gen/gibson/tenant/admin  (future guard; path is reserved)
  *
  * The guard is intentionally path-based so a `proto:generate` run that
@@ -16,14 +16,14 @@
  * next build, before any code references it.
  *
  * Permitted paths:
- *   - src/gen/gibson/admin/v1/     — gibson.admin.v1.TenantAdminService (broker RPCs, stays)
- *   - src/gen/gibson/tenant/v1/    — gibson.tenant.v1.TenantService (new OSS SDK)
- *   - src/gen/gibson/daemon/v1/    — gibson.daemon.v1.DaemonService (OSS SDK)
+ *   - src/gen/gibson/admin/v1/    , gibson.admin.v1.TenantAdminService (broker RPCs, stays)
+ *   - src/gen/gibson/tenant/v1/   , gibson.tenant.v1.TenantService (new OSS SDK)
+ *   - src/gen/gibson/daemon/v1/   , gibson.daemon.v1.DaemonService (OSS SDK)
  *   - All other src/gen/ subtrees
  *
  * Exemptions:
  *   - node_modules, .next, build output
- *   - Test files (*.test.*, *.spec.*, __tests__/, e2e/) — may reference
+ *   - Test files (*.test.*, *.spec.*, __tests__/, e2e/), may reference
  *     deleted paths in historical comments or negative assertions.
  *   - Lines that are purely comments (start with // or inside block comments)
  *
@@ -57,12 +57,12 @@ const DASHBOARD_ROOT = join(__dirname, '..');
 // appending `/v1/` or `/` ensures only the intended directory is matched.
 const FORBIDDEN_GEN_PATHS = [
   'src/gen/gibson/daemon/admin',
-  'src/gen/gibson/platform',     // PlatformOperatorService — moved to DaemonOperatorService (daemon/operator/v1)
-  'src/gen/gibson/admin/v1/',    // gibson.admin.v1 — decomposed into gibson.tenant.v1.* (ADR-0039)
-  'src/gen/gibson/authz/v1/',    // gibson.authz.v1 — moved to gibson.tenant.v1.ModelAccessService (ADR-0039)
-  'src/gen/gibson/budget/v1/',   // gibson.budget.v1 — moved to gibson.tenant.v1.BudgetService (ADR-0039)
-  'src/gen/gibson/usage/v1/',    // gibson.usage.v1 — moved to gibson.tenant.v1.UsageService (ADR-0039)
-  'src/gen/gibson/user/v1/',     // gibson.user.v1 — moved to gibson.tenant.v1.UserService (ADR-0039)
+  'src/gen/gibson/platform',     // PlatformOperatorService, moved to DaemonOperatorService (daemon/operator/v1)
+  'src/gen/gibson/admin/v1/',    // gibson.admin.v1, decomposed into gibson.tenant.v1.* (ADR-0039)
+  'src/gen/gibson/authz/v1/',    // gibson.authz.v1, moved to gibson.tenant.v1.ModelAccessService (ADR-0039)
+  'src/gen/gibson/budget/v1/',   // gibson.budget.v1, moved to gibson.tenant.v1.BudgetService (ADR-0039)
+  'src/gen/gibson/usage/v1/',    // gibson.usage.v1, moved to gibson.tenant.v1.UsageService (ADR-0039)
+  'src/gen/gibson/user/v1/',     // gibson.user.v1, moved to gibson.tenant.v1.UserService (ADR-0039)
 ];
 
 /** Directories and file patterns to skip entirely. */

@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * TraceDetailView — client component backing /dashboard/traces/[id].
+ * TraceDetailView, client component backing /dashboard/traces/[id].
  *
  * Fetches a trace directly by id via useTraceDetail and renders it with the
  * SAME shared components as the mission Traces tab: TokenSummaryPanel above
- * the expandable TraceTree. There is one trace renderer — this page composes
+ * the expandable TraceTree. There is one trace renderer, this page composes
  * it, it does not reimplement it.
  */
 
@@ -49,7 +49,7 @@ export function TraceDetailView({ traceId }: { traceId: string }) {
 
   if (isError) {
     const msg = error instanceof Error ? error.message : String(error);
-    // 404 "not available" is a normal state — render an empty state, not an error.
+    // 404 "not available" is a normal state, render an empty state, not an error.
     if (msg.includes("not available")) {
       return (
         <div className="space-y-4">

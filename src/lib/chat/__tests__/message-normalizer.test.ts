@@ -1,5 +1,5 @@
 /**
- * Message Normalizer — pure round-trip table tests.
+ * Message Normalizer, pure round-trip table tests.
  *
  * Spec: dashboard#548 (Module 3), closes dashboard#550.
  *
@@ -83,10 +83,10 @@ function recordToProtoMsg(record: ReturnType<typeof uiMessageToProto>): Conversa
 }
 
 // ---------------------------------------------------------------------------
-// Individual part type — save path (UIMessage → proto)
+// Individual part type, save path (UIMessage → proto)
 // ---------------------------------------------------------------------------
 
-describe('uiMessageToProto — save path', () => {
+describe('uiMessageToProto, save path', () => {
   it('maps a text part to MessagePartText', () => {
     const msg = makeUiMsg({
       parts: [{ type: 'text', text: 'Hello world' }],
@@ -223,7 +223,7 @@ describe('uiMessageToProto — save path', () => {
       expect(fallback.value.text).toContain('totally-unknown-future-type');
     }
 
-    // The following part is still present — unknown does NOT consume the rest.
+    // The following part is still present, unknown does NOT consume the rest.
     const next = record.parts[1].part;
     expect(next?.case).toBe('text');
     if (next?.case === 'text') {
@@ -233,10 +233,10 @@ describe('uiMessageToProto — save path', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Individual part type — load path (proto → UIMessage)
+// Individual part type, load path (proto → UIMessage)
 // ---------------------------------------------------------------------------
 
-describe('protoToUiMessage — load path', () => {
+describe('protoToUiMessage, load path', () => {
   it('maps MessagePartText to a TextUIPart', () => {
     const msg = makeProtoMsg({
       parts: [
@@ -399,18 +399,18 @@ describe('protoToUiMessage — load path', () => {
     // Simulate a proto part with no recognised case (e.g. future schema).
     // In Connect-ES, an unset oneof produces { case: undefined }.
     const msg = makeProtoMsg({
-      // Empty part — cas.case will be undefined
+      // Empty part, cas.case will be undefined
       parts: [create(MessagePartSchema, {})],
     });
     const ui = protoToUiMessage(msg);
     expect(ui.parts).toHaveLength(1);
-    // Must produce SOMETHING — never silently omit.
+    // Must produce SOMETHING, never silently omit.
     expect(ui.parts[0].type).toBeDefined();
   });
 });
 
 // ---------------------------------------------------------------------------
-// Full round-trip — UIMessage → proto → UIMessage
+// Full round-trip, UIMessage → proto → UIMessage
 // ---------------------------------------------------------------------------
 
 describe('full round-trip: UIMessage → proto → UIMessage', () => {
@@ -500,7 +500,7 @@ describe('full round-trip: UIMessage → proto → UIMessage', () => {
     expect(restored.parts[0]).toMatchObject({ type: 'text', text: 'What hosts are vulnerable?' });
   });
 
-  it('round-trips an unknown UIMessage part type — fallback text is preserved', () => {
+  it('round-trips an unknown UIMessage part type, fallback text is preserved', () => {
     const original = makeUiMsg({
       id: 'unk-msg-1',
       role: 'assistant',
@@ -524,7 +524,7 @@ describe('full round-trip: UIMessage → proto → UIMessage', () => {
       }),
     );
 
-    // 3 parts — nothing dropped.
+    // 3 parts, nothing dropped.
     expect(restored.parts).toHaveLength(3);
     expect(restored.parts[0]).toMatchObject({ type: 'text', text: 'before' });
     // Middle part survived as a text fallback.
@@ -585,7 +585,7 @@ describe('full round-trip: UIMessage → proto → UIMessage', () => {
 // Batch converters
 // ---------------------------------------------------------------------------
 
-describe('uiMessagesToProto / protoToUiMessages — batch converters', () => {
+describe('uiMessagesToProto / protoToUiMessages, batch converters', () => {
   it('batch-converts an array of messages and round-trips all of them', () => {
     const msgs: UIMessage[] = [
       makeUiMsg({ id: 'b-1', role: 'user', parts: [{ type: 'text', text: 'Hello' }] }),

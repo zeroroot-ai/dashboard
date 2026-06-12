@@ -4,7 +4,7 @@
  * Unit tests for the PermissionsCache module. Covers cache
  * hit/miss/TTL/invalidation behaviour without making real network calls.
  *
- * Spec: zero-trust-hardening Req 6.1, 6.2 — the module no longer holds a
+ * Spec: zero-trust-hardening Req 6.1, 6.2, the module no longer holds a
  * direct gRPC client. It calls the server route `/api/auth/my-permissions`
  * via `fetch`. These tests stub `globalThis.fetch` accordingly.
  */
@@ -152,7 +152,7 @@ describe('getMyPermissions', () => {
 
 describe('invalidatePermissionsCache', () => {
   it('clears all cached entries', async () => {
-    // Each invocation must produce a fresh Response — Response bodies can
+    // Each invocation must produce a fresh Response, Response bodies can
     // only be consumed once, so a single shared instance breaks on the
     // second call.
     fetchMock.mockImplementation(async () => jsonResponse('member'));

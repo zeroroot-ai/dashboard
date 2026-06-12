@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AddSecretForm — client-side form component for creating a new secret.
+ * AddSecretForm, client-side form component for creating a new secret.
  *
  * Submits via the createSecretAction server action (POST, server-side).
  * The value field is:
@@ -154,7 +154,7 @@ export function AddSecretForm() {
         </Select>
       </div>
 
-      {/* Value field — password type, autoComplete off, NEVER stored */}
+      {/* Value field, password type, autoComplete off, NEVER stored */}
       <div className="space-y-2">
         <Label htmlFor="secret-value">
           Value

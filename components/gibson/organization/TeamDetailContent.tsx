@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * Team detail surface — roster, add member, remove member, toggle admin,
+ * Team detail surface, roster, add member, remove member, toggle admin,
  * delete team. Backed by gibson PlatformOperatorService.ListTeamMembers
  * + WriteAccessTuples (via add/remove/deleteTeamMember server actions).
  *
  * dashboard#148. Companion to the Teams list at
  * /dashboard/organization/teams. Layout follows the existing Organization
- * pages — Card-per-section, EmptyState fallback when roster is empty.
+ * pages, Card-per-section, EmptyState fallback when roster is empty.
  */
 
 import { useEffect, useState } from "react";
@@ -106,7 +106,7 @@ export function TeamDetailContent({ teamId }: Props) {
   }
 
   async function onToggleAdmin(m: TeamMember) {
-    // Single-tuple flip of the `admin` relation, no touch on `member` —
+    // Single-tuple flip of the `admin` relation, no touch on `member` -
     // setTeamAdminAction is the proper fix for the remove+re-add dance the
     // earlier version used (dashboard#148 → #168).
     const r = await setTeamAdminAction({
@@ -131,7 +131,7 @@ export function TeamDetailContent({ teamId }: Props) {
   async function onDeleteTeam() {
     if (
       !confirm(
-        `Delete team ${teamId}? This removes every member/admin/deny tuple referencing it. Members keep their tenant access — only their team binding goes away.`,
+        `Delete team ${teamId}? This removes every member/admin/deny tuple referencing it. Members keep their tenant access, only their team binding goes away.`,
       )
     )
       return;
@@ -269,7 +269,7 @@ export function TeamDetailContent({ teamId }: Props) {
           <CardTitle className="text-destructive">Danger zone</CardTitle>
           <CardDescription>
             Deleting a team removes every member, admin, and per-team-deny
-            tuple referencing it. Members keep their tenant access — only the
+            tuple referencing it. Members keep their tenant access, only the
             team binding goes away. This action cannot be undone.
           </CardDescription>
         </CardHeader>

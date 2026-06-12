@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * SecretsList — client component that renders the tenant secrets DataTable.
+ * SecretsList, client component that renders the tenant secrets DataTable.
  *
  * Receives pre-fetched SecretMetadata rows from the server component page.
  * Renders name, category, version, last_rotated_at, last_accessed_at columns.
@@ -50,7 +50,7 @@ import { useAuthorize } from "@/src/lib/auth/use-authorize";
 // ---------------------------------------------------------------------------
 
 function formatUnixTs(unixSeconds: bigint): string {
-  if (!unixSeconds || unixSeconds === BigInt(0)) return "—";
+  if (!unixSeconds || unixSeconds === BigInt(0)) return "-";
   const d = new Date(Number(unixSeconds) * 1000);
   return d.toLocaleDateString(undefined, {
     year: "numeric",

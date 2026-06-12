@@ -96,7 +96,7 @@ function UserActionsMenu({
   const isInvited = member.status === "invited";
   const canRemove = canEdit && !isSelf && !isOwner;
 
-  // For owner rows there are no destructive actions — wrap the trigger with a
+  // For owner rows there are no destructive actions, wrap the trigger with a
   // tooltip so admins know why the row is protected.
   const ownerNoActions = isOwner && !isSelf;
 
@@ -157,7 +157,7 @@ function UserActionsMenu({
             <span>{menu}</span>
           </TooltipTrigger>
           <TooltipContent side="left">
-            Owner — transfer ownership before making changes
+            Owner, transfer ownership before making changes
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -181,7 +181,7 @@ export function UsersContent() {
   );
   const canEdit = !authLoading && canEditResolved;
 
-  // Roster from the daemon (MembershipService.ListMembers) — the single source
+  // Roster from the daemon (MembershipService.ListMembers), the single source
   // of truth post dashboard#715. Active members + pending invitations both
   // arrive here; status discriminates them. Refetched after every mutation.
   const {
@@ -325,7 +325,7 @@ export function UsersContent() {
       {/* Loading state */}
       {isLoading && <TableSkeleton rows={5} cols={5} />}
 
-      {/* Empty state — no users at all (not just filtered) */}
+      {/* Empty state, no users at all (not just filtered) */}
       {!isLoading && !isError && items.length === 0 && (
         <EmptyState
           icon={UserPlus}
@@ -412,7 +412,7 @@ export function UsersContent() {
                     <TableCell className="text-muted-foreground text-sm tabular-nums">
                       {member.joinedAt
                         ? new Date(member.joinedAt).toLocaleDateString()
-                        : "—"}
+                        : "-"}
                     </TableCell>
                     <TableCell>
                       <UserActionsMenu

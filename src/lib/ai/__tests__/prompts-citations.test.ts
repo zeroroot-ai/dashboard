@@ -22,7 +22,7 @@ const graphContextWithSummary = {
 // Citation instruction tests
 // ============================================================================
 
-describe('buildSystemPrompt — citation instructions', () => {
+describe('buildSystemPrompt, citation instructions', () => {
   it('includes the [cite:node:{nodeId}] instruction when nodeId is set and graphContext.summary is present', () => {
     const system = buildSystemPrompt({
       ...baseOpts,
@@ -81,7 +81,7 @@ describe('buildSystemPrompt — citation instructions', () => {
     expect(system).toContain('[cite:node:host:10.0.0.2]');
   });
 
-  it('preserves all 7 context layers — nodeId does not remove any', () => {
+  it('preserves all 7 context layers, nodeId does not remove any', () => {
     const system = buildSystemPrompt({
       ...baseOpts,
       graphContext: graphContextWithSummary,

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 /**
- * Production — deployment shapes + security posture + the path to a paid
+ * Production, deployment shapes + security posture + the path to a paid
  * plan. Every posture line names a shipping mechanism; accreditation
  * claims (IL5/IL6, SOC2, …) stay off the page until they exist.
  */

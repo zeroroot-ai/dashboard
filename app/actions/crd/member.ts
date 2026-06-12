@@ -1,16 +1,16 @@
 'use server';
 
 /**
- * Member-management Server Actions — backed by the daemon's MembershipService
+ * Member-management Server Actions, backed by the daemon's MembershipService
  * (gibson#621/#626), NOT the TenantMember CR. Per ADR-0043/0044 the daemon owns
  * the membership + invitation lifecycle; the dashboard is a pure client.
  *
- *   inviteMemberAction     — MembershipService.InviteMember (issues a pending
+ *   inviteMemberAction    , MembershipService.InviteMember (issues a pending
  *                            invitation + emails the accept link, gibson#632).
- *   revokeMemberAction     — active member  → SetTenantRole(remove)
+ *   revokeMemberAction    , active member  → SetTenantRole(remove)
  *                            pending invite  → CancelInvitation
- *   resendInvitationAction — MembershipService.ResendInvitation
- *   acceptInvitationAction — MembershipService.AcceptInvitation (token redeem)
+ *   resendInvitationAction, MembershipService.ResendInvitation
+ *   acceptInvitationAction, MembershipService.AcceptInvitation (token redeem)
  *
  * dashboard#715 ripped the TenantMember CR writes (applyTenantMember /
  * patchTenantMember / deleteTenantMember).
@@ -102,11 +102,11 @@ export async function inviteMemberAction(input: {
 }
 
 /**
- * Redeem an invitation token. The token is the sole capability — the daemon's
+ * Redeem an invitation token. The token is the sole capability, the daemon's
  * AcceptInvitation is unauthenticated and provisions the invitee. Called from
  * the invitation accept page.
  */
-// @crd-authz-exempt: token-based redemption — the invitation token is the sole capability; AcceptInvitation is unauthenticated by design (gibson#633, ADR-0043). No CRD mutation; routes through the daemon RPC.
+// @crd-authz-exempt: token-based redemption, the invitation token is the sole capability; AcceptInvitation is unauthenticated by design (gibson#633, ADR-0043). No CRD mutation; routes through the daemon RPC.
 export async function acceptInvitationAction(input: { token: string }): Promise<ActionResult> {
   const parsed = acceptInvitationInput.safeParse(input);
   if (!parsed.success) {
@@ -117,7 +117,7 @@ export async function acceptInvitationAction(input: { token: string }): Promise<
     // brand-new user with no session/token. The dashboard SA authenticates the
     // Envoy hop; the daemon's AcceptInvitation is unauthenticated:true so
     // ext-authz skips the FGA check and redeems by token (gibson#633,
-    // dashboard#727). Empty tenant — the daemon derives it from the invitation.
+    // dashboard#727). Empty tenant, the daemon derives it from the invitation.
     const client = serviceClient(MembershipService, '');
     await client.acceptInvitation({ token: parsed.data.token });
     return { ok: true, data: undefined };

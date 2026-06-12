@@ -1,5 +1,5 @@
 /**
- * Signup page — Server Component.
+ * Signup page, Server Component.
  *
  * Validates `?plan=` against the self-serve plan IDs. Redirects to
  * `/pricing?missing_plan=true` when the param is absent or invalid.
@@ -7,7 +7,7 @@
  * Fetches the Zitadel password-complexity policy server-side via the
  * cached helper so the client-side strength meter starts with the correct
  * requirements. Falls back to `DEFAULT_PASSWORD_POLICY` on Zitadel outage
- * — the form still renders.
+ *, the form still renders.
  *
  * Renders `<SignupForm>` inside a Suspense boundary (matching the pattern
  * used by `/login`).
@@ -24,7 +24,7 @@ import { getSignupZitadelAdminClient } from "@/src/lib/zitadel/admin-client-fact
 import { SignupForm } from "./signup-form";
 
 export const metadata: Metadata = {
-  title: "Create account — Gibson",
+  title: "Create account | Gibson",
   description: "Sign up for Gibson and start building autonomous AI agents.",
 };
 
@@ -53,7 +53,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   if (!isValidPlan) {
     // TEST_FIXTURES_BYPASS_PRICING: allow e2e tests to skip the plan-validation
     // redirect so the signup form renders even when the test cluster has no
-    // plan configuration. NEVER set this in production — it removes the pricing
+    // plan configuration. NEVER set this in production, it removes the pricing
     // gate entirely for any request to /signup.
     if (process.env.TEST_FIXTURES_BYPASS_PRICING !== "true") {
       redirect("/pricing?missing_plan=true");
@@ -85,7 +85,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   const planDisplay = pricingDisplays.find((p) => p.id === plan);
   const planDisplayName = planDisplay?.name ?? plan;
 
-  // Fetch the password policy server-side. Never throws — falls back to defaults.
+  // Fetch the password policy server-side. Never throws, falls back to defaults.
   let passwordPolicy = DEFAULT_PASSWORD_POLICY;
   try {
     const client = getSignupZitadelAdminClient();

@@ -1,5 +1,5 @@
 /**
- * Chat Store — pin, rename, stop+persist-partial, edit+regenerate, and
+ * Chat Store, pin, rename, stop+persist-partial, edit+regenerate, and
  * interrupted-stream finalization / mid-stream-switch unit tests (dashboard#555)
  */
 
@@ -22,7 +22,7 @@ function makeConv(id: string, overrides: Partial<Conversation> = {}): Conversati
   };
 }
 
-describe('Chat Store — togglePinConversation', () => {
+describe('Chat Store, togglePinConversation', () => {
   beforeEach(() => {
     useChatStore.setState({
       conversations: [makeConv('a'), makeConv('b'), makeConv('c')],
@@ -50,7 +50,7 @@ describe('Chat Store — togglePinConversation', () => {
   });
 });
 
-describe('Chat Store — isConversationPinned', () => {
+describe('Chat Store, isConversationPinned', () => {
   beforeEach(() => {
     useChatStore.setState({ pinnedConversationIds: ['x'] });
   });
@@ -64,7 +64,7 @@ describe('Chat Store — isConversationPinned', () => {
   });
 });
 
-describe('Chat Store — updateConversationTitle (rename)', () => {
+describe('Chat Store, updateConversationTitle (rename)', () => {
   beforeEach(() => {
     useChatStore.setState({
       conversations: [makeConv('a', { title: 'Old Title' }), makeConv('b')],
@@ -92,7 +92,7 @@ describe('Chat Store — updateConversationTitle (rename)', () => {
   });
 });
 
-describe('Chat Store — deleteConversation', () => {
+describe('Chat Store, deleteConversation', () => {
   beforeEach(() => {
     useChatStore.setState({
       conversations: [makeConv('a'), makeConv('b'), makeConv('c')],
@@ -132,10 +132,10 @@ function makeMsg(id: string, role: UIMessage['role'], text: string): UIMessage {
 }
 
 // ============================================================================
-// Stop + persist — finalizePartialMessage
+// Stop + persist, finalizePartialMessage
 // ============================================================================
 
-describe('Chat Store — finalizePartialMessage (stop mid-stream)', () => {
+describe('Chat Store, finalizePartialMessage (stop mid-stream)', () => {
   const userMsg = makeMsg('m1', 'user', 'Hello');
   const partialAssistantMsg = makeMsg('m2', 'assistant', 'Here is a partial response that was');
 
@@ -186,7 +186,7 @@ describe('Chat Store — finalizePartialMessage (stop mid-stream)', () => {
     useChatStore.getState().finalizePartialMessage('conv-1', messagesAtStop);
 
     const conv = useChatStore.getState().conversations.find((c) => c.id === 'conv-1')!;
-    // Exactly 2 messages — no dangling empty assistant message appended.
+    // Exactly 2 messages, no dangling empty assistant message appended.
     expect(conv.messages).toHaveLength(2);
     // No message has empty parts or empty text.
     for (const msg of conv.messages) {
@@ -196,7 +196,7 @@ describe('Chat Store — finalizePartialMessage (stop mid-stream)', () => {
 
   it('does not duplicate the assistant message when called twice with the same messages', () => {
     // Calling finalizePartialMessage twice (e.g. double-fire of the effect) must be
-    // idempotent — the message list is replaced atomically, never appended to.
+    // idempotent, the message list is replaced atomically, never appended to.
     const messagesAtStop: UIMessage[] = [userMsg, partialAssistantMsg];
 
     useChatStore.getState().finalizePartialMessage('conv-1', messagesAtStop);
@@ -217,10 +217,10 @@ describe('Chat Store — finalizePartialMessage (stop mid-stream)', () => {
 });
 
 // ============================================================================
-// Stop + reload — round-trip via the normalizer contract
+// Stop + reload, round-trip via the normalizer contract
 // ============================================================================
 
-describe('Chat Store — stopped message reloads intact via saveMessages', () => {
+describe('Chat Store, stopped message reloads intact via saveMessages', () => {
   const userMsg = makeMsg('u1', 'user', 'Tell me about X');
   const stoppedMsg = makeMsg(
     'a1',
@@ -256,16 +256,16 @@ describe('Chat Store — stopped message reloads intact via saveMessages', () =>
       | { type: 'text'; text: string }
       | undefined;
     expect(textPart).toBeDefined();
-    // The partial text is preserved exactly once — no truncation, no duplication.
+    // The partial text is preserved exactly once, no truncation, no duplication.
     expect(textPart!.text).toBe('X is a concept that encompasses many fields. In particular');
   });
 });
 
 // ============================================================================
-// Edit + regenerate — truncateMessages
+// Edit + regenerate, truncateMessages
 // ============================================================================
 
-describe('Chat Store — truncateMessages (edit/regenerate)', () => {
+describe('Chat Store, truncateMessages (edit/regenerate)', () => {
   const userMsg1 = makeMsg('u1', 'user', 'First question');
   const assistantMsg1 = makeMsg('a1', 'assistant', 'First answer');
   const userMsg2 = makeMsg('u2', 'user', 'Follow-up question');
@@ -283,7 +283,7 @@ describe('Chat Store — truncateMessages (edit/regenerate)', () => {
   });
 
   it('truncates downstream messages when editing a user message (keep up to and including the edited message)', () => {
-    // Edit userMsg2 at index 2 — this should drop assistantMsg2 (index 3)
+    // Edit userMsg2 at index 2, this should drop assistantMsg2 (index 3)
     useChatStore.getState().truncateMessages('conv-edit', 2);
     const msgs = useChatStore.getState().conversations.find((c) => c.id === 'conv-edit')!.messages;
     expect(msgs).toHaveLength(3); // u1, a1, u2
@@ -323,10 +323,10 @@ describe('Chat Store — truncateMessages (edit/regenerate)', () => {
 });
 
 // ============================================================================
-// Edit + regenerate — editMessageText
+// Edit + regenerate, editMessageText
 // ============================================================================
 
-describe('Chat Store — editMessageText', () => {
+describe('Chat Store, editMessageText', () => {
   const userMsg = makeMsg('u1', 'user', 'Original text');
   const assistantMsg = makeMsg('a1', 'assistant', 'Some answer');
 
@@ -367,10 +367,10 @@ describe('Chat Store — editMessageText', () => {
 });
 
 // ============================================================================
-// Edit + regenerate — full edit-truncate-persist sequence
+// Edit + regenerate, full edit-truncate-persist sequence
 // ============================================================================
 
-describe('Chat Store — edit-and-regenerate full sequence', () => {
+describe('Chat Store, edit-and-regenerate full sequence', () => {
   const u1 = makeMsg('u1', 'user', 'What is X?');
   const a1 = makeMsg('a1', 'assistant', 'X is a thing');
   const u2 = makeMsg('u2', 'user', 'Tell me more about Y');
@@ -400,14 +400,14 @@ describe('Chat Store — edit-and-regenerate full sequence', () => {
       | undefined;
     expect(editedPart?.text).toBe('Tell me about Z instead');
 
-    // Step 3: simulate re-stream completion — finalizePartialMessage writes the
+    // Step 3: simulate re-stream completion, finalizePartialMessage writes the
     // new assistant response (no a2; new a3 replaces it)
     const newAssistant = makeMsg('a3', 'assistant', 'Z is a completely different topic');
     const newMessages: UIMessage[] = [u1, a1, { ...u2, parts: [{ type: 'text', text: 'Tell me about Z instead' }] } as UIMessage, newAssistant];
     useChatStore.getState().finalizePartialMessage('conv-seq', newMessages);
 
     const final = useChatStore.getState().conversations.find((c) => c.id === 'conv-seq')!.messages;
-    // Exactly 4 messages — no orphaned a2
+    // Exactly 4 messages, no orphaned a2
     expect(final).toHaveLength(4);
     expect(final[3].id).toBe('a3');
     expect(final.find((m) => m.id === 'a2')).toBeUndefined();
@@ -423,7 +423,7 @@ describe('Chat Store — edit-and-regenerate full sequence', () => {
     useChatStore.getState().finalizePartialMessage('conv-seq', regenMessages);
 
     const final = useChatStore.getState().conversations.find((c) => c.id === 'conv-seq')!.messages;
-    // Exactly 4 messages — no duplicate a2 + a3
+    // Exactly 4 messages, no duplicate a2 + a3
     expect(final).toHaveLength(4);
     expect(final[3].id).toBe('a3');
     expect(final.find((m) => m.id === 'a2')).toBeUndefined();
@@ -451,7 +451,7 @@ describe('Chat Store — edit-and-regenerate full sequence', () => {
 });
 
 // ============================================================================
-// dashboard#555 — interrupted-stream finalization on reload
+// dashboard#555, interrupted-stream finalization on reload
 // ============================================================================
 //
 // A conversation whose last assistant message was persisted mid-stream (via the
@@ -462,12 +462,12 @@ describe('Chat Store — edit-and-regenerate full sequence', () => {
 //  - expose it as a normal completed message (no spinner, no in-progress flag)
 //  - leave regenerate available (all assistant messages support it by design)
 //
-// There is no `isStreaming` / `inProgress` field on the Conversation type —
+// There is no `isStreaming` / `inProgress` field on the Conversation type -
 // the "no spinner" guarantee is structural: the store never marks messages as
 // in-progress; the only streaming indicator is the AI SDK's `status` field in
 // the hook, which is reset to 'ready' on page reload.
 
-describe('Chat Store — interrupted-stream finalization on reload (dashboard#555)', () => {
+describe('Chat Store, interrupted-stream finalization on reload (dashboard#555)', () => {
   const userMsg = makeMsg('u1', 'user', 'Tell me about streams');
   const interruptedAssistantMsg = makeMsg(
     'a1',
@@ -503,7 +503,7 @@ describe('Chat Store — interrupted-stream finalization on reload (dashboard#55
 
     // Trailing message is the assistant message.
     expect(lastMsg.role).toBe('assistant');
-    // The text is the partial content exactly as persisted — no truncation.
+    // The text is the partial content exactly as persisted, no truncation.
     const textPart = lastMsg.parts.find((p) => p.type === 'text') as
       | { type: 'text'; text: string }
       | undefined;
@@ -511,7 +511,7 @@ describe('Chat Store — interrupted-stream finalization on reload (dashboard#55
     expect(textPart!.text).toBe(
       'Streams are sequences of data that can be processed incrementally. For example',
     );
-    // The Conversation type has no isStreaming / inProgress / status field —
+    // The Conversation type has no isStreaming / inProgress / status field -
     // the message is structurally identical to any completed assistant message.
     // Cast through unknown so TypeScript allows the structural property probe.
     const convAny = conv as unknown as Record<string, unknown>;
@@ -526,7 +526,7 @@ describe('Chat Store — interrupted-stream finalization on reload (dashboard#55
     useChatStore.getState().saveMessages('conv-interrupted', daemonMessages);
 
     const conv = useChatStore.getState().conversations.find((c) => c.id === 'conv-interrupted')!;
-    // Atomic replacement — always exactly 2 messages, never 3 or 4.
+    // Atomic replacement, always exactly 2 messages, never 3 or 4.
     expect(conv.messages).toHaveLength(2);
   });
 
@@ -537,7 +537,7 @@ describe('Chat Store — interrupted-stream finalization on reload (dashboard#55
     const retrieved = useChatStore.getState().getConversationMessages('conv-interrupted');
     expect(retrieved).toHaveLength(2);
     expect(retrieved[1].role).toBe('assistant');
-    // getConversationMessages is a pure read — no mutation side-effect.
+    // getConversationMessages is a pure read, no mutation side-effect.
     const convAfter = useChatStore.getState().conversations.find((c) => c.id === 'conv-interrupted')!;
     expect(convAfter.messages).toHaveLength(2);
   });
@@ -560,7 +560,7 @@ describe('Chat Store — interrupted-stream finalization on reload (dashboard#55
 });
 
 // ============================================================================
-// dashboard#555 — mid-stream conversation switch: origin isolation
+// dashboard#555, mid-stream conversation switch: origin isolation
 // ============================================================================
 //
 // The actual streaming-origin tracking lives in useChat (streamingOriginConvRef).
@@ -572,7 +572,7 @@ describe('Chat Store — interrupted-stream finalization on reload (dashboard#55
 // behavior is an integration concern; here we verify the underlying store
 // primitives are safe for that pattern.
 
-describe('Chat Store — mid-stream switch: origin isolation (dashboard#555)', () => {
+describe('Chat Store, mid-stream switch: origin isolation (dashboard#555)', () => {
   const originUserMsg = makeMsg('ou1', 'user', 'Question for origin');
   const originStreamedMsg = makeMsg('oa1', 'assistant', 'Streaming answer for origin');
   const switchedUserMsg = makeMsg('su1', 'user', 'Question for switched');
@@ -615,7 +615,7 @@ describe('Chat Store — mid-stream switch: origin isolation (dashboard#555)', (
     const originFinalMessages: UIMessage[] = [originUserMsg, originStreamedMsg];
     useChatStore.getState().saveMessages('conv-origin', originFinalMessages);
 
-    // activeConversationId must remain 'conv-switched' — saveMessages must not
+    // activeConversationId must remain 'conv-switched', saveMessages must not
     // change which conversation is active.
     expect(useChatStore.getState().activeConversationId).toBe('conv-switched');
   });
@@ -628,7 +628,7 @@ describe('Chat Store — mid-stream switch: origin isolation (dashboard#555)', (
     // 2. Simulate the user switching back to the origin.
     useChatStore.getState().setActiveConversation('conv-origin');
 
-    // 3. getConversationMessages returns the origin's messages — the completed stream.
+    // 3. getConversationMessages returns the origin's messages, the completed stream.
     const msgs = useChatStore.getState().getConversationMessages('conv-origin');
     expect(msgs).toHaveLength(2);
     expect(msgs[0].id).toBe('ou1');
@@ -642,7 +642,7 @@ describe('Chat Store — mid-stream switch: origin isolation (dashboard#555)', (
     // happen with the corrected streamingOriginConvRef logic in useChat.
     //
     // We test the negative case here to confirm the store primitives alone cannot
-    // prevent misattribution — the protection lives in the hook's streamingOriginConvRef.
+    // prevent misattribution, the protection lives in the hook's streamingOriginConvRef.
 
     // Simulate the old bug: save origin messages to the switched-to conversation.
     const originFinalMessages: UIMessage[] = [originUserMsg, originStreamedMsg];
@@ -650,7 +650,7 @@ describe('Chat Store — mid-stream switch: origin isolation (dashboard#555)', (
 
     const switched = useChatStore.getState().conversations.find((c) => c.id === 'conv-switched')!;
     // This is what the BUG would produce: the switched conversation gets origin messages.
-    expect(switched.messages).toHaveLength(2); // corrupted — 2 instead of 1
+    expect(switched.messages).toHaveLength(2); // corrupted, 2 instead of 1
     // Ensure that the correct fix (saving to origin) avoids this.
     // The correct behavior is tested in "saveMessages to origin does not affect the switched-to conversation"
     // above. The hook ensures saveMessages is called with the origin id, not active id.

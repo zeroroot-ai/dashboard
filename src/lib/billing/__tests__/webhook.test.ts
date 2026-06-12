@@ -19,7 +19,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // ---------------------------------------------------------------------------
-// Module mocks — registered BEFORE the module under test is imported so that
+// Module mocks, registered BEFORE the module under test is imported so that
 // vi.mock() hoisting takes effect. Each mock is configured per-test via the
 // factory function's captured references.
 // ---------------------------------------------------------------------------
@@ -41,7 +41,7 @@ vi.mock('@/src/lib/k8s/tenants', () => ({
   patchTenant: (...args: unknown[]) => mockPatchTenant(...args),
 }));
 
-// BillingService daemon RPC mocks — replaces the DB pool.
+// BillingService daemon RPC mocks, replaces the DB pool.
 // The route now calls serviceClient(BillingService, ...) for idempotency.
 const mockRecordWebhookEvent = vi.hoisted(() => vi.fn());
 const mockDeleteWebhookEvent = vi.hoisted(() => vi.fn());
@@ -151,7 +151,7 @@ function makeEvent(type: string, session: Record<string, unknown>) {
   };
 }
 
-/** Tenant CR with no failed conditions — provisioning OK. */
+/** Tenant CR with no failed conditions, provisioning OK. */
 function healthyTenant() {
   return {
     metadata: { name: 'acme', annotations: {} },
@@ -160,7 +160,7 @@ function healthyTenant() {
   };
 }
 
-/** Tenant CR with Blocked=True — provisioning definitively failed. */
+/** Tenant CR with Blocked=True, provisioning definitively failed. */
 function blockedTenant() {
   return {
     metadata: { name: 'acme', annotations: {} },
@@ -209,7 +209,7 @@ afterEach(() => {
 // Signature verification
 // ---------------------------------------------------------------------------
 
-describe('POST /api/billing/webhook — signature verification', () => {
+describe('POST /api/billing/webhook, signature verification', () => {
   it('returns 400 when Stripe-Signature header is missing', async () => {
     const req = new NextRequest('http://localhost/api/billing/webhook', {
       method: 'POST',
@@ -241,10 +241,10 @@ describe('POST /api/billing/webhook — signature verification', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Happy path — billing confirmed
+// Happy path, billing confirmed
 // ---------------------------------------------------------------------------
 
-describe('POST /api/billing/webhook — checkout.session.completed (confirm path)', () => {
+describe('POST /api/billing/webhook, checkout.session.completed (confirm path)', () => {
   it('returns 200 and patches the Tenant CR with billing-active annotation', async () => {
     const session = makeSession();
     const event = makeEvent('checkout.session.completed', session);
@@ -299,10 +299,10 @@ describe('POST /api/billing/webhook — checkout.session.completed (confirm path
 });
 
 // ---------------------------------------------------------------------------
-// Rollback path — provisioning failed
+// Rollback path, provisioning failed
 // ---------------------------------------------------------------------------
 
-describe('POST /api/billing/webhook — checkout.session.completed (rollback path)', () => {
+describe('POST /api/billing/webhook, checkout.session.completed (rollback path)', () => {
   it('issues a refund when tenant is Blocked=True', async () => {
     const session = makeSession();
     const event = makeEvent('checkout.session.completed', session);
@@ -422,10 +422,10 @@ describe('POST /api/billing/webhook — checkout.session.completed (rollback pat
 });
 
 // ---------------------------------------------------------------------------
-// Idempotency — duplicate delivery
+// Idempotency, duplicate delivery
 // ---------------------------------------------------------------------------
 
-describe('POST /api/billing/webhook — idempotency', () => {
+describe('POST /api/billing/webhook, idempotency', () => {
   it('returns 200 with duplicate:true on duplicate event (no side effects)', async () => {
     const session = makeSession();
     const event = makeEvent('checkout.session.completed', session);
@@ -465,7 +465,7 @@ describe('POST /api/billing/webhook — idempotency', () => {
     const [req] = mockRecordWebhookEvent.mock.calls[0] as [{ eventId: string; eventType: string }];
     expect(req.eventId).toBe(event.id);
     expect(req.eventType).toBe('checkout.session.completed');
-    // Patch was called — event was processed (not duplicate-skipped).
+    // Patch was called, event was processed (not duplicate-skipped).
     expect(mockPatchTenant).toHaveBeenCalled();
   });
 
@@ -489,7 +489,7 @@ describe('POST /api/billing/webhook — idempotency', () => {
 // Expired / async_payment_failed events
 // ---------------------------------------------------------------------------
 
-describe('POST /api/billing/webhook — checkout.session.expired and async_payment_failed', () => {
+describe('POST /api/billing/webhook, checkout.session.expired and async_payment_failed', () => {
   it.each([
     'checkout.session.expired',
     'checkout.session.async_payment_failed',
@@ -537,7 +537,7 @@ describe('POST /api/billing/webhook — checkout.session.expired and async_payme
 // Missing client_reference_id
 // ---------------------------------------------------------------------------
 
-describe('POST /api/billing/webhook — missing client_reference_id', () => {
+describe('POST /api/billing/webhook, missing client_reference_id', () => {
   it('returns 200 but skips all business logic when client_reference_id is null', async () => {
     const session = makeSession({ client_reference_id: null });
     const event = makeEvent('checkout.session.completed', session);
@@ -556,7 +556,7 @@ describe('POST /api/billing/webhook — missing client_reference_id', () => {
 // Unhandled event types
 // ---------------------------------------------------------------------------
 
-describe('POST /api/billing/webhook — unhandled event types', () => {
+describe('POST /api/billing/webhook, unhandled event types', () => {
   it('returns 200 and takes no action for truly unrecognised event types', async () => {
     const event = makeEvent('payment_method.attached', {});
     mockVerifyWebhookSignature.mockReturnValue(event);
@@ -604,7 +604,7 @@ function makeInvoice(overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe('POST /api/billing/webhook — customer.subscription.created', () => {
+describe('POST /api/billing/webhook, customer.subscription.created', () => {
   it('patches tenant CR billing status on subscription.created', async () => {
     const subscription = makeSubscription();
     const event = makeEvent('customer.subscription.created', subscription);
@@ -649,7 +649,7 @@ describe('POST /api/billing/webhook — customer.subscription.created', () => {
   });
 });
 
-describe('POST /api/billing/webhook — customer.subscription.updated', () => {
+describe('POST /api/billing/webhook, customer.subscription.updated', () => {
   it('patches tenant CR billing status on subscription.updated', async () => {
     const subscription = makeSubscription({ status: 'active' });
     const event = {
@@ -695,7 +695,7 @@ describe('POST /api/billing/webhook — customer.subscription.updated', () => {
   });
 });
 
-describe('POST /api/billing/webhook — customer.subscription.deleted', () => {
+describe('POST /api/billing/webhook, customer.subscription.deleted', () => {
   it('sets billing status to cancelled and writes teardown-after annotation', async () => {
     const subscription = makeSubscription({ status: 'canceled' });
     const event = makeEvent('customer.subscription.deleted', subscription);
@@ -727,7 +727,7 @@ describe('POST /api/billing/webhook — customer.subscription.deleted', () => {
   });
 });
 
-describe('POST /api/billing/webhook — customer.subscription.trial_will_end', () => {
+describe('POST /api/billing/webhook, customer.subscription.trial_will_end', () => {
   it('sets trialEndsSoon = true on the Tenant CR', async () => {
     const subscription = makeSubscription();
     const event = makeEvent('customer.subscription.trial_will_end', subscription);
@@ -743,7 +743,7 @@ describe('POST /api/billing/webhook — customer.subscription.trial_will_end', (
   });
 });
 
-describe('POST /api/billing/webhook — invoice.paid', () => {
+describe('POST /api/billing/webhook, invoice.paid', () => {
   it('sets status to active and clears pastDueSince', async () => {
     const invoice = makeInvoice();
     const event = makeEvent('invoice.paid', invoice);
@@ -761,7 +761,7 @@ describe('POST /api/billing/webhook — invoice.paid', () => {
   });
 });
 
-describe('POST /api/billing/webhook — invoice.payment_failed', () => {
+describe('POST /api/billing/webhook, invoice.payment_failed', () => {
   it('sets status to past_due and writes pastDueSince', async () => {
     const invoice = makeInvoice();
     const event = makeEvent('invoice.payment_failed', invoice);
@@ -803,7 +803,7 @@ describe('POST /api/billing/webhook — invoice.payment_failed', () => {
   });
 });
 
-describe('POST /api/billing/webhook — invoice.payment_action_required', () => {
+describe('POST /api/billing/webhook, invoice.payment_action_required', () => {
   it('handles the same as invoice.payment_failed (sets past_due)', async () => {
     const invoice = makeInvoice();
     const event = makeEvent('invoice.payment_action_required', invoice);
@@ -822,18 +822,18 @@ describe('POST /api/billing/webhook — invoice.payment_action_required', () => 
   });
 });
 
-describe('POST /api/billing/webhook — idempotency replay (all new event types)', () => {
+describe('POST /api/billing/webhook, idempotency replay (all new event types)', () => {
   it('patchTenant is called exactly once even when same subscription.created event delivered twice', async () => {
     const subscription = makeSubscription();
     const event = makeEvent('customer.subscription.created', subscription);
 
-    // First delivery — new event (isNew=true, default mock).
+    // First delivery, new event (isNew=true, default mock).
     mockVerifyWebhookSignature.mockReturnValue(event);
     await POST(makeRequest(JSON.stringify(subscription)));
     const countAfterFirst = mockPatchTenant.mock.calls.length;
     expect(countAfterFirst).toBeGreaterThanOrEqual(1);
 
-    // Second delivery (same event ID) — duplicate (isNew=false).
+    // Second delivery (same event ID), duplicate (isNew=false).
     mockVerifyWebhookSignature.mockReturnValue(event);
     mockRecordWebhookEvent.mockResolvedValueOnce({ isNew: false });
     await POST(makeRequest(JSON.stringify(subscription)));

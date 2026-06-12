@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * GibsonHostedForm — read-only panel for the Gibson-hosted Vault provider.
+ * GibsonHostedForm, read-only panel for the Gibson-hosted Vault provider.
  *
  * No configuration fields are shown because Gibson manages the Vault cluster
  * and namespace on behalf of the tenant. The component only confirms that the
@@ -21,7 +21,7 @@ export function GibsonHostedForm() {
         <DatabaseZapIcon className="size-4" />
         <AlertDescription className="text-xs">
           Your secrets are stored in a dedicated HashiCorp Vault namespace
-          managed by Gibson. No configuration is required — the backend is
+          managed by Gibson. No configuration is required, the backend is
           ready to use.
         </AlertDescription>
       </Alert>

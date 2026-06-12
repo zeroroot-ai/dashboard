@@ -9,7 +9,7 @@
  * scope that needs a target is selected, the selector fetches the matching
  * list via its read Server Action and caches it for the component's lifetime.
  * Callers may still pass `teams` / `users` / `agents` to override the fetch
- * (e.g. tests, or a page that already has the data) — a non-empty prop wins.
+ * (e.g. tests, or a page that already has the data), a non-empty prop wins.
  *
  * Spec: agent-authoring-and-tenant-entitlements task 28, R8;
  * dashboard#698/#699/#700 (populate per-team/-user/-agent dropdowns).

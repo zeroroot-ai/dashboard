@@ -43,7 +43,7 @@ async function fetchMissions(filters?: MissionFilters, _tenantId?: string): Prom
   }
 
   const json = await response.json();
-  // API returns { data: Mission[], total, page, ... } — unwrap it
+  // API returns { data: Mission[], total, page, ... }, unwrap it
   return Array.isArray(json) ? json : json.data ?? [];
 }
 

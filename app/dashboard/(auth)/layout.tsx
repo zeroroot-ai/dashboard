@@ -73,7 +73,7 @@ export default async function AuthLayout({
     : null;
 
   // Resolve plan limits for the in-app quota widget from the daemon's
-  // GetTenantQuota RPC (tenant_quotas Postgres row) — NOT the Tenant CR's
+  // GetTenantQuota RPC (tenant_quotas Postgres row), NOT the Tenant CR's
   // spec.tier. Per ADR-0044 the dashboard's only K8s access is tenant
   // provisioning; quota limits are a daemon read. Failures degrade silently
   // to zero (widget hides). Spec plans-and-quotas-simplification R9.B.3.

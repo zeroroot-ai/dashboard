@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * getTenantQuotaAction — read-side Server Action for the Plan & Usage
+ * getTenantQuotaAction, read-side Server Action for the Plan & Usage
  * section. Reads plan limits from the daemon's tenant_quotas Postgres
  * row via TenantAdminService.GetTenantQuota and the live counter
  * snapshot via TenantAdminService.GetTenantQuotaUsage.

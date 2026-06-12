@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * CheckpointBadge — "Resumed from checkpoint X" affordance.
+ * CheckpointBadge, "Resumed from checkpoint X" affordance.
  *
  * Reads {@link CheckpointMetadata} streamed back on the first
  * `ResumeMissionResponse` event. When metadata is null the badge
@@ -33,7 +33,7 @@ function checkpointShortId(id: string): string {
 }
 
 function timeAgoFromUnixSeconds(unixSec: bigint): string {
-  if (unixSec === BigInt(0)) return "—";
+  if (unixSec === BigInt(0)) return "-";
   const seconds = Math.max(
     0,
     Math.floor(Date.now() / 1000) - Number(unixSec),

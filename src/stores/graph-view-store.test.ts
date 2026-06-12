@@ -2,7 +2,7 @@
  * Graph View Store Tests
  *
  * The store is the single source of truth for the knowledge-graph explorer.
- * These tests assert the external behavior of its actions — in particular the
+ * These tests assert the external behavior of its actions, in particular the
  * regression guard that switching layout never lands the controls in a wedged
  * state (the original "clicking a layout button disables all of them" bug).
  */

@@ -55,10 +55,10 @@ beforeEach(() => {
   mockRequireActiveTenant.mockResolvedValue('t1');
 });
 
-describe('GET /api/missions — canonical error mapping', () => {
+describe('GET /api/missions, canonical error mapping', () => {
   // The 9-class table the slice contracts. Every route under app/api
   // must surface daemon failures with these exact HTTP codes + class
-  // names — the client-side error-state component branches on class.
+  // names, the client-side error-state component branches on class.
   const cases: Array<{
     code: Code;
     httpStatus: number;
@@ -126,7 +126,7 @@ describe('GET /api/missions — canonical error mapping', () => {
   });
 });
 
-describe('GET /api/missions — empty-state vs error-state', () => {
+describe('GET /api/missions, empty-state vs error-state', () => {
   it('200 with empty data array on empty-state (no missions for tenant)', async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: 'u1', tenantId: 't1' } });
     mockListMissions.mockResolvedValue({ missions: [] });
@@ -134,7 +134,7 @@ describe('GET /api/missions — empty-state vs error-state', () => {
     const { GET } = await import('../route');
     const res = await GET(makeRequest());
 
-    // Empty-state is HTTP 200 — the UI renders the empty-state
+    // Empty-state is HTTP 200, the UI renders the empty-state
     // component. This is the contract that distinguishes "no data"
     // from "the daemon failed to answer".
     expect(res.status).toBe(200);
@@ -152,7 +152,7 @@ describe('GET /api/missions — empty-state vs error-state', () => {
     const { GET } = await import('../route');
     const res = await GET(makeRequest());
 
-    // Error-state — distinct HTTP class so the client-side hook can
+    // Error-state, distinct HTTP class so the client-side hook can
     // branch on it without inspecting the response body.
     expect(res.status).toBeGreaterThanOrEqual(400);
     const body = await res.json();

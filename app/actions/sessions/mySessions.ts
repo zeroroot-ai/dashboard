@@ -4,7 +4,7 @@
  * Self-service login-session actions for the Settings → CLI page
  * (PRD dashboard#738, slices S3/S4).
  *
- * Both actions act ONLY on the authenticated caller's own sessions — the
+ * Both actions act ONLY on the authenticated caller's own sessions, the
  * daemon's gibson.session.v1.SessionService is self-scoped and the dashboard
  * never passes a user id. listMySessionsAction additionally decodes the
  * caller's own session id (the `sid` claim on the Zitadel access token) so the

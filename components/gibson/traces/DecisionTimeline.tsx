@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * DecisionTimeline — the train-of-thought view of a run (dashboard#533).
+ * DecisionTimeline, the train-of-thought view of a run (dashboard#533).
  *
  * Renders the run's agent decisions as a readable vertical narrative: which
  * agent acted, what it decided (action), why (reasoning), how sure it was
@@ -9,7 +9,7 @@
  * entry expands to reveal the underlying conversation, loaded on demand.
  *
  * This is the default run view. The raw span tree lives behind the "Advanced"
- * affordance in RunView — this component never shows observation ids or
+ * affordance in RunView, this component never shows observation ids or
  * Langfuse/Gibson-internal vocabulary.
  */
 
@@ -42,7 +42,7 @@ function formatClockTime(d: Date): string {
 }
 
 function formatLatency(ms: number): string {
-  if (ms <= 0) return "—";
+  if (ms <= 0) return "-";
   if (ms < 1000) return `${Math.round(ms)}ms`;
   return `${(ms / 1000).toFixed(2)}s`;
 }

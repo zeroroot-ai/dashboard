@@ -3,7 +3,7 @@
  *
  * Defines the audience-aware persona system for the Gibson chat assistant.
  * Each persona carries a system prompt, icon, suggested prompts, and
- * human-readable label/description. Persona metadata is static — no API
+ * human-readable label/description. Persona metadata is static, no API
  * call is needed to populate the selector.
  */
 
@@ -15,7 +15,7 @@ export interface Persona {
   id: string;
   label: string;
   description: string;
-  /** Lucide icon name string — resolved at component level via the icon map. */
+  /** Lucide icon name string, resolved at component level via the icon map. */
   icon: string;
   systemPrompt: string;
   suggestedPrompts: string[];

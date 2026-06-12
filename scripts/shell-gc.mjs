@@ -2,7 +2,7 @@
 /**
  * Entry point for the shell-user garbage collection CronJob.
  *
- * Run daily (03:00 UTC by default — see the Helm CronJob template) to delete
+ * Run daily (03:00 UTC by default, see the Helm CronJob template) to delete
  * shell-user rows in the dashboard `user` table (the Auth.js adapter schema)
  * that were created by the tenant-operator's shell-user auto-create path
  * and never claimed within the retention threshold.
@@ -13,19 +13,19 @@
  * and is covered by unit tests via vitest. The production dashboard image
  * runs Node 20 which has no built-in `.ts` loader, so this file inlines the
  * SQL so the CronJob can execute without a transpilation step. Keep the two
- * in sync — the SQL predicates here must match `unclaimed-shell-gc.ts` line
+ * in sync, the SQL predicates here must match `unclaimed-shell-gc.ts` line
  * for line, otherwise the unit tests won't cover the live behaviour.
  *
  * Environment:
- *   DATABASE_URL — PostgreSQL connection string for the dashboard DB.
+ *   DATABASE_URL, PostgreSQL connection string for the dashboard DB.
  *
  * Flags:
  *   --dry-run             List candidates without deleting.
  *   --older-than-days=N   Override the 30-day age threshold.
  *
  * Exit codes:
- *   0 — success (including "no candidates").
- *   1 — unhandled error (DB unreachable, invalid flags, etc.).
+ *   0, success (including "no candidates").
+ *   1, unhandled error (DB unreachable, invalid flags, etc.).
  */
 
 import pg from "pg";
@@ -33,7 +33,7 @@ import pg from "pg";
 const { Pool } = pg;
 
 // ---------------------------------------------------------------------------
-// Argv parsing — deliberately hand-rolled so we don't pull in a CLI dep.
+// Argv parsing, deliberately hand-rolled so we don't pull in a CLI dep.
 // Supports `--dry-run`, `--older-than-days=N`, and `--older-than-days N`.
 // ---------------------------------------------------------------------------
 
@@ -64,7 +64,7 @@ function parseArgs(argv) {
 
 // ---------------------------------------------------------------------------
 // Core GC (mirror of src/lib/jobs/unclaimed-shell-gc.ts). Every change to the
-// SQL here must be made in that file too — the unit test suite exercises it.
+// SQL here must be made in that file too, the unit test suite exercises it.
 // ---------------------------------------------------------------------------
 
 const SELECT_SQL = `

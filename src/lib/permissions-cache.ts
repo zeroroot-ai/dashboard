@@ -7,7 +7,7 @@
  * in-memory cache so the dashboard does not hammer the route on every
  * component render.
  *
- * Spec: zero-trust-hardening Requirements 6.1, 6.2 — the previous
+ * Spec: zero-trust-hardening Requirements 6.1, 6.2, the previous
  * implementation built a `createGrpcWebTransport` against
  * `NEXT_PUBLIC_GIBSON_DAEMON_URL` directly from the browser. That bypassed
  * the Envoy edge (the single jwt_authn / ext_authz / SPIFFE-mTLS
@@ -17,7 +17,7 @@
  * server-side transport.
  *
  * Design constraints:
- *  - Cache is a plain Map with timestamps — no third-party cache lib.
+ *  - Cache is a plain Map with timestamps, no third-party cache lib.
  *  - TTL defaults to 5 minutes; overridable via
  *    NEXT_PUBLIC_PERMISSIONS_CACHE_TTL_MS environment variable.
  *  - `invalidatePermissionsCache()` forces a fresh fetch on next access.
@@ -71,7 +71,7 @@ interface CacheEntry {
   expiresAt: number;
 }
 
-// Module-scoped Map — one entry per tenantId.
+// Module-scoped Map, one entry per tenantId.
 const _cache = new Map<string, CacheEntry>();
 
 /** Remove all cached entries, forcing a fresh fetch on next access. */
@@ -91,7 +91,7 @@ export function invalidateTenantPermissions(tenantId: string): void {
 // Replaces the previous browser-side gRPC-Web transport. The server route
 // at `/api/auth/my-permissions` requires an Auth.js session and calls
 // `GetMyPermissions` server-side via `userClient` (which routes through
-// Envoy — see src/lib/gibson-client.ts). Per the zero-trust-hardening
+// Envoy, see src/lib/gibson-client.ts). Per the zero-trust-hardening
 // spec this is the ONLY supported path; no `NEXT_PUBLIC_GIBSON_DAEMON_URL`
 // is read anywhere.
 //

@@ -2,7 +2,7 @@
  * Account Settings page.
  *
  * Read-only view of the signed-in user's identity + active workspace.
- * Editing is not exposed in the dashboard today — the IdP is a backend
+ * Editing is not exposed in the dashboard today, the IdP is a backend
  * implementation detail that should never surface to end users (no
  * "manage in Zitadel" deep-link, no provider name leakage). When the
  * dashboard grows in-app profile editing, it will proxy through a
@@ -35,7 +35,7 @@ export default async function AccountSettingsPage() {
   try {
     activeTenant = await getActiveTenant();
   } catch {
-    // No active-tenant cookie — user hasn't picked one yet, or the cookie
+    // No active-tenant cookie, user hasn't picked one yet, or the cookie
     // pointed at a tenant they no longer belong to. Render gracefully.
   }
   const memberships = await getMyMemberships();

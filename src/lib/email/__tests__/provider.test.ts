@@ -88,7 +88,7 @@ const msg: EmailMessage = {
 // --- Factory -----------------------------------------------------------
 
 describe('getEmailProvider()', () => {
-  it('throws when DASHBOARD_EMAIL_PROVIDER is unset (one-code-path/206 — explicit choice required)', () => {
+  it('throws when DASHBOARD_EMAIL_PROVIDER is unset (one-code-path/206, explicit choice required)', () => {
     delete process.env.DASHBOARD_EMAIL_PROVIDER;
     expect(() => getEmailProvider()).toThrow(
       /DASHBOARD_EMAIL_PROVIDER is required/,

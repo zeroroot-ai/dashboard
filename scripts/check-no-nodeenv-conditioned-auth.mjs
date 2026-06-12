@@ -76,7 +76,7 @@ const TEST_FILE_PATTERN = /\.(?:test|spec)\./;
 
 const NODEENV_NEEDLE = 'process.env.NODE_ENV';
 
-/** Globs (path-prefix matchers) — restricted to authz/identity/daemon-call code. */
+/** Globs (path-prefix matchers), restricted to authz/identity/daemon-call code. */
 const RESTRICTED_PATH_PREFIXES = [
   'src/lib/auth/',
   'src/app/api/auth/',
@@ -197,7 +197,7 @@ function runScan() {
 function printViolations(violations) {
   for (const v of violations) {
     process.stderr.write(
-      `❌ ${v.rel}:${v.line} — process.env.NODE_ENV reference in restricted authz/identity/daemon-call path\n` +
+      `❌ ${v.rel}:${v.line}, process.env.NODE_ENV reference in restricted authz/identity/daemon-call path\n` +
         `   ${v.content}\n\n`,
     );
   }
@@ -206,13 +206,13 @@ function printViolations(violations) {
       `---------------\n` +
       `Spec "${SPEC_NAME}" Requirement 5: NODE_ENV-conditioned authz/identity/\n` +
       `daemon-call branches are forbidden because NODE_ENV is fragile in\n` +
-      `prod deployments — a misconfigured image with NODE_ENV=development\n` +
+      `prod deployments, a misconfigured image with NODE_ENV=development\n` +
       `silently unlocks every \`!== 'production'\` branch.\n` +
       `\n` +
       `If your hit is genuinely non-authz (e.g. cookie-secure flag,\n` +
       `dev-only logging), add it to .permitted-nodeenv.json with a\n` +
       `rationale string and have a security reviewer sign off. Do NOT\n` +
-      `add authz/identity/daemon-call hits to the allow-list — find a\n` +
+      `add authz/identity/daemon-call hits to the allow-list, find a\n` +
       `same-in-dev-and-prod approach.\n`,
   );
 }
@@ -224,7 +224,7 @@ function printViolations(violations) {
 function runSelfTest() {
   const fixturePath = join(ROOT, 'src', 'lib', 'auth', '__nodeenv_selftest.ts');
   const fixtureContent = [
-    '// SELFTEST FIXTURE — auto-deleted immediately after the guard runs',
+    '// SELFTEST FIXTURE, auto-deleted immediately after the guard runs',
     'export function bad(): boolean {',
     "  return process.env.NODE_ENV !== 'production';",
     '}',
@@ -251,12 +251,12 @@ function runSelfTest() {
 
   if (caught) {
     process.stdout.write(
-      `${SCRIPT_NAME} --selftest: PASS — guard correctly caught the synthetic violation.\n`,
+      `${SCRIPT_NAME} --selftest: PASS, guard correctly caught the synthetic violation.\n`,
     );
     process.exit(0);
   }
   process.stderr.write(
-    `${SCRIPT_NAME} --selftest: FAIL — guard did NOT catch a deliberate NODE_ENV reference in src/lib/auth/.\n`,
+    `${SCRIPT_NAME} --selftest: FAIL, guard did NOT catch a deliberate NODE_ENV reference in src/lib/auth/.\n`,
   );
   process.exit(1);
 }

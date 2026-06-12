@@ -2,7 +2,7 @@
  * Smoke tests for the shared auth validators.
  *
  * The signup form (client) and the signUpAction (server) both consume
- * these schemas — divergence here would silently let weak passwords
+ * these schemas, divergence here would silently let weak passwords
  * past either layer.
  */
 import { describe, expect, it } from "vitest";

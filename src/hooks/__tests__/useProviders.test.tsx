@@ -324,7 +324,7 @@ describe('useProviders Hooks', () => {
         expect(global.fetch).toHaveBeenCalled();
       });
 
-      // See note above on includeDisabled — same arg-length contract.
+      // See note above on includeDisabled, same arg-length contract.
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('provider=anthropic-primary'),
         undefined

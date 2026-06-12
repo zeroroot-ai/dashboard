@@ -1,6 +1,6 @@
 ---
 title: Component bootstrap & auth
-description: How agents, tools, and plugins authenticate against Gibson — the one enrollment path, the per-call protocol, and where to look when a 401 lands.
+description: How agents, tools, and plugins authenticate against Gibson, the one enrollment path, the per-call protocol, and where to look when a 401 lands.
 ---
 
 A "component" in Gibson is the umbrella for **agents**, **tools**, and
@@ -8,7 +8,7 @@ A "component" in Gibson is the umbrella for **agents**, **tools**, and
 at dispatch time. They share **one identity model** end to end: every
 kind enrolls the same way, and every call to Gibson carries a Bearer
 JWT minted from the same machinery. What differs between an agent, a
-tool, and a plugin is **policy** — the grants on its principal — not the
+tool, and a plugin is **policy**, the grants on its principal, not the
 mechanism.
 
 ## The enrollment path
@@ -47,7 +47,7 @@ sends it as a Bearer credential; Gibson validates the signature against
 the host key recorded at enrollment. The short per-RPC lifetime
 minimises the replay window.
 
-The SDK handles all of this transparently — your code calls
+The SDK handles all of this transparently, your code calls
 `agent.New(...)` (or the equivalent for tools and plugins), passes a
 context, and Gibson sees a fully-authenticated request. You do not write
 any of the token plumbing yourself.
@@ -65,13 +65,13 @@ the on-disk files. The SDK reads either source.
 | **Host key** | Persistent Ed25519 keypair stored on disk at `~/.gibson/<kind>/<name>.host_key` (mode 0600). Identifies a component install. Its public-key thumbprint is the host_id. |
 | **Runtime credential** | The signing material written alongside the host key at `~/.gibson/<kind>/<name>.runtime.json` (mode 0600), or supplied as `GIBSON_AGENT_KEY` for headless runtimes. |
 | **Capability-grant token (CG-JWT)** | Per-mission task token Gibson mints, scoped to a specific RPC set. Presented alongside the primary credential during mission execution. |
-| **Component grant** | Per-action read / configure / execute permission on a registered component, granted via the dashboard's Permissions tab. This is the policy that makes an agent an agent and a tool a tool — the enrollment mechanism is identical. |
+| **Component grant** | Per-action read / configure / execute permission on a registered component, granted via the dashboard's Permissions tab. This is the policy that makes an agent an agent and a tool a tool, the enrollment mechanism is identical. |
 | **Plugin invocation grant** | Binary `can_invoke` permission on a plugin. Only **tools** can hold this; agents do not directly invoke plugins. |
 
 ## Troubleshooting a 401
 
 A 401 means Gibson rejected your component's credential. The customer
-debug surface for this is the **dashboard** plus `gibson inspect` — you
+debug surface for this is the **dashboard** plus `gibson inspect`, you
 should not need to read any server-side logs.
 
 1. **Verify the credential files are intact.** Mode must be 0600 on both
@@ -81,7 +81,7 @@ should not need to read any server-side logs.
    calls Gibson's identity service, and prints who you are along with
    the permissions you hold.
 3. **If `inspect` fails to authenticate**, your enrollment never
-   completed or the host key is gone — re-issue a bootstrap token from
+   completed or the host key is gone, re-issue a bootstrap token from
    the dashboard's deploy wizard and re-run `gibson component register
    --token <T>`. (Bootstrap tokens are single-use and expire after 24 h;
    if you lost one or it expired, issuing a fresh one is the path
@@ -89,17 +89,17 @@ should not need to read any server-side logs.
 4. **If `inspect` succeeds but a specific RPC still gets denied**, you
    have a credential but not the grant the RPC needs. Open the relevant
    component's detail page in the dashboard and check the **Permissions**
-   tab — the missing grant will be listed there with a one-click toggle
+   tab, the missing grant will be listed there with a one-click toggle
    to add it (subject to your own role's permissions to edit grants).
 
 If you've worked through these and the call still fails, the enrollment
-flow has misfired — file a bug with the output of `gibson inspect --json`
+flow has misfired, file a bug with the output of `gibson inspect --json`
 so we can correlate it on our side.
 
 ## Related
 
-- **SDK packages** — [`capabilitygrant`](https://github.com/zeroroot-ai/sdk/tree/main/capabilitygrant)
-- **CLI commands** — `gibson component register --token <T>` (all kinds),
+- **SDK packages**, [`capabilitygrant`](https://github.com/zeroroot-ai/sdk/tree/main/capabilitygrant)
+- **CLI commands**, `gibson component register --token <T>` (all kinds),
   `gibson inspect`
-- **In-product surfaces** — the deploy wizard at `/dashboard/deploy`,
+- **In-product surfaces**, the deploy wizard at `/dashboard/deploy`,
   the Permissions tab on each component's detail page

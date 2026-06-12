@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * PathQueryPanel — Phase 5, Task 20
+ * PathQueryPanel, Phase 5, Task 20
  *
  * Floating panel for querying paths between graph nodes via /api/graph/paths.
  * Source-node autocomplete from current data.nodes. Target picker: by node-kind

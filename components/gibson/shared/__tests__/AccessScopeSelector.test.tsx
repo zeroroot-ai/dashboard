@@ -1,5 +1,5 @@
 /**
- * AccessScopeSelector — component tests.
+ * AccessScopeSelector, component tests.
  *
  * Covers the on-demand population of the per-team / per-user / per-agent
  * dropdowns (dashboard#698/#699/#700) and the prop-override path.

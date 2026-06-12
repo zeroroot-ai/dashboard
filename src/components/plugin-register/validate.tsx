@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Step 2 — Server-side validation
+ * Step 2, Server-side validation
  *
  * Calls validatePluginManifestAction (RegisterPlugin dry-run) to surface
  * semantic errors from the daemon. Automatically fires when the step mounts
@@ -90,7 +90,7 @@ export function ValidateStep({
         <h3 className="text-sm font-medium">Server-side validation</h3>
         <p className="text-muted-foreground mt-1 text-xs">
           The manifest is being validated against the Gibson daemon. No state is
-          created — this is a dry run.
+          created, this is a dry run.
         </p>
       </div>
 

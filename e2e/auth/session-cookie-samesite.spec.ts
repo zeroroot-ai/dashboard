@@ -1,14 +1,14 @@
 /**
  * session-cookie-samesite.spec.ts
  *
- * Spec security-hardening R18 — verifies the dashboard session cookie is
+ * Spec security-hardening R18, verifies the dashboard session cookie is
  * issued with `SameSite=Strict`, so it is never carried on cross-origin
  * navigations / sub-resource requests. This protects authenticated
  * endpoints from CSRF and clickjacking attacks that depend on a
  * third-party origin issuing requests with ambient session credentials.
  *
  * The OIDC state / PKCE / callback-URL / csrf cookies that Auth.js sets
- * during the sign-in round-trip MUST stay `SameSite=Lax` — Zitadel's
+ * during the sign-in round-trip MUST stay `SameSite=Lax`, Zitadel's
  * browser-level redirect back to /api/auth/callback/zitadel would
  * otherwise drop the state cookie and break sign-in. We assert that
  * contract too.
@@ -16,20 +16,20 @@
  * Test plan (no live Zitadel required for the assertions below):
  *
  *   1. Hit `/` un-authenticated. Auth.js v5 issues a CSRF cookie and a
- *      callback-url cookie on first contact — assert these are LAX.
+ *      callback-url cookie on first contact, assert these are LAX.
  *
  *   2. Hit `/api/auth/signin/zitadel` (the GET-then-POST signin route).
  *      Auth.js sets the OIDC state + pkce cookies before redirecting to
  *      Zitadel. Assert these are LAX (so they survive Zitadel's redirect
  *      back to the dashboard). Asserts presence; if the signin route
  *      doesn't expose them in this context the test logs and skips that
- *      branch — the unit test in src/__tests__/auth/cookie-samesite.test.ts
+ *      branch, the unit test in src/__tests__/auth/cookie-samesite.test.ts
  *      is the load-bearing assertion.
  *
  *   3. Cross-origin GET to `/` with no cookies: response is anonymous
  *      (302 to /login or 200 with login chrome). This mirrors what
  *      happens to the session cookie in a strict-cookie attack scenario
- *      — even if the user has an active session, a cross-site request
+ *     , even if the user has an active session, a cross-site request
  *      from `attacker.example` will not include the session cookie, so
  *      the dashboard will treat the request as anonymous.
  *
@@ -40,7 +40,7 @@
  *      authentication outcome.
  *
  * The session cookie itself can only be obtained by a real OIDC sign-in,
- * which requires a running Zitadel — so the strict assertion on the
+ * which requires a running Zitadel, so the strict assertion on the
  * SESSION cookie's Set-Cookie header lives in the unit test
  * (`src/__tests__/auth/cookie-samesite.test.ts`). This e2e test exercises
  * the boundary behaviour observable without authenticated state.
@@ -61,7 +61,7 @@ test.describe("session cookie sameSite (security-hardening R18)", () => {
   test("anonymous request to / does not authenticate when no cookies are sent", async ({
     request,
   }) => {
-    // Cross-origin GET with NO cookies — equivalent to the browser
+    // Cross-origin GET with NO cookies, equivalent to the browser
     // dropping the session cookie because of `SameSite=Strict` on a
     // cross-site referrer. The dashboard must NOT authenticate this
     // request. Auth.js is configured with pages.signIn = "/login" and
@@ -115,7 +115,7 @@ test.describe("session cookie sameSite (security-hardening R18)", () => {
       if (fallback.status() >= 400) {
         test.skip(
           true,
-          "Auth.js endpoints not reachable in this environment — see " +
+          "Auth.js endpoints not reachable in this environment, see " +
             "src/__tests__/auth/cookie-samesite.test.ts for the load-bearing assertion",
         );
       }
@@ -125,7 +125,7 @@ test.describe("session cookie sameSite (security-hardening R18)", () => {
     if (!setCookieHeaders) {
       test.skip(
         true,
-        "no Set-Cookie headers in /api/auth/csrf response — likely a deployment-mode mismatch",
+        "no Set-Cookie headers in /api/auth/csrf response, likely a deployment-mode mismatch",
       );
     }
 
@@ -161,7 +161,7 @@ test.describe("session cookie sameSite (security-hardening R18)", () => {
     test.info().annotations.push({
       type: "spec",
       description:
-        "security-hardening R18 — session cookie sameSite=strict; " +
+        "security-hardening R18, session cookie sameSite=strict; " +
         "see src/__tests__/auth/cookie-samesite.test.ts for the unit assertion.",
     });
   });

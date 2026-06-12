@@ -159,7 +159,7 @@ const bedrockDescriptor: SupportedProviderDescriptor = {
   defaultModels: [
     {
       name: "anthropic.claude-3-haiku-20240307-v1:0",
-      family: "Bedrock — Claude 3",
+      family: "Bedrock, Claude 3",
       contextWindow: 200000,
     },
   ],
@@ -313,10 +313,10 @@ describe("ProvidersContent", () => {
 });
 
 // ---------------------------------------------------------------------------
-// ConfiguredProviderRow — health badge (dashboard#283)
+// ConfiguredProviderRow, health badge (dashboard#283)
 // ---------------------------------------------------------------------------
 
-describe("ConfiguredProviderRow — health badge", () => {
+describe("ConfiguredProviderRow, health badge", () => {
   const mockedUseSupportedProviders = vi.mocked(useSupportedProviders);
   const mockedUseProviders = vi.mocked(useProviders);
   const mockedUseProviderHealth = vi.mocked(useProviderHealth);
@@ -581,7 +581,7 @@ describe("DynamicCredentialForm", () => {
     expect(callArgs.config).not.toHaveProperty("displayName");
   });
 
-  it("password inputs are uncontrolled — react does not hold plaintext in state beyond submit", async () => {
+  it("password inputs are uncontrolled, react does not hold plaintext in state beyond submit", async () => {
     const user = userEvent.setup();
     renderWithProviders(
       <DynamicCredentialForm
@@ -618,10 +618,10 @@ describe("DynamicCredentialForm", () => {
 });
 
 // ---------------------------------------------------------------------------
-// ConfiguredProviderRow — credentialsMasked display
+// ConfiguredProviderRow, credentialsMasked display
 // ---------------------------------------------------------------------------
 
-describe("ConfiguredProviderRow — credentialsMasked display", () => {
+describe("ConfiguredProviderRow, credentialsMasked display", () => {
   const mockedUseSupportedProviders = vi.mocked(useSupportedProviders);
   const mockedUseProviders = vi.mocked(useProviders);
 
@@ -716,10 +716,10 @@ describe("ConfiguredProviderRow — credentialsMasked display", () => {
 });
 
 // ---------------------------------------------------------------------------
-// ConfiguredProviderRow — edit credentials (dashboard#281)
+// ConfiguredProviderRow, edit credentials (dashboard#281)
 // ---------------------------------------------------------------------------
 
-describe("ConfiguredProviderRow — edit credentials", () => {
+describe("ConfiguredProviderRow, edit credentials", () => {
   const mockedUseSupportedProviders = vi.mocked(useSupportedProviders);
   const mockedUseProviders = vi.mocked(useProviders);
 
@@ -769,7 +769,7 @@ describe("ConfiguredProviderRow — edit credentials", () => {
 
     await user.click(screen.getByRole("button", { name: /edit credentials/i }));
 
-    // Simulate credential entry via the stub — fires onValuesChange
+    // Simulate credential entry via the stub, fires onValuesChange
     await user.click(screen.getByTestId("credentials-and-test-stub"));
 
     await user.click(screen.getByRole("button", { name: /^save$/i }));
@@ -838,10 +838,10 @@ describe("ConfiguredProviderRow — edit credentials", () => {
 });
 
 // ---------------------------------------------------------------------------
-// ConfiguredProviderRow — deprecated model badge (dashboard#289)
+// ConfiguredProviderRow, deprecated model badge (dashboard#289)
 // ---------------------------------------------------------------------------
 
-describe("ConfiguredProviderRow — deprecated model badge (dashboard#289)", () => {
+describe("ConfiguredProviderRow, deprecated model badge (dashboard#289)", () => {
   const mockedUseSupportedProviders = vi.mocked(useSupportedProviders);
   const mockedUseProviders = vi.mocked(useProviders);
   const mockedUseProviderHealth = vi.mocked(useProviderHealth);

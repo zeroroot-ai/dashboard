@@ -1,7 +1,7 @@
 /**
  * Findings Counts API Route
  *
- * GET /api/findings/counts — returns { critical, high, medium, low, info }
+ * GET /api/findings/counts, returns { critical, high, medium, low, info }
  * counts via GraphService.GetFindingCounts (SEVERITY grouping).
  *
  * Spec: dashboard-direct-neo4j-removal (Phase 3, Task 11).

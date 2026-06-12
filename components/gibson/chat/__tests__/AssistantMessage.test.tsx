@@ -16,7 +16,7 @@ import { AssistantMessage, UserMessage } from '../ChatContent';
  * The bug: `MessagePartPrimitive.InProgress` was rendered at the MESSAGE scope
  * (a sibling of `MessagePrimitive.Parts`). That primitive reads `s.part`, which
  * only exists inside a message-PART scope, so the proxied assistant state threw
- * on every assistant-message render — before `.status` was ever consulted.
+ * on every assistant-message render, before `.status` was ever consulted.
  *
  * This harness renders the real `AssistantMessage` through a minimal external
  * store runtime. Pre-fix it throws during render; post-fix it renders the text.

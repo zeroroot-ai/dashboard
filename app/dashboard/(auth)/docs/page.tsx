@@ -1,5 +1,5 @@
 /**
- * /dashboard/docs index — overview of the mission DSL with
+ * /dashboard/docs index, overview of the mission DSL with
  * pointers to verbs / nouns / schema-reference / templates.
  */
 
@@ -18,11 +18,11 @@ export default function DocsIndex() {
       </p>
       <ul>
         <li>
-          <Link href="/dashboard/docs/verbs">Mission Verbs</Link> — the
+          <Link href="/dashboard/docs/verbs">Mission Verbs</Link>, the
           12 decision actions the orchestrator can take.
         </li>
         <li>
-          <Link href="/dashboard/docs/nouns">Mission Nouns</Link> —
+          <Link href="/dashboard/docs/nouns">Mission Nouns</Link> -
           every <code>NodeType</code> with its config message and
           MergeStrategy.
         </li>
@@ -30,17 +30,17 @@ export default function DocsIndex() {
           <Link href="/dashboard/docs/schema-reference">
             Schema Reference
           </Link>{" "}
-          — exhaustive field reference for every mission proto
+         , exhaustive field reference for every mission proto
           message.
         </li>
         <li>
-          <Link href="/dashboard/docs/templates">Templates</Link> —
+          <Link href="/dashboard/docs/templates">Templates</Link> -
           ready-to-use missions shipped by the ADK.
         </li>
       </ul>
       <p>
         Every term in these pages is sourced from the canonical proto
-        comments — no hand-written documentation. The dashboard&rsquo;s{" "}
+        comments, no hand-written documentation. The dashboard&rsquo;s{" "}
         <code>scripts/vendor-mission-authoring-bundle.mjs</code>{" "}
         prebuild step refreshes this content from the OCI bundle on
         every SDK tag bump.

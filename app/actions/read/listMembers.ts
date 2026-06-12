@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * listMembersAction — read-side Server Action for the Members settings page
+ * listMembersAction, read-side Server Action for the Members settings page
  * and the MemberPicker combobox in Model Access.
  *
  * Calls TenantAdminService.ListMembers (platform-sdk PR #34) to enumerate
@@ -59,7 +59,7 @@ function toMemberRow(m: TenantMember): MemberRow {
  * Fetch up to 500 members of the active tenant.
  *
  * Returns { ok: true, data: [] } when the daemon returns Unimplemented or
- * Unavailable — the caller degrades gracefully until the handler ships.
+ * Unavailable, the caller degrades gracefully until the handler ships.
  */
 export async function listMembersAction(
   nameFilter?: string,
@@ -88,7 +88,7 @@ export async function listMembersAction(
   } catch (err) {
     if (err instanceof ConnectError) {
       if (err.code === Code.Unimplemented || err.code === Code.Unavailable) {
-        // Backend handler not yet deployed — degrade gracefully.
+        // Backend handler not yet deployed, degrade gracefully.
         return { ok: true, data: [] };
       }
     }

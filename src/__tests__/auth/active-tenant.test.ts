@@ -35,7 +35,7 @@ vi.mock("react", () => ({
   cache: <T extends (...args: never[]) => unknown>(fn: T) => fn,
 }));
 
-// next/navigation redirect is a throw — we capture it so RSC tests work.
+// next/navigation redirect is a throw, we capture it so RSC tests work.
 const redirectTarget = { url: "" };
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
@@ -47,7 +47,7 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
-// next/server NextResponse — provide a minimal stub so the module loads.
+// next/server NextResponse, provide a minimal stub so the module loads.
 vi.mock("next/server", () => ({
   NextResponse: {
     json: (body: unknown, init?: { status?: number; headers?: Record<string, string> }) => ({
@@ -131,11 +131,11 @@ describe("getActiveTenant error modes", () => {
 });
 
 // ---------------------------------------------------------------------------
-// requireActiveTenant — canonical alias
+// requireActiveTenant, canonical alias
 // ---------------------------------------------------------------------------
 
 describe("requireActiveTenant", () => {
-  it("is an alias for getActiveTenant — returns tenant when cookie present + valid member", async () => {
+  it("is an alias for getActiveTenant, returns tenant when cookie present + valid member", async () => {
     memberships.list = [{ tenantId: "acme", tenantName: "Acme", role: "admin" }];
     await setActiveTenant("acme");
     const id = await requireActiveTenant();

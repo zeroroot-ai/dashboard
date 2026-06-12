@@ -1,5 +1,5 @@
 /**
- * Tests for PasswordStrength component — rule checklist + HIBP breach indicator.
+ * Tests for PasswordStrength component, rule checklist + HIBP breach indicator.
  *
  * Covers:
  *   1. Empty password → no breach UI rendered.
@@ -163,7 +163,7 @@ describe("PasswordStrength", () => {
 
       expect(action).toHaveBeenCalledTimes(1);
       expect(
-        screen.getByText(/Breach check unavailable — you can still submit/i),
+        screen.getByText(/Breach check unavailable, you can still submit/i),
       ).toBeDefined();
       // Must not show alert or Breached badge.
       expect(screen.queryByRole("alert")).toBeNull();
@@ -198,7 +198,7 @@ describe("PasswordStrength", () => {
         />,
       );
 
-      // Advance to just before debounce triggers — still nothing called.
+      // Advance to just before debounce triggers, still nothing called.
       await act(async () => {
         vi.advanceTimersByTime(400);
       });

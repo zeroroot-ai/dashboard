@@ -3,7 +3,7 @@
  *
  * Fetches a tenant-level knowledge graph summary from the daemon via
  * GraphService.GetGraphSummary. The daemon performs the Neo4j query and
- * caches the result for 60 seconds server-side — no client-side cache needed.
+ * caches the result for 60 seconds server-side, no client-side cache needed.
  *
  * Spec: dashboard-direct-neo4j-removal (Phase 3, Task 10).
  */
@@ -53,7 +53,7 @@ const EMPTY_RESPONSE: GraphSummaryResponse = {
 /**
  * Fetch a tenant-scoped knowledge graph summary from the daemon.
  * Caching (60s TTL, per-tenant) is handled server-side by GetGraphSummary.
- * Returns empty response on failure — never throws.
+ * Returns empty response on failure, never throws.
  */
 export async function getGraphSummary(_tenantId: string): Promise<GraphSummaryResponse> {
   try {

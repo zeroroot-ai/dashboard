@@ -38,7 +38,7 @@ export async function GET() {
     return activeTenantApiResponse(err);
   }
 
-  // Fetch data from Gibson daemon — each call falls back to empty data on failure
+  // Fetch data from Gibson daemon, each call falls back to empty data on failure
   const [statusResponse, , agentsResponse] = await Promise.all([
     getStatus(session?.user?.id, tenantId).catch(() => null),
     listMissions(true, 100, session?.user?.id).catch(() => ({ missions: [] })),

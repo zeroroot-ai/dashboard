@@ -1,7 +1,7 @@
 /**
  * Chat Attachment API Route
  *
- * POST /api/chat/attachment — Upload a single file, extract its text content,
+ * POST /api/chat/attachment, Upload a single file, extract its text content,
  * and stage it in the daemon via UserService.StageAttachment under a
  * short-lived token. The chatbot then passes the returned `attachmentId` on
  * its next message so the chat route can inject the file content into the
@@ -160,7 +160,7 @@ async function extractPdfText(file: File): Promise<string> {
   try {
     const buffer = new Uint8Array(await file.arrayBuffer());
     // pdf-parse is dynamically imported so its pdfjs-dist dependency is only
-    // loaded when a PDF actually shows up — keeps cold-start light.
+    // loaded when a PDF actually shows up, keeps cold-start light.
     const { PDFParse } = await import('pdf-parse');
     const parser = new PDFParse({ data: buffer });
     try {

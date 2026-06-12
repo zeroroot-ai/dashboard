@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * TraceListTable — client component backing /dashboard/traces.
+ * TraceListTable, client component backing /dashboard/traces.
  *
  * Lists every Gibson Trace for the tenant across all missions. Date range and
  * name filters are URL-driven (?from=&to=&name=&page=) so the view is
@@ -123,7 +123,7 @@ export function TraceListTable() {
       <CardHeader>
         <CardTitle>Gibson Traces</CardTitle>
         <CardDescription>
-          Every AI run across your missions — token usage, model activity, and
+          Every AI run across your missions, token usage, model activity, and
           the full prompt/response detail for each call.
         </CardDescription>
       </CardHeader>

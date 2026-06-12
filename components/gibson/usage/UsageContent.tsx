@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * UsageContent — client component backing /dashboard/pages/usage.
+ * UsageContent, client component backing /dashboard/pages/usage.
  *
  * Renders four tables (by user, team, agent, mission) sourced from the
  * daemon's UsageService via the getLlmUsage Server Action. Time range
  * is URL-driven (?from=YYYY-MM-DD&to=YYYY-MM-DD) so the view is
  * shareable; defaults to month-to-date.
  *
- * Non-admin callers see only the "My usage" single-row view — the
+ * Non-admin callers see only the "My usage" single-row view, the
  * Server Action already narrows server-side, but hiding the admin
  * tabs keeps the UI from teasing data the caller can't see.
  *
@@ -258,7 +258,7 @@ export function UsageContent({ fromParam, toParam, scopeParam }: Props) {
             <p className="mt-4 text-xs text-alt dark:text-alt">
               Data may be up to{" "}
               {Math.round((Date.now() / 1000 - staleAsOfUnix) / 60)} minutes
-              old — the upstream observability store was briefly unavailable.
+              old, the upstream observability store was briefly unavailable.
             </p>
           )}
         </CardContent>

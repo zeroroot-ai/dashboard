@@ -5,9 +5,9 @@
  * if the same Counter/Histogram constructor runs twice against a registry.
  * This happens under two legitimate conditions:
  *
- *   1. Next.js dev HMR — modules reload but the globalThis-memoised registry
+ *   1. Next.js dev HMR, modules reload but the globalThis-memoised registry
  *      survives, so the second Counter constructor sees a collision.
- *   2. Next.js production build — `phase-production-build` imports server
+ *   2. Next.js production build, `phase-production-build` imports server
  *      modules multiple times while collecting page metadata.
  *
  * `getOrCreateCounter` / `getOrCreateHistogram` look up the metric by name

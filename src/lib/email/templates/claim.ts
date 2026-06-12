@@ -26,7 +26,7 @@ export function render(ctx: ClaimCtx): EmailMessage {
     ``,
     `If you weren't expecting this invitation or have questions, contact ${ctx.supportEmail}.`,
     ``,
-    `— The Gibson team`,
+    `The Gibson team`,
   ].join('\n');
 
   const html = [

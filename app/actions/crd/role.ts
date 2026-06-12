@@ -6,17 +6,17 @@
  * These two actions exist because the existing patchTenantMember actions in
  * member.ts handle invitation status only (acceptedByUserId,
  * resendRequestedAt), not role. They are FGA-tuple writes that flip the
- * relevant relation atomically — same pattern as teams.ts for membership
+ * relevant relation atomically, same pattern as teams.ts for membership
  * tuples.
  *
- *   setTenantRoleAction    — flips a user's tenant-level role between
+ *   setTenantRoleAction   , flips a user's tenant-level role between
  *                            tenant_admin and tenant_member by writing the
  *                            (user:X, admin|member, tenant:Y) tuple and
  *                            deleting the inverse in a single WriteAccessTuples
  *                            call. Used by dashboard#150 (S6) inline role
  *                            dropdown.
  *
- *   setTeamAdminAction     — toggles only the `admin` relation on a team
+ *   setTeamAdminAction    , toggles only the `admin` relation on a team
  *                            without touching the `member` relation. The
  *                            proper fix for the TeamDetailContent.onToggleAdmin
  *                            remove+re-add dance noted in dashboard#148.
@@ -42,14 +42,14 @@ export type TenantRole = "admin" | "member";
  * Flip a user's tenant-level role between admin and member.
  *
  * Two writes, in order:
- *   1. FGA WriteAccessTuples — the AUTHORITATIVE write. Adds the requested
+ *   1. FGA WriteAccessTuples, the AUTHORITATIVE write. Adds the requested
  *      relation, deletes the inverse, atomically. If this fails the action
  *      returns the existing INTERNAL error path and the second write is
  *      skipped.
- *   2. patchTenantMember(spec.role) — a DISPLAY CACHE write so the users
+ *   2. patchTenantMember(spec.role), a DISPLAY CACHE write so the users
  *      list role badge (which reads from spec.role via useCRDWatch) stays
  *      consistent across reloads. If this fails the action still returns
- *      ok — the FGA gate is authoritative for actual access — but emits a
+ *      ok, the FGA gate is authoritative for actual access, but emits a
  *      logger.warn so an operator can diagnose. The badge will briefly
  *      show the stale role on the next hard-reload until either a
  *      tenant-operator reconcile or the next role change repairs it.
@@ -82,7 +82,7 @@ export async function setTenantRoleAction(input: {
     throw err;
   }
   // Authoritative MembershipService write (FGA tuples). dashboard#715 removed
-  // the former TenantMember.spec.role display-cache patch — the daemon's
+  // the former TenantMember.spec.role display-cache patch, the daemon's
   // ListMembers derives role from FGA, so a roster refetch reflects the change
   // with no CR to keep in sync.
   try {

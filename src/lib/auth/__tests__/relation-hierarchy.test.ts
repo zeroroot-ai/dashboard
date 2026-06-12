@@ -16,7 +16,7 @@
 import { describe, it, expect } from 'vitest';
 import { satisfiesRelation, relationHierarchy, rolesAreCrossTenant } from '../relation-hierarchy';
 
-describe('satisfiesRelation — hierarchy ordering', () => {
+describe('satisfiesRelation, hierarchy ordering', () => {
   it('owner satisfies admin (owner implies admin)', () => {
     expect(satisfiesRelation('owner', 'admin')).toBe(true);
   });
@@ -50,7 +50,7 @@ describe('satisfiesRelation — hierarchy ordering', () => {
   });
 });
 
-describe('satisfiesRelation — unknown roles', () => {
+describe('satisfiesRelation, unknown roles', () => {
   it('unknown user role returns false for member', () => {
     expect(satisfiesRelation('superuser', 'member')).toBe(false);
   });

@@ -1,12 +1,12 @@
 /**
- * `assertAuthorized` — server-side authz defense-in-depth helper.
+ * `assertAuthorized`, server-side authz defense-in-depth helper.
  *
  * Applies the same registry-driven decision logic as `useAuthorize` but runs
  * in a Server Action or Route Handler context. Throws `AuthzDeniedError` when
  * the caller is not allowed to invoke `method`.
  *
  * Server actions MUST call this at the top of every function wrapping a daemon
- * admin RPC — before any Zod parse, before any daemon call, before any
+ * admin RPC, before any Zod parse, before any daemon call, before any
  * side-effecting code.
  *
  * Security contract:
@@ -22,7 +22,7 @@
  *
  * Spec: dashboard-authz-ui-gating Requirement 3.
  * Sister-spec: cross-repo-cohesion-fixes Requirement 1.
- * Sister-spec: eliminate-permissive-authz Requirement 2 — the
+ * Sister-spec: eliminate-permissive-authz Requirement 2, the
  *   non-prod escape-hatch env var and warn-once log path were deleted.
  *
  * @module auth/assert-authorized
@@ -45,8 +45,8 @@ import { readRawActiveTenant } from './active-tenant';
  * call `method`.
  *
  * Fields:
- *   - `method`  — the fully-qualified gRPC method path that was denied.
- *   - `reason`  — a short machine-readable reason code.
+ *   - `method` , the fully-qualified gRPC method path that was denied.
+ *   - `reason` , a short machine-readable reason code.
  *
  * NEVER include role lists, tenant IDs, FGA data, or session tokens in the
  * message or any field.

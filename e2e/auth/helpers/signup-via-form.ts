@@ -1,7 +1,7 @@
 /**
- * signup-via-form.ts — canonical helper that drives the real Gibson signup form.
+ * signup-via-form.ts, canonical helper that drives the real Gibson signup form.
  *
- * ONE function — no per-spec `ensureUserExists` reimplementations. All four
+ * ONE function, no per-spec `ensureUserExists` reimplementations. All four
  * Playwright spec files import this instead of inline form logic.
  *
  * The form fields (source of truth: app/(public)/signup/signup-form.tsx):
@@ -63,7 +63,7 @@ const DEFAULT_BASE_URL =
   process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
 
 /**
- * signUpViaForm — drives the Gibson signup form against the live cluster.
+ * signUpViaForm, drives the Gibson signup form against the live cluster.
  *
  * Returns the resolved { tenantSlug, finalUrl } after provisioning completes.
  * Throws if the signup fails or the provisioning panel shows an error.
@@ -103,7 +103,7 @@ export async function signUpViaForm(
   // Detect if already signed in (landed on dashboard)
   if (page.url().includes("/dashboard")) {
     console.log(
-      `[signUpViaForm] Already on dashboard (${page.url()}) — user may already exist`,
+      `[signUpViaForm] Already on dashboard (${page.url()}), user may already exist`,
     );
     return { tenantSlug: slug, finalUrl: page.url() };
   }
@@ -124,13 +124,13 @@ export async function signUpViaForm(
   await page.getByLabel(/work email/i).fill(email);
 
   // -------------------------------------------------------------------------
-  // 5. Fill password — first password input
+  // 5. Fill password, first password input
   // -------------------------------------------------------------------------
   const pwInputs = page.locator('input[type="password"]');
   await pwInputs.first().fill(password);
 
   // -------------------------------------------------------------------------
-  // 6. Fill passwordConfirm — second password input (or by label)
+  // 6. Fill passwordConfirm, second password input (or by label)
   // -------------------------------------------------------------------------
   const pwCount = await pwInputs.count();
   if (pwCount >= 2) {
@@ -179,7 +179,7 @@ export async function signUpViaForm(
       { timeout: provisioningTimeoutMs },
     );
   } catch {
-    // Provisioning may have failed — check panel state
+    // Provisioning may have failed, check panel state
     const pageText = await page.textContent("body").catch(() => "");
     const currentUrl = page.url();
 

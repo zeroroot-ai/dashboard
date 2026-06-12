@@ -15,10 +15,10 @@
  *
  * Pre-conditions (Kind cluster):
  *   make deploy-local running against `kind-gibson` context.
- *   PLAYWRIGHT_BASE_URL  — cluster URL (default: http://localhost:3000)
- *   E2E_ADMIN_EMAIL      — any valid user email (signup creates them as
+ *   PLAYWRIGHT_BASE_URL , cluster URL (default: http://localhost:3000)
+ *   E2E_ADMIN_EMAIL     , any valid user email (signup creates them as
  *                          tenant_admin of their own tenant)
- *   E2E_ADMIN_PASSWORD   — corresponding password
+ *   E2E_ADMIN_PASSWORD  , corresponding password
  *
  * Wall-clock budget: ≤ 1 minute.
  */
@@ -57,7 +57,7 @@ test.describe('Tenant chrome shows the resolved tenant', () => {
 
     // The header TenantDisplay renders inside the SiteHeader (top-of-page).
     // We assert the literal "No workspace" string is absent from that
-    // region — it would only appear when the server failed to resolve a
+    // region, it would only appear when the server failed to resolve a
     // tenant for the signed-in user.
     const header = page.getByRole('banner');
     await expect(header).toBeVisible({ timeout: 10_000 });

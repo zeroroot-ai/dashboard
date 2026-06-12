@@ -18,7 +18,7 @@ import type { ConversationMessage, ToolCallBlock } from "@/src/types/trace";
  * ConversationView renders a single LLM call's prompt ↔ response exchange as a
  * readable chat thread. It is the core "readable manner" deliverable of the
  * Gibson Traces viewer (dashboard#464) and is shared between the mission
- * Traces tab and the standalone trace detail page (dashboard#470) — there is
+ * Traces tab and the standalone trace detail page (dashboard#470), there is
  * one conversation renderer, not two.
  *
  * Rendering rules:

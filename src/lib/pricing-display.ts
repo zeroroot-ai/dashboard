@@ -1,5 +1,5 @@
 /**
- * pricing-display.ts — formats a generated Plan for the pricing UI.
+ * pricing-display.ts, formats a generated Plan for the pricing UI.
  *
  * Spec plans-and-quotas-simplification simplifies this to the two enforced
  * quotas and a small pricing block. No more vibes-features bullet list.
@@ -16,7 +16,7 @@ export interface PricingTierDisplay {
   priceLabel: string;
   /** Optional secondary price string ("billed annually"). */
   priceSubLabel: string | null;
-  /** "Save 17%" / "" — the savings badge. */
+  /** "Save 17%" / "", the savings badge. */
   annualSavings: string | null;
   /** Two enforced quotas formatted for display. 0 → "Unlimited". */
   concurrentMissionsLabel: string;
@@ -85,7 +85,7 @@ export const selfServeTierIds: readonly string[] = pricingDisplays
   .map((d) => d.id);
 
 /**
- * contactTierIds — plan ids whose signup flow routes to a contact-sales
+ * contactTierIds, plan ids whose signup flow routes to a contact-sales
  * form rather than a Stripe checkout. Used by the billing checkout
  * route to reject contact-only tiers.
  */

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * check-manifest-kind-required — fails CI when any of the three YAML
+ * check-manifest-kind-required, fails CI when any of the three YAML
  * manifest schemas at core/sdk/{plugin,agent,tool}/manifest/schema.json
  * still treats `kind` as optional past the deprecation date.
  *
@@ -33,7 +33,7 @@ function main() {
   const now = new Date();
   if (now < DEPRECATION_END) {
     console.log(
-      `[check-manifest-kind-required] ok — deprecation window active until ${DEPRECATION_END.toISOString().slice(0, 10)}`,
+      `[check-manifest-kind-required] ok, deprecation window active until ${DEPRECATION_END.toISOString().slice(0, 10)}`,
     );
     return 0;
   }
@@ -42,7 +42,7 @@ function main() {
   for (const rel of SCHEMAS) {
     const abs = path.join(WORKSPACE_ROOT, rel);
     if (!existsSync(abs)) {
-      // Schema not present in this checkout — skip silently. The
+      // Schema not present in this checkout, skip silently. The
       // workspace layout is polyrepo; not every consumer has every
       // sibling repo cloned.
       continue;
@@ -63,7 +63,7 @@ function main() {
   }
 
   if (violations.length === 0) {
-    console.log('[check-manifest-kind-required] ok — all schemas require `kind`');
+    console.log('[check-manifest-kind-required] ok, all schemas require `kind`');
     return 0;
   }
 

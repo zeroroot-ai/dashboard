@@ -1,5 +1,5 @@
 /**
- * SessionsTable — render + revoke-flow tests (PRD dashboard#738, S3/S4).
+ * SessionsTable, render + revoke-flow tests (PRD dashboard#738, S3/S4).
  * Covers loading→populated (with "This device"), empty, error, and the
  * confirm→revoke→refetch flow. The server actions are mocked.
  */

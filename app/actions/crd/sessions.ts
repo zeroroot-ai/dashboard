@@ -9,7 +9,7 @@
  * control and the self "Sign out everywhere" action.
  *
  * Authorization is two-layered (matching the daemon, gibson#622):
- *   1. requireCrdSession gate (relation "member") — any authenticated tenant
+ *   1. requireCrdSession gate (relation "member"), any authenticated tenant
  *      member may call; this is what lets a plain member revoke THEIR OWN
  *      sessions.
  *   2. The daemon enforces the fine-grained can_revoke_sessions decision

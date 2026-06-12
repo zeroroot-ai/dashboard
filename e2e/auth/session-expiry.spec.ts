@@ -8,7 +8,7 @@
  *   API because browsers reject cookies with past expiry on set.  Instead we
  *   use one of two approaches:
  *
- *   (A) Delete the session cookie entirely — Auth.js interprets a missing
+ *   (A) Delete the session cookie entirely, Auth.js interprets a missing
  *       session cookie as "unauthenticated" and the middleware redirects to
  *       the login page.  The middleware in this codebase redirects expired /
  *       missing sessions to `/dashboard/login/expired` (not the plain login
@@ -107,7 +107,7 @@ test.describe("Session expiry", () => {
       // For simplicity, skip when the cluster is unreachable.
       test.skip(
         true,
-        "Log source unreachable — skipping session expiry test.",
+        "Log source unreachable, skipping session expiry test.",
       );
       return;
     }

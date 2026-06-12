@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * approaching-limit-banner.tsx — Renders a top-of-page banner when
+ * approaching-limit-banner.tsx, Renders a top-of-page banner when
  * either enforced quota crosses 80% usage. Spec
  * plans-and-quotas-simplification R9.B.4 / R9.B.5.
  *

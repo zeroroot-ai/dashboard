@@ -1,5 +1,5 @@
 /**
- * GlossaryProvider — loads the vendored glossary.json (controlled
+ * GlossaryProvider, loads the vendored glossary.json (controlled
  * vocabulary mapping every NodeType / MergeStrategy / Language /
  * message name + verb name to its proto-derived description) and
  * exposes a useGlossary() hook for lookup.
@@ -42,7 +42,7 @@ export function GlossaryProvider({ children }: { children: ReactNode }) {
 }
 
 /**
- * useGlossary — returns the loaded glossary map. Returns an empty
+ * useGlossary, returns the loaded glossary map. Returns an empty
  * object if the provider isn't mounted (graceful fallback per
  * design.md Component 5).
  */
@@ -51,7 +51,7 @@ export function useGlossary(): GlossaryMap {
 }
 
 /**
- * lookupTerm — convenience helper that returns the description
+ * lookupTerm, convenience helper that returns the description
  * for `term` or undefined if not found. Use this when you have a
  * known term to render but the calling component isn't a hook
  * site.

@@ -5,7 +5,7 @@
  * that match the semantic of the originating gRPC status code. All other errors
  * are treated as internal server errors.
  *
- * IMPORTANT: Never log request bodies or credential fields — only log error
+ * IMPORTANT: Never log request bodies or credential fields, only log error
  * metadata (code, message) so plaintext credentials cannot appear in logs.
  */
 
@@ -48,13 +48,13 @@ export function mapCodeToHttpStatus(code: Code): number {
  * becomes a 500.
  *
  * Only the error code and daemon-provided message are included in the response
- * body — never credential material or request body content.
+ * body, never credential material or request body content.
  */
 export function translateError(err: unknown): Response {
   if (err instanceof ConnectError) {
     const status = mapCodeToHttpStatus(err.code);
     // 5xx codes mean the daemon hit an internal failure (e.g. secrets circuit
-    // open, KEK unavailable). Log so the pod log shows something — without
+    // open, KEK unavailable). Log so the pod log shows something, without
     // this the caller sees a 500 with zero diagnostic output in the dashboard.
     if (status >= 500) {
       logger.error(

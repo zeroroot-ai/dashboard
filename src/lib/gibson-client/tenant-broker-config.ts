@@ -43,7 +43,7 @@ export type {
 
 /**
  * Returns the redacted current broker config for the tenant. Sensitive
- * fields are NEVER included in the response — only `sensitive_fields_set`
+ * fields are NEVER included in the response, only `sensitive_fields_set`
  * lists which fields have values stored on the server.
  */
 export async function getBrokerConfig(): Promise<GetBrokerConfigResponse> {
@@ -77,7 +77,7 @@ export async function probeBrokerConfig(
  * Probes and (on success) persists the candidate broker config. Emits a
  * tenant_secrets_backend_configured audit event.
  *
- * Per Spec 1 R6.4, the probe is run server-side — the dashboard does not
+ * Per Spec 1 R6.4, the probe is run server-side, the dashboard does not
  * need to call probeBrokerConfig first.
  *
  * SECURITY: the candidate argument carries sensitive fields. Do not log it
@@ -96,7 +96,7 @@ export async function setBrokerConfig(
 
 /**
  * Returns the number of secrets currently stored in the tenant's active
- * broker. The response carries no names, values, or per-row metadata —
+ * broker. The response carries no names, values, or per-row metadata -
  * only an integer count.
  *
  * Used by SecretsBackendContent to gate the migration-warning UX before
@@ -104,7 +104,7 @@ export async function setBrokerConfig(
  * tenant-secrets-broker-completion R3).
  *
  * Note: the proto field is int64 which @bufbuild deserialises as bigint.
- * The dashboard treats counts as plain numbers — practical secret counts
+ * The dashboard treats counts as plain numbers, practical secret counts
  * are well under 2^53. If a tenant ever crosses that, a follow-up spec
  * can switch the form to bigint-aware comparisons.
  */

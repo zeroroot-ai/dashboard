@@ -1,12 +1,12 @@
 'use client';
 
 /**
- * RegisterAgentForm — Client Component for the "Register Agent" page.
+ * RegisterAgentForm, Client Component for the "Register Agent" page.
  *
  * Spec: unified-identity-and-authorization Phase 4 (R1.4, R9.7, R9.8).
  *
  * Two states:
- *   1. The default form (name + optional description) — POSTs to
+ *   1. The default form (name + optional description), POSTs to
  *      /api/agents/register on submit.
  *   2. After a successful provision, the form is replaced by a one-time
  *      credential panel showing client_id, client_secret, and the
@@ -36,7 +36,7 @@ import {
 } from '@/components/ui/alert';
 
 // ---------------------------------------------------------------------------
-// Wire types — mirror RegisterAgentResponseBody on the server side
+// Wire types, mirror RegisterAgentResponseBody on the server side
 // ---------------------------------------------------------------------------
 
 interface Credentials {
@@ -68,7 +68,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // Clipboard API unavailable (e.g. Safari over plain HTTP) — fall
+      // Clipboard API unavailable (e.g. Safari over plain HTTP), fall
       // through silently. The value is still selectable in the field.
     }
   }

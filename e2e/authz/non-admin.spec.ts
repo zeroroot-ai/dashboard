@@ -20,9 +20,9 @@
  *   membership. The suite also works in mocked mode (see mockMemberSession
  *   below) so it compiles and lints cleanly without a live cluster.
  *
- * Approach (option a — two-user approach):
- *   1. Sign up as user A (adminCreds) — becomes tenant_admin of tenant-A.
- *   2. Sign up as user B (memberCreds) — becomes tenant_admin of their own
+ * Approach (option a, two-user approach):
+ *   1. Sign up as user A (adminCreds), becomes tenant_admin of tenant-A.
+ *   2. Sign up as user B (memberCreds), becomes tenant_admin of their own
  *      tenant-B but has no membership in tenant-A.
  *   3. The suite tests as user B navigating to tenant-A routes.
  *
@@ -39,9 +39,9 @@
  *
  * Pre-conditions (Kind cluster):
  *   make deploy-local running against `kind-gibson` context.
- *   PLAYWRIGHT_BASE_URL  — cluster URL (default: http://localhost:3000)
- *   E2E_ADMIN_EMAIL      — any valid user email (used for auth session)
- *   E2E_ADMIN_PASSWORD   — corresponding password
+ *   PLAYWRIGHT_BASE_URL , cluster URL (default: http://localhost:3000)
+ *   E2E_ADMIN_EMAIL     , any valid user email (used for auth session)
+ *   E2E_ADMIN_PASSWORD  , corresponding password
  *
  * Wall-clock budget: ≤ 2 minutes.
  * Requirements: 9.3.
@@ -57,7 +57,7 @@ const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 
 /**
  * We need a valid authenticated session. Re-use the admin credentials for the
- * login step — the auth session itself is then overridden at the memberships
+ * login step, the auth session itself is then overridden at the memberships
  * API layer to look like a member session. This is consistent with the design:
  * the gating decision comes from the memberships response, not from the
  * session token itself.
@@ -163,7 +163,7 @@ async function mockEmptyBackend(page: Page) {
 // Suite
 // ---------------------------------------------------------------------------
 
-test.describe("Authz gating — non-admin (tenant_member) visibility", () => {
+test.describe("Authz gating, non-admin (tenant_member) visibility", () => {
   /**
    * Serial: login once, share the session across assertions.
    * Avoids the ~10s Zitadel OIDC round-trip on every test.
@@ -194,7 +194,7 @@ test.describe("Authz gating — non-admin (tenant_member) visibility", () => {
 
     // The sidebar should not contain a "Secrets" navigation link
     // (distinct from the page-level heading which may still exist for
-    // the current page context — we look for nav-specific selectors).
+    // the current page context, we look for nav-specific selectors).
     const secretsNavEntry = page.locator("nav").getByRole("link", {
       name: /^secrets$/i,
     });
@@ -263,7 +263,7 @@ test.describe("Authz gating — non-admin (tenant_member) visibility", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Direct navigation — secrets/new
+  // Direct navigation, secrets/new
   // -------------------------------------------------------------------------
 
   test("direct nav to /secrets/new redirects or returns 403 for tenant_member", async ({
@@ -305,7 +305,7 @@ test.describe("Authz gating — non-admin (tenant_member) visibility", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Direct navigation — grants
+  // Direct navigation, grants
   // -------------------------------------------------------------------------
 
   test("direct nav to /grants returns 403 or redirects for tenant_member", async ({
@@ -343,7 +343,7 @@ test.describe("Authz gating — non-admin (tenant_member) visibility", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Secrets list — Add Secret button absent
+  // Secrets list, Add Secret button absent
   // -------------------------------------------------------------------------
 
   test("Add Secret button is NOT in the DOM on /secrets for tenant_member", async ({
@@ -362,7 +362,7 @@ test.describe("Authz gating — non-admin (tenant_member) visibility", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Deploy launcher — visible BUT disabled, with tooltip, for non-admins.
+  // Deploy launcher, visible BUT disabled, with tooltip, for non-admins.
   // Regression guard for dashboard#145: the DeployLauncher used to render
   // null for non-admins, which made users believe the feature did not
   // exist. AuthGatedButton's "denied" state keeps the affordance in the
@@ -383,7 +383,7 @@ test.describe("Authz gating — non-admin (tenant_member) visibility", () => {
 
       // The denied wrapper carries data-testid="auth-gated-button-denied"
       // and renders the CTA label as text content (no link, no enabled
-      // button — see AuthGatedButton.tsx).
+      // button, see AuthGatedButton.tsx).
       const deniedWrapper = page.getByTestId("auth-gated-button-denied");
       await expect(deniedWrapper.first()).toBeVisible({ timeout: 10_000 });
       await expect(deniedWrapper.first()).toContainText(

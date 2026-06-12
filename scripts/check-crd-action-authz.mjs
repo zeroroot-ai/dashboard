@@ -6,7 +6,7 @@
  *
  * Also rejects any new app/api/.../route.ts that imports from
  * @/src/lib/k8s/tenants or calls apply-/delete-/patch- helpers from that
- * module (Requirement 9 — no public HTTP surface for CRD mutation).
+ * module (Requirement 9, no public HTTP surface for CRD mutation).
  *
  * A file-level opt-out is supported via a marker comment
  *   // @crd-authz-exempt: <reason>
@@ -66,7 +66,7 @@ function walkTs(dir) {
   return out;
 }
 
-// Matches: `export async function someAction(` — captures name and start index.
+// Matches: `export async function someAction(`, captures name and start index.
 const ACTION_SIG = /^export\s+async\s+function\s+(\w+Action)\s*[<(]/gm;
 const EXEMPT_MARKER = /\/\/\s*@crd-authz-exempt\s*:/;
 const GATE_CALL = /\b(requireCrdSession|requireCrdSessionForSelfAction)\s*[<(]/;
@@ -116,14 +116,14 @@ for (const file of crdFiles) {
     const prevLine = before.slice(prevLineStart + 1, prevLineEnd);
     if (EXEMPT_MARKER.test(prevLine)) continue;
 
-    // Find the end of this function: naive but good enough — the next
+    // Find the end of this function: naive but good enough, the next
     // export-async-function signature or the end of file.
     const nextIdx = body.slice(sigStart + 1).search(ACTION_SIG);
     const funcBody = nextIdx === -1 ? body.slice(sigStart) : body.slice(sigStart, sigStart + 1 + nextIdx);
 
     if (!GATE_CALL.test(funcBody)) {
       violations.push(
-        `${file}:${lineNumber} — CRD action '${actionName}' missing requireCrdSession call (or @crd-authz-exempt marker)`,
+        `${file}:${lineNumber}, CRD action '${actionName}' missing requireCrdSession call (or @crd-authz-exempt marker)`,
       );
     }
   }
@@ -171,7 +171,7 @@ for (const route of walkRoutes(API_DIR)) {
   if (writes.length === 0) continue;
   if (ROUTE_EXEMPT_MARKER.test(body)) continue;
   violations.push(
-    `${route} — public API route imports @/src/lib/k8s/tenants and calls a write helper (forbidden — use Server Actions)`,
+    `${route}, public API route imports @/src/lib/k8s/tenants and calls a write helper (forbidden, use Server Actions)`,
   );
 }
 

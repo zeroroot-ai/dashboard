@@ -1,5 +1,5 @@
 /**
- * <ParallelConfigEditor /> — form for ParallelNodeConfig.
+ * <ParallelConfigEditor />, form for ParallelNodeConfig.
  *
  * Spec: mission-dashboard-rewrite Requirement 1 AC 3 + Task 6.
  */
@@ -54,7 +54,7 @@ export function ParallelConfigEditor({
         <p className="text-xs text-muted-foreground">
           {config.subNodes.length} sub-node
           {config.subNodes.length === 1 ? "" : "s"} configured.
-          Edit sub-nodes from the parent step list — each
+          Edit sub-nodes from the parent step list, each
           sub-node is itself a full MissionNode and has its own
           card in the steps tab.
         </p>

@@ -115,7 +115,7 @@ function runScan() {
     return 0;
   }
 
-  console.error(`\n[${SCRIPT_NAME}] FAIL — grant.ts imports from src/lib/k8s/ (${violations.length} violation(s)).`);
+  console.error(`\n[${SCRIPT_NAME}] FAIL, grant.ts imports from src/lib/k8s/ (${violations.length} violation(s)).`);
   console.error('Catalog-enablement must route through the daemon via MembershipService.SetCatalogEnabled.');
   console.error('Replace the K8s client call with userClient(MembershipService).setCatalogEnabled({...}).\n');
   console.error(`  ${GRANT_ACTION_FILE}`);
@@ -123,7 +123,7 @@ function runScan() {
     console.error(`    L${v.line}: ${v.text}`);
     console.error(`      → direct K8s import detected in grant.ts; use daemon RPC instead`);
   }
-  console.error(`\n[${SCRIPT_NAME}] Total violations: ${violations.length} (exit 1 — HARD FAIL)`);
+  console.error(`\n[${SCRIPT_NAME}] Total violations: ${violations.length} (exit 1, HARD FAIL)`);
   return 1;
 }
 

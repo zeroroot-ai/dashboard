@@ -6,14 +6,14 @@
  * three-tree workspace-synthesis pipeline has populated entries for all
  * expected service namespaces:
  *
- *   - /gibson.tenant.v1.*              — OSS SDK focused tenant services
+ *   - /gibson.tenant.v1.*             , OSS SDK focused tenant services
  *                                        (MembershipService, SecretsService,
  *                                        GrantsService, PluginAdminService,
  *                                        ProviderService, BudgetService,
  *                                        ModelAccessService, UserService,
  *                                        AgentIdentityService, UsageService,
  *                                        TenantService)
- *   - /gibson.daemon.operator.v1.*     — platform-sdk DaemonOperatorService
+ *   - /gibson.daemon.operator.v1.*    , platform-sdk DaemonOperatorService
  *                                        (formerly PlatformOperatorService,
  *                                        renamed in dashboard#337)
  *
@@ -37,7 +37,7 @@ import { AuthRegistry } from '@/src/gen/authz/registry';
 
 const allMethods = Object.keys(AuthRegistry);
 
-describe('AuthRegistry — tenant.v1 + platform-sdk service coverage (ADR-0039)', () => {
+describe('AuthRegistry, tenant.v1 + platform-sdk service coverage (ADR-0039)', () => {
   it('contains at least one method from gibson.tenant.v1.*', () => {
     const tenantMethods = allMethods.filter((m) => m.startsWith('/gibson.tenant.v1.'));
     expect(tenantMethods.length).toBeGreaterThan(0);

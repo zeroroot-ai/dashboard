@@ -324,7 +324,7 @@ export function handleWebSocketMessage(message: WebSocketMessage): void {
       }
     }
   } catch (error) {
-    // Do NOT log the full message payload — it may contain finding titles,
+    // Do NOT log the full message payload, it may contain finding titles,
     // agent names, or alert content. Log only a short type marker.
     const messageType =
       typeof message === 'object' && message !== null && 'type' in message

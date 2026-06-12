@@ -18,7 +18,7 @@ import { type NextRequest } from 'next/server';
 import { ConnectError, Code } from '@connectrpc/connect';
 
 // ---------------------------------------------------------------------------
-// Mocks — hoisted before imports
+// Mocks, hoisted before imports
 // ---------------------------------------------------------------------------
 
 const mockGetSupportedProviders = vi.fn();
@@ -159,10 +159,10 @@ describe('GET /api/settings/providers/supported', () => {
 
     await GET(makeRequest());
 
-    // userClient must be called — it sends the user's session JWT, which is
+    // userClient must be called, it sends the user's session JWT, which is
     // what the member-relation annotation on GetSupportedProviders allows.
     expect(userClient).toHaveBeenCalledOnce();
-    // serviceClient must NOT be called — that would bypass user identity.
+    // serviceClient must NOT be called, that would bypass user identity.
     // (It is not imported by the route so this is implicit, but verifying
     // userClient was called once is sufficient.)
   });

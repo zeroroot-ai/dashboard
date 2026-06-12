@@ -7,13 +7,13 @@
  * Distinct from `signup-happy.spec.ts`:
  *   - Entry point is `/pricing` (not `/signup`) to prove the cross-page
  *     wiring works.
- *   - The assertion focus is the **provisioning progress transitions** —
+ *   - The assertion focus is the **provisioning progress transitions** -
  *     each transition is powered by an admin RPC that now routes through
  *     Envoy with a SPIFFE JWT-SVID. If the admin channel is broken, the
  *     provisioning page stalls and this test fails with a clear signal
  *     (we know WHICH step didn't happen).
  *   - On arrival at `/dashboard` we hit `/api/auth/session` to confirm the
- *     session carries a real tenant — proves the end-to-end effect of the
+ *     session carries a real tenant, proves the end-to-end effect of the
  *     admin RPCs (quota upserted, FGA tuples written, catalog seeded).
  *
  * Pre-conditions:
@@ -25,7 +25,7 @@
  * Cleanup:
  *   After the test, the Tenant CR is deleted via `kubectl` so re-runs stay
  *   idempotent. If `kubectl` isn't available the cleanup is logged and
- *   skipped — the test itself does not fail on cleanup issues.
+ *   skipped, the test itself does not fail on cleanup issues.
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -52,11 +52,11 @@ async function waitForText(
   timeoutMs: number,
 ): Promise<void> {
   await expect(page.getByText(pattern).first(), {
-    message: `Provisioning step "${label}" never appeared — admin channel may be broken.`,
+    message: `Provisioning step "${label}" never appeared, admin channel may be broken.`,
   }).toBeVisible({ timeout: timeoutMs });
 }
 
-test.describe("Signup happy path — pricing → dashboard via Envoy admin channel", () => {
+test.describe("Signup happy path, pricing → dashboard via Envoy admin channel", () => {
   test("provisioning transitions complete and session carries a tenant", async ({
     page,
     request,
@@ -120,7 +120,7 @@ test.describe("Signup happy path — pricing → dashboard via Envoy admin chann
     //   granting     → DaemonAdmin.UpsertTenantQuota + FGA tuple writes ran
     //   done         → entitlements finalised, session ready
     //
-    // 30 s budget total for the chain — the steady-state signup on Kind is
+    // 30 s budget total for the chain, the steady-state signup on Kind is
     // ~8-12 s. More than 30 s means a step stalled.
     // -----------------------------------------------------------------------
     await waitForText(page, STEP_COPY.provisioning, "provisioning", 15_000);
@@ -152,11 +152,11 @@ test.describe("Signup happy path — pricing → dashboard via Envoy admin chann
       session.user?.tenantId ?? session.user?.tenant?.id ?? null;
     expect(
       tenantId,
-      "session.user.tenantId must be populated — admin channel did not write entitlements",
+      "session.user.tenantId must be populated, admin channel did not write entitlements",
     ).toBeTruthy();
 
     // -----------------------------------------------------------------------
-    // 5. Cleanup — best-effort. We don't fail the test on cleanup issues.
+    // 5. Cleanup, best-effort. We don't fail the test on cleanup issues.
     // -----------------------------------------------------------------------
     try {
       execSync(

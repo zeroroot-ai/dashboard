@@ -38,7 +38,7 @@ const SPIFFE_TEST_TOKEN = process.env.SPIFFE_TEST_TOKEN ?? "";
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe("Claim account — operator-seeded tenant", () => {
+test.describe("Claim account, operator-seeded tenant", () => {
   test.afterAll(async () => {
     await closeDbPool();
   });
@@ -49,7 +49,7 @@ test.describe("Claim account — operator-seeded tenant", () => {
     if (!SPIFFE_TEST_TOKEN) {
       test.skip(
         true,
-        "SPIFFE_TEST_TOKEN not set — admin provisioning API requires SPIFFE auth; skipping.",
+        "SPIFFE_TEST_TOKEN not set, admin provisioning API requires SPIFFE auth; skipping.",
       );
       return;
     }
@@ -57,7 +57,7 @@ test.describe("Claim account — operator-seeded tenant", () => {
     if (!isLogSourceReachable()) {
       test.skip(
         true,
-        "Log source unreachable — skipping claim-account test (cluster not running?).",
+        "Log source unreachable, skipping claim-account test (cluster not running?).",
       );
       return;
     }

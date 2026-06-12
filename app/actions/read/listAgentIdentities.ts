@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * listAgentIdentitiesAction — read-side Server Action that enumerates the
+ * listAgentIdentitiesAction, read-side Server Action that enumerates the
  * active tenant's non-revoked agent identities for the Per-agent scope of the
  * access-matrix scope selector (AccessScopeSelector).
  *
@@ -12,7 +12,7 @@
  * Graceful fallback: Unimplemented and Unavailable are treated as an empty
  * list so the dropdown renders cleanly before the daemon ships the handler.
  *
- * Spec: dashboard#700 — populate per-agent scope dropdown.
+ * Spec: dashboard#700, populate per-agent scope dropdown.
  */
 
 import { ConnectError, Code } from "@connectrpc/connect";
@@ -29,7 +29,7 @@ export type ActionResult<T> =
 
 /** Dashboard-safe shape for a single agent identity. */
 export interface AgentIdentityRow {
-  /** principal_id — the grant target for the Per-agent scope. */
+  /** principal_id, the grant target for the Per-agent scope. */
   id: string;
   /** Human-readable agent name. */
   name: string;
@@ -39,7 +39,7 @@ export interface AgentIdentityRow {
  * Fetch up to 200 non-revoked agent identities of the active tenant.
  *
  * Returns { ok: true, data: [] } when the daemon returns Unimplemented or
- * Unavailable — the caller degrades gracefully until the handler ships.
+ * Unavailable, the caller degrades gracefully until the handler ships.
  */
 export async function listAgentIdentitiesAction(): Promise<
   ActionResult<AgentIdentityRow[]>

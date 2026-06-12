@@ -55,7 +55,7 @@ export type SetConfigActionResult = BrokerActionResult<RedactedConfig>;
 // Per-provider Zod schemas
 //
 // Each provider form sends `provider` + provider-specific fields.
-// Sensitive fields are validated as non-empty bytes (string here — encoded
+// Sensitive fields are validated as non-empty bytes (string here, encoded
 // to Uint8Array before the RPC).
 // ---------------------------------------------------------------------------
 
@@ -139,7 +139,7 @@ function buildCandidate(d: CandidateConfigInput): CandidateConfig {
     clientId: d.clientId,
     roleArn: d.roleArn,
     approleRoleId: d.approleRoleId,
-    // Sensitive — encode to bytes, never log.
+    // Sensitive, encode to bytes, never log.
     vaultToken: enc(d.vaultToken),
     approleSecretId: enc(d.approleSecretId),
     awsAccessKeyId: enc(d.awsAccessKeyId),

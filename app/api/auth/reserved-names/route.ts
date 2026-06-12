@@ -6,7 +6,7 @@
  * `gibson.admin.v1.TenantAdminService/GetReservedNames` via Envoy
  * with the dashboard pod's service identity.
  *
- * Public route — no user auth required. The denylist is non-sensitive
+ * Public route, no user auth required. The denylist is non-sensitive
  * (it is also visible to anyone who can describe the gibson-reserved-names
  * ConfigMap), and the form needs it before the user has a session.
  *
