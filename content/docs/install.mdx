@@ -49,61 +49,66 @@ Verify:
 gibson --help
 ```
 
-You should see the top-level command groups: `init`, `component`,
-`docs`, `inspect`, `mission`.
+You should see the top-level command groups: `init`, `login`, `logout`,
+`component`, `connector`, `agent`, `mission`, `target`, `provider`,
+`inspect`, and `docs`.
 
 ## 3. Point at your tenant
 
-Set `GIBSON_URL` in your shell:
+Run `gibson init` once per workspace. It writes `.gibson/workspace.yaml`,
+pinning the platform URL so you don't pass it on every command:
 
 ```bash
-export GIBSON_URL=https://api.zeroroot.ai
+gibson init --gibson-url https://api.zeroroot.ai
 ```
 
-Add it to your shell profile (`~/.zshrc`, `~/.bashrc`, …) so it
-persists across sessions. The SDK reads `GIBSON_URL` from the
-environment when your component dials Gibson; the value can also be
-embedded in the credentials file written by `gibson component register`.
+Use `--global` to write `~/.gibson/workspace.yaml` instead, so every
+directory shares one default. The CLI and SDK also accept `GIBSON_URL`
+from the environment, which overrides the workspace file when set.
 
-## 4. Get a credential from the dashboard
+## 4. Sign in
 
-Open the dashboard at
-[`app.zeroroot.ai/dashboard/deploy`](https://app.zeroroot.ai/dashboard/deploy).
-This is the **deploy wizard**, the one place where component identities
-are issued.
-
-1. Pick a kind: **Agent**, **Tool**, or **Plugin**.
-2. Name your component (kebab-case, unique within your tenant).
-3. **Permissions**, grant the component access to the data and
-   capabilities it needs. See [Roles & permissions](/docs/rbac).
-4. **Issue a bootstrap token**, every kind (agent, tool, plugin) gets a
-   single-use **bootstrap token** (24-hour expiry). It's shown exactly
-   once, copy it before you leave the page.
-5. **Connect**, leave the wizard open. It polls until your local
-   `gibson` reports back that the component connected.
-
-## 5. Register on your machine
-
-The CLI uses a single unified `component register` verb. Every kind
-enrolls the same way, paste the bootstrap token:
+Authenticate the CLI as yourself with `gibson login`. It runs the OAuth
+2.0 Device Authorization Grant: the CLI prints a URL and a short code,
+you approve in a browser, and the session is stored at
+`~/.gibson/auth/credentials` (mode `0600`). Every later `gibson` command
+then acts as you, and the session refreshes silently.
 
 ```bash
-# Agents
-gibson component register --kind agent --token <from-wizard> \
-  --name my-first-agent
-
-# Tools
-gibson component register --kind tool --token <from-wizard> \
-  --name my-first-tool
-
-# Plugins
-gibson component register --kind plugin --token <from-wizard>
+gibson login
 ```
 
-Each command runs the capability-grant handshake and writes two files at
+The CLI discovers the identity issuer from the platform automatically.
+Run `gibson logout` to end the session.
+
+## 5. Enroll a component
+
+Enrollment mints a **single-use bootstrap token** for a machine
+identity. Every kind (agent, tool, plugin) enrolls the same way, and the
+token is the only credential the component needs to bootstrap, there is
+no client secret anywhere.
+
+```bash
+gibson agent enroll --name my-first-agent --kind agent
+```
+
+The token is printed once and expires in 24 hours. Copy it, then
+exchange it for a persistent runtime credential. Run `register` from the
+component directory (scaffolded by `gibson component init`); it reads the
+kind and name from `component.yaml`:
+
+```bash
+gibson component register --token <bootstrap-token>
+```
+
+You can also pass the token on stdin (`--token -`) or via
+`GIBSON_BOOTSTRAP_TOKEN`, and override the auto-detected kind, name, or
+directory with `--kind`, `--name`, and `--dir`.
+
+`register` runs the capability-grant handshake and writes two files at
 mode `0600`: an Ed25519 **host key** at
 `~/.gibson/<kind>/<name>.host_key` and a **runtime credential** at
-`~/.gibson/<kind>/<name>.runtime.json`. Treat both like private keys -
+`~/.gibson/<kind>/<name>.runtime.json`. Treat both like private keys,
 they identify your component to Gibson.
 
 If registration fails, see

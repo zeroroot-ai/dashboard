@@ -1,19 +1,24 @@
 ---
 title: CLI Reference
-description: Every gibson command, workspace, component, mission, inspect, docs.
+description: Every gibson command, workspace, login, component, agent, connector, mission, target, provider, inspect, docs.
 ---
 
 `gibson` is the local binary you use to scaffold components, register
 them with your tenant, validate manifests, build and run components,
 submit missions, and verify credentials.
 
-Modern CLI is unified under five top-level groups:
+The CLI is unified under these top-level groups:
 
 | Group | Purpose |
 |---|---|
-| `init` | Initialise a Gibson workspace. |
+| `init` | Initialise a Gibson workspace (pins the platform URL). |
+| `login` / `logout` | Sign the CLI in and out as a human, via the device flow. |
 | `component` | Scaffold, build, register, validate, and run agents / tools / plugins. |
+| `agent` | Provision and manage machine identities (enroll, list, revoke). |
+| `connector` | Scaffold and locally run MCP connectors. |
 | `mission` | Author, validate, render, and submit missions. |
+| `target` | Manage targets a mission runs against. |
+| `provider` | Manage LLM provider credentials. |
 | `inspect` | Print who you are and what permissions your local credential carries. |
 | `docs` | Emit machine-readable docs (JSON Schemas, etc.). |
 
@@ -21,7 +26,7 @@ Global flags available on every command:
 
 | Flag | Default | What it does |
 |---|---|---|
-| `--gibson-url` | `$GIBSON_URL` | Override the Gibson endpoint for one invocation. |
+| `--gibson-url` | workspace / `$GIBSON_URL` | Override the Gibson endpoint for one invocation. |
 | `--quiet` | off | Suppress progress output; only print errors. |
 | `--json` | off | Emit machine-readable output where supported. |
 
@@ -29,13 +34,44 @@ Global flags available on every command:
 
 ## `gibson init`
 
-Initialise a Gibson workspace in the current directory. Sets up the
-shared scaffolding (`.gibson/`, default manifests) that component-init
-commands expect.
+Initialise a Gibson workspace. Writes `.gibson/workspace.yaml`, pinning
+the platform URL so you don't pass `--gibson-url` on every command.
 
 ```bash
-gibson init
+gibson init --gibson-url https://api.zeroroot.ai
+gibson init --global --gibson-url https://api.zeroroot.ai   # write ~/.gibson/workspace.yaml
 ```
+
+| Flag | Required | Notes |
+|---|---|---|
+| `--gibson-url` | yes | Platform URL, e.g. `https://api.zeroroot.ai`. |
+| `--global` | no | Write `~/.gibson/workspace.yaml` instead of `./.gibson/workspace.yaml`. |
+| `--force` | no | Overwrite an existing workspace file. |
+| `--comment` | no | Optional free-form note stored in the file. |
+
+---
+
+## `gibson login` / `gibson logout`
+
+Authenticate the CLI as a human with the OAuth 2.0 Device Authorization
+Grant. `login` prints a URL and a short code, you approve in a browser,
+and the session is written to `~/.gibson/auth/credentials` (mode `0600`).
+Every later `gibson` command then acts as you, and the session refreshes
+silently until you run `logout`.
+
+```bash
+gibson login
+gibson logout
+```
+
+| Flag | Default | Notes |
+|---|---|---|
+| `--issuer` | discovered | Override the identity issuer (local / air-gapped setups). |
+| `--client-id` | discovered | Override the public client id. |
+
+The CLI discovers the issuer and client id from
+`GET {GIBSON_URL}/.well-known/gibson-login`; the override flags are only
+needed when that endpoint is unreachable.
 
 ---
 
@@ -83,23 +119,24 @@ reproducible across machines.
 
 ### `gibson component register`
 
-Register a component install with your tenant. Every kind, agent, tool,
-plugin, exchanges a single-use bootstrap token (issued by the
-dashboard's deploy wizard) for a persistent Ed25519 host key and a
-runtime credential, via the capability-grant handshake.
+Exchange a single-use bootstrap token (minted by
+[`gibson agent enroll`](#gibson-agent)) for a persistent Ed25519 host key
+and a runtime credential, via the capability-grant handshake. Run it from
+the component directory, it reads the kind and name from `component.yaml`.
 
 ```bash
-# Every kind enrolls the same way, paste the bootstrap token
-gibson component register --kind agent  --token <bootstrap-token> --name <component-name>
-gibson component register --kind tool   --token <bootstrap-token> --name <component-name>
-gibson component register --kind plugin --token <bootstrap-token>
+gibson component register --token <bootstrap-token>
+gibson component register --token -                       # read token from stdin
+gibson component register --token <T> --kind plugin       # override the auto-detected kind
 ```
 
 | Flag | Required | Notes |
 |---|---|---|
-| `--kind` | yes | `agent`, `tool`, or `plugin`. |
-| `--token` | yes | Single-use bootstrap token from the deploy wizard. Pass `-` to read from stdin, or set `GIBSON_BOOTSTRAP_TOKEN`. |
-| `--name` | agent / tool | Component name (kebab-case, unique within tenant). |
+| `--token` | yes | Single-use bootstrap token. Pass `-` to read from stdin, or set `GIBSON_BOOTSTRAP_TOKEN`. |
+| `--dir` | no | Component directory containing `component.yaml`. Default `.`. |
+| `--kind` | no | Override the kind (`agent`/`tool`/`plugin`); auto-detected from `component.yaml`. |
+| `--name` | no | Optional install name, allows multiple credentials per kind on one host. |
+| `--gibson-url` | no | Override the platform URL; falls back to env / workspace. |
 
 What it does:
 
@@ -108,7 +145,6 @@ What it does:
    `~/.gibson/<kind>/<name>.host_key` and a runtime credential at
    `~/.gibson/<kind>/<name>.runtime.json`.
 3. Calls Gibson's identity service to confirm registration.
-4. Notifies the dashboard's deploy wizard so it can advance.
 
 Re-running with the same install is a no-op success. If verification
 fails, the command exits non-zero. See
@@ -144,6 +180,70 @@ binary directly under their process manager (systemd, Kubernetes, …).
 
 ---
 
+## `gibson agent`
+
+Provision and manage machine identities for agents, tools, and plugins.
+Despite the name, the group covers every kind, the kind is a `--kind`
+field, not a separate command.
+
+### `gibson agent enroll`
+
+Provision a new machine identity and print its one-time bootstrap token.
+The token is shown once, expires in 24 hours, and is consumed by
+[`gibson component register`](#gibson-component-register).
+
+```bash
+gibson agent enroll --name my-first-agent --kind agent
+gibson agent enroll --name my-portscan --kind tool
+```
+
+| Flag | Required | Notes |
+|---|---|---|
+| `--name` | yes | Identity name (kebab-case, unique within the tenant). |
+| `--kind` | no | `agent` (default), `tool`, or `plugin`. |
+
+### `gibson agent list`
+
+List the tenant's machine identities. Filter with `--kind`.
+
+```bash
+gibson agent list
+gibson agent list --kind plugin
+```
+
+### `gibson agent revoke`
+
+Permanently revoke a machine identity by its principal id. The next call
+the component makes is rejected; re-enroll to issue a fresh identity.
+
+```bash
+gibson agent revoke <principal-id>
+```
+
+---
+
+## `gibson connector`
+
+Scaffold and locally run **MCP connectors**, a connector bridges an
+existing Model Context Protocol server into Gibson as a plugin, running
+the vendor MCP server unmodified. See [Connectors](/docs/connectors).
+
+```bash
+gibson connector init my-bridge   # scaffold connector.yaml
+gibson connector validate         # validate the manifest
+gibson connector run              # run the vendor MCP server locally, list its tools
+gibson connector invoke <tool>    # invoke one discovered tool locally
+```
+
+| Command | Purpose |
+|---|---|
+| `init <name>` | Scaffold a `connector.yaml` manifest. |
+| `validate` | Validate a `connector.yaml` manifest. |
+| `run` | Run the vendor MCP server locally and list its discovered tools. |
+| `invoke <tool>` | Invoke one of the vendor MCP server's tools locally. |
+
+---
+
 ## `gibson mission`
 
 Group for mission authoring, validation, rendering, and submission.
@@ -172,6 +272,38 @@ What it does:
 4. Calls `RunMission` and streams the lifecycle events to stdout.
 
 See [Missions](/docs/missions) for the full lifecycle.
+
+---
+
+## `gibson target`
+
+Create, list, inspect, update, and delete the assessment targets a
+mission runs against. Targets are referenced by the minted UUID.
+
+```bash
+gibson target create   # register a target, prints its UUID
+gibson target list      # list targets (UUID + metadata)
+gibson target get <uuid>
+gibson target update <uuid>
+gibson target delete <uuid>
+```
+
+---
+
+## `gibson provider`
+
+Manage the LLM provider configurations your agents draw on. Credentials
+are stored by Gibson, never written to disk by the CLI.
+
+```bash
+gibson provider add     # create a provider configuration
+gibson provider list
+gibson provider test    # validate a config with a live probe
+gibson provider delete <name>
+```
+
+See [Secrets management](/docs/secrets-management) for how provider
+credentials are stored.
 
 ---
 

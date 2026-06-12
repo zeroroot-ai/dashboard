@@ -164,16 +164,16 @@ func main() {
 
 ### 3. Register the tool
 
+Enroll a machine identity to mint a single-use bootstrap token, then
+exchange it for a runtime credential. There is no client secret:
+
 ```bash
-gibson component register --kind tool \
-  --client-id     <from-wizard> \
-  --client-secret <from-wizard> \
-  --name          port-scan
+gibson agent enroll --name port-scan --kind tool
+gibson component register --token <bootstrap-token>
 ```
 
-The wizard at
-[`/dashboard/deploy`](https://app.zeroroot.ai/dashboard/deploy) issues
-the credential. See [Install](/docs/install#4-get-a-credential-from-the-dashboard).
+Run `register` from the tool's component directory; it reads the kind and
+name from `component.yaml`. See [Install](/docs/install#5-enroll-a-component).
 
 ### 4. Run
 
