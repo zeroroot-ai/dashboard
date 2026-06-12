@@ -622,6 +622,36 @@ describe('POST /api/billing/webhook, customer.subscription.created', () => {
     expect(billing?.status).toBe('trialing');
   });
 
+  it('stamps the billing-active annotation when the subscription starts trialing (card-first embedded flow, dashboard#769)', async () => {
+    const subscription = makeSubscription({ status: 'trialing' });
+    const event = makeEvent('customer.subscription.created', subscription);
+    mockVerifyWebhookSignature.mockReturnValue(event);
+
+    await POST(makeRequest(JSON.stringify(subscription)));
+
+    const [, patch] = mockPatchTenant.mock.calls[0] as [string, Record<string, unknown>];
+    const annotations = (patch as {
+      metadata?: { annotations?: Record<string, string> };
+    }).metadata?.annotations;
+    expect(annotations?.['gibson.zeroroot.ai/billing-active']).toBe('true');
+  });
+
+  it('does NOT stamp billing-active when the subscription is incomplete (payment not collected)', async () => {
+    const subscription = makeSubscription({ status: 'incomplete' });
+    const event = makeEvent('customer.subscription.created', subscription);
+    mockVerifyWebhookSignature.mockReturnValue(event);
+
+    await POST(makeRequest(JSON.stringify(subscription)));
+
+    const [, patch] = mockPatchTenant.mock.calls[0] as [string, Record<string, unknown>];
+    const annotations = (patch as {
+      metadata?: { annotations?: Record<string, string> };
+    }).metadata?.annotations;
+    expect(annotations?.['gibson.zeroroot.ai/billing-active']).toBeUndefined();
+    const billing = (patch as { status?: { billing?: Record<string, unknown> } }).status?.billing;
+    expect(billing?.status).toBe('incomplete');
+  });
+
   it('emits billing.checkout_completed audit event', async () => {
     const subscription = makeSubscription();
     const event = makeEvent('customer.subscription.created', subscription);
