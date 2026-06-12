@@ -362,6 +362,9 @@ export const OPTIONAL_ENV = [
   'NEXT_PUBLIC_APP_URL',
   'NEXT_PUBLIC_API_URL',
   'NEXT_PUBLIC_IDENTITY_PROVIDER_URL',
+  // Card-first signup (dashboard#769): publishable key for the in-page
+  // Payment Element. Browser-side; the secret key stays server-only.
+  'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
 
   // NOTE: the previous *_AUTHZ_PERMISSIVE_DEV escape hatches were deleted by
   // spec "eliminate-permissive-authz" Requirement 2. The check-no-permissive-

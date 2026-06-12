@@ -69,6 +69,13 @@ const STEP_GROUPS: StepGroup[] = [
     label: "$ allocating tenant namespace",
   },
   {
+    // Card-first signup (dashboard#769): plain-English label, not hacker-
+    // theme — it appears beside the Payment Element where a paying customer
+    // is entering card details.
+    steps: ["await_payment"],
+    label: "$ confirming payment method",
+  },
+  {
     steps: ["setup_workspace"],
     label: "$ provisioning control plane",
   },
