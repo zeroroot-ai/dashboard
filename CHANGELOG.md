@@ -5,6 +5,41 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.113.0](https://github.com/zeroroot-ai/dashboard/compare/v0.112.0...v0.113.0) (2026-06-12)
+
+
+### Features
+
+* **billing:** STRIPE_ALLOW_TEST_KEY opt-in for prod-runtime test mode ([#745](https://github.com/zeroroot-ai/dashboard/issues/745)) ([96a4cf2](https://github.com/zeroroot-ai/dashboard/commit/96a4cf2de7b1c3446de7041e7b93584991e53651))
+* **brand:** rename Zero Day AI -&gt; Zero Root AI from a single brand constant + guard (dashboard[#704](https://github.com/zeroroot-ai/dashboard/issues/704)) ([#710](https://github.com/zeroroot-ai/dashboard/issues/710)) ([7f25473](https://github.com/zeroroot-ai/dashboard/commit/7f254735a307b04b834b053e5341998864ac6007))
+* **copy:** em-dash guard with selftest; sweep the landing page ([#753](https://github.com/zeroroot-ai/dashboard/issues/753)) ([#761](https://github.com/zeroroot-ai/dashboard/issues/761)) ([ffdc524](https://github.com/zeroroot-ai/dashboard/commit/ffdc5241b9a75840f45590c3f77c6ecfb5cd178e))
+* **device:** branded device-verification page that hands off to the identity service (dashboard[#718](https://github.com/zeroroot-ai/dashboard/issues/718)) ([#725](https://github.com/zeroroot-ai/dashboard/issues/725)) ([d0d9275](https://github.com/zeroroot-ai/dashboard/commit/d0d9275af29e0ac9a89d2c197ca2c8dcc7e4b1ac))
+* **enrollment:** route enrollment through AgentIdentityService, drop AgentEnrollment CR path (dashboard[#713](https://github.com/zeroroot-ai/dashboard/issues/713)) ([#719](https://github.com/zeroroot-ai/dashboard/issues/719)) ([d3ce08d](https://github.com/zeroroot-ai/dashboard/commit/d3ce08d7cce2cc0aa845dd10fcc219f0dd13a991))
+* **invite:** public /invite/&lt;token&gt; accept page (dashboard[#727](https://github.com/zeroroot-ai/dashboard/issues/727)) ([#729](https://github.com/zeroroot-ai/dashboard/issues/729)) ([76c9200](https://github.com/zeroroot-ai/dashboard/commit/76c9200d01e5211614e0a2ddc43ebb31325b7176))
+* **landing:** dashboard showcase + sharper hacker accents + footer legibility (dashboard[#706](https://github.com/zeroroot-ai/dashboard/issues/706)/[#707](https://github.com/zeroroot-ai/dashboard/issues/707)/[#708](https://github.com/zeroroot-ai/dashboard/issues/708)/[#709](https://github.com/zeroroot-ai/dashboard/issues/709)) ([#712](https://github.com/zeroroot-ai/dashboard/issues/712)) ([00d0766](https://github.com/zeroroot-ai/dashboard/commit/00d07661440cfdaea24e2754c33e0ecb81db451b))
+* **landing:** merge regulated-industries copy + real ADK flow into landing page ([#747](https://github.com/zeroroot-ai/dashboard/issues/747)) ([7f77b5d](https://github.com/zeroroot-ai/dashboard/commit/7f77b5de0a3d5289d67ded7e6fff465c4ca670ab))
+* **landing:** real dashboard screenshot, Dracula terminal palette, sharper showcase tagline ([#730](https://github.com/zeroroot-ai/dashboard/issues/730)) ([9359a1f](https://github.com/zeroroot-ai/dashboard/commit/9359a1fdb979774e9b83026af6c6e8a6783d41c2))
+* **members:** member/role writes + roster via MembershipService, drop TenantMember CR (dashboard[#715](https://github.com/zeroroot-ai/dashboard/issues/715)) ([#726](https://github.com/zeroroot-ai/dashboard/issues/726)) ([fcc54f1](https://github.com/zeroroot-ai/dashboard/commit/fcc54f1061ffe01b62b0a494f42422838c1333a1))
+* **mission-graph:** live per-node run overlay on the Flow view ([#695](https://github.com/zeroroot-ai/dashboard/issues/695)) ([6e9b153](https://github.com/zeroroot-ai/dashboard/commit/6e9b153d2780c50a527df4761b27a65a7325754d))
+* **quota:** layout quota widget reads daemon GetTenantQuota, not the Tenant CR spec.tier (dashboard[#722](https://github.com/zeroroot-ai/dashboard/issues/722)) ([#724](https://github.com/zeroroot-ai/dashboard/issues/724)) ([2482546](https://github.com/zeroroot-ai/dashboard/commit/24825467f3ee22bc14de6b76344d773409befbf1))
+* **routing:** host-aware www/app split in middleware (deploy[#630](https://github.com/zeroroot-ai/dashboard/issues/630) S11) ([#697](https://github.com/zeroroot-ai/dashboard/issues/697)) ([b67fef4](https://github.com/zeroroot-ai/dashboard/commit/b67fef4f5dcf9db835ae4a68d4992d4004225223))
+* **sessions:** add FGA-gated revoke-sessions admin UI + action (dashboard[#717](https://github.com/zeroroot-ai/dashboard/issues/717)) ([#721](https://github.com/zeroroot-ai/dashboard/issues/721)) ([123e126](https://github.com/zeroroot-ai/dashboard/commit/123e12689f7d59f5f13cc2bb440e82b04f39d63b))
+* **settings:** add my-active-sessions table with per-session revoke ([#743](https://github.com/zeroroot-ai/dashboard/issues/743)) ([ddf44b0](https://github.com/zeroroot-ai/dashboard/commit/ddf44b0664f282fd7a9385c3fdfb85f8ab89386d)), closes [#740](https://github.com/zeroroot-ai/dashboard/issues/740) [#741](https://github.com/zeroroot-ai/dashboard/issues/741)
+* **settings:** add Settings → CLI command-reference card ([#742](https://github.com/zeroroot-ai/dashboard/issues/742)) ([0892d55](https://github.com/zeroroot-ai/dashboard/commit/0892d55291e836e744f296734a5cadca1710de9f)), closes [#739](https://github.com/zeroroot-ai/dashboard/issues/739)
+* **tenant:** resolve tenants from FGA-backed memberships, not the Tenant CRD (dashboard[#714](https://github.com/zeroroot-ai/dashboard/issues/714)) ([#720](https://github.com/zeroroot-ai/dashboard/issues/720)) ([3a6b5d0](https://github.com/zeroroot-ai/dashboard/commit/3a6b5d0805ffd012ae406aa13ce063cd4b9654ee))
+* **ui:** legible + bold filled error treatment (dashboard[#705](https://github.com/zeroroot-ai/dashboard/issues/705)) ([#711](https://github.com/zeroroot-ai/dashboard/issues/711)) ([9b423fb](https://github.com/zeroroot-ai/dashboard/commit/9b423fbb69c4e1977bbefcf614a5b0049913bd5e))
+
+
+### Bug Fixes
+
+* **access:** populate per-team/-user/-agent scope dropdowns in AccessScopeSelector ([#701](https://github.com/zeroroot-ai/dashboard/issues/701)) ([61832d2](https://github.com/zeroroot-ai/dashboard/commit/61832d2259ad9b3707538660b3282ff3791dc759)), closes [#698](https://github.com/zeroroot-ai/dashboard/issues/698) [#699](https://github.com/zeroroot-ai/dashboard/issues/699) [#700](https://github.com/zeroroot-ai/dashboard/issues/700)
+* **email:** add @aws-sdk/client-ses to dependencies — SES provider crashed at first send ([#748](https://github.com/zeroroot-ai/dashboard/issues/748)) ([#750](https://github.com/zeroroot-ai/dashboard/issues/750)) ([b7090a8](https://github.com/zeroroot-ai/dashboard/commit/b7090a80f05765974951f417fed20f657cb56112))
+* **email:** read the SES configuration set from env, never NODE_ENV ([#762](https://github.com/zeroroot-ai/dashboard/issues/762)) ([5f5b1f8](https://github.com/zeroroot-ai/dashboard/commit/5f5b1f813c2f38371bd8a701594d9a29bda38af7))
+* **landing:** update hero h1 to 'Zero Trust agent control plane in under an hour' ([#746](https://github.com/zeroroot-ai/dashboard/issues/746)) ([9495f40](https://github.com/zeroroot-ai/dashboard/commit/9495f40761511b776b838ea2cdf4dfb4dd18f194))
+* **routing:** run middleware on "/" so the host split redirects app root (deploy[#630](https://github.com/zeroroot-ai/dashboard/issues/630) S11) ([#702](https://github.com/zeroroot-ai/dashboard/issues/702)) ([d66bd98](https://github.com/zeroroot-ai/dashboard/commit/d66bd9833cbdd99684f70739ec2cf67348746247))
+* **signup:** map ApiException 404s so slug availability stays silent on the happy path ([#763](https://github.com/zeroroot-ai/dashboard/issues/763)) ([f1e4897](https://github.com/zeroroot-ai/dashboard/commit/f1e48977011ad8c1a920f7c89949f3bdc1447ac3)), closes [#751](https://github.com/zeroroot-ai/dashboard/issues/751)
+* **signup:** recover from Server Action deployment skew instead of dead-end error ([#694](https://github.com/zeroroot-ai/dashboard/issues/694)) ([5ba8ed6](https://github.com/zeroroot-ai/dashboard/commit/5ba8ed6ba04c4a844a202d9152ba575b71779331))
+
 ## [0.112.0](https://github.com/zeroroot-ai/dashboard/compare/v0.111.0...v0.112.0) (2026-06-03)
 
 
