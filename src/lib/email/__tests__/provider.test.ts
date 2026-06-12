@@ -260,3 +260,16 @@ describe('ResendEmailProvider', () => {
     await expect(p.send(msg)).rejects.toThrow(/Resend dispatch failed.*bad from/);
   });
 });
+
+describe('email SDK runtime dependencies', () => {
+  // Regression guard for dashboard#748: @aws-sdk/client-ses was listed in
+  // next.config serverExternalPackages (so webpack leaves the require() to
+  // runtime) but missing from package.json dependencies, so the standalone
+  // image shipped without it and the SES provider crashed at first send.
+  // serverExternalPackages entries MUST also exist in the dependency tree.
+  it('every lazily-required email SDK is resolvable', () => {
+    for (const mod of ['@aws-sdk/client-ses', 'nodemailer', 'resend']) {
+      expect(() => require.resolve(mod), `${mod} must be in dependencies`).not.toThrow();
+    }
+  });
+});
