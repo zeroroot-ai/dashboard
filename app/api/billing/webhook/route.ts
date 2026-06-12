@@ -318,7 +318,20 @@ async function handleSubscriptionCreated(
     : undefined;
   const currentPeriodEnd = new Date((subscription as unknown as { current_period_end: number }).current_period_end * 1000).toISOString();
 
+  // Card-first signup (dashboard#769): the embedded Payment Element creates
+  // the trialing subscription directly — there is no checkout.session.completed
+  // event — so this handler is what releases the saga's
+  // WaitForBillingConfirmation step. Stamp the billing-active annotation (the
+  // signal the operator polls) whenever the subscription starts in a paid
+  // state (trialing or active). Other statuses (incomplete, past_due) must NOT
+  // release provisioning.
+  const billingActive =
+    subscription.status === 'trialing' || subscription.status === 'active';
+
   await patchTenant(tenantSlug, {
+    ...(billingActive
+      ? { metadata: { annotations: { 'gibson.zeroroot.ai/billing-active': 'true' } } }
+      : {}),
     status: {
       billing: {
         subscriptionId: subscription.id,
