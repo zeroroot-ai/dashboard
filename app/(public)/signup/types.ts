@@ -125,19 +125,21 @@ export type SignupActionResult =
     }
   | {
       /**
-       * Card-first signup (dashboard#769): phase 1 completed through tenant
-       * creation and the Stripe customer is ready; the flow now pauses for
-       * in-page card collection. The client renders <PaymentStep> with these
-       * fields and, on success, calls `resumeSignupAfterPayment` to finish
-       * provisioning (member + owner + auto-login). None of these are
-       * secrets; phase 2 re-validates them against the tenant CR.
+       * Card-first signup (dashboard#785): phase 1 validated the form and
+       * created ONLY the Stripe customer + a SetupIntent — NO account, NO
+       * company yet. The client confirms the card against `cardClientSecret`
+       * with the inline Payment Element, then calls `completeSignup` with the
+       * resulting payment method. Nothing (user or Tenant CR) is created until
+       * that card clears. `stripeCustomerId` is non-secret and is re-verified
+       * server-side in phase 2 before any subscription is created.
        */
       ok: true;
-      awaitingPayment: true;
+      phase: "card";
       attemptId: string;
+      cardClientSecret: string;
+      stripeCustomerId: string;
       tenantSlug: string;
       tier: string;
-      zitadelUserId: string;
     }
   | {
       ok: false;
@@ -154,20 +156,24 @@ export type SignupActionResult =
     };
 
 /**
- * Input to `resumeSignupAfterPayment` (card-first signup phase 2,
- * dashboard#769). The client passes back the phase-1 context plus the
- * password (held in form state, never persisted server-side) so phase 2 can
- * finish provisioning + auto-login. Phase 2 re-validates tenantSlug/owner and
- * the confirmed billing state against the tenant CR before doing any work.
+ * Input to `completeSignup` (card-first signup phase 2, dashboard#785). The
+ * client passes back the phase-1 customer id + the confirmed payment method,
+ * plus the full signup fields (password is held in form state, never persisted
+ * server-side). Phase 2 verifies the customer belongs to this email, creates
+ * the trialing subscription, THEN creates the Zitadel user + Tenant CR and
+ * provisions — so no account or company exists until the card has cleared.
  */
-export interface SignupResumeInput {
+export interface CompleteSignupInput {
   attemptId: string;
+  stripeCustomerId: string;
+  paymentMethodId: string;
   tenantSlug: string;
   tier: string;
-  zitadelUserId: string;
   email: string;
   password: string;
   workspaceName: string;
+  firstName: string;
+  lastName: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -181,18 +187,15 @@ export interface SignupResumeInput {
 export type ProvisioningStep =
   | "rate_limit"
   | "policy"
+  /**
+   * Card-first signup (dashboard#785): phase 2 begins by creating the trialing
+   * subscription on the already-confirmed card, BEFORE the account/company
+   * exist. Absent (skipped) when paid tiers are disabled (kind dev autoconfirm).
+   */
+  | "create_billing"
   | "create_user"
   | "send_verify_email"
   | "apply_tenant"
-  /**
-   * Card-first signup (dashboard#769): after the tenant CR is applied and
-   * the CreateStripeCustomer saga step has written the customer to status,
-   * the flow pauses here for in-page card collection via the Payment
-   * Element. The trialing subscription is created on confirmation, which
-   * stamps billing-active and lets the saga proceed. Absent (skipped) when
-   * paid tiers are disabled (kind dev autoconfirm).
-   */
-  | "await_payment"
   | "setup_workspace"
   | "apply_member"
   | "grant_owner_role"

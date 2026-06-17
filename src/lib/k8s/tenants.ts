@@ -17,17 +17,36 @@ import type { K8sOwnerReference } from './owner-ref';
 /** Annotation key used by the tenant-operator to correlate API calls end-to-end. */
 const ANNOTATION_CORRELATION_ID = 'gibson.zeroroot.ai/correlation-id';
 
-export async function applyTenant(name: string, spec: TenantSpec): Promise<Tenant> {
+/**
+ * Annotation carrying the Stripe customer id the dashboard created BEFORE the
+ * Tenant CR (card-first signup, dashboard#785). The operator saga's
+ * CreateStripeCustomer step adopts this id deterministically instead of
+ * searching Stripe by metadata (which is eventually consistent and would race
+ * into a duplicate customer — the orphan-dupe / 21k-leak class, to#354).
+ */
+const ANNOTATION_STRIPE_CUSTOMER_ID = 'gibson.zeroroot.ai/stripe-customer-id';
+
+export interface ApplyTenantOptions {
+  /** Pre-created Stripe customer id to pin on the CR for deterministic adoption. */
+  stripeCustomerId?: string;
+}
+
+export async function applyTenant(
+  name: string,
+  spec: TenantSpec,
+  opts?: ApplyTenantOptions,
+): Promise<Tenant> {
+  const annotations: Record<string, string> = {
+    [ANNOTATION_CORRELATION_ID]: getCorrelationId(),
+  };
+  if (opts?.stripeCustomerId) {
+    annotations[ANNOTATION_STRIPE_CUSTOMER_ID] = opts.stripeCustomerId;
+  }
   return k8s().apply<Tenant>(
     {
       apiVersion: 'gibson.zeroroot.ai/v1alpha1',
       kind: 'Tenant',
-      metadata: {
-        name,
-        annotations: {
-          [ANNOTATION_CORRELATION_ID]: getCorrelationId(),
-        },
-      },
+      metadata: { name, annotations },
       spec,
     } as Tenant,
     true,

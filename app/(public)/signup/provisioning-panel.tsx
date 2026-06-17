@@ -69,11 +69,11 @@ const STEP_GROUPS: StepGroup[] = [
     label: "$ allocating tenant namespace",
   },
   {
-    // Card-first signup (dashboard#769): plain-English label, not hacker-
-    // theme — it appears beside the Payment Element where a paying customer
-    // is entering card details.
-    steps: ["await_payment"],
-    label: "$ confirming payment method",
+    // Card-first signup (dashboard#785): the card is already confirmed by the
+    // time the panel shows; this is the server creating the trialing
+    // subscription before any account/company is provisioned.
+    steps: ["create_billing"],
+    label: "$ starting trial subscription",
   },
   {
     steps: ["setup_workspace"],

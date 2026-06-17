@@ -265,6 +265,100 @@ export async function createCheckoutSession(
 // trialing subscription is created server-side with that payment method.
 // ---------------------------------------------------------------------------
 
+/**
+ * Find-or-create the Stripe customer for a card-first signup, BEFORE any
+ * account or Tenant CR exists (dashboard#785). The customer is created up
+ * front so the card can be collected and the trialing subscription created
+ * before we provision anything — nothing is created until the card clears.
+ *
+ * Reuse-by-email: a retried/abandoned signup for the same email reuses the
+ * prior `signup_pending` customer instead of minting a duplicate (the
+ * orphan-dupe / 21k-leak class, to#354). Stripe search is eventually
+ * consistent, so this is best-effort dedup; the AUTHORITATIVE customer for a
+ * completed signup is the one pinned on the Tenant CR annotation, which the
+ * operator saga adopts deterministically (no search race).
+ *
+ * Tagged with `metadata.tenant_id` = slug so the saga's adoption path and the
+ * webhook tenant attribution both resolve.
+ */
+export interface SignupCustomerParams {
+  email: string;
+  name: string;
+  tenantSlug: string;
+  tier: string;
+}
+
+function escapeStripeQuery(v: string): string {
+  return v.replace(/['\\]/g, '\\$&');
+}
+
+export async function findOrCreateSignupCustomer(
+  params: SignupCustomerParams,
+): Promise<string> {
+  const stripe = getStripeClient();
+  const metadata = {
+    tenant_id: params.tenantSlug,
+    tier: params.tier,
+    signup_pending: 'true',
+    email: params.email,
+  };
+  try {
+    const found = await stripe.customers.search({
+      query: `email:'${escapeStripeQuery(params.email)}' AND metadata['signup_pending']:'true'`,
+      limit: 1,
+    });
+    const existing = found.data[0];
+    if (existing) {
+      // Refresh name/tier/tenant in case the user changed company or plan on retry.
+      await stripe.customers.update(existing.id, { name: params.name, metadata });
+      return existing.id;
+    }
+  } catch {
+    // Search unavailable (e.g. stripe-mock has no /v1/customers/search) — fall
+    // through to create. Worst case is a reusable-later pending customer.
+  }
+  const created = await stripe.customers.create({
+    email: params.email,
+    name: params.name,
+    metadata,
+  });
+  return created.id;
+}
+
+/**
+ * Verify a client-supplied customer id really belongs to this signup's email
+ * before we create a subscription against it (phase 2 receives the id from the
+ * browser, so it is untrusted). Returns false on any mismatch / deleted /
+ * missing customer.
+ */
+export async function verifySignupCustomer(
+  customerId: string,
+  email: string,
+): Promise<boolean> {
+  const stripe = getStripeClient();
+  try {
+    const c = await stripe.customers.retrieve(customerId);
+    if (c.deleted) return false;
+    return (c.email ?? '').toLowerCase() === email.toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Clear the `signup_pending` tag once provisioning is underway, so a later
+ * unrelated signup with the same email never reuses this now-owned customer.
+ * Best-effort: a failure here does not fail the signup.
+ */
+export async function finalizeSignupCustomer(customerId: string): Promise<void> {
+  const stripe = getStripeClient();
+  try {
+    await stripe.customers.update(customerId, { metadata: { signup_pending: 'false' } });
+  } catch {
+    // non-fatal
+  }
+}
+
 /** Parameters for the embedded SetupIntent that backs the Payment Element. */
 export interface SetupIntentParams {
   /** Stripe customer ID (cus_...) the card is attached to. */
