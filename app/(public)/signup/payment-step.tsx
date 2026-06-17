@@ -23,11 +23,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { confirmCardAndSubscribe } from "@/src/lib/billing/confirm-card";
 
+// Cache the Stripe.js promise per publishable key. The key arrives at runtime
+// (prop from the server component) rather than the build-time NEXT_PUBLIC var,
+// because the shared :main image can't bake a per-env (test vs live) key
+// (dashboard#783).
 let stripePromise: Promise<Stripe | null> | null = null;
-function getStripe(): Promise<Stripe | null> {
-  if (!stripePromise) {
-    const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-    stripePromise = pk ? loadStripe(pk) : Promise.resolve(null);
+let stripePromiseKey: string | null = null;
+function getStripe(publishableKey: string): Promise<Stripe | null> {
+  if (!stripePromise || stripePromiseKey !== publishableKey) {
+    stripePromiseKey = publishableKey;
+    stripePromise = publishableKey
+      ? loadStripe(publishableKey)
+      : Promise.resolve(null);
   }
   return stripePromise;
 }
@@ -35,11 +42,13 @@ function getStripe(): Promise<Stripe | null> {
 interface PaymentStepProps {
   tenantSlug: string;
   tier: string;
+  /** Stripe publishable key, runtime-injected (dashboard#783). */
+  publishableKey: string;
   /** Called once the trialing subscription is created. */
   onComplete: () => void;
 }
 
-export function PaymentStep({ tenantSlug, tier, onComplete }: PaymentStepProps) {
+export function PaymentStep({ tenantSlug, tier, publishableKey, onComplete }: PaymentStepProps) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
@@ -79,7 +88,7 @@ export function PaymentStep({ tenantSlug, tier, onComplete }: PaymentStepProps) 
     };
   }, [tenantSlug]);
 
-  const stripe = useMemo(() => getStripe(), []);
+  const stripe = useMemo(() => getStripe(publishableKey), [publishableKey]);
 
   if (fetchError) {
     return <p className="text-error-text text-sm">{fetchError}</p>;
@@ -90,7 +99,7 @@ export function PaymentStep({ tenantSlug, tier, onComplete }: PaymentStepProps) 
 
   return (
     <Elements stripe={stripe} options={{ clientSecret }}>
-      <CardForm tenantSlug={tenantSlug} tier={tier} onComplete={onComplete} />
+      <CardForm tenantSlug={tenantSlug} tier={tier} publishableKey={publishableKey} onComplete={onComplete} />
     </Elements>
   );
 }

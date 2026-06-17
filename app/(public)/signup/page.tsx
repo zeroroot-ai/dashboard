@@ -73,6 +73,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           plan={bypassPlan}
           planDisplayName="(test bypass)"
           passwordPolicy={DEFAULT_PASSWORD_POLICY}
+          publishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ""}
         />
       </Suspense>
     );
@@ -110,6 +111,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         plan={plan}
         planDisplayName={planDisplayName}
         passwordPolicy={passwordPolicy}
+        publishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ""}
       />
     </Suspense>
   );
