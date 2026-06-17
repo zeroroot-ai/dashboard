@@ -403,14 +403,13 @@ function SignupFormInner({
         }
       }
 
-      // Mint the attemptId BEFORE invoking the action so we can show the
-      // ProvisioningPanel immediately. The panel polls /api/signup/progress/:id
-      // for live status while the server action runs in the background.
-      // Without this, the user stares at a disabled form for 20–30s with no
-      // signal that anything is happening.
+      // Mint the attemptId now (passed to signupAction for progress tracking)
+      // but DO NOT switch to the ProvisioningPanel yet: doing so unmounts this
+      // form and the Payment Element, and stripe.confirmSetup() requires a
+      // mounted Payment Element. We show the panel only AFTER the card is
+      // confirmed (below). Until then the form stays mounted + disabled
+      // (form.formState.isSubmitting drives the button's "Creating account…").
       const newAttemptId = crypto.randomUUID();
-      setAttemptId(newAttemptId);
-      setIsProvisioning(true);
       form.clearErrors();
 
       try {
@@ -423,8 +422,6 @@ function SignupFormInner({
           // under this one "Create account" submit (no separate card step).
           if (!stripe || !elements) {
             toast.error("Payment form not ready. Please retry.");
-            setAttemptId(null);
-            setIsProvisioning(false);
             return;
           }
           const confirmed = await confirmCardAndSubscribe({
@@ -441,10 +438,15 @@ function SignupFormInner({
           if (!confirmed.ok) {
             setCardError(confirmed.error);
             toast.error(confirmed.error);
-            setAttemptId(null);
-            setIsProvisioning(false);
+            // Form (and Payment Element) is still mounted (we never switched
+            // to the panel) so the user can fix the card and resubmit.
             return;
           }
+          // Card confirmed + subscription created. The Payment Element is no
+          // longer needed, so NOW switch to the ProvisioningPanel to show live
+          // status while resumeSignupAfterPayment finishes the saga.
+          setAttemptId(newAttemptId);
+          setIsProvisioning(true);
           const finished = await resumeSignupAfterPayment({
             attemptId: newAttemptId,
             tenantSlug: result.tenantSlug,
@@ -462,13 +464,18 @@ function SignupFormInner({
             setIsProvisioning(false);
           }
         } else if (result.ok) {
+          // No-payment path (e.g. free tier): provisioning ran inside
+          // signupAction. Show the panel now so it reflects the terminal
+          // state and follows the redirect.
+          setAttemptId(newAttemptId);
+          setIsProvisioning(true);
           setRedirectOnSuccess(result.redirect);
           // Panel sees terminalState=ok in Redis and follows redirect.
         } else {
-          // The server has already written a terminal failure state to the
-          // progress store; the panel will show the error inline. Also pop
-          // a toast for users not looking at the panel + apply per-field
-          // errors for retry-time validation feedback.
+          // signupAction failed before any card work. The form is still
+          // mounted (we never switched to the panel), so surface the error in
+          // place: a toast plus per-field errors so the user can correct and
+          // resubmit without losing the inline card form.
           toast.error(result.userMessage);
 
           if (result.fieldErrors) {
