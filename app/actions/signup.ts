@@ -38,10 +38,21 @@ import {
   signupInputSchema,
   type SignupInput,
   type SignupActionResult,
-  type SignupResumeInput,
+  type CompleteSignupInput,
   type SignupFailureCode,
   type ProvisioningStep,
 } from "@/app/(public)/signup/types";
+import {
+  findOrCreateSignupCustomer,
+  verifySignupCustomer,
+  finalizeSignupCustomer,
+  createSetupIntent,
+  createTrialingSubscription,
+  priceIdForTier,
+  type BillingTier,
+} from "@/src/lib/billing/stripe";
+import { lookupPlan, type PlanID } from "@/src/generated/plans";
+import { selfServeTierIds } from "@/src/lib/pricing-display";
 import { getSignupZitadelAdminClient } from "@/src/lib/zitadel/admin-client-factory";
 import { getCachedPasswordPolicy } from "@/src/lib/zitadel/password-policy-cache";
 import { ZitadelApiError } from "@/src/lib/zitadel/errors";
@@ -230,6 +241,65 @@ export async function signupAction(
       });
     }
 
+    // ----- Card-first split (dashboard#785) -----
+    // PAID tiers: create ONLY the Stripe customer + a SetupIntent here. No
+    // Zitadel user and no Tenant CR exist until the card clears in
+    // completeSignup() — an abandoned or declined signup leaves nothing behind.
+    if (paidTiersEnabled()) {
+      let stripeCustomerId: string;
+      let cardClientSecret: string;
+      try {
+        stripeCustomerId = await findOrCreateSignupCustomer({
+          email: ctx.input.email,
+          name: ctx.input.workspaceName,
+          tenantSlug: ctx.tenantSlug,
+          tier: ctx.input.tier,
+        });
+        const intent = await createSetupIntent({
+          customerId: stripeCustomerId,
+          tenantSlug: ctx.tenantSlug,
+          idempotencyKey: `signup:${attemptId}:setup-intent`,
+        });
+        if (!intent.client_secret) {
+          throw new Error("SetupIntent has no client_secret");
+        }
+        cardClientSecret = intent.client_secret;
+      } catch (err) {
+        logger.error(
+          {
+            attemptId,
+            action: "signup_setup_intent",
+            err: err instanceof Error ? err.message : String(err),
+          },
+          "card-first phase 1 (customer + SetupIntent) failed",
+        );
+        return await finish(ctx, "policy", {
+          code: "INTERNAL_ERROR",
+          userMessage: "We couldn't start payment setup. Please try again.",
+        });
+      }
+      logger.info(
+        {
+          action: "signup_card_phase",
+          attemptId,
+          tenantSlug: ctx.tenantSlug,
+          tier: ctx.input.tier,
+        },
+        "card-first phase 1 complete; awaiting inline card confirmation",
+      );
+      return {
+        ok: true,
+        phase: "card",
+        attemptId,
+        cardClientSecret,
+        stripeCustomerId,
+        tenantSlug: ctx.tenantSlug,
+        tier: ctx.input.tier,
+      };
+    }
+
+    // ----- Autoconfirm (kind dev; paid tiers disabled) -----
+    // No card step — create the account + company + provision inline.
     // 4. Create the Zitadel user (or resume if one already exists with no tenant).
     await advanceStep(attemptId, "create_user");
     const userResult = await createOrResumeZitadelUser(client, ctx);
@@ -286,43 +356,6 @@ export async function signupAction(
       });
     }
 
-    // 6b. Card-first signup (dashboard#769). When paid tiers are enabled,
-    // pause for in-page card collection: wait for the CreateStripeCustomer
-    // saga step to write status.stripeCustomerId, then hand the non-secret
-    // context to the client, which renders <PaymentStep> and calls
-    // resumeSignupAfterPayment() once the trialing subscription is created.
-    // The saga's WaitForBillingConfirmation step blocks org creation until
-    // then, so finishing provisioning here would deadlock. When paid tiers
-    // are disabled (kind autoconfirm), fall straight through to provisioning.
-    if (paidTiersEnabled()) {
-      await advanceStep(attemptId, "await_payment");
-      const customerReady = await waitForStripeCustomer(ctx.tenantSlug);
-      if (!customerReady) {
-        return await finish(ctx, "await_payment", {
-          code: "PROVISIONING_TIMEOUT",
-          userMessage:
-            "Still setting up billing for your workspace. Try again in a moment.",
-        });
-      }
-      logger.info(
-        {
-          action: "signup_awaiting_payment",
-          attemptId,
-          tenantSlug: ctx.tenantSlug,
-          tier: ctx.input.tier,
-        },
-        "signup paused for in-page card collection",
-      );
-      return {
-        ok: true,
-        awaitingPayment: true,
-        attemptId,
-        tenantSlug: ctx.tenantSlug,
-        tier: ctx.input.tier,
-        zitadelUserId: ctx.zitadelUserId as string,
-      };
-    }
-
     return await finishProvisioning(ctx, client);
   } catch (err) {
     // Catch-all, any uncaught exception becomes INTERNAL_ERROR.
@@ -340,9 +373,9 @@ export async function signupAction(
 /**
  * finishProvisioning runs the post-tenant steps shared by the kind-autoconfirm
  * path (called inline by signupAction) and the card-first path (called by
- * resumeSignupAfterPayment once the trialing subscription is confirmed):
- * wait for status.zitadelOrgID → apply the owner TenantMember → wait Active →
- * auto-login → done.
+ * completeSignup once the trialing subscription is created and the Tenant CR
+ * is applied): wait for status.zitadelOrgID → apply the owner TenantMember →
+ * wait Active → auto-login → done.
  */
 async function finishProvisioning(
   ctx: Ctx,
@@ -461,89 +494,187 @@ async function finishProvisioning(
 }
 
 /**
- * resumeSignupAfterPayment is card-first signup phase 2 (dashboard#769). The
- * client calls it once <PaymentStep> has created the trialing subscription.
- * It re-validates the context against the tenant CR (owner email match +
- * confirmed billing), re-parks an OIDC auth_request for auto-login, then runs
- * the shared finishProvisioning (org wait → member → owner → auto-login).
+ * completeSignup is card-first signup phase 2 (dashboard#785). The client
+ * calls it after the inline Payment Element has confirmed the card (a
+ * SetupIntent on the phase-1 customer). It:
+ *   1. verifies the client-supplied customer really belongs to this email,
+ *   2. creates the trialing subscription on the confirmed card,
+ *   3. ONLY THEN creates the Zitadel user + Tenant CR (pinning the customer
+ *      id so the operator saga adopts it deterministically),
+ *   4. provisions (org wait → member → owner → auto-login).
+ *
+ * Nothing — no account, no company — exists until the card has cleared. If
+ * any step before the Tenant CR fails, no CR was applied, so the company name
+ * stays free and a retry reuses the same Stripe customer (reuse-by-email).
  *
  * Security: every field arrives from the client, so nothing is trusted. The
- * tenant's spec.owner must equal the supplied email, and billing must be
- * trialing/active before any owner provisioning happens — a caller cannot
- * skip payment or hijack another tenant by forging the payload.
+ * tier is re-validated, the slug is re-checked for availability, and the
+ * customer id is verified against the email before any subscription is created
+ * — a caller cannot subscribe an arbitrary customer or hijack another company.
  */
-export async function resumeSignupAfterPayment(
-  input: SignupResumeInput,
+export async function completeSignup(
+  input: CompleteSignupInput,
 ): Promise<SignupActionResult> {
   const attemptId = UUID_RE.test(input.attemptId) ? input.attemptId : randomUUID();
+  const email = input.email.trim().toLowerCase();
 
   const ctx: Ctx = {
     attemptId,
     input: {
-      email: input.email,
+      email,
       password: input.password,
-      workspaceName: input.workspaceName,
+      workspaceName: input.workspaceName.trim(),
+      firstName: input.firstName.trim(),
+      lastName: input.lastName.trim(),
       tier: input.tier as SignupInput["tier"],
-      // Phase 2 only reads email/password/workspaceName/tier (member + owner
-      // + auto-login). The create-user-only fields are already spent in
-      // phase 1; fill them to satisfy the type without re-validating.
-      firstName: "",
-      lastName: "",
       passwordConfirm: input.password,
       acceptToS: true,
       acceptPrivacy: true,
     },
-    zitadelUserId: input.zitadelUserId,
+    zitadelUserId: undefined,
     tenantSlug: input.tenantSlug,
     emailVerifiedAtCreate: true,
     oidcHandoff: undefined,
   };
 
   try {
-    // Re-validate against the tenant CR — the payload is client-supplied.
-    const tenant = await safeGetTenant(input.tenantSlug);
-    if (!tenant) {
-      return await finish(ctx, "await_payment", {
+    // Re-validate the client-supplied tier + slug.
+    if (!(selfServeTierIds as readonly string[]).includes(input.tier)) {
+      return await finish(ctx, "create_billing", {
         code: "INTERNAL_ERROR",
-        userMessage: "We couldn't find your workspace. Please start over.",
+        userMessage: "Invalid plan. Please start over.",
       });
     }
-    if (tenant.spec.owner !== input.email) {
-      logger.warn(
-        { attemptId, action: "signup_resume_owner_mismatch" },
-        "resume payload owner does not match tenant spec.owner",
+    if (!input.tenantSlug || slugify(ctx.input.workspaceName) !== input.tenantSlug) {
+      return await finish(ctx, "create_billing", {
+        code: "INTERNAL_ERROR",
+        userMessage: "Your company name didn't match. Please start over.",
+      });
+    }
+    // Slug-availability race guard: someone may have taken the name between
+    // phase 1 and now. A pre-existing tenant owned by THIS email is a retry
+    // (allowed — createOrResumeZitadelUser + idempotent saga handle it).
+    const existing = await safeGetTenant(input.tenantSlug);
+    if (existing && existing.spec.owner !== email) {
+      return await finish(ctx, "create_billing", {
+        code: "WORKSPACE_TAKEN",
+        userMessage: "That company name isn't available, pick another.",
+        fieldErrors: { workspaceName: "Not available" },
+      });
+    }
+    // Verify the (client-supplied) customer id belongs to this signup's email
+    // before subscribing it.
+    if (
+      !input.stripeCustomerId ||
+      !(await verifySignupCustomer(input.stripeCustomerId, email))
+    ) {
+      return await finish(ctx, "create_billing", {
+        code: "INTERNAL_ERROR",
+        userMessage: "We couldn't verify your payment details. Please start over.",
+      });
+    }
+
+    // 1. Create the trialing subscription on the confirmed card — BEFORE any
+    //    account or company. If this fails, nothing has been created.
+    await advanceStep(attemptId, "create_billing");
+    const priceId = priceIdForTier(input.tier);
+    const trialDays = lookupPlan(input.tier as PlanID).trialDays;
+    if (!priceId || !trialDays || trialDays <= 0) {
+      logger.error(
+        { attemptId, tier: input.tier },
+        "billing misconfigured for tier (missing price or trialDays)",
       );
-      return await finish(ctx, "await_payment", {
+      return await finish(ctx, "create_billing", {
         code: "INTERNAL_ERROR",
-        userMessage: "We couldn't verify your workspace. Please start over.",
+        userMessage: "Billing isn't configured for that plan. Please contact support.",
       });
     }
-    // Billing must be confirmed before we provision the owner. The saga's
-    // WaitForBillingConfirmation gates org creation on the same signal, but
-    // we check here too so phase 2 can never run ahead of payment.
-    const billingStatus = tenant.status?.billing?.status;
-    if (billingStatus !== "trialing" && billingStatus !== "active") {
-      return await finish(ctx, "await_payment", {
-        code: "PROVISIONING_TIMEOUT",
-        userMessage: "Still confirming your payment. Try again in a moment.",
+    try {
+      await createTrialingSubscription({
+        tier: input.tier as BillingTier,
+        priceId,
+        customerId: input.stripeCustomerId,
+        paymentMethodId: input.paymentMethodId,
+        trialPeriodDays: trialDays,
+        tenantSlug: input.tenantSlug,
+        // One subscription per signup attempt; tolerates retries.
+        idempotencyKey: `signup:${attemptId}:subscription`,
+      });
+    } catch (err) {
+      logger.error(
+        {
+          attemptId,
+          action: "signup_subscription",
+          err: err instanceof Error ? err.message : String(err),
+        },
+        "createTrialingSubscription failed",
+      );
+      return await finish(ctx, "create_billing", {
+        code: "INTERNAL_ERROR",
+        userMessage:
+          "We couldn't start your subscription and your card was not charged. Please try again.",
       });
     }
+    // The customer now belongs to this tenant-to-be; drop the reuse tag so a
+    // later unrelated signup with the same email never reuses it (best-effort).
+    await finalizeSignupCustomer(input.stripeCustomerId);
 
-    // Re-park an OIDC auth_request for auto-login (fresh PKCE/state cookies).
-    ctx.oidcHandoff = await safeInitiateOidcAuthRequest(attemptId);
-
+    // 2. Create the Zitadel user (now that payment is secured).
     const client = getSignupZitadelAdminClient();
+    await advanceStep(attemptId, "create_user");
+    const userResult = await createOrResumeZitadelUser(client, ctx);
+    if ("fail" in userResult) {
+      return await finish(ctx, "create_user", userResult.fail);
+    }
+    ctx.zitadelUserId = userResult.userId;
+    ctx.emailVerifiedAtCreate = userResult.emailVerifiedAtCreate;
+
+    await advanceStep(attemptId, "send_verify_email");
+    if (!ctx.emailVerifiedAtCreate) {
+      try {
+        await client.sendVerificationEmail(ctx.zitadelUserId);
+      } catch (err) {
+        console.warn("[signup] sendVerificationEmail failed, non-fatal", {
+          attemptId,
+          err: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    // 3. Apply the Tenant CR, pinning the pre-created Stripe customer id so the
+    //    operator saga adopts it deterministically (no Stripe-search race that
+    //    would mint a duplicate customer — the orphan-dupe / 21k-leak class).
+    await advanceStep(attemptId, "apply_tenant");
+    try {
+      await applyTenant(
+        input.tenantSlug,
+        {
+          displayName: ctx.input.workspaceName,
+          owner: email,
+          tier: input.tier as TenantTier,
+        },
+        { stripeCustomerId: input.stripeCustomerId },
+      );
+    } catch (err) {
+      return await finish(ctx, "apply_tenant", {
+        code: "INTERNAL_ERROR",
+        userMessage: "We couldn't create your workspace. Please try again.",
+      });
+    }
+
+    // 4. Park an OIDC auth_request for auto-login, then finish provisioning.
+    ctx.oidcHandoff = await safeInitiateOidcAuthRequest(attemptId);
     return await finishProvisioning(ctx, client);
   } catch (err) {
     logger.error(
       {
         attemptId,
-        action: "signup_resume",
+        action: "signup_complete",
         err: err instanceof Error ? err.message : String(err),
       },
-      "resumeSignupAfterPayment unhandled",
+      "completeSignup unhandled",
     );
-    return await finish(ctx, "await_payment", {
+    return await finish(ctx, "create_billing", {
       code: "INTERNAL_ERROR",
       userMessage: "Something went wrong on our end.",
     });
@@ -799,31 +930,6 @@ async function waitForTenantReady(name: string): Promise<Tenant | null> {
     await sleep(POLL_INTERVAL_MS);
   }
   return null;
-}
-
-/**
- * waitForStripeCustomer polls for the CreateStripeCustomer saga step to write
- * status.stripeCustomerId (card-first signup, dashboard#769). Returns true
- * once present, false on timeout. The Payment Element cannot create a
- * SetupIntent until this customer exists.
- */
-async function waitForStripeCustomer(name: string): Promise<boolean> {
-  const deadline = Date.now() + TENANT_READY_TIMEOUT_MS;
-  while (Date.now() < deadline) {
-    try {
-      const t = await getTenant(name);
-      if (t.status?.stripeCustomerId) {
-        return true;
-      }
-      if (t.status?.phase === "Failed") {
-        return false;
-      }
-    } catch {
-      // CR may not exist yet on the very first poll, retry.
-    }
-    await sleep(POLL_INTERVAL_MS);
-  }
-  return false;
 }
 
 async function waitForMemberReady(

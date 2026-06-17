@@ -125,8 +125,37 @@ vi.mock('@/src/lib/k8s/client', () => ({
   })),
 }));
 
+// Mock the billing/stripe surface (card-first signup, dashboard#785). Use
+// vi.hoisted so the mock fns are initialised in the hoisted phase, before the
+// (also-hoisted) vi.mock factory below references them.
+const {
+  mockFindOrCreateSignupCustomer,
+  mockCreateSetupIntent,
+  mockVerifySignupCustomer,
+  mockCreateTrialingSubscription,
+  mockFinalizeSignupCustomer,
+} = vi.hoisted(() => ({
+  mockFindOrCreateSignupCustomer: vi.fn().mockResolvedValue('cus_1'),
+  mockCreateSetupIntent: vi.fn().mockResolvedValue({ client_secret: 'seti_secret_123' }),
+  mockVerifySignupCustomer: vi.fn().mockResolvedValue(true),
+  mockCreateTrialingSubscription: vi.fn().mockResolvedValue({ id: 'sub_1', status: 'trialing' }),
+  mockFinalizeSignupCustomer: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock('@/src/lib/billing/stripe', () => ({
+  findOrCreateSignupCustomer: mockFindOrCreateSignupCustomer,
+  createSetupIntent: mockCreateSetupIntent,
+  verifySignupCustomer: mockVerifySignupCustomer,
+  createTrialingSubscription: mockCreateTrialingSubscription,
+  finalizeSignupCustomer: mockFinalizeSignupCustomer,
+  priceIdForTier: vi.fn(() => 'price_team_123'),
+}));
+// NOTE: @/src/generated/plans is NOT mocked — the real lookupPlan() returns
+// the registry's trialDays, and pricing-display.ts (pulled in transitively via
+// types.ts) needs the real `plans` array. priceIdForTier is mocked above so
+// the env-backed price lookup doesn't matter here.
+
 // After mocks are set up, import the subject.
-import { signupAction, resumeSignupAfterPayment } from '../signup';
+import { signupAction, completeSignup } from '../signup';
 import { getTenant, applyTenant, applyTenantMember } from '@/src/lib/k8s/tenants';
 
 // ---------------------------------------------------------------------------
@@ -155,8 +184,13 @@ function resetMocks() {
   mockCreateHumanUser.mockClear();
   mockFindUserByEmail.mockClear();
   vi.mocked(getTenant).mockRejectedValue(new Error('tenant not found: 404'));
-  vi.mocked(applyTenant).mockResolvedValue(undefined as unknown as Tenant);
+  vi.mocked(applyTenant).mockClear().mockResolvedValue(undefined as unknown as Tenant);
   vi.mocked(applyTenantMember).mockClear();
+  mockFindOrCreateSignupCustomer.mockClear().mockResolvedValue('cus_1');
+  mockCreateSetupIntent.mockClear().mockResolvedValue({ client_secret: 'seti_secret_123' });
+  mockVerifySignupCustomer.mockClear().mockResolvedValue(true);
+  mockCreateTrialingSubscription.mockClear().mockResolvedValue({ id: 'sub_1', status: 'trialing' });
+  mockFinalizeSignupCustomer.mockClear();
 }
 
 // ---------------------------------------------------------------------------
@@ -458,32 +492,25 @@ describe('signupAction, V2 session + CreateCallback auto-login', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Card-first signup: phase 1 awaitingPayment + phase 2 resume (dashboard#769)
+// Card-first signup (dashboard#785): phase 1 creates ONLY the Stripe customer +
+// SetupIntent; phase 2 (completeSignup) creates the subscription, account, and
+// company AFTER the card clears. Nothing is created until the card clears.
 // ---------------------------------------------------------------------------
 
-const RESUME_INPUT = {
+const COMPLETE_INPUT = {
   attemptId: 'aaaaaaaa-0000-0000-0000-0000000000aa',
+  stripeCustomerId: 'cus_1',
+  paymentMethodId: 'pm_1',
   tenantSlug: 'test-workspace',
   tier: 'team',
-  zitadelUserId: 'zid-1',
   email: 'test@example.com',
   password: 'Passw0rd!Test',
   workspaceName: 'test-workspace',
+  firstName: 'Test',
+  lastName: 'User',
 };
 
-function trialingTenant(owner = 'test@example.com') {
-  return {
-    spec: { owner, displayName: 'Test', tier: 'team' },
-    status: {
-      zitadelOrgID: 'org-1',
-      stripeCustomerId: 'cus_1',
-      phase: 'Provisioning',
-      billing: { status: 'trialing' },
-    },
-  } as unknown as Tenant;
-}
-
-describe('card-first signup phase 1 (await_payment)', () => {
+describe('card-first signup phase 1 (signupAction → card)', () => {
   beforeEach(() => {
     resetMocks();
     process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
@@ -492,68 +519,88 @@ describe('card-first signup phase 1 (await_payment)', () => {
     delete process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
   });
 
-  it('returns awaitingPayment once the Stripe customer is on status, without provisioning the owner', async () => {
-    let getCalls = 0;
-    vi.mocked(getTenant).mockImplementation(async () => {
-      getCalls += 1;
-      // First call is the step-3 workspace-availability check → must 404
-      // (available). Subsequent calls are waitForStripeCustomer.
-      if (getCalls === 1) throw new Error('tenant not found: 404');
-      return {
-        spec: { owner: 'test@example.com' },
-        status: { stripeCustomerId: 'cus_1' },
-      } as unknown as Tenant;
-    });
+  it('creates ONLY the Stripe customer + SetupIntent and returns the card phase — no account/company', async () => {
+    // Step-3 availability check → 404 (name available).
+    vi.mocked(getTenant).mockRejectedValue(new Error('tenant not found: 404'));
     const result = await signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-0000000000b1');
     expect(result.ok).toBe(true);
-    expect('awaitingPayment' in result && result.awaitingPayment).toBe(true);
-    if ('awaitingPayment' in result) {
+    expect('phase' in result && result.phase === 'card').toBe(true);
+    if ('phase' in result && result.phase === 'card') {
+      expect(result.cardClientSecret).toBe('seti_secret_123');
+      expect(result.stripeCustomerId).toBe('cus_1');
       expect(result.tenantSlug).toBe('test-workspace');
       expect(result.tier).toBe('team');
-      expect(result.zitadelUserId).toBeTruthy();
     }
-    // The owner member must NOT be applied yet — billing isn't confirmed.
+    expect(mockFindOrCreateSignupCustomer).toHaveBeenCalled();
+    expect(mockCreateSetupIntent).toHaveBeenCalled();
+    // Nothing is created until the card clears.
+    expect(mockCreateHumanUser).not.toHaveBeenCalled();
+    expect(applyTenant).not.toHaveBeenCalled();
     expect(applyTenantMember).not.toHaveBeenCalled();
   });
 });
 
-describe('card-first signup phase 2 (resumeSignupAfterPayment)', () => {
+describe('card-first signup phase 2 (completeSignup)', () => {
   beforeEach(() => {
     resetMocks();
     process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
+    mockCreateHumanUser.mockResolvedValue({ userId: 'zid-1' });
   });
   afterEach(() => {
     delete process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
   });
 
-  it('refuses to provision the owner when billing has not confirmed', async () => {
-    vi.mocked(getTenant).mockResolvedValue({
-      spec: { owner: 'test@example.com' },
-      status: { stripeCustomerId: 'cus_1', billing: { status: 'incomplete' } },
-    } as unknown as Tenant);
-    const result = await resumeSignupAfterPayment(RESUME_INPUT);
-    expect(result.ok).toBe(false);
-    expect(applyTenantMember).not.toHaveBeenCalled();
-  });
-
-  it('refuses when the payload owner does not match the tenant owner (anti-hijack)', async () => {
-    vi.mocked(getTenant).mockResolvedValue(trialingTenant('someone-else@example.com'));
-    const result = await resumeSignupAfterPayment(RESUME_INPUT);
-    expect(result.ok).toBe(false);
-    expect(applyTenantMember).not.toHaveBeenCalled();
-  });
-
-  it('refuses when the tenant does not exist', async () => {
-    vi.mocked(getTenant).mockRejectedValue(new Error('tenant not found: 404'));
-    const result = await resumeSignupAfterPayment(RESUME_INPUT);
-    expect(result.ok).toBe(false);
-  });
-
-  it('provisions the owner once billing is trialing', async () => {
-    vi.mocked(getTenant).mockResolvedValue(trialingTenant());
-    const result = await resumeSignupAfterPayment(RESUME_INPUT);
+  it('creates subscription → account → Tenant CR (pinned customer) → provisions', async () => {
+    // First getTenant (slug race guard) → 404 (free); later calls
+    // (waitForTenantReady) → ready org.
+    let n = 0;
+    vi.mocked(getTenant).mockImplementation(async () => {
+      n += 1;
+      if (n === 1) throw new Error('tenant not found: 404');
+      return {
+        spec: { owner: 'test@example.com' },
+        status: { zitadelOrgID: 'org-1', phase: 'Provisioning' },
+      } as unknown as Tenant;
+    });
+    const result = await completeSignup(COMPLETE_INPUT);
     expect(result.ok).toBe(true);
+    expect(mockCreateTrialingSubscription).toHaveBeenCalled();
+    expect(mockCreateHumanUser).toHaveBeenCalled();
+    // The Tenant CR pins the pre-created customer id for deterministic adoption.
+    expect(applyTenant).toHaveBeenCalledWith(
+      'test-workspace',
+      expect.anything(),
+      { stripeCustomerId: 'cus_1' },
+    );
     expect(applyTenantMember).toHaveBeenCalled();
+  });
+
+  it('creates NOTHING when the subscription fails (no half-account)', async () => {
+    vi.mocked(getTenant).mockRejectedValue(new Error('tenant not found: 404'));
+    mockCreateTrialingSubscription.mockRejectedValueOnce(new Error('card_declined'));
+    const result = await completeSignup(COMPLETE_INPUT);
+    expect(result.ok).toBe(false);
+    expect(mockCreateHumanUser).not.toHaveBeenCalled();
+    expect(applyTenant).not.toHaveBeenCalled();
+  });
+
+  it('refuses when the customer cannot be verified for this email (anti-hijack)', async () => {
+    vi.mocked(getTenant).mockRejectedValue(new Error('tenant not found: 404'));
+    mockVerifySignupCustomer.mockResolvedValueOnce(false);
+    const result = await completeSignup(COMPLETE_INPUT);
+    expect(result.ok).toBe(false);
+    expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
+    expect(mockCreateHumanUser).not.toHaveBeenCalled();
+  });
+
+  it('refuses when the company name was taken by someone else between phases', async () => {
+    vi.mocked(getTenant).mockResolvedValue({
+      spec: { owner: 'someone-else@example.com' },
+      status: {},
+    } as unknown as Tenant);
+    const result = await completeSignup(COMPLETE_INPUT);
+    expect(result.ok).toBe(false);
+    expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
   });
 });
 

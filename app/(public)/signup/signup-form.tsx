@@ -53,9 +53,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { signupAction, resumeSignupAfterPayment } from "@/app/actions/signup";
+import { signupAction, completeSignup } from "@/app/actions/signup";
 import {
-  confirmCardAndSubscribe,
+  confirmCardSetup,
   type ConfirmCardStripe,
 } from "@/src/lib/billing/confirm-card";
 import {
@@ -415,22 +415,21 @@ function SignupFormInner({
       try {
         const result = await signupAction(data, newAttemptId);
 
-        if (result.ok && "awaitingPayment" in result) {
-          // Card was already validated above; the account + Stripe customer
-          // now exist. Confirm the card against the customer's SetupIntent,
-          // create the trialing subscription, then finish provisioning — all
-          // under this one "Create account" submit (no separate card step).
+        if (result.ok && "phase" in result && result.phase === "card") {
+          // Phase 1 created ONLY the Stripe customer + a SetupIntent — no
+          // account or company yet (dashboard#785). Confirm the card inline
+          // (the Payment Element is still mounted), then completeSignup()
+          // creates the trialing subscription + account + company.
           if (!stripe || !elements) {
             toast.error("Payment form not ready. Please retry.");
             return;
           }
-          const confirmed = await confirmCardAndSubscribe({
+          const confirmed = await confirmCardSetup({
             // Stripe.js confirmSetup is heavily overloaded; cast to the minimal
             // structural type confirm-card declares (tests pass fakes).
             stripe: stripe as unknown as ConfirmCardStripe,
             elements,
-            tenantSlug: result.tenantSlug,
-            tier: result.tier,
+            clientSecret: result.cardClientSecret,
             // Cards confirm inline (no redirect), but Stripe requires a
             // return_url whenever redirect-capable methods are offered.
             returnUrl: `${window.location.origin}/signup`,
@@ -439,22 +438,25 @@ function SignupFormInner({
             setCardError(confirmed.error);
             toast.error(confirmed.error);
             // Form (and Payment Element) is still mounted (we never switched
-            // to the panel) so the user can fix the card and resubmit.
+            // to the panel) so the user can fix the card and resubmit. Nothing
+            // was created.
             return;
           }
-          // Card confirmed + subscription created. The Payment Element is no
-          // longer needed, so NOW switch to the ProvisioningPanel to show live
-          // status while resumeSignupAfterPayment finishes the saga.
+          // Card cleared. NOW switch to the ProvisioningPanel and create the
+          // subscription + account + company under this one submit.
           setAttemptId(newAttemptId);
           setIsProvisioning(true);
-          const finished = await resumeSignupAfterPayment({
+          const finished = await completeSignup({
             attemptId: newAttemptId,
+            stripeCustomerId: result.stripeCustomerId,
+            paymentMethodId: confirmed.paymentMethodId,
             tenantSlug: result.tenantSlug,
             tier: result.tier,
-            zitadelUserId: result.zitadelUserId,
             email: data.email,
             password: data.password,
             workspaceName: data.workspaceName,
+            firstName: data.firstName,
+            lastName: data.lastName,
           });
           if (finished.ok && "redirect" in finished) {
             setRedirectOnSuccess(finished.redirect);
@@ -463,15 +465,15 @@ function SignupFormInner({
             setAttemptId(null);
             setIsProvisioning(false);
           }
-        } else if (result.ok) {
-          // No-payment path (e.g. free tier): provisioning ran inside
-          // signupAction. Show the panel now so it reflects the terminal
+        } else if (result.ok && "redirect" in result) {
+          // Autoconfirm (kind dev; paid tiers disabled): provisioning ran
+          // inside signupAction. Show the panel now so it reflects the terminal
           // state and follows the redirect.
           setAttemptId(newAttemptId);
           setIsProvisioning(true);
           setRedirectOnSuccess(result.redirect);
           // Panel sees terminalState=ok in Redis and follows redirect.
-        } else {
+        } else if (!result.ok) {
           // signupAction failed before any card work. The form is still
           // mounted (we never switched to the panel), so surface the error in
           // place: a toast plus per-field errors so the user can correct and
