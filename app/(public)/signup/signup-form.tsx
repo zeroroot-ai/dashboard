@@ -24,7 +24,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { loadStripe } from "@stripe/stripe-js";
+import { loadStripe, type Appearance } from "@stripe/stripe-js";
 import {
   Elements,
   PaymentElement,
@@ -182,6 +182,54 @@ export interface SignupFormProps {
 // Component
 // ---------------------------------------------------------------------------
 
+// Resolve a CSS custom-property value to a concrete color string the Stripe
+// Elements iframe can parse. The design tokens are oklch(); Stripe's appearance
+// API does not parse oklch reliably, so paint the value onto a throwaway element
+// and read back the browser-computed rgb(). Reading the live token (never a
+// hardcoded literal) keeps the no-hardcoded-colors guard happy AND guarantees an
+// exact match to the dashboard theme.
+function resolveToken(cs: CSSStyleDeclaration, name: string): string {
+  const raw = cs.getPropertyValue(name).trim();
+  if (!raw || typeof document === "undefined") return raw;
+  const probe = document.createElement("span");
+  probe.style.color = raw;
+  probe.style.display = "none";
+  document.body.appendChild(probe);
+  const rgb = getComputedStyle(probe).color;
+  probe.remove();
+  return rgb || raw;
+}
+
+// Build a Stripe Elements appearance from the dashboard's live CSS tokens so the
+// inline Payment Element matches the single dark brand exactly (dashboard#784
+// follow-up: the default light theme rendered a white box that clashed). Runs
+// client-side only (reads the DOM).
+function buildStripeAppearance(): Appearance {
+  const cs = getComputedStyle(document.documentElement);
+  const t = (n: string) => resolveToken(cs, n);
+  const radius = cs.getPropertyValue("--radius").trim() || "0.5rem";
+  return {
+    theme: "night",
+    variables: {
+      fontFamily: cs.getPropertyValue("--font-sans").trim() || "inherit",
+      borderRadius: radius,
+      colorPrimary: t("--primary"),
+      colorBackground: t("--input"),
+      colorText: t("--foreground"),
+      colorTextSecondary: t("--muted-foreground"),
+      colorTextPlaceholder: t("--muted-foreground"),
+      colorDanger: t("--destructive"),
+    },
+    rules: {
+      ".Input": { border: `1px solid ${t("--border")}` },
+      ".Input:focus": { boxShadow: `0 0 0 1px ${t("--ring")}` },
+      ".Label": { color: t("--muted-foreground") },
+      ".Tab": { border: `1px solid ${t("--border")}` },
+      ".Tab--selected": { borderColor: t("--primary") },
+    },
+  };
+}
+
 // SignupForm wraps the body in a deferred-mode Stripe <Elements> provider so
 // the card field renders INLINE with the account fields (no pre-created
 // customer/SetupIntent) and is validated client-side before "Create account"
@@ -193,13 +241,25 @@ export function SignupForm(props: SignupFormProps) {
     () => (props.publishableKey ? loadStripe(props.publishableKey) : null),
     [props.publishableKey],
   );
+  // Start dark (theme:'night') so there's no white flash before the token-exact
+  // appearance is computed on mount.
+  const [appearance, setAppearance] = useState<Appearance>({ theme: "night" });
+  useEffect(() => {
+    setAppearance(buildStripeAppearance());
+  }, []);
+
   if (!stripePromise) {
     return <SignupFormInner {...props} />;
   }
   return (
     <Elements
       stripe={stripePromise}
-      options={{ mode: "setup", currency: "usd", paymentMethodCreation: "manual" }}
+      options={{
+        mode: "setup",
+        currency: "usd",
+        paymentMethodCreation: "manual",
+        appearance,
+      }}
     >
       <SignupFormInner {...props} />
     </Elements>
