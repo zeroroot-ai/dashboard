@@ -61,6 +61,26 @@ import { incBillingEvent } from '@/src/lib/metrics/billing';
 // STRIPE_PRICE_* are OPTIONAL, only set when billing is enabled. We omit
 // missing entries entirely rather than collapsing them onto a sentinel ''
 // key (which would conflate every absent tier into "Enterprise").
+// subscriptionPeriodEndIso extracts the current period end as an ISO string,
+// tolerating Stripe API changes and missing values. Stripe moved
+// current_period_end off the Subscription and onto the SubscriptionItem
+// (API 2025-03+), so we read the item first and fall back to the legacy
+// top-level field. A missing/non-finite value returns undefined instead of
+// throwing — `new Date(undefined * 1000).toISOString()` throws RangeError
+// "Invalid time value", which previously crashed the webhook handler before it
+// could stamp billing-active, wedging card-first signups at provisioning
+// (dashboard#785).
+function subscriptionPeriodEndIso(subscription: Stripe.Subscription): string | undefined {
+  const item = subscription.items?.data?.[0] as unknown as {
+    current_period_end?: number;
+  } | undefined;
+  const legacy = (subscription as unknown as { current_period_end?: number })
+    .current_period_end;
+  const unix = item?.current_period_end ?? legacy;
+  if (typeof unix !== 'number' || !Number.isFinite(unix)) return undefined;
+  return new Date(unix * 1000).toISOString();
+}
+
 function buildPriceToTierName(): Record<string, string> {
   const out: Record<string, string> = {};
   const team = process.env.STRIPE_PRICE_TEAM;
@@ -316,7 +336,7 @@ async function handleSubscriptionCreated(
   const trialEnd = subscription.trial_end
     ? new Date(subscription.trial_end * 1000).toISOString()
     : undefined;
-  const currentPeriodEnd = new Date((subscription as unknown as { current_period_end: number }).current_period_end * 1000).toISOString();
+  const currentPeriodEnd = subscriptionPeriodEndIso(subscription);
 
   // Card-first signup (dashboard#769): the embedded Payment Element creates
   // the trialing subscription directly — there is no checkout.session.completed
@@ -397,7 +417,7 @@ async function handleSubscriptionUpdated(
   const trialEnd = subscription.trial_end
     ? new Date(subscription.trial_end * 1000).toISOString()
     : undefined;
-  const currentPeriodEnd = new Date((subscription as unknown as { current_period_end: number }).current_period_end * 1000).toISOString();
+  const currentPeriodEnd = subscriptionPeriodEndIso(subscription);
 
   await patchTenant(tenantSlug, {
     status: {
