@@ -778,7 +778,14 @@ function SignupFormInner({
                   <FormLabel>Payment method</FormLabel>
                   <div className="rounded-md border border-border bg-background p-3">
                     <PaymentElement
-                      options={{ layout: "tabs" }}
+                      // Accordion (not tabs): the account has several enabled
+                      // payment methods; the tabs layout crammed them into one
+                      // horizontal row that clipped after ~3. Accordion stacks
+                      // them vertically with the card expanded by default, so
+                      // every method + all card fields are visible (dashboard#784).
+                      options={{
+                        layout: { type: "accordion", defaultCollapsed: false },
+                      }}
                       onChange={(e) => {
                         setCardComplete(e.complete);
                         if (e.complete) setCardError(null);
