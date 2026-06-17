@@ -574,9 +574,8 @@ export async function completeSignup(
       });
     }
 
-    // 1. Create the trialing subscription on the confirmed card — BEFORE any
-    //    account or company. If this fails, nothing has been created.
-    await advanceStep(attemptId, "create_billing");
+    // Validate billing config up front so a misconfigured plan fails BEFORE
+    // we create any account or company.
     const priceId = priceIdForTier(input.tier);
     const trialDays = lookupPlan(input.tier as PlanID).trialDays;
     if (!priceId || !trialDays || trialDays <= 0) {
@@ -589,6 +588,61 @@ export async function completeSignup(
         userMessage: "Billing isn't configured for that plan. Please contact support.",
       });
     }
+
+    // 1. Create the Zitadel user. The card is already confirmed (the phase-1
+    //    SetupIntent), so this runs only after the payment method cleared.
+    const client = getSignupZitadelAdminClient();
+    await advanceStep(attemptId, "create_user");
+    const userResult = await createOrResumeZitadelUser(client, ctx);
+    if ("fail" in userResult) {
+      return await finish(ctx, "create_user", userResult.fail);
+    }
+    ctx.zitadelUserId = userResult.userId;
+    ctx.emailVerifiedAtCreate = userResult.emailVerifiedAtCreate;
+
+    await advanceStep(attemptId, "send_verify_email");
+    if (!ctx.emailVerifiedAtCreate) {
+      try {
+        await client.sendVerificationEmail(ctx.zitadelUserId);
+      } catch (err) {
+        console.warn("[signup] sendVerificationEmail failed, non-fatal", {
+          attemptId,
+          err: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    // 2. Apply the Tenant CR BEFORE creating the subscription, pinning the
+    //    pre-created Stripe customer id so the operator saga adopts it
+    //    deterministically (no Stripe-search race that would mint a duplicate
+    //    customer — the orphan-dupe / 21k-leak class). Applying it first also
+    //    closes a webhook race: createTrialingSubscription (below) fires
+    //    Stripe's subscription.created webhook, whose handler patches
+    //    billing-active onto THIS Tenant CR. If the CR didn't exist yet the
+    //    patch 404s and billing-active never lands within the provisioning
+    //    window, timing out the signup (dashboard#785).
+    await advanceStep(attemptId, "apply_tenant");
+    try {
+      await applyTenant(
+        input.tenantSlug,
+        {
+          displayName: ctx.input.workspaceName,
+          owner: email,
+          tier: input.tier as TenantTier,
+        },
+        { stripeCustomerId: input.stripeCustomerId },
+      );
+    } catch (err) {
+      return await finish(ctx, "apply_tenant", {
+        code: "INTERNAL_ERROR",
+        userMessage: "We couldn't create your workspace. Please try again.",
+      });
+    }
+
+    // 3. Create the trialing subscription. Its subscription.created webhook now
+    //    finds the Tenant CR (applied above) and stamps billing-active,
+    //    releasing the operator's WaitForBillingConfirmation step.
+    await advanceStep(attemptId, "create_billing");
     try {
       await createTrialingSubscription({
         tier: input.tier as BillingTier,
@@ -615,52 +669,9 @@ export async function completeSignup(
           "We couldn't start your subscription and your card was not charged. Please try again.",
       });
     }
-    // The customer now belongs to this tenant-to-be; drop the reuse tag so a
-    // later unrelated signup with the same email never reuses it (best-effort).
+    // The customer now belongs to this tenant; drop the reuse tag so a later
+    // unrelated signup with the same email never reuses it (best-effort).
     await finalizeSignupCustomer(input.stripeCustomerId);
-
-    // 2. Create the Zitadel user (now that payment is secured).
-    const client = getSignupZitadelAdminClient();
-    await advanceStep(attemptId, "create_user");
-    const userResult = await createOrResumeZitadelUser(client, ctx);
-    if ("fail" in userResult) {
-      return await finish(ctx, "create_user", userResult.fail);
-    }
-    ctx.zitadelUserId = userResult.userId;
-    ctx.emailVerifiedAtCreate = userResult.emailVerifiedAtCreate;
-
-    await advanceStep(attemptId, "send_verify_email");
-    if (!ctx.emailVerifiedAtCreate) {
-      try {
-        await client.sendVerificationEmail(ctx.zitadelUserId);
-      } catch (err) {
-        console.warn("[signup] sendVerificationEmail failed, non-fatal", {
-          attemptId,
-          err: err instanceof Error ? err.message : String(err),
-        });
-      }
-    }
-
-    // 3. Apply the Tenant CR, pinning the pre-created Stripe customer id so the
-    //    operator saga adopts it deterministically (no Stripe-search race that
-    //    would mint a duplicate customer — the orphan-dupe / 21k-leak class).
-    await advanceStep(attemptId, "apply_tenant");
-    try {
-      await applyTenant(
-        input.tenantSlug,
-        {
-          displayName: ctx.input.workspaceName,
-          owner: email,
-          tier: input.tier as TenantTier,
-        },
-        { stripeCustomerId: input.stripeCustomerId },
-      );
-    } catch (err) {
-      return await finish(ctx, "apply_tenant", {
-        code: "INTERNAL_ERROR",
-        userMessage: "We couldn't create your workspace. Please try again.",
-      });
-    }
 
     // 4. Park an OIDC auth_request for auto-login, then finish provisioning.
     ctx.oidcHandoff = await safeInitiateOidcAuthRequest(attemptId);

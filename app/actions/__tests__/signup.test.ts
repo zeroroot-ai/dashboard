@@ -550,7 +550,7 @@ describe('card-first signup phase 2 (completeSignup)', () => {
     delete process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
   });
 
-  it('creates subscription → account → Tenant CR (pinned customer) → provisions', async () => {
+  it('creates account → Tenant CR (pinned customer) → subscription → provisions', async () => {
     // First getTenant (slug race guard) → 404 (free); later calls
     // (waitForTenantReady) → ready org.
     let n = 0;
@@ -575,13 +575,30 @@ describe('card-first signup phase 2 (completeSignup)', () => {
     expect(applyTenantMember).toHaveBeenCalled();
   });
 
-  it('creates NOTHING when the subscription fails (no half-account)', async () => {
+  it('applies the Tenant CR BEFORE creating the subscription (webhook-race fix)', async () => {
+    // subscription.created fires Stripe's webhook, which patches billing-active
+    // onto the Tenant CR — so the CR must exist first, else the patch 404s.
+    let n = 0;
+    vi.mocked(getTenant).mockImplementation(async () => {
+      n += 1;
+      if (n === 1) throw new Error('tenant not found: 404');
+      return {
+        spec: { owner: 'test@example.com' },
+        status: { zitadelOrgID: 'org-1', phase: 'Provisioning' },
+      } as unknown as Tenant;
+    });
+    await completeSignup(COMPLETE_INPUT);
+    const tenantOrder = vi.mocked(applyTenant).mock.invocationCallOrder[0];
+    const subOrder = mockCreateTrialingSubscription.mock.invocationCallOrder[0];
+    expect(tenantOrder).toBeGreaterThan(0);
+    expect(subOrder).toBeGreaterThan(tenantOrder);
+  });
+
+  it('surfaces a failure when the subscription cannot be created', async () => {
     vi.mocked(getTenant).mockRejectedValue(new Error('tenant not found: 404'));
-    mockCreateTrialingSubscription.mockRejectedValueOnce(new Error('card_declined'));
+    mockCreateTrialingSubscription.mockRejectedValueOnce(new Error('stripe_error'));
     const result = await completeSignup(COMPLETE_INPUT);
     expect(result.ok).toBe(false);
-    expect(mockCreateHumanUser).not.toHaveBeenCalled();
-    expect(applyTenant).not.toHaveBeenCalled();
   });
 
   it('refuses when the customer cannot be verified for this email (anti-hijack)', async () => {
