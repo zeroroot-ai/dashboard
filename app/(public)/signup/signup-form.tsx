@@ -159,6 +159,14 @@ export interface SignupFormProps {
   planDisplayName: string;
   /** Password complexity policy fetched server-side. */
   passwordPolicy: PasswordPolicy;
+  /**
+   * Stripe publishable key (pk_test_/pk_live_), read from the runtime server
+   * env by the signup page and threaded to the Payment Element. NOT the
+   * build-time NEXT_PUBLIC var: the shared :main image can't bake a per-env
+   * (test vs live) key, so it must arrive at runtime (dashboard#783). Empty
+   * string when paid tiers are disabled (kind) — the card step is skipped then.
+   */
+  publishableKey: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -169,6 +177,7 @@ export function SignupForm({
   plan,
   planDisplayName,
   passwordPolicy,
+  publishableKey,
 }: SignupFormProps) {
   const [isProvisioning, setIsProvisioning] = useState(false);
   const [attemptId, setAttemptId] = useState<string | null>(null);
@@ -399,6 +408,7 @@ export function SignupForm({
             <PaymentStep
               tenantSlug={paymentCtx.tenantSlug}
               tier={paymentCtx.tier}
+              publishableKey={publishableKey}
               onComplete={handlePaymentComplete}
             />
           </div>
