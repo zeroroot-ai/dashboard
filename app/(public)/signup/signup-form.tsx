@@ -255,9 +255,13 @@ export function SignupForm(props: SignupFormProps) {
     <Elements
       stripe={stripePromise}
       options={{
+        // Deferred SetupIntent. Default (automatic) paymentMethodCreation: we
+        // confirm via stripe.confirmSetup({elements, clientSecret}). 'manual'
+        // would forbid confirmSetup-with-elements (it requires createPaymentMethod
+        // instead) and throws an IntegrationError — the "Something went wrong"
+        // the signup hit after the customer was created (dashboard#784).
         mode: "setup",
         currency: "usd",
-        paymentMethodCreation: "manual",
         appearance,
       }}
     >
