@@ -328,7 +328,7 @@ function SignupFormInner({
       // no customer yet. On any card error we stop here — nothing is created.
       if (paidFlow) {
         if (!stripe || !elements) {
-          setCardError("Payment form is still loading — try again in a moment.");
+          setCardError("Payment form is still loading. Try again in a moment.");
           return;
         }
         setCardError(null);
@@ -735,7 +735,7 @@ function SignupFormInner({
                     </p>
                   ) : null}
                   <p className="text-xs text-muted-foreground">
-                    Start your 14-day free trial — your card won&apos;t be charged
+                    Start your 14-day free trial. Your card won&apos;t be charged
                     until it ends. Cancel anytime.
                   </p>
                 </div>
