@@ -12,6 +12,7 @@ import {
   CustomObjectsApi,
   CoreV1Api,
   Watch,
+  setHeaderOptions,
 } from '@kubernetes/client-node';
 
 import {
@@ -152,22 +153,39 @@ class K8sClient {
     const plural = CRDPlurals[kind];
     try {
       const body = patch as object;
+      // The patch body is a merge object ({ metadata: {...}, status: {...} }),
+      // not an RFC6902 op array. client-node defaults the patch Content-Type to
+      // application/json-patch+json, which makes the API try to decode our
+      // object as []jsonPatchOp ("cannot unmarshal object into Go value of type
+      // []handlers.jsonPatchOp"). Force application/merge-patch+json so the
+      // object is applied as a strategic/merge patch (e.g. the Stripe webhook
+      // stamping the billing-active annotation, dashboard#780/#785).
+      const mergeOpts = setHeaderOptions(
+        'Content-Type',
+        'application/merge-patch+json',
+      );
       const res = namespace
-        ? await this.customApi.patchNamespacedCustomObject({
-            group: GIBSON_GROUP,
-            version: GIBSON_VERSION,
-            namespace,
-            plural,
-            name,
-            body,
-          })
-        : await this.customApi.patchClusterCustomObject({
-            group: GIBSON_GROUP,
-            version: GIBSON_VERSION,
-            plural,
-            name,
-            body,
-          });
+        ? await this.customApi.patchNamespacedCustomObject(
+            {
+              group: GIBSON_GROUP,
+              version: GIBSON_VERSION,
+              namespace,
+              plural,
+              name,
+              body,
+            },
+            mergeOpts,
+          )
+        : await this.customApi.patchClusterCustomObject(
+            {
+              group: GIBSON_GROUP,
+              version: GIBSON_VERSION,
+              plural,
+              name,
+              body,
+            },
+            mergeOpts,
+          );
       return res as unknown as T;
     } catch (err) {
       throw mapK8sError(err);
