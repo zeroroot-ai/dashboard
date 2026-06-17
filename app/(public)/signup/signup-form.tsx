@@ -434,6 +434,9 @@ function SignupFormInner({
             elements,
             tenantSlug: result.tenantSlug,
             tier: result.tier,
+            // Cards confirm inline (no redirect), but Stripe requires a
+            // return_url whenever redirect-capable methods are offered.
+            returnUrl: `${window.location.origin}/signup`,
           });
           if (!confirmed.ok) {
             setCardError(confirmed.error);

@@ -51,6 +51,7 @@ describe('confirmCardAndSubscribe (deferred)', () => {
       elements: {},
       tenantSlug: 'acme',
       tier: 'team',
+      returnUrl: 'https://app.test/signup',
       fetchFn,
       sleepFn: noSleep,
     });
@@ -68,6 +69,7 @@ describe('confirmCardAndSubscribe (deferred)', () => {
       elements: {},
       tenantSlug: 'acme',
       tier: 'team',
+      returnUrl: 'https://app.test/signup',
       fetchFn,
       sleepFn: noSleep,
     });
@@ -81,6 +83,7 @@ describe('confirmCardAndSubscribe (deferred)', () => {
       elements: { marker: true },
       tenantSlug: 'acme',
       tier: 'team',
+      returnUrl: 'https://app.test/signup',
       fetchFn: routedFetch({ setupIntent: { status: 200, body: { clientSecret: 'seti_xyz' } } }),
       sleepFn: noSleep,
     });
@@ -95,6 +98,7 @@ describe('confirmCardAndSubscribe (deferred)', () => {
       elements: {},
       tenantSlug: 'acme',
       tier: 'team',
+      returnUrl: 'https://app.test/signup',
       fetchFn: routedFetch({}),
       sleepFn: noSleep,
     });
@@ -108,6 +112,7 @@ describe('confirmCardAndSubscribe (deferred)', () => {
       elements: {},
       tenantSlug: 'acme',
       tier: 'team',
+      returnUrl: 'https://app.test/signup',
       fetchFn,
       sleepFn: noSleep,
     });
@@ -123,6 +128,7 @@ describe('confirmCardAndSubscribe (deferred)', () => {
       elements: {},
       tenantSlug: 'acme',
       tier: 'team',
+      returnUrl: 'https://app.test/signup',
       fetchFn: routedFetch({ setupIntent: { status: 409 } }),
       sleepFn: noSleep,
     });
@@ -135,6 +141,7 @@ describe('confirmCardAndSubscribe (deferred)', () => {
       elements: {},
       tenantSlug: 'acme',
       tier: 'team',
+      returnUrl: 'https://app.test/signup',
       fetchFn: routedFetch({ subscription: { status: 503 } }),
       sleepFn: noSleep,
     });
@@ -147,6 +154,7 @@ describe('confirmCardAndSubscribe (deferred)', () => {
       elements: {},
       tenantSlug: 'acme',
       tier: 'team',
+      returnUrl: 'https://app.test/signup',
       fetchFn: routedFetch({}),
       sleepFn: noSleep,
     });

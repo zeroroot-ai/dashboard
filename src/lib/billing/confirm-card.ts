@@ -26,6 +26,10 @@ export interface ConfirmCardStripe {
   confirmSetup(args: {
     elements: unknown;
     clientSecret: string;
+    // Required by Stripe whenever the Element offers a redirect-capable method
+    // (automatic_payment_methods enables several) — even with redirect:
+    // 'if_required'. Omitting it throws an IntegrationError.
+    confirmParams: { return_url: string };
     redirect: 'if_required';
   }): Promise<{
     error?: { message?: string };
@@ -38,6 +42,11 @@ export interface ConfirmCardParams {
   elements: unknown;
   tenantSlug: string;
   tier: string;
+  /**
+   * Absolute URL Stripe redirects back to IF a redirect-based method is used.
+   * Cards confirm inline (no redirect), but Stripe requires this to be present.
+   */
+  returnUrl: string;
   /** Injectable for tests; defaults to global fetch. */
   fetchFn?: typeof fetch;
   /** Injectable for tests; defaults to a real 3s sleep between 409 retries. */
@@ -106,11 +115,22 @@ export async function confirmCardAndSubscribe(
     return { ok: false, error: secret.error, retryable: secret.retryable };
   }
 
-  const { error, setupIntent } = await params.stripe.confirmSetup({
-    elements: params.elements,
-    clientSecret: secret.clientSecret,
-    redirect: 'if_required',
-  });
+  let error: { message?: string } | undefined;
+  let setupIntent: { status?: string; payment_method?: string | { id: string } | null } | undefined;
+  try {
+    ({ error, setupIntent } = await params.stripe.confirmSetup({
+      elements: params.elements,
+      clientSecret: secret.clientSecret,
+      confirmParams: { return_url: params.returnUrl },
+      redirect: 'if_required',
+    }));
+  } catch (e) {
+    // Stripe.js rejects (rather than resolving with {error}) on integration
+    // errors. Surface the real message instead of bubbling an uncaught throw up
+    // to the signup form's generic "Something went wrong" handler.
+    const msg = e instanceof Error ? e.message : 'Card confirmation failed.';
+    return { ok: false, error: msg, retryable: true };
+  }
 
   if (error) {
     // Card declined / validation / SCA failure — the user can correct and
