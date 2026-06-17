@@ -22,8 +22,15 @@
  * primitives. Matches `/login` and `/pricing` visual weight.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { loadStripe } from "@stripe/stripe-js";
+import {
+  Elements,
+  PaymentElement,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -47,12 +54,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { signupAction, resumeSignupAfterPayment } from "@/app/actions/signup";
-import { PaymentStep } from "./payment-step";
+import {
+  confirmCardAndSubscribe,
+  type ConfirmCardStripe,
+} from "@/src/lib/billing/confirm-card";
 import {
   isServerActionDeploymentSkew,
   reloadForDeploymentSkew,
 } from "@/src/lib/server-action-skew";
-import { pricingDisplays } from "@/src/lib/pricing-display";
 import type { PasswordPolicy } from "@/src/lib/zitadel/admin-client";
 import { isReservedSlug, slugify } from "@/src/lib/signup/slug";
 import { useReservedNames } from "@/src/lib/signup/use-reserved-names";
@@ -173,24 +182,50 @@ export interface SignupFormProps {
 // Component
 // ---------------------------------------------------------------------------
 
-export function SignupForm({
+// SignupForm wraps the body in a deferred-mode Stripe <Elements> provider so
+// the card field renders INLINE with the account fields (no pre-created
+// customer/SetupIntent) and is validated client-side before "Create account"
+// (dashboard#784). The publishable key is runtime-injected (dashboard#783).
+// When paid tiers are off (kind) the key is empty: render without Elements and
+// the no-card path runs.
+export function SignupForm(props: SignupFormProps) {
+  const stripePromise = useMemo(
+    () => (props.publishableKey ? loadStripe(props.publishableKey) : null),
+    [props.publishableKey],
+  );
+  if (!stripePromise) {
+    return <SignupFormInner {...props} />;
+  }
+  return (
+    <Elements
+      stripe={stripePromise}
+      options={{ mode: "setup", currency: "usd", paymentMethodCreation: "manual" }}
+    >
+      <SignupFormInner {...props} />
+    </Elements>
+  );
+}
+
+function SignupFormInner({
   plan,
   planDisplayName,
   passwordPolicy,
   publishableKey,
 }: SignupFormProps) {
+  // Stripe.js handles (null when paid tiers are off / not inside <Elements>).
+  const stripe = useStripe();
+  const elements = useElements();
+  // Whether this signup collects a card inline. Gated on the publishable key
+  // being present (paid tiers enabled).
+  const paidFlow = publishableKey !== "";
+
   const [isProvisioning, setIsProvisioning] = useState(false);
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [redirectOnSuccess, setRedirectOnSuccess] = useState<string>("");
-  // Card-first signup (dashboard#769): set when phase 1 returns
-  // awaitingPayment. Carries the phase-2 resume context plus the submitted
-  // form data (email/password/workspaceName) so onComplete can finish.
-  const [paymentCtx, setPaymentCtx] = useState<{
-    tenantSlug: string;
-    tier: string;
-    zitadelUserId: string;
-    data: SignupInput;
-  } | null>(null);
+  // Inline card state: complete = the Payment Element reports all fields valid;
+  // cardError surfaces validation/decline messages next to the card.
+  const [cardComplete, setCardComplete] = useState(false);
+  const [cardError, setCardError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   // Track field refs for programmatic focus on server-side field errors.
@@ -258,7 +293,7 @@ export function SignupForm({
     setIsProvisioning(false);
     setAttemptId(null);
     setRedirectOnSuccess("");
-    setPaymentCtx(null);
+    setCardError(null);
     form.reset({
       firstName: form.getValues("firstName"),
       lastName: form.getValues("lastName"),
@@ -287,6 +322,23 @@ export function SignupForm({
         return;
       }
 
+      // Validate the card BEFORE creating anything (the core requirement:
+      // all validation happens before "Create account"). Deferred Elements
+      // validate client-side via elements.submit() with no server round-trip /
+      // no customer yet. On any card error we stop here — nothing is created.
+      if (paidFlow) {
+        if (!stripe || !elements) {
+          setCardError("Payment form is still loading — try again in a moment.");
+          return;
+        }
+        setCardError(null);
+        const { error: submitErr } = await elements.submit();
+        if (submitErr) {
+          setCardError(submitErr.message ?? "Please check your card details.");
+          return;
+        }
+      }
+
       // Mint the attemptId BEFORE invoking the action so we can show the
       // ProvisioningPanel immediately. The panel polls /api/signup/progress/:id
       // for live status while the server action runs in the background.
@@ -301,14 +353,47 @@ export function SignupForm({
         const result = await signupAction(data, newAttemptId);
 
         if (result.ok && "awaitingPayment" in result) {
-          // Phase 1 done; pause for in-page card collection. The panel keeps
-          // polling (await_payment step) while <PaymentStep> renders.
-          setPaymentCtx({
+          // Card was already validated above; the account + Stripe customer
+          // now exist. Confirm the card against the customer's SetupIntent,
+          // create the trialing subscription, then finish provisioning — all
+          // under this one "Create account" submit (no separate card step).
+          if (!stripe || !elements) {
+            toast.error("Payment form not ready. Please retry.");
+            setAttemptId(null);
+            setIsProvisioning(false);
+            return;
+          }
+          const confirmed = await confirmCardAndSubscribe({
+            // Stripe.js confirmSetup is heavily overloaded; cast to the minimal
+            // structural type confirm-card declares (tests pass fakes).
+            stripe: stripe as unknown as ConfirmCardStripe,
+            elements,
+            tenantSlug: result.tenantSlug,
+            tier: result.tier,
+          });
+          if (!confirmed.ok) {
+            setCardError(confirmed.error);
+            toast.error(confirmed.error);
+            setAttemptId(null);
+            setIsProvisioning(false);
+            return;
+          }
+          const finished = await resumeSignupAfterPayment({
+            attemptId: newAttemptId,
             tenantSlug: result.tenantSlug,
             tier: result.tier,
             zitadelUserId: result.zitadelUserId,
-            data,
+            email: data.email,
+            password: data.password,
+            workspaceName: data.workspaceName,
           });
+          if (finished.ok && "redirect" in finished) {
+            setRedirectOnSuccess(finished.redirect);
+          } else if (!finished.ok) {
+            toast.error(finished.userMessage);
+            setAttemptId(null);
+            setIsProvisioning(false);
+          }
         } else if (result.ok) {
           setRedirectOnSuccess(result.redirect);
           // Panel sees terminalState=ok in Redis and follows redirect.
@@ -367,52 +452,14 @@ export function SignupForm({
         toast.error("Something went wrong on our end. Please try again.");
       }
     },
-    [form],
+    [form, stripe, elements, paidFlow, reservedNames],
   );
 
-  // Card-first signup (dashboard#769): finish phase 2 once the card is
-  // confirmed and the trialing subscription created. resumeSignupAfterPayment
-  // re-validates against the tenant CR (owner + billing) server-side.
-  async function handlePaymentComplete() {
-    if (!paymentCtx) return;
-    const result = await resumeSignupAfterPayment({
-      attemptId: attemptId ?? crypto.randomUUID(),
-      tenantSlug: paymentCtx.tenantSlug,
-      tier: paymentCtx.tier,
-      zitadelUserId: paymentCtx.zitadelUserId,
-      email: paymentCtx.data.email,
-      password: paymentCtx.data.password,
-      workspaceName: paymentCtx.data.workspaceName,
-    });
-    setPaymentCtx(null);
-    if (result.ok && "redirect" in result) {
-      setRedirectOnSuccess(result.redirect);
-    } else if (!result.ok) {
-      toast.error(result.userMessage);
-    }
-  }
-
-  // Show the provisioning panel once we have an attemptId. When phase 1
-  // returned awaitingPayment, render the in-page Payment Element above it.
+  // Once the single submit is underway, show the provisioning panel. The card
+  // was collected + confirmed inline before this point (no separate step).
   if (attemptId) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-6 px-4 py-12">
-        {paymentCtx ? (
-          <div className="w-full max-w-md rounded-lg border border-border bg-card p-6">
-            <h2 className="mb-1 text-lg font-semibold text-foreground">
-              Add a payment method
-            </h2>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Start your 14-day free trial. You won&apos;t be charged until it ends.
-            </p>
-            <PaymentStep
-              tenantSlug={paymentCtx.tenantSlug}
-              tier={paymentCtx.tier}
-              publishableKey={publishableKey}
-              onComplete={handlePaymentComplete}
-            />
-          </div>
-        ) : null}
         <ProvisioningPanel
           attemptId={attemptId}
           redirectOnSuccess={redirectOnSuccess}
@@ -662,6 +709,38 @@ export function SignupForm({
                 )}
               />
 
+              {/* Inline payment method (card-first signup, dashboard#784).
+                  Deferred Payment Element: renders with just the publishable
+                  key (no pre-created customer), validated client-side before
+                  "Create account". Rendered only when paid tiers are enabled. */}
+              {paidFlow ? (
+                <div className="space-y-2">
+                  <FormLabel>Payment method</FormLabel>
+                  <div className="rounded-md border border-border bg-background p-3">
+                    <PaymentElement
+                      options={{ layout: "tabs" }}
+                      onChange={(e) => {
+                        setCardComplete(e.complete);
+                        if (e.complete) setCardError(null);
+                      }}
+                    />
+                  </div>
+                  {cardError ? (
+                    <p
+                      className="text-xs text-destructive"
+                      role="alert"
+                      aria-live="polite"
+                    >
+                      {cardError}
+                    </p>
+                  ) : null}
+                  <p className="text-xs text-muted-foreground">
+                    Start your 14-day free trial — your card won&apos;t be charged
+                    until it ends. Cancel anytime.
+                  </p>
+                </div>
+              ) : null}
+
               {/* ToS checkbox */}
               <FormField
                 control={form.control}
@@ -753,7 +832,14 @@ export function SignupForm({
                 // server-action's WORKSPACE_TAKEN check remains as
                 // defense-in-depth against the TOCTOU race between two
                 // simultaneous signups.
-                disabled={isDisabled || workspaceSlugReserved || workspaceSlugTaken}
+                disabled={
+                  isDisabled ||
+                  workspaceSlugReserved ||
+                  workspaceSlugTaken ||
+                  // Card-first: block until the inline card is complete so all
+                  // validation is satisfied before the account is created.
+                  (paidFlow && !cardComplete)
+                }
                 aria-busy={isDisabled}
               >
                 {isDisabled

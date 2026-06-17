@@ -1,24 +1,31 @@
 /**
- * confirmCardAndSubscribe — the orchestration behind the in-page Payment
- * Element (card-first signup S2, dashboard#769).
+ * confirmCardAndSubscribe — orchestration behind the INLINE, single-page card
+ * collection (card-first signup redesign, dashboard#784/#785).
  *
- * Given a Stripe.js instance + the Payment Element's `elements`, it:
- *   1. confirms the SetupIntent (collects + attaches the card; 3DS/SCA is
- *      handled inline by the element — redirect: 'if_required' keeps the flow
- *      on-page for the common case), then
- *   2. creates the trialing subscription server-side with the confirmed
- *      payment method.
+ * The signup form renders a DEFERRED-mode Payment Element (no pre-created
+ * SetupIntent), so the caller validates the card client-side with
+ * `elements.submit()` BEFORE the account is created. After the account +
+ * Stripe customer exist, this function:
+ *   1. fetches a SetupIntent client secret for the tenant's customer
+ *      (/api/billing/setup-intent, retrying 409 while the CreateStripeCustomer
+ *      saga step finishes writing the customer to the Tenant CR status),
+ *   2. confirms the SetupIntent against the deferred Elements (attaches the
+ *      card; 3DS/SCA inline via redirect: 'if_required'), then
+ *   3. creates the trialing subscription with the confirmed payment method.
  *
  * Extracted from the React component so the branchy result handling is unit-
- * testable without a browser or the Stripe.js iframe. The component passes
- * real `stripe`/`elements`; tests pass fakes.
+ * testable without a browser. The component passes real `stripe`/`elements`;
+ * tests pass fakes.
  */
 
-// Minimal structural types so this module does not depend on the heavy
-// @stripe/stripe-js types at the call sites that only need these shapes.
+// Minimal structural types so this module does not pull the heavy
+// @stripe/stripe-js types into call sites that only need these shapes.
 export interface ConfirmCardStripe {
+  // Deferred-intent confirmation: clientSecret comes from the SetupIntent
+  // created server-side on submit (mode:'setup' Elements have none of their own).
   confirmSetup(args: {
     elements: unknown;
+    clientSecret: string;
     redirect: 'if_required';
   }): Promise<{
     error?: { message?: string };
@@ -33,6 +40,8 @@ export interface ConfirmCardParams {
   tier: string;
   /** Injectable for tests; defaults to global fetch. */
   fetchFn?: typeof fetch;
+  /** Injectable for tests; defaults to a real 3s sleep between 409 retries. */
+  sleepFn?: (ms: number) => Promise<void>;
 }
 
 export type ConfirmCardResult =
@@ -46,13 +55,60 @@ function paymentMethodId(
   return typeof pm === 'string' ? pm : pm.id;
 }
 
+const defaultSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/**
+ * Fetch a SetupIntent client secret for the tenant's customer. Retries on 409
+ * (customer not yet written to the Tenant CR status by the CreateStripeCustomer
+ * saga step) for up to ~60s.
+ */
+async function fetchClientSecret(
+  doFetch: typeof fetch,
+  sleep: (ms: number) => Promise<void>,
+  tenantSlug: string,
+): Promise<{ clientSecret: string } | { error: string; retryable: boolean }> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    let res: Response;
+    try {
+      res = await doFetch('/api/billing/setup-intent', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ tenantSlug }),
+      });
+    } catch {
+      await sleep(3000);
+      continue;
+    }
+    if (res.status === 409) {
+      await sleep(3000);
+      continue;
+    }
+    if (!res.ok) {
+      return { error: 'Could not start payment setup. Please try again.', retryable: false };
+    }
+    const data = (await res.json().catch(() => ({}))) as { clientSecret?: string };
+    if (!data.clientSecret) {
+      return { error: 'Payment setup response was malformed.', retryable: false };
+    }
+    return { clientSecret: data.clientSecret };
+  }
+  return { error: 'Timed out preparing payment. Please retry.', retryable: true };
+}
+
 export async function confirmCardAndSubscribe(
   params: ConfirmCardParams,
 ): Promise<ConfirmCardResult> {
   const doFetch = params.fetchFn ?? fetch;
+  const sleep = params.sleepFn ?? defaultSleep;
+
+  const secret = await fetchClientSecret(doFetch, sleep, params.tenantSlug);
+  if ('error' in secret) {
+    return { ok: false, error: secret.error, retryable: secret.retryable };
+  }
 
   const { error, setupIntent } = await params.stripe.confirmSetup({
     elements: params.elements,
+    clientSecret: secret.clientSecret,
     redirect: 'if_required',
   });
 
@@ -89,7 +145,6 @@ export async function confirmCardAndSubscribe(
   }
 
   if (res.status === 409) {
-    // Customer not yet written to the tenant CR status — transient; retry.
     return { ok: false, error: 'Still preparing your workspace — retrying.', retryable: true };
   }
   if (!res.ok) {
