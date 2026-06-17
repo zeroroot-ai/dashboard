@@ -40,10 +40,21 @@ const MARKETING_PREFIXES = ["/pricing", "/docs", "/contact-sales"] as const;
 
 /**
  * Paths never host-redirected: assets, API + auth callbacks, health probes,
- * and the internal design-tokens reference. Belt-and-suspenders alongside the
- * middleware matcher.
+ * the internal design-tokens reference, and the crawler metadata files. The
+ * latter (`/robots.txt`, `/sitemap.xml`, `/llms.txt`) must resolve directly on
+ * BOTH hosts — a 307 from the canonical marketing host (www) to the product
+ * host (app) defeats the SEO/AI-crawler intent. Belt-and-suspenders alongside
+ * the middleware matcher.
  */
-const NEUTRAL_PREFIXES = ["/api", "/_next", "/design-tokens", "/favicon"] as const;
+const NEUTRAL_PREFIXES = [
+  "/api",
+  "/_next",
+  "/design-tokens",
+  "/favicon",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/llms.txt",
+] as const;
 
 function bareHost(h: string): string {
   return h.split(":")[0]?.toLowerCase() ?? "";

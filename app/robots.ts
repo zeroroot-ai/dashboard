@@ -6,28 +6,33 @@ import type { MetadataRoute } from "next";
  * The dashboard image serves BOTH the marketing host (www.zeroroot.ai) and
  * the product host (app.zeroroot.ai) from one Next app (see
  * src/lib/host-routing.ts), so this single file is what /robots.txt returns on
- * either host. Policy:
+ * either host.
  *
- *   - Marketing surface is fully open: "/", "/pricing", "/docs",
- *     "/contact-sales" (the only prefixes isMarketingPath() serves on www).
- *     We WANT crawlers here — both classic search (SEO) and AI/LLM crawlers
- *     (so the product gets represented in frontier-model knowledge). See
- *     /llms.txt for the curated, LLM-friendly map.
- *   - Everything else is auth-walled product / auth flows / API and has no
- *     SEO value, so it is disallowed to keep crawl budget on the pages that
- *     matter and keep login/app routes out of the index.
+ * Two policies, gated on environment:
  *
- * AI crawlers are intentionally NOT blocked. GPTBot, ClaudeBot, anthropic-ai,
- * Google-Extended, PerplexityBot, CCBot, etc. all fall under "*" and are
- * welcome on the public surface.
+ *   - PRODUCTION (WWW_URL is the canonical prod marketing origin): fully open
+ *     marketing surface ("/", "/pricing", "/docs", "/contact-sales") to all
+ *     crawlers — classic search (SEO) AND AI/LLM crawlers (GPTBot, ClaudeBot,
+ *     anthropic-ai, Google-Extended, PerplexityBot, CCBot, etc., all under "*")
+ *     so the product is represented in frontier-model knowledge. See /llms.txt
+ *     for the curated, LLM-friendly map. Auth-walled product / auth flows / API
+ *     are disallowed to keep crawl budget on what matters.
+ *   - NON-PRODUCTION (staging, preview, local dev — any other WWW_URL, or
+ *     unset): `Disallow: /` for everyone. A publicly-reachable staging host
+ *     (www.staging.zeroroot.ai) must never be indexed; that would leak the
+ *     environment and create duplicate-content competition with prod.
+ *
+ * This route is `force-dynamic` because the environment is only known at
+ * runtime: CI builds one image with no WWW_URL, and the Helm chart injects the
+ * per-environment WWW_URL at pod startup. A statically-generated robots.txt
+ * would bake the build-time fallback and could not distinguish prod from
+ * staging.
  */
+export const dynamic = "force-dynamic";
 
-// Marketing base origin. The chart wires WWW_URL to the canonical marketing
-// host; fall back to the production host so a built image without WWW_URL
-// (e.g. single-origin dev) still emits a sane, absolute Sitemap line.
-const MARKETING_ORIGIN = (
-  process.env.WWW_URL ?? "https://www.zeroroot.ai"
-).replace(/\/$/, "");
+// The one host allowed to be crawled. Everything else fails closed to
+// Disallow-all, so a new/renamed non-prod host is private by default.
+const PROD_MARKETING_ORIGIN = "https://www.zeroroot.ai";
 
 // Non-public prefixes: product app, auth flows, API, internal reference. No
 // indexable content lives under these.
@@ -47,6 +52,16 @@ const DISALLOW = [
 ];
 
 export default function robots(): MetadataRoute.Robots {
+  const wwwUrl = (process.env.WWW_URL ?? "").replace(/\/$/, "");
+  const isProd = wwwUrl === PROD_MARKETING_ORIGIN;
+
+  if (!isProd) {
+    // Non-prod: block everything. No sitemap — there is nothing to index here.
+    return {
+      rules: [{ userAgent: "*", disallow: "/" }],
+    };
+  }
+
   return {
     rules: [
       {
@@ -55,7 +70,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: DISALLOW,
       },
     ],
-    sitemap: `${MARKETING_ORIGIN}/sitemap.xml`,
-    host: MARKETING_ORIGIN,
+    sitemap: `${PROD_MARKETING_ORIGIN}/sitemap.xml`,
+    host: PROD_MARKETING_ORIGIN,
   };
 }

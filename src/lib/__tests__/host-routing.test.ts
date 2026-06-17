@@ -33,6 +33,11 @@ describe("isNeutralPath", () => {
       expect(isNeutralPath(p)).toBe(true);
     }
   });
+  it("flags crawler metadata files so they serve on both hosts (no www->app 307)", () => {
+    for (const p of ["/robots.txt", "/sitemap.xml", "/llms.txt"]) {
+      expect(isNeutralPath(p)).toBe(true);
+    }
+  });
   it("does not flag product/marketing paths", () => {
     for (const p of ["/", "/dashboard", "/pricing"]) {
       expect(isNeutralPath(p)).toBe(false);

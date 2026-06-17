@@ -8,10 +8,12 @@ import type { MetadataRoute } from "next";
  * Everything else is auth-walled product and is disallowed in robots.ts.
  *
  * Keep this list in sync with the marketing prefixes and the landing footer.
+ *
+ * Pinned to the canonical production origin: a sitemap always advertises the
+ * canonical (prod) URLs regardless of which environment serves the file, and
+ * non-prod hosts are `Disallow: /` in robots.ts so they are never indexed.
  */
-const MARKETING_ORIGIN = (
-  process.env.WWW_URL ?? "https://www.zeroroot.ai"
-).replace(/\/$/, "");
+const MARKETING_ORIGIN = "https://www.zeroroot.ai";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
