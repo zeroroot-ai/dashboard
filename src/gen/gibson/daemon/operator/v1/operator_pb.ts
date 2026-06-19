@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/daemon/operator/v1/operator.proto.
  */
 export const file_gibson_daemon_operator_v1_operator: GenFile = /*@__PURE__*/
-  fileDesc("CihnaWJzb24vZGFlbW9uL29wZXJhdG9yL3YxL29wZXJhdG9yLnByb3RvEhlnaWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxIjkKD1NodXRkb3duUmVxdWVzdBINCgVmb3JjZRgBIAEoCBIXCg90aW1lb3V0X3NlY29uZHMYAiABKAUiNAoQU2h1dGRvd25SZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkiLQoYSW1wZXJzb25hdGVUZW5hbnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSIqChlJbXBlcnNvbmF0ZVRlbmFudFJlc3BvbnNlEg0KBXRva2VuGAEgASgJIioKGVJlZnJlc2hUb29sQ2F0YWxvZ1JlcXVlc3QSDQoFZm9yY2UYASABKAgiPQoaUmVmcmVzaFRvb2xDYXRhbG9nUmVzcG9uc2USDgoGcXVldWVkGAEgASgIEg8KB21lc3NhZ2UYAiABKAkiPQoLQWNjZXNzVHVwbGUSDAoEdXNlchgBIAEoCRIQCghyZWxhdGlvbhgCIAEoCRIOCgZvYmplY3QYAyABKAkilwEKGFdyaXRlQWNjZXNzVHVwbGVzUmVxdWVzdBIzCgNhZGQYASADKAsyJi5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkFjY2Vzc1R1cGxlEjYKBmRlbGV0ZRgCIAMoCzImLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuQWNjZXNzVHVwbGUSDgoGcmVhc29uGAMgASgJIjsKGVdyaXRlQWNjZXNzVHVwbGVzUmVzcG9uc2USDQoFYWRkZWQYASABKAUSDwoHZGVsZXRlZBgCIAEoBSLNAQoYVXBzZXJ0VGVuYW50UXVvdGFSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIbChNjb25jdXJyZW50X21pc3Npb25zGAcgASgFEhkKEWNvbmN1cnJlbnRfYWdlbnRzGAMgASgFEg8KB3BsYW5faWQYCCABKAlKBAgCEANKBAgEEAVKBAgFEAZKBAgGEAdSBXNlYXRzUgpzdG9yYWdlX2diUg5yZXRlbnRpb25fZGF5c1Iac2FuZGJveF9sYXVuY2hlc19wZXJfbW9udGgiLwoZVXBzZXJ0VGVuYW50UXVvdGFSZXNwb25zZRISCgp1cGRhdGVkX2F0GAEgASgJIi0KGExpc3RGZWF0dXJlVHVwbGVzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiLgoZTGlzdEZlYXR1cmVUdXBsZXNSZXNwb25zZRIRCglyZWxhdGlvbnMYASADKAkiNAofU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiOgogU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVzcG9uc2USFgoOdHVwbGVzX3dyaXR0ZW4YASABKAUitgIKEUF1ZGl0RXZlbnRNZXNzYWdlEgwKBHR5cGUYASABKAkSFQoNYWN0b3Jfc3ViamVjdBgCIAEoCRIUCgxhY3Rvcl9zb3VyY2UYAyABKAkSDQoFdHVwbGUYBCABKAkSFAoMYWN0aW9uX2NsYXNzGAUgASgJEhIKCnNjb3BlX3R5cGUYBiABKAkSEQoJb3BlcmF0aW9uGAcgASgJEg4KBnJlYXNvbhgIIAEoCRIRCgl0aW1lc3RhbXAYCSABKAkSSAoGZmllbGRzGAogAygLMjguZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5BdWRpdEV2ZW50TWVzc2FnZS5GaWVsZHNFbnRyeRotCgtGaWVsZHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIlQKFUVtaXRBdWRpdEV2ZW50UmVxdWVzdBI7CgVldmVudBgBIAEoCzIsLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuQXVkaXRFdmVudE1lc3NhZ2UiGAoWRW1pdEF1ZGl0RXZlbnRSZXNwb25zZSJHChpTZXRUZW5hbnRaaXRhZGVsT3JnUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSFgoOeml0YWRlbF9vcmdfaWQYAiABKAkiHQobU2V0VGVuYW50Wml0YWRlbE9yZ1Jlc3BvbnNlMpsNChVEYWVtb25PcGVyYXRvclNlcnZpY2USnAEKCFNodXRkb3duEiouZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5TaHV0ZG93blJlcXVlc3QaKy5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlNodXRkb3duUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMStwEKEUltcGVyc29uYXRlVGVuYW50EjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5JbXBlcnNvbmF0ZVRlbmFudFJlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkltcGVyc29uYXRlVGVuYW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSugEKElJlZnJlc2hUb29sQ2F0YWxvZxI0LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuUmVmcmVzaFRvb2xDYXRhbG9nUmVxdWVzdBo1LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuUmVmcmVzaFRvb2xDYXRhbG9nUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMStwEKEVdyaXRlQWNjZXNzVHVwbGVzEjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5Xcml0ZUFjY2Vzc1R1cGxlc1JlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLldyaXRlQWNjZXNzVHVwbGVzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMStwEKEVVwc2VydFRlbmFudFF1b3RhEjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5VcHNlcnRUZW5hbnRRdW90YVJlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlVwc2VydFRlbmFudFF1b3RhUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMStwEKEUxpc3RGZWF0dXJlVHVwbGVzEjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5MaXN0RmVhdHVyZVR1cGxlc1JlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkxpc3RGZWF0dXJlVHVwbGVzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSzAEKGFNlZWRDYXRhbG9nVGVuYW50RW5hYmxlZBI6LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVxdWVzdBo7LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSrgEKDkVtaXRBdWRpdEV2ZW50EjAuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5FbWl0QXVkaXRFdmVudFJlcXVlc3QaMS5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkVtaXRBdWRpdEV2ZW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSvQEKE1NldFRlbmFudFppdGFkZWxPcmcSNS5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlNldFRlbmFudFppdGFkZWxPcmdSZXF1ZXN0GjYuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5TZXRUZW5hbnRaaXRhZGVsT3JnUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IANCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9wbGF0Zm9ybS1zZGsvZ2VuL2dpYnNvbi9kYWVtb24vb3BlcmF0b3IvdjE7ZGFlbW9ub3BlcmF0b3J2MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
+  fileDesc("CihnaWJzb24vZGFlbW9uL29wZXJhdG9yL3YxL29wZXJhdG9yLnByb3RvEhlnaWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxIjkKD1NodXRkb3duUmVxdWVzdBINCgVmb3JjZRgBIAEoCBIXCg90aW1lb3V0X3NlY29uZHMYAiABKAUiNAoQU2h1dGRvd25SZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkiLQoYSW1wZXJzb25hdGVUZW5hbnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSIqChlJbXBlcnNvbmF0ZVRlbmFudFJlc3BvbnNlEg0KBXRva2VuGAEgASgJIioKGVJlZnJlc2hUb29sQ2F0YWxvZ1JlcXVlc3QSDQoFZm9yY2UYASABKAgiPQoaUmVmcmVzaFRvb2xDYXRhbG9nUmVzcG9uc2USDgoGcXVldWVkGAEgASgIEg8KB21lc3NhZ2UYAiABKAkiPQoLQWNjZXNzVHVwbGUSDAoEdXNlchgBIAEoCRIQCghyZWxhdGlvbhgCIAEoCRIOCgZvYmplY3QYAyABKAkilwEKGFdyaXRlQWNjZXNzVHVwbGVzUmVxdWVzdBIzCgNhZGQYASADKAsyJi5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkFjY2Vzc1R1cGxlEjYKBmRlbGV0ZRgCIAMoCzImLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuQWNjZXNzVHVwbGUSDgoGcmVhc29uGAMgASgJIjsKGVdyaXRlQWNjZXNzVHVwbGVzUmVzcG9uc2USDQoFYWRkZWQYASABKAUSDwoHZGVsZXRlZBgCIAEoBSLsAQoYVXBzZXJ0VGVuYW50UXVvdGFSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIbChNjb25jdXJyZW50X21pc3Npb25zGAcgASgFEhkKEWNvbmN1cnJlbnRfYWdlbnRzGAMgASgFEg8KB3BsYW5faWQYCCABKAkSHQoVY29uY3VycmVudF9jb25uZWN0b3JzGAkgASgFSgQIAhADSgQIBBAFSgQIBRAGSgQIBhAHUgVzZWF0c1IKc3RvcmFnZV9nYlIOcmV0ZW50aW9uX2RheXNSGnNhbmRib3hfbGF1bmNoZXNfcGVyX21vbnRoIi8KGVVwc2VydFRlbmFudFF1b3RhUmVzcG9uc2USEgoKdXBkYXRlZF9hdBgBIAEoCSItChhMaXN0RmVhdHVyZVR1cGxlc1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJIi4KGUxpc3RGZWF0dXJlVHVwbGVzUmVzcG9uc2USEQoJcmVsYXRpb25zGAEgAygJIjQKH1NlZWRDYXRhbG9nVGVuYW50RW5hYmxlZFJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJIjoKIFNlZWRDYXRhbG9nVGVuYW50RW5hYmxlZFJlc3BvbnNlEhYKDnR1cGxlc193cml0dGVuGAEgASgFIlwKGVNldFBsYXRmb3JtRW5hYmxlZFJlcXVlc3QSFQoNY29tcG9uZW50X3JlZhgBIAEoCRIRCglwdWJsaXNoZWQYAiABKAgSFQoNbWFuaWZlc3RfeWFtbBgDIAEoDCI+ChpTZXRQbGF0Zm9ybUVuYWJsZWRSZXNwb25zZRIPCgd3cml0dGVuGAEgASgIEg8KB2RlbGV0ZWQYAiABKAgitgIKEUF1ZGl0RXZlbnRNZXNzYWdlEgwKBHR5cGUYASABKAkSFQoNYWN0b3Jfc3ViamVjdBgCIAEoCRIUCgxhY3Rvcl9zb3VyY2UYAyABKAkSDQoFdHVwbGUYBCABKAkSFAoMYWN0aW9uX2NsYXNzGAUgASgJEhIKCnNjb3BlX3R5cGUYBiABKAkSEQoJb3BlcmF0aW9uGAcgASgJEg4KBnJlYXNvbhgIIAEoCRIRCgl0aW1lc3RhbXAYCSABKAkSSAoGZmllbGRzGAogAygLMjguZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5BdWRpdEV2ZW50TWVzc2FnZS5GaWVsZHNFbnRyeRotCgtGaWVsZHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIlQKFUVtaXRBdWRpdEV2ZW50UmVxdWVzdBI7CgVldmVudBgBIAEoCzIsLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuQXVkaXRFdmVudE1lc3NhZ2UiGAoWRW1pdEF1ZGl0RXZlbnRSZXNwb25zZSJHChpTZXRUZW5hbnRaaXRhZGVsT3JnUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSFgoOeml0YWRlbF9vcmdfaWQYAiABKAkiHQobU2V0VGVuYW50Wml0YWRlbE9yZ1Jlc3BvbnNlMtgOChVEYWVtb25PcGVyYXRvclNlcnZpY2USnAEKCFNodXRkb3duEiouZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5TaHV0ZG93blJlcXVlc3QaKy5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlNodXRkb3duUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMStwEKEUltcGVyc29uYXRlVGVuYW50EjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5JbXBlcnNvbmF0ZVRlbmFudFJlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkltcGVyc29uYXRlVGVuYW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSugEKElJlZnJlc2hUb29sQ2F0YWxvZxI0LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuUmVmcmVzaFRvb2xDYXRhbG9nUmVxdWVzdBo1LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuUmVmcmVzaFRvb2xDYXRhbG9nUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMStwEKEVdyaXRlQWNjZXNzVHVwbGVzEjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5Xcml0ZUFjY2Vzc1R1cGxlc1JlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLldyaXRlQWNjZXNzVHVwbGVzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMStwEKEVVwc2VydFRlbmFudFF1b3RhEjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5VcHNlcnRUZW5hbnRRdW90YVJlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlVwc2VydFRlbmFudFF1b3RhUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMStwEKEUxpc3RGZWF0dXJlVHVwbGVzEjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5MaXN0RmVhdHVyZVR1cGxlc1JlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkxpc3RGZWF0dXJlVHVwbGVzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSzAEKGFNlZWRDYXRhbG9nVGVuYW50RW5hYmxlZBI6LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVxdWVzdBo7LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSugEKElNldFBsYXRmb3JtRW5hYmxlZBI0LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuU2V0UGxhdGZvcm1FbmFibGVkUmVxdWVzdBo1LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuU2V0UGxhdGZvcm1FbmFibGVkUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSrgEKDkVtaXRBdWRpdEV2ZW50EjAuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5FbWl0QXVkaXRFdmVudFJlcXVlc3QaMS5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkVtaXRBdWRpdEV2ZW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSvQEKE1NldFRlbmFudFppdGFkZWxPcmcSNS5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlNldFRlbmFudFppdGFkZWxPcmdSZXF1ZXN0GjYuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5TZXRUZW5hbnRaaXRhZGVsT3JnUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IANCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9wbGF0Zm9ybS1zZGsvZ2VuL2dpYnNvbi9kYWVtb24vb3BlcmF0b3IvdjE7ZGFlbW9ub3BlcmF0b3J2MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
 
 /**
  * ShutdownRequest requests graceful shutdown of the daemon.
@@ -286,6 +286,15 @@ export type UpsertTenantQuotaRequest = Message<"gibson.daemon.operator.v1.Upsert
    * @generated from field: string plan_id = 8;
    */
   planId: string;
+
+  /**
+   * concurrent_connectors is the cap on hosted MCP connector instances a
+   * tenant may have running at any moment. 0 = unlimited. Per ADR-0047
+   * facet 3 (plan-tier connector-instance budget).
+   *
+   * @generated from field: int32 concurrent_connectors = 9;
+   */
+  concurrentConnectors: number;
 };
 
 /**
@@ -391,6 +400,74 @@ export const SeedCatalogTenantEnabledResponseSchema: GenMessage<SeedCatalogTenan
   messageDesc(file_gibson_daemon_operator_v1_operator, 14);
 
 /**
+ * @generated from message gibson.daemon.operator.v1.SetPlatformEnabledRequest
+ */
+export type SetPlatformEnabledRequest = Message<"gibson.daemon.operator.v1.SetPlatformEnabledRequest"> & {
+  /**
+   * component_ref is the component identifier without the "component:" type
+   * prefix — e.g. "connector-gitlab".
+   *
+   * @generated from field: string component_ref = 1;
+   */
+  componentRef: string;
+
+  /**
+   * published: true writes platform_enabled (adds to the shared catalog);
+   * false deletes it (unpublishes). Idempotent in both directions.
+   *
+   * @generated from field: bool published = 2;
+   */
+  published: boolean;
+
+  /**
+   * manifest_yaml is the connector's definition, persisted at publish so the
+   * on-enable sandbox reconciler (gibson#721) can launch a per-tenant sandbox
+   * from the shared definition — a connector published to the catalog by an
+   * operator is never tenant-registered, so this is its only manifest source.
+   * Stored as pure data under the system tenant (no principal, no install, no
+   * sandbox — `_system` is a definition marker, never an execution identity)
+   * and cleared on unpublish. Optional and ignored for non-connector
+   * components; empty on publish leaves any existing stored manifest untouched.
+   *
+   * @generated from field: bytes manifest_yaml = 3;
+   */
+  manifestYaml: Uint8Array;
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.SetPlatformEnabledRequest.
+ * Use `create(SetPlatformEnabledRequestSchema)` to create a new message.
+ */
+export const SetPlatformEnabledRequestSchema: GenMessage<SetPlatformEnabledRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 15);
+
+/**
+ * @generated from message gibson.daemon.operator.v1.SetPlatformEnabledResponse
+ */
+export type SetPlatformEnabledResponse = Message<"gibson.daemon.operator.v1.SetPlatformEnabledResponse"> & {
+  /**
+   * written is true when a tuple was actually added (published=true, was absent).
+   *
+   * @generated from field: bool written = 1;
+   */
+  written: boolean;
+
+  /**
+   * deleted is true when a tuple was actually removed (published=false, was present).
+   *
+   * @generated from field: bool deleted = 2;
+   */
+  deleted: boolean;
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.SetPlatformEnabledResponse.
+ * Use `create(SetPlatformEnabledResponseSchema)` to create a new message.
+ */
+export const SetPlatformEnabledResponseSchema: GenMessage<SetPlatformEnabledResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 16);
+
+/**
  * AuditEventMessage is the wire shape for EmitAuditEvent.
  *
  * @generated from message gibson.daemon.operator.v1.AuditEventMessage
@@ -452,7 +529,7 @@ export type AuditEventMessage = Message<"gibson.daemon.operator.v1.AuditEventMes
  * Use `create(AuditEventMessageSchema)` to create a new message.
  */
 export const AuditEventMessageSchema: GenMessage<AuditEventMessage> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 15);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 17);
 
 /**
  * EmitAuditEventRequest carries the audit event to emit.
@@ -471,7 +548,7 @@ export type EmitAuditEventRequest = Message<"gibson.daemon.operator.v1.EmitAudit
  * Use `create(EmitAuditEventRequestSchema)` to create a new message.
  */
 export const EmitAuditEventRequestSchema: GenMessage<EmitAuditEventRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 16);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 18);
 
 /**
  * EmitAuditEventResponse confirms the event was emitted.
@@ -486,7 +563,7 @@ export type EmitAuditEventResponse = Message<"gibson.daemon.operator.v1.EmitAudi
  * Use `create(EmitAuditEventResponseSchema)` to create a new message.
  */
 export const EmitAuditEventResponseSchema: GenMessage<EmitAuditEventResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 17);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 19);
 
 /**
  * SetTenantZitadelOrgRequest seeds the daemon's tenant -> Zitadel org mapping.
@@ -517,7 +594,7 @@ export type SetTenantZitadelOrgRequest = Message<"gibson.daemon.operator.v1.SetT
  * Use `create(SetTenantZitadelOrgRequestSchema)` to create a new message.
  */
 export const SetTenantZitadelOrgRequestSchema: GenMessage<SetTenantZitadelOrgRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 18);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 20);
 
 /**
  * SetTenantZitadelOrgResponse confirms the mapping was persisted.
@@ -532,7 +609,7 @@ export type SetTenantZitadelOrgResponse = Message<"gibson.daemon.operator.v1.Set
  * Use `create(SetTenantZitadelOrgResponseSchema)` to create a new message.
  */
 export const SetTenantZitadelOrgResponseSchema: GenMessage<SetTenantZitadelOrgResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 19);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 21);
 
 /**
  * DaemonOperatorService provides strictly ZD-internal operator operations on
@@ -626,6 +703,20 @@ export const DaemonOperatorService: GenService<{
     methodKind: "unary";
     input: typeof SeedCatalogTenantEnabledRequestSchema;
     output: typeof SeedCatalogTenantEnabledResponseSchema;
+  },
+  /**
+   * SetPlatformEnabled writes or deletes the FGA platform_enabled tuple for a
+   * component from system_tenant:_system — the shared-catalog publish path
+   * (gibson#682). Only the platform operator may publish a curated connector
+   * to the shared catalog; the catalog fan-out then seeds tenant_enabled per
+   * tenant. published=false unpublishes (removes it from the shared catalog).
+   *
+   * @generated from rpc gibson.daemon.operator.v1.DaemonOperatorService.SetPlatformEnabled
+   */
+  setPlatformEnabled: {
+    methodKind: "unary";
+    input: typeof SetPlatformEnabledRequestSchema;
+    output: typeof SetPlatformEnabledResponseSchema;
   },
   /**
    * EmitAuditEvent lets an operator/platform workload forward a structured
