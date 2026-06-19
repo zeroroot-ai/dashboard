@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/agent_identity.proto.
  */
 export const file_gibson_tenant_v1_agent_identity: GenFile = /*@__PURE__*/
-  fileDesc("CiVnaWJzb24vdGVuYW50L3YxL2FnZW50X2lkZW50aXR5LnByb3RvEhBnaWJzb24udGVuYW50LnYxIjkKDkNvbXBvbmVudEdyYW50EhUKDWNvbXBvbmVudF9yZWYYASABKAkSEAoIcmVsYXRpb24YAiABKAkiqgEKGkNyZWF0ZUFnZW50SWRlbnRpdHlSZXF1ZXN0EgwKBG5hbWUYASABKAkSLQoEa2luZBgCIAEoDjIfLmdpYnNvbi50ZW5hbnQudjEuUHJpbmNpcGFsS2luZBITCgtkZXNjcmlwdGlvbhgDIAEoCRI6ChBjb21wb25lbnRfZ3JhbnRzGAQgAygLMiAuZ2lic29uLnRlbmFudC52MS5Db21wb25lbnRHcmFudCLGAQobQ3JlYXRlQWdlbnRJZGVudGl0eVJlc3BvbnNlEhQKDHByaW5jaXBhbF9pZBgBIAEoCRItCgRraW5kGAIgASgOMh8uZ2lic29uLnRlbmFudC52MS5QcmluY2lwYWxLaW5kEgwKBG5hbWUYAyABKAkSEQoJY2xpZW50X2lkGAQgASgJEhUKDWNsaWVudF9zZWNyZXQYBSABKAkSEgoKZ2lic29uX3VybBgGIAEoCRIWCg5lbnJvbGxfY29tbWFuZBgHIAEoCSJ5ChpMaXN0QWdlbnRJZGVudGl0aWVzUmVxdWVzdBIRCglwYWdlX3NpemUYASABKAUSEgoKcGFnZV90b2tlbhgCIAEoCRI0CgtraW5kX2ZpbHRlchgDIAEoDjIfLmdpYnNvbi50ZW5hbnQudjEuUHJpbmNpcGFsS2luZCKPAgoNQWdlbnRJZGVudGl0eRIUCgxwcmluY2lwYWxfaWQYASABKAkSLQoEa2luZBgCIAEoDjIfLmdpYnNvbi50ZW5hbnQudjEuUHJpbmNpcGFsS2luZBIMCgRuYW1lGAMgASgJEhMKC2Rlc2NyaXB0aW9uGAQgASgJEi4KCmNyZWF0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjkKFWxhc3RfYXV0aGVudGljYXRlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHcmV2b2tlZBgHIAEoCBIaChJjcmVhdGVkX2J5X3N1YmplY3QYCCABKAkiawobTGlzdEFnZW50SWRlbnRpdGllc1Jlc3BvbnNlEjMKCmlkZW50aXRpZXMYASADKAsyHy5naWJzb24udGVuYW50LnYxLkFnZW50SWRlbnRpdHkSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIjIKGlJldm9rZUFnZW50SWRlbnRpdHlSZXF1ZXN0EhQKDHByaW5jaXBhbF9pZBgBIAEoCSIdChtSZXZva2VBZ2VudElkZW50aXR5UmVzcG9uc2UqfQoNUHJpbmNpcGFsS2luZBIeChpQUklOQ0lQQUxfS0lORF9VTlNQRUNJRklFRBAAEhgKFFBSSU5DSVBBTF9LSU5EX0FHRU5UEAESFwoTUFJJTkNJUEFMX0tJTkRfVE9PTBACEhkKFVBSSU5DSVBBTF9LSU5EX1BMVUdJThADMv8DChRBZ2VudElkZW50aXR5U2VydmljZRKgAQoTQ3JlYXRlQWdlbnRJZGVudGl0eRIsLmdpYnNvbi50ZW5hbnQudjEuQ3JlYXRlQWdlbnRJZGVudGl0eVJlcXVlc3QaLS5naWJzb24udGVuYW50LnYxLkNyZWF0ZUFnZW50SWRlbnRpdHlSZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSoAEKE0xpc3RBZ2VudElkZW50aXRpZXMSLC5naWJzb24udGVuYW50LnYxLkxpc3RBZ2VudElkZW50aXRpZXNSZXF1ZXN0Gi0uZ2lic29uLnRlbmFudC52MS5MaXN0QWdlbnRJZGVudGl0aWVzUmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEqABChNSZXZva2VBZ2VudElkZW50aXR5EiwuZ2lic29uLnRlbmFudC52MS5SZXZva2VBZ2VudElkZW50aXR5UmVxdWVzdBotLmdpYnNvbi50ZW5hbnQudjEuUmV2b2tlQWdlbnRJZGVudGl0eVJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgA0I+WjxnaXRodWIuY29tL3plcm9yb290LWFpL3Nkay9hcGkvZ2VuL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_google_protobuf_timestamp, file_gibson_auth_v1_options]);
+  fileDesc("CiVnaWJzb24vdGVuYW50L3YxL2FnZW50X2lkZW50aXR5LnByb3RvEhBnaWJzb24udGVuYW50LnYxIjkKDkNvbXBvbmVudEdyYW50EhUKDWNvbXBvbmVudF9yZWYYASABKAkSEAoIcmVsYXRpb24YAiABKAkiqgEKGkNyZWF0ZUFnZW50SWRlbnRpdHlSZXF1ZXN0EgwKBG5hbWUYASABKAkSLQoEa2luZBgCIAEoDjIfLmdpYnNvbi50ZW5hbnQudjEuUHJpbmNpcGFsS2luZBITCgtkZXNjcmlwdGlvbhgDIAEoCRI6ChBjb21wb25lbnRfZ3JhbnRzGAQgAygLMiAuZ2lic29uLnRlbmFudC52MS5Db21wb25lbnRHcmFudCLbAQobQ3JlYXRlQWdlbnRJZGVudGl0eVJlc3BvbnNlEhQKDHByaW5jaXBhbF9pZBgBIAEoCRItCgRraW5kGAIgASgOMh8uZ2lic29uLnRlbmFudC52MS5QcmluY2lwYWxLaW5kEgwKBG5hbWUYAyABKAkSEgoKZ2lic29uX3VybBgGIAEoCRIWCg5lbnJvbGxfY29tbWFuZBgHIAEoCRIXCg9ib290c3RyYXBfdG9rZW4YCCABKAlKBAgEEAVKBAgFEAZSCWNsaWVudF9pZFINY2xpZW50X3NlY3JldCJ5ChpMaXN0QWdlbnRJZGVudGl0aWVzUmVxdWVzdBIRCglwYWdlX3NpemUYASABKAUSEgoKcGFnZV90b2tlbhgCIAEoCRI0CgtraW5kX2ZpbHRlchgDIAEoDjIfLmdpYnNvbi50ZW5hbnQudjEuUHJpbmNpcGFsS2luZCKPAgoNQWdlbnRJZGVudGl0eRIUCgxwcmluY2lwYWxfaWQYASABKAkSLQoEa2luZBgCIAEoDjIfLmdpYnNvbi50ZW5hbnQudjEuUHJpbmNpcGFsS2luZBIMCgRuYW1lGAMgASgJEhMKC2Rlc2NyaXB0aW9uGAQgASgJEi4KCmNyZWF0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjkKFWxhc3RfYXV0aGVudGljYXRlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHcmV2b2tlZBgHIAEoCBIaChJjcmVhdGVkX2J5X3N1YmplY3QYCCABKAkiawobTGlzdEFnZW50SWRlbnRpdGllc1Jlc3BvbnNlEjMKCmlkZW50aXRpZXMYASADKAsyHy5naWJzb24udGVuYW50LnYxLkFnZW50SWRlbnRpdHkSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIjIKGlJldm9rZUFnZW50SWRlbnRpdHlSZXF1ZXN0EhQKDHByaW5jaXBhbF9pZBgBIAEoCSIdChtSZXZva2VBZ2VudElkZW50aXR5UmVzcG9uc2UqfQoNUHJpbmNpcGFsS2luZBIeChpQUklOQ0lQQUxfS0lORF9VTlNQRUNJRklFRBAAEhgKFFBSSU5DSVBBTF9LSU5EX0FHRU5UEAESFwoTUFJJTkNJUEFMX0tJTkRfVE9PTBACEhkKFVBSSU5DSVBBTF9LSU5EX1BMVUdJThADMv8DChRBZ2VudElkZW50aXR5U2VydmljZRKgAQoTQ3JlYXRlQWdlbnRJZGVudGl0eRIsLmdpYnNvbi50ZW5hbnQudjEuQ3JlYXRlQWdlbnRJZGVudGl0eVJlcXVlc3QaLS5naWJzb24udGVuYW50LnYxLkNyZWF0ZUFnZW50SWRlbnRpdHlSZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSoAEKE0xpc3RBZ2VudElkZW50aXRpZXMSLC5naWJzb24udGVuYW50LnYxLkxpc3RBZ2VudElkZW50aXRpZXNSZXF1ZXN0Gi0uZ2lic29uLnRlbmFudC52MS5MaXN0QWdlbnRJZGVudGl0aWVzUmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEqABChNSZXZva2VBZ2VudElkZW50aXR5EiwuZ2lic29uLnRlbmFudC52MS5SZXZva2VBZ2VudElkZW50aXR5UmVxdWVzdBotLmdpYnNvbi50ZW5hbnQudjEuUmV2b2tlQWdlbnRJZGVudGl0eVJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgA0I+WjxnaXRodWIuY29tL3plcm9yb290LWFpL3Nkay9hcGkvZ2VuL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_google_protobuf_timestamp, file_gibson_auth_v1_options]);
 
 /**
  * ComponentGrant describes an optional FGA capability grant to apply at
@@ -94,7 +94,7 @@ export const CreateAgentIdentityRequestSchema: GenMessage<CreateAgentIdentityReq
 
 /**
  * CreateAgentIdentityResponse carries the provisioned identity credentials.
- * The client_secret is emitted exactly once and cannot be recovered.
+ * The bootstrap_token is emitted exactly once and cannot be recovered.
  *
  * @generated from message gibson.tenant.v1.CreateAgentIdentityResponse
  */
@@ -117,21 +117,6 @@ export type CreateAgentIdentityResponse = Message<"gibson.tenant.v1.CreateAgentI
   name: string;
 
   /**
-   * client_id is the OAuth2 client ID for the service account.
-   *
-   * @generated from field: string client_id = 4;
-   */
-  clientId: string;
-
-  /**
-   * client_secret is the one-time secret. Store it immediately; it will not be
-   * shown again.
-   *
-   * @generated from field: string client_secret = 5;
-   */
-  clientSecret: string;
-
-  /**
    * gibson_url is the daemon's public Envoy URL for use in enroll_command.
    *
    * @generated from field: string gibson_url = 6;
@@ -139,12 +124,24 @@ export type CreateAgentIdentityResponse = Message<"gibson.tenant.v1.CreateAgentI
   gibsonUrl: string;
 
   /**
-   * enroll_command is a complete copy-pasteable shell invocation for agent
-   * enrollment.
+   * enroll_command is a complete copy-pasteable shell invocation for component
+   * enrollment: `gibson component register --kind <kind> --token -`.
    *
    * @generated from field: string enroll_command = 7;
    */
   enrollCommand: string;
+
+  /**
+   * bootstrap_token is a one-time, daemon-signed Capability-Grant bootstrap
+   * credential the component presents to the CG register endpoint to complete
+   * its FIRST host registration (it carries no Capability Grant yet). Under the
+   * unified-identity model (ADR-0045) this is the SOLE credential `gibson
+   * component register` uses for every kind; the enroll_command pipes it via
+   * `--token -`. Store it immediately; it will not be shown again.
+   *
+   * @generated from field: string bootstrap_token = 8;
+   */
+  bootstrapToken: string;
 };
 
 /**
@@ -346,8 +343,9 @@ export const PrincipalKindSchema: GenEnum<PrincipalKind> = /*@__PURE__*/
 export const AgentIdentityService: GenService<{
   /**
    * CreateAgentIdentity provisions a new machine identity for an agent, tool,
-   * or plugin. Returns a one-time client_secret that cannot be recovered after
-   * this call.
+   * or plugin. Returns a one-time capability-grant bootstrap_token that cannot
+   * be recovered after this call (ADR-0045 — the unified enrollment credential
+   * for every kind).
    *
    * @generated from rpc gibson.tenant.v1.AgentIdentityService.CreateAgentIdentity
    */
