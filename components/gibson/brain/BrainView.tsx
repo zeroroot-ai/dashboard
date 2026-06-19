@@ -158,22 +158,34 @@ export function BrainView() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.hosts.map((h) => (
-                  <TableRow key={`${h.scopeId}/${h.address}`}>
-                    <TableCell className="font-mono">
-                      {h.address}
-                      {h.surprise ? (
-                        <Badge variant="destructive" className="ml-2">
-                          anomaly
-                        </Badge>
-                      ) : null}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{h.scopeId}</TableCell>
-                    <TableCell className="font-mono">{h.openPorts.join(", ")}</TableCell>
-                    <TableCell>{h.juicy.toFixed(2)}</TableCell>
-                    <TableCell>{h.attention.toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
+                {/* Juiciest targets first: the belief field (ADR-0005) drives
+                    attention, so sorting by it surfaces the highest-value hosts. */}
+                {[...data.hosts]
+                  .sort((a, b) => b.attention - a.attention)
+                  .map((h) => {
+                    const juicyTarget = h.juicy >= 0.5;
+                    return (
+                      <TableRow key={`${h.scopeId}/${h.address}`}>
+                        <TableCell className="font-mono">
+                          {h.address}
+                          {juicyTarget ? (
+                            <Badge className="ml-2">juicy</Badge>
+                          ) : null}
+                          {h.surprise ? (
+                            <Badge variant="destructive" className="ml-2">
+                              anomaly
+                            </Badge>
+                          ) : null}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{h.scopeId}</TableCell>
+                        <TableCell className="font-mono">{h.openPorts.join(", ")}</TableCell>
+                        <TableCell className={juicyTarget ? "text-highlight font-semibold" : undefined}>
+                          {h.juicy.toFixed(2)}
+                        </TableCell>
+                        <TableCell>{h.attention.toFixed(2)}</TableCell>
+                      </TableRow>
+                    );
+                  })}
               </TableBody>
             </Table>
           )}
