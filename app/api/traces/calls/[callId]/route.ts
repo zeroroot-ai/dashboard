@@ -3,25 +3,24 @@ import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { userClient } from '@/src/lib/gibson-client';
-import { TracesService } from '@/src/gen/gibson/traces/v1/traces_pb';
+import { WorldService } from '@/src/gen/gibson/world/v1/world_pb';
 import { ConnectError, Code } from '@connectrpc/connect';
-import { assembleObservationDetail } from '@/src/lib/traces-client';
+import { adaptCallDetail } from '@/src/lib/world-traces';
 
 /**
- * GET /api/traces/observations/[obsId]
+ * GET /api/traces/calls/[callId]
  *
- * Fetch a single observation's detail (conversation content) for on-demand
- * loading when a trace row is expanded. Tenant-scoped via the daemon's
- * TracesService; the observation id alone identifies the record, so this is
- * mission-agnostic and shared by both the mission Traces tab and the
- * standalone trace detail page, one observation-fetch codepath.
+ * One LLM call's full detail incl. its prompt transcript + completion
+ * (gibson#755), loaded on demand when the user expands a call. Backed by
+ * WorldService.GetLlmCall; the daemon scopes to the caller's tenant and returns
+ * NotFound for an unknown call id.
  */
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ obsId: string }> },
+  { params }: { params: Promise<{ callId: string }> },
 ) {
   try {
-    const { obsId } = await params;
+    const { callId } = await params;
 
     const session = await getServerSession();
     if (!session) {
@@ -37,30 +36,27 @@ export async function GET(
       return activeTenantApiResponse(err);
     }
 
-    let obs: import('@/src/gen/gibson/traces/v1/traces_pb').ObservationRecord | undefined;
+    let resp: Awaited<ReturnType<ReturnType<typeof userClient<typeof WorldService>>['getLlmCall']>>;
     try {
-      const obsResp = await userClient(TracesService).getObservation({ observationId: obsId });
-      obs = obsResp.observation;
+      resp = await userClient(WorldService).getLlmCall({ callId });
     } catch (err) {
       if (err instanceof ConnectError && err.code === Code.NotFound) {
         return NextResponse.json(
-          { error: { code: 'NOT_FOUND', message: 'Observation not found' } },
+          { error: { code: 'NOT_FOUND', message: 'Call not found' } },
           { status: 404 },
         );
       }
       throw err;
     }
 
-
-    if (!obs) {
+    if (!resp.call) {
       return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: 'Observation not found' } },
+        { error: { code: 'NOT_FOUND', message: 'Call not found' } },
         { status: 404 },
       );
     }
 
-    const observation = assembleObservationDetail(obs);
-    return NextResponse.json({ observation });
+    return NextResponse.json(adaptCallDetail(resp.call));
   } catch (error) {
     return daemonErrorResponse(error);
   }

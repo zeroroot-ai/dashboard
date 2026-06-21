@@ -10,22 +10,6 @@ const SUMMARY: TokenSummary = {
   totalTokens: 17_200,
   estimatedCostUsd: 0.42,
   llmCallCount: 9,
-  byAgent: [
-    {
-      agentName: "recon",
-      inputTokens: 3_000,
-      outputTokens: 1_000,
-      totalTokens: 4_000,
-      callCount: 3,
-    },
-    {
-      agentName: "exploit",
-      inputTokens: 9_400,
-      outputTokens: 3_800,
-      totalTokens: 13_200,
-      callCount: 6,
-    },
-  ],
   byModel: [
     {
       model: "claude-haiku-4",
@@ -47,7 +31,7 @@ const SUMMARY: TokenSummary = {
 };
 
 describe("SpendView", () => {
-  it("renders by-agent and by-model breakdowns sorted by spend", () => {
+  it("renders the by-model breakdown sorted by spend", () => {
     render(<SpendView summary={SUMMARY} />);
 
     // by-model sorted by cost desc: sonnet ($0.39) before haiku ($0.03)
@@ -55,13 +39,11 @@ describe("SpendView", () => {
     expect(screen.getByText("$0.39")).toBeInTheDocument();
     expect(screen.getByText("$0.03")).toBeInTheDocument();
 
-    // by-agent sorted by tokens desc: exploit (13.2k) before recon (4k)
-    const tables = screen.getAllByRole("table");
-    const agentTable = tables[0];
-    const rows = within(agentTable).getAllByRole("row");
-    // row[0] is the header
-    expect(within(rows[1]).getByText("exploit")).toBeInTheDocument();
-    expect(within(rows[2]).getByText("recon")).toBeInTheDocument();
+    const table = screen.getByRole("table");
+    const rows = within(table).getAllByRole("row");
+    // row[0] is the header; sonnet (higher cost) comes first.
+    expect(within(rows[1]).getByText("claude-sonnet-4")).toBeInTheDocument();
+    expect(within(rows[2]).getByText("claude-haiku-4")).toBeInTheDocument();
   });
 
   it("shows a dash for models with no known pricing instead of a fake $0", () => {
@@ -69,7 +51,6 @@ describe("SpendView", () => {
       <SpendView
         summary={{
           ...SUMMARY,
-          byAgent: [],
           byModel: [
             {
               model: "mystery-model",
@@ -97,7 +78,6 @@ describe("SpendView", () => {
           totalTokens: 0,
           estimatedCostUsd: 0,
           llmCallCount: 0,
-          byAgent: [],
           byModel: [],
         }}
       />,

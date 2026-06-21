@@ -16,7 +16,6 @@ import { getGraphContext } from '@/src/lib/graph/context';
 import { getGraphSummary } from '@/src/lib/graph/summary';
 import { buildSystemPrompt } from '@/src/lib/ai/prompts';
 import { getUserActivityContext } from '@/src/lib/chat/user-activity-context';
-import { getLangfuseUserContext } from '@/src/lib/chat/langfuse-session-context';
 import { getPlatformContext } from '@/src/lib/chat/platform-context';
 import { validationErrorResponse, daemonErrorResponse } from '@/src/lib/api-errors';
 import { checkRateLimit, createRateLimitResponse } from '@/src/lib/rate-limiter';
@@ -130,12 +129,11 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Fetch all context sources in parallel (each fails silently)
     const nodeId = typeof context?.nodeId === 'string' ? context.nodeId : undefined;
-    const [graphContext, graphSummaryResult, userActivityContext, langfuseContext, platformContext] =
+    const [graphContext, graphSummaryResult, userActivityContext, platformContext] =
       await Promise.all([
         nodeId ? getGraphContext(nodeId) : Promise.resolve(undefined),
         getGraphSummary(tenantId).catch(() => null),
         getUserActivityContext(userId, tenantId),
-        getLangfuseUserContext(userId, tenantId),
         getPlatformContext(userId, tenantId),
       ]);
 
@@ -145,7 +143,6 @@ export async function POST(request: NextRequest): Promise<Response> {
       graphContext,
       graphSummary: graphSummaryResult?.summary || undefined,
       userActivityContext,
-      langfuseContext,
       platformContext,
       nodeId,
     });
@@ -183,7 +180,6 @@ export async function POST(request: NextRequest): Promise<Response> {
         return message;
       },
     });
-    response.headers.set('X-Gibson-Trace-Id', crypto.randomUUID());
     // Surface the resolved provider name so the client can display which
     // provider/model is answering the active conversation.
     response.headers.set('X-Gibson-Active-Provider', providerName);

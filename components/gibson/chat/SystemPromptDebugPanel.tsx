@@ -16,7 +16,6 @@ const PROMPT_LAYERS: PromptLayer[] = [
   { label: 'Identity', startsWith: 'You are an AI assistant' },
   { label: 'Persona', startsWith: 'You are the ' },
   { label: 'Graph Summary', startsWith: 'Here is an overview of the operator’s knowledge graph' },
-  { label: 'Langfuse Traces', startsWith: 'Recent agent execution traces' },
   { label: 'User Activity', startsWith: "The operator's recent platform activity" },
   { label: 'Platform Inventory', startsWith: 'Platform inventory' },
   { label: 'Focused Node', startsWith: 'The operator currently has the following node' },

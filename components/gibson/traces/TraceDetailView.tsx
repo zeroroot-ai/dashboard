@@ -3,24 +3,24 @@
 /**
  * TraceDetailView, client component backing /dashboard/traces/[id].
  *
- * Fetches a trace directly by id via useTraceDetail and renders it with the
- * SAME shared components as the mission Traces tab: TokenSummaryPanel above
- * the expandable TraceTree. There is one trace renderer, this page composes
- * it, it does not reimplement it.
+ * `id` is a run id (the URL-safe "_" segment is the empty/ungrouped run). It
+ * fetches the run via useRunDetail and renders it through the shared RunView:
+ * by-model totals, the run's LLM calls, and each call's transcript (gibson#755).
  */
 
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ActivityIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
-import { ActivityIcon } from "lucide-react";
 import { RunView } from "@/components/gibson/traces/RunView";
-import { useTraceDetail } from "@/src/hooks/useTraces";
+import { useRunDetail } from "@/src/hooks/useTraces";
 
 export function TraceDetailView({ traceId }: { traceId: string }) {
-  const { data, isLoading, isError, error, refetch } = useTraceDetail(traceId);
+  // The list routes the empty (ungrouped) run id to the "_" segment.
+  const runId = traceId === "_" ? "" : traceId;
+  const { data, isLoading, isError, error, refetch } = useRunDetail(runId);
 
   const backLink = (
     <div className="flex items-center gap-2">
@@ -49,15 +49,14 @@ export function TraceDetailView({ traceId }: { traceId: string }) {
 
   if (isError) {
     const msg = error instanceof Error ? error.message : String(error);
-    // 404 "not available" is a normal state, render an empty state, not an error.
     if (msg.includes("not available")) {
       return (
         <div className="space-y-4">
           {backLink}
           <EmptyState
             icon={ActivityIcon}
-            title="Trace not found"
-            description="This trace is no longer available, or it predates trace recording."
+            title="Run not found"
+            description="This run has no recorded LLM calls, or it predates call recording."
           />
         </div>
       );
@@ -67,23 +66,21 @@ export function TraceDetailView({ traceId }: { traceId: string }) {
         {backLink}
         <ErrorAlert
           error={error instanceof Error ? error : { message: String(error) }}
-          title="Failed to load trace"
+          title="Failed to load run"
           retry={() => refetch()}
         />
       </div>
     );
   }
 
-  const hasContent =
-    !!data && (data.decisions.length > 0 || data.traceTree.length > 0);
-  if (!hasContent) {
+  if (!data || data.run.calls.length === 0) {
     return (
       <div className="space-y-4">
         {backLink}
         <EmptyState
           icon={ActivityIcon}
-          title="No run activity"
-          description="This run recorded no agent activity."
+          title="No call activity"
+          description="This run recorded no LLM calls."
         />
       </div>
     );
@@ -94,14 +91,14 @@ export function TraceDetailView({ traceId }: { traceId: string }) {
       {backLink}
       <div>
         <h1 className="text-xl font-bold tracking-tight lg:text-2xl">
-          {data.missionId ? `Mission ${data.missionId}` : "Run"}
+          {data.run.label}
         </h1>
         <p className="font-mono text-[10px] text-muted-foreground/70">
-          Reference: {data.traceId}
+          {data.run.callCount} call{data.run.callCount === 1 ? "" : "s"}
         </p>
       </div>
 
-      <RunView data={data} />
+      <RunView run={data.run} tokenSummary={data.tokenSummary} />
     </div>
   );
 }

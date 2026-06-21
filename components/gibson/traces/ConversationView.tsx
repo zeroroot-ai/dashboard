@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronRightIcon, WrenchIcon } from "lucide-react";
+import { ChevronRightIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -11,29 +11,25 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Markdown } from "@/components/ui/custom/prompt/markdown";
-import { formatTokenCount } from "@/src/lib/trace-utils";
-import type { ConversationMessage, ToolCallBlock } from "@/src/types/trace";
+import { formatTokenCount } from "@/src/lib/world-traces";
+import type { ConversationMessage } from "@/src/types/trace";
 
 /**
  * ConversationView renders a single LLM call's prompt ↔ response exchange as a
- * readable chat thread. It is the core "readable manner" deliverable of the
- * Gibson Traces viewer (dashboard#464) and is shared between the mission
- * Traces tab and the standalone trace detail page (dashboard#470), there is
- * one conversation renderer, not two.
+ * readable chat thread (gibson#755). It is the core "readable manner"
+ * deliverable of the Gibson Traces viewer and the one conversation renderer.
  *
  * Rendering rules:
  * - `system`        → collapsed-by-default block (system prompts are long and
  *                     templated; the meaningful turns are user ↔ assistant).
  * - `user`          → right-aligned bubble, plain pre-wrapped text.
- * - `assistant`     → left-aligned bubble, markdown-rendered, with any tool
- *                     calls it requested shown inline beneath it.
- * - `tool`          → collapsible "Tool result" block with the call id and the
- *                     payload pretty-printed as JSON.
+ * - `assistant`     → left-aligned bubble, markdown-rendered.
+ * - `tool`          → collapsible "Tool result" block with the payload
+ *                     pretty-printed as JSON.
  *
- * `tokens`, when supplied, renders the generation's input/output token usage
- * as a chip after the thread. Per-message token attribution is not available
- * from the upstream observability store (tokens are recorded per generation,
- * not per message), so the chip reflects the whole exchange.
+ * `tokens`, when supplied, renders the call's input/output token usage as a
+ * chip after the thread. The World records tokens per call, not per message,
+ * so the chip reflects the whole exchange.
  */
 
 const ROLE_LABEL: Record<ConversationMessage["role"], string> = {
@@ -49,20 +45,6 @@ function prettyJson(raw: string): string {
   } catch {
     return raw;
   }
-}
-
-function ToolCallView({ call }: { call: ToolCallBlock }) {
-  return (
-    <div className="mt-2 rounded-md border border-border bg-muted/40 p-2">
-      <div className="flex items-center gap-1.5 text-xs font-mono text-highlight">
-        <WrenchIcon className="size-3" aria-hidden="true" />
-        {call.name || "tool"}
-      </div>
-      <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-xs text-muted-foreground">
-        {prettyJson(call.arguments)}
-      </pre>
-    </div>
-  );
 }
 
 function CollapsibleBlock({
@@ -108,9 +90,6 @@ function ChatBubble({ message }: { message: ConversationMessage }) {
             <Markdown className="text-sm break-words">{message.content}</Markdown>
           )
         ) : null}
-        {message.toolCalls?.map((call) => (
-          <ToolCallView key={call.id || call.name} call={call} />
-        ))}
       </div>
     </div>
   );
@@ -144,10 +123,7 @@ export function ConversationView({ messages, tokens }: ConversationViewProps) {
         }
         if (message.role === "tool") {
           return (
-            <CollapsibleBlock
-              key={key}
-              label={`Tool result${message.toolCallId ? ` · ${message.toolCallId}` : ""}`}
-            >
+            <CollapsibleBlock key={key} label="Tool result">
               {prettyJson(message.content)}
             </CollapsibleBlock>
           );

@@ -563,7 +563,7 @@ export {
 // Re-export Trace Types
 // ============================================================================
 
-export type { TraceData, DecisionEntry, ConversationMessage, ToolCallBlock, GenerationMetadata, TokenSummary, AgentTokenBreakdown, ModelTokenBreakdown, TraceNode, TraceNodeType, MessageRole } from './trace';
+export type { LlmCallSummary, LlmRun, LlmCallDetailData, ConversationMessage, TokenSummary, ModelTokenBreakdown, MessageRole, RunListResponse, RunDetailResponse } from './trace';
 
 // ============================================================================
 // API Key Types

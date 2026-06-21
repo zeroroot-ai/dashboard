@@ -4,7 +4,7 @@
  *
  * Asserts external rendering behaviour against the ConversationMessage[] shape:
  * role rendering, system-prompt collapse, markdown on assistant content, tool
- * calls + results, and the generation token chip. Not internal state.
+ * results, and the call token chip. Not internal state.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -57,25 +57,12 @@ describe('ConversationView', () => {
     ).toBeDefined();
   });
 
-  it('renders tool calls inline beneath the assistant message', () => {
+  it('renders a tool message as a labelled collapsible block', () => {
     const messages: ConversationMessage[] = [
-      {
-        role: 'assistant',
-        content: 'Running a scan.',
-        toolCalls: [{ id: 'c1', name: 'nmap', arguments: '{"host":"10.0.0.1"}' }],
-      },
-    ];
-    render(<ConversationView messages={messages} />);
-    expect(screen.getByText('nmap')).toBeDefined();
-  });
-
-  it('renders a tool result as a labelled collapsible block', () => {
-    const messages: ConversationMessage[] = [
-      { role: 'tool', content: '{"ports":[80,443]}', toolCallId: 'c1' },
+      { role: 'tool', content: '{"ports":[80,443]}' },
     ];
     render(<ConversationView messages={messages} />);
     expect(screen.getByText(/Tool result/)).toBeDefined();
-    expect(screen.getByText(/c1/)).toBeDefined();
   });
 
   it('shows the token chip when generation tokens are supplied', () => {

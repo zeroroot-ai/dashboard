@@ -1,40 +1,52 @@
 /**
- * Trace Display Type Definitions
- * Types for the multi-tenant trace viewer feature
+ * Trace display types — backed by the ECS brain World (gibson#755).
+ *
+ * The Gibson Traces surface reads `gibson.world.v1.WorldService.ListLlmCalls` /
+ * `GetLlmCall`: a flat log of LLM completions folded into the per-tenant World,
+ * replacing the retired Langfuse trace/observation tree. Each LLM call carries
+ * model + token metadata and (on detail) its prompt transcript + completion.
+ * Calls are grouped into "runs" by the AgentRun (`runId`) that issued them.
  */
 
 // ============================================================================
-// Trace-level Types
+// LLM call + run types
 // ============================================================================
 
-export interface TraceData {
-  traceId: string;
-  missionId: string;
-  startTime: Date;
-  endTime?: Date;
-  totalDurationMs: number;
-  tokenSummary: TokenSummary;
-  decisions: DecisionEntry[];
-  traceTree: TraceNode[];
+/** One LLM call's metadata (a `gibson.world.v1.LlmCallView`). */
+export interface LlmCallSummary {
+  callId: string;
+  /** The AgentRun that issued the call ("" for mission/chat-level calls). */
+  runId: string;
+  model: string;
+  scopeId: string;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
 }
 
-export interface TokenSummary {
-  inputTokens: number;
-  outputTokens: number;
+/**
+ * A run is the set of LLM calls sharing a `runId` — the work a single AgentRun
+ * drove through the model. Calls with no run id ("") collapse into one
+ * synthetic "ungrouped" run so the list is never lossy.
+ */
+export interface LlmRun {
+  /** runId, or the sentinel "" rendered as ungrouped. */
+  id: string;
+  label: string;
+  /** Distinct models used across the run's calls. */
+  models: string[];
+  callCount: number;
+  promptTokens: number;
+  completionTokens: number;
   totalTokens: number;
   estimatedCostUsd: number;
-  llmCallCount: number;
-  byAgent: AgentTokenBreakdown[];
-  byModel: ModelTokenBreakdown[];
+  /** The run's calls, in observation order. */
+  calls: LlmCallSummary[];
 }
 
-export interface AgentTokenBreakdown {
-  agentName: string;
-  inputTokens: number;
-  outputTokens: number;
-  totalTokens: number;
-  callCount: number;
-}
+// ============================================================================
+// Token / spend aggregation
+// ============================================================================
 
 export interface ModelTokenBreakdown {
   model: string;
@@ -45,26 +57,23 @@ export interface ModelTokenBreakdown {
   estimatedCostUsd: number;
 }
 
-// ============================================================================
-// Decision Types
-// ============================================================================
-
-export interface DecisionEntry {
-  id: string;
-  timestamp: Date;
-  action: string;
-  targetAgent?: string;
-  confidence: number;
-  reasoning: string;
-  model: string;
+/**
+ * Aggregate token + cost summary for a run. The World attributes calls by
+ * model only (there is no per-agent token attribution in the call log), so the
+ * breakdown is by-model.
+ */
+export interface TokenSummary {
   inputTokens: number;
   outputTokens: number;
-  latencyMs: number;
-  status: 'ok' | 'error';
-  errorMessage?: string;
-  contentAvailable: boolean;
-  conversation?: ConversationMessage[];
+  totalTokens: number;
+  estimatedCostUsd: number;
+  llmCallCount: number;
+  byModel: ModelTokenBreakdown[];
 }
+
+// ============================================================================
+// Transcript types
+// ============================================================================
 
 export type MessageRole = 'system' | 'user' | 'assistant' | 'tool';
 
@@ -72,75 +81,32 @@ export interface ConversationMessage {
   role: MessageRole;
   content: string;
   name?: string;
-  toolCalls?: ToolCallBlock[];
-  toolCallId?: string;
 }
 
-export interface ToolCallBlock {
-  id: string;
-  name: string;
-  arguments: string;
-}
-
-export interface GenerationMetadata {
+/** One call's full record incl. transcript (a `gibson.world.v1.LlmCallDetail`). */
+export interface LlmCallDetailData {
+  callId: string;
+  runId: string;
   model: string;
-  temperature?: number;
-  maxTokens?: number;
-  topP?: number;
-  inputTokens: number;
-  outputTokens: number;
-  latencyMs: number;
-  estimatedCostUsd: number;
-}
-
-// ============================================================================
-// Trace Tree Types
-// ============================================================================
-
-export type TraceNodeType = 'mission' | 'decision' | 'agent' | 'tool' | 'generation' | 'span';
-
-export interface TraceNode {
-  id: string;
-  name: string;
-  type: TraceNodeType;
-  startTime: Date;
-  endTime?: Date;
-  durationMs: number;
-  status: 'ok' | 'error';
-  errorMessage?: string;
-  tokens?: { input: number; output: number };
-  model?: string;
-  children: TraceNode[];
-}
-
-// ============================================================================
-// Tenant-wide trace list types
-// ============================================================================
-
-/**
- * A trace as it appears in the tenant-wide trace list, a projection of the
- * upstream trace record with no observations (those load on detail open).
- */
-export interface TraceSummary {
-  id: string;
-  name: string;
-  timestamp: string;
-  status: 'ok' | 'error';
-  totalTokens: number;
+  scopeId: string;
   promptTokens: number;
   completionTokens: number;
-  latencyMs: number;
-  tags: string[];
-  sessionId?: string;
+  totalTokens: number;
+  /** The prompt messages sent to the model. */
+  messages: ConversationMessage[];
+  /** The assistant's completion text. */
+  completion: string;
 }
 
-export interface TraceListMeta {
-  page: number;
-  totalPages: number;
-  totalItems: number;
+// ============================================================================
+// API payload shapes
+// ============================================================================
+
+export interface RunListResponse {
+  runs: LlmRun[];
 }
 
-export interface TraceListResponse {
-  data: TraceSummary[];
-  meta: TraceListMeta;
+export interface RunDetailResponse {
+  run: LlmRun;
+  tokenSummary: TokenSummary;
 }

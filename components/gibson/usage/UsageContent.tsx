@@ -16,7 +16,6 @@
  */
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -63,36 +62,6 @@ function formatDollars(cents: number): string {
 
 function formatTokens(n: number): string {
   return n.toLocaleString();
-}
-
-/**
- * Deep-link from a usage row to the Gibson Traces list scoped to that subject,
- * carrying the current date range. Returns null for scopes the trace-list can't
- * filter on:
- *   - user    → ?userId=<id>            (Langfuse trace.userId)
- *   - agent   → ?tags=agent:<name>      (Langfuse trace.tags, emitted by daemon)
- *   - mission → ?tags=mission:<id>      (Langfuse trace.tags, emitted by daemon)
- *   - team    → null                    (no team tag is emitted on traces)
- */
-function tracesHrefForScope(
-  scope: UsageScopeInput,
-  subjectId: string,
-  fromParam?: string,
-  toParam?: string,
-): string | null {
-  const qs = new URLSearchParams();
-  if (scope === "user") {
-    qs.set("userId", subjectId);
-  } else if (scope === "agent") {
-    qs.set("tags", `agent:${subjectId}`);
-  } else if (scope === "mission") {
-    qs.set("tags", `mission:${subjectId}`);
-  } else {
-    return null;
-  }
-  if (fromParam) qs.set("from", fromParam);
-  if (toParam) qs.set("to", toParam);
-  return `/dashboard/traces?${qs.toString()}`;
 }
 
 export function UsageContent({ fromParam, toParam, scopeParam }: Props) {
@@ -216,22 +185,7 @@ export function UsageContent({ fromParam, toParam, scopeParam }: Props) {
                       {rows.map((r) => (
                         <TableRow key={r.subjectId}>
                           <TableCell className="font-mono text-xs">
-                            {(() => {
-                              const href = tracesHrefForScope(
-                                s,
-                                r.subjectId,
-                                fromParam,
-                                toParam,
-                              );
-                              const label = r.displayName || r.subjectId;
-                              return href ? (
-                                <Link href={href} className="text-link hover:underline">
-                                  {label}
-                                </Link>
-                              ) : (
-                                label
-                              );
-                            })()}
+                            {r.displayName || r.subjectId}
                           </TableCell>
                           <TableCell className="text-right">
                             {formatTokens(r.inputTokens)}
