@@ -23,10 +23,11 @@ export async function GET() {
     }
 
     const client = userClient(WorldService);
-    const [missions, hosts, findings, timeline] = await Promise.all([
+    const [missions, hosts, findings, llmCalls, timeline] = await Promise.all([
       client.listMissions({}),
       client.listHosts({}),
       client.listFindings({}),
+      client.listLlmCalls({}),
       client.getTimeline({}),
     ]);
 
@@ -51,6 +52,13 @@ export async function GET() {
         scopeId: f.scopeId,
         address: f.address,
         severity: f.severity,
+      })),
+      llmCalls: llmCalls.llmCalls.map((c) => ({
+        callId: c.callId,
+        runId: c.runId,
+        model: c.model,
+        promptTokens: c.promptTokens,
+        completionTokens: c.completionTokens,
       })),
       timeline: timeline.events.map((e) => ({
         seq: Number(e.seq),
