@@ -1,189 +1,98 @@
 'use client';
 
-import {
-  useQuery,
-  type UseQueryResult,
-} from '@tanstack/react-query';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { queryKeys } from '@/src/lib/query/keys';
 import { useTenantStore } from '@/src/stores/tenant-store';
-import type { TraceData, TraceNode, DecisionEntry, ConversationMessage, GenerationMetadata } from '@/src/types/trace';
-import type { MissionStatus } from '@/src/types';
-
-// ---------- API client functions ----------
-
-interface RawTraceNode extends Omit<TraceNode, 'startTime' | 'endTime' | 'children'> {
-  startTime: string;
-  endTime?: string;
-  children?: RawTraceNode[];
-}
-
-interface RawDecisionEntry extends Omit<DecisionEntry, 'timestamp'> {
-  timestamp: string;
-}
-
-interface TraceApiResponse {
-  traceId: string;
-  missionId: string;
-  startTime: string;
-  endTime?: string;
-  totalDurationMs: number;
-  tokenSummary: TraceData['tokenSummary'];
-  decisions: RawDecisionEntry[];
-  traceTree: RawTraceNode[];
-}
-
-function deserializeTraceNode(node: RawTraceNode): TraceNode {
-  return {
-    ...node,
-    startTime: new Date(node.startTime),
-    endTime: node.endTime ? new Date(node.endTime) : undefined,
-    children: (node.children || []).map(deserializeTraceNode),
-  };
-}
-
-/** Shared deserialization of the TraceData JSON returned by both trace routes. */
-function deserializeTraceData(json: TraceApiResponse): TraceData {
-  return {
-    ...json,
-    startTime: new Date(json.startTime),
-    endTime: json.endTime ? new Date(json.endTime) : undefined,
-    decisions: json.decisions.map((d) => ({
-      ...d,
-      timestamp: new Date(d.timestamp),
-    })),
-    traceTree: json.traceTree.map(deserializeTraceNode),
-  };
-}
-
-async function fetchMissionTrace(missionId: string): Promise<TraceData> {
-  const response = await fetch(`/api/missions/${missionId}/traces`);
-
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error('Traces not available for this mission');
-    }
-    if (response.status === 503) {
-      throw new Error('Trace data temporarily unavailable');
-    }
-    throw new Error(`Failed to fetch traces: ${response.statusText}`);
-  }
-
-  return deserializeTraceData((await response.json()) as TraceApiResponse);
-}
-
-async function fetchTraceById(traceId: string): Promise<TraceData> {
-  const response = await fetch(`/api/traces/${traceId}`);
-
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error('Trace not available');
-    }
-    if (response.status === 503) {
-      throw new Error('Trace data temporarily unavailable');
-    }
-    throw new Error(`Failed to fetch trace: ${response.statusText}`);
-  }
-
-  return deserializeTraceData((await response.json()) as TraceApiResponse);
-}
-
-interface ObservationDetailResponse {
-  observation: {
-    id: string;
-    contentAvailable: boolean;
-    messages: ConversationMessage[];
-    metadata: GenerationMetadata;
-  };
-}
-
-async function fetchObservationDetail(
-  observationId: string
-): Promise<ObservationDetailResponse['observation']> {
-  const response = await fetch(`/api/traces/observations/${observationId}`);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch observation: ${response.statusText}`);
-  }
-
-  const json: ObservationDetailResponse = await response.json();
-  return json.observation;
-}
-
-// ---------- Hooks ----------
+import type { LlmRun, RunDetailResponse, LlmCallDetailData } from '@/src/types/trace';
 
 /**
- * Fetch the full trace for a mission.
- * Cache strategy varies by mission status:
- * - Completed/failed/stopped: staleTime 60s (immutable data)
- * - Running/pending/paused: staleTime 5s + refetchInterval 10s
+ * Gibson Traces hooks — backed by the brain World LLM-call log (gibson#755).
+ *
+ *   useRuns()                  → GET /api/traces            (runs across the tenant)
+ *   useRunDetail(runId)        → GET /api/traces/runs/[id]  (one run + token summary)
+ *   useCallTranscript(callId)  → GET /api/traces/calls/[id] (one call's transcript)
+ *
+ * The World call log is append-only and immutable once recorded, so detail and
+ * transcript are cached aggressively; the run list refreshes on a short stale
+ * window so newly-recorded calls surface without a manual refetch.
  */
-export function useMissionTrace(
-  missionId: string,
-  missionStatus?: MissionStatus
-): UseQueryResult<TraceData, Error> {
-  const currentTenant = useTenantStore((state) => state.currentTenant);
-  const tenantId = currentTenant?.id;
 
-  const isActive = missionStatus === 'running' || missionStatus === 'paused';
+// ---------- fetchers ----------
 
+async function fetchRuns(): Promise<LlmRun[]> {
+  const res = await fetch('/api/traces');
+  if (!res.ok) {
+    if (res.status === 503) throw new Error('Trace data temporarily unavailable');
+    throw new Error(`Failed to fetch traces: ${res.statusText}`);
+  }
+  const json = (await res.json()) as { runs: LlmRun[] };
+  return json.runs;
+}
+
+/** The empty (ungrouped) run id is encoded as the URL-safe segment "_". */
+function runSegment(runId: string): string {
+  return runId === '' ? '_' : encodeURIComponent(runId);
+}
+
+async function fetchRunDetail(runId: string): Promise<RunDetailResponse> {
+  const res = await fetch(`/api/traces/runs/${runSegment(runId)}`);
+  if (!res.ok) {
+    if (res.status === 404) throw new Error('Run not available');
+    if (res.status === 503) throw new Error('Trace data temporarily unavailable');
+    throw new Error(`Failed to fetch run: ${res.statusText}`);
+  }
+  return (await res.json()) as RunDetailResponse;
+}
+
+async function fetchCallTranscript(callId: string): Promise<LlmCallDetailData> {
+  const res = await fetch(`/api/traces/calls/${encodeURIComponent(callId)}`);
+  if (!res.ok) {
+    if (res.status === 404) throw new Error('Call not available');
+    throw new Error(`Failed to fetch call: ${res.statusText}`);
+  }
+  return (await res.json()) as LlmCallDetailData;
+}
+
+// ---------- hooks ----------
+
+/** Fetch the tenant-wide list of runs (LLM calls grouped by run id). */
+export function useRuns(): UseQueryResult<LlmRun[], Error> {
+  const tenantId = useTenantStore((state) => state.currentTenant?.id);
   return useQuery({
-    queryKey: queryKeys.traces.mission(tenantId ?? '', missionId),
-    queryFn: () => fetchMissionTrace(missionId),
-    staleTime: isActive ? 5_000 : 60_000,
-    refetchInterval: isActive ? 10_000 : false,
-    enabled: !!missionId,
-    retry: (failureCount, error) => {
-      // Don't retry 404s (no trace data) or 403s
-      if (error.message.includes('not available') || error.message.includes('Forbidden')) {
-        return false;
-      }
-      return failureCount < 2;
-    },
+    queryKey: queryKeys.traces.runs(tenantId ?? ''),
+    queryFn: fetchRuns,
+    staleTime: 10_000,
   });
 }
 
-/**
- * Fetch the full trace for a trace id directly (no mission correlation).
- * Backs the standalone /dashboard/traces/[id] detail page. Trace content is
- * immutable once recorded, so staleTime is 60s.
- */
-export function useTraceDetail(
-  traceId: string
-): UseQueryResult<TraceData, Error> {
-  const currentTenant = useTenantStore((state) => state.currentTenant);
-  const tenantId = currentTenant?.id;
-
+/** Fetch one run's calls + by-model token summary. */
+export function useRunDetail(runId: string): UseQueryResult<RunDetailResponse, Error> {
+  const tenantId = useTenantStore((state) => state.currentTenant?.id);
   return useQuery({
-    queryKey: queryKeys.traces.detail(tenantId ?? '', traceId),
-    queryFn: () => fetchTraceById(traceId),
+    queryKey: queryKeys.traces.run(tenantId ?? '', runId),
+    queryFn: () => fetchRunDetail(runId),
     staleTime: 60_000,
-    enabled: !!traceId,
+    // runId === '' is the valid "ungrouped" run, so do not gate on truthiness.
     retry: (failureCount, error) => {
-      if (error.message.includes('not available') || error.message.includes('Forbidden')) {
-        return false;
-      }
+      if (error.message.includes('not available')) return false;
       return failureCount < 2;
     },
   });
 }
 
 /**
- * Fetch a single observation's detail (conversation content).
- * Used for on-demand loading when user expands a decision. Mission-agnostic -
- * the observation id alone identifies the record. staleTime is Infinity since
- * observation content is immutable.
+ * Fetch one call's transcript on demand (when a call row is expanded). Call
+ * content is immutable, so it never goes stale.
  */
-export function useObservationDetail(
-  observationId: string,
-  enabled: boolean
-): UseQueryResult<ObservationDetailResponse['observation'], Error> {
-  const currentTenant = useTenantStore((state) => state.currentTenant);
-  const tenantId = currentTenant?.id;
-
+export function useCallTranscript(
+  callId: string,
+  enabled: boolean,
+): UseQueryResult<LlmCallDetailData, Error> {
+  const tenantId = useTenantStore((state) => state.currentTenant?.id);
   return useQuery({
-    queryKey: queryKeys.traces.observation(tenantId ?? '', observationId),
-    queryFn: () => fetchObservationDetail(observationId),
+    queryKey: queryKeys.traces.call(tenantId ?? '', callId),
+    queryFn: () => fetchCallTranscript(callId),
     staleTime: Infinity,
-    enabled: enabled && !!observationId,
+    enabled: enabled && !!callId,
   });
 }

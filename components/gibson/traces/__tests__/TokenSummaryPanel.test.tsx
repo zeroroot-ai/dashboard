@@ -1,6 +1,6 @@
 /**
- * Render contract for TokenSummaryPanel: totals strip + by-model / by-agent
- * breakdown tables, abbreviated token formatting, and USD cost display.
+ * Render contract for TokenSummaryPanel: totals strip + by-model breakdown
+ * table, abbreviated token formatting, and USD cost display (gibson#755).
  */
 
 import { describe, it, expect } from 'vitest';
@@ -24,34 +24,15 @@ const SUMMARY: TokenSummary = {
       estimatedCostUsd: 0.39,
     },
   ],
-  byAgent: [
-    {
-      agentName: 'recon',
-      inputTokens: 12_400,
-      outputTokens: 4_800,
-      totalTokens: 17_200,
-      callCount: 9,
-    },
-  ],
 };
 
 describe('TokenSummaryPanel', () => {
   it('renders the totals strip with abbreviated tokens and USD cost', () => {
     render(<TokenSummaryPanel summary={SUMMARY} />);
     expect(screen.getByText('Total tokens')).toBeDefined();
-    // 17.2k / 9 also appear in the by-agent row (single agent == totals here).
     expect(screen.getAllByText('17.2k').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('$0.42')).toBeDefined();
     expect(screen.getAllByText('9').length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('renders the duration stat only when provided', () => {
-    const { rerender } = render(<TokenSummaryPanel summary={SUMMARY} />);
-    expect(screen.queryByText('Duration')).toBeNull();
-
-    rerender(<TokenSummaryPanel summary={SUMMARY} totalDurationMs={5_500} />);
-    expect(screen.getByText('Duration')).toBeDefined();
-    expect(screen.getByText('5.50s')).toBeDefined();
   });
 
   it('renders the by-model breakdown', () => {
@@ -61,13 +42,7 @@ describe('TokenSummaryPanel', () => {
     expect(screen.getByText('$0.39')).toBeDefined();
   });
 
-  it('renders the by-agent breakdown', () => {
-    render(<TokenSummaryPanel summary={SUMMARY} />);
-    expect(screen.getByText('By agent')).toBeDefined();
-    expect(screen.getByText('recon')).toBeDefined();
-  });
-
-  it('omits breakdown tables and shows zeros without NaN for an empty summary', () => {
+  it('omits the by-model table and shows zeros without NaN for an empty summary', () => {
     const empty: TokenSummary = {
       inputTokens: 0,
       outputTokens: 0,
@@ -75,17 +50,15 @@ describe('TokenSummaryPanel', () => {
       estimatedCostUsd: 0,
       llmCallCount: 0,
       byModel: [],
-      byAgent: [],
     };
     render(<TokenSummaryPanel summary={empty} />);
     expect(screen.getByText('$0.00')).toBeDefined();
     expect(screen.queryByText('By model')).toBeNull();
-    expect(screen.queryByText('By agent')).toBeNull();
     expect(screen.queryByText(/NaN/)).toBeNull();
   });
 
   it('shows <$0.01 for tiny but non-zero cost', () => {
-    render(<TokenSummaryPanel summary={{ ...SUMMARY, estimatedCostUsd: 0.004, byModel: [], byAgent: [] }} />);
+    render(<TokenSummaryPanel summary={{ ...SUMMARY, estimatedCostUsd: 0.004, byModel: [] }} />);
     expect(screen.getByText('<$0.01')).toBeDefined();
   });
 });

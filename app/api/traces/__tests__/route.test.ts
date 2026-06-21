@@ -1,15 +1,16 @@
 /**
- * Per-route contract test for GET /api/traces (tenant-wide trace list).
+ * Per-route contract test for GET /api/traces (tenant-wide run list).
  *
- * Verifies the serialised TraceSummary projection, query-param pass-through
- * to TracesService.listTraces, and the distinct error responses (401 / 412).
- * TracesService is mocked via userClient so this is a pure route contract.
+ * The Gibson Traces list reads WorldService.ListLlmCalls and groups the flat
+ * call log into runs (gibson#755). WorldService is mocked via userClient so this
+ * is a pure route contract: the run grouping + token rollup, plus the 401 / 412
+ * auth paths.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const mockListTraces = vi.fn();
+const mockListLlmCalls = vi.fn();
 
 const { mockGetServerSession, mockRequireActiveTenant } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
@@ -36,9 +37,8 @@ vi.mock('@/src/lib/gibson-client', async (importOriginal) => {
   return {
     ...actual,
     userClient: vi.fn().mockReturnValue({
-      listTraces: (...args: unknown[]) => mockListTraces(...args),
+      listLlmCalls: (...args: unknown[]) => mockListLlmCalls(...args),
     }),
-    timestampToISO: actual.timestampToISO,
   };
 });
 
@@ -52,21 +52,15 @@ function req(url = 'http://test.local/api/traces'): NextRequest {
   return new NextRequest(url);
 }
 
-// Build a proto-like TraceRecord with a timestamp field (seconds/nanos bigint).
-function makeTraceRecord(overrides: Record<string, unknown> = {}) {
+function call(over: Record<string, unknown> = {}) {
   return {
-    id: 'tr-1',
-    name: 'recon-agent-run',
-    timestamp: { seconds: BigInt(1748433600), nanos: 0 },
-    tags: ['mission:m1'],
-    sessionId: 'sess-1',
-    totalTokens: BigInt(1680),
-    promptTokens: BigInt(1200),
-    completionTokens: BigInt(480),
-    latencyMs: 5500,
-    observationIds: [],
-    userId: '',
-    ...overrides,
+    callId: 'c1',
+    runId: 'run-1',
+    model: 'claude-opus-4',
+    scopeId: 's1',
+    promptTokens: 1200,
+    completionTokens: 480,
+    ...over,
   };
 }
 
@@ -74,11 +68,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockGetServerSession.mockResolvedValue(SESSION);
   mockRequireActiveTenant.mockResolvedValue('t1');
-  mockListTraces.mockResolvedValue({
-    traces: [],
-    nextPageToken: '',
-    totalItems: BigInt(0),
-  });
+  mockListLlmCalls.mockResolvedValue({ llmCalls: [] });
 });
 
 describe('GET /api/traces', () => {
@@ -86,84 +76,57 @@ describe('GET /api/traces', () => {
     mockGetServerSession.mockResolvedValueOnce(null);
     const res = await GET(req());
     expect(res.status).toBe(401);
-    expect(mockListTraces).not.toHaveBeenCalled();
+    expect(mockListLlmCalls).not.toHaveBeenCalled();
   });
 
   it('returns 412 when no active tenant', async () => {
     mockRequireActiveTenant.mockRejectedValueOnce(new Error('no tenant'));
     const res = await GET(req());
     expect(res.status).toBe(412);
-    expect(mockListTraces).not.toHaveBeenCalled();
+    expect(mockListLlmCalls).not.toHaveBeenCalled();
   });
 
-  it('projects traces into the TraceSummary shape', async () => {
-    mockListTraces.mockResolvedValueOnce({
-      traces: [
-        makeTraceRecord({ id: 'tr-1', name: 'recon-agent-run' }),
+  it('groups calls into runs by run id with token rollups', async () => {
+    mockListLlmCalls.mockResolvedValueOnce({
+      llmCalls: [
+        call({ callId: 'c1', runId: 'run-1' }),
+        call({ callId: 'c2', runId: 'run-1', promptTokens: 100, completionTokens: 50 }),
+        call({ callId: 'c3', runId: 'run-2', model: 'gpt-4o' }),
       ],
-      nextPageToken: '',
-      totalItems: BigInt(1),
     });
 
     const res = await GET(req());
     expect(res.status).toBe(200);
     const body = await res.json();
 
-    expect(body.meta).toMatchObject({ page: 1, totalItems: 1 });
-    expect(body.data[0]).toMatchObject({
-      id: 'tr-1',
-      name: 'recon-agent-run',
-      status: 'ok',
-      totalTokens: 1680,
-      promptTokens: 1200,
-      completionTokens: 480,
-      latencyMs: 5500,
-      tags: ['mission:m1'],
-      sessionId: 'sess-1',
+    expect(body.runs).toHaveLength(2);
+    const run1 = body.runs.find((r: { id: string }) => r.id === 'run-1');
+    expect(run1).toMatchObject({
+      id: 'run-1',
+      label: 'run-1',
+      callCount: 2,
+      promptTokens: 1300,
+      completionTokens: 530,
+      totalTokens: 1830,
     });
+    expect(run1.models).toEqual(['claude-opus-4']);
+    expect(run1.estimatedCostUsd).toBeGreaterThan(0);
   });
 
-  it('passes pagination and filters through to TracesService', async () => {
-    await GET(
-      req('http://test.local/api/traces?page=2&limit=10&from=2026-01-01&to=2026-01-31&name=recon'),
-    );
+  it('collapses empty run ids into one ungrouped run', async () => {
+    mockListLlmCalls.mockResolvedValueOnce({
+      llmCalls: [call({ callId: 'c1', runId: '' }), call({ callId: 'c2', runId: '' })],
+    });
 
-    expect(mockListTraces).toHaveBeenCalledWith(
-      expect.objectContaining({
-        pageSize: 10,
-        pageToken: '2',
-        fromTimestamp: '2026-01-01T00:00:00.000Z',
-        toTimestamp: '2026-01-31T23:59:59.999Z',
-        name: 'recon',
-      }),
-    );
+    const res = await GET(req());
+    const body = await res.json();
+    expect(body.runs).toHaveLength(1);
+    expect(body.runs[0]).toMatchObject({ id: '', label: 'Ungrouped calls', callCount: 2 });
   });
 
-  it('passes userId filter through', async () => {
-    await GET(req('http://test.local/api/traces?userId=user-42'));
-    expect(mockListTraces).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: 'user-42' }),
-    );
-  });
-
-  it('passes repeated tags filters through', async () => {
-    await GET(req('http://test.local/api/traces?tags=agent:recon&tags=mission:m1'));
-    expect(mockListTraces).toHaveBeenCalledWith(
-      expect.objectContaining({ tags: ['agent:recon', 'mission:m1'] }),
-    );
-  });
-
-  it('caps the page size at 100', async () => {
-    await GET(req('http://test.local/api/traces?limit=5000'));
-    expect(mockListTraces).toHaveBeenCalledWith(
-      expect.objectContaining({ pageSize: 100 }),
-    );
-  });
-
-  it('uses empty string for invalid date filters', async () => {
-    await GET(req('http://test.local/api/traces?from=not-a-date'));
-    expect(mockListTraces).toHaveBeenCalledWith(
-      expect.objectContaining({ fromTimestamp: '' }),
-    );
+  it('returns an empty run list when there are no calls', async () => {
+    const res = await GET(req());
+    const body = await res.json();
+    expect(body.runs).toEqual([]);
   });
 });

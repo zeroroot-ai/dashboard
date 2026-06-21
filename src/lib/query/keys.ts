@@ -140,12 +140,13 @@ export const queryKeys = {
   },
 
   // Traces
+  // Gibson Traces, backed by the brain World LLM-call log (gibson#755):
+  // run list, per-run detail, per-call transcript.
   traces: {
     all: ['traces'] as const,
-    mission: (tenantId: string, missionId: string) => ['traces', tenantId, 'mission', missionId] as const,
-    detail: (tenantId: string, traceId: string) => ['traces', tenantId, 'detail', traceId] as const,
-    observation: (tenantId: string, obsId: string) =>
-      ['traces', tenantId, 'observation', obsId] as const,
+    runs: (tenantId: string) => ['traces', tenantId, 'runs'] as const,
+    run: (tenantId: string, runId: string) => ['traces', tenantId, 'run', runId] as const,
+    call: (tenantId: string, callId: string) => ['traces', tenantId, 'call', callId] as const,
   },
 
   // Organization graph, teams + memberships + per-user inverse map.

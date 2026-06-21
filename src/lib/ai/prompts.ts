@@ -2,13 +2,12 @@
  * System Prompt Builder
  *
  * Constructs dynamic system prompts for the Gibson chatbot with
- * agent personas and layered knowledge-graph, Langfuse, Redis, and
+ * agent personas and layered knowledge-graph, Redis, and
  * platform-inventory context.
  */
 
 import type { GraphContextData } from '@/src/lib/graph/context';
 import type { UserActivityContext } from '@/src/lib/chat/user-activity-context';
-import type { LangfuseUserContext } from '@/src/lib/chat/langfuse-session-context';
 import type { PlatformContext } from '@/src/lib/chat/platform-context';
 import { getPersona } from '@/src/lib/chat/personas';
 
@@ -45,16 +44,6 @@ function renderUserActivity(ctx: UserActivityContext): string | null {
   return `The operator's recent platform activity:\n${parts.join('\n')}`;
 }
 
-function renderLangfuseContext(ctx: LangfuseUserContext): string | null {
-  if (ctx.recentTraces.length === 0) return null;
-  const lines = ctx.recentTraces.map((t) => {
-    const tokens = t.totalTokens > 0 ? ` (${t.totalTokens} tokens)` : '';
-    const snippet = t.outputSnippet ? `, "${t.outputSnippet}"` : '';
-    return `- ${t.name} at ${t.startTime} [${t.status}]${tokens}${snippet}`;
-  });
-  return `Recent agent execution traces for this user:\n${lines.join('\n')}`;
-}
-
 function renderPlatformContext(ctx: PlatformContext): string | null {
   const parts: string[] = [];
   if (ctx.agents.length > 0) {
@@ -82,7 +71,6 @@ export interface BuildSystemPromptOpts {
   graphContext?: GraphContextData;
   graphSummary?: string;
   userActivityContext?: UserActivityContext;
-  langfuseContext?: LangfuseUserContext;
   platformContext?: PlatformContext;
   /** The focused node ID if a graph context is active. When set, the model is
    *  instructed to emit a citation marker when it uses data from this node. */
@@ -96,13 +84,12 @@ export interface BuildSystemPromptOpts {
  *   1. Platform identity
  *   2. Persona prompt
  *   3. Tenant graph summary
- *   4. Langfuse recent agent traces
- *   5. Redis user activity
- *   6. Platform inventory (agents / tools / plugins)
- *   7. Focused knowledge-graph node
+ *   4. Redis user activity
+ *   5. Platform inventory (agents / tools / plugins)
+ *   6. Focused knowledge-graph node
  */
 export function buildSystemPrompt(opts: BuildSystemPromptOpts): string {
-  const { agentId, graphContext, graphSummary, userActivityContext, langfuseContext, platformContext, nodeId } = opts;
+  const { agentId, graphContext, graphSummary, userActivityContext, platformContext, nodeId } = opts;
 
   const parts: string[] = [];
 
@@ -119,13 +106,7 @@ export function buildSystemPrompt(opts: BuildSystemPromptOpts): string {
     );
   }
 
-  // 4. Langfuse recent agent traces
-  if (langfuseContext) {
-    const rendered = renderLangfuseContext(langfuseContext);
-    if (rendered) parts.push(rendered);
-  }
-
-  // 5. Redis user activity
+  // 4. Redis user activity
   if (userActivityContext) {
     const rendered = renderUserActivity(userActivityContext);
     if (rendered) parts.push(rendered);

@@ -1,27 +1,26 @@
 "use client";
 
 /**
- * RunView, the single, shared renderer for one run (dashboard#533).
+ * RunView, the single shared renderer for one run (gibson#755).
  *
- * Leads with the train-of-thought timeline (what the agents did and why) and
- * keeps the raw span tree behind an explicit "Advanced" toggle. Both the
- * standalone trace page and the mission Traces tab render through this, there
- * is one run renderer, not two.
+ * Leads with the run's by-model token totals, then two tabs:
+ *  - Calls: the run's LLM calls in order, each expandable into its full
+ *    prompt ↔ response transcript (loaded on demand).
+ *  - Spend: the by-model token / estimated-cost breakdown.
  *
- * The compact totals strip stays pinned on top; the Spend tab adds the
- * by-agent / by-model breakdown (dashboard#534).
+ * Both the standalone trace page and any embedded run view render through this,
+ * there is one run renderer.
  */
 
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { TokenSummaryPanel } from "@/components/gibson/traces/TokenSummaryPanel";
-import { DecisionTimeline } from "@/components/gibson/traces/DecisionTimeline";
+import { CallsList } from "@/components/gibson/traces/CallsList";
 import { SpendView } from "@/components/gibson/traces/SpendView";
-import { TraceTree } from "@/components/gibson/traces/TraceTree";
-import type { TraceData } from "@/src/types/trace";
+import type { LlmRun, TokenSummary } from "@/src/types/trace";
 
-type RunTab = "timeline" | "spend" | "advanced";
+type RunTab = "calls" | "spend";
 
 function TabButton({
   active,
@@ -49,39 +48,30 @@ function TabButton({
   );
 }
 
-export function RunView({ data }: { data: TraceData }) {
-  const [tab, setTab] = React.useState<RunTab>("timeline");
+export function RunView({
+  run,
+  tokenSummary,
+}: {
+  run: LlmRun;
+  tokenSummary: TokenSummary;
+}) {
+  const [tab, setTab] = React.useState<RunTab>("calls");
 
   return (
     <div className="space-y-4">
-      <TokenSummaryPanel
-        summary={data.tokenSummary}
-        totalDurationMs={data.totalDurationMs}
-      />
+      <TokenSummaryPanel summary={tokenSummary} />
 
       <div className="flex items-center gap-1 border-b border-highlight/20 pb-2">
-        <TabButton active={tab === "timeline"} onClick={() => setTab("timeline")}>
-          Timeline
+        <TabButton active={tab === "calls"} onClick={() => setTab("calls")}>
+          Calls
         </TabButton>
         <TabButton active={tab === "spend"} onClick={() => setTab("spend")}>
           Spend
         </TabButton>
-        <TabButton active={tab === "advanced"} onClick={() => setTab("advanced")}>
-          Advanced (raw trace)
-        </TabButton>
       </div>
 
-      {tab === "timeline" && <DecisionTimeline decisions={data.decisions} />}
-      {tab === "spend" && <SpendView summary={data.tokenSummary} />}
-      {tab === "advanced" && (
-        <div className="glass-hack rounded-lg p-3">
-          <div className="flex justify-between border-b border-highlight/30 pb-2 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
-            <span>Raw trace</span>
-            <span>input/output · duration</span>
-          </div>
-          <TraceTree nodes={data.traceTree} />
-        </div>
-      )}
+      {tab === "calls" && <CallsList calls={run.calls} />}
+      {tab === "spend" && <SpendView summary={tokenSummary} />}
     </div>
   );
 }

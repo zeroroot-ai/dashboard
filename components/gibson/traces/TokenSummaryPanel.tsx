@@ -8,19 +8,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatTokenCount, formatUsd } from "@/src/lib/trace-utils";
+import { formatTokenCount, formatUsd } from "@/src/lib/world-traces";
 import type { TokenSummary } from "@/src/types/trace";
-import { formatDuration } from "./TraceTree";
 
 /**
- * TokenSummaryPanel renders a TokenSummary as a top-level totals strip plus
- * by-model and by-agent breakdown tables. Shared between the mission Traces
- * tab and the standalone trace detail page (dashboard#470), there is one
- * token-summary renderer.
- *
- * `totalDurationMs` is the trace-level wall-clock duration (not part of
- * TokenSummary); when supplied it is shown alongside the token totals so the
- * panel fully subsumes the old inline summary line.
+ * TokenSummaryPanel renders a TokenSummary as a top-level totals strip plus a
+ * by-model breakdown table (gibson#755). The World call log attributes calls by
+ * model only, so there is no by-agent breakdown.
  */
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -38,24 +32,17 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 export interface TokenSummaryPanelProps {
   summary: TokenSummary;
-  totalDurationMs?: number;
 }
 
-export function TokenSummaryPanel({
-  summary,
-  totalDurationMs,
-}: TokenSummaryPanelProps) {
+export function TokenSummaryPanel({ summary }: TokenSummaryPanelProps) {
   return (
     <div className="glass-hack rounded-lg p-3 space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Stat label="Total tokens" value={formatTokenCount(summary.totalTokens)} />
         <Stat label="Input" value={formatTokenCount(summary.inputTokens)} />
         <Stat label="Output" value={formatTokenCount(summary.outputTokens)} />
         <Stat label="Est. cost" value={formatUsd(summary.estimatedCostUsd)} />
         <Stat label="LLM calls" value={summary.llmCallCount.toLocaleString()} />
-        {totalDurationMs != null && (
-          <Stat label="Duration" value={formatDuration(totalDurationMs)} />
-        )}
       </div>
 
       {summary.byModel.length > 0 && (
@@ -92,44 +79,6 @@ export function TokenSummaryPanel({
                   </TableCell>
                   <TableCell className="text-right font-mono tabular-nums">
                     {formatUsd(row.estimatedCostUsd)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {summary.byAgent.length > 0 && (
-        <div className="space-y-1">
-          <div className="text-[10px] font-mono uppercase tracking-wide text-muted-foreground">
-            By agent
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Agent</TableHead>
-                <TableHead className="text-right">Input</TableHead>
-                <TableHead className="text-right">Output</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-right">Calls</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {summary.byAgent.map((row) => (
-                <TableRow key={row.agentName}>
-                  <TableCell className="font-mono text-xs">{row.agentName}</TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">
-                    {formatTokenCount(row.inputTokens)}
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">
-                    {formatTokenCount(row.outputTokens)}
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">
-                    {formatTokenCount(row.totalTokens)}
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">
-                    {row.callCount.toLocaleString()}
                   </TableCell>
                 </TableRow>
               ))}
