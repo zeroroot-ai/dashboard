@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/world/v1/world.proto.
  */
 export const file_gibson_world_v1_world: GenFile = /*@__PURE__*/
-  fileDesc("ChtnaWJzb24vd29ybGQvdjEvd29ybGQucHJvdG8SD2dpYnNvbi53b3JsZC52MSJHCgtNaXNzaW9uVmlldxIKCgJpZBgBIAEoCRIMCgRnb2FsGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIOCgZyZWFzb24YBCABKAkidQoISG9zdFZpZXcSEAoIc2NvcGVfaWQYASABKAkSDwoHYWRkcmVzcxgCIAEoCRISCgpvcGVuX3BvcnRzGAMgAygFEg0KBWp1aWN5GAQgASgBEhEKCWF0dGVudGlvbhgFIAEoARIQCghzdXJwcmlzZRgGIAEoCSJdCgtGaW5kaW5nVmlldxIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIQCghzY29wZV9pZBgDIAEoCRIPCgdhZGRyZXNzGAQgASgJEhAKCHNldmVyaXR5GAUgASgJIjsKDVRpbWVsaW5lRXZlbnQSCwoDc2VxGAEgASgEEgwKBGtpbmQYAiABKAkSDwoHc3VtbWFyeRgDIAEoCSIVChNMaXN0TWlzc2lvbnNSZXF1ZXN0IkYKFExpc3RNaXNzaW9uc1Jlc3BvbnNlEi4KCG1pc3Npb25zGAEgAygLMhwuZ2lic29uLndvcmxkLnYxLk1pc3Npb25WaWV3IhIKEExpc3RIb3N0c1JlcXVlc3QiPQoRTGlzdEhvc3RzUmVzcG9uc2USKAoFaG9zdHMYASADKAsyGS5naWJzb24ud29ybGQudjEuSG9zdFZpZXciFQoTTGlzdEZpbmRpbmdzUmVxdWVzdCJGChRMaXN0RmluZGluZ3NSZXNwb25zZRIuCghmaW5kaW5ncxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5GaW5kaW5nVmlldyIoChJHZXRUaW1lbGluZVJlcXVlc3QSEgoKbWlzc2lvbl9pZBgBIAEoCSJFChNHZXRUaW1lbGluZVJlc3BvbnNlEi4KBmV2ZW50cxgBIAMoCzIeLmdpYnNvbi53b3JsZC52MS5UaW1lbGluZUV2ZW50MrIECgxXb3JsZFNlcnZpY2USiQEKDExpc3RNaXNzaW9ucxIkLmdpYnNvbi53b3JsZC52MS5MaXN0TWlzc2lvbnNSZXF1ZXN0GiUuZ2lic29uLndvcmxkLnYxLkxpc3RNaXNzaW9uc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKAAQoJTGlzdEhvc3RzEiEuZ2lic29uLndvcmxkLnYxLkxpc3RIb3N0c1JlcXVlc3QaIi5naWJzb24ud29ybGQudjEuTGlzdEhvc3RzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEokBCgxMaXN0RmluZGluZ3MSJC5naWJzb24ud29ybGQudjEuTGlzdEZpbmRpbmdzUmVxdWVzdBolLmdpYnNvbi53b3JsZC52MS5MaXN0RmluZGluZ3NSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMShgEKC0dldFRpbWVsaW5lEiMuZ2lic29uLndvcmxkLnYxLkdldFRpbWVsaW5lUmVxdWVzdBokLmdpYnNvbi53b3JsZC52MS5HZXRUaW1lbGluZVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgA0JLWklnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9kYWVtb24vYXBpL2dpYnNvbi93b3JsZC92MTt3b3JsZHYxYgZwcm90bzM", [file_gibson_auth_v1_options]);
+  fileDesc("ChtnaWJzb24vd29ybGQvdjEvd29ybGQucHJvdG8SD2dpYnNvbi53b3JsZC52MSJHCgtNaXNzaW9uVmlldxIKCgJpZBgBIAEoCRIMCgRnb2FsGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIOCgZyZWFzb24YBCABKAkidQoISG9zdFZpZXcSEAoIc2NvcGVfaWQYASABKAkSDwoHYWRkcmVzcxgCIAEoCRISCgpvcGVuX3BvcnRzGAMgAygFEg0KBWp1aWN5GAQgASgBEhEKCWF0dGVudGlvbhgFIAEoARIQCghzdXJwcmlzZRgGIAEoCSJdCgtGaW5kaW5nVmlldxIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIQCghzY29wZV9pZBgDIAEoCRIPCgdhZGRyZXNzGAQgASgJEhAKCHNldmVyaXR5GAUgASgJIjsKDVRpbWVsaW5lRXZlbnQSCwoDc2VxGAEgASgEEgwKBGtpbmQYAiABKAkSDwoHc3VtbWFyeRgDIAEoCSIVChNMaXN0TWlzc2lvbnNSZXF1ZXN0IkYKFExpc3RNaXNzaW9uc1Jlc3BvbnNlEi4KCG1pc3Npb25zGAEgAygLMhwuZ2lic29uLndvcmxkLnYxLk1pc3Npb25WaWV3IhIKEExpc3RIb3N0c1JlcXVlc3QiPQoRTGlzdEhvc3RzUmVzcG9uc2USKAoFaG9zdHMYASADKAsyGS5naWJzb24ud29ybGQudjEuSG9zdFZpZXciFQoTTGlzdEZpbmRpbmdzUmVxdWVzdCJGChRMaXN0RmluZGluZ3NSZXNwb25zZRIuCghmaW5kaW5ncxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5GaW5kaW5nVmlldyIoChJHZXRUaW1lbGluZVJlcXVlc3QSEgoKbWlzc2lvbl9pZBgBIAEoCSJFChNHZXRUaW1lbGluZVJlc3BvbnNlEi4KBmV2ZW50cxgBIAMoCzIeLmdpYnNvbi53b3JsZC52MS5UaW1lbGluZUV2ZW50IiAKEUdldEZyYW1lQXRSZXF1ZXN0EgsKA3NlcRgBIAEoBCK6AQoSR2V0RnJhbWVBdFJlc3BvbnNlEgsKA3NlcRgBIAEoBBINCgV0b3RhbBgCIAEoBBIuCghtaXNzaW9ucxgDIAMoCzIcLmdpYnNvbi53b3JsZC52MS5NaXNzaW9uVmlldxIoCgVob3N0cxgEIAMoCzIZLmdpYnNvbi53b3JsZC52MS5Ib3N0VmlldxIuCghmaW5kaW5ncxgFIAMoCzIcLmdpYnNvbi53b3JsZC52MS5GaW5kaW5nVmlldzK4BQoMV29ybGRTZXJ2aWNlEokBCgxMaXN0TWlzc2lvbnMSJC5naWJzb24ud29ybGQudjEuTGlzdE1pc3Npb25zUmVxdWVzdBolLmdpYnNvbi53b3JsZC52MS5MaXN0TWlzc2lvbnNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgAEKCUxpc3RIb3N0cxIhLmdpYnNvbi53b3JsZC52MS5MaXN0SG9zdHNSZXF1ZXN0GiIuZ2lic29uLndvcmxkLnYxLkxpc3RIb3N0c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKJAQoMTGlzdEZpbmRpbmdzEiQuZ2lic29uLndvcmxkLnYxLkxpc3RGaW5kaW5nc1JlcXVlc3QaJS5naWJzb24ud29ybGQudjEuTGlzdEZpbmRpbmdzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoYBCgtHZXRUaW1lbGluZRIjLmdpYnNvbi53b3JsZC52MS5HZXRUaW1lbGluZVJlcXVlc3QaJC5naWJzb24ud29ybGQudjEuR2V0VGltZWxpbmVSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgwEKCkdldEZyYW1lQXQSIi5naWJzb24ud29ybGQudjEuR2V0RnJhbWVBdFJlcXVlc3QaIy5naWJzb24ud29ybGQudjEuR2V0RnJhbWVBdFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgA0JLWklnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9kYWVtb24vYXBpL2dpYnNvbi93b3JsZC92MTt3b3JsZHYxYgZwcm90bzM", [file_gibson_auth_v1_options]);
 
 /**
  * @generated from message gibson.world.v1.MissionView
@@ -282,6 +282,68 @@ export const GetTimelineResponseSchema: GenMessage<GetTimelineResponse> = /*@__P
   messageDesc(file_gibson_world_v1_world, 11);
 
 /**
+ * GetFrameAtRequest scrubs to a Timeline position: fold the first `seq` events.
+ *
+ * @generated from message gibson.world.v1.GetFrameAtRequest
+ */
+export type GetFrameAtRequest = Message<"gibson.world.v1.GetFrameAtRequest"> & {
+  /**
+   * @generated from field: uint64 seq = 1;
+   */
+  seq: bigint;
+};
+
+/**
+ * Describes the message gibson.world.v1.GetFrameAtRequest.
+ * Use `create(GetFrameAtRequestSchema)` to create a new message.
+ */
+export const GetFrameAtRequestSchema: GenMessage<GetFrameAtRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 12);
+
+/**
+ * GetFrameAtResponse is the World materialized at frame `seq` (a server-side fold).
+ *
+ * @generated from message gibson.world.v1.GetFrameAtResponse
+ */
+export type GetFrameAtResponse = Message<"gibson.world.v1.GetFrameAtResponse"> & {
+  /**
+   * the position actually folded (clamped to [0,total])
+   *
+   * @generated from field: uint64 seq = 1;
+   */
+  seq: bigint;
+
+  /**
+   * total events in the tenant Timeline
+   *
+   * @generated from field: uint64 total = 2;
+   */
+  total: bigint;
+
+  /**
+   * @generated from field: repeated gibson.world.v1.MissionView missions = 3;
+   */
+  missions: MissionView[];
+
+  /**
+   * @generated from field: repeated gibson.world.v1.HostView hosts = 4;
+   */
+  hosts: HostView[];
+
+  /**
+   * @generated from field: repeated gibson.world.v1.FindingView findings = 5;
+   */
+  findings: FindingView[];
+};
+
+/**
+ * Describes the message gibson.world.v1.GetFrameAtResponse.
+ * Use `create(GetFrameAtResponseSchema)` to create a new message.
+ */
+export const GetFrameAtResponseSchema: GenMessage<GetFrameAtResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 13);
+
+/**
  * WorldService is the daemon-mediated read path into the ECS brain (epic
  * ecs-brain, gibson#752). The daemon resolves the caller's tenant server-side
  * and reads only that tenant's live brain World + Timeline (one World per tenant,
@@ -333,6 +395,19 @@ export const WorldService: GenService<{
     methodKind: "unary";
     input: typeof GetTimelineRequestSchema;
     output: typeof GetTimelineResponseSchema;
+  },
+  /**
+   * GetFrameAt returns the World as of folding the first `seq` Timeline events —
+   * a replay frame (ADR-0001: World == fold(Timeline)). This is what the Scroller
+   * scrubs to: a server-side fold of the log to a point, not a stored snapshot.
+   * `seq` is clamped to [0, total]; seq == total is the live World.
+   *
+   * @generated from rpc gibson.world.v1.WorldService.GetFrameAt
+   */
+  getFrameAt: {
+    methodKind: "unary";
+    input: typeof GetFrameAtRequestSchema;
+    output: typeof GetFrameAtResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_world_v1_world, 0);
