@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Card,
   CardContent,
@@ -18,6 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WorldGraph } from "@/components/gibson/brain/WorldGraph";
 
 type Mission = { id: string; goal: string; status: string; reason: string };
 type Host = {
@@ -36,12 +37,12 @@ type Finding = {
   severity: string;
 };
 type TimelineEvent = { seq: number; kind: string; summary: string };
-type WorldData = {
-  missions: Mission[];
-  hosts: Host[];
-  findings: Finding[];
-  timeline: TimelineEvent[];
-};
+
+/** The entity slice rendered by the tables + graph — either the live World or
+ *  a server-folded replay frame. */
+type Frame = { missions: Mission[]; hosts: Host[]; findings: Finding[] };
+
+type WorldData = Frame & { timeline: TimelineEvent[] };
 
 function severityVariant(s: string): "destructive" | "secondary" | "outline" {
   const v = s.toLowerCase();
@@ -56,15 +57,23 @@ function statusVariant(s: string): "default" | "secondary" {
 
 /**
  * BrainView is the dashboard read view into the ECS brain (epic ecs-brain,
- * gibson#752): the live per-tenant World (missions, hosts, findings) plus the
- * Scroller — a scrubbable view of the mission's domain-event Timeline. Reads
- * through /api/world (the daemon's tenant-scoped WorldService); never touches
- * the brain directly.
+ * gibson#752): the live per-tenant World (missions, hosts, findings) shown as
+ * both tables and a force-directed graph, plus the Scroller — a scrubbable view
+ * of the mission's domain-event Timeline. Scrubbing fetches a server-side fold
+ * of the log (`GetFrameAt`, ADR-0001: World == fold(Timeline)) so the tables and
+ * graph re-materialize at that point in time, not a client-side slice. Reads
+ * through /api/world + /api/world/frame (the daemon's tenant-scoped
+ * WorldService); never touches the brain directly.
  */
 export function BrainView() {
   const [data, setData] = useState<WorldData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scrub, setScrub] = useState<number>(0);
+  // Whether the Scroller is pinned to the live tail. While following, the 5s
+  // refresh advances the scrub head; once the user scrubs back it freezes.
+  const followTail = useRef(true);
+  // The server-folded replay frame shown when scrubbed off the tail.
+  const [frame, setFrame] = useState<Frame | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -75,7 +84,7 @@ export function BrainView() {
         const json = (await res.json()) as WorldData;
         if (!active) return;
         setData(json);
-        setScrub(json.timeline.length); // follow the live tail
+        if (followTail.current) setScrub(json.timeline.length);
         setError(null);
       } catch (e) {
         if (active) setError(e instanceof Error ? e.message : "failed to load");
@@ -88,6 +97,44 @@ export function BrainView() {
       clearInterval(id);
     };
   }, []);
+
+  // Fetch the folded frame whenever the user scrubs off the tail. Debounced and
+  // abortable so dragging the slider doesn't fire a request per pixel.
+  useEffect(() => {
+    if (!data) return;
+    if (scrub >= data.timeline.length) {
+      setFrame(null); // at the tail → render live data
+      return;
+    }
+    const controller = new AbortController();
+    const handle = setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await fetch(`/api/world/frame?seq=${scrub}`, {
+            signal: controller.signal,
+          });
+          if (!res.ok) return;
+          const json = (await res.json()) as Frame;
+          setFrame(json);
+        } catch {
+          /* aborted or transient — keep the last frame */
+        }
+      })();
+    }, 120);
+    return () => {
+      controller.abort();
+      clearTimeout(handle);
+    };
+  }, [scrub, data]);
+
+  const onScrub = useCallback(
+    (v: number[], total: number) => {
+      const next = v[0] ?? total;
+      setScrub(next);
+      followTail.current = next >= total;
+    },
+    [],
+  );
 
   if (error) {
     return (
@@ -103,16 +150,32 @@ export function BrainView() {
   }
 
   const total = data.timeline.length;
+  const atTail = scrub >= total;
+  // Tables + graph render the folded frame when scrubbed, live data at the tail.
+  const view: Frame = atTail || !frame ? data : frame;
   const shown = data.timeline.slice(0, scrub);
 
   return (
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
+          <CardTitle>World</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <WorldGraph
+            missions={view.missions}
+            hosts={view.hosts}
+            findings={view.findings}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Missions</CardTitle>
         </CardHeader>
         <CardContent>
-          {data.missions.length === 0 ? (
+          {view.missions.length === 0 ? (
             <p className="text-sm text-muted-foreground">No missions yet.</p>
           ) : (
             <Table>
@@ -124,7 +187,7 @@ export function BrainView() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.missions.map((m) => (
+                {view.missions.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell>{m.goal}</TableCell>
                     <TableCell>
@@ -144,7 +207,7 @@ export function BrainView() {
           <CardTitle>Targets</CardTitle>
         </CardHeader>
         <CardContent>
-          {data.hosts.length === 0 ? (
+          {view.hosts.length === 0 ? (
             <p className="text-sm text-muted-foreground">No hosts discovered yet.</p>
           ) : (
             <Table>
@@ -160,7 +223,7 @@ export function BrainView() {
               <TableBody>
                 {/* Juiciest targets first: the belief field (ADR-0005) drives
                     attention, so sorting by it surfaces the highest-value hosts. */}
-                {[...data.hosts]
+                {[...view.hosts]
                   .sort((a, b) => b.attention - a.attention)
                   .map((h) => {
                     const juicyTarget = h.juicy >= 0.5;
@@ -197,7 +260,7 @@ export function BrainView() {
           <CardTitle>Findings</CardTitle>
         </CardHeader>
         <CardContent>
-          {data.findings.length === 0 ? (
+          {view.findings.length === 0 ? (
             <p className="text-sm text-muted-foreground">No findings yet.</p>
           ) : (
             <Table>
@@ -209,7 +272,7 @@ export function BrainView() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.findings.map((f) => (
+                {view.findings.map((f) => (
                   <TableRow key={f.id}>
                     <TableCell>{f.title}</TableCell>
                     <TableCell>
@@ -234,12 +297,13 @@ export function BrainView() {
               value={[scrub]}
               max={total}
               step={1}
-              onValueChange={(v) => setScrub(v[0] ?? total)}
+              onValueChange={(v) => onScrub(v, total)}
               className="max-w-md"
               aria-label="Scrub the mission timeline"
             />
             <span className="text-sm text-muted-foreground whitespace-nowrap">
               {scrub} / {total} events
+              {atTail ? " · live" : " · replay"}
             </span>
           </div>
           {shown.length === 0 ? (
