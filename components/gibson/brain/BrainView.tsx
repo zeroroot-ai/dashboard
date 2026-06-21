@@ -37,12 +37,21 @@ type Finding = {
   severity: string;
 };
 type TimelineEvent = { seq: number; kind: string; summary: string };
+type LlmCall = {
+  callId: string;
+  runId: string;
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+};
 
 /** The entity slice rendered by the tables + graph — either the live World or
  *  a server-folded replay frame. */
 type Frame = { missions: Mission[]; hosts: Host[]; findings: Finding[] };
 
-type WorldData = Frame & { timeline: TimelineEvent[] };
+// LLM calls are read from the live World (GetFrameAt folds entities, not the
+// call log), so they live on WorldData rather than the scrubbable Frame.
+type WorldData = Frame & { timeline: TimelineEvent[]; llmCalls: LlmCall[] };
 
 function severityVariant(s: string): "destructive" | "secondary" | "outline" {
   const v = s.toLowerCase();
@@ -279,6 +288,40 @@ export function BrainView() {
                       <Badge variant={severityVariant(f.severity)}>{f.severity}</Badge>
                     </TableCell>
                     <TableCell className="font-mono text-muted-foreground">{f.address}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>LLM calls</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {data.llmCalls.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No LLM calls yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Model</TableHead>
+                  <TableHead className="text-right">Prompt</TableHead>
+                  <TableHead className="text-right">Completion</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.llmCalls.map((c) => (
+                  <TableRow key={c.callId}>
+                    <TableCell className="font-mono">{c.model}</TableCell>
+                    <TableCell className="text-right tabular-nums">{c.promptTokens}</TableCell>
+                    <TableCell className="text-right tabular-nums">{c.completionTokens}</TableCell>
+                    <TableCell className="text-right tabular-nums font-semibold">
+                      {c.promptTokens + c.completionTokens}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
