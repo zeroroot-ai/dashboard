@@ -6,11 +6,24 @@
 # Build from dashboard directory:
 #   docker build -t gibson-dashboard:dev .
 # ============================================================================
+#
+# Base image is digest-pinned to the org mirror (RESTRUCTURE-QUALITY-BARS §1:
+# "Digest-pinned, mirror-sourced base images everywhere — tag pins are not
+# reproducible"). The pinned digest is the multi-arch manifest-list (OCI index)
+# digest of ghcr.io/zeroroot-ai/mirror/node:20-alpine — the index digest, NOT a
+# per-arch manifest digest, because this Dockerfile is built multi-arch
+# (linux/amd64 + linux/arm64 via buildx). The node major must stay in lockstep
+# with .tool-versions (`nodejs 20.x`) and the mirror-list entry in
+# zeroroot-ai/.github. To re-pin after a mirror refresh:
+#   docker buildx imagetools inspect ghcr.io/zeroroot-ai/mirror/node:20-alpine
+# and copy the top-level (index) Digest into every FROM below.
+# ============================================================================
 
 # ============================================================================
 # Stage 1: Dependencies - Install node modules
 # ============================================================================
-FROM ghcr.io/zeroroot-ai/mirror/node:20-alpine AS deps
+# ghcr.io/zeroroot-ai/mirror/node:20-alpine
+FROM ghcr.io/zeroroot-ai/mirror/node@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS deps
 
 WORKDIR /app
 
@@ -27,7 +40,8 @@ RUN npm ci --ignore-scripts --legacy-peer-deps && \
 # ============================================================================
 # Stage 2: Builder - Build Next.js application
 # ============================================================================
-FROM ghcr.io/zeroroot-ai/mirror/node:20-alpine AS builder
+# ghcr.io/zeroroot-ai/mirror/node:20-alpine
+FROM ghcr.io/zeroroot-ai/mirror/node@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS builder
 
 WORKDIR /app
 
@@ -92,7 +106,8 @@ RUN --mount=type=secret,id=ghtoken,target=/run/secrets/ghtoken,required=false \
 # ============================================================================
 # Stage 3: Runtime - Minimal production image
 # ============================================================================
-FROM ghcr.io/zeroroot-ai/mirror/node:20-alpine AS runner
+# ghcr.io/zeroroot-ai/mirror/node:20-alpine
+FROM ghcr.io/zeroroot-ai/mirror/node@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS runner
 
 WORKDIR /app
 
