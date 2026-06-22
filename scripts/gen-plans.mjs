@@ -5,14 +5,19 @@
  * Two source modes:
  *
  *   local  (default)   read plans.yaml + plans.schema.json from the polyrepo
- *                      sibling at enterprise/platform/tenant-operator/plans/.
+ *                      sibling at enterprise/platform/gibson/operators/tenant/plans/.
  *                      Used for local dev where the workspace has both clones.
  *
  *   remote             fetch plans.yaml + plans.schema.json from GitHub raw at
- *                      https://raw.githubusercontent.com/zeroroot-ai/tenant-operator/{ref}/plans/...
+ *                      https://raw.githubusercontent.com/zeroroot-ai/gibson/{ref}/operators/tenant/plans/...
  *                      Used in Docker / CI where the sibling clone is not on disk.
- *                      Auth: GITHUB_TOKEN env var (tenant-operator is private).
+ *                      Auth: GITHUB_TOKEN env var (gibson is private).
  *                      Ref:  PLANS_REF env var, default "main".
+ *
+ * E4 monorepo fold (gibson#781 / ADR-0056): the standalone
+ * zeroroot-ai/tenant-operator repo was deleted and its plans/ tree moved into
+ * the gibson monorepo under operators/tenant/plans/. Both source modes now
+ * point at gibson.
  *
  * Mode selection:
  *   --remote / --source=remote  | PLANS_SOURCE=remote   ⇒ remote
@@ -52,20 +57,22 @@ const MAIN_DASHBOARD_ROOT = isWorktree
   ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, "")
   : DASHBOARD_ROOT;
 const REPO_ROOT = resolve(MAIN_DASHBOARD_ROOT, "..", "..", "..");
+// E4 monorepo fold (gibson#781 / ADR-0056): tenant-operator folded into the
+// gibson monorepo at operators/tenant/; the standalone repo was deleted.
 const PLANS_YAML = resolve(
   REPO_ROOT,
-  "enterprise/platform/tenant-operator/plans/plans.yaml",
+  "enterprise/platform/gibson/operators/tenant/plans/plans.yaml",
 );
 const PLANS_SCHEMA = resolve(
   REPO_ROOT,
-  "enterprise/platform/tenant-operator/plans/plans.schema.json",
+  "enterprise/platform/gibson/operators/tenant/plans/plans.schema.json",
 );
 const OUTPUT = resolve(DASHBOARD_ROOT, "src/generated/plans.ts");
 
-const REMOTE_REPO = "zeroroot-ai/tenant-operator";
+const REMOTE_REPO = "zeroroot-ai/gibson";
 const REMOTE_PATHS = {
-  yaml: "plans/plans.yaml",
-  schema: "plans/plans.schema.json",
+  yaml: "operators/tenant/plans/plans.yaml",
+  schema: "operators/tenant/plans/plans.schema.json",
 };
 
 const KNOWN_PLAN_IDS = ["team", "org", "enterprise", "enterprise-deploy"];
@@ -100,10 +107,10 @@ function resolveSource(argv) {
 }
 
 /**
- * Fetch a single file from the tenant-operator repo's raw content endpoint.
+ * Fetch a single file from the gibson monorepo's raw content endpoint.
  * Uses the GITHUB_TOKEN env var (the BuildKit `ghtoken` secret in the
- * Dockerfile, the `secrets.GH_PAT_*` PAT in CI workflows). tenant-operator
- * is a private repo so unauthenticated fetches will 401 / 404.
+ * Dockerfile, the `secrets.GH_PAT_*` PAT in CI workflows). gibson is a
+ * private repo so unauthenticated fetches will 401 / 404.
  */
 async function fetchRemoteFile(ref, repoPath) {
   const token = process.env.GITHUB_TOKEN;
@@ -271,7 +278,7 @@ function renderTypeScript(doc) {
   const lines = [];
   lines.push(
     "// GENERATED FILE, do not edit.",
-    "// Source: enterprise/platform/tenant-operator/plans/plans.yaml",
+    "// Source: enterprise/platform/gibson/operators/tenant/plans/plans.yaml",
     "// Generator: enterprise/platform/dashboard/scripts/gen-plans.mjs",
     "// Run `npm run build` (or the `prebuild` hook) to regenerate.",
     "",

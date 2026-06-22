@@ -30,9 +30,11 @@ const MAIN_DASHBOARD_ROOT = isWorktree
   ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, "")
   : DASHBOARD_ROOT;
 const REPO_ROOT = resolve(MAIN_DASHBOARD_ROOT, "..", "..", "..");
+// E4 monorepo fold (gibson#781 / ADR-0056): tenant-operator folded into the
+// gibson monorepo at operators/tenant/; the standalone repo was deleted.
 const PLANS_YAML = resolve(
   REPO_ROOT,
-  "enterprise/platform/tenant-operator/plans/plans.yaml",
+  "enterprise/platform/gibson/operators/tenant/plans/plans.yaml",
 );
 const OUTPUT = resolve(DASHBOARD_ROOT, "src/lib/billing/stripe_gen.ts");
 
@@ -50,8 +52,8 @@ function main() {
   const stdoutMode = process.argv.slice(2).includes("--stdout");
 
   // Docker image builds skip regen and trust the committed stripe_gen.ts:
-  // the polyrepo sibling tenant-operator/plans/plans.yaml is not in the
-  // build context. The drift gate (check-stripe-tiers-fresh.mjs) keeps
+  // the polyrepo sibling gibson/operators/tenant/plans/plans.yaml is not in
+  // the build context. The drift gate (check-stripe-tiers-fresh.mjs) keeps
   // workstation regens honest; the file is tracked in git so the committed
   // state is the source of truth at deploy time. Mirrors SKIP_GEN_PLANS=1
   // in gen-plans.mjs.
@@ -78,7 +80,7 @@ function main() {
   const lines = [];
   lines.push(
     "// GENERATED FILE, do not edit.",
-    "// Source: enterprise/platform/tenant-operator/plans/plans.yaml",
+    "// Source: enterprise/platform/gibson/operators/tenant/plans/plans.yaml",
     "// Generator: enterprise/platform/dashboard/scripts/gen-stripe-tiers.mjs",
     "// Spec: plans-and-quotas-simplification R8.",
     "",

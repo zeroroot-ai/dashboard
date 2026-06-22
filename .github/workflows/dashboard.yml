@@ -42,9 +42,14 @@ jobs:
       image_name: ghcr.io/zeroroot-ai/dashboard
       tag_pattern: (v.*)
     secrets:
-      # PAT with read access to zeroroot-ai/tenant-operator (private). The
-      # Dockerfile fetches plans/plans.yaml + plans/plans.schema.json from
-      # that repo at build time via gen-plans.mjs PLANS_SOURCE=remote.
+      # PAT with read access to zeroroot-ai/gibson (private). The Dockerfile
+      # fetches operators/tenant/plans/plans.yaml + plans.schema.json from that
+      # repo at build time via gen-plans.mjs PLANS_SOURCE=remote.
+      # E4 monorepo fold (gibson#781 / ADR-0056): the standalone
+      # zeroroot-ai/tenant-operator repo was deleted; its plans/ tree moved into
+      # gibson under operators/tenant/plans/. The GH_PAT_TENANT_OPERATOR_RO
+      # secret VALUE must grant read on zeroroot-ai/gibson (the secret name is a
+      # stable label; update the PAT scope, not the name).
       # Provisioned out of band in repo settings (Settings → Secrets and
       # variables → Actions → New repository secret).
       ghtoken: ${{ secrets.GH_PAT_TENANT_OPERATOR_RO }}
