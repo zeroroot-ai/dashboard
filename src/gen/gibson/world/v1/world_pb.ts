@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/world/v1/world.proto.
  */
 export const file_gibson_world_v1_world: GenFile = /*@__PURE__*/
-  fileDesc("ChtnaWJzb24vd29ybGQvdjEvd29ybGQucHJvdG8SD2dpYnNvbi53b3JsZC52MSJHCgtNaXNzaW9uVmlldxIKCgJpZBgBIAEoCRIMCgRnb2FsGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIOCgZyZWFzb24YBCABKAkidQoISG9zdFZpZXcSEAoIc2NvcGVfaWQYASABKAkSDwoHYWRkcmVzcxgCIAEoCRISCgpvcGVuX3BvcnRzGAMgAygFEg0KBWp1aWN5GAQgASgBEhEKCWF0dGVudGlvbhgFIAEoARIQCghzdXJwcmlzZRgGIAEoCSJdCgtGaW5kaW5nVmlldxIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIQCghzY29wZV9pZBgDIAEoCRIPCgdhZGRyZXNzGAQgASgJEhAKCHNldmVyaXR5GAUgASgJIjsKDVRpbWVsaW5lRXZlbnQSCwoDc2VxGAEgASgEEgwKBGtpbmQYAiABKAkSDwoHc3VtbWFyeRgDIAEoCSKBAQoLTGxtQ2FsbFZpZXcSDwoHY2FsbF9pZBgBIAEoCRIOCgZydW5faWQYAiABKAkSDQoFbW9kZWwYAyABKAkSEAoIc2NvcGVfaWQYBCABKAkSFQoNcHJvbXB0X3Rva2VucxgFIAEoBRIZChFjb21wbGV0aW9uX3Rva2VucxgGIAEoBSIVChNMaXN0TWlzc2lvbnNSZXF1ZXN0IkYKFExpc3RNaXNzaW9uc1Jlc3BvbnNlEi4KCG1pc3Npb25zGAEgAygLMhwuZ2lic29uLndvcmxkLnYxLk1pc3Npb25WaWV3IhIKEExpc3RIb3N0c1JlcXVlc3QiPQoRTGlzdEhvc3RzUmVzcG9uc2USKAoFaG9zdHMYASADKAsyGS5naWJzb24ud29ybGQudjEuSG9zdFZpZXciFQoTTGlzdEZpbmRpbmdzUmVxdWVzdCJGChRMaXN0RmluZGluZ3NSZXNwb25zZRIuCghmaW5kaW5ncxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5GaW5kaW5nVmlldyIVChNMaXN0TGxtQ2FsbHNSZXF1ZXN0IkcKFExpc3RMbG1DYWxsc1Jlc3BvbnNlEi8KCWxsbV9jYWxscxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5MbG1DYWxsVmlldyIrCgpMbG1NZXNzYWdlEgwKBHJvbGUYASABKAkSDwoHY29udGVudBgCIAEoCSLGAQoNTGxtQ2FsbERldGFpbBIPCgdjYWxsX2lkGAEgASgJEg4KBnJ1bl9pZBgCIAEoCRINCgVtb2RlbBgDIAEoCRIQCghzY29wZV9pZBgEIAEoCRIVCg1wcm9tcHRfdG9rZW5zGAUgASgFEhkKEWNvbXBsZXRpb25fdG9rZW5zGAYgASgFEi0KCG1lc3NhZ2VzGAcgAygLMhsuZ2lic29uLndvcmxkLnYxLkxsbU1lc3NhZ2USEgoKY29tcGxldGlvbhgIIAEoCSIkChFHZXRMbG1DYWxsUmVxdWVzdBIPCgdjYWxsX2lkGAEgASgJIkIKEkdldExsbUNhbGxSZXNwb25zZRIsCgRjYWxsGAEgASgLMh4uZ2lic29uLndvcmxkLnYxLkxsbUNhbGxEZXRhaWwiKAoSR2V0VGltZWxpbmVSZXF1ZXN0EhIKCm1pc3Npb25faWQYASABKAkiRQoTR2V0VGltZWxpbmVSZXNwb25zZRIuCgZldmVudHMYASADKAsyHi5naWJzb24ud29ybGQudjEuVGltZWxpbmVFdmVudCIgChFHZXRGcmFtZUF0UmVxdWVzdBILCgNzZXEYASABKAQiugEKEkdldEZyYW1lQXRSZXNwb25zZRILCgNzZXEYASABKAQSDQoFdG90YWwYAiABKAQSLgoIbWlzc2lvbnMYAyADKAsyHC5naWJzb24ud29ybGQudjEuTWlzc2lvblZpZXcSKAoFaG9zdHMYBCADKAsyGS5naWJzb24ud29ybGQudjEuSG9zdFZpZXcSLgoIZmluZGluZ3MYBSADKAsyHC5naWJzb24ud29ybGQudjEuRmluZGluZ1ZpZXcyygcKDFdvcmxkU2VydmljZRKJAQoMTGlzdE1pc3Npb25zEiQuZ2lic29uLndvcmxkLnYxLkxpc3RNaXNzaW9uc1JlcXVlc3QaJS5naWJzb24ud29ybGQudjEuTGlzdE1pc3Npb25zUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoABCglMaXN0SG9zdHMSIS5naWJzb24ud29ybGQudjEuTGlzdEhvc3RzUmVxdWVzdBoiLmdpYnNvbi53b3JsZC52MS5MaXN0SG9zdHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSiQEKDExpc3RGaW5kaW5ncxIkLmdpYnNvbi53b3JsZC52MS5MaXN0RmluZGluZ3NSZXF1ZXN0GiUuZ2lic29uLndvcmxkLnYxLkxpc3RGaW5kaW5nc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKJAQoMTGlzdExsbUNhbGxzEiQuZ2lic29uLndvcmxkLnYxLkxpc3RMbG1DYWxsc1JlcXVlc3QaJS5naWJzb24ud29ybGQudjEuTGlzdExsbUNhbGxzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoMBCgpHZXRMbG1DYWxsEiIuZ2lic29uLndvcmxkLnYxLkdldExsbUNhbGxSZXF1ZXN0GiMuZ2lic29uLndvcmxkLnYxLkdldExsbUNhbGxSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMShgEKC0dldFRpbWVsaW5lEiMuZ2lic29uLndvcmxkLnYxLkdldFRpbWVsaW5lUmVxdWVzdBokLmdpYnNvbi53b3JsZC52MS5HZXRUaW1lbGluZVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKDAQoKR2V0RnJhbWVBdBIiLmdpYnNvbi53b3JsZC52MS5HZXRGcmFtZUF0UmVxdWVzdBojLmdpYnNvbi53b3JsZC52MS5HZXRGcmFtZUF0UmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADQktaSWdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL2RhZW1vbi9hcGkvZ2lic29uL3dvcmxkL3YxO3dvcmxkdjFiBnByb3RvMw", [file_gibson_auth_v1_options]);
+  fileDesc("ChtnaWJzb24vd29ybGQvdjEvd29ybGQucHJvdG8SD2dpYnNvbi53b3JsZC52MSJHCgtNaXNzaW9uVmlldxIKCgJpZBgBIAEoCRIMCgRnb2FsGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIOCgZyZWFzb24YBCABKAkidQoISG9zdFZpZXcSEAoIc2NvcGVfaWQYASABKAkSDwoHYWRkcmVzcxgCIAEoCRISCgpvcGVuX3BvcnRzGAMgAygFEg0KBWp1aWN5GAQgASgBEhEKCWF0dGVudGlvbhgFIAEoARIQCghzdXJwcmlzZRgGIAEoCSJdCgtGaW5kaW5nVmlldxIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIQCghzY29wZV9pZBgDIAEoCRIPCgdhZGRyZXNzGAQgASgJEhAKCHNldmVyaXR5GAUgASgJIjsKDVRpbWVsaW5lRXZlbnQSCwoDc2VxGAEgASgEEgwKBGtpbmQYAiABKAkSDwoHc3VtbWFyeRgDIAEoCSKBAQoLTGxtQ2FsbFZpZXcSDwoHY2FsbF9pZBgBIAEoCRIOCgZydW5faWQYAiABKAkSDQoFbW9kZWwYAyABKAkSEAoIc2NvcGVfaWQYBCABKAkSFQoNcHJvbXB0X3Rva2VucxgFIAEoBRIZChFjb21wbGV0aW9uX3Rva2VucxgGIAEoBSIVChNMaXN0TWlzc2lvbnNSZXF1ZXN0IkYKFExpc3RNaXNzaW9uc1Jlc3BvbnNlEi4KCG1pc3Npb25zGAEgAygLMhwuZ2lic29uLndvcmxkLnYxLk1pc3Npb25WaWV3IhIKEExpc3RIb3N0c1JlcXVlc3QiPQoRTGlzdEhvc3RzUmVzcG9uc2USKAoFaG9zdHMYASADKAsyGS5naWJzb24ud29ybGQudjEuSG9zdFZpZXciFQoTTGlzdEZpbmRpbmdzUmVxdWVzdCJGChRMaXN0RmluZGluZ3NSZXNwb25zZRIuCghmaW5kaW5ncxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5GaW5kaW5nVmlldyIVChNMaXN0TGxtQ2FsbHNSZXF1ZXN0IkcKFExpc3RMbG1DYWxsc1Jlc3BvbnNlEi8KCWxsbV9jYWxscxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5MbG1DYWxsVmlldyIrCgpMbG1NZXNzYWdlEgwKBHJvbGUYASABKAkSDwoHY29udGVudBgCIAEoCSLGAQoNTGxtQ2FsbERldGFpbBIPCgdjYWxsX2lkGAEgASgJEg4KBnJ1bl9pZBgCIAEoCRINCgVtb2RlbBgDIAEoCRIQCghzY29wZV9pZBgEIAEoCRIVCg1wcm9tcHRfdG9rZW5zGAUgASgFEhkKEWNvbXBsZXRpb25fdG9rZW5zGAYgASgFEi0KCG1lc3NhZ2VzGAcgAygLMhsuZ2lic29uLndvcmxkLnYxLkxsbU1lc3NhZ2USEgoKY29tcGxldGlvbhgIIAEoCSIkChFHZXRMbG1DYWxsUmVxdWVzdBIPCgdjYWxsX2lkGAEgASgJIkIKEkdldExsbUNhbGxSZXNwb25zZRIsCgRjYWxsGAEgASgLMh4uZ2lic29uLndvcmxkLnYxLkxsbUNhbGxEZXRhaWwiKAoSR2V0VGltZWxpbmVSZXF1ZXN0EhIKCm1pc3Npb25faWQYASABKAkiRQoTR2V0VGltZWxpbmVSZXNwb25zZRIuCgZldmVudHMYASADKAsyHi5naWJzb24ud29ybGQudjEuVGltZWxpbmVFdmVudCIgChFHZXRGcmFtZUF0UmVxdWVzdBILCgNzZXEYASABKAQiugEKEkdldEZyYW1lQXRSZXNwb25zZRILCgNzZXEYASABKAQSDQoFdG90YWwYAiABKAQSLgoIbWlzc2lvbnMYAyADKAsyHC5naWJzb24ud29ybGQudjEuTWlzc2lvblZpZXcSKAoFaG9zdHMYBCADKAsyGS5naWJzb24ud29ybGQudjEuSG9zdFZpZXcSLgoIZmluZGluZ3MYBSADKAsyHC5naWJzb24ud29ybGQudjEuRmluZGluZ1ZpZXciZAoJTGFiZWxWaWV3EhEKCXRhcmdldF9pZBgBIAEoCRIPCgd2ZXJkaWN0GAIgASgJEhAKCHNldmVyaXR5GAMgASgJEhAKCGNhdGVnb3J5GAQgASgJEg8KB3VzZXJfaWQYBSABKAkirgEKClJldmlld0l0ZW0SEQoJdGFyZ2V0X2lkGAEgASgJEgwKBGtpbmQYAiABKAkSDQoFdGl0bGUYAyABKAkSEAoIc2NvcGVfaWQYBCABKAkSDwoHYWRkcmVzcxgFIAEoCRIQCghzZXZlcml0eRgGIAEoCRIQCghsYWJlbGxlZBgHIAEoCBIpCgVsYWJlbBgIIAEoCzIaLmdpYnNvbi53b3JsZC52MS5MYWJlbFZpZXciGAoWTGlzdFJldmlld1F1ZXVlUmVxdWVzdCJFChdMaXN0UmV2aWV3UXVldWVSZXNwb25zZRIqCgVpdGVtcxgBIAMoCzIbLmdpYnNvbi53b3JsZC52MS5SZXZpZXdJdGVtIlwKElN1Ym1pdExhYmVsUmVxdWVzdBIRCgl0YXJnZXRfaWQYASABKAkSDwoHdmVyZGljdBgCIAEoCRIQCghzZXZlcml0eRgDIAEoCRIQCghjYXRlZ29yeRgEIAEoCSIVChNTdWJtaXRMYWJlbFJlc3BvbnNlIhMKEUxpc3RMYWJlbHNSZXF1ZXN0IkAKEkxpc3RMYWJlbHNSZXNwb25zZRIqCgZsYWJlbHMYASADKAsyGi5naWJzb24ud29ybGQudjEuTGFiZWxWaWV3Mu4KCgxXb3JsZFNlcnZpY2USiQEKDExpc3RNaXNzaW9ucxIkLmdpYnNvbi53b3JsZC52MS5MaXN0TWlzc2lvbnNSZXF1ZXN0GiUuZ2lic29uLndvcmxkLnYxLkxpc3RNaXNzaW9uc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKAAQoJTGlzdEhvc3RzEiEuZ2lic29uLndvcmxkLnYxLkxpc3RIb3N0c1JlcXVlc3QaIi5naWJzb24ud29ybGQudjEuTGlzdEhvc3RzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEokBCgxMaXN0RmluZGluZ3MSJC5naWJzb24ud29ybGQudjEuTGlzdEZpbmRpbmdzUmVxdWVzdBolLmdpYnNvbi53b3JsZC52MS5MaXN0RmluZGluZ3NSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSiQEKDExpc3RMbG1DYWxscxIkLmdpYnNvbi53b3JsZC52MS5MaXN0TGxtQ2FsbHNSZXF1ZXN0GiUuZ2lic29uLndvcmxkLnYxLkxpc3RMbG1DYWxsc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKDAQoKR2V0TGxtQ2FsbBIiLmdpYnNvbi53b3JsZC52MS5HZXRMbG1DYWxsUmVxdWVzdBojLmdpYnNvbi53b3JsZC52MS5HZXRMbG1DYWxsUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoYBCgtHZXRUaW1lbGluZRIjLmdpYnNvbi53b3JsZC52MS5HZXRUaW1lbGluZVJlcXVlc3QaJC5naWJzb24ud29ybGQudjEuR2V0VGltZWxpbmVSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgwEKCkdldEZyYW1lQXQSIi5naWJzb24ud29ybGQudjEuR2V0RnJhbWVBdFJlcXVlc3QaIy5naWJzb24ud29ybGQudjEuR2V0RnJhbWVBdFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKSAQoPTGlzdFJldmlld1F1ZXVlEicuZ2lic29uLndvcmxkLnYxLkxpc3RSZXZpZXdRdWV1ZVJlcXVlc3QaKC5naWJzb24ud29ybGQudjEuTGlzdFJldmlld1F1ZXVlUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoYBCgtTdWJtaXRMYWJlbBIjLmdpYnNvbi53b3JsZC52MS5TdWJtaXRMYWJlbFJlcXVlc3QaJC5naWJzb24ud29ybGQudjEuU3VibWl0TGFiZWxSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgwEKCkxpc3RMYWJlbHMSIi5naWJzb24ud29ybGQudjEuTGlzdExhYmVsc1JlcXVlc3QaIy5naWJzb24ud29ybGQudjEuTGlzdExhYmVsc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgA0JLWklnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9kYWVtb24vYXBpL2dpYnNvbi93b3JsZC92MTt3b3JsZHYxYgZwcm90bzM", [file_gibson_auth_v1_options]);
 
 /**
  * @generated from message gibson.world.v1.MissionView
@@ -534,6 +534,237 @@ export const GetFrameAtResponseSchema: GenMessage<GetFrameAtResponse> = /*@__PUR
   messageDesc(file_gibson_world_v1_world, 20);
 
 /**
+ * LabelView is one applied review label (a gibson.world.v1 view of a brain
+ * Label): the verdict, optional corrected severity/category, and the user who
+ * applied it (provenance only — labels pool tenant-wide; ADR-0006).
+ *
+ * @generated from message gibson.world.v1.LabelView
+ */
+export type LabelView = Message<"gibson.world.v1.LabelView"> & {
+  /**
+   * the labelled item (a finding id or surprise host id)
+   *
+   * @generated from field: string target_id = 1;
+   */
+  targetId: string;
+
+  /**
+   * "true_positive" | "false_positive" | "dismiss"
+   *
+   * @generated from field: string verdict = 2;
+   */
+  verdict: string;
+
+  /**
+   * corrected severity ("" = leave as-is)
+   *
+   * @generated from field: string severity = 3;
+   */
+  severity: string;
+
+  /**
+   * free-form taxonomy tag ("" = none)
+   *
+   * @generated from field: string category = 4;
+   */
+  category: string;
+
+  /**
+   * who applied it (provenance; not a partition key)
+   *
+   * @generated from field: string user_id = 5;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.LabelView.
+ * Use `create(LabelViewSchema)` to create a new message.
+ */
+export const LabelViewSchema: GenMessage<LabelView> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 21);
+
+/**
+ * ReviewItem is one entry in the HITL review queue: a surfaced surprise or a
+ * Finding awaiting (or carrying) a label.
+ *
+ * @generated from message gibson.world.v1.ReviewItem
+ */
+export type ReviewItem = Message<"gibson.world.v1.ReviewItem"> & {
+  /**
+   * the label target (finding id or surprise host id)
+   *
+   * @generated from field: string target_id = 1;
+   */
+  targetId: string;
+
+  /**
+   * "finding" | "surprise"
+   *
+   * @generated from field: string kind = 2;
+   */
+  kind: string;
+
+  /**
+   * @generated from field: string title = 3;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string scope_id = 4;
+   */
+  scopeId: string;
+
+  /**
+   * @generated from field: string address = 5;
+   */
+  address: string;
+
+  /**
+   * @generated from field: string severity = 6;
+   */
+  severity: string;
+
+  /**
+   * true if a label has been applied
+   *
+   * @generated from field: bool labelled = 7;
+   */
+  labelled: boolean;
+
+  /**
+   * the applied label (set iff labelled)
+   *
+   * @generated from field: gibson.world.v1.LabelView label = 8;
+   */
+  label?: LabelView;
+};
+
+/**
+ * Describes the message gibson.world.v1.ReviewItem.
+ * Use `create(ReviewItemSchema)` to create a new message.
+ */
+export const ReviewItemSchema: GenMessage<ReviewItem> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 22);
+
+/**
+ * @generated from message gibson.world.v1.ListReviewQueueRequest
+ */
+export type ListReviewQueueRequest = Message<"gibson.world.v1.ListReviewQueueRequest"> & {
+};
+
+/**
+ * Describes the message gibson.world.v1.ListReviewQueueRequest.
+ * Use `create(ListReviewQueueRequestSchema)` to create a new message.
+ */
+export const ListReviewQueueRequestSchema: GenMessage<ListReviewQueueRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 23);
+
+/**
+ * @generated from message gibson.world.v1.ListReviewQueueResponse
+ */
+export type ListReviewQueueResponse = Message<"gibson.world.v1.ListReviewQueueResponse"> & {
+  /**
+   * @generated from field: repeated gibson.world.v1.ReviewItem items = 1;
+   */
+  items: ReviewItem[];
+};
+
+/**
+ * Describes the message gibson.world.v1.ListReviewQueueResponse.
+ * Use `create(ListReviewQueueResponseSchema)` to create a new message.
+ */
+export const ListReviewQueueResponseSchema: GenMessage<ListReviewQueueResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 24);
+
+/**
+ * SubmitLabelRequest applies a label to a surfaced item. The daemon stamps the
+ * caller's user id server-side from context — the client does not supply it, so a
+ * caller can never attribute a label to another user.
+ *
+ * @generated from message gibson.world.v1.SubmitLabelRequest
+ */
+export type SubmitLabelRequest = Message<"gibson.world.v1.SubmitLabelRequest"> & {
+  /**
+   * required: the finding id / surprise host id to label
+   *
+   * @generated from field: string target_id = 1;
+   */
+  targetId: string;
+
+  /**
+   * required: "true_positive" | "false_positive" | "dismiss"
+   *
+   * @generated from field: string verdict = 2;
+   */
+  verdict: string;
+
+  /**
+   * optional corrected severity
+   *
+   * @generated from field: string severity = 3;
+   */
+  severity: string;
+
+  /**
+   * optional taxonomy tag
+   *
+   * @generated from field: string category = 4;
+   */
+  category: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.SubmitLabelRequest.
+ * Use `create(SubmitLabelRequestSchema)` to create a new message.
+ */
+export const SubmitLabelRequestSchema: GenMessage<SubmitLabelRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 25);
+
+/**
+ * @generated from message gibson.world.v1.SubmitLabelResponse
+ */
+export type SubmitLabelResponse = Message<"gibson.world.v1.SubmitLabelResponse"> & {
+};
+
+/**
+ * Describes the message gibson.world.v1.SubmitLabelResponse.
+ * Use `create(SubmitLabelResponseSchema)` to create a new message.
+ */
+export const SubmitLabelResponseSchema: GenMessage<SubmitLabelResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 26);
+
+/**
+ * @generated from message gibson.world.v1.ListLabelsRequest
+ */
+export type ListLabelsRequest = Message<"gibson.world.v1.ListLabelsRequest"> & {
+};
+
+/**
+ * Describes the message gibson.world.v1.ListLabelsRequest.
+ * Use `create(ListLabelsRequestSchema)` to create a new message.
+ */
+export const ListLabelsRequestSchema: GenMessage<ListLabelsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 27);
+
+/**
+ * @generated from message gibson.world.v1.ListLabelsResponse
+ */
+export type ListLabelsResponse = Message<"gibson.world.v1.ListLabelsResponse"> & {
+  /**
+   * @generated from field: repeated gibson.world.v1.LabelView labels = 1;
+   */
+  labels: LabelView[];
+};
+
+/**
+ * Describes the message gibson.world.v1.ListLabelsResponse.
+ * Use `create(ListLabelsResponseSchema)` to create a new message.
+ */
+export const ListLabelsResponseSchema: GenMessage<ListLabelsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 28);
+
+/**
  * WorldService is the daemon-mediated read path into the ECS brain (epic
  * ecs-brain, gibson#752). The daemon resolves the caller's tenant server-side
  * and reads only that tenant's live brain World + Timeline (one World per tenant,
@@ -622,6 +853,44 @@ export const WorldService: GenService<{
     methodKind: "unary";
     input: typeof GetFrameAtRequestSchema;
     output: typeof GetFrameAtResponseSchema;
+  },
+  /**
+   * ListReviewQueue returns the tenant's HITL review queue — surfaced surprises +
+   * Findings, each with any label already applied (ADR-0006). The async labelling
+   * UI reads this; it is a read-only projection and NEVER gates a mission.
+   *
+   * @generated from rpc gibson.world.v1.WorldService.ListReviewQueue
+   */
+  listReviewQueue: {
+    methodKind: "unary";
+    input: typeof ListReviewQueueRequestSchema;
+    output: typeof ListReviewQueueResponseSchema;
+  },
+  /**
+   * SubmitLabel records a human review judgement (true/false-positive, severity,
+   * category, dismiss) on a surfaced item, as a tenant-scoped LabelApplied event
+   * (ADR-0006). Labels POOL across the tenant's users and NEVER cross tenants. It
+   * is async: the call appends the event and returns; the mission never waits on
+   * it. Any tenant member may label (the pool is shared), so the relation is
+   * member, not admin.
+   *
+   * @generated from rpc gibson.world.v1.WorldService.SubmitLabel
+   */
+  submitLabel: {
+    methodKind: "unary";
+    input: typeof SubmitLabelRequestSchema;
+    output: typeof SubmitLabelResponseSchema;
+  },
+  /**
+   * ListLabels returns the tenant's pooled review labels (ADR-0006) — the HITL
+   * training signal the offline trainer consumes alongside auto-outcomes.
+   *
+   * @generated from rpc gibson.world.v1.WorldService.ListLabels
+   */
+  listLabels: {
+    methodKind: "unary";
+    input: typeof ListLabelsRequestSchema;
+    output: typeof ListLabelsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_world_v1_world, 0);
