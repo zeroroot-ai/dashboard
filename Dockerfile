@@ -43,19 +43,15 @@ ENV AUTH_SECRET="build-placeholder"
 ENV NEXTAUTH_SECRET="build-placeholder"
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 
-# The prebuild gen-plans step needs plans.yaml from the canonical source —
-# the gibson monorepo (zeroroot-ai/gibson) at operators/tenant/plans/, which
-# is private. (E4 monorepo fold, gibson#781 / ADR-0056: the standalone
-# zeroroot-ai/tenant-operator repo was deleted; its plans/ tree moved here.)
-# We fetch it at build time via gen-plans.mjs remote mode (PLANS_SOURCE=remote).
-# Auth: the optional `ghtoken` BuildKit secret (a GitHub PAT with read access
-# to zeroroot-ai/gibson). Same pattern as gibson's own Dockerfiles for
-# cross-repo private content.
-ENV PLANS_SOURCE=remote
-# PLANS_REF can be overridden at build time (--build-arg) to pin against a
-# specific gibson commit / tag instead of bleeding-edge main.
-ARG PLANS_REF=main
-ENV PLANS_REF=${PLANS_REF}
+# gen-plans.mjs reads the canonical plans.yaml + plans.schema.json from the
+# polyrepo sibling deploy/helm/gibson-operators/files/ (open-core relocation,
+# gibson#915 / ADR-0050: #915 ripped billing/plans out of OSS gibson; deploy is
+# now the canonical source). That sibling is not in the Docker build context, so
+# — exactly like gen-stripe-tiers below — we skip the regen and trust the
+# committed src/generated/plans.ts. The workstation drift gate
+# (check-plans-fresh.mjs, run via `pnpm prebuild` against the deploy sibling)
+# keeps that file honest. No cross-repo build-time fetch / token needed.
+ENV SKIP_GEN_PLANS=1
 # check-dashboard-rbac-minimal.mjs runs `helm template` to diff chart RBAC.
 # helm is not installed in this Node.js image; skip it here — the check runs
 # on the dev host via `npm run prebuild` before pushing. The underlying chart
@@ -73,12 +69,9 @@ ENV SKIP_DASHBOARD_RBAC_CHECK=1
 ENV SKIP_GEN_AUTHZ_REGISTRY=1
 ENV SKIP_AUTHZ_REGISTRY_CHECK=1
 
-# gen-plans.mjs runs in remote mode (PLANS_SOURCE=remote above) and writes
-# the file fresh from the canonical gibson operators/tenant source. The freshness
-# drift gate (check-plans-fresh.mjs) is a workstation-only consistency check
-# that catches devs who change plans.yaml without committing the regenerated
-# src/generated/plans.ts. In Docker the regen has just run, so the gate is
-# redundant — and it can flap on transient remote-fetch nondeterminism.
+# gen-plans is skipped above (committed plans.ts is trusted at image-build
+# time); its freshness drift gate (check-plans-fresh.mjs) is a workstation-only
+# consistency check that needs the deploy sibling, so skip it here too.
 ENV SKIP_PLANS_FRESH_CHECK=1
 # gen-stripe-tiers.mjs reads the polyrepo sibling plans.yaml directly; that
 # path is not in the build context. The committed src/lib/billing/stripe_gen.ts
@@ -87,14 +80,14 @@ ENV SKIP_PLANS_FRESH_CHECK=1
 ENV SKIP_GEN_STRIPE_TIERS=1
 ENV SKIP_STRIPE_TIERS_FRESH_CHECK=1
 
-# Build the standalone application. The `ghtoken` BuildKit secret is mounted
-# only for the duration of this RUN; gen-plans.mjs reads it via GITHUB_TOKEN
-# to fetch plans.yaml + plans.schema.json from zeroroot-ai/gibson
-# (operators/tenant/plans/, per PLANS_SOURCE=remote / PLANS_REF above). When the secret is absent,
-# gen-plans exits non-zero and the build fails loudly — we never want to
-# ship a stale plans.ts baked from a phantom YAML.
-RUN --mount=type=secret,id=ghtoken,target=/run/secrets/ghtoken,required=true \
-    GITHUB_TOKEN="$(cat /run/secrets/ghtoken)" npm run build
+# Build the standalone application. All sibling-sourced generated files
+# (plans.ts, stripe_gen.ts, authz registry, proto bindings) are committed and
+# trusted at image-build time via the SKIP_* envs above, so the build performs
+# no cross-repo fetch. The `ghtoken` BuildKit secret is mounted non-required for
+# backward compatibility (any future build-time fetch can read it via
+# GITHUB_TOKEN); the build no longer fails when it is absent.
+RUN --mount=type=secret,id=ghtoken,target=/run/secrets/ghtoken,required=false \
+    GITHUB_TOKEN="$(cat /run/secrets/ghtoken 2>/dev/null || true)" npm run build
 
 # ============================================================================
 # Stage 3: Runtime - Minimal production image
