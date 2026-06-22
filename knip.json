@@ -23,6 +23,9 @@
     "@vitest/coverage-v8",
     "@auth/core"
   ],
+  "ignoreUnresolved": [
+    "@/\\.source/.*"
+  ],
   "rules": {
     "files": "off",
     "exports": "off",
