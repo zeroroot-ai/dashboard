@@ -1,5 +1,5 @@
 // GENERATED FILE, do not edit.
-// Source: enterprise/platform/tenant-operator/plans/plans.yaml
+// Source: enterprise/deploy/helm/gibson-operators/files/plans.yaml
 // Generator: enterprise/platform/dashboard/scripts/gen-stripe-tiers.mjs
 // Spec: plans-and-quotas-simplification R8.
 

@@ -5,19 +5,18 @@
  * Two source modes:
  *
  *   local  (default)   read plans.yaml + plans.schema.json from the polyrepo
- *                      sibling at enterprise/platform/gibson/operators/tenant/plans/.
+ *                      sibling at enterprise/deploy/helm/gibson-operators/files/.
  *                      Used for local dev where the workspace has both clones.
  *
  *   remote             fetch plans.yaml + plans.schema.json from GitHub raw at
- *                      https://raw.githubusercontent.com/zeroroot-ai/gibson/{ref}/operators/tenant/plans/...
+ *                      https://raw.githubusercontent.com/zeroroot-ai/deploy/{ref}/helm/gibson-operators/files/...
  *                      Used in Docker / CI where the sibling clone is not on disk.
  *                      Auth: GITHUB_TOKEN env var (gibson is private).
  *                      Ref:  PLANS_REF env var, default "main".
  *
- * E4 monorepo fold (gibson#781 / ADR-0056): the standalone
- * zeroroot-ai/tenant-operator repo was deleted and its plans/ tree moved into
- * the gibson monorepo under operators/tenant/plans/. Both source modes now
- * point at gibson.
+ * Open-core relocation (gibson#915 / ADR-0050): #915 ripped billing/plans out
+ * of OSS gibson; the canonical plans source is now the `deploy` repo under
+ * helm/gibson-operators/files/. Both source modes point at deploy.
  *
  * Mode selection:
  *   --remote / --source=remote  | PLANS_SOURCE=remote   ⇒ remote
@@ -57,22 +56,24 @@ const MAIN_DASHBOARD_ROOT = isWorktree
   ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, "")
   : DASHBOARD_ROOT;
 const REPO_ROOT = resolve(MAIN_DASHBOARD_ROOT, "..", "..", "..");
-// E4 monorepo fold (gibson#781 / ADR-0056): tenant-operator folded into the
-// gibson monorepo at operators/tenant/; the standalone repo was deleted.
+// Open-core relocation (gibson#915 / ADR-0050): #915 ripped billing/plans out
+// of OSS gibson, so the canonical plans source is now `deploy`
+// (helm/gibson-operators/files/) — ELv2-readable by the dashboard; the closed
+// billing impl reads the same copy. (Previously gibson/operators/tenant/plans/.)
 const PLANS_YAML = resolve(
   REPO_ROOT,
-  "enterprise/platform/gibson/operators/tenant/plans/plans.yaml",
+  "enterprise/deploy/helm/gibson-operators/files/plans.yaml",
 );
 const PLANS_SCHEMA = resolve(
   REPO_ROOT,
-  "enterprise/platform/gibson/operators/tenant/plans/plans.schema.json",
+  "enterprise/deploy/helm/gibson-operators/files/plans.schema.json",
 );
 const OUTPUT = resolve(DASHBOARD_ROOT, "src/generated/plans.ts");
 
-const REMOTE_REPO = "zeroroot-ai/gibson";
+const REMOTE_REPO = "zeroroot-ai/deploy";
 const REMOTE_PATHS = {
-  yaml: "operators/tenant/plans/plans.yaml",
-  schema: "operators/tenant/plans/plans.schema.json",
+  yaml: "helm/gibson-operators/files/plans.yaml",
+  schema: "helm/gibson-operators/files/plans.schema.json",
 };
 
 const KNOWN_PLAN_IDS = ["team", "org", "enterprise", "enterprise-deploy"];
@@ -278,7 +279,7 @@ function renderTypeScript(doc) {
   const lines = [];
   lines.push(
     "// GENERATED FILE, do not edit.",
-    "// Source: enterprise/platform/gibson/operators/tenant/plans/plans.yaml",
+    "// Source: enterprise/deploy/helm/gibson-operators/files/plans.yaml",
     "// Generator: enterprise/platform/dashboard/scripts/gen-plans.mjs",
     "// Run `npm run build` (or the `prebuild` hook) to regenerate.",
     "",
