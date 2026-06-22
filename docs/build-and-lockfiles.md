@@ -56,7 +56,10 @@ git add pnpm-lock.yaml package-lock.json
 
 `scripts/check-lockfile-sync.mjs` runs in the `prebuild` chain and compares the
 resolved version of every **direct** dependency / devDependency across the two
-lockfiles. It deliberately scopes to the direct-dependency closure (pnpm and
+lockfiles. It is a **host-only** check: `pnpm-lock.yaml` is excluded from the
+Docker build context (`.dockerignore`), so inside the image build the check
+SKIPs cleanly (there is nothing to compare against), the same way the other
+sibling-dependent prebuild checks SKIP in the image. It deliberately scopes to the direct-dependency closure (pnpm and
 npm legitimately differ on transitive peer-dedupe and hoisting, so a full-tree
 compare would be all false positives) — direct deps are where an out-of-sync
 `pnpm add` / `npm install` actually diverges the dev and image builds.

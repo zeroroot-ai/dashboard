@@ -35,7 +35,10 @@
  *                         follow-up converges the lockfiles. See
  *                         docs/build-and-lockfiles.md.
  *
- * There is intentionally NO `--skip`: the check always runs and always reports.
+ * There is intentionally NO `--skip` flag. The one place the check does not run
+ * is the Docker image build, where `pnpm-lock.yaml` is excluded from the build
+ * context (.dockerignore); there the check SKIPs cleanly (nothing to compare),
+ * the same way the other sibling-dependent prebuild checks SKIP in the image.
  *
  * Usage:
  *   node scripts/check-lockfile-sync.mjs            # strict: drift exits 1
@@ -149,9 +152,21 @@ function run() {
   const pnpmPath = join(ROOT, "pnpm-lock.yaml");
   const npmPath = join(ROOT, "package-lock.json");
 
+  // pnpm-lock.yaml is deliberately excluded from the Docker build context
+  // (.dockerignore — Next.js 16's pnpm-patch path fails when it leaks in), so
+  // it is absent inside the image build. This is a HOST-only cross-lockfile
+  // check; when the pnpm lockfile is not present there is nothing to compare
+  // against, so skip cleanly rather than fail (same pattern as the other
+  // sibling-dependent prebuild checks that SKIP in the image build).
+  if (!existsSync(pnpmPath)) {
+    console.log(
+      "[check-lockfile-sync] SKIPPED — pnpm-lock.yaml not present (image build / npm-only context); the host build runs the full cross-lockfile check."
+    );
+    return;
+  }
+
   for (const [label, p] of [
     ["package.json", pkgPath],
-    ["pnpm-lock.yaml", pnpmPath],
     ["package-lock.json", npmPath],
   ]) {
     if (!existsSync(p)) {
