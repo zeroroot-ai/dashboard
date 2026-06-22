@@ -175,7 +175,7 @@ export function ReviewQueueContent() {
           throw new Error(body?.error?.message ?? `Request failed (${res.status})`);
         }
         toast.success("Label recorded", {
-          description: "It refines this tenant's next model — the running mission is unaffected.",
+          description: "It refines this tenant's next model. The running mission is unaffected.",
         });
         await load();
       } catch (e) {
@@ -201,7 +201,7 @@ export function ReviewQueueContent() {
         </h1>
         <p className="text-sm text-muted-foreground">
           Label surfaced surprises and findings to teach this tenant&apos;s belief model. Labelling
-          is asynchronous — it never blocks a running mission and only improves the next one.
+          is asynchronous: it never blocks a running mission and only improves the next one.
         </p>
       </div>
 
@@ -238,7 +238,7 @@ export function ReviewQueueContent() {
                       <div className="font-mono text-xs text-muted-foreground">{item.targetId}</div>
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
-                      {item.address || item.scopeId || "—"}
+                      {item.address || item.scopeId || "-"}
                     </TableCell>
                     <TableCell>
                       {item.labelled && item.label ? (
