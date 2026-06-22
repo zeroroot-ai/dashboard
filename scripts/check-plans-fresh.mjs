@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Build guard: verify that src/generated/plans.ts is in sync with the current
- * tenant-operator/plans/plans.yaml.
+ * gibson/operators/tenant/plans/plans.yaml (E4 fold, gibson#781 / ADR-0056).
  *
  * Drives gen-plans.mjs --stdout to produce the expected file, then diffs
  * byte-for-byte against the committed file. Exits non-zero on discrepancy

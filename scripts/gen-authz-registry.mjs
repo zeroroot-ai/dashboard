@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Generate src/gen/authz/registry.ts from the SDK, platform-sdk, and
- * daemon-local proto FileDescriptorSets.
+ * Generate src/gen/authz/registry.ts from the SDK and gibson daemon-local
+ * proto FileDescriptorSets.
  *
- * Reads every service method in all three proto trees, decodes the
+ * Reads every service method in both proto trees, decodes the
  * (gibson.auth.v1.authz) extension (field 50001 on MethodOptions), and emits
  * a TypeScript module with the AuthEntry type, IdentityClass constants, and
  * AuthRegistry record.
@@ -12,26 +12,30 @@
  * -------------------
  * Buf v2 has a hard rule that every module path in buf.yaml must resolve INSIDE
  * the directory containing the buf.yaml. The SDK protos (resolved from the
- * gibson repo's go.mod), platform-sdk protos (sibling checkout), and
- * daemon-local protos live outside this dashboard repo, so they cannot be
- * referenced with ../../ paths. Instead, this script synthesises a temporary
- * workspace at .tmp/proto-ws/ (same pattern as proto-generate.mjs), populates
- * it with symlinks, and runs buf build from inside that workspace. The
- * workspace is always cleaned up in a finally block.
+ * gibson repo's go.mod) and gibson daemon-local protos live outside this
+ * dashboard repo, so they cannot be referenced with ../../ paths. Instead, this
+ * script synthesises a temporary workspace at .tmp/proto-ws/ (same pattern as
+ * proto-generate.mjs), populates it with symlinks, and runs buf build from
+ * inside that workspace. The workspace is always cleaned up in a finally block.
  *
- * Three proto trees
- * -----------------
- * 1. sdk-proto      , OSS SDK (DaemonService, gibson.tenant.v1, etc.)
- * 2. platform-sdk-proto, PRIVATE platform-sdk (gibson.admin.v1,
- *                        gibson.daemon.operator.v1, gibson.user.v1, etc.)
- * 3. gibson-local   , daemon-internal protos not yet promoted to platform-sdk
+ * Two proto trees
+ * ---------------
+ * 1. sdk-proto    , OSS SDK (DaemonService, gibson.tenant.v1, etc.)
+ * 2. gibson-local , gibson daemon-local protos at
+ *                   enterprise/platform/gibson/internal/server/daemon/api.
+ *                   Hosts the daemon-internal services (TracesService,
+ *                   session, world, user) AND the PRIVATE platform services
+ *                   that used to live in platform-sdk: DaemonOperatorService
+ *                   (gibson.daemon.operator.v1), BillingService
+ *                   (gibson.billing.v1), DiscoveryService
+ *                   (gibson.daemon.discovery.v1). platform-sdk was dissolved
+ *                   in gibson#781 (open-core monorepo consolidation,
+ *                   ADR-0056).
  *
- * This mirrors the three-tree pattern in proto-generate.mjs and ensures that
- * admin + operator service methods are present in the registry for the
- * assertAuthorized / useAuthorize gating layer.
+ * This ensures operator/billing/discovery service methods are present in the
+ * registry for the assertAuthorized / useAuthorize gating layer.
  *
  * Spec: cross-repo-cohesion-fixes Requirement 2.1–2.3.
- * Dashboard issue: #406 (gibson.admin.v1 and gibson.daemon.operator.v1 absent).
  *
  * Usage
  * -----
@@ -57,8 +61,7 @@ const WS = resolve(DASHBOARD_ROOT, '.tmp/proto-ws');
 const OUTPUT_PATH = resolve(DASHBOARD_ROOT, 'src/gen/authz/registry.ts');
 
 // Workspace root: ~/Code/zeroroot.ai/. Sibling repos hang off here.
-// Gibson lives at enterprise/platform/gibson, the `core/` prefix was the
-// pre-refactor layout and is no longer present.
+// Gibson lives at enterprise/platform/gibson.
 //
 // Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ or
 // .claude/worktrees/<name>/ (the Claude Code harness layout) the naive
@@ -74,14 +77,13 @@ const MAIN_DASHBOARD_ROOT = isWorktree
   : DASHBOARD_ROOT;
 const WORKSPACE_ROOT = resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
 const GIBSON_REPO = resolve(WORKSPACE_ROOT, 'enterprise/platform/gibson');
-const GIBSON_LOCAL_PROTOS = resolve(GIBSON_REPO, 'internal/daemon/api');
-// platform-sdk is a sibling repo at opensource/platform-sdk. It is the
-// authoritative home for gibson.admin.v1, gibson.daemon.operator.v1,
-// gibson.user.v1, and other private admin/operator proto packages. These
+// gibson daemon-local proto tree (post-#787 reorg location). It hosts the
+// daemon-internal services and the PRIVATE platform services
+// (DaemonOperatorService, BillingService, DiscoveryService) that used to
+// live in platform-sdk before it was dissolved (gibson#781). These
 // namespaces must be present in the AuthRegistry so assertAuthorized /
-// useAuthorize can gate access to those RPCs. dashboard#406.
-const PLATFORM_SDK_REPO = resolve(WORKSPACE_ROOT, 'opensource/platform-sdk');
-const PLATFORM_SDK_PROTOS = resolve(PLATFORM_SDK_REPO, 'proto');
+// useAuthorize can gate access to those RPCs.
+const GIBSON_LOCAL_PROTOS = resolve(GIBSON_REPO, 'internal/server/daemon/api');
 
 // Extension field number for (gibson.auth.v1.authz) on MethodOptions.
 // Hard-coded per spec: "Field number 50001 is reserved for Gibson's authorization
@@ -133,7 +135,7 @@ function ensureGibsonLocalProtos() {
     execSync(`stat ${GIBSON_LOCAL_PROTOS}`, { stdio: 'pipe' });
   } catch (err) {
     process.stderr.write(
-      '[gen-authz-registry] FATAL: daemon-local protos not found at:\n' +
+      '[gen-authz-registry] FATAL: gibson daemon-local protos not found at:\n' +
         `    ${GIBSON_LOCAL_PROTOS}\n` +
         '  Clone zeroroot-ai/gibson alongside this dashboard checkout, or\n' +
         '  run from the canonical workspace at ~/Code/zeroroot.ai/.\n' +
@@ -143,45 +145,29 @@ function ensureGibsonLocalProtos() {
   }
 }
 
-function ensurePlatformSdkProtos() {
-  try {
-    execSync(`stat ${PLATFORM_SDK_PROTOS}`, { stdio: 'pipe' });
-  } catch (err) {
-    process.stderr.write(
-      '[gen-authz-registry] FATAL: platform-sdk protos not found at:\n' +
-        `    ${PLATFORM_SDK_PROTOS}\n` +
-        '  Clone zeroroot-ai/platform-sdk at opensource/platform-sdk in your\n' +
-        '  workspace, or run from the canonical workspace at ~/Code/zeroroot.ai/.\n' +
-        `  Underlying error: ${err.message ?? err}\n`,
-    );
-    process.exit(1);
-  }
-}
-
 /**
  * Build the .tmp/proto-ws/ workspace with symlinks to two proto trees:
- * sdk-proto and platform-sdk-proto. The daemon-local proto tree
- * (gibson-local) is intentionally omitted, its only file
- * (gibson/user/v1/user.proto) duplicates the platform-sdk copy and causes
- * a "contained in multiple modules" buf error. See dashboard#406.
+ * sdk-proto and gibson-local.
  *
  * Two modules:
- *   sdk-proto         , OSS SDK (gibson.tenant.v1, DaemonService, etc.)
- *   platform-sdk-proto, PRIVATE admin/operator protos (gibson.admin.v1,
- *                        gibson.daemon.operator.v1, gibson.user.v1, etc.)
+ *   sdk-proto    , OSS SDK (gibson.tenant.v1, DaemonService, etc.)
+ *   gibson-local , gibson daemon-local protos (TracesService, session,
+ *                  world, user) + PRIVATE platform services
+ *                  (DaemonOperatorService, BillingService, DiscoveryService)
+ *                  ex-platform-sdk, dissolved in gibson#781.
  */
 function buildWorkspace() {
   rmSync(WS, { recursive: true, force: true });
   mkdirSync(WS, { recursive: true });
 
   const sdkProtoDir = resolveSdkProtoDir();
-  ensurePlatformSdkProtos();
+  ensureGibsonLocalProtos();
 
   // Symlinks bring both proto trees inside the buf.yaml's context directory.
   // Buf v2 follows symlinks; this satisfies the "modules must be inside the
   // workspace" rule without copying files.
   symlinkSync(sdkProtoDir, resolve(WS, 'sdk-proto'));
-  symlinkSync(PLATFORM_SDK_PROTOS, resolve(WS, 'platform-sdk-proto'));
+  symlinkSync(GIBSON_LOCAL_PROTOS, resolve(WS, 'gibson-local'));
 
   writeFileSync(
     resolve(WS, 'buf.yaml'),
@@ -191,36 +177,26 @@ function buildWorkspace() {
       '  - path: sdk-proto',
       '    excludes:',
       '      - sdk-proto/google',
-      // The following proto packages were migrated to platform-sdk
-      // (parent PRD zeroroot-ai/.github#101). Exclude from the OSS SDK
-      // module so buf does not see two copies of each file. After
-      // sdk#105 merges, these directories vanish from the OSS SDK and
-      // the excludes become no-ops (kept for tag-skew safety).
-      '      - sdk-proto/gibson/admin',
-      '      - sdk-proto/gibson/authz',
-      '      - sdk-proto/gibson/budget',
-      '      - sdk-proto/gibson/daemon/discovery',
-      '      - sdk-proto/gibson/usage',
-      // platform-sdk is the authoritative home for daemon-admin /
-      // authz / budget / usage / daemon-discovery / daemon-operator
-      // protos (parent PRD zeroroot-ai/.github#101). dashboard#406.
-      '  - path: platform-sdk-proto',
+      // gibson-local is the daemon-internal proto tree. It owns the
+      // daemon-internal services and the PRIVATE platform services
+      // (operator/billing/discovery) ex-platform-sdk (gibson#781).
+      // gibson/auth/v1/options.proto is the annotation extension; it lives
+      // canonically in the OSS SDK and is imported (not vendored) by the
+      // daemon-local protos. Exclude it here so buf does not see two copies
+      // under the two module roots.
+      '  - path: gibson-local',
       '    excludes:',
-      // gibson/auth/v1/options.proto is intentionally shared between
-      // OSS SDK and platform-sdk; exclude here so buf doesn't see two
-      // copies under the two module roots.
-      '      - platform-sdk-proto/gibson/auth',
-      // gibson.capability.v1 is canonically OSS-SDK-owned (sdk#103
-      // extraction). platform-sdk vendors a copy purely so its
-      // gibson.admin.v1 services can resolve the import; we read
-      // capability.proto from the OSS SDK side instead.
-      '      - platform-sdk-proto/gibson/capability',
-      // Note: gibson-local (enterprise/platform/gibson/internal/daemon/api)
-      // is intentionally omitted. Its only proto file (gibson/user/v1/user.proto)
-      // is byte-identical to the platform-sdk copy (different go_package only).
-      // Including it would cause a "contained in multiple modules" error.
-      // The daemon-local tree has no unique authz-annotated methods that
-      // aren't already covered by platform-sdk. dashboard#406.
+      '      - gibson-local/gibson/auth',
+      // Scope the gibson-local authz scan to the three ex-platform-sdk
+      // platform services (operator / billing / discovery). The other
+      // daemon-local services (session, user, world) are not surfaced
+      // through the dashboard's authz-gating layer today, and including
+      // them here would expand the committed registry beyond the scope of
+      // the platform-sdk dissolution (gibson#781). They can be added in a
+      // follow-up if/when the dashboard gates those RPCs.
+      '      - gibson-local/gibson/session',
+      '      - gibson-local/gibson/user',
+      '      - gibson-local/gibson/world',
       // protovalidate provides the (buf.validate.field).* annotations
       // adopted by the SDK from v1.5.0 onward. Pulled from the buf.build
       // remote registry; resolved by `buf dep update` invoked below.
@@ -231,7 +207,7 @@ function buildWorkspace() {
       '  use:',
       '    - STANDARD',
       '  ignore:',
-      '    - platform-sdk-proto/gibson/daemon/admin/v1/daemon_admin.proto',
+      '    - gibson-local',
       '',
     ].join('\n'),
   );
@@ -511,50 +487,50 @@ function main() {
     const sdkFDS = buildFDSFromWorkspace(ws, 'sdk-proto', 'sdk-proto');
 
     if (!stdout) {
-      process.stdout.write('[gen-authz-registry] Building platform-sdk-proto FDS...\n');
+      process.stdout.write('[gen-authz-registry] Building gibson-local FDS...\n');
     }
 
-    const platformFDS = buildFDSFromWorkspace(ws, 'platform-sdk-proto', 'platform-sdk-proto');
+    const gibsonFDS = buildFDSFromWorkspace(ws, 'gibson-local', 'gibson-local');
 
     // Scan both trees for authz annotations.
     const sdkEntries = scanFDS(sdkFDS);
-    const platformEntries = scanFDS(platformFDS);
+    const gibsonEntries = scanFDS(gibsonFDS);
 
     // Detect cross-tree method-name collisions (defense-in-depth gate).
     // Same fully-qualified method with conflicting annotation data = fatal.
-    // Order of authority: sdk > platform-sdk.
+    // Order of authority: sdk > gibson-local.
     const sdkByMethod = new Map(sdkEntries.map((e) => [e.method, e]));
-    for (const pe of platformEntries) {
-      const se = sdkByMethod.get(pe.method);
+    for (const ge of gibsonEntries) {
+      const se = sdkByMethod.get(ge.method);
       if (se) {
         const seKey = `${se.relation}|${se.objectType}|${se.objectDeriver}|${se.allowedIdentities}|${se.unauthenticated}`;
-        const peKey = `${pe.relation}|${pe.objectType}|${pe.objectDeriver}|${pe.allowedIdentities}|${pe.unauthenticated}`;
-        if (seKey !== peKey) {
+        const geKey = `${ge.relation}|${ge.objectType}|${ge.objectDeriver}|${ge.allowedIdentities}|${ge.unauthenticated}`;
+        if (seKey !== geKey) {
           process.stderr.write(
-            `[gen-authz-registry] FATAL: conflicting annotations for ${pe.method}\n` +
-              `  sdk-proto:          ${seKey}\n` +
-              `  platform-sdk-proto: ${peKey}\n`,
+            `[gen-authz-registry] FATAL: conflicting annotations for ${ge.method}\n` +
+              `  sdk-proto:    ${seKey}\n` +
+              `  gibson-local: ${geKey}\n`,
           );
           process.exit(1);
         }
       }
     }
 
-    // Merge: SDK entries first, then platform-sdk. De-dup on method name
+    // Merge: SDK entries first, then gibson-local. De-dup on method name
     // (sdk wins on collision with identical annotations, per above check).
     const seenMethods = new Set(sdkEntries.map((e) => e.method));
     const allEntries = [...sdkEntries];
-    for (const pe of platformEntries) {
-      if (!seenMethods.has(pe.method)) {
-        seenMethods.add(pe.method);
-        allEntries.push(pe);
+    for (const ge of gibsonEntries) {
+      if (!seenMethods.has(ge.method)) {
+        seenMethods.add(ge.method);
+        allEntries.push(ge);
       }
     }
 
     if (!stdout) {
       process.stdout.write(
         `[gen-authz-registry] Found ${allEntries.length} annotated methods ` +
-          `(sdk: ${sdkEntries.length}, platform-sdk: ${platformEntries.length}).\n`,
+          `(sdk: ${sdkEntries.length}, gibson-local: ${gibsonEntries.length}).\n`,
       );
     }
 

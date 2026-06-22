@@ -44,14 +44,16 @@ ENV NEXTAUTH_SECRET="build-placeholder"
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 
 # The prebuild gen-plans step needs plans.yaml from the canonical source —
-# the tenant-operator repo (zeroroot-ai/tenant-operator), which is private.
+# the gibson monorepo (zeroroot-ai/gibson) at operators/tenant/plans/, which
+# is private. (E4 monorepo fold, gibson#781 / ADR-0056: the standalone
+# zeroroot-ai/tenant-operator repo was deleted; its plans/ tree moved here.)
 # We fetch it at build time via gen-plans.mjs remote mode (PLANS_SOURCE=remote).
 # Auth: the optional `ghtoken` BuildKit secret (a GitHub PAT with read access
-# to zeroroot-ai/tenant-operator). Same pattern as gibson + tenant-operator
-# Dockerfiles for cross-repo private content.
+# to zeroroot-ai/gibson). Same pattern as gibson's own Dockerfiles for
+# cross-repo private content.
 ENV PLANS_SOURCE=remote
 # PLANS_REF can be overridden at build time (--build-arg) to pin against a
-# specific tenant-operator commit / tag instead of bleeding-edge main.
+# specific gibson commit / tag instead of bleeding-edge main.
 ARG PLANS_REF=main
 ENV PLANS_REF=${PLANS_REF}
 # check-dashboard-rbac-minimal.mjs runs `helm template` to diff chart RBAC.
@@ -72,7 +74,7 @@ ENV SKIP_GEN_AUTHZ_REGISTRY=1
 ENV SKIP_AUTHZ_REGISTRY_CHECK=1
 
 # gen-plans.mjs runs in remote mode (PLANS_SOURCE=remote above) and writes
-# the file fresh from the canonical tenant-operator source. The freshness
+# the file fresh from the canonical gibson operators/tenant source. The freshness
 # drift gate (check-plans-fresh.mjs) is a workstation-only consistency check
 # that catches devs who change plans.yaml without committing the regenerated
 # src/generated/plans.ts. In Docker the regen has just run, so the gate is
@@ -87,8 +89,8 @@ ENV SKIP_STRIPE_TIERS_FRESH_CHECK=1
 
 # Build the standalone application. The `ghtoken` BuildKit secret is mounted
 # only for the duration of this RUN; gen-plans.mjs reads it via GITHUB_TOKEN
-# to fetch plans.yaml + plans.schema.json from zeroroot-ai/tenant-operator
-# (per PLANS_SOURCE=remote / PLANS_REF above). When the secret is absent,
+# to fetch plans.yaml + plans.schema.json from zeroroot-ai/gibson
+# (operators/tenant/plans/, per PLANS_SOURCE=remote / PLANS_REF above). When the secret is absent,
 # gen-plans exits non-zero and the build fails loudly — we never want to
 # ship a stale plans.ts baked from a phantom YAML.
 RUN --mount=type=secret,id=ghtoken,target=/run/secrets/ghtoken,required=true \
