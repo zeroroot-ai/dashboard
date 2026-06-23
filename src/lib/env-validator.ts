@@ -221,13 +221,10 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
   },
 
   // ---- Observability ----
-  {
-    name: 'LOKI_URL',
-    kind: 'url',
-    hint:
-      'Loki query endpoint (e.g. http://gibson-loki:3100). Mission-log viewer dies ' +
-      'fast and loud rather than silently dialing the wrong host.',
-  },
+  // Mission/daemon logs are now read through the daemon LogsService
+  // (gibson.daemon.logs.v1) over Envoy + ext-authz (dashboard#811); the
+  // dashboard no longer dials Loki directly, so LOKI_URL / LOKI_TENANT_ID are
+  // no longer consumed here.
 ];
 
 /**
@@ -259,8 +256,6 @@ export const OPTIONAL_ENV = [
   'WWW_URL',
 
   // ---- Optional observability ----
-  // Loki tenant ID for multi-tenant Loki; absent ⇒ single-tenant mode.
-  'LOKI_TENANT_ID',
   // Langfuse trace viewer; consumers handle null host.
   'LANGFUSE_HOST',
   'LANGFUSE_ADMIN_PUBLIC_KEY',

@@ -53,7 +53,7 @@ import { create } from "@bufbuild/protobuf";
 import { logger } from "@/src/lib/logger";
 import { getServerSession } from "@/src/lib/auth";
 import { requireActiveTenant, activeTenantApiResponse } from "@/src/lib/auth/active-tenant";
-import { LokiClient } from "@/src/lib/loki-client";
+import { queryMissionLogs } from "@/src/lib/gibson-client/logs";
 import { listMissions, userClient } from "@/src/lib/gibson-client";
 import {
   DaemonService,
@@ -185,16 +185,16 @@ export async function GET(
       let cancelled = false;
       let seq = 0;
 
-      // ---- Loki log tail ----
-      // While the mission is `running` we tail Loki for this mission's log
-      // lines and forward each as an `event: log` frame. We initialise the
-      // cursor to "now" so we never replay historical lines on connect, the
-      // logs tab (GET .../logs) owns the backfill; this bridge is live-only.
-      // `LokiClient` reads env.LOKI_URL via process.env (same path as
-      // logs/route.ts). If Loki isn't ready we skip silently, log frames are
-      // best-effort and must never crash the status/checkpoint bridge.
-      const loki = new LokiClient();
-      let lastLokiTimestampNs = BigInt(Date.now()) * NS_PER_MS;
+      // ---- mission log tail ----
+      // While the mission is `running` we tail the daemon LogsService for this
+      // mission's log lines and forward each as an `event: log` frame. We
+      // initialise the cursor to "now" so we never replay historical lines on
+      // connect, the logs tab (GET .../logs) owns the backfill; this bridge is
+      // live-only. The daemon derives the tenant scope server-side
+      // (dashboard#811); the dashboard never talks to Loki directly. Any RPC
+      // failure is swallowed below so log frames are best-effort and never
+      // crash the status/checkpoint bridge.
+      let lastLogTimestampNs = BigInt(Date.now()) * NS_PER_MS;
 
       // Aborts the daemon node-event subscription (below) on teardown so the
       // upstream Subscribe stream is cancelled when the browser disconnects.
@@ -385,86 +385,80 @@ export async function GET(
 
         if (cancelled) return;
 
-        // ---- Loki log tail ----
+        // ---- mission log tail ----
         // Only tail while the mission is actively running. When status leaves
         // `running` this branch is skipped, so log frames naturally stop. The
-        // tail is best-effort: any Loki error (including an unavailable
+        // tail is best-effort: any RPC error (including an unavailable log
         // backend) is swallowed so the status/checkpoint bridge keeps polling.
-        // NOTE: the Loki-tail branch is exercised by this route's __tests__
-        // suite (LokiClient mocked) and end-to-end against a live Kind cluster;
-        // transient backend failures are intentionally silent here.
+        // The daemon LogsService derives the tenant scope server-side
+        // (dashboard#811); the dashboard never queries Loki directly. This
+        // branch is exercised by this route's __tests__ suite (queryMissionLogs
+        // mocked) and end-to-end against a live Kind cluster; transient backend
+        // failures are intentionally silent here.
         if (lastStatus === "running") {
           try {
-            const ready = await loki.isReady();
-            if (ready) {
-              const entries = await loki.query({
-                query: `{mission_id="${missionId}"}`,
-                start: new Date(Number(lastLokiTimestampNs / NS_PER_MS)),
-                end: new Date(),
-                limit: 100,
-                direction: "forward",
-                tenantId,
-              });
+            const entries = await queryMissionLogs(missionId, {
+              start: new Date(Number(lastLogTimestampNs / NS_PER_MS)),
+              end: new Date(),
+              limit: 100,
+            });
 
-              let maxTsNs = lastLokiTimestampNs;
-              for (const entry of entries) {
-                const tsNs = BigInt(entry.timestamp.getTime()) * NS_PER_MS;
-                // Skip lines at or before the cursor, Loki's `start` is
-                // inclusive, so the most recent already-emitted line can come
-                // back again on the next poll.
-                if (tsNs < lastLokiTimestampNs) continue;
+            let maxTsNs = lastLogTimestampNs;
+            for (const entry of entries) {
+              const tsNs = BigInt(entry.timestamp.getTime()) * NS_PER_MS;
+              // Skip lines at or before the cursor: the daemon's `start` is
+              // inclusive, so the most recent already-emitted line can come
+              // back again on the next poll.
+              if (tsNs < lastLogTimestampNs) continue;
 
-                // `LokiLogEntry` carries the raw line + labels; the level /
-                // message / component live inside the structured JSON payload
-                // (same parse shape as GET .../logs).
-                let parsed: Record<string, unknown> = {};
-                try {
-                  parsed = JSON.parse(entry.line);
-                } catch {
-                  parsed = { msg: entry.line };
-                }
-                const level =
-                  (parsed.level as string)?.toLowerCase() || "info";
-                const message =
-                  (parsed.msg as string) ||
-                  (parsed.message as string) ||
-                  entry.line;
-                const component = parsed.component as string | undefined;
+              // A log entry carries the raw line + labels; the level /
+              // message / component live inside the structured JSON payload
+              // (same parse shape as GET .../logs).
+              let parsed: Record<string, unknown> = {};
+              try {
+                parsed = JSON.parse(entry.line);
+              } catch {
+                parsed = { msg: entry.line };
+              }
+              const level = (parsed.level as string)?.toLowerCase() || "info";
+              const message =
+                (parsed.msg as string) ||
+                (parsed.message as string) ||
+                entry.line;
+              const component = parsed.component as string | undefined;
 
-                try {
-                  controller.enqueue(
-                    encoder.encode(
-                      sseFrame(
-                        "log",
-                        {
-                          timestamp: entry.timestamp.toISOString(),
-                          level,
-                          message,
-                          component,
-                        },
-                        String(seq++),
-                      ),
+              try {
+                controller.enqueue(
+                  encoder.encode(
+                    sseFrame(
+                      "log",
+                      {
+                        timestamp: entry.timestamp.toISOString(),
+                        level,
+                        message,
+                        component,
+                      },
+                      String(seq++),
                     ),
-                  );
-                } catch {
-                  stopPolling();
-                  return;
-                }
-
-                if (tsNs > maxTsNs) maxTsNs = tsNs;
+                  ),
+                );
+              } catch {
+                stopPolling();
+                return;
               }
 
-              // Advance the cursor past the newest line seen (+1ns) so the
-              // next poll never re-emits it.
-              if (maxTsNs >= lastLokiTimestampNs) {
-                lastLokiTimestampNs = maxTsNs + BigInt(1);
-              }
+              if (tsNs > maxTsNs) maxTsNs = tsNs;
             }
-            // isReady() === false → skip silently (no error frame).
+
+            // Advance the cursor past the newest line seen (+1ns) so the
+            // next poll never re-emits it.
+            if (maxTsNs >= lastLogTimestampNs) {
+              lastLogTimestampNs = maxTsNs + BigInt(1);
+            }
           } catch (err) {
             logger.warn(
               { ...baseLog, err },
-              "Loki tail poll failed; will retry",
+              "mission log tail poll failed; will retry",
             );
           }
         }
