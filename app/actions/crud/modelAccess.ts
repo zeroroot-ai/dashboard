@@ -3,15 +3,28 @@
 /**
  * Server Actions for the /settings/model-access page.
  *
- * Wraps the daemon's gibson.authz.v1.ModelAccessService RPCs so the
+ * Wraps the daemon's gibson.tenant.v1.ModelAccessService RPCs so the
  * dashboard can grant / revoke per-user / per-team access to providers
  * and models, and render the model_resolved audit trail.
  *
  * Spec: llm-user-attribution-governance (Requirement 4).
+ *
+ * Authz: the daemon's ext-authz layer is authoritative and rejects
+ * non-admin mutations. As defense-in-depth (mirroring app/actions/secrets.ts),
+ * the grant/revoke actions ALSO call assertAuthorized against their own
+ * registered RPC at the top of the function, before any daemon call. This
+ * short-circuits unauthorized callers with the canonical "Permission denied"
+ * result instead of paying a round-trip and surfacing a generic daemon error.
+ * The relation each method requires is derived from the generated authz
+ * registry (the same source ext-authz enforces); it is never hand-picked here.
  */
 
 import { getModelAccessClient } from "@/src/lib/gibson-client";
 import { getServerSession } from "@/src/lib/auth";
+import {
+  assertAuthorized,
+  AuthzDeniedError,
+} from "@/src/lib/auth/assert-authorized";
 import {
   GrantSubjectKind,
   GrantTargetKind,
@@ -19,7 +32,7 @@ import {
 
 export type ActionResult<T> =
   | { ok: true; data: T }
-  | { ok: false; error: string };
+  | { ok: false; error: string; code?: string };
 
 export type SubjectKindInput = "user" | "team" | "tenant";
 export type TargetKindInput = "provider" | "model";
@@ -104,6 +117,15 @@ export interface GrantInput {
 export async function grantModelAccessAction(
   input: GrantInput,
 ): Promise<ActionResult<null>> {
+  try {
+    await assertAuthorized("/gibson.tenant.v1.ModelAccessService/GrantAccess");
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      return { ok: false, error: "Permission denied", code: "permission_denied" };
+    }
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
@@ -128,6 +150,15 @@ export async function grantModelAccessAction(
 export async function revokeModelAccessAction(
   input: GrantInput,
 ): Promise<ActionResult<null>> {
+  try {
+    await assertAuthorized("/gibson.tenant.v1.ModelAccessService/RevokeAccess");
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      return { ok: false, error: "Permission denied", code: "permission_denied" };
+    }
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {

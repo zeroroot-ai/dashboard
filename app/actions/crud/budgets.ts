@@ -9,19 +9,27 @@
  *
  * Spec: llm-user-attribution-governance (Requirement 3, 5).
  *
- * Admin-only mutations are enforced server-side by the daemon (returns
- * PermissionDenied on non-admin callers); the dashboard still checks
- * the session's admin flag first so we don't round-trip for obvious
- * deny cases.
+ * Authz: the daemon's ext-authz layer is authoritative and rejects
+ * non-admin mutations. As defense-in-depth (mirroring app/actions/secrets.ts),
+ * each mutating action ALSO calls assertAuthorized against its own registered
+ * RPC at the top of the function, before any daemon call. This short-circuits
+ * unauthorized callers with the canonical "Permission denied" result instead
+ * of paying a round-trip and surfacing a generic daemon error. The relation
+ * each method requires is derived from the generated authz registry (the same
+ * source ext-authz enforces); it is never hand-picked here.
  */
 
 import { getBudgetClient } from "@/src/lib/gibson-client";
 import { getServerSession } from "@/src/lib/auth";
+import {
+  assertAuthorized,
+  AuthzDeniedError,
+} from "@/src/lib/auth/assert-authorized";
 import { BudgetScope } from "@/src/gen/gibson/budget_status/v1/budget_status_pb";
 
 export type ActionResult<T> =
   | { ok: true; data: T }
-  | { ok: false; error: string };
+  | { ok: false; error: string; code?: string };
 
 export type ScopeInput = "user" | "team" | "tenant";
 
@@ -142,6 +150,15 @@ export interface SetBudgetInput {
 export async function setBudgetAction(
   input: SetBudgetInput,
 ): Promise<ActionResult<null>> {
+  try {
+    await assertAuthorized("/gibson.tenant.v1.BudgetService/SetBudget");
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      return { ok: false, error: "Permission denied", code: "permission_denied" };
+    }
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
@@ -205,6 +222,17 @@ export async function getTenantBudgetDefaultsAction(): Promise<
 export async function setTenantBudgetDefaultsAction(
   input: TenantDefaultsRow,
 ): Promise<ActionResult<null>> {
+  try {
+    await assertAuthorized(
+      "/gibson.tenant.v1.BudgetService/SetTenantBudgetDefaults",
+    );
+  } catch (err) {
+    if (err instanceof AuthzDeniedError) {
+      return { ok: false, error: "Permission denied", code: "permission_denied" };
+    }
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
