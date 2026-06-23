@@ -6,9 +6,9 @@
  * cookie and echoes it back automatically so individual API clients don't need
  * to worry about it.
  *
- * NOTE (dashboard#862): the cookie's only seeder (proxy.ts) was removed in the
- * E9 sweep, so the cookie is currently never set and `requireCsrf` fails closed
- * on the mission routes. Tracked for a re-seed-or-retire decision in #862.
+ * The cookie is seeded by middleware (`ensureCsrfCookie` in src/lib/csrf.ts) on
+ * every pass-through navigation; its previous seeder (proxy.ts) was removed in
+ * the E9 sweep and re-homed to middleware (dashboard#862).
  */
 
 const CSRF_COOKIE = 'csrf-token';

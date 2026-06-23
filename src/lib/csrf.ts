@@ -57,3 +57,20 @@ export function validateCsrfToken(request: NextRequest): boolean {
 
   return timingSafeEqual(cookieBuf, headerBuf);
 }
+
+/**
+ * Seed the `csrf-token` cookie on a response when the incoming request does
+ * not already carry one. Called from middleware on every pass-through
+ * response so the double-submit token exists by the time client code issues
+ * a mutating request (the client reads the cookie and echoes it as the
+ * `x-csrf-token` header — see src/lib/api/fetch.ts).
+ *
+ * The previous seeder lived in the api proxy (`src/lib/api/proxy.ts`), which
+ * was removed in the E9 sweep; middleware is the correct home since it runs
+ * on every navigation before any route handler that calls `requireCsrf`.
+ */
+export function ensureCsrfCookie(request: NextRequest, response: NextResponse): void {
+  if (!getCsrfTokenFromCookies(request)) {
+    setCsrfCookie(response, generateCsrfToken());
+  }
+}

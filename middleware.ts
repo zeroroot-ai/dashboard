@@ -30,6 +30,7 @@ import { membershipReasonToLoginErrorReason } from "@/src/lib/auth/login-error-m
 import { decideHostSplit, loadHostSplitConfig } from "@/src/lib/host-routing";
 import { CORRELATION_HEADER, generateCorrelationId } from "@/src/lib/auth/correlation";
 import { popLastFiredSubsystem } from "@/src/lib/test-fixtures/fault-injection";
+import { ensureCsrfCookie } from "@/src/lib/csrf";
 import { logger } from "@/src/lib/logger";
 
 // Pin middleware to the Node.js runtime: membership.ts → gibson-client.ts
@@ -118,7 +119,9 @@ export default auth(async (req) => {
   // 1. Unauthenticated requests for protected routes, let Auth.js redirect
   //    to /login via its default behavior.
   if (!session?.user) {
-    return NextResponse.next({ request: { headers: reqHeaders } });
+    const res = NextResponse.next({ request: { headers: reqHeaders } });
+    ensureCsrfCookie(req, res);
+    return res;
   }
 
   // 1b. Opaque-token detection (dashboard#357).
@@ -152,7 +155,9 @@ export default auth(async (req) => {
 
   // 2. Authenticated requests outside the protected area, let through.
   if (!pathname.startsWith(PROTECTED_PREFIX)) {
-    return NextResponse.next({ request: { headers: reqHeaders } });
+    const res = NextResponse.next({ request: { headers: reqHeaders } });
+    ensureCsrfCookie(req, res);
+    return res;
   }
 
   // 3. Resolve memberships up front so we can distinguish absent-cookie
@@ -225,8 +230,13 @@ export default auth(async (req) => {
     return res;
   }
 
-  // 7. Healthy state, let the route render.
-  return NextResponse.next();
+  // 7. Healthy state, let the route render. Seed the CSRF double-submit cookie
+  //    here so dashboard pages (and the mission-mutation routes they call via
+  //    apiFetch) have a token to echo — the seeder used to live in the removed
+  //    api proxy (dashboard#862).
+  const res = NextResponse.next();
+  ensureCsrfCookie(req, res);
+  return res;
 });
 
 export const config = {
