@@ -66,6 +66,10 @@ const GUARDS = [
   ['check-no-direct-admin-rpc.mjs'],
   ['check-no-spiffe-in-user-client.mjs'],
   ['check-no-secrets-in-client.mjs'],
+  // dashboard#818: secret-in-logs guard was previously only reachable via the
+  // manual `check:auth-regression` script, so a `logger.info({ accessToken })`
+  // regression could pass `pnpm build`. Wired into the build-path preset here.
+  ['check-no-secret-in-logs.mjs'],
 ];
 
 if (process.argv.includes('--list')) {

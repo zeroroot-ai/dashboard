@@ -24,7 +24,73 @@
  */
 
 import { handlers } from "@/auth";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+
+/**
+ * Fields that the Auth.js `session` callback (auth.ts) attaches for
+ * SERVER-SIDE consumers only and that must NEVER cross the wire to the
+ * browser. These are raw Zitadel bearer credentials:
+ *
+ *   - accessToken , a valid `Authorization: Bearer` against Envoy/the daemon
+ *                   (src/lib/auth/user-token.ts, middleware.ts, mySessions.ts).
+ *   - idToken     , the `id_token_hint` for federated logout
+ *                   (app/api/auth/federated-signout/route.ts).
+ *
+ * Auth.js v5 with `session.strategy: "jwt"` serialises whatever the `session`
+ * callback returns into the public `GET /api/auth/session` response body and
+ * the client-side next-auth cache (SessionProvider / useSession). Server-side
+ * `auth()` / getServerSession() invoke the callback IN-PROCESS and never hit
+ * this HTTP route, so stripping the tokens here keeps every server consumer
+ * working while denying the browser access to the raw credentials
+ * (dashboard#818). The session-client.ts shim narrows the shape client-side,
+ * but only AFTER the JSON has already crossed the wire, so it is cosmetic, not
+ * a redaction. This filter is the actual redaction.
+ */
+const SESSION_SERVER_ONLY_FIELDS = ["accessToken", "idToken"] as const;
+
+/**
+ * Strip server-only token fields from a `GET /api/auth/session` JSON response
+ * before it reaches the browser. Returns the original response untouched for
+ * any other Auth.js endpoint or non-JSON body.
+ */
+async function stripServerOnlySessionFields(
+  req: NextRequest,
+  res: Response,
+): Promise<Response> {
+  // Only the session endpoint returns the session JSON. Other Auth.js GETs
+  // (csrf, providers, signin/signout pages, OIDC callback redirects) are
+  // untouched.
+  if (!req.nextUrl.pathname.endsWith("/session")) return res;
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) return res;
+
+  let body: unknown;
+  try {
+    body = await res.clone().json();
+  } catch {
+    // Non-JSON / empty body (e.g. `{}` for an unauthenticated session is still
+    // valid JSON; a parse failure means there is nothing token-bearing to
+    // strip). Return the original response unchanged.
+    return res;
+  }
+
+  if (!body || typeof body !== "object") return res;
+  const record = body as Record<string, unknown>;
+  let mutated = false;
+  for (const field of SESSION_SERVER_ONLY_FIELDS) {
+    if (field in record) {
+      delete record[field];
+      mutated = true;
+    }
+  }
+  if (!mutated) return res;
+
+  // Rebuild the response, preserving status + headers (minus content-length,
+  // which the runtime recomputes for the new body).
+  const headers = new Headers(res.headers);
+  headers.delete("content-length");
+  return NextResponse.json(record, { status: res.status, headers });
+}
 
 /**
  * Re-encodes literal '+' in the URL query string as '%2B' before Auth.js
@@ -64,8 +130,10 @@ function sanitizeCallbackUrl(req: NextRequest): NextRequest {
   return new NextRequest(sanitized, req);
 }
 
-export function GET(req: NextRequest) {
-  return handlers.GET(sanitizeCallbackUrl(req));
+export async function GET(req: NextRequest) {
+  const sanitized = sanitizeCallbackUrl(req);
+  const res = await handlers.GET(sanitized);
+  return stripServerOnlySessionFields(sanitized, res);
 }
 
 export const POST = handlers.POST;

@@ -2,9 +2,12 @@
  * Correlation ID plumbing via AsyncLocalStorage.
  *
  * Provides a per-request correlation ID that propagates automatically across
- * awaited async boundaries within the same logical request context. The same
- * UUID is reused for the CSP nonce (set in middleware.ts) so a single ID
- * covers both security policy and distributed tracing.
+ * awaited async boundaries within the same logical request context.
+ *
+ * NOTE (dashboard#818): an earlier design reused this UUID as a per-request CSP
+ * nonce set in middleware.ts. The dashboard no longer emits a CSP from app code
+ * (the nonce-CSP was removed in the zitadel-envoy-gateway-migration; see #863).
+ * This ID now serves distributed tracing only.
  *
  * Usage:
  *   // In middleware / request entry-point:

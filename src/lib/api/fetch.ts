@@ -1,10 +1,14 @@
 /**
  * Shared fetch wrapper that attaches the CSRF token header on mutating requests.
  *
- * The proxy (proxy.ts) seeds a `csrf-token` cookie on page navigations and
- * validates it against the `x-csrf-token` header on POST/PUT/PATCH/DELETE.
- * This wrapper reads the cookie and echoes it back automatically so individual
- * API clients don't need to worry about it.
+ * The double-submit `csrf-token` cookie (src/lib/csrf.ts) is validated against
+ * the `x-csrf-token` header on POST/PUT/PATCH/DELETE. This wrapper reads the
+ * cookie and echoes it back automatically so individual API clients don't need
+ * to worry about it.
+ *
+ * NOTE (dashboard#862): the cookie's only seeder (proxy.ts) was removed in the
+ * E9 sweep, so the cookie is currently never set and `requireCsrf` fails closed
+ * on the mission routes. Tracked for a re-seed-or-retire decision in #862.
  */
 
 const CSRF_COOKIE = 'csrf-token';

@@ -10,10 +10,13 @@
  * call `requireCsrf(request)` before any state change.
  *
  * Design:
- *   - Reuses the proxy-seeded `csrf-token` cookie defined in
- *     `src/lib/csrf.ts` (double-submit cookie pattern; the cookie is
- *     `sameSite: 'strict'` itself, so a cross-site form post cannot
- *     forge the matching cookie value).
+ *   - Reuses the `csrf-token` cookie defined in `src/lib/csrf.ts`
+ *     (double-submit cookie pattern; the cookie is `sameSite: 'strict'`
+ *     itself, so a cross-site form post cannot forge the matching cookie
+ *     value).
+ *     NOTE (dashboard#862): that cookie's only seeder (proxy.ts) was removed
+ *     in the E9 sweep, so the cookie is currently never set and this guard
+ *     fails closed on the mission routes. Tracked for re-seed-or-retire in #862.
  *   - Compares the cookie value to the `x-csrf-token` request header
  *     OR to a `csrf` field in the request body (multipart or
  *     `application/x-www-form-urlencoded` form posts), Auth.js v5's
@@ -27,9 +30,9 @@
  * Auth.js v5 mints its own CSRF token at `/api/auth/csrf` for its own
  * action routes. We do NOT reuse that token here, that token is bound
  * to Auth.js's action protocol and rotates on its own schedule. The
- * proxy-seeded `csrf-token` cookie is a generic per-session token that
- * client code already echoes via `src/lib/api/fetch.ts`, so wiring this
- * helper to it requires no client-side changes.
+ * `csrf-token` cookie is a generic per-session token that client code
+ * already echoes via `src/lib/api/fetch.ts`, so wiring this helper to it
+ * requires no client-side changes (subject to #862 re-seeding the cookie).
  *
  * @module auth/csrf
  */

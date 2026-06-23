@@ -328,10 +328,13 @@ export const OPTIONAL_ENV = [
   // removed in E9 (dashboard#812). Owner provisioning now runs daemon-side via
   // the unauthenticated gibson.tenant.v1.SignupService.Signup RPC, so the
   // dashboard holds NO Zitadel admin credential for signup.
+  // ZITADEL_SA_PAT was removed in E9 (dashboard#818): its only consumer was the
+  // never-wired OIDC active-org switch action (app/actions/tenant/switch.ts),
+  // deleted in the same pass. The live tenant switch is cookie + FGA only and
+  // holds no Zitadel PAT.
   'ZITADEL_DASHBOARD_CLIENT_ID',
   'ZITADEL_DASHBOARD_CLIENT_SECRET',
   'ZITADEL_TOKEN_URL',
-  'ZITADEL_SA_PAT',
 
   // ---- Tier / Billing metadata ----
   // GIBSON_TIER picks a self-serve tier display config; only relevant when
