@@ -53,7 +53,7 @@ import {
   editPluginBindingAction,
   revokePluginBindingAction,
 } from "@/app/actions/plugin-bindings";
-import type { PluginInstallSummary } from "@/src/gen/gibson/tenant/v1/plugin_admin_pb";
+import type { PluginInstallSummary } from "@/src/gen/gibson/pluginadmin/v1/plugin_admin_pb";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 
 // ---------------------------------------------------------------------------
@@ -285,10 +285,10 @@ export function PluginDetailContent({ install }: PluginDetailContentProps) {
   // Loading=true → treat as not-allowed to prevent FOUC.
   // Spec: dashboard-authz-ui-gating Task 13, Requirement 5.3.
   const { allowed: canEdit, loading: editLoading } = useAuthorize(
-    "/gibson.tenant.v1.PluginAdminService/EditPluginSecretBinding",
+    "/gibson.pluginadmin.v1.PluginAdminService/EditPluginSecretBinding",
   );
   const { allowed: canRevoke, loading: revokeLoading } = useAuthorize(
-    "/gibson.tenant.v1.PluginAdminService/RevokePluginSecretBinding",
+    "/gibson.pluginadmin.v1.PluginAdminService/RevokePluginSecretBinding",
   );
   const allowEdit = !editLoading && canEdit;
   const allowRevoke = !revokeLoading && canRevoke;

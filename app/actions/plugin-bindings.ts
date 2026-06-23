@@ -37,7 +37,7 @@ export async function editPluginBindingAction(
 ): Promise<PluginBindingResult> {
   try {
     await assertAuthorized(
-      "/gibson.tenant.v1.PluginAdminService/EditPluginSecretBinding",
+      "/gibson.pluginadmin.v1.PluginAdminService/EditPluginSecretBinding",
     );
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
@@ -64,7 +64,7 @@ export async function revokePluginBindingAction(
 ): Promise<PluginBindingResult> {
   try {
     await assertAuthorized(
-      "/gibson.tenant.v1.PluginAdminService/RevokePluginSecretBinding",
+      "/gibson.pluginadmin.v1.PluginAdminService/RevokePluginSecretBinding",
     );
   } catch (err) {
     if (err instanceof AuthzDeniedError) {

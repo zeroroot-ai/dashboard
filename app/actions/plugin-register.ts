@@ -120,7 +120,7 @@ export async function validatePluginManifestAction(
   manifestYaml: string,
 ): Promise<PluginActionResult<ValidationResult>> {
   try {
-    await assertAuthorized("/gibson.tenant.v1.PluginAdminService/RegisterPlugin");
+    await assertAuthorized("/gibson.pluginadmin.v1.PluginAdminService/RegisterPlugin");
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
       return { ok: false, error: "Permission denied", code: "permission_denied" };
@@ -189,7 +189,7 @@ export async function registerPluginAtomicAction(
   bindingsInput: unknown[],
 ): Promise<PluginActionResult<RegisterResult>> {
   try {
-    await assertAuthorized("/gibson.tenant.v1.PluginAdminService/RegisterPlugin");
+    await assertAuthorized("/gibson.pluginadmin.v1.PluginAdminService/RegisterPlugin");
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
       return { ok: false, error: "Permission denied", code: "permission_denied" };

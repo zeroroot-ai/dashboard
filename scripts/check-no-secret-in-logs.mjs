@@ -3,18 +3,22 @@
  * check-no-secret-in-logs.mjs
  *
  * Build-time guard for spec `unified-identity-and-authorization` Phase 4
- * (R9.8). The dashboard's "Register Agent" route emits the agent's
- * `client_secret` in exactly one place: the success-response body of
- * `POST /api/agents/register`. It must never reach a logger.
+ * (R9.8). The dashboard's "Register Agent" route emits the component's
+ * one-time `bootstrap_token` in exactly one place: the success-response
+ * body of `POST /api/agents/register`. It must never reach a logger.
+ * (Under the unified-identity model — ADR-0045, gibson#670 — the daemon
+ * no longer mints a `client_secret`; the sole credential is the
+ * Capability-Grant `bootstrap_token`. The legacy `client_secret` /
+ * `clientSecret` tokens are kept in the deny-list as defense-in-depth.)
  *
  * This script scans every `.ts` / `.tsx` / `.mjs` source file under
  * `app/` and `src/` for log call sites whose argument list mentions the
- * literal `client_secret`, `clientSecret`, or related Zitadel response
- * field names. A match fails the build.
+ * literal `bootstrap_token`, `bootstrapToken`, `client_secret`, or
+ * `clientSecret`. A match fails the build.
  *
  * Why narrow:
- *   - `clientSecret` is a real TypeScript identifier in the route /
- *     test code, so a generic "no clientSecret anywhere" rule would
+ *   - `bootstrapToken` is a real TypeScript identifier in the route /
+ *     test code, so a generic "no bootstrapToken anywhere" rule would
  *     misfire. We only catch the pattern when it is being passed to a
  *     logger (`console.*`, `logger.*`, etc.).
  *   - `__tests__/` and `*.test.*` files are exempt, tests legitimately
@@ -52,6 +56,8 @@ const SKIP_FILE_MARKERS = ['.test.', '.spec.', '.stories.'];
  * of the argument tree.
  */
 const FORBIDDEN_TOKENS = [
+  'bootstrap_token',
+  'bootstrapToken',
   'client_secret',
   'clientSecret',
 ];
@@ -128,7 +134,7 @@ function runScan() {
     console.error(`    ${v.text}`);
   }
   console.error('\nWhy this exists: spec unified-identity-and-authorization R9.8 -');
-  console.error("the agent client_secret is emitted exactly once in the API response;");
+  console.error("the agent bootstrap_token is emitted exactly once in the API response;");
   console.error('it must NEVER reach a logger. Move the field out of the log arg list.');
   return 1;
 }
@@ -136,10 +142,10 @@ function runScan() {
 function runSelftest() {
   const fixturePath = join(ROOT, 'src', '__check_secret_log_fixture.ts');
   const body = [
-    '// Selftest fixture, references clientSecret inside a console.log call.',
+    '// Selftest fixture, references bootstrapToken inside a console.log call.',
     'export function bad() {',
-    '  const clientSecret = "leaky";',
-    '  console.log("registered agent", { clientSecret });',
+    '  const bootstrapToken = "leaky";',
+    '  console.log("registered agent", { bootstrapToken });',
     '}',
     '',
   ].join('\n');

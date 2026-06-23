@@ -9,12 +9,16 @@
  *   1. The default form (name + optional description), POSTs to
  *      /api/agents/register on submit.
  *   2. After a successful provision, the form is replaced by a one-time
- *      credential panel showing client_id, client_secret, and the
- *      pre-filled `gibson-cli agent enroll …` command.
+ *      credential panel showing the bootstrap token and the pre-filled
+ *      `gibson component register …` command.
  *
- * The credential panel hides the secret behind a show/hide toggle by
- * default, surfaces a "Save these credentials now" warning, and yields
- * back to the empty form once the admin clicks "I have saved them".
+ * Under the unified-identity model (ADR-0045, gibson#670) a component's
+ * sole credential is a one-time, daemon-signed Capability-Grant
+ * `bootstrapToken`, not an OAuth2 client_id/client_secret pair.
+ *
+ * The credential panel hides the token behind a show/hide toggle by
+ * default, surfaces a "Save this token now" warning, and yields back to
+ * the empty form once the admin clicks "I have saved it".
  */
 
 import { useState } from 'react';
@@ -40,8 +44,7 @@ import {
 // ---------------------------------------------------------------------------
 
 interface Credentials {
-  clientId: string;
-  clientSecret: string;
+  bootstrapToken: string;
   gibsonUrl: string;
   enrollCommand: string;
 }
@@ -107,34 +110,21 @@ function CredentialPanel({
       <CardContent className="space-y-4">
         <Alert variant="destructive">
           <AlertTriangle className="size-4" />
-          <AlertTitle>Save these credentials now</AlertTitle>
+          <AlertTitle>Save this token now</AlertTitle>
           <AlertDescription>
-            The client_secret cannot be viewed again. If you lose it, you
-            must register a new agent.
+            The bootstrap token is single-use and cannot be viewed again.
+            If you lose it, you must register a new agent.
           </AlertDescription>
         </Alert>
 
         <div className="space-y-2">
-          <Label htmlFor="register-agent-client-id">Client ID</Label>
+          <Label htmlFor="register-agent-bootstrap-token">Bootstrap token</Label>
           <div className="flex gap-2">
             <Input
-              id="register-agent-client-id"
-              readOnly
-              value={credentials.clientId}
-              className="font-mono"
-            />
-            <CopyButton value={credentials.clientId} label="client ID" />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="register-agent-client-secret">Client Secret</Label>
-          <div className="flex gap-2">
-            <Input
-              id="register-agent-client-secret"
+              id="register-agent-bootstrap-token"
               readOnly
               type={secretVisible ? 'text' : 'password'}
-              value={credentials.clientSecret}
+              value={credentials.bootstrapToken}
               className="font-mono"
             />
             <Button
@@ -142,7 +132,7 @@ function CredentialPanel({
               variant="outline"
               size="sm"
               onClick={() => setSecretVisible((v) => !v)}
-              aria-label={secretVisible ? 'Hide client secret' : 'Show client secret'}
+              aria-label={secretVisible ? 'Hide bootstrap token' : 'Show bootstrap token'}
             >
               {secretVisible ? (
                 <EyeOff className="size-4" />
@@ -150,7 +140,7 @@ function CredentialPanel({
                 <Eye className="size-4" />
               )}
             </Button>
-            <CopyButton value={credentials.clientSecret} label="client secret" />
+            <CopyButton value={credentials.bootstrapToken} label="bootstrap token" />
           </div>
         </div>
 

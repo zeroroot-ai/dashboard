@@ -15,7 +15,7 @@ import {
   AuthzDeniedError,
 } from '@/src/lib/auth/assert-authorized';
 import { userClient } from '@/src/lib/gibson-client';
-import { AgentIdentityService, PrincipalKind } from '@/src/gen/gibson/tenant/v1/agent_identity_pb';
+import { AgentIdentityService, PrincipalKind } from '@/src/gen/gibson/agentidentity/v1/agent_identity_pb';
 import { IdentityService } from '@/src/gen/gibson/identity/v1/identity_pb';
 import { GrantsService } from '@/src/gen/gibson/tenant/v1/grants_pb';
 

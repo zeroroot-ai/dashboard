@@ -14,7 +14,7 @@
  *   - call applyTenantMember outside the single permitted provisioning path
  *     (app/actions/signup.ts, founding-owner creation, ADR-0044), or
  *   - reference the removed AgentEnrollment CRD (type or 'agentenrollments'
- *     plural, enrollment is gibson.tenant.v1.AgentIdentityService, no CRD).
+ *     plural, enrollment is gibson.agentidentity.v1.AgentIdentityService, no CRD).
  *
  * Comment lines (// , * , /* ) are skipped so the historical references in
  * doc-comments don't trip the guard.
@@ -131,7 +131,7 @@ function main() {
       '\nMember/role management is owned by the daemon (MembershipService,\n' +
         'ADR-0043/0044). Read ListMembers; do not write TenantMember CRs. The only\n' +
         'permitted applyTenantMember caller is the signup provisioning path.\n' +
-        'AgentEnrollment is gone, enrollment is gibson.tenant.v1.AgentIdentityService.',
+        'AgentEnrollment is gone, enrollment is gibson.agentidentity.v1.AgentIdentityService.',
     );
     process.exit(1);
   }

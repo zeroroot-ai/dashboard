@@ -180,11 +180,10 @@ describe('POST /api/agents/register, happy path', () => {
   it('calls daemon CreateAgentIdentity and returns credentials', async () => {
     mockCreateAgentIdentity.mockResolvedValue({
       principalId: 'agent_principal:uuid-123',
-      clientId: 'cid-abc',
-      clientSecret: 'csecret-xyz',
+      bootstrapToken: 'bt-abc',
       gibsonUrl: 'https://api.zeroroot.local:30443',
       enrollCommand:
-        'gibson-cli agent enroll --client-id cid-abc --client-secret csecret-xyz --gibson-url https://api.zeroroot.local:30443',
+        'gibson component register --kind agent --token - --gibson-url https://api.zeroroot.local:30443',
     });
 
     const { POST } = await import('../route');
@@ -197,11 +196,10 @@ describe('POST /api/agents/register, happy path', () => {
 
     const body = await res.json();
     expect(body).toEqual({
-      clientId: 'cid-abc',
-      clientSecret: 'csecret-xyz',
+      bootstrapToken: 'bt-abc',
       gibsonUrl: 'https://api.zeroroot.local:30443',
       enrollCommand:
-        'gibson-cli agent enroll --client-id cid-abc --client-secret csecret-xyz --gibson-url https://api.zeroroot.local:30443',
+        'gibson component register --kind agent --token - --gibson-url https://api.zeroroot.local:30443',
     });
 
     // Verify the daemon received the correct input.
@@ -213,13 +211,12 @@ describe('POST /api/agents/register, happy path', () => {
     );
   });
 
-  it('never logs the client secret on the success path', async () => {
+  it('never logs the bootstrap token on the success path', async () => {
     mockCreateAgentIdentity.mockResolvedValue({
       principalId: 'agent_principal:uuid-1',
-      clientId: 'cid-1',
-      clientSecret: 'topsecret-do-not-leak',
+      bootstrapToken: 'topsecret-do-not-leak',
       gibsonUrl: 'https://api.zeroroot.local:30443',
-      enrollCommand: 'gibson-cli agent enroll ...',
+      enrollCommand: 'gibson component register --kind agent --token - ...',
     });
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});

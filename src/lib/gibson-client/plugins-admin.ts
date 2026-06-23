@@ -1,7 +1,7 @@
 import 'server-only';
 
 /**
- * Typed dashboard client methods for gibson.tenant.v1.PluginAdminService.
+ * Typed dashboard client methods for gibson.pluginadmin.v1.PluginAdminService.
  *
  * Backs the dashboard's plugin registration wizard and plugin detail page.
  * RegisterPlugin is atomic per Spec 2 R3.1, any partial failure rolls back
@@ -13,7 +13,7 @@ import 'server-only';
  */
 
 import { userClient } from '../gibson-client';
-import { PluginAdminService } from '@/src/gen/gibson/tenant/v1/plugin_admin_pb';
+import { PluginAdminService } from '@/src/gen/gibson/pluginadmin/v1/plugin_admin_pb';
 import type {
   PluginInstallSummary,
   PluginSecretBinding,
@@ -24,7 +24,7 @@ import type {
   EditPluginSecretBindingResponse,
   RevokePluginSecretBindingResponse,
   PluginInstallStatus,
-} from '@/src/gen/gibson/tenant/v1/plugin_admin_pb';
+} from '@/src/gen/gibson/pluginadmin/v1/plugin_admin_pb';
 import { throwMapped } from './secrets';
 
 export type {

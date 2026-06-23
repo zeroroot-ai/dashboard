@@ -11,16 +11,23 @@
  *   4. Call `AgentIdentityService.CreateAgentIdentity` over gRPC via the
  *      Envoy edge (dashboard → Envoy → daemon). The daemon handles all
  *      IdP provisioning and FGA tuple writes internally.
- *   5. Return the daemon's response fields (`clientId`, `clientSecret`,
+ *   5. Return the daemon's response fields (`bootstrapToken`,
  *      `gibsonUrl`, `enrollCommand`) to the browser unchanged.
+ *
+ * Under the unified-identity model (ADR-0045, gibson#670) the daemon no
+ * longer mints an OAuth2 `client_id`/`client_secret` pair for a
+ * component. The sole credential is a one-time, daemon-signed
+ * Capability-Grant `bootstrap_token` that the component presents to the
+ * CG register endpoint on its first host registration; `enroll_command`
+ * pipes it via `--token -`.
  *
  * SECURITY:
  *   - No IdP-vendor credentials are held in this file. The daemon owns
  *     the IdP admin surface; the dashboard is a thin proxy.
- *   - The `clientSecret` is forwarded directly from the daemon response
+ *   - The `bootstrapToken` is forwarded directly from the daemon response
  *     and is never logged here. Every error path is sanitized.
  *   - Logger calls in this file deliberately do NOT reference
- *     `clientSecret`, the build guard
+ *     `bootstrapToken`, the build guard
  *     `scripts/check-no-secret-in-logs.mjs` verifies this.
  */
 
@@ -38,7 +45,7 @@ import { userClient } from '@/src/lib/gibson-client';
 import {
   AgentIdentityService,
   PrincipalKind,
-} from '@/src/gen/gibson/tenant/v1/agent_identity_pb';
+} from '@/src/gen/gibson/agentidentity/v1/agent_identity_pb';
 
 // ---------------------------------------------------------------------------
 // Request validation
@@ -91,14 +98,14 @@ const RegisterAgentSchema = z.object({
 export type RegisterAgentRequestBody = z.infer<typeof RegisterAgentSchema>;
 
 export interface RegisterAgentResponseBody {
-  /** OAuth2 client_id for the agent's service account. */
-  clientId: string;
   /**
-   * OAuth2 client_secret, emitted exactly once; cannot be retrieved
-   * again. The dashboard surfaces it to the registering admin in the
-   * one-time credential panel.
+   * One-time, daemon-signed Capability-Grant bootstrap token, emitted
+   * exactly once; cannot be retrieved again. The dashboard surfaces it
+   * to the registering admin in the one-time credential panel. The
+   * component presents it to the CG register endpoint to complete its
+   * first host registration (ADR-0045).
    */
-  clientSecret: string;
+  bootstrapToken: string;
   /** Public Envoy URL the agent should dial. */
   gibsonUrl: string;
   /**
@@ -196,11 +203,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // Step 4, call AgentIdentityService.CreateAgentIdentity via gRPC.
   // The daemon handles IdP provisioning, FGA tuple writes, and audit.
-  // clientSecret is present in the daemon response and forwarded to the
-  // browser exactly once; it is never stored or logged here.
+  // bootstrapToken is present in the daemon response and forwarded to
+  // the browser exactly once; it is never stored or logged here.
   let daemonResp: {
-    clientId: string;
-    clientSecret: string;
+    bootstrapToken: string;
     gibsonUrl: string;
     enrollCommand: string;
   };
@@ -216,8 +222,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       })),
     });
     daemonResp = {
-      clientId: resp.clientId,
-      clientSecret: resp.clientSecret,
+      bootstrapToken: resp.bootstrapToken,
       gibsonUrl: resp.gibsonUrl,
       enrollCommand: resp.enrollCommand,
     };

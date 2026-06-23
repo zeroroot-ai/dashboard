@@ -219,7 +219,7 @@ export interface TenantMember extends K8sResource<TenantMemberSpec, TenantMember
 // ---------------------------------------------------------------------------
 //
 // The AgentEnrollment CRD types were removed (dashboard#713/#716): enrollment
-// is owned by gibson.tenant.v1.AgentIdentityService (no CRD). ComponentKind +
+// is owned by gibson.agentidentity.v1.AgentIdentityService (no CRD). ComponentKind +
 // ComponentRef remain because ComponentGrant below references them.
 
 export type ComponentKind = 'agent' | 'tool' | 'plugin';
