@@ -21,6 +21,7 @@ vi.mock('@/src/lib/auth', () => ({
 
 vi.mock('@/src/lib/auth/active-tenant', () => ({
   requireActiveTenant: vi.fn(),
+  unsafeTenantId: (v: string) => v,
   activeTenantApiResponse: vi.fn((err: unknown) => {
     return Response.json({ error: 'no_active_tenant', code: 'no_active_tenant' }, { status: 412 });
   }),
@@ -43,7 +44,7 @@ vi.mock('@/src/lib/gibson-client', async (importOriginal) => {
 
 import { GET, POST } from './route';
 import { getServerSession } from '@/src/lib/auth';
-import { requireActiveTenant } from '@/src/lib/auth/active-tenant';
+import { requireActiveTenant, unsafeTenantId } from '@/src/lib/auth/active-tenant';
 import { daemonListProviders, daemonCreateProvider } from '@/src/lib/gibson-client';
 
 // ---------------------------------------------------------------------------
@@ -82,7 +83,7 @@ function makeRequest(method = 'GET', body?: unknown): Request {
 describe('GET /api/settings/providers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(requireActiveTenant).mockResolvedValue('tenant-1');
+    vi.mocked(requireActiveTenant).mockResolvedValue(unsafeTenantId('tenant-1'));
   });
 
   it('returns 401 when unauthenticated', async () => {
@@ -164,7 +165,7 @@ describe('GET /api/settings/providers', () => {
 describe('POST /api/settings/providers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(requireActiveTenant).mockResolvedValue('tenant-1');
+    vi.mocked(requireActiveTenant).mockResolvedValue(unsafeTenantId('tenant-1'));
   });
 
   const validInput = {

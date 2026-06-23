@@ -44,7 +44,7 @@ import {
   getServiceToken,
   invalidateServiceToken,
 } from './auth/service-token';
-import { getActiveTenant } from './auth/active-tenant';
+import { getActiveTenant, unsafeTenantId, type TenantId } from './auth/active-tenant';
 import {
   adminRpcTotal,
   adminEnvoyUpstreamErrorsTotal,
@@ -229,7 +229,7 @@ const telemetryInterceptor: Interceptor = (next) => async (req) => {
 export function makeClient<T extends DescService>(
   service: T,
   getToken: () => Promise<string>,
-  getTenant: () => Promise<string>,
+  getTenant: () => Promise<TenantId>,
 ): Client<T> {
   const authInterceptor: Interceptor = (next) => async (req) => {
     const [token, tenant] = await Promise.all([getToken(), getTenant()]);
@@ -362,6 +362,13 @@ export function userClient<T extends DescService>(service: T): Client<T> {
  * from those paths instead.
  *
  * Per spec R4.2, this is the canonical wrapper for service-acting RPCs.
+ *
+ * `tenantId` is a raw `string` (not a branded {@link TenantId}) because the
+ * service-acting path has no cookie/user context to validate against, callers
+ * pass a daemon-derived or empty tenant. This is the documented
+ * non-validated tenant boundary (dashboard#815); the value is branded
+ * internally via {@link unsafeTenantId} only to satisfy {@link makeClient}'s
+ * mint contract.
  */
 export function serviceClient<T extends DescService>(
   service: T,
@@ -373,7 +380,7 @@ export function serviceClient<T extends DescService>(
   // pre-emptively invalidate on the next call AFTER an Unauthenticated
   // ConnectError has been observed by the caller, see the catch in
   // `withServiceRetry` below.
-  return makeClient(service, getServiceToken, async () => tenantId);
+  return makeClient(service, getServiceToken, async () => unsafeTenantId(tenantId));
 }
 
 /**

@@ -3,9 +3,9 @@
   "permitted": [
     {
       "file": "src/lib/auth/active-tenant.ts",
-      "line": 336,
+      "line": 380,
       "kind": "cookie-secure-flag",
-      "rationale": "Sets the active-tenant cookie's `secure` attribute to true only in production. NOT an authz bypass; localhost dev legitimately runs without TLS. Audited 2026-05-07; line moved 159->336 by the requireActiveTenant canonicalization (#592)."
+      "rationale": "Sets the active-tenant cookie's `secure` attribute to true only in production. NOT an authz bypass; localhost dev legitimately runs without TLS. Audited 2026-05-07; line moved 159->336 by the requireActiveTenant canonicalization (#592), then 336->380 by the branded-TenantId mint block (#815)."
     }
   ]
 }

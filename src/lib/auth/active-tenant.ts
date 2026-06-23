@@ -45,6 +45,49 @@ const COOKIE_NAME = 'gibson_active_tenant';
 const COOKIE_MAX_AGE_S = 8 * 60 * 60; // 8h, aligned with Auth.js session
 
 // ---------------------------------------------------------------------------
+// Branded TenantId (dashboard#815)
+// ---------------------------------------------------------------------------
+//
+// `TenantId` is an opaque brand over `string`. A raw `string` is NOT
+// assignable to `TenantId`, so a lenient value (`'default'`, a smeared
+// `session.user.tenantId || ''`, an un-revalidated cookie value, …) cannot be
+// passed where a *validated* active tenant is required, it fails to compile,
+// not merely fail-closed at runtime.
+//
+// The ONLY fail-closed mint is `requireActiveTenant()` / `getActiveTenant()`
+// below, which HMAC-validates the cookie and re-checks FGA memberships before
+// branding the value. The brand makes the runtime invariant (PRD #567,
+// dashboard#583) a *type-system* invariant.
+//
+// The single documented escape hatch is `unsafeTenantId()`: the service-acting
+// transport (`serviceClient`) and the Stripe-webhook tenant attribution have
+// no cookie/user context and legitimately carry a daemon-derived or empty
+// tenant string. Those call sites brand explicitly and greppably; everything
+// else must route through the mint.
+
+/**
+ * Opaque, validated active-tenant identifier.
+ *
+ * Produced only by `requireActiveTenant()` / `getActiveTenant()` (the
+ * fail-closed mint) or, at the two documented non-user boundaries, by
+ * `unsafeTenantId()`. A plain `string` is not assignable to `TenantId`.
+ */
+export type TenantId = string & { readonly __brand: 'TenantId' };
+
+/**
+ * The sole non-validated `TenantId` mint, for the service-acting transport
+ * and webhook tenant attribution, neither of which has a cookie or a signed-in
+ * user to validate against. Every other producer of `TenantId` MUST go through
+ * `requireActiveTenant()`.
+ *
+ * Naming is intentionally loud: an `unsafeTenantId(...)` call in a user-facing
+ * route handler is a review smell (it bypasses the fail-closed mint).
+ */
+export function unsafeTenantId(value: string): TenantId {
+  return value as TenantId;
+}
+
+// ---------------------------------------------------------------------------
 // Public errors
 // ---------------------------------------------------------------------------
 
@@ -134,7 +177,7 @@ function decodeCookie(value: string | undefined): string | null {
  *   user is no longer a member of. Caller should clear the cookie and
  *   redirect to `/select-tenant`.
  */
-export const getActiveTenant = cache(async (): Promise<string> => {
+export const getActiveTenant = cache(async (): Promise<TenantId> => {
   const jar = await cookies();
   const tenantId = decodeCookie(jar.get(COOKIE_NAME)?.value);
   if (!tenantId) {
@@ -144,7 +187,8 @@ export const getActiveTenant = cache(async (): Promise<string> => {
   if (!memberships.some((m: Membership) => m.tenantId === tenantId)) {
     throw new StaleActiveTenantError(tenantId);
   }
-  return tenantId;
+  // The value is now HMAC-valid AND a confirmed current membership: brand it.
+  return tenantId as TenantId;
 });
 
 /**
