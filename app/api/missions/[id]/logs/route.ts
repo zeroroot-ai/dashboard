@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ConnectError, Code } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
-import { LokiClient, LokiLogEntry } from '@/src/lib/loki-client';
+import { logger } from '@/src/lib/logger';
+import {
+  queryDaemonLogs,
+  type DashboardLogLevel,
+} from '@/src/lib/gibson-client/logs';
 
 /**
  * GET /api/missions/:id/logs
  *
- * Fetch logs for a specific mission from Loki.
- * Falls back to returning empty array if Loki is unavailable.
+ * Fetch logs for a specific mission via the daemon LogsService
+ * (gibson.daemon.logs.v1.QueryDaemonLogs). The daemon derives the tenant
+ * scope from the authenticated identity and queries Loki server-side; the
+ * dashboard never talks to Loki directly (dashboard#811). Returns an empty,
+ * `available: false` payload when the daemon's log backend is unavailable.
  *
  * Query params:
  * - level: Filter by log level (error, warn, info, debug)
@@ -29,11 +37,13 @@ export async function GET(
       );
     }
 
-    // Authz enforced by daemon ext-authz on the downstream RPC.
-
-    let tenantId: string;
+    // Authz + tenant scoping are enforced by the daemon on the downstream
+    // RPC (ext-authz tenant#member; tenant derived from the caller's
+    // identity). We still require an active-tenant cookie so userClient can
+    // attach the x-gibson-tenant header and fail closed on stale/absent
+    // selection.
     try {
-      tenantId = await requireActiveTenant();
+      await requireActiveTenant();
     } catch (err) {
       return activeTenantApiResponse(err);
     }
@@ -42,7 +52,7 @@ export async function GET(
     const searchParams = request.nextUrl.searchParams;
 
     // Parse query params
-    const level = searchParams.get('level') as 'error' | 'warn' | 'info' | 'debug' | null;
+    const level = searchParams.get('level') as DashboardLogLevel | null;
     const limitParam = searchParams.get('limit');
     const limit = Math.min(500, Math.max(1, parseInt(limitParam || '100', 10)));
     const startParam = searchParams.get('start');
@@ -56,28 +66,32 @@ export async function GET(
       ? new Date(isNaN(Number(endParam)) ? endParam : Number(endParam))
       : new Date();
 
-    // Initialize Loki client. LOKI_URL is REQUIRED (src/lib/env-validator.ts).
-    const { env } = await import('@/src/lib/env-validator');
-    const loki = new LokiClient(env.LOKI_URL);
-
-    // Check if Loki is available
-    const isReady = await loki.isReady();
-    if (!isReady) {
-      return NextResponse.json({
-        available: false,
-        message: 'Log service is not available',
-        logs: [],
+    // Query logs for this mission through the daemon. A transient backend
+    // failure (Unavailable) is surfaced as `available: false` rather than a
+    // 5xx, matching the prior Loki-readiness behaviour.
+    let logs;
+    try {
+      logs = await queryDaemonLogs({
+        missionId,
+        level: level || undefined,
+        start,
+        end,
+        limit,
       });
+    } catch (err) {
+      if (err instanceof ConnectError && err.code === Code.Unavailable) {
+        logger.warn(
+          { route: 'missions/logs', missionId, err },
+          'daemon log backend unavailable',
+        );
+        return NextResponse.json({
+          available: false,
+          message: 'Log service is not available',
+          logs: [],
+        });
+      }
+      throw err;
     }
-
-    // Query logs for this mission
-    const logs = await loki.queryDaemonLogs(tenantId, {
-      missionId,
-      level: level || undefined,
-      start,
-      end,
-      limit,
-    });
 
     // Parse JSON log lines and extract relevant fields
     const parsedLogs = logs.map((entry) => {

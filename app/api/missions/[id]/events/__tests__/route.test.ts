@@ -24,8 +24,7 @@ const {
   mockListCheckpoints,
   mockSubscribe,
   mockUserClient,
-  mockIsReady,
-  mockQuery,
+  mockQueryMissionLogs,
 } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
   mockRequireActiveTenant: vi.fn(),
@@ -33,8 +32,7 @@ const {
   mockListCheckpoints: vi.fn(),
   mockSubscribe: vi.fn(),
   mockUserClient: vi.fn(),
-  mockIsReady: vi.fn(),
-  mockQuery: vi.fn(),
+  mockQueryMissionLogs: vi.fn(),
 }));
 
 vi.mock('@/src/lib/auth', () => ({
@@ -51,11 +49,8 @@ vi.mock('@/src/lib/gibson-client', () => ({
   userClient: () => mockUserClient(),
 }));
 
-vi.mock('@/src/lib/loki-client', () => ({
-  LokiClient: class {
-    isReady = mockIsReady;
-    query = mockQuery;
-  },
+vi.mock('@/src/lib/gibson-client/logs', () => ({
+  queryMissionLogs: mockQueryMissionLogs,
 }));
 
 // Static import, GET creates all state per-call (no module-level mutation),
@@ -103,8 +98,10 @@ beforeEach(() => {
   mockListCheckpoints.mockReset();
   mockSubscribe.mockReset();
   mockUserClient.mockReset();
-  mockIsReady.mockReset();
-  mockQuery.mockReset();
+  mockQueryMissionLogs.mockReset();
+
+  // Default: no log lines unless a test opts in.
+  mockQueryMissionLogs.mockResolvedValue([]);
 
   // Default: active tenant resolves to t1.
   mockRequireActiveTenant.mockResolvedValue('t1');
@@ -131,12 +128,11 @@ describe('GET /api/missions/:id/events, Loki log tail', () => {
       missions: [{ id: 'm1', status: 'MISSION_STATUS_RUNNING' }],
     });
 
-    mockIsReady.mockResolvedValue(true);
     // Entries must be at-or-after the route's live cursor (initialised to
     // `Date.now()` when the stream opens), otherwise they're skipped as
     // already-seen. Use timestamps a little in the future to stay ahead of it.
     const base = Date.now() + 1000;
-    mockQuery.mockResolvedValue([
+    mockQueryMissionLogs.mockResolvedValue([
       {
         timestamp: new Date(base),
         line: JSON.stringify({ level: 'info', msg: 'agent started' }),
@@ -163,19 +159,22 @@ describe('GET /api/missions/:id/events, Loki log tail', () => {
     expect(countLogFrames(text)).toBeGreaterThanOrEqual(2);
     expect(text).toContain('agent started');
     expect(text).toContain('tool crashed');
-    // The Loki query must target this mission's stream.
-    expect(mockQuery).toHaveBeenCalled();
-    expect(mockQuery.mock.calls[0][0].query).toContain('mission_id="m1"');
+    // The daemon query must target this mission. The tenant scope is derived
+    // server-side, so the route passes only the mission id (no tenant arg).
+    expect(mockQueryMissionLogs).toHaveBeenCalled();
+    expect(mockQueryMissionLogs.mock.calls[0][0]).toBe('m1');
   });
 
-  it('emits no log frames when Loki is not ready', async () => {
+  it('emits no log frames when the daemon log query fails', async () => {
     mockGetServerSession.mockResolvedValue({
       user: { id: 'u1', tenantId: 't1' },
     });
     mockListMissions.mockResolvedValue({
       missions: [{ id: 'm1', status: 'MISSION_STATUS_RUNNING' }],
     });
-    mockIsReady.mockResolvedValue(false);
+    // The daemon log backend is unavailable: the RPC rejects. The tail is
+    // best-effort and swallows the error, so no log frames are emitted.
+    mockQueryMissionLogs.mockRejectedValue(new Error('log backend unavailable'));
 
     const res = await GET(makeRequest(), makeParams('m1'));
 
@@ -187,7 +186,6 @@ describe('GET /api/missions/:id/events, Loki log tail', () => {
     );
 
     expect(text).not.toContain('event: log');
-    expect(mockQuery).not.toHaveBeenCalled();
   });
 });
 
@@ -199,7 +197,6 @@ describe('GET /api/missions/:id/events, per-node lifecycle frames', () => {
     mockListMissions.mockResolvedValue({
       missions: [{ id: 'm1', status: 'MISSION_STATUS_RUNNING' }],
     });
-    mockIsReady.mockResolvedValue(false);
 
     // Daemon Subscribe yields node events as MissionEvent on the response
     // oneof, mirror the protobuf-es shape the route reads.
@@ -252,7 +249,6 @@ describe('GET /api/missions/:id/events, per-node lifecycle frames', () => {
     mockListMissions.mockResolvedValue({
       missions: [{ id: 'm1', status: 'MISSION_STATUS_RUNNING' }],
     });
-    mockIsReady.mockResolvedValue(false);
 
     mockSubscribe.mockImplementation(async function* () {
       yield {

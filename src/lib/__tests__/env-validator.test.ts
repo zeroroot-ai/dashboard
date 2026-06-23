@@ -68,9 +68,6 @@ const VALID_ENV: Record<string, string> = {
   DASHBOARD_HIBP_ENABLED: 'true',
   DASHBOARD_EMAIL_PROVIDER: 'log',
 
-  // Observability
-  LOKI_URL: 'http://gibson-loki:3100',
-
   // Force production codepath so prodOnly entries are enforced, the test
   // suite must exercise every required key, including prodOnly ones.
   NODE_ENV: 'production',
