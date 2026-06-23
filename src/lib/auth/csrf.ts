@@ -14,9 +14,10 @@
  *     (double-submit cookie pattern; the cookie is `sameSite: 'strict'`
  *     itself, so a cross-site form post cannot forge the matching cookie
  *     value).
- *     NOTE (dashboard#862): that cookie's only seeder (proxy.ts) was removed
- *     in the E9 sweep, so the cookie is currently never set and this guard
- *     fails closed on the mission routes. Tracked for re-seed-or-retire in #862.
+ *     The cookie is seeded by middleware (`ensureCsrfCookie` in
+ *     `src/lib/csrf.ts`) on every pass-through navigation. Its previous
+ *     seeder (`proxy.ts`) was removed in the E9 sweep; middleware is the
+ *     correct home and restores this guard (dashboard#862).
  *   - Compares the cookie value to the `x-csrf-token` request header
  *     OR to a `csrf` field in the request body (multipart or
  *     `application/x-www-form-urlencoded` form posts), Auth.js v5's
@@ -32,7 +33,7 @@
  * to Auth.js's action protocol and rotates on its own schedule. The
  * `csrf-token` cookie is a generic per-session token that client code
  * already echoes via `src/lib/api/fetch.ts`, so wiring this helper to it
- * requires no client-side changes (subject to #862 re-seeding the cookie).
+ * requires no client-side changes.
  *
  * @module auth/csrf
  */
@@ -109,7 +110,7 @@ async function readSubmittedToken(request: NextRequest): Promise<string | null> 
 
 /**
  * Require a valid CSRF token on a mutating request. Throws
- * {@link CsrfError} if the proxy-seeded cookie is missing, the request
+ * {@link CsrfError} if the middleware-seeded cookie is missing, the request
  * carries no token, or the values do not match (constant-time compare).
  *
  * Call this at the top of every POST/PUT/PATCH/DELETE handler under
@@ -130,7 +131,7 @@ export async function requireCsrf(request: NextRequest): Promise<void> {
   if (!cookieToken) {
     throw new CsrfError(
       'csrf-cookie-missing',
-      `the ${CSRF_COOKIE_NAME} cookie is absent, the proxy did not seed it (browser may have third-party cookies blocked or the request bypassed the proxy)`,
+      `the ${CSRF_COOKIE_NAME} cookie is absent, middleware did not seed it (browser may have third-party cookies blocked or the request bypassed middleware)`,
     );
   }
 
