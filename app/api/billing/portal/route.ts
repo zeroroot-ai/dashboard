@@ -8,7 +8,7 @@ import type { NextRequest } from 'next/server';
 
 import { billingEnabled } from '@/src/lib/billing/billing-enabled';
 import { createPortalSession } from '@/src/lib/billing/stripe';
-import { getTenant } from '@/src/lib/k8s/tenants';
+import { getTenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
 import {
   assertAuthorized,
   AuthzDeniedError,
@@ -83,14 +83,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Look up the Tenant CR to get the Stripe customer ID.
-  let tenant: Awaited<ReturnType<typeof getTenant>> | null = null;
+  // Look up the operator-reported provisioning status to get the Stripe
+  // customer ID (dashboard#813 — no Kubernetes read).
+  let customerId: string;
   try {
-    tenant = await getTenant(tenantSlug);
+    const status = await getTenantProvisioningStatus(tenantSlug);
+    customerId = status.stripeCustomerId;
   } catch (err) {
     logger.error(
       { err: err instanceof Error ? err.message : String(err), tenantSlug },
-      '[billing/portal] Failed to get Tenant CR',
+      '[billing/portal] Failed to get tenant provisioning status',
     );
     return NextResponse.json(
       { error: 'billing temporarily unavailable' },
@@ -98,11 +100,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // tenant-operator#354 moved stripeCustomerId from spec to status
-  // (controller-populated); prefer the saga-created customer, fall back to
-  // the webhook-mirrored billing.customerId.
-  const customerId =
-    tenant.status?.stripeCustomerId ?? tenant.status?.billing?.customerId;
   if (!customerId) {
     return NextResponse.json(
       { error: 'no billing customer' },

@@ -27,22 +27,30 @@ import 'server-only';
 
 import { NextResponse } from 'next/server';
 import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
-import { getTenant } from '@/src/lib/k8s/tenants';
-import { K8sNotFoundError } from '@/src/lib/k8s/errors';
+import { getTenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
-import type { DataPlaneStatus, StoreStatus } from '@/src/types/onboarding';
-import type { DataPlaneStoreStatus } from '@/src/lib/k8s/types';
+import type {
+  DataPlaneStatus,
+  DataPlaneStoreState,
+  StoreStatus,
+} from '@/src/types/onboarding';
 
-/** Map an optional CRD store entry to the API response shape. */
-function mapStore(entry: DataPlaneStoreStatus | undefined): StoreStatus {
-  if (!entry) {
-    return { state: null, reason: null, lastUpdated: null };
-  }
-  return {
-    state: entry.state,
-    reason: entry.reason ?? null,
-    lastUpdated: entry.lastUpdated ?? null,
-  };
+const NOT_STARTED: StoreStatus = { state: null, reason: null, lastUpdated: null };
+
+const KNOWN_STATES: readonly DataPlaneStoreState[] = ['provisioning', 'ready', 'failed'];
+
+/**
+ * Map an operator-reported store state string to the API response shape. The
+ * daemon snapshot (read via the daemon, dashboard#813/#855) carries only the
+ * coarse state ("", "Provisioning", "Ready", "Failed" — case-insensitive); the
+ * per-store reason/lastUpdated were Tenant-CR-only details and are reported as
+ * null now that the dashboard no longer reads the CR directly. Unknown / empty
+ * states collapse to not-started.
+ */
+function mapStore(state: string): StoreStatus {
+  const normalized = state.toLowerCase();
+  const known = KNOWN_STATES.find((s) => s === normalized);
+  return known ? { state: known, reason: null, lastUpdated: null } : NOT_STARTED;
 }
 
 export async function GET() {
@@ -54,27 +62,17 @@ export async function GET() {
   }
 
   try {
-    const cr = await getTenant(tenantId);
-    const stores = cr.status?.dataPlane?.stores;
+    const status = await getTenantProvisioningStatus(tenantId);
 
+    // found: false (or all-empty stores) ⇒ provisioning hasn't started.
     const payload: DataPlaneStatus = {
-      postgres: mapStore(stores?.postgres),
-      redis: mapStore(stores?.redis),
-      graph: mapStore(stores?.neo4j),
+      postgres: mapStore(status.stores.postgres),
+      redis: mapStore(status.stores.redis),
+      graph: mapStore(status.stores.neo4j),
     };
 
     return NextResponse.json(payload);
   } catch (error) {
-    if (error instanceof K8sNotFoundError) {
-      // Tenant CR not yet created, provisioning hasn't started.
-      const notStarted: DataPlaneStatus = {
-        postgres: { state: null, reason: null, lastUpdated: null },
-        redis: { state: null, reason: null, lastUpdated: null },
-        graph: { state: null, reason: null, lastUpdated: null },
-      };
-      return NextResponse.json(notStarted);
-    }
-
     return daemonErrorResponse(error);
   }
 }

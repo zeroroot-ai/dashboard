@@ -10,16 +10,23 @@
  *   - a daemon policy rejection maps to POLICY_VIOLATION;
  *   - the card-first phases behave unchanged.
  *
- * All external dependencies (owner-provisioning RPC, K8s, rate-limit,
- * progress-store, billing, next/headers) are mocked so the tests run without
- * a cluster.
+ * dashboard#813: the dashboard holds zero Kubernetes access. Tenant existence,
+ * tenant-ready polling, and the founding-owner TenantMember are all owned by
+ * the tenant-operator; the dashboard reads the operator-reported provisioning
+ * snapshot via the daemon's TenantProvisioningService
+ * (`getTenantProvisioningStatus`). The dashboard no longer writes the Tenant CR
+ * or the founding-owner TenantMember.
+ *
+ * All external dependencies (owner-provisioning RPC, daemon provisioning
+ * status, rate-limit, progress-store, billing, next/headers) are mocked so the
+ * tests run without a cluster.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { ConnectError, Code } from '@connectrpc/connect';
 
-import type { Tenant } from '@/src/lib/k8s/types';
+import type { TenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
 
 // ---------------------------------------------------------------------------
 // Mocks, must precede the subject import so Vitest's module registry sees them
@@ -52,38 +59,16 @@ vi.mock('@/src/lib/signup/progress-store', () => ({
   failProgress: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock K8s tenants, no workspace conflict, tenant ready immediately.
-//
-// dashboard#813: signup no longer writes the Tenant CR — the daemon Signup RPC
-// enqueues the tenant and the tenant-operator creates the CR (gibson#949). So
-// `applyTenant` is NOT mocked here and the action must not call it; signup's
-// only remaining Tenant-CR-namespace K8s writes are the founding-owner
-// TenantMember (applyTenantMember) once the operator-created Tenant is ready.
-const mockTenant = {
-  metadata: { name: 'test-workspace', namespace: 'gibson' },
-  spec: {},
-  status: { phase: 'Active', zitadelOrgID: 'mock-org-123' },
-};
-// Real k8s().get throws on 404; the production code's safeGetTenant catches
-// the not-found error and treats it as "no existing tenant". Modeling the
-// reject (instead of resolving null) keeps the mock faithful to the real
-// `(name) => Promise<Tenant>` signature. applyTenantMember has no observable
-// return contract at the call sites here (the action awaits it but doesn't read
-// the value), so a cast through unknown is enough.
-vi.mock('@/src/lib/k8s/tenants', () => ({
-  applyTenantMember: vi.fn().mockResolvedValue(undefined as unknown as Tenant),
-  getTenant: vi.fn().mockRejectedValue(new Error('tenant not found: 404')),
-  tenantNamespace: vi.fn((slug: string) => `tenant-${slug}`),
+// Mock the daemon tenant-provisioning status read (dashboard#813). signup reads
+// it for (a) the workspace-name existence probe (tenantExists) and (b) the
+// post-provision tenant-ready poll (waitForTenantReady). The dashboard no
+// longer touches Kubernetes; there is no Tenant CR write and no TenantMember
+// write to assert.
+const { mockGetTenantProvisioningStatus } = vi.hoisted(() => ({
+  mockGetTenantProvisioningStatus: vi.fn(),
 }));
-
-// Mock K8s client for TenantMember polling, immediately Active.
-vi.mock('@/src/lib/k8s/client', () => ({
-  k8s: vi.fn(() => ({
-    get: vi.fn().mockResolvedValue({
-      status: { phase: 'Active' },
-    }),
-    apply: vi.fn().mockResolvedValue(undefined),
-  })),
+vi.mock('@/src/lib/gibson-client/provisioning', () => ({
+  getTenantProvisioningStatus: mockGetTenantProvisioningStatus,
 }));
 
 // Mock the billing/stripe surface (card-first signup, dashboard#785). Use
@@ -117,7 +102,7 @@ vi.mock('@/src/lib/billing/stripe', () => ({
 
 // After mocks are set up, import the subject.
 import { signupAction, completeSignup } from '../signup';
-import { getTenant, applyTenantMember } from '@/src/lib/k8s/tenants';
+import { getTenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
 
 // ---------------------------------------------------------------------------
 // Test fixtures
@@ -141,6 +126,28 @@ const OWNER_OK = {
   alreadyExisted: false,
 };
 
+/** A "no provisioning record yet" snapshot (slug available / not provisioned). */
+const STATUS_NOT_FOUND: TenantProvisioningStatus = {
+  found: false,
+  phase: '',
+  dataPlaneReady: false,
+  stores: { postgres: '', redis: '', neo4j: '' },
+  zitadelOrgSlug: '',
+  stripeCustomerId: '',
+  billingActive: false,
+};
+
+/** A "ready" snapshot (operator created the org; workspace ready). */
+const STATUS_READY: TenantProvisioningStatus = {
+  found: true,
+  phase: 'Provisioning',
+  dataPlaneReady: true,
+  stores: { postgres: 'ready', redis: 'ready', neo4j: 'ready' },
+  zitadelOrgSlug: 'test-workspace',
+  stripeCustomerId: 'cus_1',
+  billingActive: true,
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -148,8 +155,7 @@ const OWNER_OK = {
 /** Reset all call counts between tests. */
 function resetMocks() {
   mockProvisionSignupOwner.mockReset().mockResolvedValue(OWNER_OK);
-  vi.mocked(getTenant).mockRejectedValue(new Error('tenant not found: 404'));
-  vi.mocked(applyTenantMember).mockClear();
+  mockGetTenantProvisioningStatus.mockReset().mockResolvedValue(STATUS_NOT_FOUND);
   mockFindOrCreateSignupCustomer.mockClear().mockResolvedValue('cus_1');
   mockCreateSetupIntent.mockClear().mockResolvedValue({ client_secret: 'seti_secret_123' });
   mockVerifySignupCustomer.mockClear().mockResolvedValue(true);
@@ -157,13 +163,15 @@ function resetMocks() {
   mockFinalizeSignupCustomer.mockClear();
 }
 
-/** getTenant: first call 404 (name available), subsequent calls ready. */
-function tenantAvailableThenReady() {
+/**
+ * provisioning status: first call not-found (name available / race guard),
+ * subsequent calls ready (operator created the workspace asynchronously).
+ */
+function statusAvailableThenReady() {
   let n = 0;
-  vi.mocked(getTenant).mockImplementation(async () => {
+  vi.mocked(getTenantProvisioningStatus).mockImplementation(async () => {
     n++;
-    if (n === 1) throw new Error('tenant not found: 404');
-    return mockTenant as Tenant;
+    return n === 1 ? STATUS_NOT_FOUND : STATUS_READY;
   });
 }
 
@@ -177,7 +185,7 @@ describe('signupAction, daemon owner provisioning (E9, dashboard#812)', () => {
   });
 
   it('provisions the founding owner via the daemon Signup RPC with the form fields', async () => {
-    tenantAvailableThenReady();
+    statusAvailableThenReady();
 
     const result = await signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-000000000001');
 
@@ -197,7 +205,7 @@ describe('signupAction, daemon owner provisioning (E9, dashboard#812)', () => {
   });
 
   it('always redirects to /login after a successful signup (no auto-login)', async () => {
-    tenantAvailableThenReady();
+    statusAvailableThenReady();
 
     const result = await signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-000000000002');
 
@@ -210,7 +218,7 @@ describe('signupAction, daemon owner provisioning (E9, dashboard#812)', () => {
   });
 
   it('maps a daemon InvalidArgument (policy rejection) to POLICY_VIOLATION', async () => {
-    tenantAvailableThenReady();
+    statusAvailableThenReady();
     mockProvisionSignupOwner.mockRejectedValueOnce(
       new ConnectError('password does not meet complexity policy', Code.InvalidArgument),
     );
@@ -221,14 +229,10 @@ describe('signupAction, daemon owner provisioning (E9, dashboard#812)', () => {
     if (!result.ok) {
       expect(result.code).toBe('POLICY_VIOLATION');
     }
-    // No TenantMember CR is applied when owner provisioning fails (and the
-    // dashboard never writes the Tenant CR at all — the operator does, off the
-    // daemon's pending-provisioning queue; dashboard#813).
-    expect(applyTenantMember).not.toHaveBeenCalled();
   });
 
   it('maps a daemon Unavailable to ZITADEL_UNAVAILABLE', async () => {
-    tenantAvailableThenReady();
+    statusAvailableThenReady();
     mockProvisionSignupOwner.mockRejectedValueOnce(
       new ConnectError('identity service down', Code.Unavailable),
     );
@@ -271,8 +275,8 @@ describe('card-first signup phase 1 (signupAction → card)', () => {
   });
 
   it('creates ONLY the Stripe customer + SetupIntent and returns the card phase — no account/company', async () => {
-    // Step-3 availability check → 404 (name available).
-    vi.mocked(getTenant).mockRejectedValue(new Error('tenant not found: 404'));
+    // Step-3 availability check → not-found (name available).
+    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_NOT_FOUND);
     const result = await signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-0000000000b1');
     expect(result.ok).toBe(true);
     expect('phase' in result && result.phase === 'card').toBe(true);
@@ -285,9 +289,8 @@ describe('card-first signup phase 1 (signupAction → card)', () => {
     expect(mockFindOrCreateSignupCustomer).toHaveBeenCalled();
     expect(mockCreateSetupIntent).toHaveBeenCalled();
     // Nothing is created until the card clears: no owner provisioning (which is
-    // what enqueues the tenant for the operator) and no TenantMember write.
+    // what enqueues the tenant for the operator).
     expect(mockProvisionSignupOwner).not.toHaveBeenCalled();
-    expect(applyTenantMember).not.toHaveBeenCalled();
   });
 });
 
@@ -305,19 +308,10 @@ describe('card-first signup phase 2 (completeSignup)', () => {
     delete process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
   });
 
-  it('provisions owner (pinned customer, enqueues tenant) → subscription → provisions', async () => {
-    // First getTenant (slug race guard) → 404 (free); later calls
-    // (waitForTenantReady) → ready org, modelling the operator having created
-    // the Tenant CR asynchronously off its pending-provisioning queue.
-    let n = 0;
-    vi.mocked(getTenant).mockImplementation(async () => {
-      n += 1;
-      if (n === 1) throw new Error('tenant not found: 404');
-      return {
-        spec: { owner: 'test@example.com' },
-        status: { zitadelOrgID: 'org-1', phase: 'Provisioning' },
-      } as unknown as Tenant;
-    });
+  it('provisions owner (pinned customer, enqueues tenant) → subscription → ready', async () => {
+    // waitForTenantReady → ready org, modelling the operator having created the
+    // Tenant CR asynchronously off its pending-provisioning queue.
+    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
     const result = await completeSignup(COMPLETE_INPUT);
     expect(result.ok).toBe(true);
     expect(mockCreateTrialingSubscription).toHaveBeenCalled();
@@ -328,26 +322,14 @@ describe('card-first signup phase 2 (completeSignup)', () => {
     expect(mockProvisionSignupOwner).toHaveBeenCalledWith(
       expect.objectContaining({ stripeCustomerId: 'cus_1' }),
     );
-    // The founding-owner TenantMember is still written once the operator-created
-    // Tenant is ready.
-    expect(applyTenantMember).toHaveBeenCalled();
   });
 
   it('pins the Stripe customer on the Signup RPC BEFORE creating the subscription', async () => {
-    // The Tenant CR is created asynchronously by the operator now, so the old
-    // "apply CR before subscribe" ordering is gone. What still matters: the
-    // owner-provisioning RPC (which enqueues the tenant + pins the customer id)
-    // runs before the subscription, so the operator can adopt the pinned
-    // customer deterministically rather than racing a Stripe metadata search.
-    let n = 0;
-    vi.mocked(getTenant).mockImplementation(async () => {
-      n += 1;
-      if (n === 1) throw new Error('tenant not found: 404');
-      return {
-        spec: { owner: 'test@example.com' },
-        status: { zitadelOrgID: 'org-1', phase: 'Provisioning' },
-      } as unknown as Tenant;
-    });
+    // The Tenant CR is created asynchronously by the operator now. What still
+    // matters: the owner-provisioning RPC (which enqueues the tenant + pins the
+    // customer id) runs before the subscription, so the operator can adopt the
+    // pinned customer deterministically rather than racing a Stripe search.
+    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
     await completeSignup(COMPLETE_INPUT);
     const ownerOrder = mockProvisionSignupOwner.mock.invocationCallOrder[0];
     const subOrder = mockCreateTrialingSubscription.mock.invocationCallOrder[0];
@@ -356,28 +338,18 @@ describe('card-first signup phase 2 (completeSignup)', () => {
   });
 
   it('surfaces a failure when the subscription cannot be created', async () => {
-    vi.mocked(getTenant).mockRejectedValue(new Error('tenant not found: 404'));
+    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_NOT_FOUND);
     mockCreateTrialingSubscription.mockRejectedValueOnce(new Error('stripe_error'));
     const result = await completeSignup(COMPLETE_INPUT);
     expect(result.ok).toBe(false);
   });
 
   it('refuses when the customer cannot be verified for this email (anti-hijack)', async () => {
-    vi.mocked(getTenant).mockRejectedValue(new Error('tenant not found: 404'));
+    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_NOT_FOUND);
     mockVerifySignupCustomer.mockResolvedValueOnce(false);
     const result = await completeSignup(COMPLETE_INPUT);
     expect(result.ok).toBe(false);
     expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
     expect(mockProvisionSignupOwner).not.toHaveBeenCalled();
-  });
-
-  it('refuses when the company name was taken by someone else between phases', async () => {
-    vi.mocked(getTenant).mockResolvedValue({
-      spec: { owner: 'someone-else@example.com' },
-      status: {},
-    } as unknown as Tenant);
-    const result = await completeSignup(COMPLETE_INPUT);
-    expect(result.ok).toBe(false);
-    expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
   });
 });

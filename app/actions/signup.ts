@@ -9,10 +9,10 @@
  *
  * A single linear orchestration: form input → daemon owner provisioning (which
  * also enqueues the tenant for operator-pull provisioning) → operator creates
- * the Tenant CR + runs the saga → TenantMember CR → redirect to /login. Each
- * step emits progress to the daemon signup-progress store for the client-side
- * ProvisioningPanel to poll; each failure short-circuits and maps to a
- * user-safe `SignupFailureCode`.
+ * the Tenant CR + runs the saga (including the founding-owner TenantMember,
+ * gibson#958) → redirect to /login. Each step emits progress to the daemon
+ * signup-progress store for the client-side ProvisioningPanel to poll; each
+ * failure short-circuits and maps to a user-safe `SignupFailureCode`.
  *
  * Owner-user provisioning (create-or-resume the Zitadel human user, set
  * password, send verification email) runs DAEMON-SIDE via the unauthenticated
@@ -26,7 +26,9 @@
  * creates. This action stays focused on:
  *   (1) provisioning the founding-owner identity via the daemon RPC (which
  *       enqueues the tenant for the operator to create),
- *   (2) applying the founding-owner TenantMember CR once the Tenant is ready,
+ *   (2) polling the daemon's operator-reported provisioning status until the
+ *       workspace is Ready (the operator now creates the founding-owner
+ *       TenantMember itself, gibson#958 — the dashboard no longer writes it),
  *   (3) surfacing saga status back to the user as progress.
  *
  * The caller is always redirected through the standard `/login` flow for
@@ -72,11 +74,9 @@ import {
 } from "@/src/lib/zitadel/password-policy-cache";
 import { provisionSignupOwner } from "@/src/lib/signup/owner-provisioning";
 import {
-  applyTenantMember,
-  getTenant,
-  tenantNamespace,
-} from "@/src/lib/k8s/tenants";
-import type { Tenant, TenantMember } from "@/src/lib/k8s/types";
+  getTenantProvisioningStatus,
+  type TenantProvisioningStatus,
+} from "@/src/lib/gibson-client/provisioning";
 // Note: listTenantsForOwner / src/lib/k8s/tenants-by-owner.ts deleted under
 // spec `tenant-membership-not-in-jwt`. Duplicate-signup detection now relies
 // on the daemon SignupService.Signup RPC being idempotent on owner email
@@ -88,7 +88,6 @@ import {
   completeProgress,
   failProgress,
 } from "@/src/lib/signup/progress-store";
-import { k8s } from "@/src/lib/k8s/client";
 import { logger } from "@/src/lib/logger";
 
 
@@ -105,8 +104,6 @@ import { logger } from "@/src/lib/logger";
  * progress store and the user is emailed when the workspace is ready.
  */
 const TENANT_READY_TIMEOUT_MS = 90_000;
-/** How long to wait for the TenantMember to transition to Active. */
-const MEMBER_READY_TIMEOUT_MS = 30_000;
 const POLL_INTERVAL_MS = 1_000;
 
 /**
@@ -231,8 +228,7 @@ export async function signupAction(
         fieldErrors: { workspaceName: "Invalid company name" },
       });
     }
-    const existingTenant = await safeGetTenant(ctx.tenantSlug);
-    if (existingTenant) {
+    if (await tenantExists(ctx.tenantSlug)) {
       // Deliberately vague, no info-leak on whether the owner is someone else.
       return await finish(ctx, "policy", {
         code: "WORKSPACE_TAKEN",
@@ -334,18 +330,28 @@ export async function signupAction(
 /**
  * finishProvisioning runs the post-tenant steps shared by the kind-autoconfirm
  * path (called inline by signupAction) and the card-first path (called by
- * completeSignup once the trialing subscription is created): wait for the
- * operator to create the Tenant CR and set status.zitadelOrgID → apply the
- * owner TenantMember → wait Active → redirect to /login → done.
+ * completeSignup once the trialing subscription is created): poll the daemon's
+ * operator-reported provisioning status until the workspace is Ready (org
+ * created + founding-owner TenantMember wired by the operator, gibson#958) →
+ * redirect to /login → done.
  *
  * The Tenant CR is created asynchronously by the tenant-operator (it polls the
- * daemon pending-provisioning queue every ~15s, gibson#949), so the CR does NOT
- * exist the instant the Signup RPC returns. `waitForTenantReady` tolerates this
- * — it polls `getTenant` and swallows the not-found error until the operator
- * has created the CR and the saga has set `status.zitadelOrgID`. A wait that
- * exceeds the timeout returns a NON-fatal PROVISIONING_TIMEOUT ("we'll email
- * you"); the client-side ProvisioningPanel keeps polling the progress store, so
- * the user is never sent into a workspace whose namespace doesn't exist yet.
+ * daemon pending-provisioning queue every ~15s, gibson#949), so the workspace
+ * does NOT exist the instant the Signup RPC returns. `waitForTenantReady`
+ * tolerates this — it polls `GetTenantProvisioningStatus` (the operator-reported
+ * status mirror, dashboard#813/#855) and treats `found:false` (no record yet) as
+ * still-provisioning until the operator has reported the per-tenant Zitadel org
+ * slug. A wait that exceeds the timeout returns a NON-fatal PROVISIONING_TIMEOUT
+ * ("we'll email you"); the client-side ProvisioningPanel keeps polling the
+ * progress store, so the user is never sent into a workspace that isn't ready.
+ *
+ * The dashboard no longer writes the founding-owner TenantMember CR (the last
+ * remaining K8s write in signup): the tenant-operator creates it as part of the
+ * provisioning saga (name `<slugify(owner_email)>-owner`, owner role,
+ * pre-accepted via the owner's Zitadel sub; gibson#958). Member-readiness is
+ * therefore folded into the tenant-Ready signal the status mirror reports — the
+ * operator only reaches phase `Ready` after the founding member is wired — so
+ * there is no separate TenantMember poll.
  */
 async function finishProvisioning(ctx: Ctx): Promise<SignupActionResult> {
   const { attemptId } = ctx;
@@ -359,17 +365,23 @@ async function finishProvisioning(ctx: Ctx): Promise<SignupActionResult> {
   const tenantSlug: string = ctx.tenantSlug;
 
   try {
-    // 7. Wait for the operator to set status.zitadelOrgID.
+    // 7. Wait for the operator to provision the workspace. `waitForTenantReady`
+    //    polls the daemon's operator-reported status mirror until the per-tenant
+    //    Zitadel org slug appears (org created) — which the operator only
+    //    reports once the saga, including the founding-owner TenantMember
+    //    (gibson#958), has progressed. The dashboard no longer writes the
+    //    TenantMember itself (dashboard#855): the operator owns it, so
+    //    member-readiness is subsumed by this single tenant-Ready signal.
     await advanceStep(attemptId, "setup_workspace");
-    const tenant = await waitForTenantReady(tenantSlug);
-    if (!tenant) {
+    const status = await waitForTenantReady(tenantSlug);
+    if (!status) {
       return await finish(ctx, "setup_workspace", {
         code: "PROVISIONING_TIMEOUT",
         userMessage:
           "Still setting up your workspace, we'll email you when it's ready.",
       });
     }
-    if (tenant.status?.phase === "Failed") {
+    if (status.phase === "Failed") {
       return await finish(ctx, "setup_workspace", {
         code: "PROVISIONING_FAILED",
         userMessage:
@@ -377,56 +389,7 @@ async function finishProvisioning(ctx: Ctx): Promise<SignupActionResult> {
       });
     }
 
-    // 8. Apply the TenantMember CR (operator wires the user to the Zitadel org).
-    await advanceStep(attemptId, "apply_member");
-    try {
-      await applyTenantMember(
-        tenantNamespace(tenantSlug),
-        `${slugify(ctx.input.email)}-owner`,
-        {
-          email: ctx.input.email,
-          role: "owner",
-          tenantRef: { name: ctx.tenantSlug },
-          // Self-signup: the signup user IS the workspace owner, pre-accept the
-          // membership so the operator promotes Invited → Active without
-          // requiring the user to click an emailed invitation link. The
-          // operator's invitation flow is for invitees, not the founding owner.
-          // Spec: tenant-role-taxonomy, founding user is granted the
-          // first-class `owner` FGA relation (admin/member inherit by union).
-          acceptedByUserId: ctx.zitadelUserId,
-        },
-      );
-    } catch (err) {
-      logger.error(
-        {
-          attemptId: ctx.attemptId,
-          tenantSlug: ctx.tenantSlug,
-          err: err instanceof Error ? err.message : String(err),
-        },
-        "applyTenantMember failed",
-      );
-      return await finish(ctx, "apply_member", {
-        code: "INTERNAL_ERROR",
-        userMessage:
-          "Your account was created but we couldn't add you to the workspace. Support has been notified.",
-      });
-    }
-
-    // 9. Wait for the membership to become Active.
-    await advanceStep(attemptId, "grant_owner_role");
-    const memberReady = await waitForMemberReady(
-      tenantNamespace(tenantSlug),
-      `${slugify(ctx.input.email)}-owner`,
-    );
-    if (!memberReady) {
-      return await finish(ctx, "grant_owner_role", {
-        code: "MEMBERSHIP_TIMEOUT",
-        userMessage:
-          "Workspace created but owner-role provisioning is still in progress. Try signing in in a minute.",
-      });
-    }
-
-    // 10. Done. The user has a valid Zitadel account; route through /login so
+    // 8. Done. The user has a valid Zitadel account; route through /login so
     //     Auth.js mints the dashboard session via its standard OIDC flow.
     await completeProgress(attemptId);
     logAudit("signup_ok", ctx);
@@ -510,15 +473,25 @@ export async function completeSignup(
     }
     // Slug-availability race guard: someone may have taken the name between
     // phase 1 and now. A pre-existing tenant owned by THIS email is a retry
-    // (allowed — the idempotent Signup RPC + idempotent saga handle it).
-    const existing = await safeGetTenant(input.tenantSlug);
-    if (existing && existing.spec.owner !== email) {
-      return await finish(ctx, "create_billing", {
-        code: "WORKSPACE_TAKEN",
-        userMessage: "That company name isn't available, pick another.",
-        fieldErrors: { workspaceName: "Not available" },
-      });
-    }
+    // (allowed); one owned by a DIFFERENT email must be blocked.
+    //
+    // Post-dashboard#813 the dashboard holds no Kubernetes access, so it can no
+    // longer read the Tenant CR's spec.owner to distinguish "owned by me
+    // (retry)" from "owned by someone else (blocked)". The daemon
+    // GetTenantProvisioningStatus reports `found` but not the owner email, so we
+    // cannot disambiguate here. Rather than block legitimate retries (which
+    // would `found:true` just the same), we drop the pre-check and rely on the
+    // two independent guarantees that already hold:
+    //   - verifySignupCustomer (below) blocks customer hijack, so a caller can
+    //     never subscribe a customer that isn't theirs;
+    //   - the daemon SignupService.Signup RPC is idempotent on owner email and
+    //     the operator saga reconciles idempotently keyed by zitadel_sub, so a
+    //     genuine retry resumes the same owner/tenant and a name collision by a
+    //     different owner is rejected daemon-side at owner-provisioning time
+    //     (surfaced as an INTERNAL_ERROR / WORKSPACE_TAKEN below).
+    // The earlier signupAction availability probe (GetTenantProvisioningStatus
+    // `found`) remains the primary inline "name taken" signal for the user.
+
     // Verify the (client-supplied) customer id belongs to this signup's email
     // before subscribing it.
     if (
@@ -705,17 +678,6 @@ function slugify(s: string): string {
     .slice(0, 63);
 }
 
-async function safeGetTenant(name: string): Promise<Tenant | null> {
-  try {
-    return await getTenant(name);
-  } catch (err) {
-    if (err instanceof Error && /not.?found|404/i.test(err.message)) {
-      return null;
-    }
-    throw err;
-  }
-}
-
 function checkPasswordAgainstPolicy(
   pw: string,
   policy: PasswordPolicy,
@@ -814,42 +776,59 @@ async function provisionOwner(
   }
 }
 
-async function waitForTenantReady(name: string): Promise<Tenant | null> {
+/**
+ * tenantExists is the slug-availability check: it returns true when the daemon's
+ * operator-reported status mirror has a record for the slug (`found`). This
+ * replaces the prior `safeGetTenant(slug) !== null` existence probe — `found`
+ * doubles as the slug-availability signal (gibson#952, dashboard#855). A
+ * transport error degrades to "not taken" so the signup can still proceed; the
+ * Signup RPC + saga are idempotent on owner email and the admission webhook is
+ * the authoritative gate.
+ */
+async function tenantExists(slug: string): Promise<boolean> {
+  try {
+    const status = await getTenantProvisioningStatus(slug);
+    return status.found;
+  } catch (err) {
+    logger.warn(
+      { err: err instanceof Error ? err.message : String(err), slug },
+      "tenant-exists check failed (degrading to not-taken)",
+    );
+    return false;
+  }
+}
+
+/**
+ * waitForTenantReady polls the daemon's operator-reported provisioning status
+ * mirror (gibson#952, dashboard#855) until the workspace is ready or the timeout
+ * elapses. Readiness is signalled by the per-tenant Zitadel org slug appearing
+ * (the operator only reports it once the org is created and the saga — including
+ * the founding-owner TenantMember, gibson#958 — has progressed), or a terminal
+ * `Failed` phase. `found:false` (no record yet) and an empty org slug are both
+ * "still provisioning, keep polling". Returns the final status, or null on
+ * timeout (non-fatal — the client keeps polling the progress store).
+ */
+async function waitForTenantReady(
+  slug: string,
+): Promise<TenantProvisioningStatus | null> {
   const deadline = Date.now() + TENANT_READY_TIMEOUT_MS;
   while (Date.now() < deadline) {
     try {
-      const t = await getTenant(name);
-      if (t.status?.zitadelOrgID) {
-        return t;
-      }
-      if (t.status?.phase === "Failed") {
-        return t;
+      const status = await getTenantProvisioningStatus(slug);
+      if (status.found) {
+        if (status.zitadelOrgSlug || status.phase === "Ready") {
+          return status;
+        }
+        if (status.phase === "Failed") {
+          return status;
+        }
       }
     } catch {
-      // CR may not exist yet on the very first poll, retry.
+      // Status record may not exist yet on the very first poll, retry.
     }
     await sleep(POLL_INTERVAL_MS);
   }
   return null;
-}
-
-async function waitForMemberReady(
-  namespace: string,
-  name: string,
-): Promise<boolean> {
-  const deadline = Date.now() + MEMBER_READY_TIMEOUT_MS;
-  while (Date.now() < deadline) {
-    try {
-      const m = await k8s().get<TenantMember>("TenantMember", name, namespace);
-      if (m.status?.phase === "Active") {
-        return true;
-      }
-    } catch {
-      // Not yet created, retry.
-    }
-    await sleep(POLL_INTERVAL_MS);
-  }
-  return false;
 }
 
 function sleep(ms: number): Promise<void> {

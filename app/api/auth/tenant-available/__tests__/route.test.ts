@@ -1,9 +1,13 @@
 /**
  * Unit tests for the GET /api/auth/tenant-available route (dashboard#44).
  *
- *   - existing Tenant CR → `available: false`
- *   - K8sNotFoundError → `available: true`
- *   - K8s API failure → `available: null` with reason `lookup_failed`
+ * Post dashboard#855 the lookup goes through the daemon's
+ * TenantProvisioningService (getTenantProvisioningStatus) instead of the
+ * Kubernetes API — `found` is the availability signal:
+ *
+ *   - provisioning record exists (found: true) → `available: false`
+ *   - no record (found: false) → `available: true`
+ *   - daemon failure → `available: null` with reason `lookup_failed`
  *     (degraded; client renders no inline state, submit-time server
  *     action is authoritative)
  *   - empty / too-short slug → `available: null` with reason `empty`
@@ -12,15 +16,13 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-import { K8sNotFoundError, K8sUnavailableError } from "@/src/lib/k8s/errors";
-
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
-const getTenantImpl = vi.fn();
-vi.mock("@/src/lib/k8s/tenants", () => ({
-  getTenant: vi.fn((name: string) => getTenantImpl(name)),
+const getStatusImpl = vi.fn();
+vi.mock("@/src/lib/gibson-client/provisioning", () => ({
+  getTenantProvisioningStatus: (slug: string) => getStatusImpl(slug),
 }));
 
 vi.mock("@/src/lib/logger", () => ({
@@ -31,7 +33,7 @@ vi.mock("@/src/lib/logger", () => ({
 import { GET } from "../route";
 
 beforeEach(() => {
-  getTenantImpl.mockReset();
+  getStatusImpl.mockReset();
 });
 
 function buildReq(name: string | null): NextRequest {
@@ -41,21 +43,19 @@ function buildReq(name: string | null): NextRequest {
 }
 
 describe("GET /api/auth/tenant-available", () => {
-  it("existing tenant → available: false", async () => {
-    getTenantImpl.mockResolvedValue({ metadata: { name: "acme-security" } });
+  it("existing tenant (found: true) → available: false", async () => {
+    getStatusImpl.mockResolvedValue({ found: true });
 
     const res = await GET(buildReq("Acme Security"));
     const body = await res.json();
 
     expect(body.available).toBe(false);
     expect(body.slug).toBe("acme-security");
-    expect(getTenantImpl).toHaveBeenCalledWith("acme-security");
+    expect(getStatusImpl).toHaveBeenCalledWith("acme-security");
   });
 
-  it("K8sNotFoundError → available: true (slug is free)", async () => {
-    getTenantImpl.mockRejectedValue(
-      new K8sNotFoundError('tenants.gibson.zeroroot.ai "acme-security" not found'),
-    );
+  it("no provisioning record (found: false) → available: true (slug is free)", async () => {
+    getStatusImpl.mockResolvedValue({ found: false });
 
     const res = await GET(buildReq("Acme Security"));
     const body = await res.json();
@@ -64,8 +64,8 @@ describe("GET /api/auth/tenant-available", () => {
     expect(body.slug).toBe("acme-security");
   });
 
-  it("other K8s error → available: null, reason: lookup_failed (degrade)", async () => {
-    getTenantImpl.mockRejectedValue(new K8sUnavailableError("apiserver down"));
+  it("daemon error → available: null, reason: lookup_failed (degrade)", async () => {
+    getStatusImpl.mockRejectedValue(new Error("daemon unavailable"));
 
     const res = await GET(buildReq("Acme Security"));
     const body = await res.json();
@@ -80,7 +80,7 @@ describe("GET /api/auth/tenant-available", () => {
 
     expect(body.available).toBeNull();
     expect(body.reason).toBe("empty");
-    expect(getTenantImpl).not.toHaveBeenCalled();
+    expect(getStatusImpl).not.toHaveBeenCalled();
   });
 
   it("name slugifies to single char → available: null, reason: empty", async () => {
@@ -89,7 +89,7 @@ describe("GET /api/auth/tenant-available", () => {
 
     expect(body.available).toBeNull();
     expect(body.reason).toBe("empty");
-    expect(getTenantImpl).not.toHaveBeenCalled();
+    expect(getStatusImpl).not.toHaveBeenCalled();
   });
 
   it("missing query param → available: null, reason: empty", async () => {

@@ -491,6 +491,33 @@ export async function getSubscription(
 }
 
 /**
+ * Find the customer's current (most relevant) subscription.
+ *
+ * Returns the first trialing subscription if one exists, otherwise the first
+ * active subscription, otherwise the most recent subscription of any status,
+ * or null when the customer has none. Used by the trial-extension admin route
+ * which — post dashboard#813 — resolves the subscription via the Stripe
+ * customer id (from the daemon provisioning snapshot) rather than reading the
+ * Tenant CR's status.billing.subscriptionId directly.
+ */
+export async function findCustomerSubscription(
+  customerId: string,
+): Promise<Stripe.Subscription | null> {
+  const stripe = getStripeClient();
+  const { data } = await stripe.subscriptions.list({
+    customer: customerId,
+    status: 'all',
+    limit: 100,
+  });
+  if (data.length === 0) return null;
+  return (
+    data.find((s) => s.status === 'trialing') ??
+    data.find((s) => s.status === 'active') ??
+    data[0]
+  );
+}
+
+/**
  * Update the trial end date of a Stripe subscription.
  *
  * Used by platform operators via `POST /api/admin/billing/trial-extension` to
