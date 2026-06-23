@@ -323,11 +323,11 @@ export const OPTIONAL_ENV = [
   'MICROSOFT_CLIENT_SECRET',
   'MICROSOFT_TENANT_ID',
 
-  // ---- Zitadel admin (gated by use of the admin client factory) ----
-  // Only the signup-handoff path uses the bot PAT; pods that never sign anyone
-  // up do not require this.
-  'ZITADEL_SIGNUP_BOT_PAT',
-  'ZITADEL_EXTERNAL_DOMAIN',
+  // ---- Zitadel admin ----
+  // NOTE: the broad ZITADEL_SIGNUP_BOT_PAT + ZITADEL_EXTERNAL_DOMAIN pair was
+  // removed in E9 (dashboard#812). Owner provisioning now runs daemon-side via
+  // the unauthenticated gibson.tenant.v1.SignupService.Signup RPC, so the
+  // dashboard holds NO Zitadel admin credential for signup.
   'ZITADEL_DASHBOARD_CLIENT_ID',
   'ZITADEL_DASHBOARD_CLIENT_SECRET',
   'ZITADEL_TOKEN_URL',

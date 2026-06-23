@@ -1,20 +1,23 @@
 /**
- * Unit tests for signupAction, sendVerificationEmail conditional.
+ * Unit tests for signupAction + completeSignup.
  *
- * Spec: signup-zitadel-permissions-fix
- * Bug: SIGNUP-B23, sendVerificationEmail fired unconditionally causing
- * Zitadel 400 "Code is empty (EMAIL-5w5ilin4yt)" on every signup when
- * user was created with emailVerified=true.
+ * E9 (dashboard#812): the dashboard no longer holds a Zitadel signup-bot PAT.
+ * Founding-owner provisioning runs daemon-side via the unauthenticated
+ * gibson.tenant.v1.SignupService.Signup RPC, surfaced here through
+ * `provisionSignupOwner`. These tests assert:
+ *   - signupAction calls provisionSignupOwner with the founding-owner fields
+ *     and always redirects to /login (no auto-login);
+ *   - a daemon policy rejection maps to POLICY_VIOLATION;
+ *   - the card-first phases behave unchanged.
  *
- * These tests assert the two branches of the conditional added in Task 5:
- *   1. emailVerified=true at create-time → sendVerificationEmail is NOT called.
- *   2. emailVerified=false at create-time → sendVerificationEmail IS called.
- *
- * All external dependencies (Zitadel client, K8s, rate-limit, progress-store,
- * next/headers) are mocked so the tests run without a cluster.
+ * All external dependencies (owner-provisioning RPC, K8s, rate-limit,
+ * progress-store, billing, next/headers) are mocked so the tests run without
+ * a cluster.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import { ConnectError, Code } from '@connectrpc/connect';
 
 import type { Tenant } from '@/src/lib/k8s/types';
 
@@ -27,61 +30,14 @@ vi.mock('next/headers', () => ({
   headers: vi.fn().mockResolvedValue(new Map()),
 }));
 
-// Mock the Zitadel admin client factory so we can inject a spy.
-const mockSendVerificationEmail = vi.fn().mockResolvedValue(undefined);
-const mockCreateHumanUser = vi.fn();
-const mockFindUserByEmail = vi.fn().mockResolvedValue(null);
-const mockGetPasswordComplexityPolicy = vi.fn().mockResolvedValue({
-  minLength: 8,
-  hasUppercase: false,
-  hasLowercase: false,
-  hasNumber: false,
-  hasSymbol: false,
-});
-
-// Issue dashboard#41, V2 session + CreateCallback methods. Use vi.hoisted
-// so the mock vars are initialised in the hoisted vi.mock factory phase
-// (vi.mock is hoisted to the top of the file by the vitest transform).
-const {
-  mockCreateSession,
-  mockFinalizeAuthRequest,
-  mockInitiateOidcAuthRequest,
-  mockLoadHandoffConfig,
-} = vi.hoisted(() => ({
-  mockCreateSession: vi.fn(),
-  mockFinalizeAuthRequest: vi.fn(),
-  mockInitiateOidcAuthRequest: vi.fn().mockResolvedValue(null),
-  mockLoadHandoffConfig: vi.fn().mockReturnValue(null),
+// Mock the daemon owner-provisioning RPC wrapper (replaces the retired Zitadel
+// signup-bot admin client). vi.hoisted so the spy is available to the hoisted
+// vi.mock factory below.
+const { mockProvisionSignupOwner } = vi.hoisted(() => ({
+  mockProvisionSignupOwner: vi.fn(),
 }));
-
-vi.mock('@/src/lib/zitadel/admin-client-factory', () => ({
-  getSignupZitadelAdminClient: vi.fn(() => ({
-    createHumanUser: mockCreateHumanUser,
-    findUserByEmail: mockFindUserByEmail,
-    sendVerificationEmail: mockSendVerificationEmail,
-    getPasswordComplexityPolicy: mockGetPasswordComplexityPolicy,
-    createSession: mockCreateSession,
-    finalizeAuthRequest: mockFinalizeAuthRequest,
-  })),
-}));
-
-// Mock the signup-handoff module, default behaviour is "no handoff
-// parked" so legacy tests fall through to the existing /login redirect.
-// Individual tests in the auto-login describe-block override this.
-vi.mock('@/src/lib/zitadel/signup-handoff', () => ({
-  initiateOidcAuthRequest: mockInitiateOidcAuthRequest,
-  loadHandoffConfig: mockLoadHandoffConfig,
-}));
-
-// Mock password-policy-cache to return permissive defaults immediately.
-vi.mock('@/src/lib/zitadel/password-policy-cache', () => ({
-  getCachedPasswordPolicy: vi.fn().mockResolvedValue({
-    minLength: 8,
-    hasUppercase: false,
-    hasLowercase: false,
-    hasNumber: false,
-    hasSymbol: false,
-  }),
+vi.mock('@/src/lib/signup/owner-provisioning', () => ({
+  provisionSignupOwner: mockProvisionSignupOwner,
 }));
 
 // Mock rate-limit to always allow.
@@ -89,7 +45,7 @@ vi.mock('@/src/lib/signup/rate-limit', () => ({
   checkSignupRateLimit: vi.fn().mockResolvedValue({ allowed: true, retryAfterMs: 0 }),
 }));
 
-// Mock progress-store, no Redis needed.
+// Mock progress-store, no daemon RPC needed.
 vi.mock('@/src/lib/signup/progress-store', () => ({
   advanceStep: vi.fn().mockResolvedValue(undefined),
   completeProgress: vi.fn().mockResolvedValue(undefined),
@@ -174,15 +130,19 @@ const VALID_INPUT = {
   acceptPrivacy: true as const,
 };
 
+const OWNER_OK = {
+  tenantId: 'test-workspace',
+  ownerUserId: 'zitadel-user-123',
+  alreadyExisted: false,
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 /** Reset all call counts between tests. */
 function resetMocks() {
-  mockSendVerificationEmail.mockClear();
-  mockCreateHumanUser.mockClear();
-  mockFindUserByEmail.mockClear();
+  mockProvisionSignupOwner.mockReset().mockResolvedValue(OWNER_OK);
   vi.mocked(getTenant).mockRejectedValue(new Error('tenant not found: 404'));
   vi.mocked(applyTenant).mockClear().mockResolvedValue(undefined as unknown as Tenant);
   vi.mocked(applyTenantMember).mockClear();
@@ -193,302 +153,87 @@ function resetMocks() {
   mockFinalizeSignupCustomer.mockClear();
 }
 
+/** getTenant: first call 404 (name available), subsequent calls ready. */
+function tenantAvailableThenReady() {
+  let n = 0;
+  vi.mocked(getTenant).mockImplementation(async () => {
+    n++;
+    if (n === 1) throw new Error('tenant not found: 404');
+    return mockTenant as Tenant;
+  });
+}
+
 // ---------------------------------------------------------------------------
-// Tests: sendVerificationEmail conditional
+// Tests: daemon owner provisioning + /login redirect (E9, dashboard#812)
 // ---------------------------------------------------------------------------
 
-describe('signupAction, sendVerificationEmail conditional', () => {
+describe('signupAction, daemon owner provisioning (E9, dashboard#812)', () => {
   beforeEach(() => {
     resetMocks();
   });
 
-  it(
-    'spec:signup-zitadel-permissions-fix, skips sendVerificationEmail when user is created with emailVerified: true',
-    async () => {
-      // createHumanUser returns a user (emailVerified: true path, the current
-      // default per signup hotfix #5). The action should NOT call
-      // sendVerificationEmail because the user has no pending code to resend.
-      mockCreateHumanUser.mockResolvedValue({
-        userId: 'zitadel-user-123',
-        state: 'active',
-        email: VALID_INPUT.email,
-      });
+  it('provisions the founding owner via the daemon Signup RPC with the form fields', async () => {
+    tenantAvailableThenReady();
 
-      // Patch getTenant to return the mock ready tenant AFTER the first call
-      // (first call returns null = no existing workspace; subsequent polls return ready).
-      // First call simulates workspace-availability check ("not found" =
-      // available); subsequent polls simulate operator-ready. Throw on the
-      // first to match real k8s 404 behavior, safeGetTenant catches it.
-      let tenantCallCount = 0;
-      vi.mocked(getTenant).mockImplementation(async () => {
-        tenantCallCount++;
-        if (tenantCallCount === 1) {
-          throw new Error('tenant not found: 404');
-        }
-        return mockTenant as Tenant;
-      });
+    const result = await signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-000000000001');
 
-      const result = await signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-000000000001');
-
-      expect(
-        mockSendVerificationEmail.mock.calls.length,
-        [
-          'spec:signup-zitadel-permissions-fix SIGNUP-B23, ',
-          'sendVerificationEmail MUST NOT be called when the user was created with emailVerified=true. ',
-          'Calling it causes Zitadel to return 400 "Code is empty (EMAIL-5w5ilin4yt)" on every signup.',
-        ].join(''),
-      ).toBe(0);
-
-      // The action should still succeed.
-      expect(result.ok).toBe(true);
-    },
-  );
-
-  it(
-    'spec:signup-zitadel-permissions-fix, calls sendVerificationEmail when emailVerified: false (future SMTP flow)',
-    async () => {
-      // To exercise the emailVerified=false branch we need to manipulate the
-      // createOrResumeZitadelUser logic. Since emailVerified is hardcoded to
-      // true inside createOrResumeZitadelUser, we test the branch at the
-      // signupAction level by verifying the call count when the path WOULD
-      // have emailVerifiedAtCreate=false. This is a forward-compat branch test.
-      //
-      // We achieve this by directly calling the action with a createHumanUser
-      // that returns a value, then verifying the call count is non-zero when
-      // we stub the internal condition. Since the action hardcodes emailVerified
-      // to true, the false-branch cannot be exercised without a code change;
-      // but we can verify the shape is correct by checking that the mock
-      // is NOT called in the true-path (verified by the first test) and
-      // acknowledging that the false-path wiring exists in the code under
-      // the conditional.
-      //
-      // The test assertion below verifies the CURRENT state: with emailVerified
-      // hardcoded to true, sendVerificationEmail is always skipped. When a
-      // future spec sets emailVerified=false, this test will need updating -
-      // which is exactly when the call should re-enable.
-
-      mockCreateHumanUser.mockResolvedValue({
-        userId: 'zitadel-user-456',
-        state: 'active',
-        email: VALID_INPUT.email,
-      });
-
-      // Real k8s().get throws on 404; safeGetTenant catches "not found" errors
-      // and returns null. Modeling the throw (instead of returning null) keeps
-      // the mock faithful to the real signature `Promise<Tenant>`.
-      let tenantCallCount = 0;
-      vi.mocked(getTenant).mockImplementation(async () => {
-        tenantCallCount++;
-        if (tenantCallCount === 1) {
-          throw new Error("tenant not found: 404");
-        }
-        return mockTenant as Tenant;
-      });
-
-      // With emailVerified=true (current production default), sendVerificationEmail
-      // is NOT called. This branch test documents that the false-path exists
-      // in the code and is reachable, it WILL be called when emailVerified=false.
-      const result = await signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-000000000002');
-
-      // In the CURRENT production state, the call count is 0 because emailVerified
-      // is hardcoded to true. This test will fail if someone removes the conditional
-      // and unconditionally calls sendVerificationEmail (causing SIGNUP-B23 to recur).
-      expect(
-        mockSendVerificationEmail.mock.calls.length,
-        'spec:signup-zitadel-permissions-fix, sendVerificationEmail call count should be 0 with emailVerified=true (current default). If this fails, the conditional was removed and SIGNUP-B23 will recur.',
-      ).toBe(0);
-
-      expect(result.ok).toBe(true);
-    },
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Tests: V2 session auto-login (issue dashboard#41)
-// ---------------------------------------------------------------------------
-
-describe('signupAction, V2 session + CreateCallback auto-login', () => {
-  beforeEach(() => {
-    resetMocks();
-    mockInitiateOidcAuthRequest.mockReset();
-    mockLoadHandoffConfig.mockReset();
-    mockCreateSession.mockReset();
-    mockFinalizeAuthRequest.mockReset();
-  });
-
-  it(
-    'returns the V2 callbackUrl as redirect when the auto-login dance succeeds, issue dashboard#41',
-    async () => {
-      // Handoff config is present (production-like env).
-      mockLoadHandoffConfig.mockReturnValue({
-        issuer: 'https://auth.test.local',
-        internalIssuer: 'http://zitadel.test:8080',
-        clientId: 'cid',
-        redirectUri: 'http://app.test.local/api/auth/callback/zitadel',
-        authSecret: 'secret-32-chars-or-more-aaaaaaaaaa',
-      });
-      mockInitiateOidcAuthRequest.mockResolvedValue({
-        authRequestId: 'AR_PARKED_001',
-        zitadelLoginUrl: 'https://auth.test.local/ui/v2/login?authRequest=AR_PARKED_001',
-      });
-
-      mockCreateHumanUser.mockResolvedValue({
-        userId: 'zitadel-user-123',
-        state: 'active',
-        email: VALID_INPUT.email,
-      });
-      mockCreateSession.mockResolvedValue({
-        sessionId: 'sess-1',
-        sessionToken: 'tok-secret-1',
-      });
-      mockFinalizeAuthRequest.mockResolvedValue({
-        callbackUrl:
-          'http://app.test.local/api/auth/callback/zitadel?code=ABC&state=XYZ',
-      });
-
-      // Real k8s().get throws on 404; safeGetTenant catches "not found" errors
-      // and returns null. Modeling the throw (instead of returning null) keeps
-      // the mock faithful to the real signature `Promise<Tenant>`.
-      let tenantCallCount = 0;
-      vi.mocked(getTenant).mockImplementation(async () => {
-        tenantCallCount++;
-        if (tenantCallCount === 1) {
-          throw new Error("tenant not found: 404");
-        }
-        return mockTenant as Tenant;
-      });
-
-      const result = await signupAction(
-        VALID_INPUT,
-        'aaaaaaaa-0000-0000-0000-000000000010',
-      );
-
-      expect(result.ok).toBe(true);
-      // The redirect is the V2 callbackUrl, not the /login fallback.
-      if (result.ok && 'redirect' in result) {
-        expect(result.redirect).toBe(
-          'http://app.test.local/api/auth/callback/zitadel?code=ABC&state=XYZ',
-        );
-      } else {
-        throw new Error('expected a redirect result');
-      }
-
-      // createSession was called with the email + password from the form.
-      expect(mockCreateSession).toHaveBeenCalledWith({
-        loginName: VALID_INPUT.email.toLowerCase(),
+    expect(result.ok).toBe(true);
+    expect(mockProvisionSignupOwner).toHaveBeenCalledTimes(1);
+    expect(mockProvisionSignupOwner).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attemptId: 'aaaaaaaa-0000-0000-0000-000000000001',
+        ownerEmail: VALID_INPUT.email.toLowerCase(),
+        workspaceName: VALID_INPUT.workspaceName,
+        tier: VALID_INPUT.tier,
+        ownerFirstName: VALID_INPUT.firstName,
+        ownerLastName: VALID_INPUT.lastName,
         password: VALID_INPUT.password,
-      });
-      // finalizeAuthRequest was called with the parked authRequestId.
-      expect(mockFinalizeAuthRequest).toHaveBeenCalledWith(
-        expect.objectContaining({
-          authRequestId: 'AR_PARKED_001',
-          session: { sessionId: 'sess-1', sessionToken: 'tok-secret-1' },
-        }),
-      );
-    },
-  );
+      }),
+    );
+  });
 
-  it(
-    'falls back to /login when initiateOidcAuthRequest returns null (handoff config missing / IAM_LOGIN_CLIENT 403), issue dashboard#41',
-    async () => {
-      // No handoff config, typical in dev clusters where gitops#90 hasn't merged.
-      mockLoadHandoffConfig.mockReturnValue(null);
-      mockInitiateOidcAuthRequest.mockResolvedValue(null);
+  it('always redirects to /login after a successful signup (no auto-login)', async () => {
+    tenantAvailableThenReady();
 
-      mockCreateHumanUser.mockResolvedValue({
-        userId: 'zitadel-user-456',
-        state: 'active',
-        email: VALID_INPUT.email,
-      });
+    const result = await signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-000000000002');
 
-      // Real k8s().get throws on 404; safeGetTenant catches "not found" errors
-      // and returns null. Modeling the throw (instead of returning null) keeps
-      // the mock faithful to the real signature `Promise<Tenant>`.
-      let tenantCallCount = 0;
-      vi.mocked(getTenant).mockImplementation(async () => {
-        tenantCallCount++;
-        if (tenantCallCount === 1) {
-          throw new Error("tenant not found: 404");
-        }
-        return mockTenant as Tenant;
-      });
+    expect(result.ok).toBe(true);
+    if (result.ok && 'redirect' in result) {
+      expect(result.redirect).toBe('/login?callbackUrl=%2Fdashboard');
+    } else {
+      throw new Error('expected a redirect result');
+    }
+  });
 
-      const result = await signupAction(
-        VALID_INPUT,
-        'aaaaaaaa-0000-0000-0000-000000000011',
-      );
+  it('maps a daemon InvalidArgument (policy rejection) to POLICY_VIOLATION', async () => {
+    tenantAvailableThenReady();
+    mockProvisionSignupOwner.mockRejectedValueOnce(
+      new ConnectError('password does not meet complexity policy', Code.InvalidArgument),
+    );
 
-      expect(result.ok).toBe(true);
-      if (result.ok && 'redirect' in result) {
-        expect(result.redirect).toBe('/login?callbackUrl=%2Fdashboard');
-      } else {
-        throw new Error('expected a redirect result');
-      }
-      // The V2 methods should NOT have been called.
-      expect(mockCreateSession).not.toHaveBeenCalled();
-      expect(mockFinalizeAuthRequest).not.toHaveBeenCalled();
-    },
-  );
+    const result = await signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-000000000003');
 
-  it(
-    'falls back to /login when createSession throws (e.g. IAM_LOGIN_CLIENT 403 from Zitadel), issue dashboard#41',
-    async () => {
-      mockLoadHandoffConfig.mockReturnValue({
-        issuer: 'https://auth.test.local',
-        internalIssuer: 'http://zitadel.test:8080',
-        clientId: 'cid',
-        redirectUri: 'http://app.test.local/api/auth/callback/zitadel',
-        authSecret: 'secret-32-chars-or-more-aaaaaaaaaa',
-      });
-      mockInitiateOidcAuthRequest.mockResolvedValue({
-        authRequestId: 'AR_PARKED_403',
-        zitadelLoginUrl: 'https://auth.test.local/ui/v2/login?authRequest=AR_PARKED_403',
-      });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe('POLICY_VIOLATION');
+    }
+    // No Tenant CR is applied when owner provisioning fails.
+    expect(applyTenant).not.toHaveBeenCalled();
+  });
 
-      mockCreateHumanUser.mockResolvedValue({
-        userId: 'zitadel-user-789',
-        state: 'active',
-        email: VALID_INPUT.email,
-      });
+  it('maps a daemon Unavailable to ZITADEL_UNAVAILABLE', async () => {
+    tenantAvailableThenReady();
+    mockProvisionSignupOwner.mockRejectedValueOnce(
+      new ConnectError('identity service down', Code.Unavailable),
+    );
 
-      // Simulate the gitops#90-unmerged failure: 403 PERMISSION_DENIED.
-      mockCreateSession.mockRejectedValue(
-        Object.assign(new Error('Zitadel API error: HTTP 403'), {
-          name: 'ZitadelApiError',
-          httpStatus: 403,
-          zitadelErrorId: 'AUTHZ-permission-denied',
-          zitadelErrorMessage: 'IAM_LOGIN_CLIENT required',
-        }),
-      );
+    const result = await signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-000000000004');
 
-      // Real k8s().get throws on 404; safeGetTenant catches "not found" errors
-      // and returns null. Modeling the throw (instead of returning null) keeps
-      // the mock faithful to the real signature `Promise<Tenant>`.
-      let tenantCallCount = 0;
-      vi.mocked(getTenant).mockImplementation(async () => {
-        tenantCallCount++;
-        if (tenantCallCount === 1) {
-          throw new Error("tenant not found: 404");
-        }
-        return mockTenant as Tenant;
-      });
-
-      const result = await signupAction(
-        VALID_INPUT,
-        'aaaaaaaa-0000-0000-0000-000000000012',
-      );
-
-      expect(result.ok).toBe(true);
-      if (result.ok && 'redirect' in result) {
-        expect(result.redirect).toBe('/login?callbackUrl=%2Fdashboard');
-      } else {
-        throw new Error('expected a redirect result');
-      }
-      // We attempted createSession but it failed; finalizeAuthRequest never ran.
-      expect(mockCreateSession).toHaveBeenCalled();
-      expect(mockFinalizeAuthRequest).not.toHaveBeenCalled();
-    },
-  );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe('ZITADEL_UNAVAILABLE');
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -534,7 +279,7 @@ describe('card-first signup phase 1 (signupAction → card)', () => {
     expect(mockFindOrCreateSignupCustomer).toHaveBeenCalled();
     expect(mockCreateSetupIntent).toHaveBeenCalled();
     // Nothing is created until the card clears.
-    expect(mockCreateHumanUser).not.toHaveBeenCalled();
+    expect(mockProvisionSignupOwner).not.toHaveBeenCalled();
     expect(applyTenant).not.toHaveBeenCalled();
     expect(applyTenantMember).not.toHaveBeenCalled();
   });
@@ -544,13 +289,17 @@ describe('card-first signup phase 2 (completeSignup)', () => {
   beforeEach(() => {
     resetMocks();
     process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
-    mockCreateHumanUser.mockResolvedValue({ userId: 'zid-1' });
+    mockProvisionSignupOwner.mockResolvedValue({
+      tenantId: 'test-workspace',
+      ownerUserId: 'zid-1',
+      alreadyExisted: false,
+    });
   });
   afterEach(() => {
     delete process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
   });
 
-  it('creates account → Tenant CR (pinned customer) → subscription → provisions', async () => {
+  it('provisions owner → Tenant CR (pinned customer) → subscription → provisions', async () => {
     // First getTenant (slug race guard) → 404 (free); later calls
     // (waitForTenantReady) → ready org.
     let n = 0;
@@ -565,7 +314,10 @@ describe('card-first signup phase 2 (completeSignup)', () => {
     const result = await completeSignup(COMPLETE_INPUT);
     expect(result.ok).toBe(true);
     expect(mockCreateTrialingSubscription).toHaveBeenCalled();
-    expect(mockCreateHumanUser).toHaveBeenCalled();
+    // Owner provisioning pins the pre-created Stripe customer id.
+    expect(mockProvisionSignupOwner).toHaveBeenCalledWith(
+      expect.objectContaining({ stripeCustomerId: 'cus_1' }),
+    );
     // The Tenant CR pins the pre-created customer id for deterministic adoption.
     expect(applyTenant).toHaveBeenCalledWith(
       'test-workspace',
@@ -607,7 +359,7 @@ describe('card-first signup phase 2 (completeSignup)', () => {
     const result = await completeSignup(COMPLETE_INPUT);
     expect(result.ok).toBe(false);
     expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
-    expect(mockCreateHumanUser).not.toHaveBeenCalled();
+    expect(mockProvisionSignupOwner).not.toHaveBeenCalled();
   });
 
   it('refuses when the company name was taken by someone else between phases', async () => {
@@ -620,4 +372,3 @@ describe('card-first signup phase 2 (completeSignup)', () => {
     expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
   });
 });
-
