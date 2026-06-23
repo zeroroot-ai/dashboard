@@ -17,9 +17,9 @@ vi.mock('@/src/lib/billing/stripe', () => ({
   createPortalSession: (...args: unknown[]) => mockCreatePortalSession(...args),
 }));
 
-const mockGetTenant = vi.fn();
-vi.mock('@/src/lib/k8s/tenants', () => ({
-  getTenant: (...args: unknown[]) => mockGetTenant(...args),
+const mockGetProvisioningStatus = vi.fn();
+vi.mock('@/src/lib/gibson-client/provisioning', () => ({
+  getTenantProvisioningStatus: (...args: unknown[]) => mockGetProvisioningStatus(...args),
 }));
 
 let mockAssertAuthorizedShouldThrow: Error | null = null;
@@ -105,17 +105,11 @@ describe('POST /api/billing/portal', () => {
       status: 'present',
       tenantId: 'acme',
     });
-    mockGetTenant.mockResolvedValue({
-      apiVersion: 'gibson.zeroroot.ai/v1alpha1',
-      kind: 'Tenant',
-      metadata: { name: 'acme' },
-      spec: {
-        displayName: 'Acme Inc',
-        owner: 'alice',
-        tier: 'team',
-      },
-      // tenant-operator#354: stripeCustomerId lives on status now.
-      status: { stripeCustomerId: 'cus_test123' },
+    // Operator-reported provisioning snapshot (dashboard#855): the route reads
+    // the Stripe customer id from here instead of the Tenant CR.
+    mockGetProvisioningStatus.mockResolvedValue({
+      found: true,
+      stripeCustomerId: 'cus_test123',
     });
     mockCreatePortalSession.mockResolvedValue({
       id: 'bps_test123',
@@ -162,18 +156,10 @@ describe('POST /api/billing/portal', () => {
   });
 
   describe('tenant validation', () => {
-    it('returns 400 when stripeCustomerId is missing on tenant', async () => {
-      mockGetTenant.mockResolvedValue({
-        apiVersion: 'gibson.zeroroot.ai/v1alpha1',
-        kind: 'Tenant',
-        metadata: { name: 'acme' },
-        spec: {
-          displayName: 'Acme Inc',
-          owner: 'alice',
-          tier: 'team',
-          // stripeCustomerId intentionally absent
-        },
-        status: {},
+    it('returns 400 when stripeCustomerId is missing on the snapshot', async () => {
+      mockGetProvisioningStatus.mockResolvedValue({
+        found: true,
+        stripeCustomerId: '',
       });
       const res = await POST(makeRequest());
       expect(res.status).toBe(400);

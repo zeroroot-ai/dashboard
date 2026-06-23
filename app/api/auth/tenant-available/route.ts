@@ -12,19 +12,20 @@
  * server action would on submit; that server-side check is preserved as
  * defense-in-depth against TOCTOU races between two simultaneous signups.
  *
- * The lookup uses the K8s API (via `getTenant`) rather than a daemon
- * RPC because the existing `safeGetTenant` check in the signup server
- * action does the same, and re-using that path guarantees client+server
- * see the same answer. The client never opens a direct gRPC channel -
- * it only fetches this Next.js route.
+ * The lookup goes through the daemon's TenantProvisioningService (via
+ * `getTenantProvisioningStatus`) rather than the Kubernetes API — the dashboard
+ * holds zero cluster credentials (dashboard#813). `found: false` means no
+ * provisioning record exists for the slug, i.e. the workspace name is
+ * available. The same helper backs the signup server action's pre-create check,
+ * so client and server see the same answer. The client never opens a direct
+ * gRPC channel - it only fetches this Next.js route.
  *
  * Spec / issue: zeroroot-ai/dashboard#44.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 
-import { getTenant } from "@/src/lib/k8s/tenants";
-import { K8sNotFoundError } from "@/src/lib/k8s/errors";
+import { getTenantProvisioningStatus } from "@/src/lib/gibson-client/provisioning";
 import { slugify } from "@/src/lib/signup/slug";
 import { logger } from "@/src/lib/logger";
 
@@ -48,19 +49,14 @@ export async function GET(req: NextRequest): Promise<NextResponse<ResponseBody>>
   }
 
   try {
-    await getTenant(slug);
-    // getTenant resolved without throwing → tenant with that slug exists.
-    return NextResponse.json({ slug, available: false });
+    const status = await getTenantProvisioningStatus(slug);
+    // found: false ⇒ no provisioning record for the slug ⇒ name is available.
+    return NextResponse.json({ slug, available: !status.found });
   } catch (err) {
-    if (err instanceof K8sNotFoundError) {
-      return NextResponse.json({ slug, available: true });
-    }
-
-    // Any other failure (K8s API down, RBAC, transient transport): degrade
-    // gracefully. Return `available: null` with a structured reason, the
-    // client renders no inline state, the user can still submit, and the
-    // signup server action's pre-create check (plus the admission webhook)
-    // is the authoritative gate.
+    // Any failure (daemon down, transient transport): degrade gracefully.
+    // Return `available: null` with a structured reason, the client renders no
+    // inline state, the user can still submit, and the signup server action's
+    // pre-create check (plus the admission webhook) is the authoritative gate.
     logger.warn(
       { err, scope: "api.tenant-available.lookup_failed", slug },
       "tenant availability lookup failed (degrading to null)",

@@ -6,8 +6,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { updateSubscriptionTrialEnd } from '@/src/lib/billing/stripe';
-import { getTenant } from '@/src/lib/k8s/tenants';
+import {
+  updateSubscriptionTrialEnd,
+  findCustomerSubscription,
+} from '@/src/lib/billing/stripe';
+import { getTenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
 import {
   assertAuthorized,
   AuthzDeniedError,
@@ -61,19 +64,46 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Fetch tenant to get subscription ID.
-  let tenant: Awaited<ReturnType<typeof getTenant>>;
+  // Resolve the tenant's Stripe customer id from the operator-reported
+  // provisioning snapshot (dashboard#813 — no Kubernetes read), then resolve
+  // the live subscription from Stripe.
+  let customerId: string;
   try {
-    tenant = await getTenant(tenantId);
+    const status = await getTenantProvisioningStatus(tenantId);
+    if (!status.found) {
+      return NextResponse.json({ error: 'tenant not found' }, { status: 400 });
+    }
+    customerId = status.stripeCustomerId;
   } catch (err) {
     logger.error(
       { tenantId, err: err instanceof Error ? err.message : String(err) },
-      '[admin/billing/trial-extension] Failed to get Tenant CR',
+      '[admin/billing/trial-extension] Failed to get tenant provisioning status',
     );
     return NextResponse.json({ error: 'tenant not found' }, { status: 400 });
   }
 
-  const subscriptionId = tenant.status?.billing?.subscriptionId;
+  if (!customerId) {
+    return NextResponse.json(
+      { error: 'tenant has no billing customer' },
+      { status: 400 },
+    );
+  }
+
+  let subscription: Awaited<ReturnType<typeof findCustomerSubscription>>;
+  try {
+    subscription = await findCustomerSubscription(customerId);
+  } catch (err) {
+    logger.error(
+      { tenantId, customerId, err: err instanceof Error ? err.message : String(err) },
+      '[admin/billing/trial-extension] Stripe subscription lookup failed',
+    );
+    return NextResponse.json(
+      { error: 'billing temporarily unavailable' },
+      { status: 503 },
+    );
+  }
+
+  const subscriptionId = subscription?.id;
   if (!subscriptionId) {
     return NextResponse.json(
       { error: 'tenant has no active subscription' },
@@ -81,9 +111,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Calculate new trial end.
-  const currentTrialEnd = tenant.status?.billing?.trialEnd
-    ? new Date(tenant.status.billing.trialEnd)
+  // Calculate new trial end. Stripe's trial_end is a Unix timestamp (seconds).
+  const currentTrialEnd = subscription?.trial_end
+    ? new Date(subscription.trial_end * 1000)
     : new Date();
   const newTrialEnd = new Date(
     Math.max(currentTrialEnd.getTime(), Date.now()) + days * 86400_000,

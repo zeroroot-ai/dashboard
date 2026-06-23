@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit, createRateLimitResponse } from '@/src/lib/rate-limiter';
-import { getTenant } from '@/src/lib/k8s/tenants';
-import { K8sNotFoundError } from '@/src/lib/k8s/errors';
+import { getTenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
 
 const STATUS_RATE_LIMIT = {
   maxRequests: 60,
@@ -10,16 +9,37 @@ const STATUS_RATE_LIMIT = {
   message: 'Too many status requests. Please slow down.',
 };
 
+type StepStatus = 'completed' | 'running' | 'failed' | 'pending';
+
+/**
+ * Map an operator-reported per-store state string ("", "provisioning",
+ * "ready", "failed") into the legacy step status the provisioning page renders.
+ */
+function storeStepStatus(state: string, phaseFailed: boolean): StepStatus {
+  const s = state.toLowerCase();
+  if (s === 'ready') return 'completed';
+  if (s === 'failed') return 'failed';
+  if (s === 'provisioning') return 'running';
+  // Empty / unknown: failed phase ⇒ this step never started under a failure;
+  // otherwise it's simply pending.
+  return phaseFailed ? 'failed' : 'pending';
+}
+
 /**
  * GET /api/signup/status?tenant={tenantId}
  *
  * Public proxy endpoint for the provisioning page polling loop. Reads the
- * Tenant CR's .status.phase and .status.conditions and projects them into
- * the legacy { status, currentStep, steps } shape consumed by the
- * provisioning page.
+ * operator-reported provisioning snapshot from the daemon's
+ * TenantProvisioningService (dashboard#813 — the dashboard no longer reads the
+ * Tenant CR directly) and projects it into the legacy
+ * { status, currentStep, steps } shape the provisioning page consumes.
  *
- * The `user` parameter is no longer supported, provisioning is now keyed
- * on the Tenant CR name (slugified company name).
+ * The snapshot carries `phase` + `dataPlaneReady` + per-store states but NOT
+ * the Tenant CR's full status.conditions, so the step view is reconstructed
+ * from the coarse data-plane store states (postgres/redis/neo4j).
+ *
+ * The `user` parameter is no longer supported, provisioning is keyed on the
+ * Tenant CR name (slugified company name).
  */
 export async function GET(request: NextRequest) {
   // Rate limit by IP
@@ -38,30 +58,47 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const cr = await getTenant(tenantId);
-    const phase = cr.status?.phase ?? 'Pending';
-    const conditions = cr.status?.conditions ?? [];
+    const snapshot = await getTenantProvisioningStatus(tenantId);
 
-    // Map CR conditions → legacy step shape.
-    const steps = conditions.map((c) => ({
-      name: c.type,
-      displayLabel: c.message ?? c.type,
-      status:
-        c.status === 'True'
-          ? 'completed'
-          : c.status === 'False'
-            ? c.reason === 'InProgress'
-              ? 'running'
-              : 'failed'
-            : 'pending',
-    }));
+    if (!snapshot.found) {
+      // No provisioning record yet — operator hasn't created the CR off the
+      // pending-provisioning queue. Treat as still initializing.
+      return NextResponse.json({
+        status: 'provisioning',
+        currentStep: '',
+        steps: [],
+      });
+    }
+
+    const phase = snapshot.phase || 'Pending';
+    const phaseFailed = phase === 'Failed';
+
+    // Reconstruct a coarse step view from the per-store provisioning states.
+    const steps = [
+      {
+        name: 'postgres',
+        displayLabel: 'Provisioning database',
+        status: storeStepStatus(snapshot.stores.postgres, phaseFailed),
+      },
+      {
+        name: 'redis',
+        displayLabel: 'Provisioning cache',
+        status: storeStepStatus(snapshot.stores.redis, phaseFailed),
+      },
+      {
+        name: 'graph',
+        displayLabel: 'Provisioning knowledge graph',
+        status: storeStepStatus(snapshot.stores.neo4j, phaseFailed),
+      },
+    ];
 
     const overall =
-      phase === 'Ready'
+      phase === 'Ready' || snapshot.dataPlaneReady
         ? 'active'
-        : phase === 'Failed'
+        : phaseFailed
           ? 'provisioning_failed'
           : 'provisioning';
+
     const runningStep = steps.find((s) => s.status === 'running');
     const currentStep = runningStep?.name ?? '';
 
@@ -73,19 +110,10 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : '';
 
-    if (error instanceof K8sNotFoundError || errMsg.includes('not found')) {
-      // CR not yet created, still initializing
-      return NextResponse.json({
-        status: 'provisioning',
-        currentStep: '',
-        steps: [],
-      });
-    }
-
     console.error(
       JSON.stringify({
         component: 'signup-status',
-        op: 'getTenantCR.error',
+        op: 'getTenantProvisioningStatus.error',
         ts: new Date().toISOString(),
         error: errMsg,
       }),
