@@ -26,6 +26,8 @@ import {
 import { GitBranch, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { GraphNode } from '@/src/types/graph';
+import { EmbeddingGatePrompt } from '@/components/gibson/shared/EmbeddingGatePrompt';
+import { isEmbeddingGateError } from '@/src/lib/embedding-gate';
 
 interface PathResult {
   node_ids: string[];
@@ -138,6 +140,10 @@ export function PathQueryPanel({ nodes, initialSourceNode, onPathsFound }: PathQ
   const [loading, setLoading] = useState(false);
   const [resultCount, setResultCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // E11 BYO-embedder (gibson#810): GraphRAG path search needs an embedding
+  // provider. When the daemon returns the "configure an embedding provider"
+  // gate, surface the actionable prompt instead of a raw error string.
+  const [embeddingGated, setEmbeddingGated] = useState(false);
 
   // Wire initialSourceNode from NodeDetailPanel's "Find paths" button
   useEffect(() => {
@@ -158,6 +164,7 @@ export function PathQueryPanel({ nodes, initialSourceNode, onPathsFound }: PathQ
 
     setLoading(true);
     setError(null);
+    setEmbeddingGated(false);
     setResultCount(null);
 
     try {
@@ -179,7 +186,11 @@ export function PathQueryPanel({ nodes, initialSourceNode, onPathsFound }: PathQ
 
       if (!resp.ok) {
         const json = (await resp.json()) as { error?: string };
-        setError(json.error ?? `Error ${resp.status}`);
+        if (isEmbeddingGateError(json)) {
+          setEmbeddingGated(true);
+        } else {
+          setError(json.error ?? `Error ${resp.status}`);
+        }
         onPathsFound([]);
         return;
       }
@@ -188,7 +199,11 @@ export function PathQueryPanel({ nodes, initialSourceNode, onPathsFound }: PathQ
       setResultCount(data.paths.length);
       onPathsFound(data.paths);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      if (isEmbeddingGateError(err)) {
+        setEmbeddingGated(true);
+      } else {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      }
       onPathsFound([]);
     } finally {
       setLoading(false);
@@ -199,6 +214,7 @@ export function PathQueryPanel({ nodes, initialSourceNode, onPathsFound }: PathQ
     onPathsFound([]);
     setResultCount(null);
     setError(null);
+    setEmbeddingGated(false);
   }
 
   return (
@@ -291,13 +307,18 @@ export function PathQueryPanel({ nodes, initialSourceNode, onPathsFound }: PathQ
             />
           </div>
 
+          {/* Embedding-provider gate (E11 BYO-embedder, gibson#810) */}
+          {embeddingGated && (
+            <EmbeddingGatePrompt feature="GraphRAG path search" />
+          )}
+
           {/* Error */}
-          {error && (
+          {error && !embeddingGated && (
             <p className="text-xs text-destructive">{error}</p>
           )}
 
           {/* No paths result */}
-          {resultCount === 0 && !error && (
+          {resultCount === 0 && !error && !embeddingGated && (
             <p className="text-xs text-muted-foreground">
               No paths found within {maxDepth} hops.
             </p>

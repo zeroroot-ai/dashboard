@@ -10,6 +10,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ConnectError, Code } from '@/src/lib/gibson-client';
+import type { ProviderCapability } from '@/src/lib/gibson-client-types';
 
 // ---------------------------------------------------------------------------
 // Mocks, hoisted before imports
@@ -66,6 +67,8 @@ const mockProvider = {
   credentialsMasked: { api_key: '****abcd' },
   createdAt: '2026-04-18T00:00:00Z',
   updatedAt: '2026-04-18T00:00:00Z',
+  capabilities: ['chat'] as ProviderCapability[],
+  defaultEmbeddingModel: '',
 };
 
 function makeRequest(method = 'GET', body?: unknown): Request {

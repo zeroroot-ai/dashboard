@@ -40,13 +40,22 @@ import { useCreateProvider } from "@/src/hooks/useProviderMutations";
 const TOTAL_STEPS = 4;
 
 const LLM_PROVIDERS = [
-  { value: "anthropic", label: "Anthropic (Claude)" },
-  { value: "openai", label: "OpenAI (GPT)" },
-  { value: "google", label: "Google Gemini" },
-  { value: "ollama", label: "Ollama (Local)" },
+  // defaultEmbeddingModel: a sane out-of-the-box embedding model per provider,
+  // used when onboarding configures the provider for embeddings (E11
+  // BYO-embedder, gibson#810). Empty for providers without a canonical default
+  // (Ollama, where the model depends on what the operator has pulled locally).
+  { value: "anthropic", label: "Anthropic (Claude)", defaultEmbeddingModel: "voyage-3" },
+  { value: "openai", label: "OpenAI (GPT)", defaultEmbeddingModel: "text-embedding-3-small" },
+  { value: "google", label: "Google Gemini", defaultEmbeddingModel: "text-embedding-004" },
+  { value: "ollama", label: "Ollama (Local)", defaultEmbeddingModel: "" },
 ] as const;
 
 type LLMProviderValue = (typeof LLM_PROVIDERS)[number]["value"];
+
+/** Look up the default embedding model for an onboarding provider value. */
+function defaultEmbeddingModelFor(provider: string): string {
+  return LLM_PROVIDERS.find((p) => p.value === provider)?.defaultEmbeddingModel ?? "";
+}
 
 const MISSION_TEMPLATES = [
   { value: "external-recon", label: "External Reconnaissance" },
@@ -58,10 +67,19 @@ const MISSION_TEMPLATES = [
 
 // ── Schemas ────────────────────────────────────────────────────────────────────
 
-const llmProviderSchema = z.object({
-  provider: z.string().min(1, "Please select a provider"),
-  apiKey: z.string().optional(),
-});
+const llmProviderSchema = z
+  .object({
+    provider: z.string().min(1, "Please select a provider"),
+    apiKey: z.string().optional(),
+    // E11 BYO-embedder (gibson#810): vector features require an embedding
+    // provider. Onboarding configures this provider for both chat AND
+    // embeddings, so an embedding model is required.
+    embeddingModel: z.string().optional(),
+  })
+  .refine((v) => v.provider === "" || Boolean(v.embeddingModel && v.embeddingModel.trim()), {
+    message: "An embedding model is required so vector features work",
+    path: ["embeddingModel"],
+  });
 
 const firstMissionSchema = z.object({
   targetDomain: z
@@ -171,11 +189,24 @@ function LLMProviderStep({
     defaultValues: {
       provider: store.llmConfig?.provider ?? "",
       apiKey: "",
+      embeddingModel: defaultEmbeddingModelFor(store.llmConfig?.provider ?? ""),
     },
   });
 
   const selectedProvider = form.watch("provider") as LLMProviderValue | "";
   const requiresApiKey = selectedProvider && selectedProvider !== "ollama";
+
+  // When the operator picks a provider, prefill its canonical embedding model
+  // (unless they have already typed one) so the common path is one click.
+  React.useEffect(() => {
+    if (!selectedProvider) return;
+    const current = form.getValues("embeddingModel");
+    if (!current) {
+      const suggested = defaultEmbeddingModelFor(selectedProvider);
+      if (suggested) form.setValue("embeddingModel", suggested);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProvider]);
 
   async function onSubmit(values: LLMProviderFormValues) {
     try {
@@ -185,6 +216,12 @@ function LLMProviderStep({
           name: values.provider,
           defaultModel: '',
           credentials: values.apiKey ? { api_key: values.apiKey } : {},
+          // Onboarding requires an embedding provider (E11 BYO-embedder,
+          // gibson#810): configure this provider for both chat and embeddings
+          // so vector features (vector recall, GraphRAG, belief-RAG, finding
+          // classification) work out of the box.
+          capabilities: ["chat", "embedding"],
+          defaultEmbeddingModel: values.embeddingModel?.trim() ?? "",
         },
         testConnection: false,
       });
@@ -259,6 +296,33 @@ function LLMProviderStep({
                   </FormControl>
                   <FormDescription>
                     Your API key is stored as a Kubernetes secret and never logged.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          {selectedProvider && (
+            <FormField
+              control={form.control}
+              name="embeddingModel"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-mono">Embedding model</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="text-embedding-3-small"
+                      className="font-mono"
+                      autoComplete="off"
+                      data-testid="onboarding-embedding-model"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Required for vector recall, GraphRAG, belief-RAG and finding
+                    classification. This provider is configured for both chat and
+                    embeddings.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

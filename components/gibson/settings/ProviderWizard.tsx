@@ -72,7 +72,12 @@ import {
   CREDENTIAL_FIELD_TYPE,
   type CredentialFieldDescriptor,
   type SupportedProviderDescriptor,
+  type ProviderCapability,
 } from "@/src/lib/gibson-client-types";
+import {
+  PROVIDER_CAPABILITIES,
+  capabilityLabel,
+} from "@/src/lib/provider-capabilities";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -612,6 +617,10 @@ function ModelPickerAndSave({
   setPickedModel,
   setAsDefault,
   setSetAsDefault,
+  capabilities,
+  setCapabilities,
+  embeddingModel,
+  setEmbeddingModel,
   onSave,
   isSavePending,
 }: {
@@ -621,9 +630,31 @@ function ModelPickerAndSave({
   setPickedModel: (m: string) => void;
   setAsDefault: boolean;
   setSetAsDefault: (b: boolean) => void;
+  capabilities: ProviderCapability[];
+  setCapabilities: (c: ProviderCapability[]) => void;
+  embeddingModel: string;
+  setEmbeddingModel: (m: string) => void;
   onSave: () => void;
   isSavePending: boolean;
 }) {
+  const servesChat = capabilities.includes("chat");
+  const servesEmbedding = capabilities.includes("embedding");
+
+  function toggleCapability(cap: ProviderCapability, on: boolean) {
+    const next = on
+      ? Array.from(new Set([...capabilities, cap]))
+      : capabilities.filter((c) => c !== cap);
+    // Re-order per the canonical PROVIDER_CAPABILITIES order for stable output.
+    setCapabilities(PROVIDER_CAPABILITIES.filter((c) => next.includes(c)));
+  }
+
+  // The Save button is disabled when nothing actionable is configured: chat
+  // needs a chat model; embedding needs an embedding model. At least one
+  // capability must be selected.
+  const chatReady = !servesChat || Boolean(pickedModel);
+  const embeddingReady = !servesEmbedding || Boolean(embeddingModel.trim());
+  const saveDisabled =
+    isSavePending || capabilities.length === 0 || !chatReady || !embeddingReady;
   // Prefer live models when present; otherwise fall back to the descriptor's
   // default catalogue (e.g. Bedrock has a static list, Anthropic does not).
   // When using live models, cross-reference with the descriptor's defaultModels
@@ -664,61 +695,132 @@ function ModelPickerAndSave({
 
   return (
     <div className="space-y-4">
+      {/* Capabilities: which services this provider fulfils. Mirrors the
+          proto Capability enum (chat / embedding); a provider may serve one or
+          both (E11 BYO-embedder, gibson#810). */}
       <div className="space-y-1.5">
-        <label className="text-xs font-medium">Default model</label>
-        {models.length === 0 ? (
+        <label className="text-xs font-medium">Capabilities</label>
+        <p className="text-muted-foreground text-[11px]">
+          Choose which services this provider fulfils. Run e.g. one provider for
+          chat and another for embeddings.
+        </p>
+        <div className="flex flex-col gap-2 pt-0.5">
+          {PROVIDER_CAPABILITIES.map((cap) => (
+            <label
+              key={cap}
+              className="flex items-center gap-2 text-xs"
+              data-testid={`capability-${cap}`}
+            >
+              <Checkbox
+                checked={capabilities.includes(cap)}
+                onCheckedChange={(v) => toggleCapability(cap, v === true)}
+              />
+              {capabilityLabel(cap)}
+            </label>
+          ))}
+        </div>
+        {capabilities.length === 0 && (
           <Alert>
             <AlertCircle className="size-4" />
             <AlertDescription className="text-xs">
-              The provider didn&apos;t return a model list. Type the model name
-              manually below, Gibson will use it for new agent slots that
-              reference this provider.
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <Select value={pickedModel} onValueChange={setPickedModel}>
-            <SelectTrigger className="w-full text-xs">
-              <SelectValue placeholder="Select model" />
-            </SelectTrigger>
-            <SelectContent>
-              {models.map((m) => (
-                <SelectItem key={m.name} value={m.name} className="font-mono text-xs">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className={m.deprecated ? "text-muted-foreground" : undefined}>
-                      {m.name}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      {m.contextWindow > 0 && (
-                        <span className="text-muted-foreground text-[10px]">
-                          {m.contextWindow.toLocaleString()} ctx
-                        </span>
-                      )}
-                      {m.deprecated && (
-                        <Badge variant="secondary" className="text-[10px]">Deprecated</Badge>
-                      )}
-                    </div>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-        {models.length === 0 && (
-          <Input
-            value={pickedModel}
-            onChange={(e) => setPickedModel(e.target.value)}
-            placeholder="model-name"
-            className="font-mono text-xs"
-          />
-        )}
-        {pickedModelMeta?.deprecated && (
-          <Alert>
-            <AlertDescription className="text-xs">
-              This model is deprecated, consider switching to a newer model.
+              Select at least one capability.
             </AlertDescription>
           </Alert>
         )}
       </div>
+
+      {servesChat && (
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium">Default chat model</label>
+          {models.length === 0 ? (
+            <Alert>
+              <AlertCircle className="size-4" />
+              <AlertDescription className="text-xs">
+                The provider didn&apos;t return a model list. Type the model name
+                manually below, Gibson will use it for new agent slots that
+                reference this provider.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Select value={pickedModel} onValueChange={setPickedModel}>
+              <SelectTrigger className="w-full text-xs">
+                <SelectValue placeholder="Select model" />
+              </SelectTrigger>
+              <SelectContent>
+                {models.map((m) => (
+                  <SelectItem key={m.name} value={m.name} className="font-mono text-xs">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className={m.deprecated ? "text-muted-foreground" : undefined}>
+                        {m.name}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {m.contextWindow > 0 && (
+                          <span className="text-muted-foreground text-[10px]">
+                            {m.contextWindow.toLocaleString()} ctx
+                          </span>
+                        )}
+                        {m.deprecated && (
+                          <Badge variant="secondary" className="text-[10px]">Deprecated</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {models.length === 0 && (
+            <Input
+              value={pickedModel}
+              onChange={(e) => setPickedModel(e.target.value)}
+              placeholder="model-name"
+              className="font-mono text-xs"
+            />
+          )}
+          {pickedModelMeta?.deprecated && (
+            <Alert>
+              <AlertDescription className="text-xs">
+                This model is deprecated, consider switching to a newer model.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+      )}
+
+      {servesEmbedding && (
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium">Default embedding model</label>
+          <p className="text-muted-foreground text-[11px]">
+            Used for vector recall, GraphRAG, belief-RAG and finding
+            classification, independent of the chat model.
+          </p>
+          {models.length > 0 ? (
+            <Select value={embeddingModel} onValueChange={setEmbeddingModel}>
+              <SelectTrigger className="w-full text-xs" data-testid="embedding-model-select">
+                <SelectValue placeholder="Select embedding model" />
+              </SelectTrigger>
+              <SelectContent>
+                {models.map((m) => (
+                  <SelectItem
+                    key={m.name}
+                    value={m.name}
+                    className="font-mono text-xs"
+                  >
+                    {m.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null}
+          <Input
+            value={embeddingModel}
+            onChange={(e) => setEmbeddingModel(e.target.value)}
+            placeholder="text-embedding-3-small"
+            className="font-mono text-xs"
+            data-testid="embedding-model-input"
+          />
+        </div>
+      )}
 
       <label className="flex items-center gap-2 text-xs">
         <input
@@ -733,7 +835,7 @@ function ModelPickerAndSave({
         type="button"
         size="sm"
         onClick={onSave}
-        disabled={isSavePending || !pickedModel}
+        disabled={saveDisabled}
         className="text-xs"
       >
         {isSavePending && <Loader2 className="size-3 animate-spin" />}
@@ -762,6 +864,14 @@ export function ProviderWizard({
   const [pickedModel, setPickedModel] = React.useState<string>("");
   const [setAsDefault, setSetAsDefault] = React.useState<boolean>(false);
   const [isTestPending, setIsTestPending] = React.useState<boolean>(false);
+  // E11 BYO-embedder (gibson#810): a provider declares which services it
+  // fulfils (chat and/or embedding) plus an independent default embedding
+  // model. Default to chat-only — the legacy behaviour — so the simplest add
+  // flow is unchanged.
+  const [capabilities, setCapabilities] = React.useState<ProviderCapability[]>([
+    "chat",
+  ]);
+  const [embeddingModel, setEmbeddingModel] = React.useState<string>("");
 
   const createMutation = useCreateProvider();
   const descriptor = supported.find((d) => d.type === selectedType);
@@ -777,6 +887,8 @@ export function ProviderWizard({
     setProbeResult(null);
     setPickedModel("");
     setSetAsDefault(false);
+    setCapabilities(["chat"]);
+    setEmbeddingModel("");
   }
 
   function pickType(type: string) {
@@ -784,6 +896,8 @@ export function ProviderWizard({
     setFormValues({ name: type, credentials: {} });
     setProbeResult(null);
     setPickedModel("");
+    setCapabilities(["chat"]);
+    setEmbeddingModel("");
   }
 
   async function runTest(values: CredentialFormValues) {
@@ -850,6 +964,7 @@ export function ProviderWizard({
 
   function save() {
     if (!descriptor) return;
+    const servesEmbedding = capabilities.includes("embedding");
     createMutation.mutate(
       {
         config: {
@@ -858,6 +973,10 @@ export function ProviderWizard({
           defaultModel: pickedModel,
           credentials: formValues.credentials,
           setAsDefault,
+          capabilities,
+          // Only send an embedding model when the provider serves embeddings;
+          // otherwise leave it empty (provider is chat-only).
+          defaultEmbeddingModel: servesEmbedding ? embeddingModel : "",
         },
       },
       {
@@ -968,6 +1087,10 @@ export function ProviderWizard({
             setPickedModel={setPickedModel}
             setAsDefault={setAsDefault}
             setSetAsDefault={setSetAsDefault}
+            capabilities={capabilities}
+            setCapabilities={setCapabilities}
+            embeddingModel={embeddingModel}
+            setEmbeddingModel={setEmbeddingModel}
             onSave={save}
             isSavePending={createMutation.isPending}
           />
