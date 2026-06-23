@@ -34,7 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { inviteMemberAction } from "@/app/actions/crd/member";
-import type { MemberRole } from "@/src/lib/k8s/types";
+import type { MemberRole } from "@/app/actions/crd/types";
 
 const inviteSchema = z.object({
   email: z.string().email("Please enter a valid email address"),

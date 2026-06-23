@@ -48,7 +48,7 @@ import { setTenantRoleAction } from "@/app/actions/crd/role";
 import { revokeUserSessionsAction } from "@/app/actions/crd/sessions";
 import { listMembersAction, type MemberRow } from "@/app/actions/read/listMembers";
 import type { TenantRole } from "@/app/actions/crd/role";
-import type { MemberRole } from "@/src/lib/k8s/types";
+import type { MemberRole } from "@/app/actions/crd/types";
 
 const ROLE_BADGE_CLASS: Record<string, string> = {
   owner: "border-alt/50 bg-alt/10 text-alt",

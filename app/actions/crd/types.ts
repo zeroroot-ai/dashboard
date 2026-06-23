@@ -45,24 +45,18 @@ export type ActionResult<T = void> =
   | { ok: false; error: string; code: ActionErrorCode };
 
 /**
- * Classify a K8sError (or any error with a `.name` property from
- * `src/lib/k8s/errors.ts`) into the closed `ActionErrorCode` union.
- * Unknown errors map to `INTERNAL`.
+ * A tenant member's role. Relocated here from the deleted `src/lib/k8s/types`
+ * surface (dashboard#855 zero-kubeconfig capstone): the dashboard no longer
+ * reads the TenantMember CR, so the role enum is a dashboard-side type, not a
+ * mirror of a Kubernetes schema. Membership is owned by the daemon's
+ * MembershipService (ADR-0043/0044); these are the role strings that service
+ * returns.
  */
-export function classifyK8sError(err: { name?: string }): ActionErrorCode {
-  switch (err?.name) {
-    case "K8sNotFoundError":
-      return "NOT_FOUND";
-    case "K8sConflictError":
-      return "CONFLICT";
-    case "K8sForbiddenError":
-      return "FORBIDDEN";
-    case "K8sValidationError":
-      return "BAD_INPUT";
-    case "K8sUnavailableError":
-    case "K8sError":
-    default:
-      return "INTERNAL";
-  }
-}
+export type MemberRole = "owner" | "admin" | "member" | "viewer";
+
+/**
+ * A tenant plan tier. Re-exported from the generated plan registry, which
+ * mirrors the operator's `plans.PlanID` Go enum.
+ */
+export type { PlanID as TenantTier } from "@/src/generated/plans";
 

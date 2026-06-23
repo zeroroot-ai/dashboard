@@ -25,11 +25,10 @@ import {
   NoActiveTenantError,
   StaleActiveTenantError,
 } from '@/src/lib/auth/active-tenant';
-import { MemberRole } from '@/src/lib/k8s/types';
 import { emitCrdAuditFromGate } from '@/src/lib/audit/crd';
 import { listMembersAction } from '@/app/actions/read/listMembers';
 
-import { type ActionResult } from './types';
+import { type ActionResult, type MemberRole } from './types';
 import { requireCrdSession } from './_authz';
 import {
   inviteMemberInput,
