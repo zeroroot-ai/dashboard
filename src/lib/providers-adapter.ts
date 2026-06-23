@@ -21,5 +21,7 @@ export function toProviderConfig(r: DaemonProviderRecord): ProviderConfig {
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
     version: 0,
+    capabilities: r.capabilities,
+    defaultEmbeddingModel: r.defaultEmbeddingModel || undefined,
   };
 }

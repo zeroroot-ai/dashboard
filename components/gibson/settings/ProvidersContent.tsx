@@ -63,6 +63,7 @@ import { useCreateProvider, useDeleteProvider, useSetDefaultProvider, useUpdateP
 import { useProviderHealth } from "@/src/hooks/useProviderHealth";
 import { CREDENTIAL_FIELD_TYPE } from '@/src/lib/gibson-client-types';
 import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
+import { capabilityLabel } from '@/src/lib/provider-capabilities';
 import type { ProviderConfig, ProviderHealthStatus } from "@/src/types/provider";
 import { HEALTH_STATUS_CONFIG } from "@/src/types/provider";
 import { useQueryClient } from "@tanstack/react-query";
@@ -469,6 +470,28 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
                     Default model: {provider.defaultModel}
                     {configuredModelMeta?.deprecated === true && (
                       <Badge variant="destructive" className="text-[10px]">Model deprecated</Badge>
+                    )}
+                  </CardDescription>
+                );
+              })()}
+              {/* Capabilities + embedding model (E11 BYO-embedder,
+                  gibson#810). Empty capabilities normalise to chat-only. */}
+              {(() => {
+                const caps = provider.capabilities ?? ["chat"];
+                return (
+                  <CardDescription
+                    className="mt-0.5 text-xs flex items-center gap-1.5"
+                    data-testid="provider-capabilities"
+                  >
+                    {caps.map((cap) => (
+                      <Badge key={cap} variant="outline" className="text-[10px]">
+                        {capabilityLabel(cap)}
+                      </Badge>
+                    ))}
+                    {provider.defaultEmbeddingModel && (
+                      <span className="text-muted-foreground">
+                        Embedding model: {provider.defaultEmbeddingModel}
+                      </span>
                     )}
                   </CardDescription>
                 );

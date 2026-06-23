@@ -29,6 +29,15 @@
  */
 export type CredentialFieldType = 0 | 1 | 2 | 3 | 4 | 5;
 
+/**
+ * Dashboard-side provider capability identifier (E11 BYO-embedder,
+ * gibson#810). Mirrors the proto gibson.tenant.v1.Capability enum
+ * (CHAT / EMBEDDING) but as a pure string union so client components can use it
+ * without pulling @bufbuild/protobuf into the browser bundle. The proto-enum
+ * conversion lives in src/lib/provider-capabilities.ts.
+ */
+export type ProviderCapability = 'chat' | 'embedding';
+
 export const CREDENTIAL_FIELD_TYPE = {
   UNSPECIFIED: 0,
   TEXT: 1,
@@ -105,10 +114,20 @@ export interface DaemonProviderConfigInput {
   name: string;
   /** Provider type identifier (e.g. "anthropic", "openai"). */
   type: string;
-  /** Model to use when none is specified by the caller. */
+  /** Default CHAT model to use when none is specified by the caller. */
   defaultModel: string;
   /** Plaintext credentials, e.g. {"api_key": "sk-..."}. Transient, not retained by dashboard. */
   credentials: Record<string, string>;
   /** When true, atomically designates this provider as the tenant's default. */
   setAsDefault?: boolean;
+  /**
+   * Capabilities this provider fulfils ("chat" and/or "embedding"). Empty
+   * implies the legacy chat-only default. (E11 BYO-embedder, gibson#810.)
+   */
+  capabilities?: ProviderCapability[];
+  /**
+   * Default embedding model, independent of {@link defaultModel} (the chat
+   * model). Empty when the provider does not serve embeddings.
+   */
+  defaultEmbeddingModel?: string;
 }

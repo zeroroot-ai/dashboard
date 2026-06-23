@@ -22,6 +22,7 @@ import type {
   ModelDescriptor,
   SupportedProviderDescriptor,
   DaemonProviderConfigInput,
+  ProviderCapability,
 } from './gibson-client-types';
 // Re-exported for back-compat; client components should import from
 // gibson-client-types directly to avoid pulling grpc-js into the browser bundle.
@@ -30,7 +31,12 @@ export type {
   ModelDescriptor,
   SupportedProviderDescriptor,
   DaemonProviderConfigInput,
+  ProviderCapability,
 };
+import {
+  fromProtoCapabilities,
+  toProtoCapabilities,
+} from './provider-capabilities';
 import { requireUserToken } from './auth/user-token';
 // The ConnectRPC transport now lives in the module-private
 // `gibson-client/transport.ts` (dashboard#814). `makeClient` and the raw
@@ -219,58 +225,12 @@ export async function getMissionDefinition(name: string, userId?: string, tenant
   return response;
 }
 
-export interface TenantLangfuseCredentials {
-  publicKey: string;
-  secretKey: string;
-  host: string;
-  projectId: string;
-}
-
-/**
- * Retrieve per-tenant Langfuse credentials from the Gibson daemon.
- *
- * Throws a {@link ConnectError} with code {@link Code.NotFound} when the
- * tenant has not yet been provisioned. Callers should catch that case and
- * fall back to platform-level credentials as appropriate.
- */
-export async function getTenantLangfuseCredentials(tenantId: string, userId?: string, _tenantCtx?: string): Promise<TenantLangfuseCredentials> {
-  const client = await getAdminClient(userId, tenantId);
-  const response = await client.getTenantLangfuseCredentials({ tenantId });
-  return {
-    publicKey: response.publicKey,
-    secretKey: response.secretKey,
-    host: response.host,
-    projectId: response.projectId,
-  };
-}
-
-/**
- * Store per-tenant Langfuse credentials in the Gibson daemon.
- * Called after provisioning a new Langfuse project for a tenant.
- */
-export async function setTenantLangfuseCredentials(
-  tenantId: string,
-  credentials: TenantLangfuseCredentials,
-  userId?: string
-): Promise<void> {
-  const client = await getAdminClient(userId, tenantId);
-  await client.setTenantLangfuseCredentials({
-    tenantId,
-    publicKey: credentials.publicKey,
-    secretKey: credentials.secretKey,
-    host: credentials.host,
-    projectId: credentials.projectId,
-  });
-}
-
-/**
- * Delete per-tenant Langfuse credentials from the Gibson daemon.
- * Called when deprovisioning a tenant's Langfuse project.
- */
-export async function deleteTenantLangfuseCredentials(tenantId: string, userId?: string): Promise<void> {
-  const client = await getAdminClient(userId, tenantId);
-  await client.deleteTenantLangfuseCredentials({ tenantId });
-}
+// Per-tenant Langfuse credential RPCs were removed from the
+// gibson.tenant.v1.ProviderService proto when the tenant-admin surface was
+// re-homed into the gibson daemon-local tree (E6, gibson#921). The dashboard
+// wrappers had no callers, so they are dropped here rather than carried as
+// dead code referencing message types the regenerated bindings no longer
+// expose.
 
 export { ConnectError, Code };
 
@@ -1351,6 +1311,16 @@ export interface DaemonProviderRecord {
   createdAt: string;
   /** RFC 3339 last-update timestamp. */
   updatedAt: string;
+  /**
+   * Capabilities this provider fulfils ("chat" and/or "embedding"). Empty proto
+   * is normalised to chat-only here. (E11 BYO-embedder, gibson#810.)
+   */
+  capabilities: ProviderCapability[];
+  /**
+   * Default embedding model, independent of {@link defaultModel} (the chat
+   * model). Empty when the provider does not serve embeddings.
+   */
+  defaultEmbeddingModel: string;
 }
 
 /**
@@ -1519,6 +1489,8 @@ function fromProtoProviderRecord(
     credentialsMasked: { ...p.credentialsMasked },
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
+    capabilities: fromProtoCapabilities(p.capabilities ?? []),
+    defaultEmbeddingModel: p.defaultEmbeddingModel,
   };
 }
 
@@ -1531,6 +1503,8 @@ function toProtoDaemonConfigInput(
     defaultModel: input.defaultModel,
     credentials: { ...input.credentials },
     setAsDefault: input.setAsDefault ?? false,
+    capabilities: toProtoCapabilities(input.capabilities ?? []),
+    defaultEmbeddingModel: input.defaultEmbeddingModel ?? '',
   } as import('@/src/gen/gibson/tenant/v1/provider_pb').ProviderConfigInput;
 }
 

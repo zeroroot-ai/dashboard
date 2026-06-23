@@ -12,6 +12,10 @@
  * identifier is now just `string`.
  */
 
+import type { ProviderCapability } from '@/src/lib/gibson-client-types';
+
+export type { ProviderCapability };
+
 // ============================================================================
 // Health Status Types
 // ============================================================================
@@ -130,8 +134,18 @@ export interface ProviderConfig {
   apiKeyMasked?: string;
   /** API endpoint URL (optional, uses provider defaults if empty) */
   baseUrl?: string;
-  /** Default model to use when not specified */
+  /** Default CHAT model to use when not specified */
   defaultModel?: string;
+  /**
+   * Capabilities this provider fulfils ("chat" and/or "embedding"). Empty is
+   * normalised to chat-only by the daemon adapter. (E11 BYO-embedder.)
+   */
+  capabilities?: ProviderCapability[];
+  /**
+   * Default embedding model, independent of {@link defaultModel} (the chat
+   * model). Undefined/empty when the provider does not serve embeddings.
+   */
+  defaultEmbeddingModel?: string;
   /** Whether this is the default provider */
   isDefault: boolean;
   /** Whether this provider is currently active */
