@@ -3,10 +3,9 @@
  *
  * Auth.js v5's default callback returns `baseUrl` (the site root) when the
  * `__Secure-authjs.callback-url` cookie is missing, empty, or already points
- * at the root. That cookie is set in two places, client-side
- * `signIn("zitadel", { callbackUrl })` and the server-side handoff at
- * src/lib/zitadel/signup-handoff.ts, and either path can race, get stripped
- * by a strict cookie policy, or simply be skipped (user navigates straight to
+ * at the root. That cookie is set client-side by
+ * `signIn("zitadel", { callbackUrl })`, which can race, get stripped by a
+ * strict cookie policy, or simply be skipped (user navigates straight to
  * `/login`). The right default for an authenticated user is the product, not
  * the marketing landing page.
  *
