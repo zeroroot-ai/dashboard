@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+import { billingEnabled } from '@/src/lib/billing/billing-enabled';
 import { createPortalSession } from '@/src/lib/billing/stripe';
 import { getTenant } from '@/src/lib/k8s/tenants';
 import {
@@ -36,6 +37,14 @@ const PORTAL_RATE_LIMIT = {
  * Idempotency: 10-second bucket key prevents duplicate sessions from double-submits.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  // Billing master switch (dashboard#809 / ADR-0050). On-prem / self-host has
+  // no Stripe-backed billing backend; the "Manage payment" surface is hidden
+  // in the UI and the route no-ops here as defense-in-depth (404). Fail-closed:
+  // absent flag ⇒ billing off.
+  if (!billingEnabled()) {
+    return NextResponse.json({ error: 'billing not enabled' }, { status: 404 });
+  }
+
   // Apply rate limit first.
   const rateLimitResult = await checkRateLimit(
     req,

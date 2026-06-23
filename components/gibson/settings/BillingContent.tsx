@@ -85,7 +85,18 @@ function QuotaCard({ label, description, used, limit }: QuotaCardProps) {
   );
 }
 
-export function BillingContent() {
+/**
+ * @param billingEnabled - whether the dashboard is wired to a Stripe-backed
+ *   billing backend (hosted). Passed from the server `BillingPage` boundary
+ *   (single source of truth: src/lib/billing/billing-enabled.ts). When false
+ *   (on-prem default) the purchase/manage surfaces — upgrade CTA + customer
+ *   portal button — are suppressed; plan + quota cards always render.
+ */
+export function BillingContent({
+  billingEnabled = false,
+}: {
+  billingEnabled?: boolean;
+}) {
   const [data, setData] = useState<TenantQuotaRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,7 +129,8 @@ export function BillingContent() {
     }
   }, [data?.planId]);
 
-  const upgrade = getUpgradeTarget(plan?.id);
+  // Upgrade is a purchase action — only offer it when billing is wired.
+  const upgrade = billingEnabled ? getUpgradeTarget(plan?.id) : null;
 
   async function openCustomerPortal() {
     setPortalLoading(true);
@@ -226,7 +238,14 @@ export function BillingContent() {
               <Link href={upgrade.href}>{upgrade.label} →</Link>
             </Button>
           ) : null}
-          {plan.id !== "enterprise-deploy" ? (
+          {!billingEnabled ? (
+            // On-prem / self-host: no Stripe-backed billing backend. Plan +
+            // quotas above are config-driven (Entitlements default); there is
+            // no self-serve payment to manage.
+            <p className="text-sm text-muted-foreground">
+              Plan and quotas are managed by your administrator.
+            </p>
+          ) : plan.id !== "enterprise-deploy" ? (
             <Button
               variant="outline"
               onClick={openCustomerPortal}

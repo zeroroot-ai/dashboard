@@ -1,6 +1,7 @@
 import { type Metadata } from "next";
 import { generateMeta } from "@/lib/utils";
 
+import { billingEnabled } from "@/src/lib/billing/billing-enabled";
 import { BillingContent } from "@/components/gibson/settings/BillingContent";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -13,5 +14,5 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function BillingPage() {
-  return <BillingContent />;
+  return <BillingContent billingEnabled={billingEnabled()} />;
 }

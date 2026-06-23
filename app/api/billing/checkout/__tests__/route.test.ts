@@ -92,10 +92,24 @@ function makeRequest(body: Record<string, unknown>, headers: Record<string, stri
 describe('POST /api/billing/checkout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // dashboard#809: the route 404s when billing is disabled; these tests
+    // exercise the billing-enabled (hosted) path.
+    process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
     mockRateLimitAllowed = true;
     mockCreateCheckoutSession.mockResolvedValue({
       id: 'cs_test_123',
       url: 'https://checkout.stripe.com/pay/cs_test_123',
+    });
+  });
+
+  describe('billing-disabled gate (dashboard#809)', () => {
+    it('returns 404 when billing is not enabled (on-prem default)', async () => {
+      delete process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
+      const req = makeRequest({ tier: 'team', tenantSlug: 'acme' });
+      const res = await POST(req);
+      expect(res.status).toBe(404);
+      const json = (await res.json()) as { error: string };
+      expect(json.error).toBe('billing not enabled');
     });
   });
 

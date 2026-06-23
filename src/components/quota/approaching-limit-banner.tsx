@@ -26,6 +26,12 @@ type ApproachingLimitBannerProps = {
   /** Optional storage-key suffix so the missions and agents pages can
    * dismiss independently. */
   storageKeySuffix?: string;
+  /** Whether the dashboard is wired to a Stripe-backed billing backend.
+   * Pass from the nearest server boundary (src/lib/billing/billing-enabled).
+   * When false (on-prem default) the quota warning still shows but the
+   * "Upgrade" purchase CTA is suppressed — there is nothing to buy.
+   * Fail-closed: defaults to false. */
+  billingEnabled?: boolean;
 };
 
 const STORAGE_KEY_BASE = "gibson:quota-banner-dismissed:";
@@ -40,6 +46,7 @@ export function ApproachingLimitBanner({
   missionsLimit,
   agentsLimit,
   storageKeySuffix = "",
+  billingEnabled = false,
 }: ApproachingLimitBannerProps) {
   const { data } = useTenantQuotaUsage();
   const [dismissed, setDismissed] = useState(false);
@@ -57,7 +64,8 @@ export function ApproachingLimitBanner({
   if (maxPct < 80) return null;
 
   const atLimit = maxPct >= 100;
-  const upgrade = getUpgradeTarget(plan);
+  // Upgrade is a purchase action — only offer it when billing is wired.
+  const upgrade = billingEnabled ? getUpgradeTarget(plan) : null;
 
   const variant = atLimit
     ? "border-red-500 bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-100"
@@ -89,7 +97,9 @@ export function ApproachingLimitBanner({
         <p className="mt-1 opacity-80">
           {atLimit
             ? "You've hit your plan limit. New work will be rejected until in-flight items complete."
-            : "Approaching your plan limit. Upgrade to scale."}
+            : billingEnabled
+              ? "Approaching your plan limit. Upgrade to scale."
+              : "Approaching your plan limit."}
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
