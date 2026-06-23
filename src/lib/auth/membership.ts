@@ -32,9 +32,7 @@ import { z } from 'zod';
 import { auth } from '@/auth';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
 import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
-import { makeClient } from '@/src/lib/gibson-client';
-import { unsafeTenantId } from '@/src/lib/auth/active-tenant';
-import { requireUserToken } from '@/src/lib/auth/user-token';
+import { bootstrapClient } from '@/src/lib/gibson-client/transport';
 import { getFaultMode } from '@/src/lib/test-fixtures/fault-injection';
 import { logger } from '@/src/lib/logger';
 
@@ -135,9 +133,10 @@ function normalizeRole(raw: string): 'owner' | 'admin' | 'member' {
  */
 function membershipsClient() {
   // No tenant header: ListMyMemberships IS the tenant-list bootstrap and runs
-  // before any active tenant can be validated. Brand the empty explicitly
-  // (dashboard#815 non-validated boundary).
-  return makeClient(DaemonService, requireUserToken, async () => unsafeTenantId(''));
+  // before any active tenant can be validated. `bootstrapClient` is the
+  // sanctioned no-tenant wrapper for exactly this boundary (dashboard#814);
+  // it brands the empty tenant via unsafeTenantId internally.
+  return bootstrapClient(DaemonService);
 }
 
 /**
@@ -146,7 +145,7 @@ function membershipsClient() {
  */
 function userServiceClient() {
   // Empty tenant: InvalidateMembershipCache is scoped by user_id only.
-  return makeClient(UserService, requireUserToken, async () => unsafeTenantId(''));
+  return bootstrapClient(UserService);
 }
 
 // ---------------------------------------------------------------------------

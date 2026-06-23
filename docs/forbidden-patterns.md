@@ -17,7 +17,7 @@ const transport = createGrpcTransport({
 });
 ```
 
-Right ([`src/lib/gibson-client.ts:275`](../src/lib/gibson-client.ts)):
+Right (transport owned by [`src/lib/gibson-client/transport.ts`](../src/lib/gibson-client/transport.ts), wrappers re-exported from `gibson-client.ts`):
 
 ```ts
 import { userClient } from '@/src/lib/gibson-client';
@@ -27,9 +27,26 @@ const client = userClient(DaemonService);
 const status = await client.status({});
 ```
 
-The `scripts/check-no-direct-daemon-grpc.mjs` build guard rejects every
-direct daemon URL and `GIBSON_DAEMON_ADDRESS` reference at prebuild
-time. Fix the call site, not the guard.
+Since dashboard#814 (E9) the ConnectRPC daemon channel is constructed in
+exactly ONE module-private file, `src/lib/gibson-client/transport.ts`. That
+module owns `createGrpcTransport` / `createClient`, the Envoy URL, the SPIFFE
+mTLS context, and the `Authorization` / `x-gibson-tenant` identity headers; it
+exports only the typed-client wrappers `userClient`, `serviceClient`, and
+`bootstrapClient` (the no-tenant membership-bootstrap variant). The underlying
+`makeClient` and the raw transport are never exported, so no other file can
+construct its own daemon channel.
+
+Two guards enforce this:
+
+- `scripts/check-no-direct-daemon-grpc.mjs` rejects every direct daemon URL and
+  `GIBSON_DAEMON_ADDRESS` reference at prebuild time.
+- `scripts/check-single-daemon-transport.mjs` (also in `pnpm prebuild`) rejects
+  any import of `@connectrpc/connect-node` or any `createGrpcTransport(` /
+  `createConnectTransport(` / `createClient(` call outside the single transport
+  module. The same boundary is mirrored by the ESLint `no-restricted-imports`
+  rule in `.eslintrc.js`.
+
+Fix the call site (use a wrapper), not the guard.
 
 ## DASHBOARD-AUTH-002: minting JWT-SVIDs from the dashboard
 

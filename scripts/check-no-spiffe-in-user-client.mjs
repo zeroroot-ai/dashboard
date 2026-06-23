@@ -62,7 +62,13 @@ const ROOT = resolve(__dirname, '..');
  * Files that MUST NOT statically import the SPIFFE module. Add a path
  * here when a new user-client companion is created.
  */
-const USER_CLIENT_FILES = ['src/lib/gibson-client.ts'];
+const USER_CLIENT_FILES = [
+  'src/lib/gibson-client.ts',
+  // The ConnectRPC transport moved here in dashboard#814 (E9). It is the file
+  // that owns the user-acting transport and its SPIFFE fallback, so it carries
+  // the same "lazy-require only, never a static import" invariant.
+  'src/lib/gibson-client/transport.ts',
+];
 
 /**
  * Patterns that flag a static import of the SPIFFE module. Each entry
