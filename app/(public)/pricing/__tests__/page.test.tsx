@@ -11,7 +11,7 @@
  * silent redirect loop. (This test was added after exactly that bug.)
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render } from '@testing-library/react';
 
 vi.mock('@/src/lib/billing/fetch-prices', () => ({
@@ -20,8 +20,16 @@ vi.mock('@/src/lib/billing/fetch-prices', () => ({
 
 import PricingPage from '../page';
 
-describe('PricingPage Start-trial CTAs', () => {
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+// The "Start trial" → /signup?plan=<id> self-serve contract only applies when
+// paid billing is enabled (hosted). On-prem/default (dashboard#842 flag-gate)
+// the SaaS CTA becomes "Contact sales" instead. Both are asserted below.
+describe('PricingPage Start-trial CTAs (billing enabled)', () => {
   it.each(['team', 'org', 'enterprise'] as const)('routes the %s tier CTA to /signup with that plan', async (tierId) => {
+    vi.stubEnv('DASHBOARD_BILLING_PAID_TIERS_ENABLED', 'true');
     const ui = await PricingPage();
     const { container } = render(ui);
 
@@ -31,5 +39,21 @@ describe('PricingPage Start-trial CTAs', () => {
 
     const hrefs = startTrialLinks.map((a) => a.getAttribute('href'));
     expect(hrefs).toContain(`/signup?plan=${tierId}`);
+  });
+});
+
+describe('PricingPage CTA when billing is disabled (on-prem default)', () => {
+  it('renders "Contact sales" and no /signup?plan trial links', async () => {
+    vi.stubEnv('DASHBOARD_BILLING_PAID_TIERS_ENABLED', '');
+    const ui = await PricingPage();
+    const { container } = render(ui);
+
+    const anchors = Array.from(container.querySelectorAll('a'));
+    const labels = anchors.map((a) => a.textContent?.trim());
+    const hrefs = anchors.map((a) => a.getAttribute('href') ?? '');
+
+    expect(labels).toContain('Contact sales');
+    expect(labels).not.toContain('Start trial');
+    expect(hrefs.some((h) => h.startsWith('/signup?plan='))).toBe(false);
   });
 });
