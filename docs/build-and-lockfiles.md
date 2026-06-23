@@ -91,29 +91,51 @@ another input to the unification follow-up.
 `knip` runs at the end of the `prebuild` chain and is **blocking**
 (non-zero exit fails the build). Config: `knip.json`.
 
-Scope of the blocking gate (the categories that are clean today and safe to
-enforce):
+Scope of the blocking gate (the categories enforced as `error`):
 
+- **`files`** — a TS/TSX file in `project` scope reached by no entry point.
+- **`dependencies`** / **`devDependencies`** — a declared package imported nowhere.
 - **`unlisted`** — a dependency imported but not declared in `package.json`.
 - **`unresolved`** — an import that resolves to nothing.
 - **`binaries`** — a script invoking a binary not provided by any dependency.
 
-The high-volume categories — **unused files (≈112), unused exports (≈260),
-unused exported types (≈491), unused dependencies (≈73)** — are dominated by the
-untouched **Shadcn UI Kit template** surface (`components/ui/**`, the
-`@radix-ui/*` / `@tiptap/*` / `@fullcalendar/*` dependency blocks) that
-`CLAUDE.md` explicitly says to leave in place. Purging them is a deliberate
-template-trim, not an automated sweep, so those rules are `off` in `knip.json`
-and the purge is tracked as a **scoped follow-up**. When the template is
-trimmed, flip `files` / `exports` / `types` / `dependencies` to `error`.
+`files` / `dependencies` / `devDependencies` were flipped to `error` in the
+dead-code purge (dashboard#806 / #840). That pass deleted **147 dead files**
+(abandoned Gibson features under `src/**`, `components/gibson/**`,
+`app/**` — onboarding wizard, glossary, mission-form, help panel, websocket
+stores, the unused-but-tested `AgentInstallDialog`, etc. — **plus** the
+genuinely-unused Shadcn template files: the `components/ui/*` components that
+were never imported by the product, e.g. `accordion`, `carousel`, `chart`,
+`drawer`, `calendar`, `menubar`, …) and removed **78 dead dependencies** (the
+`@radix-ui/*` / `@tiptap/*` / `@fullcalendar/*` blocks that those dead template
+files were the sole importers of, plus `recharts`, `motion`, `vaul`, etc.).
+The **kept** template surface (the `components/ui/*` files the product *does*
+import) is untouched, per `CLAUDE.md`. The `files` ignore set is now empty.
 
-Precise, justified ignores (not blanket):
+The **`exports` (≈260) / `types` (≈491)** categories remain `off` — they are
+entangled (unused exports from *kept* template `components/ui/**`, redundant
+dual default+named exports in live files, and co-located internal
+`*Result`/`*Input` interfaces), not clean dead code. Purging them is a
+deliberate, reviewed per-symbol pass tracked as a scoped follow-up
+(**dashboard#844**). When done, flip `exports` / `types` to `error`.
+
+Precise, justified `ignoreDependencies` (not blanket):
 
 - `pg` — used only by `scripts/shell-gc.mjs` (a dev GC helper, not in CI); `pg`
   is intentionally not a declared dependency.
 - `@vitest/coverage-v8` — used only by the optional `test:coverage` script.
 - `@auth/core` — the `@auth/core/jwt` subpath is re-exported via `next-auth`
   (a transitive); declaring it directly would duplicate next-auth's pin.
+- `tailwindcss` / `tailwindcss-animate` — consumed by CSS, not TS: `@import
+  "tailwindcss"` and `@plugin "tailwindcss-animate"` in `app/globals.css`
+  (knip only follows TS/TSX imports).
+- `eslint-config-next` — provides the `next/core-web-vitals` + `next/typescript`
+  configs that `.eslintrc.js` extends (a string ref knip can't follow).
+- `pino-pretty` — referenced by string as the pino transport `target` in
+  `src/lib/logger.ts` + listed in `next.config.ts` `serverExternalPackages`.
+- `@bufbuild/buf` / `@bufbuild/protoc-gen-es` — the proto-generation toolchain
+  invoked by `scripts/proto-generate.mjs` / `gen-authz-registry.mjs` (`buf`
+  binary + the ES codegen plugin), not a TS import.
 
 ## Uniform Makefile contract
 
@@ -135,6 +157,9 @@ Tracked separately (filed against dashboard):
    `package-lock.json` (or move the image build onto pnpm so there is a single
    lockfile), resolve the patched-`next-auth` divergence, then flip
    `check-lockfile-sync.mjs` to strict in `prebuild`.
-2. **Template dead-code trim** — trim the unused Shadcn UI Kit surface and its
-   dependency block, then flip the `files`/`exports`/`types`/`dependencies`
-   knip rules to `error`.
+2. **Unused exports/types purge** (dashboard#844) — the dead-file and
+   dead-dependency purge landed and `files` / `dependencies` / `devDependencies`
+   are now `error`. The remaining `exports` (≈260) / `types` (≈491) categories
+   stay `off` because they are entangled (kept-template `components/ui/**`
+   exports, dual default+named export redundancy, co-located internal types);
+   purge them per-symbol, then flip `exports` / `types` to `error`.

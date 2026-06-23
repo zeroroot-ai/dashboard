@@ -21,13 +21,24 @@
   "ignoreDependencies": [
     "pg",
     "@vitest/coverage-v8",
-    "@auth/core"
+    "@auth/core",
+    "tailwindcss",
+    "tailwindcss-animate",
+    "eslint-config-next",
+    "pino-pretty",
+    "@bufbuild/buf",
+    "@bufbuild/protoc-gen-es"
   ],
   "ignoreUnresolved": [
     "@/\\.source/.*"
   ],
   "rules": {
-    "files": "off",
+    "files": "error",
+    "dependencies": "error",
+    "devDependencies": "error",
+    "unlisted": "error",
+    "unresolved": "error",
+    "binaries": "error",
     "exports": "off",
     "types": "off",
     "nsExports": "off",
@@ -35,11 +46,6 @@
     "enumMembers": "off",
     "classMembers": "off",
     "duplicates": "off",
-    "unlisted": "error",
-    "unresolved": "error",
-    "binaries": "error",
-    "dependencies": "off",
-    "devDependencies": "off",
     "optionalPeerDependencies": "off"
   },
   "next": {
