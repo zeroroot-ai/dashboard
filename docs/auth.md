@@ -150,9 +150,31 @@ re-run in CI.
 | [`scripts/check-no-provider-k8s-access.mjs`](../scripts/check-no-provider-k8s-access.mjs) | Direct k8s API access from provider code paths. |
 | [`scripts/check-no-secret-in-logs.mjs`](../scripts/check-no-secret-in-logs.mjs) | `client_secret`, raw JWT, etc. in log lines. |
 | [`scripts/check-no-secrets-in-client.mjs`](../scripts/check-no-secrets-in-client.mjs) | Server-only secrets leaking into client bundles. |
-| [`scripts/check-no-stale-tenant-resolution.mjs`](../scripts/check-no-stale-tenant-resolution.mjs) | Tenant resolution paths that bypass the active-tenant cookie + FGA-membership flow. |
+| [`scripts/check-no-stale-tenant-resolution.mjs`](../scripts/check-no-stale-tenant-resolution.mjs) | Re-introduction of deleted tenant-resolution machinery (`session.user.tenant`, `gibson:tenant` / `urn:zitadel:...` claims, `tenants-by-owner`). Orthogonal to the branded type below. |
 
 Don't disable a guard. Fix the code.
+
+## Branded `TenantId` (dashboard#815)
+
+The former `check-no-lenient-tenant.mjs` guard was deleted and replaced by a
+**type-system invariant**. `src/lib/auth/active-tenant.ts` exports an opaque
+`TenantId = string & { readonly __brand: 'TenantId' }`. A raw `string`
+(`'default'`, a smeared `session.user.tenantId || ''`, an un-revalidated cookie
+value) is NOT assignable to `TenantId`, so passing one where a validated active
+tenant is required is a **compile error**, not merely a runtime fail-close.
+
+- The only fail-closed mint is `requireActiveTenant()` / `getActiveTenant()`,
+  which HMAC-validates the cookie and re-checks FGA memberships before branding.
+- `makeClient(svc, getToken, getTenant)` requires `getTenant: () => Promise<TenantId>`,
+  so the daemon-call boundary cannot receive an unvalidated tenant.
+- The single documented escape hatch is `unsafeTenantId(value)`, used only by
+  the service-acting transport (`serviceClient`) and Stripe-webhook tenant
+  attribution, neither of which has a cookie/user to validate against. A
+  `unsafeTenantId(...)` call in a user-facing route handler is a review smell.
+
+`check-no-stale-tenant-resolution.mjs` is kept: it guards against re-introducing
+the *deleted* claim-reading machinery (string literals / module paths), which
+the branded type cannot express.
 
 ## Cross-link
 
