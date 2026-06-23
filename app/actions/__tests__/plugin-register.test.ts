@@ -340,7 +340,7 @@ describe("validatePluginManifestAction, authz denied", () => {
     vi.clearAllMocks();
     mockAssertAuthorized.mockRejectedValueOnce(
       new MockAuthzDeniedError(
-        "/gibson.tenant.v1.PluginAdminService/RegisterPlugin",
+        "/gibson.pluginadmin.v1.PluginAdminService/RegisterPlugin",
         "relation-not-met",
       ),
     );
@@ -360,7 +360,7 @@ describe("registerPluginAtomicAction, authz denied", () => {
     vi.clearAllMocks();
     mockAssertAuthorized.mockRejectedValueOnce(
       new MockAuthzDeniedError(
-        "/gibson.tenant.v1.PluginAdminService/RegisterPlugin",
+        "/gibson.pluginadmin.v1.PluginAdminService/RegisterPlugin",
         "relation-not-met",
       ),
     );

@@ -66,7 +66,7 @@ describe('AuthRegistry, tenant.v1 + platform-sdk service coverage (ADR-0039)', (
 
   it('contains gibson.tenant.v1 plugin admin methods', () => {
     const pluginMethods = allMethods.filter((m) =>
-      m.startsWith('/gibson.tenant.v1.PluginAdminService/'),
+      m.startsWith('/gibson.pluginadmin.v1.PluginAdminService/'),
     );
     expect(pluginMethods.length).toBeGreaterThan(0);
   });

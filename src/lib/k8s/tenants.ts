@@ -94,7 +94,7 @@ export async function applyTenantMember(
 }
 
 // AgentEnrollment helpers were removed (dashboard#713): enrollment now mints
-// credentials via gibson.tenant.v1.AgentIdentityService (the daemon owns the
+// credentials via gibson.agentidentity.v1.AgentIdentityService (the daemon owns the
 // IdP + FGA writes, no CRD, no bootstrap-token Secret), see
 // app/api/agents/register/route.ts. Per ADR-0044, enrollment is not a
 // Kubernetes operation.

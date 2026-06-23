@@ -10,7 +10,13 @@
  *
  * Spec: component-bootstrap-e2e Requirement 1.
  *
- * SECURITY: the `credentials.clientSecret` value is held in React
+ * Under the unified-identity model (ADR-0045, gibson#670) a component's
+ * sole credential is a one-time, daemon-signed Capability-Grant
+ * `bootstrapToken`, not an OAuth2 client_id/client_secret pair. This
+ * panel mirrors the plugin-enrollment panel
+ * (`src/components/plugin-register/enrollment.tsx`).
+ *
+ * SECURITY: the `credentials.bootstrapToken` value is held in React
  * state in-memory only. It MUST NOT be persisted to sessionStorage,
  * localStorage, or any browser cache.
  */
@@ -34,8 +40,7 @@ import {
 } from '@/components/ui/alert';
 
 export interface Credentials {
-  clientId: string;
-  clientSecret: string;
+  bootstrapToken: string;
   gibsonUrl: string;
   enrollCommand: string;
 }
@@ -89,34 +94,21 @@ export function CredentialPanel({
       <CardContent className="space-y-4">
         <Alert variant="destructive">
           <AlertTriangle className="size-4" />
-          <AlertTitle>Save these credentials now</AlertTitle>
+          <AlertTitle>Save this token now</AlertTitle>
           <AlertDescription>
-            The client_secret cannot be viewed again. If you lose it, you
-            must register a new component.
+            The bootstrap token is single-use and cannot be viewed again.
+            If you lose it, you must register a new component.
           </AlertDescription>
         </Alert>
 
         <div className="space-y-2">
-          <Label htmlFor="cred-panel-client-id">Client ID</Label>
+          <Label htmlFor="cred-panel-bootstrap-token">Bootstrap token</Label>
           <div className="flex gap-2">
             <Input
-              id="cred-panel-client-id"
-              readOnly
-              value={credentials.clientId}
-              className="font-mono"
-            />
-            <CopyButton value={credentials.clientId} label="client ID" />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="cred-panel-client-secret">Client Secret</Label>
-          <div className="flex gap-2">
-            <Input
-              id="cred-panel-client-secret"
+              id="cred-panel-bootstrap-token"
               readOnly
               type={secretVisible ? 'text' : 'password'}
-              value={credentials.clientSecret}
+              value={credentials.bootstrapToken}
               className="font-mono"
             />
             <Button
@@ -124,11 +116,11 @@ export function CredentialPanel({
               variant="outline"
               size="sm"
               onClick={() => setSecretVisible((v) => !v)}
-              aria-label={secretVisible ? 'Hide client secret' : 'Show client secret'}
+              aria-label={secretVisible ? 'Hide bootstrap token' : 'Show bootstrap token'}
             >
               {secretVisible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </Button>
-            <CopyButton value={credentials.clientSecret} label="client secret" />
+            <CopyButton value={credentials.bootstrapToken} label="bootstrap token" />
           </div>
         </div>
 

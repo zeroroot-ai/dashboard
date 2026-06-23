@@ -19,7 +19,7 @@ import { ConnectError, Code } from "@connectrpc/connect";
 import {
   AgentIdentityService,
   PrincipalKind,
-} from "@/src/gen/gibson/tenant/v1/agent_identity_pb";
+} from "@/src/gen/gibson/agentidentity/v1/agent_identity_pb";
 import { userClient } from "@/src/lib/gibson-client";
 import { auth } from "@/auth";
 
