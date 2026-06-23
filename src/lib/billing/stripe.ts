@@ -150,22 +150,6 @@ export async function refundCharge(
 // Types for new billing operations
 // ---------------------------------------------------------------------------
 
-/** Parameters for creating a Stripe Checkout session. */
-export interface CheckoutSessionParams {
-  /** Billing tier, must be a self-serve tier (squad/org/platform), not a contact-sales tier. */
-  tier: BillingTier;
-  /** Stripe Price ID for the tier (resolved from PRICE_ENV_MAP). */
-  priceId: string;
-  /** Stripe customer ID to associate with the session (optional). */
-  customerId?: string;
-  /** Pre-fill customer email on the Checkout page (optional, ignored if customerId set). */
-  customerEmail?: string;
-  /** Tenant slug used for client_reference_id and metadata. */
-  tenantSlug: string;
-  /** Idempotency key for the Stripe API call. */
-  idempotencyKey: string;
-}
-
 /** Parameters for creating a Stripe Billing Portal session. */
 export interface PortalSessionParams {
   /** Stripe customer ID (cus_...). */
@@ -194,66 +178,6 @@ export function priceIdForTier(tier: string): string | null {
   const envKey = PRICE_ENV_MAP[tier as BillingTier];
   if (!envKey) return null;
   return process.env[envKey] ?? null;
-}
-
-// ---------------------------------------------------------------------------
-// Checkout session
-// ---------------------------------------------------------------------------
-
-/**
- * Create a Stripe Checkout session for a self-serve subscription.
- *
- * Always creates a subscription with a 14-day trial; trial cancels automatically
- * if no payment method is collected before trial end. Throws if called with
- * a contact-sales tier (enterprise-deploy).
- *
- * @throws If `params.tier` is a contact-sales tier.
- */
-export async function createCheckoutSession(
-  params: CheckoutSessionParams,
-): Promise<Stripe.Checkout.Session> {
-  if (CONTACT_SALES_TIERS.has(params.tier)) {
-    throw new Error(
-      `[billing/stripe] createCheckoutSession called with contact-sales tier "${params.tier}". ` +
-        'Enterprise tiers must go through the sales flow, not Stripe Checkout.',
-    );
-  }
-
-  const stripe = getStripeClient();
-  // PUBLIC_URL is REQUIRED at boot (src/lib/env-validator.ts). We read
-  // process.env directly so this module's tests do not pull in the full
-  // env-validator dependency graph.
-  const publicUrl = process.env.PUBLIC_URL;
-  if (!publicUrl) {
-    throw new Error(
-      '[billing/stripe] PUBLIC_URL is required for Stripe checkout return URLs. ' +
-        'See src/lib/env-validator.ts, validateEnv() should have caught this at boot.',
-    );
-  }
-
-  return stripe.checkout.sessions.create(
-    {
-      mode: 'subscription',
-      payment_method_collection: 'always',
-      line_items: [{ price: params.priceId, quantity: 1 }],
-      subscription_data: {
-        trial_period_days: 14,
-        trial_settings: {
-          end_behavior: { missing_payment_method: 'cancel' },
-        },
-        metadata: { tenantId: params.tenantSlug },
-      },
-      client_reference_id: params.tenantSlug,
-      ...(params.customerId ? { customer: params.customerId } : {}),
-      ...(params.customerEmail && !params.customerId
-        ? { customer_email: params.customerEmail }
-        : {}),
-      success_url: `${publicUrl}/onboarding/billing-confirmed?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${publicUrl}/pricing?canceled=1`,
-      metadata: { tenantId: params.tenantSlug, tier: params.tier },
-    },
-    { idempotencyKey: params.idempotencyKey },
-  );
 }
 
 // ---------------------------------------------------------------------------
