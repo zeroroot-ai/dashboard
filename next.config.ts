@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
 import { createMDX } from "fumadocs-mdx/next";
 
-// CSP is now nonce-based and set per-request in middleware.ts.
-// Only non-CSP security headers remain here (static, same for every response).
+// CSP is NOT emitted by the dashboard app. The nonce-based per-request CSP that
+// used to live in middleware.ts was removed in the zitadel-envoy-gateway-migration
+// (CSP moved to the Envoy edge). The static non-CSP security headers below remain
+// here, same for every response. dashboard#818 verified no CSP is set by app code
+// and filed dashboard#863 to confirm the edge actually emits one (and to decide
+// whether the app should own a baseline CSP as defense-in-depth).
 const securityHeaders = [
   {
     key: "Strict-Transport-Security",

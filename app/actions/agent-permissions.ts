@@ -27,6 +27,7 @@ import {
   assertAuthorized,
   AuthzDeniedError,
 } from '@/src/lib/auth/assert-authorized';
+import { logger } from '@/src/lib/logger';
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -106,7 +107,10 @@ function mapDaemonError(err: unknown): FailureResult {
       };
     }
   }
-  console.error('[agent-permissions] daemon RPC failed:', err instanceof Error ? err.name : typeof err);
+  logger.error(
+    { scope: 'agent-permissions', errName: err instanceof Error ? err.name : typeof err },
+    'daemon RPC failed',
+  );
   return { ok: false, error: 'Daemon error, please try again', code: 'daemon_error' };
 }
 

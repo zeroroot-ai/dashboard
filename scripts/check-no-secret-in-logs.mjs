@@ -60,6 +60,14 @@ const FORBIDDEN_TOKENS = [
   'bootstrapToken',
   'client_secret',
   'clientSecret',
+  // dashboard#818: the Zitadel bearer credentials carried on the server-side
+  // session must never reach a logger either. These are raw Authorization /
+  // id_token_hint material. Length-only diagnostics (`tokenLength`,
+  // `token_length`) do NOT contain these literals, so they remain allowed.
+  'accessToken',
+  'access_token',
+  'idToken',
+  'id_token',
 ];
 
 const LOGGER_PREFIXES = [

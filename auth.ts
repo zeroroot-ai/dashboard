@@ -61,13 +61,19 @@ declare module "next-auth" {
     };
     /**
      * Zitadel access token forwarded from the OIDC token endpoint.
-     * Exposed server-side only, never serialised to the client.
      * Used by gibson-client.ts to set Authorization: Bearer <accessToken>.
+     *
+     * Server-side only: the `session` callback below attaches it for
+     * in-process `auth()` callers, and the `GET /api/auth/session` route
+     * (app/api/auth/[...nextauth]/route.ts) STRIPS it from the wire response
+     * so it never reaches the browser (dashboard#818). Do not rely on the
+     * field being absent client-side without that route-level strip.
      */
     accessToken?: string;
     /**
      * Raw Zitadel ID token, required as `id_token_hint` on the
-     * end_session_endpoint during federated logout. Server-side only.
+     * end_session_endpoint during federated logout. Server-side only;
+     * stripped from `GET /api/auth/session` like accessToken (dashboard#818).
      */
     idToken?: string;
   }
@@ -263,8 +269,9 @@ const config: NextAuthConfig = {
         // account is populated only on the initial sign-in callback.
         // Copy the Zitadel access token into the encrypted JWT so that
         // gibson-client.ts can forward it as Authorization: Bearer on every
-        // server-side gRPC call. The access token is never exposed to the
-        // browser, it lives only in the encrypted HttpOnly cookie.
+        // server-side gRPC call. The access token lives in the encrypted
+        // HttpOnly cookie and is stripped from GET /api/auth/session by the
+        // route handler so it never reaches the browser (dashboard#818).
         if (typeof account.access_token === "string") {
           token["accessToken"] = account.access_token;
         }
@@ -323,9 +330,10 @@ const config: NextAuthConfig = {
         session.user.email = token.email;
       }
       // Forward the Zitadel access token to server-side callers (gibson-client.ts).
-      // This field is set on the Session type but is never included in the
-      // client-visible session payload, it is only available inside Server
-      // Components and Server Actions where auth() is called server-side.
+      // It is attached here for in-process auth() consumers (Server Components,
+      // Server Actions, middleware); the GET /api/auth/session route handler
+      // strips it from the wire response so it is not exposed to the browser
+      // (dashboard#818).
       if (typeof token["accessToken"] === "string") {
         session.accessToken = token["accessToken"];
       }
