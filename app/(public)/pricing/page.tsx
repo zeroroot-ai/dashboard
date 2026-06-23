@@ -16,6 +16,7 @@
 
 import Link from "next/link";
 
+import { billingEnabled } from "@/src/lib/billing/billing-enabled";
 import { fetchStripePrices } from "@/src/lib/billing/fetch-prices";
 import type { BillingTier } from "@/src/lib/billing/stripe_gen";
 import { pricingDisplays, type PricingTierDisplay } from "@/src/lib/pricing-display";
@@ -42,11 +43,25 @@ const DEPLOY_TIER_ID = "enterprise-deploy";
 const PLACEHOLDER_PRICE = "Pricing temporarily unavailable";
 const PLACEHOLDER_SUB = "Try again in a minute, or contact sales for a quote.";
 
-function ctaForTier(t: PricingTierDisplay): {
+function ctaForTier(
+  t: PricingTierDisplay,
+  billing: boolean,
+): {
   label: string;
   href: string;
   variant: "default" | "outline";
 } {
+  // Billing OFF (on-prem / self-host): no Stripe-backed self-serve checkout.
+  // The tier card still displays plan + quotas; the purchase action becomes a
+  // "Contact sales" link rather than a /signup?plan trial that can't complete
+  // without a billing backend.
+  if (!billing) {
+    return {
+      label: "Contact sales",
+      href: "/contact-sales?tier=" + encodeURIComponent(t.id),
+      variant: t.id === FEATURED_TIER_ID ? "default" : "outline",
+    };
+  }
   return {
     label: "Start trial",
     href: "/signup?plan=" + encodeURIComponent(t.id),
@@ -66,7 +81,18 @@ function dollars(cents: number): string {
 function resolvePriceCard(
   t: PricingTierDisplay,
   livePrice: number | null | undefined,
+  billing: boolean,
 ): { priceLabel: string; priceSubLabel: string | null; degraded: boolean } {
+  // Billing OFF (on-prem): there is no Stripe to fetch from, so fall back to
+  // the committed plans.yaml display price rather than the "temporarily
+  // unavailable" placeholder (which would wrongly imply a broken Stripe).
+  if (!billing) {
+    return {
+      priceLabel: t.priceLabel,
+      priceSubLabel: t.priceSubLabel,
+      degraded: false,
+    };
+  }
   // Live Stripe price wins when present.
   if (typeof livePrice === "number") {
     return {
@@ -87,13 +113,15 @@ function Tier({
   t,
   featured,
   livePrice,
+  billing,
 }: {
   t: PricingTierDisplay;
   featured: boolean;
   livePrice: number | null | undefined;
+  billing: boolean;
 }) {
-  const cta = ctaForTier(t);
-  const card = resolvePriceCard(t, livePrice);
+  const cta = ctaForTier(t, billing);
+  const card = resolvePriceCard(t, livePrice, billing);
   return (
     <Card
       className={
@@ -229,12 +257,17 @@ function OnPremCard({ t }: { t: PricingTierDisplay }) {
 }
 
 export default async function PricingPage() {
+  const billing = billingEnabled();
   const saasTiers = pricingDisplays.filter((t) => SAAS_TIER_IDS.has(t.id));
   const deployTier = pricingDisplays.find((t) => t.id === DEPLOY_TIER_ID);
 
   // Server-side fetch (60s unstable_cache). On Stripe outage every
   // SaaS tier resolves to null and the page renders placeholders, never 500s.
-  const livePrices = await fetchStripePrices();
+  // Billing OFF (on-prem): skip the Stripe fetch entirely — there is no
+  // billing backend, so SaaS cards render the committed plans.yaml price.
+  const livePrices = billing
+    ? await fetchStripePrices()
+    : ({} as Record<BillingTier, number | null>);
 
   return (
     <main className="container mx-auto py-12 px-4 max-w-6xl">
@@ -253,6 +286,7 @@ export default async function PricingPage() {
             t={t}
             featured={t.id === FEATURED_TIER_ID}
             livePrice={livePrices[t.id as BillingTier]}
+            billing={billing}
           />
         ))}
       </div>

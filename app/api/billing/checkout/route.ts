@@ -14,6 +14,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+import { billingEnabled } from '@/src/lib/billing/billing-enabled';
 import {
   createCheckoutSession,
   priceIdForTier,
@@ -33,6 +34,14 @@ const CHECKOUT_RATE_LIMIT = {
 };
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  // Billing master switch (dashboard#809 / ADR-0050). On-prem / self-host has
+  // no Stripe-backed billing backend; the checkout surface is hidden in the UI
+  // and the route no-ops here as defense-in-depth (404, never a half-wired
+  // Stripe call). Fail-closed: absent flag ⇒ billing off.
+  if (!billingEnabled()) {
+    return NextResponse.json({ error: 'billing not enabled' }, { status: 404 });
+  }
+
   // Apply rate limit before any processing.
   const rateLimitResult = await checkRateLimit(
     req,

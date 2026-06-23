@@ -96,6 +96,9 @@ describe('POST /api/billing/portal', () => {
     // PUBLIC_URL is REQUIRED at boot per one-code-path/206, set it here so
     // the route's defence check doesn't short-circuit every test.
     process.env.PUBLIC_URL = 'https://app.zeroroot.local:30443';
+    // dashboard#809: the route 404s when billing is disabled; these tests
+    // exercise the billing-enabled (hosted) path.
+    process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
     mockRateLimitAllowed = true;
     mockAssertAuthorizedShouldThrow = null;
     mockReadRawActiveTenant.mockResolvedValue({
@@ -117,6 +120,16 @@ describe('POST /api/billing/portal', () => {
     mockCreatePortalSession.mockResolvedValue({
       id: 'bps_test123',
       url: 'https://billing.stripe.com/session/test123',
+    });
+  });
+
+  describe('billing-disabled gate (dashboard#809)', () => {
+    it('returns 404 when billing is not enabled (on-prem default)', async () => {
+      delete process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
+      const res = await POST(makeRequest());
+      expect(res.status).toBe(404);
+      const json = (await res.json()) as { error: string };
+      expect(json.error).toBe('billing not enabled');
     });
   });
 

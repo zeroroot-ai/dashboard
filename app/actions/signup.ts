@@ -51,6 +51,7 @@ import {
   priceIdForTier,
   type BillingTier,
 } from "@/src/lib/billing/stripe";
+import { billingEnabled } from "@/src/lib/billing/billing-enabled";
 import { lookupPlan, type PlanID } from "@/src/generated/plans";
 import { selfServeTierIds } from "@/src/lib/pricing-display";
 import { getSignupZitadelAdminClient } from "@/src/lib/zitadel/admin-client-factory";
@@ -693,13 +694,13 @@ export async function completeSignup(
 }
 
 /**
- * paidTiersEnabled mirrors the dashboard billing master switch
- * (DASHBOARD_BILLING_PAID_TIERS_ENABLED). When off (kind dev), signup runs
- * the autoconfirm path with no card step.
+ * paidTiersEnabled mirrors the dashboard billing master switch via the single
+ * source of truth (billingEnabled / DASHBOARD_BILLING_PAID_TIERS_ENABLED).
+ * When off (on-prem / kind dev), signup runs the autoconfirm path with no
+ * card step.
  */
 function paidTiersEnabled(): boolean {
-  const v = process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
-  return v === "true" || v === "1";
+  return billingEnabled();
 }
 
 // ---------------------------------------------------------------------------

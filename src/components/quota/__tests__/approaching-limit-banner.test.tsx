@@ -43,11 +43,34 @@ describe('ApproachingLimitBanner', () => {
   it('renders at 80% missions usage with team upgrade CTA', () => {
     withUsage(8, 0);
     render(
-      <ApproachingLimitBanner plan="team" missionsLimit={10} agentsLimit={50} />,
+      <ApproachingLimitBanner
+        plan="team"
+        missionsLimit={10}
+        agentsLimit={50}
+        billingEnabled
+      />,
     );
     expect(screen.getByTestId('quota-approaching-limit-banner')).toBeTruthy();
     const cta = screen.getByTestId('quota-banner-upgrade-cta');
     expect(cta.getAttribute('href')).toContain('/billing/upgrade?target=org');
+  });
+
+  it('shows the quota warning but NO upgrade CTA when billing is disabled (on-prem)', () => {
+    withUsage(8, 0);
+    // billingEnabled omitted ⇒ defaults to false (fail-closed).
+    render(
+      <ApproachingLimitBanner
+        plan="team"
+        missionsLimit={10}
+        agentsLimit={50}
+      />,
+    );
+    // The quota warning still renders…
+    expect(screen.getByTestId('quota-approaching-limit-banner')).toBeTruthy();
+    // …but the purchase-action upgrade CTA is suppressed.
+    expect(screen.queryByTestId('quota-banner-upgrade-cta')).toBeNull();
+    // Copy drops the "Upgrade to scale" line.
+    expect(screen.queryByText(/Upgrade to scale/i)).toBeNull();
   });
 
   it('renders at 100% with the at-limit copy', () => {
@@ -61,7 +84,12 @@ describe('ApproachingLimitBanner', () => {
   it('routes enterprise tenants to contact-sales', () => {
     withUsage(0, 800);
     render(
-      <ApproachingLimitBanner plan="enterprise" missionsLimit={100} agentsLimit={1000} />,
+      <ApproachingLimitBanner
+        plan="enterprise"
+        missionsLimit={100}
+        agentsLimit={1000}
+        billingEnabled
+      />,
     );
     const cta = screen.getByTestId('quota-banner-upgrade-cta');
     expect(cta.getAttribute('href')).toContain('/contact-sales');
