@@ -11,7 +11,6 @@ import {
   KubeConfig,
   CustomObjectsApi,
   CoreV1Api,
-  Watch,
   setHeaderOptions,
 } from '@kubernetes/client-node';
 
@@ -19,20 +18,16 @@ import {
   CRDKind,
   CRDPlurals,
   GibsonCRD,
-  WatchEvent,
 } from './types';
 import { mapK8sError } from './errors';
 
 const GIBSON_GROUP = 'gibson.zeroroot.ai';
 const GIBSON_VERSION = 'v1alpha1';
 
-type AbortLike = { abort: () => void };
-
 class K8sClient {
   private kc: KubeConfig;
   private customApi: CustomObjectsApi;
   private coreApi: CoreV1Api;
-  private watcher: Watch;
 
   constructor() {
     this.kc = new KubeConfig();
@@ -43,7 +38,6 @@ class K8sClient {
     }
     this.customApi = this.kc.makeApiClient(CustomObjectsApi);
     this.coreApi = this.kc.makeApiClient(CoreV1Api);
-    this.watcher = new Watch(this.kc);
   }
 
   // ---- generic CRUD ----
@@ -190,31 +184,6 @@ class K8sClient {
     } catch (err) {
       throw mapK8sError(err);
     }
-  }
-
-  // ---- watch (for SSE proxy) ----
-
-  async watch<T extends GibsonCRD>(
-    kind: CRDKind,
-    namespace: string | undefined,
-    onEvent: (evt: WatchEvent<T>) => void,
-    onError: (err: Error) => void,
-  ): Promise<AbortLike> {
-    const plural = CRDPlurals[kind];
-    const path = namespace
-      ? `/apis/${GIBSON_GROUP}/${GIBSON_VERSION}/namespaces/${namespace}/${plural}`
-      : `/apis/${GIBSON_GROUP}/${GIBSON_VERSION}/${plural}`;
-    const req = await this.watcher.watch(
-      path,
-      {},
-      (type: string, obj: unknown) => {
-        onEvent({ type: type as WatchEvent<T>['type'], object: obj as T });
-      },
-      (err: unknown) => {
-        if (err) onError(err as Error);
-      },
-    );
-    return req as AbortLike;
   }
 
   // ---- secrets (for bootstrap token display) ----
