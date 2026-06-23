@@ -3,7 +3,7 @@
  *
  * Returns the process-wide metrics registry in Prometheus text exposition
  * format 0.0.4. Access is gated by EITHER a valid Zitadel JWT Bearer token
- * (same trust path as `/api/admin/provisioning/*`) OR a source IP that falls
+ * (the platform service-account bearer trust path) OR a source IP that falls
  * inside one of the CIDR blocks listed in the
  * `DASHBOARD_METRICS_ALLOWED_CIDRS` environment variable (comma-separated).
  *

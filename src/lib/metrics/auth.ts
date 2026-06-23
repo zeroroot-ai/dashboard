@@ -16,7 +16,6 @@
  *   - Server Actions in `app/actions/auth/*` (signup, signin, password reset,
  *     email verification), increment on every terminal outcome.
  *   - `src/lib/auth/hibp.ts` / `captcha.ts`, increment on check outcomes.
- *   - `src/lib/admin-provisioning.ts`, observe `provisioningDuration`.
  */
 
 import { getOrCreateCounter, getOrCreateHistogram } from "./helpers";
@@ -120,8 +119,8 @@ export const hibpChecks = getOrCreateCounter({
 // ---------------------------------------------------------------------------
 
 /**
- * End-to-end duration of a provisioning call from the dashboard's perspective
- * (e.g. `handleCreate` in admin-provisioning). Buckets sized 100ms → 60s:
+ * End-to-end duration of a provisioning call from the dashboard's perspective.
+ * Buckets sized 100ms → 60s:
  * the floor catches happy-path idempotent replays, the ceiling catches
  * operator-initiated retries that block on external dependencies.
  *
