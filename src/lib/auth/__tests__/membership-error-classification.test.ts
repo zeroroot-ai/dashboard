@@ -60,8 +60,8 @@ vi.mock('@/src/lib/logger', () => ({
 // ---------------------------------------------------------------------------
 let listMyMembershipsImpl: () => Promise<unknown>;
 
-vi.mock('@/src/lib/gibson-client', () => ({
-  makeClient: vi.fn(() => ({
+vi.mock('@/src/lib/gibson-client/transport', () => ({
+  bootstrapClient: vi.fn(() => ({
     listMyMemberships: vi.fn(async () => listMyMembershipsImpl()),
   })),
 }));
