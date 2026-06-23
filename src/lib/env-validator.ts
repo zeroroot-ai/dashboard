@@ -381,7 +381,10 @@ export const OPTIONAL_ENV = [
   // ---- Runtime-supplied (set by Node / Next.js itself) ----
   'NODE_ENV',
   'NEXT_RUNTIME',
-  'KUBERNETES_SERVICE_HOST',
+  // NOTE: KUBERNETES_SERVICE_HOST was removed here in dashboard#855 (zero-
+  // kubeconfig capstone). It was the in-cluster-detection signal read only by
+  // the deleted src/lib/k8s client; the dashboard now holds no Kubernetes
+  // access, so the var is no longer consulted.
 ] as const;
 
 export type RequiredEnvName = (typeof REQUIRED_ENV)[number]['name'];

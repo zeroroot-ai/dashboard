@@ -45,9 +45,10 @@ import { requireUserToken } from './auth/user-token';
 import { userClient, serviceClient } from './gibson-client/transport';
 export { userClient, serviceClient };
 
-// Tenant CRUD/lookup has moved to the Tenant CRD operator. Use
-// `@/src/lib/k8s/tenants` for tenant access. Tenant proto types are no
-// longer exported by this module.
+// Tenant CRUD has moved to the daemon's AdminTenantService (operator-pull,
+// gibson#964); see `@/app/actions/crd/tenant.ts`. Tenant proto types are no
+// longer exported by this module. The dashboard holds zero Kubernetes access
+// (dashboard#855).
 
 // ---------------------------------------------------------------------------
 // Internal user-acting client builders, these preserve the signatures of
@@ -273,16 +274,16 @@ export interface ProvisioningStep {
   message: string;
 }
 
-// listTenants / getTenant / updateTenant removed, tenant CRUD and lookup
-// have moved to the Tenant CRD operator. Use `@/src/lib/k8s/tenants` for
-// reads and `app/actions/crd/tenant.ts` for mutations.
+// listTenants / getTenant / updateTenant removed, tenant CRUD now flows
+// through the daemon's AdminTenantService (operator-pull, gibson#964);
+// see `app/actions/crd/tenant.ts` for the admin mutations.
 
 // createAPIKey / listAPIKeys / revokeAPIKey removed, the gsk_ API key
 // system has been removed. Agent identity provisioning now goes through
 // TenantAdminService.CreateAgentIdentity (spec: agent-service-credentials).
 
 // listUserTenants / MembershipInfo removed, tenant membership is now
-// served by the Tenant CRD operator (see @/src/lib/k8s/tenants).
+// served by the daemon's MembershipService (ADR-0043/0044).
 
 // getAuthSchema / getProvisioningStatus / deprovisionTenant removed -
 // auth schema is now served by the FGA-backed GetMyPermissions RPC, and

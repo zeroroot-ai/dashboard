@@ -38,6 +38,14 @@ vi.mock("@/src/lib/auth/active-tenant", async (importOriginal) => {
   };
 });
 
+// Stable RPC-method mocks shared across every userClient() call so the matrix
+// can assert against them. The three AdminTenantService methods are the
+// dashboard#855 capstone: tenant CRUD now flows through the daemon (operator-
+// pull), NOT a direct K8s write. Each returns an op_id, the recorded intent.
+const adminProvisionTenantMock = vi.fn(async () => ({ opId: "op-1" }));
+const adminUpdateTenantMock = vi.fn(async () => ({ opId: "op-2" }));
+const adminDeleteTenantMock = vi.fn(async () => ({ opId: "op-3" }));
+
 vi.mock("@/src/lib/gibson-client", () => ({
   userClient: vi.fn(() => ({
     setTenantRole: vi.fn(async () => ({})),
@@ -47,29 +55,13 @@ vi.mock("@/src/lib/gibson-client", () => ({
     validateComponent: vi.fn(async () => ({})),
     grantComponentPermissions: vi.fn(async () => ({})),
     setCatalogEnabled: vi.fn(async () => ({ written: true, deleted: false })),
+    adminProvisionTenant: adminProvisionTenantMock,
+    adminUpdateTenant: adminUpdateTenantMock,
+    adminDeleteTenant: adminDeleteTenantMock,
   })),
   serviceClient: vi.fn(() => ({
     writeAccessTuples: vi.fn(async () => ({})),
   })),
-}));
-
-vi.mock("@/src/lib/k8s/tenants", () => ({
-  applyTenant: vi.fn(async (name: string) => ({ metadata: { name } })),
-  deleteTenant: vi.fn(async () => undefined),
-  patchTenant: vi.fn(async (name: string) => ({ metadata: { name } })),
-  applyTenantMember: vi.fn(async (_ns: string, name: string) => ({ metadata: { name } })),
-  // Default: one admin member named "invite-1" so the last-owner guard in
-  // revokeMemberAction doesn't block the test cases that verify the authz matrix.
-  listTenantMembers: vi.fn(async () => [
-    {
-      metadata: { name: "invite-1" },
-      spec: { email: "alice@example.com", role: "admin" },
-      status: { userId: "user-1", phase: "Active" },
-    },
-  ]),
-  deleteTenantMember: vi.fn(async () => undefined),
-  patchTenantMember: vi.fn(async (_ns: string, name: string) => ({ metadata: { name } })),
-  tenantNamespace: (name: string) => `tenant-${name}`,
 }));
 
 vi.mock("next/cache", () => ({
@@ -119,7 +111,6 @@ import * as sessionActions from "../sessions";
 import { CRD_PERMISSIONS, requireCrdSession } from "../_authz";
 import type { CrdActionName } from "../types";
 import { getServerSession } from "@/src/lib/auth";
-import * as k8sTenants from "@/src/lib/k8s/tenants";
 import { userClient } from "@/src/lib/gibson-client";
 
 const getSessionMock = getServerSession as unknown as Mock;
@@ -257,7 +248,7 @@ const MANIFESTS: ActionManifest[] = [
     invokeBadInput:
       () => () =>
         tenantActions.provisionTenantAction({ displayName: "", owner: "" }),
-    k8sMock: () => k8sTenants.applyTenant as Mock,
+    k8sMock: () => adminProvisionTenantMock,
   },
   {
     name: "deleteTenantAction",
@@ -265,7 +256,7 @@ const MANIFESTS: ActionManifest[] = [
     tenantName: "acme",
     invokeValid: (t) => () => tenantActions.deleteTenantAction(t, t),
     invokeBadInput: (t) => () => tenantActions.deleteTenantAction(t, "mismatch"),
-    k8sMock: () => k8sTenants.deleteTenant as Mock,
+    k8sMock: () => adminDeleteTenantMock,
   },
   {
     name: "updateTenantAction",
@@ -275,7 +266,7 @@ const MANIFESTS: ActionManifest[] = [
     invokeBadInput:
       (t) => () =>
         tenantActions.updateTenantAction(t, { tier: "invalid" as unknown as "team" }),
-    k8sMock: () => k8sTenants.patchTenant as Mock,
+    k8sMock: () => adminUpdateTenantMock,
   },
   {
     name: "grantComponentAction",
@@ -409,7 +400,7 @@ describe("provisionTenantAction, cross-tenant-only", () => {
     });
     expect(r.ok).toBe(false);
     expect((r as { code: string }).code).toBe("FORBIDDEN");
-    expect(k8sTenants.applyTenant).not.toHaveBeenCalled();
+    expect(adminProvisionTenantMock).not.toHaveBeenCalled();
   });
 });
 

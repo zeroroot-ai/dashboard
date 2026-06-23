@@ -15,8 +15,6 @@ import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 // without TDZ errors.
 const mocks = vi.hoisted(() => ({
   writeAccessTuples: vi.fn(async () => ({})),
-  listTenantMembers: vi.fn(async () => [] as unknown[]),
-  patchTenantMember: vi.fn(async () => ({})),
 }));
 
 vi.mock("@/src/lib/auth", () => ({
@@ -54,12 +52,6 @@ vi.mock("@/src/lib/audit/crd", () => ({
   emitCrdAuditFromGate: vi.fn(),
 }));
 
-// K8s mock for the dual-write side of setTenantRoleAction (dashboard#173).
-vi.mock("@/src/lib/k8s/tenants", () => ({
-  listTenantMembers: mocks.listTenantMembers,
-  patchTenantMember: mocks.patchTenantMember,
-}));
-
 // Silence logger.warn during the dual-write fallback paths so test output
 // stays clean; we assert behavior, not log lines.
 vi.mock("@/src/lib/logger", () => ({
@@ -95,10 +87,6 @@ function withSession(tenantId: string) {
 
 beforeEach(() => {
   mocks.writeAccessTuples.mockClear();
-  mocks.listTenantMembers.mockReset();
-  mocks.listTenantMembers.mockResolvedValue([]);
-  mocks.patchTenantMember.mockReset();
-  mocks.patchTenantMember.mockResolvedValue({});
   sessionMock.mockReset();
 });
 
@@ -156,17 +144,17 @@ describe("setTenantRoleAction", () => {
     withSession("acme");
     const r = await setTenantRoleAction({ userId: "alice", role: "admin" });
     expect(r).toEqual({ ok: true, data: { applied: true } });
-    expect(mocks.patchTenantMember).not.toHaveBeenCalled();
-    expect(mocks.listTenantMembers).not.toHaveBeenCalled();
+    // ListMembers derives role from FGA; there is no CR to keep in sync, and
+    // the daemon write is the only side effect.
+    expect(mocks.writeAccessTuples).toHaveBeenCalledOnce();
   });
 
-  it("when the daemon write fails, returns INTERNAL and does not touch the CR", async () => {
+  it("when the daemon write fails, returns INTERNAL", async () => {
     withSession("acme");
     mocks.writeAccessTuples.mockRejectedValueOnce(new Error("daemon unreachable"));
     const r = await setTenantRoleAction({ userId: "alice", role: "admin" });
     expect(r.ok).toBe(false);
     expect((r as { code: string }).code).toBe("INTERNAL");
-    expect(mocks.patchTenantMember).not.toHaveBeenCalled();
   });
 });
 
