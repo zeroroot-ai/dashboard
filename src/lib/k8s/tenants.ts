@@ -17,31 +17,24 @@ import type { K8sOwnerReference } from './owner-ref';
 /** Annotation key used by the tenant-operator to correlate API calls end-to-end. */
 const ANNOTATION_CORRELATION_ID = 'gibson.zeroroot.ai/correlation-id';
 
-/**
- * Annotation carrying the Stripe customer id the dashboard created BEFORE the
- * Tenant CR (card-first signup, dashboard#785). The operator saga's
- * CreateStripeCustomer step adopts this id deterministically instead of
- * searching Stripe by metadata (which is eventually consistent and would race
- * into a duplicate customer — the orphan-dupe / 21k-leak class, to#354).
- */
-const ANNOTATION_STRIPE_CUSTOMER_ID = 'gibson.zeroroot.ai/stripe-customer-id';
-
-export interface ApplyTenantOptions {
-  /** Pre-created Stripe customer id to pin on the CR for deterministic adoption. */
-  stripeCustomerId?: string;
-}
-
+// Signup no longer writes the Tenant CR (dashboard#813): the daemon Signup RPC
+// enqueues a pending-provisioning row and the tenant-operator creates the CR
+// (gibson#949, ADR-0023 preserved). The card-first Stripe-customer-id pinning
+// that used to ride on a Tenant-CR annotation here now flows through the Signup
+// RPC's stripe_customer_id field onto that pending row, so the ApplyTenantOptions
+// / stripe-customer-id annotation plumbing was removed.
+//
+// applyTenant survives ONLY for the cross-tenant-role admin CRD tool
+// (provisionTenantAction in app/actions/crd/tenant.ts), which lets a platform
+// admin provision a tenant directly. That admin K8s surface is out of scope for
+// dashboard#813's signup-write removal and is tracked for a later RPC migration.
 export async function applyTenant(
   name: string,
   spec: TenantSpec,
-  opts?: ApplyTenantOptions,
 ): Promise<Tenant> {
   const annotations: Record<string, string> = {
     [ANNOTATION_CORRELATION_ID]: getCorrelationId(),
   };
-  if (opts?.stripeCustomerId) {
-    annotations[ANNOTATION_STRIPE_CUSTOMER_ID] = opts.stripeCustomerId;
-  }
   return k8s().apply<Tenant>(
     {
       apiVersion: 'gibson.zeroroot.ai/v1alpha1',

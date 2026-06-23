@@ -7,21 +7,26 @@
  *
  * signupAction, the dashboard-native signup pipeline.
  *
- * A single linear orchestration: form input → daemon owner provisioning →
- * Tenant CR → operator saga → TenantMember CR → redirect to /login. Each step
- * emits progress to the daemon signup-progress store for the client-side
+ * A single linear orchestration: form input → daemon owner provisioning (which
+ * also enqueues the tenant for operator-pull provisioning) → operator creates
+ * the Tenant CR + runs the saga → TenantMember CR → redirect to /login. Each
+ * step emits progress to the daemon signup-progress store for the client-side
  * ProvisioningPanel to poll; each failure short-circuits and maps to a
  * user-safe `SignupFailureCode`.
  *
  * Owner-user provisioning (create-or-resume the Zitadel human user, set
  * password, send verification email) runs DAEMON-SIDE via the unauthenticated
- * `gibson.tenant.v1.SignupService.Signup` RPC (gibson#812). The dashboard no
- * longer holds a privileged Zitadel signup-bot PAT (dashboard#812 / E9). The
- * operator owns the rest once the Tenant CR is applied — per-tenant Zitadel
- * org + FGA tuples + Langfuse/Stripe/Redis/Neo4j init all happen downstream.
- * This action stays focused on:
- *   (1) provisioning the founding-owner identity via the daemon RPC,
- *   (2) applying the CRs that trigger the saga,
+ * `gibson.tenant.v1.SignupService.Signup` RPC (gibson#812). That same RPC now
+ * enqueues a pending-tenant-provisioning row (gibson#949); the tenant-operator
+ * polls it (leader-elected, ~15s) and creates the Tenant CR — the dashboard no
+ * longer writes the Tenant CR itself (dashboard#813, ADR-0023 preserved). The
+ * dashboard no longer holds a privileged Zitadel signup-bot PAT (dashboard#812
+ * / E9). The operator owns the rest: per-tenant Zitadel org + FGA tuples +
+ * Langfuse/Stripe/Redis/Neo4j init all happen downstream of the Tenant CR it
+ * creates. This action stays focused on:
+ *   (1) provisioning the founding-owner identity via the daemon RPC (which
+ *       enqueues the tenant for the operator to create),
+ *   (2) applying the founding-owner TenantMember CR once the Tenant is ready,
  *   (3) surfacing saga status back to the user as progress.
  *
  * The caller is always redirected through the standard `/login` flow for
@@ -67,12 +72,11 @@ import {
 } from "@/src/lib/zitadel/password-policy-cache";
 import { provisionSignupOwner } from "@/src/lib/signup/owner-provisioning";
 import {
-  applyTenant,
   applyTenantMember,
   getTenant,
   tenantNamespace,
 } from "@/src/lib/k8s/tenants";
-import type { Tenant, TenantMember, TenantTier } from "@/src/lib/k8s/types";
+import type { Tenant, TenantMember } from "@/src/lib/k8s/types";
 // Note: listTenantsForOwner / src/lib/k8s/tenants-by-owner.ts deleted under
 // spec `tenant-membership-not-in-jwt`. Duplicate-signup detection now relies
 // on the daemon SignupService.Signup RPC being idempotent on owner email
@@ -92,8 +96,15 @@ import { logger } from "@/src/lib/logger";
 // Configuration
 // ---------------------------------------------------------------------------
 
-/** How long to wait for Tenant.status.zitadelOrgID to appear. */
-const TENANT_READY_TIMEOUT_MS = 60_000;
+/**
+ * How long to wait for Tenant.status.zitadelOrgID to appear. The Tenant CR is
+ * now created asynchronously by the tenant-operator, which polls the daemon
+ * pending-provisioning queue every ~15s (gibson#949), so the budget covers both
+ * the operator-poll latency (CR creation) AND the saga's org-creation step.
+ * Exceeding it is non-fatal — the client ProvisioningPanel keeps polling the
+ * progress store and the user is emailed when the workspace is ready.
+ */
+const TENANT_READY_TIMEOUT_MS = 90_000;
 /** How long to wait for the TenantMember to transition to Active. */
 const MEMBER_READY_TIMEOUT_MS = 30_000;
 const POLL_INTERVAL_MS = 1_000;
@@ -291,31 +302,16 @@ export async function signupAction(
     // No card step — provision the owner + create the company inline.
     // 4. Provision the founding-owner identity via the daemon Signup RPC
     //    (create-or-resume the Zitadel user, set password, send verify email).
+    //    The Signup RPC also enqueues the tenant for operator-pull
+    //    provisioning (gibson#949): the tenant-operator polls the daemon's
+    //    pending-provisioning queue and creates the Tenant CR + runs the saga.
+    //    The dashboard no longer writes the Tenant CR (dashboard#813).
     await advanceStep(attemptId, "create_user");
     const userResult = await provisionOwner(ctx);
     if ("fail" in userResult) {
       return await finish(ctx, "create_user", userResult.fail);
     }
     ctx.zitadelUserId = userResult.ownerUserId;
-
-    // 5. Apply the Tenant CR, this triggers the operator saga.
-    await advanceStep(attemptId, "apply_tenant");
-    try {
-      await applyTenant(ctx.tenantSlug, {
-        displayName: ctx.input.workspaceName,
-        owner: ctx.input.email,
-        // input.tier is already a canonical PlanID (validated by Zod against
-        // selfServeTierIds, which mirrors plans.PlanID in the operator).
-        // No mapping, the operator's entitlements reconciler expects this
-        // exact value; legacy free/pro/enterprise are explicitly rejected.
-        tier: ctx.input.tier as TenantTier,
-      });
-    } catch (err) {
-      return await finish(ctx, "apply_tenant", {
-        code: "INTERNAL_ERROR",
-        userMessage: "We couldn't create your workspace. Please try again.",
-      });
-    }
 
     return await finishProvisioning(ctx);
   } catch (err) {
@@ -338,9 +334,18 @@ export async function signupAction(
 /**
  * finishProvisioning runs the post-tenant steps shared by the kind-autoconfirm
  * path (called inline by signupAction) and the card-first path (called by
- * completeSignup once the trialing subscription is created and the Tenant CR
- * is applied): wait for status.zitadelOrgID → apply the owner TenantMember →
- * wait Active → redirect to /login → done.
+ * completeSignup once the trialing subscription is created): wait for the
+ * operator to create the Tenant CR and set status.zitadelOrgID → apply the
+ * owner TenantMember → wait Active → redirect to /login → done.
+ *
+ * The Tenant CR is created asynchronously by the tenant-operator (it polls the
+ * daemon pending-provisioning queue every ~15s, gibson#949), so the CR does NOT
+ * exist the instant the Signup RPC returns. `waitForTenantReady` tolerates this
+ * — it polls `getTenant` and swallows the not-found error until the operator
+ * has created the CR and the saga has set `status.zitadelOrgID`. A wait that
+ * exceeds the timeout returns a NON-fatal PROVISIONING_TIMEOUT ("we'll email
+ * you"); the client-side ProvisioningPanel keeps polling the progress store, so
+ * the user is never sent into a workspace whose namespace doesn't exist yet.
  */
 async function finishProvisioning(ctx: Ctx): Promise<SignupActionResult> {
   const { attemptId } = ctx;
@@ -543,9 +548,13 @@ export async function completeSignup(
 
     // 1. Provision the founding-owner identity via the daemon Signup RPC. The
     //    card is already confirmed (the phase-1 SetupIntent), so this runs only
-    //    after the payment method cleared. Pin the Stripe customer id so the
-    //    operator saga adopts it deterministically. (We also pass it on the
-    //    Tenant CR below; the RPC stripe_customer_id is for daemon-side use.)
+    //    after the payment method cleared. The RPC's stripe_customer_id pins the
+    //    pre-created Stripe customer id onto the enqueued pending-provisioning
+    //    row (gibson#949); the tenant-operator stamps it onto the Tenant CR it
+    //    creates, so the saga's CreateStripeCustomer step adopts it
+    //    deterministically (no Stripe-search race that would mint a duplicate
+    //    customer — the orphan-dupe / 21k-leak class, to#354). The dashboard no
+    //    longer writes the Tenant CR itself (dashboard#813).
     await advanceStep(attemptId, "create_user");
     const userResult = await provisionOwner(ctx, input.stripeCustomerId);
     if ("fail" in userResult) {
@@ -553,36 +562,15 @@ export async function completeSignup(
     }
     ctx.zitadelUserId = userResult.ownerUserId;
 
-    // 2. Apply the Tenant CR BEFORE creating the subscription, pinning the
-    //    pre-created Stripe customer id so the operator saga adopts it
-    //    deterministically (no Stripe-search race that would mint a duplicate
-    //    customer — the orphan-dupe / 21k-leak class). Applying it first also
-    //    closes a webhook race: createTrialingSubscription (below) fires
-    //    Stripe's subscription.created webhook, whose handler patches
-    //    billing-active onto THIS Tenant CR. If the CR didn't exist yet the
-    //    patch 404s and billing-active never lands within the provisioning
-    //    window, timing out the signup (dashboard#785).
-    await advanceStep(attemptId, "apply_tenant");
-    try {
-      await applyTenant(
-        input.tenantSlug,
-        {
-          displayName: ctx.input.workspaceName,
-          owner: email,
-          tier: input.tier as TenantTier,
-        },
-        { stripeCustomerId: input.stripeCustomerId },
-      );
-    } catch (err) {
-      return await finish(ctx, "apply_tenant", {
-        code: "INTERNAL_ERROR",
-        userMessage: "We couldn't create your workspace. Please try again.",
-      });
-    }
-
-    // 3. Create the trialing subscription. Its subscription.created webhook now
-    //    finds the Tenant CR (applied above) and stamps billing-active,
-    //    releasing the operator's WaitForBillingConfirmation step.
+    // 2. Create the trialing subscription. Its subscription.created webhook
+    //    stamps billing-active onto the Tenant CR, releasing the operator's
+    //    WaitForBillingConfirmation step. The Tenant CR is now created
+    //    asynchronously by the operator (~15s after the enqueue above), so the
+    //    webhook's patch may briefly 404; the webhook returns 500 in that case
+    //    and Stripe retries with backoff until the operator has created the CR
+    //    (the webhook idempotency record is dropped on failure so the retry
+    //    re-runs the patch). This replaces the old "apply CR before subscribe"
+    //    ordering, which relied on the dashboard's synchronous CR write.
     await advanceStep(attemptId, "create_billing");
     try {
       await createTrialingSubscription({
