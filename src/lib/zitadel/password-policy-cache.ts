@@ -1,25 +1,43 @@
 /**
- * In-process cache for the Zitadel instance password-complexity policy.
+ * Default password policy for the client-side signup strength meter.
  *
- * TTL: 5 minutes. On upstream error the cache falls back to DEFAULT_PASSWORD_POLICY
- * and logs a warning, it does NOT throw, so the signup form still renders during
- * a Zitadel outage.
+ * The meter is ADVISORY ONLY. The authoritative Zitadel password-complexity
+ * policy is enforced DAEMON-SIDE at user-create time (via the
+ * `gibson.tenant.v1.SignupService.Signup` RPC, gibson#812). The dashboard no
+ * longer fetches the live policy — that required a privileged Zitadel
+ * signup-bot PAT, retired in E9 (dashboard#812). So this module exposes only
+ * the static default the strength meter renders with; there is no live fetch
+ * and no security regression (the daemon rejects a non-compliant password and
+ * the signup action maps that to a POLICY_VIOLATION).
  *
- * No external dependencies. No module-level network calls.
+ * No external dependencies. No network calls. Safe to import from client
+ * components (the strength meter is client-side) — it carries no secrets and
+ * no `server-only` guard.
  */
 
-import 'server-only';
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-import type { ZitadelAdminClient, PasswordPolicy } from './admin-client';
+/**
+ * Shape of a Zitadel password-complexity policy as consumed by the client-side
+ * strength meter and the signup action's advisory pre-check.
+ */
+export interface PasswordPolicy {
+  minLength: number;
+  hasUppercase: boolean;
+  hasLowercase: boolean;
+  hasNumber: boolean;
+  hasSymbol: boolean;
+}
 
 // ---------------------------------------------------------------------------
 // Default policy
 // ---------------------------------------------------------------------------
 
 /**
- * Fallback policy used when Zitadel is unreachable.
- * Values reflect a sensible baseline; the real policy is authoritative
- * once Zitadel is healthy.
+ * Baseline policy the signup strength meter seeds with. Reflects a sensible
+ * default; the daemon's create-time check is authoritative.
  */
 export const DEFAULT_PASSWORD_POLICY: PasswordPolicy = Object.freeze({
   minLength: 12,
@@ -28,54 +46,3 @@ export const DEFAULT_PASSWORD_POLICY: PasswordPolicy = Object.freeze({
   hasNumber: true,
   hasSymbol: false,
 });
-
-// ---------------------------------------------------------------------------
-// Cache state
-// ---------------------------------------------------------------------------
-
-const TTL_MS = 5 * 60 * 1_000; // 5 minutes
-
-interface CacheEntry {
-  policy: PasswordPolicy;
-  fetchedAt: number;
-}
-
-/** Module-level cache. Single entry; the policy is instance-wide. */
-const cache = new Map<'singleton', CacheEntry>();
-
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
-/**
- * Returns the active Zitadel password complexity policy.
- *
- * Caches the result for 5 minutes. On cache miss the `client` is called once;
- * the result is stored regardless of whether a previous entry existed.
- *
- * On any upstream error: logs a warning and returns `DEFAULT_PASSWORD_POLICY`.
- * Never throws.
- */
-export async function getCachedPasswordPolicy(
-  client: ZitadelAdminClient,
-): Promise<PasswordPolicy> {
-  const now = Date.now();
-  const entry = cache.get('singleton');
-
-  if (entry && now - entry.fetchedAt < TTL_MS) {
-    return entry.policy;
-  }
-
-  try {
-    const policy = await client.getPasswordComplexityPolicy();
-    cache.set('singleton', { policy, fetchedAt: now });
-    return policy;
-  } catch (err) {
-    // Log the error but do not throw, the form must still render.
-    console.warn(
-      '[password-policy-cache] Failed to fetch password policy from Zitadel; using defaults.',
-      err instanceof Error ? err.message : String(err),
-    );
-    return DEFAULT_PASSWORD_POLICY;
-  }
-}

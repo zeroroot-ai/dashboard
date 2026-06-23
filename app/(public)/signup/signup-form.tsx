@@ -62,7 +62,7 @@ import {
   isServerActionDeploymentSkew,
   reloadForDeploymentSkew,
 } from "@/src/lib/server-action-skew";
-import type { PasswordPolicy } from "@/src/lib/zitadel/admin-client";
+import type { PasswordPolicy } from "@/src/lib/zitadel/password-policy-cache";
 import { isReservedSlug, slugify } from "@/src/lib/signup/slug";
 import { useReservedNames } from "@/src/lib/signup/use-reserved-names";
 import { useTenantAvailability } from "@/src/lib/signup/use-tenant-availability";
