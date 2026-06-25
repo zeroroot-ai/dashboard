@@ -490,6 +490,10 @@ export function validateBillingConfig(): void {
   const required = [
     'STRIPE_SECRET_KEY',
     'STRIPE_WEBHOOK_SECRET',
+    // Card-first signup: the in-page Payment Element calls loadStripe() with
+    // this runtime-injected key. Absent → the Element never mounts and the
+    // signup CTA stays unclickable (dashboard#783). Fail loud at boot instead.
+    'STRIPE_PUBLISHABLE_KEY',
     // One env var per paid tier. Validated at startup; missing in dev or
     // free-tier-only deployments → set DASHBOARD_BILLING_PAID_TIERS_ENABLED
     // to false to skip this check entirely.
@@ -547,6 +551,30 @@ export function validateBillingConfig(): void {
     throw new Error(
       `[billing/stripe] Stripe key/mode mismatch: STRIPE_EXPECTED_MODE="${expectedMode}" ` +
         `but the key is ${keyMode}-mode — refusing to boot (the wrong cards would be accepted).`,
+    );
+  }
+
+  // The publishable key powers the in-page Payment Element (card-first signup,
+  // dashboard#783). It is runtime-injected (STRIPE_PUBLISHABLE_KEY, server-side)
+  // so one image serves both staging (pk_test) and prod (pk_live). Assert its
+  // mode matches STRIPE_EXPECTED_MODE too, so a mis-mounted pk fails the pod at
+  // boot rather than silently targeting the wrong Stripe environment.
+  const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY ?? '';
+  const pubMode = publishableKey.startsWith('pk_test_')
+    ? 'test'
+    : publishableKey.startsWith('pk_live_')
+      ? 'live'
+      : null;
+  if (pubMode === null) {
+    throw new Error(
+      '[billing/stripe] STRIPE_PUBLISHABLE_KEY has an unrecognised prefix; ' +
+        'expected pk_test_ or pk_live_ for the card-first-signup Payment Element.',
+    );
+  }
+  if (pubMode !== expectedMode) {
+    throw new Error(
+      `[billing/stripe] Stripe publishable-key/mode mismatch: STRIPE_EXPECTED_MODE="${expectedMode}" ` +
+        `but STRIPE_PUBLISHABLE_KEY is ${pubMode}-mode — refusing to boot (the Payment Element would target the wrong Stripe environment).`,
     );
   }
 

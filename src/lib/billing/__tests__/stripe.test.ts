@@ -91,7 +91,14 @@ describe('validateBillingConfig, required env vars', () => {
 });
 
 describe('validateBillingConfig — explicit STRIPE_EXPECTED_MODE guard (card-first-signup / dashboard#767)', () => {
-  function setupPaidTiers(stripeKey: string, expectedMode?: string) {
+  // publishableKey: undefined → derive a mode-matching pk so the secret-key
+  // assertions under test are reached; null → unset it (missing-pk case);
+  // string → set verbatim (pk-mode-mismatch / bad-prefix cases).
+  function setupPaidTiers(
+    stripeKey: string,
+    expectedMode?: string,
+    publishableKey?: string | null,
+  ) {
     process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (process.env as any).NODE_ENV = 'production';
@@ -100,6 +107,12 @@ describe('validateBillingConfig — explicit STRIPE_EXPECTED_MODE guard (card-fi
     process.env.STRIPE_PRICE_TEAM = 'price_team';
     process.env.STRIPE_PRICE_ORG = 'price_org';
     process.env.STRIPE_PRICE_ENTERPRISE = 'price_enterprise';
+    if (publishableKey === null) {
+      delete process.env.STRIPE_PUBLISHABLE_KEY;
+    } else {
+      process.env.STRIPE_PUBLISHABLE_KEY =
+        publishableKey ?? (expectedMode === 'live' ? 'pk_live_abc' : 'pk_test_abc');
+    }
     if (expectedMode === undefined) {
       delete process.env.STRIPE_EXPECTED_MODE;
     } else {
@@ -145,6 +158,29 @@ describe('validateBillingConfig — explicit STRIPE_EXPECTED_MODE guard (card-fi
 
   it('accepts restricted (rk_) keys by mode', () => {
     setupPaidTiers('rk_test_abc', 'test');
+    expect(() => validateBillingConfig()).not.toThrow();
+  });
+
+  // Publishable-key guards (card-first signup Payment Element / dashboard#783).
+  it('throws when STRIPE_PUBLISHABLE_KEY is missing', () => {
+    setupPaidTiers('sk_test_abc', 'test', null);
+    expect(() => validateBillingConfig()).toThrow('STRIPE_PUBLISHABLE_KEY');
+  });
+
+  it('throws when the publishable key mode mismatches expected', () => {
+    setupPaidTiers('sk_test_abc', 'test', 'pk_live_abc');
+    expect(() => validateBillingConfig()).toThrow('publishable-key/mode mismatch');
+  });
+
+  it('throws on an unrecognised publishable-key prefix', () => {
+    setupPaidTiers('sk_test_abc', 'test', 'whsec_nope');
+    expect(() => validateBillingConfig()).toThrow(
+      'STRIPE_PUBLISHABLE_KEY has an unrecognised prefix',
+    );
+  });
+
+  it('passes when secret + publishable keys both match the expected mode', () => {
+    setupPaidTiers('sk_live_abc', 'live', 'pk_live_abc');
     expect(() => validateBillingConfig()).not.toThrow();
   });
 });
