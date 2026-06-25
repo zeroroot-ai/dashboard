@@ -2,7 +2,7 @@
 /**
  * Build guard: diff the dashboard ServiceAccount's rendered RBAC
  * against the committed allow-list at
- * `enterprise/deploy/helm/gibson/.dashboard-rbac-allowlist.yaml`.
+ * `enterprise/deploy/helm/gibson-workloads/.dashboard-rbac-allowlist.yaml`.
  *
  * Spec: auth-resolution-hardening (R1.5)
  *
@@ -61,12 +61,15 @@ const MAIN_DASHBOARD_ROOT = isWorktree
 // When running inside the Docker build context (dashboard dir as root),
 // __dirname is /app/scripts and 3 levels up from DASHBOARD_ROOT is / (filesystem root).
 // Detect this and fall back to looking for the chart relative to the build
-// context (dashboard dir = /app). The allowlist is staged at
-// enterprise/deploy/helm/gibson/ inside the build context for Docker builds.
-// Spec: signup-zitadel-permissions-fix (Docker build fix for auth-resolution-hardening).
+// context (dashboard dir = /app). In the Docker build the deploy sibling is
+// absent and SKIP_DASHBOARD_RBAC_CHECK=1 is set (Dockerfile), so this guard is
+// a dev-host/CI-with-sibling gate only.
+// The open-core restructure deleted the old umbrella chart (deploy#61); the
+// dashboard RBAC + its allow-list now live in the gibson-workloads sub-chart
+// (deploy#987, dashboard#749).
 const _repoRootCandidate = resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
 const REPO_ROOT = _repoRootCandidate === '/' ? DASHBOARD_ROOT : _repoRootCandidate;
-const CHART_DIR = resolve(REPO_ROOT, 'enterprise/deploy/helm/gibson');
+const CHART_DIR = resolve(REPO_ROOT, 'enterprise/deploy/helm/gibson-workloads');
 const ALLOWLIST_PATH = resolve(CHART_DIR, '.dashboard-rbac-allowlist.yaml');
 
 function loadAllowlist() {
