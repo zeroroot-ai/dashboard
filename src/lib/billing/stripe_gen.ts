@@ -14,10 +14,14 @@ export const BILLING_TIER_IDS: readonly BillingTier[] = Object.freeze([
   "enterprise",
 ]) as readonly BillingTier[];
 
-export const PRICE_ENV_MAP: Readonly<Record<BillingTier, string>> = Object.freeze({
-  "team": "STRIPE_PRICE_TEAM",
-  "org": "STRIPE_PRICE_ORG",
-  "enterprise": "STRIPE_PRICE_ENTERPRISE",
+// LOOKUP_KEY_MAP maps each self-serve tier to its stable Stripe lookup_key.
+// Lookup keys are identical across every Stripe account and test/live mode,
+// so no per-environment STRIPE_PRICE_* env vars are needed. The dashboard
+// resolves the live price ID at runtime via prices.list({lookup_keys:[...]}).
+export const LOOKUP_KEY_MAP: Readonly<Record<BillingTier, string>> = Object.freeze({
+  "team": "gibson_team_monthly_usd",
+  "org": "gibson_org_monthly_usd",
+  "enterprise": "gibson_enterprise_monthly_usd",
 });
 
 // CONTACT_SALES_TIERS is the closed set of plan ids that route to a

@@ -16,6 +16,7 @@
 import 'server-only';
 
 import type Stripe from 'stripe';
+import { unstable_cache } from 'next/cache';
 
 import { logger } from '@/src/lib/logger';
 
@@ -23,11 +24,11 @@ import { logger } from '@/src/lib/logger';
 // Types
 // ---------------------------------------------------------------------------
 
-// Paid plan tiers + their env-var price-id slots are generated from
+// Paid plan tiers + their stable lookup_keys are generated from
 // plans.yaml, see scripts/gen-stripe-tiers.mjs. Drift is caught by
 // scripts/check-stripe-tiers-fresh.mjs as part of pnpm prebuild.
 export type { BillingTier } from './stripe_gen';
-import { BillingTier, PRICE_ENV_MAP, CONTACT_SALES_TIERS as CONTACT_SALES_TIER_IDS, BILLING_TIER_IDS } from './stripe_gen';
+import { BillingTier, LOOKUP_KEY_MAP, CONTACT_SALES_TIERS as CONTACT_SALES_TIER_IDS } from './stripe_gen';
 
 // ---------------------------------------------------------------------------
 // Lazy singleton Stripe client
@@ -164,20 +165,66 @@ export interface PortalSessionParams {
 const CONTACT_SALES_TIERS = new Set<string>(CONTACT_SALES_TIER_IDS);
 
 // ---------------------------------------------------------------------------
-// Price ID lookup
+// Price ID lookup via Stripe lookup_key
 // ---------------------------------------------------------------------------
 
 /**
- * Return the Stripe Price ID for the given tier from environment variables,
- * or null if the env var is unset.
+ * Inner (uncached) implementation — resolves a tier's Stripe Price ID by
+ * calling `prices.list({ lookup_keys: [lk] })`.  Exported for unit tests;
+ * production callers use the cached `resolvePriceId` below.
  *
- * Env vars: STRIPE_PRICE_TEAM, STRIPE_PRICE_ORG, STRIPE_PRICE_ENTERPRISE.
- * enterprise-deploy is contact-sales and has no Stripe price.
+ * Returns null on any failure: STRIPE_SECRET_KEY unset, unknown tier,
+ * no matching active price, or any Stripe API error.  Never throws.
  */
-export function priceIdForTier(tier: string): string | null {
-  const envKey = PRICE_ENV_MAP[tier as BillingTier];
-  if (!envKey) return null;
-  return process.env[envKey] ?? null;
+export async function resolvePriceIdUncached(tier: BillingTier): Promise<string | null> {
+  if (!process.env.STRIPE_SECRET_KEY) return null;
+  const lk = LOOKUP_KEY_MAP[tier];
+  if (!lk) return null;
+  try {
+    const { data } = await getStripeClient().prices.list({
+      lookup_keys: [lk],
+      active: true,
+      limit: 1,
+    });
+    return data[0]?.id ?? null;
+  } catch (err) {
+    logger.warn(
+      { tier, lookupKey: lk, err: err instanceof Error ? err.message : String(err) },
+      '[billing/stripe] prices.list lookup_key resolution failed; returning null',
+    );
+    return null;
+  }
+}
+
+/**
+ * Cached resolver: maps a BillingTier to its live Stripe Price ID via the
+ * tier's stable `lookup_key` (from LOOKUP_KEY_MAP / plans.yaml).
+ *
+ * Cached for 60 seconds under the "stripe-prices" tag so the same
+ * `revalidateTag("stripe-prices")` call that busts the pricing-page cache
+ * also busts the resolver.  Returns null on any error (see
+ * `resolvePriceIdUncached` for the full degrade contract).
+ */
+export const resolvePriceId: (tier: BillingTier) => Promise<string | null> = unstable_cache(
+  resolvePriceIdUncached,
+  ['stripe-price-id'],
+  { revalidate: 60, tags: ['stripe-prices'] },
+);
+
+/**
+ * Return the Stripe Price ID for the given tier, or null if it cannot be
+ * resolved (STRIPE_SECRET_KEY unset, unknown tier, no matching active Stripe
+ * price, or any Stripe API error).
+ *
+ * Resolves via the tier's stable `lookup_key` (LOOKUP_KEY_MAP / plans.yaml)
+ * using `prices.list({ lookup_keys: [...] })` — no per-environment
+ * STRIPE_PRICE_* env vars required.  enterprise-deploy is contact-sales and
+ * has no Stripe price, so it always resolves to null.
+ */
+export async function priceIdForTier(tier: string): Promise<string | null> {
+  const billingTier = tier as BillingTier;
+  if (!LOOKUP_KEY_MAP[billingTier]) return null;
+  return resolvePriceId(billingTier);
 }
 
 // ---------------------------------------------------------------------------
@@ -494,11 +541,10 @@ export function validateBillingConfig(): void {
     // this runtime-injected key. Absent → the Element never mounts and the
     // signup CTA stays unclickable (dashboard#783). Fail loud at boot instead.
     'STRIPE_PUBLISHABLE_KEY',
-    // One env var per paid tier. Validated at startup; missing in dev or
-    // free-tier-only deployments → set DASHBOARD_BILLING_PAID_TIERS_ENABLED
-    // to false to skip this check entirely.
-    // Generated env-var names; one per Stripe-priced tier (not contact-sales).
-    ...BILLING_TIER_IDS.map((t) => PRICE_ENV_MAP[t]),
+    // Price IDs are no longer configured via per-tier env vars. The dashboard
+    // resolves them at runtime via prices.list({ lookup_keys: [...] }) using
+    // the stable LOOKUP_KEY_MAP constants (env-agnostic, same across test/live).
+    // validateBillingConfig() no longer needs to check STRIPE_PRICE_* vars.
   ];
 
   const missing = required.filter((v) => !process.env[v]);

@@ -5,23 +5,30 @@
  * key-mode guards and the test/live key mode enforcement added in
  * spec stripe-billing-integration Task 2.
  *
+ * Also covers resolvePriceIdUncached — the inner (uncached) price-ID resolver
+ * that replaced the env-var-based priceIdForTier in the lookup_key migration.
+ *
  * The module is NOT mocked here; we import the actual implementation.
  * STRIPE_SECRET_KEY and NODE_ENV are manipulated per-test and restored
  * in afterEach via saved originals.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { validateBillingConfig, __resetStripeClientForTests } from '../stripe';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import {
+  validateBillingConfig,
+  resolvePriceIdUncached,
+  __resetStripeClientForTests,
+  __setStripeClientForTests,
+} from '../stripe';
 
 // Save original env so we can restore after each test.
 const originalEnv: Record<string, string | undefined> = {};
 
+// STRIPE_PRICE_* vars were removed from the required-env list in the
+// lookup_key migration; the required set is now just the two Stripe secrets.
 const REQUIRED_KEYS = [
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
-  'STRIPE_PRICE_TEAM',
-  'STRIPE_PRICE_ORG',
-  'STRIPE_PRICE_ENTERPRISE',
 ];
 
 function saveEnv(...keys: string[]) {
@@ -44,6 +51,7 @@ beforeEach(() => {
   saveEnv(
     'NODE_ENV',
     'DASHBOARD_BILLING_PAID_TIERS_ENABLED',
+    'STRIPE_EXPECTED_MODE',
     ...REQUIRED_KEYS,
   );
   __resetStripeClientForTests();
@@ -88,6 +96,23 @@ describe('validateBillingConfig, required env vars', () => {
     }
     expect(() => validateBillingConfig()).toThrow('STRIPE_SECRET_KEY');
   });
+
+  it('does NOT require STRIPE_PRICE_TEAM / STRIPE_PRICE_ORG / STRIPE_PRICE_ENTERPRISE', () => {
+    // These were required before the lookup_key migration; they must NOT
+    // be required now. A fully-configured billing config with no price-id
+    // env vars set must pass the startup guard.
+    process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
+    process.env.STRIPE_SECRET_KEY = 'sk_test_abc';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
+    process.env.STRIPE_EXPECTED_MODE = 'test';
+    // STRIPE_PUBLISHABLE_KEY remains required (dashboard#783); set it so this
+    // test isolates the STRIPE_PRICE_* removal, not the publishable-key guard.
+    process.env.STRIPE_PUBLISHABLE_KEY = 'pk_test_abc';
+    delete process.env.STRIPE_PRICE_TEAM;
+    delete process.env.STRIPE_PRICE_ORG;
+    delete process.env.STRIPE_PRICE_ENTERPRISE;
+    expect(() => validateBillingConfig()).not.toThrow();
+  });
 });
 
 describe('validateBillingConfig — explicit STRIPE_EXPECTED_MODE guard (card-first-signup / dashboard#767)', () => {
@@ -104,9 +129,7 @@ describe('validateBillingConfig — explicit STRIPE_EXPECTED_MODE guard (card-fi
     (process.env as any).NODE_ENV = 'production';
     process.env.STRIPE_SECRET_KEY = stripeKey;
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
-    process.env.STRIPE_PRICE_TEAM = 'price_team';
-    process.env.STRIPE_PRICE_ORG = 'price_org';
-    process.env.STRIPE_PRICE_ENTERPRISE = 'price_enterprise';
+    // No STRIPE_PRICE_* vars — they are no longer required.
     if (publishableKey === null) {
       delete process.env.STRIPE_PUBLISHABLE_KEY;
     } else {
@@ -182,5 +205,96 @@ describe('validateBillingConfig — explicit STRIPE_EXPECTED_MODE guard (card-fi
   it('passes when secret + publishable keys both match the expected mode', () => {
     setupPaidTiers('sk_live_abc', 'live', 'pk_live_abc');
     expect(() => validateBillingConfig()).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolvePriceIdUncached — lookup_key resolver unit tests
+// ---------------------------------------------------------------------------
+
+describe('resolvePriceIdUncached', () => {
+  const listMock = vi.fn();
+
+  beforeEach(() => {
+    listMock.mockReset();
+    // Inject a stub Stripe client so prices.list is fully controlled.
+    __setStripeClientForTests({
+      prices: { list: listMock },
+    });
+  });
+
+  afterEach(() => {
+    __resetStripeClientForTests();
+  });
+
+  it('returns null when STRIPE_SECRET_KEY is unset', async () => {
+    delete process.env.STRIPE_SECRET_KEY;
+    const result = await resolvePriceIdUncached('team');
+    expect(result).toBeNull();
+    expect(listMock).not.toHaveBeenCalled();
+  });
+
+  it('returns null for an unknown tier (no lookup_key)', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_xxx';
+    // 'enterprise-deploy' is contact-sales and has no LOOKUP_KEY_MAP entry.
+    const result = await resolvePriceIdUncached('enterprise-deploy' as never);
+    expect(result).toBeNull();
+    expect(listMock).not.toHaveBeenCalled();
+  });
+
+  it('calls prices.list with the correct lookup_key for each tier', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_xxx';
+    listMock.mockResolvedValue({ data: [{ id: 'price_team_123' }] });
+
+    const result = await resolvePriceIdUncached('team');
+
+    expect(result).toBe('price_team_123');
+    expect(listMock).toHaveBeenCalledWith({
+      lookup_keys: ['gibson_team_monthly_usd'],
+      active: true,
+      limit: 1,
+    });
+  });
+
+  it('returns null when Stripe returns an empty list (no matching price)', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_xxx';
+    listMock.mockResolvedValue({ data: [] });
+
+    const result = await resolvePriceIdUncached('org');
+    expect(result).toBeNull();
+  });
+
+  it('returns null (never throws) when prices.list rejects', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_xxx';
+    listMock.mockRejectedValue(new Error('stripe network error'));
+
+    const result = await resolvePriceIdUncached('enterprise');
+    expect(result).toBeNull();
+  });
+
+  it('resolves the correct price ID for org tier', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_xxx';
+    listMock.mockResolvedValue({ data: [{ id: 'price_org_456' }] });
+
+    const result = await resolvePriceIdUncached('org');
+    expect(result).toBe('price_org_456');
+    expect(listMock).toHaveBeenCalledWith({
+      lookup_keys: ['gibson_org_monthly_usd'],
+      active: true,
+      limit: 1,
+    });
+  });
+
+  it('resolves the correct price ID for enterprise tier', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_xxx';
+    listMock.mockResolvedValue({ data: [{ id: 'price_enterprise_789' }] });
+
+    const result = await resolvePriceIdUncached('enterprise');
+    expect(result).toBe('price_enterprise_789');
+    expect(listMock).toHaveBeenCalledWith({
+      lookup_keys: ['gibson_enterprise_monthly_usd'],
+      active: true,
+      limit: 1,
+    });
   });
 });

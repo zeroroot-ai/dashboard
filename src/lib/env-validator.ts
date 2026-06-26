@@ -302,9 +302,11 @@ export const OPTIONAL_ENV = [
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
   'STRIPE_PORTAL_CONFIGURATION_ID',
-  'STRIPE_PRICE_TEAM',
-  'STRIPE_PRICE_ORG',
-  'STRIPE_PRICE_ENTERPRISE',
+  // STRIPE_PRICE_TEAM / STRIPE_PRICE_ORG / STRIPE_PRICE_ENTERPRISE are
+  // intentionally absent: price IDs are now resolved at runtime from Stripe
+  // via stable lookup_keys (LOOKUP_KEY_MAP / plans.yaml), so no per-environment
+  // price ID env vars are required. The same config works across every Stripe
+  // account and test/live mode.
   // Card-first-signup mode guard (dashboard#767): explicit billing mode
   // ("test"|"live") asserted against the key prefix at boot. Required when
   // paid tiers are enabled; validateBillingConfig()/stripe.ts owns semantics.

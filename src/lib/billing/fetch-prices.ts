@@ -10,10 +10,16 @@
  * page doesn't hit Stripe on every render but still picks up live
  * Stripe price changes within a minute.
  *
+ * Price ID resolution (post-lookup_key migration):
+ *   Each tier's Stripe price ID is resolved at runtime via the stable
+ *   `lookup_key` (LOOKUP_KEY_MAP / plans.yaml) using `prices.list`.
+ *   No per-environment STRIPE_PRICE_* env vars are required; the same
+ *   config works across every Stripe account and test/live mode.
+ *
  * Graceful degrade contract (R7.3):
  *   - If STRIPE_SECRET_KEY is unset, every tier resolves to null.
- *   - If PRICE_ENV_MAP[tier] is unset, that tier resolves to null.
- *   - If Stripe returns an error, that tier resolves to null.
+ *   - If the lookup_key resolves to no active price, that tier is null.
+ *   - If Stripe returns an error at any step, that tier resolves to null.
  *   - Caller (the pricing page) MUST treat null as "show the
  *     'pricing temporarily unavailable' placeholder", not the
  *     plans.yaml fallback, see R7.3.
@@ -31,8 +37,8 @@ import 'server-only';
 import { unstable_cache } from 'next/cache';
 
 import { logger } from '@/src/lib/logger';
-import { BILLING_TIER_IDS, type BillingTier, PRICE_ENV_MAP } from './stripe_gen';
-import { getStripeClient } from './stripe';
+import { BILLING_TIER_IDS, type BillingTier } from './stripe_gen';
+import { getStripeClient, resolvePriceId } from './stripe';
 
 /** Per-tier monthly price in cents, or null when unresolvable. */
 export type StripePriceMap = Readonly<Record<BillingTier, number | null>>;
@@ -58,12 +64,12 @@ export async function fetchStripePricesUncached(): Promise<StripePriceMap> {
 
   // Fetch all tiers in parallel; per-tier failures are isolated.
   const fetches = BILLING_TIER_IDS.map(async (tier) => {
-    const envKey = PRICE_ENV_MAP[tier];
-    const priceId = process.env[envKey];
+    // Resolve the live price ID via the tier's stable lookup_key.
+    const priceId = await resolvePriceId(tier);
     if (!priceId) {
       logger.warn(
-        { tier, envKey },
-        '[billing/fetch-prices] price id env var unset; resolving tier to null',
+        { tier },
+        '[billing/fetch-prices] lookup_key resolved to no active price; resolving tier to null',
       );
       return [tier, null] as const;
     }

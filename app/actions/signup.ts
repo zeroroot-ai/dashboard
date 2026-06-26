@@ -506,7 +506,7 @@ export async function completeSignup(
 
     // Validate billing config up front so a misconfigured plan fails BEFORE
     // we provision any account or company.
-    const priceId = priceIdForTier(input.tier);
+    const priceId = await priceIdForTier(input.tier);
     const trialDays = lookupPlan(input.tier as PlanID).trialDays;
     if (!priceId || !trialDays || trialDays <= 0) {
       logger.error(

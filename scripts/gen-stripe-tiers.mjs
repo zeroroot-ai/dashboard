@@ -2,14 +2,18 @@
 /**
  * gen-stripe-tiers.mjs, emits src/lib/billing/stripe_gen.ts from
  * plans.yaml. Single bridge between the operator's plan registry and the
- * dashboard's BillingTier union + PRICE_ENV_MAP. Spec
+ * dashboard's BillingTier union + LOOKUP_KEY_MAP. Spec
  * plans-and-quotas-simplification R8 / R3.1.
  *
  * The generated file carries:
- *   - BillingTier   : TS union of every plan id whose pricing has
- *                     stripeProductId support (i.e. NOT contactSales-only).
- *   - PRICE_ENV_MAP : { [tier]: STRIPE_PRICE_<TIER_SLUG> }, the env-var
- *                     names required at runtime when paid tiers are enabled.
+ *   - BillingTier    : TS union of every plan id whose pricing has
+ *                      stripeProductId support (i.e. NOT contactSales-only).
+ *   - LOOKUP_KEY_MAP : { [tier]: "gibson_<id>_monthly_usd" }, the stable
+ *                      Stripe lookup_key for each paid tier. These are
+ *                      identical across every Stripe account and test/live
+ *                      mode, so no per-environment price ID env vars are
+ *                      needed. stripe.ts uses prices.list({lookup_keys:[...]})
+ *                      to resolve the live price ID at runtime.
  *
  * stripe.ts imports these and keeps the runtime helpers (priceIdForTier /
  * validateBillingConfig). Drift is caught by check-stripe-tiers-fresh.mjs.
@@ -38,11 +42,6 @@ const PLANS_YAML = resolve(
 );
 const OUTPUT = resolve(DASHBOARD_ROOT, "src/lib/billing/stripe_gen.ts");
 
-function envSlug(id) {
-  // team → STRIPE_PRICE_TEAM, enterprise-deploy → STRIPE_PRICE_ENTERPRISE_DEPLOY
-  return "STRIPE_PRICE_" + id.toUpperCase().replace(/-/g, "_");
-}
-
 function die(msg) {
   process.stderr.write(`gen-stripe-tiers: ${msg}\n`);
   process.exit(1);
@@ -69,12 +68,18 @@ function main() {
   if (!doc || !Array.isArray(doc.plans)) die("plans.yaml malformed");
 
   // BillingTier covers plans that get a Stripe price (not contact-sales).
-  const billingTiers = doc.plans
-    .filter((p) => p.pricing && !p.pricing.contactSales)
-    .map((p) => p.id);
+  const billingPlans = doc.plans.filter((p) => p.pricing && !p.pricing.contactSales);
+  const billingTiers = billingPlans.map((p) => p.id);
 
   if (billingTiers.length === 0) {
     die("plans.yaml has no Stripe-priced plans");
+  }
+
+  // Validate that every self-serve plan carries a lookupKey.
+  for (const p of billingPlans) {
+    if (!p.lookupKey || typeof p.lookupKey !== "string") {
+      die(`plan "${p.id}" is missing a 'lookupKey' field. Add lookupKey: gibson_${p.id}_monthly_usd`);
+    }
   }
 
   const lines = [];
@@ -94,8 +99,12 @@ function main() {
     ...billingTiers.map((id) => `  ${JSON.stringify(id)},`),
     "]) as readonly BillingTier[];",
     "",
-    "export const PRICE_ENV_MAP: Readonly<Record<BillingTier, string>> = Object.freeze({",
-    ...billingTiers.map((id) => `  ${JSON.stringify(id)}: ${JSON.stringify(envSlug(id))},`),
+    "// LOOKUP_KEY_MAP maps each self-serve tier to its stable Stripe lookup_key.",
+    "// Lookup keys are identical across every Stripe account and test/live mode,",
+    "// so no per-environment STRIPE_PRICE_* env vars are needed. The dashboard",
+    "// resolves the live price ID at runtime via prices.list({lookup_keys:[...]}).",
+    "export const LOOKUP_KEY_MAP: Readonly<Record<BillingTier, string>> = Object.freeze({",
+    ...billingPlans.map((p) => `  ${JSON.stringify(p.id)}: ${JSON.stringify(p.lookupKey)},`),
     "});",
     "",
     "// CONTACT_SALES_TIERS is the closed set of plan ids that route to a",
