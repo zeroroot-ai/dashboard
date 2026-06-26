@@ -29,7 +29,16 @@ concurrency:
 
 jobs:
   build:
-    if: github.actor != 'dependabot[bot]'
+    # Skip dependabot. Also skip external fork PRs: the image build consumes the
+    # private GH_PAT_TENANT_OPERATOR_RO secret, which GitHub never exposes to a
+    # fork's PR run, so the build would hard-fail for outside contributors. The
+    # event-name guard keeps push/tag builds and same-repo PRs running as before
+    # (on push/tag there is no pull_request context, so the fork field is unset).
+    # There is deliberately no pull_request_target trigger — keep it that way.
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.fork == false)
     uses: zeroroot-ai/.github/.github/workflows/reusable-image-build.yml@main
     permissions:
       contents: write

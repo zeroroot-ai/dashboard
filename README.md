@@ -47,6 +47,38 @@ pnpm proto:generate # regenerate src/gen/ TS proto bindings (workstation-only)
 gRPC, no legacy auth artefacts, RBAC minimality, authz-registry
 freshness, etc.). Do not disable them, fix the underlying code.
 
+## Standalone build (outside the polyrepo workspace)
+
+A bare `pnpm build` runs the prebuild chain, which includes generators
+(`gen-plans.mjs`, `gen-stripe-tiers.mjs`, `gen-authz-registry.mjs`) that
+read sibling private repos in the canonical `~/Code/zeroroot.ai/`
+workspace. Those siblings are not present in a standalone checkout, so
+the generators cannot run there. The committed generated files
+(`src/generated/plans.ts`, `src/lib/billing/stripe_gen.ts`,
+`src/gen/authz/registry.ts`) are the source of truth at build time, and
+the official image build (see `Dockerfile`) trusts them by setting the
+skip envs below. External contributors building outside the workspace
+must set the same envs:
+
+```bash
+SKIP_GEN_PLANS=1 \
+SKIP_PLANS_FRESH_CHECK=1 \
+SKIP_GEN_STRIPE_TIERS=1 \
+SKIP_STRIPE_TIERS_FRESH_CHECK=1 \
+SKIP_GEN_AUTHZ_REGISTRY=1 \
+SKIP_AUTHZ_REGISTRY_CHECK=1 \
+SKIP_DASHBOARD_RBAC_CHECK=1 \
+  pnpm build
+```
+
+These are exactly the envs the `Dockerfile` builder stage sets; keep the
+two lists in sync. The `*_FRESH_CHECK` / `*_CHECK` variants skip the
+workstation-only drift gates that diff the committed files against the
+private siblings (which a standalone checkout cannot reach), while
+`SKIP_DASHBOARD_RBAC_CHECK` skips the `helm template` RBAC diff that
+needs a Helm binary. The drift gates still run in the full workspace via
+`pnpm prebuild`, keeping the committed generated files honest.
+
 ## Architecture
 
 This repo is one piece of the wider Gibson platform polyrepo. For the
