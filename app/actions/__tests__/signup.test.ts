@@ -93,7 +93,7 @@ vi.mock('@/src/lib/billing/stripe', () => ({
   verifySignupCustomer: mockVerifySignupCustomer,
   createTrialingSubscription: mockCreateTrialingSubscription,
   finalizeSignupCustomer: mockFinalizeSignupCustomer,
-  priceIdForTier: vi.fn(() => 'price_team_123'),
+  priceIdForTier: vi.fn(async () => 'price_team_123'),
 }));
 // NOTE: @/src/generated/plans is NOT mocked — the real lookupPlan() returns
 // the registry's trialDays, and pricing-display.ts (pulled in transitively via
