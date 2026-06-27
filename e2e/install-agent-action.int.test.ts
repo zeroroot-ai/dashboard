@@ -31,13 +31,13 @@ const describeOrSkip = ENVOY && SESSION ? describe : describe.skip;
 describeOrSkip("installAgentAction, integration", () => {
   let installAgentAction: typeof import("@/app/actions/crd/installAgent").installAgentAction;
   let serviceClient: typeof import("@/src/lib/gibson-client").serviceClient;
-  let PlatformOperatorService: typeof import("@/src/gen/gibson/platform/v1/platform_operator_pb").PlatformOperatorService;
+  let DaemonOperatorService: typeof import("@/src/gen/gibson/daemon/operator/v1/operator_pb").DaemonOperatorService;
 
   beforeAll(async () => {
     ({ installAgentAction } = await import("@/app/actions/crd/installAgent"));
     ({ serviceClient } = await import("@/src/lib/gibson-client"));
-    ({ PlatformOperatorService } = await import(
-      "@/src/gen/gibson/platform/v1/platform_operator_pb"
+    ({ DaemonOperatorService } = await import(
+      "@/src/gen/gibson/daemon/operator/v1/operator_pb"
     ));
   });
 
@@ -55,7 +55,7 @@ describeOrSkip("installAgentAction, integration", () => {
       expect(r.data.agentInstallationId).toMatch(new RegExp(`-${TENANT}$`));
 
       // Confirm the tuple is visible on a subsequent Check (by deleting it).
-      await serviceClient(PlatformOperatorService, TENANT).writeAccessTuples({
+      await serviceClient(DaemonOperatorService, TENANT).writeAccessTuples({
         add: [],
         delete: [
           {
