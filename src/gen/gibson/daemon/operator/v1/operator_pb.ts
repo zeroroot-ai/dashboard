@@ -11,160 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/daemon/operator/v1/operator.proto.
  */
 export const file_gibson_daemon_operator_v1_operator: GenFile = /*@__PURE__*/
-  fileDesc("CihnaWJzb24vZGFlbW9uL29wZXJhdG9yL3YxL29wZXJhdG9yLnByb3RvEhlnaWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxIjkKD1NodXRkb3duUmVxdWVzdBINCgVmb3JjZRgBIAEoCBIXCg90aW1lb3V0X3NlY29uZHMYAiABKAUiNAoQU2h1dGRvd25SZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkiLQoYSW1wZXJzb25hdGVUZW5hbnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSIqChlJbXBlcnNvbmF0ZVRlbmFudFJlc3BvbnNlEg0KBXRva2VuGAEgASgJIioKGVJlZnJlc2hUb29sQ2F0YWxvZ1JlcXVlc3QSDQoFZm9yY2UYASABKAgiPQoaUmVmcmVzaFRvb2xDYXRhbG9nUmVzcG9uc2USDgoGcXVldWVkGAEgASgIEg8KB21lc3NhZ2UYAiABKAkiPQoLQWNjZXNzVHVwbGUSDAoEdXNlchgBIAEoCRIQCghyZWxhdGlvbhgCIAEoCRIOCgZvYmplY3QYAyABKAkilwEKGFdyaXRlQWNjZXNzVHVwbGVzUmVxdWVzdBIzCgNhZGQYASADKAsyJi5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkFjY2Vzc1R1cGxlEjYKBmRlbGV0ZRgCIAMoCzImLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuQWNjZXNzVHVwbGUSDgoGcmVhc29uGAMgASgJIjsKGVdyaXRlQWNjZXNzVHVwbGVzUmVzcG9uc2USDQoFYWRkZWQYASABKAUSDwoHZGVsZXRlZBgCIAEoBSLsAQoYVXBzZXJ0VGVuYW50UXVvdGFSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIbChNjb25jdXJyZW50X21pc3Npb25zGAcgASgFEhkKEWNvbmN1cnJlbnRfYWdlbnRzGAMgASgFEg8KB3BsYW5faWQYCCABKAkSHQoVY29uY3VycmVudF9jb25uZWN0b3JzGAkgASgFSgQIAhADSgQIBBAFSgQIBRAGSgQIBhAHUgVzZWF0c1IKc3RvcmFnZV9nYlIOcmV0ZW50aW9uX2RheXNSGnNhbmRib3hfbGF1bmNoZXNfcGVyX21vbnRoIi8KGVVwc2VydFRlbmFudFF1b3RhUmVzcG9uc2USEgoKdXBkYXRlZF9hdBgBIAEoCSItChhMaXN0RmVhdHVyZVR1cGxlc1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJIi4KGUxpc3RGZWF0dXJlVHVwbGVzUmVzcG9uc2USEQoJcmVsYXRpb25zGAEgAygJIjQKH1NlZWRDYXRhbG9nVGVuYW50RW5hYmxlZFJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJIjoKIFNlZWRDYXRhbG9nVGVuYW50RW5hYmxlZFJlc3BvbnNlEhYKDnR1cGxlc193cml0dGVuGAEgASgFIlwKGVNldFBsYXRmb3JtRW5hYmxlZFJlcXVlc3QSFQoNY29tcG9uZW50X3JlZhgBIAEoCRIRCglwdWJsaXNoZWQYAiABKAgSFQoNbWFuaWZlc3RfeWFtbBgDIAEoDCI+ChpTZXRQbGF0Zm9ybUVuYWJsZWRSZXNwb25zZRIPCgd3cml0dGVuGAEgASgIEg8KB2RlbGV0ZWQYAiABKAgitgIKEUF1ZGl0RXZlbnRNZXNzYWdlEgwKBHR5cGUYASABKAkSFQoNYWN0b3Jfc3ViamVjdBgCIAEoCRIUCgxhY3Rvcl9zb3VyY2UYAyABKAkSDQoFdHVwbGUYBCABKAkSFAoMYWN0aW9uX2NsYXNzGAUgASgJEhIKCnNjb3BlX3R5cGUYBiABKAkSEQoJb3BlcmF0aW9uGAcgASgJEg4KBnJlYXNvbhgIIAEoCRIRCgl0aW1lc3RhbXAYCSABKAkSSAoGZmllbGRzGAogAygLMjguZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5BdWRpdEV2ZW50TWVzc2FnZS5GaWVsZHNFbnRyeRotCgtGaWVsZHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIlQKFUVtaXRBdWRpdEV2ZW50UmVxdWVzdBI7CgVldmVudBgBIAEoCzIsLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuQXVkaXRFdmVudE1lc3NhZ2UiGAoWRW1pdEF1ZGl0RXZlbnRSZXNwb25zZSJHChpTZXRUZW5hbnRaaXRhZGVsT3JnUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSFgoOeml0YWRlbF9vcmdfaWQYAiABKAkiHQobU2V0VGVuYW50Wml0YWRlbE9yZ1Jlc3BvbnNlMtgOChVEYWVtb25PcGVyYXRvclNlcnZpY2USnAEKCFNodXRkb3duEiouZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5TaHV0ZG93blJlcXVlc3QaKy5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlNodXRkb3duUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMStwEKEUltcGVyc29uYXRlVGVuYW50EjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5JbXBlcnNvbmF0ZVRlbmFudFJlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkltcGVyc29uYXRlVGVuYW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSugEKElJlZnJlc2hUb29sQ2F0YWxvZxI0LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuUmVmcmVzaFRvb2xDYXRhbG9nUmVxdWVzdBo1LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuUmVmcmVzaFRvb2xDYXRhbG9nUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMStwEKEVdyaXRlQWNjZXNzVHVwbGVzEjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5Xcml0ZUFjY2Vzc1R1cGxlc1JlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLldyaXRlQWNjZXNzVHVwbGVzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMStwEKEVVwc2VydFRlbmFudFF1b3RhEjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5VcHNlcnRUZW5hbnRRdW90YVJlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlVwc2VydFRlbmFudFF1b3RhUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMStwEKEUxpc3RGZWF0dXJlVHVwbGVzEjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5MaXN0RmVhdHVyZVR1cGxlc1JlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkxpc3RGZWF0dXJlVHVwbGVzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSzAEKGFNlZWRDYXRhbG9nVGVuYW50RW5hYmxlZBI6LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVxdWVzdBo7LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSugEKElNldFBsYXRmb3JtRW5hYmxlZBI0LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuU2V0UGxhdGZvcm1FbmFibGVkUmVxdWVzdBo1LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuU2V0UGxhdGZvcm1FbmFibGVkUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSrgEKDkVtaXRBdWRpdEV2ZW50EjAuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5FbWl0QXVkaXRFdmVudFJlcXVlc3QaMS5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkVtaXRBdWRpdEV2ZW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSvQEKE1NldFRlbmFudFppdGFkZWxPcmcSNS5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlNldFRlbmFudFppdGFkZWxPcmdSZXF1ZXN0GjYuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5TZXRUZW5hbnRaaXRhZGVsT3JnUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IANCZVpjZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL2RhZW1vbi9vcGVyYXRvci92MTtkYWVtb25vcGVyYXRvcnYxYgZwcm90bzM", [file_gibson_auth_v1_options]);
-
-/**
- * ShutdownRequest requests graceful shutdown of the daemon.
- *
- * @generated from message gibson.daemon.operator.v1.ShutdownRequest
- */
-export type ShutdownRequest = Message<"gibson.daemon.operator.v1.ShutdownRequest"> & {
-  /**
-   * force indicates whether to force immediate shutdown (skip graceful drain)
-   *
-   * @generated from field: bool force = 1;
-   */
-  force: boolean;
-
-  /**
-   * timeout_seconds is the maximum time to wait for graceful shutdown (0 = default 30s)
-   *
-   * @generated from field: int32 timeout_seconds = 2;
-   */
-  timeoutSeconds: number;
-};
-
-/**
- * Describes the message gibson.daemon.operator.v1.ShutdownRequest.
- * Use `create(ShutdownRequestSchema)` to create a new message.
- */
-export const ShutdownRequestSchema: GenMessage<ShutdownRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 0);
-
-/**
- * ShutdownResponse confirms the shutdown request was accepted.
- *
- * @generated from message gibson.daemon.operator.v1.ShutdownResponse
- */
-export type ShutdownResponse = Message<"gibson.daemon.operator.v1.ShutdownResponse"> & {
-  /**
-   * success indicates if the shutdown request was accepted
-   *
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
-
-  /**
-   * message provides additional context about the shutdown
-   *
-   * @generated from field: string message = 2;
-   */
-  message: string;
-};
-
-/**
- * Describes the message gibson.daemon.operator.v1.ShutdownResponse.
- * Use `create(ShutdownResponseSchema)` to create a new message.
- */
-export const ShutdownResponseSchema: GenMessage<ShutdownResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 1);
-
-/**
- * ImpersonateTenantRequest requests a time-limited context token for the given tenant.
- * Requires the "platform-operator" role.
- *
- * @generated from message gibson.daemon.operator.v1.ImpersonateTenantRequest
- */
-export type ImpersonateTenantRequest = Message<"gibson.daemon.operator.v1.ImpersonateTenantRequest"> & {
-  /**
-   * tenant_id is the identifier of the tenant to impersonate
-   *
-   * @generated from field: string tenant_id = 1;
-   */
-  tenantId: string;
-};
-
-/**
- * Describes the message gibson.daemon.operator.v1.ImpersonateTenantRequest.
- * Use `create(ImpersonateTenantRequestSchema)` to create a new message.
- */
-export const ImpersonateTenantRequestSchema: GenMessage<ImpersonateTenantRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 2);
-
-/**
- * ImpersonateTenantResponse returns a short-lived context token scoped to the
- * target tenant. The token behaves like a normal auth token for its lifetime.
- *
- * @generated from message gibson.daemon.operator.v1.ImpersonateTenantResponse
- */
-export type ImpersonateTenantResponse = Message<"gibson.daemon.operator.v1.ImpersonateTenantResponse"> & {
-  /**
-   * token is the time-limited context token granting access to the target tenant
-   *
-   * @generated from field: string token = 1;
-   */
-  token: string;
-};
-
-/**
- * Describes the message gibson.daemon.operator.v1.ImpersonateTenantResponse.
- * Use `create(ImpersonateTenantResponseSchema)` to create a new message.
- */
-export const ImpersonateTenantResponseSchema: GenMessage<ImpersonateTenantResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 3);
-
-/**
- * RefreshToolCatalogRequest carries optional knobs for forced catalog refresh.
- *
- * @generated from message gibson.daemon.operator.v1.RefreshToolCatalogRequest
- */
-export type RefreshToolCatalogRequest = Message<"gibson.daemon.operator.v1.RefreshToolCatalogRequest"> & {
-  /**
-   * force, when true, triggers a refresh even if one was completed very
-   * recently. Currently advisory — the daemon always queues the signal
-   * and the refresher coalesces back-to-back calls into a single tick.
-   *
-   * @generated from field: bool force = 1;
-   */
-  force: boolean;
-};
-
-/**
- * Describes the message gibson.daemon.operator.v1.RefreshToolCatalogRequest.
- * Use `create(RefreshToolCatalogRequestSchema)` to create a new message.
- */
-export const RefreshToolCatalogRequestSchema: GenMessage<RefreshToolCatalogRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 4);
-
-/**
- * RefreshToolCatalogResponse carries the refresh outcome.
- *
- * @generated from message gibson.daemon.operator.v1.RefreshToolCatalogResponse
- */
-export type RefreshToolCatalogResponse = Message<"gibson.daemon.operator.v1.RefreshToolCatalogResponse"> & {
-  /**
-   * queued is true when the refresh signal was accepted by the leader
-   * replica. False when this replica is not the leader (the next leader
-   * tick will refresh) or when the refresher is not running.
-   *
-   * @generated from field: bool queued = 1;
-   */
-  queued: boolean;
-
-  /**
-   * message is a human-readable explanation of the outcome.
-   *
-   * @generated from field: string message = 2;
-   */
-  message: string;
-};
-
-/**
- * Describes the message gibson.daemon.operator.v1.RefreshToolCatalogResponse.
- * Use `create(RefreshToolCatalogResponseSchema)` to create a new message.
- */
-export const RefreshToolCatalogResponseSchema: GenMessage<RefreshToolCatalogResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 5);
+  fileDesc("CihnaWJzb24vZGFlbW9uL29wZXJhdG9yL3YxL29wZXJhdG9yLnByb3RvEhlnaWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxIj0KC0FjY2Vzc1R1cGxlEgwKBHVzZXIYASABKAkSEAoIcmVsYXRpb24YAiABKAkSDgoGb2JqZWN0GAMgASgJIpcBChhXcml0ZUFjY2Vzc1R1cGxlc1JlcXVlc3QSMwoDYWRkGAEgAygLMiYuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5BY2Nlc3NUdXBsZRI2CgZkZWxldGUYAiADKAsyJi5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkFjY2Vzc1R1cGxlEg4KBnJlYXNvbhgDIAEoCSI7ChlXcml0ZUFjY2Vzc1R1cGxlc1Jlc3BvbnNlEg0KBWFkZGVkGAEgASgFEg8KB2RlbGV0ZWQYAiABKAUi7AEKGFVwc2VydFRlbmFudFF1b3RhUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSGwoTY29uY3VycmVudF9taXNzaW9ucxgHIAEoBRIZChFjb25jdXJyZW50X2FnZW50cxgDIAEoBRIPCgdwbGFuX2lkGAggASgJEh0KFWNvbmN1cnJlbnRfY29ubmVjdG9ycxgJIAEoBUoECAIQA0oECAQQBUoECAUQBkoECAYQB1IFc2VhdHNSCnN0b3JhZ2VfZ2JSDnJldGVudGlvbl9kYXlzUhpzYW5kYm94X2xhdW5jaGVzX3Blcl9tb250aCIvChlVcHNlcnRUZW5hbnRRdW90YVJlc3BvbnNlEhIKCnVwZGF0ZWRfYXQYASABKAkiLQoYTGlzdEZlYXR1cmVUdXBsZXNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSIuChlMaXN0RmVhdHVyZVR1cGxlc1Jlc3BvbnNlEhEKCXJlbGF0aW9ucxgBIAMoCSI0Ch9TZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSI6CiBTZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWRSZXNwb25zZRIWCg50dXBsZXNfd3JpdHRlbhgBIAEoBSK2AgoRQXVkaXRFdmVudE1lc3NhZ2USDAoEdHlwZRgBIAEoCRIVCg1hY3Rvcl9zdWJqZWN0GAIgASgJEhQKDGFjdG9yX3NvdXJjZRgDIAEoCRINCgV0dXBsZRgEIAEoCRIUCgxhY3Rpb25fY2xhc3MYBSABKAkSEgoKc2NvcGVfdHlwZRgGIAEoCRIRCglvcGVyYXRpb24YByABKAkSDgoGcmVhc29uGAggASgJEhEKCXRpbWVzdGFtcBgJIAEoCRJICgZmaWVsZHMYCiADKAsyOC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkF1ZGl0RXZlbnRNZXNzYWdlLkZpZWxkc0VudHJ5Gi0KC0ZpZWxkc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiVAoVRW1pdEF1ZGl0RXZlbnRSZXF1ZXN0EjsKBWV2ZW50GAEgASgLMiwuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5BdWRpdEV2ZW50TWVzc2FnZSIYChZFbWl0QXVkaXRFdmVudFJlc3BvbnNlIkcKGlNldFRlbmFudFppdGFkZWxPcmdSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIWCg56aXRhZGVsX29yZ19pZBgCIAEoCSIdChtTZXRUZW5hbnRaaXRhZGVsT3JnUmVzcG9uc2UikAEKDVBlbmRpbmdUZW5hbnQSEQoJdGVuYW50X2lkGAEgASgJEhUKDW93bmVyX3VzZXJfaWQYAiABKAkSEwoLb3duZXJfZW1haWwYAyABKAkSFgoOd29ya3NwYWNlX25hbWUYBCABKAkSDAoEdGllchgFIAEoCRIaChJzdHJpcGVfY3VzdG9tZXJfaWQYBiABKAkiJgokTGlzdFBlbmRpbmdUZW5hbnRQcm92aXNpb25pbmdSZXF1ZXN0ImIKJUxpc3RQZW5kaW5nVGVuYW50UHJvdmlzaW9uaW5nUmVzcG9uc2USOQoHcGVuZGluZxgBIAMoCzIoLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuUGVuZGluZ1RlbmFudCIwChtBY2tUZW5hbnRQcm92aXNpb25lZFJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJIi0KHEFja1RlbmFudFByb3Zpc2lvbmVkUmVzcG9uc2USDQoFYWNrZWQYASABKAgizwEKGVJlcG9ydFRlbmFudFN0YXR1c1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg0KBXBoYXNlGAIgASgJEhgKEGRhdGFfcGxhbmVfcmVhZHkYAyABKAgSFgoOc3RvcmVfcG9zdGdyZXMYBCABKAkSEwoLc3RvcmVfcmVkaXMYBSABKAkSEwoLc3RvcmVfbmVvNGoYBiABKAkSGAoQeml0YWRlbF9vcmdfc2x1ZxgHIAEoCRIaChJzdHJpcGVfY3VzdG9tZXJfaWQYCCABKAkiRQoaUmVwb3J0VGVuYW50U3RhdHVzUmVzcG9uc2USDwoHdXBkYXRlZBgBIAEoCBIWCg5iaWxsaW5nX2FjdGl2ZRgCIAEoCCKiAQoIVGVuYW50T3ASDQoFb3BfaWQYASABKAkSEQoJdGVuYW50X2lkGAIgASgJEg8KB29wX3R5cGUYAyABKAkSFAoMZGlzcGxheV9uYW1lGAQgASgJEhgKEGRpc3BsYXlfbmFtZV9zZXQYBSABKAgSEwoLb3duZXJfZW1haWwYBiABKAkSDAoEdGllchgHIAEoCRIQCgh0aWVyX3NldBgIIAEoCCIdChtMaXN0UGVuZGluZ1RlbmFudE9wc1JlcXVlc3QiUAocTGlzdFBlbmRpbmdUZW5hbnRPcHNSZXNwb25zZRIwCgNvcHMYASADKAsyIy5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlRlbmFudE9wIiMKEkFja1RlbmFudE9wUmVxdWVzdBINCgVvcF9pZBgBIAEoCSIkChNBY2tUZW5hbnRPcFJlc3BvbnNlEg0KBWFja2VkGAEgASgIMs4QChVEYWVtb25PcGVyYXRvclNlcnZpY2UStwEKEVdyaXRlQWNjZXNzVHVwbGVzEjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5Xcml0ZUFjY2Vzc1R1cGxlc1JlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLldyaXRlQWNjZXNzVHVwbGVzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMStwEKEVVwc2VydFRlbmFudFF1b3RhEjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5VcHNlcnRUZW5hbnRRdW90YVJlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlVwc2VydFRlbmFudFF1b3RhUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMStwEKEUxpc3RGZWF0dXJlVHVwbGVzEjMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5MaXN0RmVhdHVyZVR1cGxlc1JlcXVlc3QaNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkxpc3RGZWF0dXJlVHVwbGVzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSzAEKGFNlZWRDYXRhbG9nVGVuYW50RW5hYmxlZBI6LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVxdWVzdBo7LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSrgEKDkVtaXRBdWRpdEV2ZW50EjAuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5FbWl0QXVkaXRFdmVudFJlcXVlc3QaMS5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkVtaXRBdWRpdEV2ZW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSvQEKE1NldFRlbmFudFppdGFkZWxPcmcSNS5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlNldFRlbmFudFppdGFkZWxPcmdSZXF1ZXN0GjYuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5TZXRUZW5hbnRaaXRhZGVsT3JnUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMS2wEKHUxpc3RQZW5kaW5nVGVuYW50UHJvdmlzaW9uaW5nEj8uZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5MaXN0UGVuZGluZ1RlbmFudFByb3Zpc2lvbmluZ1JlcXVlc3QaQC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkxpc3RQZW5kaW5nVGVuYW50UHJvdmlzaW9uaW5nUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSwAEKFEFja1RlbmFudFByb3Zpc2lvbmVkEjYuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5BY2tUZW5hbnRQcm92aXNpb25lZFJlcXVlc3QaNy5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkFja1RlbmFudFByb3Zpc2lvbmVkUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSugEKElJlcG9ydFRlbmFudFN0YXR1cxI0LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuUmVwb3J0VGVuYW50U3RhdHVzUmVxdWVzdBo1LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuUmVwb3J0VGVuYW50U3RhdHVzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSwAEKFExpc3RQZW5kaW5nVGVuYW50T3BzEjYuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5MaXN0UGVuZGluZ1RlbmFudE9wc1JlcXVlc3QaNy5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkxpc3RQZW5kaW5nVGVuYW50T3BzUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAMSpQEKC0Fja1RlbmFudE9wEi0uZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5BY2tUZW5hbnRPcFJlcXVlc3QaLi5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkFja1RlbmFudE9wUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IANCZVpjZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL2RhZW1vbi9vcGVyYXRvci92MTtkYWVtb25vcGVyYXRvcnYxYgZwcm90bzM", [file_gibson_auth_v1_options]);
 
 /**
  * AccessTuple is a single FGA relationship tuple.
@@ -193,7 +40,7 @@ export type AccessTuple = Message<"gibson.daemon.operator.v1.AccessTuple"> & {
  * Use `create(AccessTupleSchema)` to create a new message.
  */
 export const AccessTupleSchema: GenMessage<AccessTuple> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 6);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 0);
 
 /**
  * WriteAccessTuplesRequest atomically adds and/or deletes FGA tuples.
@@ -222,7 +69,7 @@ export type WriteAccessTuplesRequest = Message<"gibson.daemon.operator.v1.WriteA
  * Use `create(WriteAccessTuplesRequestSchema)` to create a new message.
  */
 export const WriteAccessTuplesRequestSchema: GenMessage<WriteAccessTuplesRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 7);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 1);
 
 /**
  * WriteAccessTuplesResponse reports how many tuples were written/deleted.
@@ -246,7 +93,7 @@ export type WriteAccessTuplesResponse = Message<"gibson.daemon.operator.v1.Write
  * Use `create(WriteAccessTuplesResponseSchema)` to create a new message.
  */
 export const WriteAccessTuplesResponseSchema: GenMessage<WriteAccessTuplesResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 8);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 2);
 
 /**
  * UpsertTenantQuotaRequest writes the tenant's runtime quota record. The
@@ -302,7 +149,7 @@ export type UpsertTenantQuotaRequest = Message<"gibson.daemon.operator.v1.Upsert
  * Use `create(UpsertTenantQuotaRequestSchema)` to create a new message.
  */
 export const UpsertTenantQuotaRequestSchema: GenMessage<UpsertTenantQuotaRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 9);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 3);
 
 /**
  * UpsertTenantQuotaResponse confirms the upsert.
@@ -321,7 +168,7 @@ export type UpsertTenantQuotaResponse = Message<"gibson.daemon.operator.v1.Upser
  * Use `create(UpsertTenantQuotaResponseSchema)` to create a new message.
  */
 export const UpsertTenantQuotaResponseSchema: GenMessage<UpsertTenantQuotaResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 10);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 4);
 
 /**
  * ListFeatureTuplesRequest queries the feature tuples for a tenant.
@@ -340,7 +187,7 @@ export type ListFeatureTuplesRequest = Message<"gibson.daemon.operator.v1.ListFe
  * Use `create(ListFeatureTuplesRequestSchema)` to create a new message.
  */
 export const ListFeatureTuplesRequestSchema: GenMessage<ListFeatureTuplesRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 11);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 5);
 
 /**
  * ListFeatureTuplesResponse returns the set of has_* feature tuples present.
@@ -359,7 +206,7 @@ export type ListFeatureTuplesResponse = Message<"gibson.daemon.operator.v1.ListF
  * Use `create(ListFeatureTuplesResponseSchema)` to create a new message.
  */
 export const ListFeatureTuplesResponseSchema: GenMessage<ListFeatureTuplesResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 12);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 6);
 
 /**
  * SeedCatalogTenantEnabledRequest triggers seeding of tenant_enabled tuples.
@@ -378,7 +225,7 @@ export type SeedCatalogTenantEnabledRequest = Message<"gibson.daemon.operator.v1
  * Use `create(SeedCatalogTenantEnabledRequestSchema)` to create a new message.
  */
 export const SeedCatalogTenantEnabledRequestSchema: GenMessage<SeedCatalogTenantEnabledRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 13);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 7);
 
 /**
  * SeedCatalogTenantEnabledResponse reports how many tuples were written.
@@ -397,75 +244,7 @@ export type SeedCatalogTenantEnabledResponse = Message<"gibson.daemon.operator.v
  * Use `create(SeedCatalogTenantEnabledResponseSchema)` to create a new message.
  */
 export const SeedCatalogTenantEnabledResponseSchema: GenMessage<SeedCatalogTenantEnabledResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 14);
-
-/**
- * @generated from message gibson.daemon.operator.v1.SetPlatformEnabledRequest
- */
-export type SetPlatformEnabledRequest = Message<"gibson.daemon.operator.v1.SetPlatformEnabledRequest"> & {
-  /**
-   * component_ref is the component identifier without the "component:" type
-   * prefix — e.g. "connector-gitlab".
-   *
-   * @generated from field: string component_ref = 1;
-   */
-  componentRef: string;
-
-  /**
-   * published: true writes platform_enabled (adds to the shared catalog);
-   * false deletes it (unpublishes). Idempotent in both directions.
-   *
-   * @generated from field: bool published = 2;
-   */
-  published: boolean;
-
-  /**
-   * manifest_yaml is the connector's definition, persisted at publish so the
-   * on-enable sandbox reconciler (gibson#721) can launch a per-tenant sandbox
-   * from the shared definition — a connector published to the catalog by an
-   * operator is never tenant-registered, so this is its only manifest source.
-   * Stored as pure data under the system tenant (no principal, no install, no
-   * sandbox — `_system` is a definition marker, never an execution identity)
-   * and cleared on unpublish. Optional and ignored for non-connector
-   * components; empty on publish leaves any existing stored manifest untouched.
-   *
-   * @generated from field: bytes manifest_yaml = 3;
-   */
-  manifestYaml: Uint8Array;
-};
-
-/**
- * Describes the message gibson.daemon.operator.v1.SetPlatformEnabledRequest.
- * Use `create(SetPlatformEnabledRequestSchema)` to create a new message.
- */
-export const SetPlatformEnabledRequestSchema: GenMessage<SetPlatformEnabledRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 15);
-
-/**
- * @generated from message gibson.daemon.operator.v1.SetPlatformEnabledResponse
- */
-export type SetPlatformEnabledResponse = Message<"gibson.daemon.operator.v1.SetPlatformEnabledResponse"> & {
-  /**
-   * written is true when a tuple was actually added (published=true, was absent).
-   *
-   * @generated from field: bool written = 1;
-   */
-  written: boolean;
-
-  /**
-   * deleted is true when a tuple was actually removed (published=false, was present).
-   *
-   * @generated from field: bool deleted = 2;
-   */
-  deleted: boolean;
-};
-
-/**
- * Describes the message gibson.daemon.operator.v1.SetPlatformEnabledResponse.
- * Use `create(SetPlatformEnabledResponseSchema)` to create a new message.
- */
-export const SetPlatformEnabledResponseSchema: GenMessage<SetPlatformEnabledResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 16);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 8);
 
 /**
  * AuditEventMessage is the wire shape for EmitAuditEvent.
@@ -529,7 +308,7 @@ export type AuditEventMessage = Message<"gibson.daemon.operator.v1.AuditEventMes
  * Use `create(AuditEventMessageSchema)` to create a new message.
  */
 export const AuditEventMessageSchema: GenMessage<AuditEventMessage> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 17);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 9);
 
 /**
  * EmitAuditEventRequest carries the audit event to emit.
@@ -548,7 +327,7 @@ export type EmitAuditEventRequest = Message<"gibson.daemon.operator.v1.EmitAudit
  * Use `create(EmitAuditEventRequestSchema)` to create a new message.
  */
 export const EmitAuditEventRequestSchema: GenMessage<EmitAuditEventRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 18);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 10);
 
 /**
  * EmitAuditEventResponse confirms the event was emitted.
@@ -563,7 +342,7 @@ export type EmitAuditEventResponse = Message<"gibson.daemon.operator.v1.EmitAudi
  * Use `create(EmitAuditEventResponseSchema)` to create a new message.
  */
 export const EmitAuditEventResponseSchema: GenMessage<EmitAuditEventResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 19);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 11);
 
 /**
  * SetTenantZitadelOrgRequest seeds the daemon's tenant -> Zitadel org mapping.
@@ -594,7 +373,7 @@ export type SetTenantZitadelOrgRequest = Message<"gibson.daemon.operator.v1.SetT
  * Use `create(SetTenantZitadelOrgRequestSchema)` to create a new message.
  */
 export const SetTenantZitadelOrgRequestSchema: GenMessage<SetTenantZitadelOrgRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 20);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 12);
 
 /**
  * SetTenantZitadelOrgResponse confirms the mapping was persisted.
@@ -609,7 +388,408 @@ export type SetTenantZitadelOrgResponse = Message<"gibson.daemon.operator.v1.Set
  * Use `create(SetTenantZitadelOrgResponseSchema)` to create a new message.
  */
 export const SetTenantZitadelOrgResponseSchema: GenMessage<SetTenantZitadelOrgResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 13);
+
+/**
+ * PendingTenant is one row of the daemon's pending-provisioning queue: a
+ * self-serve signup whose founding-owner Zitadel user the daemon has already
+ * provisioned, awaiting Tenant-CR creation by the operator. It carries exactly
+ * what the operator needs to build the Tenant CR spec (the same shape the
+ * dashboard used to write directly): tenant_id (CR name), workspace_name
+ * (displayName), owner_email (spec.owner), tier (spec.tier), and the optional
+ * stripe_customer_id (annotation).
+ *
+ * @generated from message gibson.daemon.operator.v1.PendingTenant
+ */
+export type PendingTenant = Message<"gibson.daemon.operator.v1.PendingTenant"> & {
+  /**
+   * tenant_id is the deterministic tenant slug (SignupResponse.tenant_id) —
+   * becomes the Tenant CR's metadata.name.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * owner_user_id is the Zitadel id of the provisioned founding-owner user.
+   * Carried for correlation; the Tenant CR's owner is the email.
+   *
+   * @generated from field: string owner_user_id = 2;
+   */
+  ownerUserId: string;
+
+  /**
+   * owner_email becomes Tenant.spec.owner.
+   *
+   * @generated from field: string owner_email = 3;
+   */
+  ownerEmail: string;
+
+  /**
+   * workspace_name becomes Tenant.spec.displayName.
+   *
+   * @generated from field: string workspace_name = 4;
+   */
+  workspaceName: string;
+
+  /**
+   * tier becomes Tenant.spec.tier ("team"/"org"/"enterprise").
+   *
+   * @generated from field: string tier = 5;
+   */
+  tier: string;
+
+  /**
+   * stripe_customer_id, when non-empty, is stamped on the Tenant CR as the
+   * gibson.zeroroot.ai/stripe-customer-id annotation for billing adoption.
+   *
+   * @generated from field: string stripe_customer_id = 6;
+   */
+  stripeCustomerId: string;
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.PendingTenant.
+ * Use `create(PendingTenantSchema)` to create a new message.
+ */
+export const PendingTenantSchema: GenMessage<PendingTenant> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 14);
+
+/**
+ * ListPendingTenantProvisioningRequest queries the pending queue. No filters
+ * today — the daemon returns every row still in status=pending.
+ *
+ * @generated from message gibson.daemon.operator.v1.ListPendingTenantProvisioningRequest
+ */
+export type ListPendingTenantProvisioningRequest = Message<"gibson.daemon.operator.v1.ListPendingTenantProvisioningRequest"> & {
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.ListPendingTenantProvisioningRequest.
+ * Use `create(ListPendingTenantProvisioningRequestSchema)` to create a new message.
+ */
+export const ListPendingTenantProvisioningRequestSchema: GenMessage<ListPendingTenantProvisioningRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 15);
+
+/**
+ * ListPendingTenantProvisioningResponse carries the pending records.
+ *
+ * @generated from message gibson.daemon.operator.v1.ListPendingTenantProvisioningResponse
+ */
+export type ListPendingTenantProvisioningResponse = Message<"gibson.daemon.operator.v1.ListPendingTenantProvisioningResponse"> & {
+  /**
+   * @generated from field: repeated gibson.daemon.operator.v1.PendingTenant pending = 1;
+   */
+  pending: PendingTenant[];
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.ListPendingTenantProvisioningResponse.
+ * Use `create(ListPendingTenantProvisioningResponseSchema)` to create a new message.
+ */
+export const ListPendingTenantProvisioningResponseSchema: GenMessage<ListPendingTenantProvisioningResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 16);
+
+/**
+ * AckTenantProvisionedRequest marks a tenant's pending record done after the
+ * operator has ensured its Tenant CR exists.
+ *
+ * @generated from message gibson.daemon.operator.v1.AckTenantProvisionedRequest
+ */
+export type AckTenantProvisionedRequest = Message<"gibson.daemon.operator.v1.AckTenantProvisionedRequest"> & {
+  /**
+   * tenant_id identifies the pending record to mark done. Required.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.AckTenantProvisionedRequest.
+ * Use `create(AckTenantProvisionedRequestSchema)` to create a new message.
+ */
+export const AckTenantProvisionedRequestSchema: GenMessage<AckTenantProvisionedRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 17);
+
+/**
+ * AckTenantProvisionedResponse confirms the ack.
+ *
+ * @generated from message gibson.daemon.operator.v1.AckTenantProvisionedResponse
+ */
+export type AckTenantProvisionedResponse = Message<"gibson.daemon.operator.v1.AckTenantProvisionedResponse"> & {
+  /**
+   * acked is true when a pending row transitioned to done; false when the row
+   * was unknown or already done (both are idempotent successes).
+   *
+   * @generated from field: bool acked = 1;
+   */
+  acked: boolean;
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.AckTenantProvisionedResponse.
+ * Use `create(AckTenantProvisionedResponseSchema)` to create a new message.
+ */
+export const AckTenantProvisionedResponseSchema: GenMessage<AckTenantProvisionedResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 18);
+
+/**
+ * ReportTenantStatusRequest carries the operator-observed Tenant CR status the
+ * daemon persists in tenant_status for the dashboard to read back. Field shape
+ * mirrors the subset of Tenant.Status the dashboard's getTenant reads consumed.
+ *
+ * @generated from message gibson.daemon.operator.v1.ReportTenantStatusRequest
+ */
+export type ReportTenantStatusRequest = Message<"gibson.daemon.operator.v1.ReportTenantStatusRequest"> & {
+  /**
+   * tenant_id is the tenant slug (Tenant CR name). Required.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * phase is status.phase (Pending/Provisioning/Ready/Failed/...).
+   *
+   * @generated from field: string phase = 2;
+   */
+  phase: string;
+
+  /**
+   * data_plane_ready mirrors status.dataPlane.ready.
+   *
+   * @generated from field: bool data_plane_ready = 3;
+   */
+  dataPlaneReady: boolean;
+
+  /**
+   * store_postgres / store_redis / store_neo4j are the per-store state strings
+   * from status.dataPlane.stores (the onboarding-progress summary).
+   *
+   * @generated from field: string store_postgres = 4;
+   */
+  storePostgres: string;
+
+  /**
+   * @generated from field: string store_redis = 5;
+   */
+  storeRedis: string;
+
+  /**
+   * @generated from field: string store_neo4j = 6;
+   */
+  storeNeo4j: string;
+
+  /**
+   * zitadel_org_slug mirrors status.zitadelOrgSlug.
+   *
+   * @generated from field: string zitadel_org_slug = 7;
+   */
+  zitadelOrgSlug: string;
+
+  /**
+   * stripe_customer_id mirrors status.billing.customerId.
+   *
+   * @generated from field: string stripe_customer_id = 8;
+   */
+  stripeCustomerId: string;
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.ReportTenantStatusRequest.
+ * Use `create(ReportTenantStatusRequestSchema)` to create a new message.
+ */
+export const ReportTenantStatusRequestSchema: GenMessage<ReportTenantStatusRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 19);
+
+/**
+ * ReportTenantStatusResponse confirms the snapshot was persisted and echoes the
+ * dashboard-owned billing_active flag back so the operator can stamp the
+ * gibson.zeroroot.ai/billing-active CR annotation the saga waits on — without a
+ * second round trip and without the operator ever owning that flag.
+ *
+ * @generated from message gibson.daemon.operator.v1.ReportTenantStatusResponse
+ */
+export type ReportTenantStatusResponse = Message<"gibson.daemon.operator.v1.ReportTenantStatusResponse"> & {
+  /**
+   * updated is true when the row was inserted or any reported field changed.
+   *
+   * @generated from field: bool updated = 1;
+   */
+  updated: boolean;
+
+  /**
+   * billing_active is the current dashboard-recorded billing-active state
+   * (set via TenantProvisioningService.SetTenantBillingActive). The operator
+   * stamps the CR annotation when this is true.
+   *
+   * @generated from field: bool billing_active = 2;
+   */
+  billingActive: boolean;
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.ReportTenantStatusResponse.
+ * Use `create(ReportTenantStatusResponseSchema)` to create a new message.
+ */
+export const ReportTenantStatusResponseSchema: GenMessage<ReportTenantStatusResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 20);
+
+/**
+ * TenantOp is one row of the daemon's admin tenant-op queue: a platform-admin
+ * CRUD operation the operator must apply to a Tenant CR. The carried fields are
+ * the union needed across the three op types; which apply depends on op_type.
+ *
+ * @generated from message gibson.daemon.operator.v1.TenantOp
+ */
+export type TenantOp = Message<"gibson.daemon.operator.v1.TenantOp"> & {
+  /**
+   * op_id is the daemon-generated queue id — the ack key. Required.
+   *
+   * @generated from field: string op_id = 1;
+   */
+  opId: string;
+
+  /**
+   * tenant_id is the Tenant CR name the op targets. Required.
+   *
+   * @generated from field: string tenant_id = 2;
+   */
+  tenantId: string;
+
+  /**
+   * op_type is "provision", "update", or "delete".
+   *
+   * @generated from field: string op_type = 3;
+   */
+  opType: string;
+
+  /**
+   * display_name is Tenant.spec.displayName. Set on provision; on update applied
+   * only when display_name_set is true. Ignored for delete.
+   *
+   * @generated from field: string display_name = 4;
+   */
+  displayName: string;
+
+  /**
+   * display_name_set marks display_name for application on an update op
+   * (always true for provision).
+   *
+   * @generated from field: bool display_name_set = 5;
+   */
+  displayNameSet: boolean;
+
+  /**
+   * owner_email is Tenant.spec.owner. Set on provision; unused for update/delete.
+   *
+   * @generated from field: string owner_email = 6;
+   */
+  ownerEmail: string;
+
+  /**
+   * tier is Tenant.spec.tier. Set on provision; on update applied only when
+   * tier_set is true. Ignored for delete.
+   *
+   * @generated from field: string tier = 7;
+   */
+  tier: string;
+
+  /**
+   * tier_set marks tier for application on an update op (always true for
+   * provision).
+   *
+   * @generated from field: bool tier_set = 8;
+   */
+  tierSet: boolean;
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.TenantOp.
+ * Use `create(TenantOpSchema)` to create a new message.
+ */
+export const TenantOpSchema: GenMessage<TenantOp> = /*@__PURE__*/
   messageDesc(file_gibson_daemon_operator_v1_operator, 21);
+
+/**
+ * ListPendingTenantOpsRequest queries the pending admin-op queue. No filters
+ * today — the daemon returns every row still in status=pending.
+ *
+ * @generated from message gibson.daemon.operator.v1.ListPendingTenantOpsRequest
+ */
+export type ListPendingTenantOpsRequest = Message<"gibson.daemon.operator.v1.ListPendingTenantOpsRequest"> & {
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.ListPendingTenantOpsRequest.
+ * Use `create(ListPendingTenantOpsRequestSchema)` to create a new message.
+ */
+export const ListPendingTenantOpsRequestSchema: GenMessage<ListPendingTenantOpsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 22);
+
+/**
+ * ListPendingTenantOpsResponse carries the pending admin-op records in
+ * created_at order.
+ *
+ * @generated from message gibson.daemon.operator.v1.ListPendingTenantOpsResponse
+ */
+export type ListPendingTenantOpsResponse = Message<"gibson.daemon.operator.v1.ListPendingTenantOpsResponse"> & {
+  /**
+   * @generated from field: repeated gibson.daemon.operator.v1.TenantOp ops = 1;
+   */
+  ops: TenantOp[];
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.ListPendingTenantOpsResponse.
+ * Use `create(ListPendingTenantOpsResponseSchema)` to create a new message.
+ */
+export const ListPendingTenantOpsResponseSchema: GenMessage<ListPendingTenantOpsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 23);
+
+/**
+ * AckTenantOpRequest marks an admin-op record done after the operator applied it.
+ *
+ * @generated from message gibson.daemon.operator.v1.AckTenantOpRequest
+ */
+export type AckTenantOpRequest = Message<"gibson.daemon.operator.v1.AckTenantOpRequest"> & {
+  /**
+   * op_id identifies the pending record to mark done. Required.
+   *
+   * @generated from field: string op_id = 1;
+   */
+  opId: string;
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.AckTenantOpRequest.
+ * Use `create(AckTenantOpRequestSchema)` to create a new message.
+ */
+export const AckTenantOpRequestSchema: GenMessage<AckTenantOpRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 24);
+
+/**
+ * AckTenantOpResponse confirms the ack.
+ *
+ * @generated from message gibson.daemon.operator.v1.AckTenantOpResponse
+ */
+export type AckTenantOpResponse = Message<"gibson.daemon.operator.v1.AckTenantOpResponse"> & {
+  /**
+   * acked is true when a pending row transitioned to done; false when the row
+   * was unknown or already done (both are idempotent successes).
+   *
+   * @generated from field: bool acked = 1;
+   */
+  acked: boolean;
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.AckTenantOpResponse.
+ * Use `create(AckTenantOpResponseSchema)` to create a new message.
+ */
+export const AckTenantOpResponseSchema: GenMessage<AckTenantOpResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 25);
 
 /**
  * DaemonOperatorService provides strictly ZD-internal operator operations on
@@ -622,46 +802,13 @@ export const SetTenantZitadelOrgResponseSchema: GenMessage<SetTenantZitadelOrgRe
  * to callers holding the "platform_operator" FGA relation on
  * system_tenant:_system.
  *
+ * ---------------------------------------------------------------------------
+ * Entitlements — operator RPCs called by the tenant-operator reconciler
+ * ---------------------------------------------------------------------------
+ *
  * @generated from service gibson.daemon.operator.v1.DaemonOperatorService
  */
 export const DaemonOperatorService: GenService<{
-  /**
-   * Shutdown requests graceful shutdown of the daemon.
-   * Only works for local daemons (not when GIBSON_DAEMON_ADDRESS is set to remote).
-   *
-   * @generated from rpc gibson.daemon.operator.v1.DaemonOperatorService.Shutdown
-   */
-  shutdown: {
-    methodKind: "unary";
-    input: typeof ShutdownRequestSchema;
-    output: typeof ShutdownResponseSchema;
-  },
-  /**
-   * ImpersonateTenant requests a time-limited context token for the given tenant.
-   * Requires the "platform-operator" role.
-   *
-   * @generated from rpc gibson.daemon.operator.v1.DaemonOperatorService.ImpersonateTenant
-   */
-  impersonateTenant: {
-    methodKind: "unary";
-    input: typeof ImpersonateTenantRequestSchema;
-    output: typeof ImpersonateTenantResponseSchema;
-  },
-  /**
-   * RefreshToolCatalog triggers an immediate refresh of the sandboxed-tool
-   * catalog. Bypasses the scheduled interval — useful for CI to publish a
-   * new tool-runner image and immediately surface its parsers to the
-   * orchestrator. Only works on the replica currently holding the refresh
-   * leader lease; followers accept the call but defer to the leader's
-   * next scheduled tick. Requires the platform-operator FGA role.
-   *
-   * @generated from rpc gibson.daemon.operator.v1.DaemonOperatorService.RefreshToolCatalog
-   */
-  refreshToolCatalog: {
-    methodKind: "unary";
-    input: typeof RefreshToolCatalogRequestSchema;
-    output: typeof RefreshToolCatalogResponseSchema;
-  },
   /**
    * WriteAccessTuples atomically adds and/or deletes FGA tuples on behalf of
    * an authenticated caller.
@@ -705,20 +852,6 @@ export const DaemonOperatorService: GenService<{
     output: typeof SeedCatalogTenantEnabledResponseSchema;
   },
   /**
-   * SetPlatformEnabled writes or deletes the FGA platform_enabled tuple for a
-   * component from system_tenant:_system — the shared-catalog publish path
-   * (gibson#682). Only the platform operator may publish a curated connector
-   * to the shared catalog; the catalog fan-out then seeds tenant_enabled per
-   * tenant. published=false unpublishes (removes it from the shared catalog).
-   *
-   * @generated from rpc gibson.daemon.operator.v1.DaemonOperatorService.SetPlatformEnabled
-   */
-  setPlatformEnabled: {
-    methodKind: "unary";
-    input: typeof SetPlatformEnabledRequestSchema;
-    output: typeof SetPlatformEnabledResponseSchema;
-  },
-  /**
    * EmitAuditEvent lets an operator/platform workload forward a structured
    * audit event onto the daemon's emitter.
    *
@@ -753,6 +886,94 @@ export const DaemonOperatorService: GenService<{
     methodKind: "unary";
     input: typeof SetTenantZitadelOrgRequestSchema;
     output: typeof SetTenantZitadelOrgResponseSchema;
+  },
+  /**
+   * ListPendingTenantProvisioning returns the daemon-owned queue of tenants
+   * awaiting Tenant-CR creation. The daemon's Signup handler enqueues one row
+   * per self-serve signup once it has provisioned the founding-owner Zitadel
+   * user (gibson#812); the tenant-operator's reconcile loop drains the queue by
+   * creating the Tenant CR for each pending record, then AckTenantProvisioned.
+   *
+   * ADR-0023: the daemon never touches Kubernetes — it only reads its Postgres
+   * queue here. The operator (which holds `tenants` create RBAC) creates the
+   * Tenant CR. Idempotent and safe to poll: returns only rows still in
+   * status=pending.
+   *
+   * @generated from rpc gibson.daemon.operator.v1.DaemonOperatorService.ListPendingTenantProvisioning
+   */
+  listPendingTenantProvisioning: {
+    methodKind: "unary";
+    input: typeof ListPendingTenantProvisioningRequestSchema;
+    output: typeof ListPendingTenantProvisioningResponseSchema;
+  },
+  /**
+   * AckTenantProvisioned marks a pending-provisioning record done so it is not
+   * re-created on the next reconcile pass. The operator calls this AFTER it has
+   * ensured the Tenant CR exists (create or already-present), so a crash
+   * between create and ack simply re-lists the row and the operator's
+   * existence-check makes the re-create a no-op. Idempotent: acking an
+   * already-done or unknown tenant_id is a no-op success.
+   *
+   * @generated from rpc gibson.daemon.operator.v1.DaemonOperatorService.AckTenantProvisioned
+   */
+  ackTenantProvisioned: {
+    methodKind: "unary";
+    input: typeof AckTenantProvisionedRequestSchema;
+    output: typeof AckTenantProvisionedResponseSchema;
+  },
+  /**
+   * ReportTenantStatus upserts the operator-observed Tenant CR status into the
+   * daemon's platform Postgres (tenant_status table) so the dashboard can read
+   * provisioning status via gibson.tenant.v1.TenantProvisioningService instead
+   * of the Kubernetes API (ADR-0023, dashboard#813). The operator's Tenant
+   * reconciler calls this best-effort after each status patch; the daemon
+   * cannot read the CR itself, so the operator is the sole source of this
+   * snapshot. Idempotent: re-reporting the same status is a no-op upsert.
+   *
+   * Note: billing_active is NOT carried here — it is owned by the dashboard
+   * billing webhook via TenantProvisioningService.SetTenantBillingActive and
+   * must not be clobbered by an operator status report.
+   *
+   * @generated from rpc gibson.daemon.operator.v1.DaemonOperatorService.ReportTenantStatus
+   */
+  reportTenantStatus: {
+    methodKind: "unary";
+    input: typeof ReportTenantStatusRequestSchema;
+    output: typeof ReportTenantStatusResponseSchema;
+  },
+  /**
+   * ListPendingTenantOps returns the daemon-owned queue of admin tenant CRUD
+   * operations (provision/update/delete) awaiting application to the Tenant CR.
+   * The dashboard's AdminTenantService enqueues one row per platform-admin CRUD
+   * action; the tenant-operator's reconcile loop drains the queue by applying
+   * each op to the Tenant CR (create / patch spec / delete), then AckTenantOp.
+   *
+   * ADR-0023: the daemon never touches Kubernetes — it only reads its Postgres
+   * queue here. The operator (which holds `tenants` create/update/delete RBAC)
+   * applies the op. Idempotent and safe to poll: returns only rows still
+   * status=pending, in created_at order so a tenant's ops apply in sequence.
+   *
+   * @generated from rpc gibson.daemon.operator.v1.DaemonOperatorService.ListPendingTenantOps
+   */
+  listPendingTenantOps: {
+    methodKind: "unary";
+    input: typeof ListPendingTenantOpsRequestSchema;
+    output: typeof ListPendingTenantOpsResponseSchema;
+  },
+  /**
+   * AckTenantOp marks a pending admin-op record done so it is not re-applied on
+   * the next reconcile pass. The operator calls this AFTER it has applied the op
+   * to the Tenant CR (create/patch/delete, all idempotent), so a crash between
+   * apply and ack simply re-lists the row and the operator's idempotent apply
+   * makes the re-apply a no-op. Idempotent: acking an already-done or unknown
+   * op_id is a no-op success.
+   *
+   * @generated from rpc gibson.daemon.operator.v1.DaemonOperatorService.AckTenantOp
+   */
+  ackTenantOp: {
+    methodKind: "unary";
+    input: typeof AckTenantOpRequestSchema;
+    output: typeof AckTenantOpResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_daemon_operator_v1_operator, 0);
