@@ -1351,6 +1351,22 @@ interface DaemonProviderTestResult {
    * Spec: providers-wizard.
    */
   models: Array<{ name: string; family: string; contextWindow: number }>;
+  /**
+   * True when an embedding probe was attempted and succeeded.
+   * Populated from gibson#1072 TestProviderResponse.embedding_ok (field 6).
+   */
+  embeddingOk?: boolean;
+  /**
+   * Vector dimension returned by the embedding probe.
+   * 0 when embeddingOk=false or no embedding probe was run.
+   * Populated from gibson#1072 TestProviderResponse.embedding_dimension (field 7).
+   */
+  embeddingDimension?: number;
+  /**
+   * Human-readable error from the embedding probe when embeddingOk=false.
+   * Populated from gibson#1072 TestProviderResponse.embedding_error (field 8).
+   */
+  embeddingError?: string;
 }
 
 /**
@@ -1705,6 +1721,10 @@ export async function daemonTestProvider(
       family: m.family ?? '',
       contextWindow: m.contextWindow,
     })),
+    // Embedding probe results from gibson#1072 (fields 6–8).
+    embeddingOk: resp.embeddingOk || undefined,
+    embeddingDimension: resp.embeddingDimension > 0 ? resp.embeddingDimension : undefined,
+    embeddingError: resp.embeddingError || undefined,
   };
 }
 

@@ -900,3 +900,243 @@ describe("ModelPickerAndSave, deprecated model display (dashboard#289)", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+// ===========================================================================
+// dashboard#870 — BYO embedding UI wired to daemon catalogue (gibson#1072)
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+// Embedding-only provider types (voyage/openai-compatible/tei)
+// ---------------------------------------------------------------------------
+
+const voyageDescriptor: SupportedProviderDescriptor = {
+  type: "voyage",
+  displayName: "Voyage AI",
+  docsUrl: "https://docs.voyageai.com/",
+  selfHosted: false,
+  credentials: [
+    {
+      key: "api_key",
+      label: "Voyage API Key",
+      required: true,
+      secret: true,
+      placeholder: "pa-...",
+      help: "Your Voyage AI API key.",
+    },
+  ],
+  defaultModels: [],
+  embeddingModels: [
+    { name: "voyage-3", family: "Voyage 3", contextWindow: 32000 },
+    { name: "voyage-3-lite", family: "Voyage 3", contextWindow: 32000 },
+  ],
+};
+
+const openaiWithEmbeddingsDescriptor: SupportedProviderDescriptor = {
+  type: "openai",
+  displayName: "OpenAI",
+  docsUrl: "https://platform.openai.com/",
+  selfHosted: false,
+  credentials: [
+    {
+      key: "api_key",
+      label: "OpenAI API Key",
+      required: true,
+      secret: true,
+      placeholder: "sk-...",
+      help: "",
+    },
+  ],
+  defaultModels: [
+    { name: "gpt-4o", family: "GPT-4o", contextWindow: 128000 },
+  ],
+  embeddingModels: [
+    { name: "text-embedding-3-small", family: "", contextWindow: 0 },
+    { name: "text-embedding-3-large", family: "", contextWindow: 0 },
+    { name: "text-embedding-ada-002", family: "", contextWindow: 0 },
+  ],
+};
+
+function setupVoyageWizard() {
+  const user = userEvent.setup();
+  render(
+    <ProviderWizard supported={[voyageDescriptor]} initialType="voyage" />,
+    { wrapper },
+  );
+  return { user };
+}
+
+async function advanceVoyageToStep3(user: ReturnType<typeof userEvent.setup>) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        result: {
+          ok: true,
+          latencyMs: 15,
+          models: [],
+          embeddingOk: true,
+          embeddingDimension: 1024,
+        },
+      }),
+    }),
+  );
+
+  const apiKeyInput = screen.getByPlaceholderText("pa-...");
+  await user.type(apiKeyInput, "pa-test-key");
+
+  await act(async () => {
+    await user.click(screen.getByRole("button", { name: /test connection/i }));
+  });
+
+  await waitFor(() => {
+    expect(screen.getByRole("button", { name: /edit credentials/i })).toBeInTheDocument();
+  }, { timeout: 3000 });
+}
+
+describe("ProviderWizard embedding-only provider (dashboard#870)", () => {
+  beforeEach(() => {
+    Element.prototype.hasPointerCapture ??= vi.fn(() => false);
+    Element.prototype.setPointerCapture ??= vi.fn();
+    Element.prototype.releasePointerCapture ??= vi.fn();
+    if (!Element.prototype.scrollIntoView) {
+      Element.prototype.scrollIntoView = vi.fn();
+    }
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("shows the 'embeddings' badge on the provider card for voyage", () => {
+    const supported: SupportedProviderDescriptor[] = [voyageDescriptor];
+    render(<ProviderWizard supported={supported} />, { wrapper });
+    expect(screen.getByText("embeddings")).toBeInTheDocument();
+  });
+
+  it("defaults to embedding-only capability for voyage (not chat)", async () => {
+    const { user } = setupVoyageWizard();
+    await advanceVoyageToStep3(user);
+
+    // The embedding capability checkbox should be checked; chat should not appear.
+    const embeddingCheckbox = screen.getByTestId("capability-embedding");
+    expect(embeddingCheckbox.querySelector('[role="checkbox"]')).toBeInTheDocument();
+
+    // No chat capability checkbox since voyage is embedding-only.
+    expect(screen.queryByTestId("capability-chat")).not.toBeInTheDocument();
+  });
+
+  it("populates the embedding model picker from embeddingModels catalogue", async () => {
+    const { user } = setupVoyageWizard();
+    await advanceVoyageToStep3(user);
+
+    // The select trigger should be present.
+    const selectTrigger = screen.getByTestId("embedding-model-select");
+    expect(selectTrigger).toBeInTheDocument();
+
+    // Open it to verify the models list.
+    fireEvent.click(selectTrigger);
+    await waitFor(() => {
+      expect(screen.getByRole("option", { name: "voyage-3" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "voyage-3-lite" })).toBeInTheDocument();
+    });
+  });
+
+  it("shows the embedding probe result in the step-3 banner (ok + dimension)", async () => {
+    const { user } = setupVoyageWizard();
+    await advanceVoyageToStep3(user);
+
+    await waitFor(() => {
+      expect(screen.getByText(/embedding probe: 1024d vector/i)).toBeInTheDocument();
+    });
+  });
+
+  it("Save button is enabled when embedding capability + model are set", async () => {
+    const { user } = setupVoyageWizard();
+    await advanceVoyageToStep3(user);
+
+    // Default embedding model auto-selects to voyage-3 (first in list).
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
+    });
+  });
+});
+
+describe("ProviderWizard dual-capability provider embedding picker (dashboard#870)", () => {
+  beforeEach(() => {
+    Element.prototype.hasPointerCapture ??= vi.fn(() => false);
+    Element.prototype.setPointerCapture ??= vi.fn();
+    Element.prototype.releasePointerCapture ??= vi.fn();
+    if (!Element.prototype.scrollIntoView) {
+      Element.prototype.scrollIntoView = vi.fn();
+    }
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function setupOpenAIStep3() {
+    const user = userEvent.setup();
+    render(
+      <ProviderWizard supported={[openaiWithEmbeddingsDescriptor]} initialType="openai" />,
+      { wrapper },
+    );
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          result: {
+            ok: true,
+            latencyMs: 20,
+            models: [{ name: "gpt-4o", family: "GPT-4o", contextWindow: 128000 }],
+            embeddingOk: true,
+            embeddingDimension: 1536,
+          },
+        }),
+      }),
+    );
+
+    const apiKeyInput = screen.getByPlaceholderText("sk-...");
+    await user.type(apiKeyInput, "sk-test-key");
+
+    await act(async () => {
+      await user.click(screen.getByRole("button", { name: /test connection/i }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /edit credentials/i })).toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    return { user };
+  }
+
+  it("shows both chat and embedding capability checkboxes for openai", async () => {
+    await setupOpenAIStep3();
+
+    expect(screen.getByTestId("capability-chat")).toBeInTheDocument();
+    expect(screen.getByTestId("capability-embedding")).toBeInTheDocument();
+  });
+
+  it("populates embedding model picker from descriptor.embeddingModels when embedding is selected", async () => {
+    const { user } = await setupOpenAIStep3();
+
+    // Enable the embedding capability.
+    const embeddingCapLabel = screen.getByTestId("capability-embedding");
+    await user.click(embeddingCapLabel.querySelector('[role="checkbox"]')!);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("embedding-model-select")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("embedding-model-select"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("option", { name: "text-embedding-3-small" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "text-embedding-3-large" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "text-embedding-ada-002" })).toBeInTheDocument();
+    });
+  });
+});

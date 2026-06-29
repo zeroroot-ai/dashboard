@@ -93,3 +93,43 @@ export function anyProviderServesEmbedding(
 ): boolean {
   return providers.some((p) => hasEmbeddingCapability(p.capabilities ?? []));
 }
+
+/**
+ * Provider types that serve ONLY embeddings (no chat capability).
+ * From gibson#1072: voyage, openai-compatible, tei have no default_models,
+ * only embedding_models. For these the wizard must default to ["embedding"]
+ * only and hide the chat capability checkbox.
+ */
+const EMBEDDING_ONLY_PROVIDER_TYPES = new Set([
+  'voyage',
+  'openai-compatible',
+  'tei',
+]);
+
+/**
+ * Returns true when the given provider type is embedding-only (no chat).
+ * Used to gate the capability checkboxes and default-model picker in the
+ * ProviderWizard so embedding-only providers don't show a chat model field.
+ */
+export function isEmbeddingOnlyProviderType(type: string): boolean {
+  return EMBEDDING_ONLY_PROVIDER_TYPES.has(type);
+}
+
+/**
+ * Returns the initial capability array to use for the given provider type.
+ * Embedding-only types default to ["embedding"]; all others default to ["chat"].
+ */
+export function defaultCapabilitiesForType(type: string): ProviderCapability[] {
+  return isEmbeddingOnlyProviderType(type) ? ['embedding'] : ['chat'];
+}
+
+/**
+ * Returns the set of selectable capabilities for the given provider type.
+ * For embedding-only provider types only "embedding" is available (the chat
+ * checkbox is hidden). For other providers both are selectable.
+ */
+export function selectableCapabilitiesForType(type: string): readonly ProviderCapability[] {
+  return isEmbeddingOnlyProviderType(type)
+    ? (['embedding'] as const)
+    : PROVIDER_CAPABILITIES;
+}
