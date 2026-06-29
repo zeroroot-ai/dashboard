@@ -27,13 +27,13 @@ import {
 } from "@/src/lib/auth/assert-authorized";
 import { BudgetScope } from "@/src/gen/gibson/budget_status/v1/budget_status_pb";
 
-export type ActionResult<T> =
+type ActionResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string; code?: string };
 
 export type ScopeInput = "user" | "team" | "tenant";
 
-export interface BudgetRow {
+interface BudgetRow {
   tenantId: string;
   scope: ScopeInput;
   subjectId: string;
@@ -82,7 +82,7 @@ function scopeFromProto(s: BudgetScope): ScopeInput {
 // List
 // ---------------------------------------------------------------------
 
-export async function listBudgetsAction(
+async function listBudgetsAction(
   scope: ScopeInput,
 ): Promise<ActionResult<BudgetRow[]>> {
   const session = await getServerSession();

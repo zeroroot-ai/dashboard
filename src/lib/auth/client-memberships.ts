@@ -19,7 +19,7 @@
 /**
  * The shape returned by `/api/auth/my-memberships`.
  */
-export interface MyMembershipsResponse {
+interface MyMembershipsResponse {
   activeTenantId: string | null;
   byTenant: Record<string, { role: string }>;
 }

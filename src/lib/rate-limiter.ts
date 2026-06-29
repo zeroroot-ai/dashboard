@@ -36,7 +36,7 @@ export interface RateLimitConfig {
   message?: string;
 }
 
-export interface RateLimitResult {
+interface RateLimitResult {
   /** Whether the request is allowed */
   allowed: boolean;
   /** Current count of requests */
@@ -51,7 +51,7 @@ export interface RateLimitResult {
   resetAt: number;
 }
 
-export interface RateLimitHeaders {
+interface RateLimitHeaders {
   'X-RateLimit-Limit': string;
   'X-RateLimit-Remaining': string;
   'X-RateLimit-Reset': string;
@@ -66,7 +66,7 @@ export interface RateLimitHeaders {
 /**
  * Rate limit presets for common use cases
  */
-export const RATE_LIMIT_PRESETS = {
+const RATE_LIMIT_PRESETS = {
   /** Standard API endpoint */
   standard: {
     maxRequests: 100,
@@ -182,7 +182,7 @@ let redisClient: RedisClient | null = null;
 /**
  * Initialize Redis client for rate limiting
  */
-export function initializeRateLimiter(client: RedisClient): void {
+function initializeRateLimiter(client: RedisClient): void {
   redisClient = client;
   logger.info({ component: 'RateLimiter' }, 'Redis client initialized');
 }
@@ -198,7 +198,7 @@ function isRedisAvailable(): boolean {
 /**
  * Extract client IP from request
  */
-export function getClientIP(request: NextRequest): string {
+function getClientIP(request: NextRequest): string {
   const forwardedFor = request.headers.get('x-forwarded-for');
   if (forwardedFor) {
     return forwardedFor.split(',')[0].trim();
@@ -600,7 +600,7 @@ export async function checkRateLimitByKey(
 /**
  * Generate rate limit headers
  */
-export function getRateLimitHeaders(result: RateLimitResult): RateLimitHeaders {
+function getRateLimitHeaders(result: RateLimitResult): RateLimitHeaders {
   const headers: RateLimitHeaders = {
     'X-RateLimit-Limit': result.limit.toString(),
     'X-RateLimit-Remaining': result.remaining.toString(),
@@ -643,7 +643,7 @@ export function createRateLimitResponse(
 /**
  * Rate limiting middleware for API routes
  */
-export function withRateLimit(
+function withRateLimit(
   endpoint: string,
   config: RateLimitConfig
 ) {
@@ -673,7 +673,7 @@ export function withRateLimit(
 /**
  * Higher-order function to wrap an API route handler with rate limiting
  */
-export function rateLimited(
+function rateLimited(
   endpoint: string,
   config: RateLimitConfig | keyof typeof RATE_LIMIT_PRESETS
 ) {
@@ -714,7 +714,7 @@ export function rateLimited(
 /**
  * Clear rate limit store (for testing)
  */
-export function clearRateLimitStore(): void {
+function clearRateLimitStore(): void {
   if (process.env.NODE_ENV === 'production') {
     throw new Error('clearRateLimitStore is not available in production');
   }
@@ -724,7 +724,7 @@ export function clearRateLimitStore(): void {
 /**
  * Get rate limit store size (for testing)
  */
-export function getRateLimitStoreSize(): number {
+function getRateLimitStoreSize(): number {
   if (process.env.NODE_ENV === 'production') {
     return -1;
   }
@@ -734,7 +734,7 @@ export function getRateLimitStoreSize(): number {
 /**
  * Stop cleanup interval (for testing)
  */
-export function stopCleanup(): void {
+function stopCleanup(): void {
   if (cleanupInterval) {
     clearInterval(cleanupInterval);
     cleanupInterval = null;

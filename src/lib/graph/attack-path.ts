@@ -17,7 +17,7 @@ export const ATTACK_RELATIONSHIPS = new Set<string>([
   'USES_TECHNIQUE',
 ]);
 
-export interface HighlightSets {
+interface HighlightSets {
   node_ids: string[];
   edge_ids: string[];
 }

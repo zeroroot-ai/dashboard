@@ -12,7 +12,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-export interface TemplateCatalogEntry {
+interface TemplateCatalogEntry {
   /** kebab-case template id (filename stem). */
   id: string;
   /** Title from the MDX frontmatter. */
@@ -32,19 +32,19 @@ const KNOWN_TEMPLATE_IDS = [
   "compliance-check",
 ] as const;
 
-export type TemplateId = (typeof KNOWN_TEMPLATE_IDS)[number];
+type TemplateId = (typeof KNOWN_TEMPLATE_IDS)[number];
 
 export function listTemplates(): TemplateCatalogEntry[] {
   return KNOWN_TEMPLATE_IDS.map(loadTemplateMeta);
 }
 
-export function loadTemplateMeta(id: string): TemplateCatalogEntry {
+function loadTemplateMeta(id: string): TemplateCatalogEntry {
   const mdxPath = join(process.cwd(), TEMPLATES_DIR, `${id}.mdx`);
   const raw = readFileSync(mdxPath, "utf-8");
   return parseFrontmatter(id, raw);
 }
 
-export interface LoadedTemplate {
+interface LoadedTemplate {
   meta: TemplateCatalogEntry;
   /** Body of the MDX file with frontmatter stripped. */
   mdxBody: string;

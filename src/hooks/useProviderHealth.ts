@@ -16,7 +16,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ProviderHealthStatus } from '@/src/types/provider';
 
-export interface ProviderHealthResponse {
+interface ProviderHealthResponse {
   status: ProviderHealthStatus;
   lastCheckAt?: string;  // ISO / RFC 3339 timestamp
   lastError?: string;

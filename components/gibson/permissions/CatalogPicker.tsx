@@ -47,7 +47,7 @@ export interface GrantSelection {
   relation: CatalogRelation;
 }
 
-export interface CatalogPickerProps {
+interface CatalogPickerProps {
   kind: 'agent' | 'tool';
   selected: GrantSelection[];
   onChange: (next: GrantSelection[]) => void;
@@ -292,4 +292,3 @@ interface CatalogPickerEntry {
 }
 
 // expose the entry type for consumers if they need it
-export type { CatalogPickerEntry };

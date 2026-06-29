@@ -80,7 +80,7 @@ export const relationHierarchy: Readonly<Record<string, number>> = RELATION_ORDE
  * Holding one of these is what authorizes tenant-lifecycle operations like
  * provisioning a new tenant, which no per-tenant relation can grant.
  */
-export const CROSS_TENANT_ROLES: ReadonlySet<string> = new Set(["platform_operator"]);
+const CROSS_TENANT_ROLES: ReadonlySet<string> = new Set(["platform_operator"]);
 
 /**
  * Report whether any of the supplied roles is a cross-tenant role.

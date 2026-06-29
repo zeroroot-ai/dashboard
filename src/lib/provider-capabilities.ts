@@ -23,7 +23,6 @@
 
 import type { ProviderCapability } from '@/src/lib/gibson-client-types';
 
-export type { ProviderCapability };
 
 /** Proto gibson.tenant.v1.Capability enum values, mirrored as literals. */
 export const PROTO_CAPABILITY = {

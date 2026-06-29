@@ -31,7 +31,7 @@ export const dns1123Label = z
     "must be a DNS-1123 label (lowercase alphanumeric + hyphen; must start and end with alphanumeric)",
   );
 
-export const tenantNameSchema = dns1123Label;
+const tenantNameSchema = dns1123Label;
 
 /**
  * Strict RFC 5322-ish email. Zod's built-in email is permissive enough to

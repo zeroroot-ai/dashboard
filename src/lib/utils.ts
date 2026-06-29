@@ -12,7 +12,7 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Format bytes to human-readable string
  */
-export function formatBytes(bytes: number, decimals = 2): string {
+function formatBytes(bytes: number, decimals = 2): string {
   if (bytes === 0) return "0 Bytes";
 
   const k = 1024;
@@ -27,7 +27,7 @@ export function formatBytes(bytes: number, decimals = 2): string {
 /**
  * Format relative time (e.g., "2 hours ago")
  */
-export function formatRelativeTime(date: Date | string): string {
+function formatRelativeTime(date: Date | string): string {
   const now = new Date();
   const then = typeof date === "string" ? new Date(date) : date;
   const diffInSeconds = Math.floor((now.getTime() - then.getTime()) / 1000);
@@ -46,7 +46,7 @@ export function formatRelativeTime(date: Date | string): string {
 /**
  * Truncate text with ellipsis
  */
-export function truncate(text: string, maxLength: number): string {
+function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength - 3) + "...";
 }
@@ -54,7 +54,7 @@ export function truncate(text: string, maxLength: number): string {
 /**
  * Debounce function for input handling
  */
-export function debounce<T extends (...args: unknown[]) => unknown>(
+function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
@@ -69,7 +69,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 /**
  * Get severity color class
  */
-export function getSeverityColor(
+function getSeverityColor(
   severity: "critical" | "high" | "medium" | "low" | "info"
 ): string {
   const colorMap = {
@@ -85,7 +85,7 @@ export function getSeverityColor(
 /**
  * Get status color class
  */
-export function getStatusColor(
+function getStatusColor(
   status: "success" | "warning" | "error" | "info"
 ): string {
   const colorMap = {

@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/select';
 import { useGraphViewStore, type LabelDensity } from '@/src/stores/graph-view-store';
 
-export interface GraphSettingsProps {
+interface GraphSettingsProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -231,4 +231,3 @@ export function GraphSettings({ open, onOpenChange }: GraphSettingsProps) {
   );
 }
 
-export default GraphSettings;

@@ -41,7 +41,7 @@ import { BILLING_TIER_IDS, type BillingTier } from './stripe_gen';
 import { getStripeClient, resolvePriceId } from './stripe';
 
 /** Per-tier monthly price in cents, or null when unresolvable. */
-export type StripePriceMap = Readonly<Record<BillingTier, number | null>>;
+type StripePriceMap = Readonly<Record<BillingTier, number | null>>;
 
 /**
  * Internal fetch (uncached). Exposed only for the unit test; production

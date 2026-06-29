@@ -131,7 +131,7 @@ export interface Alert {
 // Widget Configuration Types
 // ============================================================================
 
-export enum WidgetType {
+enum WidgetType {
   KPI_SUMMARY = 'kpi-summary',
   FINDINGS_CHART = 'findings-chart',
   MISSION_HEATMAP = 'mission-heatmap',
@@ -142,14 +142,14 @@ export enum WidgetType {
   ACTIVE_MISSIONS = 'active-missions',
 }
 
-export interface WidgetPosition {
+interface WidgetPosition {
   x: number; // grid column
   y: number; // grid row
   w: number; // width in grid units
   h: number; // height in grid units
 }
 
-export interface WidgetConfig {
+interface WidgetConfig {
   id: string;
   type: WidgetType;
   position: WidgetPosition;
@@ -157,13 +157,13 @@ export interface WidgetConfig {
   settings?: Record<string, unknown>; // widget-specific settings
 }
 
-export interface WidgetLayout {
+interface WidgetLayout {
   widgets: WidgetConfig[];
   cols: number; // total grid columns
   rowHeight: number; // height of each row in pixels
 }
 
-export interface UserLayoutPreferences {
+interface UserLayoutPreferences {
   userId: string;
   layout: WidgetLayout;
   updatedAt: Date;

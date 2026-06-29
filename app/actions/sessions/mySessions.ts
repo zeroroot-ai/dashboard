@@ -29,7 +29,7 @@ export interface MySession {
   isCurrent: boolean;
 }
 
-export type ActionResult<T> =
+type ActionResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
 

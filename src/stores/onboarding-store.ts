@@ -24,7 +24,7 @@ import { WIZARD_STEPS, DEFAULT_SETUP_TASKS } from '@/src/types/onboarding';
  * - Setup task tracking
  * - Resumption state
  */
-export interface OnboardingState {
+interface OnboardingState {
   // ========================================
   // Wizard Navigation
   // ========================================
@@ -762,22 +762,22 @@ export const useOnboardingStore = create<OnboardingState>()(
  * Prefer reading `state.currentStep` directly; this selector is provided
  * for callers that want an explicit selector reference.
  */
-export const selectCurrentStep = (s: OnboardingState): number => s.currentStep;
+const selectCurrentStep = (s: OnboardingState): number => s.currentStep;
 
 /** Selects the LLM provider alias from the store state. */
-export const selectLLMProvider = (s: OnboardingState): LLMConfig['provider'] | null => s.llmProvider;
+const selectLLMProvider = (s: OnboardingState): LLMConfig['provider'] | null => s.llmProvider;
 
 /** Selects the selected agent alias from the store state. */
-export const selectSelectedAgent = (s: OnboardingState): string | null => s.selectedAgent;
+const selectSelectedAgent = (s: OnboardingState): string | null => s.selectedAgent;
 
 /** Selects the wizard started timestamp alias from the store state. */
-export const selectStartedAt = (s: OnboardingState): string | null => s.startedAt;
+const selectStartedAt = (s: OnboardingState): string | null => s.startedAt;
 
 /** Selects the wizard completed timestamp alias from the store state. */
-export const selectCompletedAt = (s: OnboardingState): string | null => s.completedAt;
+const selectCompletedAt = (s: OnboardingState): string | null => s.completedAt;
 
 /** Selects the selected mission template alias from the store state. */
-export const selectSelectedMissionTemplate = (s: OnboardingState): string | null => s.selectedMissionTemplate;
+const selectSelectedMissionTemplate = (s: OnboardingState): string | null => s.selectedMissionTemplate;
 
 // ============================================================================
 // Convenience Hooks
@@ -786,7 +786,7 @@ export const selectSelectedMissionTemplate = (s: OnboardingState): string | null
 /**
  * Hook for wizard navigation state and actions.
  */
-export const useWizardNavigation = () =>
+const useWizardNavigation = () =>
   useOnboardingStore(
     useShallow((state) => ({
       currentStepId: state.currentStepId,
@@ -813,7 +813,7 @@ export const useWizardNavigation = () =>
 /**
  * Hook for wizard validation state.
  */
-export const useWizardValidation = () =>
+const useWizardValidation = () =>
   useOnboardingStore(
     useShallow((state) => ({
       stepValidation: state.stepValidation,
@@ -829,7 +829,7 @@ export const useWizardValidation = () =>
 /**
  * Hook for LLM configuration during onboarding.
  */
-export const useOnboardingLLMConfig = () =>
+const useOnboardingLLMConfig = () =>
   useOnboardingStore(
     useShallow((state) => ({
       llmConfig: state.llmConfig,
@@ -846,7 +846,7 @@ export const useOnboardingLLMConfig = () =>
 /**
  * Hook for agent selection during onboarding.
  */
-export const useOnboardingAgentSelection = () =>
+const useOnboardingAgentSelection = () =>
   useOnboardingStore(
     useShallow((state) => ({
       selectedAgentId: state.selectedAgentId,
@@ -857,7 +857,7 @@ export const useOnboardingAgentSelection = () =>
 /**
  * Hook for mission creation during onboarding.
  */
-export const useOnboardingMission = () =>
+const useOnboardingMission = () =>
   useOnboardingStore(
     useShallow((state) => ({
       createdMissionId: state.createdMissionId,
@@ -881,7 +881,7 @@ export const useOnboardingMission = () =>
 /**
  * Hook for setup task progress tracking.
  */
-export const useSetupProgress = () => {
+const useSetupProgress = () => {
   const state = useOnboardingStore(
     useShallow((s) => ({
       setupTasks: s.setupTasks,

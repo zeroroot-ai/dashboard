@@ -36,9 +36,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export type AuthGateState = "allowed" | "denied" | "loading";
+type AuthGateState = "allowed" | "denied" | "loading";
 
-export type AuthGatedButtonProps = React.ComponentProps<typeof Button> & {
+type AuthGatedButtonProps = React.ComponentProps<typeof Button> & {
   /** Computed visibility state. */
   state: AuthGateState;
   /** Tooltip copy shown when state="denied". Customer terminology only. */

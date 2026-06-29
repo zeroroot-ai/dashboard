@@ -141,7 +141,7 @@ export async function saveConversationAction(
   }
 }
 
-export async function generateConversationTitle(
+async function generateConversationTitle(
   conversationId: string,
   userMessage: string,
   assistantMessage: string,
@@ -231,7 +231,7 @@ export async function generateConversationTitle(
  *
  * Spec: dashboard#555 (finalize interrupted streams on reload)
  */
-export async function loadConversationMessages(
+async function loadConversationMessages(
   conversationId: string,
 ): Promise<UIMessage[] | null> {
   if (!conversationId) return null;

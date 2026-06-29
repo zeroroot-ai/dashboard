@@ -97,7 +97,7 @@ const INITIAL_STATE: WizardState = {
 // WizardProps
 // ---------------------------------------------------------------------------
 
-export interface PluginRegisterWizardProps {
+interface PluginRegisterWizardProps {
   /** Called when the user clicks "Done" on the enrollment step. */
   onClose: () => void;
 }

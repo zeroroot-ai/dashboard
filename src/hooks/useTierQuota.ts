@@ -11,7 +11,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/src/lib/api/fetch';
 
-export interface TierConfig {
+interface TierConfig {
   tier: string;
   displayName: string;
   maxTeamMembers: number;
@@ -22,14 +22,14 @@ export interface TierConfig {
   prioritySupport: boolean;
 }
 
-export interface TierUsage {
+interface TierUsage {
   teamMemberCount: number;
   apiKeyCount: number;
   customRoleCount: number;
   pendingInvitationCount: number;
 }
 
-export interface TierQuota {
+interface TierQuota {
   config: TierConfig;
   usage: TierUsage;
 }

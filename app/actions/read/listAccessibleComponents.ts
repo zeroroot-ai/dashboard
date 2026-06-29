@@ -20,7 +20,7 @@ import {
 import { getServerSession } from "@/src/lib/auth";
 import { userClient } from "@/src/lib/gibson-client";
 
-export type RWXAction = "read" | "write" | "execute";
+type RWXAction = "read" | "write" | "execute";
 
 export interface DiscoveredItem {
   name: string;
@@ -32,11 +32,11 @@ export interface DiscoveredItem {
   version?: string;
 }
 
-export type ActionResult<T> =
+type ActionResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
 
-export interface ListAccessibleComponentsInput {
+interface ListAccessibleComponentsInput {
   kind: "plugin" | "tool" | "agent" | "all";
   scope?: "tenant-wide" | "per-team" | "per-user" | "per-agent" | "my-access";
   targetId?: string;

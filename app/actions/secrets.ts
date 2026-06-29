@@ -40,7 +40,7 @@ import {
 // Shared result type (mirrors the existing ActionResult<T> convention)
 // ---------------------------------------------------------------------------
 
-export type SecretActionResult<T = null> =
+type SecretActionResult<T = null> =
   | { ok: true; data: T }
   | { ok: false; error: string; code?: string };
 

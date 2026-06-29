@@ -42,13 +42,13 @@ export type FaultMode = "503" | "malformed-200" | "timeout" | "clear";
 
 export type FaultScope = "all" | `next-${number}-calls`;
 
-export interface FaultEntry {
+interface FaultEntry {
   mode: Exclude<FaultMode, "clear">;
   /** Remaining calls before auto-clear. undefined = infinite (scope="all"). */
   remaining: number | undefined;
 }
 
-export interface ActiveFault {
+interface ActiveFault {
   mode: Exclude<FaultMode, "clear">;
   /** Call decrementIfBounded() after consuming the fault to apply scoped decay. */
   decrementIfBounded: () => void;
@@ -132,7 +132,7 @@ export function setFault(
  * Clear a specific subsystem fault or ALL faults (omit subsystem).
  * Silently no-ops when TEST_FIXTURES_ENABLED is not "true".
  */
-export function clearFault(subsystem?: FaultSubsystem): void {
+function clearFault(subsystem?: FaultSubsystem): void {
   if (!isEnabled()) return;
   if (subsystem) {
     getState().delete(subsystem);

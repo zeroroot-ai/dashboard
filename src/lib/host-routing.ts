@@ -31,7 +31,7 @@ export interface HostSplitConfig {
   wwwOrigin: string;
 }
 
-export type HostSplitDecision =
+type HostSplitDecision =
   | { kind: "pass" }
   | { kind: "redirect"; url: string };
 

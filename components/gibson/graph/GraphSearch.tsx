@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import type { GraphNode } from '@/src/types/graph';
 import { matchNodes, getNodeDisplayName } from '@/src/lib/graph/search';
 
-export interface GraphSearchProps {
+interface GraphSearchProps {
   nodes: GraphNode[];
   onFocusNode: (node: GraphNode) => void;
   className?: string;
@@ -114,4 +114,3 @@ export function GraphSearch({ nodes, onFocusNode, className }: GraphSearchProps)
   );
 }
 
-export default GraphSearch;

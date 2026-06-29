@@ -12,7 +12,7 @@ import { Play, Pause, X } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 
-export interface GraphTimelineProps {
+interface GraphTimelineProps {
   min: number;
   max: number;
   value: number;
@@ -90,4 +90,3 @@ export function GraphTimeline({
   );
 }
 
-export default GraphTimeline;

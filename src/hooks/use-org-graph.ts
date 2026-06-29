@@ -37,13 +37,13 @@ export interface UserTeamMembership {
   displayName: string;
 }
 
-export interface OrgGraph {
+interface OrgGraph {
   teams: Team[];
   byUser: Record<string, UserTeamMembership[]>;
   byTeam: Record<string, TeamMember[]>;
 }
 
-export interface UseOrgGraphResult {
+interface UseOrgGraphResult {
   data: OrgGraph;
   loading: boolean;
   error: string | null;

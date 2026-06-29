@@ -70,7 +70,7 @@ export function createHookWrapper(queryClient: QueryClient, tenant: Tenant | nul
 /**
  * Wrapper component with all necessary providers for testing
  */
-export function AllTheProviders({ children }: AllTheProvidersProps) {
+function AllTheProviders({ children }: AllTheProvidersProps) {
   const queryClient = createTestQueryClient();
   const Wrapper = createHookWrapper(queryClient);
   return <Wrapper>{children}</Wrapper>;
@@ -79,7 +79,7 @@ export function AllTheProviders({ children }: AllTheProvidersProps) {
 /**
  * Custom render function that includes all providers
  */
-export function renderWithProviders(
+function renderWithProviders(
   ui: ReactElement,
   options?: Omit<RenderOptions, 'wrapper'>
 ) {
@@ -89,7 +89,7 @@ export function renderWithProviders(
 /**
  * Custom render function with a specific QueryClient
  */
-export function renderWithQueryClient(
+function renderWithQueryClient(
   ui: ReactElement,
   queryClient: QueryClient,
   options?: Omit<RenderOptions, 'wrapper'>
@@ -105,4 +105,3 @@ export function renderWithQueryClient(
 
 // Re-export everything from React Testing Library
 export * from '@testing-library/react';
-export { default as userEvent } from '@testing-library/user-event';

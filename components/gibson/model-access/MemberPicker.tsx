@@ -36,7 +36,7 @@ import {
   type MemberRow,
 } from "@/app/actions/read/listMembers";
 
-export interface MemberPickerProps {
+interface MemberPickerProps {
   /** Currently selected user ID (controlled). */
   value: string;
   /** Emitted when the user selects a member. */

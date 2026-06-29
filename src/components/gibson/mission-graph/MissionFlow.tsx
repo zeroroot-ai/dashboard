@@ -45,7 +45,7 @@ import { MissionNodeBox, type MissionNodeBoxData } from "./MissionNodeBox";
 
 const nodeTypes = { mission: MissionNodeBox };
 
-export interface MissionFlowProps {
+interface MissionFlowProps {
   graph: MissionGraphData;
   missionDefinitionId: string;
   /** Opaque version token from GetMissionLayout; echoed on save. */

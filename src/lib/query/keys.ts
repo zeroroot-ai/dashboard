@@ -159,4 +159,4 @@ export const queryKeys = {
 } as const;
 
 // Type helpers for query keys
-export type QueryKeys = typeof queryKeys;
+type QueryKeys = typeof queryKeys;

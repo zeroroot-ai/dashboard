@@ -50,7 +50,7 @@ export interface BindingEntry {
   createValue: string;
 }
 
-export interface BindingsStepProps {
+interface BindingsStepProps {
   /** Secret names extracted from the manifest in Step 1. */
   declaredSecrets: string[];
   /** Current binding state (controlled by wizard). */

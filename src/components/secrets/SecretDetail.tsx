@@ -73,7 +73,7 @@ function MetaRow({ label, children }: { label: string; children: React.ReactNode
 // Component
 // ---------------------------------------------------------------------------
 
-export interface SecretDetailProps {
+interface SecretDetailProps {
   metadata: SecretMetadata;
 }
 

@@ -325,7 +325,7 @@ interface RotateApiKeyVariables {
  *
  * @returns Mutation result for API key rotation
  */
-export function useRotateApiKey(): UseMutationResult<
+function useRotateApiKey(): UseMutationResult<
   UpdateProviderResponse,
   Error,
   RotateApiKeyVariables,
@@ -364,7 +364,7 @@ interface ToggleProviderContext {
  *
  * @returns Mutation result for toggling provider
  */
-export function useToggleProvider(): UseMutationResult<
+function useToggleProvider(): UseMutationResult<
   UpdateProviderResponse,
   Error,
   ToggleProviderVariables,
@@ -421,7 +421,7 @@ interface ImportConfigVariables {
  *
  * @returns Mutation result for importing configuration
  */
-export function useImportConfig(): UseMutationResult<
+function useImportConfig(): UseMutationResult<
   ImportResult,
   Error,
   ImportConfigVariables,

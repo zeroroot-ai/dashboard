@@ -46,7 +46,7 @@ function timeAgoFromUnixSeconds(unixSec: bigint): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-export interface CheckpointBadgeProps {
+interface CheckpointBadgeProps {
   /** Metadata from `ResumeMissionResponse.checkpoint_metadata`, or null. */
   checkpointMetadata: CheckpointMetadata | null;
 }

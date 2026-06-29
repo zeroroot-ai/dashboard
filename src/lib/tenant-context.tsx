@@ -33,7 +33,7 @@ import type { Tenant } from "@/src/types/tenant";
 // Context Types
 // ============================================================================
 
-export interface TenantContextValue {
+interface TenantContextValue {
   /** Currently active tenant (full Tenant CRD), or null if none selected. */
   currentTenant: Tenant | null;
   /** Every tenant the user is a member of (resolved CRDs). */
@@ -64,7 +64,7 @@ export interface TenantContextValue {
   canSwitchTenant: (tenantId: string) => boolean;
 }
 
-export interface TenantProviderProps {
+interface TenantProviderProps {
   currentTenant: Tenant | null;
   availableTenants: Tenant[];
   crossTenant: boolean;

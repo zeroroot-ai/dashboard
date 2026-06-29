@@ -323,7 +323,7 @@ function RewindButton({
 // Main component
 // ---------------------------------------------------------------------------
 
-export interface CheckpointTimelineProps {
+interface CheckpointTimelineProps {
   missionId: string;
 }
 

@@ -153,7 +153,7 @@ function validateManifestClientSide(yaml: string): ClientValidationResult {
 // Component props
 // ---------------------------------------------------------------------------
 
-export interface ManifestUploadProps {
+interface ManifestUploadProps {
   /** Current manifest YAML string (controlled by wizard). */
   manifestYaml: string;
   onChange: (yaml: string) => void;

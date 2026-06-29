@@ -56,7 +56,7 @@ export interface GraphDisplaySettings {
   attackPathEmphasis: boolean;
 }
 
-export interface GraphViewState {
+interface GraphViewState {
   // Layout
   layoutMode: GraphLayoutMode;
 
@@ -236,4 +236,3 @@ export const useGraphViewStore = create<GraphViewState>()(
   )
 );
 
-export default useGraphViewStore;

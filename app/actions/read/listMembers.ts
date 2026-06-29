@@ -23,7 +23,7 @@ import { userClient } from "@/src/lib/gibson-client";
 import { getActiveTenant } from "@/src/lib/auth/active-tenant";
 import { auth } from "@/auth";
 
-export type ActionResult<T> =
+type ActionResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
 

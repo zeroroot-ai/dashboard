@@ -32,7 +32,7 @@ export const CRD_RATE_LIMITS = {
 
 export type CrdRateLimitPreset = keyof typeof CRD_RATE_LIMITS;
 
-export type RateLimitVerdict =
+type RateLimitVerdict =
   | { ok: true }
   | { ok: false; retryAfter: number };
 

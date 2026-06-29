@@ -32,7 +32,7 @@ import {
 
 const FGA_SAVE_LAYOUT = "/gibson.daemon.v1.DaemonService/SaveMissionLayout";
 
-export interface MissionFlowTabProps {
+interface MissionFlowTabProps {
   /** The mission *run* id, keys the live node-event stream. */
   missionId: string;
   missionDefinitionId?: string;

@@ -14,7 +14,7 @@ import type {
 } from '@/src/types/onboarding';
 
 // Query keys
-export const onboardingKeys = {
+const onboardingKeys = {
   all: ['onboarding'] as const,
   status: () => [...onboardingKeys.all, 'status'] as const,
   progress: () => [...onboardingKeys.all, 'progress'] as const,
@@ -141,7 +141,7 @@ export function useOnboardingStatus(options?: {
  * Provides access to setup tasks with status calculations.
  * Uses local Zustand store as primary source with API sync.
  */
-export function useSetupTasks() {
+function useSetupTasks() {
   const store = useOnboardingStore();
   useOnboardingStatus({ enabled: false });
 
@@ -192,7 +192,7 @@ export function useSetupTasks() {
  * Determines what onboarding UI elements to show.
  * Combines server state with local preferences.
  */
-export function useOnboardingVisibility() {
+function useOnboardingVisibility() {
   const showOnboarding = useShouldShowOnboarding();
   const showSetupWidget = useShouldShowSetupWidget();
   const store = useOnboardingStore();
@@ -225,7 +225,7 @@ export function useOnboardingVisibility() {
  * Syncs local Zustand state with server.
  * Call this on app mount or route changes.
  */
-export function useOnboardingSync() {
+function useOnboardingSync() {
   const store = useOnboardingStore();
   const { refetch, updateState, isLoading } = useOnboardingStatus({
     enabled: true,
@@ -261,4 +261,3 @@ export function useOnboardingSync() {
   };
 }
 
-export default useOnboardingStatus;

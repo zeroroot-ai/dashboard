@@ -576,7 +576,7 @@ function WaitForConnectionStep({
 // Dispatcher
 // ---------------------------------------------------------------------------
 
-export interface DeployDispatcherProps {
+interface DeployDispatcherProps {
   initialType?: ComponentType;
 }
 

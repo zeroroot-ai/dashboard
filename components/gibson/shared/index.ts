@@ -1,9 +1,7 @@
 export { ErrorAlert } from './ErrorAlert';
 export {
   TableSkeleton,
-  CardGridSkeleton,
   KPICardsSkeleton,
-  PageHeaderSkeleton,
 } from './DataSkeleton';
 // NOTE: TenantSwitcher is intentionally NOT re-exported here. It's a Server
 // Component (uses 'server-only' active-tenant + getMyMemberships → gibson-client

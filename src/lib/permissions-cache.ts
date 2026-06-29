@@ -169,7 +169,7 @@ export async function getMyPermissions(
 // React hook
 // ---------------------------------------------------------------------------
 
-export interface UseMyPermissionsResult {
+interface UseMyPermissionsResult {
   permissions: GetMyPermissionsResponse | null;
   loading: boolean;
   error: Error | null;
@@ -182,7 +182,7 @@ export interface UseMyPermissionsResult {
  *
  * @param tenantId - The tenant to fetch permissions for.
  */
-export function useMyPermissions(tenantId: string): UseMyPermissionsResult {
+function useMyPermissions(tenantId: string): UseMyPermissionsResult {
   const [permissions, setPermissions] = useState<GetMyPermissionsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);

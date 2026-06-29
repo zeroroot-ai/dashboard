@@ -87,7 +87,7 @@ function categoryVariant(cat: SecretCategory): "default" | "secondary" | "outlin
 // Column definitions
 // ---------------------------------------------------------------------------
 
-export const secretColumns: ColumnDef<SecretMetadata>[] = [
+const secretColumns: ColumnDef<SecretMetadata>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -188,7 +188,7 @@ export const secretColumns: ColumnDef<SecretMetadata>[] = [
 // Component
 // ---------------------------------------------------------------------------
 
-export interface SecretsListProps {
+interface SecretsListProps {
   secrets: SecretMetadata[];
   /** Total count for pagination display. */
   total: number;

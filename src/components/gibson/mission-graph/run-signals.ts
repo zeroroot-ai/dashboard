@@ -27,7 +27,7 @@ export interface NodeEvent {
  * completed ids so duplicate `completed` frames (a re-delivered Redis Stream
  * entry, a retried node) collapse naturally.
  */
-export interface RunSignalAccumulator {
+interface RunSignalAccumulator {
   completed: Set<string>;
   current: string | null;
   failed: string | null;

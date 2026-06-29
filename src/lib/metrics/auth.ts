@@ -26,13 +26,13 @@ import { getOrCreateCounter, getOrCreateHistogram } from "./helpers";
 // ---------------------------------------------------------------------------
 
 /** Terminal outcome for an auth attempt. */
-export type AuthOutcome = "ok" | "failed" | "rate_limited" | "locked";
+type AuthOutcome = "ok" | "failed" | "rate_limited" | "locked";
 
 /** Why the HIBP breach check returned. */
-export type HibpOutcome = "clean" | "breached" | "unknown";
+type HibpOutcome = "clean" | "breached" | "unknown";
 
 /** Which CAPTCHA provider rejected a token. */
-export type CaptchaProvider = "turnstile" | "hcaptcha" | "disabled";
+type CaptchaProvider = "turnstile" | "hcaptcha" | "disabled";
 
 // ---------------------------------------------------------------------------
 // Counters
@@ -141,20 +141,20 @@ export const provisioningDuration = getOrCreateHistogram({
 // ---------------------------------------------------------------------------
 
 /** Outcome of a membership-resolution attempt. */
-export type MembershipResolutionOutcome =
+type MembershipResolutionOutcome =
   | "single"        // exactly one membership returned
   | "multi"         // multiple memberships returned (picker shown)
   | "zero"          // user is a member of no tenants (onboarding shown)
   | "fga_error"     // daemon/FGA call failed; middleware routed to /login/error
   | "daemon_error"; // daemon unreachable
 
-export const membershipResolutionTotal = getOrCreateCounter({
+const membershipResolutionTotal = getOrCreateCounter({
   name: "dashboard_membership_resolution_total",
   help: "Membership-resolution attempts during sign-in / per-render, by outcome.",
   labelNames: ["outcome"] as const,
 });
 
-export const membershipResolutionDuration = getOrCreateHistogram({
+const membershipResolutionDuration = getOrCreateHistogram({
   name: "dashboard_membership_resolution_duration_seconds",
   help: "Duration of the daemon ListMyMemberships RPC seen from the dashboard.",
   labelNames: ["outcome"] as const,
@@ -163,20 +163,20 @@ export const membershipResolutionDuration = getOrCreateHistogram({
 });
 
 /** Outcome of a single active-tenant cookie validation pass. */
-export type ActiveTenantValidationOutcome =
+type ActiveTenantValidationOutcome =
   | "ok"
   | "absent"
   | "invalid"     // HMAC failed (tampered or stale AUTH_SECRET)
   | "stale"       // membership revoked while signed-in
   | "forbidden";  // attempted to set a non-member tenant
 
-export const activeTenantValidationTotal = getOrCreateCounter({
+const activeTenantValidationTotal = getOrCreateCounter({
   name: "dashboard_active_tenant_validation_total",
   help: "Active-tenant cookie validation outcomes per request.",
   labelNames: ["outcome"] as const,
 });
 
-export const tenantSwitchTotal = getOrCreateCounter({
+const tenantSwitchTotal = getOrCreateCounter({
   name: "dashboard_tenant_switch_total",
   help: "Number of successful in-app tenant switches.",
 });
@@ -193,7 +193,7 @@ export const tenantSwitchTotal = getOrCreateCounter({
  *
  * Phase 9 of the spec deletes both the flag and this counter.
  */
-export const userTokenForwardingDisabledTotal = getOrCreateCounter({
+const userTokenForwardingDisabledTotal = getOrCreateCounter({
   name: "dashboard_user_token_forwarding_disabled_total",
   help: "Dashboard RPCs served via the SPIFFE-fallback transport because USE_USER_TOKEN_FORWARDING=false. Non-zero in steady state means the soak backout is active.",
 });
@@ -206,7 +206,7 @@ export const userTokenForwardingDisabledTotal = getOrCreateCounter({
  * Sign-in attempts by terminal outcome. error_reason is the
  * machine-readable code from LoginErrorReason; "_n/a" on success.
  */
-export const signinTotal = getOrCreateCounter({
+const signinTotal = getOrCreateCounter({
   name: "dashboard_signin_total",
   help: "Dashboard sign-in attempts by terminal outcome.",
   labelNames: ["outcome", "error_reason"] as const,
@@ -216,7 +216,7 @@ export const signinTotal = getOrCreateCounter({
  * Sign-in latency from OIDC callback start to JWT-cookie write.
  * Buckets sized to catch happy path (<500ms) and slow paths up to 10s.
  */
-export const signinDuration = getOrCreateHistogram({
+const signinDuration = getOrCreateHistogram({
   name: "dashboard_signin_duration_seconds",
   help: "Sign-in latency in seconds, by outcome.",
   labelNames: ["outcome"] as const,
@@ -227,7 +227,7 @@ export const signinDuration = getOrCreateHistogram({
  * /login/error page renders, by reason. Cardinality bounded to the
  * LoginErrorReason union (8 values).
  */
-export const loginErrorTotal = getOrCreateCounter({
+const loginErrorTotal = getOrCreateCounter({
   name: "dashboard_login_error_total",
   help: "Dashboard /login/error page renders, by reason.",
   labelNames: ["reason"] as const,
@@ -245,7 +245,7 @@ export function incrementLoginError(reason: string): void {
  * Helper: observe a sign-in attempt's outcome + duration. Caller
  * passes "_n/a" when outcome is success.
  */
-export function observeSignin(
+function observeSignin(
   outcome: "success" | "error",
   durationSeconds: number,
   errorReason: string = "_n/a",

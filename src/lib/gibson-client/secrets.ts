@@ -30,19 +30,13 @@ import type {
 
 export type { SecretMetadata, SecretCategory, MissionSecretAccess };
 export type {
-  ListSecretsResponse,
-  GetSecretResponse,
-  SetSecretResponse,
-  RotateSecretResponse,
-  DeleteSecretResponse,
-  GetMissionAuditResponse,
 };
 
 /**
  * Structured error mapping from gRPC ConnectError to a dashboard-safe shape.
  * Sensitive content is never included in the error message.
  */
-export interface AdminRpcError {
+interface AdminRpcError {
   code: string;
   message: string;
 }
@@ -68,7 +62,7 @@ export function throwMapped(err: unknown): never {
 // Read methods (tenant_member+)
 // ---------------------------------------------------------------------------
 
-export interface ListSecretsOptions {
+interface ListSecretsOptions {
   categoryFilter?: SecretCategory;
   limit?: number;
   offset?: number;

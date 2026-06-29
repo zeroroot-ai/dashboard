@@ -237,7 +237,7 @@ export type ProviderAuditEventType =
 /**
  * Audit event type display configuration.
  */
-export const PROVIDER_AUDIT_EVENT_CONFIG: Record<ProviderAuditEventType, {
+const PROVIDER_AUDIT_EVENT_CONFIG: Record<ProviderAuditEventType, {
   label: string;
   description: string;
   icon: string;
@@ -374,7 +374,7 @@ export interface ImportResult {
 /**
  * Result of an export operation.
  */
-export interface ExportResult {
+interface ExportResult {
   /** Exported configuration content */
   content: string;
   /** Format of the exported content */
@@ -392,7 +392,7 @@ export interface ExportResult {
 /**
  * Request to list providers.
  */
-export interface ListProvidersRequest {
+interface ListProvidersRequest {
   /** Include disabled providers */
   includeDisabled?: boolean;
   /** Include health status for each provider */
@@ -412,7 +412,7 @@ export interface ListProvidersResponse {
 /**
  * Request to create a provider.
  */
-export interface CreateProviderRequest {
+interface CreateProviderRequest {
   /** Provider configuration to create */
   config: Record<string, unknown>;
   /** Test connectivity before creating */
@@ -434,7 +434,7 @@ export interface CreateProviderResponse {
 /**
  * Request to update a provider.
  */
-export interface UpdateProviderRequest {
+interface UpdateProviderRequest {
   /** Provider name to update */
   name: string;
   /** Fields to update */
@@ -456,7 +456,7 @@ export interface UpdateProviderResponse {
 /**
  * Request to delete a provider.
  */
-export interface DeleteProviderRequest {
+interface DeleteProviderRequest {
   /** Provider name to delete */
   name: string;
   /** Force deletion of default provider */
@@ -478,7 +478,7 @@ export interface DeleteProviderResponse {
 /**
  * Request to test provider connection.
  */
-export interface TestConnectionRequest {
+interface TestConnectionRequest {
   /** Name of existing provider to test */
   name?: string;
   /** New configuration to test without saving */
@@ -490,7 +490,7 @@ export interface TestConnectionRequest {
 /**
  * Request to set the default provider.
  */
-export interface SetDefaultProviderRequest {
+interface SetDefaultProviderRequest {
   /** Provider name to make default */
   name: string;
 }
@@ -510,7 +510,7 @@ export interface SetDefaultProviderResponse {
 /**
  * Request to get health status.
  */
-export interface GetHealthStatusRequest {
+interface GetHealthStatusRequest {
   /** Filter to specific providers (empty = all) */
   providerNames?: string[];
   /** Force fresh health check */
@@ -530,7 +530,7 @@ export interface GetHealthStatusResponse {
 /**
  * Request to export configurations.
  */
-export interface ExportConfigRequest {
+interface ExportConfigRequest {
   /** Export format */
   format: ExportFormat;
   /** Filter to specific providers (empty = all) */
@@ -542,7 +542,7 @@ export interface ExportConfigRequest {
 /**
  * Request to import configurations.
  */
-export interface ImportConfigRequest {
+interface ImportConfigRequest {
   /** Configuration content to import */
   content: string;
   /** Format of the content */
@@ -556,7 +556,7 @@ export interface ImportConfigRequest {
 /**
  * Query parameters for audit log.
  */
-export interface GetAuditLogRequest {
+interface GetAuditLogRequest {
   /** Filter to specific provider */
   providerName?: string;
   /** Filter to specific event types */
@@ -574,7 +574,7 @@ export interface GetAuditLogRequest {
 /**
  * Response containing audit events.
  */
-export interface GetAuditLogResponse {
+interface GetAuditLogResponse {
   /** List of audit events */
   events: ProviderAuditEvent[];
   /** Total count of matching events */

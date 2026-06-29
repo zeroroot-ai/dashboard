@@ -42,7 +42,7 @@ export const DEFAULT_GRAPH_FILTERS: GraphFilterState = {
 };
 
 /** Parsed entity type of a node (e.g. 'host', 'finding', 'mission'). */
-export function nodeType(node: GraphNode): string {
+function nodeType(node: GraphNode): string {
   return parseEntityType(node.labels);
 }
 

@@ -7,7 +7,7 @@ import type { EmailMessage } from '../types';
  * user doesn't silently lose money. Contains enough detail for them to
  * reconcile against their card statement.
  */
-export interface BillingRollbackCtx {
+interface BillingRollbackCtx {
   email: string;
   /** Charged amount, in the smallest currency unit (e.g. cents). */
   chargeAmount: number;

@@ -45,7 +45,7 @@ export interface TargetView {
 }
 
 /** TargetInput is the author-supplied metadata for create/update. */
-export interface TargetInput {
+interface TargetInput {
   name: string;
   type?: string;
   url?: string;
@@ -59,7 +59,7 @@ export interface TargetInput {
   timeout?: number;
 }
 
-export type TargetActionResult<T> =
+type TargetActionResult<T> =
   | { ok: true; data: T }
   | {
       ok: false;
@@ -191,7 +191,7 @@ export async function listTargetsAction(filter?: {
   }
 }
 
-export async function getTargetAction(
+async function getTargetAction(
   targetId: string,
 ): Promise<TargetActionResult<TargetView>> {
   if (!targetId) {

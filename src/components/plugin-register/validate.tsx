@@ -27,7 +27,7 @@ import { validatePluginManifestAction } from "@/app/actions/plugin-register";
 // Component props
 // ---------------------------------------------------------------------------
 
-export interface ValidateStepProps {
+interface ValidateStepProps {
   manifestYaml: string;
   onValidated: (errors: PluginManifestValidationError[]) => void;
   onNext: () => void;

@@ -25,12 +25,12 @@ export type RelationshipType =
  * Dash patterns for edge rendering.
  * Different patterns convey relationship semantics visually.
  */
-export type DashPattern = 'solid' | 'short-dash' | 'long-dash' | 'dot-dash';
+type DashPattern = 'solid' | 'short-dash' | 'long-dash' | 'dot-dash';
 
 /**
  * Severity levels for findings and security-related entities.
  */
-export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
 export interface GraphNode {
   id: string;

@@ -43,7 +43,7 @@ export const queryClient = new QueryClient({
  * Creates a new QueryClient instance with default configuration.
  * Useful for testing or creating isolated query client instances.
  */
-export function createQueryClient(): QueryClient {
+function createQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
       queries: {

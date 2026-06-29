@@ -25,7 +25,7 @@ export interface TierConfig {
   concurrentAgents: number;
 }
 
-export interface LimitCheckResult {
+interface LimitCheckResult {
   allowed: boolean;
   limit: number;
   current: number;
@@ -65,7 +65,7 @@ export function isHigherTier(a: TierLevel, b: TierLevel): boolean {
   return compareTiers(a, b) > 0;
 }
 
-export function isAtLeastTier(a: TierLevel, b: TierLevel): boolean {
+function isAtLeastTier(a: TierLevel, b: TierLevel): boolean {
   return compareTiers(a, b) >= 0;
 }
 
@@ -79,7 +79,7 @@ export function getNextTier(current: TierLevel): TierLevel | null {
  * checkConcurrentMissionLimit returns whether a mission submission would
  * fit within the tier's concurrent_missions cap.
  */
-export function checkConcurrentMissionLimit(
+function checkConcurrentMissionLimit(
   tier: TierLevel,
   currentInFlight: number,
 ): LimitCheckResult {
@@ -105,7 +105,7 @@ export function checkConcurrentMissionLimit(
  * checkConcurrentAgentLimit returns whether a new agent task dispatch
  * would fit within the tier's concurrent_agents cap.
  */
-export function checkConcurrentAgentLimit(
+function checkConcurrentAgentLimit(
   tier: TierLevel,
   currentBusy: number,
 ): LimitCheckResult {
@@ -127,7 +127,7 @@ export function checkConcurrentAgentLimit(
   return { allowed: true, limit, current: currentBusy, remaining };
 }
 
-export function formatQuotaMessage(
+function formatQuotaMessage(
   metric: "missions" | "agents",
   current: number,
   limit: number,
@@ -140,4 +140,3 @@ export function formatQuotaMessage(
 }
 
 /** Re-export lookupPlan so callers have a single entry point. */
-export { lookupPlan };

@@ -221,7 +221,7 @@ export const requireActiveTenant = getActiveTenant;
  * HTTP status: 412 Precondition Failed.
  * The `code` field is stable; clients can branch on it programmatically.
  */
-export interface NoActiveTenantApiBody {
+interface NoActiveTenantApiBody {
   error: string;
   code: 'no_active_tenant' | 'stale_active_tenant';
 }
@@ -281,7 +281,7 @@ export function activeTenantApiResponse(
  * return this shape to the client, which maps `code` to a user-visible
  * message without inventing its own missing-tenant behavior.
  */
-export type ActiveTenantActionError =
+type ActiveTenantActionError =
   | { ok: false; code: 'no_active_tenant' }
   | { ok: false; code: 'stale_active_tenant' };
 

@@ -31,7 +31,7 @@ export interface ConfirmCardStripe {
   }>;
 }
 
-export interface ConfirmCardSetupParams {
+interface ConfirmCardSetupParams {
   stripe: ConfirmCardStripe;
   elements: unknown;
   /** SetupIntent client secret returned by phase-1 `signupAction`. */
@@ -43,7 +43,7 @@ export interface ConfirmCardSetupParams {
   returnUrl: string;
 }
 
-export type ConfirmCardSetupResult =
+type ConfirmCardSetupResult =
   | { ok: true; paymentMethodId: string }
   | { ok: false; error: string };
 

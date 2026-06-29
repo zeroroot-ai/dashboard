@@ -7,7 +7,7 @@ import type { EmailMessage } from '../types';
  * that their subscription has been cancelled, when their data will be retained
  * until, and how to reactivate.
  */
-export interface BillingSubscriptionCancelledCtx {
+interface BillingSubscriptionCancelledCtx {
   /** Recipient email address. */
   email: string;
   /**

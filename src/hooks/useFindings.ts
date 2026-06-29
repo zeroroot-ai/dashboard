@@ -171,7 +171,7 @@ export function useFindings(
  * @param pagination - Pagination options
  * @returns Query result with cross-tenant findings data
  */
-export function useCrossTenantFindings(
+function useCrossTenantFindings(
   filters: FindingsFilters = {},
   tenantIds?: string[],
   pagination: FindingsPagination = { limit: 50 }

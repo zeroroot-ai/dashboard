@@ -1,7 +1,7 @@
 import type { EmailMessage } from '../types';
 
 /** Account-locked notification (too many failed sign-in attempts). */
-export interface AccountLockedCtx {
+interface AccountLockedCtx {
   email: string;
   /** When the lockout window ends, formatted as an ISO 8601 string. */
   lockoutEndsAt: Date | string;

@@ -75,7 +75,7 @@ export interface ActiveGrantVM {
   nearExpiry: boolean;
   allowedRpcs: string[];
 }
-export interface PermissionsTabProps {
+interface PermissionsTabProps {
   principalId: string;
   kind: 'agent' | 'tool';
   componentGrants: ComponentGrantVM[];

@@ -74,7 +74,7 @@ import {
  * A proto-ready message record, ready for inclusion in a
  * `SaveConversationRequest.messages` repeated field.
  */
-export interface ProtoMessageRecord {
+interface ProtoMessageRecord {
   id: string;
   role: string;
   parts: MessagePart[];

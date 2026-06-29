@@ -672,7 +672,7 @@ function MissionNodeCard({ node }: { node: MissionNodeJson }) {
 // Root component
 // -------------------------------------------------------------------------
 
-export interface MissionDefinitionDetailProps {
+interface MissionDefinitionDetailProps {
   definition: MissionDefinitionJson;
 }
 

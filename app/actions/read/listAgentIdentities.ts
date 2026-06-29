@@ -23,12 +23,12 @@ import {
 import { userClient } from "@/src/lib/gibson-client";
 import { auth } from "@/auth";
 
-export type ActionResult<T> =
+type ActionResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
 
 /** Dashboard-safe shape for a single agent identity. */
-export interface AgentIdentityRow {
+interface AgentIdentityRow {
   /** principal_id, the grant target for the Per-agent scope. */
   id: string;
   /** Human-readable agent name. */

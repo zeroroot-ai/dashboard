@@ -15,7 +15,7 @@ import { logger } from '@/src/lib/logger';
 /**
  * Map a Connect gRPC status code to an HTTP status code.
  */
-export function mapCodeToHttpStatus(code: Code): number {
+function mapCodeToHttpStatus(code: Code): number {
   switch (code) {
     case Code.Unauthenticated:
       return 401;

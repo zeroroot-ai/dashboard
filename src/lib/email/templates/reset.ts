@@ -1,7 +1,7 @@
 import type { EmailMessage } from '../types';
 
 /** Password-reset request. */
-export interface ResetCtx {
+interface ResetCtx {
   email: string;
   resetUrl: string;
   expiresInHours: number;

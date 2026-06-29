@@ -69,7 +69,7 @@ function recipientClassLabel(rc: RecipientClass): string {
 // Props
 // ---------------------------------------------------------------------------
 
-export interface GrantsTableProps {
+interface GrantsTableProps {
   grants: CapabilityGrantInfo[];
 }
 

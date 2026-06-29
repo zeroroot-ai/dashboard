@@ -41,7 +41,7 @@ export type AccessScopeSelection = {
 
 type Option = { id: string; name: string };
 
-export interface AccessScopeSelectorProps {
+interface AccessScopeSelectorProps {
   value: AccessScopeSelection;
   onChange: (v: AccessScopeSelection) => void;
   /**

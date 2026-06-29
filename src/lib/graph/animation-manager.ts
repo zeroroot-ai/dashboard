@@ -172,4 +172,4 @@ export class AnimationManager {
 }
 
 // Export singleton instance for convenience
-export const animationManager = new AnimationManager();
+const animationManager = new AnimationManager();

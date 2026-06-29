@@ -42,7 +42,7 @@ function isUUID(s: string): boolean {
   return UUID_RE.test(s);
 }
 
-export type CreateMissionResult =
+type CreateMissionResult =
   | { ok: true; missionId: string }
   | { ok: false; error: string; code: "permission_denied" | "invalid" | "rpc_failed" };
 

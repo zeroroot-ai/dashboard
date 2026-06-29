@@ -1,7 +1,7 @@
 import type { EmailMessage } from '../types';
 
 /** Organization invite / claim. */
-export interface ClaimCtx {
+interface ClaimCtx {
   email: string;
   claimUrl: string;
   expiresInDays: number;

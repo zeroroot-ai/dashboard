@@ -7,7 +7,7 @@ import type { EmailMessage } from '../types';
  * `customer.subscription.updated` event and the price ID has changed.
  * Includes proration invoice link when available.
  */
-export interface BillingPlanChangedCtx {
+interface BillingPlanChangedCtx {
   /** Recipient email address. */
   email: string;
   /** Human-readable name of the old plan (e.g. "Squad"). */

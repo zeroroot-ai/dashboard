@@ -31,7 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { rotateSecretAction } from "@/app/actions/secrets";
 
-export interface RotateModalProps {
+interface RotateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   secretName: string;

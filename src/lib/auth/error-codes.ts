@@ -23,7 +23,7 @@ export type LoginErrorReason =
   | "membership_revoked"
   | "unknown";
 
-export interface LoginErrorCopy {
+interface LoginErrorCopy {
   /** Headline shown in the page title + Card title. */
   title: string;
   /** One-paragraph plain-English description of what happened. */

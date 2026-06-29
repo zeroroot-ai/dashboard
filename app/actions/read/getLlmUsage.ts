@@ -25,7 +25,7 @@ export type UsageRow = {
   traceCount: number;
 };
 
-export type ActionResult<T> =
+type ActionResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
 
@@ -44,7 +44,7 @@ function scopeToProto(scope: UsageScopeInput): UsageScope {
   }
 }
 
-export interface GetLlmUsageRequest {
+interface GetLlmUsageRequest {
   scope: UsageScopeInput;
   /**
    * Unix seconds. Omit for "current month to date".
@@ -58,7 +58,7 @@ export interface GetLlmUsageRequest {
   subjectFilter?: string;
 }
 
-export interface GetLlmUsageResponse {
+interface GetLlmUsageResponse {
   rows: UsageRow[];
   staleAsOfUnix: number;
 }

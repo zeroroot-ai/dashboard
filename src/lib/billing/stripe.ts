@@ -97,7 +97,7 @@ export function __setStripeClientForTests(client: unknown): void {
  * cached) so rotating the secret in a running pod takes effect on the next
  * event without a restart.
  */
-export function verifyWebhookSignature(
+function verifyWebhookSignature(
   payload: string | Buffer,
   signatureHeader: string,
 ): Stripe.Event | null {
@@ -136,7 +136,7 @@ export function verifyWebhookSignature(
  * @param reason          - Refund reason surfaced to Stripe and card statement.
  *                          Must be one of Stripe's accepted reason values.
  */
-export async function refundCharge(
+async function refundCharge(
   paymentIntentId: string,
   reason: Stripe.RefundCreateParams.Reason = 'requested_by_customer',
 ): Promise<Stripe.Refund> {
@@ -152,7 +152,7 @@ export async function refundCharge(
 // ---------------------------------------------------------------------------
 
 /** Parameters for creating a Stripe Billing Portal session. */
-export interface PortalSessionParams {
+interface PortalSessionParams {
   /** Stripe customer ID (cus_...). */
   customerId: string;
   /** URL to return to after the portal session. */
@@ -252,7 +252,7 @@ export async function priceIdForTier(tier: string): Promise<string | null> {
  * Tagged with `metadata.tenant_id` = slug so the saga's adoption path and the
  * webhook tenant attribution both resolve.
  */
-export interface SignupCustomerParams {
+interface SignupCustomerParams {
   email: string;
   name: string;
   tenantSlug: string;
@@ -331,7 +331,7 @@ export async function finalizeSignupCustomer(customerId: string): Promise<void> 
 }
 
 /** Parameters for the embedded SetupIntent that backs the Payment Element. */
-export interface SetupIntentParams {
+interface SetupIntentParams {
   /** Stripe customer ID (cus_...) the card is attached to. */
   customerId: string;
   /** Tenant slug, carried in metadata for traceability. */
@@ -362,7 +362,7 @@ export async function createSetupIntent(
 }
 
 /** Parameters for creating the trialing subscription after card confirmation. */
-export interface TrialingSubscriptionParams {
+interface TrialingSubscriptionParams {
   /** Self-serve tier (not contact-sales). */
   tier: BillingTier;
   /** Stripe Price ID for the tier. */
@@ -454,7 +454,7 @@ export async function createPortalSession(
  * Used by the billing reconciler to verify subscription state against the
  * live Stripe record (drift detection and trial enforcement).
  */
-export async function getSubscription(
+async function getSubscription(
   subscriptionId: string,
 ): Promise<Stripe.Subscription> {
   const stripe = getStripeClient();

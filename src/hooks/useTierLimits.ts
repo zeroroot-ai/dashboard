@@ -20,11 +20,9 @@ import {
   isHigherTier,
 } from "@/src/lib/tier-checker";
 
-export { TIER_CONFIGS, compareTiers, getNextTier, getTierConfig, isHigherTier };
-export type { TierConfig, TierLevel };
 
 /** Live usage snapshot (mirrors the daemon's :active counters). */
-export interface TierUsage {
+interface TierUsage {
   /** Missions currently in non-terminal execution at any moment. */
   concurrentMissions: number;
   /** Agents currently bound to in-flight tasks. */
@@ -32,12 +30,12 @@ export interface TierUsage {
 }
 
 /** Tier limits + usage response. */
-export interface TierLimitsResponse {
+interface TierLimitsResponse {
   config: TierConfig;
   usage: TierUsage;
 }
 
-export const tierLimitsKeys = {
+const tierLimitsKeys = {
   all: ["tier-limits"] as const,
   current: () => [...tierLimitsKeys.all, "current"] as const,
 };
@@ -75,7 +73,7 @@ export function useTierLimits(enabled = true) {
   });
 }
 
-export function useTierLimitCheck() {
+function useTierLimitCheck() {
   const { data } = useTierLimits();
 
   return useMemo(() => {
@@ -116,7 +114,7 @@ export function useTierLimitCheck() {
   }, [data]);
 }
 
-export function useUpgradeRecommendation() {
+function useUpgradeRecommendation() {
   const { data } = useTierLimits();
 
   return useMemo(() => {

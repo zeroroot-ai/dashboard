@@ -10,7 +10,7 @@ const STALE_TIME = 30000; // 30 seconds
 /**
  * Component counts aggregated by status
  */
-export interface ComponentCounts {
+interface ComponentCounts {
   total: number;
   healthy: number;
   degraded: number;
@@ -21,7 +21,7 @@ export interface ComponentCounts {
 /**
  * All component counts by type
  */
-export interface AllComponentCounts {
+interface AllComponentCounts {
   agents: ComponentCounts;
   tools: ComponentCounts;
   plugins: ComponentCounts;
@@ -128,7 +128,7 @@ export function usePlugins() {
  * Hook to get aggregate counts for all component types
  * Derives data from the existing queries' cache
  */
-export function useComponentCounts() {
+function useComponentCounts() {
   const currentTenant = useTenantStore((state) => state.currentTenant);
   const tenantId = currentTenant?.id ?? '';
   const { data: agents = [], isLoading: agentsLoading } = useAgents();
@@ -150,7 +150,7 @@ export function useComponentCounts() {
 /**
  * Hook to fetch a single component by ID across all types
  */
-export function useComponent(id: string) {
+function useComponent(id: string) {
   const currentTenant = useTenantStore((state) => state.currentTenant);
   const tenantId = currentTenant?.id ?? '';
 
@@ -175,7 +175,7 @@ export function useComponent(id: string) {
 /**
  * Hook to get components filtered by status
  */
-export function useComponentsByStatus(status: ComponentStatus) {
+function useComponentsByStatus(status: ComponentStatus) {
   const currentTenant = useTenantStore((state) => state.currentTenant);
   const tenantId = currentTenant?.id ?? '';
   const { data: agents = [] } = useAgents();

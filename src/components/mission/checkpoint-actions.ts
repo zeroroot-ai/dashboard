@@ -104,7 +104,7 @@ export type ListCheckpointsActionResult =
   | { ok: true; response: ListCheckpointsResponse }
   | CheckpointActionError;
 
-export interface ListCheckpointsActionInput {
+interface ListCheckpointsActionInput {
   missionId: string;
   pageSize?: number;
   pageToken?: string;
@@ -160,7 +160,7 @@ export type GetCheckpointActionResult =
   | { ok: true; response: GetCheckpointResponse }
   | CheckpointActionError;
 
-export interface GetCheckpointActionInput {
+interface GetCheckpointActionInput {
   missionId: string;
   checkpointId: string;
   includeBlobs?: boolean;
@@ -209,11 +209,11 @@ export async function getCheckpointAction(
 // DiffCheckpoints
 // ---------------------------------------------------------------------------
 
-export type DiffCheckpointsActionResult =
+type DiffCheckpointsActionResult =
   | { ok: true; response: DiffCheckpointsResponse }
   | CheckpointActionError;
 
-export interface DiffCheckpointsActionInput {
+interface DiffCheckpointsActionInput {
   missionId: string;
   checkpointAId: string;
   checkpointBId: string;
@@ -258,7 +258,7 @@ export async function diffCheckpointsAction(
 // ResumeMission (rewind)
 // ---------------------------------------------------------------------------
 
-export type ResumeMissionActionResult =
+type ResumeMissionActionResult =
   | {
       ok: true;
       /**
@@ -270,7 +270,7 @@ export type ResumeMissionActionResult =
     }
   | CheckpointActionError;
 
-export interface ResumeMissionActionInput {
+interface ResumeMissionActionInput {
   missionId: string;
   /** When provided, the daemon rewinds to this checkpoint. */
   targetCheckpointId?: string;

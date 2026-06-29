@@ -17,7 +17,7 @@
  */
 import { createHash } from 'node:crypto';
 
-export type HibpResult =
+type HibpResult =
   | { breached: true; count: number }
   | { breached: false; count: 0 }
   | { breached: 'unknown'; reason: string };

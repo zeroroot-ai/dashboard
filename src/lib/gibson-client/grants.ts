@@ -19,10 +19,10 @@ import type { CapabilityGrantInfo } from '@/src/gen/gibson/capability/v1/capabil
 import { RecipientClass } from '@/src/gen/gibson/capability/v1/capability_pb';
 import { throwMapped } from './secrets';
 
-export type { CapabilityGrantInfo, ListActiveGrantsResponse };
+export type { CapabilityGrantInfo };
 export { RecipientClass };
 
-export interface ListActiveGrantsOptions {
+interface ListActiveGrantsOptions {
   /** Filter by recipient class; UNSPECIFIED (0) means all. */
   recipientClassFilter?: RecipientClass;
   /** Filter to grants whose allowed_rpcs includes this method name. */

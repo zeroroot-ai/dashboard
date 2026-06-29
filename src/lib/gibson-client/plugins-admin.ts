@@ -28,22 +28,15 @@ import type {
 import { throwMapped } from './secrets';
 
 export type {
-  PluginInstallSummary,
   PluginSecretBinding,
   PluginManifestValidationError,
-  ListPluginInstallsResponse,
-  GetPluginInstallResponse,
-  RegisterPluginResponse,
-  EditPluginSecretBindingResponse,
-  RevokePluginSecretBindingResponse,
-  PluginInstallStatus,
 };
 
 // ---------------------------------------------------------------------------
 // Read methods (tenant_member+)
 // ---------------------------------------------------------------------------
 
-export interface ListPluginInstallsOptions {
+interface ListPluginInstallsOptions {
   nameFilter?: string;
   statusFilter?: PluginInstallStatus;
   limit?: number;
@@ -53,7 +46,7 @@ export interface ListPluginInstallsOptions {
 /**
  * Returns all plugin installs for the tenant, optionally filtered.
  */
-export async function listPluginInstalls(
+async function listPluginInstalls(
   opts: ListPluginInstallsOptions = {},
 ): Promise<ListPluginInstallsResponse> {
   try {
@@ -85,7 +78,7 @@ export async function getPluginInstall(installId: string): Promise<GetPluginInst
 // Write methods (tenant_admin)
 // ---------------------------------------------------------------------------
 
-export interface RegisterPluginOptions {
+interface RegisterPluginOptions {
   /** The plugin manifest YAML bytes per Spec 2. */
   manifestYaml: Uint8Array;
   /** One binding per secret declared in manifest spec.secrets[]. */

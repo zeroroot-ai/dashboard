@@ -30,7 +30,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { deleteSecretAction } from "@/app/actions/secrets";
 
-export interface DeleteModalProps {
+interface DeleteModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   secretName: string;

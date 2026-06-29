@@ -25,7 +25,7 @@ import {
   AuthzDeniedError,
 } from "@/src/lib/auth/assert-authorized";
 
-export interface PluginBindingResult {
+interface PluginBindingResult {
   ok: boolean;
   error?: string;
 }

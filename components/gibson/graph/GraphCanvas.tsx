@@ -90,4 +90,3 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
   }
 );
 
-export default GraphCanvas;

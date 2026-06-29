@@ -29,7 +29,7 @@ import type {
 // Error Types
 // ============================================================================
 
-export class ProviderApiError extends Error {
+class ProviderApiError extends Error {
   constructor(
     message: string,
     public status: number,
@@ -95,7 +95,7 @@ function buildQueryString(params: Record<string, string | number | boolean | str
  * credential schemas and default model catalogues. Used by the settings form
  * to render provider-specific inputs without a hard-coded frontend list.
  */
-export async function getSupportedProviders(): Promise<SupportedProviderDescriptor[]> {
+async function getSupportedProviders(): Promise<SupportedProviderDescriptor[]> {
   const response = await apiFetch('/api/settings/providers/supported');
   const data = await handleResponse<{ providers: SupportedProviderDescriptor[] }>(response);
   return data.providers;
@@ -206,7 +206,7 @@ export async function deleteProvider(
 /**
  * Test connection to an existing provider
  */
-export async function testProviderConnection(
+async function testProviderConnection(
   name: string,
   options?: { timeoutSeconds?: number }
 ): Promise<ConnectionTestResult> {
@@ -225,7 +225,7 @@ export async function testProviderConnection(
 /**
  * Test connection with a new configuration (without saving)
  */
-export async function testConnectionConfig(
+async function testConnectionConfig(
   config: DaemonProviderConfigInput,
   options?: { timeoutSeconds?: number }
 ): Promise<ConnectionTestResult> {
@@ -244,7 +244,7 @@ export async function testConnectionConfig(
 /**
  * Test connection with a new provider configuration (alias for testConnectionConfig)
  */
-export async function testNewProviderConnection(
+async function testNewProviderConnection(
   config: DaemonProviderConfigInput,
   options?: { timeoutSeconds?: number }
 ): Promise<ConnectionTestResult> {
@@ -291,7 +291,7 @@ export async function getHealthStatus(options?: {
 /**
  * Refresh health status for a specific provider
  */
-export async function refreshProviderHealth(name: string): Promise<HealthStatus> {
+async function refreshProviderHealth(name: string): Promise<HealthStatus> {
   const response = await apiFetch(`/api/settings/providers/${encodeURIComponent(name)}/health`, {
     method: 'POST',
   });
@@ -347,7 +347,7 @@ export async function toggleProvider(
 /**
  * Export provider configurations
  */
-export async function exportConfig(options?: {
+async function exportConfig(options?: {
   format?: ExportFormat;
   providerNames?: string[];
   includeMetadata?: boolean;
@@ -380,7 +380,7 @@ export async function exportConfig(options?: {
 /**
  * Download exported configuration as a file
  */
-export async function downloadExportedConfig(options?: {
+async function downloadExportedConfig(options?: {
   format?: ExportFormat;
   providerNames?: string[];
   includeMetadata?: boolean;
@@ -429,7 +429,7 @@ export async function importConfig(
 /**
  * Import provider configurations from a file
  */
-export async function importConfigFromFile(
+async function importConfigFromFile(
   file: File,
   options: {
     mergeStrategy: ImportMergeStrategy;
@@ -485,48 +485,48 @@ export async function getAuditLog(options?: {
 /**
  * Check if an error is a ProviderApiError
  */
-export function isProviderApiError(error: unknown): error is ProviderApiError {
+function isProviderApiError(error: unknown): error is ProviderApiError {
   return error instanceof ProviderApiError;
 }
 
 /**
  * Check if error is an unauthorized (401) error
  */
-export function isUnauthorizedError(error: unknown): boolean {
+function isUnauthorizedError(error: unknown): boolean {
   return isProviderApiError(error) && error.status === 401;
 }
 
 /**
  * Check if error is a forbidden (403) error
  */
-export function isForbiddenError(error: unknown): boolean {
+function isForbiddenError(error: unknown): boolean {
   return isProviderApiError(error) && error.status === 403;
 }
 
 /**
  * Check if error is a not found (404) error
  */
-export function isNotFoundError(error: unknown): boolean {
+function isNotFoundError(error: unknown): boolean {
   return isProviderApiError(error) && error.status === 404;
 }
 
 /**
  * Check if error is a conflict (409) error (e.g., duplicate name, version conflict)
  */
-export function isConflictError(error: unknown): boolean {
+function isConflictError(error: unknown): boolean {
   return isProviderApiError(error) && error.status === 409;
 }
 
 /**
  * Check if error is a validation (400) error
  */
-export function isValidationError(error: unknown): boolean {
+function isValidationError(error: unknown): boolean {
   return isProviderApiError(error) && error.status === 400;
 }
 
 /**
  * Check if error is a precondition failed (412) error (optimistic locking failure)
  */
-export function isPreconditionFailedError(error: unknown): boolean {
+function isPreconditionFailedError(error: unknown): boolean {
   return isProviderApiError(error) && error.status === 412;
 }

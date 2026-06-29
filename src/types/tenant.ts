@@ -45,13 +45,13 @@ export interface TenantSettings {
   };
 }
 
-export type TenantRole = 'viewer' | 'operator' | 'admin';
+type TenantRole = 'viewer' | 'operator' | 'admin';
 
-export interface TenantSwitchRequest {
+interface TenantSwitchRequest {
   tenantId: string;
 }
 
-export interface TenantSwitchResponse {
+interface TenantSwitchResponse {
   success: boolean;
   tenant: Tenant;
   sessionUpdated: boolean;

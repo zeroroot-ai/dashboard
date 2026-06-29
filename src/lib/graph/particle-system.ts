@@ -359,4 +359,3 @@ export class ParticleSystem {
   }
 }
 
-export type { Particle, EdgeEndpoints };

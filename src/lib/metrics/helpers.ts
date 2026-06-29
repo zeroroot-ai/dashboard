@@ -33,7 +33,6 @@ type Counter<L extends string = string> = import("prom-client").Counter<L>;
 type Histogram<L extends string = string> = import("prom-client").Histogram<L>;
 type CounterConfiguration<L extends string = string> = import("prom-client").CounterConfiguration<L>;
 type HistogramConfiguration<L extends string = string> = import("prom-client").HistogramConfiguration<L>;
-export type { CounterConfiguration, HistogramConfiguration };
 
 interface PromClientCtors {
   Counter: new <L extends string = string>(opts: object) => Counter<L>;

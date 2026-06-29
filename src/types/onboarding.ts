@@ -60,12 +60,12 @@ export type WizardStepId =
 /**
  * Status of a wizard step.
  */
-export type WizardStepStatus = 'pending' | 'current' | 'completed' | 'skipped';
+type WizardStepStatus = 'pending' | 'current' | 'completed' | 'skipped';
 
 /**
  * Configuration for a wizard step.
  */
-export interface WizardStep {
+interface WizardStep {
   /** Unique step identifier */
   id: WizardStepId;
   /** Display title */
@@ -145,7 +145,7 @@ export type LLMProviderType = 'anthropic' | 'openai' | 'google' | 'ollama';
 /**
  * LLM provider display configuration.
  */
-export interface LLMProviderConfig {
+interface LLMProviderConfig {
   /** Provider type */
   type: LLMProviderType;
   /** Display name */
@@ -171,7 +171,7 @@ export interface LLMProviderConfig {
 /**
  * LLM provider configurations for onboarding.
  */
-export const LLM_PROVIDER_CONFIG: Record<LLMProviderType, LLMProviderConfig> = {
+const LLM_PROVIDER_CONFIG: Record<LLMProviderType, LLMProviderConfig> = {
   anthropic: {
     type: 'anthropic',
     displayName: 'Anthropic',
@@ -225,7 +225,7 @@ export const LLM_PROVIDER_CONFIG: Record<LLMProviderType, LLMProviderConfig> = {
 /**
  * LLM provider types as array for iteration.
  */
-export const LLM_PROVIDER_TYPES: LLMProviderType[] = ['anthropic', 'openai', 'google', 'ollama'];
+const LLM_PROVIDER_TYPES: LLMProviderType[] = ['anthropic', 'openai', 'google', 'ollama'];
 
 /**
  * LLM configuration during onboarding.
@@ -252,7 +252,7 @@ export interface LLMConfig {
 /**
  * Result of a validation operation.
  */
-export interface ValidationResult {
+interface ValidationResult {
   /** Whether validation passed */
   valid: boolean;
   /** Error message if validation failed */
@@ -266,7 +266,7 @@ export interface ValidationResult {
 /**
  * Result of LLM connection validation.
  */
-export interface LLMValidationResult extends ValidationResult {
+interface LLMValidationResult extends ValidationResult {
   /** Available models (if validation succeeded) */
   availableModels?: string[];
   /** Response latency in milliseconds */
@@ -475,12 +475,12 @@ export interface OnboardingState {
 /**
  * Current version of onboarding state schema.
  */
-export const ONBOARDING_STATE_VERSION = 1;
+const ONBOARDING_STATE_VERSION = 1;
 
 /**
  * Default onboarding state for new users.
  */
-export const DEFAULT_ONBOARDING_STATE: Omit<OnboardingState, 'userId' | 'tenantId' | 'startedAt' | 'updatedAt'> = {
+const DEFAULT_ONBOARDING_STATE: Omit<OnboardingState, 'userId' | 'tenantId' | 'startedAt' | 'updatedAt'> = {
   wizardCompleted: false,
   wizardSkipped: false,
   currentStepId: 'welcome',
@@ -541,7 +541,7 @@ export interface OnboardingStatusResponse {
 /**
  * Request to validate LLM configuration.
  */
-export interface ValidateLLMRequest {
+interface ValidateLLMRequest {
   /** Provider type */
   provider: LLMProviderType;
   /** API key to validate */
@@ -555,7 +555,7 @@ export interface ValidateLLMRequest {
 /**
  * Response from LLM validation endpoint.
  */
-export interface ValidateLLMResponse {
+interface ValidateLLMResponse {
   /** Validation result */
   result: LLMValidationResult;
 }
@@ -567,7 +567,7 @@ export interface ValidateLLMResponse {
 /**
  * Agent information for the selection step.
  */
-export interface OnboardingAgent {
+interface OnboardingAgent {
   /** Agent ID */
   id: string;
   /** Display name */
@@ -589,7 +589,7 @@ export interface OnboardingAgent {
 /**
  * Recommended agent for beginners.
  */
-export const RECOMMENDED_STARTER_AGENT = 'debug-agent';
+const RECOMMENDED_STARTER_AGENT = 'debug-agent';
 
 // ============================================================================
 // Empty State Types
@@ -598,12 +598,12 @@ export const RECOMMENDED_STARTER_AGENT = 'debug-agent';
 /**
  * Variant for empty state display.
  */
-export type EmptyStateVariant = 'onboarding' | 'experienced';
+type EmptyStateVariant = 'onboarding' | 'experienced';
 
 /**
  * Configuration for empty state display.
  */
-export interface EmptyStateConfig {
+interface EmptyStateConfig {
   /** Icon to display */
   icon: string;
   /** Title text */

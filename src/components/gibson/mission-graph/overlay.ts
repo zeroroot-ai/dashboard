@@ -31,7 +31,7 @@ export interface RunSignals {
   failedNodeId?: string | null;
 }
 
-export interface RunOverlay {
+interface RunOverlay {
   nodeStates: Record<string, NodeRunState>;
   /** Keyed by edgeKey(from, to). */
   edgeStates: Record<string, EdgeRunState>;

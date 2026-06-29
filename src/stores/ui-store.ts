@@ -7,7 +7,7 @@ import type { Event } from "@/src/types";
  *
  * Controls visual effects, animations, and performance options for the knowledge graph.
  */
-export interface GraphSettings {
+interface GraphSettings {
   /** Enable/disable all animations (dash animations, pulsing, particles) */
   animationsEnabled: boolean;
   /** Enable/disable particle effects along active edges */
@@ -33,7 +33,7 @@ export interface GraphSettings {
  *
  * State is persisted to localStorage via Zustand persist middleware.
  */
-export interface UIState {
+interface UIState {
   // Sidebar
   sidebarCollapsed: boolean;
   setSidebarCollapsed: (collapsed: boolean) => void;
@@ -175,7 +175,7 @@ export const useUIStore = create<UIState>()(
 /**
  * Hook to get sidebar state
  */
-export const useSidebar = () => {
+const useSidebar = () => {
   const collapsed = useUIStore((state) => state.sidebarCollapsed);
   const setCollapsed = useUIStore((state) => state.setSidebarCollapsed);
   return { collapsed, setCollapsed };
@@ -184,7 +184,7 @@ export const useSidebar = () => {
 /**
  * Hook to get chat panel state
  */
-export const useChatPanel = () => {
+const useChatPanel = () => {
   const open = useUIStore((state) => state.chatPanelOpen);
   const setOpen = useUIStore((state) => state.setChatPanelOpen);
   return { open, setOpen };
@@ -193,7 +193,7 @@ export const useChatPanel = () => {
 /**
  * Hook to get context panel state
  */
-export const useContextPanel = () => {
+const useContextPanel = () => {
   const open = useUIStore((state) => state.contextPanelOpen);
   const setOpen = useUIStore((state) => state.setContextPanelOpen);
   const activeTab = useUIStore((state) => state.contextPanelActiveTab);
@@ -204,7 +204,7 @@ export const useContextPanel = () => {
 /**
  * Hook to get graph layout preference
  */
-export const useGraphLayout = () => {
+const useGraphLayout = () => {
   const layout = useUIStore((state) => state.graphLayout);
   const setLayout = useUIStore((state) => state.setGraphLayout);
   return { layout, setLayout };
@@ -213,7 +213,7 @@ export const useGraphLayout = () => {
 /**
  * Hook to get graph view mode (2D/3D)
  */
-export const useGraphViewMode = () => {
+const useGraphViewMode = () => {
   const viewMode = useUIStore((state) => state.graphViewMode);
   const setViewMode = useUIStore((state) => state.setGraphViewMode);
   return { viewMode, setViewMode };
@@ -222,7 +222,7 @@ export const useGraphViewMode = () => {
 /**
  * Hook to get event buffer state
  */
-export const useEventBuffer = () => {
+const useEventBuffer = () => {
   const events = useUIStore((state) => state.eventBuffer);
   const addEvent = useUIStore((state) => state.addEvent);
   const clearEvents = useUIStore((state) => state.clearEvents);
@@ -234,7 +234,7 @@ export const useEventBuffer = () => {
 /**
  * Hook to get connection status
  */
-export const useConnectionStatus = () => {
+const useConnectionStatus = () => {
   const status = useUIStore((state) => state.connectionStatus);
   const setStatus = useUIStore((state) => state.setConnectionStatus);
   return { status, setStatus };
@@ -243,7 +243,7 @@ export const useConnectionStatus = () => {
 /**
  * Hook to get CRT effects state
  */
-export const useCrtEffects = () => {
+const useCrtEffects = () => {
   const enabled = useUIStore((state) => state.crtEffectsEnabled);
   const setEnabled = useUIStore((state) => state.setCrtEffectsEnabled);
   return { enabled, setEnabled };
@@ -260,7 +260,7 @@ export const useCrtEffects = () => {
  * - edgeGlowEnabled: Enable edge glow effects
  * - clusteringEnabled: Enable mission_run clustering
  */
-export const useGraphSettings = () => {
+const useGraphSettings = () => {
   const settings = useUIStore((state) => state.graphSettings);
   const setSettings = useUIStore((state) => state.setGraphSettings);
   return { settings, setSettings };

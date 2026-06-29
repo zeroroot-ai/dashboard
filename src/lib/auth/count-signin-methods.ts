@@ -19,7 +19,7 @@
  *   and testable without a live auth instance.
  */
 
-export interface AccountRow {
+interface AccountRow {
   providerId: string;
   [key: string]: unknown;
 }

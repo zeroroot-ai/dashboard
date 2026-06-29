@@ -44,7 +44,7 @@ export interface Conversation {
   graphContext?: GraphContext;
 }
 
-export interface ChatState {
+interface ChatState {
   // Conversations
   conversations: Conversation[];
   activeConversationId: string | null;
@@ -459,13 +459,13 @@ export const useChatStore = create<ChatState>()(
 // Selector hooks
 // ============================================================================
 
-export const useActiveConversation = () => {
+const useActiveConversation = () => {
   const activeConversationId = useChatStore((state) => state.activeConversationId);
   const conversations = useChatStore((state) => state.conversations);
   return conversations.find((c) => c.id === activeConversationId);
 };
 
-export const useChatMessages = () => {
+const useChatMessages = () => {
   const activeConversationId = useChatStore((state) => state.activeConversationId);
   const conversations = useChatStore((state) => state.conversations);
   const conversation = conversations.find((c) => c.id === activeConversationId);
@@ -485,7 +485,7 @@ export const useChatGraphContext = () => {
   return { graphContext, setGraphContext, clearGraphContext };
 };
 
-export const useChatConnection = () => {
+const useChatConnection = () => {
   const connectionStatus = useChatStore((state) => state.connectionStatus);
   const lastError = useChatStore((state) => state.lastError);
   const setConnectionStatus = useChatStore((state) => state.setConnectionStatus);

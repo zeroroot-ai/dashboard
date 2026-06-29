@@ -8,13 +8,13 @@
 
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
 
-export interface GraphExportNode {
+interface GraphExportNode {
   id: string;
   labels: string[];
   properties: Record<string, unknown>;
 }
 
-export interface GraphExportEdge {
+interface GraphExportEdge {
   id: string;
   type: string;
   source: string;
@@ -22,7 +22,7 @@ export interface GraphExportEdge {
   properties: Record<string, unknown>;
 }
 
-export interface GraphExport {
+interface GraphExport {
   exportedAt: string;
   nodeCount: number;
   edgeCount: number;

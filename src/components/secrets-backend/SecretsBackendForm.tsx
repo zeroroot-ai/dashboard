@@ -145,7 +145,7 @@ function ProbeBanner({ result }: ProbeBannerProps) {
 // SecretsBackendForm (main export)
 // ---------------------------------------------------------------------------
 
-export interface SecretsBackendFormProps {
+interface SecretsBackendFormProps {
   /**
    * Redacted config fetched server-side. null means the tenant has no
    * broker configured yet (new tenant defaults to gibson_hosted).

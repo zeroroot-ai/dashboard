@@ -10,7 +10,7 @@
 /**
  * Category classification for mission templates.
  */
-export type TemplateCategory =
+type TemplateCategory =
   | 'reconnaissance'
   | 'vulnerability-scan'
   | 'compliance'
@@ -22,12 +22,12 @@ export type TemplateCategory =
 /**
  * Difficulty level for mission templates.
  */
-export type TemplateDifficulty = 'beginner' | 'intermediate' | 'advanced';
+type TemplateDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
 /**
  * Template category display configuration.
  */
-export const TEMPLATE_CATEGORY_CONFIG: Record<TemplateCategory, {
+const TEMPLATE_CATEGORY_CONFIG: Record<TemplateCategory, {
   label: string;
   description: string;
   icon: string;
@@ -80,7 +80,7 @@ export const TEMPLATE_CATEGORY_CONFIG: Record<TemplateCategory, {
 /**
  * Template difficulty display configuration.
  */
-export const TEMPLATE_DIFFICULTY_CONFIG: Record<TemplateDifficulty, {
+const TEMPLATE_DIFFICULTY_CONFIG: Record<TemplateDifficulty, {
   label: string;
   description: string;
   color: string;
@@ -113,7 +113,7 @@ export const TEMPLATE_DIFFICULTY_CONFIG: Record<TemplateDifficulty, {
 /**
  * Type of prerequisite requirement.
  */
-export type PrerequisiteType =
+type PrerequisiteType =
   | 'llm_provider'
   | 'agent'
   | 'tool'
@@ -123,7 +123,7 @@ export type PrerequisiteType =
 /**
  * Status of a template prerequisite.
  */
-export interface PrerequisiteStatus {
+interface PrerequisiteStatus {
   /** Whether all prerequisites are met */
   met: boolean;
   /** List of missing prerequisite identifiers */
@@ -135,7 +135,7 @@ export interface PrerequisiteStatus {
 /**
  * Result of checking a single prerequisite.
  */
-export interface PrerequisiteCheckResult {
+interface PrerequisiteCheckResult {
   /** Prerequisite ID */
   id: string;
   /** Whether this prerequisite is met */
@@ -151,7 +151,7 @@ export interface PrerequisiteCheckResult {
 /**
  * A single prerequisite requirement for a template.
  */
-export interface TemplatePrerequisite {
+interface TemplatePrerequisite {
   /** Unique prerequisite identifier */
   id: string;
   /** Prerequisite type */
@@ -177,7 +177,7 @@ export interface TemplatePrerequisite {
 /**
  * Type of customizable field value.
  */
-export type CustomizableFieldType =
+type CustomizableFieldType =
   | 'string'
   | 'number'
   | 'boolean'
@@ -194,7 +194,7 @@ export type CustomizableFieldType =
 /**
  * A customizable field in a mission template.
  */
-export interface CustomizableField {
+interface CustomizableField {
   /** YAML path key (e.g., "spec.target.url") */
   key: string;
   /** Human-readable label */
@@ -234,7 +234,7 @@ export interface CustomizableField {
 /**
  * Option for select/multiselect customizable fields.
  */
-export interface CustomizableFieldOption {
+interface CustomizableFieldOption {
   /** Option value */
   value: string;
   /** Display label */
@@ -248,7 +248,7 @@ export interface CustomizableFieldOption {
 /**
  * Group of related customizable fields.
  */
-export interface CustomizableFieldGroup {
+interface CustomizableFieldGroup {
   /** Group identifier */
   id: string;
   /** Group display name */
@@ -268,7 +268,7 @@ export interface CustomizableFieldGroup {
 /**
  * Complete mission template definition.
  */
-export interface MissionTemplate {
+interface MissionTemplate {
   /** Unique template identifier */
   id: string;
   /** Template display name */
@@ -356,7 +356,7 @@ export interface MissionTemplate {
 /**
  * Minimal template info for list views.
  */
-export interface MissionTemplateListItem {
+interface MissionTemplateListItem {
   id: string;
   name: string;
   description: string;
@@ -377,7 +377,7 @@ export interface MissionTemplateListItem {
 /**
  * Result of rendering a template with custom values.
  */
-export interface TemplateRenderResult {
+interface TemplateRenderResult {
   /** Whether rendering succeeded */
   success: boolean;
   /** Rendered mission YAML (if success) */
@@ -389,7 +389,7 @@ export interface TemplateRenderResult {
 /**
  * Validation error for template rendering.
  */
-export interface TemplateValidationError {
+interface TemplateValidationError {
   /** Field key that failed validation */
   field: string;
   /** Error message */
@@ -401,7 +401,7 @@ export interface TemplateValidationError {
 /**
  * Values provided for template customization.
  */
-export type TemplateCustomValues = Record<string, string | number | boolean | string[]>;
+type TemplateCustomValues = Record<string, string | number | boolean | string[]>;
 
 // ============================================================================
 // Template API Types
@@ -410,7 +410,7 @@ export type TemplateCustomValues = Record<string, string | number | boolean | st
 /**
  * Request to list available templates.
  */
-export interface ListTemplatesRequest {
+interface ListTemplatesRequest {
   /** Filter by category */
   category?: TemplateCategory;
   /** Filter by difficulty */
@@ -436,7 +436,7 @@ export interface ListTemplatesRequest {
 /**
  * Response from listing templates.
  */
-export interface ListTemplatesResponse {
+interface ListTemplatesResponse {
   /** Templates matching the query */
   templates: MissionTemplateListItem[];
   /** Total count (for pagination) */
@@ -448,7 +448,7 @@ export interface ListTemplatesResponse {
 /**
  * Request to get a single template by ID.
  */
-export interface GetTemplateRequest {
+interface GetTemplateRequest {
   /** Template ID */
   id: string;
   /** Whether to check prerequisites */
@@ -458,7 +458,7 @@ export interface GetTemplateRequest {
 /**
  * Response from getting a template.
  */
-export interface GetTemplateResponse {
+interface GetTemplateResponse {
   /** Full template details */
   template: MissionTemplate;
   /** Prerequisite status (if requested) */
@@ -468,7 +468,7 @@ export interface GetTemplateResponse {
 /**
  * Request to render a template with custom values.
  */
-export interface RenderTemplateRequest {
+interface RenderTemplateRequest {
   /** Template ID */
   templateId: string;
   /** Custom field values */
@@ -480,7 +480,7 @@ export interface RenderTemplateRequest {
 /**
  * Response from rendering a template.
  */
-export interface RenderTemplateResponse {
+interface RenderTemplateResponse {
   /** Render result */
   result: TemplateRenderResult;
   /** Created mission ID (if not validateOnly) */
@@ -490,7 +490,7 @@ export interface RenderTemplateResponse {
 /**
  * Request to check template prerequisites.
  */
-export interface CheckPrerequisitesRequest {
+interface CheckPrerequisitesRequest {
   /** Template ID */
   templateId: string;
 }
@@ -498,7 +498,7 @@ export interface CheckPrerequisitesRequest {
 /**
  * Response from prerequisite check.
  */
-export interface CheckPrerequisitesResponse {
+interface CheckPrerequisitesResponse {
   /** Prerequisite status */
   status: PrerequisiteStatus;
 }
@@ -510,7 +510,7 @@ export interface CheckPrerequisitesResponse {
 /**
  * Filter options for template browsing.
  */
-export interface TemplateFilters {
+interface TemplateFilters {
   /** Selected categories */
   categories?: TemplateCategory[];
   /** Selected difficulties */
@@ -528,7 +528,7 @@ export interface TemplateFilters {
 /**
  * Sort options for templates.
  */
-export interface TemplateSort {
+interface TemplateSort {
   /** Sort field */
   field: 'name' | 'usageCount' | 'rating' | 'updatedAt' | 'difficulty';
   /** Sort direction */
@@ -542,7 +542,7 @@ export interface TemplateSort {
 /**
  * IDs of recommended starter templates for onboarding.
  */
-export const ONBOARDING_TEMPLATE_IDS = [
+const ONBOARDING_TEMPLATE_IDS = [
   'getting-started',
   'web-scan-basic',
   'network-discovery',
@@ -553,7 +553,7 @@ export const ONBOARDING_TEMPLATE_IDS = [
 /**
  * All template categories as array.
  */
-export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
+const TEMPLATE_CATEGORIES: TemplateCategory[] = [
   'reconnaissance',
   'vulnerability-scan',
   'compliance',
@@ -566,7 +566,7 @@ export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
 /**
  * All template difficulties as array.
  */
-export const TEMPLATE_DIFFICULTIES: TemplateDifficulty[] = [
+const TEMPLATE_DIFFICULTIES: TemplateDifficulty[] = [
   'beginner',
   'intermediate',
   'advanced',
