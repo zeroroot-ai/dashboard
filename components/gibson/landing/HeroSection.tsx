@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Typewriter } from "@/components/gibson/landing/Typewriter";
 import type { TypewriterMessage } from "@/components/gibson/landing/Typewriter";
 import { Brain } from "@/components/layout/logo";
+import { hero } from "@/src/lib/messaging";
 
 /**
  * Proper nouns the Typewriter paints in primary (brand green). Listed by
@@ -218,12 +219,13 @@ export function HeroSection() {
       />
 
       <div className="relative z-10 mx-auto max-w-6xl flex flex-col items-center gap-10">
-        {/* Brand-led opener, section tag + the page's value claim promoted
-         *  from below the CTAs to the focal point. One phrase highlighted in
-         *  primary, brand-guide-style. No fake version strings or telemetry. */}
+        {/* Brand-led opener: umbrella eyebrow, the Gibson signature line as the
+         *  focal headline (engine name highlighted in primary), then the
+         *  outcome subhead. All copy comes from the canonical messaging module
+         *  (src/lib/messaging.ts) so this surface can't drift (#886/#885). */}
         <div className="flex w-full flex-col items-start gap-0">
           <div className="font-mono text-[11px] uppercase tracking-[0.32em] text-muted-foreground">
-            {"// agent platform for security & ops teams"}
+            {hero.eyebrow}
           </div>
           <h1
             className="m-0 font-mono font-extrabold tracking-tight text-foreground whitespace-nowrap"
@@ -234,12 +236,11 @@ export function HeroSection() {
               marginBlock: 0,
             }}
           >
-            <span className="text-highlight">Zero Trust</span>{" "}
-            agent control plane in under an hour.
+            <span className="text-highlight">{hero.headlineHighlight}</span>{" "}
+            {hero.headlineRest}
           </h1>
           <p className="mt-3 max-w-2xl font-mono text-sm md:text-base leading-relaxed text-muted-foreground">
-            Agents run where you work: laptop, CI, k8s. Identity, missions,
-            shared memory, and audit run in the control plane.
+            {hero.subhead}
           </p>
         </div>
 
@@ -262,7 +263,7 @@ export function HeroSection() {
         <div className="flex flex-col items-center gap-3">
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="default" size="lg" asChild>
-              <Link href="/pricing">Start Free</Link>
+              <Link href="/pricing">{hero.ctaPrimary}</Link>
             </Button>
             <Button variant="outline" size="lg" asChild>
               <a
@@ -272,7 +273,7 @@ export function HeroSection() {
                 className="flex items-center gap-2"
               >
                 <Github className="h-4 w-4" />
-                Star the ADK
+                {hero.ctaSecondary}
               </a>
             </Button>
           </div>
@@ -280,7 +281,7 @@ export function HeroSection() {
             href="/docs"
             className="font-mono text-xs text-muted-foreground underline-offset-4 hover:text-link hover:underline"
           >
-            first agent live in under an hour. See the quickstart →
+            {hero.quickstart} →
           </Link>
         </div>
       </div>
