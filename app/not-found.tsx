@@ -20,7 +20,7 @@ export default function NotFound() {
             <Link href="/dashboard">Go back home</Link>
           </Button>
           <Button size="lg" variant="ghost" asChild>
-            <Link href="/contact-sales">
+            <Link href="https://www.zeroroot.ai/contact-sales">
               Contact support <ArrowRight className="ms-2 h-4 w-4" />
             </Link>
           </Button>

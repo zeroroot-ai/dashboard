@@ -574,7 +574,7 @@ function SignupFormInner({
                     {planDisplayName}
                   </strong>
                   <Link
-                    href="/pricing"
+                    href="https://www.zeroroot.ai/pricing"
                     className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground transition-colors"
                     tabIndex={isDisabled ? -1 : undefined}
                   >

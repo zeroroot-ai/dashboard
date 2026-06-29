@@ -1,89 +1,30 @@
-import Link from 'next/link';
-import { HeroSection } from '@/components/gibson/landing/HeroSection';
-import { TrustBar } from '@/components/gibson/landing/TrustBar';
-import { WhyBlocked } from '@/components/gibson/landing/WhyBlocked';
-import { WhatYouGet } from '@/components/gibson/landing/WhatYouGet';
-import { WhatYouRunItOn } from '@/components/gibson/landing/WhatYouRunItOn';
-import { Production } from '@/components/gibson/landing/Production';
-import { DashboardShowcase } from '@/components/gibson/landing/DashboardShowcase';
-import { GibsonBrain } from '@/components/gibson/landing/GibsonBrain';
-import { SiteHeader } from '@/components/gibson/site-header';
-import { lockup } from '@/src/lib/messaging';
+/**
+ * Root page — self-hosted front door.
+ *
+ * ADR-0006 / deploy#1033: the marketing surface (home / pricing / contact-sales)
+ * has moved to the SaaS-only www-svc (zeroroot-ai/www) served at www.zeroroot.ai.
+ * The dashboard no longer serves go-to-market pages.
+ *
+ * Per ADR-0006: self-hosted `GET /` = the **login** page.
+ *
+ * On the SaaS deployment the dashboard is served at app.zeroroot.ai. The Envoy
+ * www vhost routes to the www-svc nginx instead of this app, so this file is
+ * never served at www.zeroroot.ai in SaaS. When HOST_SPLIT is active (SaaS),
+ * the middleware already redirects app.zeroroot.ai `/` to `/dashboard` before
+ * this component is reached.
+ *
+ * On self-hosted, WWW_URL is unset so HOST_SPLIT is null and the middleware
+ * does not redirect `/`. This root page then serves as the front door, and the
+ * correct front door for a self-hosted install with no marketing surface is the
+ * login page.
+ *
+ * References: dashboard#823 (dashboard sheds go-to-market), deploy#1033.
+ */
 
-export const metadata = {
-  title: 'zeroroot.ai: the zero-trust agent factory',
-  description:
-    'Build any agent on a zero-trust substrate. Gibson, the flagship security engine, thinks in attack paths, builds a living model of your environment, and replays every move, for the teams breaking in and the teams locking down.',
-};
+import { redirect } from "next/navigation";
 
-type FooterLink = {
-  label: string;
-  href: string;
-  external?: boolean;
-};
-
-const footerLinks: FooterLink[] = [
-  { label: 'docs', href: '/docs' },
-  { label: 'discord', href: 'https://discord.gg/zeroroot-ai', external: true },
-  { label: 'github', href: 'https://github.com/zeroroot-ai/adk', external: true },
-  { label: 'pricing', href: '/pricing' },
-];
+export const dynamic = "force-dynamic";
 
 export default function RootPage() {
-  return (
-    <div className="bg-zd-gradient relative min-h-screen text-foreground">
-      <SiteHeader />
-      <main>
-        <HeroSection />
-        <TrustBar />
-        <DashboardShowcase />
-        <GibsonBrain />
-        <WhyBlocked />
-        <WhatYouGet />
-        <WhatYouRunItOn />
-        <Production />
-        <section className="border-t border-border py-10">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-4 gap-y-3 px-4 font-mono text-sm">
-            {footerLinks.map((link, i) => {
-              const anchor = link.external ? (
-                <a
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-foreground hover:text-link"
-                >
-                  {link.label}
-                </a>
-              ) : (
-                <Link
-                  href={link.href}
-                  className="text-foreground hover:text-link"
-                >
-                  {link.label}
-                </Link>
-              );
-
-              return (
-                <span
-                  key={link.label}
-                  className="flex items-center gap-x-4"
-                >
-                  {i > 0 && (
-                    <span aria-hidden="true" className="text-border">
-                      ·
-                    </span>
-                  )}
-                  {anchor}
-                </span>
-              );
-            })}
-          </div>
-        </section>
-      </main>
-      <footer className="border-t border-border py-8 text-center font-mono text-xs text-foreground opacity-90">
-        <p className="mb-2 text-sm text-foreground/90">{lockup.line}</p>
-        <p>&copy; {new Date().getFullYear()} {lockup.signature}</p>
-      </footer>
-    </div>
-  );
+  redirect("/login");
 }

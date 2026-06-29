@@ -15,10 +15,20 @@ const cfg: HostSplitConfig = {
 };
 
 describe("isMarketingPath", () => {
-  it("treats root + marketing prefixes as marketing", () => {
-    for (const p of ["/", "/pricing", "/docs", "/docs/getting-started", "/contact-sales"]) {
+  it("treats marketing prefixes as marketing (deploy#1033: pricing/contact-sales moved to www-svc)", () => {
+    // ADR-0006 / deploy#1033: pricing and contact-sales are no longer served
+    // by the dashboard — they live in the SaaS-only www-svc (www.zeroroot.ai).
+    // They ARE still in MARKETING_PREFIXES so that requests to app.<domain>/pricing
+    // redirect to the canonical marketing host rather than 404.
+    for (const p of ["/pricing", "/docs", "/docs/getting-started", "/contact-sales"]) {
       expect(isMarketingPath(p)).toBe(true);
     }
+  });
+  it("root '/' is NOT a marketing path (handled separately as app-root → /dashboard)", () => {
+    // ADR-0006: on the app host, '/' → /dashboard (not www).
+    // The root is no longer a marketing landing — it redirects to /login (self-hosted)
+    // or /dashboard (SaaS, via app-root special case in decideHostSplit).
+    expect(isMarketingPath("/")).toBe(false);
   });
   it("treats product paths as non-marketing", () => {
     for (const p of ["/dashboard", "/login", "/signup", "/dashboard/missions", "/pricingx"]) {
@@ -39,7 +49,7 @@ describe("isNeutralPath", () => {
     }
   });
   it("does not flag product/marketing paths", () => {
-    for (const p of ["/", "/dashboard", "/pricing"]) {
+    for (const p of ["/dashboard", "/pricing"]) {
       expect(isNeutralPath(p)).toBe(false);
     }
   });
@@ -84,13 +94,15 @@ describe("loadHostSplitConfig", () => {
 });
 
 describe("decideHostSplit", () => {
-  it("serves marketing paths on www", () => {
-    for (const p of ["/", "/pricing", "/docs/x", "/contact-sales"]) {
+  it("serves marketing paths on www (pass, in case dashboard is the www backend in dev)", () => {
+    // ADR-0006 / deploy#1033: in SaaS, www requests go to gibson_www_svc (nginx),
+    // not the dashboard. In dev, they may arrive here — marketing paths pass.
+    for (const p of ["/pricing", "/docs/x", "/contact-sales"]) {
       expect(decideHostSplit("www.zeroroot.ai", p, "", cfg)).toEqual({ kind: "pass" });
     }
   });
 
-  it("redirects product paths on www to the app host (preserving query)", () => {
+  it("redirects product/auth paths on www to the app host (preserving query)", () => {
     expect(decideHostSplit("www.zeroroot.ai", "/dashboard/missions", "?q=1", cfg)).toEqual({
       kind: "redirect",
       url: "https://app.zeroroot.ai:30443/dashboard/missions?q=1",
@@ -101,14 +113,16 @@ describe("decideHostSplit", () => {
     });
   });
 
-  it("redirects app root to /dashboard", () => {
+  it("redirects app root to /dashboard (unauthenticated → /login via auth middleware)", () => {
     expect(decideHostSplit("app.zeroroot.ai", "/", "", cfg)).toEqual({
       kind: "redirect",
       url: "https://app.zeroroot.ai:30443/dashboard",
     });
   });
 
-  it("redirects marketing paths on app to the www host", () => {
+  it("redirects marketing paths on app to the www host (deploy#1033: canonical www-svc origin)", () => {
+    // /pricing and /contact-sales no longer live in the dashboard.
+    // Requests that arrive at app.<domain>/pricing redirect to www (old bookmarks, etc.).
     expect(decideHostSplit("app.zeroroot.ai", "/pricing", "", cfg)).toEqual({
       kind: "redirect",
       url: "https://www.zeroroot.ai:30443/pricing",
@@ -116,6 +130,10 @@ describe("decideHostSplit", () => {
     expect(decideHostSplit("app.zeroroot.ai", "/docs/intro", "", cfg)).toEqual({
       kind: "redirect",
       url: "https://www.zeroroot.ai:30443/docs/intro",
+    });
+    expect(decideHostSplit("app.zeroroot.ai", "/contact-sales", "", cfg)).toEqual({
+      kind: "redirect",
+      url: "https://www.zeroroot.ai:30443/contact-sales",
     });
   });
 

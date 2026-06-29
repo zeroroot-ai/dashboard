@@ -3,31 +3,17 @@ import type { MetadataRoute } from "next";
 /**
  * sitemap.xml (Next.js metadata route).
  *
- * Only the public marketing surface belongs in the sitemap — the same
- * prefixes isMarketingPath() serves on the www host (src/lib/host-routing.ts).
- * Everything else is auth-walled product and is disallowed in robots.ts.
+ * ADR-0006 / deploy#1033: the marketing surface (home / pricing / contact-sales)
+ * has moved to the SaaS-only www.zeroroot.ai site. The dashboard no longer
+ * serves go-to-market pages.
  *
- * Keep this list in sync with the marketing prefixes and the landing footer.
+ * The product sitemap is intentionally empty — all auth-walled product paths
+ * are disallowed in robots.ts and should not be indexed.
  *
- * Pinned to the canonical production origin: a sitemap always advertises the
- * canonical (prod) URLs regardless of which environment serves the file, and
- * non-prod hosts are `Disallow: /` in robots.ts so they are never indexed.
+ * The canonical marketing sitemap lives at https://www.zeroroot.ai/sitemap.xml
+ * (served by the www-svc, zeroroot-ai/www). dashboard#823.
  */
-const MARKETING_ORIGIN = "https://www.zeroroot.ai";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
-  const routes: Array<{ path: string; priority: number; changeFrequency: "daily" | "weekly" | "monthly" }> = [
-    { path: "/", priority: 1.0, changeFrequency: "weekly" },
-    { path: "/pricing", priority: 0.9, changeFrequency: "weekly" },
-    { path: "/docs", priority: 0.8, changeFrequency: "daily" },
-    { path: "/contact-sales", priority: 0.5, changeFrequency: "monthly" },
-  ];
-
-  return routes.map(({ path, priority, changeFrequency }) => ({
-    url: `${MARKETING_ORIGIN}${path}`,
-    lastModified: now,
-    changeFrequency,
-    priority,
-  }));
+  return [];
 }

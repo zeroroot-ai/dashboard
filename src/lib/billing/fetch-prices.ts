@@ -109,7 +109,9 @@ export async function fetchStripePricesUncached(): Promise<StripePriceMap> {
  * argument is empty because the input space is trivial (no per-request
  * variation).
  */
-export const fetchStripePrices = unstable_cache(
+// Not currently used externally (pricing page moved to www-svc, deploy#1033).
+// Kept as a cached wrapper for future consumption (e.g. signup page price display).
+const fetchStripePrices = unstable_cache(
   fetchStripePricesUncached,
   ['stripe-prices'],
   {

@@ -8,7 +8,7 @@
 import type { Plan, PlanID } from "@/src/generated/plans";
 import { plans } from "@/src/generated/plans";
 
-export interface PricingTierDisplay {
+interface PricingTierDisplay {
   id: PlanID;
   name: string;
   tagline: string;
