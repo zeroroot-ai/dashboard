@@ -56,10 +56,26 @@ type LlmCall = {
   promptTokens: number;
   completionTokens: number;
 };
+// WorkItem is one unit of work folded into the frame (PRD #1059 M2, gibson#1061):
+// an agent run, tool execution, or plugin invocation, with its status as-of the
+// scrubbed tick. status "running" is in-flight; done/failed/skipped are terminal.
+type WorkItem = {
+  id: string;
+  missionId: string;
+  kind: string;
+  target: string;
+  status: string;
+};
 
 /** The entity slice rendered by the tables + graph — either the live World or
- *  a server-folded replay frame. */
-type Frame = { missions: Mission[]; hosts: Host[]; findings: Finding[] };
+ *  a server-folded replay frame. `work` is the mission's WorkItems reconstructed
+ *  as-of the frame (in-flight + terminal). */
+type Frame = {
+  missions: Mission[];
+  hosts: Host[];
+  findings: Finding[];
+  work: WorkItem[];
+};
 
 // LLM calls are read from the live World (GetFrameAt folds entities, not the
 // call log), so they live on WorldData rather than the scrubbable Frame.
@@ -74,6 +90,18 @@ function severityVariant(s: string): "destructive" | "secondary" | "outline" {
 
 function statusVariant(s: string): "default" | "secondary" {
   return s === "completed" ? "secondary" : "default";
+}
+
+// workStatusVariant maps a WorkItem status to a Badge variant. "running" (the
+// in-flight set) is emphasized as default; a failure is destructive; the other
+// terminal/queued states are quiet.
+function workStatusVariant(
+  s: string,
+): "default" | "destructive" | "secondary" | "outline" {
+  if (s === "running") return "default";
+  if (s === "failed") return "destructive";
+  if (s === "done") return "secondary";
+  return "outline";
 }
 
 /**
@@ -126,7 +154,10 @@ export function BrainView({ mission }: { mission?: string }) {
         if (!res.ok) throw new Error(`world read failed (${res.status})`);
         const json = (await res.json()) as WorldData;
         if (!active) return;
-        setData(json);
+        // The live /api/world read carries no work (there is no ListWork RPC;
+        // work is reconstructed per-frame), so default it — the Work panel binds
+        // to the mission-scoped folded frame, which always supplies work.
+        setData({ ...json, work: json.work ?? [] });
         // The playback controller advances the scrub head when following the
         // tail (it observes `total` growing), so no manual scrub bump here.
         setError(null);
@@ -166,7 +197,7 @@ export function BrainView({ mission }: { mission?: string }) {
           });
           if (!res.ok) return;
           const json = (await res.json()) as Frame;
-          setFrame(json);
+          setFrame({ ...json, work: json.work ?? [] });
         } catch {
           /* aborted or transient — keep the last frame */
         }
@@ -413,6 +444,51 @@ export function BrainView({ mission }: { mission?: string }) {
                     <TableCell className="font-mono text-muted-foreground">{f.address}</TableCell>
                   </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Work folds into the frame (PRD #1059 M2, gibson#1061): the mission's
+          in-flight + terminal WorkItems reconstructed as-of the scrubbed tick.
+          Bound to the mission-scoped frame, an item appears at its dispatch tick
+          (status "running") and reaches a terminal status at its completion tick,
+          so the panel reconstructs in step with the Scroller. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Work</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {view.work.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No work in flight yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Target</TableHead>
+                  <TableHead>Kind</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {/* In-flight (running) work first, so what the run is actively
+                    doing at this tick is at the top; then terminal work. */}
+                {[...view.work]
+                  .sort((a, b) => {
+                    const rank = (s: string) => (s === "running" ? 0 : 1);
+                    const d = rank(a.status) - rank(b.status);
+                    return d !== 0 ? d : a.id.localeCompare(b.id);
+                  })
+                  .map((w) => (
+                    <TableRow key={w.id}>
+                      <TableCell className="font-mono">{w.target}</TableCell>
+                      <TableCell className="text-muted-foreground">{w.kind}</TableCell>
+                      <TableCell>
+                        <Badge variant={workStatusVariant(w.status)}>{w.status}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           )}

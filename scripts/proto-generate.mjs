@@ -189,16 +189,15 @@ function buildWorkspace() {
       '  - path: gibson-local',
       '    excludes:',
       '      - gibson-local/gibson/auth',
-      // The dashboard consumes only the three ex-platform-sdk platform
-      // services (billing / operator / discovery) plus session + world
-      // from the daemon-local tree. session_pb.ts and world_pb.ts are
-      // already committed and are not re-sourced here to keep the
-      // platform-sdk dissolution (gibson#781) change minimal; user is not
-      // consumed by the dashboard. Exclude them so this regen only emits
-      // the billing/operator/discovery bindings being relocated.
+      // The dashboard consumes the three ex-platform-sdk platform services
+      // (billing / operator / discovery) plus session + world from the
+      // daemon-local tree. session_pb.ts is already committed and is not
+      // re-sourced here; user is not consumed by the dashboard. world is
+      // re-sourced (the exclusion was lifted in gibson#1061 so the World
+      // bindings — WorkItemView and the rest — regenerate properly from the
+      // daemon-local proto rather than being hand-edited). Exclude the rest.
       '      - gibson-local/gibson/session',
       '      - gibson-local/gibson/user',
-      '      - gibson-local/gibson/world',
       // protovalidate provides the (buf.validate.field).* annotations
       // adopted by the SDK from v1.5.0 onward. Pulled from the buf.build
       // remote registry; resolved by `buf dep update` invoked below.

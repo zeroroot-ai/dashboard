@@ -58,6 +58,16 @@ export async function GET(req: NextRequest) {
         address: f.address,
         severity: f.severity,
       })),
+      // The mission's WorkItems reconstructed as-of the fold (PRD #1059 M2,
+      // gibson#1061): in-flight (status "running") + terminal work. Mission-
+      // scoped when `mission` is set; all tenant work otherwise.
+      work: frame.work.map((w) => ({
+        id: w.id,
+        missionId: w.missionId,
+        kind: w.kind,
+        target: w.target,
+        status: w.status,
+      })),
     });
   } catch (error) {
     return daemonErrorResponse(error);
