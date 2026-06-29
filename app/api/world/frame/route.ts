@@ -86,6 +86,21 @@ export async function GET(req: NextRequest) {
         outcome: d.outcome,
         rationale: d.rationale,
       })),
+      // The mission's LLM calls reconstructed as-of the fold (PRD #1059 M2,
+      // gibson#1063): the call metadata (model + token counts + provenance)
+      // for every call issued up to this tick, so token/cost/provenance line
+      // up with the scrubbed frame. A call is attributed to the mission via
+      // the run_id -> WorkItem -> mission linkage. Mission-scoped when
+      // `mission` is set; all tenant calls otherwise. Transcripts stay behind
+      // GET /api/world/llm-call.
+      llmCalls: frame.llmCalls.map((c) => ({
+        callId: c.callId,
+        runId: c.runId,
+        model: c.model,
+        scopeId: c.scopeId,
+        promptTokens: c.promptTokens,
+        completionTokens: c.completionTokens,
+      })),
     });
   } catch (error) {
     return daemonErrorResponse(error);
