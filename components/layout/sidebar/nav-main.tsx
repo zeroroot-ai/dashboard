@@ -23,6 +23,7 @@ import {
   CrosshairIcon,
   ClipboardCheckIcon,
   ClipboardListIcon,
+  GlobeIcon,
   LayoutDashboardIcon,
   ListTreeIcon,
   MessageSquareIcon,
@@ -85,6 +86,11 @@ export const navItems: NavGroup[] = [
         title: "Mission Results",
         href: "/dashboard/results",
         icon: ClipboardListIcon
+      },
+      {
+        title: "World",
+        href: "/dashboard/world",
+        icon: GlobeIcon
       },
       {
         title: "Findings",
