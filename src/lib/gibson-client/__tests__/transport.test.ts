@@ -23,6 +23,7 @@ type Interceptor = (
 interface MockReq {
   header: Headers;
   method?: { name?: string };
+  service?: { typeName?: string };
 }
 
 let capturedInterceptors: Interceptor[] = [];
@@ -61,6 +62,14 @@ vi.mock('@/src/lib/metrics/gibson-admin', () => ({
   adminEnvoyUpstreamErrorsTotal: { inc: vi.fn() },
 }));
 
+// Per-RPC authz bake-in (dashboard#848). Stubbed to a no-op pass here so the
+// header-contract tests exercise the auth interceptor in isolation; a dedicated
+// describe-block below asserts WHICH wrapper runs it and with which method.
+const mockAssertAuthorized = vi.fn(async (_method: string): Promise<void> => {});
+vi.mock('@/src/lib/auth/assert-authorized', () => ({
+  assertAuthorized: (method: string) => mockAssertAuthorized(method),
+}));
+
 const FAKE_SERVICE = {} as never;
 
 /**
@@ -69,7 +78,11 @@ const FAKE_SERVICE = {} as never;
  */
 async function runInterceptors(): Promise<Headers> {
   const reqHeaders = new Headers();
-  const mockReq: MockReq = { header: reqHeaders, method: { name: 'Test' } };
+  const mockReq: MockReq = {
+    header: reqHeaders,
+    method: { name: 'Test' },
+    service: { typeName: 'gibson.test.v1.TestService' },
+  };
   const terminal = async (req: MockReq) => req;
   const composed = capturedInterceptors.reduceRight(
     (next: (req: MockReq) => Promise<unknown>, interceptor) => interceptor(next),
@@ -115,5 +128,43 @@ describe('single daemon transport wrappers', () => {
     const headers = await runInterceptors();
     expect(headers.get('Authorization')).toBe('Bearer user-token');
     expect(headers.has('x-gibson-tenant')).toBe(false);
+  });
+});
+
+describe('per-RPC authz bake-in (dashboard#848)', () => {
+  beforeEach(() => {
+    capturedInterceptors = [];
+    vi.clearAllMocks();
+  });
+
+  it('userClient runs assertAuthorized with the descriptor-derived method path', async () => {
+    const { userClient } = await import('../transport');
+    userClient(FAKE_SERVICE);
+    await runInterceptors();
+    expect(mockAssertAuthorized).toHaveBeenCalledTimes(1);
+    expect(mockAssertAuthorized).toHaveBeenCalledWith(
+      '/gibson.test.v1.TestService/Test',
+    );
+  });
+
+  it('serviceClient does NOT run assertAuthorized (SERVICE-acting, no user)', async () => {
+    const { serviceClient } = await import('../transport');
+    serviceClient(FAKE_SERVICE, 'explicit-tenant');
+    await runInterceptors();
+    expect(mockAssertAuthorized).not.toHaveBeenCalled();
+  });
+
+  it('bootstrapClient does NOT run assertAuthorized (pre-tenant bootstrap)', async () => {
+    const { bootstrapClient } = await import('../transport');
+    bootstrapClient(FAKE_SERVICE);
+    await runInterceptors();
+    expect(mockAssertAuthorized).not.toHaveBeenCalled();
+  });
+
+  it('a denial from assertAuthorized rejects the RPC before it reaches the wire', async () => {
+    mockAssertAuthorized.mockRejectedValueOnce(new Error('denied'));
+    const { userClient } = await import('../transport');
+    userClient(FAKE_SERVICE);
+    await expect(runInterceptors()).rejects.toThrow('denied');
   });
 });

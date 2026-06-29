@@ -227,6 +227,44 @@ function spiffeNodeOptions():
 }
 
 // ---------------------------------------------------------------------------
+// Per-RPC authorization interceptor (dashboard#848, E9 follow-up).
+//
+// Bakes the server-side `assertAuthorized` defense-in-depth check INTO the
+// user-acting transport, keyed off the typed method descriptor, so every
+// user-acting RPC is registry-gated at the wrapper rather than relying on
+// ~60 server actions each remembering to call `assertAuthorized(...)` by hand.
+//
+//   - The method path is derived from the descriptor as
+//     `/${service.typeName}/${method.name}`, exactly matching the AuthRegistry
+//     key shape (e.g. `/gibson.tenant.v1.SecretsService/SetSecret`).
+//   - `assertAuthorized` is fail-closed: an unknown method throws
+//     `AuthzDeniedError(unknown_method)` before the request leaves the process.
+//   - It SKIPS registry entries marked `unauthenticated` (the bootstrap path),
+//     returning without consulting the session — though those RPCs run through
+//     `bootstrapClient`, which does NOT enable this interceptor anyway.
+//   - On denial it throws `AuthzDeniedError`, which the caller's existing error
+//     handling surfaces as `permission_denied`.
+//
+// `assertAuthorized` is loaded lazily via dynamic import to break the module
+// cycle transport.ts → auth/assert-authorized → auth/membership →
+// gibson-client/transport.ts (membership uses `bootstrapClient`). The same
+// lazy-load pattern is used for `correlation` above.
+//
+// ONLY `userClient` enables this interceptor. `serviceClient` is
+// SERVICE-acting (no user session to gate against) and `bootstrapClient` runs
+// the pre-tenant membership bootstrap; both keep their no-user-context
+// contracts and never run `assertAuthorized`.
+// ---------------------------------------------------------------------------
+
+const authzInterceptor: Interceptor = (next) => async (req) => {
+  const method = `/${req.service.typeName}/${req.method.name}`;
+  // Lazy import to break the transport ↔ assert-authorized ↔ membership cycle.
+  const { assertAuthorized } = await import('../auth/assert-authorized');
+  await assertAuthorized(method);
+  return next(req);
+};
+
+// ---------------------------------------------------------------------------
 // Module-private low-level factory.
 //
 // `makeClient` is NOT exported. It is the single owner of the ConnectRPC
@@ -250,6 +288,7 @@ function makeClient<T extends DescService>(
   service: T,
   getToken: () => Promise<string>,
   getTenant: () => Promise<TenantId>,
+  opts?: { enforceAuthz?: boolean },
 ): Client<T> {
   const authInterceptor: Interceptor = (next) => async (req) => {
     const [token, tenant] = await Promise.all([getToken(), getTenant()]);
@@ -277,6 +316,17 @@ function makeClient<T extends DescService>(
     return next(req);
   };
 
+  // Interceptor order (outermost first):
+  //   telemetry  → records every call, including a denial or token failure
+  //   authz      → user-acting only: registry-gates the RPC, fail-closed,
+  //                throws BEFORE the token is minted for a denied call
+  //   auth       → mints the bearer + tenant headers, last touch before wire
+  const interceptors: Interceptor[] = [telemetryInterceptor];
+  if (opts?.enforceAuthz) {
+    interceptors.push(authzInterceptor);
+  }
+  interceptors.push(authInterceptor);
+
   // Spec unified-identity-and-authorization Phase 4 (R2.5, R9.12):
   // dashboard pod presents an X509-SVID on the mTLS handshake to Envoy
   // when SPIFFE is wired. The Workload API socket only exists in
@@ -286,10 +336,7 @@ function makeClient<T extends DescService>(
   const transport = createGrpcTransport({
     baseUrl: ENVOY_BASE_URL,
     nodeOptions: spiffeNodeOptions(),
-    // Telemetry OUTSIDE auth so token failures still produce a status
-    // label. Auth INSIDE so it's the last thing to touch headers before
-    // the wire write.
-    interceptors: [telemetryInterceptor, authInterceptor],
+    interceptors,
   });
 
   return createClient(service, transport);
@@ -312,9 +359,17 @@ function makeClient<T extends DescService>(
  * the module-private {@link makeClient} with {@link requireUserToken} and
  * {@link getActiveTenant}, both of which are `react.cache()`-memoized so
  * multi-RPC renders share a single `auth()` + cookie read.
+ *
+ * Every RPC dispatched through this client is registry-gated by the baked-in
+ * {@link authzInterceptor} (`assertAuthorized`, dashboard#848): the wrapper
+ * itself runs the per-RPC defense-in-depth authz check, fail-closed on an
+ * unknown method, so a server action no longer has to remember to call
+ * `assertAuthorized(...)` by hand before each user-acting daemon call.
  */
 export function userClient<T extends DescService>(service: T): Client<T> {
-  return makeClient(service, requireUserToken, getActiveTenant);
+  return makeClient(service, requireUserToken, getActiveTenant, {
+    enforceAuthz: true,
+  });
 }
 
 /**

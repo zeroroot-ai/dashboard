@@ -26,6 +26,8 @@ type Interceptor = (next: (req: MockReq) => Promise<unknown>) => (req: MockReq) 
 
 interface MockReq {
   header: Headers;
+  method?: { name?: string };
+  service?: { typeName?: string };
 }
 
 let capturedInterceptors: Interceptor[] = [];
@@ -35,6 +37,12 @@ vi.mock('@connectrpc/connect-node', () => ({
     capturedInterceptors = opts.interceptors ?? [];
     return { _tag: 'mock-transport' };
   }),
+}));
+
+// userClient bakes in the per-RPC authz check (dashboard#848). Stub it to a
+// no-op so these header-injection tests stay focused on the auth interceptor.
+vi.mock('@/src/lib/auth/assert-authorized', () => ({
+  assertAuthorized: vi.fn(async () => {}),
 }));
 
 vi.mock('@connectrpc/connect', async (importActual) => {
@@ -82,7 +90,11 @@ vi.mock('@/src/lib/auth/active-tenant', () => ({
  */
 async function runInterceptors(existingHeaders?: Record<string, string>): Promise<Headers> {
   const reqHeaders = new Headers(existingHeaders);
-  const mockReq: MockReq = { header: reqHeaders };
+  const mockReq: MockReq = {
+    header: reqHeaders,
+    method: { name: 'Test' },
+    service: { typeName: 'gibson.test.v1.TestService' },
+  };
 
   // Build the terminal "next" handler (identity, just returns a resolved promise).
   const terminal = async (req: MockReq) => req;
