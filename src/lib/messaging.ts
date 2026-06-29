@@ -31,7 +31,7 @@ export const umbrella = {
 } as const;
 
 /** One Gibson flagship pillar: a buyer-legible outcome, no jargon. */
-export interface Pillar {
+interface Pillar {
   readonly title: string;
   readonly body: string;
 }
@@ -57,9 +57,9 @@ export const pillars: readonly Pillar[] = [
 ] as const;
 
 /** Which side of the line a persona sits on. The engine serves all four. */
-export type PersonaSide = "offense" | "defense" | "purple" | "platform";
+type PersonaSide = "offense" | "defense" | "purple" | "platform";
 
-export interface Persona {
+interface Persona {
   readonly label: string;
   readonly side: PersonaSide;
 }
