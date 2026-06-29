@@ -31,6 +31,10 @@ interface WorldGraphProps {
   missions: WorldGraphMission[];
   hosts: WorldGraphHost[];
   findings: WorldGraphFinding[];
+  /** Node ids to highlight (the entities introduced/changed at the selected tick). */
+  highlightNodeIds?: string[];
+  /** Edge ids to highlight (the relationships introduced at the selected tick). */
+  highlightEdgeIds?: string[];
 }
 
 const hostId = (scopeId: string, address: string) => `host:${scopeId}/${address}`;
@@ -109,11 +113,27 @@ export function worldToGraph(
  * projection of whatever frame the Scroller is showing — live World or a folded
  * replay frame — so scrubbing re-renders the graph at that point in time.
  */
-export function WorldGraph({ missions, hosts, findings }: WorldGraphProps) {
+export function WorldGraph({
+  missions,
+  hosts,
+  findings,
+  highlightNodeIds,
+  highlightEdgeIds,
+}: WorldGraphProps) {
   const { nodes, edges } = useMemo(
     () => worldToGraph(missions, hosts, findings),
     [missions, hosts, findings],
   );
+
+  // Highlight the delta introduced at the selected tick (gibson#1059). The
+  // GraphCanvas dims everything outside the highlight set, so an empty set must
+  // mean "no highlight" rather than "dim everything" — pass undefined then.
+  const highlightedPaths = useMemo(() => {
+    const node_ids = highlightNodeIds ?? [];
+    const edge_ids = highlightEdgeIds ?? [];
+    if (node_ids.length === 0 && edge_ids.length === 0) return undefined;
+    return [{ node_ids, edge_ids }];
+  }, [highlightNodeIds, highlightEdgeIds]);
 
   if (nodes.length === 0) {
     return (
@@ -124,6 +144,7 @@ export function WorldGraph({ missions, hosts, findings }: WorldGraphProps) {
   return (
     <div className="relative h-[480px] w-full overflow-hidden rounded-md border border-border">
       <GraphCanvas
+        highlightedPaths={highlightedPaths}
         data={{
           nodes,
           edges,
