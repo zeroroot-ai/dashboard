@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { createRequire } from "node:module";
 
 /**
  * Token-contrast invariant, the keystone readability test for the single
@@ -57,31 +58,45 @@ function contrastRatio(lum1: number, lum2: number): number {
 }
 
 // ----------------------------------------------------------------------------
-// Parse the canonical :root token block from app/globals.css
+// Parse :root token blocks from CSS (supports multiple :root blocks and
+// @import'd sources like @zeroroot/brand/tokens.css — dashboard#909).
 // ----------------------------------------------------------------------------
 
-/** Extract the body of the first balanced `:root { ... }` block. */
-function firstRootBlock(css: string): string {
-  const start = css.indexOf(":root");
-  const open = css.indexOf("{", start);
-  let depth = 0;
-  for (let i = open; i < css.length; i++) {
-    if (css[i] === "{") depth++;
-    else if (css[i] === "}") {
-      depth--;
-      if (depth === 0) return css.slice(open + 1, i);
+/** Extract the bodies of ALL balanced `:root { ... }` blocks in a CSS string. */
+function allRootBlocks(css: string): string[] {
+  const blocks: string[] = [];
+  let search = 0;
+  while (true) {
+    const start = css.indexOf(":root", search);
+    if (start === -1) break;
+    const open = css.indexOf("{", start);
+    if (open === -1) break;
+    let depth = 0;
+    let end = -1;
+    for (let i = open; i < css.length; i++) {
+      if (css[i] === "{") depth++;
+      else if (css[i] === "}") {
+        depth--;
+        if (depth === 0) { end = i; break; }
+      }
     }
+    if (end === -1) break;
+    blocks.push(css.slice(open + 1, end));
+    search = end + 1;
   }
-  throw new Error("no balanced :root block found in globals.css");
+  if (blocks.length === 0) throw new Error("no :root block found in CSS");
+  return blocks;
 }
 
-function parseTokens(css: string): Map<string, string> {
-  const body = firstRootBlock(css);
+function parseTokensFromBlocks(blocks: string[]): Map<string, string> {
   const tokens = new Map<string, string>();
   const re = /(--[\w-]+)\s*:\s*([^;]+);/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(body)) !== null) {
-    tokens.set(m[1].trim(), m[2].trim());
+  for (const body of blocks) {
+    let m: RegExpExecArray | null;
+    re.lastIndex = 0;
+    while ((m = re.exec(body)) !== null) {
+      tokens.set(m[1].trim(), m[2].trim());
+    }
   }
   return tokens;
 }
@@ -103,11 +118,40 @@ function luminanceOf(name: string, tokens: Map<string, string>): number {
   return oklchLuminance(parseFloat(ok[1]), parseFloat(ok[2]), parseFloat(ok[3]));
 }
 
-const css = readFileSync(
-  resolve(process.cwd(), "app/globals.css"),
-  "utf8",
-);
-const tokens = parseTokens(css);
+/**
+ * Load tokens from app/globals.css plus any @import'd CSS files within the
+ * same directory tree (handles @zeroroot/brand/tokens.css — dashboard#909).
+ * Imports are resolved against node_modules and the file's own directory.
+ */
+function loadTokensFromGlobals(): Map<string, string> {
+  const globalsCss = readFileSync(resolve(process.cwd(), "app/globals.css"), "utf8");
+
+  // Collect all CSS text to scan for :root blocks.
+  const cssSources: string[] = [globalsCss];
+
+  // Resolve @import "@zeroroot/brand/tokens.css" and similar package imports.
+  const importRe = /@import\s+["']([^"']+)["']/g;
+  const req = createRequire(resolve(process.cwd(), "package.json"));
+  let imp: RegExpExecArray | null;
+  while ((imp = importRe.exec(globalsCss)) !== null) {
+    const importPath = imp[1];
+    // Skip relative imports to ./themes.css (handled inline) and Tailwind
+    // directives; only resolve bare package specifiers and absolute paths.
+    if (importPath.startsWith(".")) continue;
+    // Resolve from node_modules.
+    try {
+      const resolved = req.resolve(importPath);
+      cssSources.push(readFileSync(resolved, "utf8"));
+    } catch {
+      // Not resolvable in this environment — skip gracefully.
+    }
+  }
+
+  const allBlocks = cssSources.flatMap(allRootBlocks);
+  return parseTokensFromBlocks(allBlocks);
+}
+
+const tokens = loadTokensFromGlobals();
 
 // Normal-text foreground/background pairs, must clear AA 4.5:1.
 const TEXT_PAIRS: ReadonlyArray<[fg: string, bg: string]> = [
