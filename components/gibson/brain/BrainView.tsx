@@ -29,6 +29,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorldGraph } from "@/components/gibson/brain/WorldGraph";
 import { SPEED_OPTIONS, usePlayback } from "@/components/gibson/brain/playback";
+import { TickInspector } from "@/components/gibson/brain/TickInspector";
+import { diffFrames, type FrameDiff } from "@/components/gibson/brain/frame-diff";
 
 type Mission = { id: string; goal: string; status: string; reason: string };
 type Host = {
@@ -95,6 +97,11 @@ export function BrainView({ mission }: { mission?: string }) {
   const [error, setError] = useState<string | null>(null);
   // The server-folded replay frame shown when scrubbed off the tail.
   const [frame, setFrame] = useState<Frame | null>(null);
+  // The Timeline tick under inspection (0-based event seq), or null. Selecting a
+  // tick folds frame(seq) vs frame(seq+1) to show what that event changed.
+  const [selectedSeq, setSelectedSeq] = useState<number | null>(null);
+  const [diff, setDiff] = useState<FrameDiff | null>(null);
+  const [diffLoading, setDiffLoading] = useState(false);
 
   // The pure playback controller (S5, gibson#1059) owns the scrub position:
   // play/pause/step/jump/speed/follow-tail. `total` is the live tail; when it
@@ -107,6 +114,9 @@ export function BrainView({ mission }: { mission?: string }) {
 
   useEffect(() => {
     let active = true;
+    // A new mission's Timeline re-indexes from 0, so any prior tick selection is
+    // meaningless — clear the inspector.
+    setSelectedSeq(null);
     const url = mission
       ? `/api/world?mission=${encodeURIComponent(mission)}`
       : "/api/world";
@@ -175,6 +185,55 @@ export function BrainView({ mission }: { mission?: string }) {
     [playback.controls],
   );
 
+  // Selecting a tick (a Scroller row) opens the inspector for event `seq` and
+  // jumps the playback head to just after it, so the graph + tables show that
+  // event's after-frame and the highlight (the diff delta) lands on rendered
+  // nodes. Jump (S5) freezes follow-tail, so the replay frame stays put.
+  const onSelectTick = useCallback(
+    (seq: number) => {
+      setSelectedSeq(seq);
+      playback.controls.jump(seq + 1);
+    },
+    [playback.controls],
+  );
+
+  // Compute WHAT CHANGED at the selected tick by diffing the folded frame at
+  // seq N-1 vs N (ADR-0001: World == fold(Timeline)). Both frames come from the
+  // existing mission-scoped /api/world/frame route — no backend change. The diff
+  // is pure + client-side (`diffFrames`). Degrades at seq 0 (before == empty
+  // frame(0)) and on ticks with no entity change (empty diff). Abortable so a
+  // rapid re-select doesn't race a stale diff in.
+  useEffect(() => {
+    if (selectedSeq === null) {
+      setDiff(null);
+      return;
+    }
+    const controller = new AbortController();
+    setDiffLoading(true);
+    void (async () => {
+      try {
+        const fetchFrame = async (seq: number): Promise<Frame> => {
+          const params = new URLSearchParams({ seq: String(seq) });
+          if (mission) params.set("mission", mission);
+          const res = await fetch(`/api/world/frame?${params.toString()}`, {
+            signal: controller.signal,
+          });
+          if (!res.ok) throw new Error(`frame read failed (${res.status})`);
+          return (await res.json()) as Frame;
+        };
+        const [before, after] = await Promise.all([
+          fetchFrame(selectedSeq),
+          fetchFrame(selectedSeq + 1),
+        ]);
+        setDiff(diffFrames(before, after));
+        setDiffLoading(false);
+      } catch {
+        /* aborted or transient — keep the last diff */
+      }
+    })();
+    return () => controller.abort();
+  }, [selectedSeq, mission]);
+
   if (error) {
     return (
       <Card>
@@ -198,6 +257,10 @@ export function BrainView({ mission }: { mission?: string }) {
     view = frame;
   }
   const shown = data.timeline.slice(0, scrub);
+  const selectedEvent =
+    selectedSeq === null
+      ? null
+      : data.timeline.find((e) => e.seq === selectedSeq) ?? null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -224,9 +287,20 @@ export function BrainView({ mission }: { mission?: string }) {
             missions={view.missions}
             hosts={view.hosts}
             findings={view.findings}
+            highlightNodeIds={selectedSeq === null ? undefined : diff?.highlightNodeIds}
+            highlightEdgeIds={selectedSeq === null ? undefined : diff?.highlightEdgeIds}
           />
         </CardContent>
       </Card>
+
+      {selectedSeq !== null && selectedEvent ? (
+        <TickInspector
+          event={selectedEvent}
+          diff={diff}
+          loading={diffLoading}
+          onClose={() => setSelectedSeq(null)}
+        />
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -471,10 +545,17 @@ export function BrainView({ mission }: { mission?: string }) {
           ) : (
             <ol className="flex flex-col gap-1 font-mono text-sm">
               {shown.map((e) => (
-                <li key={e.seq} className="flex gap-3">
-                  <span className="text-muted-foreground tabular-nums">{e.seq}</span>
-                  <span className="text-foreground">{e.kind}</span>
-                  <span className="text-muted-foreground truncate">{e.summary}</span>
+                <li key={e.seq}>
+                  <button
+                    type="button"
+                    onClick={() => onSelectTick(e.seq)}
+                    aria-pressed={selectedSeq === e.seq}
+                    className="flex w-full gap-3 rounded px-1 py-0.5 text-left hover:bg-accent aria-pressed:bg-accent"
+                  >
+                    <span className="text-muted-foreground tabular-nums">{e.seq}</span>
+                    <span className="text-foreground">{e.kind}</span>
+                    <span className="text-muted-foreground truncate">{e.summary}</span>
+                  </button>
                 </li>
               ))}
             </ol>
