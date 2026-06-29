@@ -10,6 +10,12 @@ import { GibsonBrain } from '@/components/gibson/landing/GibsonBrain';
 import { SiteHeader } from '@/components/gibson/site-header';
 import { lockup } from '@/src/lib/messaging';
 
+export const metadata = {
+  title: 'zeroroot.ai: the zero-trust agent factory',
+  description:
+    'Build any agent on a zero-trust substrate. Gibson, the flagship security engine, thinks in attack paths, builds a living model of your environment, and replays every move, for the teams breaking in and the teams locking down.',
+};
+
 type FooterLink = {
   label: string;
   href: string;
