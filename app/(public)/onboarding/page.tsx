@@ -22,6 +22,11 @@ import { DataPlaneProgressPanel } from "./DataPlaneProgressPanel";
  * CR exists but FGA tuples haven't propagated yet, the DataPlaneProgressPanel
  * client component polls GET /api/onboarding/data-plane every 2 s and renders
  * real per-store provisioning progress instead of a static spinner.
+ *
+ * Self-hosted / SaaS seam gate (deploy ADR-0006, gibson#1088):
+ * On self-hosted (SIGNUP_SELF_SERVE unset) there is no public self-serve path.
+ * The "Create your first organization" CTA is replaced with a contact-admin
+ * message so operators know provisioning is admin-driven.
  */
 export default async function OnboardingPage() {
   const session = await auth();
@@ -37,6 +42,11 @@ export default async function OnboardingPage() {
   }
 
   const userEmail = session.user.email ?? null;
+
+  // Self-hosted / SaaS seam gate (deploy ADR-0006, gibson#1088).
+  // When SIGNUP_SELF_SERVE is unset, self-serve is not active — do not show
+  // a CTA that links to /signup (which redirects back to /login on self-hosted).
+  const selfServeActive = !!process.env.SIGNUP_SELF_SERVE;
 
   return (
     <div className="mx-auto max-w-xl p-8">
@@ -64,9 +74,16 @@ export default async function OnboardingPage() {
           <DataPlaneProgressPanel />
 
           <div className="border-t pt-4 space-y-3">
-            <Link href="/signup">
-              <Button>Create your first organization</Button>
-            </Link>
+            {selfServeActive ? (
+              <Link href="/signup">
+                <Button>Create your first organization</Button>
+              </Link>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Organization provisioning on this install is admin-managed. Contact
+                your platform administrator to have your organization provisioned.
+              </p>
+            )}
             <p className="text-sm text-muted-foreground">
               Already created an org and waiting for it to provision? Refresh this
               page in a minute. If you are still stuck, contact support.
