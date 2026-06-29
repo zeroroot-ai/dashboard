@@ -6,7 +6,9 @@ import { WhatYouGet } from '@/components/gibson/landing/WhatYouGet';
 import { WhatYouRunItOn } from '@/components/gibson/landing/WhatYouRunItOn';
 import { Production } from '@/components/gibson/landing/Production';
 import { DashboardShowcase } from '@/components/gibson/landing/DashboardShowcase';
+import { GibsonBrain } from '@/components/gibson/landing/GibsonBrain';
 import { SiteHeader } from '@/components/gibson/site-header';
+import { lockup } from '@/src/lib/messaging';
 
 type FooterLink = {
   label: string;
@@ -29,6 +31,7 @@ export default function RootPage() {
         <HeroSection />
         <TrustBar />
         <DashboardShowcase />
+        <GibsonBrain />
         <WhyBlocked />
         <WhatYouGet />
         <WhatYouRunItOn />
@@ -72,7 +75,8 @@ export default function RootPage() {
         </section>
       </main>
       <footer className="border-t border-border py-8 text-center font-mono text-xs text-foreground opacity-90">
-        <p>&copy; {new Date().getFullYear()} zeroroot.ai</p>
+        <p className="mb-2 text-sm text-foreground/90">{lockup.line}</p>
+        <p>&copy; {new Date().getFullYear()} {lockup.signature}</p>
       </footer>
     </div>
   );

@@ -70,6 +70,14 @@ const messages: TypewriterMessage[] = [
     label: "IR / SOC",
     text: "opencode, build me a gibson agent to sweep every new IOC across CloudTrail and k8s audit logs. Trigger it from our SIEM webhook.",
   },
+  {
+    label: "Blue Team",
+    text: "Cursor, build me a gibson agent to enrich every EDR alert with asset and identity context from the graph, then auto-close the known-benign ones. Trigger it from our SIEM webhook.",
+  },
+  {
+    label: "Purple Team",
+    text: "Claude, build me a gibson agent to replay last sprint's red-team findings against the patched hosts and confirm each path is closed. Run it weekly from CI.",
+  },
 ];
 
 /**
