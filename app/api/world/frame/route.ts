@@ -68,6 +68,24 @@ export async function GET(req: NextRequest) {
         target: w.target,
         status: w.status,
       })),
+      // The mission's Decider decisions reconstructed as-of the fold (PRD #1059
+      // M2, gibson#1062): what the brain chose to do next at each decision point
+      // and why. A decision appears at its request tick ("pending") and reaches
+      // "completed" at its completion tick. Mission-scoped when `mission` is set;
+      // all tenant decisions otherwise.
+      decisions: frame.decisions.map((d) => ({
+        id: d.id,
+        missionId: d.missionId,
+        cursor: Number(d.cursor),
+        status: d.status,
+        dispatches: d.dispatches.map((dd) => ({
+          workId: dd.workId,
+          kind: dd.kind,
+          target: dd.target,
+        })),
+        outcome: d.outcome,
+        rationale: d.rationale,
+      })),
     });
   } catch (error) {
     return daemonErrorResponse(error);

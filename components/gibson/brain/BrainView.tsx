@@ -66,15 +66,38 @@ type WorkItem = {
   target: string;
   status: string;
 };
+// DecisionDispatch is one action a Decider decision chose: the work it dispatched
+// (PRD #1059 M2, gibson#1062) — the decision→work linkage.
+type DecisionDispatch = {
+  workId: string;
+  kind: string;
+  target: string;
+};
+// Decision is one Decider decision episode folded into the frame (PRD #1059 M2,
+// gibson#1062): what the brain chose to do next at a decision point, and why. It
+// appears at its request tick (status "pending" = in flight) and reaches
+// "completed" at its completion tick; `dispatches` is the work it chose and
+// `rationale` the completion reason where the decision ended the mission.
+type Decision = {
+  id: string;
+  missionId: string;
+  cursor: number;
+  status: string;
+  dispatches: DecisionDispatch[];
+  outcome: string;
+  rationale: string;
+};
 
 /** The entity slice rendered by the tables + graph — either the live World or
  *  a server-folded replay frame. `work` is the mission's WorkItems reconstructed
- *  as-of the frame (in-flight + terminal). */
+ *  as-of the frame (in-flight + terminal); `decisions` is the mission's Decider
+ *  decisions folded to the frame. */
 type Frame = {
   missions: Mission[];
   hosts: Host[];
   findings: Finding[];
   work: WorkItem[];
+  decisions: Decision[];
 };
 
 // LLM calls are read from the live World (GetFrameAt folds entities, not the
@@ -102,6 +125,12 @@ function workStatusVariant(
   if (s === "failed") return "destructive";
   if (s === "done") return "secondary";
   return "outline";
+}
+
+// decisionStatusVariant maps a Decision status to a Badge variant. "pending" (in
+// flight) is emphasized as default; "completed" is quiet.
+function decisionStatusVariant(s: string): "default" | "secondary" {
+  return s === "completed" ? "secondary" : "default";
 }
 
 /**
@@ -157,7 +186,7 @@ export function BrainView({ mission }: { mission?: string }) {
         // The live /api/world read carries no work (there is no ListWork RPC;
         // work is reconstructed per-frame), so default it — the Work panel binds
         // to the mission-scoped folded frame, which always supplies work.
-        setData({ ...json, work: json.work ?? [] });
+        setData({ ...json, work: json.work ?? [], decisions: json.decisions ?? [] });
         // The playback controller advances the scrub head when following the
         // tail (it observes `total` growing), so no manual scrub bump here.
         setError(null);
@@ -197,7 +226,7 @@ export function BrainView({ mission }: { mission?: string }) {
           });
           if (!res.ok) return;
           const json = (await res.json()) as Frame;
-          setFrame({ ...json, work: json.work ?? [] });
+          setFrame({ ...json, work: json.work ?? [], decisions: json.decisions ?? [] });
         } catch {
           /* aborted or transient — keep the last frame */
         }
@@ -486,6 +515,56 @@ export function BrainView({ mission }: { mission?: string }) {
                       <TableCell className="text-muted-foreground">{w.kind}</TableCell>
                       <TableCell>
                         <Badge variant={workStatusVariant(w.status)}>{w.status}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Decisions fold into the frame (PRD #1059 M2, gibson#1062): the mission's
+          Decider decisions reconstructed as-of the scrubbed tick — what the brain
+          chose to do next at each decision point, and why. Bound to the mission-
+          scoped frame, a decision appears at its request tick (status "pending")
+          and reaches "completed" at its completion tick, so the panel reconstructs
+          in step with the Scroller. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Decisions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {view.decisions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No decisions yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Decision</TableHead>
+                  <TableHead>Chose</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {/* Newest decisions first (the per-mission ordinal in the id is
+                    monotonic), so the latest reasoning at this tick is at the top. */}
+                {[...view.decisions]
+                  .sort((a, b) => b.id.localeCompare(a.id))
+                  .map((d) => (
+                    <TableRow key={d.id}>
+                      <TableCell className="font-mono">{d.id}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {d.rationale
+                          ? d.rationale
+                          : d.dispatches.length === 0
+                            ? "no action"
+                            : d.dispatches
+                                .map((dd) => `${dd.kind}:${dd.target}`)
+                                .join(", ")}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={decisionStatusVariant(d.status)}>{d.status}</Badge>
                       </TableCell>
                     </TableRow>
                   ))}
