@@ -6,15 +6,15 @@ import { BrainView } from "@/components/gibson/brain/BrainView";
 
 export async function generateMetadata(): Promise<Metadata> {
   return generateMeta({
-    title: "Brain",
+    title: "World",
     additionalTitle: true,
     description:
-      "The live ECS brain: missions, discovered targets, findings, and a replayable Scroller of everything the mission did.",
-    canonical: "/brain",
+      "The live mission World: missions, discovered targets, findings, and a replayable Scroller of everything the mission did, tick by tick.",
+    canonical: "/world",
   });
 }
 
-export default function BrainPage() {
+export default function WorldPage() {
   return (
     <Suspense fallback={<Skeleton className="h-96 w-full" />}>
       <BrainView />
