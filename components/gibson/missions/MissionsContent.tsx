@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { PlusCircle, MoreHorizontal, Play, Pause, Square, Trash2, GripVertical, CrosshairIcon, Pencil, Copy } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Play, Pause, Square, Trash2, GripVertical, CrosshairIcon, Pencil, Copy, Globe } from "lucide-react";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { toast } from "sonner";
 
@@ -173,6 +173,13 @@ function MissionActionsMenu({ mission }: { mission: Mission }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link href={`/dashboard/world?mission=${encodeURIComponent(mission.id)}`}>
+            <Globe className="size-4" />
+            Open World
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           disabled={!canStart || isWorking}
           onClick={mission.status === "paused" ? handleResume : handleStart}

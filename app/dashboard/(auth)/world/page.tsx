@@ -14,10 +14,15 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default function WorldPage() {
+export default async function WorldPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mission?: string }>;
+}) {
+  const { mission } = await searchParams;
   return (
     <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-      <BrainView />
+      <BrainView mission={mission} />
     </Suspense>
   );
 }

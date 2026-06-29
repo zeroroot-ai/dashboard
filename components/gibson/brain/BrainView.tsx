@@ -73,8 +73,14 @@ function statusVariant(s: string): "default" | "secondary" {
  * graph re-materialize at that point in time, not a client-side slice. Reads
  * through /api/world + /api/world/frame (the daemon's tenant-scoped
  * WorldService); never touches the brain directly.
+ *
+ * When `mission` is set the view is scoped to that one mission run (gibson#1060):
+ * the Timeline, the Scroller, and the entity panels all fold to the mission's
+ * slice (the entity panels read the mission-scoped frame at every position,
+ * including the live tail at seq == total). Absent a mission it stays the
+ * tenant-wide World, unchanged.
  */
-export function BrainView() {
+export function BrainView({ mission }: { mission?: string }) {
   const [data, setData] = useState<WorldData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scrub, setScrub] = useState<number>(0);
@@ -86,9 +92,12 @@ export function BrainView() {
 
   useEffect(() => {
     let active = true;
+    const url = mission
+      ? `/api/world?mission=${encodeURIComponent(mission)}`
+      : "/api/world";
     const load = async () => {
       try {
-        const res = await fetch("/api/world");
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`world read failed (${res.status})`);
         const json = (await res.json()) as WorldData;
         if (!active) return;
@@ -105,21 +114,28 @@ export function BrainView() {
       active = false;
       clearInterval(id);
     };
-  }, []);
+  }, [mission]);
 
-  // Fetch the folded frame whenever the user scrubs off the tail. Debounced and
-  // abortable so dragging the slider doesn't fire a request per pixel.
+  // Fetch the folded frame. Tenant-wide, only when scrubbed off the tail (the
+  // tail renders live data). Mission-scoped, at EVERY position including the tail
+  // — the entity panels must always reflect only this mission's slice, so even
+  // the live frame (seq == total) comes from the mission-scoped fold. Debounced
+  // and abortable so dragging the slider doesn't fire a request per pixel.
   useEffect(() => {
     if (!data) return;
-    if (scrub >= data.timeline.length) {
-      setFrame(null); // at the tail → render live data
+    const total = data.timeline.length;
+    if (!mission && scrub >= total) {
+      setFrame(null); // tenant-wide at the tail → render live data
       return;
     }
+    const seq = Math.min(scrub, total);
     const controller = new AbortController();
     const handle = setTimeout(() => {
       void (async () => {
         try {
-          const res = await fetch(`/api/world/frame?seq=${scrub}`, {
+          const params = new URLSearchParams({ seq: String(seq) });
+          if (mission) params.set("mission", mission);
+          const res = await fetch(`/api/world/frame?${params.toString()}`, {
             signal: controller.signal,
           });
           if (!res.ok) return;
@@ -134,7 +150,7 @@ export function BrainView() {
       controller.abort();
       clearTimeout(handle);
     };
-  }, [scrub, data]);
+  }, [scrub, data, mission]);
 
   const onScrub = useCallback(
     (v: number[], total: number) => {
@@ -160,12 +176,33 @@ export function BrainView() {
 
   const total = data.timeline.length;
   const atTail = scrub >= total;
-  // Tables + graph render the folded frame when scrubbed, live data at the tail.
-  const view: Frame = atTail || !frame ? data : frame;
+  // Tenant-wide: render the folded frame when scrubbed, live data at the tail.
+  // Mission-scoped: always render the mission's frame (entity panels reflect only
+  // this mission); fall back to data only for the brief first-load flash.
+  let view: Frame = data;
+  if (mission) {
+    view = frame ?? data;
+  } else if (!atTail && frame) {
+    view = frame;
+  }
   const shown = data.timeline.slice(0, scrub);
 
   return (
     <div className="flex flex-col gap-6">
+      {mission ? (
+        <Card>
+          <CardContent className="flex items-center justify-between gap-4 p-4">
+            <div className="min-w-0">
+              <p className="text-sm text-muted-foreground">Viewing mission</p>
+              <p className="truncate font-mono text-sm">{mission}</p>
+            </div>
+            <Badge variant={atTail ? "default" : "secondary"}>
+              {atTail ? "live" : "replay"}
+            </Badge>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader>
           <CardTitle>World</CardTitle>
@@ -296,6 +333,11 @@ export function BrainView() {
         </CardContent>
       </Card>
 
+      {/* LLM calls are tenant-wide: the call log carries no mission linkage yet
+          (mission-scoped LLM provenance is the rich-frame projection, M2), so
+          this panel is shown only in the tenant-wide view to avoid implying a
+          single mission's calls. */}
+      {mission ? null : (
       <Card>
         <CardHeader>
           <CardTitle>LLM calls</CardTitle>
@@ -329,6 +371,7 @@ export function BrainView() {
           )}
         </CardContent>
       </Card>
+      )}
 
       <Card>
         <CardHeader>
