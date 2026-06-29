@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/world/v1/world.proto.
  */
 export const file_gibson_world_v1_world: GenFile = /*@__PURE__*/
-  fileDesc("ChtnaWJzb24vd29ybGQvdjEvd29ybGQucHJvdG8SD2dpYnNvbi53b3JsZC52MSJHCgtNaXNzaW9uVmlldxIKCgJpZBgBIAEoCRIMCgRnb2FsGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIOCgZyZWFzb24YBCABKAkidQoISG9zdFZpZXcSEAoIc2NvcGVfaWQYASABKAkSDwoHYWRkcmVzcxgCIAEoCRISCgpvcGVuX3BvcnRzGAMgAygFEg0KBWp1aWN5GAQgASgBEhEKCWF0dGVudGlvbhgFIAEoARIQCghzdXJwcmlzZRgGIAEoCSJdCgtGaW5kaW5nVmlldxIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIQCghzY29wZV9pZBgDIAEoCRIPCgdhZGRyZXNzGAQgASgJEhAKCHNldmVyaXR5GAUgASgJIlwKDFdvcmtJdGVtVmlldxIKCgJpZBgBIAEoCRISCgptaXNzaW9uX2lkGAIgASgJEgwKBGtpbmQYAyABKAkSDgoGdGFyZ2V0GAQgASgJEg4KBnN0YXR1cxgFIAEoCSI7Cg1UaW1lbGluZUV2ZW50EgsKA3NlcRgBIAEoBBIMCgRraW5kGAIgASgJEg8KB3N1bW1hcnkYAyABKAkigQEKC0xsbUNhbGxWaWV3Eg8KB2NhbGxfaWQYASABKAkSDgoGcnVuX2lkGAIgASgJEg0KBW1vZGVsGAMgASgJEhAKCHNjb3BlX2lkGAQgASgJEhUKDXByb21wdF90b2tlbnMYBSABKAUSGQoRY29tcGxldGlvbl90b2tlbnMYBiABKAUiFQoTTGlzdE1pc3Npb25zUmVxdWVzdCJGChRMaXN0TWlzc2lvbnNSZXNwb25zZRIuCghtaXNzaW9ucxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5NaXNzaW9uVmlldyISChBMaXN0SG9zdHNSZXF1ZXN0Ij0KEUxpc3RIb3N0c1Jlc3BvbnNlEigKBWhvc3RzGAEgAygLMhkuZ2lic29uLndvcmxkLnYxLkhvc3RWaWV3IhUKE0xpc3RGaW5kaW5nc1JlcXVlc3QiRgoUTGlzdEZpbmRpbmdzUmVzcG9uc2USLgoIZmluZGluZ3MYASADKAsyHC5naWJzb24ud29ybGQudjEuRmluZGluZ1ZpZXciFQoTTGlzdExsbUNhbGxzUmVxdWVzdCJHChRMaXN0TGxtQ2FsbHNSZXNwb25zZRIvCglsbG1fY2FsbHMYASADKAsyHC5naWJzb24ud29ybGQudjEuTGxtQ2FsbFZpZXciKwoKTGxtTWVzc2FnZRIMCgRyb2xlGAEgASgJEg8KB2NvbnRlbnQYAiABKAkixgEKDUxsbUNhbGxEZXRhaWwSDwoHY2FsbF9pZBgBIAEoCRIOCgZydW5faWQYAiABKAkSDQoFbW9kZWwYAyABKAkSEAoIc2NvcGVfaWQYBCABKAkSFQoNcHJvbXB0X3Rva2VucxgFIAEoBRIZChFjb21wbGV0aW9uX3Rva2VucxgGIAEoBRItCghtZXNzYWdlcxgHIAMoCzIbLmdpYnNvbi53b3JsZC52MS5MbG1NZXNzYWdlEhIKCmNvbXBsZXRpb24YCCABKAkiJAoRR2V0TGxtQ2FsbFJlcXVlc3QSDwoHY2FsbF9pZBgBIAEoCSJCChJHZXRMbG1DYWxsUmVzcG9uc2USLAoEY2FsbBgBIAEoCzIeLmdpYnNvbi53b3JsZC52MS5MbG1DYWxsRGV0YWlsIigKEkdldFRpbWVsaW5lUmVxdWVzdBISCgptaXNzaW9uX2lkGAEgASgJIkUKE0dldFRpbWVsaW5lUmVzcG9uc2USLgoGZXZlbnRzGAEgAygLMh4uZ2lic29uLndvcmxkLnYxLlRpbWVsaW5lRXZlbnQiNAoRR2V0RnJhbWVBdFJlcXVlc3QSCwoDc2VxGAEgASgEEhIKCm1pc3Npb25faWQYAiABKAki5wEKEkdldEZyYW1lQXRSZXNwb25zZRILCgNzZXEYASABKAQSDQoFdG90YWwYAiABKAQSLgoIbWlzc2lvbnMYAyADKAsyHC5naWJzb24ud29ybGQudjEuTWlzc2lvblZpZXcSKAoFaG9zdHMYBCADKAsyGS5naWJzb24ud29ybGQudjEuSG9zdFZpZXcSLgoIZmluZGluZ3MYBSADKAsyHC5naWJzb24ud29ybGQudjEuRmluZGluZ1ZpZXcSKwoEd29yaxgGIAMoCzIdLmdpYnNvbi53b3JsZC52MS5Xb3JrSXRlbVZpZXciZAoJTGFiZWxWaWV3EhEKCXRhcmdldF9pZBgBIAEoCRIPCgd2ZXJkaWN0GAIgASgJEhAKCHNldmVyaXR5GAMgASgJEhAKCGNhdGVnb3J5GAQgASgJEg8KB3VzZXJfaWQYBSABKAkirgEKClJldmlld0l0ZW0SEQoJdGFyZ2V0X2lkGAEgASgJEgwKBGtpbmQYAiABKAkSDQoFdGl0bGUYAyABKAkSEAoIc2NvcGVfaWQYBCABKAkSDwoHYWRkcmVzcxgFIAEoCRIQCghzZXZlcml0eRgGIAEoCRIQCghsYWJlbGxlZBgHIAEoCBIpCgVsYWJlbBgIIAEoCzIaLmdpYnNvbi53b3JsZC52MS5MYWJlbFZpZXciGAoWTGlzdFJldmlld1F1ZXVlUmVxdWVzdCJFChdMaXN0UmV2aWV3UXVldWVSZXNwb25zZRIqCgVpdGVtcxgBIAMoCzIbLmdpYnNvbi53b3JsZC52MS5SZXZpZXdJdGVtIlwKElN1Ym1pdExhYmVsUmVxdWVzdBIRCgl0YXJnZXRfaWQYASABKAkSDwoHdmVyZGljdBgCIAEoCRIQCghzZXZlcml0eRgDIAEoCRIQCghjYXRlZ29yeRgEIAEoCSIVChNTdWJtaXRMYWJlbFJlc3BvbnNlIhMKEUxpc3RMYWJlbHNSZXF1ZXN0IkAKEkxpc3RMYWJlbHNSZXNwb25zZRIqCgZsYWJlbHMYASADKAsyGi5naWJzb24ud29ybGQudjEuTGFiZWxWaWV3Mu4KCgxXb3JsZFNlcnZpY2USiQEKDExpc3RNaXNzaW9ucxIkLmdpYnNvbi53b3JsZC52MS5MaXN0TWlzc2lvbnNSZXF1ZXN0GiUuZ2lic29uLndvcmxkLnYxLkxpc3RNaXNzaW9uc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKAAQoJTGlzdEhvc3RzEiEuZ2lic29uLndvcmxkLnYxLkxpc3RIb3N0c1JlcXVlc3QaIi5naWJzb24ud29ybGQudjEuTGlzdEhvc3RzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEokBCgxMaXN0RmluZGluZ3MSJC5naWJzb24ud29ybGQudjEuTGlzdEZpbmRpbmdzUmVxdWVzdBolLmdpYnNvbi53b3JsZC52MS5MaXN0RmluZGluZ3NSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSiQEKDExpc3RMbG1DYWxscxIkLmdpYnNvbi53b3JsZC52MS5MaXN0TGxtQ2FsbHNSZXF1ZXN0GiUuZ2lic29uLndvcmxkLnYxLkxpc3RMbG1DYWxsc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKDAQoKR2V0TGxtQ2FsbBIiLmdpYnNvbi53b3JsZC52MS5HZXRMbG1DYWxsUmVxdWVzdBojLmdpYnNvbi53b3JsZC52MS5HZXRMbG1DYWxsUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoYBCgtHZXRUaW1lbGluZRIjLmdpYnNvbi53b3JsZC52MS5HZXRUaW1lbGluZVJlcXVlc3QaJC5naWJzb24ud29ybGQudjEuR2V0VGltZWxpbmVSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgwEKCkdldEZyYW1lQXQSIi5naWJzb24ud29ybGQudjEuR2V0RnJhbWVBdFJlcXVlc3QaIy5naWJzb24ud29ybGQudjEuR2V0RnJhbWVBdFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKSAQoPTGlzdFJldmlld1F1ZXVlEicuZ2lic29uLndvcmxkLnYxLkxpc3RSZXZpZXdRdWV1ZVJlcXVlc3QaKC5naWJzb24ud29ybGQudjEuTGlzdFJldmlld1F1ZXVlUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoYBCgtTdWJtaXRMYWJlbBIjLmdpYnNvbi53b3JsZC52MS5TdWJtaXRMYWJlbFJlcXVlc3QaJC5naWJzb24ud29ybGQudjEuU3VibWl0TGFiZWxSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgwEKCkxpc3RMYWJlbHMSIi5naWJzb24ud29ybGQudjEuTGlzdExhYmVsc1JlcXVlc3QaIy5naWJzb24ud29ybGQudjEuTGlzdExhYmVsc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgA0JSWlBnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vd29ybGQvdjE7d29ybGR2MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
+  fileDesc("ChtnaWJzb24vd29ybGQvdjEvd29ybGQucHJvdG8SD2dpYnNvbi53b3JsZC52MSJHCgtNaXNzaW9uVmlldxIKCgJpZBgBIAEoCRIMCgRnb2FsGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIOCgZyZWFzb24YBCABKAkidQoISG9zdFZpZXcSEAoIc2NvcGVfaWQYASABKAkSDwoHYWRkcmVzcxgCIAEoCRISCgpvcGVuX3BvcnRzGAMgAygFEg0KBWp1aWN5GAQgASgBEhEKCWF0dGVudGlvbhgFIAEoARIQCghzdXJwcmlzZRgGIAEoCSJdCgtGaW5kaW5nVmlldxIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIQCghzY29wZV9pZBgDIAEoCRIPCgdhZGRyZXNzGAQgASgJEhAKCHNldmVyaXR5GAUgASgJIlwKDFdvcmtJdGVtVmlldxIKCgJpZBgBIAEoCRISCgptaXNzaW9uX2lkGAIgASgJEgwKBGtpbmQYAyABKAkSDgoGdGFyZ2V0GAQgASgJEg4KBnN0YXR1cxgFIAEoCSJFChREZWNpc2lvbkRpc3BhdGNoVmlldxIPCgd3b3JrX2lkGAEgASgJEgwKBGtpbmQYAiABKAkSDgoGdGFyZ2V0GAMgASgJIq0BCgxEZWNpc2lvblZpZXcSCgoCaWQYASABKAkSEgoKbWlzc2lvbl9pZBgCIAEoCRIOCgZjdXJzb3IYAyABKAMSDgoGc3RhdHVzGAQgASgJEjkKCmRpc3BhdGNoZXMYBSADKAsyJS5naWJzb24ud29ybGQudjEuRGVjaXNpb25EaXNwYXRjaFZpZXcSDwoHb3V0Y29tZRgGIAEoCRIRCglyYXRpb25hbGUYByABKAkiOwoNVGltZWxpbmVFdmVudBILCgNzZXEYASABKAQSDAoEa2luZBgCIAEoCRIPCgdzdW1tYXJ5GAMgASgJIoEBCgtMbG1DYWxsVmlldxIPCgdjYWxsX2lkGAEgASgJEg4KBnJ1bl9pZBgCIAEoCRINCgVtb2RlbBgDIAEoCRIQCghzY29wZV9pZBgEIAEoCRIVCg1wcm9tcHRfdG9rZW5zGAUgASgFEhkKEWNvbXBsZXRpb25fdG9rZW5zGAYgASgFIhUKE0xpc3RNaXNzaW9uc1JlcXVlc3QiRgoUTGlzdE1pc3Npb25zUmVzcG9uc2USLgoIbWlzc2lvbnMYASADKAsyHC5naWJzb24ud29ybGQudjEuTWlzc2lvblZpZXciEgoQTGlzdEhvc3RzUmVxdWVzdCI9ChFMaXN0SG9zdHNSZXNwb25zZRIoCgVob3N0cxgBIAMoCzIZLmdpYnNvbi53b3JsZC52MS5Ib3N0VmlldyIVChNMaXN0RmluZGluZ3NSZXF1ZXN0IkYKFExpc3RGaW5kaW5nc1Jlc3BvbnNlEi4KCGZpbmRpbmdzGAEgAygLMhwuZ2lic29uLndvcmxkLnYxLkZpbmRpbmdWaWV3IhUKE0xpc3RMbG1DYWxsc1JlcXVlc3QiRwoUTGlzdExsbUNhbGxzUmVzcG9uc2USLwoJbGxtX2NhbGxzGAEgAygLMhwuZ2lic29uLndvcmxkLnYxLkxsbUNhbGxWaWV3IisKCkxsbU1lc3NhZ2USDAoEcm9sZRgBIAEoCRIPCgdjb250ZW50GAIgASgJIsYBCg1MbG1DYWxsRGV0YWlsEg8KB2NhbGxfaWQYASABKAkSDgoGcnVuX2lkGAIgASgJEg0KBW1vZGVsGAMgASgJEhAKCHNjb3BlX2lkGAQgASgJEhUKDXByb21wdF90b2tlbnMYBSABKAUSGQoRY29tcGxldGlvbl90b2tlbnMYBiABKAUSLQoIbWVzc2FnZXMYByADKAsyGy5naWJzb24ud29ybGQudjEuTGxtTWVzc2FnZRISCgpjb21wbGV0aW9uGAggASgJIiQKEUdldExsbUNhbGxSZXF1ZXN0Eg8KB2NhbGxfaWQYASABKAkiQgoSR2V0TGxtQ2FsbFJlc3BvbnNlEiwKBGNhbGwYASABKAsyHi5naWJzb24ud29ybGQudjEuTGxtQ2FsbERldGFpbCIoChJHZXRUaW1lbGluZVJlcXVlc3QSEgoKbWlzc2lvbl9pZBgBIAEoCSJFChNHZXRUaW1lbGluZVJlc3BvbnNlEi4KBmV2ZW50cxgBIAMoCzIeLmdpYnNvbi53b3JsZC52MS5UaW1lbGluZUV2ZW50IjQKEUdldEZyYW1lQXRSZXF1ZXN0EgsKA3NlcRgBIAEoBBISCgptaXNzaW9uX2lkGAIgASgJIpkCChJHZXRGcmFtZUF0UmVzcG9uc2USCwoDc2VxGAEgASgEEg0KBXRvdGFsGAIgASgEEi4KCG1pc3Npb25zGAMgAygLMhwuZ2lic29uLndvcmxkLnYxLk1pc3Npb25WaWV3EigKBWhvc3RzGAQgAygLMhkuZ2lic29uLndvcmxkLnYxLkhvc3RWaWV3Ei4KCGZpbmRpbmdzGAUgAygLMhwuZ2lic29uLndvcmxkLnYxLkZpbmRpbmdWaWV3EisKBHdvcmsYBiADKAsyHS5naWJzb24ud29ybGQudjEuV29ya0l0ZW1WaWV3EjAKCWRlY2lzaW9ucxgHIAMoCzIdLmdpYnNvbi53b3JsZC52MS5EZWNpc2lvblZpZXciZAoJTGFiZWxWaWV3EhEKCXRhcmdldF9pZBgBIAEoCRIPCgd2ZXJkaWN0GAIgASgJEhAKCHNldmVyaXR5GAMgASgJEhAKCGNhdGVnb3J5GAQgASgJEg8KB3VzZXJfaWQYBSABKAkirgEKClJldmlld0l0ZW0SEQoJdGFyZ2V0X2lkGAEgASgJEgwKBGtpbmQYAiABKAkSDQoFdGl0bGUYAyABKAkSEAoIc2NvcGVfaWQYBCABKAkSDwoHYWRkcmVzcxgFIAEoCRIQCghzZXZlcml0eRgGIAEoCRIQCghsYWJlbGxlZBgHIAEoCBIpCgVsYWJlbBgIIAEoCzIaLmdpYnNvbi53b3JsZC52MS5MYWJlbFZpZXciGAoWTGlzdFJldmlld1F1ZXVlUmVxdWVzdCJFChdMaXN0UmV2aWV3UXVldWVSZXNwb25zZRIqCgVpdGVtcxgBIAMoCzIbLmdpYnNvbi53b3JsZC52MS5SZXZpZXdJdGVtIlwKElN1Ym1pdExhYmVsUmVxdWVzdBIRCgl0YXJnZXRfaWQYASABKAkSDwoHdmVyZGljdBgCIAEoCRIQCghzZXZlcml0eRgDIAEoCRIQCghjYXRlZ29yeRgEIAEoCSIVChNTdWJtaXRMYWJlbFJlc3BvbnNlIhMKEUxpc3RMYWJlbHNSZXF1ZXN0IkAKEkxpc3RMYWJlbHNSZXNwb25zZRIqCgZsYWJlbHMYASADKAsyGi5naWJzb24ud29ybGQudjEuTGFiZWxWaWV3Mu4KCgxXb3JsZFNlcnZpY2USiQEKDExpc3RNaXNzaW9ucxIkLmdpYnNvbi53b3JsZC52MS5MaXN0TWlzc2lvbnNSZXF1ZXN0GiUuZ2lic29uLndvcmxkLnYxLkxpc3RNaXNzaW9uc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKAAQoJTGlzdEhvc3RzEiEuZ2lic29uLndvcmxkLnYxLkxpc3RIb3N0c1JlcXVlc3QaIi5naWJzb24ud29ybGQudjEuTGlzdEhvc3RzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEokBCgxMaXN0RmluZGluZ3MSJC5naWJzb24ud29ybGQudjEuTGlzdEZpbmRpbmdzUmVxdWVzdBolLmdpYnNvbi53b3JsZC52MS5MaXN0RmluZGluZ3NSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSiQEKDExpc3RMbG1DYWxscxIkLmdpYnNvbi53b3JsZC52MS5MaXN0TGxtQ2FsbHNSZXF1ZXN0GiUuZ2lic29uLndvcmxkLnYxLkxpc3RMbG1DYWxsc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKDAQoKR2V0TGxtQ2FsbBIiLmdpYnNvbi53b3JsZC52MS5HZXRMbG1DYWxsUmVxdWVzdBojLmdpYnNvbi53b3JsZC52MS5HZXRMbG1DYWxsUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoYBCgtHZXRUaW1lbGluZRIjLmdpYnNvbi53b3JsZC52MS5HZXRUaW1lbGluZVJlcXVlc3QaJC5naWJzb24ud29ybGQudjEuR2V0VGltZWxpbmVSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgwEKCkdldEZyYW1lQXQSIi5naWJzb24ud29ybGQudjEuR2V0RnJhbWVBdFJlcXVlc3QaIy5naWJzb24ud29ybGQudjEuR2V0RnJhbWVBdFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKSAQoPTGlzdFJldmlld1F1ZXVlEicuZ2lic29uLndvcmxkLnYxLkxpc3RSZXZpZXdRdWV1ZVJlcXVlc3QaKC5naWJzb24ud29ybGQudjEuTGlzdFJldmlld1F1ZXVlUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoYBCgtTdWJtaXRMYWJlbBIjLmdpYnNvbi53b3JsZC52MS5TdWJtaXRMYWJlbFJlcXVlc3QaJC5naWJzb24ud29ybGQudjEuU3VibWl0TGFiZWxSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgwEKCkxpc3RMYWJlbHMSIi5naWJzb24ud29ybGQudjEuTGlzdExhYmVsc1JlcXVlc3QaIy5naWJzb24ud29ybGQudjEuTGlzdExhYmVsc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgA0JSWlBnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vd29ybGQvdjE7d29ybGR2MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
 
 /**
  * @generated from message gibson.world.v1.MissionView
@@ -181,6 +181,115 @@ export const WorkItemViewSchema: GenMessage<WorkItemView> = /*@__PURE__*/
   messageDesc(file_gibson_world_v1_world, 3);
 
 /**
+ * DecisionDispatchView is one action the Decider chose in a decision episode: the
+ * WorkItem it dispatched (gibson#1062). The work's own lifecycle is the matching
+ * WorkItemView; this is the decision→work linkage (what the Decider chose).
+ *
+ * @generated from message gibson.world.v1.DecisionDispatchView
+ */
+export type DecisionDispatchView = Message<"gibson.world.v1.DecisionDispatchView"> & {
+  /**
+   * the dispatched WorkItem's id
+   *
+   * @generated from field: string work_id = 1;
+   */
+  workId: string;
+
+  /**
+   * "tool" | "agent" | "plugin"
+   *
+   * @generated from field: string kind = 2;
+   */
+  kind: string;
+
+  /**
+   * the capability the Decider chose to invoke
+   *
+   * @generated from field: string target = 3;
+   */
+  target: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.DecisionDispatchView.
+ * Use `create(DecisionDispatchViewSchema)` to create a new message.
+ */
+export const DecisionDispatchViewSchema: GenMessage<DecisionDispatchView> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 4);
+
+/**
+ * DecisionView is one Decider decision episode reconstructed as-of the folded tick
+ * (PRD #1059 M2, gibson#1062): what the brain chose to do next, and why. A
+ * decision is opened by a DecisionRequested event (the brain asked itself what to
+ * do given the evidence so far) and closed by a DecisionCompleted event once the
+ * off-tick Decider worker has submitted its choices. A decision first appears at
+ * its request tick with status "pending" (in flight) and reaches "completed" at
+ * its completion tick, so it folds in cumulatively like the timeline. The chosen
+ * actions (the work the Decider dispatched) and, where the decision ended the
+ * mission, the completion reason as `rationale`, are carried as they fold in.
+ * Mission-scoped: only this mission's decisions appear in a mission-scoped frame.
+ *
+ * @generated from message gibson.world.v1.DecisionView
+ */
+export type DecisionView = Message<"gibson.world.v1.DecisionView"> & {
+  /**
+   * stable per-mission id ("<mission_id>#d<n>")
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * the goal mission this decision drives
+   *
+   * @generated from field: string mission_id = 2;
+   */
+  missionId: string;
+
+  /**
+   * evidence cursor at request time (its position in the run)
+   *
+   * @generated from field: int64 cursor = 3;
+   */
+  cursor: bigint;
+
+  /**
+   * "pending" (in flight) | "completed"
+   *
+   * @generated from field: string status = 4;
+   */
+  status: string;
+
+  /**
+   * the work the Decider chose to dispatch
+   *
+   * @generated from field: repeated gibson.world.v1.DecisionDispatchView dispatches = 5;
+   */
+  dispatches: DecisionDispatchView[];
+
+  /**
+   * mission outcome if the decision ended the mission ("" otherwise)
+   *
+   * @generated from field: string outcome = 6;
+   */
+  outcome: string;
+
+  /**
+   * the completion reason, where present
+   *
+   * @generated from field: string rationale = 7;
+   */
+  rationale: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.DecisionView.
+ * Use `create(DecisionViewSchema)` to create a new message.
+ */
+export const DecisionViewSchema: GenMessage<DecisionView> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 5);
+
+/**
  * @generated from message gibson.world.v1.TimelineEvent
  */
 export type TimelineEvent = Message<"gibson.world.v1.TimelineEvent"> & {
@@ -211,7 +320,7 @@ export type TimelineEvent = Message<"gibson.world.v1.TimelineEvent"> & {
  * Use `create(TimelineEventSchema)` to create a new message.
  */
 export const TimelineEventSchema: GenMessage<TimelineEvent> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 4);
+  messageDesc(file_gibson_world_v1_world, 6);
 
 /**
  * LlmCallView is a single LLM completion's metadata (gibson#755): model + token
@@ -258,7 +367,7 @@ export type LlmCallView = Message<"gibson.world.v1.LlmCallView"> & {
  * Use `create(LlmCallViewSchema)` to create a new message.
  */
 export const LlmCallViewSchema: GenMessage<LlmCallView> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 5);
+  messageDesc(file_gibson_world_v1_world, 7);
 
 /**
  * @generated from message gibson.world.v1.ListMissionsRequest
@@ -271,7 +380,7 @@ export type ListMissionsRequest = Message<"gibson.world.v1.ListMissionsRequest">
  * Use `create(ListMissionsRequestSchema)` to create a new message.
  */
 export const ListMissionsRequestSchema: GenMessage<ListMissionsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 6);
+  messageDesc(file_gibson_world_v1_world, 8);
 
 /**
  * @generated from message gibson.world.v1.ListMissionsResponse
@@ -288,7 +397,7 @@ export type ListMissionsResponse = Message<"gibson.world.v1.ListMissionsResponse
  * Use `create(ListMissionsResponseSchema)` to create a new message.
  */
 export const ListMissionsResponseSchema: GenMessage<ListMissionsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 7);
+  messageDesc(file_gibson_world_v1_world, 9);
 
 /**
  * @generated from message gibson.world.v1.ListHostsRequest
@@ -301,7 +410,7 @@ export type ListHostsRequest = Message<"gibson.world.v1.ListHostsRequest"> & {
  * Use `create(ListHostsRequestSchema)` to create a new message.
  */
 export const ListHostsRequestSchema: GenMessage<ListHostsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 8);
+  messageDesc(file_gibson_world_v1_world, 10);
 
 /**
  * @generated from message gibson.world.v1.ListHostsResponse
@@ -318,7 +427,7 @@ export type ListHostsResponse = Message<"gibson.world.v1.ListHostsResponse"> & {
  * Use `create(ListHostsResponseSchema)` to create a new message.
  */
 export const ListHostsResponseSchema: GenMessage<ListHostsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 9);
+  messageDesc(file_gibson_world_v1_world, 11);
 
 /**
  * @generated from message gibson.world.v1.ListFindingsRequest
@@ -331,7 +440,7 @@ export type ListFindingsRequest = Message<"gibson.world.v1.ListFindingsRequest">
  * Use `create(ListFindingsRequestSchema)` to create a new message.
  */
 export const ListFindingsRequestSchema: GenMessage<ListFindingsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 10);
+  messageDesc(file_gibson_world_v1_world, 12);
 
 /**
  * @generated from message gibson.world.v1.ListFindingsResponse
@@ -348,7 +457,7 @@ export type ListFindingsResponse = Message<"gibson.world.v1.ListFindingsResponse
  * Use `create(ListFindingsResponseSchema)` to create a new message.
  */
 export const ListFindingsResponseSchema: GenMessage<ListFindingsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 11);
+  messageDesc(file_gibson_world_v1_world, 13);
 
 /**
  * @generated from message gibson.world.v1.ListLlmCallsRequest
@@ -361,7 +470,7 @@ export type ListLlmCallsRequest = Message<"gibson.world.v1.ListLlmCallsRequest">
  * Use `create(ListLlmCallsRequestSchema)` to create a new message.
  */
 export const ListLlmCallsRequestSchema: GenMessage<ListLlmCallsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 12);
+  messageDesc(file_gibson_world_v1_world, 14);
 
 /**
  * @generated from message gibson.world.v1.ListLlmCallsResponse
@@ -378,7 +487,7 @@ export type ListLlmCallsResponse = Message<"gibson.world.v1.ListLlmCallsResponse
  * Use `create(ListLlmCallsResponseSchema)` to create a new message.
  */
 export const ListLlmCallsResponseSchema: GenMessage<ListLlmCallsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 13);
+  messageDesc(file_gibson_world_v1_world, 15);
 
 /**
  * LlmMessage is one prompt message in an LlmCall transcript.
@@ -402,7 +511,7 @@ export type LlmMessage = Message<"gibson.world.v1.LlmMessage"> & {
  * Use `create(LlmMessageSchema)` to create a new message.
  */
 export const LlmMessageSchema: GenMessage<LlmMessage> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 14);
+  messageDesc(file_gibson_world_v1_world, 16);
 
 /**
  * LlmCallDetail is a single call's full record: the LlmCallView metadata plus the
@@ -457,7 +566,7 @@ export type LlmCallDetail = Message<"gibson.world.v1.LlmCallDetail"> & {
  * Use `create(LlmCallDetailSchema)` to create a new message.
  */
 export const LlmCallDetailSchema: GenMessage<LlmCallDetail> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 15);
+  messageDesc(file_gibson_world_v1_world, 17);
 
 /**
  * @generated from message gibson.world.v1.GetLlmCallRequest
@@ -474,7 +583,7 @@ export type GetLlmCallRequest = Message<"gibson.world.v1.GetLlmCallRequest"> & {
  * Use `create(GetLlmCallRequestSchema)` to create a new message.
  */
 export const GetLlmCallRequestSchema: GenMessage<GetLlmCallRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 16);
+  messageDesc(file_gibson_world_v1_world, 18);
 
 /**
  * @generated from message gibson.world.v1.GetLlmCallResponse
@@ -491,7 +600,7 @@ export type GetLlmCallResponse = Message<"gibson.world.v1.GetLlmCallResponse"> &
  * Use `create(GetLlmCallResponseSchema)` to create a new message.
  */
 export const GetLlmCallResponseSchema: GenMessage<GetLlmCallResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 17);
+  messageDesc(file_gibson_world_v1_world, 19);
 
 /**
  * @generated from message gibson.world.v1.GetTimelineRequest
@@ -508,7 +617,7 @@ export type GetTimelineRequest = Message<"gibson.world.v1.GetTimelineRequest"> &
  * Use `create(GetTimelineRequestSchema)` to create a new message.
  */
 export const GetTimelineRequestSchema: GenMessage<GetTimelineRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 18);
+  messageDesc(file_gibson_world_v1_world, 20);
 
 /**
  * @generated from message gibson.world.v1.GetTimelineResponse
@@ -525,7 +634,7 @@ export type GetTimelineResponse = Message<"gibson.world.v1.GetTimelineResponse">
  * Use `create(GetTimelineResponseSchema)` to create a new message.
  */
 export const GetTimelineResponseSchema: GenMessage<GetTimelineResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 19);
+  messageDesc(file_gibson_world_v1_world, 21);
 
 /**
  * GetFrameAtRequest scrubs to a Timeline position: fold the first `seq` events.
@@ -554,7 +663,7 @@ export type GetFrameAtRequest = Message<"gibson.world.v1.GetFrameAtRequest"> & {
  * Use `create(GetFrameAtRequestSchema)` to create a new message.
  */
 export const GetFrameAtRequestSchema: GenMessage<GetFrameAtRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 20);
+  messageDesc(file_gibson_world_v1_world, 22);
 
 /**
  * GetFrameAtResponse is the World materialized at frame `seq` (a server-side fold).
@@ -599,6 +708,17 @@ export type GetFrameAtResponse = Message<"gibson.world.v1.GetFrameAtResponse"> &
    * @generated from field: repeated gibson.world.v1.WorkItemView work = 6;
    */
   work: WorkItemView[];
+
+  /**
+   * The mission's Decider decisions reconstructed as-of `seq` (PRD #1059 M2,
+   * gibson#1062): what the brain chose to do next at each decision point and why.
+   * A decision appears at its request tick ("pending") and reaches "completed" at
+   * its completion tick, so the set folds in cumulatively. Mission-scoped when
+   * mission_id is set; all tenant decisions when it is empty.
+   *
+   * @generated from field: repeated gibson.world.v1.DecisionView decisions = 7;
+   */
+  decisions: DecisionView[];
 };
 
 /**
@@ -606,7 +726,7 @@ export type GetFrameAtResponse = Message<"gibson.world.v1.GetFrameAtResponse"> &
  * Use `create(GetFrameAtResponseSchema)` to create a new message.
  */
 export const GetFrameAtResponseSchema: GenMessage<GetFrameAtResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 21);
+  messageDesc(file_gibson_world_v1_world, 23);
 
 /**
  * LabelView is one applied review label (a gibson.world.v1 view of a brain
@@ -657,7 +777,7 @@ export type LabelView = Message<"gibson.world.v1.LabelView"> & {
  * Use `create(LabelViewSchema)` to create a new message.
  */
 export const LabelViewSchema: GenMessage<LabelView> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 22);
+  messageDesc(file_gibson_world_v1_world, 24);
 
 /**
  * ReviewItem is one entry in the HITL review queue: a surfaced surprise or a
@@ -720,7 +840,7 @@ export type ReviewItem = Message<"gibson.world.v1.ReviewItem"> & {
  * Use `create(ReviewItemSchema)` to create a new message.
  */
 export const ReviewItemSchema: GenMessage<ReviewItem> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 23);
+  messageDesc(file_gibson_world_v1_world, 25);
 
 /**
  * @generated from message gibson.world.v1.ListReviewQueueRequest
@@ -733,7 +853,7 @@ export type ListReviewQueueRequest = Message<"gibson.world.v1.ListReviewQueueReq
  * Use `create(ListReviewQueueRequestSchema)` to create a new message.
  */
 export const ListReviewQueueRequestSchema: GenMessage<ListReviewQueueRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 24);
+  messageDesc(file_gibson_world_v1_world, 26);
 
 /**
  * @generated from message gibson.world.v1.ListReviewQueueResponse
@@ -750,7 +870,7 @@ export type ListReviewQueueResponse = Message<"gibson.world.v1.ListReviewQueueRe
  * Use `create(ListReviewQueueResponseSchema)` to create a new message.
  */
 export const ListReviewQueueResponseSchema: GenMessage<ListReviewQueueResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 25);
+  messageDesc(file_gibson_world_v1_world, 27);
 
 /**
  * SubmitLabelRequest applies a label to a surfaced item. The daemon stamps the
@@ -794,7 +914,7 @@ export type SubmitLabelRequest = Message<"gibson.world.v1.SubmitLabelRequest"> &
  * Use `create(SubmitLabelRequestSchema)` to create a new message.
  */
 export const SubmitLabelRequestSchema: GenMessage<SubmitLabelRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 26);
+  messageDesc(file_gibson_world_v1_world, 28);
 
 /**
  * @generated from message gibson.world.v1.SubmitLabelResponse
@@ -807,7 +927,7 @@ export type SubmitLabelResponse = Message<"gibson.world.v1.SubmitLabelResponse">
  * Use `create(SubmitLabelResponseSchema)` to create a new message.
  */
 export const SubmitLabelResponseSchema: GenMessage<SubmitLabelResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 27);
+  messageDesc(file_gibson_world_v1_world, 29);
 
 /**
  * @generated from message gibson.world.v1.ListLabelsRequest
@@ -820,7 +940,7 @@ export type ListLabelsRequest = Message<"gibson.world.v1.ListLabelsRequest"> & {
  * Use `create(ListLabelsRequestSchema)` to create a new message.
  */
 export const ListLabelsRequestSchema: GenMessage<ListLabelsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 28);
+  messageDesc(file_gibson_world_v1_world, 30);
 
 /**
  * @generated from message gibson.world.v1.ListLabelsResponse
@@ -837,7 +957,7 @@ export type ListLabelsResponse = Message<"gibson.world.v1.ListLabelsResponse"> &
  * Use `create(ListLabelsResponseSchema)` to create a new message.
  */
 export const ListLabelsResponseSchema: GenMessage<ListLabelsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 29);
+  messageDesc(file_gibson_world_v1_world, 31);
 
 /**
  * WorldService is the daemon-mediated read path into the ECS brain (epic
