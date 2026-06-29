@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Pause, Play, Radio, SkipBack, SkipForward } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -16,9 +17,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorldGraph } from "@/components/gibson/brain/WorldGraph";
+import { SPEED_OPTIONS, usePlayback } from "@/components/gibson/brain/playback";
 
 type Mission = { id: string; goal: string; status: string; reason: string };
 type Host = {
@@ -83,12 +93,17 @@ function statusVariant(s: string): "default" | "secondary" {
 export function BrainView({ mission }: { mission?: string }) {
   const [data, setData] = useState<WorldData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [scrub, setScrub] = useState<number>(0);
-  // Whether the Scroller is pinned to the live tail. While following, the 5s
-  // refresh advances the scrub head; once the user scrubs back it freezes.
-  const followTail = useRef(true);
   // The server-folded replay frame shown when scrubbed off the tail.
   const [frame, setFrame] = useState<Frame | null>(null);
+
+  // The pure playback controller (S5, gibson#1059) owns the scrub position:
+  // play/pause/step/jump/speed/follow-tail. `total` is the live tail; when it
+  // grows while following, the controller tracks it (live-tail follow). The
+  // emitted position drives the same `/api/world/frame` fetch the slider used.
+  const total = data ? data.timeline.length : 0;
+  const playback = usePlayback(total);
+  const scrub = playback.position;
+  const atTail = playback.atTail;
 
   useEffect(() => {
     let active = true;
@@ -102,7 +117,8 @@ export function BrainView({ mission }: { mission?: string }) {
         const json = (await res.json()) as WorldData;
         if (!active) return;
         setData(json);
-        if (followTail.current) setScrub(json.timeline.length);
+        // The playback controller advances the scrub head when following the
+        // tail (it observes `total` growing), so no manual scrub bump here.
         setError(null);
       } catch (e) {
         if (active) setError(e instanceof Error ? e.message : "failed to load");
@@ -153,12 +169,10 @@ export function BrainView({ mission }: { mission?: string }) {
   }, [scrub, data, mission]);
 
   const onScrub = useCallback(
-    (v: number[], total: number) => {
-      const next = v[0] ?? total;
-      setScrub(next);
-      followTail.current = next >= total;
+    (v: number[]) => {
+      playback.controls.jump(v[0] ?? 0);
     },
-    [],
+    [playback.controls],
   );
 
   if (error) {
@@ -174,8 +188,6 @@ export function BrainView({ mission }: { mission?: string }) {
     return <Skeleton className="h-96 w-full" />;
   }
 
-  const total = data.timeline.length;
-  const atTail = scrub >= total;
   // Tenant-wide: render the folded frame when scrubbed, live data at the tail.
   // Mission-scoped: always render the mission's frame (entity panels reflect only
   // this mission); fall back to data only for the brief first-load flash.
@@ -378,12 +390,74 @@ export function BrainView({ mission }: { mission?: string }) {
           <CardTitle>Scroller</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              onClick={playback.controls.stepBack}
+              disabled={scrub <= 0}
+              aria-label="Step back one event"
+            >
+              <SkipBack />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              onClick={playback.controls.toggle}
+              disabled={total === 0 || (atTail && !playback.playing)}
+              aria-label={playback.playing ? "Pause playback" : "Play"}
+              aria-pressed={playback.playing}
+            >
+              {playback.playing ? <Pause /> : <Play />}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              onClick={playback.controls.stepForward}
+              disabled={scrub >= total}
+              aria-label="Step forward one event"
+            >
+              <SkipForward />
+            </Button>
+            <Button
+              type="button"
+              variant={atTail ? "secondary" : "outline"}
+              size="sm"
+              onClick={playback.controls.followTail}
+              disabled={atTail}
+              aria-label="Follow the live tail"
+            >
+              <Radio />
+              Live
+            </Button>
+            <Select
+              value={String(playback.speed)}
+              onValueChange={(v) => playback.controls.setSpeed(Number(v))}
+            >
+              <SelectTrigger
+                className="h-8 w-20"
+                aria-label="Playback speed"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SPEED_OPTIONS.map((s) => (
+                  <SelectItem key={s} value={String(s)}>
+                    {s}x
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-center gap-4">
             <Slider
               value={[scrub]}
               max={total}
               step={1}
-              onValueChange={(v) => onScrub(v, total)}
+              onValueChange={onScrub}
               className="max-w-md"
               aria-label="Scrub the mission timeline"
             />
