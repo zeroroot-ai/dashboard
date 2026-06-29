@@ -10,7 +10,7 @@ const DEFAULT_DEBOUNCE_MS = 400;
 /** Minimum slug length we'll bother checking server-side. */
 const MIN_SLUG_LENGTH = 2;
 
-export interface TenantAvailability {
+interface TenantAvailability {
   /** Slugified form of the user's input. Empty when input slugifies to empty. */
   slug: string;
   /**

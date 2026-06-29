@@ -43,7 +43,7 @@ function titleCase(s: string): string {
   return s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export interface GraphLegendProps {
+interface GraphLegendProps {
   nodeTypes: string[];
   relationshipTypes: string[];
   /** Show the finding-severity scale (when the severity heatmap is on). */
@@ -125,4 +125,3 @@ export function GraphLegend({
   );
 }
 
-export default GraphLegend;

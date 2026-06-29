@@ -14,13 +14,13 @@
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import type { GraphLayoutMode } from '@/src/stores/graph-view-store';
 
-export interface Point {
+interface Point {
   x: number;
   y: number;
 }
 
 /** A fixed position per node id, or null to defer to the force simulation. */
-export type LayoutPositions = Map<string, Point> | null;
+type LayoutPositions = Map<string, Point> | null;
 
 // Spacing constants (graph-space units; the canvas zoom-fits afterward).
 const HIER_X_GAP = 90;

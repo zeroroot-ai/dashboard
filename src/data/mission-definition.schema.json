@@ -1,5 +1,5 @@
 {
-  "$comment": "DO NOT EDIT — generated from opensource/sdk/gen/mission-definition.schema.json by scripts/gen-mission-schema.mjs. Run `node scripts/gen-mission-schema.mjs` to regenerate.",
+  "$comment": "DO NOT EDIT, generated from opensource/sdk/gen/mission-definition.schema.json by scripts/gen-mission-schema.mjs. Run `node scripts/gen-mission-schema.mjs` to regenerate.",
   "$defs": {
     "AgentNodeConfig": {
       "additionalProperties": false,
@@ -63,7 +63,7 @@
     },
     "DataPolicy": {
       "additionalProperties": false,
-      "description": "DataPolicy defines how data is handled for a node",
+      "description": "DataPolicy defines how data is handled for a node.  Deprecated: superseded by the ECS brain (gibson#851, ADR-0008). Data handling (reuse + scoping) is now implicit in the event-sourced World and scope-relative identity (ADR-0002) + ambient projection. Retained wire-compatibly; ignored by the engine.",
       "properties": {
         "accessControl": {
           "description": "AccessControl specifies who can access this data",
@@ -344,7 +344,7 @@
       "properties": {
         "dataPolicy": {
           "$ref": "#/$defs/DataPolicy",
-          "description": "DataPolicy defines data handling policy for this node"
+          "description": "DataPolicy defines data handling policy for this node.  Deprecated: data reuse + scoping are no longer node-declared. Under the ECS brain (gibson#851, ADR-0008) reuse is implicit in the event-sourced World and scoping flows from scope-relative identity (ADR-0002) + ambient projection. The field is retained wire-compatibly for old definitions but is ignored by the engine."
         },
         "dependencies": {
           "description": "Dependencies lists node IDs that must complete before this node executes",
@@ -378,7 +378,7 @@
         },
         "reusePolicy": {
           "$ref": "#/$defs/ReusePolicy",
-          "description": "ReusePolicy declares how this node's I/O is scoped + reused across mission runs. Optional; defaults to run-scoped no-reuse when absent. Spec: mission-schema-canonicalization (mirror migration)."
+          "description": "ReusePolicy declares how this node's I/O is scoped + reused across mission runs.  Deprecated: superseded by the ECS brain (gibson#851, ADR-0008). Reuse is implicit in the World; scoping is via scope-relative identity (ADR-0002) + ambient projection. Retained wire-compatibly but ignored by the engine."
         },
         "timeout": {
           "description": "Timeout is the maximum execution time for this node",
@@ -516,7 +516,7 @@
     },
     "ReusePolicy": {
       "additionalProperties": false,
-      "description": "ReusePolicy declares how a node's I/O is scoped + reused across mission runs. Distinct from DataPolicy (which governs storage/encryption); the two policies are layered.  Spec: mission-schema-canonicalization (mirror migration — lifts mission.DataPolicy's OutputScope/InputScope/Reuse fields into the canonical proto schema as a separately-named message to avoid collision with the existing DataPolicy).",
+      "description": "ReusePolicy declares how a node's I/O is scoped + reused across mission runs.  Deprecated: superseded by the ECS brain (gibson#851, ADR-0008). Reuse is implicit in the event-sourced World and scoping flows from scope-relative identity (ADR-0002) + ambient projection, so node-declared reuse/scoping no longer has meaning. Retained wire-compatibly; ignored by the engine.",
       "properties": {
         "inputScope": {
           "description": "InputScope: \"mission_run\" | \"mission\" | \"global\". Default: \"mission\".",
@@ -792,6 +792,10 @@
       "description": "CreatedAt is the timestamp when the mission definition was created",
       "format": "date-time",
       "type": "string"
+    },
+    "deciderSlot": {
+      "$ref": "#/$defs/LLMSlotConfig",
+      "description": "DeciderSlot names the mission-level LLM the brain's Decider runs on — the orchestration decision-maker, distinct from per-node agent slots (gibson#850). Only the provider+model are used (the slot name is implicitly \"decider\"). Absent means the brain uses the tenant's dashboard-default provider/model, so missions need not set it."
     },
     "dependencies": {
       "$ref": "#/$defs/MissionDependencies",

@@ -52,7 +52,7 @@ import {
 // Variant: no broker configured
 // ---------------------------------------------------------------------------
 
-export function SecretsEmptyStateNoBroker() {
+function SecretsEmptyStateNoBroker() {
   return (
     <Empty>
       <EmptyHeader>
@@ -80,12 +80,12 @@ export function SecretsEmptyStateNoBroker() {
 // Variant: onboarding (Gibson-hosted Vault ready, zero secrets)
 // ---------------------------------------------------------------------------
 
-export interface SecretsEmptyStateOnboardingProps {
+interface SecretsEmptyStateOnboardingProps {
   /** Called when the user clicks "Add your first secret". */
   onAddSecret?: () => void;
 }
 
-export function SecretsEmptyStateOnboarding({
+function SecretsEmptyStateOnboarding({
   onAddSecret,
 }: SecretsEmptyStateOnboardingProps) {
   return (
@@ -131,11 +131,11 @@ export function SecretsEmptyStateOnboarding({
 // Variant: no secrets (BYO broker / general case)
 // ---------------------------------------------------------------------------
 
-export interface SecretsEmptyStateNoSecretsProps {
+interface SecretsEmptyStateNoSecretsProps {
   onAddSecret?: () => void;
 }
 
-export function SecretsEmptyStateNoSecrets({
+function SecretsEmptyStateNoSecrets({
   onAddSecret,
 }: SecretsEmptyStateNoSecretsProps) {
   return (
@@ -171,9 +171,9 @@ export function SecretsEmptyStateNoSecrets({
 // Convenience union component, delegates to the right variant
 // ---------------------------------------------------------------------------
 
-export type SecretsEmptyStateVariant = "no-broker" | "onboarding" | "no-secrets";
+type SecretsEmptyStateVariant = "no-broker" | "onboarding" | "no-secrets";
 
-export interface SecretsEmptyStateProps {
+interface SecretsEmptyStateProps {
   variant: SecretsEmptyStateVariant;
   onAddSecret?: () => void;
 }

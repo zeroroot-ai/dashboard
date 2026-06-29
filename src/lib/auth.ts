@@ -167,6 +167,6 @@ export async function getServerSession(): Promise<GibsonSession | null> {
 /**
  * Check if authentication is enabled.
  */
-export function isAuthEnabled(): boolean {
+function isAuthEnabled(): boolean {
   return true;
 }

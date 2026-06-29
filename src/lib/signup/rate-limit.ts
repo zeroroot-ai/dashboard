@@ -15,7 +15,7 @@
 import { createHash } from "node:crypto";
 import { checkRateLimitByKey } from "@/src/lib/rate-limiter";
 
-export interface SignupRateLimitResult {
+interface SignupRateLimitResult {
   allowed: boolean;
   retryAfterMs: number;
 }

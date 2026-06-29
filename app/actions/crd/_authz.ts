@@ -27,7 +27,7 @@ import type { ActionErrorCode, ActionResult, CrdActionName } from "./types";
 // Public API
 // ---------------------------------------------------------------------------
 
-export interface CrdAuthzParams {
+interface CrdAuthzParams {
   action: CrdActionName;
   /** Tenant scope to enforce; omit for create-time actions like provision. */
   tenantName?: string;
@@ -39,7 +39,7 @@ export interface CrdAuthzParams {
   inputKeys?: string[];
 }
 
-export type CrdAuthzResult<T = void> =
+type CrdAuthzResult<T = void> =
   | {
       ok: true;
       session: GibsonSession;
@@ -176,7 +176,7 @@ export async function requireCrdSession<T = void>(
  * Used exclusively by `acceptInvitationAction`, which an invitee must be
  * able to call without holding any tenant permission first.
  */
-export async function requireCrdSessionForSelfAction<T = void>(
+async function requireCrdSessionForSelfAction<T = void>(
   action: CrdActionName,
   expectedUserId: string,
   inputKeys: string[] = [],

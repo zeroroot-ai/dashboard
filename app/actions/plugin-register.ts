@@ -39,11 +39,11 @@ import {
 // Result types
 // ---------------------------------------------------------------------------
 
-export type PluginActionResult<T = null> =
+type PluginActionResult<T = null> =
   | { ok: true; data: T }
   | { ok: false; error: string; code?: string };
 
-export interface ValidationResult {
+interface ValidationResult {
   valid: boolean;
   errors: PluginManifestValidationError[];
 }

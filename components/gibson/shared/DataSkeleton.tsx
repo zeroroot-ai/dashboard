@@ -79,7 +79,7 @@ interface CardGridSkeletonProps {
  * - 1 col on mobile, 2 on tablet (sm), 3 on desktop (xl).
  * Each card mimics the header + badge row + two content lines + footer stripe.
  */
-export function CardGridSkeleton({ count = 4, className }: CardGridSkeletonProps) {
+function CardGridSkeleton({ count = 4, className }: CardGridSkeletonProps) {
   return (
     <div
       className={cn('grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3', className)}
@@ -171,7 +171,7 @@ interface PageHeaderSkeletonProps {
  * Skeleton for the standard page header pattern used across Gibson pages:
  * a page title on the left and optional action button(s) on the right.
  */
-export function PageHeaderSkeleton({
+function PageHeaderSkeleton({
   showActions = true,
   className,
 }: PageHeaderSkeletonProps) {

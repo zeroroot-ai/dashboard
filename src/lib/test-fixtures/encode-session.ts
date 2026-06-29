@@ -35,7 +35,7 @@ import { encode } from "@auth/core/jwt";
 const INSECURE_COOKIE_NAME = "authjs.session-token";
 const SECURE_COOKIE_NAME = "__Secure-authjs.session-token";
 
-export interface TestSessionInput {
+interface TestSessionInput {
   sub: string;
   name?: string;
   email?: string;
@@ -45,7 +45,7 @@ export interface TestSessionInput {
   secret?: string;
 }
 
-export interface TestSessionResult {
+interface TestSessionResult {
   cookieName: string;
   cookieValue: string;
 }

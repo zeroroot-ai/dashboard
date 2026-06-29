@@ -66,7 +66,7 @@ function renderPlatformContext(ctx: PlatformContext): string | null {
 // Prompt Builder
 // ============================================================================
 
-export interface BuildSystemPromptOpts {
+interface BuildSystemPromptOpts {
   agentId: string;
   graphContext?: GraphContextData;
   graphSummary?: string;

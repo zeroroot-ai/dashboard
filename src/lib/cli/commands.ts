@@ -15,7 +15,7 @@
  */
 
 /** A single CLI command with its human-readable label and explanation. */
-export interface CliCommand {
+interface CliCommand {
   /** Short label shown above the command (e.g. "Authenticate"). */
   label: string;
   /** The full command string, ready to copy. */

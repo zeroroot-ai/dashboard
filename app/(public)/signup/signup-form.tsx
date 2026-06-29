@@ -161,7 +161,7 @@ function PasswordStrengthMeter({
 // Props
 // ---------------------------------------------------------------------------
 
-export interface SignupFormProps {
+interface SignupFormProps {
   /** Validated plan ID, used both for the tier field and the read-only display. */
   plan: string;
   /** Human-readable plan name, e.g. "Squad". */

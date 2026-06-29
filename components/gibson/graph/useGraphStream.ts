@@ -20,14 +20,14 @@ import type { GraphNode, GraphEdge } from '@/src/types/graph';
 // Backoff schedule in ms: 1s, 2s, 5s, 10s, 30s (then capped at 30s)
 const BACKOFF_SCHEDULE = [1_000, 2_000, 5_000, 10_000, 30_000];
 
-export interface GraphStreamUpdate {
+interface GraphStreamUpdate {
   kind: number; // GraphUpdate.Kind enum value
   node?: GraphNode;
   edge?: GraphEdge;
   at: number | null; // epoch ms or null
 }
 
-export interface GraphStreamState {
+interface GraphStreamState {
   healthy: boolean;
   lastEventAt: number;
 }

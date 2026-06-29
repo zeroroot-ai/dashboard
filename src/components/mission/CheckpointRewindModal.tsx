@@ -59,7 +59,7 @@ function idempotencyLabel(i: ToolIdempotency): string {
   }
 }
 
-export interface CheckpointRewindModalProps {
+interface CheckpointRewindModalProps {
   missionId: string;
   /** Checkpoint the user wants to rewind to. */
   target: CheckpointSummary;

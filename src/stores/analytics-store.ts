@@ -29,7 +29,7 @@ export interface WebSocketUpdate {
 // Chart Data Cache Types
 // ============================================================================
 
-export interface ChartDataCacheEntry {
+interface ChartDataCacheEntry {
   data: unknown;
   timestamp: number;
   ttl?: number; // Time-to-live in milliseconds
@@ -39,7 +39,7 @@ export interface ChartDataCacheEntry {
 // Store State
 // ============================================================================
 
-export interface AnalyticsState {
+interface AnalyticsState {
   // KPI Data
   kpis: KPIData | null;
 
@@ -313,22 +313,22 @@ function applyUpdateToKPIs(
 /**
  * Hook to get KPIs
  */
-export const useKPIsData = () => useAnalyticsStore((state) => state.kpis);
+const useKPIsData = () => useAnalyticsStore((state) => state.kpis);
 
 /**
  * Hook to check if data is stale
  */
-export const useIsStale = () => useAnalyticsStore((state) => state.isStale);
+const useIsStale = () => useAnalyticsStore((state) => state.isStale);
 
 /**
  * Hook to get last update timestamp
  */
-export const useLastUpdate = () => useAnalyticsStore((state) => state.lastUpdateAt);
+const useLastUpdate = () => useAnalyticsStore((state) => state.lastUpdateAt);
 
 /**
  * Hook to get analytics actions
  */
-export const useAnalyticsActions = () =>
+const useAnalyticsActions = () =>
   useAnalyticsStore(
     useShallow((state) => ({
       setKPIs: state.setKPIs,

@@ -8,7 +8,7 @@
 import type { GraphNode } from '@/src/types/graph';
 import { parseEntityType } from '@/src/lib/graph/entity-taxonomy';
 
-export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
 /** Severity levels, most → least severe. */
 export const SEVERITY_LEVELS: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];

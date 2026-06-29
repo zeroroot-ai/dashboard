@@ -39,7 +39,7 @@ import type { BindingEntry } from "./bindings";
 // Types
 // ---------------------------------------------------------------------------
 
-export interface ConfirmStepProps {
+interface ConfirmStepProps {
   manifestYaml: string;
   bindings: BindingEntry[];
   onBack: () => void;

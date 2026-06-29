@@ -38,14 +38,14 @@ const FGA_HOVER =
 // boundary without proto message classes)
 // ---------------------------------------------------------------------------
 
-export interface CUEDiagnosticResult {
+interface CUEDiagnosticResult {
   line: number;
   col: number;
   message: string;
   severity: string;
 }
 
-export interface CUECompletionItemResult {
+interface CUECompletionItemResult {
   label: string;
   detail: string;
   documentation: string;

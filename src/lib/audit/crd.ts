@@ -16,7 +16,7 @@ import type { GibsonSession } from "@/src/lib/auth";
  * the list of input field names (values withheld), use it to record that
  * `bootstrapTokenRef` was part of the input without logging the token.
  */
-export type CrdAuditOutcome =
+type CrdAuditOutcome =
   | "ok"
   | "unauthenticated"
   | "forbidden"
@@ -24,7 +24,7 @@ export type CrdAuditOutcome =
   | "rate_limited"
   | "internal";
 
-export interface CrdAuditEvent {
+interface CrdAuditEvent {
   ts: string;
   action: CrdActionName;
   outcome: CrdAuditOutcome;

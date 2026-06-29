@@ -43,7 +43,7 @@ const LAYOUTS: { mode: GraphLayoutMode; label: string; icon: LucideIcon }[] = [
   { mode: 'timeline', label: 'Timeline', icon: Clock },
 ];
 
-export interface GraphControlsProps {
+interface GraphControlsProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFit: () => void;
@@ -237,4 +237,3 @@ export function GraphControls({
   );
 }
 
-export default GraphControls;

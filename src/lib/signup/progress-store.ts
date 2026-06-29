@@ -68,7 +68,7 @@ function protoToProgress(proto: {
   return base;
 }
 
-export async function setProgress(
+async function setProgress(
   attemptId: string,
   progress: ProvisioningProgress,
 ): Promise<void> {

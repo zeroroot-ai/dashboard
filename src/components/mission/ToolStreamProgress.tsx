@@ -60,7 +60,7 @@ function tryParse<T>(raw: unknown): T | null {
   }
 }
 
-export interface ToolStreamProgressProps {
+interface ToolStreamProgressProps {
   missionId: string;
   invocationId: string;
   toolName: string;

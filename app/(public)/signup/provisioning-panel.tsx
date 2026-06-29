@@ -190,7 +190,7 @@ function StepIcon({ status }: { status: GroupStatus }) {
 // Props
 // ---------------------------------------------------------------------------
 
-export interface ProvisioningPanelProps {
+interface ProvisioningPanelProps {
   /** The opaque attempt UUID returned by `signupAction`. */
   attemptId: string;
   /** URL to navigate to when `terminalState === "ok"`. */

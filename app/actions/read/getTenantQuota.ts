@@ -21,7 +21,7 @@ import {
   StaleActiveTenantError,
 } from "@/src/lib/auth/active-tenant";
 
-export type ActionResult<T> =
+type ActionResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
 

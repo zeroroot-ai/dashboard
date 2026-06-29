@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/popover";
 import { useListMissionDefinitions } from "@/src/hooks/useListMissionDefinitions";
 
-export interface DefinitionPickerDropdownProps {
+interface DefinitionPickerDropdownProps {
   /** Currently selected definition name, or null for "New Mission". */
   value: string | null;
   onChange: (name: string | null) => void;

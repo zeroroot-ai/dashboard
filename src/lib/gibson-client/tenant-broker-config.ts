@@ -32,11 +32,7 @@ import { throwMapped } from './secrets';
 
 export type {
   RedactedConfig,
-  CandidateConfig,
   ProbeResult,
-  GetBrokerConfigResponse,
-  ProbeBrokerConfigResponse,
-  SetBrokerConfigResponse,
 };
 // BrokerProvider is an enum value; export it as a value (not type) so action
 // files can use it in switch statements. See re-export at bottom of file.

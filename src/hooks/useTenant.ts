@@ -112,4 +112,4 @@ export function useTenant() {
 // Export type for the hook return value
 // ============================================================================
 
-export type UseTenantReturn = ReturnType<typeof useTenant>;
+type UseTenantReturn = ReturnType<typeof useTenant>;

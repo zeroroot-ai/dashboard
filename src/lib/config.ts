@@ -75,7 +75,7 @@ export const serverConfig = {
  * Client-side environment configuration.
  * These variables are exposed to the browser via NEXT_PUBLIC_ prefix.
  */
-export const clientConfig = {
+const clientConfig = {
   // Public API endpoints (if needed)
   // Add NEXT_PUBLIC_ prefixed variables here when needed
 } as const;
@@ -149,6 +149,6 @@ export function validateEnvConfig(): void {
  * @param defaultValue - Default value if not set
  * @returns Environment variable value or default
  */
-export function getEnv(key: string, defaultValue?: string): string {
+function getEnv(key: string, defaultValue?: string): string {
   return process.env[key] || defaultValue || '';
 }

@@ -23,20 +23,20 @@ import { saveMissionSourceAction } from "@/app/actions/missions/source-store";
 import { createMissionFromCUEAction } from "@/app/actions/missions/create-mission";
 import { NEW_MISSION_CUE } from "@/src/data/new-mission-template";
 
-export type SaveStatus = "idle" | "saving" | "saved" | "error";
-export type RunState = "idle" | "launching";
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+type RunState = "idle" | "launching";
 
 const DEFAULT_DEBOUNCE_MS = 2500;
 const FALLBACK_NAME = "Untitled Mission";
 
-export interface UseMissionEditorOptions {
+interface UseMissionEditorOptions {
   /** Debounce delay for autosave in ms. Default 2500. Tests pass 0. */
   debounceMs?: number;
   /** Whether autosave is active. Default true. */
   autosave?: boolean;
 }
 
-export interface MissionEditorApi {
+interface MissionEditorApi {
   // ── state ──
   cueSource: string;
   isDirty: boolean;
@@ -239,4 +239,3 @@ export function useMissionEditor(
   };
 }
 
-export default useMissionEditor;

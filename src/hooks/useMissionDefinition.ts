@@ -163,7 +163,7 @@ export interface MissionDefinitionJson {
 // extended later but the definition detail is self-contained for M6).
 // -----------------------------------------------------------------------
 
-export const missionDefinitionQueryKey = (name: string) =>
+const missionDefinitionQueryKey = (name: string) =>
   ["missionDefinitions", "detail", name] as const;
 
 async function fetchMissionDefinition(name: string): Promise<MissionDefinitionJson> {

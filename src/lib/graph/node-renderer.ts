@@ -79,7 +79,7 @@ export const NODE_SIZES: Record<EntityType, number> = {
  * than the icon stroke colour so the icon remains the focal point.
  * Lifted slightly from their original values to pop against the new bg.
  */
-export const CATEGORY_COLORS: Record<string, string> = {
+const CATEGORY_COLORS: Record<string, string> = {
   execution:      '#1a4d2e',  // dark green (lifted from #166534)
   dns:            '#1a3a6e',  // deep blue  (lifted from #1e3a5f)
   infrastructure: '#0f4a44',  // dark teal  (lifted from #134e4a)
@@ -193,7 +193,7 @@ function hexToRgba(hex: string, alpha: number): string {
 // Public types
 // ---------------------------------------------------------------------------
 
-export interface NodeOptions {
+interface NodeOptions {
   /** Base colour used for the border and glow (hex string) */
   color: string;
   /** Overall opacity multiplier, 0–1 (default 1.0) */
@@ -216,7 +216,7 @@ export interface NodeOptions {
 // NodeRenderer
 // ---------------------------------------------------------------------------
 
-export class NodeRenderer {
+class NodeRenderer {
   /** Minimum node side length before switching to a plain filled square */
   private readonly fallbackSize = 8;
 
@@ -440,4 +440,4 @@ export class NodeRenderer {
 }
 
 // Export singleton for convenience
-export const nodeRenderer = new NodeRenderer();
+const nodeRenderer = new NodeRenderer();

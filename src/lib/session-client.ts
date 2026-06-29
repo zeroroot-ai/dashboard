@@ -25,19 +25,19 @@
 
 import { useSession as useNextAuthSession } from "next-auth/react";
 
-export type SessionUser = {
+type SessionUser = {
   id: string;
   email: string;
   name?: string | null;
   image?: string | null;
 };
 
-export type ClientSession = {
+type ClientSession = {
   user: SessionUser;
   expiresAt?: string | Date;
 };
 
-export type UseSessionResult = {
+type UseSessionResult = {
   data: ClientSession | null;
   isPending: boolean;
   error: Error | null;

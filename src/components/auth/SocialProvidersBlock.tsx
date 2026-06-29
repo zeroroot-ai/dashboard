@@ -18,7 +18,7 @@
 
 import type { ProviderId } from "@/src/lib/social-providers";
 
-export interface SocialProvidersBlockProps {
+interface SocialProvidersBlockProps {
   /** Ordered list of enabled provider IDs, always empty in Zitadel flow. */
   providers: ProviderId[];
   /** Optional post-auth redirect destination, validated server-side. */

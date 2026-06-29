@@ -23,7 +23,7 @@ import { assertAuthorized, AuthzDeniedError } from "@/src/lib/auth/assert-author
 const GET_MISSION_AUDIT_RPC =
   "/gibson.tenant.v1.SecretsService/GetMissionAudit";
 
-export interface MissionAuditResult {
+interface MissionAuditResult {
   accesses: MissionSecretAccess[];
   aggregationLagSeconds: number;
 }

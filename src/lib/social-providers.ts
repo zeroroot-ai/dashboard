@@ -28,7 +28,7 @@ export type ProviderId = "github" | "gitlab" | "google" | "microsoft";
 /** Canonical display order, UI renders buttons in this sequence. */
 export const PROVIDER_ORDER: ProviderId[] = ["github", "gitlab", "google", "microsoft"];
 
-export interface SocialProvidersResult {
+interface SocialProvidersResult {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: Record<string, any>;
   /**

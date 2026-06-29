@@ -47,7 +47,7 @@ function QuotaRow({ label, used, limit }: QuotaRowProps) {
   );
 }
 
-export type QuotaWidgetProps = {
+type QuotaWidgetProps = {
   /**
    * Plan limits to compare against. The dashboard's tenant context provides
    * these; the widget is dumb about where they come from.

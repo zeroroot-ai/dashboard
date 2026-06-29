@@ -13,12 +13,12 @@ import { NextRequest, NextResponse } from 'next/server';
 export const CSRF_COOKIE_NAME = 'csrf-token';
 
 /** Generate a cryptographically random CSRF token (64 hex chars). */
-export function generateCsrfToken(): string {
+function generateCsrfToken(): string {
   return randomBytes(32).toString('hex');
 }
 
 /** Set the CSRF cookie on a NextResponse. */
-export function setCsrfCookie(response: NextResponse, token: string): void {
+function setCsrfCookie(response: NextResponse, token: string): void {
   response.cookies.set(CSRF_COOKIE_NAME, token, {
     path: '/',
     sameSite: 'strict',
@@ -29,7 +29,7 @@ export function setCsrfCookie(response: NextResponse, token: string): void {
 }
 
 /** Read the csrf-token cookie value from an incoming request. */
-export function getCsrfTokenFromCookies(request: NextRequest): string | null {
+function getCsrfTokenFromCookies(request: NextRequest): string | null {
   return request.cookies.get(CSRF_COOKIE_NAME)?.value ?? null;
 }
 

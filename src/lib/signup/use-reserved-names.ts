@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
  * Reserved-names denylist returned by GET /api/auth/reserved-names.
  * Spec: tenant-provisioning-unification-phase2 Requirement 4.5.
  */
-export interface ReservedNamesDenylist {
+interface ReservedNamesDenylist {
   exact: string[];
   prefix: string[];
 }

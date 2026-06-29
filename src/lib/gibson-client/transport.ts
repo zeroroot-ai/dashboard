@@ -371,7 +371,7 @@ export function bootstrapClient<T extends DescService>(service: T): Client<T> {
  * Exported for service-acting write callers; reads can tolerate a one-shot
  * 401 surfacing as an error.
  */
-export async function withServiceRetry<R>(fn: () => Promise<R>): Promise<R> {
+async function withServiceRetry<R>(fn: () => Promise<R>): Promise<R> {
   try {
     return await fn();
   } catch (err) {

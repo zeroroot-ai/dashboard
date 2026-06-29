@@ -14,7 +14,7 @@ import type { Alert } from '@/src/types/analytics';
  *
  * DND preference is persisted to localStorage via Zustand persist middleware.
  */
-export interface AlertsState {
+interface AlertsState {
   // State
   alerts: Alert[];
   isDropdownOpen: boolean;
@@ -147,7 +147,7 @@ export const useAlertsStore = create<AlertsState>()(
  * Hook to get alerts state - returns alerts array and unread count
  * Uses useShallow to prevent infinite re-render loops
  */
-export const useAlerts = () =>
+const useAlerts = () =>
   useAlertsStore(
     useShallow((state) => ({
       alerts: state.alerts,
@@ -158,7 +158,7 @@ export const useAlerts = () =>
 /**
  * Hook to get dropdown state
  */
-export const useDropdown = () =>
+const useDropdown = () =>
   useAlertsStore(
     useShallow((state) => ({
       isDropdownOpen: state.isDropdownOpen,
@@ -169,7 +169,7 @@ export const useDropdown = () =>
 /**
  * Hook to get toast queue state
  */
-export const useToastQueue = () =>
+const useToastQueue = () =>
   useAlertsStore(
     useShallow((state) => ({
       toastQueue: state.toastQueue,
@@ -180,7 +180,7 @@ export const useToastQueue = () =>
 /**
  * Hook to get alert actions
  */
-export const useAlertActions = () =>
+const useAlertActions = () =>
   useAlertsStore(
     useShallow((state) => ({
       setAlerts: state.setAlerts,
@@ -193,7 +193,7 @@ export const useAlertActions = () =>
 /**
  * Hook to get DND state
  */
-export const useDoNotDisturb = () =>
+const useDoNotDisturb = () =>
   useAlertsStore(
     useShallow((state) => ({
       doNotDisturb: state.doNotDisturb,

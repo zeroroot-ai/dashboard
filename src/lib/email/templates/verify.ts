@@ -4,7 +4,7 @@ import type { EmailMessage } from '../types';
  * `verify`, sent on sign-up to confirm an email address belongs to the
  * user who supplied it. Links expire (`expiresInHours`).
  */
-export interface VerifyCtx {
+interface VerifyCtx {
   email: string;
   verificationUrl: string;
   expiresInHours: number;

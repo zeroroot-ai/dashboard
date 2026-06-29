@@ -76,7 +76,7 @@ export async function getTenantProvisioningStatus(
  * persists the flag; the tenant-operator reads it back on its next reconcile
  * and stamps the CR annotation the saga waits on.
  */
-export async function setTenantBillingActive(
+async function setTenantBillingActive(
   tenantId: string,
   active: boolean,
 ): Promise<void> {

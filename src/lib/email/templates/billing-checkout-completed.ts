@@ -7,7 +7,7 @@ import type { EmailMessage } from '../types';
  * trial has started. Confirms that a payment method has been collected and
  * provides links to the dashboard and the Stripe Customer Portal.
  */
-export interface BillingCheckoutCompletedCtx {
+interface BillingCheckoutCompletedCtx {
   /** Recipient email address. */
   email: string;
   /** Human-readable plan name (e.g. "Squad", "Org", "Platform"). */

@@ -63,7 +63,7 @@ function RoleBadge({ role }: { role: string }) {
   );
 }
 
-export interface MembersTableProps {
+interface MembersTableProps {
   members: MemberRow[];
   /**
    * The signed-in user's identity. Used to fall back to the session's own

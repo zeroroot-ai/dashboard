@@ -49,7 +49,7 @@ import { createRemoteJWKSet, errors as joseErrors, jwtVerify } from 'jose';
 // ---------------------------------------------------------------------------
 
 /** Machine-readable failure codes, surfaced in 401 response bodies. */
-export type ZitadelBearerErrorCode =
+type ZitadelBearerErrorCode =
   | 'missing-authorization'
   | 'invalid-format'
   | 'signature-failed'
@@ -189,7 +189,7 @@ export function __resetJWKSForTests(): void {
 // Verified identity shape
 // ---------------------------------------------------------------------------
 
-export interface VerifiedServiceIdentity {
+interface VerifiedServiceIdentity {
   /** Human-readable SA username, e.g. "gibson-tenant-operator". */
   subject: string;
   /** Numeric Zitadel `sub` claim (the machine-user's internal ID). */

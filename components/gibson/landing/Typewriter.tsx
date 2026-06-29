@@ -10,7 +10,7 @@ export interface TypewriterMessage {
   text: string;
 }
 
-export interface TypewriterProps {
+interface TypewriterProps {
   messages: TypewriterMessage[];
   typingSpeed?: number;
   deletingSpeed?: number;

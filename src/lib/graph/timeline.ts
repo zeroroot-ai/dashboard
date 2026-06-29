@@ -9,7 +9,7 @@
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import { getNodeTimestamp } from '@/src/lib/graph/layout-engine';
 
-export interface TimelineBounds {
+interface TimelineBounds {
   min: number;
   max: number;
 }

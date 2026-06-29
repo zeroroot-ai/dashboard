@@ -53,15 +53,15 @@ const grantsSchema = z.array(grantTupleSchema).min(1).max(64);
 // Result types
 // ---------------------------------------------------------------------------
 
-export type ActionResult<T = null> =
+type ActionResult<T = null> =
   | { ok: true; data: T }
   | { ok: false; error: string; code?: string };
 
-export interface WriteResult {
+interface WriteResult {
   written: number;
   alreadyPresent: number;
 }
-export interface DeleteResult {
+interface DeleteResult {
   deleted: number;
   notPresent: number;
 }

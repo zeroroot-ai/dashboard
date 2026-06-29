@@ -35,7 +35,7 @@ import {
  * shape the routes consumed from the old Loki client (timestamp + raw line +
  * stream labels) so the downstream JSON-parse logic is unchanged.
  */
-export interface DashboardLogEntry {
+interface DashboardLogEntry {
   /** Emit time, reconstructed from the proto's unix_nanos field. */
   timestamp: Date;
   /** Raw log line (typically structured slog JSON). */
@@ -78,7 +78,7 @@ function toProtoLevel(level?: DashboardLogLevel): LogLevel {
   }
 }
 
-export interface QueryLogsOptions {
+interface QueryLogsOptions {
   start?: Date;
   end?: Date;
   limit?: number;
@@ -103,7 +103,7 @@ export async function queryMissionLogs(
   return resp.entries.map(fromProtoEntry);
 }
 
-export interface QueryDaemonLogsOptions extends QueryLogsOptions {
+interface QueryDaemonLogsOptions extends QueryLogsOptions {
   level?: DashboardLogLevel;
   missionId?: string;
 }

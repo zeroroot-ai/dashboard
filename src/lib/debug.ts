@@ -22,7 +22,7 @@ import type { NextRequest } from "next/server";
 
 export const isDebug = process.env.DASHBOARD_DEBUG === "1";
 
-export type DebugErrorRecord = {
+type DebugErrorRecord = {
   ts: string;
   route: string;
   method: string;
@@ -50,7 +50,7 @@ export function recentDebugErrors(): DebugErrorRecord[] {
  * full message + stack. In production, callers still get a generic 500
  * with no internals leaked.
  */
-export function withDebugErrors<Args extends unknown[]>(
+function withDebugErrors<Args extends unknown[]>(
   handler: (req: NextRequest, ...args: Args) => Promise<Response>,
 ): (req: NextRequest, ...args: Args) => Promise<Response> {
   return async (req, ...args) => {

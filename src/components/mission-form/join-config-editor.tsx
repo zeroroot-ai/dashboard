@@ -91,7 +91,7 @@ const STRATEGY_OPTIONS: Array<{
   },
 ];
 
-export function JoinConfigEditor({
+function JoinConfigEditor({
   value,
   onChange,
   availableNodeIds,

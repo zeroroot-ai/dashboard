@@ -19,7 +19,7 @@ export interface GraphData {
 /**
  * Graph filter options
  */
-export interface GraphFilterOptions {
+interface GraphFilterOptions {
   /** Filter by node types */
   nodeTypes?: GraphNodeType[];
   /** Filter by relationship types */
@@ -33,7 +33,7 @@ export interface GraphFilterOptions {
 /**
  * Graph statistics
  */
-export interface GraphStats {
+interface GraphStats {
   totalNodes: number;
   totalEdges: number;
   nodesByType: Record<string, number>;

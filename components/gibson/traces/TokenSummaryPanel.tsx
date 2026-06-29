@@ -30,7 +30,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-export interface TokenSummaryPanelProps {
+interface TokenSummaryPanelProps {
   summary: TokenSummary;
 }
 

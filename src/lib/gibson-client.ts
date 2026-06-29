@@ -27,8 +27,6 @@ import type {
 // Re-exported for back-compat; client components should import from
 // gibson-client-types directly to avoid pulling grpc-js into the browser bundle.
 export type {
-  CredentialFieldDescriptor,
-  ModelDescriptor,
   SupportedProviderDescriptor,
   DaemonProviderConfigInput,
   ProviderCapability,
@@ -204,7 +202,7 @@ export async function runMission(
   return { success: true };
 }
 
-export async function getMissionHistory(name: string, limit = 100, offset = 0, userId?: string, tenantId?: string) {
+async function getMissionHistory(name: string, limit = 100, offset = 0, userId?: string, tenantId?: string) {
   const client = await getClient(userId, tenantId);
   const response = await client.getMissionHistory({
     name,
@@ -241,14 +239,14 @@ export { ConnectError, Code };
 
 // TenantUpdates removed, tenant mutation moved to the Tenant CRD operator.
 
-export interface AuditLogQueryOptions {
+interface AuditLogQueryOptions {
   startTime?: Date;
   endTime?: Date;
   action?: string;
   limit?: number;
 }
 
-export interface AuditLogEntry {
+interface AuditLogEntry {
   id: string;
   tenantId: string;
   action: string;
@@ -260,7 +258,7 @@ export interface AuditLogEntry {
   metadata: Record<string, string>;
 }
 
-export interface TenantQuota {
+interface TenantQuota {
   tenantId: string;
   maxMissions: number;
   maxAgents: number;
@@ -268,7 +266,7 @@ export interface TenantQuota {
   rateLimitRpm: number;
 }
 
-export interface ProvisioningStep {
+interface ProvisioningStep {
   name: string;
   status: string;
   message: string;
@@ -357,7 +355,7 @@ export async function getTenantQuotaUsage(
 // These exports are retained as no-ops so any reference to them compiles;
 // route files are updated to not call the daemon at all.
 
-export interface AlertRecord {
+interface AlertRecord {
   id: string;
   tenantId: string;
   userId: string;
@@ -395,7 +393,7 @@ export interface ConversationRecord {
  * Parts carry the lossless ordered content, the canonical shape since
  * dashboard#550 replaced the flat `content` string.
  */
-export interface ConversationMessageRecord {
+interface ConversationMessageRecord {
   id: string;
   role: string;
   /** Ordered proto parts, the lossless representation. */
@@ -512,7 +510,7 @@ export async function deleteConversation(
 // ============================================================================
 
 /** Serialized form of a MissionInfo proto message. */
-export interface SerializedMission {
+interface SerializedMission {
   id: string;
   name: string;
   /** Plain status string from the proto (e.g. "running", "completed", "failed"). */
@@ -536,7 +534,7 @@ export interface SerializedMission {
 }
 
 /** Serialized form of an AgentInfo proto message. */
-export interface SerializedAgent {
+interface SerializedAgent {
   id: string;
   name: string;
   /** Component kind, always `"agent"` for agents. */
@@ -556,7 +554,7 @@ export interface SerializedAgent {
 }
 
 /** Serialized form of a ToolInfo.capabilities nested message. */
-export interface SerializedCapabilities {
+interface SerializedCapabilities {
   /** Whether the tool process is running as uid 0 (root). */
   hasRoot: boolean;
   /** Whether passwordless sudo access is available. */
@@ -572,7 +570,7 @@ export interface SerializedCapabilities {
 }
 
 /** Serialized form of a ToolInfo proto message. */
-export interface SerializedTool {
+interface SerializedTool {
   id: string;
   name: string;
   version: string;
@@ -594,7 +592,7 @@ export interface SerializedTool {
 }
 
 /** Serialized form of a PluginInfo proto message. */
-export interface SerializedPlugin {
+interface SerializedPlugin {
   id: string;
   name: string;
   version: string;
@@ -611,7 +609,7 @@ export interface SerializedPlugin {
 }
 
 /** Serialized form of a StatusResponse proto message. */
-export interface SerializedStatus {
+interface SerializedStatus {
   /** Always `true` when the daemon is responding. */
   running: boolean;
   /** Operating-system PID of the daemon process. */
@@ -816,7 +814,7 @@ export function serializeStatus(s: StatusResponse): SerializedStatus {
  * Legacy-compatible read shape for a provider record.
  * @deprecated Prefer {@link DaemonProviderRecord} for new code.
  */
-export interface ProviderRecord {
+interface ProviderRecord {
   name: string;
   displayName: string;
   type: string;
@@ -836,7 +834,7 @@ export interface ProviderRecord {
  * Result shape returned by {@link listProviders}.
  * `defaultProvider` is the name of the tenant's current default, or null.
  */
-export interface ListProvidersResult {
+interface ListProvidersResult {
   providers: ProviderRecord[];
   defaultProvider: string | null;
 }
@@ -884,7 +882,7 @@ export async function listProviders(tenantId: string, userId?: string): Promise<
  * Return all plugins known to the daemon for this tenant.
  * Direct alias for the existing `listPlugins` call.
  */
-export async function listAvailablePlugins(tenantId: string, userId?: string, tenantCtx?: string): Promise<PluginInfo[]> {
+async function listAvailablePlugins(tenantId: string, userId?: string, tenantCtx?: string): Promise<PluginInfo[]> {
   const response = await listPlugins(userId, tenantCtx);
   return response.plugins ?? [];
 }
@@ -900,7 +898,7 @@ export async function listAvailablePlugins(tenantId: string, userId?: string, te
  * Returns `{ success: true, latencyMs }` on success, or
  * `{ success: false, error, latencyMs }` on any failure without throwing.
  */
-export async function testPluginConnection(
+async function testPluginConnection(
   tenantId: string,
   name: string,
   _config?: Record<string, string>,
@@ -957,7 +955,7 @@ export async function testPluginConnection(
  * Fetch a user's profile via UserService.GetUserProfile and map it to the UserProfile shape.
  * Routes through the new UserService (admin-services-completion task 17).
  */
-export async function getUserProfile(
+async function getUserProfile(
   tenantId: string,
   userId: string
 ): Promise<UserProfile> {
@@ -980,7 +978,7 @@ export async function getUserProfile(
  * Only display_name and avatar_url are accepted; email is immutable (IdP-managed).
  * Routes through the new UserService (admin-services-completion task 17).
  */
-export async function updateUserProfile(
+async function updateUserProfile(
   tenantId: string,
   userId: string,
   updates: Record<string, unknown>
@@ -1037,7 +1035,7 @@ import {
   FindingCountGroupBy,
 } from '@/src/gen/gibson/graph/v1/graph_pb';
 
-export interface KPIs {
+interface KPIs {
   activeMissions: number;
   totalMissions: number;
   agentsOnline: number;
@@ -1138,7 +1136,7 @@ export async function getFindingsByCategory(tenantId: string, _userId?: string):
   }
 }
 
-export interface FindingsTimeSeriesPoint {
+interface FindingsTimeSeriesPoint {
   date: string;
   count: number;
 }
@@ -1169,7 +1167,7 @@ export async function getFindingsTimeSeries(
   }
 }
 
-export interface MissionHeatmapCell {
+interface MissionHeatmapCell {
   /** 0 = Sunday ... 6 = Saturday */
   dayOfWeek: number;
   /** 0-23 */
@@ -1209,7 +1207,7 @@ export async function getMissionHeatmap(tenantId: string, userId?: string): Prom
   return cells;
 }
 
-export interface AgentPerformanceRecord {
+interface AgentPerformanceRecord {
   name: string;
   healthy: boolean;
   kind: string;
@@ -1338,7 +1336,7 @@ export interface DaemonProviderRecord {
  * Structured result of a daemon-side provider connectivity test.
  * Note: latencyMs is returned as number here (converted from proto int64 bigint).
  */
-export interface DaemonProviderTestResult {
+interface DaemonProviderTestResult {
   /** True when the upstream returned a successful response. */
   ok: boolean;
   /** Round-trip time in milliseconds (always reported, even on failure). */
@@ -1358,7 +1356,7 @@ export interface DaemonProviderTestResult {
 /**
  * Health status for a daemon-managed provider.
  */
-export interface DaemonProviderHealthStatus {
+interface DaemonProviderHealthStatus {
   status: 'healthy' | 'unhealthy' | 'unknown';
   /** RFC 3339 timestamp of the last health check. */
   lastCheckAt?: string;

@@ -102,7 +102,7 @@ interface CredentialFormValues {
   credentials: Record<string, string>;
 }
 
-export interface ProviderWizardProps {
+interface ProviderWizardProps {
   supported: SupportedProviderDescriptor[];
   /** Called when the user's provider is successfully created. */
   onComplete?: () => void;
@@ -441,7 +441,7 @@ function IrsaAwareCredentialFields({
 // Step 2: credentials + test connection
 // ---------------------------------------------------------------------------
 
-export interface CredentialsAndTestProps {
+interface CredentialsAndTestProps {
   descriptor: SupportedProviderDescriptor;
 
   // Wizard-mode props (used by ProviderWizard)

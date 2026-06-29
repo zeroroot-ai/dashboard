@@ -95,7 +95,7 @@ function ChatBubble({ message }: { message: ConversationMessage }) {
   );
 }
 
-export interface ConversationViewProps {
+interface ConversationViewProps {
   messages: ConversationMessage[];
   /** Generation-level token usage; renders a chip after the thread when set. */
   tokens?: { input: number; output: number };

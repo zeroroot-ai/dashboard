@@ -43,7 +43,7 @@ import { fetchMyMemberships } from './client-memberships';
  * The optional `reason` field is populated on deny paths to help developers
  * diagnose issues. Do not surface it in user-visible messages.
  */
-export interface AuthorizeResult {
+interface AuthorizeResult {
   /** Whether the current user is allowed to call the method. */
   allowed: boolean;
   /**

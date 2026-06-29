@@ -211,7 +211,7 @@ function AccessRow({ access }: { access: MissionSecretAccess }) {
 // Main panel
 // ---------------------------------------------------------------------------
 
-export interface SecretsAccessedPanelProps {
+interface SecretsAccessedPanelProps {
   missionId: string;
 }
 

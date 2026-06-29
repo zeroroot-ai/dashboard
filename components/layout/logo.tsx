@@ -70,7 +70,7 @@ interface BrainCRTProps extends BrainProps {
 }
 
 /** Primary mark, CRT bezel with the slashed zero on the screen. */
-export function BrainCRT({
+function BrainCRT({
   size = 96,
   glow = true,
   stem = true,
@@ -166,7 +166,7 @@ interface WordmarkProps {
 }
 
 /** "zeroroot.ai" with .ai dimmed; "0d.ai" if `variant="short"`. */
-export function Wordmark({
+function Wordmark({
   size = 32,
   dim = true,
   variant = "full",
@@ -250,7 +250,7 @@ interface AvatarProps {
 }
 
 /** Square tile, GitHub org avatar, app icon, sticker. */
-export function Avatar({ size = 96, radius = 12, className }: AvatarProps) {
+function Avatar({ size = 96, radius = 12, className }: AvatarProps) {
   return (
     <span
       className={className}
@@ -271,28 +271,6 @@ export function Avatar({ size = 96, radius = 12, className }: AvatarProps) {
       }}
     >
       <Brain size={Math.round(size * 0.6)} aria-hidden />
-    </span>
-  );
-}
-
-/**
- * Default export, drop-in replacement for the previous raster `/logo.png`.
- * Sized to match the legacy 30px placeholder so the sidebar collapsible
- * doesn't reflow.
- */
-export default function Logo() {
-  return (
-    <span
-      className="me-1 inline-flex shrink-0 items-center justify-center transition-all group-data-collapsible:size-6 group-data-[collapsible=icon]:size-8"
-      style={{
-        width: 30,
-        height: 30,
-        color: "var(--primary)",
-      }}
-      aria-label={PRODUCT_NAME}
-      role="img"
-    >
-      <BrainCRT size={30} stem={false} aria-hidden />
     </span>
   );
 }

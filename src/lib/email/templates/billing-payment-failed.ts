@@ -10,7 +10,7 @@ import type { EmailMessage } from '../types';
  * Service impact: the subscription enters past_due state. After 7 days in
  * past_due, paid capabilities are revoked (entitlements enforcement).
  */
-export interface BillingPaymentFailedCtx {
+interface BillingPaymentFailedCtx {
   /** Recipient email address. */
   email: string;
   /** Failed charge amount in the smallest currency unit (e.g. cents). */

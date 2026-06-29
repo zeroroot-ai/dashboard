@@ -320,4 +320,4 @@ export class IconRenderer {
 }
 
 // Export a singleton instance for convenience
-export const iconRenderer = new IconRenderer();
+const iconRenderer = new IconRenderer();

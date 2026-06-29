@@ -17,7 +17,7 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
 
-export const supportedProvidersQueryKeys = {
+const supportedProvidersQueryKeys = {
   all: ['supportedProviders'] as const,
   list: () => [...supportedProvidersQueryKeys.all, 'list'] as const,
 };

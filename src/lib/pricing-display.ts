@@ -53,7 +53,7 @@ function formatPriceLabel(p: Plan): { label: string; sub: string | null } {
   return { label: "Contact sales", sub: null };
 }
 
-export function planToDisplay(p: Plan): PricingTierDisplay {
+function planToDisplay(p: Plan): PricingTierDisplay {
   const { label, sub } = formatPriceLabel(p);
   const savings =
     typeof p.pricing.annualSavingsPct === "number" && p.pricing.annualSavingsPct > 0
@@ -89,6 +89,6 @@ export const selfServeTierIds: readonly string[] = pricingDisplays
  * form rather than a Stripe checkout. Used by the billing checkout
  * route to reject contact-only tiers.
  */
-export const contactTierIds: readonly string[] = pricingDisplays
+const contactTierIds: readonly string[] = pricingDisplays
   .filter((d) => d.contactSales)
   .map((d) => d.id);

@@ -79,7 +79,7 @@ export interface Finding {
   taxonomy: TaxonomyReference;
 }
 
-export interface FindingFilters {
+interface FindingFilters {
   severity?: FindingSeverity[];
   type?: string[];
   missionId?: string;
@@ -90,9 +90,9 @@ export interface FindingFilters {
 // Finding Export Types
 // ============================================================================
 
-export type FindingsExportFormat = 'json' | 'csv' | 'sarif' | 'html' | 'pdf';
+type FindingsExportFormat = 'json' | 'csv' | 'sarif' | 'html' | 'pdf';
 
-export interface FindingsExportOptions {
+interface FindingsExportOptions {
   /** Export format */
   format: FindingsExportFormat;
   /** Findings to export (if not provided, uses current filters) */
@@ -111,7 +111,7 @@ export interface FindingsExportOptions {
   filename?: string;
 }
 
-export interface FindingsExportResult {
+interface FindingsExportResult {
   success: boolean;
   filename: string;
   format: FindingsExportFormat;
@@ -121,13 +121,13 @@ export interface FindingsExportResult {
   error?: string;
 }
 
-export interface SARIFReport {
+interface SARIFReport {
   $schema: string;
   version: string;
   runs: SARIFRun[];
 }
 
-export interface SARIFRun {
+interface SARIFRun {
   tool: {
     driver: {
       name: string;
@@ -139,7 +139,7 @@ export interface SARIFRun {
   results: SARIFResult[];
 }
 
-export interface SARIFRule {
+interface SARIFRule {
   id: string;
   name: string;
   shortDescription: { text: string };
@@ -150,7 +150,7 @@ export interface SARIFRule {
   };
 }
 
-export interface SARIFResult {
+interface SARIFResult {
   ruleId: string;
   level: 'error' | 'warning' | 'note' | 'none';
   message: { text: string };
@@ -190,7 +190,7 @@ export interface Event {
   missionId?: string;
 }
 
-export interface EventFilter {
+interface EventFilter {
   types?: EventType[];
   severity?: EventSeverity[];
   source?: string;
@@ -242,14 +242,14 @@ export type GraphNodeType =
   | 'User'
   | 'Credential';
 
-export interface NodeStyle {
+interface NodeStyle {
   color?: string;
   borderColor?: string;
   icon?: string;
   size?: number;
 }
 
-export interface GraphNode {
+interface GraphNode {
   id: string;
   type: GraphNodeType;
   label: string;
@@ -262,7 +262,7 @@ export interface GraphNode {
   style?: NodeStyle;
 }
 
-export interface GraphEdge {
+interface GraphEdge {
   id: string;
   source: string;
   target: string;
@@ -271,18 +271,18 @@ export interface GraphEdge {
   label?: string;
 }
 
-export interface GraphData {
+interface GraphData {
   nodes: GraphNode[];
   edges: GraphEdge[];
 }
 
-export type GraphLayout = '2d' | '3d' | 'force';
+type GraphLayout = '2d' | '3d' | 'force';
 
 // ============================================================================
 // User Session Types
 // ============================================================================
 
-export interface UserSession {
+interface UserSession {
   user: {
     id: string;
     name: string;
@@ -298,13 +298,13 @@ export interface UserSession {
 // Notification Types
 // ============================================================================
 
-export type NotificationType =
+type NotificationType =
   | 'info'
   | 'success'
   | 'warning'
   | 'error';
 
-export interface Notification {
+interface Notification {
   id: string;
   type: NotificationType;
   title: string;
@@ -318,7 +318,7 @@ export interface Notification {
 // Chat Types
 // ============================================================================
 
-export interface ChatMessage {
+interface ChatMessage {
   id: string;
   agentId?: string;
   content: string;
@@ -331,7 +331,7 @@ export interface ChatMessage {
 // Connection Status Types
 // ============================================================================
 
-export type ConnectionStatus =
+type ConnectionStatus =
   | 'connected'
   | 'connecting'
   | 'disconnected';
@@ -367,7 +367,7 @@ export interface DashboardMetrics {
 // Pagination Types
 // ============================================================================
 
-export interface PaginationParams {
+interface PaginationParams {
   page?: number;
   limit?: number;
   cursor?: string;
@@ -386,13 +386,13 @@ export interface PaginatedResponse<T> {
 // API Response Types
 // ============================================================================
 
-export interface ApiError {
+interface ApiError {
   code: string;
   message: string;
   details?: Record<string, unknown>;
 }
 
-export interface ApiResponse<T> {
+interface ApiResponse<T> {
   data?: T;
   error?: ApiError;
   timestamp: Date;
@@ -404,36 +404,20 @@ export interface ApiResponse<T> {
 
 export type {
   KPIData,
-  TimeSeriesPoint,
   TimeRange,
   FindingsOverTime,
   CategoryCount,
   SeverityDistribution,
-  HeatmapCell,
   MissionHeatmap,
   AgentPerformance,
-  AgentStatus,
-  Alert,
-  AlertType,
-  AlertSeverity,
-  WidgetConfig,
-  WidgetPosition,
-  WidgetLayout,
-  UserLayoutPreferences,
 } from './analytics';
 
-export { WidgetType } from './analytics';
 
 // ============================================================================
 // Re-export Tenant Types
 // ============================================================================
 
 export type {
-  Tenant,
-  TenantSettings,
-  TenantRole,
-  TenantSwitchRequest,
-  TenantSwitchResponse,
 } from './tenant';
 
 // ============================================================================
@@ -442,46 +426,13 @@ export type {
 
 export type {
   // ProviderType removed, use string; see spec 25-daemon-driven-provider-config
-  ProviderHealthStatus,
   // AzureConfig, AWSConfig, OllamaConfig, OpenAIConfig removed, spec 25
-  RateLimitConfig,
-  HealthStatus,
-  ProviderConfig,
   // ProviderConfigInput removed, use DaemonProviderConfigInput from gibson-client
-  ModelInfo,
-  ConnectionTestResult,
-  ProviderAuditEventType,
-  FieldChange,
-  ProviderAuditEvent,
-  ExportFormat,
-  ImportMergeStrategy,
-  ImportError,
-  ImportResult,
-  ExportResult,
-  ListProvidersRequest,
-  ListProvidersResponse,
-  CreateProviderRequest,
-  CreateProviderResponse,
-  UpdateProviderRequest,
-  UpdateProviderResponse,
-  DeleteProviderRequest,
-  DeleteProviderResponse,
-  TestConnectionRequest,
-  SetDefaultProviderRequest,
-  SetDefaultProviderResponse,
-  GetHealthStatusRequest,
-  GetHealthStatusResponse,
-  ExportConfigRequest,
-  ImportConfigRequest,
-  GetAuditLogRequest,
-  GetAuditLogResponse,
   // ProviderFormData, ProviderFormErrors removed, spec 25
 } from './provider';
 
 export {
   // PROVIDER_TYPE_CONFIG, PROVIDER_TYPES, PROVIDER_MODELS removed, spec 25
-  HEALTH_STATUS_CONFIG,
-  PROVIDER_AUDIT_EVENT_CONFIG,
 } from './provider';
 
 // ============================================================================
@@ -489,36 +440,9 @@ export {
 // ============================================================================
 
 export type {
-  WizardStepId,
-  WizardStepStatus,
-  WizardStep,
-  LLMProviderType,
-  LLMProviderConfig,
-  LLMConfig,
-  ValidationResult,
-  LLMValidationResult,
-  SetupTaskStatus,
-  SetupTaskId,
-  SetupTask,
-  SetupProgress,
-  OnboardingState,
-  UpdateOnboardingStateRequest,
-  OnboardingStatusResponse,
-  ValidateLLMRequest,
-  ValidateLLMResponse,
-  OnboardingAgent,
-  EmptyStateVariant,
-  EmptyStateConfig,
 } from './onboarding';
 
 export {
-  WIZARD_STEPS,
-  LLM_PROVIDER_CONFIG,
-  LLM_PROVIDER_TYPES,
-  DEFAULT_SETUP_TASKS,
-  ONBOARDING_STATE_VERSION,
-  DEFAULT_ONBOARDING_STATE,
-  RECOMMENDED_STARTER_AGENT,
 } from './onboarding';
 
 // ============================================================================
@@ -526,51 +450,22 @@ export {
 // ============================================================================
 
 export type {
-  TemplateCategory,
-  TemplateDifficulty,
-  PrerequisiteType,
-  TemplatePrerequisite,
-  CustomizableFieldType,
-  CustomizableField,
-  CustomizableFieldOption,
-  CustomizableFieldGroup,
-  MissionTemplate,
-  MissionTemplateListItem,
-  TemplateRenderResult,
-  TemplateValidationError,
-  TemplateCustomValues,
-  ListTemplatesRequest,
-  ListTemplatesResponse,
-  GetTemplateRequest,
-  GetTemplateResponse,
-  RenderTemplateRequest,
-  RenderTemplateResponse,
-  CheckPrerequisitesRequest,
-  CheckPrerequisitesResponse,
-  TemplateFilters,
-  TemplateSort,
 } from './templates';
 
 export {
-  TEMPLATE_CATEGORY_CONFIG,
-  TEMPLATE_DIFFICULTY_CONFIG,
-  ONBOARDING_TEMPLATE_IDS,
-  TEMPLATE_CATEGORIES,
-  TEMPLATE_DIFFICULTIES,
 } from './templates';
 
 // ============================================================================
 // Re-export Trace Types
 // ============================================================================
 
-export type { LlmCallSummary, LlmRun, LlmCallDetailData, ConversationMessage, TokenSummary, ModelTokenBreakdown, MessageRole, RunListResponse, RunDetailResponse } from './trace';
 
 // ============================================================================
 // API Key Types
 // ============================================================================
 
 /** API key metadata returned by the daemon's ListAPIKeys RPC. */
-export interface APIKeyInfo {
+interface APIKeyInfo {
   keyId: string;
   name?: string;
   componentType?: string;

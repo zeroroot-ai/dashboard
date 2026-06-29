@@ -15,7 +15,7 @@ export type UserStatus = 'active' | 'invited' | 'suspended';
 /**
  * User status display configuration for UI.
  */
-export const USER_STATUS_CONFIG: Record<UserStatus, {
+const USER_STATUS_CONFIG: Record<UserStatus, {
   label: string;
   color: string;
   description: string;
@@ -44,7 +44,7 @@ export const USER_STATUS_CONFIG: Record<UserStatus, {
 /**
  * Email notification preferences for a user.
  */
-export interface EmailNotificationSettings {
+interface EmailNotificationSettings {
   /** Notify when missions complete */
   missionCompletion: boolean;
   /** Alert on new findings (by severity threshold) */
@@ -60,7 +60,7 @@ export interface EmailNotificationSettings {
 /**
  * In-app notification preferences for a user.
  */
-export interface InAppNotificationSettings {
+interface InAppNotificationSettings {
   /** Show notifications for mission status changes */
   missionStatusChanges: boolean;
   /** Show notifications for new findings */
@@ -86,7 +86,7 @@ export interface UserPreferences {
 /**
  * Default user preferences for new users.
  */
-export const DEFAULT_USER_PREFERENCES: UserPreferences = {
+const DEFAULT_USER_PREFERENCES: UserPreferences = {
   emailNotifications: {
     missionCompletion: true,
     findingAlerts: true,
@@ -119,7 +119,7 @@ export interface RoleRef {
   displayName?: string;
 }
 
-export interface User {
+interface User {
   /** Unique user identifier (UUID) */
   id: string;
   /** RFC 5322 validated email address */
@@ -204,7 +204,7 @@ export interface UserProfile {
 /**
  * Data for updating user profile.
  */
-export interface UpdateUserProfileRequest {
+interface UpdateUserProfileRequest {
   /** New display name */
   displayName?: string;
   /** New avatar URL or base64 data URL */
@@ -226,7 +226,7 @@ export interface UpdateUserProfileRequest {
 /**
  * Filters for querying users/team members.
  */
-export interface UserFilter {
+interface UserFilter {
   /** Search by name or email */
   search?: string;
   /** Filter by status */
@@ -248,7 +248,7 @@ export interface UserFilter {
 /**
  * Sorting options for user queries.
  */
-export interface UserSort {
+interface UserSort {
   /** Field to sort by */
   field: 'displayName' | 'email' | 'createdAt' | 'lastLoginAt' | 'status';
   /** Sort direction */
@@ -258,7 +258,7 @@ export interface UserSort {
 /**
  * Pagination parameters for user queries.
  */
-export interface UserPagination {
+interface UserPagination {
   /** Page number (1-based) */
   page: number;
   /** Items per page */
@@ -268,7 +268,7 @@ export interface UserPagination {
 /**
  * Complete query parameters for user listing.
  */
-export interface UserQueryParams {
+interface UserQueryParams {
   /** Filters to apply */
   filters?: UserFilter;
   /** Sorting options */
@@ -285,7 +285,7 @@ export interface UserQueryParams {
  * Team member representation with additional context.
  * Extends User with team-specific information.
  */
-export interface TeamMember extends User {
+interface TeamMember extends User {
   /** Role names (resolved from role IDs) */
   roleNames?: string[];
   /** When the user joined this tenant */
@@ -311,7 +311,7 @@ export interface UserPaginationInfo {
 /**
  * Response for listing team members.
  */
-export interface ListTeamMembersResponse {
+interface ListTeamMembersResponse {
   /** Team member list (canonical field) */
   members?: TeamMember[];
   /** Team member list (alias used by some API responses) */
@@ -399,7 +399,7 @@ export interface ListUserActivitiesResponse {
 /**
  * Active user session information.
  */
-export interface UserSession {
+interface UserSession {
   /** Session ID (hashed token) */
   id: string;
   /** User ID */
@@ -436,7 +436,7 @@ export interface UserSession {
 /**
  * Response for listing user sessions.
  */
-export interface ListUserSessionsResponse {
+interface ListUserSessionsResponse {
   /** Active sessions */
   sessions: UserSession[];
   /** Total count */
@@ -446,7 +446,7 @@ export interface ListUserSessionsResponse {
 /**
  * Request to revoke a user session.
  */
-export interface RevokeSessionRequest {
+interface RevokeSessionRequest {
   /** Session ID to revoke */
   sessionId: string;
   /** User ID (for verification) */
@@ -460,7 +460,7 @@ export interface RevokeSessionRequest {
 /**
  * Request to create a new user (admin only).
  */
-export interface CreateUserRequest {
+interface CreateUserRequest {
   /** Email address */
   email: string;
   /** Display name */
@@ -474,7 +474,7 @@ export interface CreateUserRequest {
 /**
  * Request to update a user (admin only).
  */
-export interface UpdateUserRequest {
+interface UpdateUserRequest {
   /** User ID */
   userId: string;
   /** New display name */
@@ -488,7 +488,7 @@ export interface UpdateUserRequest {
 /**
  * Request to suspend a user.
  */
-export interface SuspendUserRequest {
+interface SuspendUserRequest {
   /** User ID to suspend */
   userId: string;
   /** Reason for suspension */
@@ -498,7 +498,7 @@ export interface SuspendUserRequest {
 /**
  * Request to reactivate a suspended user.
  */
-export interface ReactivateUserRequest {
+interface ReactivateUserRequest {
   /** User ID to reactivate */
   userId: string;
 }
@@ -506,7 +506,7 @@ export interface ReactivateUserRequest {
 /**
  * Request to remove a user from the team.
  */
-export interface RemoveUserRequest {
+interface RemoveUserRequest {
   /** User ID to remove */
   userId: string;
 }

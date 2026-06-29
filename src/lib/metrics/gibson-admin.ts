@@ -24,7 +24,7 @@ export type AdminRpcStatus =
   | "error"; // everything else, deserialization, unexpected exceptions
 
 /** Why a JWT-SVID mint attempt ended. */
-export type JwtRefreshOutcome =
+type JwtRefreshOutcome =
   | "ok" // fresh token minted
   | "cached" // served from in-process cache, no SPIRE round-trip
   | "stale_while_revalidate" // served stale token, kicked off refresh
@@ -48,7 +48,7 @@ export const adminRpcTotal = getOrCreateCounter({
  * SPIRE-miss cases so we can alert on SPIRE outages WITHOUT being misled
  * by steady-state cache hits.
  */
-export const adminJwtRefreshTotal = getOrCreateCounter({
+const adminJwtRefreshTotal = getOrCreateCounter({
   name: "gibson_admin_jwt_refresh_total",
   help: "SPIFFE JWT-SVID fetch outcomes on the dashboard admin-RPC path.",
   labelNames: ["outcome"] as const,

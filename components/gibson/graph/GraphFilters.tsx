@@ -19,9 +19,8 @@ import {
   type SeverityFloor,
 } from '@/src/lib/graph/filters';
 
-export type { GraphFilterState } from '@/src/lib/graph/filters';
 
-export interface GraphFiltersProps {
+interface GraphFiltersProps {
   filters: GraphFilterState;
   onFiltersChange: (filters: GraphFilterState) => void;
   /** Entity types present in the current graph (toggle targets). */

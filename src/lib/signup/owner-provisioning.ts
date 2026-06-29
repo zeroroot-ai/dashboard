@@ -26,7 +26,7 @@ import { serviceClient } from '@/src/lib/gibson-client';
 import { SignupService } from '@/src/gen/gibson/tenant/v1/signup_pb';
 
 /** Inputs to `provisionSignupOwner`. */
-export interface ProvisionSignupOwnerInput {
+interface ProvisionSignupOwnerInput {
   /** Opaque single-use signup-attempt UUID; correlates with the progress stream. */
   attemptId: string;
   /** Founding owner's email address (login name). */
@@ -49,7 +49,7 @@ export interface ProvisionSignupOwnerInput {
 }
 
 /** Outcome of owner provisioning. */
-export interface ProvisionSignupOwnerResult {
+interface ProvisionSignupOwnerResult {
   /** Deterministic tenant slug the daemon derived from the workspace name. */
   tenantId: string;
   /** Zitadel id of the provisioned founding-owner human user. */

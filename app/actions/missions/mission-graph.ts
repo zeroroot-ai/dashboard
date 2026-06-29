@@ -68,13 +68,13 @@ export interface MissionGraphData {
   viewport: ViewportData | null;
 }
 
-export interface NodePositionInput {
+interface NodePositionInput {
   nodeId: string;
   x: number;
   y: number;
 }
 
-export interface SaveLayoutInput {
+interface SaveLayoutInput {
   missionDefinitionId: string;
   nodes: NodePositionInput[];
   viewport?: ViewportData | null;
@@ -82,7 +82,7 @@ export interface SaveLayoutInput {
   expectedVersion: string;
 }
 
-export type SaveLayoutResult =
+type SaveLayoutResult =
   | { ok: true; version: string }
   | { ok: false; conflict: true };
 

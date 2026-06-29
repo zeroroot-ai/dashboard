@@ -195,13 +195,13 @@ export const ICON_PATHS: Record<string, DuotoneIconDefinition> = {
  * Get icon definition for an entity type
  * Falls back to a generic circle if not found
  */
-export function getIconDefinition(entityType: string): DuotoneIconDefinition {
+function getIconDefinition(entityType: string): DuotoneIconDefinition {
   return ICON_PATHS[entityType] || ICON_PATHS['network'];
 }
 
 /**
  * Check if an icon exists for a given entity type
  */
-export function hasIcon(entityType: string): boolean {
+function hasIcon(entityType: string): boolean {
   return entityType in ICON_PATHS;
 }

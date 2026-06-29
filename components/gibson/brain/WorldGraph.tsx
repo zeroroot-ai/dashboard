@@ -5,7 +5,7 @@ import { GraphCanvas } from '@/components/gibson/graph/GraphCanvas';
 import { DEFAULT_DISPLAY } from '@/src/stores/graph-view-store';
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
 
-export interface WorldGraphMission {
+interface WorldGraphMission {
   id: string;
   goal: string;
   status: string;
@@ -27,7 +27,7 @@ export interface WorldGraphFinding {
   severity: string;
 }
 
-export interface WorldGraphProps {
+interface WorldGraphProps {
   missions: WorldGraphMission[];
   hosts: WorldGraphHost[];
   findings: WorldGraphFinding[];

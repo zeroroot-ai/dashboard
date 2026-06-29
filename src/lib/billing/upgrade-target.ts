@@ -10,7 +10,7 @@
 
 import type { PlanID } from "@/src/generated/plans";
 
-export type UpgradeTarget = {
+type UpgradeTarget = {
   label: string;
   href: string;
 } | null;

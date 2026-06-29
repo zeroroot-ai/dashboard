@@ -71,7 +71,7 @@ function useCopyToClipboard(text: string) {
 // Component props
 // ---------------------------------------------------------------------------
 
-export interface EnrollmentStepProps {
+interface EnrollmentStepProps {
   result: RegisterResult;
   onDone: () => void;
 }

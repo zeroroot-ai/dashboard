@@ -23,12 +23,12 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 /**
  * Performance mode based on FPS
  */
-export type PerformanceMode = 'optimal' | 'reduced' | 'critical';
+type PerformanceMode = 'optimal' | 'reduced' | 'critical';
 
 /**
  * Hook return value
  */
-export interface UseGraph3DPerformanceReturn {
+interface UseGraph3DPerformanceReturn {
   /** Current instantaneous FPS */
   fps: number;
   /** Average FPS over last second */

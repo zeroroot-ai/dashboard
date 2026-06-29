@@ -342,7 +342,7 @@ function ParallelGroupRow({
 // Main component
 // ---------------------------------------------------------------------------
 
-export interface CheckpointDetailProps {
+interface CheckpointDetailProps {
   missionId: string;
   checkpointId: string;
   open: boolean;

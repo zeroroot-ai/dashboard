@@ -7,7 +7,7 @@ import type { EmailMessage } from '../types';
  * (3 days before the trial ends). Encourages the customer to confirm their
  * payment method and provides a clear picture of what they'll be charged.
  */
-export interface BillingTrialWillEndCtx {
+interface BillingTrialWillEndCtx {
   /** Recipient email address. */
   email: string;
   /** Human-readable plan name (e.g. "Squad", "Org", "Platform"). */

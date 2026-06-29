@@ -173,7 +173,7 @@ export function useMissions(
 /**
  * Fetch missions across multiple tenants (super-admin only)
  */
-export function useCrossTenantMissions(
+function useCrossTenantMissions(
   filters?: MissionFilters,
   tenantIds?: string[]
 ): UseQueryResult<Mission[], Error> {

@@ -26,9 +26,9 @@ const TURNSTILE_VERIFY_URL =
 const HCAPTCHA_VERIFY_URL = 'https://api.hcaptcha.com/siteverify';
 const VERIFY_TIMEOUT_MS = 3000;
 
-export type CaptchaProvider = 'turnstile' | 'hcaptcha' | 'disabled';
+type CaptchaProvider = 'turnstile' | 'hcaptcha' | 'disabled';
 
-export type CaptchaResult =
+type CaptchaResult =
   | { ok: true; score?: number }
   | { ok: false; reason: string };
 

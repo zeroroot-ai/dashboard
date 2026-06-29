@@ -133,7 +133,7 @@ export type ErrorClass =
   | 'invalid_argument'
   | 'internal';
 
-export interface ErrorClassEntry {
+interface ErrorClassEntry {
   /** Stable machine-readable class name. */
   class: ErrorClass;
   /** HTTP status the route returns. */
@@ -292,7 +292,7 @@ export function classifyConnectCode(code: Code): ErrorClass {
  * `app/api/<path>/route.ts` matches this shape, the client-side
  * error-state component can render any error consistently.
  */
-export interface ApiErrorBody {
+interface ApiErrorBody {
   error: {
     /** Canonical class name (see `ErrorClass`). */
     class: ErrorClass;

@@ -52,7 +52,7 @@ export const CSRF_HEADER_NAME = 'x-csrf-token';
 export const CSRF_FORM_FIELD = 'csrf';
 
 /** Machine-readable failure reasons. Surfaced in 403 response bodies. */
-export type CsrfErrorReason =
+type CsrfErrorReason =
   | 'csrf-cookie-missing'
   | 'csrf-token-missing'
   | 'csrf-token-mismatch';

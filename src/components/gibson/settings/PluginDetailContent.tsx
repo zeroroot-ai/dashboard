@@ -266,7 +266,7 @@ function BindingRow({
 // Component props
 // ---------------------------------------------------------------------------
 
-export interface PluginDetailContentProps {
+interface PluginDetailContentProps {
   install: PluginInstallSummary;
 }
 

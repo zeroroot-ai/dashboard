@@ -25,7 +25,7 @@ import { EmptyState } from "@/components/gibson/shared/EmptyState";
 /** Canonical URL of the provider configuration page. */
 export const PROVIDERS_SETTINGS_HREF = "/dashboard/pages/settings/providers";
 
-export interface EmbeddingGatePromptProps {
+interface EmbeddingGatePromptProps {
   /**
    * Name of the feature being gated, woven into the description so the prompt
    * reads naturally (e.g. "Vector recall", "GraphRAG", "the knowledge graph").

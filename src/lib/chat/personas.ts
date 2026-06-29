@@ -11,7 +11,7 @@
 // Types
 // ============================================================================
 
-export interface Persona {
+interface Persona {
   id: string;
   label: string;
   description: string;

@@ -45,7 +45,7 @@ export interface Credentials {
   enrollCommand: string;
 }
 
-export interface CredentialPanelProps {
+interface CredentialPanelProps {
   credentials: Credentials;
   /** Title shown in the card header. Defaults to "Component credentials". */
   title?: string;

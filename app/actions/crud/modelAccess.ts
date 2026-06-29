@@ -30,7 +30,7 @@ import {
   GrantTargetKind,
 } from "@/src/gen/gibson/tenant/v1/model_access_pb";
 
-export type ActionResult<T> =
+type ActionResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string; code?: string };
 
@@ -213,7 +213,7 @@ export async function listModelAccessAction(
 // Audit trail
 // ---------------------------------------------------------------------
 
-export interface ListAuditInput {
+interface ListAuditInput {
   fromUnix: number;
   toUnix: number;
   userId?: string;

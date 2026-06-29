@@ -412,7 +412,7 @@ function ClientDiff({ entries }: { entries: ClientFallbackEntry[] }) {
 // Main component
 // ---------------------------------------------------------------------------
 
-export interface CheckpointDiffViewProps {
+interface CheckpointDiffViewProps {
   missionId: string;
   checkpointAId: string;
   checkpointBId: string;

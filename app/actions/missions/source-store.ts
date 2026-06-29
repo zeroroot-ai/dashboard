@@ -39,11 +39,11 @@ import { logger } from "@/src/lib/logger";
 // Result types
 // ---------------------------------------------------------------------------
 
-export type DraftActionResult<T = null> =
+type DraftActionResult<T = null> =
   | { ok: true; data: T }
   | { ok: false; error: string; code: DraftActionErrorCode };
 
-export type DraftActionErrorCode =
+type DraftActionErrorCode =
   | "permission_denied"
   | "bad_input"
   | "not_found"

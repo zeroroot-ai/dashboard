@@ -42,7 +42,7 @@
 // ---------------------------------------------------------------------------
 
 /** What shape a required env var must take. */
-export type EnvKind = 'string' | 'url' | 'boolean' | 'number';
+type EnvKind = 'string' | 'url' | 'boolean' | 'number';
 
 /**
  * Single required-env entry.
@@ -54,7 +54,7 @@ export type EnvKind = 'string' | 'url' | 'boolean' | 'number';
  *               Dev/local boots without it. Use sparingly, most things should
  *               be required everywhere so dev parity is structural.
  */
-export interface RequiredEnvSpec {
+interface RequiredEnvSpec {
   name: string;
   kind: EnvKind;
   hint: string;
@@ -234,7 +234,7 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
  * Adding an entry here is a deliberate decision: prefer the REQUIRED_ENV
  * block whenever possible.
  */
-export const OPTIONAL_ENV = [
+const OPTIONAL_ENV = [
   // ---- Optional Zitadel divergence hatch ----
   // Inherits ZITADEL_ISSUER when unset; only required in topologies where the
   // browser-facing and pod-internal Zitadel URLs MUST differ.
@@ -392,8 +392,8 @@ export const OPTIONAL_ENV = [
   // access, so the var is no longer consulted.
 ] as const;
 
-export type RequiredEnvName = (typeof REQUIRED_ENV)[number]['name'];
-export type OptionalEnvName = (typeof OPTIONAL_ENV)[number];
+type RequiredEnvName = (typeof REQUIRED_ENV)[number]['name'];
+type OptionalEnvName = (typeof OPTIONAL_ENV)[number];
 
 // ---------------------------------------------------------------------------
 // Validation
