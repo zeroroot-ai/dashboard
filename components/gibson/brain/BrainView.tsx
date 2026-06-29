@@ -91,18 +91,21 @@ type Decision = {
 /** The entity slice rendered by the tables + graph — either the live World or
  *  a server-folded replay frame. `work` is the mission's WorkItems reconstructed
  *  as-of the frame (in-flight + terminal); `decisions` is the mission's Decider
- *  decisions folded to the frame. */
+ *  decisions folded to the frame; `llmCalls` is the mission's LLM-call metadata
+ *  folded to the frame (PRD #1059 M2, gibson#1063) — it moves with the Scroller. */
 type Frame = {
   missions: Mission[];
   hosts: Host[];
   findings: Finding[];
   work: WorkItem[];
   decisions: Decision[];
+  llmCalls: LlmCall[];
 };
 
-// LLM calls are read from the live World (GetFrameAt folds entities, not the
-// call log), so they live on WorldData rather than the scrubbable Frame.
-type WorldData = Frame & { timeline: TimelineEvent[]; llmCalls: LlmCall[] };
+// LLM calls are now folded into the mission frame via the run_id -> WorkItem ->
+// mission linkage (gibson#1063), so they ride on `Frame` and reconstruct to the
+// scrubbed tick; WorldData just adds the Timeline to that.
+type WorldData = Frame & { timeline: TimelineEvent[] };
 
 function severityVariant(s: string): "destructive" | "secondary" | "outline" {
   const v = s.toLowerCase();
@@ -186,7 +189,12 @@ export function BrainView({ mission }: { mission?: string }) {
         // The live /api/world read carries no work (there is no ListWork RPC;
         // work is reconstructed per-frame), so default it — the Work panel binds
         // to the mission-scoped folded frame, which always supplies work.
-        setData({ ...json, work: json.work ?? [], decisions: json.decisions ?? [] });
+        setData({
+          ...json,
+          work: json.work ?? [],
+          decisions: json.decisions ?? [],
+          llmCalls: json.llmCalls ?? [],
+        });
         // The playback controller advances the scrub head when following the
         // tail (it observes `total` growing), so no manual scrub bump here.
         setError(null);
@@ -226,7 +234,12 @@ export function BrainView({ mission }: { mission?: string }) {
           });
           if (!res.ok) return;
           const json = (await res.json()) as Frame;
-          setFrame({ ...json, work: json.work ?? [], decisions: json.decisions ?? [] });
+          setFrame({
+            ...json,
+            work: json.work ?? [],
+            decisions: json.decisions ?? [],
+            llmCalls: json.llmCalls ?? [],
+          });
         } catch {
           /* aborted or transient — keep the last frame */
         }
@@ -574,17 +587,19 @@ export function BrainView({ mission }: { mission?: string }) {
         </CardContent>
       </Card>
 
-      {/* LLM calls are tenant-wide: the call log carries no mission linkage yet
-          (mission-scoped LLM provenance is the rich-frame projection, M2), so
-          this panel is shown only in the tenant-wide view to avoid implying a
-          single mission's calls. */}
-      {mission ? null : (
+      {/* LLM calls fold into the frame (PRD #1059 M2, gibson#1063): the mission's
+          LLM-call metadata reconstructed as-of the scrubbed tick. Bound to the
+          folded frame (mission-scoped via the run_id -> WorkItem -> mission
+          linkage), a call appears at its observation tick, so the panel moves
+          with the Scroller and its token/cost totals line up with what's on
+          screen instead of being tenant-wide and tail-only. Transcripts stay
+          behind the GetLlmCall detail path (opened from the per-tick inspector). */}
       <Card>
         <CardHeader>
           <CardTitle>LLM calls</CardTitle>
         </CardHeader>
         <CardContent>
-          {data.llmCalls.length === 0 ? (
+          {view.llmCalls.length === 0 ? (
             <p className="text-sm text-muted-foreground">No LLM calls yet.</p>
           ) : (
             <Table>
@@ -597,7 +612,7 @@ export function BrainView({ mission }: { mission?: string }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.llmCalls.map((c) => (
+                {view.llmCalls.map((c) => (
                   <TableRow key={c.callId}>
                     <TableCell className="font-mono">{c.model}</TableCell>
                     <TableCell className="text-right tabular-nums">{c.promptTokens}</TableCell>
@@ -612,7 +627,6 @@ export function BrainView({ mission }: { mission?: string }) {
           )}
         </CardContent>
       </Card>
-      )}
 
       <Card>
         <CardHeader>
