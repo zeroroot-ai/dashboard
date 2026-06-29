@@ -55,8 +55,9 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     // redirect so the signup form renders even when the test cluster has no
     // plan configuration. NEVER set this in production, it removes the pricing
     // gate entirely for any request to /signup.
+    // ADR-0006 / deploy#1033: the pricing page moved to www.zeroroot.ai.
     if (process.env.TEST_FIXTURES_BYPASS_PRICING !== "true") {
-      redirect("/pricing?missing_plan=true");
+      redirect("https://www.zeroroot.ai/pricing?missing_plan=true");
     }
     // In bypass mode, fall through with the first self-serve plan so the form
     // renders with a valid (if arbitrary) plan value.

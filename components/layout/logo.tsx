@@ -27,7 +27,7 @@ interface BrainProps {
 }
 
 /** Standalone slashed-zero (Ø-style glyph). Used at small sizes and on tiles. */
-export function Brain({
+function Brain({
   size = 64,
   className,
   "aria-label": ariaLabel = "zeroroot mark",

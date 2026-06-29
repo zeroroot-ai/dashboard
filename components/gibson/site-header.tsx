@@ -3,7 +3,11 @@ import { getServerSession } from "@/src/lib/auth";
 import { Lockup } from "@/components/layout/logo";
 
 /**
- * Public chrome, landing, pricing, docs.
+ * Product chrome — shown on login, signup, onboarding, and other public/auth
+ * pages of the dashboard.
+ *
+ * ADR-0006 / deploy#1033: pricing and the marketing surface moved to the
+ * SaaS-only www-svc (www.zeroroot.ai). External links point there.
  *
  * Brand lockup: full BrainCRT mark (with monitor stand, "the actual terminal")
  * sitting next to the "zeroroot.ai" wordmark. Same treatment as the square
@@ -31,7 +35,7 @@ export async function SiteHeader() {
             docs
           </Link>
           <Link
-            href="/pricing"
+            href="https://www.zeroroot.ai/pricing"
             className="text-foreground transition-colors hover:text-link"
           >
             pricing
