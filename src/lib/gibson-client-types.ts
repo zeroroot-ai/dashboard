@@ -84,6 +84,12 @@ export interface ModelDescriptor {
   contextWindow: number;
   /** True when the provider catalogue marks this model as superseded. */
   deprecated?: boolean;
+  /**
+   * Capabilities this model supports. Mirrors proto `Capability` enum values
+   * (1=chat, 2=embedding). Absent/empty implies chat-only (legacy default).
+   * From gibson#1072: field 4 on ModelDescriptor.
+   */
+  capabilities?: ProviderCapability[];
 }
 
 /**
@@ -101,8 +107,16 @@ export interface SupportedProviderDescriptor {
   selfHosted: boolean;
   /** Form schema, one entry per credential input. */
   credentials: CredentialFieldDescriptor[];
-  /** Default model catalogue the provider advertises. */
+  /** Default model catalogue the provider advertises (chat models). */
   defaultModels: ModelDescriptor[];
+  /**
+   * Pre-filtered catalogue of EMBEDDING models this provider offers.
+   * Populated from gibson#1072 `SupportedProvider.embedding_models` (field 7).
+   * Empty when the provider is chat-only or the catalogue is unknown.
+   * Embedding-only provider types (voyage/openai-compatible/tei) carry ONLY
+   * this list (defaultModels is empty).
+   */
+  embeddingModels?: ModelDescriptor[];
 }
 
 /**

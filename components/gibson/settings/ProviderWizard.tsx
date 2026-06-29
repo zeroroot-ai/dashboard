@@ -77,6 +77,9 @@ import {
 import {
   PROVIDER_CAPABILITIES,
   capabilityLabel,
+  isEmbeddingOnlyProviderType,
+  defaultCapabilitiesForType,
+  selectableCapabilitiesForType,
 } from "@/src/lib/provider-capabilities";
 
 // ---------------------------------------------------------------------------
@@ -95,6 +98,12 @@ export interface ProbeResult {
   latencyMs: number;
   error?: string;
   models: FoundModel[];
+  /** True when an embedding probe was attempted and succeeded (gibson#1072). */
+  embeddingOk?: boolean;
+  /** Vector dimension from the embedding probe, 0/absent when not probed. */
+  embeddingDimension?: number;
+  /** Error from the embedding probe when embeddingOk=false. */
+  embeddingError?: string;
 }
 
 interface CredentialFormValues {
@@ -289,42 +298,52 @@ function ProviderTypePicker({
 }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      {supported.map((d) => (
-        <Card
-          key={d.type}
-          role="button"
-          tabIndex={0}
-          onClick={() => onPick(d.type)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              onPick(d.type);
-            }
-          }}
-          className="hover:border-primary/40 hover:bg-muted/30 cursor-pointer transition-colors"
-        >
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between gap-2">
-              <CardTitle className="text-sm">{d.displayName}</CardTitle>
-              {d.selfHosted && (
-                <Badge variant="secondary" className="text-[10px]">
-                  self-hosted
-                </Badge>
+      {supported.map((d) => {
+        const embeddingOnly = isEmbeddingOnlyProviderType(d.type);
+        return (
+          <Card
+            key={d.type}
+            role="button"
+            tabIndex={0}
+            onClick={() => onPick(d.type)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onPick(d.type);
+              }
+            }}
+            className="hover:border-primary/40 hover:bg-muted/30 cursor-pointer transition-colors"
+          >
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-sm">{d.displayName}</CardTitle>
+                <div className="flex items-center gap-1">
+                  {embeddingOnly && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      embeddings
+                    </Badge>
+                  )}
+                  {d.selfHosted && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      self-hosted
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <CardDescription className="text-xs">
+                {d.credentials.length === 0
+                  ? "No credentials required"
+                  : `${d.credentials.length} credential field${d.credentials.length === 1 ? "" : "s"}`}
+              </CardDescription>
+              {d.type === "openai" && (
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Also works with Azure OpenAI, Ask Sage, and other compatible providers.
+                </p>
               )}
-            </div>
-            <CardDescription className="text-xs">
-              {d.credentials.length === 0
-                ? "No credentials required"
-                : `${d.credentials.length} credential field${d.credentials.length === 1 ? "" : "s"}`}
-            </CardDescription>
-            {d.type === "openai" && (
-              <p className="text-muted-foreground mt-1 text-xs">
-                Also works with Azure OpenAI, Ask Sage, and other compatible providers.
-              </p>
-            )}
-          </CardHeader>
-        </Card>
-      ))}
+            </CardHeader>
+          </Card>
+        );
+      })}
     </div>
   );
 }
@@ -557,8 +576,13 @@ export function CredentialsAndTest({
               {externalProbeResult!.models.length > 0 ? (
                 <>Found {externalProbeResult!.models.length} model{externalProbeResult!.models.length === 1 ? "" : "s"}.</>
               ) : (
-                "No live model list, using the provider's static catalogue."
+                "No live model list, using the provider&apos;s static catalogue."
               )}
+              {externalProbeResult!.embeddingOk && externalProbeResult!.embeddingDimension ? (
+                <> Embedding probe passed ({externalProbeResult!.embeddingDimension}d).</>
+              ) : externalProbeResult!.embeddingError ? (
+                <> Embedding probe failed: {externalProbeResult!.embeddingError}</>
+              ) : null}
             </AlertDescription>
           </Alert>
         )}
@@ -639,6 +663,10 @@ function ModelPickerAndSave({
 }) {
   const servesChat = capabilities.includes("chat");
   const servesEmbedding = capabilities.includes("embedding");
+  // Embedding-only providers (voyage/openai-compatible/tei) have only
+  // embedding_models; the capability checkbox for chat is hidden entirely.
+  const selectableCaps = selectableCapabilitiesForType(descriptor.type);
+  const isEmbeddingOnly = isEmbeddingOnlyProviderType(descriptor.type);
 
   function toggleCapability(cap: ProviderCapability, on: boolean) {
     const next = on
@@ -655,11 +683,11 @@ function ModelPickerAndSave({
   const embeddingReady = !servesEmbedding || Boolean(embeddingModel.trim());
   const saveDisabled =
     isSavePending || capabilities.length === 0 || !chatReady || !embeddingReady;
-  // Prefer live models when present; otherwise fall back to the descriptor's
-  // default catalogue (e.g. Bedrock has a static list, Anthropic does not).
-  // When using live models, cross-reference with the descriptor's defaultModels
-  // to annotate them with the deprecated flag.
-  const models: FoundModel[] = React.useMemo(() => {
+
+  // Chat model list: prefer live models from the probe; fall back to the
+  // descriptor's static defaultModels catalogue (e.g. Bedrock).
+  // Cross-reference live models with the static list to pick up deprecated flags.
+  const chatModels: FoundModel[] = React.useMemo(() => {
     let base: FoundModel[];
     if (liveModels.length > 0) {
       base = liveModels.map((m) => {
@@ -685,27 +713,51 @@ function ModelPickerAndSave({
     });
   }, [liveModels, descriptor.defaultModels]);
 
-  const pickedModelMeta = models.find((m) => m.name === pickedModel);
+  // Embedding model list: from gibson#1072 SupportedProvider.embeddingModels
+  // (field 7). For embedding-only providers this IS the complete catalogue.
+  // For dual-capability providers (openai, bedrock, cohere) it is pre-filtered
+  // by the daemon. Empty when the provider has no static embedding catalogue
+  // and the operator must type a model name manually.
+  const embeddingModels: FoundModel[] = React.useMemo(() => {
+    return (descriptor.embeddingModels ?? []).map((m) => ({
+      name: m.name,
+      family: m.family ?? "",
+      contextWindow: m.contextWindow ?? 0,
+      deprecated: m.deprecated ?? false,
+    }));
+  }, [descriptor.embeddingModels]);
+
+  const pickedModelMeta = chatModels.find((m) => m.name === pickedModel);
 
   React.useEffect(() => {
-    if (!pickedModel && models.length > 0) {
-      setPickedModel(models[0].name);
+    if (!pickedModel && chatModels.length > 0 && servesChat) {
+      setPickedModel(chatModels[0].name);
     }
-  }, [models, pickedModel, setPickedModel]);
+  }, [chatModels, pickedModel, setPickedModel, servesChat]);
+
+  // When the provider is embedding-only, default the embedding model picker
+  // to the first entry in the catalogue if none has been selected yet.
+  React.useEffect(() => {
+    if (!embeddingModel && embeddingModels.length > 0 && servesEmbedding) {
+      setEmbeddingModel(embeddingModels[0].name);
+    }
+  }, [embeddingModels, embeddingModel, setEmbeddingModel, servesEmbedding]);
 
   return (
     <div className="space-y-4">
       {/* Capabilities: which services this provider fulfils. Mirrors the
           proto Capability enum (chat / embedding); a provider may serve one or
-          both (E11 BYO-embedder, gibson#810). */}
+          both (E11 BYO-embedder, gibson#810). Embedding-only types (voyage /
+          openai-compatible / tei) show only the embedding checkbox. */}
       <div className="space-y-1.5">
         <label className="text-xs font-medium">Capabilities</label>
         <p className="text-muted-foreground text-[11px]">
-          Choose which services this provider fulfils. Run e.g. one provider for
-          chat and another for embeddings.
+          {isEmbeddingOnly
+            ? "This provider serves embeddings only."
+            : "Choose which services this provider fulfils. Run e.g. one provider for chat and another for embeddings."}
         </p>
         <div className="flex flex-col gap-2 pt-0.5">
-          {PROVIDER_CAPABILITIES.map((cap) => (
+          {selectableCaps.map((cap) => (
             <label
               key={cap}
               className="flex items-center gap-2 text-xs"
@@ -714,6 +766,7 @@ function ModelPickerAndSave({
               <Checkbox
                 checked={capabilities.includes(cap)}
                 onCheckedChange={(v) => toggleCapability(cap, v === true)}
+                disabled={isEmbeddingOnly}
               />
               {capabilityLabel(cap)}
             </label>
@@ -732,7 +785,7 @@ function ModelPickerAndSave({
       {servesChat && (
         <div className="space-y-1.5">
           <label className="text-xs font-medium">Default chat model</label>
-          {models.length === 0 ? (
+          {chatModels.length === 0 ? (
             <Alert>
               <AlertCircle className="size-4" />
               <AlertDescription className="text-xs">
@@ -747,7 +800,7 @@ function ModelPickerAndSave({
                 <SelectValue placeholder="Select model" />
               </SelectTrigger>
               <SelectContent>
-                {models.map((m) => (
+                {chatModels.map((m) => (
                   <SelectItem key={m.name} value={m.name} className="font-mono text-xs">
                     <div className="flex items-center justify-between gap-3">
                       <span className={m.deprecated ? "text-muted-foreground" : undefined}>
@@ -769,7 +822,7 @@ function ModelPickerAndSave({
               </SelectContent>
             </Select>
           )}
-          {models.length === 0 && (
+          {chatModels.length === 0 && (
             <Input
               value={pickedModel}
               onChange={(e) => setPickedModel(e.target.value)}
@@ -794,13 +847,16 @@ function ModelPickerAndSave({
             Used for vector recall, GraphRAG, belief-RAG and finding
             classification, independent of the chat model.
           </p>
-          {models.length > 0 ? (
-            <Select value={embeddingModel} onValueChange={setEmbeddingModel}>
+          {embeddingModels.length > 0 ? (
+            <Select
+              value={embeddingModel}
+              onValueChange={setEmbeddingModel}
+            >
               <SelectTrigger className="w-full text-xs" data-testid="embedding-model-select">
                 <SelectValue placeholder="Select embedding model" />
               </SelectTrigger>
               <SelectContent>
-                {models.map((m) => (
+                {embeddingModels.map((m) => (
                   <SelectItem
                     key={m.name}
                     value={m.name}
@@ -812,6 +868,9 @@ function ModelPickerAndSave({
               </SelectContent>
             </Select>
           ) : null}
+          {/* Manual input: shown always so the operator can type a model name
+              when the daemon's static catalogue is empty (e.g. a custom TEI
+              instance). Hidden visually but still present in the DOM for a11y. */}
           <Input
             value={embeddingModel}
             onChange={(e) => setEmbeddingModel(e.target.value)}
@@ -866,11 +925,11 @@ export function ProviderWizard({
   const [isTestPending, setIsTestPending] = React.useState<boolean>(false);
   // E11 BYO-embedder (gibson#810): a provider declares which services it
   // fulfils (chat and/or embedding) plus an independent default embedding
-  // model. Default to chat-only — the legacy behaviour — so the simplest add
-  // flow is unchanged.
-  const [capabilities, setCapabilities] = React.useState<ProviderCapability[]>([
-    "chat",
-  ]);
+  // model. Default to chat-only — the legacy behaviour — unless the
+  // initialType is embedding-only (voyage/openai-compatible/tei, gibson#1072).
+  const [capabilities, setCapabilities] = React.useState<ProviderCapability[]>(
+    () => defaultCapabilitiesForType(initialType),
+  );
   const [embeddingModel, setEmbeddingModel] = React.useState<string>("");
 
   const createMutation = useCreateProvider();
@@ -896,7 +955,9 @@ export function ProviderWizard({
     setFormValues({ name: type, credentials: {} });
     setProbeResult(null);
     setPickedModel("");
-    setCapabilities(["chat"]);
+    // Embedding-only providers (voyage/openai-compatible/tei) default to
+    // embedding capability only; others default to chat.
+    setCapabilities(defaultCapabilitiesForType(type));
     setEmbeddingModel("");
   }
 
@@ -949,6 +1010,10 @@ export function ProviderWizard({
         latencyMs: r.latencyMs ?? 0,
         error: r.error,
         models: r.models ?? [],
+        // Embedding probe results from gibson#1072.
+        embeddingOk: r.embeddingOk,
+        embeddingDimension: r.embeddingDimension,
+        embeddingError: r.embeddingError,
       });
     } catch (err) {
       setProbeResult({
@@ -1069,7 +1134,14 @@ export function ProviderWizard({
 
           {probeResult?.ok && (
             <Alert variant="default" className="border-highlight">
-              <AlertDescription>Connection test passed.</AlertDescription>
+              <AlertDescription className="text-xs">
+                Connection test passed.
+                {probeResult.embeddingOk && probeResult.embeddingDimension ? (
+                  <> Embedding probe: {probeResult.embeddingDimension}d vector.</>
+                ) : probeResult.embeddingError ? (
+                  <> Embedding probe failed: {probeResult.embeddingError}</>
+                ) : null}
+              </AlertDescription>
             </Alert>
           )}
           {probeResult && !probeResult.ok && (

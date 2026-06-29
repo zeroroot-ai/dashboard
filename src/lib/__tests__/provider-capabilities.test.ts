@@ -9,6 +9,9 @@ import {
   hasChatCapability,
   hasEmbeddingCapability,
   anyProviderServesEmbedding,
+  isEmbeddingOnlyProviderType,
+  defaultCapabilitiesForType,
+  selectableCapabilitiesForType,
 } from '@/src/lib/provider-capabilities';
 
 describe('provider-capabilities', () => {
@@ -89,5 +92,52 @@ describe('provider-capabilities', () => {
 
   it('exposes the two capabilities in display order', () => {
     expect([...PROVIDER_CAPABILITIES]).toEqual(['chat', 'embedding']);
+  });
+
+  // -------------------------------------------------------------------------
+  // gibson#1072: embedding-only provider type helpers
+  // -------------------------------------------------------------------------
+
+  describe('isEmbeddingOnlyProviderType (gibson#1072)', () => {
+    it('returns true for embedding-only provider types', () => {
+      expect(isEmbeddingOnlyProviderType('voyage')).toBe(true);
+      expect(isEmbeddingOnlyProviderType('openai-compatible')).toBe(true);
+      expect(isEmbeddingOnlyProviderType('tei')).toBe(true);
+    });
+
+    it('returns false for chat-capable provider types', () => {
+      expect(isEmbeddingOnlyProviderType('openai')).toBe(false);
+      expect(isEmbeddingOnlyProviderType('anthropic')).toBe(false);
+      expect(isEmbeddingOnlyProviderType('bedrock')).toBe(false);
+      expect(isEmbeddingOnlyProviderType('cohere')).toBe(false);
+      expect(isEmbeddingOnlyProviderType('')).toBe(false);
+    });
+  });
+
+  describe('defaultCapabilitiesForType (gibson#1072)', () => {
+    it('returns ["embedding"] for embedding-only types', () => {
+      expect(defaultCapabilitiesForType('voyage')).toEqual(['embedding']);
+      expect(defaultCapabilitiesForType('tei')).toEqual(['embedding']);
+      expect(defaultCapabilitiesForType('openai-compatible')).toEqual(['embedding']);
+    });
+
+    it('returns ["chat"] for chat-capable types (legacy default)', () => {
+      expect(defaultCapabilitiesForType('anthropic')).toEqual(['chat']);
+      expect(defaultCapabilitiesForType('openai')).toEqual(['chat']);
+      expect(defaultCapabilitiesForType('bedrock')).toEqual(['chat']);
+      expect(defaultCapabilitiesForType('')).toEqual(['chat']);
+    });
+  });
+
+  describe('selectableCapabilitiesForType (gibson#1072)', () => {
+    it('returns only ["embedding"] for embedding-only types', () => {
+      expect([...selectableCapabilitiesForType('voyage')]).toEqual(['embedding']);
+      expect([...selectableCapabilitiesForType('tei')]).toEqual(['embedding']);
+    });
+
+    it('returns all PROVIDER_CAPABILITIES for chat-capable types', () => {
+      expect([...selectableCapabilitiesForType('openai')]).toEqual([...PROVIDER_CAPABILITIES]);
+      expect([...selectableCapabilitiesForType('anthropic')]).toEqual([...PROVIDER_CAPABILITIES]);
+    });
   });
 });
