@@ -30,7 +30,13 @@
  * pass `secureCookie: true` to encodeTestSession().
  */
 
-import { encode } from "@auth/core/jwt";
+// Re-exported by next-auth/jwt (`export * from "@auth/core/jwt"`). Importing
+// through next-auth (a direct dependency) keeps this resolvable even when
+// @auth/core is nested under next-auth rather than root-hoisted, which happens
+// because @auth/core's peerOptional nodemailer@^7 conflicts with our
+// nodemailer@9 (dashboard#892). The bare "@auth/core/jwt" subpath does not
+// resolve from src/ in that layout and fails the production typecheck.
+import { encode } from "next-auth/jwt";
 
 const INSECURE_COOKIE_NAME = "authjs.session-token";
 const SECURE_COOKIE_NAME = "__Secure-authjs.session-token";
