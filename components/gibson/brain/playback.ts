@@ -28,7 +28,7 @@ const DEFAULT_SPEED = 1;
 /** Timer cadence for `usePlayback`. The reducer is rate-agnostic — it advances
  *  by elapsed wall-clock time, not by tick count — so the cadence only bounds
  *  visual smoothness, not playback speed. */
-export const TICK_INTERVAL_MS = 100;
+const TICK_INTERVAL_MS = 100;
 
 export interface PlaybackState {
   /** Current tick, integer, always clamped to [0, total]. */
@@ -45,7 +45,7 @@ export interface PlaybackState {
   accumulatorMs: number;
 }
 
-export type PlaybackAction =
+type PlaybackAction =
   | { type: "play" }
   | { type: "pause" }
   | { type: "toggle" }
@@ -187,7 +187,7 @@ export function playbackReducer(
 export const isAtTail = (state: PlaybackState): boolean =>
   state.position >= state.total;
 
-export interface PlaybackControls {
+interface PlaybackControls {
   play(): void;
   pause(): void;
   toggle(): void;
@@ -198,7 +198,7 @@ export interface PlaybackControls {
   followTail(): void;
 }
 
-export interface UsePlayback {
+interface UsePlayback {
   position: number;
   total: number;
   playing: boolean;

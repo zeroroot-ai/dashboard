@@ -17,7 +17,7 @@ export interface Frame {
   findings: WorldGraphFinding[];
 }
 
-export type EntityKind = 'mission' | 'host' | 'finding';
+type EntityKind = 'mission' | 'host' | 'finding';
 export type ChangeType = 'added' | 'removed' | 'changed';
 
 export interface ChangedEntity {
