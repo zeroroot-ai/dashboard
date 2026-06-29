@@ -6,7 +6,7 @@ export interface TickEvent {
 }
 
 /** The Timeline event kind for an observed LLM completion (gibson brain/llm_call.go). */
-export const LLM_TICK_KIND = 'llm_call.observed';
+const LLM_TICK_KIND = 'llm_call.observed';
 
 /** The Timeline event kinds for Decider activity (gibson brain/decider.go). */
 const DECISION_PREFIX = 'decision.';
