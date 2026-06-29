@@ -28,7 +28,8 @@
     "eslint-config-next",
     "pino-pretty",
     "@bufbuild/buf",
-    "@bufbuild/protoc-gen-es"
+    "@bufbuild/protoc-gen-es",
+    "@zeroroot/brand"
   ],
   "ignoreUnresolved": [
     "@/\\.source/.*"
