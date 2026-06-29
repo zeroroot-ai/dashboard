@@ -5,6 +5,53 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.115.0](https://github.com/zeroroot-ai/dashboard/compare/v0.114.0...v0.115.0) (2026-06-29)
+
+
+### Features
+
+* add robots.txt, sitemap, and llms.txt for SEO and AI crawler discovery ([#788](https://github.com/zeroroot-ai/dashboard/issues/788)) ([53c3060](https://github.com/zeroroot-ai/dashboard/commit/53c3060e1a71ad7d4345e124a3163f96a44d9529))
+* **auth:** brand TenantId with a fail-closed mint so lenient tenants cannot compile ([#847](https://github.com/zeroroot-ai/dashboard/issues/847)) ([e11d64c](https://github.com/zeroroot-ai/dashboard/commit/e11d64c9891a960430eb9617ceb81ab62e15ca66))
+* **billing:** flag-gate the Stripe-backed billing UI (off on-prem) ([#842](https://github.com/zeroroot-ai/dashboard/issues/842)) ([7f2f07a](https://github.com/zeroroot-ai/dashboard/commit/7f2f07a88fba496caf091c0f01dca973dedba1d2)), closes [#809](https://github.com/zeroroot-ai/dashboard/issues/809)
+* **billing:** resolve Stripe price IDs via lookup_key, drop STRIPE_PRICE_* env vars ([#872](https://github.com/zeroroot-ai/dashboard/issues/872)) ([5614f8f](https://github.com/zeroroot-ai/dashboard/commit/5614f8fcc145ab5432994599266994bda5912ac4))
+* **brain:** dashboard Brain view + Scroller (read path) ([#804](https://github.com/zeroroot-ai/dashboard/issues/804)) ([9e3c657](https://github.com/zeroroot-ai/dashboard/commit/9e3c65774606be83f4408c6676863c7a54cf49d4))
+* **brain:** juicy-target highlighting in the World view ([#776](https://github.com/zeroroot-ai/dashboard/issues/776)) ([#827](https://github.com/zeroroot-ai/dashboard/issues/827)) ([0ee8cfa](https://github.com/zeroroot-ai/dashboard/commit/0ee8cfa35a295fd6d54e9d75d6a8a41ad4d2d989))
+* **brain:** surface World LLM calls in the /brain view ([#755](https://github.com/zeroroot-ai/dashboard/issues/755)) ([#831](https://github.com/zeroroot-ai/dashboard/issues/831)) ([681a1f3](https://github.com/zeroroot-ai/dashboard/commit/681a1f3ed302c8f75fc82ae6874cbc99e8ed8e18))
+* **brain:** World graph view + server-fold Scroller ([#752](https://github.com/zeroroot-ai/dashboard/issues/752)) ([#830](https://github.com/zeroroot-ai/dashboard/issues/830)) ([798cb57](https://github.com/zeroroot-ai/dashboard/commit/798cb57e5585037cf9946d880dbf6458d12ab851))
+* **build:** phase-0 gate hardening — digest-pinned base, blocking knip, lockfile-sync, Makefile ([#838](https://github.com/zeroroot-ai/dashboard/issues/838)) ([1c384c5](https://github.com/zeroroot-ai/dashboard/commit/1c384c58e8c8f3aaa10a92d5ab8bf086eb7c2440))
+* BYO-embedder provider config + vector-feature gate (E11, gibson[#810](https://github.com/zeroroot-ai/dashboard/issues/810)) ([#850](https://github.com/zeroroot-ai/dashboard/issues/850)) ([aaeda91](https://github.com/zeroroot-ai/dashboard/commit/aaeda91cd3510b03fdec0a50d07d062a2fabef52))
+* migrate admin tenant CRUD to daemon AdminTenantService, delete dashboard K8s access (dashboard[#855](https://github.com/zeroroot-ai/dashboard/issues/855)) ([#859](https://github.com/zeroroot-ai/dashboard/issues/859)) ([e7dbee6](https://github.com/zeroroot-ai/dashboard/commit/e7dbee64daf6b52c7cdbda8a75ad6f0d2ec0f2c7))
+* **nav:** add World sidebar entry; rename /dashboard/brain route to /dashboard/world ([#882](https://github.com/zeroroot-ai/dashboard/issues/882)) ([b031570](https://github.com/zeroroot-ai/dashboard/commit/b0315704d029d5492cf3b4ede1f3de12b4046013))
+* **proto:** repoint enrollment to agentidentity/pluginadmin packages, migrate credential panel to bootstrapToken ([#841](https://github.com/zeroroot-ai/dashboard/issues/841)) ([feccf69](https://github.com/zeroroot-ai/dashboard/commit/feccf69be300055a476feb6fa0e5b1d81cbd389e))
+* **review:** label queue over the brain World for HITL learning ([#753](https://github.com/zeroroot-ai/dashboard/issues/753)) ([#834](https://github.com/zeroroot-ai/dashboard/issues/834)) ([347e8f6](https://github.com/zeroroot-ai/dashboard/commit/347e8f640584ddf58158541b5ce820752c5583da))
+* **security:** single server-only daemon client with module-private transport ([#849](https://github.com/zeroroot-ai/dashboard/issues/849)) ([bd73d93](https://github.com/zeroroot-ai/dashboard/commit/bd73d931b9e3e6684ffe1f5c30acdc15f468c150)), closes [#814](https://github.com/zeroroot-ai/dashboard/issues/814)
+* **signup:** card-first single-submit — create nothing until the card clears ([#785](https://github.com/zeroroot-ai/dashboard/issues/785)) ([#798](https://github.com/zeroroot-ai/dashboard/issues/798)) ([3087dad](https://github.com/zeroroot-ai/dashboard/commit/3087dadeba61bfd4eed8fb5f4cdec7aaf7ecfec2))
+* **signup:** inline card on the signup page, validated before Create account ([#789](https://github.com/zeroroot-ai/dashboard/issues/789)) ([430a0f4](https://github.com/zeroroot-ai/dashboard/commit/430a0f4b8b1e080e4ceebc5599bcc63e2bfd546a))
+* **signup:** inline card validated before Create account (+ fix broken main) ([#790](https://github.com/zeroroot-ai/dashboard/issues/790)) ([c84ca4d](https://github.com/zeroroot-ai/dashboard/commit/c84ca4d4c2f2ac4d11aa065219657739f36d5aea))
+* **traces:** back Gibson Traces with the brain World, retire Langfuse UI ([#832](https://github.com/zeroroot-ai/dashboard/issues/832)) ([8c3cdfc](https://github.com/zeroroot-ai/dashboard/commit/8c3cdfcf124130d34724b557fef2b0d580c49476))
+
+
+### Bug Fixes
+
+* add assertAuthorized pre-check to budget/modelAccess mutating actions ([#867](https://github.com/zeroroot-ai/dashboard/issues/867)) ([1313880](https://github.com/zeroroot-ai/dashboard/commit/1313880a465b0caa1f2f060623acb5018f4f0574))
+* **billing/webhook:** don't throw on missing current_period_end; unblock billing-active ([#780](https://github.com/zeroroot-ai/dashboard/issues/780)) ([#799](https://github.com/zeroroot-ai/dashboard/issues/799)) ([a32f3b4](https://github.com/zeroroot-ai/dashboard/commit/a32f3b4a4b1a1165a438a0e63a90681fcec82270))
+* **billing:** require + mode-check STRIPE_PUBLISHABLE_KEY at boot ([#869](https://github.com/zeroroot-ai/dashboard/issues/869)) ([c46e73d](https://github.com/zeroroot-ai/dashboard/commit/c46e73d204d2af3ef70ae834cfc909e1c5960ada)), closes [#783](https://github.com/zeroroot-ai/dashboard/issues/783)
+* **build:** repoint dashboard-rbac guard at gibson-workloads ([#749](https://github.com/zeroroot-ai/dashboard/issues/749)) ([#871](https://github.com/zeroroot-ai/dashboard/issues/871)) ([2cb5aa0](https://github.com/zeroroot-ai/dashboard/commit/2cb5aa047a78bb363edc3983198e90f62768d1c7))
+* **gen:** drop dead gibson.platform.v1 bindings + deleted operator RPCs ([#881](https://github.com/zeroroot-ai/dashboard/issues/881)) ([2750a68](https://github.com/zeroroot-ai/dashboard/commit/2750a680b62592089a30ffd1f8b3c75ac69513e3))
+* **k8s:** send merge-patch content-type so Tenant CR patches apply ([#780](https://github.com/zeroroot-ai/dashboard/issues/780)/[#785](https://github.com/zeroroot-ai/dashboard/issues/785)) ([#801](https://github.com/zeroroot-ai/dashboard/issues/801)) ([d9b6a6a](https://github.com/zeroroot-ai/dashboard/commit/d9b6a6a698e8cb4ee20d6ee01a9c72a12fe79904))
+* **plans:** source plans from deploy + commit plans.ts (post-open-core) ([#837](https://github.com/zeroroot-ai/dashboard/issues/837)) ([1c9eb4b](https://github.com/zeroroot-ai/dashboard/commit/1c9eb4bfcff25ef2a0cfd8dec632d310bf421951))
+* re-seed csrf-token cookie in middleware (dashboard[#862](https://github.com/zeroroot-ai/dashboard/issues/862)) ([#866](https://github.com/zeroroot-ai/dashboard/issues/866)) ([d605af0](https://github.com/zeroroot-ai/dashboard/commit/d605af070c29a3e5e7bcfe0e7e12a82f399e08c6))
+* restore agent_identity binding to unblock typecheck (regen drift) ([#825](https://github.com/zeroroot-ai/dashboard/issues/825)) ([28fd74b](https://github.com/zeroroot-ai/dashboard/commit/28fd74bd5f34c04f2476395ccf71914eececbfc1))
+* **seo:** serve crawler metadata on both hosts and noindex non-prod ([#795](https://github.com/zeroroot-ai/dashboard/issues/795)) ([b2e66dc](https://github.com/zeroroot-ai/dashboard/commit/b2e66dca3177377c143635e1f35e876969d93860))
+* **signup:** apply Tenant CR before creating the subscription (webhook race) ([#785](https://github.com/zeroroot-ai/dashboard/issues/785)) ([#800](https://github.com/zeroroot-ai/dashboard/issues/800)) ([b1edf5c](https://github.com/zeroroot-ai/dashboard/commit/b1edf5ccce3d56c3ca3a910b2a79a330dd5b015f))
+* **signup:** drop em-dashes from inline card copy (build guard) ([#791](https://github.com/zeroroot-ai/dashboard/issues/791)) ([2457dbf](https://github.com/zeroroot-ai/dashboard/commit/2457dbf5d94f124cc754b0d7745472e268fa19c6))
+* **signup:** drop paymentMethodCreation:'manual' — it broke confirmSetup ([#794](https://github.com/zeroroot-ai/dashboard/issues/794)) ([36ab340](https://github.com/zeroroot-ai/dashboard/commit/36ab3400babedca1ba0bb088075c1885aeabe447))
+* **signup:** inject Stripe publishable key at runtime so the Payment Element loads ([#786](https://github.com/zeroroot-ai/dashboard/issues/786)) ([3f41e9f](https://github.com/zeroroot-ai/dashboard/commit/3f41e9f4f7868e3f42d7508e464830c900e66160)), closes [#783](https://github.com/zeroroot-ai/dashboard/issues/783)
+* **signup:** keep Payment Element mounted until card is confirmed ([#797](https://github.com/zeroroot-ai/dashboard/issues/797)) ([a2d6146](https://github.com/zeroroot-ai/dashboard/commit/a2d61464f940cd78e556ef50cd1d14db95b1aff6))
+* **signup:** pass return_url to confirmSetup + surface confirm errors ([#796](https://github.com/zeroroot-ai/dashboard/issues/796)) ([7542d50](https://github.com/zeroroot-ai/dashboard/commit/7542d50898f5b170f8b7145b3af8ab90ee6871f4))
+* **signup:** stack payment methods (accordion) so none are clipped ([#793](https://github.com/zeroroot-ai/dashboard/issues/793)) ([c85bc13](https://github.com/zeroroot-ai/dashboard/commit/c85bc134c219d26843354377b05d2faaf0fe6b72))
+* **signup:** theme the inline Payment Element to the dark dashboard brand ([#792](https://github.com/zeroroot-ai/dashboard/issues/792)) ([4557c6b](https://github.com/zeroroot-ai/dashboard/commit/4557c6b75a202768a9b1573ee233e31434ba14f9))
+
 ## [0.114.0](https://github.com/zeroroot-ai/dashboard/compare/v0.113.0...v0.114.0) (2026-06-12)
 
 
