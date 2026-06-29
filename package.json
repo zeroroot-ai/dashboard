@@ -105,7 +105,7 @@
     "react-dom": "^19.2.3",
     "react-force-graph-2d": "1.29.1",
     "react-ga4": "^3.0.1",
-    "react-hook-form": "^7.69.0",
+    "react-hook-form": "^7.80.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "resend": "^6.2.5",
