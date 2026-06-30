@@ -1,6 +1,5 @@
 /**
- * billing-enabled.ts — the single source of truth for "does this dashboard
- * have a Stripe-backed billing backend?".
+ * billing-enabled.ts — thin shim over the deployment-profile resolver.
  *
  * Open-core context (ADR-0050, dashboard#809): gibson#798 ripped
  * BillingService / Stripe / plans out of the OSS daemon; the closed billing
@@ -9,15 +8,12 @@
  * Entitlements default. The hosted offering wires in the closed billing
  * service.
  *
- * This flag gates the *purchase / manage* billing UI (Stripe checkout,
- * subscription management, customer portal, upgrade CTAs). It does NOT gate
- * plan/tier DISPLAY (from src/generated/plans.ts) or entitlement/quota
- * display — those are always present regardless of whether billing is wired.
- *
- * Backing env: `DASHBOARD_BILLING_PAID_TIERS_ENABLED` (the pre-existing
- * billing master switch — see src/lib/env-validator.ts and
- * src/lib/billing/stripe.ts:validateBillingConfig). We deliberately reuse it
- * rather than introduce a second flag that could drift out of sync.
+ * dashboard#921: the authoritative reader of `DASHBOARD_BILLING_PAID_TIERS_ENABLED`
+ * (and the other posture knobs) has moved to `src/lib/deployment-profile.ts`.
+ * This file is retained as a convenience shim so existing callers that only
+ * need the `billingEnabled` boolean do not have to change their import paths.
+ * New callers that need multiple profile fields should import
+ * `getDeploymentProfile()` directly and destructure what they need.
  *
  * Fail-closed: an absent / unrecognised value means billing is OFF. This is
  * the on-prem default — a self-host deploy that simply doesn't set the var
@@ -31,11 +27,16 @@
 
 import 'server-only';
 
+import { getDeploymentProfile } from '@/src/lib/deployment-profile';
+
 /**
  * True when the dashboard is wired to a Stripe-backed billing backend
  * (hosted offering). False on-prem / self-host (the default).
+ *
+ * Delegates to `getDeploymentProfile().billingEnabled`. Prefer calling
+ * `getDeploymentProfile()` directly when you also need `selfServeSignup`
+ * or `marketingUrl` — that avoids resolving the profile twice.
  */
 export function billingEnabled(): boolean {
-  const v = process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
-  return v === 'true' || v === '1';
+  return getDeploymentProfile().billingEnabled;
 }

@@ -32,6 +32,7 @@ import type { Metadata } from "next";
 
 import { selfServeTierIds, pricingDisplays } from "@/src/lib/pricing-display";
 import { DEFAULT_PASSWORD_POLICY } from "@/src/lib/zitadel/password-policy-cache";
+import { getDeploymentProfile } from "@/src/lib/deployment-profile";
 import { SignupForm } from "./signup-form";
 
 export const metadata: Metadata = {
@@ -53,10 +54,14 @@ interface SignupPageProps {
 // ---------------------------------------------------------------------------
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
+  // Resolve the deployment posture from the single source of truth.
+  // dashboard#921 / PRD dashboard#920 / deploy ADR-0006.
+  const profile = getDeploymentProfile();
+
   // Self-hosted / SaaS seam gate (deploy ADR-0006, gibson#1088).
-  // SIGNUP_SELF_SERVE is set by the SaaS overlay (gitops); absent on self-hosted.
-  // Self-hosted /signup is never reachable — redirect to login (the front door).
-  if (!process.env.SIGNUP_SELF_SERVE) {
+  // When selfServeSignup is false, /signup is never reachable — redirect to
+  // login (the front door). Derived from SIGNUP_SELF_SERVE via the resolver.
+  if (!profile.selfServeSignup) {
     redirect("/login");
   }
 
@@ -68,12 +73,10 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     rawPlan !== undefined &&
     (selfServeTierIds as readonly string[]).includes(rawPlan);
 
-  // WWW_URL is set by the SaaS Helm overlay (gitops) and points to the
-  // marketing site (e.g. https://www.zeroroot.ai). On self-hosted it is unset.
+  // marketingUrl is null on self-hosted (WWW_URL unset) and non-null on SaaS.
   // dashboard#917 / deploy#1055: the pricing redirect is SaaS-only.
-  const marketingUrl = process.env.WWW_URL
-    ? process.env.WWW_URL.replace(/\/$/, "")
-    : null;
+  // dashboard#921: resolved via the deployment-profile resolver (single reader).
+  const { marketingUrl } = profile;
 
   if (!isValidPlan) {
     // TEST_FIXTURES_BYPASS_PRICING: allow e2e tests to skip the plan-validation

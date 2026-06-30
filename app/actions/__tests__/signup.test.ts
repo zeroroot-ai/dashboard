@@ -268,10 +268,16 @@ const COMPLETE_INPUT = {
 describe('card-first signup phase 1 (signupAction → card)', () => {
   beforeEach(() => {
     resetMocks();
+    // dashboard#921: billing-on requires the full SaaS knob set so the
+    // deployment-profile resolver does not reject the combination as incoherent.
     process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
+    process.env.SIGNUP_SELF_SERVE = 'true';
+    process.env.WWW_URL = 'https://www.zeroroot.ai';
   });
   afterEach(() => {
     delete process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
+    delete process.env.SIGNUP_SELF_SERVE;
+    delete process.env.WWW_URL;
   });
 
   it('creates ONLY the Stripe customer + SetupIntent and returns the card phase — no account/company', async () => {
@@ -297,7 +303,11 @@ describe('card-first signup phase 1 (signupAction → card)', () => {
 describe('card-first signup phase 2 (completeSignup)', () => {
   beforeEach(() => {
     resetMocks();
+    // dashboard#921: billing-on requires the full SaaS knob set so the
+    // deployment-profile resolver does not reject the combination as incoherent.
     process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
+    process.env.SIGNUP_SELF_SERVE = 'true';
+    process.env.WWW_URL = 'https://www.zeroroot.ai';
     mockProvisionSignupOwner.mockResolvedValue({
       tenantId: 'test-workspace',
       ownerUserId: 'zid-1',
@@ -306,6 +316,8 @@ describe('card-first signup phase 2 (completeSignup)', () => {
   });
   afterEach(() => {
     delete process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
+    delete process.env.SIGNUP_SELF_SERVE;
+    delete process.env.WWW_URL;
   });
 
   it('provisions owner (pinned customer, enqueues tenant) → subscription → ready', async () => {

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { auth } from "@/auth";
 import { getMyMemberships } from "@/src/lib/auth/membership";
+import { getDeploymentProfile } from "@/src/lib/deployment-profile";
 import { DataPlaneProgressPanel } from "./DataPlaneProgressPanel";
 
 /**
@@ -44,9 +45,10 @@ export default async function OnboardingPage() {
   const userEmail = session.user.email ?? null;
 
   // Self-hosted / SaaS seam gate (deploy ADR-0006, gibson#1088).
-  // When SIGNUP_SELF_SERVE is unset, self-serve is not active — do not show
-  // a CTA that links to /signup (which redirects back to /login on self-hosted).
-  const selfServeActive = !!process.env.SIGNUP_SELF_SERVE;
+  // When selfServeSignup is false, self-serve is not active — do not show a
+  // CTA that links to /signup (which redirects back to /login on self-hosted).
+  // dashboard#921: resolved via the deployment-profile resolver (single reader).
+  const { selfServeSignup: selfServeActive } = getDeploymentProfile();
 
   return (
     <div className="mx-auto max-w-xl p-8">
