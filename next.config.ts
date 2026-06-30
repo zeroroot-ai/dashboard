@@ -7,11 +7,25 @@ import { createMDX } from "fumadocs-mdx/next";
 // here, same for every response. dashboard#818 verified no CSP is set by app code
 // and filed dashboard#863 to confirm the edge actually emits one (and to decide
 // whether the app should own a baseline CSP as defense-in-depth).
+// HSTS is a REAL-CERT concern. Emitting it behind the self-signed dev edge
+// (kind / self-hosted before a trusted cert is installed) is self-defeating:
+// the browser pins the domain (max-age 1y, includeSubDomains) and then refuses
+// the self-signed cert with no "proceed" bypass — bricking *.<domain> locally
+// (introduced by #865; this gate restores the prior dev behaviour). Deployments
+// behind a trusted cert (SaaS, or a self-hosted customer with a real cert) leave
+// DASHBOARD_HSTS_DISABLED unset and keep HSTS; kind/self-hosted-self-signed sets
+// DASHBOARD_HSTS_DISABLED=1. Default = HSTS ON (prod stays strict).
+const hstsDisabled = process.env.DASHBOARD_HSTS_DISABLED === "1";
+
 const securityHeaders = [
-  {
-    key: "Strict-Transport-Security",
-    value: "max-age=31536000; includeSubDomains",
-  },
+  ...(hstsDisabled
+    ? []
+    : [
+        {
+          key: "Strict-Transport-Security",
+          value: "max-age=31536000; includeSubDomains",
+        },
+      ]),
   {
     key: "X-Frame-Options",
     value: "DENY",
