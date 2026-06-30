@@ -1,18 +1,27 @@
 /**
  * Login page, Server Component.
  *
- * Reads the list of enabled social providers server-side (via buildSocialProviders)
- * so that no provider client IDs are leaked beyond what is strictly necessary,
- * and no disabled providers are rendered. Passes the list to the client-side
- * LoginForm, which renders SocialProvidersBlock above the email/password form.
+ * Reads the deployment profile (dashboard#921) to decide whether to offer a
+ * "Create account" CTA on the front door. Passes only the resolved boolean to
+ * the client component — never raw env.
+ *
+ * Also reads the list of enabled social providers so that no provider client
+ * IDs are leaked beyond what is strictly necessary, and no disabled providers
+ * are rendered. Passes the list to the client-side LoginForm.
  */
 
 import { Suspense } from "react";
 import { Loader2Icon } from "lucide-react";
 import { buildSocialProviders, PROVIDER_ORDER } from "@/src/lib/social-providers";
+import { getDeploymentProfile } from "@/src/lib/deployment-profile";
 import { LoginForm } from "./login-form";
 
 export default function LoginPage() {
+  // Resolve the deployment posture from the single source of truth.
+  // selfServeSignup governs whether a "Create account" CTA is shown.
+  // dashboard#922 / PRD dashboard#920 / deploy ADR-0006.
+  const { selfServeSignup } = getDeploymentProfile();
+
   // buildSocialProviders() throws at startup if any provider has a partial
   // config, so by the time this render runs either everything is valid or
   // the process has already crashed. We only pass the enabled IDs to the
@@ -22,8 +31,8 @@ export default function LoginPage() {
   // UI preview toggle: when DASHBOARD_SOCIAL_PREVIEW=true, render every
   // supported provider button regardless of backend wiring so operators can
   // see the layout before real OAuth credentials are plumbed in. Clicking a
-  // non-configured button surfaces Auth.js's "provider not found" error
-  //, acceptable for preview, not for production.
+  // non-configured button surfaces Auth.js's "provider not found" error,
+  // acceptable for preview, not for production.
   const previewAll = process.env.DASHBOARD_SOCIAL_PREVIEW === "true";
   const providers = previewAll ? PROVIDER_ORDER : enabled;
 
@@ -35,7 +44,7 @@ export default function LoginPage() {
         </div>
       }
     >
-      <LoginForm providers={providers} />
+      <LoginForm providers={providers} selfServeSignup={selfServeSignup} />
     </Suspense>
   );
 }
