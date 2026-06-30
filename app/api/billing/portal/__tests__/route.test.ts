@@ -98,7 +98,12 @@ describe('POST /api/billing/portal', () => {
     process.env.PUBLIC_URL = 'https://app.zeroroot.local:30443';
     // dashboard#809: the route 404s when billing is disabled; these tests
     // exercise the billing-enabled (hosted) path.
+    // dashboard#921: billing-on requires the full SaaS knob set (the
+    // deployment-profile resolver rejects billing-on without the companion
+    // knobs as an incoherent configuration).
     process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
+    process.env.SIGNUP_SELF_SERVE = 'true';
+    process.env.WWW_URL = 'https://www.zeroroot.ai';
     mockRateLimitAllowed = true;
     mockAssertAuthorizedShouldThrow = null;
     mockReadRawActiveTenant.mockResolvedValue({
