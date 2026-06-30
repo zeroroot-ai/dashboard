@@ -183,6 +183,14 @@ interface SignupFormProps {
    * self-hosted users are never bounced off-cluster to the SaaS marketing site.
    */
   pricingUrl: string | null;
+  /**
+   * Whether the deployment profile has billing enabled (SaaS). When false
+   * (self-hosted / card-free profile): the plan display row, Stripe Elements,
+   * and payment-method field are all omitted. The form collects only email,
+   * password, and workspace name. When true the card-first SaaS flow renders
+   * exactly as before (no regression). dashboard#923 / PRD dashboard#920.
+   */
+  billingEnabled: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -241,12 +249,19 @@ function buildStripeAppearance(): Appearance {
 // the card field renders INLINE with the account fields (no pre-created
 // customer/SetupIntent) and is validated client-side before "Create account"
 // (dashboard#784). The publishable key is runtime-injected (dashboard#783).
-// When paid tiers are off (kind) the key is empty: render without Elements and
+// When paid tiers are off (kind) or billingEnabled=false (self-hosted, card-free
+// profile, dashboard#923) the key is absent/empty: render without Elements and
 // the no-card path runs.
 export function SignupForm(props: SignupFormProps) {
+  // On self-hosted (billingEnabled=false) we never need Stripe Elements: skip
+  // loading the Stripe SDK entirely so no Stripe network call is made, no card
+  // iframe is injected, and the form stays fully offline-capable. dashboard#923.
   const stripePromise = useMemo(
-    () => (props.publishableKey ? loadStripe(props.publishableKey) : null),
-    [props.publishableKey],
+    () =>
+      props.billingEnabled && props.publishableKey
+        ? loadStripe(props.publishableKey)
+        : null,
+    [props.billingEnabled, props.publishableKey],
   );
   // Start dark (theme:'night') so there's no white flash before the token-exact
   // appearance is computed on mount.
@@ -283,13 +298,15 @@ function SignupFormInner({
   passwordPolicy,
   publishableKey,
   pricingUrl,
+  billingEnabled,
 }: SignupFormProps) {
   // Stripe.js handles (null when paid tiers are off / not inside <Elements>).
   const stripe = useStripe();
   const elements = useElements();
-  // Whether this signup collects a card inline. Gated on the publishable key
-  // being present (paid tiers enabled).
-  const paidFlow = publishableKey !== "";
+  // Whether this signup collects a card inline. Gated on both billingEnabled
+  // (deployment-profile resolver, dashboard#923) AND the publishable key being
+  // present. Self-hosted (billingEnabled=false) → card-free regardless of key.
+  const paidFlow = billingEnabled && publishableKey !== "";
 
   const [isProvisioning, setIsProvisioning] = useState(false);
   const [attemptId, setAttemptId] = useState<string | null>(null);
@@ -574,27 +591,34 @@ function SignupFormInner({
               className="space-y-5"
               noValidate
             >
-              {/* Read-only plan display */}
-              <div className="flex items-center justify-between rounded-md border border-border bg-muted/50 px-3 py-2">
-                <span className="text-sm text-muted-foreground">Plan</span>
-                <div className="flex items-center gap-2">
-                  <strong className="text-sm font-medium">
-                    {planDisplayName}
-                  </strong>
-                  {/* "Edit plan" link is SaaS-only (dashboard#917).
-                      Hidden on self-hosted (pricingUrl null) so users are
-                      never bounced off-cluster to the marketing site. */}
-                  {pricingUrl !== null && (
-                    <Link
-                      href={pricingUrl}
-                      className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground transition-colors"
-                      tabIndex={isDisabled ? -1 : undefined}
-                    >
-                      Edit plan
-                    </Link>
-                  )}
+              {/* Read-only plan display — SaaS only (billingEnabled).
+                  Self-hosted (billingEnabled=false): plans are a SaaS concept;
+                  self-hosted runs unlimited-metered entitlements with no plan
+                  picker. Hide this row entirely on the card-free profile so
+                  the form is clean: email / password / workspace only.
+                  dashboard#923 / PRD dashboard#920. */}
+              {billingEnabled && (
+                <div className="flex items-center justify-between rounded-md border border-border bg-muted/50 px-3 py-2">
+                  <span className="text-sm text-muted-foreground">Plan</span>
+                  <div className="flex items-center gap-2">
+                    <strong className="text-sm font-medium">
+                      {planDisplayName}
+                    </strong>
+                    {/* "Edit plan" link is SaaS-only (dashboard#917).
+                        Hidden on self-hosted (pricingUrl null) so users are
+                        never bounced off-cluster to the marketing site. */}
+                    {pricingUrl !== null && (
+                      <Link
+                        href={pricingUrl}
+                        className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground transition-colors"
+                        tabIndex={isDisabled ? -1 : undefined}
+                      >
+                        Edit plan
+                      </Link>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Name row, 2-col on sm+ */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

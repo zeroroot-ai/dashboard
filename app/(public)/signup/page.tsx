@@ -3,12 +3,16 @@
  *
  * Validates `?plan=` against the self-serve plan IDs.
  *
- * Plan-missing / plan-invalid behavior depends on the WWW_URL env var
- * (dashboard#917, deploy#1055):
- *   - SaaS (WWW_URL set): redirect to `${WWW_URL}/pricing?missing_plan=true`
- *     so users can choose a plan on the marketing site.
- *   - Self-hosted (WWW_URL unset): default to the first self-serve tier and
- *     render SignupForm in-app. No off-cluster redirect.
+ * Plan-missing / plan-invalid behavior depends on the deployment profile
+ * (resolved via getDeploymentProfile(), dashboard#921):
+ *   - SaaS (billingEnabled=true, marketingUrl set): redirect to
+ *     `${marketingUrl}/pricing?missing_plan=true` so users can choose a plan
+ *     on the marketing site.
+ *   - Self-hosted (billingEnabled=false, marketingUrl null): no `?plan=`
+ *     required and no off-cluster redirect. Plans are a SaaS concept; self-
+ *     hosted runs unlimited-metered entitlements. Default to the first self-
+ *     serve tier internally (for the daemon wire) but hide the plan row from
+ *     the form entirely. dashboard#923 / PRD dashboard#920.
  *
  * Seeds the client-side password strength meter with the default password
  * policy. The meter is advisory only; the daemon enforces the authoritative
@@ -76,7 +80,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   // marketingUrl is null on self-hosted (WWW_URL unset) and non-null on SaaS.
   // dashboard#917 / deploy#1055: the pricing redirect is SaaS-only.
   // dashboard#921: resolved via the deployment-profile resolver (single reader).
-  const { marketingUrl } = profile;
+  const { marketingUrl, billingEnabled } = profile;
 
   if (!isValidPlan) {
     // TEST_FIXTURES_BYPASS_PRICING: allow e2e tests to skip the plan-validation
@@ -84,15 +88,18 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     // plan configuration. NEVER set this in production, it removes the pricing
     // gate entirely for any request to /signup.
     if (process.env.TEST_FIXTURES_BYPASS_PRICING !== "true") {
-      if (marketingUrl) {
+      if (billingEnabled && marketingUrl) {
         // SaaS: bounce to the marketing pricing page so the user can pick a plan.
+        // Self-hosted (billingEnabled=false): no ?plan= required — plans are a
+        // SaaS concept; fall through to the card-free form. dashboard#923.
         redirect(`${marketingUrl}/pricing?missing_plan=true`);
       }
-      // Self-hosted (marketingUrl unset): fall through to the form with the
-      // first self-serve tier. No off-cluster redirect.
+      // Self-hosted (billingEnabled=false, marketingUrl null): fall through to
+      // the form with the first self-serve tier used for the daemon wire.
+      // The plan row is hidden from the user entirely (dashboard#923).
     }
-    // In bypass mode (e2e) or self-hosted mode, fall through with the first
-    // self-serve plan so the form renders with a valid (if arbitrary) plan.
+    // In bypass mode (e2e), self-hosted mode, or card-free profile: fall through
+    // with the first self-serve plan so the daemon wire receives a valid tier.
     const fallbackPlan = selfServeTierIds[0] ?? "solo";
     const fallbackDisplayName =
       process.env.TEST_FIXTURES_BYPASS_PRICING === "true"
@@ -113,12 +120,15 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           passwordPolicy={DEFAULT_PASSWORD_POLICY}
           publishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ""}
           pricingUrl={marketingUrl ? `${marketingUrl}/pricing` : null}
+          billingEnabled={billingEnabled}
         />
       </Suspense>
     );
   }
 
-  // At this point rawPlan is guaranteed non-null and valid.
+  // At this point rawPlan is guaranteed non-null and valid (SaaS path: billingEnabled=true
+  // and marketingUrl set so the redirect above ran, or billingEnabled=false where
+  // we fell through above with the fallback).
   const plan = rawPlan as string;
 
   // Resolve the human-readable plan name for the read-only tier display.
@@ -143,6 +153,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         passwordPolicy={passwordPolicy}
         publishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ""}
         pricingUrl={marketingUrl ? `${marketingUrl}/pricing` : null}
+        billingEnabled={billingEnabled}
       />
     </Suspense>
   );
