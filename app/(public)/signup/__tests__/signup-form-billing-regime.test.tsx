@@ -113,6 +113,10 @@ const BASE_PROPS = {
   passwordPolicy: DEFAULT_PASSWORD_POLICY,
   publishableKey: 'pk_test_placeholder',
   pricingUrl: 'https://www.zeroroot.ai/pricing',
+  // termsUrl / privacyUrl default to SaaS values in the base fixture.
+  // Tests that exercise the self-hosted (null) path override these explicitly.
+  termsUrl: 'https://www.zeroroot.ai/terms',
+  privacyUrl: 'https://www.zeroroot.ai/privacy',
 };
 
 // ---------------------------------------------------------------------------
@@ -246,5 +250,47 @@ describe('SignupForm — card-first profile (billingEnabled=true, SaaS)', () => 
       <SignupForm {...BASE_PROPS} billingEnabled={true} pricingUrl={null} />,
     );
     expect(screen.queryByRole('link', { name: /edit plan/i })).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// C) Marketing-link eradication — dashboard#924 / PRD dashboard#920
+// ---------------------------------------------------------------------------
+
+describe('SignupForm — marketing-link eradication (dashboard#924)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('C.1: self-hosted (termsUrl/privacyUrl null) — no off-cluster ToS link', () => {
+    render(
+      <SignupForm
+        {...BASE_PROPS}
+        billingEnabled={false}
+        termsUrl={null}
+        privacyUrl={null}
+      />,
+    );
+    // The checkbox label text still renders but without an anchor element.
+    expect(screen.queryByRole('link', { name: /terms of service/i })).toBeNull();
+    expect(screen.queryByRole('link', { name: /privacy policy/i })).toBeNull();
+    // The plain-text fallback label is present so the checkbox is still usable.
+    expect(screen.getByText(/terms of service/i)).toBeDefined();
+    expect(screen.getByText(/privacy policy/i)).toBeDefined();
+  });
+
+  it('C.2: SaaS (termsUrl/privacyUrl set) — linked ToS and Privacy', () => {
+    render(
+      <SignupForm
+        {...BASE_PROPS}
+        billingEnabled={true}
+        termsUrl="https://www.zeroroot.ai/terms"
+        privacyUrl="https://www.zeroroot.ai/privacy"
+      />,
+    );
+    const tosLink = screen.getByRole('link', { name: /terms of service/i });
+    expect(tosLink.getAttribute('href')).toBe('https://www.zeroroot.ai/terms');
+    const privacyLink = screen.getByRole('link', { name: /privacy policy/i });
+    expect(privacyLink.getAttribute('href')).toBe('https://www.zeroroot.ai/privacy');
   });
 });

@@ -19,7 +19,7 @@
  *
  * Branding: uses the dashboard's CSS custom properties from globals.css /
  * themes.css via Shadcn's Card, Input, Label, Checkbox, Button, and Form
- * primitives. Matches `/login` and `/pricing` visual weight.
+ * primitives. Matches `/login` visual weight.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -191,6 +191,19 @@ interface SignupFormProps {
    * exactly as before (no regression). dashboard#923 / PRD dashboard#920.
    */
   billingEnabled: boolean;
+  /**
+   * Full URL of the Terms of Service page, e.g. "https://www.zeroroot.ai/terms".
+   * Derived server-side from marketingUrl (dashboard#924 / PRD dashboard#920).
+   * Null on self-hosted (WWW_URL unset) — the ToS checkbox link is omitted so
+   * self-hosted users are never sent to a dead off-cluster page.
+   */
+  termsUrl: string | null;
+  /**
+   * Full URL of the Privacy Policy page, e.g. "https://www.zeroroot.ai/privacy".
+   * Derived server-side from marketingUrl (dashboard#924 / PRD dashboard#920).
+   * Null on self-hosted (WWW_URL unset) — the privacy checkbox link is omitted.
+   */
+  privacyUrl: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -299,6 +312,8 @@ function SignupFormInner({
   publishableKey,
   pricingUrl,
   billingEnabled,
+  termsUrl,
+  privacyUrl,
 }: SignupFormProps) {
   // Stripe.js handles (null when paid tiers are off / not inside <Elements>).
   const stripe = useStripe();
@@ -884,15 +899,22 @@ function SignupFormInner({
                     <div className="space-y-1 leading-none">
                       <FormLabel htmlFor="acceptToS" className="font-normal cursor-pointer">
                         I agree to the{" "}
-                        <Link
-                          href="https://zeroroot.ai/terms"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="underline underline-offset-4 hover:no-underline"
-                          tabIndex={isDisabled ? -1 : undefined}
-                        >
-                          Terms of Service
-                        </Link>
+                        {/* ToS link is SaaS-only (dashboard#924). On self-hosted
+                            (termsUrl null) render plain text so the checkbox still
+                            functions without a dead off-cluster link. */}
+                        {termsUrl !== null ? (
+                          <Link
+                            href={termsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline underline-offset-4 hover:no-underline"
+                            tabIndex={isDisabled ? -1 : undefined}
+                          >
+                            Terms of Service
+                          </Link>
+                        ) : (
+                          <span className="underline underline-offset-4">Terms of Service</span>
+                        )}
                       </FormLabel>
                       <FormMessage />
                     </div>
@@ -923,15 +945,22 @@ function SignupFormInner({
                     <div className="space-y-1 leading-none">
                       <FormLabel htmlFor="acceptPrivacy" className="font-normal cursor-pointer">
                         I agree to the{" "}
-                        <Link
-                          href="https://zeroroot.ai/privacy"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="underline underline-offset-4 hover:no-underline"
-                          tabIndex={isDisabled ? -1 : undefined}
-                        >
-                          Privacy Policy
-                        </Link>
+                        {/* Privacy link is SaaS-only (dashboard#924). On self-hosted
+                            (privacyUrl null) render plain text so the checkbox still
+                            functions without a dead off-cluster link. */}
+                        {privacyUrl !== null ? (
+                          <Link
+                            href={privacyUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline underline-offset-4 hover:no-underline"
+                            tabIndex={isDisabled ? -1 : undefined}
+                          >
+                            Privacy Policy
+                          </Link>
+                        ) : (
+                          <span className="underline underline-offset-4">Privacy Policy</span>
+                        )}
                       </FormLabel>
                       <FormMessage />
                     </div>
