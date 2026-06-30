@@ -51,6 +51,14 @@ COPY . .
 # Disable telemetry during build
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# DASHBOARD_HSTS_DISABLED — build-arg so local :dev image builds (make
+# restart-dashboard) can disable HSTS in routes-manifest.json (baked by
+# `next build`). Next.js bakes next.config.ts headers() at build time;
+# the runtime env var has no effect. Production/CI builds omit this arg
+# so HSTS is emitted. kind dev builds pass --build-arg DASHBOARD_HSTS_DISABLED=1.
+ARG DASHBOARD_HSTS_DISABLED=""
+ENV DASHBOARD_HSTS_DISABLED=${DASHBOARD_HSTS_DISABLED}
+
 # Build-time placeholders for modules that validate env vars at import time.
 # These are NOT baked into the runtime image — real values come from K8s secrets.
 ENV AUTH_SECRET="build-placeholder"
