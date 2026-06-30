@@ -91,9 +91,6 @@ importers:
       '@xyflow/react':
         specifier: ^12.10.1
         version: 12.10.2(@types/react@19.2.8)(immer@11.1.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@zeroroot/brand':
-        specifier: file:/home/anthony/Code/zero-day.ai/opensource/brand
-        version: file:../../../opensource/brand(tailwindcss@4.3.0)
       ai:
         specifier: ^6.0.141
         version: 6.0.145(zod@3.25.76)
@@ -3088,14 +3085,6 @@ packages:
 
   '@xyflow/system@0.0.76':
     resolution: {integrity: sha512-hvwvnRS1B3REwVDlWexsq7YQaPZeG3/mKo1jv38UmnpWmxihp14bW6VtEOuHEwJX2FvzFw8k77LyKSk/wiZVNA==}
-
-  '@zeroroot/brand@file:../../../opensource/brand':
-    resolution: {directory: ../../../opensource/brand, type: directory}
-    peerDependencies:
-      tailwindcss: '>=4.0.0'
-    peerDependenciesMeta:
-      tailwindcss:
-        optional: true
 
   accessor-fn@1.5.3:
     resolution: {integrity: sha512-rkAofCwe/FvYFUlMB0v0gWmhqtfAtV1IUkdPbfhTUyYniu5LrC0A0UJkTH0Jv3S8SvwkmfuAlY+mQIJATdocMA==}
@@ -9071,10 +9060,6 @@ snapshots:
       d3-interpolate: 3.0.1
       d3-selection: 3.0.0
       d3-zoom: 3.0.0
-
-  '@zeroroot/brand@file:../../../opensource/brand(tailwindcss@4.3.0)':
-    optionalDependencies:
-      tailwindcss: 4.3.0
 
   accessor-fn@1.5.3: {}
 
