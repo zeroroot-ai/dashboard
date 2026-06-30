@@ -78,7 +78,6 @@
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
     "@xyflow/react": "^12.10.1",
-    "@zeroroot/brand": "file:/home/anthony/Code/zero-day.ai/opensource/brand",
     "ai": "^6.0.141",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
