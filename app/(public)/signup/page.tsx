@@ -1,8 +1,14 @@
 /**
  * Signup page, Server Component.
  *
- * Validates `?plan=` against the self-serve plan IDs. Redirects to
- * `/pricing?missing_plan=true` when the param is absent or invalid.
+ * Validates `?plan=` against the self-serve plan IDs.
+ *
+ * Plan-missing / plan-invalid behavior depends on the WWW_URL env var
+ * (dashboard#917, deploy#1055):
+ *   - SaaS (WWW_URL set): redirect to `${WWW_URL}/pricing?missing_plan=true`
+ *     so users can choose a plan on the marketing site.
+ *   - Self-hosted (WWW_URL unset): default to the first self-serve tier and
+ *     render SignupForm in-app. No off-cluster redirect.
  *
  * Seeds the client-side password strength meter with the default password
  * policy. The meter is advisory only; the daemon enforces the authoritative
@@ -62,18 +68,34 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     rawPlan !== undefined &&
     (selfServeTierIds as readonly string[]).includes(rawPlan);
 
+  // WWW_URL is set by the SaaS Helm overlay (gitops) and points to the
+  // marketing site (e.g. https://www.zeroroot.ai). On self-hosted it is unset.
+  // dashboard#917 / deploy#1055: the pricing redirect is SaaS-only.
+  const marketingUrl = process.env.WWW_URL
+    ? process.env.WWW_URL.replace(/\/$/, "")
+    : null;
+
   if (!isValidPlan) {
     // TEST_FIXTURES_BYPASS_PRICING: allow e2e tests to skip the plan-validation
     // redirect so the signup form renders even when the test cluster has no
     // plan configuration. NEVER set this in production, it removes the pricing
     // gate entirely for any request to /signup.
-    // ADR-0006 / deploy#1033: the pricing page moved to www.zeroroot.ai.
     if (process.env.TEST_FIXTURES_BYPASS_PRICING !== "true") {
-      redirect("https://www.zeroroot.ai/pricing?missing_plan=true");
+      if (marketingUrl) {
+        // SaaS: bounce to the marketing pricing page so the user can pick a plan.
+        redirect(`${marketingUrl}/pricing?missing_plan=true`);
+      }
+      // Self-hosted (marketingUrl unset): fall through to the form with the
+      // first self-serve tier. No off-cluster redirect.
     }
-    // In bypass mode, fall through with the first self-serve plan so the form
-    // renders with a valid (if arbitrary) plan value.
-    const bypassPlan = selfServeTierIds[0] ?? "solo";
+    // In bypass mode (e2e) or self-hosted mode, fall through with the first
+    // self-serve plan so the form renders with a valid (if arbitrary) plan.
+    const fallbackPlan = selfServeTierIds[0] ?? "solo";
+    const fallbackDisplayName =
+      process.env.TEST_FIXTURES_BYPASS_PRICING === "true"
+        ? "(test bypass)"
+        : (pricingDisplays.find((p) => p.id === fallbackPlan)?.name ??
+          fallbackPlan);
     return (
       <Suspense
         fallback={
@@ -83,10 +105,11 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         }
       >
         <SignupForm
-          plan={bypassPlan}
-          planDisplayName="(test bypass)"
+          plan={fallbackPlan}
+          planDisplayName={fallbackDisplayName}
           passwordPolicy={DEFAULT_PASSWORD_POLICY}
           publishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ""}
+          pricingUrl={marketingUrl ? `${marketingUrl}/pricing` : null}
         />
       </Suspense>
     );
@@ -116,6 +139,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         planDisplayName={planDisplayName}
         passwordPolicy={passwordPolicy}
         publishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ""}
+        pricingUrl={marketingUrl ? `${marketingUrl}/pricing` : null}
       />
     </Suspense>
   );
