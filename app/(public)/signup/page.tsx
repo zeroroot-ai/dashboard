@@ -121,6 +121,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           publishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ""}
           pricingUrl={marketingUrl ? `${marketingUrl}/pricing` : null}
           billingEnabled={billingEnabled}
+          termsUrl={marketingUrl ? `${marketingUrl}/terms` : null}
+          privacyUrl={marketingUrl ? `${marketingUrl}/privacy` : null}
         />
       </Suspense>
     );
@@ -154,6 +156,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         publishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ""}
         pricingUrl={marketingUrl ? `${marketingUrl}/pricing` : null}
         billingEnabled={billingEnabled}
+        termsUrl={marketingUrl ? `${marketingUrl}/terms` : null}
+        privacyUrl={marketingUrl ? `${marketingUrl}/privacy` : null}
       />
     </Suspense>
   );
