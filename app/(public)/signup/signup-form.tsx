@@ -176,6 +176,13 @@ interface SignupFormProps {
    * string when paid tiers are disabled (kind) — the card step is skipped then.
    */
   publishableKey: string;
+  /**
+   * Full URL of the marketing pricing page, e.g. "https://www.zeroroot.ai/pricing".
+   * Derived server-side from WWW_URL (dashboard#917 / deploy#1055).
+   * Null on self-hosted (WWW_URL unset) — the "Edit plan" link is hidden so
+   * self-hosted users are never bounced off-cluster to the SaaS marketing site.
+   */
+  pricingUrl: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -275,6 +282,7 @@ function SignupFormInner({
   planDisplayName,
   passwordPolicy,
   publishableKey,
+  pricingUrl,
 }: SignupFormProps) {
   // Stripe.js handles (null when paid tiers are off / not inside <Elements>).
   const stripe = useStripe();
@@ -573,13 +581,18 @@ function SignupFormInner({
                   <strong className="text-sm font-medium">
                     {planDisplayName}
                   </strong>
-                  <Link
-                    href="https://www.zeroroot.ai/pricing"
-                    className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground transition-colors"
-                    tabIndex={isDisabled ? -1 : undefined}
-                  >
-                    Edit plan
-                  </Link>
+                  {/* "Edit plan" link is SaaS-only (dashboard#917).
+                      Hidden on self-hosted (pricingUrl null) so users are
+                      never bounced off-cluster to the marketing site. */}
+                  {pricingUrl !== null && (
+                    <Link
+                      href={pricingUrl}
+                      className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={isDisabled ? -1 : undefined}
+                    >
+                      Edit plan
+                    </Link>
+                  )}
                 </div>
               </div>
 
