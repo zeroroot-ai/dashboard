@@ -54,7 +54,7 @@ import 'server-only';
  * Every field is derived solely from deploy-time env knobs — never from
  * request headers, cookies, or query parameters.
  */
-export interface DeploymentProfile {
+interface DeploymentProfile {
   /**
    * True when self-serve signup is active (the SaaS profile or a self-hosted
    * install that has explicitly enabled open registration).
