@@ -116,6 +116,7 @@ export async function SecretsBackendContent() {
       <SecretsBackendForm
         currentConfig={config}
         secretCount={secretCount}
+        tenantId={tenantId}
       />
     </div>
   );

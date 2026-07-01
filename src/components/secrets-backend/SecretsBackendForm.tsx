@@ -146,12 +146,28 @@ interface SecretsBackendFormProps {
    * tenant-secrets-broker-completion R3.6 + design D4.
    */
   secretCount: number;
+  /**
+   * The active tenant id (derived server-side from the session/tenant
+   * context). Used to pre-fill the BYO path-prefix with the tenant-scoped
+   * default `tenant/<tenant-id>` when the tenant has no saved value. This
+   * mirrors the daemon codec's DefaultPathPrefix so probe/save land the same
+   * isolation path the daemon would otherwise default to (brokercodec,
+   * gibson#1121).
+   */
+  tenantId: string;
 }
 
 export function SecretsBackendForm({
   currentConfig,
   secretCount,
+  tenantId,
 }: SecretsBackendFormProps) {
+  // Tenant-scoped default KV path prefix for BYO (path-prefix) mode. Mirrors
+  // the daemon's brokercodec.DefaultPathPrefix ("tenant/<tenant-id>"). OSS
+  // Vault / OpenBao CE has no namespaces, so tenant isolation on a customer's
+  // own Vault comes from this prefix.
+  const defaultPathPrefix = `tenant/${tenantId}`;
+
   // Map the active BrokerProvider enum reported by GetBrokerConfig back to the
   // form key. The selector defaults to whichever backend is actually active
   // for the tenant (VAULT_HOSTED → Hosted, VAULT_BYO → BYO Vault). No
@@ -171,11 +187,15 @@ export function SecretsBackendForm({
     defaultValues: {
       ...BROKER_FORM_DEFAULTS,
       provider: initialProvider,
-      // Pre-populate non-sensitive BYO fields from current config
+      // Pre-populate non-sensitive BYO fields from current config. When there
+      // is no saved path prefix, seed the tenant-scoped default so the BYO
+      // form is never blank (PRD gibson#1105 story 7). authMethod defaults to
+      // "token" so the token field renders and a valid auth method is always
+      // carried in the candidate.
       address: currentConfig?.address ?? "",
-      namespaceOrPath: currentConfig?.namespaceOrPath ?? "",
+      namespaceOrPath: currentConfig?.namespaceOrPath || defaultPathPrefix,
       mount: currentConfig?.mount ?? "",
-      authMethod: currentConfig?.authMethod ?? "",
+      authMethod: currentConfig?.authMethod || "token",
     },
   });
 
@@ -217,19 +237,23 @@ export function SecretsBackendForm({
   // --------------------------------------------------------------------------
   // Provider switching
   //
-  // Switching providers is free (no dialog gate), Save is what's gated by
-  // the acknowledgement checkbox when secretCount > 0. The reset clears
-  // sensitive fields, the acknowledgement (back to false), and probe/save
-  // state so stale values never leak across providers.
-  // Spec: tenant-secrets-broker-completion R3.4 (last sentence).
+  // Switching providers must NOT silently blank the user's typed values (PRD
+  // gibson#1105 story 10). Previously this called form.reset() to the empty
+  // defaults, wiping the address / path-prefix / auth every time the user
+  // toggled providers. Now we preserve every field and only:
+  //   - re-derive the tenant-scoped path-prefix default if the field is empty,
+  //     so a first switch into BYO always lands a sensible prefix, and
+  //   - reset the migration acknowledgement to false so an ack never carries
+  //     across a provider change (spec tenant-secrets-broker-completion R3.4).
+  // The provider itself is already updated by the Select's field.onChange.
+  // Probe/save banners are cleared so stale results don't linger.
   // --------------------------------------------------------------------------
 
-  function handleProviderChange(value: string) {
-    const next = value as BrokerProviderKey;
-    form.reset({
-      ...BROKER_FORM_DEFAULTS,
-      provider: next,
-    });
+  function handleProviderChange() {
+    if (!form.getValues("namespaceOrPath")) {
+      form.setValue("namespaceOrPath", defaultPathPrefix);
+    }
+    form.setValue("acknowledgeMigration", false);
     setProbeResult(null);
     setSaveResult(null);
   }
@@ -293,6 +317,15 @@ export function SecretsBackendForm({
         ? "BROKER_PROVIDER_VAULT_HOSTED"
         : "BROKER_PROVIDER_VAULT_BYO";
     fd.set("provider", providerValue);
+    // These wire fields feed the daemon's brokercodec.EncodeCandidate
+    // (gibson#1121), which projects them onto the vault.Config the provider
+    // consumes:
+    //   namespaceOrPath → path_prefix (BYO; empty defaults to tenant/<id>)
+    //   mount           → kv_mount
+    //   authMethod      → auth.method
+    //   vaultToken      → auth.token           (token auth)
+    //   approleRoleId   → auth.app_role_id     (approle auth)
+    //   approleSecretId → auth.app_role_secret_id
     fd.set("address", values.provider === "gibson_hosted" ? "" : values.address);
     fd.set("namespaceOrPath", values.namespaceOrPath);
     fd.set("mount", values.mount);
@@ -349,7 +382,7 @@ export function SecretsBackendForm({
                 <Select
                   onValueChange={(v) => {
                     field.onChange(v);
-                    handleProviderChange(v);
+                    handleProviderChange();
                   }}
                   defaultValue={field.value}
                   disabled={isReadOnly}

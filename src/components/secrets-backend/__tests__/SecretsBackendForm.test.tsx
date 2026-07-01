@@ -23,11 +23,18 @@ import { SecretsBackendForm } from "../SecretsBackendForm";
 import { BrokerProvider } from "@/src/gen/gibson/tenant/v1/secrets_pb";
 import type { RedactedConfig } from "@/src/lib/gibson-client/tenant-broker-config";
 
-function makeConfig(provider: BrokerProvider, address = ""): RedactedConfig {
+const TENANT_ID = "tenant-abc";
+const DEFAULT_PATH_PREFIX = `tenant/${TENANT_ID}`;
+
+function makeConfig(
+  provider: BrokerProvider,
+  address = "",
+  namespaceOrPath = "",
+): RedactedConfig {
   return {
     provider,
     address,
-    namespaceOrPath: "",
+    namespaceOrPath,
     mount: "",
     authMethod: "",
     region: "",
@@ -65,6 +72,7 @@ describe("SecretsBackendForm default-to-active selector", () => {
       <SecretsBackendForm
         currentConfig={makeConfig(BrokerProvider.VAULT_HOSTED)}
         secretCount={0}
+        tenantId={TENANT_ID}
       />,
     );
 
@@ -85,6 +93,7 @@ describe("SecretsBackendForm default-to-active selector", () => {
           "https://vault.example.com",
         )}
         secretCount={0}
+        tenantId={TENANT_ID}
       />,
     );
 
@@ -95,7 +104,7 @@ describe("SecretsBackendForm default-to-active selector", () => {
   });
 
   it("defaults to Hosted when there is no config yet", () => {
-    render(<SecretsBackendForm currentConfig={null} secretCount={0} />);
+    render(<SecretsBackendForm currentConfig={null} secretCount={0} tenantId={TENANT_ID} />);
     expect(screen.getByTestId("provider-switcher")).toHaveTextContent(/hosted/i);
   });
 });
@@ -106,6 +115,7 @@ describe("SecretsBackendForm two-backend selector", () => {
       <SecretsBackendForm
         currentConfig={makeConfig(BrokerProvider.VAULT_HOSTED)}
         secretCount={0}
+        tenantId={TENANT_ID}
       />,
     );
 
@@ -128,6 +138,7 @@ describe("SecretsBackendForm migration warning (Hosted ↔ BYO)", () => {
       <SecretsBackendForm
         currentConfig={makeConfig(BrokerProvider.VAULT_HOSTED)}
         secretCount={0}
+        tenantId={TENANT_ID}
       />,
     );
 
@@ -145,6 +156,7 @@ describe("SecretsBackendForm migration warning (Hosted ↔ BYO)", () => {
       <SecretsBackendForm
         currentConfig={makeConfig(BrokerProvider.VAULT_HOSTED)}
         secretCount={5}
+        tenantId={TENANT_ID}
       />,
     );
 
@@ -159,5 +171,93 @@ describe("SecretsBackendForm migration warning (Hosted ↔ BYO)", () => {
 
     fireEvent.click(checkbox);
     expect(save).not.toBeDisabled();
+  });
+});
+
+describe("SecretsBackendForm BYO path-prefix prefill", () => {
+  it("prefills the path prefix with tenant/<tenant-id> when BYO is active and no value is saved", () => {
+    render(
+      <SecretsBackendForm
+        currentConfig={makeConfig(
+          BrokerProvider.VAULT_BYO,
+          "https://vault.example.com",
+        )}
+        secretCount={0}
+        tenantId={TENANT_ID}
+      />,
+    );
+
+    const prefix = screen.getByPlaceholderText("tenant/your-tenant");
+    expect(prefix).toHaveValue(DEFAULT_PATH_PREFIX);
+  });
+
+  it("keeps the saved path prefix over the tenant-scoped default", () => {
+    render(
+      <SecretsBackendForm
+        currentConfig={makeConfig(
+          BrokerProvider.VAULT_BYO,
+          "https://vault.example.com",
+          "custom/kv/path",
+        )}
+        secretCount={0}
+        tenantId={TENANT_ID}
+      />,
+    );
+
+    expect(screen.getByPlaceholderText("tenant/your-tenant")).toHaveValue(
+      "custom/kv/path",
+    );
+  });
+
+  it("prefills the path prefix after switching Hosted→BYO", async () => {
+    render(
+      <SecretsBackendForm
+        currentConfig={makeConfig(BrokerProvider.VAULT_HOSTED)}
+        secretCount={0}
+        tenantId={TENANT_ID}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("provider-switcher"));
+    fireEvent.click(await screen.findByRole("option", { name: /byo vault/i }));
+
+    expect(screen.getByPlaceholderText("tenant/your-tenant")).toHaveValue(
+      DEFAULT_PATH_PREFIX,
+    );
+  });
+});
+
+describe("SecretsBackendForm preserve-on-switch", () => {
+  it("does not blank typed BYO values when switching provider away and back", async () => {
+    render(
+      <SecretsBackendForm
+        currentConfig={makeConfig(
+          BrokerProvider.VAULT_BYO,
+          "https://vault.example.com",
+        )}
+        secretCount={0}
+        tenantId={TENANT_ID}
+      />,
+    );
+
+    // Type a custom address into the BYO sub-form.
+    const address = screen.getByPlaceholderText(
+      "https://vault.example.com:8200",
+    );
+    fireEvent.change(address, { target: { value: "https://my-vault:8200" } });
+    expect(address).toHaveValue("https://my-vault:8200");
+
+    // Switch to Hosted (BYO sub-form unmounts) …
+    fireEvent.click(screen.getByTestId("provider-switcher"));
+    fireEvent.click(await screen.findByRole("option", { name: /hosted/i }));
+    expect(screen.queryByPlaceholderText("https://vault.example.com:8200")).toBeNull();
+
+    // … then back to BYO: the typed address must still be there.
+    fireEvent.click(screen.getByTestId("provider-switcher"));
+    fireEvent.click(await screen.findByRole("option", { name: /byo vault/i }));
+
+    expect(
+      screen.getByPlaceholderText("https://vault.example.com:8200"),
+    ).toHaveValue("https://my-vault:8200");
   });
 });
