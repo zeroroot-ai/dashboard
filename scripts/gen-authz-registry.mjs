@@ -195,16 +195,17 @@ function buildWorkspace() {
       '  - path: gibson-local',
       '    excludes:',
       '      - gibson-local/gibson/auth',
-      // Scope the gibson-local authz scan to the three ex-platform-sdk
-      // platform services (operator / billing / discovery). The other
-      // daemon-local services (session, user, world) are not surfaced
-      // through the dashboard's authz-gating layer today, and including
-      // them here would expand the committed registry beyond the scope of
-      // the platform-sdk dissolution (gibson#781). They can be added in a
-      // follow-up if/when the dashboard gates those RPCs.
+      // Scope the gibson-local authz scan to the ex-platform-sdk platform
+      // services (operator / billing / discovery) PLUS world: the dashboard's
+      // World/traces surface calls assertAuthorized on gibson.world.v1.WorldService
+      // reads (ListMissions, ListLlmCalls, GetFrameAt, …), so those methods must
+      // be surfaced into the registry — otherwise assertAuthorized fail-closes
+      // them as unknown_method (the "world read failed (500)" the dashboard shows).
+      // session/user stay unsurfaced until the dashboard gates them. Context:
+      // platform-sdk dissolution (gibson#781); world surfaced for the ecs-brain
+      // read path.
       '      - gibson-local/gibson/session',
       '      - gibson-local/gibson/user',
-      '      - gibson-local/gibson/world',
       // protovalidate provides the (buf.validate.field).* annotations
       // adopted by the SDK from v1.5.0 onward. Pulled from the buf.build
       // remote registry; resolved by `buf dep update` invoked below.
