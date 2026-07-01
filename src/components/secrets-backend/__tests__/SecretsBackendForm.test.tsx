@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 
 // useAuthorize is hit by the form to gate Probe/Save buttons. Stub to
 // "allowed" for both RPCs so the Save button renders. The hook also
@@ -20,21 +20,22 @@ vi.mock("@/app/actions/secrets-backend", () => ({
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 import { SecretsBackendForm } from "../SecretsBackendForm";
+import { BrokerProvider } from "@/src/gen/gibson/tenant/v1/secrets_pb";
 import type { RedactedConfig } from "@/src/lib/gibson-client/tenant-broker-config";
 
-function makeVaultConfig(): RedactedConfig {
+function makeConfig(provider: BrokerProvider, address = ""): RedactedConfig {
   return {
-    provider: 2, // BROKER_PROVIDER_VAULT, pre-existing config that's NOT gibson-hosted
-    address: "https://vault.example.com",
+    provider,
+    address,
     namespaceOrPath: "",
     mount: "",
-    authMethod: "token",
+    authMethod: "",
     region: "",
     project: "",
     tenantIdExternal: "",
     clientId: "",
     roleArn: "",
-    sensitiveFieldsSet: ["vault_token"],
+    sensitiveFieldsSet: [],
     updatedAtUnix: BigInt(0),
     updatedBy: "",
   } as unknown as RedactedConfig;
@@ -46,12 +47,9 @@ beforeEach(() => {
   if (!Element.prototype.scrollIntoView) {
     Element.prototype.scrollIntoView = vi.fn();
   }
-  // Radix also queries hasPointerCapture / setPointerCapture / releasePointerCapture
-  // on the trigger; jsdom returns undefined for these on HTMLElement.
   Element.prototype.hasPointerCapture ??= vi.fn(() => false);
   Element.prototype.setPointerCapture ??= vi.fn();
   Element.prototype.releasePointerCapture ??= vi.fn();
-  // Radix' useSize calls ResizeObserver; jsdom doesn't have it.
   if (typeof globalThis.ResizeObserver === "undefined") {
     globalThis.ResizeObserver = class FakeResizeObserver {
       observe() {}
@@ -61,82 +59,105 @@ beforeEach(() => {
   }
 });
 
-describe("SecretsBackendForm migration warning", () => {
-  it("does NOT show the migration warning when secretCount=0", async () => {
-    render(<SecretsBackendForm currentConfig={makeVaultConfig()} secretCount={0} />);
+describe("SecretsBackendForm default-to-active selector", () => {
+  it("defaults the selector to Hosted when the active backend is VAULT_HOSTED", () => {
+    render(
+      <SecretsBackendForm
+        currentConfig={makeConfig(BrokerProvider.VAULT_HOSTED)}
+        secretCount={0}
+      />,
+    );
 
-    // Switch from Vault → AWS SM via the trigger.
     const trigger = screen.getByTestId("provider-switcher");
-    fireEvent.click(trigger);
-    const awsOption = await screen.findByRole("option", { name: /aws secrets manager/i });
-    fireEvent.click(awsOption);
-
-    // Migration warning must NOT be in the DOM.
-    expect(screen.queryByTestId("migration-warning")).toBeNull();
-    expect(screen.queryByTestId("acknowledge-migration")).toBeNull();
+    expect(trigger).toHaveTextContent(/hosted/i);
+    // Hosted renders the zero-config panel, not the BYO Vault address field.
+    expect(screen.queryByText(/vault address/i)).toBeNull();
+    expect(
+      screen.getByText(/active for your tenant/i),
+    ).toBeInTheDocument();
   });
 
-  it("shows warning + checkbox when secretCount>0 AND provider differs; checkbox gates Save", async () => {
-    render(<SecretsBackendForm currentConfig={makeVaultConfig()} secretCount={5} />);
+  it("defaults the selector to BYO Vault when the active backend is VAULT_BYO", () => {
+    render(
+      <SecretsBackendForm
+        currentConfig={makeConfig(
+          BrokerProvider.VAULT_BYO,
+          "https://vault.example.com",
+        )}
+        secretCount={0}
+      />,
+    );
 
-    // Switch from Vault → AWS SM.
     const trigger = screen.getByTestId("provider-switcher");
-    fireEvent.click(trigger);
-    const awsOption = await screen.findByRole("option", { name: /aws secrets manager/i });
-    fireEvent.click(awsOption);
+    expect(trigger).toHaveTextContent(/byo vault/i);
+    // BYO renders the Vault sub-form (address field present).
+    expect(screen.getByText(/vault address/i)).toBeInTheDocument();
+  });
 
-    // Warning + checkbox visible.
+  it("defaults to Hosted when there is no config yet", () => {
+    render(<SecretsBackendForm currentConfig={null} secretCount={0} />);
+    expect(screen.getByTestId("provider-switcher")).toHaveTextContent(/hosted/i);
+  });
+});
+
+describe("SecretsBackendForm two-backend selector", () => {
+  it("offers exactly Hosted and BYO Vault (no AWS/GCP/Azure)", async () => {
+    render(
+      <SecretsBackendForm
+        currentConfig={makeConfig(BrokerProvider.VAULT_HOSTED)}
+        secretCount={0}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("provider-switcher"));
+    const listbox = await screen.findByRole("listbox");
+    const options = within(listbox).getAllByRole("option");
+    const labels = options.map((o) => o.textContent?.trim());
+    expect(labels).toEqual(["Hosted", "BYO Vault"]);
+
+    // No retired cloud backends.
+    expect(
+      within(listbox).queryByRole("option", { name: /aws|gcp|azure/i }),
+    ).toBeNull();
+  });
+});
+
+describe("SecretsBackendForm migration warning (Hosted ↔ BYO)", () => {
+  it("does NOT show the migration warning when secretCount=0", async () => {
+    render(
+      <SecretsBackendForm
+        currentConfig={makeConfig(BrokerProvider.VAULT_HOSTED)}
+        secretCount={0}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("provider-switcher"));
+    const byo = await screen.findByRole("option", { name: /byo vault/i });
+    fireEvent.click(byo);
+
+    expect(screen.queryByTestId("migration-warning")).toBeNull();
+    // With nothing to migrate, Save is reachable and not gated.
+    expect(screen.getByTestId("save-button")).not.toBeDisabled();
+  });
+
+  it("shows warning + checkbox when switching Hosted→BYO with existing secrets; checkbox gates Save", async () => {
+    render(
+      <SecretsBackendForm
+        currentConfig={makeConfig(BrokerProvider.VAULT_HOSTED)}
+        secretCount={5}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("provider-switcher"));
+    const byo = await screen.findByRole("option", { name: /byo vault/i });
+    fireEvent.click(byo);
+
     expect(screen.getByTestId("migration-warning")).toBeInTheDocument();
     const checkbox = screen.getByTestId("acknowledge-migration");
-    expect(checkbox).toBeInTheDocument();
-
-    // Save button is disabled until the checkbox is ticked.
     const save = screen.getByTestId("save-button");
     expect(save).toBeDisabled();
 
     fireEvent.click(checkbox);
     expect(save).not.toBeDisabled();
-  });
-
-  it("shows warning when secretCount=-1 (RPC unreachable, conservative path)", async () => {
-    render(<SecretsBackendForm currentConfig={makeVaultConfig()} secretCount={-1} />);
-
-    // Switch from Vault → AWS SM.
-    const trigger = screen.getByTestId("provider-switcher");
-    fireEvent.click(trigger);
-    const awsOption = await screen.findByRole("option", { name: /aws secrets manager/i });
-    fireEvent.click(awsOption);
-
-    expect(screen.getByTestId("migration-warning")).toBeInTheDocument();
-    // The conservative path includes the "Could not load current secret count"
-    // muted-text caveat so operators understand why the warning is firing
-    // even on what might be a brand-new tenant.
-    expect(
-      screen.getByText(/could not load current secret count/i),
-    ).toBeInTheDocument();
-  });
-
-  it("resets the acknowledgement checkbox when the user picks a different provider", async () => {
-    render(<SecretsBackendForm currentConfig={makeVaultConfig()} secretCount={3} />);
-
-    // Switch Vault → AWS SM, tick the checkbox.
-    const trigger = screen.getByTestId("provider-switcher");
-    fireEvent.click(trigger);
-    const aws = await screen.findByRole("option", { name: /aws secrets manager/i });
-    fireEvent.click(aws);
-
-    const checkbox1 = screen.getByTestId("acknowledge-migration");
-    fireEvent.click(checkbox1);
-    expect(screen.getByTestId("save-button")).not.toBeDisabled();
-
-    // Now switch AWS SM → GCP SM. The acknowledgement should reset to
-    // unchecked and Save should disable again.
-    fireEvent.click(screen.getByTestId("provider-switcher"));
-    const gcp = await screen.findByRole("option", { name: /gcp secret manager/i });
-    fireEvent.click(gcp);
-
-    const checkbox2 = screen.getByTestId("acknowledge-migration");
-    expect((checkbox2 as HTMLInputElement & { dataset: { state?: string } }).dataset.state).not.toBe("checked");
-    expect(screen.getByTestId("save-button")).toBeDisabled();
   });
 });
