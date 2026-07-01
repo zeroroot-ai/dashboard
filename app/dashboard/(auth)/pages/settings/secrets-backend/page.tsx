@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "Settings | Secrets Backend",
     additionalTitle: true,
     description:
-      "Configure the secrets backend provider for your tenant. Choose between Gibson-hosted Vault, HashiCorp Vault (BYO), AWS Secrets Manager, GCP Secret Manager, or Azure Key Vault.",
+      "Configure the secrets backend for your tenant. Choose between the platform-managed Hosted broker or your own BYO Vault.",
     canonical: "/pages/settings/secrets-backend",
   });
 }

@@ -4,39 +4,38 @@
  * Task 10 (secrets list page) imports this component and renders the
  * appropriate variant based on tenant provisioning state.
  *
- * Three variants per Requirement 1.6 and 7.2:
+ * Three variants:
  *
- *   1. `no-broker`  , Tenant has no broker configured yet.
- *                      CTA: configure broker first → /settings/secrets-backend
+ *   1. `unavailable`, The secrets broker could not be reached (genuine outage
+ *                      / daemon error). This is NOT a "you must configure a
+ *                      backend" dead-end — Hosted is always active — so there
+ *                      is no configure-backend CTA that would trap the user.
+ *                      Shows an error state; the fix is to retry.
  *
- *   2. `onboarding` , Tenant has a configured broker (default: Gibson-hosted
- *                      Vault after signup) but zero secrets.
- *                      Shows the post-signup onboarding message per R7.2:
- *                      "Your secrets backend is ready (Gibson-hosted Vault)"
+ *   2. `onboarding` , Hosted broker active (default for every tenant) with
+ *                      zero secrets.
  *                      CTA: Add your first secret
  *                      Secondary: Or skip and register a plugin
  *
- *   3. `no-secrets` , Tenant has a configured broker but zero secrets and the
- *                      onboarding message has already been dismissed / doesn't
- *                      apply (BYO broker case).
+ *   3. `no-secrets` , BYO Vault active with zero secrets.
  *                      CTA: Add your first secret
  *
  * Usage (in secrets list page):
  *
  *   import { SecretsEmptyState } from "@/src/components/secrets/EmptyState";
  *
- *   // no broker configured:
- *   <SecretsEmptyState variant="no-broker" />
+ *   // broker unreachable:
+ *   <SecretsEmptyState variant="unavailable" />
  *
- *   // new tenant post-signup with Gibson-hosted Vault ready:
+ *   // Hosted broker ready, zero secrets:
  *   <SecretsEmptyState variant="onboarding" onAddSecret={openAddModal} />
  *
- *   // existing tenant with BYO broker and zero secrets:
+ *   // BYO Vault ready, zero secrets:
  *   <SecretsEmptyState variant="no-secrets" onAddSecret={openAddModal} />
  */
 
 import Link from "next/link";
-import { DatabaseIcon, KeyRoundIcon, PlugIcon } from "lucide-react";
+import { KeyRoundIcon, PlugIcon, TriangleAlertIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -49,27 +48,26 @@ import {
 } from "@/components/ui/empty";
 
 // ---------------------------------------------------------------------------
-// Variant: no broker configured
+// Variant: broker unavailable (genuine outage / daemon error)
 // ---------------------------------------------------------------------------
 
-function SecretsEmptyStateNoBroker() {
+function SecretsEmptyStateUnavailable() {
   return (
-    <Empty>
+    <Empty data-testid="secrets-backend-unavailable">
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <DatabaseIcon />
+          <TriangleAlertIcon />
         </EmptyMedia>
-        <EmptyTitle>No secrets backend configured</EmptyTitle>
+        <EmptyTitle>Secrets backend unavailable</EmptyTitle>
         <EmptyDescription>
-          You need to configure a secrets backend before adding secrets. Choose
-          between Gibson-hosted Vault or bring your own provider.
+          We couldn&apos;t reach your secrets backend. This is usually a
+          temporary connectivity issue with the platform, not a configuration
+          problem. Try again in a moment.
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button asChild size="sm">
-          <Link href="/dashboard/pages/settings/secrets-backend">
-            Configure secrets backend
-          </Link>
+        <Button asChild size="sm" variant="outline">
+          <Link href="/dashboard/pages/settings/secrets">Retry</Link>
         </Button>
       </EmptyContent>
     </Empty>
@@ -171,7 +169,7 @@ function SecretsEmptyStateNoSecrets({
 // Convenience union component, delegates to the right variant
 // ---------------------------------------------------------------------------
 
-type SecretsEmptyStateVariant = "no-broker" | "onboarding" | "no-secrets";
+type SecretsEmptyStateVariant = "unavailable" | "onboarding" | "no-secrets";
 
 interface SecretsEmptyStateProps {
   variant: SecretsEmptyStateVariant;
@@ -187,8 +185,8 @@ interface SecretsEmptyStateProps {
  */
 export function SecretsEmptyState({ variant, onAddSecret }: SecretsEmptyStateProps) {
   switch (variant) {
-    case "no-broker":
-      return <SecretsEmptyStateNoBroker />;
+    case "unavailable":
+      return <SecretsEmptyStateUnavailable />;
     case "onboarding":
       return <SecretsEmptyStateOnboarding onAddSecret={onAddSecret} />;
     case "no-secrets":

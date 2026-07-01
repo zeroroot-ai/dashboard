@@ -6,7 +6,8 @@ import { getServerSession } from "@/src/lib/auth";
 import { getActiveTenant } from "@/src/lib/auth/active-tenant";
 import { listSecrets } from "@/src/lib/gibson-client/secrets";
 import { getBrokerConfig } from "@/src/lib/gibson-client/tenant-broker-config";
-import { BrokerProvider } from "@/src/gen/gibson/tenant/v1/secrets_pb";
+import { type BrokerProvider } from "@/src/gen/gibson/tenant/v1/secrets_pb";
+import { resolveSecretsBackendView } from "@/src/lib/secrets/page-state";
 import { SecretsList } from "@/src/components/secrets/SecretsList";
 import { SecretsEmptyState } from "@/src/components/secrets/EmptyState";
 import {
@@ -57,26 +58,27 @@ export default async function SecretsPage({ searchParams }: SecretsPageProps) {
   const offset = Math.max(0, parseInt(params.offset ?? "0", 10) || 0);
   const limit = Math.min(100, Math.max(1, parseInt(params.limit ?? String(PAGE_LIMIT), 10) || PAGE_LIMIT));
 
-  // Determine broker state first, drives the empty state variant.
-  let brokerConfigured = false;
-  let isGibsonHosted = false;
+  // Determine the active backend from the daemon's explicit signal. Hosted is
+  // the always-active default for every tenant, so the add-secret path stays
+  // reachable whenever the broker responds; a genuine "unavailable" state is
+  // shown only when the broker cannot be reached. No provider/address
+  // heuristics (dashboard#935).
+  let brokerReachable = false;
+  let activeProvider: BrokerProvider | undefined;
   try {
     const brokerResp = await getBrokerConfig();
-    brokerConfigured = brokerResp.configured;
-    // Gibson-hosted Vault is BROKER_PROVIDER_VAULT with no explicit address
-    // (the platform sets it), we infer "gibson-hosted" by the provider enum
-    // and absence of a custom address. The platform always uses Vault, so any
-    // VAULT provider with no custom address is Gibson-hosted.
-    isGibsonHosted =
-      brokerConfigured &&
-      brokerResp.config?.provider === BrokerProvider.VAULT &&
-      !brokerResp.config?.address;
+    brokerReachable = true;
+    activeProvider = brokerResp.config?.provider;
   } catch {
-    // If the broker config call fails, treat as unconfigured, safe default.
-    brokerConfigured = false;
+    brokerReachable = false;
   }
 
-  if (!brokerConfigured) {
+  const view = resolveSecretsBackendView({
+    reachable: brokerReachable,
+    provider: activeProvider,
+  });
+
+  if (view === "unavailable") {
     return (
       <div className="space-y-6">
         <div className="space-y-0.5">
@@ -85,10 +87,12 @@ export default async function SecretsPage({ searchParams }: SecretsPageProps) {
             Manage credentials and API keys your plugins can resolve at mission time.
           </p>
         </div>
-        <SecretsEmptyState variant="no-broker" />
+        <SecretsEmptyState variant="unavailable" />
       </div>
     );
   }
+
+  const isBYO = view === "byo";
 
   // Fetch the secrets list.
   let secrets: Awaited<ReturnType<typeof listSecrets>> | null = null;
@@ -117,7 +121,7 @@ export default async function SecretsPage({ searchParams }: SecretsPageProps) {
       {fetchError ? (
         <p className="text-destructive text-sm">{fetchError}</p>
       ) : !hasSecrets ? (
-        <SecretsEmptyState variant={isGibsonHosted ? "onboarding" : "no-secrets"} />
+        <SecretsEmptyState variant={isBYO ? "no-secrets" : "onboarding"} />
       ) : (
         <SecretsList
           secrets={secrets!.secrets}

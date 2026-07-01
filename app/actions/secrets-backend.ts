@@ -8,8 +8,8 @@
  *    returns a structured ProbeResult to the caller.
  *  - setBrokerConfigAction: probe-then-persist; revalidates on success.
  *
- * SECURITY: CandidateConfig carries sensitive auth fields (Vault token, AWS
- * keys, GCP SA JSON, Azure client secret). These fields:
+ * SECURITY: CandidateConfig carries sensitive auth fields (Vault token,
+ * AppRole secret ID). These fields:
  *  - Are NEVER logged (not even in debug statements).
  *  - Are NEVER returned in error messages.
  *  - Are NEVER passed back to the client in any response field.
@@ -59,25 +59,20 @@ export type SetConfigActionResult = BrokerActionResult<RedactedConfig>;
 // to Uint8Array before the RPC).
 // ---------------------------------------------------------------------------
 
+// Only two backends are supported: the platform-managed Hosted broker and a
+// customer-supplied BYO Vault. AWS/GCP/Azure were removed (PRD gibson#1105).
 const providerEnum = z.enum([
-  "BROKER_PROVIDER_VAULT",
-  "BROKER_PROVIDER_AWSSM",
-  "BROKER_PROVIDER_GCPSM",
-  "BROKER_PROVIDER_AZUREKV",
+  "BROKER_PROVIDER_VAULT_HOSTED",
+  "BROKER_PROVIDER_VAULT_BYO",
 ]);
 
-// Non-sensitive common fields reused across providers.
+// Non-sensitive fields (BYO Vault only).
 const nonSensitiveBase = z.object({
   provider: providerEnum,
   address: z.string().max(512).optional().default(""),
   namespaceOrPath: z.string().max(512).optional().default(""),
   mount: z.string().max(512).optional().default(""),
   authMethod: z.string().max(64).optional().default(""),
-  region: z.string().max(64).optional().default(""),
-  project: z.string().max(256).optional().default(""),
-  tenantIdExternal: z.string().max(256).optional().default(""),
-  clientId: z.string().max(256).optional().default(""),
-  roleArn: z.string().max(512).optional().default(""),
   approleRoleId: z.string().max(256).optional().default(""),
 });
 
@@ -86,11 +81,6 @@ const nonSensitiveBase = z.object({
 const sensitiveFields = z.object({
   vaultToken: z.string().max(8192).optional().default(""),
   approleSecretId: z.string().max(8192).optional().default(""),
-  awsAccessKeyId: z.string().max(256).optional().default(""),
-  awsSecretAccessKey: z.string().max(512).optional().default(""),
-  awsExternalId: z.string().max(512).optional().default(""),
-  gcpServiceAccountJson: z.string().max(65536).optional().default(""),
-  azureClientSecret: z.string().max(8192).optional().default(""),
 });
 
 const candidateConfigSchema = nonSensitiveBase.merge(sensitiveFields);
@@ -103,14 +93,10 @@ type CandidateConfigInput = z.infer<typeof candidateConfigSchema>;
 
 function providerStringToProto(p: string): BrokerProvider {
   switch (p) {
-    case "BROKER_PROVIDER_VAULT":
-      return BrokerProvider.VAULT;
-    case "BROKER_PROVIDER_AWSSM":
-      return BrokerProvider.AWSSM;
-    case "BROKER_PROVIDER_GCPSM":
-      return BrokerProvider.GCPSM;
-    case "BROKER_PROVIDER_AZUREKV":
-      return BrokerProvider.AZUREKV;
+    case "BROKER_PROVIDER_VAULT_HOSTED":
+      return BrokerProvider.VAULT_HOSTED;
+    case "BROKER_PROVIDER_VAULT_BYO":
+      return BrokerProvider.VAULT_BYO;
     default:
       return BrokerProvider.UNSPECIFIED;
   }
@@ -133,20 +119,10 @@ function buildCandidate(d: CandidateConfigInput): CandidateConfig {
     namespaceOrPath: d.namespaceOrPath,
     mount: d.mount,
     authMethod: d.authMethod,
-    region: d.region,
-    project: d.project,
-    tenantIdExternal: d.tenantIdExternal,
-    clientId: d.clientId,
-    roleArn: d.roleArn,
     approleRoleId: d.approleRoleId,
     // Sensitive, encode to bytes, never log.
     vaultToken: enc(d.vaultToken),
     approleSecretId: enc(d.approleSecretId),
-    awsAccessKeyId: enc(d.awsAccessKeyId),
-    awsSecretAccessKey: enc(d.awsSecretAccessKey),
-    awsExternalId: enc(d.awsExternalId),
-    gcpServiceAccountJson: enc(d.gcpServiceAccountJson),
-    azureClientSecret: enc(d.azureClientSecret),
   } as unknown as CandidateConfig;
 }
 
@@ -170,11 +146,7 @@ function formDataToObject(formData: FormData): Record<string, unknown> {
 function redactErrorMessage(msg: string): string {
   return msg
     .replace(/vault_token[=:\s]+\S+/gi, "vault_token=[REDACTED]")
-    .replace(/approle_secret[=:\s]+\S+/gi, "approle_secret=[REDACTED]")
-    .replace(/aws_secret[=:\s]+\S+/gi, "aws_secret=[REDACTED]")
-    .replace(/aws_access_key[=:\s]+\S+/gi, "aws_access_key=[REDACTED]")
-    .replace(/azure_client_secret[=:\s]+\S+/gi, "azure_client_secret=[REDACTED]")
-    .replace(/gcp_service_account[=:\s]+\S+/gi, "gcp_service_account=[REDACTED]");
+    .replace(/approle_secret[=:\s]+\S+/gi, "approle_secret=[REDACTED]");
 }
 
 // ---------------------------------------------------------------------------

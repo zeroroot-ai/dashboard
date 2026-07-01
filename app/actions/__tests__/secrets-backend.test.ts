@@ -50,22 +50,16 @@ vi.mock("@/src/lib/gibson-client/tenant-broker-config", () => ({
   setBrokerConfig: mockSetBrokerConfig,
   BrokerProvider: {
     UNSPECIFIED: 0,
-    POSTGRES: 1,
-    VAULT: 2,
-    AWSSM: 3,
-    GCPSM: 4,
-    AZUREKV: 5,
+    VAULT_HOSTED: 6,
+    VAULT_BYO: 7,
   },
 }));
 
 vi.mock("@/src/gen/gibson/tenant/v1/secrets_pb", () => ({
   BrokerProvider: {
     UNSPECIFIED: 0,
-    POSTGRES: 1,
-    VAULT: 2,
-    AWSSM: 3,
-    GCPSM: 4,
-    AZUREKV: 5,
+    VAULT_HOSTED: 6,
+    VAULT_BYO: 7,
   },
 }));
 
@@ -97,7 +91,7 @@ function makeFormData(fields: Record<string, string>): FormData {
 }
 
 const vaultFormBase = {
-  provider: "BROKER_PROVIDER_VAULT",
+  provider: "BROKER_PROVIDER_VAULT_BYO",
   address: "https://vault.example.com",
   mount: "secret",
   authMethod: "token",
@@ -232,7 +226,7 @@ describe("setBrokerConfigAction, probe-success-then-save", () => {
 
   it("returns saved config and revalidates on success", async () => {
     const savedConfig = {
-      provider: 2, // VAULT
+      provider: 7, // VAULT_BYO
       address: "https://vault.example.com",
       sensitiveFieldsSet: ["vault_token"],
       updatedAtUnix: BigInt(0),
@@ -258,24 +252,21 @@ describe("setBrokerConfigAction, probe-success-then-save", () => {
 describe("setBrokerConfigAction, redacted error messages", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("does not include AWS keys in error message", async () => {
+  it("does not include the vault token in error message", async () => {
     const rpcErr = Object.assign(new Error("connection refused"), {
       code: "unavailable",
     });
     mockSetBrokerConfig.mockRejectedValue(rpcErr);
 
     const fd = makeFormData({
-      provider: "BROKER_PROVIDER_AWSSM",
-      region: "us-east-1",
-      awsAccessKeyId: "AKIAIOSFODNN7_DO_NOT_LOG",
-      awsSecretAccessKey: "wJalrXUtnFEMI_DO_NOT_LOG",
+      ...vaultFormBase,
+      vaultToken: "s.SUPER_SECRET_TOKEN_DO_NOT_LOG",
     });
     const result = await setBrokerConfigAction(fd);
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected not-ok");
-    expect(result.error).not.toContain("AKIAIOSFODNN7_DO_NOT_LOG");
-    expect(result.error).not.toContain("wJalrXUtnFEMI_DO_NOT_LOG");
+    expect(result.error).not.toContain("SUPER_SECRET_TOKEN_DO_NOT_LOG");
   });
 });
 

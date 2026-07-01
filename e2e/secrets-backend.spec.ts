@@ -200,7 +200,7 @@ test.describe("Secrets-backend, page structure", () => {
       page
         .getByRole("combobox", { name: /provider/i })
         .or(page.getByLabel(/provider/i))
-        .or(page.getByRole("button", { name: /provider|vault|aws|gcp|azure/i }))
+        .or(page.getByRole("button", { name: /provider|hosted|byo|vault/i }))
         .first(),
     ).toBeVisible({ timeout: 15_000 });
   });
@@ -251,18 +251,16 @@ test.describe("Secrets-backend, provider switch warning", () => {
     );
 
     if (switcherTagName === "select") {
-      // Use the first non-Gibson-hosted option available
+      // Switch to BYO Vault (the only non-Hosted backend).
       const options = await switcher.locator("option").allTextContents();
-      const altOption = options.find((o) =>
-        /aws|hashicorp|vault.*byo|byo|azure|gcp/i.test(o),
-      );
+      const altOption = options.find((o) => /byo|vault/i.test(o));
       if (altOption) {
         await switcher.selectOption({ label: altOption });
       }
     } else {
       await switcher.click();
       const option = page
-        .getByRole("option", { name: /aws.*secrets|hashicorp|vault|byo/i })
+        .getByRole("option", { name: /byo vault|byo|vault/i })
         .first();
       if ((await option.count()) > 0) {
         await option.click();
@@ -295,16 +293,14 @@ test.describe("Secrets-backend, provider switch warning", () => {
     );
     if (switcherTagName === "select") {
       const options = await switcher.locator("option").allTextContents();
-      const altOption = options.find((o) =>
-        /aws|hashicorp|vault.*byo|byo|azure|gcp/i.test(o),
-      );
+      const altOption = options.find((o) => /byo|vault/i.test(o));
       if (altOption) {
         await switcher.selectOption({ label: altOption });
       }
     } else {
       await switcher.click();
       const option = page
-        .getByRole("option", { name: /aws|vault.*byo|hashicorp/i })
+        .getByRole("option", { name: /byo vault|byo|vault/i })
         .first();
       if ((await option.count()) > 0) {
         await option.click();

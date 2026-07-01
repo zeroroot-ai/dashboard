@@ -53,14 +53,12 @@ import { useAuthorize } from "@/src/lib/auth/use-authorize";
 
 import { GibsonHostedForm } from "./gibsonhosted";
 import { VaultForm } from "./vault";
-import { AwsSMForm } from "./awssm";
-import { GcpSMForm } from "./gcpsm";
-import { AzureKVForm } from "./azurekv";
 import {
   BROKER_FORM_DEFAULTS,
   type BrokerFormValues,
   type BrokerProviderKey,
 } from "./types";
+import { BrokerProvider } from "@/src/gen/gibson/tenant/v1/secrets_pb";
 import type { RedactedConfig } from "@/src/lib/gibson-client/tenant-broker-config";
 
 // ---------------------------------------------------------------------------
@@ -76,28 +74,14 @@ interface ProviderMeta {
 const PROVIDERS: ProviderMeta[] = [
   {
     key: "gibson_hosted",
-    label: "Gibson-hosted Vault",
-    description: "Managed HashiCorp Vault namespace (default for SaaS tenants).",
+    label: "Hosted",
+    description:
+      "Platform-managed OpenBao broker. Zero configuration; already active for every tenant.",
   },
   {
-    key: "BROKER_PROVIDER_VAULT",
-    label: "HashiCorp Vault (BYO)",
-    description: "Bring your own HashiCorp Vault instance.",
-  },
-  {
-    key: "BROKER_PROVIDER_AWSSM",
-    label: "AWS Secrets Manager",
-    description: "Store secrets in AWS Secrets Manager.",
-  },
-  {
-    key: "BROKER_PROVIDER_GCPSM",
-    label: "GCP Secret Manager",
-    description: "Store secrets in Google Cloud Secret Manager.",
-  },
-  {
-    key: "BROKER_PROVIDER_AZUREKV",
-    label: "Azure Key Vault",
-    description: "Store secrets in Azure Key Vault.",
+    key: "BROKER_PROVIDER_VAULT_BYO",
+    label: "BYO Vault",
+    description: "Bring your own HashiCorp Vault / OpenBao instance.",
   },
 ];
 
@@ -168,25 +152,17 @@ export function SecretsBackendForm({
   currentConfig,
   secretCount,
 }: SecretsBackendFormProps) {
-  // Map the proto BrokerProvider enum value back to the form key.
+  // Map the active BrokerProvider enum reported by GetBrokerConfig back to the
+  // form key. The selector defaults to whichever backend is actually active
+  // for the tenant (VAULT_HOSTED → Hosted, VAULT_BYO → BYO Vault). No
+  // heuristics — the daemon reports the explicit enum.
   function resolveInitialProvider(): BrokerProviderKey {
-    if (!currentConfig) return "gibson_hosted";
-    // The proto enum numeric values: 0=UNSPECIFIED, 1=POSTGRES, 2=VAULT,
-    // 3=AWSSM, 4=GCPSM, 5=AZUREKV. The TenantAdminService always returns
-    // gibson_hosted as VAULT with an empty address for managed tenants.
-    // We use the address field absence as the heuristic for gibson_hosted.
-    switch (currentConfig.provider) {
-      case 2: // VAULT
-        return currentConfig.address ? "BROKER_PROVIDER_VAULT" : "gibson_hosted";
-      case 3:
-        return "BROKER_PROVIDER_AWSSM";
-      case 4:
-        return "BROKER_PROVIDER_GCPSM";
-      case 5:
-        return "BROKER_PROVIDER_AZUREKV";
-      default:
-        return "gibson_hosted";
+    if (currentConfig?.provider === BrokerProvider.VAULT_BYO) {
+      return "BROKER_PROVIDER_VAULT_BYO";
     }
+    // Hosted is the always-active default for every tenant, so anything that
+    // is not explicitly BYO (including no config yet) shows Hosted.
+    return "gibson_hosted";
   }
 
   const initialProvider = resolveInitialProvider();
@@ -195,16 +171,11 @@ export function SecretsBackendForm({
     defaultValues: {
       ...BROKER_FORM_DEFAULTS,
       provider: initialProvider,
-      // Pre-populate non-sensitive fields from current config
+      // Pre-populate non-sensitive BYO fields from current config
       address: currentConfig?.address ?? "",
       namespaceOrPath: currentConfig?.namespaceOrPath ?? "",
       mount: currentConfig?.mount ?? "",
       authMethod: currentConfig?.authMethod ?? "",
-      region: currentConfig?.region ?? "",
-      project: currentConfig?.project ?? "",
-      tenantIdExternal: currentConfig?.tenantIdExternal ?? "",
-      clientId: currentConfig?.clientId ?? "",
-      roleArn: currentConfig?.roleArn ?? "",
     },
   });
 
@@ -295,18 +266,13 @@ export function SecretsBackendForm({
 
       if (result.ok) {
         toast.success("Secrets backend configured", {
-          description: "Your new provider settings have been saved.",
+          description: "Your new backend settings have been saved.",
         });
         // Reset sensitive fields only, keep non-sensitive populated for UX.
         form.reset({
           ...values,
           vaultToken: "",
           approleSecretId: "",
-          awsAccessKeyId: "",
-          awsSecretAccessKey: "",
-          awsExternalId: "",
-          gcpServiceAccountJson: "",
-          azureClientSecret: "",
         });
       }
     } finally {
@@ -320,31 +286,21 @@ export function SecretsBackendForm({
 
   function buildFormData(values: BrokerFormValues): FormData {
     const fd = new FormData();
-    // Map the gibson_hosted key to the VAULT provider string expected by the
-    // server action (the daemon maps gibson_hosted → VAULT with empty address).
+    // Map the form key to the explicit BrokerProvider enum string the server
+    // action expects (Hosted → VAULT_HOSTED, BYO → VAULT_BYO).
     const providerValue =
       values.provider === "gibson_hosted"
-        ? "BROKER_PROVIDER_VAULT"
-        : values.provider;
+        ? "BROKER_PROVIDER_VAULT_HOSTED"
+        : "BROKER_PROVIDER_VAULT_BYO";
     fd.set("provider", providerValue);
     fd.set("address", values.provider === "gibson_hosted" ? "" : values.address);
     fd.set("namespaceOrPath", values.namespaceOrPath);
     fd.set("mount", values.mount);
     fd.set("authMethod", values.authMethod);
-    fd.set("region", values.region);
-    fd.set("project", values.project);
-    fd.set("tenantIdExternal", values.tenantIdExternal);
-    fd.set("clientId", values.clientId);
-    fd.set("roleArn", values.roleArn);
     fd.set("approleRoleId", values.approleRoleId);
     // Sensitive, the server action encodes these to Uint8Array before RPC.
     fd.set("vaultToken", values.vaultToken);
     fd.set("approleSecretId", values.approleSecretId);
-    fd.set("awsAccessKeyId", values.awsAccessKeyId);
-    fd.set("awsSecretAccessKey", values.awsSecretAccessKey);
-    fd.set("awsExternalId", values.awsExternalId);
-    fd.set("gcpServiceAccountJson", values.gcpServiceAccountJson);
-    fd.set("azureClientSecret", values.azureClientSecret);
     return fd;
   }
 
@@ -422,24 +378,15 @@ export function SecretsBackendForm({
 
           <Separator />
 
-          {/* Per-provider sub-form */}
+          {/* Per-backend sub-form */}
           <div data-testid="provider-subform">
             {isGibsonHosted && <GibsonHostedForm />}
-            {selectedProvider === "BROKER_PROVIDER_VAULT" && (
+            {selectedProvider === "BROKER_PROVIDER_VAULT_BYO" && (
               <VaultForm
                 control={form.control}
                 register={form.register}
                 authMethod={authMethod}
               />
-            )}
-            {selectedProvider === "BROKER_PROVIDER_AWSSM" && (
-              <AwsSMForm control={form.control} />
-            )}
-            {selectedProvider === "BROKER_PROVIDER_GCPSM" && (
-              <GcpSMForm control={form.control} authMethod={authMethod} />
-            )}
-            {selectedProvider === "BROKER_PROVIDER_AZUREKV" && (
-              <AzureKVForm control={form.control} authMethod={authMethod} />
             )}
           </div>
 
