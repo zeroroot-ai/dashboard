@@ -89,17 +89,19 @@ export function VaultForm({ control, authMethod }: VaultFormProps) {
         name="namespaceOrPath"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-xs">Namespace / Path Prefix</FormLabel>
+            <FormLabel className="text-xs">Path Prefix</FormLabel>
             <FormControl>
               <Input
                 {...field}
-                placeholder="admin/my-tenant"
+                placeholder="tenant/your-tenant"
                 className="font-mono text-xs"
                 autoComplete="off"
               />
             </FormControl>
             <FormDescription className="text-xs">
-              Vault Enterprise namespace or Community KV path prefix (optional).
+              KV path prefix your secrets are isolated under. Pre-filled with a
+              tenant-scoped default; leave it unless your Vault requires a
+              different layout.
             </FormDescription>
             <FormMessage />
           </FormItem>

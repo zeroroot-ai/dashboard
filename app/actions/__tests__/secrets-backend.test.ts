@@ -129,6 +129,43 @@ describe("probeBrokerConfigAction, success (probe ok)", () => {
     // instanceof is unreliable in jsdom, check content instead).
     expect(Buffer.from(candidate.vaultToken).toString()).toBe("my-vault-token");
   });
+
+  it("maps the BYO candidate onto the wire fields the daemon codec consumes", async () => {
+    mockProbeBrokerConfig.mockResolvedValue({
+      result: { ok: true, errorClass: "", errorMessage: "", durationMs: BigInt(1) },
+    });
+
+    // A full BYO AppRole candidate. The daemon's brokercodec.EncodeCandidate
+    // (gibson#1121) reads exactly these wire fields and projects them onto
+    // vault.Config: namespaceOrPath→path_prefix, mount→kv_mount,
+    // authMethod→auth.method, approleRoleId→auth.app_role_id,
+    // approleSecretId→auth.app_role_secret_id. Assert the candidate carries
+    // them so the nested-auth mapping actually authenticates.
+    const fd = makeFormData({
+      provider: "BROKER_PROVIDER_VAULT_BYO",
+      address: "https://vault.example.com",
+      namespaceOrPath: "tenant/tenant-abc",
+      mount: "kv2",
+      authMethod: "approle",
+      approleRoleId: "role-123",
+      approleSecretId: "secret-id-456",
+    });
+    await probeBrokerConfigAction(fd);
+
+    const candidate = mockProbeBrokerConfig.mock.calls[0][0];
+    expect(candidate.provider).toBe(7); // VAULT_BYO
+    expect(candidate.address).toBe("https://vault.example.com");
+    // path_prefix source
+    expect(candidate.namespaceOrPath).toBe("tenant/tenant-abc");
+    // kv_mount source
+    expect(candidate.mount).toBe("kv2");
+    // nested auth{} sources
+    expect(candidate.authMethod).toBe("approle");
+    expect(candidate.approleRoleId).toBe("role-123");
+    expect(Buffer.from(candidate.approleSecretId).toString()).toBe(
+      "secret-id-456",
+    );
+  });
 });
 
 describe("probeBrokerConfigAction, probe fails (probe ok=false)", () => {

@@ -441,6 +441,93 @@ test.describe("Secrets-backend, probe success", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Test suite: BYO configure → probe → save
+// ---------------------------------------------------------------------------
+
+test.describe("Secrets-backend, BYO configure→probe→save", () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
+    await mockProbeSuccess(page);
+  });
+
+  /** Switch the provider selector to BYO Vault. */
+  async function selectBYO(page: Page) {
+    const switcher = page
+      .getByTestId("provider-switcher")
+      .or(page.getByRole("combobox", { name: /provider/i }))
+      .first();
+    await expect(switcher).toBeVisible({ timeout: 15_000 });
+    await switcher.click();
+    await page.getByRole("option", { name: /byo vault/i }).first().click();
+  }
+
+  test("BYO path-prefix is pre-filled with a tenant-scoped default", async ({
+    page,
+  }) => {
+    await page.goto(BACKEND_URL);
+    await selectBYO(page);
+
+    // The path-prefix input is seeded with `tenant/<tenant-id>` (never blank).
+    const prefix = page.getByPlaceholder("tenant/your-tenant");
+    await expect(prefix).toBeVisible({ timeout: 10_000 });
+    await expect(prefix).toHaveValue(/^tenant\/.+/);
+  });
+
+  test("BYO path-prefix is preserved when switching provider away and back", async ({
+    page,
+  }) => {
+    await page.goto(BACKEND_URL);
+    await selectBYO(page);
+
+    const prefix = page.getByPlaceholder("tenant/your-tenant");
+    await prefix.fill("tenant/custom-path");
+
+    // Away to Hosted, then back to BYO.
+    const switcher = page.getByTestId("provider-switcher").first();
+    await switcher.click();
+    await page.getByRole("option", { name: /hosted/i }).first().click();
+    await switcher.click();
+    await page.getByRole("option", { name: /byo vault/i }).first().click();
+
+    await expect(page.getByPlaceholder("tenant/your-tenant")).toHaveValue(
+      "tenant/custom-path",
+    );
+  });
+
+  test("BYO configure → probe → save succeeds", async ({ page }) => {
+    await page.goto(BACKEND_URL);
+    await selectBYO(page);
+
+    // Fill address + token (auth method defaults to Token).
+    await page
+      .getByPlaceholder("https://vault.example.com:8200")
+      .fill("https://vault.example.com:8200");
+    const token = page.locator('input[type="password"]').first();
+    if ((await token.count()) > 0) {
+      await token.fill(TEST_VAULT_TOKEN);
+    }
+
+    // Probe.
+    await page
+      .getByRole("button", { name: /probe|test.*connection|verify/i })
+      .first()
+      .click();
+    await expect(
+      page.getByText(/success|verified|probe.*pass/i).first(),
+    ).toBeVisible({ timeout: 10_000 });
+
+    // Save.
+    await page
+      .getByRole("button", { name: /^save$|^save.*config/i })
+      .first()
+      .click();
+    await expect(
+      page.getByText(/saved|configuration.*saved|backend.*updated/i).first(),
+    ).toBeVisible({ timeout: 10_000 });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Test suite: sensitive field storage isolation
 // ---------------------------------------------------------------------------
 
