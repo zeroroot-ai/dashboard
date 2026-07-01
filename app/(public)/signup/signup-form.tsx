@@ -24,7 +24,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { loadStripe, type Appearance } from "@stripe/stripe-js";
+import {
+  loadStripe,
+  type Appearance,
+  type Stripe,
+  type StripeElements,
+} from "@stripe/stripe-js";
 import {
   Elements,
   PaymentElement,
@@ -284,7 +289,12 @@ export function SignupForm(props: SignupFormProps) {
   }, []);
 
   if (!stripePromise) {
-    return <SignupFormInner {...props} />;
+    // Card-free path (self-hosted / billingEnabled=false): there is NO <Elements>
+    // provider, so we must NOT call useStripe()/useElements() — in this version of
+    // @stripe/react-stripe-js they THROW "Could not find Elements context" rather
+    // than returning null. Pass nulls; SignupFormInner only touches them when
+    // paidFlow is true (which is false here). dashboard#923 follow-up.
+    return <SignupFormInner {...props} stripe={null} elements={null} />;
   }
   return (
     <Elements
@@ -300,9 +310,18 @@ export function SignupForm(props: SignupFormProps) {
         appearance,
       }}
     >
-      <SignupFormInner {...props} />
+      <SignupFormInnerWithStripe {...props} />
     </Elements>
   );
+}
+
+// Bridge that reads the Stripe hooks. Rendered ONLY inside <Elements>, so the
+// hooks always have a provider. Keeping the hook calls here (off the card-free
+// path) is what prevents the "Could not find Elements context" throw.
+function SignupFormInnerWithStripe(props: SignupFormProps) {
+  const stripe = useStripe();
+  const elements = useElements();
+  return <SignupFormInner {...props} stripe={stripe} elements={elements} />;
 }
 
 function SignupFormInner({
@@ -314,10 +333,12 @@ function SignupFormInner({
   billingEnabled,
   termsUrl,
   privacyUrl,
-}: SignupFormProps) {
-  // Stripe.js handles (null when paid tiers are off / not inside <Elements>).
-  const stripe = useStripe();
-  const elements = useElements();
+  stripe,
+  elements,
+}: SignupFormProps & {
+  stripe: Stripe | null;
+  elements: StripeElements | null;
+}) {
   // Whether this signup collects a card inline. Gated on both billingEnabled
   // (deployment-profile resolver, dashboard#923) AND the publishable key being
   // present. Self-hosted (billingEnabled=false) → card-free regardless of key.
