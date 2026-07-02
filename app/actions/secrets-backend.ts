@@ -35,10 +35,7 @@ import {
 } from "@/src/lib/gibson-client/tenant-broker-config";
 import type { CandidateConfig } from "@/src/gen/gibson/tenant/v1/secrets_pb";
 import { getServerSession } from "@/src/lib/auth";
-import {
-  assertAuthorized,
-  AuthzDeniedError,
-} from "@/src/lib/auth/assert-authorized";
+import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
 
 // ---------------------------------------------------------------------------
 // Shared result types
@@ -164,15 +161,6 @@ function redactErrorMessage(msg: string): string {
 export async function probeBrokerConfigAction(
   formData: FormData,
 ): Promise<ProbeActionResult> {
-  try {
-    await assertAuthorized("/gibson.tenant.v1.SecretsService/ProbeBrokerConfig");
-  } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return { ok: false, error: "Permission denied", code: "permission_denied" };
-    }
-    throw err;
-  }
-
   const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "Unauthenticated", code: "unauthenticated" };
@@ -197,6 +185,8 @@ export async function probeBrokerConfigAction(
     }
     return { ok: true, data: result };
   } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
     const rawMsg = err instanceof Error ? err.message : "Probe failed";
     return {
       ok: false,
@@ -220,15 +210,6 @@ export async function probeBrokerConfigAction(
 export async function setBrokerConfigAction(
   formData: FormData,
 ): Promise<SetConfigActionResult> {
-  try {
-    await assertAuthorized("/gibson.tenant.v1.SecretsService/SetBrokerConfig");
-  } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return { ok: false, error: "Permission denied", code: "permission_denied" };
-    }
-    throw err;
-  }
-
   const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "Unauthenticated", code: "unauthenticated" };
@@ -262,6 +243,8 @@ export async function setBrokerConfigAction(
     revalidatePath("/dashboard/pages/settings/secrets-backend");
     return { ok: true, data: resp.config! };
   } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
     const rawMsg = err instanceof Error ? err.message : "Failed to save config";
     return {
       ok: false,

@@ -5,9 +5,11 @@
  *
  * Wrap the daemon's GrantsAdminService.WriteAgentGrants and
  * DeleteAgentGrants RPCs so the client component never has to hold a
- * gRPC client. Both actions assertAuthorized server-side, forward via
- * userClient (which goes through Envoy + ext-authz), and revalidate
- * the agent / tool detail page on success.
+ * gRPC client. Both actions forward via userClient (which goes through
+ * Envoy + ext-authz and bakes a per-RPC assertAuthorized check into the
+ * dispatch, dashboard#848 / #902) and revalidate the agent / tool detail
+ * page on success. A denial surfaces as AuthzDeniedError from inside the
+ * RPC call and is mapped by mapDaemonError (dashboard#904).
  *
  * Spec: component-bootstrap-dashboard-completion Requirement 5.
  */
@@ -23,10 +25,7 @@ import { userClient } from '@/src/lib/gibson-client';
 import {
   GrantsService,
 } from '@/src/gen/gibson/tenant/v1/grants_pb';
-import {
-  assertAuthorized,
-  AuthzDeniedError,
-} from '@/src/lib/auth/assert-authorized';
+import { permissionDeniedResult } from '@/src/lib/auth/assert-authorized';
 import { logger } from '@/src/lib/logger';
 
 // ---------------------------------------------------------------------------
@@ -72,23 +71,17 @@ interface DeleteResult {
 
 type FailureResult = { ok: false; error: string; code?: string };
 
-async function preflight(rpcMethod: string): Promise<FailureResult | null> {
+async function preflight(): Promise<FailureResult | null> {
   const session = await auth();
   if (!session?.user) {
     return { ok: false, error: 'Authentication required', code: 'unauthenticated' };
-  }
-  try {
-    await assertAuthorized(rpcMethod);
-  } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return { ok: false, error: 'Permission denied', code: 'permission_denied' };
-    }
-    throw err;
   }
   return null;
 }
 
 function mapDaemonError(err: unknown): FailureResult {
+  const denied = permissionDeniedResult(err);
+  if (denied) return denied;
   if (err instanceof ConnectError) {
     if (err.code === Code.PermissionDenied) {
       return { ok: false, error: 'Permission denied', code: 'permission_denied' };
@@ -122,7 +115,7 @@ export async function writeAgentGrantsAction(
   targetPrincipalId: string,
   grantsInput: unknown,
 ): Promise<ActionResult<WriteResult>> {
-  const pre = await preflight('/gibson.tenant.v1.GrantsService/WriteAgentGrants');
+  const pre = await preflight();
   if (pre) return pre;
 
   const targetParsed = targetSchema.safeParse(targetPrincipalId);
@@ -171,7 +164,7 @@ export async function deleteAgentGrantsAction(
   targetPrincipalId: string,
   grantsInput: unknown,
 ): Promise<ActionResult<DeleteResult>> {
-  const pre = await preflight('/gibson.tenant.v1.GrantsService/DeleteAgentGrants');
+  const pre = await preflight();
   if (pre) return pre;
 
   const targetParsed = targetSchema.safeParse(targetPrincipalId);

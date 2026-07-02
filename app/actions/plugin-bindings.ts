@@ -7,8 +7,10 @@
  * so the client `PluginDetailContent` component can call them without dragging
  * server-only auth into the client bundle.
  *
- * Authz: assertAuthorized is called at the top of each action before any
- * daemon call (spec: dashboard-authz-ui-gating Requirements 6.1, 6.5).
+ * Authz: both wrapped RPCs dispatch through the user-acting client, which
+ * bakes a per-RPC assertAuthorized check into the transport (dashboard#848 /
+ * #902); a denial surfaces as AuthzDeniedError from inside the call and is
+ * mapped to the canonical "Permission denied" result (dashboard#904).
  *
  * Spec: secrets-tenant-lifecycle Task 15, Requirement 2.3.
  */
@@ -20,10 +22,7 @@ import {
   editPluginSecretBinding,
   revokePluginSecretBinding,
 } from "@/src/lib/gibson-client/plugins-admin";
-import {
-  assertAuthorized,
-  AuthzDeniedError,
-} from "@/src/lib/auth/assert-authorized";
+import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
 
 interface PluginBindingResult {
   ok: boolean;
@@ -36,21 +35,12 @@ export async function editPluginBindingAction(
   newRef: string,
 ): Promise<PluginBindingResult> {
   try {
-    await assertAuthorized(
-      "/gibson.pluginadmin.v1.PluginAdminService/EditPluginSecretBinding",
-    );
-  } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return { ok: false, error: "Permission denied" };
-    }
-    throw err;
-  }
-
-  try {
     await editPluginSecretBinding(installId, declaredName, newRef);
     revalidatePath(`/dashboard/pages/settings/plugins/${installId}`);
     return { ok: true };
   } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Unknown error",
@@ -63,21 +53,12 @@ export async function revokePluginBindingAction(
   declaredName: string,
 ): Promise<PluginBindingResult> {
   try {
-    await assertAuthorized(
-      "/gibson.pluginadmin.v1.PluginAdminService/RevokePluginSecretBinding",
-    );
-  } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return { ok: false, error: "Permission denied" };
-    }
-    throw err;
-  }
-
-  try {
     await revokePluginSecretBinding(installId, declaredName);
     revalidatePath(`/dashboard/pages/settings/plugins/${installId}`);
     return { ok: true };
   } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Unknown error",
