@@ -1,0 +1,67 @@
+name: dashboard
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'components/**'
+      - 'src/**'
+      - 'content/**'
+      - 'scripts/**'
+      - 'Dockerfile'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'pnpm-lock.yaml'
+      - 'knip.json'
+      - '.tool-versions'
+      - 'next.config.*'
+      - 'tailwind.config.*'
+      - '.github/workflows/dashboard.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: dashboard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Skip dependabot. Also skip external fork PRs: the image build consumes the
+    # private GH_PAT_TENANT_OPERATOR_RO secret, which GitHub never exposes to a
+    # fork's PR run, so the build would hard-fail for outside contributors. The
+    # event-name guard keeps push/tag builds and same-repo PRs running as before
+    # (on push/tag there is no pull_request context, so the fork field is unset).
+    # There is deliberately no pull_request_target trigger — keep it that way.
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.fork == false)
+    uses: zeroroot-ai/.github/.github/workflows/reusable-image-build.yml@main
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+      attestations: write
+      security-events: write
+      actions: read
+    with:
+      component_name: dashboard
+      component_path: .
+      dockerfile_path: Dockerfile
+      image_name: ghcr.io/zeroroot-ai/dashboard
+      tag_pattern: (v.*)
+    secrets:
+      # PAT with read access to zeroroot-ai/gibson (private). The Dockerfile
+      # fetches operators/tenant/plans/plans.yaml + plans.schema.json from that
+      # repo at build time via gen-plans.mjs PLANS_SOURCE=remote.
+      # E4 monorepo fold (gibson#781 / ADR-0056): the standalone
+      # zeroroot-ai/tenant-operator repo was deleted; its plans/ tree moved into
+      # gibson under operators/tenant/plans/. The GH_PAT_TENANT_OPERATOR_RO
+      # secret VALUE must grant read on zeroroot-ai/gibson (the secret name is a
+      # stable label; update the PAT scope, not the name).
+      # Provisioned out of band in repo settings (Settings → Secrets and
+      # variables → Actions → New repository secret).
+      ghtoken: ${{ secrets.GH_PAT_TENANT_OPERATOR_RO }}

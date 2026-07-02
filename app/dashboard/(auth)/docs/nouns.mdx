@@ -1,0 +1,57 @@
+---
+title: Mission Nouns
+description: Node types in the mission DAG.
+---
+
+# Mission Nouns (`NodeType`)
+
+Each mission node carries a `NodeType` enum value selecting its execution semantics. The matching `*NodeConfig` variant in the `MissionNode.config` oneof carries the per-noun parameters.
+
+## `NODE_TYPE_AGENT`
+
+Agent node executes an agent
+
+**Enum value:** `1` &middot; **Config message:** `AgentNodeConfig`
+
+## `NODE_TYPE_TOOL`
+
+Tool node executes a tool
+
+**Enum value:** `2` &middot; **Config message:** `ToolNodeConfig`
+
+## `NODE_TYPE_PLUGIN`
+
+Plugin node calls a named method on a multi-method plugin component.
+
+**Enum value:** `3` &middot; **Config message:** `PluginNodeConfig`
+
+## `NODE_TYPE_CONDITION`
+
+Condition node performs conditional branching
+
+**Enum value:** `4` &middot; **Config message:** `ConditionNodeConfig`
+
+## `NODE_TYPE_PARALLEL`
+
+Parallel node executes sub-nodes in parallel
+
+**Enum value:** `5` &middot; **Config message:** `ParallelNodeConfig`
+
+## `NODE_TYPE_JOIN`
+
+Join node waits for multiple branches to complete
+
+**Enum value:** `6` &middot; **Config message:** `JoinNodeConfig`
+
+## MergeStrategy (JOIN)
+
+MergeStrategy declares how a JoinNodeConfig combines results from its `wait_for` upstream sources.  Spec: mission-verb-noun-registry Requirement 7.
+
+| Value | Number | Description |
+|---|---|---|
+| `MERGE_STRATEGY_UNSPECIFIED` | `0` | Sentinel - must be first. |
+| `MERGE_STRATEGY_CONCAT` | `1` | CONCAT preserves source order in the merged output. |
+| `MERGE_STRATEGY_REDUCE` | `2` | REDUCE applies a built-in reducer (semantics defined in the CONDITION/JOIN executor design). |
+| `MERGE_STRATEGY_FIRST` | `3` | FIRST returns the first source to complete. |
+| `MERGE_STRATEGY_LAST` | `4` | LAST returns the last source to complete. |
+| `MERGE_STRATEGY_CUSTOM` | `5` | CUSTOM evaluates the JoinNodeConfig.aggregator CEL expression against the source results. |

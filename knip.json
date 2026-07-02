@@ -1,0 +1,69 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "scripts/**/*.{mjs,js,ts}"
+  ],
+  "project": [
+    "app/**/*.{ts,tsx}",
+    "components/**/*.{ts,tsx}",
+    "hooks/**/*.{ts,tsx}",
+    "lib/**/*.{ts,tsx}",
+    "src/**/*.{ts,tsx}"
+  ],
+  "ignore": [
+    "src/gen/**",
+    "src/generated/**",
+    "src/data/**",
+    "out/**",
+    ".next/**",
+    "scripts/ast-checks/fixtures/**",
+    "components/ui/**"
+  ],
+  "ignoreDependencies": [
+    "pg",
+    "@vitest/coverage-v8",
+    "@auth/core",
+    "tailwindcss",
+    "tailwindcss-animate",
+    "eslint-config-next",
+    "pino-pretty",
+    "@bufbuild/buf",
+    "@bufbuild/protoc-gen-es",
+    "@zeroroot/brand"
+  ],
+  "ignoreUnresolved": [
+    "@/\\.source/.*"
+  ],
+  "rules": {
+    "files": "error",
+    "dependencies": "error",
+    "devDependencies": "error",
+    "unlisted": "error",
+    "unresolved": "error",
+    "binaries": "error",
+    "exports": "error",
+    "types": "error",
+    "nsExports": "error",
+    "nsTypes": "error",
+    "enumMembers": "error",
+    "classMembers": "error",
+    "duplicates": "off",
+    "optionalPeerDependencies": "off"
+  },
+  "next": {
+    "entry": [
+      "next.config.ts",
+      "app/**/{page,layout,loading,error,not-found,template,default,route,global-error,sitemap,robots,manifest,opengraph-image,twitter-image,icon,apple-icon}.{ts,tsx}",
+      "middleware.ts",
+      "instrumentation.ts"
+    ]
+  },
+  "vitest": {
+    "config": ["vitest.config.ts"],
+    "entry": ["**/*.{test,spec}.{ts,tsx}", "**/__tests__/**/*.{ts,tsx}", "src/test/**/*.ts"]
+  },
+  "playwright": {
+    "config": ["playwright.config.ts"],
+    "entry": ["e2e/**/*.{test,spec}.{ts,tsx}", "e2e/**/*.setup.ts"]
+  }
+}
