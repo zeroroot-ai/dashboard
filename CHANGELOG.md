@@ -5,6 +5,49 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.116.0](https://github.com/zeroroot-ai/dashboard/compare/v0.115.0...v0.116.0) (2026-07-02)
+
+
+### Features
+
+* align docs intro and landing metadata to the new positioning ([#906](https://github.com/zeroroot-ai/dashboard/issues/906)) ([ec28b89](https://github.com/zeroroot-ai/dashboard/commit/ec28b896a8f8481510dc1f99345a5a151ee81d2f)), closes [#888](https://github.com/zeroroot-ai/dashboard/issues/888)
+* **auth:** closed-registration tests + operator doc (dashboard[#925](https://github.com/zeroroot-ai/dashboard/issues/925)) ([#930](https://github.com/zeroroot-ai/dashboard/issues/930)) ([9cf0955](https://github.com/zeroroot-ai/dashboard/commit/9cf0955c21171af7f1a08b1d21fc04a83121cd0a))
+* **auth:** navigable self-contained front door — sign-in + create-account ([#927](https://github.com/zeroroot-ai/dashboard/issues/927)) ([1ed76c2](https://github.com/zeroroot-ai/dashboard/commit/1ed76c2c60c58892255cf9a9cd9e7ee217e077a0))
+* **authz:** bake assertAuthorized into the user-acting daemon client ([#902](https://github.com/zeroroot-ai/dashboard/issues/902)) ([28bc4f2](https://github.com/zeroroot-ai/dashboard/commit/28bc4f21295d054a06e60f8a74bea38e1466e903))
+* **brand:** consume @zeroroot/brand design-tokens package ([#910](https://github.com/zeroroot-ai/dashboard/issues/910)) ([0f53be5](https://github.com/zeroroot-ai/dashboard/commit/0f53be550eef53586e07ace495f79ddddf760cd2)), closes [#909](https://github.com/zeroroot-ai/dashboard/issues/909)
+* ground landing hero in canonical messaging module (Gibson "thinks in paths") ([#889](https://github.com/zeroroot-ai/dashboard/issues/889)) ([220166b](https://github.com/zeroroot-ai/dashboard/commit/220166b35aab84c81f478fc407213114124fc796)), closes [#886](https://github.com/zeroroot-ai/dashboard/issues/886) [#885](https://github.com/zeroroot-ai/dashboard/issues/885)
+* **marketing:** shed go-to-market surface to SaaS-only www-svc (deploy[#1033](https://github.com/zeroroot-ai/dashboard/issues/1033)) ([#911](https://github.com/zeroroot-ai/dashboard/issues/911)) ([e1f54c0](https://github.com/zeroroot-ai/dashboard/commit/e1f54c0e5fe46331d56958f1d708eaf4ac175767))
+* **profile:** deployment-profile resolver — single source for self-hosted/SaaS posture ([#926](https://github.com/zeroroot-ai/dashboard/issues/926)) ([de201c2](https://github.com/zeroroot-ai/dashboard/commit/de201c2d44ed56db7702584ee6f2f383f7a4f280))
+* **profile:** eradicate hardcoded marketing links + prebuild guard ([#924](https://github.com/zeroroot-ai/dashboard/issues/924)) ([15a808a](https://github.com/zeroroot-ai/dashboard/commit/15a808a14b3fe9338d0d7d7f68751ba2074e72ba))
+* **providers:** wire BYO embedding UI to daemon catalogue + embedding probe (dashboard[#870](https://github.com/zeroroot-ai/dashboard/issues/870)) ([#908](https://github.com/zeroroot-ai/dashboard/issues/908)) ([c28d2b9](https://github.com/zeroroot-ai/dashboard/commit/c28d2b948cd155c6d38bf87d75810ca0886e0436))
+* **seam:** gate signup surface on SIGNUP_SELF_SERVE knob (ADR-0006 [#1088](https://github.com/zeroroot-ai/dashboard/issues/1088)) ([#912](https://github.com/zeroroot-ai/dashboard/issues/912)) ([a2e4c94](https://github.com/zeroroot-ai/dashboard/commit/a2e4c9463da5441825f51cbe1bdae1dc61e70e8a))
+* **secrets:** BYO Vault form — codec field names, tenant-scoped path-prefix prefill, probe/save ([#939](https://github.com/zeroroot-ai/dashboard/issues/939)) ([feea985](https://github.com/zeroroot-ai/dashboard/commit/feea9852d5056466401052028e06eb7c937c5698)), closes [#936](https://github.com/zeroroot-ai/dashboard/issues/936)
+* **secrets:** two-backend selector (Hosted/BYO), default to active backend, fix add-secret gating ([#937](https://github.com/zeroroot-ai/dashboard/issues/937)) ([484f1ef](https://github.com/zeroroot-ai/dashboard/commit/484f1efc25d6c38dcc3b232654ddfd68540bcba0)), closes [#935](https://github.com/zeroroot-ai/dashboard/issues/935)
+* **signup:** card-free, plan-free self-hosted registration ([#928](https://github.com/zeroroot-ai/dashboard/issues/928)) ([7b67c13](https://github.com/zeroroot-ai/dashboard/commit/7b67c13369ad3e772e67a580e0fc2d0b2a4257c9))
+* surface Gibson flagship pillars on landing + broaden personas ([#905](https://github.com/zeroroot-ai/dashboard/issues/905)) ([c0cc9e6](https://github.com/zeroroot-ai/dashboard/commit/c0cc9e69e5589781374223fcfaaa9ed8a032246d)), closes [#887](https://github.com/zeroroot-ai/dashboard/issues/887)
+* **world:** Decisions panel folded into the mission-run World view (M3) ([#903](https://github.com/zeroroot-ai/dashboard/issues/903)) ([1c08374](https://github.com/zeroroot-ai/dashboard/commit/1c0837472c0e009243bb50f94e65bb57c12deeb2))
+* **world:** mission-scoped LLM panel folds with the Scroller (M3) ([#907](https://github.com/zeroroot-ai/dashboard/issues/907)) ([e754a14](https://github.com/zeroroot-ai/dashboard/commit/e754a143c9aef40644ee3ccea91d684284eea17f)), closes [#1063](https://github.com/zeroroot-ai/dashboard/issues/1063)
+* **world:** mission-scoped World view + Mission Results entry point ([#891](https://github.com/zeroroot-ai/dashboard/issues/891)) ([e7fc519](https://github.com/zeroroot-ai/dashboard/commit/e7fc519e19a7768adaee14ea1c897b7b2f33fcaa)), closes [#1060](https://github.com/zeroroot-ai/dashboard/issues/1060)
+* **world:** per-tick inspector with frame-diff, transcript, graph highlight ([#895](https://github.com/zeroroot-ai/dashboard/issues/895)) ([b0e4d20](https://github.com/zeroroot-ai/dashboard/commit/b0e4d20bb9b7c49959a1304605a4fda43949e096)), closes [#884](https://github.com/zeroroot-ai/dashboard/issues/884)
+* **world:** playback controller for the mission Scroller ([#894](https://github.com/zeroroot-ai/dashboard/issues/894)) ([f7b7b7e](https://github.com/zeroroot-ai/dashboard/commit/f7b7b7e22c3d22ab23ae1fba6751f1ad90e0fb93)), closes [#883](https://github.com/zeroroot-ai/dashboard/issues/883)
+* **world:** Work panel folded into the mission-run World view (M3) ([#896](https://github.com/zeroroot-ai/dashboard/issues/896)) ([cc7b045](https://github.com/zeroroot-ai/dashboard/commit/cc7b045c1b0241d56b4b593a7d3b8b6f7972a53d))
+
+
+### Bug Fixes
+
+* **authz:** surface gibson.world.v1.WorldService in the dashboard authz registry ([#934](https://github.com/zeroroot-ai/dashboard/issues/934)) ([e651760](https://github.com/zeroroot-ai/dashboard/commit/e651760e8f080f0397fab4e4c54fdb09b87c3d8a))
+* **brand:** inline brand tokens, drop forbidden file: dep ([#914](https://github.com/zeroroot-ai/dashboard/issues/914)) ([4e9b36b](https://github.com/zeroroot-ai/dashboard/commit/4e9b36b376af4559c5ec1bf5477b9fe04ee6a103))
+* **build:** add DASHBOARD_HSTS_DISABLED build-arg to disable HSTS in dev builds ([#916](https://github.com/zeroroot-ai/dashboard/issues/916)) ([e7eb323](https://github.com/zeroroot-ai/dashboard/commit/e7eb323fbc5792df8c8373af8e60ee86b7bc1caf))
+* **build:** de-export unused brain/World types to restore knip gate ([#898](https://github.com/zeroroot-ai/dashboard/issues/898)) ([2241661](https://github.com/zeroroot-ai/dashboard/commit/2241661d291984bf64d6e1d3de72306ca22fb567))
+* **build:** de-export unused messaging types to restore knip gate ([#897](https://github.com/zeroroot-ai/dashboard/issues/897)) ([888fa02](https://github.com/zeroroot-ai/dashboard/commit/888fa02778eecc4b9c3c831a724806ca8edf9afd))
+* **build:** un-export unused DeploymentProfile type (knip green) ([#931](https://github.com/zeroroot-ai/dashboard/issues/931)) ([634aa07](https://github.com/zeroroot-ai/dashboard/commit/634aa078f832d5ede45708122f3d8f2b0ab19c10))
+* export WorldGraphMission so frame-diff typechecks ([#901](https://github.com/zeroroot-ai/dashboard/issues/901)) ([2cc4402](https://github.com/zeroroot-ai/dashboard/commit/2cc4402d8421caeec20e97ef756abb43af7c4674)), closes [#900](https://github.com/zeroroot-ai/dashboard/issues/900)
+* resolve jwt encode via next-auth/jwt to unbreak the dashboard build ([#899](https://github.com/zeroroot-ai/dashboard/issues/899)) ([2e31eba](https://github.com/zeroroot-ai/dashboard/commit/2e31ebaa238cfd1d98e2f85a5717083237e98785)), closes [#892](https://github.com/zeroroot-ai/dashboard/issues/892)
+* restore repo tree (revert [#942](https://github.com/zeroroot-ai/dashboard/issues/942)) + land queue-entry-compat CI fix ([#945](https://github.com/zeroroot-ai/dashboard/issues/945)) ([86ad7bf](https://github.com/zeroroot-ai/dashboard/commit/86ad7bf359f185cd9bb3b82b9109d429fa21a973))
+* **seam:** config-drive marketing URL via WWW_URL, no off-cluster bounce on self-hosted ([#917](https://github.com/zeroroot-ai/dashboard/issues/917)) ([#918](https://github.com/zeroroot-ai/dashboard/issues/918)) ([e16eabf](https://github.com/zeroroot-ai/dashboard/commit/e16eabfe1bfe6d4f488d3644178933bdbf97e5c6))
+* **security:** gate HSTS off for self-signed/self-hosted edge (DASHBOARD_HSTS_DISABLED) ([#913](https://github.com/zeroroot-ai/dashboard/issues/913)) ([fba92c0](https://github.com/zeroroot-ai/dashboard/commit/fba92c09c8f8796fef00a5906a67898f5df74734))
+* **signup:** don't call Stripe hooks on the card-free path ([#932](https://github.com/zeroroot-ai/dashboard/issues/932)) ([c06c55a](https://github.com/zeroroot-ai/dashboard/commit/c06c55a0c5206b8c4fcc8f4199223b475e7a6c37))
+
 ## [0.115.0](https://github.com/zeroroot-ai/dashboard/compare/v0.114.0...v0.115.0) (2026-06-29)
 
 
