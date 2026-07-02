@@ -86,7 +86,7 @@
     "date-fns": "^4.1.0",
     "fumadocs-core": "^16.7.16",
     "fumadocs-mdx": "^14.3.0",
-    "fumadocs-ui": "^16.7.16",
+    "fumadocs-ui": "^16.10.7",
     "immer": "^11.1.8",
     "isomorphic-dompurify": "^3.7.1",
     "jose": "^6.2.3",
