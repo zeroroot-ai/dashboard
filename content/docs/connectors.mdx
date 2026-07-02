@@ -1,0 +1,97 @@
+---
+title: Connectors
+description: Bridge an existing Model Context Protocol (MCP) server into Gibson as a plugin, run it unmodified, scaffold and test it locally with the gibson CLI.
+---
+
+A **connector** brings an existing [Model Context Protocol](https://modelcontextprotocol.io)
+(MCP) server into Gibson. You don't rewrite the server or port its tools,
+the vendor MCP server runs **unmodified** behind a generic MCP-bridge
+plugin, and its tools become callable inside your missions.
+
+## A connector is a plugin
+
+There is no separate connector runtime or component kind. A connector is
+a [plugin](/docs/plugins), the same enrollment, the same secret bindings,
+the same lifecycle, configured to bridge an MCP server instead of
+implementing tools directly. Anything you know about plugins applies.
+
+What the bridge handles for you:
+
+- spawning or connecting to the vendor MCP server,
+- the MCP `initialize` handshake and `tools/list` discovery,
+- resolving the secrets the vendor server needs from
+  [Gibson-managed secrets storage](/docs/secrets-management),
+- exposing each discovered tool to your agents and missions.
+
+## Two transports
+
+A connector reaches its vendor MCP server one of two ways:
+
+| Transport | When | How |
+|---|---|---|
+| `stdio` (default) | The vendor server is a local executable (an `npx`/`uvx` package, a binary). | The bridge spawns it as a subprocess and speaks MCP over stdin/stdout. |
+| `http` | The vendor server already runs as a network service. | The bridge connects to its base URL. |
+
+## Scaffold a connector
+
+`gibson connector init` writes a `connector.yaml` describing the vendor
+reference, the transport, and the secret-to-environment-variable mapping
+the vendor server expects.
+
+```bash
+# stdio: spawn an npm-published MCP server as a subprocess
+gibson connector init github-bridge \
+  --command npx --arg=-y --arg=@modelcontextprotocol/server-github \
+  --secret cred:github_token=GITHUB_PERSONAL_ACCESS_TOKEN
+
+# http: bridge an already-running MCP server
+gibson connector init internal-api \
+  --transport http --endpoint https://mcp.example.com/mcp
+```
+
+| Flag | Notes |
+|---|---|
+| `--transport` | `stdio` (default) or `http`. |
+| `--command` | stdio: the executable that runs the vendor server (e.g. `npx`, `uvx`). |
+| `--arg` | stdio: one argument to `--command`, repeatable and ordered. |
+| `--endpoint` | http: the base URL of the running vendor server. |
+| `--secret` | A `<broker-name>=<ENV_VAR>` mapping, repeatable. The bridge resolves the broker secret and injects it as the named environment variable. |
+| `--force` | Overwrite an existing `connector.yaml`. |
+
+## Run and test locally
+
+`run` and `invoke` drive the same SDK bridge client the platform uses,
+but resolve declared secrets from **your environment** rather than the
+platform secrets broker, so you can iterate without a daemon.
+
+```bash
+gibson connector validate          # check connector.yaml
+gibson connector run               # start the vendor server, list its discovered tools
+gibson connector run --json        # include each tool's input schema
+gibson connector invoke <tool>     # run one discovered tool end to end
+```
+
+Set the environment variables named in your `--secret` mappings before
+running locally, e.g. `export GITHUB_PERSONAL_ACCESS_TOKEN=...`.
+
+## Deploy it
+
+Once `run` lists the tools you expect, the connector deploys like any
+other plugin:
+
+1. Enroll a plugin identity and register it, see
+   [Component bootstrap & auth](/docs/component-bootstrap). The
+   connector's `--kind` is `plugin`.
+2. Bind the vendor server's secrets to the plugin so the bridge resolves
+   them from Gibson-managed secrets storage instead of your shell, see
+   [Secrets management](/docs/secrets-management).
+3. Reference the bridged tools from a mission the same way you reference
+   any tool.
+
+## Related
+
+- **[Plugins](/docs/plugins)**, the component a connector is built on.
+- **[Secrets management](/docs/secrets-management)**, how the vendor
+  server's credentials are stored and injected.
+- **[CLI reference → `gibson connector`](/docs/cli-reference#gibson-connector)**,
+  the full command surface.

@@ -1,0 +1,220 @@
+---
+title: Your First Agent
+description: Build a Gibson agent with the SDK, the Agent contract, the Harness, and a working hello-world example.
+---
+
+An **agent** is the autonomous reasoning layer of a Gibson mission. It
+decides what to do next, calls tools, queries the knowledge graph, and
+submits findings. Gibson runs your agent inside a mission alongside any
+other agents, tools, and plugins the mission references.
+
+This page walks through writing an agent from scratch using the Gibson
+SDK.
+
+## Prerequisites
+
+- You've completed [Install](/docs/install) and `gibson inspect` returns
+  successfully for a registered agent identity.
+- Go installed (the version pinned in the SDK's `go.mod`).
+
+If you haven't enrolled an agent yet, do that first:
+`gibson agent enroll --name <name> --kind agent` mints a bootstrap token,
+and `gibson component register --token <T>` exchanges it for the runtime
+credential the SDK needs.
+
+## What an agent looks like
+
+In the SDK, an agent is anything that satisfies the `agent.Agent`
+contract from `github.com/zeroroot-ai/sdk/agent`. Don't write the
+struct by hand, use the **builder**:
+
+```go
+cfg := agent.NewConfig().
+    SetName("my-agent").
+    SetVersion("0.1.0").
+    SetDescription("…").
+    AddCapability("recon").
+    AddTargetType("web_app").
+    AddTechniqueType("input_fuzzing").
+    AddLLMSlot("primary", llm.SlotRequirements{}).
+    SetExecuteFunc(execute)
+
+a, err := agent.New(cfg)
+```
+
+What the fields mean:
+
+| Field | Purpose |
+|---|---|
+| `Name` | Unique within your tenant. Mission nodes refer to your agent by name. |
+| `Version` | Semantic version. Useful for canarying upgrades. |
+| `Description` | Human-readable purpose. Shown in the dashboard. |
+| `Capabilities` | Free-form labels (`"recon"`, `"prompt_injection"`, …). Used for routing and discovery. |
+| `TargetTypes` | The shape of system this agent works against (`"web_app"`, `"k8s_cluster"`, `"llm_chat"`). |
+| `TechniqueTypes` | Attack techniques employed. |
+| `LLMSlots` | Slot identifiers + requirements. The mission binds each slot to a real model at dispatch time. |
+| `SetExecuteFunc` | The actual work, see below. |
+
+## The Harness
+
+Your agent never talks to Gibson directly. It calls **`agent.Harness`**,
+which is the agent's view of the platform. The harness is passed into
+`Execute` and exposes everything an agent might need:
+
+| You want to… | Use |
+|---|---|
+| Call an LLM | `h.Complete`, `h.CompleteWithTools`, `h.Stream`, `h.CompleteStructured` |
+| Call a tool | `h.CallToolProto`, `h.CallToolProtoStream`, `h.QueueToolWork`, `h.ToolResults` |
+| Query a plugin | `h.QueryPlugin`, `h.ListPlugins` |
+| Hand a subtask to another agent | `h.DelegateToAgent`, `h.ListAgents` |
+| Persist a security finding | `h.SubmitFinding`, `h.GetFindings` |
+| Read the knowledge graph | `h.QueryNodes`, `h.FindSimilarAttacks`, `h.FindSimilarFindings`, `h.GetAttackChains` |
+| Write to the knowledge graph | `h.StoreNode` |
+| Use working / mission / long-term memory | `h.Memory()` |
+| See the mission's target and metadata | `h.Mission()`, `h.Target()` |
+| Spawn a sub-mission | `h.CreateMission`, `h.RunMission` |
+| Read or write a workspace file | `h.Workspace()`, `h.Workspaces()` |
+| Belt-and-braces authz check before a sensitive op | `h.Authorize(ctx, action, resource)` |
+
+LLM slot identifiers (`"primary"`, `"summarizer"`, …) are agent-defined.
+Your tenant's slot policy maps each one to a real provider + model at
+dispatch time. See [Observability](/docs/observability) for cost and latency
+metrics.
+
+## A complete hello-world
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+
+    "github.com/zeroroot-ai/sdk/agent"
+    "github.com/zeroroot-ai/sdk/llm"
+)
+
+func execute(ctx context.Context, h agent.Harness, t agent.Task) (agent.Result, error) {
+    resp, err := h.Complete(ctx, "primary", []llm.Message{
+        {Role: llm.RoleSystem, Content: "You greet people warmly in one sentence."},
+        {Role: llm.RoleUser, Content: t.Prompt},
+    })
+    if err != nil {
+        return agent.NewErrorResult(err), nil
+    }
+    return agent.NewSuccessResult(resp.Content), nil
+}
+
+func main() {
+    cfg := agent.NewConfig().
+        SetName("hello-agent").
+        SetVersion("0.1.0").
+        SetDescription("Says hi via the primary LLM slot.").
+        AddCapability("greeting").
+        AddTargetType("none").
+        AddLLMSlot("primary", llm.SlotRequirements{}).
+        SetExecuteFunc(execute)
+
+    a, err := agent.New(cfg)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    if err := agent.Serve(context.Background(), a); err != nil {
+        log.Fatal(err)
+    }
+}
+```
+
+`agent.Serve` reads `~/.gibson/agent/credentials`, connects to your
+tenant, registers the agent, and waits for missions to dispatch work.
+
+## Running the agent
+
+```bash
+go run .
+```
+
+Leave the process running. In the dashboard's Missions section, add a
+node that points at your agent's name and click **Run**. The mission
+detail page streams events as your agent works, see
+[Missions](/docs/missions) for the full event taxonomy.
+
+## A more realistic example
+
+A bug-bounty triage agent that uses a tool, the graph, and submits a
+finding:
+
+```go
+func execute(ctx context.Context, h agent.Harness, t agent.Task) (agent.Result, error) {
+    target := h.Target()
+
+    // 1. Run a port scan tool we already enrolled.
+    scan, err := h.CallToolProto(ctx, "port-scan", &portscanv1.Request{
+        Host: target.Address,
+    })
+    if err != nil {
+        return agent.NewErrorResult(err), nil
+    }
+
+    // 2. Pull similar prior findings from the knowledge graph for context.
+    similar, err := h.FindSimilarFindings(ctx, agent.SimilarityRequest{
+        Description: "exposed admin endpoint",
+        Limit:       5,
+    })
+    if err != nil {
+        return agent.NewErrorResult(err), nil
+    }
+
+    // 3. Have the LLM decide what's worth flagging.
+    plan, err := h.CompleteStructured(ctx, "primary", planSchema, llm.Messages{
+        {Role: llm.RoleSystem, Content: "Triage scan output. Decide what to flag."},
+        {Role: llm.RoleUser, Content: render(scan, similar)},
+    })
+    if err != nil {
+        return agent.NewErrorResult(err), nil
+    }
+
+    // 4. Submit findings.
+    for _, item := range plan.Flag {
+        if err := h.SubmitFinding(ctx, agent.Finding{
+            Title:       item.Title,
+            Severity:    item.Severity,
+            TargetRef:   target.Id,
+            Description: item.Description,
+            Evidence:    item.Evidence,
+        }); err != nil {
+            return agent.NewErrorResult(err), nil
+        }
+    }
+    return agent.NewSuccessResult("triage complete"), nil
+}
+```
+
+Tools, plugins, and the graph are explained on their own pages -
+[Tools](/docs/tools), [Plugins](/docs/plugins), [Knowledge graph](/docs/knowledge-graph).
+
+## Lifecycle hooks
+
+Beyond `Execute`, the SDK supports optional lifecycle hooks:
+
+- `Initialize(ctx, cfg)`, runs once when the agent process starts.
+- `Shutdown(ctx)`, runs on graceful shutdown.
+- `Health(ctx)`, Gibson polls this to confirm the agent is still alive.
+
+The builder accepts these via `SetInitializeFunc`, `SetShutdownFunc`,
+`SetHealthFunc`. The defaults are no-ops and a `Healthy` status; most
+agents don't need to override them.
+
+## What's next
+
+- **[Tools](/docs/tools)**, define and call a tool from your agent.
+- **[Findings](/docs/findings)**, what `SubmitFinding` does and how
+  findings show up in the dashboard.
+- **[Knowledge graph](/docs/knowledge-graph)**, querying and writing the
+  graph from inside an agent.
+- **[Missions](/docs/missions)**, chain your agent with other components
+  in a DAG.
+- **[Taxonomy](/docs/taxonomy)** and **[Ontology](/docs/ontology)**, extend
+  the type system with custom node types or industry-vocab mappings
+  for your component.
