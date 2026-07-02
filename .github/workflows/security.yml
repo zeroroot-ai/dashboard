@@ -6,8 +6,21 @@ name: security
 # merge_group instead of double-firing on every `push` and `pull_request`,
 # plus a weekly deep scan so an advisory published between merges is still
 # caught within a week.
+#
+# Queue-entry compat (epic cicd-efficiency, board #44, merge-queue-entry
+# follow-up): a `merge_group`-only trigger produces NO check run at all on
+# an ordinary pull_request -- GitHub blocks queue entry until every
+# ruleset-required check context has reported on the PR itself (`skipped`
+# satisfies that; an absent check does not). `security / npm audit` is a
+# required context, so this froze every PR's queue entry until it was
+# stripped from the ruleset live (see zeroroot-ai/.github PR restoring
+# rulesets/repo/dashboard.json). Add `pull_request` to the trigger and skip
+# the real audit there via job-level `if:` -- skipped is free (no runner
+# spin-up), and the authoritative scan still only runs on merge_group plus
+# the weekly schedule.
 
 on:
+  pull_request:
   merge_group:
   schedule:
     - cron: "0 10 * * 3"
@@ -16,6 +29,10 @@ on:
 jobs:
   npm-audit:
     name: npm audit
+    # Real audit only outside pull_request (merge_group is the authoritative
+    # gate, schedule is the weekly deep scan, workflow_dispatch is manual).
+    # Reports `skipped` on PRs so this context satisfies merge-queue entry.
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

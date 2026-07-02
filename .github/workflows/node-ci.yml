@@ -32,28 +32,22 @@ name: node-ci
 # exist on that tag yet. Flip to the next tag (v2.1.0 / re-pointed v2) once
 # zeroroot-ai/.github#<this PR> merges and the tag moves, per ADR-0060's
 # blast-radius rule (pin a release tag, never @main, in steady state).
+#
+# Queue-entry compat (epic cicd-efficiency, board #44, merge-queue-entry
+# follow-up, canary PR dashboard#942): GitHub blocks a PR from entering the
+# merge queue until every ruleset-required check context has reported on the
+# PR itself -- a `skipped` conclusion satisfies that, an absent check does
+# not. The `paths:` filter used to live on the trigger itself, so a PR that
+# didn't touch any listed path (e.g. a README-only change) produced NO
+# check run at all for this workflow, and `heavy / node-ci (heavy)` -- a
+# required context -- would never appear, blocking queue entry forever.
+# Trigger on every pull_request now (no path filter on the trigger); a
+# cheap native `changes` job (git diff, no third-party action) does the
+# same path detection and gates the `fast` job instead. `heavy` still only
+# runs the real build on merge_group and reports `skipped` on every PR.
 
 on:
   pull_request:
-    paths:
-      - 'app/**'
-      - 'components/**'
-      - 'src/**'
-      - 'content/**'
-      - 'scripts/**'
-      - 'e2e/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'pnpm-lock.yaml'
-      - 'knip.json'
-      - '.tool-versions'
-      - '.eslintrc.js'
-      - '.eslintignore'
-      - 'tsconfig.json'
-      - 'vitest.config.*'
-      - 'next.config.*'
-      - 'tailwind.config.*'
-      - '.github/workflows/node-ci.yml'
   merge_group:
 
 concurrency:
@@ -64,9 +58,39 @@ permissions:
   contents: read
 
 jobs:
+  # ---- cheap path-detection (pull_request only) ----
+  # merge_group always gets the real heavy build regardless of paths, so
+  # this only needs to run -- and only needs to gate anything -- on
+  # pull_request.
+  changes:
+    name: detect Node/pnpm-relevant changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      relevant: ${{ steps.diff.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Diff against PR base
+        id: diff
+        run: |
+          set -e
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          CHANGED="$(git diff --name-only "$BASE" "$HEAD")"
+          echo "$CHANGED"
+          if echo "$CHANGED" | grep -E '^(app/|components/|src/|content/|scripts/|e2e/|package\.json$|package-lock\.json$|pnpm-lock\.yaml$|knip\.json$|\.tool-versions$|\.eslintrc\.js$|\.eslintignore$|tsconfig\.json$|vitest\.config\.|next\.config\.|tailwind\.config\.|\.github/workflows/node-ci\.yml$)' > /dev/null; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # ---- fast tier (pull_request): typecheck + lint + vitest ----
   fast:
-    if: github.event_name == 'pull_request'
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.relevant == 'true'
     uses: zeroroot-ai/.github/.github/workflows/reusable-node-ci.yml@main
     with:
       tier: fast

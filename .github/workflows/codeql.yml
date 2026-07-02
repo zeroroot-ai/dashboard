@@ -5,8 +5,21 @@ name: CodeQL
 # gibson's S5 (gibson#1130): the authoritative CodeQL analysis moves to
 # merge_group (the pre-merge gate) instead of firing on every commit landed
 # to `main`, plus the existing weekly deep scan.
+#
+# Queue-entry compat (epic cicd-efficiency, board #44, merge-queue-entry
+# follow-up): a `merge_group`-only trigger produces NO check run at all on
+# an ordinary pull_request -- GitHub blocks queue entry until every
+# ruleset-required check context has reported on the PR itself (`skipped`
+# satisfies that; an absent check does not). `CodeQL / Analyze TypeScript`
+# is a required context, so this froze every PR's queue entry until it was
+# stripped from the ruleset live (see zeroroot-ai/.github PR restoring
+# rulesets/repo/dashboard.json). Add `pull_request` to the trigger and skip
+# the real analysis there via job-level `if:` -- skipped is free (no runner
+# spin-up, no CodeQL init/build/analyze), and the authoritative scan still
+# only runs on merge_group plus the weekly schedule.
 
 on:
+  pull_request:
   merge_group:
   schedule:
     - cron: "0 8 * * 2"
@@ -21,6 +34,10 @@ concurrency:
 jobs:
   analyze:
     name: Analyze TypeScript
+    # Real scan only outside pull_request (merge_group is the authoritative
+    # gate, schedule is the weekly deep scan). Reports `skipped` on PRs so
+    # this context satisfies merge-queue entry.
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
