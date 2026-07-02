@@ -1,0 +1,164 @@
+---
+title: Roles & Permissions
+description: How tenant roles, per-component grants, and plugin invocation gates work in Gibson, and how to set them up for your team.
+---
+
+Gibson's permission model has three layers:
+
+1. **Tenant roles**, who in your organisation can do what at the
+   tenant level (invite users, configure secrets backends, enroll
+   components, run missions).
+2. **Per-component grants**, which agents and tools can read,
+   configure, or execute which other components.
+3. **Plugin invocation gates**, which tools can call which plugins.
+
+This page walks through each layer from the dashboard, then summarises
+how it composes.
+
+## Tenant roles
+
+Three roles ship out of the box. Roles are assigned to users in your
+tenant under **Settings → Members**.
+
+| Role | What they can do |
+|---|---|
+| **Owner** | Everything an admin can do, plus billing, tenant deletion, and ownership transfer. There is exactly one owner per tenant. |
+| **Admin** | Invite/remove users, configure secrets backends, enroll and configure components, write per-component grants, run any mission, see all findings. The default for technical staff. |
+| **Member** | Run missions, view findings, query the knowledge graph, build and enroll their own components. Cannot configure tenant-wide settings or write grants beyond their own components. |
+
+To invite users:
+
+1. Go to **Settings → Members → Invite**.
+2. Enter their email and pick a role.
+3. They receive an invitation link, sign in, and are added to your
+   tenant.
+
+Removing a user revokes their session immediately and disables any
+component identities they own. Components stay enrolled (so missions
+keep working) but are flagged in the dashboard for re-assignment.
+
+## Per-component grants
+
+Beyond tenant roles, every agent and tool you enroll has its own
+**component identity** with its own permission set. This is how Gibson
+implements least-privilege: an agent can only read what it's been
+explicitly granted.
+
+Three actions are gated per component:
+
+| Action | What it allows |
+|---|---|
+| **Read** | The component can see the target component's state, recent runs, and metadata. |
+| **Configure** | The component can change the target component's settings, usually reserved for admin tooling. |
+| **Execute** | The component can invoke the target component's methods (run an agent, call a tool). |
+
+Set grants in the dashboard:
+
+1. Open the **Permissions** tab on the agent or tool's detail page.
+2. Click **Add grant**.
+3. Pick a target component and the actions to allow.
+4. Save.
+
+You can also do this in the deploy wizard's **Permissions** step when
+you first enroll a component.
+
+### Component grants in practice
+
+| You want… | Grant |
+|---|---|
+| `triage-agent` to call `port-scan` and `httpx` tools | `triage-agent → port-scan: execute`, `triage-agent → httpx: execute` |
+| `report-agent` to read findings produced by other agents in the tenant | `report-agent → tenant: read findings` |
+| An admin tool to disable a misbehaving plugin | `admin-tool → my-plugin: configure` |
+
+Gibson denies anything not explicitly granted. If a mission references
+a tool the agent doesn't have `execute` on, the call fails fast with a
+permission-denied error visible in the mission detail page.
+
+## Plugin invocation
+
+Plugins are gated separately. The reason is structural: plugins hold
+credentials and persistent state, so Gibson is conservative about what
+can invoke them.
+
+Two facts to internalise:
+
+- **Only tools can invoke plugins.** Agents cannot directly. If an
+  agent needs Shodan data, it calls a tool that wraps the Shodan
+  plugin.
+- **A tool can invoke a plugin only if it has been granted
+  `can_invoke`** on that plugin.
+
+Set this on the **plugin** detail page → **Permissions** tab → **Allow
+tool**. Pick the tool and save. From then on, that tool can call any
+of the plugin's declared methods.
+
+This split (agent → tool → plugin) is intentional. It gives you a
+single point to audit and revoke plugin access without touching agent
+code.
+
+## How the layers compose
+
+For any action, Gibson checks layers in order, **deny-wins**:
+
+1. Tenant role, does this user / component belong to a tenant that's
+   allowed this action?
+2. Component grants, for cross-component actions, does the caller
+   hold the necessary grant on the target?
+3. Plugin invocation, for plugin calls, does the calling tool hold
+   `can_invoke`?
+
+A denial at any layer fails the call, with a structured error you can
+see in the dashboard's audit log (and on the mission detail page if
+the call happened during a mission run).
+
+## Auditing
+
+Every permission decision is recorded. The audit log under **Settings
+→ Audit log** shows:
+
+| Column | Meaning |
+|---|---|
+| Time | When the action was attempted. |
+| Actor | The user or component identity that attempted it. |
+| Action | The RPC or operation. |
+| Target | What it was attempted against. |
+| Outcome | `allow`, `deny`, with reason on denials. |
+
+Filters let you slice by actor, action type, outcome, and date. You
+can export the filtered view as CSV or JSON for compliance evidence.
+
+## Common workflows
+
+### Onboard a new engineer
+
+1. Invite them as **Member** under **Settings → Members**.
+2. They install the `gibson` CLI, set `GIBSON_URL`, and start
+   registering their own components against your tenant.
+3. Their components inherit member-tier defaults; you can grant
+   broader access on a per-component basis as needed.
+
+### Lock down a third-party tool
+
+1. Enroll the tool with the deploy wizard. Don't grant any permissions
+   yet.
+2. On the tool's **Permissions** tab, grant only the specific targets
+   it needs (`execute` on the agents that should call it; `read` on
+   the components whose data it must see).
+3. Review the audit log periodically to confirm the tool isn't
+   attempting anything beyond its grants.
+
+### Rotate access when a contractor leaves
+
+1. **Settings → Members → Remove**. Their session and components are
+   deactivated.
+2. Re-assign their components to a remaining team member, or retire
+   them if no longer needed.
+3. Filter the audit log on their actor ID for any forensic review.
+
+## Related
+
+- [Component bootstrap & auth](/docs/component-bootstrap), how
+  credentials are issued and how to debug a 401.
+- [Plugins](/docs/plugins), manifest-bound secret access; only the
+  plugin's own identity can read its bound secrets.
+- [Observability](/docs/observability), audit log and replay.

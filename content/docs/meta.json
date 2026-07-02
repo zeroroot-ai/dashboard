@@ -1,0 +1,23 @@
+{
+  "title": "Gibson ADK",
+  "pages": [
+    "install",
+    "getting-started",
+    "first-agent",
+    "component-bootstrap",
+    "---",
+    "missions",
+    "tools",
+    "plugins",
+    "connectors",
+    "secrets-management",
+    "findings",
+    "---",
+    "knowledge-graph",
+    "taxonomy",
+    "ontology",
+    "rbac",
+    "observability",
+    "cli-reference"
+  ]
+}

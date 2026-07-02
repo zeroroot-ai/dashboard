@@ -1,0 +1,28 @@
+name: security
+
+# Epic: cicd-efficiency (board #44), slice S11a (dashboard#940). Scanner
+# cadence per docs/architecture/CICD-CONTEXT.md decision 9, mirroring
+# gibson's S5 (gibson#1130): the authoritative pre-merge gate moves to
+# merge_group instead of double-firing on every `push` and `pull_request`,
+# plus a weekly deep scan so an advisory published between merges is still
+# caught within a week.
+
+on:
+  merge_group:
+  schedule:
+    - cron: "0 10 * * 3"
+  workflow_dispatch:
+
+jobs:
+  npm-audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Audit production dependencies
+        run: npm audit --audit-level=critical --omit=dev --package-lock-only

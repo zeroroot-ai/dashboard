@@ -1,0 +1,426 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+/* Single locked dark brand (#650). There is no light mode. The `dark`
+ * variant is pinned always-on so the ~91 `dark:` utilities across the
+ * shadcn primitives keep applying as the active style without a `.dark`
+ * class or a prefers-color-scheme media query. The no-light-mode guard
+ * (#651) forbids the `.dark`-class and media-query forms; this always-on
+ * form is the sanctioned one. */
+@custom-variant dark (&);
+
+@import "./themes.css";
+
+/* ----------------------------------------------------------------------
+ * Brand token layer (dashboard#909, inlined dashboard#913-fix).
+ *
+ * Originally sourced from @zeroroot/brand via a `file:` dep (local path).
+ * That dep was forbidden (no-monorepo-shortcuts, breaks Docker builds).
+ * Tokens are inlined here verbatim from opensource/brand/dist/tokens.css
+ * until @zeroroot/brand is published as a public npm package.
+ * Follow-up: re-wire to a public @zeroroot-ai/brand package (drop inline).
+ *
+ * Two :root overrides follow immediately after:
+ *   1. Typography — uses the Next.js font variable (var(--font-jetbrains-mono))
+ *      rather than the raw font-family stack in the package, so the
+ *      dashboard's self-hosted font preload applies correctly.
+ *   2. Dashboard-local tokens — FullCalendar (--fc-*) tokens that have no
+ *      meaning outside the authenticated app.
+ *
+ * Hardcoded color literals are forbidden in app/** and components/**
+ * (#53 CI guard). globals.css and themes.css are exempt as the token
+ * declaration files.
+ * ---------------------------------------------------------------------- */
+
+:root {
+  /* ------------------------------------------------------------------ */
+  /* Palette — raw color ramps. Never reference from components.         */
+  /* ------------------------------------------------------------------ */
+
+  /* Neutral ramp, near-black, faintly blue-violet (hue 280). */
+  --base-50:   oklch(0.985 0.004 280);
+  --base-100:  oklch(0.945 0.008 280);
+  --base-200:  oklch(0.875 0.012 280);
+  --base-300:  oklch(0.770 0.016 280);
+  --base-400:  oklch(0.620 0.020 280);
+  --base-500:  oklch(0.480 0.022 280);
+  --base-600:  oklch(0.380 0.022 280);
+  --base-700:  oklch(0.300 0.020 280);
+  --base-800:  oklch(0.235 0.018 280);
+  --base-900:  oklch(0.175 0.014 280);
+  --base-950:  oklch(0.130 0.012 280);
+  --base-1000: oklch(0.090 0.010 280);
+
+  /* Primary ramp, electric violet (hue 295). */
+  --primary-50:   oklch(0.970 0.020 295);
+  --primary-100:  oklch(0.935 0.045 295);
+  --primary-200:  oklch(0.880 0.090 295);
+  --primary-300:  oklch(0.800 0.150 295);
+  --primary-400:  oklch(0.700 0.205 295);
+  --primary-500:  oklch(0.620 0.230 295);
+  --primary-600:  oklch(0.560 0.220 295);
+  --primary-700:  oklch(0.480 0.185 295);
+  --primary-800:  oklch(0.410 0.150 295);
+  --primary-900:  oklch(0.355 0.120 295);
+  --primary-950:  oklch(0.260 0.085 295);
+  --primary-1000: oklch(0.185 0.060 295);
+
+  /* Secondary ramp, cyan-blue (hue 235). */
+  --secondary-50:   oklch(0.980 0.014 235);
+  --secondary-100:  oklch(0.950 0.034 235);
+  --secondary-200:  oklch(0.905 0.064 235);
+  --secondary-300:  oklch(0.845 0.104 235);
+  --secondary-400:  oklch(0.780 0.140 235);
+  --secondary-500:  oklch(0.710 0.150 235);
+  --secondary-600:  oklch(0.610 0.130 235);
+  --secondary-700:  oklch(0.515 0.105 235);
+  --secondary-800:  oklch(0.440 0.085 235);
+  --secondary-900:  oklch(0.390 0.070 235);
+  --secondary-950:  oklch(0.295 0.055 235);
+  --secondary-1000: oklch(0.210 0.040 235);
+
+  /* ------------------------------------------------------------------ */
+  /* Semantic — Shadcn/Tailwind-mapped tokens. Use these in components.  */
+  /* ------------------------------------------------------------------ */
+
+  --background:             oklch(0.17 0.012 280);   /* near-black, blue-violet tint */
+  --foreground:             oklch(0.96 0.008 280);   /* near-white, faint cool */
+  --card:                   oklch(0.21 0.014 280);   /* elevated surface */
+  --card-foreground:        oklch(0.96 0.008 280);
+  --popover:                oklch(0.21 0.014 280);
+  --popover-foreground:     oklch(0.96 0.008 280);
+  --primary:                oklch(0.58 0.225 295);   /* electric violet */
+  --primary-foreground:     oklch(0.99 0.004 295);   /* white-on-violet */
+  --secondary:              oklch(0.30 0.040 250);   /* muted dark-blue surface */
+  --secondary-foreground:   oklch(0.96 0.008 280);
+  --muted:                  oklch(0.255 0.016 280);  /* code wells / muted surface */
+  --muted-foreground:       oklch(0.76 0.020 280);   /* dim text, AA on muted/card/bg */
+  --accent:                 oklch(0.275 0.022 288);  /* hover / dialog, faint violet */
+  --accent-foreground:      oklch(0.96 0.008 280);
+  --destructive:            oklch(0.54 0.210 22);    /* alert-red FILL */
+  --destructive-foreground: oklch(0.99 0.004 22);
+  --error-text:             oklch(0.74 0.165 22);    /* legible red TEXT on dark card/bg */
+  --warning:                oklch(0.80 0.155 85);    /* amber */
+  --warning-foreground:     oklch(0.20 0.030 85);
+  --success-foreground:     oklch(0.18 0.030 162);   /* on emerald accent */
+  --overlay:                oklch(0.05 0.010 280 / 0.75);
+  --border:                 oklch(0.34 0.020 280);
+  --input:                  oklch(0.50 0.024 280);   /* input boundary, 3:1 on bg */
+  --ring:                   oklch(0.62 0.230 295);   /* violet focus ring, 3:1 on bg */
+  --chart-1:                oklch(0.62 0.230 295);   /* violet */
+  --chart-2:                oklch(0.74 0.160 162);   /* emerald */
+  --chart-3:                oklch(0.78 0.150 235);   /* cyan-blue */
+  --chart-4:                oklch(0.80 0.160 85);    /* amber */
+  --chart-5:                oklch(0.62 0.215 22);    /* red */
+  --radius:                 0.40rem;                 /* premium soft-square */
+  --sidebar:                oklch(0.19 0.013 280);
+  --sidebar-foreground:     oklch(0.96 0.008 280);
+  --sidebar-primary:        oklch(0.58 0.225 295);
+  --sidebar-primary-foreground: oklch(0.99 0.004 295);
+  --sidebar-accent:         oklch(0.275 0.022 288);
+  --sidebar-accent-foreground: oklch(0.96 0.008 280);
+  --sidebar-border:         oklch(0.32 0.020 280);
+  --sidebar-ring:           oklch(0.62 0.230 295);
+
+  /* ------------------------------------------------------------------ */
+  /* Specialty — premium-security brand character.                       */
+  /* ------------------------------------------------------------------ */
+
+  --highlight:        oklch(0.68 0.255 295);   /* violet, brighter, punchier accent */
+  --alt:              oklch(0.76 0.170 162);   /* emerald, crisper */
+  --link:             oklch(0.80 0.160 235);   /* cyan-blue, crisper */
+  --glow-strength:    0.9;                     /* stronger terminal-hacker glow */
+  --scanline-opacity: 0.035;                   /* more visible CRT scanlines */
+  --scanline-color:   oklch(0.62 0.230 295);   /* violet scanline */
+  --terminal-bg:      oklch(0.090 0.010 280);  /* darkest palette value (base-1000) */
+
+  /* ------------------------------------------------------------------ */
+  /* Dracula terminal palette, scoped to terminal panels.                */
+  /* ------------------------------------------------------------------ */
+
+  --dracula-fg:      #f8f8f2;
+  --dracula-comment: #6272a4;
+  --dracula-cyan:    #8be9fd;
+  --dracula-green:   #50fa7b;
+  --dracula-orange:  #ffb86c;
+  --dracula-pink:    #ff79c6;
+  --dracula-purple:  #bd93f9;
+  --dracula-red:     #ff5555;
+  --dracula-yellow:  #f1fa8c;
+
+  /* ------------------------------------------------------------------ */
+  /* Typography                                                          */
+  /* ------------------------------------------------------------------ */
+
+  --display-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+  --display-weight: 800;
+  --text-family:    "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+
+  /* ------------------------------------------------------------------ */
+  /* Legacy --color-zd-* aliases. No new uses; existing consumers only. */
+  /* ------------------------------------------------------------------ */
+
+  --color-zd-bg:           oklch(0.17 0.012 280);   /* => --background */
+  --color-zd-bg-deep:      oklch(0.21 0.014 280);   /* => --card */
+  --color-zd-fg:           oklch(0.96 0.008 280);   /* => --foreground */
+  --color-zd-highlight:    oklch(0.68 0.255 295);   /* => --highlight */
+  --color-zd-alt:          oklch(0.76 0.170 162);   /* => --alt */
+  --color-zd-link:         oklch(0.80 0.160 235);   /* => --link */
+  --color-zd-border:       oklch(0.34 0.020 280);   /* => --border */
+  --color-zd-accent-purple: oklch(0.58 0.225 295);  /* => --primary */
+  --color-zd-accent-orange: oklch(0.80 0.155 85);   /* => --warning */
+}
+
+/* Dashboard typography override: use Next.js-injected font variable so
+ * the self-hosted JetBrains Mono preload applies. The @zeroroot/brand
+ * package ships the raw font-family stack as a safe fallback; the
+ * override here prepends the Next.js variable so the preloaded font wins
+ * when available. */
+:root {
+  --display-family: var(--font-jetbrains-mono), 'Fira Code', 'Cascadia Code', monospace;
+  --text-family: var(--font-jetbrains-mono), 'Fira Code', 'Cascadia Code', monospace;
+}
+
+/* Dashboard-local tokens: FullCalendar theming, terminal background
+ * (re-alias via var() so the brand value drives it). These are not part
+ * of @zeroroot/brand because they have no meaning on the marketing/docs
+ * surfaces. */
+:root {
+  --fc-button-bg-color: var(--primary);
+  --fc-button-hover-bg-color: var(--primary);
+  --fc-button-active-bg-color: var(--primary);
+  --fc-button-hover-border-color: transparent;
+  --fc-button-active-border-color: transparent;
+  --fc-button-border-color: transparent;
+  --fc-event-border-color: transparent;
+  --fc-event-text-color: oklch(1 0 0);
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: var(--muted);
+  --fc-today-bg-color: var(--muted);
+
+  /* Terminal component background: override the resolved brand value with
+   * a var() reference so updates to --base-1000 propagate automatically. */
+  --terminal-bg: var(--base-1000);
+}
+
+@theme inline {
+  --animate-scroll: scroll var(--animation-duration, 40s) var(--animation-direction, forwards)
+    linear infinite;
+
+  @keyframes scroll {
+    to {
+      transform: translate(calc(-50% - 0.5rem));
+    }
+  }
+
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scale(1.5);
+      opacity: 1;
+    }
+  }
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-error-text: var(--error-text);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success-foreground: var(--success-foreground);
+  --color-overlay: var(--overlay);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-highlight: var(--highlight);
+  --color-alt: var(--alt);
+  --color-link: var(--link);
+
+  --color-dracula-fg: var(--dracula-fg);
+  --color-dracula-comment: var(--dracula-comment);
+  --color-dracula-cyan: var(--dracula-cyan);
+  --color-dracula-green: var(--dracula-green);
+  --color-dracula-orange: var(--dracula-orange);
+  --color-dracula-pink: var(--dracula-pink);
+  --color-dracula-purple: var(--dracula-purple);
+  --color-dracula-red: var(--dracula-red);
+  --color-dracula-yellow: var(--dracula-yellow);
+
+  --font-display: var(--display-family);
+  --display-weight: var(--display-weight);
+  --font-sans: var(--text-family);
+  --font-mono: var(--text-family);
+}
+
+@utility bg-zd-gradient {
+  background: linear-gradient(135deg, var(--background) 0%, var(--card) 50%, var(--background) 100%);
+  background-attachment: fixed;
+}
+
+@utility text-zd-glow {
+  text-shadow: 0 0 calc(10px * var(--glow-strength)) var(--highlight),
+               0 0 calc(20px * var(--glow-strength)) color-mix(in oklch, var(--highlight) 30%, transparent);
+}
+
+@keyframes zd-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Brand CRT flicker, used on hero lockups + standalone marks to evoke an
+ * unstable phosphor monitor. 92% of the cycle is steady so the flicker
+ * reads as a glitch, not a flash. */
+@keyframes zda-flicker {
+  0%, 92%, 100% { opacity: 1; }
+  93%           { opacity: 0.62; }
+  94%           { opacity: 1; }
+  95%           { opacity: 0.84; }
+}
+
+@utility zd-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  background-color: var(--link);
+  box-shadow: 0 0 calc(5px * var(--glow-strength)) var(--link);
+  animation: zd-blink 1s infinite;
+  vertical-align: text-bottom;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Brand body weight: mono needs the heft, 400 reads thin. */
+    font-weight: 500;
+  }
+
+  .font-display {
+    font-weight: var(--display-weight);
+  }
+
+  [data-slot="button"],
+  [data-slot="dialog-trigger"],
+  [data-slot="dropdown-menu-item"],
+  [data-slot="command-item"],
+  [data-slot="toggle-group-item"],
+  [data-slot="dropdown-menu-trigger"],
+  [data-slot="popover-trigger"],
+  [data-slot="tooltip-trigger"],
+  [data-slot="sheet-trigger"],
+  [data-slot="tabs-trigger"],
+  [data-slot="collapsible-trigger"] {
+    @apply cursor-pointer!;
+  }
+
+  [data-slot="dialog-overlay"],
+  [data-slot="sheet-overlay"],
+  [data-slot="drawer-overlay"] {
+    @apply bg-overlay! backdrop-blur-sm;
+  }
+}
+
+/* Global CRT scanline overlay, kept as a restrained premium texture.
+ * --scanline-opacity is barely-perceptible (0.012). */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    var(--scanline-color) 2px,
+    var(--scanline-color) 4px
+  );
+  opacity: var(--scanline-opacity);
+}
+
+.glow-green {
+  box-shadow: 0 0 calc(15px * var(--glow-strength)) color-mix(in oklch, var(--highlight) 40%, transparent);
+}
+.text-glow-green {
+  text-shadow: 0 0 calc(8px * var(--glow-strength)) color-mix(in oklch, var(--highlight) 60%, transparent);
+}
+.text-glow-green-soft {
+  text-shadow: 0 0 calc(3px * var(--glow-strength)) color-mix(in oklch, var(--highlight) 35%, transparent);
+}
+.border-glow-green {
+  box-shadow: 0 0 calc(4px * var(--glow-strength)) color-mix(in oklch, var(--highlight) 30%, transparent),
+              inset 0 0 calc(2px * var(--glow-strength)) color-mix(in oklch, var(--highlight) 10%, transparent);
+}
+
+.data-value {
+  color: var(--primary);
+  font-family: var(--font-mono);
+  text-shadow: 0 0 calc(4px * var(--glow-strength)) color-mix(in oklch, var(--highlight) 30%, transparent);
+}
+
+.bg-grid-hack {
+  background-image:
+    radial-gradient(circle, color-mix(in oklch, var(--highlight) 15%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.glass-hack {
+  background: color-mix(in oklch, var(--highlight) 3%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid color-mix(in oklch, var(--highlight) 10%, transparent);
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: color-mix(in oklch, var(--foreground) 8%, transparent); }
+::-webkit-scrollbar-thumb { background: color-mix(in oklch, var(--primary) 30%, transparent); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--primary) 50%, transparent); }
+
+@media (prefers-reduced-motion: reduce) {
+  body::before { display: none; }
+  .text-glow-green, .text-glow-green-soft { text-shadow: none; }
+  .glow-green, .border-glow-green { box-shadow: none; }
+}

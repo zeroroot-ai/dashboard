@@ -1,0 +1,26 @@
+name: release-please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: release-please
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v5
+        with:
+          # Use RELEASE_PLEASE_TOKEN (a PAT with repo write scope) instead of
+          # the default GITHUB_TOKEN. Tags pushed by GITHUB_TOKEN do NOT fire
+          # downstream `push: tags:` workflow triggers (GitHub anti-recursion
+          # behavior). Using a PAT means the tag push fires dashboard.yml
+          # (image build) automatically. See workspace memory note
+          # project_release_please_tag_trigger_gap.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

@@ -101,5 +101,3 @@ conventions see [`CLAUDE.md`](./CLAUDE.md), which covers:
 
 This project is licensed under the Elastic License 2.0. See the
 [`LICENSE`](./LICENSE) file for the full text.
-
-<!-- merge-queue canary (epic cicd-efficiency S11a) -->

@@ -1,0 +1,57 @@
+name: CodeQL
+
+# Epic: cicd-efficiency (board #44), slice S11a (dashboard#940). Scanner
+# cadence per docs/architecture/CICD-CONTEXT.md decision 9, mirroring
+# gibson's S5 (gibson#1130): the authoritative CodeQL analysis moves to
+# merge_group (the pre-merge gate) instead of firing on every commit landed
+# to `main`, plus the existing weekly deep scan.
+
+on:
+  merge_group:
+  schedule:
+    - cron: "0 8 * * 2"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze TypeScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      # No security-events:write — dashboard is a private repo, so uploading
+      # SARIF to the code-scanning Security tab requires paid GitHub Advanced
+      # Security. We run the analysis and publish the SARIF as a workflow
+      # artifact instead (gibson#974). Restore the upload (and this permission)
+      # when the repo goes public, where code scanning is free.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+          config-file: .github/codeql-config.yml
+
+      - uses: github/codeql-action/analyze@v3
+        with:
+          # Run the analysis but do NOT upload to the code-scanning API — that
+          # upload needs paid GHAS on a private repo (gibson#974). Write the
+          # SARIF locally and publish it as an artifact below.
+          upload: never
+          output: codeql-results
+
+      - name: Upload CodeQL SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif-typescript
+          path: codeql-results
+          if-no-files-found: warn
