@@ -88,7 +88,7 @@
     "fumadocs-mdx": "^14.3.0",
     "fumadocs-ui": "^16.7.16",
     "immer": "^11.1.8",
-    "isomorphic-dompurify": "^3.7.1",
+    "isomorphic-dompurify": "^3.18.0",
     "jose": "^6.2.3",
     "lucide-react": "^0.522.0",
     "marked": "^15.0.12",
