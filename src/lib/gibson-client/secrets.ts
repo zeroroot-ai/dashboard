@@ -15,6 +15,7 @@ import 'server-only';
 
 import { ConnectError } from '@connectrpc/connect';
 import { userClient } from '../gibson-client';
+import { AuthzDeniedError } from '../auth/assert-authorized';
 import { SecretsService } from '@/src/gen/gibson/tenant/v1/secrets_pb';
 import type {
   SecretMetadata,
@@ -52,6 +53,12 @@ function mapConnectError(err: unknown): AdminRpcError {
 }
 
 export function throwMapped(err: unknown): never {
+  // The transport's baked-in per-RPC authz gate (dashboard#848 / #902)
+  // throws AuthzDeniedError from inside the userClient dispatch. That is an
+  // authorization signal, not a transport error: rethrow it untouched so
+  // action-level mappers can surface the canonical permission_denied
+  // contract (dashboard#904).
+  if (err instanceof AuthzDeniedError) throw err;
   const mapped = mapConnectError(err);
   const wrapped = new Error(mapped.message) as Error & { code: string };
   wrapped.code = mapped.code;

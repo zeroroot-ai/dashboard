@@ -4,10 +4,12 @@
  * Server actions for the MissionGraph flow-chart view.
  *
  * The daemon owns the topology projection and the layout store; the dashboard
- * is a pure client. These actions: (1) authorize against the FGA registry entry
- * for the corresponding DaemonService RPC; (2) dial the daemon through Envoy +
- * SPIFFE-mTLS via userClient; (3) return plain objects safe to cross the
- * server/client boundary (no proto message classes).
+ * is a pure client. These actions dial the daemon through Envoy + SPIFFE-mTLS
+ * via userClient — whose transport registry-gates every RPC with a baked-in
+ * assertAuthorized check (dashboard#848 / #902) — and return plain objects
+ * safe to cross the server/client boundary (no proto message classes). A
+ * denial throws AuthzDeniedError from inside the RPC call; the read actions
+ * map it to their graceful empty result (dashboard#904).
  *
  * Spec: MissionGraph epic (sdk#278). Slices dashboard#655 / #657 / #658.
  */
@@ -16,16 +18,9 @@ import "server-only";
 
 import { ConnectError, Code } from "@connectrpc/connect";
 
-import {
-  assertAuthorized,
-  AuthzDeniedError,
-} from "@/src/lib/auth/assert-authorized";
+import { AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
 import { userClient } from "@/src/lib/gibson-client";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
-
-const FGA_GET_GRAPH = "/gibson.daemon.v1.DaemonService/GetMissionGraph";
-const FGA_GET_LAYOUT = "/gibson.daemon.v1.DaemonService/GetMissionLayout";
-const FGA_SAVE_LAYOUT = "/gibson.daemon.v1.DaemonService/SaveMissionLayout";
 
 // ---------------------------------------------------------------------------
 // Plain serialisable shapes
@@ -98,42 +93,40 @@ export async function getMissionGraphAction(
   missionDefinitionId: string,
 ): Promise<MissionGraphData | null> {
   try {
-    await assertAuthorized(FGA_GET_GRAPH);
+    const client = userClient(DaemonService);
+    const resp = await client.getMissionGraph({ missionDefinitionId });
+    const g = resp.graph;
+    if (!g) return null;
+
+    return {
+      nodes: g.nodes.map((n) => ({
+        id: n.id,
+        kind: n.kind,
+        name: n.name,
+        summary: n.summary,
+        isEntry: n.isEntry,
+        isExit: n.isExit,
+        rank: n.rank,
+        x: n.x,
+        y: n.y,
+        layoutSource: n.layoutSource,
+      })),
+      edges: g.edges.map((e) => ({
+        from: e.from,
+        to: e.to,
+        condition: e.condition,
+        role: e.role,
+      })),
+      entryPoints: [...g.entryPoints],
+      exitPoints: [...g.exitPoints],
+      viewport: g.viewport
+        ? { x: g.viewport.x, y: g.viewport.y, zoom: g.viewport.zoom }
+        : null,
+    };
   } catch (err) {
     if (err instanceof AuthzDeniedError) return null;
     throw err;
   }
-
-  const client = userClient(DaemonService);
-  const resp = await client.getMissionGraph({ missionDefinitionId });
-  const g = resp.graph;
-  if (!g) return null;
-
-  return {
-    nodes: g.nodes.map((n) => ({
-      id: n.id,
-      kind: n.kind,
-      name: n.name,
-      summary: n.summary,
-      isEntry: n.isEntry,
-      isExit: n.isExit,
-      rank: n.rank,
-      x: n.x,
-      y: n.y,
-      layoutSource: n.layoutSource,
-    })),
-    edges: g.edges.map((e) => ({
-      from: e.from,
-      to: e.to,
-      condition: e.condition,
-      role: e.role,
-    })),
-    entryPoints: [...g.entryPoints],
-    exitPoints: [...g.exitPoints],
-    viewport: g.viewport
-      ? { x: g.viewport.x, y: g.viewport.y, zoom: g.viewport.zoom }
-      : null,
-  };
 }
 
 /** The saved layout's opaque version token, or "" when none is saved. */
@@ -141,14 +134,13 @@ export async function getMissionLayoutVersionAction(
   missionDefinitionId: string,
 ): Promise<string> {
   try {
-    await assertAuthorized(FGA_GET_LAYOUT);
+    const client = userClient(DaemonService);
+    const resp = await client.getMissionLayout({ missionDefinitionId });
+    return resp.layout?.version ?? "";
   } catch (err) {
     if (err instanceof AuthzDeniedError) return "";
     throw err;
   }
-  const client = userClient(DaemonService);
-  const resp = await client.getMissionLayout({ missionDefinitionId });
-  return resp.layout?.version ?? "";
 }
 
 /**
@@ -160,8 +152,9 @@ export async function getMissionLayoutVersionAction(
 export async function saveMissionLayoutAction(
   input: SaveLayoutInput,
 ): Promise<SaveLayoutResult> {
-  await assertAuthorized(FGA_SAVE_LAYOUT);
-
+  // Authz denial (AuthzDeniedError from the userClient transport) is
+  // deliberately NOT mapped here: it propagates to the caller, matching the
+  // previous bare-assert behaviour.
   const client = userClient(DaemonService);
   try {
     const resp = await client.saveMissionLayout({

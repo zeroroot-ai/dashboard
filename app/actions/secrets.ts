@@ -11,9 +11,11 @@
  * session's tenantId (set by the active-tenant cookie via the existing auth
  * path). The daemon's ext-authz layer enforces tenant_admin for writes.
  *
- * Authz: assertAuthorized is called at the top of each mutating action before
- * any Zod parse or daemon call (spec: dashboard-authz-ui-gating Requirements
- * 6.1, 6.2).
+ * Authz: every RPC dispatched through the user-acting client is
+ * registry-gated by the transport's baked-in assertAuthorized check
+ * (dashboard#848 / #902); a denial is thrown from inside the RPC call as
+ * AuthzDeniedError and mapped to the canonical "Permission denied" result by
+ * permissionDeniedResult (dashboard#904).
  *
  * Spec: secrets-tenant-lifecycle Task 7, Requirements 1, 8.
  */
@@ -31,10 +33,7 @@ import {
 } from "@/src/lib/gibson-client/secrets";
 import { getServerSession } from "@/src/lib/auth";
 import { SecretCategory } from "@/src/gen/gibson/tenant/v1/secrets_pb";
-import {
-  assertAuthorized,
-  AuthzDeniedError,
-} from "@/src/lib/auth/assert-authorized";
+import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
 
 // ---------------------------------------------------------------------------
 // Shared result type (mirrors the existing ActionResult<T> convention)
@@ -115,15 +114,6 @@ function categoryToProto(cat: "cred" | "provider_config"): SecretCategory {
 export async function createSecretAction(
   formData: FormData,
 ): Promise<SecretActionResult<SecretMetadata>> {
-  try {
-    await assertAuthorized("/gibson.tenant.v1.SecretsService/SetSecret");
-  } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return { ok: false, error: "Permission denied", code: "permission_denied" };
-    }
-    throw err;
-  }
-
   const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "Unauthenticated", code: "unauthenticated" };
@@ -158,6 +148,8 @@ export async function createSecretAction(
     revalidatePath("/dashboard/pages/settings/secrets");
     return { ok: true, data: resp.metadata! };
   } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
     // SECURITY: error message from daemon must not contain the value.
     // throwMapped already strips it but we add a defense-in-depth check.
     const msg = err instanceof Error ? err.message : "Failed to create secret";
@@ -179,15 +171,6 @@ export async function rotateSecretAction(
   secretName: string,
   formData: FormData,
 ): Promise<SecretActionResult<SecretMetadata>> {
-  try {
-    await assertAuthorized("/gibson.tenant.v1.SecretsService/RotateSecret");
-  } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return { ok: false, error: "Permission denied", code: "permission_denied" };
-    }
-    throw err;
-  }
-
   const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "Unauthenticated", code: "unauthenticated" };
@@ -220,6 +203,8 @@ export async function rotateSecretAction(
     revalidatePath("/dashboard/pages/settings/secrets");
     return { ok: true, data: resp.metadata! };
   } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
     const msg = err instanceof Error ? err.message : "Failed to rotate secret";
     const code = (err as { code?: string }).code ?? "error";
     return { ok: false, error: msg, code };
@@ -237,15 +222,6 @@ export async function rotateSecretAction(
 export async function deleteSecretAction(
   secretName: string,
 ): Promise<SecretActionResult<null>> {
-  try {
-    await assertAuthorized("/gibson.tenant.v1.SecretsService/DeleteSecret");
-  } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return { ok: false, error: "Permission denied", code: "permission_denied" };
-    }
-    throw err;
-  }
-
   const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "Unauthenticated", code: "unauthenticated" };
@@ -265,6 +241,8 @@ export async function deleteSecretAction(
     revalidatePath("/dashboard/pages/settings/secrets");
     return { ok: true, data: null };
   } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
     const msg = err instanceof Error ? err.message : "Failed to delete secret";
     const code = (err as { code?: string }).code ?? "error";
     return { ok: false, error: msg, code };

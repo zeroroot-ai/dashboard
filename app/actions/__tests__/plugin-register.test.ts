@@ -13,7 +13,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
   mockRegisterPlugin,
   mockGetServerSession,
-  mockAssertAuthorized,
   MockAuthzDeniedError,
 } = vi.hoisted(() => {
   class _MockAuthzDeniedError extends Error {
@@ -31,7 +30,6 @@ const {
     mockGetServerSession: vi.fn(async () => ({
       user: { id: "user-1", tenantId: "tenant-abc" },
     })),
-    mockAssertAuthorized: vi.fn(async () => undefined),
     MockAuthzDeniedError: _MockAuthzDeniedError,
   };
 });
@@ -48,8 +46,15 @@ vi.mock("@/src/lib/gibson-client/plugins-admin", () => ({
 }));
 
 vi.mock("@/src/lib/auth/assert-authorized", () => ({
-  assertAuthorized: mockAssertAuthorized,
   AuthzDeniedError: MockAuthzDeniedError,
+  permissionDeniedResult: (err: unknown) =>
+    err instanceof MockAuthzDeniedError
+      ? {
+          ok: false as const,
+          error: "Permission denied",
+          code: "permission_denied" as const,
+        }
+      : null,
 }));
 
 // ---------------------------------------------------------------------------
@@ -332,13 +337,18 @@ describe("registerPluginAtomicAction, unauthenticated", () => {
 });
 
 // ---------------------------------------------------------------------------
-// assertAuthorized gating
+// Authz denial mapping (dashboard#904)
+//
+// The per-RPC authz check is baked into the userClient transport
+// (dashboard#848 / #902), so a denial surfaces as AuthzDeniedError thrown
+// from INSIDE the gibson-client call. Each action must map it to the
+// canonical permission_denied result.
 // ---------------------------------------------------------------------------
 
 describe("validatePluginManifestAction, authz denied", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAssertAuthorized.mockRejectedValueOnce(
+    mockRegisterPlugin.mockRejectedValueOnce(
       new MockAuthzDeniedError(
         "/gibson.pluginadmin.v1.PluginAdminService/RegisterPlugin",
         "relation-not-met",
@@ -346,19 +356,19 @@ describe("validatePluginManifestAction, authz denied", () => {
     );
   });
 
-  it("returns permission_denied without calling daemon", async () => {
+  it("maps the wrapper-thrown denial to permission_denied", async () => {
     const result = await validatePluginManifestAction(validManifest);
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected not-ok");
     expect(result.code).toBe("permission_denied");
-    expect(mockRegisterPlugin).not.toHaveBeenCalled();
+    expect(result.error).toBe("Permission denied");
   });
 });
 
 describe("registerPluginAtomicAction, authz denied", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAssertAuthorized.mockRejectedValueOnce(
+    mockRegisterPlugin.mockRejectedValueOnce(
       new MockAuthzDeniedError(
         "/gibson.pluginadmin.v1.PluginAdminService/RegisterPlugin",
         "relation-not-met",
@@ -366,11 +376,11 @@ describe("registerPluginAtomicAction, authz denied", () => {
     );
   });
 
-  it("returns permission_denied without calling daemon", async () => {
+  it("maps the wrapper-thrown denial to permission_denied", async () => {
     const result = await registerPluginAtomicAction(validManifest, []);
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected not-ok");
     expect(result.code).toBe("permission_denied");
-    expect(mockRegisterPlugin).not.toHaveBeenCalled();
+    expect(result.error).toBe("Permission denied");
   });
 });
