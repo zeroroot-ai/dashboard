@@ -52,6 +52,11 @@ function mapErr(err: unknown): never {
   // #902) is an authorization signal, not a transport error: rethrow it
   // untouched so the action layer maps it to permission_denied (dashboard#904).
   if (err instanceof AuthzDeniedError) throw err;
+  // A MissionDraftNotFoundError thrown inside a wrapper's own try block
+  // (empty `draft` in an OK response) is already the typed error callers
+  // expect: rethrow it untouched instead of rewrapping it as a generic
+  // MissionDraftRpcError (dashboard#957).
+  if (err instanceof MissionDraftNotFoundError) throw err;
   if (err instanceof ConnectError) {
     if (err.code === Code.NotFound) {
       throw new MissionDraftNotFoundError(err.rawMessage);
