@@ -19,7 +19,6 @@ const {
   mockRotateSecret,
   mockDeleteSecret,
   mockGetServerSession,
-  mockAssertAuthorized,
   MockAuthzDeniedError,
 } = vi.hoisted(() => {
   class _MockAuthzDeniedError extends Error {
@@ -39,7 +38,6 @@ const {
     mockGetServerSession: vi.fn(async () => ({
       user: { id: "user-1", tenantId: "tenant-abc" },
     })),
-    mockAssertAuthorized: vi.fn(async () => undefined),
     MockAuthzDeniedError: _MockAuthzDeniedError,
   };
 });
@@ -62,8 +60,15 @@ vi.mock("@/src/gen/gibson/tenant/v1/secrets_pb", () => ({
 }));
 
 vi.mock("@/src/lib/auth/assert-authorized", () => ({
-  assertAuthorized: mockAssertAuthorized,
   AuthzDeniedError: MockAuthzDeniedError,
+  permissionDeniedResult: (err: unknown) =>
+    err instanceof MockAuthzDeniedError
+      ? {
+          ok: false as const,
+          error: "Permission denied",
+          code: "permission_denied" as const,
+        }
+      : null,
 }));
 
 // ---------------------------------------------------------------------------
@@ -327,13 +332,18 @@ describe("deleteSecretAction, RPC error", () => {
 });
 
 // ---------------------------------------------------------------------------
-// assertAuthorized gating
+// Authz denial mapping (dashboard#904)
+//
+// The per-RPC authz check is baked into the userClient transport
+// (dashboard#848 / #902), so a denial surfaces as AuthzDeniedError thrown
+// from INSIDE the gibson-client call. Each action must map it to the
+// canonical permission_denied result.
 // ---------------------------------------------------------------------------
 
 describe("createSecretAction, authz denied", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAssertAuthorized.mockRejectedValueOnce(
+    mockSetSecret.mockRejectedValueOnce(
       new MockAuthzDeniedError(
         "/gibson.tenant.v1.SecretsService/SetSecret",
         "relation-not-met",
@@ -341,20 +351,20 @@ describe("createSecretAction, authz denied", () => {
     );
   });
 
-  it("returns permission_denied without calling daemon", async () => {
+  it("maps the wrapper-thrown denial to permission_denied", async () => {
     const fd = makeFormData({ name: "cred:x", category: "cred", value: "v" });
     const result = await createSecretAction(fd);
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected not-ok");
     expect(result.code).toBe("permission_denied");
-    expect(mockSetSecret).not.toHaveBeenCalled();
+    expect(result.error).toBe("Permission denied");
   });
 });
 
 describe("rotateSecretAction, authz denied", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAssertAuthorized.mockRejectedValueOnce(
+    mockRotateSecret.mockRejectedValueOnce(
       new MockAuthzDeniedError(
         "/gibson.tenant.v1.SecretsService/RotateSecret",
         "relation-not-met",
@@ -362,20 +372,20 @@ describe("rotateSecretAction, authz denied", () => {
     );
   });
 
-  it("returns permission_denied without calling daemon", async () => {
+  it("maps the wrapper-thrown denial to permission_denied", async () => {
     const fd = makeFormData({ value: "new-v" });
     const result = await rotateSecretAction("cred:x", fd);
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected not-ok");
     expect(result.code).toBe("permission_denied");
-    expect(mockRotateSecret).not.toHaveBeenCalled();
+    expect(result.error).toBe("Permission denied");
   });
 });
 
 describe("deleteSecretAction, authz denied", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAssertAuthorized.mockRejectedValueOnce(
+    mockDeleteSecret.mockRejectedValueOnce(
       new MockAuthzDeniedError(
         "/gibson.tenant.v1.SecretsService/DeleteSecret",
         "relation-not-met",
@@ -383,11 +393,11 @@ describe("deleteSecretAction, authz denied", () => {
     );
   });
 
-  it("returns permission_denied without calling daemon", async () => {
+  it("maps the wrapper-thrown denial to permission_denied", async () => {
     const result = await deleteSecretAction("cred:x");
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected not-ok");
     expect(result.code).toBe("permission_denied");
-    expect(mockDeleteSecret).not.toHaveBeenCalled();
+    expect(result.error).toBe("Permission denied");
   });
 });

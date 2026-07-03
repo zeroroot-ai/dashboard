@@ -68,6 +68,43 @@ export class AuthzDeniedError extends Error {
 }
 
 // ---------------------------------------------------------------------------
+// Central denial → action-result mapper (dashboard#904)
+// ---------------------------------------------------------------------------
+
+/**
+ * Canonical failure shape a server action returns when the caller is not
+ * authorized. Matches the `{ ok: false, error, code }` ActionResult
+ * convention used across app/actions.
+ */
+type PermissionDeniedResult = {
+  ok: false;
+  error: string;
+  code: 'permission_denied';
+};
+
+/**
+ * Central `AuthzDeniedError` → `permission_denied` action-result mapper.
+ *
+ * Since the per-RPC authz bake-in (dashboard#848 / #902), the denial is
+ * thrown from INSIDE the `userClient` RPC dispatch rather than by a manual
+ * `assertAuthorized(...)` prologue in each server action (dashboard#904
+ * deleted those). Server actions call this FIRST in their daemon-call
+ * `catch` to preserve the canonical
+ * `{ ok: false, error: 'Permission denied', code: 'permission_denied' }`
+ * surface.
+ *
+ * Returns `null` when `err` is not an authz denial, so the caller falls
+ * through to its own error mapping.
+ */
+export function permissionDeniedResult(
+  err: unknown,
+): PermissionDeniedResult | null {
+  return err instanceof AuthzDeniedError
+    ? { ok: false, error: 'Permission denied', code: 'permission_denied' }
+    : null;
+}
+
+// ---------------------------------------------------------------------------
 // Helper
 // ---------------------------------------------------------------------------
 

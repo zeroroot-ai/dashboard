@@ -10,21 +10,18 @@
  * Spec: llm-user-attribution-governance (Requirement 4).
  *
  * Authz: the daemon's ext-authz layer is authoritative and rejects
- * non-admin mutations. As defense-in-depth (mirroring app/actions/secrets.ts),
- * the grant/revoke actions ALSO call assertAuthorized against their own
- * registered RPC at the top of the function, before any daemon call. This
- * short-circuits unauthorized callers with the canonical "Permission denied"
- * result instead of paying a round-trip and surfacing a generic daemon error.
+ * non-admin mutations. As defense-in-depth, every RPC dispatched through the
+ * user-acting client is registry-gated by the transport's baked-in
+ * assertAuthorized check (dashboard#848 / #902); a denial is thrown from
+ * inside the RPC call as AuthzDeniedError and mapped to the canonical
+ * "Permission denied" result by permissionDeniedResult (dashboard#904).
  * The relation each method requires is derived from the generated authz
  * registry (the same source ext-authz enforces); it is never hand-picked here.
  */
 
 import { getModelAccessClient } from "@/src/lib/gibson-client";
 import { getServerSession } from "@/src/lib/auth";
-import {
-  assertAuthorized,
-  AuthzDeniedError,
-} from "@/src/lib/auth/assert-authorized";
+import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
 import {
   GrantSubjectKind,
   GrantTargetKind,
@@ -117,15 +114,6 @@ export interface GrantInput {
 export async function grantModelAccessAction(
   input: GrantInput,
 ): Promise<ActionResult<null>> {
-  try {
-    await assertAuthorized("/gibson.tenant.v1.ModelAccessService/GrantAccess");
-  } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return { ok: false, error: "Permission denied", code: "permission_denied" };
-    }
-    throw err;
-  }
-
   const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
@@ -143,6 +131,8 @@ export async function grantModelAccessAction(
     });
     return { ok: true, data: null };
   } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
@@ -150,15 +140,6 @@ export async function grantModelAccessAction(
 export async function revokeModelAccessAction(
   input: GrantInput,
 ): Promise<ActionResult<null>> {
-  try {
-    await assertAuthorized("/gibson.tenant.v1.ModelAccessService/RevokeAccess");
-  } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return { ok: false, error: "Permission denied", code: "permission_denied" };
-    }
-    throw err;
-  }
-
   const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
@@ -171,6 +152,8 @@ export async function revokeModelAccessAction(
     });
     return { ok: true, data: null };
   } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
 }

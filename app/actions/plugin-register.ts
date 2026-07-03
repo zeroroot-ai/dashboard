@@ -30,10 +30,7 @@ import {
   type PluginManifestValidationError,
 } from "@/src/lib/gibson-client/plugins-admin";
 import { getServerSession } from "@/src/lib/auth";
-import {
-  assertAuthorized,
-  AuthzDeniedError,
-} from "@/src/lib/auth/assert-authorized";
+import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
 
 // ---------------------------------------------------------------------------
 // Result types
@@ -119,15 +116,6 @@ function buildBindings(
 export async function validatePluginManifestAction(
   manifestYaml: string,
 ): Promise<PluginActionResult<ValidationResult>> {
-  try {
-    await assertAuthorized("/gibson.pluginadmin.v1.PluginAdminService/RegisterPlugin");
-  } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return { ok: false, error: "Permission denied", code: "permission_denied" };
-    }
-    throw err;
-  }
-
   const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "Unauthenticated", code: "unauthenticated" };
@@ -159,6 +147,8 @@ export async function validatePluginManifestAction(
 
     return { ok: true, data: { valid: true, errors: [] } };
   } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
     const msg = err instanceof Error ? err.message : "Validation failed";
     const code = (err as { code?: string }).code ?? "error";
     return { ok: false, error: msg, code };
@@ -188,15 +178,6 @@ export async function registerPluginAtomicAction(
   manifestYaml: string,
   bindingsInput: unknown[],
 ): Promise<PluginActionResult<RegisterResult>> {
-  try {
-    await assertAuthorized("/gibson.pluginadmin.v1.PluginAdminService/RegisterPlugin");
-  } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return { ok: false, error: "Permission denied", code: "permission_denied" };
-    }
-    throw err;
-  }
-
   const session = await getServerSession();
   if (!session?.user) {
     return { ok: false, error: "Unauthenticated", code: "unauthenticated" };
@@ -255,6 +236,8 @@ export async function registerPluginAtomicAction(
       },
     };
   } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
     const msg = err instanceof Error ? err.message : "Registration failed";
     const code = (err as { code?: string }).code ?? "error";
 

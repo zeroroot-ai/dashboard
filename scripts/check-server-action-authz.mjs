@@ -5,13 +5,29 @@
  * exemption marker with a reason.
  *
  * Recognised authz patterns (any one satisfies the gate):
- *   - assertAuthorized(...)                     , DaemonAdminService RPC gating
+ *   - userClient(...) — the user-acting daemon transport bakes a per-RPC,
+ *       fail-closed assertAuthorized check into every dispatch
+ *       (dashboard#848 / #902), so any action whose daemon calls flow
+ *       through userClient is registry-gated at the wrapper.
+ *   - imports from a user-acting gibson-client wrapper module
+ *       (src/lib/gibson-client/{secrets,mission-source,plugins-admin,
+ *       tenant-broker-config,grants,logs}) — those modules dispatch
+ *       exclusively through userClient, so the same wrapper enforcement
+ *       applies one hop away.
+ *   - assertAuthorized(...)                     , manual registry gating
+ *       (still required where the daemon call is NOT user-acting, e.g. the
+ *       billing route handlers that pair a user-authz check with
+ *       serviceClient / Stripe calls).
  *   - requireCrdSession / requireCrdSessionForSelfAction , CRD/k8s actions
  *   - getServerSession(...)                     , minimum floor: the action
  *       resolves the authenticated server session (and is expected to narrow
- *       to it / hasPermission). The two patterns above are preferred for
+ *       to it / hasPermission). The patterns above are preferred for
  *       mutations; this floor catches actions that proxy the daemon with no
  *       server-side identity at all.
+ *
+ * NOTE the barrel import `@/src/lib/gibson-client` is deliberately NOT
+ * recognised: it also re-exports serviceClient (service-acting, NOT
+ * authz-gated), so a barrel import alone proves nothing.
  *
  * `app/actions/crd/**` is intentionally NOT covered here, it has its own,
  * stricter per-action gate in check-crd-action-authz.mjs.
@@ -41,6 +57,11 @@ const SEARCH_DIRS = [
 const EXCLUDE = [join(ROOT, "app", "actions", "crd")];
 
 const AUTHZ_PATTERNS = [
+  // User-acting transport: userClient bakes assertAuthorized into every RPC
+  // dispatch (dashboard#848 / #902), fail-closed on unknown methods.
+  /\buserClient\s*[<(]/,
+  // User-acting gibson-client wrapper modules (all dispatch via userClient).
+  /from\s+["']@\/src\/lib\/gibson-client\/(secrets|mission-source|plugins-admin|tenant-broker-config|grants|logs)["']/,
   /\bassertAuthorized\s*\(/,
   /\brequireCrdSession(ForSelfAction)?\s*[<(]/,
 ];

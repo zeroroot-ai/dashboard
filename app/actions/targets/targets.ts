@@ -14,19 +14,10 @@ import "server-only";
 
 import { ConnectError } from "@connectrpc/connect";
 
-import {
-  assertAuthorized,
-  AuthzDeniedError,
-} from "@/src/lib/auth/assert-authorized";
+import { AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
 import { userClient } from "@/src/lib/gibson-client";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 import { logger } from "@/src/lib/logger";
-
-const FGA_CREATE_TARGET = "/gibson.daemon.v1.DaemonService/CreateTarget";
-const FGA_LIST_TARGETS = "/gibson.daemon.v1.DaemonService/ListTargets";
-const FGA_GET_TARGET = "/gibson.daemon.v1.DaemonService/GetTarget";
-const FGA_UPDATE_TARGET = "/gibson.daemon.v1.DaemonService/UpdateTarget";
-const FGA_DELETE_TARGET = "/gibson.daemon.v1.DaemonService/DeleteTarget";
 
 /** TargetView is the metadata surface the dashboard reads/writes. */
 export interface TargetView {
@@ -152,7 +143,6 @@ export async function createTargetAction(
     return { ok: false, error: "Target name is required", code: "invalid" };
   }
   try {
-    await assertAuthorized(FGA_CREATE_TARGET);
     const client = userClient(DaemonService);
     const resp = await client.createTarget({ target: targetMsg(input) });
     if (!resp.target?.id && !resp.targetId) {
@@ -173,7 +163,6 @@ export async function listTargetsAction(filter?: {
   offset?: number;
 }): Promise<TargetActionResult<TargetView[]>> {
   try {
-    await assertAuthorized(FGA_LIST_TARGETS);
     const client = userClient(DaemonService);
     const resp = await client.listTargets({
       filter: {
@@ -198,7 +187,6 @@ async function getTargetAction(
     return { ok: false, error: "target id is required", code: "invalid" };
   }
   try {
-    await assertAuthorized(FGA_GET_TARGET);
     const client = userClient(DaemonService);
     const resp = await client.getTarget({ targetId });
     if (!resp.target) {
@@ -221,7 +209,6 @@ export async function updateTargetAction(
     return { ok: false, error: "Target name is required", code: "invalid" };
   }
   try {
-    await assertAuthorized(FGA_UPDATE_TARGET);
     const client = userClient(DaemonService);
     const resp = await client.updateTarget({
       target: { id: targetId, ...targetMsg(input) },
@@ -239,7 +226,6 @@ export async function deleteTargetAction(
     return { ok: false, error: "target id is required", code: "invalid" };
   }
   try {
-    await assertAuthorized(FGA_DELETE_TARGET);
     const client = userClient(DaemonService);
     await client.deleteTarget({ targetId });
     return { ok: true, data: { id: targetId } };

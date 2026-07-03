@@ -15,13 +15,7 @@
 
 import { getMissionAudit } from "@/src/lib/gibson-client/secrets";
 import type { MissionSecretAccess } from "@/src/lib/gibson-client/secrets";
-import { assertAuthorized, AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
-
-// The RPC this action wraps. Authorization derives from its AuthRegistry
-// relation (member, any tenant member may read mission secret-access audit),
-// the single authorization source of truth shared with useAuthorize.
-const GET_MISSION_AUDIT_RPC =
-  "/gibson.tenant.v1.SecretsService/GetMissionAudit";
+import { AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
 
 interface MissionAuditResult {
   accesses: MissionSecretAccess[];
@@ -33,25 +27,26 @@ interface MissionAuditResult {
  *
  * Called from SecretsAccessedPanel (client component) via server action.
  *
- * Server-side authz pre-check (defense-in-depth): authorizes the caller for
- * the GetMissionAudit RPC via the AuthRegistry (member relation) before
- * touching the daemon. The daemon still performs the authoritative FGA check;
- * this gate ensures the dashboard layer never proxies an unauthenticated /
- * under-permitted read. The "permission_denied" error contract is preserved
- * for the calling panel.
+ * Server-side authz (defense-in-depth): the GetMissionAudit RPC dispatches
+ * through the user-acting client, whose transport registry-gates every call
+ * with a baked-in assertAuthorized check (member relation, dashboard#848 /
+ * #902). A denial throws AuthzDeniedError from inside the call; it is mapped
+ * here so the "permission_denied" error contract is preserved for the
+ * calling panel (dashboard#904). The daemon still performs the authoritative
+ * FGA check.
  */
 export async function fetchMissionAudit(
   missionId: string,
 ): Promise<MissionAuditResult> {
+  let resp;
   try {
-    await assertAuthorized(GET_MISSION_AUDIT_RPC);
+    resp = await getMissionAudit(missionId);
   } catch (err) {
     if (err instanceof AuthzDeniedError) {
       throw new Error("permission_denied");
     }
     throw err;
   }
-  const resp = await getMissionAudit(missionId);
   return {
     accesses: (resp.accesses ?? []) as MissionSecretAccess[],
     aggregationLagSeconds: resp.aggregationLagSeconds ?? 0,

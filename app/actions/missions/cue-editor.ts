@@ -4,10 +4,12 @@
  * Server actions for the MissionCUEEditor's three language-service RPCs:
  * ValidateMissionCUE, CompleteMissionCUE, HoverMissionCUE.
  *
- * Each action: (1) calls assertAuthorized against the FGA registry entry for
- * the corresponding DaemonService RPC; (2) dials the daemon through the
- * Envoy + SPIFFE-mTLS path via userClient; (3) returns a plain-object result
- * that the editor's Monaco providers can consume directly.
+ * Each action dials the daemon through the Envoy + SPIFFE-mTLS path via
+ * userClient — whose transport bakes a per-RPC assertAuthorized check into
+ * every dispatch (dashboard#848 / #902) — and returns a plain-object result
+ * that the editor's Monaco providers can consume directly. A denial throws
+ * AuthzDeniedError from inside the RPC call; each action maps it to its
+ * graceful empty result (dashboard#904).
  *
  * Spec: dashboard#291 (CUE editor / platform-sdk v0.7.0). Migrated to
  * DaemonService (OSS SDK) per ADR-0037 in dashboard#336.
@@ -15,23 +17,9 @@
 
 import "server-only";
 
-import {
-  assertAuthorized,
-  AuthzDeniedError,
-} from "@/src/lib/auth/assert-authorized";
+import { AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
 import { userClient } from "@/src/lib/gibson-client";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
-
-// ---------------------------------------------------------------------------
-// FGA registry keys (mirror the daemon's authz annotations)
-// ---------------------------------------------------------------------------
-
-const FGA_VALIDATE =
-  "/gibson.daemon.v1.DaemonService/ValidateMissionCUE";
-const FGA_COMPLETE =
-  "/gibson.daemon.v1.DaemonService/CompleteMissionCUE";
-const FGA_HOVER =
-  "/gibson.daemon.v1.DaemonService/HoverMissionCUE";
 
 // ---------------------------------------------------------------------------
 // Return types (plain objects safe to serialise across the server/client
@@ -67,20 +55,18 @@ export async function validateMissionCUEAction(
   cueSource: string
 ): Promise<CUEDiagnosticResult[]> {
   try {
-    await assertAuthorized(FGA_VALIDATE);
+    const client = userClient(DaemonService);
+    const resp = await client.validateMissionCUE({ cueSource });
+    return resp.diagnostics.map((d) => ({
+      line: d.line,
+      col: d.col,
+      message: d.message,
+      severity: d.severity,
+    }));
   } catch (err) {
     if (err instanceof AuthzDeniedError) return [];
     throw err;
   }
-
-  const client = userClient(DaemonService);
-  const resp = await client.validateMissionCUE({ cueSource });
-  return resp.diagnostics.map((d) => ({
-    line: d.line,
-    col: d.col,
-    message: d.message,
-    severity: d.severity,
-  }));
 }
 
 /**
@@ -95,20 +81,18 @@ export async function completeMissionCUEAction(
   col: number
 ): Promise<CUECompletionItemResult[]> {
   try {
-    await assertAuthorized(FGA_COMPLETE);
+    const client = userClient(DaemonService);
+    const resp = await client.completeMissionCUE({ cueSource, line, col });
+    return resp.items.map((item) => ({
+      label: item.label,
+      detail: item.detail,
+      documentation: item.documentation,
+      kind: item.kind,
+    }));
   } catch (err) {
     if (err instanceof AuthzDeniedError) return [];
     throw err;
   }
-
-  const client = userClient(DaemonService);
-  const resp = await client.completeMissionCUE({ cueSource, line, col });
-  return resp.items.map((item) => ({
-    label: item.label,
-    detail: item.detail,
-    documentation: item.documentation,
-    kind: item.kind,
-  }));
 }
 
 /**
@@ -122,13 +106,11 @@ export async function hoverMissionCUEAction(
   col: number
 ): Promise<string> {
   try {
-    await assertAuthorized(FGA_HOVER);
+    const client = userClient(DaemonService);
+    const resp = await client.hoverMissionCUE({ cueSource, line, col });
+    return resp.markdown;
   } catch (err) {
     if (err instanceof AuthzDeniedError) return "";
     throw err;
   }
-
-  const client = userClient(DaemonService);
-  const resp = await client.hoverMissionCUE({ cueSource, line, col });
-  return resp.markdown;
 }

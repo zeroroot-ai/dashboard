@@ -14,9 +14,12 @@
  *   - week-4-handlers-ui-e2e §4 tasks 35-46 (dashboard checkpoint browser).
  *
  * Security:
- *   - assertAuthorized runs server-side defence-in-depth before each call.
- *     The daemon + ext-authz are still authoritative; this layer just
- *     short-circuits unauthorized callers earlier.
+ *   - Every RPC dispatched through `userClient` is registry-gated by the
+ *     transport's baked-in assertAuthorized check (dashboard#848 / #902);
+ *     a denial throws AuthzDeniedError from inside the call and is mapped
+ *     by toActionError (dashboard#904). The daemon + ext-authz are still
+ *     authoritative; this layer just short-circuits unauthorized callers
+ *     earlier.
  *   - Errors are logged via the canonical pino logger and re-thrown as
  *     plain {@link CheckpointActionError} objects with a serialisable
  *     `code` so the client can render gRPC-aware toasts.
@@ -27,10 +30,7 @@ import { create } from "@bufbuild/protobuf";
 
 import { logger } from "@/src/lib/logger";
 import { getServerSession } from "@/src/lib/auth";
-import {
-  assertAuthorized,
-  AuthzDeniedError,
-} from "@/src/lib/auth/assert-authorized";
+import { AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
 import { userClient } from "@/src/lib/gibson-client";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 import {
@@ -44,11 +44,6 @@ import {
   type DiffCheckpointsResponse,
   type CheckpointMetadata,
 } from "@/src/gen/gibson/daemon/v1/daemon_pb";
-
-const LIST_METHOD = "/gibson.daemon.v1.DaemonService/ListCheckpoints";
-const GET_METHOD = "/gibson.daemon.v1.DaemonService/GetCheckpoint";
-const DIFF_METHOD = "/gibson.daemon.v1.DaemonService/DiffCheckpoints";
-const RESUME_METHOD = "/gibson.daemon.v1.DaemonService/ResumeMission";
 
 // ---------------------------------------------------------------------------
 // Public error shape
@@ -126,8 +121,6 @@ export async function listCheckpointsAction(
   }
 
   try {
-    await assertAuthorized(LIST_METHOD);
-
     const order =
       input.order === "oldest_first"
         ? ListCheckpointsRequest_Order.OLDEST_FIRST
@@ -181,8 +174,6 @@ export async function getCheckpointAction(
   }
 
   try {
-    await assertAuthorized(GET_METHOD);
-
     const req = create(GetCheckpointRequestSchema, {
       missionId: input.missionId,
       checkpointId: input.checkpointId,
@@ -234,8 +225,6 @@ export async function diffCheckpointsAction(
   }
 
   try {
-    await assertAuthorized(DIFF_METHOD);
-
     const req = create(DiffCheckpointsRequestSchema, {
       missionId: input.missionId,
       checkpointAId: input.checkpointAId,
@@ -298,8 +287,6 @@ export async function resumeMissionAction(
   }
 
   try {
-    await assertAuthorized(RESUME_METHOD);
-
     const req = create(ResumeMissionRequestSchema, {
       missionId: input.missionId,
       targetCheckpointId: input.targetCheckpointId ?? "",

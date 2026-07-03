@@ -7,10 +7,20 @@ import { Code, ConnectError } from "@connectrpc/connect";
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@/src/lib/auth/assert-authorized", () => ({
-  assertAuthorized: vi.fn().mockResolvedValue(undefined),
-  AuthzDeniedError: class AuthzDeniedError extends Error {},
-}));
+vi.mock("@/src/lib/auth/assert-authorized", () => {
+  class AuthzDeniedError extends Error {}
+  return {
+    AuthzDeniedError,
+    permissionDeniedResult: (err: unknown) =>
+      err instanceof AuthzDeniedError
+        ? {
+            ok: false as const,
+            error: "Permission denied",
+            code: "permission_denied" as const,
+          }
+        : null,
+  };
+});
 
 const mockCreateMissionDefinition = vi.fn();
 const mockUpdateMissionDefinition = vi.fn();

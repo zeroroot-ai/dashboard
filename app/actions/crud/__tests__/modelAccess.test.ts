@@ -1,16 +1,17 @@
 /**
  * Unit tests for app/actions/crud/modelAccess.ts
  *
- * Focus: defense-in-depth authz gating (dashboard#864). The grant/revoke
- * mutating actions must call assertAuthorized against their own registered RPC
- * BEFORE dialing the daemon, and short-circuit an AuthzDeniedError with a
- * "Permission denied" result without ever touching the model-access client.
+ * Focus: defense-in-depth authz mapping (dashboard#864 / #904). The per-RPC
+ * authz check is baked into the userClient transport (dashboard#848 / #902),
+ * so a denial is thrown from INSIDE the daemon RPC call as AuthzDeniedError.
+ * The grant/revoke actions must map that denial to the canonical
+ * "Permission denied" result via permissionDeniedResult.
  *
  * Mocks the gibson-client factory and the assert-authorized helper so the
  * tests run without a live gRPC connection. Mirrors app/actions/__tests__/
  * secrets.test.ts.
  *
- * Refs #864 / #818.
+ * Refs #864 / #818 / #904.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -24,7 +25,6 @@ const {
   mockRevokeAccess,
   mockGetModelAccessClient,
   mockGetServerSession,
-  mockAssertAuthorized,
   MockAuthzDeniedError,
 } = vi.hoisted(() => {
   class _MockAuthzDeniedError extends Error {
@@ -49,7 +49,6 @@ const {
     mockGetServerSession: vi.fn(async () => ({
       user: { id: "user-1", tenantId: "tenant-abc" },
     })),
-    mockAssertAuthorized: vi.fn(async () => undefined),
     MockAuthzDeniedError: _MockAuthzDeniedError,
   };
 });
@@ -65,8 +64,15 @@ vi.mock("@/src/lib/auth", () => ({
 }));
 
 vi.mock("@/src/lib/auth/assert-authorized", () => ({
-  assertAuthorized: mockAssertAuthorized,
   AuthzDeniedError: MockAuthzDeniedError,
+  permissionDeniedResult: (err: unknown) =>
+    err instanceof MockAuthzDeniedError
+      ? {
+          ok: false as const,
+          error: "Permission denied",
+          code: "permission_denied" as const,
+        }
+      : null,
 }));
 
 vi.mock("@/src/gen/gibson/tenant/v1/model_access_pb", () => ({
@@ -95,20 +101,19 @@ const validInput: GrantInput = {
 // grantModelAccessAction
 // ---------------------------------------------------------------------------
 
-describe("grantModelAccessAction, authz gating", () => {
+describe("grantModelAccessAction, authz mapping", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("asserts authorization against the GrantAccess RPC before dialing", async () => {
+  it("succeeds and dials the daemon for an authorized caller", async () => {
     const result = await grantModelAccessAction(validInput);
     expect(result.ok).toBe(true);
-    expect(mockAssertAuthorized).toHaveBeenCalledWith(
-      "/gibson.tenant.v1.ModelAccessService/GrantAccess",
-    );
     expect(mockGrantAccess).toHaveBeenCalledOnce();
   });
 
-  it("returns permission_denied and never dials the daemon when denied", async () => {
-    mockAssertAuthorized.mockRejectedValueOnce(
+  it("maps a wrapper-thrown AuthzDeniedError to permission_denied", async () => {
+    // The userClient transport throws the denial from inside the RPC call
+    // (dashboard#848 / #902); model it on the client method mock.
+    mockGrantAccess.mockRejectedValueOnce(
       new MockAuthzDeniedError(
         "/gibson.tenant.v1.ModelAccessService/GrantAccess",
         "relation-not-met",
@@ -118,21 +123,16 @@ describe("grantModelAccessAction, authz gating", () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected not-ok");
     expect(result.code).toBe("permission_denied");
-    expect(mockGetModelAccessClient).not.toHaveBeenCalled();
-    expect(mockGrantAccess).not.toHaveBeenCalled();
+    expect(result.error).toBe("Permission denied");
   });
 
-  it("calls assertAuthorized before the daemon client is constructed", async () => {
-    const order: string[] = [];
-    mockAssertAuthorized.mockImplementationOnce(async () => {
-      order.push("assert");
-    });
-    mockGetModelAccessClient.mockImplementationOnce(async () => {
-      order.push("client");
-      return { grantAccess: mockGrantAccess, revokeAccess: mockRevokeAccess };
-    });
-    await grantModelAccessAction(validInput);
-    expect(order).toEqual(["assert", "client"]);
+  it("keeps the daemon error message for non-authz failures", async () => {
+    mockGrantAccess.mockRejectedValueOnce(new Error("daemon exploded"));
+    const result = await grantModelAccessAction(validInput);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected not-ok");
+    expect(result.code).not.toBe("permission_denied");
+    expect(result.error).toBe("daemon exploded");
   });
 });
 
@@ -140,20 +140,17 @@ describe("grantModelAccessAction, authz gating", () => {
 // revokeModelAccessAction
 // ---------------------------------------------------------------------------
 
-describe("revokeModelAccessAction, authz gating", () => {
+describe("revokeModelAccessAction, authz mapping", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("asserts authorization against the RevokeAccess RPC before dialing", async () => {
+  it("succeeds and dials the daemon for an authorized caller", async () => {
     const result = await revokeModelAccessAction(validInput);
     expect(result.ok).toBe(true);
-    expect(mockAssertAuthorized).toHaveBeenCalledWith(
-      "/gibson.tenant.v1.ModelAccessService/RevokeAccess",
-    );
     expect(mockRevokeAccess).toHaveBeenCalledOnce();
   });
 
-  it("returns permission_denied and never dials the daemon when denied", async () => {
-    mockAssertAuthorized.mockRejectedValueOnce(
+  it("maps a wrapper-thrown AuthzDeniedError to permission_denied", async () => {
+    mockRevokeAccess.mockRejectedValueOnce(
       new MockAuthzDeniedError(
         "/gibson.tenant.v1.ModelAccessService/RevokeAccess",
         "relation-not-met",
@@ -163,7 +160,6 @@ describe("revokeModelAccessAction, authz gating", () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected not-ok");
     expect(result.code).toBe("permission_denied");
-    expect(mockGetModelAccessClient).not.toHaveBeenCalled();
-    expect(mockRevokeAccess).not.toHaveBeenCalled();
+    expect(result.error).toBe("Permission denied");
   });
 });

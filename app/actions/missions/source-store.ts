@@ -3,12 +3,15 @@
 /**
  * Server actions for the mission-create page's draft persistence flow.
  *
- * Each action: (1) calls assertAuthorized against the corresponding daemon
- * RPC's authz registry entry; (2) resolves the active tenant server-side via
- * getActiveTenant, never accepts a tenantId from the client; (3) invokes
- * the daemon RPC through the Envoy + SPIFFE-mTLS path; (4) maps daemon
+ * Each action: (1) resolves the active tenant server-side via
+ * getActiveTenant, never accepts a tenantId from the client; (2) invokes
+ * the daemon RPC through the Envoy + SPIFFE-mTLS path via the mission-source
+ * wrappers — whose userClient transport registry-gates every RPC with a
+ * baked-in assertAuthorized check (dashboard#848 / #902); (3) maps daemon
  * NotFound to a typed DraftNotFound error so the UI can show a "draft
- * expired" toast.
+ * expired" toast. An authz denial throws AuthzDeniedError from inside the
+ * RPC call and is mapped to permission_denied in rpcErrToResult
+ * (dashboard#904).
  *
  * Spec: mission-draft-dashboard-wiring.
  */
@@ -28,10 +31,7 @@ import {
   type MissionDraft,
   type MissionDraftFull,
 } from "@/src/lib/gibson-client/mission-source";
-import {
-  assertAuthorized,
-  AuthzDeniedError,
-} from "@/src/lib/auth/assert-authorized";
+import { AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
 import { getActiveTenant } from "@/src/lib/auth/active-tenant";
 import { logger } from "@/src/lib/logger";
 
@@ -48,15 +48,6 @@ type DraftActionErrorCode =
   | "bad_input"
   | "not_found"
   | "rpc_failed";
-
-// ---------------------------------------------------------------------------
-// FGA registry keys (mirror the daemon's authz annotations)
-// ---------------------------------------------------------------------------
-
-const FGA_SAVE = "/gibson.tenant.v1.TenantService/SaveMissionDraft";
-const FGA_LIST = "/gibson.tenant.v1.TenantService/ListMissionDrafts";
-const FGA_GET = "/gibson.tenant.v1.TenantService/GetMissionDraft";
-const FGA_DELETE = "/gibson.tenant.v1.TenantService/DeleteMissionDraft";
 
 // ---------------------------------------------------------------------------
 // Input validation
@@ -84,14 +75,10 @@ const idSchema = z
 // Helpers
 // ---------------------------------------------------------------------------
 
-function mapDeniedOrThrow(err: unknown): DraftActionResult<never> | never {
+function rpcErrToResult(action: string, err: unknown): DraftActionResult<never> {
   if (err instanceof AuthzDeniedError) {
     return { ok: false, error: "Permission denied", code: "permission_denied" };
   }
-  throw err;
-}
-
-function rpcErrToResult(action: string, err: unknown): DraftActionResult<never> {
   if (err instanceof MissionDraftNotFoundError) {
     return { ok: false, error: "Draft not found", code: "not_found" };
   }
@@ -132,13 +119,6 @@ export async function saveMissionSourceAction(input: {
   cueSource: string;
   draftId?: string;
 }): Promise<DraftActionResult<{ draftId: string }>> {
-  try {
-    await assertAuthorized(FGA_SAVE);
-  } catch (err) {
-    const denied = mapDeniedOrThrow(err);
-    if (denied) return denied;
-  }
-
   const parsed = saveSchema.safeParse(input);
   if (!parsed.success) {
     return {
@@ -165,13 +145,6 @@ export async function saveMissionSourceAction(input: {
 export async function listMissionSourcesAction(): Promise<
   DraftActionResult<MissionDraft[]>
 > {
-  try {
-    await assertAuthorized(FGA_LIST);
-  } catch (err) {
-    const denied = mapDeniedOrThrow(err);
-    if (denied) return denied;
-  }
-
   const tenantId = await getActiveTenant();
   try {
     const drafts = await rpcList(tenantId);
@@ -189,13 +162,6 @@ export async function listMissionSourcesAction(): Promise<
 export async function getMissionSourceAction(
   draftId: string,
 ): Promise<DraftActionResult<MissionDraftFull>> {
-  try {
-    await assertAuthorized(FGA_GET);
-  } catch (err) {
-    const denied = mapDeniedOrThrow(err);
-    if (denied) return denied;
-  }
-
   const idValid = idSchema.safeParse(draftId);
   if (!idValid.success) {
     return {
@@ -221,13 +187,6 @@ export async function getMissionSourceAction(
 export async function deleteMissionSourceAction(
   draftId: string,
 ): Promise<DraftActionResult<null>> {
-  try {
-    await assertAuthorized(FGA_DELETE);
-  } catch (err) {
-    const denied = mapDeniedOrThrow(err);
-    if (denied) return denied;
-  }
-
   const idValid = idSchema.safeParse(draftId);
   if (!idValid.success) {
     return {

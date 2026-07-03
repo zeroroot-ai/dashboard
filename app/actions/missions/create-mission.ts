@@ -24,16 +24,10 @@ import { join } from "node:path";
 import { z } from "zod";
 import { ConnectError, Code } from "@connectrpc/connect";
 
-import {
-  assertAuthorized,
-  AuthzDeniedError,
-} from "@/src/lib/auth/assert-authorized";
+import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
 import { userClient } from "@/src/lib/gibson-client";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 import { logger } from "@/src/lib/logger";
-
-const FGA_CREATE_DEFINITION =
-  "/gibson.daemon.v1.DaemonService/CreateMissionDefinition";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -72,15 +66,10 @@ export async function createMissionFromCUEAction(input: {
   }
   const { cueSource } = parsed.data;
 
-  try {
-    await assertAuthorized(FGA_CREATE_DEFINITION);
-  } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return { ok: false, error: "Permission denied", code: "permission_denied" };
-    }
-    throw err;
-  }
-
+  // Authz: every RPC below is registry-gated by the userClient transport's
+  // baked-in assertAuthorized check (dashboard#848 / #902); a denial throws
+  // AuthzDeniedError from inside the call and is mapped in the catch below
+  // (dashboard#904).
   try {
     const client = userClient(DaemonService);
 
@@ -205,6 +194,8 @@ export async function createMissionFromCUEAction(input: {
 
     return { ok: true, missionId: runMissionId };
   } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
     if (err instanceof ConnectError) {
       if (err.code === Code.InvalidArgument) {
         return {
