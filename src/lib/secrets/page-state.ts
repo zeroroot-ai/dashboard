@@ -14,9 +14,9 @@
 
 import { BrokerProvider } from "@/src/gen/gibson/tenant/v1/secrets_pb";
 
-export type SecretsBackendView = "unavailable" | "hosted" | "byo";
+type SecretsBackendView = "unavailable" | "hosted" | "byo";
 
-export interface ResolveSecretsBackendViewInput {
+interface ResolveSecretsBackendViewInput {
   /** true when GetBrokerConfig responded (broker reachable). */
   reachable: boolean;
   /** the active provider enum reported by GetBrokerConfig, if any. */

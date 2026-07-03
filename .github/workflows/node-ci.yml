@@ -95,10 +95,35 @@ jobs:
     with:
       tier: fast
 
-  # ---- heavy tier (merge_group): pnpm build (full prebuild guard chain) ----
-  heavy:
+  # ---- heavy tier (merge_group): full build (prebuild guard chain) ----
+  heavy-build:
     if: github.event_name == 'merge_group'
     uses: zeroroot-ai/.github/.github/workflows/reusable-node-ci.yml@main
     with:
       tier: heavy
       skip-sibling-generators: true
+
+  # Required-context reporter (dashboard#949 unwedge, follow-up to the #945
+  # queue-entry compat). The main ruleset requires the exact context
+  # "heavy", but a reusable-workflow CALL reports its check runs under
+  # "heavy / node-ci (heavy)" when it runs (merge_group) and only under the
+  # bare caller job name when it is skipped (pull_request). Result: the
+  # required "heavy" context NEVER reported on merge-queue branches, so
+  # every queue entry sat in AWAITING_CHECKS until the 60-minute
+  # check_response_timeout and was dropped -- even with a fully green
+  # build. This plain job is the stable "heavy" context on both events:
+  #   - pull_request: skipped (exactly the pre-existing #945 behaviour --
+  #     a skipped required context satisfies queue ENTRY).
+  #   - merge_group: mirrors heavy-build's result, so the queue gets a
+  #     real pass/fail signal under the required name.
+  heavy:
+    name: heavy
+    needs: [heavy-build]
+    if: ${{ always() && github.event_name == 'merge_group' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: gate on heavy-build result
+        run: |
+          result="${{ needs.heavy-build.result }}"
+          echo "heavy-build result: $result"
+          [ "$result" = "success" ] || exit 1

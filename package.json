@@ -50,7 +50,8 @@
     "check:server-action-authz": "node scripts/check-server-action-authz.mjs",
     "check:single-authz-path": "node scripts/check-single-authz-path.mjs",
     "check:no-prod-debug-flags": "node scripts/check-no-prod-debug-flags.mjs",
-    "check:no-legacy-product-name": "node scripts/check-no-legacy-product-name.mjs"
+    "check:no-legacy-product-name": "node scripts/check-no-legacy-product-name.mjs",
+    "postinstall": "fumadocs-mdx"
   },
   "dependencies": {
     "@ai-sdk/provider": "^3.0.8",
@@ -129,6 +130,7 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/js-yaml": "4.0.9",
+    "@types/mdx": "^2.0.13",
     "@types/node": "^24.10.4",
     "@types/nodemailer": "^6.4.17",
     "@types/react": "^19.2.7",
