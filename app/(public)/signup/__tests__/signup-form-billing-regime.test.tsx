@@ -21,23 +21,56 @@ import * as React from 'react';
 
 // ---------------------------------------------------------------------------
 // Stripe mocks — must be set up before the component import so Vitest's
-// module registry has them in place. `@stripe/react-stripe-js` exports hooks
-// (useStripe, useElements) that return null outside a real Elements context;
-// the component already handles this gracefully (paidFlow gates their use).
+// module registry has them in place.
+//
+// FIDELITY (dashboard#933): the real `@stripe/react-stripe-js` hooks THROW
+// "Could not find Elements context; …" when called outside an <Elements>
+// provider — they do NOT return null. An earlier version of this mock
+// returned null unconditionally, which let a card-free crash ship green
+// (SignupForm called the hooks on the no-<Elements> path; fixed by the
+// SignupFormInnerWithStripe bridge, dashboard#923 follow-up). The mock now
+// mirrors the installed library: a context marks provider presence, hooks
+// and <PaymentElement> throw the library's exact error shape outside it,
+// and hooks resolve to null INSIDE it (deferred stripePromise not yet
+// resolved), which is the state the render-only tests exercise.
 // ---------------------------------------------------------------------------
 
 vi.mock('@stripe/stripe-js', () => ({
   loadStripe: vi.fn().mockResolvedValue(null),
 }));
 
-vi.mock('@stripe/react-stripe-js', () => ({
-  Elements: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  PaymentElement: () => (
-    <div data-testid="stripe-payment-element">PaymentElement</div>
-  ),
-  useStripe: () => null,
-  useElements: () => null,
-}));
+vi.mock('@stripe/react-stripe-js', () => {
+  const ElementsContext = React.createContext<boolean>(false);
+  // Mirrors parseElementsContext in @stripe/react-stripe-js.
+  const requireElementsContext = (useCase: string): void => {
+    throw new Error(
+      `Could not find Elements context; You need to wrap the part of your app that ${useCase} in an <Elements> provider.`,
+    );
+  };
+  return {
+    Elements: ({ children }: { children: React.ReactNode }) => (
+      <ElementsContext.Provider value={true}>{children}</ElementsContext.Provider>
+    ),
+    PaymentElement: () => {
+      if (!React.useContext(ElementsContext)) {
+        requireElementsContext('mounts <PaymentElement>');
+      }
+      return <div data-testid="stripe-payment-element">PaymentElement</div>;
+    },
+    useStripe: () => {
+      if (!React.useContext(ElementsContext)) {
+        requireElementsContext('calls useStripe()');
+      }
+      return null;
+    },
+    useElements: () => {
+      if (!React.useContext(ElementsContext)) {
+        requireElementsContext('calls useElements()');
+      }
+      return null;
+    },
+  };
+});
 
 // ---------------------------------------------------------------------------
 // Next.js navigation mock (Link uses the router)
@@ -103,6 +136,8 @@ vi.mock('@/src/lib/server-action-skew', () => ({
 import { SignupForm } from '../signup-form';
 import { DEFAULT_PASSWORD_POLICY } from '@/src/lib/zitadel/password-policy-cache';
 
+import { useStripe, useElements, Elements } from '@stripe/react-stripe-js';
+
 // ---------------------------------------------------------------------------
 // Shared fixtures
 // ---------------------------------------------------------------------------
@@ -120,12 +155,83 @@ const BASE_PROPS = {
 };
 
 // ---------------------------------------------------------------------------
+// 0) Mock fidelity — dashboard#933
+//
+// Guard the mock itself: if it ever regresses to null-returning hooks, these
+// tests fail, and with them the guarantee that the card-free suite below
+// would catch a hook call outside <Elements>.
+// ---------------------------------------------------------------------------
+
+/** Probe that calls useStripe() during render, like a buggy form body would. */
+function UseStripeProbe() {
+  useStripe();
+  return <div>probe</div>;
+}
+
+/** Probe that calls useElements() during render. */
+function UseElementsProbe() {
+  useElements();
+  return <div>probe</div>;
+}
+
+describe('Stripe mock fidelity (dashboard#933)', () => {
+  // React logs render-phase throws via console.error; silence them so the
+  // expected throws don't spam the output.
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  it('useStripe() throws outside <Elements>, matching @stripe/react-stripe-js', () => {
+    expect(() => render(<UseStripeProbe />)).toThrow(
+      /Could not find Elements context/,
+    );
+  });
+
+  it('useElements() throws outside <Elements>, matching @stripe/react-stripe-js', () => {
+    expect(() => render(<UseElementsProbe />)).toThrow(
+      /Could not find Elements context/,
+    );
+  });
+
+  it('the hooks resolve (to null) inside <Elements>', () => {
+    expect(() =>
+      render(
+        <Elements stripe={null}>
+          <UseStripeProbe />
+          <UseElementsProbe />
+        </Elements>,
+      ),
+    ).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // A) Card-free profile (billingEnabled=false, self-hosted)
 // ---------------------------------------------------------------------------
 
 describe('SignupForm — card-free profile (billingEnabled=false)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  // The regression dashboard#933 exists to catch: with the throwing Stripe
+  // mock active, a card-free render crashes loudly if ANY component in the
+  // tree calls useStripe()/useElements() (or mounts <PaymentElement>)
+  // without an <Elements> provider — exactly what the real library does.
+  it('A.0: card-free render calls no Stripe hook outside <Elements> (dashboard#933)', () => {
+    expect(() =>
+      render(<SignupForm {...BASE_PROPS} billingEnabled={false} />),
+    ).not.toThrow();
+  });
+
+  it('A.0b: billing enabled but publishable key empty (no <Elements>) also renders without a Stripe hook call', () => {
+    // stripePromise is null when the key is empty even with billing on —
+    // this path must also avoid the hooks.
+    expect(() =>
+      render(
+        <SignupForm {...BASE_PROPS} publishableKey="" billingEnabled={true} />,
+      ),
+    ).not.toThrow();
   });
 
   it('A.1: renders the form without a plan row', () => {
