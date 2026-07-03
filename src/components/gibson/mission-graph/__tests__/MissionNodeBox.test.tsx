@@ -4,6 +4,13 @@ import { ReactFlowProvider } from "@xyflow/react";
 
 import { MissionNodeBox, type MissionNodeBoxData } from "../MissionNodeBox";
 
+// MissionNodeBox only reads `data`; the remaining NodeProps fields (id,
+// position, selection state, ...) are irrelevant to these tests, so build
+// the props from the data alone via a cast through `unknown`.
+function nodeProps(data: MissionNodeBoxData) {
+  return { data } as unknown as Parameters<typeof MissionNodeBox>[0];
+}
+
 function renderBox(data: Partial<MissionNodeBoxData>) {
   const full: MissionNodeBoxData = {
     label: "scan",
@@ -14,11 +21,9 @@ function renderBox(data: Partial<MissionNodeBoxData>) {
     runState: "pending",
     ...data,
   };
-  // MissionNodeBox only reads `data`; other NodeProps are irrelevant here.
   return render(
     <ReactFlowProvider>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <MissionNodeBox {...({ data: full } as any)} />
+      <MissionNodeBox {...nodeProps(full)} />
     </ReactFlowProvider>,
   );
 }
@@ -38,18 +43,15 @@ describe("MissionNodeBox", () => {
 
     rerender(
       <ReactFlowProvider>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <MissionNodeBox
-          {...({
-            data: {
-              label: "x",
-              kind: "join",
-              summary: "",
-              isEntry: false,
-              isExit: true,
-              runState: "pending",
-            },
-          } as any)}
+          {...nodeProps({
+            label: "x",
+            kind: "join",
+            summary: "",
+            isEntry: false,
+            isExit: true,
+            runState: "pending",
+          })}
         />
       </ReactFlowProvider>,
     );
