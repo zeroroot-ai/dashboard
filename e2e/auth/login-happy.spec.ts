@@ -3,23 +3,25 @@
  *
  * Happy-path login: known email + correct password → dashboard.
  *
- * Pre-conditions:
- *   DASHBOARD_EMAIL_PROVIDER=log
- *   DASHBOARD_CAPTCHA_PROVIDER=disabled
+ * Front-door shapes are handled by the shared loginViaZitadelV2 helper
+ * (dashboard#961): kind inline form, SaaS gate page (deploy#1060), and the
+ * legacy auto-handoff all funnel through the same call.
  *
- * Because we need a pre-existing user with a verified email we either:
+ * Because we need a pre-existing user we either:
  *   (a) Read credentials from E2E_SEED_EMAIL / E2E_SEED_PASSWORD env vars
  *       (for running against a cluster with a pre-seeded user), or
- *   (b) Create a fresh user via the signup flow and skip verification by
- *       using the token-scrape helper, then sign in.
+ *   (b) Create a fresh user via the shared signup helper (signUpViaForm),
+ *       then sign in. Signup creates the Zitadel user with a
+ *       verified-at-create email (E9, dashboard#812), so no email-token
+ *       scrape is needed before login.
  *
  * Strategy (b) is the self-contained default so no external seed is required.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import { BASE_URL, generateUserCredentials } from "./helpers/fixtures";
-import { scrapeToken, isLogSourceReachable } from "./helpers/email-log";
-import { closeDbPool } from "./helpers/db";
+import { loginViaZitadelV2 } from "./helpers/login-via-zitadel-v2";
+import { signUpViaForm } from "./helpers/signup-via-form";
 
 // ---------------------------------------------------------------------------
 // Seed: allow overriding credentials via env for cluster-seeded runs.
@@ -29,158 +31,56 @@ const SEED_EMAIL = process.env.E2E_SEED_EMAIL;
 const SEED_PASSWORD = process.env.E2E_SEED_PASSWORD;
 
 // ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-async function signup(
-  page: Page,
-  companyName: string,
-  email: string,
-  password: string,
-) {
-  await page.goto(`${BASE_URL}/signup`);
-
-  const companyInput = page.getByLabel(/company name/i).or(
-    page.getByPlaceholder(/company|organization|workspace/i),
-  );
-  await companyInput.first().fill(companyName);
-  await page.getByLabel(/email/i).fill(email);
-  const pwFields = page.getByLabel(/^password$/i);
-  await pwFields.first().fill(password);
-  const confirm = page.getByLabel(/confirm password|re-enter password/i).first();
-  if ((await confirm.count()) > 0) await confirm.fill(password);
-  const tos = page.getByRole("checkbox", { name: /terms|tos|agree/i }).first();
-  if ((await tos.count()) > 0) await tos.check();
-  await page
-    .getByRole("button", { name: /create account|sign up|get started/i })
-    .first()
-    .click();
-  await page.waitForURL(
-    (url) =>
-      url.pathname.startsWith("/verify-email") ||
-      url.pathname.startsWith("/signup/provisioning") ||
-      url.pathname.startsWith("/dashboard"),
-    { timeout: 30_000 },
-  );
-}
-
-async function loginWith(
-  page: Page,
-  email: string,
-  password: string,
-) {
-  await page.goto(`${BASE_URL}/login`);
-  await expect(page).toHaveURL(/\/login/, { timeout: 15_000 });
-  await page.getByLabel(/email/i).fill(email);
-  await page.getByLabel(/password/i).first().fill(password);
-  await page
-    .getByRole("button", { name: /^log ?in$|^sign ?in$/i })
-    .first()
-    .click();
-}
-
-// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
 test.describe("Login, happy path", () => {
-  test.afterAll(async () => {
-    await closeDbPool();
-  });
-
   test("correct credentials → redirect to dashboard", async ({ browser }) => {
-    // If a pre-seeded user is provided, use them directly.
-    if (SEED_EMAIL && SEED_PASSWORD) {
-      const ctx = await browser.newContext();
-      const page = await ctx.newPage();
-      try {
-        await loginWith(page, SEED_EMAIL, SEED_PASSWORD);
-        await page.waitForURL(
-          (url) => !url.pathname.startsWith("/login"),
-          { timeout: 20_000 },
-        );
-        await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 });
-        await expect(
-          page.getByText(/error|failed|invalid/i),
-        ).not.toBeVisible();
-      } finally {
-        await ctx.close();
-      }
-      return;
-    }
+    // Self-contained path budget: signup provisioning (up to 120s) + Zitadel
+    // OIDC login (up to 60s) + navigation slack.
+    test.setTimeout(300_000);
 
-    // Self-contained: sign up a fresh user, verify their email, then log in.
-    if (!isLogSourceReachable()) {
-      test.skip(
-        true,
-        "Log source unreachable and no E2E_SEED_EMAIL set, skipping.",
-      );
-      return;
-    }
-
-    const creds = generateUserCredentials();
-    const ctx = await browser.newContext();
+    const ctx = await browser.newContext({ ignoreHTTPSErrors: true });
     const page = await ctx.newPage();
 
     try {
-      // 1. Create the user via signup.
-      await signup(page, creds.companyName, creds.email, creds.password);
+      let email: string;
+      let password: string;
 
-      // 2. If we landed on the dashboard, email verification is not required.
-      if (page.url().includes("/dashboard")) {
-        await expect(page.getByText(/error|failed|invalid/i)).not.toBeVisible();
-        return;
-      }
-
-      // 3. Scrape and consume the verify token.
-      const token = await scrapeToken({
-        to: creds.email,
-        tokenType: "verify",
-        timeoutMs: 30_000,
-      });
-      await page.goto(
-        `${BASE_URL}/verify-email/confirm?token=${encodeURIComponent(token)}`,
-      );
-      // Wait for success or dashboard redirect.
-      await page.waitForURL(
-        (url) =>
-          url.pathname.startsWith("/dashboard") ||
-          url.pathname.startsWith("/verify-email"),
-        { timeout: 20_000 },
-      );
-      if (!page.url().includes("/dashboard")) {
-        // Wait for meta-refresh.
-        await page.waitForURL(
-          (url) => url.pathname.startsWith("/dashboard"),
-          { timeout: 10_000 },
-        );
-      }
-
-      // 4. Sign out so we can test login cleanly.
-      // Hit the signout action by navigating to a URL that triggers it, or
-      // look for a signout button in the sidebar.
-      const signoutBtn = page
-        .getByRole("button", { name: /sign out|log out/i })
-        .first();
-      if ((await signoutBtn.count()) > 0) {
-        await signoutBtn.click();
-        await page.waitForURL((url) => !url.pathname.startsWith("/dashboard"), {
-          timeout: 10_000,
-        });
+      if (SEED_EMAIL && SEED_PASSWORD) {
+        // Pre-seeded user: log straight in.
+        email = SEED_EMAIL;
+        password = SEED_PASSWORD;
       } else {
-        // Navigate directly to the signed-out state.
-        await page.goto(`${BASE_URL}/login`);
+        // Self-contained: create a fresh tenant + user via the real signup
+        // flow, then log in with those credentials.
+        const creds = generateUserCredentials();
+        await signUpViaForm(page, {
+          slug: creds.slug,
+          email: creds.email,
+          password: creds.password,
+          baseURL: BASE_URL,
+        });
+        // Post-signup lands on /login (auto-login retired in E9). Clear any
+        // half-established browser state so the login below is a clean flow.
+        await ctx.clearCookies();
+        email = creds.email;
+        password = creds.password;
       }
 
-      // 5. Log in with the verified credentials.
-      await loginWith(page, creds.email, creds.password);
-      await page.waitForURL(
-        (url) => !url.pathname.startsWith("/login"),
-        { timeout: 20_000 },
-      );
+      // Drive the shape-aware login flow (gate page / inline form / V2 pages).
+      const result = await loginViaZitadelV2(page, ctx, {
+        email,
+        password,
+        baseURL: BASE_URL,
+      });
 
-      // 6. Assert we landed on the dashboard.
+      // Assert we landed on the dashboard with a session cookie.
+      await page.waitForURL((url) => url.pathname.startsWith("/dashboard"), {
+        timeout: 30_000,
+      });
       await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 });
+      expect(result.sessionCookieSet).toBe(true);
       await expect(
         page.getByText(/invalid email or password|error|failed/i),
       ).not.toBeVisible();

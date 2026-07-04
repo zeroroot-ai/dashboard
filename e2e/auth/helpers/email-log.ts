@@ -48,7 +48,38 @@ import { execSync, spawn } from "child_process";
 const K8S_NAMESPACE = process.env.DASHBOARD_K8S_NAMESPACE ?? "gibson";
 const K8S_POD_LABEL =
   process.env.DASHBOARD_K8S_POD_LABEL ?? "app.kubernetes.io/name=gibson-dashboard";
+/**
+ * Umbrella-chart deployments (staging/prod EKS) label the dashboard pod
+ * `app.kubernetes.io/name=gibson-workloads` + `component=dashboard`, NOT
+ * `name=gibson-dashboard` (the kind-dev shape). Try the configured label
+ * first, then fall back to the component label. dashboard#961.
+ */
+const K8S_POD_LABEL_FALLBACK = "app.kubernetes.io/component=dashboard";
 const LOG_FILE = process.env.DASHBOARD_LOG_FILE ?? "";
+
+/** Cached label that actually matched a pod ("" = not resolved yet). */
+let resolvedPodLabel = "";
+
+/** Return the first pod label selector that matches at least one pod. */
+function resolvePodLabel(): string {
+  if (resolvedPodLabel) return resolvedPodLabel;
+  for (const label of [K8S_POD_LABEL, K8S_POD_LABEL_FALLBACK]) {
+    try {
+      const out = execSync(
+        `kubectl get pods -n ${K8S_NAMESPACE} -l "${label}" --no-headers 2>/dev/null || true`,
+        { timeout: 5000, encoding: "utf-8" },
+      );
+      if (out.trim().length > 0) {
+        resolvedPodLabel = label;
+        return label;
+      }
+    } catch {
+      // try next label
+    }
+  }
+  // Nothing matched; keep the configured label so error messages stay honest.
+  return K8S_POD_LABEL;
+}
 
 /** How long to wait for a token to appear in logs (ms). */
 const SCRAPE_TIMEOUT_MS =
@@ -97,7 +128,7 @@ function fetchLogs(sinceSeconds = 120): string {
   // Kubernetes path: try to get logs from the dashboard pod.
   try {
     return execSync(
-      `kubectl logs -n ${K8S_NAMESPACE} -l "${K8S_POD_LABEL}" --tail=500 --since=${sinceSeconds}s 2>/dev/null || true`,
+      `kubectl logs -n ${K8S_NAMESPACE} -l "${resolvePodLabel()}" --tail=500 --since=${sinceSeconds}s 2>/dev/null || true`,
       { timeout: 10_000, encoding: "utf-8" },
     );
   } catch {
@@ -273,11 +304,13 @@ export function isLogSourceReachable(): boolean {
     }
   }
   try {
-    execSync(
-      `kubectl get pods -n ${K8S_NAMESPACE} -l "${K8S_POD_LABEL}" --no-headers 2>/dev/null | head -1`,
-      { timeout: 5000 },
+    const out = execSync(
+      `kubectl get pods -n ${K8S_NAMESPACE} -l "${resolvePodLabel()}" --no-headers 2>/dev/null | head -1`,
+      { timeout: 5000, encoding: "utf-8" },
     );
-    return true;
+    // `kubectl get` exits 0 even when zero pods match ("No resources found"
+    // goes to stderr) — require an actual pod line. dashboard#961.
+    return out.trim().length > 0;
   } catch {
     return false;
   }

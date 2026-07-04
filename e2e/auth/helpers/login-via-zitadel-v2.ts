@@ -12,6 +12,16 @@
  *   5. Fill password and submit
  *   6. Wait for terminal landing (dashboard callback or /dashboard)
  *
+ * Front-door shapes (dashboard#961): /login renders differently per deployment
+ * profile, so step 1 is shape-aware:
+ *   (a) auto-handoff — the page fires signIn("zitadel") on load and the
+ *       browser leaves /login on its own (legacy kind behaviour). Nothing to do.
+ *   (b) gate page (SaaS profile, deploy#1060) — "Welcome to Gibson" card with
+ *       a "Sign in" button and ZERO inputs. We click the button, which hands
+ *       off to the Zitadel V2 loginname page, then steps 2-5 run unchanged.
+ *   (c) inline email/password form — filled and submitted directly on /login;
+ *       the Zitadel V2 pages (steps 2-5) are skipped entirely.
+ *
  * Bug catalog:
  *   LOGIN-B1: useEffect double-fire causes duplicate signin/zitadel POSTs.
  *             Symptom: browser parks on /ui/v2/login/signedin. Fixed: commit 5dfa778.
@@ -42,6 +52,11 @@ export interface LoginOptions {
   loginFormTimeoutMs?: number;
   /** Milliseconds to wait for the terminal landing after password submit (default: 60_000). */
   loginCompleteTimeoutMs?: number;
+  /**
+   * Milliseconds to spend detecting the /login front-door shape
+   * (auto-handoff vs gate page vs inline form). Default: 15_000.
+   */
+  shapeDetectTimeoutMs?: number;
 }
 
 /** One hop captured during the OIDC redirect chain. */
@@ -98,6 +113,7 @@ export async function loginViaZitadelV2(
     baseURL = DEFAULT_BASE_URL,
     loginFormTimeoutMs = 30_000,
     loginCompleteTimeoutMs = 60_000,
+    shapeDetectTimeoutMs = 15_000,
   } = opts;
 
   const chain: LoginHop[] = [];
@@ -132,62 +148,140 @@ export async function loginViaZitadelV2(
   }
 
   // -------------------------------------------------------------------------
-  // 2. Wait for Zitadel V2 loginname form.
-  //    LOGIN-B1: if /login triggered two POSTs to signin/zitadel, Zitadel
-  //    will park the browser on /signedin instead of /loginname.
+  // 1b. Front-door shape detection (dashboard#961).
+  //     If we are still on /login, work out which shape rendered:
+  //       - inline: email + password inputs directly on /login (kind inline
+  //         form). Fill and submit here; the Zitadel V2 steps are skipped.
+  //       - gate: zero inputs, a "Sign in" button (SaaS profile,
+  //         deploy#1060). Click it to hand off to Zitadel V2.
+  //       - handoff: the page already left /login on its own (legacy
+  //         auto-fire). Fall through to the V2 wait unchanged.
   // -------------------------------------------------------------------------
-  console.log(`[loginViaZitadelV2] waiting for Zitadel V2 loginname form`);
-  try {
-    await page.waitForURL(/\/ui\/v2\/login\/loginname/, {
-      timeout: loginFormTimeoutMs,
-    });
-  } catch {
-    const currentUrl = page.url();
-    if (currentUrl.includes("/ui/v2/login/signedin")) {
+  let inlineLoginDone = false;
+  if (new URL(page.url()).pathname.startsWith("/login")) {
+    const emailInput = page.getByLabel(/email/i).first();
+    const passwordInput = page.locator('input[type="password"]').first();
+    const gateButton = page
+      .getByRole("button", { name: /^sign ?in\b/i })
+      .first();
+
+    type FrontDoorShape = "handoff" | "inline" | "gate" | "unknown";
+    let shape: FrontDoorShape = "unknown";
+    const shapeDeadline = Date.now() + shapeDetectTimeoutMs;
+    while (Date.now() < shapeDeadline) {
+      if (!new URL(page.url()).pathname.startsWith("/login")) {
+        shape = "handoff";
+        break;
+      }
+      // Check for the inline form FIRST: the inline shape also has a submit
+      // button that matches the gate-button name pattern.
+      if (
+        (await emailInput.isVisible().catch(() => false)) &&
+        (await passwordInput.isVisible().catch(() => false))
+      ) {
+        shape = "inline";
+        break;
+      }
+      if (await gateButton.isVisible().catch(() => false)) {
+        shape = "gate";
+        break;
+      }
+      await page.waitForTimeout(250);
+    }
+    console.log(`[loginViaZitadelV2] /login front-door shape: ${shape}`);
+
+    if (shape === "inline") {
+      // Kind inline-form path, unchanged behaviour: credentials are submitted
+      // directly on /login, no Zitadel V2 pages are involved.
+      await emailInput.fill(email);
+      await passwordInput.fill(password);
+      await page
+        .getByRole("button", { name: /^log ?in$|^sign ?in$/i })
+        .first()
+        .click();
+      inlineLoginDone = true;
+    } else if (shape === "gate") {
+      // SaaS gate page: click "Sign in" to initiate the Zitadel OIDC flow.
+      await gateButton.click();
+      // Hydration guard: if the click landed before React attached the
+      // onClick handler, the URL never changes. Retry once.
+      const left = await page
+        .waitForURL((url) => !url.pathname.startsWith("/login"), {
+          timeout: 10_000,
+        })
+        .then(() => true)
+        .catch(() => false);
+      if (!left) {
+        console.log(
+          `[loginViaZitadelV2] gate Sign-in click was a no-op (pre-hydration?), retrying once`,
+        );
+        await gateButton.click().catch(() => undefined);
+      }
+    }
+    // shape === "handoff" | "unknown": fall through, step 2's wait either
+    // succeeds (auto-fire happened) or produces the existing rich error.
+  }
+
+  if (!inlineLoginDone) {
+    // -----------------------------------------------------------------------
+    // 2. Wait for Zitadel V2 loginname form.
+    //    LOGIN-B1: if /login triggered two POSTs to signin/zitadel, Zitadel
+    //    will park the browser on /signedin instead of /loginname.
+    // -----------------------------------------------------------------------
+    console.log(`[loginViaZitadelV2] waiting for Zitadel V2 loginname form`);
+    try {
+      await page.waitForURL(/\/ui\/v2\/login\/loginname/, {
+        timeout: loginFormTimeoutMs,
+      });
+    } catch {
+      const currentUrl = page.url();
+      if (currentUrl.includes("/ui/v2/login/signedin")) {
+        throw new Error(
+          `[loginViaZitadelV2] LOGIN-B1 REGRESSION: Zitadel parked browser on /signedin. ` +
+            `This is the useEffect double-fire bug (commit 5dfa778). ` +
+            `Check login-form.tsx for a useRef guard. URL=${currentUrl}`,
+        );
+      }
       throw new Error(
-        `[loginViaZitadelV2] LOGIN-B1 REGRESSION: Zitadel parked browser on /signedin. ` +
-          `This is the useEffect double-fire bug (commit 5dfa778). ` +
-          `Check login-form.tsx for a useRef guard. URL=${currentUrl}`,
+        `[loginViaZitadelV2] Timed out waiting for Zitadel V2 loginname form. ` +
+          `Current URL=${currentUrl}. ` +
+          `Ensure the /login front door handed off to Zitadel (gate "Sign in" ` +
+          `clicked, or signIn("zitadel") fired on page load).`,
       );
     }
-    throw new Error(
-      `[loginViaZitadelV2] Timed out waiting for Zitadel V2 loginname form. ` +
-        `Current URL=${currentUrl}. ` +
-        `Ensure signIn("zitadel") fired on /login page load.`,
-    );
+
+    // -----------------------------------------------------------------------
+    // 3. Fill loginname (email) and submit.
+    // -----------------------------------------------------------------------
+    console.log(`[loginViaZitadelV2] filling loginname`);
+    await page.getByLabel(/login.?name|email|user/i).first().fill(email);
+    await page.getByRole("button", { name: /next|continue|submit/i }).first().click();
+
+    // -----------------------------------------------------------------------
+    // 4. Wait for Zitadel V2 password form.
+    // -----------------------------------------------------------------------
+    console.log(`[loginViaZitadelV2] waiting for Zitadel V2 password form`);
+    try {
+      await page.waitForURL(/\/ui\/v2\/login\/password/, { timeout: 20_000 });
+    } catch {
+      const currentUrl = page.url();
+      throw new Error(
+        `[loginViaZitadelV2] Timed out waiting for Zitadel V2 password form. ` +
+          `Current URL=${currentUrl}. ` +
+          `Check: loginname submitted correctly, user exists in Zitadel org.`,
+      );
+    }
+
+    // -----------------------------------------------------------------------
+    // 5. Fill password and submit.
+    // -----------------------------------------------------------------------
+    console.log(`[loginViaZitadelV2] filling password`);
+    await page.locator('input[type="password"]').first().fill(password);
+    await page
+      .getByRole("button", { name: /next|continue|submit|sign.?in/i })
+      .first()
+      .click();
   }
-
-  // -------------------------------------------------------------------------
-  // 3. Fill loginname (email) and submit.
-  // -------------------------------------------------------------------------
-  console.log(`[loginViaZitadelV2] filling loginname`);
-  await page.getByLabel(/login.?name|email|user/i).first().fill(email);
-  await page.getByRole("button", { name: /next|continue|submit/i }).first().click();
-
-  // -------------------------------------------------------------------------
-  // 4. Wait for Zitadel V2 password form.
-  // -------------------------------------------------------------------------
-  console.log(`[loginViaZitadelV2] waiting for Zitadel V2 password form`);
-  try {
-    await page.waitForURL(/\/ui\/v2\/login\/password/, { timeout: 20_000 });
-  } catch {
-    const currentUrl = page.url();
-    throw new Error(
-      `[loginViaZitadelV2] Timed out waiting for Zitadel V2 password form. ` +
-        `Current URL=${currentUrl}. ` +
-        `Check: loginname submitted correctly, user exists in Zitadel org.`,
-    );
-  }
-
-  // -------------------------------------------------------------------------
-  // 5. Fill password and submit.
-  // -------------------------------------------------------------------------
-  console.log(`[loginViaZitadelV2] filling password`);
-  await page.locator('input[type="password"]').first().fill(password);
-  await page
-    .getByRole("button", { name: /next|continue|submit|sign.?in/i })
-    .first()
-    .click();
 
   // -------------------------------------------------------------------------
   // 6. Wait for terminal landing.
