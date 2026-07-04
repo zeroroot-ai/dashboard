@@ -19,10 +19,13 @@
  *   /tmp/dashboard-smoke-session-b-<slug-b>.json, session B cookie jar
  *
  * Env vars consumed:
- *   SIGNUP_SLUG_A     , tenant A slug (set by orchestrator)
- *   SIGNUP_EMAIL_A    , tenant A email (set by orchestrator)
- *   SIGNUP_SLUG_B     , tenant B slug (set by orchestrator)
- *   SIGNUP_EMAIL_B    , tenant B email (set by orchestrator)
+ *   SIGNUP_SLUG_A     , tenant A slug (set by orchestrator; optional)
+ *   SIGNUP_EMAIL_A    , tenant A email (set by orchestrator; optional)
+ *   SIGNUP_SLUG_B     , tenant B slug (set by orchestrator; optional)
+ *   SIGNUP_EMAIL_B    , tenant B email (set by orchestrator; optional)
+ *     When all four are unset the spec SELF-PROVISIONS two throwaway
+ *     tenants via the shared signup helper (dashboard#961). Setting some
+ *     but not all four is a hard error.
  *   SIGNUP_PASSWORD   , shared password for synthetic test tenants
  *   SMOKE_CONCURRENCY , number of parallel route loads (default: 4)
  *   MANIFEST_PATH     , path to dashboard-routes.yaml
@@ -50,7 +53,7 @@ import * as path from "path";
 import * as yaml from "js-yaml";
 import { signUpViaForm } from "./helpers/signup-via-form";
 import { loginViaZitadelV2 } from "./helpers/login-via-zitadel-v2";
-import { securePassword } from "./helpers/fixtures";
+import { generateUserCredentials, securePassword } from "./helpers/fixtures";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -59,10 +62,29 @@ import { securePassword } from "./helpers/fixtures";
 const CLUSTER_URL =
   process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
 
-const SLUG_A = process.env.SIGNUP_SLUG_A ?? "";
-const EMAIL_A = process.env.SIGNUP_EMAIL_A ?? "";
-const SLUG_B = process.env.SIGNUP_SLUG_B ?? "";
-const EMAIL_B = process.env.SIGNUP_EMAIL_B ?? "";
+// Tenant identities. Fast path: the orchestrator (kind CI workflow / the Go
+// side's `make test-dashboard-smoke-e2e`) seeds SIGNUP_SLUG_A/B +
+// SIGNUP_EMAIL_A/B so the Go assertions can find the report/session files.
+// Self-provision fallback (dashboard#961): when the env vars are absent,
+// generate throwaway identities the same way the other auth specs do —
+// establishSession() already signs the tenant up before logging in, so no
+// external seeding is required. Note: in fully-parallel mode each worker
+// process gets its own generated identities; every test provisions and uses
+// only its own tenant, so this stays self-consistent per test.
+const ENV_SLUG_A = process.env.SIGNUP_SLUG_A ?? "";
+const ENV_EMAIL_A = process.env.SIGNUP_EMAIL_A ?? "";
+const ENV_SLUG_B = process.env.SIGNUP_SLUG_B ?? "";
+const ENV_EMAIL_B = process.env.SIGNUP_EMAIL_B ?? "";
+const ANY_SEEDED = !!(ENV_SLUG_A || ENV_EMAIL_A || ENV_SLUG_B || ENV_EMAIL_B);
+const ALL_SEEDED = !!(ENV_SLUG_A && ENV_EMAIL_A && ENV_SLUG_B && ENV_EMAIL_B);
+
+const GEN_A = generateUserCredentials();
+const GEN_B = generateUserCredentials();
+
+const SLUG_A = ALL_SEEDED ? ENV_SLUG_A : GEN_A.slug;
+const EMAIL_A = ALL_SEEDED ? ENV_EMAIL_A : GEN_A.email;
+const SLUG_B = ALL_SEEDED ? ENV_SLUG_B : GEN_B.slug;
+const EMAIL_B = ALL_SEEDED ? ENV_EMAIL_B : GEN_B.email;
 const SYNTHETIC_PASSWORD = process.env.SIGNUP_PASSWORD ?? securePassword();
 const MANIFEST_PATH =
   process.env.MANIFEST_PATH ??
@@ -407,10 +429,21 @@ test.describe("dashboard smoke", () => {
   const screenshotDir = "/tmp";
 
   test.beforeAll(async () => {
-    if (!SLUG_A) throw new Error("dashboard-smoke: SIGNUP_SLUG_A env var is required");
-    if (!EMAIL_A) throw new Error("dashboard-smoke: SIGNUP_EMAIL_A env var is required");
-    if (!SLUG_B) throw new Error("dashboard-smoke: SIGNUP_SLUG_B env var is required");
-    if (!EMAIL_B) throw new Error("dashboard-smoke: SIGNUP_EMAIL_B env var is required");
+    // Partial env seeding is a misconfiguration — either the orchestrator
+    // seeds all four vars (fast path) or none (self-provision fallback).
+    if (ANY_SEEDED && !ALL_SEEDED) {
+      throw new Error(
+        "dashboard-smoke: partial SIGNUP_* env seeding — set all of " +
+          "SIGNUP_SLUG_A, SIGNUP_EMAIL_A, SIGNUP_SLUG_B, SIGNUP_EMAIL_B " +
+          "or none (self-provision mode).",
+      );
+    }
+    if (!ALL_SEEDED) {
+      console.log(
+        `[dashboard-smoke] SIGNUP_* env vars unset — self-provisioning ` +
+          `throwaway tenants (A=${SLUG_A}, B=${SLUG_B})`,
+      );
+    }
 
     manifestEntries = loadManifest(MANIFEST_PATH);
   });

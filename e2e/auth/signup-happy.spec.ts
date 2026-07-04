@@ -1,102 +1,53 @@
 /**
  * signup-happy.spec.ts
  *
- * Happy-path signup: fresh unique slug + email → verify email → land on
- * dashboard.
+ * Happy-path signup: fresh unique slug + email → provisioning completes →
+ * the new credentials can sign in and land on the dashboard.
  *
- * Pre-conditions:
- *   DASHBOARD_EMAIL_PROVIDER=log  (tokens appear in stdout / kubectl logs)
- *   DASHBOARD_CAPTCHA_PROVIDER=disabled
- *
- * Flow:
- *   1. Navigate to /signup.
- *   2. Fill in unique company name, email, password, accept ToS.
- *   3. Submit → expect redirect to /verify-email (or provisioning page).
- *   4. Scrape verification token from log provider output.
- *   5. Navigate to /verify-email/confirm?token=<token>.
- *   6. Expect redirect / success state and then land on /dashboard/*.
+ * Flow (shared shape-aware helpers, dashboard#961):
+ *   1. signUpViaForm drives /signup?plan=… — it handles every front-door
+ *      shape (kind card-free form, SaaS card-first form with the inline
+ *      Stripe Payment Element, login-only redirect, pricing bounce) and
+ *      waits for the ProvisioningPanel to finish and route through /login
+ *      (auto-login retired in E9, dashboard#812).
+ *   2. loginViaZitadelV2 signs in with the fresh credentials — the Zitadel
+ *      user is created with a verified-at-create email, so no email-token
+ *      scrape is required.
+ *   3. Assert we land on /dashboard with a session cookie.
  */
 
 import { test, expect } from "@playwright/test";
 import { BASE_URL, generateUserCredentials } from "./helpers/fixtures";
-import { scrapeToken, isLogSourceReachable } from "./helpers/email-log";
-import { queryUser, closeDbPool } from "./helpers/db";
+import { loginViaZitadelV2 } from "./helpers/login-via-zitadel-v2";
+import { signUpViaForm } from "./helpers/signup-via-form";
 
 test.describe("Signup, happy path", () => {
-  test.afterAll(async () => {
-    await closeDbPool();
-  });
-
-  test("fresh slug + email completes signup and email verification", async ({
+  test("fresh slug + email completes signup and can sign in", async ({
     page,
+    context,
   }) => {
+    // Provisioning (up to 120s) + Zitadel OIDC login (up to 60s) + slack.
+    test.setTimeout(300_000);
+
     const creds = generateUserCredentials();
 
     // -------------------------------------------------------------------------
-    // Step 1: Navigate to signup page
+    // Step 1: Drive the signup form (shape-aware shared helper).
     // -------------------------------------------------------------------------
-    await page.goto(`${BASE_URL}/signup`);
-    await expect(page).toHaveURL(/\/signup/, { timeout: 15_000 });
+    const { finalUrl, tenantSlug } = await signUpViaForm(page, {
+      slug: creds.slug,
+      email: creds.email,
+      password: creds.password,
+      baseURL: BASE_URL,
+    });
 
-    // -------------------------------------------------------------------------
-    // Step 2: Fill in the signup form
-    // -------------------------------------------------------------------------
-    // Company name field
-    const companyNameInput = page.getByLabel(/company name/i).or(
-      page.getByPlaceholder(/company|organization|workspace/i),
-    );
-    await companyNameInput.first().fill(creds.companyName);
+    expect(tenantSlug).toBe(creds.slug);
+    // Post-signup the dashboard routes through /login; /dashboard is also
+    // accepted for deployments where an auto-login path is active.
+    expect(finalUrl).toMatch(/\/login|\/dashboard/);
 
-    // Email field
-    await page.getByLabel(/email/i).fill(creds.email);
-
-    // Password field, use the first password field (the confirm may be second)
-    const passwordFields = page.getByLabel(/^password$/i);
-    await passwordFields.first().fill(creds.password);
-
-    // Confirm password if present
-    const confirmField = page
-      .getByLabel(/confirm password|re-enter password/i)
-      .first();
-    const confirmCount = await confirmField.count();
-    if (confirmCount > 0) {
-      await confirmField.fill(creds.password);
-    }
-
-    // Accept Terms of Service checkbox if present
-    const tosCheckbox = page
-      .getByRole("checkbox", { name: /terms|tos|agree/i })
-      .first();
-    const tosCount = await tosCheckbox.count();
-    if (tosCount > 0) {
-      await tosCheckbox.check();
-    }
-
-    // -------------------------------------------------------------------------
-    // Step 3: Submit the form
-    // -------------------------------------------------------------------------
-    await page
-      .getByRole("button", { name: /create account|sign up|get started/i })
-      .first()
-      .click();
-
-    // After submission we expect either:
-    //   (a) /verify-email, email verification gate
-    //   (b) /signup/provisioning, provisioning pending page
-    //   (c) /dashboard/*, direct dashboard (if email verification is bypassed)
-    await page.waitForURL(
-      (url) =>
-        url.pathname.startsWith("/verify-email") ||
-        url.pathname.startsWith("/signup/provisioning") ||
-        url.pathname.startsWith("/dashboard"),
-      { timeout: 30_000 },
-    );
-
-    const afterSubmitUrl = page.url();
-
-    // If we're already in the dashboard, signup + verification are done.
-    if (afterSubmitUrl.includes("/dashboard")) {
-      // Confirm a dashboard element is visible.
+    // Already authenticated (auto-login profile): signup is proven usable.
+    if (finalUrl.includes("/dashboard")) {
       await expect(page.locator("body")).not.toHaveText(/error/i, {
         timeout: 10_000,
       });
@@ -104,72 +55,21 @@ test.describe("Signup, happy path", () => {
     }
 
     // -------------------------------------------------------------------------
-    // Step 4: Scrape verification token from log provider
+    // Step 2: Sign in with the fresh credentials to prove the account works.
     // -------------------------------------------------------------------------
-    if (!isLogSourceReachable()) {
-      test.skip(
-        true,
-        "Log source unreachable, skipping token-scrape step (cluster not running?)",
-      );
-      return;
-    }
-
-    const token = await scrapeToken({
-      to: creds.email,
-      tokenType: "verify",
-      timeoutMs: 30_000,
+    const result = await loginViaZitadelV2(page, context, {
+      email: creds.email,
+      password: creds.password,
+      baseURL: BASE_URL,
     });
 
-    expect(token).toBeTruthy();
-
     // -------------------------------------------------------------------------
-    // Step 5: Navigate to the confirm endpoint
+    // Step 3: Assert we landed on the dashboard.
     // -------------------------------------------------------------------------
-    await page.goto(
-      `${BASE_URL}/verify-email/confirm?token=${encodeURIComponent(token)}`,
-    );
-
-    // -------------------------------------------------------------------------
-    // Step 6: Expect success state and eventual dashboard access
-    // -------------------------------------------------------------------------
-    // The confirm page either auto-redirects (meta-refresh 2s) or shows a
-    // success card. We accept both.
-    await page.waitForURL(
-      (url) =>
-        url.pathname.startsWith("/dashboard") ||
-        url.pathname.startsWith("/verify-email"),
-      { timeout: 30_000 },
-    );
-
-    const finalUrl = page.url();
-
-    if (finalUrl.includes("/verify-email")) {
-      // Success card on verify page, look for success wording.
-      await expect(
-        page.getByText(/verified|success|welcome|confirmed/i),
-      ).toBeVisible({ timeout: 15_000 });
-
-      // Wait for the meta-refresh redirect to dashboard.
-      await page.waitForURL((url) => url.pathname.startsWith("/dashboard"), {
-        timeout: 15_000,
-      });
-    }
-
-    // Assert we landed on the dashboard (not an error page).
+    await page.waitForURL((url) => url.pathname.startsWith("/dashboard"), {
+      timeout: 30_000,
+    });
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 });
-    await expect(
-      page.getByText(/sign in|error|failed|invalid/i),
-    ).not.toBeVisible();
-
-    // -------------------------------------------------------------------------
-    // Optional DB assertion: user row exists and emailVerified = true
-    // -------------------------------------------------------------------------
-    const user = await queryUser(creds.email);
-    if (user !== null) {
-      // Row should exist
-      expect(user["email"]).toBe(creds.email.toLowerCase());
-      // emailVerified should be true after confirmation
-      expect(user["emailVerified"]).toBe(true);
-    }
+    expect(result.sessionCookieSet).toBe(true);
   });
 });
