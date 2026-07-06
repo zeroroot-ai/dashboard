@@ -233,7 +233,11 @@ export function ToolsContent() {
               }
               secondaryCta={
                 <Button asChild variant="ghost">
-                  <Link href="/docs/tools">Read the docs</Link>
+                  {/* prefetch={false}: /docs 307s to the marketing host in
+                      SaaS; an RSC prefetch of it dies on CORS (dashboard#963). */}
+                  <Link href="/docs/tools" prefetch={false}>
+                    Read the docs
+                  </Link>
                 </Button>
               }
             />

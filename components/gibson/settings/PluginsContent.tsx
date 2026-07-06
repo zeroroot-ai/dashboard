@@ -285,7 +285,11 @@ export function PluginsContent() {
               }
               secondaryCta={
                 <Button asChild variant="ghost">
-                  <Link href="/docs/plugins">Read the docs</Link>
+                  {/* prefetch={false}: /docs 307s to the marketing host in
+                      SaaS; an RSC prefetch of it dies on CORS (dashboard#963). */}
+                  <Link href="/docs/plugins" prefetch={false}>
+                    Read the docs
+                  </Link>
                 </Button>
               }
             />
