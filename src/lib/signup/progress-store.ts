@@ -11,9 +11,11 @@
  * terminal codes + human-facing error messages, never raw Zitadel
  * responses / user credentials.
  *
- * TTL: 5 minutes. Provisioning should finish in <30s; the extra window
- * gives the UI a chance to render the final "done" state before the key
- * expires.
+ * TTL: 10 minutes. The TTL is reset on every write, and the longest gap
+ * between writes is the signup action's tenant-ready wait
+ * (TENANT_READY_TIMEOUT_MS = 240s, dashboard#962) between the
+ * `setup_workspace` advance and the terminal record; 600s keeps the key
+ * alive through that gap with room for the UI to render the final state.
  *
  * Replaces the previous direct-Redis implementation.
  * Spec: dashboard-no-backing-store-clients (Module 5 / issue #589).
@@ -29,7 +31,7 @@ import type {
   SignupFailureCode,
 } from '@/app/(public)/signup/types';
 
-const PROGRESS_TTL_SECONDS = 300;
+const PROGRESS_TTL_SECONDS = 600;
 
 // ============================================================================
 // Core helpers

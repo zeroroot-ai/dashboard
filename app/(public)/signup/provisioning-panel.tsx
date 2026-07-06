@@ -12,8 +12,10 @@
  *  - On `terminalState === "failed"`: shows the error message and a "Try
  *    again" button that calls `onRetry()` to reset the parent form.
  *  - On `terminalState === "timeout"`: shows the "We'll email you" message
- *    with a dismiss button.
- *  - Hard cap at 120 iterations (~2 minutes) as a runaway guard.
+ *    with a sign-in link (the account exists; signing in once the email
+ *    lands is the resume path, dashboard#962).
+ *  - Hard cap at 360 iterations (~6 minutes) as a runaway guard — must
+ *    exceed the signup action's worst-case duration (~255s).
  *
  * Accessibility: a `role="status"` + `aria-live="polite"` region announces
  * step transitions to screen readers without interrupting active speech.
@@ -204,7 +206,11 @@ interface ProvisioningPanelProps {
 // ---------------------------------------------------------------------------
 
 const POLL_INTERVAL_MS = 1_000;
-const MAX_POLL_ITERATIONS = 120; // 2-minute hard cap
+// Runaway guard. Must comfortably exceed the server action's worst-case
+// duration (TENANT_READY_TIMEOUT_MS=240s wait + preamble ≈ 255s,
+// dashboard#962) so the panel is still polling when the action writes its
+// terminal progress record; 6 minutes gives ~2 minutes of slack.
+const MAX_POLL_ITERATIONS = 360; // 6-minute hard cap
 
 export function ProvisioningPanel({
   attemptId,
@@ -213,7 +219,6 @@ export function ProvisioningPanel({
 }: ProvisioningPanelProps) {
   const [progress, setProgress] = useState<ProvisioningProgress | null>(null);
   const [pollError, setPollError] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
   const [announcement, setAnnouncement] = useState("");
 
   // Track previous step label to diff for aria-live announcements.
@@ -323,8 +328,6 @@ export function ProvisioningPanel({
       }
     };
   }, [isOk, redirectOnSuccess]);
-
-  if (dismissed) return null;
 
   // Build the group status list for rendering.
   const groupStatuses = STEP_GROUPS.map((group) => ({
@@ -484,12 +487,11 @@ export function ProvisioningPanel({
               Try again
             </Button>
           )}
-          {isTimeout && (
-            <Button onClick={() => setDismissed(true)} variant="outline">
-              Dismiss
-            </Button>
-          )}
-          <Button variant="ghost" asChild>
+          {/* On timeout the account exists and the workspace is still coming
+              (dashboard#962): "Sign in" is the resume path, so it gets primary
+              weight here. The old "Dismiss" button nulled this panel while the
+              parent kept rendering the holding container — a blank page. */}
+          <Button variant={isTimeout ? "default" : "ghost"} asChild>
             <Link href="/login">Sign in instead</Link>
           </Button>
         </CardFooter>

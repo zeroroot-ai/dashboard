@@ -103,6 +103,7 @@ vi.mock('@/src/lib/billing/stripe', () => ({
 // After mocks are set up, import the subject.
 import { signupAction, completeSignup } from '../signup';
 import { getTenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
+import { failProgress } from '@/src/lib/signup/progress-store';
 
 // ---------------------------------------------------------------------------
 // Test fixtures
@@ -363,5 +364,96 @@ describe('card-first signup phase 2 (completeSignup)', () => {
     expect(result.ok).toBe(false);
     expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
     expect(mockProvisionSignupOwner).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Provisioning-wait budget (dashboard#962)
+//
+// The dashboard's tenant-ready wait must comfortably cover real second-tenant
+// provisioning latency: staging observed a back-to-back second tenant reach
+// Ready at ~2m25s while the old 90s budget had already failed the signup.
+// These tests pin the budget behaviorally with fake timers: a provision that
+// completes at 150s (past the old 90s budget) must succeed, and the deadline
+// must not fire before 240s. The timeout itself must surface as the NON-fatal
+// PROVISIONING_TIMEOUT ("we'll email you"), never a hard failure.
+//
+// Chain invariant documented in app/actions/signup.ts: Envoy's app-vhost
+// route timeout (300s, deploy repo) > worst-case action (~255s) > this 240s
+// wait. Raising the wait requires raising the Envoy route timeout in the same
+// change set (deploy#1020 failure class).
+// ---------------------------------------------------------------------------
+
+describe('provisioning-wait budget (dashboard#962)', () => {
+  beforeEach(() => {
+    resetMocks();
+    vi.mocked(failProgress).mockClear();
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('succeeds when the tenant becomes Ready at ~150s (past the old 90s budget)', async () => {
+    const start = Date.now();
+    let availabilityProbe = true;
+    vi.mocked(getTenantProvisioningStatus).mockImplementation(async () => {
+      if (availabilityProbe) {
+        // Step-3 workspace-name availability check → not taken.
+        availabilityProbe = false;
+        return STATUS_NOT_FOUND;
+      }
+      // waitForTenantReady polls: still provisioning until t=150s.
+      return Date.now() - start >= 150_000 ? STATUS_READY : STATUS_NOT_FOUND;
+    });
+
+    const pending = signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-0000000000c1');
+    await vi.advanceTimersByTimeAsync(160_000);
+    const result = await pending;
+
+    expect(result.ok).toBe(true);
+    if (result.ok && 'redirect' in result) {
+      expect(result.redirect).toBe('/login?callbackUrl=%2Fdashboard');
+    } else {
+      throw new Error('expected a redirect result');
+    }
+  });
+
+  it('holds the wait past 200s and returns non-fatal PROVISIONING_TIMEOUT after the 240s budget', async () => {
+    // Never becomes ready.
+    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_NOT_FOUND);
+
+    let settled = false;
+    const pending = signupAction(VALID_INPUT, 'aaaaaaaa-0000-0000-0000-0000000000c2').then(
+      (r) => {
+        settled = true;
+        return r;
+      },
+    );
+
+    // Regression guard on the budget itself: the old 90s deadline (and
+    // anything shorter than the observed 2m25s latency) would have settled
+    // by now.
+    await vi.advanceTimersByTimeAsync(200_000);
+    expect(settled).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(45_000);
+    const result = await pending;
+    expect(settled).toBe(true);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe('PROVISIONING_TIMEOUT');
+      // Non-destructive copy: the workspace is still coming; never "try again".
+      expect(result.userMessage).toMatch(/email you/i);
+    }
+    // The progress store records the terminal timeout (the panel renders the
+    // "we'll email you" holding state from this record).
+    expect(vi.mocked(failProgress)).toHaveBeenCalledWith(
+      'aaaaaaaa-0000-0000-0000-0000000000c2',
+      'setup_workspace',
+      'PROVISIONING_TIMEOUT',
+      expect.stringMatching(/email you/i),
+    );
   });
 });

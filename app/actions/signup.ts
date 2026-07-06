@@ -99,11 +99,28 @@ import { logger } from "@/src/lib/logger";
  * How long to wait for Tenant.status.zitadelOrgID to appear. The Tenant CR is
  * now created asynchronously by the tenant-operator, which polls the daemon
  * pending-provisioning queue every ~15s (gibson#949), so the budget covers both
- * the operator-poll latency (CR creation) AND the saga's org-creation step.
- * Exceeding it is non-fatal — the client ProvisioningPanel keeps polling the
- * progress store and the user is emailed when the workspace is ready.
+ * the operator-poll latency (CR creation) AND the full provisioning saga.
+ * Exceeding it is non-fatal — the client ProvisioningPanel stays on the
+ * "still working" holding state and the user is emailed when the workspace is
+ * ready.
+ *
+ * Budget (dashboard#962): 240s. A second back-to-back tenant provision was
+ * observed at 2m25s CR→Ready on floor-sized staging (the saga's data-plane
+ * steps queue behind the first tenant's; the Neo4j step alone has a 2-minute
+ * operator-side timeout), plus ≤15s queue pickup ≈ 160s realistic worst case;
+ * the signup smoke's own saga budget is 180s. The previous 90s was tighter
+ * than real second-tenant latency and failed the signup while the tenant
+ * still reached Ready.
+ *
+ * Chain invariant (same failure class as deploy#1020): every HTTP hop above
+ * this wait must exceed the worst-case action duration (~255s = 240s wait +
+ * Stripe/owner-provisioning preamble). Envoy's app-vhost catch-all route
+ * timeout is 300s (deploy helm/gibson-workloads/files/envoy/envoy.yaml) and
+ * the staging NLB TCP idle timeout is a fixed 350s:
+ *   NLB 350s > Envoy 300s > action ~255s > TENANT_READY_TIMEOUT_MS 240s.
+ * If you raise this, raise the Envoy route timeout in the same change set.
  */
-const TENANT_READY_TIMEOUT_MS = 90_000;
+const TENANT_READY_TIMEOUT_MS = 240_000;
 const POLL_INTERVAL_MS = 1_000;
 
 /**
