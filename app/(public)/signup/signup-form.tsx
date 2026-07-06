@@ -75,6 +75,24 @@ import { ProvisioningPanel } from "./provisioning-panel";
 import { signupInputSchema, type SignupInput } from "./types";
 
 // ---------------------------------------------------------------------------
+// Non-fatal timeout codes
+// ---------------------------------------------------------------------------
+
+/**
+ * Timeout failure codes are NON-destructive (dashboard#962): by the time the
+ * server-side provisioning wait elapses, the Zitadel user, Stripe customer,
+ * trialing subscription, and Tenant CR all exist and typically finish
+ * provisioning seconds later. Treating them like hard failures (reset to the
+ * form + "try again" toast) poisons the retry — the workspace name is now
+ * WORKSPACE_TAKEN and the email a duplicate. Keep the ProvisioningPanel
+ * mounted instead; it reads terminalState "timeout" from the progress store
+ * and renders the "we'll email you" holding state with a sign-in link.
+ */
+function isNonFatalTimeout(code: string): boolean {
+  return code === "PROVISIONING_TIMEOUT" || code === "MEMBERSHIP_TIMEOUT";
+}
+
+// ---------------------------------------------------------------------------
 // Password strength meter
 // ---------------------------------------------------------------------------
 
@@ -522,9 +540,19 @@ function SignupFormInner({
           if (finished.ok && "redirect" in finished) {
             setRedirectOnSuccess(finished.redirect);
           } else if (!finished.ok) {
-            toast.error(finished.userMessage);
-            setAttemptId(null);
-            setIsProvisioning(false);
+            if (isNonFatalTimeout(finished.code)) {
+              // dashboard#962: the wait deadline elapsed but the account,
+              // subscription, and tenant all EXIST and are still
+              // provisioning. Keep the ProvisioningPanel mounted — it reads
+              // terminalState "timeout" from the progress store and shows
+              // the "we'll email you" holding state. Dropping back to the
+              // form here invited a retry against a half-provisioned
+              // workspace (WORKSPACE_TAKEN / duplicate email).
+            } else {
+              toast.error(finished.userMessage);
+              setAttemptId(null);
+              setIsProvisioning(false);
+            }
           }
         } else if (result.ok && "redirect" in result) {
           // Autoconfirm (kind dev; paid tiers disabled): provisioning ran
@@ -535,6 +563,16 @@ function SignupFormInner({
           setRedirectOnSuccess(result.redirect);
           // Panel sees terminalState=ok in Redis and follows redirect.
         } else if (!result.ok) {
+          if (isNonFatalTimeout(result.code)) {
+            // Autoconfirm path (no card): provisioning ran inline inside
+            // signupAction and hit the wait deadline, but the account and
+            // tenant exist and are still provisioning (dashboard#962). Show
+            // the panel so the user gets the "we'll email you" holding state
+            // instead of a destructive "try again".
+            setAttemptId(newAttemptId);
+            setIsProvisioning(true);
+            return;
+          }
           // signupAction failed before any card work. The form is still
           // mounted (we never switched to the panel), so surface the error in
           // place: a toast plus per-field errors so the user can correct and
