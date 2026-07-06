@@ -36,8 +36,15 @@ export async function SiteHeader() {
           <Lockup size="md" />
         </Link>
         <nav className="flex items-center gap-6 font-mono text-sm" aria-label="Primary">
+          {/* Docs live on the marketing host in SaaS (deploy#1033). An
+              app-relative /docs link gets RSC-prefetched by Next.js, and the
+              middleware 307 to www.<domain> kills that prefetch on CORS — a
+              guaranteed console error on every page with this nav
+              (dashboard#963). Link the canonical host directly, like pricing.
+              On self-hosted (marketingUrl null) the dashboard serves /docs
+              itself, so the relative link is correct there. */}
           <Link
-            href="/docs"
+            href={marketingUrl !== null ? `${marketingUrl}/docs` : "/docs"}
             className="text-foreground transition-colors hover:text-link"
           >
             docs
