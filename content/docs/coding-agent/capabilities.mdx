@@ -1,0 +1,112 @@
+---
+title: What zerocool adds
+description: The Gibson model provider, ambient knowledge, and the full tool list the coding agent gains once the host is enrolled, from findings and recall to Gibson tools, delegation, missions, and componentize.
+---
+
+Once the host is enrolled, opencode gains a model provider, an ambient
+knowledge block, and a set of tools. This page is what each one does and
+when the agent uses it.
+
+## The Gibson model provider
+
+The plugin starts a local OpenAI-compatible endpoint and registers a
+`gibson` provider that points at it. Pick a `gibson/<slot>` model and
+every completion goes through the Gibson harness.
+
+That means:
+
+- **Slots, not model names.** You select a role, and the tenant's slot
+  configuration decides the model behind it. An operator changes the
+  model once, for everyone.
+- **Budgets apply.** The spend counts against the tenant budget, the
+  same as any other component.
+- **Credentials stay on the platform.** There is no provider API key in
+  your shell or in your opencode config.
+- **Calls are traced.** The session appears in observability with the
+  rest of the tenant's work.
+
+## Ambient knowledge
+
+From the second turn of a session, the agent's system prompt carries a
+short block of relevant facts from the tenant knowledge graph. The
+plugin does one graph lookup per session and caches it, so it is cheap.
+
+The default query is "prior findings and security facts for this
+codebase". Override it with `ZEROCOOL_AMBIENT_QUERY` when you want the
+agent primed on something else.
+
+The block is deliberately small, because it is prompt overhead. For anything
+more specific, the agent uses the `recall` tool.
+
+## Tools
+
+### Findings and knowledge
+
+| Tool | What it does |
+|---|---|
+| `submit_finding` | Records a security finding in the tenant knowledge graph, with title, description, category, severity, confidence, and evidence. |
+| `recall` | Searches the tenant knowledge graph for prior findings, targets, and security facts. Filter by node type and limit the hits. |
+
+`submit_finding` is for real vulnerabilities, misconfigurations, and
+notable security facts. It is not a progress log. The plugin never emits
+a finding on its own: a file edit is not a security finding, and an
+invented one only adds noise a person then has to triage.
+
+### Gibson tools
+
+Every tool registered in your tenant is exposed as `gibson_<name>` and
+runs through the harness, authorized and metered.
+
+| Tool | What it does |
+|---|---|
+| `gibson_<name>` | One entry per discovered tool. The description carries the tool's own description and its input message type. |
+| `gibson_list_tools` | Lists the tools and plugins registered in the tenant, with versions and plugin methods. |
+| `gibson_call_tool` | Invokes a Gibson tool by name. Use it when you know the name but the tool is not in the list. |
+| `gibson_query_plugin` | Calls a method on a registered plugin. |
+
+Discovery is best-effort, so `gibson_call_tool` is always registered.
+Without it there would be no way to reach a tool whose name you already
+know.
+
+### Delegation and missions
+
+The coding agent is a member of the fleet, so it can hand work to the
+rest of it.
+
+| Tool | What it does |
+|---|---|
+| `gibson_list_agents` | Lists the agents in the tenant that work can go to. |
+| `gibson_delegate` | Hands a goal to another agent, with context, a turn cap, and an optional tool allowlist. |
+| `gibson_create_mission` | Creates a mission from a definition, bound to a target. It does not start it. |
+| `gibson_run_mission` | Queues a created mission. It returns as soon as the mission is queued. |
+| `gibson_mission_status` | Reads a mission's status, or blocks until the mission reaches a terminal state. |
+| `gibson_mission_results` | Reads the results of a finished mission. |
+| `gibson_cancel_mission` | Cancels a mission. |
+
+### Componentize
+
+| Tool | What it does |
+|---|---|
+| `gibson_componentize` | Turns a built artifact into a Gibson component manifest and writes it to disk. It validates the artifact against the component contract. It does not build or push an image. |
+| `gibson_enroll_component` | Registers a produced artifact with Gibson so it joins the tenant fleet. Run `gibson_componentize` first. |
+
+This closes the loop: the coding agent writes a tool, checks it against
+the contract, and enrolls it. The next session discovers it as a Gibson
+tool.
+
+## Standalone behaviour
+
+When the host is not enrolled, or the platform is unreachable, the agent
+keeps two tools:
+
+- `submit_finding`, writing to a local JSONL log instead of the graph
+  (`~/.zerocool/findings.jsonl` by default)
+- `gibson_componentize`, which needs no platform
+
+Everything else is absent, and opencode is otherwise unchanged.
+
+## Related
+
+- [Set up the coding agent](/docs/coding-agent/setup)
+- [Missions](/docs/missions) and [Tools](/docs/tools)
+- [Knowledge graph](/docs/knowledge-graph)

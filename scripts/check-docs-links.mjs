@@ -40,17 +40,23 @@ const SCAN_DIR = join(ROOT, "content", "docs");
 // Match Markdown links pointing at absolute /docs/ slugs:
 //   [label](/docs/slug)
 //   [label](/docs/slug#anchor)
+//   [label](/docs/folder/slug)
 // Absolute paths are required because Next.js's Link component does not
 // resolve relative hrefs (`./slug`) the way a plain <a> tag would -
 // `<Link href="./ontology">` clicked from /docs/first-agent does NOT
 // navigate to /docs/ontology. See dashboard#97 follow-up sweep.
-const LINK_RE = /\[[^\]]+\]\(\/docs\/([a-z0-9-]+)(#[a-z0-9-]+)?\)/g;
+//
+// The slug is multi-segment: `content/docs/` holds folder sections
+// (e.g. `coding-agent/`) whose pages render at `/docs/<folder>/<page>`.
+// A single-segment pattern would silently skip every such link instead
+// of validating it.
+const LINK_RE = /\[[^\]]+\]\(\/docs\/([a-z0-9-]+(?:\/[a-z0-9-]+)*)(#[a-z0-9-]+)?\)/g;
 
 // Regression guard: relative `./slug` references inside docs MDX render
 // as `<a href="./slug">` which Next.js's client-side router refuses to
 // navigate. We forbid them entirely and the absolute /docs/ form above
 // is the canonical pattern.
-const FORBIDDEN_RELATIVE_RE = /\[[^\]]+\]\(\.\/[a-z0-9-]+/g;
+const FORBIDDEN_RELATIVE_RE = /\[[^\]]+\]\(\.\/[a-z0-9-]+(?:\/[a-z0-9-]+)*/g;
 
 // Headings, capture top-level Markdown headings (any level) and slugify
 // them the way fumadocs / GitHub renders anchors: lower-case, strip
@@ -77,9 +83,22 @@ function* walkMdx(dir) {
   }
 }
 
+// Resolve a /docs/ slug to the MDX file that renders it, or null.
+// A folder section is addressed by its own slug (`/docs/coding-agent`),
+// which fumadocs renders from `<folder>/index.mdx`.
+function resolveTarget(slug) {
+  for (const candidate of [
+    join(SCAN_DIR, `${slug}.mdx`),
+    join(SCAN_DIR, slug, "index.mdx"),
+  ]) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
 function pageAnchors(targetSlug) {
-  const targetPath = join(SCAN_DIR, `${targetSlug}.mdx`);
-  if (!existsSync(targetPath)) return null;
+  const targetPath = resolveTarget(targetSlug);
+  if (!targetPath) return null;
   const content = readFileSync(targetPath, "utf8");
   const anchors = new Set();
   for (const m of content.matchAll(HEADING_RE)) {
@@ -115,8 +134,7 @@ function scan() {
         const slug = m[1];
         const anchor = m[2] ? m[2].slice(1) : null;
 
-        const targetPath = join(SCAN_DIR, `${slug}.mdx`);
-        if (!existsSync(targetPath)) {
+        if (!resolveTarget(slug)) {
           broken.push({
             file: relative(ROOT, file),
             line: i + 1,
@@ -150,6 +168,7 @@ function selftest() {
   const tempBadSlug = join(SCAN_DIR, "__selftest_bad_slug__.mdx");
   const tempBadAnchor = join(SCAN_DIR, "__selftest_bad_anchor__.mdx");
   const tempRelative = join(SCAN_DIR, "__selftest_relative__.mdx");
+  const tempNested = join(SCAN_DIR, "__selftest_nested__.mdx");
   writeFileSync(
     tempBadSlug,
     "See [the missing page](/docs/this-slug-does-not-exist).\n",
@@ -161,6 +180,10 @@ function selftest() {
   writeFileSync(
     tempRelative,
     "See [relative form](./install), should be forbidden.\n",
+  );
+  writeFileSync(
+    tempNested,
+    "See [missing folder page](/docs/selftest-folder/missing-page).\n",
   );
   try {
     const broken = scan();
@@ -187,11 +210,21 @@ function selftest() {
       console.error("✗ selftest FAILED: scanner did not catch relative ./slug form");
       process.exit(1);
     }
-    console.log("✓ selftest passed (scanner catches missing slug + missing anchor + forbidden relative form)");
+    const nestedMiss = broken.find(
+      (b) => b.file.endsWith("__selftest_nested__.mdx") && /does not exist/.test(b.reason),
+    );
+    if (!nestedMiss) {
+      console.error("✗ selftest FAILED: scanner did not catch missing folder-section page");
+      process.exit(1);
+    }
+    console.log(
+      "✓ selftest passed (scanner catches missing slug + missing anchor + forbidden relative form + missing folder-section page)",
+    );
   } finally {
     if (existsSync(tempBadSlug)) unlinkSync(tempBadSlug);
     if (existsSync(tempBadAnchor)) unlinkSync(tempBadAnchor);
     if (existsSync(tempRelative)) unlinkSync(tempRelative);
+    if (existsSync(tempNested)) unlinkSync(tempNested);
   }
 }
 
