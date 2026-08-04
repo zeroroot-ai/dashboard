@@ -41,9 +41,14 @@ if (typeof window !== "undefined") {
     }
   ).MonacoEnvironment = {
     getWorker(_moduleId: string, _label: string): Worker {
+      // monaco-editor 0.56 added an `exports` map that rewrites every
+      // subpath as `./esm/vs/*.js`, so the old deep specifier
+      // ("monaco-editor/esm/vs/editor/editor.worker") now resolves to a
+      // doubled `esm/vs/esm/vs/...` path and fails. The supported form is
+      // the subpath relative to `esm/vs/`.
       return new Worker(
         new URL(
-          "monaco-editor/esm/vs/editor/editor.worker",
+          "monaco-editor/editor/editor.worker.js",
           import.meta.url
         )
       );
