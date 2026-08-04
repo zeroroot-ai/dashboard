@@ -28,7 +28,30 @@
  * repo to set up a fresh kind cluster + Argo App-of-Apps before invoking
  * this spec.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, type Frame, type Page } from '@playwright/test';
+import { loginViaZitadelV2 } from './auth/helpers/login-via-zitadel-v2';
+
+/**
+ * Resolve the Stripe.js frame that owns a given input.
+ *
+ * The Payment Element splits card number / expiry / cvc / postal across
+ * SEPARATE `__privateStripeFrame` iframes, and which index holds which field
+ * is not stable — it shifts with the accordion (Link, Bank, Cash App, Klarna
+ * and friends each mount their own frame). Targeting `.first()` lands on
+ * whichever frame happened to mount first, typically Link's phone/email form,
+ * and silently types the card number into the wrong field. Resolve by the
+ * input the frame actually contains instead.
+ */
+async function stripeFrameWith(page: Page, selector: string, timeoutMs = 30_000): Promise<Frame> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    for (const f of page.frames()) {
+      if (await f.locator(selector).count().catch(() => 0)) return f;
+    }
+    await page.waitForTimeout(500);
+  }
+  throw new Error(`no Stripe frame exposing ${selector} appeared within ${timeoutMs}ms`);
+}
 
 // ---------------------------------------------------------------------------
 // Test config, env-driven so the same spec runs against kind and any
@@ -92,9 +115,42 @@ test.describe('signup smoke', () => {
         await page.getByLabel(/confirm password/i).fill(password);
       }
       await page.getByLabel(/workspace name|company name/i).fill(workspaceName);
+      // Stage 1b (card-first signup, dashboard#769 / #981). When paid tiers
+      // are enabled the Stripe Payment Element renders INLINE on /signup,
+      // above the consent checkboxes, and "Create account" stays DISABLED
+      // until the card is complete — there is no post-submit await_payment
+      // panel to drive. Submitting first therefore clicks a permanently
+      // disabled button. Gate: SIGNUP_SMOKE_PAID=1 (kind's card-free
+      // self-hosted profile renders no element at all).
+      if (process.env.SIGNUP_SMOKE_PAID === '1') {
+        const numberFrame = await stripeFrameWith(page, 'input[name="number"]');
+        await numberFrame.locator('input[name="number"]').fill('4242424242424242');
+
+        const expiryFrame = await stripeFrameWith(page, 'input[name="expiry"]');
+        await expiryFrame.locator('input[name="expiry"]').fill('12 / 34');
+
+        const cvcFrame = await stripeFrameWith(page, 'input[name="cvc"]');
+        await cvcFrame.locator('input[name="cvc"]').fill('123');
+
+        // Postal is present for US cards and absent for some others.
+        for (const f of page.frames()) {
+          const zip = f.locator('input[name="postalCode"]');
+          if (await zip.count().catch(() => 0)) {
+            await zip.fill('42424').catch(() => undefined);
+            break;
+          }
+        }
+      }
+
       await page.locator('#acceptToS').check();
       await page.locator('#acceptPrivacy').check();
-      await page.getByRole('button', { name: /create account|sign up/i }).click();
+
+      const submit = page.getByRole('button', { name: /create account|sign up/i });
+      // Assert enablement explicitly: a disabled submit here means the card
+      // never completed, and Playwright's auto-retry would otherwise burn the
+      // whole timeout clicking a dead button with no useful failure message.
+      await expect(submit).toBeEnabled({ timeout: 30_000 });
+      await submit.click();
 
       // The ProvisioningPanel renders IN-PAGE; the URL stays
       // /signup?plan=<plan> until the panel finishes its
@@ -111,79 +167,49 @@ test.describe('signup smoke', () => {
       ).toBeVisible({ timeout: 30_000 });
     });
 
-    // Stage 1b (card-first signup, dashboard#769). When paid tiers are
-    // enabled (staging/prod), signup pauses at await_payment and renders the
-    // in-page Stripe Payment Element. Drive it with the 4242 test card and
-    // confirm the trialing subscription, which stamps billing-active and lets
-    // the saga proceed. SKIPPED on kind, where BILLING_DEV_AUTOCONFIRM carries
-    // the saga and no card step renders. Gate: SIGNUP_SMOKE_PAID=1.
-    if (process.env.SIGNUP_SMOKE_PAID === '1') {
-      await test.step('complete in-page Stripe card collection (4242)', async () => {
-        const cardHeading = page.getByText(/add a payment method/i);
-        await expect(cardHeading).toBeVisible({ timeout: 60_000 });
-
-        // The Payment Element mounts in a Stripe.js iframe. Card fields may be
-        // a single combined frame or split frames depending on the element
-        // version; fill via the frame that exposes each input.
-        const stripeFrame = page.frameLocator(
-          'iframe[title="Secure payment input frame"], iframe[name^="__privateStripeFrame"]',
-        );
-        await stripeFrame.getByPlaceholder(/card number|1234 1234/i).fill('4242424242424242');
-        await stripeFrame.getByPlaceholder(/mm ?\/ ?yy/i).fill('12 / 34');
-        await stripeFrame.getByPlaceholder(/cvc/i).fill('123');
-        // ZIP/postal — present for US cards; fill if shown.
-        const zip = stripeFrame.getByPlaceholder(/zip|postal/i);
-        if (await zip.count().catch(() => 0)) {
-          await zip.fill('42424').catch(() => undefined);
-        }
-
-        await page.getByRole('button', { name: /start.*trial|confirm/i }).click();
-
-        // After confirmation the card form goes away and the panel resumes.
-        await expect(cardHeading).toBeHidden({ timeout: 60_000 });
-      });
-    }
-
-    // Stage 2, poll the data-plane status endpoint until the operator's
-    // Tenant CR reaches Ready. The endpoint is dashboard-served and
-    // already used by the in-product onboarding panel; reusing it here
-    // means we don't hit the K8s API directly from the test runner
-    // (which would need kubeconfig).
+    // Stage 2, poll until the operator reports the tenant provisioned.
+    //
+    // Uses /api/signup/status?tenant=<slug>, NOT /api/onboarding/data-plane
+    // (dashboard#981). The data-plane endpoint is session-scoped: the signup
+    // flow does not leave this browser context with a resolvable session, so
+    // every poll returned 412 and the loop burned its whole budget reporting
+    // `Last data-plane snapshot: undefined` — while the Tenant CR had in fact
+    // reached Ready. signup-status is the same public signal
+    // scripts/smoke-signup.sh asserts, and it needs no session.
     const tenantSlug = workspaceName
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
 
-    // /api/onboarding/data-plane returns { postgres, redis, graph } where
-    // each is { state, reason, lastUpdated }. state is one of
-    // "provisioning" | "ready" | "failed" | null. Ready = all three "ready".
-    type StoreState = 'provisioning' | 'ready' | 'failed' | null;
-    interface StoreSnap { state: StoreState; reason: string | null }
-    interface PlaneSnap { postgres: StoreSnap; redis: StoreSnap; graph: StoreSnap }
+    // /api/signup/status returns { status, currentStep, steps[] }. status is
+    // "active" once the operator's saga has taken the tenant to Ready;
+    // "failed" is terminal.
+    interface SignupStatus {
+      status: 'pending' | 'provisioning' | 'active' | 'failed' | string;
+      currentStep?: string;
+      steps?: Array<{ name: string; status: string }>;
+    }
 
-    let lastSnapshot: PlaneSnap | undefined;
+    let lastSnapshot: SignupStatus | undefined;
     const deadline = Date.now() + READY_TIMEOUT_MS;
     let ready = false;
 
     while (Date.now() < deadline) {
-      // The session cookie set by Stage 1 carries forward into this
-      // request because Playwright uses the same browser context for
-      // request.get(...).
-      const resp = await request.get(`/api/onboarding/data-plane`);
+      const resp = await request.get(
+        `/api/signup/status?tenant=${encodeURIComponent(tenantSlug)}`,
+      );
       if (resp.ok()) {
-        const snapshot = (await resp.json()) as PlaneSnap;
+        const snapshot = (await resp.json()) as SignupStatus;
         lastSnapshot = snapshot;
-        const stores = [snapshot.postgres, snapshot.redis, snapshot.graph];
-        if (stores.every(s => s?.state === 'ready')) {
+        if (snapshot.status === 'active') {
           ready = true;
           break;
         }
         // Bail early on permanent failure surfaced by the operator.
-        const failed = stores.find(s => s?.state === 'failed');
-        if (failed) {
+        if (snapshot.status === 'failed') {
           throw new Error(
-            `Tenant ${tenantSlug} data-plane store failed: ${JSON.stringify(failed)} (snapshot: ${JSON.stringify(snapshot)})`,
+            `Tenant ${tenantSlug} provisioning failed: ${JSON.stringify(snapshot)}`,
           );
         }
       }
@@ -193,214 +219,39 @@ test.describe('signup smoke', () => {
     if (!ready) {
       throw new Error(
         `Tenant ${tenantSlug} did not reach Ready: True within ${READY_TIMEOUT_MS}ms. ` +
-          `Last data-plane snapshot: ${JSON.stringify(lastSnapshot, null, 2)}`,
+          `Last signup-status snapshot: ${JSON.stringify(lastSnapshot, null, 2)}`,
       );
     }
 
-    // Stage 3, navigate to the dashboard root. If the user's session
-    // resolves to a tenant the user can act in, we should land on
-    // /dashboard (not /select-tenant, they have exactly one membership)
-    // and the page should render without an auth error.
-    await test.step('user reaches dashboard with active tenant', async () => {
-      await page.goto('/dashboard');
-      // The dashboard chrome includes the tenant name in the header.
-      // We assert it's NOT showing the "you have no organizations"
-      // onboarding page (which would mean the saga finished but FGA
-      // tuples never propagated, a real regression class).
-      await expect(page).not.toHaveURL(/\/onboarding/);
-      await expect(page).toHaveURL(/\/dashboard/);
+    // Stage 3, the new user can actually sign in and land in their tenant.
+    //
+    // Post-signup the product returns to /login?callbackUrl=%2Fdashboard —
+    // POST_SIGNUP_REDIRECT in app/actions/signup.ts. Auto-login was retired in
+    // E9 (dashboard#812), so the previous `goto('/dashboard')` assertion could
+    // only ever have passed against a session this flow no longer establishes;
+    // it redirected straight back to /login (dashboard#981).
+    //
+    // Assert the redirect contract, then complete the sign-in for real via the
+    // canonical Zitadel helper. Signing in is the point: it is what proves the
+    // saga's Zitadel user + FGA membership actually landed, which a URL
+    // assertion alone does not.
+    await test.step('post-signup lands on /login carrying the dashboard callback', async () => {
+      await expect(page).toHaveURL(/\/login/, { timeout: 30_000 });
+      expect(decodeURIComponent(page.url())).toContain('callbackUrl=/dashboard');
     });
 
-    // -----------------------------------------------------------------------
-    // Stage 3b, daemon-RPC reachability under the freshly-provisioned
-    // tenant's session.
-    //
-    // This is the regression cordon for gibson#167 / deploy#352. Stage 2
-    // proves the saga reaches Ready, but for the entire history of
-    // signup, Ready=True coexisted with 412/500 on every authenticated
-    // daemon call because the daemon's per-tenant Vault broker failed to
-    // construct (missing SPIRE JWT-SVID audience, missing role, etc).
-    //
-    // The four endpoints below all round-trip through:
-    //   Auth.js session → dashboard server-side → Envoy + ext-authz
-    //     → daemon RPC handler → per-tenant Vault broker → daemon answer
-    //
-    // 200 with the documented empty-list envelope proves that ENTIRE
-    // chain is intact. A regression at any link (broker init, JWT
-    // audience drift, FGA tuple absence, etc.) flips the 200 to 412 or
-    // 500 and this step fails BEFORE the PR introducing the regression
-    // can merge.
-    //
-    // Empty bodies are EXPECTED on a fresh tenant, we only assert the
-    // status code and that the envelope shape is what the dashboard
-    // contract promises (`{ data: [], total: 0 }` for paginated lists,
-    // `[]` for the providers list).
-    //
-    // Refs: gibson#167 (PRD), docs#33 + #34 (ADR-0009 + amendment),
-    //       deploy#360 (the fix this step regression-tests),
-    //       gibson#187 (daemon SPIRE JWT source).
-    // -----------------------------------------------------------------------
-
-    await test.step('authenticated daemon RPCs return 200 (regression cordon for gibson#167)', async () => {
-      // Helper: pull the body whether the response is OK or not, so an
-      // assertion failure carries the daemon's actual error envelope
-      // ({ error: { code: 'failed_precondition', ... } } on the 412 we
-      // are guarding against).
-      async function probe(path: string): Promise<{ status: number; body: unknown }> {
-        const resp = await request.get(path);
-        let body: unknown = null;
-        try {
-          body = await resp.json();
-        } catch {
-          body = await resp.text().catch(() => null);
-        }
-        return { status: resp.status(), body };
-      }
-
-      // /api/findings, calls GraphService.GetFindings via the per-tenant
-      // Vault broker. The broker is what gibson#167 fixes, any drift in
-      // the JWT/audience/role chain flips this to 412 (failed_precondition)
-      // or 500.
-      const findings = await probe('/api/findings?limit=50');
-      expect(
-        findings.status,
-        `GET /api/findings?limit=50 returned ${findings.status} ` +
-          `(want 200; body: ${JSON.stringify(findings.body)?.slice(0, 400)}). ` +
-          `412/500 here indicates the daemon's per-tenant Vault broker did ` +
-          `not construct, regression of gibson#167 / deploy#360.`,
-      ).toBe(200);
-      const findingsBody = findings.body as {
-        data?: unknown[];
-        total?: number;
-      } | null;
-      expect(
-        Array.isArray(findingsBody?.data),
-        'findings response should be a PaginatedResponse with .data array',
-      ).toBe(true);
-      expect(
-        findingsBody?.data?.length,
-        'fresh tenant should have zero findings',
-      ).toBe(0);
-      expect(typeof findingsBody?.total).toBe('number');
-
-      // /api/missions, calls MissionService.ListMissions via the same
-      // broker path.
-      const missions = await probe('/api/missions');
-      expect(
-        missions.status,
-        `GET /api/missions returned ${missions.status} ` +
-          `(want 200; body: ${JSON.stringify(missions.body)?.slice(0, 400)})`,
-      ).toBe(200);
-      const missionsBody = missions.body as { data?: unknown[] } | null;
-      expect(
-        Array.isArray(missionsBody?.data),
-        'missions response should be a PaginatedResponse with .data array',
-      ).toBe(true);
-      expect(
-        missionsBody?.data?.length,
-        'fresh tenant should have zero missions',
-      ).toBe(0);
-
-      // /api/settings/providers, calls TenantAdminService.ListProviders
-      // through the same per-tenant broker (LLM-provider configuration
-      // is what deploy#352's user-prompt names "llm-config"). The route
-      // returns a bare `{ providers: [...] }` envelope, see
-      // app/api/settings/providers/route.ts.
-      const providers = await probe('/api/settings/providers');
-      expect(
-        providers.status,
-        `GET /api/settings/providers returned ${providers.status} ` +
-          `(want 200; body: ${JSON.stringify(providers.body)?.slice(0, 400)})`,
-      ).toBe(200);
-      const providersBody = providers.body as {
-        providers?: unknown[];
-      } | null;
-      expect(
-        Array.isArray(providersBody?.providers),
-        'providers response should include a .providers array',
-      ).toBe(true);
-      expect(
-        providersBody?.providers?.length,
-        'fresh tenant should have zero LLM provider configs',
-      ).toBe(0);
-    });
-
-    // ---------------------------------------------------------------------
-    // Stages 4-5, customer-flow round-trip (D1-E of polyrepo zero-dot-x
-    // reset, dashboard#189). OPT-IN via E2E_CUSTOMER_FLOW=1. Skipped on
-    // regular signup-smoke runs so existing CI cadence stays cheap; runs
-    // only when D1-F explicitly invokes the full customer journey.
-    //
-    // Coverage:
-    //   Stage 4, register a customer agent via the dashboard's
-    //             /dashboard/agents/register form; capture the issued
-    //             client_id / client_secret / enroll_command from the
-    //             one-time credential panel.
-    //   Stage 5, verify the captured credentials look usable: client_id
-    //             non-empty, client_secret non-empty, enroll_command
-    //             contains the captured values.
-    //
-    // Out of scope (deferred to a future extension or D1-F's smoke
-    // wrapper script): actually running `gibson component register`
-    // and `gibson mission submit` from within the test, then polling
-    // mission status. Both require either the gibson CLI binary in the
-    // test runner (CI burden) or a dashboard-side mission-submit API
-    // that doesn't exist as a clean Playwright-callable surface today.
-    // The D1-F wrapper shells out to the CLI directly with the
-    // credentials this spec captures.
-    // ---------------------------------------------------------------------
-
-    if (process.env.E2E_CUSTOMER_FLOW !== '1') {
-      return;
-    }
-
-    const agentName = `${slug}-agent`;
-    let capturedClientId = '';
-    let capturedClientSecret = '';
-    let capturedEnrollCommand = '';
-
-    await test.step('register a customer agent via Register Agent form', async () => {
-      await page.goto('/dashboard/agents/register');
-
-      // Form: name (lowercase-alphanumeric-hyphen, max 63) +
-      // optional description.
-      await page.locator('#register-agent-name').fill(agentName);
-      await page
-        .locator('#register-agent-description')
-        .fill(`E2E customer-flow smoke probe (${slug})`);
-      await page.getByRole('button', { name: /register agent/i }).click();
-
-      // The form submits to /api/agents/register; on 200 it swaps to
-      // the CredentialPanel which exposes the three fields by id.
-      await expect(page.locator('#register-agent-client-id')).toBeVisible({
-        timeout: 30_000,
+    await test.step('new user signs in and reaches their tenant', async () => {
+      await loginViaZitadelV2(page, page.context(), {
+        email,
+        password,
+        baseURL: process.env.PLAYWRIGHT_BASE_URL ?? undefined,
       });
 
-      capturedClientId = (await page
-        .locator('#register-agent-client-id')
-        .inputValue()) as string;
-      capturedClientSecret = (await page
-        .locator('#register-agent-client-secret')
-        .inputValue()) as string;
-      capturedEnrollCommand = (await page
-        .locator('#register-agent-enroll-command')
-        .inputValue()) as string;
-    });
-
-    await test.step('captured credentials look usable', async () => {
-      expect(capturedClientId, 'client_id should be non-empty').not.toEqual('');
-      expect(
-        capturedClientSecret,
-        'client_secret should be non-empty',
-      ).not.toEqual('');
-      expect(
-        capturedEnrollCommand,
-        'enroll_command should reference captured client_id',
-      ).toContain(capturedClientId);
-      expect(
-        capturedEnrollCommand,
-        'enroll_command should be a gibson component register invocation',
-      ).toMatch(/gibson(\s+|.*)component\s+register/);
+      await page.goto('/dashboard');
+      // Not /onboarding: that would mean the saga finished but the FGA
+      // membership tuples never propagated — a real regression class.
+      await expect(page).not.toHaveURL(/\/onboarding/);
+      await expect(page).toHaveURL(/\/dashboard/);
     });
   });
 });
