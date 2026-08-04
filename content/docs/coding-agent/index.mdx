@@ -1,0 +1,67 @@
+---
+title: Coding agent
+description: Zerocool is the Gibson coding agent, a set of opencode plugins that give your editor the harness, the tenant knowledge graph, Gibson tools, findings, and delegation.
+---
+
+**Zerocool** is the Gibson coding agent. It is not a separate editor.
+It is a set of plugins for [opencode](https://opencode.ai). You install a
+plugin, and opencode becomes a member of your tenant's fleet.
+
+An unenrolled coding agent is a private tool. It reads your code, it
+answers, and everything it learns is lost when you close the terminal.
+An enrolled coding agent works inside your tenant. It reads what earlier
+runs recorded, it writes what it finds back to the knowledge graph, and
+it delegates work to the other agents in the fleet.
+
+## What you get
+
+| Capability | What it does |
+|---|---|
+| **LLM through the harness** | Completions go through Gibson. You get slots, budgets, per-tenant provider credentials, and tracing. There is no API key in your shell. |
+| **Knowledge graph** | The agent reads prior findings, targets, and security facts for the codebase before it starts, and you can query the graph directly with `recall`. |
+| **Findings** | The agent records real vulnerabilities into the tenant World, where the dashboard and every other agent can see them. |
+| **Gibson tools** | Every tool and plugin registered in your tenant becomes an opencode tool, run through the harness (authorized and metered). |
+| **Delegation and missions** | The agent hands work to other agents in the fleet, and creates, runs, and reads Gibson missions. |
+| **Componentize** | The agent turns an artifact it built into a Gibson component and enrolls it into the fleet. |
+
+See [What zerocool adds](/docs/coding-agent/capabilities) for the detail.
+
+## The packages
+
+All three plugins build on `@zerocool/sdk`, the framework-agnostic
+TypeScript Gibson SDK. They share one Gibson session, so they
+authenticate once, no matter how many you install.
+
+| Package | What it does | When to install it |
+|---|---|---|
+| **`@zerocool/opencode-gibson`** | The main plugin. Check-in, LLM through the harness, tools, findings, knowledge, delegation. | Always. One install, most of the value. |
+| **`@zerocool/opencode-gibson-exec`** | Runs execution in a setec Devbox instead of on your workstation. | Opt-in. It changes where your code runs. |
+| **`@zerocool/opencode-gibson-sessions`** | Mirrors local session context into the daemon store. | Opt-in. It changes where your state lives. |
+
+The rest of this section is about the main plugin.
+
+## It fails open
+
+A coding agent that cannot reach its platform must still be a coding
+agent. If Gibson is unreachable, or the host is not enrolled, the plugin
+does not refuse to start. It degrades to standalone behaviour: opencode
+works as usual, findings go to a local log file, and the componentize
+tool still works, because a manifest needs no platform.
+
+You will see one line on stderr that tells you which mode you are in.
+
+## Enrollment is human, once
+
+A person enrolls the host one time, in a browser. Every start after that
+is unattended. There is no non-interactive path to the first check-in,
+and that is the platform's design, not a limitation: a coding agent
+joins a tenant's fleet on a person's authority.
+
+Go to [Set up the coding agent](/docs/coding-agent/setup).
+
+## Related
+
+- [Component bootstrap & auth](/docs/component-bootstrap), the identity
+  model every Gibson component shares
+- [Knowledge graph](/docs/knowledge-graph), what `recall` searches
+- [Findings](/docs/findings), what `submit_finding` writes

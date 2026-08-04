@@ -1,0 +1,120 @@
+---
+title: Set up the coding agent
+description: Install the zerocool plugin into opencode, enroll the host once in a browser, spend the one-time bootstrap token on the first start, then run unattended.
+---
+
+This page takes you from an empty workstation to an enrolled coding
+agent. Steps 2 and 3 need a person. Every start after that needs nobody.
+
+## Prerequisites
+
+| Tool | Why |
+|---|---|
+| **opencode** | The editor the plugin extends. See [opencode.ai](https://opencode.ai) to install it. |
+| **`gibson`** | Sign in and mint the enrollment token. See [Install](/docs/install). |
+| **Node 22 or later, and `pnpm` 10** | Build the plugin. The repo pins the pnpm version. |
+| **A Gibson tenant you are a member of** | Enrollment fails if your account is not an active member. |
+
+## 1. Install the plugin
+
+Build the plugin from source:
+
+```bash
+git clone https://github.com/zeroroot-ai/zerocool-plugins.git
+cd zerocool-plugins
+pnpm install
+pnpm build
+```
+
+Then point opencode at the build. opencode loads any TypeScript file in
+`.opencode/plugin/` in your project, so a one-line re-export is enough.
+Use the absolute path to your clone:
+
+```bash
+mkdir -p .opencode/plugin
+cat > .opencode/plugin/zerocool.ts <<'EOF'
+export { GibsonPlugin } from "/absolute/path/to/zerocool-plugins/packages/opencode-gibson/dist/index.js"
+EOF
+```
+
+Put the same file in `~/.config/opencode/plugin/` instead if you want
+the plugin in every project. It then loads in every opencode session, so
+prefer the project-level file while you evaluate it.
+
+## 2. Sign in as yourself
+
+```bash
+gibson login --gibson-url https://api.zeroroot.ai
+```
+
+The CLI prints a URL and a short code, for example `PXJT-TJDQ`. Open the
+URL, sign in, and confirm the code. This is the OAuth 2.0 device flow,
+the same one [Getting started](/docs/getting-started) uses.
+
+## 3. Mint the one-time token
+
+```bash
+gibson agent enroll --name zerocool
+```
+
+This prints a **bootstrap token**. It is shown once, it expires in 24
+hours, and it is consumed by the first check-in. Copy it now.
+
+## 4. First start, with the token
+
+Start opencode once with the token in the environment:
+
+```bash
+GIBSON_PLATFORM_URL=https://api.zeroroot.ai \
+GIBSON_BOOTSTRAP_TOKEN=<token from step 3> \
+opencode
+```
+
+On success, stderr shows:
+
+```text
+[zerocool] Gibson connected via first check-in (component_scope=...); provider "gibson" auto-configured at http://127.0.0.1:8787 ...
+[zerocool] Host key written to /home/you/.zerocool/host.key. The bootstrap token is spent ...
+[zerocool] N Gibson tool(s) registered
+```
+
+The full lines also tell you to select a `gibson/<slot>` model and to
+unset `GIBSON_BOOTSTRAP_TOKEN`. Do both: the model selection routes
+completions through the harness, and the token is now useless.
+
+## 5. Every start after
+
+Drop the token. It is spent.
+
+```bash
+GIBSON_PLATFORM_URL=https://api.zeroroot.ai opencode
+```
+
+Now stderr says **connected via the registered host key**. That is the
+unattended path, and it is the one you use from here on.
+
+The plugin decides which path to take from the host key file, not from
+the environment. If `~/.zerocool/host.key` exists, the plugin ignores
+`GIBSON_BOOTSTRAP_TOKEN` completely. A one-time token replayed on every
+start would be rejected anyway, and it would mean keeping a spent
+credential in your environment forever.
+
+## What the first check-in does
+
+| Step | What happens |
+|---|---|
+| **Handshake** | The plugin exchanges the bootstrap token for a capability grant and registers `zerocool` as a component of your tenant. |
+| **Host key** | A persistent key is written to `~/.zerocool/host.key`. It identifies this install. |
+| **Heartbeat** | The component reports itself as live for as long as the session runs. |
+| **Shim** | A local OpenAI-compatible endpoint starts on port 8787 and forwards to the harness. |
+| **Provider** | The plugin adds a `gibson` provider to the opencode config at load time. You configure nothing. |
+| **Discovery** | The plugin reads the tenant registry once and registers each Gibson tool as an opencode tool. |
+
+Tool discovery runs once, at load. opencode reads the tool list as a
+static set, so a tool registered in your tenant mid-session does not
+reach the model. Restart opencode after you enroll new tools.
+
+## Related
+
+- [Configuration & troubleshooting](/docs/coding-agent/reference)
+- [Component bootstrap & auth](/docs/component-bootstrap)
