@@ -49,15 +49,15 @@ jobs:
       # artifact instead (gibson#974). Restore the upload (and this permission)
       # when the repo goes public, where code scanning is free.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4.37.3
         with:
           languages: javascript-typescript
           queries: security-extended
           config-file: .github/codeql-config.yml
 
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4.37.3
         with:
           # Run the analysis but do NOT upload to the code-scanning API — that
           # upload needs paid GHAS on a private repo (gibson#974). Write the
@@ -67,7 +67,7 @@ jobs:
 
       - name: Upload CodeQL SARIF artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: codeql-sarif-typescript
           path: codeql-results
