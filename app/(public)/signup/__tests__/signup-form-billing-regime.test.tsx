@@ -134,7 +134,6 @@ vi.mock('@/src/lib/server-action-skew', () => ({
 // ---------------------------------------------------------------------------
 
 import { SignupForm } from '../signup-form';
-import { DEFAULT_PASSWORD_POLICY } from '@/src/lib/zitadel/password-policy-cache';
 
 import { useStripe, useElements, Elements } from '@stripe/react-stripe-js';
 
@@ -145,8 +144,6 @@ import { useStripe, useElements, Elements } from '@stripe/react-stripe-js';
 const BASE_PROPS = {
   plan: 'team',
   planDisplayName: 'Team',
-  passwordPolicy: DEFAULT_PASSWORD_POLICY,
-  publishableKey: 'pk_test_placeholder',
   pricingUrl: 'https://www.zeroroot.ai/pricing',
   // termsUrl / privacyUrl default to SaaS values in the base fixture.
   // Tests that exercise the self-hosted (null) path override these explicitly.
@@ -224,13 +221,11 @@ describe('SignupForm — card-free profile (billingEnabled=false)', () => {
     ).not.toThrow();
   });
 
-  it('A.0b: billing enabled but publishable key empty (no <Elements>) also renders without a Stripe hook call', () => {
-    // stripePromise is null when the key is empty even with billing on —
-    // this path must also avoid the hooks.
+  it('A.0b: billing enabled also renders without a Stripe hook call', () => {
+    // Step one never mounts Stripe on ANY profile now — the card moved behind
+    // verification — so neither regime may reach the hooks.
     expect(() =>
-      render(
-        <SignupForm {...BASE_PROPS} publishableKey="" billingEnabled={true} />,
-      ),
+      render(<SignupForm {...BASE_PROPS} billingEnabled={true} />),
     ).not.toThrow();
   });
 
@@ -257,12 +252,14 @@ describe('SignupForm — card-free profile (billingEnabled=false)', () => {
     expect(screen.queryByText(/14-day free trial/i)).toBeNull();
   });
 
-  it('A.5: renders the core account fields (email, password, workspace)', () => {
+  it('A.5: renders the core account fields, and NO password field', () => {
     render(<SignupForm {...BASE_PROPS} billingEnabled={false} />);
     expect(screen.getByLabelText(/work email/i)).toBeDefined();
-    // Two password fields exist (Password + Confirm password); use getAllBy.
-    expect(screen.getAllByLabelText(/password/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByLabelText(/company name/i)).toBeDefined();
+    // The password moved to /signup/complete. Collecting it here would mean
+    // holding a credential across the mail round-trip for an address nobody
+    // had yet proven they control.
+    expect(screen.queryAllByLabelText(/password/i)).toHaveLength(0);
   });
 
   it('A.6: renders the first/last name fields', () => {
@@ -277,9 +274,11 @@ describe('SignupForm — card-free profile (billingEnabled=false)', () => {
     expect(screen.getByLabelText(/privacy policy/i)).toBeDefined();
   });
 
-  it('A.8: renders the "Create account" submit button', () => {
+  it('A.8: renders the "Continue" submit button', () => {
     render(<SignupForm {...BASE_PROPS} billingEnabled={false} />);
-    expect(screen.getByRole('button', { name: /create account/i })).toBeDefined();
+    // Not "Create account": submitting sends a verification message and
+    // creates nothing.
+    expect(screen.getByRole('button', { name: /continue/i })).toBeDefined();
   });
 
   it('A.9: renders the "Sign in" link back to /login', () => {
@@ -287,15 +286,9 @@ describe('SignupForm — card-free profile (billingEnabled=false)', () => {
     expect(screen.getByRole('link', { name: /sign in/i })).toBeDefined();
   });
 
-  it('A.10: works when publishableKey is empty (fully card-free)', () => {
-    // publishableKey empty + billingEnabled=false = no Stripe at all.
+  it('A.10: works with no pricing URL (fully card-free)', () => {
     render(
-      <SignupForm
-        {...BASE_PROPS}
-        publishableKey=""
-        pricingUrl={null}
-        billingEnabled={false}
-      />,
+      <SignupForm {...BASE_PROPS} pricingUrl={null} billingEnabled={false} />,
     );
     expect(screen.queryByText('Payment method')).toBeNull();
     expect(screen.getByLabelText(/work email/i)).toBeDefined();
@@ -326,26 +319,26 @@ describe('SignupForm — card-first profile (billingEnabled=true, SaaS)', () => 
     );
   });
 
-  it('B.3: renders the payment method section (Stripe PaymentElement)', () => {
-    // With billingEnabled=true and a publishableKey, loadStripe is called
-    // and the component wraps in Elements (mocked to passthrough), then
-    // renders PaymentElement inside the paidFlow branch.
+  it('B.3: renders NO payment method section, even on the SaaS profile', () => {
+    // This is the ordering fix. A Payment Element needs a SetupIntent, a
+    // SetupIntent needs a customer, and a customer is a billing object — none
+    // of which may exist for an address nobody has proven they control. The
+    // card is collected on /signup/complete instead.
     render(<SignupForm {...BASE_PROPS} billingEnabled={true} />);
-    expect(screen.getByText('Payment method')).toBeDefined();
-    expect(screen.getByTestId('stripe-payment-element')).toBeDefined();
+    expect(screen.queryByText('Payment method')).toBeNull();
+    expect(screen.queryByTestId('stripe-payment-element')).toBeNull();
   });
 
-  it('B.4: renders the trial copy', () => {
+  it('B.4: renders no trial copy (there is no card on this screen)', () => {
     render(<SignupForm {...BASE_PROPS} billingEnabled={true} />);
-    expect(screen.getByText(/14-day free trial/i)).toBeDefined();
+    expect(screen.queryByText(/free trial/i)).toBeNull();
   });
 
-  it('B.5: core account fields still render (no regression)', () => {
+  it('B.5: core account fields still render, and still no password', () => {
     render(<SignupForm {...BASE_PROPS} billingEnabled={true} />);
     expect(screen.getByLabelText(/work email/i)).toBeDefined();
-    // Two password fields exist (Password + Confirm password); use getAllBy.
-    expect(screen.getAllByLabelText(/password/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByLabelText(/company name/i)).toBeDefined();
+    expect(screen.queryAllByLabelText(/password/i)).toHaveLength(0);
   });
 
   it('B.6: "Edit plan" link is hidden when pricingUrl is null', () => {

@@ -1,45 +1,37 @@
 "use client";
 
 /**
- * SignupForm, Client Component.
+ * SignupForm, Client Component — step ONE of self-serve signup.
  *
  * Controlled form built with react-hook-form + zodResolver(signupInputSchema).
- * Fields (in DOM order): firstName, lastName, email, password, workspaceName,
- * acceptToS checkbox, acceptPrivacy checkbox.
+ * Fields (in DOM order): firstName, lastName, email, workspaceName, acceptToS
+ * checkbox, acceptPrivacy checkbox.
+ *
+ * There is NO password field and NO card field here, and their absence is the
+ * whole point of this screen. Submitting asks the daemon to email a single-use
+ * verification link and nothing else happens: no account, no billing customer,
+ * no workspace. The password and the card are collected on /signup/complete,
+ * which is only reachable by following that link.
  *
  * On submit:
- *  1. Disables the form and sets provisioning state.
+ *  1. Disables the form.
  *  2. Calls `signupAction(data)` (Server Action).
- *  3. On success → renders `<ProvisioningPanel>`.
+ *  3. On success → renders the "check your email" state. The response is
+ *     identical whether or not the address already has an account, so this
+ *     screen must not branch on it.
  *  4. On failure → displays the userMessage via sonner toast, focuses the
  *     first errored field if `fieldErrors` is present.
- *
- * Shows a `beforeunload` prompt while provisioning to prevent accidental
- * navigation.
  *
  * Branding: uses the dashboard's CSS custom properties from globals.css /
  * themes.css via Shadcn's Card, Input, Label, Checkbox, Button, and Form
  * primitives. Matches `/login` visual weight.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-  loadStripe,
-  type Appearance,
-  type Stripe,
-  type StripeElements,
-} from "@stripe/stripe-js";
-import {
-  Elements,
-  PaymentElement,
-  useElements,
-  useStripe,
-} from "@stripe/react-stripe-js";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -58,127 +50,19 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { signupAction, completeSignup } from "@/app/actions/signup";
-import {
-  confirmCardSetup,
-  type ConfirmCardStripe,
-} from "@/src/lib/billing/confirm-card";
+import { signupAction } from "@/app/actions/signup";
 import {
   isServerActionDeploymentSkew,
   reloadForDeploymentSkew,
 } from "@/src/lib/server-action-skew";
-import type { PasswordPolicy } from "@/src/lib/zitadel/password-policy-cache";
 import { isReservedSlug, slugify } from "@/src/lib/signup/slug";
 import { useReservedNames } from "@/src/lib/signup/use-reserved-names";
 import { useTenantAvailability } from "@/src/lib/signup/use-tenant-availability";
-import { ProvisioningPanel } from "./provisioning-panel";
 import { signupInputSchema, type SignupInput } from "./types";
 
 // ---------------------------------------------------------------------------
 // Non-fatal timeout codes
 // ---------------------------------------------------------------------------
-
-/**
- * Timeout failure codes are NON-destructive (dashboard#962): by the time the
- * server-side provisioning wait elapses, the Zitadel user, Stripe customer,
- * trialing subscription, and Tenant CR all exist and typically finish
- * provisioning seconds later. Treating them like hard failures (reset to the
- * form + "try again" toast) poisons the retry — the workspace name is now
- * WORKSPACE_TAKEN and the email a duplicate. Keep the ProvisioningPanel
- * mounted instead; it reads terminalState "timeout" from the progress store
- * and renders the "we'll email you" holding state with a sign-in link.
- */
-function isNonFatalTimeout(code: string): boolean {
-  return code === "PROVISIONING_TIMEOUT" || code === "MEMBERSHIP_TIMEOUT";
-}
-
-// ---------------------------------------------------------------------------
-// Password strength meter
-// ---------------------------------------------------------------------------
-
-interface PolicyCheck {
-  label: string;
-  met: boolean;
-}
-
-function buildPolicyChecks(
-  password: string,
-  policy: PasswordPolicy,
-): PolicyCheck[] {
-  return [
-    {
-      label: `At least ${policy.minLength} characters`,
-      met: password.length >= policy.minLength,
-    },
-    ...(policy.hasUppercase
-      ? [{ label: "One uppercase letter", met: /[A-Z]/.test(password) }]
-      : []),
-    ...(policy.hasLowercase
-      ? [{ label: "One lowercase letter", met: /[a-z]/.test(password) }]
-      : []),
-    ...(policy.hasNumber
-      ? [{ label: "One number", met: /[0-9]/.test(password) }]
-      : []),
-    ...(policy.hasSymbol
-      ? [
-          {
-            label: "One symbol",
-            met: /[^a-zA-Z0-9]/.test(password),
-          },
-        ]
-      : []),
-  ];
-}
-
-function PasswordStrengthMeter({
-  password,
-  policy,
-}: {
-  password: string;
-  policy: PasswordPolicy;
-}) {
-  if (!password) return null;
-
-  const checks = buildPolicyChecks(password, policy);
-  const metCount = checks.filter((c) => c.met).length;
-  const strength = checks.length === 0 ? 1 : metCount / checks.length;
-
-  const barColor =
-    strength === 1
-      ? "bg-highlight"
-      : strength >= 0.6
-        ? "bg-alt"
-        : "bg-destructive";
-
-  return (
-    <div className="mt-2 space-y-2" aria-label="Password requirements">
-      {/* Strength bar */}
-      <div
-        className="h-1 w-full rounded-full bg-muted overflow-hidden"
-        aria-hidden="true"
-      >
-        <div
-          className={`h-full rounded-full transition-all duration-300 ${barColor}`}
-          style={{ width: `${Math.round(strength * 100)}%` }}
-        />
-      </div>
-      {/* Per-requirement checklist */}
-      <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2" aria-label="Password requirements">
-        {checks.map((check) => (
-          <li
-            key={check.label}
-            className={`flex items-center gap-1.5 text-xs ${
-              check.met ? "text-highlight" : "text-muted-foreground"
-            }`}
-          >
-            <span aria-hidden="true">{check.met ? "✓" : "○"}</span>
-            <span>{check.label}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Props
@@ -189,16 +73,6 @@ interface SignupFormProps {
   plan: string;
   /** Human-readable plan name, e.g. "Squad". */
   planDisplayName: string;
-  /** Password complexity policy fetched server-side. */
-  passwordPolicy: PasswordPolicy;
-  /**
-   * Stripe publishable key (pk_test_/pk_live_), read from the runtime server
-   * env by the signup page and threaded to the Payment Element. NOT the
-   * build-time NEXT_PUBLIC var: the shared :main image can't bake a per-env
-   * (test vs live) key, so it must arrive at runtime (dashboard#783). Empty
-   * string when paid tiers are disabled (kind) — the card step is skipped then.
-   */
-  publishableKey: string;
   /**
    * Full URL of the marketing pricing page, e.g. "https://www.zeroroot.ai/pricing".
    * Derived server-side from WWW_URL (dashboard#917 / deploy#1055).
@@ -233,143 +107,24 @@ interface SignupFormProps {
 // Component
 // ---------------------------------------------------------------------------
 
-// Resolve a CSS custom-property value to a concrete color string the Stripe
-// Elements iframe can parse. The design tokens are oklch(); Stripe's appearance
-// API does not parse oklch reliably, so paint the value onto a throwaway element
-// and read back the browser-computed rgb(). Reading the live token (never a
-// hardcoded literal) keeps the no-hardcoded-colors guard happy AND guarantees an
-// exact match to the dashboard theme.
-function resolveToken(cs: CSSStyleDeclaration, name: string): string {
-  const raw = cs.getPropertyValue(name).trim();
-  if (!raw || typeof document === "undefined") return raw;
-  const probe = document.createElement("span");
-  probe.style.color = raw;
-  probe.style.display = "none";
-  document.body.appendChild(probe);
-  const rgb = getComputedStyle(probe).color;
-  probe.remove();
-  return rgb || raw;
-}
-
-// Build a Stripe Elements appearance from the dashboard's live CSS tokens so the
-// inline Payment Element matches the single dark brand exactly (dashboard#784
-// follow-up: the default light theme rendered a white box that clashed). Runs
-// client-side only (reads the DOM).
-function buildStripeAppearance(): Appearance {
-  const cs = getComputedStyle(document.documentElement);
-  const t = (n: string) => resolveToken(cs, n);
-  const radius = cs.getPropertyValue("--radius").trim() || "0.5rem";
-  return {
-    theme: "night",
-    variables: {
-      fontFamily: cs.getPropertyValue("--font-sans").trim() || "inherit",
-      borderRadius: radius,
-      colorPrimary: t("--primary"),
-      colorBackground: t("--input"),
-      colorText: t("--foreground"),
-      colorTextSecondary: t("--muted-foreground"),
-      colorTextPlaceholder: t("--muted-foreground"),
-      colorDanger: t("--destructive"),
-    },
-    rules: {
-      ".Input": { border: `1px solid ${t("--border")}` },
-      ".Input:focus": { boxShadow: `0 0 0 1px ${t("--ring")}` },
-      ".Label": { color: t("--muted-foreground") },
-      ".Tab": { border: `1px solid ${t("--border")}` },
-      ".Tab--selected": { borderColor: t("--primary") },
-    },
-  };
-}
-
-// SignupForm wraps the body in a deferred-mode Stripe <Elements> provider so
-// the card field renders INLINE with the account fields (no pre-created
-// customer/SetupIntent) and is validated client-side before "Create account"
-// (dashboard#784). The publishable key is runtime-injected (dashboard#783).
-// When paid tiers are off (kind) or billingEnabled=false (self-hosted, card-free
-// profile, dashboard#923) the key is absent/empty: render without Elements and
-// the no-card path runs.
-export function SignupForm(props: SignupFormProps) {
-  // On self-hosted (billingEnabled=false) we never need Stripe Elements: skip
-  // loading the Stripe SDK entirely so no Stripe network call is made, no card
-  // iframe is injected, and the form stays fully offline-capable. dashboard#923.
-  const stripePromise = useMemo(
-    () =>
-      props.billingEnabled && props.publishableKey
-        ? loadStripe(props.publishableKey)
-        : null,
-    [props.billingEnabled, props.publishableKey],
-  );
-  // Start dark (theme:'night') so there's no white flash before the token-exact
-  // appearance is computed on mount.
-  const [appearance, setAppearance] = useState<Appearance>({ theme: "night" });
-  useEffect(() => {
-    setAppearance(buildStripeAppearance());
-  }, []);
-
-  if (!stripePromise) {
-    // Card-free path (self-hosted / billingEnabled=false): there is NO <Elements>
-    // provider, so we must NOT call useStripe()/useElements() — in this version of
-    // @stripe/react-stripe-js they THROW "Could not find Elements context" rather
-    // than returning null. Pass nulls; SignupFormInner only touches them when
-    // paidFlow is true (which is false here). dashboard#923 follow-up.
-    return <SignupFormInner {...props} stripe={null} elements={null} />;
-  }
-  return (
-    <Elements
-      stripe={stripePromise}
-      options={{
-        // Deferred SetupIntent. Default (automatic) paymentMethodCreation: we
-        // confirm via stripe.confirmSetup({elements, clientSecret}). 'manual'
-        // would forbid confirmSetup-with-elements (it requires createPaymentMethod
-        // instead) and throws an IntegrationError — the "Something went wrong"
-        // the signup hit after the customer was created (dashboard#784).
-        mode: "setup",
-        currency: "usd",
-        appearance,
-      }}
-    >
-      <SignupFormInnerWithStripe {...props} />
-    </Elements>
-  );
-}
-
-// Bridge that reads the Stripe hooks. Rendered ONLY inside <Elements>, so the
-// hooks always have a provider. Keeping the hook calls here (off the card-free
-// path) is what prevents the "Could not find Elements context" throw.
-function SignupFormInnerWithStripe(props: SignupFormProps) {
-  const stripe = useStripe();
-  const elements = useElements();
-  return <SignupFormInner {...props} stripe={stripe} elements={elements} />;
-}
-
-function SignupFormInner({
+// SignupForm collects the account details ONLY. It no longer mounts Stripe.
+//
+// The card step moved to /signup/complete, which runs after the emailed link is
+// redeemed. That is not a layout preference: a Payment Element needs a
+// SetupIntent, a SetupIntent needs a customer, and creating a customer here
+// would mean a billing object exists for an address nobody has proven they
+// control. Submitting this form sends one email and creates nothing else.
+export function SignupForm({
   plan,
   planDisplayName,
-  passwordPolicy,
-  publishableKey,
   pricingUrl,
   billingEnabled,
   termsUrl,
   privacyUrl,
-  stripe,
-  elements,
-}: SignupFormProps & {
-  stripe: Stripe | null;
-  elements: StripeElements | null;
-}) {
-  // Whether this signup collects a card inline. Gated on both billingEnabled
-  // (deployment-profile resolver, dashboard#923) AND the publishable key being
-  // present. Self-hosted (billingEnabled=false) → card-free regardless of key.
-  const paidFlow = billingEnabled && publishableKey !== "";
-
-  const [isProvisioning, setIsProvisioning] = useState(false);
-  const [attemptId, setAttemptId] = useState<string | null>(null);
-  const [redirectOnSuccess, setRedirectOnSuccess] = useState<string>("");
-  // Inline card state: complete = the Payment Element reports all fields valid;
-  // cardError surfaces validation/decline messages next to the card.
-  const [cardComplete, setCardComplete] = useState(false);
-  const [cardError, setCardError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
+}: SignupFormProps) {
+  // `sent` is the terminal state of this screen. There is no provisioning
+  // panel here any more: submitting sends a verification message and stops.
+  const [sent, setSent] = useState<string | null>(null);
 
   // Track field refs for programmatic focus on server-side field errors.
   const fieldRefs = useRef<Partial<Record<keyof SignupInput, HTMLElement | null>>>({});
@@ -380,7 +135,6 @@ function SignupFormInner({
       firstName: "",
       lastName: "",
       email: "",
-      password: "",
       workspaceName: "",
       // tier is pre-filled from the URL query param.
       tier: plan as SignupInput["tier"],
@@ -391,7 +145,6 @@ function SignupFormInner({
   });
 
   const { watch } = form;
-  const passwordValue = watch("password");
   const workspaceNameValue = watch("workspaceName");
 
   // Chart-managed reserved-names denylist, fetched once via
@@ -414,41 +167,6 @@ function SignupFormInner({
   const workspaceAvailability = useTenantAvailability(workspaceNameValue ?? "");
   const workspaceSlugTaken = workspaceAvailability.available === false;
 
-  // Prevent accidental navigation while provisioning is in progress.
-  // Skip the guard once a success redirect URL is set: at that point the
-  // panel is about to navigate intentionally (window.location.assign), and
-  // browsers fire beforeunload during that navigation too, without this
-  // skip, the user gets a "you will lose your saved information" popup
-  // every successful signup right before landing on /login.
-  useEffect(() => {
-    if (!isProvisioning) return;
-    if (redirectOnSuccess) return;
-
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isProvisioning, redirectOnSuccess]);
-
-  const handleRetry = useCallback(() => {
-    setIsProvisioning(false);
-    setAttemptId(null);
-    setRedirectOnSuccess("");
-    setCardError(null);
-    form.reset({
-      firstName: form.getValues("firstName"),
-      lastName: form.getValues("lastName"),
-      email: form.getValues("email"),
-      password: "",
-      workspaceName: form.getValues("workspaceName"),
-      tier: plan as SignupInput["tier"],
-      acceptToS: undefined as unknown as true,
-      acceptPrivacy: undefined as unknown as true,
-    });
-  }, [form, plan]);
-
   const onSubmit = useCallback(
     async (data: SignupInput) => {
       // Block submission when the slugified workspace name lands on the
@@ -465,133 +183,37 @@ function SignupFormInner({
         return;
       }
 
-      // Validate the card BEFORE creating anything (the core requirement:
-      // all validation happens before "Create account"). Deferred Elements
-      // validate client-side via elements.submit() with no server round-trip /
-      // no customer yet. On any card error we stop here — nothing is created.
-      if (paidFlow) {
-        if (!stripe || !elements) {
-          setCardError("Payment form is still loading. Try again in a moment.");
-          return;
-        }
-        setCardError(null);
-        const { error: submitErr } = await elements.submit();
-        if (submitErr) {
-          setCardError(submitErr.message ?? "Please check your card details.");
-          return;
-        }
-      }
-
-      // Mint the attemptId now (passed to signupAction for progress tracking)
-      // but DO NOT switch to the ProvisioningPanel yet: doing so unmounts this
-      // form and the Payment Element, and stripe.confirmSetup() requires a
-      // mounted Payment Element. We show the panel only AFTER the card is
-      // confirmed (below). Until then the form stays mounted + disabled
-      // (form.formState.isSubmitting drives the button's "Creating account…").
+      // The attempt id is minted here and carried through the emailed link, so
+      // the progress stream survives the round-trip through the mailbox.
       const newAttemptId = crypto.randomUUID();
       form.clearErrors();
 
       try {
         const result = await signupAction(data, newAttemptId);
 
-        if (result.ok && "phase" in result && result.phase === "card") {
-          // Phase 1 created ONLY the Stripe customer + a SetupIntent — no
-          // account or company yet (dashboard#785). Confirm the card inline
-          // (the Payment Element is still mounted), then completeSignup()
-          // creates the trialing subscription + account + company.
-          if (!stripe || !elements) {
-            toast.error("Payment form not ready. Please retry.");
-            return;
-          }
-          const confirmed = await confirmCardSetup({
-            // Stripe.js confirmSetup is heavily overloaded; cast to the minimal
-            // structural type confirm-card declares (tests pass fakes).
-            stripe: stripe as unknown as ConfirmCardStripe,
-            elements,
-            clientSecret: result.cardClientSecret,
-            // Cards confirm inline (no redirect), but Stripe requires a
-            // return_url whenever redirect-capable methods are offered.
-            returnUrl: `${window.location.origin}/signup`,
-          });
-          if (!confirmed.ok) {
-            setCardError(confirmed.error);
-            toast.error(confirmed.error);
-            // Form (and Payment Element) is still mounted (we never switched
-            // to the panel) so the user can fix the card and resubmit. Nothing
-            // was created.
-            return;
-          }
-          // Card cleared. NOW switch to the ProvisioningPanel and create the
-          // subscription + account + company under this one submit.
-          setAttemptId(newAttemptId);
-          setIsProvisioning(true);
-          const finished = await completeSignup({
-            attemptId: newAttemptId,
-            stripeCustomerId: result.stripeCustomerId,
-            paymentMethodId: confirmed.paymentMethodId,
-            tenantSlug: result.tenantSlug,
-            tier: result.tier,
-            email: data.email,
-            password: data.password,
-            workspaceName: data.workspaceName,
-            firstName: data.firstName,
-            lastName: data.lastName,
-          });
-          if (finished.ok && "redirect" in finished) {
-            setRedirectOnSuccess(finished.redirect);
-          } else if (!finished.ok) {
-            if (isNonFatalTimeout(finished.code)) {
-              // dashboard#962: the wait deadline elapsed but the account,
-              // subscription, and tenant all EXIST and are still
-              // provisioning. Keep the ProvisioningPanel mounted — it reads
-              // terminalState "timeout" from the progress store and shows
-              // the "we'll email you" holding state. Dropping back to the
-              // form here invited a retry against a half-provisioned
-              // workspace (WORKSPACE_TAKEN / duplicate email).
-            } else {
-              toast.error(finished.userMessage);
-              setAttemptId(null);
-              setIsProvisioning(false);
-            }
-          }
-        } else if (result.ok && "redirect" in result) {
-          // Autoconfirm (kind dev; paid tiers disabled): provisioning ran
-          // inside signupAction. Show the panel now so it reflects the terminal
-          // state and follows the redirect.
-          setAttemptId(newAttemptId);
-          setIsProvisioning(true);
-          setRedirectOnSuccess(result.redirect);
-          // Panel sees terminalState=ok in Redis and follows redirect.
-        } else if (!result.ok) {
-          if (isNonFatalTimeout(result.code)) {
-            // Autoconfirm path (no card): provisioning ran inline inside
-            // signupAction and hit the wait deadline, but the account and
-            // tenant exist and are still provisioning (dashboard#962). Show
-            // the panel so the user gets the "we'll email you" holding state
-            // instead of a destructive "try again".
-            setAttemptId(newAttemptId);
-            setIsProvisioning(true);
-            return;
-          }
-          // signupAction failed before any card work. The form is still
-          // mounted (we never switched to the panel), so surface the error in
-          // place: a toast plus per-field errors so the user can correct and
-          // resubmit without losing the inline card form.
-          toast.error(result.userMessage);
+        if (result.ok) {
+          // Identical for a brand-new address and one that already has an
+          // account. Do NOT try to tell the user which case they are in: the
+          // daemon deliberately does not say, because an anonymous caller is
+          // not entitled to learn whether an address is registered. Whoever
+          // owns the mailbox finds out, in the message they receive.
+          setSent(data.email);
+          return;
+        }
 
-          if (result.fieldErrors) {
-            const errorEntries = Object.entries(result.fieldErrors) as Array<
-              [keyof SignupInput, string]
-            >;
-            for (const [field, message] of errorEntries) {
-              form.setError(field, { type: "server", message });
-            }
-            const firstErrorField = errorEntries[0]?.[0];
-            if (firstErrorField) {
-              const el = fieldRefs.current[firstErrorField];
-              if (el instanceof HTMLElement) {
-                el.focus();
-              }
+        toast.error(result.userMessage);
+        if (result.fieldErrors) {
+          const errorEntries = Object.entries(result.fieldErrors) as Array<
+            [keyof SignupInput, string]
+          >;
+          for (const [field, message] of errorEntries) {
+            form.setError(field, { type: "server", message });
+          }
+          const firstErrorField = errorEntries[0]?.[0];
+          if (firstErrorField) {
+            const el = fieldRefs.current[firstErrorField];
+            if (el instanceof HTMLElement) {
+              el.focus();
             }
           }
         }
@@ -605,9 +227,6 @@ function SignupFormInner({
           message: err instanceof Error ? err.message : String(err),
           stack: err instanceof Error ? err.stack : undefined,
         });
-        // Drop the panel so the user is back on the form regardless of cause.
-        setAttemptId(null);
-        setIsProvisioning(false);
         // Deployment skew: this tab's client bundle predates the running
         // dashboard build, so its Server Action IDs are stale and Next.js
         // rejects the call with "Failed to find Server Action". Retrying the
@@ -627,24 +246,47 @@ function SignupFormInner({
         toast.error("Something went wrong on our end. Please try again.");
       }
     },
-    [form, stripe, elements, paidFlow, reservedNames],
+    [form, reservedNames],
   );
 
-  // Once the single submit is underway, show the provisioning panel. The card
-  // was collected + confirmed inline before this point (no separate step).
-  if (attemptId) {
+  // Terminal state of this screen. Note what it does NOT offer: a way to ask
+  // whether the address was already registered, or a resend button that would
+  // let this page probe the send cooldown.
+  if (sent) {
     return (
-      <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-6 px-4 py-12">
-        <ProvisioningPanel
-          attemptId={attemptId}
-          redirectOnSuccess={redirectOnSuccess}
-          onRetry={handleRetry}
-        />
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
+        <Card className="w-full max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold">Check your email</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              If we can reach <span className="font-medium text-foreground">{sent}</span>,
+              a message is on its way. Open the link in it to choose a password
+              and finish setting up your workspace.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              The link is good for 24 hours and can only be used once. Nothing
+              has been created yet.
+            </p>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <p className="text-sm text-muted-foreground">
+              Wrong address?{" "}
+              <Link
+                href="/signup"
+                className="underline underline-offset-4 hover:no-underline font-medium"
+              >
+                Start over
+              </Link>
+            </p>
+          </CardFooter>
+        </Card>
       </div>
     );
   }
 
-  const isDisabled = form.formState.isSubmitting || isProvisioning;
+  const isDisabled = form.formState.isSubmitting;
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
@@ -773,78 +415,6 @@ function SignupFormInner({
                 )}
               />
 
-              {/* Password */}
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          {...field}
-                          ref={(el) => {
-                            field.ref(el);
-                            fieldRefs.current.password = el;
-                          }}
-                          type={showPassword ? "text" : "password"}
-                          placeholder="At least 12 characters"
-                          autoComplete="new-password"
-                          disabled={isDisabled}
-                          aria-required="true"
-                          className="pr-10"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((v) => !v)}
-                          className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
-                          aria-label={showPassword ? "Hide password" : "Show password"}
-                          tabIndex={isDisabled ? -1 : undefined}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" aria-hidden="true" />
-                          ) : (
-                            <Eye className="h-4 w-4" aria-hidden="true" />
-                          )}
-                        </button>
-                      </div>
-                    </FormControl>
-                    <PasswordStrengthMeter
-                      password={passwordValue}
-                      policy={passwordPolicy}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Password confirmation */}
-              <FormField
-                control={form.control}
-                name="passwordConfirm"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm password</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        ref={(el) => {
-                          field.ref(el);
-                          fieldRefs.current.passwordConfirm = el;
-                        }}
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Re-enter your password"
-                        autoComplete="new-password"
-                        disabled={isDisabled}
-                        aria-required="true"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               {/* Company name, the form-field name (`workspaceName`),
                   slugified Tenant CR name, and all downstream operator
                   wiring still use the workspace terminology. Only the
@@ -895,45 +465,6 @@ function SignupFormInner({
                   </FormItem>
                 )}
               />
-
-              {/* Inline payment method (card-first signup, dashboard#784).
-                  Deferred Payment Element: renders with just the publishable
-                  key (no pre-created customer), validated client-side before
-                  "Create account". Rendered only when paid tiers are enabled. */}
-              {paidFlow ? (
-                <div className="space-y-2">
-                  <FormLabel>Payment method</FormLabel>
-                  <div className="rounded-md border border-border bg-background p-3">
-                    <PaymentElement
-                      // Accordion (not tabs): the account has several enabled
-                      // payment methods; the tabs layout crammed them into one
-                      // horizontal row that clipped after ~3. Accordion stacks
-                      // them vertically with the card expanded by default, so
-                      // every method + all card fields are visible (dashboard#784).
-                      options={{
-                        layout: { type: "accordion", defaultCollapsed: false },
-                      }}
-                      onChange={(e) => {
-                        setCardComplete(e.complete);
-                        if (e.complete) setCardError(null);
-                      }}
-                    />
-                  </div>
-                  {cardError ? (
-                    <p
-                      className="text-xs text-destructive"
-                      role="alert"
-                      aria-live="polite"
-                    >
-                      {cardError}
-                    </p>
-                  ) : null}
-                  <p className="text-xs text-muted-foreground">
-                    Start your 14-day free trial. Your card won&apos;t be charged
-                    until it ends. Cancel anytime.
-                  </p>
-                </div>
-              ) : null}
 
               {/* ToS checkbox */}
               <FormField
@@ -1043,18 +574,11 @@ function SignupFormInner({
                 disabled={
                   isDisabled ||
                   workspaceSlugReserved ||
-                  workspaceSlugTaken ||
-                  // Card-first: block until the inline card is complete so all
-                  // validation is satisfied before the account is created.
-                  (paidFlow && !cardComplete)
+                  workspaceSlugTaken
                 }
                 aria-busy={isDisabled}
               >
-                {isDisabled
-                  ? isProvisioning
-                    ? "Setting up your workspace…"
-                    : "Creating account…"
-                  : "Create account"}
+                {isDisabled ? "Sending…" : "Continue"}
               </Button>
             </form>
           </Form>

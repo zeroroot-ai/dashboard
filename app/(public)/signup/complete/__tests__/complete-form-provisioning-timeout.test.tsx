@@ -1,23 +1,22 @@
 /**
- * Non-destructive PROVISIONING_TIMEOUT handling in SignupForm (dashboard#962).
+ * Non-destructive PROVISIONING_TIMEOUT handling on the completion screen
+ * (dashboard#962).
  *
- * When the signup action's tenant-ready wait elapses, the Zitadel user,
- * Stripe customer, trialing subscription, and Tenant CR all EXIST and are
- * still provisioning — staging observed the Tenant CR reach Ready ~2m25s in
- * while the old handling had already dropped the user back to the signup form
- * with a "signup failed" toast. Retrying from there lands in WORKSPACE_TAKEN /
- * duplicate-email territory.
+ * When the completion action's tenant-ready wait elapses, the account, the
+ * subscription and the workspace all EXIST and are still provisioning —
+ * staging observed the workspace reach Ready ~2m25s in while the old handling
+ * had already dropped the user back to a form with a "signup failed" toast.
+ * Retrying from there lands in WORKSPACE_TAKEN / duplicate-email territory.
  *
- * These tests pin the fixed behavior: on a PROVISIONING_TIMEOUT result the
- * form KEEPS the ProvisioningPanel mounted (the panel reads terminalState
- * "timeout" from the progress store and renders the "we'll email you" holding
- * state), and does NOT toast a failure or reset back to the form. A genuine
- * hard failure (INTERNAL_ERROR) still returns to the form with a toast.
+ * These tests pin the fixed behaviour, now on CompleteSignupForm (the wait
+ * moved here with the rest of provisioning when signup was split so that
+ * nothing is created before the address is proven): on a PROVISIONING_TIMEOUT
+ * result the form KEEPS the ProvisioningPanel mounted, and does NOT toast a
+ * failure or reset. A genuine hard failure (INTERNAL_ERROR) still returns to
+ * the form with a toast.
  *
- * Uses the card-free (autoconfirm) path: billingEnabled=false renders without
- * Stripe Elements and submits straight through signupAction, which is where
- * the inline provisioning wait runs. The card-first path shares the same
- * isNonFatalTimeout branch on the completeSignup result.
+ * Uses the card-free profile (billingEnabled=false): no Stripe, so the submit
+ * goes straight to completeSignup, which is where the wait runs.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -43,10 +42,6 @@ vi.mock('@stripe/react-stripe-js', () => ({
   useElements: () => null,
 }));
 
-// ---------------------------------------------------------------------------
-// Next.js navigation mock (Link uses the router)
-// ---------------------------------------------------------------------------
-
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
@@ -56,7 +51,7 @@ vi.mock('next/navigation', () => ({
     forward: vi.fn(),
     prefetch: vi.fn(),
   }),
-  usePathname: () => '/signup',
+  usePathname: () => '/signup/complete',
   useSearchParams: () => new URLSearchParams(),
   useParams: () => ({}),
 }));
@@ -65,23 +60,14 @@ vi.mock('next/navigation', () => ({
 // Server-action mocks — the subject of these tests.
 // ---------------------------------------------------------------------------
 
-const { mockSignupAction, mockCompleteSignup } = vi.hoisted(() => ({
-  mockSignupAction: vi.fn(),
+const { mockCompleteSignup, mockStartSignupPayment } = vi.hoisted(() => ({
   mockCompleteSignup: vi.fn(),
+  mockStartSignupPayment: vi.fn(),
 }));
 vi.mock('@/app/actions/signup', () => ({
-  signupAction: mockSignupAction,
   completeSignup: mockCompleteSignup,
-}));
-
-// Slug / reserved-names / tenant-availability hooks — idle state.
-vi.mock('@/src/lib/signup/use-reserved-names', () => ({
-  // Real hook returns a ReservedNamesDenylist ({exact, prefix}); these tests
-  // type a workspace name, so isReservedSlug dereferences both fields.
-  useReservedNames: () => ({ exact: [], prefix: [] }),
-}));
-vi.mock('@/src/lib/signup/use-tenant-availability', () => ({
-  useTenantAvailability: () => ({ available: null }),
+  startSignupPayment: mockStartSignupPayment,
+  signupAction: vi.fn(),
 }));
 
 // sonner toast — spy: the timeout path must NOT toast an error.
@@ -99,30 +85,26 @@ vi.mock('@/src/lib/server-action-skew', () => ({
   reloadForDeploymentSkew: vi.fn(() => false),
 }));
 
-// ---------------------------------------------------------------------------
-// Subject under test
-// ---------------------------------------------------------------------------
-
-import { SignupForm } from '../signup-form';
+import { CompleteSignupForm } from '../complete-form';
 import { DEFAULT_PASSWORD_POLICY } from '@/src/lib/zitadel/password-policy-cache';
 
-// Card-free (self-hosted / kind autoconfirm) props: no Stripe, no plan row.
+const ATTEMPT = 'aaaaaaaa-0000-0000-0000-0000000000d1';
+
+/** Card-free (self-hosted / kind autoconfirm) props: no Stripe. */
 const CARD_FREE_PROPS = {
-  plan: 'team',
-  planDisplayName: 'Team',
+  verified: {
+    attemptId: ATTEMPT,
+    email: 'ada@example.com',
+    workspaceName: 'ada-security',
+    tier: 'team',
+  },
   passwordPolicy: DEFAULT_PASSWORD_POLICY,
   publishableKey: '',
-  pricingUrl: null,
   billingEnabled: false,
-  termsUrl: null,
-  privacyUrl: null,
 };
 
-/** Fill every required field and submit. */
+/** Fill the password pair and submit. */
 async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText(/first name/i), 'Ada');
-  await user.type(screen.getByLabelText(/last name/i), 'Lovelace');
-  await user.type(screen.getByLabelText(/work email/i), 'ada@example.com');
   // The password input is wrapped in a positioning <div> inside FormControl,
   // so the label associates with the div (non-labellable); query by
   // placeholder instead.
@@ -131,16 +113,13 @@ async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
     'Passw0rd!Test',
   );
   await user.type(screen.getByLabelText(/confirm password/i), 'Passw0rd!Test');
-  await user.type(screen.getByLabelText(/company name/i), 'ada-security');
-  await user.click(screen.getByLabelText(/terms of service/i));
-  await user.click(screen.getByLabelText(/privacy policy/i));
   await user.click(screen.getByRole('button', { name: /create account/i }));
 }
 
-describe('SignupForm PROVISIONING_TIMEOUT handling (dashboard#962)', () => {
+describe('CompleteSignupForm PROVISIONING_TIMEOUT handling (dashboard#962)', () => {
   beforeEach(() => {
-    mockSignupAction.mockReset();
     mockCompleteSignup.mockReset();
+    mockStartSignupPayment.mockReset();
     mockToastError.mockClear();
     // The ProvisioningPanel polls /api/signup/progress/:id; serve the
     // terminal timeout record the server action wrote before returning.
@@ -166,19 +145,24 @@ describe('SignupForm PROVISIONING_TIMEOUT handling (dashboard#962)', () => {
     vi.unstubAllGlobals();
   });
 
+  it('never asks the billing actions to run on the card-free profile', () => {
+    render(<CompleteSignupForm {...CARD_FREE_PROPS} />);
+    expect(mockStartSignupPayment).not.toHaveBeenCalled();
+  });
+
   // Generous timeout: the panel's real 1s poll interval has to tick at least
   // once, and the full suite runs this file under heavy parallel load.
   it('keeps the ProvisioningPanel mounted (no toast, no form reset) on PROVISIONING_TIMEOUT', { timeout: 20_000 }, async () => {
-    mockSignupAction.mockResolvedValue({
+    mockCompleteSignup.mockResolvedValue({
       ok: false,
-      attemptId: 'aaaaaaaa-0000-0000-0000-0000000000d1',
+      attemptId: ATTEMPT,
       code: 'PROVISIONING_TIMEOUT',
       userMessage:
         "Still setting up your workspace, we'll email you when it's ready.",
     });
 
     const user = userEvent.setup();
-    render(<SignupForm {...CARD_FREE_PROPS} />);
+    render(<CompleteSignupForm {...CARD_FREE_PROPS} />);
     await fillAndSubmit(user);
 
     // The holding panel replaces the form…
@@ -204,15 +188,15 @@ describe('SignupForm PROVISIONING_TIMEOUT handling (dashboard#962)', () => {
   });
 
   it('still returns to the form with a toast on a hard failure (INTERNAL_ERROR)', async () => {
-    mockSignupAction.mockResolvedValue({
+    mockCompleteSignup.mockResolvedValue({
       ok: false,
-      attemptId: 'aaaaaaaa-0000-0000-0000-0000000000d2',
+      attemptId: ATTEMPT,
       code: 'INTERNAL_ERROR',
       userMessage: 'Something went wrong on our end.',
     });
 
     const user = userEvent.setup();
-    render(<SignupForm {...CARD_FREE_PROPS} />);
+    render(<CompleteSignupForm {...CARD_FREE_PROPS} />);
     await fillAndSubmit(user);
 
     await waitFor(() => {
