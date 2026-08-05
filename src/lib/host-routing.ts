@@ -101,8 +101,15 @@ export function isMarketingPath(pathname: string): boolean {
   );
 }
 
-/** True when the path belongs to the docs site rather than this app. */
-export function isDocsPath(pathname: string): boolean {
+/**
+ * True when the path belongs to the docs site rather than this app.
+ *
+ * Not exported: its only consumer is decideHostSplit below, and knip gates
+ * the build on unused exports. isMarketingPath and isNeutralPath are exported
+ * because the tests assert on them directly; this one is covered through
+ * decideHostSplit.
+ */
+function isDocsPath(pathname: string): boolean {
   return DOCS_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
