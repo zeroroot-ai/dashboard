@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import { createMDX } from "fumadocs-mdx/next";
 
 // CSP is NOT emitted by the dashboard app. The nonce-based per-request CSP that
 // used to live in middleware.ts was removed in the zitadel-envoy-gateway-migration
@@ -219,9 +218,8 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Wrap with Fumadocs MDX adapter so `.mdx` content under `content/docs/`
-// is compiled at build time. The adapter reads `source.config.ts` and
-// emits typed output to `.source/` (gitignored).
-const withMDX = createMDX();
-
-export default withMDX(nextConfig);
+// No MDX adapter. The customer docs moved to their own deployable
+// (dashboard#820); the only .mdx left in this app is under
+// app/dashboard/(auth)/docs, which is read with readFileSync and rendered
+// by react-markdown at request time, not compiled by a bundler plugin.
+export default nextConfig;

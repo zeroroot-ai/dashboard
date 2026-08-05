@@ -38,7 +38,6 @@ const SCOPED_ROOTS = [
   "app",
   "components",
   "src/components",
-  "content/docs",
 ];
 
 const SKIP_DIRS = new Set(["node_modules", ".next", ".tmp", "test-results", "__tests__", "__snapshots__"]);

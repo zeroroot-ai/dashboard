@@ -7,6 +7,7 @@
  * button via the matrix's `rowTrailingAction` slot.
  */
 
+import { docsUrl } from "@/src/lib/docs-url";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { PlugIcon, PlusIcon, Settings2 } from "lucide-react";
@@ -285,11 +286,13 @@ export function PluginsContent() {
               }
               secondaryCta={
                 <Button asChild variant="ghost">
-                  {/* prefetch={false}: /docs 307s to the marketing host in
-                      SaaS; an RSC prefetch of it dies on CORS (dashboard#963). */}
-                  <Link href="/docs/plugins" prefetch={false}>
+                  {/* The docs are a separate deployable on their own host
+                      (dashboard#820), so this is a plain cross-origin anchor:
+                      next/link cannot route to it, and an RSC prefetch of a
+                      cross-origin URL dies on CORS (dashboard#963). */}
+                  <a href={docsUrl("plugins")} target="_blank" rel="noopener noreferrer">
                     Read the docs
-                  </Link>
+                  </a>
                 </Button>
               }
             />
