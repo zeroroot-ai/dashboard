@@ -30,19 +30,37 @@ vi.mock('@/src/lib/gibson-client/provisioning', () => ({
   getTenantProvisioningStatus: (...args: unknown[]) => mockGetProvisioningStatus(...args),
 }));
 
-let mockAssertAuthorizedShouldThrow: Error | null = null;
-vi.mock('@/src/lib/auth/assert-authorized', () => ({
-  assertAuthorized: vi.fn().mockImplementation(() => {
-    if (mockAssertAuthorizedShouldThrow) throw mockAssertAuthorizedShouldThrow;
-    return Promise.resolve();
-  }),
-  AuthzDeniedError: class AuthzDeniedError extends Error {
-    constructor(method: string, reason: string) {
-      super(`assertAuthorized: ${reason} for ${method}`);
-      this.name = 'AuthzDeniedError';
-    }
-  },
+// Auth: this route is platform-operator ONLY. It is gated on the cross-tenant
+// role, not on a per-tenant relation — a per-tenant gate would resolve to the
+// CALLER's own tenant while the route acts on a body-supplied tenantId.
+let mockSession: { user: { crossTenant: boolean } } | null = null;
+vi.mock('@/src/lib/auth', () => ({
+  getServerSession: () => Promise.resolve(mockSession),
 }));
+
+vi.mock('@/src/lib/auth/schema', () => ({
+  isCrossTenant: (s: { user?: { crossTenant?: boolean } } | null) =>
+    s?.user?.crossTenant ?? false,
+}));
+
+let mockCsrfShouldThrow = false;
+vi.mock('@/src/lib/auth/csrf', () => {
+  class CsrfError extends Error {
+    constructor() {
+      super('csrf');
+      this.name = 'CsrfError';
+    }
+  }
+  return {
+    CsrfError,
+    requireCsrf: () => {
+      if (mockCsrfShouldThrow) throw new CsrfError();
+      return Promise.resolve();
+    },
+    csrfErrorResponse: () =>
+      new Response(JSON.stringify({ error: 'csrf-token-required' }), { status: 403 }),
+  };
+});
 
 vi.mock('@/src/lib/audit/auth', () => ({
   emitAuthAudit: vi.fn(),
@@ -57,7 +75,6 @@ vi.mock('@/src/lib/logger', () => ({
 // ---------------------------------------------------------------------------
 
 import { POST } from '../route';
-import { AuthzDeniedError } from '@/src/lib/auth/assert-authorized';
 
 function makeRequest(body: unknown): NextRequest {
   return new NextRequest('http://localhost:3000/api/admin/billing/trial-extension', {
@@ -74,7 +91,8 @@ function makeRequest(body: unknown): NextRequest {
 describe('POST /api/admin/billing/trial-extension', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAssertAuthorizedShouldThrow = null;
+    mockSession = { user: { crossTenant: true } };
+    mockCsrfShouldThrow = false;
     mockGetProvisioningStatus.mockResolvedValue({
       found: true,
       stripeCustomerId: 'cus_test123',
@@ -87,13 +105,36 @@ describe('POST /api/admin/billing/trial-extension', () => {
     mockUpdateSubscriptionTrialEnd.mockResolvedValue(undefined);
   });
 
-  it('returns 403 when assertAuthorized throws AuthzDeniedError', async () => {
-    mockAssertAuthorizedShouldThrow = new AuthzDeniedError(
-      '/gibson.pluginadmin.v1.PluginAdminService/RegisterPlugin',
-      'relation-not-met',
-    );
+  it('returns 401 when there is no session', async () => {
+    mockSession = null;
+    const res = await POST(makeRequest({ tenantId: 'acme', days: 7 }));
+    expect(res.status).toBe(401);
+  });
+
+  // Regression: the previous gate used a per-tenant relation, which every
+  // self-serve tenant owner satisfies on their OWN tenant — while the route
+  // acts on the body-supplied tenantId. A tenant-scoped caller must be denied.
+  it('returns 403 for a tenant-scoped caller (no cross-tenant role)', async () => {
+    mockSession = { user: { crossTenant: false } };
+    const res = await POST(makeRequest({ tenantId: 'someone-elses-tenant', days: 30 }));
+    expect(res.status).toBe(403);
+    expect(mockUpdateSubscriptionTrialEnd).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 when the CSRF token is missing or wrong', async () => {
+    mockCsrfShouldThrow = true;
     const res = await POST(makeRequest({ tenantId: 'acme', days: 7 }));
     expect(res.status).toBe(403);
+    expect(mockUpdateSubscriptionTrialEnd).not.toHaveBeenCalled();
+  });
+
+  // Regression: a wall-clock-bucketed idempotency key let the same extension
+  // be re-applied once per bucket, stacking trial time without bound.
+  it('derives the idempotency key from the resulting trial end, not the clock', async () => {
+    await POST(makeRequest({ tenantId: 'acme', days: 7 }));
+    const firstKey = mockUpdateSubscriptionTrialEnd.mock.calls[0]?.[2] as string;
+    const trialEndUnix = mockUpdateSubscriptionTrialEnd.mock.calls[0]?.[1] as number;
+    expect(firstKey).toBe(`admin:trial-extension:acme:sub_test123:${trialEndUnix}`);
   });
 
   it('rejects days outside 1–30', async () => {
