@@ -12,6 +12,7 @@ const cfg: HostSplitConfig = {
   wwwHost: "www.zeroroot.ai:30443",
   appOrigin: "https://app.zeroroot.ai:30443",
   wwwOrigin: "https://www.zeroroot.ai:30443",
+  docsOrigin: "https://docs.zeroroot.ai:30443",
 };
 
 describe("isMarketingPath", () => {
@@ -20,7 +21,7 @@ describe("isMarketingPath", () => {
     // by the dashboard — they live in the SaaS-only www-svc (www.zeroroot.ai).
     // They ARE still in MARKETING_PREFIXES so that requests to app.<domain>/pricing
     // redirect to the canonical marketing host rather than 404.
-    for (const p of ["/pricing", "/docs", "/docs/getting-started", "/contact-sales"]) {
+    for (const p of ["/pricing", "/contact-sales"]) {
       expect(isMarketingPath(p)).toBe(true);
     }
   });
@@ -34,6 +35,31 @@ describe("isMarketingPath", () => {
     for (const p of ["/dashboard", "/login", "/signup", "/dashboard/missions", "/pricingx"]) {
       expect(isMarketingPath(p)).toBe(false);
     }
+  });
+});
+
+describe("docs paths go to the docs site, never the marketing host", () => {
+  it("redirects /docs from the product host to the docs origin", () => {
+    expect(decideHostSplit("app.zeroroot.ai:30443", "/docs", "", cfg)).toEqual({
+      kind: "redirect",
+      url: "https://docs.zeroroot.ai:30443/docs",
+    });
+  });
+
+  it("redirects a stale /docs bookmark on the marketing host too", () => {
+    // Before dashboard#820 this passed through, because www served the docs.
+    // It does not any more, so passing through means a 404.
+    expect(decideHostSplit("www.zeroroot.ai:30443", "/docs/missions", "", cfg)).toEqual({
+      kind: "redirect",
+      url: "https://docs.zeroroot.ai:30443/docs/missions",
+    });
+  });
+
+  it("keeps marketing paths on the marketing host", () => {
+    expect(decideHostSplit("app.zeroroot.ai:30443", "/pricing", "", cfg)).toEqual({
+      kind: "redirect",
+      url: "https://www.zeroroot.ai:30443/pricing",
+    });
   });
 });
 
@@ -60,8 +86,28 @@ describe("loadHostSplitConfig", () => {
     const c = loadHostSplitConfig({
       AUTH_URL: "https://app.zeroroot.ai:30443/",
       WWW_URL: "https://www.zeroroot.ai:30443",
+      DOCS_URL: "https://docs.zeroroot.ai:30443",
     });
     expect(c).toEqual(cfg);
+  });
+
+  it("falls back to the public docs host when DOCS_URL is unset", () => {
+    // Docs are core (ADR-0006), present self-hosted as well as SaaS, so there
+    // is always a real target — unlike marketingUrl, which is null off-SaaS.
+    const c = loadHostSplitConfig({
+      AUTH_URL: "https://app.zeroroot.ai",
+      WWW_URL: "https://www.zeroroot.ai",
+    });
+    expect(c?.docsOrigin).toBe("https://docs.zeroroot.ai");
+  });
+
+  it("strips a trailing slash from DOCS_URL", () => {
+    const c = loadHostSplitConfig({
+      AUTH_URL: "https://app.zeroroot.ai",
+      WWW_URL: "https://www.zeroroot.ai",
+      DOCS_URL: "https://docs.example.test/",
+    });
+    expect(c?.docsOrigin).toBe("https://docs.example.test");
   });
 
   it("prefers NEXTAUTH_URL over AUTH_URL for the app origin", () => {
@@ -97,7 +143,7 @@ describe("decideHostSplit", () => {
   it("serves marketing paths on www (pass, in case dashboard is the www backend in dev)", () => {
     // ADR-0006 / deploy#1033: in SaaS, www requests go to gibson_www_svc (nginx),
     // not the dashboard. In dev, they may arrive here — marketing paths pass.
-    for (const p of ["/pricing", "/docs/x", "/contact-sales"]) {
+    for (const p of ["/pricing", "/contact-sales"]) {
       expect(decideHostSplit("www.zeroroot.ai", p, "", cfg)).toEqual({ kind: "pass" });
     }
   });
@@ -129,7 +175,7 @@ describe("decideHostSplit", () => {
     });
     expect(decideHostSplit("app.zeroroot.ai", "/docs/intro", "", cfg)).toEqual({
       kind: "redirect",
-      url: "https://www.zeroroot.ai:30443/docs/intro",
+      url: "https://docs.zeroroot.ai:30443/docs/intro",
     });
     expect(decideHostSplit("app.zeroroot.ai", "/contact-sales", "", cfg)).toEqual({
       kind: "redirect",

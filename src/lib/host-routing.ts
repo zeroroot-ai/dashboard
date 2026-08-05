@@ -27,6 +27,16 @@
 export interface HostSplitConfig {
   /** Bare host incl. port if any, e.g. "app.zeroroot.ai:30443". */
   appHost: string;
+  /**
+   * Full origin of the docs site, no trailing slash.
+   *
+   * Derived from `DOCS_URL`, falling back to the public docs host. Unlike
+   * `marketingUrl` this is never null: ADR-0006 classes docs as a core
+   * component, shipped self-hosted as well as SaaS, so a /docs bookmark
+   * always has somewhere real to land.
+   */
+  docsOrigin: string;
+
   /** Bare host incl. port if any, e.g. "www.zeroroot.ai:30443". */
   wwwHost: string;
   /** Full product origin, no trailing slash. */
@@ -46,7 +56,18 @@ type HostSplitDecision =
  * from old bookmarks) redirect to the canonical marketing host rather than
  * 404ing. Root "/" is handled separately (→ /dashboard, not www).
  */
-const MARKETING_PREFIXES = ["/docs", "/pricing", "/contact-sales"] as const;
+const MARKETING_PREFIXES = ["/pricing", "/contact-sales"] as const;
+
+/**
+ * `/docs` is NOT a marketing prefix. It used to be, back when the marketing
+ * host and the docs were the same Next app. Since dashboard#820 the docs are
+ * their own deployable on their own host, so redirecting an old /docs bookmark
+ * to the marketing host sends it somewhere that legitimately 404s — which is
+ * exactly what it did until this change.
+ *
+ * Kept as its own prefix so those bookmarks land on the docs site instead.
+ */
+const DOCS_PREFIXES = ["/docs"] as const;
 
 /**
  * Paths never host-redirected: assets, API + auth callbacks, health probes,
@@ -76,6 +97,13 @@ function stripTrailingSlash(s: string): string {
 
 export function isMarketingPath(pathname: string): boolean {
   return MARKETING_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+}
+
+/** True when the path belongs to the docs site rather than this app. */
+export function isDocsPath(pathname: string): boolean {
+  return DOCS_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
 }
@@ -110,11 +138,13 @@ export function loadHostSplitConfig(
     return null;
   }
   if (hostEquals(appHost, wwwHost)) return null;
+  const docsRaw = source.DOCS_URL;
   return {
     appHost,
     wwwHost,
     appOrigin: stripTrailingSlash(appOrigin),
     wwwOrigin: stripTrailingSlash(wwwOrigin),
+    docsOrigin: stripTrailingSlash(docsRaw || "https://docs.zeroroot.ai"),
   };
 }
 
@@ -141,6 +171,9 @@ export function decideHostSplit(
     // In dev (no separate www-svc), they may arrive here — apply the split:
     // marketing paths pass (dashboard could serve them in dev), product/auth
     // paths redirect to the app host so the auth flow works correctly.
+    if (isDocsPath(pathname)) {
+      return { kind: "redirect", url: `${cfg.docsOrigin}${pathname}${search}` };
+    }
     if (isMarketingPath(pathname)) return { kind: "pass" };
     // Product/auth path on the marketing host → product host.
     return { kind: "redirect", url: `${cfg.appOrigin}${pathname}${search}` };
@@ -152,8 +185,11 @@ export function decideHostSplit(
     // Unauthenticated users land on /login via the auth middleware.
     return { kind: "redirect", url: `${cfg.appOrigin}/dashboard` };
   }
+  if (isDocsPath(pathname)) {
+    // Old /docs bookmarks land on the docs site, not the marketing host.
+    return { kind: "redirect", url: `${cfg.docsOrigin}${pathname}${search}` };
+  }
   if (isMarketingPath(pathname)) {
-    // Docs (and any future marketing paths) redirect to the www host.
     return { kind: "redirect", url: `${cfg.wwwOrigin}${pathname}${search}` };
   }
   return { kind: "pass" };
