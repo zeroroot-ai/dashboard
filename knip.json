@@ -32,7 +32,6 @@
     "@zeroroot/brand"
   ],
   "ignoreUnresolved": [
-    "@/\\.source/.*"
   ],
   "rules": {
     "files": "error",
