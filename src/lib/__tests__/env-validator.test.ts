@@ -47,7 +47,11 @@ const VALID_ENV: Record<string, string> = {
   ALLOWED_SERVICE_SUBJECTS: '111,222,333',
 
   // Auth.js
-  AUTH_SECRET: 'a'.repeat(32),
+  // NOT `'a'.repeat(32)`: that cleared the old length-only check while having
+  // no entropy at all, which is exactly what the `secret` kind now rejects.
+  AUTH_SECRET: 'Qk7pR2xLmZ9vTc4WnB6yHd8sJf3gAe5U',
+  // 43 base64 chars + one pad = exactly 32 decoded bytes.
+  NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: 'A'.repeat(43) + '=',
   AUTH_URL: 'https://app.zeroroot.local:30443',
   POST_LOGOUT_REDIRECT_URI: 'https://app.zeroroot.local:30443',
 
@@ -190,6 +194,82 @@ describe('env-validator: validateEnv()', () => {
     expect(e.malformed.map((m) => m.spec.name)).toContain('ZITADEL_CLIENT_ID');
   });
 
+  // -------------------------------------------------------------------------
+  // Secret strength (GHSA-826q). `kind: 'string'` only asserted non-empty, so
+  // the validator accepted a one-character AUTH_SECRET, the key that encrypts
+  // every session cookie.
+  // -------------------------------------------------------------------------
+
+  function malformedNames(mutation: Record<string, string>): string[] {
+    setProcessEnv({ ...VALID_ENV, ...mutation });
+    try {
+      validateEnv();
+    } catch (err) {
+      if (err instanceof EnvValidationError) {
+        return err.malformed.map((m) => m.spec.name);
+      }
+      throw err;
+    }
+    return [];
+  }
+
+  it('rejects a single-character AUTH_SECRET', () => {
+    expect(malformedNames({ AUTH_SECRET: 'x' })).toContain('AUTH_SECRET');
+  });
+
+  it('rejects an AUTH_SECRET below the minimum length', () => {
+    expect(malformedNames({ AUTH_SECRET: 'Qk7pR2xLmZ9vTc4WnB6y' })).toContain(
+      'AUTH_SECRET',
+    );
+  });
+
+  it('rejects a long-but-zero-entropy AUTH_SECRET', () => {
+    // Long enough to clear a length check, and worthless.
+    expect(malformedNames({ AUTH_SECRET: 'a'.repeat(64) })).toContain(
+      'AUTH_SECRET',
+    );
+    expect(malformedNames({ AUTH_SECRET: 'changeme'.repeat(8) })).toContain(
+      'AUTH_SECRET',
+    );
+  });
+
+  it('accepts a generated-looking AUTH_SECRET', () => {
+    expect(
+      malformedNames({ AUTH_SECRET: 'kJ8vN2pQ7mR4tW9xZ3bY6cF1gH5dS0aL' }),
+    ).not.toContain('AUTH_SECRET');
+  });
+
+  it('requires NEXT_SERVER_ACTIONS_ENCRYPTION_KEY in production', () => {
+    setProcessEnv({ ...VALID_ENV, NODE_ENV: 'production' });
+    delete process.env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY;
+
+    let caught: unknown;
+    try {
+      validateEnv();
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(EnvValidationError);
+    expect((caught as EnvValidationError).missing.map((s) => s.name)).toContain(
+      'NEXT_SERVER_ACTIONS_ENCRYPTION_KEY',
+    );
+  });
+
+  it('rejects a NEXT_SERVER_ACTIONS_ENCRYPTION_KEY that is not a 32-byte base64 key', () => {
+    // Next.js silently ignores a malformed key and substitutes a per-build
+    // ephemeral one, so this has to fail at boot or not at all.
+    for (const bad of [
+      'not-base64-at-all!!',
+      'AAAA=', // valid base64, wrong length
+      'A'.repeat(64), // decodes to 48 bytes
+    ]) {
+      expect(
+        malformedNames({ NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: bad }),
+        `expected ${bad} to be rejected`,
+      ).toContain('NEXT_SERVER_ACTIONS_ENCRYPTION_KEY');
+    }
+  });
+
   it('skips prodOnly entries when NODE_ENV is not production', () => {
     setProcessEnv({ ...VALID_ENV, NODE_ENV: 'development' });
     delete process.env.ALLOWED_SERVICE_SUBJECTS;
@@ -215,7 +295,7 @@ describe('env-validator: validateEnv()', () => {
 describe('env-validator: typed accessor (env.X)', () => {
   it('returns the value when the required var is set', () => {
     expect(env.ZITADEL_ISSUER).toBe('https://auth.zeroroot.local:30443');
-    expect(env.AUTH_SECRET).toBe('a'.repeat(32));
+    expect(env.AUTH_SECRET).toBe(VALID_ENV.AUTH_SECRET);
   });
 
   it('throws EnvValidationError when a required var is read while missing', () => {

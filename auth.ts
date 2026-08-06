@@ -42,6 +42,10 @@ import { cookies } from "next/headers";
 import { getFaultMode } from "@/src/lib/test-fixtures/fault-injection";
 
 import { resolvePostSignInRedirect } from "@/src/lib/auth/post-signin-redirect";
+import {
+  SESSION_IDLE_MAX_AGE_SECONDS,
+  isSessionBeyondAbsoluteCap,
+} from "@/src/lib/auth/session-lifetime";
 
 // ---------------------------------------------------------------------------
 // Module augmentation, extend the built-in Session/JWT types with the
@@ -83,8 +87,16 @@ declare module "next-auth" {
     accessToken?: string;
     /** Raw Zitadel ID token, stored in the encrypted JWT cookie, server-side only */
     idToken?: string;
+    /**
+     * Unix seconds at which this login began, stamped ONCE at sign-in and
+     * never refreshed. Auth.js rewrites `iat`/`exp` on every re-mint, so
+     * neither can express "how long has this human been signed in"; this
+     * field is the only durable anchor for the absolute session cap.
+     */
+    authIssuedAt?: number;
   }
 }
+
 
 // ---------------------------------------------------------------------------
 // Environment variable resolution
@@ -150,6 +162,28 @@ const internalIssuer =
     ? process.env.ZITADEL_INTERNAL_ISSUER
     : issuer;
 
+/**
+ * Whether cookies this app sets should carry the `Secure` attribute.
+ *
+ * Read from AUTH_URL because that is the same value Auth.js itself uses to
+ * decide whether to apply the `__Secure-` cookie NAME prefix, so the name and
+ * the attribute cannot drift apart. See the `cookies.sessionToken` block below
+ * for what went wrong when this was keyed to NODE_ENV.
+ *
+ * AUTH_URL is a required env (see src/lib/env-validator.ts), so the NODE_ENV
+ * fallback here is reachable only during `next build`, where no cookie is ever
+ * set.
+ */
+const useSecureCookies: boolean = (() => {
+  const rawAuthUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL;
+  if (!rawAuthUrl) return process.env.NODE_ENV === "production";
+  try {
+    return new URL(rawAuthUrl).protocol === "https:";
+  } catch {
+    return process.env.NODE_ENV === "production";
+  }
+})();
+
 const clientId = requireEnv("ZITADEL_CLIENT_ID");
 
 // Confidential client, secret is required at runtime; Auth.js v5 uses
@@ -212,10 +246,13 @@ const config: NextAuthConfig = {
   // -------------------------------------------------------------------------
   session: {
     strategy: "jwt",
-    // 8 hours; matches a typical working-session duration. The Zitadel token
-    // lifetime is shorter, Auth.js will re-mint the JWT on each server render
-    // while the OIDC session remains valid.
-    maxAge: 8 * 60 * 60,
+    // IDLE window. Auth.js re-mints the JWT (new `exp`) on every server render
+    // while the OIDC session remains valid, so this value on its own is an
+    // idle timeout and NOT a session lifetime: a tab that polls keeps the
+    // session alive indefinitely. The absolute cap is enforced separately in
+    // the `jwt` callback against the `authIssuedAt` stamp, see
+    // SESSION_ABSOLUTE_MAX_AGE_SECONDS.
+    maxAge: SESSION_IDLE_MAX_AGE_SECONDS,
   },
 
   // -------------------------------------------------------------------------
@@ -264,6 +301,19 @@ const config: NextAuthConfig = {
         }
       }
       // -----------------------------------------------------------------------
+
+      if (account) {
+        // Stamp the start of this login. Written ONCE, on the initial sign-in
+        // callback, and never touched again, so the absolute cap below cannot
+        // be pushed forward by activity.
+        token.authIssuedAt = Math.floor(Date.now() / 1000);
+      } else if (isSessionBeyondAbsoluteCap(token.authIssuedAt)) {
+        // Absolute session lifetime reached (or a pre-cap session with no
+        // stamp). Returning null makes Auth.js discard the session cookie;
+        // the next request is unauthenticated and the middleware's
+        // deny-by-default rule sends the user back to Zitadel.
+        return null;
+      }
 
       if (account) {
         // account is populated only on the initial sign-in callback.
@@ -346,15 +396,16 @@ const config: NextAuthConfig = {
       return session;
     },
 
-    /**
-     * authorized, invoked by Auth.js middleware (task 22) to gate protected
-     * routes. Returning false causes Auth.js to redirect to the sign-in page.
-     * Public routes (sign-in page itself, health endpoints) are excluded in the
-     * middleware matcher config, not here, keep this callback simple.
-     */
-    async authorized({ auth }) {
-      return !!auth?.user;
-    },
+    // NOTE: there is no `authorized` callback here, and adding one back would
+    // be actively misleading.
+    //
+    // Auth.js only invokes `authorized` when middleware exports the bare `auth`
+    // handler. middleware.ts uses the wrapper form
+    // `export default auth(async (req) => { ... })`, which takes over the
+    // decision entirely, so the callback that used to live here (`return
+    // !!auth?.user`) never ran on a single request. It read as route protection
+    // and provided none. The real gate is the deny-by-default allowlist in
+    // middleware.ts; keep it there, in one place.
 
     /**
      * redirect, resolves the post-sign-in destination.
@@ -419,7 +470,18 @@ const config: NextAuthConfig = {
         httpOnly: true,
         sameSite: "strict",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        // Keyed to the deployment's own URL scheme, NOT to NODE_ENV.
+        //
+        // Auth.js derives the cookie NAME prefix from AUTH_URL: an https
+        // AUTH_URL gets `__Secure-authjs.session-token`. Deriving the `secure`
+        // ATTRIBUTE from NODE_ENV instead let the two disagree, and the
+        // disagreement fails in both directions. A non-production build served
+        // over the kind edge's TLS got the `__Secure-` NAME with `Secure`
+        // unset, which the browser refuses to store at all; and a production
+        // build reachable over plain http (self-hosted before its certificate
+        // is installed) got `Secure` set on an origin that cannot store it.
+        // One source of truth, so the name and the attribute cannot diverge.
+        secure: useSecureCookies,
       },
     },
   },

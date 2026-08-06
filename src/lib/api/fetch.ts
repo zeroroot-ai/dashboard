@@ -11,13 +11,22 @@
  * the E9 sweep and re-homed to middleware (dashboard#862).
  */
 
-const CSRF_COOKIE = 'csrf-token';
+// Two names, one cookie. A TLS origin gets the `__Host-` prefixed form (the
+// browser then refuses any Set-Cookie for it that carries a Domain attribute,
+// so a sibling host cannot overwrite it); a plain-http origin cannot store a
+// Secure cookie at all and gets the unprefixed form. See src/lib/csrf.ts.
+// Ordered most-preferred first.
+const CSRF_COOKIE_NAMES = ['__Host-csrf-token', 'csrf-token'] as const;
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 function getCsrfToken(): string | null {
   if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${CSRF_COOKIE}=([^;]+)`));
-  return match ? decodeURIComponent(match[1]) : null;
+  for (const name of CSRF_COOKIE_NAMES) {
+    // `__Host-` contains no regex metacharacters, so interpolation is safe here.
+    const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
+    if (match) return decodeURIComponent(match[1]);
+  }
+  return null;
 }
 
 /**

@@ -16,10 +16,11 @@
  *
  * Build-time vs runtime split:
  *   `next.config.ts` is evaluated at `next build` time (and again at
- *   server start), the only env var it reads, `GIBSON_API_URL`, is a
- *   build-time concern. We surface it through `env.GIBSON_API_URL` so
- *   `next.config.ts` no longer carries an inline `?? "http://localhost"`
- *   fallback, AND we add a build-time check script
+ *   server start). It no longer reads ANY env var: its only reader was the
+ *   `/api/grpc` rewrite, which was deleted because it forwarded browser
+ *   traffic to the daemon without traversing Envoy + ext_authz.
+ *   `GIBSON_API_URL` stays in the required set because the chart supplies it
+ *   and there is a build-time check script
  *   (`scripts/check-required-build-env.mjs`) that runs before `next build`
  *   on the production codepath so a missing `GIBSON_API_URL` fails the
  *   image build, not just the pod boot. See the prebuild chain.
@@ -41,8 +42,34 @@
 // Spec descriptors
 // ---------------------------------------------------------------------------
 
-/** What shape a required env var must take. */
-type EnvKind = 'string' | 'url' | 'boolean' | 'number';
+/**
+ * What shape a required env var must take.
+ *
+ * `secret` and `aes256key` exist because `string` only asserts non-empty, which
+ * is not a meaningful contract for a key. `AUTH_SECRET` passed `string`
+ * validation at length 1: the validator accepted a one-character value for the
+ * key that encrypts every session cookie.
+ */
+type EnvKind = 'string' | 'url' | 'boolean' | 'number' | 'secret' | 'aes256key';
+
+/**
+ * Minimum accepted length for a `secret`-kind value. `openssl rand -base64 32`
+ * yields 44 chars and the Helm chart generates `randAlphaNum 32`, so 32 is the
+ * floor that admits every legitimate generator while rejecting hand-typed
+ * values.
+ */
+const MIN_SECRET_LENGTH = 32;
+
+/**
+ * Minimum distinct characters in a `secret`-kind value.
+ *
+ * Length alone does not imply entropy: `'a'.repeat(32)` clears a length check
+ * and has none. This is a floor against padded and repeated placeholders, not
+ * an entropy estimator; 10 distinct characters is far below what any random
+ * 32-char generator produces (which is ~24+) and far above what a padded
+ * placeholder reaches.
+ */
+const MIN_SECRET_UNIQUE_CHARS = 10;
 
 /**
  * Single required-env entry.
@@ -117,10 +144,27 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
   // ---- Auth.js ----
   {
     name: 'AUTH_SECRET',
-    kind: 'string',
+    // `secret`, not `string`: this key encrypts every session cookie and HMACs
+    // the missing-email-recovery nonce, and `string` accepted any non-empty
+    // value including a single character.
+    kind: 'secret',
     hint:
       'Random 32+ char secret used by Auth.js to encrypt JWE cookies and ' +
       'HMAC the missing-email-recovery nonce. Generate with `openssl rand -base64 32`.',
+  },
+  {
+    name: 'NEXT_SERVER_ACTIONS_ENCRYPTION_KEY',
+    kind: 'aes256key',
+    hint:
+      'Base64-encoded 32-byte AES-GCM key Next.js uses to encrypt Server Action ' +
+      'bound arguments. Delivered by External Secrets and mounted by the chart so ' +
+      'it is identical across replicas and survives upgrades. Next.js falls back to ' +
+      'a per-build ephemeral key when this is absent or malformed, which is why it ' +
+      'must be asserted here rather than left to fail as a decrypt error under load. ' +
+      'Generate with `openssl rand -base64 32`.',
+    // Enforced in production only: `pnpm dev` on a workstation legitimately runs
+    // single-process, where the Next.js ephemeral fallback is correct behaviour.
+    prodOnly: true,
   },
   {
     name: 'AUTH_URL',
@@ -157,9 +201,12 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
     name: 'GIBSON_API_URL',
     kind: 'url',
     hint:
-      'Internal Envoy gRPC endpoint the Next.js rewrite at /api/grpc forwards to ' +
-      '(e.g. http://gibson-envoy:30443). Read by next.config.ts at build time AND ' +
-      'startup, check-required-build-env.mjs enforces this in CI too.',
+      'Internal Envoy endpoint for the daemon front door (e.g. http://gibson-envoy:30443). ' +
+      'NOTE: the /api/grpc Next.js rewrite that used to consume this was deleted, ' +
+      'it proxied browser traffic onto the daemon without traversing ext_authz. ' +
+      'The value is still asserted at boot because the chart supplies it and ' +
+      'check-required-build-env.mjs enforces it in CI; it now has no in-repo reader. ' +
+      'Retiring it is a chart-coupled change, do that in the deploy repo first.',
   },
   {
     name: 'PUBLIC_URL',
@@ -465,6 +512,43 @@ function validateShape(
       return /^(true|false|1|0)$/i.test(value)
         ? { ok: true }
         : { ok: false, reason: 'expected "true" | "false" | "1" | "0"' };
+    case 'secret': {
+      if (value.length < MIN_SECRET_LENGTH) {
+        return {
+          ok: false,
+          reason: `secret is too short (${value.length} chars, minimum ${MIN_SECRET_LENGTH}); generate with \`openssl rand -base64 32\``,
+        };
+      }
+      const unique = new Set(value).size;
+      if (unique < MIN_SECRET_UNIQUE_CHARS) {
+        return {
+          ok: false,
+          reason: `secret has too little variation (${unique} distinct characters, minimum ${MIN_SECRET_UNIQUE_CHARS}); this looks like a placeholder or padded value, generate with \`openssl rand -base64 32\``,
+        };
+      }
+      return { ok: true };
+    }
+    case 'aes256key': {
+      // Next.js requires a base64-encoded 32-byte AES-GCM key. Anything else
+      // is silently ignored at boot and replaced with a per-build ephemeral
+      // key, so a typo here degrades to "works on one replica" rather than
+      // failing loudly. Validate the decoded byte length, not the string.
+      if (!/^[A-Za-z0-9+/]+={0,2}$/.test(value)) {
+        return { ok: false, reason: 'not valid base64' };
+      }
+      let byteLength: number;
+      try {
+        byteLength = Buffer.from(value, 'base64').length;
+      } catch {
+        return { ok: false, reason: 'not valid base64' };
+      }
+      return byteLength === 32
+        ? { ok: true }
+        : {
+            ok: false,
+            reason: `expected a base64-encoded 32-byte key, decoded to ${byteLength} bytes; generate with \`openssl rand -base64 32\``,
+          };
+    }
     case 'number':
       return Number.isFinite(Number(value))
         ? { ok: true }

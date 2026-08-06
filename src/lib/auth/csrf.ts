@@ -43,7 +43,7 @@ import 'server-only';
 import { timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { CSRF_COOKIE_NAME } from '@/src/lib/csrf';
+import { CSRF_COOKIE_NAME, getCsrfTokenFromCookies } from '@/src/lib/csrf';
 
 /** Header name used in the double-submit pattern. */
 export const CSRF_HEADER_NAME = 'x-csrf-token';
@@ -127,7 +127,9 @@ async function readSubmittedToken(request: NextRequest): Promise<string | null> 
  *   }
  */
 export async function requireCsrf(request: NextRequest): Promise<void> {
-  const cookieToken = request.cookies.get(CSRF_COOKIE_NAME)?.value ?? '';
+  // Read through the shared helper: the cookie is `__Host-csrf-token` on a
+  // TLS origin and `csrf-token` on plain http, and the helper accepts either.
+  const cookieToken = getCsrfTokenFromCookies(request) ?? '';
   if (!cookieToken) {
     throw new CsrfError(
       'csrf-cookie-missing',
