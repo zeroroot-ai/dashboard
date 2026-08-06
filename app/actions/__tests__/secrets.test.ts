@@ -82,6 +82,7 @@ import {
 } from "../secrets";
 
 import { revalidatePath } from "next/cache";
+import { ERROR_CLASS_TABLE } from "@/src/lib/api-errors";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -327,7 +328,11 @@ describe("deleteSecretAction, RPC error", () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected not-ok");
     expect(result.code).toBe("not_found");
-    expect(result.error).toMatch(/not found/i);
+    // The class is what the caller switches on. The daemon's own wording is
+    // NOT forwarded any more (GHSA-xxg9-2h3v-588p): it goes to the server log
+    // against the correlation ID, and the user sees canonical copy.
+    expect(result.error).not.toContain("not found");
+    expect(result.error).toBe(ERROR_CLASS_TABLE.not_found.message);
   });
 });
 
