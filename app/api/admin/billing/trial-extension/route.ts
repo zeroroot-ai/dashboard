@@ -11,10 +11,9 @@ import {
   findCustomerSubscription,
 } from '@/src/lib/billing/stripe';
 import { getTenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
-import {
-  assertAuthorized,
-  AuthzDeniedError,
-} from '@/src/lib/auth/assert-authorized';
+import { getServerSession } from '@/src/lib/auth';
+import { isCrossTenant } from '@/src/lib/auth/schema';
+import { requireCsrf, CsrfError, csrfErrorResponse } from '@/src/lib/auth/csrf';
 import { emitAuthAudit } from '@/src/lib/audit/auth';
 import { logger } from '@/src/lib/logger';
 
@@ -32,16 +31,32 @@ export const dynamic = 'force-dynamic';
  * billing.trial_extension audit event.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  // Auth gate: platform-operator only.
-  // Uses PluginsAdminService as the system_tenant#admin relation gate
-  // (same pattern as existing admin routes).
+  // CSRF, zero-trust-hardening Req 11.5 — this route mutates billing state.
   try {
-    await assertAuthorized('/gibson.pluginadmin.v1.PluginAdminService/RegisterPlugin');
+    await requireCsrf(req);
   } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return NextResponse.json({ error: 'permission denied' }, { status: 403 });
-    }
+    if (err instanceof CsrfError) return csrfErrorResponse(err);
     throw err;
+  }
+
+  // Auth gate: platform-operator ONLY.
+  //
+  // This previously called assertAuthorized() with a PluginAdminService
+  // method as a stand-in for "system_tenant#admin". That method's registry
+  // entry derives its object via `tenant_from_identity`, so it resolves to
+  // admin on the CALLER'S OWN tenant — which every self-serve tenant owner
+  // holds. The route accepts an arbitrary `tenantId` in the body, so that
+  // gate authorized nothing about the tenant being modified.
+  //
+  // Cross-tenant authority is not expressible as a per-tenant relation, so
+  // gate on the cross-tenant role directly (the same check
+  // app/actions/crd/_authz.ts uses for tenant-lifecycle actions).
+  const session = await getServerSession();
+  if (!session) {
+    return NextResponse.json({ error: 'authentication required' }, { status: 401 });
+  }
+  if (!isCrossTenant(session)) {
+    return NextResponse.json({ error: 'permission denied' }, { status: 403 });
   }
 
   let body: { tenantId?: string; days?: number };
@@ -120,7 +135,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   );
   const newTrialEndUnix = Math.floor(newTrialEnd.getTime() / 1000);
 
-  const idempotencyKey = `admin:trial-extension:${tenantId}:${subscriptionId}:${Math.floor(Date.now() / 10000)}`;
+  // Idempotency key must NOT include a wall-clock bucket: a time-bucketed key
+  // lets the same extension be re-applied once per bucket, stacking trial time
+  // without bound. Key on the resulting trial end instead, so a repeat of the
+  // same request is a genuine no-op at Stripe while a legitimately different
+  // extension still gets its own key.
+  const idempotencyKey = `admin:trial-extension:${tenantId}:${subscriptionId}:${newTrialEndUnix}`;
 
   try {
     await updateSubscriptionTrialEnd(subscriptionId, newTrialEndUnix, idempotencyKey);
