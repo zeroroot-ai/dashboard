@@ -233,6 +233,90 @@ describe("probeBrokerConfigAction, bad_input", () => {
 });
 
 // ---------------------------------------------------------------------------
+// BYO Vault address validation (GHSA-92mq-8rvr-p4x5)
+//
+// The address is dialled downstream while carrying the tenant's Vault token,
+// so an address naming internal space is both a credential-exfiltration
+// channel and an in-cluster request oracle. The action must refuse it before
+// the RPC is dispatched.
+//
+// This is defence in depth only: it cannot see DNS rebinding or a redirect.
+// The deciding control is connect-time peer-address validation in gibson.
+// ---------------------------------------------------------------------------
+
+describe("BYO Vault address is rejected when it points at internal space", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const hostileAddresses = [
+    "http://169.254.169.254/latest/meta-data",
+    "https://169.254.169.254/latest/meta-data",
+    "https://127.0.0.1:8200",
+    "https://2130706433:8200",
+    "https://[::1]:8200",
+    "https://10.1.2.3:8200",
+    "https://192.168.0.10:8200",
+    "https://172.20.0.1:8200",
+    "https://localhost:8200",
+    "https://gibson-openbao.gibson.svc.cluster.local:8200",
+    "https://vault:8200",
+    "https://metadata.google.internal/computeMetadata/v1",
+    "http://vault.example.com:8200",
+    "https://attacker:pass@vault.example.com",
+    "file:///etc/passwd",
+  ];
+
+  it.each(hostileAddresses)("probe rejects %s without dispatching the RPC", async (address) => {
+    const fd = makeFormData({ ...vaultFormBase, address, vaultToken: "s.tok" });
+    const result = await probeBrokerConfigAction(fd);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected not-ok");
+    expect(result.code).toBe("bad_input");
+    expect(mockProbeBrokerConfig).not.toHaveBeenCalled();
+  });
+
+  it.each(hostileAddresses)("save rejects %s without dispatching the RPC", async (address) => {
+    const fd = makeFormData({ ...vaultFormBase, address, vaultToken: "s.tok" });
+    const result = await setBrokerConfigAction(fd);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected not-ok");
+    expect(result.code).toBe("bad_input");
+    expect(mockSetBrokerConfig).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("still accepts a public https address and forwards it normalised", async () => {
+    mockProbeBrokerConfig.mockResolvedValue({
+      result: { ok: true, errorClass: "", errorMessage: "", durationMs: BigInt(1) },
+    });
+
+    const fd = makeFormData({
+      ...vaultFormBase,
+      address: "https://Vault.Example.com:8200/",
+    });
+    const result = await probeBrokerConfigAction(fd);
+
+    expect(result.ok).toBe(true);
+    expect(mockProbeBrokerConfig.mock.calls[0][0].address).toBe(
+      "https://vault.example.com:8200",
+    );
+  });
+
+  it("leaves the hosted broker (empty address) untouched", async () => {
+    mockProbeBrokerConfig.mockResolvedValue({
+      result: { ok: true, errorClass: "", errorMessage: "", durationMs: BigInt(1) },
+    });
+
+    const fd = makeFormData({ provider: "BROKER_PROVIDER_VAULT_HOSTED" });
+    const result = await probeBrokerConfigAction(fd);
+
+    expect(result.ok).toBe(true);
+    expect(mockProbeBrokerConfig.mock.calls[0][0].address).toBe("");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // setBrokerConfigAction
 // ---------------------------------------------------------------------------
 
