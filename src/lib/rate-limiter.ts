@@ -1,13 +1,31 @@
 /**
  * Rate Limiting System
  *
- * Redis-backed rate limiting for API endpoints.
- * Provides:
- * - Fixed window rate limiting
- * - Sliding window rate limiting
- * - Token bucket algorithm
- * - Per-user and per-IP limiting
- * - Configurable limits per endpoint
+ * Rate limiting for API routes and Server Actions. Because signup CAPTCHA is a
+ * deliberate WONTFIX, rate limiting is the ONLY abuse control on the public
+ * surface, so the invariants below are load-bearing rather than best-effort:
+ *
+ *  1. The identity a limit is keyed on must NOT be attacker-controlled.
+ *     A limit keyed on a spoofable value is not a limit: the attacker rotates
+ *     the value to get unlimited budget, and pins it to a victim's value to
+ *     exhaust *their* budget. See `resolveClientIp`.
+ *
+ *  2. Budget is consumed ONLY by requests that are inside it, and only once.
+ *     A limiter that records refused attempts lets a blocked source keep its
+ *     own bucket permanently full: every rejection re-arms the window, so the
+ *     bucket never drains and the source is locked out forever. Combined with
+ *     (1) that turns into a lockout primitive against any chosen victim.
+ *
+ *  3. Unrelated sources never share a bucket. Keys are namespaced per
+ *     endpoint and per resolved identity.
+ *
+ * Storage: the dashboard is a thin client and holds no backing-store
+ * credentials, it may not import a Redis/Postgres driver directly
+ * (dashboard#584, enforced by scripts/check-no-store-clients.mjs). This module
+ * therefore does not construct a shared store, it only accepts one via
+ * `initializeRateLimiter`. Until a composition root injects one, limits are
+ * enforced per-process, which multiplies the effective limit by the replica
+ * count. That degradation is logged loudly rather than assumed away.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -17,7 +35,7 @@ import { logger } from './logger';
 // Types
 // ============================================================================
 
-export type RateLimitAlgorithm = 'fixed_window' | 'sliding_window' | 'token_bucket';
+type RateLimitAlgorithm = 'fixed_window' | 'sliding_window';
 
 export interface RateLimitConfig {
   /** Maximum requests allowed in the window */
@@ -39,7 +57,7 @@ export interface RateLimitConfig {
 interface RateLimitResult {
   /** Whether the request is allowed */
   allowed: boolean;
-  /** Current count of requests */
+  /** Number of requests recorded in the window, including this one if allowed */
   current: number;
   /** Maximum allowed requests */
   limit: number;
@@ -60,92 +78,94 @@ interface RateLimitHeaders {
 }
 
 // ============================================================================
-// Configuration Presets
+// Shared store (injected, never constructed here)
 // ============================================================================
+
+/** Verdict returned by a shared, cross-process rate-limit store. */
+export interface RateLimitStoreVerdict {
+  allowed: boolean;
+  /** Requests recorded in the window after this call. */
+  current: number;
+  /** Seconds until the bucket has room again. */
+  resetInSeconds: number;
+}
 
 /**
- * Rate limit presets for common use cases
+ * Contract for a shared (cross-pod) rate-limit store.
+ *
+ * `consume` MUST be atomic and MUST be consume-on-success: it may record the
+ * attempt only when the attempt is inside the budget. An implementation that
+ * records refused attempts violates invariant (2) above and is not a valid
+ * store for this interface.
  */
-const RATE_LIMIT_PRESETS = {
-  /** Standard API endpoint */
-  standard: {
-    maxRequests: 100,
-    windowSeconds: 60,
-    algorithm: 'sliding_window' as const,
-  },
+export interface RateLimitStore {
+  consume(
+    key: string,
+    maxRequests: number,
+    windowSeconds: number,
+  ): Promise<RateLimitStoreVerdict>;
+}
 
-  /** Sensitive endpoints (login, password reset) */
-  sensitive: {
-    maxRequests: 10,
-    windowSeconds: 60,
-    algorithm: 'fixed_window' as const,
-  },
+let sharedStore: RateLimitStore | null = null;
+let missingStoreLogged = false;
 
-  /** Invitation endpoints */
-  invitation: {
-    maxRequests: 20,
-    windowSeconds: 3600, // 1 hour
-    algorithm: 'fixed_window' as const,
-    message: 'Too many invitations sent. Please try again later.',
-  },
+/**
+ * Inject the shared rate-limit store.
+ *
+ * Call this once from a server composition root (or from a test). Passing
+ * `null` reverts to the per-process in-memory map.
+ */
+export function initializeRateLimiter(store: RateLimitStore | null): void {
+  sharedStore = store;
+  missingStoreLogged = false;
+  logger.info(
+    { component: 'RateLimiter', shared: store !== null },
+    store !== null
+      ? 'shared rate-limit store installed'
+      : 'shared rate-limit store cleared, limits are per-process',
+  );
+}
 
-  /** API key operations */
-  apiKey: {
-    maxRequests: 10,
-    windowSeconds: 3600, // 1 hour
-    algorithm: 'fixed_window' as const,
-    message: 'Too many API key operations. Please try again later.',
-  },
-
-  /** Session operations */
-  session: {
-    maxRequests: 30,
-    windowSeconds: 60,
-    algorithm: 'sliding_window' as const,
-  },
-
-  /** Export/download operations */
-  export: {
-    maxRequests: 10,
-    windowSeconds: 3600, // 1 hour
-    algorithm: 'fixed_window' as const,
-    message: 'Export limit reached. Please try again later.',
-  },
-
-  /** Search operations */
-  search: {
-    maxRequests: 60,
-    windowSeconds: 60,
-    algorithm: 'sliding_window' as const,
-  },
-
-  /** Bulk operations */
-  bulk: {
-    maxRequests: 5,
-    windowSeconds: 60,
-    algorithm: 'fixed_window' as const,
-    message: 'Too many bulk operations. Please wait before trying again.',
-  },
-} as const;
+/**
+ * Resolve the store to use, logging once when there is none.
+ *
+ * The absence of a shared store is a real weakening of the control (the
+ * effective limit becomes `configured limit x replica count`), so it is
+ * reported at error level rather than silently tolerated.
+ */
+function getStore(): RateLimitStore | null {
+  if (sharedStore) return sharedStore;
+  if (!missingStoreLogged) {
+    missingStoreLogged = true;
+    logger.error(
+      { component: 'RateLimiter' },
+      'no shared rate-limit store is installed: limits are enforced per-process, ' +
+        'so the effective limit is multiplied by the replica count. Inject one via ' +
+        'initializeRateLimiter() to restore a cluster-wide limit.',
+    );
+  }
+  return null;
+}
 
 // ============================================================================
-// In-Memory Storage (Development)
+// In-process storage (fallback)
 // ============================================================================
 
 interface RateLimitEntry {
-  count: number;
+  /** Timestamps of ACCEPTED requests only. Refused attempts are never recorded. */
   timestamps: number[];
+  /** Start of the fixed window this entry belongs to (fixed_window only). */
   windowStart: number;
-  tokens?: number;
-  lastRefill?: number;
+  /** Last time this entry was touched, used for eviction. */
+  lastSeen: number;
 }
 
 const rateLimitStore: Map<string, RateLimitEntry> = new Map();
 
-// Cleanup old entries periodically
-const CLEANUP_INTERVAL_MS = 60 * 1000; // 1 minute
+const CLEANUP_INTERVAL_MS = 60 * 1000;
+const ENTRY_TTL_MS = 2 * 60 * 60 * 1000;
 
-let cleanupInterval: NodeJS.Timeout | null = null;
+let cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
 function startCleanup(): void {
   if (cleanupInterval) return;
@@ -153,453 +173,376 @@ function startCleanup(): void {
   cleanupInterval = setInterval(() => {
     const now = Date.now();
     for (const [key, entry] of rateLimitStore.entries()) {
-      // Remove entries older than 2 hours
-      if (now - entry.windowStart > 2 * 60 * 60 * 1000) {
+      if (now - entry.lastSeen > ENTRY_TTL_MS) {
         rateLimitStore.delete(key);
       }
     }
   }, CLEANUP_INTERVAL_MS);
+
+  // Never hold the process open for the sweeper.
+  cleanupInterval.unref?.();
+}
+
+/** Clear the in-process store. Exported for tests. */
+export function clearRateLimitStore(): void {
+  rateLimitStore.clear();
 }
 
 // ============================================================================
-// Redis Client Interface
-// ============================================================================
-
-interface RedisClient {
-  get(key: string): Promise<string | null>;
-  set(key: string, value: string, options?: { EX?: number }): Promise<void>;
-  incr(key: string): Promise<number>;
-  expire(key: string, seconds: number): Promise<void>;
-  ttl(key: string): Promise<number>;
-  zadd(key: string, score: number, member: string): Promise<number>;
-  zrangebyscore(key: string, min: number, max: number): Promise<string[]>;
-  zremrangebyscore(key: string, min: number, max: number): Promise<number>;
-  zcount(key: string, min: number, max: number): Promise<number>;
-}
-
-let redisClient: RedisClient | null = null;
-
-/**
- * Initialize Redis client for rate limiting
- */
-function initializeRateLimiter(client: RedisClient): void {
-  redisClient = client;
-  logger.info({ component: 'RateLimiter' }, 'Redis client initialized');
-}
-
-function isRedisAvailable(): boolean {
-  return redisClient !== null && process.env.NODE_ENV === 'production';
-}
-
-// ============================================================================
-// Key Generation
+// Client identity
 // ============================================================================
 
 /**
- * Extract client IP from request
+ * How many reverse proxies we operate between the public internet and this
+ * process. The dashboard runs behind exactly one (Envoy), which is the
+ * default; override only when the topology genuinely changes (e.g. a CDN is
+ * placed in front of Envoy, making it two).
  */
-function getClientIP(request: NextRequest): string {
-  const forwardedFor = request.headers.get('x-forwarded-for');
+const DEFAULT_TRUSTED_PROXY_HOPS = 1;
+
+/**
+ * Bucket used when the source cannot be established, i.e. the request did not
+ * arrive through the trusted proxy chain. In production nothing reaches the
+ * pod except via Envoy, so this bucket should stay empty; sharing it is
+ * deliberate, an unidentifiable source gets no per-source budget.
+ */
+const UNIDENTIFIED_SOURCE = 'unidentified';
+
+function trustedProxyHopCount(): number {
+  const raw = process.env.TRUSTED_PROXY_HOP_COUNT;
+  if (raw === undefined || raw.trim() === '') return DEFAULT_TRUSTED_PROXY_HOPS;
+  const parsed = Number.parseInt(raw.trim(), 10);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    logger.warn(
+      { component: 'RateLimiter', value: raw },
+      'TRUSTED_PROXY_HOP_COUNT is not a non-negative integer, using the default',
+    );
+    return DEFAULT_TRUSTED_PROXY_HOPS;
+  }
+  return parsed;
+}
+
+const IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+
+/**
+ * Validate and normalise a single X-Forwarded-For entry.
+ *
+ * Returns null for anything that is not a plausible IP address, so a garbage
+ * entry can never become a rate-limit bucket name.
+ */
+function normalizeIp(raw: string): string | null {
+  let value = raw.trim();
+  if (value === '') return null;
+
+  // `[2001:db8::1]:443` -> `2001:db8::1`
+  if (value.startsWith('[')) {
+    const close = value.indexOf(']');
+    if (close === -1) return null;
+    value = value.slice(1, close);
+  } else {
+    // `1.2.3.4:443` -> `1.2.3.4` (a bare IPv6 has >1 colon and no port here)
+    const colons = value.split(':').length - 1;
+    if (colons === 1) value = value.slice(0, value.indexOf(':'));
+  }
+
+  const v4 = IPV4.exec(value);
+  if (v4) {
+    for (let i = 1; i <= 4; i += 1) {
+      const octet = Number(v4[i]);
+      if (octet > 255) return null;
+    }
+    return value;
+  }
+
+  // Loose IPv6 check: hex groups and colons only, at least two colons.
+  if (/^[0-9a-fA-F:]+$/.test(value) && value.includes('::')) return value.toLowerCase();
+  if (/^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/.test(value)) return value.toLowerCase();
+
+  return null;
+}
+
+/**
+ * Resolve the client IP from a request's headers.
+ *
+ * X-Forwarded-For grows left-to-right: each proxy APPENDS the address of the
+ * peer it received the request from. So with `hops` proxies that we operate,
+ * the right-hand `hops` entries were written by our own infrastructure and the
+ * entry at `length - hops` is the address our outermost trusted proxy actually
+ * observed. Everything to the left of that was supplied by the caller and is
+ * forgeable.
+ *
+ * Reading the LEFTMOST entry, as this function previously did, means reading a
+ * value the attacker writes: they rotate it for unlimited budget, or pin it to
+ * a victim's IP to exhaust the victim's budget.
+ *
+ * Exported for tests.
+ */
+export function resolveClientIp(
+  headers: Pick<Headers, 'get'>,
+  hops: number = trustedProxyHopCount(),
+): string {
+  const forwardedFor = headers.get('x-forwarded-for');
+
   if (forwardedFor) {
-    return forwardedFor.split(',')[0].trim();
+    const entries = forwardedFor
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter((entry) => entry !== '');
+
+    if (entries.length > 0) {
+      // With 0 trusted hops there is no proxy to have appended anything, so
+      // the whole header is caller-supplied and worthless; fall through.
+      if (hops > 0) {
+        // Clamp: a chain shorter than the configured hop count means the
+        // request did not traverse the full expected path. Index 0 is then
+        // the best available value and is still proxy-written.
+        const index = Math.max(0, entries.length - hops);
+        const ip = normalizeIp(entries[index]);
+        return ip ?? UNIDENTIFIED_SOURCE;
+      }
+    }
   }
 
-  const realIP = request.headers.get('x-real-ip');
-  if (realIP) {
-    return realIP;
+  // x-real-ip is set by proxies but is equally forgeable by a direct caller,
+  // so it is only honoured when we are NOT behind a proxy at all (hops === 0),
+  // i.e. a local `next dev` run.
+  if (hops === 0) {
+    const realIp = headers.get('x-real-ip');
+    if (realIp) {
+      const ip = normalizeIp(realIp);
+      if (ip) return ip;
+    }
   }
 
-  return '127.0.0.1';
+  return UNIDENTIFIED_SOURCE;
 }
 
 /**
- * Generate rate limit key based on configuration
+ * Generate the rate limit key.
+ *
+ * Note on `identifier: 'user'`: the user id is NOT read from a request header.
+ * A client-supplied `x-user-id` was previously trusted here, which let a caller
+ * mint a fresh bucket per request (unlimited budget) or omit the header
+ * entirely to get no rate limiting at all. Until a trusted server-side identity
+ * is threaded in, user-keyed configs degrade to IP-keyed limiting, which is
+ * strictly stronger than the previous behaviour.
+ *
+ * Returns null ONLY for `custom` + `keyGenerator` that opts out explicitly.
  */
 function generateKey(
   request: NextRequest,
   endpoint: string,
-  config: RateLimitConfig
+  config: RateLimitConfig,
 ): string | null {
-  // Use custom key generator if provided
   if (config.keyGenerator) {
     return config.keyGenerator(request);
   }
 
-  const identifier = config.identifier || 'ip';
-  const ip = getClientIP(request);
-
-  // Try to get user ID from session
-  // In production, this would come from the actual session
-  const userId = request.headers.get('x-user-id');
-
-  switch (identifier) {
-    case 'ip':
-      return `ratelimit:${endpoint}:ip:${ip}`;
-
-    case 'user':
-      if (!userId) return null; // Skip rate limiting if no user
-      return `ratelimit:${endpoint}:user:${userId}`;
-
-    case 'ip_and_user':
-      if (!userId) {
-        return `ratelimit:${endpoint}:ip:${ip}`;
-      }
-      return `ratelimit:${endpoint}:user:${userId}:ip:${ip}`;
-
-    case 'custom':
-      return null; // Must use keyGenerator
-
-    default:
-      return `ratelimit:${endpoint}:ip:${ip}`;
-  }
+  const ip = resolveClientIp(request.headers);
+  return `ratelimit:${endpoint}:ip:${ip}`;
 }
 
 // ============================================================================
-// Rate Limiting Algorithms
+// Algorithms (in-process)
 // ============================================================================
 
+function touch(key: string, now: number, windowStart: number): RateLimitEntry {
+  const existing = rateLimitStore.get(key);
+  if (existing) {
+    existing.lastSeen = now;
+    return existing;
+  }
+  const created: RateLimitEntry = { timestamps: [], windowStart, lastSeen: now };
+  rateLimitStore.set(key, created);
+  return created;
+}
+
 /**
- * Fixed window rate limiting (in-memory)
+ * Fixed window, consume-on-success.
  */
-function checkFixedWindowMemory(
-  key: string,
-  config: RateLimitConfig
-): RateLimitResult {
+function checkFixedWindowMemory(key: string, config: RateLimitConfig): RateLimitResult {
   const now = Date.now();
   const windowMs = config.windowSeconds * 1000;
   const windowStart = Math.floor(now / windowMs) * windowMs;
+  const resetAtMs = windowStart + windowMs;
 
-  let entry = rateLimitStore.get(key);
+  const entry = touch(key, now, windowStart);
+  if (entry.windowStart !== windowStart) {
+    entry.windowStart = windowStart;
+    entry.timestamps = [];
+  }
 
-  // New window or expired
-  if (!entry || entry.windowStart !== windowStart) {
-    entry = {
-      count: 1,
-      timestamps: [now],
-      windowStart,
-    };
-    rateLimitStore.set(key, entry);
+  const resetIn = Math.max(1, Math.ceil((resetAtMs - now) / 1000));
+  const resetAt = Math.ceil(resetAtMs / 1000);
 
+  if (entry.timestamps.length >= config.maxRequests) {
+    // Refused: do NOT record. See invariant (2).
     return {
-      allowed: true,
-      current: 1,
+      allowed: false,
+      current: entry.timestamps.length,
       limit: config.maxRequests,
-      remaining: config.maxRequests - 1,
-      resetIn: Math.ceil((windowStart + windowMs - now) / 1000),
-      resetAt: Math.ceil((windowStart + windowMs) / 1000),
+      remaining: 0,
+      resetIn,
+      resetAt,
     };
   }
 
-  // Same window
-  entry.count++;
   entry.timestamps.push(now);
-
-  const allowed = entry.count <= config.maxRequests;
-  const resetIn = Math.ceil((windowStart + windowMs - now) / 1000);
-  const resetAt = Math.ceil((windowStart + windowMs) / 1000);
-
   return {
-    allowed,
-    current: entry.count,
+    allowed: true,
+    current: entry.timestamps.length,
     limit: config.maxRequests,
-    remaining: Math.max(0, config.maxRequests - entry.count),
+    remaining: Math.max(0, config.maxRequests - entry.timestamps.length),
     resetIn,
     resetAt,
   };
 }
 
 /**
- * Sliding window rate limiting (in-memory)
+ * Sliding window, consume-on-success.
  */
-function checkSlidingWindowMemory(
-  key: string,
-  config: RateLimitConfig
-): RateLimitResult {
+function checkSlidingWindowMemory(key: string, config: RateLimitConfig): RateLimitResult {
   const now = Date.now();
   const windowMs = config.windowSeconds * 1000;
-  const windowStart = now - windowMs;
+  const cutoff = now - windowMs;
 
-  let entry = rateLimitStore.get(key);
+  const entry = touch(key, now, now);
+  entry.timestamps = entry.timestamps.filter((ts) => ts > cutoff);
 
-  if (!entry) {
-    entry = {
-      count: 1,
-      timestamps: [now],
-      windowStart: now,
-    };
-    rateLimitStore.set(key, entry);
-
+  if (entry.timestamps.length >= config.maxRequests) {
+    // Refused: do NOT record. Recording here would push the oldest timestamp
+    // forward on every rejection, so the window would never drain.
+    const oldest = entry.timestamps[0] ?? now;
+    const resetInMs = oldest + windowMs - now;
     return {
-      allowed: true,
-      current: 1,
+      allowed: false,
+      current: entry.timestamps.length,
       limit: config.maxRequests,
-      remaining: config.maxRequests - 1,
-      resetIn: config.windowSeconds,
-      resetAt: Math.ceil((now + windowMs) / 1000),
+      remaining: 0,
+      resetIn: Math.max(1, Math.ceil(resetInMs / 1000)),
+      resetAt: Math.ceil((oldest + windowMs) / 1000),
     };
   }
 
-  // Remove timestamps outside the window
-  entry.timestamps = entry.timestamps.filter((ts) => ts > windowStart);
   entry.timestamps.push(now);
-  entry.count = entry.timestamps.length;
-
-  const allowed = entry.count <= config.maxRequests;
-
-  // Calculate reset time (when oldest request falls out of window)
-  const oldestTimestamp = entry.timestamps[0] || now;
-  const resetIn = Math.ceil((oldestTimestamp + windowMs - now) / 1000);
-  const resetAt = Math.ceil((oldestTimestamp + windowMs) / 1000);
-
   return {
-    allowed,
-    current: entry.count,
+    allowed: true,
+    current: entry.timestamps.length,
     limit: config.maxRequests,
-    remaining: Math.max(0, config.maxRequests - entry.count),
-    resetIn: Math.max(1, resetIn),
-    resetAt,
+    remaining: Math.max(0, config.maxRequests - entry.timestamps.length),
+    resetIn: config.windowSeconds,
+    resetAt: Math.ceil((now + windowMs) / 1000),
   };
 }
 
-/**
- * Token bucket rate limiting (in-memory)
- */
-function checkTokenBucketMemory(
-  key: string,
-  config: RateLimitConfig
+function checkMemory(key: string, config: RateLimitConfig): RateLimitResult {
+  return (config.algorithm ?? 'sliding_window') === 'fixed_window'
+    ? checkFixedWindowMemory(key, config)
+    : checkSlidingWindowMemory(key, config);
+}
+
+function verdictToResult(
+  verdict: RateLimitStoreVerdict,
+  config: RateLimitConfig,
 ): RateLimitResult {
-  const now = Date.now();
-  const refillRate = config.maxRequests / config.windowSeconds; // tokens per second
-  const maxTokens = config.maxRequests;
-
-  let entry = rateLimitStore.get(key);
-
-  if (!entry) {
-    entry = {
-      count: 0,
-      timestamps: [],
-      windowStart: now,
-      tokens: maxTokens - 1, // Use one token
-      lastRefill: now,
-    };
-    rateLimitStore.set(key, entry);
-
-    return {
-      allowed: true,
-      current: 1,
-      limit: maxTokens,
-      remaining: maxTokens - 1,
-      resetIn: config.windowSeconds,
-      resetAt: Math.ceil((now + config.windowSeconds * 1000) / 1000),
-    };
-  }
-
-  // Refill tokens based on time elapsed
-  const elapsedSeconds = (now - (entry.lastRefill || now)) / 1000;
-  const tokensToAdd = Math.floor(elapsedSeconds * refillRate);
-
-  if (tokensToAdd > 0) {
-    entry.tokens = Math.min(maxTokens, (entry.tokens || 0) + tokensToAdd);
-    entry.lastRefill = now;
-  }
-
-  // Try to consume a token
-  if ((entry.tokens || 0) >= 1) {
-    entry.tokens = (entry.tokens || 0) - 1;
-    entry.count++;
-
-    return {
-      allowed: true,
-      current: entry.count,
-      limit: maxTokens,
-      remaining: Math.floor(entry.tokens || 0),
-      resetIn: Math.ceil((maxTokens - (entry.tokens || 0)) / refillRate),
-      resetAt: Math.ceil((now + ((maxTokens - (entry.tokens || 0)) / refillRate) * 1000) / 1000),
-    };
-  }
-
-  // No tokens available
-  const timeUntilToken = Math.ceil(1 / refillRate);
-
+  const resetIn = Math.max(1, Math.ceil(verdict.resetInSeconds));
   return {
-    allowed: false,
-    current: entry.count,
-    limit: maxTokens,
-    remaining: 0,
-    resetIn: timeUntilToken,
-    resetAt: Math.ceil((now + timeUntilToken * 1000) / 1000),
+    allowed: verdict.allowed,
+    current: verdict.current,
+    limit: config.maxRequests,
+    remaining: Math.max(0, config.maxRequests - verdict.current),
+    resetIn,
+    resetAt: Math.ceil(Date.now() / 1000) + resetIn,
   };
 }
 
 /**
- * Check rate limit using Redis (sliding window)
+ * Consume one unit from `key`, preferring the shared store.
+ *
+ * `failClosed` governs what happens when the shared store ERRORS: callers that
+ * cannot tolerate a silent downgrade (e.g. bootstrap-token enumeration) get
+ * the error rethrown instead of a per-process fallback.
  */
-async function checkSlidingWindowRedis(
+async function consume(
   key: string,
-  config: RateLimitConfig
+  config: RateLimitConfig,
+  failClosed: boolean,
 ): Promise<RateLimitResult> {
-  if (!redisClient) {
-    // Fallback to memory
-    return checkSlidingWindowMemory(key, config);
-  }
+  startCleanup();
 
-  const now = Date.now();
-  const windowMs = config.windowSeconds * 1000;
-  const windowStart = now - windowMs;
+  const store = getStore();
+  if (!store) {
+    return checkMemory(key, config);
+  }
 
   try {
-    // Remove old entries
-    await redisClient.zremrangebyscore(key, 0, windowStart);
-
-    // Add current request
-    await redisClient.zadd(key, now, `${now}-${Math.random()}`);
-
-    // Set expiry on the key
-    await redisClient.expire(key, config.windowSeconds * 2);
-
-    // Count requests in window
-    const count = await redisClient.zcount(key, windowStart, now);
-
-    const allowed = count <= config.maxRequests;
-
-    return {
-      allowed,
-      current: count,
-      limit: config.maxRequests,
-      remaining: Math.max(0, config.maxRequests - count),
-      resetIn: config.windowSeconds,
-      resetAt: Math.ceil((now + windowMs) / 1000),
-    };
-  } catch (error) {
-    console.error('[RateLimiter] Redis error, falling back to memory:', error);
-    return checkSlidingWindowMemory(key, config);
+    const verdict = await store.consume(key, config.maxRequests, config.windowSeconds);
+    return verdictToResult(verdict, config);
+  } catch (err) {
+    if (failClosed) throw err;
+    logger.warn(
+      { component: 'RateLimiter', err },
+      'shared rate-limit store failed, falling back to the per-process limit',
+    );
+    return checkMemory(key, config);
   }
 }
 
 // ============================================================================
-// Main Rate Limiting Function
+// Public API
 // ============================================================================
 
+function unlimited(config: RateLimitConfig): RateLimitResult {
+  return {
+    allowed: true,
+    current: 0,
+    limit: config.maxRequests,
+    remaining: config.maxRequests,
+    resetIn: config.windowSeconds,
+    resetAt: Math.ceil((Date.now() + config.windowSeconds * 1000) / 1000),
+  };
+}
+
 /**
- * Check if a request should be rate limited
+ * Check (and consume) the rate limit for an incoming request.
  */
 export async function checkRateLimit(
   request: NextRequest,
   endpoint: string,
-  config: RateLimitConfig
+  config: RateLimitConfig,
 ): Promise<RateLimitResult> {
-  // Start cleanup if not running
-  startCleanup();
-
-  // Check if should skip
   if (config.skip?.(request)) {
-    return {
-      allowed: true,
-      current: 0,
-      limit: config.maxRequests,
-      remaining: config.maxRequests,
-      resetIn: config.windowSeconds,
-      resetAt: Math.ceil((Date.now() + config.windowSeconds * 1000) / 1000),
-    };
+    return unlimited(config);
   }
 
-  // Generate key
   const key = generateKey(request, endpoint, config);
   if (!key) {
-    // No key means skip rate limiting
-    return {
-      allowed: true,
-      current: 0,
-      limit: config.maxRequests,
-      remaining: config.maxRequests,
-      resetIn: config.windowSeconds,
-      resetAt: Math.ceil((Date.now() + config.windowSeconds * 1000) / 1000),
-    };
+    return unlimited(config);
   }
 
-  const algorithm = config.algorithm || 'sliding_window';
-
-  // Use Redis in production, memory in development
-  if (isRedisAvailable()) {
-    return checkSlidingWindowRedis(key, config);
-  }
-
-  // In-memory implementation based on algorithm
-  switch (algorithm) {
-    case 'fixed_window':
-      return checkFixedWindowMemory(key, config);
-    case 'sliding_window':
-      return checkSlidingWindowMemory(key, config);
-    case 'token_bucket':
-      return checkTokenBucketMemory(key, config);
-    default:
-      return checkSlidingWindowMemory(key, config);
-  }
+  return consume(key, config, false);
 }
 
 /**
- * Check rate limit for a pre-generated key, for callers that already know
- * the identity (e.g. Server Actions loading the session themselves) and do
- * not have a NextRequest to pass through `checkRateLimit`.
+ * Check (and consume) the rate limit for a pre-generated key, for callers that
+ * already know the identity (e.g. Server Actions loading the session
+ * themselves) and have no NextRequest to pass through `checkRateLimit`.
  *
- * Throws instead of falling back to memory when `failClosed: true` is set
- * and the Redis client errors. Callers that cannot tolerate silent degrade
- * (e.g. bootstrap token fetch) use that flag to short-circuit.
+ * With `failClosed: true` a shared-store error is rethrown instead of silently
+ * degrading to the per-process limit.
  */
 export async function checkRateLimitByKey(
   key: string,
   config: RateLimitConfig,
   opts?: { failClosed?: boolean },
 ): Promise<RateLimitResult> {
-  startCleanup();
-
-  const algorithm = config.algorithm || 'sliding_window';
-
-  if (isRedisAvailable()) {
-    if (opts?.failClosed) {
-      // Redis sliding-window path with no memory fallback on error.
-      const now = Date.now();
-      const windowMs = config.windowSeconds * 1000;
-      const windowStart = now - windowMs;
-      if (!redisClient) {
-        throw new Error('rate limiter redis client unavailable');
-      }
-      await redisClient.zremrangebyscore(key, 0, windowStart);
-      await redisClient.zadd(key, now, `${now}-${Math.random()}`);
-      await redisClient.expire(key, config.windowSeconds * 2);
-      const count = await redisClient.zcount(key, windowStart, now);
-      const allowed = count <= config.maxRequests;
-      return {
-        allowed,
-        current: count,
-        limit: config.maxRequests,
-        remaining: Math.max(0, config.maxRequests - count),
-        resetIn: config.windowSeconds,
-        resetAt: Math.ceil((now + windowMs) / 1000),
-      };
-    }
-    return checkSlidingWindowRedis(key, config);
-  }
-
-  switch (algorithm) {
-    case 'fixed_window':
-      return checkFixedWindowMemory(key, config);
-    case 'sliding_window':
-      return checkSlidingWindowMemory(key, config);
-    case 'token_bucket':
-      return checkTokenBucketMemory(key, config);
-    default:
-      return checkSlidingWindowMemory(key, config);
-  }
+  return consume(key, config, opts?.failClosed === true);
 }
 
 // ============================================================================
-// Response Helpers
+// Response helpers
 // ============================================================================
 
-/**
- * Generate rate limit headers
- */
 function getRateLimitHeaders(result: RateLimitResult): RateLimitHeaders {
   const headers: RateLimitHeaders = {
     'X-RateLimit-Limit': result.limit.toString(),
@@ -615,11 +558,11 @@ function getRateLimitHeaders(result: RateLimitResult): RateLimitHeaders {
 }
 
 /**
- * Create a rate limited response
+ * Create a 429 response carrying the standard rate-limit headers.
  */
 export function createRateLimitResponse(
   result: RateLimitResult,
-  message?: string
+  message?: string,
 ): NextResponse {
   return NextResponse.json(
     {
@@ -632,111 +575,6 @@ export function createRateLimitResponse(
     {
       status: 429,
       headers: getRateLimitHeaders(result) as Record<string, string>,
-    }
+    },
   );
-}
-
-// ============================================================================
-// Middleware Helper
-// ============================================================================
-
-/**
- * Rate limiting middleware for API routes
- */
-function withRateLimit(
-  endpoint: string,
-  config: RateLimitConfig
-) {
-  return async function rateLimitMiddleware(
-    request: NextRequest,
-    handler: () => Promise<NextResponse>
-  ): Promise<NextResponse> {
-    const result = await checkRateLimit(request, endpoint, config);
-
-    if (!result.allowed) {
-      return createRateLimitResponse(result, config.message);
-    }
-
-    // Execute the handler and add rate limit headers to response
-    const response = await handler();
-
-    // Add headers to response
-    const headers = getRateLimitHeaders(result);
-    Object.entries(headers).forEach(([key, value]) => {
-      if (value !== undefined) response.headers.set(key, value);
-    });
-
-    return response;
-  };
-}
-
-/**
- * Higher-order function to wrap an API route handler with rate limiting
- */
-function rateLimited(
-  endpoint: string,
-  config: RateLimitConfig | keyof typeof RATE_LIMIT_PRESETS
-) {
-  const effectiveConfig = typeof config === 'string'
-    ? RATE_LIMIT_PRESETS[config]
-    : config;
-
-  return function <T extends (request: NextRequest, ...args: unknown[]) => Promise<NextResponse>>(
-    handler: T
-  ): T {
-    return (async (request: NextRequest, ...args: unknown[]) => {
-      const result = await checkRateLimit(request, endpoint, effectiveConfig);
-
-      if (!result.allowed) {
-        return createRateLimitResponse(
-          result,
-          'message' in effectiveConfig ? effectiveConfig.message : undefined
-        );
-      }
-
-      const response = await handler(request, ...args);
-
-      // Add headers to response
-      const headers = getRateLimitHeaders(result);
-      Object.entries(headers).forEach(([key, value]) => {
-        if (value !== undefined) response.headers.set(key, value);
-      });
-
-      return response;
-    }) as T;
-  };
-}
-
-// ============================================================================
-// Testing Utilities
-// ============================================================================
-
-/**
- * Clear rate limit store (for testing)
- */
-function clearRateLimitStore(): void {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('clearRateLimitStore is not available in production');
-  }
-  rateLimitStore.clear();
-}
-
-/**
- * Get rate limit store size (for testing)
- */
-function getRateLimitStoreSize(): number {
-  if (process.env.NODE_ENV === 'production') {
-    return -1;
-  }
-  return rateLimitStore.size;
-}
-
-/**
- * Stop cleanup interval (for testing)
- */
-function stopCleanup(): void {
-  if (cleanupInterval) {
-    clearInterval(cleanupInterval);
-    cleanupInterval = null;
-  }
 }
