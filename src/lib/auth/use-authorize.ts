@@ -13,7 +13,10 @@
  *   4. Membership query loading → { allowed: false, loading: true } (hides UI,
  *      avoids flash-of-visible-admin-chrome).
  *   5. No role for active tenant → denied.
- *   6. satisfiesRelation(role, entry.relation) → allowed / denied.
+ *   6. decideAuthEntry(entry, role) → allowed / denied. Object scope is read
+ *      first: an entry whose FGA check runs against a specific component,
+ *      plugin, or secret is not decidable from a tenant role and is denied
+ *      ('object-scoped'). Only then is the tenant-role tier compared.
  *
  * IMPORTANT: `loading: true` MUST be treated as "not allowed" by every caller.
  * Render `null` when `loading || !allowed`.
@@ -31,7 +34,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { AuthRegistry, IdentityClass } from '@/src/gen/authz/registry';
-import { satisfiesRelation } from './relation-hierarchy';
+import { decideAuthEntry } from './relation-hierarchy';
 import { fetchMyMemberships } from './client-memberships';
 
 /**
@@ -120,8 +123,11 @@ export function useAuthorize(method: string): AuthorizeResult {
     return { allowed: false, loading: false };
   }
 
-  return {
-    allowed: satisfiesRelation(tenantEntry.role, entry.relation),
-    loading: false,
-  };
+  // Object scope first, then relation. Mirrors `assertAuthorized` exactly,
+  // both route through the same `decideAuthEntry`, so client chrome and the
+  // server gate can never disagree about what a tenant role grants.
+  const verdict = decideAuthEntry(entry, tenantEntry.role);
+  return verdict.allowed
+    ? { allowed: true, loading: false }
+    : { allowed: false, loading: false, reason: verdict.reason };
 }

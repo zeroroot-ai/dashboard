@@ -19,6 +19,11 @@
  *     and prod: a registry miss is always a programming error and must
  *     throw before the call leaves the process. There is no environment-
  *     dependent escape hatch.
+ *   - The decision is OBJECT-AWARE. This helper knows only the caller's role
+ *     on the active tenant, so it can only decide entries whose FGA check
+ *     runs against that tenant. Entries scoped to a specific component,
+ *     plugin, or secret are refused ('object-scoped') and left to the daemon,
+ *     which sees the object. See `auth/relation-hierarchy`.
  *
  * Spec: dashboard-authz-ui-gating Requirement 3.
  * Sister-spec: cross-repo-cohesion-fixes Requirement 1.
@@ -32,7 +37,7 @@ import 'server-only';
 
 import { auth } from '@/auth';
 import { AuthRegistry, IdentityClass } from '@/src/gen/authz/registry';
-import { satisfiesRelation } from './relation-hierarchy';
+import { decideAuthEntry } from './relation-hierarchy';
 import { getMyMemberships } from './membership';
 import { readRawActiveTenant } from './active-tenant';
 
@@ -60,6 +65,7 @@ export class AuthzDeniedError extends Error {
       | 'no-active-tenant'
       | 'not-a-member'
       | 'relation-not-met'
+      | 'object-scoped'
       | 'unknown_method',
   ) {
     super(`assertAuthorized: ${reason} for ${method}`);
@@ -163,7 +169,11 @@ export async function assertAuthorized(method: string): Promise<void> {
     throw new AuthzDeniedError(method, 'not-a-member');
   }
 
-  if (!satisfiesRelation(membership.role, entry.relation)) {
-    throw new AuthzDeniedError(method, 'relation-not-met');
+  // Object scope first, then relation. An entry whose FGA check runs against a
+  // specific component / plugin / secret names that object in the request body,
+  // which this check never sees, so it is refused here and left to the daemon.
+  const verdict = decideAuthEntry(entry, membership.role);
+  if (!verdict.allowed) {
+    throw new AuthzDeniedError(method, verdict.reason);
   }
 }
