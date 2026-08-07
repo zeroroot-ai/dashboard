@@ -83,6 +83,17 @@ vi.mock('@/src/gen/authz/registry', () => ({
       allowedIdentities: 1,
       unauthenticated: true,
     },
+    // Object-scoped entry, USER-callable so the identity gate does not
+    // short-circuit the decision under test. GHSA-mvxf-pr5g-7pvx.
+    '/gibson.tenant.v1.SecretsService/GetCredential': {
+      method: '/gibson.tenant.v1.SecretsService/GetCredential',
+      service: 'gibson.tenant.v1.SecretsService',
+      relation: 'can_resolve',
+      objectType: 'secret',
+      objectDeriver: "tenant_and_field('Name')",
+      allowedIdentities: 1,
+      unauthenticated: false,
+    },
     '__test_service_only__': {
       method: '__test_service_only__',
       service: 'test.v1.TestService',
@@ -253,7 +264,52 @@ describe('useAuthorize, member role', () => {
       wrapper: createWrapper(),
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current).toEqual({ allowed: false, loading: false });
+    expect(result.current).toEqual({
+      allowed: false,
+      loading: false,
+      reason: 'relation-not-met',
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GHSA-mvxf-pr5g-7pvx: client chrome must agree with the server gate. A tenant
+// admin does not get a per-object grant just for being an admin, so the UI
+// must not offer the action either.
+// ---------------------------------------------------------------------------
+
+describe('useAuthorize, object-scoped relation', () => {
+  const SECRET_METHOD = '/gibson.tenant.v1.SecretsService/GetCredential';
+
+  it('DENIES a tenant admin an object-scoped grant on a secret', async () => {
+    mockMemberships('tenant-a', { 'tenant-a': { role: 'admin' } });
+    const { result } = renderHook(() => useAuthorize(SECRET_METHOD), {
+      wrapper: createWrapper(),
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current).toEqual({
+      allowed: false,
+      loading: false,
+      reason: 'object-scoped',
+    });
+  });
+
+  it('DENIES a tenant owner the same grant', async () => {
+    mockMemberships('tenant-a', { 'tenant-a': { role: 'owner' } });
+    const { result } = renderHook(() => useAuthorize(SECRET_METHOD), {
+      wrapper: createWrapper(),
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current).toMatchObject({ allowed: false, reason: 'object-scoped' });
+  });
+
+  it('ALLOWS that same tenant admin the tenant-scoped RPC on their own tenant', async () => {
+    mockMemberships('tenant-a', { 'tenant-a': { role: 'admin' } });
+    const { result } = renderHook(() => useAuthorize(ADMIN_METHOD), {
+      wrapper: createWrapper(),
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current).toEqual({ allowed: true, loading: false });
   });
 });
 

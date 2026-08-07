@@ -62,6 +62,36 @@ vi.mock('@/src/gen/authz/registry', () => ({
       allowedIdentities: 1,
       unauthenticated: true,
     },
+    // Object-scoped entries. Shaped exactly like the generated registry, but
+    // USER-callable so the identity gate does not short-circuit the decision
+    // under test. GHSA-mvxf-pr5g-7pvx.
+    '/test/SecretsService/GetCredential': {
+      method: '/test/SecretsService/GetCredential',
+      service: 'test.SecretsService',
+      relation: 'can_resolve',
+      objectType: 'secret',
+      objectDeriver: "tenant_and_field('Name')",
+      allowedIdentities: 1, // USER
+      unauthenticated: false,
+    },
+    '/test/PluginInvokeService/PluginInvoke': {
+      method: '/test/PluginInvokeService/PluginInvoke',
+      service: 'test.PluginInvokeService',
+      relation: 'can_invoke',
+      objectType: 'plugin',
+      objectDeriver: "tenant_and_field('PluginName')",
+      allowedIdentities: 1,
+      unauthenticated: false,
+    },
+    '/test/ComponentService/CallTool': {
+      method: '/test/ComponentService/CallTool',
+      service: 'test.ComponentService',
+      relation: 'can_execute',
+      objectType: 'component',
+      objectDeriver: 'system_tenant',
+      allowedIdentities: 1,
+      unauthenticated: false,
+    },
     '/test/ServiceOnlyService/InternalMethod': {
       method: '/test/ServiceOnlyService/InternalMethod',
       service: 'test.ServiceOnlyService',
@@ -264,6 +294,57 @@ describe('assertAuthorized, allowed paths', () => {
   it('resolves for member on a member method', async () => {
     setupMemberships('tenant-a', 'member');
     await expect(assertAuthorized('/test/MemberService/MemberMethod')).resolves.toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GHSA-mvxf-pr5g-7pvx: a tenant role must not satisfy a per-object grant.
+//
+// The object a `can_resolve` / `can_invoke` / `can_execute` check runs against
+// is named by a request field this helper never sees, so it cannot be decided
+// here and is refused. The daemon + ext-authz, which do see the object, remain
+// the deciders. The pair below is the security claim in full: DENIED on an
+// object the caller holds no grant over, ALLOWED on the one object a tenant
+// role does cover, the caller's own active tenant.
+// ---------------------------------------------------------------------------
+
+describe('assertAuthorized, object-scoped relations', () => {
+  const OBJECT_SCOPED_METHODS = [
+    '/test/SecretsService/GetCredential',
+    '/test/PluginInvokeService/PluginInvoke',
+    '/test/ComponentService/CallTool',
+  ];
+
+  it.each(OBJECT_SCOPED_METHODS)(
+    'DENIES a tenant admin %s, the object is not theirs to name',
+    async (method) => {
+      setupMemberships('tenant-a', 'admin');
+      await expect(assertAuthorized(method)).rejects.toMatchObject({
+        reason: 'object-scoped',
+        method,
+      });
+    },
+  );
+
+  it.each(OBJECT_SCOPED_METHODS)('DENIES a tenant owner %s', async (method) => {
+    setupMemberships('tenant-a', 'owner');
+    await expect(assertAuthorized(method)).rejects.toMatchObject({
+      reason: 'object-scoped',
+    });
+  });
+
+  it('ALLOWS the same tenant admin the tenant-scoped RPC on the tenant they do own', async () => {
+    setupMemberships('tenant-a', 'admin');
+    await expect(
+      assertAuthorized('/test/AdminService/AdminMethod'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('denies before the RPC leaves the process (throws, never resolves)', async () => {
+    setupMemberships('tenant-a', 'owner');
+    await expect(
+      assertAuthorized('/test/SecretsService/GetCredential'),
+    ).rejects.toThrow(AuthzDeniedError);
   });
 });
 
