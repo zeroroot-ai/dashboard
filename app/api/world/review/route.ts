@@ -3,6 +3,7 @@ import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { userClient } from '@/src/lib/gibson-client';
 import { WorldService } from '@/src/gen/gibson/world/v1/world_pb';
+import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 
 /**
  * /api/world/review — the HITL review/label queue (epic ecs-brain, gibson#753).
@@ -55,6 +56,15 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  // CSRF, src/lib/auth/csrf.ts: the session cookie is sameSite=lax, so a
+  // mutating handler must check the double-submit token itself.
+  try {
+    await requireCsrf(req);
+  } catch (err) {
+    if (err instanceof CsrfError) return csrfErrorResponse(err);
+    throw err;
+  }
+
   try {
     const session = await getServerSession();
     if (!session) {

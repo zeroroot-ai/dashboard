@@ -1,4 +1,9 @@
 /**
+ * @csrf-exempt: Auth.js mints and validates its own CSRF token on its own
+ * action routes (it is the thing that serves /api/auth/csrf). Layering the
+ * dashboard's double-submit check on top would reject Auth.js's own POSTs,
+ * which carry its token and not ours.
+ *
  * Auth.js v5 route handler.
  *
  * Exposes the GET and POST handlers that Auth.js needs to handle OIDC

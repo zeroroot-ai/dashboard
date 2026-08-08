@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
+import { apiFetch } from "@/src/lib/api/fetch";
 
 // ── Types (mirror the /api/world/review response) ────────────────────────────
 
@@ -165,7 +166,7 @@ export function ReviewQueueContent() {
     async (targetId: string, verdict: Verdict, category: string) => {
       setSubmitting(targetId);
       try {
-        const res = await fetch("/api/world/review", {
+        const res = await apiFetch("/api/world/review", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ targetId, verdict, category }),

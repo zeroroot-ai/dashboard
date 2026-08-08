@@ -10,6 +10,7 @@ import {
 import { queryKeys } from '@/src/lib/query/keys';
 import { useTenantStore } from '@/src/stores/tenant-store';
 import type { Mission, MissionFilters, PaginatedResponse } from '@/src/types';
+import { apiFetch } from '@/src/lib/api/fetch';
 
 // API client functions
 //
@@ -92,7 +93,7 @@ async function fetchMission(id: string): Promise<Mission> {
 }
 
 async function startMission(missionId: string): Promise<Mission> {
-  const response = await fetch(`/api/missions/${missionId}/start`, {
+  const response = await apiFetch(`/api/missions/${missionId}/start`, {
     method: 'POST',
   });
 
@@ -104,7 +105,7 @@ async function startMission(missionId: string): Promise<Mission> {
 }
 
 async function pauseMission(missionId: string): Promise<Mission> {
-  const response = await fetch(`/api/missions/${missionId}/pause`, {
+  const response = await apiFetch(`/api/missions/${missionId}/pause`, {
     method: 'POST',
   });
 
@@ -116,7 +117,7 @@ async function pauseMission(missionId: string): Promise<Mission> {
 }
 
 async function resumeMission(missionId: string): Promise<Mission> {
-  const response = await fetch(`/api/missions/${missionId}/resume`, {
+  const response = await apiFetch(`/api/missions/${missionId}/resume`, {
     method: 'POST',
   });
 
@@ -128,7 +129,7 @@ async function resumeMission(missionId: string): Promise<Mission> {
 }
 
 async function stopMission(missionId: string): Promise<Mission> {
-  const response = await fetch(`/api/missions/${missionId}/stop`, {
+  const response = await apiFetch(`/api/missions/${missionId}/stop`, {
     method: 'POST',
   });
 
@@ -140,7 +141,7 @@ async function stopMission(missionId: string): Promise<Mission> {
 }
 
 async function deleteMission(missionId: string): Promise<void> {
-  const response = await fetch(`/api/missions/${missionId}`, {
+  const response = await apiFetch(`/api/missions/${missionId}`, {
     method: 'DELETE',
   });
 

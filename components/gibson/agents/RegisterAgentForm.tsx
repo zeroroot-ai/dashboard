@@ -38,6 +38,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from '@/components/ui/alert';
+import { apiFetch } from '@/src/lib/api/fetch';
 
 // ---------------------------------------------------------------------------
 // Wire types, mirror RegisterAgentResponseBody on the server side
@@ -197,7 +198,7 @@ export function RegisterAgentForm() {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await fetch('/api/agents/register', {
+      const res = await apiFetch('/api/agents/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

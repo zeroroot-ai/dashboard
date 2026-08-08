@@ -20,6 +20,7 @@ import {
 } from '@/src/lib/gibson-client';
 import { translateError } from '@/src/lib/providers-route-error';
 import { toProviderConfig } from '@/src/lib/providers-adapter';
+import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 
 type RouteContext = { params: Promise<{ name: string }> };
 
@@ -75,6 +76,16 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
  * and are never persisted by the dashboard.
  */
 async function handleUpdate(req: NextRequest, { params }: RouteContext): Promise<Response> {
+  // CSRF, src/lib/auth/csrf.ts: the session cookie is sameSite=lax, so a
+  // mutating handler must check the double-submit token itself. Both PATCH and
+  // PUT are this function, so gating it here covers both.
+  try {
+    await requireCsrf(req);
+  } catch (err) {
+    if (err instanceof CsrfError) return csrfErrorResponse(err);
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session) {
     return Response.json(
@@ -147,7 +158,16 @@ export const PUT = handleUpdate;
  * Permanently delete a provider config by name.
  * Returns 404 when no provider with the given name exists for the tenant.
  */
-export async function DELETE(_req: NextRequest, { params }: RouteContext) {
+export async function DELETE(req: NextRequest, { params }: RouteContext) {
+  // CSRF, src/lib/auth/csrf.ts: the session cookie is sameSite=lax, so a
+  // mutating handler must check the double-submit token itself.
+  try {
+    await requireCsrf(req);
+  } catch (err) {
+    if (err instanceof CsrfError) return csrfErrorResponse(err);
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session) {
     return Response.json(

@@ -61,6 +61,12 @@ function isEnabled(): boolean {
 // Handler
 // ---------------------------------------------------------------------------
 
+/**
+ * @csrf-exempt: returns 404 unless TEST_FIXTURES_ENABLED is exactly "true",
+ * which no deployed environment sets, so in production this endpoint does not
+ * exist to be forged against. Driven by Playwright's request context, which
+ * sets no `x-csrf-token` header.
+ */
 export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!isEnabled()) return notEnabled();
 

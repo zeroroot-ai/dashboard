@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import type { GraphNode } from '@/src/types/graph';
 import { EmbeddingGatePrompt } from '@/components/gibson/shared/EmbeddingGatePrompt';
 import { isEmbeddingGateError } from '@/src/lib/embedding-gate';
+import { apiFetch } from '@/src/lib/api/fetch';
 
 interface PathResult {
   node_ids: string[];
@@ -178,7 +179,7 @@ export function PathQueryPanel({ nodes, initialSourceNode, onPathsFound }: PathQ
         body.to_node_id = targetNode!.id;
       }
 
-      const resp = await fetch('/api/graph/paths', {
+      const resp = await apiFetch('/api/graph/paths', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { Button, type buttonVariants } from "@/components/ui/button";
 import { type VariantProps } from "class-variance-authority";
+import { apiFetch } from "@/src/lib/api/fetch";
 
 type ButtonProps = React.ComponentProps<"button"> & VariantProps<typeof buttonVariants>;
 
@@ -37,7 +38,7 @@ export function RunDemoMissionButton({
   async function handleClick() {
     setPending(true);
     try {
-      const response = await fetch("/api/missions/demo", {
+      const response = await apiFetch("/api/missions/demo", {
         method: "POST",
       });
 

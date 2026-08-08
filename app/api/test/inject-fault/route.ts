@@ -27,6 +27,12 @@
  *   Returns 404 when not enabled.
  *
  * Spec: auth-resolution-hardening, Task 14 (primitive 1).
+ *
+ * @csrf-exempt: returns 404 unless TEST_FIXTURES_ENABLED is exactly "true",
+ * which no deployed environment sets, so in production this endpoint does not
+ * exist to be forged against. It is driven by Playwright's request context,
+ * which shares the cookie jar but sets no `x-csrf-token` header; gating it
+ * would break the e2e harness to protect a route that is already 404.
  */
 
 import { NextResponse, type NextRequest } from "next/server";

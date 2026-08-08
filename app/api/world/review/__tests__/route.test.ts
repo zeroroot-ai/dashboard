@@ -16,6 +16,18 @@ const { mockGetServerSession } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
 }));
 
+// CSRF is enforced by these routes (src/lib/auth/csrf.ts). Stubbed to pass here
+// so these cases keep testing what they are about; the gate itself is covered,
+// unmocked and per route, in app/api/__tests__/csrf-coverage.test.ts.
+vi.mock('@/src/lib/auth/csrf', () => ({
+  requireCsrf: vi.fn(async () => undefined),
+  CsrfError: class CsrfError extends Error {},
+  csrfErrorResponse: (err: Error) =>
+    new Response(JSON.stringify({ error: 'csrf-token-required', reason: err.message }), {
+      status: 403,
+    }),
+}));
+
 vi.mock('@/src/lib/auth', () => ({
   getServerSession: mockGetServerSession,
 }));

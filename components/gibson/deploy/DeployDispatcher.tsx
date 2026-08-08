@@ -50,6 +50,7 @@ import {
   CatalogPicker,
   type GrantSelection as CatalogGrantSelection,
 } from '@/components/gibson/permissions/CatalogPicker';
+import { apiFetch } from '@/src/lib/api/fetch';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -389,7 +390,7 @@ function CredentialStep({
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch('/api/agents/register', {
+      const res = await apiFetch('/api/agents/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
