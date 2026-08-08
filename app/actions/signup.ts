@@ -40,7 +40,7 @@
 
 import "server-only";
 
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
 import { randomUUID } from "node:crypto";
 
 import { ConnectError, Code } from "@connectrpc/connect";
@@ -58,8 +58,8 @@ import {
 } from "@/app/(public)/signup/types";
 import {
   findOrCreateSignupCustomer,
-  verifySignupCustomer,
   finalizeSignupCustomer,
+  verifySignupCustomer,
   createSetupIntent,
   createTrialingSubscription,
   priceIdForTier,
@@ -67,12 +67,20 @@ import {
 } from "@/src/lib/billing/stripe";
 import { billingEnabled } from "@/src/lib/billing/billing-enabled";
 import { lookupPlan, type PlanID } from "@/src/generated/plans";
-import { selfServeTierIds } from "@/src/lib/pricing-display";
 import {
-  DEFAULT_PASSWORD_POLICY,
-  type PasswordPolicy,
-} from "@/src/lib/zitadel/password-policy-cache";
-import { provisionSignupOwner } from "@/src/lib/signup/owner-provisioning";
+  requestSignupVerification,
+  attachSignupCustomer,
+  completeSignupOwner,
+} from "@/src/lib/signup/owner-provisioning";
+import { resolveClientIp } from "@/src/lib/signup/client-ip";
+import {
+  SIGNUP_VERIFIED_COOKIE,
+  SIGNUP_VERIFIED_MAX_AGE_SECONDS,
+  decodeVerifiedSession,
+  encodeVerifiedSession,
+  signupCookieOptions,
+  type VerifiedSignupSession,
+} from "@/src/lib/signup/verified-session";
 import {
   getTenantProvisioningStatus,
   type TenantProvisioningStatus,
@@ -148,11 +156,9 @@ const POST_SIGNUP_REDIRECT = "/login?callbackUrl=%2Fdashboard";
 export async function signupAction(
   rawInput: SignupInput,
   /**
-   * Optional client-supplied attempt id. The form mints this BEFORE invoking
-   * the action and renders the holding-page <ProvisioningPanel> with it
-   * immediately, so the user sees progress while this action is still
-   * running. Server validates the format defensively. When absent (e.g.
-   * direct invocation from a test) we mint our own.
+   * Optional client-supplied attempt id. The form mints this so the same id
+   * survives the mail round-trip and the progress stream can be resumed on the
+   * completion screen. Server validates the format defensively.
    */
   clientAttemptId?: string,
 ): Promise<SignupActionResult> {
@@ -161,7 +167,6 @@ export async function signupAction(
       ? clientAttemptId
       : randomUUID();
 
-  // Pipeline context, mutable as steps run; never returned to the caller.
   const ctx: Ctx = {
     attemptId,
     input: rawInput,
@@ -192,9 +197,9 @@ export async function signupAction(
     }
     ctx.input = parsed.data;
 
-    // Normalize email to lowercase + trim, every downstream comparison
-    // (existing-user lookup, tenant-owner list, rate-limit email key) must
-    // use this canonical form.
+    // Normalize email to lowercase + trim. The daemon normalizes again and its
+    // value is the authoritative one; this keeps the local rate-limit key and
+    // the daemon's per-address budget keyed on the same string.
     ctx.input = {
       ...ctx.input,
       email: ctx.input.email.trim().toLowerCase(),
@@ -203,7 +208,8 @@ export async function signupAction(
       workspaceName: ctx.input.workspaceName.trim(),
     };
 
-    // 1. Rate limit.
+    // 1. Rate limit. A cheap early reject only — the control that binds is the
+    //    daemon's, inside the RPC handler, which no caller can route around.
     await advanceStep(attemptId, "rate_limit");
     const ip = await resolveClientIp();
     const rateLimit = await checkSignupRateLimit(ip, ctx.input.email);
@@ -216,30 +222,14 @@ export async function signupAction(
       });
     }
 
-    // 2. Password policy (advisory, client-side strength meter only). The
-    //    daemon enforces the real policy at user-create time, so this is a
-    //    best-effort early-reject using the default policy constant; the
-    //    dashboard no longer fetches the live Zitadel policy (E9, no PAT).
-    await advanceStep(attemptId, "policy");
-    const policyFail = checkPasswordAgainstPolicy(
-      ctx.input.password,
-      DEFAULT_PASSWORD_POLICY,
-    );
-    if (policyFail) {
-      return await finish(ctx, "policy", {
-        code: "POLICY_VIOLATION",
-        userMessage: policyFail,
-        fieldErrors: { password: policyFail },
-      });
-    }
-
-    // 3. Workspace-name availability.
+    // 2. Workspace-name availability. Advisory: the admission webhook is the
+    //    authoritative gate and the daemon re-derives the slug at completion.
     ctx.tenantSlug = slugify(ctx.input.workspaceName);
     if (!ctx.tenantSlug) {
       return await finish(ctx, "policy", {
-        // dashboard#44: user-visible copy uses "company name"; the
-        // internal code, error code, and field name stay as
-        // workspaceName/WORKSPACE_TAKEN to avoid moving downstream wiring.
+        // dashboard#44: user-visible copy uses "company name"; the internal
+        // code, error code, and field name stay as workspaceName /
+        // WORKSPACE_TAKEN to avoid moving downstream wiring.
         code: "INTERNAL_ERROR",
         userMessage: "That company name isn't available, pick another.",
         fieldErrors: { workspaceName: "Invalid company name" },
@@ -254,81 +244,34 @@ export async function signupAction(
       });
     }
 
-    // ----- Card-first split (dashboard#785) -----
-    // PAID tiers: create ONLY the Stripe customer + a SetupIntent here. No
-    // Zitadel user and no Tenant CR exist until the card clears in
-    // completeSignup() — an abandoned or declined signup leaves nothing behind.
-    if (paidTiersEnabled()) {
-      let stripeCustomerId: string;
-      let cardClientSecret: string;
-      try {
-        stripeCustomerId = await findOrCreateSignupCustomer({
-          email: ctx.input.email,
-          name: ctx.input.workspaceName,
-          tenantSlug: ctx.tenantSlug,
-          tier: ctx.input.tier,
-        });
-        const intent = await createSetupIntent({
-          customerId: stripeCustomerId,
-          tenantSlug: ctx.tenantSlug,
-          idempotencyKey: `signup:${attemptId}:setup-intent`,
-        });
-        if (!intent.client_secret) {
-          throw new Error("SetupIntent has no client_secret");
-        }
-        cardClientSecret = intent.client_secret;
-      } catch (err) {
-        logger.error(
-          {
-            attemptId,
-            action: "signup_setup_intent",
-            err: err instanceof Error ? err.message : String(err),
-          },
-          "card-first phase 1 (customer + SetupIntent) failed",
-        );
-        return await finish(ctx, "policy", {
-          code: "INTERNAL_ERROR",
-          userMessage: "We couldn't start payment setup. Please try again.",
-        });
-      }
-      logger.info(
-        {
-          action: "signup_card_phase",
-          attemptId,
-          tenantSlug: ctx.tenantSlug,
-          tier: ctx.input.tier,
-        },
-        "card-first phase 1 complete; awaiting inline card confirmation",
-      );
-      return {
-        ok: true,
-        phase: "card",
+    // 3. Ask the daemon to email a verification link. THIS IS THE WHOLE STEP.
+    //
+    //    No Zitadel user, no Stripe customer, no SetupIntent, no Tenant CR. The
+    //    previous shape created a billing customer and a SetupIntent right here,
+    //    before anyone had shown they could receive mail at the address — which
+    //    meant an anonymous request left a billing object behind for an address
+    //    that might belong to someone else entirely.
+    await advanceStep(attemptId, "send_verify_email");
+    try {
+      await requestSignupVerification({
         attemptId,
-        cardClientSecret,
-        stripeCustomerId,
-        tenantSlug: ctx.tenantSlug,
+        ownerEmail: ctx.input.email,
+        workspaceName: ctx.input.workspaceName,
         tier: ctx.input.tier,
-      };
+        ownerFirstName: ctx.input.firstName,
+        ownerLastName: ctx.input.lastName,
+        clientIp: ip,
+      });
+    } catch (err) {
+      return await finish(ctx, "send_verify_email", mapVerificationError(err));
     }
 
-    // ----- Autoconfirm (kind dev; paid tiers disabled) -----
-    // No card step — provision the owner + create the company inline.
-    // 4. Provision the founding-owner identity via the daemon Signup RPC
-    //    (create-or-resume the Zitadel user, set password, send verify email).
-    //    The Signup RPC also enqueues the tenant for operator-pull
-    //    provisioning (gibson#949): the tenant-operator polls the daemon's
-    //    pending-provisioning queue and creates the Tenant CR + runs the saga.
-    //    The dashboard no longer writes the Tenant CR (dashboard#813).
-    await advanceStep(attemptId, "create_user");
-    const userResult = await provisionOwner(ctx);
-    if ("fail" in userResult) {
-      return await finish(ctx, "create_user", userResult.fail);
-    }
-    ctx.zitadelUserId = userResult.ownerUserId;
-
-    return await finishProvisioning(ctx);
+    logger.info(
+      { action: "signup_verification_requested", attemptId, tier: ctx.input.tier },
+      "verification requested; nothing provisioned",
+    );
+    return { ok: true, phase: "verify_email", attemptId };
   } catch (err) {
-    // Catch-all, any uncaught exception becomes INTERNAL_ERROR.
     logger.error(
       {
         attemptId,
@@ -337,10 +280,84 @@ export async function signupAction(
       },
       "signupAction unhandled",
     );
-    return await finish(ctx, "create_user", {
+    return await finish(ctx, "send_verify_email", {
       code: "INTERNAL_ERROR",
       userMessage: "Something went wrong on our end.",
     });
+  }
+}
+
+/**
+ * startSignupPayment is the paid path's FIRST billing call, and it cannot run
+ * before this point in the flow.
+ *
+ * It reads the verified-session cookie, which only exists because the emailed
+ * link was redeemed. Then, and only then, it creates the Stripe customer and a
+ * SetupIntent, and pins the customer to the session daemon-side so the
+ * completion call does not have to be trusted for it.
+ *
+ * On the card-free profile (self-hosted / paid tiers disabled) it is a no-op
+ * that reports no client secret; the completion screen renders without a card.
+ */
+export async function startSignupPayment(): Promise<SignupActionResult> {
+  const session = await readVerifiedSession();
+  if (!session) {
+    return {
+      ok: false,
+      attemptId: "",
+      code: "VERIFICATION_INVALID",
+      userMessage: "That link is no longer valid. Please start again.",
+    };
+  }
+  if (!paidTiersEnabled()) {
+    return { ok: true, phase: "card", attemptId: session.attemptId, cardClientSecret: "" };
+  }
+
+  const tenantSlug = slugify(session.workspaceName);
+  try {
+    const stripeCustomerId = await findOrCreateSignupCustomer({
+      email: session.email,
+      name: session.workspaceName,
+      tenantSlug,
+      tier: session.tier,
+    });
+    const intent = await createSetupIntent({
+      customerId: stripeCustomerId,
+      tenantSlug,
+      idempotencyKey: `signup:${session.attemptId}:setup-intent`,
+    });
+    if (!intent.client_secret) {
+      throw new Error("SetupIntent has no client_secret");
+    }
+    // Pin it daemon-side BEFORE handing the card form to the browser, so the
+    // completion call never carries a customer id the daemon has to trust.
+    await attachSignupCustomer({
+      verifiedSessionToken: session.verifiedSessionToken,
+      stripeCustomerId,
+      clientIp: await resolveClientIp(),
+    });
+    await writeVerifiedSession({ ...session, stripeCustomerId });
+    return {
+      ok: true,
+      phase: "card",
+      attemptId: session.attemptId,
+      cardClientSecret: intent.client_secret,
+    };
+  } catch (err) {
+    logger.error(
+      {
+        attemptId: session.attemptId,
+        action: "signup_setup_intent",
+        err: err instanceof Error ? err.message : String(err),
+      },
+      "payment setup failed after verification",
+    );
+    return {
+      ok: false,
+      attemptId: session.attemptId,
+      code: "INTERNAL_ERROR",
+      userMessage: "We couldn't start payment setup. Please try again.",
+    };
   }
 }
 
@@ -433,171 +450,164 @@ async function finishProvisioning(ctx: Ctx): Promise<SignupActionResult> {
 }
 
 /**
- * completeSignup is card-first signup phase 2 (dashboard#785). The client
- * calls it after the inline Payment Element has confirmed the card (a
- * SetupIntent on the phase-1 customer). It:
- *   1. verifies the client-supplied customer really belongs to this email,
- *   2. creates the trialing subscription on the confirmed card,
- *   3. ONLY THEN provisions the owner user + Tenant CR (pinning the customer
- *      id so the operator saga adopts it deterministically),
- *   4. provisions (org wait → member → owner → /login).
+ * completeSignup finishes a VERIFIED signup.
  *
- * Nothing — no account, no company — exists until the card has cleared. If
- * any step before the Tenant CR fails, no CR was applied, so the company name
- * stays free and a retry reuses the same Stripe customer (reuse-by-email).
+ * Its authority is the verified-session cookie and nothing else. Note what it
+ * does not accept from the caller: no email, no company name, no plan, no
+ * customer id. All of those are read daemon-side from the verification row the
+ * session resolves to, so a caller who redeemed a link for one address cannot
+ * provision a workspace for another. The only inputs are the password the user
+ * just typed and, on the paid path, the payment method they just confirmed.
  *
- * Security: every field arrives from the client, so nothing is trusted. The
- * tier is re-validated, the slug is re-checked for availability, and the
- * customer id is verified against the email before any subscription is created
- * — a caller cannot subscribe an arbitrary customer or hijack another company.
+ * Order:
+ *   1. Create the founding-owner identity and enqueue the tenant (the daemon
+ *      consumes the session here, so it cannot be replayed into a second
+ *      workspace).
+ *   2. Create the trialing subscription on the already-confirmed card.
+ *   3. Poll provisioning to Ready and hand back the /login redirect.
  */
 export async function completeSignup(
   input: CompleteSignupInput,
 ): Promise<SignupActionResult> {
-  const attemptId = UUID_RE.test(input.attemptId) ? input.attemptId : randomUUID();
-  const email = input.email.trim().toLowerCase();
+  const session = await readVerifiedSession();
+  if (!session) {
+    return {
+      ok: false,
+      attemptId: "",
+      code: "VERIFICATION_INVALID",
+      userMessage: "That link is no longer valid. Please start again.",
+    };
+  }
 
   const ctx: Ctx = {
-    attemptId,
+    attemptId: session.attemptId,
     input: {
-      email,
-      password: input.password,
-      workspaceName: input.workspaceName.trim(),
-      firstName: input.firstName.trim(),
-      lastName: input.lastName.trim(),
-      tier: input.tier as SignupInput["tier"],
-      passwordConfirm: input.password,
+      email: session.email,
+      workspaceName: session.workspaceName,
+      firstName: "",
+      lastName: "",
+      tier: session.tier as SignupInput["tier"],
       acceptToS: true,
       acceptPrivacy: true,
     },
     zitadelUserId: undefined,
-    tenantSlug: input.tenantSlug,
+    tenantSlug: slugify(session.workspaceName),
   };
 
   try {
-    // Re-validate the client-supplied tier + slug.
-    if (!(selfServeTierIds as readonly string[]).includes(input.tier)) {
-      return await finish(ctx, "create_billing", {
-        code: "INTERNAL_ERROR",
-        userMessage: "Invalid plan. Please start over.",
-      });
-    }
-    if (!input.tenantSlug || slugify(ctx.input.workspaceName) !== input.tenantSlug) {
-      return await finish(ctx, "create_billing", {
-        code: "INTERNAL_ERROR",
-        userMessage: "Your company name didn't match. Please start over.",
-      });
-    }
-    // Slug-availability race guard: someone may have taken the name between
-    // phase 1 and now. A pre-existing tenant owned by THIS email is a retry
-    // (allowed); one owned by a DIFFERENT email must be blocked.
-    //
-    // Post-dashboard#813 the dashboard holds no Kubernetes access, so it can no
-    // longer read the Tenant CR's spec.owner to distinguish "owned by me
-    // (retry)" from "owned by someone else (blocked)". The daemon
-    // GetTenantProvisioningStatus reports `found` but not the owner email, so we
-    // cannot disambiguate here. Rather than block legitimate retries (which
-    // would `found:true` just the same), we drop the pre-check and rely on the
-    // two independent guarantees that already hold:
-    //   - verifySignupCustomer (below) blocks customer hijack, so a caller can
-    //     never subscribe a customer that isn't theirs;
-    //   - the daemon SignupService.Signup RPC is idempotent on owner email and
-    //     the operator saga reconciles idempotently keyed by zitadel_sub, so a
-    //     genuine retry resumes the same owner/tenant and a name collision by a
-    //     different owner is rejected daemon-side at owner-provisioning time
-    //     (surfaced as an INTERNAL_ERROR / WORKSPACE_TAKEN below).
-    // The earlier signupAction availability probe (GetTenantProvisioningStatus
-    // `found`) remains the primary inline "name taken" signal for the user.
-
-    // Verify the (client-supplied) customer id belongs to this signup's email
-    // before subscribing it.
-    if (
-      !input.stripeCustomerId ||
-      !(await verifySignupCustomer(input.stripeCustomerId, email))
-    ) {
+    const paid = paidTiersEnabled();
+    if (paid && (!input.paymentMethodId || !session.stripeCustomerId)) {
       return await finish(ctx, "create_billing", {
         code: "INTERNAL_ERROR",
         userMessage: "We couldn't verify your payment details. Please start over.",
       });
     }
 
-    // Validate billing config up front so a misconfigured plan fails BEFORE
-    // we provision any account or company.
-    const priceId = await priceIdForTier(input.tier);
-    const trialDays = lookupPlan(input.tier as PlanID).trialDays;
-    if (!priceId || !trialDays || trialDays <= 0) {
-      logger.error(
-        { attemptId, tier: input.tier },
-        "billing misconfigured for tier (missing price or trialDays)",
-      );
-      return await finish(ctx, "create_billing", {
-        code: "INTERNAL_ERROR",
-        userMessage: "Billing isn't configured for that plan. Please contact support.",
-      });
+    // The customer id rides in the session cookie, and a cookie is a value the
+    // browser holds: someone with a valid session of their own can put another
+    // account's customer id in it and have us subscribe a card to a stranger's
+    // billing record. The daemon pinned this customer to the verification row
+    // but does not hand it back, so the cookie is what we have — confirm it
+    // still belongs to the address this session proved before subscribing it.
+    // Checked before the account is created so a rejection leaves nothing
+    // behind.
+    if (paid && session.stripeCustomerId) {
+      if (!(await verifySignupCustomer(session.stripeCustomerId, session.email))) {
+        logger.error(
+          { attemptId: ctx.attemptId, action: "signup_customer_mismatch" },
+          "session customer does not belong to the verified address",
+        );
+        return await finish(ctx, "create_billing", {
+          code: "INTERNAL_ERROR",
+          userMessage: "We couldn't verify your payment details. Please start over.",
+        });
+      }
     }
 
-    // 1. Provision the founding-owner identity via the daemon Signup RPC. The
-    //    card is already confirmed (the phase-1 SetupIntent), so this runs only
-    //    after the payment method cleared. The RPC's stripe_customer_id pins the
-    //    pre-created Stripe customer id onto the enqueued pending-provisioning
-    //    row (gibson#949); the tenant-operator stamps it onto the Tenant CR it
-    //    creates, so the saga's CreateStripeCustomer step adopts it
-    //    deterministically (no Stripe-search race that would mint a duplicate
-    //    customer — the orphan-dupe / 21k-leak class, to#354). The dashboard no
-    //    longer writes the Tenant CR itself (dashboard#813).
-    await advanceStep(attemptId, "create_user");
-    const userResult = await provisionOwner(ctx, input.stripeCustomerId);
-    if ("fail" in userResult) {
-      return await finish(ctx, "create_user", userResult.fail);
+    // Validate billing config BEFORE creating the account, so a misconfigured
+    // plan does not leave a user with an identity and no subscription.
+    let priceId: string | null = null;
+    let trialDays: number | undefined;
+    if (paid) {
+      priceId = await priceIdForTier(session.tier);
+      trialDays = lookupPlan(session.tier as PlanID).trialDays;
+      if (!priceId || !trialDays || trialDays <= 0) {
+        logger.error(
+          { attemptId: ctx.attemptId, tier: session.tier },
+          "billing misconfigured for tier (missing price or trialDays)",
+        );
+        return await finish(ctx, "create_billing", {
+          code: "INTERNAL_ERROR",
+          userMessage:
+            "Billing isn't configured for that plan. Please contact support.",
+        });
+      }
     }
-    ctx.zitadelUserId = userResult.ownerUserId;
 
-    // 2. Create the trialing subscription. Its subscription.created webhook
-    //    stamps billing-active onto the Tenant CR, releasing the operator's
-    //    WaitForBillingConfirmation step. The Tenant CR is now created
-    //    asynchronously by the operator (~15s after the enqueue above), so the
-    //    webhook's patch may briefly 404; the webhook returns 500 in that case
-    //    and Stripe retries with backoff until the operator has created the CR
-    //    (the webhook idempotency record is dropped on failure so the retry
-    //    re-runs the patch). This replaces the old "apply CR before subscribe"
-    //    ordering, which relied on the dashboard's synchronous CR write.
-    await advanceStep(attemptId, "create_billing");
+    // 1. Create the founding-owner identity + enqueue the tenant. The daemon
+    //    reads the address, company name, plan and customer id from its own
+    //    verification row; this call supplies only the session and the password.
+    await advanceStep(ctx.attemptId, "create_user");
+    const clientIp = await resolveClientIp();
+    let ownerUserId: string;
     try {
-      await createTrialingSubscription({
-        tier: input.tier as BillingTier,
-        priceId,
-        customerId: input.stripeCustomerId,
-        paymentMethodId: input.paymentMethodId,
-        trialPeriodDays: trialDays,
-        tenantSlug: input.tenantSlug,
-        // One subscription per signup attempt; tolerates retries.
-        idempotencyKey: `signup:${attemptId}:subscription`,
+      const result = await completeSignupOwner({
+        attemptId: ctx.attemptId,
+        verifiedSessionToken: session.verifiedSessionToken,
+        password: input.password,
+        clientIp,
       });
+      ownerUserId = result.ownerUserId;
+      ctx.tenantSlug = result.tenantId;
     } catch (err) {
-      logger.error(
-        {
-          attemptId,
-          action: "signup_subscription",
-          err: err instanceof Error ? err.message : String(err),
-        },
-        "createTrialingSubscription failed",
-      );
-      return await finish(ctx, "create_billing", {
-        code: "INTERNAL_ERROR",
-        userMessage:
-          "We couldn't start your subscription and your card was not charged. Please try again.",
-      });
+      return await finish(ctx, "create_user", mapCompletionError(err));
     }
-    // The customer now belongs to this tenant; drop the reuse tag so a later
-    // unrelated signup with the same email never reuses it (best-effort).
-    await finalizeSignupCustomer(input.stripeCustomerId);
+    ctx.zitadelUserId = ownerUserId;
 
-    // 4. Finish provisioning (org wait → member → owner → /login).
+    // 2. Create the trialing subscription on the confirmed card.
+    if (paid && priceId && trialDays && session.stripeCustomerId && input.paymentMethodId) {
+      await advanceStep(ctx.attemptId, "create_billing");
+      try {
+        await createTrialingSubscription({
+          tier: session.tier as BillingTier,
+          priceId,
+          customerId: session.stripeCustomerId,
+          paymentMethodId: input.paymentMethodId,
+          trialPeriodDays: trialDays,
+          tenantSlug: ctx.tenantSlug ?? "",
+          // One subscription per signup attempt; tolerates retries.
+          idempotencyKey: `signup:${ctx.attemptId}:subscription`,
+        });
+      } catch (err) {
+        logger.error(
+          {
+            attemptId: ctx.attemptId,
+            action: "signup_subscription",
+            err: err instanceof Error ? err.message : String(err),
+          },
+          "createTrialingSubscription failed",
+        );
+        return await finish(ctx, "create_billing", {
+          code: "INTERNAL_ERROR",
+          userMessage:
+            "We couldn't start your subscription and your card was not charged. Please try again.",
+        });
+      }
+      // The customer now belongs to this tenant; drop the reuse tag so a later
+      // unrelated signup with the same email never reuses it (best-effort).
+      await finalizeSignupCustomer(session.stripeCustomerId);
+    }
+
+    // The session is spent daemon-side; drop the cookie so a stale one cannot
+    // send the user back into a completion that can no longer succeed.
+    await clearVerifiedSession();
+
+    // 3. Finish provisioning (wait for Ready → /login).
     return await finishProvisioning(ctx);
   } catch (err) {
     logger.error(
       {
-        attemptId,
+        attemptId: ctx.attemptId,
         action: "signup_complete",
         err: err instanceof Error ? err.message : String(err),
       },
@@ -634,7 +644,7 @@ interface Ctx {
 interface FinishFailure {
   code: SignupFailureCode;
   userMessage: string;
-  fieldErrors?: Partial<Record<keyof SignupInput, string>>;
+  fieldErrors?: Partial<Record<string, string>>;
 }
 
 async function finish(
@@ -677,15 +687,6 @@ function logAudit(
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function resolveClientIp(): Promise<string> {
-  const hdrs = await headers();
-  return (
-    hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    hdrs.get("x-real-ip") ??
-    "unknown"
-  );
-}
-
 function slugify(s: string): string {
   return s
     .toLowerCase()
@@ -695,102 +696,130 @@ function slugify(s: string): string {
     .slice(0, 63);
 }
 
-function checkPasswordAgainstPolicy(
-  pw: string,
-  policy: PasswordPolicy,
-): string | null {
-  if (pw.length < policy.minLength) {
-    return `Password must be at least ${policy.minLength} characters.`;
-  }
-  if (policy.hasUppercase && !/[A-Z]/.test(pw)) {
-    return "Password must contain an uppercase letter.";
-  }
-  if (policy.hasLowercase && !/[a-z]/.test(pw)) {
-    return "Password must contain a lowercase letter.";
-  }
-  if (policy.hasNumber && !/\d/.test(pw)) {
-    return "Password must contain a number.";
-  }
-  if (policy.hasSymbol && !/[^A-Za-z0-9]/.test(pw)) {
-    return "Password must contain a symbol.";
-  }
-  return null;
+/**
+ * readVerifiedSession / writeVerifiedSession / clearVerifiedSession — the
+ * completion capability, in an httpOnly cookie.
+ *
+ * Every post-redemption action reads the session from here rather than taking
+ * it as an argument. A session passed as an argument is a session the caller
+ * chooses; a session read from an httpOnly cookie is one the browser cannot
+ * read, forge, or move to another tab's signup.
+ */
+async function readVerifiedSession(): Promise<VerifiedSignupSession | null> {
+  const jar = await cookies();
+  return decodeVerifiedSession(jar.get(SIGNUP_VERIFIED_COOKIE)?.value);
+}
+
+async function writeVerifiedSession(s: VerifiedSignupSession): Promise<void> {
+  const jar = await cookies();
+  jar.set({
+    name: SIGNUP_VERIFIED_COOKIE,
+    value: encodeVerifiedSession(s),
+    maxAge: SIGNUP_VERIFIED_MAX_AGE_SECONDS,
+    ...signupCookieOptions(),
+  });
+}
+
+async function clearVerifiedSession(): Promise<void> {
+  const jar = await cookies();
+  jar.set({
+    name: SIGNUP_VERIFIED_COOKIE,
+    value: "",
+    maxAge: 0,
+    ...signupCookieOptions(),
+  });
 }
 
 /**
- * Provision (or resume) the founding-owner identity via the daemon
- * SignupService.Signup RPC. The daemon performs the IdP-admin create-or-resume
- * user, set-password, and best-effort verification-email; the dashboard holds
- * no Zitadel admin credential (E9, dashboard#812).
+ * mapVerificationError turns a RequestEmailVerification failure into a
+ * user-safe code.
  *
- * Maps RPC failures to user-safe signup failure codes: a daemon-side password
- * policy rejection (InvalidArgument / FailedPrecondition) surfaces as
- * POLICY_VIOLATION; Unavailable as ZITADEL_UNAVAILABLE; anything else as
- * INTERNAL_ERROR.
+ * It must NOT distinguish outcomes the daemon deliberately made identical. The
+ * daemon answers "this address already has an account" with exactly the same
+ * empty success as "this address is new"; the only errors it raises are ones
+ * decidable without consulting the directory.
  */
-async function provisionOwner(
-  ctx: Ctx,
-  stripeCustomerId?: string,
-): Promise<{ ownerUserId: string; alreadyExisted: boolean } | { fail: FinishFailure }> {
-  try {
-    const result = await provisionSignupOwner({
-      attemptId: ctx.attemptId,
-      ownerEmail: ctx.input.email,
-      workspaceName: ctx.input.workspaceName,
-      tier: ctx.input.tier,
-      ownerFirstName: ctx.input.firstName,
-      ownerLastName: ctx.input.lastName,
-      stripeCustomerId,
-      password: ctx.input.password,
-    });
-    return { ownerUserId: result.ownerUserId, alreadyExisted: result.alreadyExisted };
-  } catch (err) {
-    const code = err instanceof ConnectError ? err.code : undefined;
-    const rawMessage = err instanceof ConnectError ? err.rawMessage : "";
-
-    if (
-      code === Code.InvalidArgument ||
-      code === Code.FailedPrecondition ||
-      /password|complexity/i.test(rawMessage)
-    ) {
-      const msg = /password|complexity/i.test(rawMessage)
-        ? "Password doesn't meet the policy."
-        : "We couldn't process your signup details. Please check them and try again.";
-      return {
-        fail: {
-          code: "POLICY_VIOLATION",
-          userMessage: msg,
-          fieldErrors: /password|complexity/i.test(rawMessage)
-            ? { password: "Password doesn't meet the policy." }
-            : undefined,
-        },
-      };
-    }
-    if (code === Code.Unavailable || code === Code.DeadlineExceeded) {
-      return {
-        fail: {
-          code: "ZITADEL_UNAVAILABLE",
-          userMessage:
-            "We're having trouble reaching our identity service. Try again in a moment.",
-        },
-      };
-    }
-    logger.error(
-      {
-        attemptId: ctx.attemptId,
-        action: "signup_provision_owner",
-        connectCode: code,
-        err: err instanceof Error ? err.message : String(err),
-      },
-      "owner provisioning RPC failed",
-    );
+function mapVerificationError(err: unknown): FinishFailure {
+  const code = err instanceof ConnectError ? err.code : undefined;
+  if (code === Code.ResourceExhausted) {
     return {
-      fail: {
-        code: "INTERNAL_ERROR",
-        userMessage: "We couldn't create your account. Please try again.",
-      },
+      code: "RATE_LIMITED",
+      userMessage: "Too many signup requests. Please try again later.",
     };
   }
+  if (code === Code.InvalidArgument) {
+    return {
+      code: "POLICY_VIOLATION",
+      userMessage:
+        "We couldn't process your signup details. Please check them and try again.",
+    };
+  }
+  if (code === Code.PermissionDenied) {
+    // Self-serve signup is off on this deployment (admin-provision only).
+    return {
+      code: "INTERNAL_ERROR",
+      userMessage:
+        "Self-serve signup isn't available here. Please contact your administrator.",
+    };
+  }
+  return {
+    code: "ZITADEL_UNAVAILABLE",
+    userMessage: "We couldn't send your verification email. Please try again.",
+  };
+}
+
+/**
+ * mapCompletionError turns a Signup failure into a user-safe code.
+ *
+ * `AlreadyExists` is surfaced honestly here and ONLY here: by this point the
+ * caller has proven control of the mailbox, so telling them an account already
+ * exists for it discloses nothing they are not entitled to know. At request
+ * time the same fact is withheld.
+ */
+function mapCompletionError(err: unknown): FinishFailure {
+  const code = err instanceof ConnectError ? err.code : undefined;
+  const rawMessage = err instanceof ConnectError ? err.rawMessage : "";
+
+  if (code === Code.PermissionDenied) {
+    return {
+      code: "VERIFICATION_INVALID",
+      userMessage: "That link is no longer valid. Please start again.",
+    };
+  }
+  if (code === Code.AlreadyExists) {
+    return {
+      code: "ALREADY_PROVISIONED",
+      userMessage:
+        "An account already exists for that email address. Please sign in instead.",
+    };
+  }
+  if (
+    code === Code.InvalidArgument ||
+    code === Code.FailedPrecondition ||
+    /password|complexity/i.test(rawMessage)
+  ) {
+    const isPolicy = /password|complexity/i.test(rawMessage);
+    return {
+      code: "POLICY_VIOLATION",
+      userMessage: isPolicy
+        ? "Password doesn't meet the policy."
+        : "We couldn't process your signup details. Please check them and try again.",
+      fieldErrors: isPolicy
+        ? { password: "Password doesn't meet the policy." }
+        : undefined,
+    };
+  }
+  if (code === Code.Unavailable || code === Code.DeadlineExceeded) {
+    return {
+      code: "ZITADEL_UNAVAILABLE",
+      userMessage:
+        "We're having trouble reaching our identity service. Try again in a moment.",
+    };
+  }
+  return {
+    code: "INTERNAL_ERROR",
+    userMessage: "We couldn't create your account. Please try again.",
+  };
 }
 
 /**

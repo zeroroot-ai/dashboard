@@ -2,8 +2,11 @@
  * types.ts, Signup form Zod schemas and shared TypeScript types.
  *
  * Single source of truth for:
- *  - `signupInputSchema`, form shape validated by both the Client Component
- *    (React Hook Form resolver) and the Server Action (runtime guard).
+ *  - `signupInputSchema`, step-one form shape validated by both the Client
+ *    Component (React Hook Form resolver) and the Server Action (runtime
+ *    guard). It carries NO password: step one only asks for a link to be sent.
+ *  - `completeSignupInputSchema`, the post-redemption form shape, which is
+ *    where the password is collected.
  *  - `SignupFailureCode`, exhaustive union of all terminal error states.
  *  - `SignupActionResult`, discriminated union returned by `signupAction`.
  *  - `ProvisioningStep` / `ProvisioningProgress`, Redis progress state shape
@@ -39,16 +42,6 @@ export const signupInputSchema = z.object({
     .email("Enter a valid email address")
     .max(254, "Email must be 254 characters or fewer"),
 
-  password: z
-    .string()
-    .min(12, "Password must be at least 12 characters")
-    .max(256, "Password must be 256 characters or fewer"),
-
-  // Confirm-password field, validated below via .superRefine after both
-  // password fields are parsed so the user gets a "doesn't match" error tied
-  // to the confirm field rather than the password field.
-  passwordConfirm: z.string(),
-
   // dashboard#44: user-visible label is "Company Name". The form-field
   // name, schema field, and downstream Tenant CR all still use
   // `workspaceName` to avoid touching the operator wiring.
@@ -72,17 +65,43 @@ export const signupInputSchema = z.object({
   acceptPrivacy: z.literal(true, {
     errorMap: () => ({ message: "Please accept the Privacy Policy to continue" }),
   }),
-}).superRefine((data, ctx) => {
-  if (data.password !== data.passwordConfirm) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["passwordConfirm"],
-      message: "Passwords don't match",
-    });
-  }
 });
 
 export type SignupInput = z.infer<typeof signupInputSchema>;
+
+/**
+ * Completion-form schema — the fields collected AFTER the emailed link is
+ * redeemed.
+ *
+ * The password lives here rather than on the first screen because it must not
+ * exist anywhere while the address is still unproven. Carrying it across the
+ * mail round-trip would mean holding a credential for an address that, at the
+ * moment it was stored, nobody had shown they controlled.
+ *
+ * Everything else about the signup — address, company name, plan — is NOT in
+ * this schema and is NOT sent at completion. The daemon reads all of it back
+ * from the verification row the session resolves to, so a redeemed session
+ * cannot be pointed at a different address.
+ */
+export const completeSignupInputSchema = z
+  .object({
+    password: z
+      .string()
+      .min(12, "Password must be at least 12 characters")
+      .max(256, "Password must be 256 characters or fewer"),
+    passwordConfirm: z.string(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.password !== data.passwordConfirm) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["passwordConfirm"],
+        message: "Passwords don't match",
+      });
+    }
+  });
+
+export type CompleteSignupFormInput = z.infer<typeof completeSignupInputSchema>;
 
 // ---------------------------------------------------------------------------
 // Failure codes
@@ -103,6 +122,12 @@ export type SignupFailureCode =
   | "MEMBERSHIP_TIMEOUT"
   | "TOS_MISSING"
   | "INTERNAL_ERROR"
+  /**
+   * The completion session is absent, expired or already spent. One code for
+   * all of those, mirroring the daemon, which answers them identically so
+   * redemption cannot be used to probe which signups exist.
+   */
+  | "VERIFICATION_INVALID"
   /**
    * Vault namespace provisioning failed during tenant signup.
    * The tenant-operator saga rolls back and sets this code in the
@@ -125,21 +150,27 @@ export type SignupActionResult =
     }
   | {
       /**
-       * Card-first signup (dashboard#785): phase 1 validated the form and
-       * created ONLY the Stripe customer + a SetupIntent — NO account, NO
-       * company yet. The client confirms the card against `cardClientSecret`
-       * with the inline Payment Element, then calls `completeSignup` with the
-       * resulting payment method. Nothing (user or Tenant CR) is created until
-       * that card clears. `stripeCustomerId` is non-secret and is re-verified
-       * server-side in phase 2 before any subscription is created.
+       * Step one succeeded: a verification message was requested.
+       *
+       * There is deliberately nothing else in this variant. It is returned
+       * identically whether the address is new or already has an account —
+       * anything that varied between the two would tell an anonymous caller
+       * which addresses are registered.
+       */
+      ok: true;
+      phase: "verify_email";
+      attemptId: string;
+    }
+  | {
+      /**
+       * Completion is waiting on the card. The SetupIntent and its customer
+       * were created AFTER redemption, which is the ordering this whole flow
+       * exists to enforce: no billing object for an unproven address.
        */
       ok: true;
       phase: "card";
       attemptId: string;
       cardClientSecret: string;
-      stripeCustomerId: string;
-      tenantSlug: string;
-      tier: string;
     }
   | {
       ok: false;
@@ -149,31 +180,27 @@ export type SignupActionResult =
       /** User-facing prose, safe to display verbatim. */
       userMessage: string;
       /**
-       * Optional per-field error overrides keyed by `signupInputSchema` field
-       * names. The Client Component uses these to focus the first errored field.
+       * Optional per-field error overrides, keyed by form-field name. Plain
+       * string keys rather than `keyof SignupInput` because the two screens
+       * have different fields: step one has no password, and the completion
+       * screen has nothing else.
        */
-      fieldErrors?: Partial<Record<keyof SignupInput, string>>;
+      fieldErrors?: Partial<Record<string, string>>;
     };
 
 /**
- * Input to `completeSignup` (card-first signup phase 2, dashboard#785). The
- * client passes back the phase-1 customer id + the confirmed payment method,
- * plus the full signup fields (password is held in form state, never persisted
- * server-side). Phase 2 verifies the customer belongs to this email, creates
- * the trialing subscription, THEN creates the Zitadel user + Tenant CR and
- * provisions — so no account or company exists until the card has cleared.
+ * Input to `completeSignup`, the step that runs on /signup/complete.
+ *
+ * Note how little is here. The email, company name, plan and billing customer
+ * are all absent by design: the daemon reads them from the verification row the
+ * session cookie resolves to. A completion call therefore cannot describe a
+ * signup other than the one whose link was opened.
  */
 export interface CompleteSignupInput {
-  attemptId: string;
-  stripeCustomerId: string;
-  paymentMethodId: string;
-  tenantSlug: string;
-  tier: string;
-  email: string;
+  /** The password chosen on the completion screen. Write-only, never persisted here. */
   password: string;
-  workspaceName: string;
-  firstName: string;
-  lastName: string;
+  /** Paid path only: the payment method produced by confirming the SetupIntent. */
+  paymentMethodId?: string;
 }
 
 // ---------------------------------------------------------------------------

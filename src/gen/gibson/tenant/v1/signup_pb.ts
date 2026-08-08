@@ -3,36 +3,42 @@
 /* eslint-disable */
 
 // Package gibson.tenant.v1 — SignupService: server-side tenant provisioning for
-// self-serve signup (E9, gibson#812, ADR-0043/0044).
+// self-serve signup.
 //
-// Before E9 the dashboard provisioned a tenant during signup by (a) holding a
-// privileged Zitadel "signup-bot" IAM PAT to create the Zitadel org/user and
-// (b) writing the Tenant / TenantMember Kubernetes CRs directly with its
-// in-cluster ServiceAccount. That gave the web tier two broad, standing
-// privileges (IdP admin + cluster write) purely to bootstrap a tenant.
+// The service holds the IdP-admin privilege that the web tier used to hold: the
+// dashboard makes unauthenticated RPCs and the DAEMON performs every Zitadel
+// operation with its own admin credential. No signup-bot PAT exists in the
+// caller.
 //
-// SignupService.Signup moves the IdP-admin half of that privilege off the web
-// tier: the dashboard makes ONE unauthenticated RPC carrying the founding-owner
-// email, profile, password, workspace name, and plan tier, and the DAEMON
-// performs the Zitadel human-owner provisioning (create-or-resume user, set
-// password, send verification email) using its EXISTING Zitadel admin
-// credential. The dashboard signup-bot Zitadel PAT is thereby retired
-// (dashboard#812).
+// The daemon does NOT touch Kubernetes and does NOT create the Tenant CR
+// (ADR-0023). It records the tenant in its pending-provisioning queue
+// (migration 016) and the gibson-tenant-operator drains that queue, creates the
+// Tenant CR and reconciles the per-tenant Zitadel org, secrets, grants and data
+// plane. (The dashboard stopped writing the Tenant CR in dashboard#813; the
+// older comment here claiming otherwise was stale.)
 //
-// The daemon does NOT touch Kubernetes and does NOT create the Tenant CR:
-// ADR-0023 forbids daemon-side K8s API access. The dashboard keeps creating the
-// Tenant CR (ADR-0044 sanctions tenant-provisioning K8s writes) — moving that
-// write off the dashboard is dashboard#813's job, not this slice. Once the
-// Tenant CR exists the gibson-tenant-operator provisions the per-tenant Zitadel
-// org via TenantIdentity (gibson#803) and the rest of its ordered sub-CRD chain
-// (gibson#805). So the cutover here is narrow and reversible: human-owner-user
-// provisioning is the only thing that moves daemon-side in #812.
+// ORDERING CONTRACT — the reason this file has three RPCs instead of one:
 //
-// Authorization: Signup is UNAUTHENTICATED. It runs before any tenant or
-// membership exists, so there is no principal to FGA-check (exactly like
-// SetSignupProgress on UserService). The opaque attempt_id UUID is the
-// correlation capability; the daemon validates the request and is the sole
-// holder of the IdP-admin provisioning privilege.
+//   Nothing persistent, billable or tenant-visible is created before the person
+//   signing up has proven they control the address they typed. The flow is
+//
+//     RequestEmailVerification  → one expiring verification row + one email
+//     RedeemEmailVerification   → the emailed token is exchanged for a short
+//                                 completion session
+//     Signup                    → identity, billing and provisioning, all of it
+//                                 strictly after that proof
+//
+//   Signup therefore takes NO owner email, workspace name, tier or profile from
+//   the client. Every one of those is read back from the verification row the
+//   session resolves to. A client that could supply them could point a redeemed
+//   session at a different address, which would defeat the verification it just
+//   passed.
+//
+// Authorization: all three RPCs are UNAUTHENTICATED. They run before any tenant
+// or membership exists, so there is no principal to FGA-check (like
+// UserService.SetSignupProgress). The capability is the emailed token, then the
+// session token derived from it, both held only by whoever received the mail.
+// The handlers enforce rate limits, expiry and single-use themselves.
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
@@ -43,60 +49,54 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/signup.proto.
  */
 export const file_gibson_tenant_v1_signup: GenFile = /*@__PURE__*/
-  fileDesc("Ch1naWJzb24vdGVuYW50L3YxL3NpZ251cC5wcm90bxIQZ2lic29uLnRlbmFudC52MSK/AQoNU2lnbnVwUmVxdWVzdBISCgphdHRlbXB0X2lkGAEgASgJEhMKC293bmVyX2VtYWlsGAIgASgJEhYKDndvcmtzcGFjZV9uYW1lGAMgASgJEgwKBHRpZXIYBCABKAkSGAoQb3duZXJfZmlyc3RfbmFtZRgFIAEoCRIXCg9vd25lcl9sYXN0X25hbWUYBiABKAkSGgoSc3RyaXBlX2N1c3RvbWVyX2lkGAcgASgJEhAKCHBhc3N3b3JkGAggASgJIlMKDlNpZ251cFJlc3BvbnNlEhEKCXRlbmFudF9pZBgBIAEoCRIXCg9hbHJlYWR5X2V4aXN0ZWQYAiABKAgSFQoNb3duZXJfdXNlcl9pZBgDIAEoCTJkCg1TaWdudXBTZXJ2aWNlElMKBlNpZ251cBIfLmdpYnNvbi50ZW5hbnQudjEuU2lnbnVwUmVxdWVzdBogLmdpYnNvbi50ZW5hbnQudjEuU2lnbnVwUmVzcG9uc2UiBoq1GAIoAUJUWlJnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vdGVuYW50L3YxO3RlbmFudHYxYgZwcm90bzM", [file_gibson_auth_v1_options]);
+  fileDesc("Ch1naWJzb24vdGVuYW50L3YxL3NpZ251cC5wcm90bxIQZ2lic29uLnRlbmFudC52MSK2AQofUmVxdWVzdEVtYWlsVmVyaWZpY2F0aW9uUmVxdWVzdBISCgphdHRlbXB0X2lkGAEgASgJEhMKC293bmVyX2VtYWlsGAIgASgJEhYKDndvcmtzcGFjZV9uYW1lGAMgASgJEgwKBHRpZXIYBCABKAkSGAoQb3duZXJfZmlyc3RfbmFtZRgFIAEoCRIXCg9vd25lcl9sYXN0X25hbWUYBiABKAkSEQoJY2xpZW50X2lwGAcgASgJIiIKIFJlcXVlc3RFbWFpbFZlcmlmaWNhdGlvblJlc3BvbnNlIkIKHlJlZGVlbUVtYWlsVmVyaWZpY2F0aW9uUmVxdWVzdBINCgV0b2tlbhgBIAEoCRIRCgljbGllbnRfaXAYAiABKAkikAEKH1JlZGVlbUVtYWlsVmVyaWZpY2F0aW9uUmVzcG9uc2USHgoWdmVyaWZpZWRfc2Vzc2lvbl90b2tlbhgBIAEoCRISCgphdHRlbXB0X2lkGAIgASgJEhMKC293bmVyX2VtYWlsGAMgASgJEhYKDndvcmtzcGFjZV9uYW1lGAQgASgJEgwKBHRpZXIYBSABKAkibAobQXR0YWNoU2lnbnVwQ3VzdG9tZXJSZXF1ZXN0Eh4KFnZlcmlmaWVkX3Nlc3Npb25fdG9rZW4YASABKAkSGgoSc3RyaXBlX2N1c3RvbWVyX2lkGAIgASgJEhEKCWNsaWVudF9pcBgDIAEoCSIeChxBdHRhY2hTaWdudXBDdXN0b21lclJlc3BvbnNlIuYBCg1TaWdudXBSZXF1ZXN0EhIKCmF0dGVtcHRfaWQYASABKAkSEAoIcGFzc3dvcmQYCCABKAkSHgoWdmVyaWZpZWRfc2Vzc2lvbl90b2tlbhgJIAEoCRIRCgljbGllbnRfaXAYCiABKAlKBAgCEANKBAgDEARKBAgEEAVKBAgFEAZKBAgGEAdKBAgHEAhSC293bmVyX2VtYWlsUg53b3Jrc3BhY2VfbmFtZVIEdGllclIQb3duZXJfZmlyc3RfbmFtZVIPb3duZXJfbGFzdF9uYW1lUhJzdHJpcGVfY3VzdG9tZXJfaWQiUQoOU2lnbnVwUmVzcG9uc2USEQoJdGVuYW50X2lkGAEgASgJEhUKDW93bmVyX3VzZXJfaWQYAyABKAlKBAgCEANSD2FscmVhZHlfZXhpc3RlZDL4AwoNU2lnbnVwU2VydmljZRKJAQoYUmVxdWVzdEVtYWlsVmVyaWZpY2F0aW9uEjEuZ2lic29uLnRlbmFudC52MS5SZXF1ZXN0RW1haWxWZXJpZmljYXRpb25SZXF1ZXN0GjIuZ2lic29uLnRlbmFudC52MS5SZXF1ZXN0RW1haWxWZXJpZmljYXRpb25SZXNwb25zZSIGirUYAigBEoYBChdSZWRlZW1FbWFpbFZlcmlmaWNhdGlvbhIwLmdpYnNvbi50ZW5hbnQudjEuUmVkZWVtRW1haWxWZXJpZmljYXRpb25SZXF1ZXN0GjEuZ2lic29uLnRlbmFudC52MS5SZWRlZW1FbWFpbFZlcmlmaWNhdGlvblJlc3BvbnNlIgaKtRgCKAESfQoUQXR0YWNoU2lnbnVwQ3VzdG9tZXISLS5naWJzb24udGVuYW50LnYxLkF0dGFjaFNpZ251cEN1c3RvbWVyUmVxdWVzdBouLmdpYnNvbi50ZW5hbnQudjEuQXR0YWNoU2lnbnVwQ3VzdG9tZXJSZXNwb25zZSIGirUYAigBElMKBlNpZ251cBIfLmdpYnNvbi50ZW5hbnQudjEuU2lnbnVwUmVxdWVzdBogLmdpYnNvbi50ZW5hbnQudjEuU2lnbnVwUmVzcG9uc2UiBoq1GAIoAUJUWlJnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vdGVuYW50L3YxO3RlbmFudHYxYgZwcm90bzM", [file_gibson_auth_v1_options]);
 
 /**
- * SignupRequest carries everything the daemon needs to provision the
- * founding-owner Zitadel user. It carries the owner password (write-only; see
- * the field doc) because the daemon now performs the exact create-user +
- * set-password the dashboard signup-bot used to perform — the password the user
- * typed must reach the daemon for it to set credentials. It carries NO
- * IdP-admin credential: the daemon holds the provisioning privilege via its own
- * Zitadel admin client.
+ * RequestEmailVerificationRequest carries the signup form's non-secret fields.
  *
- * @generated from message gibson.tenant.v1.SignupRequest
+ * There is no password field. A password submitted for an address nobody has
+ * proven control of would have to be stored across the verification round-trip,
+ * and a stored credential for an unproven address is exactly the thing this
+ * flow exists to avoid. The password is collected after redemption instead.
+ *
+ * @generated from message gibson.tenant.v1.RequestEmailVerificationRequest
  */
-export type SignupRequest = Message<"gibson.tenant.v1.SignupRequest"> & {
+export type RequestEmailVerificationRequest = Message<"gibson.tenant.v1.RequestEmailVerificationRequest"> & {
   /**
-   * attempt_id is the opaque single-use signup-attempt UUID. It correlates this
-   * request with the UserService signup-progress stream and guards retries.
-   * Required; must be a valid UUID.
+   * attempt_id is the opaque signup-attempt UUID; it correlates this request
+   * with the UserService signup-progress stream. Required, must be a UUID.
    *
    * @generated from field: string attempt_id = 1;
    */
   attemptId: string;
 
   /**
-   * owner_email is the founding owner's email address. The daemon provisions
-   * the Zitadel human-owner user under this email (login name) and the
-   * dashboard records it as the Tenant CR's spec.owner. Required.
+   * owner_email is the address to verify. Normalized (trimmed, lowercased)
+   * server-side; the normalized value is what the completion path later reads
+   * back. Required.
    *
    * @generated from field: string owner_email = 2;
    */
   ownerEmail: string;
 
   /**
-   * workspace_name is the human-readable workspace / company name. The daemon
-   * derives the tenant slug from it (returned as tenant_id); the dashboard uses
-   * it as the Tenant CR's spec.displayName. Required.
+   * workspace_name is the human-readable workspace name. Parked on the
+   * verification row and read back at completion. Required.
    *
    * @generated from field: string workspace_name = 3;
    */
   workspaceName: string;
 
   /**
-   * tier is the canonical plan id ("team", "org", "enterprise"). The dashboard
-   * records it as the Tenant CR's spec.tier. Required; validated against the
-   * known self-serve tiers.
+   * tier is the canonical plan id ("team", "org", "enterprise"). Required.
    *
    * @generated from field: string tier = 4;
    */
   tier: string;
 
   /**
-   * owner_first_name / owner_last_name are the founding owner's profile name.
-   * Optional — used to populate the Zitadel human-user profile the daemon
-   * creates.
+   * owner_first_name / owner_last_name populate the eventual human-user
+   * profile. Optional.
    *
    * @generated from field: string owner_first_name = 5;
    */
@@ -108,29 +108,231 @@ export type SignupRequest = Message<"gibson.tenant.v1.SignupRequest"> & {
   ownerLastName: string;
 
   /**
-   * stripe_customer_id pins a pre-created Stripe customer to the tenant for
-   * deterministic billing adoption on the card-first signup path. Optional;
-   * recorded by the dashboard on the Tenant CR so the billing reconciler adopts
-   * the existing customer rather than creating a new one.
+   * client_ip is the requester's IP as the edge resolved it, used for
+   * abuse limits.
    *
-   * @generated from field: string stripe_customer_id = 7;
+   * TRUST ASSUMPTION: the daemon believes this field because the only caller
+   * that can reach the RPC is the dashboard workload, authenticated by its
+   * SPIFFE SVID over mTLS through Envoy. If that ever stops being true — if
+   * this method is exposed to a caller outside the SPIFFE allowlist — the
+   * field becomes attacker-controlled and the per-IP limits become
+   * decorative. Keep the allowlist honest.
+   *
+   * May be empty when the edge could not attribute the request; empty is NOT
+   * folded into the normal per-IP budget, it draws on a much smaller
+   * unattributed bucket.
+   *
+   * @generated from field: string client_ip = 7;
+   */
+  clientIp: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.RequestEmailVerificationRequest.
+ * Use `create(RequestEmailVerificationRequestSchema)` to create a new message.
+ */
+export const RequestEmailVerificationRequestSchema: GenMessage<RequestEmailVerificationRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_signup, 0);
+
+/**
+ * RequestEmailVerificationResponse is intentionally EMPTY.
+ *
+ * Not "empty for now" — empty as the contract. Any field here would have to
+ * either be constant (in which case it says nothing) or vary with the address
+ * (in which case it tells an anonymous caller which addresses are registered).
+ *
+ * @generated from message gibson.tenant.v1.RequestEmailVerificationResponse
+ */
+export type RequestEmailVerificationResponse = Message<"gibson.tenant.v1.RequestEmailVerificationResponse"> & {
+};
+
+/**
+ * Describes the message gibson.tenant.v1.RequestEmailVerificationResponse.
+ * Use `create(RequestEmailVerificationResponseSchema)` to create a new message.
+ */
+export const RequestEmailVerificationResponseSchema: GenMessage<RequestEmailVerificationResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_signup, 1);
+
+/**
+ * RedeemEmailVerificationRequest carries the raw token from the emailed link.
+ *
+ * @generated from message gibson.tenant.v1.RedeemEmailVerificationRequest
+ */
+export type RedeemEmailVerificationRequest = Message<"gibson.tenant.v1.RedeemEmailVerificationRequest"> & {
+  /**
+   * token is the raw value from the link. The daemon stores only its hash, so
+   * this value cannot be recovered from the database.
+   *
+   * @generated from field: string token = 1;
+   */
+  token: string;
+
+  /**
+   * client_ip — see RequestEmailVerificationRequest.client_ip.
+   *
+   * @generated from field: string client_ip = 2;
+   */
+  clientIp: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.RedeemEmailVerificationRequest.
+ * Use `create(RedeemEmailVerificationRequestSchema)` to create a new message.
+ */
+export const RedeemEmailVerificationRequestSchema: GenMessage<RedeemEmailVerificationRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_signup, 2);
+
+/**
+ * RedeemEmailVerificationResponse hands back the completion session.
+ *
+ * @generated from message gibson.tenant.v1.RedeemEmailVerificationResponse
+ */
+export type RedeemEmailVerificationResponse = Message<"gibson.tenant.v1.RedeemEmailVerificationResponse"> & {
+  /**
+   * verified_session_token authorizes the completion step. Short-lived
+   * (minutes). The caller stores it as an httpOnly cookie and never renders
+   * it. Only its hash is persisted daemon-side.
+   *
+   * @generated from field: string verified_session_token = 1;
+   */
+  verifiedSessionToken: string;
+
+  /**
+   * attempt_id lets the caller resume the correct signup-progress stream.
+   *
+   * @generated from field: string attempt_id = 2;
+   */
+  attemptId: string;
+
+  /**
+   * owner_email is echoed so the completion page can show which address was
+   * verified. Safe to return here and nowhere else: the caller has just
+   * demonstrated possession of a token that was only ever sent to it.
+   *
+   * @generated from field: string owner_email = 3;
+   */
+  ownerEmail: string;
+
+  /**
+   * workspace_name / tier are echoed for display on the completion page.
+   *
+   * @generated from field: string workspace_name = 4;
+   */
+  workspaceName: string;
+
+  /**
+   * @generated from field: string tier = 5;
+   */
+  tier: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.RedeemEmailVerificationResponse.
+ * Use `create(RedeemEmailVerificationResponseSchema)` to create a new message.
+ */
+export const RedeemEmailVerificationResponseSchema: GenMessage<RedeemEmailVerificationResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_signup, 3);
+
+/**
+ * AttachSignupCustomerRequest pins a billing customer to a verified session.
+ *
+ * @generated from message gibson.tenant.v1.AttachSignupCustomerRequest
+ */
+export type AttachSignupCustomerRequest = Message<"gibson.tenant.v1.AttachSignupCustomerRequest"> & {
+  /**
+   * @generated from field: string verified_session_token = 1;
+   */
+  verifiedSessionToken: string;
+
+  /**
+   * @generated from field: string stripe_customer_id = 2;
    */
   stripeCustomerId: string;
 
   /**
-   * password is the founding owner's initial password (the value the user typed
-   * at signup). The daemon sets it on the Zitadel human-owner user so the owner
-   * can sign in immediately — replacing the privileged dashboard signup-bot
-   * setUserPassword call. Required.
+   * client_ip — see RequestEmailVerificationRequest.client_ip. This RPC writes
+   * to Postgres on every call and is unauthenticated, so it draws on a budget
+   * like the other three rather than being the one unmetered door.
    *
-   * SECURITY: write-only. The daemon forwards it to the IdP request body only;
-   * it is never logged, persisted, or returned. The RPC is unauthenticated but
-   * pre-tenant and attempt_id-keyed, exactly as the prior dashboard signup-bot
-   * path was unauthenticated from the browser's perspective.
+   * @generated from field: string client_ip = 3;
+   */
+  clientIp: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.AttachSignupCustomerRequest.
+ * Use `create(AttachSignupCustomerRequestSchema)` to create a new message.
+ */
+export const AttachSignupCustomerRequestSchema: GenMessage<AttachSignupCustomerRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_signup, 4);
+
+/**
+ * AttachSignupCustomerResponse is empty.
+ *
+ * @generated from message gibson.tenant.v1.AttachSignupCustomerResponse
+ */
+export type AttachSignupCustomerResponse = Message<"gibson.tenant.v1.AttachSignupCustomerResponse"> & {
+};
+
+/**
+ * Describes the message gibson.tenant.v1.AttachSignupCustomerResponse.
+ * Use `create(AttachSignupCustomerResponseSchema)` to create a new message.
+ */
+export const AttachSignupCustomerResponseSchema: GenMessage<AttachSignupCustomerResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_signup, 5);
+
+/**
+ * SignupRequest completes a verified signup.
+ *
+ * Note what is NOT here: owner_email, workspace_name, tier, owner names,
+ * stripe_customer_id. All of them are read from the verification row the
+ * session resolves to. Accepting them from the client would let a caller pass
+ * verification for one address and provision another.
+ *
+ * WIRE COMPATIBILITY: fields 2-7 held the removed inputs and are RESERVED, not
+ * recycled. attempt_id (1) and password (8) keep the numbers and the meanings
+ * they always had. A tag that changes meaning is invisible on the wire — a
+ * client built against the old shape would have had its workspace name decoded
+ * as the owner's password — so removed tags are retired permanently and new
+ * fields take fresh numbers.
+ *
+ * @generated from message gibson.tenant.v1.SignupRequest
+ */
+export type SignupRequest = Message<"gibson.tenant.v1.SignupRequest"> & {
+  /**
+   * attempt_id correlates with the signup-progress stream. Required, must be a
+   * UUID, and must match the attempt the verification was issued under.
+   *
+   * @generated from field: string attempt_id = 1;
+   */
+  attemptId: string;
+
+  /**
+   * password is the founding owner's chosen password.
+   *
+   * SECURITY: write-only. It reaches the IdP request body and nothing else —
+   * never logged, never persisted by the daemon, never returned. It is only
+   * ever applied to a user this call creates; if the address already has an
+   * account, the RPC fails and the password is discarded.
    *
    * @generated from field: string password = 8;
    */
   password: string;
+
+  /**
+   * verified_session_token is the value RedeemEmailVerification returned. It
+   * is the capability for this call: no session, no provisioning.
+   *
+   * @generated from field: string verified_session_token = 9;
+   */
+  verifiedSessionToken: string;
+
+  /**
+   * client_ip — see RequestEmailVerificationRequest.client_ip.
+   *
+   * @generated from field: string client_ip = 10;
+   */
+  clientIp: string;
 };
 
 /**
@@ -138,37 +340,30 @@ export type SignupRequest = Message<"gibson.tenant.v1.SignupRequest"> & {
  * Use `create(SignupRequestSchema)` to create a new message.
  */
 export const SignupRequestSchema: GenMessage<SignupRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_signup, 0);
+  messageDesc(file_gibson_tenant_v1_signup, 6);
 
 /**
- * SignupResponse reports the outcome of owner provisioning.
+ * SignupResponse reports the outcome of a completed signup.
+ *
+ * WIRE COMPATIBILITY: field 2 was `bool already_existed`, which described the
+ * resume behaviour this flow no longer has. It is reserved rather than reused —
+ * reusing it for a string would also have changed the wire type under any
+ * client still reading it.
  *
  * @generated from message gibson.tenant.v1.SignupResponse
  */
 export type SignupResponse = Message<"gibson.tenant.v1.SignupResponse"> & {
   /**
-   * tenant_id is the deterministic tenant slug the daemon derived from the
-   * workspace name (the same slugify the dashboard computes). The dashboard
-   * uses it as the Tenant CR name when it applies the Tenant CR.
+   * tenant_id is the deterministic slug derived from the workspace name on the
+   * verification row.
    *
    * @generated from field: string tenant_id = 1;
    */
   tenantId: string;
 
   /**
-   * already_existed is true when the founding-owner user already existed for
-   * this email (idempotent retry / resume) rather than being created by this
-   * call. Its password was reset to the supplied value either way.
-   *
-   * @generated from field: bool already_existed = 2;
-   */
-  alreadyExisted: boolean;
-
-  /**
-   * owner_user_id is the Zitadel id of the provisioned founding-owner human
-   * user. The dashboard does not currently need it (the Tenant CR's owner is
-   * the email), but it is returned for correlation / future direct owner
-   * references.
+   * owner_user_id is the Zitadel id of the founding-owner human user this call
+   * created. Same tag and same meaning it has always had.
    *
    * @generated from field: string owner_user_id = 3;
    */
@@ -180,47 +375,92 @@ export type SignupResponse = Message<"gibson.tenant.v1.SignupResponse"> & {
  * Use `create(SignupResponseSchema)` to create a new message.
  */
 export const SignupResponseSchema: GenMessage<SignupResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_signup, 1);
+  messageDesc(file_gibson_tenant_v1_signup, 7);
 
 /**
- * SignupService provisions the founding-owner identity for a self-serve signup
- * request.
- *
- * It is the server-side replacement for the IdP-admin half of the dashboard's
- * privileged signup path: the dashboard calls Signup instead of holding a
- * Zitadel admin PAT to create/credential the owner user. (The Tenant CR write
- * stays on the dashboard for now — dashboard#813.)
+ * SignupService owns the self-serve signup flow: prove the address, then
+ * provision.
  *
  * @generated from service gibson.tenant.v1.SignupService
  */
 export const SignupService: GenService<{
   /**
-   * Signup provisions the founding-owner identity for a self-serve signup
-   * attempt.
+   * RequestEmailVerification records a signup request and emails the address a
+   * single-use link. It creates NO identity, NO billing object and NO tenant.
    *
-   * The daemon creates (or resumes) the Zitadel human-owner user with the
-   * supplied email + profile, sets the supplied password, and best-effort
-   * sends the verification email — the exact Zitadel admin operations the
-   * dashboard signup-bot performed with its privileged PAT, now performed
-   * daemon-side with the daemon's existing Zitadel admin credential. The RPC
-   * returns the derived tenant slug and the owner user id.
+   * The response is EMPTY, and identical for every accepted request. It does
+   * not report whether the address already has an account, whether a
+   * verification was already pending, or anything else that differs between
+   * two addresses — because the caller is anonymous and an address's
+   * registration status is not theirs to learn. Both branches (new address /
+   * existing account) perform one directory lookup and send one message, so
+   * they are alike in shape as well as in payload.
    *
-   * The daemon does NOT touch Kubernetes and does NOT create the Tenant CR:
-   * ADR-0023 forbids daemon-side K8s API access. The dashboard keeps creating
-   * the Tenant CR (ADR-0044 sanctions that tenant-provisioning write) using the
-   * returned slug; the gibson-tenant-operator then reconciles that CR into the
-   * per-tenant Zitadel org (TenantIdentity, gibson#803), secrets, grants, and
-   * data plane (gibson#805). Net effect of this RPC: the dashboard drops its
-   * signup-bot Zitadel PAT.
+   * The fact that an account already exists IS disclosed — to the mailbox that
+   * owns the address, in the message it receives. That is the one recipient
+   * entitled to it.
    *
-   * Idempotent on owner email: re-issuing the same signup (a client retry)
-   * resumes the existing owner user — resetting its password to the supplied
-   * value and returning already_existed=true — rather than failing, so a
-   * dropped response does not strand the owner with a stale credential.
+   * Errors are limited to conditions independent of whether the address
+   * exists: InvalidArgument (malformed input), ResourceExhausted (rate limit),
+   * Unavailable (the message could not be sent, or the store/limiter is down).
    *
-   * UNAUTHENTICATED: runs before any tenant/membership exists. The attempt_id
-   * UUID is the capability; the daemon is the sole holder of the IdP-admin
-   * provisioning privilege (no IdP PAT in the caller).
+   * @generated from rpc gibson.tenant.v1.SignupService.RequestEmailVerification
+   */
+  requestEmailVerification: {
+    methodKind: "unary";
+    input: typeof RequestEmailVerificationRequestSchema;
+    output: typeof RequestEmailVerificationResponseSchema;
+  },
+  /**
+   * RedeemEmailVerification exchanges the raw emailed token for a short-lived
+   * completion session token.
+   *
+   * Single-use and atomic: redemption is one compare-and-set against the
+   * token's row, so a second use of the same link matches nothing and fails.
+   *
+   * Every failure — unknown token, expired token, already-redeemed token,
+   * malformed token — returns the SAME PermissionDenied with the SAME message.
+   * Distinguishing them would turn this RPC into a checker for which tokens
+   * and which signups exist.
+   *
+   * @generated from rpc gibson.tenant.v1.SignupService.RedeemEmailVerification
+   */
+  redeemEmailVerification: {
+    methodKind: "unary";
+    input: typeof RedeemEmailVerificationRequestSchema;
+    output: typeof RedeemEmailVerificationResponseSchema;
+  },
+  /**
+   * AttachSignupCustomer records the billing customer created for a verified
+   * signup session, so the completion path does not have to trust the client
+   * for the customer id.
+   *
+   * Only reachable with a live verified session, which is what keeps billing
+   * objects from existing for unproven addresses.
+   *
+   * @generated from rpc gibson.tenant.v1.SignupService.AttachSignupCustomer
+   */
+  attachSignupCustomer: {
+    methodKind: "unary";
+    input: typeof AttachSignupCustomerRequestSchema;
+    output: typeof AttachSignupCustomerResponseSchema;
+  },
+  /**
+   * Signup completes a verified signup: it creates the founding-owner Zitadel
+   * human user with the supplied password and enqueues the tenant for
+   * operator-pull provisioning.
+   *
+   * It requires a live verified_session_token. Without one it does nothing —
+   * this is the single chokepoint that keeps provisioning behind proof of
+   * mailbox control, and there is no sibling path around it.
+   *
+   * NOT idempotent-by-resume. If the address acquired an account between the
+   * verification email and this call, the RPC returns AlreadyExists and no
+   * credential is written to that account. Signup never sets a password on an
+   * account it did not just create.
+   *
+   * The session is consumed on success, so the completion cookie cannot be
+   * replayed into a second tenant.
    *
    * @generated from rpc gibson.tenant.v1.SignupService.Signup
    */

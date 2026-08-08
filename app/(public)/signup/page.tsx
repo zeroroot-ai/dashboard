@@ -35,7 +35,6 @@ import { Loader2Icon } from "lucide-react";
 import type { Metadata } from "next";
 
 import { selfServeTierIds, pricingDisplays } from "@/src/lib/pricing-display";
-import { DEFAULT_PASSWORD_POLICY } from "@/src/lib/zitadel/password-policy-cache";
 import { getDeploymentProfile } from "@/src/lib/deployment-profile";
 import { SignupForm } from "./signup-form";
 
@@ -117,8 +116,6 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         <SignupForm
           plan={fallbackPlan}
           planDisplayName={fallbackDisplayName}
-          passwordPolicy={DEFAULT_PASSWORD_POLICY}
-          publishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ""}
           pricingUrl={marketingUrl ? `${marketingUrl}/pricing` : null}
           billingEnabled={billingEnabled}
           termsUrl={marketingUrl ? `${marketingUrl}/terms` : null}
@@ -139,7 +136,6 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
 
   // Seed the client-side strength meter with the default policy. The daemon
   // enforces the authoritative policy at user-create time (E9, dashboard#812).
-  const passwordPolicy = DEFAULT_PASSWORD_POLICY;
 
   return (
     <Suspense
@@ -152,8 +148,6 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
       <SignupForm
         plan={plan}
         planDisplayName={planDisplayName}
-        passwordPolicy={passwordPolicy}
-        publishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ""}
         pricingUrl={marketingUrl ? `${marketingUrl}/pricing` : null}
         billingEnabled={billingEnabled}
         termsUrl={marketingUrl ? `${marketingUrl}/terms` : null}
