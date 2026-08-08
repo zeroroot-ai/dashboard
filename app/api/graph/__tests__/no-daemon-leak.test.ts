@@ -24,6 +24,18 @@ const getMissionGraph = vi.fn();
 const getFindingCounts = vi.fn();
 const queryPaths = vi.fn();
 
+// POST /api/graph/paths is CSRF-gated. Stubbed so these cases keep testing the
+// error envelope, which is what they are about; the gate itself is covered,
+// unmocked, in app/api/__tests__/csrf-coverage.test.ts.
+vi.mock('@/src/lib/auth/csrf', () => ({
+  requireCsrf: vi.fn(async () => undefined),
+  CsrfError: class CsrfError extends Error {},
+  csrfErrorResponse: (err: Error) =>
+    new Response(JSON.stringify({ error: 'csrf-token-required', reason: err.message }), {
+      status: 403,
+    }),
+}));
+
 vi.mock('@/src/lib/auth', () => ({
   getServerSession: vi.fn(async () => ({ user: { id: 'user-1' } })),
 }));
