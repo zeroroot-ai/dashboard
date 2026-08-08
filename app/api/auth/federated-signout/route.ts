@@ -37,8 +37,9 @@
  * already committed by the time user code runs.
  */
 import { NextResponse, type NextRequest } from "next/server";
-import { auth, signOut } from "@/auth";
+import { signOut } from "@/auth";
 import { ACTIVE_TENANT_COOKIE_NAME } from "@/src/lib/auth/active-tenant";
+import { isSecureRequest } from "@/src/lib/csrf";
 import { logger } from "@/src/lib/logger";
 
 // Auth.js v5 cookie names. Names differ in production (Secure cookie prefix)
@@ -77,22 +78,83 @@ function clearAuthCookies(res: NextResponse): void {
   }
 }
 
-function clearActiveTenantCookie(res: NextResponse): void {
+function clearActiveTenantCookie(req: NextRequest, res: NextResponse): void {
   // Mirror the attributes setActiveTenant uses when writing the cookie
   // (src/lib/auth/active-tenant.ts) so the browser accepts the overwrite.
-  // Path=/ + sameSite=lax + httpOnly + secure-in-production.
+  // Path=/ + sameSite=lax + httpOnly + Secure-when-the-request-is-https.
+  //
+  // The Secure flag tracks the REQUEST SCHEME, not NODE_ENV. Keying it to
+  // NODE_ENV gets it wrong in both directions: a production image running with
+  // NODE_ENV unset writes a non-Secure cookie over https, and a local https
+  // run writes Secure=false. Worse for a clear, the browser matches the
+  // overwrite against the original cookie's attributes, so a mismatched Secure
+  // flag means the delete is silently dropped and the tenant scope survives
+  // logout.
   res.cookies.set(ACTIVE_TENANT_COOKIE_NAME, "", {
     maxAge: 0,
     path: "/",
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: isSecureRequest(req),
   });
 }
 
-export async function GET(_req: NextRequest): Promise<NextResponse> {
-  const session = await auth();
-  const idToken = session?.idToken;
+/**
+ * Cross-site request forgery guard for a navigation endpoint.
+ *
+ * This route mutates state (it destroys the user's dashboard AND IdP session),
+ * so it must not be triggerable by another origin. It is reached by ordinary
+ * navigations rather than by `fetch`, so the double-submit header token used
+ * elsewhere is not available here: `window.location.href = ...` and
+ * `<form method="post">` cannot attach an `x-csrf-token` header.
+ *
+ * Fetch metadata is the right mechanism for that shape. The browser sets these
+ * headers itself and script cannot forge them:
+ *
+ *   - `Sec-Fetch-Site: cross-site`  -> another origin initiated it. Reject.
+ *   - `Sec-Fetch-Dest` other than `document` -> the request came from a
+ *     subresource load (`<img src=...>`, `<script src=...>`, `fetch`), never a
+ *     real logout. Reject, this is the classic zero-click logout-CSRF vector.
+ *   - `Sec-Fetch-Site: none` -> user typed the URL / used a bookmark. Allow.
+ *
+ * Legacy clients that send no fetch metadata fall back to an `Origin` check,
+ * and an absent `Origin` on a top-level navigation is allowed (that is what a
+ * user-initiated navigation looks like).
+ */
+function isCrossSiteRequest(req: NextRequest): boolean {
+  const site = req.headers.get('sec-fetch-site');
+  const dest = req.headers.get('sec-fetch-dest');
+
+  if (site !== null) {
+    if (site === 'cross-site') return true;
+    // Only a real navigation may sign the user out. `empty` (fetch/XHR),
+    // `image`, `script`, `iframe` etc. are all forgery vectors.
+    if (dest !== null && dest !== 'document') return true;
+    return false;
+  }
+
+  // No fetch metadata: fall back to Origin.
+  const origin = req.headers.get('origin');
+  if (origin === null) return false; // top-level navigation, no Origin sent
+  try {
+    return new URL(origin).origin !== req.nextUrl.origin;
+  } catch {
+    return true;
+  }
+}
+
+async function handleSignout(req: NextRequest): Promise<NextResponse> {
+  if (isCrossSiteRequest(req)) {
+    logger.warn(
+      {
+        route: 'auth/federated-signout',
+        secFetchSite: req.headers.get('sec-fetch-site'),
+        secFetchDest: req.headers.get('sec-fetch-dest'),
+      },
+      'rejected cross-site sign-out attempt',
+    );
+    return NextResponse.json({ error: 'cross_site_request' }, { status: 403 });
+  }
 
   // The user-flow OIDC client (gibson-dashboard, registered as an
   // authorization-code App in Zitadel). This is the client whose
@@ -122,18 +184,20 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // We need EITHER an id_token_hint OR a client_id for Zitadel to
-  // accept the end_session call. id_token_hint is preferred (Zitadel
-  // resolves the client by aud claim); client_id is the documented
-  // fallback for sessions that have lost the id_token (refresh
-  // cycles, JWT-shape changes, etc.). If neither is available we
-  // can't drive a real RP-initiated logout, fail loud rather than
-  // silently sending an unauthenticated end_session that Zitadel
-  // would reject anyway.
-  if (!idToken && !clientId) {
+  // Zitadel needs to resolve the RP for the end_session call. Two shapes are
+  // accepted: `id_token_hint` (resolved via the aud claim) or `client_id`.
+  //
+  // We deliberately use client_id ONLY. `id_token_hint` would put the raw ID
+  // token, a signed bearer credential carrying the user's identity claims,
+  // into a URL the browser navigates to. URLs are not a safe place for
+  // credentials: they land in browser history, in the `Referer` sent onward
+  // from the post-logout landing page, in any intermediary access log, and in
+  // the address bar over the user's shoulder. client_id carries no secret and
+  // drives the same RP-initiated logout.
+  if (!clientId) {
     logger.error(
       { route: "auth/federated-signout" },
-      "ZITADEL_CLIENT_ID env is unset AND session has no idToken, cannot drive RP-initiated logout. Check helm/gibson-workloads dashboard ZITADEL_CLIENT_ID wiring.",
+      "ZITADEL_CLIENT_ID env is unset, cannot drive RP-initiated logout. Check helm/gibson-workloads dashboard ZITADEL_CLIENT_ID wiring.",
     );
     return NextResponse.json(
       { error: "logout_misconfigured" },
@@ -147,16 +211,11 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
 
   // ALWAYS redirect through Zitadel's end_session, without it, Zitadel's
   // SSO cookie remains and silently re-authenticates the user on the next
-  // /login. id_token_hint is the preferred shape; client_id is the documented
-  // fallback when the hint is unavailable.
+  // /login. Only client_id is sent, never the ID token, see above.
   // ZITADEL_ISSUER is REQUIRED at boot (src/lib/env-validator.ts), no fallback.
   const zitadelIssuer = (await import("@/src/lib/env-validator")).env.ZITADEL_ISSUER;
   const endSession = new URL(`${zitadelIssuer}/oidc/v1/end_session`);
-  if (idToken) {
-    endSession.searchParams.set("id_token_hint", idToken);
-  } else if (clientId) {
-    endSession.searchParams.set("client_id", clientId);
-  }
+  endSession.searchParams.set("client_id", clientId);
   endSession.searchParams.set(
     "post_logout_redirect_uri",
     postLogoutRedirectUri,
@@ -172,10 +231,33 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
   // Multi-tenant: also drop the active-tenant cookie so the next sign-in
   // runs default-tenant resolution / picker afresh, not auto-routing the
   // user back into the tenant they were viewing at logout time.
-  clearActiveTenantCookie(res);
+  clearActiveTenantCookie(req, res);
   return res;
 }
 
-// Accept POST too, the sign-out form in no-workspace/page.tsx posts rather
-// than GETs, and this route should handle either method identically.
-export const POST = GET;
+/**
+ * POST is the correct method for a sign-out: it mutates state. The sign-out
+ * forms in `no-workspace/page.tsx` and `onboarding/page.tsx` use it.
+ */
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  return handleSignout(req);
+}
+
+/**
+ * GET is still accepted because the primary logout affordances navigate to
+ * this route (`window.location.href = "/api/auth/federated-signout"` in the
+ * sidebar and header user menus) and middleware redirects tenantless sessions
+ * here. Both are same-origin navigations.
+ *
+ * The forgery risk that normally makes a state-changing GET unacceptable is
+ * closed by `isCrossSiteRequest`: a cross-origin page cannot produce a request
+ * with `Sec-Fetch-Site: same-origin`, and the zero-click subresource vectors
+ * (`<img>`, `<script>`, `fetch`) are rejected on `Sec-Fetch-Dest`.
+ *
+ * Follow-up: once the two `window.location.href` call sites and the middleware
+ * redirect are converted to POST, delete this handler and let the route be
+ * POST-only.
+ */
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  return handleSignout(req);
+}

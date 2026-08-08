@@ -55,11 +55,14 @@ import { ACTIVE_TENANT_COOKIE_NAME } from '@/src/lib/auth/active-tenant';
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeRequest(): NextRequest {
+function makeRequest(
+  init: { method?: string; headers?: Record<string, string>; url?: string } = {},
+): NextRequest {
   // Request origin intentionally differs from POST_LOGOUT_REDIRECT_URI so we
   // can prove the route does NOT synthesize the URI from origin.
-  return new NextRequest('http://localhost:9999/api/auth/federated-signout', {
-    method: 'GET',
+  return new NextRequest(init.url ?? 'http://localhost:9999/api/auth/federated-signout', {
+    method: init.method ?? 'GET',
+    headers: init.headers,
   });
 }
 
@@ -107,10 +110,23 @@ describe('GET /api/auth/federated-signout', () => {
     // Regression guard: the request origin (localhost:9999 from makeRequest)
     // must NEVER end up as the post_logout_redirect_uri.
     expect(url.searchParams.get('post_logout_redirect_uri')).not.toContain('localhost:9999');
-    expect(url.searchParams.get('id_token_hint')).toBe('test-id-token');
   });
 
-  it('falls back to the user-flow client_id (ZITADEL_CLIENT_ID) when id_token_hint is unavailable', async () => {
+  it('NEVER puts the raw id_token in the navigable redirect URL', async () => {
+    // The ID token is a signed bearer credential carrying the user's identity
+    // claims. A URL the browser navigates to is not a safe place for one: it
+    // lands in browser history, in the Referer sent onward from the
+    // post-logout landing page, and in every intermediary access log.
+    // client_id drives the same RP-initiated logout and carries no secret.
+    mockAuth.mockResolvedValue({ idToken: 'test-id-token' });
+    const res = await GET(makeRequest());
+    const location = res.headers.get('location')!;
+    expect(location).not.toContain('test-id-token');
+    expect(location).not.toContain('id_token_hint');
+    expect(new URL(location).searchParams.get('client_id')).toBe('test-user-flow-client-id');
+  });
+
+  it('always identifies the RP by the user-flow client_id (ZITADEL_CLIENT_ID)', async () => {
     mockAuth.mockResolvedValue({ idToken: undefined });
     const res = await GET(makeRequest());
     const url = new URL(res.headers.get('location')!);
@@ -126,7 +142,7 @@ describe('GET /api/auth/federated-signout', () => {
     );
   });
 
-  it('fails loud (500) when no idToken AND ZITADEL_CLIENT_ID is unset, no silent unauthenticated end_session', async () => {
+  it('fails loud (500) when ZITADEL_CLIENT_ID is unset, no silent unauthenticated end_session', async () => {
     // Both end_session client-resolution inputs are missing: an
     // unauthenticated end_session call would be rejected by Zitadel anyway
     // and would partially trash the user's local session in the process
@@ -189,7 +205,107 @@ describe('GET /api/auth/federated-signout', () => {
     expect(mockSignOut).not.toHaveBeenCalled();
   });
 
-  it('POST is wired to the same handler so the no-workspace signout form works', () => {
-    expect(POST).toBe(GET);
+  it('POST drives the same logout so the no-workspace signout form works', async () => {
+    const res = await POST(makeRequest({ method: 'POST' }));
+    expect(res.status).toBe(307);
+    expect(mockSignOut).toHaveBeenCalledWith({ redirect: false });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Cross-site request forgery (GHSA-wqh8)
+// ---------------------------------------------------------------------------
+
+describe('federated-signout CSRF protection', () => {
+  const ORIG_ENV = { ...process.env };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSignOut.mockResolvedValue(undefined);
+    mockAuth.mockResolvedValue({ idToken: 'test-id-token' });
+    process.env.POST_LOGOUT_REDIRECT_URI = 'https://app.zeroroot.local:30443';
+    process.env.ZITADEL_ISSUER = 'https://auth.zeroroot.local:30443';
+    process.env.ZITADEL_CLIENT_ID = 'test-user-flow-client-id';
+  });
+
+  afterEach(() => {
+    process.env = { ...ORIG_ENV };
+  });
+
+  it('rejects a cross-site navigation and does NOT sign the user out', async () => {
+    const res = await GET(
+      makeRequest({ headers: { 'sec-fetch-site': 'cross-site', 'sec-fetch-dest': 'document' } }),
+    );
+    expect(res.status).toBe(403);
+    expect(mockSignOut).not.toHaveBeenCalled();
+  });
+
+  it('rejects a cross-site form POST', async () => {
+    const res = await POST(
+      makeRequest({
+        method: 'POST',
+        headers: { 'sec-fetch-site': 'cross-site', 'sec-fetch-dest': 'document' },
+      }),
+    );
+    expect(res.status).toBe(403);
+    expect(mockSignOut).not.toHaveBeenCalled();
+  });
+
+  it('rejects the zero-click subresource vector (<img src=...>)', async () => {
+    // Same-origin but loaded as an image: this is how a forged logout is
+    // normally triggered, and it is never a real sign-out.
+    const res = await GET(
+      makeRequest({ headers: { 'sec-fetch-site': 'same-origin', 'sec-fetch-dest': 'image' } }),
+    );
+    expect(res.status).toBe(403);
+    expect(mockSignOut).not.toHaveBeenCalled();
+  });
+
+  it('rejects a fetch()-initiated sign-out', async () => {
+    const res = await GET(
+      makeRequest({ headers: { 'sec-fetch-site': 'same-origin', 'sec-fetch-dest': 'empty' } }),
+    );
+    expect(res.status).toBe(403);
+    expect(mockSignOut).not.toHaveBeenCalled();
+  });
+
+  it('allows a same-origin navigation (the sidebar/header menu path)', async () => {
+    const res = await GET(
+      makeRequest({ headers: { 'sec-fetch-site': 'same-origin', 'sec-fetch-dest': 'document' } }),
+    );
+    expect(res.status).toBe(307);
+    expect(mockSignOut).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows a user-typed navigation (Sec-Fetch-Site: none)', async () => {
+    const res = await GET(
+      makeRequest({ headers: { 'sec-fetch-site': 'none', 'sec-fetch-dest': 'document' } }),
+    );
+    expect(res.status).toBe(307);
+  });
+
+  it('falls back to Origin when fetch metadata is absent', async () => {
+    const res = await GET(makeRequest({ headers: { origin: 'https://evil.example' } }));
+    expect(res.status).toBe(403);
+    expect(mockSignOut).not.toHaveBeenCalled();
+  });
+
+  it('keys the active-tenant cookie Secure flag to the request scheme, not NODE_ENV', async () => {
+    const secure = await GET(
+      makeRequest({
+        url: 'https://app.zeroroot.local/api/auth/federated-signout',
+        headers: { 'x-forwarded-proto': 'https' },
+      }),
+    );
+    const secureCookie = secure.cookies
+      .getAll()
+      .find((c) => c.name === ACTIVE_TENANT_COOKIE_NAME);
+    expect(secureCookie!.secure).toBe(true);
+
+    const plain = await GET(makeRequest({ headers: { 'x-forwarded-proto': 'http' } }));
+    const plainCookie = plain.cookies
+      .getAll()
+      .find((c) => c.name === ACTIVE_TENANT_COOKIE_NAME);
+    expect(plainCookie!.secure).toBe(false);
   });
 });
