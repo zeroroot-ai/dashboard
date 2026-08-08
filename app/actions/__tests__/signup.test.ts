@@ -126,7 +126,10 @@ vi.mock('@/src/lib/auth/breached-password-gate', () => ({
 // After mocks are set up, import the subject.
 import { signupAction, startSignupPayment, completeSignup } from '../signup';
 import { getTenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
-import { SIGNUP_VERIFIED_COOKIE } from '@/src/lib/signup/verified-session';
+import {
+  SIGNUP_VERIFIED_COOKIE,
+  encodeVerifiedSession,
+} from '@/src/lib/signup/verified-session';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -164,19 +167,42 @@ const STATUS_READY: TenantProvisioningStatus = {
 
 const ATTEMPT = 'aaaaaaaa-0000-0000-0000-000000000001';
 
-/** Put a redeemed-session cookie in the jar, as /signup/verify would. */
+/**
+ * Put a redeemed-session cookie in the jar, as /signup/verify would.
+ *
+ * Goes through the real `encodeVerifiedSession`, so the cookie carries a real
+ * signature. Hand-rolling the JSON here would produce a cookie the app now
+ * rejects, and every test would fail for the wrong reason.
+ */
 function seedVerifiedSession(extra: Record<string, unknown> = {}) {
   mockCookieStore.store.set(
     SIGNUP_VERIFIED_COOKIE,
-    JSON.stringify({
+    encodeVerifiedSession({
       verifiedSessionToken: 'sess-1',
       attemptId: ATTEMPT,
       email: 'test@example.com',
       workspaceName: 'test-workspace',
       tier: 'team',
       ...extra,
-    }),
+    } as Parameters<typeof encodeVerifiedSession>[0]),
   );
+}
+
+/**
+ * Put a FORGED cookie in the jar: valid JSON, no valid signature. This is what
+ * a user editing their own cookie jar can produce, and what the signature
+ * exists to reject.
+ */
+function seedForgedSession(extra: Record<string, unknown> = {}) {
+  const payload = JSON.stringify({
+    verifiedSessionToken: 'sess-1',
+    attemptId: ATTEMPT,
+    email: 'test@example.com',
+    workspaceName: 'test-workspace',
+    tier: 'team',
+    ...extra,
+  });
+  mockCookieStore.store.set(SIGNUP_VERIFIED_COOKIE, `${payload}.${'0'.repeat(64)}`);
 }
 
 function resetMocks() {
@@ -397,6 +423,74 @@ describe('completeSignup', () => {
     expect(mockVerifySignupCustomer).toHaveBeenCalledWith('cus_victim', 'test@example.com');
     expect(mockCompleteSignupOwner).not.toHaveBeenCalled();
     expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
+  });
+
+  // -------------------------------------------------------------------------
+  // Cookie forgery (GHSA-r74f)
+  // -------------------------------------------------------------------------
+  //
+  // The cookie is httpOnly, which stops a script on the page reading it. It
+  // does nothing about the person holding the browser. `tier` rides in this
+  // cookie and the dashboard prices from it, so an unsigned cookie meant the
+  // daemon could provision one plan (it resolves the tier from its own
+  // verification row) while the dashboard billed for another.
+
+  it('refuses a forged cookie outright, and bills nothing', async () => {
+    seedForgedSession({ stripeCustomerId: 'cus_1' });
+
+    const result = await completeSignup({
+      password: 'Passw0rd!Test',
+      paymentMethodId: 'pm_1',
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe('VERIFICATION_INVALID');
+    expect(mockCompleteSignupOwner).not.toHaveBeenCalled();
+    expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
+  });
+
+  it('a tier downgraded inside a genuine cookie cannot select a cheaper price', async () => {
+    // Start from a REAL signed cookie on the dearer plan, then rewrite just the
+    // tier to a real, cheaper, valid plan — the exact edit the attack needs.
+    // `team` is a live plan id, so this does not pass merely because the forged
+    // value fails plan lookup: it fails because the signature no longer holds.
+    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
+    const genuine = encodeVerifiedSession({
+      verifiedSessionToken: 'sess-1',
+      attemptId: ATTEMPT,
+      email: 'test@example.com',
+      workspaceName: 'test-workspace',
+      tier: 'org',
+      stripeCustomerId: 'cus_1',
+    });
+    const lastDot = genuine.lastIndexOf('.');
+    const downgraded =
+      genuine.slice(0, lastDot).replace('"tier":"org"', '"tier":"team"') +
+      genuine.slice(lastDot);
+    expect(downgraded).not.toBe(genuine);
+    mockCookieStore.store.set(SIGNUP_VERIFIED_COOKIE, downgraded);
+
+    const result = await completeSignup({
+      password: 'Passw0rd!Test',
+      paymentMethodId: 'pm_1',
+    });
+
+    // Refused outright, rather than subscribed at the cheaper price.
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe('VERIFICATION_INVALID');
+    expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
+    expect(mockCompleteSignupOwner).not.toHaveBeenCalled();
+  });
+
+  it('subscribes on the tier the daemon put in the signed cookie', async () => {
+    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
+    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
+
+    await completeSignup({ password: 'Passw0rd!Test', paymentMethodId: 'pm_1' });
+
+    expect(mockCreateTrialingSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({ tier: 'team' }),
+    );
   });
 
   it('does not create a subscription when the account could not be created', async () => {

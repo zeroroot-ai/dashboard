@@ -22,9 +22,33 @@
  * goes straight to the daemon in the completion call. A password held across
  * the email round-trip would be a stored credential for an address that, at the
  * time it was stored, nobody had proven they controlled.
+ *
+ * THE COOKIE IS SIGNED. httpOnly stops a script on the page reading it; it does
+ * nothing about the person holding the browser, who can put whatever they like
+ * in it and send it back. That mattered because `tier` rides in here and the
+ * dashboard prices from it: the daemon resolves the plan from its own
+ * verification row (`row.Tier`) and provisions accordingly, so a browser-chosen
+ * tier could not change what got provisioned, but it could change what got
+ * billed and how long the trial ran. Provisioned as one plan, charged for
+ * another. `stripeCustomerId` rides here too and had to be re-checked against
+ * Stripe at completion for exactly the same reason.
+ *
+ * Signing removes the class rather than the one field: every value in the
+ * payload is now tamper-evident, and a cookie that does not verify is treated
+ * as absent. Same construction as the `gibson_active_tenant` cookie in
+ * `src/lib/auth/active-tenant.ts` — `<payload>.<hex hmac-sha256>` keyed on
+ * AUTH_SECRET, compared in constant time.
+ *
+ * This is confidentiality-preserving only in the sense that matters here: the
+ * payload stays readable to anyone who can read the cookie jar, and that is
+ * fine, because every field in it belongs to the person who just proved control
+ * of the mailbox. What they must not be able to do is CHANGE one, and now they
+ * cannot.
  */
 
 import 'server-only';
+
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
 import type { RedeemedSignupVerification } from './owner-provisioning';
 
@@ -86,24 +110,83 @@ export function signupCookieOptions(): {
   };
 }
 
-/** Serialise for the cookie value. */
-export function encodeVerifiedSession(s: VerifiedSignupSession): string {
-  return JSON.stringify(s);
+// ---------------------------------------------------------------------------
+// Signing
+// ---------------------------------------------------------------------------
+
+/**
+ * The signing key. Deliberately the same one `active-tenant.ts` uses: it is a
+ * generic server-side signing secret that happens to be named for Auth.js, the
+ * chart already generates it into the dashboard Secret, and a second key would
+ * be a second thing to rotate for no gain.
+ *
+ * Hard-fails rather than falling back to a guessable value. A signup flow that
+ * silently signs with the empty string is worse than one that does not start.
+ */
+function signingKey(): Buffer {
+  const s = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  if (!s || s.length < 16) {
+    throw new Error('AUTH_SECRET is missing or too short to sign cookies');
+  }
+  return Buffer.from(s, 'utf8');
+}
+
+function sign(payload: string): string {
+  return createHmac('sha256', signingKey()).update(payload).digest('hex');
 }
 
 /**
- * Parse a cookie value back into a session.
+ * Constant-time signature compare. Returns false on a length mismatch so a
+ * caller cannot use timing to learn anything about the expected signature.
+ */
+function signatureMatches(payload: string, providedHex: string): boolean {
+  const expected = Buffer.from(sign(payload), 'hex');
+  let provided: Buffer;
+  try {
+    provided = Buffer.from(providedHex, 'hex');
+  } catch {
+    return false;
+  }
+  if (expected.length !== provided.length) return false;
+  return timingSafeEqual(expected, provided);
+}
+
+/**
+ * Serialise and sign for the cookie value.
  *
- * Returns null on anything malformed or incomplete rather than throwing, and on
- * anything missing the token — a cookie without the capability cannot authorise
- * completion, so treating it as absent is the same answer with less code.
+ * Format is `<json>.<hex hmac>`. The JSON is not escaped or encoded further:
+ * `JSON.stringify` cannot emit a `.` outside a string literal, and the split on
+ * read takes the LAST `.`, so a payload containing dots round-trips intact.
+ */
+export function encodeVerifiedSession(s: VerifiedSignupSession): string {
+  const payload = JSON.stringify(s);
+  return `${payload}.${sign(payload)}`;
+}
+
+/**
+ * Verify, then parse, a cookie value back into a session.
+ *
+ * Returns null on anything malformed, incomplete, unsigned or wrongly signed
+ * rather than throwing, and on anything missing the token — a cookie without
+ * the capability cannot authorise completion, so treating it as absent is the
+ * same answer with less code. A tampered cookie takes the same path: the user
+ * is told the link is no longer valid and starts again.
  */
 export function decodeVerifiedSession(
   raw: string | undefined,
 ): VerifiedSignupSession | null {
   if (!raw) return null;
+
+  // Split on the LAST dot: the signature is fixed-width hex and cannot contain
+  // one, but the JSON payload can.
+  const lastDot = raw.lastIndexOf('.');
+  if (lastDot <= 0) return null;
+  const payload = raw.slice(0, lastDot);
+  const signature = raw.slice(lastDot + 1);
+  if (!signature || !signatureMatches(payload, signature)) return null;
+
   try {
-    const parsed: unknown = JSON.parse(raw);
+    const parsed: unknown = JSON.parse(payload);
     if (typeof parsed !== 'object' || parsed === null) return null;
     const s = parsed as Partial<VerifiedSignupSession>;
     if (

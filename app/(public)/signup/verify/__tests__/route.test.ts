@@ -27,7 +27,10 @@ vi.mock('@/src/lib/logger', () => ({
 import { NextRequest } from 'next/server';
 
 import { GET } from '../route';
-import { SIGNUP_VERIFIED_COOKIE } from '@/src/lib/signup/verified-session';
+import {
+  SIGNUP_VERIFIED_COOKIE,
+  decodeVerifiedSession,
+} from '@/src/lib/signup/verified-session';
 
 function request(url: string): NextRequest {
   return new NextRequest(url, {
@@ -64,10 +67,14 @@ describe('GET /signup/verify', () => {
     const cookie = res.cookies.get(SIGNUP_VERIFIED_COOKIE);
     expect(cookie).toBeDefined();
     expect(cookie?.httpOnly).toBe(true);
-    expect(JSON.parse(cookie?.value ?? '{}')).toMatchObject({
+    // Read it back the way the app does. The cookie is signed, so this also
+    // asserts the route wrote a cookie that will actually verify later.
+    expect(decodeVerifiedSession(cookie?.value)).toMatchObject({
       verifiedSessionToken: 'sess-1',
       email: 'ada@example.com',
     });
+    // Signed, not bare JSON.
+    expect(() => JSON.parse(cookie?.value ?? '')).toThrow();
 
     // The redirect target must not carry the token onward.
     expect(res.headers.get('location')).not.toContain('raw-token');
