@@ -5,6 +5,13 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.117.0](https://github.com/zeroroot-ai/dashboard/compare/v0.116.0...v0.117.0) (2026-08-08)
+
+
+### Features
+
+* **signup:** verify the email address before creating anything ([#991](https://github.com/zeroroot-ai/dashboard/issues/991)) ([bc6099f](https://github.com/zeroroot-ai/dashboard/commit/bc6099f642045b537cc1a2e1bd392c4c4e510910))
+
 ## [0.116.0](https://github.com/zeroroot-ai/dashboard/compare/v0.115.0...v0.116.0) (2026-08-08)
 
 
