@@ -46,12 +46,21 @@ const SCRIPTS_DIR = path.dirname(fileURLToPath(import.meta.url));
  * no LLM-credential reads, no direct K8s provider-secret access, no
  * IAM-admin PAT, no raw IdP fetch, no direct daemon channel, exactly one
  * daemon transport, no deleted admin-RPC bindings, no SPIFFE collapse in
- * the user client, no leaked secret in the client bundle.
+ * the user client, no secret in a log line.
  *
  * Each of these catches a runtime/semantic invariant the compiler cannot:
  * string-literal env-var names, `process.env` reads, host:port literals,
- * package.json dependency declarations, fetch-call proximity, or compiled
- * bundle scans — none of which is a TypeScript type error.
+ * package.json dependency declarations, or fetch-call proximity — none of
+ * which is a TypeScript type error.
+ *
+ * SOURCE GUARDS ONLY. Every guard here reads the source tree, so the preset
+ * is runnable at `prebuild`, before any build output exists. Guards that read
+ * the COMPILED bundle belong in `postbuild` and are not listed here:
+ * `check-no-secrets-in-client.mjs` and
+ * `check-no-direct-daemon-grpc-bundle.mjs` both scan `.next/`, and both now
+ * fail closed on missing output (dashboard#996) rather than reporting a
+ * vacuous pass. Listing either one here would fail every build on the empty
+ * `.next/` that necessarily exists at prebuild time.
  */
 const GUARDS = [
   ['check-no-permissive-flags.mjs'],
@@ -65,7 +74,6 @@ const GUARDS = [
   ['check-single-daemon-transport.mjs'],
   ['check-no-direct-admin-rpc.mjs'],
   ['check-no-spiffe-in-user-client.mjs'],
-  ['check-no-secrets-in-client.mjs'],
   // dashboard#818: secret-in-logs guard was previously only reachable via the
   // manual `check:auth-regression` script, so a `logger.info({ accessToken })`
   // regression could pass `pnpm build`. Wired into the build-path preset here.
