@@ -5,6 +5,13 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.117.1](https://github.com/zeroroot-ai/dashboard/compare/v0.117.0...v0.117.1) (2026-08-08)
+
+
+### Bug Fixes
+
+* **ci:** make three build guards able to fail, and close the sign-out forgery path ([#996](https://github.com/zeroroot-ai/dashboard/issues/996)) ([667d20b](https://github.com/zeroroot-ai/dashboard/commit/667d20b06ba5cda0774ebd2cc9cafdb2f64c36f0))
+
 ## [0.117.0](https://github.com/zeroroot-ai/dashboard/compare/v0.116.0...v0.117.0) (2026-08-08)
 
 
