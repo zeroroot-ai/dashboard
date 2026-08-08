@@ -1,11 +1,27 @@
 import type { NextConfig } from "next";
 
-// CSP is NOT emitted by the dashboard app. The nonce-based per-request CSP that
-// used to live in middleware.ts was removed in the zitadel-envoy-gateway-migration
-// (CSP moved to the Envoy edge). The static non-CSP security headers below remain
-// here, same for every response. dashboard#818 verified no CSP is set by app code
-// and filed dashboard#863 to confirm the edge actually emits one (and to decide
-// whether the app should own a baseline CSP as defense-in-depth).
+// The dashboard owns a baseline Content-Security-Policy (dashboard#863).
+//
+// History: a nonce-based per-request CSP used to live in middleware.ts and was
+// removed in the zitadel-envoy-gateway-migration on the assumption the Envoy
+// edge would emit one. The app then shipped with NO CSP on any response. That
+// assumption is not a control: the edge policy is a different repo's
+// configuration, it does not apply to a self-hosted install fronted by some
+// other ingress, and it does not apply at all when a response is served
+// without traversing the intended vhost. This app renders LLM output and
+// attacker-influenced target data, so the app must carry its own policy.
+//
+// Nonce vs. static: a nonce policy needs a per-request value, which means
+// middleware, which does not run on every response (the matcher excludes
+// _next/static, api/auth, api/health, api/signup). A static policy in
+// `headers()` covers EVERY response, which is the property that matters for a
+// baseline. The cost is `'unsafe-inline'` in script-src, because Next.js
+// injects inline bootstrap/flight scripts that a static policy cannot
+// enumerate. That is a real limitation and is called out below, but the
+// directives that actually bound an XSS blast radius — connect-src, img-src,
+// form-action, base-uri, object-src, frame-ancestors — are unaffected by
+// 'unsafe-inline' and are strict here.
+//
 // HSTS is a REAL-CERT concern. Emitting it behind the self-signed dev edge
 // (kind / self-hosted before a trusted cert is installed) is self-defeating:
 // the browser pins the domain (max-age 1y, includeSubDomains) and then refuses
@@ -16,7 +32,97 @@ import type { NextConfig } from "next";
 // DASHBOARD_HSTS_DISABLED=1. Default = HSTS ON (prod stays strict).
 const hstsDisabled = process.env.DASHBOARD_HSTS_DISABLED === "1";
 
+// `next dev` (Turbopack HMR + React refresh) evaluates transpiled modules with
+// eval(). Production never needs it. This is the only dev/prod divergence in the
+// policy and it relaxes dev only, so the production build stays the strict one.
+const isDev = process.env.NODE_ENV !== "production";
+
+// Third-party origins the BROWSER genuinely reaches. Each entry is justified;
+// anything not listed is denied by the `default-src 'self'` fallback.
+//
+//   js.stripe.com / hooks.stripe.com / m.stripe.network , Stripe.js + the
+//     Payment Element iframes used by card-first signup and the billing
+//     settings page (@stripe/react-stripe-js injects the script at runtime).
+//   api.stripe.com / r.stripe.com , Stripe.js XHR + error telemetry.
+//   challenges.cloudflare.com / *.hcaptcha.com , the Turnstile / hCaptcha
+//     widget scripts and frames. Selected by DASHBOARD_CAPTCHA_PROVIDER; the
+//     default is "disabled", so these are usually unused. Listing them costs
+//     nothing and keeps a provider flip from silently breaking signup.
+//   googletagmanager.com / google-analytics.com , react-ga4 (lib/ga.ts) injects
+//     the gtag script at runtime when NEXT_PUBLIC_GA_KEY is set.
+//   avatars.githubusercontent.com / lh3.googleusercontent.com , social-login
+//     avatars; these already appear in `images.remotePatterns` below.
+//
+// NOT listed on purpose: the Monaco editor is bundled locally
+// (`loader.config({ monaco: monacoEditor })` in MissionCUEEditor.tsx), so no
+// CDN origin is required. HIBP and the captcha siteverify calls are
+// server-side only.
+const STRIPE_SCRIPT = "https://js.stripe.com";
+const STRIPE_FRAMES = "https://js.stripe.com https://hooks.stripe.com https://m.stripe.network";
+const STRIPE_CONNECT = "https://api.stripe.com https://m.stripe.network https://r.stripe.com";
+const CAPTCHA = "https://challenges.cloudflare.com https://*.hcaptcha.com";
+const ANALYTICS_SCRIPT = "https://www.googletagmanager.com";
+const ANALYTICS_CONNECT =
+  "https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com";
+
+/**
+ * The dashboard's baseline Content-Security-Policy.
+ *
+ * Exported as a single named constant so the CI guard (scripts/check-csp.mjs)
+ * has a stable thing to assert on rather than having to parse the header array.
+ *
+ * Directive notes:
+ *   default-src 'self'      , deny-by-default for every fetch type not named below.
+ *   base-uri 'none'         , kills <base href> injection outright. Nothing in
+ *                             this app sets a base tag, so 'none' is safe and is
+ *                             strictly stronger than 'self'. Unaffected by
+ *                             'unsafe-inline' in script-src, which is why it is
+ *                             one of the directives that still earns its keep.
+ *   object-src 'none'       , no <object>/<embed>/<applet> plugin content.
+ *   frame-ancestors 'none'  , clickjacking; the modern replacement for the
+ *                             X-Frame-Options: DENY header kept alongside it.
+ *   form-action 'self'      , a form injected into LLM-rendered output cannot
+ *                             POST credentials or findings to an attacker host.
+ *   script-src              , see the 'unsafe-inline' caveat above the HSTS
+ *                             comment. External script ORIGINS are still
+ *                             restricted, so an injected
+ *                             <script src="https://evil/..."> is blocked.
+ *   style-src 'unsafe-inline', Tailwind/CSS-in-JS, Monaco, mermaid and xterm all
+ *                             write inline style attributes. Inline style is not
+ *                             a script-execution primitive.
+ *   img-src data: blob:     , generated diagrams, canvas exports, avatars.
+ *   connect-src             , the exfiltration-relevant directive. Same-origin
+ *                             plus the third parties above; 'self' also covers
+ *                             same-origin ws/wss for the terminal + event stream.
+ *   worker-src 'self' blob: , Monaco language workers and mermaid render workers
+ *                             are instantiated from blob URLs.
+ *
+ * Deliberately absent: `upgrade-insecure-requests`, which would break plain-http
+ * local dev, and `require-trusted-types-for`, which needs a policy audit of
+ * every DOM sink first.
+ */
+export const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "base-uri 'none'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${STRIPE_SCRIPT} ${CAPTCHA} ${ANALYTICS_SCRIPT}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://www.googletagmanager.com https://*.google-analytics.com",
+  "font-src 'self' data:",
+  `connect-src 'self' ${STRIPE_CONNECT} ${CAPTCHA} ${ANALYTICS_CONNECT}`,
+  `frame-src 'self' ${STRIPE_FRAMES} ${CAPTCHA}`,
+  "worker-src 'self' blob:",
+  "media-src 'self' data: blob:",
+  "manifest-src 'self'",
+].join("; ");
+
 const securityHeaders = [
+  {
+    key: "Content-Security-Policy",
+    value: CONTENT_SECURITY_POLICY,
+  },
   ...(hstsDisabled
     ? []
     : [
@@ -128,28 +234,22 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  async rewrites() {
-    // GIBSON_API_URL is REQUIRED at SERVER START, see src/lib/env-validator.ts.
-    //
-    // next.config.ts is evaluated by `next build` AT BUILD TIME and AGAIN
-    // when the Next.js Node server starts. The image build runs without
-    // any pod-side env (the chart wires GIBSON_API_URL at pod-start, not
-    // at docker-build), so a hard throw here would fail the image build.
-    //
-    // The required-env fence lives at boot in validateEnv() (run from
-    // instrumentation.register()) which DOES crashloop a misconfigured
-    // pod. next.config.ts here uses a clearly-synthetic stub URL when
-    // the env is missing during build; runtime missing-env is caught one
-    // tick later by validateEnv() before any request can succeed.
-    const gibsonApiUrl =
-      process.env.GIBSON_API_URL ?? "http://__BUILD_TIME_STUB_GIBSON_API_URL__";
-    return [
-      {
-        source: "/api/grpc/:path*",
-        destination: `${gibsonApiUrl}/:path*`,
-      },
-    ];
-  },
+  // NO rewrites. There used to be a `/api/grpc/:path*` →
+  // `${GIBSON_API_URL}/:path*` rewrite here, ungated by environment, which made
+  // the Next.js server a browser-reachable reverse proxy onto the daemon front
+  // door. Every authorization decision in this product is taken by Envoy +
+  // ext_authz on the request path; a Next.js rewrite is a different request
+  // path, so anything reaching the daemon through it arrived without that
+  // decision having been made. The rewrite had NO callers anywhere in this repo
+  // (`rg "api/grpc"` matched only the rewrite itself and one env-var comment),
+  // so it is deleted outright rather than dev-gated: a dev-gated version is
+  // still a codepath that only differs by environment, which is exactly the
+  // divergence ADR-0027 forbids.
+  //
+  // Server-side daemon calls go through src/lib/gibson-client.ts
+  // (userClient / serviceClient) at the Envoy base URL. Do not re-add a rewrite,
+  // a route handler that forwards opaquely, or any other pass-through onto the
+  // daemon. See the `check-no-direct-daemon-grpc.mjs` prebuild guard.
   async redirects() {
     return [
       // /dashboard/users → /dashboard/organization/users (users moved into Organization group; dashboard#144).
