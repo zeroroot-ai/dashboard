@@ -72,6 +72,7 @@ import {
   attachSignupCustomer,
   completeSignupOwner,
 } from "@/src/lib/signup/owner-provisioning";
+import { assertPasswordNotBreached } from "@/src/lib/auth/breached-password-gate";
 import { resolveClientIp } from "@/src/lib/signup/client-ip";
 import {
   SIGNUP_VERIFIED_COOKIE,
@@ -460,6 +461,7 @@ async function finishProvisioning(ctx: Ctx): Promise<SignupActionResult> {
  * just typed and, on the paid path, the payment method they just confirmed.
  *
  * Order:
+ *   0. Refuse a known-breached password, before anything at all exists.
  *   1. Create the founding-owner identity and enqueue the tenant (the daemon
  *      consumes the session here, so it cannot be replayed into a second
  *      workspace).
@@ -476,6 +478,33 @@ export async function completeSignup(
       attemptId: "",
       code: "VERIFICATION_INVALID",
       userMessage: "That link is no longer valid. Please start again.",
+    };
+  }
+
+  // Breached-password gate, FIRST. This is the only point in the flow where
+  // the password exists, and it runs before the identity, the tenant, the
+  // billing customer's subscription — before anything a refusal would have to
+  // be rolled back from. A rejected attempt leaves the verified session live
+  // so the user simply picks another password on the same screen.
+  //
+  // Fail-open on an unreachable HIBP: see assertPasswordNotBreached.
+  const breach = await assertPasswordNotBreached(
+    input.password,
+    "signup",
+    session.email,
+  );
+  if (!breach.allowed) {
+    return {
+      ok: false,
+      attemptId: session.attemptId,
+      // COPY REVIEW: new string on a path that was unreachable until now.
+      code: "POLICY_VIOLATION",
+      userMessage:
+        "That password has appeared in a data breach. Please choose a different one.",
+      fieldErrors: {
+        password:
+          "That password has appeared in a data breach. Please choose a different one.",
+      },
     };
   }
 
