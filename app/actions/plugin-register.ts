@@ -31,6 +31,7 @@ import {
 } from "@/src/lib/gibson-client/plugins-admin";
 import { getServerSession } from "@/src/lib/auth";
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
+import { serverActionError } from "@/src/lib/errors/server-action-error";
 
 // ---------------------------------------------------------------------------
 // Result types
@@ -149,9 +150,7 @@ export async function validatePluginManifestAction(
   } catch (err) {
     const denied = permissionDeniedResult(err);
     if (denied) return denied;
-    const msg = err instanceof Error ? err.message : "Validation failed";
-    const code = (err as { code?: string }).code ?? "error";
-    return { ok: false, error: msg, code };
+    return serverActionError(err, { action: "validatePluginManifestAction" });
   }
 }
 

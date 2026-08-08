@@ -211,11 +211,23 @@ const nextConfig: NextConfig = {
   // current bundle), see src/lib/server-action-skew.ts. Do not assume this
   // env var alone prevents the "Something went wrong" signup error.
   images: {
+    // `remotePatterns` is an allowlist for the /_next/image optimiser: any
+    // origin listed here can be fetched by the server on behalf of an
+    // unauthenticated caller who controls the `url` query parameter. The
+    // `http` + `localhost` entry carried no port, so it allowed every port on
+    // the loopback interface of whichever machine ran the server. That is
+    // useful when the machine is a laptop and harmful when it is a pod. Keep
+    // it for local development only; a production build has no legitimate
+    // loopback image source.
     remotePatterns: [
-      {
-        protocol: "http",
-        hostname: "localhost",
-      },
+      ...(process.env.NODE_ENV === "production"
+        ? []
+        : [
+            {
+              protocol: "http" as const,
+              hostname: "localhost",
+            },
+          ]),
       {
         protocol: "https",
         hostname: "avatars.githubusercontent.com",

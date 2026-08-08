@@ -34,6 +34,7 @@ import {
 import { getServerSession } from "@/src/lib/auth";
 import { SecretCategory } from "@/src/gen/gibson/tenant/v1/secrets_pb";
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
+import { serverActionError } from "@/src/lib/errors/server-action-error";
 
 // ---------------------------------------------------------------------------
 // Shared result type (mirrors the existing ActionResult<T> convention)
@@ -98,6 +99,24 @@ function categoryToProto(cat: "cred" | "provider_config"): SecretCategory {
 }
 
 // ---------------------------------------------------------------------------
+// Log redaction
+// ---------------------------------------------------------------------------
+
+/**
+ * Strips the shapes a secret value could take if a daemon error echoed part of
+ * a write back to us.
+ *
+ * Applied to the **logged** detail only. Nothing from a daemon error reaches
+ * the browser any more, so this exists purely so a stray echo cannot settle in
+ * the log aggregator either.
+ */
+function redactSecretValue(detail: string): string {
+  return detail
+    .replace(/\b(value|secret|token|password|credential)\s*[=:]\s*\S+/gi, "$1=[REDACTED]")
+    .replace(/\b(s\.[A-Za-z0-9]{16,}|hv[sb]\.[A-Za-z0-9._-]{16,})\b/g, "[REDACTED]");
+}
+
+// ---------------------------------------------------------------------------
 // createSecretAction
 // ---------------------------------------------------------------------------
 
@@ -150,11 +169,15 @@ export async function createSecretAction(
   } catch (err) {
     const denied = permissionDeniedResult(err);
     if (denied) return denied;
-    // SECURITY: error message from daemon must not contain the value.
-    // throwMapped already strips it but we add a defense-in-depth check.
-    const msg = err instanceof Error ? err.message : "Failed to create secret";
-    const code = (err as { code?: string }).code ?? "error";
-    return { ok: false, error: msg, code };
+    // SECURITY: the daemon's own words are never returned to the browser.
+    // They are logged against a correlation ID instead. This is both a leak
+    // control (daemon errors name mounts, hosts and internal paths) and a
+    // defence in depth for the secret value itself: throwMapped already
+    // strips it, and the redactor below keeps a stray echo out of the log.
+    return serverActionError(err, {
+      action: "setSecretAction",
+      redact: redactSecretValue,
+    });
   }
 }
 
@@ -205,9 +228,10 @@ export async function rotateSecretAction(
   } catch (err) {
     const denied = permissionDeniedResult(err);
     if (denied) return denied;
-    const msg = err instanceof Error ? err.message : "Failed to rotate secret";
-    const code = (err as { code?: string }).code ?? "error";
-    return { ok: false, error: msg, code };
+    return serverActionError(err, {
+      action: "rotateSecretAction",
+      redact: redactSecretValue,
+    });
   }
 }
 
@@ -243,8 +267,6 @@ export async function deleteSecretAction(
   } catch (err) {
     const denied = permissionDeniedResult(err);
     if (denied) return denied;
-    const msg = err instanceof Error ? err.message : "Failed to delete secret";
-    const code = (err as { code?: string }).code ?? "error";
-    return { ok: false, error: msg, code };
+    return serverActionError(err, { action: "deleteSecretAction" });
   }
 }

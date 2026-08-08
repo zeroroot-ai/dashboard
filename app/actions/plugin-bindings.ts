@@ -23,6 +23,7 @@ import {
   revokePluginSecretBinding,
 } from "@/src/lib/gibson-client/plugins-admin";
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
+import { serverActionError } from "@/src/lib/errors/server-action-error";
 
 interface PluginBindingResult {
   ok: boolean;
@@ -41,10 +42,9 @@ export async function editPluginBindingAction(
   } catch (err) {
     const denied = permissionDeniedResult(err);
     if (denied) return denied;
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : "Unknown error",
-    };
+    // Opaque class + canonical copy; the daemon's own words go to the log
+    // against a correlation ID rather than to the browser.
+    return serverActionError(err, { action: "editPluginBindingAction" });
   }
 }
 
@@ -59,9 +59,8 @@ export async function revokePluginBindingAction(
   } catch (err) {
     const denied = permissionDeniedResult(err);
     if (denied) return denied;
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : "Unknown error",
-    };
+    // Opaque class + canonical copy; the daemon's own words go to the log
+    // against a correlation ID rather than to the browser.
+    return serverActionError(err, { action: "revokePluginBindingAction" });
   }
 }
