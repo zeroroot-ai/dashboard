@@ -18,6 +18,7 @@ import {
   type DaemonProviderConfigInput,
 } from '@/src/lib/gibson-client';
 import { translateError } from '@/src/lib/providers-route-error';
+import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 
 // ---------------------------------------------------------------------------
 // POST /api/settings/providers/test
@@ -38,6 +39,15 @@ import { translateError } from '@/src/lib/providers-route-error';
  * Rate-limited server-side by the daemon (ResourceExhausted → 429).
  */
 export async function POST(req: NextRequest) {
+  // CSRF, src/lib/auth/csrf.ts: the session cookie is sameSite=lax, so a
+  // mutating handler must check the double-submit token itself.
+  try {
+    await requireCsrf(req);
+  } catch (err) {
+    if (err instanceof CsrfError) return csrfErrorResponse(err);
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session) {
     return Response.json(

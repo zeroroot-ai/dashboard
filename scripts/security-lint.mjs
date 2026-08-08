@@ -78,6 +78,10 @@ const GUARDS = [
   // manual `check:auth-regression` script, so a `logger.info({ accessToken })`
   // regression could pass `pnpm build`. Wired into the build-path preset here.
   ['check-no-secret-in-logs.mjs'],
+  // dashboard#1009: `src/lib/auth/csrf.ts` requires every mutating handler
+  // under app/api/** to call requireCsrf. 7 of 25 route files did, and nothing
+  // checked. Per-export, so a gated POST beside an ungated DELETE still fails.
+  ['check-api-route-csrf.mjs'],
 ];
 
 if (process.argv.includes('--list')) {

@@ -110,6 +110,14 @@ function renderLead(lead: Lead): { subject: string; html: string; text: string }
   return { subject, html, text };
 }
 
+/**
+ * @csrf-exempt: posted cross-origin by the static marketing site (`www`), which
+ * nginx serves with no request-time server, so the caller has no cookie on this
+ * origin to double-submit and never will. Guarded instead by an exact-match
+ * Origin allowlist of one (WWW_URL), an unauthenticated schema-validated body
+ * that only ever produces an email to a fixed inbox, and a rate limit. There is
+ * no user session to ride, so there is nothing for a forged request to abuse.
+ */
 export async function POST(request: NextRequest) {
   const rateLimitResult = await checkRateLimit(request, 'contact-sales', {
     maxRequests: 5,

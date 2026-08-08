@@ -46,6 +46,7 @@ import {
   AgentIdentityService,
   PrincipalKind,
 } from '@/src/gen/gibson/agentidentity/v1/agent_identity_pb';
+import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 
 // ---------------------------------------------------------------------------
 // Request validation
@@ -122,6 +123,15 @@ export interface RegisterAgentResponseBody {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // CSRF, src/lib/auth/csrf.ts: the session cookie is sameSite=lax, so a
+  // mutating handler must check the double-submit token itself.
+  try {
+    await requireCsrf(request);
+  } catch (err) {
+    if (err instanceof CsrfError) return csrfErrorResponse(err);
+    throw err;
+  }
+
   // Step 1, authenticate. Uses the raw auth() helper (no FGA enrichment)
   // for the cheap unauth fast-path; the enriched session below is only
   // touched after we know we have a session.

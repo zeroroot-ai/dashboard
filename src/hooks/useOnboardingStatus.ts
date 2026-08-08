@@ -12,6 +12,7 @@ import type {
   SetupTask,
   OnboardingStatusResponse,
 } from '@/src/types/onboarding';
+import { apiFetch } from '@/src/lib/api/fetch';
 
 // Query keys
 const onboardingKeys = {
@@ -39,7 +40,7 @@ async function fetchOnboardingStatus(): Promise<OnboardingStatusResponse> {
 async function updateOnboardingState(
   state: Partial<OnboardingState>
 ): Promise<OnboardingStatusResponse> {
-  const response = await fetch('/api/onboarding/status', {
+  const response = await apiFetch('/api/onboarding/status', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ state }),

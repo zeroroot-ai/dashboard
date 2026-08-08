@@ -18,6 +18,7 @@ import {
 } from '@/src/lib/gibson-client';
 import { translateError } from '@/src/lib/providers-route-error';
 import { toProviderConfig } from '@/src/lib/providers-adapter';
+import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 
 // ---------------------------------------------------------------------------
 // GET /api/settings/providers
@@ -71,6 +72,15 @@ export async function GET(_req: NextRequest) {
  * and are never persisted by the dashboard.
  */
 export async function POST(req: NextRequest) {
+  // CSRF, src/lib/auth/csrf.ts: the session cookie is sameSite=lax, so a
+  // mutating handler must check the double-submit token itself.
+  try {
+    await requireCsrf(req);
+  } catch (err) {
+    if (err instanceof CsrfError) return csrfErrorResponse(err);
+    throw err;
+  }
+
   let session: Awaited<ReturnType<typeof getServerSession>>;
   try {
     session = await getServerSession();

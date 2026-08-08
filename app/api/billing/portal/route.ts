@@ -16,6 +16,7 @@ import {
 import { readRawActiveTenant } from '@/src/lib/auth/active-tenant';
 import { checkRateLimit } from '@/src/lib/rate-limiter';
 import { logger } from '@/src/lib/logger';
+import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,6 +38,15 @@ const PORTAL_RATE_LIMIT = {
  * Idempotency: 10-second bucket key prevents duplicate sessions from double-submits.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  // CSRF, src/lib/auth/csrf.ts: the session cookie is sameSite=lax, so a
+  // mutating handler must check the double-submit token itself.
+  try {
+    await requireCsrf(req);
+  } catch (err) {
+    if (err instanceof CsrfError) return csrfErrorResponse(err);
+    throw err;
+  }
+
   // Billing master switch (dashboard#809 / ADR-0050). On-prem / self-host has
   // no Stripe-backed billing backend; the "Manage payment" surface is hidden
   // in the UI and the route no-ops here as defense-in-depth (404). Fail-closed:

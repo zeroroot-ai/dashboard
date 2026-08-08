@@ -238,6 +238,13 @@ async function handleSignout(req: NextRequest): Promise<NextResponse> {
 /**
  * POST is the correct method for a sign-out: it mutates state. The sign-out
  * forms in `no-workspace/page.tsx` and `onboarding/page.tsx` use it.
+ *
+ * @csrf-exempt: reached by top-level navigation and by `<form method="post">`,
+ * neither of which can attach an `x-csrf-token` header, so the double-submit
+ * token is unavailable by construction. Guarded instead by `isCrossSiteRequest`
+ * above, which uses Sec-Fetch-Site / Sec-Fetch-Dest, headers the browser sets
+ * and script cannot forge (dashboard#996). That is the right mechanism for
+ * this shape, not a weaker version of this one.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
   return handleSignout(req);

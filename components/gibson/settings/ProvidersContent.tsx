@@ -69,6 +69,7 @@ import { HEALTH_STATUS_CONFIG } from "@/src/types/provider";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { ProviderWizard, CredentialsAndTest, type ProbeResult } from "./ProviderWizard";
+import { apiFetch } from "@/src/lib/api/fetch";
 
 // ---------------------------------------------------------------------------
 // Health badge helpers
@@ -349,7 +350,7 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
     setIsEditTestPending(true);
     setEditProbeResult(null);
     try {
-      const res = await fetch("/api/settings/providers/test", {
+      const res = await apiFetch("/api/settings/providers/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

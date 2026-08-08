@@ -81,6 +81,7 @@ import {
   defaultCapabilitiesForType,
   selectableCapabilitiesForType,
 } from "@/src/lib/provider-capabilities";
+import { apiFetch } from "@/src/lib/api/fetch";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -966,7 +967,7 @@ export function ProviderWizard({
     setIsTestPending(true);
     setProbeResult(null);
     try {
-      const res = await fetch("/api/settings/providers/test", {
+      const res = await apiFetch("/api/settings/providers/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

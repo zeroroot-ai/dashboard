@@ -78,6 +78,7 @@ function shouldShowSetupWidget(state: OnboardingState): boolean {
 // ============================================================================
 
 import type { UserOnboardingState } from '@/src/gen/gibson/tenant/v1/user_pb';
+import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 
 /** Index of default task metadata by id for fast lookup during proto conversion. */
 const DEFAULT_TASK_META: Map<string, SetupTask> = new Map(
@@ -184,6 +185,15 @@ export async function GET(_request: NextRequest) {
 // ============================================================================
 
 export async function POST(request: NextRequest) {
+  // CSRF, src/lib/auth/csrf.ts: the session cookie is sameSite=lax, so a
+  // mutating handler must check the double-submit token itself.
+  try {
+    await requireCsrf(request);
+  } catch (err) {
+    if (err instanceof CsrfError) return csrfErrorResponse(err);
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session) {
     return NextResponse.json(
@@ -322,7 +332,16 @@ export async function POST(request: NextRequest) {
 // DELETE /api/onboarding/status
 // ============================================================================
 
-export async function DELETE(_request: NextRequest) {
+export async function DELETE(request: NextRequest) {
+  // CSRF, src/lib/auth/csrf.ts: the session cookie is sameSite=lax, so a
+  // mutating handler must check the double-submit token itself.
+  try {
+    await requireCsrf(request);
+  } catch (err) {
+    if (err instanceof CsrfError) return csrfErrorResponse(err);
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session) {
     return NextResponse.json(

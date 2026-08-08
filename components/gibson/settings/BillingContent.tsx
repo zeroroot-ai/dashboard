@@ -33,6 +33,7 @@ import {
   getTenantQuotaAction,
   type TenantQuotaRow,
 } from "@/app/actions/read/getTenantQuota";
+import { apiFetch } from "@/src/lib/api/fetch";
 
 const REFRESH_INTERVAL_MS = 60_000;
 
@@ -135,7 +136,7 @@ export function BillingContent({
   async function openCustomerPortal() {
     setPortalLoading(true);
     try {
-      const res = await fetch("/api/billing/portal", { method: "POST" });
+      const res = await apiFetch("/api/billing/portal", { method: "POST" });
       if (!res.ok) {
         const msg = await res.text().catch(() => "");
         throw new Error(msg || `HTTP ${res.status}`);

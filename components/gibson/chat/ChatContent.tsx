@@ -83,6 +83,7 @@ import {
   downloadText,
   titleToFilename,
 } from '@/src/lib/chat/export';
+import { apiFetch } from '@/src/lib/api/fetch';
 
 // ============================================================================
 // Agent icon mapping
@@ -985,7 +986,11 @@ export function ChatContent() {
           return id ? { attachmentId: id } : {};
         },
         fetch: async (input, init) => {
-          const response = await fetch(input, init);
+          // The transport builds its own request, so it bypasses apiFetch.
+          // Route it back through so /api/chat gets the CSRF header like every
+          // other mutating call. Read here rather than in `headers` above so
+          // the token is current per request, not per transport construction.
+          const response = await apiFetch(input, init);
           const debugPayload = response.headers.get('X-Gibson-System-Prompt-Debug');
           if (debugPayload) {
             setDebugRef.current(decodeURIComponent(debugPayload));
@@ -1162,7 +1167,7 @@ export function ChatContent() {
     try {
       const form = new FormData();
       form.append('file', file);
-      const res = await fetch('/api/chat/attachment', {
+      const res = await apiFetch('/api/chat/attachment', {
         method: 'POST',
         body: form,
       });

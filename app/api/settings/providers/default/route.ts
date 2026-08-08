@@ -15,6 +15,7 @@ import {
   daemonSetDefaultProvider,
 } from '@/src/lib/gibson-client';
 import { translateError } from '@/src/lib/providers-route-error';
+import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 
 // ---------------------------------------------------------------------------
 // GET /api/settings/providers/default
@@ -64,6 +65,15 @@ export async function GET(_req: NextRequest) {
  * Returns 404 when no provider with the given name exists for the tenant.
  */
 export async function PUT(req: NextRequest) {
+  // CSRF, src/lib/auth/csrf.ts: the session cookie is sameSite=lax, so a
+  // mutating handler must check the double-submit token itself.
+  try {
+    await requireCsrf(req);
+  } catch (err) {
+    if (err instanceof CsrfError) return csrfErrorResponse(err);
+    throw err;
+  }
+
   const session = await getServerSession();
   if (!session) {
     return Response.json(

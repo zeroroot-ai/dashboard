@@ -39,6 +39,7 @@ const GUARDS = [
   "check-no-store-clients.mjs",
   "check-no-nodeenv-conditioned-auth.mjs",
   "check-lockfile-sync.mjs",
+  "check-api-route-csrf.mjs",
 ];
 
 let failed = 0;

@@ -27,6 +27,7 @@ import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/act
 import { userClient } from '@/src/lib/gibson-client';
 import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
 import { logger } from '@/src/lib/logger';
+import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 
 // ============================================================================
 // Constants
@@ -49,6 +50,15 @@ function isAllowedMime(mime: string): boolean {
 // ============================================================================
 
 export async function POST(request: NextRequest): Promise<Response> {
+  // CSRF, src/lib/auth/csrf.ts: the session cookie is sameSite=lax, so a
+  // mutating handler must check the double-submit token itself.
+  try {
+    await requireCsrf(request);
+  } catch (err) {
+    if (err instanceof CsrfError) return csrfErrorResponse(err);
+    throw err;
+  }
+
   // Auth
   const session = await getServerSession();
   if (!session) {
