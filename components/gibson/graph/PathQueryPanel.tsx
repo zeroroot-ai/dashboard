@@ -185,11 +185,19 @@ export function PathQueryPanel({ nodes, initialSourceNode, onPathsFound }: PathQ
       });
 
       if (!resp.ok) {
-        const json = (await resp.json()) as { error?: string };
+        // Canonical envelope from `daemonErrorResponse`: `error` is an object
+        // carrying stable copy, never the daemon's own words. Older callers
+        // read `error` as a string; both shapes are tolerated so a cached
+        // bundle mid-deploy still renders something sensible.
+        const json = (await resp.json().catch(() => ({}))) as {
+          error?: string | { message?: string };
+        };
         if (isEmbeddingGateError(json)) {
           setEmbeddingGated(true);
         } else {
-          setError(json.error ?? `Error ${resp.status}`);
+          const message =
+            typeof json.error === 'string' ? json.error : json.error?.message;
+          setError(message ?? `Error ${resp.status}`);
         }
         onPathsFound([]);
         return;
