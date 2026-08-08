@@ -305,6 +305,16 @@ interface ApiErrorBody {
      * `x-correlation-id` response header.
      */
     correlationId: string;
+    /**
+     * Optional stable sub-code, set by the route when the client needs to
+     * branch on WHICH failure this is (not merely which class).
+     *
+     * This exists so a client can keep behaviour that previously depended on
+     * substring-matching the daemon's own message. It is a closed vocabulary
+     * chosen by the route, never derived from daemon text, so adding it does
+     * not reopen the leak this module exists to close.
+     */
+    reason?: string;
   };
 }
 
@@ -340,6 +350,15 @@ interface DaemonErrorOptions {
    * correlation ID can be traced back to the originating handler.
    */
   route?: string;
+  /**
+   * Stable sub-code echoed into `error.reason`, for the cases where a client
+   * must branch on WHICH failure occurred rather than on its class.
+   *
+   * Must be a constant chosen by the route from a closed vocabulary. Passing
+   * anything derived from the daemon's message would defeat the point of this
+   * module, so treat a non-literal argument here as a review failure.
+   */
+  reason?: string;
 }
 
 /**
@@ -427,6 +446,7 @@ export function daemonErrorResponse(
       message,
       affordance: entry.affordance,
       correlationId,
+      ...(options.reason ? { reason: options.reason } : {}),
     },
   };
 

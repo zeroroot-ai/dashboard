@@ -7,28 +7,11 @@
 
 import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
-import { ConnectError, Code } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { userClient } from '@/src/lib/gibson-client';
 import { GraphService } from '@/src/gen/gibson/graph/v1/graph_pb';
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
-
-/** Map ConnectError codes to HTTP status codes per spec. */
-function grpcStatusToHttp(err: ConnectError): number {
-  switch (err.code) {
-    case Code.PermissionDenied:
-    case Code.Unauthenticated:
-      return 403;
-    case Code.FailedPrecondition:
-      return 412;
-    case Code.DeadlineExceeded:
-      return 504;
-    case Code.Unavailable:
-      return 503;
-    default:
-      return 500;
-  }
-}
 
 /** Map proto Node to dashboard GraphNode shape. */
 function toGraphNode(n: { id: string; labels: string[]; properties: Record<string, string>; severity: string }): GraphNode {
@@ -70,7 +53,7 @@ function toGraphEdge(e: { id: string; sourceId: string; targetId: string; type: 
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession();
@@ -92,11 +75,9 @@ export async function GET(
       edges: resp.edges.map(toGraphEdge),
     });
   } catch (err) {
-    if (err instanceof ConnectError) {
-      const status = grpcStatusToHttp(err);
-      return NextResponse.json({ error: err.message }, { status });
-    }
-    console.error('[api/graph/mission] unexpected error', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return daemonErrorResponse(err, {
+      headers: request.headers,
+      route: 'api/graph/mission/[id]',
+    });
   }
 }

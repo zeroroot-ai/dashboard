@@ -28,6 +28,18 @@ const GATE_MARKERS = [
 ] as const;
 
 /**
+ * Stable sub-code an API route sets on `error.reason` to say "this was the
+ * embedding-provider gate" WITHOUT forwarding the daemon's message.
+ *
+ * Routes now map daemon failures through `daemonErrorResponse`, which replaces
+ * the daemon's own words with canonical copy — deliberately, because that text
+ * names internal hosts and call paths. Substring-matching it across the wire
+ * therefore stopped being possible. The route classifies server-side, where it
+ * still has the raw message, and emits this constant instead.
+ */
+export const EMBEDDING_GATE_REASON = 'no_embedding_provider';
+
+/**
  * True when `message` is the daemon's "no embedding provider configured" gate.
  */
 export function isEmbeddingGateMessage(message: string | undefined | null): boolean {
@@ -50,12 +62,16 @@ export function isEmbeddingGateError(err: unknown): boolean {
     // ConnectError / Error: `.message`; ConnectError also exposes `.rawMessage`.
     if (typeof o.message === 'string' && isEmbeddingGateMessage(o.message)) return true;
     if (typeof o.rawMessage === 'string' && isEmbeddingGateMessage(o.rawMessage)) return true;
-    // API error envelopes: `{ error: "<message>" }` (graph routes) or
-    // `{ error: { message } }` (api-errors helper / providers route).
+    // API error envelopes: `{ error: "<message>" }` (legacy graph-route shape)
+    // or `{ error: { message } }` (api-errors helper / providers route).
     const nested = o.error;
     if (typeof nested === 'string' && isEmbeddingGateMessage(nested)) return true;
     if (nested && typeof nested === 'object') {
       const no = nested as Record<string, unknown>;
+      // Canonical envelope: the route already classified this server-side and
+      // said so in a closed-vocabulary sub-code. Checked before `message`
+      // because the canonical copy no longer carries the daemon's wording.
+      if (no.reason === EMBEDDING_GATE_REASON) return true;
       if (typeof no.message === 'string' && isEmbeddingGateMessage(no.message)) return true;
     }
   }

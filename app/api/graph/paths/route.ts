@@ -6,28 +6,16 @@
 
 import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
-import { ConnectError, Code } from '@connectrpc/connect';
+import { ConnectError } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
+import {
+  EMBEDDING_GATE_REASON,
+  isEmbeddingGateMessage,
+} from '@/src/lib/embedding-gate';
 import { userClient } from '@/src/lib/gibson-client';
 import { GraphService } from '@/src/gen/gibson/graph/v1/graph_pb';
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
-
-/** Map ConnectError codes to HTTP status codes per spec. */
-function grpcStatusToHttp(err: ConnectError): number {
-  switch (err.code) {
-    case Code.PermissionDenied:
-    case Code.Unauthenticated:
-      return 403;
-    case Code.FailedPrecondition:
-      return 412;
-    case Code.DeadlineExceeded:
-      return 504;
-    case Code.Unavailable:
-      return 503;
-    default:
-      return 500;
-  }
-}
 
 /** Map proto Node to dashboard GraphNode shape. */
 function toGraphNode(n: { id: string; labels: string[]; properties: Record<string, string>; severity: string }): GraphNode {
@@ -111,11 +99,18 @@ export async function POST(request: NextRequest) {
       truncated_paths: resp.truncatedPaths,
     });
   } catch (err) {
-    if (err instanceof ConnectError) {
-      const status = grpcStatusToHttp(err);
-      return NextResponse.json({ error: err.message }, { status });
-    }
-    console.error('[api/graph/paths] unexpected error', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    // Path queries traverse embeddings, so the commonest non-bug failure here
+    // is the daemon's "no embedding provider configured" gate. The panel
+    // renders a dedicated prompt for it rather than an error, and it used to
+    // recognise it by substring-matching the daemon's message on the wire.
+    // That message no longer crosses the boundary, so classify it HERE, where
+    // the raw text is still in hand, and hand the client a stable sub-code.
+    const raw = err instanceof ConnectError ? err.rawMessage : undefined;
+    const reason = isEmbeddingGateMessage(raw) ? EMBEDDING_GATE_REASON : undefined;
+    return daemonErrorResponse(err, {
+      headers: request.headers,
+      route: 'api/graph/paths',
+      reason,
+    });
   }
 }

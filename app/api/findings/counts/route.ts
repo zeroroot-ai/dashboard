@@ -8,34 +8,17 @@
  */
 
 import 'server-only';
-import { NextResponse } from 'next/server';
-import { ConnectError, Code } from '@connectrpc/connect';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
+import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { userClient } from '@/src/lib/gibson-client';
 import {
   GraphService,
   FindingCountGroupBy,
 } from '@/src/gen/gibson/graph/v1/graph_pb';
 
-/** Map ConnectError codes to HTTP status codes. */
-function grpcStatusToHttp(err: ConnectError): number {
-  switch (err.code) {
-    case Code.PermissionDenied:
-    case Code.Unauthenticated:
-      return 403;
-    case Code.FailedPrecondition:
-      return 412;
-    case Code.DeadlineExceeded:
-      return 504;
-    case Code.Unavailable:
-      return 503;
-    default:
-      return 500;
-  }
-}
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await getServerSession();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -70,11 +53,9 @@ export async function GET() {
 
     return NextResponse.json(counts);
   } catch (err) {
-    if (err instanceof ConnectError) {
-      const status = grpcStatusToHttp(err);
-      return NextResponse.json({ error: err.message }, { status });
-    }
-    console.error('[api/findings/counts] unexpected error', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return daemonErrorResponse(err, {
+      headers: request.headers,
+      route: 'api/findings/counts',
+    });
   }
 }
