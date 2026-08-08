@@ -81,7 +81,15 @@ interface RateLimitHeaders {
 // Shared store (injected, never constructed here)
 // ============================================================================
 
-/** Verdict returned by a shared, cross-process rate-limit store. */
+/**
+ * Verdict returned by a shared, cross-process rate-limit store.
+ *
+ * @public Part of the injection seam below. Deliberately has no in-repo
+ * implementer yet: where the shared counter lives (a daemon RPC vs an
+ * exception to the thin-client rule) is an open owner decision, and the
+ * contract is published here so whichever wins can satisfy it without
+ * reshaping this module.
+ */
 export interface RateLimitStoreVerdict {
   allowed: boolean;
   /** Requests recorded in the window after this call. */
@@ -97,6 +105,9 @@ export interface RateLimitStoreVerdict {
  * attempt only when the attempt is inside the budget. An implementation that
  * records refused attempts violates invariant (2) above and is not a valid
  * store for this interface.
+ *
+ * @public Injection seam — see RateLimitStoreVerdict for why it currently has
+ * no in-repo implementer.
  */
 export interface RateLimitStore {
   consume(
