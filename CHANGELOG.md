@@ -5,6 +5,15 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.117.2](https://github.com/zeroroot-ai/dashboard/compare/v0.117.1...v0.117.2) (2026-08-08)
+
+
+### Bug Fixes
+
+* **api:** route graph and findings errors through the canonical mapper ([#1006](https://github.com/zeroroot-ai/dashboard/issues/1006)) ([4ec9506](https://github.com/zeroroot-ai/dashboard/commit/4ec950652175472516c17abdd45522d4eb074459))
+* **signup:** actually run the breached-password check ([#1007](https://github.com/zeroroot-ai/dashboard/issues/1007)) ([0058796](https://github.com/zeroroot-ai/dashboard/commit/00587964da00d5f574d47eed632bedbfa4043f10))
+* **signup:** sign the verified-session cookie so the plan cannot be edited ([#1008](https://github.com/zeroroot-ai/dashboard/issues/1008)) ([8d34831](https://github.com/zeroroot-ai/dashboard/commit/8d34831be1079c018601dc27f6d0f036a7eb1889))
+
 ## [0.117.1](https://github.com/zeroroot-ai/dashboard/compare/v0.117.0...v0.117.1) (2026-08-08)
 
 
