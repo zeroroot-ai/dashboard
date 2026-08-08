@@ -36,6 +36,10 @@ import {
 import type { CandidateConfig } from "@/src/gen/gibson/tenant/v1/secrets_pb";
 import { getServerSession } from "@/src/lib/auth";
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
+import {
+  validateVaultAddress,
+  MAX_VAULT_ADDRESS_LENGTH,
+} from "@/src/lib/validators/vault-address";
 
 // ---------------------------------------------------------------------------
 // Shared result types
@@ -66,7 +70,11 @@ const providerEnum = z.enum([
 // Non-sensitive fields (BYO Vault only).
 const nonSensitiveBase = z.object({
   provider: providerEnum,
-  address: z.string().max(512).optional().default(""),
+  address: z
+    .string()
+    .max(MAX_VAULT_ADDRESS_LENGTH)
+    .optional()
+    .default(""),
   namespaceOrPath: z.string().max(512).optional().default(""),
   mount: z.string().max(512).optional().default(""),
   authMethod: z.string().max(64).optional().default(""),
@@ -80,7 +88,35 @@ const sensitiveFields = z.object({
   approleSecretId: z.string().max(8192).optional().default(""),
 });
 
-const candidateConfigSchema = nonSensitiveBase.merge(sensitiveFields);
+/**
+ * The BYO Vault address is an SSRF sink: the daemon dials it while carrying
+ * the tenant's Vault token, so an address naming an in-cluster or link-local
+ * host both exfiltrates that credential and turns the platform into a request
+ * oracle. Validate the shape before the value reaches the RPC, and replace the
+ * submitted string with the validator's normalised form.
+ *
+ * This is defence in depth, NOT the deciding control. A URL-shape check cannot
+ * see DNS rebinding or a redirect; only connect-time inspection of the
+ * resolved peer address can. That control lives in gibson
+ * (`internal/infra/netguard`, hooked into the dialer that performs the probe).
+ *
+ * The address is only meaningful for the BYO provider. The hosted broker
+ * submits an empty address, which stays permitted.
+ */
+const candidateConfigSchema = nonSensitiveBase
+  .merge(sensitiveFields)
+  .superRefine((data, ctx) => {
+    if (data.provider !== "BROKER_PROVIDER_VAULT_BYO") return;
+
+    const verdict = validateVaultAddress(data.address);
+    if (!verdict.ok) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["address"],
+        message: verdict.reason,
+      });
+    }
+  });
 
 type CandidateConfigInput = z.infer<typeof candidateConfigSchema>;
 
@@ -110,9 +146,15 @@ function enc(s: string): Uint8Array {
  * It MUST NOT be logged, serialized, or returned to the client.
  */
 function buildCandidate(d: CandidateConfigInput): CandidateConfig {
+  // The schema has already rejected any BYO address the validator refuses, so
+  // this re-check only picks up the normalised spelling. Falling back to the
+  // raw value keeps the hosted-broker case (empty address) unchanged.
+  const verdict = validateVaultAddress(d.address);
+  const address = verdict.ok ? verdict.normalized : d.address;
+
   return {
     provider: providerStringToProto(d.provider),
-    address: d.address,
+    address,
     namespaceOrPath: d.namespaceOrPath,
     mount: d.mount,
     authMethod: d.authMethod,
