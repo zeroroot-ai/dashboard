@@ -17,7 +17,7 @@ import type { Appearance } from "@stripe/stripe-js";
 // and read back the browser-computed rgb(). Reading the live token (never a
 // hardcoded literal) keeps the no-hardcoded-colors guard happy AND guarantees an
 // exact match to the dashboard theme.
-export function resolveToken(cs: CSSStyleDeclaration, name: string): string {
+function resolveToken(cs: CSSStyleDeclaration, name: string): string {
   const raw = cs.getPropertyValue(name).trim();
   if (!raw || typeof document === "undefined") return raw;
   const probe = document.createElement("span");

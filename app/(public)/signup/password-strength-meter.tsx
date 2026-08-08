@@ -17,7 +17,7 @@ interface PolicyCheck {
   met: boolean;
 }
 
-export function buildPolicyChecks(
+function buildPolicyChecks(
   password: string,
   policy: PasswordPolicy,
 ): PolicyCheck[] {

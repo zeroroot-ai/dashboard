@@ -59,6 +59,7 @@ import {
 import {
   findOrCreateSignupCustomer,
   finalizeSignupCustomer,
+  verifySignupCustomer,
   createSetupIntent,
   createTrialingSubscription,
   priceIdForTier,
@@ -500,6 +501,27 @@ export async function completeSignup(
         code: "INTERNAL_ERROR",
         userMessage: "We couldn't verify your payment details. Please start over.",
       });
+    }
+
+    // The customer id rides in the session cookie, and a cookie is a value the
+    // browser holds: someone with a valid session of their own can put another
+    // account's customer id in it and have us subscribe a card to a stranger's
+    // billing record. The daemon pinned this customer to the verification row
+    // but does not hand it back, so the cookie is what we have — confirm it
+    // still belongs to the address this session proved before subscribing it.
+    // Checked before the account is created so a rejection leaves nothing
+    // behind.
+    if (paid && session.stripeCustomerId) {
+      if (!(await verifySignupCustomer(session.stripeCustomerId, session.email))) {
+        logger.error(
+          { attemptId: ctx.attemptId, action: "signup_customer_mismatch" },
+          "session customer does not belong to the verified address",
+        );
+        return await finish(ctx, "create_billing", {
+          code: "INTERNAL_ERROR",
+          userMessage: "We couldn't verify your payment details. Please start over.",
+        });
+      }
     }
 
     // Validate billing config BEFORE creating the account, so a misconfigured

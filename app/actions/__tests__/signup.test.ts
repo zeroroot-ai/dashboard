@@ -95,17 +95,20 @@ const {
   mockCreateSetupIntent,
   mockCreateTrialingSubscription,
   mockFinalizeSignupCustomer,
+  mockVerifySignupCustomer,
 } = vi.hoisted(() => ({
   mockFindOrCreateSignupCustomer: vi.fn().mockResolvedValue('cus_1'),
   mockCreateSetupIntent: vi.fn().mockResolvedValue({ client_secret: 'seti_secret_123' }),
   mockCreateTrialingSubscription: vi.fn().mockResolvedValue({ id: 'sub_1', status: 'trialing' }),
   mockFinalizeSignupCustomer: vi.fn().mockResolvedValue(undefined),
+  mockVerifySignupCustomer: vi.fn().mockResolvedValue(true),
 }));
 vi.mock('@/src/lib/billing/stripe', () => ({
   findOrCreateSignupCustomer: mockFindOrCreateSignupCustomer,
   createSetupIntent: mockCreateSetupIntent,
   createTrialingSubscription: mockCreateTrialingSubscription,
   finalizeSignupCustomer: mockFinalizeSignupCustomer,
+  verifySignupCustomer: mockVerifySignupCustomer,
   priceIdForTier: vi.fn(async () => 'price_team_123'),
 }));
 
@@ -179,6 +182,7 @@ function resetMocks() {
   mockCreateSetupIntent.mockClear().mockResolvedValue({ client_secret: 'seti_secret_123' });
   mockCreateTrialingSubscription.mockClear().mockResolvedValue({ id: 'sub_1', status: 'trialing' });
   mockFinalizeSignupCustomer.mockClear();
+  mockVerifySignupCustomer.mockClear().mockResolvedValue(true);
 }
 
 function enableSaaS() {
@@ -361,6 +365,25 @@ describe('completeSignup', () => {
     });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe('VERIFICATION_INVALID');
+    expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
+  });
+
+  it('refuses a session cookie carrying someone else\'s customer, before creating anything', async () => {
+    // The cookie is httpOnly but it is still the browser's to send: an attacker
+    // holding a valid session of their own can swap in another account's
+    // customer id. Stripe says it does not belong to this proven address, so
+    // nothing is created and no card is attached to a stranger's billing.
+    seedVerifiedSession({ stripeCustomerId: 'cus_victim' });
+    mockVerifySignupCustomer.mockResolvedValue(false);
+
+    const result = await completeSignup({
+      password: 'Passw0rd!Test',
+      paymentMethodId: 'pm_1',
+    });
+
+    expect(result.ok).toBe(false);
+    expect(mockVerifySignupCustomer).toHaveBeenCalledWith('cus_victim', 'test@example.com');
+    expect(mockCompleteSignupOwner).not.toHaveBeenCalled();
     expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
   });
 
