@@ -112,6 +112,17 @@ vi.mock('@/src/lib/billing/stripe', () => ({
   priceIdForTier: vi.fn(async () => 'price_team_123'),
 }));
 
+// Breached-password gate. Mocked so the suite never reaches out to HIBP; the
+// gate's own policy (refuse / allow / fail-open) is covered in
+// src/lib/auth/__tests__/breached-password-gate.test.ts. Defaults to "allowed"
+// so every pre-existing ordering test is unaffected.
+const { mockAssertPasswordNotBreached } = vi.hoisted(() => ({
+  mockAssertPasswordNotBreached: vi.fn(),
+}));
+vi.mock('@/src/lib/auth/breached-password-gate', () => ({
+  assertPasswordNotBreached: mockAssertPasswordNotBreached,
+}));
+
 // After mocks are set up, import the subject.
 import { signupAction, startSignupPayment, completeSignup } from '../signup';
 import { getTenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
@@ -183,6 +194,7 @@ function resetMocks() {
   mockCreateTrialingSubscription.mockClear().mockResolvedValue({ id: 'sub_1', status: 'trialing' });
   mockFinalizeSignupCustomer.mockClear();
   mockVerifySignupCustomer.mockClear().mockResolvedValue(true);
+  mockAssertPasswordNotBreached.mockReset().mockResolvedValue({ allowed: true });
 }
 
 function enableSaaS() {
@@ -399,5 +411,71 @@ describe('completeSignup', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe('ALREADY_PROVISIONED');
     expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
+  });
+
+  // -------------------------------------------------------------------------
+  // Breached-password gate (GHSA-8jw6 residual)
+  // -------------------------------------------------------------------------
+  //
+  // Same ordering property as the rest of this file: the refusal must land
+  // before anything exists, so a rejected password leaves nothing behind.
+
+  it('refuses a breached password BEFORE any account or subscription exists', async () => {
+    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
+    mockAssertPasswordNotBreached.mockResolvedValue({ allowed: false, count: 24230577 });
+
+    const result = await completeSignup({
+      password: 'Passw0rd!Test',
+      paymentMethodId: 'pm_1',
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe('POLICY_VIOLATION');
+      expect(result.fieldErrors?.password).toBeTruthy();
+      // The breach count is a property of the public corpus, but there is no
+      // reason to put a number in front of the user; the copy must not carry it.
+      expect(result.userMessage).not.toContain('24230577');
+    }
+
+    // Nothing was created, and nothing needs rolling back.
+    expect(mockCompleteSignupOwner).not.toHaveBeenCalled();
+    expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
+    expect(mockFinalizeSignupCustomer).not.toHaveBeenCalled();
+  });
+
+  it('runs the gate before the customer check, so a breach costs no Stripe call', async () => {
+    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
+    mockAssertPasswordNotBreached.mockResolvedValue({ allowed: false, count: 5 });
+
+    await completeSignup({ password: 'Passw0rd!Test', paymentMethodId: 'pm_1' });
+
+    expect(mockVerifySignupCustomer).not.toHaveBeenCalled();
+  });
+
+  it('checks the password the user actually submitted', async () => {
+    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
+    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
+
+    await completeSignup({
+      password: 'correct-horse-battery-staple',
+      paymentMethodId: 'pm_1',
+    });
+
+    expect(mockAssertPasswordNotBreached).toHaveBeenCalledWith(
+      'correct-horse-battery-staple',
+      'signup',
+      'test@example.com',
+    );
+  });
+
+  it('proceeds when the gate allows the password', async () => {
+    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
+    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
+    mockAssertPasswordNotBreached.mockResolvedValue({ allowed: true });
+
+    await completeSignup({ password: 'Passw0rd!Test', paymentMethodId: 'pm_1' });
+
+    expect(mockCompleteSignupOwner).toHaveBeenCalled();
   });
 });
