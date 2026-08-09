@@ -151,8 +151,26 @@ function decisionStatusVariant(s: string): "default" | "secondary" {
  * slice (the entity panels read the mission-scoped frame at every position,
  * including the live tail at seq == total). Absent a mission it stays the
  * tenant-wide World, unchanged.
+ *
+ * `chrome` selects how much surrounding furniture to draw, so the same view can
+ * be a standalone page or a panel inside a page that already names the mission:
+ *
+ *   - "page"     (default) the /world route. Draws the mission identity card and
+ *                the Missions table.
+ *   - "embedded" a panel on the mission detail page (the Snapshot tab, which
+ *                replaced the retired checkpoint browser, gibson#1321). The host
+ *                page already renders the mission name, id and status, and the
+ *                Scroller already reports live/replay, so the identity card and
+ *                the single-row Missions table are redundant and are dropped.
+ *                Everything else is identical, there is no second code path.
  */
-export function BrainView({ mission }: { mission?: string }) {
+export function BrainView({
+  mission,
+  chrome = "page",
+}: {
+  mission?: string;
+  chrome?: "page" | "embedded";
+}) {
   const [data, setData] = useState<WorldData | null>(null);
   const [error, setError] = useState<string | null>(null);
   // The server-folded replay frame shown when scrubbed off the tail.
@@ -337,7 +355,7 @@ export function BrainView({ mission }: { mission?: string }) {
 
   return (
     <div className="flex flex-col gap-6">
-      {mission ? (
+      {mission && chrome === "page" ? (
         <Card>
           <CardContent className="flex items-center justify-between gap-4 p-4">
             <div className="min-w-0">
@@ -375,37 +393,39 @@ export function BrainView({ mission }: { mission?: string }) {
         />
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Missions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {view.missions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No missions yet.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Goal</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Reason</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {view.missions.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell>{m.goal}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusVariant(m.status)}>{m.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{m.reason}</TableCell>
+      {chrome === "page" ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Missions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {view.missions.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No missions yet.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Goal</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Reason</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {view.missions.map((m) => (
+                    <TableRow key={m.id}>
+                      <TableCell>{m.goal}</TableCell>
+                      <TableCell>
+                        <Badge variant={statusVariant(m.status)}>{m.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{m.reason}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -698,7 +718,11 @@ export function BrainView({ mission }: { mission?: string }) {
           <div className="flex items-center gap-4">
             <Slider
               value={[scrub]}
-              max={total}
+              // A zero-length Timeline would make the track percentage 0/0,
+              // which the slider renders as `calc(NaN% + 0px)`. Floor the range
+              // at 1 so an empty mission draws a valid (inert) track; the
+              // step-forward and scrub handlers still clamp against `total`.
+              max={total || 1}
               step={1}
               onValueChange={onScrub}
               className="max-w-md"

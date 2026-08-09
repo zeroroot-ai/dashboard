@@ -21,7 +21,6 @@ const {
   mockGetServerSession,
   mockRequireActiveTenant,
   mockListMissions,
-  mockListCheckpoints,
   mockSubscribe,
   mockUserClient,
   mockQueryMissionLogs,
@@ -29,7 +28,6 @@ const {
   mockGetServerSession: vi.fn(),
   mockRequireActiveTenant: vi.fn(),
   mockListMissions: vi.fn(),
-  mockListCheckpoints: vi.fn(),
   mockSubscribe: vi.fn(),
   mockUserClient: vi.fn(),
   mockQueryMissionLogs: vi.fn(),
@@ -95,7 +93,6 @@ beforeEach(() => {
   mockGetServerSession.mockReset();
   mockRequireActiveTenant.mockReset();
   mockListMissions.mockReset();
-  mockListCheckpoints.mockReset();
   mockSubscribe.mockReset();
   mockUserClient.mockReset();
   mockQueryMissionLogs.mockReset();
@@ -106,13 +103,10 @@ beforeEach(() => {
   // Default: active tenant resolves to t1.
   mockRequireActiveTenant.mockResolvedValue('t1');
 
-  // userClient(DaemonService).listCheckpoints(...), newest-first, empty here.
-  mockListCheckpoints.mockResolvedValue({ checkpoints: [] });
   // userClient(DaemonService).subscribe(...), empty node-event stream by
   // default so the bridge emits no `node` frames unless a test opts in.
   mockSubscribe.mockImplementation(async function* () {});
   mockUserClient.mockReturnValue({
-    listCheckpoints: mockListCheckpoints,
     subscribe: mockSubscribe,
   });
 });

@@ -16,13 +16,11 @@ import { ErrorAlert, TableSkeleton } from "@/components/gibson/shared";
 import { useMission } from "@/src/hooks/useMissions";
 import type { MissionStatus } from "@/src/types";
 import { SecretsAccessedPanel } from "@/src/components/missions/SecretsAccessedPanel";
-import { CheckpointTimeline } from "@/src/components/mission/CheckpointTimeline";
-import { CheckpointBadge } from "@/src/components/mission/CheckpointBadge";
+import { BrainView } from "@/components/gibson/brain/BrainView";
 import { ToolStreamProgress } from "@/src/components/mission/ToolStreamProgress";
 import { MissionFindingsTab } from "@/components/gibson/missions/MissionFindingsTab";
 import { MissionFlowTab } from "@/src/components/gibson/mission-graph/MissionFlowTab";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
-import type { CheckpointMetadata } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 import type { MissionTerminalHandle } from "@/src/components/missions/MissionTerminal";
 
 const MissionTerminal = dynamic(
@@ -74,20 +72,16 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
   const { id } = use(params);
   const { data: mission, isLoading, error, refetch } = useMission(id);
 
-  // FGA gating for the Checkpoints tab, viewer is required to even see
-  // the tab. Spec week-4-handlers-ui-e2e §4 task 40 / R17.1.
-  const { allowed: canViewCheckpoints, loading } = useAuthorize(
-    "/gibson.daemon.v1.DaemonService/ListCheckpoints",
+  // FGA gating for the Snapshot tab. The tab replays the mission's World
+  // Timeline, and every panel in it is folded server-side by
+  // WorldService.GetFrameAt, so that RPC is the permission the tab needs and
+  // the one we gate on. This gate moved off the retired
+  // DaemonService/ListCheckpoints when the checkpoint browser was replaced by
+  // the World snapshot surface (gibson#1321); the checkpoint RPCs no longer
+  // exist, so gating on one would fail closed for everybody.
+  const { allowed: canViewSnapshot, loading } = useAuthorize(
+    "/gibson.world.v1.WorldService/GetFrameAt",
   );
-
-  // Surfaced after a Resume; populated by the CheckpointRewindModal when
-  // the daemon's first ResumeMissionResponse carries a checkpoint
-  // metadata payload. Spec mission-checkpointing R9.3.
-  const [resumeMetadata, _setResumeMetadata] =
-    React.useState<CheckpointMetadata | null>(null);
-  const resumed =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("resumed") === "1";
 
   // Live "currently executing tools" set for `<ToolStreamProgress />`.
   // Map<invocationId, InFlightTool>; using a Map (rather than a Set of
@@ -316,9 +310,6 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
               {statusLabel}
             </Badge>
             <span className="text-xs text-muted-foreground font-mono">{mission.id}</span>
-            {(resumed || resumeMetadata) && (
-              <CheckpointBadge checkpointMetadata={resumeMetadata} />
-            )}
           </div>
         </div>
       </div>
@@ -343,8 +334,8 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
           <TabsTrigger value="logs">Logs</TabsTrigger>
           <TabsTrigger value="flow">Flow</TabsTrigger>
           <TabsTrigger value="secrets">Secrets</TabsTrigger>
-          {!loading && canViewCheckpoints && (
-            <TabsTrigger value="checkpoints">Checkpoints</TabsTrigger>
+          {!loading && canViewSnapshot && (
+            <TabsTrigger value="snapshot">Snapshot</TabsTrigger>
           )}
         </TabsList>
 
@@ -527,14 +518,17 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
           </Card>
         </TabsContent>
 
-        {/* Checkpoints, week-4-handlers-ui-e2e §4 R17.1 */}
-        {canViewCheckpoints && (
-          <TabsContent value="checkpoints" className="mt-4">
-            <Card>
-              <CardContent className="pt-6">
-                <CheckpointTimeline missionId={mission.id} />
-              </CardContent>
-            </Card>
+        {/* Snapshot, mission state at a point in time (gibson#1321).
+            Replaces the checkpoint browser, which went permanently empty when
+            gibson#1117 removed the checkpoint store. Same question ("what did
+            this mission look like at step N?"), answered off the World
+            Timeline: BrainView scrubs the mission's event log and every panel
+            re-materializes from the server-side fold (ADR-0001, World ==
+            fold(Timeline)). It is the exact component /world?mission=<id>
+            mounts, in embedded chrome, so there is one playback code path. */}
+        {!loading && canViewSnapshot && (
+          <TabsContent value="snapshot" className="mt-4">
+            <BrainView mission={mission.id} chrome="embedded" />
           </TabsContent>
         )}
       </Tabs>
