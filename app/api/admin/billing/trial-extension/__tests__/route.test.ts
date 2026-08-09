@@ -4,11 +4,13 @@
  * Unit tests for the trial-extension admin route at
  * app/api/admin/billing/trial-extension/route.ts.
  *
- * Post dashboard#855 the route resolves the tenant's Stripe customer id from
- * the daemon's operator-reported provisioning snapshot
- * (getTenantProvisioningStatus) — NOT the Tenant CR — then resolves the live
- * subscription from Stripe via findCustomerSubscription (the daemon status RPC
- * does not carry the subscription id or trial_end, so those come from Stripe).
+ * Post dashboard#1016/gibson#1339 the route resolves the tenant's Stripe
+ * customer id from the daemon's rule-mode, platform_operator-gated
+ * AdminTenantService.AdminGetTenantBilling RPC — NOT the Tenant CR, and NOT
+ * the unauthenticated GetTenantProvisioningStatus (which never disclosed
+ * billing state to any caller) — then resolves the live subscription from
+ * Stripe via findCustomerSubscription (the daemon RPC does not carry the
+ * subscription id or trial_end, so those come from Stripe).
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -25,9 +27,9 @@ vi.mock('@/src/lib/billing/stripe', () => ({
   findCustomerSubscription: (...args: unknown[]) => mockFindCustomerSubscription(...args),
 }));
 
-const mockGetProvisioningStatus = vi.fn();
+const mockAdminGetTenantBilling = vi.fn();
 vi.mock('@/src/lib/gibson-client/provisioning', () => ({
-  getTenantProvisioningStatus: (...args: unknown[]) => mockGetProvisioningStatus(...args),
+  adminGetTenantBilling: (...args: unknown[]) => mockAdminGetTenantBilling(...args),
 }));
 
 // Auth: this route is platform-operator ONLY. It is gated on the cross-tenant
@@ -93,7 +95,7 @@ describe('POST /api/admin/billing/trial-extension', () => {
     vi.clearAllMocks();
     mockSession = { user: { crossTenant: true } };
     mockCsrfShouldThrow = false;
-    mockGetProvisioningStatus.mockResolvedValue({
+    mockAdminGetTenantBilling.mockResolvedValue({
       found: true,
       stripeCustomerId: 'cus_test123',
     });
@@ -143,7 +145,7 @@ describe('POST /api/admin/billing/trial-extension', () => {
   });
 
   it('returns 400 when the provisioning snapshot has no record (found: false)', async () => {
-    mockGetProvisioningStatus.mockResolvedValue({ found: false, stripeCustomerId: '' });
+    mockAdminGetTenantBilling.mockResolvedValue({ found: false, stripeCustomerId: '' });
     const res = await POST(makeRequest({ tenantId: 'acme', days: 7 }));
     expect(res.status).toBe(400);
     const json = (await res.json()) as { error: string };
@@ -151,7 +153,7 @@ describe('POST /api/admin/billing/trial-extension', () => {
   });
 
   it('returns 400 when the tenant has no Stripe customer', async () => {
-    mockGetProvisioningStatus.mockResolvedValue({ found: true, stripeCustomerId: '' });
+    mockAdminGetTenantBilling.mockResolvedValue({ found: true, stripeCustomerId: '' });
     const res = await POST(makeRequest({ tenantId: 'acme', days: 7 }));
     expect(res.status).toBe(400);
     const json = (await res.json()) as { error: string };
@@ -169,7 +171,7 @@ describe('POST /api/admin/billing/trial-extension', () => {
   it('resolves the customer id from the snapshot and the subscription from Stripe, then extends', async () => {
     const res = await POST(makeRequest({ tenantId: 'acme', days: 7 }));
     expect(res.status).toBe(200);
-    expect(mockGetProvisioningStatus).toHaveBeenCalledWith('acme');
+    expect(mockAdminGetTenantBilling).toHaveBeenCalledWith('acme');
     expect(mockFindCustomerSubscription).toHaveBeenCalledWith('cus_test123');
     expect(mockUpdateSubscriptionTrialEnd).toHaveBeenCalledOnce();
     const [subId, newTrialEndUnix] = mockUpdateSubscriptionTrialEnd.mock.calls[0] as [

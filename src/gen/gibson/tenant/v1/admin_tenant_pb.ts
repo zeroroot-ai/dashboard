@@ -40,7 +40,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/admin_tenant.proto.
  */
 export const file_gibson_tenant_v1_admin_tenant: GenFile = /*@__PURE__*/
-  fileDesc("CiNnaWJzb24vdGVuYW50L3YxL2FkbWluX3RlbmFudC5wcm90bxIQZ2lic29uLnRlbmFudC52MSJpChtBZG1pblByb3Zpc2lvblRlbmFudFJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRITCgtvd25lcl9lbWFpbBgDIAEoCRIMCgR0aWVyGAQgASgJIi0KHEFkbWluUHJvdmlzaW9uVGVuYW50UmVzcG9uc2USDQoFb3BfaWQYASABKAkifQoYQWRtaW5VcGRhdGVUZW5hbnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIMCgR0aWVyGAIgASgJEhAKCHRpZXJfc2V0GAMgASgIEhQKDGRpc3BsYXlfbmFtZRgEIAEoCRIYChBkaXNwbGF5X25hbWVfc2V0GAUgASgIIioKGUFkbWluVXBkYXRlVGVuYW50UmVzcG9uc2USDQoFb3BfaWQYASABKAkiLQoYQWRtaW5EZWxldGVUZW5hbnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSIqChlBZG1pbkRlbGV0ZVRlbmFudFJlc3BvbnNlEg0KBW9wX2lkGAEgASgJMpUEChJBZG1pblRlbmFudFNlcnZpY2USrgEKFEFkbWluUHJvdmlzaW9uVGVuYW50Ei0uZ2lic29uLnRlbmFudC52MS5BZG1pblByb3Zpc2lvblRlbmFudFJlcXVlc3QaLi5naWJzb24udGVuYW50LnYxLkFkbWluUHJvdmlzaW9uVGVuYW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESpQEKEUFkbWluVXBkYXRlVGVuYW50EiouZ2lic29uLnRlbmFudC52MS5BZG1pblVwZGF0ZVRlbmFudFJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkFkbWluVXBkYXRlVGVuYW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESpQEKEUFkbWluRGVsZXRlVGVuYW50EiouZ2lic29uLnRlbmFudC52MS5BZG1pbkRlbGV0ZVRlbmFudFJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkFkbWluRGVsZXRlVGVuYW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAFCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
+  fileDesc("CiNnaWJzb24vdGVuYW50L3YxL2FkbWluX3RlbmFudC5wcm90bxIQZ2lic29uLnRlbmFudC52MSJpChtBZG1pblByb3Zpc2lvblRlbmFudFJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRITCgtvd25lcl9lbWFpbBgDIAEoCRIMCgR0aWVyGAQgASgJIi0KHEFkbWluUHJvdmlzaW9uVGVuYW50UmVzcG9uc2USDQoFb3BfaWQYASABKAkifQoYQWRtaW5VcGRhdGVUZW5hbnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIMCgR0aWVyGAIgASgJEhAKCHRpZXJfc2V0GAMgASgIEhQKDGRpc3BsYXlfbmFtZRgEIAEoCRIYChBkaXNwbGF5X25hbWVfc2V0GAUgASgIIioKGUFkbWluVXBkYXRlVGVuYW50UmVzcG9uc2USDQoFb3BfaWQYASABKAkiLQoYQWRtaW5EZWxldGVUZW5hbnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSIqChlBZG1pbkRlbGV0ZVRlbmFudFJlc3BvbnNlEg0KBW9wX2lkGAEgASgJIjEKHEFkbWluR2V0VGVuYW50QmlsbGluZ1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJInwKHUFkbWluR2V0VGVuYW50QmlsbGluZ1Jlc3BvbnNlEg0KBWZvdW5kGAEgASgIEhoKEnN0cmlwZV9jdXN0b21lcl9pZBgCIAEoCRIWCg5iaWxsaW5nX2FjdGl2ZRgDIAEoCBIYChB6aXRhZGVsX29yZ19zbHVnGAQgASgJMskFChJBZG1pblRlbmFudFNlcnZpY2USrgEKFEFkbWluUHJvdmlzaW9uVGVuYW50Ei0uZ2lic29uLnRlbmFudC52MS5BZG1pblByb3Zpc2lvblRlbmFudFJlcXVlc3QaLi5naWJzb24udGVuYW50LnYxLkFkbWluUHJvdmlzaW9uVGVuYW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESpQEKEUFkbWluVXBkYXRlVGVuYW50EiouZ2lic29uLnRlbmFudC52MS5BZG1pblVwZGF0ZVRlbmFudFJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkFkbWluVXBkYXRlVGVuYW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESpQEKEUFkbWluRGVsZXRlVGVuYW50EiouZ2lic29uLnRlbmFudC52MS5BZG1pbkRlbGV0ZVRlbmFudFJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkFkbWluRGVsZXRlVGVuYW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESsQEKFUFkbWluR2V0VGVuYW50QmlsbGluZxIuLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5HZXRUZW5hbnRCaWxsaW5nUmVxdWVzdBovLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5HZXRUZW5hbnRCaWxsaW5nUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAFCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
 
 /**
  * AdminProvisionTenantRequest carries the spec inputs for a new tenant. Mirrors
@@ -230,6 +230,71 @@ export const AdminDeleteTenantResponseSchema: GenMessage<AdminDeleteTenantRespon
   messageDesc(file_gibson_tenant_v1_admin_tenant, 5);
 
 /**
+ * AdminGetTenantBillingRequest names the tenant whose billing identifiers to
+ * read. tenant_id is UNTRUSTED input, authorised by nothing on its own — the
+ * platform_operator gate on system_tenant is what permits the cross-tenant read.
+ *
+ * @generated from message gibson.tenant.v1.AdminGetTenantBillingRequest
+ */
+export type AdminGetTenantBillingRequest = Message<"gibson.tenant.v1.AdminGetTenantBillingRequest"> & {
+  /**
+   * tenant_id is the tenant slug to read billing for. Required.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.AdminGetTenantBillingRequest.
+ * Use `create(AdminGetTenantBillingRequestSchema)` to create a new message.
+ */
+export const AdminGetTenantBillingRequestSchema: GenMessage<AdminGetTenantBillingRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 6);
+
+/**
+ * AdminGetTenantBillingResponse carries the named tenant's billing identifiers.
+ *
+ * @generated from message gibson.tenant.v1.AdminGetTenantBillingResponse
+ */
+export type AdminGetTenantBillingResponse = Message<"gibson.tenant.v1.AdminGetTenantBillingResponse"> & {
+  /**
+   * found is false when the tenant has no provisioning record.
+   *
+   * @generated from field: bool found = 1;
+   */
+  found: boolean;
+
+  /**
+   * stripe_customer_id mirrors tenant_status.stripe_customer_id.
+   *
+   * @generated from field: string stripe_customer_id = 2;
+   */
+  stripeCustomerId: string;
+
+  /**
+   * billing_active is the tenant's billing-active state.
+   *
+   * @generated from field: bool billing_active = 3;
+   */
+  billingActive: boolean;
+
+  /**
+   * zitadel_org_slug is the per-tenant Zitadel org login slug.
+   *
+   * @generated from field: string zitadel_org_slug = 4;
+   */
+  zitadelOrgSlug: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.AdminGetTenantBillingResponse.
+ * Use `create(AdminGetTenantBillingResponseSchema)` to create a new message.
+ */
+export const AdminGetTenantBillingResponseSchema: GenMessage<AdminGetTenantBillingResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 7);
+
+/**
  * AdminTenantService is the dashboard-facing write side of admin tenant CRUD.
  * Each RPC records a tenant_admin_ops row (the admin's intent) and returns the
  * generated op_id; the tenant-operator drains the queue and applies the op to
@@ -280,6 +345,27 @@ export const AdminTenantService: GenService<{
     methodKind: "unary";
     input: typeof AdminDeleteTenantRequestSchema;
     output: typeof AdminDeleteTenantResponseSchema;
+  },
+  /**
+   * AdminGetTenantBilling returns ANY tenant's billing identifiers — the Stripe
+   * customer id, the billing-active flag and the Zitadel org slug — for the
+   * platform-operator admin surfaces (the trial-extension tool, dashboard#1016).
+   *
+   * This is a genuine CROSS-tenant read: a staff operator acting on an arbitrary
+   * tenant_id. It cannot use the unauthenticated
+   * TenantProvisioningService.GetTenantProvisioningStatus (that RPC no longer
+   * discloses billing state to any caller — gibson#1339), nor the own-tenant
+   * TenantService.GetTenantBilling (the operator is not that tenant's admin). It
+   * carries the same platform_operator gate as the other AdminTenantService
+   * RPCs: ext-authz authorises platform_operator on system_tenant:_system before
+   * the handler trusts the request tenant_id.
+   *
+   * @generated from rpc gibson.tenant.v1.AdminTenantService.AdminGetTenantBilling
+   */
+  adminGetTenantBilling: {
+    methodKind: "unary";
+    input: typeof AdminGetTenantBillingRequestSchema;
+    output: typeof AdminGetTenantBillingResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_tenant_v1_admin_tenant, 0);
