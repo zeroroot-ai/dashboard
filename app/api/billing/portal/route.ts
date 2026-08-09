@@ -8,7 +8,7 @@ import type { NextRequest } from 'next/server';
 
 import { billingEnabled } from '@/src/lib/billing/billing-enabled';
 import { createPortalSession } from '@/src/lib/billing/stripe';
-import { getTenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
+import { getTenantBilling } from '@/src/lib/gibson-client/provisioning';
 import {
   assertAuthorized,
   AuthzDeniedError,
@@ -93,28 +93,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Look up the operator-reported provisioning status to get the Stripe
-  // customer ID (dashboard#813 — no Kubernetes read).
-  //
-  // KNOWN GAP (dashboard#1016, gibson#1339): this always 400s below. gibson#1230
-  // added a same-tenant gate to GetTenantProvisioningStatus that this route
-  // cannot satisfy — the RPC is proto-annotated `unauthenticated: true`, so
-  // ext-authz skips tenant resolution entirely for it (never reads
-  // x-gibson-tenant into the identity forwarded to the daemon), regardless of
-  // whether this call goes through userClient or serviceClient or what tenant
-  // value is passed in. stripe_customer_id is redacted for every caller,
-  // including the tenant reading its own status. Root-caused in gibson#1339,
-  // which proposes a new rule-mode RPC scoped to the caller's own tenant. Do
-  // not attempt to fix this by threading tenantSlug into a serviceClient call
-  // here — verified ineffective, see gibson#1339's trace.
+  // Look up the Stripe customer ID via the rule-mode TenantService.GetTenantBilling
+  // RPC (dashboard#1016, gibson#1339/#1361). This replaced the unauthenticated
+  // GetTenantProvisioningStatus read: that RPC is proto-annotated
+  // `unauthenticated: true`, so ext-authz never resolved a tenant for it at all
+  // (not for any caller, same-tenant included), which meant this route always
+  // 400'd. GetTenantBilling is rule-mode (`tenant_from_identity`), so calling it
+  // via `userClient` lets ext-authz + FGA resolve and authorize the caller's own
+  // tenant before the handler runs — no tenant_id in the request, nothing to
+  // spoof.
   let customerId: string;
   try {
-    const status = await getTenantProvisioningStatus(tenantSlug);
+    const status = await getTenantBilling();
     customerId = status.stripeCustomerId;
   } catch (err) {
     logger.error(
       { err: err instanceof Error ? err.message : String(err), tenantSlug },
-      '[billing/portal] Failed to get tenant provisioning status',
+      '[billing/portal] Failed to get tenant billing identifiers',
     );
     return NextResponse.json(
       { error: 'billing temporarily unavailable' },

@@ -26,19 +26,31 @@
 //     it back and stamps the CR annotation, so the saga's
 //     WaitForBillingConfirmation step is unchanged.
 //
-// Authorization (gibson#1230): both RPCs remain REACHABLE without a tenant JWT
-// — signup polling and the Stripe webhook both run before any principal exists
-// — but reachability is not authorization, and each handler now enforces its
-// own gate:
+// Authorization (gibson#1230, gibson#1339): both RPCs remain REACHABLE without
+// a tenant JWT — signup polling and the Stripe webhook both run before any
+// principal exists — but reachability is not authorization, and each handler
+// now enforces its own gate:
 //
-//   - GetTenantProvisioningStatus discloses the cross-tenant identifiers
-//     (zitadel_org_slug, stripe_customer_id) and billing_active ONLY to a
-//     caller whose authenticated tenant is the tenant being read. Every other
-//     caller sees existence plus coarse provisioning progress.
+//   - GetTenantProvisioningStatus is intentionally unauthenticated and serves
+//     ONLY existence plus coarse provisioning progress (phase, data_plane_ready,
+//     per-store states, zitadel_org_ready) — the data the pre-identity signup
+//     page needs. It does NOT serve the cross-tenant identifiers
+//     (zitadel_org_slug, stripe_customer_id) or the billing state to anyone.
+//
+//     gibson#1230 originally gated those behind an in-handler "same authenticated
+//     tenant" redaction, but ext-authz never resolves a tenant for an
+//     unauthenticated-mode RPC (skipTenantResolution), so that allow-branch was
+//     unreachable for EVERY caller — including the tenant's own billing portal
+//     (gibson#1339). The identifiers now live on rule-mode RPCs where ext-authz
+//     + FGA can actually authorise the caller: TenantService.GetTenantBilling
+//     (own tenant, tenant_from_identity) and AdminTenantService
+//     .AdminGetTenantBilling (cross-tenant, platform_operator).
 //   - SetTenantBillingActive requires a fresh HMAC assertion bound to this
 //     tenant_id and active value, signed with the deployment's billing-webhook
 //     secret. Envoy routing alone used to be the only control, which meant any
-//     caller on that route could flip billing_active for any tenant.
+//     caller on that route could flip billing_active for any tenant. This gate
+//     is CORRECT precisely because the webhook caller is identity-less — an
+//     identity-based gate here would repeat the gibson#1339 mistake.
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
@@ -143,15 +155,19 @@ export type GetTenantProvisioningStatusResponse = Message<"gibson.tenant.v1.GetT
 
   /**
    * zitadel_org_slug mirrors status.zitadelOrgSlug (the per-tenant org login
-   * slug), used by the dashboard to route the owner to their org login.
+   * slug). RETAINED for wire compatibility but NO LONGER POPULATED by this
+   * unauthenticated RPC (gibson#1339) — read it via TenantService
+   * .GetTenantBilling (own tenant) or AdminTenantService.AdminGetTenantBilling
+   * (cross-tenant). Use zitadel_org_ready (field 8) for the org-created edge.
    *
    * @generated from field: string zitadel_org_slug = 5;
    */
   zitadelOrgSlug: string;
 
   /**
-   * stripe_customer_id mirrors status.billing.customerId, used by the billing
-   * portal surface to open the Stripe customer portal.
+   * stripe_customer_id mirrors status.billing.customerId. RETAINED for wire
+   * compatibility but NO LONGER POPULATED here (gibson#1339) — read it via
+   * TenantService.GetTenantBilling / AdminTenantService.AdminGetTenantBilling.
    *
    * @generated from field: string stripe_customer_id = 6;
    */
@@ -159,7 +175,8 @@ export type GetTenantProvisioningStatusResponse = Message<"gibson.tenant.v1.GetT
 
   /**
    * billing_active is the billing-active state last recorded via
-   * SetTenantBillingActive.
+   * SetTenantBillingActive. RETAINED for wire compatibility but NO LONGER
+   * POPULATED here (gibson#1339) — read it via the billing RPCs above.
    *
    * @generated from field: bool billing_active = 7;
    */
@@ -263,9 +280,12 @@ export const TenantProvisioningService: GenService<{
    * with phase empty / data_plane_ready=false.
    *
    * UNAUTHENTICATED-REACHABLE: runs pre-membership (signup polling, slug
-   * availability). A caller that is not the tenant itself receives existence
-   * plus coarse progress only; the org slug, Stripe customer id and
-   * billing_active are withheld (gibson#1230).
+   * availability). EVERY caller receives existence plus coarse progress only
+   * (phase, data_plane_ready, stores, zitadel_org_ready); the org slug, Stripe
+   * customer id and billing_active are never served here — read them via
+   * TenantService.GetTenantBilling (own tenant) or
+   * AdminTenantService.AdminGetTenantBilling (cross-tenant) (gibson#1230,
+   * gibson#1339).
    *
    * @generated from rpc gibson.tenant.v1.TenantProvisioningService.GetTenantProvisioningStatus
    */

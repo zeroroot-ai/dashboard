@@ -10,7 +10,7 @@ import {
   updateSubscriptionTrialEnd,
   findCustomerSubscription,
 } from '@/src/lib/billing/stripe';
-import { getTenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
+import { adminGetTenantBilling } from '@/src/lib/gibson-client/provisioning';
 import { getServerSession } from '@/src/lib/auth';
 import { isCrossTenant } from '@/src/lib/auth/schema';
 import { requireCsrf, CsrfError, csrfErrorResponse } from '@/src/lib/auth/csrf';
@@ -79,21 +79,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Resolve the tenant's Stripe customer id from the operator-reported
-  // provisioning snapshot (dashboard#813 — no Kubernetes read), then resolve
-  // the live subscription from Stripe.
+  // Resolve the tenant's Stripe customer id via the rule-mode
+  // AdminTenantService.AdminGetTenantBilling RPC (dashboard#1016,
+  // gibson#1339/#1361), then resolve the live subscription from Stripe.
   //
-  // KNOWN GAP (dashboard#1016, gibson#1339): this always 400s below. This is a
-  // genuine cross-tenant read (a platform_operator acting on an arbitrary
-  // tenantId) and gibson#1230's same-tenant gate on GetTenantProvisioningStatus
-  // cannot be satisfied by ANY caller of this RPC (see gibson#1339 — the RPC is
-  // `unauthenticated: true`-annotated, so ext-authz never resolves a tenant for
-  // it at all, cross-tenant or same-tenant). Needs a new authenticated,
-  // platform_operator-gated daemon RPC; do not attempt a header/client-swap fix
-  // here, it cannot work against the current RPC.
+  // This is a genuine cross-tenant read (a platform_operator acting on an
+  // arbitrary tenantId), so it cannot use the own-tenant GetTenantBilling RPC
+  // (the billing-portal route's fix) or the unauthenticated
+  // GetTenantProvisioningStatus (which never disclosed billing state to any
+  // caller, gibson#1339). AdminGetTenantBilling is gated `platform_operator` on
+  // `system_tenant` by ext-authz/FGA in addition to the `isCrossTenant(session)`
+  // check above.
   let customerId: string;
   try {
-    const status = await getTenantProvisioningStatus(tenantId);
+    const status = await adminGetTenantBilling(tenantId);
     if (!status.found) {
       return NextResponse.json({ error: 'tenant not found' }, { status: 400 });
     }
@@ -101,7 +100,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (err) {
     logger.error(
       { tenantId, err: err instanceof Error ? err.message : String(err) },
-      '[admin/billing/trial-extension] Failed to get tenant provisioning status',
+      '[admin/billing/trial-extension] Failed to get tenant billing identifiers',
     );
     return NextResponse.json({ error: 'tenant not found' }, { status: 400 });
   }

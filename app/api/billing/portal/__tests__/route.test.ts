@@ -29,9 +29,9 @@ vi.mock('@/src/lib/billing/stripe', () => ({
   createPortalSession: (...args: unknown[]) => mockCreatePortalSession(...args),
 }));
 
-const mockGetProvisioningStatus = vi.fn();
+const mockGetTenantBilling = vi.fn();
 vi.mock('@/src/lib/gibson-client/provisioning', () => ({
-  getTenantProvisioningStatus: (...args: unknown[]) => mockGetProvisioningStatus(...args),
+  getTenantBilling: (...args: unknown[]) => mockGetTenantBilling(...args),
 }));
 
 let mockAssertAuthorizedShouldThrow: Error | null = null;
@@ -122,11 +122,14 @@ describe('POST /api/billing/portal', () => {
       status: 'present',
       tenantId: 'acme',
     });
-    // Operator-reported provisioning snapshot (dashboard#855): the route reads
-    // the Stripe customer id from here instead of the Tenant CR.
-    mockGetProvisioningStatus.mockResolvedValue({
+    // Rule-mode own-tenant billing read (dashboard#1016, gibson#1339/#1361):
+    // the route reads the Stripe customer id from here instead of the
+    // redacted, unauthenticated GetTenantProvisioningStatus.
+    mockGetTenantBilling.mockResolvedValue({
       found: true,
       stripeCustomerId: 'cus_test123',
+      billingActive: true,
+      zitadelOrgSlug: 'acme-org',
     });
     mockCreatePortalSession.mockResolvedValue({
       id: 'bps_test123',
@@ -174,9 +177,11 @@ describe('POST /api/billing/portal', () => {
 
   describe('tenant validation', () => {
     it('returns 400 when stripeCustomerId is missing on the snapshot', async () => {
-      mockGetProvisioningStatus.mockResolvedValue({
+      mockGetTenantBilling.mockResolvedValue({
         found: true,
         stripeCustomerId: '',
+        billingActive: false,
+        zitadelOrgSlug: 'acme-org',
       });
       const res = await POST(makeRequest());
       expect(res.status).toBe(400);
