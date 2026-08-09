@@ -19,6 +19,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findWorkspaceRoot } from './lib/workspace-root.mjs';
 
 const SCRIPT_NAME = 'check-auth-rbac-inventory-fresh.mjs';
 const SPEC_NAME = 'auth-resolution-hardening';
@@ -28,11 +29,11 @@ const DASHBOARD_ROOT = resolve(__dirname, '..');
 // Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ the naive
 // `../../..` walk lands short of the workspace root. Rewind to the main
 // checkout root before walking up. dashboard#197 (same pattern as #175).
-const isWorktree = DASHBOARD_ROOT.includes('/.worktrees/');
-const MAIN_DASHBOARD_ROOT = isWorktree
-  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, '')
-  : DASHBOARD_ROOT;
-const REPO_ROOT = resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
+// Sibling resolution searches upward for the artifact rather than counting
+// `..` segments. The depth counter was correct for the main checkout and for a
+// worktree at `<dashboard>/.worktrees/<name>`, and wrong everywhere else.
+// dashboard#1015.
+const REPO_ROOT = findWorkspaceRoot({ from: DASHBOARD_ROOT }) ?? DASHBOARD_ROOT;
 const COMMITTED = resolve(REPO_ROOT, 'enterprise/docs/AUTH_RBAC_INVENTORY.md');
 const GENERATOR = resolve(__dirname, 'gen-auth-rbac-inventory.mjs');
 

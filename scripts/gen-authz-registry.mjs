@@ -54,6 +54,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fromBinary } from '@bufbuild/protobuf';
 import { FileDescriptorSetSchema } from '@bufbuild/protobuf/wkt';
+import { resolveWorkspacePath } from './lib/workspace-root.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, '..');
@@ -68,23 +69,18 @@ const PROTOVALIDATE_COMMIT = '50325440f8f24053b047484a6bf60b76';
 const PROTOVALIDATE_DIGEST =
   'b5:74cb6f5c0853c3c10aafc701614194bbd63326bdb8ef4068214454b8894b03ba4113e04b3a33a8321cdf05336e37db4dc14a5e2495db8462566914f36086ba31';
 
-// Workspace root: ~/Code/zeroroot.ai/. Sibling repos hang off here.
-// Gibson lives at enterprise/platform/gibson.
+// Sibling repos hang off the polyrepo workspace root; gibson lives at
+// enterprise/platform/gibson.
 //
-// Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ or
-// .claude/worktrees/<name>/ (the Claude Code harness layout) the naive
-// `../../..` walk lands short of the workspace root. Rewind to the main
-// checkout root before walking up. dashboard#148, dashboard#406.
-const isWorktree =
-  DASHBOARD_ROOT.includes('/.worktrees/') || DASHBOARD_ROOT.includes('/.claude/worktrees/');
-const MAIN_DASHBOARD_ROOT = isWorktree
-  ? DASHBOARD_ROOT.replace(/\/\.claude\/worktrees\/[^/]+$/, '').replace(
-      /\/\.worktrees\/[^/]+$/,
-      '',
-    )
-  : DASHBOARD_ROOT;
-const WORKSPACE_ROOT = resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
-const GIBSON_REPO = resolve(WORKSPACE_ROOT, 'enterprise/platform/gibson');
+// Sibling resolution searches upward for the artifact rather than counting
+// `..` segments off a rewound path. The depth counter was correct for the main
+// checkout and for a worktree at `<dashboard>/.worktrees/<name>`, and wrong
+// everywhere else — from `<workspace>/.worktrees/<name>` it walked to `/home`.
+// dashboard#1015.
+const GIBSON_REPO_REL = 'enterprise/platform/gibson';
+const GIBSON_REPO =
+  resolveWorkspacePath(GIBSON_REPO_REL, { from: DASHBOARD_ROOT })?.path ??
+  resolve(DASHBOARD_ROOT, GIBSON_REPO_REL);
 // gibson daemon-local proto tree (post-#787 reorg location). It hosts the
 // daemon-internal services and the PRIVATE platform services
 // (DaemonOperatorService, BillingService, DiscoveryService) that used to
@@ -107,7 +103,9 @@ function resolveSdkProtoDir() {
   // tracks main and avoids the "gibson go.mod pin lags one minor
   // version behind the latest sdk release" hazard. Mirrors the pattern
   // in proto-generate.mjs.
-  const SDK_SIBLING = resolve(WORKSPACE_ROOT, 'opensource/sdk/api/proto');
+  const SDK_SIBLING =
+    resolveWorkspacePath('opensource/sdk/api/proto', { from: DASHBOARD_ROOT })
+      ?.path ?? resolve(DASHBOARD_ROOT, 'opensource/sdk/api/proto');
   try {
     execSync(`stat ${SDK_SIBLING}`, { stdio: 'pipe' });
     return SDK_SIBLING;

@@ -34,7 +34,51 @@ pnpm test:e2e       # playwright E2E suite
 pnpm typecheck      # tsc --noEmit
 pnpm lint           # eslint
 pnpm proto:generate # regenerate src/gen/ TS proto bindings
+pnpm test:scripts   # node:test suites for the build scripts
 ```
+
+## Worktrees
+
+**Put a worktree anywhere inside the polyrepo workspace.** Both `pnpm prebuild`
+and `pnpm lint` work from any such location as of dashboard#1015; before that
+no single location satisfied both. A worktree *outside* the workspace has no
+sibling repos above it, so set `GIBSON_WORKSPACE_ROOT` there.
+
+The build scripts reach sibling repos (`deploy`'s `plans.yaml`, the `sdk` proto
+tree, the gibson daemon-local proto tree) through
+`scripts/lib/workspace-root.mjs`, which **searches upward for the artifact**
+instead of counting `..` segments off a rewound path. The old counter was
+correct for the main checkout and for a worktree at
+`<dashboard>/.worktrees/<name>` and wrong everywhere else — from
+`<workspace>/.worktrees/<name>` it walked to `/home` and reported
+`plans.yaml not found at /home/enterprise/deploy/...`.
+
+```js
+import { requireWorkspacePath } from "./lib/workspace-root.mjs";
+
+const plansYaml = requireWorkspacePath(
+  "enterprise/deploy/helm/gibson-operators/files/plans.yaml",
+  { from: DASHBOARD_ROOT },
+);
+```
+
+Use `requireWorkspacePath` when the artifact is mandatory (it throws a
+diagnostic naming every directory tried), `resolveWorkspacePath` when absence
+is a legitimate mode, and `findWorkspaceRoot` when you need the root itself.
+
+`GIBSON_WORKSPACE_ROOT` overrides the search. An override that does not hold
+fails rather than falling back, so a typo surfaces instead of mysteriously
+working.
+
+**Never reintroduce a depth count.** `resolve(root, "..", "..", "..")` and
+`path.includes("/.worktrees/")` are the exact bug; the workspace layout has
+already moved once (the open-core consolidation) and will move again. Unit
+tests covering every layout live in `scripts/lib/workspace-root.test.mjs`.
+
+`.eslintrc.js` sets `root: true` so a worktree nested inside the dashboard
+checkout stops inheriting the parent's identical config, which used to make
+`@next/next` resolve from two `node_modules/.pnpm` trees and abort eslint with
+exit 2.
 
 ## Mission schema copy
 

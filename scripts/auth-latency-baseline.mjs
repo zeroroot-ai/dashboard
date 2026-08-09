@@ -62,17 +62,14 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
+import { findWorkspaceRoot } from "./lib/workspace-root.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "..");
-// Worktree-aware: when REPO_ROOT (== DASHBOARD_ROOT here) is .worktrees/<name>/
-// the naive `../../..` walk below for the default --out path lands short of the
-// workspace root. Rewind to the main checkout root before walking up.
-// dashboard#197 (same pattern as #175).
-const _isWorktree = REPO_ROOT.includes("/.worktrees/");
-const _MAIN_REPO_ROOT = _isWorktree
-  ? REPO_ROOT.replace(/\/\.worktrees\/[^/]+$/, "")
-  : REPO_ROOT;
+// Sibling resolution searches upward for the artifact rather than counting
+// `..` segments. The depth counter was correct for the main checkout and for a
+// worktree at `<dashboard>/.worktrees/<name>`, and wrong everywhere else.
+// dashboard#1015.
 
 // ---------------------------------------------------------------------------
 // SLO targets (spec R8)
@@ -99,7 +96,12 @@ const N_ITERS = parseInt(args["n"], 10);
 const DRIVE_LOAD = args["drive-load"];
 const OUT_PATH =
   args["out"] ||
-  resolve(_MAIN_REPO_ROOT, "..", "..", "..", "enterprise", "docs", "auth-latency-baseline.json");
+  resolve(
+    findWorkspaceRoot({ from: REPO_ROOT }) ?? REPO_ROOT,
+    "enterprise",
+    "docs",
+    "auth-latency-baseline.json",
+  );
 
 // ---------------------------------------------------------------------------
 // Prometheus text-format parser, histogram buckets

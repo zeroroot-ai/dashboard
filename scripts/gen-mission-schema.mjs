@@ -30,28 +30,22 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveWorkspacePath } from "./lib/workspace-root.mjs";
 
 const SCRIPT_NAME = "gen-mission-schema.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, "..");
 
-// Worktree-aware: when run from .worktrees/<name>/scripts/, DASHBOARD_ROOT
-// resolves to the worktree directory and the naive `../../..` walks short
-// of the polyrepo workspace root. Strip the `.worktrees/<name>` suffix to
-// reach the canonical dashboard checkout, then walk up to the workspace.
-// Sister scripts proto-generate.mjs + gen-authz-registry.mjs use the same
-// pattern.
-const isWorktree = DASHBOARD_ROOT.includes("/.worktrees/");
-const MAIN_DASHBOARD_ROOT = isWorktree
-  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, "")
-  : DASHBOARD_ROOT;
-const REPO_ROOT = resolve(MAIN_DASHBOARD_ROOT, "..", "..", "..");
-
-const SDK_SCHEMA = resolve(
-  REPO_ROOT,
-  "opensource/sdk/gen/mission-definition.schema.json",
-);
+// Sibling resolution searches upward for the artifact rather than counting
+// `..` segments off a rewound path. The depth counter was correct for the main
+// checkout and for a worktree at `<dashboard>/.worktrees/<name>`, and wrong
+// everywhere else — from `<workspace>/.worktrees/<name>` it walked to `/home`.
+// dashboard#1015.
+const SDK_SCHEMA_REL = "opensource/sdk/gen/mission-definition.schema.json";
+const SDK_SCHEMA =
+  resolveWorkspacePath(SDK_SCHEMA_REL, { from: DASHBOARD_ROOT })?.path ??
+  resolve(DASHBOARD_ROOT, SDK_SCHEMA_REL);
 const OUTPUT = resolve(
   DASHBOARD_ROOT,
   "src/data/mission-definition.schema.json",

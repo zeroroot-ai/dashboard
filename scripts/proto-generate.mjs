@@ -46,6 +46,10 @@ import {
 } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import {
+  findWorkspaceRoot,
+  resolveWorkspacePath,
+} from './lib/workspace-root.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = path.resolve(HERE, '..');
@@ -81,23 +85,23 @@ const PROTOVALIDATE_COMMIT = '50325440f8f24053b047484a6bf60b76';
 const PROTOVALIDATE_DIGEST =
   'b5:74cb6f5c0853c3c10aafc701614194bbd63326bdb8ef4068214454b8894b03ba4113e04b3a33a8321cdf05336e37db4dc14a5e2495db8462566914f36086ba31';
 
-// Workspace root: ~/Code/zeroroot.ai/. Sibling repos hang off here.
-// Dashboard lives at enterprise/platform/dashboard so the workspace root
-// is three levels up. Gibson lives at enterprise/platform/gibson.
+// Sibling repos hang off the polyrepo workspace root; gibson lives at
+// enterprise/platform/gibson.
 //
-// Worktree-aware: when run from .worktrees/<name>/scripts/ or
-// .claude/worktrees/<name>/scripts/, DASHBOARD_ROOT resolves to the
-// worktree directory and the naive `../../..` walks short. Detect both
-// patterns and rewind to the main checkout root before computing the
-// workspace root. dashboard#148.
-const isWorktree =
-  DASHBOARD_ROOT.includes('/.worktrees/') ||
-  DASHBOARD_ROOT.includes('/.claude/worktrees/');
-const MAIN_DASHBOARD_ROOT = isWorktree
-  ? DASHBOARD_ROOT.replace(/\/\.claude\/worktrees\/[^/]+$/, '').replace(/\/\.worktrees\/[^/]+$/, '')
-  : DASHBOARD_ROOT;
-const WORKSPACE_ROOT = path.resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
-const GIBSON_REPO = path.join(WORKSPACE_ROOT, 'enterprise/platform/gibson');
+// Sibling resolution searches upward for the artifact rather than counting
+// `..` segments off a rewound path. The depth counter was correct for the main
+// checkout and for a worktree at `<dashboard>/.worktrees/<name>`, and wrong
+// everywhere else — from `<workspace>/.worktrees/<name>` it walked to `/home`.
+// dashboard#1015.
+const GIBSON_REPO_REL = 'enterprise/platform/gibson';
+const gibsonFound = resolveWorkspacePath(GIBSON_REPO_REL, {
+  from: DASHBOARD_ROOT,
+});
+const WORKSPACE_ROOT =
+  gibsonFound?.workspaceRoot ??
+  findWorkspaceRoot({ from: DASHBOARD_ROOT }) ??
+  DASHBOARD_ROOT;
+const GIBSON_REPO = gibsonFound?.path ?? path.join(WORKSPACE_ROOT, GIBSON_REPO_REL);
 // gibson daemon-local proto tree. Post-#787 reorg this lives under
 // internal/server/daemon/api. It hosts the daemon-internal services
 // (TracesService, session, world, user) plus the PRIVATE platform
@@ -122,7 +126,9 @@ function resolveSdkProtoDir({ soft = false } = {}) {
   // migrations. Sibling checkout is also the standard layout for this
   // workspace; the module-cache fallback exists for the case where the
   // dashboard repo is being regen'd outside the polyrepo.
-  const SDK_SIBLING = path.join(WORKSPACE_ROOT, 'opensource/sdk/api/proto');
+  const SDK_SIBLING =
+    resolveWorkspacePath('opensource/sdk/api/proto', { from: DASHBOARD_ROOT })
+      ?.path ?? path.join(WORKSPACE_ROOT, 'opensource/sdk/api/proto');
   try {
     const stat = run(`stat ${SDK_SIBLING}`);
     if (stat) return SDK_SIBLING;

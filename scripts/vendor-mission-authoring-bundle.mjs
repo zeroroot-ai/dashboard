@@ -59,6 +59,7 @@ import {
 } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { findWorkspaceRoot } from './lib/workspace-root.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = path.resolve(HERE, '..');
@@ -66,11 +67,12 @@ const DASHBOARD_ROOT = path.resolve(HERE, '..');
 // `../../..` walk lands short of the workspace root. Rewind to the main
 // checkout root before walking up. dashboard#193 (matches the pattern
 // landed in #162 / #175 / PR-for-#186).
-const isWorktree = DASHBOARD_ROOT.includes('/.worktrees/');
-const MAIN_DASHBOARD_ROOT = isWorktree
-  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, '')
-  : DASHBOARD_ROOT;
-const WORKSPACE_ROOT = path.resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
+// Sibling resolution searches upward for the artifact rather than counting
+// `..` segments. The depth counter was correct for the main checkout and for a
+// worktree at `<dashboard>/.worktrees/<name>`, and wrong everywhere else.
+// dashboard#1015.
+const WORKSPACE_ROOT =
+  findWorkspaceRoot({ from: DASHBOARD_ROOT }) ?? DASHBOARD_ROOT;
 
 const SRC_DATA = path.join(DASHBOARD_ROOT, 'src/data');
 const DOCS_ROUTE = path.join(

@@ -35,32 +35,28 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveWorkspacePath } from "./lib/workspace-root.mjs";
 
 const SCRIPT_NAME = "check-mission-schema-fresh.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, "..");
 
-// Worktree-aware: same pattern as gen-mission-schema.mjs (and the sister
-// scripts proto-generate.mjs / gen-authz-registry.mjs). When the dashboard
-// is checked out at `.worktrees/<name>/`, the naive `../../..` walk would
-// short-cut and miss the SDK sibling, causing the freshness gate to
-// silently skip in STRUCTURAL mode in every worktree.
-const isWorktree = DASHBOARD_ROOT.includes("/.worktrees/");
-const MAIN_DASHBOARD_ROOT = isWorktree
-  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, "")
-  : DASHBOARD_ROOT;
-const REPO_ROOT = resolve(MAIN_DASHBOARD_ROOT, "..", "..", "..");
+// Sibling resolution searches upward for the artifact rather than counting
+// `..` segments off a rewound path. The depth counter missed the SDK sibling
+// from any worktree outside `<dashboard>/.worktrees/<name>`, which silently
+// downgraded this gate to STRUCTURAL mode instead of failing on drift.
+// dashboard#1015.
 
 const COMMITTED = resolve(
   DASHBOARD_ROOT,
   "src/data/mission-definition.schema.json",
 );
 const GENERATOR = resolve(__dirname, "gen-mission-schema.mjs");
-const SDK_SCHEMA = resolve(
-  REPO_ROOT,
-  "opensource/sdk/gen/mission-definition.schema.json",
-);
+const SDK_SCHEMA_REL = "opensource/sdk/gen/mission-definition.schema.json";
+const SDK_SCHEMA =
+  resolveWorkspacePath(SDK_SCHEMA_REL, { from: DASHBOARD_ROOT })?.path ??
+  resolve(DASHBOARD_ROOT, SDK_SCHEMA_REL);
 
 const DO_NOT_EDIT_PREFIX = "DO NOT EDIT";
 
