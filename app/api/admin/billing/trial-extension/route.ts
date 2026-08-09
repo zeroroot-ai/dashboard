@@ -82,6 +82,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Resolve the tenant's Stripe customer id from the operator-reported
   // provisioning snapshot (dashboard#813 — no Kubernetes read), then resolve
   // the live subscription from Stripe.
+  //
+  // KNOWN GAP (dashboard#1016, gibson#1339): this always 400s below. This is a
+  // genuine cross-tenant read (a platform_operator acting on an arbitrary
+  // tenantId) and gibson#1230's same-tenant gate on GetTenantProvisioningStatus
+  // cannot be satisfied by ANY caller of this RPC (see gibson#1339 — the RPC is
+  // `unauthenticated: true`-annotated, so ext-authz never resolves a tenant for
+  // it at all, cross-tenant or same-tenant). Needs a new authenticated,
+  // platform_operator-gated daemon RPC; do not attempt a header/client-swap fix
+  // here, it cannot work against the current RPC.
   let customerId: string;
   try {
     const status = await getTenantProvisioningStatus(tenantId);

@@ -36,12 +36,17 @@ export interface TenantProvisioningStatus {
   dataPlaneReady: boolean;
   /** Per-store states for the onboarding-progress UI. */
   stores: TenantStoreStates;
-  /** Per-tenant Zitadel org login slug (status.zitadelOrgSlug). */
+  /** Per-tenant Zitadel org login slug (status.zitadelOrgSlug). Redacted (empty) for
+   * any caller whose authenticated tenant is not the tenant being read (gibson#1230). */
   zitadelOrgSlug: string;
   /** Stripe customer id (status.billing.customerId) for the billing-portal link. */
   stripeCustomerId: string;
   /** Billing-active state last recorded via SetTenantBillingActive. */
   billingActive: boolean;
+  /** Whether the per-tenant Zitadel org exists, without disclosing its slug. Survives
+   * the cross-tenant redaction that blanks zitadelOrgSlug (gibson#1230/#1333) — this is
+   * the field the signup readiness poller should read instead. */
+  zitadelOrgReady: boolean;
 }
 
 /**
@@ -67,6 +72,7 @@ export async function getTenantProvisioningStatus(
     zitadelOrgSlug: resp.zitadelOrgSlug,
     stripeCustomerId: resp.stripeCustomerId,
     billingActive: resp.billingActive,
+    zitadelOrgReady: resp.zitadelOrgReady,
   };
 }
 

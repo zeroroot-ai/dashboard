@@ -26,14 +26,19 @@
 //     it back and stamps the CR annotation, so the saga's
 //     WaitForBillingConfirmation step is unchanged.
 //
-// Authorization: both RPCs are UNAUTHENTICATED, exactly like SignupService and
-// UserService.SetSignupProgress. GetTenantProvisioningStatus runs pre-membership
-// (signup polling, slug-availability) so there is no principal to FGA-check, and
-// it returns only coarse provisioning status keyed by the public tenant slug —
-// no tenant data. SetTenantBillingActive is the Stripe webhook path: the
-// dashboard validates the Stripe signature before calling, and Envoy gates the
-// daemon so only the dashboard workload can reach it — the same trust model the
-// prior dashboard-SA patchTenant write relied on.
+// Authorization (gibson#1230): both RPCs remain REACHABLE without a tenant JWT
+// — signup polling and the Stripe webhook both run before any principal exists
+// — but reachability is not authorization, and each handler now enforces its
+// own gate:
+//
+//   - GetTenantProvisioningStatus discloses the cross-tenant identifiers
+//     (zitadel_org_slug, stripe_customer_id) and billing_active ONLY to a
+//     caller whose authenticated tenant is the tenant being read. Every other
+//     caller sees existence plus coarse provisioning progress.
+//   - SetTenantBillingActive requires a fresh HMAC assertion bound to this
+//     tenant_id and active value, signed with the deployment's billing-webhook
+//     secret. Envoy routing alone used to be the only control, which meant any
+//     caller on that route could flip billing_active for any tenant.
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
@@ -44,7 +49,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/provisioning.proto.
  */
 export const file_gibson_tenant_v1_provisioning: GenFile = /*@__PURE__*/
-  fileDesc("CiNnaWJzb24vdGVuYW50L3YxL3Byb3Zpc2lvbmluZy5wcm90bxIQZ2lic29uLnRlbmFudC52MSJMChpUZW5hbnREYXRhUGxhbmVTdG9yZVN0YXR1cxIQCghwb3N0Z3JlcxgBIAEoCRINCgVyZWRpcxgCIAEoCRINCgVuZW80ahgDIAEoCSI3CiJHZXRUZW5hbnRQcm92aXNpb25pbmdTdGF0dXNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSLpAQojR2V0VGVuYW50UHJvdmlzaW9uaW5nU3RhdHVzUmVzcG9uc2USDQoFZm91bmQYASABKAgSDQoFcGhhc2UYAiABKAkSGAoQZGF0YV9wbGFuZV9yZWFkeRgDIAEoCBI8CgZzdG9yZXMYBCABKAsyLC5naWJzb24udGVuYW50LnYxLlRlbmFudERhdGFQbGFuZVN0b3JlU3RhdHVzEhgKEHppdGFkZWxfb3JnX3NsdWcYBSABKAkSGgoSc3RyaXBlX2N1c3RvbWVyX2lkGAYgASgJEhYKDmJpbGxpbmdfYWN0aXZlGAcgASgIIkIKHVNldFRlbmFudEJpbGxpbmdBY3RpdmVSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIOCgZhY3RpdmUYAiABKAgiMQoeU2V0VGVuYW50QmlsbGluZ0FjdGl2ZVJlc3BvbnNlEg8KB3VwZGF0ZWQYASABKAgytgIKGVRlbmFudFByb3Zpc2lvbmluZ1NlcnZpY2USkgEKG0dldFRlbmFudFByb3Zpc2lvbmluZ1N0YXR1cxI0LmdpYnNvbi50ZW5hbnQudjEuR2V0VGVuYW50UHJvdmlzaW9uaW5nU3RhdHVzUmVxdWVzdBo1LmdpYnNvbi50ZW5hbnQudjEuR2V0VGVuYW50UHJvdmlzaW9uaW5nU3RhdHVzUmVzcG9uc2UiBoq1GAIoARKDAQoWU2V0VGVuYW50QmlsbGluZ0FjdGl2ZRIvLmdpYnNvbi50ZW5hbnQudjEuU2V0VGVuYW50QmlsbGluZ0FjdGl2ZVJlcXVlc3QaMC5naWJzb24udGVuYW50LnYxLlNldFRlbmFudEJpbGxpbmdBY3RpdmVSZXNwb25zZSIGirUYAigBQlRaUmdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_gibson_auth_v1_options]);
+  fileDesc("CiNnaWJzb24vdGVuYW50L3YxL3Byb3Zpc2lvbmluZy5wcm90bxIQZ2lic29uLnRlbmFudC52MSJMChpUZW5hbnREYXRhUGxhbmVTdG9yZVN0YXR1cxIQCghwb3N0Z3JlcxgBIAEoCRINCgVyZWRpcxgCIAEoCRINCgVuZW80ahgDIAEoCSI3CiJHZXRUZW5hbnRQcm92aXNpb25pbmdTdGF0dXNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSKEAgojR2V0VGVuYW50UHJvdmlzaW9uaW5nU3RhdHVzUmVzcG9uc2USDQoFZm91bmQYASABKAgSDQoFcGhhc2UYAiABKAkSGAoQZGF0YV9wbGFuZV9yZWFkeRgDIAEoCBI8CgZzdG9yZXMYBCABKAsyLC5naWJzb24udGVuYW50LnYxLlRlbmFudERhdGFQbGFuZVN0b3JlU3RhdHVzEhgKEHppdGFkZWxfb3JnX3NsdWcYBSABKAkSGgoSc3RyaXBlX2N1c3RvbWVyX2lkGAYgASgJEhYKDmJpbGxpbmdfYWN0aXZlGAcgASgIEhkKEXppdGFkZWxfb3JnX3JlYWR5GAggASgIIkIKHVNldFRlbmFudEJpbGxpbmdBY3RpdmVSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIOCgZhY3RpdmUYAiABKAgiMQoeU2V0VGVuYW50QmlsbGluZ0FjdGl2ZVJlc3BvbnNlEg8KB3VwZGF0ZWQYASABKAgytgIKGVRlbmFudFByb3Zpc2lvbmluZ1NlcnZpY2USkgEKG0dldFRlbmFudFByb3Zpc2lvbmluZ1N0YXR1cxI0LmdpYnNvbi50ZW5hbnQudjEuR2V0VGVuYW50UHJvdmlzaW9uaW5nU3RhdHVzUmVxdWVzdBo1LmdpYnNvbi50ZW5hbnQudjEuR2V0VGVuYW50UHJvdmlzaW9uaW5nU3RhdHVzUmVzcG9uc2UiBoq1GAIoARKDAQoWU2V0VGVuYW50QmlsbGluZ0FjdGl2ZRIvLmdpYnNvbi50ZW5hbnQudjEuU2V0VGVuYW50QmlsbGluZ0FjdGl2ZVJlcXVlc3QaMC5naWJzb24udGVuYW50LnYxLlNldFRlbmFudEJpbGxpbmdBY3RpdmVSZXNwb25zZSIGirUYAigBQlRaUmdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_gibson_auth_v1_options]);
 
 /**
  * TenantDataPlaneStoreStatus mirrors the Tenant CR's
@@ -159,6 +164,25 @@ export type GetTenantProvisioningStatusResponse = Message<"gibson.tenant.v1.GetT
    * @generated from field: bool billing_active = 7;
    */
   billingActive: boolean;
+
+  /**
+   * zitadel_org_ready reports WHETHER the per-tenant Zitadel org exists, without
+   * disclosing its slug. It is the readiness edge the signup poller waits on:
+   * the org is created well before the Tenant CR reaches phase Ready, so a
+   * poller that can only see `phase` sits through the remaining data-plane work
+   * and times out on an otherwise-successful signup.
+   *
+   * This field is deliberately OUTSIDE the cross-tenant redaction set
+   * (redactCrossTenantStatus). It is coarse progress of exactly the kind
+   * `phase`, `data_plane_ready` and `stores` already disclose to an anonymous
+   * caller — a bare "has this step completed" bit. What was withheld in
+   * gibson#1230 was the cross-tenant IDENTIFIERS and the billing state, and a
+   * boolean carries neither: it names nothing and cannot be replayed into any
+   * other system. zitadel_org_slug itself stays redacted.
+   *
+   * @generated from field: bool zitadel_org_ready = 8;
+   */
+  zitadelOrgReady: boolean;
 };
 
 /**
@@ -238,8 +262,10 @@ export const TenantProvisioningService: GenService<{
    * reported (the brief window between enqueue and first reconcile) found=true
    * with phase empty / data_plane_ready=false.
    *
-   * UNAUTHENTICATED: runs pre-membership (signup polling, slug availability).
-   * Returns only coarse provisioning status keyed by the public slug.
+   * UNAUTHENTICATED-REACHABLE: runs pre-membership (signup polling, slug
+   * availability). A caller that is not the tenant itself receives existence
+   * plus coarse progress only; the org slug, Stripe customer id and
+   * billing_active are withheld (gibson#1230).
    *
    * @generated from rpc gibson.tenant.v1.TenantProvisioningService.GetTenantProvisioningStatus
    */
@@ -256,9 +282,12 @@ export const TenantProvisioningService: GenService<{
    * and stamps the CR annotation the saga's WaitForBillingConfirmation step
    * waits on. Idempotent.
    *
-   * UNAUTHENTICATED: the Stripe webhook path. The dashboard validates the
-   * Stripe signature before calling and Envoy gates the daemon to the dashboard
-   * workload — the same trust boundary the prior dashboard-SA CR patch had.
+   * UNAUTHENTICATED-REACHABLE: the Stripe webhook path has no tenant JWT. The
+   * caller must instead present x-gibson-billing-signature and
+   * x-gibson-billing-issued-at — an HMAC over this tenant_id and active value,
+   * signed with the deployment's billing-webhook secret and valid for a bounded
+   * window. A daemon with no secret configured refuses every caller
+   * (gibson#1230).
    *
    * @generated from rpc gibson.tenant.v1.TenantProvisioningService.SetTenantBillingActive
    */
