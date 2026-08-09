@@ -49,7 +49,30 @@ import path from 'node:path';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = path.resolve(HERE, '..');
-const WS = path.join(DASHBOARD_ROOT, '.tmp/proto-ws');
+
+// CLI surface
+// -----------
+//   (no flags)      generate into src/gen/ (the committed tree)
+//   --out=<dir>     generate into <dir> instead, leaving src/gen/ untouched.
+//                   Used by scripts/check-proto-bindings-fresh.mjs to produce
+//                   the "expected" tree for a byte-diff.
+//   --probe         resolve the two source proto trees, print a JSON report to
+//                   stdout, and exit 0 whether or not they are present. Lets
+//                   the freshness gate decide between FULL and STRUCTURAL mode
+//                   without duplicating this file's path resolution.
+const ARGV = process.argv.slice(2);
+const PROBE = ARGV.includes('--probe');
+const OUT_FLAG = ARGV.find((a) => a.startsWith('--out='));
+const OUT_DIR = OUT_FLAG
+  ? path.resolve(process.cwd(), OUT_FLAG.slice('--out='.length))
+  : path.join(DASHBOARD_ROOT, 'src/gen');
+
+// Each invocation gets its own scratch workspace so a `--out=` run (the
+// freshness gate) can never race or clobber a concurrent plain regen.
+const WS = path.join(
+  DASHBOARD_ROOT,
+  `.tmp/proto-ws${OUT_FLAG ? `-${process.pid}` : ''}`,
+);
 
 // Pinned protovalidate BSR module, mirrors the SDK's committed buf.lock.
 // Used as an offline fallback when `buf dep update` can't reach the BSR
@@ -92,7 +115,7 @@ function run(cmd, opts = {}) {
   });
 }
 
-function resolveSdkProtoDir() {
+function resolveSdkProtoDir({ soft = false } = {}) {
   // Prefer the sibling checkout at opensource/sdk when present, it
   // tracks main and avoids the "gibson go.mod pin lags one minor
   // version behind the latest sdk release" hazard during multi-repo
@@ -117,6 +140,7 @@ function resolveSdkProtoDir() {
     if (!dir) throw new Error('empty');
     return path.join(dir, 'api/proto');
   } catch (err) {
+    if (soft) return null;
     console.error(
       'proto-generate: failed to resolve github.com/zeroroot-ai/sdk.\n' +
         `  Tried sibling checkout at: ${SDK_SIBLING}\n` +
@@ -129,14 +153,16 @@ function resolveSdkProtoDir() {
   }
 }
 
-function ensureGibsonLocalProtos() {
+function ensureGibsonLocalProtos({ soft = false } = {}) {
   // No-op-style sanity check: the daemon-local protos must exist.
   // They are not a published Go module, so we can only get them via a
   // sibling checkout.
   try {
     const stat = run(`stat ${GIBSON_LOCAL_PROTOS}`);
     if (!stat) throw new Error('stat empty');
+    return true;
   } catch (err) {
+    if (soft) return false;
     console.error(
       'proto-generate: gibson daemon-local protos not found at:\n' +
         `    ${GIBSON_LOCAL_PROTOS}\n` +
@@ -294,17 +320,50 @@ function generate() {
     env: offline ? { ...process.env, NETRC: '/dev/null' } : process.env,
   });
 
-  // rsync --update keeps unchanged files untouched (preserves mtimes
-  // for incremental tooling) and only writes diffs. Output destination
-  // is the committed src/gen/ tree.
   const out = path.join(ws, 'out');
-  const dst = path.join(DASHBOARD_ROOT, 'src/gen') + '/';
-  execSync(`rsync -a --update ${out}/ ${dst}`, { stdio: 'inherit' });
+  if (OUT_FLAG) {
+    // Freshness-gate mode: the caller wants exactly what the generator
+    // produced, nothing else. `--delete` (and no `--update`) so the
+    // destination is a faithful mirror, not a merge over stale content.
+    mkdirSync(OUT_DIR, { recursive: true });
+    execSync(`rsync -a --delete ${out}/ ${OUT_DIR}/`, { stdio: 'inherit' });
+  } else {
+    // rsync --update keeps unchanged files untouched (preserves mtimes
+    // for incremental tooling) and only writes diffs. Output destination
+    // is the committed src/gen/ tree.
+    execSync(`rsync -a --update ${out}/ ${OUT_DIR}/`, { stdio: 'inherit' });
+  }
 
   // Clean up. The workspace is regenerated on every run; persistent
   // state in .tmp/proto-ws would just risk staleness.
   rmSync(ws, { recursive: true, force: true });
-  console.log('proto-generate: ok');
+  console.log(`proto-generate: ok (${OUT_DIR})`);
 }
 
-generate();
+function probe() {
+  const gibsonLocalProtos = ensureGibsonLocalProtos({ soft: true })
+    ? GIBSON_LOCAL_PROTOS
+    : null;
+  const sdkProtoDir = resolveSdkProtoDir({ soft: true });
+  process.stdout.write(
+    JSON.stringify(
+      {
+        workspaceRoot: WORKSPACE_ROOT,
+        sdkProtoDir,
+        gibsonLocalProtos,
+        // Both trees are required: buf generate reads them as two modules of
+        // one workspace, so a partial checkout cannot produce a comparable
+        // tree and must fall back to STRUCTURAL mode.
+        available: Boolean(sdkProtoDir && gibsonLocalProtos),
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+}
+
+if (PROBE) {
+  probe();
+} else {
+  generate();
+}
