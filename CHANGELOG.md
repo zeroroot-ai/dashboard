@@ -5,6 +5,21 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.118.0](https://github.com/zeroroot-ai/dashboard/compare/v0.117.2...v0.118.0) (2026-08-09)
+
+
+### Features
+
+* **missions:** rebuild the dead Checkpoints tab on the World snapshot ([#1013](https://github.com/zeroroot-ai/dashboard/issues/1013)) ([7984123](https://github.com/zeroroot-ai/dashboard/commit/79841231ef0230dfe8decf168e5ad4a3b9c4ffa8))
+
+
+### Bug Fixes
+
+* **api:** require CSRF on every mutating route, and guard it ([#1009](https://github.com/zeroroot-ai/dashboard/issues/1009)) ([7e6819d](https://github.com/zeroroot-ai/dashboard/commit/7e6819dcd46b40fef6e882354c0da035fac98ed2))
+* **dx:** resolve polyrepo siblings by search, not by path depth ([#1018](https://github.com/zeroroot-ai/dashboard/issues/1018)) ([505d7dd](https://github.com/zeroroot-ai/dashboard/commit/505d7dd2a68b2caf2bd7f41f8ae320bd178e6034)), closes [#1015](https://github.com/zeroroot-ai/dashboard/issues/1015)
+* **gen:** make the four freshness gates able to fail ([#1021](https://github.com/zeroroot-ai/dashboard/issues/1021)) ([3e13cca](https://github.com/zeroroot-ai/dashboard/commit/3e13ccacd40ed87116ddbb81f1dbb0744eba696f)), closes [#1019](https://github.com/zeroroot-ai/dashboard/issues/1019)
+* **signup:** read org readiness from zitadel_org_ready; drop the dead checkpoint browser ([#1020](https://github.com/zeroroot-ai/dashboard/issues/1020)) ([8ed83a8](https://github.com/zeroroot-ai/dashboard/commit/8ed83a8837298cae294619322c2bd075d64e7cd4))
+
 ## [0.117.2](https://github.com/zeroroot-ai/dashboard/compare/v0.117.1...v0.117.2) (2026-08-08)
 
 
