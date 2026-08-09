@@ -51,13 +51,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: github/codeql-action/init@v4.37.3
+      - uses: github/codeql-action/init@v4.37.6
         with:
           languages: javascript-typescript
           queries: security-extended
           config-file: .github/codeql-config.yml
 
-      - uses: github/codeql-action/analyze@v4.37.3
+      - uses: github/codeql-action/analyze@v4.37.6
         with:
           # Run the analysis but do NOT upload to the code-scanning API — that
           # upload needs paid GHAS on a private repo (gibson#974). Write the
