@@ -41,6 +41,14 @@ const GUARDS = [
   "check-lockfile-sync.mjs",
   "check-api-route-csrf.mjs",
   "check-proto-bindings-fresh.mjs",
+  // The four single-artifact freshness gates (dashboard#1019). They shared the
+  // "generator runs immediately before its own checker" defect, which made all
+  // four incapable of failing; their self-tests exist to keep that from
+  // recurring silently.
+  "check-plans-fresh.mjs",
+  "check-stripe-tiers-fresh.mjs",
+  "check-authz-registry-fresh.mjs",
+  "check-mission-schema-fresh.mjs",
 ];
 
 let failed = 0;

@@ -86,6 +86,22 @@ function generate() {
 const argv = process.argv.slice(2);
 const stdoutMode = argv.includes("--stdout");
 
+// --probe: report whether the SDK sibling is reachable, as JSON on stdout.
+// check-mission-schema-fresh.mjs uses this to decide between a full byte-diff
+// and a structural-only pass, so the generator that owns this path is the only
+// thing that has to know it. Same contract as `proto-generate.mjs --probe`.
+if (argv.includes("--probe")) {
+  const present = existsSync(SDK_SCHEMA);
+  process.stdout.write(
+    JSON.stringify(
+      { sources: { sdkSchema: present ? SDK_SCHEMA : null }, available: present },
+      null,
+      2,
+    ) + "\n",
+  );
+  process.exit(0);
+}
+
 if (!existsSync(SDK_SCHEMA)) {
   if (stdoutMode) {
     die(

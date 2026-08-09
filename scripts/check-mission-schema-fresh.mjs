@@ -1,150 +1,75 @@
 #!/usr/bin/env node
 /**
- * Build guard: verify that src/data/mission-definition.schema.json is in sync
- * with the SDK's authoritative artifact.
+ * Build guard: verify that the **committed**
+ * `src/data/mission-definition.schema.json` matches what
+ * `gen-mission-schema.mjs` produces from the SDK's authoritative artifact at
+ * `opensource/sdk/gen/mission-definition.schema.json`.
  *
- * Two modes depending on environment
- * -----------------------------------
+ * Until dashboard#1019 `prebuild` ran `gen-mission-schema.mjs` immediately
+ * before this gate, so the gate diffed the file the generator had just written
+ * against the generator, and could not fail. The generator no longer runs in
+ * `prebuild`; regeneration is an explicit `pnpm gen:mission-schema`.
  *
- * FULL (SDK sibling present at REPO_ROOT/opensource/sdk/gen/):
- *   Drives gen-mission-schema.mjs --stdout to produce the expected file, then
- *   diffs byte-for-byte against the committed file. Exits non-zero on
- *   discrepancy so CI fails fast when the SDK schema changes without a regen
- *   commit. This is the workstation and full-polyrepo-CI mode.
- *
- * STRUCTURAL (SDK sibling absent, dashboard-only CI):
- *   Cannot regenerate from source, so instead validates:
- *     1. src/data/mission-definition.schema.json exists and parses as JSON.
- *     2. The $comment field is present and starts with "DO NOT EDIT".
- *   This ensures the file has been processed by the generator at least once
- *   and has not been silently replaced with a hand-edited copy.
- *
- * There is no --skip / --permissive flag. Drift fails the build, period.
+ * Mechanics, modes and the no-escape-hatch stance live in
+ * `scripts/lib/freshness-gate.mjs`. This gate no longer resolves the SDK
+ * sibling itself (dashboard#1015 / #1018): it asks `gen-mission-schema.mjs
+ * --probe`, so the script that owns the path is the only one that knows it.
+ * The structural pass here additionally
+ * requires the artifact to parse as JSON and to carry the "DO NOT EDIT"
+ * `$comment` header, which is what proves it came out of the generator rather
+ * than out of an editor.
  *
  * Usage
  *   node scripts/check-mission-schema-fresh.mjs
- *
- * Resolution (full mode)
- *   Run `node scripts/gen-mission-schema.mjs` and commit
- *   src/data/mission-definition.schema.json alongside the SDK schema change.
+ *   node scripts/check-mission-schema-fresh.mjs --selftest
  *
  * Closes: zeroroot-ai/dashboard#165
+ * Fixes: zeroroot-ai/dashboard#1019
  */
 
-import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { resolveWorkspacePath } from "./lib/workspace-root.mjs";
 
-const SCRIPT_NAME = "check-mission-schema-fresh.mjs";
+import { main } from "./lib/freshness-gate.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, "..");
-
-// Sibling resolution searches upward for the artifact rather than counting
-// `..` segments off a rewound path. The depth counter missed the SDK sibling
-// from any worktree outside `<dashboard>/.worktrees/<name>`, which silently
-// downgraded this gate to STRUCTURAL mode instead of failing on drift.
-// dashboard#1015.
-
-const COMMITTED = resolve(
-  DASHBOARD_ROOT,
-  "src/data/mission-definition.schema.json",
-);
-const GENERATOR = resolve(__dirname, "gen-mission-schema.mjs");
-const SDK_SCHEMA_REL = "opensource/sdk/gen/mission-definition.schema.json";
-const SDK_SCHEMA =
-  resolveWorkspacePath(SDK_SCHEMA_REL, { from: DASHBOARD_ROOT })?.path ??
-  resolve(DASHBOARD_ROOT, SDK_SCHEMA_REL);
-
+const ARTIFACT = "src/data/mission-definition.schema.json";
 const DO_NOT_EDIT_PREFIX = "DO NOT EDIT";
 
-// --- read the committed file first (required in both modes) ---
-
-let committedRaw;
-try {
-  committedRaw = readFileSync(COMMITTED, "utf8");
-} catch (err) {
-  process.stderr.write(
-    `\n[${SCRIPT_NAME}] FAIL, cannot read committed schema at ${COMMITTED}: ${err.message}\n`,
-  );
-  process.stderr.write(
-    "Run: node scripts/gen-mission-schema.mjs\n",
-  );
-  process.exit(1);
+/** JSON syntax plus the generator's `$comment` marker, in one validator. */
+function validate(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (err) {
+    return `not valid JSON: ${err.message}`;
+  }
+  if (
+    typeof parsed.$comment !== "string" ||
+    !parsed.$comment.startsWith(DO_NOT_EDIT_PREFIX)
+  ) {
+    return `missing the "${DO_NOT_EDIT_PREFIX}" $comment header`;
+  }
+  return null;
 }
 
-// --- structural validation (always runs) ---
-
-let committedParsed;
-try {
-  committedParsed = JSON.parse(committedRaw);
-} catch (err) {
-  process.stderr.write(
-    `\n[${SCRIPT_NAME}] FAIL, ${COMMITTED} is not valid JSON: ${err.message}\n`,
-  );
-  process.stderr.write(
-    "Run: node scripts/gen-mission-schema.mjs\n",
-  );
-  process.exit(1);
-}
-
-if (
-  typeof committedParsed.$comment !== "string" ||
-  !committedParsed.$comment.startsWith(DO_NOT_EDIT_PREFIX)
-) {
-  process.stderr.write(
-    `\n[${SCRIPT_NAME}] FAIL, ${COMMITTED} is missing the "DO NOT EDIT" $comment header.\n`,
-  );
-  process.stderr.write(
-    'The file must be generated by scripts/gen-mission-schema.mjs, not hand-edited.\n',
-  );
-  process.stderr.write(
-    "Run: node scripts/gen-mission-schema.mjs\n",
-  );
-  process.exit(1);
-}
-
-// --- full byte-diff (only when SDK sibling is present) ---
-
-if (!existsSync(SDK_SCHEMA)) {
-  process.stdout.write(
-    `[${SCRIPT_NAME}] STRUCTURAL OK, SDK sibling not present at ${SDK_SCHEMA}; ` +
-      `validated $comment header only (dashboard-only CI mode).\n`,
-  );
-  process.exit(0);
-}
-
-let regenerated;
-try {
-  regenerated = execFileSync("node", [GENERATOR, "--stdout"], {
-    encoding: "utf8",
+main(
+  {
+    scriptName: "check-mission-schema-fresh.mjs",
+    artifact: ARTIFACT,
+    generator: resolve(__dirname, "gen-mission-schema.mjs"),
+    generatedMarker: DO_NOT_EDIT_PREFIX,
+    validate,
+    resolution: "pnpm gen:mission-schema",
     maxBuffer: 16 * 1024 * 1024,
-  });
-} catch (err) {
-  process.stderr.write(
-    `[${SCRIPT_NAME}] FAIL, generator errored: ${err.message}\n`,
-  );
-  process.exit(2);
-}
-
-if (committedRaw !== regenerated) {
-  process.stderr.write(
-    `\n[${SCRIPT_NAME}] FAIL, ${COMMITTED} is stale.\n`,
-  );
-  process.stderr.write(
-    "src/data/mission-definition.schema.json does not match the current SDK schema.\n",
-  );
-  process.stderr.write(
-    "Resolve by running: node scripts/gen-mission-schema.mjs\n",
-  );
-  process.stderr.write(
-    "Then commit src/data/mission-definition.schema.json alongside the SDK schema change.\n",
-  );
-  process.exit(1);
-}
-
-process.stdout.write(
-  `[${SCRIPT_NAME}] OK, mission-definition.schema.json is in sync with opensource/sdk\n`,
+    sampleFrom: resolve(DASHBOARD_ROOT, ARTIFACT),
+    syntheticSample: JSON.stringify(
+      { $comment: `${DO_NOT_EDIT_PREFIX}, generated.`, type: "object" },
+      null,
+      2,
+    ),
+  },
+  process.argv.slice(2),
+  DASHBOARD_ROOT,
 );

@@ -23,7 +23,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
-import { requireWorkspacePath } from "./lib/workspace-root.mjs";
+import { requireWorkspacePath, resolveWorkspacePath } from "./lib/workspace-root.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(HERE, "..");
@@ -43,8 +43,28 @@ function die(msg) {
   process.exit(1);
 }
 
+/**
+ * Report whether the canonical plan registry is reachable, as JSON on stdout.
+ * `check-stripe-tiers-fresh.mjs` uses this to decide between a full byte-diff
+ * and a structural-only pass, so the generator that owns this path is the only
+ * thing that has to know it. Same contract as `proto-generate.mjs --probe`.
+ */
+function probe() {
+  // Same upward search main() uses, but non-fatal: --probe asks "is this
+  // reachable?", so absence is an answer rather than an error. dashboard#1015.
+  const yaml = resolveWorkspacePath(PLANS_REL, { from: DASHBOARD_ROOT })?.path ?? null;
+  process.stdout.write(
+    JSON.stringify({ sources: { yaml }, available: Boolean(yaml) }, null, 2) + "\n",
+  );
+}
+
 function main() {
   const stdoutMode = process.argv.slice(2).includes("--stdout");
+
+  if (process.argv.slice(2).includes("--probe")) {
+    probe();
+    return;
+  }
 
   // Docker image builds skip regen and trust the committed stripe_gen.ts:
   // the polyrepo sibling deploy/helm/gibson-operators/files/plans.yaml is not in

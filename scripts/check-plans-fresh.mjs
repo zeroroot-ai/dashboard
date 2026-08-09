@@ -1,75 +1,52 @@
 #!/usr/bin/env node
 /**
- * Build guard: verify that src/generated/plans.ts is in sync with the current
- * deploy/helm/gibson-operators/files/plans.yaml (E4 fold, gibson#781 / ADR-0056).
+ * Build guard: verify that the **committed** `src/generated/plans.ts` matches
+ * what `gen-plans.mjs` produces from the canonical
+ * `enterprise/deploy/helm/gibson-operators/files/plans.yaml`.
  *
- * Drives gen-plans.mjs --stdout to produce the expected file, then diffs
- * byte-for-byte against the committed file. Exits non-zero on discrepancy
- * so CI fails fast when plans.yaml changes without a regen commit.
+ * Until dashboard#1019 `prebuild` ran `gen-plans.mjs` immediately before this
+ * gate, so the gate diffed the file the generator had just written against the
+ * generator. It could not fail, and it did not: `src/generated/plans.ts` sat
+ * committed with two taglines that `plans.yaml` had already superseded. The
+ * generator no longer runs in `prebuild`; regeneration is an explicit
+ * `pnpm gen:plans`.
+ *
+ * Mechanics, modes and the no-escape-hatch stance live in
+ * `scripts/lib/freshness-gate.mjs`.
+ *
+ * Usage
+ *   node scripts/check-plans-fresh.mjs
+ *   node scripts/check-plans-fresh.mjs --selftest
+ *
+ * Resolution
+ *   pnpm gen:plans, then commit src/generated/plans.ts alongside the
+ *   plans.yaml change.
  *
  * Spec: plans-and-quotas-simplification (R3.3 drift gate).
- *
- * Usage:
- *   node scripts/check-plans-fresh.mjs
- *
- * Resolution:
- *   Run `pnpm gen:plans` (or just `pnpm prebuild`) and commit
- *   src/generated/plans.ts alongside the plans.yaml change.
+ * Fixes: zeroroot-ai/dashboard#1019
  */
 
-import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const SCRIPT_NAME = "check-plans-fresh.mjs";
+import { main } from "./lib/freshness-gate.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, "..");
-const COMMITTED = resolve(DASHBOARD_ROOT, "src/generated/plans.ts");
-const GENERATOR = resolve(__dirname, "gen-plans.mjs");
+const ARTIFACT = "src/generated/plans.ts";
 
-if (process.env.SKIP_PLANS_FRESH_CHECK === "1") {
-  process.stdout.write(`[${SCRIPT_NAME}] SKIPPED, SKIP_PLANS_FRESH_CHECK=1\n`);
-  process.exit(0);
-}
-
-let committed;
-try {
-  committed = readFileSync(COMMITTED, "utf8");
-} catch (err) {
-  process.stderr.write(
-    `[${SCRIPT_NAME}] FAIL, cannot read committed plans.ts at ${COMMITTED}: ${err.message}\n`,
-  );
-  process.stderr.write("Run: pnpm gen:plans\n");
-  process.exit(1);
-}
-
-let regenerated;
-try {
-  regenerated = execFileSync("node", [GENERATOR, "--stdout"], {
-    encoding: "utf8",
+main(
+  {
+    scriptName: "check-plans-fresh.mjs",
+    artifact: ARTIFACT,
+    generator: resolve(__dirname, "gen-plans.mjs"),
+    generatedMarker: "// GENERATED FILE, do not edit.",
+    resolution: "pnpm gen:plans",
     maxBuffer: 16 * 1024 * 1024,
-  });
-} catch (err) {
-  process.stderr.write(
-    `[${SCRIPT_NAME}] FAIL, generator errored: ${err.message}\n`,
-  );
-  process.exit(2);
-}
-
-if (committed !== regenerated) {
-  process.stderr.write(`\n[${SCRIPT_NAME}] FAIL, ${COMMITTED} is stale.\n`);
-  process.stderr.write(
-    "src/generated/plans.ts does not match the current plans.yaml.\n",
-  );
-  process.stderr.write("Resolve by running: pnpm gen:plans\n");
-  process.stderr.write(
-    "Then commit src/generated/plans.ts alongside the plans.yaml change.\n",
-  );
-  process.exit(1);
-}
-
-process.stdout.write(
-  `[${SCRIPT_NAME}] OK, plans.ts is in sync with plans.yaml\n`,
+    sampleFrom: resolve(DASHBOARD_ROOT, ARTIFACT),
+    syntheticSample:
+      "// GENERATED FILE, do not edit.\nexport const plans = [];\n",
+  },
+  process.argv.slice(2),
+  DASHBOARD_ROOT,
 );

@@ -55,7 +55,7 @@ export const plans: readonly Plan[] = Object.freeze([
   {
     "id": "org",
     "displayName": "Org",
-    "tagline": "For security organisations running coverage across multiple AI surfaces",
+    "tagline": "For security organizations running coverage across multiple AI surfaces",
     "stripeProductId": "prod_UUghpmfCDlbOyn",
     "trialDays": 14,
     "pricing": {
@@ -83,7 +83,7 @@ export const plans: readonly Plan[] = Object.freeze([
   {
     "id": "enterprise-deploy",
     "displayName": "Enterprise (On-Prem & Federal)",
-    "tagline": "Self-hosted in your VPC, on-prem datacentre, or air-gapped enclave",
+    "tagline": "Run the full platform inside your own boundary",
     "stripeProductId": null,
     "pricing": {
       "contactSales": true

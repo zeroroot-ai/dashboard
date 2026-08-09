@@ -1,52 +1,46 @@
 #!/usr/bin/env node
 /**
- * Build guard: verify that src/lib/billing/stripe_gen.ts is in sync with
- * plans.yaml. Spec plans-and-quotas-simplification R3.3 / R8.
+ * Build guard: verify that the **committed** `src/lib/billing/stripe_gen.ts`
+ * matches what `gen-stripe-tiers.mjs` produces from the canonical
+ * `enterprise/deploy/helm/gibson-operators/files/plans.yaml`.
  *
- * Drives gen-stripe-tiers.mjs --stdout and diffs against the committed
- * file. Non-zero exit on drift.
+ * Until dashboard#1019 `prebuild` ran `gen-stripe-tiers.mjs` immediately
+ * before this gate, so the gate diffed the file the generator had just written
+ * against the generator, and could not fail. The generator no longer runs in
+ * `prebuild`; regeneration is an explicit `pnpm gen:stripe-tiers`.
+ *
+ * Mechanics, modes and the no-escape-hatch stance live in
+ * `scripts/lib/freshness-gate.mjs`.
+ *
+ * Usage
+ *   node scripts/check-stripe-tiers-fresh.mjs
+ *   node scripts/check-stripe-tiers-fresh.mjs --selftest
+ *
+ * Spec: plans-and-quotas-simplification R3.3 / R8.
+ * Fixes: zeroroot-ai/dashboard#1019
  */
 
-import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const SCRIPT_NAME = "check-stripe-tiers-fresh.mjs";
+import { main } from "./lib/freshness-gate.mjs";
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, "..");
-const COMMITTED = resolve(DASHBOARD_ROOT, "src/lib/billing/stripe_gen.ts");
-const GENERATOR = resolve(__dirname, "gen-stripe-tiers.mjs");
+const ARTIFACT = "src/lib/billing/stripe_gen.ts";
 
-if (process.env.SKIP_STRIPE_TIERS_FRESH_CHECK === "1") {
-  process.stdout.write(`[${SCRIPT_NAME}] SKIPPED\n`);
-  process.exit(0);
-}
-
-let committed;
-try {
-  committed = readFileSync(COMMITTED, "utf8");
-} catch (err) {
-  process.stderr.write(`[${SCRIPT_NAME}] FAIL, cannot read ${COMMITTED}: ${err.message}\n`);
-  process.stderr.write("Run: node scripts/gen-stripe-tiers.mjs\n");
-  process.exit(1);
-}
-
-let regenerated;
-try {
-  regenerated = execFileSync("node", [GENERATOR, "--stdout"], {
-    encoding: "utf8",
+main(
+  {
+    scriptName: "check-stripe-tiers-fresh.mjs",
+    artifact: ARTIFACT,
+    generator: resolve(__dirname, "gen-stripe-tiers.mjs"),
+    generatedMarker: "// GENERATED FILE, do not edit.",
+    resolution: "pnpm gen:stripe-tiers",
     maxBuffer: 16 * 1024 * 1024,
-  });
-} catch (err) {
-  process.stderr.write(`[${SCRIPT_NAME}] FAIL, generator errored: ${err.message}\n`);
-  process.exit(2);
-}
-
-if (committed !== regenerated) {
-  process.stderr.write(`\n[${SCRIPT_NAME}] FAIL, ${COMMITTED} is stale.\n`);
-  process.stderr.write("Run: node scripts/gen-stripe-tiers.mjs\n");
-  process.exit(1);
-}
-
-process.stdout.write(`[${SCRIPT_NAME}] OK, stripe_gen.ts is in sync with plans.yaml\n`);
+    sampleFrom: resolve(DASHBOARD_ROOT, ARTIFACT),
+    syntheticSample:
+      "// GENERATED FILE, do not edit.\nexport type BillingTier = never;\n",
+  },
+  process.argv.slice(2),
+  DASHBOARD_ROOT,
+);
