@@ -6,70 +6,53 @@
  * Forwards the following daemon-derived events to the browser as named
  * SSE frames:
  *
- *   - `event: checkpoint` , a new checkpoint has been captured for this
- *                            mission. Payload: a `CheckpointSummary` JSON
- *                            shape (matches `gibson.daemon.v1.CheckpointSummary`).
- *                            Consumed by `<CheckpointTimeline />` to
- *                            prepend timeline rows without a full re-fetch
- *                            (mission-checkpointing R17.7).
  *   - `event: status`     , mission status transition (pending → running
  *                            → paused → completed / failed / stopped).
  *                            Payload: { missionId, status }.
- *   - `event: rewind`     , the daemon emitted a `mission.rewind.completed`
- *                            audit event for this mission. Payload mirrors
- *                            the audit event's metadata fields.
+ *   - `event: log`        , one mission log line, while the mission runs.
+ *                            Payload: { timestamp, level, message, component }.
  *   - `event: node`       , a mission DAG node changed lifecycle phase.
  *                            Payload: { missionId, nodeId, phase } where
  *                            phase is "started" | "completed" | "failed".
  *                            Consumed by `<MissionFlowTab />` to paint the
  *                            flow-chart run overlay live (gibson#604).
  *
- * Implementation note: the status / checkpoint / log frames use a short-interval
- * poll over the unary `DaemonService.ListCheckpoints` and `ListMissions` RPCs
- * (tenant-scoped via the userClient) and emit diffs. The `node` frames instead
- * consume the daemon's server-streaming `DaemonService.Subscribe` RPC, filtered
- * to this mission's `node.*` events, the orchestrator publishes those to the
- * tenant Redis Stream backing Subscribe. Both run concurrently against the same
- * SSE controller.
+ * This bridge used to also emit `event: checkpoint` frames, polled off
+ * `DaemonService.ListCheckpoints` for the checkpoint browser. gibson#1117
+ * removed the checkpoint store and gibson#1321 removed the hollow RPCs that
+ * survived it, so both the poll and the frame are gone; mission-state-at-a-tick
+ * is now the World snapshot surface (`WorldService.GetFrameAt`), which reads
+ * its own route. Nothing consumed the frame after the browser was retired.
+ *
+ * Implementation note: the status / log frames use a short-interval poll over
+ * the unary `DaemonService.ListMissions` RPC (tenant-scoped via the userClient)
+ * plus the LogsService tail, and emit diffs. The `node` frames instead consume
+ * the daemon's server-streaming `DaemonService.Subscribe` RPC, filtered to this
+ * mission's `node.*` events, the orchestrator publishes those to the tenant
+ * Redis Stream backing Subscribe. Both run concurrently against the same SSE
+ * controller.
  *
  * Security model:
  *   - The userClient flows through Envoy + ext-authz + SPIFFE-mTLS per
  *     dashboard `CLAUDE.md`; no direct daemon gRPC channel.
- *   - The downstream `ListCheckpoints` RPC is gated by the FGA
- *     `mission#viewer` relation (mission-checkpointing R13.2) so a
- *     non-viewer caller sees an empty stream + a one-time error frame.
  *   - We do NOT propagate client `request.signal` aborts upstream, when
  *     the browser disconnects we just stop the polling loop. The
  *     underlying daemon RPC has no in-flight stream to cancel.
- *
- * Spec: mission-checkpointing R17.7, week-4-handlers-ui-e2e §4 task 43
- *       (live SSE listener for the checkpoint timeline).
  */
 
 import { NextRequest } from "next/server";
-import { ConnectError, Code } from "@connectrpc/connect";
-import { create } from "@bufbuild/protobuf";
 
 import { logger } from "@/src/lib/logger";
 import { getServerSession } from "@/src/lib/auth";
 import { requireActiveTenant, activeTenantApiResponse } from "@/src/lib/auth/active-tenant";
 import { queryMissionLogs } from "@/src/lib/gibson-client/logs";
 import { listMissions, userClient } from "@/src/lib/gibson-client";
-import {
-  DaemonService,
-  ListCheckpointsRequestSchema,
-  ListCheckpointsRequest_Order,
-  type CheckpointSummary,
-} from "@/src/gen/gibson/daemon/v1/daemon_pb";
+import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 
 // Polling cadence for the underlying daemon RPCs. 3s strikes a balance
-// between dashboard freshness and daemon load, checkpoints capture at
-// the orchestrator's super-step boundary (default ≥ 30s cadence per
-// `checkpoint/policy.go:218`), so any 3s poll comfortably observes
-// every new checkpoint exactly once.
+// between dashboard freshness and daemon load.
 const POLL_INTERVAL_MS = 3000;
 const HEARTBEAT_INTERVAL_MS = 15000;
-const LIST_PAGE_SIZE = 50;
 
 // Nanoseconds-per-millisecond, as a BigInt. The tsconfig target is ES2017,
 // which disallows BigInt literals (`1_000_000n`), so we construct via BigInt().
@@ -90,37 +73,6 @@ function sseFrame(event: string, data: unknown, id?: string): string {
   lines.push("");
   lines.push("");
   return lines.join("\n");
-}
-
-/**
- * Produces a JSON-serialisable shape for a `CheckpointSummary`. The
- * proto bindings use bigint + Timestamp objects; the dashboard
- * timeline reconstructs the proto shape on the client side, so we
- * forward fields verbatim modulo bigint→string conversion to keep
- * `JSON.stringify` happy.
- */
-function summaryToWire(summary: CheckpointSummary): Record<string, unknown> {
-  return {
-    checkpointId: summary.checkpointId,
-    missionId: summary.missionId,
-    superStep: summary.superStep.toString(),
-    capturedAt: summary.capturedAt
-      ? {
-          seconds: summary.capturedAt.seconds.toString(),
-          nanos: summary.capturedAt.nanos,
-        }
-      : undefined,
-    sizeBytes: summary.sizeBytes.toString(),
-    source: summary.source,
-    inFlightIdempotency: summary.inFlightIdempotency,
-    parallelGroupId: summary.parallelGroupId,
-    expiresAt: summary.expiresAt
-      ? {
-          seconds: summary.expiresAt.seconds.toString(),
-          nanos: summary.expiresAt.nanos,
-        }
-      : undefined,
-  };
 }
 
 export async function GET(
@@ -180,7 +132,6 @@ export async function GET(
         }
       }, HEARTBEAT_INTERVAL_MS);
 
-      const seenCheckpointIds = new Set<string>();
       let lastStatus: string | null = null;
       let cancelled = false;
       let seq = 0;
@@ -193,7 +144,7 @@ export async function GET(
       // live-only. The daemon derives the tenant scope server-side
       // (dashboard#811); the dashboard never talks to Loki directly. Any RPC
       // failure is swallowed below so log frames are best-effort and never
-      // crash the status/checkpoint bridge.
+      // crash the status bridge.
       let lastLogTimestampNs = BigInt(Date.now()) * NS_PER_MS;
 
       // Aborts the daemon node-event subscription (below) on teardown so the
@@ -218,7 +169,7 @@ export async function GET(
       // ("checked lines") in real time as a run progresses (gibson#604).
       //
       // Best-effort and independent of the poll loop: if Subscribe is
-      // unavailable the status/checkpoint bridge keeps working and the overlay
+      // unavailable the status bridge keeps working and the overlay
       // simply stays static. We run it as a detached pump rather than inside
       // `tick` because Subscribe is a long-lived server stream, not a unary
       // poll. The `for await` yields control between frames, so it shares the
@@ -266,84 +217,9 @@ export async function GET(
         }
       })();
 
-      // Single poll iteration: fetch the latest checkpoint page +
-      // mission status + emit diffs.
+      // Single poll iteration: read the mission status + tail its logs and
+      // emit diffs.
       const tick = async () => {
-        if (cancelled) return;
-
-        // ---- checkpoint diffs ----
-        try {
-          const req = create(ListCheckpointsRequestSchema, {
-            missionId,
-            pageSize: LIST_PAGE_SIZE,
-            pageToken: "",
-            order: ListCheckpointsRequest_Order.NEWEST_FIRST,
-          });
-          const resp = await userClient(DaemonService).listCheckpoints(req);
-
-          // First-pass population: load all currently-known checkpoint
-          // IDs into the seen set without emitting events. This avoids
-          // a thunderclap of "checkpoint" frames on initial connection.
-          const initialPass = seenCheckpointIds.size === 0 && lastStatus === null;
-          if (initialPass) {
-            for (const cp of resp.checkpoints) {
-              seenCheckpointIds.add(cp.checkpointId);
-            }
-          } else {
-            // Daemon returns newest-first; emit oldest-first so the
-            // client's prepend-on-event handler renders rows in
-            // capture order.
-            for (let i = resp.checkpoints.length - 1; i >= 0; i--) {
-              const cp = resp.checkpoints[i];
-              if (!seenCheckpointIds.has(cp.checkpointId)) {
-                seenCheckpointIds.add(cp.checkpointId);
-                try {
-                  controller.enqueue(
-                    encoder.encode(
-                      sseFrame("checkpoint", summaryToWire(cp), String(seq++)),
-                    ),
-                  );
-                } catch {
-                  stopPolling();
-                  return;
-                }
-              }
-            }
-          }
-        } catch (err) {
-          // PermissionDenied is a hard stop, close the stream after
-          // forwarding the error so the client can surface a toast.
-          if (err instanceof ConnectError && err.code === Code.PermissionDenied) {
-            try {
-              controller.enqueue(
-                encoder.encode(
-                  sseFrame("error", {
-                    missionId,
-                    code: "permission_denied",
-                    message: "Permission denied",
-                  }),
-                ),
-              );
-            } catch {
-              // ignore; client may have disconnected
-            }
-            logger.warn(baseLog, "ListCheckpoints permission denied; closing bridge");
-            stopPolling();
-            try {
-              controller.close();
-            } catch {
-              // already closed
-            }
-            return;
-          }
-          // Transient errors: log and keep polling. Repeated failures
-          // continue to surface via pino but do not crash the stream.
-          logger.warn(
-            { ...baseLog, err },
-            "ListCheckpoints poll failed; will retry",
-          );
-        }
-
         if (cancelled) return;
 
         // ---- status diffs ----
@@ -389,7 +265,7 @@ export async function GET(
         // Only tail while the mission is actively running. When status leaves
         // `running` this branch is skipped, so log frames naturally stop. The
         // tail is best-effort: any RPC error (including an unavailable log
-        // backend) is swallowed so the status/checkpoint bridge keeps polling.
+        // backend) is swallowed so the status bridge keeps polling.
         // The daemon LogsService derives the tenant scope server-side
         // (dashboard#811); the dashboard never queries Loki directly. This
         // branch is exercised by this route's __tests__ suite (queryMissionLogs
@@ -464,8 +340,9 @@ export async function GET(
         }
       };
 
-      // Initial tick immediately (initial-pass populates the seen set
-      // without emitting events) followed by the recurring poll loop.
+      // Initial tick immediately (it seeds lastStatus, so the first observed
+      // status is a baseline rather than a transition) followed by the
+      // recurring poll loop.
       await tick();
 
       const interval = setInterval(() => {

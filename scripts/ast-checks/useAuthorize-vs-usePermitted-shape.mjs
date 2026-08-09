@@ -59,7 +59,6 @@ const ALLOWLIST = new Set([
   "src/lib/auth/__tests__/use-authorize.test.tsx",
   // Components that pre-date the walker. Drain tracked at the follow-up
   // issue created by slice 3.8's PR body.
-  "src/components/mission/CheckpointTimeline.tsx",
   "src/components/secrets/SecretDetail.tsx",
   "src/components/secrets/SecretsList.tsx",
   "src/components/secrets-backend/SecretsBackendForm.tsx",
