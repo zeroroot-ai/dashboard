@@ -54,7 +54,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fromBinary } from '@bufbuild/protobuf';
 import { FileDescriptorSetSchema } from '@bufbuild/protobuf/wkt';
-import { resolveWorkspacePath } from './lib/workspace-root.mjs';
+import { findWorkspaceRoot, resolveWorkspacePath } from './lib/workspace-root.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, '..');
@@ -98,7 +98,7 @@ const AUTHZ_EXTENSION_FIELD = 50001;
 // Workspace synthesis (verbatim pattern from proto-generate.mjs)
 // ---------------------------------------------------------------------------
 
-function resolveSdkProtoDir() {
+function resolveSdkProtoDir({ soft = false } = {}) {
   // Prefer the sibling checkout at opensource/sdk when present, it
   // tracks main and avoids the "gibson go.mod pin lags one minor
   // version behind the latest sdk release" hazard. Mirrors the pattern
@@ -124,6 +124,9 @@ function resolveSdkProtoDir() {
     if (!dir) throw new Error('empty');
     return resolve(dir, 'api/proto');
   } catch (err) {
+    // soft: --probe asks "is this reachable?", so absence is an answer, not a
+    // fatality. Mirrors proto-generate.mjs's soft resolution.
+    if (soft) return null;
     process.stderr.write(
       '[gen-authz-registry] FATAL: failed to resolve github.com/zeroroot-ai/sdk.\n' +
         `  Tried sibling checkout at: ${SDK_SIBLING}\n` +
@@ -136,10 +139,12 @@ function resolveSdkProtoDir() {
   }
 }
 
-function ensureGibsonLocalProtos() {
+function ensureGibsonLocalProtos({ soft = false } = {}) {
   try {
     execSync(`stat ${GIBSON_LOCAL_PROTOS}`, { stdio: 'pipe' });
+    return true;
   } catch (err) {
+    if (soft) return false;
     process.stderr.write(
       '[gen-authz-registry] FATAL: gibson daemon-local protos not found at:\n' +
         `    ${GIBSON_LOCAL_PROTOS}\n` +
@@ -149,6 +154,31 @@ function ensureGibsonLocalProtos() {
     );
     process.exit(1);
   }
+}
+
+/**
+ * Report whether both proto trees are reachable, as JSON on stdout.
+ * `check-authz-registry-fresh.mjs` uses this to decide between a full
+ * byte-diff and a structural-only pass, so the generator that owns these paths
+ * is the only thing that has to know them. Same contract, and the same
+ * both-trees-or-nothing rule, as `proto-generate.mjs --probe`.
+ */
+function probe() {
+  const gibsonLocalProtos = ensureGibsonLocalProtos({ soft: true })
+    ? GIBSON_LOCAL_PROTOS
+    : null;
+  const sdkProtoDir = resolveSdkProtoDir({ soft: true });
+  process.stdout.write(
+    JSON.stringify(
+      {
+        workspaceRoot: findWorkspaceRoot({ from: DASHBOARD_ROOT }),
+        sources: { sdkProtoDir, gibsonLocalProtos },
+        available: Boolean(sdkProtoDir && gibsonLocalProtos),
+      },
+      null,
+      2,
+    ) + '\n',
+  );
 }
 
 /**
@@ -495,17 +525,26 @@ function generateTS(entries) {
 function main() {
   const stdout = process.argv.includes('--stdout');
 
+  if (process.argv.includes('--probe')) {
+    probe();
+    return;
+  }
+
   // SKIP_GEN_AUTHZ_REGISTRY=1: trust the committed src/gen/authz/registry.ts
   // and skip regeneration. Same pattern as gen-plans.mjs's SKIP_GEN_PLANS.
   // Used in container builds where the SDK + gibson source trees are not
   // present. The host build runs the full regen + drift gate, so trusting
   // the committed file inside the container is safe.
-  if (process.env.SKIP_GEN_AUTHZ_REGISTRY === '1' && existsSync(OUTPUT_PATH)) {
-    if (!stdout) {
-      process.stdout.write(
-        `[gen-authz-registry] SKIP_GEN_AUTHZ_REGISTRY=1, using pre-generated ${OUTPUT_PATH}\n`,
-      );
-    }
+  //
+  // Never honoured in --stdout mode: that mode exists for the drift gate,
+  // which needs real generator output. Returning early there would emit an
+  // empty capture and the gate would read it as drift. (gen-plans.mjs guards
+  // its SKIP the same way; this one did not, and would have started lying the
+  // moment the gate's own SKIP escape was removed in dashboard#1019.)
+  if (!stdout && process.env.SKIP_GEN_AUTHZ_REGISTRY === '1' && existsSync(OUTPUT_PATH)) {
+    process.stdout.write(
+      `[gen-authz-registry] SKIP_GEN_AUTHZ_REGISTRY=1, using pre-generated ${OUTPUT_PATH}\n`,
+    );
     return;
   }
 

@@ -31,8 +31,10 @@
  * source of truth and the dashboard; no other TS file should parse the YAML
  * directly.
  *
- * Runs in the `prebuild` npm hook. Exits with a non-zero status on any failure
- * so the build fails loudly rather than producing stale types.
+ * Explicitly invoked (`pnpm gen:plans`), NOT part of `prebuild`. Putting it
+ * back into prebuild would make check-plans-fresh.mjs diff this script's
+ * output against this script's output; see dashboard#1019.
+ * Exits with a non-zero status on any failure so a bad regen is loud.
  *
  * Schema simplified by spec plans-and-quotas-simplification:
  *   - Four plan ids: team, org, enterprise, enterprise-deploy
@@ -45,7 +47,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
-import { requireWorkspacePath } from "./lib/workspace-root.mjs";
+import { requireWorkspacePath, resolveWorkspacePath } from "./lib/workspace-root.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(HERE, "..");
@@ -184,10 +186,52 @@ async function loadRemote() {
   };
 }
 
+/**
+ * Report whether the canonical plan registry is reachable, as JSON on stdout.
+ * `check-plans-fresh.mjs` uses this to decide between a full byte-diff and a
+ * structural-only pass, so the generator that owns these paths is the only
+ * thing that has to know them. Same contract as `proto-generate.mjs --probe`.
+ */
+function probe(source) {
+  // Remote mode fetches from GitHub, so the sibling clone is irrelevant; the
+  // sources are "available" whenever a token is present to fetch them with.
+  if (source === "remote") {
+    process.stdout.write(
+      JSON.stringify(
+        {
+          mode: "remote",
+          sources: { remote: `${REMOTE_REPO}@${process.env.PLANS_REF || "main"}` },
+          available: Boolean(process.env.GITHUB_TOKEN),
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+    return;
+  }
+  // Same upward search loadLocal() uses, but non-fatal: --probe asks "is this
+  // reachable?", so absence is an answer rather than an error. dashboard#1015.
+  const yaml = resolveWorkspacePath(PLANS_REL, { from: DASHBOARD_ROOT })?.path ?? null;
+  const schema =
+    resolveWorkspacePath(PLANS_SCHEMA_REL, { from: DASHBOARD_ROOT })?.path ?? null;
+  process.stdout.write(
+    JSON.stringify(
+      { mode: "local", sources: { yaml, schema }, available: Boolean(yaml && schema) },
+      null,
+      2,
+    ) + "\n",
+  );
+}
+
 async function main() {
   const argv = process.argv.slice(2);
   const stdoutMode = argv.includes("--stdout");
   const source = resolveSource(argv);
+
+  if (argv.includes("--probe")) {
+    probe(source);
+    return;
+  }
 
   if (!stdoutMode && process.env.SKIP_GEN_PLANS === "1" && existsSync(OUTPUT)) {
     // Diagnostic to stderr so --stdout consumers never see it (defense in

@@ -65,47 +65,33 @@ ENV AUTH_SECRET="build-placeholder"
 ENV NEXTAUTH_SECRET="build-placeholder"
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 
-# gen-plans.mjs reads the canonical plans.yaml + plans.schema.json from the
-# polyrepo sibling deploy/helm/gibson-operators/files/ (open-core relocation,
-# gibson#915 / ADR-0050: #915 ripped billing/plans out of OSS gibson; deploy is
-# now the canonical source). That sibling is not in the Docker build context, so
-# — exactly like gen-stripe-tiers below — we skip the regen and trust the
-# committed src/generated/plans.ts. The workstation drift gate
-# (check-plans-fresh.mjs, run via `pnpm prebuild` against the deploy sibling)
-# keeps that file honest. No cross-repo build-time fetch / token needed.
-ENV SKIP_GEN_PLANS=1
+# No SKIP_GEN_* / SKIP_*_FRESH_CHECK envs any more (dashboard#1019).
+#
+# `prebuild` used to run each generator immediately before its own freshness
+# gate, so every gate diffed the generator's output against the generator's
+# output and could never fail. The generators are out of `prebuild` now, and
+# the four gates (plans, stripe tiers, authz registry, mission schema) compare
+# the COMMITTED artifact against freshly generated output.
+#
+# The polyrepo siblings those generators read — deploy/helm/gibson-operators/
+# files/, opensource/sdk/, enterprise/platform/gibson/ — are still absent from
+# this build context. The gates now discover that by asking each generator
+# `--probe`, and degrade to their STRUCTURAL pass: the committed artifact must
+# exist, be non-empty, parse, and carry its generator's header. That much is
+# verified here; the byte-diff happens on the workstation and in polyrepo CI.
+# Being told to look away is no longer an option, which is the point.
+#
 # check-dashboard-rbac-minimal.mjs runs `helm template` to diff chart RBAC.
 # helm is not installed in this Node.js image; skip it here — the check runs
 # on the dev host via `npm run prebuild` before pushing. The underlying chart
 # RBAC is still enforced by the allowlist at commit time.
 # Spec: signup-zitadel-permissions-fix (Docker build fix for auth-resolution-hardening).
 ENV SKIP_DASHBOARD_RBAC_CHECK=1
-# gen-authz-registry.mjs walks the SDK + gibson proto trees via workspace
-# synthesis (see scripts/gen-authz-registry.mjs and proto-generate.mjs). Those
-# trees are sibling repos outside this Dockerfile's build context, and the
-# script needs `go list -m` against gibson's go.mod to find the SDK. Neither
-# is available in the node:20-alpine builder. The host build runs the full
-# regen + drift gate via `pnpm prebuild`; inside the container we consume the
-# committed src/gen/authz/registry.ts.
-# Spec: cross-repo-cohesion-fixes Requirement 2.
-ENV SKIP_GEN_AUTHZ_REGISTRY=1
-ENV SKIP_AUTHZ_REGISTRY_CHECK=1
-
-# gen-plans is skipped above (committed plans.ts is trusted at image-build
-# time); its freshness drift gate (check-plans-fresh.mjs) is a workstation-only
-# consistency check that needs the deploy sibling, so skip it here too.
-ENV SKIP_PLANS_FRESH_CHECK=1
-# gen-stripe-tiers.mjs reads the polyrepo sibling plans.yaml directly; that
-# path is not in the build context. The committed src/lib/billing/stripe_gen.ts
-# is the source of truth at image-build time. The workstation drift gate
-# (check-stripe-tiers-fresh.mjs) keeps that file honest.
-ENV SKIP_GEN_STRIPE_TIERS=1
-ENV SKIP_STRIPE_TIERS_FRESH_CHECK=1
 
 # Build the standalone application. All sibling-sourced generated files
-# (plans.ts, stripe_gen.ts, authz registry, proto bindings) are committed and
-# trusted at image-build time via the SKIP_* envs above, so the build performs
-# no cross-repo fetch. The `ghtoken` BuildKit secret is mounted non-required for
+# (plans.ts, stripe_gen.ts, authz registry, proto bindings) are committed, and
+# the freshness gates verify them structurally here (see the note above), so the
+# build performs no cross-repo fetch. The `ghtoken` BuildKit secret is mounted non-required for
 # backward compatibility (any future build-time fetch can read it via
 # GITHUB_TOKEN); the build no longer fails when it is absent.
 RUN --mount=type=secret,id=ghtoken,target=/run/secrets/ghtoken,required=false \

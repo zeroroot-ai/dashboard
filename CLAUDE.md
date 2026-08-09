@@ -9,6 +9,7 @@ This file documents conventions specific to the `zeroroot-ai/dashboard` reposito
 - This is a **Shadcn UI Kit** template. Do not touch pages/components that are unrelated to the Gibson product surface, the template pages are intentionally untouched.
 - Dashboard → daemon always goes through **Envoy + ext_authz**. Never open a direct gRPC channel to `:50051` / `:50002` or use `GIBSON_DAEMON_ADDRESS`. The guard script `scripts/check-no-direct-daemon-grpc.mjs` will fail the build if you do.
 - `pnpm prebuild` runs a chain of policy-guard scripts. Do not disable them. Fix the code instead.
+- **`prebuild` never runs a generator.** It runs the freshness *gates* only, so a stale committed artifact fails the build instead of being silently rewritten. Regeneration is explicit: `pnpm gen:plans`, `pnpm gen:stripe-tiers`, `pnpm gen:authz`, `pnpm gen:mission-schema`, `pnpm proto:generate`. Putting a `gen-*` step back into `prebuild` re-creates dashboard#1019, where four gates diffed the generator's output against the generator's output and none of them could fail.
 - **No hardcoded colors anywhere under `app/**` or `components/**`.** Every color goes through a token declared in `app/globals.css`. The guard `scripts/check-no-hardcoded-colors.mjs` rejects tailwind palette utilities (`text-emerald-*`, `bg-zinc-*`), tailwind arbitrary-value colors (`bg-[#...]`, `text-[oklch(...)]`), black/white utilities (`bg-white`, `text-black`), inline-style colors, and raw `#...`/`oklch(...)`/`rgb(...)`/`hsl(...)` in `.css` files. Two files are exempt because they declare the token system itself: `app/globals.css`, `app/themes.css`. See the design-system guide below.
 - **Customer-facing docs name product capabilities, not vendors.** `content/docs/**/*.mdx` must not mention Zitadel, OpenFGA / FGA, Envoy, ext-authz, jwt_authn, JWKS, x-gibson-identity-*, Langfuse, SPIFFE / SPIRE, Neo4j, CNPG, ArgoCD, cert-manager, ESO, OPA, or "Gibson-hosted Vault". Write product language instead, "Gibson identity service", "Gibson permissions", "Gibson Traces", "Gibson-managed secrets storage". See the Customer terminology section below; full deny-list ↔ replacement table at [docs.git → repos/dashboard/customer-doc-terminology.md](https://github.com/zeroroot-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md). Internal developer docs at `enterprise/platform/dashboard/docs/*.md` and every `CLAUDE.md` are intentionally exempt.
 
@@ -104,8 +105,11 @@ workspace. Exits with a clear error if the sibling is absent.
 - When the SDK sibling is present: regenerates in memory and byte-diffs against
   the committed file. Fails on any drift.
 - When the SDK sibling is absent (dashboard-only CI): validates that the
-  committed file is valid JSON with the `$comment` header present.
+  committed file exists, is non-empty, is valid JSON, and carries the
+  `$comment` header. A deleted or emptied artifact fails here too.
 - No `--skip` / `--permissive` flag exists. Drift fails the build, period.
+- The generator does NOT run in `prebuild` (dashboard#1019). See the shared
+  freshness-gate section below.
 
 When the SDK schema changes: run `pnpm gen:mission-schema` and commit
 `src/data/mission-definition.schema.json` alongside the SDK change.
@@ -219,6 +223,52 @@ The paydown for the six landed entries is the one-shot regen that follows
 gibson#1329 (checkpoint-RPC retirement, sdk v0.159.0); regenerating before it
 lands would just bake in output that is about to change again.
 
+## Single-artifact freshness gates (dashboard#1019)
+
+Four committed artifacts are generated from a canonical upstream in a sibling
+repo, and each has a gate in `pnpm prebuild`:
+
+| Artifact | Upstream | Gate | Regenerate |
+|---|---|---|---|
+| `src/generated/plans.ts` | `enterprise/deploy/helm/gibson-operators/files/plans.yaml` | `check-plans-fresh.mjs` | `pnpm gen:plans` |
+| `src/lib/billing/stripe_gen.ts` | the same `plans.yaml` | `check-stripe-tiers-fresh.mjs` | `pnpm gen:stripe-tiers` |
+| `src/gen/authz/registry.ts` | SDK + gibson daemon-local protos | `check-authz-registry-fresh.mjs` | `pnpm gen:authz` |
+| `src/data/mission-definition.schema.json` | `opensource/sdk/gen/mission-definition.schema.json` | `check-mission-schema-fresh.mjs` | `pnpm gen:mission-schema` |
+
+All four share one implementation, `scripts/lib/freshness-gate.mjs`. Read that
+file before touching any of them; the gate scripts themselves are configuration.
+
+```bash
+pnpm check:plans          # selftest, then the real check
+pnpm check:stripe-tiers
+pnpm check:authz-registry
+pnpm check:mission-schema
+```
+
+Rules that are not negotiable, because breaking each of them is exactly how
+these four gates spent months reporting green on real drift:
+
+- **Never put a `gen-*` step into `prebuild`.** A generator that runs
+  immediately before its own gate makes the gate diff the generator's output
+  against the generator's output. That was dashboard#1019: `plans.ts` sat
+  committed with two superseded taglines and no build ever said so.
+- **The gate reads the committed bytes and generates out-of-tree.** Generation
+  goes to a `--stdout` capture, never to the working tree.
+- **No `--skip`, no `SKIP_*` env.** Source availability is discovered by asking
+  the generator `--probe` (the contract `proto-generate.mjs --probe` set), not
+  by being told to look away. Absent sources degrade to the STRUCTURAL pass,
+  which still requires the artifact to exist, be non-empty, parse, and carry
+  its generator's header.
+- **A missing artifact is drift, not an exemption.** A gate that passes on a
+  deleted file is the same bug in a different costume.
+- **Every gate is registered in `scripts/check-guard-selftests.mjs`** and proves
+  on every build that it rejects drift, deletion, emptiness, a stripped
+  generator header, and a generator that emits nothing.
+
+Adding a fifth artifact of this shape means adding a config, not a script:
+give the generator a `--probe`, then call `main()` from
+`scripts/lib/freshness-gate.mjs` and register the gate in the self-test list.
+
 ## Frontend authz
 
 ### Overview
@@ -240,17 +290,17 @@ enterprise/platform/gibson/internal/server/daemon/api/**/*.proto (gibson daemon-
   └─ (gibson.auth.v1.authz) extension on each method
        │
        ▼
-scripts/gen-authz-registry.mjs    ← runs as part of pnpm prebuild
+scripts/gen-authz-registry.mjs    ← explicit: pnpm gen:authz
        │
        ▼
-src/gen/authz/registry.ts         ← committed, regenerated on every build
+src/gen/authz/registry.ts         ← committed; prebuild GATES it, never rewrites it
 ```
 
 `gen-authz-registry.mjs` invokes `buf build` against BOTH module directories to produce a single FileDescriptorSet, walks every service method, decodes the authz annotation, and emits a TypeScript module with the unified `AuthRegistry` record. Customer-callable `DaemonService` RPCs and admin `gibson.tenant.v1.*` RPCs land in the same registry; the FGA relation (`member`/`can_use` vs `admin`/`writer`) distinguishes them.
 
-`scripts/check-authz-registry-fresh.mjs` regenerates to a temp file and diffs against the committed copy, CI fails on drift.
+`scripts/check-authz-registry-fresh.mjs` regenerates out-of-tree and diffs against the committed copy, CI fails on drift.
 
-Both scripts run as part of `pnpm prebuild` before the existing `check-no-*` policy guards.
+The **gate** runs as part of `pnpm prebuild`, before the existing `check-no-*` policy guards. The **generator** does not, and must not: it used to run immediately before its own gate, which made the gate structurally incapable of failing (dashboard#1019).
 
 **Spec reference:** `dashboard-authz-ui-gating` (Phase 1, Tasks 1-2).
 **Sister spec:** `private-authz-registry` Layer 1 annotates the SDK protos. This dashboard script is independent of that spec's OCI output, it reads annotations directly from the local proto source. The two specs can ship in either order.
@@ -374,7 +424,7 @@ After the E6 narrow-SDK flip (ADR-0058 amendment, docs#101), tenant-administrati
 
 1. In the gibson daemon-local tree at `enterprise/platform/gibson/internal/server/daemon/api/gibson/tenant/v1/<file>.proto`, add the new RPC to the appropriate service (`MembershipService`, `GrantsService`, `ProviderService`, `SecretsService`, …). Add the `(gibson.auth.v1.authz)` extension with `relation: "admin"` (or `"writer"`) and `allowed_identities: [USER]`. The extension is imported from the OSS SDK (`gibson/auth/v1/options.proto`).
 2. Run `make proto && make authz-registry && go build ./...` in the gibson repo. Commit + open the gibson PR.
-3. In this dashboard repo, run `pnpm proto:generate` (regenerates the TypeScript bindings under `src/gen/` from the gibson daemon-local tree) and `pnpm prebuild` (`gen-authz-registry.mjs` regenerates `src/gen/authz/registry.ts`).
+3. In this dashboard repo, run `pnpm proto:generate` (regenerates the TypeScript bindings under `src/gen/` from the gibson daemon-local tree) and `pnpm gen:authz` (regenerates `src/gen/authz/registry.ts`). `pnpm prebuild` will not regenerate either for you; it fails if you skip this step.
 4. In the UI, call `useAuthorize("/gibson.tenant.v1.<Service>/YourMethod")` on the new button/action.
 5. In the server action, call `await assertAuthorized(...)` before the daemon call, then dial the service via the ConnectRPC client (through Envoy).
 6. Commit `src/gen/authz/registry.ts` + the new `src/gen/gibson/...` bindings alongside the code changes, the CI drift gate will fail if you forget.
