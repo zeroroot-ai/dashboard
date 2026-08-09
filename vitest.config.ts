@@ -30,7 +30,10 @@ export default defineConfig({
         statements: 70,
       },
     },
-    include: ['src/**/*.{test,spec}.{ts,tsx}', 'app/**/*.{test,spec}.{ts,tsx}', 'components/**/*.{test,spec}.{ts,tsx}'],
+    // scripts/lib/ is included so the build-tooling unit tests actually run.
+    // (The older `scripts/*.test.mjs` files use node:test, not vitest, and are
+    // run by `pnpm test:scripts` instead.) dashboard#1015.
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'app/**/*.{test,spec}.{ts,tsx}', 'components/**/*.{test,spec}.{ts,tsx}', 'scripts/lib/**/*.{test,spec}.{mjs,ts}'],
     exclude: ['node_modules', '.next', 'e2e'],
   },
   resolve: {

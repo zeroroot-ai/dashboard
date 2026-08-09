@@ -45,6 +45,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'yaml';
+import { findWorkspaceRoot } from './lib/workspace-root.mjs';
 
 const SCRIPT_NAME = 'check-dashboard-rbac-minimal.mjs';
 const SPEC_NAME = 'auth-resolution-hardening';
@@ -54,21 +55,11 @@ const DASHBOARD_ROOT = resolve(__dirname, '..');
 // Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ the naive
 // `../../..` walk lands short of the workspace root. Rewind to the main
 // checkout root before walking up. dashboard#197 (same pattern as #175).
-const isWorktree = DASHBOARD_ROOT.includes('/.worktrees/');
-const MAIN_DASHBOARD_ROOT = isWorktree
-  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, '')
-  : DASHBOARD_ROOT;
-// When running inside the Docker build context (dashboard dir as root),
-// __dirname is /app/scripts and 3 levels up from DASHBOARD_ROOT is / (filesystem root).
-// Detect this and fall back to looking for the chart relative to the build
-// context (dashboard dir = /app). In the Docker build the deploy sibling is
-// absent and SKIP_DASHBOARD_RBAC_CHECK=1 is set (Dockerfile), so this guard is
-// a dev-host/CI-with-sibling gate only.
-// The open-core restructure deleted the old umbrella chart (deploy#61); the
-// dashboard RBAC + its allow-list now live in the gibson-workloads sub-chart
-// (deploy#987, dashboard#749).
-const _repoRootCandidate = resolve(MAIN_DASHBOARD_ROOT, '..', '..', '..');
-const REPO_ROOT = _repoRootCandidate === '/' ? DASHBOARD_ROOT : _repoRootCandidate;
+// Sibling resolution searches upward for the artifact rather than counting
+// `..` segments. The depth counter was correct for the main checkout and for a
+// worktree at `<dashboard>/.worktrees/<name>`, and wrong everywhere else.
+// dashboard#1015.
+const REPO_ROOT = findWorkspaceRoot({ from: DASHBOARD_ROOT }) ?? DASHBOARD_ROOT;
 const CHART_DIR = resolve(REPO_ROOT, 'enterprise/deploy/helm/gibson-workloads');
 const ALLOWLIST_PATH = resolve(CHART_DIR, '.dashboard-rbac-allowlist.yaml');
 

@@ -1,5 +1,13 @@
 /** @type {import('eslint').Linter.Config} */
 module.exports = {
+  // Stop the eslintrc cascade here. Without it, a worktree nested at
+  // `<dashboard>/.worktrees/<name>` inherits the parent checkout's identical
+  // `.eslintrc.js`, `@next/next` then resolves from two different
+  // `node_modules/.pnpm` trees, and eslint bails with "couldn't determine the
+  // plugin \"@next/next\" uniquely" (exit 2, nothing linted). Nothing above
+  // this directory carries an eslint config, so this is a no-op for the main
+  // checkout and a fix for every nested layout. dashboard#1015.
+  root: true,
   // `next/typescript` registers @typescript-eslint/{parser,eslint-plugin}
   // so rule references like `@typescript-eslint/no-explicit-any` (in
   // eslint-disable comments and individual file overrides) resolve. Without

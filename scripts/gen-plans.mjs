@@ -45,29 +45,23 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
+import { requireWorkspacePath } from "./lib/workspace-root.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(HERE, "..");
-// Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ the naive
-// `../../..` walk lands short of the workspace root. Rewind to the main
-// checkout root before walking up. dashboard#175.
-const isWorktree = DASHBOARD_ROOT.includes("/.worktrees/");
-const MAIN_DASHBOARD_ROOT = isWorktree
-  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, "")
-  : DASHBOARD_ROOT;
-const REPO_ROOT = resolve(MAIN_DASHBOARD_ROOT, "..", "..", "..");
+// Sibling resolution searches upward for the artifact rather than counting
+// `..` segments off a rewound path. The depth counter was correct for the main
+// checkout and for a worktree at `<dashboard>/.worktrees/<name>`, and wrong
+// everywhere else — from `<workspace>/.worktrees/<name>` it walked to `/home`.
+// dashboard#1015.
+//
 // Open-core relocation (gibson#915 / ADR-0050): #915 ripped billing/plans out
 // of OSS gibson, so the canonical plans source is now `deploy`
 // (helm/gibson-operators/files/) — ELv2-readable by the dashboard; the closed
 // billing impl reads the same copy. (Previously gibson/operators/tenant/plans/.)
-const PLANS_YAML = resolve(
-  REPO_ROOT,
-  "enterprise/deploy/helm/gibson-operators/files/plans.yaml",
-);
-const PLANS_SCHEMA = resolve(
-  REPO_ROOT,
-  "enterprise/deploy/helm/gibson-operators/files/plans.schema.json",
-);
+const PLANS_REL = "enterprise/deploy/helm/gibson-operators/files/plans.yaml";
+const PLANS_SCHEMA_REL =
+  "enterprise/deploy/helm/gibson-operators/files/plans.schema.json";
 const OUTPUT = resolve(DASHBOARD_ROOT, "src/generated/plans.ts");
 
 const REMOTE_REPO = "zeroroot-ai/deploy";
@@ -150,20 +144,24 @@ async function fetchRemoteFile(ref, repoPath) {
 
 /** Load plans.yaml + plans.schema.json from local polyrepo paths. */
 function loadLocal() {
-  if (!existsSync(PLANS_YAML)) {
-    die(
-      `plans.yaml not found at ${PLANS_YAML} (local mode). ` +
-        "Ensure the polyrepo sibling clone exists at that path, or switch to " +
-        "remote mode with PLANS_SOURCE=remote (sets GITHUB_TOKEN required).",
-    );
-  }
-  if (!existsSync(PLANS_SCHEMA)) {
-    die(`plans.schema.json not found at ${PLANS_SCHEMA} (local mode)`);
+  let plansYaml;
+  let plansSchema;
+  try {
+    plansYaml = requireWorkspacePath(PLANS_REL, {
+      from: DASHBOARD_ROOT,
+      hint:
+        "Or switch to remote mode with PLANS_SOURCE=remote (GITHUB_TOKEN required).",
+    });
+    plansSchema = requireWorkspacePath(PLANS_SCHEMA_REL, {
+      from: DASHBOARD_ROOT,
+    });
+  } catch (e) {
+    die(`${e.message} (local mode)`);
   }
   return {
-    yamlText: readFileSync(PLANS_YAML, "utf8"),
-    schemaText: readFileSync(PLANS_SCHEMA, "utf8"),
-    sourceLabel: `local: ${PLANS_YAML}`,
+    yamlText: readFileSync(plansYaml, "utf8"),
+    schemaText: readFileSync(plansSchema, "utf8"),
+    sourceLabel: `local: ${plansYaml}`,
   };
 }
 

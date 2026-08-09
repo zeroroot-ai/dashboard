@@ -12,6 +12,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { findWorkspaceRoot } from './lib/workspace-root.mjs';
 
 // 90 days post-spec landing. Edit this to extend or shorten the
 // backward-compat window. The script will start failing CI on this
@@ -21,7 +22,12 @@ const DEPRECATION_END = new Date('2026-08-01T00:00:00Z');
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // Workspace root is two levels up from enterprise/platform/dashboard/scripts
 // (dashboard/scripts -> dashboard -> platform -> enterprise -> zeroroot.ai).
-const WORKSPACE_ROOT = path.resolve(HERE, '..', '..', '..', '..');
+// Sibling resolution searches upward for the artifact rather than counting
+// `..` segments. The depth counter was correct for the main checkout and for a
+// worktree at `<dashboard>/.worktrees/<name>`, and wrong everywhere else.
+// dashboard#1015.
+const WORKSPACE_ROOT =
+  findWorkspaceRoot({ from: HERE }) ?? path.resolve(HERE, '..', '..', '..', '..');
 
 const SCHEMAS = [
   'core/sdk/plugin/manifest/schema.json',

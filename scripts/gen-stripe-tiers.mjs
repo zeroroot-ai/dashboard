@@ -23,23 +23,19 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
+import { requireWorkspacePath } from "./lib/workspace-root.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(HERE, "..");
-// Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ the naive
-// `../../..` walk lands short of the workspace root. Rewind to the main
-// checkout root before walking up. dashboard#197 (same pattern as #175).
-const isWorktree = DASHBOARD_ROOT.includes("/.worktrees/");
-const MAIN_DASHBOARD_ROOT = isWorktree
-  ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, "")
-  : DASHBOARD_ROOT;
-const REPO_ROOT = resolve(MAIN_DASHBOARD_ROOT, "..", "..", "..");
+// Sibling resolution searches upward for the artifact rather than counting
+// `..` segments off a rewound path. The depth counter was correct for the main
+// checkout and for a worktree at `<dashboard>/.worktrees/<name>`, and wrong
+// everywhere else — from `<workspace>/.worktrees/<name>` it walked to `/home`.
+// dashboard#1015.
+//
 // E4 monorepo fold (gibson#781 / ADR-0056): tenant-operator folded into the
 // gibson monorepo at operators/tenant/; the standalone repo was deleted.
-const PLANS_YAML = resolve(
-  REPO_ROOT,
-  "enterprise/deploy/helm/gibson-operators/files/plans.yaml",
-);
+const PLANS_REL = "enterprise/deploy/helm/gibson-operators/files/plans.yaml";
 const OUTPUT = resolve(DASHBOARD_ROOT, "src/lib/billing/stripe_gen.ts");
 
 function die(msg) {
@@ -63,8 +59,13 @@ function main() {
     return;
   }
 
-  if (!existsSync(PLANS_YAML)) die(`plans.yaml not found at ${PLANS_YAML}`);
-  const doc = parseYaml(readFileSync(PLANS_YAML, "utf8"));
+  let plansYaml;
+  try {
+    plansYaml = requireWorkspacePath(PLANS_REL, { from: DASHBOARD_ROOT });
+  } catch (e) {
+    die(e.message);
+  }
+  const doc = parseYaml(readFileSync(plansYaml, "utf8"));
   if (!doc || !Array.isArray(doc.plans)) die("plans.yaml malformed");
 
   // BillingTier covers plans that get a Stripe price (not contact-sales).
