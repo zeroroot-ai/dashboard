@@ -1,0 +1,30 @@
+{
+  "$comment": "Monotonic-shrink baseline for scripts/check-proto-bindings-fresh.mjs. Entries may only be REMOVED (regenerate the file, then run the guard with --shrink). Adding an entry is deliberately not automated: it must be a hand edit reviewed in a PR, the same rule as .color-allowlist.json.",
+  "issue": "https://github.com/zeroroot-ai/dashboard/issues/1014",
+  "entries": {
+    "buf/validate/validate_pb.ts": {
+      "committedSha256": "7e95752384b2be8a62c8699a155caf5ba6133fcb5bd04e84851e3f424e6a3dad",
+      "reason": "pre-existing drift at gate land time (dashboard#1014); paid down by the regen that follows gibson#1329"
+    },
+    "gibson/daemon/v1/daemon_pb.ts": {
+      "committedSha256": "11d70eaac3a604b08f1c48a1842b7fb63e21f173ec59729c2645e5d5af72134c",
+      "reason": "pre-existing drift at gate land time (dashboard#1014); paid down by the regen that follows gibson#1329"
+    },
+    "gibson/identity/v1/identity_pb.ts": {
+      "committedSha256": "efbd2048cc312a7611c8211341447ef4b91b511318a1d36761a1dc3b2dac26f7",
+      "reason": "pre-existing drift at gate land time (dashboard#1014); paid down by the regen that follows gibson#1329"
+    },
+    "gibson/tenant/v1/provider_pb.ts": {
+      "committedSha256": "614e6da5801b08dacbaaa42ec3312fc7a1b0c1b8644e47966b50b76644c5d8b4",
+      "reason": "pre-existing drift at gate land time (dashboard#1014); paid down by the regen that follows gibson#1329"
+    },
+    "gibson/tenant/v1/signup_pb.ts": {
+      "committedSha256": "e3743910bdbdd55487efcd92e345876d2e5d76f383b3c1975b7de559748c2e54",
+      "reason": "pre-existing drift at gate land time (dashboard#1014); paid down by the regen that follows gibson#1329"
+    },
+    "gibson/tenant/v1/usage_pb.ts": {
+      "committedSha256": "29cac35079ff5375a5835440eed44d88755a97107abe7a39d0f814044690261c",
+      "reason": "pre-existing drift at gate land time (dashboard#1014); paid down by the regen that follows gibson#1329"
+    }
+  }
+}

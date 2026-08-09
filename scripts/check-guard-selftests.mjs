@@ -40,6 +40,7 @@ const GUARDS = [
   "check-no-nodeenv-conditioned-auth.mjs",
   "check-lockfile-sync.mjs",
   "check-api-route-csrf.mjs",
+  "check-proto-bindings-fresh.mjs",
 ];
 
 let failed = 0;
