@@ -95,6 +95,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // Look up the operator-reported provisioning status to get the Stripe
   // customer ID (dashboard#813 — no Kubernetes read).
+  //
+  // KNOWN GAP (dashboard#1016, gibson#1339): this always 400s below. gibson#1230
+  // added a same-tenant gate to GetTenantProvisioningStatus that this route
+  // cannot satisfy — the RPC is proto-annotated `unauthenticated: true`, so
+  // ext-authz skips tenant resolution entirely for it (never reads
+  // x-gibson-tenant into the identity forwarded to the daemon), regardless of
+  // whether this call goes through userClient or serviceClient or what tenant
+  // value is passed in. stripe_customer_id is redacted for every caller,
+  // including the tenant reading its own status. Root-caused in gibson#1339,
+  // which proposes a new rule-mode RPC scoped to the caller's own tenant. Do
+  // not attempt to fix this by threading tenantSlug into a serviceClient call
+  // here — verified ineffective, see gibson#1339's trace.
   let customerId: string;
   try {
     const status = await getTenantProvisioningStatus(tenantSlug);

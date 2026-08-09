@@ -401,8 +401,8 @@ async function finishProvisioning(ctx: Ctx): Promise<SignupActionResult> {
 
   try {
     // 7. Wait for the operator to provision the workspace. `waitForTenantReady`
-    //    polls the daemon's operator-reported status mirror until the per-tenant
-    //    Zitadel org slug appears (org created) — which the operator only
+    //    polls the daemon's operator-reported status mirror until
+    //    `zitadelOrgReady` goes true (org created) — which the operator only
     //    reports once the saga, including the founding-owner TenantMember
     //    (gibson#958), has progressed. The dashboard no longer writes the
     //    TenantMember itself (dashboard#855): the operator owns it, so
@@ -876,12 +876,18 @@ async function tenantExists(slug: string): Promise<boolean> {
 /**
  * waitForTenantReady polls the daemon's operator-reported provisioning status
  * mirror (gibson#952, dashboard#855) until the workspace is ready or the timeout
- * elapses. Readiness is signalled by the per-tenant Zitadel org slug appearing
- * (the operator only reports it once the org is created and the saga — including
- * the founding-owner TenantMember, gibson#958 — has progressed), or a terminal
- * `Failed` phase. `found:false` (no record yet) and an empty org slug are both
- * "still provisioning, keep polling". Returns the final status, or null on
+ * elapses. Readiness is signalled by `zitadel_org_ready` going true (the operator
+ * only reports it once the org is created and the saga — including the
+ * founding-owner TenantMember, gibson#958 — has progressed), or a terminal
+ * `Failed` phase. `found:false` (no record yet) and `zitadelOrgReady:false` are
+ * both "still provisioning, keep polling". Returns the final status, or null on
  * timeout (non-fatal — the client keeps polling the progress store).
+ *
+ * Reads `zitadelOrgReady`, not `zitadelOrgSlug`: the daemon withholds the slug
+ * itself from any caller whose authenticated tenant isn't the tenant being read
+ * (gibson#1230), and this poller runs pre-membership with no tenant claim at all,
+ * so `zitadelOrgSlug` is always empty here. `zitadelOrgReady` is the same
+ * readiness edge without the redacted identifier (gibson#1333).
  */
 async function waitForTenantReady(
   slug: string,
@@ -891,7 +897,7 @@ async function waitForTenantReady(
     try {
       const status = await getTenantProvisioningStatus(slug);
       if (status.found) {
-        if (status.zitadelOrgSlug || status.phase === "Ready") {
+        if (status.zitadelOrgReady || status.phase === "Ready") {
           return status;
         }
         if (status.phase === "Failed") {
