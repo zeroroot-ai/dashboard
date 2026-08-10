@@ -883,11 +883,12 @@ async function tenantExists(slug: string): Promise<boolean> {
  * both "still provisioning, keep polling". Returns the final status, or null on
  * timeout (non-fatal — the client keeps polling the progress store).
  *
- * Reads `zitadelOrgReady`, not `zitadelOrgSlug`: the daemon withholds the slug
+ * Reads `zitadelOrgReady`, not the org slug: the daemon withholds the slug
  * itself from any caller whose authenticated tenant isn't the tenant being read
  * (gibson#1230), and this poller runs pre-membership with no tenant claim at all,
- * so `zitadelOrgSlug` is always empty here. `zitadelOrgReady` is the same
- * readiness edge without the redacted identifier (gibson#1333).
+ * so the slug could never arrive here. `TenantProvisioningStatus` no longer
+ * exposes it (dashboard#1016); `zitadelOrgReady` is the same readiness edge
+ * without the redacted identifier (gibson#1333).
  */
 async function waitForTenantReady(
   slug: string,
