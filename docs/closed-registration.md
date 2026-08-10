@@ -94,31 +94,73 @@ signs up — no bootstrap needed. The first user to complete the signup flow
 for a tenant becomes the `tenant_admin` for that tenant (by the daemon's
 provisioning logic in `SignupService.Signup`).
 
-**When registration is closed on a fresh install:** there is currently no
-turnkey first-principal bootstrap. `AdminTenantService.AdminProvisionTenant`
-(gibson daemon-local, `internal/server/daemon/api/gibson/tenant/v1/admin_tenant.proto`)
-enqueues a tenant-creation op — the tenant-operator drains it and creates the
-`Tenant` CR — but this RPC does NOT create the owner's Zitadel login (the human
-identity) or provision the FGA membership tuple for the owner. After calling
-`AdminProvisionTenant`, the tenant exists in the operator's queue but there is
-no Zitadel user for the owner and no way to sign in as that owner.
+**When registration is closed on a fresh install:** use the
+`bootstrap-tenant-owner` one-shot (gibson#1103). It creates the owner's Zitadel
+login and the FGA ownership tuple — the two things `AdminProvisionTenant` does
+not — without ever reopening registration and without requiring a pre-existing
+human session. The actor invoking it *is* the platform operator (same shape as
+`active-session-backfill` / `tenant-owner-backfill`), so there is no
+chicken-and-egg.
 
-This is a **known gap**, tracked as a follow-up in the gibson repo. Until it
-is addressed, the recommended workaround for a closed-registration self-hosted
-install is:
+`AdminTenantService.AdminProvisionTenant` (gibson daemon-local,
+`internal/server/daemon/api/gibson/tenant/v1/admin_tenant.proto`) still only
+enqueues the tenant-creation op — the tenant-operator drains it, creates the
+`Tenant` CR, and the provisioning saga stands up the namespace, entitlements,
+and the tenant's per-tenant Zitadel org (`EnsureZitadelOrg`). That RPC mints no
+human user and writes no ownership tuple; `bootstrap-tenant-owner` closes that
+gap.
 
-1. Start with registration **open** (`gibson.signupSelfServe: true`, the default).
-2. Create the first/owner account via the normal signup flow.
-3. Confirm that account has `tenant_admin` in the dashboard.
-4. Then close registration by setting `gibson.signupSelfServe: false` and
-   redeploying (or restarting the dashboard pod to pick up the new env).
+### Runbook
 
-This workaround is safe and sufficient for the "locked-down after initial
-setup" use case. The follow-up issue will address the case where an operator
-wants a fully closed install from the very first boot.
+**Prerequisite:** the tenant must already be provisioned far enough that its
+per-tenant Zitadel org exists — i.e. `AdminProvisionTenant` has run and the Tenant
+CR's `status.zitadelOrgID` is populated. If it is not yet, the command exits
+non-zero with `tenant %q has no status.zitadelOrgID yet — wait for tenant
+provisioning (EnsureZitadelOrg) to converge and retry`; wait for the saga to
+converge and re-run.
 
-See the filed follow-up: gibson#1103 — first-admin bootstrap for
-closed-registration self-hosted installs.
+The binary ships in the daemon image at
+`/usr/local/bin/bootstrap-tenant-owner`. Run it as an in-cluster one-shot (a
+`Job`, or `kubectl exec` into a daemon pod) with the operator's environment —
+it reads an in-cluster kubeconfig and the same Zitadel-admin and FGA config the
+daemon uses:
+
+```bash
+bootstrap-tenant-owner -tenant <tenant-id> -owner-email owner@example.com
+```
+
+| Flag | Meaning |
+|---|---|
+| `-tenant` | the Tenant CR name / tenant id (required) |
+| `-owner-email` | the owner's email address (required) |
+
+Required environment (already present on the daemon workload):
+`GIBSON_IDP_ADMIN_ISSUER`, `GIBSON_IDP_ADMIN_CLIENT_ID`,
+`GIBSON_IDP_ADMIN_CLIENT_SECRET`, `GIBSON_IDP_ADMIN_DISCOVERY_URL`,
+`GIBSON_IDP_ZITADEL_ORG_ID` (platform admin org), `GIBSON_PUBLIC_URL`,
+`EXT_AUTHZ_FGA_ADDR`, `EXT_AUTHZ_FGA_STORE_ID`, `EXT_AUTHZ_FGA_MODEL_ID`.
+
+What it does, in order:
+
+1. Resolves the tenant's per-tenant Zitadel org id from the Tenant CR's
+   `status.zitadelOrgID`.
+2. `EnsureHumanUser` — find-or-create the owner's Zitadel human user in that org
+   (the same call `MembershipService.AcceptInvitation` makes for an invited
+   member). **Zitadel emails the owner a credential-setup / verification code; no
+   password ever crosses this binary.**
+3. `AddTenantMember` with role `owner` (idempotent — a 409 is treated as success).
+4. Writes the FGA tuple `(user:<owner-id>, owner, tenant:<tenant-id>)` if absent
+   — the top of the tenant relation hierarchy (`admin`/`writer`/`member` all
+   derive `or owner` in `model.fga`; this is what the dashboard and operators
+   call `tenant_admin` authority).
+
+**Idempotent and safe to retry.** A re-run for an owner who already holds the
+tuple reports `outcome=already_owner` and exits zero; Zitadel steps are
+find-or-create. Order is Zitadel first, FGA second, so a partial failure leaves
+no ownership tuple pointing at a nonexistent user.
+
+The owner then completes credential setup from the Zitadel email and signs in at
+`/login` — registration stays closed throughout.
 
 ## Cross-links
 
