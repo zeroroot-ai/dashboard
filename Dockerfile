@@ -28,13 +28,25 @@ FROM ghcr.io/zeroroot-ai/mirror/node@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c
 WORKDIR /app
 
 # Copy dependency manifests for layer caching
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 
 # Install production + dev dependencies (needed for build). --ignore-scripts
 # blocks arbitrary postinstall scripts; npm rebuild then runs install for the
 # specific native modules that need per-arch binaries extracted (multi-arch
 # Docker buildx builds linux/arm64 via QEMU and needs the right .node binary).
-RUN npm ci --ignore-scripts --legacy-peer-deps && \
+#
+# @zeroroot-ai/brand (dashboard#915) is fetched from GitHub Packages, not the
+# public npm registry, and needs an auth token even though the package is
+# readable org-wide (npm.pkg.github.com requires a bearer token for every
+# install regardless of package visibility). The committed .npmrc declares
+# `//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}`; unlike pnpm, npm DOES
+# expand env vars in a project-level .npmrc, so passing NODE_AUTH_TOKEN into
+# this RUN's shell environment (not baked as an image ENV/ARG) is enough.
+# `required=false` so a plain local `docker build` without the secret still
+# works if ambient registry auth exists (e.g. a workstation-level ~/.npmrc).
+RUN --mount=type=secret,id=npm_token,target=/run/secrets/npm_token,required=false \
+    NODE_AUTH_TOKEN="$(cat /run/secrets/npm_token 2>/dev/null || true)" \
+    npm ci --ignore-scripts --legacy-peer-deps && \
     npm rebuild lightningcss
 
 # ============================================================================

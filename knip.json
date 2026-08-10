@@ -29,7 +29,7 @@
     "pino-pretty",
     "@bufbuild/buf",
     "@bufbuild/protoc-gen-es",
-    "@zeroroot/brand"
+    "@zeroroot-ai/brand"
   ],
   "ignoreUnresolved": [
   ],

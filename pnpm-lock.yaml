@@ -91,6 +91,9 @@ importers:
       '@xyflow/react':
         specifier: ^12.10.1
         version: 12.10.2(@types/react@19.2.8)(immer@11.1.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@zeroroot-ai/brand':
+        specifier: ^0.1.0
+        version: 0.1.0(tailwindcss@4.3.0)
       ai:
         specifier: ^6.0.141
         version: 6.0.145(zod@3.25.76)
@@ -2970,6 +2973,11 @@ packages:
 
   '@xyflow/system@0.0.76':
     resolution: {integrity: sha512-hvwvnRS1B3REwVDlWexsq7YQaPZeG3/mKo1jv38UmnpWmxihp14bW6VtEOuHEwJX2FvzFw8k77LyKSk/wiZVNA==}
+
+  '@zeroroot-ai/brand@0.1.0':
+    resolution: {integrity: sha512-4I3ObsCi37BiHYc927CI/XLWZv2zIg7eGNrF7/h+FZ3f9wSkFe/TfdJ9c7ZKZeGSptCubnjXepfjhkqxu0CwNQ==, tarball: https://npm.pkg.github.com/download/@zeroroot-ai/brand/0.1.0/2140066291c125ca09df20d1b525d94a7aa690f5}
+    peerDependencies:
+      tailwindcss: '>=4.0.0'
 
   accessor-fn@1.5.3:
     resolution: {integrity: sha512-rkAofCwe/FvYFUlMB0v0gWmhqtfAtV1IUkdPbfhTUyYniu5LrC0A0UJkTH0Jv3S8SvwkmfuAlY+mQIJATdocMA==}
@@ -8522,6 +8530,10 @@ snapshots:
       d3-interpolate: 3.0.1
       d3-selection: 3.0.0
       d3-zoom: 3.0.0
+
+  '@zeroroot-ai/brand@0.1.0(tailwindcss@4.3.0)':
+    dependencies:
+      tailwindcss: 4.3.0
 
   accessor-fn@1.5.3: {}
 
