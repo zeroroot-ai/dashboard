@@ -150,23 +150,18 @@ const STATUS_NOT_FOUND: TenantProvisioningStatus = {
   phase: '',
   dataPlaneReady: false,
   stores: { postgres: '', redis: '', neo4j: '' },
-  zitadelOrgSlug: '',
-  stripeCustomerId: '',
-  billingActive: false,
   zitadelOrgReady: false,
 };
 
-// zitadelOrgSlug stays '' here even though the org is ready: the daemon
-// redacts it for the unauthenticated signup-poller caller (gibson#1230).
-// zitadelOrgReady is the readiness signal the poller actually reads.
+// There is no zitadelOrgSlug / stripeCustomerId / billingActive to seed here:
+// the daemon redacts all three for the unauthenticated signup-poller caller
+// (gibson#1230), so TenantProvisioningStatus does not carry them at all
+// (dashboard#1016). zitadelOrgReady is the readiness signal the poller reads.
 const STATUS_READY: TenantProvisioningStatus = {
   found: true,
   phase: 'Provisioning',
   dataPlaneReady: true,
   stores: { postgres: 'ready', redis: 'ready', neo4j: 'ready' },
-  zitadelOrgSlug: '',
-  stripeCustomerId: 'cus_1',
-  billingActive: true,
   zitadelOrgReady: true,
 };
 

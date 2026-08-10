@@ -214,6 +214,24 @@ describe('POST /api/billing/portal', () => {
       expect(params.returnUrl).toContain('/dashboard/pages/settings/billing');
     });
 
+    // dashboard#1016: the customer id must come from the rule-mode
+    // TenantService.GetTenantBilling read. The unauthenticated
+    // GetTenantProvisioningStatus can never disclose it — reading it there
+    // silently yielded '' and 400'd this route for every tenant.
+    it('resolves the customer from GetTenantBilling, not the redacted status RPC', async () => {
+      mockGetTenantBilling.mockResolvedValue({
+        found: true,
+        stripeCustomerId: 'cus_from_rule_mode',
+        billingActive: true,
+        zitadelOrgSlug: 'acme-org',
+      });
+      const res = await POST(makeRequest());
+      expect(res.status).toBe(200);
+      expect(mockGetTenantBilling).toHaveBeenCalledOnce();
+      const [params] = mockCreatePortalSession.mock.calls[0] as [{ customerId: string }];
+      expect(params.customerId).toBe('cus_from_rule_mode');
+    });
+
     it('uses 10-second bucket idempotency key', async () => {
       await POST(makeRequest());
       const [params] = mockCreatePortalSession.mock.calls[0] as [{ idempotencyKey: string }];

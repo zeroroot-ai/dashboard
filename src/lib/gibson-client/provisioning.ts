@@ -15,11 +15,17 @@ import { AdminTenantService } from '@/src/gen/gibson/tenant/v1/admin_tenant_pb';
  * reports the Tenant CR status into the daemon (ReportTenantStatus); the
  * daemon serves it back here so the web tier holds zero cluster credentials.
  *
- * `getTenantProvisioningStatus` and `setTenantBillingActive` are unauthenticated
- * (pre-membership signup polling / the Stripe-webhook path) and reached over the
- * SAME `serviceClient(Service, '')` service-acting transport as SignupService —
- * Envoy gates the daemon to the dashboard workload (the documented
- * non-validated tenant boundary, dashboard#815).
+ * `getTenantProvisioningStatus` is unauthenticated (pre-membership signup
+ * polling) and reached over the SAME `serviceClient(Service, '')`
+ * service-acting transport as SignupService — Envoy gates the daemon to the
+ * dashboard workload (the documented non-validated tenant boundary,
+ * dashboard#815). Because the RPC is proto-annotated `unauthenticated: true`,
+ * ext-authz never resolves a tenant for it, so the daemon's same-tenant
+ * unredaction branch can never be taken by ANY dashboard caller. The three
+ * fields it withholds — `zitadel_org_slug`, `stripe_customer_id`,
+ * `billing_active` — are therefore deliberately ABSENT from
+ * {@link TenantProvisioningStatus}: reading them is a compile error rather
+ * than a silent `''`/`false` (dashboard#1016).
  *
  * `getTenantBilling` and `adminGetTenantBilling` are DIFFERENT: they are
  * rule-mode RPCs that require an authenticated caller, so they go through
@@ -35,7 +41,18 @@ export interface TenantStoreStates {
   neo4j: string;
 }
 
-/** Operator-reported provisioning status for a tenant slug. */
+/**
+ * Operator-reported provisioning status for a tenant slug.
+ *
+ * DELIBERATELY does NOT carry `zitadelOrgSlug`, `stripeCustomerId` or
+ * `billingActive`. The daemon withholds all three from every caller of the
+ * unauthenticated `GetTenantProvisioningStatus` RPC (gibson#1230/#1339), so
+ * mapping them here would hand every future reader a silent `''`/`false` —
+ * which is exactly how the billing portal, admin trial-extension and the
+ * signup readiness poll all broke at once (dashboard#1016). Omitting them
+ * turns that mistake into a compile error. Read {@link getTenantBilling}
+ * (own tenant) or {@link adminGetTenantBilling} (cross-tenant) instead.
+ */
 export interface TenantProvisioningStatus {
   /** false when no provisioning record exists for the slug (slug available / not provisioned). */
   found: boolean;
@@ -45,22 +62,10 @@ export interface TenantProvisioningStatus {
   dataPlaneReady: boolean;
   /** Per-store states for the onboarding-progress UI. */
   stores: TenantStoreStates;
-  /** Per-tenant Zitadel org login slug (status.zitadelOrgSlug). Redacted (empty) for
-   * EVERY caller of this unauthenticated-mode RPC, including the tenant reading
-   * its own status — it can never resolve an authenticated tenant to compare
-   * against (gibson#1230/#1339). Read {@link getTenantBilling} /
-   * {@link adminGetTenantBilling} instead when you need the real value. */
-  zitadelOrgSlug: string;
-  /** Stripe customer id (status.billing.customerId). Redacted the same way as
-   * {@link zitadelOrgSlug} — always empty here. Use {@link getTenantBilling}
-   * (own tenant) or {@link adminGetTenantBilling} (cross-tenant) instead. */
-  stripeCustomerId: string;
-  /** Billing-active state. Redacted the same way as {@link zitadelOrgSlug} —
-   * always false here. Use {@link getTenantBilling} / {@link adminGetTenantBilling}. */
-  billingActive: boolean;
   /** Whether the per-tenant Zitadel org exists, without disclosing its slug. Survives
-   * the cross-tenant redaction that blanks zitadelOrgSlug (gibson#1230/#1333) — this is
-   * the field the signup readiness poller should read instead. */
+   * the cross-tenant redaction that blanks zitadel_org_slug (gibson#1230/#1333) — this is
+   * the readiness signal the signup poller reads, and the only org-related field
+   * this RPC can honestly answer. */
   zitadelOrgReady: boolean;
 }
 
@@ -68,6 +73,11 @@ export interface TenantProvisioningStatus {
  * Reads the operator-reported provisioning status for a tenant slug, replacing
  * the dashboard's `getTenant()` Kubernetes read. `found: false` (rather than a
  * thrown NOT_FOUND) doubles as a slug-availability / not-yet-provisioned check.
+ *
+ * The wire response still carries `zitadelOrgSlug` / `stripeCustomerId` /
+ * `billingActive` fields for other (authenticated) callers of the same message
+ * type; this mapper drops them unconditionally rather than forwarding whatever
+ * the daemon happened to send. See {@link TenantProvisioningStatus}.
  */
 export async function getTenantProvisioningStatus(
   tenantId: string,
@@ -84,36 +94,19 @@ export async function getTenantProvisioningStatus(
       redis: resp.stores?.redis ?? '',
       neo4j: resp.stores?.neo4j ?? '',
     },
-    zitadelOrgSlug: resp.zitadelOrgSlug,
-    stripeCustomerId: resp.stripeCustomerId,
-    billingActive: resp.billingActive,
     zitadelOrgReady: resp.zitadelOrgReady,
   };
 }
 
-/**
- * Records the tenant's billing-active state, replacing the dashboard billing
- * webhook's `patchTenant()` of the billing-active CR annotation. The daemon
- * persists the flag; the tenant-operator reads it back on its next reconcile
- * and stamps the CR annotation the saga waits on.
- *
- * UNWIRED (dashboard#1016, gibson#1339's "also in scope"): declared but never
- * called anywhere in this repo. The daemon-side HMAC gate this RPC now requires
- * (`x-gibson-billing-signature` / `x-gibson-billing-issued-at`, signed with
- * `GIBSON_BILLING_WEBHOOK_SECRET`) is ready, but no component signs and calls
- * it yet — the Stripe→daemon hop needs an owner decision (a dashboard webhook
- * route vs. the billing-webhook workload) before this can be wired up. Left
- * unexported and uncalled deliberately; do not wire a guessed caller.
- */
-async function setTenantBillingActive(
-  tenantId: string,
-  active: boolean,
-): Promise<void> {
-  await serviceClient(TenantProvisioningService, '').setTenantBillingActive({
-    tenantId,
-    active,
-  });
-}
+// `TenantProvisioningService.SetTenantBillingActive` has NO dashboard wrapper on
+// purpose (dashboard#1016). The helper that used to sit here was unexported and
+// uncalled since the day it landed, and it can no longer work: the daemon now
+// requires a fresh HMAC assertion on that RPC (`x-gibson-billing-signature` /
+// `x-gibson-billing-issued-at`, signed with `GIBSON_BILLING_WEBHOOK_SECRET`),
+// a secret the dashboard does not hold and must not hold. The dashboard also
+// serves no Stripe webhook route, so it is not the Stripe→daemon hop. Ownership
+// of the signed call belongs to whichever component owns the Stripe webhook;
+// do not reintroduce a wrapper here without that decision.
 
 /** Billing identifiers for a tenant, served by the rule-mode `GetTenantBilling`
  * / `AdminGetTenantBilling` RPCs (gibson#1339/#1361) rather than the
