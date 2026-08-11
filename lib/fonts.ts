@@ -2,7 +2,6 @@ import {
   Geist,
   Inter,
   JetBrains_Mono,
-  Montserrat,
   Overpass_Mono,
   Poppins,
   Roboto,
@@ -12,6 +11,7 @@ import {
   Kumbh_Sans,
   Outfit
 } from "next/font/google";
+import localFont from "next/font/local";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -30,10 +30,22 @@ const plus_jakarta_sans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta-sans"
 });
 
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-montserrat"
+// Self-hosted rather than next/font/google: the image build fetches
+// next/font/google assets from fonts.gstatic.com at build time, and a
+// transient 404 there hard-fails the Docker build with an error that names
+// neither fonts nor the network (dashboard#1029). The woff2 files below are
+// vendored from @fontsource/montserrat 5.3.0 (npm registry, latin subset,
+// normal style, SIL Open Font License, see ./fonts/montserrat/LICENSE), so
+// the build no longer depends on a third-party CDN returning 200 for five
+// specific hashed asset URLs.
+const montserrat = localFont({
+  src: [
+    { path: "./fonts/montserrat/montserrat-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/montserrat/montserrat-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/montserrat/montserrat-latin-600-normal.woff2", weight: "600", style: "normal" }
+  ],
+  variable: "--font-montserrat",
+  display: "swap"
 });
 
 const poppins = Poppins({
