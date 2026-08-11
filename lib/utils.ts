@@ -27,7 +27,13 @@ export function generateMeta({
   return {
     title: `${title}, Zero Root AI`,
     description: description,
-    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.zeroroot.ai'),
+    // Server env, read at request time — the same app-origin source the
+    // host-split middleware uses. The old NEXT_PUBLIC_APP_URL was set by no
+    // environment (inlined undefined at build), so staging pages advertised
+    // prod canonical/OG URLs (dashboard#1036).
+    metadataBase: new URL(
+      process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? 'https://app.zeroroot.ai',
+    ),
     alternates: {
       canonical: `/dashboard${canonical}`
     },

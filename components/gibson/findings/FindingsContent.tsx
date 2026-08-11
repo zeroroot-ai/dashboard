@@ -1,6 +1,5 @@
 "use client";
 
-import { docsUrl } from "@/src/lib/docs-url";
 import * as React from "react";
 import Link from "next/link";
 import { ArrowUpDown, ChevronDown, ChevronUp, Download, Search, ShieldAlertIcon } from "lucide-react";
@@ -108,7 +107,7 @@ function getDiscoveredTs(date: Date | string): number {
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-export function FindingsContent() {
+export function FindingsContent({ docsHref }: { docsHref: string }) {
   // Filter state, severity checkboxes
   const [enabledSeverities, setEnabledSeverities] = React.useState<Set<FindingSeverity>>(
     new Set(ALL_SEVERITIES),
@@ -302,7 +301,7 @@ export function FindingsContent() {
                   (dashboard#820), so this is a plain cross-origin anchor:
                   next/link cannot route to it, and an RSC prefetch of a
                   cross-origin URL dies on CORS (dashboard#963). */}
-              <a href={docsUrl("missions")} target="_blank" rel="noopener noreferrer">
+              <a href={docsHref} target="_blank" rel="noopener noreferrer">
                 Read the docs
               </a>
             </Button>
