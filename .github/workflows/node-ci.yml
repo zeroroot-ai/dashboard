@@ -91,6 +91,13 @@ jobs:
   fast:
     needs: changes
     if: github.event_name == 'pull_request' && needs.changes.outputs.relevant == 'true'
+    # The reusable workflow declares `packages: read` (to install the private
+    # @zeroroot-ai/brand package from npm.pkg.github.com); a reusable workflow
+    # cannot hold more permission than its caller grants, so the caller must
+    # grant it too or the run is rejected at startup (#915 / .github#239).
+    permissions:
+      contents: read
+      packages: read
     uses: zeroroot-ai/.github/.github/workflows/reusable-node-ci.yml@main
     with:
       tier: fast
@@ -98,6 +105,9 @@ jobs:
   # ---- heavy tier (merge_group): full build (prebuild guard chain) ----
   heavy-build:
     if: github.event_name == 'merge_group'
+    permissions:
+      contents: read
+      packages: read
     uses: zeroroot-ai/.github/.github/workflows/reusable-node-ci.yml@main
     with:
       tier: heavy
