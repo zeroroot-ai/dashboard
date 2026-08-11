@@ -162,6 +162,18 @@ test.describe("Signup, Vault namespace provisioning step (R7)", () => {
   }) => {
     test.setTimeout(180_000);
 
+    // Signup (dashboard#991) now requires a real, out-of-band verification
+    // token to complete — see e2e/auth/helpers/signup-via-form.ts. Skip with
+    // a clear reason rather than failing on the signup step.
+    if (!process.env.SIGNUP_VERIFY_TOKEN) {
+      test.skip(
+        true,
+        "SIGNUP_VERIFY_TOKEN not set: signUpViaForm cannot complete the " +
+          "two-step signup flow without a real verification token (dashboard#991/#992).",
+      );
+      return;
+    }
+
     const creds = generateUserCredentials();
     console.log(
       `[signup-vault] Starting signup for tenant slug: ${creds.slug}`,
