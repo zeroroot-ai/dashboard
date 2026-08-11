@@ -415,8 +415,9 @@ const OPTIONAL_ENV = [
 
   // ---- Public Next.js variables ----
   // NEXT_PUBLIC_* are evaluated at build time and ship to the browser; not a
-  // boot-time concern.
-  'NEXT_PUBLIC_APP_URL',
+  // boot-time concern. (NEXT_PUBLIC_APP_URL was deleted in dashboard#1036:
+  // nothing set it anywhere, so its readers silently pinned prod URLs;
+  // metadataBase now derives from NEXTAUTH_URL/AUTH_URL at request time.)
   'NEXT_PUBLIC_API_URL',
   'NEXT_PUBLIC_IDENTITY_PROVIDER_URL',
   // Card-first signup: publishable key for the in-page Payment Element.

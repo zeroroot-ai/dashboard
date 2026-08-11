@@ -10,16 +10,16 @@
  * well as SaaS (an air-gapped install ships a version-matched docs image), so
  * there is no posture in which the link should be omitted.
  *
- * `NEXT_PUBLIC_DOCS_URL` overrides the default for installs on their own
- * domain. It is `NEXT_PUBLIC_` because the consumers are client components;
- * the chart's server-side `DOCS_URL` cannot reach them.
+ * Server-derived, at call time: the chart renders `DOCS_URL` from
+ * `gibson.docsOrigin` (global.domain), so each environment links to its own
+ * docs host. Client components cannot read it — their server page computes
+ * the href with `docsUrl()` and passes it down as a prop, the same
+ * runtime-not-build-time pattern as STRIPE_PUBLISHABLE_KEY (dashboard#783).
+ * The previous `NEXT_PUBLIC_DOCS_URL` read was set by nothing and would have
+ * been inlined at image build time anyway, which pinned every environment's
+ * docs links to prod (dashboard#1036).
  */
 const DEFAULT_DOCS_ORIGIN = 'https://docs.zeroroot.ai';
-
-/** Origin of the docs site, no trailing slash. */
-const docsOrigin: string = (
-  process.env.NEXT_PUBLIC_DOCS_URL || DEFAULT_DOCS_ORIGIN
-).replace(/\/$/, '');
 
 /**
  * Build an absolute URL for a doc page.
@@ -27,6 +27,10 @@ const docsOrigin: string = (
  * @param slug page path without a leading slash, e.g. `"missions"`.
  */
 export function docsUrl(slug: string): string {
+  const docsOrigin = (process.env.DOCS_URL || DEFAULT_DOCS_ORIGIN).replace(
+    /\/$/,
+    '',
+  );
   const clean = slug.replace(/^\/+/, '');
   return `${docsOrigin}/docs/${clean}`;
 }

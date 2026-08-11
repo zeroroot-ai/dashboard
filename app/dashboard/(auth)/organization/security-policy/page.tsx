@@ -2,16 +2,16 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShieldCheckIcon } from "lucide-react";
 import { SecurityPolicyContent } from "@/components/gibson/organization/SecurityPolicyContent";
-import { getDeploymentProfile } from "@/src/lib/deployment-profile";
+import { docsUrl } from "@/src/lib/docs-url";
 
 export default function SecurityPolicyPage() {
-  // Docs live on the marketing host in SaaS (deploy#1033); an app-relative
-  // /docs link gets RSC-prefetched, 307s cross-host, and dies on CORS with a
-  // console error (dashboard#963). Self-hosted (marketingUrl null) serves
-  // /docs from this app, so the relative link stays correct there.
-  const { marketingUrl } = getDeploymentProfile();
-  const rbacDocsHref =
-    marketingUrl !== null ? `${marketingUrl}/docs/rbac` : "/docs/rbac";
+  // Absolute cross-origin URL, not an app-relative /docs link: a relative
+  // link gets RSC-prefetched, 307s cross-host, and dies on CORS with a
+  // console error (dashboard#963). The docs moved off the marketing host to
+  // their own deployable (dashboard#820, #989) — linking marketingUrl here
+  // 404'd on SaaS, and docsUrl is env-derived and never null (ADR-0006
+  // classes docs as core, so self-hosted serves its own docs host too).
+  const rbacDocsHref = docsUrl("rbac");
   return (
     <div className="p-6 space-y-6">
       <div className="space-y-1">

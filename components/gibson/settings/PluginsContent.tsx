@@ -7,7 +7,6 @@
  * button via the matrix's `rowTrailingAction` slot.
  */
 
-import { docsUrl } from "@/src/lib/docs-url";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { PlugIcon, PlusIcon, Settings2 } from "lucide-react";
@@ -106,7 +105,7 @@ const CATEGORY_BADGE_CLASS: Record<string, string> = {
     "border-alt/40 bg-alt/10 text-alt dark:text-alt",
 };
 
-export function PluginsContent() {
+export function PluginsContent({ docsHref }: { docsHref: string }) {
   const { allowed: canManage, loading: authLoading } =
     useAuthorize(COMPONENT_MANAGE_RPC);
   const { data: tier } = useTierLimits();
@@ -290,7 +289,7 @@ export function PluginsContent() {
                       (dashboard#820), so this is a plain cross-origin anchor:
                       next/link cannot route to it, and an RSC prefetch of a
                       cross-origin URL dies on CORS (dashboard#963). */}
-                  <a href={docsUrl("plugins")} target="_blank" rel="noopener noreferrer">
+                  <a href={docsHref} target="_blank" rel="noopener noreferrer">
                     Read the docs
                   </a>
                 </Button>
