@@ -53,7 +53,20 @@ test.describe("Login, happy path", () => {
         password = SEED_PASSWORD;
       } else {
         // Self-contained: create a fresh tenant + user via the real signup
-        // flow, then log in with those credentials.
+        // flow, then log in with those credentials. Signup (dashboard#991)
+        // now requires a real, out-of-band verification token to complete
+        // — see e2e/auth/helpers/signup-via-form.ts. Without a seed user OR
+        // that token there is no way to get credentials, so skip rather than
+        // fail on the signup step.
+        if (!process.env.SIGNUP_VERIFY_TOKEN) {
+          test.skip(
+            true,
+            "Neither E2E_SEED_EMAIL/E2E_SEED_PASSWORD nor SIGNUP_VERIFY_TOKEN " +
+              "is set: no way to obtain credentials for the login test " +
+              "(dashboard#991/#992).",
+          );
+          return;
+        }
         const creds = generateUserCredentials();
         await signUpViaForm(page, {
           slug: creds.slug,

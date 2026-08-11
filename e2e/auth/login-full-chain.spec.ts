@@ -69,6 +69,21 @@ test.describe("Login, full chain (cluster e2e)", () => {
       return;
     }
 
+    // Signup (dashboard#991) now requires a real, out-of-band verification
+    // token to complete — see e2e/auth/helpers/signup-via-form.ts. This spec
+    // tests LOGIN, not signup, so treat the absence of that infra the same
+    // way as a missing cluster: skip with a clear reason instead of failing
+    // on the signup step.
+    if (!process.env.SIGNUP_VERIFY_TOKEN) {
+      test.skip(
+        true,
+        "SIGNUP_VERIFY_TOKEN not set: signUpViaForm cannot complete the " +
+          "two-step signup flow without a real verification token (dashboard#991/#992). " +
+          "This spec needs a signed-up user as a precondition for testing login.",
+      );
+      return;
+    }
+
     // -----------------------------------------------------------------------
     // 1. Sign up a fresh user
     // -----------------------------------------------------------------------
