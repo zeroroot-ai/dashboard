@@ -5,6 +5,15 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.118.1](https://github.com/zeroroot-ai/dashboard/compare/v0.118.0...v0.118.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* **billing:** consume GetTenantBilling / AdminGetTenantBilling and zitadel_org_ready ([#1023](https://github.com/zeroroot-ai/dashboard/issues/1023)) ([c423bb1](https://github.com/zeroroot-ai/dashboard/commit/c423bb16b27921208bb71b5b810782880a3a96fe)), closes [#1016](https://github.com/zeroroot-ai/dashboard/issues/1016)
+* **billing:** stop surfacing the permanently-redacted provisioning fields ([#1028](https://github.com/zeroroot-ai/dashboard/issues/1028)) ([dd21c77](https://github.com/zeroroot-ai/dashboard/commit/dd21c7727c0d0ca75361cb1fca03b574166874d2))
+* **build:** self-host Montserrat instead of fetching it from fonts.gstatic.com at build time ([#1033](https://github.com/zeroroot-ai/dashboard/issues/1033)) ([d5e8a5f](https://github.com/zeroroot-ai/dashboard/commit/d5e8a5f9e038363d9650a63ec97b12ba9c1c9f15))
+
 ## [0.118.0](https://github.com/zeroroot-ai/dashboard/compare/v0.117.2...v0.118.0) (2026-08-09)
 
 
