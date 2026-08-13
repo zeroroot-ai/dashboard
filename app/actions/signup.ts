@@ -50,6 +50,7 @@ const UUID_RE =
 
 import {
   signupInputSchema,
+  POST_SIGNUP_REDIRECT,
   type SignupInput,
   type SignupActionResult,
   type CompleteSignupInput,
@@ -150,8 +151,13 @@ const POLL_INTERVAL_MS = 1_000;
  * removed the GET-based sign-in initiation that v4 supported, and a GET to
  * that endpoint now throws `UnknownAction` and bounces back to
  * /login?error=Configuration.
+ *
+ * The constant itself lives in ./types (client-safe) since dashboard#967:
+ * the <ProvisioningPanel /> navigates to the same destination when the
+ * live-readiness fallback resolves a timed-out attempt after this action
+ * has already returned. This comment block stays here because the
+ * rationale is server-flow rationale.
  */
-const POST_SIGNUP_REDIRECT = "/login?callbackUrl=%2Fdashboard";
 
 // ---------------------------------------------------------------------------
 // Main entry
@@ -692,6 +698,13 @@ async function finish(
     code: failure.code,
     userMessage: failure.userMessage,
     fieldErrors: failure.fieldErrors,
+    // Non-fatal timeout only (dashboard#967): the action — the sole
+    // progress-store writer — has returned, so the stored timeout record
+    // can never flip to ok on its own. The panel hands this slug back to
+    // the progress endpoint (`?slug=`), which probes live tenant readiness
+    // and synthesizes the ok record once the saga completes.
+    tenantSlug:
+      failure.code === "PROVISIONING_TIMEOUT" ? ctx.tenantSlug : undefined,
   };
 }
 
