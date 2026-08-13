@@ -75,13 +75,26 @@ jobs:
 
       - name: Diff against PR base
         id: diff
+        # Deny-list, not allow-list (dashboard#1035). The previous
+        # allow-list silently skipped real application source -- root
+        # lib/ (imported by app/layout.tsx via the `@/*` -> `./*`
+        # tsconfig mapping), hooks/, auth.ts, middleware.ts,
+        # instrumentation.ts, patches/ -- producing false-green CLEAN
+        # PRs with no fast tier at all (see PR #1033). A change is
+        # RELEVANT unless every changed file matches a known-irrelevant
+        # pattern, so a NEW top-level source dir is covered by default
+        # instead of silently invisible. node-ci.yml itself is always
+        # relevant even though the rest of .github/ is not.
         run: |
           set -e
           BASE="${{ github.event.pull_request.base.sha }}"
           HEAD="${{ github.event.pull_request.head.sha }}"
           CHANGED="$(git diff --name-only "$BASE" "$HEAD")"
           echo "$CHANGED"
-          if echo "$CHANGED" | grep -E '^(app/|components/|src/|content/|scripts/|e2e/|package\.json$|package-lock\.json$|pnpm-lock\.yaml$|knip\.json$|\.tool-versions$|\.eslintrc\.js$|\.eslintignore$|tsconfig\.json$|vitest\.config\.|next\.config\.|tailwind\.config\.|\.github/workflows/node-ci\.yml$)' > /dev/null; then
+          IRRELEVANT='^(docs/|\.github/|LICENSE$|CODEOWNERS$|\.gitignore$|\.dockerignore$)|\.md$'
+          if echo "$CHANGED" | grep -qE '^\.github/workflows/node-ci\.yml$'; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          elif echo "$CHANGED" | grep -vE "$IRRELEVANT" | grep -q .; then
             echo "relevant=true" >> "$GITHUB_OUTPUT"
           else
             echo "relevant=false" >> "$GITHUB_OUTPUT"
