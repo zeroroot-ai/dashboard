@@ -215,6 +215,12 @@ function CompleteSignupFormInner({
   const [cardError, setCardError] = useState<string | null>(null);
   const [provisioning, setProvisioning] = useState(false);
   const [redirectOnSuccess, setRedirectOnSuccess] = useState("");
+  // Set only on a non-fatal PROVISIONING_TIMEOUT result (dashboard#967):
+  // lets the panel keep polling with the live-readiness fallback so the
+  // holding state auto-resolves when the operator finishes the saga.
+  const [timeoutTenantSlug, setTimeoutTenantSlug] = useState<
+    string | undefined
+  >(undefined);
 
   const passwordRef = useRef<HTMLInputElement | null>(null);
 
@@ -268,7 +274,11 @@ function CompleteSignupFormInner({
         if (!result.ok) {
           if (isNonFatalTimeout(result.code)) {
             // The account and workspace exist and are still provisioning. Keep
-            // the panel up rather than inviting a retry that cannot work.
+            // the panel up rather than inviting a retry that cannot work. The
+            // slug arms the panel's live-readiness fallback poll so the
+            // holding state auto-resolves once the workspace is Ready
+            // (dashboard#967).
+            setTimeoutTenantSlug(result.tenantSlug);
             return;
           }
           setProvisioning(false);
@@ -309,6 +319,7 @@ function CompleteSignupFormInner({
         <ProvisioningPanel
           attemptId={verified.attemptId}
           redirectOnSuccess={redirectOnSuccess}
+          tenantSlug={timeoutTenantSlug}
           onRetry={() => setProvisioning(false)}
         />
       </div>

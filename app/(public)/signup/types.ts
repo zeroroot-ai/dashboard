@@ -104,6 +104,22 @@ export const completeSignupInputSchema = z
 export type CompleteSignupFormInput = z.infer<typeof completeSignupInputSchema>;
 
 // ---------------------------------------------------------------------------
+// Post-signup destination
+// ---------------------------------------------------------------------------
+
+/**
+ * Where a completed signup lands. Routes through /login so the LoginForm
+ * client component invokes Auth.js v5's CSRF-protected signIn("zitadel").
+ * Shared here (client-safe module) because BOTH sides navigate to it: the
+ * Server Action's success result, and the <ProvisioningPanel /> when the
+ * live-readiness fallback resolves a timed-out attempt (dashboard#967) —
+ * a path where the action returned before any success redirect existed.
+ * The full rationale (and why a direct /api/auth/signin/zitadel redirect
+ * breaks) is documented at the use site in app/actions/signup.ts.
+ */
+export const POST_SIGNUP_REDIRECT = "/login?callbackUrl=%2Fdashboard";
+
+// ---------------------------------------------------------------------------
 // Failure codes
 // ---------------------------------------------------------------------------
 
@@ -179,6 +195,17 @@ export type SignupActionResult =
       code: SignupFailureCode;
       /** User-facing prose, safe to display verbatim. */
       userMessage: string;
+      /**
+       * Set ONLY for the non-fatal `PROVISIONING_TIMEOUT` code
+       * (dashboard#967): the workspace slug the action was waiting on.
+       * The <ProvisioningPanel /> hands it back to the progress endpoint
+       * (`?slug=`), which probes live tenant readiness once the stored
+       * record is a terminal timeout — the Server Action has already
+       * returned and can never flip the record to `ok` itself. Disclosed
+       * only to the browser holding the verified-session cookie, and it
+       * is derived from the workspace name that same user typed.
+       */
+      tenantSlug?: string;
       /**
        * Optional per-field error overrides, keyed by form-field name. Plain
        * string keys rather than `keyof SignupInput` because the two screens

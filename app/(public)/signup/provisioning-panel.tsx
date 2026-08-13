@@ -38,6 +38,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { POST_SIGNUP_REDIRECT } from "./types";
 import type { ProvisioningProgress, ProvisioningStep } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -197,6 +198,15 @@ interface ProvisioningPanelProps {
   attemptId: string;
   /** URL to navigate to when `terminalState === "ok"`. */
   redirectOnSuccess: string;
+  /**
+   * Workspace slug from a non-fatal PROVISIONING_TIMEOUT result
+   * (dashboard#967). When set, a server-reported timeout does NOT stop the
+   * poll: the panel keeps polling with `?slug=` so the progress endpoint
+   * can probe live tenant readiness and flip the holding state to
+   * "access granted" once the operator finishes the saga. Absent on the
+   * happy path and for genuinely failed attempts.
+   */
+  tenantSlug?: string;
   /** Called when the user clicks "Try again", should reset the parent form. */
   onRetry: () => void;
 }
@@ -211,10 +221,17 @@ const POLL_INTERVAL_MS = 1_000;
 // dashboard#962) so the panel is still polling when the action writes its
 // terminal progress record; 6 minutes gives ~2 minutes of slack.
 const MAX_POLL_ITERATIONS = 360; // 6-minute hard cap
+// Extended cap while the live-readiness fallback holds (dashboard#967):
+// a server-reported timeout with a known slug keeps polling — every 3rd
+// tick, 20 probes/min, within the endpoint's 60/min budget — for up to 15
+// minutes total before giving up and leaving the "Sign in instead" path.
+const FALLBACK_TICK_MODULUS = 3;
+const MAX_FALLBACK_POLL_ITERATIONS = 900; // 15-minute hard cap
 
 export function ProvisioningPanel({
   attemptId,
   redirectOnSuccess,
+  tenantSlug,
   onRetry,
 }: ProvisioningPanelProps) {
   const [progress, setProgress] = useState<ProvisioningProgress | null>(null);
@@ -223,7 +240,14 @@ export function ProvisioningPanel({
 
   // Track previous step label to diff for aria-live announcements.
   const prevStepRef = useRef<ProvisioningStep | null>(null);
+  const prevTerminalRef = useRef<ProvisioningProgress["terminalState"]>(
+    undefined,
+  );
   const iterationsRef = useRef(0);
+  // True once a server-reported timeout arrived while a slug is known:
+  // the live-readiness fallback is holding (dashboard#967). A ref, not
+  // state — the interval callback closes over state from mount time.
+  const fallbackHoldingRef = useRef(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentStep = progress?.step ?? null;
@@ -242,7 +266,10 @@ export function ProvisioningPanel({
       if (cancelled) return;
 
       iterationsRef.current += 1;
-      if (iterationsRef.current > MAX_POLL_ITERATIONS) {
+      const maxIterations = fallbackHoldingRef.current
+        ? MAX_FALLBACK_POLL_ITERATIONS
+        : MAX_POLL_ITERATIONS;
+      if (iterationsRef.current > maxIterations) {
         clearInterval(id);
         // Treat runaway as a timeout for the UI.
         setProgress((prev) =>
@@ -257,10 +284,25 @@ export function ProvisioningPanel({
         return;
       }
 
+      // While the fallback holds, probe every 3rd tick — the endpoint's
+      // live-readiness branch dials the daemon, so keep it to 20/min.
+      if (
+        fallbackHoldingRef.current &&
+        iterationsRef.current % FALLBACK_TICK_MODULUS !== 0
+      ) {
+        return;
+      }
+
       try {
-        const res = await fetch(`/api/signup/progress/${encodeURIComponent(attemptId)}`, {
-          cache: "no-store",
-        });
+        const slugParam = tenantSlug
+          ? `?slug=${encodeURIComponent(tenantSlug)}`
+          : "";
+        const res = await fetch(
+          `/api/signup/progress/${encodeURIComponent(attemptId)}${slugParam}`,
+          {
+            cache: "no-store",
+          },
+        );
 
         if (cancelled) return;
 
@@ -290,15 +332,28 @@ export function ProvisioningPanel({
         }
 
         if (data.terminalState) {
-          clearInterval(id);
-          if (data.terminalState === "ok") {
-            setAnnouncement("Your workspace is ready. Signing you in now.");
-          } else if (data.terminalState === "failed") {
-            setAnnouncement("Setup failed. You can try again.");
+          // A server-reported timeout is NOT terminal when the slug is
+          // known (dashboard#967): the Server Action — the only progress
+          // writer — has returned, so only this poll's live-readiness
+          // fallback can still flip the attempt to ok. Keep polling.
+          if (data.terminalState === "timeout" && tenantSlug) {
+            fallbackHoldingRef.current = true;
           } else {
-            setAnnouncement(
-              "Setup is taking longer than expected. We'll email you when it's ready.",
-            );
+            clearInterval(id);
+          }
+          // Announce once per terminal-state transition; the fallback
+          // hold re-receives the same timeout record every probe.
+          if (data.terminalState !== prevTerminalRef.current) {
+            prevTerminalRef.current = data.terminalState;
+            if (data.terminalState === "ok") {
+              setAnnouncement("Your workspace is ready. Signing you in now.");
+            } else if (data.terminalState === "failed") {
+              setAnnouncement("Setup failed. You can try again.");
+            } else {
+              setAnnouncement(
+                "Setup is taking longer than expected. We'll email you when it's ready.",
+              );
+            }
           }
         }
       } catch {
@@ -313,13 +368,16 @@ export function ProvisioningPanel({
       cancelled = true;
       clearInterval(id);
     };
-  }, [attemptId]);
+  }, [attemptId, tenantSlug]);
 
-  // Navigate on success after a brief celebratory pause.
+  // Navigate on success after a brief celebratory pause. When the
+  // live-readiness fallback resolved a timed-out attempt (dashboard#967)
+  // no action-supplied redirect exists — fall back to the canonical
+  // post-signup destination.
   useEffect(() => {
     if (isOk) {
       successTimerRef.current = setTimeout(() => {
-        window.location.assign(redirectOnSuccess);
+        window.location.assign(redirectOnSuccess || POST_SIGNUP_REDIRECT);
       }, 1_500);
     }
     return () => {
