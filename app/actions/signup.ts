@@ -138,10 +138,13 @@ const POLL_INTERVAL_MS = 1_000;
  * POSTs to /api/auth/signin/zitadel with the required tokens.
  *
  * The auto-login path (issue dashboard#41) is retired in E9 (dashboard#812):
- * it depended on a broad signup-bot Zitadel PAT holding IAM_LOGIN_CLIENT
- * (gitops#90, never merged), so auto-login already fell back to /login at
- * runtime. Restoring it via a narrow login-scoped credential is tracked as a
- * follow-up; until then /login is the single post-signup path.
+ * it depended on a broad signup-bot Zitadel PAT holding IAM_LOGIN_CLIENT.
+ * That grant DID land once (gitops#90, merged via gitops PR #92 as commit
+ * 2dd4167, 2026-05-14) but regressed out in the later apps/manifests ->
+ * envs/ overlay restructure; no IAM_LOGIN_CLIENT grant exists on gitops
+ * main today, so auto-login already fell back to /login at runtime.
+ * Restoring it via a narrow login-scoped credential is tracked in
+ * dashboard#853; until then /login is the single post-signup path.
  *
  * NOTE: don't redirect directly to /api/auth/signin/zitadel, Auth.js v5
  * removed the GET-based sign-in initiation that v4 supported, and a GET to
