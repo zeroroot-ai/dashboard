@@ -6,20 +6,24 @@ on:
     tags:
       - 'v*'
   pull_request:
+    # Deny-list, not allow-list (dashboard#1035). The Dockerfile is
+    # `COPY . .`, so nearly every tracked file feeds the image build. The
+    # previous allow-list silently false-greened whole source trees --
+    # root lib/, hooks/, auth.ts, middleware.ts, instrumentation.ts,
+    # patches/, public/ were all invisible, and `content/**` pointed at a
+    # directory that does not exist. Everything triggers the build now
+    # except paths that cannot reach the image or its build; a NEW
+    # top-level source dir is covered by default instead of silently
+    # skipped.
     paths:
-      - 'app/**'
-      - 'components/**'
-      - 'src/**'
-      - 'content/**'
-      - 'scripts/**'
-      - 'Dockerfile'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'pnpm-lock.yaml'
-      - 'knip.json'
-      - '.tool-versions'
-      - 'next.config.*'
-      - 'tailwind.config.*'
+      - '**'
+      - '!docs/**'
+      - '!e2e/**'
+      - '!**.md'
+      - '!LICENSE'
+      - '!CODEOWNERS'
+      - '!.gitignore'
+      - '!.github/**'
       - '.github/workflows/dashboard.yml'
   workflow_dispatch:
 
