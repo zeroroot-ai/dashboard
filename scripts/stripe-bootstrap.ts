@@ -21,6 +21,10 @@
  * Paste this value into the Helm chart as dashboard.billing.portalConfigurationId.
  *
  * Spec: stripe-billing-integration R3.2, design open item 5.
+ *
+ * Webhook endpoints are NOT managed here. The durable webhook-endpoint
+ * reconciler (endpoint create/update/rotate + signing-secret sync into the
+ * secret backend, deploy#896) is scripts/stripe-webhook-reconcile.mjs.
  */
 
 import { getStripeClient } from '../src/lib/billing/stripe';
