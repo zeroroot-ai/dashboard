@@ -449,9 +449,17 @@ function sampleArtifact(config) {
  * marker intact, so the drift case fails for the drift and nothing else.
  */
 function drifted(text) {
-  const out = text.replace("\n", "\n\n");
-  if (out === text) throw new Error("selftest fixture has no newline to perturb");
-  return out;
+  // Splice at the first newline rather than text.replace("\n", "\n\n").
+  //
+  // The replace form did the right thing — a single-occurrence string replace
+  // perturbs exactly one byte position, which is what a drift fixture wants —
+  // but it reads like a half-finished sanitizer (replace without /g is the
+  // classic incomplete-sanitization bug), and static analysis flags it as one.
+  // Slicing states the intent directly: insert one blank line after the first
+  // newline, once, deliberately.
+  const i = text.indexOf("\n");
+  if (i === -1) throw new Error("selftest fixture has no newline to perturb");
+  return `${text.slice(0, i + 1)}\n${text.slice(i + 1)}`;
 }
 
 /** The same artifact with the generator marker removed, and nothing else changed. */
