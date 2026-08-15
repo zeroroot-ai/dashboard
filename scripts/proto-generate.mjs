@@ -36,7 +36,7 @@
  * Spec: component-bootstrap-dashboard-completion (proto-gen workflow).
  */
 
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import {
   existsSync,
   mkdirSync,
@@ -111,11 +111,29 @@ const GIBSON_REPO = gibsonFound?.path ?? path.join(WORKSPACE_ROOT, GIBSON_REPO_R
 // dissolved in gibson#781.
 const GIBSON_LOCAL_PROTOS = path.join(GIBSON_REPO, 'internal/server/daemon/api');
 
-function run(cmd, opts = {}) {
-  return execSync(cmd, {
+/**
+ * Run a child process with an explicit argv array and NO shell.
+ *
+ * This is the one place in this file that spawns anything, so the rationale
+ * lives here. `execSync(cmd)` hands its argument to `/bin/sh`, which re-parses
+ * it: every value interpolated into the string (a resolved workspace path, a
+ * module directory, an output directory) stops being data the moment it
+ * contains `;`, `$(...)`, a backtick, a quote or a glob. `execFileSync(file,
+ * args)` passes argv straight to `execve`, so no interpolated value can ever
+ * become syntax. The values here are developer/operator-controlled rather than
+ * attacker-controlled, so this was never exploitable in practice — argv just
+ * removes the class outright.
+ *
+ * @param {string} file  - Executable to run.
+ * @param {string[]} args - Argument vector (never a command line).
+ * @param {{stdio?: any, cwd?: string, env?: NodeJS.ProcessEnv}} [opts]
+ */
+function run(file, args, opts = {}) {
+  return execFileSync(file, args, {
     stdio: opts.stdio ?? 'pipe',
     encoding: 'utf8',
     cwd: opts.cwd ?? DASHBOARD_ROOT,
+    ...(opts.env ? { env: opts.env } : {}),
   });
 }
 
@@ -129,20 +147,19 @@ function resolveSdkProtoDir({ soft = false } = {}) {
   const SDK_SIBLING =
     resolveWorkspacePath('opensource/sdk/api/proto', { from: DASHBOARD_ROOT })
       ?.path ?? path.join(WORKSPACE_ROOT, 'opensource/sdk/api/proto');
-  try {
-    const stat = run(`stat ${SDK_SIBLING}`);
-    if (stat) return SDK_SIBLING;
-  } catch {
-    // fall through to module-cache resolution
-  }
+  // Presence is a filesystem question; the old `stat` shelled out only to
+  // interpolate the path into a command line. existsSync answers it in process.
+  if (existsSync(SDK_SIBLING)) return SDK_SIBLING;
 
   // Module-cache fallback: `go list -m` against the gibson repo
   // resolves the SDK to whichever version gibson is pinned to. Only
   // hit when the sibling checkout is absent.
   try {
-    const dir = run('go list -m -f "{{.Dir}}" github.com/zeroroot-ai/sdk', {
-      cwd: GIBSON_REPO,
-    }).trim();
+    const dir = run(
+      'go',
+      ['list', '-m', '-f', '{{.Dir}}', 'github.com/zeroroot-ai/sdk'],
+      { cwd: GIBSON_REPO },
+    ).trim();
     if (!dir) throw new Error('empty');
     return path.join(dir, 'api/proto');
   } catch (err) {
@@ -162,22 +179,17 @@ function resolveSdkProtoDir({ soft = false } = {}) {
 function ensureGibsonLocalProtos({ soft = false } = {}) {
   // No-op-style sanity check: the daemon-local protos must exist.
   // They are not a published Go module, so we can only get them via a
-  // sibling checkout.
-  try {
-    const stat = run(`stat ${GIBSON_LOCAL_PROTOS}`);
-    if (!stat) throw new Error('stat empty');
-    return true;
-  } catch (err) {
-    if (soft) return false;
-    console.error(
-      'proto-generate: gibson daemon-local protos not found at:\n' +
-        `    ${GIBSON_LOCAL_PROTOS}\n` +
-        '  Clone zeroroot-ai/gibson alongside this dashboard checkout, or\n' +
-        '  run from the canonical workspace at ~/Code/zeroroot.ai/.\n' +
-        `  Underlying error: ${err.message ?? err}`,
-    );
-    process.exit(1);
-  }
+  // sibling checkout. existsSync, not `stat` through a shell (see
+  // resolveSdkProtoDir).
+  if (existsSync(GIBSON_LOCAL_PROTOS)) return true;
+  if (soft) return false;
+  console.error(
+    'proto-generate: gibson daemon-local protos not found at:\n' +
+      `    ${GIBSON_LOCAL_PROTOS}\n` +
+      '  Clone zeroroot-ai/gibson alongside this dashboard checkout, or\n' +
+      '  run from the canonical workspace at ~/Code/zeroroot.ai/.',
+  );
+  process.exit(1);
 }
 
 function buildWorkspace() {
@@ -289,7 +301,7 @@ function generate() {
   // is the real gate (it errors clearly if the dep can't resolve).
   let offline = false;
   try {
-    execSync(`npx buf dep update`, {
+    run('npx', ['buf', 'dep', 'update'], {
       cwd: ws,
       stdio: 'inherit',
     });
@@ -320,7 +332,7 @@ function generate() {
   // back to the offline path, point NETRC at /dev/null so buf does not
   // try to authenticate against the BSR with a stale/invalid token in
   // ~/.netrc — it resolves the pinned dep straight from the local cache.
-  execSync(`npx buf generate`, {
+  run('npx', ['buf', 'generate'], {
     cwd: ws,
     stdio: 'inherit',
     env: offline ? { ...process.env, NETRC: '/dev/null' } : process.env,
@@ -332,12 +344,18 @@ function generate() {
     // produced, nothing else. `--delete` (and no `--update`) so the
     // destination is a faithful mirror, not a merge over stale content.
     mkdirSync(OUT_DIR, { recursive: true });
-    execSync(`rsync -a --delete ${out}/ ${OUT_DIR}/`, { stdio: 'inherit' });
+    // argv, and `--` before the operands so a path can be neither shell syntax
+    // nor an rsync option.
+    run('rsync', ['-a', '--delete', '--', `${out}/`, `${OUT_DIR}/`], {
+      stdio: 'inherit',
+    });
   } else {
     // rsync --update keeps unchanged files untouched (preserves mtimes
     // for incremental tooling) and only writes diffs. Output destination
     // is the committed src/gen/ tree.
-    execSync(`rsync -a --update ${out}/ ${OUT_DIR}/`, { stdio: 'inherit' });
+    run('rsync', ['-a', '--update', '--', `${out}/`, `${OUT_DIR}/`], {
+      stdio: 'inherit',
+    });
   }
 
   // Clean up. The workspace is regenerated on every run; persistent

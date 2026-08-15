@@ -39,7 +39,8 @@
  * are not available we fall back to scanning Auth.js / Zitadel debug output.
  */
 
-import { execSync, spawn } from "child_process";
+import { execFileSync, spawn } from "child_process";
+import { statSync } from "node:fs";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -65,9 +66,14 @@ function resolvePodLabel(): string {
   if (resolvedPodLabel) return resolvedPodLabel;
   for (const label of [K8S_POD_LABEL, K8S_POD_LABEL_FALLBACK]) {
     try {
-      const out = execSync(
-        `kubectl get pods -n ${K8S_NAMESPACE} -l "${label}" --no-headers 2>/dev/null || true`,
-        { timeout: 5000, encoding: "utf-8" },
+      // argv, not a shell string. See fetchLogs() for the rationale.
+      // `2>/dev/null || true` is gone: stderr is dropped by the stdio
+      // triple, and a non-zero exit throws into the catch below, which
+      // already means "this label did not resolve, try the next one".
+      const out = execFileSync(
+        "kubectl",
+        ["get", "pods", "-n", K8S_NAMESPACE, "-l", label, "--no-headers"],
+        { timeout: 5000, encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] },
       );
       if (out.trim().length > 0) {
         resolvedPodLabel = label;
@@ -112,11 +118,21 @@ interface ScrapeOptions {
  * runs `kubectl logs`; locally it reads the file at `DASHBOARD_LOG_FILE`.
  *
  * Returns an empty string if neither source is available (tests skip/warn).
+ *
+ * Every child process in this file is spawned with `execFileSync(cmd, [argv])`
+ * and therefore WITHOUT a shell. The namespace, pod label and log-file path all
+ * come from the environment (`DASHBOARD_K8S_NAMESPACE`,
+ * `DASHBOARD_K8S_POD_LABEL`, `DASHBOARD_LOG_FILE`); interpolating them into a
+ * command line hands `/bin/sh` a string that it re-parses, so a value carrying
+ * `;`, `$(...)`, a backtick or a glob would become syntax rather than data. An
+ * argv array is passed straight to `execve` and can never be reparsed. The
+ * values are operator-supplied rather than attacker-supplied, so this was never
+ * exploitable in practice — argv simply removes the whole class.
  */
 function fetchLogs(sinceSeconds = 120): string {
   if (LOG_FILE) {
     try {
-      return execSync(`tail -n 2000 ${LOG_FILE}`, {
+      return execFileSync("tail", ["-n", "2000", "--", LOG_FILE], {
         timeout: 5000,
         encoding: "utf-8",
       });
@@ -127,9 +143,18 @@ function fetchLogs(sinceSeconds = 120): string {
 
   // Kubernetes path: try to get logs from the dashboard pod.
   try {
-    return execSync(
-      `kubectl logs -n ${K8S_NAMESPACE} -l "${resolvePodLabel()}" --tail=500 --since=${sinceSeconds}s 2>/dev/null || true`,
-      { timeout: 10_000, encoding: "utf-8" },
+    return execFileSync(
+      "kubectl",
+      [
+        "logs",
+        "-n",
+        K8S_NAMESPACE,
+        "-l",
+        resolvePodLabel(),
+        "--tail=500",
+        `--since=${sinceSeconds}s`,
+      ],
+      { timeout: 10_000, encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] },
     );
   } catch {
     return "";
@@ -296,17 +321,22 @@ export async function scrapeToken(opts: ScrapeOptions): Promise<string> {
  */
 export function isLogSourceReachable(): boolean {
   if (LOG_FILE) {
+    // `test -f` was a shell round-trip for a filesystem question; statSync
+    // answers it in-process, with the path as data rather than syntax.
     try {
-      execSync(`test -f ${LOG_FILE}`, { timeout: 1000 });
-      return true;
+      return statSync(LOG_FILE).isFile();
     } catch {
       return false;
     }
   }
   try {
-    const out = execSync(
-      `kubectl get pods -n ${K8S_NAMESPACE} -l "${resolvePodLabel()}" --no-headers 2>/dev/null | head -1`,
-      { timeout: 5000, encoding: "utf-8" },
+    // argv, not a shell string (see fetchLogs). The `| head -1` pipe is gone:
+    // the only thing done with the output is a non-empty test, which is
+    // identical on the first line and on the whole stream.
+    const out = execFileSync(
+      "kubectl",
+      ["get", "pods", "-n", K8S_NAMESPACE, "-l", resolvePodLabel(), "--no-headers"],
+      { timeout: 5000, encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] },
     );
     // `kubectl get` exits 0 even when zero pods match ("No resources found"
     // goes to stderr) — require an actual pod line. dashboard#961.

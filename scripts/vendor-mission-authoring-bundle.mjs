@@ -48,7 +48,7 @@
  * Spec: mission-dashboard-rewrite Requirement 4.1 + 5.3 + 6.1.
  */
 
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import {
   cpSync,
   existsSync,
@@ -80,8 +80,21 @@ const DOCS_ROUTE = path.join(
   'src/app/dashboard/(auth)/docs',
 );
 
-function run(cmd, opts = {}) {
-  return execSync(cmd, {
+/**
+ * Run a child process with an explicit argv array and NO shell.
+ *
+ * The OCI reference and the tarball path below are interpolated from an env
+ * var / a resolved workspace path. Building a command line out of them hands
+ * `/bin/sh` a string it re-parses, so such a value stops being data as soon as
+ * it contains shell syntax; an argv array goes straight to `execve` and cannot
+ * be reparsed. Same rationale as scripts/proto-generate.mjs's run().
+ *
+ * @param {string} file  - Executable to run.
+ * @param {string[]} args - Argument vector (never a command line).
+ * @param {{cwd?: string, stdio?: any}} [opts]
+ */
+function run(file, args, opts = {}) {
+  return execFileSync(file, args, {
     encoding: 'utf8',
     cwd: opts.cwd ?? DASHBOARD_ROOT,
     stdio: opts.stdio ?? 'pipe',
@@ -128,7 +141,7 @@ function resolveBundleSourceDir() {
   const ref = `ghcr.io/zeroroot-ai/mission-authoring:${version}`;
   console.log(`mission-authoring-bundle: oras pull ${ref}`);
   try {
-    run(`oras pull ${ref}`, { cwd: pullDir, stdio: 'inherit' });
+    run('oras', ['pull', ref], { cwd: pullDir, stdio: 'inherit' });
   } catch (err) {
     throw new Error(
       `oras pull failed for ${ref}. Set MISSION_AUTHORING_BUNDLE_DIR or MISSION_AUTHORING_BUNDLE_PATH to skip the OCI pull. Underlying: ${err.message ?? err}`,
@@ -148,7 +161,7 @@ function extractTarball(tarballPath, version) {
   const dest = path.join(DASHBOARD_ROOT, '.tmp/mission-authoring-extract');
   rmSync(dest, { recursive: true, force: true });
   mkdirSync(dest, { recursive: true });
-  run(`tar -xzf ${tarballPath} -C ${dest}`);
+  run('tar', ['-xzf', tarballPath, '-C', dest]);
   return { dir: dest, version };
 }
 
@@ -161,7 +174,8 @@ function resolveVersion() {
   if (existsSync(path.join(gibsonRepo, 'go.mod'))) {
     try {
       const v = run(
-        'go list -m -f "{{.Version}}" github.com/zeroroot-ai/sdk',
+        'go',
+        ['list', '-m', '-f', '{{.Version}}', 'github.com/zeroroot-ai/sdk'],
         { cwd: gibsonRepo },
       ).trim();
       if (v) return v;

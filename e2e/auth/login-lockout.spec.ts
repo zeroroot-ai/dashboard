@@ -194,15 +194,33 @@ test.describe("Login, account lockout", () => {
       try {
         // We use the 'verify' tokenType logic but scan for the lockout subject.
         // In practice we just look in the raw logs.
-        const { execSync } = await import("child_process");
+        const { execFileSync } = await import("child_process");
         const K8S_NAMESPACE = process.env.DASHBOARD_K8S_NAMESPACE ?? "gibson";
         const K8S_POD_LABEL =
           process.env.DASHBOARD_K8S_POD_LABEL ??
           "app.kubernetes.io/name=gibson-dashboard";
 
-        const logs = execSync(
-          `kubectl logs -n ${K8S_NAMESPACE} -l "${K8S_POD_LABEL}" --tail=500 --since=120s 2>/dev/null || true`,
-          { timeout: 10_000, encoding: "utf-8" },
+        // argv, not a shell string: the namespace and pod label come from the
+        // environment, and an argv array can never be reparsed as shell syntax.
+        // Same construct as e2e/auth/helpers/email-log.ts, which carries the
+        // full rationale. Non-zero exit lands in the catch below, which is what
+        // the old `|| true` plus the surrounding try amounted to anyway.
+        const logs = execFileSync(
+          "kubectl",
+          [
+            "logs",
+            "-n",
+            K8S_NAMESPACE,
+            "-l",
+            K8S_POD_LABEL,
+            "--tail=500",
+            "--since=120s",
+          ],
+          {
+            timeout: 10_000,
+            encoding: "utf-8",
+            stdio: ["ignore", "pipe", "ignore"],
+          },
         );
 
         const hasLockoutEmail =
