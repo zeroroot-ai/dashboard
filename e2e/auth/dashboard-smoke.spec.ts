@@ -13,10 +13,11 @@
  * The spec reads MANIFEST_PATH (path to dashboard-routes.yaml) and iterates
  * routes in parallel (concurrency: SMOKE_CONCURRENCY, default 4).
  *
- * Output files:
- *   /tmp/dashboard-smoke-report-<slug-a>.json  , full per-route results for Go side
- *   /tmp/dashboard-smoke-session-a-<slug-a>.json, session A cookie jar
- *   /tmp/dashboard-smoke-session-b-<slug-b>.json, session B cookie jar
+ * Output files (in the run's private artifact dir, see helpers/artifact-dir.ts;
+ * the Go orchestrator passes its own directory in via E2E_ARTIFACT_DIR):
+ *   dashboard-smoke-report-<slug-a>.json   , full per-route results for Go side
+ *   dashboard-smoke-session-a-<slug-a>.json, session A cookie jar
+ *   dashboard-smoke-session-b-<slug-b>.json, session B cookie jar
  *
  * Env vars consumed:
  *   SIGNUP_SLUG_A     , tenant A slug (set by orchestrator; optional)
@@ -48,9 +49,10 @@ import {
   expect,
   type BrowserContext,
 } from "@playwright/test";
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import * as yaml from "js-yaml";
+import { artifactDir } from "./helpers/artifact-dir";
 import { signUpViaForm } from "./helpers/signup-via-form";
 import { loginViaZitadelV2 } from "./helpers/login-via-zitadel-v2";
 import { generateUserCredentials, securePassword } from "./helpers/fixtures";
@@ -61,6 +63,11 @@ import { generateUserCredentials, securePassword } from "./helpers/fixtures";
 
 const CLUSTER_URL =
   process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
+
+// One private per-run dir (mkdtemp, mode 0700) instead of fixed /tmp paths: the
+// two session files below are live cookie jars, so a predictable path is both a
+// symlink-clobber target and readable by every other local user.
+const ARTIFACT_DIR = artifactDir("dashboard-smoke");
 
 // Tenant identities. Fast path: the orchestrator (kind CI workflow / the Go
 // side's `make test-dashboard-smoke-e2e`) seeds SIGNUP_SLUG_A/B +
@@ -462,7 +469,7 @@ test.describe("dashboard smoke", () => {
       await establishSession(contextA, SLUG_A, EMAIL_A, SYNTHETIC_PASSWORD);
 
       // Save session A for the cross-tenant isolation test.
-      const sessionPathA = `/tmp/dashboard-smoke-session-a-${SLUG_A}.json`;
+      const sessionPathA = path.join(ARTIFACT_DIR, `dashboard-smoke-session-a-${SLUG_A}.json`);
       await contextA.storageState({ path: sessionPathA });
       console.log(`[dashboard-smoke] session A saved to ${sessionPathA}`);
 
@@ -506,7 +513,7 @@ test.describe("dashboard smoke", () => {
         endTime,
         results: allResults,
       };
-      const reportPath = `/tmp/dashboard-smoke-report-${SLUG_A}.json`;
+      const reportPath = path.join(ARTIFACT_DIR, `dashboard-smoke-report-${SLUG_A}.json`);
       fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
       console.log(
         `[dashboard-smoke] report written to ${reportPath} (passed=${report.passed}/${report.totalRoutes})`,
@@ -571,7 +578,7 @@ test.describe("dashboard smoke", () => {
     try {
       await establishSession(contextB, SLUG_B, EMAIL_B, SYNTHETIC_PASSWORD);
 
-      const sessionPathB = `/tmp/dashboard-smoke-session-b-${SLUG_B}.json`;
+      const sessionPathB = path.join(ARTIFACT_DIR, `dashboard-smoke-session-b-${SLUG_B}.json`);
       await contextB.storageState({ path: sessionPathB });
       console.log(`[dashboard-smoke] session B saved to ${sessionPathB}`);
     } finally {

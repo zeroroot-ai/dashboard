@@ -59,7 +59,7 @@
  * Exit codes: 0 clean, 1 violation, 2 unexpected error.
  */
 
-import { readdir, readFile, stat, mkdir, writeFile, rm } from "node:fs/promises";
+import { readdir, readFile, stat, mkdir, mkdtemp, writeFile, rm } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -443,8 +443,10 @@ async function writeFixture(dir, files) {
 }
 
 async function runSelfTest() {
-  const base = join(tmpdir(), `check-csp-selftest-${process.pid}`);
-  await rm(base, { recursive: true, force: true });
+  // mkdtemp, not a fixed /tmp path: it creates the directory atomically with
+  // mode 0700 and an unpredictable suffix, so no other local user can pre-plant
+  // a symlink at the fixture path or read the fixtures we write.
+  const base = await mkdtemp(join(tmpdir(), "check-csp-selftest-"));
 
   const mutate = (from, to) => ({ "next.config.ts": GOOD_CONFIG.replace(from, to) });
 
