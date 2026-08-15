@@ -87,6 +87,7 @@ vi.mock('@/src/lib/server-action-skew', () => ({
 
 import { CompleteSignupForm } from '../complete-form';
 import { DEFAULT_PASSWORD_POLICY } from '@/src/lib/zitadel/password-policy-cache';
+import { PROVISIONING_TIMEOUT_MESSAGE } from '../../types';
 
 const ATTEMPT = 'aaaaaaaa-0000-0000-0000-0000000000d1';
 
@@ -134,8 +135,7 @@ describe('CompleteSignupForm PROVISIONING_TIMEOUT handling (dashboard#962)', () 
           terminalState: 'timeout',
           error: {
             code: 'PROVISIONING_TIMEOUT',
-            userMessage:
-              "Still setting up your workspace, we'll email you when it's ready.",
+            userMessage: PROVISIONING_TIMEOUT_MESSAGE,
           },
         }),
       }),
@@ -157,8 +157,7 @@ describe('CompleteSignupForm PROVISIONING_TIMEOUT handling (dashboard#962)', () 
       ok: false,
       attemptId: ATTEMPT,
       code: 'PROVISIONING_TIMEOUT',
-      userMessage:
-        "Still setting up your workspace, we'll email you when it's ready.",
+      userMessage: PROVISIONING_TIMEOUT_MESSAGE,
     });
 
     const user = userEvent.setup();
@@ -171,7 +170,7 @@ describe('CompleteSignupForm PROVISIONING_TIMEOUT handling (dashboard#962)', () 
         screen.queryByRole('button', { name: /create account/i }),
       ).not.toBeInTheDocument();
     });
-    // …and eventually renders the "we'll email you" timeout state from the
+    // …and eventually renders the holding ("scenic route") state from the
     // progress store (panel poll interval is 1s).
     await waitFor(
       () => {

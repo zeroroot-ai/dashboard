@@ -51,6 +51,7 @@ const UUID_RE =
 import {
   signupInputSchema,
   POST_SIGNUP_REDIRECT,
+  PROVISIONING_TIMEOUT_MESSAGE,
   type SignupInput,
   type SignupActionResult,
   type CompleteSignupInput,
@@ -111,8 +112,11 @@ import { logger } from "@/src/lib/logger";
  * pending-provisioning queue every ~15s (gibson#949), so the budget covers both
  * the operator-poll latency (CR creation) AND the full provisioning saga.
  * Exceeding it is non-fatal — the client ProvisioningPanel stays on the
- * "still working" holding state and the user is emailed when the workspace is
- * ready.
+ * "still working" holding state and keeps polling with `?slug=`, so the
+ * live-readiness fallback in `/api/signup/progress/:id` resolves the attempt
+ * once the operator finishes (dashboard#967). No email is sent: nothing in
+ * the platform sends a workspace-ready notification today (see
+ * PROVISIONING_TIMEOUT_MESSAGE in ../(public)/signup/types).
  *
  * Budget (dashboard#962): 240s. A second back-to-back tenant provision was
  * observed at 2m25s CR→Ready on floor-sized staging (the saga's data-plane
@@ -386,8 +390,9 @@ export async function startSignupPayment(): Promise<SignupActionResult> {
  * status mirror, dashboard#813/#855) and treats `found:false` (no record yet) as
  * still-provisioning until the operator has reported the per-tenant Zitadel org
  * slug. A wait that exceeds the timeout returns a NON-fatal PROVISIONING_TIMEOUT
- * ("we'll email you"); the client-side ProvisioningPanel keeps polling the
- * progress store, so the user is never sent into a workspace that isn't ready.
+ * carrying the tenant slug; the client-side ProvisioningPanel keeps polling the
+ * progress store with that slug, so the user is never sent into a workspace
+ * that isn't ready and the holding state still resolves itself.
  *
  * The dashboard no longer writes the founding-owner TenantMember CR (the last
  * remaining K8s write in signup): the tenant-operator creates it as part of the
@@ -421,8 +426,7 @@ async function finishProvisioning(ctx: Ctx): Promise<SignupActionResult> {
     if (!status) {
       return await finish(ctx, "setup_workspace", {
         code: "PROVISIONING_TIMEOUT",
-        userMessage:
-          "Still setting up your workspace, we'll email you when it's ready.",
+        userMessage: PROVISIONING_TIMEOUT_MESSAGE,
       });
     }
     if (status.phase === "Failed") {

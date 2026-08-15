@@ -11,9 +11,11 @@
  *    success redirect URL via `window.location.assign`.
  *  - On `terminalState === "failed"`: shows the error message and a "Try
  *    again" button that calls `onRetry()` to reset the parent form.
- *  - On `terminalState === "timeout"`: shows the "We'll email you" message
- *    with a sign-in link (the account exists; signing in once the email
- *    lands is the resume path, dashboard#962).
+ *  - On `terminalState === "timeout"`: shows the holding state with a
+ *    sign-in link (the account exists; signing in once the workspace is
+ *    live is the resume path, dashboard#962). The copy deliberately makes
+ *    NO email promise — nothing in the platform sends a workspace-ready
+ *    notification yet (dashboard#967 defect 2).
  *  - Hard cap at 360 iterations (~6 minutes) as a runaway guard — must
  *    exceed the signup action's worst-case duration (~255s).
  *
@@ -27,7 +29,7 @@ import {
   Loader2,
   XCircle,
   Circle,
-  Mail,
+  Clock,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -38,7 +40,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { POST_SIGNUP_REDIRECT } from "./types";
+import { POST_SIGNUP_REDIRECT, PROVISIONING_TIMEOUT_MESSAGE } from "./types";
 import type { ProvisioningProgress, ProvisioningStep } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -351,7 +353,7 @@ export function ProvisioningPanel({
               setAnnouncement("Setup failed. You can try again.");
             } else {
               setAnnouncement(
-                "Setup is taking longer than expected. We'll email you when it's ready.",
+                `Setup is taking longer than expected. ${PROVISIONING_TIMEOUT_MESSAGE}`,
               );
             }
           }
@@ -517,11 +519,15 @@ export function ProvisioningPanel({
           );
         })()}
 
-        {/* Timeout state, same vibe; the workspace IS coming, just slowly. */}
+        {/* Timeout state, same vibe; the workspace IS coming, just slowly.
+            No email promise here (dashboard#967 defect 2): nothing sends a
+            workspace-ready notification, so the honest resume path is the
+            "Sign in instead" button below. The clock icon replaced a mail
+            icon for the same reason. */}
         {isTimeout && (
           <div className="rounded-md bg-muted border border-border px-4 py-3 space-y-2">
             <div className="flex items-center gap-2">
-              <Mail
+              <Clock
                 className="h-5 w-5 shrink-0 text-muted-foreground"
                 aria-hidden="true"
               />
@@ -530,8 +536,7 @@ export function ProvisioningPanel({
               </p>
             </div>
             <p className="text-sm text-muted-foreground pl-7 font-mono">
-              still wiring things up, we&apos;ll drop you an email the moment
-              your workspace is live.
+              still wiring things up. sign in once your workspace is live.
             </p>
           </div>
         )}
