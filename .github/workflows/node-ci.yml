@@ -114,6 +114,12 @@ jobs:
     uses: zeroroot-ai/.github/.github/workflows/reusable-node-ci.yml@main
     with:
       tier: fast
+      # MUST equal package.json's `packageManager` exactly. The reusable
+      # workflow defaults to the bare major "10", and pnpm/action-setup
+      # rejects a version that disagrees with `packageManager` rather than
+      # picking one. Both are pinned to the same exact version so corepack
+      # (which reads package.json) and CI resolve the same pnpm (#1043).
+      pnpm-version: "10.34.5"
 
   # ---- heavy tier (merge_group): full build (prebuild guard chain) ----
   heavy-build:
@@ -125,6 +131,8 @@ jobs:
     with:
       tier: heavy
       skip-sibling-generators: true
+      # Keep in lockstep with the fast tier and package.json (#1043).
+      pnpm-version: "10.34.5"
 
   # Required-context reporter (dashboard#949 unwedge, follow-up to the #945
   # queue-entry compat). The main ruleset requires the exact context
