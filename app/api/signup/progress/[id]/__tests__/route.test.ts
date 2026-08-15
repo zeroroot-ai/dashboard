@@ -27,6 +27,7 @@ vi.mock('@/src/lib/rate-limiter', () => ({
 }));
 
 import { GET } from '../route';
+import { PROVISIONING_TIMEOUT_MESSAGE } from '@/app/(public)/signup/types';
 
 const ATTEMPT_ID = '123e4567-e89b-42d3-a456-426614174000';
 
@@ -36,7 +37,7 @@ const TIMEOUT_RECORD = {
   terminalState: 'timeout',
   error: {
     code: 'PROVISIONING_TIMEOUT',
-    userMessage: "Still setting up your workspace, we'll email you when it's ready.",
+    userMessage: PROVISIONING_TIMEOUT_MESSAGE,
   },
 };
 

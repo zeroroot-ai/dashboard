@@ -119,6 +119,26 @@ export type CompleteSignupFormInput = z.infer<typeof completeSignupInputSchema>;
  */
 export const POST_SIGNUP_REDIRECT = "/login?callbackUrl=%2Fdashboard";
 
+/**
+ * User-facing message for the non-fatal PROVISIONING_TIMEOUT result: the
+ * account, the subscription and the workspace all EXIST and the operator is
+ * still finishing the saga (dashboard#962).
+ *
+ * It must NOT promise an email. The tenant-operator's
+ * `mail.Sender.SendWelcome` (gibson
+ * `operators/tenant/internal/mail/sender.go:121`) is implemented and the
+ * SMTP transport is a hard boot requirement, but the method has ZERO
+ * callers — nothing sends a workspace-ready notification today
+ * (dashboard#967 defect 2; operator-side wiring tracked in zeroroot-ai/gibson).
+ * Restore the promise only in the change set that lands the sender's caller.
+ *
+ * Shared here (client-safe module) so the Server Action result, the
+ * <ProvisioningPanel /> holding state and the copy-invariant test read one
+ * string.
+ */
+export const PROVISIONING_TIMEOUT_MESSAGE =
+  "Still setting up your workspace. You can sign in once it's ready.";
+
 // ---------------------------------------------------------------------------
 // Failure codes
 // ---------------------------------------------------------------------------
