@@ -24,7 +24,7 @@
 
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 const ROOT = resolve(new URL("..", import.meta.url).pathname);
 
@@ -47,7 +47,22 @@ function trackedConfigFiles() {
     const full = join(ROOT, c);
     if (!existsSync(full)) continue;
     try {
-      execSync(`git ls-files --error-unmatch ${JSON.stringify(c)}`, {
+      // execFileSync with an argv array, NOT execSync with an interpolated
+      // string. `c` is a filename read off disk by readdirSync, so it is
+      // whatever the checkout happens to contain, and every name matching
+      // /^\.env(\..*)?$/ reaches this line.
+      //
+      // The previous form was:
+      //   execSync(`git ls-files --error-unmatch ${JSON.stringify(c)}`)
+      //
+      // JSON.stringify wraps the name in DOUBLE quotes, and the shell still
+      // performs command substitution inside double quotes — `$(...)` and
+      // backticks expand there. So a file named `.env.$(...)` executed its
+      // contents as soon as this guard ran, which `pnpm prebuild` does on
+      // every build. Quoting was not the fix; using a shell at all was the
+      // bug. execFileSync passes argv straight to git with no shell to parse
+      // it, so the filename can never be read as syntax.
+      execFileSync("git", ["ls-files", "--error-unmatch", "--", c], {
         cwd: ROOT,
         stdio: "ignore",
       });
