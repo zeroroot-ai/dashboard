@@ -124,6 +124,45 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
+# Strip the bundled package managers from the RUNTIME image.
+#
+# Nothing in this stage uses them. The entrypoint is `node server.js` against
+# the Next standalone output, and the healthcheck shells out to wget; npm, npx,
+# corepack and yarn are present only because the node base image ships them.
+# The build stages are unaffected — they run `npm ci` / `npm run build` in the
+# `deps` and `builder` stages, which are discarded and never scanned.
+#
+# They are worth deleting for two reasons:
+#
+#  1. Attack surface. A production container has no business carrying a package
+#     manager that can fetch and execute arbitrary code from the network. If
+#     anything ever achieves execution in this image, npm is a ready-made way
+#     to pull down a second stage.
+#
+#  2. Every CVE in npm's ~200 vendored dependencies is charged to this image.
+#     npm bundles its whole dependency tree under
+#     /usr/local/lib/node_modules/npm/node_modules/, so the image scan reports
+#     tar, minimatch, cross-spawn, glob, brace-expansion, ip-address and diff
+#     advisories against a CLI that is never invoked at runtime. That was 17 of
+#     the repo's open Trivy alerts (9 high, 2 medium, 2 low, plus 4 more tar
+#     highs). None was reachable, and none could be fixed by patching the app —
+#     the only lever is npm's own version, which is pinned by the base image.
+#     Deleting the CLI removes the packages, and with them the findings, rather
+#     than annotating them as unreachable one advisory at a time.
+#
+# Must run before `USER nextjs` — the files are root-owned.
+RUN rm -rf \
+      /usr/local/lib/node_modules/npm \
+      /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm \
+      /usr/local/bin/npx \
+      /usr/local/bin/corepack \
+      /opt/yarn-* \
+      /usr/local/bin/yarn \
+      /usr/local/bin/yarnpkg \
+ && ! command -v npm >/dev/null 2>&1 \
+ && node --version
+
 # Copy standalone build output
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
