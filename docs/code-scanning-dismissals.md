@@ -14,8 +14,10 @@ Each dismissal comment on the API points back at the matching section below.
 
 - Runtime application code (`app/`, `src/`) is **fix-only**. A finding there is
   either fixed or escalated to the owner; it is never dismissed on an agent's
-  own authority. Anything under those paths appears in this file only in the
-  *Escalated* section, still open.
+  own authority. Exactly one entry below (alert 7) is a dismissal under those
+  paths, and it was escalated and granted before it was taken — the rule
+  presumes a fix exists, and that case is one where the algorithm is fixed by
+  an external protocol. Escalate; do not decide it yourself.
 - A dismissal must say **who controls the input** and **why they are already
   inside the trust boundary**. "It's only a test" is not a reason, because test
   code still runs on shared CI hosts and still holds live credentials.
@@ -171,12 +173,19 @@ written by another container, where the boundary is real.
 
 ---
 
-## Escalated — NOT dismissed, still open
+## Dismissed by owner decision — runtime code with no available fix
 
 ### 7 — `js/insufficient-password-hash` in `src/lib/auth/hibp.ts`
 
-**Status: open. Requires an owner decision. This is runtime code under `src/`,
-which is fix-only, and there is no fix.**
+| | |
+|---|---|
+| Rule | CodeQL `js/insufficient-password-hash` |
+| Path | `src/lib/auth/hibp.ts:53` |
+| Reason | `false positive` |
+
+**This is the one dismissal on runtime code under `src/`, and it was escalated
+before it was taken.** The fix-only rule for `app/` and `src/` presumes a fix
+exists. Here none does, in a strong sense: the algorithm is not ours to choose.
 
 `src/lib/auth/hibp.ts:53` computes `createHash('sha1')` over a password. CodeQL
 flags SHA-1 on a value named `password`, which is normally exactly right.
@@ -196,18 +205,34 @@ whose k-anonymity protocol **mandates SHA-1**:
 Changing the algorithm would not harden anything; it would break the API
 contract and disable breached-password checking entirely.
 
-So the finding is a true false positive, but resolving it means dismissing an
-alert on `src/`, which the fix-only rule forbids without an owner exception.
-**Left open deliberately, pending that decision.** The alternatives are:
+To restate the property that matters: **SHA-1 is being used as a lookup key,
+not as a security primitive.** No integrity, authentication, or storage
+guarantee rests on its collision resistance. It is the index into a public
+corpus, and the corpus is indexed by SHA-1 because that is what the protocol
+says. Substituting any other digest does not weaken or strengthen anything — it
+makes the API call impossible, because the server has nothing to match against.
 
-- **A)** Owner grants a one-off exception; dismiss as `false positive` citing
-  this section.
-- **B)** Exclude `src/lib/auth/hibp.ts` from the `js/insufficient-password-hash`
-  query in `.github/codeql-config.yml`, which is a scoped, reviewable,
-  in-repo statement rather than a per-alert click.
+### Why it was dismissed rather than configured out
 
-Option B is probably better: it survives a re-scan, and it is visible in the
-config rather than buried in alert metadata.
+The considered alternative was excluding this file from the
+`js/insufficient-password-hash` query in `.github/codeql-config.yml`, on the
+grounds that config is visible in version control and survives a re-scan.
+
+**That is not available at the required precision, and would be worse if it
+were.** CodeQL's `query-filters` match on rule *metadata* — `id`, `tags`,
+`precision`, `severity` — not on paths. `paths-ignore` is path-scoped but
+rule-agnostic. There is no path × rule intersection in the config format, so
+the only expressible exclusion is "disable this weak-crypto rule repo-wide,"
+which would blind the repo to a genuinely bad SHA-1 or MD5 use added later.
+That is precisely the regression the rule exists to catch.
+
+A surgical per-alert dismissal keeps the rule armed everywhere else, and this
+ledger supplies the version-controlled visibility that the config approach was
+wanted for. Owner decision, 2026-08-15.
+
+**If this alert reappears** after a re-scan (a dismissal is per-alert, and a
+sufficiently changed line can raise a new one), re-dismiss it citing this
+section. Do not reach for the config exclusion.
 
 ---
 
@@ -226,6 +251,16 @@ not recur silently.
    the repo was private, and it was not restored when the repo went public.
    Fixed by #1075. The Security tab was frozen at 2026-06-19 the whole time,
    and could not close a single fixed alert.
+
+   **This is not dashboard-specific.** `zeroroot-ai/gibson` carries the identical
+   pattern: it is public (`private: false`), its `.github/workflows/codeql.yml`
+   still reads "gibson is a private repo, so uploading SARIF … requires paid
+   GitHub Advanced Security" with `upload: never`, and its last CodeQL analysis
+   on `refs/heads/main` was 2026-06-20 — the same freeze window. Its Security tab
+   is blind for the same reason. Both repos were flipped public by epic
+   `oss-public-flip` (board #40) and neither had the upload restored, so the
+   trigger to re-enable is the flip itself rather than anything repo-local.
+   Routed to the org sweep lane alongside item 1; not fixed here.
 3. **`check-authz-registry-fresh` fails on `main`.** `src/gen/authz/registry.ts`
    disagrees with the gibson protos over `ComponentService` `StoreNode` /
    `SubmitFinding` / `SubmitResult`. Reproduces on a clean `origin/main`
