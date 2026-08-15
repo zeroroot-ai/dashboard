@@ -23,6 +23,12 @@ on:
   merge_group:
   schedule:
     - cron: "0 8 * * 2"
+  # Lets an authoritative scan be forced onto `refs/heads/main` on demand.
+  # Without it the only events that analyse main itself are the weekly cron and
+  # the merge_group runs (which report against the transient queue ref), so a
+  # stale alert that has since been fixed in the source can sit open on the
+  # Security tab for up to a week before anything reconciles it.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -43,11 +49,22 @@ jobs:
     permissions:
       actions: read
       contents: read
-      # No security-events:write — dashboard is a private repo, so uploading
-      # SARIF to the code-scanning Security tab requires paid GitHub Advanced
-      # Security. We run the analysis and publish the SARIF as a workflow
-      # artifact instead (gibson#974). Restore the upload (and this permission)
-      # when the repo goes public, where code scanning is free.
+      # Restored by dashboard#1075. #868/gibson#974 dropped this permission and
+      # set `upload: never` because the dashboard was then a PRIVATE repo, where
+      # uploading SARIF to the code-scanning Security tab needs paid GitHub
+      # Advanced Security. The repo is PUBLIC now (epic oss-public-flip, board
+      # #40), and code scanning is free on public repos, so the condition that
+      # comment named as the trigger to restore the upload has been met.
+      #
+      # While the upload was off the Security tab could not learn anything: it
+      # froze at the last analysis that did upload (2026-06-19, commit 0ee8cfa)
+      # and every alert on it stayed pinned to that commit for ~2 months. The
+      # scans kept running and kept passing, so nothing looked wrong — but an
+      # alert fixed in the source could never be closed by the scanner, because
+      # closing an alert requires a newer analysis for the same category that no
+      # longer contains it. Do not set `upload: never` again while the repo is
+      # public; it does not reduce risk, it only blinds the tab.
+      security-events: write
     steps:
       - uses: actions/checkout@v7
 
@@ -59,10 +76,10 @@ jobs:
 
       - uses: github/codeql-action/analyze@v4.37.6
         with:
-          # Run the analysis but do NOT upload to the code-scanning API — that
-          # upload needs paid GHAS on a private repo (gibson#974). Write the
-          # SARIF locally and publish it as an artifact below.
-          upload: never
+          # Upload to the code-scanning API so the Security tab reflects the
+          # commit actually analysed. `output` still writes the SARIF locally,
+          # so the artifact below keeps working alongside the upload.
+          upload: always
           output: codeql-results
 
       - name: Upload CodeQL SARIF artifact
