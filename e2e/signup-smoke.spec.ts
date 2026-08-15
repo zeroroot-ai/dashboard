@@ -28,6 +28,8 @@
  * repo to set up a fresh kind cluster + Argo App-of-Apps before invoking
  * this spec.
  */
+import { randomBytes } from 'node:crypto';
+
 import { test, expect, type Frame, type Page } from '@playwright/test';
 import { loginViaZitadelV2 } from './auth/helpers/login-via-zitadel-v2';
 
@@ -68,7 +70,14 @@ const POLL_INTERVAL_MS = Number(process.env.SIGNUP_SMOKE_POLL_INTERVAL_MS ?? 5_0
 // way).
 function fixtureSlug() {
   const t = Date.now().toString(36);
-  const r = Math.random().toString(36).slice(2, 6);
+  // randomBytes, not Math.random. The slug is not only a collision-avoidance
+  // suffix: the test derives this run's account password from it a few lines
+  // below. Math.random is seeded predictably enough that anyone able to
+  // observe a slug (they appear in tenant names and email addresses on the
+  // shared dev cluster) could recover the password of the account this run
+  // creates. Cryptographic randomness costs nothing here and removes the
+  // question entirely.
+  const r = randomBytes(4).toString('hex');
   return `e2e-${t}-${r}`;
 }
 

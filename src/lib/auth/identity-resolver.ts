@@ -21,7 +21,7 @@
  */
 
 import 'server-only';
-import { readFileSync, statSync, watchFile } from 'node:fs';
+import { closeSync, fstatSync, openSync, readFileSync, watchFile } from 'node:fs';
 
 type IdentityMap = Record<string, string>;
 
@@ -37,17 +37,32 @@ function mapPath(): string {
 }
 
 function loadIfChanged(): void {
-  const path = mapPath();
+  // Open once, then fstat and read through that SAME descriptor.
+  //
+  // The previous form resolved the path twice — statSync(path) to read the
+  // mtime, then readFileSync(path) to get the bytes — so the two calls could
+  // land on two different files if the path was replaced in between. That is
+  // a time-of-check/time-of-use gap: the mtime recorded in cacheMtimeMs would
+  // describe one file while `cache` held the contents of another, and because
+  // the mtime then matches on every subsequent call, the stale contents would
+  // be pinned indefinitely rather than corrected on the next refresh.
+  //
+  // A descriptor refers to the opened inode, not to the name, so fstatSync and
+  // readFileSync(fd) cannot disagree about which file they are describing.
+  let fd: number | undefined;
   try {
-    const m = statSync(path).mtimeMs;
+    fd = openSync(mapPath(), 'r');
+    const m = fstatSync(fd).mtimeMs;
     if (m === cacheMtimeMs) return;
-    const raw = readFileSync(path, 'utf8');
+    const raw = readFileSync(fd, 'utf8');
     cache = JSON.parse(raw) as IdentityMap;
     cacheMtimeMs = m;
   } catch {
     // Keep last-known-good cache on read/parse error. The init container
     // fail-fasts if the map is unpopulated, so missing-file at runtime is
     // either a misconfiguration or a node restart in progress.
+  } finally {
+    if (fd !== undefined) closeSync(fd);
   }
 }
 

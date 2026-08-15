@@ -94,7 +94,11 @@ async function consentGitHub(page: Page): Promise<void> {
   const password = process.env.E2E_GITHUB_PASSWORD!;
 
   // GitHub login form, wait for the page to fully load.
-  await page.waitForURL(/github\.com/, { timeout: 15_000 });
+  // Anchored to the origin, not a bare /github\.com/ substring match. Unanchored
+  // it also accepts https://github.com.evil.example/ and https://notgithub.com/,
+  // so the assertion would pass on precisely the redirect target we would most
+  // want it to catch.
+  await page.waitForURL(/^https:\/\/github\.com\//, { timeout: 15_000 });
 
   // Fill username.
   const loginField = page
@@ -244,7 +248,7 @@ test.describe("GitHub social sign-in, click-through flow", () => {
         // Click the button, signInSocialAction will run and window.location.assign
         // the GitHub authorize URL.
         await Promise.all([
-          page.waitForURL(/github\.com/, { timeout: 15_000 }),
+          page.waitForURL(/^https:\/\/github\.com\//, { timeout: 15_000 }),
           githubBtn.click(),
         ]);
 
@@ -353,7 +357,7 @@ test.describe("Settings > Account, linked accounts panel", () => {
 
         // Click Link GitHub, will redirect to GitHub.
         await Promise.all([
-          page.waitForURL(/github\.com/, { timeout: 15_000 }),
+          page.waitForURL(/^https:\/\/github\.com\//, { timeout: 15_000 }),
           linkGitHubBtn.click(),
         ]);
 
@@ -386,7 +390,7 @@ test.describe("Settings > Account, linked accounts panel", () => {
 
         // Re-link GitHub.
         await Promise.all([
-          page.waitForURL(/github\.com/, { timeout: 15_000 }),
+          page.waitForURL(/^https:\/\/github\.com\//, { timeout: 15_000 }),
           linkGitHubBtn.click(),
         ]);
         await consentGitHub(page);
@@ -429,7 +433,7 @@ test.describe("Settings > Account, linked accounts panel", () => {
           .or(page.getByTestId("social-btn-github"))
           .first();
         await Promise.all([
-          page.waitForURL(/github\.com/, { timeout: 15_000 }),
+          page.waitForURL(/^https:\/\/github\.com\//, { timeout: 15_000 }),
           githubBtn.click(),
         ]);
         await consentGitHub(page);
