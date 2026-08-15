@@ -7,17 +7,17 @@
  *
  * Skips signup entirely, assumes the user already exists. Drives /login,
  * watches every navigation + every response status, dumps the chain to
- * /tmp/login-trace-chain.json, and screenshots the final state.
+ * login-trace-chain.json, and screenshots the final state.
  *
  * Inputs (env):
  *   TRACE_EMAIL   , pre-existing Zitadel user email (required)
  *   TRACE_PASSWORD, that user's password (required)
  *   PLAYWRIGHT_BASE_URL, defaults to https://app.zeroroot.local:30443
  *
- * Output:
- *   /tmp/login-trace-chain.json   , every response observed during the flow
- *   /tmp/login-trace-final.png    , final page screenshot
- *   /tmp/login-trace-cookies.json , cookies at end of flow (values redacted)
+ * Output (inside a per-run private temp dir, path logged at test start):
+ *   login-trace-chain.json   , every response observed during the flow
+ *   login-trace-final.png    , final page screenshot
+ *   login-trace-cookies.json , cookies at end of flow (values redacted)
  *
  * Run via:
  *   TRACE_EMAIL=anthony@zeroroot.ai TRACE_PASSWORD='…' \
@@ -28,9 +28,19 @@
  */
 
 import { test, expect } from "@playwright/test";
-import * as fs from "fs";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { artifactDir } from "./helpers/artifact-dir";
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
+
+// Private per-run dir (mkdtemp, mode 0700) rather than a fixed /tmp path: the
+// cookie jar dumped below is live session state, and a predictable path is both
+// a symlink-clobber target and readable by every other local user.
+const ARTIFACT_DIR = artifactDir("login-trace");
+const CHAIN_PATH = path.join(ARTIFACT_DIR, "login-trace-chain.json");
+const SCREENSHOT_PATH = path.join(ARTIFACT_DIR, "login-trace-final.png");
+const COOKIES_PATH = path.join(ARTIFACT_DIR, "login-trace-cookies.json");
 
 interface Hop {
   ts: string;
@@ -71,9 +81,9 @@ test("login-trace: capture OIDC redirect chain", async ({ page, context }) => {
     await page.waitForURL(/\/ui\/v2\/login\/loginname/, { timeout: 30_000 });
   } catch {
     console.log(`[trace] never reached /ui/v2/login/loginname, current URL=${page.url()}`);
-    await page.screenshot({ path: "/tmp/login-trace-final.png", fullPage: true });
-    fs.writeFileSync("/tmp/login-trace-chain.json", JSON.stringify(chain, null, 2));
-    throw new Error(`Step 2 failed. See /tmp/login-trace-{chain.json,final.png}`);
+    await page.screenshot({ path: SCREENSHOT_PATH, fullPage: true });
+    fs.writeFileSync(CHAIN_PATH, JSON.stringify(chain, null, 2));
+    throw new Error(`Step 2 failed. See ${CHAIN_PATH} and ${SCREENSHOT_PATH}`);
   }
 
   // Step 3: fill loginname (email) and submit.
@@ -87,9 +97,9 @@ test("login-trace: capture OIDC redirect chain", async ({ page, context }) => {
     await page.waitForURL(/\/ui\/v2\/login\/password/, { timeout: 20_000 });
   } catch {
     console.log(`[trace] never reached /ui/v2/login/password, current URL=${page.url()}`);
-    await page.screenshot({ path: "/tmp/login-trace-final.png", fullPage: true });
-    fs.writeFileSync("/tmp/login-trace-chain.json", JSON.stringify(chain, null, 2));
-    throw new Error(`Step 4 failed. See /tmp/login-trace-{chain.json,final.png}`);
+    await page.screenshot({ path: SCREENSHOT_PATH, fullPage: true });
+    fs.writeFileSync(CHAIN_PATH, JSON.stringify(chain, null, 2));
+    throw new Error(`Step 4 failed. See ${CHAIN_PATH} and ${SCREENSHOT_PATH}`);
   }
 
   // Step 5: fill password and submit.
@@ -118,8 +128,8 @@ test("login-trace: capture OIDC redirect chain", async ({ page, context }) => {
   console.log(`[trace] hops captured: ${chain.length}`);
 
   // Dump everything for diagnosis.
-  await page.screenshot({ path: "/tmp/login-trace-final.png", fullPage: true });
-  fs.writeFileSync("/tmp/login-trace-chain.json", JSON.stringify(chain, null, 2));
+  await page.screenshot({ path: SCREENSHOT_PATH, fullPage: true });
+  fs.writeFileSync(CHAIN_PATH, JSON.stringify(chain, null, 2));
 
   const cookies = (await context.cookies()).map((c) => ({
     name: c.name,
@@ -130,9 +140,9 @@ test("login-trace: capture OIDC redirect chain", async ({ page, context }) => {
     sameSite: c.sameSite,
     valueLength: c.value.length,
   }));
-  fs.writeFileSync("/tmp/login-trace-cookies.json", JSON.stringify(cookies, null, 2));
+  fs.writeFileSync(COOKIES_PATH, JSON.stringify(cookies, null, 2));
 
-  console.log("[trace] dumped /tmp/login-trace-{chain.json,final.png,cookies.json}");
+  console.log(`[trace] dumped login-trace-{chain.json,final.png,cookies.json} under ${ARTIFACT_DIR}`);
 
   // Surface the diagnosis.
   const sessionCookieSet = cookies.some((c) =>
@@ -142,7 +152,7 @@ test("login-trace: capture OIDC redirect chain", async ({ page, context }) => {
     throw new Error(
       `[trace] DIAGNOSED: Zitadel V2 UI parked browser on /signedin instead of redirecting to dashboard callback. ` +
         `session cookie set: ${sessionCookieSet}. ` +
-        `Inspect /tmp/login-trace-chain.json for the last few hops Zitadel made before stopping.`,
+        `Inspect ${CHAIN_PATH} for the last few hops Zitadel made before stopping.`,
     );
   }
   expect(sessionCookieSet, "Auth.js session cookie should be set after login").toBe(true);

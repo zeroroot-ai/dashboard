@@ -2,8 +2,10 @@
  * login-full-chain.spec.ts, browser driver for the login full-chain e2e test.
  *
  * Uses signUpViaForm (Task 4) + loginViaZitadelV2 (Task 9) helpers.
- * Writes /tmp/login-redirect-chain-<slug>.json and /tmp/login-storage-state-<slug>.json
- * for the Go assertions in login_full_chain_test.go.
+ * Writes login-redirect-chain-<slug>.json and login-storage-state-<slug>.json
+ * for the Go assertions in login_full_chain_test.go. Both land in the run's
+ * private artifact dir (see helpers/artifact-dir.ts); the Go side passes its
+ * own directory in via E2E_ARTIFACT_DIR.
  *
  * Cluster: values.yaml + values-kind.yaml (single-values-file rule; no overlay).
  * Env: SIGNUP_SLUG, SIGNUP_EMAIL, SIGNUP_PASSWORD, PLAYWRIGHT_BASE_URL.
@@ -12,16 +14,23 @@
  */
 
 import { test, expect, type Page } from "@playwright/test";
-import * as fs from "fs";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { artifactDir } from "./helpers/artifact-dir";
 import { securePassword } from "./helpers/fixtures";
 import { signUpViaForm } from "./helpers/signup-via-form";
 import { loginViaZitadelV2 } from "./helpers/login-via-zitadel-v2";
 
 const CLUSTER_URL = process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
 
+// One private per-run dir (mkdtemp, mode 0700) instead of fixed /tmp paths: the
+// storageState files below are live signed-in session cookies, so a predictable
+// path is both a symlink-clobber target and readable by every other local user.
+const ARTIFACT_DIR = artifactDir("login-full-chain");
+
 /** One 3xx hop in the OIDC redirect chain (matches Go helpers.RedirectStep). */
 interface RedirectStep { from: string; to: string; status: number; method: string; }
-/** Expired-session result written to /tmp for Go side. */
+/** Expired-session result written to the artifact dir for the Go side. */
 interface ExpiredSessionResult { redirectedToLogin: boolean; hasRedirectToParam: boolean; finalUrl: string; }
 
 function redactOIDC(url: string): string {
@@ -123,14 +132,14 @@ test.describe("Login, full chain (cluster e2e)", () => {
     // -----------------------------------------------------------------------
     // 4. Write redirect chain JSON for Go assertions (R1.4)
     // -----------------------------------------------------------------------
-    const chainPath = `/tmp/login-redirect-chain-${slug}.json`;
+    const chainPath = path.join(ARTIFACT_DIR, `login-redirect-chain-${slug}.json`);
     fs.writeFileSync(chainPath, JSON.stringify(chain, null, 2));
     console.log(`[login-full-chain] redirect chain written to ${chainPath} (${chain.length} hops)`);
 
     // -----------------------------------------------------------------------
     // 5. Save storage state (cookies) for Go /api/me assertion (R1.5)
     // -----------------------------------------------------------------------
-    const statePath = `/tmp/login-storage-state-${slug}.json`;
+    const statePath = path.join(ARTIFACT_DIR, `login-storage-state-${slug}.json`);
     await context.storageState({ path: statePath });
     console.log(`[login-full-chain] storage state written to ${statePath}`);
 
@@ -180,7 +189,7 @@ test.describe("Login, full chain (cluster e2e)", () => {
       );
     }
 
-    const statePath = `/tmp/login-negative-wrong-password-${slug}.json`;
+    const statePath = path.join(ARTIFACT_DIR, `login-negative-wrong-password-${slug}.json`);
     await context.storageState({ path: statePath });
     console.log(`[login-full-chain] negative:wrong-password PASSED (hasSession=${hasSession})`);
   });
@@ -213,7 +222,7 @@ test.describe("Login, full chain (cluster e2e)", () => {
     const cookies = await context.cookies();
     const hasSession = cookies.some((c) => c.name.includes("authjs.session-token"));
 
-    const statePath = `/tmp/login-negative-nonexistent-email-${slug}.json`;
+    const statePath = path.join(ARTIFACT_DIR, `login-negative-nonexistent-email-${slug}.json`);
     await context.storageState({ path: statePath });
     console.log(
       `[login-full-chain] negative:nonexistent-email PASSED (failed=${failed} hasSession=${hasSession})`,
@@ -253,7 +262,7 @@ test.describe("Login, full chain (cluster e2e)", () => {
       finalUrl: redactOIDC(finalUrl),
     };
 
-    const resultPath = `/tmp/login-negative-expired-${slug}.json`;
+    const resultPath = path.join(ARTIFACT_DIR, `login-negative-expired-${slug}.json`);
     fs.writeFileSync(resultPath, JSON.stringify(result, null, 2));
     console.log(
       `[login-full-chain] negative:expired-session redirectedToLogin=${result.redirectedToLogin} ` +

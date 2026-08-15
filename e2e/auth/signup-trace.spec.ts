@@ -13,9 +13,9 @@
  *   TRACE_PASSWORD, password (defaults to a generated secure password)
  *   PLAYWRIGHT_BASE_URL, defaults to https://app.zeroroot.local:30443
  *
- * Outputs:
- *   /tmp/signup-trace-result.json , per-step status, final URL, panel state
- *   /tmp/signup-trace-final.png   , screenshot of final page state
+ * Outputs (inside a per-run private temp dir, path logged at the end):
+ *   signup-trace-result.json , per-step status, final URL, panel state
+ *   signup-trace-final.png   , screenshot of final page state
  *
  * Run via:
  *   E2E_AUTH_SUITE=1 npx playwright test e2e/auth/signup-trace.spec.ts \
@@ -23,9 +23,18 @@
  */
 
 import { test, expect } from "@playwright/test";
-import * as fs from "fs";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { artifactDir } from "./helpers/artifact-dir";
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
+
+// Private per-run dir (mkdtemp, mode 0700) rather than a fixed /tmp path: the
+// result file records signed-in session state, and a predictable path is both a
+// symlink-clobber target and readable by every other local user.
+const ARTIFACT_DIR = artifactDir("signup-trace");
+const RESULT_PATH = path.join(ARTIFACT_DIR, "signup-trace-result.json");
+const SCREENSHOT_PATH = path.join(ARTIFACT_DIR, "signup-trace-final.png");
 
 const now = Date.now();
 const SLUG = process.env.TRACE_SLUG ?? `trace-${String(now).slice(-8)}`;
@@ -161,9 +170,9 @@ test("signup-trace: drive real signup form and capture provisioning state", asyn
   }
 
   // Always dump outputs
-  await page.screenshot({ path: "/tmp/signup-trace-final.png", fullPage: true });
-  fs.writeFileSync("/tmp/signup-trace-result.json", JSON.stringify(result, null, 2));
-  console.log("[signup-trace] dumped /tmp/signup-trace-{result.json,final.png}");
+  await page.screenshot({ path: SCREENSHOT_PATH, fullPage: true });
+  fs.writeFileSync(RESULT_PATH, JSON.stringify(result, null, 2));
+  console.log(`[signup-trace] dumped signup-trace-{result.json,final.png} under ${ARTIFACT_DIR}`);
   console.log(`[signup-trace] FINAL URL: ${result.finalUrl}`);
   console.log(`[signup-trace] panel state: ${result.panelState}`);
 

@@ -56,7 +56,15 @@
  * Exit codes: 0 clean, 1 violation or unverifiable inputs.
  */
 
-import { readdirSync, readFileSync, statSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import {
+  readdirSync,
+  readFileSync,
+  statSync,
+  mkdirSync,
+  mkdtempSync,
+  writeFileSync,
+  rmSync,
+} from "node:fs";
 import { join, resolve, relative, sep } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -298,8 +306,10 @@ const CLEAN_BUNDLE = {
 };
 
 function runSelfTest() {
-  const base = join(tmpdir(), `${SCRIPT_NAME}-selftest-${process.pid}`);
-  rmSync(base, { recursive: true, force: true });
+  // mkdtempSync, not a fixed /tmp path: it creates the directory atomically
+  // with mode 0700 and an unpredictable suffix, so no other local user can
+  // pre-plant a symlink at the fixture path or read the fixtures we write.
+  const base = mkdtempSync(join(tmpdir(), `${SCRIPT_NAME}-selftest-`));
 
   const SECRET = "s3cret-value-not-printed";
 
