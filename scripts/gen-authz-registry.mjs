@@ -48,7 +48,11 @@
  * output for the same proto input, the drift gate relies on this.
  */
 
-import { execSync, execFileSync, spawnSync } from 'node:child_process';
+// execFileSync/spawnSync only: every child process here is spawned with an argv
+// array and no shell, so an interpolated path or module name can never be
+// reparsed as shell syntax. See scripts/proto-generate.mjs's run() for the full
+// rationale.
+import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -106,21 +110,23 @@ function resolveSdkProtoDir({ soft = false } = {}) {
   const SDK_SIBLING =
     resolveWorkspacePath('opensource/sdk/api/proto', { from: DASHBOARD_ROOT })
       ?.path ?? resolve(DASHBOARD_ROOT, 'opensource/sdk/api/proto');
-  try {
-    execSync(`stat ${SDK_SIBLING}`, { stdio: 'pipe' });
-    return SDK_SIBLING;
-  } catch {
-    // fall through to module-cache resolution
-  }
+  // Presence is a filesystem question; `stat` through a shell answered it by
+  // interpolating the path into a command line. existsSync answers it in
+  // process, with no shell and no try/catch scaffolding to absorb one.
+  if (existsSync(SDK_SIBLING)) return SDK_SIBLING;
 
   // Module-cache fallback: `go list -m` against the gibson repo resolves
   // the SDK to whichever version gibson is pinned to.
   try {
-    const dir = execSync('go list -m -f "{{.Dir}}" github.com/zeroroot-ai/sdk', {
-      cwd: GIBSON_REPO,
-      encoding: 'utf8',
-      stdio: 'pipe',
-    }).trim();
+    const dir = execFileSync(
+      'go',
+      ['list', '-m', '-f', '{{.Dir}}', 'github.com/zeroroot-ai/sdk'],
+      {
+        cwd: GIBSON_REPO,
+        encoding: 'utf8',
+        stdio: 'pipe',
+      },
+    ).trim();
     if (!dir) throw new Error('empty');
     return resolve(dir, 'api/proto');
   } catch (err) {
@@ -140,20 +146,16 @@ function resolveSdkProtoDir({ soft = false } = {}) {
 }
 
 function ensureGibsonLocalProtos({ soft = false } = {}) {
-  try {
-    execSync(`stat ${GIBSON_LOCAL_PROTOS}`, { stdio: 'pipe' });
-    return true;
-  } catch (err) {
-    if (soft) return false;
-    process.stderr.write(
-      '[gen-authz-registry] FATAL: gibson daemon-local protos not found at:\n' +
-        `    ${GIBSON_LOCAL_PROTOS}\n` +
-        '  Clone zeroroot-ai/gibson alongside this dashboard checkout, or\n' +
-        '  run from the canonical workspace at ~/Code/zeroroot.ai/.\n' +
-        `  Underlying error: ${err.message ?? err}\n`,
-    );
-    process.exit(1);
-  }
+  // existsSync, not `stat` through a shell (see resolveSdkProtoDir).
+  if (existsSync(GIBSON_LOCAL_PROTOS)) return true;
+  if (soft) return false;
+  process.stderr.write(
+    '[gen-authz-registry] FATAL: gibson daemon-local protos not found at:\n' +
+      `    ${GIBSON_LOCAL_PROTOS}\n` +
+      '  Clone zeroroot-ai/gibson alongside this dashboard checkout, or\n' +
+      '  run from the canonical workspace at ~/Code/zeroroot.ai/.\n',
+  );
+  process.exit(1);
 }
 
 /**
@@ -262,7 +264,7 @@ function buildWorkspace() {
   // the build step bypasses the (possibly stale) ~/.netrc BSR credential.
   let offline = false;
   try {
-    execSync('npx buf dep update', { cwd: WS, stdio: 'inherit' });
+    execFileSync('npx', ['buf', 'dep', 'update'], { cwd: WS, stdio: 'inherit' });
   } catch {
     offline = true;
     process.stderr.write(
