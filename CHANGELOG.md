@@ -5,6 +5,27 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.119.0](https://github.com/zeroroot-ai/dashboard/compare/v0.118.1...v0.119.0) (2026-08-15)
+
+
+### Features
+
+* **billing:** durable Stripe webhook-endpoint reconciler (deploy[#896](https://github.com/zeroroot-ai/dashboard/issues/896)) ([#1044](https://github.com/zeroroot-ai/dashboard/issues/1044)) ([871e513](https://github.com/zeroroot-ai/dashboard/commit/871e5138f94b0575a54237b897141ffa0e3ecff7))
+* **signup:** live-readiness fallback resolves the timeout holding state ([#1041](https://github.com/zeroroot-ai/dashboard/issues/1041)) ([1775a3f](https://github.com/zeroroot-ai/dashboard/commit/1775a3f74783b1fdef6a5c5d50438b504e413aa6))
+
+
+### Bug Fixes
+
+* **ci:** flip both PR path filters to deny-lists; root source dirs were invisible ([#1039](https://github.com/zeroroot-ai/dashboard/issues/1039)) ([5e1a256](https://github.com/zeroroot-ai/dashboard/commit/5e1a256d179bbb221fafaf8e83d9abe57811b0ca)), closes [#1035](https://github.com/zeroroot-ai/dashboard/issues/1035)
+* **docker:** strip npm/corepack/yarn from the runtime image ([#1076](https://github.com/zeroroot-ai/dashboard/issues/1076)) ([59e12ce](https://github.com/zeroroot-ai/dashboard/commit/59e12cefac51d27a5f122d678aed6690f1415518))
+* **e2e:** write test artifacts to a private mkdtemp dir, not fixed /tmp paths ([#1079](https://github.com/zeroroot-ai/dashboard/issues/1079)) ([ede72f9](https://github.com/zeroroot-ai/dashboard/commit/ede72f9b76c1cfae4fb517ee9d6ab0555095ac47))
+* **links:** env-derive in-product docs links and metadataBase ([#1037](https://github.com/zeroroot-ai/dashboard/issues/1037)) ([5604abd](https://github.com/zeroroot-ai/dashboard/commit/5604abdf7ccca6ffb01d6de8d85a51a0beb62d1d))
+* **scripts:** pass argv to child processes instead of building shell strings ([#1080](https://github.com/zeroroot-ai/dashboard/issues/1080)) ([5563a7d](https://github.com/zeroroot-ai/dashboard/commit/5563a7dbc9c28c9884b499c04e844e22f24013ad))
+* **scripts:** run git ls-files via argv, not an interpolated shell string ([#1077](https://github.com/zeroroot-ai/dashboard/issues/1077)) ([79c8803](https://github.com/zeroroot-ai/dashboard/commit/79c8803f6396ac930fe763521970f2fb8995e901))
+* **security:** close the remaining CodeQL findings outside the exec/tempfile batches ([#1078](https://github.com/zeroroot-ai/dashboard/issues/1078)) ([4bcaa75](https://github.com/zeroroot-ai/dashboard/commit/4bcaa753da3823a5e237a7888ab32657bff76bd3))
+* **signup:** correct the stale 'gitops[#90](https://github.com/zeroroot-ai/dashboard/issues/90) never merged' comment ([#1040](https://github.com/zeroroot-ai/dashboard/issues/1040)) ([14158e5](https://github.com/zeroroot-ai/dashboard/commit/14158e51482cd68a07e2a8302115be4331cf4fe9)), closes [#853](https://github.com/zeroroot-ai/dashboard/issues/853)
+* **signup:** stop promising a readiness email nobody sends ([#1086](https://github.com/zeroroot-ai/dashboard/issues/1086)) ([f0b993f](https://github.com/zeroroot-ai/dashboard/commit/f0b993f28d380abfca5792b26842777525401762))
+
 ## [0.118.1](https://github.com/zeroroot-ai/dashboard/compare/v0.118.0...v0.118.1) (2026-08-11)
 
 
