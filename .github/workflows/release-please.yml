@@ -13,14 +13,23 @@ jobs:
     name: release-please
     runs-on: ubuntu-latest
     steps:
+      - name: Mint App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          app-id: ${{ secrets.SDK_FANOUT_APP_ID }}
+          private-key: ${{ secrets.SDK_FANOUT_APP_PRIVATE_KEY }}
+          owner: zeroroot-ai
+          repositories: dashboard
+
       - uses: googleapis/release-please-action@v5
         with:
-          # Use RELEASE_PLEASE_TOKEN (a PAT with repo write scope) instead of
-          # the default GITHUB_TOKEN. Tags pushed by GITHUB_TOKEN do NOT fire
-          # downstream `push: tags:` workflow triggers (GitHub anti-recursion
-          # behavior). Using a PAT means the tag push fires dashboard.yml
-          # (image build) automatically. See workspace memory note
-          # project_release_please_tag_trigger_gap.
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          # Mint a short-lived token from the zeroday-sdk-fanout GitHub App rather
+          # than using GITHUB_TOKEN or a long-lived PAT. GITHUB_TOKEN does not fire
+          # downstream `push: tags:` workflows (GitHub anti-recursion) and its
+          # bot-authored PRs get held at action_required; a PAT avoids both but
+          # expires, which reproduces the same silent stall on a timer. An App token
+          # has neither failure mode. See zeroroot-ai/.github#263.
+          token: ${{ steps.app-token.outputs.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
