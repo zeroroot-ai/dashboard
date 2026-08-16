@@ -5,6 +5,13 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.119.1](https://github.com/zeroroot-ai/dashboard/compare/v0.119.0...v0.119.1) (2026-08-16)
+
+
+### Bug Fixes
+
+* **ci:** mint release-please token from the zeroday-sdk-fanout App ([#1090](https://github.com/zeroroot-ai/dashboard/issues/1090)) ([96ed756](https://github.com/zeroroot-ai/dashboard/commit/96ed7569e58d75975560c7c3b4842c3611520c42))
+
 ## [0.119.0](https://github.com/zeroroot-ai/dashboard/compare/v0.118.1...v0.119.0) (2026-08-15)
 
 
