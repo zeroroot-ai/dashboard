@@ -11,7 +11,7 @@
  *
  * Rules:
  *   - Relative path starting with `/` (excluding bare `/`) → preserved.
- *   - Same-origin absolute URL → normalised to `${baseUrl}${path}${search}`.
+ *   - Same-origin absolute URL → normalized to `${baseUrl}${path}${search}`.
  *   - Bare baseUrl, `/`, empty, cross-origin, protocol-relative, or
  *     unparseable → `${baseUrl}/dashboard`.
  *

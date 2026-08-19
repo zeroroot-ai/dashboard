@@ -12,7 +12,7 @@
  *     different concern and is NOT being reintroduced here. Subject
  *     identity for service-acting RPCs is now Zitadel client_credentials.
  *
- * Operational behaviour:
+ * Operational behavior:
  *   - On import, no socket is opened, no env is read, nothing is
  *     stateful. All side effects are deferred to first call.
  *   - {@link isSpiffeAvailable} returns true iff the Workload API socket
@@ -95,7 +95,7 @@ function configuredSocket(): string {
 /**
  * Strip the `unix://` (or `unix:`) prefix to get the filesystem path
  * `fs.existsSync` understands. SPIRE accepts both `unix:` and `unix://`
- * forms; we normalise here.
+ * forms; we normalize here.
  */
 function socketFsPath(uri: string): string {
   if (uri.startsWith('unix://')) return uri.slice('unix://'.length);

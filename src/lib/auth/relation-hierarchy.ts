@@ -138,7 +138,7 @@ export function satisfiesRelation(userRole: string, requiredRelation: string): b
  *   - `system_tenant`, the object is the one fixed platform-wide tenant.
  *     Decided by the caller holding the cross-tenant relation.
  *   - `per_object`, the object is named by request data (or by an
- *     object/deriver pair this code does not recognise). NOT decidable here.
+ *     object/deriver pair this code does not recognize). NOT decidable here.
  */
 type AuthzScope = 'active_tenant' | 'system_tenant' | 'per_object';
 

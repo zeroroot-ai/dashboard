@@ -189,7 +189,7 @@ export async function signupAction(
   };
 
   try {
-    // 0. Schema guard (defence-in-depth; Client Component already validates).
+    // 0. Schema guard (defense-in-depth; Client Component already validates).
     const parsed = signupInputSchema.safeParse(rawInput);
     if (!parsed.success) {
       const first = parsed.error.issues[0];

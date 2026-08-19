@@ -10,7 +10,7 @@
  *
  * Spec: one-code-path (deploy#186), slice deploy#206.
  *
- * Behaviour: when this script is invoked WITHOUT `CI=1` or
+ * Behavior: when this script is invoked WITHOUT `CI=1` or
  * `STRICT_BUILD_ENV=1`, it is a no-op (so a developer running `pnpm build`
  * locally without a fully-populated env is not blocked). When CI runs
  * `next build` against the production-bound codepath, set `STRICT_BUILD_ENV=1`
@@ -59,6 +59,6 @@ These env vars are read by next.config.ts AT BUILD TIME (and again at server
 start before instrumentation.ts runs). Set them in the CI build job /
 Dockerfile build args before invoking 'next build'.
 
-See src/lib/env-validator.ts for the full required-env catalogue.
+See src/lib/env-validator.ts for the full required-env catalog.
 `);
 process.exit(1);

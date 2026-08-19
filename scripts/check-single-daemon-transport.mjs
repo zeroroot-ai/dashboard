@@ -42,7 +42,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 
 // The single module permitted to own the transport. Path is relative to ROOT,
-// normalised to forward slashes for cross-platform comparison.
+// normalized to forward slashes for cross-platform comparison.
 const TRANSPORT_MODULE = "src/lib/gibson-client/transport.ts";
 
 const SCAN_DIRS = ["app", "src"];

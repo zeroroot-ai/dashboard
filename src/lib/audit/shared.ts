@@ -2,7 +2,7 @@
  * Shared audit utilities: string truncation, sensitive-key redaction.
  *
  * These primitives are consumed by both `audit/crd.ts` and `audit/auth.ts`
- * so that redaction and truncation behaviour is defined in exactly one place.
+ * so that redaction and truncation behavior is defined in exactly one place.
  */
 
 /** Maximum characters for generic audit string fields (error messages etc.). */

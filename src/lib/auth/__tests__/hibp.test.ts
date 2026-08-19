@@ -2,7 +2,7 @@
  * Tests for the HIBP breach check. All HTTP traffic is mocked via `vi.fn` on
  * `globalThis.fetch`, no real network calls are made. The tests assert both
  * the k-anonymity contract (only the 5-char prefix is sent) and the
- * fail-open behaviour on timeout / non-200 / disabled.
+ * fail-open behavior on timeout / non-200 / disabled.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

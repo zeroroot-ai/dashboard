@@ -26,7 +26,7 @@ const PROMPT_LAYERS: PromptLayer[] = [
 // ============================================================================
 
 /**
- * Split the flat prompt string into labelled sections using the layer markers.
+ * Split the flat prompt string into labeled sections using the layer markers.
  * Sections are separated by `\n\n` in the prompt.
  */
 function parseLayers(prompt: string): Array<{ label: string; content: string | null }> {

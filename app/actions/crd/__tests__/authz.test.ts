@@ -304,7 +304,7 @@ const MANIFESTS: ActionManifest[] = [
   },
   // Member actions (invite/accept/revoke/resend) removed from this k8s-mock
   // table by dashboard#715: they now call the daemon's MembershipService, not
-  // the TenantMember CR. Their gating + behaviour is covered by member.test.ts
+  // the TenantMember CR. Their gating + behavior is covered by member.test.ts
   // with the RPC client mocked. acceptInvitationAction is token-based +
   // unauthenticated (no self-gate).
   // Enrollment actions removed (dashboard#713): enrollment moved to

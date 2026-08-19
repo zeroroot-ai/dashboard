@@ -68,7 +68,7 @@ interface LogPayload {
 // ---------------------------------------------------------------------------
 
 /**
- * Maps a structured log level to a coloured, fixed-width ANSI prefix so the
+ * Maps a structured log level to a colored, fixed-width ANSI prefix so the
  * terminal renders an aligned `[LVL] HH:MM:SS message` gutter.
  */
 function levelPrefix(level: string): string {

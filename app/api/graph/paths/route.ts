@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     // Path queries traverse embeddings, so the commonest non-bug failure here
     // is the daemon's "no embedding provider configured" gate. The panel
     // renders a dedicated prompt for it rather than an error, and it used to
-    // recognise it by substring-matching the daemon's message on the wire.
+    // recognize it by substring-matching the daemon's message on the wire.
     // That message no longer crosses the boundary, so classify it HERE, where
     // the raw text is still in hand, and hand the client a stable sub-code.
     const raw = err instanceof ConnectError ? err.rawMessage : undefined;

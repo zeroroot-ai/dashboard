@@ -154,7 +154,7 @@ export async function saveMissionLayoutAction(
 ): Promise<SaveLayoutResult> {
   // Authz denial (AuthzDeniedError from the userClient transport) is
   // deliberately NOT mapped here: it propagates to the caller, matching the
-  // previous bare-assert behaviour.
+  // previous bare-assert behavior.
   const client = userClient(DaemonService);
   try {
     const resp = await client.saveMissionLayout({

@@ -172,7 +172,7 @@ export async function createSecretAction(
     // SECURITY: the daemon's own words are never returned to the browser.
     // They are logged against a correlation ID instead. This is both a leak
     // control (daemon errors name mounts, hosts and internal paths) and a
-    // defence in depth for the secret value itself: throwMapped already
+    // defense in depth for the secret value itself: throwMapped already
     // strips it, and the redactor below keeps a stray echo out of the log.
     return serverActionError(err, {
       action: "setSecretAction",

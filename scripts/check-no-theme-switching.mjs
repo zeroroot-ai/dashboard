@@ -4,7 +4,7 @@
  *
  * Enforces ONE locked brand with no theme machinery. Previously
  * check-no-light-mode.mjs, which enforced #651's "the brand is dark". ADR-0064
- * makes the brand light, so the colour half of that rule is void — but the half
+ * makes the brand light, so the color half of that rule is void — but the half
  * that mattered is not, and this guard keeps it:
  *
  *   there is one brand, chosen here, and no per-user, per-device or

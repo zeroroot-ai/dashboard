@@ -40,7 +40,7 @@ describe('useEventStream', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-    // Defence in depth, describe blocks below call vi.useFakeTimers() and
+    // Defense in depth, describe blocks below call vi.useFakeTimers() and
     // older test runners would leak the fake-timer state into later describes.
     // Explicitly switch back so each test starts with real timers.
     vi.useRealTimers();

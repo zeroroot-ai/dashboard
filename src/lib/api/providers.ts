@@ -92,7 +92,7 @@ function buildQueryString(params: Record<string, string | number | boolean | str
 
 /**
  * Fetch the daemon-reported list of supported LLM provider types with their
- * credential schemas and default model catalogues. Used by the settings form
+ * credential schemas and default model catalogs. Used by the settings form
  * to render provider-specific inputs without a hard-coded frontend list.
  */
 async function getSupportedProviders(): Promise<SupportedProviderDescriptor[]> {

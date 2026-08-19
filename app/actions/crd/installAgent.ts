@@ -11,7 +11,7 @@
  * may be forwarded to the agent principal. The grant is atomic server-side
  * so no client-side compensating delete is needed.
  *
- * Defence-in-depth: we refuse to write a tuple the caller lacks access to,
+ * Defense-in-depth: we refuse to write a tuple the caller lacks access to,
  * regardless of what `permissions.yaml` declared required.
  *
  * Spec: access-matrix-finish task 13, R5 AC 1-4, 6, 9.
@@ -73,7 +73,7 @@ export async function installAgentAction(
     return { ok: false, error: "no active tenant" };
   }
 
-  // 1. Re-validate the manifest server-side (defence in depth).
+  // 1. Re-validate the manifest server-side (defense in depth).
   const validate = await userClient(DiscoveryService).validateComponent({
     componentYaml: new TextEncoder().encode(input.componentYaml),
     permissionsYaml: new TextEncoder().encode(input.permissionsYaml),

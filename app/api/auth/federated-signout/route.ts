@@ -223,7 +223,7 @@ async function handleSignout(req: NextRequest): Promise<NextResponse> {
 
   const res = NextResponse.redirect(endSession.toString());
   // Belt-and-suspenders: explicitly expire every Auth.js cookie shape on the
-  // response. signOut() should do this, but observed behaviour is that the
+  // response. signOut() should do this, but observed behavior is that the
   // session cookie occasionally survives the call when redirect: false is set,
   // letting middleware see a still-valid JWT on the next request and bouncing
   // the user straight back into /dashboard.

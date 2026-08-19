@@ -176,7 +176,7 @@ async function generateConversationTitle(
     const assistantSnippet = assistantMessage.slice(0, 500);
 
     const prompt =
-      `Summarise this conversation in 6 words or fewer. ` +
+      `Summarize this conversation in 6 words or fewer. ` +
       `Reply with ONLY the title, no punctuation.\n\n` +
       `User: ${userSnippet}\nAssistant: ${assistantSnippet}`;
 

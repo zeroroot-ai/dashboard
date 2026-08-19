@@ -13,7 +13,7 @@
  *   event: error
  *   data: <JSON>
  *
- * On client disconnect (AbortSignal), the gRPC stream is cancelled.
+ * On client disconnect (AbortSignal), the gRPC stream is canceled.
  */
 
 import 'server-only';

@@ -68,7 +68,7 @@ export async function GET(
 
     // Query logs for this mission through the daemon. A transient backend
     // failure (Unavailable) is surfaced as `available: false` rather than a
-    // 5xx, matching the prior Loki-readiness behaviour.
+    // 5xx, matching the prior Loki-readiness behavior.
     let logs;
     try {
       logs = await queryDaemonLogs({

@@ -20,7 +20,7 @@
  *     `userClient(ComponentService)`. No direct daemon gRPC channel.
  *   - Errors and lifecycle events go to the canonical pino logger.
  *   - Client disconnect closes ONLY the SSE side; the upstream stream's
- *     context is NOT cancelled, the daemon's ring buffer retains events
+ *     context is NOT canceled, the daemon's ring buffer retains events
  *     for late reconnect (design.md). We deliberately do not propagate
  *     `request.signal` aborts upstream.
  */
@@ -152,7 +152,7 @@ export async function GET(
               encoder.encode(sseFrame(eventName, payload, String(seq))),
             );
           } catch {
-            // Client disconnected; bail out without cancelling upstream.
+            // Client disconnected; bail out without canceling upstream.
             break;
           }
           seq += 1;

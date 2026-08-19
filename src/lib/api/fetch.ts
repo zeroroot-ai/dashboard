@@ -31,7 +31,7 @@ function getCsrfToken(): string | null {
 
 /**
  * Drop-in replacement for `fetch` that adds the `x-csrf-token` header
- * on mutating requests. All other behaviour is identical to the native fetch.
+ * on mutating requests. All other behavior is identical to the native fetch.
  */
 export function apiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const method = (init?.method ?? 'GET').toUpperCase();

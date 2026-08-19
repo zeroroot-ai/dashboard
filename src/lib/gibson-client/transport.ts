@@ -186,7 +186,7 @@ let spiffeFallbackLogged = false;
 /**
  * Returns http2 nodeOptions populated with the dashboard pod's current
  * X509-SVID context, or `undefined` to leave the default plain-HTTPS
- * behaviour in place.
+ * behavior in place.
  *
  * Uses the SYNC accessor {@link tryGetCachedX509SvidContext}: the very
  * first outbound RPC may go without an SVID (cache cold), but kicks

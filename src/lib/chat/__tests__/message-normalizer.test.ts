@@ -396,7 +396,7 @@ describe('protoToUiMessage, load path', () => {
   });
 
   it('handles unknown proto oneof case explicitly (not silently dropped)', () => {
-    // Simulate a proto part with no recognised case (e.g. future schema).
+    // Simulate a proto part with no recognized case (e.g. future schema).
     // In Connect-ES, an unset oneof produces { case: undefined }.
     const msg = makeProtoMsg({
       // Empty part, cas.case will be undefined

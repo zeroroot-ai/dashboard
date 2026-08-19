@@ -18,7 +18,7 @@ import { resolveUserFacingError } from "@/src/lib/errors/user-facing";
  * have permission for, or when a tenant-scoped user navigates to a workspace
  * they do not belong to.
  *
- * Behaviour:
+ * Behavior:
  * - Unauthenticated visitors → redirect to /login.
  * - Authenticated users with multiple tenants → show tenant switcher buttons
  *   so they can switch to a workspace they have access to.

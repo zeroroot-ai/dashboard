@@ -128,7 +128,7 @@ export async function acceptInvitationAction(input: { token: string }): Promise<
 /**
  * Remove a member or cancel a pending invitation. Active members are removed by
  * stripping their role tuples (SetTenantRole remove); pending invitations are
- * cancelled by email. The last active owner cannot be removed.
+ * canceled by email. The last active owner cannot be removed.
  */
 export async function revokeMemberAction(input: {
   userId: string;

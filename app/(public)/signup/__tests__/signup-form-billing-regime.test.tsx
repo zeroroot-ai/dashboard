@@ -8,7 +8,7 @@
  *   - NOT require a ?plan= param (the plan row is entirely absent)
  *
  * When `billingEnabled=true` (SaaS / card-first), the plan row and payment
- * method section must be present (no regression to the existing behaviour).
+ * method section must be present (no regression to the existing behavior).
  *
  * Strategy: mock Stripe and all server-action imports so the component can
  * render in jsdom. Assert on DOM presence/absence of the plan row and payment

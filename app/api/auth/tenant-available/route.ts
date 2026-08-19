@@ -65,7 +65,7 @@ const LOOKUP_RATE_LIMIT = {
  *
  * The floor is above the daemon's typical lookup so both branches land on it.
  * It does not equalise a lookup that overruns the floor, which is why the rate
- * limit above is the primary control and this is defence in depth.
+ * limit above is the primary control and this is defense in depth.
  */
 const MIN_RESPONSE_MS = 300;
 

@@ -250,7 +250,7 @@ export async function verifyZitadelBearer(
   // Without this pin, a malicious caller who guesses the public-key bytes
   // could forge an HS256-signed token whose secret is the RSA modulus
   // material (the classic alg=none / alg-confusion attack family). jose's
-  // default behaviour is to accept whatever `alg` header the token
+  // default behavior is to accept whatever `alg` header the token
   // declares, then look up a JWK with a matching `kid`/`alg` from the
   // JWKS, combined with a JWKS that legitimately contains an RSA
   // public key, this is a real attack surface. Restricting the verifier
@@ -268,7 +268,7 @@ export async function verifyZitadelBearer(
       throw new ZitadelBearerError('signature-failed', 'JWT signature verification failed');
     }
     if (err instanceof joseErrors.JOSEAlgNotAllowed) {
-      // R7: surface algorithm-mismatch as a signature failure (defence
+      // R7: surface algorithm-mismatch as a signature failure (defense
       // against alg=none / alg-confusion). Don't include the rejected
       // alg in the user-visible message, keep the failure mode opaque.
       throw new ZitadelBearerError(

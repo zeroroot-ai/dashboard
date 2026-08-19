@@ -61,7 +61,7 @@ import { logger } from "@/src/lib/logger";
  * the type information is gone. In production that string is the numeric enum
  * value (`Code` is a numeric enum, so `err.code.toString()` yields "14", which
  * is also why the `code` these actions returned to the browser was an opaque
- * number). Both spellings are recognised here.
+ * number). Both spellings are recognized here.
  */
 const CODE_NAMES: Record<string, Code> = {
   canceled: Code.Canceled,

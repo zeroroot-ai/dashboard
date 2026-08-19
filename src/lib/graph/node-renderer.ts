@@ -5,9 +5,9 @@
  * Lucide stroke icons. Replaces the previous circle+Phosphor-duotone approach.
  *
  * Visual design:
- *  - Rounded rect background filled with a category-specific dark colour
- *  - Lucide icon centred inside, rendered as a stroke (lineCap/lineJoin: round)
- *  - Thin border by default; coloured + glowing border on hover/select
+ *  - Rounded rect background filled with a category-specific dark color
+ *  - Lucide icon centered inside, rendered as a stroke (lineCap/lineJoin: round)
+ *  - Thin border by default; colored + glowing border on hover/select
  *  - Optional left-edge severity stripe on `finding` nodes
  *  - Active nodes pulse the border opacity via a sine wave
  */
@@ -70,13 +70,13 @@ export const NODE_SIZES: Record<EntityType, number> = {
 };
 
 // ---------------------------------------------------------------------------
-// Category colours (dark-theme backgrounds)
+// Category colors (dark-theme backgrounds)
 // ---------------------------------------------------------------------------
 
 /**
- * Background fill colours for each category, designed for the deep-navy
+ * Background fill colors for each category, designed for the deep-navy
  * terminal aesthetic (canvas bg #0f1714). These are intentionally darker
- * than the icon stroke colour so the icon remains the focal point.
+ * than the icon stroke color so the icon remains the focal point.
  * Lifted slightly from their original values to pop against the new bg.
  */
 const CATEGORY_COLORS: Record<string, string> = {
@@ -122,7 +122,7 @@ function getCategory(type: EntityType): string {
 }
 
 // ---------------------------------------------------------------------------
-// Severity colours
+// Severity colors
 // ---------------------------------------------------------------------------
 
 const SEVERITY_COLORS = {
@@ -194,7 +194,7 @@ function hexToRgba(hex: string, alpha: number): string {
 // ---------------------------------------------------------------------------
 
 interface NodeOptions {
-  /** Base colour used for the border and glow (hex string) */
+  /** Base color used for the border and glow (hex string) */
   color: string;
   /** Overall opacity multiplier, 0–1 (default 1.0) */
   alpha?: number;
@@ -206,7 +206,7 @@ interface NodeOptions {
   isActive?: boolean;
   /** Current animation phase for the pulse, 0–1 */
   pulsePhase?: number;
-  /** Severity level, draws a coloured left-edge stripe on `finding` nodes */
+  /** Severity level, draws a colored left-edge stripe on `finding` nodes */
   severity?: 'critical' | 'high' | 'medium' | 'low' | 'info';
   /** Glow quality multiplier, 0.5–1.0 (default 1.0). Lower = cheaper blur. */
   glowQuality?: number;
@@ -221,7 +221,7 @@ class NodeRenderer {
   private readonly fallbackSize = 8;
 
   /**
-   * Draw a single entity node centred at (x, y).
+   * Draw a single entity node centered at (x, y).
    *
    * @param ctx        - Canvas 2D rendering context
    * @param entityType - Gibson taxonomy entity type
@@ -321,7 +321,7 @@ class NodeRenderer {
   // Private helpers
   // -------------------------------------------------------------------------
 
-  /** Draw the Lucide stroke icon centred at (cx, cy). */
+  /** Draw the Lucide stroke icon centered at (cx, cy). */
   private drawIcon(
     ctx: CanvasRenderingContext2D,
     entityType: EntityType,

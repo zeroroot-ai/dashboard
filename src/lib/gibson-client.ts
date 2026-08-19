@@ -1311,8 +1311,8 @@ export interface DaemonProviderRecord {
   /** RFC 3339 last-update timestamp. */
   updatedAt: string;
   /**
-   * Capabilities this provider fulfils ("chat" and/or "embedding"). Empty proto
-   * is normalised to chat-only here. (E11 BYO-embedder, gibson#810.)
+   * Capabilities this provider fulfills ("chat" and/or "embedding"). Empty proto
+   * is normalized to chat-only here. (E11 BYO-embedder, gibson#810.)
    */
   capabilities: ProviderCapability[];
   /**
@@ -1346,7 +1346,7 @@ interface DaemonProviderTestResult {
   /** Cleaned upstream error message (when ok is false). */
   error?: string;
   /**
-   * Live model catalogue returned by the provider's API for these credentials.
+   * Live model catalog returned by the provider's API for these credentials.
    * Empty for providers that don't expose a list endpoint, OR when ok is false.
    * Spec: providers-wizard.
    */

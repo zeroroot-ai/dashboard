@@ -309,7 +309,7 @@ interface ApiErrorBody {
      * Optional stable sub-code, set by the route when the client needs to
      * branch on WHICH failure this is (not merely which class).
      *
-     * This exists so a client can keep behaviour that previously depended on
+     * This exists so a client can keep behavior that previously depended on
      * substring-matching the daemon's own message. It is a closed vocabulary
      * chosen by the route, never derived from daemon text, so adding it does
      * not reopen the leak this module exists to close.

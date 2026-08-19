@@ -10,11 +10,11 @@
  *   2. Enter credentials +  , fields rendered from the descriptor's
  *      Test connection         CredentialField list. "Test" hits the daemon
  *                              TestProvider RPC, which returns the live model
- *                              catalogue from the provider's API on success.
+ *                              catalog from the provider's API on success.
  *   3. Pick a default model , populated from the live test result; falls back
  *      and save                to the descriptor's static defaultModels for
  *                              providers (e.g. Bedrock) where the daemon
- *                              already knows the catalogue.
+ *                              already knows the catalog.
  *
  * The same component drives the empty-state first-run flow AND the
  * "Add Provider" dialog for subsequent providers, the only difference is
@@ -577,7 +577,7 @@ export function CredentialsAndTest({
               {externalProbeResult!.models.length > 0 ? (
                 <>Found {externalProbeResult!.models.length} model{externalProbeResult!.models.length === 1 ? "" : "s"}.</>
               ) : (
-                "No live model list, using the provider&apos;s static catalogue."
+                "No live model list, using the provider&apos;s static catalog."
               )}
               {externalProbeResult!.embeddingOk && externalProbeResult!.embeddingDimension ? (
                 <> Embedding probe passed ({externalProbeResult!.embeddingDimension}d).</>
@@ -686,7 +686,7 @@ function ModelPickerAndSave({
     isSavePending || capabilities.length === 0 || !chatReady || !embeddingReady;
 
   // Chat model list: prefer live models from the probe; fall back to the
-  // descriptor's static defaultModels catalogue (e.g. Bedrock).
+  // descriptor's static defaultModels catalog (e.g. Bedrock).
   // Cross-reference live models with the static list to pick up deprecated flags.
   const chatModels: FoundModel[] = React.useMemo(() => {
     let base: FoundModel[];
@@ -715,9 +715,9 @@ function ModelPickerAndSave({
   }, [liveModels, descriptor.defaultModels]);
 
   // Embedding model list: from gibson#1072 SupportedProvider.embeddingModels
-  // (field 7). For embedding-only providers this IS the complete catalogue.
+  // (field 7). For embedding-only providers this IS the complete catalog.
   // For dual-capability providers (openai, bedrock, cohere) it is pre-filtered
-  // by the daemon. Empty when the provider has no static embedding catalogue
+  // by the daemon. Empty when the provider has no static embedding catalog
   // and the operator must type a model name manually.
   const embeddingModels: FoundModel[] = React.useMemo(() => {
     return (descriptor.embeddingModels ?? []).map((m) => ({
@@ -737,7 +737,7 @@ function ModelPickerAndSave({
   }, [chatModels, pickedModel, setPickedModel, servesChat]);
 
   // When the provider is embedding-only, default the embedding model picker
-  // to the first entry in the catalogue if none has been selected yet.
+  // to the first entry in the catalog if none has been selected yet.
   React.useEffect(() => {
     if (!embeddingModel && embeddingModels.length > 0 && servesEmbedding) {
       setEmbeddingModel(embeddingModels[0].name);
@@ -746,7 +746,7 @@ function ModelPickerAndSave({
 
   return (
     <div className="space-y-4">
-      {/* Capabilities: which services this provider fulfils. Mirrors the
+      {/* Capabilities: which services this provider fulfills. Mirrors the
           proto Capability enum (chat / embedding); a provider may serve one or
           both (E11 BYO-embedder, gibson#810). Embedding-only types (voyage /
           openai-compatible / tei) show only the embedding checkbox. */}
@@ -755,7 +755,7 @@ function ModelPickerAndSave({
         <p className="text-muted-foreground text-[11px]">
           {isEmbeddingOnly
             ? "This provider serves embeddings only."
-            : "Choose which services this provider fulfils. Run e.g. one provider for chat and another for embeddings."}
+            : "Choose which services this provider fulfills. Run e.g. one provider for chat and another for embeddings."}
         </p>
         <div className="flex flex-col gap-2 pt-0.5">
           {selectableCaps.map((cap) => (
@@ -870,7 +870,7 @@ function ModelPickerAndSave({
             </Select>
           ) : null}
           {/* Manual input: shown always so the operator can type a model name
-              when the daemon's static catalogue is empty (e.g. a custom TEI
+              when the daemon's static catalog is empty (e.g. a custom TEI
               instance). Hidden visually but still present in the DOM for a11y. */}
           <Input
             value={embeddingModel}
@@ -925,8 +925,8 @@ export function ProviderWizard({
   const [setAsDefault, setSetAsDefault] = React.useState<boolean>(false);
   const [isTestPending, setIsTestPending] = React.useState<boolean>(false);
   // E11 BYO-embedder (gibson#810): a provider declares which services it
-  // fulfils (chat and/or embedding) plus an independent default embedding
-  // model. Default to chat-only — the legacy behaviour — unless the
+  // fulfills (chat and/or embedding) plus an independent default embedding
+  // model. Default to chat-only — the legacy behavior — unless the
   // initialType is embedding-only (voyage/openai-compatible/tei, gibson#1072).
   const [capabilities, setCapabilities] = React.useState<ProviderCapability[]>(
     () => defaultCapabilitiesForType(initialType),
@@ -975,7 +975,7 @@ export function ProviderWizard({
           name: values.name,
           // The default model is populated AFTER the probe; for the test call
           // itself we send a single representative entry from the descriptor's
-          // catalogue when one exists, otherwise the empty string. Providers
+          // catalog when one exists, otherwise the empty string. Providers
           // that ignore the model field on a health probe (most do) won't care.
           defaultModel: descriptor.defaultModels[0]?.name ?? "",
           credentials: values.credentials,

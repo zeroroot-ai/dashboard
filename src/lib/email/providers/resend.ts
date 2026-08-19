@@ -45,7 +45,7 @@ export class ResendEmailProvider implements EmailProvider {
     });
 
     // Resend returns an { data, error } shape, surface errors to the
-    // caller instead of swallowing. Callers own retry behaviour.
+    // caller instead of swallowing. Callers own retry behavior.
     const err = (result as { error?: { message?: string; name?: string } }).error;
     if (err) {
       throw new Error(

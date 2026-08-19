@@ -163,7 +163,7 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
       'must be asserted here rather than left to fail as a decrypt error under load. ' +
       'Generate with `openssl rand -base64 32`.',
     // Enforced in production only: `pnpm dev` on a workstation legitimately runs
-    // single-process, where the Next.js ephemeral fallback is correct behaviour.
+    // single-process, where the Next.js ephemeral fallback is correct behavior.
     prodOnly: true,
   },
   {
@@ -595,7 +595,7 @@ export function validateEnv(): void {
  *
  * - For REQUIRED keys: returns `string` and asserts non-empty (validateEnv
  *   already ran at boot, but we re-check on every access so unit tests
- *   that monkey-patch `process.env` see consistent behaviour).
+ *   that monkey-patch `process.env` see consistent behavior).
  * - For OPTIONAL keys: returns `string | undefined`.
  *
  * Do NOT add `process.env.X ?? "..."` patterns anywhere else in the

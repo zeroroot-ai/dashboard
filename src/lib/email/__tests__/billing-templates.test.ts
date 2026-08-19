@@ -189,7 +189,7 @@ describe('templates/billing-payment-failed', () => {
 });
 
 // ---------------------------------------------------------------------------
-// billing-subscription-cancelled
+// billing-subscription-canceled
 // ---------------------------------------------------------------------------
 
 describe('templates/billing-subscription-cancelled', () => {

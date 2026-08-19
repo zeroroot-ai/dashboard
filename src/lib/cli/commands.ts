@@ -1,7 +1,7 @@
 /**
  * CLI command-reference builder (PRD dashboard#738, slice S1).
  *
- * A pure function that produces the labelled, copy-pasteable `gibson` CLI
+ * A pure function that produces the labeled, copy-pasteable `gibson` CLI
  * command set for a given tenant + platform URL. It is the single source of
  * truth for the command strings rendered on the Settings → CLI page, and it
  * has no I/O so it can be unit-tested in isolation.

@@ -148,7 +148,7 @@ export async function GET(
       let lastLogTimestampNs = BigInt(Date.now()) * NS_PER_MS;
 
       // Aborts the daemon node-event subscription (below) on teardown so the
-      // upstream Subscribe stream is cancelled when the browser disconnects.
+      // upstream Subscribe stream is canceled when the browser disconnects.
       const nodeAbort = new AbortController();
 
       // Tear down state shared between the polling loop and the

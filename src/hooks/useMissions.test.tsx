@@ -42,7 +42,7 @@ describe('useMissions', () => {
 
   afterEach(() => {
     queryClient.clear();
-    // Defence in depth, one test in this file calls vi.useFakeTimers().
+    // Defense in depth, one test in this file calls vi.useFakeTimers().
     // Without this restore, subsequent tests inherit fake-timer state and
     // waitFor times out at 5s on every async assertion.
     vi.useRealTimers();

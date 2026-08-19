@@ -563,7 +563,7 @@ export function SignupForm({
                 type="submit"
                 className="w-full"
                 // Block submit when:
-                //   - form is mid-submit / provisioning (existing behaviour),
+                //   - form is mid-submit / provisioning (existing behavior),
                 //   - the slug is on the reserved-names denylist (the K8s
                 //     admission webhook would reject this server-side),
                 //   - the inline availability lookup says the slug is taken.

@@ -34,7 +34,7 @@ interface ApiResponse {
  *
  * Fires GET /api/auth/tenant-available?name=<rawName>. Each new `rawName`
  * starts a fresh debounce window; the previous window's in-flight fetch
- * (if any) is cancelled via AbortController so its result can't overwrite
+ * (if any) is canceled via AbortController so its result can't overwrite
  * a fresher answer.
  *
  * The hook never blocks rendering and is safe to read every render: the

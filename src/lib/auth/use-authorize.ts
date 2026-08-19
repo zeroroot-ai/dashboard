@@ -7,7 +7,7 @@
  *
  * Decision flow:
  *   1. Unknown method → DENIED (fail-closed). No environment-dependent
- *      escape hatch, same behaviour in dev and prod.
+ *      escape hatch, same behavior in dev and prod.
  *   2. entry.unauthenticated → allowed (public RPC; no identity required).
  *   3. allowedIdentities excludes USER → denied immediately (service-only RPC).
  *   4. Membership query loading → { allowed: false, loading: true } (hides UI,
@@ -91,7 +91,7 @@ export function useAuthorize(method: string): AuthorizeResult {
   });
 
   // Unknown method: DENY (fail-closed). No environment-dependent escape
-  // hatch. Same behaviour in dev and prod: a registry miss is always a
+  // hatch. Same behavior in dev and prod: a registry miss is always a
   // programming error.
   if (!entry) {
     return { allowed: false, loading: false, reason: 'unknown_method' };

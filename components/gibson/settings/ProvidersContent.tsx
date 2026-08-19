@@ -476,7 +476,7 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
                 );
               })()}
               {/* Capabilities + embedding model (E11 BYO-embedder,
-                  gibson#810). Empty capabilities normalise to chat-only. */}
+                  gibson#810). Empty capabilities normalize to chat-only. */}
               {(() => {
                 const caps = provider.capabilities ?? ["chat"];
                 return (

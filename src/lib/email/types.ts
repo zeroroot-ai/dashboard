@@ -32,7 +32,7 @@ export interface EmailMessage {
  * Common interface every provider implements.
  *
  * Dispatch errors MUST be thrown, never swallowed, callers decide
- * retry behaviour (rate-limiter, audit log, user-visible error, etc.).
+ * retry behavior (rate-limiter, audit log, user-visible error, etc.).
  */
 export interface EmailProvider {
   send(msg: EmailMessage): Promise<void>;
