@@ -230,9 +230,9 @@ export function ToolStreamProgress({
             state.kind === "failed"
               ? "border-destructive/50 text-destructive"
               : state.kind === "complete"
-                ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-300"
+                ? "border-emerald-500/40 text-emerald-700"
                 : state.kind === "warning"
-                  ? "border-amber-500/40 text-amber-700 dark:text-amber-300"
+                  ? "border-amber-500/40 text-amber-700"
                   : "",
           )}
         >

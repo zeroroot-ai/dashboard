@@ -68,8 +68,8 @@ export function ApproachingLimitBanner({
   const upgrade = billingEnabled ? getUpgradeTarget(plan) : null;
 
   const variant = atLimit
-    ? "border-red-500 bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-100"
-    : "border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-100";
+    ? "border-red-500 bg-red-50 text-red-900"
+    : "border-amber-500 bg-amber-50 text-amber-900";
 
   return (
     <div

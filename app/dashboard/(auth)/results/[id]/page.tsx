@@ -58,8 +58,8 @@ interface InFlightTool {
 const STATUS_BADGE_CLASSES: Record<MissionStatus, string> = {
   pending: "border-border text-muted-foreground",
   running: "border-primary/50 bg-primary/10 text-primary",
-  paused: "border-alt/50 bg-alt/10 text-alt dark:text-alt",
-  completed: "border-link/50 bg-link/10 text-link dark:text-link",
+  paused: "border-alt/50 bg-alt/10 text-alt",
+  completed: "border-link/50 bg-link/10 text-link",
   failed: "border-destructive/50 bg-destructive/10 text-destructive",
   stopped: "border-border text-muted-foreground",
 };

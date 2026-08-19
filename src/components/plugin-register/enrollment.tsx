@@ -101,7 +101,7 @@ export function EnrollmentStep({ result, onDone }: EnrollmentStepProps) {
         </p>
       </div>
 
-      <Alert className="border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400">
+      <Alert className="border-green-500/40 bg-green-500/10 text-green-700">
         <CheckIcon className="size-4" aria-hidden="true" />
         <AlertTitle>Registration successful</AlertTitle>
         <AlertDescription className="text-xs">

@@ -92,8 +92,8 @@ importers:
         specifier: ^12.10.1
         version: 12.10.2(@types/react@19.2.8)(immer@11.1.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@zeroroot-ai/brand':
-        specifier: ^0.1.0
-        version: 0.1.0(tailwindcss@4.3.0)
+        specifier: ^0.3.0
+        version: 0.3.0(tailwindcss@4.3.0)
       ai:
         specifier: ^6.0.141
         version: 6.0.145(zod@3.25.76)
@@ -2974,8 +2974,8 @@ packages:
   '@xyflow/system@0.0.76':
     resolution: {integrity: sha512-hvwvnRS1B3REwVDlWexsq7YQaPZeG3/mKo1jv38UmnpWmxihp14bW6VtEOuHEwJX2FvzFw8k77LyKSk/wiZVNA==}
 
-  '@zeroroot-ai/brand@0.1.0':
-    resolution: {integrity: sha512-4I3ObsCi37BiHYc927CI/XLWZv2zIg7eGNrF7/h+FZ3f9wSkFe/TfdJ9c7ZKZeGSptCubnjXepfjhkqxu0CwNQ==, tarball: https://npm.pkg.github.com/download/@zeroroot-ai/brand/0.1.0/2140066291c125ca09df20d1b525d94a7aa690f5}
+  '@zeroroot-ai/brand@0.3.0':
+    resolution: {integrity: sha512-Edcp9wSpinUn1G6CiACx3o79zGWzU/b48IML50CyTa+yCkudv+acdfEf1ITGr+nd1QuGH1n36mbvPnDHRAPO5Q==, tarball: https://npm.pkg.github.com/download/@zeroroot-ai/brand/0.3.0/a9fad9cf35a6a0d4eb356c2f30077b6380832ea4}
     peerDependencies:
       tailwindcss: '>=4.0.0'
 
@@ -8531,7 +8531,7 @@ snapshots:
       d3-selection: 3.0.0
       d3-zoom: 3.0.0
 
-  '@zeroroot-ai/brand@0.1.0(tailwindcss@4.3.0)':
+  '@zeroroot-ai/brand@0.3.0(tailwindcss@4.3.0)':
     dependencies:
       tailwindcss: 4.3.0
 

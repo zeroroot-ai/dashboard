@@ -291,7 +291,7 @@ export function ManifestUpload({
 
       {/* Success badge */}
       {isValid && (
-        <Alert className="border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400">
+        <Alert className="border-green-500/40 bg-green-500/10 text-green-700">
           <FileTextIcon className="size-4" aria-hidden="true" />
           <AlertTitle>Manifest looks valid</AlertTitle>
           <AlertDescription className="text-xs">

@@ -56,7 +56,7 @@ export default async function TemplateDetailPage({ params }: PageProps) {
       </header>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <article className="prose prose-sm max-w-none dark:prose-invert">
+        <article className="prose prose-sm max-w-none">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {tpl.mdxBody}
           </ReactMarkdown>

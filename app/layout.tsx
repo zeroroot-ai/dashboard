@@ -1,7 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import GoogleAnalyticsInit from "@/lib/ga";
-import { fontVariables } from "@/lib/fonts";
 import NextTopLoader from "nextjs-toploader";
 import { GibsonProviders } from "@/app/providers";
 
@@ -14,13 +13,16 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // One immutable dark brand (#651). There is no light mode, no theme
-  // toggle, and no theme cookie. The `dark` class is applied statically so
-  // the first paint is the brand on every cold load, no flash, no
-  // next-themes inline script, no per-user/per-device theme state.
+  // One immutable brand, now light (ADR-0064). Still no theme toggle, no theme
+  // cookie and no next-themes script: #650/#651 removed that and it stays
+  // removed. The statically applied brand class is gone with the dark brand.
+  //
+  // No font variables either. The brand package self-hosts Inter Tight and
+  // JetBrains Mono, so the twelve next/font Google downloads that used to be
+  // injected here are gone along with lib/fonts.ts.
   return (
-    <html lang="en" className="dark">
-      <body className={cn("bg-background group/layout font-sans", fontVariables)}>
+    <html lang="en">
+      <body className={cn("bg-background group/layout font-sans")}>
         <GibsonProviders>
           {children}
         </GibsonProviders>

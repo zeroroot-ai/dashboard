@@ -1,31 +1,42 @@
 #!/usr/bin/env node
 /*
- * check-no-light-mode.mjs
+ * check-no-theme-switching.mjs
  *
- * Enforces the single locked dark brand (#651, PRD #649). Fails the build
- * if any reintroduced light-mode construct appears in the source tree:
+ * Enforces ONE locked brand with no theme machinery. Previously
+ * check-no-light-mode.mjs, which enforced #651's "the brand is dark". ADR-0064
+ * makes the brand light, so the colour half of that rule is void — but the half
+ * that mattered is not, and this guard keeps it:
+ *
+ *   there is one brand, chosen here, and no per-user, per-device or
+ *   per-preference way to get a different one.
+ *
+ * Renamed rather than deleted, because a guard whose name asserts the opposite
+ * of what ships is worse than no guard: the next reader trusts the name.
+ *
+ * Fails the build on:
  *
  *   1. An import from `next-themes` (the library is removed entirely).
  *   2. The `theme_choice` cookie/metadata key (per-user/-device theme state).
- *   3. In CSS: a `.dark` class selector, a `prefers-color-scheme` media
- *      query, or a class/media-based `@custom-variant dark` definition.
- *   4. A `'light'`/`"light"` THEME string literal, i.e. one appearing on a
- *      line that also mentions `dark`, `theme`, or `mode`. This catches
- *      reintroduced theme machinery (`'dark' | 'light'` unions,
- *      `theme: 'light'`, `mode="light"`) while leaving unrelated uses of the
- *      word "light" alone (e.g. a "light scan" intensity option).
+ *   3. In CSS: a `.dark` class selector, a `prefers-color-scheme` media query,
+ *      or ANY `@custom-variant dark` definition.
+ *   4. A static `dark` class on an element, e.g. `<html className="dark">`.
+ *   5. A `'light'`/`"light"` THEME string literal, i.e. one appearing on a line
+ *      that also mentions `dark`, `theme`, or `mode`. This catches theme
+ *      machinery (`'dark' | 'light'` unions, `theme: 'light'`, `mode="light"`)
+ *      while leaving unrelated uses of the word "light" alone (e.g. a "light
+ *      scan" intensity option).
  *
- * The sanctioned dark-variant form is the always-on `@custom-variant
- * dark (&)` in app/globals.css, it makes every `dark:` utility apply
- * unconditionally with no `.dark` class and no media query. That form is
- * explicitly allowed.
+ * Rule 3 changed with ADR-0064. The always-on `@custom-variant dark (&)` used
+ * to be the sanctioned form: it pinned every `dark:` utility on so the dark
+ * half of shadcn's light-first pairs became the active style. Under a light
+ * brand that form is exactly wrong, so it is now a violation like the others.
  *
  * Scanned roots: app/, components/, src/, lib/, auth.ts, middleware.ts.
  * Skipped: node_modules/, .next/, e2e/ (covered by #654), this script.
  *
  * Usage:
- *   node scripts/check-no-light-mode.mjs            # scan the tree
- *   node scripts/check-no-light-mode.mjs --selftest # verify the scanner
+ *   node scripts/check-no-theme-switching.mjs            # scan the tree
+ *   node scripts/check-no-theme-switching.mjs --selftest # verify the scanner
  *
  * Exit codes: 0 clean, 1 violations found (or selftest failure).
  */
@@ -75,6 +86,10 @@ export function scanContent(content, ext) {
       if (/['"]light['"]/.test(line) && /\bdark\b|\btheme\b|\bmode\b/i.test(line)) {
         violations.push({ rule: "light theme literal", line: n });
       }
+      // `<html className="dark">` and friends: a brand pinned in markup.
+      if (/\b(className|class)\s*=\s*["'][^"']*\bdark\b[^"']*["']/.test(line)) {
+        violations.push({ rule: "static dark class", line: n });
+      }
     }
 
     if (/theme_choice/.test(line)) {
@@ -89,9 +104,10 @@ export function scanContent(content, ext) {
       if (/prefers-color-scheme/.test(line)) {
         violations.push({ rule: "prefers-color-scheme media query", line: n });
       }
-      // class/media-based custom-variant dark, allow only the (&) form.
-      if (/@custom-variant\s+dark\b/.test(line) && !/@custom-variant\s+dark\s*\(\s*&\s*\)/.test(line)) {
-        violations.push({ rule: "class/media @custom-variant dark", line: n });
+      // ADR-0064: no form of this is sanctioned any more, including the
+      // always-on `(&)` one that used to be.
+      if (/@custom-variant\s+dark\b/.test(line)) {
+        violations.push({ rule: "@custom-variant dark", line: n });
       }
     }
   });
@@ -137,24 +153,29 @@ async function scanTree() {
 }
 
 async function selftest() {
-  const dir = await mkdtemp(join(tmpdir(), "no-light-mode-"));
+  const dir = await mkdtemp(join(tmpdir(), "no-theme-switching-"));
   const cases = [
     ["a.tsx", `import { useTheme } from "next-themes";`, ".tsx", "next-themes import"],
     ["b.ts", `const k = "theme_choice";`, ".ts", "theme_choice key"],
     ["c.css", `.dark { --background: black; }`, ".css", ".dark selector"],
     ["d.css", `@media (prefers-color-scheme: light) { :root {} }`, ".css", "prefers-color-scheme media query"],
-    ["e.css", `@custom-variant dark (&:is(.dark *));`, ".css", "class/media @custom-variant dark"],
+    ["e.css", `@custom-variant dark (&:is(.dark *));`, ".css", "@custom-variant dark"],
+    // The form that USED to be sanctioned. ADR-0064 makes it a violation, and
+    // this case is the difference between the old guard and this one.
+    ["e2.css", `@custom-variant dark (&);`, ".css", "@custom-variant dark"],
+    ["i.tsx", `<html lang="en" className="dark">`, ".tsx", "static dark class"],
     ["f.ts", `let t: 'dark' | 'light' = 'dark';`, ".ts", "light theme literal"],
     ["g.tsx", `<ModeCard mode="light">`, ".tsx", "light theme literal"],
     ["h.ts", `theme: 'light',`, ".ts", "light theme literal"],
   ];
   // Sanctioned forms that must NOT trigger.
   const negatives = [
-    ["ok1.css", `@custom-variant dark (&);`, ".css"],
     ["ok2.tsx", `// removed next-themes; see app/globals.css`, ".tsx"],
     ["ok3.css", `/* mirror :root/.dark in globals */ :root { --x: 0; }`, ".css"],
     // A non-theme "light" value (scan intensity) must be left alone.
     ["ok4.ts", `{ value: 'light', label: 'Quick scan, common subdomains only' },`, ".ts"],
+    // "dark" inside an unrelated class name must not trip the static-class rule.
+    ["ok5.tsx", `<div className="bg-darkroom-500 text-foreground">`, ".tsx"],
   ];
 
   let ok = true;
@@ -180,22 +201,23 @@ async function selftest() {
 async function main() {
   if (process.argv.includes("--selftest")) {
     const ok = await selftest();
-    console.log(ok ? "check-no-light-mode.mjs: selftest passed" : "check-no-light-mode.mjs: selftest FAILED");
+    console.log(ok ? "check-no-theme-switching.mjs: selftest passed" : "check-no-theme-switching.mjs: selftest FAILED");
     process.exit(ok ? 0 : 1);
   }
 
   const violations = await scanTree();
   if (violations.length === 0) {
-    console.log("check-no-light-mode.mjs: clean (single dark brand enforced)");
+    console.log("check-no-theme-switching.mjs: clean (one locked brand, no theme machinery)");
     process.exit(0);
   }
 
-  console.error("check-no-light-mode.mjs: light-mode construct(s) found:\n");
+  console.error("check-no-theme-switching.mjs: theme-switching construct(s) found:\n");
   for (const v of violations) {
     console.error(`  ${v.file}:${v.line}  ${v.rule}`);
   }
   console.error(
-    "\nThere is one immutable dark brand (#649). Remove the construct; do not reintroduce light mode.",
+    "\nThere is one immutable brand, and it is chosen in the brand package (ADR-0064).\n" +
+      "Remove the construct; do not reintroduce a way to pick a different one.",
   );
   process.exit(1);
 }

@@ -165,7 +165,7 @@ export function GrantsTable({ grants }: GrantsTableProps) {
                   {grant.nearExpiry && (
                     <Badge
                       variant="outline"
-                      className="ml-2 border-amber-500/50 text-amber-600 dark:text-amber-400 text-[10px] px-1 py-0 h-4"
+                      className="ml-2 border-amber-500/50 text-amber-600 text-[10px] px-1 py-0 h-4"
                     >
                       expiring soon
                     </Badge>
@@ -223,7 +223,7 @@ export function GrantsTable({ grants }: GrantsTableProps) {
                 <TableCell
                   className={cn(
                     "text-xs font-mono tabular-nums",
-                    grant.nearExpiry && "text-amber-600 dark:text-amber-400 font-medium"
+                    grant.nearExpiry && "text-amber-600 font-medium"
                   )}
                 >
                   {formatUnixTs(grant.expiresAtUnix)}

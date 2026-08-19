@@ -287,7 +287,7 @@ function TokenBar({
   const pct = Math.min(100, (current / limit) * 100);
   return (
     <div className="inline-flex flex-col items-end gap-1 min-w-[12rem]">
-      <span className={warn ? "text-alt dark:text-alt" : ""}>
+      <span className={warn ? "text-alt" : ""}>
         {formatTokens(current)} / {formatTokens(limit)}
       </span>
       <Progress value={pct} className="h-1.5" />
