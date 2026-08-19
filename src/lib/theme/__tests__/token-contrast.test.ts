@@ -1,14 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { createRequire } from "node:module";
 
 /**
  * Token-contrast invariant, the keystone readability test for the single
- * dark brand (#650). It parses the canonical `:root` token block out of
- * `app/globals.css` and asserts that every semantic foreground/background
- * pairing meets WCAG 2.1 AA: >=4.5:1 for normal text, >=3:1 for large text
- * and non-text UI affordances (focus ring, input boundary).
+ * locked brand — light since ADR-0064. It parses the canonical `:root` token
+ * block out of `app/globals.css` and everything it imports, and asserts that
+ * every semantic foreground/background pairing meets WCAG 2.1 AA: >=4.5:1 for
+ * normal text, >=3:1 for large text and non-text UI affordances (focus ring,
+ * input boundary).
+ *
+ * The pairings are ground-agnostic on purpose: they ask whether a foreground
+ * reads on its background, which is the question regardless of which is darker.
  *
  * Readability is the product's #1 goal, so this is a hard gate, not a guide.
  * The contrast math mirrors `src/lib/graph/__tests__/theme-colors.test.ts`
@@ -84,7 +88,10 @@ function allRootBlocks(css: string): string[] {
     blocks.push(css.slice(open + 1, end));
     search = end + 1;
   }
-  if (blocks.length === 0) throw new Error("no :root block found in CSS");
+  // No throw here. Now that the loader follows the whole import graph, plenty
+  // of files in it legitimately declare no tokens (themes.css, the brand's
+  // @font-face rules). The emptiness that matters is the aggregate, and the
+  // caller asserts it.
   return blocks;
 }
 
@@ -119,35 +126,60 @@ function luminanceOf(name: string, tokens: Map<string, string>): number {
 }
 
 /**
- * Load tokens from app/globals.css plus any @import'd CSS files within the
- * same directory tree (handles @zeroroot/brand/tokens.css — dashboard#909).
- * Imports are resolved against node_modules and the file's own directory.
+ * Load tokens from app/globals.css and everything it imports, transitively.
+ *
+ * Follows BOTH kinds of @import: a bare package specifier, resolved from
+ * node_modules, and a relative path, resolved against the file that contains
+ * it. The relative case is not a nicety — the brand package's entry declares no
+ * tokens itself, it imports its own ./tokens.css. Following only package
+ * specifiers found zero :root blocks and this test failed to load at all, which
+ * is how it announced the gap.
+ *
+ * Cycles are impossible to loop on: every file is visited once.
  */
 function loadTokensFromGlobals(): Map<string, string> {
-  const globalsCss = readFileSync(resolve(process.cwd(), "app/globals.css"), "utf8");
-
-  // Collect all CSS text to scan for :root blocks.
-  const cssSources: string[] = [globalsCss];
-
-  // Resolve @import "@zeroroot/brand/tokens.css" and similar package imports.
-  const importRe = /@import\s+["']([^"']+)["']/g;
+  const entry = resolve(process.cwd(), "app/globals.css");
   const req = createRequire(resolve(process.cwd(), "package.json"));
-  let imp: RegExpExecArray | null;
-  while ((imp = importRe.exec(globalsCss)) !== null) {
-    const importPath = imp[1];
-    // Skip relative imports to ./themes.css (handled inline) and Tailwind
-    // directives; only resolve bare package specifiers and absolute paths.
-    if (importPath.startsWith(".")) continue;
-    // Resolve from node_modules.
+  const importRe = /@import\s+["']([^"']+)["']/g;
+
+  const seen = new Set<string>();
+  const cssSources: string[] = [];
+
+  const visit = (file: string): void => {
+    if (seen.has(file)) return;
+    seen.add(file);
+
+    let css: string;
     try {
-      const resolved = req.resolve(importPath);
-      cssSources.push(readFileSync(resolved, "utf8"));
+      css = readFileSync(file, "utf8");
     } catch {
-      // Not resolvable in this environment — skip gracefully.
+      return; // not present in this environment
     }
-  }
+    cssSources.push(css);
+
+    for (const [, importPath] of css.matchAll(importRe)) {
+      // Tailwind's own directive resolves to no file on disk.
+      if (importPath === "tailwindcss") continue;
+      try {
+        visit(
+          importPath.startsWith(".")
+            ? resolve(dirname(file), importPath)
+            : req.resolve(importPath),
+        );
+      } catch {
+        // Not resolvable here — skip rather than fail the whole suite.
+      }
+    }
+  };
+
+  visit(entry);
 
   const allBlocks = cssSources.flatMap(allRootBlocks);
+  if (allBlocks.length === 0) {
+    throw new Error(
+      `no :root block found across ${cssSources.length} CSS file(s) reachable from app/globals.css`,
+    );
+  }
   return parseTokensFromBlocks(allBlocks);
 }
 
@@ -178,7 +210,7 @@ const UI_PAIRS: ReadonlyArray<[token: string, bg: string]> = [
   ["--input", "--background"],
 ];
 
-describe("token-contrast (single dark brand)", () => {
+describe("token-contrast (single locked brand)", () => {
   it("parses the canonical :root token block", () => {
     expect(tokens.get("--background")).toBeDefined();
     expect(tokens.get("--primary")).toBeDefined();
