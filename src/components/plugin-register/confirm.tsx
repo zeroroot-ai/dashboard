@@ -227,8 +227,8 @@ export function ConfirmStep({
                       variant="outline"
                       className={
                         b.mode === "existing"
-                          ? "border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                          : "border-green-500/40 bg-green-500/10 text-green-600 dark:text-green-400"
+                          ? "border-blue-500/40 bg-blue-500/10 text-blue-600"
+                          : "border-green-500/40 bg-green-500/10 text-green-600"
                       }
                     >
                       {b.mode === "existing" ? "existing" : "create"}

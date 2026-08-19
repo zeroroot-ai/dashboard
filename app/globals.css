@@ -2,50 +2,33 @@
 
 @plugin "tailwindcss-animate";
 
-/* Single locked dark brand (#650). There is no light mode. The `dark`
- * variant is pinned always-on so the ~91 `dark:` utilities across the
- * shadcn primitives keep applying as the active style without a `.dark`
- * class or a prefers-color-scheme media query. The no-light-mode guard
- * (#651) forbids the `.dark`-class and media-query forms; this always-on
- * form is the sanctioned one. */
-@custom-variant dark (&);
+/* Single locked LIGHT brand (ADR-0064). Still one brand: no theme toggle, no
+ * theme cookie, no presets — #650/#651 removed that machinery and it stays
+ * removed. What changed is the colour.
+ *
+ * The always-on dark variant that pinned every dark-prefixed utility on is gone
+ * with it. Those utilities were the dark half of shadcn's light-first pairs
+ * (text-emerald-700 / text-emerald-300), so turning the variant off returns
+ * each primitive to the value that suits this ground — and the now-inert halves
+ * are deleted rather than left to rot. */
 
 @import "./themes.css";
 
 /* ----------------------------------------------------------------------
- * Brand token layer (dashboard#909, inlined dashboard#913-fix, re-wired
- * to the published package dashboard#915).
+ * Brand tokens, from the package.
  *
- * Originally sourced from @zeroroot/brand via a `file:` dep (local path).
- * That dep was forbidden (no-monorepo-shortcuts, breaks Docker builds), so
- * the tokens were inlined verbatim (dashboard#913-fix) until the package
- * was published for real. @zeroroot-ai/brand@0.1.0 is now published to
- * GitHub Packages (ghcr npm registry) and consumed as a versioned
- * dependency, replacing the inline block below with an @import.
+ * These used to be inlined here verbatim, under a note saying that would hold
+ * "until @zeroroot-ai/brand is published as a public npm package". It has been
+ * published for some time; the copy had already drifted (this file overrode the
+ * text family to Outfit while the package declared JetBrains Mono), which is
+ * precisely what a second copy of a token set does.
  *
- * Two :root overrides follow immediately after:
- *   1. Typography — uses the Next.js font variable (var(--font-jetbrains-mono))
- *      rather than the raw font-family stack in the package, so the
- *      dashboard's self-hosted font preload applies correctly.
- *   2. Dashboard-local tokens — FullCalendar (--fc-*) tokens that have no
- *      meaning outside the authenticated app.
- *
- * Hardcoded color literals are forbidden in app/** and components/**
- * (#53 CI guard). globals.css and themes.css are exempt as the token
- * declaration files.
+ * The package entry brings the tokens, the @font-face rules for the two faces
+ * it self-hosts, the @theme mapping and the base layer — so none of that is
+ * restated below.
  * ---------------------------------------------------------------------- */
 
-@import "@zeroroot-ai/brand/tokens.css";
-
-/* Dashboard typography override: use Next.js-injected font variable so
- * the self-hosted JetBrains Mono preload applies. @zeroroot-ai/brand
- * ships the raw font-family stack as a safe fallback; the override here
- * prepends the Next.js variable so the preloaded font wins when
- * available. */
-:root {
-  --display-family: var(--font-jetbrains-mono), 'Fira Code', 'Cascadia Code', monospace;
-  --text-family: var(--font-jetbrains-mono), 'Fira Code', 'Cascadia Code', monospace;
-}
+@import "@zeroroot-ai/brand/globals.css";
 
 /* Dashboard-local tokens: FullCalendar theming, terminal background
  * (re-alias via var() so the brand value drives it). These are not part
@@ -59,7 +42,7 @@
   --fc-button-active-border-color: transparent;
   --fc-button-border-color: transparent;
   --fc-event-border-color: transparent;
-  --fc-event-text-color: oklch(1 0 0);
+  --fc-event-text-color: var(--primary-foreground);
   --fc-border-color: var(--border);
   --fc-page-bg-color: var(--muted);
   --fc-today-bg-color: var(--muted);
@@ -91,179 +74,37 @@
     }
   }
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-error-text: var(--error-text);
-  --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
-  --color-success-foreground: var(--success-foreground);
-  --color-overlay: var(--overlay);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-
-  --color-highlight: var(--highlight);
-  --color-alt: var(--alt);
-  --color-link: var(--link);
-
-  --color-dracula-fg: var(--dracula-fg);
-  --color-dracula-comment: var(--dracula-comment);
-  --color-dracula-cyan: var(--dracula-cyan);
-  --color-dracula-green: var(--dracula-green);
-  --color-dracula-orange: var(--dracula-orange);
-  --color-dracula-pink: var(--dracula-pink);
-  --color-dracula-purple: var(--dracula-purple);
-  --color-dracula-red: var(--dracula-red);
-  --color-dracula-yellow: var(--dracula-yellow);
-
-  --font-display: var(--display-family);
-  --display-weight: var(--display-weight);
-  --font-sans: var(--text-family);
-  --font-mono: var(--text-family);
 }
 
-@utility bg-zd-gradient {
-  background: linear-gradient(135deg, var(--background) 0%, var(--card) 50%, var(--background) 100%);
-  background-attachment: fixed;
-}
+/* Everything the brand package already declares — the radius scale, every
+ * --color-* mapping, the zd-* utilities, the scrollbar rule and the base layer
+ * — was restated here and is now gone. It came in with the inlined tokens and
+ * had no reason to outlive them. */
 
-@utility text-zd-glow {
-  text-shadow: 0 0 calc(10px * var(--glow-strength)) var(--highlight),
-               0 0 calc(20px * var(--glow-strength)) color-mix(in oklch, var(--highlight) 30%, transparent);
-}
-
-@keyframes zd-blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
-}
-
-/* Brand CRT flicker, used on hero lockups + standalone marks to evoke an
- * unstable phosphor monitor. 92% of the cycle is steady so the flicker
- * reads as a glitch, not a flash. */
-@keyframes zda-flicker {
-  0%, 92%, 100% { opacity: 1; }
-  93%           { opacity: 0.62; }
-  94%           { opacity: 1; }
-  95%           { opacity: 0.84; }
-}
-
-@utility zd-cursor {
-  display: inline-block;
-  width: 0.6em;
-  height: 1.1em;
-  background-color: var(--link);
-  box-shadow: 0 0 calc(5px * var(--glow-strength)) var(--link);
-  animation: zd-blink 1s infinite;
-  vertical-align: text-bottom;
-}
-
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-    /* Brand body weight: mono needs the heft, 400 reads thin. */
-    font-weight: 500;
-  }
-
-  .font-display {
-    font-weight: var(--display-weight);
-  }
-
-  [data-slot="button"],
-  [data-slot="dialog-trigger"],
-  [data-slot="dropdown-menu-item"],
-  [data-slot="command-item"],
-  [data-slot="toggle-group-item"],
-  [data-slot="dropdown-menu-trigger"],
-  [data-slot="popover-trigger"],
-  [data-slot="tooltip-trigger"],
-  [data-slot="sheet-trigger"],
-  [data-slot="tabs-trigger"],
-  [data-slot="collapsible-trigger"] {
-    @apply cursor-pointer!;
-  }
-
-  [data-slot="dialog-overlay"],
-  [data-slot="sheet-overlay"],
-  [data-slot="drawer-overlay"] {
-    @apply bg-overlay! backdrop-blur-sm;
-  }
-}
-
-/* Global CRT scanline overlay, kept as a restrained premium texture.
- * --scanline-opacity is barely-perceptible (0.012). */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    var(--scanline-color) 2px,
-    var(--scanline-color) 4px
-  );
-  opacity: var(--scanline-opacity);
-}
+/* Emphasis on a light ground.
+ *
+ * These were phosphor glows — box-shadow and text-shadow bloom around the
+ * accent — an effect that only reads against near-black. On concrete a bloom is
+ * either invisible or looks like a printing fault, so the same classes now mean
+ * the same thing (this is the emphasised one) drawn the way this ground allows:
+ * a crisp accent edge and the readable green.
+ *
+ * The full-screen CRT scanline overlay is gone with them. The scanline tokens
+ * survive in the brand for terminal panels, which are still dark. */
 
 .glow-green {
-  box-shadow: 0 0 calc(15px * var(--glow-strength)) color-mix(in oklch, var(--highlight) 40%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--highlight) 55%, transparent);
 }
 .text-glow-green {
-  text-shadow: 0 0 calc(8px * var(--glow-strength)) color-mix(in oklch, var(--highlight) 60%, transparent);
-}
-.text-glow-green-soft {
-  text-shadow: 0 0 calc(3px * var(--glow-strength)) color-mix(in oklch, var(--highlight) 35%, transparent);
-}
-.border-glow-green {
-  box-shadow: 0 0 calc(4px * var(--glow-strength)) color-mix(in oklch, var(--highlight) 30%, transparent),
-              inset 0 0 calc(2px * var(--glow-strength)) color-mix(in oklch, var(--highlight) 10%, transparent);
+  color: var(--highlight);
 }
 
+/* A measured value. --primary is the acid fill and fails as text on this
+ * ground, so the readable green carries it. */
 .data-value {
-  color: var(--primary);
+  color: var(--highlight);
   font-family: var(--font-mono);
-  text-shadow: 0 0 calc(4px * var(--glow-strength)) color-mix(in oklch, var(--highlight) 30%, transparent);
+  font-variant-numeric: tabular-nums;
 }
 
 .bg-grid-hack {
@@ -272,11 +113,15 @@ body::before {
   background-size: 24px 24px;
 }
 
+/* Named "hack" long before this change; the name is a lie about what it is (a
+ * translucent panel) and wants renaming across its eleven usages in its own PR.
+ * Re-tuned for concrete: a wash of the ground rather than a wash of the accent,
+ * which on a light surface reads as a stain. */
 .glass-hack {
-  background: color-mix(in oklch, var(--highlight) 3%, transparent);
+  background: color-mix(in oklch, var(--card) 72%, transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid color-mix(in oklch, var(--highlight) 10%, transparent);
+  border: 1px solid var(--border);
 }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -284,8 +129,5 @@ body::before {
 ::-webkit-scrollbar-thumb { background: color-mix(in oklch, var(--primary) 30%, transparent); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--primary) 50%, transparent); }
 
-@media (prefers-reduced-motion: reduce) {
-  body::before { display: none; }
-  .text-glow-green, .text-glow-green-soft { text-shadow: none; }
-  .glow-green, .border-glow-green { box-shadow: none; }
-}
+/* Nothing here blooms or animates any more, so there is no motion to reduce.
+ * The rule that used to live here disabled the CRT overlay and the glows. */

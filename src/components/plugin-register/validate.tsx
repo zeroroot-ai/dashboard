@@ -104,7 +104,7 @@ export function ValidateStep({
 
       {/* Success */}
       {state.phase === "success" && (
-        <Alert className="border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400">
+        <Alert className="border-green-500/40 bg-green-500/10 text-green-700">
           <CheckCircle2Icon className="size-4" aria-hidden="true" />
           <AlertTitle>Manifest is valid</AlertTitle>
           <AlertDescription className="text-xs">

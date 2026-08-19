@@ -50,7 +50,7 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
           ))}
         </nav>
       </aside>
-      <main className="prose prose-sm max-w-3xl dark:prose-invert">
+      <main className="prose prose-sm max-w-3xl">
         {children}
       </main>
     </div>

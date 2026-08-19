@@ -679,7 +679,7 @@ function AssistantTextPart(_props: TextMessagePartProps) {
   return (
     <>
       <MarkdownTextPrimitive
-        className="prose prose-sm dark:prose-invert max-w-none"
+        className="prose prose-sm max-w-none"
         componentsByLanguage={MARKDOWN_COMPONENTS_BY_LANGUAGE}
         preprocess={stripCitationMarkers}
       />

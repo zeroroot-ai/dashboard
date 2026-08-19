@@ -102,7 +102,7 @@ function ProbeBanner({ result }: ProbeBannerProps) {
     return (
       <Alert className="border-green-500/30 bg-green-500/10">
         <CheckCircle2 className="size-4 text-green-600" />
-        <AlertDescription className="text-xs text-green-700 dark:text-green-400">
+        <AlertDescription className="text-xs text-green-700">
           Probe succeeded
           {durationMs !== null ? ` in ${durationMs} ms.` : "."}
         </AlertDescription>

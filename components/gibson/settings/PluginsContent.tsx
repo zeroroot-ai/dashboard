@@ -100,9 +100,9 @@ function scopeParam(
 const CATEGORY_BADGE_CLASS: Record<string, string> = {
   Core: "border-primary/40 bg-primary/10 text-primary",
   Integration:
-    "border-link/40 bg-link/10 text-link dark:text-link",
+    "border-link/40 bg-link/10 text-link",
   Development:
-    "border-alt/40 bg-alt/10 text-alt dark:text-alt",
+    "border-alt/40 bg-alt/10 text-alt",
 };
 
 export function PluginsContent({ docsHref }: { docsHref: string }) {

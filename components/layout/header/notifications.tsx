@@ -124,7 +124,7 @@ const Notifications = () => {
       <DropdownMenuContent
         align={isMobile ? "center" : "end"}
         className="ms-4 w-80 p-0">
-        <DropdownMenuLabel className="bg-background dark:bg-muted sticky top-0 z-10 p-0">
+        <DropdownMenuLabel className="bg-background sticky top-0 z-10 p-0">
           <div className="flex justify-between border-b px-6 py-4">
             <div className="font-medium">Notifications</div>
             {hasItems && (

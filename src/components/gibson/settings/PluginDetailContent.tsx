@@ -82,21 +82,21 @@ function StatusBadge({ status }: { status: number }) {
   switch (status) {
     case 1:
       return (
-        <Badge className="border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400">
+        <Badge className="border-green-500/40 bg-green-500/10 text-green-700">
           <CheckCircle2Icon className="mr-1 size-3" aria-hidden="true" />
           Serving
         </Badge>
       );
     case 2:
       return (
-        <Badge className="border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400">
+        <Badge className="border-red-500/40 bg-red-500/10 text-red-700">
           <WifiOffIcon className="mr-1 size-3" aria-hidden="true" />
           Unreachable
         </Badge>
       );
     case 3:
       return (
-        <Badge className="border-yellow-500/40 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400">
+        <Badge className="border-yellow-500/40 bg-yellow-500/10 text-yellow-700">
           <AlertTriangleIcon className="mr-1 size-3" aria-hidden="true" />
           Degraded
         </Badge>
