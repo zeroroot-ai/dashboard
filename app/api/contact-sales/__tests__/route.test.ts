@@ -9,7 +9,7 @@
  * The CORS allowlist is therefore the part worth pinning down. It must grant
  * exactly one origin, WWW_URL, and it must never reflect back whatever the
  * caller put in its Origin header — that would turn the allowlist into a
- * rubber stamp. These tests cover that, plus the surrounding behaviour the
+ * rubber stamp. These tests cover that, plus the surrounding behavior the
  * form depends on: validation, rate limiting, and dispatch.
  */
 

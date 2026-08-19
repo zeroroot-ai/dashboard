@@ -3,7 +3,7 @@
  *
  * The cases that matter are the layouts the old depth-counting resolver got
  * wrong. Each builds a real directory tree under a temp dir, so the assertions
- * are about actual filesystem behaviour, not a mocked path string.
+ * are about actual filesystem behavior, not a mocked path string.
  *
  * dashboard#1015.
  */

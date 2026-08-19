@@ -137,8 +137,8 @@ export interface ProviderConfig {
   /** Default CHAT model to use when not specified */
   defaultModel?: string;
   /**
-   * Capabilities this provider fulfils ("chat" and/or "embedding"). Empty is
-   * normalised to chat-only by the daemon adapter. (E11 BYO-embedder.)
+   * Capabilities this provider fulfills ("chat" and/or "embedding"). Empty is
+   * normalized to chat-only by the daemon adapter. (E11 BYO-embedder.)
    */
   capabilities?: ProviderCapability[];
   /**

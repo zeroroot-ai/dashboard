@@ -14,7 +14,7 @@
  * runs Node 20 which has no built-in `.ts` loader, so this file inlines the
  * SQL so the CronJob can execute without a transpilation step. Keep the two
  * in sync, the SQL predicates here must match `unclaimed-shell-gc.ts` line
- * for line, otherwise the unit tests won't cover the live behaviour.
+ * for line, otherwise the unit tests won't cover the live behavior.
  *
  * Environment:
  *   DATABASE_URL, PostgreSQL connection string for the dashboard DB.

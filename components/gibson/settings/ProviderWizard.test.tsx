@@ -735,7 +735,7 @@ describe("ProviderWizard step 3, probe result is advisory (dashboard#288)", () =
 });
 
 // ===========================================================================
-// dashboard#289, deprecated model display in catalogue picker
+// dashboard#289, deprecated model display in catalog picker
 // ===========================================================================
 
 const mixedModelsDescriptor: SupportedProviderDescriptor = {
@@ -902,7 +902,7 @@ describe("ModelPickerAndSave, deprecated model display (dashboard#289)", () => {
 });
 
 // ===========================================================================
-// dashboard#870 — BYO embedding UI wired to daemon catalogue (gibson#1072)
+// dashboard#870 — BYO embedding UI wired to daemon catalog (gibson#1072)
 // ===========================================================================
 
 // ---------------------------------------------------------------------------

@@ -20,7 +20,7 @@
  *
  * What is skipped
  * ---------------
- * - `node_modules/`, `.next/`, build artefacts
+ * - `node_modules/`, `.next/`, build artifacts
  * - `__tests__/` directories, `*.test.*`, `*.spec.*`, regression test
  *   files are explicitly allowed to mention the pattern so they can assert
  *   the invariant themselves

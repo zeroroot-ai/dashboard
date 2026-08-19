@@ -6,7 +6,7 @@
  * The root cause of deploy#896: the Stripe webhook endpoint and the signing
  * secret the receiver verifies against (`gibson/<env>/gibson-stripe-credentials`
  * property `webhook_secret`, ESO-synced into the `gibson-stripe-credentials`
- * K8s Secret) were two independently hand-maintained artefacts. Recreate the
+ * K8s Secret) were two independently hand-maintained artifacts. Recreate the
  * endpoint, or reseed the secret, and every webhook delivery fails signature
  * verification until someone notices. This script makes ONE tool own both
  * halves in the same run, so they cannot drift.

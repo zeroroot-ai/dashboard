@@ -1,10 +1,10 @@
 import type { EmailMessage } from '../types';
 
 /**
- * Billing subscription-cancelled notification.
+ * Billing subscription-canceled notification.
  *
  * Sent when Stripe fires `customer.subscription.deleted`. Informs the customer
- * that their subscription has been cancelled, when their data will be retained
+ * that their subscription has been canceled, when their data will be retained
  * until, and how to reactivate.
  */
 interface BillingSubscriptionCancelledCtx {

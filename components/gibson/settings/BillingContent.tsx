@@ -182,7 +182,7 @@ export function BillingContent({
   if (!plan) {
     const planLabel = data?.planId || "No plan assigned";
     const planMsg = data?.planId
-      ? `Plan "${data.planId}" is not recognised. Contact support if this persists.`
+      ? `Plan "${data.planId}" is not recognized. Contact support if this persists.`
       : "No plan has been assigned to this tenant yet. Contact support.";
     return (
       <div className="space-y-6">

@@ -2,7 +2,7 @@
  * Contract test for ConversationView, the readable prompt ↔ response renderer
  * at the heart of the Gibson Traces viewer (dashboard#466).
  *
- * Asserts external rendering behaviour against the ConversationMessage[] shape:
+ * Asserts external rendering behavior against the ConversationMessage[] shape:
  * role rendering, system-prompt collapse, markdown on assistant content, tool
  * results, and the call token chip. Not internal state.
  */

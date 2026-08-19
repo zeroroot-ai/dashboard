@@ -83,7 +83,7 @@ describe('CSRF cookie naming and Secure attribute', () => {
     // The regression this guards: `secure: process.env.NODE_ENV === 'production'`
     // marked cookies Secure on a production build served over plain http (so the
     // browser dropped them) and left them non-Secure on a dev build behind the
-    // TLS edge. Pin the behaviour with NODE_ENV explicitly set to the value that
+    // TLS edge. Pin the behavior with NODE_ENV explicitly set to the value that
     // would have produced the wrong answer under the old rule.
     vi.stubEnv('NODE_ENV', 'development');
     try {

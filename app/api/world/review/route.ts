@@ -99,9 +99,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // The daemon stamps the labelling user from the SPIFFE identity chain
+    // The daemon stamps the labeling user from the SPIFFE identity chain
     // server-side; the dashboard never supplies a user id (no cross-user
-    // attribution). The call returns immediately — labelling is async.
+    // attribution). The call returns immediately — labeling is async.
     const client = userClient(WorldService);
     await client.submitLabel({
       targetId: body.targetId,

@@ -240,7 +240,7 @@ describe("probeBrokerConfigAction, bad_input", () => {
 // channel and an in-cluster request oracle. The action must refuse it before
 // the RPC is dispatched.
 //
-// This is defence in depth only: it cannot see DNS rebinding or a redirect.
+// This is defense in depth only: it cannot see DNS rebinding or a redirect.
 // The deciding control is connect-time peer-address validation in gibson.
 // ---------------------------------------------------------------------------
 

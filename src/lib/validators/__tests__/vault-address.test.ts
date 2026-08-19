@@ -36,7 +36,7 @@ describe("validateVaultAddress", () => {
 
   describe("rejects addresses aimed at internal space", () => {
     it.each([
-      // Loopback, in every spelling the URL parser normalises.
+      // Loopback, in every spelling the URL parser normalizes.
       "https://127.0.0.1:8200",
       "https://127.99.12.4:8200",
       "https://2130706433:8200",

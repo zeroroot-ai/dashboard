@@ -5,7 +5,7 @@
  *
  * The cached export (`fetchStripePrices`) is not tested directly because
  * `unstable_cache`'s internals are framework-owned; the contract under
- * test is the inner function's graceful-degrade behaviour across the
+ * test is the inner function's graceful-degrade behavior across the
  * three failure shapes documented in R7.3:
  *   1. STRIPE_SECRET_KEY unset → all tiers null.
  *   2. lookup_key resolves to null (no active price) → that tier null.

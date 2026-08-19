@@ -251,7 +251,7 @@ function* walkFiles(dir, exts) {
  * Both alias spellings resolve to the same tree via tsconfig `paths`:
  *   "@/src/gen/..."  →  <root>/src/gen/...   (via "@/src/*")
  *   "@/gen/..."      →  <root>/gen/...       (via "@/*", legacy spelling)
- * The second form is normalised into src/gen/ as well; it only appears in
+ * The second form is normalized into src/gen/ as well; it only appears in
  * excluded fixture files today, but normalising costs nothing.
  */
 function discoverEntryModules(root) {

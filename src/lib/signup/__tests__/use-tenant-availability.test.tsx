@@ -3,7 +3,7 @@
  *
  * Uses a 5ms debounce window so tests run in real time without the fake-
  * timers + promise-microtask + waitFor interaction that breaks vitest's
- * vi.useFakeTimers in async tests. The hook's behaviour is the same at
+ * vi.useFakeTimers in async tests. The hook's behavior is the same at
  * 5ms as it is at 400ms; the only thing the debounce changes is the
  * cadence, not the state-machine.
  *
@@ -11,7 +11,7 @@
  *   1. Empty / too-short input → `available: null`, no fetch fires.
  *   2. Settled input → one fetch fires after debounce, state reflects the
  *      server's answer (free vs taken vs degraded).
- *   3. Rapid keystrokes → fetches for stale inputs are cancelled (via
+ *   3. Rapid keystrokes → fetches for stale inputs are canceled (via
  *      AbortController + the latest-request-id guard) and their results
  *      don't overwrite a fresher answer.
  *   4. Network failure → state degrades to `null` (no inline signal,
@@ -142,7 +142,7 @@ describe("useTenantAvailability", () => {
     });
 
     // Only one fetch should have actually fired (the others were
-    // cancelled mid-debounce by the effect cleanup).
+    // canceled mid-debounce by the effect cleanup).
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(String(fetchSpy.mock.calls[0]?.[0])).toContain(
       encodeURIComponent("acme corp"),

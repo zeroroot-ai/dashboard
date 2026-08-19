@@ -199,7 +199,7 @@ describe('algorithm pin (R7)', () => {
   });
 
   it('passes algorithms: ["RS256"] option to jwtVerify', async () => {
-    // Defence-in-depth: assert the option is actually wired through.
+    // Defense-in-depth: assert the option is actually wired through.
     // A regression in zitadel-bearer-verifier.ts that drops the option
     // would silently re-open the alg-confusion vector, only this test
     // would catch it.

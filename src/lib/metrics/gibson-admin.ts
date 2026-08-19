@@ -39,7 +39,7 @@ type JwtRefreshOutcome =
  */
 export const adminRpcTotal = getOrCreateCounter({
   name: "gibson_admin_rpc_total",
-  help: "Total admin RPCs from the dashboard through Envoy to the daemon, labelled by gRPC method and terminal status.",
+  help: "Total admin RPCs from the dashboard through Envoy to the daemon, labeled by gRPC method and terminal status.",
   labelNames: ["method", "status"] as const,
 });
 
@@ -62,6 +62,6 @@ const adminJwtRefreshTotal = getOrCreateCounter({
  */
 export const adminEnvoyUpstreamErrorsTotal = getOrCreateCounter({
   name: "gibson_admin_envoy_upstream_errors_total",
-  help: "HTTP errors returned by Envoy on the admin-RPC path, labelled by status.",
+  help: "HTTP errors returned by Envoy on the admin-RPC path, labeled by status.",
   labelNames: ["envoy_status"] as const,
 });

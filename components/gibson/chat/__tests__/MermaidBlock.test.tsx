@@ -50,7 +50,7 @@ describe('MermaidBlock', () => {
       );
 
       // Wait for the async mermaid.render to complete and innerHTML to be set.
-      // jsdom normalises SVG (self-closing tags → explicit close tags), so we
+      // jsdom normalizes SVG (self-closing tags → explicit close tags), so we
       // check for the SVG element's presence rather than exact string equality.
       await waitFor(() => {
         const wrapper = container.querySelector('[aria-label="Mermaid diagram"]');

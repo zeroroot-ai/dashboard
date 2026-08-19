@@ -1,7 +1,7 @@
 /**
  * GET /api/settings/providers/supported
  *
- * Returns the daemon's static catalogue of supported LLM provider types,
+ * Returns the daemon's static catalog of supported LLM provider types,
  * with their per-provider credential field schemas. Backs the dashboard's
  * Settings → Providers wizard.
  *
@@ -11,7 +11,7 @@
  * Uses the member-accessible client (user's session token). The FGA
  * annotation on GetSupportedProviders carries relation: "member" so any
  * signed-in user, not just tenant admins, can retrieve the static
- * provider catalogue. ADR-0037: migrated from gibson.admin.v1 to the
+ * provider catalog. ADR-0037: migrated from gibson.admin.v1 to the
  * OSS SDK TenantService.
  */
 
@@ -75,9 +75,9 @@ export async function GET(_req: NextRequest) {
           // CredentialField.type (field 7) carries the semantic field type.
           fieldType: ((c as unknown as { type?: number }).type ?? 0) as CredentialFieldType,
         })),
-        // Chat model catalogue (field 6).
+        // Chat model catalog (field 6).
         defaultModels: (p.defaultModels ?? []).map((m) => mapModelDescriptor(m as Parameters<typeof mapModelDescriptor>[0])),
-        // Embedding model catalogue from gibson#1072 (field 7).
+        // Embedding model catalog from gibson#1072 (field 7).
         // Non-empty for providers that serve embeddings (openai, bedrock, cohere,
         // voyage, openai-compatible, tei). Absent/empty means chat-only.
         embeddingModels: (p.embeddingModels ?? []).length > 0

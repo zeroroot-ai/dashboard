@@ -13,7 +13,7 @@
  *   - all-keys-present → does not throw
  *   - shape validation: a malformed URL is rejected even if non-empty
  *   - typed accessor `env.X` throws when the var is missing at access time
- *     (defence in depth, same shape slice #196's `requireEnv()` had)
+ *     (defense in depth, same shape slice #196's `requireEnv()` had)
  *   - production-only entries are skipped when NODE_ENV !== 'production'
  *
  * The test isolates `process.env` via beforeEach/afterEach so it never

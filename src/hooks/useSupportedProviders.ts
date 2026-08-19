@@ -6,7 +6,7 @@
  * Fetches from `/api/settings/providers/supported`, which delegates to the
  * daemon's `gibson.tenant.v1.TenantService/GetSupportedProviders` RPC
  * (spec providers-wizard). The RPC carries relation: "member" so any
- * authenticated user can fetch the static provider catalogue. Powers the
+ * authenticated user can fetch the static provider catalog. Powers the
  * Settings → Providers wizard's type picker and dynamic credential form.
  *
  * The static TS mirror that briefly lived at
@@ -23,9 +23,9 @@ const supportedProvidersQueryKeys = {
 };
 
 /**
- * Returns the daemon's static catalogue of supported LLM providers.
+ * Returns the daemon's static catalog of supported LLM providers.
  *
- * `staleTime: 5min`, the catalogue only changes when the daemon image is
+ * `staleTime: 5min`, the catalog only changes when the daemon image is
  * upgraded; a 5-minute cache keeps the wizard snappy without holding a
  * stale list across a deploy roll.
  */

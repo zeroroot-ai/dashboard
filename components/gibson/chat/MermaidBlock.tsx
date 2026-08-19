@@ -6,7 +6,7 @@
  * Design constraints:
  * - Mermaid is dynamically imported so it never lands in the initial bundle.
  * - On parse/render error, falls back to a <pre><code> block showing raw source.
- * - All styling uses semantic design tokens only (no hardcoded colours).
+ * - All styling uses semantic design tokens only (no hardcoded colors).
  *
  * SECURITY
  * --------

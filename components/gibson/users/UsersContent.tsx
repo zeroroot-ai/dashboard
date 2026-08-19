@@ -505,7 +505,7 @@ export function UsersContent() {
               disabled={cancelling}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {cancelling ? "Cancelling..." : "Cancel invitation"}
+              {cancelling ? "Canceling..." : "Cancel invitation"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

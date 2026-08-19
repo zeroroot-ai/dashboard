@@ -14,7 +14,7 @@ import { registry } from "../registry";
 
 /**
  * prom-client counters are additive process globals; tests are not isolated
- * by default. We reset every counter/histogram before each test so labelled
+ * by default. We reset every counter/histogram before each test so labeled
  * increments assert against a known baseline.
  */
 beforeEach(() => {

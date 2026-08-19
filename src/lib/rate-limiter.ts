@@ -236,7 +236,7 @@ function trustedProxyHopCount(): number {
 const IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
 
 /**
- * Validate and normalise a single X-Forwarded-For entry.
+ * Validate and normalize a single X-Forwarded-For entry.
  *
  * Returns null for anything that is not a plausible IP address, so a garbage
  * entry can never become a rate-limit bucket name.
@@ -336,7 +336,7 @@ export function resolveClientIp(
  * mint a fresh bucket per request (unlimited budget) or omit the header
  * entirely to get no rate limiting at all. Until a trusted server-side identity
  * is threaded in, user-keyed configs degrade to IP-keyed limiting, which is
- * strictly stronger than the previous behaviour.
+ * strictly stronger than the previous behavior.
  *
  * Returns null ONLY for `custom` + `keyGenerator` that opts out explicitly.
  */

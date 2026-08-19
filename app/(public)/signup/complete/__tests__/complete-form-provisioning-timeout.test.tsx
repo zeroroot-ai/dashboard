@@ -8,7 +8,7 @@
  * had already dropped the user back to a form with a "signup failed" toast.
  * Retrying from there lands in WORKSPACE_TAKEN / duplicate-email territory.
  *
- * These tests pin the fixed behaviour, now on CompleteSignupForm (the wait
+ * These tests pin the fixed behavior, now on CompleteSignupForm (the wait
  * moved here with the rest of provisioning when signup was split so that
  * nothing is created before the address is proven): on a PROVISIONING_TIMEOUT
  * result the form KEEPS the ProvisioningPanel mounted, and does NOT toast a

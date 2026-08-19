@@ -1,7 +1,7 @@
 /**
  * Provider capability helpers (E11 BYO-embedder, gibson#810).
  *
- * A provider declares which services it fulfils via the proto
+ * A provider declares which services it fulfills via the proto
  * `gibson.tenant.v1.Capability` enum (CHAT and/or EMBEDDING). The dashboard
  * works in terms of a small string union (`"chat" | "embedding"`) for ergonomic
  * form state, and converts to/from the proto enum at the wire boundary in

@@ -201,7 +201,7 @@ export function ReviewQueueContent() {
           <ShieldAlertIcon className="size-6 text-highlight" /> Review queue
         </h1>
         <p className="text-sm text-muted-foreground">
-          Label surfaced surprises and findings to teach this tenant&apos;s belief model. Labelling
+          Label surfaced surprises and findings to teach this tenant&apos;s belief model. Labeling
           is asynchronous: it never blocks a running mission and only improves the next one.
         </p>
       </div>

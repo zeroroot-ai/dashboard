@@ -19,7 +19,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Without the prefix, a sibling host on the registrable domain (or anything
  * that can get a Set-Cookie past the browser for a parent domain) can overwrite
  * the CSRF cookie, and a double-submit scheme whose cookie an attacker can
- * write is not a defence: they set both halves and the constant-time compare
+ * write is not a defense: they set both halves and the constant-time compare
  * happily agrees.
  */
 export const CSRF_COOKIE_NAME = '__Host-csrf-token';

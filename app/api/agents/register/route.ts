@@ -241,7 +241,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   // Step 5, return credentials to the browser.
-  // Defence-in-depth: forbid any cache layer from ever storing the payload.
+  // Defense-in-depth: forbid any cache layer from ever storing the payload.
   const body: RegisterAgentResponseBody = daemonResp;
   return NextResponse.json(body, {
     status: 201,

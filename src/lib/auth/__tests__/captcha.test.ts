@@ -77,7 +77,7 @@ describe('verifyCaptcha', () => {
       // boot. An unset provider is no longer silently equivalent to
       // "disabled", operators must opt in or out explicitly. The
       // env-validator catches this at instrumentation.register(); this
-      // test asserts the per-call defence stays consistent with the
+      // test asserts the per-call defense stays consistent with the
       // boot-time contract.
       delete process.env.DASHBOARD_CAPTCHA_PROVIDER;
       await expect(verifyCaptcha('anything')).rejects.toThrow(

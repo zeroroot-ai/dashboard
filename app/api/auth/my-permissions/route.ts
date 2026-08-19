@@ -17,7 +17,7 @@
  * `createGrpcWebTransport` constructor and replacing the call site with a
  * fetch to this route.
  *
- * Behaviour:
+ * Behavior:
  *   - Returns `401 { error: 'unauthenticated' }` when no Auth.js session.
  *   - Returns `400 { error: 'no-active-tenant' }` when the session has no
  *     active tenant (user has not yet selected one).

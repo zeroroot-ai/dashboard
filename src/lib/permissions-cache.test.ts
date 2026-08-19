@@ -2,7 +2,7 @@
  * permissions-cache.test.ts
  *
  * Unit tests for the PermissionsCache module. Covers cache
- * hit/miss/TTL/invalidation behaviour without making real network calls.
+ * hit/miss/TTL/invalidation behavior without making real network calls.
  *
  * Spec: zero-trust-hardening Req 6.1, 6.2, the module no longer holds a
  * direct gRPC client. It calls the server route `/api/auth/my-permissions`

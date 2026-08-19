@@ -230,7 +230,7 @@ export const PERSONAS: Record<string, Persona> = Object.fromEntries(
 
 /**
  * Returns the persona for the given ID. Falls back to the `general` persona
- * when the ID is not recognised.
+ * when the ID is not recognized.
  */
 export function getPersona(id: string): Persona {
   return PERSONAS[id] ?? PERSONAS.general;

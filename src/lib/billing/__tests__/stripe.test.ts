@@ -79,7 +79,7 @@ describe('validateBillingConfig, paid tiers disabled (default)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Missing env var validation (existing behaviour, not regressed).
+// Missing env var validation (existing behavior, not regressed).
 // ---------------------------------------------------------------------------
 
 describe('validateBillingConfig, required env vars', () => {

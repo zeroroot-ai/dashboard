@@ -21,7 +21,7 @@
  *
  * IMPORTANT: this is a *runner*, not a reimplementation. Each guard below
  * is spawned exactly as it ran before (same script, same args, same cwd,
- * stdio inherited). Behaviour is preserved byte-for-byte: any guard that
+ * stdio inherited). Behavior is preserved byte-for-byte: any guard that
  * exits non-zero fails the preset with that guard's own output. No check
  * is weakened, reordered into a wrong dependency, or silently skipped.
  *

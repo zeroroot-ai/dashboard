@@ -28,7 +28,7 @@
  * The deciding control is connect-time validation on the dial itself, in the
  * daemon: a `net.Dialer` `Control` hook that inspects the resolved address of
  * every connection attempt, including redirect follow-ups. That lives in
- * gibson (`internal/infra/netguard`). This module is defence in depth and
+ * gibson (`internal/infra/netguard`). This module is defense in depth and
  * usability (it gives the admin an immediate, specific error), not the fix.
  *
  * @module lib/validators/vault-address
@@ -85,7 +85,7 @@ const INTERNAL_HOST_EXACT = new Set([
  * True when `host` is a dotted-quad IPv4 literal in a range that is not
  * routable on the public internet, or is otherwise reserved.
  *
- * The WHATWG URL parser normalises every IPv4 spelling (octal `0177.0.0.1`,
+ * The WHATWG URL parser normalizes every IPv4 spelling (octal `0177.0.0.1`,
  * hex `0x7f.0.0.1`, dword `2130706433`) into dotted-quad before this is
  * reached, so the obfuscated forms are covered without special-casing them.
  */
@@ -281,7 +281,7 @@ export function validateVaultAddress(raw: string): VaultAddressValidation {
     };
   }
 
-  // Re-serialise from the parsed URL so the daemon receives a normalised form
+  // Re-serialise from the parsed URL so the daemon receives a normalized form
   // rather than the raw operator input.
   const path = url.pathname === "/" ? "" : url.pathname.replace(/\/$/, "");
   return { ok: true, normalized: `${url.protocol}//${url.host}${path}` };

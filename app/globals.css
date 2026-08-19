@@ -4,7 +4,7 @@
 
 /* Single locked LIGHT brand (ADR-0064). Still one brand: no theme toggle, no
  * theme cookie, no presets — #650/#651 removed that machinery and it stays
- * removed. What changed is the colour.
+ * removed. What changed is the color.
  *
  * The always-on dark variant that pinned every dark-prefixed utility on is gone
  * with it. Those utilities were the dark half of shadcn's light-first pairs

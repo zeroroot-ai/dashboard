@@ -15,7 +15,7 @@
  *
  * Why a unit test (not just the Playwright e2e):
  *   - The e2e test in `e2e/auth/session-cookie-samesite.spec.ts` can
- *     verify behaviour against Auth.js endpoints, but the SESSION cookie
+ *     verify behavior against Auth.js endpoints, but the SESSION cookie
  *     itself is only minted after a real OIDC sign-in (requires a live
  *     Zitadel). This test pins the contract at the source of truth so a
  *     regression in auth.ts surfaces in CI without needing infra.
@@ -69,7 +69,7 @@ describe("auth.ts cookie configuration (security-hardening R18)", () => {
   });
 
   it("session cookie is httpOnly", () => {
-    // Defence-in-depth pairing, strict alone is meaningless if the
+    // Defense-in-depth pairing, strict alone is meaningless if the
     // cookie is JS-readable.
     const sessionTokenOpts = captured.config?.cookies?.sessionToken?.options;
     expect(sessionTokenOpts?.httpOnly).toBe(true);

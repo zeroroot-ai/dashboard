@@ -35,7 +35,7 @@
  *     minimum floor: the action resolves server-side identity at all
  *
  * NOTE the barrel import `@/src/lib/gibson-client` is deliberately NOT
- * recognised: it also re-exports serviceClient (service-acting, NOT
+ * recognized: it also re-exports serviceClient (service-acting, NOT
  * authz-gated), so importing the barrel proves nothing.
  *
  * `app/actions/crd/**` is excluded, it has a stricter per-action gate in
@@ -576,7 +576,7 @@ if (process.argv.slice(2).includes("--selftest")) {
   if (violations.length > 0) {
     console.error(
       `\n${SCRIPT_NAME}: ${violations.length} exported server action(s) with no ` +
-        `recognised server-side authz check and no @server-action-authz-exempt marker:\n`,
+        `recognized server-side authz check and no @server-action-authz-exempt marker:\n`,
     );
     for (const v of violations) console.error(`  - ${v.file} -> ${v.export}()`);
     console.error(

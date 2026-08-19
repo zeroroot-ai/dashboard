@@ -4,7 +4,7 @@
  * Both the signup form (client) and the signUpAction Server Action
  * (server) import these schemas, so a rule change can never silently
  * drift between the two layers. The Auth.js Credentials provider in
- * auth.ts mirrors the same complexity rules as a defence-in-depth final
+ * auth.ts mirrors the same complexity rules as a defense-in-depth final
  * check.
  */
 

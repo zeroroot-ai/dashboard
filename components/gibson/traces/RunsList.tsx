@@ -3,7 +3,7 @@
 /**
  * RunsList, the landing view for /dashboard/traces (gibson#755).
  *
- * One row per run: the LLM calls a single AgentRun drove, labelled by run id
+ * One row per run: the LLM calls a single AgentRun drove, labeled by run id
  * (or "Ungrouped calls" for mission/chat-level calls). Each row reads as model
  * activity — models used, call count, total tokens (spend proxy) — and links to
  * the run view, where each call expands into its full prompt ↔ response detail.

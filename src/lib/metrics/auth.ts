@@ -46,7 +46,7 @@ type CaptchaProvider = "turnstile" | "hcaptcha" | "disabled";
  */
 export const signupAttempts = getOrCreateCounter({
   name: "dashboard_auth_signup_attempts_total",
-  help: "Total signup attempts, labelled by outcome and coarse failure reason.",
+  help: "Total signup attempts, labeled by outcome and coarse failure reason.",
   labelNames: ["outcome", "reason"] as const,
 });
 
@@ -57,7 +57,7 @@ export const signupAttempts = getOrCreateCounter({
  */
 export const signinAttempts = getOrCreateCounter({
   name: "dashboard_auth_signin_attempts_total",
-  help: "Total signin attempts, labelled by outcome and coarse failure reason.",
+  help: "Total signin attempts, labeled by outcome and coarse failure reason.",
   labelNames: ["outcome", "reason"] as const,
 });
 
@@ -92,14 +92,14 @@ export const emailVerifications = getOrCreateCounter({
 });
 
 /**
- * Total CAPTCHA verification failures, labelled by provider. A successful
+ * Total CAPTCHA verification failures, labeled by provider. A successful
  * CAPTCHA verification is implied by the parent action's `signupAttempts` /
  * `signinAttempts` success increment and is NOT counted here, this metric
  * exists specifically to alert on abuse/outage of the CAPTCHA provider.
  */
 export const captchaFailures = getOrCreateCounter({
   name: "dashboard_auth_captcha_failures_total",
-  help: "Total CAPTCHA verification failures, labelled by provider.",
+  help: "Total CAPTCHA verification failures, labeled by provider.",
   labelNames: ["provider"] as const,
 });
 

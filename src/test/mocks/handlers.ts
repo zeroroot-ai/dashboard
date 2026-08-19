@@ -113,7 +113,7 @@ export const handlers = [
     }, { status: 201 });
   }),
 
-  // Supported-provider catalogue consumed by useSupportedProviders. Hook
+  // Supported-provider catalog consumed by useSupportedProviders. Hook
   // expects `{ providers: SupportedProviderDescriptor[] }`. An empty list
   // is a valid successful response, the test asserts data === [].
   http.get('/api/settings/providers/supported', () => {

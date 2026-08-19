@@ -80,7 +80,7 @@ const PORT_LABELS = {
   "50100": "registration port",
 };
 
-// Daemon hostname patterns we recognise. The shape is intentionally
+// Daemon hostname patterns we recognize. The shape is intentionally
 // permissive, it catches `gibson`, `gibson.<ns>`, `gibson.<ns>.svc`,
 // `gibson.<ns>.svc.cluster.local`, plus the legacy `gibson-daemon.<...>`
 // variant. The trailing port is required so that bare references to the

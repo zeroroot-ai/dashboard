@@ -93,9 +93,9 @@ const sensitiveFields = z.object({
  * the tenant's Vault token, so an address naming an in-cluster or link-local
  * host both exfiltrates that credential and turns the platform into a request
  * oracle. Validate the shape before the value reaches the RPC, and replace the
- * submitted string with the validator's normalised form.
+ * submitted string with the validator's normalized form.
  *
- * This is defence in depth, NOT the deciding control. A URL-shape check cannot
+ * This is defense in depth, NOT the deciding control. A URL-shape check cannot
  * see DNS rebinding or a redirect; only connect-time inspection of the
  * resolved peer address can. That control lives in gibson
  * (`internal/infra/netguard`, hooked into the dialer that performs the probe).
@@ -147,7 +147,7 @@ function enc(s: string): Uint8Array {
  */
 function buildCandidate(d: CandidateConfigInput): CandidateConfig {
   // The schema has already rejected any BYO address the validator refuses, so
-  // this re-check only picks up the normalised spelling. Falling back to the
+  // this re-check only picks up the normalized spelling. Falling back to the
   // raw value keeps the hosted-broker case (empty address) unchanged.
   const verdict = validateVaultAddress(d.address);
   const address = verdict.ok ? verdict.normalized : d.address;
