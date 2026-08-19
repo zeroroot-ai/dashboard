@@ -5,6 +5,13 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.120.0](https://github.com/zeroroot-ai/dashboard/compare/v0.119.1...v0.120.0) (2026-08-19)
+
+
+### Features
+
+* **brand:** consume the brand package and flip the console to the light ground ([#1097](https://github.com/zeroroot-ai/dashboard/issues/1097)) ([777af0b](https://github.com/zeroroot-ai/dashboard/commit/777af0b464fe8c93eff202fd7c8b9f636601f288))
+
 ## [0.119.1](https://github.com/zeroroot-ai/dashboard/compare/v0.119.0...v0.119.1) (2026-08-16)
 
 
