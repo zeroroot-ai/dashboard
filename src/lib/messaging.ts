@@ -98,7 +98,7 @@ export const hero = {
   headlineHighlight: ENGINE,
   headlineRest: "thinks in paths, not checklists.",
   subhead:
-    "Gibson is our autonomous security brain. Point it at your environment and it builds a living model of how risk connects, finds the paths that matter, and replays every move. For the teams breaking in and the teams locking down.",
+    "Gibson is our autonomous security brain. Point it at your environment and it keeps one live picture of what is there, so every agent starts from what the last one learned and every move plays back. For the teams breaking in and the teams locking down.",
   ctaPrimary: "Start Free",
   ctaSecondary: "Star the ADK",
   quickstart: "first agent live in under an hour. See the quickstart",
