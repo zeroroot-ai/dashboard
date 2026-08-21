@@ -56,6 +56,8 @@ import {
 import type { PluginInstallSummary } from "@/src/gen/gibson/pluginadmin/v1/plugin_admin_pb";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 
+import { ConnectorAuthCard } from "./ConnectorAuthCard";
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -368,6 +370,12 @@ export function PluginDetailContent({ install }: PluginDetailContentProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Vendor authorization (connectors only: runtime mcp-bridge fronts a
+          vendor MCP server that may require an OAuth grant, ADR-0064) */}
+      {install.runtimeMode === "mcp-bridge" && (
+        <ConnectorAuthCard installId={install.installId} connector={install.name} />
+      )}
 
       {/* Secret bindings table */}
       <Card className="border-border/60 bg-card/60">
