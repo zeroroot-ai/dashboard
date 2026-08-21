@@ -1,8 +1,8 @@
 /**
- * Design system reference page (#52, single dark brand #653). Authoritative
+ * Design system reference page (#52, single acid-concrete light brand, ADR-0064). Authoritative
  * visual ledger for the dashboard's tokens + typography + Shadcn primitives.
  *
- * There is one immutable dark brand. Each card inherits the live `:root`
+ * There is one immutable light brand. Each card inherits the live `:root`
  * tokens (no inline override), so this page documents the real rendered
  * brand and cannot drift from globals.css. Editing happens in
  * `app/globals.css` only.
@@ -34,7 +34,7 @@ const semanticTokens: Token[] = [
   { name: "--card-foreground", description: "Body text on card" },
   { name: "--popover", description: "Popover / dropdown surface" },
   { name: "--popover-foreground", description: "Body text on popover" },
-  { name: "--primary", description: "Primary action (violet)" },
+  { name: "--primary", description: "Primary action (acid green)" },
   { name: "--primary-foreground", description: "Text on primary action" },
   { name: "--secondary", description: "Secondary action" },
   { name: "--secondary-foreground", description: "Text on secondary action" },
@@ -60,7 +60,7 @@ const sidebarTokens: Token[] = [
 ];
 
 const chartTokens: Token[] = [
-  { name: "--chart-1", description: "Series 1 (violet)" },
+  { name: "--chart-1", description: "Series 1 (green)" },
   { name: "--chart-2", description: "Series 2 (emerald)" },
   { name: "--chart-3", description: "Series 3 (cyan-blue)" },
   { name: "--chart-4", description: "Series 4 (amber)" },
@@ -68,7 +68,7 @@ const chartTokens: Token[] = [
 ];
 
 const specialtyTokens: Token[] = [
-  { name: "--highlight", description: "Violet emphasis" },
+  { name: "--highlight", description: "Acid-green emphasis (carries text)" },
   { name: "--alt", description: "Emerald accent" },
   { name: "--link", description: "Cyan link / cursor" },
   { name: "--glow-strength", description: "Glow scalar (premium-restrained)" },
@@ -241,7 +241,7 @@ export default function DesignTokensPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Authoritative visual ledger for the dashboard&apos;s semantic + specialty tokens.
             Every Shadcn primitive auto-themes from these tokens. There is one immutable
-            dark brand, editing happens in{" "}
+            light brand, editing happens in{" "}
             <code className="text-alt">app/globals.css</code> only.
           </p>
         </header>

@@ -1,26 +1,29 @@
 /**
  * Theme Colors Configuration Module
- * Provides theme-specific color palettes for knowledge graph rendering.
+ * Provides the canvas color palette for knowledge-graph and World-globe rendering.
  *
  * Design notes
  * ------------
  * All canvas-rendered literal colors live here. This file lives under
- * `src/lib/` (not `app/` or `components/`), so it is intentionally
- * outside the `check-no-hardcoded-colors` guard scope, canvas rendering
- * cannot consume CSS custom properties.
+ * `src/lib/` (not `app/` or `components/`), so it is intentionally outside the
+ * `check-no-hardcoded-colors` guard scope: canvas rendering cannot consume CSS
+ * custom properties, so the brand tokens are mirrored here as literals.
  *
- * Colors are aligned to the brand design tokens in `app/globals.css`:
- *   dark mode:
- *     --background  oklch(0.13 0.008 145)  → #0f1714  (deep-navy, lifted off pure black)
- *     --foreground  oklch(0.97 0.01  145)  → #f0f5ef  (near-white)
- *     --primary     oklch(0.86 0.28  145)  → #9ee640  (phosphor green)
- *     --link        oklch(0.78 0.16  220)  → #5bcbe8  (cyan)
- *     --alt         oklch(0.82 0.18   80)  → #e8c535  (amber)
- *     --destructive oklch(0.68 0.24   18)  → #f44336  (crt red)
+ * Palette: the "acid concrete" brand (ADR-0064). Terminal and canvas panels
+ * stay DARK on the light app ground, drawn on the brand terminal background
+ * with the Dracula ramp for entity/severity hues and acid green (`--primary`)
+ * as the glow/emphasis accent. Acid is a FILL/GLOW, never label text (it fails
+ * contrast at text sizes), which is why node LABELS use `CANVAS_TEXT`
+ * (`canvas-style.ts`), not a node color.
  *
- * WCAG AA (≥4.5:1 normal text, ≥3:1 large/UI) is satisfied for every
- * text/label/HUD color versus the dark background. See the companion
- * unit tests in `__tests__/theme-colors.test.ts`.
+ * Aligned to the brand tokens in `@zeroroot-ai/brand`:
+ *   --terminal-bg  oklch(0.130 0.010 100) -> #17150f  (warm near-black)
+ *   --primary      oklch(0.860 0.215 128) -> rgb(163,230,53)  (acid lime, a FILL)
+ *   --dracula-*    the Dracula ramp, mirrored verbatim from the brand tokens
+ *
+ * WCAG AA (>=4.5:1) is satisfied for every node/severity color versus the
+ * terminal background. See the companion unit tests in
+ * `__tests__/theme-colors.test.ts`.
  */
 
 // ============================================================================
@@ -112,103 +115,98 @@ export interface ThemeColors {
 }
 
 // ============================================================================
-// Dark Theme (single locked dark brand, violet-led)
+// Terminal Theme (acid concrete, ADR-0064) — one locked palette, dark canvas
 // ============================================================================
 
 /**
- * The single locked dark brand (#652), violet-led on a near-black blue-violet
- * base, aligned to the globals.css design tokens. There is no light theme.
+ * The one canvas palette. Terminal/canvas panels stay dark on the light app
+ * ground (ADR-0064), drawn on the brand terminal background with the Dracula
+ * ramp and acid-green accent. There is no second palette and no theme picker;
+ * canvas rendering cannot read CSS custom properties, so the brand is mirrored
+ * here as literals.
  *
- * Background: #14121c (≈ oklch(0.17 0.012 280)), near-black with a faint
- * blue-violet tint, matching --background. Canvas rendering can't read CSS
- * custom properties, so the brand is mirrored here as literals.
+ * Background: #17150f (~ oklch(0.130 0.010 100)), the brand `--terminal-bg`,
+ * a warm near-black. Node, edge, label, and severity colors are contrast-tuned
+ * against it; all achieve WCAG AA (>=4.5:1), verified by the companion test.
  *
- * Node, edge, label, and HUD text colors are contrast-tuned against this
- * background; all text/label colors achieve WCAG AA (≥4.5:1), verified by
- * the companion unit test.
- *
- * Grid/vignette/scanline rendering is handled in KnowledgeGraph3D.tsx; the
- * grid color here is a faint violet overlay so the grid reads against the
- * base without competing with nodes.
+ * Grid/vignette/scanline rendering is handled in the canvas renderer; the grid
+ * color here is a faint acid overlay so the grid reads without competing with
+ * nodes.
  */
 export const DARK_THEME: ThemeColors = {
-  // Near-black blue-violet, ≈ oklch(0.17 0.012 280), aligns to --background
-  background: '#14121c',
+  // Warm near-black, ~ oklch(0.130 0.010 100), aligns to --terminal-bg.
+  background: '#17150f',
 
-  // Faint violet grid lines, aligned to --primary (oklch 0.58 0.225 295)
-  grid: 'rgba(139, 92, 246, 0.07)',
+  // Faint acid grid lines, aligned to --primary (acid lime).
+  grid: 'rgba(163, 230, 53, 0.07)',
 
   glowColors: {
-    // Electric violet, aligns to --primary / --highlight
-    primary: 'rgba(139, 92, 246, 0.45)',
-    // Brighter violet active/hover
-    active: 'rgba(167, 139, 250, 0.40)',
-    // Alert red, aligns to --destructive
-    critical: 'rgba(244, 67, 54, 0.8)',
-    // Emerald success, aligns to --alt
-    success: 'rgba(105, 240, 174, 0.55)',
+    // Acid lime, aligns to --primary. The brand glow/emphasis accent.
+    primary: 'rgba(163, 230, 53, 0.45)',
+    // Brighter acid for active/hover.
+    active: 'rgba(190, 242, 100, 0.45)',
+    // Dracula red, aligns to --destructive / --refused.
+    critical: 'rgba(255, 85, 85, 0.8)',
+    // Dracula green, aligns to --granted.
+    success: 'rgba(80, 250, 123, 0.55)',
   },
 
-  // Severity colors, high contrast vs the dark base AND readable on node
-  // chips. All hex values achieve ≥4.5:1 vs #14121c.
+  // Severity colors, the Dracula ramp. All achieve >=4.5:1 vs #17150f.
   severityColors: {
-    critical: '#ff5252',  // red-A200
-    high:     '#ff9100',  // orange-A400
-    medium:   '#ffd740',  // amber-A200
-    low:      '#69f0ae',  // emerald-A200
-    info:     '#90caf9',  // blue-200
+    critical: '#ff5555', // dracula red
+    high: '#ffb86c', // dracula orange
+    medium: '#f1fa8c', // dracula yellow
+    low: '#50fa7b', // dracula green
+    info: '#8be9fd', // dracula cyan
   },
 
-  // Node type colors, bright enough to read over #14121c (≥4.5:1), biased
-  // to the violet/blue/emerald/cyan brand family. Used as border/glow accent
-  // colors; the node chip body uses dark fills so the icon + border carry the
-  // contrast.
+  // Node type colors, biased to the Dracula ramp (+ acid for the discovery
+  // frontier), each >=4.5:1 vs #17150f and mutually distinguishable.
   nodeColors: {
-    mission:        '#b39dff',  // brand violet (root)
-    mission_run:    '#69f0ae',  // emerald-A200
-    agent_run:      '#ce93d8',  // purple-200
-    tool_execution: '#ffd740',  // amber-A200
-    llm_call:       '#ea80fc',  // purple-A100
-    domain:         '#82b1ff',  // blue-A100
-    subdomain:      '#80d8ff',  // cyan-A100
-    host:           '#69f0ae',  // emerald-A200
-    port:           '#a7ffeb',  // teal-A100
-    service:        '#64ffda',  // teal-A200
-    endpoint:       '#84ffff',  // cyan-A100
-    technology:     '#b39ddb',  // deep-purple-200
-    certificate:    '#80d8ff',  // cyan-A100
-    finding:        '#ff5252',  // red-A200
-    evidence:       '#b0bec5',  // blue-grey-200
-    technique:      '#f48fb1',  // pink-200
+    mission: '#bd93f9', // dracula purple (root anchor)
+    mission_run: '#50fa7b', // dracula green
+    agent_run: '#ff79c6', // dracula pink
+    tool_execution: '#ffb86c', // dracula orange
+    llm_call: '#f1fa8c', // dracula yellow
+    domain: '#8be9fd', // dracula cyan
+    subdomain: '#a3e635', // acid lime (discovery frontier)
+    host: '#69f0ae', // emerald-A200
+    port: '#a7ffeb', // teal-A100
+    service: '#64ffda', // teal-A200
+    endpoint: '#84ffff', // cyan-A100
+    technology: '#d0a3ff', // light purple
+    certificate: '#80d8ff', // light cyan
+    finding: '#ff5555', // dracula red
+    evidence: '#b0bec5', // blue-grey-200
+    technique: '#f48fb1', // pink-200
   },
 
-  // Edge relationship colors, muted enough to not clutter the canvas, bright
-  // enough to be distinguishable. Structural edges use faint violet; execution
-  // edges use emerald; semantic edges use distinct hues.
+  // Edge relationship colors. Structural edges use a faint acid; discovery and
+  // semantic edges take distinct Dracula hues; the AFFECTS edge is red.
   edgeColors: {
-    // Structural relationships, faint brand violet
-    HAS_SUBDOMAIN:   'rgba(139, 92, 246, 0.25)',
-    HAS_PORT:        'rgba(139, 92, 246, 0.25)',
-    RUNS_SERVICE:    'rgba(139, 92, 246, 0.25)',
-    HAS_ENDPOINT:    'rgba(139, 92, 246, 0.25)',
-    HAS_EVIDENCE:    'rgba(176, 190, 197, 0.5)',
+    // Structural relationships, faint acid.
+    HAS_SUBDOMAIN: 'rgba(163, 230, 53, 0.22)',
+    HAS_PORT: 'rgba(163, 230, 53, 0.22)',
+    RUNS_SERVICE: 'rgba(163, 230, 53, 0.22)',
+    HAS_ENDPOINT: 'rgba(163, 230, 53, 0.22)',
+    HAS_EVIDENCE: 'rgba(176, 190, 197, 0.5)',
 
-    // Discovery relationships
-    DISCOVERED: '#82b1ff',   // blue-A100
-    AFFECTS:    '#ff5252',   // red-A200
-    BELONGS_TO: '#80d8ff',   // cyan-A100
-    RESOLVES_TO:'#69f0ae',   // emerald-A200
+    // Discovery relationships.
+    DISCOVERED: '#8be9fd', // dracula cyan
+    AFFECTS: '#ff5555', // dracula red
+    BELONGS_TO: '#80d8ff', // light cyan
+    RESOLVES_TO: '#50fa7b', // dracula green
 
-    // Execution relationships, emerald
-    USED_TO:      'rgba(105, 240, 174, 0.55)',
-    USED_TOOL:    'rgba(105, 240, 174, 0.55)',
-    DELEGATED_TO: '#b39dff',  // brand violet
+    // Execution relationships, green.
+    USED_TO: 'rgba(80, 250, 123, 0.55)',
+    USED_TOOL: 'rgba(80, 250, 123, 0.55)',
+    DELEGATED_TO: '#bd93f9', // dracula purple
 
-    // Cross-entity relationships
-    USES_TECHNOLOGY:  '#b39ddb',  // deep-purple-200
-    SERVES_CERTIFICATE: '#80d8ff', // cyan-A100
-    USES_TECHNIQUE:   '#f48fb1',   // pink-200
-    LEADS_TO:         '#ea80fc',   // purple-A100
+    // Cross-entity relationships.
+    USES_TECHNOLOGY: '#d0a3ff', // light purple
+    SERVES_CERTIFICATE: '#80d8ff', // light cyan
+    USES_TECHNIQUE: '#f48fb1', // pink-200
+    LEADS_TO: '#ff79c6', // dracula pink
   },
 };
 
@@ -217,9 +215,9 @@ export const DARK_THEME: ThemeColors = {
 // ============================================================================
 
 /**
- * Return the graph color palette. There is one locked dark brand (#652), so
- * this always returns DARK_THEME, kept as a function for call-site clarity
- * and so the canvas renderer has a single accessor.
+ * Return the graph color palette. There is one locked canvas palette (acid
+ * concrete, ADR-0064), so this always returns DARK_THEME, kept as a function
+ * for call-site clarity and so the canvas renderer has a single accessor.
  *
  * @example
  * ```typescript

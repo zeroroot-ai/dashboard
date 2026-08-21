@@ -38,7 +38,7 @@ const DASH_PATTERNS: Record<DashPattern, number[]> = {
  */
 const GLOW_CONFIG = {
   shadowBlur: 3,
-  shadowColor: 'rgba(139, 92, 246, 0.25)',  // Very subtle brand-violet glow
+  shadowColor: 'rgba(163, 230, 53, 0.25)',  // Very subtle acid glow
 };
 
 export class EdgeRenderer {

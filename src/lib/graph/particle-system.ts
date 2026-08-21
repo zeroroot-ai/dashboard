@@ -48,8 +48,8 @@ export class ParticleSystem {
   // Comet-tail length as a fraction of edge length, gives each particle a
   // directional streak so the edge reads as a flowing line, not loose dots.
   private readonly TAIL_LENGTH = 0.06;
-  // Brand violet, the default when an edge color can't be resolved.
-  private readonly DEFAULT_COLOR = '#a78bfa';
+  // Acid lime (brand accent), the default when an edge color can't be resolved.
+  private readonly DEFAULT_COLOR = '#a3e635';
 
   constructor(maxParticles: number = 200) {
     this.maxParticles = maxParticles;
@@ -207,8 +207,8 @@ export class ParticleSystem {
    * @returns Color string
    */
   private getEdgeColor(edgeId: string): string {
-    // The edge's brand color, captured at activation. Falls back to brand
-    // violet if the edge was never given one.
+    // The edge's brand color, captured at activation. Falls back to the acid
+    // accent if the edge was never given one.
     return this.edgeColors.get(edgeId) ?? this.DEFAULT_COLOR;
   }
 

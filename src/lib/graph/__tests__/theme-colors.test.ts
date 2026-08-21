@@ -67,22 +67,22 @@ describe('theme-colors (single dark brand)', () => {
       expect(DARK_THEME.severityColors).toBeDefined();
     });
 
-    it('has a near-black, blue-violet-tinted background', () => {
+    it('has a warm near-black terminal background', () => {
       expect(DARK_THEME.background).toMatch(/^#[0-9a-f]{6}$/i);
-      // Not pure cold-black; the brand base is lifted off #000.
+      // Not pure cold-black; the brand terminal base is lifted off #000.
       expect(DARK_THEME.background).not.toBe('#000000');
       // Dark enough to be a near-black surface.
       expect(hexLuminance(DARK_THEME.background)).toBeLessThan(0.03);
     });
 
-    it('uses a violet-led grid + glow (the brand accent)', () => {
-      expect(DARK_THEME.grid).toMatch(/^rgba\(139,\s*92,\s*246/);
-      expect(DARK_THEME.glowColors.primary).toMatch(/^rgba\(139,\s*92,\s*246/);
+    it('uses an acid-led grid + glow (the brand accent)', () => {
+      expect(DARK_THEME.grid).toMatch(/^rgba\(163,\s*230,\s*53/);
+      expect(DARK_THEME.glowColors.primary).toMatch(/^rgba\(163,\s*230,\s*53/);
     });
 
-    it('makes the mission (root) node the brand violet', () => {
-      // The mission node anchors the graph; it carries the primary brand hue.
-      expect(DARK_THEME.nodeColors.mission).toBe('#b39dff');
+    it('makes the mission (root) node a Dracula-ramp anchor hue', () => {
+      // The mission node anchors the graph; it carries the primary anchor hue.
+      expect(DARK_THEME.nodeColors.mission).toBe('#bd93f9');
     });
 
     it('has all glow colors in rgba format', () => {

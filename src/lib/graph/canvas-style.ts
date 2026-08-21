@@ -14,7 +14,7 @@ export const CANVAS_TEXT = '#f0f5ef';
 export const CANVAS_TEXT_HALO = 'rgba(0, 0, 0, 0.85)';
 
 /** Fallback link color for relationship types not in the theme edge palette. */
-export const EDGE_FALLBACK = 'rgba(139, 92, 246, 0.30)';
+export const EDGE_FALLBACK = 'rgba(163, 230, 53, 0.30)';
 
 /** Color for links dimmed by selection focus or path highlight. */
 export const EDGE_DIM = 'rgba(176, 190, 197, 0.10)';
@@ -31,8 +31,8 @@ export const UNCONNECTED_ALPHA = 0.3;
 /** Min on-screen scale before node labels are drawn. */
 export const LABEL_ZOOM_THRESHOLD = 1.2;
 
-/** Minimap panel background (translucent near-black blue-violet). */
-export const MINIMAP_BG = 'rgba(20, 18, 28, 0.65)';
+/** Minimap panel background (translucent warm near-black, the terminal ground). */
+export const MINIMAP_BG = 'rgba(23, 21, 15, 0.65)';
 
 /** Minimap current-viewport rectangle stroke. */
 export const MINIMAP_VIEWPORT = 'rgba(240, 245, 239, 0.7)';

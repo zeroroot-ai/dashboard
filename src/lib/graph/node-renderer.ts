@@ -125,12 +125,14 @@ function getCategory(type: EntityType): string {
 // Severity colors
 // ---------------------------------------------------------------------------
 
+// Dracula ramp (acid-concrete brand, ADR-0064), in lockstep with
+// theme-colors.ts and entity-taxonomy.ts.
 const SEVERITY_COLORS = {
-  critical: '#ef4444',  // red-500
-  high:     '#f97316',  // orange-500
-  medium:   '#eab308',  // yellow-500
-  low:      '#22c55e',  // green-500
-  info:     '#6b7280',  // gray-500
+  critical: '#ff5555',  // dracula red
+  high:     '#ffb86c',  // dracula orange
+  medium:   '#f1fa8c',  // dracula yellow
+  low:      '#50fa7b',  // dracula green
+  info:     '#8be9fd',  // dracula cyan
 } as const;
 
 // ---------------------------------------------------------------------------
