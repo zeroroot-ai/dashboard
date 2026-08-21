@@ -5,6 +5,8 @@
  * Delegation-only through the user-acting transport (userClient).
  */
 import 'server-only';
+import { type NextRequest } from 'next/server';
+import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 import {
   daemonGetConnectorAuthStatus,
   daemonDisableConnector,
@@ -25,7 +27,15 @@ export async function GET(_req: Request, { params }: RouteContext) {
   }
 }
 
-export async function DELETE(_req: Request, { params }: RouteContext) {
+export async function DELETE(req: NextRequest, { params }: RouteContext) {
+  // CSRF: mutating handler must verify the double-submit token (src/lib/auth/csrf.ts).
+  try {
+    await requireCsrf(req);
+  } catch (err) {
+    if (err instanceof CsrfError) return csrfErrorResponse(err);
+    throw err;
+  }
+
   const { connector } = await params;
   try {
     await daemonDisableConnector(connector);

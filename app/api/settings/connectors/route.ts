@@ -9,6 +9,7 @@
  */
 import 'server-only';
 import { type NextRequest } from 'next/server';
+import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 import {
   daemonListCatalog,
   daemonListConnectors,
@@ -26,6 +27,14 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  // CSRF: mutating handler must verify the double-submit token (src/lib/auth/csrf.ts).
+  try {
+    await requireCsrf(req);
+  } catch (err) {
+    if (err instanceof CsrfError) return csrfErrorResponse(err);
+    throw err;
+  }
+
   let catalogId: string;
   try {
     const body = (await req.json()) as { catalogId?: unknown };
