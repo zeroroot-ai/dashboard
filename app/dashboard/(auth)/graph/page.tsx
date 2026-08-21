@@ -34,7 +34,14 @@ import {
 } from '@/src/lib/graph/filters';
 import { applyNodeOps } from '@/src/lib/graph/node-ops';
 import { attackPathSets } from '@/src/lib/graph/attack-path';
-import { timelineBounds, filterByTime } from '@/src/lib/graph/timeline';
+import { isScrubbing } from '@/src/lib/graph/fold-scrubber';
+import { usePlayback } from '@/components/gibson/brain/playback';
+import {
+  worldToGraph,
+  type WorldGraphMission,
+  type WorldGraphHost,
+  type WorldGraphFinding,
+} from '@/components/gibson/brain/WorldGraph';
 import { toGraphExportJSON } from '@/src/lib/graph/export';
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import { cn } from '@/lib/utils';
@@ -76,12 +83,8 @@ export default function GraphPage() {
   const clearFocus = useGraphViewStore((s) => s.clearFocus);
   const showAllNodes = useGraphViewStore((s) => s.showAllNodes);
   const timelineActive = useGraphViewStore((s) => s.timelineActive);
-  const timelineCutoff = useGraphViewStore((s) => s.timelineCutoff);
-  const timelinePlaying = useGraphViewStore((s) => s.timelinePlaying);
   const openTimeline = useGraphViewStore((s) => s.openTimeline);
   const closeTimeline = useGraphViewStore((s) => s.closeTimeline);
-  const setTimelineCutoff = useGraphViewStore((s) => s.setTimelineCutoff);
-  const setTimelinePlaying = useGraphViewStore((s) => s.setTimelinePlaying);
 
   // TanStack Query, mission graph or full tenant graph
   const {
@@ -140,25 +143,95 @@ export default function GraphPage() {
     [filteredData, hiddenNodeIds, focusNodeId, focusDepth]
   );
 
-  // Timeline scrubber: reveal the graph up to a cutoff time.
-  const tlBounds = useMemo(() => timelineBounds(opsData.nodes), [opsData.nodes]);
-  const timelineData = useMemo(() => {
-    if (timelineActive && timelineCutoff != null && tlBounds) {
-      return filterByTime(opsData.nodes, opsData.edges, timelineCutoff);
+  // ── Fold scrubber (gibson#1105) ─────────────────────────────────────────
+  // A seq-indexed scrubber over the scope's World Timeline. At the live tail we
+  // render the full enriched graph (opsData); scrubbed off the tail we render a
+  // server-side fold of the log (GetFrameAt) mapped to the World subset, so the
+  // graph rewinds in step with the World Scroller (ADR-0001: World ==
+  // fold(Timeline)). This replaces the old client-side wall-clock reveal.
+  const [timeline, setTimeline] = useState<{ seq: number }[]>([]);
+  const total = timeline.length;
+  const playback = usePlayback(total);
+  const seq = playback.position;
+
+  // Load the scope's Timeline (tenant-wide, or the selected mission) so the
+  // scrubber knows the run length; refreshed slowly for live growth.
+  useEffect(() => {
+    let active = true;
+    const url = missionId
+      ? `/api/world?mission=${encodeURIComponent(missionId)}`
+      : '/api/world';
+    const load = async () => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const json = (await res.json()) as { timeline?: { seq: number }[] };
+        if (active) setTimeline(json.timeline ?? []);
+      } catch {
+        /* transient */
+      }
+    };
+    void load();
+    const id = setInterval(() => void load(), 10_000);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, [missionId]);
+
+  // Off the live tail, fetch the folded frame and map it to graph shape (the
+  // same projection WorldGraph uses). Debounced + abortable so dragging the
+  // scrubber does not fire a request per tick.
+  const [frameGraph, setFrameGraph] = useState<{ nodes: GraphNode[]; edges: GraphEdge[] } | null>(null);
+  const scrubbing = isScrubbing(timelineActive, total, seq);
+  useEffect(() => {
+    if (!scrubbing) {
+      setFrameGraph(null);
+      return;
     }
-    return opsData;
-  }, [timelineActive, timelineCutoff, tlBounds, opsData]);
+    const controller = new AbortController();
+    const handle = setTimeout(() => {
+      void (async () => {
+        try {
+          const params = new URLSearchParams({ seq: String(seq) });
+          if (missionId) params.set('mission', missionId);
+          const res = await fetch(`/api/world/frame?${params.toString()}`, {
+            signal: controller.signal,
+          });
+          if (!res.ok) return;
+          const frame = (await res.json()) as {
+            missions?: WorldGraphMission[];
+            hosts?: WorldGraphHost[];
+            findings?: WorldGraphFinding[];
+          };
+          setFrameGraph(
+            worldToGraph(frame.missions ?? [], frame.hosts ?? [], frame.findings ?? []),
+          );
+        } catch {
+          /* aborted or transient — keep the last frame */
+        }
+      })();
+    }, 120);
+    return () => {
+      controller.abort();
+      clearTimeout(handle);
+    };
+  }, [scrubbing, seq, missionId]);
+
+  // The graph the rest of the page renders: the folded frame while scrubbed off
+  // the tail, the live enriched graph otherwise.
+  const viewData = scrubbing && frameGraph ? frameGraph : opsData;
 
   // Highlight precedence: an explicit path query wins; otherwise attack-path
   // emphasis derives a highlight set from the visible attack-relationship edges.
   const effectiveHighlight = useMemo(() => {
     if (highlightedPaths.length > 0) return highlightedPaths;
     if (display.attackPathEmphasis) {
-      const sets = attackPathSets(timelineData.edges);
+      const sets = attackPathSets(viewData.edges);
       return sets.edge_ids.length > 0 ? [sets] : [];
     }
     return [];
-  }, [highlightedPaths, display.attackPathEmphasis, timelineData.edges]);
+  }, [highlightedPaths, display.attackPathEmphasis, viewData.edges]);
 
   // Live stream hook
   const [liveEnabled, setLiveEnabled] = useState(false);
@@ -224,12 +297,12 @@ export default function GraphPage() {
   // Fit-to-selection: frame the node plus its direct neighbors.
   const handleFrameNode = useCallback((node: GraphNode) => {
     const ids = new Set<string>([node.id]);
-    for (const e of timelineData.edges) {
+    for (const e of viewData.edges) {
       if (e.source === node.id) ids.add(e.target);
       if (e.target === node.id) ids.add(e.source);
     }
     canvasRef.current?.fitToNodes([...ids]);
-  }, [timelineData.edges]);
+  }, [viewData.edges]);
 
   // Node-manipulation handlers
   const handleTogglePin = useCallback((node: GraphNode) => togglePin(node.id), [togglePin]);
@@ -251,7 +324,7 @@ export default function GraphPage() {
 
   // Export the current (visible) view.
   const handleExportJson = useCallback(() => {
-    const payload = toGraphExportJSON(timelineData.nodes, timelineData.edges);
+    const payload = toGraphExportJSON(viewData.nodes, viewData.edges);
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -259,7 +332,7 @@ export default function GraphPage() {
     a.download = `gibson-graph-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [timelineData]);
+  }, [viewData]);
 
   const handleExportPng = useCallback(() => {
     const url = canvasRef.current?.exportPNG();
@@ -278,47 +351,27 @@ export default function GraphPage() {
 
   const canvasData = useMemo(
     () => ({
-      nodes: timelineData.nodes,
-      edges: timelineData.edges,
+      nodes: viewData.nodes,
+      edges: viewData.edges,
       display,
       selectedNodeId: selectedNode?.id ?? null,
       layoutMode,
       showMinimap,
       pinnedNodeIds,
     }),
-    [timelineData, display, selectedNode, layoutMode, showMinimap, pinnedNodeIds]
+    [viewData, display, selectedNode, layoutMode, showMinimap, pinnedNodeIds]
   );
 
-  // Timeline play: advance the cutoff across the run, then pause at the end.
+  // Open/close the scrubber. Opening re-pins to the live tail so it starts at
+  // the current World; the usePlayback controller owns play/pause/step/jump.
   const handleToggleTimeline = useCallback(() => {
-    if (timelineActive) closeTimeline();
-    else openTimeline(tlBounds ? tlBounds.max : null);
-  }, [timelineActive, closeTimeline, openTimeline, tlBounds]);
-
-  const handleTogglePlay = useCallback(() => {
-    if (!tlBounds) return;
-    if (!timelinePlaying && (timelineCutoff == null || timelineCutoff >= tlBounds.max)) {
-      setTimelineCutoff(tlBounds.min); // restart from the beginning
+    if (timelineActive) {
+      closeTimeline();
+    } else {
+      playback.controls.followTail();
+      openTimeline();
     }
-    setTimelinePlaying(!timelinePlaying);
-  }, [tlBounds, timelinePlaying, timelineCutoff, setTimelineCutoff, setTimelinePlaying]);
-
-  useEffect(() => {
-    if (!timelineActive || !timelinePlaying || !tlBounds) return;
-    const span = Math.max(1, tlBounds.max - tlBounds.min);
-    const stepMs = span / 60; // ~6s to play the whole run at 100ms ticks
-    const id = setInterval(() => {
-      const cur = useGraphViewStore.getState().timelineCutoff ?? tlBounds.min;
-      const next = cur + stepMs;
-      if (next >= tlBounds.max) {
-        setTimelineCutoff(tlBounds.max);
-        setTimelinePlaying(false);
-      } else {
-        setTimelineCutoff(next);
-      }
-    }, 100);
-    return () => clearInterval(id);
-  }, [timelineActive, timelinePlaying, tlBounds, setTimelineCutoff, setTimelinePlaying]);
+  }, [timelineActive, closeTimeline, openTimeline, playback.controls]);
 
   // ─── Render states ──────────────────────────────────────────────────────────
 
@@ -346,15 +399,27 @@ export default function GraphPage() {
       className="relative w-full rounded-lg overflow-hidden border border-border bg-background"
       style={{ height: 'var(--content-full-height)' }}
     >
-      {/* Truncation banner */}
-      {truncated && totalNodeCount && (
-        <div className="absolute top-0 left-0 right-0 z-30 bg-alt/10 border-b border-alt/40/30 px-4 py-2 flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-alt flex-shrink-0" />
-          <p className="text-xs text-alt">
-            Showing {timelineData.nodes.length.toLocaleString()} of {totalNodeCount.toLocaleString()} nodes.
-            Use filters to narrow the scope.
+      {/* Replay banner: while scrubbed off the tail the graph is a fold of the
+          World (missions, hosts, findings); the enriched nodes/edges return at
+          Live. Takes precedence over the truncation banner. */}
+      {scrubbing ? (
+        <div className="absolute top-0 left-0 right-0 z-30 bg-highlight/10 border-b border-highlight/40 px-4 py-2 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-highlight flex-shrink-0" />
+          <p className="text-xs text-highlight">
+            Replay · folded to event {seq} of {total}. This is the World at that tick;
+            return to Live for the full enriched graph.
           </p>
         </div>
+      ) : (
+        truncated && totalNodeCount && (
+          <div className="absolute top-0 left-0 right-0 z-30 bg-alt/10 border-b border-alt/40/30 px-4 py-2 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-alt flex-shrink-0" />
+            <p className="text-xs text-alt">
+              Showing {viewData.nodes.length.toLocaleString()} of {totalNodeCount.toLocaleString()} nodes.
+              Use filters to narrow the scope.
+            </p>
+          </div>
+        )
       )}
 
       {/* Loading overlay */}
@@ -466,23 +531,20 @@ export default function GraphPage() {
           onOpenSettings={() => setSettingsOpen(true)}
           onExportPng={handleExportPng}
           onExportJson={handleExportJson}
-          onToggleTimeline={tlBounds ? handleToggleTimeline : undefined}
+          onToggleTimeline={total > 0 ? handleToggleTimeline : undefined}
           timelineActive={timelineActive}
         />
       )}
 
-      {/* Timeline scrubber */}
-      {hasData && timelineActive && tlBounds && (
+      {/* Timeline scrubber (seq-indexed fold; gibson#1105) */}
+      {hasData && timelineActive && total > 0 && (
         <GraphTimeline
-          min={tlBounds.min}
-          max={tlBounds.max}
-          value={timelineCutoff ?? tlBounds.max}
-          playing={timelinePlaying}
-          onChange={(v) => {
-            setTimelinePlaying(false);
-            setTimelineCutoff(v);
-          }}
-          onTogglePlay={handleTogglePlay}
+          min={0}
+          max={total}
+          value={seq}
+          playing={playback.playing}
+          onChange={(v) => playback.controls.jump(v)}
+          onTogglePlay={playback.controls.toggle}
           onClose={closeTimeline}
         />
       )}
@@ -527,12 +589,12 @@ export default function GraphPage() {
             </div>
           </SheetContent>
         </Sheet>
-        {hasData && <GraphSearch nodes={timelineData.nodes} onFocusNode={handleFocusNode} />}
+        {hasData && <GraphSearch nodes={viewData.nodes} onFocusNode={handleFocusNode} />}
       </div>
 
       {/* Path Query Panel */}
       <PathQueryPanel
-        nodes={timelineData.nodes}
+        nodes={viewData.nodes}
         initialSourceNode={pathSourceNode}
         onPathsFound={setHighlightedPaths}
       />

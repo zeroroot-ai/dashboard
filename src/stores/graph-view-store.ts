@@ -77,10 +77,10 @@ interface GraphViewState {
   focusNodeId: string | null;
   focusDepth: number;
 
-  // Timeline scrubber (session-only)
+  // Timeline scrubber (session-only). Whether the scrubber is open; the scrub
+  // position, play state and speed are owned by the usePlayback controller in
+  // the graph page (gibson#1105), not the store.
   timelineActive: boolean;
-  timelineCutoff: number | null;
-  timelinePlaying: boolean;
 
   // Live counts, pushed from the rendering engine
   nodeCount: number;
@@ -111,11 +111,9 @@ interface GraphViewState {
   clearFocus: () => void;
   showAllNodes: () => void;
 
-  // Actions, Timeline
-  openTimeline: (cutoff: number | null) => void;
+  // Actions, Timeline (open/close only; position is owned by usePlayback)
+  openTimeline: () => void;
   closeTimeline: () => void;
-  setTimelineCutoff: (cutoff: number | null) => void;
-  setTimelinePlaying: (playing: boolean) => void;
 
   // Actions, Stats
   setStats: (nodeCount: number, edgeCount: number) => void;
@@ -157,8 +155,6 @@ export const useGraphViewStore = create<GraphViewState>()(
       focusNodeId: null,
       focusDepth: 1,
       timelineActive: false,
-      timelineCutoff: null,
-      timelinePlaying: false,
       nodeCount: 0,
       edgeCount: 0,
 
@@ -203,11 +199,9 @@ export const useGraphViewStore = create<GraphViewState>()(
       clearFocus: () => set({ focusNodeId: null, focusDepth: 1 }),
       showAllNodes: () => set({ hiddenNodeIds: [], focusNodeId: null, focusDepth: 1 }),
 
-      // Timeline
-      openTimeline: (cutoff) => set({ timelineActive: true, timelineCutoff: cutoff, timelinePlaying: false }),
-      closeTimeline: () => set({ timelineActive: false, timelineCutoff: null, timelinePlaying: false }),
-      setTimelineCutoff: (cutoff) => set({ timelineCutoff: cutoff }),
-      setTimelinePlaying: (playing) => set({ timelinePlaying: playing }),
+      // Timeline (open/close only; usePlayback owns the position)
+      openTimeline: () => set({ timelineActive: true }),
+      closeTimeline: () => set({ timelineActive: false }),
 
       // Stats
       setStats: (nodeCount, edgeCount) => set({ nodeCount, edgeCount }),
