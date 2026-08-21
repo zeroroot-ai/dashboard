@@ -3,9 +3,10 @@
 /**
  * GraphTimeline
  *
- * Scrubber that replays graph growth over a mission run: play / pause / drag to
- * reveal nodes discovered up to a point in time. Bounds + cutoff are computed by
- * the page from node timestamps; this component is presentational.
+ * Scrubber that replays the graph over a run by Timeline sequence: play / pause
+ * / drag to fold the World to a given tick (gibson#1105). `value`/`max` are the
+ * scrub position and total event count; this component is presentational and
+ * the page drives the fold via GetFrameAt.
  */
 
 import { Play, Pause, X } from 'lucide-react';
@@ -23,16 +24,9 @@ interface GraphTimelineProps {
   className?: string;
 }
 
-function formatTime(ms: number): string {
-  const d = new Date(ms);
-  if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
+function formatSeq(value: number, max: number): string {
+  const seq = Math.round(value);
+  return seq >= max ? `${max} · live` : `${seq} / ${max}`;
 }
 
 export function GraphTimeline({
@@ -67,15 +61,15 @@ export function GraphTimeline({
       <Slider
         min={min}
         max={max}
-        step={Math.max(1, Math.round((max - min) / 200))}
+        step={1}
         value={[value]}
         onValueChange={([v]) => onChange(v)}
         className="flex-1"
         aria-label="Timeline position"
       />
 
-      <span className="text-xs font-mono text-muted-foreground tabular-nums w-36 text-right flex-shrink-0">
-        {formatTime(value)}
+      <span className="text-xs font-mono text-muted-foreground tabular-nums w-28 text-right flex-shrink-0">
+        {formatSeq(value, max)}
       </span>
 
       <button
