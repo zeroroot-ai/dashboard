@@ -116,7 +116,7 @@ describe('rgbaFrom', () => {
   });
 
   it('re-alphas an existing rgb/rgba literal', () => {
-    expect(rgbaFrom('rgba(139, 92, 246, 0.45)', 0.1)).toBe('rgba(139, 92, 246, 0.1)');
+    expect(rgbaFrom('rgba(80, 250, 123, 0.45)', 0.1)).toBe('rgba(80, 250, 123, 0.1)');
     expect(rgbaFrom('rgb(1, 2, 3)', 0.2)).toBe('rgba(1, 2, 3, 0.2)');
   });
 });

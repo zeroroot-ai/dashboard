@@ -75,43 +75,42 @@ export type DashPattern = 'solid' | 'short-dash' | 'long-dash' | 'dot-dash';
  * Uses green shades for execution layer, blue for DNS, emerald/teal for infrastructure,
  * cyan for technical layer, and red/pink for security findings.
  */
+// Acid-concrete brand (ADR-0064): the Dracula ramp + acid frontier, kept in
+// lockstep with theme-colors.ts `nodeColors` so getEntityColor and the canvas
+// renderer never diverge. One palette, no violet.
 const ENTITY_COLORS_DARK: Record<EntityType, string> = {
-  // Execution layer, green shades
-  mission: '#22c55e',        // green-500
-  mission_run: '#4ade80',    // green-400
-  agent_run: '#a78bfa',      // violet-400 (AI agent)
-  tool_execution: '#fbbf24', // amber-400
-  llm_call: '#c084fc',       // purple-400
+  mission: '#bd93f9',        // dracula purple (root anchor)
+  mission_run: '#50fa7b',    // dracula green
+  agent_run: '#ff79c6',      // dracula pink
+  tool_execution: '#ffb86c', // dracula orange
+  llm_call: '#f1fa8c',       // dracula yellow
 
-  // DNS/domain layer, blue
-  domain: '#3b82f6',         // blue-500
-  subdomain: '#60a5fa',      // blue-400
+  domain: '#8be9fd',         // dracula cyan
+  subdomain: '#a3e635',      // acid lime (discovery frontier)
 
-  // Infrastructure layer, emerald/teal
-  host: '#10b981',           // emerald-500
-  port: '#14b8a6',           // teal-500
-  service: '#2dd4bf',        // teal-400
+  host: '#69f0ae',           // emerald-A200
+  port: '#a7ffeb',           // teal-A100
+  service: '#64ffda',        // teal-A200
 
-  // Technical layer, cyan
-  endpoint: '#06b6d4',       // cyan-500
-  technology: '#8b5cf6',     // violet-500
-  certificate: '#0ea5e9',    // sky-500
+  endpoint: '#84ffff',       // cyan-A100
+  technology: '#d0a3ff',     // light purple
+  certificate: '#80d8ff',    // light cyan
 
-  // Security layer, red/pink
-  finding: '#ef4444',        // red-500
-  evidence: '#6b7280',       // gray-500
-  technique: '#f472b6',      // pink-400
+  finding: '#ff5555',        // dracula red
+  evidence: '#b0bec5',       // blue-grey-200
+  technique: '#f48fb1',      // pink-200
 };
 
 /**
- * Severity colors for finding nodes, tuned for the single dark brand.
+ * Severity colors for finding nodes, the Dracula ramp (acid-concrete brand,
+ * ADR-0064). Kept in lockstep with theme-colors.ts `severityColors`.
  */
 const SEVERITY_COLORS_DARK: Record<Severity, string> = {
-  critical: '#ff4444',          // Intense red
-  high: '#ff8c00',              // Orange
-  medium: '#ffb000',            // Amber
-  low: '#6b8aab',               // Muted blue-gray
-  info: '#6b7280',              // Gray
+  critical: '#ff5555', // dracula red
+  high: '#ffb86c',     // dracula orange
+  medium: '#f1fa8c',   // dracula yellow
+  low: '#50fa7b',      // dracula green
+  info: '#8be9fd',     // dracula cyan
 };
 
 // ============================================================================
@@ -181,7 +180,7 @@ const RELATIONSHIP_DASH_PATTERNS: Record<RelationshipType, DashPattern> = {
  *
  * @example
  * ```ts
- * const color = getEntityColor('mission'); // '#22c55e'
+ * const color = getEntityColor('mission'); // '#bd93f9'
  * ```
  */
 export function getEntityColor(entityType: EntityType): string {
@@ -223,7 +222,7 @@ export function getRelationshipDashPattern(relationshipType: RelationshipType | 
  *
  * @example
  * ```ts
- * const color = getSeverityColor('critical'); // '#ff4444'
+ * const color = getSeverityColor('critical'); // '#ff5555'
  * ```
  */
 export function getSeverityColor(severity: Severity): string {

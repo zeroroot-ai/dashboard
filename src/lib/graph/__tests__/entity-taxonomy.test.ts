@@ -45,9 +45,9 @@ describe('entity-taxonomy', () => {
     });
 
     it('should return expected colors for specific entity types', () => {
-      expect(getEntityColor('mission')).toBe('#22c55e');
-      expect(getEntityColor('domain')).toBe('#3b82f6');
-      expect(getEntityColor('finding')).toBe('#ef4444');
+      expect(getEntityColor('mission')).toBe('#bd93f9');
+      expect(getEntityColor('domain')).toBe('#8be9fd');
+      expect(getEntityColor('finding')).toBe('#ff5555');
     });
   });
 
@@ -181,11 +181,11 @@ describe('entity-taxonomy', () => {
     });
 
     it('should return expected colors for each severity level', () => {
-      expect(getSeverityColor('critical')).toBe('#ff4444');
-      expect(getSeverityColor('high')).toBe('#ff8c00');
-      expect(getSeverityColor('medium')).toBe('#ffb000');
-      expect(getSeverityColor('low')).toBe('#6b8aab');
-      expect(getSeverityColor('info')).toBe('#6b7280');
+      expect(getSeverityColor('critical')).toBe('#ff5555');
+      expect(getSeverityColor('high')).toBe('#ffb86c');
+      expect(getSeverityColor('medium')).toBe('#f1fa8c');
+      expect(getSeverityColor('low')).toBe('#50fa7b');
+      expect(getSeverityColor('info')).toBe('#8be9fd');
     });
   });
 
