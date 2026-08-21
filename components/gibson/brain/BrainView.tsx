@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorldGraph } from "@/components/gibson/brain/WorldGraph";
+import { WorldGlobe } from "@/components/gibson/brain/WorldGlobe";
 import { SPEED_OPTIONS, usePlayback } from "@/components/gibson/brain/playback";
 import { TickInspector } from "@/components/gibson/brain/TickInspector";
 import { diffFrames, type FrameDiff } from "@/components/gibson/brain/frame-diff";
@@ -180,6 +181,9 @@ export function BrainView({
   const [selectedSeq, setSelectedSeq] = useState<number | null>(null);
   const [diff, setDiff] = useState<FrameDiff | null>(null);
   const [diffLoading, setDiffLoading] = useState(false);
+  // Which rendering of the World to show. Both draw the same folded frame, so
+  // switching never refetches and the Scroller keeps driving whichever is up.
+  const [worldView, setWorldView] = useState<"graph" | "globe">("graph");
 
   // The pure playback controller (S5, gibson#1059) owns the scrub position:
   // play/pause/step/jump/speed/follow-tail. `total` is the live tail; when it
@@ -370,17 +374,50 @@ export function BrainView({
       ) : null}
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
           <CardTitle>World</CardTitle>
+          <div
+            className="flex items-center gap-1"
+            role="group"
+            aria-label="World view"
+          >
+            <Button
+              type="button"
+              variant={worldView === "graph" ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setWorldView("graph")}
+              aria-pressed={worldView === "graph"}
+            >
+              Graph
+            </Button>
+            <Button
+              type="button"
+              variant={worldView === "globe" ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setWorldView("globe")}
+              aria-pressed={worldView === "globe"}
+            >
+              Globe
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <WorldGraph
-            missions={view.missions}
-            hosts={view.hosts}
-            findings={view.findings}
-            highlightNodeIds={selectedSeq === null ? undefined : diff?.highlightNodeIds}
-            highlightEdgeIds={selectedSeq === null ? undefined : diff?.highlightEdgeIds}
-          />
+          {worldView === "graph" ? (
+            <WorldGraph
+              missions={view.missions}
+              hosts={view.hosts}
+              findings={view.findings}
+              highlightNodeIds={selectedSeq === null ? undefined : diff?.highlightNodeIds}
+              highlightEdgeIds={selectedSeq === null ? undefined : diff?.highlightEdgeIds}
+            />
+          ) : (
+            <WorldGlobe
+              missions={view.missions}
+              hosts={view.hosts}
+              findings={view.findings}
+              highlightNodeIds={selectedSeq === null ? undefined : diff?.highlightNodeIds}
+            />
+          )}
         </CardContent>
       </Card>
 
