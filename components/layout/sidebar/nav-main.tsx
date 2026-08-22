@@ -17,6 +17,7 @@ import {
   ActivityIcon,
   AlertTriangleIcon,
   BotIcon,
+  CableIcon,
   UserIcon,
   UsersIcon,
   ChevronRight,
@@ -126,6 +127,14 @@ export const navItems: NavGroup[] = [
         title: "Plugins",
         href: "/dashboard/plugins",
         icon: Plug2Icon
+      },
+      {
+        // Connectors are a first-class component kind, a peer of plugins and
+        // tools (ADR-0065), so they sit in the primary nav rather than under
+        // Settings.
+        title: "Connectors",
+        href: "/dashboard/connectors",
+        icon: CableIcon
       },
       {
         title: "Deploy",

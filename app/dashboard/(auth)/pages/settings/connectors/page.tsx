@@ -1,17 +1,13 @@
-import { type Metadata } from "next";
-import { generateMeta } from "@/lib/utils";
+import { redirect } from "next/navigation";
 
-import { ConnectorsContent } from "@/components/gibson/settings/ConnectorsContent";
-
-export async function generateMetadata(): Promise<Metadata> {
-  return generateMeta({
-    title: "Settings | Connectors",
-    additionalTitle: true,
-    description: "Enable third-party connectors and give your agents their tools.",
-    canonical: "/pages/settings/connectors",
-  });
-}
-
-export default function ConnectorsPage() {
-  return <ConnectorsContent />;
+/**
+ * /dashboard/pages/settings/connectors, legacy route.
+ *
+ * Connectors are a first-class component kind, a peer of plugins and tools
+ * (ADR-0065, dashboard#1522), so the page moved out of Settings to the
+ * primary nav at /dashboard/connectors. This route now redirects there so
+ * existing links and bookmarks keep working.
+ */
+export default function ConnectorsSettingsRedirect(): never {
+  redirect("/dashboard/connectors");
 }
