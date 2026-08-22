@@ -5,6 +5,23 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.121.0](https://github.com/zeroroot-ai/dashboard/compare/v0.120.1...v0.121.0) (2026-08-22)
+
+
+### Features
+
+* **connectors:** authorize a connector against its vendor from the dashboard ([#1101](https://github.com/zeroroot-ai/dashboard/issues/1101)) ([ab1f39f](https://github.com/zeroroot-ai/dashboard/commit/ab1f39f54ad29bb97bbcc8073b6cbea9c76851a0))
+* **connectors:** connectors settings page (ADR-0014 Slice 6) ([#1114](https://github.com/zeroroot-ai/dashboard/issues/1114)) ([7e5e76e](https://github.com/zeroroot-ai/dashboard/commit/7e5e76e96e01fcfbb01671b6b9cadf6ea58da488))
+* **connectors:** promote Connectors to a first-class left-nav item ([#1118](https://github.com/zeroroot-ai/dashboard/issues/1118)) ([4442db2](https://github.com/zeroroot-ai/dashboard/commit/4442db297f7f06630b07181e8ce2ce0cb8a78ffb))
+* **graph:** fold the knowledge-graph scrubber over the Timeline ([#1113](https://github.com/zeroroot-ai/dashboard/issues/1113)) ([6a49a55](https://github.com/zeroroot-ai/dashboard/commit/6a49a554ead751d59c7d53083eb6c808ffe28ba1))
+* **graph:** put the canvas palette on the acid-concrete brand (kill violet) ([#1112](https://github.com/zeroroot-ai/dashboard/issues/1112)) ([c206a31](https://github.com/zeroroot-ai/dashboard/commit/c206a31adc2574dbfb397d64874123074a84b438))
+* **world:** add a globe view of the World alongside the graph ([#1110](https://github.com/zeroroot-ai/dashboard/issues/1110)) ([c1dc8b9](https://github.com/zeroroot-ai/dashboard/commit/c1dc8b94e1d2b53284f370b9041857bf788c1970))
+
+
+### Bug Fixes
+
+* **connectors:** regenerate authz map with ConnectorService ([#1117](https://github.com/zeroroot-ai/dashboard/issues/1117)) ([39687a3](https://github.com/zeroroot-ai/dashboard/commit/39687a32a3ea7ec6dac0fdc5988f6d4c860729e0))
+
 ## [0.120.1](https://github.com/zeroroot-ai/dashboard/compare/v0.120.0...v0.120.1) (2026-08-19)
 
 
