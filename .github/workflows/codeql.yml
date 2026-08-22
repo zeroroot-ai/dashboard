@@ -68,13 +68,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: github/codeql-action/init@v4.37.6
+      - uses: github/codeql-action/init@v4.37.7
         with:
           languages: javascript-typescript
           queries: security-extended
           config-file: .github/codeql-config.yml
 
-      - uses: github/codeql-action/analyze@v4.37.6
+      - uses: github/codeql-action/analyze@v4.37.7
         with:
           # Upload to the code-scanning API so the Security tab reflects the
           # commit actually analysed. `output` still writes the SARIF locally,
