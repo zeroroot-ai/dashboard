@@ -82,9 +82,16 @@ const PROTOVALIDATE_DIGEST =
 // everywhere else — from `<workspace>/.worktrees/<name>` it walked to `/home`.
 // dashboard#1015.
 const GIBSON_REPO_REL = 'enterprise/platform/gibson';
-const GIBSON_REPO =
-  resolveWorkspacePath(GIBSON_REPO_REL, { from: DASHBOARD_ROOT })?.path ??
-  resolve(DASHBOARD_ROOT, GIBSON_REPO_REL);
+// GIBSON_PROTO_REPO overrides the resolved gibson root so a local regen can
+// read a checkout or git worktree that already carries a proto not yet on the
+// resolved sibling's HEAD, e.g. a just-merged feature branch checked out
+// separately. Unset in CI, where the resolved sibling is the source of truth;
+// when both trees carry the same protos the generated output is byte-identical,
+// so the override never changes CI's result. dashboard#1116.
+const GIBSON_REPO = process.env.GIBSON_PROTO_REPO?.trim()
+  ? resolve(process.env.GIBSON_PROTO_REPO)
+  : (resolveWorkspacePath(GIBSON_REPO_REL, { from: DASHBOARD_ROOT })?.path ??
+    resolve(DASHBOARD_ROOT, GIBSON_REPO_REL));
 // gibson daemon-local proto tree (post-#787 reorg location). It hosts the
 // daemon-internal services and the PRIVATE platform services
 // (DaemonOperatorService, BillingService, DiscoveryService) that used to
