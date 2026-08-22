@@ -10,6 +10,7 @@ import {
   DatabaseIcon,
   DollarSignIcon,
   KeyIcon,
+  PlugIcon,
   ScaleIcon,
   ShieldIcon,
   TerminalIcon,
@@ -47,6 +48,7 @@ const accountNav = [
 
 const workspaceNav = [
   { title: "Providers", href: "/dashboard/pages/settings/providers", icon: BotIcon },
+  { title: "Connectors", href: "/dashboard/pages/settings/connectors", icon: PlugIcon },
   // Agents and Plugins live as top-level dashboard sections (left-bar nav);
   // the deploy wizard for both is reachable from those pages.
   { title: "Model Access", href: "/dashboard/pages/settings/model-access", icon: ScaleIcon },
