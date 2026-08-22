@@ -39,34 +39,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-interface CatalogEntry {
-  id: string;
-  displayName: string;
-  description: string;
-  shape: string;
-  auth: string;
-}
-
-interface Connector {
-  id: string;
-  shape: string;
-  runtime: string;
-  phase: string;
-  discoveredTools: number;
-  lastError: string;
-}
-
-type AuthState = "unspecified" | "unauthorized" | "authorized" | "refresh_failing";
-
-interface ConnectorAuth {
-  state: AuthState;
-  authorizedBy: string;
-  scope: string;
-  accessTokenExpiresAt: string | null;
-  lastRefreshError: string;
-  lastRefreshAt: string | null;
-}
+import type {
+  CatalogEntryDTO as CatalogEntry,
+  ConnectorDTO as Connector,
+  ConnectorAuthDTO as ConnectorAuth,
+} from "@/src/lib/gibson-client/connector-types";
 
 interface ApiError {
   error?: { code?: string; message?: string };

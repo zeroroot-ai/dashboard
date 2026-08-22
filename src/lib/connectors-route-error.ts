@@ -31,7 +31,7 @@ function mapCodeToHttpStatus(code: Code): number {
   }
 }
 
-export interface ConnectorErrorBody {
+interface ConnectorErrorBody {
   error: { code: string; message: string };
 }
 
