@@ -24,6 +24,8 @@ import {
   ShieldCheckIcon,
   ArrowLeftIcon,
   ExternalLinkIcon,
+  PlugIcon,
+  CableIcon,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -97,12 +99,14 @@ function StepNumber({ n }: { n: number }) {
 
 interface AddPluginGuideProps {
   docsPluginsHref: string;
+  docsConnectorsHref: string;
   docsBootstrapHref: string;
   onBack: () => void;
 }
 
 export function AddPluginGuide({
   docsPluginsHref,
+  docsConnectorsHref,
   docsBootstrapHref,
   onBack,
 }: AddPluginGuideProps) {
@@ -118,6 +122,66 @@ export function AddPluginGuide({
           steps below.
         </p>
       </div>
+
+      {/* Plugin vs connector - the material distinction, so a person picks the
+          right kind before following the plugin steps. */}
+      <Card className="border-border/60 bg-card/60">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Plugin or connector?</CardTitle>
+        </CardHeader>
+        <CardContent className="text-muted-foreground space-y-3 pb-4 text-sm">
+          <p>
+            Both integrate a vendor, and the same vendor can be offered as
+            either. They differ in <span className="text-foreground font-medium">how the vendor is reached</span> and{" "}
+            <span className="text-foreground font-medium">who decides which call to make</span>:
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="border-border/60 bg-muted/30 space-y-1.5 rounded-md border p-3">
+              <div className="text-foreground flex items-center gap-2 font-medium">
+                <PlugIcon className="text-highlight size-4" aria-hidden="true" />
+                Plugin
+              </div>
+              <p>
+                A <span className="text-foreground font-medium">deterministic</span> integration built on the
+                vendor&apos;s own <span className="text-foreground font-medium">SDK</span> (or a typed API client).
+                You write a thin <code className="bg-muted rounded px-1 font-mono text-xs">handler.go</code>;
+                the <span className="text-foreground font-medium">caller</span> invokes a named method with known
+                inputs. No LLM choosing calls, no MCP.
+              </p>
+              <p className="text-xs">
+                Reach for it when you want a stable, typed, predictable surface
+                over a vendor API (GitHub, GitLab, Splunk).
+              </p>
+            </div>
+            <div className="border-border/60 bg-muted/30 space-y-1.5 rounded-md border p-3">
+              <div className="text-foreground flex items-center gap-2 font-medium">
+                <CableIcon className="text-highlight size-4" aria-hidden="true" />
+                Connector
+              </div>
+              <p>
+                An <span className="text-foreground font-medium">agent-driven</span> integration over{" "}
+                <span className="text-foreground font-medium">MCP</span> (Model Context Protocol).
+                <span className="text-foreground font-medium">No code</span>: a short declaration points at a
+                vendor&apos;s MCP server, and an <span className="text-foreground font-medium">agent</span>{" "}
+                discovers and chooses which tools to call.
+              </p>
+              <p className="text-xs">
+                Reach for it when a vendor already ships an MCP server and you
+                want the agent to drive.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link
+              href="/dashboard/connectors"
+              className="text-primary inline-flex items-center gap-1 text-xs underline underline-offset-2"
+            >
+              Add a connector instead
+            </Link>
+            <DocsLink href={docsConnectorsHref}>Connector docs</DocsLink>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="space-y-3">
         <Card className="border-border/60 bg-card/60">

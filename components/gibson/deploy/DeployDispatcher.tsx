@@ -586,6 +586,8 @@ interface DeployDispatcherProps {
   initialType?: ComponentType;
   /** docsUrl('plugins'), resolved server-side (dashboard#1036). */
   docsPluginsHref: string;
+  /** docsUrl('connectors'), resolved server-side. */
+  docsConnectorsHref: string;
   /** docsUrl('component-bootstrap'), resolved server-side (dashboard#1036). */
   docsComponentBootstrapHref: string;
 }
@@ -593,6 +595,7 @@ interface DeployDispatcherProps {
 export function DeployDispatcher({
   initialType,
   docsPluginsHref,
+  docsConnectorsHref,
   docsComponentBootstrapHref,
 }: DeployDispatcherProps) {
   const params = useSearchParams();
@@ -617,6 +620,7 @@ export function DeployDispatcher({
       <div className="max-w-2xl mx-auto py-8 px-4">
         <AddPluginGuide
           docsPluginsHref={docsPluginsHref}
+          docsConnectorsHref={docsConnectorsHref}
           docsBootstrapHref={docsComponentBootstrapHref}
           onBack={() => setStep(1)}
         />

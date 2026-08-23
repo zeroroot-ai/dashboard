@@ -13,6 +13,7 @@ export default function DeployPage() {
     <Suspense>
       <DeployDispatcher
         docsPluginsHref={docsUrl('plugins')}
+        docsConnectorsHref={docsUrl('connectors')}
         docsComponentBootstrapHref={docsUrl('component-bootstrap')}
       />
     </Suspense>
