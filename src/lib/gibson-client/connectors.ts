@@ -145,22 +145,6 @@ export async function daemonRevokeConnectorGrant(connector: string): Promise<voi
   }
 }
 
-// SLICE-5 PENDING (ADR-0014). StartConnectorAuthorization is being added to
-// connector_auth.proto on feat/connector-toolhive-operator. Until it merges and
-// proto:generate regenerates connector_auth_pb.ts, the generated client does not
-// expose the method, so the client type is augmented here. To swap to the real
-// client, DELETE this block and this augmentation: the generated client then
-// exposes startConnectorAuthorization directly.
-interface StartConnectorAuthorizationResult {
-  authorizeUrl: string;
-}
-type ConnectorAuthClientWithStart = ReturnType<typeof userClient<typeof ConnectorAuthService>> & {
-  startConnectorAuthorization(req: {
-    connector: string;
-    instanceUrl: string;
-  }): Promise<StartConnectorAuthorizationResult>;
-};
-
 /**
  * Start the OAuth authorization for a connector. Returns the vendor authorize
  * URL the human opens in a browser to consent once. The daemon holds the PKCE
@@ -171,7 +155,7 @@ export async function daemonStartConnectorAuthorization(
   instanceUrl: string,
 ): Promise<string> {
   try {
-    const client = userClient(ConnectorAuthService) as unknown as ConnectorAuthClientWithStart;
+    const client = userClient(ConnectorAuthService);
     const resp = await client.startConnectorAuthorization({ connector, instanceUrl });
     return resp.authorizeUrl;
   } catch (err) {

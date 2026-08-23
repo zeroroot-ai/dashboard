@@ -23,7 +23,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/connector_auth.proto.
  */
 export const file_gibson_tenant_v1_connector_auth: GenFile = /*@__PURE__*/
-  fileDesc("CiVnaWJzb24vdGVuYW50L3YxL2Nvbm5lY3Rvcl9hdXRoLnByb3RvEhBnaWJzb24udGVuYW50LnYxIjIKHUdldENvbm5lY3RvckF1dGhTdGF0dXNSZXF1ZXN0EhEKCWNvbm5lY3RvchgBIAEoCSK8AgoeR2V0Q29ubmVjdG9yQXV0aFN0YXR1c1Jlc3BvbnNlEjMKBXN0YXRlGAEgASgOMiQuZ2lic29uLnRlbmFudC52MS5Db25uZWN0b3JBdXRoU3RhdGUSFQoNYXV0aG9yaXplZF9ieRgCIAEoCRIxCg1hdXRob3JpemVkX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBINCgVzY29wZRgEIAEoCRI7ChdhY2Nlc3NfdG9rZW5fZXhwaXJlc19hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASGgoSbGFzdF9yZWZyZXNoX2Vycm9yGAYgASgJEjMKD2xhc3RfcmVmcmVzaF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAivwEKJUNvbXBsZXRlQ29ubmVjdG9yQXV0aG9yaXphdGlvblJlcXVlc3QSEQoJY29ubmVjdG9yGAEgASgJEhUKDXJlZnJlc2hfdG9rZW4YAiABKAkSFgoOdG9rZW5fZW5kcG9pbnQYAyABKAkSEQoJY2xpZW50X2lkGAQgASgJEhUKDWNsaWVudF9zZWNyZXQYBSABKAkSDQoFc2NvcGUYBiABKAkSGwoTcmV2b2NhdGlvbl9lbmRwb2ludBgHIAEoCSJqCiZDb21wbGV0ZUNvbm5lY3RvckF1dGhvcml6YXRpb25SZXNwb25zZRJACgZzdGF0dXMYASABKAsyMC5naWJzb24udGVuYW50LnYxLkdldENvbm5lY3RvckF1dGhTdGF0dXNSZXNwb25zZSIwChtSZXZva2VDb25uZWN0b3JHcmFudFJlcXVlc3QSEQoJY29ubmVjdG9yGAEgASgJIkkKHFJldm9rZUNvbm5lY3RvckdyYW50UmVzcG9uc2USEQoJaGFkX2dyYW50GAEgASgIEhYKDnZlbmRvcl9yZXZva2VkGAIgASgIKrABChJDb25uZWN0b3JBdXRoU3RhdGUSJAogQ09OTkVDVE9SX0FVVEhfU1RBVEVfVU5TUEVDSUZJRUQQABIlCiFDT05ORUNUT1JfQVVUSF9TVEFURV9VTkFVVEhPUklaRUQQARIjCh9DT05ORUNUT1JfQVVUSF9TVEFURV9BVVRIT1JJWkVEEAISKAokQ09OTkVDVE9SX0FVVEhfU1RBVEVfUkVGUkVTSF9GQUlMSU5HEAMyqgQKFENvbm5lY3RvckF1dGhTZXJ2aWNlEqkBChZHZXRDb25uZWN0b3JBdXRoU3RhdHVzEi8uZ2lic29uLnRlbmFudC52MS5HZXRDb25uZWN0b3JBdXRoU3RhdHVzUmVxdWVzdBowLmdpYnNvbi50ZW5hbnQudjEuR2V0Q29ubmVjdG9yQXV0aFN0YXR1c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARLAAQoeQ29tcGxldGVDb25uZWN0b3JBdXRob3JpemF0aW9uEjcuZ2lic29uLnRlbmFudC52MS5Db21wbGV0ZUNvbm5lY3RvckF1dGhvcml6YXRpb25SZXF1ZXN0GjguZ2lic29uLnRlbmFudC52MS5Db21wbGV0ZUNvbm5lY3RvckF1dGhvcml6YXRpb25SZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKiAQoUUmV2b2tlQ29ubmVjdG9yR3JhbnQSLS5naWJzb24udGVuYW50LnYxLlJldm9rZUNvbm5lY3RvckdyYW50UmVxdWVzdBouLmdpYnNvbi50ZW5hbnQudjEuUmV2b2tlQ29ubmVjdG9yR3JhbnRSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAUJUWlJnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vdGVuYW50L3YxO3RlbmFudHYxYgZwcm90bzM", [file_gibson_auth_v1_options, file_google_protobuf_timestamp]);
+  fileDesc("CiVnaWJzb24vdGVuYW50L3YxL2Nvbm5lY3Rvcl9hdXRoLnByb3RvEhBnaWJzb24udGVuYW50LnYxIjIKHUdldENvbm5lY3RvckF1dGhTdGF0dXNSZXF1ZXN0EhEKCWNvbm5lY3RvchgBIAEoCSJNCiJTdGFydENvbm5lY3RvckF1dGhvcml6YXRpb25SZXF1ZXN0EhEKCWNvbm5lY3RvchgBIAEoCRIUCgxpbnN0YW5jZV91cmwYAiABKAkiSwojU3RhcnRDb25uZWN0b3JBdXRob3JpemF0aW9uUmVzcG9uc2USFQoNYXV0aG9yaXplX3VybBgBIAEoCRINCgVzdGF0ZRgCIAEoCSK8AgoeR2V0Q29ubmVjdG9yQXV0aFN0YXR1c1Jlc3BvbnNlEjMKBXN0YXRlGAEgASgOMiQuZ2lic29uLnRlbmFudC52MS5Db25uZWN0b3JBdXRoU3RhdGUSFQoNYXV0aG9yaXplZF9ieRgCIAEoCRIxCg1hdXRob3JpemVkX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBINCgVzY29wZRgEIAEoCRI7ChdhY2Nlc3NfdG9rZW5fZXhwaXJlc19hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASGgoSbGFzdF9yZWZyZXNoX2Vycm9yGAYgASgJEjMKD2xhc3RfcmVmcmVzaF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiVwolQ29tcGxldGVDb25uZWN0b3JBdXRob3JpemF0aW9uUmVxdWVzdBIRCgljb25uZWN0b3IYASABKAkSDAoEY29kZRgCIAEoCRINCgVzdGF0ZRgDIAEoCSJqCiZDb21wbGV0ZUNvbm5lY3RvckF1dGhvcml6YXRpb25SZXNwb25zZRJACgZzdGF0dXMYASABKAsyMC5naWJzb24udGVuYW50LnYxLkdldENvbm5lY3RvckF1dGhTdGF0dXNSZXNwb25zZSIwChtSZXZva2VDb25uZWN0b3JHcmFudFJlcXVlc3QSEQoJY29ubmVjdG9yGAEgASgJIkkKHFJldm9rZUNvbm5lY3RvckdyYW50UmVzcG9uc2USEQoJaGFkX2dyYW50GAEgASgIEhYKDnZlbmRvcl9yZXZva2VkGAIgASgIKrABChJDb25uZWN0b3JBdXRoU3RhdGUSJAogQ09OTkVDVE9SX0FVVEhfU1RBVEVfVU5TUEVDSUZJRUQQABIlCiFDT05ORUNUT1JfQVVUSF9TVEFURV9VTkFVVEhPUklaRUQQARIjCh9DT05ORUNUT1JfQVVUSF9TVEFURV9BVVRIT1JJWkVEEAISKAokQ09OTkVDVE9SX0FVVEhfU1RBVEVfUkVGUkVTSF9GQUlMSU5HEAMy5AUKFENvbm5lY3RvckF1dGhTZXJ2aWNlEqkBChZHZXRDb25uZWN0b3JBdXRoU3RhdHVzEi8uZ2lic29uLnRlbmFudC52MS5HZXRDb25uZWN0b3JBdXRoU3RhdHVzUmVxdWVzdBowLmdpYnNvbi50ZW5hbnQudjEuR2V0Q29ubmVjdG9yQXV0aFN0YXR1c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARK3AQobU3RhcnRDb25uZWN0b3JBdXRob3JpemF0aW9uEjQuZ2lic29uLnRlbmFudC52MS5TdGFydENvbm5lY3RvckF1dGhvcml6YXRpb25SZXF1ZXN0GjUuZ2lic29uLnRlbmFudC52MS5TdGFydENvbm5lY3RvckF1dGhvcml6YXRpb25SZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARLAAQoeQ29tcGxldGVDb25uZWN0b3JBdXRob3JpemF0aW9uEjcuZ2lic29uLnRlbmFudC52MS5Db21wbGV0ZUNvbm5lY3RvckF1dGhvcml6YXRpb25SZXF1ZXN0GjguZ2lic29uLnRlbmFudC52MS5Db21wbGV0ZUNvbm5lY3RvckF1dGhvcml6YXRpb25SZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKiAQoUUmV2b2tlQ29ubmVjdG9yR3JhbnQSLS5naWJzb24udGVuYW50LnYxLlJldm9rZUNvbm5lY3RvckdyYW50UmVxdWVzdBouLmdpYnNvbi50ZW5hbnQudjEuUmV2b2tlQ29ubmVjdG9yR3JhbnRSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAUJUWlJnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vdGVuYW50L3YxO3RlbmFudHYxYgZwcm90bzM", [file_gibson_auth_v1_options, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message gibson.tenant.v1.GetConnectorAuthStatusRequest
@@ -43,6 +43,67 @@ export type GetConnectorAuthStatusRequest = Message<"gibson.tenant.v1.GetConnect
  */
 export const GetConnectorAuthStatusRequestSchema: GenMessage<GetConnectorAuthStatusRequest> = /*@__PURE__*/
   messageDesc(file_gibson_tenant_v1_connector_auth, 0);
+
+/**
+ * @generated from message gibson.tenant.v1.StartConnectorAuthorizationRequest
+ */
+export type StartConnectorAuthorizationRequest = Message<"gibson.tenant.v1.StartConnectorAuthorizationRequest"> & {
+  /**
+   * connector is the bare component name the grant belongs to, e.g.
+   * "connector-gitlab".
+   *
+   * @generated from field: string connector = 1;
+   */
+  connector: string;
+
+  /**
+   * instance_url is the base URL of the customer's own vendor instance, e.g.
+   * "https://gitlab.com" or "https://gitlab.example.com". The daemon derives
+   * the OAuth authorization-server metadata from it (RFC 8414), and also tries
+   * the RFC 9728 protected-resource document off it.
+   *
+   * @generated from field: string instance_url = 2;
+   */
+  instanceUrl: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.StartConnectorAuthorizationRequest.
+ * Use `create(StartConnectorAuthorizationRequestSchema)` to create a new message.
+ */
+export const StartConnectorAuthorizationRequestSchema: GenMessage<StartConnectorAuthorizationRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_connector_auth, 1);
+
+/**
+ * @generated from message gibson.tenant.v1.StartConnectorAuthorizationResponse
+ */
+export type StartConnectorAuthorizationResponse = Message<"gibson.tenant.v1.StartConnectorAuthorizationResponse"> & {
+  /**
+   * authorize_url is the vendor authorization URL the operator opens in a
+   * browser. It already carries response_type, client_id, redirect_uri, scope,
+   * state, code_challenge and code_challenge_method=S256.
+   *
+   * @generated from field: string authorize_url = 1;
+   */
+  authorizeUrl: string;
+
+  /**
+   * state binds this authorization to its callback. The dashboard passes it
+   * back to CompleteConnectorAuthorization when it drives the flow itself; the
+   * daemon callback reads it from the redirect. It is not a secret, but it is
+   * single-use and expires with the pending record.
+   *
+   * @generated from field: string state = 2;
+   */
+  state: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.StartConnectorAuthorizationResponse.
+ * Use `create(StartConnectorAuthorizationResponseSchema)` to create a new message.
+ */
+export const StartConnectorAuthorizationResponseSchema: GenMessage<StartConnectorAuthorizationResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_connector_auth, 2);
 
 /**
  * @generated from message gibson.tenant.v1.GetConnectorAuthStatusResponse
@@ -103,66 +164,38 @@ export type GetConnectorAuthStatusResponse = Message<"gibson.tenant.v1.GetConnec
  * Use `create(GetConnectorAuthStatusResponseSchema)` to create a new message.
  */
 export const GetConnectorAuthStatusResponseSchema: GenMessage<GetConnectorAuthStatusResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_connector_auth, 1);
+  messageDesc(file_gibson_tenant_v1_connector_auth, 3);
 
 /**
  * @generated from message gibson.tenant.v1.CompleteConnectorAuthorizationRequest
  */
 export type CompleteConnectorAuthorizationRequest = Message<"gibson.tenant.v1.CompleteConnectorAuthorizationRequest"> & {
   /**
-   * connector is the bare component name the grant belongs to.
+   * connector is the bare component name the grant belongs to. It is optional
+   * and cross-checked against the connector recorded when the authorization
+   * was started; the state alone identifies the pending authorization.
    *
    * @generated from field: string connector = 1;
    */
   connector: string;
 
   /**
-   * refresh_token is the vendor's refresh token from the finished
-   * authorization-code exchange. Never logged, never returned.
+   * code is the authorization code the vendor returned to the daemon callback.
+   * The daemon exchanges it for the grant, so the refresh token is minted and
+   * kept daemon-side and never transits this API.
    *
-   * @generated from field: string refresh_token = 2;
+   * @generated from field: string code = 2;
    */
-  refreshToken: string;
+  code: string;
 
   /**
-   * token_endpoint is the vendor's OAuth token URL, e.g.
-   * "https://gitlab.example.com/oauth/token".
+   * state is the value StartConnectorAuthorization returned. It binds the code
+   * to that authorization (the CSRF binding) and selects the stored PKCE
+   * verifier, token endpoint and client id. Single-use and short-lived.
    *
-   * @generated from field: string token_endpoint = 3;
+   * @generated from field: string state = 3;
    */
-  tokenEndpoint: string;
-
-  /**
-   * client_id identifies the OAuth application (dynamic client registration
-   * or a hand-registered application on the vendor).
-   *
-   * @generated from field: string client_id = 4;
-   */
-  clientId: string;
-
-  /**
-   * client_secret is empty for a public client using PKCE.
-   *
-   * @generated from field: string client_secret = 5;
-   */
-  clientSecret: string;
-
-  /**
-   * scope is what the human consented to, recorded for display and for
-   * comparison on re-authorization.
-   *
-   * @generated from field: string scope = 6;
-   */
-  scope: string;
-
-  /**
-   * revocation_endpoint is the vendor's OAuth revocation URL, when the
-   * vendor advertises one. Enables vendor-side revocation on
-   * RevokeConnectorGrant.
-   *
-   * @generated from field: string revocation_endpoint = 7;
-   */
-  revocationEndpoint: string;
+  state: string;
 };
 
 /**
@@ -170,7 +203,7 @@ export type CompleteConnectorAuthorizationRequest = Message<"gibson.tenant.v1.Co
  * Use `create(CompleteConnectorAuthorizationRequestSchema)` to create a new message.
  */
 export const CompleteConnectorAuthorizationRequestSchema: GenMessage<CompleteConnectorAuthorizationRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_connector_auth, 2);
+  messageDesc(file_gibson_tenant_v1_connector_auth, 4);
 
 /**
  * @generated from message gibson.tenant.v1.CompleteConnectorAuthorizationResponse
@@ -189,7 +222,7 @@ export type CompleteConnectorAuthorizationResponse = Message<"gibson.tenant.v1.C
  * Use `create(CompleteConnectorAuthorizationResponseSchema)` to create a new message.
  */
 export const CompleteConnectorAuthorizationResponseSchema: GenMessage<CompleteConnectorAuthorizationResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_connector_auth, 3);
+  messageDesc(file_gibson_tenant_v1_connector_auth, 5);
 
 /**
  * @generated from message gibson.tenant.v1.RevokeConnectorGrantRequest
@@ -206,7 +239,7 @@ export type RevokeConnectorGrantRequest = Message<"gibson.tenant.v1.RevokeConnec
  * Use `create(RevokeConnectorGrantRequestSchema)` to create a new message.
  */
 export const RevokeConnectorGrantRequestSchema: GenMessage<RevokeConnectorGrantRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_connector_auth, 4);
+  messageDesc(file_gibson_tenant_v1_connector_auth, 6);
 
 /**
  * @generated from message gibson.tenant.v1.RevokeConnectorGrantResponse
@@ -236,7 +269,7 @@ export type RevokeConnectorGrantResponse = Message<"gibson.tenant.v1.RevokeConne
  * Use `create(RevokeConnectorGrantResponseSchema)` to create a new message.
  */
 export const RevokeConnectorGrantResponseSchema: GenMessage<RevokeConnectorGrantResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_connector_auth, 5);
+  messageDesc(file_gibson_tenant_v1_connector_auth, 7);
 
 /**
  * ConnectorAuthState is the coarse authorization state of a connector.
@@ -304,13 +337,33 @@ export const ConnectorAuthService: GenService<{
     output: typeof GetConnectorAuthStatusResponseSchema;
   },
   /**
-   * CompleteConnectorAuthorization stores the grant produced by a finished
-   * browser authorization, then immediately exercises the refresh_token
-   * grant against the vendor to prove it works and publish the first access
-   * token. A grant that cannot refresh is not stored: the operator learns at
-   * authorization time, not two hours later.
+   * StartConnectorAuthorization begins an OAuth authorization for a connector
+   * against the customer's own vendor instance. The daemon runs RFC 8414
+   * discovery and RFC 7591 dynamic client registration, mints a PKCE pair and
+   * a random state, holds them in a short-TTL server-side store keyed by
+   * state, and returns the authorize URL the operator opens. The browser round
+   * trip returns to the daemon callback, so no human pastes a URL and no local
+   * listener runs by hand (ADR-0014).
    *
-   * Re-authorizing replaces the previous grant in place.
+   * @generated from rpc gibson.tenant.v1.ConnectorAuthService.StartConnectorAuthorization
+   */
+  startConnectorAuthorization: {
+    methodKind: "unary";
+    input: typeof StartConnectorAuthorizationRequestSchema;
+    output: typeof StartConnectorAuthorizationResponseSchema;
+  },
+  /**
+   * CompleteConnectorAuthorization finishes the authorization the daemon
+   * started: it takes the authorization code and the state that binds it, does
+   * the code-to-token exchange daemon-side, stores the grant, and immediately
+   * exercises the refresh_token grant against the vendor to prove it works and
+   * publish the first access token. A grant that cannot refresh is not stored:
+   * the operator learns at authorization time, not two hours later. The
+   * refresh token never leaves the daemon.
+   *
+   * Re-authorizing replaces the previous grant in place. The daemon callback
+   * runs the same path, so completing through the browser and completing
+   * through this RPC are one behaviour.
    *
    * @generated from rpc gibson.tenant.v1.ConnectorAuthService.CompleteConnectorAuthorization
    */
