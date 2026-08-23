@@ -41,6 +41,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type {
   CatalogEntryDTO as CatalogEntry,
   ConnectorDTO as Connector,
@@ -107,6 +109,8 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState<Record<string, boolean>>({});
   const [disableTarget, setDisableTarget] = React.useState<Connector | null>(null);
+  const [authTarget, setAuthTarget] = React.useState<{ id: string; displayName: string } | null>(null);
+  const [instanceUrl, setInstanceUrl] = React.useState("");
 
   const setConnectorBusy = React.useCallback((id: string, value: boolean) => {
     setBusy((prev) => ({ ...prev, [id]: value }));
@@ -189,13 +193,18 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
     }
   }
 
-  async function onAuthorize(connectorId: string) {
+  function openAuthorize(connectorId: string, displayName: string) {
+    setInstanceUrl("");
+    setAuthTarget({ id: connectorId, displayName });
+  }
+
+  async function onAuthorize(connectorId: string, instanceUrl: string) {
     setConnectorBusy(connectorId, true);
     try {
       const res = await apiFetch(`/api/settings/connectors/${encodeURIComponent(connectorId)}/authorize`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ instanceUrl }),
       });
       if (!res.ok) {
         const { sessionExpired, message } = await readEnableOrAuthorizeError(
@@ -418,7 +427,7 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
                                 size="sm"
                                 className="mt-3 w-fit"
                                 disabled={busy[c.id]}
-                                onClick={() => void onAuthorize(c.id)}
+                                onClick={() => openAuthorize(c.id, entry?.displayName ?? c.id)}
                               >
                                 {busy[c.id] ? <Loader2 className="animate-spin" /> : <RefreshCw />}
                                 Re-authorize
@@ -432,7 +441,7 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
                             <span className="flex items-center gap-1.5">
                               <ShieldAlert className="text-destructive size-4" /> Not authorized yet.
                             </span>
-                            <Button size="sm" disabled={busy[c.id]} onClick={() => void onAuthorize(c.id)}>
+                            <Button size="sm" disabled={busy[c.id]} onClick={() => openAuthorize(c.id, entry?.displayName ?? c.id)}>
                               {busy[c.id] ? <Loader2 className="animate-spin" /> : <ExternalLink />}
                               Authorize
                             </Button>
@@ -481,6 +490,58 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
           </section>
         </>
       ) : null}
+
+      <Dialog open={authTarget !== null} onOpenChange={(open) => !open && setAuthTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Authorize {authTarget?.displayName}</DialogTitle>
+            <DialogDescription>
+              Enter the base URL of your {authTarget?.displayName} instance. We use it to find the
+              vendor&apos;s OAuth endpoints, then open a tab where you approve access.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2 py-2">
+            <Label htmlFor="connector-instance-url">Instance URL</Label>
+            <Input
+              id="connector-instance-url"
+              placeholder="https://gitlab.com"
+              value={instanceUrl}
+              onChange={(e) => setInstanceUrl(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && instanceUrl.trim() && authTarget) {
+                  const target = authTarget;
+                  const url = instanceUrl.trim();
+                  setAuthTarget(null);
+                  void onAuthorize(target.id, url);
+                }
+              }}
+            />
+            <p className="text-muted-foreground text-sm">
+              Use https://gitlab.com for GitLab.com, or your self-hosted instance URL.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAuthTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!instanceUrl.trim() || (authTarget ? busy[authTarget.id] : false)}
+              onClick={() => {
+                if (!authTarget) return;
+                const target = authTarget;
+                const url = instanceUrl.trim();
+                setAuthTarget(null);
+                void onAuthorize(target.id, url);
+              }}
+            >
+              {authTarget && busy[authTarget.id] ? <Loader2 className="animate-spin" /> : null}
+              Authorize
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={disableTarget !== null} onOpenChange={(open) => !open && setDisableTarget(null)}>
         <DialogContent>
