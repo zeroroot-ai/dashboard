@@ -9,6 +9,7 @@
  * through the connectors API routes.
  */
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   Loader2,
@@ -58,6 +59,28 @@ async function readError(res: Response, fallback: string): Promise<string> {
   }
 }
 
+/**
+ * Read an error response once and report both whether it is an expired
+ * session (HTTP 401, or a gRPC Unauthenticated mapped by
+ * connectorErrorResponse to `error.code === "unauthenticated"`) and the
+ * message to show otherwise.
+ */
+async function readEnableOrAuthorizeError(
+  res: Response,
+  fallback: string,
+): Promise<{ sessionExpired: boolean; message: string }> {
+  let code: string | undefined;
+  let message = fallback;
+  try {
+    const body = (await res.json()) as ApiError;
+    code = body.error?.code;
+    message = body.error?.message ?? fallback;
+  } catch {
+    // Response wasn't JSON; fall back to the generic message.
+  }
+  return { sessionExpired: res.status === 401 || code === "unauthenticated", message };
+}
+
 /** Map a connector phase to a badge variant and a human label. */
 function phaseBadge(phase: string): { variant: "success" | "secondary" | "outline" | "destructive"; label: string } {
   switch (phase) {
@@ -74,7 +97,8 @@ function phaseBadge(phase: string): { variant: "success" | "secondary" | "outlin
   }
 }
 
-export function ConnectorsContent() {
+export function ConnectorsContent({ docsHref }: { docsHref: string }) {
+  const router = useRouter();
   const [catalog, setCatalog] = React.useState<CatalogEntry[]>([]);
   const [enabled, setEnabled] = React.useState<Connector[]>([]);
   const [auth, setAuth] = React.useState<Record<string, ConnectorAuth>>({});
@@ -128,6 +152,13 @@ export function ConnectorsContent() {
 
   const enabledIds = React.useMemo(() => new Set(enabled.map((c) => c.id)), [enabled]);
 
+  const notifySessionExpired = React.useCallback(() => {
+    toast.error("Your session expired", {
+      description: "Sign in again to continue.",
+      action: { label: "Sign in", onClick: () => router.push("/login") },
+    });
+  }, [router]);
+
   async function onEnable(entry: CatalogEntry) {
     setConnectorBusy(entry.id, true);
     try {
@@ -137,7 +168,15 @@ export function ConnectorsContent() {
         body: JSON.stringify({ catalogId: entry.id }),
       });
       if (!res.ok) {
-        toast.error(await readError(res, `Could not enable ${entry.displayName}.`));
+        const { sessionExpired, message } = await readEnableOrAuthorizeError(
+          res,
+          `Could not enable ${entry.displayName}.`,
+        );
+        if (sessionExpired) {
+          notifySessionExpired();
+        } else {
+          toast.error(message);
+        }
         return;
       }
       toast.success(`${entry.displayName} enabled.`);
@@ -158,7 +197,15 @@ export function ConnectorsContent() {
         body: JSON.stringify({}),
       });
       if (!res.ok) {
-        toast.error(await readError(res, "Could not start authorization."));
+        const { sessionExpired, message } = await readEnableOrAuthorizeError(
+          res,
+          "Could not start authorization.",
+        );
+        if (sessionExpired) {
+          notifySessionExpired();
+        } else {
+          toast.error(message);
+        }
         return;
       }
       const body = (await res.json()) as { authorizeUrl?: string };
@@ -234,9 +281,21 @@ export function ConnectorsContent() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Connectors</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Give your agents tools from the services you already use. Enable a connector, approve access
-          once, and its tools become callable in missions, attributed to the agent and to you.
+          A connector links an outside service to your agents&apos; tools. Enable one from the catalog,
+          authorize it once with the vendor, and it goes live, its tools callable in every mission,
+          attributed to the agent and to you.
         </p>
+        {/* Docs are a separate deployable on their own host (dashboard#820), so
+            this is a plain cross-origin anchor: next/link cannot route to it,
+            and an RSC prefetch of a cross-origin URL dies on CORS (dashboard#963). */}
+        <a
+          href={docsHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-muted-foreground mt-2 inline-block text-xs underline underline-offset-2 hover:text-foreground"
+        >
+          How connectors work
+        </a>
       </div>
 
       {loadError ? (

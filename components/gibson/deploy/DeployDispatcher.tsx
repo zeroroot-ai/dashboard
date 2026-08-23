@@ -8,8 +8,13 @@
  * chart and a hardcoded localhost:30002 URL).
  *
  * Branches:
- *   kind=plugin            → renders PluginRegisterWizard unchanged
- *   kind=agent | tool      → 4-step flow:
+ *   kind=plugin             → renders AddPluginGuide, a read-only walkthrough
+ *                              of the real plugin lifecycle (author in the
+ *                              integrations repo, PR, GitOps values, SPIFFE
+ *                              auto-enrollment). There is no manifest upload
+ *                              or bootstrap-token step in this model
+ *                              (ADR-0065/0066).
+ *   kind=agent | tool       → 4-step flow:
  *                              1. Type & name
  *                              2. Permissions
  *                              3. Credential panel (one-time)
@@ -41,7 +46,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 
-import { PluginRegisterWizard } from '@/src/components/plugin-register/wizard';
+import { AddPluginGuide } from './AddPluginGuide';
 import {
   CredentialPanel,
   type Credentials,
@@ -138,8 +143,8 @@ function SelectTypeStep({
           Select component type
         </h2>
         <p className="text-sm text-muted-foreground">
-          Plugins are registered through their manifest; agents and tools are
-          provisioned with OAuth2 credentials.
+          Plugins are added through GitOps and enroll automatically; agents
+          and tools are provisioned with OAuth2 credentials.
         </p>
       </div>
 
@@ -579,9 +584,17 @@ function WaitForConnectionStep({
 
 interface DeployDispatcherProps {
   initialType?: ComponentType;
+  /** docsUrl('plugins'), resolved server-side (dashboard#1036). */
+  docsPluginsHref: string;
+  /** docsUrl('component-bootstrap'), resolved server-side (dashboard#1036). */
+  docsComponentBootstrapHref: string;
 }
 
-export function DeployDispatcher({ initialType }: DeployDispatcherProps = {}) {
+export function DeployDispatcher({
+  initialType,
+  docsPluginsHref,
+  docsComponentBootstrapHref,
+}: DeployDispatcherProps) {
   const params = useSearchParams();
   const queryParam = params.get('type');
   const inferredInitial: ComponentType =
@@ -596,13 +609,17 @@ export function DeployDispatcher({ initialType }: DeployDispatcherProps = {}) {
   const [grants, setGrants] = useState<GrantSelection[]>([]);
   const [acknowledgedMinimal, setAcknowledgedMinimal] = useState(false);
 
-  // Plugin path: delegate entirely to PluginRegisterWizard. We render
-  // the type-selection step first so the operator can switch back to
+  // Plugin path: delegate entirely to AddPluginGuide. We render the
+  // type-selection step first so the operator can switch back to
   // agent/tool, then hand off.
   if (componentType === 'plugin' && step >= 2) {
     return (
       <div className="max-w-2xl mx-auto py-8 px-4">
-        <PluginRegisterWizard onClose={() => setStep(1)} />
+        <AddPluginGuide
+          docsPluginsHref={docsPluginsHref}
+          docsBootstrapHref={docsComponentBootstrapHref}
+          onBack={() => setStep(1)}
+        />
       </div>
     );
   }

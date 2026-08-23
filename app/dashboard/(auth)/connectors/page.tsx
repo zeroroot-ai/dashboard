@@ -2,6 +2,7 @@ import { type Metadata } from "next";
 import { generateMeta } from "@/lib/utils";
 
 import { ConnectorsContent } from "@/components/gibson/settings/ConnectorsContent";
+import { docsUrl } from "@/src/lib/docs-url";
 
 export async function generateMetadata(): Promise<Metadata> {
   return generateMeta({
@@ -12,5 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function ConnectorsPage() {
-  return <ConnectorsContent />;
+  // Computed server-side: docsUrl reads the chart-provided DOCS_URL, which a
+  // client component cannot (dashboard#1036).
+  return <ConnectorsContent docsHref={docsUrl("connectors")} />;
 }
