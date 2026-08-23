@@ -21,6 +21,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/src/lib/api/fetch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -113,7 +114,7 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
 
   const loadAuth = React.useCallback(async (connectorId: string) => {
     try {
-      const res = await fetch(`/api/settings/connectors/${encodeURIComponent(connectorId)}`);
+      const res = await apiFetch(`/api/settings/connectors/${encodeURIComponent(connectorId)}`);
       if (!res.ok) return;
       const body = (await res.json()) as { auth?: ConnectorAuth };
       if (body.auth) setAuth((prev) => ({ ...prev, [connectorId]: body.auth as ConnectorAuth }));
@@ -126,7 +127,7 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
     setLoading(true);
     setLoadError(null);
     try {
-      const res = await fetch("/api/settings/connectors");
+      const res = await apiFetch("/api/settings/connectors");
       if (!res.ok) {
         setLoadError(await readError(res, "The connector service is unavailable."));
         return;
@@ -162,7 +163,7 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
   async function onEnable(entry: CatalogEntry) {
     setConnectorBusy(entry.id, true);
     try {
-      const res = await fetch("/api/settings/connectors", {
+      const res = await apiFetch("/api/settings/connectors", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ catalogId: entry.id }),
@@ -191,7 +192,7 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
   async function onAuthorize(connectorId: string) {
     setConnectorBusy(connectorId, true);
     try {
-      const res = await fetch(`/api/settings/connectors/${encodeURIComponent(connectorId)}/authorize`, {
+      const res = await apiFetch(`/api/settings/connectors/${encodeURIComponent(connectorId)}/authorize`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({}),
@@ -240,7 +241,7 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
   async function onRevoke(connectorId: string, displayName: string) {
     setConnectorBusy(connectorId, true);
     try {
-      const res = await fetch(`/api/settings/connectors/${encodeURIComponent(connectorId)}/revoke`, {
+      const res = await apiFetch(`/api/settings/connectors/${encodeURIComponent(connectorId)}/revoke`, {
         method: "POST",
       });
       if (!res.ok) {
@@ -259,7 +260,7 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
   async function onDisable(connector: Connector) {
     setConnectorBusy(connector.id, true);
     try {
-      const res = await fetch(`/api/settings/connectors/${encodeURIComponent(connector.id)}`, {
+      const res = await apiFetch(`/api/settings/connectors/${encodeURIComponent(connector.id)}`, {
         method: "DELETE",
       });
       if (!res.ok) {
