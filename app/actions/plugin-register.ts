@@ -46,7 +46,7 @@ interface ValidationResult {
   errors: PluginManifestValidationError[];
 }
 
-export interface RegisterResult {
+interface RegisterResult {
   installId: string;
   bootstrapToken: string;
   bootstrapTokenExpiresAtUnix: bigint;
