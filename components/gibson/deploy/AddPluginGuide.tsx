@@ -39,7 +39,7 @@ const EXAMPLE_PLUGIN_URL =
 
 const HANDLER_SNIPPET = `type GetRepositoryRequest struct {
     Owner string
-    Name  string
+    Repo  string
 }
 
 type GetRepositoryResponse struct {
