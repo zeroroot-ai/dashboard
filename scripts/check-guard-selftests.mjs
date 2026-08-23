@@ -40,6 +40,7 @@ const GUARDS = [
   "check-no-nodeenv-conditioned-auth.mjs",
   "check-lockfile-sync.mjs",
   "check-api-route-csrf.mjs",
+  "check-client-mutation-uses-apifetch.mjs",
   "check-proto-bindings-fresh.mjs",
   // The four single-artifact freshness gates (dashboard#1019). They shared the
   // "generator runs immediately before its own checker" defect, which made all

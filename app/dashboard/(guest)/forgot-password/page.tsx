@@ -39,6 +39,9 @@ export default function Page() {
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
+      // @apifetch-exempt: unauthenticated guest password-reset; no session to
+      // protect with a double-submit token, and errors are deliberately
+      // swallowed below to prevent account enumeration.
       await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
