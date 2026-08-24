@@ -8,11 +8,17 @@
  *
  * Fetches the tenant catalog from /api/admin/components/catalog (and,
  * for tools, /api/admin/plugins/catalog) and renders one row per
- * catalog entry with action checkboxes. All FGA tuple syntax is hidden
+ * catalog entry with action checkboxes. Enabled connectors come from
+ * listAccessibleComponentsAction (DiscoveryService.ListConnectors,
+ * ADR-0067): a connector is only ever the OBJECT of a grant, the
+ * target principal stays an agent / tool / plugin principal, so the
+ * picker emits the standard GrantSelection with a
+ * `component:connector/<id>` ref. All FGA tuple syntax is hidden
  * behind a "Show technical detail" disclosure to keep the operator
  * surface in plain English.
  *
- * Spec: component-bootstrap-dashboard-completion Requirement 3.
+ * Spec: component-bootstrap-dashboard-completion Requirement 3;
+ * connector grants: ADR-0067 (dashboard#1128).
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -31,6 +37,8 @@ import {
   AlertDescription,
   AlertTitle,
 } from '@/components/ui/alert';
+
+import { listAccessibleComponentsAction } from '@/app/actions/read/listAccessibleComponents';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -57,12 +65,6 @@ interface CatalogPickerProps {
    * Add-grant modal). The wizard creation flow leaves this empty.
    */
   excludeAlreadyGranted?: GrantSelection[];
-}
-
-interface CatalogResponse<T extends string> {
-  [k: string]: Array<{ name: string; ref: string; description: string; version: string }>;
-  components: never[]; // tightened per consumer
-  plugins: never[];
 }
 
 interface ApiError {
@@ -131,7 +133,26 @@ export function CatalogPicker({
     enabled: kind === 'tool',
   });
 
-  if (componentsQ.isLoading || (kind === 'tool' && pluginsQ.isLoading)) {
+  // Enabled connectors, deny-wins-evaluated by DiscoveryService
+  // (ADR-0067). Each row grants against component:connector/<id>.
+  const connectorsQ = useQuery({
+    queryKey: ['catalog', 'connectors'],
+    queryFn: async () => {
+      const r = await listAccessibleComponentsAction({ kind: 'connector' });
+      if (!r.ok) throw new Error(r.error);
+      return r.data.map(
+        (d): CatalogPickerEntry => ({
+          name: d.displayName ?? d.name,
+          ref: `component:connector/${d.name}`,
+          description: d.description ?? '',
+          version: d.version ?? '',
+        }),
+      );
+    },
+    staleTime: 30_000,
+  });
+
+  if (componentsQ.isLoading || connectorsQ.isLoading || (kind === 'tool' && pluginsQ.isLoading)) {
     return (
       <div className="flex items-center justify-center py-6 text-muted-foreground">
         <Loader2 className="size-4 animate-spin mr-2" /> Loading catalog…
@@ -155,9 +176,14 @@ export function CatalogPicker({
   }
 
   const components = componentsQ.data ?? [];
+  const connectors = connectorsQ.data ?? [];
   const plugins = pluginsQ.data ?? [];
 
-  const empty = components.length === 0 && (kind !== 'tool' || plugins.length === 0);
+  const empty =
+    components.length === 0 &&
+    connectors.length === 0 &&
+    !connectorsQ.isError &&
+    (kind !== 'tool' || plugins.length === 0);
   if (empty) {
     return (
       <Alert>
@@ -187,48 +213,53 @@ export function CatalogPicker({
               No components in catalog.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-left text-muted-foreground border-b">
-                    <th className="py-1.5 pr-3">Component</th>
-                    <th className="py-1.5 px-2 text-center">Read</th>
-                    {/* Displayed label is "Write"; the underlying relation stays can_configure. */}
-                    <th className="py-1.5 px-2 text-center">Write</th>
-                    <th className="py-1.5 px-2 text-center">Execute</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {components.map((c) => (
-                    <tr key={c.ref} className="border-b border-highlight/10">
-                      <td className="py-1.5 pr-3">
-                        <div className="font-mono">{c.name}</div>
-                        {c.description ? (
-                          <div className="text-[0.65rem] text-muted-foreground/70">
-                            {c.description}
-                          </div>
-                        ) : null}
-                      </td>
-                      {(['can_read', 'can_configure', 'can_execute'] as const).map(
-                        (rel) => {
-                          const excluded = isExcluded(excludeAlreadyGranted, c.ref, rel);
-                          return (
-                            <td key={rel} className="py-1.5 px-2 text-center">
-                              <Checkbox
-                                checked={isSelected(selected, c.ref, rel)}
-                                disabled={excluded}
-                                aria-label={`${rel} on ${c.name}`}
-                                onCheckedChange={() => onChange(toggle(selected, c.ref, rel))}
-                              />
-                            </td>
-                          );
-                        },
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <RwxGrantTable
+              nameHeader="Component"
+              entries={components}
+              selected={selected}
+              onChange={onChange}
+              excludeAlreadyGranted={excludeAlreadyGranted}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Connectors (ADR-0067) */}
+      <Card>
+        <CardHeader className="pb-2 pt-3">
+          <CardTitle className="text-xs font-medium font-mono uppercase tracking-wider text-muted-foreground">
+            Connectors ({connectors.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-[0.65rem] text-muted-foreground">
+            Execute lets this {kind} call the connector&apos;s tools. The
+            OAuth scope approved at authorization time bounds what
+            execute can reach.
+          </p>
+          {connectorsQ.isError ? (
+            <Alert variant="destructive">
+              <AlertTriangle className="size-4" />
+              <AlertTitle>Could not load connectors</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p className="text-xs">{(connectorsQ.error as Error).message}</p>
+                <Button variant="outline" size="sm" onClick={() => connectorsQ.refetch()}>
+                  <RefreshCcw className="size-3 mr-1" /> Retry
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : connectors.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">
+              No connectors enabled. Enable one from the Connectors page.
+            </p>
+          ) : (
+            <RwxGrantTable
+              nameHeader="Connector"
+              entries={connectors}
+              selected={selected}
+              onChange={onChange}
+              excludeAlreadyGranted={excludeAlreadyGranted}
+            />
           )}
         </CardContent>
       </Card>
@@ -281,6 +312,71 @@ export function CatalogPicker({
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// RwxGrantTable, one row per catalog entry with the three action
+// checkboxes. Shared by the Components and Connectors sections; the
+// displayed "Write" label maps to the can_configure relation (#1130).
+// ---------------------------------------------------------------------------
+
+function RwxGrantTable({
+  nameHeader,
+  entries,
+  selected,
+  onChange,
+  excludeAlreadyGranted,
+}: {
+  nameHeader: string;
+  entries: CatalogPickerEntry[];
+  selected: GrantSelection[];
+  onChange: (next: GrantSelection[]) => void;
+  excludeAlreadyGranted?: GrantSelection[];
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="text-left text-muted-foreground border-b">
+            <th className="py-1.5 pr-3">{nameHeader}</th>
+            <th className="py-1.5 px-2 text-center">Read</th>
+            {/* Displayed label is "Write"; the underlying relation stays can_configure. */}
+            <th className="py-1.5 px-2 text-center">Write</th>
+            <th className="py-1.5 px-2 text-center">Execute</th>
+          </tr>
+        </thead>
+        <tbody>
+          {entries.map((c) => (
+            <tr key={c.ref} className="border-b border-highlight/10">
+              <td className="py-1.5 pr-3">
+                <div className="font-mono">{c.name}</div>
+                {c.description ? (
+                  <div className="text-[0.65rem] text-muted-foreground/70">
+                    {c.description}
+                  </div>
+                ) : null}
+              </td>
+              {(['can_read', 'can_configure', 'can_execute'] as const).map(
+                (rel) => {
+                  const excluded = isExcluded(excludeAlreadyGranted, c.ref, rel);
+                  return (
+                    <td key={rel} className="py-1.5 px-2 text-center">
+                      <Checkbox
+                        checked={isSelected(selected, c.ref, rel)}
+                        disabled={excluded}
+                        aria-label={`${rel} on ${c.name}`}
+                        onCheckedChange={() => onChange(toggle(selected, c.ref, rel))}
+                      />
+                    </td>
+                  );
+                },
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

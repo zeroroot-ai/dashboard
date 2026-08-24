@@ -56,7 +56,7 @@
     "check:mission-schema": "node scripts/check-mission-schema-fresh.mjs --selftest && node scripts/check-mission-schema-fresh.mjs",
     "test:guard-selftests": "node scripts/check-guard-selftests.mjs",
     "test:scripts": "node --test scripts/*.test.mjs",
-    "test:ast-checks": "node scripts/check-guard-selftests.mjs && node scripts/ast-checks/server-action-no-direct-daemon-import.mjs --fixtures && node scripts/ast-checks/useAuthorize-vs-usePermitted-shape.mjs --fixtures && node scripts/ast-checks/server-action-no-direct-daemon-import.mjs && node scripts/ast-checks/useAuthorize-vs-usePermitted-shape.mjs",
+    "test:ast-checks": "node scripts/check-guard-selftests.mjs && node scripts/ast-checks/server-action-no-direct-daemon-import.mjs --fixtures && node scripts/ast-checks/useAuthorize-vs-usePermitted-shape.mjs --fixtures && node scripts/ast-checks/no-connector-principal-surfaces.mjs --fixtures && node scripts/ast-checks/server-action-no-direct-daemon-import.mjs && node scripts/ast-checks/useAuthorize-vs-usePermitted-shape.mjs && node scripts/ast-checks/no-connector-principal-surfaces.mjs",
     "check:server-action-authz": "node scripts/check-server-action-authz.mjs",
     "check:single-authz-path": "node scripts/check-single-authz-path.mjs",
     "check:no-prod-debug-flags": "node scripts/check-no-prod-debug-flags.mjs",
