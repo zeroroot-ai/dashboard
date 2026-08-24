@@ -2,7 +2,7 @@
 
 /**
  * Security Policy surface, unified deny-wins matrix across plugins /
- * tools / agents at every scope. Composes AccessScopeSelector +
+ * tools / agents / connectors at every scope. Composes AccessScopeSelector +
  * RWXMatrix and routes toggles through setComponentAccessAction.
  *
  * Spec: agent-authoring-and-tenant-entitlements task 38, R8.
@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { setComponentAccessAction } from "@/app/actions/crd/access";
 import { toast } from "sonner";
 
-type Kind = "plugin" | "tool" | "agent" | "all";
+type Kind = "plugin" | "tool" | "agent" | "connector" | "all";
 
 import {
   listAccessibleComponentsAction,
@@ -120,6 +120,7 @@ export function SecurityPolicyContent() {
                 <SelectItem value="plugin">Plugins</SelectItem>
                 <SelectItem value="tool">Tools</SelectItem>
                 <SelectItem value="agent">Agents</SelectItem>
+                <SelectItem value="connector">Connectors</SelectItem>
                 <SelectItem value="all">All</SelectItem>
               </SelectContent>
             </Select>

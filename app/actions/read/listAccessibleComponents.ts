@@ -26,7 +26,7 @@ export interface DiscoveredItem {
   name: string;
   displayName?: string;
   description?: string;
-  kind: "plugin" | "tool" | "agent";
+  kind: "plugin" | "tool" | "agent" | "connector";
   rwx: { read: boolean; write: boolean; execute: boolean };
   denyingGates: string[];
   version?: string;
@@ -37,7 +37,7 @@ type ActionResult<T> =
   | { ok: false; error: string };
 
 interface ListAccessibleComponentsInput {
-  kind: "plugin" | "tool" | "agent" | "all";
+  kind: "plugin" | "tool" | "agent" | "connector" | "all";
   scope?: "tenant-wide" | "per-team" | "per-user" | "per-agent" | "my-access";
   targetId?: string;
   action?: RWXAction;
@@ -102,6 +102,10 @@ export async function listAccessibleComponentsAction(
     if (input.kind === "agent" || input.kind === "all") {
       const r = await client.listAgents({ query });
       for (const it of r.items) out.push(shape(it, "agent"));
+    }
+    if (input.kind === "connector" || input.kind === "all") {
+      const r = await client.listConnectors({ query });
+      for (const it of r.items) out.push(shape(it, "connector"));
     }
     return { ok: true, data: out };
   } catch (err) {

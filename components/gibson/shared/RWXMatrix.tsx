@@ -35,6 +35,12 @@ export interface RWXMatrixProps {
    */
   rowTrailingAction?: (item: RWXItem) => ReactNode;
   /**
+   * Render a small annotation under the Execute cell per row (e.g. the
+   * OAuth scope string that bounds what execute can do on a connector).
+   * Rows where it returns null/undefined render no annotation.
+   */
+  executeAnnotation?: (item: RWXItem) => ReactNode;
+  /**
    * `"toggle"` (default): Shadcn Switch, optimistic update expected.
    * `"approve"`: Shadcn Checkbox, the parent collects approvals in local
    * state and only issues writes on confirm (no optimistic update).
@@ -47,6 +53,7 @@ export function RWXMatrix({
   onToggle,
   readOnly,
   rowTrailingAction,
+  executeAnnotation,
   mode = "toggle",
 }: RWXMatrixProps) {
   const showTrailing = Boolean(rowTrailingAction);
@@ -62,7 +69,9 @@ export function RWXMatrix({
         </tr>
       </thead>
       <tbody>
-        {items.map((it) => (
+        {items.map((it) => {
+          const execNote = executeAnnotation?.(it);
+          return (
           <tr key={it.name} className="border-b hover:bg-muted/30">
             <td className="py-2 pr-4">
               <div className="font-medium">{it.displayName ?? it.name}</div>
@@ -113,13 +122,19 @@ export function RWXMatrix({
                     </TooltipContent>
                   )}
                 </Tooltip>
+                {a === "execute" && execNote != null && (
+                  <div className="text-muted-foreground mt-1 text-[10px] leading-tight break-all">
+                    {execNote}
+                  </div>
+                )}
               </td>
             ))}
             {showTrailing && (
               <td className="py-2 pr-4 text-right">{rowTrailingAction?.(it)}</td>
             )}
           </tr>
-        ))}
+          );
+        })}
       </tbody>
     </table>
   );

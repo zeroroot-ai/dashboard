@@ -280,7 +280,7 @@ function PermissionsStep({
         <AlertTitle>This {componentType} will be able to:</AlertTitle>
         <AlertDescription className="text-xs">
           read {counts.read} component{counts.read === 1 ? '' : 's'},{' '}
-          configure {counts.configure} component{counts.configure === 1 ? '' : 's'},{' '}
+          write to {counts.configure} component{counts.configure === 1 ? '' : 's'},{' '}
           execute {counts.execute} component{counts.execute === 1 ? '' : 's'}
           {componentType === 'tool' && (
             <>
