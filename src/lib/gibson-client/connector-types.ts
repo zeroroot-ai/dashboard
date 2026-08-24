@@ -18,6 +18,8 @@ export interface CatalogEntryDTO {
   shape: string;
   /** "none", "secret", or "oauth". */
   auth: string;
+  /** Vendor base URL to pre-fill into the authorize form (e.g. "https://gitlab.com"); empty when the vendor has no single default. */
+  defaultInstanceUrl: string;
 }
 
 /** ConnectorDTO is one connector the tenant has enabled, with its live status. */
