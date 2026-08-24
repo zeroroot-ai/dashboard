@@ -6,7 +6,12 @@
  * catalog, enables a connector with one click, authorizes an OAuth connector by
  * approving once at the vendor, and sees the live status of every enabled
  * connector. The daemon does all the work; this panel reads and drives it
- * through the connectors API routes.
+ * through the connector Server Actions (ADR-0067, dashboard#1126).
+ *
+ * Enable and Disable are tenant-admin RPCs (gibson#1553), so their controls
+ * gate on useAuthorize with the hide-on-loading pattern: a member never sees
+ * them. The server actions enforce the same registry entry via the transport's
+ * baked-in assertAuthorized, so hiding is cosmetic, not the security boundary.
  */
 import * as React from "react";
 import { useRouter } from "next/navigation";
@@ -21,7 +26,15 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
-import { apiFetch } from "@/src/lib/api/fetch";
+import {
+  listConnectorsAction,
+  enableConnectorAction,
+  disableConnectorAction,
+  getConnectorAuthStatusAction,
+  startConnectorAuthorizationAction,
+  revokeConnectorGrantAction,
+} from "@/app/actions/connectors";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,39 +62,18 @@ import type {
   ConnectorAuthDTO as ConnectorAuth,
 } from "@/src/lib/gibson-client/connector-types";
 
-interface ApiError {
-  error?: { code?: string; message?: string };
-}
-
-async function readError(res: Response, fallback: string): Promise<string> {
-  try {
-    const body = (await res.json()) as ApiError;
-    return body.error?.message ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
+// Tenant-admin lifecycle RPCs (gibson#1553). Members must not see the
+// Enable/Disable controls, so both gate through useAuthorize.
+const CONNECTOR_ENABLE_RPC = "/gibson.tenant.v1.ConnectorService/EnableConnector";
+const CONNECTOR_DISABLE_RPC = "/gibson.tenant.v1.ConnectorService/DisableConnector";
 
 /**
- * Read an error response once and report both whether it is an expired
- * session (HTTP 401, or a gRPC Unauthenticated mapped by
- * connectorErrorResponse to `error.code === "unauthenticated"`) and the
- * message to show otherwise.
+ * An action result with `code === "unauthenticated"` means the session
+ * expired (either the dashboard session is gone, or the daemon returned a
+ * gRPC Unauthenticated that serverActionError classified).
  */
-async function readEnableOrAuthorizeError(
-  res: Response,
-  fallback: string,
-): Promise<{ sessionExpired: boolean; message: string }> {
-  let code: string | undefined;
-  let message = fallback;
-  try {
-    const body = (await res.json()) as ApiError;
-    code = body.error?.code;
-    message = body.error?.message ?? fallback;
-  } catch {
-    // Response wasn't JSON; fall back to the generic message.
-  }
-  return { sessionExpired: res.status === 401 || code === "unauthenticated", message };
+function isSessionExpired(code?: string): boolean {
+  return code === "unauthenticated";
 }
 
 /** Map a connector phase to a badge variant and a human label. */
@@ -112,18 +104,34 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
   const [authTarget, setAuthTarget] = React.useState<{ id: string; displayName: string } | null>(null);
   const [instanceUrl, setInstanceUrl] = React.useState("");
 
+  // Admin-only lifecycle controls, hide-on-loading (no FOUC).
+  const { allowed: canEnable, loading: enableAuthLoading } = useAuthorize(CONNECTOR_ENABLE_RPC);
+  const { allowed: canDisable, loading: disableAuthLoading } = useAuthorize(CONNECTOR_DISABLE_RPC);
+  const showEnable = !enableAuthLoading && canEnable;
+  const showDisable = !disableAuthLoading && canDisable;
+
+  // pollAuth must stop when the panel unmounts.
+  const mountedRef = React.useRef(true);
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   const setConnectorBusy = React.useCallback((id: string, value: boolean) => {
     setBusy((prev) => ({ ...prev, [id]: value }));
   }, []);
 
-  const loadAuth = React.useCallback(async (connectorId: string) => {
+  const loadAuth = React.useCallback(async (connectorId: string): Promise<ConnectorAuth | null> => {
     try {
-      const res = await apiFetch(`/api/settings/connectors/${encodeURIComponent(connectorId)}`);
-      if (!res.ok) return;
-      const body = (await res.json()) as { auth?: ConnectorAuth };
-      if (body.auth) setAuth((prev) => ({ ...prev, [connectorId]: body.auth as ConnectorAuth }));
+      const res = await getConnectorAuthStatusAction(connectorId);
+      if (!res.ok) return null;
+      setAuth((prev) => ({ ...prev, [connectorId]: res.data }));
+      return res.data;
     } catch {
       // A failed status read is non-fatal; the card shows the phase regardless.
+      return null;
     }
   }, []);
 
@@ -131,17 +139,17 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
     setLoading(true);
     setLoadError(null);
     try {
-      const res = await apiFetch("/api/settings/connectors");
+      const res = await listConnectorsAction();
       if (!res.ok) {
-        setLoadError(await readError(res, "The connector service is unavailable."));
+        setLoadError(res.error || "The connector service is unavailable.");
         return;
       }
-      const body = (await res.json()) as { catalog: CatalogEntry[]; enabled: Connector[] };
-      setCatalog(body.catalog ?? []);
-      setEnabled(body.enabled ?? []);
+      const { catalog: nextCatalog, enabled: nextEnabled } = res.data;
+      setCatalog(nextCatalog);
+      setEnabled(nextEnabled);
       await Promise.all(
-        (body.enabled ?? [])
-          .filter((c) => catalogAuthKind(body.catalog, c.id) === "oauth")
+        nextEnabled
+          .filter((c) => catalogAuthKind(nextCatalog, c.id) === "oauth")
           .map((c) => loadAuth(c.id)),
       );
     } catch {
@@ -167,20 +175,12 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
   async function onEnable(entry: CatalogEntry) {
     setConnectorBusy(entry.id, true);
     try {
-      const res = await apiFetch("/api/settings/connectors", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ catalogId: entry.id }),
-      });
+      const res = await enableConnectorAction(entry.id);
       if (!res.ok) {
-        const { sessionExpired, message } = await readEnableOrAuthorizeError(
-          res,
-          `Could not enable ${entry.displayName}.`,
-        );
-        if (sessionExpired) {
+        if (isSessionExpired(res.code)) {
           notifySessionExpired();
         } else {
-          toast.error(message);
+          toast.error(res.error || `Could not enable ${entry.displayName}.`);
         }
         return;
       }
@@ -201,29 +201,20 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
   async function onAuthorize(connectorId: string, instanceUrl: string) {
     setConnectorBusy(connectorId, true);
     try {
-      const res = await apiFetch(`/api/settings/connectors/${encodeURIComponent(connectorId)}/authorize`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ instanceUrl }),
-      });
+      const res = await startConnectorAuthorizationAction(connectorId, instanceUrl);
       if (!res.ok) {
-        const { sessionExpired, message } = await readEnableOrAuthorizeError(
-          res,
-          "Could not start authorization.",
-        );
-        if (sessionExpired) {
+        if (isSessionExpired(res.code)) {
           notifySessionExpired();
         } else {
-          toast.error(message);
+          toast.error(res.error || "Could not start authorization.");
         }
         return;
       }
-      const body = (await res.json()) as { authorizeUrl?: string };
-      if (!body.authorizeUrl) {
+      if (!res.data.authorizeUrl) {
         toast.error("The service did not return an authorization link.");
         return;
       }
-      window.open(body.authorizeUrl, "_blank", "noopener,noreferrer");
+      window.open(res.data.authorizeUrl, "_blank", "noopener,noreferrer");
       toast.info("Approve access in the tab that opened, then return here.");
       void pollAuth(connectorId);
     } catch {
@@ -236,13 +227,17 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
   const pollAuth = React.useCallback(
     async (connectorId: string) => {
       // Poll the grant status for up to five minutes while the human consents.
+      // Stop as soon as the grant is authorized, and stop on unmount.
       for (let i = 0; i < 60; i += 1) {
         await new Promise((r) => setTimeout(r, 5000));
-        await loadAuth(connectorId);
-        // Re-read from state via a fresh fetch each round is enough; the card
-        // updates as soon as the state flips to authorized.
+        if (!mountedRef.current) return;
+        const a = await loadAuth(connectorId);
+        if (!mountedRef.current) return;
+        if (a?.state === "authorized") {
+          await load();
+          return;
+        }
       }
-      await load();
     },
     [loadAuth, load],
   );
@@ -250,11 +245,9 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
   async function onRevoke(connectorId: string, displayName: string) {
     setConnectorBusy(connectorId, true);
     try {
-      const res = await apiFetch(`/api/settings/connectors/${encodeURIComponent(connectorId)}/revoke`, {
-        method: "POST",
-      });
+      const res = await revokeConnectorGrantAction(connectorId);
       if (!res.ok) {
-        toast.error(await readError(res, "Could not revoke the grant."));
+        toast.error(res.error || "Could not revoke the grant.");
         return;
       }
       toast.success(`Access revoked for ${displayName}.`);
@@ -269,11 +262,9 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
   async function onDisable(connector: Connector) {
     setConnectorBusy(connector.id, true);
     try {
-      const res = await apiFetch(`/api/settings/connectors/${encodeURIComponent(connector.id)}`, {
-        method: "DELETE",
-      });
+      const res = await disableConnectorAction(connector.id);
       if (!res.ok) {
-        toast.error(await readError(res, "Could not disable the connector."));
+        toast.error(res.error || "Could not disable the connector.");
         return;
       }
       toast.success(`${connector.id} disabled.`);
@@ -354,14 +345,17 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
                       <CardDescription>{entry.description}</CardDescription>
                     </CardHeader>
                     <CardFooter className="mt-auto">
-                      <Button
-                        size="sm"
-                        disabled={already || busy[entry.id]}
-                        onClick={() => void onEnable(entry)}
-                      >
-                        {busy[entry.id] ? <Loader2 className="animate-spin" /> : null}
-                        {already ? "Enabled" : "Enable"}
-                      </Button>
+                      {/* Admin-only control, hide-on-loading (no FOUC). */}
+                      {showEnable ? (
+                        <Button
+                          size="sm"
+                          disabled={already || busy[entry.id]}
+                          onClick={() => void onEnable(entry)}
+                        >
+                          {busy[entry.id] ? <Loader2 className="animate-spin" /> : null}
+                          {already ? "Enabled" : "Enable"}
+                        </Button>
+                      ) : null}
                     </CardFooter>
                   </Card>
                 );
@@ -472,15 +466,18 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
                             Revoke access
                           </Button>
                         ) : null}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive"
-                          disabled={busy[c.id]}
-                          onClick={() => setDisableTarget(c)}
-                        >
-                          <Trash2 /> Disable
-                        </Button>
+                        {/* Admin-only control, hide-on-loading (no FOUC). */}
+                        {showDisable ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive"
+                            disabled={busy[c.id]}
+                            onClick={() => setDisableTarget(c)}
+                          >
+                            <Trash2 /> Disable
+                          </Button>
+                        ) : null}
                       </CardFooter>
                     </Card>
                   );
