@@ -64,6 +64,14 @@ describe('GET /signup/verify', () => {
     });
     expect(res.headers.get('location')).toContain('/signup/complete');
 
+    // RELATIVE, always. `req.nextUrl.origin` in a route handler is the
+    // server's bind address (https://0.0.0.0:3000), not the customer-facing
+    // host — an absolute Location built from it sent the browser to a dead
+    // origin right after the single-use token was consumed, dead-ending
+    // signup (launch blocker 2, gitops#382). The browser resolves a relative
+    // Location against the origin it is already on.
+    expect(res.headers.get('location')).toBe('/signup/complete');
+
     const cookie = res.cookies.get(SIGNUP_VERIFIED_COOKIE);
     expect(cookie).toBeDefined();
     expect(cookie?.httpOnly).toBe(true);
@@ -101,5 +109,9 @@ describe('GET /signup/verify', () => {
 
     expect(new Set(destinations).size).toBe(1);
     expect(destinations[0]).toContain('/signup');
+    // Relative for the same reason as the success path: an absolute
+    // Location from req.nextUrl points at the bind address, not the host
+    // the browser is on.
+    expect(destinations[0]).toBe('/signup?verify=invalid');
   });
 });
