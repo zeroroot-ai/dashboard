@@ -44,6 +44,26 @@ import { logger } from '@/src/lib/logger';
  */
 const VERIFY_FAILED_REDIRECT = '/signup?verify=invalid';
 
+/**
+ * A redirect with a RELATIVE Location, never one built from `req.nextUrl`.
+ *
+ * In a Route Handler behind the platform edge, `req.nextUrl.origin` is the
+ * server's own bind address (`https://0.0.0.0:3000`), not the host the
+ * customer's browser is on — middleware sees the external host, route
+ * handlers do not. An absolute Location built from it sends the browser to a
+ * dead origin, so clicking the emailed verification link consumed the token
+ * and then dead-ended the whole signup flow. RFC 9110 §10.2.2 allows a
+ * relative URI reference in Location; the browser resolves it against the
+ * origin it is already on, which is the only origin this route can trust.
+ * The completion page's `redirect()` already emits the relative form.
+ */
+function redirectTo(location: string): NextResponse {
+  return new NextResponse(null, {
+    status: 307,
+    headers: { Location: location },
+  });
+}
+
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const token = req.nextUrl.searchParams.get('token') ?? '';
   const clientIp = clientIpFromHeaders({
@@ -52,7 +72,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   });
 
   if (!token) {
-    return NextResponse.redirect(new URL(VERIFY_FAILED_REDIRECT, req.nextUrl));
+    return redirectTo(VERIFY_FAILED_REDIRECT);
   }
 
   let session;
@@ -66,10 +86,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       { action: 'signup_verify_redeem', err: err instanceof Error ? err.message : String(err) },
       'signup verification redemption failed',
     );
-    return NextResponse.redirect(new URL(VERIFY_FAILED_REDIRECT, req.nextUrl));
+    return redirectTo(VERIFY_FAILED_REDIRECT);
   }
 
-  const res = NextResponse.redirect(new URL('/signup/complete', req.nextUrl));
+  const res = redirectTo('/signup/complete');
   res.cookies.set({
     name: SIGNUP_VERIFIED_COOKIE,
     value: encodeVerifiedSession(session),
