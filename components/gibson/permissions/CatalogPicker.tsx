@@ -193,7 +193,8 @@ export function CatalogPicker({
                   <tr className="text-left text-muted-foreground border-b">
                     <th className="py-1.5 pr-3">Component</th>
                     <th className="py-1.5 px-2 text-center">Read</th>
-                    <th className="py-1.5 px-2 text-center">Configure</th>
+                    {/* Displayed label is "Write"; the underlying relation stays can_configure. */}
+                    <th className="py-1.5 px-2 text-center">Write</th>
                     <th className="py-1.5 px-2 text-center">Execute</th>
                   </tr>
                 </thead>

@@ -499,6 +499,15 @@ export const AuthRegistry: Record<string, AuthEntry> = {
     allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE | IdentityClass.COMPONENT,
     unauthenticated: false,
   },
+  "/gibson.daemon.discovery.v1.DiscoveryService/ListConnectors": {
+    method: "/gibson.daemon.discovery.v1.DiscoveryService/ListConnectors",
+    service: "gibson.daemon.discovery.v1.DiscoveryService",
+    relation: "member",
+    objectType: "tenant",
+    objectDeriver: "tenant_from_identity",
+    allowedIdentities: IdentityClass.USER | IdentityClass.SERVICE | IdentityClass.COMPONENT,
+    unauthenticated: false,
+  },
   "/gibson.daemon.discovery.v1.DiscoveryService/ListLLMSlots": {
     method: "/gibson.daemon.discovery.v1.DiscoveryService/ListLLMSlots",
     service: "gibson.daemon.discovery.v1.DiscoveryService",

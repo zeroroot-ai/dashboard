@@ -211,7 +211,7 @@ function EffectiveSummary({
       <AlertTitle>Effective access</AlertTitle>
       <AlertDescription className="text-xs">
         This {kind} can read {summary.read} component
-        {summary.read === 1 ? '' : 's'}, configure {summary.configure} component
+        {summary.read === 1 ? '' : 's'}, write to {summary.configure} component
         {summary.configure === 1 ? '' : 's'}, and execute {summary.execute} component
         {summary.execute === 1 ? '' : 's'}
         {kind === 'tool' && (

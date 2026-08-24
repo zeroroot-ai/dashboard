@@ -35,6 +35,21 @@ import {
   revokeConnectorGrantAction,
 } from "@/app/actions/connectors";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
+import { setComponentAccessAction } from "@/app/actions/crd/access";
+import {
+  listAccessibleComponentsAction,
+  type DiscoveredItem,
+} from "@/app/actions/read/listAccessibleComponents";
+import {
+  AccessScopeSelector,
+  type AccessScopeSelection,
+} from "@/components/gibson/shared/AccessScopeSelector";
+import {
+  RWXMatrix,
+  type RWXAction,
+  type RWXItem,
+} from "@/components/gibson/shared/RWXMatrix";
+import { ErrorAlert } from "@/components/gibson/shared";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,6 +81,11 @@ import type {
 // Enable/Disable controls, so both gate through useAuthorize.
 const CONNECTOR_ENABLE_RPC = "/gibson.tenant.v1.ConnectorService/EnableConnector";
 const CONNECTOR_DISABLE_RPC = "/gibson.tenant.v1.ConnectorService/DisableConnector";
+
+// Tenant-wide component-access management is gated on the same RPC the
+// plugins page uses (relation: admin). Non-admins default to "my-access".
+const COMPONENT_MANAGE_RPC =
+  "/gibson.tenant.v1.MembershipService/SetComponentAccess";
 
 /**
  * An action result with `code === "unauthenticated"` means the session
@@ -485,6 +505,8 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
               </div>
             )}
           </section>
+
+          <ConnectorAccessMatrix auth={auth} />
         </>
       ) : null}
 
@@ -571,4 +593,187 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
 /** The auth kind of a catalog entry, for deciding whether to poll the grant. */
 function catalogAuthKind(catalog: CatalogEntry[], id: string): string {
   return catalog.find((e) => e.id === id)?.auth ?? "none";
+}
+
+type MatrixScope = AccessScopeSelection["scope"];
+
+function scopeParam(
+  s: MatrixScope,
+): "tenant" | "team" | "user" | "component" | "my" | null {
+  switch (s) {
+    case "tenant-wide":
+      return "tenant";
+    case "per-team":
+      return "team";
+    case "per-user":
+      return "user";
+    case "per-agent":
+      return "component";
+    case "my-access":
+      return "my";
+    default:
+      return null;
+  }
+}
+
+function toMatrixItem(d: DiscoveredItem): RWXItem {
+  const meta: string[] = [];
+  if (d.version) meta.push(`v${d.version}`);
+  if (d.description) meta.push(d.description);
+  return {
+    name: d.name,
+    displayName: d.displayName ?? d.name,
+    description: meta.join(", ") || undefined,
+    rwx: d.rwx,
+    denyingGates: d.denyingGates,
+  };
+}
+
+/**
+ * ConnectorAccessMatrix, the shared RWX matrix over the connector kind of
+ * the discovery catalog (ADR-0067 UI slice 2, same pattern as
+ * PluginsContent). Toggles write deny-wins tuples against
+ * component:connector/<id> through setComponentAccessAction. The OAuth
+ * scope string from the connector's grant renders under the Execute
+ * toggle, because the scope is the real blast-radius bound of execute.
+ */
+function ConnectorAccessMatrix({ auth }: { auth: Record<string, ConnectorAuth> }) {
+  const { allowed: canManage, loading: authLoading } =
+    useAuthorize(COMPONENT_MANAGE_RPC);
+
+  const [scope, setScope] = React.useState<AccessScopeSelection>({
+    scope: "my-access",
+  });
+  // Once admin authorization resolves, default admins to the tenant-wide
+  // scope (one-shot, so a later manual scope change is respected).
+  const appliedAdminDefault = React.useRef(false);
+  React.useEffect(() => {
+    if (!authLoading && canManage && !appliedAdminDefault.current) {
+      appliedAdminDefault.current = true;
+      setScope({ scope: "tenant-wide" });
+    }
+  }, [authLoading, canManage]);
+
+  const [items, setItems] = React.useState<RWXItem[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<Error | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    listAccessibleComponentsAction({
+      kind: "connector",
+      scope: scope.scope,
+      targetId: scope.targetId,
+    })
+      .then((r) => {
+        if (cancelled) return;
+        if (r.ok) setItems(r.data.map(toMatrixItem));
+        else setError(new Error(r.error));
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err : new Error(String(err)));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [scope]);
+
+  async function refetch() {
+    const r = await listAccessibleComponentsAction({
+      kind: "connector",
+      scope: scope.scope,
+      targetId: scope.targetId,
+    });
+    if (r.ok) setItems(r.data.map(toMatrixItem));
+  }
+
+  async function onToggle(item: RWXItem, action: RWXAction, enabled: boolean) {
+    const s = scopeParam(scope.scope);
+    if (!s) return;
+    const r = await setComponentAccessAction({
+      scope: s,
+      targetId: scope.targetId,
+      componentRef: `component:connector/${item.name}`,
+      action,
+      enabled,
+    });
+    if (!r.ok) {
+      toast.error(`Toggle failed: ${r.error}`);
+      await refetch();
+      return;
+    }
+    setItems((prev) =>
+      prev.map((it) =>
+        it.name === item.name
+          ? { ...it, rwx: { ...it.rwx, [action]: enabled } }
+          : it,
+      ),
+    );
+  }
+
+  // The OAuth scope string bounds what execute can reach at the vendor,
+  // so it renders beside the execute toggle.
+  function executeAnnotation(item: RWXItem) {
+    const s = auth[item.name]?.scope;
+    if (!s) return null;
+    return <>Scope: {s}</>;
+  }
+
+  return (
+    <section className="space-y-4">
+      <div>
+        <h2 className="text-lg font-medium">Access</h2>
+        <p className="text-muted-foreground text-sm">
+          Per-action access to each connector. Toggles here write the
+          deny-wins tuples that gate read, write, and execute.
+        </p>
+      </div>
+      <Card className="border-border/60 bg-card/60">
+        <CardContent className="space-y-4 pt-6">
+          {canManage ? (
+            <AccessScopeSelector value={scope} onChange={setScope} />
+          ) : (
+            <p className="text-muted-foreground text-xs">
+              Showing the connectors currently accessible to you. Tenant
+              admins can manage per-team, per-user, and per-agent scopes.
+            </p>
+          )}
+
+          {error && (
+            <ErrorAlert
+              error={error}
+              title="Unable to load connector access"
+              retry={refetch}
+            />
+          )}
+
+          {loading && !error && (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          )}
+
+          {!loading && !error && items.length === 0 && (
+            <p className="text-muted-foreground text-sm">
+              No connectors are visible for this scope. Enable one from the
+              catalog above to manage per-action access here.
+            </p>
+          )}
+
+          {!loading && !error && items.length > 0 && (
+            <RWXMatrix
+              items={items}
+              onToggle={onToggle}
+              executeAnnotation={executeAnnotation}
+            />
+          )}
+        </CardContent>
+      </Card>
+    </section>
+  );
 }

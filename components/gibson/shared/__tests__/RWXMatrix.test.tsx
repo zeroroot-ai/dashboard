@@ -81,6 +81,23 @@ describe("RWXMatrix", () => {
     expect(withoutTrailing.queryByTestId("trailing")).toBeNull();
   });
 
+  it("executeAnnotation renders under the execute cell when provided; absent otherwise", () => {
+    const withAnnotation = renderMatrix({
+      items: [baseItem],
+      onToggle: () => {},
+      executeAnnotation: (item) =>
+        item.name === "gitlab" ? <span>Scope: read_api</span> : null,
+    });
+    expect(withAnnotation.getByText("Scope: read_api")).toBeInTheDocument();
+
+    withAnnotation.unmount();
+    const withoutAnnotation = renderMatrix({
+      items: [baseItem],
+      onToggle: () => {},
+    });
+    expect(withoutAnnotation.queryByText(/Scope:/)).toBeNull();
+  });
+
   it("readOnly disables the controls", () => {
     renderMatrix({ items: [baseItem], onToggle: () => {}, readOnly: true });
     const readSwitch = screen.getByRole("switch", {
