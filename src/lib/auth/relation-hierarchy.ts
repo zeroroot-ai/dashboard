@@ -95,6 +95,7 @@ const OBJECT_SCOPED_RELATIONS: ReadonlySet<string> = new Set([
   'can_configure', // configure a component
   'can_use', // use a component (harness / callback operations)
   'can_invoke', // invoke a plugin binary
+  'can_poll_work', // poll / submit work items on a component (work queue)
   'can_resolve', // resolve a secret credential
 ]);
 
