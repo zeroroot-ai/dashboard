@@ -193,8 +193,8 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
     }
   }
 
-  function openAuthorize(connectorId: string, displayName: string) {
-    setInstanceUrl("");
+  function openAuthorize(connectorId: string, displayName: string, defaultInstanceUrl: string) {
+    setInstanceUrl(defaultInstanceUrl);
     setAuthTarget({ id: connectorId, displayName });
   }
 
@@ -427,7 +427,7 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
                                 size="sm"
                                 className="mt-3 w-fit"
                                 disabled={busy[c.id]}
-                                onClick={() => openAuthorize(c.id, entry?.displayName ?? c.id)}
+                                onClick={() => openAuthorize(c.id, entry?.displayName ?? c.id, entry?.defaultInstanceUrl ?? "")}
                               >
                                 {busy[c.id] ? <Loader2 className="animate-spin" /> : <RefreshCw />}
                                 Re-authorize
@@ -441,7 +441,7 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
                             <span className="flex items-center gap-1.5">
                               <ShieldAlert className="text-destructive size-4" /> Not authorized yet.
                             </span>
-                            <Button size="sm" disabled={busy[c.id]} onClick={() => openAuthorize(c.id, entry?.displayName ?? c.id)}>
+                            <Button size="sm" disabled={busy[c.id]} onClick={() => openAuthorize(c.id, entry?.displayName ?? c.id, entry?.defaultInstanceUrl ?? "")}>
                               {busy[c.id] ? <Loader2 className="animate-spin" /> : <ExternalLink />}
                               Authorize
                             </Button>
