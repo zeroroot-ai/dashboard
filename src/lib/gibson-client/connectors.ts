@@ -136,7 +136,31 @@ export async function daemonGetConnectorAuthStatus(connector: string): Promise<C
   }
 }
 
-/** Revoke a connector's OAuth grant. */
+/**
+ * Store a static credential (a personal access token) for an auth "secret"
+ * connector (ADR-0015). The daemon keeps it in the tenant's secret store and
+ * publishes it to the connector; the credential crosses the API once, inbound,
+ * and is never returned. Calling it again replaces the credential in place.
+ */
+export async function daemonSetConnectorSecret(connector: string, secret: string): Promise<ConnectorAuthDTO> {
+  try {
+    const client = userClient(ConnectorAuthService);
+    const resp = await client.setConnectorSecret({ connector, secret: new TextEncoder().encode(secret) });
+    const st = resp.status;
+    return {
+      state: toAuthStateDTO(st?.state ?? ConnectorAuthState.UNSPECIFIED),
+      authorizedBy: st?.authorizedBy ?? '',
+      scope: st?.scope ?? '',
+      accessTokenExpiresAt: isoOrNull(st?.accessTokenExpiresAt),
+      lastRefreshError: st?.lastRefreshError ?? '',
+      lastRefreshAt: isoOrNull(st?.lastRefreshAt),
+    };
+  } catch (err) {
+    throwMapped(err);
+  }
+}
+
+/** Revoke a connector's OAuth grant, or remove its stored static credential. */
 export async function daemonRevokeConnectorGrant(connector: string): Promise<void> {
   try {
     const client = userClient(ConnectorAuthService);

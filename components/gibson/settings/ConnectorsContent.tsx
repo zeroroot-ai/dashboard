@@ -4,8 +4,8 @@
  *
  * The connectors settings panel (ADR-0014). A person browses the curated
  * catalog, enables a connector with one click, authorizes an OAuth connector by
- * approving once at the vendor, and sees the live status of every enabled
- * connector. The daemon does all the work; this panel reads and drives it
+ * approving once at the vendor or stores a token for a secret connector
+ * (ADR-0015), and sees the live status of every enabled connector. The daemon does all the work; this panel reads and drives it
  * through the connector Server Actions (ADR-0067, dashboard#1126).
  *
  * Enable and Disable are tenant-admin RPCs (gibson#1553), so their controls
@@ -24,6 +24,7 @@ import {
   ShieldAlert,
   Trash2,
   ExternalLink,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -33,6 +34,7 @@ import {
   getConnectorAuthStatusAction,
   startConnectorAuthorizationAction,
   revokeConnectorGrantAction,
+  setConnectorSecretAction,
 } from "@/app/actions/connectors";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { setComponentAccessAction } from "@/app/actions/crd/access";
@@ -123,6 +125,8 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
   const [disableTarget, setDisableTarget] = React.useState<Connector | null>(null);
   const [authTarget, setAuthTarget] = React.useState<{ id: string; displayName: string } | null>(null);
   const [instanceUrl, setInstanceUrl] = React.useState("");
+  const [secretTarget, setSecretTarget] = React.useState<{ id: string; displayName: string } | null>(null);
+  const [secretValue, setSecretValue] = React.useState("");
 
   // Admin-only lifecycle controls, hide-on-loading (no FOUC).
   const { allowed: canEnable, loading: enableAuthLoading } = useAuthorize(CONNECTOR_ENABLE_RPC);
@@ -169,7 +173,7 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
       setEnabled(nextEnabled);
       await Promise.all(
         nextEnabled
-          .filter((c) => catalogAuthKind(nextCatalog, c.id) === "oauth")
+          .filter((c) => hasCredential(catalogAuthKind(nextCatalog, c.id)))
           .map((c) => loadAuth(c.id)),
       );
     } catch {
@@ -261,6 +265,33 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
     },
     [loadAuth, load],
   );
+
+  function openSecret(connectorId: string, displayName: string) {
+    setSecretValue("");
+    setSecretTarget({ id: connectorId, displayName });
+  }
+
+  async function onSetSecret(connectorId: string, displayName: string, secret: string) {
+    setConnectorBusy(connectorId, true);
+    try {
+      const res = await setConnectorSecretAction(connectorId, secret);
+      if (!res.ok) {
+        if (isSessionExpired(res.code)) {
+          notifySessionExpired();
+        } else {
+          toast.error(res.error || `Could not store the token for ${displayName}.`);
+        }
+        return;
+      }
+      setAuth((prev) => ({ ...prev, [connectorId]: res.data }));
+      toast.success(`Token stored for ${displayName}.`);
+      await load();
+    } catch {
+      toast.error(`Could not reach the service to store the token for ${displayName}.`);
+    } finally {
+      setConnectorBusy(connectorId, false);
+    }
+  }
 
   async function onRevoke(connectorId: string, displayName: string) {
     setConnectorBusy(connectorId, true);
@@ -399,6 +430,7 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
                 {enabled.map((c) => {
                   const entry = catalog.find((e) => e.id === c.id);
                   const isOAuth = entry?.auth === "oauth";
+                  const isSecret = entry?.auth === "secret";
                   const a = auth[c.id];
                   const badge = phaseBadge(c.phase);
                   return (
@@ -462,6 +494,27 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
                           </div>
                         ) : null}
 
+                        {isSecret && (!a || a.state === "unauthorized") ? (
+                          <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm">
+                            <span className="flex items-center gap-1.5">
+                              <ShieldAlert className="text-destructive size-4" /> No token stored yet.
+                            </span>
+                            <Button size="sm" disabled={busy[c.id]} onClick={() => openSecret(c.id, entry?.displayName ?? c.id)}>
+                              {busy[c.id] ? <Loader2 className="animate-spin" /> : <KeyRound />}
+                              Add token
+                            </Button>
+                          </div>
+                        ) : null}
+
+                        {isSecret && a?.state === "authorized" ? (
+                          <div className="text-muted-foreground space-y-1 text-sm">
+                            <span className="text-foreground flex items-center gap-1.5">
+                              <ShieldCheck className="size-4" />
+                              Token stored{a.authorizedBy ? ` by ${a.authorizedBy}` : ""}.
+                            </span>
+                          </div>
+                        ) : null}
+
                         {isOAuth && a?.state === "authorized" ? (
                           <div className="text-muted-foreground space-y-1 text-sm">
                             <span className="text-foreground flex items-center gap-1.5">
@@ -476,6 +529,26 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
                         ) : null}
                       </CardContent>
                       <CardFooter className="gap-2">
+                        {isSecret && a?.state === "authorized" ? (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={busy[c.id]}
+                              onClick={() => openSecret(c.id, entry?.displayName ?? c.id)}
+                            >
+                              Replace token
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={busy[c.id]}
+                              onClick={() => void onRevoke(c.id, entry?.displayName ?? c.id)}
+                            >
+                              Remove token
+                            </Button>
+                          </>
+                        ) : null}
                         {isOAuth && a?.state === "authorized" ? (
                           <Button
                             variant="outline"
@@ -562,12 +635,64 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={secretTarget !== null} onOpenChange={(open) => !open && setSecretTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add a token for {secretTarget?.displayName}</DialogTitle>
+            <DialogDescription>
+              Paste a personal access token from {secretTarget?.displayName}. It is stored in your
+              workspace secret store and sent to the vendor as the connector&apos;s credential. It is
+              never shown again.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2 py-2">
+            <Label htmlFor="connector-secret">Token</Label>
+            <Input
+              id="connector-secret"
+              type="password"
+              value={secretValue}
+              onChange={(e) => setSecretValue(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && secretValue.trim() && secretTarget) {
+                  const target = secretTarget;
+                  const value = secretValue.trim();
+                  setSecretTarget(null);
+                  setSecretValue("");
+                  void onSetSecret(target.id, target.displayName, value);
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSecretTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!secretValue.trim() || (secretTarget ? busy[secretTarget.id] : false)}
+              onClick={() => {
+                if (!secretTarget) return;
+                const target = secretTarget;
+                const value = secretValue.trim();
+                setSecretTarget(null);
+                setSecretValue("");
+                void onSetSecret(target.id, target.displayName, value);
+              }}
+            >
+              {secretTarget && busy[secretTarget.id] ? <Loader2 className="animate-spin" /> : null}
+              Save token
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={disableTarget !== null} onOpenChange={(open) => !open && setDisableTarget(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Disable this connector?</DialogTitle>
             <DialogDescription>
-              This removes the connector and its tools from your workspace. Any OAuth grant is revoked.
+              This removes the connector and its tools from your workspace. Any OAuth grant or stored token is revoked.
               You can enable it again from the catalog.
             </DialogDescription>
           </DialogHeader>
@@ -590,9 +715,14 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
   );
 }
 
-/** The auth kind of a catalog entry, for deciding whether to poll the grant. */
+/** The auth kind of a catalog entry, for deciding whether to load its credential state. */
 function catalogAuthKind(catalog: CatalogEntry[], id: string): string {
   return catalog.find((e) => e.id === id)?.auth ?? "none";
+}
+
+/** An oauth connector holds a grant; a secret connector holds a stored token. Both have state to show. */
+function hasCredential(authKind: string): boolean {
+  return authKind === "oauth" || authKind === "secret";
 }
 
 type MatrixScope = AccessScopeSelection["scope"];

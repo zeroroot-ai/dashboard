@@ -28,6 +28,7 @@ import {
   daemonGetConnectorAuthStatus,
   daemonStartConnectorAuthorization,
   daemonRevokeConnectorGrant,
+  daemonSetConnectorSecret,
 } from "@/src/lib/gibson-client/connectors";
 import type {
   CatalogEntryDTO,
@@ -63,6 +64,15 @@ const connectorIdSchema = z
 const instanceUrlSchema = z
   .string()
   .max(2048, "The instance URL must be at most 2048 characters");
+
+/**
+ * A static credential for an auth "secret" connector. It is forwarded to the
+ * daemon verbatim and never logged; the size cap only bounds the request.
+ */
+const connectorSecretSchema = z
+  .string()
+  .min(1, "A token is required")
+  .max(8192, "The token must be at most 8192 characters");
 
 // ---------------------------------------------------------------------------
 // Actions
@@ -218,7 +228,46 @@ export async function startConnectorAuthorizationAction(
   }
 }
 
-/** Revoke a connector's OAuth grant. */
+/**
+ * Store a static credential (a personal access token) for an auth "secret"
+ * connector (ADR-0015). Requires the tenant "admin" relation. The token is
+ * never echoed back; the returned status says who stored it.
+ */
+export async function setConnectorSecretAction(
+  connector: string,
+  secret: string,
+): Promise<ConnectorActionResult<ConnectorAuthDTO>> {
+  const session = await getServerSession();
+  if (!session?.user) {
+    return { ok: false, error: "Unauthenticated", code: "unauthenticated" };
+  }
+  const parsedId = connectorIdSchema.safeParse(connector);
+  if (!parsedId.success) {
+    return {
+      ok: false,
+      error: parsedId.error.issues[0]?.message ?? "Invalid input",
+      code: "bad_input",
+    };
+  }
+  const parsedSecret = connectorSecretSchema.safeParse(secret);
+  if (!parsedSecret.success) {
+    return {
+      ok: false,
+      error: parsedSecret.error.issues[0]?.message ?? "Invalid input",
+      code: "bad_input",
+    };
+  }
+  try {
+    const auth = await daemonSetConnectorSecret(parsedId.data, parsedSecret.data);
+    return { ok: true, data: auth };
+  } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
+    return serverActionError(err, { action: "setConnectorSecretAction" });
+  }
+}
+
+/** Revoke a connector's OAuth grant, or remove its stored static credential. */
 export async function revokeConnectorGrantAction(
   connector: string,
 ): Promise<ConnectorActionResult> {
