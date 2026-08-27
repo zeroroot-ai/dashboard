@@ -1822,6 +1822,15 @@ export const AuthRegistry: Record<string, AuthEntry> = {
     allowedIdentities: IdentityClass.USER,
     unauthenticated: false,
   },
+  "/gibson.tenant.v1.ConnectorAuthService/SetConnectorSecret": {
+    method: "/gibson.tenant.v1.ConnectorAuthService/SetConnectorSecret",
+    service: "gibson.tenant.v1.ConnectorAuthService",
+    relation: "admin",
+    objectType: "tenant",
+    objectDeriver: "tenant_from_identity",
+    allowedIdentities: IdentityClass.USER,
+    unauthenticated: false,
+  },
   "/gibson.tenant.v1.ConnectorAuthService/StartConnectorAuthorization": {
     method: "/gibson.tenant.v1.ConnectorAuthService/StartConnectorAuthorization",
     service: "gibson.tenant.v1.ConnectorAuthService",

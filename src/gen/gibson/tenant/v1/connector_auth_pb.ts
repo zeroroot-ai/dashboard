@@ -23,7 +23,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/connector_auth.proto.
  */
 export const file_gibson_tenant_v1_connector_auth: GenFile = /*@__PURE__*/
-  fileDesc("CiVnaWJzb24vdGVuYW50L3YxL2Nvbm5lY3Rvcl9hdXRoLnByb3RvEhBnaWJzb24udGVuYW50LnYxIjIKHUdldENvbm5lY3RvckF1dGhTdGF0dXNSZXF1ZXN0EhEKCWNvbm5lY3RvchgBIAEoCSJNCiJTdGFydENvbm5lY3RvckF1dGhvcml6YXRpb25SZXF1ZXN0EhEKCWNvbm5lY3RvchgBIAEoCRIUCgxpbnN0YW5jZV91cmwYAiABKAkiSwojU3RhcnRDb25uZWN0b3JBdXRob3JpemF0aW9uUmVzcG9uc2USFQoNYXV0aG9yaXplX3VybBgBIAEoCRINCgVzdGF0ZRgCIAEoCSK8AgoeR2V0Q29ubmVjdG9yQXV0aFN0YXR1c1Jlc3BvbnNlEjMKBXN0YXRlGAEgASgOMiQuZ2lic29uLnRlbmFudC52MS5Db25uZWN0b3JBdXRoU3RhdGUSFQoNYXV0aG9yaXplZF9ieRgCIAEoCRIxCg1hdXRob3JpemVkX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBINCgVzY29wZRgEIAEoCRI7ChdhY2Nlc3NfdG9rZW5fZXhwaXJlc19hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASGgoSbGFzdF9yZWZyZXNoX2Vycm9yGAYgASgJEjMKD2xhc3RfcmVmcmVzaF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiVwolQ29tcGxldGVDb25uZWN0b3JBdXRob3JpemF0aW9uUmVxdWVzdBIRCgljb25uZWN0b3IYASABKAkSDAoEY29kZRgCIAEoCRINCgVzdGF0ZRgDIAEoCSJqCiZDb21wbGV0ZUNvbm5lY3RvckF1dGhvcml6YXRpb25SZXNwb25zZRJACgZzdGF0dXMYASABKAsyMC5naWJzb24udGVuYW50LnYxLkdldENvbm5lY3RvckF1dGhTdGF0dXNSZXNwb25zZSIwChtSZXZva2VDb25uZWN0b3JHcmFudFJlcXVlc3QSEQoJY29ubmVjdG9yGAEgASgJIkkKHFJldm9rZUNvbm5lY3RvckdyYW50UmVzcG9uc2USEQoJaGFkX2dyYW50GAEgASgIEhYKDnZlbmRvcl9yZXZva2VkGAIgASgIKrABChJDb25uZWN0b3JBdXRoU3RhdGUSJAogQ09OTkVDVE9SX0FVVEhfU1RBVEVfVU5TUEVDSUZJRUQQABIlCiFDT05ORUNUT1JfQVVUSF9TVEFURV9VTkFVVEhPUklaRUQQARIjCh9DT05ORUNUT1JfQVVUSF9TVEFURV9BVVRIT1JJWkVEEAISKAokQ09OTkVDVE9SX0FVVEhfU1RBVEVfUkVGUkVTSF9GQUlMSU5HEAMy5AUKFENvbm5lY3RvckF1dGhTZXJ2aWNlEqkBChZHZXRDb25uZWN0b3JBdXRoU3RhdHVzEi8uZ2lic29uLnRlbmFudC52MS5HZXRDb25uZWN0b3JBdXRoU3RhdHVzUmVxdWVzdBowLmdpYnNvbi50ZW5hbnQudjEuR2V0Q29ubmVjdG9yQXV0aFN0YXR1c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARK3AQobU3RhcnRDb25uZWN0b3JBdXRob3JpemF0aW9uEjQuZ2lic29uLnRlbmFudC52MS5TdGFydENvbm5lY3RvckF1dGhvcml6YXRpb25SZXF1ZXN0GjUuZ2lic29uLnRlbmFudC52MS5TdGFydENvbm5lY3RvckF1dGhvcml6YXRpb25SZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARLAAQoeQ29tcGxldGVDb25uZWN0b3JBdXRob3JpemF0aW9uEjcuZ2lic29uLnRlbmFudC52MS5Db21wbGV0ZUNvbm5lY3RvckF1dGhvcml6YXRpb25SZXF1ZXN0GjguZ2lic29uLnRlbmFudC52MS5Db21wbGV0ZUNvbm5lY3RvckF1dGhvcml6YXRpb25SZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKiAQoUUmV2b2tlQ29ubmVjdG9yR3JhbnQSLS5naWJzb24udGVuYW50LnYxLlJldm9rZUNvbm5lY3RvckdyYW50UmVxdWVzdBouLmdpYnNvbi50ZW5hbnQudjEuUmV2b2tlQ29ubmVjdG9yR3JhbnRSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAUJUWlJnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vdGVuYW50L3YxO3RlbmFudHYxYgZwcm90bzM", [file_gibson_auth_v1_options, file_google_protobuf_timestamp]);
+  fileDesc("CiVnaWJzb24vdGVuYW50L3YxL2Nvbm5lY3Rvcl9hdXRoLnByb3RvEhBnaWJzb24udGVuYW50LnYxIjIKHUdldENvbm5lY3RvckF1dGhTdGF0dXNSZXF1ZXN0EhEKCWNvbm5lY3RvchgBIAEoCSJNCiJTdGFydENvbm5lY3RvckF1dGhvcml6YXRpb25SZXF1ZXN0EhEKCWNvbm5lY3RvchgBIAEoCRIUCgxpbnN0YW5jZV91cmwYAiABKAkiSwojU3RhcnRDb25uZWN0b3JBdXRob3JpemF0aW9uUmVzcG9uc2USFQoNYXV0aG9yaXplX3VybBgBIAEoCRINCgVzdGF0ZRgCIAEoCSK8AgoeR2V0Q29ubmVjdG9yQXV0aFN0YXR1c1Jlc3BvbnNlEjMKBXN0YXRlGAEgASgOMiQuZ2lic29uLnRlbmFudC52MS5Db25uZWN0b3JBdXRoU3RhdGUSFQoNYXV0aG9yaXplZF9ieRgCIAEoCRIxCg1hdXRob3JpemVkX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBINCgVzY29wZRgEIAEoCRI7ChdhY2Nlc3NfdG9rZW5fZXhwaXJlc19hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASGgoSbGFzdF9yZWZyZXNoX2Vycm9yGAYgASgJEjMKD2xhc3RfcmVmcmVzaF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiVwolQ29tcGxldGVDb25uZWN0b3JBdXRob3JpemF0aW9uUmVxdWVzdBIRCgljb25uZWN0b3IYASABKAkSDAoEY29kZRgCIAEoCRINCgVzdGF0ZRgDIAEoCSJqCiZDb21wbGV0ZUNvbm5lY3RvckF1dGhvcml6YXRpb25SZXNwb25zZRJACgZzdGF0dXMYASABKAsyMC5naWJzb24udGVuYW50LnYxLkdldENvbm5lY3RvckF1dGhTdGF0dXNSZXNwb25zZSIwChtSZXZva2VDb25uZWN0b3JHcmFudFJlcXVlc3QSEQoJY29ubmVjdG9yGAEgASgJIkkKHFJldm9rZUNvbm5lY3RvckdyYW50UmVzcG9uc2USEQoJaGFkX2dyYW50GAEgASgIEhYKDnZlbmRvcl9yZXZva2VkGAIgASgIIj4KGVNldENvbm5lY3RvclNlY3JldFJlcXVlc3QSEQoJY29ubmVjdG9yGAEgASgJEg4KBnNlY3JldBgCIAEoDCJeChpTZXRDb25uZWN0b3JTZWNyZXRSZXNwb25zZRJACgZzdGF0dXMYASABKAsyMC5naWJzb24udGVuYW50LnYxLkdldENvbm5lY3RvckF1dGhTdGF0dXNSZXNwb25zZSqwAQoSQ29ubmVjdG9yQXV0aFN0YXRlEiQKIENPTk5FQ1RPUl9BVVRIX1NUQVRFX1VOU1BFQ0lGSUVEEAASJQohQ09OTkVDVE9SX0FVVEhfU1RBVEVfVU5BVVRIT1JJWkVEEAESIwofQ09OTkVDVE9SX0FVVEhfU1RBVEVfQVVUSE9SSVpFRBACEigKJENPTk5FQ1RPUl9BVVRIX1NUQVRFX1JFRlJFU0hfRkFJTElORxADMoMHChRDb25uZWN0b3JBdXRoU2VydmljZRKpAQoWR2V0Q29ubmVjdG9yQXV0aFN0YXR1cxIvLmdpYnNvbi50ZW5hbnQudjEuR2V0Q29ubmVjdG9yQXV0aFN0YXR1c1JlcXVlc3QaMC5naWJzb24udGVuYW50LnYxLkdldENvbm5lY3RvckF1dGhTdGF0dXNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAEStwEKG1N0YXJ0Q29ubmVjdG9yQXV0aG9yaXphdGlvbhI0LmdpYnNvbi50ZW5hbnQudjEuU3RhcnRDb25uZWN0b3JBdXRob3JpemF0aW9uUmVxdWVzdBo1LmdpYnNvbi50ZW5hbnQudjEuU3RhcnRDb25uZWN0b3JBdXRob3JpemF0aW9uUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESwAEKHkNvbXBsZXRlQ29ubmVjdG9yQXV0aG9yaXphdGlvbhI3LmdpYnNvbi50ZW5hbnQudjEuQ29tcGxldGVDb25uZWN0b3JBdXRob3JpemF0aW9uUmVxdWVzdBo4LmdpYnNvbi50ZW5hbnQudjEuQ29tcGxldGVDb25uZWN0b3JBdXRob3JpemF0aW9uUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESogEKFFJldm9rZUNvbm5lY3RvckdyYW50Ei0uZ2lic29uLnRlbmFudC52MS5SZXZva2VDb25uZWN0b3JHcmFudFJlcXVlc3QaLi5naWJzb24udGVuYW50LnYxLlJldm9rZUNvbm5lY3RvckdyYW50UmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESnAEKElNldENvbm5lY3RvclNlY3JldBIrLmdpYnNvbi50ZW5hbnQudjEuU2V0Q29ubmVjdG9yU2VjcmV0UmVxdWVzdBosLmdpYnNvbi50ZW5hbnQudjEuU2V0Q29ubmVjdG9yU2VjcmV0UmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAFCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_gibson_auth_v1_options, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message gibson.tenant.v1.GetConnectorAuthStatusRequest
@@ -272,6 +272,52 @@ export const RevokeConnectorGrantResponseSchema: GenMessage<RevokeConnectorGrant
   messageDesc(file_gibson_tenant_v1_connector_auth, 7);
 
 /**
+ * @generated from message gibson.tenant.v1.SetConnectorSecretRequest
+ */
+export type SetConnectorSecretRequest = Message<"gibson.tenant.v1.SetConnectorSecretRequest"> & {
+  /**
+   * connector is the bare connector id the credential belongs to, e.g.
+   * "github".
+   *
+   * @generated from field: string connector = 1;
+   */
+  connector: string;
+
+  /**
+   * secret is the static credential the connector presents to the vendor,
+   * verbatim. The proxy sends it as "Authorization: Bearer <secret>". TLS in
+   * transit; never logged; never returned by any RPC.
+   *
+   * @generated from field: bytes secret = 2;
+   */
+  secret: Uint8Array;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.SetConnectorSecretRequest.
+ * Use `create(SetConnectorSecretRequestSchema)` to create a new message.
+ */
+export const SetConnectorSecretRequestSchema: GenMessage<SetConnectorSecretRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_connector_auth, 8);
+
+/**
+ * @generated from message gibson.tenant.v1.SetConnectorSecretResponse
+ */
+export type SetConnectorSecretResponse = Message<"gibson.tenant.v1.SetConnectorSecretResponse"> & {
+  /**
+   * @generated from field: gibson.tenant.v1.GetConnectorAuthStatusResponse status = 1;
+   */
+  status?: GetConnectorAuthStatusResponse;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.SetConnectorSecretResponse.
+ * Use `create(SetConnectorSecretResponseSchema)` to create a new message.
+ */
+export const SetConnectorSecretResponseSchema: GenMessage<SetConnectorSecretResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_connector_auth, 9);
+
+/**
  * ConnectorAuthState is the coarse authorization state of a connector.
  *
  * @generated from enum gibson.tenant.v1.ConnectorAuthState
@@ -376,7 +422,8 @@ export const ConnectorAuthService: GenService<{
    * RevokeConnectorGrant revokes the connector's grant: best-effort
    * revocation at the vendor, then deletion of the grant and the published
    * access token. Takes effect for every agent using the connector, because
-   * the platform holds the only credential. Idempotent.
+   * the platform holds the only credential. Idempotent. A static credential
+   * (SetConnectorSecret) is removed the same way, with no vendor call.
    *
    * @generated from rpc gibson.tenant.v1.ConnectorAuthService.RevokeConnectorGrant
    */
@@ -384,6 +431,24 @@ export const ConnectorAuthService: GenService<{
     methodKind: "unary";
     input: typeof RevokeConnectorGrantRequestSchema;
     output: typeof RevokeConnectorGrantResponseSchema;
+  },
+  /**
+   * SetConnectorSecret stores a customer-supplied static credential (for
+   * example a personal access token) for an `auth: secret` connector
+   * (ADR-0015). The daemon writes it to the tenant's configured secret store
+   * (the hosted OpenBao namespace or the customer's BYO Vault) as the
+   * connector's access secret, and records a static grant that names the
+   * human who supplied it. The materializer then publishes it to the
+   * ToolHive proxy exactly as it does an OAuth access token. The credential
+   * crosses the API once, inbound; no RPC ever returns it. Calling it again
+   * replaces the credential in place.
+   *
+   * @generated from rpc gibson.tenant.v1.ConnectorAuthService.SetConnectorSecret
+   */
+  setConnectorSecret: {
+    methodKind: "unary";
+    input: typeof SetConnectorSecretRequestSchema;
+    output: typeof SetConnectorSecretResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_tenant_v1_connector_auth, 0);
