@@ -126,8 +126,8 @@ export function RWXMatrix({
                         />
                       ) : (
                         <Switch
-                          checked={it.killSwitch ? !it.killSwitch[a] : false}
-                          disabled={readOnly || !it.killSwitch}
+                          checked={it.inTenantCatalog !== false && !!it.killSwitch && !it.killSwitch[a]}
+                          disabled={readOnly || it.inTenantCatalog === false || !it.killSwitch}
                           onCheckedChange={(v) => onToggle(it, a, v)}
                           aria-label={`${a} for ${it.displayName ?? it.name}`}
                         />
@@ -137,10 +137,10 @@ export function RWXMatrix({
                   {(!it.rwx[a] || (mode === "toggle" && !it.killSwitch)) && (
                     <TooltipContent>
                       <div className="max-w-xs text-xs">
-                        {mode === "toggle" && !it.killSwitch ? (
+                        {it.inTenantCatalog === false ? (
+                          <>Not in tenant catalog. Every action is off until an admin enables it.</>
+                        ) : mode === "toggle" && !it.killSwitch ? (
                           <>Switch state unavailable; the daemon could not read the deny tuples.</>
-                        ) : it.inTenantCatalog === false ? (
-                          <>Not in tenant catalog: no tenant_enabled for this tenant. Enable it first.</>
                         ) : it.denyingGates && it.denyingGates.length > 0 ? (
                           <>
                             Denied by:

@@ -144,6 +144,17 @@ describe("RWXMatrix kill-switch binding (dashboard#1135)", () => {
     expect(onEnable.mock.calls[0][0].name).toBe("gitlab");
   });
 
+  it("an item outside the tenant catalog renders every switch off and disabled, whatever the deny state", () => {
+    // execute has no deny tuple, so under the catalog it would render on.
+    // Outside the catalog nothing runs, so nothing may look on.
+    renderMatrix({ items: [{ ...baseItem, inTenantCatalog: false }], onToggle: () => {} });
+    for (const a of ["read", "write", "execute"]) {
+      const sw = screen.getByRole("switch", { name: new RegExp(`${a} for GitLab Plugin`, "i") });
+      expect(sw).toHaveAttribute("aria-checked", "false");
+      expect(sw).toBeDisabled();
+    }
+  });
+
   it("an item outside the tenant catalog shows no Enable without onEnable", () => {
     renderMatrix({ items: [{ ...baseItem, inTenantCatalog: false }], onToggle: () => {} });
     expect(screen.queryByRole("button", { name: /enable/i })).toBeNull();
