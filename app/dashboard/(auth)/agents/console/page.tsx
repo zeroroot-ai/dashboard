@@ -3,7 +3,7 @@ import { generateMeta } from "@/lib/utils";
 
 export function generateMetadata() {
   return generateMeta({
-    title: "Agent Console",
+    title: "Coding Agent Console",
     description: "Read-only live view of your tenant's running agents",
     canonical: "/agents/console",
   });

@@ -115,7 +115,7 @@ export function AgentConsole() {
         <div>
           <h1 className="flex items-center gap-2 text-lg font-semibold">
             <TerminalIcon className="size-5" aria-hidden="true" />
-            Agent Console
+            Coding Agent Console
           </h1>
           <p className="text-sm text-muted-foreground">
             A read-only, live view of the agents your tenant is running now.
