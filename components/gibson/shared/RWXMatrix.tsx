@@ -9,6 +9,7 @@
  * Spec: agent-authoring-and-tenant-entitlements task 29, R8.
  */
 import type { ReactNode } from "react";
+import type { ComponentSource } from "@/app/actions/read/listAccessibleComponents";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +40,7 @@ export interface RWXItem {
    * enrolled from a laptop must never look the same.
    */
   provenance?: {
-    source: "platform-catalog" | "tenant-enrolled" | "unknown";
+    source: ComponentSource;
     ownerTenant?: string;
     instances: number;
     lastHeartbeat?: Date;
@@ -47,7 +48,7 @@ export interface RWXItem {
   };
 }
 
-const SOURCE_LABEL: Record<NonNullable<RWXItem["provenance"]>["source"], string> = {
+const SOURCE_LABEL: Record<ComponentSource, string> = {
   "platform-catalog": "Platform catalog",
   "tenant-enrolled": "Tenant-enrolled",
   unknown: "Unknown source",
