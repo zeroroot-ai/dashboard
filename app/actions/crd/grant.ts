@@ -26,14 +26,12 @@ import { emitCrdAuditFromGate } from '@/src/lib/audit/crd';
 import type { ActionResult } from './types';
 import { requireCrdSession } from './_authz';
 import { grantComponentInput, revokeGrantInput, componentRefSchema } from './schemas';
+import { componentKey } from './component-key';
 import type { z } from 'zod';
 
 /** ComponentRef is the domain type for a {kind, name} component reference. */
 type ComponentRef = z.infer<typeof componentRefSchema>;
 
-function componentKey(ref: ComponentRef): string {
-  return `${ref.kind}-${ref.name}`;
-}
 
 export async function grantComponentAction(input: {
   tenantName: string;

@@ -22,6 +22,8 @@ const baseItem: RWXItem = {
   description: "v2.1.0, Source control",
   rwx: { read: true, write: false, execute: false },
   denyingGates: ["tenant:acme#tenant_write_disabled@component:plugin/gitlab"],
+  killSwitch: { read: false, write: true, execute: false },
+  inTenantCatalog: true,
 };
 
 describe("RWXMatrix", () => {
@@ -108,5 +110,42 @@ describe("RWXMatrix", () => {
       readSwitch.hasAttribute("disabled") ||
         readSwitch.hasAttribute("data-disabled"),
     ).toBe(true);
+  });
+});
+
+describe("RWXMatrix kill-switch binding (dashboard#1135)", () => {
+  it("a toggle switch shows the deny tuple state, not the effective capability", () => {
+    // execute: no deny tuple, but effective capability false (not granted).
+    // The switch must render ON, because clicking it would write a deny.
+    renderMatrix({ items: [baseItem], onToggle: () => {} });
+    const exec = screen.getByRole("switch", { name: /execute for GitLab Plugin/i });
+    expect(exec).toHaveAttribute("aria-checked", "true");
+    const write = screen.getByRole("switch", { name: /write for GitLab Plugin/i });
+    expect(write).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("an unknown switch state disables the switch instead of guessing", () => {
+    renderMatrix({ items: [{ ...baseItem, killSwitch: undefined }], onToggle: () => {} });
+    const read = screen.getByRole("switch", { name: /read for GitLab Plugin/i });
+    expect(read).toBeDisabled();
+    expect(read).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("an item outside the tenant catalog offers Enable when onEnable is given", () => {
+    const onEnable = vi.fn();
+    renderMatrix({
+      items: [{ ...baseItem, inTenantCatalog: false }],
+      onToggle: () => {},
+      onEnable,
+    });
+    expect(screen.getByText(/Not in tenant catalog/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /enable GitLab Plugin in tenant catalog/i }));
+    expect(onEnable).toHaveBeenCalledTimes(1);
+    expect(onEnable.mock.calls[0][0].name).toBe("gitlab");
+  });
+
+  it("an item outside the tenant catalog shows no Enable without onEnable", () => {
+    renderMatrix({ items: [{ ...baseItem, inTenantCatalog: false }], onToggle: () => {} });
+    expect(screen.queryByRole("button", { name: /enable/i })).toBeNull();
   });
 });
