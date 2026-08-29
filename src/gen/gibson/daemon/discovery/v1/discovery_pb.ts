@@ -35,7 +35,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/daemon/discovery/v1/discovery.proto.
  */
 export const file_gibson_daemon_discovery_v1_discovery: GenFile = /*@__PURE__*/
-  fileDesc("CipnaWJzb24vZGFlbW9uL2Rpc2NvdmVyeS92MS9kaXNjb3ZlcnkucHJvdG8SGmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxIkIKEkFjdGlvbkNhcGFiaWxpdGllcxIMCgRyZWFkGAEgASgIEg0KBXdyaXRlGAIgASgIEg8KB2V4ZWN1dGUYAyABKAgiuQEKC0NhdGFsb2dJdGVtEgwKBG5hbWUYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEgwKBGtpbmQYBCABKAkSOwoDcnd4GAUgASgLMi4uZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuQWN0aW9uQ2FwYWJpbGl0aWVzEhUKDWRlbnlpbmdfZ2F0ZXMYBiADKAkSDwoHdmVyc2lvbhgHIAEoCSIPCg1XaG9BbUlSZXF1ZXN0IpsBCg5XaG9BbUlSZXNwb25zZRIPCgd1c2VyX2lkGAEgASgJEhUKDWFjdGl2ZV90ZW5hbnQYAiABKAkSDwoHdGVuYW50cxgDIAMoCRINCgV0ZWFtcxgEIAMoCRIRCglyZWxhdGlvbnMYBSADKAkSFQoNaXNfYWdlbnRfYXV0aBgGIAEoCBIXCg9jb21wb25lbnRfc2NvcGUYByABKAkipwEKCUxpc3RRdWVyeRIwCgVzY29wZRgBIAEoDjIhLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLlNjb3BlEjIKBmFjdGlvbhgCIAEoDjIiLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkFjdGlvbhIRCgl0YXJnZXRfaWQYAyABKAkSDgoGY3Vyc29yGAQgASgJEhEKCXBhZ2Vfc2l6ZRgFIAEoBSJKChJMaXN0UGx1Z2luc1JlcXVlc3QSNAoFcXVlcnkYASABKAsyJS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0UXVlcnkiYgoTTGlzdFBsdWdpbnNSZXNwb25zZRI2CgVpdGVtcxgBIAMoCzInLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkNhdGFsb2dJdGVtEhMKC25leHRfY3Vyc29yGAIgASgJIkgKEExpc3RUb29sc1JlcXVlc3QSNAoFcXVlcnkYASABKAsyJS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0UXVlcnkiYAoRTGlzdFRvb2xzUmVzcG9uc2USNgoFaXRlbXMYASADKAsyJy5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5DYXRhbG9nSXRlbRITCgtuZXh0X2N1cnNvchgCIAEoCSJJChFMaXN0QWdlbnRzUmVxdWVzdBI0CgVxdWVyeRgBIAEoCzIlLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkxpc3RRdWVyeSJhChJMaXN0QWdlbnRzUmVzcG9uc2USNgoFaXRlbXMYASADKAsyJy5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5DYXRhbG9nSXRlbRITCgtuZXh0X2N1cnNvchgCIAEoCSJNChVMaXN0Q29ubmVjdG9yc1JlcXVlc3QSNAoFcXVlcnkYASABKAsyJS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0UXVlcnkiZQoWTGlzdENvbm5lY3RvcnNSZXNwb25zZRI2CgVpdGVtcxgBIAMoCzInLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkNhdGFsb2dJdGVtEhMKC25leHRfY3Vyc29yGAIgASgJIksKE0xpc3RMTE1TbG90c1JlcXVlc3QSNAoFcXVlcnkYASABKAsyJS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0UXVlcnkiUQoZTGlzdFJlcG9ydFN1cmZhY2VzUmVxdWVzdBI0CgVxdWVyeRgBIAEoCzIlLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkxpc3RRdWVyeSIlChVEZXNjcmliZVBsdWdpblJlcXVlc3QSDAoEbmFtZRgBIAEoCSIjChNEZXNjcmliZVRvb2xSZXF1ZXN0EgwKBG5hbWUYASABKAkiJAoURGVzY3JpYmVBZ2VudFJlcXVlc3QSDAoEbmFtZRgBIAEoCSL1AQoWRGVzY3JpYmVQbHVnaW5SZXNwb25zZRIMCgRuYW1lGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIPCgd2ZXJzaW9uGAQgASgJEj0KB21ldGhvZHMYBSADKAsyLC5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5NZXRob2REZXNjcmlwdG9yEjsKA3J3eBgGIAEoCzIuLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkFjdGlvbkNhcGFiaWxpdGllcxIVCg1kZW55aW5nX2dhdGVzGAcgAygJIoIBChBNZXRob2REZXNjcmlwdG9yEgwKBG5hbWUYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSFAoMYWN0aW9uX2NsYXNzGAMgASgJEhkKEWlucHV0X3NjaGVtYV9qc29uGAQgASgJEhoKEm91dHB1dF9zY2hlbWFfanNvbhgFIAEoCSKsAgoURGVzY3JpYmVUb29sUmVzcG9uc2USDAoEbmFtZRgBIAEoCRIUCgxkaXNwbGF5X25hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSDwoHdmVyc2lvbhgEIAEoCRIYChBpbnB1dF9wcm90b190eXBlGAUgASgJEhkKEW91dHB1dF9wcm90b190eXBlGAYgASgJEisKI3Jlc2VydmVzX2ZpZWxkXzEwMF9kaXNjb3ZlcnlfcmVzdWx0GAcgASgIEhQKDGFjdGlvbl9jbGFzcxgIIAEoCRI7CgNyd3gYCSABKAsyLi5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5BY3Rpb25DYXBhYmlsaXRpZXMSFQoNZGVueWluZ19nYXRlcxgKIAMoCSKWAgoVRGVzY3JpYmVBZ2VudFJlc3BvbnNlEgwKBG5hbWUYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEg8KB3ZlcnNpb24YBCABKAkSEQoJbGxtX3Nsb3RzGAUgAygJEkwKFXJlcXVlc3RlZF9wZXJtaXNzaW9ucxgGIAMoCzItLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLlBlcm1pc3Npb25SZXF1ZXN0EjsKA3J3eBgHIAEoCzIuLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkFjdGlvbkNhcGFiaWxpdGllcxIVCg1kZW55aW5nX2dhdGVzGAggAygJInYKEVBlcm1pc3Npb25SZXF1ZXN0EhMKC3RhcmdldF9uYW1lGAEgASgJEhMKC3RhcmdldF9raW5kGAIgASgJEg4KBmFjdGlvbhgDIAEoCRIQCghyZXF1aXJlZBgEIAEoCBIVCg1qdXN0aWZpY2F0aW9uGAUgASgJIkwKGFZhbGlkYXRlQ29tcG9uZW50UmVxdWVzdBIWCg5jb21wb25lbnRfeWFtbBgBIAEoDBIYChBwZXJtaXNzaW9uc195YW1sGAIgASgMItoBChlWYWxpZGF0ZUNvbXBvbmVudFJlc3BvbnNlEkIKDXNjaGVtYV9lcnJvcnMYASADKAsyKy5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5WYWxpZGF0aW9uRXJyb3ISPgoNYWNjZXNzX2Vycm9ycxgCIAMoCzInLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkFjY2Vzc0Vycm9yEhMKC3Nsb3RfZXJyb3JzGAMgAygJEhgKEHByb3RvX3Zpb2xhdGlvbnMYBCADKAkSCgoCb2sYBSABKAgiMAoPVmFsaWRhdGlvbkVycm9yEgwKBHBhdGgYASABKAkSDwoHbWVzc2FnZRgCIAEoCSJSCgtBY2Nlc3NFcnJvchISCgp0YXJnZXRfcmVmGAEgASgJEhgKEHJlcXVlc3RlZF9hY3Rpb24YAiABKAkSFQoNZmFpbGluZ19nYXRlcxgDIAMoCSKUAQoIU2xvdEluZm8SDAoEbmFtZRgBIAEoCRITCgtkZXNjcmlwdGlvbhgCIAEoCRIaChJtaW5fY29udGV4dF93aW5kb3cYAyABKAUSGQoRcmVxdWlyZWRfZmVhdHVyZXMYBCADKAkSGAoQcHJlZmVycmVkX21vZGVscxgFIAMoCRIUCgxzYXRpc2ZpZWRfYnkYBiADKAkiSwoUTGlzdExMTVNsb3RzUmVzcG9uc2USMwoFc2xvdHMYASADKAsyJC5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5TbG90SW5mbyJHCg1SZXBvcnRTdXJmYWNlEgwKBGtpbmQYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSEwoLc2NoZW1hX2pzb24YAyABKAkiWQoaTGlzdFJlcG9ydFN1cmZhY2VzUmVzcG9uc2USOwoIc3VyZmFjZXMYASADKAsyKS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5SZXBvcnRTdXJmYWNlIkgKH1N1Z2dlc3RNaXNzaW5nQ2FwYWJpbGl0eVJlcXVlc3QSFQoNbmVlZGVkX3RhcmdldBgBIAEoCRIOCgZhY3Rpb24YAiABKAkiTQogU3VnZ2VzdE1pc3NpbmdDYXBhYmlsaXR5UmVzcG9uc2USDwoHbWVzc2FnZRgBIAEoCRIYChBhY3Rpb25hYmxlX3BhdGhzGAIgAygJKrMBCgVTY29wZRIVChFTQ09QRV9VTlNQRUNJRklFRBAAEhgKFFNDT1BFX1NZU1RFTV9DQVRBTE9HEAESGgoWU0NPUEVfVEVOQU5UX0FWQUlMQUJMRRACEhYKElNDT1BFX1VTRVJfRU5BQkxFRBADEhsKF1NDT1BFX0NPTVBPTkVOVF9FTkFCTEVEEAQSEwoPU0NPUEVfVEVBTV9WSUVXEAUSEwoPU0NPUEVfVVNFUl9WSUVXEAYqVwoGQWN0aW9uEhYKEkFDVElPTl9VTlNQRUNJRklFRBAAEg8KC0FDVElPTl9SRUFEEAESEAoMQUNUSU9OX1dSSVRFEAISEgoOQUNUSU9OX0VYRUNVVEUQAzLaDwoQRGlzY292ZXJ5U2VydmljZRKNAQoGV2hvQW1JEikuZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuV2hvQW1JUmVxdWVzdBoqLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLldob0FtSVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKcAQoLTGlzdFBsdWdpbnMSLi5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0UGx1Z2luc1JlcXVlc3QaLy5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0UGx1Z2luc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKlAQoORGVzY3JpYmVQbHVnaW4SMS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5EZXNjcmliZVBsdWdpblJlcXVlc3QaMi5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5EZXNjcmliZVBsdWdpblJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKWAQoJTGlzdFRvb2xzEiwuZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuTGlzdFRvb2xzUmVxdWVzdBotLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkxpc3RUb29sc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKfAQoMRGVzY3JpYmVUb29sEi8uZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuRGVzY3JpYmVUb29sUmVxdWVzdBowLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkRlc2NyaWJlVG9vbFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKZAQoKTGlzdEFnZW50cxItLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkxpc3RBZ2VudHNSZXF1ZXN0Gi4uZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuTGlzdEFnZW50c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKlAQoOTGlzdENvbm5lY3RvcnMSMS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0Q29ubmVjdG9yc1JlcXVlc3QaMi5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0Q29ubmVjdG9yc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKiAQoNRGVzY3JpYmVBZ2VudBIwLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkRlc2NyaWJlQWdlbnRSZXF1ZXN0GjEuZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuRGVzY3JpYmVBZ2VudFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKfAQoMTGlzdExMTVNsb3RzEi8uZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuTGlzdExMTVNsb3RzUmVxdWVzdBowLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkxpc3RMTE1TbG90c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKxAQoSTGlzdFJlcG9ydFN1cmZhY2VzEjUuZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuTGlzdFJlcG9ydFN1cmZhY2VzUmVxdWVzdBo2LmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkxpc3RSZXBvcnRTdXJmYWNlc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKuAQoRVmFsaWRhdGVDb21wb25lbnQSNC5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5WYWxpZGF0ZUNvbXBvbmVudFJlcXVlc3QaNS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5WYWxpZGF0ZUNvbXBvbmVudFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxLDAQoYU3VnZ2VzdE1pc3NpbmdDYXBhYmlsaXR5EjsuZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuU3VnZ2VzdE1pc3NpbmdDYXBhYmlsaXR5UmVxdWVzdBo8LmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLlN1Z2dlc3RNaXNzaW5nQ2FwYWJpbGl0eVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgB0J9UAFaX2dpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi9kYWVtb24vZGlzY292ZXJ5L3YxO2Rpc2NvdmVyeXBiqgIXR2lic29uLkRhZW1vbi5EaXNjb3ZlcnliBnByb3RvMw", [file_gibson_auth_v1_options]);
+  fileDesc("CipnaWJzb24vZGFlbW9uL2Rpc2NvdmVyeS92MS9kaXNjb3ZlcnkucHJvdG8SGmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxIkIKEkFjdGlvbkNhcGFiaWxpdGllcxIMCgRyZWFkGAEgASgIEg0KBXdyaXRlGAIgASgIEg8KB2V4ZWN1dGUYAyABKAgilQIKC0NhdGFsb2dJdGVtEgwKBG5hbWUYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEgwKBGtpbmQYBCABKAkSOwoDcnd4GAUgASgLMi4uZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuQWN0aW9uQ2FwYWJpbGl0aWVzEhUKDWRlbnlpbmdfZ2F0ZXMYBiADKAkSDwoHdmVyc2lvbhgHIAEoCRI/Cg1raWxsX3N3aXRjaGVzGAggASgLMiguZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuS2lsbFN3aXRjaGVzEhkKEWluX3RlbmFudF9jYXRhbG9nGAkgASgIIsoBCgxLaWxsU3dpdGNoZXMSPgoGdGVuYW50GAEgASgLMi4uZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuQWN0aW9uQ2FwYWJpbGl0aWVzEjwKBHRlYW0YAiABKAsyLi5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5BY3Rpb25DYXBhYmlsaXRpZXMSPAoEdXNlchgDIAEoCzIuLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkFjdGlvbkNhcGFiaWxpdGllcyIPCg1XaG9BbUlSZXF1ZXN0IpsBCg5XaG9BbUlSZXNwb25zZRIPCgd1c2VyX2lkGAEgASgJEhUKDWFjdGl2ZV90ZW5hbnQYAiABKAkSDwoHdGVuYW50cxgDIAMoCRINCgV0ZWFtcxgEIAMoCRIRCglyZWxhdGlvbnMYBSADKAkSFQoNaXNfYWdlbnRfYXV0aBgGIAEoCBIXCg9jb21wb25lbnRfc2NvcGUYByABKAkipwEKCUxpc3RRdWVyeRIwCgVzY29wZRgBIAEoDjIhLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLlNjb3BlEjIKBmFjdGlvbhgCIAEoDjIiLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkFjdGlvbhIRCgl0YXJnZXRfaWQYAyABKAkSDgoGY3Vyc29yGAQgASgJEhEKCXBhZ2Vfc2l6ZRgFIAEoBSJKChJMaXN0UGx1Z2luc1JlcXVlc3QSNAoFcXVlcnkYASABKAsyJS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0UXVlcnkiYgoTTGlzdFBsdWdpbnNSZXNwb25zZRI2CgVpdGVtcxgBIAMoCzInLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkNhdGFsb2dJdGVtEhMKC25leHRfY3Vyc29yGAIgASgJIkgKEExpc3RUb29sc1JlcXVlc3QSNAoFcXVlcnkYASABKAsyJS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0UXVlcnkiYAoRTGlzdFRvb2xzUmVzcG9uc2USNgoFaXRlbXMYASADKAsyJy5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5DYXRhbG9nSXRlbRITCgtuZXh0X2N1cnNvchgCIAEoCSJJChFMaXN0QWdlbnRzUmVxdWVzdBI0CgVxdWVyeRgBIAEoCzIlLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkxpc3RRdWVyeSJhChJMaXN0QWdlbnRzUmVzcG9uc2USNgoFaXRlbXMYASADKAsyJy5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5DYXRhbG9nSXRlbRITCgtuZXh0X2N1cnNvchgCIAEoCSJNChVMaXN0Q29ubmVjdG9yc1JlcXVlc3QSNAoFcXVlcnkYASABKAsyJS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0UXVlcnkiZQoWTGlzdENvbm5lY3RvcnNSZXNwb25zZRI2CgVpdGVtcxgBIAMoCzInLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkNhdGFsb2dJdGVtEhMKC25leHRfY3Vyc29yGAIgASgJIksKE0xpc3RMTE1TbG90c1JlcXVlc3QSNAoFcXVlcnkYASABKAsyJS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0UXVlcnkiUQoZTGlzdFJlcG9ydFN1cmZhY2VzUmVxdWVzdBI0CgVxdWVyeRgBIAEoCzIlLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkxpc3RRdWVyeSIlChVEZXNjcmliZVBsdWdpblJlcXVlc3QSDAoEbmFtZRgBIAEoCSIjChNEZXNjcmliZVRvb2xSZXF1ZXN0EgwKBG5hbWUYASABKAkiJAoURGVzY3JpYmVBZ2VudFJlcXVlc3QSDAoEbmFtZRgBIAEoCSL1AQoWRGVzY3JpYmVQbHVnaW5SZXNwb25zZRIMCgRuYW1lGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIPCgd2ZXJzaW9uGAQgASgJEj0KB21ldGhvZHMYBSADKAsyLC5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5NZXRob2REZXNjcmlwdG9yEjsKA3J3eBgGIAEoCzIuLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkFjdGlvbkNhcGFiaWxpdGllcxIVCg1kZW55aW5nX2dhdGVzGAcgAygJIoIBChBNZXRob2REZXNjcmlwdG9yEgwKBG5hbWUYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSFAoMYWN0aW9uX2NsYXNzGAMgASgJEhkKEWlucHV0X3NjaGVtYV9qc29uGAQgASgJEhoKEm91dHB1dF9zY2hlbWFfanNvbhgFIAEoCSKsAgoURGVzY3JpYmVUb29sUmVzcG9uc2USDAoEbmFtZRgBIAEoCRIUCgxkaXNwbGF5X25hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSDwoHdmVyc2lvbhgEIAEoCRIYChBpbnB1dF9wcm90b190eXBlGAUgASgJEhkKEW91dHB1dF9wcm90b190eXBlGAYgASgJEisKI3Jlc2VydmVzX2ZpZWxkXzEwMF9kaXNjb3ZlcnlfcmVzdWx0GAcgASgIEhQKDGFjdGlvbl9jbGFzcxgIIAEoCRI7CgNyd3gYCSABKAsyLi5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5BY3Rpb25DYXBhYmlsaXRpZXMSFQoNZGVueWluZ19nYXRlcxgKIAMoCSKWAgoVRGVzY3JpYmVBZ2VudFJlc3BvbnNlEgwKBG5hbWUYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEg8KB3ZlcnNpb24YBCABKAkSEQoJbGxtX3Nsb3RzGAUgAygJEkwKFXJlcXVlc3RlZF9wZXJtaXNzaW9ucxgGIAMoCzItLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLlBlcm1pc3Npb25SZXF1ZXN0EjsKA3J3eBgHIAEoCzIuLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkFjdGlvbkNhcGFiaWxpdGllcxIVCg1kZW55aW5nX2dhdGVzGAggAygJInYKEVBlcm1pc3Npb25SZXF1ZXN0EhMKC3RhcmdldF9uYW1lGAEgASgJEhMKC3RhcmdldF9raW5kGAIgASgJEg4KBmFjdGlvbhgDIAEoCRIQCghyZXF1aXJlZBgEIAEoCBIVCg1qdXN0aWZpY2F0aW9uGAUgASgJIkwKGFZhbGlkYXRlQ29tcG9uZW50UmVxdWVzdBIWCg5jb21wb25lbnRfeWFtbBgBIAEoDBIYChBwZXJtaXNzaW9uc195YW1sGAIgASgMItoBChlWYWxpZGF0ZUNvbXBvbmVudFJlc3BvbnNlEkIKDXNjaGVtYV9lcnJvcnMYASADKAsyKy5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5WYWxpZGF0aW9uRXJyb3ISPgoNYWNjZXNzX2Vycm9ycxgCIAMoCzInLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkFjY2Vzc0Vycm9yEhMKC3Nsb3RfZXJyb3JzGAMgAygJEhgKEHByb3RvX3Zpb2xhdGlvbnMYBCADKAkSCgoCb2sYBSABKAgiMAoPVmFsaWRhdGlvbkVycm9yEgwKBHBhdGgYASABKAkSDwoHbWVzc2FnZRgCIAEoCSJSCgtBY2Nlc3NFcnJvchISCgp0YXJnZXRfcmVmGAEgASgJEhgKEHJlcXVlc3RlZF9hY3Rpb24YAiABKAkSFQoNZmFpbGluZ19nYXRlcxgDIAMoCSKUAQoIU2xvdEluZm8SDAoEbmFtZRgBIAEoCRITCgtkZXNjcmlwdGlvbhgCIAEoCRIaChJtaW5fY29udGV4dF93aW5kb3cYAyABKAUSGQoRcmVxdWlyZWRfZmVhdHVyZXMYBCADKAkSGAoQcHJlZmVycmVkX21vZGVscxgFIAMoCRIUCgxzYXRpc2ZpZWRfYnkYBiADKAkiSwoUTGlzdExMTVNsb3RzUmVzcG9uc2USMwoFc2xvdHMYASADKAsyJC5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5TbG90SW5mbyJHCg1SZXBvcnRTdXJmYWNlEgwKBGtpbmQYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSEwoLc2NoZW1hX2pzb24YAyABKAkiWQoaTGlzdFJlcG9ydFN1cmZhY2VzUmVzcG9uc2USOwoIc3VyZmFjZXMYASADKAsyKS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5SZXBvcnRTdXJmYWNlIkgKH1N1Z2dlc3RNaXNzaW5nQ2FwYWJpbGl0eVJlcXVlc3QSFQoNbmVlZGVkX3RhcmdldBgBIAEoCRIOCgZhY3Rpb24YAiABKAkiTQogU3VnZ2VzdE1pc3NpbmdDYXBhYmlsaXR5UmVzcG9uc2USDwoHbWVzc2FnZRgBIAEoCRIYChBhY3Rpb25hYmxlX3BhdGhzGAIgAygJKrMBCgVTY29wZRIVChFTQ09QRV9VTlNQRUNJRklFRBAAEhgKFFNDT1BFX1NZU1RFTV9DQVRBTE9HEAESGgoWU0NPUEVfVEVOQU5UX0FWQUlMQUJMRRACEhYKElNDT1BFX1VTRVJfRU5BQkxFRBADEhsKF1NDT1BFX0NPTVBPTkVOVF9FTkFCTEVEEAQSEwoPU0NPUEVfVEVBTV9WSUVXEAUSEwoPU0NPUEVfVVNFUl9WSUVXEAYqVwoGQWN0aW9uEhYKEkFDVElPTl9VTlNQRUNJRklFRBAAEg8KC0FDVElPTl9SRUFEEAESEAoMQUNUSU9OX1dSSVRFEAISEgoOQUNUSU9OX0VYRUNVVEUQAzLaDwoQRGlzY292ZXJ5U2VydmljZRKNAQoGV2hvQW1JEikuZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuV2hvQW1JUmVxdWVzdBoqLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLldob0FtSVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKcAQoLTGlzdFBsdWdpbnMSLi5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0UGx1Z2luc1JlcXVlc3QaLy5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0UGx1Z2luc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKlAQoORGVzY3JpYmVQbHVnaW4SMS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5EZXNjcmliZVBsdWdpblJlcXVlc3QaMi5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5EZXNjcmliZVBsdWdpblJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKWAQoJTGlzdFRvb2xzEiwuZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuTGlzdFRvb2xzUmVxdWVzdBotLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkxpc3RUb29sc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKfAQoMRGVzY3JpYmVUb29sEi8uZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuRGVzY3JpYmVUb29sUmVxdWVzdBowLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkRlc2NyaWJlVG9vbFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKZAQoKTGlzdEFnZW50cxItLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkxpc3RBZ2VudHNSZXF1ZXN0Gi4uZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuTGlzdEFnZW50c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKlAQoOTGlzdENvbm5lY3RvcnMSMS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0Q29ubmVjdG9yc1JlcXVlc3QaMi5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5MaXN0Q29ubmVjdG9yc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKiAQoNRGVzY3JpYmVBZ2VudBIwLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkRlc2NyaWJlQWdlbnRSZXF1ZXN0GjEuZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuRGVzY3JpYmVBZ2VudFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKfAQoMTGlzdExMTVNsb3RzEi8uZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuTGlzdExMTVNsb3RzUmVxdWVzdBowLmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkxpc3RMTE1TbG90c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKxAQoSTGlzdFJlcG9ydFN1cmZhY2VzEjUuZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuTGlzdFJlcG9ydFN1cmZhY2VzUmVxdWVzdBo2LmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLkxpc3RSZXBvcnRTdXJmYWNlc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxKuAQoRVmFsaWRhdGVDb21wb25lbnQSNC5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5WYWxpZGF0ZUNvbXBvbmVudFJlcXVlc3QaNS5naWJzb24uZGFlbW9uLmRpc2NvdmVyeS52MS5WYWxpZGF0ZUNvbXBvbmVudFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgBxLDAQoYU3VnZ2VzdE1pc3NpbmdDYXBhYmlsaXR5EjsuZ2lic29uLmRhZW1vbi5kaXNjb3ZlcnkudjEuU3VnZ2VzdE1pc3NpbmdDYXBhYmlsaXR5UmVxdWVzdBo8LmdpYnNvbi5kYWVtb24uZGlzY292ZXJ5LnYxLlN1Z2dlc3RNaXNzaW5nQ2FwYWJpbGl0eVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgB0J9UAFaX2dpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi9kYWVtb24vZGlzY292ZXJ5L3YxO2Rpc2NvdmVyeXBiqgIXR2lic29uLkRhZW1vbi5EaXNjb3ZlcnliBnByb3RvMw", [file_gibson_auth_v1_options]);
 
 /**
  * ActionCapabilities is the per-action effective state for a single catalog
@@ -124,6 +124,28 @@ export type CatalogItem = Message<"gibson.daemon.discovery.v1.CatalogItem"> & {
    * @generated from field: string version = 7;
    */
   version: string;
+
+  /**
+   * kill_switches reports which deny tuples EXIST on this item, per scope
+   * layer and per action, so a client can render the switch it writes
+   * (tenant_<action>_disabled and friends). This is state, not capability:
+   * rwx is the effective result, which also needs the catalog and a grant.
+   * A layer is unset when the query gave it no subject (team needs
+   * SCOPE_TEAM_VIEW; user is the viewed user under SCOPE_USER_VIEW, else
+   * the caller). Unset on a check failure: the client then shows nothing
+   * rather than a guess.
+   *
+   * @generated from field: gibson.daemon.discovery.v1.KillSwitches kill_switches = 8;
+   */
+  killSwitches?: KillSwitches;
+
+  /**
+   * in_tenant_catalog is whether tenant_enabled holds for the caller's
+   * tenant on this item (the in_tenant_catalog gate every can_* needs).
+   *
+   * @generated from field: bool in_tenant_catalog = 9;
+   */
+  inTenantCatalog: boolean;
 };
 
 /**
@@ -132,6 +154,36 @@ export type CatalogItem = Message<"gibson.daemon.discovery.v1.CatalogItem"> & {
  */
 export const CatalogItemSchema: GenMessage<CatalogItem> = /*@__PURE__*/
   messageDesc(file_gibson_daemon_discovery_v1_discovery, 1);
+
+/**
+ * KillSwitches: per-layer deny state. Each ActionCapabilities here means
+ * "a deny tuple exists for this action at this layer" (true = denied).
+ *
+ * @generated from message gibson.daemon.discovery.v1.KillSwitches
+ */
+export type KillSwitches = Message<"gibson.daemon.discovery.v1.KillSwitches"> & {
+  /**
+   * @generated from field: gibson.daemon.discovery.v1.ActionCapabilities tenant = 1;
+   */
+  tenant?: ActionCapabilities;
+
+  /**
+   * @generated from field: gibson.daemon.discovery.v1.ActionCapabilities team = 2;
+   */
+  team?: ActionCapabilities;
+
+  /**
+   * @generated from field: gibson.daemon.discovery.v1.ActionCapabilities user = 3;
+   */
+  user?: ActionCapabilities;
+};
+
+/**
+ * Describes the message gibson.daemon.discovery.v1.KillSwitches.
+ * Use `create(KillSwitchesSchema)` to create a new message.
+ */
+export const KillSwitchesSchema: GenMessage<KillSwitches> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 2);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.WhoAmIRequest
@@ -144,7 +196,7 @@ export type WhoAmIRequest = Message<"gibson.daemon.discovery.v1.WhoAmIRequest"> 
  * Use `create(WhoAmIRequestSchema)` to create a new message.
  */
 export const WhoAmIRequestSchema: GenMessage<WhoAmIRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 2);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 3);
 
 /**
  * WhoAmIResponse mirrors the dashboard's existing /api/auth/me + FGA lookup
@@ -203,7 +255,7 @@ export type WhoAmIResponse = Message<"gibson.daemon.discovery.v1.WhoAmIResponse"
  * Use `create(WhoAmIResponseSchema)` to create a new message.
  */
 export const WhoAmIResponseSchema: GenMessage<WhoAmIResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 3);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 4);
 
 /**
  * ListQuery is the shared shape for list-filter parameters. Each RPC's
@@ -251,7 +303,7 @@ export type ListQuery = Message<"gibson.daemon.discovery.v1.ListQuery"> & {
  * Use `create(ListQuerySchema)` to create a new message.
  */
 export const ListQuerySchema: GenMessage<ListQuery> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 4);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 5);
 
 /**
  * Per-RPC List request/response wrappers. Buf STANDARD requires distinct
@@ -272,7 +324,7 @@ export type ListPluginsRequest = Message<"gibson.daemon.discovery.v1.ListPlugins
  * Use `create(ListPluginsRequestSchema)` to create a new message.
  */
 export const ListPluginsRequestSchema: GenMessage<ListPluginsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 5);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 6);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.ListPluginsResponse
@@ -294,7 +346,7 @@ export type ListPluginsResponse = Message<"gibson.daemon.discovery.v1.ListPlugin
  * Use `create(ListPluginsResponseSchema)` to create a new message.
  */
 export const ListPluginsResponseSchema: GenMessage<ListPluginsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 6);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 7);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.ListToolsRequest
@@ -311,7 +363,7 @@ export type ListToolsRequest = Message<"gibson.daemon.discovery.v1.ListToolsRequ
  * Use `create(ListToolsRequestSchema)` to create a new message.
  */
 export const ListToolsRequestSchema: GenMessage<ListToolsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 7);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 8);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.ListToolsResponse
@@ -333,7 +385,7 @@ export type ListToolsResponse = Message<"gibson.daemon.discovery.v1.ListToolsRes
  * Use `create(ListToolsResponseSchema)` to create a new message.
  */
 export const ListToolsResponseSchema: GenMessage<ListToolsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 8);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 9);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.ListAgentsRequest
@@ -350,7 +402,7 @@ export type ListAgentsRequest = Message<"gibson.daemon.discovery.v1.ListAgentsRe
  * Use `create(ListAgentsRequestSchema)` to create a new message.
  */
 export const ListAgentsRequestSchema: GenMessage<ListAgentsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 9);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 10);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.ListAgentsResponse
@@ -372,7 +424,7 @@ export type ListAgentsResponse = Message<"gibson.daemon.discovery.v1.ListAgentsR
  * Use `create(ListAgentsResponseSchema)` to create a new message.
  */
 export const ListAgentsResponseSchema: GenMessage<ListAgentsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 10);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 11);
 
 /**
  * Connectors are the fourth component kind (ADR-0067). Items carry
@@ -392,7 +444,7 @@ export type ListConnectorsRequest = Message<"gibson.daemon.discovery.v1.ListConn
  * Use `create(ListConnectorsRequestSchema)` to create a new message.
  */
 export const ListConnectorsRequestSchema: GenMessage<ListConnectorsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 11);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 12);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.ListConnectorsResponse
@@ -414,7 +466,7 @@ export type ListConnectorsResponse = Message<"gibson.daemon.discovery.v1.ListCon
  * Use `create(ListConnectorsResponseSchema)` to create a new message.
  */
 export const ListConnectorsResponseSchema: GenMessage<ListConnectorsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 12);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 13);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.ListLLMSlotsRequest
@@ -431,7 +483,7 @@ export type ListLLMSlotsRequest = Message<"gibson.daemon.discovery.v1.ListLLMSlo
  * Use `create(ListLLMSlotsRequestSchema)` to create a new message.
  */
 export const ListLLMSlotsRequestSchema: GenMessage<ListLLMSlotsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 13);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 14);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.ListReportSurfacesRequest
@@ -448,7 +500,7 @@ export type ListReportSurfacesRequest = Message<"gibson.daemon.discovery.v1.List
  * Use `create(ListReportSurfacesRequestSchema)` to create a new message.
  */
 export const ListReportSurfacesRequestSchema: GenMessage<ListReportSurfacesRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 14);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 15);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.DescribePluginRequest
@@ -467,7 +519,7 @@ export type DescribePluginRequest = Message<"gibson.daemon.discovery.v1.Describe
  * Use `create(DescribePluginRequestSchema)` to create a new message.
  */
 export const DescribePluginRequestSchema: GenMessage<DescribePluginRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 15);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 16);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.DescribeToolRequest
@@ -484,7 +536,7 @@ export type DescribeToolRequest = Message<"gibson.daemon.discovery.v1.DescribeTo
  * Use `create(DescribeToolRequestSchema)` to create a new message.
  */
 export const DescribeToolRequestSchema: GenMessage<DescribeToolRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 16);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 17);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.DescribeAgentRequest
@@ -501,7 +553,7 @@ export type DescribeAgentRequest = Message<"gibson.daemon.discovery.v1.DescribeA
  * Use `create(DescribeAgentRequestSchema)` to create a new message.
  */
 export const DescribeAgentRequestSchema: GenMessage<DescribeAgentRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 17);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 18);
 
 /**
  * DescribePluginResponse returns the plugin's method set with per-method
@@ -552,7 +604,7 @@ export type DescribePluginResponse = Message<"gibson.daemon.discovery.v1.Describ
  * Use `create(DescribePluginResponseSchema)` to create a new message.
  */
 export const DescribePluginResponseSchema: GenMessage<DescribePluginResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 18);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 19);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.MethodDescriptor
@@ -597,7 +649,7 @@ export type MethodDescriptor = Message<"gibson.daemon.discovery.v1.MethodDescrip
  * Use `create(MethodDescriptorSchema)` to create a new message.
  */
 export const MethodDescriptorSchema: GenMessage<MethodDescriptor> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 19);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 20);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.DescribeToolResponse
@@ -669,7 +721,7 @@ export type DescribeToolResponse = Message<"gibson.daemon.discovery.v1.DescribeT
  * Use `create(DescribeToolResponseSchema)` to create a new message.
  */
 export const DescribeToolResponseSchema: GenMessage<DescribeToolResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 20);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 21);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.DescribeAgentResponse
@@ -729,7 +781,7 @@ export type DescribeAgentResponse = Message<"gibson.daemon.discovery.v1.Describe
  * Use `create(DescribeAgentResponseSchema)` to create a new message.
  */
 export const DescribeAgentResponseSchema: GenMessage<DescribeAgentResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 21);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 22);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.PermissionRequest
@@ -772,7 +824,7 @@ export type PermissionRequest = Message<"gibson.daemon.discovery.v1.PermissionRe
  * Use `create(PermissionRequestSchema)` to create a new message.
  */
 export const PermissionRequestSchema: GenMessage<PermissionRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 22);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 23);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.ValidateComponentRequest
@@ -797,7 +849,7 @@ export type ValidateComponentRequest = Message<"gibson.daemon.discovery.v1.Valid
  * Use `create(ValidateComponentRequestSchema)` to create a new message.
  */
 export const ValidateComponentRequestSchema: GenMessage<ValidateComponentRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 23);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 24);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.ValidateComponentResponse
@@ -837,7 +889,7 @@ export type ValidateComponentResponse = Message<"gibson.daemon.discovery.v1.Vali
  * Use `create(ValidateComponentResponseSchema)` to create a new message.
  */
 export const ValidateComponentResponseSchema: GenMessage<ValidateComponentResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 24);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 25);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.ValidationError
@@ -861,7 +913,7 @@ export type ValidationError = Message<"gibson.daemon.discovery.v1.ValidationErro
  * Use `create(ValidationErrorSchema)` to create a new message.
  */
 export const ValidationErrorSchema: GenMessage<ValidationError> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 25);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 26);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.AccessError
@@ -894,7 +946,7 @@ export type AccessError = Message<"gibson.daemon.discovery.v1.AccessError"> & {
  * Use `create(AccessErrorSchema)` to create a new message.
  */
 export const AccessErrorSchema: GenMessage<AccessError> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 26);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 27);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.SlotInfo
@@ -941,7 +993,7 @@ export type SlotInfo = Message<"gibson.daemon.discovery.v1.SlotInfo"> & {
  * Use `create(SlotInfoSchema)` to create a new message.
  */
 export const SlotInfoSchema: GenMessage<SlotInfo> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 27);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 28);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.ListLLMSlotsResponse
@@ -958,7 +1010,7 @@ export type ListLLMSlotsResponse = Message<"gibson.daemon.discovery.v1.ListLLMSl
  * Use `create(ListLLMSlotsResponseSchema)` to create a new message.
  */
 export const ListLLMSlotsResponseSchema: GenMessage<ListLLMSlotsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 28);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 29);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.ReportSurface
@@ -991,7 +1043,7 @@ export type ReportSurface = Message<"gibson.daemon.discovery.v1.ReportSurface"> 
  * Use `create(ReportSurfaceSchema)` to create a new message.
  */
 export const ReportSurfaceSchema: GenMessage<ReportSurface> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 29);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 30);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.ListReportSurfacesResponse
@@ -1008,7 +1060,7 @@ export type ListReportSurfacesResponse = Message<"gibson.daemon.discovery.v1.Lis
  * Use `create(ListReportSurfacesResponseSchema)` to create a new message.
  */
 export const ListReportSurfacesResponseSchema: GenMessage<ListReportSurfacesResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 30);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 31);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.SuggestMissingCapabilityRequest
@@ -1036,7 +1088,7 @@ export type SuggestMissingCapabilityRequest = Message<"gibson.daemon.discovery.v
  * Use `create(SuggestMissingCapabilityRequestSchema)` to create a new message.
  */
 export const SuggestMissingCapabilityRequestSchema: GenMessage<SuggestMissingCapabilityRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 31);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 32);
 
 /**
  * @generated from message gibson.daemon.discovery.v1.SuggestMissingCapabilityResponse
@@ -1066,7 +1118,7 @@ export type SuggestMissingCapabilityResponse = Message<"gibson.daemon.discovery.
  * Use `create(SuggestMissingCapabilityResponseSchema)` to create a new message.
  */
 export const SuggestMissingCapabilityResponseSchema: GenMessage<SuggestMissingCapabilityResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_discovery_v1_discovery, 32);
+  messageDesc(file_gibson_daemon_discovery_v1_discovery, 33);
 
 /**
  * Scope controls which view of the catalog a list RPC returns. The same
