@@ -55,7 +55,7 @@ const SOURCE_LABEL: Record<ComponentSource, string> = {
 };
 
 /** One line of facts under the name: source, owner, instances, last check-in. */
-export function ProvenanceLine({ p }: { p: NonNullable<RWXItem["provenance"]> }) {
+function ProvenanceLine({ p }: { p: NonNullable<RWXItem["provenance"]> }) {
   const parts: string[] = [];
   if (p.ownerTenant) parts.push(`owner ${p.ownerTenant}`);
   parts.push(p.instances === 1 ? "1 instance" : `${p.instances} instances`);
