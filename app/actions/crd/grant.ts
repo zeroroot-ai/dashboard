@@ -26,20 +26,12 @@ import { emitCrdAuditFromGate } from '@/src/lib/audit/crd';
 import type { ActionResult } from './types';
 import { requireCrdSession } from './_authz';
 import { grantComponentInput, revokeGrantInput, componentRefSchema } from './schemas';
+import { componentKey } from './component-key';
 import type { z } from 'zod';
 
 /** ComponentRef is the domain type for a {kind, name} component reference. */
 type ComponentRef = z.infer<typeof componentRefSchema>;
 
-/**
- * The daemon's component object is `component:<kind>/<name>` (gibson ADR-0015,
- * authz.ComponentObject). SetCatalogEnabled prefixes `component:` itself, so
- * the ref it receives is `<kind>/<name>`. The old `<kind>-<name>` spelling
- * came from the CRD era and landed the tuple on an object nothing reads.
- */
-export function componentKey(ref: ComponentRef): string {
-  return `${ref.kind}/${ref.name}`;
-}
 
 export async function grantComponentAction(input: {
   tenantName: string;
