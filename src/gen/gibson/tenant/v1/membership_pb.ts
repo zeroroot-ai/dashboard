@@ -1011,7 +1011,7 @@ export const GrantComponentPermissionsResponseSchema: GenMessage<GrantComponentP
 export type SetCatalogEnabledRequest = Message<"gibson.tenant.v1.SetCatalogEnabledRequest"> & {
   /**
    * component_ref is the component identifier without the "component:" type
-   * prefix — e.g. "tool-nmap" or "agent-recon". The daemon normalises it
+   * prefix, kind-qualified as "<kind>:<name>" or "<kind>/<name>" — e.g. "tool:nmap" or "agent/zerocool". The daemon normalises it
    * before writing to FGA.
    *
    * @generated from field: string component_ref = 1;
@@ -1066,7 +1066,7 @@ export const SetCatalogEnabledResponseSchema: GenMessage<SetCatalogEnabledRespon
 export type SetCatalogPublishedRequest = Message<"gibson.tenant.v1.SetCatalogPublishedRequest"> & {
   /**
    * component_ref is the component identifier without the "component:" type
-   * prefix — e.g. "connector-gitlab". The daemon normalises it before writing.
+   * prefix, kind-qualified — e.g. "connector:gitlab" or "connector/gitlab". The daemon normalises it before writing.
    *
    * @generated from field: string component_ref = 1;
    */
@@ -1366,7 +1366,7 @@ export const MembershipService: GenService<{
    * already absent).
    *
    * The component_ref must be a fully-qualified component object key of the
-   * form "<kind>-<name>" (e.g. "tool-nmap", "agent-recon"). The daemon
+   * form "<kind>:<name>" or "<kind>/<name>" (e.g. "tool:nmap", "agent/zerocool"). The daemon
    * normalises to "component:<component_ref>" before writing to FGA.
    *
    * Authorization: tenant admin. Only a tenant admin may modify which
