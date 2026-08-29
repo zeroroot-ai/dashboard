@@ -160,3 +160,30 @@ describe("RWXMatrix kill-switch binding (dashboard#1135)", () => {
     expect(screen.queryByRole("button", { name: /enable/i })).toBeNull();
   });
 });
+
+describe("RWXMatrix provenance line", () => {
+  it("says what the row is, who owns it, how many run, and when it checked in", () => {
+    renderMatrix({
+      items: [{
+        ...baseItem,
+        provenance: { source: "tenant-enrolled", ownerTenant: "primary", instances: 1, lastHeartbeat: new Date(Date.now() - 30_000) },
+      }],
+      onToggle: () => {},
+    });
+    const line = screen.getByTestId("provenance");
+    expect(line).toHaveTextContent("Tenant-enrolled");
+    expect(line).toHaveTextContent("owner primary");
+    expect(line).toHaveTextContent("1 instance");
+    expect(line).toHaveTextContent(/checked in .*ago/);
+  });
+
+  it("a platform item with nothing registered says so", () => {
+    renderMatrix({
+      items: [{ ...baseItem, provenance: { source: "platform-catalog", ownerTenant: "_system", instances: 0 } }],
+      onToggle: () => {},
+    });
+    const line = screen.getByTestId("provenance");
+    expect(line).toHaveTextContent("Platform catalog");
+    expect(line).toHaveTextContent("not running");
+  });
+});
