@@ -58,6 +58,7 @@ function toMatrixItem(d: DiscoveredItem, scope: Scope): RWXItem {
     denyingGates: d.denyingGates,
     killSwitch: pickKillSwitch(d, scope),
     inTenantCatalog: d.inTenantCatalog,
+    provenance: d.provenance,
   };
 }
 

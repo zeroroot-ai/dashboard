@@ -78,6 +78,7 @@ function toMatrixItem(d: DiscoveredItem, scope: Scope): PluginMatrixItem {
     denyingGates: d.denyingGates,
     killSwitch: pickKillSwitch(d, scope),
     inTenantCatalog: d.inTenantCatalog,
+    provenance: d.provenance,
     configurable: inferConfigurable(d.name),
     category: inferCategory(d.name),
   };

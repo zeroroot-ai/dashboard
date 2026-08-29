@@ -57,6 +57,7 @@ function toMatrixItem(d: DiscoveredItem, scope: AccessScopeSelection["scope"]): 
     denyingGates: d.denyingGates,
     killSwitch: pickKillSwitch(d, scope),
     inTenantCatalog: d.inTenantCatalog,
+    provenance: d.provenance,
   };
 }
 

@@ -44,6 +44,35 @@ export interface DiscoveredItem {
   };
   /** tenant_enabled for the caller's tenant, the gate every can_* needs. */
   inTenantCatalog: boolean;
+  /** What the row IS, who holds it, and when it last checked in. */
+  provenance: Provenance;
+}
+
+export type ComponentSource = "platform-catalog" | "tenant-enrolled" | "unknown";
+
+export interface Provenance {
+  source: ComponentSource;
+  /** The tenant the registry holds it under ("_system" for platform items). */
+  ownerTenant?: string;
+  /** Registered instances right now. */
+  instances: number;
+  /** Newest heartbeat across instances. Undefined when nothing is registered. */
+  lastHeartbeat?: Date;
+  /** Oldest running instance's start. */
+  startedAt?: Date;
+}
+
+function sourceOf(v: unknown): ComponentSource {
+  // protobuf-es decodes the enum to its numeric value; JSON transport may
+  // carry the name. Accept both, and never guess on anything else.
+  if (v === 1 || v === "SOURCE_PLATFORM_CATALOG") return "platform-catalog";
+  if (v === 2 || v === "SOURCE_TENANT_ENROLLED") return "tenant-enrolled";
+  return "unknown";
+}
+
+function unixDate(v: unknown): Date | undefined {
+  const n = typeof v === "bigint" ? Number(v) : typeof v === "number" ? v : typeof v === "string" ? Number(v) : 0;
+  return n > 0 ? new Date(n * 1000) : undefined;
 }
 
 export type ActionFlags = { read: boolean; write: boolean; execute: boolean };
@@ -148,6 +177,11 @@ function shape(item: unknown, kind: DiscoveredItem["kind"]): DiscoveredItem {
     version?: string;
     killSwitches?: { tenant?: unknown; team?: unknown; user?: unknown };
     inTenantCatalog?: boolean;
+    source?: unknown;
+    ownerTenant?: string;
+    instances?: number;
+    lastHeartbeatUnix?: unknown;
+    startedAtUnix?: unknown;
   };
   return {
     name: it.name ?? "",
@@ -167,5 +201,12 @@ function shape(item: unknown, kind: DiscoveredItem["kind"]): DiscoveredItem {
       user: flags(it.killSwitches?.user),
     },
     inTenantCatalog: !!it.inTenantCatalog,
+    provenance: {
+      source: sourceOf(it.source),
+      ownerTenant: it.ownerTenant || undefined,
+      instances: it.instances ?? 0,
+      lastHeartbeat: unixDate(it.lastHeartbeatUnix),
+      startedAt: unixDate(it.startedAtUnix),
+    },
   };
 }

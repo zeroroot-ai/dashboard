@@ -9,7 +9,10 @@
  * Spec: agent-authoring-and-tenant-entitlements task 29, R8.
  */
 import type { ReactNode } from "react";
+import type { ComponentSource } from "@/app/actions/read/listAccessibleComponents";
 import { Checkbox } from "@/components/ui/checkbox";
+import { formatDistanceToNow } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -32,6 +35,41 @@ export interface RWXItem {
   killSwitch?: { read: boolean; write: boolean; execute: boolean };
   /** tenant_enabled for the caller's tenant. False means every action is off. */
   inTenantCatalog?: boolean;
+  /**
+   * What the row IS. A platform catalog agent and a component a tenant
+   * enrolled from a laptop must never look the same.
+   */
+  provenance?: {
+    source: ComponentSource;
+    ownerTenant?: string;
+    instances: number;
+    lastHeartbeat?: Date;
+    startedAt?: Date;
+  };
+}
+
+const SOURCE_LABEL: Record<ComponentSource, string> = {
+  "platform-catalog": "Platform catalog",
+  "tenant-enrolled": "Tenant-enrolled",
+  unknown: "Unknown source",
+};
+
+/** One line of facts under the name: source, owner, instances, last check-in. */
+function ProvenanceLine({ p }: { p: NonNullable<RWXItem["provenance"]> }) {
+  const parts: string[] = [];
+  if (p.ownerTenant) parts.push(`owner ${p.ownerTenant}`);
+  parts.push(p.instances === 1 ? "1 instance" : `${p.instances} instances`);
+  if (p.lastHeartbeat) parts.push(`checked in ${formatDistanceToNow(p.lastHeartbeat, { addSuffix: true })}`);
+  else parts.push("not running");
+  if (p.startedAt) parts.push(`up since ${formatDistanceToNow(p.startedAt, { addSuffix: true })}`);
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground" data-testid="provenance">
+      <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-mono">
+        {SOURCE_LABEL[p.source]}
+      </Badge>
+      <span>{parts.join(", ")}</span>
+    </div>
+  );
 }
 
 export interface RWXMatrixProps {
@@ -95,6 +133,7 @@ export function RWXMatrix({
               {it.description && (
                 <div className="text-xs text-muted-foreground">{it.description}</div>
               )}
+              {it.provenance && <ProvenanceLine p={it.provenance} />}
               {it.inTenantCatalog === false && (
                 <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                   <span>Not in tenant catalog</span>
