@@ -33,6 +33,9 @@ import {
   type RWXItem,
 } from "@/components/gibson/shared/RWXMatrix";
 import { setComponentAccessAction } from "@/app/actions/crd/access";
+import { pickKillSwitch } from "@/components/gibson/shared/kill-switch";
+import { grantComponentAction } from "@/app/actions/crd/grant";
+import { useCurrentTenant } from "@/src/stores/tenant-store";
 import {
   listAccessibleComponentsAction,
   type DiscoveredItem,
@@ -63,7 +66,7 @@ function inferConfigurable(name: string): boolean {
   return !name.toLowerCase().includes("debug");
 }
 
-function toMatrixItem(d: DiscoveredItem): PluginMatrixItem {
+function toMatrixItem(d: DiscoveredItem, scope: Scope): PluginMatrixItem {
   const meta: string[] = [];
   if (d.version) meta.push(`v${d.version}`);
   if (d.description) meta.push(d.description);
@@ -73,6 +76,8 @@ function toMatrixItem(d: DiscoveredItem): PluginMatrixItem {
     description: meta.join(", ") || undefined,
     rwx: d.rwx,
     denyingGates: d.denyingGates,
+    killSwitch: pickKillSwitch(d, scope),
+    inTenantCatalog: d.inTenantCatalog,
     configurable: inferConfigurable(d.name),
     category: inferCategory(d.name),
   };
@@ -137,7 +142,7 @@ export function PluginsContent({ docsHref }: { docsHref: string }) {
     })
       .then((r) => {
         if (cancelled) return;
-        if (r.ok) setItems(r.data.map(toMatrixItem));
+        if (r.ok) setItems(r.data.map((d) => toMatrixItem(d, scope.scope)));
         else setError(new Error(r.error));
       })
       .catch((err: unknown) => {
@@ -159,7 +164,21 @@ export function PluginsContent({ docsHref }: { docsHref: string }) {
       scope: scope.scope,
       targetId: scope.targetId,
     });
-    if (r.ok) setItems(r.data.map(toMatrixItem));
+    if (r.ok) setItems(r.data.map((d) => toMatrixItem(d, scope.scope)));
+  }
+
+  const tenant = useCurrentTenant();
+  async function onEnable(item: RWXItem) {
+    if (!tenant) {
+      toast.error("No active tenant");
+      return;
+    }
+    const r = await grantComponentAction({
+      tenantName: tenant.name,
+      componentRef: { kind: "plugin", name: item.name },
+    });
+    if (!r.ok) toast.error(`Enable failed: ${r.error}`);
+    await refetch();
   }
 
   async function onToggle(
@@ -181,13 +200,9 @@ export function PluginsContent({ docsHref }: { docsHref: string }) {
       await refetch();
       return;
     }
-    setItems((prev) =>
-      prev.map((it) =>
-        it.name === item.name
-          ? { ...it, rwx: { ...it.rwx, [action]: enabled } }
-          : it,
-      ),
-    );
+    // Re-read from the daemon: the switch shows the deny tuple state, and
+    // only the daemon knows it (dashboard#1135).
+    await refetch();
   }
 
   function handleConfigure(name: string) {
@@ -298,7 +313,7 @@ export function PluginsContent({ docsHref }: { docsHref: string }) {
           )}
 
           {!loading && !error && items.length > 0 && (
-            <RWXMatrix
+            <RWXMatrix onEnable={canManage ? onEnable : undefined}
               items={items}
               onToggle={onToggle}
               rowTrailingAction={renderTrailing}

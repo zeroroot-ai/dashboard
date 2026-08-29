@@ -30,6 +30,28 @@ export interface DiscoveredItem {
   rwx: { read: boolean; write: boolean; execute: boolean };
   denyingGates: string[];
   version?: string;
+  /**
+   * Deny tuples that EXIST on this item, per scope layer and per action
+   * (true = a deny tuple is written). This is what a switch writes, so it is
+   * what a switch shows. `rwx` is the effective result, which also needs the
+   * catalog and a grant. A layer is absent when the daemon had no subject for
+   * it, or when its check failed.
+   */
+  killSwitches: {
+    tenant?: ActionFlags;
+    team?: ActionFlags;
+    user?: ActionFlags;
+  };
+  /** tenant_enabled for the caller's tenant, the gate every can_* needs. */
+  inTenantCatalog: boolean;
+}
+
+export type ActionFlags = { read: boolean; write: boolean; execute: boolean };
+
+function flags(v: unknown): ActionFlags | undefined {
+  if (!v || typeof v !== "object") return undefined;
+  const f = v as { read?: boolean; write?: boolean; execute?: boolean };
+  return { read: !!f.read, write: !!f.write, execute: !!f.execute };
 }
 
 type ActionResult<T> =
@@ -124,6 +146,8 @@ function shape(item: unknown, kind: DiscoveredItem["kind"]): DiscoveredItem {
     rwx?: { read?: boolean; write?: boolean; execute?: boolean };
     denyingGates?: string[];
     version?: string;
+    killSwitches?: { tenant?: unknown; team?: unknown; user?: unknown };
+    inTenantCatalog?: boolean;
   };
   return {
     name: it.name ?? "",
@@ -137,5 +161,11 @@ function shape(item: unknown, kind: DiscoveredItem["kind"]): DiscoveredItem {
     },
     denyingGates: it.denyingGates ?? [],
     version: it.version,
+    killSwitches: {
+      tenant: flags(it.killSwitches?.tenant),
+      team: flags(it.killSwitches?.team),
+      user: flags(it.killSwitches?.user),
+    },
+    inTenantCatalog: !!it.inTenantCatalog,
   };
 }

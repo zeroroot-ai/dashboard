@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { setComponentAccessAction } from "@/app/actions/crd/access";
+import { pickKillSwitch } from "@/components/gibson/shared/kill-switch";
 import { toast } from "sonner";
 
 type Kind = "plugin" | "tool" | "agent" | "connector" | "all";
@@ -44,16 +45,18 @@ async function fetchItems(
     targetId: scope.targetId,
   });
   if (!r.ok) return [];
-  return r.data.map(toMatrixItem);
+  return r.data.map((d) => toMatrixItem(d, scope.scope));
 }
 
-function toMatrixItem(d: DiscoveredItem): RWXItem {
+function toMatrixItem(d: DiscoveredItem, scope: AccessScopeSelection["scope"]): RWXItem {
   return {
     name: d.name,
     displayName: d.displayName ?? d.name,
     description: d.description,
     rwx: d.rwx,
     denyingGates: d.denyingGates,
+    killSwitch: pickKillSwitch(d, scope),
+    inTenantCatalog: d.inTenantCatalog,
   };
 }
 
@@ -95,12 +98,9 @@ export function SecurityPolicyContent() {
       toast.error(`Toggle failed: ${r.error}`);
       return;
     }
-    // Optimistic update, re-fetch the matrix to reflect the write.
-    setItems((prev) =>
-      prev.map((it) =>
-        it.name === item.name ? { ...it, rwx: { ...it.rwx, [action]: enabled } } : it,
-      ),
-    );
+    // Re-read from the daemon: the switch shows the deny tuple state, and
+    // only the daemon knows it (dashboard#1135).
+    setItems(await fetchItems(kind, scope));
   }
 
   return (

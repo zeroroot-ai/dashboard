@@ -10,6 +10,7 @@
  */
 import type { ReactNode } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -21,6 +22,16 @@ export interface RWXItem {
   description?: string;
   rwx: { read: boolean; write: boolean; execute: boolean };
   denyingGates?: string[];
+  /**
+   * The deny tuples this page's scope writes, per action (true = denied).
+   * A toggle-mode switch shows this, never `rwx`: `rwx` is the effective
+   * capability, which also needs the catalog and a grant, and a switch that
+   * showed it wrote denies nobody meant (dashboard#1135). Undefined means
+   * the daemon could not say, and the switch is disabled rather than guessed.
+   */
+  killSwitch?: { read: boolean; write: boolean; execute: boolean };
+  /** tenant_enabled for the caller's tenant. False means every action is off. */
+  inTenantCatalog?: boolean;
 }
 
 export interface RWXMatrixProps {
@@ -46,6 +57,11 @@ export interface RWXMatrixProps {
    * state and only issues writes on confirm (no optimistic update).
    */
   mode?: "toggle" | "approve";
+  /**
+   * When given, an item with `inTenantCatalog === false` renders an Enable
+   * control that calls this (the tenant catalog enable, SetCatalogEnabled).
+   */
+  onEnable?: (item: RWXItem) => void | Promise<void>;
 }
 
 export function RWXMatrix({
@@ -55,6 +71,7 @@ export function RWXMatrix({
   rowTrailingAction,
   executeAnnotation,
   mode = "toggle",
+  onEnable,
 }: RWXMatrixProps) {
   const showTrailing = Boolean(rowTrailingAction);
   return (
@@ -78,6 +95,22 @@ export function RWXMatrix({
               {it.description && (
                 <div className="text-xs text-muted-foreground">{it.description}</div>
               )}
+              {it.inTenantCatalog === false && (
+                <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>Not in tenant catalog</span>
+                  {onEnable && !readOnly && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => onEnable(it)}
+                      aria-label={`enable ${it.displayName ?? it.name} in tenant catalog`}
+                    >
+                      Enable
+                    </Button>
+                  )}
+                </div>
+              )}
             </td>
             {(["read", "write", "execute"] as RWXAction[]).map((a) => (
               <td key={a} className="py-2 pr-4 text-center">
@@ -93,18 +126,22 @@ export function RWXMatrix({
                         />
                       ) : (
                         <Switch
-                          checked={it.rwx[a]}
-                          disabled={readOnly}
+                          checked={it.killSwitch ? !it.killSwitch[a] : false}
+                          disabled={readOnly || !it.killSwitch}
                           onCheckedChange={(v) => onToggle(it, a, v)}
                           aria-label={`${a} for ${it.displayName ?? it.name}`}
                         />
                       )}
                     </div>
                   </TooltipTrigger>
-                  {!it.rwx[a] && (
+                  {(!it.rwx[a] || (mode === "toggle" && !it.killSwitch)) && (
                     <TooltipContent>
                       <div className="max-w-xs text-xs">
-                        {it.denyingGates && it.denyingGates.length > 0 ? (
+                        {mode === "toggle" && !it.killSwitch ? (
+                          <>Switch state unavailable; the daemon could not read the deny tuples.</>
+                        ) : it.inTenantCatalog === false ? (
+                          <>Not in tenant catalog: no tenant_enabled for this tenant. Enable it first.</>
+                        ) : it.denyingGates && it.denyingGates.length > 0 ? (
                           <>
                             Denied by:
                             <ul className="list-disc list-inside mt-1">

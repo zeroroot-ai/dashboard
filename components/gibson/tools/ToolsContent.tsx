@@ -29,6 +29,9 @@ import {
   type RWXItem,
 } from "@/components/gibson/shared/RWXMatrix";
 import { setComponentAccessAction } from "@/app/actions/crd/access";
+import { pickKillSwitch } from "@/components/gibson/shared/kill-switch";
+import { grantComponentAction } from "@/app/actions/crd/grant";
+import { useCurrentTenant } from "@/src/stores/tenant-store";
 import {
   listAccessibleComponentsAction,
   type DiscoveredItem,
@@ -43,7 +46,7 @@ import { useTierLimits } from "@/src/hooks/useTierLimits";
 
 type Scope = AccessScopeSelection["scope"];
 
-function toMatrixItem(d: DiscoveredItem): RWXItem {
+function toMatrixItem(d: DiscoveredItem, scope: Scope): RWXItem {
   const meta: string[] = [];
   if (d.version) meta.push(`v${d.version}`);
   if (d.description) meta.push(d.description);
@@ -53,6 +56,8 @@ function toMatrixItem(d: DiscoveredItem): RWXItem {
     description: meta.join(", ") || undefined,
     rwx: d.rwx,
     denyingGates: d.denyingGates,
+    killSwitch: pickKillSwitch(d, scope),
+    inTenantCatalog: d.inTenantCatalog,
   };
 }
 
@@ -107,7 +112,7 @@ export function ToolsContent() {
     })
       .then((r) => {
         if (cancelled) return;
-        if (r.ok) setItems(r.data.map(toMatrixItem));
+        if (r.ok) setItems(r.data.map((d) => toMatrixItem(d, scope.scope)));
         else setError(new Error(r.error));
       })
       .catch((err: unknown) => {
@@ -129,7 +134,21 @@ export function ToolsContent() {
       scope: scope.scope,
       targetId: scope.targetId,
     });
-    if (r.ok) setItems(r.data.map(toMatrixItem));
+    if (r.ok) setItems(r.data.map((d) => toMatrixItem(d, scope.scope)));
+  }
+
+  const tenant = useCurrentTenant();
+  async function onEnable(item: RWXItem) {
+    if (!tenant) {
+      toast.error("No active tenant");
+      return;
+    }
+    const r = await grantComponentAction({
+      tenantName: tenant.name,
+      componentRef: { kind: "tool", name: item.name },
+    });
+    if (!r.ok) toast.error(`Enable failed: ${r.error}`);
+    await refetch();
   }
 
   async function onToggle(
@@ -151,13 +170,9 @@ export function ToolsContent() {
       await refetch();
       return;
     }
-    setItems((prev) =>
-      prev.map((it) =>
-        it.name === item.name
-          ? { ...it, rwx: { ...it.rwx, [action]: enabled } }
-          : it,
-      ),
-    );
+    // Re-read from the daemon: the switch shows the deny tuple state, and
+    // only the daemon knows it (dashboard#1135).
+    await refetch();
   }
 
   const counts = useMemo(() => {
@@ -244,7 +259,7 @@ export function ToolsContent() {
           )}
 
           {!loading && !error && items.length > 0 && (
-            <RWXMatrix items={items} onToggle={onToggle} />
+            <RWXMatrix onEnable={canManage ? onEnable : undefined} items={items} onToggle={onToggle} />
           )}
         </CardContent>
       </Card>
