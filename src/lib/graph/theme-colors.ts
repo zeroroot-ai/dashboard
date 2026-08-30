@@ -49,7 +49,18 @@ export type EntityType =
   | 'certificate'
   | 'finding'
   | 'evidence'
-  | 'technique';
+  | 'technique'
+  // Application lifecycle (Taxonomy v2, gibson#1656). Kept in lockstep with
+  // entity-taxonomy.ts `ENTITY_TYPES`.
+  | 'application'
+  | 'repository'
+  | 'image'
+  | 'package'
+  | 'deployment'
+  | 'vulnerability'
+  | 'merge_request'
+  | 'pipeline'
+  | 'control';
 
 /**
  * Relationship types between entities
@@ -70,7 +81,19 @@ export type RelationshipType =
   | 'USED_TOOL'
   | 'DELEGATED_TO'
   | 'DISCOVERED'
-  | 'BELONGS_TO';
+  | 'BELONGS_TO'
+  // Application lifecycle (Taxonomy v2, gibson#1656).
+  | 'HAS_REPOSITORY'
+  | 'HAS_DEPLOYMENT'
+  | 'BUILT_FROM'
+  | 'CONTAINS'
+  | 'RUNS'
+  | 'EXPOSES'
+  | 'INSTANCE_OF'
+  | 'FIXED_BY'
+  | 'VERIFIED_BY'
+  | 'MERGED_INTO'
+  | 'TOUCHES';
 
 /**
  * Finding severity levels
@@ -179,6 +202,19 @@ export const DARK_THEME: ThemeColors = {
     finding: '#ff5555', // dracula red
     evidence: '#b0bec5', // blue-grey-200
     technique: '#f48fb1', // pink-200
+
+    // Application lifecycle (Taxonomy v2, gibson#1656). Mirrors
+    // entity-taxonomy.ts ENTITY_COLORS_DARK; see the rationale there. Every
+    // hue clears WCAG AA on this background, asserted in the companion test.
+    application: '#4f7eee', // blue, the lifecycle anchor
+    repository: '#9e75c7', // muted purple, source
+    image: '#53adea', // light blue, built artifact
+    package: '#aec775', // sage, dependency
+    deployment: '#c79675', // warm tan, what runs
+    vulnerability: '#d26a94', // deep rose, the weakness identity
+    merge_request: '#be4fee', // violet, the proposed change
+    pipeline: '#e7dac5', // bone, the verifier
+    control: '#f1bbe1', // pale pink, compliance
   },
 
   // Edge relationship colors. Structural edges use a faint acid; discovery and
@@ -207,6 +243,21 @@ export const DARK_THEME: ThemeColors = {
     SERVES_CERTIFICATE: '#80d8ff', // light cyan
     USES_TECHNIQUE: '#f48fb1', // pink-200
     LEADS_TO: '#ff79c6', // dracula pink
+
+    // Application lifecycle (Taxonomy v2, gibson#1656). Structural edges take
+    // the same faint acid as the recon structure; remediation edges take their
+    // target's hue so a fix path reads as one colour from Finding to Pipeline.
+    HAS_REPOSITORY: 'rgba(163, 230, 53, 0.22)',
+    HAS_DEPLOYMENT: 'rgba(163, 230, 53, 0.22)',
+    BUILT_FROM: 'rgba(163, 230, 53, 0.22)',
+    CONTAINS: 'rgba(163, 230, 53, 0.22)',
+    RUNS: 'rgba(163, 230, 53, 0.22)',
+    EXPOSES: 'rgba(163, 230, 53, 0.22)',
+    INSTANCE_OF: '#d26a94', // the shared-Vulnerability fan-in
+    FIXED_BY: '#be4fee',
+    VERIFIED_BY: '#e7dac5',
+    MERGED_INTO: 'rgba(190, 79, 238, 0.55)',
+    TOUCHES: '#f1bbe1',
   },
 };
 

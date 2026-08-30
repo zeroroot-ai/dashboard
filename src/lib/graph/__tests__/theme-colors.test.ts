@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { getAllEntityTypes } from '@/src/lib/graph/entity-taxonomy';
 import {
   getThemeColors,
   DARK_THEME,
@@ -94,14 +95,14 @@ describe('theme-colors (single dark brand)', () => {
       expect(glowColors.success).toMatch(/^rgba\(/);
     });
 
-    it('has colors for all 16 entity types', () => {
-      const entityTypes: EntityType[] = [
-        'mission', 'mission_run', 'agent_run', 'tool_execution', 'llm_call',
-        'domain', 'subdomain', 'host', 'port', 'service', 'endpoint',
-        'technology', 'certificate', 'finding', 'evidence', 'technique',
-      ];
+    it('has a color for every entity type in the taxonomy', () => {
+      // Derived from the taxonomy, not re-listed here: a label promoted in
+      // gibson's Taxonomy is covered by this test (and by the WCAG check
+      // below) the moment it is added, with no test to re-pin.
+      const entityTypes = getAllEntityTypes();
+      expect(entityTypes.length).toBeGreaterThan(0);
       entityTypes.forEach((t) => {
-        expect(DARK_THEME.nodeColors[t]).toMatch(/^#[0-9a-f]{6}$/i);
+        expect(DARK_THEME.nodeColors[t as EntityType]).toMatch(/^#[0-9a-f]{6}$/i);
       });
     });
 
@@ -133,13 +134,9 @@ describe('theme-colors (single dark brand)', () => {
 
   describe('WCAG AA, node colors vs the brand background (>=4.5:1)', () => {
     const bg = DARK_THEME.background;
-    const entityTypes: EntityType[] = [
-      'mission', 'mission_run', 'agent_run', 'tool_execution', 'llm_call',
-      'domain', 'subdomain', 'host', 'port', 'service', 'endpoint',
-      'technology', 'certificate', 'finding', 'evidence', 'technique',
-    ];
+    const entityTypes = getAllEntityTypes();
     it.each(entityTypes)('%s node color is AA-legible', (t) => {
-      expect(contrastRatio(DARK_THEME.nodeColors[t], bg)).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(DARK_THEME.nodeColors[t as EntityType], bg)).toBeGreaterThanOrEqual(4.5);
     });
   });
 

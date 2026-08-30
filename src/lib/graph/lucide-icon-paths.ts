@@ -20,23 +20,14 @@ export interface LucideIconDefinition {
   strokeWidth: number;
 }
 
-export type EntityType =
-  | 'mission'
-  | 'mission_run'
-  | 'agent_run'
-  | 'tool_execution'
-  | 'llm_call'
-  | 'domain'
-  | 'subdomain'
-  | 'host'
-  | 'port'
-  | 'service'
-  | 'endpoint'
-  | 'technology'
-  | 'certificate'
-  | 'finding'
-  | 'evidence'
-  | 'technique';
+/**
+ * The taxonomy's entity vocabulary, re-exported so this module has no fifth
+ * copy of it. It used to hold its own hand-maintained union, which meant a
+ * label promoted in gibson's Taxonomy had to be added here as well or the
+ * canvas would not type-check against it.
+ */
+export type { EntityType } from './entity-taxonomy';
+import type { EntityType } from './entity-taxonomy';
 
 // ---------------------------------------------------------------------------
 // Conversion helpers
@@ -97,7 +88,17 @@ function polygonPath(points: string): string {
 // Icon definitions
 // ---------------------------------------------------------------------------
 
-export const ENTITY_ICON_MAP: Record<EntityType, LucideIconDefinition> = {
+/**
+ * Canvas glyphs, by entity type.
+ *
+ * PARTIAL on purpose: each entry is a hand-transcribed Lucide path set, so the
+ * map covers the entity types that have one and the renderer already guards
+ * with `if (iconDef)`. An entity with no glyph still draws, as its coloured
+ * node with its label; the graph legend (which uses the Lucide React
+ * components rather than these paths) names it either way. The application
+ * lifecycle types added in Taxonomy v2 are in that position today.
+ */
+export const ENTITY_ICON_MAP: Partial<Record<EntityType, LucideIconDefinition>> = {
   // MISSION: Crosshair icon
   // Source: lucide-react/dist/esm/icons/crosshair.js
   // Elements: circle(12,12,10), line(22→18,12), line(6→2,12), line(12,6→2), line(12,22→18)
