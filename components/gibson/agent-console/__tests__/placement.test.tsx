@@ -58,7 +58,7 @@ describe("findLiveRun and consoleHref", () => {
     expect(findLiveRun(runs, { missionId: "" })).toBeUndefined();
     expect(findLiveRun(runs, { agentName: "" })).toBeUndefined();
     expect(findLiveRun(undefined, { missionId: "m-1" })).toBeUndefined();
-    expect(consoleHref("run 1")).toBe("/dashboard/agents/console?run=run%201");
+    expect(consoleHref("run 1")).toBe("/dashboard/sandboxes?run=run%201");
   });
 });
 
@@ -67,7 +67,7 @@ describe("LiveConsoleLink", () => {
     useRunningAgentsMock.mockReturnValue({ data: [run({ runId: "run-9", missionId: "m-9" })] });
     render(<LiveConsoleLink match={{ missionId: "m-9" }} />);
     const link = screen.getByTestId("live-console-link");
-    expect(link).toHaveAttribute("href", "/dashboard/agents/console?run=run-9");
+    expect(link).toHaveAttribute("href", "/dashboard/sandboxes?run=run-9");
     expect(link).toHaveTextContent("Live sandbox");
   });
 

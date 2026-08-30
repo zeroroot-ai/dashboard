@@ -6,7 +6,7 @@ export function generateMetadata() {
   return generateMeta({
     title: "Agent Sandboxes",
     description: "Live, read-only view of the agents running in your tenant's sandboxes",
-    canonical: "/agents/console",
+    canonical: "/sandboxes",
   });
 }
 

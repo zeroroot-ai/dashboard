@@ -264,6 +264,13 @@ const nextConfig: NextConfig = {
   // daemon. See the `check-no-direct-daemon-grpc.mjs` prebuild guard.
   async redirects() {
     return [
+      // The agent console moved to /dashboard/sandboxes (dashboard#1159). The
+      // query string carries the deep link (?run=<id>) and Next keeps it.
+      {
+        source: "/dashboard/agents/console",
+        destination: "/dashboard/sandboxes",
+        permanent: true,
+      },
       // /dashboard/users → /dashboard/organization/users (users moved into Organization group; dashboard#144).
       {
         source: "/dashboard/users",

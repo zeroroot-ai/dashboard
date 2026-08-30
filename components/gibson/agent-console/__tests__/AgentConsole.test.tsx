@@ -38,7 +38,7 @@ const replaceMock = vi.fn((href: string) => {
 });
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: replaceMock, push: vi.fn() }),
-  usePathname: () => "/dashboard/agents/console",
+  usePathname: () => "/dashboard/sandboxes",
   useSearchParams: () => new URLSearchParams(search),
 }));
 
@@ -288,7 +288,7 @@ describe("AgentConsole pop-out", () => {
       fireEvent.click(screen.getAllByTestId("agent-tile")[1]);
     });
     expect(replaceMock).toHaveBeenLastCalledWith(
-      "/dashboard/agents/console?run=run-01",
+      "/dashboard/sandboxes?run=run-01",
       { scroll: false },
     );
     view.rerender(<AgentConsole />);
@@ -300,7 +300,7 @@ describe("AgentConsole pop-out", () => {
     await act(async () => {
       fireEvent.keyDown(popout, { key: "Escape" });
     });
-    expect(replaceMock).toHaveBeenLastCalledWith("/dashboard/agents/console", { scroll: false });
+    expect(replaceMock).toHaveBeenLastCalledWith("/dashboard/sandboxes", { scroll: false });
     view.rerender(<AgentConsole />);
     await waitFor(() => expect(screen.queryByTestId("agent-popout")).toBeNull());
   });
@@ -313,14 +313,14 @@ describe("AgentConsole pop-out", () => {
       fireEvent.keyDown(tile, { key: "Enter" });
     });
     expect(replaceMock).toHaveBeenLastCalledWith(
-      "/dashboard/agents/console?run=run-00",
+      "/dashboard/sandboxes?run=run-00",
       { scroll: false },
     );
     await act(async () => {
       fireEvent.keyDown(screen.getAllByTestId("agent-tile")[2], { key: "f" });
     });
     expect(replaceMock).toHaveBeenLastCalledWith(
-      "/dashboard/agents/console?run=run-02",
+      "/dashboard/sandboxes?run=run-02",
       { scroll: false },
     );
   });
@@ -335,7 +335,7 @@ describe("AgentConsole pop-out", () => {
       fireEvent.keyDown(popout, { key: "ArrowRight" });
     });
     expect(replaceMock).toHaveBeenLastCalledWith(
-      "/dashboard/agents/console?run=run-00",
+      "/dashboard/sandboxes?run=run-00",
       { scroll: false },
     );
     view.rerender(<AgentConsole />);
@@ -343,7 +343,7 @@ describe("AgentConsole pop-out", () => {
       fireEvent.keyDown(screen.getByTestId("agent-popout"), { key: "ArrowLeft" });
     });
     expect(replaceMock).toHaveBeenLastCalledWith(
-      "/dashboard/agents/console?run=run-02",
+      "/dashboard/sandboxes?run=run-02",
       { scroll: false },
     );
   });

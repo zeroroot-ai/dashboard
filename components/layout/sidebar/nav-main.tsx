@@ -124,7 +124,7 @@ export const navItems: NavGroup[] = [
       },
       {
         title: "Sandboxes",
-        href: "/dashboard/agents/console",
+        href: "/dashboard/sandboxes",
         icon: TerminalIcon,
         liveBadge: "running-agents"
       },

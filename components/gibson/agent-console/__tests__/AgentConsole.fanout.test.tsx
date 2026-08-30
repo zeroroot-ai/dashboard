@@ -20,7 +20,7 @@ vi.mock("next/dynamic", () => ({
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
-  usePathname: () => "/dashboard/agents/console",
+  usePathname: () => "/dashboard/sandboxes",
   useSearchParams: () => new URLSearchParams(""),
 }));
 const useRunningAgentsMock = vi.fn();
