@@ -24,7 +24,7 @@ export function findLiveRun(
 
 /** Console deep link for a run. */
 export function consoleHref(runId: string): string {
-  return `/dashboard/agents/console?run=${encodeURIComponent(runId)}`;
+  return `/dashboard/sandboxes?run=${encodeURIComponent(runId)}`;
 }
 
 /** The live run for a mission or an agent, if any, from the polled list. */
