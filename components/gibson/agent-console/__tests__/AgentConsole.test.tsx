@@ -61,6 +61,7 @@ function agent(over: Partial<RunningAgentView>): RunningAgentView {
     startedAt: "2026-08-28T10:00:00.000Z",
     missionId: "",
     missionRunId: "",
+    sandboxClass: "agent",
     ...over,
   };
 }
@@ -451,5 +452,31 @@ describe("AgentConsole copy", () => {
     expect(text).not.toMatch(/coding agent/i);
     expect(text).not.toMatch(/console/i);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Agent Sandboxes");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Sandbox class on the tile (dashboard#1160)
+// ---------------------------------------------------------------------------
+
+describe("AgentConsole sandbox class", () => {
+  it("shows the class the run was launched under", () => {
+    useRunningAgentsMock.mockReturnValue({
+      data: [agent({ runId: "run-1", sandboxClass: "gvisor-strict" })],
+      isLoading: false,
+      error: null,
+    });
+    render(<AgentConsole />);
+    expect(screen.getByTestId("agent-tile-class")).toHaveTextContent("gvisor-strict");
+  });
+
+  it("shows no class chip when the daemon reports none", () => {
+    useRunningAgentsMock.mockReturnValue({
+      data: [agent({ runId: "run-1", sandboxClass: "" })],
+      isLoading: false,
+      error: null,
+    });
+    render(<AgentConsole />);
+    expect(screen.queryByTestId("agent-tile-class")).toBeNull();
   });
 });

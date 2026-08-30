@@ -44,6 +44,11 @@ export interface RunningAgentView {
   missionId: string;
   /** The mission run this run serves. Empty for a run outside a mission. */
   missionRunId: string;
+  /**
+   * The setec SandboxClass the run was launched under (ADR-0016 decision 4).
+   * It names the isolation posture, so a viewer sees what confines a run.
+   */
+  sandboxClass: string;
 }
 
 const NS_PER_MS = BigInt(1_000_000);
@@ -68,6 +73,7 @@ export async function listRunningAgents(): Promise<RunningAgentView[]> {
     startedAt: unixNanosToISO(a.startedUnixNanos),
     missionId: a.missionId,
     missionRunId: a.missionRunId,
+    sandboxClass: a.sandboxClass,
   }));
 }
 

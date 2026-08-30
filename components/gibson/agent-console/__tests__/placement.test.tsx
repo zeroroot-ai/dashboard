@@ -29,6 +29,7 @@ function run(over: Partial<RunningAgentView>): RunningAgentView {
     startedAt: "2026-08-30T10:00:00Z",
     missionId: "m-1",
     missionRunId: "mr-1",
+    sandboxClass: "agent",
     ...over,
   };
 }
