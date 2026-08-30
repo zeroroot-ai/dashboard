@@ -163,6 +163,15 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
         <span className="shrink-0" title={agent.runId}>
           {shortId(agent.runId)}
         </span>
+        {agent.sandboxClass ? (
+          <span
+            data-testid="agent-tile-class"
+            className="hidden shrink-0 rounded-sm border border-terminal-border px-1 lg:inline"
+            title="setec sandbox class"
+          >
+            {agent.sandboxClass}
+          </span>
+        ) : null}
         <span className="ml-auto flex shrink-0 items-center gap-3 tabular-nums">
           {model ? (
             <span className="hidden xl:inline" title="model">

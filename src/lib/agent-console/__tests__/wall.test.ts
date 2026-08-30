@@ -10,7 +10,7 @@ import {
 import type { RunningAgentView } from "@/src/lib/gibson-client/agent-console";
 
 function agent(runId: string, over: Partial<RunningAgentView> = {}): RunningAgentView {
-  return { runId, agentName: runId, sandboxId: "", startedAt: "2026-08-30T10:00:00Z", missionId: "", missionRunId: "", ...over };
+  return { runId, agentName: runId, sandboxId: "", startedAt: "2026-08-30T10:00:00Z", missionId: "", missionRunId: "", sandboxClass: "agent", ...over };
 }
 
 describe("wallColumns", () => {

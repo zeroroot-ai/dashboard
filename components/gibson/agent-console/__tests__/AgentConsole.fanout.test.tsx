@@ -49,6 +49,7 @@ function agents(n: number): RunningAgentView[] {
     startedAt: new Date(Date.UTC(2026, 7, 30, 10, i)).toISOString(),
     missionId: "",
     missionRunId: "",
+    sandboxClass: "agent",
   }));
 }
 
