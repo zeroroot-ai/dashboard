@@ -43,6 +43,9 @@ export function openConsoleTerminal(
 ): ConsoleTerminal {
   const terminal = new Terminal({
     theme: TERMINAL_THEME,
+    // The cursor never blinks: the console is read-only, and a blinking
+    // cursor is motion that reduced-motion viewers do not want.
+    cursorBlink: false,
     convertEol: true,
     scrollback: opts.scrollback ?? 5000,
     fontFamily: resolveMonoFontFamily(),

@@ -24,7 +24,7 @@ export function LiveConsoleLink({ match, size = "default", className }: LiveCons
   return (
     <Button asChild variant="outline" size={size} className={className}>
       <Link href={consoleHref(run.runId)} data-testid="live-console-link" data-run-id={run.runId}>
-        <span className="size-2 shrink-0 animate-pulse rounded-full bg-primary" aria-hidden="true" />
+        <span className="size-2 shrink-0 animate-pulse motion-reduce:animate-none rounded-full bg-primary" aria-hidden="true" />
         <TerminalIcon className="size-4" aria-hidden="true" />
         Live console
       </Link>

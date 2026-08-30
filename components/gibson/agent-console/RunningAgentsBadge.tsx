@@ -19,7 +19,7 @@ export function RunningAgentsBadge() {
       className="border border-primary/40 font-mono tabular-nums text-primary peer-hover/menu-button:text-primary"
       aria-label={`${count} agents running`}
     >
-      <span className="mr-1 inline-block size-1.5 animate-pulse rounded-full bg-primary" aria-hidden="true" />
+      <span className="mr-1 inline-block size-1.5 animate-pulse motion-reduce:animate-none rounded-full bg-primary" aria-hidden="true" />
       {count}
     </SidebarMenuBadge>
   );
