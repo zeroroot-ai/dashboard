@@ -52,9 +52,9 @@ const PHASE_LABEL: Record<AgentConsolePhase, string> = {
 };
 
 const DOT_CLASS: Record<AgentConsolePhase, string> = {
-  streaming: "bg-primary animate-pulse",
-  finished: "bg-muted-foreground",
-  gone: "bg-muted-foreground/50",
+  streaming: "bg-primary animate-pulse motion-reduce:animate-none",
+  finished: "bg-terminal-muted",
+  gone: "bg-terminal-muted/50",
   error: "bg-destructive",
 };
 
@@ -141,15 +141,14 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
       onClick={open}
       onKeyDown={handleKeyDown}
       className={cn(
-        "flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-md border border-border outline-none",
+        "flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-md border border-terminal-border bg-terminal outline-none",
         "focus-visible:ring-2 focus-visible:ring-ring",
         selected && "ring-2 ring-primary",
       )}
-      style={{ backgroundColor: "var(--terminal-bg)" }}
     >
       <header
         data-testid="agent-tile-header"
-        className="flex min-w-0 items-center gap-2 border-b border-border bg-muted/40 px-2 py-1 font-mono text-xs"
+        className="flex min-w-0 items-center gap-2 border-b border-terminal-border bg-terminal px-2 py-1 font-mono text-xs text-terminal-muted"
       >
         <span
           data-testid="agent-tile-dot"
@@ -158,13 +157,13 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
           aria-label={PHASE_LABEL[status.phase]}
           title={PHASE_LABEL[status.phase]}
         />
-        <span className="min-w-0 truncate font-semibold text-foreground" title={name}>
+        <span className="min-w-0 truncate font-semibold text-terminal-fg" title={name}>
           {name}
         </span>
-        <span className="shrink-0 text-muted-foreground" title={agent.runId}>
+        <span className="shrink-0" title={agent.runId}>
           {shortId(agent.runId)}
         </span>
-        <span className="ml-auto flex shrink-0 items-center gap-3 tabular-nums text-muted-foreground">
+        <span className="ml-auto flex shrink-0 items-center gap-3 tabular-nums">
           {model ? (
             <span className="hidden xl:inline" title="model">
               {model}
@@ -172,12 +171,12 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
           ) : null}
           {turns !== undefined ? <span title="turns">{turns}t</span> : null}
           {elapsed !== null ? (
-            <span className="text-foreground" title="elapsed">
+            <span className="text-terminal-fg" title="elapsed">
               {elapsed}
             </span>
           ) : null}
           {costUsd !== undefined ? (
-            <span className="text-foreground" title="cost so far">
+            <span className="text-terminal-fg" title="cost so far">
               {formatCost(costUsd)}
             </span>
           ) : null}

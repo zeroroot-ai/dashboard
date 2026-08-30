@@ -66,7 +66,7 @@ const PHASE_LABEL: Record<AgentConsolePhase, string> = {
 };
 
 const DOT_CLASS: Record<AgentConsolePhase, string> = {
-  streaming: "bg-primary animate-pulse",
+  streaming: "bg-primary animate-pulse motion-reduce:animate-none",
   finished: "bg-muted-foreground",
   gone: "bg-muted-foreground/50",
   error: "bg-destructive",
@@ -226,7 +226,7 @@ function PopoutBody({
         </span>
       </header>
       <div className="flex min-h-0 flex-1">
-        <div className="min-h-0 min-w-0 flex-1" style={{ backgroundColor: "var(--terminal-bg)" }}>
+        <div className="min-h-0 min-w-0 flex-1 bg-terminal">
           <TileTerminal
             ref={terminalRef}
             title={`${name} · live output`}

@@ -202,12 +202,20 @@ const TEXT_PAIRS: ReadonlyArray<[fg: string, bg: string]> = [
   ["--muted-foreground", "--muted"],
   ["--muted-foreground", "--background"],
   ["--muted-foreground", "--card"],
+  // Coding Agent Console (dashboard#1149): tile headers, the pop-out rail
+  // and the recent list draw text on the dark terminal ground.
+  ["--terminal-fg", "--terminal-bg"],
+  ["--terminal-muted", "--terminal-bg"],
+  ["--primary", "--terminal-bg"],
 ];
 
 // Non-text UI affordances, must clear AA 3:1 against the base background.
 const UI_PAIRS: ReadonlyArray<[token: string, bg: string]> = [
   ["--ring", "--background"],
   ["--input", "--background"],
+  // Console status dots and ribbons on the terminal ground.
+  ["--destructive", "--terminal-bg"],
+  ["--terminal-border", "--terminal-bg"],
 ];
 
 describe("token-contrast (single locked brand)", () => {

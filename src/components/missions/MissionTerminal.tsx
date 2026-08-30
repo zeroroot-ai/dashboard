@@ -230,23 +230,20 @@ export const MissionTerminal = React.forwardRef<
 
   return (
     <div
-      className="flex flex-col rounded-md border border-border overflow-hidden"
-      style={{
-        backgroundColor: "var(--terminal-bg)",
-      }}
+      className="flex flex-col rounded-md border border-terminal-border bg-terminal overflow-hidden"
     >
       {/* Drag handle, only shown when panel is open */}
       {isOpen && (
         <div
           onMouseDown={handleDragMouseDown}
-          className="h-1.5 w-full shrink-0 cursor-ns-resize bg-border/40 hover:bg-border/70 transition-colors"
+          className="h-1.5 w-full shrink-0 cursor-ns-resize bg-terminal-border/40 hover:bg-terminal-border/70 transition-colors motion-reduce:transition-none"
           aria-hidden="true"
         />
       )}
 
       {/* Toolbar */}
-      <div className="bg-muted/40 border-b border-border flex items-center justify-between px-2 py-1 shrink-0">
-        <span className="text-xs font-mono text-muted-foreground select-none">
+      <div className="bg-terminal border-b border-terminal-border flex items-center justify-between px-2 py-1 shrink-0">
+        <span className="text-xs font-mono text-terminal-muted select-none">
           {title}
         </span>
         <div className="flex items-center gap-1">
@@ -254,7 +251,7 @@ export const MissionTerminal = React.forwardRef<
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 px-2 text-xs text-muted-foreground"
+              className="h-6 px-2 text-xs text-terminal-muted hover:text-terminal-fg"
               onClick={() => terminalRef.current?.clear()}
             >
               Clear
@@ -263,7 +260,7 @@ export const MissionTerminal = React.forwardRef<
           <Button
             variant="ghost"
             size="icon"
-            className="size-6"
+            className="size-6 text-terminal-muted hover:text-terminal-fg"
             aria-label={isOpen ? "Collapse terminal" : "Expand terminal"}
             onClick={() => setIsOpen((prev) => {
               const next = !prev;
