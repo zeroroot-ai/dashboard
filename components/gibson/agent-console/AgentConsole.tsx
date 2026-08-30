@@ -1,171 +1,107 @@
 "use client";
 
 /**
- * AgentConsole, the read-only live console for a tenant's running agents
- * (ADR-0016 S12, dashboard#1134).
+ * AgentConsole, the read-only Ops wall for a tenant's running agents
+ * (ADR-0016 S12, dashboard#1134, dashboard#1146).
  *
- * It lists EVERY agent the tenant is running right now (requirement 1) and
- * gives each its own always-mounted terminal pane that streams that run's live
- * output independently (requirement 1: each streams on its own). The panes are
- * stacked, so several agents stream at once; a viewer can collapse the ones
- * they are not watching.
+ * It lists EVERY agent the tenant is running right now and gives each its
+ * own always-mounted tile that streams that run's live output. The wall
+ * fits however many agents run: one agent is one full pane, two to four are
+ * halves, up to nine are thirds, up to twenty-five are five columns, and
+ * more are six columns. The viewer picks a density and a sort order, and
+ * both persist in browser storage.
  *
- * The surface is READ-ONLY (requirement 2): it renders events only. There is
- * no input, no PTY, no command box, and no write path back to the agent. A
- * viewer who wants to drive an agent interactively runs it locally.
+ * The surface is READ-ONLY: it renders events only. There is no input, no
+ * PTY, no command box, and no write path back to the agent.
  *
  * Tenant isolation is enforced server-side: the list route and each stream
  * derive the tenant from the authenticated identity, and the daemon returns
- * only this tenant's instances. This component never re-filters and never
- * receives another tenant's data.
+ * only this tenant's instances. This component never re-filters.
  */
 
 import * as React from "react";
-import dynamic from "next/dynamic";
 import { BotIcon, TerminalIcon } from "lucide-react";
-
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ErrorAlert, TableSkeleton } from "@/components/gibson/shared";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { useRunningAgents } from "@/src/hooks/useRunningAgents";
 import {
-  useAgentConsole,
-  type AgentConsolePhase,
-} from "@/src/hooks/useAgentConsole";
-import {
-  formatCost,
-  formatDuration,
-  shortId,
-} from "@/src/lib/agent-console/stream-json";
-import type { RunningAgentView } from "@/src/lib/gibson-client/agent-console";
-import type { MissionTerminalHandle } from "@/src/components/missions/MissionTerminal";
+  WALL_DENSITIES,
+  WALL_SORTS,
+  pickChoice,
+  sortRunning,
+  tileFontSize,
+  tileHeight,
+  wallColumns,
+  type WallSort,
+  type WallTileFacts,
+} from "@/src/lib/agent-console/wall";
+import { AgentTile } from "./AgentTile";
 
-// xterm touches the DOM, so the terminal must load client-side only.
-const MissionTerminal = dynamic(
-  () =>
-    import("@/src/components/missions/MissionTerminal").then(
-      (m) => m.MissionTerminal,
-    ),
-  { ssr: false },
-);
-
-/** Formats an ISO start time for display, tolerating a bad value. */
-function formatStarted(iso: string): string {
-  const d = new Date(iso);
-  return isNaN(d.getTime()) ? iso : d.toLocaleString();
-}
+const DENSITY_KEY = "agent-console.density";
+const SORT_KEY = "agent-console.sort";
 
 /**
- * Elapsed time since `startedAt`, ticking once a second while the run
- * streams and frozen once it stops. Returns null for a bad start time.
+ * A choice that persists in browser storage for this viewer. The stored
+ * value is read after mount, so server and first client render agree.
  */
-function useElapsed(startedAt: string, running: boolean): string | null {
-  const start = new Date(startedAt).getTime();
-  const [now, setNow] = React.useState(() => Date.now());
+function usePersistedChoice<T extends string>(
+  key: string,
+  allowed: readonly T[],
+  fallback: T,
+): [T, (next: T) => void] {
+  const [value, setValue] = React.useState<T>(fallback);
   React.useEffect(() => {
-    if (!running) return;
-    const id = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, [running]);
-  if (isNaN(start)) return null;
-  return formatDuration(Math.max(0, now - start));
-}
-
-const PHASE_LABEL: Record<AgentConsolePhase, string> = {
-  streaming: "live",
-  finished: "finished",
-  gone: "stopped",
-  error: "stream error",
-};
-
-/**
- * One running agent's pane: a header identifying the run, a status line
- * (agent name, short run id, elapsed time, model, turns, cost) and an
- * always-mounted terminal streaming its live output. The pane owns its own
- * EventSource via {@link useAgentConsole}, so every pane streams
- * independently of the others.
- */
-function AgentConsolePane({ agent }: { agent: RunningAgentView }) {
-  const terminalRef = React.useRef<MissionTerminalHandle>(null);
-  const status = useAgentConsole(agent.runId, terminalRef);
-  const running = status.phase === "streaming";
-  const elapsed = useElapsed(agent.startedAt, running);
-  const name = agent.agentName || agent.runId;
-  const { model, turns, costUsd } = status.summary;
-
-  return (
-    <Card data-testid="agent-console-pane" data-run-id={agent.runId}>
-      <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <BotIcon className="size-4 text-muted-foreground" aria-hidden="true" />
-            {name}
-          </CardTitle>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge
-              variant={running ? "default" : "outline"}
-              data-testid="agent-phase"
-            >
-              {PHASE_LABEL[status.phase]}
-            </Badge>
-            {agent.sandboxId ? (
-              <Badge variant="outline" className="text-xs text-muted-foreground">
-                sandbox {agent.sandboxId}
-              </Badge>
-            ) : null}
-            <span className="text-xs text-muted-foreground">
-              started {formatStarted(agent.startedAt)}
-            </span>
-          </div>
-        </div>
-        <dl
-          data-testid="agent-status-line"
-          className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs text-muted-foreground"
-        >
-          <div className="flex gap-1">
-            <dt className="sr-only">run</dt>
-            <dd title={agent.runId}>{shortId(agent.runId)}</dd>
-          </div>
-          {elapsed !== null ? (
-            <div className="flex gap-1">
-              <dt>elapsed</dt>
-              <dd className="tabular-nums text-foreground">{elapsed}</dd>
-            </div>
-          ) : null}
-          {model ? (
-            <div className="flex gap-1">
-              <dt>model</dt>
-              <dd className="text-foreground">{model}</dd>
-            </div>
-          ) : null}
-          {turns !== undefined ? (
-            <div className="flex gap-1">
-              <dt>turns</dt>
-              <dd className="tabular-nums text-foreground">{turns}</dd>
-            </div>
-          ) : null}
-          {costUsd !== undefined ? (
-            <div className="flex gap-1">
-              <dt>cost</dt>
-              <dd className="tabular-nums text-foreground">{formatCost(costUsd)}</dd>
-            </div>
-          ) : null}
-        </dl>
-      </CardHeader>
-      <CardContent>
-        <MissionTerminal
-          ref={terminalRef}
-          title={`${name} · live output`}
-          defaultOpen={true}
-        />
-      </CardContent>
-    </Card>
+    try {
+      setValue(pickChoice(localStorage.getItem(key), allowed, fallback));
+    } catch {
+      // Storage is unavailable; the fallback stays.
+    }
+  }, [key, allowed, fallback]);
+  const set = React.useCallback(
+    (next: T) => {
+      setValue(next);
+      try {
+        localStorage.setItem(key, next);
+      } catch {
+        // Storage is unavailable; the choice lives for this page only.
+      }
+    },
+    [key],
   );
+  return [value, set];
 }
+
+const SORT_LABEL: Record<WallSort, string> = {
+  started: "Started",
+  name: "Name",
+  cost: "Cost",
+};
 
 export function AgentConsole() {
   const { data: agents, isLoading, error } = useRunningAgents();
+  const [density, setDensity] = usePersistedChoice(DENSITY_KEY, WALL_DENSITIES, "comfortable");
+  const [sort, setSort] = usePersistedChoice(SORT_KEY, WALL_SORTS, "started");
+  const [facts, setFacts] = React.useState<ReadonlyMap<string, WallTileFacts>>(
+    () => new Map(),
+  );
+  const onFacts = React.useCallback((runId: string, next: WallTileFacts) => {
+    setFacts((prev) => {
+      const cur = prev.get(runId);
+      if (cur && cur.costUsd === next.costUsd) return prev;
+      const out = new Map(prev);
+      out.set(runId, next);
+      return out;
+    });
+  }, []);
 
   if (isLoading) {
     return <TableSkeleton />;
@@ -180,11 +116,14 @@ export function AgentConsole() {
     );
   }
 
-  const running = agents ?? [];
+  const running = sortRunning(agents ?? [], sort, facts);
+  const columns = wallColumns(running.length);
+  const height = tileHeight(columns, density);
+  const fontSize = tileFontSize(density);
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-lg font-semibold">
             <TerminalIcon className="size-5" aria-hidden="true" />
@@ -194,11 +133,50 @@ export function AgentConsole() {
             A read-only, live view of the agents your tenant is running now.
           </p>
         </div>
-        {running.length > 0 ? (
-          <Badge variant="outline" data-testid="running-count">
-            {running.length} running
-          </Badge>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {running.length > 0 ? (
+            <Badge variant="outline" data-testid="running-count">
+              {running.length} running
+            </Badge>
+          ) : null}
+          <div
+            role="group"
+            aria-label="Tile density"
+            className="flex overflow-hidden rounded-md border border-border"
+          >
+            {WALL_DENSITIES.map((d) => (
+              <Button
+                key={d}
+                type="button"
+                variant={density === d ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 rounded-none px-2 text-xs capitalize"
+                aria-pressed={density === d}
+                data-testid={`density-${d}`}
+                onClick={() => setDensity(d)}
+              >
+                {d}
+              </Button>
+            ))}
+          </div>
+          <Select value={sort} onValueChange={(v) => setSort(pickChoice(v, WALL_SORTS, "started"))}>
+            <SelectTrigger
+              size="sm"
+              className="h-7 w-[7.5rem] text-xs"
+              aria-label="Sort tiles"
+              data-testid="sort-select"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {WALL_SORTS.map((s) => (
+                <SelectItem key={s} value={s} className="text-xs">
+                  {SORT_LABEL[s]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {running.length === 0 ? (
@@ -208,9 +186,21 @@ export function AgentConsole() {
           description="When your tenant dispatches a coding agent, its live output shows up here."
         />
       ) : (
-        <div className="space-y-4">
+        <div
+          data-testid="agent-wall"
+          data-columns={columns}
+          data-density={density}
+          className="grid w-full min-w-0 gap-3"
+          style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+        >
           {running.map((agent) => (
-            <AgentConsolePane key={agent.runId} agent={agent} />
+            <AgentTile
+              key={agent.runId}
+              agent={agent}
+              height={height}
+              fontSize={fontSize}
+              onFacts={onFacts}
+            />
           ))}
         </div>
       )}

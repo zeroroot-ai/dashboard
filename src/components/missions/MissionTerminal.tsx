@@ -13,9 +13,8 @@
 "use client";
 
 import * as React from "react";
-import { Terminal } from "@xterm/xterm";
-import { FitAddon } from "@xterm/addon-fit";
-import { TERMINAL_THEME } from "@/src/lib/graph/theme-colors";
+import type { Terminal } from "@xterm/xterm";
+import { openConsoleTerminal } from "@/src/lib/agent-console/terminal";
 import "@xterm/xterm/css/xterm.css";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -76,20 +75,6 @@ function readStoredHeight(): number {
   return DEFAULT_HEIGHT;
 }
 
-const FALLBACK_MONO = '"JetBrains Mono", "Fira Code", "Cascadia Code", monospace';
-
-/**
- * Resolves the brand mono font family for xterm. next/font sets
- * `--font-jetbrains-mono` to the loaded family name on the root element.
- */
-function resolveMonoFontFamily(): string {
-  if (typeof document === "undefined") return FALLBACK_MONO;
-  const v = getComputedStyle(document.documentElement)
-    .getPropertyValue("--font-jetbrains-mono")
-    .trim();
-  return v.length > 0 ? `${v}, ${FALLBACK_MONO}` : FALLBACK_MONO;
-}
-
 function readStoredOpen(defaultOpen: boolean): boolean {
   try {
     const stored = localStorage.getItem(LS_OPEN_KEY);
@@ -125,7 +110,7 @@ export const MissionTerminal = React.forwardRef<
   // --- refs for xterm internals ---
   const containerRef = React.useRef<HTMLDivElement>(null);
   const terminalRef = React.useRef<Terminal | null>(null);
-  const fitAddonRef = React.useRef<FitAddon | null>(null);
+  const fitAddonRef = React.useRef<{ fit: () => void } | null>(null);
 
   // --- pending writes queue ---
   // Writes that arrive before the xterm instance is initialized (e.g. because
@@ -156,24 +141,10 @@ export const MissionTerminal = React.forwardRef<
     if (!isOpen) return;
     if (!containerRef.current) return;
 
-    // xterm paints on a canvas and cannot parse the oklch() design tokens,
-    // so it takes the locked hex palette (dashboard#1144). The font family
-    // is the one runtime read: next/font exposes the real family name in a
-    // custom property, and a `var()` in a canvas font string does not resolve.
-    const fontFamily = resolveMonoFontFamily();
-    const terminal = new Terminal({
-      theme: TERMINAL_THEME,
-      convertEol: true,
-      scrollback: 5000,
-      fontFamily,
-      fontSize: 14,
-      lineHeight: 1.4,
-    });
-    const fitAddon = new FitAddon();
-    terminal.loadAddon(fitAddon);
-    terminal.open(containerRef.current);
-    fitAddon.fit();
-
+    // One themed xterm for every console surface (dashboard#1146).
+    const opened = openConsoleTerminal(containerRef.current);
+    const terminal = opened.terminal;
+    const fitAddon = { fit: opened.fit };
     terminalRef.current = terminal;
     fitAddonRef.current = fitAddon;
 
