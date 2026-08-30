@@ -26,7 +26,7 @@ export function LiveConsoleLink({ match, size = "default", className }: LiveCons
       <Link href={consoleHref(run.runId)} data-testid="live-console-link" data-run-id={run.runId}>
         <span className="size-2 shrink-0 animate-pulse motion-reduce:animate-none rounded-full bg-primary" aria-hidden="true" />
         <TerminalIcon className="size-4" aria-hidden="true" />
-        Live console
+        Live sandbox
       </Link>
     </Button>
   );

@@ -198,7 +198,7 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
         ) : null}
         <TileTerminal
           ref={terminalRef}
-          title={`${name} · live output`}
+          title={`${name} · sandbox output`}
           height={height}
           fontSize={fontSize}
         />
