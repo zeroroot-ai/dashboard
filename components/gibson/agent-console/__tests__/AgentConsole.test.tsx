@@ -51,6 +51,7 @@ function agent(over: Partial<RunningAgentView>): RunningAgentView {
 
 beforeEach(() => {
   useAgentConsoleMock.mockReset();
+  useAgentConsoleMock.mockReturnValue({ phase: "streaming", summary: {} });
   useRunningAgentsMock.mockReset();
 });
 
@@ -130,5 +131,39 @@ describe("AgentConsole", () => {
 
     expect(screen.getByText("Could not load running agents")).toBeInTheDocument();
     expect(screen.queryByTestId("agent-console-pane")).not.toBeInTheDocument();
+  });
+
+  it("shows a status line with the short run id, elapsed time and stream facts (#1144)", () => {
+    useAgentConsoleMock.mockReturnValue({
+      phase: "streaming",
+      summary: { model: "claude-opus-5", turns: 3, costUsd: 0.13 },
+    });
+    useRunningAgentsMock.mockReturnValue({
+      data: [agent({ runId: "0123456789abcdef", agentName: "claude" })],
+      isLoading: false,
+      error: null,
+    });
+    render(<AgentConsole />);
+    const line = screen.getByTestId("agent-status-line");
+    expect(line).toHaveTextContent("01234567");
+    expect(line).toHaveTextContent(/elapsed\s*\d/);
+    expect(line).toHaveTextContent("claude-opus-5");
+    expect(line).toHaveTextContent("turns3");
+    expect(line).toHaveTextContent("cost$0.13");
+    expect(screen.getByTestId("agent-phase")).toHaveTextContent("live");
+  });
+
+  it("marks a finished stream and hides facts it does not have", () => {
+    useAgentConsoleMock.mockReturnValue({ phase: "finished", summary: {} });
+    useRunningAgentsMock.mockReturnValue({
+      data: [agent({})],
+      isLoading: false,
+      error: null,
+    });
+    render(<AgentConsole />);
+    expect(screen.getByTestId("agent-phase")).toHaveTextContent("finished");
+    const line = screen.getByTestId("agent-status-line");
+    expect(line).not.toHaveTextContent("model");
+    expect(line).not.toHaveTextContent("cost");
   });
 });

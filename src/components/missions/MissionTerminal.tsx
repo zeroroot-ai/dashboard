@@ -15,6 +15,7 @@
 import * as React from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
+import { TERMINAL_THEME } from "@/src/lib/graph/theme-colors";
 import "@xterm/xterm/css/xterm.css";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,20 @@ function readStoredHeight(): number {
     // localStorage unavailable (SSR guard, should not reach here)
   }
   return DEFAULT_HEIGHT;
+}
+
+const FALLBACK_MONO = '"JetBrains Mono", "Fira Code", "Cascadia Code", monospace';
+
+/**
+ * Resolves the brand mono font family for xterm. next/font sets
+ * `--font-jetbrains-mono` to the loaded family name on the root element.
+ */
+function resolveMonoFontFamily(): string {
+  if (typeof document === "undefined") return FALLBACK_MONO;
+  const v = getComputedStyle(document.documentElement)
+    .getPropertyValue("--font-jetbrains-mono")
+    .trim();
+  return v.length > 0 ? `${v}, ${FALLBACK_MONO}` : FALLBACK_MONO;
 }
 
 function readStoredOpen(defaultOpen: boolean): boolean {
@@ -141,23 +156,16 @@ export const MissionTerminal = React.forwardRef<
     if (!isOpen) return;
     if (!containerRef.current) return;
 
-    // Read CSS custom properties at runtime so terminal colors always match
-    // the design-token values, including after theme switches.
-    const style = getComputedStyle(document.documentElement);
-    const bg = style.getPropertyValue("--terminal-bg").trim();
-    const fg = style.getPropertyValue("--foreground").trim();
-    const sel = style.getPropertyValue("--accent").trim();
-
+    // xterm paints on a canvas and cannot parse the oklch() design tokens,
+    // so it takes the locked hex palette (dashboard#1144). The font family
+    // is the one runtime read: next/font exposes the real family name in a
+    // custom property, and a `var()` in a canvas font string does not resolve.
+    const fontFamily = resolveMonoFontFamily();
     const terminal = new Terminal({
-      theme: {
-        background: bg || "#000000",
-        foreground: fg || "#ffffff",
-        selectionBackground: sel || "#3a3a3a",
-      },
+      theme: TERMINAL_THEME,
       convertEol: true,
       scrollback: 5000,
-      fontFamily:
-        'var(--font-jetbrains-mono), "Fira Code", "Cascadia Code", monospace',
+      fontFamily,
       fontSize: 14,
       lineHeight: 1.4,
     });

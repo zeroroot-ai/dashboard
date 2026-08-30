@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   getThemeColors,
   DARK_THEME,
+  TERMINAL_THEME,
   type EntityType,
   type RelationshipType,
   type Severity,
@@ -182,5 +183,44 @@ describe('theme-colors (single dark brand)', () => {
       expect(colors.edgeColors).toBeDefined();
       expect(colors.severityColors).toBeDefined();
     });
+  });
+});
+
+// ============================================================================
+// xterm palette (dashboard#1144)
+// ============================================================================
+
+describe('TERMINAL_THEME (xterm palette)', () => {
+  const HEX = /^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i;
+
+  it('has only parseable hex colors, never a raw design token', () => {
+    for (const [key, value] of Object.entries(TERMINAL_THEME)) {
+      expect(value, key).toMatch(HEX);
+      expect(value, key).not.toContain('oklch');
+      expect(value, key).not.toContain('var(');
+    }
+  });
+
+  it('foreground contrasts with background at AAA', () => {
+    expect(
+      contrastRatio(TERMINAL_THEME.foreground, TERMINAL_THEME.background),
+    ).toBeGreaterThanOrEqual(7);
+  });
+
+  it('every visible ANSI color reaches AA on the background', () => {
+    const skip = new Set(['background', 'black', 'cursorAccent', 'selectionBackground']);
+    for (const [key, value] of Object.entries(TERMINAL_THEME)) {
+      if (skip.has(key)) continue;
+      expect(
+        contrastRatio(value, TERMINAL_THEME.background),
+        `${key} ${value}`,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('shares the canvas background and the acid accent with DARK_THEME', () => {
+    expect(TERMINAL_THEME.background).toBe(DARK_THEME.background);
+    expect(TERMINAL_THEME.brightGreen).toBe(DARK_THEME.nodeColors.subdomain);
+    expect(TERMINAL_THEME.cursor).toBe(TERMINAL_THEME.brightGreen);
   });
 });

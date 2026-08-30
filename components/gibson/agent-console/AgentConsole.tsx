@@ -29,7 +29,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorAlert, TableSkeleton } from "@/components/gibson/shared";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { useRunningAgents } from "@/src/hooks/useRunningAgents";
-import { useAgentConsole } from "@/src/hooks/useAgentConsole";
+import {
+  useAgentConsole,
+  type AgentConsolePhase,
+} from "@/src/hooks/useAgentConsole";
+import {
+  formatCost,
+  formatDuration,
+  shortId,
+} from "@/src/lib/agent-console/stream-json";
 import type { RunningAgentView } from "@/src/lib/gibson-client/agent-console";
 import type { MissionTerminalHandle } from "@/src/components/missions/MissionTerminal";
 
@@ -49,13 +57,42 @@ function formatStarted(iso: string): string {
 }
 
 /**
- * One running agent's pane: a header identifying the run and an always-mounted
- * terminal streaming its live output. The pane owns its own EventSource via
- * {@link useAgentConsole}, so every pane streams independently of the others.
+ * Elapsed time since `startedAt`, ticking once a second while the run
+ * streams and frozen once it stops. Returns null for a bad start time.
+ */
+function useElapsed(startedAt: string, running: boolean): string | null {
+  const start = new Date(startedAt).getTime();
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => {
+    if (!running) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [running]);
+  if (isNaN(start)) return null;
+  return formatDuration(Math.max(0, now - start));
+}
+
+const PHASE_LABEL: Record<AgentConsolePhase, string> = {
+  streaming: "live",
+  finished: "finished",
+  gone: "stopped",
+  error: "stream error",
+};
+
+/**
+ * One running agent's pane: a header identifying the run, a status line
+ * (agent name, short run id, elapsed time, model, turns, cost) and an
+ * always-mounted terminal streaming its live output. The pane owns its own
+ * EventSource via {@link useAgentConsole}, so every pane streams
+ * independently of the others.
  */
 function AgentConsolePane({ agent }: { agent: RunningAgentView }) {
   const terminalRef = React.useRef<MissionTerminalHandle>(null);
-  useAgentConsole(agent.runId, terminalRef);
+  const status = useAgentConsole(agent.runId, terminalRef);
+  const running = status.phase === "streaming";
+  const elapsed = useElapsed(agent.startedAt, running);
+  const name = agent.agentName || agent.runId;
+  const { model, turns, costUsd } = status.summary;
 
   return (
     <Card data-testid="agent-console-pane" data-run-id={agent.runId}>
@@ -63,11 +100,14 @@ function AgentConsolePane({ agent }: { agent: RunningAgentView }) {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-base">
             <BotIcon className="size-4 text-muted-foreground" aria-hidden="true" />
-            {agent.agentName || agent.runId}
+            {name}
           </CardTitle>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="font-mono text-xs">
-              {agent.runId}
+            <Badge
+              variant={running ? "default" : "outline"}
+              data-testid="agent-phase"
+            >
+              {PHASE_LABEL[status.phase]}
             </Badge>
             {agent.sandboxId ? (
               <Badge variant="outline" className="text-xs text-muted-foreground">
@@ -79,11 +119,44 @@ function AgentConsolePane({ agent }: { agent: RunningAgentView }) {
             </span>
           </div>
         </div>
+        <dl
+          data-testid="agent-status-line"
+          className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs text-muted-foreground"
+        >
+          <div className="flex gap-1">
+            <dt className="sr-only">run</dt>
+            <dd title={agent.runId}>{shortId(agent.runId)}</dd>
+          </div>
+          {elapsed !== null ? (
+            <div className="flex gap-1">
+              <dt>elapsed</dt>
+              <dd className="tabular-nums text-foreground">{elapsed}</dd>
+            </div>
+          ) : null}
+          {model ? (
+            <div className="flex gap-1">
+              <dt>model</dt>
+              <dd className="text-foreground">{model}</dd>
+            </div>
+          ) : null}
+          {turns !== undefined ? (
+            <div className="flex gap-1">
+              <dt>turns</dt>
+              <dd className="tabular-nums text-foreground">{turns}</dd>
+            </div>
+          ) : null}
+          {costUsd !== undefined ? (
+            <div className="flex gap-1">
+              <dt>cost</dt>
+              <dd className="tabular-nums text-foreground">{formatCost(costUsd)}</dd>
+            </div>
+          ) : null}
+        </dl>
       </CardHeader>
       <CardContent>
         <MissionTerminal
           ref={terminalRef}
-          title={`${agent.agentName || agent.runId} · live output`}
+          title={`${name} · live output`}
           defaultOpen={true}
         />
       </CardContent>

@@ -214,6 +214,73 @@ export const DARK_THEME: ThemeColors = {
 // Theme Selection Function
 // ============================================================================
 
+// ============================================================================
+// xterm palette (acid concrete, ADR-0064), dashboard#1144
+// ============================================================================
+
+/** The xterm.js theme shape the console uses. Every value is a hex color. */
+interface TerminalTheme {
+  background: string;
+  foreground: string;
+  cursor: string;
+  cursorAccent: string;
+  selectionBackground: string;
+  black: string;
+  red: string;
+  green: string;
+  yellow: string;
+  blue: string;
+  magenta: string;
+  cyan: string;
+  white: string;
+  brightBlack: string;
+  brightRed: string;
+  brightGreen: string;
+  brightYellow: string;
+  brightBlue: string;
+  brightMagenta: string;
+  brightCyan: string;
+  brightWhite: string;
+}
+
+/**
+ * The one xterm palette for the Coding Agent Console and the mission
+ * terminal. xterm paints on a canvas and cannot read CSS custom properties,
+ * so the brand is mirrored here as hex literals, the same way DARK_THEME
+ * mirrors it for the graph canvas. The Dracula ramp carries the ANSI colors.
+ * Bright green is the acid accent, so `\x1b[92m` is the brand highlight.
+ * The companion test checks that every value parses and contrasts.
+ */
+export const TERMINAL_THEME: TerminalTheme = {
+  // Warm near-black, the brand --terminal-bg.
+  background: '#17150f',
+  // Dracula foreground.
+  foreground: '#f8f8f2',
+  // Acid lime cursor on the dark ground.
+  cursor: '#a3e635',
+  cursorAccent: '#17150f',
+  // Acid at 25% alpha, so selected text stays readable.
+  selectionBackground: '#a3e63540',
+  black: '#21222c',
+  red: '#ff5555',
+  green: '#50fa7b',
+  yellow: '#f1fa8c',
+  blue: '#bd93f9',
+  magenta: '#ff79c6',
+  cyan: '#8be9fd',
+  white: '#f8f8f2',
+  // Warm grey for secondary lines (system, thinking). Not the Dracula
+  // comment blue, which fails contrast on the warm ground.
+  brightBlack: '#8b877b',
+  brightRed: '#ff6e6e',
+  brightGreen: '#a3e635',
+  brightYellow: '#ffffa5',
+  brightBlue: '#d6acff',
+  brightMagenta: '#ff92df',
+  brightCyan: '#a4ffff',
+  brightWhite: '#ffffff',
+};
+
 /**
  * Return the graph color palette. There is one locked canvas palette (acid
  * concrete, ADR-0064), so this always returns DARK_THEME, kept as a function
