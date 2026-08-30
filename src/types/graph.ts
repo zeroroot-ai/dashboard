@@ -9,7 +9,10 @@
 export type EntityType =
   | 'mission' | 'mission_run' | 'agent_run' | 'tool_execution' | 'llm_call'
   | 'domain' | 'subdomain' | 'host' | 'port' | 'service' | 'endpoint' | 'technology' | 'certificate'
-  | 'finding' | 'evidence' | 'technique';
+  | 'finding' | 'evidence' | 'technique'
+  // Application lifecycle (Taxonomy v2, gibson#1656).
+  | 'application' | 'repository' | 'image' | 'package' | 'deployment'
+  | 'vulnerability' | 'merge_request' | 'pipeline' | 'control';
 
 /**
  * Relationship types in the knowledge graph.
@@ -19,7 +22,10 @@ export type RelationshipType =
   | 'HAS_SUBDOMAIN' | 'RESOLVES_TO' | 'HAS_PORT' | 'RUNS_SERVICE' | 'HAS_ENDPOINT'
   | 'USES_TECHNOLOGY' | 'SERVES_CERTIFICATE' | 'AFFECTS' | 'HAS_EVIDENCE'
   | 'USES_TECHNIQUE' | 'LEADS_TO' | 'USED_TOOL' | 'DELEGATED_TO' | 'DISCOVERED' | 'BELONGS_TO'
-  | 'PART_OF' | 'EXECUTES';
+  | 'PART_OF' | 'EXECUTES'
+  // Application lifecycle (Taxonomy v2, gibson#1656).
+  | 'HAS_REPOSITORY' | 'HAS_DEPLOYMENT' | 'BUILT_FROM' | 'CONTAINS' | 'RUNS' | 'EXPOSES'
+  | 'INSTANCE_OF' | 'FIXED_BY' | 'VERIFIED_BY' | 'MERGED_INTO' | 'TOUCHES';
 
 /**
  * Dash patterns for edge rendering.

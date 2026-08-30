@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
+  ENTITY_TYPES,
+  RELATIONSHIP_TYPES,
   getEntityColor,
   getRelationshipDashPattern,
   getSeverityColor,
@@ -34,7 +36,7 @@ describe('entity-taxonomy', () => {
       'technique',
     ];
 
-    it('should return valid colors for all 16 entity types', () => {
+    it('should return valid colors for every entity type', () => {
       allEntityTypes.forEach((entityType) => {
         const color = getEntityColor(entityType);
 
@@ -272,11 +274,12 @@ describe('entity-taxonomy', () => {
   });
 
   describe('getAllEntityTypes', () => {
-    it('should return array of all 16 entity types', () => {
+    it('should return every entity type in the taxonomy', () => {
       const allTypes = getAllEntityTypes();
 
       expect(Array.isArray(allTypes)).toBe(true);
-      expect(allTypes.length).toBe(16);
+      // Derived from ENTITY_TYPES, so a promoted label needs no test re-pin.
+      expect(allTypes.length).toBe(ENTITY_TYPES.length);
     });
 
     it('should include all expected entity types', () => {
@@ -308,11 +311,12 @@ describe('entity-taxonomy', () => {
   });
 
   describe('getAllRelationshipTypes', () => {
-    it('should return array of all 17 relationship types', () => {
+    it('should return every relationship type in the taxonomy', () => {
       const allTypes = getAllRelationshipTypes();
 
       expect(Array.isArray(allTypes)).toBe(true);
-      expect(allTypes.length).toBe(17);
+      // Derived from RELATIONSHIP_TYPES, so a promoted edge needs no re-pin.
+      expect(allTypes.length).toBe(RELATIONSHIP_TYPES.length);
     });
 
     it('should include all expected relationship types', () => {

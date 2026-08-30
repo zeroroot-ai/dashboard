@@ -67,6 +67,19 @@ export const NODE_SIZES: Record<EntityType, number> = {
   endpoint:       34,
   certificate:    34,
   evidence:       34,
+
+  // Application lifecycle (Taxonomy v2, gibson#1656), sized on the same tiers:
+  // the Application is a root anchor, the things it owns sit a tier down, and
+  // the many-per-image Package is a leaf.
+  application:    64,
+  vulnerability:  64,
+  repository:     52,
+  deployment:     52,
+  merge_request:  52,
+  image:          46,
+  pipeline:       46,
+  control:        38,
+  package:        34,
 };
 
 // ---------------------------------------------------------------------------

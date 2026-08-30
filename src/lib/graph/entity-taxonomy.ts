@@ -14,46 +14,93 @@
  * All entity types in the Gibson knowledge graph taxonomy.
  * Represents the complete set of node types that can exist in the graph.
  */
-export type EntityType =
-  | 'mission'
-  | 'mission_run'
-  | 'agent_run'
-  | 'tool_execution'
-  | 'llm_call'
-  | 'domain'
-  | 'subdomain'
-  | 'host'
-  | 'port'
-  | 'service'
-  | 'endpoint'
-  | 'technology'
-  | 'certificate'
-  | 'finding'
-  | 'evidence'
-  | 'technique';
+export const ENTITY_TYPES = [
+  // Execution layer.
+  'mission',
+  'mission_run',
+  'agent_run',
+  'tool_execution',
+  'llm_call',
+
+  // Recon layer.
+  'domain',
+  'subdomain',
+  'host',
+  'port',
+  'service',
+  'endpoint',
+  'technology',
+  'certificate',
+  'finding',
+  'evidence',
+  'technique',
+
+  // Application lifecycle (Taxonomy v2, gibson#1656). A different layer of the
+  // same graph: what the tenant ships, what runs, what is wrong with it, and
+  // what was done about it.
+  'application',
+  'repository',
+  'image',
+  'package',
+  'deployment',
+  'vulnerability',
+  'merge_request',
+  'pipeline',
+  'control',
+] as const;
+
+/**
+ * All entity types in the Gibson knowledge graph taxonomy.
+ * Represents the complete set of node types that can exist in the graph.
+ *
+ * Derived from `ENTITY_TYPES` so the union, the parser's accept-list and
+ * `getAllEntityTypes()` cannot drift apart: adding a label is one edit, not
+ * three. Mirrors gibson `internal/engine/taxonomy/taxonomy.go`.
+ */
+export type EntityType = (typeof ENTITY_TYPES)[number];
 
 /**
  * All relationship types in the Gibson knowledge graph taxonomy.
  * Represents the complete set of edge types that can connect nodes.
  */
-export type RelationshipType =
-  | 'HAS_SUBDOMAIN'
-  | 'RESOLVES_TO'
-  | 'HAS_PORT'
-  | 'RUNS_SERVICE'
-  | 'HAS_ENDPOINT'
-  | 'USES_TECHNOLOGY'
-  | 'SERVES_CERTIFICATE'
-  | 'AFFECTS'
-  | 'HAS_EVIDENCE'
-  | 'USES_TECHNIQUE'
-  | 'LEADS_TO'
-  | 'USED_TOOL'
-  | 'DELEGATED_TO'
-  | 'DISCOVERED'
-  | 'BELONGS_TO'
-  | 'PART_OF'
-  | 'EXECUTES';
+export const RELATIONSHIP_TYPES = [
+  'HAS_SUBDOMAIN',
+  'RESOLVES_TO',
+  'HAS_PORT',
+  'RUNS_SERVICE',
+  'HAS_ENDPOINT',
+  'USES_TECHNOLOGY',
+  'SERVES_CERTIFICATE',
+  'AFFECTS',
+  'HAS_EVIDENCE',
+  'USES_TECHNIQUE',
+  'LEADS_TO',
+  'USED_TOOL',
+  'DELEGATED_TO',
+  'DISCOVERED',
+  'BELONGS_TO',
+  'PART_OF',
+  'EXECUTES',
+
+  // Application lifecycle (Taxonomy v2, gibson#1656).
+  'HAS_REPOSITORY', // Application -> Repository
+  'HAS_DEPLOYMENT', // Application -> Deployment
+  'BUILT_FROM',     // Image       -> Repository
+  'CONTAINS',       // Image       -> Package
+  'RUNS',           // Deployment  -> Image
+  'EXPOSES',        // Deployment  -> Host
+  'INSTANCE_OF',    // Finding     -> Vulnerability
+  'FIXED_BY',       // Finding     -> MergeRequest
+  'VERIFIED_BY',    // Finding     -> Pipeline
+  'MERGED_INTO',    // MergeRequest-> Repository
+  'TOUCHES',        // Finding     -> Control
+] as const;
+
+/**
+ * All relationship types in the Gibson knowledge graph taxonomy.
+ * Derived from `RELATIONSHIP_TYPES` for the same reason as `EntityType`.
+ */
+export type RelationshipType = (typeof RELATIONSHIP_TYPES)[number];
 
 /**
  * Severity levels for findings and vulnerabilities.
@@ -99,6 +146,22 @@ const ENTITY_COLORS_DARK: Record<EntityType, string> = {
   finding: '#ff5555',        // dracula red
   evidence: '#b0bec5',       // blue-grey-200
   technique: '#f48fb1',      // pink-200
+
+  // Application lifecycle (Taxonomy v2, gibson#1656). Chosen by search, not by
+  // eye: every hue clears WCAG AA (>=4.5:1) on the terminal ground and is the
+  // most separable in-band candidate left once the 16 hues above are placed
+  // (min OKLab dE 10.0 to any existing or sibling hue). The bright-on-near-black
+  // space is full at 16, so within this family colour narrows the field and the
+  // legend's ICON plus label carries identity, never colour alone.
+  application: '#4f7eee',    // blue, the lifecycle anchor
+  repository: '#9e75c7',     // muted purple, source
+  image: '#53adea',          // light blue, built artifact
+  package: '#aec775',        // sage, dependency
+  deployment: '#c79675',     // warm tan, what runs
+  vulnerability: '#d26a94',  // deep rose, the weakness identity
+  merge_request: '#be4fee',  // violet, the proposed change
+  pipeline: '#e7dac5',       // bone, the verifier
+  control: '#f1bbe1',        // pale pink, compliance
 };
 
 /**
@@ -166,6 +229,20 @@ const RELATIONSHIP_DASH_PATTERNS: Record<RelationshipType, DashPattern> = {
   LEADS_TO: 'dot-dash',
   PART_OF: 'dot-dash',
   EXECUTES: 'dot-dash',
+
+  // Application lifecycle (Taxonomy v2, gibson#1656), classified by the same
+  // four semantics as the rows above.
+  HAS_REPOSITORY: 'solid',   // structural containment
+  HAS_DEPLOYMENT: 'solid',
+  BUILT_FROM: 'solid',
+  CONTAINS: 'solid',
+  RUNS: 'solid',
+  EXPOSES: 'solid',
+  FIXED_BY: 'long-dash',     // remediation is execution
+  VERIFIED_BY: 'long-dash',
+  MERGED_INTO: 'long-dash',
+  INSTANCE_OF: 'dot-dash',   // identity fan-in, cross-entity
+  TOUCHES: 'dot-dash',
 };
 
 // ============================================================================
@@ -248,29 +325,12 @@ export function parseEntityType(labels: string[]): EntityType {
   // Normalize labels to lowercase for case-insensitive matching
   const normalizedLabels = labels.map((l) => l.toLowerCase().replace(/\s+/g, '_'));
 
-  // Define all valid entity types for checking
-  const validTypes: EntityType[] = [
-    'mission',
-    'mission_run',
-    'agent_run',
-    'tool_execution',
-    'llm_call',
-    'domain',
-    'subdomain',
-    'host',
-    'port',
-    'service',
-    'endpoint',
-    'technology',
-    'certificate',
-    'finding',
-    'evidence',
-    'technique',
-  ];
-
-  // Find first matching entity type
+  // Find first matching entity type. The accept-list IS the vocabulary, so a
+  // label promoted in gibson's Taxonomy is parseable here the moment it is
+  // added to ENTITY_TYPES.
+  const validTypes: readonly string[] = ENTITY_TYPES;
   for (const label of normalizedLabels) {
-    if (validTypes.includes(label as EntityType)) {
+    if (validTypes.includes(label)) {
       return label as EntityType;
     }
   }
@@ -286,24 +346,7 @@ export function parseEntityType(labels: string[]): EntityType {
  * @returns Array of all EntityType values
  */
 export function getAllEntityTypes(): EntityType[] {
-  return [
-    'mission',
-    'mission_run',
-    'agent_run',
-    'tool_execution',
-    'llm_call',
-    'domain',
-    'subdomain',
-    'host',
-    'port',
-    'service',
-    'endpoint',
-    'technology',
-    'certificate',
-    'finding',
-    'evidence',
-    'technique',
-  ];
+  return [...ENTITY_TYPES];
 }
 
 /**
@@ -313,23 +356,5 @@ export function getAllEntityTypes(): EntityType[] {
  * @returns Array of all RelationshipType values
  */
 export function getAllRelationshipTypes(): RelationshipType[] {
-  return [
-    'HAS_SUBDOMAIN',
-    'RESOLVES_TO',
-    'HAS_PORT',
-    'RUNS_SERVICE',
-    'HAS_ENDPOINT',
-    'USES_TECHNOLOGY',
-    'SERVES_CERTIFICATE',
-    'AFFECTS',
-    'HAS_EVIDENCE',
-    'USES_TECHNIQUE',
-    'LEADS_TO',
-    'USED_TOOL',
-    'DELEGATED_TO',
-    'DISCOVERED',
-    'BELONGS_TO',
-    'PART_OF',
-    'EXECUTES',
-  ];
+  return [...RELATIONSHIP_TYPES];
 }

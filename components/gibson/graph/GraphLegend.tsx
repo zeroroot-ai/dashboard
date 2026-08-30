@@ -12,7 +12,9 @@
 
 import {
   Rocket, Play, Bot, Wrench, Sparkles, Globe, Server, Plug, Cog, Link as LinkIcon,
-  Cpu, Shield, Bug, FileText, Crosshair, Circle, type LucideIcon,
+  Cpu, Shield, Bug, FileText, Crosshair, Circle, Boxes, GitBranch, Container,
+  Package as PackageIcon, Rocket as RocketIcon, ShieldAlert, GitPullRequest,
+  Workflow, ClipboardCheck, type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getEntityColor, getSeverityColor, type EntityType } from '@/src/lib/graph/entity-taxonomy';
@@ -37,6 +39,20 @@ const ENTITY_ICONS: Record<string, LucideIcon> = {
   finding: Bug,
   evidence: FileText,
   technique: Crosshair,
+
+  // Application lifecycle (Taxonomy v2, gibson#1656). The bright-on-near-black
+  // hue space is full at 16, so within this family the ICON is what separates
+  // one label from the next; colour narrows the field. Identity is never
+  // colour alone here.
+  application: Boxes,
+  repository: GitBranch,
+  image: Container,
+  package: PackageIcon,
+  deployment: RocketIcon,
+  vulnerability: ShieldAlert,
+  merge_request: GitPullRequest,
+  pipeline: Workflow,
+  control: ClipboardCheck,
 };
 
 function titleCase(s: string): string {
