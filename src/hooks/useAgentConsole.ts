@@ -22,6 +22,11 @@
 
 import * as React from 'react';
 import type { MissionTerminalHandle } from '@/src/components/missions/MissionTerminal';
+import {
+  mergeSummary,
+  renderAgentLine,
+  type AgentRunSummary,
+} from '@/src/lib/agent-console/stream-json';
 
 const LINE_ENDED = '\x1b[32m✓ Agent finished\x1b[0m\r\n';
 const LINE_NOT_FOUND =
@@ -43,12 +48,43 @@ function base64ToBytes(b64: string): Uint8Array {
   return bytes;
 }
 
+/** Where the stream stands. `streaming` until the server closes it. */
+export type AgentConsolePhase = 'streaming' | 'finished' | 'gone' | 'error';
+
+/** Live status of one run, derived from the stream (dashboard#1144). */
+interface AgentConsoleStatus {
+  phase: AgentConsolePhase;
+  summary: AgentRunSummary;
+}
+
+const INITIAL_STATUS: AgentConsoleStatus = { phase: 'streaming', summary: {} };
+
 export function useAgentConsole(
   runId: string | undefined,
   terminalRef: React.RefObject<MissionTerminalHandle | null>,
-): void {
+): AgentConsoleStatus {
+  const [status, setStatus] = React.useState<AgentConsoleStatus>(INITIAL_STATUS);
   React.useEffect(() => {
     if (!runId) return;
+    setStatus(INITIAL_STATUS);
+    const setPhase = (phase: AgentConsolePhase) => {
+      setStatus((prev) => (prev.phase === phase ? prev : { ...prev, phase }));
+    };
+    const write = (text: string) => {
+      terminalRef.current?.write(text);
+    };
+    // Render one raw stream line to readable terminal text, and keep the
+    // facts it carried (model, turns, cost, session).
+    const writeLine = (line: string) => {
+      const rendered = renderAgentLine(line);
+      if (rendered.text.length > 0) write(rendered.text);
+      if (rendered.summary) {
+        setStatus((prev) => {
+          const summary = mergeSummary(prev.summary, rendered.summary);
+          return summary === prev.summary ? prev : { ...prev, summary };
+        });
+      }
+    };
 
     const es = new EventSource('/api/agents/' + runId + '/events');
     const decoder = new TextDecoder();
@@ -56,9 +92,6 @@ export function useAgentConsole(
     // ever write complete lines to the terminal.
     let pending = '';
 
-    const write = (text: string) => {
-      terminalRef.current?.write(text);
-    };
 
     const flushComplete = (text: string) => {
       pending += text;
@@ -66,7 +99,7 @@ export function useAgentConsole(
       while (nl !== -1) {
         const line = pending.slice(0, nl);
         pending = pending.slice(nl + 1);
-        write(line + '\r\n');
+        writeLine(line);
         nl = pending.indexOf('\n');
       }
     };
@@ -74,7 +107,7 @@ export function useAgentConsole(
     const close = () => {
       // Flush any trailing partial line the agent left without a newline.
       if (pending.length > 0) {
-        write(pending + '\r\n');
+        writeLine(pending);
         pending = '';
       }
       es.close();
@@ -100,11 +133,13 @@ export function useAgentConsole(
     const handleEnd = () => {
       close();
       write(LINE_ENDED);
+      setPhase('finished');
     };
 
     const handleNotFound = () => {
       close();
       write(LINE_NOT_FOUND);
+      setPhase('gone');
     };
 
     // EventSource fires a native `error` event on transient disconnects, with
@@ -115,6 +150,7 @@ export function useAgentConsole(
       if (typeof e.data !== 'string' || e.data.length === 0) return;
       close();
       write(LINE_ERROR);
+      setPhase('error');
     };
 
     es.addEventListener('chunk', handleChunk);
@@ -126,4 +162,5 @@ export function useAgentConsole(
       es.close();
     };
   }, [runId, terminalRef]);
+  return status;
 }
