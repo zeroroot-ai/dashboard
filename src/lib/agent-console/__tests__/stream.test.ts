@@ -165,6 +165,7 @@ describe("AgentStreamRegistry", () => {
     const a = r.acquire("run-1");
     const b = r.acquire("run-1");
     expect(a).toBe(b);
+    r.setLive("run-1", true);
     expect(sources).toHaveLength(1);
     expect(r.size).toBe(1);
     r.release("run-1");
@@ -174,5 +175,141 @@ describe("AgentStreamRegistry", () => {
     expect(r.size).toBe(0);
     r.release("run-1");
     expect(r.size).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fan-out: cap, queue, cursor (dashboard#1148)
+// ---------------------------------------------------------------------------
+
+describe("AgentStream cursor", () => {
+  it("tracks the last seq, drops repeats, and resumes with ?since= on the next start", () => {
+    const { sources, opener } = open();
+    const s = new AgentStream("run-c");
+    s.start(opener);
+    const write = vi.fn();
+    s.subscribe({ write });
+    sources[0].emit("chunk", { seq: "1", dataB64: b64("one\n") });
+    sources[0].emit("chunk", { seq: "2", dataB64: b64("two\n") });
+    sources[0].emit("chunk", { seq: "2", dataB64: b64("two again\n") });
+    expect(write.mock.calls.map((c) => c[0])).toEqual(["one\r\n", "two\r\n"]);
+    expect(s.cursor).toBe(BigInt(2));
+    s.close();
+    expect(s.connected).toBe(false);
+    s.start(opener);
+    expect(sources).toHaveLength(2);
+    expect(sources[1].url).toBe("/api/agents/run-c/events?since=2");
+    sources[1].emit("chunk", { seq: "3", dataB64: b64("three\n") });
+    expect(write).toHaveBeenLastCalledWith("three\r\n");
+    // The buffer survives the reconnect for a late surface.
+    const late = vi.fn();
+    s.subscribe({ write: late });
+    expect(late.mock.calls.map((c) => c[0])).toEqual(["one\r\n", "two\r\n", "three\r\n"]);
+  });
+
+  it("does not reopen after the stream ended", () => {
+    const { sources, opener } = open();
+    const s = new AgentStream("run-d");
+    s.start(opener);
+    sources[0].emit("end", { runId: "run-d" });
+    s.start(opener);
+    expect(sources).toHaveLength(1);
+  });
+});
+
+describe("AgentStreamRegistry fan-out", () => {
+  it("never opens more than the cap and queues the rest in order", () => {
+    const { sources, opener } = open();
+    const r = new AgentStreamRegistry({ open: opener, cap: 3 });
+    const ids = Array.from({ length: 25 }, (_, i) => `run-${i}`);
+    for (const id of ids) {
+      r.acquire(id);
+      r.setLive(id, true);
+    }
+    expect(sources).toHaveLength(3);
+    expect(sources.map((s) => s.url)).toEqual([
+      "/api/agents/run-0/events",
+      "/api/agents/run-1/events",
+      "/api/agents/run-2/events",
+    ]);
+    expect(r.stats()).toEqual({ cap: 3, live: 3, waiting: 22 });
+  });
+
+  it("frees a slot when demand goes and when a stream ends", () => {
+    const { sources, opener } = open();
+    const r = new AgentStreamRegistry({ open: opener, cap: 2 });
+    for (const id of ["a", "b", "c", "d"]) {
+      r.acquire(id);
+      r.setLive(id, true);
+    }
+    expect(sources.map((s) => s.url)).toEqual(["/api/agents/a/events", "/api/agents/b/events"]);
+    // a scrolls out of view: its slot goes to c.
+    r.setLive("a", false);
+    expect(sources[0].closeSpy).toHaveBeenCalled();
+    expect(sources.map((s) => s.url)).toEqual([
+      "/api/agents/a/events",
+      "/api/agents/b/events",
+      "/api/agents/c/events",
+    ]);
+    expect(r.stats()).toEqual({ cap: 2, live: 2, waiting: 1 });
+    // b finishes: its slot goes to d.
+    sources[1].emit("end", { runId: "b" });
+    expect(sources[3].url).toBe("/api/agents/d/events");
+    expect(r.stats()).toEqual({ cap: 2, live: 2, waiting: 0 });
+  });
+
+  it("resumes a tile scrolled back into view from its cursor", () => {
+    const { sources, opener } = open();
+    const r = new AgentStreamRegistry({ open: opener, cap: 1 });
+    const a = r.acquire("a");
+    r.setLive("a", true);
+    sources[0].emit("chunk", { seq: "7", dataB64: b64("seven\n") });
+    r.setLive("a", false);
+    expect(a.connected).toBe(false);
+    r.setLive("a", true);
+    expect(sources[1].url).toBe("/api/agents/a/events?since=7");
+  });
+
+  it("counts demand per surface, so a pop-out over a tile keeps one connection", () => {
+    const { sources, opener } = open();
+    const r = new AgentStreamRegistry({ open: opener, cap: 2 });
+    r.acquire("a");
+    r.acquire("a");
+    r.setLive("a", true);
+    r.setLive("a", true);
+    expect(sources).toHaveLength(1);
+    r.setLive("a", false);
+    expect(sources[0].closeSpy).not.toHaveBeenCalled();
+    r.setLive("a", false);
+    expect(sources[0].closeSpy).toHaveBeenCalled();
+    r.release("a");
+    expect(r.size).toBe(1);
+    r.release("a");
+    expect(r.size).toBe(0);
+  });
+
+  it("reports stats to watchers and ignores demand for unknown runs", () => {
+    const { opener } = open();
+    const r = new AgentStreamRegistry({ open: opener, cap: 1 });
+    const seen: number[] = [];
+    const off = r.onStats((s) => seen.push(s.live));
+    r.setLive("ghost", true);
+    r.acquire("a");
+    r.setLive("a", true);
+    expect(seen).toEqual([0, 1]);
+    off();
+    r.setLive("a", false);
+    expect(seen).toEqual([0, 1]);
+  });
+
+  it("accepts a bare opener for backward compatibility and enforces a cap of at least 1", () => {
+    const { sources, opener } = open();
+    const r = new AgentStreamRegistry(opener);
+    expect(r.cap).toBe(6);
+    const r0 = new AgentStreamRegistry({ open: opener, cap: 0 });
+    expect(r0.cap).toBe(1);
+    r.acquire("a");
+    r.setLive("a", true);
+    expect(sources).toHaveLength(1);
   });
 });

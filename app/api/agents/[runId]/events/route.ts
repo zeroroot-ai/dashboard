@@ -46,6 +46,13 @@ import { streamAgentEvents } from '@/src/lib/gibson-client/agent-console';
 
 const HEARTBEAT_INTERVAL_MS = 15000;
 
+/** Parses the `since` query value. Missing means 0; anything else must be a non-negative integer. */
+function parseSince(raw: string | null): bigint | null {
+  if (raw === null || raw === '') return BigInt(0);
+  if (!/^\d{1,18}$/.test(raw)) return null;
+  return BigInt(raw);
+}
+
 /** SSE frame builder; always terminates with the canonical blank line. */
 function sseFrame(event: string, data: unknown, id?: string): string {
   const lines: string[] = [];
@@ -86,7 +93,18 @@ export async function GET(
     });
   }
 
-  const baseLog = { route: 'agents/events', runId } as const;
+  // `since` is the last event sequence the client saw. The daemon replays
+  // its backlog after it, so a client that reconnects backfills its tail
+  // without a gap or a duplicate. Missing or zero means the whole backlog.
+  const sinceSeq = parseSince(request.nextUrl.searchParams.get('since'));
+  if (sinceSeq === null) {
+    return new Response(JSON.stringify({ error: 'since must be a non-negative integer' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const baseLog = { route: 'agents/events', runId, sinceSeq: sinceSeq.toString() } as const;
   const encoder = new TextEncoder();
 
   // Aborts the daemon server stream on teardown (browser disconnect).
@@ -111,17 +129,18 @@ export async function GET(
         }
       }, HEARTBEAT_INTERVAL_MS);
 
-      let seq = 0;
       try {
-        const events = streamAgentEvents(runId, abort.signal);
+        const events = streamAgentEvents(runId, sinceSeq, abort.signal);
         for await (const ev of events) {
+          const seq = ev.seq.toString();
           const frame = sseFrame(
             'chunk',
             {
               unixNanos: ev.unixNanos.toString(),
               dataB64: Buffer.from(ev.data).toString('base64'),
+              seq,
             },
-            String(seq++),
+            seq,
           );
           try {
             controller.enqueue(encoder.encode(frame));

@@ -72,12 +72,35 @@ interface AgentTileProps {
   selected?: boolean;
 }
 
+/**
+ * True while the element is in the viewport. Without IntersectionObserver
+ * (older browsers, tests) every tile counts as visible.
+ */
+function useInView(ref: React.RefObject<HTMLElement | null>): boolean {
+  const [inView, setInView] = React.useState(true);
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) setInView(entry.isIntersecting);
+      },
+      { rootMargin: "200px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref]);
+  return inView;
+}
+
 export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function AgentTile(
   { agent, height, fontSize, onFacts, onOpen, selected = false },
   ref,
 ) {
   const terminalRef = React.useRef<MissionTerminalHandle>(null);
-  const status = useAgentConsole(agent.runId, terminalRef);
+  const sectionRef = React.useRef<HTMLElement | null>(null);
+  const inView = useInView(sectionRef);
+  const status = useAgentConsole(agent.runId, terminalRef, { live: inView });
   const running = status.phase === "streaming";
   const elapsed = useElapsed(agent.startedAt, running);
   const name = agent.agentName || agent.runId;
@@ -98,10 +121,15 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
 
   return (
     <section
-      ref={ref}
+      ref={(el) => {
+        sectionRef.current = el;
+        if (typeof ref === "function") ref(el);
+        else if (ref) ref.current = el;
+      }}
       data-testid="agent-tile"
       data-run-id={agent.runId}
       data-phase={status.phase}
+      data-live={inView ? "true" : "false"}
       data-selected={selected ? "true" : undefined}
       aria-label={`${name} ${shortId(agent.runId)}`}
       tabIndex={0}

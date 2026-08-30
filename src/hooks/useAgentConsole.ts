@@ -20,11 +20,22 @@ export const AgentStreamRegistryContext = React.createContext<AgentStreamRegistr
  * Attaches a terminal to a run's live stream and returns the run's status.
  *
  * The terminal first receives what the stream already buffered, then every
- * live line. The stream stays open while any surface holds it.
+ * live line. The stream is kept while any surface holds it, and connects
+ * while any surface wants it live and a slot is free (dashboard#1148).
  */
+interface UseAgentConsoleOptions {
+  /**
+   * Whether this surface wants a live connection now. A tile out of view
+   * passes false and keeps its buffer; the registry frees the slot.
+   * Defaults to true.
+   */
+  live?: boolean;
+}
+
 export function useAgentConsole(
   runId: string | undefined,
   terminalRef: React.RefObject<MissionTerminalHandle | null>,
+  { live = true }: UseAgentConsoleOptions = {},
 ): AgentConsoleStatus {
   const registry = React.useContext(AgentStreamRegistryContext);
   const [status, setStatus] = React.useState<AgentConsoleStatus>({
@@ -45,6 +56,12 @@ export function useAgentConsole(
       registry.release(runId);
     };
   }, [runId, terminalRef, registry]);
+
+  React.useEffect(() => {
+    if (!runId || !live) return;
+    registry.setLive(runId, true);
+    return () => registry.setLive(runId, false);
+  }, [runId, live, registry]);
 
   return status;
 }
