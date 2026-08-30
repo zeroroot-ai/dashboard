@@ -5,28 +5,32 @@ description: Reconnaissance across a target's exposed surface.
 
 # Recon
 
-Discover what the target exposes: open ports, running services,
-and reachable subdomains. Two agent nodes run sequentially:
+Discover what the target exposes: subdomains, the addresses they
+resolve to, live HTTP services, and open ports. Four tool nodes run
+in sequence. Every tool ships in `gibson-executor`, so the mission
+runs on any cluster with the tool runner enabled.
 
-1. **`scan`**, runs the `nmap-agent` against the target.
-2. **`enrich`**, feeds the scan output into `shodan-agent` for
-   passive-source enrichment.
+1. **`subdomains`** runs `subfinder` on the root domain.
+2. **`resolve`** runs `dnsx` to resolve the names to addresses.
+3. **`http`** runs `httpx` to find live HTTP services and their
+   technology fingerprints.
+4. **`ports`** runs `naabu` over a fixed list of common ports.
 
 ## Override before running
 
 | Field | What to set |
 |---|---|
-| `target_ref` | The target's name or ID. |
+| `targetRef` | The target's name or ID. |
+| `_target` | The root domain every tool node scans. |
 
 ## Output shape
 
-The mission's findings table holds discovered ports, banners,
-and Shodan-enriched service metadata. Use the dashboard's mission
-view to inspect; the daemon also exposes findings via the
-ListMissionFindings RPC.
+The mission lands Domain, Subdomain, Host, Port, and Service nodes
+in the tenant's knowledge graph. Open the graph page or the mission
+run page in the dashboard to inspect them.
 
 ## Customizations
 
-- Swap `nmap-agent` for a custom scanner agent, the rest of the
-  graph stays the same.
-- Add a third node downstream of `enrich` to summarize findings.
+- Change the `ports` list on the `ports` node.
+- Add an `nmap` tool node after `ports` for service versions.
+- Add a `nuclei` tool node after `http` for a vulnerability pass.

@@ -50,6 +50,10 @@ const GUARDS = [
   "check-stripe-tiers-fresh.mjs",
   "check-authz-registry-fresh.mjs",
   "check-mission-schema-fresh.mjs",
+  // The templates drift gate (dashboard#1156). It guards the vendored ADK
+  // mission-template CUE and shipped for months with no self-test, so nothing
+  // proved it could fail.
+  "check-templates-fresh.mjs",
 ];
 
 let failed = 0;

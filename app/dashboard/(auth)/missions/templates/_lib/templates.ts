@@ -3,8 +3,15 @@
  * the vendored template.cue + template.mdx pairs from
  * src/data/templates/ and exposes a typed catalog.
  *
- * Vendored from opensource/adk/templates/<name>/{template.cue,template.mdx}
- * by scripts/vendor-mission-templates.mjs (sibling-checkout dev workflow).
+ * The .cue is vendored byte-for-byte from
+ * opensource/adk/templates/<name>/template.cue by
+ * scripts/vendor-mission-templates.mjs (sibling-checkout dev workflow) and
+ * drift-gated by scripts/check-templates-fresh.mjs.
+ *
+ * The .mdx is a house-style copy of the ADK's template.mdx, kept by hand: it
+ * is customer-rendered prose and the dashboard forbids em-dashes there
+ * (check-no-emdash.mjs, dashboard#752/#753), which the ADK copies use. It is
+ * deliberately not byte-gated.
  *
  * Spec: mission-dashboard-rewrite Requirement 6 ACs 1, 2, 3.
  */
