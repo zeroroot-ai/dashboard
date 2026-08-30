@@ -195,7 +195,7 @@ function PopoutBody({
           {shortId(agent.runId)}
         </span>
         <DialogDescription className="sr-only">
-          Live output of {name}. Press Escape to close, Left or Right to move between agents.
+          Sandbox output of {name}. Press Escape to close, Left or Right to move between sandboxes.
         </DialogDescription>
         <span className="ml-auto flex items-center gap-1 font-mono text-xs text-muted-foreground">
           <Button
@@ -203,7 +203,7 @@ function PopoutBody({
             variant="ghost"
             size="icon"
             className="size-7"
-            aria-label="Previous agent"
+            aria-label="Previous sandbox"
             disabled={count <= 1}
             onClick={() => onNavigate(-1)}
           >
@@ -217,7 +217,7 @@ function PopoutBody({
             variant="ghost"
             size="icon"
             className="size-7"
-            aria-label="Next agent"
+            aria-label="Next sandbox"
             disabled={count <= 1}
             onClick={() => onNavigate(1)}
           >
@@ -229,7 +229,7 @@ function PopoutBody({
         <div className="min-h-0 min-w-0 flex-1 bg-terminal">
           <TileTerminal
             ref={terminalRef}
-            title={`${name} · live output`}
+            title={`${name} · sandbox output`}
             height="fill"
             fontSize={14}
           />

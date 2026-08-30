@@ -185,7 +185,7 @@ function MissionActionsMenu({ mission }: { mission: Mission }) {
           <DropdownMenuItem asChild>
             <Link href={consoleHref(liveRun.runId)} data-testid="live-console-item">
               <Terminal className="size-4" />
-              Live console
+              Live sandbox
             </Link>
           </DropdownMenuItem>
         ) : null}

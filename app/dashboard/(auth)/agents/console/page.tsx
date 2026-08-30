@@ -4,8 +4,8 @@ import { generateMeta } from "@/lib/utils";
 
 export function generateMetadata() {
   return generateMeta({
-    title: "Coding Agent Console",
-    description: "Read-only live view of your tenant's running agents",
+    title: "Agent Sandboxes",
+    description: "Live, read-only view of the agents running in your tenant's sandboxes",
     canonical: "/agents/console",
   });
 }

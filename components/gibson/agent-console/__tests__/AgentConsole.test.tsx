@@ -134,7 +134,7 @@ describe("AgentConsole", () => {
     render(<AgentConsole />);
 
     expect(screen.getByTestId("empty-state")).toBeInTheDocument();
-    expect(screen.getByText("No agents are running")).toBeInTheDocument();
+    expect(screen.getByText("No sandboxes are running")).toBeInTheDocument();
     expect(screen.queryByTestId("agent-console-pane")).not.toBeInTheDocument();
   });
 
@@ -433,5 +433,23 @@ describe("AgentConsole finished runs", () => {
     render(<AgentConsole />);
     expect(screen.getByRole("link", { name: "Launch a mission" })).toHaveAttribute("href", "/dashboard/missions");
     expect(screen.getByRole("link", { name: "Enable an agent" })).toHaveAttribute("href", "/dashboard/agents");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Copy: sandboxes, not coding agents (dashboard#1158)
+// ---------------------------------------------------------------------------
+
+describe("AgentConsole copy", () => {
+  it.each([
+    ["empty", []],
+    ["with runs", [agent({ runId: "run-1", agentName: "claude" })]],
+  ])("never says coding agent or console (%s)", (_label, data) => {
+    useRunningAgentsMock.mockReturnValue({ data, isLoading: false, error: null });
+    render(<AgentConsole />);
+    const text = document.body.textContent ?? "";
+    expect(text).not.toMatch(/coding agent/i);
+    expect(text).not.toMatch(/console/i);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Agent Sandboxes");
   });
 });

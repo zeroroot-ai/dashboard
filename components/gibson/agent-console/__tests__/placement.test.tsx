@@ -42,7 +42,7 @@ describe("RunningAgentsBadge", () => {
     useRunningAgentsMock.mockReturnValue({ data: [run({}), run({ runId: "run-2" })] });
     const view = render(<RunningAgentsBadge />);
     expect(screen.getByTestId("running-agents-badge")).toHaveTextContent("2");
-    expect(screen.getByTestId("running-agents-badge")).toHaveAccessibleName("2 agents running");
+    expect(screen.getByTestId("running-agents-badge")).toHaveAccessibleName("2 sandboxes running");
     view.unmount();
     useRunningAgentsMock.mockReturnValue({ data: [] });
     render(<RunningAgentsBadge />);
@@ -68,7 +68,7 @@ describe("LiveConsoleLink", () => {
     render(<LiveConsoleLink match={{ missionId: "m-9" }} />);
     const link = screen.getByTestId("live-console-link");
     expect(link).toHaveAttribute("href", "/dashboard/agents/console?run=run-9");
-    expect(link).toHaveTextContent("Live console");
+    expect(link).toHaveTextContent("Live sandbox");
   });
 
   it("renders nothing when no run matches", () => {

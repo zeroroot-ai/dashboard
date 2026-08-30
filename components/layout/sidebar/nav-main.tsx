@@ -123,7 +123,7 @@ export const navItems: NavGroup[] = [
         icon: BotIcon
       },
       {
-        title: "Coding Agent Console",
+        title: "Sandboxes",
         href: "/dashboard/agents/console",
         icon: TerminalIcon,
         liveBadge: "running-agents"

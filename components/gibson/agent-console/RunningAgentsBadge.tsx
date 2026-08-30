@@ -17,7 +17,7 @@ export function RunningAgentsBadge() {
     <SidebarMenuBadge
       data-testid="running-agents-badge"
       className="border border-primary/40 font-mono tabular-nums text-primary peer-hover/menu-button:text-primary"
-      aria-label={`${count} agents running`}
+      aria-label={`${count} sandboxes running`}
     >
       <span className="mr-1 inline-block size-1.5 animate-pulse motion-reduce:animate-none rounded-full bg-primary" aria-hidden="true" />
       {count}

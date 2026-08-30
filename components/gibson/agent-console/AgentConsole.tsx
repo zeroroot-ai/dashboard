@@ -221,10 +221,10 @@ export function AgentConsole() {
         <div>
           <h1 className="flex items-center gap-2 text-lg font-semibold">
             <TerminalIcon className="size-5" aria-hidden="true" />
-            Coding Agent Console
+            Agent Sandboxes
           </h1>
           <p className="text-sm text-muted-foreground">
-            A read-only, live view of the agents your tenant is running now.
+            Every agent your tenant runs in an isolated setec sandbox, live. Read-only.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -287,8 +287,8 @@ export function AgentConsole() {
       {running.length === 0 ? (
         <EmptyState
           icon={BotIcon}
-          title="No agents are running"
-          description="When your tenant dispatches a coding agent, its live output shows up here. Launch a mission that uses an agent, or enable one from the catalog first."
+          title="No sandboxes are running"
+          description="When a mission dispatches an agent, it runs in its own sandbox and its output shows up here. Launch a mission, or enable an agent from the catalog first."
           primaryCta={
             <Button asChild>
               <Link href="/dashboard/missions">Launch a mission</Link>
