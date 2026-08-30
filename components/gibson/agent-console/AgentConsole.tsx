@@ -11,6 +11,11 @@
  * more are six columns. The viewer picks a density and a sort order, and
  * both persist in browser storage.
  *
+ * A tile pops out near-full-screen on click, Enter or F (dashboard#1147).
+ * The pop-out shares the tile's stream through one registry per wall, so
+ * nothing reconnects. The URL carries `?run=<id>` while a pop-out is open,
+ * so a pop-out is linkable.
+ *
  * The surface is READ-ONLY: it renders events only. There is no input, no
  * PTY, no command box, and no write path back to the agent.
  *
@@ -20,6 +25,7 @@
  */
 
 import * as React from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BotIcon, TerminalIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +39,8 @@ import {
 import { ErrorAlert, TableSkeleton } from "@/components/gibson/shared";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { useRunningAgents } from "@/src/hooks/useRunningAgents";
+import { AgentStreamRegistryContext } from "@/src/hooks/useAgentConsole";
+import { AgentStreamRegistry } from "@/src/lib/agent-console/stream";
 import {
   WALL_DENSITIES,
   WALL_SORTS,
@@ -45,6 +53,7 @@ import {
   type WallTileFacts,
 } from "@/src/lib/agent-console/wall";
 import { AgentTile } from "./AgentTile";
+import { AgentPopout } from "./AgentPopout";
 
 const DENSITY_KEY = "agent-console.density";
 const SORT_KEY = "agent-console.sort";
@@ -80,6 +89,31 @@ function usePersistedChoice<T extends string>(
   return [value, set];
 }
 
+const RUN_PARAM = "run";
+
+/**
+ * The run open in the pop-out, mirrored in the URL as `?run=<id>`. The URL
+ * is the source of truth, so a deep link opens the pop-out on load and
+ * Back closes it.
+ */
+function useSelectedRun(): [string | null, (runId: string | null) => void] {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const selected = params.get(RUN_PARAM);
+  const setSelected = React.useCallback(
+    (runId: string | null) => {
+      const next = new URLSearchParams(params.toString());
+      if (runId) next.set(RUN_PARAM, runId);
+      else next.delete(RUN_PARAM);
+      const qs = next.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [router, pathname, params],
+  );
+  return [selected, setSelected];
+}
+
 const SORT_LABEL: Record<WallSort, string> = {
   started: "Started",
   name: "Name",
@@ -93,6 +127,13 @@ export function AgentConsole() {
   const [facts, setFacts] = React.useState<ReadonlyMap<string, WallTileFacts>>(
     () => new Map(),
   );
+  const [registry] = React.useState(() => new AgentStreamRegistry());
+  const [selectedRun, setSelectedRun] = useSelectedRun();
+  const tileRefs = React.useRef(new Map<string, HTMLElement>());
+  // The run that was open last, so focus can return to its tile after the
+  // URL has already dropped ?run=.
+  const lastSelectedRef = React.useRef<string | null>(null);
+  if (selectedRun) lastSelectedRef.current = selectedRun;
   const onFacts = React.useCallback((runId: string, next: WallTileFacts) => {
     setFacts((prev) => {
       const cur = prev.get(runId);
@@ -120,8 +161,24 @@ export function AgentConsole() {
   const columns = wallColumns(running.length);
   const height = tileHeight(columns, density);
   const fontSize = tileFontSize(density);
+  const selectedIndex = selectedRun ? running.findIndex((a) => a.runId === selectedRun) : -1;
+  const selectedAgent = selectedIndex >= 0 ? running[selectedIndex] : null;
+  const navigate = (delta: 1 | -1) => {
+    if (running.length === 0 || selectedIndex < 0) return;
+    const next = (selectedIndex + delta + running.length) % running.length;
+    setSelectedRun(running[next].runId);
+  };
+  const returnFocusToTile = (e: Event) => {
+    const last = lastSelectedRef.current;
+    const tile = last ? tileRefs.current.get(last) : undefined;
+    if (tile) {
+      e.preventDefault();
+      tile.focus();
+    }
+  };
 
   return (
+    <AgentStreamRegistryContext.Provider value={registry}>
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -196,14 +253,29 @@ export function AgentConsole() {
           {running.map((agent) => (
             <AgentTile
               key={agent.runId}
+              ref={(el) => {
+                if (el) tileRefs.current.set(agent.runId, el);
+                else tileRefs.current.delete(agent.runId);
+              }}
               agent={agent}
               height={height}
               fontSize={fontSize}
               onFacts={onFacts}
+              onOpen={setSelectedRun}
+              selected={agent.runId === selectedRun}
             />
           ))}
         </div>
       )}
+      <AgentPopout
+        agent={selectedAgent}
+        index={selectedIndex}
+        count={running.length}
+        onClose={() => setSelectedRun(null)}
+        onNavigate={navigate}
+        onCloseAutoFocus={returnFocusToTile}
+      />
     </div>
+    </AgentStreamRegistryContext.Provider>
   );
 }

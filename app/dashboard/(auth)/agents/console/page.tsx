@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { AgentConsole } from "@/components/gibson/agent-console/AgentConsole";
 import { generateMeta } from "@/lib/utils";
 
@@ -12,7 +13,10 @@ export function generateMetadata() {
 export default function AgentConsolePage() {
   return (
     <div className="space-y-4">
-      <AgentConsole />
+      {/* useSearchParams (the ?run= deep link) needs a Suspense boundary. */}
+      <Suspense>
+        <AgentConsole />
+      </Suspense>
     </div>
   );
 }

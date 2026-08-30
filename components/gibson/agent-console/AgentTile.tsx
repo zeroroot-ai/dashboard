@@ -66,9 +66,16 @@ interface AgentTileProps {
   fontSize: number;
   /** Receives the run facts the stream reveals (cost so far). */
   onFacts?: (runId: string, facts: WallTileFacts) => void;
+  /** Opens this run in the pop-out (click, Enter or F). */
+  onOpen?: (runId: string) => void;
+  /** True while this run is open in the pop-out. */
+  selected?: boolean;
 }
 
-export function AgentTile({ agent, height, fontSize, onFacts }: AgentTileProps) {
+export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function AgentTile(
+  { agent, height, fontSize, onFacts, onOpen, selected = false },
+  ref,
+) {
   const terminalRef = React.useRef<MissionTerminalHandle>(null);
   const status = useAgentConsole(agent.runId, terminalRef);
   const running = status.phase === "streaming";
@@ -80,13 +87,31 @@ export function AgentTile({ agent, height, fontSize, onFacts }: AgentTileProps) 
     if (costUsd !== undefined) onFacts?.(agent.runId, { costUsd });
   }, [agent.runId, costUsd, onFacts]);
 
+  const open = () => onOpen?.(agent.runId);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.key === "Enter" || e.key === "f" || e.key === "F") {
+      e.preventDefault();
+      open();
+    }
+  };
+
   return (
     <section
+      ref={ref}
       data-testid="agent-tile"
       data-run-id={agent.runId}
       data-phase={status.phase}
+      data-selected={selected ? "true" : undefined}
       aria-label={`${name} ${shortId(agent.runId)}`}
-      className="flex min-w-0 flex-col overflow-hidden rounded-md border border-border"
+      tabIndex={0}
+      onClick={open}
+      onKeyDown={handleKeyDown}
+      className={cn(
+        "flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-md border border-border outline-none",
+        "focus-visible:ring-2 focus-visible:ring-ring",
+        selected && "ring-2 ring-primary",
+      )}
       style={{ backgroundColor: "var(--terminal-bg)" }}
     >
       <header
@@ -133,4 +158,4 @@ export function AgentTile({ agent, height, fontSize, onFacts }: AgentTileProps) 
       />
     </section>
   );
-}
+});
