@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, act, waitFor } from "@testing-library/react";
+import { render, screen, act, waitFor, fireEvent } from "@testing-library/react";
 import * as React from "react";
 
 import { AgentConsole } from "../AgentConsole";
@@ -29,8 +29,22 @@ vi.mock("next/dynamic", () => ({
   },
 }));
 
+// next/navigation: the ?run= deep link (dashboard#1147). The mock keeps the
+// URL in a variable so router.replace and useSearchParams agree.
+let search = "";
+const replaceMock = vi.fn((href: string) => {
+  const i = href.indexOf("?");
+  search = i >= 0 ? href.slice(i + 1) : "";
+});
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: replaceMock, push: vi.fn() }),
+  usePathname: () => "/dashboard/agents/console",
+  useSearchParams: () => new URLSearchParams(search),
+}));
+
 const useAgentConsoleMock = vi.fn();
-vi.mock("@/src/hooks/useAgentConsole", () => ({
+vi.mock("@/src/hooks/useAgentConsole", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/src/hooks/useAgentConsole")>()),
   useAgentConsole: (runId: string | undefined) => useAgentConsoleMock(runId),
 }));
 
@@ -50,6 +64,8 @@ function agent(over: Partial<RunningAgentView>): RunningAgentView {
 }
 
 beforeEach(() => {
+  search = "";
+  replaceMock.mockClear();
   useAgentConsoleMock.mockReset();
   useAgentConsoleMock.mockReturnValue({ phase: "streaming", summary: {} });
   useRunningAgentsMock.mockReset();
@@ -249,5 +265,123 @@ describe("AgentConsole wall", () => {
     await waitFor(() =>
       expect(screen.getByTestId("agent-wall")).toHaveAttribute("data-density", "comfortable"),
     );
+  });
+
+});
+
+// ---------------------------------------------------------------------------
+// Pop-out (dashboard#1147)
+// ---------------------------------------------------------------------------
+
+describe("AgentConsole pop-out", () => {
+  function three() {
+    useRunningAgentsMock.mockReturnValue({ data: agents(3), isLoading: false, error: null });
+  }
+
+  it("opens on click, mirrors the run in the URL, and closes on Escape", async () => {
+    three();
+    const view = render(<AgentConsole />);
+    expect(screen.queryByTestId("agent-popout")).toBeNull();
+    await act(async () => {
+      fireEvent.click(screen.getAllByTestId("agent-tile")[1]);
+    });
+    expect(replaceMock).toHaveBeenLastCalledWith(
+      "/dashboard/agents/console?run=run-01",
+      { scroll: false },
+    );
+    view.rerender(<AgentConsole />);
+    const popout = await screen.findByTestId("agent-popout");
+    expect(popout).toHaveTextContent("agent-1");
+    expect(screen.getByTestId("popout-position")).toHaveTextContent("2 / 3");
+    expect(screen.getAllByTestId("agent-tile")[1]).toHaveAttribute("data-selected", "true");
+
+    await act(async () => {
+      fireEvent.keyDown(popout, { key: "Escape" });
+    });
+    expect(replaceMock).toHaveBeenLastCalledWith("/dashboard/agents/console", { scroll: false });
+    view.rerender(<AgentConsole />);
+    await waitFor(() => expect(screen.queryByTestId("agent-popout")).toBeNull());
+  });
+
+  it("opens on Enter and on F from the keyboard", async () => {
+    three();
+    render(<AgentConsole />);
+    const tile = screen.getAllByTestId("agent-tile")[0];
+    await act(async () => {
+      fireEvent.keyDown(tile, { key: "Enter" });
+    });
+    expect(replaceMock).toHaveBeenLastCalledWith(
+      "/dashboard/agents/console?run=run-00",
+      { scroll: false },
+    );
+    await act(async () => {
+      fireEvent.keyDown(screen.getAllByTestId("agent-tile")[2], { key: "f" });
+    });
+    expect(replaceMock).toHaveBeenLastCalledWith(
+      "/dashboard/agents/console?run=run-02",
+      { scroll: false },
+    );
+  });
+
+  it("moves to the previous and the next agent with Left and Right, wrapping", async () => {
+    three();
+    search = "run=run-02";
+    const view = render(<AgentConsole />);
+    const popout = await screen.findByTestId("agent-popout");
+    expect(screen.getByTestId("popout-position")).toHaveTextContent("3 / 3");
+    await act(async () => {
+      fireEvent.keyDown(popout, { key: "ArrowRight" });
+    });
+    expect(replaceMock).toHaveBeenLastCalledWith(
+      "/dashboard/agents/console?run=run-00",
+      { scroll: false },
+    );
+    view.rerender(<AgentConsole />);
+    await act(async () => {
+      fireEvent.keyDown(screen.getByTestId("agent-popout"), { key: "ArrowLeft" });
+    });
+    expect(replaceMock).toHaveBeenLastCalledWith(
+      "/dashboard/agents/console?run=run-02",
+      { scroll: false },
+    );
+  });
+
+  it("opens the pop-out for a deep link on load and streams it through the same hook", async () => {
+    three();
+    search = "run=run-01";
+    render(<AgentConsole />);
+    const popout = await screen.findByTestId("agent-popout");
+    expect(popout).toHaveTextContent("agent-1");
+    expect(screen.getByTestId("popout-rail")).toHaveTextContent("run-01");
+    // The pop-out attaches to the same run id; the shared registry gives it
+    // the tile's stream (see stream.test.ts for the single-EventSource proof).
+    const ids = useAgentConsoleMock.mock.calls.map((c) => c[0]);
+    expect(ids.filter((id) => id === "run-01").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("ignores a deep link to a run that is not on the wall", () => {
+    three();
+    search = "run=nope";
+    render(<AgentConsole />);
+    expect(screen.queryByTestId("agent-popout")).toBeNull();
+  });
+
+  it("returns focus to the tile on close", async () => {
+    three();
+    const view = render(<AgentConsole />);
+    const tile = screen.getAllByTestId("agent-tile")[1];
+    tile.focus();
+    await act(async () => {
+      fireEvent.click(tile);
+    });
+    view.rerender(<AgentConsole />);
+    const popout = await screen.findByTestId("agent-popout");
+    await waitFor(() => expect(popout.contains(document.activeElement)).toBe(true));
+    await act(async () => {
+      fireEvent.keyDown(popout, { key: "Escape" });
+    });
+    view.rerender(<AgentConsole />);
+    await waitFor(() => expect(screen.queryByTestId("agent-popout")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(screen.getAllByTestId("agent-tile")[1]));
   });
 });

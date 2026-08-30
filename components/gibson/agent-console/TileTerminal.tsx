@@ -18,8 +18,8 @@ import "@xterm/xterm/css/xterm.css";
 interface TileTerminalProps {
   /** Accessible name of the tile terminal. */
   title: string;
-  /** Fixed height in pixels. */
-  height: number;
+  /** Fixed height in pixels, or "fill" to take the parent's height. */
+  height: number | "fill";
   /** Terminal font size in pixels. */
   fontSize: number;
 }
@@ -77,8 +77,8 @@ export const TileTerminal = React.forwardRef<MissionTerminalHandle, TileTerminal
         ref={containerRef}
         role="log"
         aria-label={title}
-        style={{ height }}
-        className="w-full overflow-hidden"
+        style={height === "fill" ? undefined : { height }}
+        className={height === "fill" ? "h-full min-h-0 w-full overflow-hidden" : "w-full overflow-hidden"}
       />
     );
   },
