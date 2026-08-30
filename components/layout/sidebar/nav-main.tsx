@@ -13,6 +13,7 @@ import {
   SidebarMenuSubItem,
   useSidebar
 } from "@/components/ui/sidebar";
+import { RunningAgentsBadge } from "@/components/gibson/agent-console/RunningAgentsBadge";
 import {
   ActivityIcon,
   AlertTriangleIcon,
@@ -61,6 +62,8 @@ type NavItem = {
   isComing?: boolean;
   isDataBadge?: string;
   isNew?: boolean;
+  /** Live count of the tenant's running agents (the console entry). */
+  liveBadge?: "running-agents";
   newTab?: boolean;
   items?: NavItem;
 }[];
@@ -123,7 +126,7 @@ export const navItems: NavGroup[] = [
         title: "Coding Agent Console",
         href: "/dashboard/agents/console",
         icon: TerminalIcon,
-        isNew: true
+        liveBadge: "running-agents"
       },
       {
         title: "Tools",
@@ -293,6 +296,7 @@ export function NavMain() {
                       New
                     </SidebarMenuBadge>
                   )}
+                  {item.liveBadge === "running-agents" && <RunningAgentsBadge />}
                   {!!item.isDataBadge && (
                     <SidebarMenuBadge className="peer-hover/menu-button:text-foreground">
                       {item.isDataBadge}

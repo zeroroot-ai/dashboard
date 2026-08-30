@@ -40,6 +40,10 @@ export interface RunningAgentView {
   sandboxId: string;
   /** Start time as an ISO-8601 string, from the proto's Unix-nanos field. */
   startedAt: string;
+  /** The mission this run serves. Empty for a run outside a mission. */
+  missionId: string;
+  /** The mission run this run serves. Empty for a run outside a mission. */
+  missionRunId: string;
 }
 
 const NS_PER_MS = BigInt(1_000_000);
@@ -62,6 +66,8 @@ export async function listRunningAgents(): Promise<RunningAgentView[]> {
     agentName: a.agentName,
     sandboxId: a.sandboxId,
     startedAt: unixNanosToISO(a.startedUnixNanos),
+    missionId: a.missionId,
+    missionRunId: a.missionRunId,
   }));
 }
 

@@ -29,6 +29,7 @@
  */
 
 import * as React from "react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BotIcon, TerminalIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -46,16 +47,22 @@ import { useRunningAgents } from "@/src/hooks/useRunningAgents";
 import { AgentStreamRegistryContext } from "@/src/hooks/useAgentConsole";
 import { AgentStreamRegistry } from "@/src/lib/agent-console/stream";
 import {
+  RIBBON_MS,
   WALL_DENSITIES,
   WALL_SORTS,
+  foldSeenRuns,
   pickChoice,
+  ribbonLabel,
   sortRunning,
+  splitWall,
   tileFontSize,
   tileHeight,
   wallColumns,
+  type SeenRun,
   type WallSort,
   type WallTileFacts,
 } from "@/src/lib/agent-console/wall";
+import { formatDuration, shortId } from "@/src/lib/agent-console/stream-json";
 import { AgentTile } from "./AgentTile";
 import { AgentPopout } from "./AgentPopout";
 
@@ -143,12 +150,30 @@ export function AgentConsole() {
   const onFacts = React.useCallback((runId: string, next: WallTileFacts) => {
     setFacts((prev) => {
       const cur = prev.get(runId);
-      if (cur && cur.costUsd === next.costUsd) return prev;
+      if (cur && cur.costUsd === next.costUsd && cur.ended === next.ended) return prev;
       const out = new Map(prev);
-      out.set(runId, next);
+      out.set(runId, { ...cur, ...next });
       return out;
     });
   }, []);
+
+  // A finished run stays on the wall for a minute with a ribbon, then folds
+  // into the recent list. `seen` remembers every run this page showed.
+  const [seen, setSeen] = React.useState<ReadonlyMap<string, SeenRun>>(() => new Map());
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => {
+    if (!agents) return;
+    setSeen((prev) => foldSeenRuns(prev, agents, facts, Date.now()));
+  }, [agents, facts]);
+  const hasRibbon = React.useMemo(
+    () => [...seen.values()].some((r) => r.endedAt !== undefined && now - r.endedAt < RIBBON_MS),
+    [seen, now],
+  );
+  React.useEffect(() => {
+    if (!hasRibbon) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [hasRibbon]);
 
   if (isLoading) {
     return <TableSkeleton />;
@@ -163,7 +188,13 @@ export function AgentConsole() {
     );
   }
 
-  const running = sortRunning(agents ?? [], sort, facts);
+  const { tiles, recent } = splitWall(seen, now);
+  const running = sortRunning(
+    tiles.map((r) => r.agent),
+    sort,
+    facts,
+  );
+  const liveCount = (agents ?? []).length;
   const columns = wallColumns(running.length);
   const height = tileHeight(columns, density);
   const fontSize = tileFontSize(density);
@@ -197,9 +228,9 @@ export function AgentConsole() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {running.length > 0 ? (
+          {liveCount > 0 ? (
             <Badge variant="outline" data-testid="running-count">
-              {running.length} running
+              {liveCount} running
             </Badge>
           ) : null}
           {running.length > 0 ? (
@@ -257,7 +288,17 @@ export function AgentConsole() {
         <EmptyState
           icon={BotIcon}
           title="No agents are running"
-          description="When your tenant dispatches a coding agent, its live output shows up here."
+          description="When your tenant dispatches a coding agent, its live output shows up here. Launch a mission that uses an agent, or enable one from the catalog first."
+          primaryCta={
+            <Button asChild>
+              <Link href="/dashboard/missions">Launch a mission</Link>
+            </Button>
+          }
+          secondaryCta={
+            <Button asChild variant="outline">
+              <Link href="/dashboard/agents">Enable an agent</Link>
+            </Button>
+          }
         />
       ) : (
         <div
@@ -280,10 +321,53 @@ export function AgentConsole() {
               onFacts={onFacts}
               onOpen={setSelectedRun}
               selected={agent.runId === selectedRun}
+              ribbon={
+                seen.get(agent.runId)?.endedAt !== undefined
+                  ? ribbonLabel(seen.get(agent.runId)?.ended)
+                  : undefined
+              }
             />
           ))}
         </div>
       )}
+      {recent.length > 0 ? (
+        <section aria-labelledby="recent-runs-heading" className="space-y-2">
+          <h2 id="recent-runs-heading" className="text-sm font-semibold">
+            Recent runs
+          </h2>
+          <ul data-testid="recent-runs" className="divide-y divide-border rounded-md border border-border">
+            {recent.map((run) => (
+              <li
+                key={run.agent.runId}
+                data-testid="recent-run"
+                data-run-id={run.agent.runId}
+                className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 font-mono text-xs"
+              >
+                <span className="font-semibold text-foreground">{run.agent.agentName || run.agent.runId}</span>
+                <span className="text-muted-foreground" title={run.agent.runId}>
+                  {shortId(run.agent.runId)}
+                </span>
+                <Badge variant="outline" className="text-[0.65rem]">
+                  {ribbonLabel(run.ended)}
+                </Badge>
+                {run.endedAt !== undefined ? (
+                  <span className="text-muted-foreground">
+                    ended {formatDuration(now - run.endedAt)} ago
+                  </span>
+                ) : null}
+                {run.agent.missionId ? (
+                  <Link
+                    href={`/dashboard/results/${encodeURIComponent(run.agent.missionId)}`}
+                    className="ml-auto text-primary underline-offset-2 hover:underline"
+                  >
+                    Open mission
+                  </Link>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       <AgentPopout
         agent={selectedAgent}
         index={selectedIndex}

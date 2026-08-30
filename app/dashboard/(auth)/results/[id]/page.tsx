@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import { ArrowLeft } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { LiveConsoleLink } from "@/components/gibson/agent-console/LiveConsoleLink";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -312,6 +313,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
             <span className="text-xs text-muted-foreground font-mono">{mission.id}</span>
           </div>
         </div>
+        <LiveConsoleLink match={{ missionId: mission.id }} />
       </div>
 
       <Separator />

@@ -59,6 +59,8 @@ function agent(over: Partial<RunningAgentView>): RunningAgentView {
     agentName: "scanner",
     sandboxId: "sbx-1",
     startedAt: "2026-08-28T10:00:00.000Z",
+    missionId: "",
+    missionRunId: "",
     ...over,
   };
 }
@@ -383,5 +385,53 @@ describe("AgentConsole pop-out", () => {
     view.rerender(<AgentConsole />);
     await waitFor(() => expect(screen.queryByTestId("agent-popout")).toBeNull());
     await waitFor(() => expect(document.activeElement).toBe(screen.getAllByTestId("agent-tile")[1]));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Finished-run ribbon and recent list (dashboard#1145)
+// ---------------------------------------------------------------------------
+
+describe("AgentConsole finished runs", () => {
+  it("keeps a run that left the list on the wall with a ribbon for 60 s, then lists it as recent", async () => {
+    vi.useFakeTimers();
+    try {
+      useAgentConsoleMock.mockReturnValue({ phase: "streaming", summary: {} });
+      const two = agents(2);
+      useRunningAgentsMock.mockReturnValue({ data: two, isLoading: false, error: null });
+      const view = render(<AgentConsole />);
+      expect(screen.getAllByTestId("agent-tile")).toHaveLength(2);
+      expect(screen.queryByTestId("agent-tile-ribbon")).toBeNull();
+
+      // run-00 finishes: its stream reports finished and the list drops it.
+      useAgentConsoleMock.mockImplementation((runId: string) =>
+        runId === "run-00" ? { phase: "finished", summary: {} } : { phase: "streaming", summary: {} },
+      );
+      useRunningAgentsMock.mockReturnValue({ data: [two[1]], isLoading: false, error: null });
+      await act(async () => {
+        view.rerender(<AgentConsole />);
+      });
+      expect(screen.getAllByTestId("agent-tile")).toHaveLength(2);
+      expect(screen.getByTestId("agent-tile-ribbon")).toHaveTextContent("Completed");
+      expect(screen.getByTestId("running-count")).toHaveTextContent("1 running");
+      expect(screen.queryByTestId("recent-runs")).toBeNull();
+
+      await act(async () => {
+        vi.advanceTimersByTime(61_000);
+      });
+      expect(screen.getAllByTestId("agent-tile")).toHaveLength(1);
+      const recent = screen.getByTestId("recent-runs");
+      expect(recent).toHaveTextContent("agent-0");
+      expect(recent).toHaveTextContent("Completed");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("offers a mission and an agent action in the empty state", () => {
+    useRunningAgentsMock.mockReturnValue({ data: [], isLoading: false, error: null });
+    render(<AgentConsole />);
+    expect(screen.getByRole("link", { name: "Launch a mission" })).toHaveAttribute("href", "/dashboard/missions");
+    expect(screen.getByRole("link", { name: "Enable an agent" })).toHaveAttribute("href", "/dashboard/agents");
   });
 });

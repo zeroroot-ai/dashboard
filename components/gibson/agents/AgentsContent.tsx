@@ -19,6 +19,7 @@ import {
   type RWXAction,
   type RWXItem,
 } from "@/components/gibson/shared/RWXMatrix";
+import { LiveConsoleLink } from "@/components/gibson/agent-console/LiveConsoleLink";
 import { setComponentAccessAction } from "@/app/actions/crd/access";
 import { pickKillSwitch } from "@/components/gibson/shared/kill-switch";
 import { grantComponentAction } from "@/app/actions/crd/grant";
@@ -251,7 +252,14 @@ export function AgentsContent() {
           )}
 
           {!loading && !error && items.length > 0 && (
-            <RWXMatrix onEnable={canManage ? onEnable : undefined} items={items} onToggle={onToggle} />
+            <RWXMatrix
+              onEnable={canManage ? onEnable : undefined}
+              items={items}
+              onToggle={onToggle}
+              rowTrailingAction={(it) => (
+                <LiveConsoleLink match={{ agentName: it.name }} size="sm" className="h-7 text-xs" />
+              )}
+            />
           )}
         </CardContent>
       </Card>
