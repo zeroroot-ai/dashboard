@@ -11,6 +11,10 @@
  * more are six columns. The viewer picks a density and a sort order, and
  * both persist in browser storage.
  *
+ * Only tiles in view hold a live stream, and the page never holds more
+ * than a cap of open streams; the rest queue and the header says so
+ * (dashboard#1148).
+ *
  * A tile pops out near-full-screen on click, Enter or F (dashboard#1147).
  * The pop-out shares the tile's stream through one registry per wall, so
  * nothing reconnects. The URL carries `?run=<id>` while a pop-out is open,
@@ -128,6 +132,8 @@ export function AgentConsole() {
     () => new Map(),
   );
   const [registry] = React.useState(() => new AgentStreamRegistry());
+  const [streamStats, setStreamStats] = React.useState(() => registry.stats());
+  React.useEffect(() => registry.onStats(setStreamStats), [registry]);
   const [selectedRun, setSelectedRun] = useSelectedRun();
   const tileRefs = React.useRef(new Map<string, HTMLElement>());
   // The run that was open last, so focus can return to its tile after the
@@ -194,6 +200,17 @@ export function AgentConsole() {
           {running.length > 0 ? (
             <Badge variant="outline" data-testid="running-count">
               {running.length} running
+            </Badge>
+          ) : null}
+          {running.length > 0 ? (
+            <Badge
+              variant="outline"
+              data-testid="stream-stats"
+              className="tabular-nums"
+              title="Open live streams on this page, out of the cap. Tiles out of view free their slot."
+            >
+              live {streamStats.live}/{streamStats.cap}
+              {streamStats.waiting > 0 ? ` · ${streamStats.waiting} waiting` : ""}
             </Badge>
           ) : null}
           <div

@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/daemon/agentconsole/v1/agentconsole.proto.
  */
 export const file_gibson_daemon_agentconsole_v1_agentconsole: GenFile = /*@__PURE__*/
-  fileDesc("CjBnaWJzb24vZGFlbW9uL2FnZW50Y29uc29sZS92MS9hZ2VudGNvbnNvbGUucHJvdG8SHWdpYnNvbi5kYWVtb24uYWdlbnRjb25zb2xlLnYxImIKDFJ1bm5pbmdBZ2VudBIOCgZydW5faWQYASABKAkSEgoKYWdlbnRfbmFtZRgCIAEoCRISCgpzYW5kYm94X2lkGAMgASgJEhoKEnN0YXJ0ZWRfdW5peF9uYW5vcxgEIAEoAyIaChhMaXN0UnVubmluZ0FnZW50c1JlcXVlc3QiWAoZTGlzdFJ1bm5pbmdBZ2VudHNSZXNwb25zZRI7CgZhZ2VudHMYASADKAsyKy5naWJzb24uZGFlbW9uLmFnZW50Y29uc29sZS52MS5SdW5uaW5nQWdlbnQiKgoYU3RyZWFtQWdlbnRFdmVudHNSZXF1ZXN0Eg4KBnJ1bl9pZBgBIAEoCSIuCgpBZ2VudEV2ZW50EhIKCnVuaXhfbmFub3MYASABKAMSDAoEZGF0YRgCIAEoDDL2AgoTQWdlbnRDb25zb2xlU2VydmljZRK0AQoRTGlzdFJ1bm5pbmdBZ2VudHMSNy5naWJzb24uZGFlbW9uLmFnZW50Y29uc29sZS52MS5MaXN0UnVubmluZ0FnZW50c1JlcXVlc3QaOC5naWJzb24uZGFlbW9uLmFnZW50Y29uc29sZS52MS5MaXN0UnVubmluZ0FnZW50c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKnAQoRU3RyZWFtQWdlbnRFdmVudHMSNy5naWJzb24uZGFlbW9uLmFnZW50Y29uc29sZS52MS5TdHJlYW1BZ2VudEV2ZW50c1JlcXVlc3QaKS5naWJzb24uZGFlbW9uLmFnZW50Y29uc29sZS52MS5BZ2VudEV2ZW50IiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAzABQmdaZWdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi9kYWVtb24vYWdlbnRjb25zb2xlL3YxO2FnZW50Y29uc29sZXYxYgZwcm90bzM", [file_gibson_auth_v1_options]);
+  fileDesc("CjBnaWJzb24vZGFlbW9uL2FnZW50Y29uc29sZS92MS9hZ2VudGNvbnNvbGUucHJvdG8SHWdpYnNvbi5kYWVtb24uYWdlbnRjb25zb2xlLnYxImIKDFJ1bm5pbmdBZ2VudBIOCgZydW5faWQYASABKAkSEgoKYWdlbnRfbmFtZRgCIAEoCRISCgpzYW5kYm94X2lkGAMgASgJEhoKEnN0YXJ0ZWRfdW5peF9uYW5vcxgEIAEoAyIaChhMaXN0UnVubmluZ0FnZW50c1JlcXVlc3QiWAoZTGlzdFJ1bm5pbmdBZ2VudHNSZXNwb25zZRI7CgZhZ2VudHMYASADKAsyKy5naWJzb24uZGFlbW9uLmFnZW50Y29uc29sZS52MS5SdW5uaW5nQWdlbnQiPQoYU3RyZWFtQWdlbnRFdmVudHNSZXF1ZXN0Eg4KBnJ1bl9pZBgBIAEoCRIRCglzaW5jZV9zZXEYAiABKAQiOwoKQWdlbnRFdmVudBISCgp1bml4X25hbm9zGAEgASgDEgwKBGRhdGEYAiABKAwSCwoDc2VxGAMgASgEMvYCChNBZ2VudENvbnNvbGVTZXJ2aWNlErQBChFMaXN0UnVubmluZ0FnZW50cxI3LmdpYnNvbi5kYWVtb24uYWdlbnRjb25zb2xlLnYxLkxpc3RSdW5uaW5nQWdlbnRzUmVxdWVzdBo4LmdpYnNvbi5kYWVtb24uYWdlbnRjb25zb2xlLnYxLkxpc3RSdW5uaW5nQWdlbnRzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEqcBChFTdHJlYW1BZ2VudEV2ZW50cxI3LmdpYnNvbi5kYWVtb24uYWdlbnRjb25zb2xlLnYxLlN0cmVhbUFnZW50RXZlbnRzUmVxdWVzdBopLmdpYnNvbi5kYWVtb24uYWdlbnRjb25zb2xlLnYxLkFnZW50RXZlbnQiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADMAFCZ1plZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL2RhZW1vbi9hZ2VudGNvbnNvbGUvdjE7YWdlbnRjb25zb2xldjFiBnByb3RvMw", [file_gibson_auth_v1_options]);
 
 /**
  * RunningAgent is one running agent instance in the caller's tenant. It carries
@@ -106,6 +106,15 @@ export type StreamAgentEventsRequest = Message<"gibson.daemon.agentconsole.v1.St
    * @generated from field: string run_id = 1;
    */
   runId: string;
+
+  /**
+   * since_seq is the last event sequence the client saw. The stream starts
+   * with the backlog after it (what the daemon still holds), then follows
+   * live. Zero means the whole backlog.
+   *
+   * @generated from field: uint64 since_seq = 2;
+   */
+  sinceSeq: bigint;
 };
 
 /**
@@ -136,6 +145,14 @@ export type AgentEvent = Message<"gibson.daemon.agentconsole.v1.AgentEvent"> & {
    * @generated from field: bytes data = 2;
    */
   data: Uint8Array;
+
+  /**
+   * seq is the per-run sequence number of this chunk, starting at 1. Pass it
+   * back as since_seq to resume without a gap or a duplicate.
+   *
+   * @generated from field: uint64 seq = 3;
+   */
+  seq: bigint;
 };
 
 /**

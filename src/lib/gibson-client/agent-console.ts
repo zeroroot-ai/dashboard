@@ -76,9 +76,18 @@ export async function listRunningAgents(): Promise<RunningAgentView[]> {
  * opencode NDJSON. This wrapper does no buffering, it hands each chunk through
  * as the daemon relays it.
  */
+/**
+ * Streams one run's events. `sinceSeq` is the last event sequence the caller
+ * saw: the daemon replays its backlog after it, then follows live, with no
+ * gap and no duplicate. Zero means the whole backlog (dashboard#1148).
+ */
 export function streamAgentEvents(
   runId: string,
+  sinceSeq: bigint,
   signal: AbortSignal,
 ): AsyncIterable<AgentEvent> {
-  return userClient(AgentConsoleService).streamAgentEvents({ runId }, { signal });
+  return userClient(AgentConsoleService).streamAgentEvents(
+    { runId, sinceSeq },
+    { signal },
+  );
 }
