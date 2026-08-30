@@ -14,7 +14,28 @@
 
 import * as React from "react";
 import dynamic from "next/dynamic";
-import { ChevronLeftIcon, ChevronRightIcon, CopyIcon, CheckIcon } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CopyIcon,
+  CheckIcon,
+  ExternalLinkIcon,
+  SquareIcon,
+} from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useStopMission } from "@/src/hooks/useMissions";
 import {
   Dialog,
   DialogContent,
@@ -67,6 +88,51 @@ function useElapsed(startedAt: string, running: boolean): string | null {
 function formatStarted(iso: string): string {
   const d = new Date(iso);
   return isNaN(d.getTime()) ? iso : d.toLocaleString();
+}
+
+/** Stops the mission behind a run after a confirmation. */
+function StopMissionButton({ missionId, agentName }: { missionId: string; agentName: string }) {
+  const stop = useStopMission();
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          type="button"
+          variant="destructive"
+          size="sm"
+          className="justify-start text-xs"
+          disabled={stop.isPending}
+          data-testid="popout-stop-mission"
+        >
+          <SquareIcon className="size-3.5" />
+          Stop mission
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Stop this mission?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This stops mission {missionId} and ends the {agentName} run. The agent loses
+            work it has not checkpointed.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Keep running</AlertDialogCancel>
+          <AlertDialogAction
+            data-testid="popout-stop-confirm"
+            onClick={() =>
+              stop.mutate(missionId, {
+                onSuccess: () => toast.success("Mission stopped"),
+                onError: (err) => toast.error(`Failed to stop mission: ${err.message}`),
+              })
+            }
+          >
+            Stop mission
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 }
 
 function Fact({ label, value, mono = true }: { label: string; value: React.ReactNode; mono?: boolean }) {
@@ -177,6 +243,8 @@ function PopoutBody({
             <Fact label="status" value={PHASE_LABEL[status.phase]} mono={false} />
             <Fact label="agent" value={name} />
             <Fact label="run id" value={agent.runId} />
+            {agent.missionId ? <Fact label="mission" value={agent.missionId} /> : null}
+            {agent.missionRunId ? <Fact label="mission run" value={agent.missionRunId} /> : null}
             {agent.sandboxId ? <Fact label="sandbox" value={agent.sandboxId} /> : null}
             {model ? <Fact label="model" value={model} /> : null}
             {sessionId ? <Fact label="session" value={shortId(sessionId)} /> : null}
@@ -187,6 +255,17 @@ function PopoutBody({
             {durationMs !== undefined ? <Fact label="agent time" value={formatDuration(durationMs)} /> : null}
           </dl>
           <div className="mt-auto flex flex-col gap-2">
+            {agent.missionId ? (
+              <Button asChild variant="outline" size="sm" className="justify-start text-xs">
+                <Link href={`/dashboard/results/${encodeURIComponent(agent.missionId)}`} data-testid="popout-open-mission">
+                  <ExternalLinkIcon className="size-3.5" />
+                  Open mission
+                </Link>
+              </Button>
+            ) : null}
+            {agent.missionId && running ? (
+              <StopMissionButton missionId={agent.missionId} agentName={name} />
+            ) : null}
             <Button
               type="button"
               variant="outline"

@@ -32,6 +32,8 @@ const { mockUseMission, mockUseAuthorize } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/src/hooks/useMissions', () => ({ useMission: mockUseMission }));
+// The header's Live console link polls the running-agents list (dashboard#1145).
+vi.mock('@/src/hooks/useRunningAgents', () => ({ useRunningAgents: () => ({ data: [] }) }));
 vi.mock('@/src/lib/auth/use-authorize', () => ({
   useAuthorize: mockUseAuthorize,
 }));

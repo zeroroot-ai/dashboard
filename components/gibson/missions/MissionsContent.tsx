@@ -2,12 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { PlusCircle, MoreHorizontal, Play, Pause, Square, Trash2, GripVertical, CrosshairIcon, Pencil, Copy, Globe } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Play, Pause, Square, Trash2, GripVertical, CrosshairIcon, Pencil, Copy, Globe, Terminal } from "lucide-react";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { consoleHref, useLiveRun } from "@/components/gibson/agent-console/useLiveRun";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -111,6 +112,7 @@ function MissionEditButton({ mission }: { mission: Mission }) {
 }
 
 function MissionActionsMenu({ mission }: { mission: Mission }) {
+  const liveRun = useLiveRun({ missionId: mission.id });
   const canStart = mission.status === "pending" || mission.status === "paused";
   const canPause = mission.status === "running";
   const canStop = mission.status === "running" || mission.status === "paused";
@@ -179,6 +181,14 @@ function MissionActionsMenu({ mission }: { mission: Mission }) {
             Open World
           </Link>
         </DropdownMenuItem>
+        {liveRun ? (
+          <DropdownMenuItem asChild>
+            <Link href={consoleHref(liveRun.runId)} data-testid="live-console-item">
+              <Terminal className="size-4" />
+              Live console
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           disabled={!canStart || isWorking}

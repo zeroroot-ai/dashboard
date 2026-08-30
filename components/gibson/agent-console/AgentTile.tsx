@@ -70,6 +70,8 @@ interface AgentTileProps {
   onOpen?: (runId: string) => void;
   /** True while this run is open in the pop-out. */
   selected?: boolean;
+  /** Ribbon over a run that ended and still sits on the wall. */
+  ribbon?: "Completed" | "Failed" | "Stopped";
 }
 
 /**
@@ -94,7 +96,7 @@ function useInView(ref: React.RefObject<HTMLElement | null>): boolean {
 }
 
 export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function AgentTile(
-  { agent, height, fontSize, onFacts, onOpen, selected = false },
+  { agent, height, fontSize, onFacts, onOpen, selected = false, ribbon },
   ref,
 ) {
   const terminalRef = React.useRef<MissionTerminalHandle>(null);
@@ -106,9 +108,12 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
   const name = agent.agentName || agent.runId;
   const { costUsd, model, turns } = status.summary;
 
+  const ended = status.phase === "streaming" ? undefined : status.phase;
   React.useEffect(() => {
-    if (costUsd !== undefined) onFacts?.(agent.runId, { costUsd });
-  }, [agent.runId, costUsd, onFacts]);
+    if (costUsd !== undefined || ended !== undefined) {
+      onFacts?.(agent.runId, { costUsd, ended });
+    }
+  }, [agent.runId, costUsd, ended, onFacts]);
 
   const open = () => onOpen?.(agent.runId);
   const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
@@ -178,12 +183,27 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
           ) : null}
         </span>
       </header>
-      <TileTerminal
-        ref={terminalRef}
-        title={`${name} · live output`}
-        height={height}
-        fontSize={fontSize}
-      />
+      <div className="relative">
+        {ribbon ? (
+          <div
+            data-testid="agent-tile-ribbon"
+            className={cn(
+              "pointer-events-none absolute inset-x-0 top-0 z-10 px-2 py-1 text-center font-mono text-xs font-semibold uppercase tracking-wide",
+              ribbon === "Completed" && "bg-primary text-primary-foreground",
+              ribbon === "Failed" && "bg-destructive text-destructive-foreground",
+              ribbon === "Stopped" && "bg-muted text-muted-foreground",
+            )}
+          >
+            {ribbon}
+          </div>
+        ) : null}
+        <TileTerminal
+          ref={terminalRef}
+          title={`${name} · live output`}
+          height={height}
+          fontSize={fontSize}
+        />
+      </div>
     </section>
   );
 });
