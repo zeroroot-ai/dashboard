@@ -224,7 +224,8 @@ export function AgentConsole() {
             Agent Sandboxes
           </h1>
           <p className="text-sm text-muted-foreground">
-            Every agent your tenant runs in an isolated setec sandbox, live. Read-only.
+            Every agent and tool your tenant runs in an isolated setec sandbox,
+            live. Read-only.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -288,7 +289,7 @@ export function AgentConsole() {
         <EmptyState
           icon={BotIcon}
           title="No sandboxes are running"
-          description="When a mission dispatches an agent, it runs in its own sandbox and its output shows up here. Launch a mission, or enable an agent from the catalog first."
+          description="When a mission dispatches an agent or runs a tool, it gets its own sandbox and its output shows up here. Launch a mission, or enable an agent from the catalog first."
           primaryCta={
             <Button asChild>
               <Link href="/dashboard/missions">Launch a mission</Link>

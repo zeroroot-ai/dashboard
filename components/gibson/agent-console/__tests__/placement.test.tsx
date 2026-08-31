@@ -30,6 +30,7 @@ function run(over: Partial<RunningAgentView>): RunningAgentView {
     missionId: "m-1",
     missionRunId: "mr-1",
     sandboxClass: "agent",
+    componentKind: "agent",
     ...over,
   };
 }

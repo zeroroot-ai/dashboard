@@ -62,6 +62,7 @@ function agent(over: Partial<RunningAgentView>): RunningAgentView {
     missionId: "",
     missionRunId: "",
     sandboxClass: "agent",
+    componentKind: "agent",
     ...over,
   };
 }
@@ -478,5 +479,35 @@ describe("AgentConsole sandbox class", () => {
     });
     render(<AgentConsole />);
     expect(screen.queryByTestId("agent-tile-class")).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tools share the wall with agents (gibson#1699)
+// ---------------------------------------------------------------------------
+
+describe("AgentConsole component kinds", () => {
+  it("labels a tool run and an agent run differently", () => {
+    useRunningAgentsMock.mockReturnValue({
+      data: [
+        agent({ runId: "run-a", agentName: "claude", componentKind: "agent" }),
+        agent({ runId: "run-t", agentName: "nmap", componentKind: "tool" }),
+      ],
+      isLoading: false,
+      error: null,
+    });
+    render(<AgentConsole />);
+    const kinds = screen.getAllByTestId("agent-tile-kind").map((e) => e.textContent);
+    expect(kinds).toEqual(["agent", "tool"]);
+  });
+
+  it("shows no kind chip when the daemon reports none", () => {
+    useRunningAgentsMock.mockReturnValue({
+      data: [agent({ runId: "run-a", componentKind: "" })],
+      isLoading: false,
+      error: null,
+    });
+    render(<AgentConsole />);
+    expect(screen.queryByTestId("agent-tile-kind")).toBeNull();
   });
 });

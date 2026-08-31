@@ -163,6 +163,20 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
         <span className="shrink-0" title={agent.runId}>
           {shortId(agent.runId)}
         </span>
+        {agent.componentKind ? (
+          <span
+            data-testid="agent-tile-kind"
+            className={cn(
+              "shrink-0 rounded-sm px-1 font-semibold uppercase tracking-wide",
+              agent.componentKind === "tool"
+                ? "bg-terminal-muted/20 text-terminal-muted"
+                : "bg-primary/20 text-primary",
+            )}
+            title={`component kind: ${agent.componentKind}`}
+          >
+            {agent.componentKind}
+          </span>
+        ) : null}
         {agent.sandboxClass ? (
           <span
             data-testid="agent-tile-class"

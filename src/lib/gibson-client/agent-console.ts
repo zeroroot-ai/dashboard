@@ -49,6 +49,11 @@ export interface RunningAgentView {
    * It names the isolation posture, so a viewer sees what confines a run.
    */
   sandboxClass: string;
+  /**
+   * What kind of component is running: "agent" or "tool". Both run in
+   * sandboxes and both appear here, so the wall labels them.
+   */
+  componentKind: string;
 }
 
 const NS_PER_MS = BigInt(1_000_000);
@@ -74,6 +79,7 @@ export async function listRunningAgents(): Promise<RunningAgentView[]> {
     missionId: a.missionId,
     missionRunId: a.missionRunId,
     sandboxClass: a.sandboxClass,
+    componentKind: a.componentKind,
   }));
 }
 

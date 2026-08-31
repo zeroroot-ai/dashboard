@@ -246,6 +246,7 @@ function PopoutBody({
             {agent.missionId ? <Fact label="mission" value={agent.missionId} /> : null}
             {agent.missionRunId ? <Fact label="mission run" value={agent.missionRunId} /> : null}
             {agent.sandboxId ? <Fact label="sandbox" value={agent.sandboxId} /> : null}
+            {agent.componentKind ? <Fact label="kind" value={agent.componentKind} mono={false} /> : null}
             {agent.sandboxClass ? <Fact label="sandbox class" value={agent.sandboxClass} /> : null}
             {model ? <Fact label="model" value={model} /> : null}
             {sessionId ? <Fact label="session" value={shortId(sessionId)} /> : null}
