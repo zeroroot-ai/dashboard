@@ -50,7 +50,7 @@ function mapCodeToHttpStatus(code: Code): number {
  * Only the error code and daemon-provided message are included in the response
  * body, never credential material or request body content.
  */
-export function translateError(err: unknown): Response {
+export function translateError(err: unknown, route = 'providers'): Response {
   if (err instanceof ConnectError) {
     const status = mapCodeToHttpStatus(err.code);
     // 5xx codes mean the daemon hit an internal failure (e.g. secrets circuit
@@ -58,7 +58,7 @@ export function translateError(err: unknown): Response {
     // this the caller sees a 500 with zero diagnostic output in the dashboard.
     if (status >= 500) {
       logger.error(
-        { code: err.code, httpStatus: status, daemonMessage: err.rawMessage, route: 'providers' },
+        { code: err.code, httpStatus: status, daemonMessage: err.rawMessage, route },
         'daemon RPC returned 5xx',
       );
     }
@@ -73,11 +73,11 @@ export function translateError(err: unknown): Response {
   if (err instanceof Error) {
     const stack = (err.stack ?? '').split('\n').slice(0, 3).join(' | ');
     logger.error(
-      { errorName: err.name, errorMessage: err.message, stack, route: 'providers' },
+      { errorName: err.name, errorMessage: err.message, stack, route },
       'unexpected error in providers route',
     );
   } else {
-    logger.error({ thrown: String(err), route: 'providers' }, 'unexpected non-Error throw in providers route');
+    logger.error({ thrown: String(err), route }, 'unexpected non-Error throw in route');
   }
   return Response.json(
     { error: { code: 'internal', message: 'Internal server error' } },

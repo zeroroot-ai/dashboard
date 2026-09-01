@@ -35,6 +35,7 @@ import {
   ServerIcon,
   SettingsIcon,
   TerminalIcon,
+  LayersIcon,
   ShieldCheckIcon,
   WrenchIcon,
   type LucideIcon
@@ -121,6 +122,11 @@ export const navItems: NavGroup[] = [
         title: "Agents",
         href: "/dashboard/agents",
         icon: BotIcon
+      },
+      {
+        title: "Banks",
+        href: "/dashboard/agents/banks",
+        icon: LayersIcon
       },
       {
         title: "Sandboxes",
