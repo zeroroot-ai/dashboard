@@ -1140,3 +1140,115 @@ describe("ProviderWizard dual-capability provider embedding picker (dashboard#87
     });
   });
 });
+
+// ===========================================================================
+// Login shapes for bank members (gibson#1706 lane E6): Vertex and Foundry
+// ===========================================================================
+
+const vertexDescriptor: SupportedProviderDescriptor = {
+  type: "vertex",
+  displayName: "Google Vertex (Claude)",
+  docsUrl: "https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/claude",
+  selfHosted: false,
+  credentials: [
+    { key: "vertex_project_id", label: "Google Cloud Project ID", required: true, secret: false, placeholder: "", help: "" },
+    { key: "vertex_region", label: "Vertex Region", required: true, secret: false, placeholder: "us-east5", help: "" },
+    {
+      key: "google_application_credentials_json",
+      label: "Service Account JSON",
+      required: true,
+      secret: true,
+      placeholder: "",
+      help: "The whole service-account key document.",
+    },
+  ],
+  defaultModels: [{ name: "claude-sonnet-4-5@20250929", family: "Claude", contextWindow: 200000 }],
+};
+
+const foundryDescriptor: SupportedProviderDescriptor = {
+  type: "foundry",
+  displayName: "Microsoft Foundry (Claude)",
+  docsUrl: "https://learn.microsoft.com/azure/ai-foundry/",
+  selfHosted: false,
+  credentials: [
+    { key: "foundry_api_key", label: "Foundry API Key", required: true, secret: true, placeholder: "", help: "" },
+    { key: "foundry_resource", label: "Foundry Resource Name", required: true, secret: false, placeholder: "", help: "" },
+  ],
+  defaultModels: [],
+};
+
+describe("Vertex login shape: the service-account document", () => {
+  it("renders the JSON document as a multi-line box, not a one-line input", () => {
+    renderCredentialsAndTest(vertexDescriptor);
+    const box = screen.getByTestId("secret-document-google_application_credentials_json");
+    expect(box.tagName).toBe("TEXTAREA");
+    expect(box).toHaveAttribute("spellcheck", "false");
+    // The project id and region stay plain text inputs.
+    expect(screen.getByLabelText(/Google Cloud Project ID/)).toHaveAttribute("type", "text");
+    expect(screen.getByLabelText(/Vertex Region/)).toHaveAttribute("type", "text");
+  });
+
+  it("refuses a truncated document before the test call leaves the browser", async () => {
+    const { onTest } = renderCredentialsAndTest(vertexDescriptor);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText(/Google Cloud Project ID/), "proj");
+    await user.type(screen.getByLabelText(/Vertex Region/), "us-east5");
+    const box = screen.getByTestId("secret-document-google_application_credentials_json");
+    fireEvent.change(box, { target: { value: '{"type":"service_account"' } });
+    await user.click(screen.getByRole("button", { name: /Test connection/ }));
+    expect(await screen.findByText(/Paste the whole JSON document/)).toBeInTheDocument();
+    expect(onTest).not.toHaveBeenCalled();
+  });
+
+  it("passes a whole document through to the test call as the raw text", async () => {
+    const { onTest } = renderCredentialsAndTest(vertexDescriptor);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText(/Google Cloud Project ID/), "proj");
+    await user.type(screen.getByLabelText(/Vertex Region/), "us-east5");
+    const doc = '{"type":"service_account","project_id":"proj","private_key":"-----BEGIN-----"}';
+    const box = screen.getByTestId("secret-document-google_application_credentials_json");
+    fireEvent.change(box, { target: { value: doc } });
+    await user.click(screen.getByRole("button", { name: /Test connection/ }));
+    await waitFor(() => expect(onTest).toHaveBeenCalledTimes(1));
+    expect(onTest.mock.calls[0][0].credentials.google_application_credentials_json).toBe(doc);
+  });
+
+  it("leaves the document blank in edit mode so the stored value is kept", () => {
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <CredentialsAndTest
+          descriptor={vertexDescriptor}
+          providerName="vertex-prod"
+          secretFieldPlaceholder="Leave blank to keep existing value"
+          initialValues={{ vertex_project_id: "proj", vertex_region: "us-east5" }}
+        />
+      </QueryClientProvider>,
+    );
+    const box = screen.getByTestId("secret-document-google_application_credentials_json");
+    expect(box).toHaveValue("");
+    expect(box).toHaveAttribute("placeholder", "Leave blank to keep existing value");
+    expect(screen.getByLabelText(/Google Cloud Project ID/)).toHaveValue("proj");
+  });
+});
+
+describe("Foundry login shape", () => {
+  it("masks the API key and shows the resource name as text", () => {
+    renderCredentialsAndTest(foundryDescriptor);
+    expect(screen.getByLabelText(/Foundry API Key/)).toHaveAttribute("type", "password");
+    expect(screen.getByLabelText(/Foundry Resource Name/)).toHaveAttribute("type", "text");
+  });
+});
+
+describe("Provider picker: login-shape hint", () => {
+  it("says which configurations bank members can run on, and stays silent for the rest", () => {
+    const openai = makeDescriptor({ type: "openai", displayName: "OpenAI" });
+    render(
+      <ProviderWizard supported={[vertexDescriptor, foundryDescriptor, bedrockWithIrsa, openai]} />,
+      { wrapper },
+    );
+    expect(screen.getByTestId("login-shape-hint-vertex")).toHaveTextContent("Google Vertex AI");
+    expect(screen.getByTestId("login-shape-hint-foundry")).toHaveTextContent("Microsoft Foundry");
+    expect(screen.getByTestId("login-shape-hint-bedrock")).toHaveTextContent("Amazon Bedrock");
+    expect(screen.queryByTestId("login-shape-hint-openai")).toBeNull();
+  });
+});

@@ -82,6 +82,9 @@ import {
   selectableCapabilitiesForType,
 } from "@/src/lib/provider-capabilities";
 import { apiFetch } from "@/src/lib/api/fetch";
+import { Textarea } from "@/components/ui/textarea";
+import { loginShapeHint } from "@/src/lib/providers/login-shape";
+import { isSecretDocumentField, validateSecretDocument } from "@/src/lib/providers/secret-document";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -266,6 +269,33 @@ function CredentialInput({
     );
   }
 
+  // A whole secret document (a service-account key): a multi-line box. The
+  // value is write-only like every secret field; the shape check runs in the
+  // form rules (see IrsaAwareCredentialFields). gibson#1706 lane E6.
+  if (isSecretDocumentField(cf)) {
+    const { onChange, onBlur, value, name } = field;
+    // react-hook-form's field carries a ref for focus-on-error; FieldProps
+    // types it away because it targets an <input>. Forward it explicitly.
+    const ref = (field as { ref?: React.Ref<HTMLTextAreaElement> }).ref;
+    return (
+      <Textarea
+        id={id}
+        name={name}
+        ref={ref}
+        value={value ?? ""}
+        onChange={onChange as unknown as React.ChangeEventHandler<HTMLTextAreaElement>}
+        onBlur={onBlur as unknown as React.FocusEventHandler<HTMLTextAreaElement>}
+        rows={6}
+        placeholder={secretFieldPlaceholder ?? (cf.placeholder || '{ "type": "service_account", ... }')}
+        className="font-mono text-xs"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        data-testid={`secret-document-${cf.key}`}
+      />
+    );
+  }
+
   // TEXT or PASSWORD
   const isPassword = effectiveType === CREDENTIAL_FIELD_TYPE.PASSWORD;
   const placeholder =
@@ -341,6 +371,11 @@ function ProviderTypePicker({
                   Also works with Azure OpenAI, Ask Sage, and other compatible providers.
                 </p>
               )}
+              {loginShapeHint(d.type) && (
+                <p className="text-muted-foreground mt-1 text-xs" data-testid={`login-shape-hint-${d.type}`}>
+                  {loginShapeHint(d.type)}
+                </p>
+              )}
             </CardHeader>
           </Card>
         );
@@ -395,7 +430,10 @@ function IrsaAwareCredentialFields({
             key={cf.key}
             control={control}
             name={`credentials.${cf.key}`}
-            rules={{ required: cf.required && !cf.secret && !isBool ? `${cf.label} is required` : false }}
+            rules={{
+              required: cf.required && !cf.secret && !isBool ? `${cf.label} is required` : false,
+              validate: isSecretDocumentField(cf) ? validateSecretDocument : undefined,
+            }}
             render={({ field }) => (
               <FormItem>
                 {isBool ? (
