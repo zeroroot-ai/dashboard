@@ -38,6 +38,12 @@ export interface JobSpecView {
   credentialNames: string[];
   inputs: string[];
   acceptance: AcceptanceView | null;
+  /**
+   * Free-form context, string values only. The job node executor stamps
+   * `mission_run_id` and `node_id` here (gibson#1713), which is how a run
+   * finds its jobs.
+   */
+  context: Record<string, string>;
 }
 
 export interface JobView {
