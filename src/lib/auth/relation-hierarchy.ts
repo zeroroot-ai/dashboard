@@ -7,7 +7,9 @@
  * the caller's role on the active tenant. It never sees the request body, so
  * it can only decide entries whose object IS the active tenant (or the fixed
  * system tenant). Everything else is decided by the daemon + ext-authz, which
- * do see the object.
+ * do see the object: `useAuthorize` hides chrome for such an entry, and
+ * `assertAuthorized` forwards the call after the tenant floor so the daemon
+ * can answer.
  *
  * Two structural rules follow, and both are enforced here rather than left to
  * each call site:
