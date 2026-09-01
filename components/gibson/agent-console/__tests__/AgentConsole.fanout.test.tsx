@@ -50,6 +50,7 @@ function agents(n: number): RunningAgentView[] {
     missionId: "",
     missionRunId: "",
     sandboxClass: "agent",
+    componentKind: "agent",
   }));
 }
 
