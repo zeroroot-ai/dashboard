@@ -8,8 +8,10 @@ import {
   AgentNodeConfigSchema,
   ToolNodeConfigSchema,
   NodeType,
+  JobNodeConfigSchema,
 } from '@/src/gen/gibson/mission/v1/mission_definition_pb';
-import { TaskSchema } from '@/src/gen/gibson/types/v1/types_pb';
+import { TaskSchema, TaskConstraintsSchema } from '@/src/gen/gibson/types/v1/types_pb';
+import { DeliverableKind, JobSpecSchema } from '@/src/gen/gibson/job/v1/job_pb';
 
 function agentNode(id: string, agentName: string, goal?: string) {
   return create(MissionNodeSchema, {
@@ -122,5 +124,45 @@ describe('definitionToCUE', () => {
     const cue = definitionToCUE(def);
     const nameMatch = cue.match(/name:\s+"([^"]+)"/);
     expect(nameMatch?.[1]).toBe('my-mission');
+  });
+
+  it('serialises a JOB node with jobConfig, the job import, acceptance and constraints (gibson#1706)', () => {
+    const def = create(MissionDefinitionSchema, {
+      name: 'fix',
+      nodes: {
+        fix: create(MissionNodeSchema, {
+          id: 'fix',
+          type: NodeType.JOB,
+          config: {
+            case: 'jobConfig',
+            value: create(JobNodeConfigSchema, {
+              bankRef: 'fix-crew',
+              spec: create(JobSpecSchema, {
+                goal: 'fix it',
+                repositories: [{ name: 'app', connectorRef: 'connector/gitlab', project: 'acme/app', baseBranch: 'main', deliverable: DeliverableKind.MERGE_REQUEST }],
+                credentialNames: ['npm-token'],
+                inputs: ['scan'],
+                acceptance: { verifierComponent: 'agent/verifier', passingScore: 0.8, maxPasses: 3 },
+              }),
+              constraints: create(TaskConstraintsSchema, { maxTurns: 40 }),
+            }),
+          },
+        }),
+      },
+    });
+    const cue = definitionToCUE(def);
+    expect(cue).toContain('import jobv1 "github.com/zeroroot-ai/sdk/api/proto/gibson/job/v1"');
+    expect(cue).toContain('type: missionv1.#NODE_TYPE_JOB');
+    expect(cue).toContain('bankRef: "fix-crew"');
+    expect(cue).toContain('goal: "fix it"');
+    expect(cue).toContain('deliverable:  jobv1.#DELIVERABLE_KIND_MERGE_REQUEST');
+    expect(cue).toContain('verifierComponent: "agent/verifier"');
+    expect(cue).toContain('maxPasses:         3');
+    expect(cue).toContain('maxTurns:  40');
+  });
+
+  it('omits the job import when no node is a job', () => {
+    const def = create(MissionDefinitionSchema, { name: 'scan', nodes: { scan: agentNode('scan', 'nmap-agent') } });
+    expect(definitionToCUE(def)).not.toContain('jobv1');
   });
 });

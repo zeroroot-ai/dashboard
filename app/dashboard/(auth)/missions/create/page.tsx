@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { MissionTerminalHandle } from "@/src/components/missions/MissionTerminal";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Loader2, Rocket, Save, X } from "lucide-react";
+import { ArrowLeft, Hammer, Loader2, Rocket, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -18,6 +18,8 @@ import { getMissionSourceAction } from "@/app/actions/missions/source-store";
 import { getTemplateCUESourceAction } from "@/app/actions/missions/create-mission";
 import { NEW_MISSION_CUE, buildNewMissionCue } from "@/src/data/new-mission-template";
 import { useDefaultProvider } from "@/src/hooks/useProviders";
+import { JobNodeDialog } from "@/src/components/mission/create/job-node-dialog";
+import { insertNodeIntoCue, jobNodeToCue, type JobNodeFormValues } from "@/src/lib/mission/job-node";
 
 const MissionCUEEditor = dynamic(
   () =>
@@ -295,6 +297,15 @@ export default function CreateMissionPage() {
     return () => window.removeEventListener("beforeunload", handle);
   }, [editor.isDirty]);
 
+  // The node palette (gibson#1706 lane E4): a job node inserted into the
+  // definition's nodes block, first position, with the job import.
+  const [jobNodeOpen, setJobNodeOpen] = React.useState(false);
+  function handleInsertJobNode(values: JobNodeFormValues) {
+    editor.setSource(insertNodeIntoCue(editor.cueSource, values.nodeId, jobNodeToCue(values)));
+    setJobNodeOpen(false);
+    toast.success(`Job node ${values.nodeId} inserted`);
+  }
+
   async function handleRunMission() {
     terminalRef.current?.clear();
     setTerminalOpen(false);
@@ -439,6 +450,16 @@ export default function CreateMissionPage() {
         </Button>
         <Button
           size="sm"
+          variant="outline"
+          onClick={() => setJobNodeOpen(true)}
+          className="gap-1.5"
+          data-testid="palette-job-node"
+        >
+          <Hammer className="size-3.5" />
+          Job node
+        </Button>
+        <Button
+          size="sm"
           onClick={handleRunMission}
           disabled={editor.runDisabled}
           className="gap-1.5"
@@ -459,6 +480,8 @@ export default function CreateMissionPage() {
           onDiagnosticsChange={editor.setErrorCount}
         />
       </div>
+
+      <JobNodeDialog open={jobNodeOpen} onOpenChange={setJobNodeOpen} onInsert={handleInsertJobNode} />
 
       <MissionTerminal
         ref={terminalRef}

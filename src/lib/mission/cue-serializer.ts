@@ -14,8 +14,16 @@
 
 import type { MissionDefinition, MissionNode } from '@/src/gen/gibson/mission/v1/mission_definition_pb';
 import { NodeType } from '@/src/gen/gibson/mission/v1/mission_definition_pb';
+import { DeliverableKind } from '@/src/gen/gibson/job/v1/job_pb';
+import { JOB_IMPORT_LINE } from './job-node';
 
 const IMPORT_LINE = 'import missionv1 "github.com/zeroroot-ai/sdk/api/proto/gibson/mission/v1"';
+
+const DELIVERABLE_NAME: Readonly<Record<number, string>> = {
+  [DeliverableKind.PUSH_BRANCH]: 'DELIVERABLE_KIND_PUSH_BRANCH',
+  [DeliverableKind.MERGE_REQUEST]: 'DELIVERABLE_KIND_MERGE_REQUEST',
+  [DeliverableKind.NONE]: 'DELIVERABLE_KIND_NONE',
+};
 
 function q(s: string): string {
   return `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '')}"`;
@@ -29,6 +37,7 @@ function nodeTypeName(t: NodeType): string {
     case NodeType.CONDITION: return 'missionv1.#NODE_TYPE_CONDITION';
     case NodeType.PARALLEL:  return 'missionv1.#NODE_TYPE_PARALLEL';
     case NodeType.JOIN:      return 'missionv1.#NODE_TYPE_JOIN';
+    case NodeType.JOB:       return 'missionv1.#NODE_TYPE_JOB';
     default:                 return 'missionv1.#NODE_TYPE_UNSPECIFIED';
   }
 }
@@ -122,6 +131,47 @@ function serializeNode(node: MissionNode): string {
       }
       break;
     }
+    case 'jobConfig': {
+      // gibson#1706 lane E4. Mirrors jobNodeToCue in ./job-node.ts.
+      const cfg = node.config.value;
+      const spec = cfg.spec;
+      lines.push(`\t\tjobConfig: {`);
+      lines.push(`\t\t\tbankRef: ${q(cfg.bankRef)}`);
+      lines.push(`\t\t\tspec: {`);
+      lines.push(`\t\t\t\tgoal: ${q(spec?.goal ?? '')}`);
+      if (spec && spec.repositories.length > 0) {
+        lines.push(`\t\t\t\trepositories: [`);
+        for (const r of spec.repositories) {
+          lines.push(`\t\t\t\t\t{`);
+          lines.push(`\t\t\t\t\t\tname:         ${q(r.name)}`);
+          lines.push(`\t\t\t\t\t\tconnectorRef: ${q(r.connectorRef)}`);
+          lines.push(`\t\t\t\t\t\tproject:      ${q(r.project)}`);
+          if (r.baseBranch) lines.push(`\t\t\t\t\t\tbaseBranch:   ${q(r.baseBranch)}`);
+          const kind = DELIVERABLE_NAME[r.deliverable];
+          if (kind) lines.push(`\t\t\t\t\t\tdeliverable:  jobv1.#${kind}`);
+          lines.push(`\t\t\t\t\t},`);
+        }
+        lines.push(`\t\t\t\t]`);
+      }
+      if (spec && spec.credentialNames.length > 0) lines.push(`\t\t\t\tcredentialNames: [${spec.credentialNames.map(q).join(', ')}]`);
+      if (spec && spec.inputs.length > 0) lines.push(`\t\t\t\tinputs: [${spec.inputs.map(q).join(', ')}]`);
+      if (spec?.acceptance && spec.acceptance.verifierComponent) {
+        lines.push(`\t\t\t\tacceptance: {`);
+        lines.push(`\t\t\t\t\tverifierComponent: ${q(spec.acceptance.verifierComponent)}`);
+        lines.push(`\t\t\t\t\tpassingScore:      ${spec.acceptance.passingScore}`);
+        lines.push(`\t\t\t\t\tmaxPasses:         ${spec.acceptance.maxPasses}`);
+        lines.push(`\t\t\t\t}`);
+      }
+      lines.push(`\t\t\t}`);
+      if (cfg.constraints && (cfg.constraints.maxTurns > 0 || cfg.constraints.maxTokens > 0)) {
+        lines.push(`\t\t\tconstraints: {`);
+        if (cfg.constraints.maxTurns > 0) lines.push(`\t\t\t\tmaxTurns:  ${cfg.constraints.maxTurns}`);
+        if (cfg.constraints.maxTokens > 0) lines.push(`\t\t\t\tmaxTokens: ${cfg.constraints.maxTokens}`);
+        lines.push(`\t\t\t}`);
+      }
+      lines.push(`\t\t}`);
+      break;
+    }
     case 'joinConfig': {
       const cfg = node.config.value;
       const inner: string[] = [];
@@ -153,6 +203,8 @@ export function definitionToCUE(def: MissionDefinition): string {
   const parts: string[] = [];
 
   parts.push(IMPORT_LINE);
+  // A job node names its deliverable through the job package.
+  if (Object.values(def.nodes ?? {}).some((n) => n?.config.case === 'jobConfig')) parts.push(JOB_IMPORT_LINE);
   parts.push('');
   parts.push('mission: missionv1.#MissionDefinition & {');
   parts.push(`\tname:        ${q(def.name)}`);
