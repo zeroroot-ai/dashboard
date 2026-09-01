@@ -42,6 +42,10 @@ export interface AgentRunSummary {
   turns?: number;
   costUsd?: number;
   durationMs?: number;
+  /** Bank member facts from `member_status` lines (gibson#1706). */
+  memberState?: string;
+  jobsInFlight?: number;
+  cap?: number;
 }
 
 /** One rendered stream line: terminal text plus any summary facts it carried. */
@@ -69,12 +73,26 @@ interface StreamEvent {
   session_id?: string;
   cwd?: string;
   tools?: unknown;
-  message?: { content?: unknown; model?: string };
+  message?: { content?: unknown; model?: string } | string;
   num_turns?: number;
   total_cost_usd?: number;
   duration_ms?: number;
   is_error?: boolean;
   result?: unknown;
+  // Bank member lines (gibson#1706, gibson#1716). The daemon tees them into
+  // the same NDJSON as the Claude Code stream-json lines.
+  job_id?: string;
+  goal?: string;
+  kind?: string;
+  sender?: string;
+  state?: string;
+  verdict?: string;
+  score?: number;
+  ref?: string;
+  url?: string;
+  jobs_in_flight?: number;
+  cap?: number;
+  claude_version?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -255,6 +273,70 @@ function renderResult(ev: StreamEvent): RenderedLine {
   return { text, summary };
 }
 
+// ---------------------------------------------------------------------------
+// Bank member lines (gibson#1706 lane E3)
+//
+//   {"type":"job_opened","job_id":"...","goal":"..."}
+//   {"type":"job_input","job_id":"...","kind":"turn|answer|wrap_up","sender":"user:..."}
+//   {"type":"job_state","job_id":"...","state":"working|waiting|closed","message":"..."}
+//   {"type":"job_deliverable","job_id":"...","kind":"merge_request","ref":"...","url":"..."}
+//   {"type":"job_closed","job_id":"...","verdict":"accomplished|failed|abandoned","score":0.9}
+//   {"type":"member_status","state":"idle|busy|needs_sign_in|draining","jobs_in_flight":1,"cap":2,"claude_version":"..."}
+// ---------------------------------------------------------------------------
+
+function jobTag(ev: StreamEvent): string {
+  return typeof ev.job_id === "string" && ev.job_id.length > 0 ? `job ${shortId(ev.job_id)}` : "job";
+}
+
+function renderJobEvent(ev: StreamEvent): RenderedLine {
+  const tag = jobTag(ev);
+  switch (ev.type) {
+    case "job_opened": {
+      const goal = typeof ev.goal === "string" && ev.goal.length > 0 ? ` · ${oneLine(ev.goal)}` : "";
+      return { text: `${BOLD}${CYAN}◆ ${tag} opened${RESET}${DIM}${goal}${RESET}${EOL}` };
+    }
+    case "job_input": {
+      const kind = typeof ev.kind === "string" ? ev.kind : "input";
+      const from = typeof ev.sender === "string" && ev.sender.length > 0 ? ` from ${ev.sender}` : "";
+      return { text: `${CYAN}→ ${tag} ${kind}${from}${RESET}${EOL}` };
+    }
+    case "job_state": {
+      const state = typeof ev.state === "string" ? ev.state : "state";
+      const msg = typeof ev.message === "string" && ev.message.length > 0 ? ` · ${oneLine(ev.message)}` : "";
+      const color = state === "waiting" ? ACID : BRIGHT_BLACK;
+      return { text: `${color}◇ ${tag} ${state}${msg}${RESET}${EOL}` };
+    }
+    case "job_deliverable": {
+      const parts = [ev.kind, ev.ref, ev.url].filter((v): v is string => typeof v === "string" && v.length > 0);
+      return { text: `${GREEN}⇧ ${tag} ${parts.join(" ")}${RESET}${EOL}` };
+    }
+    case "job_closed": {
+      const verdict = typeof ev.verdict === "string" ? ev.verdict : "closed";
+      const score = typeof ev.score === "number" ? ` ${ev.score.toFixed(2)}` : "";
+      const color = verdict === "accomplished" ? ACID : verdict === "failed" ? RED : BRIGHT_BLACK;
+      return { text: `${BOLD}${color}── ${tag} closed ${verdict}${score} ──${RESET}${EOL}` };
+    }
+    default:
+      return { text: "" };
+  }
+}
+
+function renderMemberStatus(ev: StreamEvent): RenderedLine {
+  const summary: AgentRunSummary = {};
+  const parts: string[] = [];
+  if (typeof ev.state === "string") {
+    summary.memberState = ev.state;
+    parts.push(ev.state.replace(/_/g, " "));
+  }
+  if (typeof ev.jobs_in_flight === "number" && typeof ev.cap === "number") {
+    summary.jobsInFlight = ev.jobs_in_flight;
+    summary.cap = ev.cap;
+    parts.push(`${ev.jobs_in_flight}/${ev.cap}`);
+  }
+  if (typeof ev.claude_version === "string" && ev.claude_version.length > 0) parts.push(`claude ${ev.claude_version}`);
+  return { text: `${BRIGHT_BLACK}● member ${parts.join(" · ")}${RESET}${EOL}`, summary };
+}
+
 function renderUnknown(line: string, ev: StreamEvent): RenderedLine {
   const label = typeof ev.type === "string" ? ev.type : "json";
   return { text: `${BRIGHT_BLACK}${label} ${oneLine(line)}${RESET}${EOL}` };
@@ -282,18 +364,29 @@ export function renderAgentLine(line: string): RenderedLine {
   switch (event.type) {
     case "assistant": {
       const summary: AgentRunSummary = {};
-      if (typeof event.message?.model === "string") summary.model = event.message.model;
+      const message = isRecord(event.message) ? event.message : undefined;
+      if (typeof message?.model === "string") summary.model = message.model;
       return {
-        text: renderBlocks(event.message?.content, renderAssistantBlock),
+        text: renderBlocks(message?.content, renderAssistantBlock),
         summary,
       };
     }
-    case "user":
-      return { text: renderBlocks(event.message?.content, renderUserBlock) };
+    case "user": {
+      const message = isRecord(event.message) ? event.message : undefined;
+      return { text: renderBlocks(message?.content, renderUserBlock) };
+    }
     case "system":
       return renderSystem(event);
     case "result":
       return renderResult(event);
+    case "job_opened":
+    case "job_input":
+    case "job_state":
+    case "job_deliverable":
+    case "job_closed":
+      return renderJobEvent(event);
+    case "member_status":
+      return renderMemberStatus(event);
     default:
       return renderUnknown(trimmed, event);
   }

@@ -8,6 +8,10 @@
  * The tile owns its own EventSource via useAgentConsole, so every tile
  * streams independently. It reports its stream facts to the wall through
  * `onFacts`, so the wall can sort by cost.
+ *
+ * A tile that shows a bank member (gibson#1706) carries the member's state
+ * chip and a JobPanel under the terminal: its jobs and a compose box. Every
+ * other tile stays read-only.
  */
 
 import * as React from "react";
@@ -17,6 +21,9 @@ import { formatCost, formatDuration, shortId } from "@/src/lib/agent-console/str
 import type { WallTileFacts } from "@/src/lib/agent-console/wall";
 import type { RunningAgentView } from "@/src/lib/gibson-client/agent-console";
 import type { MissionTerminalHandle } from "@/src/components/missions/MissionTerminal";
+import type { MemberWithBankView } from "@/src/lib/banks/view";
+import { MemberStateChip } from "@/components/gibson/banks/MemberStateChip";
+import { JobPanel } from "./JobPanel";
 import { cn } from "@/lib/utils";
 
 // xterm touches the DOM, so the terminal must load client-side only.
@@ -72,6 +79,8 @@ interface AgentTileProps {
   selected?: boolean;
   /** Ribbon over a run that ended and still sits on the wall. */
   ribbon?: "Completed" | "Failed" | "Stopped";
+  /** Set when this run is a bank member: the tile gains its state and jobs. */
+  member?: MemberWithBankView;
 }
 
 /**
@@ -96,7 +105,7 @@ function useInView(ref: React.RefObject<HTMLElement | null>): boolean {
 }
 
 export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function AgentTile(
-  { agent, height, fontSize, onFacts, onOpen, selected = false, ribbon },
+  { agent, height, fontSize, onFacts, onOpen, selected = false, ribbon, member },
   ref,
 ) {
   const terminalRef = React.useRef<MissionTerminalHandle>(null);
@@ -177,6 +186,12 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
             {agent.componentKind}
           </span>
         ) : null}
+        {member ? (
+          <span className="flex shrink-0 items-center gap-1" data-testid="agent-tile-member" title={`member of bank ${member.bankName}`}>
+            <span className="hidden lg:inline">{member.bankName}</span>
+            <MemberStateChip member={member} />
+          </span>
+        ) : null}
         {agent.sandboxClass ? (
           <span
             data-testid="agent-tile-class"
@@ -226,6 +241,7 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
           fontSize={fontSize}
         />
       </div>
+      {member ? <JobPanel member={member} compact /> : null}
     </section>
   );
 });

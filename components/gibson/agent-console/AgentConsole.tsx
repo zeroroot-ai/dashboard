@@ -20,8 +20,9 @@
  * nothing reconnects. The URL carries `?run=<id>` while a pop-out is open,
  * so a pop-out is linkable.
  *
- * The surface is READ-ONLY: it renders events only. There is no input, no
- * PTY, no command box, and no write path back to the agent.
+ * A tile that shows a bank member (gibson#1706) gains the member's state
+ * and a job panel with a compose box, so a person can give it structured
+ * jobs. Every other tile is read-only: events only, no input, no PTY.
  *
  * Tenant isolation is enforced server-side: the list route and each stream
  * derive the tenant from the authenticated identity, and the daemon returns
@@ -44,6 +45,7 @@ import {
 import { ErrorAlert, TableSkeleton } from "@/components/gibson/shared";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { useRunningAgents } from "@/src/hooks/useRunningAgents";
+import { useMemberRuns } from "@/src/hooks/useMemberRuns";
 import { AgentStreamRegistryContext } from "@/src/hooks/useAgentConsole";
 import { AgentStreamRegistry } from "@/src/lib/agent-console/stream";
 import {
@@ -133,6 +135,7 @@ const SORT_LABEL: Record<WallSort, string> = {
 
 export function AgentConsole() {
   const { data: agents, isLoading, error } = useRunningAgents();
+  const memberRuns = useMemberRuns();
   const [density, setDensity] = usePersistedChoice(DENSITY_KEY, WALL_DENSITIES, "comfortable");
   const [sort, setSort] = usePersistedChoice(SORT_KEY, WALL_SORTS, "started");
   const [facts, setFacts] = React.useState<ReadonlyMap<string, WallTileFacts>>(
@@ -225,7 +228,7 @@ export function AgentConsole() {
           </h1>
           <p className="text-sm text-muted-foreground">
             Every agent and tool your tenant runs in an isolated setec sandbox,
-            live. Read-only.
+            live. Bank members take jobs from here.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -327,6 +330,7 @@ export function AgentConsole() {
                   ? ribbonLabel(seen.get(agent.runId)?.ended)
                   : undefined
               }
+              member={memberRuns.get(agent.runId)}
             />
           ))}
         </div>
@@ -376,6 +380,7 @@ export function AgentConsole() {
         onClose={() => setSelectedRun(null)}
         onNavigate={navigate}
         onCloseAutoFocus={returnFocusToTile}
+        member={selectedAgent ? memberRuns.get(selectedAgent.runId) : undefined}
       />
     </div>
     </AgentStreamRegistryContext.Provider>

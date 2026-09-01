@@ -11,6 +11,9 @@ import { LiveConsoleLink } from "../LiveConsoleLink";
 import { findLiveRun, consoleHref } from "../useLiveRun";
 import type { RunningAgentView } from "@/src/lib/gibson-client/agent-console";
 
+// Bank members on the wall (gibson#1706): none in these suites.
+vi.mock("@/src/hooks/useMemberRuns", () => ({ useMemberRuns: () => new Map() }));
+
 const useRunningAgentsMock = vi.fn();
 vi.mock("@/src/hooks/useRunningAgents", () => ({
   useRunningAgents: () => useRunningAgentsMock(),
