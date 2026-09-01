@@ -315,36 +315,54 @@ describe('assertAuthorized, object-scoped relations', () => {
     '/test/ComponentService/CallTool',
   ];
 
+  // The dashboard never sees the object a per-object entry names, so it can
+  // neither grant nor refuse the relation. It enforces the floor and forwards.
+  // The daemon holds the grant on the named bank, job, secret or component
+  // and answers PERMISSION_DENIED itself (gibson#1706).
   it.each(OBJECT_SCOPED_METHODS)(
-    'DENIES a tenant admin %s, the object is not theirs to name',
+    'FORWARDS %s for a tenant member, the daemon decides the object grant',
+    async (method) => {
+      setupMemberships('tenant-a', 'member');
+      await expect(assertAuthorized(method)).resolves.toBeUndefined();
+    },
+  );
+
+  it.each(OBJECT_SCOPED_METHODS)(
+    'FORWARDS %s for a tenant admin without treating the role as the grant',
     async (method) => {
       setupMemberships('tenant-a', 'admin');
+      await expect(assertAuthorized(method)).resolves.toBeUndefined();
+    },
+  );
+
+  it.each(OBJECT_SCOPED_METHODS)('still requires a session for %s', async (method) => {
+    setupNoSession();
+    await expect(assertAuthorized(method)).rejects.toMatchObject({
+      reason: 'no-session',
+      method,
+    });
+  });
+
+  it.each(OBJECT_SCOPED_METHODS)('still requires an active tenant for %s', async (method) => {
+    setupNoActiveTenant();
+    await expect(assertAuthorized(method)).rejects.toMatchObject({
+      reason: 'no-active-tenant',
+    });
+  });
+
+  it.each(OBJECT_SCOPED_METHODS)(
+    'still requires a membership on the active tenant for %s',
+    async (method) => {
+      setupMemberships('tenant-b', 'admin'); // member elsewhere, not on tenant-a
       await expect(assertAuthorized(method)).rejects.toMatchObject({
-        reason: 'object-scoped',
-        method,
+        reason: 'not-a-member',
       });
     },
   );
 
-  it.each(OBJECT_SCOPED_METHODS)('DENIES a tenant owner %s', async (method) => {
+  it('never throws an object-scoped reason: that verdict belongs to the UI hook only', async () => {
     setupMemberships('tenant-a', 'owner');
-    await expect(assertAuthorized(method)).rejects.toMatchObject({
-      reason: 'object-scoped',
-    });
-  });
-
-  it('ALLOWS the same tenant admin the tenant-scoped RPC on the tenant they do own', async () => {
-    setupMemberships('tenant-a', 'admin');
-    await expect(
-      assertAuthorized('/test/AdminService/AdminMethod'),
-    ).resolves.toBeUndefined();
-  });
-
-  it('denies before the RPC leaves the process (throws, never resolves)', async () => {
-    setupMemberships('tenant-a', 'owner');
-    await expect(
-      assertAuthorized('/test/SecretsService/GetCredential'),
-    ).rejects.toThrow(AuthzDeniedError);
+    await expect(assertAuthorized('/test/SecretsService/GetCredential')).resolves.toBeUndefined();
   });
 });
 

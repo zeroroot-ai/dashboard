@@ -353,7 +353,7 @@ export async function createSecretAction(formData: FormData) {
 }
 ```
 
-`assertAuthorized` throws `AuthzDeniedError` (with `method` and `reason` fields) on denial. Server actions catch it and return a structured error; the client maps this to a "Permission denied" toast. Never log the `reason` in a user-visible message (it contains internal role data).
+`assertAuthorized` throws `AuthzDeniedError` (with `method` and `reason` fields) on denial. For a per-object entry (`objectType` is a `bank`, `job`, `component`, `plugin` or `secret`) it enforces the floor only (session, USER-callable RPC, active tenant, membership) and then lets the call through: the request body names the object, the dashboard never sees it, and ext-authz holds the grant. The daemon answers `PERMISSION_DENIED` itself. Gate per-object chrome from object data (the bank's owner, the job's opener), never from `useAuthorize`, which hides such chrome. Server actions catch it and return a structured error; the client maps this to a "Permission denied" toast. Never log the `reason` in a user-visible message (it contains internal role data).
 
 ---
 

@@ -21,9 +21,15 @@
  *     dependent escape hatch.
  *   - The decision is OBJECT-AWARE. This helper knows only the caller's role
  *     on the active tenant, so it can only decide entries whose FGA check
- *     runs against that tenant. Entries scoped to a specific component,
- *     plugin, or secret are refused ('object-scoped') and left to the daemon,
- *     which sees the object. See `auth/relation-hierarchy`.
+ *     runs against that tenant. An entry scoped to one bank, job, component,
+ *     plugin or secret names that object in the request body, which this
+ *     helper never sees. For such an entry the helper enforces the floor
+ *     (a session, a USER-callable RPC, an active tenant, a membership on it)
+ *     and then forwards the call: the daemon and ext-authz hold the grant on
+ *     the named object and decide the relation. It does not guess and it
+ *     does not refuse. Before gibson#1706 no USER-callable RPC was
+ *     object-scoped, so the refuse-or-allow shape never met a real call.
+ *     See `auth/relation-hierarchy`.
  *
  * Spec: dashboard-authz-ui-gating Requirement 3.
  * Sister-spec: cross-repo-cohesion-fixes Requirement 1.
@@ -37,7 +43,7 @@ import 'server-only';
 
 import { auth } from '@/auth';
 import { AuthRegistry, IdentityClass } from '@/src/gen/authz/registry';
-import { decideAuthEntry } from './relation-hierarchy';
+import { decideAuthEntry, scopeOfEntry } from './relation-hierarchy';
 import { getMyMemberships } from './membership';
 import { readRawActiveTenant } from './active-tenant';
 
@@ -65,7 +71,6 @@ export class AuthzDeniedError extends Error {
       | 'no-active-tenant'
       | 'not-a-member'
       | 'relation-not-met'
-      | 'object-scoped'
       | 'unknown_method',
   ) {
     super(`assertAuthorized: ${reason} for ${method}`);
@@ -169,11 +174,17 @@ export async function assertAuthorized(method: string): Promise<void> {
     throw new AuthzDeniedError(method, 'not-a-member');
   }
 
-  // Object scope first, then relation. An entry whose FGA check runs against a
-  // specific component / plugin / secret names that object in the request body,
-  // which this check never sees, so it is refused here and left to the daemon.
+  // Object scope first, then relation. An entry whose FGA check runs against
+  // one bank, job, component, plugin or secret names that object in the
+  // request body, which this check never sees. The floor above still holds
+  // (session, USER identity, active tenant, membership). The relation is the
+  // daemon's to decide: ext-authz checks the caller's grant on the named
+  // object. So the call is forwarded, and a caller without the grant gets
+  // PERMISSION_DENIED from the daemon, not from here.
+  if (scopeOfEntry(entry) === 'per_object') return;
+
   const verdict = decideAuthEntry(entry, membership.role);
   if (!verdict.allowed) {
-    throw new AuthzDeniedError(method, verdict.reason);
+    throw new AuthzDeniedError(method, 'relation-not-met');
   }
 }
