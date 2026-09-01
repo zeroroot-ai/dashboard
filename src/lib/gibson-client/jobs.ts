@@ -154,6 +154,11 @@ function specView(s: JobSpec | undefined): JobSpecView {
           maxPasses: s.acceptance.maxPasses,
         }
       : null,
+    context: Object.fromEntries(
+      Object.entries(s?.context ?? {}).flatMap(([k, v]) =>
+        v.kind.case === 'stringValue' ? [[k, v.kind.value] as const] : [],
+      ),
+    ),
   };
 }
 

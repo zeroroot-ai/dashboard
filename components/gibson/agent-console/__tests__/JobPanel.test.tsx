@@ -45,7 +45,7 @@ const member: MemberWithBankView = {
 function job(over: Partial<JobView> = {}): JobView {
   return {
     id: "job-1", bankId: "bank-1", memberId: "mem-1", state: "working",
-    spec: { goal: "fix the login bug", repositories: [], credentialNames: [], inputs: [], acceptance: null },
+    spec: { goal: "fix the login bug", repositories: [], credentialNames: [], inputs: [], acceptance: null, context: {} },
     claudeSessionId: "", openedBy: { kind: "user", id: "u1" }, openedAt: null, lastInputAt: null, closedAt: null,
     verdict: "unspecified", score: 0, deliverables: [], attempts: 0, ...over,
   };
