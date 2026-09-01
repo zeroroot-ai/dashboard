@@ -70,6 +70,12 @@ export interface MemberView {
   lastHeartbeat: string | null;
 }
 
+/** A member with the facts of its bank, for the console join (lane E3). */
+export interface MemberWithBankView extends MemberView {
+  bankName: string;
+  bankOwner: PrincipalView;
+}
+
 export const LOGIN_SHAPE_LABEL: Readonly<Record<LoginShapeName, string>> = {
   subscription: "Subscription (the owner signs in inside the sandbox)",
   anthropic_api_key: "Anthropic API key",

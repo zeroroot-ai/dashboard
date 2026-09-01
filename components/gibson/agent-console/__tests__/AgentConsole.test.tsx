@@ -48,6 +48,15 @@ vi.mock("@/src/hooks/useAgentConsole", async (importOriginal) => ({
   useAgentConsole: (runId: string | undefined) => useAgentConsoleMock(runId),
 }));
 
+// Bank members on the wall (gibson#1706): none in these suites.
+const memberRuns = new Map();
+vi.mock("@/src/hooks/useMemberRuns", () => ({ useMemberRuns: () => memberRuns }));
+vi.mock("@/components/gibson/agent-console/JobPanel", () => ({
+  JobPanel: ({ member }: { member: { id: string } }) => (
+    <form data-testid="job-panel" data-member-id={member.id}><textarea aria-label="compose" /></form>
+  ),
+}));
+
 const useRunningAgentsMock = vi.fn();
 vi.mock("@/src/hooks/useRunningAgents", () => ({
   useRunningAgents: () => useRunningAgentsMock(),
@@ -111,7 +120,7 @@ describe("AgentConsole", () => {
     expect(calledRunIds).toContain("run-2");
   });
 
-  it("renders no input, textarea, or other write control (requirement 2: read-only)", () => {
+  it("renders no input, textarea, or other write control for a tile that is not a bank member (requirement 2: read-only)", () => {
     useRunningAgentsMock.mockReturnValue({
       data: [agent({ runId: "run-1" }), agent({ runId: "run-2" })],
       isLoading: false,
@@ -124,6 +133,29 @@ describe("AgentConsole", () => {
     expect(container.querySelectorAll("textarea")).toHaveLength(0);
     expect(container.querySelectorAll("form")).toHaveLength(0);
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  it("gives a bank member's tile its state chip and the job panel (gibson#1706)", () => {
+    memberRuns.set("run-1", {
+      id: "mem-1", bankId: "b", missionId: "", missionRunId: "", agentRunId: "run-1", sandboxId: "",
+      state: "busy", jobsInFlight: 1, cap: 2, activeJobIds: ["j1"], claudeVersion: "", lastHeartbeat: null,
+      bankName: "crew", bankOwner: { kind: "user", id: "u1" },
+    });
+    useRunningAgentsMock.mockReturnValue({
+      data: [agent({ runId: "run-1" }), agent({ runId: "run-2" })],
+      isLoading: false,
+      error: null,
+    });
+    try {
+      render(<AgentConsole />);
+      const tiles = screen.getAllByTestId("agent-tile");
+      expect(tiles[0].querySelector('[data-testid="member-state"]')).toHaveTextContent("busy 1/2");
+      expect(tiles[0].querySelector('[data-testid="job-panel"]')).not.toBeNull();
+      expect(tiles[1].querySelector('[data-testid="member-state"]')).toBeNull();
+      expect(tiles[1].querySelector("textarea")).toBeNull();
+    } finally {
+      memberRuns.clear();
+    }
   });
 
   it("shows the empty state when no agents are running", () => {

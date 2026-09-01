@@ -23,6 +23,9 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard/sandboxes",
   useSearchParams: () => new URLSearchParams(""),
 }));
+// Bank members on the wall (gibson#1706): none in these suites.
+vi.mock("@/src/hooks/useMemberRuns", () => ({ useMemberRuns: () => new Map() }));
+
 const useRunningAgentsMock = vi.fn();
 vi.mock("@/src/hooks/useRunningAgents", () => ({
   useRunningAgents: () => useRunningAgentsMock(),

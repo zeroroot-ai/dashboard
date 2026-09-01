@@ -9,7 +9,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { TerminalIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -20,31 +19,8 @@ import {
 } from "@/components/ui/table";
 import { consoleHref } from "@/components/gibson/agent-console/useLiveRun";
 import { formatDuration, shortId } from "@/src/lib/agent-console/stream-json";
-import { memberStateLabel, type MemberStateName, type MemberView } from "@/src/lib/banks/view";
-import { cn } from "@/lib/utils";
-
-const STATE_CLASS: Record<MemberStateName, string> = {
-  idle: "border-primary/50 bg-primary/10 text-primary",
-  busy: "border-alt/50 bg-alt/10 text-alt",
-  needs_sign_in: "border-destructive/50 bg-destructive/10 text-destructive",
-  draining: "border-border text-muted-foreground",
-  dead: "border-destructive/50 text-destructive",
-  launching: "border-border text-muted-foreground",
-  unknown: "border-border text-muted-foreground",
-};
-
-function MemberStateChip({ member }: { member: Pick<MemberView, "state" | "jobsInFlight" | "cap"> }) {
-  return (
-    <Badge
-      variant="outline"
-      className={cn("font-mono text-[0.65rem]", STATE_CLASS[member.state])}
-      data-testid="member-state"
-      data-state={member.state}
-    >
-      {memberStateLabel(member)}
-    </Badge>
-  );
-}
+import type { MemberView } from "@/src/lib/banks/view";
+import { MemberStateChip } from "./MemberStateChip";
 
 function heartbeatLabel(iso: string | null, now: number): string {
   if (!iso) return "never";

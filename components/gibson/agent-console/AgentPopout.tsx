@@ -47,6 +47,9 @@ import { useAgentConsole, type AgentConsolePhase } from "@/src/hooks/useAgentCon
 import { formatCost, formatDuration, shortId } from "@/src/lib/agent-console/stream-json";
 import type { RunningAgentView } from "@/src/lib/gibson-client/agent-console";
 import type { MissionTerminalHandle } from "@/src/components/missions/MissionTerminal";
+import type { MemberWithBankView } from "@/src/lib/banks/view";
+import { MemberStateChip } from "@/components/gibson/banks/MemberStateChip";
+import { JobPanel } from "./JobPanel";
 import { cn } from "@/lib/utils";
 
 // xterm touches the DOM, so the terminal must load client-side only.
@@ -155,6 +158,8 @@ interface AgentPopoutProps {
   onNavigate: (delta: 1 | -1) => void;
   /** Called on close, so focus can return to the tile. */
   onCloseAutoFocus?: (e: Event) => void;
+  /** Set when the run is a bank member: the pop-out gets the same job controls as the tile. */
+  member?: MemberWithBankView;
 }
 
 function PopoutBody({
@@ -162,7 +167,8 @@ function PopoutBody({
   index,
   count,
   onNavigate,
-}: Pick<AgentPopoutProps, "agent" | "index" | "count" | "onNavigate"> & { agent: RunningAgentView }) {
+  member,
+}: Pick<AgentPopoutProps, "agent" | "index" | "count" | "onNavigate" | "member"> & { agent: RunningAgentView }) {
   const terminalRef = React.useRef<MissionTerminalHandle>(null);
   const status = useAgentConsole(agent.runId, terminalRef);
   const running = status.phase === "streaming";
@@ -226,13 +232,16 @@ function PopoutBody({
         </span>
       </header>
       <div className="flex min-h-0 flex-1">
-        <div className="min-h-0 min-w-0 flex-1 bg-terminal">
-          <TileTerminal
-            ref={terminalRef}
-            title={`${name} · sandbox output`}
-            height="fill"
-            fontSize={14}
-          />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-terminal">
+          <div className="min-h-0 flex-1">
+            <TileTerminal
+              ref={terminalRef}
+              title={`${name} · sandbox output`}
+              height="fill"
+              fontSize={14}
+            />
+          </div>
+          {member ? <JobPanel member={member} /> : null}
         </div>
         <aside
           data-testid="popout-rail"
@@ -247,6 +256,8 @@ function PopoutBody({
             {agent.missionRunId ? <Fact label="mission run" value={agent.missionRunId} /> : null}
             {agent.sandboxId ? <Fact label="sandbox" value={agent.sandboxId} /> : null}
             {agent.componentKind ? <Fact label="kind" value={agent.componentKind} mono={false} /> : null}
+            {member ? <Fact label="bank" value={member.bankName} /> : null}
+            {member ? <Fact label="member" value={<MemberStateChip member={member} />} mono={false} /> : null}
             {agent.sandboxClass ? <Fact label="sandbox class" value={agent.sandboxClass} /> : null}
             {model ? <Fact label="model" value={model} /> : null}
             {sessionId ? <Fact label="session" value={shortId(sessionId)} /> : null}
@@ -285,7 +296,7 @@ function PopoutBody({
   );
 }
 
-export function AgentPopout({ agent, index, count, onClose, onNavigate, onCloseAutoFocus }: AgentPopoutProps) {
+export function AgentPopout({ agent, index, count, onClose, onNavigate, onCloseAutoFocus, member }: AgentPopoutProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "ArrowLeft") {
       e.preventDefault();
@@ -304,7 +315,7 @@ export function AgentPopout({ agent, index, count, onClose, onNavigate, onCloseA
         onKeyDown={handleKeyDown}
         onCloseAutoFocus={onCloseAutoFocus}
       >
-        {agent ? <PopoutBody agent={agent} index={index} count={count} onNavigate={onNavigate} /> : null}
+        {agent ? <PopoutBody agent={agent} index={index} count={count} onNavigate={onNavigate} member={member} /> : null}
       </DialogContent>
     </Dialog>
   );
