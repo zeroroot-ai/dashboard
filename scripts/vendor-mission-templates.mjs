@@ -26,7 +26,7 @@ import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const TEMPLATE_IDS = ["recon", "webapp-scan", "secrets-audit", "compliance-check"];
+const TEMPLATE_IDS = ["recon", "webapp-scan", "secrets-audit", "compliance-check", "scan-fix-verify"];
 
 const DASHBOARD_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT_DIR = join(DASHBOARD_ROOT, "src/data/templates");

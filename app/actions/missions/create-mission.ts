@@ -225,6 +225,7 @@ const KNOWN_TEMPLATE_IDS = new Set([
   "webapp-scan",
   "secrets-audit",
   "compliance-check",
+  "scan-fix-verify",
 ]);
 
 /**

@@ -37,6 +37,7 @@ const KNOWN_TEMPLATE_IDS = [
   "webapp-scan",
   "secrets-audit",
   "compliance-check",
+  "scan-fix-verify",
 ] as const;
 
 type TemplateId = (typeof KNOWN_TEMPLATE_IDS)[number];
