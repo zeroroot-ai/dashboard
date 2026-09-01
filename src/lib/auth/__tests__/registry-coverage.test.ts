@@ -89,6 +89,64 @@ describe('AuthRegistry, tenant.v1 + platform-sdk service coverage (ADR-0039)', (
     expect(userMethods.length).toBe(0);
   });
 
+  it('contains gibson.bank.v1 BankService methods (gibson#1706 lane E7)', () => {
+    const bankMethods = allMethods.filter((m) =>
+      m.startsWith('/gibson.bank.v1.BankService/'),
+    );
+    expect(bankMethods).toEqual(
+      expect.arrayContaining([
+        '/gibson.bank.v1.BankService/CreateBank',
+        '/gibson.bank.v1.BankService/ListBanks',
+        '/gibson.bank.v1.BankService/GetBank',
+        '/gibson.bank.v1.BankService/UpdateBank',
+        '/gibson.bank.v1.BankService/DeleteBank',
+        '/gibson.bank.v1.BankService/ListMembers',
+        '/gibson.bank.v1.BankService/StartSignIn',
+        '/gibson.bank.v1.BankService/StreamSignIn',
+        '/gibson.bank.v1.BankService/SubmitSignInCode',
+      ]),
+    );
+  });
+
+  it('contains gibson.job.v1 JobService methods (gibson#1706 lane E7)', () => {
+    const jobMethods = allMethods.filter((m) =>
+      m.startsWith('/gibson.job.v1.JobService/'),
+    );
+    expect(jobMethods).toEqual(
+      expect.arrayContaining([
+        '/gibson.job.v1.JobService/OpenJob',
+        '/gibson.job.v1.JobService/SendInput',
+        '/gibson.job.v1.JobService/CloseJob',
+        '/gibson.job.v1.JobService/GetJob',
+        '/gibson.job.v1.JobService/ListJobs',
+        '/gibson.job.v1.JobService/StreamJobEvents',
+      ]),
+    );
+  });
+
+  it('bank and job entries name the bank or job object, never the tenant, for per-object RPCs', () => {
+    // The dashboard cannot decide these from a tenant role; the daemon does.
+    // A regression that re-annotates one of them against the tenant would let
+    // any member pass the dashboard gate for another owner's bank.
+    const perObject = [
+      ['/gibson.bank.v1.BankService/GetBank', 'bank', 'can_read'],
+      ['/gibson.bank.v1.BankService/UpdateBank', 'bank', 'owner'],
+      ['/gibson.bank.v1.BankService/DeleteBank', 'bank', 'owner'],
+      ['/gibson.bank.v1.BankService/StartSignIn', 'bank', 'owner'],
+      ['/gibson.job.v1.JobService/OpenJob', 'bank', 'can_send'],
+      ['/gibson.job.v1.JobService/SendInput', 'job', 'can_send'],
+      ['/gibson.job.v1.JobService/CloseJob', 'job', 'can_close'],
+      ['/gibson.job.v1.JobService/GetJob', 'job', 'can_read'],
+    ] as const;
+    for (const [method, objectType, relation] of perObject) {
+      expect(AuthRegistry[method]?.objectType, method).toBe(objectType);
+      expect(AuthRegistry[method]?.relation, method).toBe(relation);
+    }
+    expect(AuthRegistry['/gibson.bank.v1.BankService/CreateBank']?.relation).toBe('writer');
+    expect(AuthRegistry['/gibson.bank.v1.BankService/ListBanks']?.relation).toBe('member');
+    expect(AuthRegistry['/gibson.job.v1.JobService/ListJobs']?.relation).toBe('member');
+  });
+
   it('registry is non-empty overall', () => {
     expect(allMethods.length).toBeGreaterThan(0);
   });
