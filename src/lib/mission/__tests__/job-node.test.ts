@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  BANK_REF_PLACEHOLDER,
   EMPTY_JOB_NODE,
   JOB_IMPORT_LINE,
   insertNodeIntoCue,
@@ -34,6 +35,11 @@ describe("jobNodeSchema mirrors the daemon's OpenJob checks", () => {
   });
   it("needs a bank and a goal", () => {
     expect(jobNodeSchema.safeParse({ ...full, bankRef: "" }).success).toBe(false);
+    // The shipped template's placeholder (adk#257) is not a bank.
+    const r = jobNodeSchema.safeParse({ ...full, bankRef: BANK_REF_PLACEHOLDER });
+    expect(r.success).toBe(false);
+    expect(r.success ? "" : r.error.issues[0].message).toBe("A bank is required");
+    expect(BANK_REF_PLACEHOLDER).toBe("FIXME-bank");
     expect(jobNodeSchema.safeParse({ ...full, goal: " " }).success).toBe(false);
   });
   it("needs the slash form for connector and verifier refs", () => {
@@ -124,6 +130,12 @@ describe("round trip: the stored definition feeds the form with the same values"
     };
     expect(jobNodeValuesFromJson("fix", json)).toEqual(full);
   });
+  it("reads the template placeholder FIXME-bank as no bank, so the form prompts for one", () => {
+    const v = jobNodeValuesFromJson("fix", { jobConfig: { bankRef: BANK_REF_PLACEHOLDER, spec: { goal: "g" } } });
+    expect(v.bankRef).toBe("");
+    expect(jobNodeSchema.safeParse(v).success).toBe(false);
+  });
+
   it("reads a node with defaults back to the form defaults", () => {
     const v = jobNodeValuesFromJson("fix", { jobConfig: { bankRef: "b", spec: { goal: "g" } } });
     expect(v).toEqual({ ...EMPTY_JOB_NODE, bankRef: "b", goal: "g" });

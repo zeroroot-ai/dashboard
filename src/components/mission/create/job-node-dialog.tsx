@@ -48,6 +48,7 @@ import { listConnectorsAction } from "@/app/actions/connectors";
 import { listAccessibleComponentsAction } from "@/app/actions/read/listAccessibleComponents";
 import { listSecretNamesAction } from "@/app/actions/read/listSecretNames";
 import {
+  BANK_REF_PLACEHOLDER,
   DELIVERABLE_KINDS,
   EMPTY_JOB_NODE,
   jobNodeSchema,
@@ -78,7 +79,13 @@ function toValues(f: FormShape): JobNodeFormValues {
 
 function fromValues(v: JobNodeFormValues): FormShape {
   const { credentialNames, inputs, ...rest } = v;
-  return { ...rest, credentialNamesText: credentialNames.join(", "), inputsText: inputs.join(", ") };
+  return {
+    ...rest,
+    // The shipped template carries FIXME-bank (adk#257): unset, so the form prompts.
+    bankRef: rest.bankRef === BANK_REF_PLACEHOLDER ? "" : rest.bankRef,
+    credentialNamesText: credentialNames.join(", "),
+    inputsText: inputs.join(", "),
+  };
 }
 
 interface JobNodeDialogProps {

@@ -53,7 +53,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const SCRIPT_NAME = "check-templates";
-const TEMPLATE_IDS = ["recon", "webapp-scan", "secrets-audit", "compliance-check"];
+const TEMPLATE_IDS = ["recon", "webapp-scan", "secrets-audit", "compliance-check", "scan-fix-verify"];
 const OUT_DIR = "src/data/templates";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

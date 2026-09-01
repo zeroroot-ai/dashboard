@@ -122,6 +122,28 @@ describe("JobNodeDialog", () => {
     expect(v.repositories).toEqual([{ name: "app", connectorRef: "connector/gitlab", project: "acme/app", baseBranch: "", deliverable: "merge_request" }]);
   });
 
+  it("treats the template placeholder FIXME-bank as unset: prompts for a bank and refuses to insert", async () => {
+    const fromTemplate: JobNodeFormValues = {
+      nodeId: "fix", name: "", bankRef: "FIXME-bank", goal: "Fix every finding the scan node reported.",
+      repositories: [{ name: "app", connectorRef: "connector/gitlab", project: "group/repo", baseBranch: "main", deliverable: "merge_request" }],
+      credentialNames: [], inputs: ["scan"], verifierComponent: "agent/webvuln-agent",
+      passingScore: 0.8, maxPasses: 3, maxTurns: 40, maxTokens: 0, deadlineMinutes: 90,
+    };
+    const { onInsert } = renderDialog(fromTemplate);
+    // The bank select shows its prompt, not the placeholder.
+    expect(screen.getByTestId("job-node-bank")).toHaveTextContent("Pick a bank");
+    expect(screen.getByTestId("job-node-bank")).not.toHaveTextContent("FIXME-bank");
+    fireEvent.click(screen.getByTestId("job-node-insert"));
+    expect(await screen.findByText("A bank is required")).toBeInTheDocument();
+    expect(onInsert).not.toHaveBeenCalled();
+    // Picking a bank clears it and the node inserts with that bank.
+    openSelect("job-node-bank");
+    fireEvent.click(await screen.findByTestId("bank-option-fix-crew"));
+    fireEvent.click(screen.getByTestId("job-node-insert"));
+    await waitFor(() => expect(onInsert).toHaveBeenCalledTimes(1));
+    expect(onInsert.mock.calls[0][0]).toMatchObject({ bankRef: "fix-crew", inputs: ["scan"] });
+  });
+
   it("round trip: a stored node feeds the form and inserts the same values", async () => {
     const stored: JobNodeFormValues = {
       nodeId: "fix", name: "Fix", bankRef: "fix-crew", goal: "g",

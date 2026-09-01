@@ -18,6 +18,14 @@
 import { z } from "zod";
 
 const SLASH_REF = /^[a-z][a-z0-9_-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/;
+
+/**
+ * The bank placeholder the shipped template carries. `JobNodeConfig.bank_ref`
+ * has `min_len: 1`, so a template cannot leave it empty; the ADK writes this
+ * value instead, and it fails at submit on purpose. The form treats it as
+ * unset: it prompts for a bank and refuses to insert it (adk#257).
+ */
+export const BANK_REF_PLACEHOLDER = "FIXME-bank";
 const NODE_ID = /^[a-z][a-zA-Z0-9_]*$/;
 
 export const DELIVERABLE_KINDS = ["merge_request", "push_branch", "none"] as const;
@@ -47,7 +55,11 @@ export const jobNodeSchema = z
   .object({
     nodeId: z.string().trim().regex(NODE_ID, "A node id starts with a lower-case letter and has no spaces"),
     name: z.string().trim().max(120),
-    bankRef: z.string().trim().min(1, "A bank is required"),
+    bankRef: z
+      .string()
+      .trim()
+      .min(1, "A bank is required")
+      .refine((v) => v !== BANK_REF_PLACEHOLDER, "A bank is required"),
     goal: z.string().trim().min(1, "Say what the job must achieve"),
     repositories: z.array(repositorySchema),
     credentialNames: z.array(z.string().trim().min(1)),
@@ -237,7 +249,8 @@ export function jobNodeValuesFromJson(
   return {
     nodeId,
     name: node.name ?? "",
-    bankRef: cfg.bankRef ?? "",
+    // The template placeholder reads as unset, so the form prompts for a bank.
+    bankRef: cfg.bankRef === BANK_REF_PLACEHOLDER ? "" : (cfg.bankRef ?? ""),
     goal: spec.goal ?? "",
     repositories: (spec.repositories ?? []).map((r) => ({
       name: r.name ?? "",
