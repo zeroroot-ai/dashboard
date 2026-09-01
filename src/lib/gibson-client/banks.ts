@@ -31,6 +31,7 @@ import type {
   MemberStateName,
   MemberView,
   PrincipalView,
+  SignInStepView,
   SpillPolicyName,
 } from '../banks/view';
 
@@ -232,4 +233,31 @@ export async function deleteBank(id: string): Promise<void> {
 export async function listMembers(bankId: string, pageToken = ''): Promise<MemberPage> {
   const resp = await userClient(BankService).listMembers({ bankId, pageSize: PAGE_SIZE, pageToken });
   return { members: resp.members.map(toMemberView), nextPageToken: resp.nextPageToken };
+}
+
+// ---------------------------------------------------------------------------
+// The sign-in relay (gibson#1706 lane E2, epic decision 8)
+//
+// A subscription bank signs in inside its sandbox through Anthropic's own
+// flow. The daemon relays the URL and the code prompt; the person opens the
+// URL on claude.ai and pastes the code back. The platform never sees the
+// token. Only the bank owner may drive it: every RPC here is `owner` on the
+// bank, which the daemon decides.
+// ---------------------------------------------------------------------------
+
+export async function startSignIn(bankId: string, memberId: string): Promise<MemberView | null> {
+  const resp = await userClient(BankService).startSignIn({ bankId, memberId });
+  return resp.member ? toMemberView(resp.member) : null;
+}
+
+export async function submitSignInCode(bankId: string, memberId: string, code: string): Promise<MemberView | null> {
+  const resp = await userClient(BankService).submitSignInCode({ bankId, memberId, code });
+  return resp.member ? toMemberView(resp.member) : null;
+}
+
+/** Follows one member's sign-in flow until done or error, or until `signal` aborts. */
+export async function* streamSignIn(bankId: string, memberId: string, signal: AbortSignal): AsyncIterable<SignInStepView> {
+  for await (const step of userClient(BankService).streamSignIn({ bankId, memberId }, { signal })) {
+    yield { url: step.url, codePrompt: step.codePrompt, done: step.done, error: step.error };
+  }
 }

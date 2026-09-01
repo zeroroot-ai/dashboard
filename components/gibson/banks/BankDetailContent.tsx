@@ -29,6 +29,7 @@ import {
 import { BankFormDialog } from "./BankFormDialog";
 import { DeleteBankDialog } from "./DeleteBankDialog";
 import { MemberList } from "./MemberList";
+import { SignInAction } from "./SignInPanel";
 
 function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -41,11 +42,9 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
 
 interface BankDetailContentProps {
   bankId: string;
-  /** Extra cell per member row, for the sign-in relay (dashboard#1169). */
-  renderMemberAction?: (member: MemberView) => React.ReactNode;
 }
 
-export function BankDetailContent({ bankId, renderMemberAction }: BankDetailContentProps) {
+export function BankDetailContent({ bankId }: BankDetailContentProps) {
   const router = useRouter();
   const { data: bank, isLoading, error } = useBank(bankId);
   const { data: members } = useBankMembers(bankId);
@@ -115,7 +114,16 @@ export function BankDetailContent({ bankId, renderMemberAction }: BankDetailCont
           <CardTitle className="text-sm">Members</CardTitle>
         </CardHeader>
         <CardContent>
-          <MemberList members={memberRows} renderAction={renderMemberAction} />
+          <MemberList
+            members={memberRows}
+            // The sign-in relay (dashboard#1169): the owner drives it, on a
+            // member that waits for the sign-in. The subscription is theirs.
+            renderAction={
+              canManage
+                ? (m: MemberView) => (m.state === "needs_sign_in" ? <SignInAction bankId={bank.id} member={m} /> : null)
+                : undefined
+            }
+          />
         </CardContent>
       </Card>
 

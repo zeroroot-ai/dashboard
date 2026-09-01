@@ -70,6 +70,18 @@ export interface MemberView {
   lastHeartbeat: string | null;
 }
 
+/**
+ * One step of a member's sign-in flow (lane E2). The URL the person opens,
+ * the prompt when the flow asks for the code, then done or error. Nothing
+ * here is a token: the sign-in completes on claude.ai, inside the sandbox.
+ */
+export interface SignInStepView {
+  url: string;
+  codePrompt: string;
+  done: boolean;
+  error: string;
+}
+
 /** A member with the facts of its bank, for the console join (lane E3). */
 export interface MemberWithBankView extends MemberView {
   bankName: string;
