@@ -42,6 +42,7 @@ import type {
   ConditionNodeConfigJson,
   ParallelNodeConfigJson,
   JoinNodeConfigJson,
+  JobNodeConfigJson,
 } from "@/src/hooks/useMissionDefinition";
 
 // -------------------------------------------------------------------------
@@ -466,7 +467,57 @@ function JoinConfigCard({ cfg }: { cfg: JoinNodeConfigJson }) {
   );
 }
 
+function JobConfigCard({ cfg }: { cfg: JobNodeConfigJson }) {
+  const spec = cfg.spec ?? {};
+  return (
+    <dl data-testid="job-config">
+      <FieldRow label="Bank">
+        <StringField value={cfg.bankRef} label="bank_ref" />
+      </FieldRow>
+      <FieldRow label="Goal">
+        <StringField value={spec.goal} label="goal" />
+      </FieldRow>
+      <FieldRow label="Repositories">
+        {spec.repositories && spec.repositories.length > 0 ? (
+          <ul className="space-y-1 font-mono text-xs">
+            {spec.repositories.map((r, i) => (
+              <li key={`${r.name ?? i}`} data-testid="job-repository">
+                {r.name} · {r.connectorRef} · {r.project}
+                {r.baseBranch ? ` · ${r.baseBranch}` : ""} · {(r.deliverable ?? "").replace("DELIVERABLE_KIND_", "").toLowerCase()}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <Unset label="repositories" />
+        )}
+      </FieldRow>
+      <FieldRow label="Credential names">
+        <TagList items={spec.credentialNames} label="credential_names" />
+      </FieldRow>
+      <FieldRow label="Inputs">
+        <TagList items={spec.inputs} label="inputs" />
+      </FieldRow>
+      <FieldRow label="Verifier">
+        <StringField value={spec.acceptance?.verifierComponent} label="verifier_component" />
+      </FieldRow>
+      <FieldRow label="Passing score">
+        <NumericField value={spec.acceptance?.passingScore} label="passing_score" />
+      </FieldRow>
+      <FieldRow label="Max passes">
+        <NumericField value={spec.acceptance?.maxPasses} label="max_passes" />
+      </FieldRow>
+      <FieldRow label="Max turns">
+        <NumericField value={cfg.constraints?.maxTurns} label="max_turns" />
+      </FieldRow>
+      <FieldRow label="Max tokens">
+        <NumericField value={cfg.constraints?.maxTokens} label="max_tokens" />
+      </FieldRow>
+    </dl>
+  );
+}
+
 function NodeConfigVariant({ node }: { node: MissionNodeJson }) {
+  if (node.jobConfig) return <JobConfigCard cfg={node.jobConfig} />;
   if (node.agentConfig) return <AgentConfigCard cfg={node.agentConfig} />;
   if (node.toolConfig) return <ToolConfigCard cfg={node.toolConfig} />;
   if (node.pluginConfig) return <PluginConfigCard cfg={node.pluginConfig} />;

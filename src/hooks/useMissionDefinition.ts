@@ -114,6 +114,9 @@ export interface JoinNodeConfigJson {
   aggregator?: string;
 }
 
+/** NODE_TYPE_JOB config as protobuf JSON (gibson#1706 lane E4). */
+export type { JobNodeConfigJson } from "@/src/lib/mission/job-node";
+
 export interface MissionNodeJson {
   id?: string;
   type?: string;             // NodeType enum string
@@ -132,6 +135,7 @@ export interface MissionNodeJson {
   conditionConfig?: ConditionNodeConfigJson;
   parallelConfig?: ParallelNodeConfigJson;
   joinConfig?: JoinNodeConfigJson;
+  jobConfig?: import("@/src/lib/mission/job-node").JobNodeConfigJson;
 }
 
 export interface MissionEdgeJson {
