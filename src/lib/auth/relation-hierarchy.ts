@@ -97,6 +97,13 @@ const OBJECT_SCOPED_RELATIONS: ReadonlySet<string> = new Set([
   'can_invoke', // invoke a plugin binary
   'can_poll_work', // poll / submit work items on a component (work queue)
   'can_resolve', // resolve a secret credential
+  // Banks and jobs (gibson#1706, ADR-0019). A bank names its owner and its
+  // senders; a job names its readers, senders and closers. All three are grants
+  // on one bank or one job, never on the tenant, so a tenant admin does not
+  // hold them by rank.
+  'can_read', // read one bank or one job (GetBank, ListMembers, GetJob, StreamJobEvents)
+  'can_send', // open a job on a bank, or send input to a job
+  'can_close', // close a job with a verdict and a score
 ]);
 
 /**

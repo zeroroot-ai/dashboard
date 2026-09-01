@@ -1,6 +1,28 @@
 {
   "$comment": "DO NOT EDIT, generated from opensource/sdk/gen/mission-definition.schema.json by scripts/gen-mission-schema.mjs. Run `node scripts/gen-mission-schema.mjs` to regenerate.",
   "$defs": {
+    "Acceptance": {
+      "additionalProperties": false,
+      "description": "Acceptance is how a job is judged. The job node executor runs the verify loop against it. A person or an agent that closes a job by hand reads it as guidance.",
+      "properties": {
+        "maxPasses": {
+          "description": "max_passes is how many verify passes the job node executor runs before it closes the job as FAILED. Zero means one pass. This bounds the verify loop INSIDE one job. A mission node's RetryPolicy is a different thing: it retries the whole node.",
+          "format": "int32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "passingScore": {
+          "description": "passing_score is the score, from 0.0 to 1.0, at or above which the verifier accepts the work.",
+          "format": "double",
+          "type": "number"
+        },
+        "verifierComponent": {
+          "description": "verifier_component names the component that judges the work, in the slash form \"agent/<name>\". Empty means no verify loop: a person or an agent closes the job.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "AgentNodeConfig": {
       "additionalProperties": false,
       "description": "AgentNodeConfig contains configuration for agent nodes. AGENT = LLM-driven worker that calls tools and plugins on the author's behalf. The executor selects an agent component by name and dispatches the configured Task.",
@@ -87,6 +109,72 @@
         "storeOutput": {
           "description": "StoreOutput determines whether to store output data in GraphRAG",
           "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "JobNodeConfig": {
+      "additionalProperties": false,
+      "description": "RetryPolicy defines the retry behavior for a mission node JobNodeConfig contains configuration for job nodes. JOB = a unit of work driven on a bank of always-on coding agents (gibson#1706). The executor opens a job on the bank, then runs the verify loop: it dispatches the acceptance step to the declared verifier component, and on failure sends the verifier's report as the next input to the SAME job, so the agent keeps its conversation and its worktrees. When the verifier passes, or the passes run out, the executor calls CloseJob with a verdict and a score.  The loop lives inside this node. The mission graph stays a DAG: a job node never adds a loop edge.",
+      "properties": {
+        "bankRef": {
+          "description": "bank_ref names the bank to open the job on, by id or by name. Required.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "constraints": {
+          "$ref": "#/$defs/TaskConstraints",
+          "description": "constraints bound every turn of the job. The daemon clamps them to the bank policy. Unset means the bank default."
+        },
+        "spec": {
+          "$ref": "#/$defs/JobSpec",
+          "description": "spec is the structured input that opens the job: goal, repositories, credential names, World inputs, and the acceptance the verify loop runs against. Required."
+        }
+      },
+      "required": [
+        "spec"
+      ],
+      "type": "object"
+    },
+    "JobSpec": {
+      "additionalProperties": false,
+      "description": "JobSpec is the structured input that opens a job: the goal, the repositories and credentials the work needs, the World nodes it starts from, and how it is judged. The daemon reads repositories and credential_names before it mints the per-turn grant, so they are declared fields. context is free-form. Anything the daemon must enforce lives in a declared field.  A JobSpec says WHAT to do. It carries no execution bounds. Bounds are gibson.types.v1.TaskConstraints and they ride on the dispatch envelope (gibson.types.v1.Task.constraints), which the daemon fills from the bank policy and from the mission node. This package imports nothing above gibson.common.v1 on purpose, so gibson.types.v1.Task can carry a JobSpec without a cyclic import.",
+      "properties": {
+        "acceptance": {
+          "$ref": "#/$defs/Acceptance",
+          "description": "acceptance is how the job is judged."
+        },
+        "context": {
+          "additionalProperties": {
+            "$ref": "#/$defs/TypedValue"
+          },
+          "description": "context is free-form context for the member. The daemon does not read it.",
+          "type": "object"
+        },
+        "credentialNames": {
+          "description": "credential_names lists the credentials the member may read during the job. The per-turn grant covers these and no others.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "goal": {
+          "description": "goal is what the job must achieve, in plain words.",
+          "type": "string"
+        },
+        "inputs": {
+          "description": "inputs lists World node ids the job starts from: findings, plans, earlier deliverables.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "repositories": {
+          "description": "repositories lists the repositories the job works in.",
+          "items": {
+            "$ref": "#/$defs/RepositorySpec"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -246,7 +334,7 @@
     },
     "MissionEdge": {
       "additionalProperties": false,
-      "description": "MissionEdge represents a directed edge in the mission DAG",
+      "description": "MissionEdge represents a directed edge in the mission DAG.  The graph is acyclic. A loop is never an edge. Work that repeats until it passes an acceptance step loops INSIDE one node: a job node runs its verify loop against the same job (gibson#1706), and a node's RetryPolicy retries the node itself.",
       "properties": {
         "condition": {
           "description": "Condition is an optional condition that must be satisfied for the edge to be traversed",
@@ -339,6 +427,17 @@
           "required": [
             "joinConfig"
           ]
+        },
+        {
+          "properties": {
+            "jobConfig": {
+              "$ref": "#/$defs/JobNodeConfig",
+              "description": "JobConfig for job nodes (gibson#1706). Field number 17 because 16 is the sibling reuse_policy field."
+            }
+          },
+          "required": [
+            "jobConfig"
+          ]
         }
       ],
       "properties": {
@@ -392,7 +491,8 @@
             "NODE_TYPE_PLUGIN",
             "NODE_TYPE_CONDITION",
             "NODE_TYPE_PARALLEL",
-            "NODE_TYPE_JOIN"
+            "NODE_TYPE_JOIN",
+            "NODE_TYPE_JOB"
           ],
           "type": "string"
         }
@@ -480,9 +580,43 @@
       },
       "type": "object"
     },
+    "RepositorySpec": {
+      "additionalProperties": false,
+      "description": "RepositorySpec names one repository a job works in and what leaves the sandbox at wrap-up.",
+      "properties": {
+        "baseBranch": {
+          "description": "base_branch is the branch the job branch starts from and the merge request targets. Empty means the project default branch.",
+          "type": "string"
+        },
+        "connectorRef": {
+          "description": "connector_ref names the connector that holds the forge credential, in the slash form \"connector/<name>\". Required.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "deliverable": {
+          "description": "deliverable is what the member does with the work at wrap-up. Required.",
+          "enum": [
+            "DELIVERABLE_KIND_PUSH_BRANCH",
+            "DELIVERABLE_KIND_MERGE_REQUEST",
+            "DELIVERABLE_KIND_NONE"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "name is the directory name of the worktree the member sees. Unique inside the job. Required.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "project": {
+          "description": "project is the project path on the forge, for example \"group/repo\". Required.",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "RetryPolicy": {
       "additionalProperties": false,
-      "description": "RetryPolicy defines the retry behavior for a mission node",
       "properties": {
         "backoffStrategy": {
           "description": "BackoffStrategy determines how delays are calculated between retries",
@@ -535,7 +669,7 @@
     },
     "Task": {
       "additionalProperties": false,
-      "description": "Task represents a goal-oriented task with context and constraints.",
+      "description": "Task represents a goal-oriented task with context and constraints.  context is free-form: the daemon does not read it. Anything the daemon must enforce lives in a declared field. Resources a dispatched task needs (repositories, credential names, World inputs, acceptance) live in job, because the daemon reads them before it mints the task grant.",
       "properties": {
         "constraints": {
           "$ref": "#/$defs/TaskConstraints"
@@ -552,6 +686,10 @@
         },
         "id": {
           "type": "string"
+        },
+        "job": {
+          "$ref": "#/$defs/JobSpec",
+          "description": "job names the typed resources this task needs and how it is judged (gibson#1706). It is set when the task opens or continues a job on a bank member. goal stays the goal; the spec's own goal is ignored on a dispatched task. Absent on a task that needs no repository, no credential and no acceptance step."
         },
         "metadata": {
           "additionalProperties": {
