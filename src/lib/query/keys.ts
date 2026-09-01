@@ -24,8 +24,17 @@ const graphBase = ['graph'] as const;
 const analyticsBase = ['analytics'] as const;
 const userBase = ['user'] as const;
 const alertsBase = ['alerts'] as const;
+const banksBase = ['banks'] as const;
 
 export const queryKeys = {
+  // Banks of always-on coding agents (gibson#1706)
+  banks: {
+    all: banksBase,
+    list: (tenantId: string) => [...banksBase, tenantId, 'list'] as const,
+    detail: (tenantId: string, id: string) => [...banksBase, tenantId, 'detail', id] as const,
+    members: (tenantId: string, id: string) => [...banksBase, tenantId, 'members', id] as const,
+  },
+
   // Daemon status
   status: {
     all: statusBase,
