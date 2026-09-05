@@ -111,9 +111,10 @@ const PUBLIC_PREFIXES: readonly string[] = [
   // Explicitly-public config projection consumed by the anonymous login/signup
   // pages (app/api/config/public).
   "/api/config/public",
-  // Public marketing/status endpoints. Their handlers own their own rate
-  // limiting and validation.
-  "/api/contact-sales",
+  // Public status endpoint. Its handler owns its own rate limiting and
+  // validation. contact-sales is NOT here: www owns lead capture on its own
+  // CloudFront origin (ADR-0009), and an unauthenticated POST that emails a
+  // fixed inbox has no place in a customer's self-hosted cluster.
   "/api/status",
 ];
 
