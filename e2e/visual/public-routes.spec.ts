@@ -28,7 +28,6 @@ const PUBLIC_ROUTES = [
   { name: "login", path: "/login" },
   { name: "signup", path: "/signup" },
   { name: "design-tokens", path: "/design-tokens" },
-  { name: "contact-sales", path: "/contact-sales" },
 ] as const;
 
 /**
