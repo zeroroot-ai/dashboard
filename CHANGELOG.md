@@ -5,6 +5,59 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.121.0](https://github.com/zeroroot-ai/dashboard/compare/v0.120.1...v0.121.0) (2026-09-05)
+
+
+### Features
+
+* **agent-console:** read-only live console for a tenant's running agents ([#1138](https://github.com/zeroroot-ai/dashboard/issues/1138)) ([4970c9c](https://github.com/zeroroot-ai/dashboard/commit/4970c9c38dee21bd21d49a2d671dafaf4d95954b))
+* **agents:** every catalog row says what it is, who owns it, how many run, and when it checked in ([#1142](https://github.com/zeroroot-ai/dashboard/issues/1142)) ([7a74920](https://github.com/zeroroot-ai/dashboard/commit/7a749204db5f0fc2e63d511e947d04a7770c4a69))
+* **agents:** fan out console streams under a cap with a since cursor ([#1153](https://github.com/zeroroot-ai/dashboard/issues/1153)) ([1c20167](https://github.com/zeroroot-ai/dashboard/commit/1c20167559145d6ae34dfff03c89f36b6b325914)), closes [#1148](https://github.com/zeroroot-ai/dashboard/issues/1148)
+* **agents:** first-class console placement, live count and links ([#1154](https://github.com/zeroroot-ai/dashboard/issues/1154)) ([1a733ff](https://github.com/zeroroot-ai/dashboard/commit/1a733ff79410024547ab5212f4e1970c1c217651)), closes [#1145](https://github.com/zeroroot-ai/dashboard/issues/1145)
+* **agents:** ops wall for the coding agent console ([#1151](https://github.com/zeroroot-ai/dashboard/issues/1151)) ([acfa550](https://github.com/zeroroot-ai/dashboard/commit/acfa550817c2cca98f92115f6a42e1be58ef6b02)), closes [#1146](https://github.com/zeroroot-ai/dashboard/issues/1146)
+* **agents:** pop-out a console tile to full screen without reconnecting ([#1152](https://github.com/zeroroot-ai/dashboard/issues/1152)) ([d1102c0](https://github.com/zeroroot-ai/dashboard/commit/d1102c0516a8259aed347411aa8eb9149b7d3336)), closes [#1147](https://github.com/zeroroot-ai/dashboard/issues/1147)
+* **banks:** bank page: create, edit count and policies, delete; member list with idle, busy, needs sign-in and open jobs ([#1178](https://github.com/zeroroot-ai/dashboard/issues/1178)) ([86bceff](https://github.com/zeroroot-ai/dashboard/commit/86bceff887eebfa928dc3a8e3b09100d12b1b94d))
+* **banks:** sign-in relay: show the URL and the code prompt, submit the code, show expiry ([#1182](https://github.com/zeroroot-ai/dashboard/issues/1182)) ([d23dfd8](https://github.com/zeroroot-ai/dashboard/commit/d23dfd81d5641d56a49c1f2f78293df777efbedf))
+* **connectors:** authorize a connector against its vendor from the dashboard ([#1101](https://github.com/zeroroot-ai/dashboard/issues/1101)) ([ab1f39f](https://github.com/zeroroot-ai/dashboard/commit/ab1f39f54ad29bb97bbcc8073b6cbea9c76851a0))
+* **connectors:** catalog picker grants and connectors e2e ([#1131](https://github.com/zeroroot-ai/dashboard/issues/1131)) ([8538c50](https://github.com/zeroroot-ai/dashboard/commit/8538c50d51a03888946ba9292fd1af4ee5e56c16))
+* **connectors:** connectors settings page (ADR-0014 Slice 6) ([#1114](https://github.com/zeroroot-ai/dashboard/issues/1114)) ([7e5e76e](https://github.com/zeroroot-ai/dashboard/commit/7e5e76e96e01fcfbb01671b6b9cadf6ea58da488))
+* **connectors:** lifecycle moves to Server Actions with authz gating ([#1129](https://github.com/zeroroot-ai/dashboard/issues/1129)) ([f9cd7e4](https://github.com/zeroroot-ai/dashboard/commit/f9cd7e4a4f550f9fd22fc670dbf337263ee14091))
+* **connectors:** pre-fill the authorize form from the catalog default instance URL ([#1125](https://github.com/zeroroot-ai/dashboard/issues/1125)) ([cb4d9c6](https://github.com/zeroroot-ai/dashboard/commit/cb4d9c62e9134a27a1e98e0d0c17ccb5b8355332))
+* **connectors:** promote Connectors to a first-class left-nav item ([#1118](https://github.com/zeroroot-ai/dashboard/issues/1118)) ([4442db2](https://github.com/zeroroot-ai/dashboard/commit/4442db297f7f06630b07181e8ce2ce0cb8a78ffb))
+* **connectors:** rwx matrix and security-policy coverage ([#1130](https://github.com/zeroroot-ai/dashboard/issues/1130)) ([926e6a1](https://github.com/zeroroot-ai/dashboard/commit/926e6a1b81e45b87fb2451f7351d0d7c5c2f12a9))
+* **connectors:** store a token for an auth:secret connector (ADR-0015) ([#1133](https://github.com/zeroroot-ai/dashboard/issues/1133)) ([2ef2279](https://github.com/zeroroot-ai/dashboard/commit/2ef22791caaa19dedcb304c95471346b6da7a000))
+* **console:** compose box opens a job or sends input, job list with state, answer box for waiting jobs, close with verdict and score ([#1179](https://github.com/zeroroot-ai/dashboard/issues/1179)) ([fe54778](https://github.com/zeroroot-ai/dashboard/commit/fe5477807605bd2a34e546638b45ebf14f7d8789))
+* **dashboard:** explain plugin vs connector on the deploy/plugin guide ([#1120](https://github.com/zeroroot-ai/dashboard/issues/1120)) ([f2b2788](https://github.com/zeroroot-ai/dashboard/commit/f2b2788f80d27273b88eb1f0d9e0b9fd4ba8ce96))
+* **dashboard:** guided plugin-deploy flow + connector session-expired UX + docs links ([#1119](https://github.com/zeroroot-ai/dashboard/issues/1119)) ([0ac5ebb](https://github.com/zeroroot-ai/dashboard/commit/0ac5ebb564509adcc66d18344d02885d338f3dd5))
+* **graph:** fold the knowledge-graph scrubber over the Timeline ([#1113](https://github.com/zeroroot-ai/dashboard/issues/1113)) ([6a49a55](https://github.com/zeroroot-ai/dashboard/commit/6a49a554ead751d59c7d53083eb6c808ffe28ba1))
+* **graph:** put the canvas palette on the acid-concrete brand (kill violet) ([#1112](https://github.com/zeroroot-ai/dashboard/issues/1112)) ([c206a31](https://github.com/zeroroot-ai/dashboard/commit/c206a31adc2574dbfb397d64874123074a84b438))
+* **missions:** job node in the mission builder: bank picker, JobSpec editor, verifier and passing score, max passes ([#1180](https://github.com/zeroroot-ai/dashboard/issues/1180)) ([9b29970](https://github.com/zeroroot-ai/dashboard/commit/9b29970781fda89cc2d4c4d2f3c02d3d0ab29f4c))
+* **missions:** run view shows job node attempts, verifier reports, deliverables and cost ([#1181](https://github.com/zeroroot-ai/dashboard/issues/1181)) ([01d946b](https://github.com/zeroroot-ai/dashboard/commit/01d946ba798d700367c30bf8a218e43477e0add4))
+* **missions:** vendor the scan-fix-verify template, and read its FIXME-bank placeholder as no bank ([#1183](https://github.com/zeroroot-ai/dashboard/issues/1183)) ([4f42919](https://github.com/zeroroot-ai/dashboard/commit/4f429190796ee1e2ad88c8d9a077bf0ba2920115))
+* **report:** per-application report, and the lifecycle taxonomy it reads ([#1166](https://github.com/zeroroot-ai/dashboard/issues/1166)) ([288a1af](https://github.com/zeroroot-ai/dashboard/commit/288a1af0dda9d85192dc46c3b17c89a62f0a9980)), closes [#1157](https://github.com/zeroroot-ai/dashboard/issues/1157)
+* **sandboxes:** console copy says sandboxed agents, not coding agents ([#1162](https://github.com/zeroroot-ai/dashboard/issues/1162)) ([c4e1347](https://github.com/zeroroot-ai/dashboard/commit/c4e13478796727793c2cf798eedebc65d777f7eb)), closes [#1158](https://github.com/zeroroot-ai/dashboard/issues/1158)
+* **sandboxes:** move the surface to /dashboard/sandboxes with a redirect ([#1163](https://github.com/zeroroot-ai/dashboard/issues/1163)) ([5bc5d26](https://github.com/zeroroot-ai/dashboard/commit/5bc5d26f1ddf34c1c37d74ab543cc7959293fa8a)), closes [#1159](https://github.com/zeroroot-ai/dashboard/issues/1159)
+* **sandboxes:** the wall shows tool sandboxes alongside agents ([#1167](https://github.com/zeroroot-ai/dashboard/issues/1167)) ([cd08e87](https://github.com/zeroroot-ai/dashboard/commit/cd08e8706fca272e3507c2d6f6d0b10e858e2e0a))
+* **sandboxes:** tiles show the setec sandbox class ([#1165](https://github.com/zeroroot-ai/dashboard/issues/1165)) ([008d962](https://github.com/zeroroot-ai/dashboard/commit/008d96209f5d03d2331b963572b0b271c049fbd0)), closes [#1160](https://github.com/zeroroot-ai/dashboard/issues/1160)
+* **settings:** provider configuration forms for Bedrock, Vertex and Foundry credentials ([#1177](https://github.com/zeroroot-ai/dashboard/issues/1177)) ([5f04734](https://github.com/zeroroot-ai/dashboard/commit/5f04734e6809995f5dae5a191c19b6f62b6d6f81))
+* **world:** add a globe view of the World alongside the graph ([#1110](https://github.com/zeroroot-ai/dashboard/issues/1110)) ([c1dc8b9](https://github.com/zeroroot-ai/dashboard/commit/c1dc8b94e1d2b53284f370b9041857bf788c1970))
+
+
+### Bug Fixes
+
+* **agents:** console chrome readable on the terminal ground, no motion when reduced ([#1155](https://github.com/zeroroot-ai/dashboard/issues/1155)) ([6f47e60](https://github.com/zeroroot-ai/dashboard/commit/6f47e60a91a53b176e77fdef68ce26e493318120))
+* **agents:** label the console "Coding Agent Console" ([#1143](https://github.com/zeroroot-ai/dashboard/issues/1143)) ([734aa7d](https://github.com/zeroroot-ai/dashboard/commit/734aa7df6b4649167fe6f8dbed2dce1e9aaf73bf))
+* **agents:** make the coding agent console legible ([#1150](https://github.com/zeroroot-ai/dashboard/issues/1150)) ([2089917](https://github.com/zeroroot-ai/dashboard/commit/2089917098bdfa97b0d4a1dc6a8c118995f13015)), closes [#1144](https://github.com/zeroroot-ai/dashboard/issues/1144)
+* **agents:** outside the tenant catalog every switch is off and disabled ([#1141](https://github.com/zeroroot-ai/dashboard/issues/1141)) ([2f65d73](https://github.com/zeroroot-ai/dashboard/commit/2f65d739a54bdefada2dac80f220ed4f51a90749)), closes [#1135](https://github.com/zeroroot-ai/dashboard/issues/1135)
+* **agents:** the RWX switch shows the deny tuple it writes, refetches, and offers the catalog enable ([#1139](https://github.com/zeroroot-ai/dashboard/issues/1139)) ([8eb4f35](https://github.com/zeroroot-ai/dashboard/commit/8eb4f35cc9da50054aa81b6943b95372d1dedf91))
+* **authz:** forward per-object RPCs to the daemon after the tenant floor ([#1176](https://github.com/zeroroot-ai/dashboard/issues/1176)) ([bb7bbaf](https://github.com/zeroroot-ai/dashboard/commit/bb7bbaff53bb86db47d8e25f0ec959d3acee4160))
+* **connectors:** regenerate authz map with ConnectorService ([#1117](https://github.com/zeroroot-ai/dashboard/issues/1117)) ([39687a3](https://github.com/zeroroot-ai/dashboard/commit/39687a32a3ea7ec6dac0fdc5988f6d4c860729e0))
+* delete the dead contact-sales route and the stranded messaging module ([#1184](https://github.com/zeroroot-ai/dashboard/issues/1184)) ([a9a2463](https://github.com/zeroroot-ai/dashboard/commit/a9a24635b457aebfa0c6dc49a04b08baa4b95937))
+* **rework:** collect the instance URL in the connector authorize form ([#1122](https://github.com/zeroroot-ai/dashboard/issues/1122)) ([c53e5e6](https://github.com/zeroroot-ai/dashboard/commit/c53e5e65d96014cef75d243e734f993628476fc8))
+* **rework:** migrate connector authorization to the daemon-driven OAuth flow ([#1123](https://github.com/zeroroot-ai/dashboard/issues/1123)) ([bef93f1](https://github.com/zeroroot-ai/dashboard/commit/bef93f12613923af4d9dbbcccd1674fec1e6a870))
+* **rework:** send the CSRF token on connector mutations ([#1121](https://github.com/zeroroot-ai/dashboard/issues/1121)) ([ede3bca](https://github.com/zeroroot-ai/dashboard/commit/ede3bcac964bccd16fdfe6cd0585c355223d6a0a))
+* **signup:** emit relative redirects from the verify route ([#1132](https://github.com/zeroroot-ai/dashboard/issues/1132)) ([2b88097](https://github.com/zeroroot-ai/dashboard/commit/2b88097c244c1d446ae8384f618112a29136d0dc))
+
 ## [0.120.1](https://github.com/zeroroot-ai/dashboard/compare/v0.120.0...v0.120.1) (2026-08-19)
 
 
