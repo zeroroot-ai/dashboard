@@ -1,0 +1,147 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+/* Single locked LIGHT brand (ADR-0064). Still one brand: no theme toggle, no
+ * theme cookie, no presets — #650/#651 removed that machinery and it stays
+ * removed. What changed is the color.
+ *
+ * The always-on dark variant that pinned every dark-prefixed utility on is gone
+ * with it. Those utilities were the dark half of shadcn's light-first pairs
+ * (text-emerald-700 / text-emerald-300), so turning the variant off returns
+ * each primitive to the value that suits this ground — and the now-inert halves
+ * are deleted rather than left to rot. */
+
+@import "./themes.css";
+
+/* ----------------------------------------------------------------------
+ * Brand tokens, from the package.
+ *
+ * These used to be inlined here verbatim, under a note saying that would hold
+ * "until @zeroroot-ai/brand is published as a public npm package". It has been
+ * published for some time; the copy had already drifted (this file overrode the
+ * text family to Outfit while the package declared JetBrains Mono), which is
+ * precisely what a second copy of a token set does.
+ *
+ * The package entry brings the tokens, the @font-face rules for the two faces
+ * it self-hosts, the @theme mapping and the base layer — so none of that is
+ * restated below.
+ * ---------------------------------------------------------------------- */
+
+@import "@zeroroot-ai/brand/globals.css";
+
+/* Dashboard-local tokens: FullCalendar theming, terminal background
+ * (re-alias via var() so the brand value drives it). These are not part
+ * of @zeroroot-ai/brand because they have no meaning on the marketing/docs
+ * surfaces. */
+:root {
+  --fc-button-bg-color: var(--primary);
+  --fc-button-hover-bg-color: var(--primary);
+  --fc-button-active-bg-color: var(--primary);
+  --fc-button-hover-border-color: transparent;
+  --fc-button-active-border-color: transparent;
+  --fc-button-border-color: transparent;
+  --fc-event-border-color: transparent;
+  --fc-event-text-color: var(--primary-foreground);
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: var(--muted);
+  --fc-today-bg-color: var(--muted);
+
+  /* Terminal component background: override the resolved brand value with
+   * a var() reference so updates to --base-1000 propagate automatically. */
+  --terminal-bg: var(--base-1000);
+  /* Text and lines drawn ON the terminal ground (ADR-0064: terminal panels
+   * stay dark on the light app ground). The app --foreground is near-black
+   * and unreadable there, so console headers, rails and toolbars use these.
+   * Contrast against --terminal-bg is asserted by token-contrast.test.ts. */
+  --terminal-fg: var(--base-50);
+  --terminal-muted: var(--base-500);
+  --terminal-border: var(--base-600);
+}
+
+@theme inline {
+  /* Utilities for the terminal ground: bg-terminal, text-terminal-fg,
+   * text-terminal-muted, border-terminal-border. */
+  --color-terminal: var(--terminal-bg);
+  --color-terminal-fg: var(--terminal-fg);
+  --color-terminal-muted: var(--terminal-muted);
+  --color-terminal-border: var(--terminal-border);
+
+  --animate-scroll: scroll var(--animation-duration, 40s) var(--animation-direction, forwards)
+    linear infinite;
+
+  @keyframes scroll {
+    to {
+      transform: translate(calc(-50% - 0.5rem));
+    }
+  }
+
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scale(1.5);
+      opacity: 1;
+    }
+  }
+
+}
+
+/* Everything the brand package already declares — the radius scale, every
+ * --color-* mapping, the zd-* utilities, the scrollbar rule and the base layer
+ * — was restated here and is now gone. It came in with the inlined tokens and
+ * had no reason to outlive them. */
+
+/* Emphasis on a light ground.
+ *
+ * These were phosphor glows — box-shadow and text-shadow bloom around the
+ * accent — an effect that only reads against near-black. On concrete a bloom is
+ * either invisible or looks like a printing fault, so the same classes now mean
+ * the same thing (this is the emphasised one) drawn the way this ground allows:
+ * a crisp accent edge and the readable green.
+ *
+ * The full-screen CRT scanline overlay is gone with them. The scanline tokens
+ * survive in the brand for terminal panels, which are still dark. */
+
+.glow-green {
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--highlight) 55%, transparent);
+}
+.text-glow-green {
+  color: var(--highlight);
+}
+
+/* A measured value. --primary is the acid fill and fails as text on this
+ * ground, so the readable green carries it. */
+.data-value {
+  color: var(--highlight);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.bg-grid-hack {
+  background-image:
+    radial-gradient(circle, color-mix(in oklch, var(--highlight) 15%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Named "hack" long before this change; the name is a lie about what it is (a
+ * translucent panel) and wants renaming across its eleven usages in its own PR.
+ * Re-tuned for concrete: a wash of the ground rather than a wash of the accent,
+ * which on a light surface reads as a stain. */
+.glass-hack {
+  background: color-mix(in oklch, var(--card) 72%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: color-mix(in oklch, var(--foreground) 8%, transparent); }
+::-webkit-scrollbar-thumb { background: color-mix(in oklch, var(--primary) 30%, transparent); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--primary) 50%, transparent); }
+
+/* Nothing here blooms or animates any more, so there is no motion to reduce.
+ * The rule that used to live here disabled the CRT overlay and the glows. */

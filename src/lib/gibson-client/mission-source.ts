@@ -1,0 +1,128 @@
+import 'server-only';
+
+/**
+ * Typed dashboard client methods for the mission-draft RPCs on
+ * gibson.tenant.v1.TenantService.
+ *
+ * Each wrapper calls userClient(TenantService) so the call flows
+ * dashboard → Envoy (JWT + SPIFFE mTLS) → daemon, never direct.
+ *
+ * Spec: mission-draft-dashboard-wiring.
+ */
+
+import { Code, ConnectError } from '@connectrpc/connect';
+import { userClient } from '../gibson-client';
+import { AuthzDeniedError } from '../auth/assert-authorized';
+import { TenantService } from '@/src/gen/gibson/tenant/v1/tenant_pb';
+import type {
+  MissionDraft,
+  MissionDraftFull,
+} from '@/src/gen/gibson/tenant/v1/tenant_pb';
+
+export type { MissionDraft, MissionDraftFull };
+
+// ---------------------------------------------------------------------------
+// Error types
+// ---------------------------------------------------------------------------
+
+export class MissionDraftNotFoundError extends Error {
+  readonly code = 'not_found';
+  constructor(message = 'Mission draft not found') {
+    super(message);
+    this.name = 'MissionDraftNotFoundError';
+  }
+}
+
+/**
+ * MissionDraftRpcError wraps any non-NotFound transport / daemon error from
+ * the mission-draft RPCs. Callers catch this to render a generic toast
+ * without exposing daemon internals.
+ */
+export class MissionDraftRpcError extends Error {
+  readonly code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'MissionDraftRpcError';
+    this.code = code;
+  }
+}
+
+function mapErr(err: unknown): never {
+  // Authz denial from the transport's baked-in per-RPC gate (dashboard#848 /
+  // #902) is an authorization signal, not a transport error: rethrow it
+  // untouched so the action layer maps it to permission_denied (dashboard#904).
+  if (err instanceof AuthzDeniedError) throw err;
+  // A MissionDraftNotFoundError thrown inside a wrapper's own try block
+  // (empty `draft` in an OK response) is already the typed error callers
+  // expect: rethrow it untouched instead of rewrapping it as a generic
+  // MissionDraftRpcError (dashboard#957).
+  if (err instanceof MissionDraftNotFoundError) throw err;
+  if (err instanceof ConnectError) {
+    if (err.code === Code.NotFound) {
+      throw new MissionDraftNotFoundError(err.rawMessage);
+    }
+    throw new MissionDraftRpcError(err.code.toString(), err.rawMessage);
+  }
+  const msg = err instanceof Error ? err.message : 'mission draft rpc failed';
+  throw new MissionDraftRpcError('unknown', msg);
+}
+
+// ---------------------------------------------------------------------------
+// RPC wrappers
+// ---------------------------------------------------------------------------
+
+export async function saveMissionDraft(
+  tenantId: string,
+  args: { name: string; cueSource: string; draftId?: string },
+): Promise<{ draftId: string }> {
+  try {
+    const client = userClient(TenantService);
+    const res = await client.saveMissionDraft({
+      tenantId,
+      name: args.name,
+      cueSource: args.cueSource,
+      draftId: args.draftId ?? '',
+    });
+    return { draftId: res.draftId };
+  } catch (err) {
+    mapErr(err);
+  }
+}
+
+export async function listMissionDrafts(tenantId: string): Promise<MissionDraft[]> {
+  try {
+    const client = userClient(TenantService);
+    const res = await client.listMissionDrafts({ tenantId });
+    return res.drafts;
+  } catch (err) {
+    mapErr(err);
+  }
+}
+
+export async function getMissionDraft(
+  tenantId: string,
+  draftId: string,
+): Promise<MissionDraftFull> {
+  try {
+    const client = userClient(TenantService);
+    const res = await client.getMissionDraft({ tenantId, draftId });
+    if (!res.draft) {
+      throw new MissionDraftNotFoundError();
+    }
+    return res.draft;
+  } catch (err) {
+    mapErr(err);
+  }
+}
+
+export async function deleteMissionDraft(
+  tenantId: string,
+  draftId: string,
+): Promise<void> {
+  try {
+    const client = userClient(TenantService);
+    await client.deleteMissionDraft({ tenantId, draftId });
+  } catch (err) {
+    mapErr(err);
+  }
+}

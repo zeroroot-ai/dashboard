@@ -1,0 +1,160 @@
+name: node-ci
+
+# Thin caller for the canonical three-tier Node/pnpm CI (Epic: cicd-efficiency,
+# board #44, slice S11a, dashboard#940). See docs/architecture/CICD-CONTEXT.md
+# (decisions 4, 8, 11) and docs/adr/0060-*.
+#
+# dashboard previously had NO formal typecheck/lint/vitest/build gate on pull
+# requests -- dashboard.yml only builds and pushes the container image
+# (push:main / tags only, path-filtered on pull_request but never required).
+# This workflow is the first PR-blocking Node CI surface for the repo, built
+# straight onto the org-wide trigger split instead of a bespoke one-off:
+#
+#   pull_request -> fast tier:  typecheck, lint, vitest unit tests. Quick
+#                                contributor signal, no build.
+#   merge_group  -> heavy tier: `pnpm build`, which runs the full `prebuild`
+#                                policy-guard chain (security-lint, CSP,
+#                                no-store-clients, no-direct-daemon-grpc, the
+#                                AST checks, knip, ...) + `next build` +
+#                                `postbuild` secret-leak guards. This is the
+#                                authoritative gate that must be green before
+#                                landing.
+#
+# `skip-sibling-generators: true` on the heavy call: a single-repo dashboard
+# checkout has no `enterprise/deploy` polyrepo sibling on disk, so the plans /
+# stripe-tiers / authz-registry generators and the RBAC helm-template check
+# cannot run for real here. Same SKIP_* pattern the Dockerfile already uses to
+# trust the committed generated files; the workstation / a full polyrepo CI
+# run is what actually catches drift on those.
+#
+# NOTE (temporary @main pin): this caller is pinned to @main rather than a
+# release tag because the tag @v2 predates reusable-node-ci.yml -- it does not
+# exist on that tag yet. Flip to the next tag (v2.1.0 / re-pointed v2) once
+# zeroroot-ai/.github#<this PR> merges and the tag moves, per ADR-0060's
+# blast-radius rule (pin a release tag, never @main, in steady state).
+#
+# Queue-entry compat (epic cicd-efficiency, board #44, merge-queue-entry
+# follow-up, canary PR dashboard#942): GitHub blocks a PR from entering the
+# merge queue until every ruleset-required check context has reported on the
+# PR itself -- a `skipped` conclusion satisfies that, an absent check does
+# not. The `paths:` filter used to live on the trigger itself, so a PR that
+# didn't touch any listed path (e.g. a README-only change) produced NO
+# check run at all for this workflow, and `heavy / node-ci (heavy)` -- a
+# required context -- would never appear, blocking queue entry forever.
+# Trigger on every pull_request now (no path filter on the trigger); a
+# cheap native `changes` job (git diff, no third-party action) does the
+# same path detection and gates the `fast` job instead. `heavy` still only
+# runs the real build on merge_group and reports `skipped` on every PR.
+
+on:
+  pull_request:
+  merge_group:
+
+concurrency:
+  group: node-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ---- cheap path-detection (pull_request only) ----
+  # merge_group always gets the real heavy build regardless of paths, so
+  # this only needs to run -- and only needs to gate anything -- on
+  # pull_request.
+  changes:
+    name: detect Node/pnpm-relevant changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      relevant: ${{ steps.diff.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Diff against PR base
+        id: diff
+        # Deny-list, not allow-list (dashboard#1035). The previous
+        # allow-list silently skipped real application source -- root
+        # lib/ (imported by app/layout.tsx via the `@/*` -> `./*`
+        # tsconfig mapping), hooks/, auth.ts, middleware.ts,
+        # instrumentation.ts, patches/ -- producing false-green CLEAN
+        # PRs with no fast tier at all (see PR #1033). A change is
+        # RELEVANT unless every changed file matches a known-irrelevant
+        # pattern, so a NEW top-level source dir is covered by default
+        # instead of silently invisible. node-ci.yml itself is always
+        # relevant even though the rest of .github/ is not.
+        run: |
+          set -e
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          CHANGED="$(git diff --name-only "$BASE" "$HEAD")"
+          echo "$CHANGED"
+          IRRELEVANT='^(docs/|\.github/|LICENSE$|CODEOWNERS$|\.gitignore$|\.dockerignore$)|\.md$'
+          if echo "$CHANGED" | grep -qE '^\.github/workflows/node-ci\.yml$'; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          elif echo "$CHANGED" | grep -vE "$IRRELEVANT" | grep -q .; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ---- fast tier (pull_request): typecheck + lint + vitest ----
+  fast:
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.relevant == 'true'
+    # The reusable workflow declares `packages: read` (to install the private
+    # @zeroroot-ai/brand package from npm.pkg.github.com); a reusable workflow
+    # cannot hold more permission than its caller grants, so the caller must
+    # grant it too or the run is rejected at startup (#915 / .github#239).
+    permissions:
+      contents: read
+      packages: read
+    uses: zeroroot-ai/.github/.github/workflows/reusable-node-ci.yml@main
+    with:
+      tier: fast
+      # MUST equal package.json's `packageManager` exactly. The reusable
+      # workflow defaults to the bare major "10", and pnpm/action-setup
+      # rejects a version that disagrees with `packageManager` rather than
+      # picking one. Both are pinned to the same exact version so corepack
+      # (which reads package.json) and CI resolve the same pnpm (#1043).
+      pnpm-version: "10.34.5"
+
+  # ---- heavy tier (merge_group): full build (prebuild guard chain) ----
+  heavy-build:
+    if: github.event_name == 'merge_group'
+    permissions:
+      contents: read
+      packages: read
+    uses: zeroroot-ai/.github/.github/workflows/reusable-node-ci.yml@main
+    with:
+      tier: heavy
+      skip-sibling-generators: true
+      # Keep in lockstep with the fast tier and package.json (#1043).
+      pnpm-version: "10.34.5"
+
+  # Required-context reporter (dashboard#949 unwedge, follow-up to the #945
+  # queue-entry compat). The main ruleset requires the exact context
+  # "heavy", but a reusable-workflow CALL reports its check runs under
+  # "heavy / node-ci (heavy)" when it runs (merge_group) and only under the
+  # bare caller job name when it is skipped (pull_request). Result: the
+  # required "heavy" context NEVER reported on merge-queue branches, so
+  # every queue entry sat in AWAITING_CHECKS until the 60-minute
+  # check_response_timeout and was dropped -- even with a fully green
+  # build. This plain job is the stable "heavy" context on both events:
+  #   - pull_request: skipped (exactly the pre-existing #945 behaviour --
+  #     a skipped required context satisfies queue ENTRY).
+  #   - merge_group: mirrors heavy-build's result, so the queue gets a
+  #     real pass/fail signal under the required name.
+  heavy:
+    name: heavy
+    needs: [heavy-build]
+    if: ${{ always() && github.event_name == 'merge_group' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: gate on heavy-build result
+        run: |
+          result="${{ needs.heavy-build.result }}"
+          echo "heavy-build result: $result"
+          [ "$result" = "success" ] || exit 1

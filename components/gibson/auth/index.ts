@@ -1,0 +1,1 @@
+export { AuthGatedButton } from "./AuthGatedButton";

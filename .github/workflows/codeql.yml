@@ -1,0 +1,91 @@
+name: CodeQL
+
+# Epic: cicd-efficiency (board #44), slice S11a (dashboard#940). Scanner
+# cadence per docs/architecture/CICD-CONTEXT.md decision 9, mirroring
+# gibson's S5 (gibson#1130): the authoritative CodeQL analysis moves to
+# merge_group (the pre-merge gate) instead of firing on every commit landed
+# to `main`, plus the existing weekly deep scan.
+#
+# Queue-entry compat (epic cicd-efficiency, board #44, merge-queue-entry
+# follow-up): a `merge_group`-only trigger produces NO check run at all on
+# an ordinary pull_request -- GitHub blocks queue entry until every
+# ruleset-required check context has reported on the PR itself (`skipped`
+# satisfies that; an absent check does not). `CodeQL / Analyze TypeScript`
+# is a required context, so this froze every PR's queue entry until it was
+# stripped from the ruleset live (see zeroroot-ai/.github PR restoring
+# rulesets/repo/dashboard.json). Add `pull_request` to the trigger and skip
+# the real analysis there via job-level `if:` -- skipped is free (no runner
+# spin-up, no CodeQL init/build/analyze), and the authoritative scan still
+# only runs on merge_group plus the weekly schedule.
+
+on:
+  pull_request:
+  merge_group:
+  schedule:
+    - cron: "0 8 * * 2"
+  # Lets an authoritative scan be forced onto `refs/heads/main` on demand.
+  # Without it the only events that analyse main itself are the weekly cron and
+  # the merge_group runs (which report against the transient queue ref), so a
+  # stale alert that has since been fixed in the source can sit open on the
+  # Security tab for up to a week before anything reconciles it.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze TypeScript
+    # Real scan only outside pull_request (merge_group is the authoritative
+    # gate, schedule is the weekly deep scan). Reports `skipped` on PRs so
+    # this context satisfies merge-queue entry.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      # Restored by dashboard#1075. #868/gibson#974 dropped this permission and
+      # set `upload: never` because the dashboard was then a PRIVATE repo, where
+      # uploading SARIF to the code-scanning Security tab needs paid GitHub
+      # Advanced Security. The repo is PUBLIC now (epic oss-public-flip, board
+      # #40), and code scanning is free on public repos, so the condition that
+      # comment named as the trigger to restore the upload has been met.
+      #
+      # While the upload was off the Security tab could not learn anything: it
+      # froze at the last analysis that did upload (2026-06-19, commit 0ee8cfa)
+      # and every alert on it stayed pinned to that commit for ~2 months. The
+      # scans kept running and kept passing, so nothing looked wrong — but an
+      # alert fixed in the source could never be closed by the scanner, because
+      # closing an alert requires a newer analysis for the same category that no
+      # longer contains it. Do not set `upload: never` again while the repo is
+      # public; it does not reduce risk, it only blinds the tab.
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: github/codeql-action/init@v4.37.6
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+          config-file: .github/codeql-config.yml
+
+      - uses: github/codeql-action/analyze@v4.37.6
+        with:
+          # Upload to the code-scanning API so the Security tab reflects the
+          # commit actually analysed. `output` still writes the SARIF locally,
+          # so the artifact below keeps working alongside the upload.
+          upload: always
+          output: codeql-results
+
+      - name: Upload CodeQL SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: codeql-sarif-typescript
+          path: codeql-results
+          if-no-files-found: warn

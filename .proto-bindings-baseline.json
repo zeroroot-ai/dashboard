@@ -1,0 +1,5 @@
+{
+  "$comment": "Monotonic-shrink baseline for scripts/check-proto-bindings-fresh.mjs. Entries may only be REMOVED (regenerate the file, then run the guard with --shrink). Adding an entry is deliberately not automated: it must be a hand edit reviewed in a PR, the same rule as .color-allowlist.json.",
+  "issue": "https://github.com/zeroroot-ai/dashboard/issues/1014",
+  "entries": {}
+}

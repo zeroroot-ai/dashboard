@@ -1,0 +1,10 @@
+/* Single locked dark brand (#651). The multi-preset / radius / scale /
+ * font / color-mode machinery and its 8 `[data-theme-preset]` blocks
+ * (each carrying a light + dark token set) are gone along with the theme
+ * customizer and ActiveThemeProvider. globals.css `:root` is now the sole
+ * source of truth for every token. Nothing sets `data-theme-*` anymore. */
+
+body {
+    @apply overscroll-none bg-transparent antialiased;
+    --text-family: var(--font-outfit), sans-serif;
+}

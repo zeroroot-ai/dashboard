@@ -1,0 +1,179 @@
+# console-allowlist.yaml — known-benign browser console messages for the
+# dashboard smoke e2e suite.
+#
+# Any console Error-level message that matches a pattern here will be filtered
+# from the smoke test's failure report. Warn / Info / Log level messages are
+# always filtered (they are normal in development mode).
+#
+# CODEOWNERS: this file requires @platform-architecture approval to modify.
+# Adding an allowlist entry without a tracking issue reference is not permitted
+# for Error-level messages (see NFR Reliability in requirements.md).
+#
+# Pattern fields:
+#   pattern    — JavaScript regex string (matched against the full console message text)
+#   level      — "error" | "warn" | "info" | "log" | "*" (all levels)
+#   reason     — human-readable justification (required for level: error)
+#   tracking   — tracking issue URL (recommended for level: error)
+#
+# Security note: NEVER add a pattern that would suppress cross-tenant data
+# leaks or auth failures. Console errors related to 401/403 responses MUST
+# be surfaced, not allowlisted.
+
+allowlist:
+
+  # ---------------------------------------------------------------------------
+  # Next.js development mode — standard warnings during local/CI dev server
+  # ---------------------------------------------------------------------------
+
+  - pattern: "\\[Fast Refresh\\]"
+    level: "*"
+    reason: "Next.js Hot Module Replacement status message — benign in dev mode"
+    tracking: ""
+
+  - pattern: "Warning: ReactDOM\\.render"
+    level: warn
+    reason: "Next.js 13+ RSC upgrade path — legacy render warning; no impact"
+    tracking: ""
+
+  - pattern: "Warning: Each child in a list should have a unique"
+    level: warn
+    reason: "React key prop warning in dev mode — cosmetic, tracked separately"
+    tracking: ""
+
+  - pattern: "Warning: validateDOMNesting"
+    level: warn
+    reason: "React DOM nesting warning in dev mode — cosmetic"
+    tracking: ""
+
+  - pattern: "Warning: Cannot update a component .* while rendering"
+    level: warn
+    reason: "React concurrent mode warning during SSR hydration — cosmetic"
+    tracking: ""
+
+  - pattern: "Download the React DevTools"
+    level: "*"
+    reason: "React DevTools install prompt — only appears in dev mode"
+    tracking: ""
+
+  - pattern: "React DevTools"
+    level: "*"
+    reason: "React DevTools related message — only appears in dev mode"
+    tracking: ""
+
+  - pattern: "\\[HMR\\]"
+    level: "*"
+    reason: "Webpack/Next.js Hot Module Replacement message — benign"
+    tracking: ""
+
+  - pattern: "webpack-internal"
+    level: "*"
+    reason: "Webpack internal module reference in stack traces — dev only"
+    tracking: ""
+
+  # ---------------------------------------------------------------------------
+  # Next.js 14/15 App Router messages
+  # ---------------------------------------------------------------------------
+
+  - pattern: "Warning: Prop .className. did not match"
+    level: warn
+    reason: "Server/client className mismatch during hydration — cosmetic, tracked in Next.js upstream"
+    tracking: ""
+
+  - pattern: "Error: Hydration failed because"
+    level: error
+    reason: "Next.js App Router hydration mismatch — tracked upstream; occurs in dev mode with strict mode double-render"
+    tracking: "https://github.com/vercel/next.js/issues/42218"
+
+  - pattern: "There was an error while hydrating"
+    level: error
+    reason: "Next.js hydration error companion message — same as above"
+    tracking: "https://github.com/vercel/next.js/issues/42218"
+
+  - pattern: "Warning: Expected server HTML to contain"
+    level: warn
+    reason: "SSR/hydration mismatch warning — cosmetic in dev mode"
+    tracking: ""
+
+  # ---------------------------------------------------------------------------
+  # Next.js 15 / React 19 Suspense
+  # ---------------------------------------------------------------------------
+
+  - pattern: "Warning: An update to .* inside a test was not wrapped in act"
+    level: warn
+    reason: "React act() warning in Playwright context — harmless in e2e"
+    tracking: ""
+
+  # ---------------------------------------------------------------------------
+  # Radix UI / shadcn/ui component library warnings
+  # ---------------------------------------------------------------------------
+
+  - pattern: "Warning: .* is not a known aria attribute"
+    level: warn
+    reason: "Radix UI ARIA attribute forwarding warning — harmless"
+    tracking: ""
+
+  # ---------------------------------------------------------------------------
+  # Third-party widgets loaded by the dashboard in dev/CI
+  # ---------------------------------------------------------------------------
+
+  - pattern: "Langfuse"
+    level: info
+    reason: "Langfuse SDK initialization info message — expected"
+    tracking: ""
+
+  - pattern: "\\[Langfuse\\]"
+    level: "*"
+    reason: "Langfuse tracing messages — expected in dev mode"
+    tracking: ""
+
+  # ---------------------------------------------------------------------------
+  # OpenTelemetry / tracing
+  # ---------------------------------------------------------------------------
+
+  - pattern: "\\[OTEL\\]"
+    level: "*"
+    reason: "OpenTelemetry SDK diagnostic message — benign in dev mode"
+    tracking: ""
+
+  - pattern: "OpenTelemetry"
+    level: warn
+    reason: "OTel configuration warning (e.g., no exporter configured) — benign in CI"
+    tracking: ""
+
+  # ---------------------------------------------------------------------------
+  # Next.js image optimization
+  # ---------------------------------------------------------------------------
+
+  - pattern: "Image with src .* has either width or height modified"
+    level: warn
+    reason: "Next.js Image component dimension warning — cosmetic"
+    tracking: ""
+
+  - pattern: "\\[Image\\]"
+    level: warn
+    reason: "Next.js image optimization warning — cosmetic"
+    tracking: ""
+
+  # ---------------------------------------------------------------------------
+  # Misc browser warnings that appear in clean Next.js apps
+  # ---------------------------------------------------------------------------
+
+  - pattern: "Permissions policy violation"
+    level: warn
+    reason: "Browser permissions policy warning for APIs not used by dashboard — cosmetic"
+    tracking: ""
+
+  - pattern: "Refused to load the font"
+    level: warn
+    reason: "CSP font-src warning in dev mode (less strict than production) — cosmetic"
+    tracking: ""
+
+  - pattern: "Third-party cookie"
+    level: warn
+    reason: "Chrome third-party cookie deprecation warning — not a dashboard issue"
+    tracking: ""
+
+  - pattern: "ResizeObserver loop"
+    level: error
+    reason: "ResizeObserver loop limit exceeded — benign browser quirk, not a code error"
+    tracking: "https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver#observation_errors"

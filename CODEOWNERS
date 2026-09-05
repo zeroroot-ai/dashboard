@@ -1,0 +1,32 @@
+# CODEOWNERS — enterprise/platform/dashboard
+#
+# This file defines code ownership for files in enterprise/platform/dashboard/.
+# GitHub requires a review from the listed owners before a PR can be merged.
+#
+# Team handles used here:
+#   @platform-architecture — Platform Architecture team
+
+# ---------------------------------------------------------------------------
+# Console allowlist — expanding this allowlist can hide real browser errors.
+# Every Error-level addition MUST include a tracking issue reference in the YAML.
+# Per NFR Reliability + R5.3 (dashboard-smoke-e2e-tdd requirements).
+# ---------------------------------------------------------------------------
+e2e/console-allowlist.yaml                  @platform-architecture
+
+# ---------------------------------------------------------------------------
+# Dashboard smoke Playwright spec — drives auth + unauth + cross-tenant probes.
+# Per R4.3.
+# ---------------------------------------------------------------------------
+e2e/auth/dashboard-smoke.spec.ts            @platform-architecture
+
+# ---------------------------------------------------------------------------
+# Schema validation script — used by Go shape_validator.go bridge.
+# ---------------------------------------------------------------------------
+scripts/validate-schema.mjs                 @platform-architecture
+
+# ---------------------------------------------------------------------------
+# Mission-run Playwright spec — drives the browser-side coordination file
+# pickup and Playwright assertions for the mission lifecycle gate.
+# Per R7 (mission-run-e2e-tdd requirements).
+# ---------------------------------------------------------------------------
+e2e/auth/mission-run.spec.ts                @platform-architecture

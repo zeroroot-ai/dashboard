@@ -1,0 +1,19 @@
+---
+title: Mission Templates
+description: Reusable mission templates shipped by the ADK.
+---
+
+# Mission Templates
+
+Templates live under `opensource/adk/templates/`. Each template
+ships as three artifacts:
+
+- `template.cue`, authoring source (consumed by `gibson mission new`).
+- `template.json`, proto-shaped JSON export (consumed by the dashboard).
+- `template.mdx`, handwritten description (rendered here).
+
+Catalog index is generated at bundle-build time and committed to the
+ADK repo. This page is regenerated whenever the bundle is rebuilt.
+
+The v1 template set covers `recon`, `webapp-scan`, `secrets-audit`, `compliance-check`, see the per-template detail pages once those
+templates land.

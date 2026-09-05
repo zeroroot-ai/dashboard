@@ -1,0 +1,247 @@
+"use client";
+
+/**
+ * AgentTile, one live tile on the Ops wall (dashboard#1146).
+ *
+ * A compact header (status dot, agent name, short run id, elapsed time,
+ * cost so far) over a fixed-height terminal that streams this run's output.
+ * The tile owns its own EventSource via useAgentConsole, so every tile
+ * streams independently. It reports its stream facts to the wall through
+ * `onFacts`, so the wall can sort by cost.
+ *
+ * A tile that shows a bank member (gibson#1706) carries the member's state
+ * chip and a JobPanel under the terminal: its jobs and a compose box. Every
+ * other tile stays read-only.
+ */
+
+import * as React from "react";
+import dynamic from "next/dynamic";
+import { useAgentConsole, type AgentConsolePhase } from "@/src/hooks/useAgentConsole";
+import { formatCost, formatDuration, shortId } from "@/src/lib/agent-console/stream-json";
+import type { WallTileFacts } from "@/src/lib/agent-console/wall";
+import type { RunningAgentView } from "@/src/lib/gibson-client/agent-console";
+import type { MissionTerminalHandle } from "@/src/components/missions/MissionTerminal";
+import type { MemberWithBankView } from "@/src/lib/banks/view";
+import { MemberStateChip } from "@/components/gibson/banks/MemberStateChip";
+import { JobPanel } from "./JobPanel";
+import { cn } from "@/lib/utils";
+
+// xterm touches the DOM, so the terminal must load client-side only.
+const TileTerminal = dynamic(
+  () =>
+    import("@/components/gibson/agent-console/TileTerminal").then(
+      (m) => m.TileTerminal,
+    ),
+  { ssr: false },
+);
+
+/**
+ * Elapsed time since `startedAt`, ticking once a second while the run
+ * streams and frozen once it stops. Returns null for a bad start time.
+ */
+function useElapsed(startedAt: string, running: boolean): string | null {
+  const start = new Date(startedAt).getTime();
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => {
+    if (!running) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [running]);
+  if (isNaN(start)) return null;
+  return formatDuration(Math.max(0, now - start));
+}
+
+const PHASE_LABEL: Record<AgentConsolePhase, string> = {
+  streaming: "live",
+  finished: "finished",
+  gone: "stopped",
+  error: "stream error",
+};
+
+const DOT_CLASS: Record<AgentConsolePhase, string> = {
+  streaming: "bg-primary animate-pulse motion-reduce:animate-none",
+  finished: "bg-terminal-muted",
+  gone: "bg-terminal-muted/50",
+  error: "bg-destructive",
+};
+
+interface AgentTileProps {
+  agent: RunningAgentView;
+  /** Fixed terminal height in pixels. */
+  height: number;
+  /** Terminal font size in pixels. */
+  fontSize: number;
+  /** Receives the run facts the stream reveals (cost so far). */
+  onFacts?: (runId: string, facts: WallTileFacts) => void;
+  /** Opens this run in the pop-out (click, Enter or F). */
+  onOpen?: (runId: string) => void;
+  /** True while this run is open in the pop-out. */
+  selected?: boolean;
+  /** Ribbon over a run that ended and still sits on the wall. */
+  ribbon?: "Completed" | "Failed" | "Stopped";
+  /** Set when this run is a bank member: the tile gains its state and jobs. */
+  member?: MemberWithBankView;
+}
+
+/**
+ * True while the element is in the viewport. Without IntersectionObserver
+ * (older browsers, tests) every tile counts as visible.
+ */
+function useInView(ref: React.RefObject<HTMLElement | null>): boolean {
+  const [inView, setInView] = React.useState(true);
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) setInView(entry.isIntersecting);
+      },
+      { rootMargin: "200px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref]);
+  return inView;
+}
+
+export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function AgentTile(
+  { agent, height, fontSize, onFacts, onOpen, selected = false, ribbon, member },
+  ref,
+) {
+  const terminalRef = React.useRef<MissionTerminalHandle>(null);
+  const sectionRef = React.useRef<HTMLElement | null>(null);
+  const inView = useInView(sectionRef);
+  const status = useAgentConsole(agent.runId, terminalRef, { live: inView });
+  const running = status.phase === "streaming";
+  const elapsed = useElapsed(agent.startedAt, running);
+  const name = agent.agentName || agent.runId;
+  const { costUsd, model, turns } = status.summary;
+
+  const ended = status.phase === "streaming" ? undefined : status.phase;
+  React.useEffect(() => {
+    if (costUsd !== undefined || ended !== undefined) {
+      onFacts?.(agent.runId, { costUsd, ended });
+    }
+  }, [agent.runId, costUsd, ended, onFacts]);
+
+  const open = () => onOpen?.(agent.runId);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.key === "Enter" || e.key === "f" || e.key === "F") {
+      e.preventDefault();
+      open();
+    }
+  };
+
+  return (
+    <section
+      ref={(el) => {
+        sectionRef.current = el;
+        if (typeof ref === "function") ref(el);
+        else if (ref) ref.current = el;
+      }}
+      data-testid="agent-tile"
+      data-run-id={agent.runId}
+      data-phase={status.phase}
+      data-live={inView ? "true" : "false"}
+      data-selected={selected ? "true" : undefined}
+      aria-label={`${name} ${shortId(agent.runId)}`}
+      tabIndex={0}
+      onClick={open}
+      onKeyDown={handleKeyDown}
+      className={cn(
+        "flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-md border border-terminal-border bg-terminal outline-none",
+        "focus-visible:ring-2 focus-visible:ring-ring",
+        selected && "ring-2 ring-primary",
+      )}
+    >
+      <header
+        data-testid="agent-tile-header"
+        className="flex min-w-0 items-center gap-2 border-b border-terminal-border bg-terminal px-2 py-1 font-mono text-xs text-terminal-muted"
+      >
+        <span
+          data-testid="agent-tile-dot"
+          className={cn("size-2 shrink-0 rounded-full", DOT_CLASS[status.phase])}
+          role="img"
+          aria-label={PHASE_LABEL[status.phase]}
+          title={PHASE_LABEL[status.phase]}
+        />
+        <span className="min-w-0 truncate font-semibold text-terminal-fg" title={name}>
+          {name}
+        </span>
+        <span className="shrink-0" title={agent.runId}>
+          {shortId(agent.runId)}
+        </span>
+        {agent.componentKind ? (
+          <span
+            data-testid="agent-tile-kind"
+            className={cn(
+              "shrink-0 rounded-sm px-1 font-semibold uppercase tracking-wide",
+              agent.componentKind === "tool"
+                ? "bg-terminal-muted/20 text-terminal-muted"
+                : "bg-primary/20 text-primary",
+            )}
+            title={`component kind: ${agent.componentKind}`}
+          >
+            {agent.componentKind}
+          </span>
+        ) : null}
+        {member ? (
+          <span className="flex shrink-0 items-center gap-1" data-testid="agent-tile-member" title={`member of bank ${member.bankName}`}>
+            <span className="hidden lg:inline">{member.bankName}</span>
+            <MemberStateChip member={member} />
+          </span>
+        ) : null}
+        {agent.sandboxClass ? (
+          <span
+            data-testid="agent-tile-class"
+            className="hidden shrink-0 rounded-sm border border-terminal-border px-1 lg:inline"
+            title="setec sandbox class"
+          >
+            {agent.sandboxClass}
+          </span>
+        ) : null}
+        <span className="ml-auto flex shrink-0 items-center gap-3 tabular-nums">
+          {model ? (
+            <span className="hidden xl:inline" title="model">
+              {model}
+            </span>
+          ) : null}
+          {turns !== undefined ? <span title="turns">{turns}t</span> : null}
+          {elapsed !== null ? (
+            <span className="text-terminal-fg" title="elapsed">
+              {elapsed}
+            </span>
+          ) : null}
+          {costUsd !== undefined ? (
+            <span className="text-terminal-fg" title="cost so far">
+              {formatCost(costUsd)}
+            </span>
+          ) : null}
+        </span>
+      </header>
+      <div className="relative">
+        {ribbon ? (
+          <div
+            data-testid="agent-tile-ribbon"
+            className={cn(
+              "pointer-events-none absolute inset-x-0 top-0 z-10 px-2 py-1 text-center font-mono text-xs font-semibold uppercase tracking-wide",
+              ribbon === "Completed" && "bg-primary text-primary-foreground",
+              ribbon === "Failed" && "bg-destructive text-destructive-foreground",
+              ribbon === "Stopped" && "bg-muted text-muted-foreground",
+            )}
+          >
+            {ribbon}
+          </div>
+        ) : null}
+        <TileTerminal
+          ref={terminalRef}
+          title={`${name} · sandbox output`}
+          height={height}
+          fontSize={fontSize}
+        />
+      </div>
+      {member ? <JobPanel member={member} compact /> : null}
+    </section>
+  );
+});
