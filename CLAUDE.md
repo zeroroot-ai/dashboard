@@ -11,7 +11,7 @@ This file documents conventions specific to the `zeroroot-ai/dashboard` reposito
 - `pnpm prebuild` runs a chain of policy-guard scripts. Do not disable them. Fix the code instead.
 - **`prebuild` never runs a generator.** It runs the freshness *gates* only, so a stale committed artifact fails the build instead of being silently rewritten. Regeneration is explicit: `pnpm gen:plans`, `pnpm gen:stripe-tiers`, `pnpm gen:authz`, `pnpm gen:mission-schema`, `pnpm proto:generate`. Putting a `gen-*` step back into `prebuild` re-creates dashboard#1019, where four gates diffed the generator's output against the generator's output and none of them could fail.
 - **No hardcoded colors anywhere under `app/**` or `components/**`.** Every color goes through a token declared in `app/globals.css`. The guard `scripts/check-no-hardcoded-colors.mjs` rejects tailwind palette utilities (`text-emerald-*`, `bg-zinc-*`), tailwind arbitrary-value colors (`bg-[#...]`, `text-[oklch(...)]`), black/white utilities (`bg-white`, `text-black`), inline-style colors, and raw `#...`/`oklch(...)`/`rgb(...)`/`hsl(...)` in `.css` files. Two files are exempt because they declare the token system itself: `app/globals.css`, `app/themes.css`. See the design-system guide below.
-- **Customer-facing docs name product capabilities, not vendors.** `content/docs/**/*.mdx` must not mention Zitadel, OpenFGA / FGA, Envoy, ext-authz, jwt_authn, JWKS, x-gibson-identity-*, Langfuse, SPIFFE / SPIRE, Neo4j, CNPG, ArgoCD, cert-manager, ESO, OPA, or "Gibson-hosted Vault". Write product language instead, "Gibson identity service", "Gibson permissions", "Gibson Traces", "Gibson-managed secrets storage". See the Customer terminology section below; full deny-list ↔ replacement table at [docs.git → repos/dashboard/customer-doc-terminology.md](https://github.com/zeroroot-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md). Internal developer docs at `enterprise/platform/dashboard/docs/*.md` and every `CLAUDE.md` are intentionally exempt.
+- **Customer-facing docs name product capabilities, not vendors.** `content/docs/**/*.mdx` must not mention Zitadel, OpenFGA / FGA, Envoy, ext-authz, jwt_authn, JWKS, x-gibson-identity-*, Langfuse, SPIFFE / SPIRE, Neo4j, CNPG, ArgoCD, cert-manager, ESO, OPA, or "Gibson-hosted Vault". Write product language instead, "Gibson identity service", "Gibson permissions", "Gibson Traces", "Gibson-managed secrets storage". See the Customer terminology section below; full deny-list ↔ replacement table at `docs.git → repos/dashboard/customer-doc-terminology.md` (local docs → `repos/dashboard/customer-doc-terminology.md`). Internal developer docs at `enterprise/platform/dashboard/docs/*.md` and every `CLAUDE.md` are intentionally exempt.
 
 ## Two-surface platform contract (post-2026-05 refactor)
 
@@ -467,7 +467,7 @@ Three token layers, narrowing from raw to semantic:
 - **Semantic** (`--background`, `--foreground`, `--card`, `--primary`, `--secondary`, `--muted`, `--accent`, `--destructive`, `--border`, `--input`, `--ring`, `--sidebar-*`, `--chart-*`), the default choice. Maps directly to tailwind utilities (`bg-background`, `text-foreground`, `border-border`).
 - **Specialty** (`--highlight`, `--alt`, `--link`, `--glow-strength`, `--scanline-opacity`), reach for these only when the design intent is the terminal-hacker accent itself. Available as `text-highlight`, `text-alt`, `text-link`.
 
-Full architectural rationale + when-to-update: [docs.git → repos/dashboard/design-system.md](https://github.com/zeroroot-ai/docs/blob/main/repos/dashboard/design-system.md).
+Full architectural rationale + when-to-update: `docs.git → repos/dashboard/design-system.md` (local docs → `repos/dashboard/design-system.md`).
 
 ### No hardcoded colors, the CI guard
 
@@ -527,7 +527,7 @@ The spec also skips gracefully when `TEST_AUTH_BYPASS` is unset, so CI environme
 
 Customer-facing docs at `content/docs/**/*.mdx` and the customer-visible UI surface name **product capabilities**, not the vendors implementing them. This is a hard constraint: vendor names dilute the brand, expose attack surface, and turn infrastructure choices into doc-migration contracts whenever we swap a dependency.
 
-Canonical reference: [docs.git → `repos/dashboard/customer-doc-terminology.md`](https://github.com/zeroroot-ai/docs/blob/main/repos/dashboard/customer-doc-terminology.md). It carries the full deny-list ↔ replacement table, the allowlist of permitted BYO/protocol terms, and the structural rewrite pattern for the "how do I debug a 401" flow.
+Canonical reference: `docs.git → `repos/dashboard/customer-doc-terminology.md`` (local docs → `repos/dashboard/customer-doc-terminology.md`). It carries the full deny-list ↔ replacement table, the allowlist of permitted BYO/protocol terms, and the structural rewrite pattern for the "how do I debug a 401" flow.
 
 The deny-list at a glance, these never appear in `content/docs/**/*.mdx`:
 
