@@ -103,11 +103,8 @@ ENV SKIP_DASHBOARD_RBAC_CHECK=1
 # Build the standalone application. All sibling-sourced generated files
 # (plans.ts, stripe_gen.ts, authz registry, proto bindings) are committed, and
 # the freshness gates verify them structurally here (see the note above), so the
-# build performs no cross-repo fetch. The `ghtoken` BuildKit secret is mounted non-required for
-# backward compatibility (any future build-time fetch can read it via
-# GITHUB_TOKEN); the build no longer fails when it is absent.
-RUN --mount=type=secret,id=ghtoken,target=/run/secrets/ghtoken,required=false \
-    GITHUB_TOKEN="$(cat /run/secrets/ghtoken 2>/dev/null || true)" npm run build
+# build performs no cross-repo fetch and reads no token.
+RUN npm run build
 
 # ============================================================================
 # Stage 3: Runtime - Minimal production image
