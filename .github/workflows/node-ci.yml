@@ -104,10 +104,10 @@ jobs:
   fast:
     needs: changes
     if: github.event_name == 'pull_request' && needs.changes.outputs.relevant == 'true'
-    # The reusable workflow declares `packages: read` (to install the private
-    # @zeroroot-ai/brand package from npm.pkg.github.com); a reusable workflow
+    # The reusable workflow declares `packages: read`; a reusable workflow
     # cannot hold more permission than its caller grants, so the caller must
     # grant it too or the run is rejected at startup (#915 / .github#239).
+    # @zeroroot-ai/brand itself comes from registry.npmjs.org (attic#17).
     permissions:
       contents: read
       packages: read
