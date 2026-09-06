@@ -74,7 +74,7 @@ jobs:
           queries: security-extended
           config-file: .github/codeql-config.yml
 
-      - uses: github/codeql-action/analyze@5595ccaf912efad79be6eef63a5619ff05969be3 # v4.37.6
+      - uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         with:
           # Upload to the code-scanning API so the Security tab reflects the
           # commit actually analysed. `output` still writes the SARIF locally,
