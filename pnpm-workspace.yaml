@@ -1,2 +1,15 @@
 patchedDependencies:
   next-auth: patches/next-auth.patch
+
+# pnpm 11+ quarantines any package published in the last 24h
+# (minimumReleaseAge). That protects against a compromised third-party
+# publish being pulled in before anyone notices, which is not the risk
+# profile of our own scope: we publish it, from this org, and the release
+# that produced it is the one we just merged. Without this exclusion a
+# fresh @zeroroot-ai/brand release makes `pnpm install` fail for a day
+# (measured 2026-09-06 with pnpm 12: ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION).
+#
+# Excluded by scope, not by version: a pinned entry would need re-pinning
+# on every brand release. Same policy as www and docs-site.
+minimumReleaseAgeExclude:
+  - '@zeroroot-ai/*'
