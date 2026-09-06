@@ -5,6 +5,13 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.120.2](https://github.com/zeroroot-ai/dashboard/compare/v0.120.1...v0.120.2) (2026-09-06)
+
+
+### Bug Fixes
+
+* **build:** drop the dead ghtoken secret and the fork skip from the image build ([#13](https://github.com/zeroroot-ai/dashboard/issues/13)) ([b8dab0a](https://github.com/zeroroot-ai/dashboard/commit/b8dab0a83684bb14603aa275d097cbb649f18391))
+
 ## [0.120.1](https://github.com/zeroroot-ai/dashboard/compare/v0.120.0...v0.120.1) (2026-08-19)
 
 
