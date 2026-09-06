@@ -28,7 +28,7 @@ FROM ghcr.io/zeroroot-ai/mirror/node@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c
 WORKDIR /app
 
 # Copy dependency manifests for layer caching
-COPY package.json package-lock.json .npmrc ./
+COPY package.json package-lock.json ./
 
 # Install production + dev dependencies (needed for build). --ignore-scripts
 # blocks arbitrary postinstall scripts; npm rebuild then runs install for the
