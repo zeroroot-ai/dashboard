@@ -98,7 +98,7 @@
     "immer": "^11.1.8",
     "isomorphic-dompurify": "~3.19.0",
     "jose": "^6.2.3",
-    "lucide-react": "^0.522.0",
+    "lucide-react": "^1.39.0",
     "marked": "^15.0.12",
     "mermaid": "11.17.2",
     "monaco-editor": "^0.56.0",
