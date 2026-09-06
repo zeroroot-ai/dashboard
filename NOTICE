@@ -1,0 +1,16 @@
+Gibson Console (dashboard)
+Copyright 2026 Zero Root AI
+
+Licensed under the Elastic License 2.0. See LICENSE.
+
+Third-party software is installed at build time from the npm registry under
+its own licenses; `pnpm licenses list --prod` prints the full inventory for a
+given lockfile. Two entries are not MIT/BSD/Apache/ISC and are called out here:
+
+  sharp / @img/sharp-libvips  LGPL-3.0-or-later  (image processing; used as a
+                              dynamically linked library, unmodified)
+  khroma                      no license field in its package metadata; used
+                              transitively by the diagram renderer
+
+Product names, marks and the Gibson brand assets under @zeroroot-ai/brand are
+trademarks of Zero Root AI and are not licensed under the Elastic License 2.0.

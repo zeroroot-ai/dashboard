@@ -1,0 +1,23 @@
+# Calls the org-level reusable architectural-doc-coverage workflow.
+# See zeroroot-ai/.github/.github/workflows/architectural-doc-coverage.yml
+# for the gate's logic, configuration, and rationale.
+#
+# Required check name: architectural-doc-coverage
+
+name: architectural-doc-coverage
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+jobs:
+  architectural-doc-coverage:
+    # External fork PRs cannot read the private DOCS_REPO_READ_TOKEN secret —
+    # GitHub never exposes repository secrets to a fork's PR run. Skip the gate
+    # cleanly on forks rather than hard-failing for outside contributors.
+    # Same-repo PRs (head.repo.fork == false) run the gate as before. There is
+    # deliberately no pull_request_target trigger here — keep it that way.
+    if: github.event.pull_request.head.repo.fork == false
+    uses: zeroroot-ai/.github/.github/workflows/architectural-doc-coverage.yml@main
+    secrets:
+      DOCS_REPO_READ_TOKEN: ${{ secrets.DOCS_REPO_READ_TOKEN }}
