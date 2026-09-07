@@ -5,6 +5,13 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.120.4](https://github.com/zeroroot-ai/dashboard/compare/v0.120.3...v0.120.4) (2026-09-07)
+
+
+### Bug Fixes
+
+* **rework:** upgrade alpine packages in the runtime image and make the node pin bumpable ([#27](https://github.com/zeroroot-ai/dashboard/issues/27)) ([3184757](https://github.com/zeroroot-ai/dashboard/commit/3184757955d5142a7890d213a680c6e6c6f4c618)), closes [#9](https://github.com/zeroroot-ai/dashboard/issues/9)
+
 ## [0.120.3](https://github.com/zeroroot-ai/dashboard/compare/v0.120.2...v0.120.3) (2026-09-07)
 
 
