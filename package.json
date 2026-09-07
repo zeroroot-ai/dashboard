@@ -1,6 +1,6 @@
 {
   "name": "gibson-dashboard",
-  "version": "0.120.4",
+  "version": "0.120.5",
   "private": true,
   "packageManager": "pnpm@10.34.5",
   "license": "Elastic-2.0",
