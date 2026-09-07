@@ -5,6 +5,13 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.120.3](https://github.com/zeroroot-ai/dashboard/compare/v0.120.2...v0.120.3) (2026-09-07)
+
+
+### Bug Fixes
+
+* **security:** clear npm advisories, hide the key-shaped placeholder, scope workflow permissions ([#25](https://github.com/zeroroot-ai/dashboard/issues/25)) ([09baebf](https://github.com/zeroroot-ai/dashboard/commit/09baebfbd2ed85e66558daf6a388db8ce5bf0621)), closes [#9](https://github.com/zeroroot-ai/dashboard/issues/9)
+
 ## [0.120.2](https://github.com/zeroroot-ai/dashboard/compare/v0.120.1...v0.120.2) (2026-09-06)
 
 
