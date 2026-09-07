@@ -7,12 +7,12 @@ dashboard#805). Companion to the org-wide
 
 ## Toolchain pin
 
-- **Node is pinned to `nodejs 20.x` in `.tool-versions`** (currently `20.20.2`,
+- **Node is pinned to `nodejs 24.x` in `.tool-versions`** (currently `24.20.0`,
   the exact patch shipped by the mirror base image). This is the single source
   of truth for the dev toolchain. `mise`/`asdf` read it; CI and the image build
   use the same major.
 - The pin matches the **digest-pinned base image** in the `Dockerfile`
-  (`ghcr.io/zeroroot-ai/mirror/node@sha256:…`, the `node:20-alpine` mirror).
+  (`ghcr.io/zeroroot-ai/mirror/node@sha256:…`, the `node:24-alpine` mirror).
   Dev == CI == image Node major, by construction. Before this pass
   `.tool-versions` said `nodejs 22` while the image built on `node:20` — the
   same class of drift the quality-bars doc calls out for gibson
@@ -21,13 +21,13 @@ dashboard#805). Companion to the org-wide
 ## Base image — digest-pinned, mirror-sourced
 
 Every `FROM` in the `Dockerfile` pins the **multi-arch manifest-list (OCI
-index) digest** of `ghcr.io/zeroroot-ai/mirror/node:20-alpine`, not the
+index) digest** of `ghcr.io/zeroroot-ai/mirror/node:24-alpine`, not the
 floating tag. Tag pins are not reproducible (the doc's rule); the index digest
 is required (not a per-arch manifest digest) because the image is built
 multi-arch via buildx. To re-pin after a mirror refresh:
 
 ```bash
-docker buildx imagetools inspect ghcr.io/zeroroot-ai/mirror/node:20-alpine
+docker buildx imagetools inspect ghcr.io/zeroroot-ai/mirror/node:24-alpine
 # copy the top-level (index) Digest into every FROM
 ```
 
@@ -38,7 +38,7 @@ The dashboard ships **both** lockfiles, by necessity:
 | Lockfile | Manager | Used by | Notes |
 |---|---|---|---|
 | `pnpm-lock.yaml` | pnpm | local dev (`pnpm install`), `make bootstrap` | **dev source of truth**; the only lockfile that honors `pnpm.patchedDependencies` (the `next-auth` `.js`-extension patch). |
-| `package-lock.json` | npm | the production container image (`npm ci`, see `Dockerfile`) | the Next.js `node:20-alpine` image build path. |
+| `package-lock.json` | npm | the production container image (`npm ci`, see `Dockerfile`) | the Next.js `node:24-alpine` image build path. |
 
 The image build uses `npm ci` (not pnpm) because the standalone Next.js image
 build was standardised on npm + `package-lock.json`; switching the image build

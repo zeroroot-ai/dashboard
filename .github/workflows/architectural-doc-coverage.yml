@@ -10,6 +10,9 @@ on:
   pull_request:
     types: [opened, edited, synchronize, reopened, ready_for_review]
 
+permissions:
+  contents: read
+
 jobs:
   architectural-doc-coverage:
     # External fork PRs cannot read the private DOCS_REPO_READ_TOKEN secret —

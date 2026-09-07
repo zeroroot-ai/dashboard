@@ -31,6 +31,9 @@ concurrency:
   group: dashboard-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   build:
     # Skip dependabot. Fork PRs run: the build reads no secret, and the
@@ -38,8 +41,11 @@ jobs:
     # no pull_request_target trigger. Keep it that way.
     if: github.actor != 'dependabot[bot]'
     uses: zeroroot-ai/.github/.github/workflows/reusable-image-build.yml@main
+    # The reusable workflow declares contents:read on every job (it pushes an
+    # image, signs it and uploads SARIF; it writes no repository contents).
+    # packages:write and security-events:write are the two writes it needs.
     permissions:
-      contents: write
+      contents: read
       packages: write
       id-token: write
       attestations: write

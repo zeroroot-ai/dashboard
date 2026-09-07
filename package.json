@@ -123,7 +123,7 @@
     "stripe": "^21.0.1",
     "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7",
-    "uuid": "^11.1.0",
+    "uuid": "^11.1.1",
     "yaml": "^2.8.3",
     "zod": "^3.25.76",
     "zustand": "^5.0.9"
@@ -142,7 +142,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
-    "@vitest/ui": "^4.1.2",
+    "@vitest/ui": "^4.1.11",
     "eslint": "^9.39.2",
     "eslint-config-next": "^15.5.9",
     "js-yaml": "4.3.1",
@@ -155,9 +155,18 @@
     "prettier-plugin-tailwindcss": "^0.8.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.2"
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "monaco-editor": {
+      "dompurify": "3.4.15"
+    }
   },
   "pnpm": {
+    "overrides": {
+      "monaco-editor>dompurify": "3.4.15"
+    },
     "patchedDependencies": {
       "next-auth": "patches/next-auth.patch"
     }

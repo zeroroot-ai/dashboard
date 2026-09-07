@@ -4,9 +4,10 @@ on:
   push:
     branches: [main]
 
+# The job runs release-please with a GitHub App token minted in the first
+# step. GITHUB_TOKEN itself writes nothing, so it stays read-only.
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   release-please:
