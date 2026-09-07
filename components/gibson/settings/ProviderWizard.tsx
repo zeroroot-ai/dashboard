@@ -289,7 +289,7 @@ function CredentialInput({
         onChange={onChange as unknown as React.ChangeEventHandler<HTMLTextAreaElement>}
         onBlur={onBlur as unknown as React.FocusEventHandler<HTMLTextAreaElement>}
         rows={6}
-        placeholder={secretFieldPlaceholder ?? (cf.placeholder || '{ "type": "service_account", ... }')}
+        placeholder={secretFieldPlaceholder ?? (cf.placeholder || "Paste the full JSON key file")}
         className="font-mono text-xs"
         autoComplete="off"
         autoCorrect="off"

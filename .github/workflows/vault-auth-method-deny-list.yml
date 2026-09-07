@@ -10,6 +10,9 @@ on:
   pull_request:
     types: [opened, edited, synchronize, reopened, ready_for_review]
 
+permissions:
+  contents: read
+
 jobs:
   vault-auth-method-deny-list:
     uses: zeroroot-ai/.github/.github/workflows/vault-auth-method-deny-list.yml@main

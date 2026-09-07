@@ -236,6 +236,65 @@ section. Do not reach for the config exclusion.
 
 ---
 
+### 20 — `js/insufficient-password-hash` in `src/lib/auth/hibp.ts` (re-raised 2026-09-07)
+
+| | |
+|---|---|
+| Rule | CodeQL `js/insufficient-password-hash` |
+| Path | `src/lib/auth/hibp.ts:56` |
+| Reason | `false positive` |
+| Dismissed | 2026-09-07, digest issue #9 |
+
+The same finding as alert 7 above. The repo was recreated on 2026-09-06 in the
+history reset (`zeroroot-ai/.github#17`), so code scanning started from zero and
+raised the finding again under a new number. The code is unchanged in
+substance: `isPasswordBreached` still hashes the password with SHA-1 because the
+HIBP range protocol mandates it, still sends only the five-character prefix,
+and still stores nothing. The owner decision recorded under alert 7 covers this
+instance. No new analysis was needed and none is claimed.
+
+## Scorecard findings the org contract makes deliberate
+
+OpenSSF Scorecard reports on repository shape, not on code. Two of its findings
+on this repo name things the org does on purpose. They were dismissed on
+2026-09-07 with the digest issue #9 as the pointer. The Scorecard checks that no
+repo can satisfy (Fuzzing, CII badge, Code-Review, Branch-Protection,
+Maintained, SAST coverage of the reset baseline) were dismissed org-wide in the
+same sweep and are not listed per repo.
+
+### 10, 11, 12, 13, 14 — `PinnedDependenciesID` on `uses: zeroroot-ai/.github/...@main`
+
+| | |
+|---|---|
+| Rule | Scorecard `PinnedDependenciesID` ("third-party GitHubAction not pinned by hash") |
+| Alerts | 10 (`.github/workflows/architectural-doc-coverage.yml:21`), 11 (`.github/workflows/dashboard.yml:40`), 12 (`.github/workflows/node-ci.yml:114`), 13 (`.github/workflows/node-ci.yml:130`), 14 (`.github/workflows/vault-auth-method-deny-list.yml:15`) |
+| Reason | `won't fix` |
+
+Every flagged line calls a reusable workflow in `zeroroot-ai/.github` at
+`@main`. That is the org contract: shared CI logic lives in the reusable
+workflows and a fix there fans out to every consumer on the next run (workspace
+`CLAUDE.md` section 8, "one root cause is one PR"). A SHA pin would freeze this
+repo on a stale copy of the contract and would need a hand bump in every
+consumer for every change. The workflows are first-party and the org owns the
+ref, so the supply-chain argument behind the check does not apply.
+
+### 2, 4 — `TokenPermissionsID` job-level writes on the image job
+
+| | |
+|---|---|
+| Rule | Scorecard `TokenPermissionsID` |
+| Alerts | 2 (`.github/workflows/dashboard.yml:46`, security-events), 4 (`.github/workflows/dashboard.yml:43`, packages) |
+| Reason | `won't fix` |
+
+The `build` job in `dashboard.yml` calls `reusable-image-build`. That workflow
+pushes the image to GHCR, which needs `packages: write`, and uploads the Trivy
+SARIF to code scanning, which needs `security-events: write`. Both writes are
+the purpose of the job and are granted at job level only. The third write the
+check flagged, `contents: write`, was not needed (the reusable workflow declares
+`contents: read` on every job) and was removed in the same change, together
+with a read-only top-level `permissions` block on every workflow that lacked
+one.
+
 ## Follow-ups
 
 These are the causes behind the orphaned alerts above, tracked so the class does
