@@ -16,7 +16,7 @@ channel to the daemon.
 
 ## Prerequisites
 
-- Node.js 20.x or newer.
+- Node.js 24.x (see `.tool-versions`).
 - pnpm 10.x (`corepack enable && corepack prepare pnpm@10 --activate`).
 - A local kind cluster from `enterprise/deploy/helm/gibson/` for any
   workflow that talks to the daemon (most of them).

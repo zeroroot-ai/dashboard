@@ -12,7 +12,7 @@
 # and docs/build-and-lockfiles.md for why the dashboard ships both lockfiles
 # and how they are kept in sync).
 #
-# The Node toolchain is pinned in .tool-versions (nodejs 20.x, matching the
+# The Node toolchain is pinned in .tool-versions (nodejs 24.x, matching the
 # digest-pinned mirror base image in the Dockerfile). `make bootstrap` uses the
 # committed pnpm-lock.yaml frozen so a clean checkout is reproducible.
 # ============================================================================
