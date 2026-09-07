@@ -13,7 +13,7 @@ import {
   ComposerPrimitive,
   ActionBarPrimitive,
   MessagePartPrimitive,
-  useMessage,
+  useAuiState,
   type TextMessagePartProps,
 } from '@assistant-ui/react';
 import { useAISDKRuntime } from '@assistant-ui/react-ai-sdk';
@@ -742,7 +742,7 @@ export function UserMessage() {
 
 function AssistantMessageCitations() {
   const { graphContext } = useChatGraphContext();
-  const content = useMessage((state) => state.content);
+  const content = useAuiState((state) => state.message.content);
 
   // Only surface citations when a focused graph node is active
   if (!graphContext?.nodeId) return null;
