@@ -23,7 +23,7 @@
 # Stage 1: Dependencies - Install node modules
 # ============================================================================
 # ghcr.io/zeroroot-ai/mirror/node:24-alpine
-FROM ghcr.io/zeroroot-ai/mirror/node@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS deps
+FROM ghcr.io/zeroroot-ai/mirror/node:24-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS deps
 
 WORKDIR /app
 
@@ -45,7 +45,7 @@ RUN npm ci --ignore-scripts --legacy-peer-deps && \
 # Stage 2: Builder - Build Next.js application
 # ============================================================================
 # ghcr.io/zeroroot-ai/mirror/node:24-alpine
-FROM ghcr.io/zeroroot-ai/mirror/node@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS builder
+FROM ghcr.io/zeroroot-ai/mirror/node:24-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS builder
 
 WORKDIR /app
 
@@ -102,7 +102,7 @@ RUN npm run build
 # Stage 3: Runtime - Minimal production image
 # ============================================================================
 # ghcr.io/zeroroot-ai/mirror/node:24-alpine
-FROM ghcr.io/zeroroot-ai/mirror/node@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS runner
+FROM ghcr.io/zeroroot-ai/mirror/node:24-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS runner
 
 WORKDIR /app
 
@@ -110,6 +110,11 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Create non-root user matching Helm deployment spec (UID 1001)
+# Pull the alpine fixes that landed after the base image was built (2026-09:
+# openssl 3.5.8-r0). The digest pin keeps the base reproducible; the upgrade
+# keeps the runtime patched between Dependabot digest bumps.
+RUN apk upgrade --no-cache
+
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
