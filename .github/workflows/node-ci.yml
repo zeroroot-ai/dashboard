@@ -91,7 +91,7 @@ jobs:
           HEAD="${{ github.event.pull_request.head.sha }}"
           CHANGED="$(git diff --name-only "$BASE" "$HEAD")"
           echo "$CHANGED"
-          IRRELEVANT='^(docs/|\.github/|LICENSE$|CODEOWNERS$|\.gitignore$|\.dockerignore$)|\.md$'
+          IRRELEVANT='^(docs/|\.github/|LICENSE$|\.gitignore$|\.dockerignore$)|\.md$'
           if echo "$CHANGED" | grep -qE '^\.github/workflows/node-ci\.yml$'; then
             echo "relevant=true" >> "$GITHUB_OUTPUT"
           elif echo "$CHANGED" | grep -vE "$IRRELEVANT" | grep -q .; then

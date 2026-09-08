@@ -1,6 +1,7 @@
 # Calls the org-level reusable ADR-0009 deny-list workflow.
 # See zeroroot-ai/.github/.github/workflows/vault-auth-method-deny-list.yml
-# for the scanner logic and ADR-0009 (zeroroot-ai/docs) for the deny-list itself.
+# for the scanner logic. The deny-list itself comes from ADR-0009, the Vault
+# auth-method decision record.
 #
 # Required check name: vault-auth-method-deny-list
 

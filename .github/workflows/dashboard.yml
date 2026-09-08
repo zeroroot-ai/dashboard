@@ -21,7 +21,6 @@ on:
       - '!e2e/**'
       - '!**.md'
       - '!LICENSE'
-      - '!CODEOWNERS'
       - '!.gitignore'
       - '!.github/**'
       - '.github/workflows/dashboard.yml'

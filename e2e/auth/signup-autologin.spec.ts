@@ -15,7 +15,7 @@
  *   - Session cookie established before dashboard home renders.
  *
  * Live dependency:
- *   - zeroroot-ai/gitops#90 grants `IAM_LOGIN_CLIENT` on the
+ *   - the identity service must grant `IAM_LOGIN_CLIENT` to the
  *     `gibson-signup-bot` machine user. Without that grant the
  *     `POST /v2/sessions` call in app/actions/signup.ts returns 403
  *     PERMISSION_DENIED and the signup action falls back to the
@@ -70,8 +70,8 @@ test.describe("Signup auto-login, V2 session + CreateCallback (issue dashboard#4
     // -----------------------------------------------------------------------
     // 3. Submit and wait for either:
     //    (a) direct landing on /dashboard, the auto-login path worked, OR
-    //    (b) bounce to /login, gitops#90 hasn't merged yet, IAM_LOGIN_CLIENT
-    //        is missing, signup action fell back. In that case skip with
+    //    (b) bounce to /login, the `IAM_LOGIN_CLIENT` grant is missing and
+    //        the signup action fell back. In that case skip with
     //        an explicit reason so the test result is meaningful.
     // -----------------------------------------------------------------------
     await page
@@ -91,11 +91,12 @@ test.describe("Signup auto-login, V2 session + CreateCallback (issue dashboard#4
     const reachedDashboard = page.url().includes("/dashboard");
 
     if (!reachedDashboard) {
-      // We hit the fallback /login redirect. This is the gitops#90 dependency
+      // We hit the fallback /login redirect. This is the missing-grant
       // signature, surface as a SKIP so the result is unambiguous.
       test.skip(
         true,
-        "signup auto-login bounced to /login, likely gitops#90 (IAM_LOGIN_CLIENT) not merged yet. " +
+        "signup auto-login bounced to /login, likely the IAM_LOGIN_CLIENT grant " +
+          "on gibson-signup-bot is missing. " +
           "Verify by tailing the dashboard pod: " +
           '`kubectl -n gibson logs deploy/dashboard | grep "auto-login V2 session"`, ' +
           "look for a `httpStatus: 403, zitadelErrorId: AUTHZ_*` warning line.",
