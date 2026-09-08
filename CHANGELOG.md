@@ -5,6 +5,13 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.120.7](https://github.com/zeroroot-ai/dashboard/compare/v0.120.6...v0.120.7) (2026-09-08)
+
+
+### Bug Fixes
+
+* **ci:** drop the packages: read grant from both node-ci jobs ([#34](https://github.com/zeroroot-ai/dashboard/issues/34)) ([4ebc51f](https://github.com/zeroroot-ai/dashboard/commit/4ebc51f7bdf69c8f8b5f257a357ecd2033870425))
+
 ## [0.120.6](https://github.com/zeroroot-ai/dashboard/compare/v0.120.5...v0.120.6) (2026-09-08)
 
 
