@@ -104,13 +104,11 @@ jobs:
   fast:
     needs: changes
     if: github.event_name == 'pull_request' && needs.changes.outputs.relevant == 'true'
-    # The reusable workflow declares `packages: read`; a reusable workflow
-    # cannot hold more permission than its caller grants, so the caller must
-    # grant it too or the run is rejected at startup (#915 / .github#239).
-    # @zeroroot-ai/brand itself comes from registry.npmjs.org (attic#17).
+    # contents: read is all the reusable workflow asks for. @zeroroot-ai/brand
+    # installs from registry.npmjs.org, so no job here reads GitHub Packages
+    # (.github#48 dropped the grant from the reusable side).
     permissions:
       contents: read
-      packages: read
     uses: zeroroot-ai/.github/.github/workflows/reusable-node-ci.yml@main
     with:
       tier: fast
@@ -126,7 +124,6 @@ jobs:
     if: github.event_name == 'merge_group'
     permissions:
       contents: read
-      packages: read
     uses: zeroroot-ai/.github/.github/workflows/reusable-node-ci.yml@main
     with:
       tier: heavy
