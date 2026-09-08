@@ -14,7 +14,7 @@
  * The token system itself lives in `app/globals.css` + `app/themes.css`,
  * so those two files are explicitly exempted. Everywhere else, the path
  * forward is the semantic + specialty tokens documented in the
- * design-system doc (docs.git: repos/dashboard/design-system.md).
+ * design-system section of this repo's CLAUDE.md.
  *
  * Existing violations are captured in `.color-allowlist.json` at the
  * repo root. The list is monotonic-shrink only:
@@ -275,7 +275,7 @@ function runScan() {
     process.stderr.write(
       "\nFix: replace with a semantic token (bg-background, text-foreground, " +
         "border-border) or a specialty token (text-highlight, text-alt, text-link). " +
-        "See docs.git → repos/dashboard/design-system.md.\n",
+        "See the design-system section of CLAUDE.md.\n",
     );
   }
   if (stale.length > 0) {
