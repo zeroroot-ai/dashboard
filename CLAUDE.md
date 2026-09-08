@@ -523,6 +523,28 @@ Two independent production guards on the encoder, AND-ed: `NODE_ENV !== "product
 
 The spec also skips gracefully when `TEST_AUTH_BYPASS` is unset, so CI environments that haven't opted in don't fail; they just don't run the auth-route suite.
 
+### Legacy brand names, the CI guard
+
+`scripts/check-no-legacy-product-name.mjs` runs in `pnpm prebuild` and scans the
+whole tree for the four pre-rebrand strings its header declares: the old product
+name, the old domain, the old org slug, and the old daemon domain. The product is
+**Zero Root AI**, the org is **zeroroot-ai**, and the domain is **zeroroot.ai**.
+
+```bash
+node scripts/check-no-legacy-product-name.mjs             # scan the tree
+node scripts/check-no-legacy-product-name.mjs --shrink    # drop stale allowlist entries
+node scripts/check-no-legacy-product-name.mjs --selftest  # prove every pattern still fires
+```
+
+Exceptions live in `.legacy-brand-allowlist.json`. `files` holds the three
+self-referential whole-file exceptions (the guard, the allowlist, CHANGELOG.md).
+`lines` holds one entry per tolerated line, keyed by the exact trimmed line text,
+never by line number. An entry that no longer matches fails the guard, so the
+allowlist cannot rot. The guard is registered in
+`scripts/check-guard-selftests.mjs`, so every build proves each pattern fires,
+that a clean tree passes, that the allowlist suppresses, and that a stale entry
+is reported.
+
 ## Customer terminology
 
 Customer-facing docs at `content/docs/**/*.mdx` and the customer-visible UI surface name **product capabilities**, not the vendors implementing them. This is a hard constraint: vendor names dilute the brand, expose attack surface, and turn infrastructure choices into doc-migration contracts whenever we swap a dependency.

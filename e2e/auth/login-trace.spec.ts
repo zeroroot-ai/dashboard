@@ -23,7 +23,7 @@
  *   login-trace-cookies.json , cookies at end of flow (values redacted)
  *
  * Run via:
- *   TRACE_EMAIL=anthony@zeroroot.ai TRACE_PASSWORD='…' \
+ *   TRACE_EMAIL=login-trace@example.com TRACE_PASSWORD='…' \
  *   PLAYWRIGHT_BASE_URL=https://app.zeroroot.local:30443 \
  *   E2E_AUTH_SUITE=1 \
  *   npx playwright test e2e/auth/login-trace.spec.ts \

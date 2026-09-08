@@ -57,6 +57,10 @@ const GUARDS = [
   // mission-template CUE and shipped for months with no self-test, so nothing
   // proved it could fail.
   "check-templates-fresh.mjs",
+  // The legacy-brand guard (zeroroot-ai/.github#14). It scans the whole tree
+  // for the pre-rebrand names and reads a content-keyed allowlist, so both the
+  // patterns and the allowlist have to be proved live on every build.
+  "check-no-legacy-product-name.mjs",
 ];
 
 let failed = 0;
