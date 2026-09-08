@@ -60,7 +60,7 @@
     "check:server-action-authz": "node scripts/check-server-action-authz.mjs",
     "check:single-authz-path": "node scripts/check-single-authz-path.mjs",
     "check:no-prod-debug-flags": "node scripts/check-no-prod-debug-flags.mjs",
-    "check:no-legacy-product-name": "node scripts/check-no-legacy-product-name.mjs"
+    "check:no-legacy-product-name": "node scripts/check-no-legacy-product-name.mjs --selftest && node scripts/check-no-legacy-product-name.mjs"
   },
   "dependencies": {
     "@ai-sdk/provider": "^3.0.8",

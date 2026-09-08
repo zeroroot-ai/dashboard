@@ -39,7 +39,7 @@ let orphanCheckout;
 
 beforeAll(() => {
   const scratch = mkdtempSync(join(tmpdir(), "workspace-root-test-"));
-  workspace = join(scratch, "zero-day.ai");
+  workspace = join(scratch, "polyrepo-workspace");
 
   mkdirSync(join(workspace, "enterprise/deploy/helm/gibson-operators/files"), {
     recursive: true,
@@ -138,7 +138,7 @@ describe("resolveWorkspacePath", () => {
 
   it("rejects a relative GIBSON_WORKSPACE_ROOT", () => {
     const prev = process.env[WORKSPACE_ROOT_ENV];
-    process.env[WORKSPACE_ROOT_ENV] = "../zero-day.ai";
+    process.env[WORKSPACE_ROOT_ENV] = "../polyrepo-workspace";
     try {
       expect(() =>
         resolveWorkspacePath(PLANS_REL, { from: mainCheckout }),
