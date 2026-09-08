@@ -78,7 +78,7 @@ ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 # the COMMITTED artifact against freshly generated output.
 #
 # The polyrepo siblings those generators read — deploy/helm/gibson-operators/
-# files/, opensource/sdk/, enterprise/platform/gibson/ — are still absent from
+# files/, and the sdk and gibson checkouts — are still absent from
 # this build context. The gates now discover that by asking each generator
 # `--probe`, and degrade to their STRUCTURAL pass: the committed artifact must
 # exist, be non-empty, parse, and carry its generator's header. That much is

@@ -21,7 +21,7 @@
  *
  * Pre-conditions:
  *   - Full chart deployed to the `gibson` Kind cluster
- *     (`make -C enterprise/deploy/helm/gibson deploy-local`).
+ *     (deploy the umbrella chart from the charts repository).
  *   - `DASHBOARD_EMAIL_PROVIDER=log`, `DASHBOARD_CAPTCHA_PROVIDER=disabled`.
  *   - `BILLING_DEV_AUTOCONFIRM` either flipped on OR Stripe webhook reachable.
  *

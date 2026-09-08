@@ -26,19 +26,16 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
-import { requireWorkspacePath, resolveWorkspacePath } from "./lib/workspace-root.mjs";
+import { requireRepoPath, resolveRepoPath } from "./lib/workspace-root.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(HERE, "..");
-// Sibling resolution searches upward for the artifact rather than counting
-// `..` segments off a rewound path. The depth counter was correct for the main
-// checkout and for a worktree at `<dashboard>/.worktrees/<name>`, and wrong
-// everywhere else — from `<workspace>/.worktrees/<name>` it walked to `/home`.
-// dashboard#1015.
-//
-// E4 monorepo fold (gibson#781 / ADR-0056): tenant-operator folded into the
-// gibson monorepo at operators/tenant/; the standalone repo was deleted.
-const PLANS_REL = "enterprise/deploy/helm/gibson-operators/files/plans.yaml";
+// The resolver takes a repository name and a path inside it, and finds the
+// checkout by searching the ancestors of this one. The canonical plan registry
+// lives in the public `charts` repository (ADR-0086), the same copy gen-plans.mjs
+// reads.
+const PLANS_REPO = "charts";
+const PLANS_REL = "helm/gibson-operators/files/plans.yaml";
 const OUTPUT = resolve(DASHBOARD_ROOT, "src/lib/billing/stripe_gen.ts");
 
 function die(msg) {
@@ -53,9 +50,9 @@ function die(msg) {
  * thing that has to know it. Same contract as `proto-generate.mjs --probe`.
  */
 function probe() {
-  // Same upward search main() uses, but non-fatal: --probe asks "is this
-  // reachable?", so absence is an answer rather than an error. dashboard#1015.
-  const yaml = resolveWorkspacePath(PLANS_REL, { from: DASHBOARD_ROOT })?.path ?? null;
+  // Same search main() uses, but non-fatal: --probe asks "is this
+  // reachable?", so absence is an answer rather than an error.
+  const yaml = resolveRepoPath(PLANS_REPO, PLANS_REL, { from: DASHBOARD_ROOT })?.path ?? null;
   process.stdout.write(
     JSON.stringify({ sources: { yaml }, available: Boolean(yaml) }, null, 2) + "\n",
   );
@@ -70,8 +67,7 @@ function main() {
   }
 
   // Docker image builds skip regen and trust the committed stripe_gen.ts:
-  // the polyrepo sibling deploy/helm/gibson-operators/files/plans.yaml is not in
-  // the build context. The drift gate (check-stripe-tiers-fresh.mjs) keeps
+  // the charts checkout that holds plans.yaml is not in the build context. The drift gate (check-stripe-tiers-fresh.mjs) keeps
   // workstation regens honest; the file is tracked in git so the committed
   // state is the source of truth at deploy time. Mirrors SKIP_GEN_PLANS=1
   // in gen-plans.mjs.
@@ -84,7 +80,7 @@ function main() {
 
   let plansYaml;
   try {
-    plansYaml = requireWorkspacePath(PLANS_REL, { from: DASHBOARD_ROOT });
+    plansYaml = requireRepoPath(PLANS_REPO, PLANS_REL, { from: DASHBOARD_ROOT });
   } catch (e) {
     die(e.message);
   }
@@ -108,9 +104,16 @@ function main() {
 
   const lines = [];
   lines.push(
+    // The stamped SPDX header is part of the artifact, so the generator emits
+    // it. A stamping pass that adds it afterwards puts the committed file and
+    // the generator's output permanently out of step, and the freshness gate
+    // then fails on every workstation regen.
+    "// SPDX-License-Identifier: Elastic-2.0",
+    "// Copyright 2026 Zero Root AI",
+    "",
     "// GENERATED FILE, do not edit.",
-    "// Source: enterprise/deploy/helm/gibson-operators/files/plans.yaml",
-    "// Generator: enterprise/platform/dashboard/scripts/gen-stripe-tiers.mjs",
+    "// Source: charts/helm/gibson-operators/files/plans.yaml",
+    "// Generator: scripts/gen-stripe-tiers.mjs in zeroroot-ai/dashboard",
     "// Spec: plans-and-quotas-simplification R8.",
     "",
     "export type BillingTier =",

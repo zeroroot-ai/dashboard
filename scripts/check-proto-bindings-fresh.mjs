@@ -5,8 +5,8 @@
 /**
  * Build guard: verify that the committed TypeScript proto bindings under
  * `src/gen/` are in sync with the two source proto trees they are generated
- * from (the OSS SDK at `opensource/sdk/api/proto` and the gibson daemon-local
- * tree at `enterprise/platform/gibson/internal/server/daemon/api`).
+ * from (the OSS SDK at `api/proto` in the sdk repository and the gibson
+ * daemon-local tree at `internal/server/daemon/api` in the gibson repository).
  *
  * Sister gates: `check-authz-registry-fresh.mjs` (src/gen/authz/registry.ts)
  * and `check-mission-schema-fresh.mjs` (the SDK mission schema). This one

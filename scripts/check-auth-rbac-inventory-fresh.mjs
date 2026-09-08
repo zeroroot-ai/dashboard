@@ -3,8 +3,8 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Build guard: regenerate enterprise/docs/AUTH_RBAC_INVENTORY.md and
- * fail the build if the committed file differs.
+ * Build guard: regenerate docs/AUTH_RBAC_INVENTORY.md and fail the build if
+ * the committed file differs.
  *
  * Spec: auth-resolution-hardening (R9.2).
  *
@@ -22,44 +22,62 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { findWorkspaceRoot } from './lib/workspace-root.mjs';
 
 const SCRIPT_NAME = 'check-auth-rbac-inventory-fresh.mjs';
 const SPEC_NAME = 'auth-resolution-hardening';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, '..');
-// Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ the naive
-// `../../..` walk lands short of the workspace root. Rewind to the main
-// checkout root before walking up. dashboard#197 (same pattern as #175).
-// Sibling resolution searches upward for the artifact rather than counting
-// `..` segments. The depth counter was correct for the main checkout and for a
-// worktree at `<dashboard>/.worktrees/<name>`, and wrong everywhere else.
-// dashboard#1015.
-const REPO_ROOT = findWorkspaceRoot({ from: DASHBOARD_ROOT }) ?? DASHBOARD_ROOT;
-const COMMITTED = resolve(REPO_ROOT, 'enterprise/docs/AUTH_RBAC_INVENTORY.md');
+// The inventory is committed in this repository, so it is always present and
+// the gate is never vacuous.
+const COMMITTED = resolve(DASHBOARD_ROOT, 'docs/AUTH_RBAC_INVENTORY.md');
 const GENERATOR = resolve(__dirname, 'gen-auth-rbac-inventory.mjs');
 
-// Skip when committed file is not accessible (e.g., inside Docker build where
-// REPO_ROOT resolves to filesystem root and enterprise/docs/ is outside the
-// build context). The check is a dev-host gate.
+// Skip inside the Docker build, which carries neither the committed docs/ tree
+// nor a charts checkout. The check is a dev-host gate.
 // Spec: signup-zitadel-permissions-fix (Docker build fix for auth-resolution-hardening).
 if (process.env.SKIP_DASHBOARD_RBAC_CHECK === '1') {
   console.log(`[${SCRIPT_NAME}] SKIPPED, SKIP_DASHBOARD_RBAC_CHECK=1`);
   process.exit(0);
 }
 
+const HEADER = '# Auth RBAC Inventory, Gibson Dashboard';
+
 let committed;
 try {
   committed = readFileSync(COMMITTED, 'utf8');
 } catch (err) {
-  if (err.code === 'ENOENT') {
-    console.log(`[${SCRIPT_NAME}] SKIP, enterprise/docs sibling not present at ${COMMITTED}; skipping freshness check (dashboard-only workspace).`);
-    process.exit(0);
-  }
   console.error(`[${SCRIPT_NAME}] FAIL, cannot read committed inventory at ${COMMITTED}: ${err.message}`);
   console.error('Run: npm run gen:auth-rbac-inventory');
   process.exit(1);
+}
+
+// STRUCTURAL pass: with no charts checkout nearby the generator has nothing to
+// read, so a byte-diff is impossible. The gate still refuses a deleted, empty
+// or header-stripped artifact, so it is never vacuous. The generator answers
+// "can you read your source?" itself; the gate is never told to look away.
+let probe;
+try {
+  probe = JSON.parse(
+    execFileSync('node', [GENERATOR, '--probe'], { encoding: 'utf8' }),
+  );
+} catch (err) {
+  console.error(`[${SCRIPT_NAME}] FAIL, generator --probe errored: ${err.message}`);
+  process.exit(2);
+}
+if (!probe.available) {
+  if (committed.trim() === '' || !committed.startsWith(HEADER)) {
+    console.error(
+      `[${SCRIPT_NAME}] FAIL, ${COMMITTED} is empty or has lost its generated header.`,
+    );
+    console.error('Run: npm run gen:auth-rbac-inventory');
+    process.exit(1);
+  }
+  console.log(
+    `[${SCRIPT_NAME}] OK (structural), no charts checkout to render against; ` +
+      'the committed inventory exists, is non-empty and carries its header.',
+  );
+  process.exit(0);
 }
 
 let regenerated;

@@ -5,7 +5,7 @@
 /**
  * Build guard: verify that the **committed** `src/generated/plans.ts` matches
  * what `gen-plans.mjs` produces from the canonical
- * `enterprise/deploy/helm/gibson-operators/files/plans.yaml`.
+ * `helm/gibson-operators/files/plans.yaml` in the charts repository.
  *
  * Until dashboard#1019 `prebuild` ran `gen-plans.mjs` immediately before this
  * gate, so the gate diffed the file the generator had just written against the

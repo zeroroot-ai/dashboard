@@ -21,7 +21,7 @@ name: node-ci
 #                                landing.
 #
 # `skip-sibling-generators: true` on the heavy call: a single-repo dashboard
-# checkout has no `enterprise/deploy` polyrepo sibling on disk, so the plans /
+# checkout has no `charts` or `sdk` checkout on disk, so the plans /
 # stripe-tiers / authz-registry generators and the RBAC helm-template check
 # cannot run for real here. Same SKIP_* pattern the Dockerfile already uses to
 # trust the committed generated files; the workstation / a full polyrepo CI

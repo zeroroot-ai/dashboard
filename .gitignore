@@ -56,3 +56,6 @@ next-env.d.ts
 
 # Claude Code agent worktrees / local state
 .claude/
+
+# auth latency capture, written by scripts/auth-latency-baseline.mjs
+/docs/auth-latency-baseline.json

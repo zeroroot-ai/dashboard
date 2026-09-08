@@ -6,7 +6,7 @@
  * Build guard: verify that the **committed**
  * `src/data/mission-definition.schema.json` matches what
  * `gen-mission-schema.mjs` produces from the SDK's authoritative artifact at
- * `opensource/sdk/gen/mission-definition.schema.json`.
+ * `gen/mission-definition.schema.json` in the sdk repository.
  *
  * Until dashboard#1019 `prebuild` ran `gen-mission-schema.mjs` immediately
  * before this gate, so the gate diffed the file the generator had just written

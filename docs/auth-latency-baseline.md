@@ -9,7 +9,7 @@ This document describes the baseline sign-in latency measurement for the
 
 ```bash
 # 1. Start the dashboard server:
-cd enterprise/platform/dashboard
+cd <your dashboard checkout>
 pnpm build && pnpm start
 # or for dev:  pnpm dev
 
@@ -20,7 +20,7 @@ PLAYWRIGHT_BASE_URL=http://localhost:3000 \
 # 3. Capture the histogram from /api/metrics:
 node scripts/auth-latency-baseline.mjs --base-url http://localhost:3000
 
-# Output is written to enterprise/docs/auth-latency-baseline.json (gitignored).
+# Output is written to docs/auth-latency-baseline.json (gitignored).
 # The script prints p50/p95/p99 and exits non-zero if the SLO is violated.
 ```
 

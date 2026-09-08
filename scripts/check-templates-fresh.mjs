@@ -8,7 +8,7 @@
  * ## What it guards
  *
  * `src/data/templates/<name>.cue` is a vendored copy of
- * `opensource/adk/templates/<name>/template.cue`. The ADK copy is canonical:
+ * `templates/<name>/template.cue` in the adk repository. The ADK copy is canonical:
  * it is the one the `gibson` CLI ships and validates. A dashboard copy that
  * has drifted seeds the mission editor with CUE the CLI would reject, so the
  * two must stay byte-identical.
@@ -39,8 +39,8 @@
  *
  * ## Paths
  *
- * The ADK sibling is found at `../../../opensource/adk` relative to the
- * dashboard root, or at `$ADK_DIR` when set. `ADK_DIR` matters for git
+ * The ADK checkout is found by `scripts/lib/workspace-root.mjs`, or at
+ * `$ADK_DIR` when set. `ADK_DIR` matters for git
  * worktrees, where the relative walk lands outside the workspace.
  *
  * Usage:
@@ -54,6 +54,7 @@ import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveRepoPath } from "./lib/workspace-root.mjs";
 
 const SCRIPT_NAME = "check-templates";
 const TEMPLATE_IDS = ["recon", "webapp-scan", "secrets-audit", "compliance-check", "scan-fix-verify"];
@@ -68,7 +69,10 @@ const DASHBOARD_ROOT = resolve(__dirname, "..");
  */
 export function resolveAdkDir(env = process.env, root = DASHBOARD_ROOT) {
   if (env.ADK_DIR) return resolve(env.ADK_DIR);
-  return resolve(root, "../../../opensource/adk");
+  return (
+    resolveRepoPath("adk", "templates", { from: root })?.repoRoot ??
+    resolve(root, "adk")
+  );
 }
 
 /**

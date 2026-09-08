@@ -7,14 +7,14 @@
  *
  * Two source modes:
  *
- *   local  (default)   read plans.yaml + plans.schema.json from the polyrepo
- *                      sibling at enterprise/platform/charts/helm/gibson-operators/files/.
- *                      Used for local dev where the workspace has both clones.
+ *   local  (default)   read plans.yaml + plans.schema.json from a checkout of
+ *                      zeroroot-ai/charts next to this one, at
+ *                      helm/gibson-operators/files/. Used for local dev.
  *
- *   remote             fetch plans.yaml + plans.schema.json from GitHub raw at
+ *   remote             fetch the same two files from GitHub raw at
  *                      https://raw.githubusercontent.com/zeroroot-ai/charts/{ref}/helm/gibson-operators/files/...
- *                      Used in Docker / CI where the sibling clone is not on disk.
- *                      charts is public: no token needed.
+ *                      Used in Docker / CI where no checkout is on disk.
+ *                      charts is public, so no token is needed.
  *                      Ref:  PLANS_REF env var, default "main".
  *
  * Open-core relocation (gibson#915 / ADR-0050): #915 ripped billing/plans out
@@ -26,7 +26,7 @@
  *   --local  / --source=local   | PLANS_SOURCE=local    ⇒ local
  *   default                                              ⇒ local
  *
- * Emits:  enterprise/platform/dashboard/src/generated/plans.ts
+ * Emits:  src/generated/plans.ts
  *
  * The generated file contains strongly-typed Plan / Quotas / Pricing / PlanID
  * definitions + the frozen `plans` constant used by /pricing, BillingContent,
@@ -50,23 +50,22 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
-import { requireWorkspacePath, resolveWorkspacePath } from "./lib/workspace-root.mjs";
+import { requireRepoPath, resolveRepoPath } from "./lib/workspace-root.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(HERE, "..");
-// Sibling resolution searches upward for the artifact rather than counting
-// `..` segments off a rewound path. The depth counter was correct for the main
-// checkout and for a worktree at `<dashboard>/.worktrees/<name>`, and wrong
-// everywhere else — from `<workspace>/.worktrees/<name>` it walked to `/home`.
-// dashboard#1015.
+// The resolver takes a repository name and a path inside it, and finds the
+// checkout by searching the ancestors of this one. It never counts `..`
+// segments and never names a directory outside a repository, so the layout of
+// the checkouts on any one machine is not encoded here.
 //
 // Open-core relocation (gibson#915 / ADR-0050): #915 ripped billing/plans out
-// of OSS gibson, so the canonical plans source is `charts` (ADR-0086)
-// (helm/gibson-operators/files/) — ELv2-readable by the dashboard; the closed
-// billing impl reads the same copy. (Previously gibson/operators/tenant/plans/.)
-const PLANS_REL = "enterprise/platform/charts/helm/gibson-operators/files/plans.yaml";
-const PLANS_SCHEMA_REL =
-  "enterprise/platform/charts/helm/gibson-operators/files/plans.schema.json";
+// of OSS gibson, so the canonical plans source is the public `charts`
+// repository (ADR-0086), ELv2-readable by the dashboard; the closed billing
+// implementation reads the same copy.
+const PLANS_REPO = "charts";
+const PLANS_REL = "helm/gibson-operators/files/plans.yaml";
+const PLANS_SCHEMA_REL = "helm/gibson-operators/files/plans.schema.json";
 const OUTPUT = resolve(DASHBOARD_ROOT, "src/generated/plans.ts");
 
 const REMOTE_REPO = "zeroroot-ai/charts";
@@ -107,26 +106,18 @@ function resolveSource(argv) {
 }
 
 /**
- * Fetch a single file from the gibson monorepo's raw content endpoint.
- * Uses the GITHUB_TOKEN env var (the BuildKit `ghtoken` secret in the
- * Dockerfile, the `secrets.GH_PAT_*` PAT in CI workflows). gibson is a
- * private repo so unauthenticated fetches will 401 / 404.
+ * Fetch a single file from the charts repository's raw content endpoint.
+ * charts is public, so the fetch is unauthenticated. GITHUB_TOKEN is sent
+ * when it is set, which only raises the rate limit.
  */
 async function fetchRemoteFile(ref, repoPath) {
   const token = process.env.GITHUB_TOKEN;
-  if (!token) {
-    die(
-      "PLANS_SOURCE=remote requires GITHUB_TOKEN env var with read access " +
-        `to ${REMOTE_REPO} (private repo). Set GITHUB_TOKEN or switch to ` +
-        "PLANS_SOURCE=local.",
-    );
-  }
   const url = `https://raw.githubusercontent.com/${REMOTE_REPO}/${encodeURIComponent(ref)}/${repoPath}`;
   let resp;
   try {
     resp = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         Accept: "application/vnd.github.raw",
         "User-Agent": "gibson-dashboard-gen-plans",
       },
@@ -140,24 +131,24 @@ async function fetchRemoteFile(ref, repoPath) {
         (resp.status === 404
           ? ` (check PLANS_REF=${JSON.stringify(ref)} resolves to a commit on ${REMOTE_REPO})`
           : resp.status === 401 || resp.status === 403
-            ? " (check GITHUB_TOKEN has read access to the private repo)"
+            ? " (rate limited; set GITHUB_TOKEN to raise the limit)"
             : ""),
     );
   }
   return await resp.text();
 }
 
-/** Load plans.yaml + plans.schema.json from local polyrepo paths. */
+/** Load plans.yaml + plans.schema.json from a local charts checkout. */
 function loadLocal() {
   let plansYaml;
   let plansSchema;
   try {
-    plansYaml = requireWorkspacePath(PLANS_REL, {
+    plansYaml = requireRepoPath(PLANS_REPO, PLANS_REL, {
       from: DASHBOARD_ROOT,
       hint:
-        "Or switch to remote mode with PLANS_SOURCE=remote (GITHUB_TOKEN required).",
+        "Or switch to remote mode with PLANS_SOURCE=remote; charts is public, so no token is needed.",
     });
-    plansSchema = requireWorkspacePath(PLANS_SCHEMA_REL, {
+    plansSchema = requireRepoPath(PLANS_REPO, PLANS_SCHEMA_REL, {
       from: DASHBOARD_ROOT,
     });
   } catch (e) {
@@ -196,15 +187,15 @@ async function loadRemote() {
  * thing that has to know them. Same contract as `proto-generate.mjs --probe`.
  */
 function probe(source) {
-  // Remote mode fetches from GitHub, so the sibling clone is irrelevant; the
-  // sources are "available" whenever a token is present to fetch them with.
+  // Remote mode fetches from GitHub, so the local checkout is irrelevant and
+  // charts is public, so the sources are always reachable.
   if (source === "remote") {
     process.stdout.write(
       JSON.stringify(
         {
           mode: "remote",
           sources: { remote: `${REMOTE_REPO}@${process.env.PLANS_REF || "main"}` },
-          available: Boolean(process.env.GITHUB_TOKEN),
+          available: true,
         },
         null,
         2,
@@ -212,11 +203,11 @@ function probe(source) {
     );
     return;
   }
-  // Same upward search loadLocal() uses, but non-fatal: --probe asks "is this
-  // reachable?", so absence is an answer rather than an error. dashboard#1015.
-  const yaml = resolveWorkspacePath(PLANS_REL, { from: DASHBOARD_ROOT })?.path ?? null;
+  // Same search loadLocal() uses, but non-fatal: --probe asks "is this
+  // reachable?", so absence is an answer rather than an error.
+  const yaml = resolveRepoPath(PLANS_REPO, PLANS_REL, { from: DASHBOARD_ROOT })?.path ?? null;
   const schema =
-    resolveWorkspacePath(PLANS_SCHEMA_REL, { from: DASHBOARD_ROOT })?.path ?? null;
+    resolveRepoPath(PLANS_REPO, PLANS_SCHEMA_REL, { from: DASHBOARD_ROOT })?.path ?? null;
   process.stdout.write(
     JSON.stringify(
       { mode: "local", sources: { yaml, schema }, available: Boolean(yaml && schema) },
@@ -325,7 +316,7 @@ function renderTypeScript(doc) {
   lines.push(
     "// GENERATED FILE, do not edit.",
     "// Source: charts/helm/gibson-operators/files/plans.yaml",
-    "// Generator: enterprise/platform/dashboard/scripts/gen-plans.mjs",
+    "// Generator: scripts/gen-plans.mjs in zeroroot-ai/dashboard",
     "// Run `npm run build` (or the `prebuild` hook) to regenerate.",
     "",
     "export type PlanID =",

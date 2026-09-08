@@ -183,4 +183,4 @@ the branded type cannot express.
 - Machine-readable rules: [`rules.yaml`](./rules.yaml).
 - SDK identity types: `core/sdk/docs/auth.md`.
 - ext-authz internals (the layer above the daemon): `core/ext-authz/docs/auth.md`.
-- Helm wiring (Envoy chain, SPIRE, Zitadel SAs): `enterprise/deploy/docs/auth.md`.
+- Helm wiring (Envoy chain, SPIRE, Zitadel SAs): the umbrella chart in the charts repository.

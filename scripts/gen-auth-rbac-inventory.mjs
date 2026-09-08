@@ -3,9 +3,10 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Generate enterprise/docs/AUTH_RBAC_INVENTORY.md from the rendered
- * chart + the FGA tuple seed. Single auditable source of truth for the
- * dashboard's RBAC posture.
+ * Generate docs/AUTH_RBAC_INVENTORY.md from the rendered chart + the FGA
+ * tuple seed. Single auditable source of truth for the dashboard's RBAC
+ * posture. The chart comes from a charts checkout; the inventory is committed
+ * in this repository, next to the code whose posture it records.
  *
  * Spec: auth-resolution-hardening (R9).
  *
@@ -22,46 +23,29 @@
  * produce byte-identical output for the same chart input.
  */
 
-import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'yaml';
-import { findWorkspaceRoot } from './lib/workspace-root.mjs';
+import { resolveRepoPath } from './lib/workspace-root.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, '..');
-// Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ the naive
-// `../../..` walk lands short of the workspace root. Rewind to the main
-// checkout root before walking up. dashboard#197 (same pattern as #175).
-// Sibling resolution searches upward for the artifact rather than counting
-// `..` segments. The depth counter was correct for the main checkout and for a
-// worktree at `<dashboard>/.worktrees/<name>`, and wrong everywhere else.
-// dashboard#1015.
-const REPO_ROOT = findWorkspaceRoot({ from: DASHBOARD_ROOT }) ?? DASHBOARD_ROOT;
-const CHART_DIR = resolve(REPO_ROOT, 'enterprise/deploy/helm/gibson');
-const FGA_INIT = resolve(CHART_DIR, 'templates/openfga/init-job.yaml');
-const OUTPUT_PATH = resolve(REPO_ROOT, 'enterprise/docs/AUTH_RBAC_INVENTORY.md');
+// The resolver takes a repository name and a path inside it, and finds the
+// checkout by searching the ancestors of this one. The umbrella chart lives in
+// the public charts repository (ADR-0086).
+// The charts repository commits a golden render of the umbrella with the
+// vanilla overlay. Reading it needs neither helm nor a dependency build, and it
+// is the same artifact the chart's own gate asserts on. The rendered RBAC does
+// not depend on environment values, so the vanilla golden is enough.
+const GOLDEN_REL = 'helm/testdata/golden/values-vanilla.withcaps.yaml';
+const GOLDEN_PATH =
+  resolveRepoPath('charts', GOLDEN_REL, { from: DASHBOARD_ROOT })?.path ??
+  resolve(DASHBOARD_ROOT, 'charts', GOLDEN_REL);
+const OUTPUT_PATH = resolve(DASHBOARD_ROOT, 'docs/AUTH_RBAC_INVENTORY.md');
 
 function renderChart() {
-  // Render with values-kind.yaml so the chart's environment-overlay-required
-  // values (idp.zitadel.issuer, vault.enabled, etc.) are satisfied. The
-  // generated inventory is environment-independent (it lists rule shapes,
-  // not concrete values), so any working overlay produces the same output.
-  const valuesKind = resolve(CHART_DIR, 'values-kind.yaml');
-  return execFileSync(
-    'helm',
-    [
-      'template',
-      CHART_DIR,
-      '--values',
-      valuesKind,
-      '--set',
-      'tenantOperator.billing.devAutoConfirm=false',
-      '--api-versions=monitoring.coreos.com/v1',
-    ],
-    { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
-  );
+  return readFileSync(GOLDEN_PATH, 'utf8');
 }
 
 function parseDocs(rendered) {
@@ -157,21 +141,16 @@ function renderRoleTable(role) {
   return lines.join('\n');
 }
 
-function extractDashboardFGATuple() {
-  // Look up the seeded tuple inline in the openfga init job script.
-  let body = '';
-  try {
-    body = readFileSync(FGA_INIT, 'utf8');
-  } catch {
-    return null;
-  }
+function extractDashboardFGATuple(rendered) {
+  // The seeded tuple is inline in the rendered FGA init job.
+  const body = rendered;
   const m = /platform\/dashboard.+?platform_operator.+?system_tenant:_system/s.exec(body);
   if (!m) return null;
   return {
     user: 'user:<trust-domain>/platform/dashboard',
     relation: 'platform_operator',
     object: 'system_tenant:_system',
-    seededBy: 'enterprise/deploy/helm/gibson/templates/openfga/init-job.yaml (post-install/post-upgrade Hook)',
+    seededBy: 'charts: helm/gibson-workloads/templates/fga-init/job.yaml (post-install/post-upgrade Hook)',
     purpose:
       'Authorizes the dashboard workload SPIFFE identity to call admin RPCs that operate on the system tenant (Shutdown, ImpersonateTenant, UpsertTenantQuota, etc.). User-acting RPCs do NOT use this tuple, those reach FGA as `user:<zitadel-sub>` per spec dashboard-fga-user-identity.',
   };
@@ -210,13 +189,13 @@ function generate() {
     .map((k) => roles.get(k))
     .sort((a, b) => a.metadata.name.localeCompare(b.metadata.name));
 
-  const tuple = extractDashboardFGATuple();
+  const tuple = extractDashboardFGATuple(rendered);
   const nps = networkPoliciesForDashboard(docs);
 
   const out = [];
   out.push('# Auth RBAC Inventory, Gibson Dashboard');
   out.push('');
-  out.push('> Generated by `enterprise/platform/dashboard/scripts/gen-auth-rbac-inventory.mjs`.');
+  out.push('> Generated by `scripts/gen-auth-rbac-inventory.mjs` in zeroroot-ai/dashboard.');
   out.push('> Do NOT hand-edit. Regenerate with `npm run gen:auth-rbac-inventory`.');
   out.push('> Freshness is enforced by `scripts/check-auth-rbac-inventory-fresh.mjs` in `npm run prebuild`.');
   out.push('');
@@ -262,6 +241,24 @@ function generate() {
 }
 
 const argv = process.argv.slice(2);
+
+// --probe: report whether the chart's golden render is reachable, as JSON on
+// stdout. check-auth-rbac-inventory-fresh.mjs uses this to choose between a
+// full byte-diff and a structural pass, so the generator that owns this path is
+// the only thing that has to know it. Same contract as
+// `proto-generate.mjs --probe`.
+if (argv.includes('--probe')) {
+  const present = existsSync(GOLDEN_PATH);
+  process.stdout.write(
+    JSON.stringify(
+      { sources: { golden: present ? GOLDEN_PATH : null }, available: present },
+      null,
+      2,
+    ) + '\n',
+  );
+  process.exit(0);
+}
+
 const text = generate();
 if (argv.includes('--stdout')) {
   process.stdout.write(text);

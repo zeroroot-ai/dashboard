@@ -2,67 +2,84 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Polyrepo sibling resolution for the dashboard's build scripts.
+ * Sibling-repository resolution for the dashboard's build scripts.
  *
- * ## Why this exists
+ * ## What a caller asks for
  *
- * Six scripts needed to reach a file in a sibling repo (`deploy`'s plans.yaml,
- * the `sdk` proto tree, the gibson daemon-local proto tree, …). Each one
- * encoded the workspace layout as a path-depth count:
+ * A repository NAME and a path INSIDE that repository:
  *
  * ```js
- * const isWorktree = DASHBOARD_ROOT.includes("/.worktrees/");
- * const MAIN = isWorktree ? DASHBOARD_ROOT.replace(/\/\.worktrees\/[^/]+$/, "") : DASHBOARD_ROOT;
- * const REPO_ROOT = resolve(MAIN, "..", "..", "..");
+ * requireRepoPath("charts", "helm/gibson-operators/files/plans.yaml");
+ * requireRepoPath("sdk", "gen/mission-definition.schema.json");
  * ```
  *
- * That is correct for exactly two layouts: the main checkout at
- * `<workspace>/enterprise/platform/dashboard`, and a worktree nested at
- * `<dashboard>/.worktrees/<name>`. From a worktree anywhere else — say
- * `<workspace>/.worktrees/<name>` — the rewind is a no-op and the three-level
- * walk lands on `/home`, producing
- * `/home/enterprise/deploy/helm/gibson-operators/files/plans.yaml`. See
- * dashboard#1015. Nesting the worktree to satisfy the counter then breaks
- * eslint, so no location satisfied both checks.
+ * Both halves are durable. `charts` is `github.com/zeroroot-ai/charts`, and
+ * `helm/gibson-operators/files/plans.yaml` is a path in that repository. No
+ * caller states where the clones sit on any particular machine.
  *
- * ## What replaces it
+ * ## Where the resolver looks
  *
- * Search upward for the artifact instead of counting directory levels. Walk
- * from the starting directory to the filesystem root and take the first
- * ancestor under which the requested workspace-relative path actually exists.
- * A wrong ancestor cannot produce a false positive, because the predicate is
- * "the file is there", not "the depth looks right".
+ * It walks up from this checkout. At each ancestor it descends through GROUPING
+ * directories, up to two levels, and takes the first directory named after the
+ * repository that actually contains the requested path.
  *
- * This is layout-agnostic: it works from the main checkout, from a worktree
- * nested inside the dashboard, from a worktree at the workspace root, and from
- * any future layout — including whatever the workspace moves to next, which is
- * the point (it already moved once with the open-core consolidation).
+ * A grouping directory is any directory that is not itself a checkout, so the
+ * descent never enters another repository's tree. Dot-directories, build output
+ * and `node_modules` are never entered either, and the descent carries a budget
+ * so a miss cannot turn into a filesystem crawl.
  *
- * `GIBSON_WORKSPACE_ROOT` overrides the search when set. An explicit override
- * is never silently ignored: if the artifact is not under it, resolution fails
- * rather than falling back to the walk, so a typo surfaces instead of
- * mysteriously working.
+ * That rule covers every layout the workspace has used and the obvious ones it
+ * has not: repositories side by side, repositories under one or two grouping
+ * directories, this checkout in a `.worktrees/<name>` directory at any level.
+ * It never counts `..` segments and it never names a grouping directory, so
+ * moving the clones needs no edit here.
+ *
+ * The predicate is "the requested path is under this directory", so a directory
+ * that happens to share a repository name but holds nothing is skipped rather
+ * than returned.
+ *
+ * ## The one override
+ *
+ * `GIBSON_WORKSPACE_ROOT` replaces the ancestor walk with the single directory
+ * it names. The same descent applies under it, so a scratch root of symlinks
+ * works:
+ *
+ * ```
+ * $ROOT/gibson -> …          # a child
+ * $ROOT/oss/sdk -> …         # under one grouping directory
+ * ```
+ *
+ * An override that does not hold FAILS. It never falls back to the walk, so a
+ * typo surfaces instead of mysteriously working.
+ *
+ * ## Never reintroduce a depth count
+ *
+ * `resolve(root, "..", "..", "..")` and `path.includes("/.worktrees/")` are the
+ * exact bug this replaced. Unit tests covering every layout live in
+ * `scripts/lib/workspace-root.test.mjs`.
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 
 export const WORKSPACE_ROOT_ENV = "GIBSON_WORKSPACE_ROOT";
 
-/**
- * Paths that, relative to a directory, identify it as the polyrepo workspace
- * root. Used only to name the root in diagnostics and to answer "is there a
- * workspace here at all"; actual artifact resolution never relies on these,
- * it looks for the artifact itself.
- *
- * Several anchors, ORed, so a partial clone set still resolves.
- */
-const WORKSPACE_ANCHORS = [
-  "enterprise/platform/dashboard",
-  "enterprise/platform/gibson",
-  "enterprise/deploy",
-  "opensource/sdk",
-];
+/** Directory names that never group sibling checkouts. */
+const NEVER_A_GROUP = new Set([
+  "node_modules",
+  "dist",
+  "build",
+  "out",
+  "coverage",
+  "target",
+  "vendor",
+]);
+
+/** How many grouping directories the descent may pass through. */
+const MAX_GROUP_DEPTH = 2;
+
+/** Directories the descent may examine per starting point. */
+const SEARCH_BUDGET = 256;
 
 /** Every directory from `start` up to the filesystem root, inclusive. */
 export function ancestorsOf(start) {
@@ -88,85 +105,117 @@ function envRoot() {
   return resolve(value);
 }
 
+function defaultListDirs(dir) {
+  try {
+    return readdirSync(dir, { withFileTypes: true })
+      .filter(
+        (e) =>
+          e.isDirectory() && !e.name.startsWith(".") && !NEVER_A_GROUP.has(e.name),
+      )
+      .map((e) => e.name);
+  } catch {
+    return [];
+  }
+}
+
 /**
- * Resolve one workspace-relative path to an absolute path.
+ * Every directory that could be the `repo` checkout, nearest first.
  *
- * @param {string} relPath  path relative to the workspace root, e.g.
- *   "enterprise/deploy/helm/gibson-operators/files/plans.yaml". May name a
- *   file or a directory.
- * @param {{from?: string, exists?: (p: string) => boolean}} [opts]
- *   `from` is the directory to start the upward walk at; defaults to the
- *   current working directory. `exists` is injectable for tests.
- * @returns {{path: string, workspaceRoot: string, via: "env" | "search"} | null}
- *   null when the artifact is not reachable from any ancestor.
+ * @param {string} repo
+ * @param {string[]} bases  starting points, nearest first
+ * @param {(dir: string) => string[]} listDirs
+ * @param {(dir: string) => boolean} isCheckout
  */
-export function resolveWorkspacePath(relPath, opts = {}) {
-  const { from = process.cwd(), exists = existsSync } = opts;
+function* candidateRoots(repo, bases, listDirs, isCheckout) {
+  for (const base of bases) {
+    let frontier = [base];
+    let budget = SEARCH_BUDGET;
+    for (let depth = 0; depth <= MAX_GROUP_DEPTH; depth += 1) {
+      const next = [];
+      for (const dir of frontier) {
+        yield join(dir, repo);
+        if (depth === MAX_GROUP_DEPTH || budget <= 0) continue;
+        // Descend through grouping directories only. A directory that is
+        // itself a checkout holds another repository's tree, never a sibling.
+        if (isCheckout(dir)) continue;
+        for (const name of listDirs(dir)) {
+          if (budget <= 0) break;
+          budget -= 1;
+          if (name === repo) continue;
+          next.push(join(dir, name));
+        }
+      }
+      if (next.length === 0) break;
+      frontier = next;
+    }
+  }
+}
+
+/**
+ * Resolve one path inside a sibling repository.
+ *
+ * @param {string} repo  repository name, e.g. "charts", "sdk", "gibson", "adk"
+ * @param {string} relPath  path inside that repository. May name a file or a
+ *   directory. Pass a marker such as "go.mod" when the caller wants the
+ *   repository root itself, and read `repoRoot` off the result.
+ * @param {{from?: string, exists?: (p: string) => boolean,
+ *          listDirs?: (dir: string) => string[]}} [opts]
+ *   `from` is the directory the ancestor walk starts at, default the current
+ *   working directory. `exists` and `listDirs` are injectable for tests.
+ * @returns {{path: string, repoRoot: string, via: "env" | "search"} | null}
+ *   null when no candidate holds the requested path.
+ */
+export function resolveRepoPath(repo, relPath, opts = {}) {
+  const {
+    from = process.cwd(),
+    exists = existsSync,
+    listDirs = defaultListDirs,
+  } = opts;
 
   const forced = envRoot();
-  if (forced !== null) {
-    const candidate = join(forced, relPath);
-    // Deliberately no fallback to the search: an explicit override that does
-    // not hold must fail loudly.
-    return exists(candidate)
-      ? { path: candidate, workspaceRoot: forced, via: "env" }
-      : null;
-  }
+  const bases = forced !== null ? [forced] : ancestorsOf(from);
+  const via = forced !== null ? "env" : "search";
+  const isCheckout = (dir) => exists(join(dir, ".git"));
 
-  for (const dir of ancestorsOf(from)) {
-    const candidate = join(dir, relPath);
-    if (exists(candidate)) {
-      return { path: candidate, workspaceRoot: dir, via: "search" };
-    }
+  for (const repoRoot of candidateRoots(repo, bases, listDirs, isCheckout)) {
+    const candidate = join(repoRoot, relPath);
+    if (exists(candidate)) return { path: candidate, repoRoot, via };
   }
   return null;
 }
 
 /**
- * Same as resolveWorkspacePath but throws a diagnostic naming every directory
- * that was tried, instead of returning null.
+ * Same as resolveRepoPath, but throws a diagnostic that names what was tried.
  *
+ * @param {string} repo
  * @param {string} relPath
- * @param {{from?: string, exists?: (p: string) => boolean, hint?: string}} [opts]
+ * @param {{from?: string, exists?: (p: string) => boolean,
+ *          listDirs?: (dir: string) => string[], hint?: string}} [opts]
  * @returns {string} absolute path
  */
-export function requireWorkspacePath(relPath, opts = {}) {
-  const { from = process.cwd(), exists = existsSync, hint } = opts;
-  const found = resolveWorkspacePath(relPath, { from, exists });
+export function requireRepoPath(repo, relPath, opts = {}) {
+  const { from = process.cwd(), hint, ...rest } = opts;
+  const found = resolveRepoPath(repo, relPath, { from, ...rest });
   if (found) return found.path;
 
   const forced = envRoot();
-  const lines = [`cannot locate ${relPath} in the polyrepo workspace.`];
+  const lines = [
+    `cannot locate ${relPath} in a checkout of zeroroot-ai/${repo}.`,
+  ];
   if (forced !== null) {
     lines.push(
-      `${WORKSPACE_ROOT_ENV} is set to ${forced}, and ${join(forced, relPath)} does not exist.`,
-      `Unset ${WORKSPACE_ROOT_ENV} to search upward from the checkout instead.`,
+      `${WORKSPACE_ROOT_ENV} is set to ${forced}, and no ${repo} directory under it holds ${relPath}.`,
+      `Put the checkout at ${join(forced, repo)}, or unset ${WORKSPACE_ROOT_ENV}`,
+      "to search upward from this checkout instead.",
     );
   } else {
     lines.push(
-      `Searched upward from ${resolve(from)}:`,
-      ...ancestorsOf(from).map((d) => `  ${join(d, relPath)}`),
-      `Clone the sibling repo into your workspace, or set ${WORKSPACE_ROOT_ENV}`,
-      "to the directory the sibling repos hang off.",
+      `Searched every ancestor of ${resolve(from)} for a ${repo} directory`,
+      `holding that path, through at most ${MAX_GROUP_DEPTH} grouping directories.`,
+      `Clone zeroroot-ai/${repo} next to this checkout, or set ${WORKSPACE_ROOT_ENV}`,
+      "to the directory the checkouts hang off.",
     );
   }
   if (hint) lines.push(hint);
   throw new Error(lines.join("\n"));
-}
-
-/**
- * Best-effort location of the workspace root itself, for diagnostics and for
- * callers that need the root rather than one artifact under it.
- *
- * @param {{from?: string, exists?: (p: string) => boolean}} [opts]
- * @returns {string | null}
- */
-export function findWorkspaceRoot(opts = {}) {
-  const { from = process.cwd(), exists = existsSync } = opts;
-  const forced = envRoot();
-  if (forced !== null) return forced;
-  for (const dir of ancestorsOf(from)) {
-    if (WORKSPACE_ANCHORS.some((a) => exists(join(dir, a)))) return dir;
-  }
-  return null;
 }

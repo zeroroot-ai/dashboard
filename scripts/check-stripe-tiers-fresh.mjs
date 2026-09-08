@@ -5,7 +5,7 @@
 /**
  * Build guard: verify that the **committed** `src/lib/billing/stripe_gen.ts`
  * matches what `gen-stripe-tiers.mjs` produces from the canonical
- * `enterprise/deploy/helm/gibson-operators/files/plans.yaml`.
+ * `helm/gibson-operators/files/plans.yaml` in the charts repository.
  *
  * Until dashboard#1019 `prebuild` ran `gen-stripe-tiers.mjs` immediately
  * before this gate, so the gate diffed the file the generator had just written

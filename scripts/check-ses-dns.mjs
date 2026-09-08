@@ -106,7 +106,7 @@ async function main() {
   } else {
     console.error(`\n❌ One or more DNS checks failed for ${DOMAIN}`);
     console.error('  Ensure Route53 records are configured per:');
-    console.error('  enterprise/gitops/apps/gibson/ses-dns-records.yaml');
+    console.error('  the SES DNS record set in the hosted estate.');
     process.exit(1);
   }
 }

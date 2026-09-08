@@ -1,5 +1,5 @@
 {
-  "$comment": "DO NOT EDIT, generated from opensource/sdk/gen/mission-definition.schema.json by scripts/gen-mission-schema.mjs. Run `node scripts/gen-mission-schema.mjs` to regenerate.",
+  "$comment": "DO NOT EDIT, generated from gen/mission-definition.schema.json in zeroroot-ai/sdk by scripts/gen-mission-schema.mjs. Run `node scripts/gen-mission-schema.mjs` to regenerate.",
   "$defs": {
     "Acceptance": {
       "additionalProperties": false,
