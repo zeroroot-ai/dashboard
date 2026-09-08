@@ -26,6 +26,9 @@
  *   files  three whole-file exceptions: this guard (it declares the patterns it
  *          searches for), this allowlist (it quotes the lines it allows) and
  *          CHANGELOG.md (release-please writes it, and it records the rename).
+ *          A file entry is stale when the file is PRESENT and carries no
+ *          legacy string. A file that is absent is not stale: the Docker build
+ *          context drops every .md file, so CHANGELOG.md is simply not there.
  *   lines  one entry per tolerated line, keyed by the exact trimmed line text.
  *          An entry whose text no longer appears in its file fails the guard,
  *          so the allowlist cannot rot. Run `--shrink` to drop stale entries.
@@ -34,8 +37,9 @@
  *   (none)      scan the tree, report every hit outside the allowlist
  *   --shrink    remove allowlist line entries that no longer match
  *   --selftest  build fixtures, prove each pattern fires, prove a clean tree
- *               passes, prove the allowlist suppresses and prove a stale
- *               allowlist entry is reported
+ *               passes, prove the allowlist suppresses, prove a stale
+ *               allowlist entry is reported, and prove an absent file is not
+ *               mistaken for a stale entry
  *
  * Exit codes: 0 clean; 1 at least one hit or a stale allowlist entry; 2 error.
  */
@@ -177,11 +181,17 @@ async function scan(root, allowlist) {
 
   const files = await collectFiles(root);
   const seen = new Map();
+  const exemptHits = new Set();
   const hits = [];
 
   for (const rel of files) {
-    if (exemptFiles.has(rel)) continue;
     const content = await readFile(join(root, rel), "utf8");
+    if (exemptFiles.has(rel)) {
+      // Still scanned, so a whole-file exception that no longer earns its
+      // place is reported instead of sitting there for ever.
+      if (PATTERNS.some((p) => p.re.test(content))) exemptHits.add(rel);
+      continue;
+    }
     const allowedHere = allowedLines.get(rel);
     const lines = content.split("\n");
     for (let i = 0; i < lines.length; i += 1) {
@@ -201,7 +211,12 @@ async function scan(root, allowlist) {
   const present = new Set(files);
   const stale = [];
   for (const entry of allowlist.files ?? []) {
-    if (!present.has(entry.path)) stale.push({ ...entry, why: "file is gone" });
+    // An absent file is not stale. The scan runs over partial trees too, and
+    // the Docker build context carries no .md file at all.
+    if (!present.has(entry.path)) continue;
+    if (!exemptHits.has(entry.path)) {
+      stale.push({ ...entry, why: "the file carries no legacy string any more" });
+    }
   }
   for (const entry of allowlist.lines ?? []) {
     if (!seen.get(entry.path)?.has(entry.text)) {
@@ -322,13 +337,25 @@ async function runSelftest() {
       failures.push("a live allowlist entry was reported stale");
     }
 
-    // A stale entry must be reported, so the allowlist cannot rot.
+    // A stale entry must be reported, so the allowlist cannot rot. A whole-file
+    // exception is stale when the file is present and carries nothing to
+    // exempt; a line entry is stale when its text is gone.
     const rotted = await scan(root, {
-      files: [{ path: "docs/deleted.md" }],
+      files: [{ path: "app/clean.tsx" }],
       lines: [{ path: "app/clean.tsx", text: "this line does not exist" }],
     });
     if (rotted.stale.length !== 2) {
       failures.push(`expected 2 stale entries, got ${rotted.stale.length}`);
+    }
+
+    // An ABSENT file is not stale. The Docker build context drops every .md
+    // file, so a CHANGELOG.md exception must survive a partial tree.
+    const partial = await scan(root, {
+      files: [{ path: "docs/not-in-this-tree.md" }],
+      lines: [],
+    });
+    if (partial.stale.length !== 0) {
+      failures.push("an absent whole-file exception was reported stale");
     }
   } finally {
     rmSync(root, { recursive: true, force: true });
