@@ -21,7 +21,7 @@
  *   1, at least one unexpected hit (details printed to stderr)
  */
 
-import { readdir, readFile, stat } from "node:fs/promises";
+import { open, readdir, readFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -107,26 +107,50 @@ async function walk(dir, hits) {
     const relPath = toPosix(relative(DASHBOARD_ROOT, absPath));
     if (ALLOWLIST.has(relPath)) continue;
 
-    const content = await readFile(absPath, "utf8");
-    if (!content.includes(PATTERN)) continue;
+    scanContent(relPath, await readFile(absPath, "utf8"), hits);
+  }
+}
 
-    const lines = content.split("\n");
-    for (let i = 0; i < lines.length; i += 1) {
-      if (lines[i].includes(PATTERN)) {
-        hits.push({ file: relPath, line: i + 1, text: lines[i].trim() });
-      }
+/**
+ * Record every line of `content` that carries the legacy URL.
+ */
+function scanContent(relPath, content, hits) {
+  if (!content.includes(PATTERN)) return;
+  const lines = content.split("\n");
+  for (let i = 0; i < lines.length; i += 1) {
+    if (lines[i].includes(PATTERN)) {
+      hits.push({ file: relPath, line: i + 1, text: lines[i].trim() });
     }
   }
 }
 
+/**
+ * Check one search root. The root is opened once and the same handle serves
+ * both the type check and the read, so no second path lookup can race a
+ * rename between them (CodeQL js/file-system-race). A missing root is
+ * skipped, a directory root is walked, and any other non-file root is
+ * ignored.
+ */
 async function checkEntry(entry, hits) {
   const abs = join(DASHBOARD_ROOT, entry);
-  let info;
+  let handle;
   try {
-    info = await stat(abs);
+    handle = await open(abs, "r");
   } catch (err) {
     if (err && err.code === "ENOENT") return;
+    if (err && err.code === "EISDIR") {
+      await walk(abs, hits);
+      return;
+    }
     throw err;
+  }
+  let info;
+  let content;
+  try {
+    info = await handle.stat();
+    if (info.isFile()) content = await handle.readFile("utf8");
+  } finally {
+    await handle.close();
   }
   if (info.isDirectory()) {
     await walk(abs, hits);
@@ -135,14 +159,7 @@ async function checkEntry(entry, hits) {
   if (!info.isFile()) return;
   const relPath = toPosix(relative(DASHBOARD_ROOT, abs));
   if (ALLOWLIST.has(relPath)) return;
-  const content = await readFile(abs, "utf8");
-  if (!content.includes(PATTERN)) return;
-  const lines = content.split("\n");
-  for (let i = 0; i < lines.length; i += 1) {
-    if (lines[i].includes(PATTERN)) {
-      hits.push({ file: relPath, line: i + 1, text: lines[i].trim() });
-    }
-  }
+  scanContent(relPath, content, hits);
 }
 
 async function main() {
