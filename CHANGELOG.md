@@ -5,6 +5,13 @@ All notable changes to the Gibson Dashboard are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.120.8](https://github.com/zeroroot-ai/dashboard/compare/v0.120.7...v0.120.8) (2026-09-08)
+
+
+### Bug Fixes
+
+* **tests:** drop the wall-clock waits from AccessScopeSelector tests ([#36](https://github.com/zeroroot-ai/dashboard/issues/36)) ([1804e91](https://github.com/zeroroot-ai/dashboard/commit/1804e91732be93af4d2c070792fb57b6e8ba0417))
+
 ## [0.120.7](https://github.com/zeroroot-ai/dashboard/compare/v0.120.6...v0.120.7) (2026-09-08)
 
 
