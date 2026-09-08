@@ -4,8 +4,8 @@
 
 /**
  * check-manifest-kind-required, fails CI when any of the three YAML
- * manifest schemas at core/sdk/{plugin,agent,tool}/manifest/schema.json
- * still treats `kind` as optional past the deprecation date.
+ * manifest schemas at {plugin,agent,tool}/manifest/schema.json in the sdk
+ * repository still treats `kind` as optional past the deprecation date.
  *
  * Pre-deprecation: log "ok (deprecation window active until DATE)".
  * Post-deprecation: exit non-zero with the offending file path.
@@ -15,7 +15,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { findWorkspaceRoot } from './lib/workspace-root.mjs';
+import { resolveRepoPath } from './lib/workspace-root.mjs';
 
 // 90 days post-spec landing. Edit this to extend or shorten the
 // backward-compat window. The script will start failing CI on this
@@ -23,19 +23,14 @@ import { findWorkspaceRoot } from './lib/workspace-root.mjs';
 const DEPRECATION_END = new Date('2026-08-01T00:00:00Z');
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-// Workspace root is two levels up from enterprise/platform/dashboard/scripts
-// (dashboard/scripts -> dashboard -> platform -> enterprise -> zeroroot.ai).
-// Sibling resolution searches upward for the artifact rather than counting
-// `..` segments. The depth counter was correct for the main checkout and for a
-// worktree at `<dashboard>/.worktrees/<name>`, and wrong everywhere else.
-// dashboard#1015.
-const WORKSPACE_ROOT =
-  findWorkspaceRoot({ from: HERE }) ?? path.resolve(HERE, '..', '..', '..', '..');
 
+// The manifest schemas live in the sdk repository. The resolver takes a
+// repository name and a path inside it, and finds the checkout by searching
+// the ancestors of this one.
 const SCHEMAS = [
-  'core/sdk/plugin/manifest/schema.json',
-  'core/sdk/agent/manifest/schema.json',
-  'core/sdk/tool/manifest/schema.json',
+  'plugin/manifest/schema.json',
+  'agent/manifest/schema.json',
+  'tool/manifest/schema.json',
 ];
 
 function main() {
@@ -49,13 +44,13 @@ function main() {
 
   const violations = [];
   for (const rel of SCHEMAS) {
-    const abs = path.join(WORKSPACE_ROOT, rel);
-    if (!existsSync(abs)) {
-      // Schema not present in this checkout, skip silently. The
-      // workspace layout is polyrepo; not every consumer has every
-      // sibling repo cloned.
+    const found = resolveRepoPath('sdk', rel, { from: HERE });
+    if (!found) {
+      // No sdk checkout nearby, so there is nothing to read. Every consumer
+      // clones the repositories it needs, and dashboard-only CI clones none.
       continue;
     }
+    const abs = found.path;
     let parsed;
     try {
       parsed = JSON.parse(readFileSync(abs, 'utf8'));

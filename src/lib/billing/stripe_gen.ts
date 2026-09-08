@@ -2,8 +2,8 @@
 // Copyright 2026 Zero Root AI
 
 // GENERATED FILE, do not edit.
-// Source: enterprise/deploy/helm/gibson-operators/files/plans.yaml
-// Generator: enterprise/platform/dashboard/scripts/gen-stripe-tiers.mjs
+// Source: charts/helm/gibson-operators/files/plans.yaml
+// Generator: scripts/gen-stripe-tiers.mjs in zeroroot-ai/dashboard
 // Spec: plans-and-quotas-simplification R8.
 
 export type BillingTier =

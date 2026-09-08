@@ -83,7 +83,7 @@ flows exclusively through `webhooks.zeroroot.ai/stripe`.
 2. Commit and deploy.
 
 **GitOps Ingress change:**
-1. Apply the tombstone Ingress in `enterprise/gitops/apps/gibson/webhook-ingress.yaml`
+1. Apply the tombstone Ingress that the hosted estate carries for the webhook host
    (the second YAML document, currently commented as "apply only after migration window closes").
 2. Open a PR; ArgoCD will sync the tombstone Ingress to the cluster.
 

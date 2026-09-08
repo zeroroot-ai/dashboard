@@ -7,11 +7,10 @@
  * into src/data/ and prepend a "$comment" field marking it as generated.
  *
  * Source of truth:
- *   opensource/sdk/gen/mission-definition.schema.json
- *   (sibling checkout at ~/Code/zeroroot.ai/ polyrepo workspace root)
+ *   gen/mission-definition.schema.json in a checkout of zeroroot-ai/sdk
  *
  * Output:
- *   enterprise/platform/dashboard/src/data/mission-definition.schema.json
+ *   src/data/mission-definition.schema.json
  *
  * Two modes
  * ---------
@@ -21,8 +20,7 @@
  * The script is idempotent: running it twice with the same SDK source produces
  * byte-identical output.
  *
- * Workstation-only. Requires the polyrepo sibling clone of opensource/sdk at
- *   ~/Code/zeroroot.ai/opensource/sdk/gen/mission-definition.schema.json
+ * Workstation-only. Requires a checkout of zeroroot-ai/sdk next to this one.
  * CI does not run this generator; the freshness gate (check-mission-schema-fresh.mjs)
  * verifies the committed file is structurally valid and carries the $comment header.
  * Full regeneration + diff only runs when the SDK sibling is present.
@@ -33,21 +31,19 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { resolveWorkspacePath } from "./lib/workspace-root.mjs";
+import { resolveRepoPath } from "./lib/workspace-root.mjs";
 
 const SCRIPT_NAME = "gen-mission-schema.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, "..");
 
-// Sibling resolution searches upward for the artifact rather than counting
-// `..` segments off a rewound path. The depth counter was correct for the main
-// checkout and for a worktree at `<dashboard>/.worktrees/<name>`, and wrong
-// everywhere else — from `<workspace>/.worktrees/<name>` it walked to `/home`.
-// dashboard#1015.
-const SDK_SCHEMA_REL = "opensource/sdk/gen/mission-definition.schema.json";
+// The resolver takes a repository name and a path inside it, and finds the
+// checkout by searching the ancestors of this one.
+const SDK_REPO = "sdk";
+const SDK_SCHEMA_REL = "gen/mission-definition.schema.json";
 const SDK_SCHEMA =
-  resolveWorkspacePath(SDK_SCHEMA_REL, { from: DASHBOARD_ROOT })?.path ??
+  resolveRepoPath(SDK_REPO, SDK_SCHEMA_REL, { from: DASHBOARD_ROOT })?.path ??
   resolve(DASHBOARD_ROOT, SDK_SCHEMA_REL);
 const OUTPUT = resolve(
   DASHBOARD_ROOT,
@@ -55,7 +51,7 @@ const OUTPUT = resolve(
 );
 
 const GENERATED_COMMENT =
-  "DO NOT EDIT, generated from opensource/sdk/gen/mission-definition.schema.json by scripts/gen-mission-schema.mjs. Run `node scripts/gen-mission-schema.mjs` to regenerate.";
+  "DO NOT EDIT, generated from gen/mission-definition.schema.json in zeroroot-ai/sdk by scripts/gen-mission-schema.mjs. Run `node scripts/gen-mission-schema.mjs` to regenerate.";
 
 function die(msg) {
   process.stderr.write(`${SCRIPT_NAME}: ${msg}\n`);
@@ -109,7 +105,7 @@ if (!existsSync(SDK_SCHEMA)) {
   if (stdoutMode) {
     die(
       `SDK schema not found at ${SDK_SCHEMA}\n` +
-        "--stdout mode requires the polyrepo sibling clone of opensource/sdk.\n" +
+        "--stdout mode requires a checkout of zeroroot-ai/sdk next to this one.\n" +
         "The freshness check (check-mission-schema-fresh.mjs) should gate --stdout on SDK presence.",
     );
   }

@@ -29,7 +29,7 @@ the in-cluster Prometheus.
 
 ## Alert rules
 
-Rules are committed under `enterprise/deploy/helm/gibson/files/prometheus/rules/`.
+Rules are committed under `helm/gibson/files/prometheus/rules/` in the charts repository.
 
 ### `DashboardSignInErrorRateHigh`
 
@@ -77,7 +77,7 @@ Rules are committed under `enterprise/deploy/helm/gibson/files/prometheus/rules/
 - **URL:** `https://grafana.gibson.svc/d/auth-resolution-hardening/auth-resolution-hardening`
   (accessible via `kubectl port-forward svc/grafana 3000:80 -n monitoring` on
   the dev cluster).
-- **File committed at:** `enterprise/deploy/helm/gibson/files/grafana/dashboards/auth.json`.
+- **File committed at:** `helm/gibson/files/grafana/dashboards/auth.json` in the charts repository.
 - **Discovery:** The Grafana sidecar mounts the dashboard JSON automatically via
   ConfigMap annotation; no manual import required after `helm upgrade`.
 - **Default time range:** Last 6 hours.
@@ -108,8 +108,8 @@ UX. It does not change the core authentication code path. However, if the
 
 3. **To roll back the Prometheus rules or Grafana dashboard** (e.g., if a
    recording rule causes query load issues):
-   - Edit `enterprise/deploy/helm/gibson/files/prometheus/rules/auth-alerts.yaml`
-     or `auth-slos.yaml` via a Helm values PR to `enterprise/deploy/`.
+   - Edit `helm/gibson/files/prometheus/rules/auth-alerts.yaml`
+     or `auth-slos.yaml` in the charts repository.
    - The Prometheus operator will reconcile within 60 seconds.
    - Do NOT directly `kubectl edit` the PrometheusRule, use Helm/GitOps.
 
@@ -142,7 +142,7 @@ hold for a 24-hour window post-deploy:
 
 Run `node scripts/auth-latency-baseline.mjs --base-url <url>` against the
 target environment after sign-ins have flowed through the server to capture
-p50/p95/p99. The output is written to `enterprise/docs/auth-latency-baseline.json`.
+p50/p95/p99. The output is written to `docs/auth-latency-baseline.json`.
 
 The baseline measurement for this spec was captured before the full FGA
 roundtrip landed. After `dashboard-fga-user-identity` ships the baseline should

@@ -4,12 +4,12 @@
 
 /**
  * vendor-mission-authoring-bundle, pulls the mission-authoring
- * OCI artifact (published by opensource/sdk's
+ * OCI artifact (published by the sdk repository's
  * publish-mission-authoring.yml workflow) into local
  * src/data/ and src/app/dashboard/(auth)/docs/ at build time.
  *
- * Bundle layout (produced by `make mission-authoring-bundle` in
- * opensource/sdk):
+ * Bundle layout (produced by `make mission-authoring-bundle` in the
+ * sdk repository):
  *
  *   mission-authoring-bundle.tar.gz
  *     ├── mission-definition.schema.json
@@ -32,21 +32,17 @@
  *   1. `MISSION_AUTHORING_BUNDLE_PATH` env var, local tarball path
  *      (used by tests, dev, and CI to skip the OCI pull).
  *   2. `MISSION_AUTHORING_BUNDLE_DIR` env var, pre-extracted dir.
- *   3. Sibling SDK checkout at $WORKSPACE_ROOT/opensource/sdk/gen -
- *      used by developers in the canonical polyrepo layout. Falls
- *      back to this when no env var is set, before attempting the
- *      OCI pull.
+ *   3. A local sdk checkout, its gen/ directory. Used by developers
+ *      who have one. Falls back to this when no env var is set,
+ *      before attempting the OCI pull.
  *   4. `oras pull ghcr.io/zeroroot-ai/mission-authoring:${MISSION_AUTHORING_VERSION}`.
  *
  * MISSION_AUTHORING_VERSION defaults to the SDK version pinned in
- * the sibling gibson repo's go.mod (resolved via `go list -m`).
+ * the gibson repository's go.mod (resolved via `go list -m`).
  *
- * Worktree-aware: when run from .worktrees/<name>/scripts/, the
- * naive `../../..` walk lands short of the workspace root. Strip
- * the `.worktrees/<name>` suffix to recover the canonical
- * dashboard root before walking up (same pattern as
- * scripts/gen-plans.mjs, gen-mission-schema.mjs,
- * check-mission-schema-fresh.mjs, proto-generate.mjs).
+ * Both checkouts are found by scripts/lib/workspace-root.mjs, which
+ * takes a repository name and a path inside it. It never counts `..`
+ * segments, so any worktree location works.
  *
  * Spec: mission-dashboard-rewrite Requirement 4.1 + 5.3 + 6.1.
  */
@@ -62,20 +58,10 @@ import {
 } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { findWorkspaceRoot } from './lib/workspace-root.mjs';
+import { resolveRepoPath } from './lib/workspace-root.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = path.resolve(HERE, '..');
-// Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ the naive
-// `../../..` walk lands short of the workspace root. Rewind to the main
-// checkout root before walking up. dashboard#193 (matches the pattern
-// landed in #162 / #175 / PR-for-#186).
-// Sibling resolution searches upward for the artifact rather than counting
-// `..` segments. The depth counter was correct for the main checkout and for a
-// worktree at `<dashboard>/.worktrees/<name>`, and wrong everywhere else.
-// dashboard#1015.
-const WORKSPACE_ROOT =
-  findWorkspaceRoot({ from: DASHBOARD_ROOT }) ?? DASHBOARD_ROOT;
 
 const SRC_DATA = path.join(DASHBOARD_ROOT, 'src/data');
 const DOCS_ROUTE = path.join(
@@ -123,15 +109,16 @@ function resolveBundleSourceDir() {
     return extractTarball(tarOverride, 'tarball-override');
   }
 
-  // 3. Sibling SDK checkout.
-  const siblingGen = path.join(WORKSPACE_ROOT, 'opensource/sdk/gen');
+  // 3. A local sdk checkout.
+  const siblingGen = resolveRepoPath('sdk', 'gen', {
+    from: DASHBOARD_ROOT,
+  })?.path;
   if (
+    siblingGen &&
     existsSync(path.join(siblingGen, 'mission-definition.schema.json')) &&
     existsSync(path.join(siblingGen, 'mission-docs'))
   ) {
-    console.log(
-      `mission-authoring-bundle: using sibling SDK gen/ at ${siblingGen}`,
-    );
+    console.log(`mission-authoring-bundle: using sdk gen/ at ${siblingGen}`);
     return { dir: siblingGen, version: 'sibling-checkout' };
   }
 
@@ -172,9 +159,10 @@ function resolveVersion() {
   const explicit = process.env.MISSION_AUTHORING_VERSION;
   if (explicit) return explicit;
 
-  // Resolve from sibling gibson's go.mod via `go list -m`.
-  const gibsonRepo = path.join(WORKSPACE_ROOT, 'enterprise/platform/gibson');
-  if (existsSync(path.join(gibsonRepo, 'go.mod'))) {
+  // Resolve from the gibson repository's go.mod via `go list -m`.
+  const gibsonRepo =
+    resolveRepoPath('gibson', 'go.mod', { from: DASHBOARD_ROOT })?.repoRoot ?? '';
+  if (gibsonRepo && existsSync(path.join(gibsonRepo, 'go.mod'))) {
     try {
       const v = run(
         'go',

@@ -40,11 +40,11 @@
  *   --drive-load        Use lightweight /api/metrics polling loop to collect
  *                       histogram snapshots (does not log in users, useful when
  *                       the cluster already has active sign-in traffic)
- *   --out <path>        Write JSON result to this path (default: enterprise/docs/auth-latency-baseline.json)
+ *   --out <path>        Write JSON result to this path (default: docs/auth-latency-baseline.json)
  *
  * Output
  * ------
- * Writes enterprise/docs/auth-latency-baseline.json with the structure:
+ * Writes docs/auth-latency-baseline.json with the structure:
  *   {
  *     "capturedAt": "<ISO8601>",
  *     "baseUrl": "<url>",
@@ -65,14 +65,9 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { findWorkspaceRoot } from "./lib/workspace-root.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "..");
-// Sibling resolution searches upward for the artifact rather than counting
-// `..` segments. The depth counter was correct for the main checkout and for a
-// worktree at `<dashboard>/.worktrees/<name>`, and wrong everywhere else.
-// dashboard#1015.
 
 // ---------------------------------------------------------------------------
 // SLO targets (spec R8)
@@ -98,13 +93,7 @@ const BASE_URL = args["base-url"];
 const N_ITERS = parseInt(args["n"], 10);
 const DRIVE_LOAD = args["drive-load"];
 const OUT_PATH =
-  args["out"] ||
-  resolve(
-    findWorkspaceRoot({ from: REPO_ROOT }) ?? REPO_ROOT,
-    "enterprise",
-    "docs",
-    "auth-latency-baseline.json",
-  );
+  args["out"] || resolve(REPO_ROOT, "docs", "auth-latency-baseline.json");
 
 // ---------------------------------------------------------------------------
 // Prometheus text-format parser, histogram buckets

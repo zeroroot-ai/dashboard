@@ -18,7 +18,7 @@ channel to the daemon.
 
 - Node.js 24.x (see `.tool-versions`).
 - pnpm 10.x (`corepack enable && corepack prepare pnpm@10 --activate`).
-- A local kind cluster from `enterprise/deploy/helm/gibson/` for any
+- A local kind cluster from `helm/gibson/` in the charts repository for any
   workflow that talks to the daemon (most of them).
 - Sibling checkouts of `core/gibson/` and `core/sdk/` if you intend to
   regenerate proto bindings (`pnpm proto:generate`).
@@ -83,7 +83,7 @@ this same env and nothing else; keep the two in sync.
 
 This repo is one piece of the wider Gibson platform polyrepo. For the
 authoritative platform-wide overview see
-`enterprise/docs/ARCHITECTURE.md` in the workspace. For dashboard-only
+the architecture notes in the workspace. For dashboard-only
 conventions see [`CLAUDE.md`](./CLAUDE.md), which covers:
 
 - The Auth.js / Zitadel surface and the post-Better-Auth migration.

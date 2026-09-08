@@ -21,10 +21,9 @@
  * without a real mail transport (dashboard#992).
  *
  * The SECOND half (cluster-side Go assertions) is in:
- *   core/gibson/tests/e2e/signup_full_chain_test.go
+ *   tests/e2e/signup_full_chain_test.go in the gibson repository.
  *
- * The `make test-signup-e2e` orchestrator in
- * enterprise/deploy/helm/gibson/Makefile:
+ * The `make test-signup-e2e` orchestrator that drives the umbrella chart:
  *   1. Generates a unique slug + email, exports SIGNUP_SLUG / SIGNUP_EMAIL.
  *   2. Runs this Playwright spec (browser form fill + provisioning UI wait).
  *   3. Runs the Go test (cluster-side assertions).

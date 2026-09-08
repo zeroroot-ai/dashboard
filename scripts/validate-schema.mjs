@@ -34,8 +34,7 @@ import { fileURLToPath } from 'url'
 // ---------------------------------------------------------------------------
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-// The script lives in enterprise/platform/dashboard/scripts/; the dashboard
-// root is one level up.
+// The script lives in scripts/; the dashboard root is one level up.
 const DASHBOARD_ROOT = path.resolve(__dirname, '..')
 
 // require() for dynamic CommonJS imports from the dashboard's node_modules.

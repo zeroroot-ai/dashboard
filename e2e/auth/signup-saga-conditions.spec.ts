@@ -21,7 +21,7 @@
  *
  * Pre-conditions:
  *   - Full chart deployed to the `gibson` Kind cluster
- *     (`make -C enterprise/deploy/helm/gibson deploy-local`).
+ *     (deploy the umbrella chart from the charts repository).
  *   - `dataPlane.vault.enabled=true` AND `dataPlane.vault.kindRootToken=true`
  *     (default in `values-kind.yaml` after this spec).
  *   - `BILLING_DEV_AUTOCONFIRM=true` so the WaitForBillingConfirmation

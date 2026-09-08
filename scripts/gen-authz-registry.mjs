@@ -25,7 +25,7 @@
  * ---------------
  * 1. sdk-proto    , OSS SDK (DaemonService, gibson.tenant.v1, etc.)
  * 2. gibson-local , gibson daemon-local protos at
- *                   enterprise/platform/gibson/internal/server/daemon/api.
+ *                   internal/server/daemon/api in the gibson repository.
  *                   Hosts the daemon-internal services (TracesService,
  *                   session, world, user) AND the PRIVATE platform services
  *                   that used to live in platform-sdk: DaemonOperatorService
@@ -61,7 +61,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fromBinary } from '@bufbuild/protobuf';
 import { FileDescriptorSetSchema } from '@bufbuild/protobuf/wkt';
-import { findWorkspaceRoot, resolveWorkspacePath } from './lib/workspace-root.mjs';
+import { resolveRepoPath } from './lib/workspace-root.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, '..');
@@ -76,15 +76,10 @@ const PROTOVALIDATE_COMMIT = '50325440f8f24053b047484a6bf60b76';
 const PROTOVALIDATE_DIGEST =
   'b5:74cb6f5c0853c3c10aafc701614194bbd63326bdb8ef4068214454b8894b03ba4113e04b3a33a8321cdf05336e37db4dc14a5e2495db8462566914f36086ba31';
 
-// Sibling repos hang off the polyrepo workspace root; gibson lives at
-// enterprise/platform/gibson.
-//
-// Sibling resolution searches upward for the artifact rather than counting
-// `..` segments off a rewound path. The depth counter was correct for the main
-// checkout and for a worktree at `<dashboard>/.worktrees/<name>`, and wrong
-// everywhere else — from `<workspace>/.worktrees/<name>` it walked to `/home`.
-// dashboard#1015.
-const GIBSON_REPO_REL = 'enterprise/platform/gibson';
+// The resolver takes a repository name and a path inside it, and finds the
+// checkout by searching the ancestors of this one. `go.mod` is the marker that
+// proves a candidate directory really is the gibson repository.
+const GIBSON_REPO_MARKER = 'go.mod';
 // GIBSON_PROTO_REPO overrides the resolved gibson root so a local regen can
 // read a checkout or git worktree that already carries a proto not yet on the
 // resolved sibling's HEAD, e.g. a just-merged feature branch checked out
@@ -93,8 +88,8 @@ const GIBSON_REPO_REL = 'enterprise/platform/gibson';
 // so the override never changes CI's result. dashboard#1116.
 const GIBSON_REPO = process.env.GIBSON_PROTO_REPO?.trim()
   ? resolve(process.env.GIBSON_PROTO_REPO)
-  : (resolveWorkspacePath(GIBSON_REPO_REL, { from: DASHBOARD_ROOT })?.path ??
-    resolve(DASHBOARD_ROOT, GIBSON_REPO_REL));
+  : (resolveRepoPath('gibson', GIBSON_REPO_MARKER, { from: DASHBOARD_ROOT })
+      ?.repoRoot ?? resolve(DASHBOARD_ROOT, 'gibson'));
 // gibson daemon-local proto tree (post-#787 reorg location). It hosts the
 // daemon-internal services and the PRIVATE platform services
 // (DaemonOperatorService, BillingService, DiscoveryService) that used to
@@ -113,13 +108,12 @@ const AUTHZ_EXTENSION_FIELD = 50001;
 // ---------------------------------------------------------------------------
 
 function resolveSdkProtoDir({ soft = false } = {}) {
-  // Prefer the sibling checkout at opensource/sdk when present, it
-  // tracks main and avoids the "gibson go.mod pin lags one minor
-  // version behind the latest sdk release" hazard. Mirrors the pattern
-  // in proto-generate.mjs.
+  // Prefer a local sdk checkout when present, it tracks main and avoids the
+  // "gibson go.mod pin lags one minor version behind the latest sdk release"
+  // hazard. Mirrors the pattern in proto-generate.mjs.
   const SDK_SIBLING =
-    resolveWorkspacePath('opensource/sdk/api/proto', { from: DASHBOARD_ROOT })
-      ?.path ?? resolve(DASHBOARD_ROOT, 'opensource/sdk/api/proto');
+    resolveRepoPath('sdk', 'api/proto', { from: DASHBOARD_ROOT })?.path ??
+    resolve(DASHBOARD_ROOT, 'sdk/api/proto');
   // Presence is a filesystem question; `stat` through a shell answered it by
   // interpolating the path into a command line. existsSync answers it in
   // process, with no shell and no try/catch scaffolding to absorb one.
@@ -147,8 +141,8 @@ function resolveSdkProtoDir({ soft = false } = {}) {
       '[gen-authz-registry] FATAL: failed to resolve github.com/zeroroot-ai/sdk.\n' +
         `  Tried sibling checkout at: ${SDK_SIBLING}\n` +
         `  Tried module-cache via gibson at: ${GIBSON_REPO}\n` +
-        '  Clone zeroroot-ai/sdk at opensource/sdk in your workspace, or\n' +
-        '  run from the canonical workspace at ~/Code/zeroroot.ai/.\n' +
+        '  Clone zeroroot-ai/sdk next to this checkout, or set\n' +
+        '  GIBSON_WORKSPACE_ROOT to the directory the checkouts hang off.\n' +
         `  Underlying error: ${err.message ?? err}\n`,
     );
     process.exit(1);
@@ -183,7 +177,7 @@ function probe() {
   process.stdout.write(
     JSON.stringify(
       {
-        workspaceRoot: findWorkspaceRoot({ from: DASHBOARD_ROOT }),
+        gibsonRepo: existsSync(GIBSON_REPO) ? GIBSON_REPO : null,
         sources: { sdkProtoDir, gibsonLocalProtos },
         available: Boolean(sdkProtoDir && gibsonLocalProtos),
       },

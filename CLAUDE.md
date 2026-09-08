@@ -11,14 +11,14 @@ This file documents conventions specific to the `zeroroot-ai/dashboard` reposito
 - `pnpm prebuild` runs a chain of policy-guard scripts. Do not disable them. Fix the code instead.
 - **`prebuild` never runs a generator.** It runs the freshness *gates* only, so a stale committed artifact fails the build instead of being silently rewritten. Regeneration is explicit: `pnpm gen:plans`, `pnpm gen:stripe-tiers`, `pnpm gen:authz`, `pnpm gen:mission-schema`, `pnpm proto:generate`. Putting a `gen-*` step back into `prebuild` re-creates dashboard#1019, where four gates diffed the generator's output against the generator's output and none of them could fail.
 - **No hardcoded colors anywhere under `app/**` or `components/**`.** Every color goes through a token declared in `app/globals.css`. The guard `scripts/check-no-hardcoded-colors.mjs` rejects tailwind palette utilities (`text-emerald-*`, `bg-zinc-*`), tailwind arbitrary-value colors (`bg-[#...]`, `text-[oklch(...)]`), black/white utilities (`bg-white`, `text-black`), inline-style colors, and raw `#...`/`oklch(...)`/`rgb(...)`/`hsl(...)` in `.css` files. Two files are exempt because they declare the token system itself: `app/globals.css`, `app/themes.css`. See the design-system guide below.
-- **Customer-facing docs name product capabilities, not vendors.** `content/docs/**/*.mdx` must not mention Zitadel, OpenFGA / FGA, Envoy, ext-authz, jwt_authn, JWKS, x-gibson-identity-*, Langfuse, SPIFFE / SPIRE, Neo4j, CNPG, ArgoCD, cert-manager, ESO, OPA, or "Gibson-hosted Vault". Write product language instead, "Gibson identity service", "Gibson permissions", "Gibson Traces", "Gibson-managed secrets storage". See the Customer terminology section below; the full deny-list is in the Customer terminology section below. Internal developer docs at `enterprise/platform/dashboard/docs/*.md` and every `CLAUDE.md` are intentionally exempt.
+- **Customer-facing docs name product capabilities, not vendors.** `content/docs/**/*.mdx` must not mention Zitadel, OpenFGA / FGA, Envoy, ext-authz, jwt_authn, JWKS, x-gibson-identity-*, Langfuse, SPIFFE / SPIRE, Neo4j, CNPG, ArgoCD, cert-manager, ESO, OPA, or "Gibson-hosted Vault". Write product language instead, "Gibson identity service", "Gibson permissions", "Gibson Traces", "Gibson-managed secrets storage". The full deny-list is in the Customer terminology section below. Internal developer docs at `docs/*.md` and every `CLAUDE.md` are intentionally exempt.
 
 ## Two-surface platform contract (post-2026-05 refactor)
 
 Daemon protos consumed here come from two Go modules, both pinned in the sibling `gibson` repo's `go.mod` (the dashboard's proto-regen workspace resolves them via `go list -m`):
 
 - **OSS SDK** (`github.com/zeroroot-ai/sdk`), customer-facing. After the E6 narrow-SDK flip (ADR-0058 amendment, docs#101; sdk#390) the SDK is the **component-developer** surface: `DaemonService`, the component-enrollment services `AgentIdentityService` (`gibson.agentidentity.v1`) and `PluginAdminService` (`gibson.pluginadmin.v1`) — each re-homed into its OWN wire package — plus mission / finding / discovery / budget types and the `gibson.auth.v1` annotation extension. The 9 tenant-administration services (`TenantService`, `MembershipService`, `GrantsService`, `ProviderService`, `SecretsService`, `BudgetService`, `UserService`, `UsageService`, `ModelAccessService`) were REMOVED from the SDK and re-homed into the gibson daemon-local tree (below); their wire package `gibson.tenant.v1` and full-method paths are unchanged.
-- **gibson daemon-local** (`enterprise/platform/gibson/internal/server/daemon/api`), PRIVATE. Hosts the genuinely-internal platform services — `DaemonOperatorService` (`gibson.daemon.operator.v1`), `BillingService` (`gibson.billing.v1`), `DiscoveryService` (`gibson.daemon.discovery.v1`) — that used to live in the dissolved `platform-sdk` module (ADR-0056, gibson#781), AND the 9 re-homed tenant-administration services under `gibson.tenant.v1` (`internal/server/daemon/api/gibson/tenant/v1/`; E6, gibson#921). Wire paths for the tenant services are unchanged from when they lived in the SDK.
+- **gibson daemon-local** (`internal/server/daemon/api` in the gibson repository), PRIVATE. Hosts the genuinely-internal platform services — `DaemonOperatorService` (`gibson.daemon.operator.v1`), `BillingService` (`gibson.billing.v1`), `DiscoveryService` (`gibson.daemon.discovery.v1`) — that used to live in the dissolved `platform-sdk` module (ADR-0056, gibson#781), AND the 9 re-homed tenant-administration services under `gibson.tenant.v1` (`internal/server/daemon/api/gibson/tenant/v1/`; E6, gibson#921). Wire paths for the tenant services are unchanged from when they lived in the SDK.
 
 Admin server-actions (tenant management, plugin install, secrets management, grants) call the `gibson.tenant.v1.*` services (now gibson daemon-local) and the enrollment services (`gibson.agentidentity.v1.AgentIdentityService`, `gibson.pluginadmin.v1.PluginAdminService`, both in the SDK). Each carries a `(gibson.auth.v1.authz)` annotation with an `admin`/`writer` relation, and Envoy gates those admin-relation prefixes behind the admin JWT requirement. The dashboard never opens a direct daemon channel.
 
@@ -38,43 +38,47 @@ pnpm proto:generate # regenerate src/gen/ TS proto bindings
 pnpm test:scripts   # node:test suites for the build scripts
 ```
 
-## Worktrees
+## Sibling repositories and worktrees
 
-**Put a worktree anywhere inside the polyrepo workspace.** Both `pnpm prebuild`
-and `pnpm lint` work from any such location as of dashboard#1015; before that
-no single location satisfied both. A worktree *outside* the workspace has no
-sibling repos above it, so set `GIBSON_WORKSPACE_ROOT` there.
-
-The build scripts reach sibling repos (`deploy`'s `plans.yaml`, the `sdk` proto
-tree, the gibson daemon-local proto tree) through
-`scripts/lib/workspace-root.mjs`, which **searches upward for the artifact**
-instead of counting `..` segments off a rewound path. The old counter was
-correct for the main checkout and for a worktree at
-`<dashboard>/.worktrees/<name>` and wrong everywhere else — from
-`<workspace>/.worktrees/<name>` it walked to `/home` and reported
-`plans.yaml not found at /home/enterprise/deploy/...`.
+The build scripts read files from four other repositories: `charts` (the
+umbrella chart and `plans.yaml`), `sdk` (protos and the mission schema),
+`gibson` (the daemon-local proto tree) and `adk` (mission templates). They ask
+for them by REPOSITORY NAME and a path INSIDE that repository, never by a path
+on any one machine:
 
 ```js
-import { requireWorkspacePath } from "./lib/workspace-root.mjs";
+import { requireRepoPath, resolveRepoPath } from "./lib/workspace-root.mjs";
 
-const plansYaml = requireWorkspacePath(
-  "enterprise/deploy/helm/gibson-operators/files/plans.yaml",
+const plansYaml = requireRepoPath(
+  "charts",
+  "helm/gibson-operators/files/plans.yaml",
   { from: DASHBOARD_ROOT },
 );
 ```
 
-Use `requireWorkspacePath` when the artifact is mandatory (it throws a
-diagnostic naming every directory tried), `resolveWorkspacePath` when absence
-is a legitimate mode, and `findWorkspaceRoot` when you need the root itself.
+`scripts/lib/workspace-root.mjs` finds the checkout by walking up from this one
+and, at each ancestor, descending through GROUPING directories, up to two
+levels. A grouping directory is any directory that is not itself a checkout, so
+the descent never enters another repository's tree. The predicate is "this
+directory holds the requested path", so a same-named empty directory is skipped
+rather than returned.
 
-`GIBSON_WORKSPACE_ROOT` overrides the search. An override that does not hold
-fails rather than falling back, so a typo surfaces instead of mysteriously
-working.
+That covers checkouts side by side, checkouts under one or two grouping
+directories, and a worktree anywhere inside the tree. **Put a worktree
+anywhere.** A worktree with no checkouts above it needs
+`GIBSON_WORKSPACE_ROOT`, which replaces the walk with the single directory it
+names. An override that does not hold FAILS rather than falling back, so a typo
+surfaces instead of mysteriously working.
+
+Use `requireRepoPath` when the file is mandatory (it throws a diagnostic naming
+the repository, the path and the override) and `resolveRepoPath` when absence is
+a legitimate mode. To get the checkout root itself, resolve a marker file and
+read `repoRoot` off the result, as `proto-generate.mjs` does with `go.mod`.
 
 **Never reintroduce a depth count.** `resolve(root, "..", "..", "..")` and
-`path.includes("/.worktrees/")` are the exact bug; the workspace layout has
-already moved once (the open-core consolidation) and will move again. Unit
-tests covering every layout live in `scripts/lib/workspace-root.test.mjs`.
+`path.includes("/.worktrees/")` are the exact bug; the layout has already moved
+twice and will move again. Unit tests covering every layout live in
+`scripts/lib/workspace-root.test.mjs`.
 
 `.eslintrc.js` sets `root: true` so a worktree nested inside the dashboard
 checkout stops inheriting the parent's identical config, which used to make
@@ -84,12 +88,12 @@ exit 2.
 ## Mission schema copy
 
 `src/data/mission-definition.schema.json` is a generated copy of
-`opensource/sdk/gen/mission-definition.schema.json`. It is NOT
+`gen/mission-definition.schema.json` in the `sdk` repository. It is NOT
 hand-maintained. The file carries a `$comment` field ("DO NOT EDIT, generated
 …") as the first key.
 
-**Source of truth:** `opensource/sdk/gen/mission-definition.schema.json`
-(produced by the SDK's proto → JSON Schema pipeline).
+**Source of truth:** `gen/mission-definition.schema.json` in the `sdk`
+repository (produced by the SDK's proto → JSON Schema pipeline).
 
 **Generator (workstation-only):**
 ```bash
@@ -97,8 +101,8 @@ node scripts/gen-mission-schema.mjs
 # or
 pnpm gen:mission-schema
 ```
-Requires the `opensource/sdk/` sibling clone to be present in the polyrepo
-workspace. Exits with a clear error if the sibling is absent.
+Requires an `sdk` checkout the resolver can reach. Exits with a clear error
+if there is none.
 
 **Freshness gate (runs in `pnpm prebuild`):**
 `scripts/check-mission-schema-fresh.mjs`
@@ -125,9 +129,8 @@ The dashboard's TS proto bindings at `src/gen/` are generated from
   decomposed `gibson.tenant.v1.*` tenant-admin services (customer-facing per
   ADR-0039), the customer-callable mission / finding / discovery / budget
   types, and the `gibson.auth.v1` annotation extension.
-- the **gibson daemon-local** protos at the
-  `enterprise/platform/gibson/internal/server/daemon/api/` sibling checkout,
-  which are not published anywhere. This tree hosts the daemon-internal services
+- the **gibson daemon-local** protos at `internal/server/daemon/api/` in the
+  `gibson` checkout, which are not published anywhere. This tree hosts the daemon-internal services
   AND the PRIVATE platform services (`DaemonOperatorService`, `BillingService`,
   `DiscoveryService`) that used to live in the separate `platform-sdk` module
   before it was dissolved into the gibson monorepo (gibson#781).
@@ -144,22 +147,21 @@ builds a self-contained workspace:
 .tmp/proto-ws/
 ├── buf.yaml                # generated, lists gibson-local + sdk-proto
 ├── buf.gen.yaml            # generated, drives protoc-gen-es
-├── gibson-local     -> .../enterprise/platform/gibson/internal/server/daemon/api (symlink)
+├── gibson-local     -> <gibson checkout>/internal/server/daemon/api (symlink)
 └── sdk-proto        -> $(go list -m github.com/zeroroot-ai/sdk)/api/proto             (symlink)
 ```
 
 Then `buf generate` runs from inside `.tmp/proto-ws/`, the output
 is rsynced into `src/gen/`, and the workspace is removed. Same
-pattern as the daemon's `make authz-registry` recipe in
-`enterprise/platform/gibson/Makefile`, which faces the identical "two proto
-trees, one buf invocation" constraint.
+pattern as the daemon's `make authz-registry` recipe in the `gibson`
+repository's Makefile, which faces the identical "two proto trees, one buf
+invocation" constraint.
 
 **No checked-in `buf.yaml` or `buf.gen.yaml`** at the dashboard
 root, they only exist transiently inside `.tmp/proto-ws/`.
 
-**Workstation-only.** The script assumes `enterprise/platform/gibson/` is
-cloned as a sibling of this repo (i.e. you're in
-the canonical `~/Code/zeroroot.ai/` polyrepo workspace). CI does not regenerate
+**Workstation-only.** The script needs a `gibson` checkout the resolver can
+reach. CI does not regenerate
 proto bindings, `src/gen/` is committed and CI just typechecks
 it. Run `pnpm proto:generate` locally whenever you change a
 `.proto` file in either tree, then commit the regenerated
@@ -230,10 +232,11 @@ repo, and each has a gate in `pnpm prebuild`:
 
 | Artifact | Upstream | Gate | Regenerate |
 |---|---|---|---|
-| `src/generated/plans.ts` | `enterprise/deploy/helm/gibson-operators/files/plans.yaml` | `check-plans-fresh.mjs` | `pnpm gen:plans` |
+| `src/generated/plans.ts` | `charts`: `helm/gibson-operators/files/plans.yaml` | `check-plans-fresh.mjs` | `pnpm gen:plans` |
 | `src/lib/billing/stripe_gen.ts` | the same `plans.yaml` | `check-stripe-tiers-fresh.mjs` | `pnpm gen:stripe-tiers` |
 | `src/gen/authz/registry.ts` | SDK + gibson daemon-local protos | `check-authz-registry-fresh.mjs` | `pnpm gen:authz` |
-| `src/data/mission-definition.schema.json` | `opensource/sdk/gen/mission-definition.schema.json` | `check-mission-schema-fresh.mjs` | `pnpm gen:mission-schema` |
+| `src/data/mission-definition.schema.json` | `sdk`: `gen/mission-definition.schema.json` | `check-mission-schema-fresh.mjs` | `pnpm gen:mission-schema` |
+| `docs/AUTH_RBAC_INVENTORY.md` | `charts`: `helm/testdata/golden/values-vanilla.withcaps.yaml` | `check-auth-rbac-inventory-fresh.mjs` | `pnpm gen:auth-rbac-inventory` |
 
 All four share one implementation, `scripts/lib/freshness-gate.mjs`. Read that
 file before touching any of them; the gate scripts themselves are configuration.
@@ -286,7 +289,7 @@ Both layers read from a single static map, the `AuthRegistry`, generated from OS
 
 ```
 <sdk-module>/api/proto/**/*.proto       (OSS SDK, DaemonService + AgentIdentityService (gibson.agentidentity.v1) + PluginAdminService (gibson.pluginadmin.v1))
-enterprise/platform/gibson/internal/server/daemon/api/**/*.proto (gibson daemon-local, gibson.tenant.v1.* admin services + DaemonOperatorService, BillingService, DiscoveryService)
+<gibson>/internal/server/daemon/api/**/*.proto  (gibson daemon-local, gibson.tenant.v1.* admin services + DaemonOperatorService, BillingService, DiscoveryService)
   └─ (gibson.auth.v1.authz) extension on each method
        │
        ▼
@@ -418,11 +421,11 @@ E2E coverage for the three states lives in `e2e/authz/admin.spec.ts` (asserts al
 
 ### Adding a new admin RPC
 
-After the E6 narrow-SDK flip (ADR-0058 amendment, docs#101), tenant-administration RPCs (`gibson.tenant.v1.*`, FGA relation `admin` or `writer`) live in the **gibson daemon-local** proto tree at `enterprise/platform/gibson/internal/server/daemon/api/gibson/tenant/v1/`. The SDK retains only the component-developer surface: the enrollment services `AgentIdentityService` (`gibson.agentidentity.v1`) and `PluginAdminService` (`gibson.pluginadmin.v1`), plus `DaemonService`. Pick the tree by which surface the RPC belongs to.
+After the E6 narrow-SDK flip (ADR-0058 amendment, docs#101), tenant-administration RPCs (`gibson.tenant.v1.*`, FGA relation `admin` or `writer`) live in the **gibson daemon-local** proto tree at `internal/server/daemon/api/gibson/tenant/v1/` in the `gibson` repository. The SDK retains only the component-developer surface: the enrollment services `AgentIdentityService` (`gibson.agentidentity.v1`) and `PluginAdminService` (`gibson.pluginadmin.v1`), plus `DaemonService`. Pick the tree by which surface the RPC belongs to.
 
 **Tenant-admin RPC** (most dashboard admin work):
 
-1. In the gibson daemon-local tree at `enterprise/platform/gibson/internal/server/daemon/api/gibson/tenant/v1/<file>.proto`, add the new RPC to the appropriate service (`MembershipService`, `GrantsService`, `ProviderService`, `SecretsService`, …). Add the `(gibson.auth.v1.authz)` extension with `relation: "admin"` (or `"writer"`) and `allowed_identities: [USER]`. The extension is imported from the OSS SDK (`gibson/auth/v1/options.proto`).
+1. In the gibson daemon-local tree at `internal/server/daemon/api/gibson/tenant/v1/<file>.proto` in the `gibson` repository, add the new RPC to the appropriate service (`MembershipService`, `GrantsService`, `ProviderService`, `SecretsService`, …). Add the `(gibson.auth.v1.authz)` extension with `relation: "admin"` (or `"writer"`) and `allowed_identities: [USER]`. The extension is imported from the OSS SDK (`gibson/auth/v1/options.proto`).
 2. Run `make proto && make authz-registry && go build ./...` in the gibson repo. Commit + open the gibson PR.
 3. In this dashboard repo, run `pnpm proto:generate` (regenerates the TypeScript bindings under `src/gen/` from the gibson daemon-local tree) and `pnpm gen:authz` (regenerates `src/gen/authz/registry.ts`). `pnpm prebuild` will not regenerate either for you; it fails if you skip this step.
 4. In the UI, call `useAuthorize("/gibson.tenant.v1.<Service>/YourMethod")` on the new button/action.
@@ -433,7 +436,7 @@ After the E6 narrow-SDK flip (ADR-0058 amendment, docs#101), tenant-administrati
 
 No other files need editing. The registry is the only source of authz rules.
 
-**Genuinely-private operator RPC?** Same flow, but the proto lives in `enterprise/platform/gibson/internal/server/daemon/api/gibson/{daemon.operator,billing,daemon.discovery}/v1/...` and it never surfaces in customer UI. The two-surface contract (docs ADR-0025, refined by ADR-0058 amendment / docs#101 and the gibson#781 monorepo consolidation) keeps the component-developer and platform proto trees split.
+**Genuinely-private operator RPC?** Same flow, but the proto lives in `internal/server/daemon/api/gibson/{daemon.operator,billing,daemon.discovery}/v1/...` in the `gibson` repository and it never surfaces in customer UI. The two-surface contract (docs ADR-0025, refined by ADR-0058 amendment / docs#101 and the gibson#781 monorepo consolidation) keeps the component-developer and platform proto trees split.
 
 ---
 
@@ -549,7 +552,7 @@ is reported.
 
 Customer-facing docs at `content/docs/**/*.mdx` and the customer-visible UI surface name **product capabilities**, not the vendors implementing them. This is a hard constraint: vendor names dilute the brand, expose attack surface, and turn infrastructure choices into doc-migration contracts whenever we swap a dependency.
 
-The deny-list below is the canonical reference. It carries the full deny-list ↔ replacement table, the allowlist of permitted BYO/protocol terms, and the structural rewrite pattern for the "how do I debug a 401" flow.
+The list below is the canonical reference. It carries the deny-list, the allowlist of permitted BYO and protocol terms, and the structural rewrite pattern for the "how do I debug a 401" flow.
 
 The deny-list at a glance, these never appear in `content/docs/**/*.mdx`:
 
@@ -567,7 +570,7 @@ Permitted (customer-facing product surface):
 - Customer-runtime references, `Kubernetes`, `systemd` (must read unambiguously as "your runtime").
 - Standard protocol terms, `OAuth2`, `OIDC`, `JWT`, `client_id`, `client_secret`.
 
-**Out of scope**, internal developer docs at `enterprise/platform/dashboard/docs/*.md` (auth.md, forbidden-patterns.md, how-to-add-a-rpc.md, …) and every `CLAUDE.md` may name internal components freely. The CI guard (lands in #129 as `scripts/check-no-internal-tech-in-docs.mjs`) skips them.
+**Out of scope**, internal developer docs at `docs/*.md` (auth.md, forbidden-patterns.md, how-to-add-a-rpc.md, …) and every `CLAUDE.md` may name internal components freely. The CI guard (lands in #129 as `scripts/check-no-internal-tech-in-docs.mjs`) skips them.
 
 When you find yourself writing "Check Envoy's `jwt_authn` logs" in a customer-facing troubleshooting flow, stop. The customer cannot reach those logs. Replace with a dashboard action (re-issue from the deploy wizard, inspect grants in the Permissions tab) or a CLI invocation (`gibson inspect`). The general rule: if a step requires reading internal logs, it is the wrong step.
 

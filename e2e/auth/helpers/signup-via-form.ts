@@ -50,7 +50,7 @@
  * the daemon sent. There is deliberately no test-only bypass for this: the
  * daemon's `GIBSON_EMAIL_PROVIDER=log` transport is a NON-delivering dev stub
  * that never logs the token or message body (see
- * `enterprise/platform/gibson/internal/platform/mailer/mailer.go` `LogMailer`,
+ * `internal/platform/mailer/mailer.go` `LogMailer` in the gibson repository,
  * "the application log is a lower-trust, widely-shipped sink ... writing the
  * body there hands anyone with log read access a working account-takeover
  * link") and `Delivers()` reports false, so `resolveSignupMailer` refuses to

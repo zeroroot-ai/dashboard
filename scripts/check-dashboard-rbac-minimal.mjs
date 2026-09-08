@@ -5,7 +5,8 @@
 /**
  * Build guard: diff the dashboard ServiceAccount's rendered RBAC
  * against the committed allow-list at
- * `enterprise/deploy/helm/gibson-workloads/.dashboard-rbac-allowlist.yaml`.
+ * `helm/gibson-workloads/.dashboard-rbac-allowlist.yaml` in the charts
+ * repository.
  *
  * Spec: auth-resolution-hardening (R1.5)
  *
@@ -20,7 +21,10 @@
  *
  * How it works
  * ------------
- * 1. Renders the chart with default values via `helm template`.
+ * 1. Reads the chart's committed golden render. The charts repository renders
+ *    the umbrella with the vanilla overlay and commits the result, so this
+ *    guard needs neither helm nor a dependency build, and it reads exactly the
+ *    manifests the chart's own gate asserts on.
  * 2. Parses every `ClusterRole` and `Role` whose name matches
  *    `gibson-dashboard*`.
  * 3. For each rule, looks up the matching allow-list entry by
@@ -43,28 +47,31 @@
  * Exit codes: 0 = clean, 1 = violation, 2 = config / tooling error.
  */
 
-import { execFileSync } from 'node:child_process';
+
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'yaml';
-import { findWorkspaceRoot } from './lib/workspace-root.mjs';
+import { resolveRepoPath } from './lib/workspace-root.mjs';
 
 const SCRIPT_NAME = 'check-dashboard-rbac-minimal.mjs';
 const SPEC_NAME = 'auth-resolution-hardening';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = resolve(__dirname, '..');
-// Worktree-aware: when DASHBOARD_ROOT is .worktrees/<name>/ the naive
-// `../../..` walk lands short of the workspace root. Rewind to the main
-// checkout root before walking up. dashboard#197 (same pattern as #175).
-// Sibling resolution searches upward for the artifact rather than counting
-// `..` segments. The depth counter was correct for the main checkout and for a
-// worktree at `<dashboard>/.worktrees/<name>`, and wrong everywhere else.
-// dashboard#1015.
-const REPO_ROOT = findWorkspaceRoot({ from: DASHBOARD_ROOT }) ?? DASHBOARD_ROOT;
-const CHART_DIR = resolve(REPO_ROOT, 'enterprise/deploy/helm/gibson-workloads');
-const ALLOWLIST_PATH = resolve(CHART_DIR, '.dashboard-rbac-allowlist.yaml');
+// The resolver takes a repository name and a path inside it, and finds the
+// checkout by searching the ancestors of this one. The workloads chart lives in
+// the public charts repository (ADR-0086).
+const ALLOWLIST_REL = 'helm/gibson-workloads/.dashboard-rbac-allowlist.yaml';
+const GOLDEN_REL = 'helm/testdata/golden/values-vanilla.withcaps.yaml';
+const chartsFound = resolveRepoPath('charts', ALLOWLIST_REL, {
+  from: DASHBOARD_ROOT,
+});
+const ALLOWLIST_PATH =
+  chartsFound?.path ?? resolve(DASHBOARD_ROOT, 'charts', ALLOWLIST_REL);
+const GOLDEN_PATH = chartsFound
+  ? resolve(chartsFound.repoRoot, GOLDEN_REL)
+  : resolve(DASHBOARD_ROOT, 'charts', GOLDEN_REL);
 
 function loadAllowlist() {
   const raw = readFileSync(ALLOWLIST_PATH, 'utf8');
@@ -80,27 +87,9 @@ function loadAllowlist() {
 }
 
 function renderChart() {
-  // Render with the kind overlay, the chart enforces several environment-
-  // overlay-required values (idp.zitadel.issuer, vault.enabled, etc.) via
-  // template guards. values-kind.yaml is the smallest overlay that satisfies
-  // them, and the rendered RBAC under it matches the rendered RBAC under
-  // values-aws-prod.yaml (the rules don't depend on environment values),
-  // so this is sufficient for the minimal-RBAC invariant we're checking.
-  const valuesKind = resolve(CHART_DIR, 'values-kind.yaml');
-  const out = execFileSync(
-    'helm',
-    [
-      'template',
-      CHART_DIR,
-      '--values',
-      valuesKind,
-      '--set',
-      'tenantOperator.billing.devAutoConfirm=false',
-      '--api-versions=monitoring.coreos.com/v1',
-    ],
-    { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
-  );
-  return out;
+  // The rendered RBAC does not depend on environment values, so the vanilla
+  // golden is sufficient for the minimal-RBAC invariant this guard checks.
+  return readFileSync(GOLDEN_PATH, 'utf8');
 }
 
 function parseDocs(rendered) {
@@ -223,21 +212,19 @@ if (argv.includes('--selftest')) {
   process.exit(0);
 }
 
-// Skip when the enterprise/deploy sibling repo is not cloned.
-// In dashboard-only CI the deploy repo is absent, so there is nothing to
-// render or diff against. The workstation and full-polyrepo CI paths always
-// have the sibling present and run the check end-to-end.
-// Closes: zeroroot-ai/dashboard#166
-if (!existsSync(CHART_DIR)) {
+// Skip when no charts checkout is nearby. In dashboard-only CI there is none,
+// so there is nothing to render or diff against. The workstation and the full
+// multi-repo CI path always have one and run the check end to end.
+if (!existsSync(ALLOWLIST_PATH) || !existsSync(GOLDEN_PATH)) {
   process.stderr.write(
-    `[${SCRIPT_NAME}] SKIPPED, enterprise/deploy sibling not present at ${CHART_DIR}; ` +
-      `skipping the manifest-RBAC-minimal check.\n`,
+    `[${SCRIPT_NAME}] SKIPPED, no charts checkout holds ${ALLOWLIST_REL} and ` +
+      `${GOLDEN_REL}; skipping the manifest-RBAC-minimal check.\n`,
   );
   process.exit(0);
 }
 
-// Skip when helm is not installed (e.g., inside the Docker build image which
-// is Node.js only). The check is a dev-host gate; the Docker build only needs
+// Skip on request (e.g. inside the Docker build image, which carries no
+// charts checkout). The check is a dev-host gate; the Docker build only needs
 // the prebuild code-quality checks that don't require helm.
 // Spec: signup-zitadel-permissions-fix (Docker build fix for auth-resolution-hardening).
 if (process.env.SKIP_DASHBOARD_RBAC_CHECK === '1') {

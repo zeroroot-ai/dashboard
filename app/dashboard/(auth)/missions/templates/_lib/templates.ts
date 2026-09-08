@@ -4,7 +4,7 @@
  * src/data/templates/ and exposes a typed catalog.
  *
  * The .cue is vendored byte-for-byte from
- * opensource/adk/templates/<name>/template.cue by
+ * templates/<name>/template.cue in the adk repository by
  * scripts/vendor-mission-templates.mjs (sibling-checkout dev workflow) and
  * drift-gated by scripts/check-templates-fresh.mjs.
  *
