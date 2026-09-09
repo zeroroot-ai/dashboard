@@ -526,27 +526,29 @@ Two independent production guards on the encoder, AND-ed: `NODE_ENV !== "product
 
 The spec also skips gracefully when `TEST_AUTH_BYPASS` is unset, so CI environments that haven't opted in don't fail; they just don't run the auth-route suite.
 
-### Legacy brand names, the CI guard
+### Legacy brand names, the org CI guard
 
-`scripts/check-no-legacy-product-name.mjs` runs in `pnpm prebuild` and scans the
-whole tree for the four pre-rebrand strings its header declares: the old product
-name, the old domain, the old org slug, and the old daemon domain. The product is
+The brand guard is an org guard now. `.github/workflows/tree-guards.yml` calls
+`zeroroot-ai/.github/.github/workflows/brand-guard.yml@main`, which scans every
+tracked file for the four pre-rebrand strings: the old product name, the old
+domain, the old org slug, and the old daemon domain. The product is
 **Zero Root AI**, the org is **zeroroot-ai**, and the domain is **zeroroot.ai**.
+The repo-local `scripts/check-no-legacy-product-name.mjs` and its
+`.legacy-brand-allowlist.json` were deleted when the org guard landed
+(zeroroot-ai/.github#14). Do not add a second copy.
+
+Run it against this tree before you push. The script travels with the
+`zeroroot-ai/.github` checkout, at `actions/brand-guard/check-brand.sh`:
 
 ```bash
-node scripts/check-no-legacy-product-name.mjs             # scan the tree
-node scripts/check-no-legacy-product-name.mjs --shrink    # drop stale allowlist entries
-node scripts/check-no-legacy-product-name.mjs --selftest  # prove every pattern still fires
+REPO_ROOT="$PWD" bash "$GITHUB_META_REPO/actions/brand-guard/check-brand.sh"
 ```
 
-Exceptions live in `.legacy-brand-allowlist.json`. `files` holds the three
-self-referential whole-file exceptions (the guard, the allowlist, CHANGELOG.md).
-`lines` holds one entry per tolerated line, keyed by the exact trimmed line text,
-never by line number. An entry that no longer matches fails the guard, so the
-allowlist cannot rot. The guard is registered in
-`scripts/check-guard-selftests.mjs`, so every build proves each pattern fires,
-that a clean tree passes, that the allowlist suppresses, and that a stale entry
-is reported.
+Exemptions are keyed by content, never by line number. Put the marker
+`brand-guard-exempt: <reason>` on the same line as the string, or add the path
+to `.brand-guard-allow` under a `# why:` comment. The second workflow job runs
+the org link check over every Markdown file. Add a repo-root `.lychee.toml`
+only for a host that is alive but blocks a robot.
 
 ## Customer terminology
 

@@ -40,7 +40,216 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/admin_tenant.proto.
  */
 export const file_gibson_tenant_v1_admin_tenant: GenFile = /*@__PURE__*/
-  fileDesc("CiNnaWJzb24vdGVuYW50L3YxL2FkbWluX3RlbmFudC5wcm90bxIQZ2lic29uLnRlbmFudC52MSJpChtBZG1pblByb3Zpc2lvblRlbmFudFJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRITCgtvd25lcl9lbWFpbBgDIAEoCRIMCgR0aWVyGAQgASgJIi0KHEFkbWluUHJvdmlzaW9uVGVuYW50UmVzcG9uc2USDQoFb3BfaWQYASABKAkifQoYQWRtaW5VcGRhdGVUZW5hbnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIMCgR0aWVyGAIgASgJEhAKCHRpZXJfc2V0GAMgASgIEhQKDGRpc3BsYXlfbmFtZRgEIAEoCRIYChBkaXNwbGF5X25hbWVfc2V0GAUgASgIIioKGUFkbWluVXBkYXRlVGVuYW50UmVzcG9uc2USDQoFb3BfaWQYASABKAkiLQoYQWRtaW5EZWxldGVUZW5hbnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSIqChlBZG1pbkRlbGV0ZVRlbmFudFJlc3BvbnNlEg0KBW9wX2lkGAEgASgJIjEKHEFkbWluR2V0VGVuYW50QmlsbGluZ1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJInwKHUFkbWluR2V0VGVuYW50QmlsbGluZ1Jlc3BvbnNlEg0KBWZvdW5kGAEgASgIEhoKEnN0cmlwZV9jdXN0b21lcl9pZBgCIAEoCRIWCg5iaWxsaW5nX2FjdGl2ZRgDIAEoCBIYChB6aXRhZGVsX29yZ19zbHVnGAQgASgJMskFChJBZG1pblRlbmFudFNlcnZpY2USrgEKFEFkbWluUHJvdmlzaW9uVGVuYW50Ei0uZ2lic29uLnRlbmFudC52MS5BZG1pblByb3Zpc2lvblRlbmFudFJlcXVlc3QaLi5naWJzb24udGVuYW50LnYxLkFkbWluUHJvdmlzaW9uVGVuYW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESpQEKEUFkbWluVXBkYXRlVGVuYW50EiouZ2lic29uLnRlbmFudC52MS5BZG1pblVwZGF0ZVRlbmFudFJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkFkbWluVXBkYXRlVGVuYW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESpQEKEUFkbWluRGVsZXRlVGVuYW50EiouZ2lic29uLnRlbmFudC52MS5BZG1pbkRlbGV0ZVRlbmFudFJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkFkbWluRGVsZXRlVGVuYW50UmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESsQEKFUFkbWluR2V0VGVuYW50QmlsbGluZxIuLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5HZXRUZW5hbnRCaWxsaW5nUmVxdWVzdBovLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5HZXRUZW5hbnRCaWxsaW5nUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAFCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
+  fileDesc("CiNnaWJzb24vdGVuYW50L3YxL2FkbWluX3RlbmFudC5wcm90bxIQZ2lic29uLnRlbmFudC52MSKzAQoTUGVuZGluZ1JlZ2lzdHJhdGlvbhIXCg9yZWdpc3RyYXRpb25faWQYASABKAkSEwoLb3duZXJfZW1haWwYAiABKAkSFgoOd29ya3NwYWNlX25hbWUYAyABKAkSDAoEdGllchgEIAEoCRIYChBvd25lcl9maXJzdF9uYW1lGAUgASgJEhcKD293bmVyX2xhc3RfbmFtZRgGIAEoCRIVCg1yZWdpc3RlcmVkX2F0GAcgASgJIjUKJEFkbWluTGlzdFBlbmRpbmdSZWdpc3RyYXRpb25zUmVxdWVzdBINCgVsaW1pdBgBIAEoBSJlCiVBZG1pbkxpc3RQZW5kaW5nUmVnaXN0cmF0aW9uc1Jlc3BvbnNlEjwKDXJlZ2lzdHJhdGlvbnMYASADKAsyJS5naWJzb24udGVuYW50LnYxLlBlbmRpbmdSZWdpc3RyYXRpb24iOgofQWRtaW5BcHByb3ZlUmVnaXN0cmF0aW9uUmVxdWVzdBIXCg9yZWdpc3RyYXRpb25faWQYASABKAkiXQogQWRtaW5BcHByb3ZlUmVnaXN0cmF0aW9uUmVzcG9uc2USEQoJdGVuYW50X2lkGAEgASgJEhUKDW93bmVyX3VzZXJfaWQYAiABKAkSDwoHcGxhbl9pZBgDIAEoCSJJCh5BZG1pblJlamVjdFJlZ2lzdHJhdGlvblJlcXVlc3QSFwoPcmVnaXN0cmF0aW9uX2lkGAEgASgJEg4KBnJlYXNvbhgCIAEoCSIhCh9BZG1pblJlamVjdFJlZ2lzdHJhdGlvblJlc3BvbnNlImkKG0FkbWluUHJvdmlzaW9uVGVuYW50UmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEhMKC293bmVyX2VtYWlsGAMgASgJEgwKBHRpZXIYBCABKAkiLQocQWRtaW5Qcm92aXNpb25UZW5hbnRSZXNwb25zZRINCgVvcF9pZBgBIAEoCSJ9ChhBZG1pblVwZGF0ZVRlbmFudFJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEgwKBHRpZXIYAiABKAkSEAoIdGllcl9zZXQYAyABKAgSFAoMZGlzcGxheV9uYW1lGAQgASgJEhgKEGRpc3BsYXlfbmFtZV9zZXQYBSABKAgiKgoZQWRtaW5VcGRhdGVUZW5hbnRSZXNwb25zZRINCgVvcF9pZBgBIAEoCSItChhBZG1pbkRlbGV0ZVRlbmFudFJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJIioKGUFkbWluRGVsZXRlVGVuYW50UmVzcG9uc2USDQoFb3BfaWQYASABKAkiMQocQWRtaW5HZXRUZW5hbnRCaWxsaW5nUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkifAodQWRtaW5HZXRUZW5hbnRCaWxsaW5nUmVzcG9uc2USDQoFZm91bmQYASABKAgSGgoSc3RyaXBlX2N1c3RvbWVyX2lkGAIgASgJEhYKDmJpbGxpbmdfYWN0aXZlGAMgASgIEhgKEHppdGFkZWxfb3JnX3NsdWcYBCABKAkyjAoKEkFkbWluVGVuYW50U2VydmljZRKuAQoUQWRtaW5Qcm92aXNpb25UZW5hbnQSLS5naWJzb24udGVuYW50LnYxLkFkbWluUHJvdmlzaW9uVGVuYW50UmVxdWVzdBouLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5Qcm92aXNpb25UZW5hbnRSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARKlAQoRQWRtaW5VcGRhdGVUZW5hbnQSKi5naWJzb24udGVuYW50LnYxLkFkbWluVXBkYXRlVGVuYW50UmVxdWVzdBorLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5VcGRhdGVUZW5hbnRSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARKlAQoRQWRtaW5EZWxldGVUZW5hbnQSKi5naWJzb24udGVuYW50LnYxLkFkbWluRGVsZXRlVGVuYW50UmVxdWVzdBorLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5EZWxldGVUZW5hbnRSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARKxAQoVQWRtaW5HZXRUZW5hbnRCaWxsaW5nEi4uZ2lic29uLnRlbmFudC52MS5BZG1pbkdldFRlbmFudEJpbGxpbmdSZXF1ZXN0Gi8uZ2lic29uLnRlbmFudC52MS5BZG1pbkdldFRlbmFudEJpbGxpbmdSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARLJAQodQWRtaW5MaXN0UGVuZGluZ1JlZ2lzdHJhdGlvbnMSNi5naWJzb24udGVuYW50LnYxLkFkbWluTGlzdFBlbmRpbmdSZWdpc3RyYXRpb25zUmVxdWVzdBo3LmdpYnNvbi50ZW5hbnQudjEuQWRtaW5MaXN0UGVuZGluZ1JlZ2lzdHJhdGlvbnNSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARK6AQoYQWRtaW5BcHByb3ZlUmVnaXN0cmF0aW9uEjEuZ2lic29uLnRlbmFudC52MS5BZG1pbkFwcHJvdmVSZWdpc3RyYXRpb25SZXF1ZXN0GjIuZ2lic29uLnRlbmFudC52MS5BZG1pbkFwcHJvdmVSZWdpc3RyYXRpb25SZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARK3AQoXQWRtaW5SZWplY3RSZWdpc3RyYXRpb24SMC5naWJzb24udGVuYW50LnYxLkFkbWluUmVqZWN0UmVnaXN0cmF0aW9uUmVxdWVzdBoxLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5SZWplY3RSZWdpc3RyYXRpb25SZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAUJUWlJnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vdGVuYW50L3YxO3RlbmFudHYxYgZwcm90bzM", [file_gibson_auth_v1_options]);
+
+/**
+ * PendingRegistration is one registration awaiting an administrator's
+ * decision. It carries what a person needs to decide and nothing more.
+ *
+ * @generated from message gibson.tenant.v1.PendingRegistration
+ */
+export type PendingRegistration = Message<"gibson.tenant.v1.PendingRegistration"> & {
+  /**
+   * registration_id names this registration in an approve or reject call.
+   *
+   * @generated from field: string registration_id = 1;
+   */
+  registrationId: string;
+
+  /**
+   * owner_email is the address that registered.
+   *
+   * @generated from field: string owner_email = 2;
+   */
+  ownerEmail: string;
+
+  /**
+   * workspace_name is the workspace they asked for.
+   *
+   * @generated from field: string workspace_name = 3;
+   */
+  workspaceName: string;
+
+  /**
+   * tier is the plan they asked for, as they typed it. The plan gate runs at
+   * approval time, so an unknown tier is refused then rather than hidden here.
+   *
+   * @generated from field: string tier = 4;
+   */
+  tier: string;
+
+  /**
+   * owner_first_name / owner_last_name are the profile fields they supplied.
+   *
+   * @generated from field: string owner_first_name = 5;
+   */
+  ownerFirstName: string;
+
+  /**
+   * @generated from field: string owner_last_name = 6;
+   */
+  ownerLastName: string;
+
+  /**
+   * registered_at is when the registration arrived, RFC 3339.
+   *
+   * @generated from field: string registered_at = 7;
+   */
+  registeredAt: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.PendingRegistration.
+ * Use `create(PendingRegistrationSchema)` to create a new message.
+ */
+export const PendingRegistrationSchema: GenMessage<PendingRegistration> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 0);
+
+/**
+ * AdminListPendingRegistrationsRequest asks for the queue.
+ *
+ * @generated from message gibson.tenant.v1.AdminListPendingRegistrationsRequest
+ */
+export type AdminListPendingRegistrationsRequest = Message<"gibson.tenant.v1.AdminListPendingRegistrationsRequest"> & {
+  /**
+   * limit caps the page. Zero means the server default; the server also caps
+   * it, so a large value cannot turn this into a full-table read.
+   *
+   * @generated from field: int32 limit = 1;
+   */
+  limit: number;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.AdminListPendingRegistrationsRequest.
+ * Use `create(AdminListPendingRegistrationsRequestSchema)` to create a new message.
+ */
+export const AdminListPendingRegistrationsRequestSchema: GenMessage<AdminListPendingRegistrationsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 1);
+
+/**
+ * AdminListPendingRegistrationsResponse carries the queue, oldest first.
+ *
+ * @generated from message gibson.tenant.v1.AdminListPendingRegistrationsResponse
+ */
+export type AdminListPendingRegistrationsResponse = Message<"gibson.tenant.v1.AdminListPendingRegistrationsResponse"> & {
+  /**
+   * @generated from field: repeated gibson.tenant.v1.PendingRegistration registrations = 1;
+   */
+  registrations: PendingRegistration[];
+};
+
+/**
+ * Describes the message gibson.tenant.v1.AdminListPendingRegistrationsResponse.
+ * Use `create(AdminListPendingRegistrationsResponseSchema)` to create a new message.
+ */
+export const AdminListPendingRegistrationsResponseSchema: GenMessage<AdminListPendingRegistrationsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 2);
+
+/**
+ * AdminApproveRegistrationRequest names the registration to approve.
+ *
+ * @generated from message gibson.tenant.v1.AdminApproveRegistrationRequest
+ */
+export type AdminApproveRegistrationRequest = Message<"gibson.tenant.v1.AdminApproveRegistrationRequest"> & {
+  /**
+   * registration_id is the id AdminListPendingRegistrations returned.
+   * Required.
+   *
+   * @generated from field: string registration_id = 1;
+   */
+  registrationId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.AdminApproveRegistrationRequest.
+ * Use `create(AdminApproveRegistrationRequestSchema)` to create a new message.
+ */
+export const AdminApproveRegistrationRequestSchema: GenMessage<AdminApproveRegistrationRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 3);
+
+/**
+ * AdminApproveRegistrationResponse reports what the approval provisioned.
+ *
+ * @generated from message gibson.tenant.v1.AdminApproveRegistrationResponse
+ */
+export type AdminApproveRegistrationResponse = Message<"gibson.tenant.v1.AdminApproveRegistrationResponse"> & {
+  /**
+   * tenant_id is the deterministic slug derived from the workspace name.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * owner_user_id is the identity-provider id of the now-active owner.
+   *
+   * @generated from field: string owner_user_id = 2;
+   */
+  ownerUserId: string;
+
+  /**
+   * plan_id is the canonical plan the server-side gate resolved, the same
+   * value enqueued for the operator.
+   *
+   * @generated from field: string plan_id = 3;
+   */
+  planId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.AdminApproveRegistrationResponse.
+ * Use `create(AdminApproveRegistrationResponseSchema)` to create a new message.
+ */
+export const AdminApproveRegistrationResponseSchema: GenMessage<AdminApproveRegistrationResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 4);
+
+/**
+ * AdminRejectRegistrationRequest names the registration to refuse.
+ *
+ * @generated from message gibson.tenant.v1.AdminRejectRegistrationRequest
+ */
+export type AdminRejectRegistrationRequest = Message<"gibson.tenant.v1.AdminRejectRegistrationRequest"> & {
+  /**
+   * registration_id is the id AdminListPendingRegistrations returned.
+   * Required.
+   *
+   * @generated from field: string registration_id = 1;
+   */
+  registrationId: string;
+
+  /**
+   * reason is the administrator's own note, recorded on the audit event. It is
+   * never shown to the registrant, who is told nothing: an anonymous
+   * registration surface that explained its refusals would explain them to
+   * whoever probed it.
+   *
+   * @generated from field: string reason = 2;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.AdminRejectRegistrationRequest.
+ * Use `create(AdminRejectRegistrationRequestSchema)` to create a new message.
+ */
+export const AdminRejectRegistrationRequestSchema: GenMessage<AdminRejectRegistrationRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 5);
+
+/**
+ * AdminRejectRegistrationResponse confirms the refusal.
+ *
+ * @generated from message gibson.tenant.v1.AdminRejectRegistrationResponse
+ */
+export type AdminRejectRegistrationResponse = Message<"gibson.tenant.v1.AdminRejectRegistrationResponse"> & {
+};
+
+/**
+ * Describes the message gibson.tenant.v1.AdminRejectRegistrationResponse.
+ * Use `create(AdminRejectRegistrationResponseSchema)` to create a new message.
+ */
+export const AdminRejectRegistrationResponseSchema: GenMessage<AdminRejectRegistrationResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 6);
 
 /**
  * AdminProvisionTenantRequest carries the spec inputs for a new tenant. Mirrors
@@ -86,7 +295,7 @@ export type AdminProvisionTenantRequest = Message<"gibson.tenant.v1.AdminProvisi
  * Use `create(AdminProvisionTenantRequestSchema)` to create a new message.
  */
 export const AdminProvisionTenantRequestSchema: GenMessage<AdminProvisionTenantRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_admin_tenant, 0);
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 7);
 
 /**
  * AdminProvisionTenantResponse confirms the op was recorded.
@@ -108,7 +317,7 @@ export type AdminProvisionTenantResponse = Message<"gibson.tenant.v1.AdminProvis
  * Use `create(AdminProvisionTenantResponseSchema)` to create a new message.
  */
 export const AdminProvisionTenantResponseSchema: GenMessage<AdminProvisionTenantResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_admin_tenant, 1);
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 8);
 
 /**
  * AdminUpdateTenantRequest patches a tenant's tier and/or display name. At least
@@ -161,7 +370,7 @@ export type AdminUpdateTenantRequest = Message<"gibson.tenant.v1.AdminUpdateTena
  * Use `create(AdminUpdateTenantRequestSchema)` to create a new message.
  */
 export const AdminUpdateTenantRequestSchema: GenMessage<AdminUpdateTenantRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_admin_tenant, 2);
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 9);
 
 /**
  * AdminUpdateTenantResponse confirms the op was recorded.
@@ -182,7 +391,7 @@ export type AdminUpdateTenantResponse = Message<"gibson.tenant.v1.AdminUpdateTen
  * Use `create(AdminUpdateTenantResponseSchema)` to create a new message.
  */
 export const AdminUpdateTenantResponseSchema: GenMessage<AdminUpdateTenantResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_admin_tenant, 3);
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 10);
 
 /**
  * AdminDeleteTenantRequest deletes a tenant. Mirrors deleteTenantInput (the
@@ -205,7 +414,7 @@ export type AdminDeleteTenantRequest = Message<"gibson.tenant.v1.AdminDeleteTena
  * Use `create(AdminDeleteTenantRequestSchema)` to create a new message.
  */
 export const AdminDeleteTenantRequestSchema: GenMessage<AdminDeleteTenantRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_admin_tenant, 4);
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 11);
 
 /**
  * AdminDeleteTenantResponse confirms the op was recorded.
@@ -227,7 +436,7 @@ export type AdminDeleteTenantResponse = Message<"gibson.tenant.v1.AdminDeleteTen
  * Use `create(AdminDeleteTenantResponseSchema)` to create a new message.
  */
 export const AdminDeleteTenantResponseSchema: GenMessage<AdminDeleteTenantResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_admin_tenant, 5);
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 12);
 
 /**
  * AdminGetTenantBillingRequest names the tenant whose billing identifiers to
@@ -250,7 +459,7 @@ export type AdminGetTenantBillingRequest = Message<"gibson.tenant.v1.AdminGetTen
  * Use `create(AdminGetTenantBillingRequestSchema)` to create a new message.
  */
 export const AdminGetTenantBillingRequestSchema: GenMessage<AdminGetTenantBillingRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_admin_tenant, 6);
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 13);
 
 /**
  * AdminGetTenantBillingResponse carries the named tenant's billing identifiers.
@@ -292,7 +501,7 @@ export type AdminGetTenantBillingResponse = Message<"gibson.tenant.v1.AdminGetTe
  * Use `create(AdminGetTenantBillingResponseSchema)` to create a new message.
  */
 export const AdminGetTenantBillingResponseSchema: GenMessage<AdminGetTenantBillingResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_admin_tenant, 7);
+  messageDesc(file_gibson_tenant_v1_admin_tenant, 14);
 
 /**
  * AdminTenantService is the dashboard-facing write side of admin tenant CRUD.
@@ -366,6 +575,54 @@ export const AdminTenantService: GenService<{
     methodKind: "unary";
     input: typeof AdminGetTenantBillingRequestSchema;
     output: typeof AdminGetTenantBillingResponseSchema;
+  },
+  /**
+   * AdminListPendingRegistrations returns the registrations awaiting a
+   * decision, oldest first. Each one is a person who registered on the
+   * approval rung and holds a deactivated account until an administrator
+   * decides.
+   *
+   * It returns no credential material and no token. The password never left
+   * the identity provider.
+   *
+   * @generated from rpc gibson.tenant.v1.AdminTenantService.AdminListPendingRegistrations
+   */
+  adminListPendingRegistrations: {
+    methodKind: "unary";
+    input: typeof AdminListPendingRegistrationsRequestSchema;
+    output: typeof AdminListPendingRegistrationsResponseSchema;
+  },
+  /**
+   * AdminApproveRegistration approves one pending registration: it reactivates
+   * the owner's account and enqueues the tenant for operator-pull
+   * provisioning — the same two effects SignupService.Signup produces on the
+   * open rung, from the same code.
+   *
+   * The decision is attributable: the acting administrator is recorded on the
+   * registration row and emitted as an audit event.
+   *
+   * Idempotent on the registration's state, not on the call: a registration
+   * that is no longer pending returns FailedPrecondition, so two
+   * administrators cannot both believe they approved it.
+   *
+   * @generated from rpc gibson.tenant.v1.AdminTenantService.AdminApproveRegistration
+   */
+  adminApproveRegistration: {
+    methodKind: "unary";
+    input: typeof AdminApproveRegistrationRequestSchema;
+    output: typeof AdminApproveRegistrationResponseSchema;
+  },
+  /**
+   * AdminRejectRegistration refuses one pending registration. The account
+   * stays deactivated, so the person can never sign in, and no tenant is
+   * created. Attributable in the same way as an approval.
+   *
+   * @generated from rpc gibson.tenant.v1.AdminTenantService.AdminRejectRegistration
+   */
+  adminRejectRegistration: {
+    methodKind: "unary";
+    input: typeof AdminRejectRegistrationRequestSchema;
+    output: typeof AdminRejectRegistrationResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_tenant_v1_admin_tenant, 0);
