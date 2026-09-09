@@ -7,8 +7,8 @@
  * The product is **Zero Root AI**. The dashboard previously hardcoded the
  * pre-rebrand name in ~18 files (header status flasher, sidebar, logo, page
  * titles, AI prompts, onboarding templates, chat personas). Every brand-chrome
- * reference now reads from here; `scripts/check-no-legacy-product-name.mjs`
- * fails CI if the pre-rebrand name reappears.
+ * reference now reads from here. The org brand guard, which the tree-guards
+ * workflow calls, fails CI if a pre-rebrand name reappears.
  */
 
 /** Full product name, e.g. for titles, the header status indicator, the logo. */

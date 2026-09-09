@@ -5,13 +5,15 @@
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_gibson_auth_v1_options } from "../../../auth/v1/options_pb";
+import type { MemberStatus } from "../../../bank/v1/bank_pb";
+import { file_gibson_bank_v1_bank } from "../../../bank/v1/bank_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file gibson/daemon/agentconsole/v1/agentconsole.proto.
  */
 export const file_gibson_daemon_agentconsole_v1_agentconsole: GenFile = /*@__PURE__*/
-  fileDesc("CjBnaWJzb24vZGFlbW9uL2FnZW50Y29uc29sZS92MS9hZ2VudGNvbnNvbGUucHJvdG8SHWdpYnNvbi5kYWVtb24uYWdlbnRjb25zb2xlLnYxIr0BCgxSdW5uaW5nQWdlbnQSDgoGcnVuX2lkGAEgASgJEhIKCmFnZW50X25hbWUYAiABKAkSEgoKc2FuZGJveF9pZBgDIAEoCRIaChJzdGFydGVkX3VuaXhfbmFub3MYBCABKAMSEgoKbWlzc2lvbl9pZBgFIAEoCRIWCg5taXNzaW9uX3J1bl9pZBgGIAEoCRIVCg1zYW5kYm94X2NsYXNzGAcgASgJEhYKDmNvbXBvbmVudF9raW5kGAggASgJIhoKGExpc3RSdW5uaW5nQWdlbnRzUmVxdWVzdCJYChlMaXN0UnVubmluZ0FnZW50c1Jlc3BvbnNlEjsKBmFnZW50cxgBIAMoCzIrLmdpYnNvbi5kYWVtb24uYWdlbnRjb25zb2xlLnYxLlJ1bm5pbmdBZ2VudCI9ChhTdHJlYW1BZ2VudEV2ZW50c1JlcXVlc3QSDgoGcnVuX2lkGAEgASgJEhEKCXNpbmNlX3NlcRgCIAEoBCI7CgpBZ2VudEV2ZW50EhIKCnVuaXhfbmFub3MYASABKAMSDAoEZGF0YRgCIAEoDBILCgNzZXEYAyABKAQy9gIKE0FnZW50Q29uc29sZVNlcnZpY2UStAEKEUxpc3RSdW5uaW5nQWdlbnRzEjcuZ2lic29uLmRhZW1vbi5hZ2VudGNvbnNvbGUudjEuTGlzdFJ1bm5pbmdBZ2VudHNSZXF1ZXN0GjguZ2lic29uLmRhZW1vbi5hZ2VudGNvbnNvbGUudjEuTGlzdFJ1bm5pbmdBZ2VudHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSpwEKEVN0cmVhbUFnZW50RXZlbnRzEjcuZ2lic29uLmRhZW1vbi5hZ2VudGNvbnNvbGUudjEuU3RyZWFtQWdlbnRFdmVudHNSZXF1ZXN0GikuZ2lic29uLmRhZW1vbi5hZ2VudGNvbnNvbGUudjEuQWdlbnRFdmVudCIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMwAUJnWmVnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vZGFlbW9uL2FnZW50Y29uc29sZS92MTthZ2VudGNvbnNvbGV2MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
+  fileDesc("CjBnaWJzb24vZGFlbW9uL2FnZW50Y29uc29sZS92MS9hZ2VudGNvbnNvbGUucHJvdG8SHWdpYnNvbi5kYWVtb24uYWdlbnRjb25zb2xlLnYxIo8CCgxSdW5uaW5nQWdlbnQSDgoGcnVuX2lkGAEgASgJEhIKCmFnZW50X25hbWUYAiABKAkSEgoKc2FuZGJveF9pZBgDIAEoCRIaChJzdGFydGVkX3VuaXhfbmFub3MYBCABKAMSEgoKbWlzc2lvbl9pZBgFIAEoCRIWCg5taXNzaW9uX3J1bl9pZBgGIAEoCRIVCg1zYW5kYm94X2NsYXNzGAcgASgJEhYKDmNvbXBvbmVudF9raW5kGAggASgJEg8KB2JhbmtfaWQYCSABKAkSEQoJbWVtYmVyX2lkGAogASgJEiwKBm1lbWJlchgLIAEoCzIcLmdpYnNvbi5iYW5rLnYxLk1lbWJlclN0YXR1cyIaChhMaXN0UnVubmluZ0FnZW50c1JlcXVlc3QiWAoZTGlzdFJ1bm5pbmdBZ2VudHNSZXNwb25zZRI7CgZhZ2VudHMYASADKAsyKy5naWJzb24uZGFlbW9uLmFnZW50Y29uc29sZS52MS5SdW5uaW5nQWdlbnQiTQoYU3RyZWFtQWdlbnRFdmVudHNSZXF1ZXN0Eg4KBnJ1bl9pZBgBIAEoCRIRCglzaW5jZV9zZXEYAiABKAQSDgoGam9iX2lkGAMgASgJIjsKCkFnZW50RXZlbnQSEgoKdW5peF9uYW5vcxgBIAEoAxIMCgRkYXRhGAIgASgMEgsKA3NlcRgDIAEoBDL2AgoTQWdlbnRDb25zb2xlU2VydmljZRK0AQoRTGlzdFJ1bm5pbmdBZ2VudHMSNy5naWJzb24uZGFlbW9uLmFnZW50Y29uc29sZS52MS5MaXN0UnVubmluZ0FnZW50c1JlcXVlc3QaOC5naWJzb24uZGFlbW9uLmFnZW50Y29uc29sZS52MS5MaXN0UnVubmluZ0FnZW50c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKnAQoRU3RyZWFtQWdlbnRFdmVudHMSNy5naWJzb24uZGFlbW9uLmFnZW50Y29uc29sZS52MS5TdHJlYW1BZ2VudEV2ZW50c1JlcXVlc3QaKS5naWJzb24uZGFlbW9uLmFnZW50Y29uc29sZS52MS5BZ2VudEV2ZW50IiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAzABQmdaZWdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi9kYWVtb24vYWdlbnRjb25zb2xlL3YxO2FnZW50Y29uc29sZXYxYgZwcm90bzM", [file_gibson_auth_v1_options, file_gibson_bank_v1_bank]);
 
 /**
  * RunningAgent is one running agent instance in the caller's tenant. It carries
@@ -79,6 +81,29 @@ export type RunningAgent = Message<"gibson.daemon.agentconsole.v1.RunningAgent">
    * @generated from field: string component_kind = 8;
    */
   componentKind: string;
+
+  /**
+   * bank_id and member_id name the bank member this instance is, when it is
+   * one (ADR-0019). Empty for a one-shot dispatch. A console joins the row to
+   * the bank surface by these rather than by mission_run_id.
+   *
+   * @generated from field: string bank_id = 9;
+   */
+  bankId: string;
+
+  /**
+   * @generated from field: string member_id = 10;
+   */
+  memberId: string;
+
+  /**
+   * member is what the member last reported on its heartbeat: its state, the
+   * jobs it holds and its cap. Absent for a one-shot dispatch, and absent for
+   * a member that has not reported yet.
+   *
+   * @generated from field: gibson.bank.v1.MemberStatus member = 11;
+   */
+  member?: MemberStatus;
 };
 
 /**
@@ -145,6 +170,16 @@ export type StreamAgentEventsRequest = Message<"gibson.daemon.agentconsole.v1.St
    * @generated from field: uint64 since_seq = 2;
    */
   sinceSeq: bigint;
+
+  /**
+   * job_id narrows a member's stream to one job: only the job events the
+   * daemon emits for that job pass (job_opened, job_input, job_state,
+   * job_deliverable, job_closed). The agent's own output lines carry no job
+   * id and are held back. Empty means everything.
+   *
+   * @generated from field: string job_id = 3;
+   */
+  jobId: string;
 };
 
 /**

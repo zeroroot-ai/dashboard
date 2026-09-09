@@ -86,9 +86,9 @@ const PORT_LABELS = {
 // Daemon hostname patterns we recognize. The shape is intentionally
 // permissive, it catches `gibson`, `gibson.<ns>`, `gibson.<ns>.svc`,
 // `gibson.<ns>.svc.cluster.local`, plus the legacy `gibson-daemon.<...>`
-// variant. The trailing port is required so that bare references to the
-// `gibson` package name or the `gibson.io` doc/comment string never
-// trigger.
+// variant. The trailing port is required, so a bare reference to the
+// `gibson` package name, or to any dotted `gibson.<word>` string in a
+// comment, never triggers.
 const DAEMON_HOST_BODY = "(?:gibson(?:-daemon)?(?:\\.[a-z0-9-]+)*)";
 
 function buildPortPatterns() {

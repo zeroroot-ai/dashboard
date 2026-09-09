@@ -78,25 +78,27 @@ The `scripts/check-no-spiffe-in-user-client.mjs` build guard fails the
 build if SPIFFE-JWT-SVID-minting code re-appears anywhere in the
 dashboard.
 
-## Inbound SPIFFE JWT-SVID validation
+## Inbound service-acting bearer tokens
 
-Some admin endpoints accept inbound bearer tokens minted by *other*
-in-cluster SPIFFE workloads (the tenant-operator calling
-`/api/admin/provisioning/*`). [`src/lib/spiffe-verifier.ts`](../src/lib/spiffe-verifier.ts)
-validates these against the SPIRE trust bundle exposed as JWKS by the
-sidecar `gibson-spiffe-jwks-exporter`.
+Some routes accept inbound bearer tokens presented by other platform
+components (the tenant-operator, the tool-runner). The dashboard verifies
+those against Zitadel's published JWKS, not against a SPIFFE trust bundle.
+[`src/lib/auth/zitadel-bearer-verifier.ts`](../src/lib/auth/zitadel-bearer-verifier.ts)
+is the single verifier for every such route. It checks the signature, the
+issuer, the audience and the numeric `sub` against the allowed
+service-account subjects.
 
 Env vars:
 
 ```
-SPIFFE_JWKS_URL            sidecar URL (default http://127.0.0.1:9091/jwks)
-SPIFFE_TRUST_DOMAIN        expected trust domain (e.g. zeroroot.ai)
-DASHBOARD_ADMIN_AUDIENCE   expected JWT audience (e.g. gibson-dashboard)
+ZITADEL_ISSUER             the issuer the token must carry
+ZITADEL_AUDIENCE           expected JWT audience (default gibson-platform)
+ALLOWED_SERVICE_SUBJECTS   comma-separated numeric Zitadel subjects
 ```
 
-This is **not** the dashboard authenticating users, it is the dashboard
-verifying a peer SPIFFE workload's JWT-SVID for admin callbacks. End
-users always come through Auth.js.
+This is **not** the dashboard authenticating users. It is the dashboard
+verifying a peer platform component. End users always come through Auth.js.
+No JWT-SVID minting or JWT-SVID verification code lives in the dashboard.
 
 ## "Register Agent" flow
 

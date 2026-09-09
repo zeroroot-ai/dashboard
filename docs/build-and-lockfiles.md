@@ -1,9 +1,10 @@
 # Build, toolchain, and lockfiles
 
 Phase-0 reproducible-build hardening for the dashboard (open-core relayout,
-dashboard#805). Companion to the org-wide
-[`RESTRUCTURE-QUALITY-BARS.md`](../../../../docs/architecture/open-core/RESTRUCTURE-QUALITY-BARS.md)
-§1 (reproducible builds) and §3 (dead-code gates).
+dashboard#805). It carries the dashboard half of two org quality bars,
+reproducible builds and dead-code gates. The document that stated those bars
+lived in the private docs repository, which the org deleted on 2026-09-04, so
+this file is the surviving statement of both for this repository.
 
 ## Toolchain pin
 

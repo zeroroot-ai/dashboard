@@ -142,18 +142,20 @@ const r = await fetch(`${zitadelBase}/management/v1/users/_search`, {
 });
 ```
 
-Right ([`src/lib/zitadel/admin-client-factory.ts`](../src/lib/zitadel/admin-client-factory.ts)):
+Right, ask the daemon over the Envoy edge and let it call Zitadel:
 
 ```ts
-import { getSignupZitadelAdminClient } from '@/src/lib/zitadel/admin-client-factory';
+import { userClient } from '@/src/lib/gibson-client';
+import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
 
-const zitadel = await getSignupZitadelAdminClient();
-const users = await zitadel.searchUsers({ /* ... */ });
+const activity = await userClient(UserService).getUserActivity({ /* ... */ });
 ```
 
-The factory caches tokens, refreshes before expiry, and is the single
-point that holds Zitadel service-account credentials. The build guard
-`scripts/check-no-direct-zitadel-fetch.mjs` enforces this.
+The dashboard holds no Zitadel service-account credential at all. Every
+Zitadel administration call belongs to the daemon. The build guard
+`scripts/check-no-direct-zitadel-fetch.mjs` reserves `src/lib/zitadel/` as
+the only directory in which a Zitadel HTTP call may appear, and that
+directory carries no live fetch today.
 
 ## DASHBOARD-AUTH-006: logging the agent client_secret
 

@@ -28,6 +28,11 @@
 //     Signup                    → identity, billing and provisioning, all of it
 //                                 strictly after that proof
 //
+//   The APPROVAL rung (ADR-0006, gibson#22) replaces that round trip with one
+//   Register call and an administrator's decision. It is a different proof of
+//   the same thing, not a second completion path: approval runs exactly the
+//   work Signup runs.
+//
 //   Signup therefore takes NO owner email, workspace name, tier or profile from
 //   the client. Every one of those is read back from the verification row the
 //   session resolves to. A client that could supply them could point a redeemed
@@ -49,7 +54,113 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/signup.proto.
  */
 export const file_gibson_tenant_v1_signup: GenFile = /*@__PURE__*/
-  fileDesc("Ch1naWJzb24vdGVuYW50L3YxL3NpZ251cC5wcm90bxIQZ2lic29uLnRlbmFudC52MSK2AQofUmVxdWVzdEVtYWlsVmVyaWZpY2F0aW9uUmVxdWVzdBISCgphdHRlbXB0X2lkGAEgASgJEhMKC293bmVyX2VtYWlsGAIgASgJEhYKDndvcmtzcGFjZV9uYW1lGAMgASgJEgwKBHRpZXIYBCABKAkSGAoQb3duZXJfZmlyc3RfbmFtZRgFIAEoCRIXCg9vd25lcl9sYXN0X25hbWUYBiABKAkSEQoJY2xpZW50X2lwGAcgASgJIiIKIFJlcXVlc3RFbWFpbFZlcmlmaWNhdGlvblJlc3BvbnNlIkIKHlJlZGVlbUVtYWlsVmVyaWZpY2F0aW9uUmVxdWVzdBINCgV0b2tlbhgBIAEoCRIRCgljbGllbnRfaXAYAiABKAkikAEKH1JlZGVlbUVtYWlsVmVyaWZpY2F0aW9uUmVzcG9uc2USHgoWdmVyaWZpZWRfc2Vzc2lvbl90b2tlbhgBIAEoCRISCgphdHRlbXB0X2lkGAIgASgJEhMKC293bmVyX2VtYWlsGAMgASgJEhYKDndvcmtzcGFjZV9uYW1lGAQgASgJEgwKBHRpZXIYBSABKAkibAobQXR0YWNoU2lnbnVwQ3VzdG9tZXJSZXF1ZXN0Eh4KFnZlcmlmaWVkX3Nlc3Npb25fdG9rZW4YASABKAkSGgoSc3RyaXBlX2N1c3RvbWVyX2lkGAIgASgJEhEKCWNsaWVudF9pcBgDIAEoCSIeChxBdHRhY2hTaWdudXBDdXN0b21lclJlc3BvbnNlIuYBCg1TaWdudXBSZXF1ZXN0EhIKCmF0dGVtcHRfaWQYASABKAkSEAoIcGFzc3dvcmQYCCABKAkSHgoWdmVyaWZpZWRfc2Vzc2lvbl90b2tlbhgJIAEoCRIRCgljbGllbnRfaXAYCiABKAlKBAgCEANKBAgDEARKBAgEEAVKBAgFEAZKBAgGEAdKBAgHEAhSC293bmVyX2VtYWlsUg53b3Jrc3BhY2VfbmFtZVIEdGllclIQb3duZXJfZmlyc3RfbmFtZVIPb3duZXJfbGFzdF9uYW1lUhJzdHJpcGVfY3VzdG9tZXJfaWQiYgoOU2lnbnVwUmVzcG9uc2USEQoJdGVuYW50X2lkGAEgASgJEhUKDW93bmVyX3VzZXJfaWQYAyABKAkSDwoHcGxhbl9pZBgEIAEoCUoECAIQA1IPYWxyZWFkeV9leGlzdGVkMvgDCg1TaWdudXBTZXJ2aWNlEokBChhSZXF1ZXN0RW1haWxWZXJpZmljYXRpb24SMS5naWJzb24udGVuYW50LnYxLlJlcXVlc3RFbWFpbFZlcmlmaWNhdGlvblJlcXVlc3QaMi5naWJzb24udGVuYW50LnYxLlJlcXVlc3RFbWFpbFZlcmlmaWNhdGlvblJlc3BvbnNlIgaKtRgCKAEShgEKF1JlZGVlbUVtYWlsVmVyaWZpY2F0aW9uEjAuZ2lic29uLnRlbmFudC52MS5SZWRlZW1FbWFpbFZlcmlmaWNhdGlvblJlcXVlc3QaMS5naWJzb24udGVuYW50LnYxLlJlZGVlbUVtYWlsVmVyaWZpY2F0aW9uUmVzcG9uc2UiBoq1GAIoARJ9ChRBdHRhY2hTaWdudXBDdXN0b21lchItLmdpYnNvbi50ZW5hbnQudjEuQXR0YWNoU2lnbnVwQ3VzdG9tZXJSZXF1ZXN0Gi4uZ2lic29uLnRlbmFudC52MS5BdHRhY2hTaWdudXBDdXN0b21lclJlc3BvbnNlIgaKtRgCKAESUwoGU2lnbnVwEh8uZ2lic29uLnRlbmFudC52MS5TaWdudXBSZXF1ZXN0GiAuZ2lic29uLnRlbmFudC52MS5TaWdudXBSZXNwb25zZSIGirUYAigBQlRaUmdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_gibson_auth_v1_options]);
+  fileDesc("Ch1naWJzb24vdGVuYW50L3YxL3NpZ251cC5wcm90bxIQZ2lic29uLnRlbmFudC52MSK4AQoPUmVnaXN0ZXJSZXF1ZXN0EhIKCmF0dGVtcHRfaWQYASABKAkSEwoLb3duZXJfZW1haWwYAiABKAkSFgoOd29ya3NwYWNlX25hbWUYAyABKAkSDAoEdGllchgEIAEoCRIYChBvd25lcl9maXJzdF9uYW1lGAUgASgJEhcKD293bmVyX2xhc3RfbmFtZRgGIAEoCRIQCghwYXNzd29yZBgHIAEoCRIRCgljbGllbnRfaXAYCCABKAkiKwoQUmVnaXN0ZXJSZXNwb25zZRIXCg9yZWdpc3RyYXRpb25faWQYASABKAkitgEKH1JlcXVlc3RFbWFpbFZlcmlmaWNhdGlvblJlcXVlc3QSEgoKYXR0ZW1wdF9pZBgBIAEoCRITCgtvd25lcl9lbWFpbBgCIAEoCRIWCg53b3Jrc3BhY2VfbmFtZRgDIAEoCRIMCgR0aWVyGAQgASgJEhgKEG93bmVyX2ZpcnN0X25hbWUYBSABKAkSFwoPb3duZXJfbGFzdF9uYW1lGAYgASgJEhEKCWNsaWVudF9pcBgHIAEoCSIiCiBSZXF1ZXN0RW1haWxWZXJpZmljYXRpb25SZXNwb25zZSJCCh5SZWRlZW1FbWFpbFZlcmlmaWNhdGlvblJlcXVlc3QSDQoFdG9rZW4YASABKAkSEQoJY2xpZW50X2lwGAIgASgJIpABCh9SZWRlZW1FbWFpbFZlcmlmaWNhdGlvblJlc3BvbnNlEh4KFnZlcmlmaWVkX3Nlc3Npb25fdG9rZW4YASABKAkSEgoKYXR0ZW1wdF9pZBgCIAEoCRITCgtvd25lcl9lbWFpbBgDIAEoCRIWCg53b3Jrc3BhY2VfbmFtZRgEIAEoCRIMCgR0aWVyGAUgASgJImwKG0F0dGFjaFNpZ251cEN1c3RvbWVyUmVxdWVzdBIeChZ2ZXJpZmllZF9zZXNzaW9uX3Rva2VuGAEgASgJEhoKEnN0cmlwZV9jdXN0b21lcl9pZBgCIAEoCRIRCgljbGllbnRfaXAYAyABKAkiHgocQXR0YWNoU2lnbnVwQ3VzdG9tZXJSZXNwb25zZSLmAQoNU2lnbnVwUmVxdWVzdBISCgphdHRlbXB0X2lkGAEgASgJEhAKCHBhc3N3b3JkGAggASgJEh4KFnZlcmlmaWVkX3Nlc3Npb25fdG9rZW4YCSABKAkSEQoJY2xpZW50X2lwGAogASgJSgQIAhADSgQIAxAESgQIBBAFSgQIBRAGSgQIBhAHSgQIBxAIUgtvd25lcl9lbWFpbFIOd29ya3NwYWNlX25hbWVSBHRpZXJSEG93bmVyX2ZpcnN0X25hbWVSD293bmVyX2xhc3RfbmFtZVISc3RyaXBlX2N1c3RvbWVyX2lkImIKDlNpZ251cFJlc3BvbnNlEhEKCXRlbmFudF9pZBgBIAEoCRIVCg1vd25lcl91c2VyX2lkGAMgASgJEg8KB3BsYW5faWQYBCABKAlKBAgCEANSD2FscmVhZHlfZXhpc3RlZDLTBAoNU2lnbnVwU2VydmljZRKJAQoYUmVxdWVzdEVtYWlsVmVyaWZpY2F0aW9uEjEuZ2lic29uLnRlbmFudC52MS5SZXF1ZXN0RW1haWxWZXJpZmljYXRpb25SZXF1ZXN0GjIuZ2lic29uLnRlbmFudC52MS5SZXF1ZXN0RW1haWxWZXJpZmljYXRpb25SZXNwb25zZSIGirUYAigBEoYBChdSZWRlZW1FbWFpbFZlcmlmaWNhdGlvbhIwLmdpYnNvbi50ZW5hbnQudjEuUmVkZWVtRW1haWxWZXJpZmljYXRpb25SZXF1ZXN0GjEuZ2lic29uLnRlbmFudC52MS5SZWRlZW1FbWFpbFZlcmlmaWNhdGlvblJlc3BvbnNlIgaKtRgCKAESfQoUQXR0YWNoU2lnbnVwQ3VzdG9tZXISLS5naWJzb24udGVuYW50LnYxLkF0dGFjaFNpZ251cEN1c3RvbWVyUmVxdWVzdBouLmdpYnNvbi50ZW5hbnQudjEuQXR0YWNoU2lnbnVwQ3VzdG9tZXJSZXNwb25zZSIGirUYAigBElMKBlNpZ251cBIfLmdpYnNvbi50ZW5hbnQudjEuU2lnbnVwUmVxdWVzdBogLmdpYnNvbi50ZW5hbnQudjEuU2lnbnVwUmVzcG9uc2UiBoq1GAIoARJZCghSZWdpc3RlchIhLmdpYnNvbi50ZW5hbnQudjEuUmVnaXN0ZXJSZXF1ZXN0GiIuZ2lic29uLnRlbmFudC52MS5SZWdpc3RlclJlc3BvbnNlIgaKtRgCKAFCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
+
+/**
+ * RegisterRequest carries the whole registration on the approval rung. There
+ * is no round trip to split it across, so unlike the open rung's three-step
+ * flow every field arrives at once.
+ *
+ * @generated from message gibson.tenant.v1.RegisterRequest
+ */
+export type RegisterRequest = Message<"gibson.tenant.v1.RegisterRequest"> & {
+  /**
+   * attempt_id correlates with the signup-progress stream. Required, must be a
+   * UUID.
+   *
+   * @generated from field: string attempt_id = 1;
+   */
+  attemptId: string;
+
+  /**
+   * owner_email is the address that will own the workspace. Normalized
+   * (trimmed, lowercased) server-side. Required.
+   *
+   * @generated from field: string owner_email = 2;
+   */
+  ownerEmail: string;
+
+  /**
+   * workspace_name is the human-readable workspace name. Required; it must
+   * yield a valid tenant slug.
+   *
+   * @generated from field: string workspace_name = 3;
+   */
+  workspaceName: string;
+
+  /**
+   * tier is the canonical plan id. Required, and resolved against the same
+   * server-side plan gate the open rung uses.
+   *
+   * @generated from field: string tier = 4;
+   */
+  tier: string;
+
+  /**
+   * owner_first_name / owner_last_name populate the human-user profile.
+   * Optional.
+   *
+   * @generated from field: string owner_first_name = 5;
+   */
+  ownerFirstName: string;
+
+  /**
+   * @generated from field: string owner_last_name = 6;
+   */
+  ownerLastName: string;
+
+  /**
+   * password is the owner's chosen password.
+   *
+   * SECURITY: write-only. It reaches the identity provider's request body and
+   * nothing else — never logged, never persisted by the daemon, never
+   * returned. The account it lands on is created deactivated, so the password
+   * cannot be used until an administrator approves the registration.
+   *
+   * @generated from field: string password = 7;
+   */
+  password: string;
+
+  /**
+   * client_ip — see RequestEmailVerificationRequest.client_ip.
+   *
+   * @generated from field: string client_ip = 8;
+   */
+  clientIp: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.RegisterRequest.
+ * Use `create(RegisterRequestSchema)` to create a new message.
+ */
+export const RegisterRequestSchema: GenMessage<RegisterRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_signup, 0);
+
+/**
+ * RegisterResponse tells the registrant what happens next, and nothing else.
+ *
+ * It carries no tenant id and no user id. Neither exists yet, and a
+ * registration that has not been approved is not entitled to learn what it
+ * would be called.
+ *
+ * @generated from message gibson.tenant.v1.RegisterResponse
+ */
+export type RegisterResponse = Message<"gibson.tenant.v1.RegisterResponse"> & {
+  /**
+   * registration_id identifies the pending registration to an administrator.
+   * It is the id an approval or a rejection names.
+   *
+   * @generated from field: string registration_id = 1;
+   */
+  registrationId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.RegisterResponse.
+ * Use `create(RegisterResponseSchema)` to create a new message.
+ */
+export const RegisterResponseSchema: GenMessage<RegisterResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_signup, 1);
 
 /**
  * RequestEmailVerificationRequest carries the signup form's non-secret fields.
@@ -132,7 +243,7 @@ export type RequestEmailVerificationRequest = Message<"gibson.tenant.v1.RequestE
  * Use `create(RequestEmailVerificationRequestSchema)` to create a new message.
  */
 export const RequestEmailVerificationRequestSchema: GenMessage<RequestEmailVerificationRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_signup, 0);
+  messageDesc(file_gibson_tenant_v1_signup, 2);
 
 /**
  * RequestEmailVerificationResponse is intentionally EMPTY.
@@ -151,7 +262,7 @@ export type RequestEmailVerificationResponse = Message<"gibson.tenant.v1.Request
  * Use `create(RequestEmailVerificationResponseSchema)` to create a new message.
  */
 export const RequestEmailVerificationResponseSchema: GenMessage<RequestEmailVerificationResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_signup, 1);
+  messageDesc(file_gibson_tenant_v1_signup, 3);
 
 /**
  * RedeemEmailVerificationRequest carries the raw token from the emailed link.
@@ -180,7 +291,7 @@ export type RedeemEmailVerificationRequest = Message<"gibson.tenant.v1.RedeemEma
  * Use `create(RedeemEmailVerificationRequestSchema)` to create a new message.
  */
 export const RedeemEmailVerificationRequestSchema: GenMessage<RedeemEmailVerificationRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_signup, 2);
+  messageDesc(file_gibson_tenant_v1_signup, 4);
 
 /**
  * RedeemEmailVerificationResponse hands back the completion session.
@@ -231,7 +342,7 @@ export type RedeemEmailVerificationResponse = Message<"gibson.tenant.v1.RedeemEm
  * Use `create(RedeemEmailVerificationResponseSchema)` to create a new message.
  */
 export const RedeemEmailVerificationResponseSchema: GenMessage<RedeemEmailVerificationResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_signup, 3);
+  messageDesc(file_gibson_tenant_v1_signup, 5);
 
 /**
  * AttachSignupCustomerRequest pins a billing customer to a verified session.
@@ -264,7 +375,7 @@ export type AttachSignupCustomerRequest = Message<"gibson.tenant.v1.AttachSignup
  * Use `create(AttachSignupCustomerRequestSchema)` to create a new message.
  */
 export const AttachSignupCustomerRequestSchema: GenMessage<AttachSignupCustomerRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_signup, 4);
+  messageDesc(file_gibson_tenant_v1_signup, 6);
 
 /**
  * AttachSignupCustomerResponse is empty.
@@ -279,7 +390,7 @@ export type AttachSignupCustomerResponse = Message<"gibson.tenant.v1.AttachSignu
  * Use `create(AttachSignupCustomerResponseSchema)` to create a new message.
  */
 export const AttachSignupCustomerResponseSchema: GenMessage<AttachSignupCustomerResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_signup, 5);
+  messageDesc(file_gibson_tenant_v1_signup, 7);
 
 /**
  * SignupRequest completes a verified signup.
@@ -340,7 +451,7 @@ export type SignupRequest = Message<"gibson.tenant.v1.SignupRequest"> & {
  * Use `create(SignupRequestSchema)` to create a new message.
  */
 export const SignupRequestSchema: GenMessage<SignupRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_signup, 6);
+  messageDesc(file_gibson_tenant_v1_signup, 8);
 
 /**
  * SignupResponse reports the outcome of a completed signup.
@@ -387,7 +498,7 @@ export type SignupResponse = Message<"gibson.tenant.v1.SignupResponse"> & {
  * Use `create(SignupResponseSchema)` to create a new message.
  */
 export const SignupResponseSchema: GenMessage<SignupResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_signup, 7);
+  messageDesc(file_gibson_tenant_v1_signup, 9);
 
 /**
  * SignupService owns the self-serve signup flow: prove the address, then
@@ -480,6 +591,40 @@ export const SignupService: GenService<{
     methodKind: "unary";
     input: typeof SignupRequestSchema;
     output: typeof SignupResponseSchema;
+  },
+  /**
+   * Register is the APPROVAL rung's single registration call (ADR-0006,
+   * gibson#22). It is served only when the deployment selects that rung, and
+   * the four RPCs above are refused on it; on every other rung Register is
+   * refused instead. One rung is live at a time.
+   *
+   * WHAT IT CREATES: one signup_verification row in status pending_approval,
+   * and one DEACTIVATED identity-provider user holding the password the
+   * registrant chose. Nothing else. No tenant, no billing object, no
+   * provisioning-queue row — those wait for an administrator's approval, which
+   * runs exactly the work Signup runs on the open rung.
+   *
+   * WHY IT NEEDS NO MAIL: email verification proves mailbox control on a
+   * PUBLIC signup surface. A self-hosted instance sits behind the customer's
+   * perimeter, where the operator already controls who can reach it, and an
+   * administrator approves every account by hand. The human in that path is
+   * the proof. This is what lets a self-hosted install with no SMTP have a
+   * working front door, where today it has none.
+   *
+   * The password reaches the identity provider and nothing else. The daemon
+   * never stores it: a credential parked in the platform database across an
+   * approval that may take days is exactly what this shape avoids.
+   *
+   * Errors: InvalidArgument (malformed input), AlreadyExists (the address
+   * already has an account), ResourceExhausted (rate limit), PermissionDenied
+   * (not the approval rung), Unavailable (store or identity provider down).
+   *
+   * @generated from rpc gibson.tenant.v1.SignupService.Register
+   */
+  register: {
+    methodKind: "unary";
+    input: typeof RegisterRequestSchema;
+    output: typeof RegisterResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_tenant_v1_signup, 0);
