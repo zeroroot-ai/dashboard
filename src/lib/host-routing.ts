@@ -129,6 +129,21 @@ export function isNeutralPath(pathname: string): boolean {
 }
 
 /**
+ * The docs origin, from `DOCS_URL`, falling back to the public docs host.
+ *
+ * Exported because two surfaces need it and must not disagree: this module's
+ * host split, and the deployment profile the page chrome reads. Docs are
+ * their own deployable on their own host — never a path under the marketing
+ * origin — and a second copy of that rule is how the site header ended up
+ * linking `${marketingUrl}/docs`, which 404s.
+ */
+export function resolveDocsOrigin(
+  source: Record<string, string | undefined> = process.env,
+): string {
+  return stripTrailingSlash(source.DOCS_URL || "https://docs.zeroroot.ai");
+}
+
+/**
  * Build the host-split config from the environment. Returns `null` when the
  * split is not configured — no WWW_URL, no app origin, or app === www
  * (single-origin local dev on localhost:3000), so dev is unaffected.
@@ -148,13 +163,12 @@ export function loadHostSplitConfig(
     return null;
   }
   if (hostEquals(appHost, wwwHost)) return null;
-  const docsRaw = source.DOCS_URL;
   return {
     appHost,
     wwwHost,
     appOrigin: stripTrailingSlash(appOrigin),
     wwwOrigin: stripTrailingSlash(wwwOrigin),
-    docsOrigin: stripTrailingSlash(docsRaw || "https://docs.zeroroot.ai"),
+    docsOrigin: resolveDocsOrigin(source),
   };
 }
 

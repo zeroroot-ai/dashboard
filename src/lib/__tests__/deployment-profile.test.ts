@@ -52,6 +52,8 @@ describe('getDeploymentProfile — self-hosted (A)', () => {
       selfServeSignup: false,
       billingEnabled: false,
       marketingUrl: null,
+      // Never null, in either audience: docs ship self-hosted too.
+      docsUrl: 'https://docs.zeroroot.ai',
     });
   });
 
@@ -106,6 +108,9 @@ describe('getDeploymentProfile — SaaS (B)', () => {
       selfServeSignup: true,
       billingEnabled: true,
       marketingUrl: 'https://www.zeroroot.ai',
+      // A DIFFERENT host from marketingUrl, on purpose: the marketing site
+      // serves no /docs and answers 404 for it.
+      docsUrl: 'https://docs.zeroroot.ai',
     });
   });
 
@@ -127,7 +132,16 @@ describe('getDeploymentProfile — SaaS (B)', () => {
     ).toBe(true);
   });
 
-  it('B.4: marketingUrl strips a trailing slash from WWW_URL', () => {
+  it('B.4: docsUrl follows DOCS_URL and is never the marketing host', () => {
+    const profile = getDeploymentProfile({
+      ...SAAS,
+      DOCS_URL: 'https://docs.staging.zeroroot.ai/',
+    });
+    expect(profile.docsUrl).toBe('https://docs.staging.zeroroot.ai');
+    expect(profile.docsUrl).not.toBe(profile.marketingUrl);
+  });
+
+  it('B.5: marketingUrl strips a trailing slash from WWW_URL', () => {
     const profile = getDeploymentProfile({
       ...SAAS,
       WWW_URL: 'https://www.zeroroot.ai/',
@@ -135,7 +149,7 @@ describe('getDeploymentProfile — SaaS (B)', () => {
     expect(profile.marketingUrl).toBe('https://www.zeroroot.ai');
   });
 
-  it('B.5: selfServeSignup is true in the SaaS profile', () => {
+  it('B.6: selfServeSignup is true in the SaaS profile', () => {
     expect(getDeploymentProfile(SAAS).selfServeSignup).toBe(true);
   });
 });
