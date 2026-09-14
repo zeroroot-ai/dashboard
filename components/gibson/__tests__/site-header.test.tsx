@@ -2,14 +2,18 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * SiteHeader nav-link tests (dashboard#963).
+ * SiteHeader nav-link tests.
  *
- * The docs link must point at the marketing host on SaaS. An app-relative
- * /docs href gets RSC-prefetched by Next.js; the middleware host-split 307s
- * it to www.<domain> and the cross-origin prefetch dies on CORS, producing a
- * console error on every page that renders the public header. An absolute
- * external href is never RSC-prefetched, so the error (and the wasted 307 on
- * real navigation) disappears.
+ * On SaaS the docs link must point at the DOCS host and the pricing link at
+ * the MARKETING host. They are two deployables on two hosts, and this test
+ * used to assert `${marketingUrl}/docs` — a path the marketing site does not
+ * serve and answers 404 for. The header was the last copy of a rule
+ * src/lib/host-routing.ts had already corrected.
+ *
+ * Both hrefs are absolute for a second reason (dashboard#963): an app-relative
+ * /docs href gets RSC-prefetched by Next.js, the middleware host-split 307s
+ * it cross-origin, and the prefetch dies on CORS — a console error on every
+ * page that renders the public header.
  *
  * On self-hosted (marketingUrl null) the dashboard serves /docs itself, so
  * the relative link is the correct one there — mirroring how the pricing
@@ -43,13 +47,15 @@ vi.mock("@/components/layout/logo", () => ({
 
 import { SiteHeader } from "../site-header";
 
-const WWW = "https://www.staging.zeroroot.ai";
+const WWW = "https://www.zeroroot.ai";
+const DOCS = "https://docs.zeroroot.ai";
 
 function profile(marketingUrl: string | null) {
   return {
     selfServeSignup: marketingUrl !== null,
     billingEnabled: marketingUrl !== null,
     marketingUrl,
+    docsUrl: DOCS,
   };
 }
 
@@ -59,16 +65,16 @@ describe("SiteHeader nav links", () => {
     mockGetServerSession.mockResolvedValue(null);
   });
 
-  it("SaaS: docs link is an absolute marketing-host URL (no RSC prefetch, no cross-host 307)", async () => {
+  it("SaaS: docs links to the docs host, pricing to the marketing host", async () => {
     mockGetDeploymentProfile.mockReturnValue(profile(WWW));
 
     render(await SiteHeader());
 
+    // Not `${WWW}/docs`: the marketing site serves no /docs.
     expect(screen.getByRole("link", { name: "docs" })).toHaveAttribute(
       "href",
-      `${WWW}/docs`,
+      DOCS,
     );
-    // Pricing already followed this pattern — assert it stays that way.
     expect(screen.getByRole("link", { name: "pricing" })).toHaveAttribute(
       "href",
       `${WWW}/pricing`,

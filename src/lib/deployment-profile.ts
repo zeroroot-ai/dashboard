@@ -47,6 +47,8 @@
 
 import 'server-only';
 
+import { resolveDocsOrigin } from '@/src/lib/host-routing';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -91,6 +93,20 @@ interface DeploymentProfile {
    * Derived from `WWW_URL` (stripped of trailing slash).
    */
   marketingUrl: string | null;
+
+  /**
+   * Full origin of the docs site, no trailing slash. Never null.
+   *
+   * Docs are their own deployable on their own host, in BOTH audiences
+   * (ADR-0006 classes them a core component), so unlike `marketingUrl` there
+   * is always somewhere real for a /docs link to land. That is precisely why
+   * docs must never be addressed as a path under `marketingUrl`: the
+   * marketing site serves no /docs and answers 404.
+   *
+   * Derived from `DOCS_URL` by `resolveDocsOrigin`, which the host split
+   * shares so the two cannot disagree.
+   */
+  docsUrl: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -177,5 +193,5 @@ export function getDeploymentProfile(
     );
   }
 
-  return { selfServeSignup, billingEnabled, marketingUrl };
+  return { selfServeSignup, billingEnabled, marketingUrl, docsUrl: resolveDocsOrigin(source) };
 }
