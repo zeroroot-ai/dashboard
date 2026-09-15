@@ -16,4 +16,4 @@ permissions:
 
 jobs:
   vault-auth-method-deny-list:
-    uses: zeroroot-ai/.github/.github/workflows/vault-auth-method-deny-list.yml@main
+    uses: zeroroot-ai/.github/.github/workflows/vault-auth-method-deny-list.yml@b7a142c4432492ada621d7603a676d0a3f7f8044 # main, 2026-09-15: pin every first-party reusable (.github#66)
