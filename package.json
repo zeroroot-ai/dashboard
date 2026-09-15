@@ -119,7 +119,7 @@
     "resend": "^6.18.1",
     "shiki": "^3.20.0",
     "sonner": "^2.0.7",
-    "stripe": "^21.0.1",
+    "stripe": "^22.6.2",
     "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.1.1",
