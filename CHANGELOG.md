@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.120.13](https://github.com/zeroroot-ai/dashboard/compare/v0.120.12...v0.120.13) (2026-09-15)
+
+
+### Bug Fixes
+
+* **ci:** pin the last five first-party reusable refs ([#64](https://github.com/zeroroot-ai/dashboard/issues/64)) ([33a5b5c](https://github.com/zeroroot-ai/dashboard/commit/33a5b5c1a4eab46fb253e1c19e022c00a39fa929))
+* **ci:** pin the org tree guards to a commit SHA ([#61](https://github.com/zeroroot-ai/dashboard/issues/61)) ([eb2dc7b](https://github.com/zeroroot-ai/dashboard/commit/eb2dc7bc49332c930a343c57877a571be820cebc))
+* **deps:** clear the three transitive advisories Scorecard reports ([#63](https://github.com/zeroroot-ai/dashboard/issues/63)) ([ad965c0](https://github.com/zeroroot-ai/dashboard/commit/ad965c0dfd0f382b38c0675ca081298529917cee))
+
 ## [0.120.12](https://github.com/zeroroot-ai/dashboard/compare/v0.120.11...v0.120.12) (2026-09-14)
 
 
