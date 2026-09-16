@@ -172,4 +172,11 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
     CMD wget -qO- http://localhost:3000/api/health || exit 1
 
+# The license text travels with the distribution. Apache-2.0 §4(a) and MIT
+# both require the notice to reach every recipient, and a published image is
+# a distribution. /licenses is the OCI convention. Last in the stage so a
+# change here rebuilds nothing else.
+COPY LICENSE /licenses/LICENSE
+COPY NOTICE /licenses/NOTICE
+
 CMD ["node", "server.js"]
