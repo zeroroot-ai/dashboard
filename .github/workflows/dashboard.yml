@@ -39,7 +39,7 @@ jobs:
     # reusable workflow never pushes on pull_request. There is deliberately
     # no pull_request_target trigger. Keep it that way.
     if: github.actor != 'dependabot[bot]'
-    uses: zeroroot-ai/.github/.github/workflows/reusable-image-build.yml@cc9c979345bd1940cb070a455e0b7a49004c9bac # main, 2026-09-16: unbreak the build (.github#83)
+    uses: zeroroot-ai/.github/.github/workflows/reusable-image-build.yml@0fed78673650eb244156e92f3a37ab7411e39750 # main, 2026-09-16: arm the pre-push vulnerability gate (.github#85)
     # The reusable workflow declares contents:read on every job (it pushes an
     # image, signs it and uploads SARIF; it writes no repository contents).
     # packages:write and security-events:write are the two writes it needs.
