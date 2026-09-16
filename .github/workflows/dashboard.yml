@@ -39,7 +39,7 @@ jobs:
     # reusable workflow never pushes on pull_request. There is deliberately
     # no pull_request_target trigger. Keep it that way.
     if: github.actor != 'dependabot[bot]'
-    uses: zeroroot-ai/.github/.github/workflows/reusable-image-build.yml@e55c31f0bb5fe175e4b7f9cb4407be9f292885ce # v0.3.0
+    uses: zeroroot-ai/.github/.github/workflows/reusable-image-build.yml@017f26148bffdc5d382a265edd863e8a647e7830 # v0.4.0
     # The reusable workflow declares contents:read on every job (it pushes an
     # image, signs it and uploads SARIF; it writes no repository contents).
     # packages:write and security-events:write are the two writes it needs.

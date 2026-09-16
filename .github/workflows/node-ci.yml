@@ -109,7 +109,7 @@ jobs:
     # (.github#48 dropped the grant from the reusable side).
     permissions:
       contents: read
-    uses: zeroroot-ai/.github/.github/workflows/reusable-node-ci.yml@e55c31f0bb5fe175e4b7f9cb4407be9f292885ce # v0.3.0
+    uses: zeroroot-ai/.github/.github/workflows/reusable-node-ci.yml@017f26148bffdc5d382a265edd863e8a647e7830 # v0.4.0
     with:
       tier: fast
       # MUST equal package.json's `packageManager` exactly. The reusable
@@ -124,7 +124,7 @@ jobs:
     if: github.event_name == 'merge_group'
     permissions:
       contents: read
-    uses: zeroroot-ai/.github/.github/workflows/reusable-node-ci.yml@e55c31f0bb5fe175e4b7f9cb4407be9f292885ce # v0.3.0
+    uses: zeroroot-ai/.github/.github/workflows/reusable-node-ci.yml@017f26148bffdc5d382a265edd863e8a647e7830 # v0.4.0
     with:
       tier: heavy
       skip-sibling-generators: true
