@@ -26,6 +26,6 @@ jobs:
     # Same-repo PRs (head.repo.fork == false) run the gate as before. There is
     # deliberately no pull_request_target trigger here — keep it that way.
     if: github.event.pull_request.head.repo.fork == false
-    uses: zeroroot-ai/.github/.github/workflows/architectural-doc-coverage.yml@b7a142c4432492ada621d7603a676d0a3f7f8044 # main, 2026-09-15: pin every first-party reusable (.github#66)
+    uses: zeroroot-ai/.github/.github/workflows/architectural-doc-coverage.yml@271a10c5de3fd796ef375da9658b569ab17d1ad5 # v0.2.0
     secrets:
       DOCS_REPO_READ_TOKEN: ${{ secrets.DOCS_REPO_READ_TOKEN }}
