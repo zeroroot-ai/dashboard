@@ -401,9 +401,9 @@ function normalisePlan(p) {
 }
 
 /**
- * jsonToTsLiteral serialises a plan object as a TS object-literal string.
+ * jsonToTsLiteral serializes a plan object as a TS object-literal string.
  * Using JSON.stringify produces valid TS because all values are JSON-safe
- * (no Dates, no undefined keys after null-normalisation).
+ * (no Dates, no undefined keys after null-normalization).
  */
 function jsonToTsLiteral(obj) {
   return JSON.stringify(obj, null, 2).replace(/\n/g, "\n  ");

@@ -140,7 +140,7 @@ jobs:
   # every queue entry sat in AWAITING_CHECKS until the 60-minute
   # check_response_timeout and was dropped -- even with a fully green
   # build. This plain job is the stable "heavy" context on both events:
-  #   - pull_request: skipped (exactly the pre-existing #945 behaviour --
+  #   - pull_request: skipped (exactly the pre-existing #945 behavior --
   #     a skipped required context satisfies queue ENTRY).
   #   - merge_group: mirrors heavy-build's result, so the queue gets a
   #     real pass/fail signal under the required name.

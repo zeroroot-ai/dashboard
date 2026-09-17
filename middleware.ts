@@ -145,7 +145,7 @@ function isApiPath(pathname: string): boolean {
  * Paths requiring a resolved tenant + current membership.
  *
  * Previously only `/dashboard`, which left every `/api/**` route relying solely
- * on its own handler-level authz. The middleware check is defence in depth in
+ * on its own handler-level authz. The middleware check is defense in depth in
  * front of that, not a replacement for it.
  */
 function requiresTenant(pathname: string): boolean {

@@ -45,7 +45,7 @@ jobs:
         with:
           results_file: results.sarif
           results_format: sarif
-          # Publishing needs a public repo; private repos analyse locally only.
+          # Publishing needs a public repo; private repos analyze locally only.
           publish_results: ${{ !github.event.repository.private }}
 
       - name: Upload artifact

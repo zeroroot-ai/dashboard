@@ -44,7 +44,7 @@ import { NextRequest, NextResponse } from "next/server";
  *   - idToken     , the `id_token_hint` for federated logout
  *                   (app/api/auth/federated-signout/route.ts).
  *
- * Auth.js v5 with `session.strategy: "jwt"` serialises whatever the `session`
+ * Auth.js v5 with `session.strategy: "jwt"` serializes whatever the `session`
  * callback returns into the public `GET /api/auth/session` response body and
  * the client-side next-auth cache (SessionProvider / useSession). Server-side
  * `auth()` / getServerSession() invoke the callback IN-PROCESS and never hit

@@ -94,7 +94,7 @@ Rules are committed under `helm/gibson/files/prometheus/rules/` in the charts re
 
 This spec adds observability (metrics, alerts, Grafana) and deterministic error
 UX. It does not change the core authentication code path. However, if the
-`/login/error` redirect behaviour is causing user friction or a regression:
+`/login/error` redirect behavior is causing user friction or a regression:
 
 1. **Identify the regression.** Check `dashboard_login_error_total` by reason.
    If `fga_unavailable` is elevated, the issue is FGA, not the error-UX code.

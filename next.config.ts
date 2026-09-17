@@ -29,7 +29,7 @@ import type { NextConfig } from "next";
 // (kind / self-hosted before a trusted cert is installed) is self-defeating:
 // the browser pins the domain (max-age 1y, includeSubDomains) and then refuses
 // the self-signed cert with no "proceed" bypass — bricking *.<domain> locally
-// (introduced by #865; this gate restores the prior dev behaviour). Deployments
+// (introduced by #865; this gate restores the prior dev behavior). Deployments
 // behind a trusted cert (SaaS, or a self-hosted customer with a real cert) leave
 // DASHBOARD_HSTS_DISABLED unset and keep HSTS; kind/self-hosted-self-signed sets
 // DASHBOARD_HSTS_DISABLED=1. Default = HSTS ON (prod stays strict).

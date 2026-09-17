@@ -30,7 +30,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 // Mock jose BEFORE importing the module under test so module-level JWKS
-// initialisation picks up the mocked createRemoteJWKSet.
+// initialization picks up the mocked createRemoteJWKSet.
 vi.mock('jose', async (importOriginal) => {
   const actual = await importOriginal<typeof import('jose')>();
   return {

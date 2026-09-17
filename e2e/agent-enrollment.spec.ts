@@ -13,7 +13,7 @@
  * Two test groups:
  *
  *   1. Stubbed (runs without kind cluster), asserts the Register Agent form,
- *      the credential panel, and the agent list page behaviour using
+ *      the credential panel, and the agent list page behavior using
  *      Playwright network interception.
  *
  *   2. Integration (requires kind cluster + E2E_KIND_AVAILABLE=1), drives

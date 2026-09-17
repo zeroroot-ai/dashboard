@@ -304,7 +304,7 @@ export function vercelToolsToDaemonToolDefs(
       description: tool.description ?? '',
       // Vercel always ships JSON Schema 7 here (Zod schemas are converted
       // upstream by the `tool()` helper). JSON.stringify is the right
-      // serialisation, the daemon field is `parametersJson: string`.
+      // serialization, the daemon field is `parametersJson: string`.
       parametersJson: safeStringify(tool.inputSchema),
     });
   }

@@ -139,7 +139,7 @@ const client = serviceClient(DaemonAdminService, tenantId);  // workload-acting
 
 `DaemonAdminService` RPCs are FGA-gated to platform-operator role; if
 the calling user lacks the role, the call fails with `PermissionDenied`
-at ext-authz. The dashboard never decides admin authorisation locally
+at ext-authz. The dashboard never decides admin authorization locally
 - it forwards the bearer and trusts ext-authz.
 
 ## Step 8, Run the full prebuild guard chain

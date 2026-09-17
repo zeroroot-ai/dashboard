@@ -28,7 +28,7 @@ describe("validateVaultAddress", () => {
       expect(validateVaultAddress(address).ok).toBe(true);
     });
 
-    it("normalises the address it hands on", () => {
+    it("normalizes the address it hands on", () => {
       const result = validateVaultAddress("  https://Vault.Example.com:8200/  ");
       expect(result).toEqual({
         ok: true,

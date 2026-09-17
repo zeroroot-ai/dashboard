@@ -277,7 +277,7 @@ export function UsersContent() {
         status: "invited",
       });
       if (!res.ok) throw new Error(res.error);
-      toast.success(`Invitation for ${memberToCancel.email} has been cancelled.`);
+      toast.success(`Invitation for ${memberToCancel.email} has been canceled.`);
       await refetch();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to cancel invitation.");

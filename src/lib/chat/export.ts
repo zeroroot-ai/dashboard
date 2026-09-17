@@ -127,7 +127,7 @@ export function downloadText(content: string, filename: string, mimeType: string
   URL.revokeObjectURL(url);
 }
 
-/** Sanitise a conversation title into a safe filename stem. */
+/** Sanitize a conversation title into a safe filename stem. */
 export function titleToFilename(title: string): string {
   return (title || 'conversation')
     .toLowerCase()

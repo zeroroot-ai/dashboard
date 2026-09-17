@@ -75,7 +75,7 @@ function generate() {
 
   // Inject $comment as the first key. JSON object insertion order is
   // preserved in V8 for string keys, so Object.assign with $comment first
-  // guarantees it appears first in the serialised output.
+  // guarantees it appears first in the serialized output.
   const output = { $comment: GENERATED_COMMENT, ...parsed };
 
   // Use 2-space indent + trailing newline for stable, diff-friendly output.

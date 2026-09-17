@@ -43,7 +43,7 @@ describe('adaptCallView', () => {
 });
 
 describe('adaptCallDetail', () => {
-  it('maps the transcript and normalises unknown roles to user', () => {
+  it('maps the transcript and normalizes unknown roles to user', () => {
     const out = adaptCallDetail({
       callId: 'c1',
       runId: 'r1',

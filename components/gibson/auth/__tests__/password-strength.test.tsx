@@ -174,7 +174,7 @@ describe("PasswordStrength", () => {
     });
   });
 
-  describe("debounce behaviour", () => {
+  describe("debounce behavior", () => {
     it("does not call action multiple times for rapid keystrokes", async () => {
       const action = makeAction({ ok: true, breached: false });
       const { rerender } = render(

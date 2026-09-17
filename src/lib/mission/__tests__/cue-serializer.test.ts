@@ -55,7 +55,7 @@ describe('definitionToCUE', () => {
     expect(cue).toContain('}');
   });
 
-  it('serialises scalar fields', () => {
+  it('serializes scalar fields', () => {
     const def = create(MissionDefinitionSchema, {
       name: 'recon',
       description: 'Recon scan',
@@ -75,7 +75,7 @@ describe('definitionToCUE', () => {
     expect(cue).toContain('"say \\"hello\\""');
   });
 
-  it('serialises an AGENT node with agentName and task', () => {
+  it('serializes an AGENT node with agentName and task', () => {
     const def = create(MissionDefinitionSchema, {
       name: 'scan',
       nodes: {
@@ -89,7 +89,7 @@ describe('definitionToCUE', () => {
     expect(cue).toContain('task: { goal: "scan all ports" }');
   });
 
-  it('serialises a TOOL node with inputs', () => {
+  it('serializes a TOOL node with inputs', () => {
     const def = create(MissionDefinitionSchema, {
       name: 'fetch',
       nodes: {
@@ -102,7 +102,7 @@ describe('definitionToCUE', () => {
     expect(cue).toContain('url: "https://example.com"');
   });
 
-  it('serialises edges', () => {
+  it('serializes edges', () => {
     const def = create(MissionDefinitionSchema, {
       name: 'chain',
       edges: [create(MissionEdgeSchema, { from: 'a', to: 'b' })],
@@ -111,7 +111,7 @@ describe('definitionToCUE', () => {
     expect(cue).toContain('{from: "a", to: "b"}');
   });
 
-  it('serialises entryPoints and exitPoints', () => {
+  it('serializes entryPoints and exitPoints', () => {
     const def = create(MissionDefinitionSchema, {
       name: 'chain',
       entryPoints: ['a'],
@@ -129,7 +129,7 @@ describe('definitionToCUE', () => {
     expect(nameMatch?.[1]).toBe('my-mission');
   });
 
-  it('serialises a JOB node with jobConfig, the job import, acceptance and constraints (gibson#1706)', () => {
+  it('serializes a JOB node with jobConfig, the job import, acceptance and constraints (gibson#1706)', () => {
     const def = create(MissionDefinitionSchema, {
       name: 'fix',
       nodes: {

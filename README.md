@@ -2,7 +2,7 @@
 
 The web UI for the Gibson platform. Operators use it to manage tenants,
 launch missions, browse findings, run admin RPCs, and watch the live
-event graph. Identities live in Zitadel; authorisation is enforced by
+event graph. Identities live in Zitadel; authorization is enforced by
 the daemon's ext-authz layer; the dashboard never opens a direct gRPC
 channel to the daemon.
 
@@ -44,7 +44,7 @@ pnpm proto:generate # regenerate src/gen/ TS proto bindings (workstation-only)
 ```
 
 `pnpm prebuild` runs a chain of policy-guard scripts (no direct daemon
-gRPC, no legacy auth artefacts, RBAC minimality, authz-registry
+gRPC, no legacy auth artifacts, RBAC minimality, authz-registry
 freshness, etc.). Do not disable them, fix the underlying code.
 
 ## Standalone build (outside the polyrepo workspace)

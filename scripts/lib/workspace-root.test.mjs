@@ -171,7 +171,7 @@ describe("resolveRepoPath", () => {
     expect(resolveRepoPath(ABSENT_REPO, PLANS_REL, { from: orphanCheckout })).toBeNull();
   });
 
-  it("honours GIBSON_WORKSPACE_ROOT for a child checkout", () => {
+  it("honors GIBSON_WORKSPACE_ROOT for a child checkout", () => {
     const prev = process.env[WORKSPACE_ROOT_ENV];
     process.env[WORKSPACE_ROOT_ENV] = flat;
     try {
@@ -184,7 +184,7 @@ describe("resolveRepoPath", () => {
     }
   });
 
-  it("honours GIBSON_WORKSPACE_ROOT for a grandchild checkout", () => {
+  it("honors GIBSON_WORKSPACE_ROOT for a grandchild checkout", () => {
     const prev = process.env[WORKSPACE_ROOT_ENV];
     process.env[WORKSPACE_ROOT_ENV] = grouped;
     try {

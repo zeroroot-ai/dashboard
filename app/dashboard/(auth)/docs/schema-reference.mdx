@@ -52,7 +52,7 @@ JoinNodeConfig blocks until every node ID in `wait_for` has completed (success o
 
 ## `gibson.mission.v1.MissionConstraints`
 
-MissionConstraints declares the operational limits baked into a mission definition. Making constraints part of the schema lets mission authors publish self-describing missions (e.g., "stop after 50 findings") without requiring callers to supply limits out-of-band at dispatch time.  Semantics (zero means unlimited): - max_duration  : 0 duration  → no time limit - max_tokens    : 0           → no token budget - max_cost      : 0.0         → no cost ceiling - max_findings  : 0           → no finding count limit  Spec: sdk#47 (MissionConstraints proto promotion).
+MissionConstraints declares the operational limits baked into a mission definition. Making constraints part of the schema lets mission authors publish self-describing missions (e.g., "stop after 50 findings") without requiring callers to supply limits out-of-band at dispatch time.  Semantics (zero means unlimited): - max_duration  : 0 duration  → no time limit - max_tokens    : 0           → no token budget - max_cost      : 0.0         → no cost ceiling - max_findings  : 0           → no finding count limit
 
 | Field | Type | Tag | Description |
 |---|---|---|---|
@@ -67,7 +67,7 @@ MissionConstraints declares the operational limits baked into a mission definiti
 | `max_turns_per_agent` | `int32` | 9 | max_turns_per_agent caps the number of agent turns (Observe→Think→Act iterations) for any single agent node in the mission. 0 means unlimited. |
 | `allowed_techniques` | `repeated string` | 10 | allowed_techniques is the allowlist of attack technique IDs (taxonomy) that agents may use during the mission. Empty list means no allowlist (any technique may be used unless blocked). |
 | `blocked_techniques` | `repeated string` | 11 | blocked_techniques is the blocklist of attack technique IDs that agents must not use, regardless of allowed_techniques. Empty list means no blocklist. |
-| `max_tokens_per_call` | `int32` | 12 | max_tokens_per_call is the mission-level cap on tokens consumed per individual LLM invocation. Overridden by per-node *NodeConfig. max_tokens_per_call when set on a specific node. 0 means unlimited from this mechanism. Spec: mission-schema-canonicalization Requirement 5. Enforced by internal/harness/per_call_cap.go's EffectivePerCallCap() in the daemon (wired in M4, gibson#133). |
+| `max_tokens_per_call` | `int32` | 12 | max_tokens_per_call is the mission-level cap on tokens consumed per individual LLM invocation. Overridden by per-node *NodeConfig. max_tokens_per_call when set on a specific node. 0 means unlimited from this mechanism. Spec: mission-schema-canonicalization Requirement 5. Enforced by internal/harness/per_call_cap.go's EffectivePerCallCap() in the daemon (wired in M4). |
 
 ## `gibson.mission.v1.MissionDefinition`
 
@@ -90,7 +90,7 @@ MissionDefinition represents a mission template/definition. This is the shareabl
 | `installed_at` | `google.protobuf.Timestamp` | 13 | InstalledAt is the timestamp when this mission was installed |
 | `created_at` | `google.protobuf.Timestamp` | 14 | CreatedAt is the timestamp when the mission definition was created |
 | `workspace` | `gibson.mission.v1.WorkspaceConfig` | 15 | Workspace configures repository cloning + workspace management for agents that need code access. Optional; missions without code interaction omit this field.  Spec: mission-schema-canonicalization (mirror migration). |
-| `constraints` | `gibson.mission.v1.MissionConstraints` | 16 | Constraints declares mission-level operational limits. When present, these are the authoritative constraints for the mission DAG, they make the mission self-describing so authors do not have to supply limits out-of-band at dispatch time. The daemon merges these with any dispatch-time overrides (dispatch wins on conflict). Optional: absent means no constraints are baked into the definition.  Spec: sdk#47 (MissionConstraints proto promotion). |
+| `constraints` | `gibson.mission.v1.MissionConstraints` | 16 | Constraints declares mission-level operational limits. When present, these are the authoritative constraints for the mission DAG, they make the mission self-describing so authors do not have to supply limits out-of-band at dispatch time. The daemon merges these with any dispatch-time overrides (dispatch wins on conflict). Optional: absent means no constraints are baked into the definition. |
 
 ## `gibson.mission.v1.MissionDependencies`
 

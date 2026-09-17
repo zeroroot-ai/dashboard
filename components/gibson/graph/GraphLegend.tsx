@@ -45,8 +45,8 @@ const ENTITY_ICONS: Record<string, LucideIcon> = {
 
   // Application lifecycle (Taxonomy v2, gibson#1656). The bright-on-near-black
   // hue space is full at 16, so within this family the ICON is what separates
-  // one label from the next; colour narrows the field. Identity is never
-  // colour alone here.
+  // one label from the next; color narrows the field. Identity is never
+  // color alone here.
   application: Boxes,
   repository: GitBranch,
   image: Container,

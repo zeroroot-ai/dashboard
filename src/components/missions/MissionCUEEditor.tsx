@@ -13,7 +13,7 @@
  *  - CompleteMissionCUE  → Monaco completion item provider
  *  - HoverMissionCUE     → Monaco hover provider
  *
- * CUE is registered as a Monarch-tokenised language. There is no npm-published
+ * CUE is registered as a Monarch-tokenized language. There is no npm-published
  * TextMate grammar for CUE, so a lightweight Monarch ruleset covers strings,
  * numbers, identifiers, keywords, comments, and delimiters, sufficient for
  * syntax highlighting of the mission schema subset.
@@ -164,7 +164,7 @@ export function MissionCUEEditor({
 
   // ----- Server action imports (lazy to avoid SSR issues) -----
   // These are server actions, they must be imported dynamically from a
-  // "use client" module. Because Next.js serialises server actions through the
+  // "use client" module. Because Next.js serializes server actions through the
   // React boundary, dynamic import is safe here; the bundler replaces the
   // function body with an RPC stub automatically.
   const actionsRef = useRef<{

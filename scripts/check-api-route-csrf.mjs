@@ -207,7 +207,7 @@ function fileHeader(sf, text) {
 }
 
 /**
- * Analyse one route file.
+ * Analyze one route file.
  * Returns { exports: [{ method, gated, exemptReasoned, exemptBare }] }.
  */
 function analyse(text, fileName) {

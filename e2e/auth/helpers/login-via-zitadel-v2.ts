@@ -18,7 +18,7 @@
  * Front-door shapes (dashboard#961): /login renders differently per deployment
  * profile, so step 1 is shape-aware:
  *   (a) auto-handoff — the page fires signIn("zitadel") on load and the
- *       browser leaves /login on its own (legacy kind behaviour). Nothing to do.
+ *       browser leaves /login on its own (legacy kind behavior). Nothing to do.
  *   (b) gate page (SaaS profile, deploy#1060) — "Welcome to Gibson" card with
  *       a "Sign in" button and ZERO inputs. We click the button, which hands
  *       off to the Zitadel V2 loginname page, then steps 2-5 run unchanged.
@@ -194,7 +194,7 @@ export async function loginViaZitadelV2(
     console.log(`[loginViaZitadelV2] /login front-door shape: ${shape}`);
 
     if (shape === "inline") {
-      // Kind inline-form path, unchanged behaviour: credentials are submitted
+      // Kind inline-form path, unchanged behavior: credentials are submitted
       // directly on /login, no Zitadel V2 pages are involved.
       await emailInput.fill(email);
       await passwordInput.fill(password);

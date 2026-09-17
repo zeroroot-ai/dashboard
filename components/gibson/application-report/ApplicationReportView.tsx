@@ -16,12 +16,12 @@
  *    sequential ramp rather than a set of categorical hues: severity ramps on
  *    `destructive` (risk intensity), status ramps on `primary` (progress to
  *    done). One hue, light to dark, is the correct encoding for ordered
- *    magnitude, and it needs no new colour: both ramps are opacity steps on an
- *    existing brand token, so the page stays inside the no-hardcoded-colour
+ *    magnitude, and it needs no new color: both ramps are opacity steps on an
+ *    existing brand token, so the page stays inside the no-hardcoded-color
  *    invariant.
  *  - Every bar carries its label and its count as text, so identity never
- *    rests on colour alone. That is also what keeps the severity ramp legible
- *    to a colour-blind reader and in forced-colours mode.
+ *    rests on color alone. That is also what keeps the severity ramp legible
+ *    to a color-blind reader and in forced-colors mode.
  *  - The headline numbers are stat tiles, not charts. A single value is not a
  *    chart.
  *  - The canvas severity palette is deliberately NOT reused here: those hues
@@ -212,7 +212,7 @@ function FixPipeline({
                 ) : null,
               )}
             </div>
-            {/* Legend, always present: four series, each directly labelled. */}
+            {/* Legend, always present: four series, each directly labeled. */}
             <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
               {STATUS_ORDER.map((s) => (
                 <div key={s} className="flex items-center gap-2">

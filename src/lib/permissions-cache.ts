@@ -116,7 +116,7 @@ async function fetchMyPermissionsViaRoute(
     method: 'GET',
     credentials: 'same-origin',
     headers: { Accept: 'application/json' },
-    // Let the browser HTTP cache honour the route's `Cache-Control: private`
+    // Let the browser HTTP cache honor the route's `Cache-Control: private`
     // response header. Our in-process cache below is a second layer.
   });
   if (!resp.ok) {

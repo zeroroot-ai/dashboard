@@ -7,7 +7,7 @@
  * Covers:
  * - Valid Mermaid syntax → renders a div containing the SVG output
  * - Invalid Mermaid syntax → falls back to <pre><code> with raw source
- * - Security: securityLevel is pinned, and the SVG is sanitised before it is
+ * - Security: securityLevel is pinned, and the SVG is sanitized before it is
  *   assigned to innerHTML (GHSA-xxg9-2h3v-588p)
  */
 

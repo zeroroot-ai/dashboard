@@ -125,7 +125,7 @@ describe('GET /api/missions/:id/events, Loki log tail', () => {
       missions: [{ id: 'm1', status: 'MISSION_STATUS_RUNNING' }],
     });
 
-    // Entries must be at-or-after the route's live cursor (initialised to
+    // Entries must be at-or-after the route's live cursor (initialized to
     // `Date.now()` when the stream opens), otherwise they're skipped as
     // already-seen. Use timestamps a little in the future to stay ahead of it.
     const base = Date.now() + 1000;

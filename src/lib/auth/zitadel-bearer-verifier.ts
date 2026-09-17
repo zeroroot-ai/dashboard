@@ -164,7 +164,7 @@ export function assertAllowedServiceSubjectsConfigured(): void {
 }
 
 // ---------------------------------------------------------------------------
-// JWKS, lazily initialised; cached until __resetJWKSForTests is called.
+// JWKS, lazily initialized; cached until __resetJWKSForTests is called.
 // The cache key is the issuer URL, if ZITADEL_ISSUER changes between calls
 // (test-only scenario), __resetJWKSForTests must be called first.
 // ---------------------------------------------------------------------------

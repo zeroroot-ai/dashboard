@@ -1,14 +1,13 @@
 # closed-registration.md, `zeroroot-ai/dashboard`
 
 Admin-gated closed registration for self-hosted installs. AI-agent-facing.
-Module 6 of PRD dashboard#920. Prerequisite: dashboard#921 (deployment-profile
-resolver), dashboard#922 (front-door conditional).
+It depends on the deployment-profile resolver and the front-door conditional.
 
 ## Overview
 
 A self-hosted operator can lock down registration so that only invited (or
 admin-provisioned) users can join the instance. This matches GitLab
-self-managed's behaviour: the default is open (anyone can create an account),
+self-managed's behavior: the default is open (anyone can create an account),
 and an admin can close it so that the front door is sign-in only.
 
 On Gibson self-hosted, "closed registration" means:
@@ -31,8 +30,8 @@ gibson:
 ```
 
 The chart translates this to `SIGNUP_SELF_SERVE=""` (unset / falsy) in the
-dashboard pod environment. The deployment-profile resolver (`src/lib/deployment-profile.ts`,
-dashboard#921) reads that knob once at server startup and sets
+dashboard pod environment. The deployment-profile resolver (`src/lib/deployment-profile.ts`)
+reads that knob once at server startup and sets
 `selfServeSignup: false` in the resolved `DeploymentProfile`. Every surface
 that needs to know the posture reads the resolved profile — never the raw
 env — which ensures the front door, the signup route, and any future surfaces
@@ -58,7 +57,7 @@ gibson:
 | Tenant creation | On successful signup | Admin-only via `AdminProvisionTenant` |
 
 The front-door conditional is implemented in `app/(public)/login/login-form.tsx`
-(the `selfServeSignup` prop, dashboard#922). The route-level guard is
+(the `selfServeSignup` prop). The route-level guard is
 implemented in `app/(public)/signup/page.tsx`:
 
 ```ts
@@ -71,7 +70,7 @@ if (!profile.selfServeSignup) {
 
 Tests for both: `app/(public)/login/__tests__/login-form.test.tsx` (front door)
 and `app/(public)/signup/__tests__/signup-page-closed-registration.test.tsx`
-(route gate, dashboard#925).
+(route gate).
 
 ## Default posture
 
@@ -82,8 +81,8 @@ self-contained product. An operator who wants to lock down registration sets
 `gibson.signupSelfServe: false` explicitly as a deliberate administrative
 decision.
 
-This default is enforced by the deploy render guard (`deploy#1060`,
-`helm/gibson/tests/signup-seam.bats`), which asserts that the OSS-profile
+The chart render guard (`helm/gibson/tests/signup-seam.bats`) enforces this
+default. It asserts that the OSS-profile
 Helm render has `SIGNUP_SELF_SERVE` set (open registration is the open-source
 default).
 
@@ -95,7 +94,7 @@ for a tenant becomes the `tenant_admin` for that tenant (by the daemon's
 provisioning logic in `SignupService.Signup`).
 
 **When registration is closed on a fresh install:** use the
-`bootstrap-tenant-owner` one-shot (gibson#1103). It creates the owner's Zitadel
+`bootstrap-tenant-owner` one-shot. It creates the owner's Zitadel
 login and the FGA ownership tuple — the two things `AdminProvisionTenant` does
 not — without ever reopening registration and without requiring a pre-existing
 human session. The actor invoking it *is* the platform operator (same shape as
@@ -164,10 +163,8 @@ The owner then completes credential setup from the Zitadel email and signs in at
 
 ## Cross-links
 
-- Deployment-profile resolver: `src/lib/deployment-profile.ts` (dashboard#921)
-- Front-door conditional: `app/(public)/login/login-form.tsx` (dashboard#922)
+- Deployment-profile resolver: `src/lib/deployment-profile.ts`
+- Front-door conditional: `app/(public)/login/login-form.tsx`
 - Signup route gate: `app/(public)/signup/page.tsx`
 - Route-gate test: `app/(public)/signup/__tests__/signup-page-closed-registration.test.tsx`
 - Front-door test: `app/(public)/login/__tests__/login-form.test.tsx`
-- PRD: dashboard#920 (Module 6)
-- Issue: dashboard#925

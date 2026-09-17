@@ -170,7 +170,7 @@ export const MissionTerminal = React.forwardRef<
       terminalRef.current = null;
       fitAddonRef.current = null;
     };
-    // Re-initialise only when the panel is opened/closed, not on height changes.
+    // Re-initialize only when the panel is opened/closed, not on height changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 

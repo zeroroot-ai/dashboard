@@ -51,7 +51,7 @@ export default function InviteAcceptPage() {
         setState({
           kind: "error",
           message:
-            "This invitation can't be accepted. The link may have expired, been cancelled, or already been used.",
+            "This invitation can't be accepted. The link may have expired, been canceled, or already been used.",
         });
       }
     })();

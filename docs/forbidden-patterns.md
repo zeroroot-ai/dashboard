@@ -27,7 +27,7 @@ const client = userClient(DaemonService);
 const status = await client.status({});
 ```
 
-Since dashboard#814 (E9) the ConnectRPC daemon channel is constructed in
+Since E9 the ConnectRPC daemon channel is constructed in
 exactly ONE module-private file, `src/lib/gibson-client/transport.ts`. That
 module owns `createGrpcTransport` / `createClient`, the Envoy URL, the SPIFFE
 mTLS context, and the `Authorization` / `x-gibson-tenant` identity headers; it

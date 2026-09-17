@@ -249,7 +249,7 @@ export const DARK_THEME: ThemeColors = {
 
     // Application lifecycle (Taxonomy v2, gibson#1656). Structural edges take
     // the same faint acid as the recon structure; remediation edges take their
-    // target's hue so a fix path reads as one colour from Finding to Pipeline.
+    // target's hue so a fix path reads as one color from Finding to Pipeline.
     HAS_REPOSITORY: 'rgba(163, 230, 53, 0.22)',
     HAS_DEPLOYMENT: 'rgba(163, 230, 53, 0.22)',
     BUILT_FROM: 'rgba(163, 230, 53, 0.22)',
@@ -323,7 +323,7 @@ export const TERMINAL_THEME: TerminalTheme = {
   magenta: '#ff79c6',
   cyan: '#8be9fd',
   white: '#f8f8f2',
-  // Warm grey for secondary lines (system, thinking). Not the Dracula
+  // Warm gray for secondary lines (system, thinking). Not the Dracula
   // comment blue, which fails contrast on the warm ground.
   brightBlack: '#8b877b',
   brightRed: '#ff6e6e',

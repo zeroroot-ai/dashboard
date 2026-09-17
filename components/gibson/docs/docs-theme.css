@@ -78,7 +78,7 @@
 }
 
 /*
- * Honour the OS-level motion preference. Fumadocs animates sidebar item
+ * Honor the OS-level motion preference. Fumadocs animates sidebar item
  * hover and search-dialog open/close by default; zeroing those transitions
  * here is the usability NFR (`prefers-reduced-motion`) contract.
  */

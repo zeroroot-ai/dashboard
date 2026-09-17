@@ -40,7 +40,7 @@ export function validateRedirectTo(url: string | null | undefined): string {
   // These cannot point outside the current origin.
   if (raw.startsWith("/") && !raw.startsWith("//")) {
     // Extra safety: reject paths that could encode the forbidden "//" prefix
-    // after normalisation (e.g. "/\\" in some browsers).
+    // after normalization (e.g. "/\\" in some browsers).
     if (/^\/[\\\/]/.test(raw)) return "/";
     return raw;
   }

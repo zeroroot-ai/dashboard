@@ -324,7 +324,7 @@ describe("REGION field type", () => {
   });
 });
 
-describe("Fallback behaviour when fieldType is absent", () => {
+describe("Fallback behavior when fieldType is absent", () => {
   it("renders a password input when secret=true and fieldType is absent", () => {
     const descriptor = makeDescriptor({
       credentials: [
@@ -1029,7 +1029,7 @@ describe("ProviderWizard embedding-only provider (dashboard#870)", () => {
     expect(screen.queryByTestId("capability-chat")).not.toBeInTheDocument();
   });
 
-  it("populates the embedding model picker from embeddingModels catalogue", async () => {
+  it("populates the embedding model picker from embeddingModels catalog", async () => {
     const { user } = setupVoyageWizard();
     await advanceVoyageToStep3(user);
 

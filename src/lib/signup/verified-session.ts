@@ -6,7 +6,7 @@
  *
  * After the emailed link is redeemed the daemon hands back a short-lived
  * completion session token. Everything downstream of redemption — creating the
- * billing customer, confirming the card, creating the account — is authorised
+ * billing customer, confirming the card, creating the account — is authorized
  * by that token and by nothing else.
  *
  * It lives in an httpOnly cookie for one reason: it is a capability. If it were
@@ -155,7 +155,7 @@ function signatureMatches(payload: string, providedHex: string): boolean {
 }
 
 /**
- * Serialise and sign for the cookie value.
+ * Serialize and sign for the cookie value.
  *
  * Format is `<json>.<hex hmac>`. The JSON is not escaped or encoded further:
  * `JSON.stringify` cannot emit a `.` outside a string literal, and the split on
@@ -171,7 +171,7 @@ export function encodeVerifiedSession(s: VerifiedSignupSession): string {
  *
  * Returns null on anything malformed, incomplete, unsigned or wrongly signed
  * rather than throwing, and on anything missing the token — a cookie without
- * the capability cannot authorise completion, so treating it as absent is the
+ * the capability cannot authorize completion, so treating it as absent is the
  * same answer with less code. A tampered cookie takes the same path: the user
  * is told the link is no longer valid and starts again.
  */

@@ -534,7 +534,7 @@ function KanbanRoot<T>(props: KanbanRootProps<T>) {
       onDragCancel({ active }) {
         const isColumn = active.id in value;
         const itemType = isColumn ? "column" : "item";
-        return `Dragging was cancelled. ${itemType} was dropped.`;
+        return `Dragging was canceled. ${itemType} was dropped.`;
       }
     }),
     [value, getColumn, getItemValue]

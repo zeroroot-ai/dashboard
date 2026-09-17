@@ -34,7 +34,7 @@ This repository is the web console. The highest severity classes here are:
 - Findings in a deployment you control that come from your own configuration
 - Automated scanner output with no demonstrated impact; show the path
 - Secret-shaped strings in built `.next` chunks that are form placeholders.
-  See `docs/code-scanning-dismissals.md` — we have analysed these and they
+  See `docs/code-scanning-dismissals.md` — we have analyzed these and they
   recur under new chunk hashes on every build
 
 ## Safe harbour

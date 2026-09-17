@@ -24,7 +24,7 @@ on:
   schedule:
     - cron: "0 8 * * 2"
   # Lets an authoritative scan be forced onto `refs/heads/main` on demand.
-  # Without it the only events that analyse main itself are the weekly cron and
+  # Without it the only events that analyze main itself are the weekly cron and
   # the merge_group runs (which report against the transient queue ref), so a
   # stale alert that has since been fixed in the source can sit open on the
   # Security tab for up to a week before anything reconciles it.
@@ -77,7 +77,7 @@ jobs:
       - uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         with:
           # Upload to the code-scanning API so the Security tab reflects the
-          # commit actually analysed. `output` still writes the SARIF locally,
+          # commit actually analyzed. `output` still writes the SARIF locally,
           # so the artifact below keeps working alongside the upload.
           upload: always
           output: codeql-results

@@ -426,11 +426,11 @@ const config: NextAuthConfig = {
      * or simply be skipped (user navigates straight to /login). The fallback
      * for an authenticated user must be the product, not the marketing page.
      *
-     * Behaviour:
+     * Behavior:
      *   - Relative paths beginning with `/` (excluding `/`) → preserved.
      *     "/dashboard/pages/findings" round-trips intact when a deep link is
      *     in flight.
-     *   - Same-origin absolute URLs → normalised to their path + search.
+     *   - Same-origin absolute URLs → normalized to their path + search.
      *   - Bare baseUrl, `/`, or cross-origin URLs → `${baseUrl}/dashboard`.
      *
      * dashboard#228, this collapses two prior reports of "I signed up but

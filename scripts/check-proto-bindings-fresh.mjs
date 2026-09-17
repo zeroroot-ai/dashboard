@@ -255,7 +255,7 @@ function* walkFiles(dir, exts) {
  *   "@/src/gen/..."  →  <root>/src/gen/...   (via "@/src/*")
  *   "@/gen/..."      →  <root>/gen/...       (via "@/*", legacy spelling)
  * The second form is normalized into src/gen/ as well; it only appears in
- * excluded fixture files today, but normalising costs nothing.
+ * excluded fixture files today, but normalizing costs nothing.
  */
 function discoverEntryModules(root) {
   const genRoot = resolve(root, "src/gen");

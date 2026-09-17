@@ -204,7 +204,7 @@ test.describe("mission execute, UI state (stubbed)", () => {
       .catch(() => false);
     if (!statusVisible) {
       console.warn(
-        "[mission-execute] Mission status 'pending' indicator not found, may not be labelled explicitly.",
+        "[mission-execute] Mission status 'pending' indicator not found, may not be labeled explicitly.",
       );
     }
   });

@@ -39,7 +39,7 @@ describe("RunsList", () => {
     expect(screen.getByText("gpt-4o")).toBeInTheDocument();
   });
 
-  it("summarises a multi-model run as a count", () => {
+  it("summarizes a multi-model run as a count", () => {
     render(
       <RunsList runs={[run({ id: "run-1", models: ["gpt-4o", "claude-opus-4"] })]} />,
     );

@@ -60,7 +60,7 @@ describe("resolvePostSignInRedirect, preserves intentional deep links", () => {
     );
   });
 
-  it("normalises a same-origin absolute URL to its path", () => {
+  it("normalizes a same-origin absolute URL to its path", () => {
     expect(
       resolvePostSignInRedirect(`${BASE}/dashboard/pages/missions`, BASE),
     ).toBe(`${BASE}/dashboard/pages/missions`);
