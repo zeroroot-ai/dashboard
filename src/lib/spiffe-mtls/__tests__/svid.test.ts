@@ -131,7 +131,7 @@ describe('isSpiffeAvailable', () => {
     }
   });
 
-  it('honours the env override (sees the new value on each call)', async () => {
+  it('honors the env override (sees the new value on each call)', async () => {
     process.env.SPIFFE_ENDPOINT_SOCKET = 'unix:///tmp/missing-1.sock';
     const { isSpiffeAvailable } = await importSvid();
     expect(isSpiffeAvailable()).toBe(false);

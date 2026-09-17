@@ -8,7 +8,7 @@
  * the Loki pipeline can parse and index them alongside CRD audit events.
  *
  * The emitter is intentionally fire-and-forget: it never throws and never
- * blocks the caller. Sensitive fields are redacted before serialisation.
+ * blocks the caller. Sensitive fields are redacted before serialization.
  */
 
 import { getCorrelationId } from "@/src/lib/correlation";
@@ -19,7 +19,7 @@ import { redact, truncate } from "./shared";
 // ---------------------------------------------------------------------------
 
 /**
- * Every distinct authentication / authorisation event that can be audited.
+ * Every distinct authentication / authorization event that can be audited.
  * The union is exhaustive, adding a new action requires updating this type
  * and the corresponding consumer (Loki alerting rules, SIEM, etc.).
  */
@@ -92,7 +92,7 @@ const MAX_USER_AGENT_CHARS = 256;
  *
  * Callers provide every field except `ts` and `correlationId`, which are
  * injected automatically. The full event is run through `redact()` before
- * serialisation so no sensitive value can leak even if a caller accidentally
+ * serialization so no sensitive value can leak even if a caller accidentally
  * includes one in a miscellaneous field.
  *
  * Output format: a single `console.info` call with the string

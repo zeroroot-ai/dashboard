@@ -128,7 +128,7 @@ describe('CSRF cookie naming and Secure attribute', () => {
     expect(set!.secure).toBe(false);
   });
 
-  it('honours x-forwarded-proto when TLS terminates at the edge', () => {
+  it('honors x-forwarded-proto when TLS terminates at the edge', () => {
     // The deployed shape: Envoy terminates TLS and forwards plain http to the
     // pod, so nextUrl.protocol is http even though the user is on https.
     const req = new NextRequest('http://dashboard.svc:3000/dashboard', {

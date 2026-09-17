@@ -36,7 +36,7 @@ import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 
 // AI SDK v6 UIMessage, uses parts[] instead of content: string.
 // We accept the full shape permissively and let convertToModelMessages
-// do the normalisation before handing off to streamText.
+// do the normalization before handing off to streamText.
 const uiMessageSchema = z.object({
   id: z.string(),
   role: z.enum(['user', 'assistant', 'system']),
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     });
 
     // Convert AI SDK v6 UIMessage[] → ModelMessage[] for streamText.
-    // convertToModelMessages handles the parts[] → content normalisation.
+    // convertToModelMessages handles the parts[] → content normalization.
     const coreMessages = await convertToModelMessages(messages as UIMessage[]);
     const conversation: ModelMessage[] = attachmentText
       ? [

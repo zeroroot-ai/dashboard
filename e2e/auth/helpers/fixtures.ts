@@ -32,7 +32,7 @@ export const BASE_URL =
 
 /**
  * Returns a DNS-safe, unique company slug suitable for use as a Zitadel
- * organisation slug.
+ * organization slug.
  *
  * Format: `e2e-<timestamp_base36>-<6 hex chars>`
  * Example: `e2e-lhqvz12a-3f8b2c`

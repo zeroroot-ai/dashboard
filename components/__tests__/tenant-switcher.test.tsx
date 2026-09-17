@@ -249,7 +249,7 @@ describe('TenantSwitcher', () => {
     const gamma = makeTenant('gamma-sec', 'Gamma Sec');
     const tenants = [acme, beta, gamma];
 
-    it('renders a dropdown trigger labelled with the active tenant displayName', () => {
+    it('renders a dropdown trigger labeled with the active tenant displayName', () => {
       renderSwitcher({ availableTenants: tenants, currentTenant: acme });
       expect(screen.getByText('Acme')).toBeDefined();
     });

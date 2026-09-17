@@ -35,7 +35,7 @@
  * Security:
  *   - The private key bytes leave this module only inside the
  *     SecureContextOptions value handed to the consumer; they are never
- *     stringified, logged, or serialised to disk.
+ *     stringified, logged, or serialized to disk.
  */
 
 import 'server-only';

@@ -292,7 +292,7 @@ const OPTIONAL_ENV = [
 
   // ---- Auth.js legacy aliases ----
   // NEXTAUTH_URL / NEXTAUTH_SECRET are read-only legacy aliases for AUTH_URL /
-  // AUTH_SECRET. Auth.js v5 honours either name; the dashboard requires
+  // AUTH_SECRET. Auth.js v5 honors either name; the dashboard requires
   // AUTH_URL / AUTH_SECRET, so the NEXTAUTH_* variants are intentionally
   // never required.
   'NEXTAUTH_URL',

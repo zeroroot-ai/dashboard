@@ -42,7 +42,7 @@ describe('provider-capabilities', () => {
       ).toEqual(['chat', 'embedding']);
     });
 
-    it('normalises an empty proto list to chat-only (legacy default)', () => {
+    it('normalizes an empty proto list to chat-only (legacy default)', () => {
       expect(fromProtoCapabilities([])).toEqual(['chat']);
     });
 

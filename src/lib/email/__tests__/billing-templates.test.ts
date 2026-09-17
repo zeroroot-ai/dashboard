@@ -213,7 +213,7 @@ describe('templates/billing-subscription-cancelled', () => {
   });
 
   it('subject matches spec', () => {
-    expect(msg.subject).toBe('Your Gibson subscription has been cancelled');
+    expect(msg.subject).toBe('Your Gibson subscription has been canceled');
   });
 
   it('HTML includes grace period end date', () => {

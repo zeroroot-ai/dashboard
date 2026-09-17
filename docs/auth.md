@@ -156,7 +156,7 @@ re-run in CI.
 
 Don't disable a guard. Fix the code.
 
-## Branded `TenantId` (dashboard#815)
+## Branded `TenantId`
 
 The former `check-no-lenient-tenant.mjs` guard was deleted and replaced by a
 **type-system invariant**. `src/lib/auth/active-tenant.ts` exports an opaque

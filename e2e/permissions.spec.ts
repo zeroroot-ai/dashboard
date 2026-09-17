@@ -5,7 +5,7 @@
  * permissions.spec.ts
  *
  * End-to-end tests for the settings/permissions page (permissions matrix)
- * and related UI behaviours.
+ * and related UI behaviors.
  *
  * Requirements: 15 (agent-auth-fga-integration spec)
  *

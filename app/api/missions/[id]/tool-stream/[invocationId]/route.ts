@@ -194,7 +194,7 @@ export async function GET(
       // and break out without aborting the gRPC stream.
       logger.info(
         { route: "missions/tool-stream", missionId, invocationId },
-        "tool-stream bridge cancelled by client",
+        "tool-stream bridge canceled by client",
       );
     },
   });

@@ -142,7 +142,7 @@ export async function GET(
       // ---- mission log tail ----
       // While the mission is `running` we tail the daemon LogsService for this
       // mission's log lines and forward each as an `event: log` frame. We
-      // initialise the cursor to "now" so we never replay historical lines on
+      // initialize the cursor to "now" so we never replay historical lines on
       // connect, the logs tab (GET .../logs) owns the backfill; this bridge is
       // live-only. The daemon derives the tenant scope server-side
       // (dashboard#811); the dashboard never talks to Loki directly. Any RPC
@@ -374,7 +374,7 @@ export async function GET(
     cancel() {
       logger.info(
         { route: "missions/events", missionId },
-        "mission events SSE bridge cancelled by client",
+        "mission events SSE bridge canceled by client",
       );
       clearInterval(heartbeatHandle);
       const stashed = stream as unknown as {

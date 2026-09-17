@@ -22,12 +22,12 @@ interface BillingSubscriptionCancelledCtx {
 }
 
 export function render(ctx: BillingSubscriptionCancelledCtx): EmailMessage {
-  const subject = 'Your Gibson subscription has been cancelled';
+  const subject = 'Your Gibson subscription has been canceled';
 
   const text = [
     `Hi,`,
     ``,
-    `Your Gibson subscription has been cancelled. You'll continue to have access to your account until ${ctx.gracePeriodEndDate}.`,
+    `Your Gibson subscription has been canceled. You'll continue to have access to your account until ${ctx.gracePeriodEndDate}.`,
     ``,
     `Data retention: your workspace data will be retained for 7 days after cancellation (until ${ctx.gracePeriodEndDate}). After that, data may be permanently deleted.`,
     ``,
@@ -45,8 +45,8 @@ export function render(ctx: BillingSubscriptionCancelledCtx): EmailMessage {
     `<body style="margin:0;padding:24px;background:#0b0b0f;color:#e6e6ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">`,
     `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto;background:#15151c;border-radius:8px;padding:32px;">`,
     `<tr><td>`,
-    `<h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:#ffffff;">Subscription cancelled</h1>`,
-    `<p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">Your Gibson subscription has been cancelled. You'll continue to have access to your account until <strong style="color:#ffffff;">${escapeHtml(ctx.gracePeriodEndDate)}</strong>.</p>`,
+    `<h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:#ffffff;">Subscription canceled</h1>`,
+    `<p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#c5c5cc;">Your Gibson subscription has been canceled. You'll continue to have access to your account until <strong style="color:#ffffff;">${escapeHtml(ctx.gracePeriodEndDate)}</strong>.</p>`,
     `<div style="background:#1e1e2a;border-radius:6px;padding:16px;margin:0 0 16px;">`,
     `<p style="margin:0;font-size:13px;color:#9999a3;"><strong style="color:#fbbf24;">Data retention:</strong> Your workspace data will be retained for 7 days after cancellation (until ${escapeHtml(ctx.gracePeriodEndDate)}). After that, data may be permanently deleted.</p>`,
     `</div>`,

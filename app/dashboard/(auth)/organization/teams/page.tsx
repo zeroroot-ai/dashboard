@@ -12,7 +12,7 @@ export default function TeamsPage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-bold">Teams</h1>
         <p className="text-sm text-muted-foreground">
-          Groups within your tenant for organising members and scoping access.
+          Groups within your tenant for organizing members and scoping access.
         </p>
       </div>
 

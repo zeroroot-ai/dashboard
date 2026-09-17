@@ -6,13 +6,13 @@
  *
  * Performs server-side startup self-checks. Any throw here causes the
  * Next.js process to exit non-zero (kubelet sees CrashLoopBackOff in
- * production), which is the desired fail-fast behaviour for misconfigured
+ * production), which is the desired fail-fast behavior for misconfigured
  * pods.
  *
  * Spec: zero-trust-hardening Req 11.3, `ALLOWED_SERVICE_SUBJECTS` must
  * be non-empty before any inbound service-acting traffic can succeed.
  * Spec: security-hardening R9, `DASHBOARD_AUTHZ_PERMISSIVE_DEV=1` must
- * never be honoured in a production build; defence-in-depth on top of
+ * never be honoured in a production build; defense-in-depth on top of
  * the existing `NODE_ENV` gate at `assert-authorized.ts`.
  */
 
@@ -24,10 +24,10 @@ export async function register() {
   // -------------------------------------------------------------------------
   // R9 fail-fast: permissive-dev authz is a developer ergonomics knob and
   // MUST NOT be observable on a production pod. The existing `NODE_ENV !==
-  // 'production'` guard inside `assertAuthorized` is the primary defence;
+  // 'production'` guard inside `assertAuthorized` is the primary defense;
   // this startup assertion is the second layer, if a chart values mistake
   // ever ships the env var into prod, the pod fails to start instead of
-  // silently authorising every unknown RPC.
+  // silently authorizing every unknown RPC.
   // -------------------------------------------------------------------------
   if (
     process.env.NODE_ENV === 'production' &&

@@ -84,7 +84,7 @@ The billing webhook endpoint verifies the `Stripe-Signature` header using
 
 This secret is a test-only constant. It MUST NOT be set in production.
 
-A follow-up issue (`dashboard#223`) tracks wiring this secret into the
+A follow-up tracks wiring this secret into the
 `dispatch-auth-e2e` workflow so billing webhook tests run automatically on CI.
 
 ## Environment variables

@@ -57,7 +57,7 @@ function makeProtoMsg(overrides: {
   parts?: ConversationMessage['parts'];
 }): ConversationMessage {
   // Materialise a ConversationMessage from already-created MessagePart objects.
-  // create() expects MessageInit, but an already-initialised proto message is
+  // create() expects MessageInit, but an already-initialized proto message is
   // structurally compatible at runtime. Cast through unknown to satisfy the
   // generic variance constraint.
   const msg = create(ConversationMessageSchema, {

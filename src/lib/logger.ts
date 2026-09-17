@@ -13,7 +13,7 @@
  *   - JSON output in production (one log line per event, easy to ingest).
  *   - Pretty output in development (colorised, human-readable).
  *   - A redactor that scrubs PII (email, tenant/user/session ids, tokens,
- *     passwords) before serialisation. New PII fields MUST be added to the
+ *     passwords) before serialization. New PII fields MUST be added to the
  *     `redact.paths` list below.
  *
  * Usage:

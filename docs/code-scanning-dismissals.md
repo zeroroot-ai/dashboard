@@ -29,7 +29,7 @@ Each dismissal comment on the API points back at the matching section below.
 ## Orphaned alerts: fixed in source, unreachable by any future scan
 
 The alerts in this section describe code that **no longer exists**. They stay
-open only because nothing will ever re-analyse the ref they are pinned to, so
+open only because nothing will ever re-analyze the ref they are pinned to, so
 the scanner cannot observe the fix and retire them itself.
 
 Two independent causes, both worth understanding before dismissing anything
@@ -100,7 +100,7 @@ the RPC and never returned to the client by the daemon"), and
 on the UI hint describing a secret, not on a secret.
 
 **Already removed.** `gcpsm.tsx` does not exist on `main`. It was deleted in
-full by `484f1efc25d6c38dcc3b232654ddfd68540bcba0` (2026-07-01, #937), which
+full by `484f1efc25d6c38dcc3b232654ddfd68540bcba0` (2026-07-01), which
 replaced the GCP-SM form with the Hosted/BYO selector. Zero occurrences of the
 literal remain. The alert instance history agrees: instances exist on tags
 `v0.110.0`–`v0.115.0` (all pre-deletion) and on neither `v0.116.0` nor
@@ -127,8 +127,8 @@ out to `wget`; no npm, npx, corepack or yarn is invoked. Nor could they be
 fixed by patching the application — the only lever on these versions is npm's
 own version, which the base image pins.
 
-**Fixed properly rather than annotated.** #1076 deletes npm, npx, corepack and
-yarn from the runtime stage, which removes the packages and with them the
+**Fixed properly rather than annotated.** The Dockerfile deletes npm, npx,
+corepack and yarn from the runtime stage, which removes the packages and with them the
 findings. Verified against the exact base image (the pinned mirror digest
 `sha256:fb4cd12c…` is the digest `docker.io/library/node:20-alpine` currently
 resolves to):
@@ -168,7 +168,7 @@ Winning the race grants strictly less than what the attacker must already hold.
 Restructuring the walker to hold a descriptor across the recursion decision
 would complicate it appreciably to defend a boundary that does not exist. The
 equivalent finding in runtime code (`src/lib/auth/identity-resolver.ts`, alert
-16) **was** fixed in #1078, because that one runs in a pod against a file
+16) **was** fixed, because that one runs in a pod against a file
 written by another container, where the boundary is real.
 
 ---
@@ -300,15 +300,15 @@ one.
 These are the causes behind the orphaned alerts above, tracked so the class does
 not recur silently.
 
-1. **Trivy never analyses `refs/heads/main`.** `vuln-scan` in
+1. **Trivy never analyzes `refs/heads/main`.** `vuln-scan` in
    `zeroroot-ai/.github`'s `reusable-image-build.yml` is gated on
    `startsWith(github.ref, 'refs/tags/')`. Consequence: image findings on `main`
-   can be *raised* (historically) but never *retired*, and a fix like #1076
-   cannot show up as a closed alert. Needs a decision in the `.github` repo —
+   can be *raised* (historically) but never *retired*, and a fix like the
+   runtime-stage npm removal cannot show up as a closed alert. Needs a decision in the `.github` repo —
    scanning on `main` pushes as well would let the tab reconcile.
-2. **CodeQL uploads were disabled for ~2 months.** #868 set `upload: never` when
-   the repo was private, and it was not restored when the repo went public.
-   Fixed by #1075. The Security tab was frozen at 2026-06-19 the whole time,
+2. **CodeQL uploads were disabled for ~2 months.** A workflow change set
+   `upload: never` when the repo was private, and nobody restored it when the
+   repo went public. A later fix restored the upload. The Security tab was frozen at 2026-06-19 the whole time,
    and could not close a single fixed alert.
 
    **This is not dashboard-specific.** `zeroroot-ai/gibson` carries the identical

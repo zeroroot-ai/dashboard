@@ -23,7 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export interface ConstraintsJson {
   maxDuration?: string;           // google.protobuf.Duration → "Xs"
-  maxTokens?: string;             // int64 serialised as string
+  maxTokens?: string;             // int64 serialized as string
   maxCost?: number;
   maxFindings?: number;
   severityThreshold?: string;

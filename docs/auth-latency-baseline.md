@@ -60,7 +60,7 @@ markdown file instead after each meaningful measurement.
 
   The `auth-latency-baseline.mjs` script will print a clear message explaining
   the 401 auth constraint when run against the cluster. This is the expected
-  behaviour, the guard correctly rejects unauthenticated scrapes.
+  behavior, the guard correctly rejects unauthenticated scrapes.
 
   The baseline is deferred until `DASHBOARD_METRICS_ALLOWED_CIDRS` is set for
   the Kind cluster or the Prometheus scrape job carries SPIFFE identity.

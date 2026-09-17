@@ -1,7 +1,7 @@
 # Build, toolchain, and lockfiles
 
-Phase-0 reproducible-build hardening for the dashboard (open-core relayout,
-dashboard#805). It carries the dashboard half of two org quality bars,
+Phase-0 reproducible-build hardening for the dashboard (open-core relayout).
+It carries the dashboard half of two org quality bars,
 reproducible builds and dead-code gates. The document that stated those bars
 lived in the private docs repository, which the org deleted on 2026-09-04, so
 this file is the surviving statement of both for this repository.
@@ -42,7 +42,7 @@ The dashboard ships **both** lockfiles, by necessity:
 | `package-lock.json` | npm | the production container image (`npm ci`, see `Dockerfile`) | the Next.js `node:24-alpine` image build path. |
 
 The image build uses `npm ci` (not pnpm) because the standalone Next.js image
-build was standardised on npm + `package-lock.json`; switching the image build
+build was standardized on npm + `package-lock.json`; switching the image build
 to pnpm is the unification path tracked as the follow-up below.
 
 ### Keeping the two in sync
@@ -101,7 +101,7 @@ Scope of the blocking gate (the categories enforced as `error`):
 - **`binaries`** — a script invoking a binary not provided by any dependency.
 
 `files` / `dependencies` / `devDependencies` were flipped to `error` in the
-dead-code purge (dashboard#806 / #840). That pass deleted **147 dead files**
+dead-code purge. That pass deleted **147 dead files**
 (abandoned Gibson features under `src/**`, `components/gibson/**`,
 `app/**` — onboarding wizard, glossary, mission-form, help panel, websocket
 stores, the unused-but-tested `AgentInstallDialog`, etc. — **plus** the
@@ -117,8 +117,7 @@ The **`exports` (≈260) / `types` (≈491)** categories remain `off` — they a
 entangled (unused exports from *kept* template `components/ui/**`, redundant
 dual default+named exports in live files, and co-located internal
 `*Result`/`*Input` interfaces), not clean dead code. Purging them is a
-deliberate, reviewed per-symbol pass tracked as a scoped follow-up
-(**dashboard#844**). When done, flip `exports` / `types` to `error`.
+deliberate, reviewed per-symbol pass, a scoped follow-up. When done, flip `exports` / `types` to `error`.
 
 Precise, justified `ignoreDependencies` (not blanket):
 
@@ -158,7 +157,7 @@ Tracked separately (filed against dashboard):
    `package-lock.json` (or move the image build onto pnpm so there is a single
    lockfile), resolve the patched-`next-auth` divergence, then flip
    `check-lockfile-sync.mjs` to strict in `prebuild`.
-2. **Unused exports/types purge** (dashboard#844) — the dead-file and
+2. **Unused exports/types purge** — the dead-file and
    dead-dependency purge landed and `files` / `dependencies` / `devDependencies`
    are now `error`. The remaining `exports` (≈260) / `types` (≈491) categories
    stay `off` because they are entangled (kept-template `components/ui/**`

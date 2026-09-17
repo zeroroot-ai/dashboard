@@ -4,7 +4,7 @@
 "use client";
 
 /**
- * Shared list-page layout wrapper. Standardises the title + description +
+ * Shared list-page layout wrapper. Standardizes the title + description +
  * primary-CTA + optional filter row + table-area pattern that every list
  * page in the authenticated dashboard uses.
  *

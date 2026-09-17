@@ -9,7 +9,7 @@ This file documents conventions specific to the `zeroroot-ai/dashboard` reposito
 - This is a **Shadcn UI Kit** template. Do not touch pages/components that are unrelated to the Gibson product surface, the template pages are intentionally untouched.
 - Dashboard → daemon always goes through **Envoy + ext_authz**. Never open a direct gRPC channel to `:50051` / `:50002` or use `GIBSON_DAEMON_ADDRESS`. The guard script `scripts/check-no-direct-daemon-grpc.mjs` will fail the build if you do.
 - `pnpm prebuild` runs a chain of policy-guard scripts. Do not disable them. Fix the code instead.
-- **`prebuild` never runs a generator.** It runs the freshness *gates* only, so a stale committed artifact fails the build instead of being silently rewritten. Regeneration is explicit: `pnpm gen:plans`, `pnpm gen:stripe-tiers`, `pnpm gen:authz`, `pnpm gen:mission-schema`, `pnpm proto:generate`. Putting a `gen-*` step back into `prebuild` re-creates dashboard#1019, where four gates diffed the generator's output against the generator's output and none of them could fail.
+- **`prebuild` never runs a generator.** It runs the freshness *gates* only, so a stale committed artifact fails the build instead of being silently rewritten. Regeneration is explicit: `pnpm gen:plans`, `pnpm gen:stripe-tiers`, `pnpm gen:authz`, `pnpm gen:mission-schema`, `pnpm proto:generate`. Putting a `gen-*` step back into `prebuild` re-creates the defect where four gates diffed the generator's output against the generator's output and none of them could fail.
 - **No hardcoded colors anywhere under `app/**` or `components/**`.** Every color goes through a token declared in `app/globals.css`. The guard `scripts/check-no-hardcoded-colors.mjs` rejects tailwind palette utilities (`text-emerald-*`, `bg-zinc-*`), tailwind arbitrary-value colors (`bg-[#...]`, `text-[oklch(...)]`), black/white utilities (`bg-white`, `text-black`), inline-style colors, and raw `#...`/`oklch(...)`/`rgb(...)`/`hsl(...)` in `.css` files. Two files are exempt because they declare the token system itself: `app/globals.css`, `app/themes.css`. See the design-system guide below.
 - **Customer-facing docs name product capabilities, not vendors.** `content/docs/**/*.mdx` must not mention Zitadel, OpenFGA / FGA, Envoy, ext-authz, jwt_authn, JWKS, x-gibson-identity-*, Langfuse, SPIFFE / SPIRE, Neo4j, CNPG, ArgoCD, cert-manager, ESO, OPA, or "Gibson-hosted Vault". Write product language instead, "Gibson identity service", "Gibson permissions", "Gibson Traces", "Gibson-managed secrets storage". The full deny-list is in the Customer terminology section below. Internal developer docs at `docs/*.md` and every `CLAUDE.md` are intentionally exempt.
 
@@ -17,8 +17,8 @@ This file documents conventions specific to the `zeroroot-ai/dashboard` reposito
 
 Daemon protos consumed here come from two Go modules, both pinned in the sibling `gibson` repo's `go.mod` (the dashboard's proto-regen workspace resolves them via `go list -m`):
 
-- **OSS SDK** (`github.com/zeroroot-ai/sdk`), customer-facing. After the E6 narrow-SDK flip (ADR-0058 amendment, docs#101; sdk#390) the SDK is the **component-developer** surface: `DaemonService`, the component-enrollment services `AgentIdentityService` (`gibson.agentidentity.v1`) and `PluginAdminService` (`gibson.pluginadmin.v1`) — each re-homed into its OWN wire package — plus mission / finding / discovery / budget types and the `gibson.auth.v1` annotation extension. The 9 tenant-administration services (`TenantService`, `MembershipService`, `GrantsService`, `ProviderService`, `SecretsService`, `BudgetService`, `UserService`, `UsageService`, `ModelAccessService`) were REMOVED from the SDK and re-homed into the gibson daemon-local tree (below); their wire package `gibson.tenant.v1` and full-method paths are unchanged.
-- **gibson daemon-local** (`internal/server/daemon/api` in the gibson repository), PRIVATE. Hosts the genuinely-internal platform services — `DaemonOperatorService` (`gibson.daemon.operator.v1`), `BillingService` (`gibson.billing.v1`), `DiscoveryService` (`gibson.daemon.discovery.v1`) — that used to live in the dissolved `platform-sdk` module (ADR-0056, gibson#781), AND the 9 re-homed tenant-administration services under `gibson.tenant.v1` (`internal/server/daemon/api/gibson/tenant/v1/`; E6, gibson#921). Wire paths for the tenant services are unchanged from when they lived in the SDK.
+- **OSS SDK** (`github.com/zeroroot-ai/sdk`), customer-facing. After the E6 narrow-SDK flip (ADR-0058 amendment) the SDK is the **component-developer** surface: `DaemonService`, the component-enrollment services `AgentIdentityService` (`gibson.agentidentity.v1`) and `PluginAdminService` (`gibson.pluginadmin.v1`) — each re-homed into its OWN wire package — plus mission / finding / discovery / budget types and the `gibson.auth.v1` annotation extension. The 9 tenant-administration services (`TenantService`, `MembershipService`, `GrantsService`, `ProviderService`, `SecretsService`, `BudgetService`, `UserService`, `UsageService`, `ModelAccessService`) were REMOVED from the SDK and re-homed into the gibson daemon-local tree (below); their wire package `gibson.tenant.v1` and full-method paths are unchanged.
+- **gibson daemon-local** (`internal/server/daemon/api` in the gibson repository), PRIVATE. Hosts the genuinely-internal platform services — `DaemonOperatorService` (`gibson.daemon.operator.v1`), `BillingService` (`gibson.billing.v1`), `DiscoveryService` (`gibson.daemon.discovery.v1`) — that used to live in the dissolved `platform-sdk` module (ADR-0056), AND the 9 re-homed tenant-administration services under `gibson.tenant.v1` (`internal/server/daemon/api/gibson/tenant/v1/`; E6). Wire paths for the tenant services are unchanged from when they lived in the SDK.
 
 Admin server-actions (tenant management, plugin install, secrets management, grants) call the `gibson.tenant.v1.*` services (now gibson daemon-local) and the enrollment services (`gibson.agentidentity.v1.AgentIdentityService`, `gibson.pluginadmin.v1.PluginAdminService`, both in the SDK). Each carries a `(gibson.auth.v1.authz)` annotation with an `admin`/`writer` relation, and Envoy gates those admin-relation prefixes behind the admin JWT requirement. The dashboard never opens a direct daemon channel.
 
@@ -112,7 +112,7 @@ if there is none.
   committed file exists, is non-empty, is valid JSON, and carries the
   `$comment` header. A deleted or emptied artifact fails here too.
 - No `--skip` / `--permissive` flag exists. Drift fails the build, period.
-- The generator does NOT run in `prebuild` (dashboard#1019). See the shared
+- The generator does NOT run in `prebuild`. See the shared
   freshness-gate section below.
 
 When the SDK schema changes: run `pnpm gen:mission-schema` and commit
@@ -121,7 +121,7 @@ When the SDK schema changes: run `pnpm gen:mission-schema` and commit
 ## Proto regeneration
 
 The dashboard's TS proto bindings at `src/gen/` are generated from
-**two** proto trees (after the platform-sdk dissolution, gibson#781):
+**two** proto trees (after the platform-sdk dissolution):
 
 - the **OSS SDK** protos at `<sdk-module>/api/proto/` (the module dir
   resolved via `go list -m github.com/zeroroot-ai/sdk` against the gibson
@@ -133,7 +133,7 @@ The dashboard's TS proto bindings at `src/gen/` are generated from
   `gibson` checkout, which are not published anywhere. This tree hosts the daemon-internal services
   AND the PRIVATE platform services (`DaemonOperatorService`, `BillingService`,
   `DiscoveryService`) that used to live in the separate `platform-sdk` module
-  before it was dissolved into the gibson monorepo (gibson#781).
+  before it was dissolved into the gibson monorepo.
 
 Buf v2 has a hard rule that every module path in `buf.yaml` must
 resolve **inside** the directory containing the `buf.yaml`.
@@ -173,7 +173,7 @@ SDK version you want. If you're iterating on a new SDK release,
 bump gibson's `go.mod` first (or use `GOFLAGS=-mod=mod` per the
 top-level CLAUDE.md transient-dev guidance), then regen.
 
-### Binding freshness gate (dashboard#1014)
+### Binding freshness gate
 
 `scripts/check-proto-bindings-fresh.mjs` runs in `pnpm prebuild` and is the
 gate that stops `src/gen/**/*_pb.ts` drifting away from the protos, the way
@@ -208,9 +208,8 @@ and a stale baseline entry.
 #### `.proto-bindings-baseline.json`
 
 Same monotonic-shrink contract as `.color-allowlist.json`: it captures the
-drift that already existed when the gate landed (the six files in
-dashboard#1014) so the gate could go live immediately, and it may only ever
-shrink.
+drift that already existed when the gate landed (six files) so the gate
+could go live immediately, and it may only ever shrink.
 
 - Entries pin the **committed** file's sha256, never the regenerated one. The
   regenerated bytes depend on which `sdk` / `gibson` commit you have checked
@@ -222,10 +221,10 @@ shrink.
   tolerance gets argued about in review.
 
 The paydown for the six landed entries is the one-shot regen that follows
-gibson#1329 (checkpoint-RPC retirement, sdk v0.159.0); regenerating before it
-lands would just bake in output that is about to change again.
+the checkpoint-RPC retirement (sdk v0.159.0). A regen before it lands would
+bake in output that is about to change again.
 
-## Single-artifact freshness gates (dashboard#1019)
+## Single-artifact freshness gates
 
 Four committed artifacts are generated from a canonical upstream in a sibling
 repo, and each has a gate in `pnpm prebuild`:
@@ -253,8 +252,8 @@ these four gates spent months reporting green on real drift:
 
 - **Never put a `gen-*` step into `prebuild`.** A generator that runs
   immediately before its own gate makes the gate diff the generator's output
-  against the generator's output. That was dashboard#1019: `plans.ts` sat
-  committed with two superseded taglines and no build ever said so.
+  against the generator's output. That is how `plans.ts` sat committed
+  with two superseded taglines and no build ever said so.
 - **The gate reads the committed bytes and generates out-of-tree.** Generation
   goes to a `--stdout` capture, never to the working tree.
 - **No `--skip`, no `SKIP_*` env.** Source availability is discovered by asking
@@ -303,7 +302,7 @@ src/gen/authz/registry.ts         ← committed; prebuild GATES it, never rewrit
 
 `scripts/check-authz-registry-fresh.mjs` regenerates out-of-tree and diffs against the committed copy, CI fails on drift.
 
-The **gate** runs as part of `pnpm prebuild`, before the existing `check-no-*` policy guards. The **generator** does not, and must not: it used to run immediately before its own gate, which made the gate structurally incapable of failing (dashboard#1019).
+The **gate** runs as part of `pnpm prebuild`, before the existing `check-no-*` policy guards. The **generator** does not, and must not: it used to run immediately before its own gate, which made the gate structurally incapable of failing.
 
 **Spec reference:** `dashboard-authz-ui-gating` (Phase 1, Tasks 1-2).
 **Sister spec:** `private-authz-registry` Layer 1 annotates the SDK protos. This dashboard script is independent of that spec's OCI output, it reads annotations directly from the local proto source. The two specs can ship in either order.
@@ -373,9 +372,9 @@ The query result is cached for 60 seconds and shared across all hooks on the pag
 
 ---
 
-### Three-state visibility, `AuthGatedButton` (dashboard#145)
+### Three-state visibility, `AuthGatedButton`
 
-The hide-on-loading + return-null pattern is correct for **admin scaffolding** the user shouldn't even know exists (Secrets backend, Grants admin, internal tooling). It is **wrong** for primary CTAs that every user benefits from discovering, even when their current role can't take the action, e.g. the Deploy launcher on agents/tools/plugins pages. Hiding such buttons leads to "where is the Deploy button?" support tickets from non-admins who don't realise the feature exists at all.
+The hide-on-loading + return-null pattern is correct for **admin scaffolding** the user shouldn't even know exists (Secrets backend, Grants admin, internal tooling). It is **wrong** for primary CTAs that every user benefits from discovering, even when their current role can't take the action, e.g. the Deploy launcher on agents/tools/plugins pages. Hiding such buttons leads to "where is the Deploy button?" support tickets from non-admins who don't realize the feature exists at all.
 
 For those CTAs use `<AuthGatedButton>` from `components/gibson/auth/`. It has three render states:
 
@@ -412,7 +411,7 @@ function DeployCta({ type }: { type: "agent" | "plugin" | "tool" }) {
 
 | User mental model | Pattern |
 |---|---|
-| "This action exists, but I'm not authorised, who do I ask?" | `<AuthGatedButton state="denied" disabledTooltip="..." />` |
+| "This action exists, but I'm not authorized, who do I ask?" | `<AuthGatedButton state="denied" disabledTooltip="..." />` |
 | "This action shouldn't be visible at all to me, it's internal admin scaffolding." | `useAuthorize` + `if (loading \|\| !allowed) return null` |
 
 E2E coverage for the three states lives in `e2e/authz/admin.spec.ts` (asserts allowed) and `e2e/authz/non-admin.spec.ts` (asserts denied wrapper with tooltip-bearing CTA).
@@ -421,7 +420,7 @@ E2E coverage for the three states lives in `e2e/authz/admin.spec.ts` (asserts al
 
 ### Adding a new admin RPC
 
-After the E6 narrow-SDK flip (ADR-0058 amendment, docs#101), tenant-administration RPCs (`gibson.tenant.v1.*`, FGA relation `admin` or `writer`) live in the **gibson daemon-local** proto tree at `internal/server/daemon/api/gibson/tenant/v1/` in the `gibson` repository. The SDK retains only the component-developer surface: the enrollment services `AgentIdentityService` (`gibson.agentidentity.v1`) and `PluginAdminService` (`gibson.pluginadmin.v1`), plus `DaemonService`. Pick the tree by which surface the RPC belongs to.
+After the E6 narrow-SDK flip (ADR-0058 amendment), tenant-administration RPCs (`gibson.tenant.v1.*`, FGA relation `admin` or `writer`) live in the **gibson daemon-local** proto tree at `internal/server/daemon/api/gibson/tenant/v1/` in the `gibson` repository. The SDK retains only the component-developer surface: the enrollment services `AgentIdentityService` (`gibson.agentidentity.v1`) and `PluginAdminService` (`gibson.pluginadmin.v1`), plus `DaemonService`. Pick the tree by which surface the RPC belongs to.
 
 **Tenant-admin RPC** (most dashboard admin work):
 
@@ -436,7 +435,7 @@ After the E6 narrow-SDK flip (ADR-0058 amendment, docs#101), tenant-administrati
 
 No other files need editing. The registry is the only source of authz rules.
 
-**Genuinely-private operator RPC?** Same flow, but the proto lives in `internal/server/daemon/api/gibson/{daemon.operator,billing,daemon.discovery}/v1/...` in the `gibson` repository and it never surfaces in customer UI. The two-surface contract (docs ADR-0025, refined by ADR-0058 amendment / docs#101 and the gibson#781 monorepo consolidation) keeps the component-developer and platform proto trees split.
+**Genuinely-private operator RPC?** Same flow, but the proto lives in `internal/server/daemon/api/gibson/{daemon.operator,billing,daemon.discovery}/v1/...` in the `gibson` repository and it never surfaces in customer UI. The two-surface contract (docs ADR-0025, refined by the ADR-0058 amendment and the gibson monorepo consolidation) keeps the component-developer and platform proto trees split.
 
 ---
 
@@ -482,13 +481,13 @@ node scripts/check-no-hardcoded-colors.mjs --shrink   # remove allowlist entries
 node scripts/check-no-hardcoded-colors.mjs --selftest # synthesise + verify the scanner catches each pattern class
 ```
 
-The allowlist file `.color-allowlist.json` at the repo root captures every pre-existing violation as of the guard's land time (#53). It is **monotonic-shrink only**:
+The allowlist file `.color-allowlist.json` at the repo root captures every pre-existing violation as of the guard's land time. It is **monotonic-shrink only**:
 
 - A new violation outside the allowlist → CI fail. Replace with a semantic or specialty token.
 - An allowlist entry whose source line no longer matches → CI fail with hint to run `--shrink` and commit the result.
 - A line content that changed at an allowlisted slot to a different hardcoded color → CI fail.
 
-When migrating a file (slices #54-#59), the drain procedure is:
+When migrating a file, the drain procedure is:
 
 1. Replace the hardcoded color in the source file with the appropriate semantic or specialty token.
 2. Run `node scripts/check-no-hardcoded-colors.mjs --shrink`.
@@ -505,7 +504,7 @@ pnpm test:visual          # run snapshots; fail on diff
 pnpm test:visual:update   # regenerate baselines after an intentional design change
 ```
 
-Baselines live under `e2e/visual/__screenshots__/<platform>/`. The theme is selected via the `theme_choice` cookie (the same cookie #57 wired into `app/layout.tsx`), so each route is captured against the rendered SSR theme, no FOUC, no animation noise (the spec pauses every animation + applies `prefers-reduced-motion: reduce` before sampling).
+Baselines live under `e2e/visual/__screenshots__/<platform>/`. The theme is selected via the `theme_choice` cookie (the same cookie `app/layout.tsx` sets), so each route is captured against the rendered SSR theme, no FOUC, no animation noise (the spec pauses every animation + applies `prefers-reduced-motion: reduce` before sampling).
 
 When an intentional design change lands:
 
@@ -572,7 +571,7 @@ Permitted (customer-facing product surface):
 - Customer-runtime references, `Kubernetes`, `systemd` (must read unambiguously as "your runtime").
 - Standard protocol terms, `OAuth2`, `OIDC`, `JWT`, `client_id`, `client_secret`.
 
-**Out of scope**, internal developer docs at `docs/*.md` (auth.md, forbidden-patterns.md, how-to-add-a-rpc.md, …) and every `CLAUDE.md` may name internal components freely. The CI guard (lands in #129 as `scripts/check-no-internal-tech-in-docs.mjs`) skips them.
+**Out of scope**, internal developer docs at `docs/*.md` (auth.md, forbidden-patterns.md, how-to-add-a-rpc.md, …) and every `CLAUDE.md` may name internal components freely. The CI guard `scripts/check-no-internal-tech-in-docs.mjs` skips them.
 
 When you find yourself writing "Check Envoy's `jwt_authn` logs" in a customer-facing troubleshooting flow, stop. The customer cannot reach those logs. Replace with a dashboard action (re-issue from the deploy wizard, inspect grants in the Permissions tab) or a CLI invocation (`gibson inspect`). The general rule: if a step requires reading internal logs, it is the wrong step.
 
@@ -604,7 +603,7 @@ Rules:
   message string. The redactor scrubs `email`, `tenantId`, `memberId`,
   `userId`, `sessionId`, `sessionToken`, `zitadelSubject`,
   `zitadelUserId`, `token`, `password`, `apiKey`, and `secret` before
-  serialisation.
+  serialization.
 - New PII fields require a redactor update in `src/lib/logger.ts`.
 
 In development, output is colourised via `pino-pretty`. In production,

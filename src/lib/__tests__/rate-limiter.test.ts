@@ -53,7 +53,7 @@ describe('resolveClientIp', () => {
     ).toBe('203.0.113.7');
   });
 
-  it('honours a two-proxy topology (CDN in front of Envoy)', () => {
+  it('honors a two-proxy topology (CDN in front of Envoy)', () => {
     expect(
       resolveClientIp(
         headers({ 'x-forwarded-for': '1.2.3.4, 203.0.113.7, 198.51.100.9' }),
@@ -68,7 +68,7 @@ describe('resolveClientIp', () => {
     expect(resolveClientIp(headers({ 'x-real-ip': '1.2.3.4' }), 1)).toBe('unidentified');
   });
 
-  it('honours x-real-ip only when there is no proxy at all', () => {
+  it('honors x-real-ip only when there is no proxy at all', () => {
     expect(resolveClientIp(headers({ 'x-real-ip': '203.0.113.7' }), 0)).toBe(
       '203.0.113.7',
     );
@@ -89,7 +89,7 @@ describe('resolveClientIp', () => {
     ).toBe('unidentified');
   });
 
-  it('strips a port and normalises IPv6', () => {
+  it('strips a port and normalizes IPv6', () => {
     expect(resolveClientIp(headers({ 'x-forwarded-for': '203.0.113.7:44321' }), 1)).toBe(
       '203.0.113.7',
     );

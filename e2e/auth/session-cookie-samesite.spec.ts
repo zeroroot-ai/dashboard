@@ -46,7 +46,7 @@
  * which requires a running Zitadel, so the strict assertion on the
  * SESSION cookie's Set-Cookie header lives in the unit test
  * (`src/__tests__/auth/cookie-samesite.test.ts`). This e2e test exercises
- * the boundary behaviour observable without authenticated state.
+ * the boundary behavior observable without authenticated state.
  *
  * Run:
  *   pnpm test:e2e e2e/auth/session-cookie-samesite.spec.ts

@@ -33,7 +33,7 @@
  *   - The tenant scope is derived server-side; a run id owned by another
  *     tenant is indistinguishable from one that never existed (NOT_FOUND).
  *   - Browser disconnect aborts the upstream stream via the AbortController,
- *     so the daemon's in-flight server stream is cancelled promptly.
+ *     so the daemon's in-flight server stream is canceled promptly.
  */
 
 import { NextRequest } from 'next/server';
@@ -194,7 +194,7 @@ export async function GET(
       }
     },
     cancel() {
-      logger.info(baseLog, 'agent events SSE bridge cancelled by client');
+      logger.info(baseLog, 'agent events SSE bridge canceled by client');
       clearInterval(heartbeatHandle);
       abort.abort();
     },

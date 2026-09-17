@@ -88,7 +88,7 @@ describe("auth route GET — session token stripping", () => {
     const res = await GET(
       new NextRequest("https://app.example.com/api/auth/csrf"),
     );
-    // Returned verbatim (same instance) — no re-serialisation.
+    // Returned verbatim (same instance) — no re-serialization.
     expect(res).toBe(original);
     expect(await res.json()).toEqual({ csrfToken: "abc123" });
   });

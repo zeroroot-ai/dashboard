@@ -25,7 +25,7 @@ import { userClient } from "@/src/lib/gibson-client";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 
 // ---------------------------------------------------------------------------
-// Return types (plain objects safe to serialise across the server/client
+// Return types (plain objects safe to serialize across the server/client
 // boundary without proto message classes)
 // ---------------------------------------------------------------------------
 

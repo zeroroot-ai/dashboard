@@ -24,7 +24,7 @@
  *     and leaving it unpinned means a dependency bump can silently re-enable
  *     raw HTML in labels and `click` directives (which bind javascript: hrefs
  *     and call page-scope functions). Pin it.
- *  2. Sanitising the SVG before it is assigned to innerHTML. `strict` governs
+ *  2. Sanitizing the SVG before it is assigned to innerHTML. `strict` governs
  *     what mermaid *intends* to emit; DOMPurify governs what actually reaches
  *     the DOM, and covers mermaid parser bugs and any future default change.
  *
@@ -35,12 +35,12 @@
  *
  * The one real casualty is `<foreignObject>`. DOMPurify 3.x drops HTML nested
  * inside it whatever the profile, so mermaid's default HTML labels would be
- * sanitised away and flowchart nodes would render empty. The fix is to stop
+ * sanitized away and flowchart nodes would render empty. The fix is to stop
  * mermaid emitting them: `htmlLabels: false` makes it lay labels out with plain
  * SVG `<text>`, which the sanitiser passes through untouched. That is also the
  * safer configuration outright, since it means no HTML subtree ever exists in
  * the diagram for a payload to hide in. The visible cost is that labels no
- * longer support inline HTML markup, which mermaid already refuses to honour
+ * longer support inline HTML markup, which mermaid already refuses to honor
  * under `securityLevel: 'strict'`.
  */
 
@@ -111,7 +111,7 @@ export function MermaidBlock({ code }: MermaidBlockProps) {
 
         if (!cancelled && containerRef.current) {
           // mermaid.render returns an SVG string built from untrusted diagram
-          // source. Sanitise before it reaches the DOM, so that what mermaid
+          // source. Sanitize before it reaches the DOM, so that what mermaid
           // intended to emit and what actually renders cannot diverge.
           containerRef.current.innerHTML = DOMPurify.sanitize(svg, SANITIZE_CONFIG);
         }

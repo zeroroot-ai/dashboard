@@ -673,7 +673,7 @@ test.describe("login-error-regression: LoginErrorReason coverage", () => {
             expect(afterError).toBeGreaterThanOrEqual(beforeError + 1);
           }
         } else {
-          // Plain /login redirect, acceptable middleware behaviour for missing cookies.
+          // Plain /login redirect, acceptable middleware behavior for missing cookies.
           await expect(page).toHaveURL(/\/login/, { timeout: 10_000 });
           // Sign-in form must be present (user can retry).
           await expect(

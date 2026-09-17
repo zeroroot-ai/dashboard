@@ -32,7 +32,7 @@
  * What is scanned
  * ---------------
  * `.ts` and `.tsx` files under `app/` and `src/`, EXCLUDING:
- *   - `src/lib/zitadel/**` , the authorised adapter home
+ *   - `src/lib/zitadel/**` , the authorized adapter home
  *   - `node_modules/`, `.next/`
  *   - `__tests__/` directories, `*.test.*`, `*.spec.*`
  *   - Comment-only lines (lines whose first non-whitespace chars are `//` or `*`)
@@ -69,7 +69,7 @@ const SCAN_DIRS = ['app', 'src'];
 
 const SKIP_DIRS = new Set(['node_modules', '.next', '__tests__']);
 
-/** The authorised adapter directory, fetch() calls here are expected. */
+/** The authorized adapter directory, fetch() calls here are expected. */
 const ADAPTER_DIR_REL = 'src/lib/zitadel';
 
 const SKIP_FILES = new Set([`scripts/${SCRIPT_NAME}`]);
@@ -112,7 +112,7 @@ function walk(dir, out = []) {
     const rel = relative(ROOT, full);
     if (ent.isDirectory()) {
       if (SKIP_DIRS.has(ent.name)) continue;
-      // Skip the authorised adapter directory entirely.
+      // Skip the authorized adapter directory entirely.
       if (rel === ADAPTER_DIR_REL || rel.startsWith(ADAPTER_DIR_REL + '/')) continue;
       walk(full, out);
     } else if (ent.isFile()) {

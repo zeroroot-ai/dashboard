@@ -62,7 +62,7 @@ async function readCounter(
 // ---------------------------------------------------------------------------
 
 describe("auth counters, label routing", () => {
-  it("signupAttempts{outcome,reason}: inc routes only to the labelled series", async () => {
+  it("signupAttempts{outcome,reason}: inc routes only to the labeled series", async () => {
     signupAttempts.inc({ outcome: "ok", reason: "" });
     signupAttempts.inc({ outcome: "failed", reason: "password_policy" });
     signupAttempts.inc({ outcome: "failed", reason: "password_policy" });
@@ -95,7 +95,7 @@ describe("auth counters, label routing", () => {
     ).toBe(0);
   });
 
-  it("signinAttempts{outcome,reason}: inc routes only to the labelled series", async () => {
+  it("signinAttempts{outcome,reason}: inc routes only to the labeled series", async () => {
     signinAttempts.inc({ outcome: "ok", reason: "" });
     signinAttempts.inc({ outcome: "failed", reason: "invalid_credentials" });
     signinAttempts.inc({ outcome: "locked", reason: "account_locked" });
@@ -129,7 +129,7 @@ describe("auth counters, label routing", () => {
     ).toBe(3);
   });
 
-  it("passwordResets{outcome}: inc routes only to the labelled series", async () => {
+  it("passwordResets{outcome}: inc routes only to the labeled series", async () => {
     passwordResets.inc({ outcome: "ok" });
     passwordResets.inc({ outcome: "ok" });
     passwordResets.inc({ outcome: "failed" });
@@ -151,7 +151,7 @@ describe("auth counters, label routing", () => {
     ).toBe(0);
   });
 
-  it("emailVerifications{outcome}: inc routes only to the labelled series", async () => {
+  it("emailVerifications{outcome}: inc routes only to the labeled series", async () => {
     emailVerifications.inc({ outcome: "ok" });
     emailVerifications.inc({ outcome: "failed" });
     expect(
@@ -166,7 +166,7 @@ describe("auth counters, label routing", () => {
     ).toBe(1);
   });
 
-  it("captchaFailures{provider}: inc routes only to the labelled series", async () => {
+  it("captchaFailures{provider}: inc routes only to the labeled series", async () => {
     captchaFailures.inc({ provider: "turnstile" });
     captchaFailures.inc({ provider: "turnstile" });
     captchaFailures.inc({ provider: "hcaptcha" });
@@ -188,7 +188,7 @@ describe("auth counters, label routing", () => {
     ).toBe(0);
   });
 
-  it("hibpChecks{outcome}: inc routes only to the labelled series", async () => {
+  it("hibpChecks{outcome}: inc routes only to the labeled series", async () => {
     hibpChecks.inc({ outcome: "clean" });
     hibpChecks.inc({ outcome: "breached" });
     hibpChecks.inc({ outcome: "unknown" });

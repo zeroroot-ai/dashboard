@@ -60,7 +60,7 @@ describe('ConversationView', () => {
     ).toBeDefined();
   });
 
-  it('renders a tool message as a labelled collapsible block', () => {
+  it('renders a tool message as a labeled collapsible block', () => {
     const messages: ConversationMessage[] = [
       { role: 'tool', content: '{"ports":[80,443]}' },
     ];

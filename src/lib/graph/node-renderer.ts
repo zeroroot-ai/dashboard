@@ -243,8 +243,8 @@ class NodeRenderer {
    *
    * @param ctx        - Canvas 2D rendering context
    * @param entityType - Gibson taxonomy entity type
-   * @param x          - Centre X in canvas coordinates
-   * @param y          - Centre Y in canvas coordinates
+   * @param x          - Center X in canvas coordinates
+   * @param y          - Center Y in canvas coordinates
    * @param size       - Side length of the square in logical pixels
    * @param options    - Visual options
    */

@@ -289,7 +289,7 @@ describe("BYO Vault address is rejected when it points at internal space", () =>
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
-  it("still accepts a public https address and forwards it normalised", async () => {
+  it("still accepts a public https address and forwards it normalized", async () => {
     mockProbeBrokerConfig.mockResolvedValue({
       result: { ok: true, errorClass: "", errorMessage: "", durationMs: BigInt(1) },
     });

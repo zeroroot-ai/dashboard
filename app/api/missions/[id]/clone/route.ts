@@ -14,7 +14,7 @@
  *   2. If the run has no missionDefinitionId the mission was created via the
  *      programmatic path (no author-managed definition), return 410.
  *   3. Call GetMissionDefinition(missionDefinitionId) to get the full proto.
- *   4. Serialise to CUE and return { cueSource, name }.
+ *   4. Serialize to CUE and return { cueSource, name }.
  */
 
 import { NextRequest, NextResponse } from 'next/server';

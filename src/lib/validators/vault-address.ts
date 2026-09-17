@@ -284,7 +284,7 @@ export function validateVaultAddress(raw: string): VaultAddressValidation {
     };
   }
 
-  // Re-serialise from the parsed URL so the daemon receives a normalized form
+  // Re-serialize from the parsed URL so the daemon receives a normalized form
   // rather than the raw operator input.
   const path = url.pathname === "/" ? "" : url.pathname.replace(/\/$/, "");
   return { ok: true, normalized: `${url.protocol}//${url.host}${path}` };

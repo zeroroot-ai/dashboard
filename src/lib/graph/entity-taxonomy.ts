@@ -154,8 +154,8 @@ const ENTITY_COLORS_DARK: Record<EntityType, string> = {
   // eye: every hue clears WCAG AA (>=4.5:1) on the terminal ground and is the
   // most separable in-band candidate left once the 16 hues above are placed
   // (min OKLab dE 10.0 to any existing or sibling hue). The bright-on-near-black
-  // space is full at 16, so within this family colour narrows the field and the
-  // legend's ICON plus label carries identity, never colour alone.
+  // space is full at 16, so within this family color narrows the field and the
+  // legend's ICON plus label carries identity, never color alone.
   application: '#4f7eee',    // blue, the lifecycle anchor
   repository: '#9e75c7',     // muted purple, source
   image: '#53adea',          // light blue, built artifact
