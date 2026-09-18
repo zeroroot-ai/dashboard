@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.121.1](https://github.com/zeroroot-ai/dashboard/compare/v0.121.0...v0.121.1) (2026-09-18)
+
+
+### Bug Fixes
+
+* **analytics:** initialise google analytics once per mount ([#82](https://github.com/zeroroot-ai/dashboard/issues/82)) ([3d579b4](https://github.com/zeroroot-ai/dashboard/commit/3d579b4323cef29bc419e3bca430bcccf02a59d7))
+* **config:** no workstation address in the build config ([#81](https://github.com/zeroroot-ai/dashboard/issues/81)) ([0198ead](https://github.com/zeroroot-ai/dashboard/commit/0198ead11344a706982dc59e7b1d4bb233d03591))
+
 ## [0.121.0](https://github.com/zeroroot-ai/dashboard/compare/v0.120.12...v0.121.0) (2026-09-18)
 
 
