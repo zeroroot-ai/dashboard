@@ -18,26 +18,32 @@
  */
 
 import 'server-only';
-
 import { headers } from 'next/headers';
+import {
+  resolveClientIp as resolveTrustedClientIp,
+  UNIDENTIFIED_SOURCE,
+} from '@/src/lib/rate-limiter';
 
-/** Resolve the requester's IP from the edge-supplied headers. */
+/**
+ * Resolve the requester's IP from the edge-supplied headers.
+ *
+ * One implementation, in src/lib/rate-limiter.ts: the entry `hops` from the
+ * right of `X-Forwarded-For`, which the outermost proxy we operate wrote.
+ * Envoy appends to the header, so the leftmost entry is the caller's own
+ * text. Reading it keyed every per-source signup budget on a value the
+ * attacker chose (a fresh address per attempt, or a victim's address to
+ * spend the victim's budget).
+ */
 export async function resolveClientIp(): Promise<string> {
-  const hdrs = await headers();
-  return clientIpFromHeaders({
-    forwardedFor: hdrs.get('x-forwarded-for'),
-    realIp: hdrs.get('x-real-ip'),
-  });
+  return clientIpForDaemon(await headers());
 }
 
-/** Pure form, so the header handling is testable without a request. */
-export function clientIpFromHeaders(h: {
-  forwardedFor?: string | null;
-  realIp?: string | null;
-}): string {
-  const first = h.forwardedFor?.split(',')[0]?.trim();
-  if (first) return first;
-  const real = h.realIp?.trim();
-  if (real) return real;
-  return '';
+/**
+ * Pure form, so the header handling is testable without a request. The
+ * daemon routes the empty string to a small shared unattributed bucket, so
+ * an unresolvable source is reported as '' and never as a placeholder.
+ */
+export function clientIpForDaemon(hdrs: Pick<Headers, 'get'>): string {
+  const ip = resolveTrustedClientIp(hdrs);
+  return ip === UNIDENTIFIED_SOURCE ? '' : ip;
 }

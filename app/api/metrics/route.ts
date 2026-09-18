@@ -36,6 +36,7 @@ import { isIP } from "node:net";
 
 import { registry } from "@/src/lib/metrics/registry";
 import { verifyZitadelBearer } from "@/src/lib/auth/zitadel-bearer-verifier";
+import { resolveClientIp, UNIDENTIFIED_SOURCE } from "@/src/lib/rate-limiter";
 
 // Force this route onto the Node.js runtime: prom-client uses Node APIs
 // (perf_hooks, process memory probing for some collectors) and jose's JWT
@@ -213,42 +214,20 @@ function loadAllowedCidrs(): ParsedCidr[] {
 // ---------------------------------------------------------------------------
 
 /**
- * Collect candidate client IPs from `X-Forwarded-For` and `X-Real-IP`. The
- * left-most XFF entry is the original client per the de-facto proxy
- * convention; we still test every entry against the allow-list so a
- * multi-hop scraper path continues to match.
- *
- * NOTE: These headers are trustworthy only when set by an ingress we
- * control. In a public-ingress deployment the chart MUST terminate and
- * rewrite these headers at the edge, otherwise any caller can spoof
- * `X-Forwarded-For: <whitelisted-ip>`. The Zitadel JWT path exists
- * precisely so operators who can't guarantee that do not need the CIDR gate.
+ * The one client address the CIDR gate judges: the `X-Forwarded-For` entry
+ * our outermost proxy wrote, resolved by the hop-counting reader in
+ * src/lib/rate-limiter.ts. Envoy appends to the header, so every entry to
+ * the left of that one is caller-supplied text. The gate used to test every
+ * entry and pass on the first match, which let an unauthenticated caller
+ * read the registry by sending `X-Forwarded-For: <an allow-listed address>`.
+ * An unidentified source matches nothing.
  */
-function extractClientIps(req: NextRequest): string[] {
-  const ips: string[] = [];
-  const xff = req.headers.get("x-forwarded-for");
-  if (xff) {
-    for (const raw of xff.split(",")) {
-      const s = raw.trim();
-      if (s && isIP(s) !== 0) ips.push(s);
-    }
-  }
-  const xri = req.headers.get("x-real-ip");
-  if (xri) {
-    const s = xri.trim();
-    if (s && isIP(s) !== 0) ips.push(s);
-  }
-  return ips;
-}
-
 function isAllowedCidr(req: NextRequest, cidrs: ParsedCidr[]): boolean {
   if (cidrs.length === 0) return false;
-  const ips = extractClientIps(req);
-  if (ips.length === 0) return false;
-  for (const ip of ips) {
-    for (const cidr of cidrs) {
-      if (matchesCidr(ip, cidr)) return true;
-    }
+  const ip = resolveClientIp(req.headers);
+  if (ip === UNIDENTIFIED_SOURCE || isIP(ip) === 0) return false;
+  for (const cidr of cidrs) {
+    if (matchesCidr(ip, cidr)) return true;
   }
   return false;
 }

@@ -27,7 +27,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { redeemSignupVerification } from '@/src/lib/signup/owner-provisioning';
-import { clientIpFromHeaders } from '@/src/lib/signup/client-ip';
+import { clientIpForDaemon } from '@/src/lib/signup/client-ip';
 import {
   SIGNUP_VERIFIED_COOKIE,
   SIGNUP_VERIFIED_MAX_AGE_SECONDS,
@@ -69,10 +69,7 @@ function redirectTo(location: string): NextResponse {
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const token = req.nextUrl.searchParams.get('token') ?? '';
-  const clientIp = clientIpFromHeaders({
-    forwardedFor: req.headers.get('x-forwarded-for'),
-    realIp: req.headers.get('x-real-ip'),
-  });
+  const clientIp = clientIpForDaemon(req.headers);
 
   if (!token) {
     return redirectTo(VERIFY_FAILED_REDIRECT);

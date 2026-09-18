@@ -220,7 +220,7 @@ const DEFAULT_TRUSTED_PROXY_HOPS = 1;
  * pod except via Envoy, so this bucket should stay empty; sharing it is
  * deliberate, an unidentifiable source gets no per-source budget.
  */
-const UNIDENTIFIED_SOURCE = 'unidentified';
+export const UNIDENTIFIED_SOURCE = 'unidentified';
 
 function trustedProxyHopCount(): number {
   const raw = process.env.TRUSTED_PROXY_HOP_COUNT;
