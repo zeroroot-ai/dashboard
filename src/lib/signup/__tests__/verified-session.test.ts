@@ -38,6 +38,18 @@ describe('verified-session codec', () => {
     expect(decodeVerifiedSession(encodeVerifiedSession(SESSION))).toEqual(SESSION);
   });
 
+  it('round-trips the spent flag, and a session without it decodes without it', () => {
+    const spent = decodeVerifiedSession(encodeVerifiedSession({ ...SESSION, spent: true }));
+    expect(spent?.spent).toBe(true);
+    expect(decodeVerifiedSession(encodeVerifiedSession(SESSION))?.spent).toBeUndefined();
+  });
+
+  it('a forged spent flag is rejected with the rest of the forged payload', () => {
+    // Removing `spent` from a spent cookie would re-open a completion the
+    // daemon already consumed. The signature covers it like every field.
+    expect(decodeVerifiedSession(forge({ ...SESSION, spent: true }))).toBeNull();
+  });
+
   it('round-trips the optional billing customer', () => {
     const withCustomer = { ...SESSION, stripeCustomerId: 'cus_123' };
     expect(decodeVerifiedSession(encodeVerifiedSession(withCustomer))).toEqual(withCustomer);

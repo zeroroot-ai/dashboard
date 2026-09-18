@@ -26,6 +26,7 @@ import {
   displayOnly,
 } from "@/src/lib/signup/verified-session";
 import { CompleteSignupForm } from "./complete-form";
+import { POST_SIGNUP_REDIRECT } from "../types";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,12 @@ export const metadata = {
 export default async function SignupCompletePage() {
   const jar = await cookies();
   const session = decodeVerifiedSession(jar.get(SIGNUP_VERIFIED_COOKIE)?.value);
+
+  if (session?.spent) {
+    // Completion already succeeded in this browser. The account exists; the
+    // only thing left to do is sign in (dashboard#79).
+    redirect(POST_SIGNUP_REDIRECT);
+  }
 
   if (!session) {
     // Same destination as every other verification failure. The daemon answers

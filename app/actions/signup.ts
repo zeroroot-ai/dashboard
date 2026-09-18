@@ -643,9 +643,14 @@ export async function completeSignup(
       await finalizeSignupCustomer(session.stripeCustomerId);
     }
 
-    // The session is spent daemon-side; drop the cookie so a stale one cannot
-    // send the user back into a completion that can no longer succeed.
-    await clearVerifiedSession();
+    // The session is spent daemon-side. Mark the cookie spent rather than
+    // deleting it: readVerifiedSession treats a spent session as absent, so a
+    // stale cookie cannot re-enter a completion, and the completion page sends
+    // a returning browser to /login. Deleting it here made Next.js re-render
+    // the route inside this action's response, and the page then redirected to
+    // /signup?verify=invalid before the client could reach /login
+    // (dashboard#79).
+    await markVerifiedSessionSpent(session);
 
     // 3. Finish provisioning (wait for Ready → /login).
     return await finishProvisioning(ctx);
@@ -749,7 +754,7 @@ function slugify(s: string): string {
 }
 
 /**
- * readVerifiedSession / writeVerifiedSession / clearVerifiedSession — the
+ * readVerifiedSession / writeVerifiedSession / markVerifiedSessionSpent — the
  * completion capability, in an httpOnly cookie.
  *
  * Every post-redemption action reads the session from here rather than taking
@@ -759,7 +764,10 @@ function slugify(s: string): string {
  */
 async function readVerifiedSession(): Promise<VerifiedSignupSession | null> {
   const jar = await cookies();
-  return decodeVerifiedSession(jar.get(SIGNUP_VERIFIED_COOKIE)?.value);
+  const session = decodeVerifiedSession(jar.get(SIGNUP_VERIFIED_COOKIE)?.value);
+  // A spent session is no capability: the daemon already consumed it.
+  if (session?.spent) return null;
+  return session;
 }
 
 async function writeVerifiedSession(s: VerifiedSignupSession): Promise<void> {
@@ -772,14 +780,10 @@ async function writeVerifiedSession(s: VerifiedSignupSession): Promise<void> {
   });
 }
 
-async function clearVerifiedSession(): Promise<void> {
-  const jar = await cookies();
-  jar.set({
-    name: SIGNUP_VERIFIED_COOKIE,
-    value: "",
-    maxAge: 0,
-    ...signupCookieOptions(),
-  });
+async function markVerifiedSessionSpent(
+  s: VerifiedSignupSession,
+): Promise<void> {
+  await writeVerifiedSession({ ...s, spent: true });
 }
 
 /**
