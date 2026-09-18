@@ -131,6 +131,7 @@ import { signupAction, startSignupPayment, completeSignup } from '../signup';
 import { getTenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
 import {
   SIGNUP_VERIFIED_COOKIE,
+  decodeVerifiedSession,
   encodeVerifiedSession,
 } from '@/src/lib/signup/verified-session';
 
@@ -378,9 +379,27 @@ describe('completeSignup', () => {
       }),
     );
     expect(mockCreateTrialingSubscription).toHaveBeenCalled();
-    // The daemon consumed the session; the cookie must not survive to invite a
-    // completion that can no longer succeed.
-    expect(mockCookieStore.store.has(SIGNUP_VERIFIED_COOKIE)).toBe(false);
+    // The daemon consumed the session. The cookie stays, marked spent, so the
+    // completion page can send a returning browser to /login (dashboard#79).
+    // Deleting it here re-rendered the route inside the action's response and
+    // the page redirected to /signup?verify=invalid before /login was reached.
+    const spent = decodeVerifiedSession(mockCookieStore.store.get(SIGNUP_VERIFIED_COOKIE));
+    expect(spent?.spent).toBe(true);
+    expect(spent?.attemptId).toBe(ATTEMPT);
+  });
+
+  it('refuses a second completion on a spent session', async () => {
+    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
+    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
+    const first = await completeSignup({ password: 'Passw0rd!Test', paymentMethodId: 'pm_1' });
+    expect(first.ok).toBe(true);
+    mockCompleteSignupOwner.mockClear();
+
+    // The spent cookie is no capability: the action must not reach the daemon.
+    const second = await completeSignup({ password: 'Passw0rd!Test', paymentMethodId: 'pm_1' });
+    expect(second.ok).toBe(false);
+    expect(second).toMatchObject({ code: 'VERIFICATION_INVALID' });
+    expect(mockCompleteSignupOwner).not.toHaveBeenCalled();
   });
 
   it('sends no signup-identifying fields on the completion call', async () => {

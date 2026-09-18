@@ -87,6 +87,15 @@ export interface VerifiedSignupSession {
    * reference to subscribe it.
    */
   stripeCustomerId?: string;
+  /**
+   * Set once completion succeeded. The daemon spent the session, so the
+   * cookie must never re-enter a completion; it stays so the completion page
+   * can send a returning browser to /login instead of calling the link
+   * invalid. Deleting the cookie inside the completion action re-rendered the
+   * page mid-action and that page redirected to /signup?verify=invalid before
+   * the client reached /login (dashboard#79).
+   */
+  spent?: true;
 }
 
 /** The subset the completion page may render. Note the absent token. */
@@ -210,6 +219,7 @@ export function decodeVerifiedSession(
       tier: s.tier,
       stripeCustomerId:
         typeof s.stripeCustomerId === 'string' ? s.stripeCustomerId : undefined,
+      ...(s.spent === true ? { spent: true as const } : {}),
     };
   } catch {
     return null;
