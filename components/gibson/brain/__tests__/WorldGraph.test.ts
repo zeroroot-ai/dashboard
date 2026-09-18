@@ -72,3 +72,19 @@ describe('worldToGraph', () => {
     expect(edges).toHaveLength(0);
   });
 });
+
+describe('worldToGraph belief-model pin (gibson#24)', () => {
+  it('carries the pinned belief-model version onto the mission node', () => {
+    const { nodes } = worldToGraph(
+      [{ id: 'm1', goal: 'pwn', status: 'running', reason: '', beliefModel: 'belief-v7' }],
+      [],
+      [],
+    );
+    expect(nodes[0]?.properties.belief_model).toBe('belief-v7');
+  });
+
+  it('renders an unpinned mission as an empty belief model, never undefined', () => {
+    const { nodes } = worldToGraph([{ id: 'm1', goal: 'pwn', status: 'running', reason: '' }], [], []);
+    expect(nodes[0]?.properties.belief_model).toBe('');
+  });
+});

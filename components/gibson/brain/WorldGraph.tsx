@@ -13,6 +13,12 @@ export interface WorldGraphMission {
   goal: string;
   status: string;
   reason: string;
+  /**
+   * The belief-model version the mission was pinned to at launch (ADR-0005
+   * §5): the daemon stamps it at start and the World carries it, so a
+   * reviewer can tell which model judged the run. Empty means unpinned.
+   */
+  beliefModel?: string;
 }
 export interface WorldGraphHost {
   scopeId: string;
@@ -61,7 +67,14 @@ export function worldToGraph(
       id: `mission:${m.id}`,
       labels: ['Mission'],
       entityType: 'mission',
-      properties: { goal: m.goal, status: m.status, reason: m.reason },
+      properties: {
+        goal: m.goal,
+        status: m.status,
+        reason: m.reason,
+        // Surfaced on the node detail panel as "belief model" so the pin is
+        // readable from the console, not only from the wire (gibson#24).
+        belief_model: m.beliefModel ?? '',
+      },
     });
   }
 
