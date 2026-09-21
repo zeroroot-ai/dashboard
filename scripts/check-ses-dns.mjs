@@ -23,7 +23,7 @@
  */
 
 import { promises as dns } from 'node:dns';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 const DOMAIN = 'mail.zeroroot.ai';
 const DMARC_DOMAIN = `_dmarc.${DOMAIN}`;
@@ -75,7 +75,7 @@ async function checkDMARC() {
 
 function runDnsx() {
   try {
-    execSync(`which dnsx`, { stdio: 'ignore' });
+    execFileSync('which', ['dnsx'], { stdio: 'ignore' });
   } catch {
     console.log('ℹ dnsx not found, skipping extended DNS check.');
     console.log('  Install with: go install github.com/projectdiscovery/dnsx/cmd/dnsx@latest');
@@ -83,7 +83,9 @@ function runDnsx() {
   }
 
   try {
-    const output = execSync(`dnsx -d ${DOMAIN} -t TXT -resp`, { encoding: 'utf8' });
+    // argv array, no shell: DOMAIN is operator-supplied and reaches the
+    // process as one argument whatever it contains (dashboard#11).
+    const output = execFileSync('dnsx', ['-d', DOMAIN, '-t', 'TXT', '-resp'], { encoding: 'utf8' });
     console.log(`\ndnsx output for ${DOMAIN}:`);
     console.log(output);
     return true;
