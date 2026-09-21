@@ -204,8 +204,8 @@ export function ReviewQueueContent() {
           <ShieldAlertIcon className="size-6 text-highlight" /> Review queue
         </h1>
         <p className="text-sm text-muted-foreground">
-          Label surfaced surprises and findings to teach this tenant&apos;s belief model. Labeling
-          is asynchronous: it never blocks a running mission and only improves the next one.
+          Label surfaced surprises and findings. Each label is recorded on the mission timeline
+          as a reviewed verdict. Labeling is asynchronous and never blocks a running mission.
         </p>
       </div>
 
@@ -215,7 +215,7 @@ export function ReviewQueueContent() {
         <EmptyState
           icon={ShieldAlertIcon}
           title="Nothing to review"
-          description="Surfaced surprises and findings appear here as missions run. Label them to refine the model."
+          description="Surfaced surprises and findings appear here as missions run. Label them to record a reviewed verdict."
         />
       ) : (
         items &&
