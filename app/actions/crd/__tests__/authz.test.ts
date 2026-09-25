@@ -435,3 +435,25 @@ describe("requireCrdSession, active-tenant role × required relation", () => {
   });
 });
 
+// hosted#190 / ADR-0093 rule 5: transferOwnershipAction is owner-only, not
+// admin-scoped like the rest of the CRD surface. An Admin never satisfies it.
+describe("requireCrdSession, transferOwnershipAction is owner-only", () => {
+  const ownerAction = "transferOwnershipAction" as const; // relation: "owner"
+  it("denies an admin (admin does not imply owner)", async () => {
+    getSessionMock.mockResolvedValueOnce(tenantSession("other-tenant", "admin"));
+    const r = await requireCrdSession({ action: ownerAction, tenantName: "other-tenant" });
+    expect(r.ok).toBe(false);
+    if (!r.ok && !r.result.ok) expect(r.result.code).toBe("FORBIDDEN");
+  });
+  it("allows the owner", async () => {
+    getSessionMock.mockResolvedValueOnce(tenantSession("other-tenant", "owner"));
+    const r = await requireCrdSession({ action: ownerAction, tenantName: "other-tenant" });
+    expect(r.ok).toBe(true);
+  });
+  it("denies a member", async () => {
+    getSessionMock.mockResolvedValueOnce(tenantSession("other-tenant", "member"));
+    const r = await requireCrdSession({ action: ownerAction, tenantName: "other-tenant" });
+    expect(r.ok).toBe(false);
+  });
+});
+

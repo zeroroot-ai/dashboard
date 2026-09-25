@@ -243,6 +243,11 @@ async function requireCrdSessionForSelfAction<T = void>(
 //   - acceptInvitationAction: not relation-gated, it uses the self-action
 //     helper (identity equality). The "__self__" sentinel is never evaluated
 //     by requireCrdSession; the entry exists only for coverage.
+//   - transferOwnershipAction: relation "owner", not "admin". Only the
+//     tenant's current Owner may start a transfer (hosted#190 / ADR-0093
+//     rule 5). An Admin fails this gate before the roster check or the daemon
+//     RPC even run. This mirrors the daemon's own MembershipService.
+//     TransferOwnership gate, which also requires the caller to be Owner.
 // ---------------------------------------------------------------------------
 
 export const CRD_PERMISSIONS: Record<
@@ -276,5 +281,6 @@ export const CRD_PERMISSIONS: Record<
   removeTeamMemberAction: { relation: "admin" },
   setTenantRoleAction: { relation: "admin" },
   setTeamAdminAction: { relation: "admin" },
-  transferOwnershipAction: { relation: "admin" },
+  // Owner-only (hosted#190 / ADR-0093 rule 5): an Admin never satisfies this.
+  transferOwnershipAction: { relation: "owner" },
 };
