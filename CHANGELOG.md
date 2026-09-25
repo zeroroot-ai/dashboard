@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.121.1](https://github.com/zeroroot-ai/dashboard/compare/v0.121.0...v0.121.1) (2026-09-25)
+
+
+### Bug Fixes
+
+* **analytics:** initialise google analytics once per mount ([#82](https://github.com/zeroroot-ai/dashboard/issues/82)) ([3d579b4](https://github.com/zeroroot-ai/dashboard/commit/3d579b4323cef29bc419e3bca430bcccf02a59d7))
+* **auth:** the tenant comes from the signed-in identity ([#90](https://github.com/zeroroot-ai/dashboard/issues/90)) ([1f65b27](https://github.com/zeroroot-ai/dashboard/commit/1f65b273306093dc864bdf5e26a52247b4d12a31))
+* **config:** no workstation address in the build config ([#81](https://github.com/zeroroot-ai/dashboard/issues/81)) ([0198ead](https://github.com/zeroroot-ai/dashboard/commit/0198ead11344a706982dc59e7b1d4bb233d03591))
+* **members:** only the Owner can transfer ownership ([#89](https://github.com/zeroroot-ai/dashboard/issues/89)) ([acb45f5](https://github.com/zeroroot-ai/dashboard/commit/acb45f54ebb72a5c094a870b43994a5272124ffb))
+* **review:** stop claiming that labels teach the tenant's model ([#85](https://github.com/zeroroot-ai/dashboard/issues/85)) ([456cc55](https://github.com/zeroroot-ai/dashboard/commit/456cc5560342e4b4007d09fa58e3a5637f12559d))
+* **scripts:** check-ses-dns runs dnsx through an argv array ([#87](https://github.com/zeroroot-ai/dashboard/issues/87)) ([0d3a6a3](https://github.com/zeroroot-ai/dashboard/commit/0d3a6a326fbc06c180424e134cc8f1219d766c20)), closes [#11](https://github.com/zeroroot-ai/dashboard/issues/11)
+
 ## [0.121.0](https://github.com/zeroroot-ai/dashboard/compare/v0.120.12...v0.121.0) (2026-09-18)
 
 
