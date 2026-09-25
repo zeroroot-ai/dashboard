@@ -14,6 +14,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
+import { ConnectError, Code } from "@connectrpc/connect";
 
 const mocks = vi.hoisted(() => ({
   transferOwnership: vi.fn(async (_req: Record<string, unknown>) => ({})),
@@ -119,6 +120,33 @@ describe("transferOwnershipAction, caller lacks permission", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.code).toBe("FORBIDDEN");
     expect(mocks.transferOwnership).not.toHaveBeenCalled();
+  });
+
+  // hosted#190 / ADR-0093 rule 5: an Admin can never make anyone Owner.
+  // CRD_PERMISSIONS.transferOwnershipAction requires the "owner" relation,
+  // so an Admin caller is refused before the roster check or the RPC run.
+  it("returns FORBIDDEN for an Admin caller and does not call the RPC", async () => {
+    withSession({ role: "admin" });
+    const r = await transferOwnershipAction("user-target");
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.code).toBe("FORBIDDEN");
+    expect(mocks.transferOwnership).not.toHaveBeenCalled();
+    expect(mocks.listMembers).not.toHaveBeenCalled();
+  });
+});
+
+describe("transferOwnershipAction, daemon refuses the transfer", () => {
+  it("maps a PermissionDenied RPC error to FORBIDDEN with a clear message", async () => {
+    withSession();
+    mocks.transferOwnership.mockRejectedValueOnce(
+      new ConnectError("internal relation detail", Code.PermissionDenied),
+    );
+    const r = await transferOwnershipAction("user-target");
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("FORBIDDEN");
+      expect(r.error).not.toContain("internal relation detail");
+    }
   });
 });
 

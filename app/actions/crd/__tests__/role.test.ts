@@ -12,12 +12,14 @@
  */
 
 import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
+import { ConnectError, Code } from "@connectrpc/connect";
 
 // vi.mock factories are hoisted above top-level `const` decls; hoist the
 // mock-fn handles via vi.hoisted so the factories below can close over them
 // without TDZ errors.
 const mocks = vi.hoisted(() => ({
   writeAccessTuples: vi.fn(async () => ({})),
+  listMembers: vi.fn(),
 }));
 
 vi.mock("@/src/lib/auth", () => ({
@@ -30,6 +32,14 @@ vi.mock("@/src/lib/gibson-client", () => ({
     setTenantRole: mocks.writeAccessTuples,
     setTeamAdmin: mocks.writeAccessTuples,
   })),
+}));
+
+// The Owner-guard in setTenantRoleAction (hosted#190) reads the daemon roster
+// before writing; default it to a roster with no owner so the existing
+// admin/member-flip tests are unaffected, and override per-test for the
+// owner-target cases below.
+vi.mock("@/app/actions/read/listMembers", () => ({
+  listMembersAction: mocks.listMembers,
 }));
 
 // hasPermission lives in src/lib/auth/schema; the action surface calls into
@@ -90,6 +100,11 @@ function withSession(tenantId: string) {
 
 beforeEach(() => {
   mocks.writeAccessTuples.mockClear();
+  mocks.listMembers.mockReset();
+  mocks.listMembers.mockResolvedValue({
+    ok: true,
+    data: [{ userId: "alice", displayName: "", email: "alice@example.com", role: "member", joinedAt: "", status: "active" }],
+  });
   sessionMock.mockReset();
 });
 
@@ -158,6 +173,38 @@ describe("setTenantRoleAction", () => {
     const r = await setTenantRoleAction({ userId: "alice", role: "admin" });
     expect(r.ok).toBe(false);
     expect((r as { code: string }).code).toBe("INTERNAL");
+  });
+
+  // ---------------------------------------------------------------------------
+  // Owner rule, hosted#190 / ADR-0093 rule 5.
+  // ---------------------------------------------------------------------------
+
+  it("refuses to change the workspace owner's role, and does not call the daemon", async () => {
+    withSession("acme");
+    mocks.listMembers.mockResolvedValue({
+      ok: true,
+      data: [{ userId: "alice", displayName: "", email: "alice@example.com", role: "owner", joinedAt: "", status: "active" }],
+    });
+    const r = await setTenantRoleAction({ userId: "alice", role: "admin" });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("FORBIDDEN");
+      expect(r.error).toContain("Transfer ownership");
+    }
+    expect(mocks.writeAccessTuples).not.toHaveBeenCalled();
+  });
+
+  it("maps a PermissionDenied RPC error to FORBIDDEN with a clear message", async () => {
+    withSession("acme");
+    mocks.writeAccessTuples.mockRejectedValueOnce(
+      new ConnectError("internal relation detail", Code.PermissionDenied),
+    );
+    const r = await setTenantRoleAction({ userId: "alice", role: "admin" });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("FORBIDDEN");
+      expect(r.error).not.toContain("internal relation detail");
+    }
   });
 });
 

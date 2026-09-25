@@ -20,12 +20,16 @@
  * users list badge stays consistent. Same best-effort pattern as
  * setTenantRoleAction, FGA is authoritative, the patch is cosmetic.
  *
- * TODO: replace the "members:invite" permission gate with a dedicated
- * "org:transfer_ownership" permission once it has been added to the RBAC
- * schema in core/gibson/internal/auth/permissions.yaml.
+ * Owner-only (hosted#190 / ADR-0093 rule 5): `CRD_PERMISSIONS.transferOwnershipAction`
+ * in `_authz.ts` requires the "owner" relation, so an Admin is refused by
+ * `requireCrdSession` before this function does anything else. The daemon's
+ * own MembershipService.TransferOwnership enforces the same rule; the gate
+ * here is defense-in-depth, not the only line of defense.
  *
  * Spec: dashboard#266.
  */
+
+import { ConnectError, Code } from "@connectrpc/connect";
 
 import { MembershipService } from "@/src/gen/gibson/tenant/v1/membership_pb";
 import { userClient } from "@/src/lib/gibson-client";
@@ -39,12 +43,27 @@ import {
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
 
+/** Map a daemon RPC error to the dashboard ActionResult error shape. A denial
+ * is always reported with a fixed, user-facing message: the daemon's own
+ * message can carry internal role/relation detail that should not reach the
+ * client. */
+function rpcError<T>(e: unknown): ActionResult<T> {
+  if (e instanceof ConnectError && e.code === Code.PermissionDenied) {
+    return {
+      ok: false,
+      error: "Only the current workspace owner can transfer ownership.",
+      code: "FORBIDDEN",
+    };
+  }
+  return { ok: false, error: e instanceof Error ? e.message : String(e), code: "INTERNAL" };
+}
+
 /**
  * Transfer the `owner` FGA relation from the calling user to `newOwnerUserId`.
  *
  * Preconditions (enforced server-side, not delegated to the client):
- *   1. Caller holds "members:invite" permission (proxy for owner-only gate -
- *      TODO: add "org:transfer_ownership" to RBAC schema).
+ *   1. Caller holds the "owner" relation on the active tenant
+ *      (`CRD_PERMISSIONS.transferOwnershipAction`, hosted#190).
  *   2. `newOwnerUserId` is non-empty.
  *   3. Target is an Active admin (spec.role === "admin", status.phase === "Active").
  *   4. Target is NOT already an owner.
@@ -61,7 +80,6 @@ export async function transferOwnershipAction(
 
   const gate = await requireCrdSession<{ applied: boolean }>({
     action: "transferOwnershipAction",
-    // TODO: replace with "org:transfer_ownership" once the RBAC schema has it.
     inputKeys: ["newOwnerUserId"],
   });
   if (!gate.ok) return gate.result;
@@ -138,7 +156,7 @@ export async function transferOwnershipAction(
       newOwnerUserId,
     });
   } catch (err) {
-    return { ok: false, error: String(err), code: "INTERNAL" };
+    return rpcError(err);
   }
 
   return { ok: true, data: { applied: true } };

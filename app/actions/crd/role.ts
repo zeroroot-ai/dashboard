@@ -28,8 +28,11 @@
  * Spec: dashboard#168.
  */
 
+import { ConnectError, Code } from "@connectrpc/connect";
+
 import { MembershipService } from "@/src/gen/gibson/tenant/v1/membership_pb";
 import { userClient } from "@/src/lib/gibson-client";
+import { listMembersAction } from "@/app/actions/read/listMembers";
 import {
   requireActiveTenant,
   NoActiveTenantError,
@@ -38,6 +41,17 @@ import {
 
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
+
+/** Map a daemon RPC error to the dashboard ActionResult error shape. A denial
+ * is always reported with a fixed, user-facing message: the daemon's own
+ * message can carry internal role/relation detail that should not reach the
+ * client. */
+function rpcError<T>(e: unknown): ActionResult<T> {
+  if (e instanceof ConnectError && e.code === Code.PermissionDenied) {
+    return { ok: false, error: "You cannot change this member's role.", code: "FORBIDDEN" };
+  }
+  return { ok: false, error: e instanceof Error ? e.message : String(e), code: "INTERNAL" };
+}
 
 export type TenantRole = "admin" | "member";
 
@@ -59,6 +73,13 @@ export type TenantRole = "admin" | "member";
  *
  * dashboard#173 documents the dual-write decision and the rationale for
  * choosing this over an operator-side reconcile.
+ *
+ * Owner rule (hosted#190 / ADR-0093 rule 5): assigning a role can never set
+ * or clear Owner. `role` is typed to exclude "owner" and the daemon refuses
+ * that value in both directions, so the input check below is the first line
+ * of defense. The workspace Owner's role also cannot be changed through this
+ * action at all, only `transferOwnershipAction` can move ownership; a roster
+ * check refuses the call before it reaches the daemon.
  */
 export async function setTenantRoleAction(input: {
   userId: string;
@@ -84,6 +105,22 @@ export async function setTenantRoleAction(input: {
     }
     throw err;
   }
+
+  // The Owner's role can never be changed via role assignment, only via
+  // transferOwnershipAction (hosted#190). Reads the daemon roster (source of
+  // truth) so this holds even if the client gate is bypassed.
+  const roster = await listMembersAction();
+  if (roster.ok) {
+    const target = roster.data.find((m) => m.userId === input.userId);
+    if (target?.role === "owner") {
+      return {
+        ok: false,
+        error: "The workspace owner's role cannot be changed. Transfer ownership instead.",
+        code: "FORBIDDEN",
+      };
+    }
+  }
+
   // Authoritative MembershipService write (FGA tuples). dashboard#715 removed
   // the former TenantMember.spec.role display-cache patch, the daemon's
   // ListMembers derives role from FGA, so a roster refetch reflects the change
@@ -97,7 +134,7 @@ export async function setTenantRoleAction(input: {
       remove: false,
     });
   } catch (err) {
-    return { ok: false, error: String(err), code: "INTERNAL" };
+    return rpcError(err);
   }
 
   return { ok: true, data: { applied: true } };
