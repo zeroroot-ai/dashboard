@@ -29,11 +29,13 @@ import { auth } from '@/auth';
  * Shape is intentionally preserved from the pre-Auth.js session so
  * that all existing callers can use this type without changes.
  *
- * NOTE (dashboard#583 lock-in): `tenantId` has been removed as an authority
- * field. The active tenant is now only resolvable via `requireActiveTenant()`
- * from `src/lib/auth/active-tenant`. Session no longer carries a tenant
- * identity, it carries the membership list (`tenants`) for role lookup and
- * the tenant-switcher UI.
+ * NOTE (ADR-0093 decision 4): the person's one tenant is now resolved
+ * server-side at sign-in (`auth.ts`'s `jwt` callback) and carried on the
+ * underlying Auth.js session as `tenantId`. This module's `tenantId` field
+ * mirrors that value; `tenants` / `rolesByTenant` are derived from the SAME
+ * membership read, so they can hold at most one entry. Use
+ * `requireActiveTenant()` (`src/lib/auth/active-tenant`) as the fail-closed
+ * resolver — it re-validates against current FGA membership on every call.
  */
 export interface GibsonSession {
   user: {
@@ -54,6 +56,8 @@ export interface GibsonSession {
     rolesByTenant: Record<string, string>;
     crossTenant: boolean;
   };
+  /** The person's one tenant (ADR-0093 decision 4), or null when they have none. */
+  tenantId?: string | null;
   error?: string;
   expires: string;
 }
@@ -77,31 +81,27 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
 
   const { user } = session;
 
-  // Tenant + memberships now come from FGA (via the daemon) plus the
-  // gibson_active_tenant cookie, see spec `tenant-membership-not-in-jwt`.
-  // The active tenant is NOT resolved here; every endpoint calls
-  // requireActiveTenant() directly (dashboard#583 lock-in). The session only
-  // carries the membership list (for role lookup and switcher UI).
+  // The person's tenant is resolved server-side at sign-in and carried on
+  // the session (ADR-0093 decision 4) — never read from a cookie. Memberships
+  // still come from FGA (via the daemon) for role lookup; there is at most
+  // one now, matching the session's one tenant.
   // Lazily import to avoid a hard dep cycle through the membership module.
   const tenants: string[] = [];
   const rolesByTenant: Record<string, string> = {};
   let activeTenantId: string | null = null;
   try {
-    const [{ getMyMemberships }, { readRawActiveTenant }] = await Promise.all([
-      import('@/src/lib/auth/membership'),
-      import('@/src/lib/auth/active-tenant'),
-    ]);
+    const { getMyMemberships } = await import('@/src/lib/auth/membership');
     const memberships = await getMyMemberships();
     for (const m of memberships) {
       tenants.push(m.tenantId);
       rolesByTenant[m.tenantId] = m.role;
     }
-    // Read the active-tenant cookie to populate roles for this render.
-    // This is read-only; no auto-pick fallback, a missing cookie means
-    // no active tenant and the endpoint will throw via requireActiveTenant().
-    const raw = await readRawActiveTenant();
-    if (raw.status === 'present' && tenants.includes(raw.tenantId!)) {
-      activeTenantId = raw.tenantId!;
+    // The session's server-resolved tenant, confirmed against the fresh
+    // membership read above. No auto-pick: a session with no tenant, or one
+    // whose membership no longer confirms, means no active tenant and the
+    // endpoint will throw via requireActiveTenant().
+    if (session.tenantId && tenants.includes(session.tenantId)) {
+      activeTenantId = session.tenantId;
     }
   } catch (err) {
     // Transient FGA/daemon errors degrade to "no tenant", middleware will
@@ -109,7 +109,7 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
     console.error('[auth] membership resolution failed:', err);
   }
 
-  // Derive roles from the cookie-confirmed active tenant only (no auto-pick).
+  // Derive roles from the session-confirmed active tenant only (no auto-pick).
   const roles: string[] = activeTenantId && rolesByTenant[activeTenantId] ? [rolesByTenant[activeTenantId]!] : [];
 
   // crossTenant is derived DIRECTLY from the active-tenant role, not from the
@@ -134,6 +134,7 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
       rolesByTenant,
       crossTenant,
     },
+    tenantId: activeTenantId,
     expires: session.expires,
   };
 });

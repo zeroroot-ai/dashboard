@@ -20,7 +20,7 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getServerSession } from "@/src/lib/auth";
 import { hasRoleAtLeast } from "@/src/lib/auth/roles";
-import { getActiveTenant } from "@/src/lib/auth/active-tenant";
+import { requireActiveTenant, activeTenantPageRedirect } from "@/src/lib/auth/active-tenant";
 import {
   getBrokerConfig,
   countSecrets,
@@ -85,9 +85,9 @@ export async function SecretsBackendContent() {
 
   let tenantId: string;
   try {
-    tenantId = await getActiveTenant();
-  } catch {
-    redirect("/select-tenant");
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    activeTenantPageRedirect(err);
   }
 
   if (!hasRoleAtLeast(session, tenantId, "admin")) {

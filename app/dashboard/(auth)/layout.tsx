@@ -9,10 +9,8 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
 import { SiteHeader } from "@/components/layout/header";
 import { TenantHydrator } from "@/components/layout/tenant-hydrator";
-import { TenantSwitcher } from "@/components/gibson/shared/TenantSwitcher";
 import { QuotaWidget } from "@/src/components/quota/quota-widget";
 import { getServerSession } from "@/src/lib/auth";
-import { readRawActiveTenant } from "@/src/lib/auth/active-tenant";
 import { resolveTenant } from "@/src/lib/resolve-tenant";
 import { getTenantQuotaAction } from "@/app/actions/read/getTenantQuota";
 import { logger } from "@/src/lib/logger";
@@ -62,14 +60,12 @@ export default async function AuthLayout({
     (t): t is Tenant => t !== null,
   );
 
-  // Read the active tenant from the HMAC-signed cookie (read-only; no auto-pick).
-  // Pages that need the active tenant to be required call requireActiveTenant()
-  // themselves. The layout only needs it for CRD resolution (quota widget, etc.).
-  const rawActiveTenant = await readRawActiveTenant();
-  const activeTenantId: string | null =
-    rawActiveTenant.status === 'present' && session.user.tenants.includes(rawActiveTenant.tenantId!)
-      ? rawActiveTenant.tenantId!
-      : null;
+  // The person's tenant, resolved server-side at sign-in (ADR-0093 decision
+  // 4) and already re-confirmed against current membership by
+  // getServerSession(). Pages that need it required call
+  // requireActiveTenant() themselves; the layout only needs it for CRD
+  // resolution (quota widget, etc.).
+  const activeTenantId: string | null = session.tenantId ?? null;
 
   const currentTenant: Tenant | null = activeTenantId
     ? (availableTenants.find((t) => t.id === activeTenantId) ?? null)
@@ -120,7 +116,6 @@ export default async function AuthLayout({
         <AppSidebar variant="inset" />
         <SidebarInset>
           <SiteHeader
-            tenantSwitcher={<TenantSwitcher />}
             quotaWidget={
               currentTenant ? (
                 <QuotaWidget

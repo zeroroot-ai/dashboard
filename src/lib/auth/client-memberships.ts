@@ -5,7 +5,8 @@
  * Client-side membership fetcher for the `useAuthorize` hook.
  *
  * Fetches from `/api/auth/my-memberships`, the thin server-side route that
- * calls `getMyMemberships()` + `readRawActiveTenant()` and returns:
+ * calls `getMyMemberships()` and reads the session's tenant (ADR-0093
+ * decision 4), returning:
  *
  *   { activeTenantId: string | null, byTenant: { [tenantId]: { role: string } } }
  *

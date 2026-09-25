@@ -41,7 +41,6 @@ vi.mock("@/src/lib/auth/active-tenant", async (importOriginal) => {
   return {
     ...actual,
     requireActiveTenant: vi.fn(async () => "acme"),
-    getActiveTenant: vi.fn(async () => "acme"),
   };
 });
 

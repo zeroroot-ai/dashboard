@@ -38,11 +38,14 @@ export default async function OnboardingPage() {
     redirect("/login");
   }
 
-  // Defensive: if memberships have been provisioned since the middleware
-  // last looked, send the user straight to the picker / dashboard.
+  // Defensive: if a tenant has been provisioned since the middleware last
+  // looked, send the user to the dashboard. There is no picker (ADR-0093
+  // decision 4): the middleware's own tenant check will send them through
+  // /api/auth/session-tenant to re-resolve the session before they reach
+  // /dashboard.
   const memberships = await getMyMemberships();
   if (memberships.length > 0) {
-    redirect("/select-tenant");
+    redirect("/dashboard");
   }
 
   const userEmail = session.user.email ?? null;

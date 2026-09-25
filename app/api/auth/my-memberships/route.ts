@@ -19,8 +19,8 @@
 
 import { NextResponse } from 'next/server';
 
+import { auth } from '@/auth';
 import { getMyMemberships } from '@/src/lib/auth/membership';
-import { readRawActiveTenant } from '@/src/lib/auth/active-tenant';
 
 export async function GET(): Promise<NextResponse> {
   let memberships;
@@ -37,12 +37,12 @@ export async function GET(): Promise<NextResponse> {
     byTenant[m.tenantId] = { role: m.role };
   }
 
-  // Read the active tenant cookie without throwing (no membership validation
-  // needed here, the hook will simply find no matching role if the cookie is
-  // stale and return allowed=false).
-  const { tenantId: activeTenantId } = await readRawActiveTenant().then(
-    (r) => (r.status === 'present' ? { tenantId: r.tenantId! } : { tenantId: null }),
-  );
+  // The person's tenant, resolved server-side at sign-in (ADR-0093
+  // decision 4). No membership validation needed here, the hook will
+  // simply find no matching role if the session's tenant is stale and
+  // return allowed=false.
+  const session = await auth();
+  const activeTenantId = session?.tenantId ?? null;
 
   return NextResponse.json({ activeTenantId, byTenant }, { status: 200 });
 }

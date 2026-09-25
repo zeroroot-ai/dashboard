@@ -15,11 +15,11 @@
  *     a trailing slash and silently drifted from the Zitadel registration,
  *     causing every logout to be rejected with `invalid_request`).
  *
- *  2. On every successful logout the response clears both the Auth.js
- *     session cookie set (defensive, matches `clearAuthCookies`) AND the
- *     `gibson_active_tenant` cookie, so the next sign-in re-runs default-
- *     tenant resolution / picker logic instead of auto-routing the user
- *     back to the tenant they were viewing at logout time.
+ *  2. On every successful logout the response clears the Auth.js session
+ *     cookie set (defensive, matches `clearAuthCookies`). There is no
+ *     dashboard-side tenant cookie to clear (ADR-0093 decision 4): the next
+ *     sign-in resolves the tenant server-side from the token's org, not
+ *     from anything carried forward on this response.
  *
  * Missing env: the route must fail loud (500 + structured log line) rather
  * than fall back to anything dynamic; the chart owns the URI and an unset
@@ -52,7 +52,6 @@ vi.mock('@/src/lib/logger', () => ({
 
 // Import handler under test AFTER mocks are registered.
 import { GET, POST } from '../route';
-import { ACTIVE_TENANT_COOKIE_NAME } from '@/src/lib/auth/active-tenant';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -163,18 +162,6 @@ describe('GET /api/auth/federated-signout', () => {
     expect(mockSignOut).not.toHaveBeenCalled();
   });
 
-  it('clears the gibson_active_tenant cookie on the redirect response', async () => {
-    const res = await GET(makeRequest());
-    // res.cookies is a ResponseCookies; getAll returns every Set-Cookie entry.
-    const cleared = res.cookies.getAll().find(
-      (c) => c.name === ACTIVE_TENANT_COOKIE_NAME,
-    );
-    expect(cleared).toBeDefined();
-    expect(cleared!.value).toBe('');
-    expect(cleared!.maxAge).toBe(0);
-    expect(cleared!.path).toBe('/');
-  });
-
   it('clears all Auth.js session cookie shapes on the redirect response', async () => {
     const res = await GET(makeRequest());
     const all = res.cookies.getAll();
@@ -185,8 +172,6 @@ describe('GET /api/auth/federated-signout', () => {
       .map((c) => c.name);
     expect(sessionCookieNames).toContain('__Secure-authjs.session-token');
     expect(sessionCookieNames).toContain('authjs.session-token');
-    // And the active-tenant cookie is among the cleared set.
-    expect(sessionCookieNames).toContain(ACTIVE_TENANT_COOKIE_NAME);
   });
 
   it('always invokes Auth.js signOut() with redirect:false so the route owns the final redirect', async () => {
@@ -293,22 +278,4 @@ describe('federated-signout CSRF protection', () => {
     expect(mockSignOut).not.toHaveBeenCalled();
   });
 
-  it('keys the active-tenant cookie Secure flag to the request scheme, not NODE_ENV', async () => {
-    const secure = await GET(
-      makeRequest({
-        url: 'https://app.zeroroot.local/api/auth/federated-signout',
-        headers: { 'x-forwarded-proto': 'https' },
-      }),
-    );
-    const secureCookie = secure.cookies
-      .getAll()
-      .find((c) => c.name === ACTIVE_TENANT_COOKIE_NAME);
-    expect(secureCookie!.secure).toBe(true);
-
-    const plain = await GET(makeRequest({ headers: { 'x-forwarded-proto': 'http' } }));
-    const plainCookie = plain.cookies
-      .getAll()
-      .find((c) => c.name === ACTIVE_TENANT_COOKIE_NAME);
-    expect(plainCookie!.secure).toBe(false);
-  });
 });

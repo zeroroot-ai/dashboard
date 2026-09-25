@@ -7,7 +7,7 @@
  * Server actions for the mission-create page's draft persistence flow.
  *
  * Each action: (1) resolves the active tenant server-side via
- * getActiveTenant, never accepts a tenantId from the client; (2) invokes
+ * requireActiveTenant, never accepts a tenantId from the client; (2) invokes
  * the daemon RPC through the Envoy + SPIFFE-mTLS path via the mission-source
  * wrappers — whose userClient transport registry-gates every RPC with a
  * baked-in assertAuthorized check (dashboard#848 / #902); (3) maps daemon
@@ -35,7 +35,7 @@ import {
   type MissionDraftFull,
 } from "@/src/lib/gibson-client/mission-source";
 import { AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
-import { getActiveTenant } from "@/src/lib/auth/active-tenant";
+import { requireActiveTenant } from "@/src/lib/auth/active-tenant";
 import { logger } from "@/src/lib/logger";
 
 // ---------------------------------------------------------------------------
@@ -131,7 +131,7 @@ export async function saveMissionSourceAction(input: {
     };
   }
 
-  const tenantId = await getActiveTenant();
+  const tenantId = await requireActiveTenant();
   try {
     const { draftId } = await rpcSave(tenantId, parsed.data);
     revalidatePath("/dashboard/missions/create");
@@ -148,7 +148,7 @@ export async function saveMissionSourceAction(input: {
 export async function listMissionSourcesAction(): Promise<
   DraftActionResult<MissionDraft[]>
 > {
-  const tenantId = await getActiveTenant();
+  const tenantId = await requireActiveTenant();
   try {
     const drafts = await rpcList(tenantId);
     return { ok: true, data: drafts };
@@ -174,7 +174,7 @@ export async function getMissionSourceAction(
     };
   }
 
-  const tenantId = await getActiveTenant();
+  const tenantId = await requireActiveTenant();
   try {
     const draft = await rpcGet(tenantId, idValid.data);
     return { ok: true, data: draft };
@@ -199,7 +199,7 @@ export async function deleteMissionSourceAction(
     };
   }
 
-  const tenantId = await getActiveTenant();
+  const tenantId = await requireActiveTenant();
   try {
     await rpcDelete(tenantId, idValid.data);
     revalidatePath("/dashboard/missions/create");

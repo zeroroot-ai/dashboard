@@ -16,11 +16,7 @@ import {
   getServiceToken,
   invalidateServiceToken,
 } from '../auth/service-token';
-import {
-  getActiveTenant,
-  unsafeTenantId,
-  type TenantId,
-} from '../auth/active-tenant';
+import { unsafeTenantId, type TenantId } from '../auth/active-tenant';
 import {
   adminRpcTotal,
   adminEnvoyUpstreamErrorsTotal,
@@ -35,7 +31,7 @@ import {
 // MODULE-PRIVATE: `makeClient` and the underlying `createGrpcTransport` /
 // `createClient` primitives are never exported. Callers receive only typed
 // service clients through the sanctioned wrappers (`userClient`,
-// `serviceClient`, `bootstrapClient`), so no code path outside this file can
+// `serviceClient`, `tokenClient`), so no code path outside this file can
 // construct its own daemon channel with an unaudited token / tenant / Envoy
 // URL combination.
 //
@@ -242,21 +238,23 @@ function spiffeNodeOptions():
 //     key shape (e.g. `/gibson.tenant.v1.SecretsService/SetSecret`).
 //   - `assertAuthorized` is fail-closed: an unknown method throws
 //     `AuthzDeniedError(unknown_method)` before the request leaves the process.
-//   - It SKIPS registry entries marked `unauthenticated` (the bootstrap path),
-//     returning without consulting the session — though those RPCs run through
-//     `bootstrapClient`, which does NOT enable this interceptor anyway.
+//   - It SKIPS registry entries marked `unauthenticated` (e.g.
+//     `ListMyMemberships`, the pre-tenant membership bootstrap), returning
+//     without consulting the session.
 //   - On denial it throws `AuthzDeniedError`, which the caller's existing error
 //     handling surfaces as `permission_denied`.
 //
 // `assertAuthorized` is loaded lazily via dynamic import to break the module
 // cycle transport.ts → auth/assert-authorized → auth/membership →
-// gibson-client/transport.ts (membership uses `bootstrapClient`). The same
-// lazy-load pattern is used for `correlation` above.
+// gibson-client/transport.ts. The same lazy-load pattern is used for
+// `correlation` above.
 //
-// ONLY `userClient` enables this interceptor. `serviceClient` is
-// SERVICE-acting (no user session to gate against) and `bootstrapClient` runs
-// the pre-tenant membership bootstrap; both keep their no-user-context
-// contracts and never run `assertAuthorized`.
+// `userClient` enables this interceptor by default (`opts.enforceAuthz`
+// defaults to true); a caller passes `{ enforceAuthz: false }` only for an
+// RPC that legitimately must run before membership can be assumed
+// established (see `userClient`'s doc comment). `serviceClient` is
+// SERVICE-acting (no user session to gate against) and never runs
+// `assertAuthorized`.
 // ---------------------------------------------------------------------------
 
 const authzInterceptor: Interceptor = (next) => async (req) => {
@@ -278,9 +276,14 @@ const authzInterceptor: Interceptor = (next) => async (req) => {
 
 /**
  * Builds a connect-rpc client for `service` against the Envoy edge.
- * `getToken` and `getTenant` are invoked once per RPC and their values
- * become `Authorization: Bearer <token>` and `x-gibson-tenant: <tenant>`
- * respectively.
+ * `getToken` is invoked once per RPC and its value becomes
+ * `Authorization: Bearer <token>`. `getTenant`, when given, is also invoked
+ * once per RPC and its value becomes `x-gibson-tenant: <tenant>` — this is
+ * ONLY for the service-acting path (`serviceClient`): a person's tenant
+ * comes from their token's verified Zitadel org, resolved by ext-authz, and
+ * a client-supplied `x-gibson-tenant` header for an OIDC-user identity is
+ * refused outright (ADR-0093 decision 4). `userClient` below passes no
+ * `getTenant`.
  *
  * This factory MUST NOT read env, session, or cookies, token + tenant
  * resolution is the caller's concern. That boundary keeps the file
@@ -290,11 +293,14 @@ const authzInterceptor: Interceptor = (next) => async (req) => {
 function makeClient<T extends DescService>(
   service: T,
   getToken: () => Promise<string>,
-  getTenant: () => Promise<TenantId>,
+  getTenant?: () => Promise<TenantId>,
   opts?: { enforceAuthz?: boolean },
 ): Client<T> {
   const authInterceptor: Interceptor = (next) => async (req) => {
-    const [token, tenant] = await Promise.all([getToken(), getTenant()]);
+    const [token, tenant] = await Promise.all([
+      getToken(),
+      getTenant ? getTenant() : Promise.resolve(undefined),
+    ]);
     req.header.set('Authorization', `Bearer ${token}`);
     if (tenant) {
       req.header.set('x-gibson-tenant', tenant);
@@ -346,33 +352,70 @@ function makeClient<T extends DescService>(
 }
 
 // ---------------------------------------------------------------------------
-// User-acting wrapper, bearer is the signed-in user's Zitadel access
-// token; tenant comes from the active-tenant cookie. Throws
-// `ConnectError(Unauthenticated)` when no session exists, and
-// `NoActiveTenantError` / `StaleActiveTenantError` from the cookie path.
-// Middleware handles both.
+// User-acting wrapper, bearer is the signed-in user's Zitadel access token.
+// Sends NO `x-gibson-tenant` header (ADR-0093 decision 4): a person's tenant
+// comes only from their token's verified Zitadel org, which ext-authz
+// resolves on the daemon side and forwards as x-gibson-identity-tenant. A
+// header set here for an OIDC-user identity would be refused outright.
+// Throws `ConnectError(Unauthenticated)` when no session exists. Middleware
+// handles that, plus the session's own `NoActiveTenantError` /
+// `StaleActiveTenantError` states from `requireActiveTenant()`.
 // ---------------------------------------------------------------------------
 
 /**
  * Returns a typed connect-rpc client that authenticates as the current
  * signed-in user. Use this from every Server Component / Server Action /
- * route handler that runs inside an authenticated browser session.
+ * route handler that runs inside an authenticated browser session,
+ * including the membership bootstrap (`ListMyMemberships`,
+ * `InvalidateMembershipCache`): those RPCs are registered `unauthenticated:
+ * true` in the authz registry, so the baked-in {@link authzInterceptor}
+ * returns immediately for them without needing a resolved tenant — there is
+ * no separate no-tenant transport (the former `bootstrapClient`; deleted, it
+ * had become identical to this one once the tenant header was removed).
  *
  * This is the canonical wrapper for user-acting RPCs. Internally composes
- * the module-private {@link makeClient} with {@link requireUserToken} and
- * {@link getActiveTenant}, both of which are `react.cache()`-memoized so
- * multi-RPC renders share a single `auth()` + cookie read.
+ * the module-private {@link makeClient} with {@link requireUserToken},
+ * which is `react.cache()`-memoized so multi-RPC renders share a single
+ * `auth()` read.
  *
  * Every RPC dispatched through this client is registry-gated by the baked-in
  * {@link authzInterceptor} (`assertAuthorized`, dashboard#848): the wrapper
  * itself runs the per-RPC defense-in-depth authz check, fail-closed on an
  * unknown method, so a server action no longer has to remember to call
  * `assertAuthorized(...)` by hand before each user-acting daemon call.
+ *
+ * `opts.enforceAuthz` defaults to `true`. Pass `false` only for a call whose
+ * registry entry requires an active tenant + membership (unlike
+ * `ListMyMemberships`, which is `unauthenticated: true` and so returns from
+ * `assertAuthorized` immediately regardless) but that legitimately must run
+ * before the caller's membership can be assumed established, e.g.
+ * `UserService.InvalidateMembershipCache` right after accepting a fresh
+ * invitation. See `src/lib/auth/membership.ts`.
  */
-export function userClient<T extends DescService>(service: T): Client<T> {
-  return makeClient(service, requireUserToken, getActiveTenant, {
-    enforceAuthz: true,
+export function userClient<T extends DescService>(
+  service: T,
+  opts?: { enforceAuthz?: boolean },
+): Client<T> {
+  return makeClient(service, requireUserToken, undefined, {
+    enforceAuthz: opts?.enforceAuthz ?? true,
   });
+}
+
+/**
+ * Returns a typed connect-rpc client authenticated with a raw access token,
+ * rather than one resolved from the current session. This is the sign-in-
+ * time boundary: `src/lib/auth/session-tenant.ts` calls
+ * `DaemonService.ListMyMemberships` from inside the `jwt` callback, before
+ * Auth.js has finished minting the session `auth()` would read. Sends no
+ * `x-gibson-tenant` header, same as {@link userClient}, and does not enforce
+ * the authz interceptor (there is no server-rendered UI action here to
+ * gate — this is the resolver ListMyMemberships itself feeds).
+ */
+export function tokenClient<T extends DescService>(
+  service: T,
+  accessToken: string,
+): Client<T> {
+  return makeClient(service, async () => accessToken);
 }
 
 /**
@@ -401,22 +444,6 @@ export function serviceClient<T extends DescService>(
   tenantId: string,
 ): Client<T> {
   return makeClient(service, getServiceToken, async () => unsafeTenantId(tenantId));
-}
-
-/**
- * Returns a typed user-acting client that sends NO `x-gibson-tenant` header
- * (empty tenant). This is the membership-bootstrap boundary: a small set of
- * RPCs (`DaemonService.ListMyMemberships`, `UserService.InvalidateMembershipCache`)
- * run BEFORE any active tenant can be validated, since the active-tenant
- * cookie's validity itself depends on the membership list. Composing
- * {@link userClient} there would create a circular dependency through the
- * active-tenant cookie read.
- *
- * Use this ONLY from `src/lib/auth/membership.ts`. The empty tenant is branded
- * via {@link unsafeTenantId} per the dashboard#815 non-validated boundary.
- */
-export function bootstrapClient<T extends DescService>(service: T): Client<T> {
-  return makeClient(service, requireUserToken, async () => unsafeTenantId(''));
 }
 
 /**

@@ -51,9 +51,9 @@ vi.mock('@/src/lib/auth/assert-authorized', () => ({
   },
 }));
 
-const mockReadRawActiveTenant = vi.fn();
-vi.mock('@/src/lib/auth/active-tenant', () => ({
-  readRawActiveTenant: (...args: unknown[]) => mockReadRawActiveTenant(...args),
+const mockAuth = vi.fn();
+vi.mock('@/auth', () => ({
+  auth: (...args: unknown[]) => mockAuth(...args),
 }));
 
 let mockRateLimitAllowed = true;
@@ -121,10 +121,7 @@ describe('POST /api/billing/portal', () => {
     process.env.WWW_URL = 'https://www.zeroroot.ai';
     mockRateLimitAllowed = true;
     mockAssertAuthorizedShouldThrow = null;
-    mockReadRawActiveTenant.mockResolvedValue({
-      status: 'present',
-      tenantId: 'acme',
-    });
+    mockAuth.mockResolvedValue({ tenantId: 'acme' });
     // Rule-mode own-tenant billing read (dashboard#1016, gibson#1339/#1361):
     // the route reads the Stripe customer id from here instead of the
     // redacted, unauthenticated GetTenantProvisioningStatus.
@@ -193,7 +190,7 @@ describe('POST /api/billing/portal', () => {
     });
 
     it('returns 400 when there is no active tenant', async () => {
-      mockReadRawActiveTenant.mockResolvedValue({ status: 'absent' });
+      mockAuth.mockResolvedValue({ tenantId: null });
       const res = await POST(makeRequest());
       expect(res.status).toBe(400);
       const json = await res.json() as { error: string };

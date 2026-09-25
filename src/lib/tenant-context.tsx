@@ -9,17 +9,19 @@
  * Single source of truth for client-side tenant + authz state. Hydrated from
  * server-resolved props passed through `<TenantHydrator>` (mounted in the
  * auth layout). The server resolves state on every render via
- * `getServerSession()` + the `gibson_active_tenant` cookie + FGA membership
- * lookup; the client consumes the already-resolved props synchronously.
+ * `getServerSession()`, which reads the person's one tenant from the
+ * encrypted session (ADR-0093 decision 4) and re-validates it against
+ * current FGA membership. The client consumes the already-resolved props
+ * synchronously.
  *
- * IMPORTANT: this provider never reads `useSession()` tenant fields. The
- * Auth.js JWT cookie does NOT carry tenant / permission claims, they live
- * in the server-only `gibson_active_tenant` cookie + per-request FGA RPC.
+ * IMPORTANT: this provider never reads `useSession()` directly. Server-
+ * resolved props are the only source of tenant state on the client.
  *
- * Tenant switching: `switchTenant` calls `switchActiveTenantAction`
- * (Server Action) which writes the HMAC-signed `gibson_active_tenant`
- * cookie via `setActiveTenant`, then triggers `router.refresh()` so the
- * layout re-renders with new props.
+ * There is no tenant switching. A person has exactly one tenant, resolved
+ * server-side at sign-in from their token's verified Zitadel org, never
+ * chosen client-side. `switchTenant` is kept on the context shape for the
+ * handful of components still typed against it, but it always throws:
+ * switching tenants is not an operation this design supports.
  */
 
 import {
@@ -29,7 +31,6 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { switchActiveTenantAction } from "@/components/gibson/shared/tenant-switcher-action";
 import type { Tenant } from "@/src/types/tenant";
 
 // ============================================================================
@@ -96,20 +97,15 @@ export function TenantContextProvider({
 }: TenantProviderProps) {
   const router = useRouter();
 
-  const switchTenant = useCallback(
-    async (tenantId: string) => {
-      const result = await switchActiveTenantAction(tenantId);
-      if (!result.ok) {
-        const reason =
-          result.reason === "not_a_member"
-            ? "You are not a member of that workspace."
-            : "Failed to resolve workspace membership.";
-        throw new Error(reason);
-      }
-      router.refresh();
-    },
-    [router],
-  );
+  // Switching tenants is not a supported operation (ADR-0093 decision 4): a
+  // person has exactly one tenant, resolved server-side from their identity.
+  // Kept on the context shape so existing typed callers still compile; none
+  // should ever reach it, since there is no UI that offers a choice.
+  const switchTenant = useCallback(async (_tenantId: string): Promise<void> => {
+    throw new Error(
+      "Switching tenants is not supported. Your account has exactly one workspace.",
+    );
+  }, []);
 
   const refetchTenants = useCallback(async () => {
     router.refresh();

@@ -9,10 +9,11 @@
  *
  * These hooks gate UI on the current user's tenant or permissions. The
  * underlying state is resolved server-side on every layout render via
- * `getServerSession()`, which reads the `gibson_active_tenant` cookie,
- * calls `getMyMemberships()` against FGA, and computes effective
- * permissions from the daemon's permissions schema. The resolved values
- * are passed through `<TenantHydrator>` and surfaced here.
+ * `getServerSession()`, which reads the person's one tenant (resolved
+ * server-side onto the session at sign-in, ADR-0093 decision 4), calls
+ * `getMyMemberships()` against FGA, and computes effective permissions
+ * from the daemon's permissions schema. The resolved values are passed
+ * through `<TenantHydrator>` and surfaced here.
  *
  * Permission resolution is fully driven by the daemon's permissions.yaml
  * schema (declarative-rbac-framework spec). The permissions array is

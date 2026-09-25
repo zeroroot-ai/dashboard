@@ -39,6 +39,7 @@
  */
 
 import { type Page, type BrowserContext } from "@playwright/test";
+import { computeTotp, getTotpSecret, rememberTotpSecret } from "./totp";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -77,6 +78,117 @@ export interface LoginResult {
   chain: LoginHop[];
   /** Whether an authjs session cookie is present after login. */
   sessionCookieSet: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// MFA (hosted#193 D3, plan-193 section 3.6)
+// ---------------------------------------------------------------------------
+
+/**
+ * Handles Zitadel V2's post-password MFA step, when `forceMfa` presents
+ * one. No-ops (returns immediately) when neither MFA URL appears within
+ * `detectTimeoutMs` — the normal case while `forceMfa` is off.
+ *
+ * TWO shapes, matching the plan:
+ *   - `/ui/v2/login/mfa/set` (first-factor enrollment): this test user was
+ *     just created and has no factor yet. Choose "Authenticator app",
+ *     read the TOTP secret the page displays, compute a code, submit.
+ *   - `/ui/v2/login/otp/time-based` (an already-registered factor):
+ *     compute a code from a secret remembered earlier in this process
+ *     (`getTotpSecret`) and submit it.
+ *
+ * // TODO(hosted#193): the selectors below (the "Authenticator app" choice,
+ * // the manual-entry secret text, and the code input on the enrollment
+ * // page) are written from this file's existing patterns (role/label-based,
+ * // tolerant regexes) but are NOT verified against a live Zitadel v2 login
+ * // app — I do not have a running cluster to inspect the actual DOM. If
+ * // `forceMfa` lands before this is checked against a real instance, run
+ * // one login through it headed (`PWDEBUG=1` or `--headed`) and correct any
+ * // selector that does not match, in particular how the secret is exposed
+ * // (a "can't scan the code" / "enter manually" toggle is common in
+ * // Zitadel's own screenshots, but the exact copy was not verified here).
+ */
+async function handleMfaIfPresented(page: Page, email: string): Promise<void> {
+  const detectTimeoutMs = 15_000;
+  const deadline = Date.now() + detectTimeoutMs;
+  let shape: "set" | "otp" | "none" = "none";
+  while (Date.now() < deadline) {
+    const path = new URL(page.url()).pathname;
+    if (path.includes("/ui/v2/login/mfa/set")) {
+      shape = "set";
+      break;
+    }
+    if (path.includes("/ui/v2/login/otp/time-based")) {
+      shape = "otp";
+      break;
+    }
+    // Already past both MFA steps (forceMfa is off, or a passkey/other
+    // factor completed sign-in without a code prompt): nothing to do.
+    if (
+      path.startsWith("/api/auth/callback/zitadel") ||
+      path.startsWith("/dashboard") ||
+      path === "/"
+    ) {
+      return;
+    }
+    await page.waitForTimeout(250);
+  }
+  if (shape === "none") return;
+
+  if (shape === "set") {
+    console.log(`[loginViaZitadelV2] MFA enrollment required, choosing authenticator app`);
+    await page
+      .getByRole("button", { name: /authenticator app/i })
+      .or(page.getByRole("link", { name: /authenticator app/i }))
+      .or(page.getByText(/authenticator app/i))
+      .first()
+      .click();
+
+    // Zitadel shows a QR code plus a manually-enterable base32 secret. Try
+    // a "can't scan" / "enter manually" toggle first (common in Zitadel's
+    // own docs); fall back to reading a base32-shaped string directly off
+    // the page if the toggle isn't present.
+    const manualToggle = page.getByRole("button", { name: /manually|can.?t scan/i });
+    if (await manualToggle.isVisible({ timeout: 3_000 }).catch(() => false)) {
+      await manualToggle.click();
+    }
+    const secretLocator = page.getByText(/^[A-Z2-7]{16,32}$/);
+    await secretLocator.first().waitFor({ timeout: 10_000 });
+    const secret = (await secretLocator.first().textContent())?.trim().replace(/\s+/g, "");
+    if (!secret) {
+      throw new Error(
+        "[loginViaZitadelV2] MFA enrollment: could not read the TOTP secret from the page. " +
+          "See the TODO(hosted#193) comment on handleMfaIfPresented: this selector is unverified.",
+      );
+    }
+    rememberTotpSecret(email, secret);
+
+    const code = computeTotp(secret);
+    console.log(`[loginViaZitadelV2] submitting TOTP enrollment code`);
+    await page.getByLabel(/code/i).first().fill(code);
+    await page
+      .getByRole("button", { name: /next|continue|submit|verify/i })
+      .first()
+      .click();
+    return;
+  }
+
+  // shape === "otp": an already-registered factor, compute a fresh code.
+  const secret = getTotpSecret(email);
+  if (!secret) {
+    throw new Error(
+      `[loginViaZitadelV2] Zitadel asked for a TOTP code for ${email}, but no secret was ` +
+        "remembered for this process. This can only happen if the user was enrolled outside " +
+        "this helper (e.g. a previous test run against a persistent user).",
+    );
+  }
+  const code = computeTotp(secret);
+  console.log(`[loginViaZitadelV2] submitting TOTP code`);
+  await page.getByLabel(/code/i).first().fill(code);
+  await page
+    .getByRole("button", { name: /next|continue|submit|verify/i })
+    .first()
+    .click();
 }
 
 // ---------------------------------------------------------------------------
@@ -284,6 +396,19 @@ export async function loginViaZitadelV2(
       .getByRole("button", { name: /next|continue|submit|sign.?in/i })
       .first()
       .click();
+
+    // -----------------------------------------------------------------------
+    // 5b. MFA (hosted#193 D3, plan-193 section 3.6): once `forceMfa` is
+    //     enforced, a user with only a password lands on
+    //     `/ui/v2/login/mfa/set?force=true` right after the password step
+    //     (first-factor enrollment — this test user was just created and
+    //     has no factor yet), or on `/ui/v2/login/otp/time-based` if a
+    //     factor from an earlier run in this process is already known
+    //     (see `getTotpSecret`). Skipped entirely when `forceMfa` is off:
+    //     the wait below falls through to the terminal-landing wait in
+    //     step 6 without matching either MFA URL.
+    // -----------------------------------------------------------------------
+    await handleMfaIfPresented(page, email);
   }
 
   // -------------------------------------------------------------------------

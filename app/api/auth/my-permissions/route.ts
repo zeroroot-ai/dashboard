@@ -9,9 +9,9 @@
  * never has to hold a daemon-direct gRPC transport, every call to the
  * daemon flows through Envoy via the server-side `userClient` wrapper.
  *
- * Tenant context is resolved via `requireActiveTenant()` (the HMAC-signed
- * `gibson_active_tenant` cookie per spec `tenant-membership-not-in-jwt`);
- * it is NOT accepted from a URL query string. Putting the slug in the URL
+ * Tenant context is resolved via `requireActiveTenant()` (the person's one
+ * tenant, resolved server-side onto the session at sign-in, ADR-0093
+ * decision 4); it is NOT accepted from a URL query string. Putting the slug in the URL
  * leaked the tenant identifier into browser history / referer / access logs
  * (dashboard#209).
  *

@@ -26,10 +26,6 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-vi.mock('@/components/gibson/shared/tenant-switcher-action', () => ({
-  switchActiveTenantAction: vi.fn(),
-}));
-
 function makeTenant(slug: string): Tenant {
   return {
     id: slug,

@@ -48,7 +48,6 @@ import { auth } from '@/auth';
 import { AuthRegistry, IdentityClass } from '@/src/gen/authz/registry';
 import { decideAuthEntry, scopeOfEntry } from './relation-hierarchy';
 import { getMyMemberships } from './membership';
-import { readRawActiveTenant } from './active-tenant';
 
 // ---------------------------------------------------------------------------
 // Error class
@@ -156,12 +155,12 @@ export async function assertAuthorized(method: string): Promise<void> {
     throw new AuthzDeniedError(method, 'service-only-rpc');
   }
 
-  // Resolve active tenant from the HMAC-signed cookie.
-  const rawTenant = await readRawActiveTenant();
-  if (rawTenant.status !== 'present' || !rawTenant.tenantId) {
+  // The person's tenant, resolved server-side at sign-in (ADR-0093
+  // decision 4) and re-validated against current membership just below.
+  const activeTenantId = session.tenantId;
+  if (!activeTenantId) {
     throw new AuthzDeniedError(method, 'no-active-tenant');
   }
-  const activeTenantId = rawTenant.tenantId;
 
   // Resolve memberships and find the caller's role on the active tenant.
   let memberships;

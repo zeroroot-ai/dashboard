@@ -34,7 +34,7 @@
  *     module, those dispatch exclusively through userClient
  *   - `assertAuthorized(...)`      manual registry gating
  *   - `requireCrdSession(...)` / `requireCrdSessionForSelfAction(...)`
- *   - `getServerSession()` / `getActiveTenant()` / `await auth()`, the
+ *   - `getServerSession()` / `requireActiveTenant()` / `await auth()`, the
  *     minimum floor: the action resolves server-side identity at all
  *
  * NOTE the barrel import `@/src/lib/gibson-client` is deliberately NOT
@@ -100,11 +100,6 @@ const AUTHZ_PATTERNS = [
   /\buserClient\s*[<(]/,
   /\bassertAuthorized\s*\(/,
   /\brequireCrdSession(ForSelfAction)?\s*[<(]/,
-  // setActiveTenant resolves the caller's FGA memberships and refuses a tenant
-  // the caller is not a member of before it writes the scope cookie
-  // (src/lib/auth/active-tenant.ts). An action that delegates to it has done a
-  // real server-side membership check.
-  /\bsetActiveTenant\s*\(/,
 ];
 
 /**
@@ -138,7 +133,7 @@ const PRE_EXISTING_EXEMPT = [
 
 const SESSION_PATTERNS = [
   /\bgetServerSession\s*\(/,
-  /\bgetActiveTenant\s*\(/,
+  /\brequireActiveTenant\s*\(/,
   /\bawait\s+auth\s*\(/,
 ];
 

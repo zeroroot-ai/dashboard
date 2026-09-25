@@ -41,10 +41,10 @@ export async function GET(
     }
 
     // Authz + tenant scoping are enforced by the daemon on the downstream
-    // RPC (ext-authz tenant#member; tenant derived from the caller's
-    // identity). We still require an active-tenant cookie so userClient can
-    // attach the x-gibson-tenant header and fail closed on stale/absent
-    // selection.
+    // RPC (ext-authz tenant#member; the tenant comes from the caller's
+    // token, ADR-0093 decision 4). We still require an active tenant here
+    // so the route fails closed on a session with none rather than forward
+    // a request ext-authz would deny anyway.
     try {
       await requireActiveTenant();
     } catch (err) {

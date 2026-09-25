@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Access-control contract for middleware.ts (GHSA-826q).
+ * Access-control contract for middleware.ts (GHSA-826q, ADR-0093 decision 4).
  *
  * The defect: an unauthenticated request returned `NextResponse.next()`, i.e.
  * the middleware FORWARDED anonymous traffic to protected route handlers on the
@@ -11,9 +11,11 @@
  * app uses the `auth(handler)` wrapper form, which takes the decision over
  * entirely. Nothing denied the request.
  *
- * These tests drive the real middleware function with the Auth.js wrapper
- * stubbed out, so what is under test is this repo's decision logic rather than
- * Auth.js's.
+ * ADR-0093 decision 4 replaced the `gibson_active_tenant` cookie with a
+ * session-carried tenant, resolved server-side at sign-in from the token's
+ * verified Zitadel org. These tests drive the real middleware function with
+ * the Auth.js wrapper stubbed out, so what is under test is this repo's
+ * decision logic rather than Auth.js's.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -33,12 +35,6 @@ vi.mock('@/src/lib/auth/membership', () => ({
     reason = 'daemon_unavailable';
     connectCode = 14;
   },
-}));
-
-const readRawActiveTenant = vi.fn();
-vi.mock('@/src/lib/auth/active-tenant', () => ({
-  ACTIVE_TENANT_COOKIE_NAME: 'gibson_active_tenant',
-  readRawActiveTenant: () => readRawActiveTenant(),
 }));
 
 // Single-origin: no host split, so every test exercises the auth path directly.
@@ -65,12 +61,15 @@ async function run(
   return (middleware as any)(req);
 }
 
-const SIGNED_IN = { user: { id: 'user-1' } };
+const SIGNED_IN = {
+  user: { id: 'user-1' },
+  tenantId: 'tenant-1',
+  tenantResolvedAt: 1_700_000_000,
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
   getMyMemberships.mockResolvedValue([{ tenantId: 'tenant-1' }]);
-  readRawActiveTenant.mockResolvedValue({ status: 'ok', tenantId: 'tenant-1' });
 });
 
 describe('unauthenticated requests', () => {
@@ -134,34 +133,60 @@ describe('unauthenticated requests', () => {
   });
 });
 
+describe('pre-ADR-0093 session (no tenantResolvedAt)', () => {
+  it('forces a fresh sign-in for a page navigation', async () => {
+    const res = await run('/dashboard', { user: { id: 'user-1' } });
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get('location')!).pathname).toBe('/api/auth/signin');
+  });
+
+  it('answers an API request with 401', async () => {
+    const res = await run('/api/missions', { user: { id: 'user-1' } });
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toMatchObject({ reason: 'session_stale' });
+  });
+});
+
 describe('authenticated requests without a usable tenant', () => {
-  it('denies an API request when the user has no membership', async () => {
+  it('denies an API request when the session has no tenant and no membership exists', async () => {
     getMyMemberships.mockResolvedValue([]);
-    const res = await run('/api/missions', SIGNED_IN);
-
-    expect(res.status).toBe(403);
-    await expect(res.json()).resolves.toMatchObject({ reason: 'no_membership' });
-  });
-
-  it('denies an API request when the active-tenant cookie is absent', async () => {
-    readRawActiveTenant.mockResolvedValue({ status: 'absent' });
-    const res = await run('/api/missions', SIGNED_IN);
-
-    expect(res.status).toBe(403);
-    await expect(res.json()).resolves.toMatchObject({ reason: 'no_active_tenant' });
-  });
-
-  it('denies an API request when the tenant cookie fails its signature check', async () => {
-    readRawActiveTenant.mockResolvedValue({ status: 'invalid' });
-    const res = await run('/api/missions', SIGNED_IN);
-
-    expect(res.status).toBe(403);
-    await expect(res.json()).resolves.toMatchObject({
-      reason: 'tenant_cookie_invalid',
+    const res = await run('/api/missions', {
+      user: { id: 'user-1' },
+      tenantId: null,
+      tenantResolvedAt: 1_700_000_000,
     });
+
+    expect(res.status).toBe(403);
+    await expect(res.json()).resolves.toMatchObject({ reason: 'no_tenant' });
   });
 
-  it('denies an API request when membership no longer includes the active tenant', async () => {
+  it('redirects a page navigation to /onboarding when the session has no tenant and no membership exists', async () => {
+    getMyMemberships.mockResolvedValue([]);
+    const res = await run('/dashboard', {
+      user: { id: 'user-1' },
+      tenantId: null,
+      tenantResolvedAt: 1_700_000_000,
+    });
+
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get('location')!).pathname).toBe('/onboarding');
+  });
+
+  it('redirects to /api/auth/session-tenant when the session has no tenant but one membership just appeared', async () => {
+    getMyMemberships.mockResolvedValue([{ tenantId: 'tenant-1' }]);
+    const res = await run('/dashboard', {
+      user: { id: 'user-1' },
+      tenantId: null,
+      tenantResolvedAt: 1_700_000_000,
+    });
+
+    expect(res.status).toBe(307);
+    const location = new URL(res.headers.get('location')!);
+    expect(location.pathname).toBe('/api/auth/session-tenant');
+    expect(location.searchParams.get('return_to')).toBe('/dashboard');
+  });
+
+  it('denies an API request when the session tenant no longer matches memberships', async () => {
     getMyMemberships.mockResolvedValue([{ tenantId: 'some-other-tenant' }]);
     const res = await run('/api/missions', SIGNED_IN);
 
@@ -173,16 +198,22 @@ describe('authenticated requests without a usable tenant', () => {
 
   it('exempts the onboarding endpoints, which the zero-membership state needs', async () => {
     getMyMemberships.mockResolvedValue([]);
-    const res = await run('/api/onboarding/status', SIGNED_IN);
+    const res = await run('/api/onboarding/status', {
+      user: { id: 'user-1' },
+      tenantId: null,
+      tenantResolvedAt: 1_700_000_000,
+    });
     expect(res.status).toBe(200);
   });
 
-  it('still redirects page navigations rather than returning JSON', async () => {
-    readRawActiveTenant.mockResolvedValue({ status: 'absent' });
+  it('redirects a page navigation to federated sign-out when the session tenant is revoked', async () => {
+    getMyMemberships.mockResolvedValue([]);
     const res = await run('/dashboard', SIGNED_IN);
 
     expect(res.status).toBe(307);
-    expect(new URL(res.headers.get('location')!).pathname).toBe('/select-tenant');
+    expect(new URL(res.headers.get('location')!).pathname).toBe(
+      '/api/auth/federated-signout',
+    );
   });
 });
 

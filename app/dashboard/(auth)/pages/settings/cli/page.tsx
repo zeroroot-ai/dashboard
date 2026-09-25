@@ -5,7 +5,7 @@ import { type Metadata } from "next";
 
 import { generateMeta } from "@/lib/utils";
 import { env } from "@/src/lib/env-validator";
-import { readRawActiveTenant } from "@/src/lib/auth/active-tenant";
+import { auth } from "@/auth";
 import { CliCommandsCard } from "@/components/gibson/settings/CliCommandsCard";
 import { SessionsTable } from "@/components/gibson/settings/SessionsTable";
 import {
@@ -32,9 +32,10 @@ export async function generateMetadata(): Promise<Metadata> {
  * (S3/S4) layers onto this page once the SessionService RPC lands.
  */
 export default async function CliSettingsPage() {
-  const active = await readRawActiveTenant();
+  const session = await auth();
+  const tenantId = session?.tenantId;
 
-  if (active.status !== "present" || !active.tenantId) {
+  if (!tenantId) {
     return (
       <Card>
         <CardHeader>
@@ -42,7 +43,7 @@ export default async function CliSettingsPage() {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-sm">
-            Select an active tenant to see the CLI commands for it.
+            Your account has no tenant yet, so there are no CLI commands to show.
           </p>
         </CardContent>
       </Card>
@@ -52,7 +53,7 @@ export default async function CliSettingsPage() {
   return (
     <div className="space-y-4">
       <CliCommandsCard
-        tenantSlug={active.tenantId}
+        tenantSlug={tenantId}
         gibsonUrl={env.GIBSON_PUBLIC_URL}
       />
       <SessionsTable />

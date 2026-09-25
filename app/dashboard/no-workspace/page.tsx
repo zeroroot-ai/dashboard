@@ -19,9 +19,10 @@ import { getServerSession } from "@/src/lib/auth";
  * Post-`dashboard-native-signup` this page should be unreachable during
  * normal operation: `signupAction` always applies a Tenant CR + TenantMember
  * before redirecting the user to OIDC sign-in, so every signed-in user
- * arrives at `/dashboard` with an active tenant cookie set (resolved via
- * `requireActiveTenant()` from the `gibson_active_tenant` HMAC-signed cookie
- * + FGA membership lookup, see `tenant-membership-not-in-jwt`, dashboard#583).
+ * arrives at `/dashboard` with a resolved tenant (`requireActiveTenant()`
+ * reads the person's one tenant, resolved server-side onto the session at
+ * sign-in per ADR-0093 decision 4, and re-checks it against FGA membership
+ * on every call).
  * Middleware additionally redirects tenantless users to `/api/auth/federated-signout`.
  *
  * This page exists only for a narrow diagnostic case: an operator-side

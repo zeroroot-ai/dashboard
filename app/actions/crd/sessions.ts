@@ -51,8 +51,9 @@ export async function revokeUserSessionsAction(input: {
   });
   if (!gate.ok) return gate.result;
 
-  // requireActiveTenant supplies the x-gibson-tenant header the coarse
-  // ext-authz gate needs; the daemon resolves the caller from the JWT.
+  // requireActiveTenant confirms the caller has a current tenant; ext-authz
+  // itself derives the tenant from the caller's token (ADR-0093 decision 4),
+  // never from a header this action sets.
   try {
     await requireActiveTenant();
   } catch (err) {

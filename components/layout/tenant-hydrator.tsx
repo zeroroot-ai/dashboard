@@ -7,16 +7,16 @@
  * TenantHydrator
  *
  * Thin client wrapper that mounts TenantContextProvider with state resolved
- * server-side from the enriched session (`getServerSession`) and the
- * `gibson_active_tenant` cookie + FGA membership lookup.
+ * server-side from the enriched session (`getServerSession`), which reads
+ * the person's one tenant (resolved server-side onto the session at
+ * sign-in, ADR-0093 decision 4) and re-checks it against FGA membership.
  *
  * The auth layout (a Server Component) calls `getServerSession()` once per
- * render, resolves the active + member tenant CRDs, and passes the full
- * authz state through this component. The provider treats those props as
- * authoritative on every render, there are NO client-side `useSession()`
- * reads of tenant / permission state. After a successful tenant switch
- * (`switchActiveTenantAction` + `router.refresh()`) the layout re-renders
- * with new props and the context re-hydrates.
+ * render, resolves the tenant's CRD, and passes the full authz state
+ * through this component. The provider treats those props as authoritative
+ * on every render; there are NO client-side `useSession()` reads of
+ * tenant / permission state, and there is no tenant switching (a person
+ * has exactly one tenant).
  */
 
 import type { ReactNode } from 'react';

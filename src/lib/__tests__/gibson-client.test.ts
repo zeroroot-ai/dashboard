@@ -80,7 +80,7 @@ vi.mock('@/src/gen/gibson/graph/v1/graph_pb', () => ({
 // interceptor is falsy, x-gibson-tenant is therefore not injected, which
 // matches the "Removes all x-gibson-* header injection" contract the tests verify.
 vi.mock('@/src/lib/auth/active-tenant', () => ({
-  getActiveTenant: vi.fn(async () => ''),
+  requireActiveTenant: vi.fn(async () => ''),
 }));
 
 // ---------------------------------------------------------------------------
