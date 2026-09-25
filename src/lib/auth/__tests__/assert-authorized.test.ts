@@ -133,12 +133,11 @@ const mockGetMyMemberships = vi.mocked(getMyMemberships);
 const sessionState = { id: 'user-123', tenantId: null as string | null };
 
 function applySession() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mockAuth.mockResolvedValue({
     user: { id: sessionState.id },
     tenantId: sessionState.tenantId,
     expires: '',
-  } as any);
+  } as unknown as Awaited<ReturnType<typeof auth>>);
 }
 
 function setupSession(id = 'user-123') {
