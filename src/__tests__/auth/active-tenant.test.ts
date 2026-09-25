@@ -4,26 +4,20 @@
 /**
  * Unit tests for `src/lib/auth/active-tenant.ts`.
  *
- * Covers HMAC sign/verify round-trip, tampered-cookie rejection, the
- * absent/invalid/present discriminator, NoActiveTenantError on missing
- * cookie, StaleActiveTenantError on a valid cookie that names a tenant
- * the user is no longer a member of, requireActiveTenant canonical alias,
- * and the three error-mapping helpers.
+ * ADR-0093 decision 4: the tenant comes from the session (resolved
+ * server-side at sign-in), never a cookie. Covers `requireActiveTenant`
+ * reading `session.tenantId` and re-validating it against
+ * `getMyMemberships()`, `NoActiveTenantError` when the session has no
+ * tenant, `StaleActiveTenantError` when the session's tenant is no longer
+ * a current membership, and the three error-mapping helpers.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// AUTH_SECRET must be set BEFORE the module loads.
-process.env.AUTH_SECRET = "test-secret-32-chars-long-enough!!";
-
-// In-memory cookie jar mock for next/headers.
-const cookieJar = new Map<string, { value: string }>();
-vi.mock("next/headers", () => ({
-  cookies: async () => ({
-    get: (name: string) => cookieJar.get(name),
-    set: (name: string, value: string) => cookieJar.set(name, { value }),
-    delete: (name: string) => cookieJar.delete(name),
-  }),
+// Session module is mocked so each test controls what auth() returns.
+const session = vi.hoisted(() => ({ tenantId: null as string | null }));
+vi.mock("@/auth", () => ({
+  auth: async () => (session.tenantId === undefined ? null : { tenantId: session.tenantId }),
 }));
 
 // Membership module is mocked so each test controls what getMyMemberships returns.
@@ -62,21 +56,16 @@ vi.mock("next/server", () => ({
 }));
 
 import {
-  ACTIVE_TENANT_COOKIE_NAME,
   NoActiveTenantError,
   StaleActiveTenantError,
-  clearActiveTenant,
-  getActiveTenant,
-  readRawActiveTenant,
   requireActiveTenant,
-  setActiveTenant,
   activeTenantApiResponse,
   activeTenantActionResult,
   activeTenantPageRedirect,
 } from "@/src/lib/auth/active-tenant";
 
 beforeEach(() => {
-  cookieJar.clear();
+  session.tenantId = null;
   memberships.list = [];
   redirectTarget.url = "";
 });
@@ -84,83 +73,43 @@ beforeEach(() => {
 afterEach(() => vi.clearAllMocks());
 
 // ---------------------------------------------------------------------------
-// Existing: setActiveTenant + getActiveTenant round-trip
-// ---------------------------------------------------------------------------
-
-describe("setActiveTenant + getActiveTenant round-trip", () => {
-  it("writes a signed cookie when the user is a member", async () => {
-    memberships.list = [
-      { tenantId: "t1", tenantName: "Tenant 1", role: "member" },
-    ];
-    const result = await setActiveTenant("t1");
-    expect(result.ok).toBe(true);
-    expect(cookieJar.has(ACTIVE_TENANT_COOKIE_NAME)).toBe(true);
-    const got = await getActiveTenant();
-    expect(got).toBe("t1");
-  });
-
-  it("rejects when the user is not a member", async () => {
-    memberships.list = [];
-    const result = await setActiveTenant("nope");
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toBe("not_a_member");
-    expect(cookieJar.has(ACTIVE_TENANT_COOKIE_NAME)).toBe(false);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Existing: getActiveTenant error modes
-// ---------------------------------------------------------------------------
-
-describe("getActiveTenant error modes", () => {
-  it("throws NoActiveTenantError when no cookie is set", async () => {
-    await expect(getActiveTenant()).rejects.toBeInstanceOf(NoActiveTenantError);
-  });
-
-  it("throws NoActiveTenantError on a tampered cookie", async () => {
-    cookieJar.set(ACTIVE_TENANT_COOKIE_NAME, { value: "t1.deadbeef" });
-    await expect(getActiveTenant()).rejects.toBeInstanceOf(NoActiveTenantError);
-  });
-
-  it("throws StaleActiveTenantError when the cookie's tenant is no longer in memberships", async () => {
-    memberships.list = [
-      { tenantId: "t1", tenantName: "T1", role: "member" },
-    ];
-    await setActiveTenant("t1");
-    // Revoke the membership.
-    memberships.list = [];
-    await expect(getActiveTenant()).rejects.toBeInstanceOf(StaleActiveTenantError);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// requireActiveTenant, canonical alias
+// requireActiveTenant, canonical resolver
 // ---------------------------------------------------------------------------
 
 describe("requireActiveTenant", () => {
-  it("is an alias for getActiveTenant, returns tenant when cookie present + valid member", async () => {
+  it("returns the session's tenant when it matches a current membership", async () => {
+    session.tenantId = "acme";
     memberships.list = [{ tenantId: "acme", tenantName: "Acme", role: "admin" }];
-    await setActiveTenant("acme");
     const id = await requireActiveTenant();
     expect(id).toBe("acme");
   });
 
-  it("throws NoActiveTenantError when no cookie is set", async () => {
+  it("throws NoActiveTenantError when the session has no tenant", async () => {
+    session.tenantId = null;
     await expect(requireActiveTenant()).rejects.toBeInstanceOf(NoActiveTenantError);
   });
 
-  it("throws NoActiveTenantError on a tampered HMAC", async () => {
-    cookieJar.set(ACTIVE_TENANT_COOKIE_NAME, { value: "acme.0000000000000000" });
-    await expect(requireActiveTenant()).rejects.toBeInstanceOf(NoActiveTenantError);
-  });
-
-  it("throws StaleActiveTenantError when tenant is no longer in memberships", async () => {
-    memberships.list = [{ tenantId: "acme", tenantName: "Acme", role: "member" }];
-    await setActiveTenant("acme");
+  it("throws StaleActiveTenantError when the session's tenant is no longer a membership", async () => {
+    session.tenantId = "acme";
     memberships.list = [];
     const err = await requireActiveTenant().catch((e: unknown) => e);
     expect(err).toBeInstanceOf(StaleActiveTenantError);
     expect((err as StaleActiveTenantError).tenantId).toBe("acme");
+  });
+
+  it("throws StaleActiveTenantError when memberships hold a different tenant than the session", async () => {
+    session.tenantId = "acme";
+    memberships.list = [{ tenantId: "other", tenantName: "Other", role: "member" }];
+    await expect(requireActiveTenant()).rejects.toBeInstanceOf(StaleActiveTenantError);
+  });
+
+  it("throws StaleActiveTenantError when memberships somehow hold more than one entry", async () => {
+    session.tenantId = "acme";
+    memberships.list = [
+      { tenantId: "acme", tenantName: "Acme", role: "admin" },
+      { tenantId: "other", tenantName: "Other", role: "member" },
+    ];
+    await expect(requireActiveTenant()).rejects.toBeInstanceOf(StaleActiveTenantError);
   });
 });
 
@@ -223,51 +172,18 @@ describe("activeTenantActionResult", () => {
 // ---------------------------------------------------------------------------
 
 describe("activeTenantPageRedirect", () => {
-  it("calls redirect('/select-tenant') and throws a NEXT_REDIRECT error", () => {
-    expect(() => activeTenantPageRedirect()).toThrow(/NEXT_REDIRECT/);
-    expect(redirectTarget.url).toBe("/select-tenant");
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Existing: readRawActiveTenant
-// ---------------------------------------------------------------------------
-
-describe("readRawActiveTenant", () => {
-  it("returns absent when no cookie is set", async () => {
-    const r = await readRawActiveTenant();
-    expect(r.status).toBe("absent");
+  it("redirects to /onboarding for NoActiveTenantError", () => {
+    expect(() => activeTenantPageRedirect(new NoActiveTenantError())).toThrow(/NEXT_REDIRECT/);
+    expect(redirectTarget.url).toBe("/onboarding");
   });
 
-  it("returns invalid for a tampered cookie", async () => {
-    cookieJar.set(ACTIVE_TENANT_COOKIE_NAME, { value: "t1.deadbeef" });
-    const r = await readRawActiveTenant();
-    expect(r.status).toBe("invalid");
+  it("redirects to /api/auth/federated-signout for StaleActiveTenantError", () => {
+    expect(() => activeTenantPageRedirect(new StaleActiveTenantError("t1"))).toThrow(/NEXT_REDIRECT/);
+    expect(redirectTarget.url).toBe("/api/auth/federated-signout");
   });
 
-  it("returns present + the decoded tenantId for a valid cookie", async () => {
-    memberships.list = [
-      { tenantId: "t1", tenantName: "T1", role: "member" },
-    ];
-    await setActiveTenant("t1");
-    const r = await readRawActiveTenant();
-    expect(r.status).toBe("present");
-    if (r.status === "present") expect(r.tenantId).toBe("t1");
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Existing: clearActiveTenant
-// ---------------------------------------------------------------------------
-
-describe("clearActiveTenant", () => {
-  it("removes the cookie", async () => {
-    memberships.list = [
-      { tenantId: "t1", tenantName: "T1", role: "admin" },
-    ];
-    await setActiveTenant("t1");
-    expect(cookieJar.has(ACTIVE_TENANT_COOKIE_NAME)).toBe(true);
-    await clearActiveTenant();
-    expect(cookieJar.has(ACTIVE_TENANT_COOKIE_NAME)).toBe(false);
+  it("re-throws any other error", () => {
+    const err = new Error("unexpected");
+    expect(() => activeTenantPageRedirect(err)).toThrow("unexpected");
   });
 });

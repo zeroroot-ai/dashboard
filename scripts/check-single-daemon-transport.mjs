@@ -9,9 +9,10 @@
  * hardening): the dashboard constructs its ConnectRPC channel to the Gibson
  * daemon in exactly ONE module-private file,
  * `src/lib/gibson-client/transport.ts`. Every other call site obtains a typed
- * daemon client through the sanctioned wrappers (`userClient`,
- * `serviceClient`, `bootstrapClient`) re-exported from
- * `@/src/lib/gibson-client`. This gives the platform a single audited boundary
+ * daemon client through the sanctioned wrappers `userClient` and
+ * `serviceClient` (re-exported from `@/src/lib/gibson-client`), or, at the
+ * one sign-in-time boundary before a session exists, `tokenClient` (imported
+ * directly from the transport module). This gives the platform a single audited boundary
  * for every dashboard→daemon RPC (Envoy edge URL + SPIFFE mTLS + the
  * `x-gibson-tenant` / Authorization identity headers).
  *
@@ -161,7 +162,7 @@ function runScan() {
     `module-private transport in ${TRANSPORT_MODULE}. Callers must obtain a typed client`,
   );
   console.error(
-    "via userClient / serviceClient / bootstrapClient (re-exported from @/src/lib/gibson-client),",
+    "via userClient / serviceClient / tokenClient (re-exported from @/src/lib/gibson-client),",
   );
   console.error(
     "never by constructing their own ConnectRPC channel. This keeps a single audited boundary",

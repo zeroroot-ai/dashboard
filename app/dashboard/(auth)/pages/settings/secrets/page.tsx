@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { generateMeta } from "@/lib/utils";
 
 import { getServerSession } from "@/src/lib/auth";
-import { getActiveTenant } from "@/src/lib/auth/active-tenant";
+import { requireActiveTenant, activeTenantPageRedirect } from "@/src/lib/auth/active-tenant";
 import { listSecrets } from "@/src/lib/gibson-client/secrets";
 import { getBrokerConfig } from "@/src/lib/gibson-client/tenant-broker-config";
 import { type BrokerProvider } from "@/src/gen/gibson/tenant/v1/secrets_pb";
@@ -41,9 +41,9 @@ export default async function SecretsPage({ searchParams }: SecretsPageProps) {
   }
 
   try {
-    await getActiveTenant();
-  } catch {
-    redirect("/select-tenant");
+    await requireActiveTenant();
+  } catch (err) {
+    activeTenantPageRedirect(err);
   }
 
   // Authz: ListSecrets is tenant_member, so all members can view the list.

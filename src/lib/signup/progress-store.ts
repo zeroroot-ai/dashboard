@@ -80,7 +80,7 @@ async function setProgress(
   // Signup progress is written pre-tenant (no active-tenant cookie, no
   // membership). Use the service-acting client with an empty tenant, the
   // same pattern the unauthenticated reserved-names lookup uses, NOT
-  // userClient (which fail-closes via getActiveTenant). The daemon RPC is
+  // userClient (which fail-closes via requireActiveTenant). The daemon RPC is
   // unauthenticated + attemptId-keyed (dashboard#646).
   await serviceClient(UserService, '').setSignupProgress({
     attemptId,

@@ -71,20 +71,39 @@ const TEST_FILE_PATTERN = /\.(?:test|spec)\./;
 const SKIP_FILES = new Set([`scripts/${SCRIPT_NAME}`]);
 
 /**
- * Banned patterns. Each entry is a literal needle (string) or regex.
- * `session.user.tenant` is matched as a regex with negative lookahead so
- * the GibsonSession wrapper's `tenantId` / `tenants` / `tenantSwitcher`
+ * Files allowed to set the `x-gibson-tenant` header for a person (ADR-0093
+ * decision 4 keeps ONE exception: `serviceClient` in the single transport
+ * module still names a tenant explicitly for service-acting calls, case 2 of
+ * the tenant-derivation rules). Keyed by path, never by line number, so a
+ * reflow of the file cannot silently widen or narrow the allowance.
+ */
+const X_GIBSON_TENANT_HEADER_ALLOWED_FILES = new Set([
+  'src/lib/gibson-client/transport.ts',
+]);
+
+/**
+ * Banned patterns. Each entry is a literal needle (string) or regex, with an
+ * optional third element: an array of paths (relative to ROOT) where the
+ * needle is allowed. `session.user.tenant` is matched as a regex with
+ * negative lookahead so the GibsonSession wrapper's `tenantId` / `tenants`
  * fields don't trip the guard.
  */
 const BANNED = [
-  [/\bsession\.user\.tenant(?![A-Za-z])/, 'removed Auth.js session field, use getActiveTenant() / getMyMemberships() instead'],
-  ['gibson:tenant', 'deleted Zitadel claim (tier 1), tenant comes from the gibson_active_tenant cookie now'],
+  [/\bsession\.user\.tenant(?![A-Za-z])/, 'removed Auth.js session field, use requireActiveTenant() / getMyMemberships() instead'],
+  ['gibson:tenant', 'deleted Zitadel claim (tier 1); the tenant comes from the token\'s verified Zitadel org now (ADR-0093 decision 4)'],
   ['urn:zitadel:iam:user:resourceowner:id', 'deleted Zitadel claim (tier 2)'],
   ['listTenantsForOwner', 'deleted K8s helper from src/lib/k8s/tenants-by-owner.ts'],
   ['tenants-by-owner', 'deleted module, see spec tenant-membership-not-in-jwt'],
   // Spec auth-resolution-hardening (R5.3), legacy reason codes / comment terms.
   ['tier 3', 'legacy fallback-chain language; removed under spec auth-resolution-hardening, describe the new path directly instead'],
   ['fallback chain', 'legacy fallback-chain language; removed under spec auth-resolution-hardening'],
+  // ADR-0093 decision 4: the picker, the cookie, and the client-supplied
+  // tenant header for a person's own requests are all deleted outright.
+  ['gibson_active_tenant', 'deleted cookie (ADR-0093 decision 4); the tenant is resolved server-side onto the session, never a cookie'],
+  ['select-tenant', 'deleted picker route (ADR-0093 decision 4); a person has exactly one tenant, resolved server-side, never chosen'],
+  [/\bsetActiveTenant\s*\(/, 'deleted cookie writer (ADR-0093 decision 4); there is no client-side tenant to set'],
+  [/\breadRawActiveTenant\s*\(/, 'deleted cookie reader (ADR-0093 decision 4); use requireActiveTenant() or session.tenantId'],
+  ['x-gibson-tenant', 'a person\'s tenant comes from their token, never a header (ADR-0093 decision 4); only serviceClient in src/lib/gibson-client/transport.ts may set this header, for service-acting calls', X_GIBSON_TENANT_HEADER_ALLOWED_FILES],
 ];
 
 function isCommentLine(line) {
@@ -121,11 +140,13 @@ function scanFile(absPath) {
   } catch {
     return violations;
   }
+  const relPath = relative(ROOT, absPath).split('\\').join('/');
   const lines = contents.split('\n');
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (isCommentLine(line)) continue;
-    for (const [pattern, reason] of BANNED) {
+    for (const [pattern, reason, allowedFiles] of BANNED) {
+      if (allowedFiles && allowedFiles.has(relPath)) continue;
       let idx = -1;
       let display = '';
       if (pattern instanceof RegExp) {
@@ -171,19 +192,57 @@ function scan() {
   return total;
 }
 
+/**
+ * One fixture body per needle this guard bans. Each must plant its needle
+ * on a non-comment, non-trailing-comment line so the scan actually reaches
+ * the pattern check.
+ */
+const SELFTEST_FIXTURES = [
+  { name: 'session.user.tenant', body: 'const t = session.user.tenant;\n' },
+  { name: 'gibson:tenant', body: 'const claim = "gibson:tenant";\n' },
+  { name: 'gibson_active_tenant', body: 'const cookieName = "gibson_active_tenant";\n' },
+  { name: 'select-tenant', body: 'redirect("/select-tenant");\n' },
+  { name: 'setActiveTenant(', body: 'await setActiveTenant(tenantId);\n' },
+  { name: 'readRawActiveTenant(', body: 'const raw = await readRawActiveTenant();\n' },
+  { name: 'x-gibson-tenant (outside the transport module)', body: "req.header.set('x-gibson-tenant', tenant);\n" },
+];
+
 function selftest() {
-  const fixture = resolve(ROOT, 'src/__guard_selftest_tenant_resolution.ts');
-  writeFileSync(fixture, "const t = session.user.tenant;\n", 'utf8');
-  try {
-    const v = scanFile(fixture);
-    if (v.length === 0) {
-      console.error(`[${SCRIPT_NAME}] SELFTEST FAILED: guard did not fire on planted violation`);
-      process.exit(1);
+  let failed = false;
+  for (const { name, body } of SELFTEST_FIXTURES) {
+    const fixture = resolve(ROOT, 'src/__guard_selftest_tenant_resolution.ts');
+    writeFileSync(fixture, body, 'utf8');
+    try {
+      const v = scanFile(fixture);
+      if (v.length === 0) {
+        console.error(`[${SCRIPT_NAME}] SELFTEST FAILED: guard did not fire on planted violation (${name})`);
+        failed = true;
+      }
+    } finally {
+      try { unlinkSync(fixture); } catch { /* ignore */ }
     }
-    console.log(`[${SCRIPT_NAME}] selftest OK, guard caught the planted violation`);
-  } finally {
-    try { unlinkSync(fixture); } catch { /* ignore */ }
   }
+  // The allowed file must NOT trip on the one needle it is exempt from.
+  const allowedFixture = resolve(ROOT, X_GIBSON_TENANT_HEADER_ALLOWED_FILES.values().next().value);
+  const allowedContents = readFileSync(allowedFixture, 'utf8');
+  if (!allowedContents.includes('x-gibson-tenant')) {
+    console.error(
+      `[${SCRIPT_NAME}] SELFTEST FAILED: the allowed file no longer sets x-gibson-tenant at all; ` +
+        'the allowance and the selftest have drifted apart',
+    );
+    failed = true;
+  }
+  const allowedViolations = scanFile(allowedFixture).filter((v) => v.needle === 'x-gibson-tenant');
+  if (allowedViolations.length > 0) {
+    console.error(
+      `[${SCRIPT_NAME}] SELFTEST FAILED: the allowed file (${relative(ROOT, allowedFixture)}) tripped the x-gibson-tenant needle`,
+    );
+    failed = true;
+  }
+  if (failed) {
+    process.exit(1);
+  }
+  console.log(`[${SCRIPT_NAME}] selftest OK, guard caught every planted violation and respected the x-gibson-tenant allowance`);
 }
 
 const argv = process.argv.slice(2);

@@ -4,31 +4,34 @@
 /**
  * Next.js middleware for Gibson Dashboard.
  *
- * Wraps Auth.js v5's `auth` middleware with active-tenant routing:
+ * Wraps Auth.js v5's `auth` middleware with tenant routing (ADR-0093
+ * decision 4: the tenant comes from the token's verified Zitadel org,
+ * resolved server-side at sign-in — never chosen by the client):
  *
  *   - Unauthenticated → DENIED unless the path is on the public allowlist
  *     (`PUBLIC_PATHS` / `PUBLIC_PREFIXES` below). Navigations get 302 `/login`
  *     with a `callbackUrl`; `/api/**` gets `401 {"error":"unauthenticated"}`.
  *     This is an explicit decision taken here, NOT Auth.js's default, which
  *     does not apply to the `auth(handler)` wrapper form this file uses.
- *   - Authenticated, no `gibson_active_tenant` cookie → 302 `/select-tenant`.
- *   - Authenticated, cookie present but tampered/HMAC-invalid → 302 `/select-tenant`
- *     (no error surfaced; identical UX to "haven't picked yet").
- *   - Authenticated, cookie names a tenant the user is no longer a member of →
- *     clear cookie, 302 `/select-tenant`.
+ *   - Authenticated, `session.tenantResolvedAt` absent (a pre-ADR-0093
+ *     session whose access token was never asked for its org) → force
+ *     sign-in, the same treatment as an opaque token below.
+ *   - Authenticated, `session.tenantId` null → `getMyMemberships()`. One
+ *     entry means a tenant just finished provisioning after sign-in: 302
+ *     `/api/auth/session-tenant?return_to=...` to re-resolve it. Otherwise
+ *     302 `/onboarding`.
+ *   - Authenticated, `session.tenantId` set → `getMyMemberships()` must
+ *     return exactly that tenant, or 302 `/api/auth/federated-signout` (the
+ *     membership was revoked since sign-in).
  *   - Authenticated, FGA / daemon unreachable when validating membership →
  *     302 `/login/error?reason=<machine-readable>` (deterministic error page,
  *     never federated-signout).
- *   - Authenticated with valid membership → forward to the route handler.
- *
- * The federated-signout-on-tenantless-session rule from the pre-spec
- * implementation is GONE. "No tenant" is now a product state (onboarding /
- * picker), not a broken-session sentinel.
+ *   - Authenticated with a current, valid tenant → forward to the route
+ *     handler.
  */
 
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/auth";
-import { readRawActiveTenant, ACTIVE_TENANT_COOKIE_NAME } from "@/src/lib/auth/active-tenant";
 import {
   getMyMemberships,
   MembershipResolutionError,
@@ -234,6 +237,11 @@ export default auth(async (req) => {
         reason = "oidc_token_exchange_failed";
       } else if (authError === "JWTSessionError") {
         reason = "session_invalid";
+      } else if (authError === "AccessDenied") {
+        // The `signIn` callback in auth.ts returned false: the ID token's
+        // `amr` carried no "mfa" entry (hosted#193 D3 defense-in-depth,
+        // fail-closed check against a login-app MFA-enforcement regression).
+        reason = "mfa_required";
       } else {
         reason = "oidc_token_exchange_failed";
       }
@@ -312,93 +320,102 @@ export default auth(async (req) => {
   const apiRejection = (reason: string, status: number): NextResponse =>
     NextResponse.json({ error: "forbidden", reason }, { status });
 
-  // 3. Resolve memberships up front so we can distinguish absent-cookie
-  //    from stale-cookie precisely.
-  let memberships: Awaited<ReturnType<typeof getMyMemberships>>;
-  try {
-    memberships = await getMyMemberships();
-  } catch (err) {
-    if (err instanceof MembershipResolutionError) {
-      const loginErrorReason = membershipReasonToLoginErrorReason(err.reason);
-      // Log the underlying ConnectRPC code alongside the user-facing
-      // bucket so log review can pin a misclassification (e.g. a
-      // permission_denied surfacing as daemon_unavailable would
-      // re-create the dashboard#45 bug).
+  // 3. Pre-ADR-0093 session: minted before the org scope existed, so its
+  //    access token can never resolve a tenant. Force a fresh sign-in so
+  //    Auth.js re-mints with the new scope, the same treatment as an opaque
+  //    token above.
+  if (session.tenantResolvedAt === undefined) {
+    logger.warn(
+      {
+        scope: "middleware.pre_adr0093_session",
+        correlation_id: correlationId,
+      },
+      "auth.session_predates_tenant_resolution",
+    );
+    if (wantsJson) return apiRejection("session_stale", 401);
+    const signInUrl = new URL("/api/auth/signin", req.nextUrl.origin);
+    signInUrl.searchParams.set("callbackUrl", pathname + (search || ""));
+    return NextResponse.redirect(signInUrl);
+  }
+
+  // `getMembershipsOrDeny` centralizes the daemon-error → login-error-page
+  // mapping shared by both tenant branches below.
+  const returnTo = pathname + (search || "");
+  const membershipsOrDeny = async (): Promise<
+    Awaited<ReturnType<typeof getMyMemberships>> | NextResponse
+  > => {
+    try {
+      return await getMyMemberships();
+    } catch (err) {
+      if (err instanceof MembershipResolutionError) {
+        const loginErrorReason = membershipReasonToLoginErrorReason(err.reason);
+        // Log the underlying ConnectRPC code alongside the user-facing
+        // bucket so log review can pin a misclassification (e.g. a
+        // permission_denied surfacing as daemon_unavailable would
+        // re-create the dashboard#45 bug).
+        logger.warn(
+          {
+            scope: "middleware.membership_resolution",
+            membership_reason: err.reason,
+            login_error_reason: loginErrorReason,
+            connect_code: err.connectCode,
+            correlation_id: correlationId,
+          },
+          "auth.login_error",
+        );
+        if (wantsJson) return apiRejection(loginErrorReason, 503);
+        const url = new URL("/login/error", req.nextUrl.origin);
+        url.searchParams.set("reason", loginErrorReason);
+        return NextResponse.redirect(url);
+      }
       logger.warn(
         {
           scope: "middleware.membership_resolution",
-          membership_reason: err.reason,
-          login_error_reason: loginErrorReason,
-          connect_code: err.connectCode,
+          membership_reason: "unknown",
+          login_error_reason: "unknown",
           correlation_id: correlationId,
         },
         "auth.login_error",
       );
-      if (wantsJson) return apiRejection(loginErrorReason, 503);
+      if (wantsJson) return apiRejection("unknown", 503);
       const url = new URL("/login/error", req.nextUrl.origin);
-      url.searchParams.set("reason", loginErrorReason);
+      url.searchParams.set("reason", "unknown");
       return NextResponse.redirect(url);
     }
-    logger.warn(
-      {
-        scope: "middleware.membership_resolution",
-        membership_reason: "unknown",
-        login_error_reason: "unknown",
-        correlation_id: correlationId,
-      },
-      "auth.login_error",
-    );
-    if (wantsJson) return apiRejection("unknown", 503);
-    const url = new URL("/login/error", req.nextUrl.origin);
-    url.searchParams.set("reason", "unknown");
-    return NextResponse.redirect(url);
-  }
+  };
 
-  // 4. Zero memberships → onboarding (NOT federated-signout).
-  if (memberships.length === 0) {
-    if (wantsJson) return apiRejection("no_membership", 403);
+  if (session.tenantId == null) {
+    // No tenant on the session yet (the Platform owner, or a tenant still
+    // provisioning at sign-in). Ask the daemon directly, not the stale
+    // session, in case provisioning has since finished.
+    const result = await membershipsOrDeny();
+    if (result instanceof NextResponse) return result;
+    if (result.length === 1) {
+      if (wantsJson) return apiRejection("no_tenant", 403);
+      const url = new URL("/api/auth/session-tenant", req.nextUrl.origin);
+      url.searchParams.set("return_to", returnTo);
+      return NextResponse.redirect(url);
+    }
+    if (wantsJson) return apiRejection("no_tenant", 403);
     return NextResponse.redirect(new URL("/onboarding", req.nextUrl.origin));
   }
 
-  // 5. Check the active-tenant cookie state.
-  const raw = await readRawActiveTenant();
-  const returnTo = pathname + (search || "");
-
-  if (raw.status === "absent" || raw.status === "invalid") {
-    if (wantsJson) {
-      const res = apiRejection(
-        raw.status === "invalid" ? "tenant_cookie_invalid" : "no_active_tenant",
-        403,
-      );
-      if (raw.status === "invalid") res.cookies.delete(ACTIVE_TENANT_COOKIE_NAME);
-      return res;
-    }
-    const url = new URL("/select-tenant", req.nextUrl.origin);
-    url.searchParams.set("return_to", returnTo);
-    const res = NextResponse.redirect(url);
-    if (raw.status === "invalid") {
-      // Tampered/stale-secret cookie, drop it so the next request is clean.
-      res.cookies.delete(ACTIVE_TENANT_COOKIE_NAME);
-    }
-    return res;
-  }
-
-  // 6. Cookie present + signature ok → verify membership is still current.
-  const isMember = memberships.some((m) => m.tenantId === raw.tenantId);
+  // 4. session.tenantId is set: confirm it is still exactly the caller's
+  //    one current membership. A mismatch (revoked, or the invariant
+  //    somehow broke) sends the caller through federated sign-out so the
+  //    next sign-in re-resolves cleanly, never a silent re-scope.
+  const result = await membershipsOrDeny();
+  if (result instanceof NextResponse) return result;
+  const isMember =
+    result.length === 1 && result[0]?.tenantId === session.tenantId;
   if (!isMember) {
-    if (wantsJson) {
-      const res = apiRejection("membership_revoked", 403);
-      res.cookies.delete(ACTIVE_TENANT_COOKIE_NAME);
-      return res;
-    }
-    const url = new URL("/select-tenant", req.nextUrl.origin);
-    url.searchParams.set("return_to", returnTo);
-    const res = NextResponse.redirect(url);
-    res.cookies.delete(ACTIVE_TENANT_COOKIE_NAME);
-    return res;
+    if (wantsJson) return apiRejection("membership_revoked", 403);
+    return NextResponse.redirect(
+      new URL("/api/auth/federated-signout", req.nextUrl.origin),
+    );
   }
 
-  // 7. Healthy state, let the route render. Seed the CSRF double-submit cookie
+  // 5. Healthy state, let the route render. Seed the CSRF double-submit cookie
   //    here so dashboard pages (and the mission-mutation routes they call via
   //    apiFetch) have a token to echo — the seeder used to live in the removed
   //    api proxy (dashboard#862).
@@ -419,16 +436,17 @@ export const config = {
      *   - api/signup   , signup polling endpoint; opaque-capability protected
      *   - login/error  , deterministic error page for auth failures (public)
      *   - signup       , signup page (must stay public)
-     *   - select-tenant, tenant picker (auth required, but tenant deliberately
-     *                     absent here)
      *   - onboarding   , zero-membership state (auth required, no tenant)
+     *
+     * There is no `select-tenant` exemption: the picker is gone (ADR-0093
+     * decision 4), a person's tenant is resolved server-side, never chosen.
      *
      * NOTE: /login itself is NOT excluded from the matcher. The middleware runs
      * on /login to intercept Auth.js ?error= redirects (e.g. ?error=Callback
      * from a failing jwt callback) and reroute them to /login/error. When there
      * is no ?error= param the middleware falls through immediately via step 1.
      */
-    "/((?!_next/static|_next/image|favicon\\.ico|api/auth|api/health|api/signup|login/error|signup$|signup/|select-tenant$|select-tenant/|onboarding$|onboarding/).+)",
+    "/((?!_next/static|_next/image|favicon\\.ico|api/auth|api/health|api/signup|login/error|signup$|signup/|onboarding$|onboarding/).+)",
     // The pattern above ends in `.+`, which requires ≥1 char after the leading
     // slash, so it never matches the root path "/". The host split (deploy#630
     // S11) MUST run on "/", on the product host app.<domain> the landing page

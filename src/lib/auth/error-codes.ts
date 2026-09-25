@@ -24,6 +24,7 @@ export type LoginErrorReason =
   | "session_invalid"
   | "permission_denied"
   | "membership_revoked"
+  | "mfa_required"
   | "unknown";
 
 interface LoginErrorCopy {
@@ -84,8 +85,14 @@ export const ERROR_COPY: Record<LoginErrorReason, LoginErrorCopy> = {
   membership_revoked: {
     title: "Your access was revoked",
     description:
-      "Your access to the organization you were signed into was removed. If you belong to other organizations, you can switch to one of those; otherwise contact your administrator.",
-    cta: { label: "Continue", href: "/select-tenant" },
+      "Your access to the organization you were signed into was removed. Sign in again, or contact your administrator if you believe this is a mistake.",
+    cta: { label: "Sign in again", href: "/api/auth/federated-signout" },
+  },
+  mfa_required: {
+    title: "Multi-factor sign-in required",
+    description:
+      "Your account needs multi-factor authentication before you can sign in. Set up an authenticator app or a security key, then try again.",
+    cta: { label: "Sign in", href: "/login" },
   },
   unknown: {
     title: "Something went wrong",
@@ -103,6 +110,7 @@ const KNOWN: ReadonlySet<LoginErrorReason> = new Set([
   "session_invalid",
   "permission_denied",
   "membership_revoked",
+  "mfa_required",
   "unknown",
 ]);
 

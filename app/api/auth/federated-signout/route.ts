@@ -17,13 +17,9 @@
  *  2. Kills its own session cookie on `auth.zeroroot.local`
  *  3. Redirects the browser back to our post_logout URL
  *
- * Multi-tenant note: Zitadel maintains one SSO session per user, not one per
- * tenant. RP-initiated `end_session` terminates that single session globally,
- * which is the intended logout-from-all-tenants behavior. The dashboard-side
- * tenant-scope cookie (`gibson_active_tenant`) is cleared on this response too
- * so the next sign-in re-runs default-tenant resolution / picker logic rather
- * than auto-routing the user back into the tenant they had selected at logout
- * time.
+ * There is no dashboard-side tenant cookie to clear (ADR-0093 decision 4): a
+ * person's tenant is resolved server-side at the NEXT sign-in, from their
+ * token's verified Zitadel org, not carried forward from this session.
  *
  * The `post_logout_redirect_uri` MUST be pre-registered on the Zitadel OIDC
  * client byte-for-byte. The chart owns both sides of that contract: the
@@ -41,8 +37,6 @@
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { signOut } from "@/auth";
-import { ACTIVE_TENANT_COOKIE_NAME } from "@/src/lib/auth/active-tenant";
-import { isSecureRequest } from "@/src/lib/csrf";
 import { logger } from "@/src/lib/logger";
 
 // Auth.js v5 cookie names. Names differ in production (Secure cookie prefix)
@@ -79,27 +73,6 @@ function clearAuthCookies(res: NextResponse): void {
       // that set it, which is what we want).
     });
   }
-}
-
-function clearActiveTenantCookie(req: NextRequest, res: NextResponse): void {
-  // Mirror the attributes setActiveTenant uses when writing the cookie
-  // (src/lib/auth/active-tenant.ts) so the browser accepts the overwrite.
-  // Path=/ + sameSite=lax + httpOnly + Secure-when-the-request-is-https.
-  //
-  // The Secure flag tracks the REQUEST SCHEME, not NODE_ENV. Keying it to
-  // NODE_ENV gets it wrong in both directions: a production image running with
-  // NODE_ENV unset writes a non-Secure cookie over https, and a local https
-  // run writes Secure=false. Worse for a clear, the browser matches the
-  // overwrite against the original cookie's attributes, so a mismatched Secure
-  // flag means the delete is silently dropped and the tenant scope survives
-  // logout.
-  res.cookies.set(ACTIVE_TENANT_COOKIE_NAME, "", {
-    maxAge: 0,
-    path: "/",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: isSecureRequest(req),
-  });
 }
 
 /**
@@ -231,10 +204,6 @@ async function handleSignout(req: NextRequest): Promise<NextResponse> {
   // letting middleware see a still-valid JWT on the next request and bouncing
   // the user straight back into /dashboard.
   clearAuthCookies(res);
-  // Multi-tenant: also drop the active-tenant cookie so the next sign-in
-  // runs default-tenant resolution / picker afresh, not auto-routing the
-  // user back into the tenant they were viewing at logout time.
-  clearActiveTenantCookie(req, res);
   return res;
 }
 

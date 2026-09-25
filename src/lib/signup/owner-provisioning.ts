@@ -28,7 +28,7 @@
  * run pre-tenant, before any session or membership exists. They are dialed via
  * the SAME `serviceClient(Service, '')` service-acting transport with an empty
  * tenant that the unauthenticated `SetSignupProgress` RPC uses, NOT the
- * tenant-scoped userClient (which fail-closes via getActiveTenant).
+ * tenant-scoped userClient (which fail-closes via requireActiveTenant).
  *
  * SECURITY: the founding-owner password reaches the daemon in the completion
  * request body only, and only after the address has been proven. It is never

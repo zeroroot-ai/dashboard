@@ -6,10 +6,12 @@
  * (src/lib/gibson-client/transport.ts, dashboard#814 / E9).
  *
  * Verifies the auth-interceptor header contract for each sanctioned wrapper:
- *   - userClient injects Authorization + x-gibson-tenant (active-tenant cookie)
+ *   - userClient injects Authorization but NEVER x-gibson-tenant (ADR-0093
+ *     decision 4: a person's tenant comes only from their token's verified
+ *     Zitadel org, resolved by ext-authz, never from a client header)
  *   - serviceClient injects Authorization + the explicit tenant header
- *   - bootstrapClient injects Authorization but NO x-gibson-tenant (empty
- *     tenant, the membership-bootstrap boundary)
+ *   - tokenClient injects Authorization from the given raw token, no tenant
+ *     (the sign-in-time boundary, before a session exists to read)
  *
  * The transport itself (createGrpcTransport) is mocked so the interceptor can
  * be exercised without a live gRPC connection, mirroring the pattern in
@@ -55,7 +57,6 @@ vi.mock('@/src/lib/auth/service-token', () => ({
   invalidateServiceToken: vi.fn(),
 }));
 vi.mock('@/src/lib/auth/active-tenant', () => ({
-  getActiveTenant: vi.fn(async () => 'tenant-from-cookie'),
   unsafeTenantId: (v: string) => v,
 }));
 
@@ -106,15 +107,16 @@ describe('single daemon transport wrappers', () => {
     expect('makeClient' in mod).toBe(false);
     expect(typeof mod.userClient).toBe('function');
     expect(typeof mod.serviceClient).toBe('function');
-    expect(typeof mod.bootstrapClient).toBe('function');
+    expect(typeof mod.tokenClient).toBe('function');
+    expect('bootstrapClient' in mod).toBe(false);
   });
 
-  it('userClient forwards bearer + active-tenant header', async () => {
+  it('userClient forwards bearer but NEVER x-gibson-tenant', async () => {
     const { userClient } = await import('../transport');
     userClient(FAKE_SERVICE);
     const headers = await runInterceptors();
     expect(headers.get('Authorization')).toBe('Bearer user-token');
-    expect(headers.get('x-gibson-tenant')).toBe('tenant-from-cookie');
+    expect(headers.has('x-gibson-tenant')).toBe(false);
   });
 
   it('serviceClient forwards bearer + the explicit tenant header', async () => {
@@ -125,11 +127,11 @@ describe('single daemon transport wrappers', () => {
     expect(headers.get('x-gibson-tenant')).toBe('explicit-tenant');
   });
 
-  it('bootstrapClient forwards bearer but NO x-gibson-tenant (empty tenant)', async () => {
-    const { bootstrapClient } = await import('../transport');
-    bootstrapClient(FAKE_SERVICE);
+  it('tokenClient forwards bearer from the given raw token, no tenant', async () => {
+    const { tokenClient } = await import('../transport');
+    tokenClient(FAKE_SERVICE, 'raw-access-token');
     const headers = await runInterceptors();
-    expect(headers.get('Authorization')).toBe('Bearer user-token');
+    expect(headers.get('Authorization')).toBe('Bearer raw-access-token');
     expect(headers.has('x-gibson-tenant')).toBe(false);
   });
 });
@@ -157,9 +159,16 @@ describe('per-RPC authz bake-in (dashboard#848)', () => {
     expect(mockAssertAuthorized).not.toHaveBeenCalled();
   });
 
-  it('bootstrapClient does NOT run assertAuthorized (pre-tenant bootstrap)', async () => {
-    const { bootstrapClient } = await import('../transport');
-    bootstrapClient(FAKE_SERVICE);
+  it('userClient({ enforceAuthz: false }) does NOT run assertAuthorized', async () => {
+    const { userClient } = await import('../transport');
+    userClient(FAKE_SERVICE, { enforceAuthz: false });
+    await runInterceptors();
+    expect(mockAssertAuthorized).not.toHaveBeenCalled();
+  });
+
+  it('tokenClient does NOT run assertAuthorized (sign-in-time boundary)', async () => {
+    const { tokenClient } = await import('../transport');
+    tokenClient(FAKE_SERVICE, 'raw-access-token');
     await runInterceptors();
     expect(mockAssertAuthorized).not.toHaveBeenCalled();
   });

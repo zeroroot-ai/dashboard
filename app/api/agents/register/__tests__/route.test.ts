@@ -53,7 +53,7 @@ vi.mock('@/src/lib/auth', () => ({
 }));
 
 vi.mock('@/src/lib/auth/active-tenant', () => ({
-  getActiveTenant: mockGetActiveTenant,
+  requireActiveTenant: mockGetActiveTenant,
 }));
 
 vi.mock('@/src/lib/auth/roles', () => ({
@@ -108,7 +108,7 @@ describe('POST /api/agents/register, auth gate', () => {
 // ---------------------------------------------------------------------------
 
 describe('POST /api/agents/register, tenant gate', () => {
-  it('returns 412 when getActiveTenant throws', async () => {
+  it('returns 412 when requireActiveTenant throws', async () => {
     mockAuth.mockResolvedValue({ user: { id: 'u1' } });
     mockGetActiveTenant.mockRejectedValue(
       Object.assign(new Error('no cookie'), { name: 'NoActiveTenantError' }),

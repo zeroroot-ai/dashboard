@@ -38,8 +38,7 @@
  *
  * Signing removes the class rather than the one field: every value in the
  * payload is now tamper-evident, and a cookie that does not verify is treated
- * as absent. Same construction as the `gibson_active_tenant` cookie in
- * `src/lib/auth/active-tenant.ts` — `<payload>.<hex hmac-sha256>` keyed on
+ * as absent. Construction: `<payload>.<hex hmac-sha256>` keyed on
  * AUTH_SECRET, compared in constant time.
  *
  * This is confidentiality-preserving only in the sense that matters here: the

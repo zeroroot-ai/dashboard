@@ -15,7 +15,8 @@
  *
  *   - Server-side reads use `getServerSession()` from `@/src/lib/auth`,
  *     which re-resolves tenant + role + permission state from the
- *     `gibson_active_tenant` cookie + FGA on every request.
+ *     session's server-resolved tenant (ADR-0093 decision 4) + FGA on
+ *     every request.
  *   - Client-side reads use the React context surfaced via
  *     `TenantContextProvider` (mounted in the auth layout). Hooks:
  *     `useTenant`, `useTenantId`, `useIsCrossTenant`, etc. Authorization

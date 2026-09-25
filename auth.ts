@@ -26,8 +26,12 @@
  * stay; they become the inline checks behind the boot-time validator.
  *
  * Session strategy: "jwt", Auth.js signs an encrypted JWT cookie; no server-side
- * session DB required. The cookie carries the gibson:tenant claim forwarded from
- * Zitadel's custom claim Action (task 2).
+ * session DB required. The signed-in person's tenant is resolved server-side at
+ * sign-in (ADR-0093 decision 4): the access token carries the
+ * `urn:zitadel:iam:user:resourceowner` scope's org claim, ext-authz maps that
+ * verified org to a tenant, and `src/lib/auth/session-tenant.ts` asks the daemon
+ * (through ext-authz) which tenant that resolved to and stamps it on the JWT
+ * cookie as `tenantId`. There is no client-asserted tenant claim.
  *
  * Exports follow Auth.js v5 conventions:
  *   handlers , { GET, POST }, wire into app/api/auth/[...nextauth]/route.ts (task 22)
@@ -45,6 +49,7 @@ import { cookies } from "next/headers";
 import { getFaultMode } from "@/src/lib/test-fixtures/fault-injection";
 
 import { resolvePostSignInRedirect } from "@/src/lib/auth/post-signin-redirect";
+import { evaluateMfaGate } from "@/src/lib/auth/mfa-gate";
 import {
   SESSION_IDLE_MAX_AGE_SECONDS,
   isSessionBeyondAbsoluteCap,
@@ -52,11 +57,12 @@ import {
 
 // ---------------------------------------------------------------------------
 // Module augmentation, extend the built-in Session/JWT types with the
-// Zitadel tokens needed server-side. Tenant is intentionally NOT on the
-// session: it lives in the separate `gibson_active_tenant` cookie managed
-// by `src/lib/auth/active-tenant.ts`, which lets the user switch tenants
-// without re-logging-in and lets membership changes take effect on the
-// next request rather than at next sign-in.
+// Zitadel tokens needed server-side, and with the signed-in person's tenant
+// (ADR-0093 decision 4). Unlike the deleted tenant-switcher model, tenant IS
+// on the session now: a person has exactly one tenant, resolved server-side
+// at sign-in from their token's verified Zitadel org, never chosen by the
+// client. `requireActiveTenant()` (src/lib/auth/active-tenant.ts) re-validates
+// it against current FGA membership on every request.
 // ---------------------------------------------------------------------------
 declare module "next-auth" {
   interface Session {
@@ -83,6 +89,15 @@ declare module "next-auth" {
      * stripped from `GET /api/auth/session` like accessToken (dashboard#818).
      */
     idToken?: string;
+    /**
+     * The signed-in person's one tenant, resolved server-side at sign-in
+     * (ADR-0093 decision 4). Null means none (the Platform owner, or a
+     * tenant still provisioning). This value MAY reach the browser, it is
+     * the person's own tenant, not a secret.
+     */
+    tenantId?: string | null;
+    /** Unix seconds when tenantId was resolved. Absent on a pre-ADR-0093 cookie. */
+    tenantResolvedAt?: number;
   }
 
   interface JWT {
@@ -97,6 +112,10 @@ declare module "next-auth" {
      * field is the only durable anchor for the absolute session cap.
      */
     authIssuedAt?: number;
+    /** The signed-in person's one tenant. See Session.tenantId. */
+    tenantId?: string | null;
+    /** Unix seconds when tenantId was resolved. See Session.tenantResolvedAt. */
+    tenantResolvedAt?: number;
   }
 }
 
@@ -218,19 +237,20 @@ const config: NextAuthConfig = {
       wellKnown: `${internalIssuer}/.well-known/openid-configuration`,
       clientId,
       clientSecret,
-      // Request the openid, profile, and email scopes. The gibson:tenant claim
-      // is injected server-side by Zitadel's custom Action and arrives in the
-      // ID token without a dedicated scope.
+      // Request the openid, profile, and email scopes, plus the Zitadel
+      // urn:zitadel:iam:user:resourceowner scope (ADR-0093 decision 4): it
+      // adds the person's org id to the access token, which is the ONLY
+      // input to tenant resolution (see stampSessionTenant in the jwt
+      // callback below). There is no client-asserted tenant claim.
       authorization: {
         params: {
-          scope: "openid profile email",
+          scope: "openid profile email urn:zitadel:iam:user:resourceowner",
           // Enforce PKCE for public clients even when a secret is present.
           code_challenge_method: "S256",
         },
       },
       // Trust Zitadel's ID token claims directly; skip the userinfo endpoint
-      // round-trip so the gibson:tenant claim from the ID token is available
-      // in the jwt callback without a second network call.
+      // round-trip for name/email (fetched separately below).
       idToken: true,
       checks: ["pkce", "state"],
       profile(profile) {
@@ -263,13 +283,25 @@ const config: NextAuthConfig = {
   // -------------------------------------------------------------------------
   callbacks: {
     /**
-     * jwt, runs when the JWT is first created (sign-in) and on every
-     * subsequent access. Stores ONLY stable user identity (sub, tokens) on
-     * the encrypted cookie. Active tenant is NOT a session field, it
-     * lives in `gibson_active_tenant` cookie (see active-tenant.ts) and
-     * resolves per-request from FGA memberships.
+     * signIn, defense-in-depth MFA gate (hosted#193 decision D3). See
+     * `src/lib/auth/mfa-gate.ts` for the pure decision logic and its
+     * doc comment; this callback only wires the OIDC `account` / `profile`
+     * shapes into it. Returning a path string sends Auth.js to that
+     * redirect instead of its default error page.
      */
-    async jwt({ token, account }) {
+    async signIn({ account, profile }) {
+      return evaluateMfaGate(account?.provider, profile?.["amr"]);
+    },
+
+    /**
+     * jwt, runs when the JWT is first created (sign-in) and on every
+     * subsequent access. Stores stable user identity (sub, tokens) on the
+     * encrypted cookie, plus the person's one tenant (ADR-0093 decision 4),
+     * resolved server-side via `stampSessionTenant`. A client can never name
+     * its own tenant: the `session` argument `unstable_update()` callers pass
+     * is never consulted for it, only the stored access token is.
+     */
+    async jwt({ token, account, trigger }) {
       // -----------------------------------------------------------------------
       // TEST FIXTURES: JWKS and token-exchange fault injection.
       // Only active when TEST_FIXTURES_ENABLED=true. These checks happen at
@@ -359,14 +391,36 @@ const config: NextAuthConfig = {
             // userinfo fetch is best-effort; fall through with null values
           }
         }
+
+        // Stamp the person's one tenant (ADR-0093 decision 4). Loaded via a
+        // dynamic import to avoid a module cycle: session-tenant.ts pulls in
+        // the gibson-client transport, which pulls in this module's own
+        // session helpers. A sign-in that cannot resolve its tenant (a
+        // transport error, or more than one membership) throws here, which
+        // Auth.js maps to pages.error, the same fail-closed path the
+        // fault-injection checks above use.
+        if (typeof token["accessToken"] === "string") {
+          const { stampSessionTenant } = await import("@/src/lib/auth/session-tenant");
+          await stampSessionTenant(token, token["accessToken"]);
+        }
+      } else if (trigger === "update" && typeof token["accessToken"] === "string") {
+        // Re-resolve the tenant server-side only. The `session` argument a
+        // caller passes to `unstable_update(...)` is never read here — a
+        // client can never name its own tenant. Used by
+        // `app/api/auth/session-tenant/route.ts` once a tenant finishes
+        // provisioning after sign-in.
+        const { stampSessionTenant } = await import("@/src/lib/auth/session-tenant");
+        await stampSessionTenant(token, token["accessToken"]);
       }
       return token;
     },
 
     /**
      * session, shapes the session object returned to client components and
-     * Server Actions. Exposes only user identity + server-side tokens; the
-     * active tenant is intentionally absent (use getActiveTenant() instead).
+     * Server Actions. Exposes user identity, server-side tokens, and the
+     * person's one tenant (ADR-0093 decision 4) — `requireActiveTenant()`
+     * (src/lib/auth/active-tenant.ts) re-validates it against current FGA
+     * membership on every request, rather than trusting the cookie alone.
      */
     async session({ session, token }) {
       if (token.sub) {
@@ -395,6 +449,12 @@ const config: NextAuthConfig = {
       // pass id_token_hint to Zitadel's end_session_endpoint.
       if (typeof token["idToken"] === "string") {
         session.idToken = token["idToken"];
+      }
+      // The person's one tenant, stamped by stampSessionTenant above. May
+      // reach the browser: it is the person's own tenant, not a secret.
+      session.tenantId = (token.tenantId as string | null | undefined) ?? null;
+      if (typeof token.tenantResolvedAt === "number") {
+        session.tenantResolvedAt = token.tenantResolvedAt;
       }
       return session;
     },
@@ -504,9 +564,12 @@ const config: NextAuthConfig = {
 
 // ---------------------------------------------------------------------------
 // Export the Auth.js singleton using v5 named-export conventions.
-// handlers → task 22 (route handler)
-// auth      → Server Components, Server Actions, middleware
-// signIn    → server-side redirect helper
-// signOut   → server-side redirect helper
+// handlers        → task 22 (route handler)
+// auth            → Server Components, Server Actions, middleware
+// signIn          → server-side redirect helper
+// signOut         → server-side redirect helper
+// unstable_update → re-runs the jwt callback with trigger: "update", used by
+//                   app/api/auth/session-tenant/route.ts to re-resolve the
+//                   tenant once provisioning finishes after sign-in.
 // ---------------------------------------------------------------------------
-export const { handlers, auth, signIn, signOut } = NextAuth(config);
+export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth(config);

@@ -35,7 +35,7 @@ import { z } from 'zod';
 import { auth } from '@/auth';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
 import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
-import { bootstrapClient } from '@/src/lib/gibson-client/transport';
+import { userClient } from '@/src/lib/gibson-client/transport';
 import { getFaultMode } from '@/src/lib/test-fixtures/fault-injection';
 import { logger } from '@/src/lib/logger';
 
@@ -125,30 +125,29 @@ function normalizeRole(raw: string): 'owner' | 'admin' | 'member' {
 // ---------------------------------------------------------------------------
 
 /**
- * Build a daemon client that authenticates as the current user but does
- * NOT send `x-gibson-tenant`. ListMyMemberships is registered as
- * `unauthenticated: true` in ext-authz (identity is required, but no
- * per-tenant FGA gate runs, the response IS the tenant list), so a
- * tenant header would only confuse audit logs. We can't compose
- * `userClient` here either: that helper reads the active-tenant cookie,
- * but the cookie's validity itself depends on the result of THIS RPC,
- * which would create a circular dependency.
+ * Build a daemon client that authenticates as the current user. Sends NO
+ * `x-gibson-tenant` header, same as every user-acting call now (ADR-0093
+ * decision 4): ListMyMemberships is registered `unauthenticated: true` in
+ * ext-authz (identity is required, but no per-tenant FGA gate runs, the
+ * response IS the tenant list), which also means `userClient`'s baked-in
+ * authz interceptor returns immediately for it. There is no circular
+ * dependency to route around any more, `userClient` never reads a tenant
+ * from anywhere.
  */
 function membershipsClient() {
-  // No tenant header: ListMyMemberships IS the tenant-list bootstrap and runs
-  // before any active tenant can be validated. `bootstrapClient` is the
-  // sanctioned no-tenant wrapper for exactly this boundary (dashboard#814);
-  // it brands the empty tenant via unsafeTenantId internally.
-  return bootstrapClient(DaemonService);
+  return userClient(DaemonService);
 }
 
 /**
  * Build a user-acting UserService client for membership cache invalidation.
- * Uses empty tenant (InvalidateMembershipCache is scoped by user_id only).
+ * The registry entry for InvalidateMembershipCache requires an active
+ * tenant + membership, but this is called right after mutations (e.g.
+ * accepting a fresh invitation) that may run before the caller's membership
+ * can be assumed already resolvable, so the per-RPC authz interceptor is
+ * disabled here; the daemon's own FGA check still applies.
  */
 function userServiceClient() {
-  // Empty tenant: InvalidateMembershipCache is scoped by user_id only.
-  return bootstrapClient(UserService);
+  return userClient(UserService, { enforceAuthz: false });
 }
 
 // ---------------------------------------------------------------------------

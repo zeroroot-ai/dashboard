@@ -117,26 +117,32 @@ vi.mock('@/src/lib/auth/membership', () => ({
   getMyMemberships: vi.fn(),
 }));
 
-// Mock readRawActiveTenant
-vi.mock('@/src/lib/auth/active-tenant', () => ({
-  readRawActiveTenant: vi.fn(),
-}));
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 import { auth } from '@/auth';
 import { getMyMemberships } from '@/src/lib/auth/membership';
-import { readRawActiveTenant } from '@/src/lib/auth/active-tenant';
 
 const mockAuth = vi.mocked(auth);
 const mockGetMyMemberships = vi.mocked(getMyMemberships);
-const mockReadRawActiveTenant = vi.mocked(readRawActiveTenant);
+
+// The session carries both identity and the person's one tenant (ADR-0093
+// decision 4) in the SAME auth() read; these helpers compose one session
+// object rather than two independent mocks.
+const sessionState = { id: 'user-123', tenantId: null as string | null };
+
+function applySession() {
+  mockAuth.mockResolvedValue({
+    user: { id: sessionState.id },
+    tenantId: sessionState.tenantId,
+    expires: '',
+  } as unknown as Awaited<ReturnType<typeof auth>>);
+}
 
 function setupSession(id = 'user-123') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  mockAuth.mockResolvedValue({ user: { id }, expires: '' } as any);
+  sessionState.id = id;
+  applySession();
 }
 
 function setupNoSession() {
@@ -145,11 +151,13 @@ function setupNoSession() {
 }
 
 function setupActiveTenant(tenantId: string) {
-  mockReadRawActiveTenant.mockResolvedValue({ status: 'present', tenantId });
+  sessionState.tenantId = tenantId;
+  applySession();
 }
 
 function setupNoActiveTenant() {
-  mockReadRawActiveTenant.mockResolvedValue({ status: 'absent' });
+  sessionState.tenantId = null;
+  applySession();
 }
 
 function setupMemberships(tenantId: string, role: 'owner' | 'admin' | 'member') {
@@ -164,6 +172,8 @@ function setupMembershipsError() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  sessionState.id = 'user-123';
+  sessionState.tenantId = null;
   // Default: happy path, admin on tenant-a.
   setupSession();
   setupActiveTenant('tenant-a');

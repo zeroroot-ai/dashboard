@@ -17,7 +17,7 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
-import { getActiveTenant } from "@/src/lib/auth/active-tenant";
+import { requireActiveTenant } from "@/src/lib/auth/active-tenant";
 import { getMyMemberships } from "@/src/lib/auth/membership";
 import {
   Card,
@@ -26,9 +26,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import Link from "next/link";
 
 export default async function AccountSettingsPage() {
   const session = await auth();
@@ -36,7 +33,7 @@ export default async function AccountSettingsPage() {
 
   let activeTenant: string | null = null;
   try {
-    activeTenant = await getActiveTenant();
+    activeTenant = await requireActiveTenant();
   } catch {
     // No active-tenant cookie, user hasn't picked one yet, or the cookie
     // pointed at a tenant they no longer belong to. Render gracefully.
@@ -67,25 +64,20 @@ export default async function AccountSettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Active workspace</CardTitle>
+          <CardTitle>Workspace</CardTitle>
           <CardDescription>
-            Calls to the dashboard run in the context of one of your
-            workspaces. Switch from the top-bar workspace picker.
+            Calls to the dashboard run in the context of your one workspace.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Field
             label="Workspace"
-            value={active?.tenantName ?? activeTenant ?? "(none selected)"}
+            value={active?.tenantName ?? activeTenant ?? "(none)"}
           />
           {active?.tenantId ? (
             <Field label="Workspace ID" value={active.tenantId} mono />
           ) : null}
           {active?.role ? <Field label="Role" value={active.role} /> : null}
-          <Separator />
-          <Button asChild variant="outline">
-            <Link href="/select-tenant">Switch workspace</Link>
-          </Button>
         </CardContent>
       </Card>
     </div>

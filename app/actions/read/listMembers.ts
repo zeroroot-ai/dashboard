@@ -23,7 +23,7 @@ import {
   type TenantMember,
 } from "@/src/gen/gibson/tenant/v1/membership_pb";
 import { userClient } from "@/src/lib/gibson-client";
-import { getActiveTenant } from "@/src/lib/auth/active-tenant";
+import { requireActiveTenant } from "@/src/lib/auth/active-tenant";
 import { auth } from "@/auth";
 
 type ActionResult<T> =
@@ -74,7 +74,7 @@ export async function listMembersAction(
 
   let tenantId: string;
   try {
-    tenantId = await getActiveTenant();
+    tenantId = await requireActiveTenant();
   } catch {
     return { ok: false, error: "no active tenant" };
   }

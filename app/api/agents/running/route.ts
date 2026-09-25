@@ -9,10 +9,10 @@
  * console's list/tab view: one entry per running instance, each with the
  * run id the console subscribes by.
  *
- * The tenant scope is NOT a query param. It is derived server-side by the
- * daemon from the authenticated identity (the `userClient` bearer + the
- * `x-gibson-tenant` header injected from the active-tenant cookie). The
- * dashboard never re-filters: a foreign instance never reaches this route.
+ * The tenant scope is NOT a query param. It is derived server-side by
+ * ext-authz from the caller's token (ADR-0093 decision 4) — the dashboard
+ * sends no tenant header for a person's own requests. The dashboard never
+ * re-filters: a foreign instance never reaches this route.
  *
  * Security model: the call flows dashboard -> Envoy (JWT + SPIFFE mTLS) +
  * ext-authz -> daemon, per dashboard `CLAUDE.md`. No direct daemon channel.

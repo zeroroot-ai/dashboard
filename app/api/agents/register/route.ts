@@ -43,7 +43,7 @@ import { ConnectError, Code } from '@connectrpc/connect';
 import { auth } from '@/auth';
 import { getServerSession } from '@/src/lib/auth';
 import { hasRoleAtLeast } from '@/src/lib/auth/roles';
-import { getActiveTenant } from '@/src/lib/auth/active-tenant';
+import { requireActiveTenant } from '@/src/lib/auth/active-tenant';
 import { userClient } from '@/src/lib/gibson-client';
 import {
   AgentIdentityService,
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // Step 2, resolve active tenant + verify admin role.
   let tenantId: string;
   try {
-    tenantId = await getActiveTenant();
+    tenantId = await requireActiveTenant();
   } catch (err) {
     console.warn('[agents/register] no usable active tenant:', (err as Error).name);
     return NextResponse.json(

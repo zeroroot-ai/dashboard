@@ -9,6 +9,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+import { auth } from '@/auth';
 import { billingEnabled } from '@/src/lib/billing/billing-enabled';
 import { createPortalSession } from '@/src/lib/billing/stripe';
 import { getTenantBilling } from '@/src/lib/gibson-client/provisioning';
@@ -16,7 +17,6 @@ import {
   assertAuthorized,
   AuthzDeniedError,
 } from '@/src/lib/auth/assert-authorized';
-import { readRawActiveTenant } from '@/src/lib/auth/active-tenant';
 import { checkRateLimit } from '@/src/lib/rate-limiter';
 import { logger } from '@/src/lib/logger';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
@@ -84,10 +84,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     throw err;
   }
 
-  // Resolve the active tenant slug from the session cookie.
-  const activeTenant = await readRawActiveTenant();
-  // readRawActiveTenant returns { status, tenantId? } where tenantId is the slug.
-  const tenantSlug = activeTenant?.tenantId;
+  // The person's tenant, resolved server-side at sign-in (ADR-0093
+  // decision 4). assertAuthorized above already confirmed the caller holds
+  // a membership on it.
+  const session = await auth();
+  const tenantSlug = session?.tenantId;
 
   if (!tenantSlug) {
     return NextResponse.json(

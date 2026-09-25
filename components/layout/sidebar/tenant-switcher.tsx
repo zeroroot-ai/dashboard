@@ -8,14 +8,12 @@
  *
  * Renders the active workspace in the sidebar header.
  *
- * Single-tenant users: static label, no interactive chrome.
- * Multi-tenant users: DropdownMenu listing all tenants from the
- * server-hydrated `TenantContextProvider`. Selecting an item calls
- * `switchTenant` on the context, which delegates to
- * `switchActiveTenantAction` (writes the HMAC-signed
- * `gibson_active_tenant` cookie via `setActiveTenant`) and then runs
- * `router.refresh()` so the layout re-renders with new server-resolved
- * state.
+ * A person has exactly one tenant, resolved server-side from their
+ * identity (ADR-0093 decision 4), so this always renders the static-label
+ * branch (`availableTenants.length <= 1` is now always true) — there is no
+ * switching. The dropdown branch below is retained only because
+ * `TenantContextProvider` still models a list for other historical
+ * consumers; it never renders more than one entry.
  */
 
 import * as React from "react";

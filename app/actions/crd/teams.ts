@@ -20,7 +20,7 @@
 
 import { MembershipService } from "@/src/gen/gibson/tenant/v1/membership_pb";
 import { userClient } from "@/src/lib/gibson-client";
-import { getActiveTenant } from "@/src/lib/auth/active-tenant";
+import { requireActiveTenant } from "@/src/lib/auth/active-tenant";
 
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
@@ -46,7 +46,7 @@ export async function listTeamsAction(): Promise<ActionResult<Team[]>> {
 
   let tenantId: string;
   try {
-    tenantId = await getActiveTenant();
+    tenantId = await requireActiveTenant();
   } catch {
     return { ok: false, error: "no active tenant", code: "FORBIDDEN" };
   }
@@ -97,7 +97,7 @@ export async function listTeamMembersAction(
 
   let tenantId: string;
   try {
-    tenantId = await getActiveTenant();
+    tenantId = await requireActiveTenant();
   } catch {
     return { ok: false, error: "no active tenant", code: "FORBIDDEN" };
   }
@@ -144,7 +144,7 @@ export async function createTeamAction(input: {
 
   let tenantId: string;
   try {
-    tenantId = await getActiveTenant();
+    tenantId = await requireActiveTenant();
   } catch {
     return { ok: false, error: "no active tenant", code: "FORBIDDEN" };
   }
@@ -184,7 +184,7 @@ export async function deleteTeamAction(
 
   let tenantId: string;
   try {
-    tenantId = await getActiveTenant();
+    tenantId = await requireActiveTenant();
   } catch {
     return { ok: false, error: "no active tenant", code: "FORBIDDEN" };
   }
@@ -217,7 +217,7 @@ export async function addTeamMemberAction(input: {
 
   let tenantId: string;
   try {
-    tenantId = await getActiveTenant();
+    tenantId = await requireActiveTenant();
   } catch {
     return { ok: false, error: "no active tenant", code: "FORBIDDEN" };
   }
@@ -256,7 +256,7 @@ export async function removeTeamMemberAction(input: {
 
   let tenantId: string;
   try {
-    tenantId = await getActiveTenant();
+    tenantId = await requireActiveTenant();
   } catch {
     return { ok: false, error: "no active tenant", code: "FORBIDDEN" };
   }

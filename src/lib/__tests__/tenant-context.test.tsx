@@ -27,15 +27,6 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-const mockSwitchActiveTenantAction = vi.fn<
-  (tenantId: string) => Promise<
-    { ok: true } | { ok: false; reason: 'not_a_member' | 'resolution_failed' }
-  >
->();
-vi.mock('@/components/gibson/shared/tenant-switcher-action', () => ({
-  switchActiveTenantAction: (id: string) => mockSwitchActiveTenantAction(id),
-}));
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -157,8 +148,11 @@ describe('TenantContextProvider', () => {
     expect(probe.result?.canSwitchOther).toBe(false);
   });
 
-  it('switchTenant calls switchActiveTenantAction and triggers router.refresh on success', async () => {
-    mockSwitchActiveTenantAction.mockResolvedValueOnce({ ok: true });
+  // ADR-0093 decision 4: a person has exactly one tenant, resolved
+  // server-side from their identity. There is no UI that offers a switch,
+  // and switchTenant always throws so a stray caller fails loud rather than
+  // silently no-op.
+  it('switchTenant always throws: tenant switching is not supported', async () => {
     mockRefresh.mockClear();
 
     const acme = makeTenant('acme');
@@ -169,29 +163,8 @@ describe('TenantContextProvider', () => {
     });
 
     await act(async () => {
-      await probe.result!.switchTenant('beta');
-    });
-
-    expect(mockSwitchActiveTenantAction).toHaveBeenCalledWith('beta');
-    expect(mockRefresh).toHaveBeenCalledTimes(1);
-  });
-
-  it('switchTenant throws and does not refresh when the action rejects', async () => {
-    mockSwitchActiveTenantAction.mockResolvedValueOnce({
-      ok: false,
-      reason: 'not_a_member',
-    });
-    mockRefresh.mockClear();
-
-    const acme = makeTenant('acme');
-    renderWithCtx({
-      currentTenant: acme,
-      availableTenants: [acme],
-    });
-
-    await act(async () => {
-      await expect(probe.result!.switchTenant('ghost')).rejects.toThrow(
-        /not a member/i,
+      await expect(probe.result!.switchTenant('beta')).rejects.toThrow(
+        /not supported/i,
       );
     });
     expect(mockRefresh).not.toHaveBeenCalled();

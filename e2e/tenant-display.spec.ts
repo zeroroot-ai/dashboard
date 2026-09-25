@@ -13,8 +13,8 @@
  * The header / sidebar are hydrated server-side via
  * `getServerSession()` → `resolveTenant()` → `<TenantHydrator>` → React
  * context. This test validates the full path against a live cluster: a
- * real Auth.js login, a real `gibson_active_tenant` cookie + FGA
- * membership lookup, and a real Tenant CRD lookup.
+ * real Auth.js login, the session's server-resolved tenant (ADR-0093
+ * decision 4, no cookie), and a real Tenant CRD lookup.
  *
  * Pre-conditions (Kind cluster):
  *   make deploy-local running against `kind-gibson` context.

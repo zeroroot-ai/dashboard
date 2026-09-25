@@ -53,7 +53,7 @@ const mockListMyMemberships = vi.fn(async () => FAKE_LIST_MEMBERSHIPS_RESPONSE);
 const mockInvalidateMembershipCache = vi.fn(async () => ({}));
 
 vi.mock('@/src/lib/gibson-client/transport', () => ({
-  bootstrapClient: vi.fn(() => ({
+  userClient: vi.fn(() => ({
     listMyMemberships: mockListMyMemberships,
     invalidateMembershipCache: mockInvalidateMembershipCache,
   })),
