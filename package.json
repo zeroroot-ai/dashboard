@@ -62,7 +62,7 @@
     "check:no-prod-debug-flags": "node scripts/check-no-prod-debug-flags.mjs"
   },
   "dependencies": {
-    "@ai-sdk/provider": "^3.0.8",
+    "@ai-sdk/provider": "^4.0.18",
     "@ai-sdk/react": "^3.0.143",
     "@assistant-ui/react": "0.15.18",
     "@assistant-ui/react-ai-sdk": "1.4.9",
