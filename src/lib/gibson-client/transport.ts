@@ -9,7 +9,7 @@ import {
   type Client,
   type Interceptor,
 } from '@connectrpc/connect';
-import { createGrpcTransport } from '@connectrpc/connect-node';
+import { createGrpcTransport, Http2SessionManager } from '@connectrpc/connect-node';
 import type { DescService } from '@bufbuild/protobuf';
 import { requireUserToken } from '../auth/user-token';
 import {
@@ -226,6 +226,51 @@ function spiffeNodeOptions():
 }
 
 // ---------------------------------------------------------------------------
+// One HTTP/2 session for every client (dashboard#107)
+// ---------------------------------------------------------------------------
+
+/**
+ * The HTTP/2 session manager every transport shares.
+ *
+ * `makeClient` runs on every `userClient()` / `serviceClient()` /
+ * `tokenClient()` call, so once per RPC-issuing request. Left to itself,
+ * `createGrpcTransport` builds a NEW session manager each time, and each one
+ * keeps its HTTP/2 session and TLS context open after the call ends. The heap
+ * then climbs with traffic until V8 dies: hosted's identity exit test (run
+ * 36355897936) signed a person in and the pod ended "JavaScript heap out of
+ * memory" at 507 MB about 11 minutes later.
+ *
+ * One manager multiplexes every call over one session to Envoy. It is
+ * replaced only when the pod's X509-SVID changes (cold start to mTLS, and each
+ * rotation), because the TLS identity is fixed per session. The old manager
+ * is closed after a grace period, so calls already in flight on it finish.
+ */
+let sharedSession:
+  | { identity: string; manager: Http2SessionManager }
+  | undefined;
+
+const RETIRED_SESSION_GRACE_MS = 60_000;
+
+export function sessionManagerFor(
+  nodeOptions: ReturnType<typeof spiffeNodeOptions>,
+): Http2SessionManager {
+  const identity = nodeOptions && 'cert' in nodeOptions ? String(nodeOptions.cert ?? '') : '';
+  if (sharedSession && sharedSession.identity === identity) {
+    return sharedSession.manager;
+  }
+  const retired = sharedSession?.manager;
+  sharedSession = {
+    identity,
+    manager: new Http2SessionManager(ENVOY_BASE_URL, undefined, nodeOptions),
+  };
+  if (retired) {
+    const timer = setTimeout(() => retired.abort(), RETIRED_SESSION_GRACE_MS);
+    timer.unref?.();
+  }
+  return sharedSession.manager;
+}
+
+// ---------------------------------------------------------------------------
 // Per-RPC authorization interceptor (dashboard#848, E9 follow-up).
 //
 // Bakes the server-side `assertAuthorized` defense-in-depth check INTO the
@@ -344,7 +389,8 @@ function makeClient<T extends DescService>(
   // the operator knows we're falling back.
   const transport = createGrpcTransport({
     baseUrl: ENVOY_BASE_URL,
-    nodeOptions: spiffeNodeOptions(),
+    // The shared session carries the TLS options (see sessionManagerFor).
+    sessionManager: sessionManagerFor(spiffeNodeOptions()),
     interceptors,
   });
 

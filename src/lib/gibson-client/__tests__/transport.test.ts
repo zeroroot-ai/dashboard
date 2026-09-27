@@ -32,12 +32,23 @@ interface MockReq {
 }
 
 let capturedInterceptors: Interceptor[] = [];
+const capturedSessionManagers: unknown[] = [];
+const sessionManagerCtor = vi.fn();
 
 vi.mock('@connectrpc/connect-node', () => ({
-  createGrpcTransport: vi.fn((opts: { interceptors?: Interceptor[] }) => {
-    capturedInterceptors = opts.interceptors ?? [];
-    return { _tag: 'mock-transport' };
-  }),
+  createGrpcTransport: vi.fn(
+    (opts: { interceptors?: Interceptor[]; sessionManager?: unknown }) => {
+      capturedInterceptors = opts.interceptors ?? [];
+      capturedSessionManagers.push(opts.sessionManager);
+      return { _tag: 'mock-transport' };
+    },
+  ),
+  Http2SessionManager: class {
+    abort = vi.fn();
+    constructor(...args: unknown[]) {
+      sessionManagerCtor(...args);
+    }
+  },
 }));
 
 vi.mock('@connectrpc/connect', async (importActual) => {
@@ -178,5 +189,34 @@ describe('per-RPC authz bake-in (dashboard#848)', () => {
     const { userClient } = await import('../transport');
     userClient(FAKE_SERVICE);
     await expect(runInterceptors()).rejects.toThrow('denied');
+  });
+});
+
+// dashboard#107: a transport per call used to open an HTTP/2 session per call
+// and never close it, until the pod ran out of heap. Every client must ride
+// ONE shared session manager.
+describe('transport, one shared HTTP/2 session (dashboard#107)', () => {
+  it('passes the same, defined session manager to every transport', async () => {
+    const { userClient, serviceClient, tokenClient } = await import('../transport');
+    capturedSessionManagers.length = 0;
+    const svc = { typeName: 'gibson.test.v1.T', methods: [] } as never;
+    userClient(svc);
+    userClient(svc);
+    serviceClient(svc, 't1');
+    tokenClient(svc, 'raw');
+    expect(capturedSessionManagers).toHaveLength(4);
+    expect(capturedSessionManagers[0]).toBeDefined();
+    for (const m of capturedSessionManagers) {
+      expect(m).toBe(capturedSessionManagers[0]);
+    }
+  });
+
+  it('builds a new session only when the TLS identity changes', async () => {
+    const { sessionManagerFor } = await import('../transport');
+    const a = sessionManagerFor({ cert: 'svid-1' } as never);
+    const again = sessionManagerFor({ cert: 'svid-1' } as never);
+    const rotated = sessionManagerFor({ cert: 'svid-2' } as never);
+    expect(again).toBe(a);
+    expect(rotated).not.toBe(a);
   });
 });
