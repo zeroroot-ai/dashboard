@@ -75,6 +75,19 @@ vi.mock("@/app/actions/crd/sessions", () => ({
   revokeUserSessionsAction: vi.fn(async () => ({ ok: true, data: undefined })),
 }));
 
+vi.mock("@/app/actions/crd/reset-mfa", () => ({
+  resetUserMfaAction: vi.fn(async () => ({
+    ok: true,
+    data: {
+      sessionsTerminated: 0,
+      otpCleared: false,
+      u2fCleared: 0,
+      passkeysCleared: 0,
+      notified: true,
+    },
+  })),
+}));
+
 vi.mock("@/components/gibson/users/UserTeamMembershipsEditor", () => ({
   UserTeamMembershipsEditor: () => null,
 }));

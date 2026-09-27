@@ -275,6 +275,11 @@ export const CRD_PERMISSIONS: Record<
   // the daemon enforces the fine-grained can_revoke_sessions decision for
   // revoking OTHER users (self / team-admin / tenant-admin). dashboard#717.
   revokeUserSessionsAction: { relation: "member" },
+  // admin only (NOT self-service, unlike revokeUserSessionsAction above):
+  // hosted#206 scopes this to "an Owner or Admin resets any tenant user's
+  // MFA in their tenant, including the Owner's own" — owner implies admin,
+  // so the Owner resetting their own MFA is still covered by this gate.
+  resetUserMfaAction: { relation: "admin" },
   setComponentAccessAction: { relation: "admin" },
   installAgentAction: { relation: "admin" },
   listTeamsAction: { relation: "admin" },
