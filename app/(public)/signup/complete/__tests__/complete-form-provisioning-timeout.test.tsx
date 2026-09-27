@@ -109,16 +109,29 @@ const CARD_FREE_PROPS = {
 
 /** Fill the password pair and submit. */
 async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
-  // The password input is wrapped in a positioning <div> inside FormControl,
-  // so the label associates with the div (non-labellable); query by
-  // placeholder instead.
-  await user.type(
-    screen.getByPlaceholderText(/at least 12 characters/i),
-    'Passw0rd!Test',
-  );
+  // Reach both fields through their labels, the way a user and the e2e
+  // helper (e2e/auth/helpers/signup-via-form.ts) do (dashboard#77).
+  await user.type(screen.getByLabelText(/^password$/i), 'Passw0rd!Test');
   await user.type(screen.getByLabelText(/confirm password/i), 'Passw0rd!Test');
   await user.click(screen.getByRole('button', { name: /create account/i }));
 }
+
+describe('CompleteSignupForm field labels (dashboard#77)', () => {
+  it('associates the Password label with the password input', () => {
+    render(<CompleteSignupForm {...CARD_FREE_PROPS} />);
+    const password = screen.getByLabelText(/^password$/i);
+    expect(password.tagName).toBe('INPUT');
+    expect(password).toHaveAttribute('name', 'password');
+    expect(password).toHaveAttribute('autocomplete', 'new-password');
+  });
+
+  it('associates the Confirm password label with the confirm input', () => {
+    render(<CompleteSignupForm {...CARD_FREE_PROPS} />);
+    const confirm = screen.getByLabelText(/^confirm password$/i);
+    expect(confirm.tagName).toBe('INPUT');
+    expect(confirm).toHaveAttribute('name', 'passwordConfirm');
+  });
+});
 
 describe('CompleteSignupForm PROVISIONING_TIMEOUT handling (dashboard#962)', () => {
   beforeEach(() => {

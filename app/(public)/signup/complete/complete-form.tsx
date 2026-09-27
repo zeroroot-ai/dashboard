@@ -341,8 +341,11 @@ function CompleteSignupFormInner({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <div className="relative">
+                {/* FormControl wraps the Input itself, not the positioning
+                    div, so the Input receives the id that FormLabel points
+                    at (dashboard#77). */}
+                <div className="relative">
+                  <FormControl>
                     <Input
                       {...field}
                       ref={(el) => {
@@ -356,21 +359,21 @@ function CompleteSignupFormInner({
                       aria-required="true"
                       className="pr-10"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                      tabIndex={isDisabled ? -1 : undefined}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" aria-hidden="true" />
-                      ) : (
-                        <Eye className="h-4 w-4" aria-hidden="true" />
-                      )}
-                    </button>
-                  </div>
-                </FormControl>
+                  </FormControl>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    tabIndex={isDisabled ? -1 : undefined}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" aria-hidden="true" />
+                    ) : (
+                      <Eye className="h-4 w-4" aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
                 <PasswordStrengthMeter
                   password={passwordValue}
                   policy={passwordPolicy}
