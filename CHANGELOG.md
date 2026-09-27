@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.122.1](https://github.com/zeroroot-ai/dashboard/compare/v0.122.0...v0.122.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* delete the shell-user GC script and the dead claim-account spec ([#106](https://github.com/zeroroot-ai/dashboard/issues/106)) ([e51807d](https://github.com/zeroroot-ai/dashboard/commit/e51807d62c280e83c32aafd86695c1a70cbc4214))
+* **signup:** associate the Password label with its input ([#95](https://github.com/zeroroot-ai/dashboard/issues/95)) ([5268f0f](https://github.com/zeroroot-ai/dashboard/commit/5268f0f036df83bc2f4411a00b48c9a364ea9aad)), closes [#77](https://github.com/zeroroot-ai/dashboard/issues/77)
+* **transport:** every RPC client shares one HTTP/2 session, so the heap stops climbing ([#108](https://github.com/zeroroot-ai/dashboard/issues/108)) ([3e4a030](https://github.com/zeroroot-ai/dashboard/commit/3e4a030670ab8713bfdbf8a5b41e858423b1f74e)), closes [#107](https://github.com/zeroroot-ai/dashboard/issues/107)
+
 ## [0.122.0](https://github.com/zeroroot-ai/dashboard/compare/v0.121.1...v0.122.0) (2026-09-27)
 
 
