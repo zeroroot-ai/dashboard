@@ -1,0 +1,118 @@
+name: authz-registry-drift
+
+# Cross-repo freshness gate for src/gen/ (proto bindings) and
+# src/gen/authz/registry.ts against the CURRENT zeroroot-ai/gibson main.
+#
+# node-ci.yml's reusable workflow (both the fast and heavy tiers) calls
+# check-proto-bindings-fresh.mjs / check-authz-registry-fresh.mjs with
+# `skip-sibling-generators: true`: a single-repo dashboard checkout has no
+# `gibson` or `sdk` sibling on disk, so those two gates can only ever run in
+# STRUCTURAL mode there (file exists, non-empty, carries the generator
+# header) — they cannot tell a stale relation string or a removed RPC from a
+# healthy one. That gap is what let a proto rename on gibson main
+# (platform_operator -> platform_owner on seven AdminTenantService RPCs,
+# admin -> owner on MembershipService.TransferOwnership) and several newly
+# added RPCs sit undetected in the committed registry.ts and src/gen/ until
+# an unrelated PR happened to run the real generators on a polyrepo
+# workstation and noticed the diff (see fix/authz-proto-drift's PR body for
+# the full list).
+#
+# This workflow is the one gate with both proto trees on disk, so it is the
+# one that can actually catch that class of drift. It is intentionally NOT
+# folded into node-ci.yml: doing so would put a Go toolchain, a second-repo
+# checkout and a buf module fetch on every dashboard PR's critical path,
+# which is exactly the cost node-ci.yml's own comment says the single-repo
+# design was chosen to avoid. Scheduled + workflow_dispatch instead, the same
+# shape the org already uses for cross-repo drift/scorecard checks that must
+# not block every PR of the repo they run in.
+#
+# Needs no secret beyond the default GITHUB_TOKEN: zeroroot-ai/gibson and
+# zeroroot-ai/sdk are both public (org public-repos flip, 2026-09), so the
+# checkout and `go mod download` below need no credential at all. The
+# `buf dep update` step inside proto-generate.mjs / gen-authz-registry.mjs
+# separately tries to refresh buf.build/bufbuild/protovalidate from the BSR
+# and fails without a `buf registry login` token — this is EXPECTED and
+# already tolerated by both scripts (they log the failure and fall back to
+# the pinned buf.lock they generate plus whatever protovalidate copy is in
+# the runner's local buf module cache). Whether that fallback actually
+# succeeds on a cold runner with no pre-warmed buf cache is exactly what
+# this workflow's first real run answers; if it does not, the fix is a BSR
+# token (`secrets.BUF_TOKEN` or equivalent), not a checkout change, and that
+# requirement gets recorded in the PR this workflow shipped in.
+
+on:
+  schedule:
+    - cron: "17 6 * * *" # daily, off the hour so it doesn't compete with other repos' cron jobs
+  workflow_dispatch: {}
+  pull_request:
+    paths:
+      - ".github/workflows/authz-registry-drift.yml"
+      - "scripts/proto-generate.mjs"
+      - "scripts/gen-authz-registry.mjs"
+      - "scripts/lib/freshness-gate.mjs"
+
+concurrency:
+  group: authz-registry-drift-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: proto + authz registry drift vs gibson main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dashboard
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Checkout gibson main (public, no token required)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: zeroroot-ai/gibson
+          ref: main
+          path: _gws/gibson
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: _gws/gibson/go.mod
+
+      - name: Resolve the pinned SDK module (public, no token required)
+        working-directory: _gws/gibson
+        run: go mod download github.com/zeroroot-ai/sdk
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: "10.34.5"
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Confirm FULL mode (both sibling sources on disk)
+        env:
+          GIBSON_WORKSPACE_ROOT: ${{ github.workspace }}/_gws
+        run: |
+          set -euo pipefail
+          probe="$(node scripts/proto-generate.mjs --probe)"
+          echo "$probe"
+          available="$(node -e 'process.stdout.write(String(JSON.parse(process.argv[1]).available))' "$probe")"
+          if [ "$available" != "true" ]; then
+            echo "::error::gibson sibling not resolved; this run would silently degrade to STRUCTURAL mode and pass vacuously." >&2
+            exit 1
+          fi
+
+      - name: Proto bindings drift (FULL mode)
+        env:
+          GIBSON_WORKSPACE_ROOT: ${{ github.workspace }}/_gws
+        run: node scripts/check-proto-bindings-fresh.mjs
+
+      - name: Authz registry drift (FULL mode)
+        env:
+          GIBSON_WORKSPACE_ROOT: ${{ github.workspace }}/_gws
+        run: node scripts/check-authz-registry-fresh.mjs
