@@ -20,6 +20,7 @@ export type CrdActionName =
   | "inviteMemberAction"
   | "acceptInvitationAction"
   | "revokeMemberAction"
+  | "leaveTenantAction"
   | "resendInvitationAction"
   | "revokeUserSessionsAction"
   | "setComponentAccessAction"

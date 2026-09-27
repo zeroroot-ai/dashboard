@@ -2209,6 +2209,15 @@ export const AuthRegistry: Record<string, AuthEntry> = {
     allowedIdentities: IdentityClass.USER,
     unauthenticated: false,
   },
+  "/gibson.tenant.v1.MembershipService/LeaveTenant": {
+    method: "/gibson.tenant.v1.MembershipService/LeaveTenant",
+    service: "gibson.tenant.v1.MembershipService",
+    relation: "member",
+    objectType: "tenant",
+    objectDeriver: "tenant_from_identity",
+    allowedIdentities: IdentityClass.USER,
+    unauthenticated: false,
+  },
   "/gibson.tenant.v1.MembershipService/ListMembers": {
     method: "/gibson.tenant.v1.MembershipService/ListMembers",
     service: "gibson.tenant.v1.MembershipService",
@@ -2229,6 +2238,15 @@ export const AuthRegistry: Record<string, AuthEntry> = {
   },
   "/gibson.tenant.v1.MembershipService/ListTeams": {
     method: "/gibson.tenant.v1.MembershipService/ListTeams",
+    service: "gibson.tenant.v1.MembershipService",
+    relation: "admin",
+    objectType: "tenant",
+    objectDeriver: "tenant_from_identity",
+    allowedIdentities: IdentityClass.USER,
+    unauthenticated: false,
+  },
+  "/gibson.tenant.v1.MembershipService/RemoveMember": {
+    method: "/gibson.tenant.v1.MembershipService/RemoveMember",
     service: "gibson.tenant.v1.MembershipService",
     relation: "admin",
     objectType: "tenant",

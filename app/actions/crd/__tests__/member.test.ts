@@ -2,19 +2,25 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Unit tests for revokeMemberAction (dashboard#715).
+ * Unit tests for revokeMemberAction and leaveTenantAction (Removal,
+ * ADR-0093 §11, hosted#205).
  *
- * revokeMemberAction now calls the daemon's MembershipService, SetTenantRole
- * (remove) for active members, CancelInvitation for pending invitations, and
- * runs a last-active-owner safeguard against the daemon roster
- * (listMembersAction) before any mutation.
+ * revokeMemberAction calls the daemon's MembershipService.RemoveMember for
+ * active members (which revokes every session at once and deletes the
+ * Zitadel account) and CancelInvitation for pending invitations, running an
+ * Owner pre-check against the daemon roster (listMembersAction) before any
+ * mutation. leaveTenantAction is the self-service half: it calls
+ * MembershipService.LeaveTenant with no target, the caller removes
+ * themselves.
  */
 
+import { ConnectError, Code } from "@connectrpc/connect";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   listMembers: vi.fn(),
-  setTenantRole: vi.fn(async (_req: Record<string, unknown>) => ({})),
+  removeMember: vi.fn(async (_req: Record<string, unknown>) => ({})),
+  leaveTenant: vi.fn(async (_req: Record<string, unknown>) => ({})),
   cancelInvitation: vi.fn(async (_req: Record<string, unknown>) => ({})),
   requireCrdSession: vi.fn(),
 }));
@@ -25,7 +31,8 @@ vi.mock("@/app/actions/read/listMembers", () => ({
 
 vi.mock("@/src/lib/gibson-client", () => ({
   userClient: () => ({
-    setTenantRole: mocks.setTenantRole,
+    removeMember: mocks.removeMember,
+    leaveTenant: mocks.leaveTenant,
     cancelInvitation: mocks.cancelInvitation,
   }),
 }));
@@ -41,7 +48,7 @@ vi.mock("@/src/lib/auth/active-tenant", async (importOriginal) => {
 
 vi.mock("@/src/lib/audit/crd", () => ({ emitCrdAuditFromGate: vi.fn() }));
 
-import { revokeMemberAction } from "../member";
+import { revokeMemberAction, leaveTenantAction } from "../member";
 
 function member(over: { userId?: string; email?: string; role: string; status?: string }) {
   return {
@@ -56,8 +63,10 @@ function member(over: { userId?: string; email?: string; role: string; status?: 
 
 beforeEach(() => {
   mocks.listMembers.mockReset();
-  mocks.setTenantRole.mockReset();
-  mocks.setTenantRole.mockResolvedValue({});
+  mocks.removeMember.mockReset();
+  mocks.removeMember.mockResolvedValue({});
+  mocks.leaveTenant.mockReset();
+  mocks.leaveTenant.mockResolvedValue({});
   mocks.cancelInvitation.mockReset();
   mocks.cancelInvitation.mockResolvedValue({});
   // Authz gate: allow.
@@ -68,8 +77,8 @@ beforeEach(() => {
   });
 });
 
-describe("revokeMemberAction, last-owner safeguard", () => {
-  it("blocks removal of the last active owner (no mutation)", async () => {
+describe("revokeMemberAction, Owner pre-check", () => {
+  it("blocks removal of the Owner (no mutation)", async () => {
     mocks.listMembers.mockResolvedValue({
       ok: true,
       data: [member({ userId: "o1", role: "owner" })],
@@ -77,52 +86,70 @@ describe("revokeMemberAction, last-owner safeguard", () => {
     const r = await revokeMemberAction({ userId: "o1", email: "o1@example.com", status: "active" });
     expect(r.ok).toBe(false);
     expect((r as { code: string }).code).toBe("FORBIDDEN");
-    expect((r as { error: string }).error).toMatch(/last owner/i);
-    expect(mocks.setTenantRole).not.toHaveBeenCalled();
+    expect((r as { error: string }).error).toMatch(/owner/i);
+    expect(mocks.removeMember).not.toHaveBeenCalled();
   });
 
-  it("allows removal when two active owners exist", async () => {
-    mocks.listMembers.mockResolvedValue({
-      ok: true,
-      data: [member({ userId: "o1", role: "owner" }), member({ userId: "o2", role: "owner" })],
-    });
-    const r = await revokeMemberAction({ userId: "o1", email: "o1@example.com", status: "active" });
-    expect(r.ok).toBe(true);
-    expect(mocks.setTenantRole).toHaveBeenCalledOnce();
-    expect(mocks.setTenantRole.mock.calls[0][0]).toMatchObject({ userId: "o1", remove: true });
-  });
-
-  it("allows removal of an admin even with a single owner", async () => {
+  it("allows removal of an admin", async () => {
     mocks.listMembers.mockResolvedValue({
       ok: true,
       data: [member({ userId: "o1", role: "owner" }), member({ userId: "a1", role: "admin" })],
     });
     const r = await revokeMemberAction({ userId: "a1", email: "a1@example.com", status: "active" });
     expect(r.ok).toBe(true);
-    expect(mocks.setTenantRole).toHaveBeenCalledOnce();
+    expect(mocks.removeMember).toHaveBeenCalledOnce();
+    expect(mocks.removeMember.mock.calls[0][0]).toMatchObject({ userId: "a1", tenantId: "acme" });
   });
 
-  it("does not count invited owners toward the active-owner total", async () => {
-    mocks.listMembers.mockResolvedValue({
-      ok: true,
-      data: [
-        member({ userId: "o1", role: "owner", status: "active" }),
-        member({ email: "pending@example.com", role: "owner", status: "invited" }),
-      ],
-    });
+  it("falls back to the daemon's own PermissionDenied mapping when the roster lookup misses the target", async () => {
+    mocks.listMembers.mockResolvedValue({ ok: true, data: [] });
+    mocks.removeMember.mockRejectedValue(
+      new ConnectError("the tenant's Owner cannot be removed", Code.PermissionDenied),
+    );
     const r = await revokeMemberAction({ userId: "o1", email: "o1@example.com", status: "active" });
     expect(r.ok).toBe(false);
-    expect(mocks.setTenantRole).not.toHaveBeenCalled();
+    expect((r as { code: string }).code).toBe("FORBIDDEN");
+    expect((r as { error: string }).error).toMatch(/owner/i);
+    expect((r as { error: string }).error).not.toMatch(/cannot be removed/); // fixed message, not the raw daemon text
   });
 });
 
 describe("revokeMemberAction, invitation cancel path", () => {
-  it("cancels a pending invitation by email (no roster lookup, no role strip)", async () => {
+  it("cancels a pending invitation by email (no roster lookup, no removal RPC)", async () => {
     const r = await revokeMemberAction({ userId: "", email: "pending@example.com", status: "invited" });
     expect(r.ok).toBe(true);
     expect(mocks.cancelInvitation).toHaveBeenCalledOnce();
     expect(mocks.cancelInvitation.mock.calls[0][0]).toMatchObject({ email: "pending@example.com" });
-    expect(mocks.setTenantRole).not.toHaveBeenCalled();
+    expect(mocks.removeMember).not.toHaveBeenCalled();
     expect(mocks.listMembers).not.toHaveBeenCalled();
+  });
+});
+
+describe("leaveTenantAction", () => {
+  it("calls LeaveTenant with no target (the caller removes themselves)", async () => {
+    const r = await leaveTenantAction();
+    expect(r.ok).toBe(true);
+    expect(mocks.leaveTenant).toHaveBeenCalledOnce();
+    expect(mocks.leaveTenant.mock.calls[0][0]).toMatchObject({ tenantId: "acme" });
+  });
+
+  it("maps the daemon's Owner refusal to a fixed, clear message", async () => {
+    mocks.leaveTenant.mockRejectedValue(
+      new ConnectError("the tenant's Owner cannot leave", Code.PermissionDenied),
+    );
+    const r = await leaveTenantAction();
+    expect(r.ok).toBe(false);
+    expect((r as { code: string }).code).toBe("FORBIDDEN");
+    expect((r as { error: string }).error).toMatch(/transfer ownership/i);
+  });
+
+  it("returns FORBIDDEN when the session gate denies", async () => {
+    mocks.requireCrdSession.mockResolvedValue({
+      ok: false,
+      result: { ok: false, error: "denied", code: "FORBIDDEN" },
+    });
+    const r = await leaveTenantAction();
+    expect(r.ok).toBe(false);
+    expect(mocks.leaveTenant).not.toHaveBeenCalled();
   });
 });
