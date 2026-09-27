@@ -23,6 +23,7 @@ export type CrdActionName =
   | "leaveTenantAction"
   | "resendInvitationAction"
   | "revokeUserSessionsAction"
+  | "resetUserMfaAction"
   | "setComponentAccessAction"
   | "installAgentAction"
   | "listTeamsAction"

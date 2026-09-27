@@ -10,7 +10,7 @@ import { useSession } from "@/src/lib/session-client";
 import { useTenantId } from "@/src/lib/auth/tenant";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { useTenantContext } from "@/src/lib/tenant-context";
-import { ArrowLeft, ArrowRightLeft, LogOut, Mail, ShieldOff } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft, KeyRound, LogOut, Mail, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { UserTeamMembershipsEditor } from "@/components/gibson/users/UserTeamMembershipsEditor";
@@ -49,6 +49,7 @@ import { transferOwnershipAction } from "@/app/actions/crd/transfer-ownership";
 import { revokeMemberAction, resendInvitationAction } from "@/app/actions/crd/member";
 import { setTenantRoleAction } from "@/app/actions/crd/role";
 import { revokeUserSessionsAction } from "@/app/actions/crd/sessions";
+import { resetUserMfaAction } from "@/app/actions/crd/reset-mfa";
 import { listMembersAction, type MemberRow } from "@/app/actions/read/listMembers";
 import type { TenantRole } from "@/app/actions/crd/role";
 import type { MemberRole } from "@/app/actions/crd/types";
@@ -87,6 +88,12 @@ export default function UserDetailPage() {
   );
   // During the auth query, treat as not allowed (hide-on-loading contract).
   const canEdit = !authLoading && canManageMembers && !isSelf;
+  // ResetUserMFA (hosted#206) is admin-only, unlike RevokeUserSessions: an
+  // Owner or Admin resets any member's MFA, including their own (owner
+  // implies admin), so this is NOT gated on !isSelf.
+  const { allowed: canResetMFA, loading: resetMfaAuthLoading } = useAuthorize(
+    "/gibson.tenant.v1.UserService/ResetUserMFA",
+  );
 
   // Derive whether the viewing user is the tenant owner from the FGA-resolved
   // rolesByTenant map populated by TenantContextProvider.
@@ -121,6 +128,10 @@ export default function UserDetailPage() {
   const [revoking, setRevoking] = React.useState(false);
   const [revokingSessions, setRevokingSessions] = React.useState(false);
 
+  // Reset MFA confirmation dialog state (hosted#206).
+  const [resetMfaOpen, setResetMfaOpen] = React.useState(false);
+  const [resettingMfa, setResettingMfa] = React.useState(false);
+
   // Role change state. The override is a TenantRole because setTenantRoleAction
   // only accepts admin|member, owners cannot be set via this dropdown.
   const [roleOverride, setRoleOverride] = React.useState<TenantRole | null>(null);
@@ -141,6 +152,9 @@ export default function UserDetailPage() {
   // always sign themselves out everywhere. The daemon enforces the
   // can_revoke_sessions decision (gibson#622); this only controls visibility.
   const showRevokeSessions = isActive && (canEdit || isSelf);
+  // Admin-only (see the useAuthorize call above); not gated on !isSelf so an
+  // Owner or Admin sees the control on their own row too.
+  const showResetMFA = !resetMfaAuthLoading && canResetMFA && isActive;
   const showResendInvitation = canEdit && isInvited;
   const showRoleDropdown =
     canEdit && isActive && !isOwner;
@@ -209,6 +223,26 @@ export default function UserDetailPage() {
     }
   }
 
+  async function handleResetMFA() {
+    if (!member) return;
+    setResettingMfa(true);
+    try {
+      const result = await resetUserMfaAction({ targetUserId: member.userId });
+      if (result.ok) {
+        toast.success(
+          result.data.notified
+            ? `MFA reset for ${member.email}. They will receive a sign-in link at their own address.`
+            : `MFA reset for ${member.email}. No notice could be sent, let them know directly.`,
+        );
+      } else {
+        toast.error(result.error || "Failed to reset MFA.");
+      }
+    } finally {
+      setResettingMfa(false);
+      setResetMfaOpen(false);
+    }
+  }
+
   async function handleResendInvitation() {
     if (!member) return;
     try {
@@ -252,7 +286,8 @@ export default function UserDetailPage() {
     showResendInvitation ||
     showTransferOwnership ||
     showRevokeAccess ||
-    showRevokeSessions;
+    showRevokeSessions ||
+    showResetMFA;
 
   return (
     <div className="space-y-4">
@@ -511,12 +546,43 @@ export default function UserDetailPage() {
                     </>
                   )}
 
-                  {showRevokeAccess && (
+                  {showResetMFA && (
                     <>
                       {(showRoleDropdown ||
                         showResendInvitation ||
                         showTransferOwnership ||
                         showRevokeSessions) && (
+                        <Separator className="bg-highlight/20" />
+                      )}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <p className="font-mono text-sm">Reset MFA</p>
+                          <p className="text-xs text-muted-foreground">
+                            {isSelf
+                              ? "Sign yourself out everywhere, clear your authenticator app, security keys, and passkeys, and get a sign-in link at your own address."
+                              : `Sign ${member.email} out everywhere and clear their authenticator app, security keys, and passkeys. They receive a sign-in link at their own address; you receive nothing that grants access to their account.`}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 border-destructive/50 text-destructive hover:bg-destructive/10"
+                          onClick={() => setResetMfaOpen(true)}
+                        >
+                          <KeyRound className="size-3.5" />
+                          Reset MFA
+                        </Button>
+                      </div>
+                    </>
+                  )}
+
+                  {showRevokeAccess && (
+                    <>
+                      {(showRoleDropdown ||
+                        showResendInvitation ||
+                        showTransferOwnership ||
+                        showRevokeSessions ||
+                        showResetMFA) && (
                         <Separator className="bg-highlight/20" />
                       )}
                       <div className="flex items-center justify-between">
@@ -595,6 +661,34 @@ export default function UserDetailPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {revoking ? "Removing..." : "Remove"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset MFA confirmation dialog (hosted#206) */}
+      <AlertDialog open={resetMfaOpen} onOpenChange={setResetMfaOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Reset MFA for {member?.email}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This signs {isSelf ? "you" : "them"} out everywhere immediately
+              and removes every authenticator app, security key, and passkey
+              on file. {isSelf ? "You" : "They"} will need to sign in and set
+              up MFA again; the sign-in link goes only to{" "}
+              {isSelf ? "your own" : "their own"} address.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resettingMfa}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleResetMFA}
+              disabled={resettingMfa}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {resettingMfa ? "Resetting..." : "Reset MFA"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
