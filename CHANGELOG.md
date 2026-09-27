@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.122.0](https://github.com/zeroroot-ai/dashboard/compare/v0.121.1...v0.122.0) (2026-09-27)
+
+
+### Features
+
+* **members:** add a Reset MFA action to the member detail page ([#92](https://github.com/zeroroot-ai/dashboard/issues/92)) ([ed65e43](https://github.com/zeroroot-ai/dashboard/commit/ed65e438b134a3039818b5cda3b524fb9671d092))
+
+
+### Bug Fixes
+
+* **authz:** resync src/gen and the authz registry with gibson main ([#94](https://github.com/zeroroot-ai/dashboard/issues/94)) ([69d7194](https://github.com/zeroroot-ai/dashboard/commit/69d7194708f701be0855c288fb62f0ed2fe6ef94))
+* **members:** removing a member deletes their account, not just their role ([#91](https://github.com/zeroroot-ai/dashboard/issues/91)) ([4511e66](https://github.com/zeroroot-ai/dashboard/commit/4511e6699854065680b4a82a48bb966a50508a18))
+
 ## [0.121.1](https://github.com/zeroroot-ai/dashboard/compare/v0.121.0...v0.121.1) (2026-09-25)
 
 
