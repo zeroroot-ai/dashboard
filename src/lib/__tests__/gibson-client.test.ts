@@ -40,6 +40,10 @@ vi.mock('@connectrpc/connect-node', () => ({
     capturedInterceptors = opts.interceptors ?? [];
     return { _tag: 'mock-transport' };
   }),
+  // The transport shares one session manager (dashboard#107).
+  Http2SessionManager: class {
+    abort = vi.fn();
+  },
 }));
 
 // userClient bakes in the per-RPC authz check (dashboard#848). Stub it to a
