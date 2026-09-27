@@ -121,8 +121,8 @@ deliberate, reviewed per-symbol pass, a scoped follow-up. When done, flip `expor
 
 Precise, justified `ignoreDependencies` (not blanket):
 
-- `pg` — used only by `scripts/shell-gc.mjs` (a dev GC helper, not in CI); `pg`
-  is intentionally not a declared dependency.
+- `pg` — used only by the e2e database helper `e2e/auth/helpers/db.ts`, which
+  loads it with `require`; `pg` is intentionally not a declared dependency.
 - `@vitest/coverage-v8` — used only by the optional `test:coverage` script.
 - `@auth/core` — the `@auth/core/jwt` subpath is re-exported via `next-auth`
   (a transitive); declaring it directly would duplicate next-auth's pin.
