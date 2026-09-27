@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/src/lib/session-client";
 import { useTenantId } from "@/src/lib/auth/tenant";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
-import { MoreHorizontal, Search, Trash2, UserPlus, Eye, Mail, XCircle } from "lucide-react";
+import { MoreHorizontal, Search, Trash2, UserPlus, Eye, Mail, XCircle, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -58,7 +58,7 @@ import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { InviteUserDialog } from "./InviteUserDialog";
 import { TeamMembershipChips } from "./TeamMembershipChips";
 import { useOrgGraph } from "@/src/hooks/use-org-graph";
-import { revokeMemberAction, resendInvitationAction } from "@/app/actions/crd/member";
+import { revokeMemberAction, resendInvitationAction, leaveTenantAction } from "@/app/actions/crd/member";
 import { setTenantRoleAction } from "@/app/actions/crd/role";
 import { listMembersAction, type MemberRow } from "@/app/actions/read/listMembers";
 
@@ -87,6 +87,7 @@ function UserActionsMenu({
   onRemove,
   onResend,
   onCancel,
+  onLeave,
 }: {
   member: MemberRow;
   canEdit: boolean;
@@ -95,9 +96,14 @@ function UserActionsMenu({
   onRemove: (member: MemberRow) => void;
   onResend: (member: MemberRow) => void;
   onCancel: (member: MemberRow) => void;
+  onLeave: () => void;
 }) {
   const isInvited = member.status === "invited";
   const canRemove = canEdit && !isSelf && !isOwner;
+  // Removal's self-service half (ADR-0093 §11, hosted#205): any member may
+  // leave their own tenant, regardless of canEdit. The Owner cannot leave;
+  // they see no action on their own row (must transfer ownership first).
+  const canLeave = isSelf && !isOwner && !isInvited;
 
   // For owner rows there are no destructive actions, wrap the trigger with a
   // tooltip so admins know why the row is protected.
@@ -145,6 +151,18 @@ function UserActionsMenu({
             >
               <Trash2 className="size-4" />
               Remove
+            </DropdownMenuItem>
+          </>
+        )}
+        {canLeave && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={onLeave}
+            >
+              <LogOut className="size-4" />
+              Leave workspace
             </DropdownMenuItem>
           </>
         )}
@@ -208,6 +226,8 @@ export function UsersContent() {
   const [removing, setRemoving] = React.useState(false);
   const [memberToCancel, setMemberToCancel] = React.useState<MemberRow | null>(null);
   const [cancelling, setCancelling] = React.useState(false);
+  const [leaveOpen, setLeaveOpen] = React.useState(false);
+  const [leaving, setLeaving] = React.useState(false);
   const [pendingRole, setPendingRole] = React.useState<Record<string, boolean>>({});
 
   const filtered = React.useMemo(() => {
@@ -284,6 +304,24 @@ export function UsersContent() {
     } finally {
       setCancelling(false);
       setMemberToCancel(null);
+    }
+  }
+
+  async function handleConfirmLeave() {
+    setLeaving(true);
+    try {
+      const res = await leaveTenantAction();
+      if (!res.ok) throw new Error(res.error);
+      toast.success("You have left this workspace.");
+      // The daemon already revoked every session at once (ADR-0093 §11); sign
+      // out of the dashboard's own cookie too, same route the sidebar log-out
+      // uses, so the browser does not keep pointing at a tenant the caller no
+      // longer belongs to.
+      window.location.href = "/api/auth/federated-signout";
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to leave workspace.");
+      setLeaving(false);
+      setLeaveOpen(false);
     }
   }
 
@@ -426,6 +464,7 @@ export function UsersContent() {
                         onRemove={setMemberToRemove}
                         onResend={handleResend}
                         onCancel={setMemberToCancel}
+                        onLeave={() => setLeaveOpen(true)}
                       />
                     </TableCell>
                   </TableRow>
@@ -509,6 +548,29 @@ export function UsersContent() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {cancelling ? "Canceling..." : "Cancel invitation"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Leave workspace confirmation dialog (ADR-0093 §11, hosted#205) */}
+      <AlertDialog open={leaveOpen} onOpenChange={(open) => { if (!open && !leaving) setLeaveOpen(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave this workspace?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will lose access immediately and be signed out. Your missions
+              and findings stay in the workspace, attributed to you by name.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={leaving}>Stay</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmLeave}
+              disabled={leaving}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {leaving ? "Leaving..." : "Leave workspace"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

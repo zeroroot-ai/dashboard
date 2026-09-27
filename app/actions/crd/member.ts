@@ -10,10 +10,20 @@
  *
  *   inviteMemberAction    , MembershipService.InviteMember (issues a pending
  *                            invitation + emails the accept link, gibson#632).
- *   revokeMemberAction    , active member  → SetTenantRole(remove)
+ *   revokeMemberAction    , active member  → MembershipService.RemoveMember
  *                            pending invite  → CancelInvitation
+ *   leaveTenantAction     , MembershipService.LeaveTenant (self-service half
+ *                            of Removal, ADR-0093 §11, hosted#205)
  *   resendInvitationAction, MembershipService.ResendInvitation
  *   acceptInvitationAction, MembershipService.AcceptInvitation (token redeem)
+ *
+ * Removal (ADR-0093 §11, hosted#205): removing a member is no longer just an
+ * FGA role strip. RemoveMember and LeaveTenant revoke every one of the
+ * target's sessions at once and delete their Zitadel account outright, which
+ * frees their email for another tenant. Their missions and findings stay in
+ * the tenant, attributed by the name and email recorded at the time. The
+ * daemon refuses both when the target is the tenant's Owner; transfer
+ * ownership first.
  *
  * dashboard#715 ripped the TenantMember CR writes (applyTenantMember /
  * patchTenantMember / deleteTenantMember).
@@ -128,10 +138,22 @@ export async function acceptInvitationAction(input: { token: string }): Promise<
   }
 }
 
+/** Map a Removal RPC's (RemoveMember, LeaveTenant) PermissionDenied to a
+ * fixed, clear message rather than forwarding the daemon's raw text, same
+ * pattern as transferOwnershipAction / setTenantRoleAction. */
+function removalRpcError<T>(e: unknown, ownerMessage: string): ActionResult<T> {
+  if (e instanceof ConnectError && e.code === Code.PermissionDenied) {
+    return { ok: false, error: ownerMessage, code: 'FORBIDDEN' };
+  }
+  return rpcError(e);
+}
+
 /**
- * Remove a member or cancel a pending invitation. Active members are removed by
- * stripping their role tuples (SetTenantRole remove); pending invitations are
- * canceled by email. The last active owner cannot be removed.
+ * Remove a member or cancel a pending invitation. An active member is
+ * removed through Removal (ADR-0093 §11, hosted#205): MembershipService.
+ * RemoveMember revokes every one of their sessions at once and deletes their
+ * Zitadel account; a pending invitation is canceled by email instead. The
+ * tenant's Owner can never be removed this way, only transferred out first.
  */
 export async function revokeMemberAction(input: {
   userId: string;
@@ -152,17 +174,18 @@ export async function revokeMemberAction(input: {
 
   const isInvited = parsed.data.status === 'invited';
 
-  // Last-owner safeguard for active members. Reads the daemon roster (source of
-  // truth) so it holds even if the client gate is bypassed.
+  // Owner pre-check for active members: a clear error before the round trip.
+  // Reads the daemon roster (source of truth) so it holds even if the client
+  // gate is bypassed; the daemon's RemoveMember refuses the Owner
+  // authoritatively regardless, this is a UX shortcut, not the only guard.
   if (!isInvited) {
     const roster = await listMembersAction();
     if (roster.ok) {
-      const activeOwners = roster.data.filter((m) => m.role === 'owner' && m.status === 'active');
       const target = roster.data.find((m) => m.userId === parsed.data.userId);
-      if (activeOwners.length === 1 && target?.role === 'owner') {
+      if (target?.role === 'owner') {
         return {
           ok: false,
-          error: 'Cannot remove the last owner of a workspace. Transfer ownership first.',
+          error: "Cannot remove the tenant's Owner. Transfer ownership first.",
           code: 'FORBIDDEN',
         };
       }
@@ -174,7 +197,7 @@ export async function revokeMemberAction(input: {
     if (isInvited) {
       await client.cancelInvitation({ tenantId: t.tenantId, email: parsed.data.email });
     } else {
-      await client.setTenantRole({ tenantId: t.tenantId, userId: parsed.data.userId, role: '', remove: true });
+      await client.removeMember({ tenantId: t.tenantId, userId: parsed.data.userId });
     }
     emitCrdAuditFromGate({
       session: gate.session,
@@ -187,7 +210,38 @@ export async function revokeMemberAction(input: {
     });
     return { ok: true, data: undefined };
   } catch (e) {
-    return rpcError(e);
+    return removalRpcError(e, "Cannot remove the tenant's Owner. Transfer ownership first.");
+  }
+}
+
+/**
+ * Leave the caller's own tenant, the self-service half of Removal (ADR-0093
+ * §11, hosted#205): MembershipService.LeaveTenant revokes every one of the
+ * caller's own sessions at once and deletes their Zitadel account. The
+ * tenant's Owner cannot leave; they must transfer ownership first.
+ */
+export async function leaveTenantAction(): Promise<ActionResult> {
+  const gate = await requireCrdSession({ action: 'leaveTenantAction', inputKeys: [] });
+  if (!gate.ok) return gate.result;
+
+  const t = await activeTenantOr<void>();
+  if ('result' in t) return t.result;
+
+  try {
+    const client = userClient(MembershipService);
+    await client.leaveTenant({ tenantId: t.tenantId });
+    emitCrdAuditFromGate({
+      session: gate.session,
+      userId: gate.userId,
+      action: 'leaveTenantAction',
+      outcome: 'ok',
+      targetTenant: t.tenantId,
+      inputKeys: [],
+      resourceRef: gate.userId,
+    });
+    return { ok: true, data: undefined };
+  } catch (e) {
+    return removalRpcError(e, 'You must transfer ownership before you can leave this workspace.');
   }
 }
 

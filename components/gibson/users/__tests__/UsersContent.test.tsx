@@ -11,10 +11,13 @@
  *   3. A role Select IS rendered for non-owner, non-self rows.
  *   4. No Remove menu item for owner rows.
  *   5. "owner (you)" badge when the owner is the current user.
+ *   6. "Leave workspace" appears only on the caller's own non-owner row
+ *      (ADR-0093 §11, hosted#205).
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { MemberRow } from "@/app/actions/read/listMembers";
 
@@ -47,6 +50,7 @@ vi.mock("@/src/hooks/use-org-graph", () => ({
 vi.mock("@/app/actions/crd/member", () => ({
   revokeMemberAction: vi.fn(),
   resendInvitationAction: vi.fn(),
+  leaveTenantAction: vi.fn(async () => ({ ok: true, data: undefined })),
 }));
 
 vi.mock("@/app/actions/crd/role", () => ({
@@ -154,5 +158,40 @@ describe("UsersContent, owner role display", () => {
     });
     renderWithQuery();
     expect((await screen.findAllByText(/owner.*you/i)).length).toBeGreaterThan(0);
+  });
+});
+
+describe("UsersContent, leave workspace (ADR-0093 §11, hosted#205)", () => {
+  it("shows Leave workspace on the caller's own non-owner row", async () => {
+    // The session mock's current user is "user-other".
+    mockMembers.mockResolvedValue({
+      ok: true,
+      data: [member({ userId: "user-other", email: "me@example.com", role: "member" })],
+    });
+    renderWithQuery();
+    const trigger = await screen.findByRole("button", { name: /open actions for me@example\.com/i });
+    await userEvent.click(trigger);
+    expect(await screen.findByText("Leave workspace")).toBeInTheDocument();
+    // Self rows never show the admin-facing Remove action either.
+    expect(screen.queryByText("Remove")).toBeNull();
+  });
+
+  it("does not show Leave workspace on the caller's own owner row", async () => {
+    mockMembers.mockResolvedValue({
+      ok: true,
+      data: [member({ userId: "user-other", email: "owner@example.com", role: "owner" })],
+    });
+    renderWithQuery();
+    const trigger = await screen.findByRole("button", { name: /open actions for owner@example\.com/i });
+    await userEvent.click(trigger);
+    expect(screen.queryByText("Leave workspace")).toBeNull();
+  });
+
+  it("does not show Leave workspace on another user's row", async () => {
+    mockMembers.mockResolvedValue({ ok: true, data: [admin()] });
+    renderWithQuery();
+    const trigger = await screen.findByRole("button", { name: /open actions for admin@example\.com/i });
+    await userEvent.click(trigger);
+    expect(screen.queryByText("Leave workspace")).toBeNull();
   });
 });

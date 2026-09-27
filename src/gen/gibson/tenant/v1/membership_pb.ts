@@ -29,7 +29,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/membership.proto.
  */
 export const file_gibson_tenant_v1_membership: GenFile = /*@__PURE__*/
-  fileDesc("CiFnaWJzb24vdGVuYW50L3YxL21lbWJlcnNoaXAucHJvdG8SEGdpYnNvbi50ZW5hbnQudjEikQEKDFRlbmFudE1lbWJlchIPCgd1c2VyX2lkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRINCgVlbWFpbBgDIAEoCRIMCgRyb2xlGAQgASgJEi0KCWpvaW5lZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDgoGc3RhdHVzGAYgASgJImMKEkxpc3RNZW1iZXJzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSEgoKcGFnZV90b2tlbhgCIAEoCRIRCglwYWdlX3NpemUYAyABKAUSEwoLbmFtZV9maWx0ZXIYBCABKAkiXwoTTGlzdE1lbWJlcnNSZXNwb25zZRIvCgdtZW1iZXJzGAEgAygLMh4uZ2lic29uLnRlbmFudC52MS5UZW5hbnRNZW1iZXISFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIlgKFFNldFRlbmFudFJvbGVSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEgwKBHJvbGUYAyABKAkSDgoGcmVtb3ZlGAQgASgIIhcKFVNldFRlbmFudFJvbGVSZXNwb25zZSJIChhUcmFuc2Zlck93bmVyc2hpcFJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhkKEW5ld19vd25lcl91c2VyX2lkGAIgASgJIhsKGVRyYW5zZmVyT3duZXJzaGlwUmVzcG9uc2UiRQoTSW52aXRlTWVtYmVyUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDQoFZW1haWwYAiABKAkSDAoEcm9sZRgDIAEoCSJdChRJbnZpdGVNZW1iZXJSZXNwb25zZRIVCg1pbnZpdGF0aW9uX2lkGAEgASgJEi4KCmV4cGlyZXNfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIigKF0FjY2VwdEludml0YXRpb25SZXF1ZXN0Eg0KBXRva2VuGAEgASgJIj4KGEFjY2VwdEludml0YXRpb25SZXNwb25zZRIRCgl0ZW5hbnRfaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCSJSChdSZXNlbmRJbnZpdGF0aW9uUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSFQoNaW52aXRhdGlvbl9pZBgCIAEoCRINCgVlbWFpbBgDIAEoCSIaChhSZXNlbmRJbnZpdGF0aW9uUmVzcG9uc2UiUgoXQ2FuY2VsSW52aXRhdGlvblJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhUKDWludml0YXRpb25faWQYAiABKAkSDQoFZW1haWwYAyABKAkiGgoYQ2FuY2VsSW52aXRhdGlvblJlc3BvbnNlIj4KBFRlYW0SCgoCaWQYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEhQKDG1lbWJlcl9jb3VudBgDIAEoBSJUCgpUZWFtTWVtYmVyEg8KB3VzZXJfaWQYASABKAkSDQoFZW1haWwYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJEhAKCGlzX2FkbWluGAQgASgIIkwKEExpc3RUZWFtc1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhIKCnBhZ2VfdG9rZW4YAiABKAkSEQoJcGFnZV9zaXplGAMgASgFIlMKEUxpc3RUZWFtc1Jlc3BvbnNlEiUKBXRlYW1zGAEgAygLMhYuZ2lic29uLnRlbmFudC52MS5UZWFtEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJNChFDcmVhdGVUZWFtUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDwoHdGVhbV9pZBgCIAEoCRIUCgxkaXNwbGF5X25hbWUYAyABKAkiOgoSQ3JlYXRlVGVhbVJlc3BvbnNlEiQKBHRlYW0YASABKAsyFi5naWJzb24udGVuYW50LnYxLlRlYW0iNwoRRGVsZXRlVGVhbVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3RlYW1faWQYAiABKAkiFAoSRGVsZXRlVGVhbVJlc3BvbnNlImMKFkxpc3RUZWFtTWVtYmVyc1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3RlYW1faWQYAiABKAkSEgoKcGFnZV90b2tlbhgDIAEoCRIRCglwYWdlX3NpemUYBCABKAUiYQoXTGlzdFRlYW1NZW1iZXJzUmVzcG9uc2USLQoHbWVtYmVycxgBIAMoCzIcLmdpYnNvbi50ZW5hbnQudjEuVGVhbU1lbWJlchIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiSwoUQWRkVGVhbU1lbWJlclJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3RlYW1faWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCSIXChVBZGRUZWFtTWVtYmVyUmVzcG9uc2UiTgoXUmVtb3ZlVGVhbU1lbWJlclJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3RlYW1faWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCSIaChhSZW1vdmVUZWFtTWVtYmVyUmVzcG9uc2UiXAoTU2V0VGVhbUFkbWluUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDwoHdGVhbV9pZBgCIAEoCRIPCgd1c2VyX2lkGAMgASgJEhAKCGlzX2FkbWluGAQgASgIIhYKFFNldFRlYW1BZG1pblJlc3BvbnNlIksKFENvbXBvbmVudEFjY2Vzc0VudHJ5EhAKCHJlbGF0aW9uGAEgASgJEg8KB3RlYW1faWQYAiABKAkSEAoIZGlzYWJsZWQYAyABKAgiegoZU2V0Q29tcG9uZW50QWNjZXNzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSEQoJY29tcG9uZW50GAIgASgJEjcKB2VudHJpZXMYAyADKAsyJi5naWJzb24udGVuYW50LnYxLkNvbXBvbmVudEFjY2Vzc0VudHJ5IkwKGlNldENvbXBvbmVudEFjY2Vzc1Jlc3BvbnNlEhYKDnR1cGxlc193cml0dGVuGAEgASgFEhYKDnR1cGxlc19kZWxldGVkGAIgASgFIjMKEUNvbXBvbmVudEFwcHJvdmFsEg4KBnRhcmdldBgBIAEoCRIOCgZhY3Rpb24YAiABKAkiiQEKIEdyYW50Q29tcG9uZW50UGVybWlzc2lvbnNSZXF1ZXN0Eh0KFWFnZW50X2luc3RhbGxhdGlvbl9pZBgBIAEoCRI2CglhcHByb3ZhbHMYAiADKAsyIy5naWJzb24udGVuYW50LnYxLkNvbXBvbmVudEFwcHJvdmFsEg4KBnJlYXNvbhgDIAEoCSJCCiFHcmFudENvbXBvbmVudFBlcm1pc3Npb25zUmVzcG9uc2USHQoVYWdlbnRfaW5zdGFsbGF0aW9uX2lkGAEgASgJIkIKGFNldENhdGFsb2dFbmFibGVkUmVxdWVzdBIVCg1jb21wb25lbnRfcmVmGAEgASgJEg8KB2VuYWJsZWQYAiABKAgiPQoZU2V0Q2F0YWxvZ0VuYWJsZWRSZXNwb25zZRIPCgd3cml0dGVuGAEgASgIEg8KB2RlbGV0ZWQYAiABKAgiRgoaU2V0Q2F0YWxvZ1B1Ymxpc2hlZFJlcXVlc3QSFQoNY29tcG9uZW50X3JlZhgBIAEoCRIRCglwdWJsaXNoZWQYAiABKAgiPwobU2V0Q2F0YWxvZ1B1Ymxpc2hlZFJlc3BvbnNlEg8KB3dyaXR0ZW4YASABKAgSDwoHZGVsZXRlZBgCIAEoCCIZChdHZXRSZXNlcnZlZE5hbWVzUmVxdWVzdCI5ChhHZXRSZXNlcnZlZE5hbWVzUmVzcG9uc2USDQoFZXhhY3QYASADKAkSDgoGcHJlZml4GAIgAygJMt4VChFNZW1iZXJzaGlwU2VydmljZRKHAQoLTGlzdE1lbWJlcnMSJC5naWJzb24udGVuYW50LnYxLkxpc3RNZW1iZXJzUmVxdWVzdBolLmdpYnNvbi50ZW5hbnQudjEuTGlzdE1lbWJlcnNSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKNAQoNU2V0VGVuYW50Um9sZRImLmdpYnNvbi50ZW5hbnQudjEuU2V0VGVuYW50Um9sZVJlcXVlc3QaJy5naWJzb24udGVuYW50LnYxLlNldFRlbmFudFJvbGVSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKZAQoRVHJhbnNmZXJPd25lcnNoaXASKi5naWJzb24udGVuYW50LnYxLlRyYW5zZmVyT3duZXJzaGlwUmVxdWVzdBorLmdpYnNvbi50ZW5hbnQudjEuVHJhbnNmZXJPd25lcnNoaXBSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKKAQoMSW52aXRlTWVtYmVyEiUuZ2lic29uLnRlbmFudC52MS5JbnZpdGVNZW1iZXJSZXF1ZXN0GiYuZ2lic29uLnRlbmFudC52MS5JbnZpdGVNZW1iZXJSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARJxChBBY2NlcHRJbnZpdGF0aW9uEikuZ2lic29uLnRlbmFudC52MS5BY2NlcHRJbnZpdGF0aW9uUmVxdWVzdBoqLmdpYnNvbi50ZW5hbnQudjEuQWNjZXB0SW52aXRhdGlvblJlc3BvbnNlIgaKtRgCKAESlgEKEFJlc2VuZEludml0YXRpb24SKS5naWJzb24udGVuYW50LnYxLlJlc2VuZEludml0YXRpb25SZXF1ZXN0GiouZ2lic29uLnRlbmFudC52MS5SZXNlbmRJbnZpdGF0aW9uUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESlgEKEENhbmNlbEludml0YXRpb24SKS5naWJzb24udGVuYW50LnYxLkNhbmNlbEludml0YXRpb25SZXF1ZXN0GiouZ2lic29uLnRlbmFudC52MS5DYW5jZWxJbnZpdGF0aW9uUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESgQEKCUxpc3RUZWFtcxIiLmdpYnNvbi50ZW5hbnQudjEuTGlzdFRlYW1zUmVxdWVzdBojLmdpYnNvbi50ZW5hbnQudjEuTGlzdFRlYW1zUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAEShAEKCkNyZWF0ZVRlYW0SIy5naWJzb24udGVuYW50LnYxLkNyZWF0ZVRlYW1SZXF1ZXN0GiQuZ2lic29uLnRlbmFudC52MS5DcmVhdGVUZWFtUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAEShAEKCkRlbGV0ZVRlYW0SIy5naWJzb24udGVuYW50LnYxLkRlbGV0ZVRlYW1SZXF1ZXN0GiQuZ2lic29uLnRlbmFudC52MS5EZWxldGVUZWFtUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESkwEKD0xpc3RUZWFtTWVtYmVycxIoLmdpYnNvbi50ZW5hbnQudjEuTGlzdFRlYW1NZW1iZXJzUmVxdWVzdBopLmdpYnNvbi50ZW5hbnQudjEuTGlzdFRlYW1NZW1iZXJzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESjQEKDUFkZFRlYW1NZW1iZXISJi5naWJzb24udGVuYW50LnYxLkFkZFRlYW1NZW1iZXJSZXF1ZXN0GicuZ2lic29uLnRlbmFudC52MS5BZGRUZWFtTWVtYmVyUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESlgEKEFJlbW92ZVRlYW1NZW1iZXISKS5naWJzb24udGVuYW50LnYxLlJlbW92ZVRlYW1NZW1iZXJSZXF1ZXN0GiouZ2lic29uLnRlbmFudC52MS5SZW1vdmVUZWFtTWVtYmVyUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESigEKDFNldFRlYW1BZG1pbhIlLmdpYnNvbi50ZW5hbnQudjEuU2V0VGVhbUFkbWluUmVxdWVzdBomLmdpYnNvbi50ZW5hbnQudjEuU2V0VGVhbUFkbWluUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESnAEKElNldENvbXBvbmVudEFjY2VzcxIrLmdpYnNvbi50ZW5hbnQudjEuU2V0Q29tcG9uZW50QWNjZXNzUmVxdWVzdBosLmdpYnNvbi50ZW5hbnQudjEuU2V0Q29tcG9uZW50QWNjZXNzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESsgEKGUdyYW50Q29tcG9uZW50UGVybWlzc2lvbnMSMi5naWJzb24udGVuYW50LnYxLkdyYW50Q29tcG9uZW50UGVybWlzc2lvbnNSZXF1ZXN0GjMuZ2lic29uLnRlbmFudC52MS5HcmFudENvbXBvbmVudFBlcm1pc3Npb25zUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpkBChFTZXRDYXRhbG9nRW5hYmxlZBIqLmdpYnNvbi50ZW5hbnQudjEuU2V0Q2F0YWxvZ0VuYWJsZWRSZXF1ZXN0GisuZ2lic29uLnRlbmFudC52MS5TZXRDYXRhbG9nRW5hYmxlZFJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEp8BChNTZXRDYXRhbG9nUHVibGlzaGVkEiwuZ2lic29uLnRlbmFudC52MS5TZXRDYXRhbG9nUHVibGlzaGVkUmVxdWVzdBotLmdpYnNvbi50ZW5hbnQudjEuU2V0Q2F0YWxvZ1B1Ymxpc2hlZFJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEnEKEEdldFJlc2VydmVkTmFtZXMSKS5naWJzb24udGVuYW50LnYxLkdldFJlc2VydmVkTmFtZXNSZXF1ZXN0GiouZ2lic29uLnRlbmFudC52MS5HZXRSZXNlcnZlZE5hbWVzUmVzcG9uc2UiBoq1GAIoAUJUWlJnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vdGVuYW50L3YxO3RlbmFudHYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_gibson_auth_v1_options]);
+  fileDesc("CiFnaWJzb24vdGVuYW50L3YxL21lbWJlcnNoaXAucHJvdG8SEGdpYnNvbi50ZW5hbnQudjEikQEKDFRlbmFudE1lbWJlchIPCgd1c2VyX2lkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRINCgVlbWFpbBgDIAEoCRIMCgRyb2xlGAQgASgJEi0KCWpvaW5lZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDgoGc3RhdHVzGAYgASgJImMKEkxpc3RNZW1iZXJzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSEgoKcGFnZV90b2tlbhgCIAEoCRIRCglwYWdlX3NpemUYAyABKAUSEwoLbmFtZV9maWx0ZXIYBCABKAkiXwoTTGlzdE1lbWJlcnNSZXNwb25zZRIvCgdtZW1iZXJzGAEgAygLMh4uZ2lic29uLnRlbmFudC52MS5UZW5hbnRNZW1iZXISFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIlgKFFNldFRlbmFudFJvbGVSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEgwKBHJvbGUYAyABKAkSDgoGcmVtb3ZlGAQgASgIIhcKFVNldFRlbmFudFJvbGVSZXNwb25zZSJIChhUcmFuc2Zlck93bmVyc2hpcFJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhkKEW5ld19vd25lcl91c2VyX2lkGAIgASgJIhsKGVRyYW5zZmVyT3duZXJzaGlwUmVzcG9uc2UiOQoTUmVtb3ZlTWVtYmVyUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCSIWChRSZW1vdmVNZW1iZXJSZXNwb25zZSInChJMZWF2ZVRlbmFudFJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJIhUKE0xlYXZlVGVuYW50UmVzcG9uc2UiRQoTSW52aXRlTWVtYmVyUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDQoFZW1haWwYAiABKAkSDAoEcm9sZRgDIAEoCSJdChRJbnZpdGVNZW1iZXJSZXNwb25zZRIVCg1pbnZpdGF0aW9uX2lkGAEgASgJEi4KCmV4cGlyZXNfYXQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIigKF0FjY2VwdEludml0YXRpb25SZXF1ZXN0Eg0KBXRva2VuGAEgASgJIj4KGEFjY2VwdEludml0YXRpb25SZXNwb25zZRIRCgl0ZW5hbnRfaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCSJSChdSZXNlbmRJbnZpdGF0aW9uUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSFQoNaW52aXRhdGlvbl9pZBgCIAEoCRINCgVlbWFpbBgDIAEoCSIaChhSZXNlbmRJbnZpdGF0aW9uUmVzcG9uc2UiUgoXQ2FuY2VsSW52aXRhdGlvblJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhUKDWludml0YXRpb25faWQYAiABKAkSDQoFZW1haWwYAyABKAkiGgoYQ2FuY2VsSW52aXRhdGlvblJlc3BvbnNlIj4KBFRlYW0SCgoCaWQYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEhQKDG1lbWJlcl9jb3VudBgDIAEoBSJUCgpUZWFtTWVtYmVyEg8KB3VzZXJfaWQYASABKAkSDQoFZW1haWwYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJEhAKCGlzX2FkbWluGAQgASgIIkwKEExpc3RUZWFtc1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhIKCnBhZ2VfdG9rZW4YAiABKAkSEQoJcGFnZV9zaXplGAMgASgFIlMKEUxpc3RUZWFtc1Jlc3BvbnNlEiUKBXRlYW1zGAEgAygLMhYuZ2lic29uLnRlbmFudC52MS5UZWFtEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJNChFDcmVhdGVUZWFtUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDwoHdGVhbV9pZBgCIAEoCRIUCgxkaXNwbGF5X25hbWUYAyABKAkiOgoSQ3JlYXRlVGVhbVJlc3BvbnNlEiQKBHRlYW0YASABKAsyFi5naWJzb24udGVuYW50LnYxLlRlYW0iNwoRRGVsZXRlVGVhbVJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3RlYW1faWQYAiABKAkiFAoSRGVsZXRlVGVhbVJlc3BvbnNlImMKFkxpc3RUZWFtTWVtYmVyc1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3RlYW1faWQYAiABKAkSEgoKcGFnZV90b2tlbhgDIAEoCRIRCglwYWdlX3NpemUYBCABKAUiYQoXTGlzdFRlYW1NZW1iZXJzUmVzcG9uc2USLQoHbWVtYmVycxgBIAMoCzIcLmdpYnNvbi50ZW5hbnQudjEuVGVhbU1lbWJlchIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiSwoUQWRkVGVhbU1lbWJlclJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3RlYW1faWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCSIXChVBZGRUZWFtTWVtYmVyUmVzcG9uc2UiTgoXUmVtb3ZlVGVhbU1lbWJlclJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg8KB3RlYW1faWQYAiABKAkSDwoHdXNlcl9pZBgDIAEoCSIaChhSZW1vdmVUZWFtTWVtYmVyUmVzcG9uc2UiXAoTU2V0VGVhbUFkbWluUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDwoHdGVhbV9pZBgCIAEoCRIPCgd1c2VyX2lkGAMgASgJEhAKCGlzX2FkbWluGAQgASgIIhYKFFNldFRlYW1BZG1pblJlc3BvbnNlIksKFENvbXBvbmVudEFjY2Vzc0VudHJ5EhAKCHJlbGF0aW9uGAEgASgJEg8KB3RlYW1faWQYAiABKAkSEAoIZGlzYWJsZWQYAyABKAgiegoZU2V0Q29tcG9uZW50QWNjZXNzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSEQoJY29tcG9uZW50GAIgASgJEjcKB2VudHJpZXMYAyADKAsyJi5naWJzb24udGVuYW50LnYxLkNvbXBvbmVudEFjY2Vzc0VudHJ5IkwKGlNldENvbXBvbmVudEFjY2Vzc1Jlc3BvbnNlEhYKDnR1cGxlc193cml0dGVuGAEgASgFEhYKDnR1cGxlc19kZWxldGVkGAIgASgFIjMKEUNvbXBvbmVudEFwcHJvdmFsEg4KBnRhcmdldBgBIAEoCRIOCgZhY3Rpb24YAiABKAkiiQEKIEdyYW50Q29tcG9uZW50UGVybWlzc2lvbnNSZXF1ZXN0Eh0KFWFnZW50X2luc3RhbGxhdGlvbl9pZBgBIAEoCRI2CglhcHByb3ZhbHMYAiADKAsyIy5naWJzb24udGVuYW50LnYxLkNvbXBvbmVudEFwcHJvdmFsEg4KBnJlYXNvbhgDIAEoCSJCCiFHcmFudENvbXBvbmVudFBlcm1pc3Npb25zUmVzcG9uc2USHQoVYWdlbnRfaW5zdGFsbGF0aW9uX2lkGAEgASgJIkIKGFNldENhdGFsb2dFbmFibGVkUmVxdWVzdBIVCg1jb21wb25lbnRfcmVmGAEgASgJEg8KB2VuYWJsZWQYAiABKAgiPQoZU2V0Q2F0YWxvZ0VuYWJsZWRSZXNwb25zZRIPCgd3cml0dGVuGAEgASgIEg8KB2RlbGV0ZWQYAiABKAgiRgoaU2V0Q2F0YWxvZ1B1Ymxpc2hlZFJlcXVlc3QSFQoNY29tcG9uZW50X3JlZhgBIAEoCRIRCglwdWJsaXNoZWQYAiABKAgiPwobU2V0Q2F0YWxvZ1B1Ymxpc2hlZFJlc3BvbnNlEg8KB3dyaXR0ZW4YASABKAgSDwoHZGVsZXRlZBgCIAEoCCIZChdHZXRSZXNlcnZlZE5hbWVzUmVxdWVzdCI5ChhHZXRSZXNlcnZlZE5hbWVzUmVzcG9uc2USDQoFZXhhY3QYASADKAkSDgoGcHJlZml4GAIgAygJMvYXChFNZW1iZXJzaGlwU2VydmljZRKHAQoLTGlzdE1lbWJlcnMSJC5naWJzb24udGVuYW50LnYxLkxpc3RNZW1iZXJzUmVxdWVzdBolLmdpYnNvbi50ZW5hbnQudjEuTGlzdE1lbWJlcnNSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKNAQoNU2V0VGVuYW50Um9sZRImLmdpYnNvbi50ZW5hbnQudjEuU2V0VGVuYW50Um9sZVJlcXVlc3QaJy5naWJzb24udGVuYW50LnYxLlNldFRlbmFudFJvbGVSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKZAQoRVHJhbnNmZXJPd25lcnNoaXASKi5naWJzb24udGVuYW50LnYxLlRyYW5zZmVyT3duZXJzaGlwUmVxdWVzdBorLmdpYnNvbi50ZW5hbnQudjEuVHJhbnNmZXJPd25lcnNoaXBSZXNwb25zZSIrirUYJwoFb3duZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKKAQoMUmVtb3ZlTWVtYmVyEiUuZ2lic29uLnRlbmFudC52MS5SZW1vdmVNZW1iZXJSZXF1ZXN0GiYuZ2lic29uLnRlbmFudC52MS5SZW1vdmVNZW1iZXJSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKIAQoLTGVhdmVUZW5hbnQSJC5naWJzb24udGVuYW50LnYxLkxlYXZlVGVuYW50UmVxdWVzdBolLmdpYnNvbi50ZW5hbnQudjEuTGVhdmVUZW5hbnRSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESigEKDEludml0ZU1lbWJlchIlLmdpYnNvbi50ZW5hbnQudjEuSW52aXRlTWVtYmVyUmVxdWVzdBomLmdpYnNvbi50ZW5hbnQudjEuSW52aXRlTWVtYmVyUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAEScQoQQWNjZXB0SW52aXRhdGlvbhIpLmdpYnNvbi50ZW5hbnQudjEuQWNjZXB0SW52aXRhdGlvblJlcXVlc3QaKi5naWJzb24udGVuYW50LnYxLkFjY2VwdEludml0YXRpb25SZXNwb25zZSIGirUYAigBEpYBChBSZXNlbmRJbnZpdGF0aW9uEikuZ2lic29uLnRlbmFudC52MS5SZXNlbmRJbnZpdGF0aW9uUmVxdWVzdBoqLmdpYnNvbi50ZW5hbnQudjEuUmVzZW5kSW52aXRhdGlvblJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpYBChBDYW5jZWxJbnZpdGF0aW9uEikuZ2lic29uLnRlbmFudC52MS5DYW5jZWxJbnZpdGF0aW9uUmVxdWVzdBoqLmdpYnNvbi50ZW5hbnQudjEuQ2FuY2VsSW52aXRhdGlvblJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEoEBCglMaXN0VGVhbXMSIi5naWJzb24udGVuYW50LnYxLkxpc3RUZWFtc1JlcXVlc3QaIy5naWJzb24udGVuYW50LnYxLkxpc3RUZWFtc1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEoQBCgpDcmVhdGVUZWFtEiMuZ2lic29uLnRlbmFudC52MS5DcmVhdGVUZWFtUmVxdWVzdBokLmdpYnNvbi50ZW5hbnQudjEuQ3JlYXRlVGVhbVJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEoQBCgpEZWxldGVUZWFtEiMuZ2lic29uLnRlbmFudC52MS5EZWxldGVUZWFtUmVxdWVzdBokLmdpYnNvbi50ZW5hbnQudjEuRGVsZXRlVGVhbVJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpMBCg9MaXN0VGVhbU1lbWJlcnMSKC5naWJzb24udGVuYW50LnYxLkxpc3RUZWFtTWVtYmVyc1JlcXVlc3QaKS5naWJzb24udGVuYW50LnYxLkxpc3RUZWFtTWVtYmVyc1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEo0BCg1BZGRUZWFtTWVtYmVyEiYuZ2lic29uLnRlbmFudC52MS5BZGRUZWFtTWVtYmVyUmVxdWVzdBonLmdpYnNvbi50ZW5hbnQudjEuQWRkVGVhbU1lbWJlclJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpYBChBSZW1vdmVUZWFtTWVtYmVyEikuZ2lic29uLnRlbmFudC52MS5SZW1vdmVUZWFtTWVtYmVyUmVxdWVzdBoqLmdpYnNvbi50ZW5hbnQudjEuUmVtb3ZlVGVhbU1lbWJlclJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEooBCgxTZXRUZWFtQWRtaW4SJS5naWJzb24udGVuYW50LnYxLlNldFRlYW1BZG1pblJlcXVlc3QaJi5naWJzb24udGVuYW50LnYxLlNldFRlYW1BZG1pblJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpwBChJTZXRDb21wb25lbnRBY2Nlc3MSKy5naWJzb24udGVuYW50LnYxLlNldENvbXBvbmVudEFjY2Vzc1JlcXVlc3QaLC5naWJzb24udGVuYW50LnYxLlNldENvbXBvbmVudEFjY2Vzc1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABErIBChlHcmFudENvbXBvbmVudFBlcm1pc3Npb25zEjIuZ2lic29uLnRlbmFudC52MS5HcmFudENvbXBvbmVudFBlcm1pc3Npb25zUmVxdWVzdBozLmdpYnNvbi50ZW5hbnQudjEuR3JhbnRDb21wb25lbnRQZXJtaXNzaW9uc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKZAQoRU2V0Q2F0YWxvZ0VuYWJsZWQSKi5naWJzb24udGVuYW50LnYxLlNldENhdGFsb2dFbmFibGVkUmVxdWVzdBorLmdpYnNvbi50ZW5hbnQudjEuU2V0Q2F0YWxvZ0VuYWJsZWRSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARKfAQoTU2V0Q2F0YWxvZ1B1Ymxpc2hlZBIsLmdpYnNvbi50ZW5hbnQudjEuU2V0Q2F0YWxvZ1B1Ymxpc2hlZFJlcXVlc3QaLS5naWJzb24udGVuYW50LnYxLlNldENhdGFsb2dQdWJsaXNoZWRSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARJxChBHZXRSZXNlcnZlZE5hbWVzEikuZ2lic29uLnRlbmFudC52MS5HZXRSZXNlcnZlZE5hbWVzUmVxdWVzdBoqLmdpYnNvbi50ZW5hbnQudjEuR2V0UmVzZXJ2ZWROYW1lc1Jlc3BvbnNlIgaKtRgCKAFCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_google_protobuf_timestamp, file_gibson_auth_v1_options]);
 
 /**
  * TenantMember is the dashboard-safe representation of a single tenant
@@ -175,7 +175,8 @@ export type SetTenantRoleRequest = Message<"gibson.tenant.v1.SetTenantRoleReques
 
   /**
    * role is the FGA relation to grant. Must be one of "admin", "member", or
-   * "writer". Use remove = true to remove the user's role entirely.
+   * "writer" — "owner" is refused; see TransferOwnership. Use remove = true
+   * to remove the user's role entirely.
    *
    * @generated from field: string role = 3;
    */
@@ -250,6 +251,79 @@ export const TransferOwnershipResponseSchema: GenMessage<TransferOwnershipRespon
   messageDesc(file_gibson_tenant_v1_membership, 6);
 
 /**
+ * @generated from message gibson.tenant.v1.RemoveMemberRequest
+ */
+export type RemoveMemberRequest = Message<"gibson.tenant.v1.RemoveMemberRequest"> & {
+  /**
+   * tenant_id is the FGA id of the tenant (e.g. "tenant:acme").
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * user_id is the FGA user id (without type prefix) of the tenant user to
+   * remove. Required.
+   *
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.RemoveMemberRequest.
+ * Use `create(RemoveMemberRequestSchema)` to create a new message.
+ */
+export const RemoveMemberRequestSchema: GenMessage<RemoveMemberRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_membership, 7);
+
+/**
+ * @generated from message gibson.tenant.v1.RemoveMemberResponse
+ */
+export type RemoveMemberResponse = Message<"gibson.tenant.v1.RemoveMemberResponse"> & {
+};
+
+/**
+ * Describes the message gibson.tenant.v1.RemoveMemberResponse.
+ * Use `create(RemoveMemberResponseSchema)` to create a new message.
+ */
+export const RemoveMemberResponseSchema: GenMessage<RemoveMemberResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_membership, 8);
+
+/**
+ * @generated from message gibson.tenant.v1.LeaveTenantRequest
+ */
+export type LeaveTenantRequest = Message<"gibson.tenant.v1.LeaveTenantRequest"> & {
+  /**
+   * tenant_id is the FGA id of the tenant (e.g. "tenant:acme"). Must match
+   * the authenticated caller's tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.LeaveTenantRequest.
+ * Use `create(LeaveTenantRequestSchema)` to create a new message.
+ */
+export const LeaveTenantRequestSchema: GenMessage<LeaveTenantRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_membership, 9);
+
+/**
+ * @generated from message gibson.tenant.v1.LeaveTenantResponse
+ */
+export type LeaveTenantResponse = Message<"gibson.tenant.v1.LeaveTenantResponse"> & {
+};
+
+/**
+ * Describes the message gibson.tenant.v1.LeaveTenantResponse.
+ * Use `create(LeaveTenantResponseSchema)` to create a new message.
+ */
+export const LeaveTenantResponseSchema: GenMessage<LeaveTenantResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_membership, 10);
+
+/**
  * @generated from message gibson.tenant.v1.InviteMemberRequest
  */
 export type InviteMemberRequest = Message<"gibson.tenant.v1.InviteMemberRequest"> & {
@@ -282,7 +356,7 @@ export type InviteMemberRequest = Message<"gibson.tenant.v1.InviteMemberRequest"
  * Use `create(InviteMemberRequestSchema)` to create a new message.
  */
 export const InviteMemberRequestSchema: GenMessage<InviteMemberRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 7);
+  messageDesc(file_gibson_tenant_v1_membership, 11);
 
 /**
  * @generated from message gibson.tenant.v1.InviteMemberResponse
@@ -308,7 +382,7 @@ export type InviteMemberResponse = Message<"gibson.tenant.v1.InviteMemberRespons
  * Use `create(InviteMemberResponseSchema)` to create a new message.
  */
 export const InviteMemberResponseSchema: GenMessage<InviteMemberResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 8);
+  messageDesc(file_gibson_tenant_v1_membership, 12);
 
 /**
  * @generated from message gibson.tenant.v1.AcceptInvitationRequest
@@ -328,7 +402,7 @@ export type AcceptInvitationRequest = Message<"gibson.tenant.v1.AcceptInvitation
  * Use `create(AcceptInvitationRequestSchema)` to create a new message.
  */
 export const AcceptInvitationRequestSchema: GenMessage<AcceptInvitationRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 9);
+  messageDesc(file_gibson_tenant_v1_membership, 13);
 
 /**
  * @generated from message gibson.tenant.v1.AcceptInvitationResponse
@@ -354,7 +428,7 @@ export type AcceptInvitationResponse = Message<"gibson.tenant.v1.AcceptInvitatio
  * Use `create(AcceptInvitationResponseSchema)` to create a new message.
  */
 export const AcceptInvitationResponseSchema: GenMessage<AcceptInvitationResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 10);
+  messageDesc(file_gibson_tenant_v1_membership, 14);
 
 /**
  * @generated from message gibson.tenant.v1.ResendInvitationRequest
@@ -384,7 +458,7 @@ export type ResendInvitationRequest = Message<"gibson.tenant.v1.ResendInvitation
  * Use `create(ResendInvitationRequestSchema)` to create a new message.
  */
 export const ResendInvitationRequestSchema: GenMessage<ResendInvitationRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 11);
+  messageDesc(file_gibson_tenant_v1_membership, 15);
 
 /**
  * @generated from message gibson.tenant.v1.ResendInvitationResponse
@@ -397,7 +471,7 @@ export type ResendInvitationResponse = Message<"gibson.tenant.v1.ResendInvitatio
  * Use `create(ResendInvitationResponseSchema)` to create a new message.
  */
 export const ResendInvitationResponseSchema: GenMessage<ResendInvitationResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 12);
+  messageDesc(file_gibson_tenant_v1_membership, 16);
 
 /**
  * @generated from message gibson.tenant.v1.CancelInvitationRequest
@@ -424,7 +498,7 @@ export type CancelInvitationRequest = Message<"gibson.tenant.v1.CancelInvitation
  * Use `create(CancelInvitationRequestSchema)` to create a new message.
  */
 export const CancelInvitationRequestSchema: GenMessage<CancelInvitationRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 13);
+  messageDesc(file_gibson_tenant_v1_membership, 17);
 
 /**
  * @generated from message gibson.tenant.v1.CancelInvitationResponse
@@ -437,7 +511,7 @@ export type CancelInvitationResponse = Message<"gibson.tenant.v1.CancelInvitatio
  * Use `create(CancelInvitationResponseSchema)` to create a new message.
  */
 export const CancelInvitationResponseSchema: GenMessage<CancelInvitationResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 14);
+  messageDesc(file_gibson_tenant_v1_membership, 18);
 
 /**
  * Team is a single team row returned by ListTeams.
@@ -473,7 +547,7 @@ export type Team = Message<"gibson.tenant.v1.Team"> & {
  * Use `create(TeamSchema)` to create a new message.
  */
 export const TeamSchema: GenMessage<Team> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 15);
+  messageDesc(file_gibson_tenant_v1_membership, 19);
 
 /**
  * TeamMember is a single member row returned by ListTeamMembers.
@@ -513,7 +587,7 @@ export type TeamMember = Message<"gibson.tenant.v1.TeamMember"> & {
  * Use `create(TeamMemberSchema)` to create a new message.
  */
 export const TeamMemberSchema: GenMessage<TeamMember> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 16);
+  messageDesc(file_gibson_tenant_v1_membership, 20);
 
 /**
  * @generated from message gibson.tenant.v1.ListTeamsRequest
@@ -544,7 +618,7 @@ export type ListTeamsRequest = Message<"gibson.tenant.v1.ListTeamsRequest"> & {
  * Use `create(ListTeamsRequestSchema)` to create a new message.
  */
 export const ListTeamsRequestSchema: GenMessage<ListTeamsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 17);
+  messageDesc(file_gibson_tenant_v1_membership, 21);
 
 /**
  * @generated from message gibson.tenant.v1.ListTeamsResponse
@@ -566,7 +640,7 @@ export type ListTeamsResponse = Message<"gibson.tenant.v1.ListTeamsResponse"> & 
  * Use `create(ListTeamsResponseSchema)` to create a new message.
  */
 export const ListTeamsResponseSchema: GenMessage<ListTeamsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 18);
+  messageDesc(file_gibson_tenant_v1_membership, 22);
 
 /**
  * @generated from message gibson.tenant.v1.CreateTeamRequest
@@ -600,7 +674,7 @@ export type CreateTeamRequest = Message<"gibson.tenant.v1.CreateTeamRequest"> & 
  * Use `create(CreateTeamRequestSchema)` to create a new message.
  */
 export const CreateTeamRequestSchema: GenMessage<CreateTeamRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 19);
+  messageDesc(file_gibson_tenant_v1_membership, 23);
 
 /**
  * @generated from message gibson.tenant.v1.CreateTeamResponse
@@ -619,7 +693,7 @@ export type CreateTeamResponse = Message<"gibson.tenant.v1.CreateTeamResponse"> 
  * Use `create(CreateTeamResponseSchema)` to create a new message.
  */
 export const CreateTeamResponseSchema: GenMessage<CreateTeamResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 20);
+  messageDesc(file_gibson_tenant_v1_membership, 24);
 
 /**
  * @generated from message gibson.tenant.v1.DeleteTeamRequest
@@ -641,7 +715,7 @@ export type DeleteTeamRequest = Message<"gibson.tenant.v1.DeleteTeamRequest"> & 
  * Use `create(DeleteTeamRequestSchema)` to create a new message.
  */
 export const DeleteTeamRequestSchema: GenMessage<DeleteTeamRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 21);
+  messageDesc(file_gibson_tenant_v1_membership, 25);
 
 /**
  * @generated from message gibson.tenant.v1.DeleteTeamResponse
@@ -654,7 +728,7 @@ export type DeleteTeamResponse = Message<"gibson.tenant.v1.DeleteTeamResponse"> 
  * Use `create(DeleteTeamResponseSchema)` to create a new message.
  */
 export const DeleteTeamResponseSchema: GenMessage<DeleteTeamResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 22);
+  messageDesc(file_gibson_tenant_v1_membership, 26);
 
 /**
  * @generated from message gibson.tenant.v1.ListTeamMembersRequest
@@ -686,7 +760,7 @@ export type ListTeamMembersRequest = Message<"gibson.tenant.v1.ListTeamMembersRe
  * Use `create(ListTeamMembersRequestSchema)` to create a new message.
  */
 export const ListTeamMembersRequestSchema: GenMessage<ListTeamMembersRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 23);
+  messageDesc(file_gibson_tenant_v1_membership, 27);
 
 /**
  * @generated from message gibson.tenant.v1.ListTeamMembersResponse
@@ -708,7 +782,7 @@ export type ListTeamMembersResponse = Message<"gibson.tenant.v1.ListTeamMembersR
  * Use `create(ListTeamMembersResponseSchema)` to create a new message.
  */
 export const ListTeamMembersResponseSchema: GenMessage<ListTeamMembersResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 24);
+  messageDesc(file_gibson_tenant_v1_membership, 28);
 
 /**
  * @generated from message gibson.tenant.v1.AddTeamMemberRequest
@@ -737,7 +811,7 @@ export type AddTeamMemberRequest = Message<"gibson.tenant.v1.AddTeamMemberReques
  * Use `create(AddTeamMemberRequestSchema)` to create a new message.
  */
 export const AddTeamMemberRequestSchema: GenMessage<AddTeamMemberRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 25);
+  messageDesc(file_gibson_tenant_v1_membership, 29);
 
 /**
  * @generated from message gibson.tenant.v1.AddTeamMemberResponse
@@ -750,7 +824,7 @@ export type AddTeamMemberResponse = Message<"gibson.tenant.v1.AddTeamMemberRespo
  * Use `create(AddTeamMemberResponseSchema)` to create a new message.
  */
 export const AddTeamMemberResponseSchema: GenMessage<AddTeamMemberResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 26);
+  messageDesc(file_gibson_tenant_v1_membership, 30);
 
 /**
  * @generated from message gibson.tenant.v1.RemoveTeamMemberRequest
@@ -777,7 +851,7 @@ export type RemoveTeamMemberRequest = Message<"gibson.tenant.v1.RemoveTeamMember
  * Use `create(RemoveTeamMemberRequestSchema)` to create a new message.
  */
 export const RemoveTeamMemberRequestSchema: GenMessage<RemoveTeamMemberRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 27);
+  messageDesc(file_gibson_tenant_v1_membership, 31);
 
 /**
  * @generated from message gibson.tenant.v1.RemoveTeamMemberResponse
@@ -790,7 +864,7 @@ export type RemoveTeamMemberResponse = Message<"gibson.tenant.v1.RemoveTeamMembe
  * Use `create(RemoveTeamMemberResponseSchema)` to create a new message.
  */
 export const RemoveTeamMemberResponseSchema: GenMessage<RemoveTeamMemberResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 28);
+  messageDesc(file_gibson_tenant_v1_membership, 32);
 
 /**
  * @generated from message gibson.tenant.v1.SetTeamAdminRequest
@@ -824,7 +898,7 @@ export type SetTeamAdminRequest = Message<"gibson.tenant.v1.SetTeamAdminRequest"
  * Use `create(SetTeamAdminRequestSchema)` to create a new message.
  */
 export const SetTeamAdminRequestSchema: GenMessage<SetTeamAdminRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 29);
+  messageDesc(file_gibson_tenant_v1_membership, 33);
 
 /**
  * @generated from message gibson.tenant.v1.SetTeamAdminResponse
@@ -837,7 +911,7 @@ export type SetTeamAdminResponse = Message<"gibson.tenant.v1.SetTeamAdminRespons
  * Use `create(SetTeamAdminResponseSchema)` to create a new message.
  */
 export const SetTeamAdminResponseSchema: GenMessage<SetTeamAdminResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 30);
+  messageDesc(file_gibson_tenant_v1_membership, 34);
 
 /**
  * ComponentAccessEntry specifies the access control state for a single
@@ -875,7 +949,7 @@ export type ComponentAccessEntry = Message<"gibson.tenant.v1.ComponentAccessEntr
  * Use `create(ComponentAccessEntrySchema)` to create a new message.
  */
 export const ComponentAccessEntrySchema: GenMessage<ComponentAccessEntry> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 31);
+  messageDesc(file_gibson_tenant_v1_membership, 35);
 
 /**
  * @generated from message gibson.tenant.v1.SetComponentAccessRequest
@@ -904,7 +978,7 @@ export type SetComponentAccessRequest = Message<"gibson.tenant.v1.SetComponentAc
  * Use `create(SetComponentAccessRequestSchema)` to create a new message.
  */
 export const SetComponentAccessRequestSchema: GenMessage<SetComponentAccessRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 32);
+  messageDesc(file_gibson_tenant_v1_membership, 36);
 
 /**
  * @generated from message gibson.tenant.v1.SetComponentAccessResponse
@@ -926,7 +1000,7 @@ export type SetComponentAccessResponse = Message<"gibson.tenant.v1.SetComponentA
  * Use `create(SetComponentAccessResponseSchema)` to create a new message.
  */
 export const SetComponentAccessResponseSchema: GenMessage<SetComponentAccessResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 33);
+  messageDesc(file_gibson_tenant_v1_membership, 37);
 
 /**
  * ComponentApproval records the caller's approval for a single capability on a component.
@@ -954,7 +1028,7 @@ export type ComponentApproval = Message<"gibson.tenant.v1.ComponentApproval"> & 
  * Use `create(ComponentApprovalSchema)` to create a new message.
  */
 export const ComponentApprovalSchema: GenMessage<ComponentApproval> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 34);
+  messageDesc(file_gibson_tenant_v1_membership, 38);
 
 /**
  * @generated from message gibson.tenant.v1.GrantComponentPermissionsRequest
@@ -986,7 +1060,7 @@ export type GrantComponentPermissionsRequest = Message<"gibson.tenant.v1.GrantCo
  * Use `create(GrantComponentPermissionsRequestSchema)` to create a new message.
  */
 export const GrantComponentPermissionsRequestSchema: GenMessage<GrantComponentPermissionsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 35);
+  messageDesc(file_gibson_tenant_v1_membership, 39);
 
 /**
  * @generated from message gibson.tenant.v1.GrantComponentPermissionsResponse
@@ -1003,7 +1077,7 @@ export type GrantComponentPermissionsResponse = Message<"gibson.tenant.v1.GrantC
  * Use `create(GrantComponentPermissionsResponseSchema)` to create a new message.
  */
 export const GrantComponentPermissionsResponseSchema: GenMessage<GrantComponentPermissionsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 36);
+  messageDesc(file_gibson_tenant_v1_membership, 40);
 
 /**
  * @generated from message gibson.tenant.v1.SetCatalogEnabledRequest
@@ -1011,7 +1085,7 @@ export const GrantComponentPermissionsResponseSchema: GenMessage<GrantComponentP
 export type SetCatalogEnabledRequest = Message<"gibson.tenant.v1.SetCatalogEnabledRequest"> & {
   /**
    * component_ref is the component identifier without the "component:" type
-   * prefix, kind-qualified as "<kind>:<name>" or "<kind>/<name>" — e.g. "tool:nmap" or "agent/zerocool". The daemon normalises it
+   * prefix, kind-qualified as "<kind>:<name>" or "<kind>/<name>" — e.g. "tool:nmap" or "agent/zerocool". The daemon normalizes it
    * before writing to FGA.
    *
    * @generated from field: string component_ref = 1;
@@ -1032,7 +1106,7 @@ export type SetCatalogEnabledRequest = Message<"gibson.tenant.v1.SetCatalogEnabl
  * Use `create(SetCatalogEnabledRequestSchema)` to create a new message.
  */
 export const SetCatalogEnabledRequestSchema: GenMessage<SetCatalogEnabledRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 37);
+  messageDesc(file_gibson_tenant_v1_membership, 41);
 
 /**
  * @generated from message gibson.tenant.v1.SetCatalogEnabledResponse
@@ -1058,7 +1132,7 @@ export type SetCatalogEnabledResponse = Message<"gibson.tenant.v1.SetCatalogEnab
  * Use `create(SetCatalogEnabledResponseSchema)` to create a new message.
  */
 export const SetCatalogEnabledResponseSchema: GenMessage<SetCatalogEnabledResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 38);
+  messageDesc(file_gibson_tenant_v1_membership, 42);
 
 /**
  * @generated from message gibson.tenant.v1.SetCatalogPublishedRequest
@@ -1066,7 +1140,7 @@ export const SetCatalogEnabledResponseSchema: GenMessage<SetCatalogEnabledRespon
 export type SetCatalogPublishedRequest = Message<"gibson.tenant.v1.SetCatalogPublishedRequest"> & {
   /**
    * component_ref is the component identifier without the "component:" type
-   * prefix, kind-qualified — e.g. "connector:gitlab" or "connector/gitlab". The daemon normalises it before writing.
+   * prefix, kind-qualified — e.g. "connector:gitlab" or "connector/gitlab". The daemon normalizes it before writing.
    *
    * @generated from field: string component_ref = 1;
    */
@@ -1087,7 +1161,7 @@ export type SetCatalogPublishedRequest = Message<"gibson.tenant.v1.SetCatalogPub
  * Use `create(SetCatalogPublishedRequestSchema)` to create a new message.
  */
 export const SetCatalogPublishedRequestSchema: GenMessage<SetCatalogPublishedRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 39);
+  messageDesc(file_gibson_tenant_v1_membership, 43);
 
 /**
  * @generated from message gibson.tenant.v1.SetCatalogPublishedResponse
@@ -1113,7 +1187,7 @@ export type SetCatalogPublishedResponse = Message<"gibson.tenant.v1.SetCatalogPu
  * Use `create(SetCatalogPublishedResponseSchema)` to create a new message.
  */
 export const SetCatalogPublishedResponseSchema: GenMessage<SetCatalogPublishedResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 40);
+  messageDesc(file_gibson_tenant_v1_membership, 44);
 
 /**
  * @generated from message gibson.tenant.v1.GetReservedNamesRequest
@@ -1126,7 +1200,7 @@ export type GetReservedNamesRequest = Message<"gibson.tenant.v1.GetReservedNames
  * Use `create(GetReservedNamesRequestSchema)` to create a new message.
  */
 export const GetReservedNamesRequestSchema: GenMessage<GetReservedNamesRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 41);
+  messageDesc(file_gibson_tenant_v1_membership, 45);
 
 /**
  * @generated from message gibson.tenant.v1.GetReservedNamesResponse
@@ -1152,7 +1226,7 @@ export type GetReservedNamesResponse = Message<"gibson.tenant.v1.GetReservedName
  * Use `create(GetReservedNamesResponseSchema)` to create a new message.
  */
 export const GetReservedNamesResponseSchema: GenMessage<GetReservedNamesResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_membership, 42);
+  messageDesc(file_gibson_tenant_v1_membership, 46);
 
 /**
  * MembershipService manages tenant members, teams, roles, and component access
@@ -1179,8 +1253,10 @@ export const MembershipService: GenService<{
   /**
    * SetTenantRole writes or removes admin / member / writer FGA tuples on
    * the tenant for a given user. The role field must be one of "admin",
-   * "member", or "writer". Atomically removes any conflicting prior role
-   * tuple before writing the new one.
+   * "member", or "writer" — "owner" is refused; Owner can change only
+   * through TransferOwnership (hosted#190). Also refused when user_id
+   * already holds the tenant's owner relation: the Owner's role can never be
+   * changed or removed through this RPC.
    *
    * @generated from rpc gibson.tenant.v1.MembershipService.SetTenantRole
    */
@@ -1190,9 +1266,11 @@ export const MembershipService: GenService<{
     output: typeof SetTenantRoleResponseSchema;
   },
   /**
-   * TransferOwnership atomically swaps the owner FGA tuple on the tenant
-   * from the current owner to new_owner_user_id. Fails if the caller is
-   * not the current owner.
+   * TransferOwnership atomically moves the owner relation from the caller to
+   * new_owner_user_id and grants the caller admin, in a single FGA write.
+   * Gated on the "owner" relation (not "admin"): only the tenant's current
+   * Owner may call this RPC (hosted#190). new_owner_user_id must already be
+   * a member of the caller's tenant.
    *
    * @generated from rpc gibson.tenant.v1.MembershipService.TransferOwnership
    */
@@ -1200,6 +1278,40 @@ export const MembershipService: GenService<{
     methodKind: "unary";
     input: typeof TransferOwnershipRequestSchema;
     output: typeof TransferOwnershipResponseSchema;
+  },
+  /**
+   * RemoveMember ends user_id's place in the caller's tenant: their Zitadel
+   * account is deleted and every one of their sessions is revoked at once, so
+   * their next request fails immediately rather than waiting for a token to
+   * expire. Their missions and findings stay in the tenant, attributed by the
+   * name and email recorded at the time.
+   *
+   * Refused when user_id holds the tenant's owner relation: the Owner cannot
+   * be removed, only transferred out of first (TransferOwnership).
+   *
+   * @generated from rpc gibson.tenant.v1.MembershipService.RemoveMember
+   */
+  removeMember: {
+    methodKind: "unary";
+    input: typeof RemoveMemberRequestSchema;
+    output: typeof RemoveMemberResponseSchema;
+  },
+  /**
+   * LeaveTenant is the self-service half of Removal (ADR-0093 §11): the
+   * caller ends their own place in their tenant, exactly like RemoveMember
+   * with themselves as the target. Gated on "member" (every tenant role
+   * implies it) rather than "admin", since removing yourself needs no
+   * admin standing.
+   *
+   * Refused when the caller holds the tenant's owner relation: the Owner
+   * cannot leave until ownership is transferred to another tenant user.
+   *
+   * @generated from rpc gibson.tenant.v1.MembershipService.LeaveTenant
+   */
+  leaveTenant: {
+    methodKind: "unary";
+    input: typeof LeaveTenantRequestSchema;
+    output: typeof LeaveTenantResponseSchema;
   },
   /**
    * InviteMember creates a pending invitation for an email address with the
@@ -1367,7 +1479,7 @@ export const MembershipService: GenService<{
    *
    * The component_ref must be a fully-qualified component object key of the
    * form "<kind>:<name>" or "<kind>/<name>" (e.g. "tool:nmap", "agent/zerocool"). The daemon
-   * normalises to "component:<component_ref>" before writing to FGA.
+   * normalizes to "component:<component_ref>" before writing to FGA.
    *
    * Authorization: tenant admin. Only a tenant admin may modify which
    * components are available in their tenant's catalog.
