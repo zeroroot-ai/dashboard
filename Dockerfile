@@ -23,7 +23,7 @@
 # Stage 1: Dependencies - Install node modules
 # ============================================================================
 # ghcr.io/zeroroot-ai/mirror/node:24-alpine
-FROM ghcr.io/zeroroot-ai/mirror/node:24-alpine@sha256:50c8e8ca1d27439048670df5883f32d57cf81cff6233222c893fd0d9884cbd81 AS deps
+FROM ghcr.io/zeroroot-ai/mirror/node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS deps
 
 WORKDIR /app
 
@@ -45,7 +45,7 @@ RUN npm ci --ignore-scripts --legacy-peer-deps && \
 # Stage 2: Builder - Build Next.js application
 # ============================================================================
 # ghcr.io/zeroroot-ai/mirror/node:24-alpine
-FROM ghcr.io/zeroroot-ai/mirror/node:24-alpine@sha256:50c8e8ca1d27439048670df5883f32d57cf81cff6233222c893fd0d9884cbd81 AS builder
+FROM ghcr.io/zeroroot-ai/mirror/node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS builder
 
 WORKDIR /app
 
@@ -102,7 +102,7 @@ RUN npm run build
 # Stage 3: Runtime - Minimal production image
 # ============================================================================
 # ghcr.io/zeroroot-ai/mirror/node:24-alpine
-FROM ghcr.io/zeroroot-ai/mirror/node:24-alpine@sha256:50c8e8ca1d27439048670df5883f32d57cf81cff6233222c893fd0d9884cbd81 AS runner
+FROM ghcr.io/zeroroot-ai/mirror/node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS runner
 
 WORKDIR /app
 
