@@ -69,7 +69,24 @@
 const TENANT_ROLE_ORDER: Readonly<Record<string, number>> = {
   // Proto-emitted relation names (canonical, these match what the SDK/daemon
   // proto annotations emit verbatim).
+  //
+  // platform_operator and platform_owner are two SEPARATE, non-overlapping
+  // system_tenant relations (gibson model.fga: both `define ...: [user]`
+  // direct-only, neither implies the other). platform_operator is
+  // machine-only (service accounts); platform_owner is the one human
+  // Zitadel administrator (ADR-0093 decision 6/7, hosted#201). The seven
+  // AdminTenantService RPCs that used to gate a human caller on
+  // platform_operator now gate on platform_owner instead. Both share this
+  // placeholder tier rather than a real ranking: no caller role this file
+  // ever sees (`membership.role` is always owner/admin/member, normalized in
+  // src/lib/auth/membership.ts) can equal either string, so the exact tier
+  // value never changes an outcome, only that it must classify ABOVE every
+  // tenant-scoped role so `?? Infinity`'s default-deny is never silently
+  // relied on for a relation the registry actually emits (see
+  // __tests__/satisfies-relation.test.ts, which fails CI the moment a new
+  // proto relation lands here unclassified).
   platform_operator: 1000, // cross-tenant ops tier, higher than any tenant-scoped relation
+  platform_owner: 1000, // the Platform owner; see the block comment above
   owner: 150, // tenant owner, highest tenant-scoped role; FGA: admin = [user] or owner
   admin: 100,
   // writer: tenant-scoped write access (e.g. DaemonService/CreateMissionDefinition).
@@ -245,8 +262,17 @@ export const objectScopedRelations: ReadonlySet<string> = OBJECT_SCOPED_RELATION
  * Roles that operate ACROSS tenant boundaries (not scoped to a single tenant).
  * Holding one of these is what authorizes tenant-lifecycle operations like
  * provisioning a new tenant, which no per-tenant relation can grant.
+ *
+ * Includes platform_owner alongside platform_operator (ADR-0093 decision
+ * 6/7, hosted#201): the seven AdminTenantService RPCs a human platform
+ * administrator calls now gate on platform_owner, not platform_operator, so
+ * anywhere this module's cross-tenant classification is asked about a role
+ * string must treat both as cross-tenant, not only the older one.
  */
-const CROSS_TENANT_ROLES: ReadonlySet<string> = new Set(['platform_operator']);
+const CROSS_TENANT_ROLES: ReadonlySet<string> = new Set([
+  'platform_operator',
+  'platform_owner',
+]);
 
 /**
  * Report whether any of the supplied roles is a cross-tenant role.

@@ -409,7 +409,7 @@ export const ConnectorAuthService: GenService<{
    *
    * Re-authorizing replaces the previous grant in place. The daemon callback
    * runs the same path, so completing through the browser and completing
-   * through this RPC are one behaviour.
+   * through this RPC are one behavior.
    *
    * @generated from rpc gibson.tenant.v1.ConnectorAuthService.CompleteConnectorAuthorization
    */

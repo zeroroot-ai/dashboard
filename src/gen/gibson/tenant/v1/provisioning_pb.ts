@@ -42,9 +42,9 @@
 //     unauthenticated-mode RPC (skipTenantResolution), so that allow-branch was
 //     unreachable for EVERY caller — including the tenant's own billing portal
 //     (gibson#1339). The identifiers now live on rule-mode RPCs where ext-authz
-//     + FGA can actually authorise the caller: TenantService.GetTenantBilling
+//     + FGA can actually authorize the caller: TenantService.GetTenantBilling
 //     (own tenant, tenant_from_identity) and AdminTenantService
-//     .AdminGetTenantBilling (cross-tenant, platform_operator).
+//     .AdminGetTenantBilling (cross-tenant, platform_owner).
 //   - SetTenantBillingActive requires a fresh HMAC assertion bound to this
 //     tenant_id and active value, signed with the deployment's billing-webhook
 //     secret. Envoy routing alone used to be the only control, which meant any

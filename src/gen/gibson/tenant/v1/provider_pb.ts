@@ -83,7 +83,7 @@ export type ProviderRecord = Message<"gibson.tenant.v1.ProviderRecord"> & {
   updatedAt: string;
 
   /**
-   * capabilities declares which services this provider fulfils (chat and/or
+   * capabilities declares which services this provider fulfills (chat and/or
    * embedding). Empty implies the legacy chat-only default.
    *
    * @generated from field: repeated gibson.tenant.v1.Capability capabilities = 10;
@@ -142,7 +142,7 @@ export type ProviderConfigInput = Message<"gibson.tenant.v1.ProviderConfigInput"
   setAsDefault: boolean;
 
   /**
-   * capabilities declares which services this provider fulfils (chat and/or
+   * capabilities declares which services this provider fulfills (chat and/or
    * embedding). Empty implies the legacy chat-only default.
    *
    * @generated from field: repeated gibson.tenant.v1.Capability capabilities = 6;
@@ -245,7 +245,7 @@ export type ModelDescriptor = Message<"gibson.tenant.v1.ModelDescriptor"> & {
 
   /**
    * capabilities declares what this model can do (chat, embedding, …).
-   * Empty implies legacy chat-only behaviour. The dashboard uses this field to
+   * Empty implies legacy chat-only behavior. The dashboard uses this field to
    * populate the chat-model picker (CAPABILITY_CHAT) or the embedding-model
    * picker (CAPABILITY_EMBEDDING) — a model may appear in both.
    *
@@ -293,7 +293,7 @@ export type SupportedProvider = Message<"gibson.tenant.v1.SupportedProvider"> & 
   credentials: CredentialField[];
 
   /**
-   * default_models is the static catalogue of CHAT models this provider
+   * default_models is the static catalog of CHAT models this provider
    * exposes when the daemon can enumerate them without a live API call.
    * Empty for providers where the model list requires a live probe.
    *
@@ -302,7 +302,7 @@ export type SupportedProvider = Message<"gibson.tenant.v1.SupportedProvider"> & 
   defaultModels: ModelDescriptor[];
 
   /**
-   * embedding_models is the static catalogue of EMBEDDING models this
+   * embedding_models is the static catalog of EMBEDDING models this
    * provider supports. Empty for providers that serve chat only (e.g.
    * Anthropic, Google). The dashboard uses this list to populate the
    * embedding-model picker in Settings > Providers.
@@ -717,7 +717,7 @@ export type TestProviderResponse = Message<"gibson.tenant.v1.TestProviderRespons
   error: string;
 
   /**
-   * Live model catalogue returned by the provider's API for these credentials.
+   * Live model catalog returned by the provider's API for these credentials.
    * Empty when ok=false.
    *
    * @generated from field: repeated gibson.tenant.v1.ModelDescriptor models = 5;
@@ -789,7 +789,7 @@ export const GetSupportedProvidersResponseSchema: GenMessage<GetSupportedProvide
 
 /**
  * ProbeProviderRequest carries candidate provider credentials for a
- * validation-only call that returns the live model catalogue. Credentials
+ * validation-only call that returns the live model catalog. Credentials
  * are NEVER persisted by this RPC.
  * Source: previously ProbeProviderRequest in gibson.admin.v1 (platform-sdk).
  *
@@ -860,7 +860,7 @@ export type ProbeProviderResponse = Message<"gibson.tenant.v1.ProbeProviderRespo
   errorClass: string;
 
   /**
-   * Live chat-model catalogue the provider's API returned for these
+   * Live chat-model catalog the provider's API returned for these
    * credentials. Empty when ok=false or the provider is embedding-only.
    *
    * @generated from field: repeated gibson.tenant.v1.ModelDescriptor models = 4;
@@ -1153,7 +1153,7 @@ export const ExecuteLLMResponseSchema: GenMessage<ExecuteLLMResponse> = /*@__PUR
   messageDesc(file_gibson_tenant_v1_provider, 36);
 
 /**
- * Capability declares a service a provider can fulfil. A provider may serve
+ * Capability declares a service a provider can fulfill. A provider may serve
  * chat completions, embeddings, or both — letting an operator run e.g.
  * Anthropic for chat and OpenAI/Bedrock for embeddings (E11 BYO-embedder).
  *
@@ -1314,7 +1314,7 @@ export const ProviderService: GenService<{
     output: typeof TestProviderResponseSchema;
   },
   /**
-   * GetSupportedProviders returns the daemon's static catalogue of LLM provider
+   * GetSupportedProviders returns the daemon's static catalog of LLM provider
    * types with their per-provider credential field schemas.
    *
    * @generated from rpc gibson.tenant.v1.ProviderService.GetSupportedProviders
@@ -1326,7 +1326,7 @@ export const ProviderService: GenService<{
   },
   /**
    * ProbeProvider validates candidate provider credentials WITHOUT persisting
-   * them, and returns the live model catalogue the provider's API exposes for
+   * them, and returns the live model catalog the provider's API exposes for
    * those credentials. Used by the wizard's "Test connection" step.
    *
    * SECURITY: credentials transit memory only — they are passed to the
@@ -1345,7 +1345,7 @@ export const ProviderService: GenService<{
     output: typeof ProbeProviderResponseSchema;
   },
   /**
-   * ListProviderModels fetches the live model catalogue for an already-
+   * ListProviderModels fetches the live model catalog for an already-
    * configured provider, looked up by name. Credentials are read from the
    * encrypted store; the caller does not pass them.
    *

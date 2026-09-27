@@ -131,7 +131,7 @@ describe('satisfiesRelation, tenant roles never reach per-object grants', () => 
   it.each([...objectScopedRelations])(
     'no tenant role satisfies the per-object relation "%s"',
     (relation) => {
-      for (const role of ['owner', 'admin', 'writer', 'member', 'platform_operator']) {
+      for (const role of ['owner', 'admin', 'writer', 'member', 'platform_operator', 'platform_owner']) {
         expect(
           satisfiesRelation(role, relation),
           `role "${role}" must not satisfy per-object relation "${relation}"`,
@@ -260,6 +260,44 @@ describe('decideAuthEntry, a tenant admin and an object-scoped grant', () => {
       ),
     ).toEqual({ allowed: false, reason: 'relation-not-met' });
   });
+
+  // ADR-0093 decision 6/7 (hosted#201): platform_operator and platform_owner
+  // are two SEPARATE system_tenant relations (gibson model.fga: both
+  // `define ...: [user]` direct-only; neither implies the other). The seven
+  // AdminTenantService RPCs that used to gate a human caller on
+  // platform_operator now gate on platform_owner instead. Mirrors the
+  // existing platform_operator test above: both share this module's
+  // cross-tenant placeholder tier (see relation-hierarchy.ts), which is
+  // sound only because the one real caller-role source this function ever
+  // sees (`membership.role`, normalized to owner/admin/member in
+  // src/lib/auth/membership.ts) can never literally equal either string —
+  // true mutual exclusion between the two is enforced by ext-authz /
+  // model.fga on the daemon, not representable on this tenant-role scale.
+  it('ALLOWS a platform_owner the system-tenant relation', () => {
+    expect(
+      decideAuthEntry(
+        {
+          relation: 'platform_owner',
+          objectType: 'system_tenant',
+          objectDeriver: 'system_tenant',
+        },
+        'platform_owner',
+      ),
+    ).toEqual({ allowed: true });
+  });
+
+  it('DENIES a tenant owner the platform_owner-gated system-tenant relation', () => {
+    expect(
+      decideAuthEntry(
+        {
+          relation: 'platform_owner',
+          objectType: 'system_tenant',
+          objectDeriver: 'system_tenant',
+        },
+        'owner',
+      ),
+    ).toEqual({ allowed: false, reason: 'relation-not-met' });
+  });
 });
 
 describe('decideAuthEntry against the real generated AuthRegistry', () => {
@@ -284,7 +322,12 @@ describe('decideAuthEntry against the real generated AuthRegistry', () => {
 
   it('a tenant admin is still allowed every admin/member/writer RPC on its own tenant', () => {
     const wronglyDenied = activeTenant
-      .filter((e) => e.relation !== 'owner' && e.relation !== 'platform_operator')
+      .filter(
+        (e) =>
+          e.relation !== 'owner' &&
+          e.relation !== 'platform_operator' &&
+          e.relation !== 'platform_owner',
+      )
       .filter((e) => !decideAuthEntry(e, 'admin').allowed)
       .map((e) => e.method);
     expect(wronglyDenied).toEqual([]);
@@ -294,6 +337,15 @@ describe('decideAuthEntry against the real generated AuthRegistry', () => {
 describe('rolesAreCrossTenant (#615)', () => {
   it('is true for a platform_operator', () => {
     expect(rolesAreCrossTenant(['platform_operator'])).toBe(true);
+  });
+
+  // ADR-0093 decision 6/7 (hosted#201): the human platform administrator's
+  // cross-tenant relation was split out of platform_operator into its own
+  // platform_owner relation. rolesAreCrossTenant must classify it the same
+  // way, or a genuine platform_owner-holding caller would be misreported as
+  // NOT cross-tenant everywhere this function's result feeds a decision.
+  it('is true for a platform_owner', () => {
+    expect(rolesAreCrossTenant(['platform_owner'])).toBe(true);
   });
 
   it('is false for a tenant admin', () => {

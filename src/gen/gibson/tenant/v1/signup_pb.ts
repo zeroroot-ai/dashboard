@@ -457,7 +457,7 @@ export const SignupRequestSchema: GenMessage<SignupRequest> = /*@__PURE__*/
  * SignupResponse reports the outcome of a completed signup.
  *
  * WIRE COMPATIBILITY: field 2 was `bool already_existed`, which described the
- * resume behaviour this flow no longer has. It is reserved rather than reused —
+ * resume behavior this flow no longer has. It is reserved rather than reused —
  * reusing it for a string would also have changed the wire type under any
  * client still reading it.
  *
