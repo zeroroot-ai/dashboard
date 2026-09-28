@@ -168,6 +168,18 @@ export const queryKeys = {
     all: ['org-graph'] as const,
     full: (tenantId: string) => ['org-graph', tenantId, 'full'] as const,
   },
+
+  // Destructive-action authorization queue (ADR-0028, gibson#278, dashboard#99).
+  destructiveActions: {
+    all: ['destructive-actions'] as const,
+    list: (tenantId: string) => ['destructive-actions', tenantId, 'list'] as const,
+  },
+
+  // HITL bet-settlement queue (ADR-0023, gibson#264/#266/#280, dashboard#97).
+  hitlSettle: {
+    all: ['hitl-settle'] as const,
+    list: (tenantId: string) => ['hitl-settle', tenantId, 'list'] as const,
+  },
 } as const;
 
 // Type helpers for query keys

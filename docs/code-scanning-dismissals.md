@@ -316,8 +316,8 @@ not recur silently.
    still reads "gibson is a private repo, so uploading SARIF … requires paid
    GitHub Advanced Security" with `upload: never`, and its last CodeQL analysis
    on `refs/heads/main` was 2026-06-20 — the same freeze window. Its Security tab
-   is blind for the same reason. Both repos were flipped public by epic
-   `oss-public-flip` (board #40) and neither had the upload restored, so the
+   is blind for the same reason. Both repos were flipped public by the
+   `oss-public-flip` epic and neither had the upload restored, so the
    trigger to re-enable is the flip itself rather than anything repo-local.
    Routed to the org sweep lane alongside item 1; not fixed here.
 3. **`check-authz-registry-fresh` fails on `main`.** `src/gen/authz/registry.ts`
