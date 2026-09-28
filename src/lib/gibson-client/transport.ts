@@ -391,9 +391,11 @@ export function sessionManagerFor(
 //     key shape (e.g. `/gibson.tenant.v1.SecretsService/SetSecret`).
 //   - `assertAuthorized` is fail-closed: an unknown method throws
 //     `AuthzDeniedError(unknown_method)` before the request leaves the process.
-//   - It SKIPS registry entries marked `unauthenticated` (e.g.
-//     `ListMyMemberships`, the pre-tenant membership bootstrap), returning
-//     without consulting the session.
+//   - It SKIPS registry entries marked `unauthenticated`, returning without
+//     consulting the session. `ListMyMemberships` is NOT one of these (its
+//     registry entry is `unauthenticated: false`); it is instead built with
+//     `{ enforceAuthz: false }` on its own client, which skips this
+//     interceptor entirely (see below and dashboard#107).
 //   - On denial it throws `AuthzDeniedError`, which the caller's existing error
 //     handling surfaces as `permission_denied`.
 //
@@ -405,9 +407,11 @@ export function sessionManagerFor(
 // `userClient` enables this interceptor by default (`opts.enforceAuthz`
 // defaults to true); a caller passes `{ enforceAuthz: false }` only for an
 // RPC that legitimately must run before membership can be assumed
-// established (see `userClient`'s doc comment). `serviceClient` is
-// SERVICE-acting (no user session to gate against) and never runs
-// `assertAuthorized`.
+// established (see `userClient`'s doc comment) — this includes
+// `ListMyMemberships` itself: the RPC IS the membership resolver, so it can
+// never wait on `assertAuthorized`'s own call to `getMyMemberships()`
+// without recursing (dashboard#107). `serviceClient` is SERVICE-acting (no
+// user session to gate against) and never runs `assertAuthorized`.
 // ---------------------------------------------------------------------------
 
 const authzInterceptor: Interceptor = (next) => async (req) => {
@@ -524,11 +528,12 @@ function makeClient<T extends DescService>(
  * signed-in user. Use this from every Server Component / Server Action /
  * route handler that runs inside an authenticated browser session,
  * including the membership bootstrap (`ListMyMemberships`,
- * `InvalidateMembershipCache`): those RPCs are registered `unauthenticated:
- * true` in the authz registry, so the baked-in {@link authzInterceptor}
- * returns immediately for them without needing a resolved tenant — there is
- * no separate no-tenant transport (the former `bootstrapClient`; deleted, it
- * had become identical to this one once the tenant header was removed).
+ * `InvalidateMembershipCache`): both RPCs are registered `unauthenticated:
+ * false` in the authz registry (a user token is required at the wire
+ * level), so callers pass `{ enforceAuthz: false }` to skip the dashboard's
+ * OWN {@link authzInterceptor} for them — there is no separate no-tenant
+ * transport (the former `bootstrapClient`; deleted, it had become identical
+ * to this one once the tenant header was removed).
  *
  * This is the canonical wrapper for user-acting RPCs. Internally composes
  * the module-private {@link makeClient} with {@link requireUserToken},
@@ -541,13 +546,14 @@ function makeClient<T extends DescService>(
  * unknown method, so a server action no longer has to remember to call
  * `assertAuthorized(...)` by hand before each user-acting daemon call.
  *
- * `opts.enforceAuthz` defaults to `true`. Pass `false` only for a call whose
- * registry entry requires an active tenant + membership (unlike
- * `ListMyMemberships`, which is `unauthenticated: true` and so returns from
- * `assertAuthorized` immediately regardless) but that legitimately must run
- * before the caller's membership can be assumed established, e.g.
- * `UserService.InvalidateMembershipCache` right after accepting a fresh
- * invitation. See `src/lib/auth/membership.ts`.
+ * `opts.enforceAuthz` defaults to `true`. Pass `false` only for a call that
+ * legitimately must run before the caller's membership can be assumed
+ * established, e.g. `DaemonService.ListMyMemberships` (the membership
+ * resolver cannot wait on itself: routing it through the default
+ * authz-enforced client re-entered `assertAuthorized`, which called
+ * `getMyMemberships()`, which called `ListMyMemberships` again, forever —
+ * dashboard#107) and `UserService.InvalidateMembershipCache` right after
+ * accepting a fresh invitation. See `src/lib/auth/membership.ts`.
  */
 export function userClient<T extends DescService>(
   service: T,
