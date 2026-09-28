@@ -179,8 +179,52 @@ const telemetryInterceptor: Interceptor = (next) => async (req) => {
 // SPIFFE wiring, sync resolver for createGrpcTransport's nodeOptions
 // ---------------------------------------------------------------------------
 
-let spiffeWarmedUp = false;
-let spiffeFallbackLogged = false;
+// ---------------------------------------------------------------------------
+// Process-wide state via globalThis (dashboard#107 follow-up).
+//
+// `next build` with `output: "standalone"` compiles this file into a
+// SEPARATE bundle per entry point that imports it: middleware.js, and every
+// server/route chunk that transitively reaches gibson-client (each server
+// action or route handler module that calls `userClient` / `serviceClient`
+// pulls in its own copy unless it shares a chunk with another caller).
+// Verified against a `next build` of this repo:
+//
+//   grep -rl "SPIFFE Workload API socket not present" .next/server
+//     .next/server/chunks/7371.js
+//     .next/server/chunks/9706.js
+//     .next/server/middleware.js
+//
+// A plain module-scope `let` is duplicated once per bundle: each copy gets
+// its OWN `sharedSession`, so the fix in #108 ("all transports share ONE
+// session manager") only held within a single bundle. Three bundles means up
+// to three live HTTP/2 sessions and TLS contexts open to Envoy at once
+// instead of one, which is why the SPIFFE fallback warning below was
+// observed logged twice from a single pod (each bundle logs its own
+// first-fallback once). `registry.ts` hit the identical class of bug for the
+// same reason (HMR re-evaluating the module) and fixed it with a
+// `globalThis` slot; the same fix applies here, this time for bundle
+// duplication rather than HMR.
+// ---------------------------------------------------------------------------
+
+const GLOBAL_STATE_KEY = '__gibsonDashboardTransportState' as const;
+
+interface TransportGlobalState {
+  spiffeWarmedUp: boolean;
+  spiffeFallbackLogged: boolean;
+  sharedSession?: { identity: string; manager: Http2SessionManager };
+}
+
+type GlobalWithTransportState = typeof globalThis & {
+  [GLOBAL_STATE_KEY]?: TransportGlobalState;
+};
+
+function getTransportGlobalState(): TransportGlobalState {
+  const g = globalThis as GlobalWithTransportState;
+  if (!g[GLOBAL_STATE_KEY]) {
+    g[GLOBAL_STATE_KEY] = { spiffeWarmedUp: false, spiffeFallbackLogged: false };
+  }
+  return g[GLOBAL_STATE_KEY];
+}
 
 /**
  * Returns http2 nodeOptions populated with the dashboard pod's current
@@ -197,10 +241,11 @@ let spiffeFallbackLogged = false;
 function spiffeNodeOptions():
   | (Parameters<typeof createGrpcTransport>[0]['nodeOptions'])
   | undefined {
+  const state = getTransportGlobalState();
   const mod = loadSpiffe();
   if (!mod || !mod.isSpiffeAvailable()) {
-    if (!spiffeFallbackLogged) {
-      spiffeFallbackLogged = true;
+    if (!state.spiffeFallbackLogged) {
+      state.spiffeFallbackLogged = true;
       console.warn(
         '[gibson-client] SPIFFE Workload API socket not present ' +
           `(SPIFFE_ENDPOINT_SOCKET=${process.env.SPIFFE_ENDPOINT_SOCKET ?? 'unset'}); ` +
@@ -209,8 +254,8 @@ function spiffeNodeOptions():
     }
     return undefined;
   }
-  if (!spiffeWarmedUp) {
-    spiffeWarmedUp = true;
+  if (!state.spiffeWarmedUp) {
+    state.spiffeWarmedUp = true;
     mod.warmX509SvidContext();
   }
   const svidCtx = mod.tryGetCachedX509SvidContext();
@@ -244,22 +289,25 @@ function spiffeNodeOptions():
  * replaced only when the pod's X509-SVID changes (cold start to mTLS, and each
  * rotation), because the TLS identity is fixed per session. The old manager
  * is closed after a grace period, so calls already in flight on it finish.
+ *
+ * Held on `globalThis` (see {@link getTransportGlobalState}), not a plain
+ * module-scope `let`: `next build` compiles this file into more than one
+ * bundle, and a module-scope binding is duplicated once per bundle. Only a
+ * `globalThis` slot is guaranteed to be the same cell no matter which
+ * bundle's copy of this function runs.
  */
-let sharedSession:
-  | { identity: string; manager: Http2SessionManager }
-  | undefined;
-
 const RETIRED_SESSION_GRACE_MS = 60_000;
 
 export function sessionManagerFor(
   nodeOptions: ReturnType<typeof spiffeNodeOptions>,
 ): Http2SessionManager {
+  const state = getTransportGlobalState();
   const identity = nodeOptions && 'cert' in nodeOptions ? String(nodeOptions.cert ?? '') : '';
-  if (sharedSession && sharedSession.identity === identity) {
-    return sharedSession.manager;
+  if (state.sharedSession && state.sharedSession.identity === identity) {
+    return state.sharedSession.manager;
   }
-  const retired = sharedSession?.manager;
-  sharedSession = {
+  const retired = state.sharedSession?.manager;
+  state.sharedSession = {
     identity,
     manager: new Http2SessionManager(ENVOY_BASE_URL, undefined, nodeOptions),
   };
@@ -267,7 +315,7 @@ export function sessionManagerFor(
     const timer = setTimeout(() => retired.abort(), RETIRED_SESSION_GRACE_MS);
     timer.unref?.();
   }
-  return sharedSession.manager;
+  return state.sharedSession.manager;
 }
 
 // ---------------------------------------------------------------------------
