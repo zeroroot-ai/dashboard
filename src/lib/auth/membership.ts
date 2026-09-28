@@ -5,10 +5,13 @@
  * Tenant-membership lookup for the authenticated user.
  *
  * Calls the daemon's `gibson.daemon.v1.DaemonService/ListMyMemberships` RPC
- * via the user-acting transport (`gibson-client.ts`'s shared transport). The
- * RPC is registered in ext-authz with `unauthenticated: true`, identity is
- * required (validated by Envoy jwt_authn + ext-authz) but no per-tenant FGA
- * gate is performed (the response IS the tenant list).
+ * via the user-acting transport (`gibson-client.ts`'s shared transport). At
+ * the wire level the RPC is registered `unauthenticated: false` (identity is
+ * required, validated by Envoy jwt_authn + ext-authz) but carries no
+ * per-tenant FGA relation (the response IS the tenant list). The dashboard
+ * fetches it with `{ enforceAuthz: false }` on its own client (see
+ * `membershipsClient()` below), because the membership bootstrap cannot wait
+ * on the membership check it exists to answer (dashboard#107).
  *
  * Caching strategy (security-hardening R17):
  *
@@ -127,15 +130,27 @@ function normalizeRole(raw: string): 'owner' | 'admin' | 'member' {
 /**
  * Build a daemon client that authenticates as the current user. Sends NO
  * `x-gibson-tenant` header, same as every user-acting call now (ADR-0093
- * decision 4): ListMyMemberships is registered `unauthenticated: true` in
- * ext-authz (identity is required, but no per-tenant FGA gate runs, the
- * response IS the tenant list), which also means `userClient`'s baked-in
- * authz interceptor returns immediately for it. There is no circular
- * dependency to route around any more, `userClient` never reads a tenant
- * from anywhere.
+ * decision 4).
+ *
+ * `ListMyMemberships` is registered `unauthenticated: false` in the authz
+ * registry (`src/gen/authz/registry.ts`): the daemon requires a user token
+ * for it, which is correct at the wire level. But the dashboard's own
+ * `assertAuthorized` reads a NOT-unauthenticated entry as "resolve the
+ * caller's membership first," and resolving membership means calling
+ * `getMyMemberships()`, which calls this RPC. Routing that call through the
+ * default `userClient(DaemonService)` (authz enforced) re-entered
+ * `assertAuthorized("ListMyMemberships")`, which called `getMyMemberships()`
+ * again, forever: dashboard#107, 6,244 pending `ListMyMemberships` calls
+ * stuck in the interceptor chain of ONE request.
+ *
+ * `{ enforceAuthz: false }` breaks the cycle: the membership bootstrap must
+ * never be gated on membership. The daemon's own FGA check still applies to
+ * the RPC; only the dashboard's redundant pre-check is skipped here, the
+ * same way `userServiceClient()` below skips it for
+ * `InvalidateMembershipCache`.
  */
 function membershipsClient() {
-  return userClient(DaemonService);
+  return userClient(DaemonService, { enforceAuthz: false });
 }
 
 /**

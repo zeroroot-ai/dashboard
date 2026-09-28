@@ -17,6 +17,7 @@ import { getServerSession } from '@/src/lib/auth';
 import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { translateError } from '@/src/lib/providers-route-error';
 import { listJobs } from '@/src/lib/gibson-client/jobs';
+import { collectAllPages } from '@/src/lib/pagination';
 import type { JobView } from '@/src/lib/jobs/view';
 
 export const RUN_CONTEXT_KEY = 'mission_run_id';
@@ -33,13 +34,21 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   }
   const { id } = await params;
   try {
-    const data: JobView[] = [];
-    let pageToken = '';
-    do {
-      const page = await listJobs({ pageToken });
-      for (const job of page.jobs) if (job.spec.context[RUN_CONTEXT_KEY] === id) data.push(job);
-      pageToken = page.nextPageToken;
-    } while (pageToken !== '');
+    // Walked through collectAllPages() (dashboard#107 follow-up): the
+    // previous hand-rolled `do { ... } while (pageToken !== '')` never
+    // stopped if ListJobs returned the same token again or an empty page
+    // with a token still set, turning one RPC into an unbounded accumulation
+    // of jobs in memory. Collect every RAW job first (unfiltered, so an
+    // empty page of jobs that all belong to OTHER runs never looks like "no
+    // more data" to the guard), then filter to this run.
+    const allJobs = await collectAllPages(
+      async (pageToken) => {
+        const page = await listJobs({ pageToken });
+        return { items: page.jobs, nextPageToken: page.nextPageToken };
+      },
+      { rpc: 'JobService.ListJobs', context: { missionId: id } },
+    );
+    const data: JobView[] = allJobs.filter((job) => job.spec.context[RUN_CONTEXT_KEY] === id);
     return Response.json({ data });
   } catch (err) {
     return translateError(err, 'missions/[id]/jobs');

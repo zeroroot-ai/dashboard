@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.122.4](https://github.com/zeroroot-ai/dashboard/compare/v0.122.3...v0.122.4) (2026-09-28)
+
+
+### Bug Fixes
+
+* **authz:** stop at self-mode RPCs before reading memberships ([#116](https://github.com/zeroroot-ai/dashboard/issues/116)) ([542cae0](https://github.com/zeroroot-ai/dashboard/commit/542cae0a75a64cf2f316db3dd3ef53cdd3335492))
+
+## [0.122.3](https://github.com/zeroroot-ai/dashboard/compare/v0.122.2...v0.122.3) (2026-09-28)
+
+
+### Bug Fixes
+
+* **auth:** stop the membership bootstrap from gating on membership ([#115](https://github.com/zeroroot-ai/dashboard/issues/115)) ([7b241e9](https://github.com/zeroroot-ai/dashboard/commit/7b241e91a0b2f589acd9435998737fa2145ca66d)), closes [#107](https://github.com/zeroroot-ai/dashboard/issues/107)
+* **pagination:** stop unbounded page-token loops from accumulating forever ([#112](https://github.com/zeroroot-ai/dashboard/issues/112)) ([92224c4](https://github.com/zeroroot-ai/dashboard/commit/92224c4b1d8face244f031a76177c0baab53a183))
+* **transport:** give every unary daemon call a bounded deadline ([#114](https://github.com/zeroroot-ai/dashboard/issues/114)) ([201a545](https://github.com/zeroroot-ai/dashboard/commit/201a545e7509f56745c404671b22a48ecb7ec084))
+
+## [0.122.2](https://github.com/zeroroot-ai/dashboard/compare/v0.122.1...v0.122.2) (2026-09-28)
+
+
+### Bug Fixes
+
+* **events:** abort the daemon subscribe call when the SSE client disconnects ([#111](https://github.com/zeroroot-ai/dashboard/issues/111)) ([521d52f](https://github.com/zeroroot-ai/dashboard/commit/521d52f3ce632511471d9bc0cd8ac3c5cae4838d))
+* **transport:** hold the shared HTTP/2 session on globalThis, not a module-scope let ([#109](https://github.com/zeroroot-ai/dashboard/issues/109)) ([b121dd5](https://github.com/zeroroot-ai/dashboard/commit/b121dd58e810fef8f9d688c9bc43dc6e1ad6d402))
+
+## [0.122.1](https://github.com/zeroroot-ai/dashboard/compare/v0.122.0...v0.122.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* delete the shell-user GC script and the dead claim-account spec ([#106](https://github.com/zeroroot-ai/dashboard/issues/106)) ([e51807d](https://github.com/zeroroot-ai/dashboard/commit/e51807d62c280e83c32aafd86695c1a70cbc4214))
+* **signup:** associate the Password label with its input ([#95](https://github.com/zeroroot-ai/dashboard/issues/95)) ([5268f0f](https://github.com/zeroroot-ai/dashboard/commit/5268f0f036df83bc2f4411a00b48c9a364ea9aad)), closes [#77](https://github.com/zeroroot-ai/dashboard/issues/77)
+* **transport:** every RPC client shares one HTTP/2 session, so the heap stops climbing ([#108](https://github.com/zeroroot-ai/dashboard/issues/108)) ([3e4a030](https://github.com/zeroroot-ai/dashboard/commit/3e4a030670ab8713bfdbf8a5b41e858423b1f74e)), closes [#107](https://github.com/zeroroot-ai/dashboard/issues/107)
+
 ## [0.122.0](https://github.com/zeroroot-ai/dashboard/compare/v0.121.1...v0.122.0) (2026-09-27)
 
 

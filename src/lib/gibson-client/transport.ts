@@ -9,7 +9,7 @@ import {
   type Client,
   type Interceptor,
 } from '@connectrpc/connect';
-import { createGrpcTransport } from '@connectrpc/connect-node';
+import { createGrpcTransport, Http2SessionManager } from '@connectrpc/connect-node';
 import type { DescService } from '@bufbuild/protobuf';
 import { requireUserToken } from '../auth/user-token';
 import {
@@ -154,6 +154,66 @@ function envoyStatusFrom(err: unknown): string | null {
 }
 
 /**
+ * Bounded deadline for every UNARY call (dashboard#107 follow-up).
+ *
+ * A heap snapshot from the hosted demo run caught the mechanism directly:
+ * one Owner sign-in and one /dashboard render produced 6,244 concurrent,
+ * never-completing `ListMyMemberships` calls in ~45s (~140/s), each with
+ * its own full connect-node closure set (transport, client, session
+ * provider). Only one shared `Http2SessionManager` existed, in "ready"
+ * state, with a live, otherwise-healthy HTTP/2 session, yet almost none of
+ * the pending calls had reached the point of opening an actual HTTP/2
+ * stream, only 3 `Http2Stream` objects existed against 6,244 pending
+ * `unary` closures. The calls were stuck earlier in the interceptor chain
+ * (most likely resolving the bearer token or the authz registry check),
+ * not on the wire, and nothing ever cancelled them, so every pending call's
+ * full closure graph stayed reachable and grew the heap until the pod OOMed.
+ *
+ * No interceptor, wire-level failure, or backend condition should be able
+ * to leave a unary call pending forever. This interceptor is the backstop:
+ * it races EVERY unary call against a deadline, regardless of what is slow
+ * (token minting, the authz registry check, session setup, or the RPC
+ * itself), and aborts with `Code.DeadlineExceeded` if the deadline passes.
+ * Callers that need a different upper bound may still pass their own
+ * `timeoutMs` / `signal`; this interceptor only fills in a bound when none
+ * would otherwise exist.
+ *
+ * Deliberately does NOT apply to streaming calls: `DaemonService.Subscribe`
+ * (`req.stream === true`) is meant to stay open for the life of the SSE
+ * connection it backs. Bounding it here would kill a legitimate long-lived
+ * stream on the same timer as a hung unary call.
+ */
+const UNARY_CALL_DEADLINE_MS = 20_000;
+
+const deadlineInterceptor: Interceptor = (next) => async (req) => {
+  if (req.stream) {
+    return next(req);
+  }
+  const controller = new AbortController();
+  const forwardAbort = (): void => controller.abort(req.signal.reason);
+  if (req.signal.aborted) {
+    controller.abort(req.signal.reason);
+  } else {
+    req.signal.addEventListener('abort', forwardAbort, { once: true });
+  }
+  const timer = setTimeout(() => {
+    controller.abort(
+      new ConnectError(
+        `${req.service.typeName}/${req.method.name} exceeded the dashboard's ${UNARY_CALL_DEADLINE_MS}ms unary call deadline`,
+        Code.DeadlineExceeded,
+      ),
+    );
+  }, UNARY_CALL_DEADLINE_MS);
+  timer.unref?.();
+  try {
+    return await next({ ...req, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+    req.signal.removeEventListener('abort', forwardAbort);
+  }
+};
+
+/**
  * Telemetry interceptor: emits one `gibson_admin_rpc_total` increment
  * per call and bumps the upstream-errors counter when the failure looks
  * Envoy-shaped. Wrapped OUTSIDE the auth interceptor so token-mint
@@ -179,8 +239,52 @@ const telemetryInterceptor: Interceptor = (next) => async (req) => {
 // SPIFFE wiring, sync resolver for createGrpcTransport's nodeOptions
 // ---------------------------------------------------------------------------
 
-let spiffeWarmedUp = false;
-let spiffeFallbackLogged = false;
+// ---------------------------------------------------------------------------
+// Process-wide state via globalThis (dashboard#107 follow-up).
+//
+// `next build` with `output: "standalone"` compiles this file into a
+// SEPARATE bundle per entry point that imports it: middleware.js, and every
+// server/route chunk that transitively reaches gibson-client (each server
+// action or route handler module that calls `userClient` / `serviceClient`
+// pulls in its own copy unless it shares a chunk with another caller).
+// Verified against a `next build` of this repo:
+//
+//   grep -rl "SPIFFE Workload API socket not present" .next/server
+//     .next/server/chunks/7371.js
+//     .next/server/chunks/9706.js
+//     .next/server/middleware.js
+//
+// A plain module-scope `let` is duplicated once per bundle: each copy gets
+// its OWN `sharedSession`, so the fix in #108 ("all transports share ONE
+// session manager") only held within a single bundle. Three bundles means up
+// to three live HTTP/2 sessions and TLS contexts open to Envoy at once
+// instead of one, which is why the SPIFFE fallback warning below was
+// observed logged twice from a single pod (each bundle logs its own
+// first-fallback once). `registry.ts` hit the identical class of bug for the
+// same reason (HMR re-evaluating the module) and fixed it with a
+// `globalThis` slot; the same fix applies here, this time for bundle
+// duplication rather than HMR.
+// ---------------------------------------------------------------------------
+
+const GLOBAL_STATE_KEY = '__gibsonDashboardTransportState' as const;
+
+interface TransportGlobalState {
+  spiffeWarmedUp: boolean;
+  spiffeFallbackLogged: boolean;
+  sharedSession?: { identity: string; manager: Http2SessionManager };
+}
+
+type GlobalWithTransportState = typeof globalThis & {
+  [GLOBAL_STATE_KEY]?: TransportGlobalState;
+};
+
+function getTransportGlobalState(): TransportGlobalState {
+  const g = globalThis as GlobalWithTransportState;
+  if (!g[GLOBAL_STATE_KEY]) {
+    g[GLOBAL_STATE_KEY] = { spiffeWarmedUp: false, spiffeFallbackLogged: false };
+  }
+  return g[GLOBAL_STATE_KEY];
+}
 
 /**
  * Returns http2 nodeOptions populated with the dashboard pod's current
@@ -197,10 +301,11 @@ let spiffeFallbackLogged = false;
 function spiffeNodeOptions():
   | (Parameters<typeof createGrpcTransport>[0]['nodeOptions'])
   | undefined {
+  const state = getTransportGlobalState();
   const mod = loadSpiffe();
   if (!mod || !mod.isSpiffeAvailable()) {
-    if (!spiffeFallbackLogged) {
-      spiffeFallbackLogged = true;
+    if (!state.spiffeFallbackLogged) {
+      state.spiffeFallbackLogged = true;
       console.warn(
         '[gibson-client] SPIFFE Workload API socket not present ' +
           `(SPIFFE_ENDPOINT_SOCKET=${process.env.SPIFFE_ENDPOINT_SOCKET ?? 'unset'}); ` +
@@ -209,8 +314,8 @@ function spiffeNodeOptions():
     }
     return undefined;
   }
-  if (!spiffeWarmedUp) {
-    spiffeWarmedUp = true;
+  if (!state.spiffeWarmedUp) {
+    state.spiffeWarmedUp = true;
     mod.warmX509SvidContext();
   }
   const svidCtx = mod.tryGetCachedX509SvidContext();
@@ -226,6 +331,54 @@ function spiffeNodeOptions():
 }
 
 // ---------------------------------------------------------------------------
+// One HTTP/2 session for every client (dashboard#107)
+// ---------------------------------------------------------------------------
+
+/**
+ * The HTTP/2 session manager every transport shares.
+ *
+ * `makeClient` runs on every `userClient()` / `serviceClient()` /
+ * `tokenClient()` call, so once per RPC-issuing request. Left to itself,
+ * `createGrpcTransport` builds a NEW session manager each time, and each one
+ * keeps its HTTP/2 session and TLS context open after the call ends. The heap
+ * then climbs with traffic until V8 dies: hosted's identity exit test (run
+ * 36355897936) signed a person in and the pod ended "JavaScript heap out of
+ * memory" at 507 MB about 11 minutes later.
+ *
+ * One manager multiplexes every call over one session to Envoy. It is
+ * replaced only when the pod's X509-SVID changes (cold start to mTLS, and each
+ * rotation), because the TLS identity is fixed per session. The old manager
+ * is closed after a grace period, so calls already in flight on it finish.
+ *
+ * Held on `globalThis` (see {@link getTransportGlobalState}), not a plain
+ * module-scope `let`: `next build` compiles this file into more than one
+ * bundle, and a module-scope binding is duplicated once per bundle. Only a
+ * `globalThis` slot is guaranteed to be the same cell no matter which
+ * bundle's copy of this function runs.
+ */
+const RETIRED_SESSION_GRACE_MS = 60_000;
+
+export function sessionManagerFor(
+  nodeOptions: ReturnType<typeof spiffeNodeOptions>,
+): Http2SessionManager {
+  const state = getTransportGlobalState();
+  const identity = nodeOptions && 'cert' in nodeOptions ? String(nodeOptions.cert ?? '') : '';
+  if (state.sharedSession && state.sharedSession.identity === identity) {
+    return state.sharedSession.manager;
+  }
+  const retired = state.sharedSession?.manager;
+  state.sharedSession = {
+    identity,
+    manager: new Http2SessionManager(ENVOY_BASE_URL, undefined, nodeOptions),
+  };
+  if (retired) {
+    const timer = setTimeout(() => retired.abort(), RETIRED_SESSION_GRACE_MS);
+    timer.unref?.();
+  }
+  return state.sharedSession.manager;
+}
+
+// ---------------------------------------------------------------------------
 // Per-RPC authorization interceptor (dashboard#848, E9 follow-up).
 //
 // Bakes the server-side `assertAuthorized` defense-in-depth check INTO the
@@ -238,9 +391,11 @@ function spiffeNodeOptions():
 //     key shape (e.g. `/gibson.tenant.v1.SecretsService/SetSecret`).
 //   - `assertAuthorized` is fail-closed: an unknown method throws
 //     `AuthzDeniedError(unknown_method)` before the request leaves the process.
-//   - It SKIPS registry entries marked `unauthenticated` (e.g.
-//     `ListMyMemberships`, the pre-tenant membership bootstrap), returning
-//     without consulting the session.
+//   - It SKIPS registry entries marked `unauthenticated`, returning without
+//     consulting the session. `ListMyMemberships` is NOT one of these (its
+//     registry entry is `unauthenticated: false`); it is instead built with
+//     `{ enforceAuthz: false }` on its own client, which skips this
+//     interceptor entirely (see below and dashboard#107).
 //   - On denial it throws `AuthzDeniedError`, which the caller's existing error
 //     handling surfaces as `permission_denied`.
 //
@@ -252,9 +407,11 @@ function spiffeNodeOptions():
 // `userClient` enables this interceptor by default (`opts.enforceAuthz`
 // defaults to true); a caller passes `{ enforceAuthz: false }` only for an
 // RPC that legitimately must run before membership can be assumed
-// established (see `userClient`'s doc comment). `serviceClient` is
-// SERVICE-acting (no user session to gate against) and never runs
-// `assertAuthorized`.
+// established (see `userClient`'s doc comment) — this includes
+// `ListMyMemberships` itself: the RPC IS the membership resolver, so it can
+// never wait on `assertAuthorized`'s own call to `getMyMemberships()`
+// without recursing (dashboard#107). `serviceClient` is SERVICE-acting (no
+// user session to gate against) and never runs `assertAuthorized`.
 // ---------------------------------------------------------------------------
 
 const authzInterceptor: Interceptor = (next) => async (req) => {
@@ -326,11 +483,14 @@ function makeClient<T extends DescService>(
   };
 
   // Interceptor order (outermost first):
+  //   deadline   → unary-only bound (dashboard#107 follow-up); wraps
+  //                EVERYTHING below so a hang anywhere in this chain, not
+  //                just on the wire, cannot pin a call open forever
   //   telemetry  → records every call, including a denial or token failure
   //   authz      → user-acting only: registry-gates the RPC, fail-closed,
   //                throws BEFORE the token is minted for a denied call
   //   auth       → mints the bearer + tenant headers, last touch before wire
-  const interceptors: Interceptor[] = [telemetryInterceptor];
+  const interceptors: Interceptor[] = [deadlineInterceptor, telemetryInterceptor];
   if (opts?.enforceAuthz) {
     interceptors.push(authzInterceptor);
   }
@@ -344,7 +504,8 @@ function makeClient<T extends DescService>(
   // the operator knows we're falling back.
   const transport = createGrpcTransport({
     baseUrl: ENVOY_BASE_URL,
-    nodeOptions: spiffeNodeOptions(),
+    // The shared session carries the TLS options (see sessionManagerFor).
+    sessionManager: sessionManagerFor(spiffeNodeOptions()),
     interceptors,
   });
 
@@ -367,11 +528,12 @@ function makeClient<T extends DescService>(
  * signed-in user. Use this from every Server Component / Server Action /
  * route handler that runs inside an authenticated browser session,
  * including the membership bootstrap (`ListMyMemberships`,
- * `InvalidateMembershipCache`): those RPCs are registered `unauthenticated:
- * true` in the authz registry, so the baked-in {@link authzInterceptor}
- * returns immediately for them without needing a resolved tenant — there is
- * no separate no-tenant transport (the former `bootstrapClient`; deleted, it
- * had become identical to this one once the tenant header was removed).
+ * `InvalidateMembershipCache`): both RPCs are registered `unauthenticated:
+ * false` in the authz registry (a user token is required at the wire
+ * level), so callers pass `{ enforceAuthz: false }` to skip the dashboard's
+ * OWN {@link authzInterceptor} for them — there is no separate no-tenant
+ * transport (the former `bootstrapClient`; deleted, it had become identical
+ * to this one once the tenant header was removed).
  *
  * This is the canonical wrapper for user-acting RPCs. Internally composes
  * the module-private {@link makeClient} with {@link requireUserToken},
@@ -384,13 +546,14 @@ function makeClient<T extends DescService>(
  * unknown method, so a server action no longer has to remember to call
  * `assertAuthorized(...)` by hand before each user-acting daemon call.
  *
- * `opts.enforceAuthz` defaults to `true`. Pass `false` only for a call whose
- * registry entry requires an active tenant + membership (unlike
- * `ListMyMemberships`, which is `unauthenticated: true` and so returns from
- * `assertAuthorized` immediately regardless) but that legitimately must run
- * before the caller's membership can be assumed established, e.g.
- * `UserService.InvalidateMembershipCache` right after accepting a fresh
- * invitation. See `src/lib/auth/membership.ts`.
+ * `opts.enforceAuthz` defaults to `true`. Pass `false` only for a call that
+ * legitimately must run before the caller's membership can be assumed
+ * established, e.g. `DaemonService.ListMyMemberships` (the membership
+ * resolver cannot wait on itself: routing it through the default
+ * authz-enforced client re-entered `assertAuthorized`, which called
+ * `getMyMemberships()`, which called `ListMyMemberships` again, forever —
+ * dashboard#107) and `UserService.InvalidateMembershipCache` right after
+ * accepting a fresh invitation. See `src/lib/auth/membership.ts`.
  */
 export function userClient<T extends DescService>(
   service: T,

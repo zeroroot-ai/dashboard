@@ -46,6 +46,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
       objectDeriver: 'tenant_from_identity',
       allowedIdentities: 1, // USER only
       unauthenticated: false,
+      self: false,
     },
     '/test/MemberService/MemberMethod': {
       method: '/test/MemberService/MemberMethod',
@@ -55,6 +56,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
       objectDeriver: 'tenant_from_identity',
       allowedIdentities: 1,
       unauthenticated: false,
+      self: false,
     },
     '/test/PublicService/PingMethod': {
       method: '/test/PublicService/PingMethod',
@@ -64,6 +66,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
       objectDeriver: '',
       allowedIdentities: 1,
       unauthenticated: true,
+      self: false,
     },
     // Object-scoped entries. Shaped exactly like the generated registry, but
     // USER-callable so the identity gate does not short-circuit the decision
@@ -76,6 +79,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
       objectDeriver: "tenant_and_field('Name')",
       allowedIdentities: 1, // USER
       unauthenticated: false,
+      self: false,
     },
     '/test/PluginInvokeService/PluginInvoke': {
       method: '/test/PluginInvokeService/PluginInvoke',
@@ -85,6 +89,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
       objectDeriver: "tenant_and_field('PluginName')",
       allowedIdentities: 1,
       unauthenticated: false,
+      self: false,
     },
     '/test/ComponentService/CallTool': {
       method: '/test/ComponentService/CallTool',
@@ -94,6 +99,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
       objectDeriver: 'system_tenant',
       allowedIdentities: 1,
       unauthenticated: false,
+      self: false,
     },
     '/test/ServiceOnlyService/InternalMethod': {
       method: '/test/ServiceOnlyService/InternalMethod',
@@ -103,6 +109,28 @@ vi.mock('@/src/gen/authz/registry', () => ({
       objectDeriver: 'system_tenant',
       allowedIdentities: 2, // SERVICE only
       unauthenticated: false,
+      self: false,
+    },
+    // Self-mode entries (AuthOptions.self): the caller reads its own data.
+    '/test/DaemonService/ListMyMemberships': {
+      method: '/test/DaemonService/ListMyMemberships',
+      service: 'test.DaemonService',
+      relation: '',
+      objectType: '',
+      objectDeriver: '',
+      allowedIdentities: 1, // USER
+      unauthenticated: false,
+      self: true,
+    },
+    '/test/DaemonService/ServiceSelf': {
+      method: '/test/DaemonService/ServiceSelf',
+      service: 'test.DaemonService',
+      relation: '',
+      objectType: '',
+      objectDeriver: '',
+      allowedIdentities: 2, // SERVICE only
+      unauthenticated: false,
+      self: true,
     },
   } as Record<string, import('@/src/gen/authz/registry').AuthEntry>,
 }));
@@ -396,5 +424,37 @@ describe('AuthzDeniedError class', () => {
     expect(err.message).toContain('relation-not-met');
     // Sanity: message should be short and structured, no dynamic tenant data.
     expect(err.message).not.toMatch(/tenant-|user-|role:/);
+  });
+});
+
+// hosted#208: getMyMemberships() calls ListMyMemberships through userClient,
+// which runs this check. A self-mode entry that required a membership made
+// every membership read start another one, until the dashboard ran out of
+// heap after a tenant member signed in.
+describe('assertAuthorized, self-mode entry', () => {
+  it('resolves for a signed-in user with an active tenant without reading memberships', async () => {
+    setupSession();
+    setupActiveTenant('tenant-a');
+    setupMembershipsError();
+    await expect(assertAuthorized('/test/DaemonService/ListMyMemberships')).resolves.toBeUndefined();
+    expect(mockGetMyMemberships).not.toHaveBeenCalled();
+  });
+
+  it('resolves for a signed-in user with no active tenant', async () => {
+    setupSession();
+    setupNoActiveTenant();
+    await expect(assertAuthorized('/test/DaemonService/ListMyMemberships')).resolves.toBeUndefined();
+    expect(mockGetMyMemberships).not.toHaveBeenCalled();
+  });
+
+  it('still throws no-session without a session', async () => {
+    setupNoSession();
+    await expect(assertAuthorized('/test/DaemonService/ListMyMemberships')).rejects.toMatchObject({ reason: 'no-session' });
+  });
+
+  it('still applies the identity class', async () => {
+    setupSession();
+    setupActiveTenant('tenant-a');
+    await expect(assertAuthorized('/test/DaemonService/ServiceSelf')).rejects.toMatchObject({ reason: 'service-only-rpc' });
   });
 });

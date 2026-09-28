@@ -325,6 +325,7 @@ function readVarint(bytes, pos) {
  *   3 = object_deriver (string)
  *   4 = allowed_identities (int32)
  *   5 = unauthenticated (bool)
+ *   6 = self (bool): the caller reads its own data; no FGA tuple to check
  */
 function decodeAuthOptions(rawData) {
   // Skip the leading length varint.
@@ -337,6 +338,7 @@ function decodeAuthOptions(rawData) {
     objectDeriver: '',
     allowedIdentities: 0,
     unauthenticated: false,
+    self: false,
   };
 
   while (pos < rawData.length) {
@@ -360,6 +362,7 @@ function decodeAuthOptions(rawData) {
       pos = p2;
       if (fieldNo === 4) result.allowedIdentities = v;
       else if (fieldNo === 5) result.unauthenticated = v !== 0;
+      else if (fieldNo === 6) result.self = v !== 0;
     } else {
       // Unknown wire type, stop parsing this message.
       break;
@@ -501,6 +504,8 @@ function generateTS(entries) {
   lines.push('  objectDeriver: string;');
   lines.push('  allowedIdentities: number;');
   lines.push('  unauthenticated: boolean;');
+  lines.push('  /** Self-mode (gibson.auth.v1 AuthOptions.self): an authenticated caller reading its own data. No tenant relation applies. */');
+  lines.push('  self: boolean;');
   lines.push('}');
   lines.push('');
   lines.push('export const AuthRegistry: Record<string, AuthEntry> = {');
@@ -515,6 +520,7 @@ function generateTS(entries) {
     lines.push(`    objectDeriver: "${e.objectDeriver}",`);
     lines.push(`    allowedIdentities: ${allowedExpr},`);
     lines.push(`    unauthenticated: ${e.unauthenticated},`);
+    lines.push(`    self: ${e.self},`);
     lines.push(`  },`);
   }
 
@@ -590,8 +596,8 @@ function main() {
     for (const ge of gibsonEntries) {
       const se = sdkByMethod.get(ge.method);
       if (se) {
-        const seKey = `${se.relation}|${se.objectType}|${se.objectDeriver}|${se.allowedIdentities}|${se.unauthenticated}`;
-        const geKey = `${ge.relation}|${ge.objectType}|${ge.objectDeriver}|${ge.allowedIdentities}|${ge.unauthenticated}`;
+        const seKey = `${se.relation}|${se.objectType}|${se.objectDeriver}|${se.allowedIdentities}|${se.unauthenticated}|${se.self}`;
+        const geKey = `${ge.relation}|${ge.objectType}|${ge.objectDeriver}|${ge.allowedIdentities}|${ge.unauthenticated}|${ge.self}`;
         if (seKey !== geKey) {
           process.stderr.write(
             `[gen-authz-registry] FATAL: conflicting annotations for ${ge.method}\n` +

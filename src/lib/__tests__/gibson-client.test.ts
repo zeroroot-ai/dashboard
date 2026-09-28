@@ -31,6 +31,9 @@ interface MockReq {
   header: Headers;
   method?: { name?: string };
   service?: { typeName?: string };
+  /** Real Connect requests always carry these; the deadline interceptor reads both. */
+  stream: boolean;
+  signal: AbortSignal;
 }
 
 let capturedInterceptors: Interceptor[] = [];
@@ -40,6 +43,10 @@ vi.mock('@connectrpc/connect-node', () => ({
     capturedInterceptors = opts.interceptors ?? [];
     return { _tag: 'mock-transport' };
   }),
+  // The transport shares one session manager (dashboard#107).
+  Http2SessionManager: class {
+    abort = vi.fn();
+  },
 }));
 
 // userClient bakes in the per-RPC authz check (dashboard#848). Stub it to a
@@ -97,6 +104,8 @@ async function runInterceptors(existingHeaders?: Record<string, string>): Promis
     header: reqHeaders,
     method: { name: 'Test' },
     service: { typeName: 'gibson.test.v1.TestService' },
+    stream: false,
+    signal: new AbortController().signal,
   };
 
   // Build the terminal "next" handler (identity, just returns a resolved promise).
