@@ -155,6 +155,15 @@ export async function assertAuthorized(method: string): Promise<void> {
     throw new AuthzDeniedError(method, 'service-only-rpc');
   }
 
+  // Self-mode RPC (gibson.auth.v1 AuthOptions.self): the caller reads its own
+  // data, and ext-authz checks no tenant relation for it. A session and the
+  // USER class are the whole rule, so stop here. This must return before the
+  // membership lookup below: ListMyMemberships IS self-mode, and
+  // getMyMemberships() calls it through this same check. Requiring a
+  // membership for it made every membership read start another one, until
+  // the dashboard ran out of heap after a tenant member signed in (hosted#208).
+  if (entry.self) return;
+
   // The person's tenant, resolved server-side at sign-in (ADR-0093
   // decision 4) and re-validated against current membership just below.
   const activeTenantId = session.tenantId;
