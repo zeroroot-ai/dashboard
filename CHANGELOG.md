@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.122.3](https://github.com/zeroroot-ai/dashboard/compare/v0.122.2...v0.122.3) (2026-09-28)
+
+
+### Bug Fixes
+
+* **auth:** stop the membership bootstrap from gating on membership ([#115](https://github.com/zeroroot-ai/dashboard/issues/115)) ([7b241e9](https://github.com/zeroroot-ai/dashboard/commit/7b241e91a0b2f589acd9435998737fa2145ca66d)), closes [#107](https://github.com/zeroroot-ai/dashboard/issues/107)
+* **pagination:** stop unbounded page-token loops from accumulating forever ([#112](https://github.com/zeroroot-ai/dashboard/issues/112)) ([92224c4](https://github.com/zeroroot-ai/dashboard/commit/92224c4b1d8face244f031a76177c0baab53a183))
+* **transport:** give every unary daemon call a bounded deadline ([#114](https://github.com/zeroroot-ai/dashboard/issues/114)) ([201a545](https://github.com/zeroroot-ai/dashboard/commit/201a545e7509f56745c404671b22a48ecb7ec084))
+
 ## [0.122.2](https://github.com/zeroroot-ai/dashboard/compare/v0.122.1...v0.122.2) (2026-09-28)
 
 
