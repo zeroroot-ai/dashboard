@@ -133,7 +133,7 @@ export function HitlSettleQueueContent() {
         </h1>
         <p className="text-sm text-muted-foreground">
           Judge the bets the fleet is unsure about. Judging is asynchronous and never blocks or
-          pauses a running mission — the fleet keeps working while a bet is open (ADR-0008).
+          pauses a running mission. The fleet keeps working while a bet is open (ADR-0008).
           Every verdict feeds the learning loop.
         </p>
       </div>
@@ -152,7 +152,7 @@ export function HitlSettleQueueContent() {
         <EmptyState
           icon={PlugZapIcon}
           title="HITL settlement backend not yet connected"
-          description="This queue has no live bets to show because the backend isn't wired to a queryable source yet — this is not an error."
+          description="This queue has no live bets to show because the backend is not wired to a queryable source yet. This is not an error."
         />
       )}
 
