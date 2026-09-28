@@ -168,6 +168,12 @@ export const queryKeys = {
     all: ['org-graph'] as const,
     full: (tenantId: string) => ['org-graph', tenantId, 'full'] as const,
   },
+
+  // Destructive-action authorization queue (ADR-0028, gibson#278, dashboard#99).
+  destructiveActions: {
+    all: ['destructive-actions'] as const,
+    list: (tenantId: string) => ['destructive-actions', tenantId, 'list'] as const,
+  },
 } as const;
 
 // Type helpers for query keys
