@@ -29,6 +29,9 @@ interface MockReq {
   header: Headers;
   method?: { name?: string };
   service?: { typeName?: string };
+  /** Real Connect requests always carry these; the deadline interceptor reads both. */
+  stream: boolean;
+  signal: AbortSignal;
 }
 
 let capturedInterceptors: Interceptor[] = [];
@@ -97,6 +100,8 @@ async function runInterceptors(): Promise<Headers> {
     header: reqHeaders,
     method: { name: 'Test' },
     service: { typeName: 'gibson.test.v1.TestService' },
+    stream: false,
+    signal: new AbortController().signal,
   };
   const terminal = async (req: MockReq) => req;
   const composed = capturedInterceptors.reduceRight(
