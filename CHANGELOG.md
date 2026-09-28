@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.122.4](https://github.com/zeroroot-ai/dashboard/compare/v0.122.3...v0.122.4) (2026-09-28)
+
+
+### Bug Fixes
+
+* **authz:** stop at self-mode RPCs before reading memberships ([#116](https://github.com/zeroroot-ai/dashboard/issues/116)) ([542cae0](https://github.com/zeroroot-ai/dashboard/commit/542cae0a75a64cf2f316db3dd3ef53cdd3335492))
+
 ## [0.122.3](https://github.com/zeroroot-ai/dashboard/compare/v0.122.2...v0.122.3) (2026-09-28)
 
 
