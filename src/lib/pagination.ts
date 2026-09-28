@@ -39,18 +39,23 @@
 
 import { logger } from './logger';
 
-/** Minimal shape every paginated RPC response needs to satisfy. */
-export interface PageLike<T> {
+/**
+ * Minimal shape every paginated RPC response needs to satisfy. Not exported:
+ * callers satisfy it structurally (an object literal with `items` and
+ * `nextPageToken`) and never need to name the type.
+ */
+interface PageLike<T> {
   items: readonly T[];
   nextPageToken: string;
 }
 
-export type PaginationStopReason =
-  | 'repeated_token'
-  | 'empty_page_with_token'
-  | 'max_pages_exceeded';
+type PaginationStopReason = 'repeated_token' | 'empty_page_with_token' | 'max_pages_exceeded';
 
-export interface CollectAllPagesOptions {
+/**
+ * Options for {@link collectAllPages}. Not exported for the same reason as
+ * {@link PageLike}: callers pass an object literal, never a named type.
+ */
+interface CollectAllPagesOptions {
   /**
    * Hard cap on the number of pages fetched. This is a backstop, not the
    * expected steady-state page count, legitimate lists in this product are
