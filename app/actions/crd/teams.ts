@@ -21,6 +21,7 @@
 import { MembershipService } from "@/src/gen/gibson/tenant/v1/membership_pb";
 import { userClient } from "@/src/lib/gibson-client";
 import { requireActiveTenant } from "@/src/lib/auth/active-tenant";
+import { collectAllPages } from "@/src/lib/pagination";
 
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
@@ -58,25 +59,31 @@ export async function listTeamsAction(): Promise<ActionResult<Team[]>> {
   // the daemon's default page size of 50). If a tenant ever exceeds that,
   // we can swap to client-side pagination without a server-action shape
   // change.
+  //
+  // Walked through collectAllPages() (dashboard#107 follow-up): a hand-rolled
+  // `do { ... } while (pageToken)` here never stopped if the daemon returned
+  // the same token again or an empty page with a token still set, turning one
+  // RPC into an unbounded accumulation of results in memory.
   try {
     const client = userClient(MembershipService);
-    const teams: Team[] = [];
-    let pageToken = "";
-    do {
-      const resp = await client.listTeams({
-        tenantId: tenantId,
-        pageToken,
-        pageSize: 0, // daemon picks default
-      });
-      for (const t of resp.teams) {
-        teams.push({
-          id: t.id,
-          displayName: t.displayName || t.id,
-          memberCount: t.memberCount,
+    const teams = await collectAllPages(
+      async (pageToken) => {
+        const resp = await client.listTeams({
+          tenantId: tenantId,
+          pageToken,
+          pageSize: 0, // daemon picks default
         });
-      }
-      pageToken = resp.nextPageToken;
-    } while (pageToken);
+        return {
+          items: resp.teams.map((t) => ({
+            id: t.id,
+            displayName: t.displayName || t.id,
+            memberCount: t.memberCount,
+          })),
+          nextPageToken: resp.nextPageToken,
+        };
+      },
+      { rpc: "MembershipService.ListTeams", context: { tenantId } },
+    );
     return { ok: true, data: teams };
   } catch (err) {
     return { ok: false, error: String(err), code: "INTERNAL" };
@@ -102,27 +109,30 @@ export async function listTeamMembersAction(
     return { ok: false, error: "no active tenant", code: "FORBIDDEN" };
   }
 
+  // Walked through collectAllPages() (dashboard#107 follow-up), same
+  // unbounded-loop hazard as listTeamsAction above.
   try {
     const client = userClient(MembershipService);
-    const members: TeamMember[] = [];
-    let pageToken = "";
-    do {
-      const resp = await client.listTeamMembers({
-        tenantId: tenantId,
-        teamId,
-        pageToken,
-        pageSize: 0,
-      });
-      for (const m of resp.members) {
-        members.push({
-          userId: m.userId,
-          email: m.email || undefined,
-          displayName: m.displayName || undefined,
-          isAdmin: m.isAdmin,
+    const members = await collectAllPages(
+      async (pageToken) => {
+        const resp = await client.listTeamMembers({
+          tenantId: tenantId,
+          teamId,
+          pageToken,
+          pageSize: 0,
         });
-      }
-      pageToken = resp.nextPageToken;
-    } while (pageToken);
+        return {
+          items: resp.members.map((m) => ({
+            userId: m.userId,
+            email: m.email || undefined,
+            displayName: m.displayName || undefined,
+            isAdmin: m.isAdmin,
+          })),
+          nextPageToken: resp.nextPageToken,
+        };
+      },
+      { rpc: "MembershipService.ListTeamMembers", context: { tenantId, teamId } },
+    );
     return { ok: true, data: members };
   } catch (err) {
     return { ok: false, error: String(err), code: "INTERNAL" };
