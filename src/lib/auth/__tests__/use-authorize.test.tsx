@@ -67,6 +67,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
       objectDeriver: 'tenant_from_identity',
       allowedIdentities: 1,
       unauthenticated: false,
+      self: false,
     },
     '/gibson.tenant.v1.SecretsService/ListSecrets': {
       method: '/gibson.tenant.v1.SecretsService/ListSecrets',
@@ -76,6 +77,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
       objectDeriver: 'tenant_from_identity',
       allowedIdentities: 1,
       unauthenticated: false,
+      self: false,
     },
     '__test_unauthenticated__': {
       method: '__test_unauthenticated__',
@@ -85,6 +87,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
       objectDeriver: '',
       allowedIdentities: 1,
       unauthenticated: true,
+      self: false,
     },
     // Object-scoped entry, USER-callable so the identity gate does not
     // short-circuit the decision under test. GHSA-mvxf-pr5g-7pvx.
@@ -96,6 +99,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
       objectDeriver: "tenant_and_field('Name')",
       allowedIdentities: 1,
       unauthenticated: false,
+      self: false,
     },
     '__test_service_only__': {
       method: '__test_service_only__',
@@ -105,6 +109,7 @@ vi.mock('@/src/gen/authz/registry', () => ({
       objectDeriver: 'system_tenant',
       allowedIdentities: 2, // SERVICE only, no USER bit
       unauthenticated: false,
+      self: false,
     },
   } as Record<string, import('@/src/gen/authz/registry').AuthEntry>,
 }));
