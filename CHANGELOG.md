@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.122.2](https://github.com/zeroroot-ai/dashboard/compare/v0.122.1...v0.122.2) (2026-09-28)
+
+
+### Bug Fixes
+
+* **events:** abort the daemon subscribe call when the SSE client disconnects ([#111](https://github.com/zeroroot-ai/dashboard/issues/111)) ([521d52f](https://github.com/zeroroot-ai/dashboard/commit/521d52f3ce632511471d9bc0cd8ac3c5cae4838d))
+* **transport:** hold the shared HTTP/2 session on globalThis, not a module-scope let ([#109](https://github.com/zeroroot-ai/dashboard/issues/109)) ([b121dd5](https://github.com/zeroroot-ai/dashboard/commit/b121dd58e810fef8f9d688c9bc43dc6e1ad6d402))
+
 ## [0.122.1](https://github.com/zeroroot-ai/dashboard/compare/v0.122.0...v0.122.1) (2026-09-27)
 
 
