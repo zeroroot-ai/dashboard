@@ -167,8 +167,8 @@ export function DestructiveActionQueueContent() {
         </h1>
         <p className="text-sm text-muted-foreground">
           Before an irreversible or state-changing demonstration runs, it waits here for one
-          human decision. The mission is not blocked while an action waits — the rest of the
-          fleet keeps working everything else; only that one action pauses (ADR-0028).
+          human decision. The mission is not blocked while an action waits. The rest of the
+          fleet keeps working on everything else. Only that one action pauses (ADR-0028).
         </p>
       </div>
 
@@ -186,7 +186,7 @@ export function DestructiveActionQueueContent() {
         <EmptyState
           icon={PlugZapIcon}
           title="Authorization backend not yet connected"
-          description="Gibson refuses every destructive demonstration outright until this queue is wired to a live authorizer. Nothing is pending because nothing can be authorized yet — this is not an error."
+          description="Gibson refuses every destructive demonstration outright until this queue is wired to a live authorizer. Nothing is pending because nothing can be authorized yet. This is not an error."
         />
       )}
 
