@@ -2,14 +2,32 @@
 // Copyright 2026 Zero Root AI
 
 import { getServerSession } from '@/src/lib/auth';
+import { logger } from '@/src/lib/logger';
 
 /**
  * GET /api/events/stream
  *
- * Server-Sent Events endpoint for real-time event streaming.
+ * Server-Sent Events endpoint for real-time event streaming. Mounted
+ * unconditionally by DashboardContent, so it opens on every /dashboard
+ * render (`useEventStream()`, dashboard#107 follow-up investigation).
+ *
  * Attempts to proxy the Gibson daemon's Subscribe RPC as SSE.
  * Falls back to a heartbeat-only stream if the daemon stream is unavailable
  * (the Subscribe RPC is not fully implemented yet).
+ *
+ * `cancel()` MUST abort the upstream `subscribe` call (dashboard#107 follow-up):
+ * the browser's EventSource reconnects with its own exponential backoff
+ * (src/hooks/useEventStream.ts) on every network hiccup, each reconnect
+ * opens a NEW route handler invocation, and without an AbortSignal threaded
+ * into `subscribe()`, the OLD invocation's `for await` loop stays blocked
+ * awaiting the daemon's next event forever, since it only checks `closed`
+ * between received events, never while waiting for one. A client that
+ * reconnects repeatedly (a flaky edge, an Envoy idle timeout, a daemon that
+ * never sends anything) leaked one abandoned daemon-subscribe stream, and
+ * everything it closes over, per reconnect. Every other SSE bridge in this
+ * repo (app/api/jobs/[id]/events, app/api/agents/[runId]/events,
+ * app/api/graph/stream) already threads an AbortController into its upstream
+ * call for exactly this reason; this route did not.
  */
 export async function GET() {
   const session = await getServerSession();
@@ -22,6 +40,7 @@ export async function GET() {
 
   const encoder = new TextEncoder();
   let closed = false;
+  const abort = new AbortController();
 
   const stream = new ReadableStream({
     start(controller) {
@@ -66,7 +85,7 @@ export async function GET() {
 
           const client = userClient(DaemonService);
 
-          for await (const event of client.subscribe({})) {
+          for await (const event of client.subscribe({}, { signal: abort.signal })) {
             if (closed) break;
 
             const sseEvent = {
@@ -103,15 +122,24 @@ export async function GET() {
               break;
             }
           }
-        } catch {
-          // Subscribe RPC not available, heartbeat-only mode is fine.
-          // The dashboard will show "Connected" and events will appear
-          // once the daemon's Subscribe RPC is implemented.
+        } catch (err) {
+          // Subscribe RPC not available (or the call above was aborted by
+          // cancel()), heartbeat-only mode is fine. The dashboard will show
+          // "Connected" and events will appear once the daemon's Subscribe
+          // RPC is implemented. Do not log an abort as a failure, it is the
+          // expected shutdown path, not an error condition.
+          if (!abort.signal.aborted) {
+            logger.warn(
+              { scope: 'api.events.stream', err },
+              'daemon event subscribe failed, continuing in heartbeat-only mode',
+            );
+          }
         }
       })();
     },
     cancel() {
       closed = true;
+      abort.abort();
     },
   });
 
