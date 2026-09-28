@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.123.0](https://github.com/zeroroot-ai/dashboard/compare/v0.122.4...v0.123.0) (2026-09-28)
+
+
+### Features
+
+* **gibson:** intelligence-layer dashboard queues — destructive-action authorization and bet-verdict review ([#128](https://github.com/zeroroot-ai/dashboard/issues/128)) ([df2d889](https://github.com/zeroroot-ai/dashboard/commit/df2d8893064296bdd2474057ded433acc9613a75))
+
 ## [0.122.4](https://github.com/zeroroot-ai/dashboard/compare/v0.122.3...v0.122.4) (2026-09-28)
 
 
