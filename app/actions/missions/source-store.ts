@@ -34,7 +34,7 @@ import {
   type MissionDraft,
   type MissionDraftFull,
 } from "@/src/lib/gibson-client/mission-source";
-import { AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
+import { authzDenial } from "@/src/lib/auth/assert-authorized";
 import { requireActiveTenant } from "@/src/lib/auth/active-tenant";
 import { logger } from "@/src/lib/logger";
 
@@ -79,7 +79,7 @@ const idSchema = z
 // ---------------------------------------------------------------------------
 
 function rpcErrToResult(action: string, err: unknown): DraftActionResult<never> {
-  if (err instanceof AuthzDeniedError) {
+  if (authzDenial(err)) {
     return { ok: false, error: "Permission denied", code: "permission_denied" };
   }
   if (err instanceof MissionDraftNotFoundError) {

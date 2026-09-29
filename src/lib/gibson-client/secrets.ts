@@ -18,7 +18,7 @@ import 'server-only';
 
 import { ConnectError } from '@connectrpc/connect';
 import { userClient } from '../gibson-client';
-import { AuthzDeniedError } from '../auth/assert-authorized';
+import { authzDenial } from '../auth/assert-authorized';
 import { SecretsService } from '@/src/gen/gibson/tenant/v1/secrets_pb';
 import type {
   SecretMetadata,
@@ -61,7 +61,7 @@ export function throwMapped(err: unknown): never {
   // authorization signal, not a transport error: rethrow it untouched so
   // action-level mappers can surface the canonical permission_denied
   // contract (dashboard#904).
-  if (err instanceof AuthzDeniedError) throw err;
+  if (authzDenial(err)) throw err;
   const mapped = mapConnectError(err);
   const wrapped = new Error(mapped.message) as Error & { code: string };
   wrapped.code = mapped.code;

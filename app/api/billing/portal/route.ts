@@ -15,7 +15,7 @@ import { createPortalSession } from '@/src/lib/billing/stripe';
 import { getTenantBilling } from '@/src/lib/gibson-client/provisioning';
 import {
   assertAuthorized,
-  AuthzDeniedError,
+  authzDenial,
 } from '@/src/lib/auth/assert-authorized';
 import { checkRateLimit } from '@/src/lib/rate-limiter';
 import { logger } from '@/src/lib/logger';
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     await assertAuthorized('/gibson.tenant.v1.SecretsService/CountSecrets');
   } catch (err) {
-    if (err instanceof AuthzDeniedError) {
+    if (authzDenial(err)) {
       return NextResponse.json({ error: 'permission denied' }, { status: 403 });
     }
     throw err;

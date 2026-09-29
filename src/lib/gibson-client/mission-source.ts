@@ -15,7 +15,7 @@ import 'server-only';
 
 import { Code, ConnectError } from '@connectrpc/connect';
 import { userClient } from '../gibson-client';
-import { AuthzDeniedError } from '../auth/assert-authorized';
+import { authzDenial } from '../auth/assert-authorized';
 import { TenantService } from '@/src/gen/gibson/tenant/v1/tenant_pb';
 import type {
   MissionDraft,
@@ -54,7 +54,7 @@ function mapErr(err: unknown): never {
   // Authz denial from the transport's baked-in per-RPC gate (dashboard#848 /
   // #902) is an authorization signal, not a transport error: rethrow it
   // untouched so the action layer maps it to permission_denied (dashboard#904).
-  if (err instanceof AuthzDeniedError) throw err;
+  if (authzDenial(err)) throw err;
   // A MissionDraftNotFoundError thrown inside a wrapper's own try block
   // (empty `draft` in an OK response) is already the typed error callers
   // expect: rethrow it untouched instead of rewrapping it as a generic

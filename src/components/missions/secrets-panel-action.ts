@@ -18,7 +18,7 @@
 
 import { getMissionAudit } from "@/src/lib/gibson-client/secrets";
 import type { MissionSecretAccess } from "@/src/lib/gibson-client/secrets";
-import { AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
+import { authzDenial } from "@/src/lib/auth/assert-authorized";
 
 interface MissionAuditResult {
   accesses: MissionSecretAccess[];
@@ -45,7 +45,7 @@ export async function fetchMissionAudit(
   try {
     resp = await getMissionAudit(missionId);
   } catch (err) {
-    if (err instanceof AuthzDeniedError) {
+    if (authzDenial(err)) {
       throw new Error("permission_denied");
     }
     throw err;

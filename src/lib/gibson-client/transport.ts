@@ -2,13 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 import 'server-only';
-import {
-  createClient,
-  ConnectError,
-  Code,
-  type Client,
-  type Interceptor,
-} from '@connectrpc/connect';
+import { createClient, ConnectError, Code, type Client, type Interceptor } from '@connectrpc/connect';
 import { createGrpcTransport, Http2SessionManager } from '@connectrpc/connect-node';
 import type { DescService } from '@bufbuild/protobuf';
 import { requireUserToken } from '../auth/user-token';
@@ -417,8 +411,22 @@ export function sessionManagerFor(
 const authzInterceptor: Interceptor = (next) => async (req) => {
   const method = `/${req.service.typeName}/${req.method.name}`;
   // Lazy import to break the transport ↔ assert-authorized ↔ membership cycle.
-  const { assertAuthorized } = await import('../auth/assert-authorized');
-  await assertAuthorized(method);
+  const { assertAuthorized, authzDenial } = await import('../auth/assert-authorized');
+  try {
+    await assertAuthorized(method);
+  } catch (err) {
+    // connect-es passes every error an interceptor throws through
+    // `ConnectError.from`, which gives a plain Error the code Unknown and
+    // keeps it only as `cause`. Thrown as a ConnectError here, the denial
+    // keeps its own code (PermissionDenied), so every consumer that reads
+    // the code (serverActionError, the RPC metrics) classifies it as a
+    // denial, and `authzDenial(err)` finds the AuthzDeniedError in `cause`.
+    const denial = authzDenial(err);
+    if (denial) {
+      throw new ConnectError(denial.message, Code.PermissionDenied, undefined, undefined, denial);
+    }
+    throw err;
+  }
   return next(req);
 };
 

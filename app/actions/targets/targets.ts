@@ -17,7 +17,7 @@ import "server-only";
 
 import { ConnectError } from "@connectrpc/connect";
 
-import { AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
+import { authzDenial } from "@/src/lib/auth/assert-authorized";
 import { userClient } from "@/src/lib/gibson-client";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 import { logger } from "@/src/lib/logger";
@@ -127,7 +127,7 @@ function mapErr(err: unknown, op: string): {
   error: string;
   code: "permission_denied" | "invalid" | "not_found" | "rpc_failed";
 } {
-  if (err instanceof AuthzDeniedError) {
+  if (authzDenial(err)) {
     return { ok: false, error: "Permission denied", code: "permission_denied" };
   }
   if (err instanceof ConnectError) {

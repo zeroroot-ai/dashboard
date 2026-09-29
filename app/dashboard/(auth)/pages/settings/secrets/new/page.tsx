@@ -11,7 +11,7 @@ import { getServerSession } from "@/src/lib/auth";
 import { AddSecretForm } from "@/src/components/secrets/AddSecretForm";
 import {
   assertAuthorized,
-  AuthzDeniedError,
+  authzDenial,
 } from "@/src/lib/auth/assert-authorized";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -35,7 +35,7 @@ export default async function NewSecretPage() {
   try {
     await assertAuthorized("/gibson.tenant.v1.SecretsService/SetSecret");
   } catch (err) {
-    if (err instanceof AuthzDeniedError) {
+    if (authzDenial(err)) {
       redirect("/dashboard/pages/settings/secrets");
     }
     throw err;
