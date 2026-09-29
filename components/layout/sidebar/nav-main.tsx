@@ -21,6 +21,7 @@ import {
   ActivityIcon,
   AlertTriangleIcon,
   BotIcon,
+  BoxIcon,
   CableIcon,
   UserIcon,
   UsersIcon,
@@ -154,6 +155,14 @@ export const navItems: NavGroup[] = [
         title: "Connectors",
         href: "/dashboard/connectors",
         icon: CableIcon
+      },
+      {
+        // Domain Packs are a curated, per-tenant enable/disable catalog
+        // (ADR-0033, gibson#383), the same shape as Connectors, so it sits
+        // beside it in the primary nav.
+        title: "Domain Packs",
+        href: "/dashboard/domain-packs",
+        icon: BoxIcon
       },
       {
         title: "Deploy",
