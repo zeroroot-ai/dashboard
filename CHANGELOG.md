@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.123.1](https://github.com/zeroroot-ai/dashboard/compare/v0.123.0...v0.123.1) (2026-09-29)
+
+
+### Bug Fixes
+
+* **auth:** keep one membership verdict per person for 30 seconds instead of one daemon call per browser request ([#130](https://github.com/zeroroot-ai/dashboard/issues/130)) ([2ee3b3a](https://github.com/zeroroot-ai/dashboard/commit/2ee3b3aac593ccced0dad1b8dea99daf54bddeb5))
+
 ## [0.123.0](https://github.com/zeroroot-ai/dashboard/compare/v0.122.4...v0.123.0) (2026-09-28)
 
 
