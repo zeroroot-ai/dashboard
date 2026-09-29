@@ -41,9 +41,14 @@ vi.mock('@/src/lib/metrics/gibson-admin', () => ({
   adminRpcTotal: { inc: vi.fn() },
   adminEnvoyUpstreamErrorsTotal: { inc: vi.fn() },
 }));
-vi.mock('@/src/lib/auth/assert-authorized', () => ({
-  assertAuthorized: vi.fn(async () => undefined),
-}));
+// The real module, with only assertAuthorized replaced: the transport's
+// authz interceptor also reads authzDenial from it.
+vi.mock('@/src/lib/auth/assert-authorized', async (importActual) => {
+  const actual = await importActual<typeof import('@/src/lib/auth/assert-authorized')>();
+  return { ...actual, assertAuthorized: vi.fn(async () => undefined) };
+});
+vi.mock('@/auth', () => ({ auth: vi.fn(async () => null) }));
+vi.mock('@/src/lib/auth/membership', () => ({ getMyMemberships: vi.fn(async () => []) }));
 
 let server: http2.Http2Server;
 let baseUrl: string;

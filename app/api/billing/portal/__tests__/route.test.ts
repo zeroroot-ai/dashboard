@@ -38,18 +38,20 @@ vi.mock('@/src/lib/gibson-client/provisioning', () => ({
 }));
 
 let mockAssertAuthorizedShouldThrow: Error | null = null;
-vi.mock('@/src/lib/auth/assert-authorized', () => ({
-  assertAuthorized: vi.fn().mockImplementation(() => {
-    if (mockAssertAuthorizedShouldThrow) throw mockAssertAuthorizedShouldThrow;
-    return Promise.resolve();
-  }),
-  AuthzDeniedError: class AuthzDeniedError extends Error {
-    constructor(method: string, reason: string) {
-      super(`assertAuthorized: ${reason} for ${method}`);
-      this.name = 'AuthzDeniedError';
-    }
-  },
-}));
+// The real module, with only assertAuthorized replaced: the route reads a
+// denial through the real authzDenial, which recognizes the real
+// AuthzDeniedError class and no stand-in.
+vi.mock('@/src/lib/auth/assert-authorized', async (importActual) => {
+  const actual = await importActual<typeof import('@/src/lib/auth/assert-authorized')>();
+  return {
+    ...actual,
+    assertAuthorized: vi.fn().mockImplementation(() => {
+      if (mockAssertAuthorizedShouldThrow) throw mockAssertAuthorizedShouldThrow;
+      return Promise.resolve();
+    }),
+  };
+});
+vi.mock('@/src/lib/auth/membership', () => ({ getMyMemberships: vi.fn(async () => []) }));
 
 const mockAuth = vi.fn();
 vi.mock('@/auth', () => ({
