@@ -62,7 +62,8 @@ import {
 // on the session now: a person has exactly one tenant, resolved server-side
 // at sign-in from their token's verified Zitadel org, never chosen by the
 // client. `requireActiveTenant()` (src/lib/auth/active-tenant.ts) re-validates
-// it against current FGA membership on every request.
+// it against FGA membership through the daemon, a verdict at most
+// MEMBERSHIP_VERDICT_TTL_MS old (src/lib/auth/membership.ts).
 // ---------------------------------------------------------------------------
 declare module "next-auth" {
   interface Session {
@@ -419,8 +420,9 @@ const config: NextAuthConfig = {
      * session, shapes the session object returned to client components and
      * Server Actions. Exposes user identity, server-side tokens, and the
      * person's one tenant (ADR-0093 decision 4) — `requireActiveTenant()`
-     * (src/lib/auth/active-tenant.ts) re-validates it against current FGA
-     * membership on every request, rather than trusting the cookie alone.
+     * (src/lib/auth/active-tenant.ts) re-validates it against FGA membership
+     * through the daemon (a verdict at most MEMBERSHIP_VERDICT_TTL_MS old),
+     * rather than trusting the cookie alone.
      */
     async session({ session, token }) {
       if (token.sub) {

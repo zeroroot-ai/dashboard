@@ -2,22 +2,29 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Unit tests for the membership resolution module (security-hardening R17).
+ * Unit tests for the membership resolution module (security-hardening R17,
+ * revised 2026-09-29).
  *
  * After the Redis-cutover (dashboard#589 / #579) the dashboard no longer holds
- * a Redis client. The cross-request cache is now managed by the daemon.
- * The dashboard side retains only per-render memoization via react.cache().
+ * a Redis client. The cross-request layer is the per-process verdict cache in
+ * membership.ts: one positive verdict per `sub` for MEMBERSHIP_VERDICT_TTL_MS,
+ * shared by concurrent readers, never holding an empty result or a failure.
  *
- * Two assertions remain:
+ * Assertions:
  *
  *   1. **Daemon call tracking:** getMyMemberships() reaches the daemon and
  *      returns the expected shape.
  *
- *   2. **Invalidation:** invalidateMembershipCache(userId) delegates to the
- *      daemon's InvalidateMembershipCache RPC (fire-and-forget, non-fatal).
+ *   2. **Verdict cache:** reads within the TTL cost one daemon call, a page
+ *      load's concurrent reads share one in-flight call, an empty result and
+ *      a failure are not cached, and the TTL expiry asks the daemon again.
  *
- * react.cache() is still stubbed to NOT memoize, each test call is
- * treated as a fresh render so we can assert per-call daemon counts.
+ *   3. **Invalidation:** invalidateMembershipCache(userId) forgets the local
+ *      verdict and delegates to the daemon's InvalidateMembershipCache RPC
+ *      (fire-and-forget, non-fatal).
+ *
+ * react.cache() is stubbed to NOT memoize, so each call is a fresh render and
+ * only the verdict cache can collapse calls.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -33,10 +40,11 @@ vi.mock('react', () => ({
 // Auth.js session, return a stable signed-in user across all tests.
 // ---------------------------------------------------------------------------
 const TEST_USER_ID = 'zitadel-numeric-sub-12345';
+const mockAuth = vi.fn(async () => ({
+  user: { id: TEST_USER_ID, name: 'Test User' },
+}));
 vi.mock('@/auth', () => ({
-  auth: vi.fn(async () => ({
-    user: { id: TEST_USER_ID, name: 'Test User' },
-  })),
+  auth: () => mockAuth(),
 }));
 
 // ---------------------------------------------------------------------------
@@ -85,6 +93,8 @@ vi.mock('@/src/lib/logger', () => ({
 import {
   getMyMemberships,
   invalidateMembershipCache,
+  MEMBERSHIP_VERDICT_TTL_MS,
+  __clearMembershipVerdictCacheForTests,
   __getDaemonCallCountForTests,
   __resetDaemonCallCountForTests,
 } from '../membership';
@@ -95,6 +105,8 @@ import {
 
 beforeEach(() => {
   __resetDaemonCallCountForTests();
+  __clearMembershipVerdictCacheForTests();
+  vi.useRealTimers();
   vi.clearAllMocks();
   // Re-attach mocks after clearAllMocks (which resets mock fn call counts
   // but also resets the mock implementations to their default no-op).
@@ -121,17 +133,67 @@ describe('getMyMemberships, basic fetch', () => {
     ]);
   });
 
-  it('each read hits the daemon (no cross-request cache on the dashboard side)', async () => {
+});
+
+describe('getMyMemberships, per-process verdict cache', () => {
+  it('reads within the TTL cost one daemon call', async () => {
     await getMyMemberships();
     await getMyMemberships();
     await getMyMemberships();
-    // Dashboard no longer has a Redis cross-request cache.
-    // Each call reaches the daemon (which applies its own server-side cache).
-    expect(__getDaemonCallCountForTests()).toBe(3);
+    expect(__getDaemonCallCountForTests()).toBe(1);
+  });
+
+  it('concurrent reads (one page load) share one in-flight daemon call', async () => {
+    const results = await Promise.all(
+      Array.from({ length: 50 }, () => getMyMemberships()),
+    );
+    expect(results.every((r) => r.length === 2)).toBe(true);
+    expect(__getDaemonCallCountForTests()).toBe(1);
+  });
+
+  it('asks the daemon again once the TTL has passed', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-29T12:00:00Z'));
+    await getMyMemberships();
+    vi.setSystemTime(new Date(Date.now() + MEMBERSHIP_VERDICT_TTL_MS - 1));
+    await getMyMemberships();
+    expect(__getDaemonCallCountForTests()).toBe(1);
+    vi.setSystemTime(new Date(Date.now() + 2));
+    await getMyMemberships();
+    expect(__getDaemonCallCountForTests()).toBe(2);
+  });
+
+  it('does not cache an empty result, so a new grant shows at once', async () => {
+    mockListMyMemberships.mockResolvedValueOnce({ memberships: [] });
+    expect(await getMyMemberships()).toEqual([]);
+    const after = await getMyMemberships();
+    expect(after).toHaveLength(2);
+    expect(__getDaemonCallCountForTests()).toBe(2);
+  });
+
+  it('does not cache a failure, so the next read tries the daemon again', async () => {
+    mockListMyMemberships.mockRejectedValueOnce(new Error('boom'));
+    await expect(getMyMemberships()).rejects.toThrow();
+    expect(await getMyMemberships()).toHaveLength(2);
+    expect(__getDaemonCallCountForTests()).toBe(2);
+  });
+
+  it('keeps one verdict per user, never across users', async () => {
+    await getMyMemberships();
+    mockAuth.mockResolvedValueOnce({ user: { id: 'another-sub', name: 'Other' } });
+    await getMyMemberships();
+    expect(__getDaemonCallCountForTests()).toBe(2);
   });
 });
 
 describe('invalidateMembershipCache, delegation to daemon', () => {
+  it('forgets the local verdict, so the next read asks the daemon', async () => {
+    await getMyMemberships();
+    await invalidateMembershipCache(TEST_USER_ID);
+    await getMyMemberships();
+    expect(__getDaemonCallCountForTests()).toBe(2);
+  });
+
   it('delegates to the daemon InvalidateMembershipCache RPC', async () => {
     await invalidateMembershipCache(TEST_USER_ID);
     expect(mockInvalidateMembershipCache).toHaveBeenCalledOnce();

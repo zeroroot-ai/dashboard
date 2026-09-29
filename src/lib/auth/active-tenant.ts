@@ -15,9 +15,10 @@
  *
  * Use `requireActiveTenant()` as the single fail-closed resolver for the
  * active tenant. It reads `session.tenantId` and re-validates it against the
- * caller's current FGA membership on every request (via `getMyMemberships()`,
- * which calls the daemon), so a revoked membership takes effect immediately
- * rather than waiting for the next sign-in.
+ * caller's FGA membership (via `getMyMemberships()`, which asks the daemon and
+ * keeps one positive verdict per process for MEMBERSHIP_VERDICT_TTL_MS), so a
+ * revoked membership takes effect within seconds rather than waiting for the
+ * next sign-in.
  *
  * ### Error-mapping helpers
  *
@@ -120,8 +121,8 @@ export class StaleActiveTenantError extends Error {
  *
  * Re-validates `session.tenantId` against `getMyMemberships()` on every
  * call — never just trusting the value the session cookie carries — so a
- * membership removal takes effect at once rather than waiting for the next
- * sign-in.
+ * membership removal takes effect within MEMBERSHIP_VERDICT_TTL_MS rather
+ * than waiting for the next sign-in.
  *
  * When there is no tenant, or the resolved tenant is stale, the function
  * throws typed errors; use the error-mapping helpers below to translate
