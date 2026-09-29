@@ -33,19 +33,7 @@ export function useTenantId(): string | null {
   return useTenantContext().currentTenant?.id ?? null;
 }
 
-/**
- * Hook to get every tenant slug the current user is a member of.
- */
-export function useAvailableTenants(): string[] {
-  return useTenantContext().availableTenants.map((t) => t.id);
-}
 
-/**
- * Hook to check if the current user has multiple tenants.
- */
-export function useHasMultipleTenants(): boolean {
-  return useTenantContext().availableTenants.length > 1;
-}
 
 
 /**

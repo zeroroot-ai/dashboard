@@ -9,7 +9,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { auth } from '@/auth';
 import { billingEnabled } from '@/src/lib/billing/billing-enabled';
 import { createPortalSession } from '@/src/lib/billing/stripe';
 import { getTenantBilling } from '@/src/lib/gibson-client/provisioning';
@@ -20,6 +19,7 @@ import {
 import { checkRateLimit } from '@/src/lib/rate-limiter';
 import { logger } from '@/src/lib/logger';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
+import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,14 +87,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // The person's tenant, resolved server-side at sign-in (ADR-0093
   // decision 4). assertAuthorized above already confirmed the caller holds
   // a membership on it.
-  const session = await auth();
-  const tenantSlug = session?.tenantId;
-
-  if (!tenantSlug) {
-    return NextResponse.json(
-      { error: 'no active tenant' },
-      { status: 400 },
-    );
+  let tenantSlug: string;
+  try {
+    tenantSlug = await requireActiveTenant();
+  } catch (err) {
+    return activeTenantApiResponse(err);
   }
 
   // Look up the Stripe customer ID via the rule-mode TenantService.GetTenantBilling

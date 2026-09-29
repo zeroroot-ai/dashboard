@@ -54,6 +54,20 @@ vi.mock('@/src/lib/auth/assert-authorized', async (importActual) => {
 vi.mock('@/src/lib/auth/membership', () => ({ getMyMemberships: vi.fn(async () => []) }));
 
 const mockAuth = vi.fn();
+// The route resolves its tenant through requireActiveTenant() (hosted#195).
+// The mock reads the same mockAuth the tests already drive, so a session
+// with no tenant refuses the way the real resolver does.
+vi.mock('@/src/lib/auth/active-tenant', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/src/lib/auth/active-tenant')>();
+  return {
+    ...actual,
+    requireActiveTenant: async () => {
+      const session = (await mockAuth()) as { tenantId?: string | null } | null;
+      if (!session?.tenantId) throw new actual.NoActiveTenantError();
+      return session.tenantId;
+    },
+  };
+});
 vi.mock('@/auth', () => ({
   auth: (...args: unknown[]) => mockAuth(...args),
 }));
@@ -191,12 +205,12 @@ describe('POST /api/billing/portal', () => {
       expect(json.error).toBe('no billing customer');
     });
 
-    it('returns 400 when there is no active tenant', async () => {
+    it('returns 412 no_active_tenant when there is no active tenant', async () => {
       mockAuth.mockResolvedValue({ tenantId: null });
       const res = await POST(makeRequest());
-      expect(res.status).toBe(400);
-      const json = await res.json() as { error: string };
-      expect(json.error).toBe('no active tenant');
+      expect(res.status).toBe(412);
+      const json = await res.json() as { code: string };
+      expect(json.code).toBe('no_active_tenant');
     });
   });
 

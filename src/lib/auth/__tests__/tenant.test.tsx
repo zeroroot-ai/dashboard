@@ -8,8 +8,6 @@ import * as React from 'react';
 import { TenantContextProvider } from '@/src/lib/tenant-context';
 import {
   useTenantId,
-  useAvailableTenants,
-  useHasMultipleTenants,
   useIsCrossTenant,
   useGroups,
 } from '@/src/lib/auth/tenant';
@@ -38,8 +36,6 @@ function makeTenant(slug: string): Tenant {
 
 interface ProbeResult {
   tenantId: string | null;
-  available: string[];
-  hasMultiple: boolean;
   isCross: boolean;
   groups: string[];
 }
@@ -49,8 +45,6 @@ const probe: { result?: ProbeResult } = {};
 function Probe() {
   probe.result = {
     tenantId: useTenantId(),
-    available: useAvailableTenants(),
-    hasMultiple: useHasMultipleTenants(),
     isCross: useIsCrossTenant(),
     groups: useGroups(),
   };
@@ -83,26 +77,11 @@ describe('client authz hooks (src/lib/auth/tenant.ts)', () => {
     expect(probe.result?.tenantId).toBe('acme');
   });
 
-  it('useAvailableTenants returns slugs in order', () => {
-    const a = makeTenant('a');
-    const b = makeTenant('b');
-    const c = makeTenant('c');
-    renderWith({ currentTenant: a, availableTenants: [a, b, c] });
 
-    expect(probe.result?.available).toEqual(['a', 'b', 'c']);
-    expect(probe.result?.hasMultiple).toBe(true);
-  });
-
-  it('useHasMultipleTenants is false for single-tenant users', () => {
-    const acme = makeTenant('acme');
-    renderWith({ currentTenant: acme, availableTenants: [acme] });
-    expect(probe.result?.hasMultiple).toBe(false);
-  });
 
   it('useTenantId is null when no active tenant is set', () => {
     renderWith({ currentTenant: null, availableTenants: [] });
     expect(probe.result?.tenantId).toBeNull();
-    expect(probe.result?.available).toEqual([]);
   });
 
   it('useIsCrossTenant + useGroups reflect their context fields', () => {

@@ -50,6 +50,7 @@ import { auth } from '@/auth';
 import { AuthRegistry, IdentityClass } from '@/src/gen/authz/registry';
 import { decideAuthEntry, scopeOfEntry } from './relation-hierarchy';
 import { getMyMemberships } from './membership';
+import { requireActiveTenant, NoActiveTenantError, StaleActiveTenantError } from './active-tenant';
 
 // ---------------------------------------------------------------------------
 // Error class
@@ -193,9 +194,16 @@ export async function assertAuthorized(method: string): Promise<void> {
 
   // The person's tenant, resolved server-side at sign-in (ADR-0093
   // decision 4) and re-validated against current membership just below.
-  const activeTenantId = session.tenantId;
-  if (!activeTenantId) {
-    throw new AuthzDeniedError(method, 'no-active-tenant');
+  let activeTenantId: string;
+  try {
+    activeTenantId = await requireActiveTenant();
+  } catch (err) {
+    if (err instanceof NoActiveTenantError) {
+      throw new AuthzDeniedError(method, 'no-active-tenant');
+    }
+    // A stale tenant, or a membership read that failed (daemon
+    // unavailable): both deny, as the membership lookup below always did.
+    throw new AuthzDeniedError(method, 'not-a-member');
   }
 
   // Resolve memberships and find the caller's role on the active tenant.

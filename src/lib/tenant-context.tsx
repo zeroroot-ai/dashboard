@@ -19,9 +19,8 @@
  *
  * There is no tenant switching. A person has exactly one tenant, resolved
  * server-side at sign-in from their token's verified Zitadel org, never
- * chosen client-side. `switchTenant` is kept on the context shape for the
- * handful of components still typed against it, but it always throws:
- * switching tenants is not an operation this design supports.
+ * chosen client-side (ADR-0093 decision 4). The switch operations that the
+ * old picker used are gone from this shape; nothing offers a choice.
  */
 
 import {
@@ -50,22 +49,13 @@ interface TenantContextValue {
   groups: string[];
   /** Always false, props arrive synchronously with the server render. */
   isLoading: boolean;
-  /** Always null, failures surface via switchTenant return value / toasts. */
+  /** Always null, props arrive already resolved. */
   error: string | null;
-  /**
-   * Switch to a different tenant. Calls `switchActiveTenantAction` which
-   * writes the HMAC-signed active-tenant cookie and validates membership;
-   * on success the page is refreshed to pick up the new server-resolved
-   * state. Throws on failure.
-   */
-  switchTenant: (tenantId: string) => Promise<void>;
   /**
    * Refresh server-resolved state. Equivalent to `router.refresh()` -
    * forces the layout to re-fetch memberships from FGA.
    */
   refetchTenants: () => Promise<void>;
-  /** True if the user can switch to the given tenant (member, not active). */
-  canSwitchTenant: (tenantId: string) => boolean;
 }
 
 interface TenantProviderProps {
@@ -97,27 +87,9 @@ export function TenantContextProvider({
 }: TenantProviderProps) {
   const router = useRouter();
 
-  // Switching tenants is not a supported operation (ADR-0093 decision 4): a
-  // person has exactly one tenant, resolved server-side from their identity.
-  // Kept on the context shape so existing typed callers still compile; none
-  // should ever reach it, since there is no UI that offers a choice.
-  const switchTenant = useCallback(async (_tenantId: string): Promise<void> => {
-    throw new Error(
-      "Switching tenants is not supported. Your account has exactly one workspace.",
-    );
-  }, []);
-
   const refetchTenants = useCallback(async () => {
     router.refresh();
   }, [router]);
-
-  const canSwitchTenant = useCallback(
-    (tenantId: string): boolean => {
-      if (currentTenant?.id === tenantId) return false;
-      return availableTenants.some((t) => t.id === tenantId);
-    },
-    [currentTenant, availableTenants],
-  );
 
   const contextValue: TenantContextValue = {
     currentTenant,
@@ -127,9 +99,7 @@ export function TenantContextProvider({
     groups,
     isLoading: false,
     error: null,
-    switchTenant,
     refetchTenants,
-    canSwitchTenant,
   };
 
   return (

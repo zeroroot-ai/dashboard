@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { requireActiveTenant, NoActiveTenantError, activeTenantPageRedirect } from '@/src/lib/auth/active-tenant';
 
 export async function generateMetadata(): Promise<Metadata> {
   return generateMeta({
@@ -32,8 +33,14 @@ export async function generateMetadata(): Promise<Metadata> {
  * (S3/S4) layers onto this page once the SessionService RPC lands.
  */
 export default async function CliSettingsPage() {
-  const session = await auth();
-  const tenantId = session?.tenantId;
+  let tenantId: string | null = null;
+  try {
+    tenantId = await requireActiveTenant();
+  } catch (err) {
+    if (!(err instanceof NoActiveTenantError)) {
+      activeTenantPageRedirect(err);
+    }
+  }
 
   if (!tenantId) {
     return (

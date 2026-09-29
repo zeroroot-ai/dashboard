@@ -19,8 +19,8 @@
 
 import { NextResponse } from 'next/server';
 
-import { auth } from '@/auth';
 import { getMyMemberships } from '@/src/lib/auth/membership';
+import { requireActiveTenant, NoActiveTenantError, StaleActiveTenantError } from '@/src/lib/auth/active-tenant';
 
 export async function GET(): Promise<NextResponse> {
   let memberships;
@@ -41,8 +41,14 @@ export async function GET(): Promise<NextResponse> {
   // decision 4). No membership validation needed here, the hook will
   // simply find no matching role if the session's tenant is stale and
   // return allowed=false.
-  const session = await auth();
-  const activeTenantId = session?.tenantId ?? null;
+  let activeTenantId: string | null = null;
+  try {
+    activeTenantId = await requireActiveTenant();
+  } catch (err) {
+    if (!(err instanceof NoActiveTenantError) && !(err instanceof StaleActiveTenantError)) {
+      throw err;
+    }
+  }
 
   return NextResponse.json({ activeTenantId, byTenant }, { status: 200 });
 }
