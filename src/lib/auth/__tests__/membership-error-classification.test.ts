@@ -72,12 +72,14 @@ vi.mock('@/src/lib/gibson-client/transport', () => ({
 import {
   getMyMemberships,
   MembershipResolutionError,
+  __clearMembershipVerdictCacheForTests,
   __resetDaemonCallCountForTests,
 } from '../membership';
 import { ERROR_COPY } from '../error-codes';
 
 beforeEach(() => {
   __resetDaemonCallCountForTests();
+  __clearMembershipVerdictCacheForTests();
 });
 
 // ---------------------------------------------------------------------------

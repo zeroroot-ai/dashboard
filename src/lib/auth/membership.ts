@@ -13,18 +13,34 @@
  * `membershipsClient()` below), because the membership bootstrap cannot wait
  * on the membership check it exists to answer (dashboard#107).
  *
- * Caching strategy (security-hardening R17):
+ * Caching strategy (security-hardening R17, revised 2026-09-29):
  *
  *   1. Per-request memoization via `react.cache()` keeps a single render
  *      from hammering the daemon when 50+ Server Components on a page all
  *      ask `useAuthorize` / `assertAuthorized` for membership data. This
  *      layer has zero TTL and zero cross-request scope.
  *
- *   2. Cross-request cache via the daemon's UserService.InvalidateMembershipCache
- *      RPC which the dashboard calls after FGA-write mutations. The daemon
- *      owns the Redis layer; the dashboard no longer holds a Redis client.
+ *   2. A per-process verdict cache, keyed by the caller's `sub`, for
+ *      MEMBERSHIP_VERDICT_TTL_MS. The middleware asks "is this person still
+ *      a member of their tenant?" on EVERY browser request, and one page
+ *      load is about fifty requests in one second (route prefetches, RSC
+ *      payloads, API polls). Each ask was one ListMyMemberships RPC through
+ *      the edge, whose per-person limit on authenticated API calls is fifty
+ *      per second (blocker 4, `api_authenticated`). Measured 2026-09-29 on
+ *      staging: every sign-in tripped the limit five times, the RPC came
+ *      back UNAVAILABLE, and the middleware sent the person to
+ *      `/login/error?reason=daemon_unavailable` for a membership they held.
+ *      The bound this cache sets: a grant shows at once (an empty result
+ *      is never cached), an error is never cached, and a revocation takes
+ *      effect on each replica within the TTL. ADR-0093 rejected trusting a
+ *      token claim because a removal would wait for token expiry, hours;
+ *      this waits seconds, and the verdict still comes from FGA through the
+ *      daemon, never from the cookie. Concurrent reads share one in-flight
+ *      RPC, so the fifty requests of one page load cost one call.
  *
- * Cache key shape (daemon-side): `dashboard:memberships:user:<sub>`.
+ * The daemon's UserService.InvalidateMembershipCache deletes a Redis key
+ * (`dashboard:memberships:user:<sub>`) that nothing writes; the cache this
+ * module invalidates is its own.
  *
  * @module auth/membership
  */
@@ -166,7 +182,55 @@ function userServiceClient() {
 }
 
 // ---------------------------------------------------------------------------
-// Membership cache invalidation (daemon-delegated)
+// Per-process verdict cache (caching strategy 2 above)
+// ---------------------------------------------------------------------------
+
+/** How long one positive membership verdict is reused, per process. */
+export const MEMBERSHIP_VERDICT_TTL_MS = 30_000;
+
+type VerdictEntry = {
+  readonly promise: Promise<Membership[]>;
+  readonly expiresAt: number;
+};
+
+/** Keyed by the caller's `sub`. Holds in-flight and settled positive verdicts. */
+const verdictCache = new Map<string, VerdictEntry>();
+
+/**
+ * One membership read for `userId`: the cached in-flight or settled verdict
+ * while it is fresh, else a new daemon call that concurrent readers share.
+ * Only a non-empty result stays cached; an empty list or a failure is
+ * dropped as soon as it settles, so a grant and an outage are both seen at
+ * once.
+ */
+function readVerdict(userId: string): Promise<Membership[]> {
+  const now = Date.now();
+  const hit = verdictCache.get(userId);
+  if (hit && hit.expiresAt > now) return hit.promise;
+
+  const promise = fetchMembershipsFromDaemon();
+  const entry: VerdictEntry = { promise, expiresAt: now + MEMBERSHIP_VERDICT_TTL_MS };
+  verdictCache.set(userId, entry);
+  promise.then(
+    (memberships) => {
+      if (memberships.length === 0 && verdictCache.get(userId) === entry) {
+        verdictCache.delete(userId);
+      }
+    },
+    () => {
+      if (verdictCache.get(userId) === entry) verdictCache.delete(userId);
+    },
+  );
+  return promise;
+}
+
+/** Test-only helper: forget every cached verdict between tests. */
+export function __clearMembershipVerdictCacheForTests(): void {
+  verdictCache.clear();
+}
+
+// ---------------------------------------------------------------------------
+// Membership cache invalidation
 // ---------------------------------------------------------------------------
 
 /** Test-only counter for daemon RPC calls. Exported for assertions. */
@@ -181,10 +245,8 @@ export function __resetDaemonCallCountForTests(): void {
 }
 
 /**
- * Invalidate the cached membership list for a single user.
- *
- * Delegates to the daemon's InvalidateMembershipCache RPC. The daemon owns
- * the Redis layer; the dashboard no longer holds a Redis client.
+ * Invalidate the cached membership list for a single user: this process's
+ * verdict cache first, then the daemon's InvalidateMembershipCache RPC.
  *
  * Called by callers that mutate membership through their own paths (e.g.
  * accept-invitation server actions) and want to ensure the next read sees
@@ -192,6 +254,7 @@ export function __resetDaemonCallCountForTests(): void {
  */
 export async function invalidateMembershipCache(userId: string): Promise<void> {
   if (!userId) return;
+  verdictCache.delete(userId);
   try {
     await userServiceClient().invalidateMembershipCache({ userId });
   } catch (err) {
@@ -292,11 +355,5 @@ export const getMyMemberships = cache(async (): Promise<Membership[]> => {
     throw new MembershipResolutionError('unauthenticated');
   }
 
-  // The cross-request Redis cache is now managed by the daemon (via the
-  // InvalidateMembershipCache RPC). The dashboard no longer holds a Redis
-  // client, the per-request react.cache() memoization above is the only
-  // dashboard-side caching layer. Each request that isn't memoized within
-  // the same render will hit the daemon, which applies its own server-side
-  // cache (keyed on user sub, short TTL).
-  return fetchMembershipsFromDaemon();
+  return readVerdict(session.user.id);
 });
