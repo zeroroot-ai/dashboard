@@ -57,7 +57,12 @@ export type ActionResult<T = void> =
  * MembershipService (ADR-0043/0044); these are the role strings that service
  * returns.
  */
-export type MemberRole = "owner" | "admin" | "member" | "viewer";
+/**
+ * A tenant role as the daemon reports and accepts it: the FGA relation names
+ * of ADR-0093 decision 2 (Owner, Admin, Editor = writer, Viewer = member).
+ * Labels live in src/lib/auth/tenant-roles.ts.
+ */
+export type MemberRole = "owner" | "admin" | "writer" | "member";
 
 /**
  * A tenant plan tier. Re-exported from the generated plan registry, which

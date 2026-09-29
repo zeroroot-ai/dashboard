@@ -53,12 +53,13 @@ import { resetUserMfaAction } from "@/app/actions/crd/reset-mfa";
 import { listMembersAction, type MemberRow } from "@/app/actions/read/listMembers";
 import type { TenantRole } from "@/app/actions/crd/role";
 import type { MemberRole } from "@/app/actions/crd/types";
+import { ASSIGNABLE_TENANT_ROLES, isAssignableTenantRole, tenantRoleLabel } from "@/src/lib/auth/tenant-roles";
 
 const ROLE_BADGE_CLASS: Record<string, string> = {
   owner: "border-alt/50 bg-alt/10 text-alt",
   admin: "border-primary/50 bg-primary/10 text-primary",
-  member: "border-link/50 bg-link/10/20 text-link",
-  viewer: "border-border bg-muted/50 text-muted-foreground",
+  writer: "border-link/50 bg-link/10/20 text-link",
+  member: "border-border bg-muted/50 text-muted-foreground",
 };
 
 function getInitials(name?: string | null): string {
@@ -133,7 +134,7 @@ export default function UserDetailPage() {
   const [resettingMfa, setResettingMfa] = React.useState(false);
 
   // Role change state. The override is a TenantRole because setTenantRoleAction
-  // only accepts admin|member, owners cannot be set via this dropdown.
+  // accepts admin, writer and member only; owners cannot be set via this dropdown.
   const [roleOverride, setRoleOverride] = React.useState<TenantRole | null>(null);
   const [changingRole, setChangingRole] = React.useState(false);
 
@@ -267,7 +268,7 @@ export default function UserDetailPage() {
       const result = await setTenantRoleAction({ userId: targetUserId, role });
       if (result.ok) {
         setRoleOverride(role);
-        toast.success(`${member.email} is now ${role}.`);
+        toast.success(`${member.email} is now ${tenantRoleLabel(role)}.`);
         await refetch();
       } else {
         toast.error(result.error || "Failed to change role.");
@@ -385,9 +386,9 @@ export default function UserDetailPage() {
                     </p>
                     <Badge
                       variant="outline"
-                      className={`text-xs font-mono ${ROLE_BADGE_CLASS[effectiveRole ?? "viewer"] ?? ROLE_BADGE_CLASS.viewer}`}
+                      className={`text-xs font-mono ${ROLE_BADGE_CLASS[effectiveRole ?? "member"] ?? ROLE_BADGE_CLASS.member}`}
                     >
-                      {effectiveRole ?? member.role}
+                      {tenantRoleLabel(effectiveRole)}
                       {isSelf && " (you)"}
                     </Badge>
                   </div>
@@ -446,16 +447,21 @@ export default function UserDetailPage() {
                         </p>
                       </div>
                       <Select
-                        value={(effectiveRole === "admin" || effectiveRole === "member") ? effectiveRole : "member"}
-                        onValueChange={(v) => handleRoleChange(v as TenantRole)}
+                        value={effectiveRole && isAssignableTenantRole(effectiveRole) ? effectiveRole : "member"}
+                        onValueChange={(v) => {
+                          if (isAssignableTenantRole(v)) void handleRoleChange(v);
+                        }}
                         disabled={changingRole}
                       >
                         <SelectTrigger size="sm" className="w-32">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="admin">admin</SelectItem>
-                          <SelectItem value="member">member</SelectItem>
+                          {ASSIGNABLE_TENANT_ROLES.map((r) => (
+                            <SelectItem key={r} value={r}>
+                              {tenantRoleLabel(r)}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>

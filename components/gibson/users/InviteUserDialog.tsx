@@ -38,10 +38,11 @@ import {
 } from "@/components/ui/select";
 import { inviteMemberAction } from "@/app/actions/crd/member";
 import type { MemberRole } from "@/app/actions/crd/types";
+import { ASSIGNABLE_TENANT_ROLES, TENANT_ROLE_HINT, isAssignableTenantRole, tenantRoleLabel } from "@/src/lib/auth/tenant-roles";
 
 const inviteSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  role: z.enum(["member", "admin"], {
+  role: z.enum(ASSIGNABLE_TENANT_ROLES, {
     required_error: "Please select a role",
   }),
   message: z.string().max(500).optional(),
@@ -63,7 +64,9 @@ export function InviteUserDialog({ open, onOpenChange, tenantId, onInvited }: In
 
   const form = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema),
-    defaultValues: { email: "", role: "member", message: "" },
+    // Editor by default: the person was invited to work in the workspace.
+    // Viewer is a deliberate choice, not the thing you get by not looking.
+    defaultValues: { email: "", role: "writer", message: "" },
   });
 
   async function onSubmit(values: InviteFormValues) {
@@ -142,10 +145,16 @@ export function InviteUserDialog({ open, onOpenChange, tenantId, onInvited }: In
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="member">Member</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
+                      {ASSIGNABLE_TENANT_ROLES.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {tenantRoleLabel(role)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {field.value && isAssignableTenantRole(field.value) ? TENANT_ROLE_HINT[field.value] : null}
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}

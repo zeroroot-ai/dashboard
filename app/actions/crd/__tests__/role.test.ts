@@ -122,6 +122,23 @@ describe("setTenantRoleAction", () => {
     expect(payload.remove).toBe(false);
   });
 
+  it("member → writer (Editor) writes writer role via setTenantRole", async () => {
+    withSession("acme");
+    const r = await setTenantRoleAction({ userId: "alice", role: "writer" });
+    expect(r).toEqual({ ok: true, data: { applied: true } });
+    expect(mocks.writeAccessTuples).toHaveBeenCalledOnce();
+    const [payload] = mocks.writeAccessTuples.mock.calls[0] as unknown as [{ role: string }];
+    expect(payload.role).toBe("writer");
+  });
+
+  it("refuses a role outside admin, writer and member before any RPC", async () => {
+    withSession("acme");
+    const r = await setTenantRoleAction({ userId: "alice", role: "editor" as never });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.code).toBe("BAD_INPUT");
+    expect(mocks.writeAccessTuples).not.toHaveBeenCalled();
+  });
+
   it("member → admin writes admin role via setTenantRole", async () => {
     withSession("acme");
     await setTenantRoleAction({ userId: "alice", role: "admin" });

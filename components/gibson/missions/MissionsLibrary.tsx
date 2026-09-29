@@ -12,7 +12,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { PlusCircle, CrosshairIcon, Pencil, Trash2, Loader2 } from "lucide-react";
+import { CrosshairIcon, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
+import { NewMissionButton } from "@/components/gibson/missions/NewMissionButton";
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import {
   listMissionSourcesAction,
@@ -103,12 +104,7 @@ export function MissionsLibrary() {
         <h1 className="text-xl font-bold tracking-tight font-mono lg:text-2xl">
           Missions
         </h1>
-        <Button asChild>
-          <Link href="/dashboard/missions/create">
-            <PlusCircle className="size-4" />
-            New Mission
-          </Link>
-        </Button>
+        <NewMissionButton />
       </div>
 
       {error && (
@@ -126,14 +122,7 @@ export function MissionsLibrary() {
           icon={CrosshairIcon}
           title="No missions yet"
           description="A mission is an agent workflow you author in CUE. Create one, it autosaves as you type and can be run any time."
-          primaryCta={
-            <Button asChild>
-              <Link href="/dashboard/missions/create">
-                <PlusCircle className="size-4" />
-                New Mission
-              </Link>
-            </Button>
-          }
+          primaryCta={<NewMissionButton />}
         />
       )}
 
