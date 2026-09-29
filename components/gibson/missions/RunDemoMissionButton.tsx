@@ -8,9 +8,12 @@ import { useRouter } from "next/navigation";
 import { PlayIcon, Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button, type buttonVariants } from "@/components/ui/button";
+import { type buttonVariants } from "@/components/ui/button";
 import { type VariantProps } from "class-variance-authority";
 import { apiFetch } from "@/src/lib/api/fetch";
+import { AuthGatedButton } from "@/components/gibson/auth/AuthGatedButton";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
+import { MISSION_RUN_DENIED_COPY, MISSION_RUN_GATE_RPC } from "@/components/gibson/missions/NewMissionButton";
 
 type ButtonProps = React.ComponentProps<"button"> & VariantProps<typeof buttonVariants>;
 
@@ -37,6 +40,10 @@ export function RunDemoMissionButton({
 }: RunDemoMissionButtonProps) {
   const router = useRouter();
   const [pending, setPending] = React.useState(false);
+  // The demo launches a mission, which needs the Editor role. Hidden while
+  // the check runs, disabled with the reason for a Viewer.
+  const { allowed, loading } = useAuthorize(MISSION_RUN_GATE_RPC);
+  const state = loading ? "loading" : allowed ? "allowed" : "denied";
 
   async function handleClick() {
     setPending(true);
@@ -73,13 +80,19 @@ export function RunDemoMissionButton({
   }
 
   return (
-    <Button {...rest} disabled={disabled || pending} onClick={handleClick}>
+    <AuthGatedButton
+      {...rest}
+      state={state}
+      disabledTooltip={MISSION_RUN_DENIED_COPY}
+      disabled={disabled || pending}
+      onClick={handleClick}
+    >
       {pending ? (
         <Loader2Icon className="size-4 animate-spin" aria-hidden="true" />
       ) : (
         <PlayIcon className="size-4" aria-hidden="true" />
       )}
       {children ?? (pending ? "Starting demo…" : "Run demo mission")}
-    </Button>
+    </AuthGatedButton>
   );
 }

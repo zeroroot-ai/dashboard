@@ -34,7 +34,7 @@ import * as Kanban from "@/components/ui/kanban";
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import { RunDemoMissionButton } from "./RunDemoMissionButton";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
-import { NewMissionButton } from "@/components/gibson/missions/NewMissionButton";
+import { MISSION_RUN_DENIED_COPY, MISSION_RUN_GATE_RPC, NewMissionButton } from "@/components/gibson/missions/NewMissionButton";
 import { AuthGatedButton } from "@/components/gibson/auth/AuthGatedButton";
 import {
   useMissions,
@@ -117,10 +117,15 @@ function MissionEditButton({ mission }: { mission: Mission }) {
 
 function MissionActionsMenu({ mission }: { mission: Mission }) {
   const liveRun = useLiveRun({ missionId: mission.id });
-  const canStart = mission.status === "pending" || mission.status === "paused";
-  const canPause = mission.status === "running";
-  const canStop = mission.status === "running" || mission.status === "paused";
-  const canClone = Boolean(mission.missionDefinitionId);
+  // Start, pause, resume, stop and delete all need the Editor role (the
+  // daemon gates them on RunMission's relation). One check, every write
+  // item follows it, and a Viewer reads why instead of a failed toast.
+  const { allowed, loading } = useAuthorize(MISSION_RUN_GATE_RPC);
+  const canWrite = allowed && !loading;
+  const canStart = canWrite && (mission.status === "pending" || mission.status === "paused");
+  const canPause = canWrite && mission.status === "running";
+  const canStop = canWrite && (mission.status === "running" || mission.status === "paused");
+  const canClone = canWrite && Boolean(mission.missionDefinitionId);
 
   const startMutation = useStartMission();
   const pauseMutation = usePauseMission();
@@ -229,12 +234,20 @@ function MissionActionsMenu({ mission }: { mission: Mission }) {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-destructive focus:text-destructive"
-          disabled={isWorking}
+          disabled={!canWrite || isWorking}
           onClick={handleDelete}
         >
           <Trash2 className="size-4" />
           Delete
         </DropdownMenuItem>
+        {!loading && !allowed && (
+          <>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-1.5 text-xs text-muted-foreground" data-testid="mission-actions-viewer-note">
+              {MISSION_RUN_DENIED_COPY}
+            </div>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
