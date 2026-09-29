@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.125.0](https://github.com/zeroroot-ai/dashboard/compare/v0.124.2...v0.125.0) (2026-09-29)
+
+
+### Features
+
+* **authz:** mission actions, the demo run and target controls follow the Editor gate, registry from sdk v0.183.1 ([#141](https://github.com/zeroroot-ai/dashboard/issues/141)) ([0b0af30](https://github.com/zeroroot-ai/dashboard/commit/0b0af3028136f5e27d2e03f5f81bc5cf65129c43))
+
 ## [0.124.2](https://github.com/zeroroot-ai/dashboard/compare/v0.124.1...v0.124.2) (2026-09-29)
 
 
