@@ -51,9 +51,13 @@ vi.mock('@connectrpc/connect-node', () => ({
 
 // userClient bakes in the per-RPC authz check (dashboard#848). Stub it to a
 // no-op so these header-injection tests stay focused on the auth interceptor.
-vi.mock('@/src/lib/auth/assert-authorized', () => ({
-  assertAuthorized: vi.fn(async () => {}),
-}));
+// The real module, with only assertAuthorized replaced: the transport's
+// authz interceptor also reads authzDenial from it.
+vi.mock('@/src/lib/auth/assert-authorized', async (importActual) => {
+  const actual = await importActual<typeof import('@/src/lib/auth/assert-authorized')>();
+  return { ...actual, assertAuthorized: vi.fn(async () => {}) };
+});
+vi.mock('@/src/lib/auth/membership', () => ({ getMyMemberships: vi.fn(async () => []) }));
 
 vi.mock('@connectrpc/connect', async (importActual) => {
   const actual = await importActual<typeof import('@connectrpc/connect')>();
