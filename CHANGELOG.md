@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.124.0](https://github.com/zeroroot-ai/dashboard/compare/v0.123.1...v0.124.0) (2026-09-29)
+
+
+### Features
+
+* **users:** Editor role on invite and role change, four-role labels, and a Viewer gate on the mission editor ([6218e0e](https://github.com/zeroroot-ai/dashboard/commit/6218e0e5796ef8b3fbc6f6b9f77b67479ff69523))
+* **users:** offer the Editor role on invite and role change, four-role labels, and a Viewer gate on the mission editor ([#133](https://github.com/zeroroot-ai/dashboard/issues/133)) ([6218e0e](https://github.com/zeroroot-ai/dashboard/commit/6218e0e5796ef8b3fbc6f6b9f77b67479ff69523))
+
 ## [0.123.1](https://github.com/zeroroot-ai/dashboard/compare/v0.123.0...v0.123.1) (2026-09-29)
 
 
