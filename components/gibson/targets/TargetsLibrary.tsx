@@ -120,12 +120,12 @@ function splitList(s: string): string[] {
 }
 
 /** The RPCs the target controls need; all three require the Editor role. */
-export const TARGET_CREATE_GATE_RPC = "/gibson.daemon.v1.DaemonService/CreateTarget";
-export const TARGET_UPDATE_GATE_RPC = "/gibson.daemon.v1.DaemonService/UpdateTarget";
-export const TARGET_DELETE_GATE_RPC = "/gibson.daemon.v1.DaemonService/DeleteTarget";
+const TARGET_CREATE_GATE_RPC = "/gibson.daemon.v1.DaemonService/CreateTarget";
+const TARGET_UPDATE_GATE_RPC = "/gibson.daemon.v1.DaemonService/UpdateTarget";
+const TARGET_DELETE_GATE_RPC = "/gibson.daemon.v1.DaemonService/DeleteTarget";
 
 /** Copy a Viewer reads on a disabled target control. */
-export const TARGET_WRITE_DENIED_COPY =
+const TARGET_WRITE_DENIED_COPY =
   "Your role is Viewer. Ask a workspace Admin for the Editor role to change targets.";
 
 function NewTargetButton({ onClick }: { onClick: () => void }) {
