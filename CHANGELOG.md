@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.124.2](https://github.com/zeroroot-ai/dashboard/compare/v0.124.1...v0.124.2) (2026-09-29)
+
+
+### Bug Fixes
+
+* **auth:** one tenant resolver, no picker, no active-tenant cookie residue ([#140](https://github.com/zeroroot-ai/dashboard/issues/140)) ([56113b5](https://github.com/zeroroot-ai/dashboard/commit/56113b5601ffc1aa2f025594e5bb695b6351717c))
+* **rework:** test mocks of assert-authorized carry the real module, so authzDenial exists ([#137](https://github.com/zeroroot-ai/dashboard/issues/137)) ([ab8f6f4](https://github.com/zeroroot-ai/dashboard/commit/ab8f6f4b8b66a00fe9a736fcc3e471a7827c710b))
+
 ## [0.124.1](https://github.com/zeroroot-ai/dashboard/compare/v0.124.0...v0.124.1) (2026-09-29)
 
 
