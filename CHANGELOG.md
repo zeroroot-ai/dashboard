@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.124.1](https://github.com/zeroroot-ai/dashboard/compare/v0.124.0...v0.124.1) (2026-09-29)
+
+
+### Bug Fixes
+
+* **auth:** a denial from inside an RPC is read as permission denied, not as an internal error ([#135](https://github.com/zeroroot-ai/dashboard/issues/135)) ([1682758](https://github.com/zeroroot-ai/dashboard/commit/1682758466d278e0c04a924c3c98a745d982b179))
+
 ## [0.124.0](https://github.com/zeroroot-ai/dashboard/compare/v0.123.1...v0.124.0) (2026-09-29)
 
 
