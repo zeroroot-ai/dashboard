@@ -52,6 +52,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
+import { AuthGatedButton } from "@/components/gibson/auth/AuthGatedButton";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import {
   listTargetsAction,
@@ -115,6 +117,55 @@ function splitList(s: string): string[] {
     .split(",")
     .map((x) => x.trim())
     .filter(Boolean);
+}
+
+/** The RPCs the target controls need; all three require the Editor role. */
+const TARGET_CREATE_GATE_RPC = "/gibson.daemon.v1.DaemonService/CreateTarget";
+const TARGET_UPDATE_GATE_RPC = "/gibson.daemon.v1.DaemonService/UpdateTarget";
+const TARGET_DELETE_GATE_RPC = "/gibson.daemon.v1.DaemonService/DeleteTarget";
+
+/** Copy a Viewer reads on a disabled target control. */
+const TARGET_WRITE_DENIED_COPY =
+  "Your role is Viewer. Ask a workspace Admin for the Editor role to change targets.";
+
+function NewTargetButton({ onClick }: { onClick: () => void }) {
+  const { allowed, loading } = useAuthorize(TARGET_CREATE_GATE_RPC);
+  const state = loading ? "loading" : allowed ? "allowed" : "denied";
+  return (
+    <AuthGatedButton state={state} disabledTooltip={TARGET_WRITE_DENIED_COPY} onClick={onClick}>
+      <PlusCircle className="size-4" />
+      New Target
+    </AuthGatedButton>
+  );
+}
+
+function TargetRowAction({
+  rpc,
+  label,
+  onClick,
+  children,
+}: {
+  rpc: string;
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  const { allowed, loading } = useAuthorize(rpc);
+  const state = loading ? "loading" : allowed ? "allowed" : "denied";
+  return (
+    <AuthGatedButton
+      state={state}
+      disabledTooltip={TARGET_WRITE_DENIED_COPY}
+      variant="ghost"
+      size="icon"
+      className="size-7"
+      loadingSkeletonClassName="size-7 rounded-md"
+      aria-label={label}
+      onClick={onClick}
+    >
+      {children}
+    </AuthGatedButton>
+  );
 }
 
 export function TargetsLibrary() {
@@ -208,10 +259,7 @@ export function TargetsLibrary() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h1 className="text-xl font-bold tracking-tight font-mono lg:text-2xl">Targets</h1>
-        <Button onClick={openCreate}>
-          <PlusCircle className="size-4" />
-          New Target
-        </Button>
+        <NewTargetButton onClick={openCreate} />
       </div>
 
       {error && (
@@ -225,12 +273,7 @@ export function TargetsLibrary() {
           icon={CrosshairIcon}
           title="No targets yet"
           description="A target is the system a mission assesses, a host, endpoint, or model. Create one, then reference it from a mission."
-          primaryCta={
-            <Button onClick={openCreate}>
-              <PlusCircle className="size-4" />
-              New Target
-            </Button>
-          }
+          primaryCta={<NewTargetButton onClick={openCreate} />}
         />
       )}
 
@@ -269,24 +312,12 @@ export function TargetsLibrary() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1 justify-end">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7"
-                        aria-label={`Edit ${t.name}`}
-                        onClick={() => openEdit(t)}
-                      >
+                      <TargetRowAction rpc={TARGET_UPDATE_GATE_RPC} label={`Edit ${t.name}`} onClick={() => openEdit(t)}>
                         <Pencil className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7"
-                        aria-label={`Delete ${t.name}`}
-                        onClick={() => setPendingDelete(t)}
-                      >
+                      </TargetRowAction>
+                      <TargetRowAction rpc={TARGET_DELETE_GATE_RPC} label={`Delete ${t.name}`} onClick={() => setPendingDelete(t)}>
                         <Trash2 className="size-3.5" />
-                      </Button>
+                      </TargetRowAction>
                     </div>
                   </TableCell>
                 </TableRow>

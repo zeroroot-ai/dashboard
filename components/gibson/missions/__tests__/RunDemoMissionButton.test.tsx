@@ -15,6 +15,11 @@ import { RunDemoMissionButton } from '../RunDemoMissionButton';
 
 const mockPush = vi.fn();
 
+const authorize = vi.fn(() => ({ allowed: true, loading: false }));
+vi.mock('@/src/lib/auth/use-authorize', () => ({
+  useAuthorize: () => authorize(),
+}));
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
@@ -137,5 +142,22 @@ describe('RunDemoMissionButton', () => {
       );
     });
     expect(mockPush).not.toHaveBeenCalled();
+  });
+});
+
+describe('RunDemoMissionButton, Viewer gate', () => {
+  it('renders a disabled button with the reason for a Viewer, never fires the demo', () => {
+    authorize.mockReturnValueOnce({ allowed: false, loading: false });
+    render(<RunDemoMissionButton />);
+    const wrapper = screen.getByTestId('auth-gated-button-denied');
+    expect(wrapper).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByText(/Run demo mission/i)).toBeInTheDocument();
+  });
+
+  it('renders nothing clickable while the check is loading', () => {
+    authorize.mockReturnValueOnce({ allowed: false, loading: true });
+    render(<RunDemoMissionButton />);
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByTestId('auth-gated-button-loading')).toBeInTheDocument();
   });
 });

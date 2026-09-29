@@ -28,6 +28,13 @@ export const NEW_MISSION_GATE_RPC = "/gibson.daemon.v1.DaemonService/ValidateMis
 export const NEW_MISSION_DENIED_COPY =
   "Your role is Viewer. Ask a workspace Admin for the Editor role to create missions.";
 
+/** The RPC every mission lifecycle action needs (start, pause, resume, stop). */
+export const MISSION_RUN_GATE_RPC = "/gibson.daemon.v1.DaemonService/RunMission";
+
+/** Copy for a mission action a Viewer cannot take. */
+export const MISSION_RUN_DENIED_COPY =
+  "Your role is Viewer. Ask a workspace Admin for the Editor role to run missions.";
+
 type Props = Omit<React.ComponentProps<typeof AuthGatedButton>, "state" | "disabledTooltip" | "asChild" | "children"> & {
   /** Where the link goes. Defaults to a blank editor. */
   href?: string;
