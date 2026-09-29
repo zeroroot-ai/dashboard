@@ -15,7 +15,7 @@ import { SecretsList } from "@/src/components/secrets/SecretsList";
 import { SecretsEmptyState } from "@/src/components/secrets/EmptyState";
 import {
   assertAuthorized,
-  AuthzDeniedError,
+  authzDenial,
 } from "@/src/lib/auth/assert-authorized";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -51,7 +51,7 @@ export default async function SecretsPage({ searchParams }: SecretsPageProps) {
   try {
     await assertAuthorized("/gibson.tenant.v1.SecretsService/ListSecrets");
   } catch (err) {
-    if (err instanceof AuthzDeniedError) {
+    if (authzDenial(err)) {
       redirect("/dashboard/pages/settings");
     }
     throw err;

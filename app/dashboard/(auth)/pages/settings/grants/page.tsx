@@ -12,7 +12,7 @@ import { listActiveGrants } from "@/src/lib/gibson-client/grants";
 import { GrantsTable } from "@/src/components/grants/GrantsTable";
 import {
   assertAuthorized,
-  AuthzDeniedError,
+  authzDenial,
 } from "@/src/lib/auth/assert-authorized";
 
 /**
@@ -46,7 +46,7 @@ export default async function GrantsPage() {
   try {
     await assertAuthorized("/gibson.tenant.v1.GrantsService/ListActiveGrants");
   } catch (err) {
-    if (err instanceof AuthzDeniedError) {
+    if (authzDenial(err)) {
       redirect("/dashboard/pages/settings");
     }
     throw err;

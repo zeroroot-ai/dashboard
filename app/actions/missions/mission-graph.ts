@@ -21,7 +21,7 @@ import "server-only";
 
 import { ConnectError, Code } from "@connectrpc/connect";
 
-import { AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
+import { authzDenial } from "@/src/lib/auth/assert-authorized";
 import { userClient } from "@/src/lib/gibson-client";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 
@@ -127,7 +127,7 @@ export async function getMissionGraphAction(
         : null,
     };
   } catch (err) {
-    if (err instanceof AuthzDeniedError) return null;
+    if (authzDenial(err)) return null;
     throw err;
   }
 }
@@ -141,7 +141,7 @@ export async function getMissionLayoutVersionAction(
     const resp = await client.getMissionLayout({ missionDefinitionId });
     return resp.layout?.version ?? "";
   } catch (err) {
-    if (err instanceof AuthzDeniedError) return "";
+    if (authzDenial(err)) return "";
     throw err;
   }
 }

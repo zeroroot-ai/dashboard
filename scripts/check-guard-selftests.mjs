@@ -39,6 +39,7 @@ const GUARDS = [
   "check-csp.mjs",
   "check-no-secrets-in-client.mjs",
   "check-server-action-authz.mjs",
+  "check-authz-denial-unwrapped.mjs",
   "check-no-store-clients.mjs",
   "check-no-nodeenv-conditioned-auth.mjs",
   "check-lockfile-sync.mjs",

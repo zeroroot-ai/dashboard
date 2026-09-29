@@ -20,7 +20,7 @@
 
 import "server-only";
 
-import { AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
+import { authzDenial } from "@/src/lib/auth/assert-authorized";
 import { userClient } from "@/src/lib/gibson-client";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 
@@ -67,7 +67,7 @@ export async function validateMissionCUEAction(
       severity: d.severity,
     }));
   } catch (err) {
-    if (err instanceof AuthzDeniedError) return [];
+    if (authzDenial(err)) return [];
     throw err;
   }
 }
@@ -93,7 +93,7 @@ export async function completeMissionCUEAction(
       kind: item.kind,
     }));
   } catch (err) {
-    if (err instanceof AuthzDeniedError) return [];
+    if (authzDenial(err)) return [];
     throw err;
   }
 }
@@ -113,7 +113,7 @@ export async function hoverMissionCUEAction(
     const resp = await client.hoverMissionCUE({ cueSource, line, col });
     return resp.markdown;
   } catch (err) {
-    if (err instanceof AuthzDeniedError) return "";
+    if (authzDenial(err)) return "";
     throw err;
   }
 }

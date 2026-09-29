@@ -17,7 +17,7 @@ import { ConnectError, Code } from '@connectrpc/connect';
 
 import {
   assertAuthorized,
-  AuthzDeniedError,
+  authzDenial,
 } from '@/src/lib/auth/assert-authorized';
 import { userClient } from '@/src/lib/gibson-client';
 import { AgentIdentityService, PrincipalKind } from '@/src/gen/gibson/agentidentity/v1/agent_identity_pb';
@@ -67,7 +67,7 @@ export default async function Page({
   try {
     await assertAuthorized('/gibson.identity.v1.IdentityService/WhoAmI');
   } catch (err) {
-    if (err instanceof AuthzDeniedError) {
+    if (authzDenial(err)) {
       redirect('/dashboard/agents');
     }
     throw err;

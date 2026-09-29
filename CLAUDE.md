@@ -339,23 +339,20 @@ File: `src/lib/auth/assert-authorized.ts` (server-only)
 
 ```ts
 "use server";
-import { assertAuthorized } from "@/lib/auth/assert-authorized";
-import { AuthzDeniedError } from "@/lib/auth/assert-authorized";
+import { authzDenial, permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
 
 export async function createSecretAction(formData: FormData) {
   try {
-    await assertAuthorized("/gibson.tenant.v1.SecretsService/SetSecret");
+    await userClient(SecretsService).setSecret({ ... });
   } catch (err) {
-    if (err instanceof AuthzDeniedError) {
-      return { ok: false, error: "Permission denied", code: "permission_denied" };
-    }
-    throw err;
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
+    return serverActionError(err, { action: "createSecretAction" });
   }
-  // ...proceed with daemon call
 }
 ```
 
-`assertAuthorized` throws `AuthzDeniedError` (with `method` and `reason` fields) on denial. For a per-object entry (`objectType` is a `bank`, `job`, `component`, `plugin` or `secret`) it enforces the floor only (session, USER-callable RPC, active tenant, membership) and then lets the call through: the request body names the object, the dashboard never sees it, and ext-authz holds the grant. The daemon answers `PERMISSION_DENIED` itself. Gate per-object chrome from object data (the bank's owner, the job's opener), never from `useAuthorize`, which hides such chrome. Server actions catch it and return a structured error; the client maps this to a "Permission denied" toast. Never log the `reason` in a user-visible message (it contains internal role data).
+`assertAuthorized` throws `AuthzDeniedError` (with `method` and `reason` fields) on denial. The `userClient` transport runs it inside every RPC and rethrows the denial as a `ConnectError` with code `PermissionDenied` and the `AuthzDeniedError` as `cause` (connect-es wraps every error an interceptor throws). Read a denial through `authzDenial(err)` or `permissionDeniedResult(err)`, never through `instanceof AuthzDeniedError`: the guard `scripts/check-authz-denial-unwrapped.mjs` rejects the `instanceof` form outside `assert-authorized.ts`. For a per-object entry (`objectType` is a `bank`, `job`, `component`, `plugin` or `secret`) it enforces the floor only (session, USER-callable RPC, active tenant, membership) and then lets the call through: the request body names the object, the dashboard never sees it, and ext-authz holds the grant. The daemon answers `PERMISSION_DENIED` itself. Gate per-object chrome from object data (the bank's owner, the job's opener), never from `useAuthorize`, which hides such chrome. Server actions catch it and return a structured error; the client maps this to a "Permission denied" toast. Never log the `reason` in a user-visible message (it contains internal role data).
 
 ---
 

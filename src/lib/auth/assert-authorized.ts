@@ -44,6 +44,8 @@
 
 import 'server-only';
 
+import { ConnectError } from '@connectrpc/connect';
+
 import { auth } from '@/auth';
 import { AuthRegistry, IdentityClass } from '@/src/gen/authz/registry';
 import { decideAuthEntry, scopeOfEntry } from './relation-hierarchy';
@@ -112,9 +114,34 @@ type PermissionDeniedResult = {
 export function permissionDeniedResult(
   err: unknown,
 ): PermissionDeniedResult | null {
-  return err instanceof AuthzDeniedError
+  return authzDenial(err)
     ? { ok: false, error: 'Permission denied', code: 'permission_denied' }
     : null;
+}
+
+/**
+ * The `AuthzDeniedError` behind `err`, or `null` when `err` is not a denial.
+ *
+ * A denial reaches a caller in one of two shapes. A direct `assertAuthorized`
+ * call throws `AuthzDeniedError` itself. A denial from inside an RPC (the
+ * transport's authz interceptor) reaches the caller as a `ConnectError`:
+ * connect-es passes every error an interceptor throws through
+ * `ConnectError.from`, which keeps the original as `cause`. The interceptor
+ * throws a `ConnectError` with code `PermissionDenied` and the
+ * `AuthzDeniedError` as its cause, so both shapes carry the denial.
+ *
+ * Measured 2026-09-29 on staging: `instanceof AuthzDeniedError` on the RPC
+ * shape was false, so a member who pressed "Enable" on a connector saw the
+ * internal-error page with a reference id instead of "Permission denied".
+ * Every caller checks through this function, never through `instanceof`
+ * (guard: scripts/check-authz-denial-unwrapped.mjs).
+ */
+export function authzDenial(err: unknown): AuthzDeniedError | null {
+  if (err instanceof AuthzDeniedError) return err;
+  if (err instanceof ConnectError && err.cause instanceof AuthzDeniedError) {
+    return err.cause;
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------

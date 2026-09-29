@@ -84,9 +84,16 @@ vi.mock('@/src/lib/metrics/gibson-admin', () => ({
 // header-contract tests exercise the auth interceptor in isolation; a dedicated
 // describe-block below asserts WHICH wrapper runs it and with which method.
 const mockAssertAuthorized = vi.fn(async (_method: string): Promise<void> => {});
-vi.mock('@/src/lib/auth/assert-authorized', () => ({
-  assertAuthorized: (method: string) => mockAssertAuthorized(method),
-}));
+vi.mock('@/src/lib/auth/assert-authorized', async (importActual) => {
+  const actual = await importActual<typeof import('@/src/lib/auth/assert-authorized')>();
+  return {
+    ...actual,
+    assertAuthorized: (method: string) => mockAssertAuthorized(method),
+  };
+});
+// assert-authorized's own imports are not under test here.
+vi.mock('@/auth', () => ({ auth: vi.fn(async () => null) }));
+vi.mock('@/src/lib/auth/membership', () => ({ getMyMemberships: vi.fn(async () => []) }));
 
 const FAKE_SERVICE = {} as never;
 
