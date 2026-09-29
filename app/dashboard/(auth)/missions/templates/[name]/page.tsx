@@ -8,12 +8,12 @@
  */
 
 import { notFound } from "next/navigation";
+import { NewMissionButton } from "@/components/gibson/missions/NewMissionButton";
 import Link from "next/link";
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 import {
@@ -48,11 +48,12 @@ export default async function TemplateDetailPage({ params }: PageProps) {
           <h1 className="text-2xl font-semibold">{tpl.meta.title}</h1>
           <p className="text-muted-foreground">{tpl.meta.description}</p>
         </div>
-        <Link
+        <NewMissionButton
+          hideIcon
           href={`/dashboard/missions/create?template=${encodeURIComponent(tpl.meta.id)}`}
         >
-          <Button>Use this template</Button>
-        </Link>
+          Use this template
+        </NewMissionButton>
       </header>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

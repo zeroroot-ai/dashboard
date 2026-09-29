@@ -44,7 +44,7 @@ interface TenantContextValue {
   availableTenants: Tenant[];
   /** True when the user holds at least one role flagged cross_tenant. */
   crossTenant: boolean;
-  /** Map of tenantId → role string ("admin" | "member"). */
+  /** Map of tenantId → role string ("owner" | "admin" | "writer" | "member"). */
   rolesByTenant: Record<string, string>;
   /** IdP-asserted groups (currently always empty). */
   groups: string[];

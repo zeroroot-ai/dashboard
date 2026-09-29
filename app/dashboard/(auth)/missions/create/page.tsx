@@ -14,6 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useMissionEditor } from "@/src/hooks/useMissionEditor";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
+import { EmptyState } from "@/components/gibson/shared/EmptyState";
+import { NEW_MISSION_DENIED_COPY, NEW_MISSION_GATE_RPC } from "@/components/gibson/missions/NewMissionButton";
 import { useMissionTerminal } from "@/src/hooks/useMissionTerminal";
 import { SavedMissionsMenu } from "@/src/components/mission/create/saved-missions-menu";
 import { DefinitionPickerDropdown } from "@/src/components/mission/create/definition-picker-dropdown";
@@ -98,6 +101,11 @@ export default function CreateMissionPage() {
   const urlCloneMissionId = searchParams.get("clone") ?? undefined;
 
   const terminalRef = React.useRef<MissionTerminalHandle>(null);
+
+  // The editor cannot run without ValidateMissionCUE (Editor role). Resolve
+  // that once, up front, so a Viewer gets one plain sentence instead of the
+  // template validation's refusal dressed as "Failed to load missions".
+  const { allowed, loading } = useAuthorize(NEW_MISSION_GATE_RPC);
 
   // The editor state machine owns source, dirty tracking, autosave, save,
   // and run. The page is a thin view that routes URL hydration into
@@ -376,6 +384,25 @@ export default function CreateMissionPage() {
             : "Saved";
 
   const isSaving = editor.saveStatus === "saving";
+
+
+  if (!loading && !allowed) {
+    return (
+      <EmptyState
+        icon={Rocket}
+        title="Missions are read-only for your role"
+        description={NEW_MISSION_DENIED_COPY}
+        primaryCta={
+          <Button asChild variant="outline">
+            <Link href="/dashboard/missions">
+              <ArrowLeft className="size-4" />
+              Back to missions
+            </Link>
+          </Button>
+        }
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">

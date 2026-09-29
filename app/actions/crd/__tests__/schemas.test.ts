@@ -131,13 +131,16 @@ describe("displayNameSchema", () => {
 });
 
 describe("memberRoleSchema", () => {
-  it.each(["admin", "member"])("accepts %s", (r) => {
+  it.each(["admin", "writer", "member"])("accepts %s", (r) => {
     expect(memberRoleSchema.safeParse(r).success).toBe(true);
   });
   it("rejects 'owner'", () => {
     expect(memberRoleSchema.safeParse("owner").success).toBe(false);
   });
-  it("rejects 'viewer'", () => {
+  it("rejects the label 'Editor' (the daemon speaks relation names)", () => {
+    expect(memberRoleSchema.safeParse("Editor").success).toBe(false);
+  });
+  it("rejects 'viewer' (the daemon calls it member)", () => {
     expect(memberRoleSchema.safeParse("viewer").success).toBe(false);
   });
 });

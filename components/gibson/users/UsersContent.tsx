@@ -61,14 +61,15 @@ import { useOrgGraph } from "@/src/hooks/use-org-graph";
 import { revokeMemberAction, resendInvitationAction, leaveTenantAction } from "@/app/actions/crd/member";
 import { setTenantRoleAction } from "@/app/actions/crd/role";
 import { listMembersAction, type MemberRow } from "@/app/actions/read/listMembers";
+import { ASSIGNABLE_TENANT_ROLES, isAssignableTenantRole, tenantRoleLabel, type AssignableTenantRole } from "@/src/lib/auth/tenant-roles";
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const ROLE_BADGE_CLASS: Record<string, string> = {
   owner: "border-alt/50 bg-alt/10 text-alt",
   admin: "border-primary/50 bg-primary/10 text-primary",
-  member: "border-link/50 bg-link/10/20 text-link",
-  viewer: "border-border bg-muted/50 text-muted-foreground",
+  writer: "border-link/50 bg-link/10/20 text-link",
+  member: "border-border bg-muted/50 text-muted-foreground",
 };
 
 /** A row key that is stable for both active members (userId) and pending
@@ -236,13 +237,13 @@ export function UsersContent() {
     return items.filter((m) => m.email.toLowerCase().includes(q));
   }, [items, search]);
 
-  async function handleRoleChange(member: MemberRow, role: "admin" | "member") {
+  async function handleRoleChange(member: MemberRow, role: AssignableTenantRole) {
     const key = rowKey(member);
     setPendingRole((prev) => ({ ...prev, [key]: true }));
     try {
       const res = await setTenantRoleAction({ userId: member.userId, role });
       if (!res.ok) throw new Error(res.error ?? "failed");
-      toast.success(`${member.email} is now ${role}.`);
+      toast.success(`${member.email} is now ${tenantRoleLabel(role)}.`);
       await refetch();
     } catch (err) {
       toast.error(
@@ -416,25 +417,28 @@ export function UsersContent() {
                       {showDropdown ? (
                         <Select
                           value={role}
-                          onValueChange={(v) =>
-                            handleRoleChange(member, v as "admin" | "member")
-                          }
+                          onValueChange={(v) => {
+                            if (isAssignableTenantRole(v)) void handleRoleChange(member, v);
+                          }}
                           disabled={isPending}
                         >
                           <SelectTrigger size="sm" className="w-32">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="admin">admin</SelectItem>
-                            <SelectItem value="member">member</SelectItem>
+                            {ASSIGNABLE_TENANT_ROLES.map((r) => (
+                              <SelectItem key={r} value={r}>
+                                {tenantRoleLabel(r)}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       ) : (
                         <Badge
                           variant="outline"
-                          className={`text-xs font-mono ${ROLE_BADGE_CLASS[role] ?? ROLE_BADGE_CLASS.viewer}`}
+                          className={`text-xs font-mono ${ROLE_BADGE_CLASS[role] ?? ROLE_BADGE_CLASS.member}`}
                         >
-                          {role}{isSelf ? " (you)" : ""}
+                          {tenantRoleLabel(role)}{isSelf ? " (you)" : ""}
                         </Badge>
                       )}
                     </TableCell>

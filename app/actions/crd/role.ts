@@ -12,12 +12,11 @@
  * relevant relation atomically, same pattern as teams.ts for membership
  * tuples.
  *
- *   setTenantRoleAction   , flips a user's tenant-level role between
- *                            tenant_admin and tenant_member by writing the
- *                            (user:X, admin|member, tenant:Y) tuple and
- *                            deleting the inverse in a single WriteAccessTuples
- *                            call. Used by dashboard#150 (S6) inline role
- *                            dropdown.
+ *   setTenantRoleAction   , sets a user's one tenant role to Admin, Editor
+ *                            (writer) or Viewer (member). The daemon writes
+ *                            the Zitadel grant and copies it into FGA
+ *                            (ADR-0093 decision 3). Used by the inline role
+ *                            dropdown (dashboard#150, S6).
  *
  *   setTeamAdminAction    , toggles only the `admin` relation on a team
  *                            without touching the `member` relation. The
@@ -41,6 +40,7 @@ import {
 
 import { requireCrdSession } from "./_authz";
 import type { ActionResult } from "./types";
+import { isAssignableTenantRole, type AssignableTenantRole } from "@/src/lib/auth/tenant-roles";
 
 /** Map a daemon RPC error to the dashboard ActionResult error shape. A denial
  * is always reported with a fixed, user-facing message: the daemon's own
@@ -53,10 +53,11 @@ function rpcError<T>(e: unknown): ActionResult<T> {
   return { ok: false, error: e instanceof Error ? e.message : String(e), code: "INTERNAL" };
 }
 
-export type TenantRole = "admin" | "member";
+/** A role an Admin or Owner may assign. Never "owner" (hosted#190). */
+export type TenantRole = AssignableTenantRole;
 
 /**
- * Flip a user's tenant-level role between admin and member.
+ * Set a user's one tenant role: admin, writer (Editor) or member (Viewer).
  *
  * Two writes, in order:
  *   1. FGA WriteAccessTuples, the AUTHORITATIVE write. Adds the requested
@@ -88,8 +89,8 @@ export async function setTenantRoleAction(input: {
   if (!input.userId) {
     return { ok: false, error: "userId required", code: "BAD_INPUT" };
   }
-  if (input.role !== "admin" && input.role !== "member") {
-    return { ok: false, error: "role must be 'admin' or 'member'", code: "BAD_INPUT" };
+  if (!isAssignableTenantRole(input.role)) {
+    return { ok: false, error: "role must be 'admin', 'writer' or 'member'", code: "BAD_INPUT" };
   }
   const gate = await requireCrdSession<{ applied: boolean }>({
     action: "setTenantRoleAction",

@@ -5,7 +5,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { PlusCircle, MoreHorizontal, Play, Pause, Square, Trash2, GripVertical, CrosshairIcon, Pencil, Copy, Globe, Terminal } from "lucide-react";
+import { MoreHorizontal, Play, Pause, Square, Trash2, GripVertical, CrosshairIcon, Pencil, Copy, Globe, Terminal } from "lucide-react";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { toast } from "sonner";
 
@@ -34,6 +34,7 @@ import * as Kanban from "@/components/ui/kanban";
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import { RunDemoMissionButton } from "./RunDemoMissionButton";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
+import { NewMissionButton } from "@/components/gibson/missions/NewMissionButton";
 import { AuthGatedButton } from "@/components/gibson/auth/AuthGatedButton";
 import {
   useMissions,
@@ -426,12 +427,7 @@ export function MissionsContent() {
         <h1 className="text-xl font-bold tracking-tight font-mono lg:text-2xl">Mission Results</h1>
         <div className="flex items-center gap-2">
           <RunDemoMissionButton variant="outline" />
-          <Button asChild>
-            <Link href="/dashboard/missions/create">
-              <PlusCircle className="size-4" />
-              New Mission
-            </Link>
-          </Button>
+          <NewMissionButton />
         </div>
       </div>
 
@@ -456,14 +452,7 @@ export function MissionsContent() {
           title="No missions yet"
           description="A mission orchestrates one or more agents against a target. Run the one-click demo to see findings flow in, or author your own."
           primaryCta={<RunDemoMissionButton />}
-          secondaryCta={
-            <Button asChild variant="ghost">
-              <Link href="/dashboard/missions/create">
-                <PlusCircle className="size-4" />
-                Create your own
-              </Link>
-            </Button>
-          }
+          secondaryCta={<NewMissionButton variant="ghost">Create your own</NewMissionButton>}
         />
       )}
       {!isLoading && !error && missions.length > 0 && (

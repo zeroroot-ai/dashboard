@@ -122,6 +122,23 @@ const admin = () => member({ userId: "user-admin-id", email: "admin@example.com"
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
+describe("UsersContent, four-role labels (ADR-0093 decision 2)", () => {
+  it('renders "Editor" for a writer and "Viewer" for a member, never the relation names', async () => {
+    mockMembers.mockResolvedValue({
+      ok: true,
+      data: [
+        member({ userId: "user-editor", email: "editor@example.com", role: "writer" }),
+        member({ userId: "user-viewer", email: "viewer@example.com", role: "member" }),
+      ],
+    });
+    renderWithQuery();
+    await screen.findByText("editor@example.com");
+    expect(screen.getAllByText(/^Editor$/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/^Viewer$/).length).toBeGreaterThan(0);
+    expect(screen.queryAllByText(/^writer$/).length).toBe(0);
+  });
+});
+
 describe("UsersContent, owner role display", () => {
   it('renders "owner" badge text (not "member") for an owner', async () => {
     mockMembers.mockResolvedValue({ ok: true, data: [owner()] });

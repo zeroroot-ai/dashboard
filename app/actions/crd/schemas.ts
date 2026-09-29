@@ -63,7 +63,9 @@ export const componentRefSchema = z
   })
   .strict();
 
-export const memberRoleSchema = z.enum(["admin", "member"]);
+/** The roles an invitation or a role change may carry (ADR-0093 decision 2:
+ * Admin, Editor = writer, Viewer = member). Owner is never assigned this way. */
+export const memberRoleSchema = z.enum(["admin", "writer", "member"]);
 
 // Canonical Gibson plan IDs, derived from the generated plan registry
 // (src/generated/plans.ts), which mirrors the operator's plans.PlanID Go

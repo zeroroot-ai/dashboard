@@ -71,7 +71,7 @@ import { logger } from '@/src/lib/logger';
 export type Membership = {
   readonly tenantId: string;
   readonly tenantName: string;
-  readonly role: 'owner' | 'admin' | 'member';
+  readonly role: 'owner' | 'admin' | 'writer' | 'member';
 };
 
 /**
@@ -127,15 +127,15 @@ const MembershipSchema = z.object({
 
 /**
  * Normalize an arbitrary role string from the daemon into the strict
- * `'owner' | 'admin' | 'member'` shape this module promises. Anything
- * outside that set is treated as `"member"` (lowest privilege), the
- * daemon emits exactly these three today (`tenant.owner` was added in
- * gibson v0.27.0 / spec `tenant-role-taxonomy`), but defending against
- * drift is cheap.
+ * `'owner' | 'admin' | 'writer' | 'member'` shape this module promises: the
+ * four tenant roles of ADR-0093 decision 2 (Owner, Admin, Editor, Viewer)
+ * under their FGA relation names. Anything outside that set is treated as
+ * `"member"` (lowest privilege), so drift can only lose rights, never grant.
  */
-function normalizeRole(raw: string): 'owner' | 'admin' | 'member' {
+function normalizeRole(raw: string): 'owner' | 'admin' | 'writer' | 'member' {
   if (raw === 'owner') return 'owner';
   if (raw === 'admin') return 'admin';
+  if (raw === 'writer') return 'writer';
   return 'member';
 }
 

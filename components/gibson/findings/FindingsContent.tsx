@@ -4,7 +4,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { ArrowUpDown, ChevronDown, ChevronUp, Download, Search, ShieldAlertIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
+import { NewMissionButton } from "@/components/gibson/missions/NewMissionButton";
 import { useFindings } from "@/src/hooks/useFindings";
 import type { Finding, FindingSeverity } from "@/src/types";
 import { FindingsExportDialog } from "./FindingsExportDialog";
@@ -293,11 +293,7 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
           icon={ShieldAlertIcon}
           title="No findings yet"
           description="Findings are created as missions run agents against your targets. Once a mission produces a result, it will land here for triage and export."
-          primaryCta={
-            <Button asChild>
-              <Link href="/dashboard/missions/create">Create a mission</Link>
-            </Button>
-          }
+          primaryCta={<NewMissionButton hideIcon>Create a mission</NewMissionButton>}
           secondaryCta={
             <Button asChild variant="ghost">
               {/* The docs are a separate deployable on their own host
