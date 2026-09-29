@@ -39,14 +39,6 @@ async function setAuthSession(context: BrowserContext) {
       secure: false,
       sameSite: "Lax",
     },
-    {
-      name: "gibson_active_tenant",
-      value: MOCK_TENANT_ID,
-      domain: "localhost",
-      path: "/",
-      httpOnly: false,
-      sameSite: "Lax",
-    },
   ]);
 }
 

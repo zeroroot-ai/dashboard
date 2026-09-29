@@ -75,9 +75,8 @@ test.describe('Tenant chrome shows the resolved tenant', () => {
     await page.goto(`${BASE_URL}/dashboard`);
     await page.waitForLoadState('networkidle', { timeout: 15_000 });
 
-    // The sidebar TenantSwitcher renders the active tenant displayName as
-    // a `font-medium` span under the SidebarMenuButton tooltip. We assert
-    // it isn't the fallback string.
+    // The sidebar header renders the active tenant displayName under the
+    // product name. We assert it isn't the fallback string.
     const sidebar = page.locator('aside,[data-slot="sidebar"]').first();
     await expect(sidebar).toBeVisible({ timeout: 10_000 });
     await expect(sidebar).not.toContainText('No workspace', {

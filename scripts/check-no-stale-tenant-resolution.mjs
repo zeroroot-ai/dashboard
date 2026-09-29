@@ -82,6 +82,26 @@ const X_GIBSON_TENANT_HEADER_ALLOWED_FILES = new Set([
 ]);
 
 /**
+ * The ONE reader of `session.tenantId` in server code (hosted#195, ADR-0093
+ * decision 4) is `requireActiveTenant()` in the resolver, which re-validates
+ * the value against current membership on every call. Two files are allowed
+ * beside it, each for a reason that is not "resolving the tenant":
+ *   - `auth.ts` (root): the session callback that WRITES the field.
+ *   - `middleware.ts`: the edge router. It runs on every request in the edge
+ *     runtime, where the resolver's server-only membership client does not
+ *     exist. It routes (redirects a session with no tenant to onboarding,
+ *     sends a revoked one to sign-out) and never authorizes a handler; every
+ *     handler still resolves through requireActiveTenant().
+ * Every other file goes through the resolver, so a removed membership is
+ * refused everywhere at once and no handler trusts a stale cookie value.
+ */
+const SESSION_TENANT_ID_ALLOWED_FILES = new Set([
+  'src/lib/auth/active-tenant.ts',
+  'auth.ts',
+  'middleware.ts',
+]);
+
+/**
  * Banned patterns. Each entry is a literal needle (string) or regex, with an
  * optional third element: an array of paths (relative to ROOT) where the
  * needle is allowed. `session.user.tenant` is matched as a regex with
@@ -103,6 +123,7 @@ const BANNED = [
   ['select-tenant', 'deleted picker route (ADR-0093 decision 4); a person has exactly one tenant, resolved server-side, never chosen'],
   [/\bsetActiveTenant\s*\(/, 'deleted cookie writer (ADR-0093 decision 4); there is no client-side tenant to set'],
   [/\breadRawActiveTenant\s*\(/, 'deleted cookie reader (ADR-0093 decision 4); use requireActiveTenant() or session.tenantId'],
+  [/\bsession\??\.tenantId\b/, 'a second tenant resolver (hosted#195); the tenant comes from requireActiveTenant() in src/lib/auth/active-tenant.ts, never a direct session read', SESSION_TENANT_ID_ALLOWED_FILES],
   ['x-gibson-tenant', 'a person\'s tenant comes from their token, never a header (ADR-0093 decision 4); only serviceClient in src/lib/gibson-client/transport.ts may set this header, for service-acting calls', X_GIBSON_TENANT_HEADER_ALLOWED_FILES],
 ];
 
@@ -205,6 +226,7 @@ const SELFTEST_FIXTURES = [
   { name: 'setActiveTenant(', body: 'await setActiveTenant(tenantId);\n' },
   { name: 'readRawActiveTenant(', body: 'const raw = await readRawActiveTenant();\n' },
   { name: 'x-gibson-tenant (outside the transport module)', body: "req.header.set('x-gibson-tenant', tenant);\n" },
+  { name: 'session.tenantId (outside the resolver)', body: 'const tenantId = session?.tenantId ?? null;\n' },
 ];
 
 function selftest() {
@@ -239,10 +261,24 @@ function selftest() {
     );
     failed = true;
   }
+  // The resolver and the producer must still read session.tenantId, and
+  // must not trip the needle that bans it everywhere else.
+  for (const rel of SESSION_TENANT_ID_ALLOWED_FILES) {
+    const abs = resolve(ROOT, rel);
+    const contents = readFileSync(abs, 'utf8');
+    if (!/\bsession\??\.tenantId\b/.test(contents)) {
+      console.error(`[${SCRIPT_NAME}] SELFTEST FAILED: ${rel} no longer reads session.tenantId; the allowance and the code have drifted apart`);
+      failed = true;
+    }
+    if (scanFile(abs).some((v) => v.reason.includes('second tenant resolver'))) {
+      console.error(`[${SCRIPT_NAME}] SELFTEST FAILED: the allowed file ${rel} tripped the session.tenantId needle`);
+      failed = true;
+    }
+  }
   if (failed) {
     process.exit(1);
   }
-  console.log(`[${SCRIPT_NAME}] selftest OK, guard caught every planted violation and respected the x-gibson-tenant allowance`);
+  console.log(`[${SCRIPT_NAME}] selftest OK, guard caught every planted violation and respected the allowances`);
 }
 
 const argv = process.argv.slice(2);

@@ -15,6 +15,7 @@ import { resolveTenant } from "@/src/lib/resolve-tenant";
 import { getTenantQuotaAction } from "@/app/actions/read/getTenantQuota";
 import { logger } from "@/src/lib/logger";
 import type { Tenant } from "@/src/types/tenant";
+import { requireActiveTenant, NoActiveTenantError, StaleActiveTenantError } from '@/src/lib/auth/active-tenant';
 
 export default async function AuthLayout({
   children
@@ -65,7 +66,14 @@ export default async function AuthLayout({
   // getServerSession(). Pages that need it required call
   // requireActiveTenant() themselves; the layout only needs it for CRD
   // resolution (quota widget, etc.).
-  const activeTenantId: string | null = session.tenantId ?? null;
+  let activeTenantId: string | null = null;
+  try {
+    activeTenantId = await requireActiveTenant();
+  } catch (err) {
+    if (!(err instanceof NoActiveTenantError) && !(err instanceof StaleActiveTenantError)) {
+      throw err;
+    }
+  }
 
   const currentTenant: Tenant | null = activeTenantId
     ? (availableTenants.find((t) => t.id === activeTenantId) ?? null)

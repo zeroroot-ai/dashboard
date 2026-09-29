@@ -49,14 +49,6 @@ export async function injectAuthSession(
       secure: false,
       sameSite: "Lax",
     },
-    {
-      name: "gibson_active_tenant",
-      value: tenantId,
-      domain: "localhost",
-      path: "/",
-      httpOnly: false,
-      sameSite: "Lax",
-    },
   ]);
 }
 

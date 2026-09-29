@@ -48,9 +48,6 @@ interface ProbeResult {
   rolesByTenant: Record<string, string>;
   groups: string[];
   isLoading: boolean;
-  canSwitchActive: boolean;
-  canSwitchOther: boolean;
-  switchTenant: (id: string) => Promise<void>;
 }
 
 const probe: { result?: ProbeResult } = {};
@@ -64,14 +61,6 @@ function Probe() {
     rolesByTenant: ctx.rolesByTenant,
     groups: ctx.groups,
     isLoading: ctx.isLoading,
-    canSwitchActive: ctx.currentTenant
-      ? ctx.canSwitchTenant(ctx.currentTenant.id)
-      : false,
-    canSwitchOther: ctx.canSwitchTenant(
-      ctx.availableTenants.find((t) => t.id !== ctx.currentTenant?.id)?.id ??
-        '__noop__',
-    ),
-    switchTenant: ctx.switchTenant,
   };
   return null;
 }
@@ -123,52 +112,8 @@ describe('TenantContextProvider', () => {
     });
   });
 
-  it('canSwitchTenant is false for the active tenant, true for any other member tenant', () => {
-    const acme = makeTenant('acme');
-    const beta = makeTenant('beta');
 
-    renderWithCtx({
-      currentTenant: acme,
-      availableTenants: [acme, beta],
-    });
 
-    expect(probe.result?.canSwitchActive).toBe(false);
-    expect(probe.result?.canSwitchOther).toBe(true);
-  });
-
-  it('canSwitchTenant is false for an unknown slug', () => {
-    const acme = makeTenant('acme');
-    renderWithCtx({
-      currentTenant: acme,
-      availableTenants: [acme],
-    });
-
-    // probe.canSwitchOther uses the placeholder "__noop__" because there is
-    // no second tenant, that exercises the unknown-slug branch.
-    expect(probe.result?.canSwitchOther).toBe(false);
-  });
-
-  // ADR-0093 decision 4: a person has exactly one tenant, resolved
-  // server-side from their identity. There is no UI that offers a switch,
-  // and switchTenant always throws so a stray caller fails loud rather than
-  // silently no-op.
-  it('switchTenant always throws: tenant switching is not supported', async () => {
-    mockRefresh.mockClear();
-
-    const acme = makeTenant('acme');
-    const beta = makeTenant('beta');
-    renderWithCtx({
-      currentTenant: acme,
-      availableTenants: [acme, beta],
-    });
-
-    await act(async () => {
-      await expect(probe.result!.switchTenant('beta')).rejects.toThrow(
-        /not supported/i,
-      );
-    });
-    expect(mockRefresh).not.toHaveBeenCalled();
-  });
 
   it('throws a clear error when useTenantContext is used outside the provider', () => {
     // Suppress the React error-boundary log so the test output is clean.

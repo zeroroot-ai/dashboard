@@ -28,14 +28,6 @@ function ConnectionStatus() {
 }
 
 interface SiteHeaderProps {
-  /**
-   * Tenant switcher slot. The auth layout (a Server Component) renders the
-   * `<TenantSwitcher />` Server Component into this slot so the switcher
-   * can read memberships + the active-tenant cookie on the server without
-   * forcing this header (which uses `useSidebar`) to become a Server
-   * Component itself.
-   */
-  tenantSwitcher?: ReactNode;
 
   /**
    * Quota widget slot. The auth layout renders <QuotaWidget /> into this
@@ -45,7 +37,7 @@ interface SiteHeaderProps {
   quotaWidget?: ReactNode;
 }
 
-export function SiteHeader({ tenantSwitcher, quotaWidget }: SiteHeaderProps = {}) {
+export function SiteHeader({ quotaWidget }: SiteHeaderProps = {}) {
   const { toggleSidebar, open } = useSidebar();
 
   return (
@@ -66,7 +58,6 @@ export function SiteHeader({ tenantSwitcher, quotaWidget }: SiteHeaderProps = {}
             </>
           ) : null}
           <TenantDisplay />
-          {tenantSwitcher}
           <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
           <Notifications />
           <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />

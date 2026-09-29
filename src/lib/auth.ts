@@ -96,12 +96,18 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
       tenants.push(m.tenantId);
       rolesByTenant[m.tenantId] = m.role;
     }
-    // The session's server-resolved tenant, confirmed against the fresh
-    // membership read above. No auto-pick: a session with no tenant, or one
-    // whose membership no longer confirms, means no active tenant and the
-    // endpoint will throw via requireActiveTenant().
-    if (session.tenantId && tenants.includes(session.tenantId)) {
-      activeTenantId = session.tenantId;
+    // The one resolver confirms the session's server-resolved tenant against
+    // current membership (hosted#195). No auto-pick: no tenant, or one whose
+    // membership no longer confirms, is null here, and the endpoint that
+    // needs it throws via requireActiveTenant() itself.
+    const { requireActiveTenant, NoActiveTenantError, StaleActiveTenantError } =
+      await import('@/src/lib/auth/active-tenant');
+    try {
+      activeTenantId = await requireActiveTenant();
+    } catch (err) {
+      if (!(err instanceof NoActiveTenantError) && !(err instanceof StaleActiveTenantError)) {
+        throw err;
+      }
     }
   } catch (err) {
     // Transient FGA/daemon errors degrade to "no tenant", middleware will

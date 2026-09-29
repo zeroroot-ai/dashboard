@@ -50,15 +50,6 @@ interface TenantStateCompat {
   availableTenants: Tenant[];
   isLoading: boolean;
   error: null;
-  switcherOpen: boolean;
-  lastSwitchTimestamp: null;
-  setCurrentTenant: (_: unknown) => undefined;
-  setAvailableTenants: (_: unknown) => undefined;
-  switchTenant: (_id: string, _api: unknown) => Promise<undefined>;
-  setSwitcherOpen: (_: unknown) => undefined;
-  setLoading: (_: unknown) => undefined;
-  setError: (_: unknown) => undefined;
-  reset: () => undefined;
 }
 
 /**
@@ -79,15 +70,6 @@ export function useTenantStore<T>(selector: (state: TenantStateCompat) => T): T 
     availableTenants,
     isLoading,
     error: null,
-    switcherOpen: false,
-    lastSwitchTimestamp: null,
-    setCurrentTenant: () => undefined,
-    setAvailableTenants: () => undefined,
-    switchTenant: async () => undefined,
-    setSwitcherOpen: () => undefined,
-    setLoading: () => undefined,
-    setError: () => undefined,
-    reset: () => undefined,
   };
 
   return selector(state);
@@ -126,40 +108,5 @@ export function useTenantError(): null {
   return null;
 }
 
-/**
- * Always false, switcher open state is local UI state inside the
- * switcher component now.
- *
- * @deprecated Migrate callers to local useState.
- */
-export function useSwitcherOpen(): boolean {
-  return false;
-}
 
-/**
- * No-op mutator bag. Switching is performed by `switchActiveTenantAction`
- * from `@/components/gibson/shared/tenant-switcher-action`.
- *
- * @deprecated Use the Server Action directly.
- */
-export function useTenantActions() {
-  return {
-    setCurrentTenant: (_: unknown) => undefined,
-    setAvailableTenants: (_: unknown) => undefined,
-    switchTenant: async (_id: string, _api: unknown) => undefined,
-    setSwitcherOpen: (_: unknown) => undefined,
-    setLoading: (_: unknown) => undefined,
-    setError: (_: unknown) => undefined,
-    reset: () => undefined,
-  };
-}
 
-/**
- * Returns true if the user can switch to the given tenant (i.e. they hold
- * membership and it is not the active one).
- */
-export function useCanSwitchToTenant(tenantId: string): boolean {
-  const { currentTenant, availableTenants } = useContextTenants();
-  if (currentTenant?.id === tenantId) return false;
-  return availableTenants.some((t) => t.id === tenantId);
-}
