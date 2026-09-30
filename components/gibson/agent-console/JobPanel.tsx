@@ -52,6 +52,8 @@ import {
   type JobView,
 } from "@/src/lib/jobs/view";
 import type { MemberWithBankView } from "@/src/lib/banks/view";
+import { useUserRefs } from "@/src/hooks/useUserRefs";
+import { userIdsToResolve, type UserRefView } from "@/src/lib/principals/label";
 import { formatDuration, shortId } from "@/src/lib/agent-console/stream-json";
 import { cn } from "@/lib/utils";
 
@@ -76,13 +78,13 @@ function ago(iso: string | null, now: number): string {
   return isNaN(t) ? "unknown" : `${formatDuration(Math.max(0, now - t))} ago`;
 }
 
-function eventLine(ev: JobEventView, myUserId: string | null): string {
+function eventLine(ev: JobEventView, myUserId: string | null, refs?: ReadonlyMap<string, UserRefView>): string {
   switch (ev.kind) {
     case "opened":
       return ev.message ? `opened · ${ev.message}` : "opened";
     case "input":
       return ev.input
-        ? `${ev.input.kind} from ${senderLabel(ev.input.sender, myUserId)}: ${ev.input.message}`
+        ? `${ev.input.kind} from ${senderLabel(ev.input.sender, myUserId, refs)}: ${ev.input.message}`
         : "input";
     case "state":
       return `${jobStateLabel(ev.state)}${ev.message ? ` · ${ev.message}` : ""}`;
@@ -110,6 +112,15 @@ export function JobPanel({ member, compact = false }: JobPanelProps) {
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const selected = openJobs.find((j) => j.id === selectedId) ?? null;
   const feed = useJobEvents(selected ? selected.id : null);
+  const peopleIds = React.useMemo(
+    () =>
+      userIdsToResolve(
+        [...openJobs.map((j) => j.openedBy), ...feed.events.map((ev) => ev.input?.sender)],
+        myUserId,
+      ),
+    [openJobs, feed.events, myUserId],
+  );
+  const { data: userRefs } = useUserRefs(peopleIds);
   const [now, setNow] = React.useState(() => Date.now());
   React.useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
@@ -161,7 +172,7 @@ export function JobPanel({ member, compact = false }: JobPanelProps) {
               >
                 <JobStateChip state={j.state} />
                 <span className="truncate" title={j.spec.goal}>{j.spec.goal || shortId(j.id)}</span>
-                <span className="ml-auto shrink-0">by {senderLabel(j.openedBy, myUserId)}</span>
+                <span className="ml-auto shrink-0">by {senderLabel(j.openedBy, myUserId, userRefs)}</span>
                 <span className="shrink-0" title="last input">{ago(j.lastInputAt, now)}</span>
               </button>
             </li>
@@ -175,8 +186,8 @@ export function JobPanel({ member, compact = false }: JobPanelProps) {
             <span>{feed.phase === "streaming" ? "waiting for events" : feed.phase}</span>
           ) : (
             feed.events.map((ev) => (
-              <span key={ev.seq} data-testid="job-event" data-kind={ev.kind} className="truncate" title={eventLine(ev, myUserId)}>
-                {eventLine(ev, myUserId)}
+              <span key={ev.seq} data-testid="job-event" data-kind={ev.kind} className="truncate" title={eventLine(ev, myUserId, userRefs)}>
+                {eventLine(ev, myUserId, userRefs)}
               </span>
             ))
           )}

@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
         events: 0,
         tenantId,
         missionDefinitionId: serialized.missionDefinitionId,
+        createdBy: serialized.createdBy,
       };
     });
 

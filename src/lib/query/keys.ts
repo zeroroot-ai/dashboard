@@ -28,6 +28,7 @@ const analyticsBase = ['analytics'] as const;
 const userBase = ['user'] as const;
 const alertsBase = ['alerts'] as const;
 const banksBase = ['banks'] as const;
+const usersBase = ['users'] as const;
 
 export const queryKeys = {
   // Banks of always-on coding agents (gibson#1706)
@@ -141,6 +142,12 @@ export const queryKeys = {
   user: {
     all: userBase,
     layout: (tenantId: string) => [...userBase, tenantId, 'layout'] as const,
+  },
+
+  // Other people of the tenant, resolved from ids for display (hosted#205)
+  users: {
+    all: usersBase,
+    resolve: (tenantId: string, ids: readonly string[]) => [...usersBase, tenantId, 'resolve', ...ids] as const,
   },
 
   // Alerts

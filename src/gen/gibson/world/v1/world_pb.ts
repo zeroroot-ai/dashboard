@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/world/v1/world.proto.
  */
 export const file_gibson_world_v1_world: GenFile = /*@__PURE__*/
-  fileDesc("ChtnaWJzb24vd29ybGQvdjEvd29ybGQucHJvdG8SD2dpYnNvbi53b3JsZC52MSJdCgtNaXNzaW9uVmlldxIKCgJpZBgBIAEoCRIMCgRnb2FsGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIOCgZyZWFzb24YBCABKAkSFAoMYmVsaWVmX21vZGVsGAUgASgJInUKCEhvc3RWaWV3EhAKCHNjb3BlX2lkGAEgASgJEg8KB2FkZHJlc3MYAiABKAkSEgoKb3Blbl9wb3J0cxgDIAMoBRINCgVqdWljeRgEIAEoARIRCglhdHRlbnRpb24YBSABKAESEAoIc3VycHJpc2UYBiABKAkiXQoLRmluZGluZ1ZpZXcSCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSEAoIc2NvcGVfaWQYAyABKAkSDwoHYWRkcmVzcxgEIAEoCRIQCghzZXZlcml0eRgFIAEoCSJcCgxXb3JrSXRlbVZpZXcSCgoCaWQYASABKAkSEgoKbWlzc2lvbl9pZBgCIAEoCRIMCgRraW5kGAMgASgJEg4KBnRhcmdldBgEIAEoCRIOCgZzdGF0dXMYBSABKAkiRQoURGVjaXNpb25EaXNwYXRjaFZpZXcSDwoHd29ya19pZBgBIAEoCRIMCgRraW5kGAIgASgJEg4KBnRhcmdldBgDIAEoCSKtAQoMRGVjaXNpb25WaWV3EgoKAmlkGAEgASgJEhIKCm1pc3Npb25faWQYAiABKAkSDgoGY3Vyc29yGAMgASgDEg4KBnN0YXR1cxgEIAEoCRI5CgpkaXNwYXRjaGVzGAUgAygLMiUuZ2lic29uLndvcmxkLnYxLkRlY2lzaW9uRGlzcGF0Y2hWaWV3Eg8KB291dGNvbWUYBiABKAkSEQoJcmF0aW9uYWxlGAcgASgJIjsKDVRpbWVsaW5lRXZlbnQSCwoDc2VxGAEgASgEEgwKBGtpbmQYAiABKAkSDwoHc3VtbWFyeRgDIAEoCSKBAQoLTGxtQ2FsbFZpZXcSDwoHY2FsbF9pZBgBIAEoCRIOCgZydW5faWQYAiABKAkSDQoFbW9kZWwYAyABKAkSEAoIc2NvcGVfaWQYBCABKAkSFQoNcHJvbXB0X3Rva2VucxgFIAEoBRIZChFjb21wbGV0aW9uX3Rva2VucxgGIAEoBSIVChNMaXN0TWlzc2lvbnNSZXF1ZXN0IkYKFExpc3RNaXNzaW9uc1Jlc3BvbnNlEi4KCG1pc3Npb25zGAEgAygLMhwuZ2lic29uLndvcmxkLnYxLk1pc3Npb25WaWV3IhIKEExpc3RIb3N0c1JlcXVlc3QiPQoRTGlzdEhvc3RzUmVzcG9uc2USKAoFaG9zdHMYASADKAsyGS5naWJzb24ud29ybGQudjEuSG9zdFZpZXciFQoTTGlzdEZpbmRpbmdzUmVxdWVzdCJGChRMaXN0RmluZGluZ3NSZXNwb25zZRIuCghmaW5kaW5ncxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5GaW5kaW5nVmlldyIVChNMaXN0TGxtQ2FsbHNSZXF1ZXN0IkcKFExpc3RMbG1DYWxsc1Jlc3BvbnNlEi8KCWxsbV9jYWxscxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5MbG1DYWxsVmlldyIrCgpMbG1NZXNzYWdlEgwKBHJvbGUYASABKAkSDwoHY29udGVudBgCIAEoCSLGAQoNTGxtQ2FsbERldGFpbBIPCgdjYWxsX2lkGAEgASgJEg4KBnJ1bl9pZBgCIAEoCRINCgVtb2RlbBgDIAEoCRIQCghzY29wZV9pZBgEIAEoCRIVCg1wcm9tcHRfdG9rZW5zGAUgASgFEhkKEWNvbXBsZXRpb25fdG9rZW5zGAYgASgFEi0KCG1lc3NhZ2VzGAcgAygLMhsuZ2lic29uLndvcmxkLnYxLkxsbU1lc3NhZ2USEgoKY29tcGxldGlvbhgIIAEoCSIkChFHZXRMbG1DYWxsUmVxdWVzdBIPCgdjYWxsX2lkGAEgASgJIkIKEkdldExsbUNhbGxSZXNwb25zZRIsCgRjYWxsGAEgASgLMh4uZ2lic29uLndvcmxkLnYxLkxsbUNhbGxEZXRhaWwiKAoSR2V0VGltZWxpbmVSZXF1ZXN0EhIKCm1pc3Npb25faWQYASABKAkiRQoTR2V0VGltZWxpbmVSZXNwb25zZRIuCgZldmVudHMYASADKAsyHi5naWJzb24ud29ybGQudjEuVGltZWxpbmVFdmVudCI0ChFHZXRGcmFtZUF0UmVxdWVzdBILCgNzZXEYASABKAQSEgoKbWlzc2lvbl9pZBgCIAEoCSLKAgoSR2V0RnJhbWVBdFJlc3BvbnNlEgsKA3NlcRgBIAEoBBINCgV0b3RhbBgCIAEoBBIuCghtaXNzaW9ucxgDIAMoCzIcLmdpYnNvbi53b3JsZC52MS5NaXNzaW9uVmlldxIoCgVob3N0cxgEIAMoCzIZLmdpYnNvbi53b3JsZC52MS5Ib3N0VmlldxIuCghmaW5kaW5ncxgFIAMoCzIcLmdpYnNvbi53b3JsZC52MS5GaW5kaW5nVmlldxIrCgR3b3JrGAYgAygLMh0uZ2lic29uLndvcmxkLnYxLldvcmtJdGVtVmlldxIwCglkZWNpc2lvbnMYByADKAsyHS5naWJzb24ud29ybGQudjEuRGVjaXNpb25WaWV3Ei8KCWxsbV9jYWxscxgIIAMoCzIcLmdpYnNvbi53b3JsZC52MS5MbG1DYWxsVmlldyJkCglMYWJlbFZpZXcSEQoJdGFyZ2V0X2lkGAEgASgJEg8KB3ZlcmRpY3QYAiABKAkSEAoIc2V2ZXJpdHkYAyABKAkSEAoIY2F0ZWdvcnkYBCABKAkSDwoHdXNlcl9pZBgFIAEoCSKuAQoKUmV2aWV3SXRlbRIRCgl0YXJnZXRfaWQYASABKAkSDAoEa2luZBgCIAEoCRINCgV0aXRsZRgDIAEoCRIQCghzY29wZV9pZBgEIAEoCRIPCgdhZGRyZXNzGAUgASgJEhAKCHNldmVyaXR5GAYgASgJEhAKCGxhYmVsbGVkGAcgASgIEikKBWxhYmVsGAggASgLMhouZ2lic29uLndvcmxkLnYxLkxhYmVsVmlldyIYChZMaXN0UmV2aWV3UXVldWVSZXF1ZXN0IkUKF0xpc3RSZXZpZXdRdWV1ZVJlc3BvbnNlEioKBWl0ZW1zGAEgAygLMhsuZ2lic29uLndvcmxkLnYxLlJldmlld0l0ZW0iXAoSU3VibWl0TGFiZWxSZXF1ZXN0EhEKCXRhcmdldF9pZBgBIAEoCRIPCgd2ZXJkaWN0GAIgASgJEhAKCHNldmVyaXR5GAMgASgJEhAKCGNhdGVnb3J5GAQgASgJIhUKE1N1Ym1pdExhYmVsUmVzcG9uc2UiEwoRTGlzdExhYmVsc1JlcXVlc3QiQAoSTGlzdExhYmVsc1Jlc3BvbnNlEioKBmxhYmVscxgBIAMoCzIaLmdpYnNvbi53b3JsZC52MS5MYWJlbFZpZXcy7goKDFdvcmxkU2VydmljZRKJAQoMTGlzdE1pc3Npb25zEiQuZ2lic29uLndvcmxkLnYxLkxpc3RNaXNzaW9uc1JlcXVlc3QaJS5naWJzb24ud29ybGQudjEuTGlzdE1pc3Npb25zUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoABCglMaXN0SG9zdHMSIS5naWJzb24ud29ybGQudjEuTGlzdEhvc3RzUmVxdWVzdBoiLmdpYnNvbi53b3JsZC52MS5MaXN0SG9zdHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSiQEKDExpc3RGaW5kaW5ncxIkLmdpYnNvbi53b3JsZC52MS5MaXN0RmluZGluZ3NSZXF1ZXN0GiUuZ2lic29uLndvcmxkLnYxLkxpc3RGaW5kaW5nc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKJAQoMTGlzdExsbUNhbGxzEiQuZ2lic29uLndvcmxkLnYxLkxpc3RMbG1DYWxsc1JlcXVlc3QaJS5naWJzb24ud29ybGQudjEuTGlzdExsbUNhbGxzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoMBCgpHZXRMbG1DYWxsEiIuZ2lic29uLndvcmxkLnYxLkdldExsbUNhbGxSZXF1ZXN0GiMuZ2lic29uLndvcmxkLnYxLkdldExsbUNhbGxSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMShgEKC0dldFRpbWVsaW5lEiMuZ2lic29uLndvcmxkLnYxLkdldFRpbWVsaW5lUmVxdWVzdBokLmdpYnNvbi53b3JsZC52MS5HZXRUaW1lbGluZVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKDAQoKR2V0RnJhbWVBdBIiLmdpYnNvbi53b3JsZC52MS5HZXRGcmFtZUF0UmVxdWVzdBojLmdpYnNvbi53b3JsZC52MS5HZXRGcmFtZUF0UmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpIBCg9MaXN0UmV2aWV3UXVldWUSJy5naWJzb24ud29ybGQudjEuTGlzdFJldmlld1F1ZXVlUmVxdWVzdBooLmdpYnNvbi53b3JsZC52MS5MaXN0UmV2aWV3UXVldWVSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMShgEKC1N1Ym1pdExhYmVsEiMuZ2lic29uLndvcmxkLnYxLlN1Ym1pdExhYmVsUmVxdWVzdBokLmdpYnNvbi53b3JsZC52MS5TdWJtaXRMYWJlbFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKDAQoKTGlzdExhYmVscxIiLmdpYnNvbi53b3JsZC52MS5MaXN0TGFiZWxzUmVxdWVzdBojLmdpYnNvbi53b3JsZC52MS5MaXN0TGFiZWxzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADQlJaUGdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi93b3JsZC92MTt3b3JsZHYxYgZwcm90bzM", [file_gibson_auth_v1_options]);
+  fileDesc("ChtnaWJzb24vd29ybGQvdjEvd29ybGQucHJvdG8SD2dpYnNvbi53b3JsZC52MSJdCgtNaXNzaW9uVmlldxIKCgJpZBgBIAEoCRIMCgRnb2FsGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIOCgZyZWFzb24YBCABKAkSFAoMYmVsaWVmX21vZGVsGAUgASgJInUKCEhvc3RWaWV3EhAKCHNjb3BlX2lkGAEgASgJEg8KB2FkZHJlc3MYAiABKAkSEgoKb3Blbl9wb3J0cxgDIAMoBRINCgVqdWljeRgEIAEoARIRCglhdHRlbnRpb24YBSABKAESEAoIc3VycHJpc2UYBiABKAkiXQoLRmluZGluZ1ZpZXcSCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSEAoIc2NvcGVfaWQYAyABKAkSDwoHYWRkcmVzcxgEIAEoCRIQCghzZXZlcml0eRgFIAEoCSJcCgxXb3JrSXRlbVZpZXcSCgoCaWQYASABKAkSEgoKbWlzc2lvbl9pZBgCIAEoCRIMCgRraW5kGAMgASgJEg4KBnRhcmdldBgEIAEoCRIOCgZzdGF0dXMYBSABKAkiRQoURGVjaXNpb25EaXNwYXRjaFZpZXcSDwoHd29ya19pZBgBIAEoCRIMCgRraW5kGAIgASgJEg4KBnRhcmdldBgDIAEoCSKtAQoMRGVjaXNpb25WaWV3EgoKAmlkGAEgASgJEhIKCm1pc3Npb25faWQYAiABKAkSDgoGY3Vyc29yGAMgASgDEg4KBnN0YXR1cxgEIAEoCRI5CgpkaXNwYXRjaGVzGAUgAygLMiUuZ2lic29uLndvcmxkLnYxLkRlY2lzaW9uRGlzcGF0Y2hWaWV3Eg8KB291dGNvbWUYBiABKAkSEQoJcmF0aW9uYWxlGAcgASgJIjsKDVRpbWVsaW5lRXZlbnQSCwoDc2VxGAEgASgEEgwKBGtpbmQYAiABKAkSDwoHc3VtbWFyeRgDIAEoCSKBAQoLTGxtQ2FsbFZpZXcSDwoHY2FsbF9pZBgBIAEoCRIOCgZydW5faWQYAiABKAkSDQoFbW9kZWwYAyABKAkSEAoIc2NvcGVfaWQYBCABKAkSFQoNcHJvbXB0X3Rva2VucxgFIAEoBRIZChFjb21wbGV0aW9uX3Rva2VucxgGIAEoBSIVChNMaXN0TWlzc2lvbnNSZXF1ZXN0IkYKFExpc3RNaXNzaW9uc1Jlc3BvbnNlEi4KCG1pc3Npb25zGAEgAygLMhwuZ2lic29uLndvcmxkLnYxLk1pc3Npb25WaWV3IhIKEExpc3RIb3N0c1JlcXVlc3QiPQoRTGlzdEhvc3RzUmVzcG9uc2USKAoFaG9zdHMYASADKAsyGS5naWJzb24ud29ybGQudjEuSG9zdFZpZXciFQoTTGlzdEZpbmRpbmdzUmVxdWVzdCJGChRMaXN0RmluZGluZ3NSZXNwb25zZRIuCghmaW5kaW5ncxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5GaW5kaW5nVmlldyIVChNMaXN0TGxtQ2FsbHNSZXF1ZXN0IkcKFExpc3RMbG1DYWxsc1Jlc3BvbnNlEi8KCWxsbV9jYWxscxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5MbG1DYWxsVmlldyIrCgpMbG1NZXNzYWdlEgwKBHJvbGUYASABKAkSDwoHY29udGVudBgCIAEoCSLGAQoNTGxtQ2FsbERldGFpbBIPCgdjYWxsX2lkGAEgASgJEg4KBnJ1bl9pZBgCIAEoCRINCgVtb2RlbBgDIAEoCRIQCghzY29wZV9pZBgEIAEoCRIVCg1wcm9tcHRfdG9rZW5zGAUgASgFEhkKEWNvbXBsZXRpb25fdG9rZW5zGAYgASgFEi0KCG1lc3NhZ2VzGAcgAygLMhsuZ2lic29uLndvcmxkLnYxLkxsbU1lc3NhZ2USEgoKY29tcGxldGlvbhgIIAEoCSIkChFHZXRMbG1DYWxsUmVxdWVzdBIPCgdjYWxsX2lkGAEgASgJIkIKEkdldExsbUNhbGxSZXNwb25zZRIsCgRjYWxsGAEgASgLMh4uZ2lic29uLndvcmxkLnYxLkxsbUNhbGxEZXRhaWwiKAoSR2V0VGltZWxpbmVSZXF1ZXN0EhIKCm1pc3Npb25faWQYASABKAkiRQoTR2V0VGltZWxpbmVSZXNwb25zZRIuCgZldmVudHMYASADKAsyHi5naWJzb24ud29ybGQudjEuVGltZWxpbmVFdmVudCI0ChFHZXRGcmFtZUF0UmVxdWVzdBILCgNzZXEYASABKAQSEgoKbWlzc2lvbl9pZBgCIAEoCSLKAgoSR2V0RnJhbWVBdFJlc3BvbnNlEgsKA3NlcRgBIAEoBBINCgV0b3RhbBgCIAEoBBIuCghtaXNzaW9ucxgDIAMoCzIcLmdpYnNvbi53b3JsZC52MS5NaXNzaW9uVmlldxIoCgVob3N0cxgEIAMoCzIZLmdpYnNvbi53b3JsZC52MS5Ib3N0VmlldxIuCghmaW5kaW5ncxgFIAMoCzIcLmdpYnNvbi53b3JsZC52MS5GaW5kaW5nVmlldxIrCgR3b3JrGAYgAygLMh0uZ2lic29uLndvcmxkLnYxLldvcmtJdGVtVmlldxIwCglkZWNpc2lvbnMYByADKAsyHS5naWJzb24ud29ybGQudjEuRGVjaXNpb25WaWV3Ei8KCWxsbV9jYWxscxgIIAMoCzIcLmdpYnNvbi53b3JsZC52MS5MbG1DYWxsVmlldyJkCglMYWJlbFZpZXcSEQoJdGFyZ2V0X2lkGAEgASgJEg8KB3ZlcmRpY3QYAiABKAkSEAoIc2V2ZXJpdHkYAyABKAkSEAoIY2F0ZWdvcnkYBCABKAkSDwoHdXNlcl9pZBgFIAEoCSKuAQoKUmV2aWV3SXRlbRIRCgl0YXJnZXRfaWQYASABKAkSDAoEa2luZBgCIAEoCRINCgV0aXRsZRgDIAEoCRIQCghzY29wZV9pZBgEIAEoCRIPCgdhZGRyZXNzGAUgASgJEhAKCHNldmVyaXR5GAYgASgJEhAKCGxhYmVsbGVkGAcgASgIEikKBWxhYmVsGAggASgLMhouZ2lic29uLndvcmxkLnYxLkxhYmVsVmlldyIYChZMaXN0UmV2aWV3UXVldWVSZXF1ZXN0IkUKF0xpc3RSZXZpZXdRdWV1ZVJlc3BvbnNlEioKBWl0ZW1zGAEgAygLMhsuZ2lic29uLndvcmxkLnYxLlJldmlld0l0ZW0iXAoSU3VibWl0TGFiZWxSZXF1ZXN0EhEKCXRhcmdldF9pZBgBIAEoCRIPCgd2ZXJkaWN0GAIgASgJEhAKCHNldmVyaXR5GAMgASgJEhAKCGNhdGVnb3J5GAQgASgJIhUKE1N1Ym1pdExhYmVsUmVzcG9uc2UiEwoRTGlzdExhYmVsc1JlcXVlc3QiQAoSTGlzdExhYmVsc1Jlc3BvbnNlEioKBmxhYmVscxgBIAMoCzIaLmdpYnNvbi53b3JsZC52MS5MYWJlbFZpZXciJQoVR2V0Q2FsaWJyYXRpb25SZXF1ZXN0EgwKBGJpbnMYASABKAUibgoSQ2FsaWJyYXRpb25CaW5WaWV3EgsKA2xvdxgBIAEoARIMCgRoaWdoGAIgASgBEgkKAW4YAyABKAUSFgoObWVhbl9wcmVkaWN0ZWQYBCABKAESGgoSb2JzZXJ2ZWRfZnJlcXVlbmN5GAUgASgBIrQBChhUZWNobmlxdWVDYWxpYnJhdGlvblZpZXcSEQoJdGVjaG5pcXVlGAEgASgJEgkKAW4YAiABKAUSFgoObWVhbl9wcmVkaWN0ZWQYAyABKAESGgoSb2JzZXJ2ZWRfZnJlcXVlbmN5GAQgASgBEhMKC2JyaWVyX3Njb3JlGAUgASgBEjEKBGJpbnMYBiADKAsyIy5naWJzb24ud29ybGQudjEuQ2FsaWJyYXRpb25CaW5WaWV3IrcBChZHZXRDYWxpYnJhdGlvblJlc3BvbnNlEg4KBnRlbmFudBgBIAEoCRI6CgdvdmVyYWxsGAIgASgLMikuZ2lic29uLndvcmxkLnYxLlRlY2huaXF1ZUNhbGlicmF0aW9uVmlldxI/CgxieV90ZWNobmlxdWUYAyADKAsyKS5naWJzb24ud29ybGQudjEuVGVjaG5pcXVlQ2FsaWJyYXRpb25WaWV3EhAKCHVuc2NvcmVkGAQgASgFIhUKE0xpc3RPcGVuQmV0c1JlcXVlc3QiqgEKFFJlZmVyZW5jZWRFbnRpdHlWaWV3Eg0KBWxhYmVsGAEgASgJEk4KDWlkX3Byb3BlcnRpZXMYAiADKAsyNy5naWJzb24ud29ybGQudjEuUmVmZXJlbmNlZEVudGl0eVZpZXcuSWRQcm9wZXJ0aWVzRW50cnkaMwoRSWRQcm9wZXJ0aWVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKeAQoHT3BlbkJldBIVCg1oeXBvdGhlc2lzX2lkGAEgASgJEg0KBWNsYWltGAIgASgJEhAKCHByb3Bvc2VyGAMgASgJEhIKCmNvbmZpZGVuY2UYBCABKAESNwoIZXZpZGVuY2UYBSADKAsyJS5naWJzb24ud29ybGQudjEuUmVmZXJlbmNlZEVudGl0eVZpZXcSDgoGcnVuX2lkGAYgASgJIj4KFExpc3RPcGVuQmV0c1Jlc3BvbnNlEiYKBGJldHMYASADKAsyGC5naWJzb24ud29ybGQudjEuT3BlbkJldCJAChZTZXR0bGVCZXRCeUhJVExSZXF1ZXN0EhUKDWh5cG90aGVzaXNfaWQYASABKAkSDwoHdmVyZGljdBgCIAEoCSIqChdTZXR0bGVCZXRCeUhJVExSZXNwb25zZRIPCgdzZXR0bGVkGAEgASgIIjsKFEdldFJlcHV0YXRpb25SZXF1ZXN0EhEKCXRlY2huaXF1ZRgBIAEoCRIQCghzY29wZV9pZBgCIAEoCSJJChVHZXRSZXB1dGF0aW9uUmVzcG9uc2USFgoOcHJpb3Jfc3RyZW5ndGgYASABKAESGAoQaGFzX3RyYWNrX3JlY29yZBgCIAEoCDKwDwoMV29ybGRTZXJ2aWNlEokBCgxMaXN0TWlzc2lvbnMSJC5naWJzb24ud29ybGQudjEuTGlzdE1pc3Npb25zUmVxdWVzdBolLmdpYnNvbi53b3JsZC52MS5MaXN0TWlzc2lvbnNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgAEKCUxpc3RIb3N0cxIhLmdpYnNvbi53b3JsZC52MS5MaXN0SG9zdHNSZXF1ZXN0GiIuZ2lic29uLndvcmxkLnYxLkxpc3RIb3N0c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKJAQoMTGlzdEZpbmRpbmdzEiQuZ2lic29uLndvcmxkLnYxLkxpc3RGaW5kaW5nc1JlcXVlc3QaJS5naWJzb24ud29ybGQudjEuTGlzdEZpbmRpbmdzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEokBCgxMaXN0TGxtQ2FsbHMSJC5naWJzb24ud29ybGQudjEuTGlzdExsbUNhbGxzUmVxdWVzdBolLmdpYnNvbi53b3JsZC52MS5MaXN0TGxtQ2FsbHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgwEKCkdldExsbUNhbGwSIi5naWJzb24ud29ybGQudjEuR2V0TGxtQ2FsbFJlcXVlc3QaIy5naWJzb24ud29ybGQudjEuR2V0TGxtQ2FsbFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKGAQoLR2V0VGltZWxpbmUSIy5naWJzb24ud29ybGQudjEuR2V0VGltZWxpbmVSZXF1ZXN0GiQuZ2lic29uLndvcmxkLnYxLkdldFRpbWVsaW5lUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoMBCgpHZXRGcmFtZUF0EiIuZ2lic29uLndvcmxkLnYxLkdldEZyYW1lQXRSZXF1ZXN0GiMuZ2lic29uLndvcmxkLnYxLkdldEZyYW1lQXRSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkgEKD0xpc3RSZXZpZXdRdWV1ZRInLmdpYnNvbi53b3JsZC52MS5MaXN0UmV2aWV3UXVldWVSZXF1ZXN0GiguZ2lic29uLndvcmxkLnYxLkxpc3RSZXZpZXdRdWV1ZVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKGAQoLU3VibWl0TGFiZWwSIy5naWJzb24ud29ybGQudjEuU3VibWl0TGFiZWxSZXF1ZXN0GiQuZ2lic29uLndvcmxkLnYxLlN1Ym1pdExhYmVsUmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoMBCgpMaXN0TGFiZWxzEiIuZ2lic29uLndvcmxkLnYxLkxpc3RMYWJlbHNSZXF1ZXN0GiMuZ2lic29uLndvcmxkLnYxLkxpc3RMYWJlbHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSjwEKDkdldENhbGlicmF0aW9uEiYuZ2lic29uLndvcmxkLnYxLkdldENhbGlicmF0aW9uUmVxdWVzdBonLmdpYnNvbi53b3JsZC52MS5HZXRDYWxpYnJhdGlvblJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKMAQoNR2V0UmVwdXRhdGlvbhIlLmdpYnNvbi53b3JsZC52MS5HZXRSZXB1dGF0aW9uUmVxdWVzdBomLmdpYnNvbi53b3JsZC52MS5HZXRSZXB1dGF0aW9uUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEokBCgxMaXN0T3BlbkJldHMSJC5naWJzb24ud29ybGQudjEuTGlzdE9wZW5CZXRzUmVxdWVzdBolLmdpYnNvbi53b3JsZC52MS5MaXN0T3BlbkJldHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkgEKD1NldHRsZUJldEJ5SElUTBInLmdpYnNvbi53b3JsZC52MS5TZXR0bGVCZXRCeUhJVExSZXF1ZXN0GiguZ2lic29uLndvcmxkLnYxLlNldHRsZUJldEJ5SElUTFJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgA0JSWlBnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vd29ybGQvdjE7d29ybGR2MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
 
 /**
  * MissionView is one mission as the World holds it.
@@ -993,6 +993,384 @@ export const ListLabelsResponseSchema: GenMessage<ListLabelsResponse> = /*@__PUR
   messageDesc(file_gibson_world_v1_world, 31);
 
 /**
+ * GetCalibrationRequest asks for the tenant's reliability/calibration report.
+ *
+ * @generated from message gibson.world.v1.GetCalibrationRequest
+ */
+export type GetCalibrationRequest = Message<"gibson.world.v1.GetCalibrationRequest"> & {
+  /**
+   * bins is the number of equal-width predicted-probability buckets the
+   * reliability curve is computed over. <= 0 uses the server's default
+   * (deciles).
+   *
+   * @generated from field: int32 bins = 1;
+   */
+  bins: number;
+};
+
+/**
+ * Describes the message gibson.world.v1.GetCalibrationRequest.
+ * Use `create(GetCalibrationRequestSchema)` to create a new message.
+ */
+export const GetCalibrationRequestSchema: GenMessage<GetCalibrationRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 32);
+
+/**
+ * CalibrationBinView is one predicted-probability bucket of a reliability
+ * diagram: every settled, staked bet whose predicted probability fell in
+ * [low, high), and the mean predicted probability vs. the observed frequency
+ * of a TRUE verdict among them.
+ *
+ * @generated from message gibson.world.v1.CalibrationBinView
+ */
+export type CalibrationBinView = Message<"gibson.world.v1.CalibrationBinView"> & {
+  /**
+   * @generated from field: double low = 1;
+   */
+  low: number;
+
+  /**
+   * @generated from field: double high = 2;
+   */
+  high: number;
+
+  /**
+   * @generated from field: int32 n = 3;
+   */
+  n: number;
+
+  /**
+   * @generated from field: double mean_predicted = 4;
+   */
+  meanPredicted: number;
+
+  /**
+   * @generated from field: double observed_frequency = 5;
+   */
+  observedFrequency: number;
+};
+
+/**
+ * Describes the message gibson.world.v1.CalibrationBinView.
+ * Use `create(CalibrationBinViewSchema)` to create a new message.
+ */
+export const CalibrationBinViewSchema: GenMessage<CalibrationBinView> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 33);
+
+/**
+ * TechniqueCalibrationView is the reliability/calibration measure for one
+ * group of settled, staked bets: either every settled bet in the tenant
+ * (GetCalibrationResponse.overall, technique == "") or one specific
+ * technique's settled bets (GetCalibrationResponse.by_technique).
+ *
+ * @generated from message gibson.world.v1.TechniqueCalibrationView
+ */
+export type TechniqueCalibrationView = Message<"gibson.world.v1.TechniqueCalibrationView"> & {
+  /**
+   * @generated from field: string technique = 1;
+   */
+  technique: string;
+
+  /**
+   * @generated from field: int32 n = 2;
+   */
+  n: number;
+
+  /**
+   * @generated from field: double mean_predicted = 3;
+   */
+  meanPredicted: number;
+
+  /**
+   * @generated from field: double observed_frequency = 4;
+   */
+  observedFrequency: number;
+
+  /**
+   * brier_score is the mean squared error between each bet's predicted
+   * probability and its observed outcome (0 or 1) — the standard proper
+   * scoring rule for calibration (0 is perfect; lower is better).
+   *
+   * @generated from field: double brier_score = 5;
+   */
+  brierScore: number;
+
+  /**
+   * @generated from field: repeated gibson.world.v1.CalibrationBinView bins = 6;
+   */
+  bins: CalibrationBinView[];
+};
+
+/**
+ * Describes the message gibson.world.v1.TechniqueCalibrationView.
+ * Use `create(TechniqueCalibrationViewSchema)` to create a new message.
+ */
+export const TechniqueCalibrationViewSchema: GenMessage<TechniqueCalibrationView> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 34);
+
+/**
+ * GetCalibrationResponse is gibson#284's full reliability answer for the
+ * caller's tenant.
+ *
+ * @generated from message gibson.world.v1.GetCalibrationResponse
+ */
+export type GetCalibrationResponse = Message<"gibson.world.v1.GetCalibrationResponse"> & {
+  /**
+   * @generated from field: string tenant = 1;
+   */
+  tenant: string;
+
+  /**
+   * @generated from field: gibson.world.v1.TechniqueCalibrationView overall = 2;
+   */
+  overall?: TechniqueCalibrationView;
+
+  /**
+   * @generated from field: repeated gibson.world.v1.TechniqueCalibrationView by_technique = 3;
+   */
+  byTechnique: TechniqueCalibrationView[];
+
+  /**
+   * unscored counts settled bets with no recorded claim-node belief (no bet
+   * was ever staked for that hypothesis) — excluded from every aggregate
+   * because calibration cannot compare a predicted probability that was
+   * never staked. Surfaced, not hidden.
+   *
+   * @generated from field: int32 unscored = 4;
+   */
+  unscored: number;
+};
+
+/**
+ * Describes the message gibson.world.v1.GetCalibrationResponse.
+ * Use `create(GetCalibrationResponseSchema)` to create a new message.
+ */
+export const GetCalibrationResponseSchema: GenMessage<GetCalibrationResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 35);
+
+/**
+ * ListOpenBetsRequest takes no fields: the caller's tenant resolves the same
+ * way it does for every other WorldService read.
+ *
+ * @generated from message gibson.world.v1.ListOpenBetsRequest
+ */
+export type ListOpenBetsRequest = Message<"gibson.world.v1.ListOpenBetsRequest"> & {
+};
+
+/**
+ * Describes the message gibson.world.v1.ListOpenBetsRequest.
+ * Use `create(ListOpenBetsRequestSchema)` to create a new message.
+ */
+export const ListOpenBetsRequestSchema: GenMessage<ListOpenBetsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 36);
+
+/**
+ * ReferencedEntityView is an entity a bet's claim is about, by Taxonomy label
+ * and identity properties — the same by-label-and-properties addressing
+ * HypothesisObservation.references uses on the wire (sdk#70), so the review
+ * UI can show what the claim references without a graph node id.
+ *
+ * @generated from message gibson.world.v1.ReferencedEntityView
+ */
+export type ReferencedEntityView = Message<"gibson.world.v1.ReferencedEntityView"> & {
+  /**
+   * @generated from field: string label = 1;
+   */
+  label: string;
+
+  /**
+   * @generated from field: map<string, string> id_properties = 2;
+   */
+  idProperties: { [key: string]: string };
+};
+
+/**
+ * Describes the message gibson.world.v1.ReferencedEntityView.
+ * Use `create(ReferencedEntityViewSchema)` to create a new message.
+ */
+export const ReferencedEntityViewSchema: GenMessage<ReferencedEntityView> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 37);
+
+/**
+ * OpenBet is one placed-but-unsettled bet (gibson#339): a Hypothesis that
+ * carries a bettable HypothesisID with no matching BetSettlement yet.
+ *
+ * confidence is the claim's own self-reported confidence (Hypothesis.Confidence),
+ * NOT a reconciled market stake read back from BeliefSubstrate — that
+ * reconciliation is a pre-existing, tracked gap (gibson#273) this RPC does not
+ * close. run_id is the mission run that proposed the claim, for the review
+ * UI's transcript link; empty when the observation carried no run id.
+ *
+ * @generated from message gibson.world.v1.OpenBet
+ */
+export type OpenBet = Message<"gibson.world.v1.OpenBet"> & {
+  /**
+   * @generated from field: string hypothesis_id = 1;
+   */
+  hypothesisId: string;
+
+  /**
+   * @generated from field: string claim = 2;
+   */
+  claim: string;
+
+  /**
+   * @generated from field: string proposer = 3;
+   */
+  proposer: string;
+
+  /**
+   * @generated from field: double confidence = 4;
+   */
+  confidence: number;
+
+  /**
+   * @generated from field: repeated gibson.world.v1.ReferencedEntityView evidence = 5;
+   */
+  evidence: ReferencedEntityView[];
+
+  /**
+   * @generated from field: string run_id = 6;
+   */
+  runId: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.OpenBet.
+ * Use `create(OpenBetSchema)` to create a new message.
+ */
+export const OpenBetSchema: GenMessage<OpenBet> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 38);
+
+/**
+ * @generated from message gibson.world.v1.ListOpenBetsResponse
+ */
+export type ListOpenBetsResponse = Message<"gibson.world.v1.ListOpenBetsResponse"> & {
+  /**
+   * @generated from field: repeated gibson.world.v1.OpenBet bets = 1;
+   */
+  bets: OpenBet[];
+};
+
+/**
+ * Describes the message gibson.world.v1.ListOpenBetsResponse.
+ * Use `create(ListOpenBetsResponseSchema)` to create a new message.
+ */
+export const ListOpenBetsResponseSchema: GenMessage<ListOpenBetsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 39);
+
+/**
+ * SettleBetByHITLRequest names the bet and the reviewer's verdict.
+ * The reviewing user is resolved server-side from the caller's identity
+ * (ADR-0006 §6 provenance rule), never taken from the request — the same
+ * rule SubmitLabel already follows, so a caller can never attribute a
+ * settlement to another user.
+ *
+ * @generated from message gibson.world.v1.SettleBetByHITLRequest
+ */
+export type SettleBetByHITLRequest = Message<"gibson.world.v1.SettleBetByHITLRequest"> & {
+  /**
+   * @generated from field: string hypothesis_id = 1;
+   */
+  hypothesisId: string;
+
+  /**
+   * verdict is true_positive, false_positive, or dismiss (the same
+   * vocabulary SubmitLabel uses). dismiss applies a label only; it never
+   * settles the bet.
+   *
+   * @generated from field: string verdict = 2;
+   */
+  verdict: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.SettleBetByHITLRequest.
+ * Use `create(SettleBetByHITLRequestSchema)` to create a new message.
+ */
+export const SettleBetByHITLRequestSchema: GenMessage<SettleBetByHITLRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 40);
+
+/**
+ * @generated from message gibson.world.v1.SettleBetByHITLResponse
+ */
+export type SettleBetByHITLResponse = Message<"gibson.world.v1.SettleBetByHITLResponse"> & {
+  /**
+   * settled is true only when this call caused a NEW settlement. false with
+   * no error covers two honest non-events: the bet was already settled by
+   * any of the three settlement paths (idempotent no-op), or the verdict was
+   * dismiss (label-only/no-settle by design, never an error).
+   *
+   * @generated from field: bool settled = 1;
+   */
+  settled: boolean;
+};
+
+/**
+ * Describes the message gibson.world.v1.SettleBetByHITLResponse.
+ * Use `create(SettleBetByHITLResponseSchema)` to create a new message.
+ */
+export const SettleBetByHITLResponseSchema: GenMessage<SettleBetByHITLResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 41);
+
+/**
+ * GetReputationRequest names the technique x environment key (ADR-0029 §3):
+ * technique is the settlement.TechniqueID a Bet/Hypothesis names (e.g.
+ * "T1190"); scope_id is the "environment" — the same ScopeID coordinate
+ * every other observation in this brain partitions identity by.
+ *
+ * @generated from message gibson.world.v1.GetReputationRequest
+ */
+export type GetReputationRequest = Message<"gibson.world.v1.GetReputationRequest"> & {
+  /**
+   * @generated from field: string technique = 1;
+   */
+  technique: string;
+
+  /**
+   * @generated from field: string scope_id = 2;
+   */
+  scopeId: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.GetReputationRequest.
+ * Use `create(GetReputationRequestSchema)` to create a new message.
+ */
+export const GetReputationRequestSchema: GenMessage<GetReputationRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 42);
+
+/**
+ * @generated from message gibson.world.v1.GetReputationResponse
+ */
+export type GetReputationResponse = Message<"gibson.world.v1.GetReputationResponse"> & {
+  /**
+   * prior_strength is the confidence a NEW hypothesis of this technique, in
+   * this scope, should start from (brain.Reputation.PriorStrength): the
+   * observed TRUE frequency once settled bets exist, or the neutral
+   * DefaultReputationPrior (0.5) when has_track_record is false.
+   *
+   * @generated from field: double prior_strength = 1;
+   */
+  priorStrength: number;
+
+  /**
+   * has_track_record is false when nothing has been recorded for this key
+   * yet — "no data", never hidden behind a bare zero value.
+   *
+   * @generated from field: bool has_track_record = 2;
+   */
+  hasTrackRecord: boolean;
+};
+
+/**
+ * Describes the message gibson.world.v1.GetReputationResponse.
+ * Use `create(GetReputationResponseSchema)` to create a new message.
+ */
+export const GetReputationResponseSchema: GenMessage<GetReputationResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 43);
+
+/**
  * WorldService is the daemon-mediated read path into the ECS brain (epic
  * ecs-brain, gibson#752). The daemon resolves the caller's tenant server-side
  * and reads only that tenant's live brain World + Timeline (one World per tenant,
@@ -1119,6 +1497,66 @@ export const WorldService: GenService<{
     methodKind: "unary";
     input: typeof ListLabelsRequestSchema;
     output: typeof ListLabelsResponseSchema;
+  },
+  /**
+   * GetCalibration returns the tenant's reliability/calibration report from
+   * settled bets (gibson#284, ADR-0022/ADR-0006): does a predicted 0.8 mean
+   * 80% in reality? A tenant-wide summary plus a per-technique breakdown, each
+   * with a Brier score and a binned reliability-diagram curve — the source for
+   * the dashboard's reliability diagram (dashboard#98).
+   *
+   * @generated from rpc gibson.world.v1.WorldService.GetCalibration
+   */
+  getCalibration: {
+    methodKind: "unary";
+    input: typeof GetCalibrationRequestSchema;
+    output: typeof GetCalibrationResponseSchema;
+  },
+  /**
+   * GetReputation returns one technique's current track record in one scope
+   * (ADR-0022, ADR-0029 §3, gibson#267): does this technique tend to work
+   * here? Read-only projection of the technique x environment belief a
+   * settled bet updates (brain.UpdateReputation) — a caller that only needs
+   * one key's current value, not the full tenant-wide breakdown
+   * GetCalibration gives.
+   *
+   * @generated from rpc gibson.world.v1.WorldService.GetReputation
+   */
+  getReputation: {
+    methodKind: "unary";
+    input: typeof GetReputationRequestSchema;
+    output: typeof GetReputationResponseSchema;
+  },
+  /**
+   * ListOpenBets returns the tenant's placed-but-unsettled bets (gibson#339):
+   * a Hypothesis that carries a bettable HypothesisID (ADR-0021/ADR-0022,
+   * sdk#89) with no matching BetSettlement yet. Backend for dashboard#97's
+   * HITL-settle review queue. Read-only, so relation is member like every
+   * other WorldService read.
+   *
+   * @generated from rpc gibson.world.v1.WorldService.ListOpenBets
+   */
+  listOpenBets: {
+    methodKind: "unary";
+    input: typeof ListOpenBetsRequestSchema;
+    output: typeof ListOpenBetsResponseSchema;
+  },
+  /**
+   * SettleBetByHITL records a human review verdict on a bet (gibson#280,
+   * ADR-0023 decision 3): true_positive/false_positive settle the bet
+   * (Engine.SettleBetByHITL); dismiss is label-only/no-settle, matching the
+   * backend's own refusal semantics (a bet's binary settlement has no "not
+   * actionable" outcome the way a surfaced surprise does). A settlement is a
+   * more consequential, less reversible action than a plain read or label, so
+   * this is gated at writer, not bare member — dashboard#97's settle action,
+   * not every tenant member's review queue.
+   *
+   * @generated from rpc gibson.world.v1.WorldService.SettleBetByHITL
+   */
+  settleBetByHITL: {
+    methodKind: "unary";
+    input: typeof SettleBetByHITLRequestSchema;
+    output: typeof SettleBetByHITLResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_world_v1_world, 0);

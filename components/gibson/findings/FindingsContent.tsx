@@ -23,12 +23,15 @@ import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { NewMissionButton } from "@/components/gibson/missions/NewMissionButton";
 import { useFindings } from "@/src/hooks/useFindings";
+import { useSession } from "@/src/lib/session-client";
+import { useUserRefs } from "@/src/hooks/useUserRefs";
+import { principalLabel, userIdsToResolve } from "@/src/lib/principals/label";
 import type { Finding, FindingSeverity } from "@/src/types";
 import { FindingsExportDialog } from "./FindingsExportDialog";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type SortField = "severity" | "title" | "type" | "asset" | "mission" | "discovered";
+type SortField = "severity" | "title" | "type" | "asset" | "mission" | "discovered" | "reporter";
 type SortDir = "asc" | "desc";
 
 // ── Severity helpers ─────────────────────────────────────────────────────────
@@ -147,7 +150,7 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
     { limit: 200 },
   );
 
-  const findings: Finding[] = data?.data ?? [];
+  const findings: Finding[] = React.useMemo(() => data?.data ?? [], [data]);
 
   // Debounce search
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -186,6 +189,29 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
     }
   }
 
+  // Who reported each finding: the submitting agent and the person who
+  // enrolled it. A person who left the tenant reads "removed user" (hosted#205).
+  const { data: session } = useSession();
+  const myUserId = session?.user.id ?? null;
+  const reporterIds = React.useMemo(
+    () =>
+      userIdsToResolve(
+        findings.flatMap((f) => [f.submittedBy, f.enrolledBy ? { kind: "user" as const, id: f.enrolledBy } : undefined]),
+        myUserId,
+      ),
+    [findings, myUserId],
+  );
+  const { data: userRefs } = useUserRefs(reporterIds);
+  const reportedBy = React.useCallback(
+    (f: Finding): string => {
+      if (!f.submittedBy) return "-";
+      const who = principalLabel(f.submittedBy, myUserId, userRefs);
+      if (f.submittedBy.kind !== "component" || !f.enrolledBy) return who;
+      return `${who}, enrolled by ${principalLabel({ kind: "user", id: f.enrolledBy }, myUserId, userRefs)}`;
+    },
+    [myUserId, userRefs],
+  );
+
   // Client-side sort of the API results
   const visibleFindings = React.useMemo(() => {
     return [...findings].sort((a, b) => {
@@ -203,6 +229,9 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
         case "asset":
           cmp = (a.affectedAssets[0] ?? "").localeCompare(b.affectedAssets[0] ?? "");
           break;
+        case "reporter":
+          cmp = reportedBy(a).localeCompare(reportedBy(b));
+          break;
         case "mission":
           cmp = a.missionId.localeCompare(b.missionId);
           break;
@@ -212,7 +241,7 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [findings, sortField, sortDir]);
+  }, [findings, sortField, sortDir, reportedBy]);
 
   return (
     <div className="space-y-4">
@@ -321,6 +350,7 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
                     { field: "type" as SortField, label: "Type" },
                     { field: "asset" as SortField, label: "Affected Asset" },
                     { field: "mission" as SortField, label: "Mission" },
+                    { field: "reporter" as SortField, label: "Reported by" },
                     { field: "discovered" as SortField, label: "Discovered" },
                   ] as { field: SortField; label: string }[]
                 ).map(({ field, label }) => (
@@ -339,7 +369,7 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
               {visibleFindings.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="text-muted-foreground py-10 text-center text-sm"
                   >
                     No findings match the current filters.
@@ -371,6 +401,11 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
                     </TableCell>
                     <TableCell>
                       <span className="text-muted-foreground text-xs">{finding.missionId}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-muted-foreground text-xs" data-testid="finding-reporter">
+                        {reportedBy(finding)}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <span className="text-muted-foreground text-xs tabular-nums">

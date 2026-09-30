@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright 2026 Zero Root AI
 
+import type { PrincipalView } from '@/src/lib/banks/view';
+
 /**
  * Base Type Definitions
  * Core interfaces and types for the Gibson Mission Control dashboard
@@ -41,6 +43,8 @@ export interface Mission {
   events: number;
   tenantId: string;
   missionDefinitionId?: string;
+  /** Who created the mission. Absent on a mission created before attribution existed. */
+  createdBy?: PrincipalView;
 }
 
 export interface MissionFilters {
@@ -80,6 +84,10 @@ export interface Finding {
   affectedAssets: string[];
   discoveredAt: Date;
   taxonomy: TaxonomyReference;
+  /** Who submitted the finding: the agent, or a person who filed it by hand. */
+  submittedBy?: PrincipalView;
+  /** The user id of the person who enrolled the submitting agent. */
+  enrolledBy?: string;
 }
 
 interface FindingFilters {

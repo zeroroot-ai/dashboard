@@ -2,6 +2,8 @@
 // Copyright 2026 Zero Root AI
 
 import 'server-only';
+import { principalView } from '@/src/lib/gibson-client/principal';
+import type { PrincipalView } from '@/src/lib/banks/view';
 import { ConnectError, Code } from '@connectrpc/connect';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
 import { TenantService } from '@/src/gen/gibson/tenant/v1/tenant_pb';
@@ -534,6 +536,8 @@ interface SerializedMission {
   description: string;
   /** The mission definition this mission was launched from, or `undefined` when unset. */
   missionDefinitionId?: string;
+  /** Who created the mission; undefined on a mission created before attribution existed. */
+  createdBy?: PrincipalView;
 }
 
 /** Serialized form of an AgentInfo proto message. */
@@ -709,6 +713,7 @@ export function serializeMission(m: MissionInfo): SerializedMission {
     progress: m.progress,
     description: m.description,
     missionDefinitionId: m.missionDefinitionId || undefined,
+    createdBy: m.createdBy ? principalView(m.createdBy) : undefined,
   };
 }
 
