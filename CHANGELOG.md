@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.126.0](https://github.com/zeroroot-ai/dashboard/compare/v0.125.0...v0.126.0) (2026-09-30)
+
+
+### Features
+
+* **domain-packs:** dashboard catalog + enable/disable toggle UI (gibson[#383](https://github.com/zeroroot-ai/dashboard/issues/383)) ([#143](https://github.com/zeroroot-ai/dashboard/issues/143)) ([745a423](https://github.com/zeroroot-ai/dashboard/commit/745a423d88add16451c14e8abbab5bab9f8442ab))
+* **people:** show who created a mission and who reported a finding ([#147](https://github.com/zeroroot-ai/dashboard/issues/147)) ([7882d4c](https://github.com/zeroroot-ai/dashboard/commit/7882d4c677e528caebefc76e2a8b82a8cba0659f))
+
+
+### Bug Fixes
+
+* **ci:** link-check checks only the Markdown a PR touched (.github v0.7.2) ([#145](https://github.com/zeroroot-ai/dashboard/issues/145)) ([fd4fd0e](https://github.com/zeroroot-ai/dashboard/commit/fd4fd0e240f8d9b98d6563d1169807537263478d))
+
 ## [0.125.0](https://github.com/zeroroot-ai/dashboard/compare/v0.124.2...v0.125.0) (2026-09-29)
 
 
