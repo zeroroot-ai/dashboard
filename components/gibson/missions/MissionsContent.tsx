@@ -29,6 +29,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSession } from "@/src/lib/session-client";
+import { useUserRefs } from "@/src/hooks/useUserRefs";
+import { principalLabel, userIdsToResolve } from "@/src/lib/principals/label";
 import * as Kanban from "@/components/ui/kanban";
 
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
@@ -253,7 +256,27 @@ function MissionActionsMenu({ mission }: { mission: Mission }) {
   );
 }
 
+/**
+ * Names the people behind a list of missions. A creator who left the tenant
+ * reads "removed user" (hosted#205); a mission created before attribution
+ * existed has no creator and reads "-".
+ */
+function useMissionCreators(missions: Mission[]) {
+  const { data: session } = useSession();
+  const myUserId = session?.user.id ?? null;
+  const ids = React.useMemo(
+    () => userIdsToResolve(missions.map((m) => m.createdBy), myUserId),
+    [missions, myUserId],
+  );
+  const { data: refs } = useUserRefs(ids);
+  return React.useCallback(
+    (mission: Mission) => (mission.createdBy ? principalLabel(mission.createdBy, myUserId, refs) : "-"),
+    [myUserId, refs],
+  );
+}
+
 function MissionsTable({ missions }: { missions: Mission[] }) {
+  const creatorOf = useMissionCreators(missions);
   return (
     <div className="rounded-md border border-border">
       <Table>
@@ -263,6 +286,7 @@ function MissionsTable({ missions }: { missions: Mission[] }) {
             <TableHead>Status</TableHead>
             <TableHead>Target Scope</TableHead>
             <TableHead className="text-right">Findings</TableHead>
+            <TableHead>Created by</TableHead>
             <TableHead>Created</TableHead>
             <TableHead className="w-20" />
           </TableRow>
@@ -290,6 +314,9 @@ function MissionsTable({ missions }: { missions: Mission[] }) {
                 ) : (
                   <span className="text-muted-foreground">-</span>
                 )}
+              </TableCell>
+              <TableCell className="text-muted-foreground text-sm" data-testid="mission-creator">
+                {creatorOf(mission)}
               </TableCell>
               <TableCell className="text-muted-foreground text-sm tabular-nums">
                 {mission.startedAt

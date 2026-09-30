@@ -2,6 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 import 'server-only';
+import { principalView } from '@/src/lib/gibson-client/principal';
 
 /**
  * Typed dashboard client for gibson.bank.v1.BankService (gibson#1706, lane E1).
@@ -26,14 +27,12 @@ import {
   type Bank,
   type Member,
 } from '@/src/gen/gibson/bank/v1/bank_pb';
-import { Principal_Kind, type Principal } from '@/src/gen/gibson/common/v1/gibson_common_pb';
 import { userClient } from '../gibson-client';
 import type {
   BankView,
   LoginShapeName,
   MemberStateName,
   MemberView,
-  PrincipalView,
   SignInStepView,
   SpillPolicyName,
 } from '../banks/view';
@@ -87,21 +86,6 @@ function memberStateName(v: MemberState): MemberStateName {
   }
 }
 
-function principalView(p: Principal | undefined): PrincipalView {
-  if (!p) return { kind: 'unknown', id: '' };
-  switch (p.kind) {
-    case Principal_Kind.USER:
-      return { kind: 'user', id: p.id };
-    case Principal_Kind.TENANT:
-      return { kind: 'tenant', id: p.id };
-    case Principal_Kind.COMPONENT:
-      return { kind: 'component', id: p.id };
-    case Principal_Kind.SERVICE:
-      return { kind: 'service', id: p.id };
-    default:
-      return { kind: 'unknown', id: p.id };
-  }
-}
 
 function iso(ts: Timestamp | undefined): string | null {
   return ts ? timestampDate(ts).toISOString() : null;

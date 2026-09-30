@@ -2,6 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 import { NextRequest, NextResponse } from 'next/server';
+import { principalViewFromRef } from '@/src/lib/gibson-client/principal';
 import { ConnectError, Code } from '@connectrpc/connect';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
@@ -68,6 +69,8 @@ export async function GET(request: NextRequest) {
         category: f.type || (labels.includes('Vulnerability') ? 'vulnerability' : 'finding'),
         missionName: f.properties['missionName'] || undefined,
         cve: f.properties['cve'] || undefined,
+        submittedBy: principalViewFromRef(f.properties['submitted_by']),
+        enrolledBy: f.properties['enrolled_by'] || undefined,
         createdAt: f.createdAt ? new Date(Number(f.createdAt.seconds) * 1000) : new Date(),
         updatedAt: new Date(),
       };

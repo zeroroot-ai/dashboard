@@ -8,6 +8,7 @@
  */
 
 import type { PrincipalView } from "@/src/lib/banks/view";
+import { principalLabel, type UserRefView } from "@/src/lib/principals/label";
 
 export type JobStateName = "open" | "working" | "waiting" | "closed" | "unknown";
 export type JobVerdictName = "unspecified" | "accomplished" | "failed" | "abandoned";
@@ -115,11 +116,15 @@ export function pendingQuestion(events: readonly JobEventView[]): string | null 
   return null;
 }
 
-/** Short sender text for an input row. */
-export function senderLabel(p: PrincipalView, myUserId: string | null): string {
-  if (p.kind === "user") return p.id === myUserId ? "me" : `user ${p.id}`;
-  if (p.kind === "component") return `component ${p.id}`;
-  if (p.kind === "service") return "platform";
-  if (p.kind === "tenant") return "tenant";
-  return p.id || "unknown";
+/**
+ * Short sender text for an input row: "me", the member's resolved name,
+ * "removed user" for a person who left the tenant, or the id while the
+ * resolution loads.
+ */
+export function senderLabel(
+  p: PrincipalView,
+  myUserId: string | null,
+  refs?: ReadonlyMap<string, UserRefView>,
+): string {
+  return principalLabel(p, myUserId, refs);
 }
