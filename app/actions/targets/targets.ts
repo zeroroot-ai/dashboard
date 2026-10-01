@@ -30,13 +30,24 @@ export interface TargetView {
   url: string;
   provider: string;
   model: string;
-  authType: string;
   status: string;
   description: string;
   tags: string[];
   capabilities: string[];
   timeout: number;
 }
+
+/**
+ * A target carries NO authentication shape and NO credential reference, by
+ * owner decision 2026-10-01: it names WHAT is assessed, never how to
+ * authenticate to it. Secrets live in OpenBao under an explicit scope and
+ * `gibson secret` manages them.
+ *
+ * `authType` used to be carried here, from the wire Target through TargetView
+ * and back through targetMsg, and no component ever rendered it. gibson#521
+ * removes it from the daemon and the sdk reserves proto field 9, so a read of
+ * `t.authType` would stop compiling. Do not re-add it.
+ */
 
 /** TargetInput is the author-supplied metadata for create/update. */
 interface TargetInput {
@@ -45,7 +56,6 @@ interface TargetInput {
   url?: string;
   provider?: string;
   model?: string;
-  authType?: string;
   status?: string;
   description?: string;
   tags?: string[];
@@ -69,7 +79,6 @@ function toView(t: {
   url?: string;
   provider?: string;
   model?: string;
-  authType?: string;
   status?: string;
   description?: string;
   tags?: string[];
@@ -83,7 +92,6 @@ function toView(t: {
     url: t.url ?? "",
     provider: t.provider ?? "",
     model: t.model ?? "",
-    authType: t.authType ?? "",
     status: t.status ?? "",
     description: t.description ?? "",
     tags: t.tags ?? [],
@@ -99,7 +107,6 @@ function targetMsg(input: TargetInput): {
   url: string;
   provider: string;
   model: string;
-  authType: string;
   status: string;
   description: string;
   tags: string[];
@@ -112,7 +119,6 @@ function targetMsg(input: TargetInput): {
     url: input.url ?? "",
     provider: input.provider ?? "",
     model: input.model ?? "",
-    authType: input.authType ?? "",
     status: input.status ?? "",
     description: input.description ?? "",
     tags: input.tags ?? [],
