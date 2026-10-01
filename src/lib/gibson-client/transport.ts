@@ -6,6 +6,7 @@ import { createClient, ConnectError, Code, type Client, type Interceptor } from 
 import { createGrpcTransport, Http2SessionManager } from '@connectrpc/connect-node';
 import type { DescService } from '@bufbuild/protobuf';
 import { requireUserToken } from '../auth/user-token';
+import { recordWorkloadSvidFallback } from '../metrics/auth';
 import {
   getServiceToken,
   invalidateServiceToken,
@@ -298,6 +299,9 @@ function spiffeNodeOptions():
   const state = getTransportGlobalState();
   const mod = loadSpiffe();
   if (!mod || !mod.isSpiffeAvailable()) {
+    // Every RPC on this branch leaves without the pod's SVID. The chart alerts
+    // on a sustained rate here; before this the series had no producer at all.
+    recordWorkloadSvidFallback();
     if (!state.spiffeFallbackLogged) {
       state.spiffeFallbackLogged = true;
       console.warn(
@@ -315,7 +319,10 @@ function spiffeNodeOptions():
   const svidCtx = mod.tryGetCachedX509SvidContext();
   if (!svidCtx) {
     // Cache still cold (warm-up just kicked off). The first RPC goes
-    // out without the SVID; by the second the cache is populated.
+    // out without the SVID; by the second the cache is populated. Counted
+    // because it IS an RPC without the SVID; the alert's `for: 10m` absorbs
+    // the one-off, and only a persistent failure sustains.
+    recordWorkloadSvidFallback();
     return undefined;
   }
   // SecureContextOptions is a subset of http2.SecureClientSessionOptions

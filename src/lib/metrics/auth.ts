@@ -185,21 +185,44 @@ const tenantSwitchTotal = getOrCreateCounter({
 });
 
 // ---------------------------------------------------------------------------
-// User-token-forwarding backout (spec: dashboard-fga-user-identity R8)
+// Workload-identity transport fallback
 // ---------------------------------------------------------------------------
 
 /**
- * Increments on every dashboard daemon RPC made via the SPIFFE-fallback
- * (USE_USER_TOKEN_FORWARDING=false) branch. Non-zero in steady state
- * means the soak-mode backout is active, per-user FGA is disabled and
- * audit attribution falls back to the dashboard workload identity.
+ * Increments on every outbound daemon RPC that leaves without the pod's
+ * X509-SVID, so the call reaches Envoy over plain HTTPS carrying only its
+ * Bearer token. Two causes: the SPIFFE Workload API socket is absent, or the
+ * SVID cache was still cold.
  *
- * Phase 9 of the spec deletes both the flag and this counter.
+ * The chart alerts on this (`DashboardUserTokenForwardingDisabled`,
+ * gibson-workloads/templates/dashboard/auth-prometheusrule.yaml), and until
+ * now NOTHING incremented it, so the alert could not fire for any reason. The
+ * counter was declared for the USE_USER_TOKEN_FORWARDING soak backout, that
+ * flag was deleted, and charts#294 re-aimed the alert at a transport fault
+ * without anything producing the series it reads.
+ *
+ * A cold cache increments once per pod start, which the alert's `for: 10m`
+ * absorbs: one increment makes `increase(...[5m]) > 0` true for five minutes,
+ * not ten. A missing socket increments on every RPC and sustains, which is the
+ * condition worth paging about.
+ *
+ * The NAME still says user-token-forwarding and the condition no longer does.
+ * Renaming it breaks the chart's alert expr and four golden files in another
+ * repo, so it moves in a coordinated pair, not here.
  */
-const userTokenForwardingDisabledTotal = getOrCreateCounter({
+const workloadSvidFallbackTotal = getOrCreateCounter({
   name: "dashboard_user_token_forwarding_disabled_total",
-  help: "Dashboard RPCs served via the SPIFFE-fallback transport because USE_USER_TOKEN_FORWARDING=false. Non-zero in steady state means the soak backout is active.",
+  help: "Outbound dashboard daemon RPCs that left without the pod's X509-SVID, over plain HTTPS. Sustained non-zero means the SPIFFE Workload API is unreachable.",
 });
+
+/**
+ * Helper: record one outbound RPC that went without the workload SVID.
+ * Called from the transport's fallback branches, which run in the Node.js
+ * runtime only.
+ */
+export function recordWorkloadSvidFallback(): void {
+  workloadSvidFallbackTotal.inc();
+}
 
 // ---------------------------------------------------------------------------
 // Sign-in + login-error metrics (spec: auth-resolution-hardening R3)

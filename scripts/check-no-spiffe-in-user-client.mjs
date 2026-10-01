@@ -17,11 +17,18 @@
  * prevents the same regression by trip-wiring on a SPIFFE import inside
  * the user-acting transport.
  *
- * The user-acting transport DOES retain a SPIFFE fallback in its
- * backout branch (USE_USER_TOKEN_FORWARDING=false), but the import is
- * dynamic (`await import('./spiffe/jwt-svid')`) so it never appears as
- * a top-level static import. This guard only matches static imports;
- * dynamic imports are allowed.
+ * The transport DOES load the SPIFFE module, so this guard matches only
+ * STATIC imports and allows a runtime load. That allowance is load-bearing,
+ * not a leftover: `loadSpiffe()` in transport.ts pulls the module through
+ * `createRequire` with a path built from a runtime expression, because
+ * Turbopack traces a literal and then pulls grpc-js into the bundle, where
+ * its `node:dns` / `node:fs` requires fail to resolve. Tighten this guard to
+ * match runtime loads and the workload-identity path stops working.
+ *
+ * It used to say the allowance existed for the backout branch's
+ * `await import('./spiffe/jwt-svid')` under USE_USER_TOKEN_FORWARDING=false.
+ * That branch is gone: `grep -rn "await import(.*spiffe" src/` returns nothing
+ * and no code reads that env var. The allowance survives for the reason above.
  *
  * Detection
  * ---------
@@ -68,8 +75,9 @@ const ROOT = resolve(__dirname, '..');
 const USER_CLIENT_FILES = [
   'src/lib/gibson-client.ts',
   // The ConnectRPC transport moved here in dashboard#814 (E9). It is the file
-  // that owns the user-acting transport and its SPIFFE fallback, so it carries
-  // the same "lazy-require only, never a static import" invariant.
+  // that owns the user-acting transport and its workload-identity SPIFFE
+  // fallback, so it carries the same "runtime load only, never a static
+  // import" invariant.
   'src/lib/gibson-client/transport.ts',
 ];
 
@@ -77,9 +85,9 @@ const USER_CLIENT_FILES = [
  * Patterns that flag a static import of the SPIFFE module. Each entry
  * is a regex applied to non-comment source lines.
  *
- * NOTE: These match `import ... from '...'` only, they do NOT match
- * `await import('...')`. The user-acting transport's backout branch is
- * allowed to dynamic-import the SPIFFE helper.
+ * NOTE: These match `import ... from '...'` only, they do NOT match a runtime
+ * load. transport.ts must be able to reach the SPIFFE module through
+ * `loadSpiffe()`; see the header for why that cannot be a static import.
  */
 const STATIC_IMPORT_PATTERNS = [
   /^\s*import\b[^;\n]*\bfrom\s+['"]@\/src\/lib\/spiffe\//,
