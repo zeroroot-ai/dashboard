@@ -32,6 +32,7 @@ import {
   GaugeIcon,
   GlobeIcon,
   LayoutDashboardIcon,
+  GavelIcon,
   ListTreeIcon,
   MessageSquareIcon,
   NetworkIcon,
@@ -112,6 +113,14 @@ export const navItems: NavGroup[] = [
         title: "Review Queue",
         href: "/dashboard/review",
         icon: ClipboardCheckIcon
+      },
+      {
+        // The HITL settle queue (ADR-0023, dashboard#97): a human judges the
+        // bets the fleet is unsure about, and every verdict feeds the learning
+        // loop. Distinct from the review queue, which labels surfaced surprises.
+        title: "Settle Queue",
+        href: "/dashboard/hitl-settle",
+        icon: GavelIcon
       },
       {
         title: "Traces",

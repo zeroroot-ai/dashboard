@@ -21,16 +21,12 @@ const mockApiFetch = vi.fn();
 
 const SAMPLE: OpenBetForReview = {
   id: "hyp-1",
-  missionId: "m1",
-  scopeId: "s1",
   hypothesisId: "hyp-1",
   claim: "port 6443 is unauthenticated",
   proposer: "recon-agent",
   confidence: 0.72,
-  technique: "http-probe",
-  evidence: [{ description: "200 OK with no Authorization header" }],
+  evidence: [{ label: "Host", idProperties: { address: "10.0.0.5" } }],
   runId: "run-1",
-  requestedAt: "2026-09-28T00:00:00.000Z",
 };
 
 describe("useOpenBets / useSubmitBetVerdict", () => {
@@ -52,7 +48,7 @@ describe("useOpenBets / useSubmitBetVerdict", () => {
   it("fetches the OPEN-bet queue from the real API route, not a fixture", async () => {
     global.fetch = vi.fn(async () => ({
       ok: true,
-      json: async () => ({ items: [SAMPLE], available: true }),
+      json: async () => ({ items: [SAMPLE] }),
     })) as unknown as typeof fetch;
 
     const { result } = renderHook(() => useOpenBets(), { wrapper });
@@ -63,19 +59,6 @@ describe("useOpenBets / useSubmitBetVerdict", () => {
       expect.objectContaining({ cache: "no-store" }),
     );
     expect(result.current.data?.items).toEqual([SAMPLE]);
-    expect(result.current.data?.available).toBe(true);
-  });
-
-  it("surfaces available:false when the backend is not wired, without treating it as an error", async () => {
-    global.fetch = vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ items: [], available: false }),
-    })) as unknown as typeof fetch;
-
-    const { result } = renderHook(() => useOpenBets(), { wrapper });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data?.available).toBe(false);
   });
 
   it("rejects on a non-2xx response", async () => {
