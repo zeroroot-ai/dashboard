@@ -47,7 +47,7 @@ lint: ## ESLint over the TS/TSX surface
 typecheck: ## tsc --noEmit
 	$(PNPM) typecheck
 
-knip: ## Dead-code / unused-dependency gate (blocking; see knip.json)
+knip: ## Dead-code / unused-dependency gate (blocking; see knip.jsonc)
 	$(PNPM) knip
 
 proto: ## Regenerate the TS proto bindings (workstation-only; needs sibling repos)
