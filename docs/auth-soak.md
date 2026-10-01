@@ -23,7 +23,8 @@ the in-cluster Prometheus.
 | `dashboard_membership_resolution_total{outcome="..."}` | Counter | FGA membership resolution outcomes (single/multi/zero/fga_error/daemon_error) | `fga_error` and `daemon_error` should be 0; sustained non-zero triggers `DashboardFGAUnreachable` |
 | `dashboard_membership_resolution_duration_seconds` | Histogram | ListMyMemberships RPC latency from dashboard | p99 < 500 ms under normal FGA load |
 | `dashboard_active_tenant_validation_total{outcome="..."}` | Counter | Cookie validation outcomes per protected request | `stale` and `forbidden` should be low; spikes indicate revocation events or cookie tampering |
-| `dashboard_user_token_forwarding_disabled_total` | Counter | Dashboard RPCs served via the SPIFFE-fallback transport | **Should be 0 in steady state.** Non-zero means `USE_USER_TOKEN_FORWARDING=false` is active, the SPIFFE-fallback transport is engaged and per-user FGA audit attribution is disabled. Non-zero during soak requires investigation before declaring the spec complete. |
+| `dashboard_workload_svid_fallback_total` | Counter | Outbound daemon RPCs that left without the pod's X509-SVID, over plain HTTPS | **A sustained rate means the SPIFFE Workload API is unreachable** and calls carry only their Bearer token. One increment per pod start is the cold SVID cache and is expected. |
+| `dashboard_user_token_forwarding_disabled_total` | Counter | Deprecated alias of the row above, same count | Written for ONE release while the chart alert moves to the new name. The chart pins the dashboard by release tag, so the new series does not exist in a cluster until the chart pins a release that emits it. Do not build anything new on this name. |
 
 ---
 
@@ -113,14 +114,6 @@ UX. It does not change the core authentication code path. However, if the
    - The Prometheus operator will reconcile within 60 seconds.
    - Do NOT directly `kubectl edit` the PrometheusRule, use Helm/GitOps.
 
-4. **If `USE_USER_TOKEN_FORWARDING=false` was set as a soak backout** (from the
-   `dashboard-fga-user-identity` spec):
-   - `dashboard_user_token_forwarding_disabled_total` will be non-zero.
-   - This is expected during a controlled backout window but must return to 0
-     before the soak is declared complete.
-   - To re-enable forwarding: set `USE_USER_TOKEN_FORWARDING=true` in the
-     dashboard Helm values and redeploy.
-
 ---
 
 ## Soak completion criteria
@@ -131,7 +124,9 @@ hold for a 24-hour window post-deploy:
 - [ ] `DashboardSignInErrorRateHigh` has not fired.
 - [ ] `DashboardFGAUnreachable` has not fired.
 - [ ] `DashboardSignInLatencyBudgetBurn` has not fired.
-- [ ] `dashboard_user_token_forwarding_disabled_total` is 0.
+- [ ] `dashboard_workload_svid_fallback_total` is flat after the first
+      minute of each pod's life (a cold SVID cache counts once; a climbing rate
+      means the Workload API socket is missing).
 - [ ] p95 sign-in latency (from `dashboard_signin_duration_seconds`) is below 1.5 s.
 - [ ] `dashboard_login_error_total` shows no unexpected spikes.
 - [ ] The Grafana dashboard renders all panels with data (no "no data" on sign-in panels).

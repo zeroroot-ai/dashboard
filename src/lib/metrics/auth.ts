@@ -185,21 +185,72 @@ const tenantSwitchTotal = getOrCreateCounter({
 });
 
 // ---------------------------------------------------------------------------
-// User-token-forwarding backout (spec: dashboard-fga-user-identity R8)
+// Workload-identity transport fallback
 // ---------------------------------------------------------------------------
 
 /**
- * Increments on every dashboard daemon RPC made via the SPIFFE-fallback
- * (USE_USER_TOKEN_FORWARDING=false) branch. Non-zero in steady state
- * means the soak-mode backout is active, per-user FGA is disabled and
- * audit attribution falls back to the dashboard workload identity.
+ * Increments on every outbound daemon RPC that leaves without the pod's
+ * X509-SVID, so the call reaches Envoy over plain HTTPS carrying only its
+ * Bearer token. Two causes: the SPIFFE Workload API socket is absent, or the
+ * SVID cache was still cold.
  *
- * Phase 9 of the spec deletes both the flag and this counter.
+ * The chart alerts on this (`DashboardUserTokenForwardingDisabled`,
+ * gibson-workloads/templates/dashboard/auth-prometheusrule.yaml), and until
+ * now NOTHING incremented it, so the alert could not fire for any reason. The
+ * counter was declared for the USE_USER_TOKEN_FORWARDING soak backout, that
+ * flag was deleted, and charts#294 re-aimed the alert at a transport fault
+ * without anything producing the series it reads.
+ *
+ * A cold cache increments once per pod start, which the alert's `for: 10m`
+ * absorbs: one increment makes `increase(...[5m]) > 0` true for five minutes,
+ * not ten. A missing socket increments on every RPC and sustains, which is the
+ * condition worth paging about.
+ *
+ * TWO series carry the same count during a rename, deliberately. The old name
+ * says user-token-forwarding and the condition no longer does, but the chart
+ * pins the dashboard by release tag + digest
+ * (`helm/gibson-workloads/values.yaml` → `tag: "v0.126.0@sha256:..."`), so the
+ * new series does not exist in a cluster until the chart pins a release that
+ * emits it. Switching the alert's expr first would leave it reading a series
+ * nobody writes for as long as the pin lagged.
+ *
+ * So the overlap closes the window to zero:
+ *   1. this release emits BOTH names
+ *   2. charts re-pins to it AND moves the expr to the new name, one PR
+ *   3. a later dashboard release drops the old name
+ *   4. charts re-pins, no alert change
+ *
+ * Step 3 deletes `legacyName` and this comment. Until then the duplicate is
+ * load-bearing and must not be "cleaned up".
  */
-const userTokenForwardingDisabledTotal = getOrCreateCounter({
-  name: "dashboard_user_token_forwarding_disabled_total",
-  help: "Dashboard RPCs served via the SPIFFE-fallback transport because USE_USER_TOKEN_FORWARDING=false. Non-zero in steady state means the soak backout is active.",
+const workloadSvidFallbackTotal = getOrCreateCounter({
+  name: "dashboard_workload_svid_fallback_total",
+  help: "Outbound dashboard daemon RPCs that left without the pod's X509-SVID, over plain HTTPS. Sustained non-zero means the SPIFFE Workload API is unreachable.",
 });
+
+/**
+ * The pre-rename name of {@link workloadSvidFallbackTotal}. Written for one
+ * release so the chart's `DashboardUserTokenForwardingDisabled` alert keeps
+ * reading a live series while the expr moves. Delete at step 3.
+ */
+const workloadSvidFallbackTotalLegacyName = getOrCreateCounter({
+  name: "dashboard_user_token_forwarding_disabled_total",
+  help: "Deprecated alias of dashboard_workload_svid_fallback_total, kept for one release while the chart alert moves to the new name. Do not build anything new on it.",
+});
+
+/**
+ * Helper: record one outbound RPC that went without the workload SVID.
+ * Called from the transport's fallback branches, which run in the Node.js
+ * runtime only.
+ *
+ * Increments BOTH series from the one event, so the two can never disagree
+ * during the rename. A caller that bumped only one would make the overlap a
+ * source of two different numbers.
+ */
+export function recordWorkloadSvidFallback(): void {
+  workloadSvidFallbackTotal.inc();
+  workloadSvidFallbackTotalLegacyName.inc();
+}
 
 // ---------------------------------------------------------------------------
 // Sign-in + login-error metrics (spec: auth-resolution-hardening R3)
