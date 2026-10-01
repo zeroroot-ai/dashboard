@@ -69,7 +69,6 @@ interface FormState {
   url: string;
   provider: string;
   model: string;
-  authType: string;
   status: string;
   description: string;
   tags: string;
@@ -79,7 +78,6 @@ interface FormState {
 
 const TYPE_OPTIONS = ["llm_chat", "llm_api", "rag", "agent", "embedding", "multimodal", "custom"];
 const PROVIDER_OPTIONS = ["", "openai", "anthropic", "google", "azure", "ollama", "custom"];
-const AUTH_OPTIONS = ["none", "api_key", "bearer", "basic", "oauth"];
 const STATUS_OPTIONS = ["active", "inactive", "error"];
 
 const EMPTY_FORM: FormState = {
@@ -88,7 +86,6 @@ const EMPTY_FORM: FormState = {
   url: "",
   provider: "",
   model: "",
-  authType: "none",
   status: "active",
   description: "",
   tags: "",
@@ -103,7 +100,6 @@ function toForm(t: TargetView): FormState {
     url: t.url,
     provider: t.provider,
     model: t.model,
-    authType: t.authType || "none",
     status: t.status || "active",
     description: t.description,
     tags: t.tags.join(", "),
@@ -214,7 +210,6 @@ export function TargetsLibrary() {
       url: form.url.trim(),
       provider: form.provider.trim(),
       model: form.model.trim(),
-      authType: form.authType.trim(),
       status: form.status.trim(),
       description: form.description.trim(),
       tags: splitList(form.tags),
@@ -413,24 +408,6 @@ export function TargetsLibrary() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Auth type</Label>
-                <Select
-                  value={form.authType}
-                  onValueChange={(v) => setForm((f) => ({ ...f, authType: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {AUTH_OPTIONS.map((o) => (
-                      <SelectItem key={o} value={o}>
-                        {o}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="space-y-1.5">
                 <Label>Status</Label>
                 <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
