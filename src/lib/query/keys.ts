@@ -187,6 +187,13 @@ export const queryKeys = {
     all: ['hitl-settle'] as const,
     list: (tenantId: string) => ['hitl-settle', tenantId, 'list'] as const,
   },
+
+  // Reliability / calibration report (ADR-0022, gibson#284, dashboard#98).
+  calibration: {
+    all: ['calibration'] as const,
+    report: (tenantId: string, bins: number) =>
+      ['calibration', tenantId, 'report', bins] as const,
+  },
 } as const;
 
 // Type helpers for query keys
