@@ -19,11 +19,6 @@ pnpm exec playwright test --list e2e/mission-execute.spec.ts
 pnpm exec playwright test --list e2e/billing-webhook.spec.ts
 pnpm exec playwright test --list e2e/plan-change.spec.ts
 
-# Stubbed tests only (require TEST_AUTH_BYPASS=1 but no kind cluster)
-TEST_AUTH_BYPASS=1 AUTH_SECRET=<your-local-secret> pnpm test:e2e e2e/tenant-provision.spec.ts
-TEST_AUTH_BYPASS=1 AUTH_SECRET=<your-local-secret> pnpm test:e2e e2e/agent-enrollment.spec.ts
-TEST_AUTH_BYPASS=1 AUTH_SECRET=<your-local-secret> pnpm test:e2e e2e/mission-execute.spec.ts
-
 # Integration tests (require kind cluster)
 E2E_KIND_AVAILABLE=1 PLAYWRIGHT_BASE_URL=https://app.zeroroot.local:30443 \
   pnpm test:e2e e2e/tenant-provision.spec.ts
@@ -55,7 +50,6 @@ Located under `e2e/page-objects/`:
 
 | File | Purpose |
 |---|---|
-| `auth.po.ts` | Inject synthetic Auth.js sessions; stub `/api/auth/my-memberships` |
 | `dashboard.po.ts` | Navigate to dashboard; stub daemon proxy and tier endpoints |
 | `billing.po.ts` | Sign Stripe webhooks with HMAC-SHA256; stub checkout; build event payloads |
 
@@ -64,10 +58,15 @@ Located under `e2e/page-objects/`:
 Every spec uses `test.skip()` at the describe level for blocks that require
 infrastructure. The two gates used across these specs are:
 
-- `test.skip(!process.env.TEST_AUTH_BYPASS, ...)`, for tests that inject
-  synthetic session cookies (requires `TEST_AUTH_BYPASS=1` on the server).
 - `test.skip(!process.env.E2E_KIND_AVAILABLE, ...)`, for integration tests
   that require a live kind cluster.
+
+There used to be a second gate, `TEST_AUTH_BYPASS`, for tests that injected a
+synthetic session cookie. The encoder behind it is deleted and
+`scripts/check-no-session-forgery.mjs` refuses it coming back: a module that
+forges a session is a second way to be authenticated (ADR-0027). A spec that needs
+a signed-in browser has to sign in, and that lane does not exist yet —
+dashboard#163.
 
 Tests with neither gate run unconditionally (e.g., the billing UI-stub tests
 that use only `page.route()` interception).

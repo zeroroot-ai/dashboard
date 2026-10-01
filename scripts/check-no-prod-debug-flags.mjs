@@ -10,7 +10,12 @@
  *   - /api/test/fga-revoke        TEST_FIXTURES_ENABLED=true   (revokes authz)
  *   - /api/test/inject-fault      TEST_FIXTURES_ENABLED=true
  *   - /api/debug/recent-errors    DASHBOARD_DEBUG=1            (error ring buffer)
- *   - (test-only auth)            TEST_AUTH_BYPASS=1
+ *
+ * TEST_AUTH_BYPASS was a fourth entry here. It gated a module that forged an
+ * Auth.js session JWE, and it is gone: the module is deleted and the flag is
+ * nothing. A flag cannot be set to its enabling value if nothing reads it, so
+ * there is no contract left for this guard to lock. What replaced it is
+ * check-no-session-forgery.mjs, which refuses the module coming back.
  *
  * The codebase deliberately does NOT gate these on `NODE_ENV`, that is the
  * forbidden anti-pattern enforced by check-no-nodeenv-conditioned-auth.mjs
@@ -36,7 +41,6 @@ const DANGEROUS = [
   { flag: "TEST_FIXTURES_ENABLED", enable: /TEST_FIXTURES_ENABLED\s*[:=]\s*["']?true["']?/i },
   { flag: "DASHBOARD_DEBUG", enable: /\bDASHBOARD_DEBUG\s*[:=]\s*["']?1["']?/ },
   { flag: "NEXT_PUBLIC_DASHBOARD_DEBUG", enable: /NEXT_PUBLIC_DASHBOARD_DEBUG\s*[:=]\s*["']?1["']?/ },
-  { flag: "TEST_AUTH_BYPASS", enable: /TEST_AUTH_BYPASS\s*[:=]\s*["']?1["']?/ },
 ];
 
 // Candidate committed config files. Only scan ones that are tracked by git.
