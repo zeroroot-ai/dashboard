@@ -23,7 +23,8 @@ the in-cluster Prometheus.
 | `dashboard_membership_resolution_total{outcome="..."}` | Counter | FGA membership resolution outcomes (single/multi/zero/fga_error/daemon_error) | `fga_error` and `daemon_error` should be 0; sustained non-zero triggers `DashboardFGAUnreachable` |
 | `dashboard_membership_resolution_duration_seconds` | Histogram | ListMyMemberships RPC latency from dashboard | p99 < 500 ms under normal FGA load |
 | `dashboard_active_tenant_validation_total{outcome="..."}` | Counter | Cookie validation outcomes per protected request | `stale` and `forbidden` should be low; spikes indicate revocation events or cookie tampering |
-| `dashboard_user_token_forwarding_disabled_total` | Counter | Outbound daemon RPCs that left without the pod's X509-SVID, over plain HTTPS | **A sustained rate means the SPIFFE Workload API is unreachable** and calls carry only their Bearer token. One increment per pod start is the cold SVID cache and is expected. The name predates the condition: the `USE_USER_TOKEN_FORWARDING` flag it was built for is gone, and renaming the series needs the chart alert to move with it. |
+| `dashboard_workload_svid_fallback_total` | Counter | Outbound daemon RPCs that left without the pod's X509-SVID, over plain HTTPS | **A sustained rate means the SPIFFE Workload API is unreachable** and calls carry only their Bearer token. One increment per pod start is the cold SVID cache and is expected. |
+| `dashboard_user_token_forwarding_disabled_total` | Counter | Deprecated alias of the row above, same count | Written for ONE release while the chart alert moves to the new name. The chart pins the dashboard by release tag, so the new series does not exist in a cluster until the chart pins a release that emits it. Do not build anything new on this name. |
 
 ---
 
@@ -123,7 +124,7 @@ hold for a 24-hour window post-deploy:
 - [ ] `DashboardSignInErrorRateHigh` has not fired.
 - [ ] `DashboardFGAUnreachable` has not fired.
 - [ ] `DashboardSignInLatencyBudgetBurn` has not fired.
-- [ ] `dashboard_user_token_forwarding_disabled_total` is flat after the first
+- [ ] `dashboard_workload_svid_fallback_total` is flat after the first
       minute of each pod's life (a cold SVID cache counts once; a climbing rate
       means the Workload API socket is missing).
 - [ ] p95 sign-in latency (from `dashboard_signin_duration_seconds`) is below 1.5 s.

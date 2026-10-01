@@ -206,22 +206,50 @@ const tenantSwitchTotal = getOrCreateCounter({
  * not ten. A missing socket increments on every RPC and sustains, which is the
  * condition worth paging about.
  *
- * The NAME still says user-token-forwarding and the condition no longer does.
- * Renaming it breaks the chart's alert expr and four golden files in another
- * repo, so it moves in a coordinated pair, not here.
+ * TWO series carry the same count during a rename, deliberately. The old name
+ * says user-token-forwarding and the condition no longer does, but the chart
+ * pins the dashboard by release tag + digest
+ * (`helm/gibson-workloads/values.yaml` → `tag: "v0.126.0@sha256:..."`), so the
+ * new series does not exist in a cluster until the chart pins a release that
+ * emits it. Switching the alert's expr first would leave it reading a series
+ * nobody writes for as long as the pin lagged.
+ *
+ * So the overlap closes the window to zero:
+ *   1. this release emits BOTH names
+ *   2. charts re-pins to it AND moves the expr to the new name, one PR
+ *   3. a later dashboard release drops the old name
+ *   4. charts re-pins, no alert change
+ *
+ * Step 3 deletes `legacyName` and this comment. Until then the duplicate is
+ * load-bearing and must not be "cleaned up".
  */
 const workloadSvidFallbackTotal = getOrCreateCounter({
-  name: "dashboard_user_token_forwarding_disabled_total",
+  name: "dashboard_workload_svid_fallback_total",
   help: "Outbound dashboard daemon RPCs that left without the pod's X509-SVID, over plain HTTPS. Sustained non-zero means the SPIFFE Workload API is unreachable.",
+});
+
+/**
+ * The pre-rename name of {@link workloadSvidFallbackTotal}. Written for one
+ * release so the chart's `DashboardUserTokenForwardingDisabled` alert keeps
+ * reading a live series while the expr moves. Delete at step 3.
+ */
+const workloadSvidFallbackTotalLegacyName = getOrCreateCounter({
+  name: "dashboard_user_token_forwarding_disabled_total",
+  help: "Deprecated alias of dashboard_workload_svid_fallback_total, kept for one release while the chart alert moves to the new name. Do not build anything new on it.",
 });
 
 /**
  * Helper: record one outbound RPC that went without the workload SVID.
  * Called from the transport's fallback branches, which run in the Node.js
  * runtime only.
+ *
+ * Increments BOTH series from the one event, so the two can never disagree
+ * during the rename. A caller that bumped only one would make the overlap a
+ * source of two different numbers.
  */
 export function recordWorkloadSvidFallback(): void {
   workloadSvidFallbackTotal.inc();
+  workloadSvidFallbackTotalLegacyName.inc();
 }
 
 // ---------------------------------------------------------------------------
