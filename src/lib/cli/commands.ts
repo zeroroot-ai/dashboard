@@ -67,7 +67,7 @@ export function buildCliCommands({
       label: "Confirm grants",
       command: "gibson inspect",
       description:
-        "Show what this principal can do, the effective grants the platform resolved for the checked-in component.",
+        "Show the effective grants the platform resolved — for the checked-in component, or for you when no component is registered and you are signed in.",
     },
   ];
 }
