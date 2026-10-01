@@ -29,6 +29,7 @@ import {
   CrosshairIcon,
   ClipboardCheckIcon,
   ClipboardListIcon,
+  GaugeIcon,
   GlobeIcon,
   LayoutDashboardIcon,
   ListTreeIcon,
@@ -121,6 +122,13 @@ export const navItems: NavGroup[] = [
         title: "Knowledge Graph",
         href: "/dashboard/graph",
         icon: NetworkIcon
+      },
+      {
+        // The reliability diagram (ADR-0022, dashboard#98): the visible proof
+        // that the fleet's confidence numbers are calibrated against outcomes.
+        title: "Reliability",
+        href: "/dashboard/reliability",
+        icon: GaugeIcon
       },
       {
         title: "Agents",
