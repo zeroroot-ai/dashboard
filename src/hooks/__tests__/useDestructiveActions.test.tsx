@@ -20,18 +20,14 @@ vi.mock("@/src/lib/api/fetch", () => ({
 const mockApiFetch = vi.fn();
 
 const SAMPLE: PendingDestructiveAction = {
-  id: "hyp-1:0",
+  id: "hyp-1",
   missionId: "m1",
   scopeId: "s1",
   hypothesisId: "hyp-1",
-  claim: "port 6443 is unauthenticated",
-  technique: "http-probe",
+  technique: "T1190",
   predicateType: "status_code",
-  predicateParams: { expect: 200 },
-  action: "Send an authenticated request without credentials",
   blastRadius: "single host: 10.0.0.5",
-  reversible: true,
-  reversibilityNote: "read-only probe",
+  reversibility: "irreversible",
   requestedAt: "2026-09-28T00:00:00.000Z",
 };
 
@@ -54,7 +50,7 @@ describe("useDestructiveActions / useDecideDestructiveAction", () => {
   it("fetches the pending queue from the real API route, not a fixture", async () => {
     global.fetch = vi.fn(async () => ({
       ok: true,
-      json: async () => ({ items: [SAMPLE], available: true }),
+      json: async () => ({ items: [SAMPLE] }),
     })) as unknown as typeof fetch;
 
     const { result } = renderHook(() => useDestructiveActions(), { wrapper });
@@ -65,20 +61,6 @@ describe("useDestructiveActions / useDecideDestructiveAction", () => {
       expect.objectContaining({ cache: "no-store" }),
     );
     expect(result.current.data?.items).toEqual([SAMPLE]);
-    expect(result.current.data?.available).toBe(true);
-  });
-
-  it("surfaces available:false when the backend is not wired, without treating it as an error", async () => {
-    global.fetch = vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ items: [], available: false }),
-    })) as unknown as typeof fetch;
-
-    const { result } = renderHook(() => useDestructiveActions(), { wrapper });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data?.available).toBe(false);
-    expect(result.current.data?.items).toEqual([]);
   });
 
   it("rejects on a non-2xx response", async () => {

@@ -5,9 +5,8 @@
  * Per-route contract test for /api/world/destructive-actions — the ADR-0028
  * destructive-action authorization queue (dashboard#99). The backend client
  * (src/lib/destructive-actions/client.ts) is swapped per-test via its
- * test-only seam, so this is a pure route contract: GET maps the queue
- * (including the "backend not wired" case), POST validates + forwards the
- * decision, plus the 401/400/503 paths.
+ * test-only seam, so this is a pure route contract: GET maps the queue, POST
+ * validates + forwards the decision, plus the 401/400 paths.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -15,7 +14,6 @@ import { NextRequest } from "next/server";
 import {
   __setDestructiveActionsClientForTest,
   __resetDestructiveActionsClientForTest,
-  DestructiveActionsBackendUnavailableError,
   type DestructiveActionsClient,
 } from "@/src/lib/destructive-actions/client";
 import type { PendingDestructiveAction } from "@/src/types/destructive-actions";
@@ -47,18 +45,14 @@ import { GET, POST } from "../route";
 const SESSION = { user: { id: "u1", tenantId: "t1" } };
 
 const SAMPLE: PendingDestructiveAction = {
-  id: "hyp-1:0",
-  missionId: "m1",
-  scopeId: "s1",
+  id: "hyp-1",
   hypothesisId: "hyp-1",
-  claim: "port 6443 is unauthenticated",
-  technique: "http-probe",
+  scopeId: "s1",
+  missionId: "m1",
+  technique: "T1190",
   predicateType: "status_code",
-  predicateParams: { expect: 200 },
-  action: "Send an authenticated request without credentials",
   blastRadius: "single host: 10.0.0.5",
-  reversible: true,
-  reversibilityNote: "read-only probe",
+  reversibility: "irreversible",
   requestedAt: "2026-09-28T00:00:00.000Z",
 };
 
@@ -80,7 +74,7 @@ afterEach(() => {
 });
 
 describe("GET /api/world/destructive-actions", () => {
-  it("maps the pending queue when the backend is wired", async () => {
+  it("maps the pending queue", async () => {
     const fake: DestructiveActionsClient = {
       listPending: vi.fn(async () => [SAMPLE]),
       decide: vi.fn(),
@@ -90,25 +84,15 @@ describe("GET /api/world/destructive-actions", () => {
     const res = await GET();
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.available).toBe(true);
     expect(body.items).toHaveLength(1);
     expect(body.items[0]).toEqual(SAMPLE);
   });
 
-  it("reports available:false (not an error) when the backend is not wired", async () => {
-    const fake: DestructiveActionsClient = {
-      listPending: vi.fn(async () => {
-        throw new DestructiveActionsBackendUnavailableError();
-      }),
-      decide: vi.fn(),
-    };
-    __setDestructiveActionsClientForTest(fake);
-
+  it("returns an empty queue as items:[] (not an error)", async () => {
+    __setDestructiveActionsClientForTest({ listPending: vi.fn(async () => []), decide: vi.fn() });
     const res = await GET();
     expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.available).toBe(false);
-    expect(body.items).toEqual([]);
+    expect((await res.json()).items).toEqual([]);
   });
 
   it("401 when unauthenticated", async () => {
@@ -123,26 +107,24 @@ describe("POST /api/world/destructive-actions", () => {
     const decide = vi.fn(async () => undefined);
     __setDestructiveActionsClientForTest({ listPending: vi.fn(), decide });
 
-    const res = await POST(postReq({ id: "hyp-1:0", decision: "approve" }));
+    const res = await POST(postReq({ id: "hyp-1", decision: "approve" }));
     expect(res.status).toBe(200);
-    expect(decide).toHaveBeenCalledWith("hyp-1:0", "approve", undefined);
+    expect(decide).toHaveBeenCalledWith("hyp-1", "approve");
   });
 
-  it("forwards a valid deny decision with a reason", async () => {
+  it("forwards a valid deny decision", async () => {
     const decide = vi.fn(async () => undefined);
     __setDestructiveActionsClientForTest({ listPending: vi.fn(), decide });
 
-    const res = await POST(
-      postReq({ id: "hyp-1:0", decision: "deny", reason: "too risky right now" }),
-    );
+    const res = await POST(postReq({ id: "hyp-1", decision: "deny" }));
     expect(res.status).toBe(200);
-    expect(decide).toHaveBeenCalledWith("hyp-1:0", "deny", "too risky right now");
+    expect(decide).toHaveBeenCalledWith("hyp-1", "deny");
   });
 
   it("400 on an unknown decision (fail-closed)", async () => {
     const decide = vi.fn();
     __setDestructiveActionsClientForTest({ listPending: vi.fn(), decide });
-    const res = await POST(postReq({ id: "hyp-1:0", decision: "maybe" }));
+    const res = await POST(postReq({ id: "hyp-1", decision: "maybe" }));
     expect(res.status).toBe(400);
     expect(decide).not.toHaveBeenCalled();
   });
@@ -155,21 +137,9 @@ describe("POST /api/world/destructive-actions", () => {
     expect(decide).not.toHaveBeenCalled();
   });
 
-  it("503 when the backend is not wired", async () => {
-    const decide = vi.fn(async () => {
-      throw new DestructiveActionsBackendUnavailableError();
-    });
-    __setDestructiveActionsClientForTest({ listPending: vi.fn(), decide });
-
-    const res = await POST(postReq({ id: "hyp-1:0", decision: "approve" }));
-    expect(res.status).toBe(503);
-    const body = await res.json();
-    expect(body.error.code).toBe("BACKEND_NOT_WIRED");
-  });
-
   it("401 when unauthenticated", async () => {
     mockGetServerSession.mockResolvedValue(null);
-    const res = await POST(postReq({ id: "hyp-1:0", decision: "approve" }));
+    const res = await POST(postReq({ id: "hyp-1", decision: "approve" }));
     expect(res.status).toBe(401);
   });
 });

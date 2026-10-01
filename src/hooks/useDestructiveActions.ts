@@ -5,11 +5,10 @@
 
 /**
  * React Query hooks for the ADR-0028 destructive-action authorization queue
- * (gibson#278, dashboard#99). Reads go to GET /api/world/destructive-actions,
+ * (gibson#278/#336, dashboard#99). Reads go to GET /api/world/destructive-actions,
  * decisions POST through `apiFetch` (CSRF). Both are real network calls
- * against the dashboard's own API route — never a fixture — so the queue
- * shown here is exactly what `src/lib/destructive-actions/client.ts` reports
- * (including its honest "backend not wired yet" state).
+ * against the dashboard's own API route — never a fixture — so the queue shown
+ * here is exactly what `DestructiveAuthorizationService` reports.
  */
 
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
@@ -53,7 +52,6 @@ export function useDestructiveActions(): UseQueryResult<DestructiveActionQueueRe
 interface DecideVariables {
   id: string;
   decision: DestructiveActionDecision;
-  reason?: string;
 }
 
 /**

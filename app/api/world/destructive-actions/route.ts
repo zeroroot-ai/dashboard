@@ -5,15 +5,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
-import {
-  getDestructiveActionsClient,
-  DestructiveActionsBackendUnavailableError,
-} from '@/src/lib/destructive-actions/client';
+import { getDestructiveActionsClient } from '@/src/lib/destructive-actions/client';
 import type { DestructiveActionDecision } from '@/src/types/destructive-actions';
 
 /**
  * /api/world/destructive-actions — the ADR-0028 destructive-action
- * authorization queue (gibson#278, dashboard#99).
+ * authorization queue (gibson#278/#336, dashboard#99), backed by
+ * `DestructiveAuthorizationService` over Envoy + ext-authz.
  *
  * GET  returns the caller's tenant's pending destructive actions: what each
  *      one would do, its blast radius, its reversibility, the predicate it
@@ -21,14 +19,8 @@ import type { DestructiveActionDecision } from '@/src/types/destructive-actions'
  *      NEVER blocks the rest of the mission — only the one gated action
  *      waits (ADR-0028 §2).
  * POST records one human's approve/deny decision for a specific pending
- *      action. Per-action, not per-mission: approving or denying one action
- *      never touches any other pending action or the mission's own state.
- *
- * The backend queue itself does not exist on the wire yet — see
- * src/lib/destructive-actions/client.ts for the stub seam this route reads
- * through. `available: false` on GET (and a 503 BACKEND_NOT_WIRED on POST)
- * is the honest "nothing can be authorized yet" state, not a route bug: today
- * gibson refuses every destructive request outright rather than queuing it.
+ *      action. Per-action, not per-mission: the decision never touches any
+ *      other pending action or the mission's own state.
  */
 const DECISIONS = new Set<DestructiveActionDecision>(['approve', 'deny']);
 
@@ -42,15 +34,8 @@ export async function GET() {
       );
     }
 
-    try {
-      const items = await getDestructiveActionsClient().listPending();
-      return NextResponse.json({ items, available: true });
-    } catch (err) {
-      if (err instanceof DestructiveActionsBackendUnavailableError) {
-        return NextResponse.json({ items: [], available: false });
-      }
-      throw err;
-    }
+    const items = await getDestructiveActionsClient().listPending();
+    return NextResponse.json({ items });
   } catch (error) {
     return daemonErrorResponse(error);
   }
@@ -78,7 +63,6 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as {
       id?: string;
       decision?: string;
-      reason?: string;
     };
 
     if (!body.id) {
@@ -94,22 +78,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    try {
-      await getDestructiveActionsClient().decide(
-        body.id,
-        body.decision as DestructiveActionDecision,
-        body.reason,
-      );
-    } catch (err) {
-      if (err instanceof DestructiveActionsBackendUnavailableError) {
-        return NextResponse.json(
-          { error: { code: 'BACKEND_NOT_WIRED', message: err.message } },
-          { status: 503 },
-        );
-      }
-      throw err;
-    }
-
+    await getDestructiveActionsClient().decide(body.id, body.decision as DestructiveActionDecision);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return daemonErrorResponse(error);

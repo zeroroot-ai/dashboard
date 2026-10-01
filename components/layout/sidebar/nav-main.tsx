@@ -40,6 +40,7 @@ import {
   RocketIcon,
   ServerIcon,
   SettingsIcon,
+  ShieldAlertIcon,
   TerminalIcon,
   LayersIcon,
   ShieldCheckIcon,
@@ -196,6 +197,14 @@ export const navItems: NavGroup[] = [
         title: "Events",
         href: "/dashboard/events",
         icon: ActivityIcon
+      },
+      {
+        // The destructive-action authorization queue (ADR-0028, dashboard#99):
+        // a human authorizes each irreversible demonstration before it runs.
+        // The gate is per-action, never per-mission.
+        title: "Authorizations",
+        href: "/dashboard/destructive-actions",
+        icon: ShieldAlertIcon
       }
     ]
   },

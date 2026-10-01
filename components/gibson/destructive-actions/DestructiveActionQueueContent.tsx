@@ -23,9 +23,9 @@ import {
   ShieldAlertIcon,
   UnlockIcon,
   LockIcon,
+  HelpCircleIcon,
   CheckIcon,
   XIcon,
-  PlugZapIcon,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -40,22 +40,41 @@ import {
 } from "@/src/hooks/useDestructiveActions";
 import type {
   DestructiveActionDecision,
+  DestructiveReversibility,
   PendingDestructiveAction,
 } from "@/src/types/destructive-actions";
 
 // ── Reversibility badge ──────────────────────────────────────────────────────
 
-function ReversibilityBadge({ reversible }: { reversible: boolean }) {
-  return reversible ? (
+function ReversibilityBadge({ reversibility }: { reversibility: DestructiveReversibility }) {
+  if (reversibility === "reversible") {
+    return (
+      <Badge className="border border-border bg-muted/60 font-mono text-xs uppercase tracking-wide text-muted-foreground">
+        <UnlockIcon className="mr-1 size-3" /> Reversible
+      </Badge>
+    );
+  }
+  if (reversibility === "irreversible") {
+    return (
+      <Badge className="border border-destructive/40 bg-destructive/10 font-mono text-xs uppercase tracking-wide text-destructive">
+        <LockIcon className="mr-1 size-3" /> Irreversible
+      </Badge>
+    );
+  }
+  return (
     <Badge className="border border-border bg-muted/60 font-mono text-xs uppercase tracking-wide text-muted-foreground">
-      <UnlockIcon className="mr-1 size-3" /> Reversible
-    </Badge>
-  ) : (
-    <Badge className="border border-destructive/40 bg-destructive/10 font-mono text-xs uppercase tracking-wide text-destructive">
-      <LockIcon className="mr-1 size-3" /> Irreversible
+      <HelpCircleIcon className="mr-1 size-3" /> Reversibility not classified
     </Badge>
   );
 }
+
+/** Copy for the detail row's reversibility line. */
+const REVERSIBILITY_NOTE: Record<DestructiveReversibility, string> = {
+  reversible: "The daemon marks this action reversible.",
+  irreversible: "The daemon marks this action irreversible.",
+  unspecified:
+    "No reversibility signal yet; it reached this queue because it is destructive at all.",
+};
 
 // ── One pending action ───────────────────────────────────────────────────────
 
@@ -95,9 +114,12 @@ function DestructiveActionRow({ item }: { item: PendingDestructiveAction }) {
             <Badge className="border border-highlight/40 bg-highlight/10 font-mono text-xs uppercase tracking-wide text-highlight">
               {item.technique}
             </Badge>
-            <ReversibilityBadge reversible={item.reversible} />
+            <ReversibilityBadge reversibility={item.reversibility} />
           </div>
-          <p className="text-sm font-medium">{item.action}</p>
+          <p className="text-sm font-medium">
+            Run the <span className="font-mono">{item.technique}</span> demonstration to satisfy the{" "}
+            <span className="font-mono">{item.predicateType}</span> predicate.
+          </p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -123,31 +145,26 @@ function DestructiveActionRow({ item }: { item: PendingDestructiveAction }) {
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Blast radius
           </div>
-          <div>{item.blastRadius}</div>
+          <div>{item.blastRadius || "Not yet classified"}</div>
         </div>
         <div>
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Reversibility
           </div>
-          <div>{item.reversibilityNote}</div>
+          <div>{REVERSIBILITY_NOTE[item.reversibility]}</div>
         </div>
         <div>
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Predicate
           </div>
-          <div className="font-mono text-xs">
-            {item.predicateType}
-            {item.predicateParams != null && (
-              <span className="text-muted-foreground"> {JSON.stringify(item.predicateParams)}</span>
-            )}
-          </div>
+          <div className="font-mono text-xs">{item.predicateType}</div>
         </div>
         <div>
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Hypothesis / bet
           </div>
-          <div>{item.claim}</div>
           <div className="font-mono text-xs text-muted-foreground">{item.hypothesisId}</div>
+          <div className="font-mono text-xs text-muted-foreground">scope {item.scopeId}</div>
         </div>
       </CardContent>
     </Card>
@@ -182,15 +199,7 @@ export function DestructiveActionQueueContent() {
         <ErrorAlert title="Failed to load the authorization queue" error={error} />
       )}
 
-      {!isLoading && !error && data && !data.available && (
-        <EmptyState
-          icon={PlugZapIcon}
-          title="Authorization backend not yet connected"
-          description="Gibson refuses every destructive demonstration outright until this queue is wired to a live authorizer. Nothing is pending because nothing can be authorized yet. This is not an error."
-        />
-      )}
-
-      {!isLoading && !error && data && data.available && data.items.length === 0 && (
+      {!isLoading && !error && data && data.items.length === 0 && (
         <EmptyState
           icon={ShieldAlertIcon}
           title="Nothing awaiting authorization"
@@ -198,7 +207,7 @@ export function DestructiveActionQueueContent() {
         />
       )}
 
-      {!isLoading && !error && data && data.available && data.items.length > 0 && (
+      {!isLoading && !error && data && data.items.length > 0 && (
         <div className="space-y-3">
           {data.items.map((item) => (
             <DestructiveActionRow key={item.id} item={item} />
