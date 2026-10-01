@@ -41,7 +41,7 @@
  *   E2E_CONNECTOR_NAME    - Its display name (default: GitLab)
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 // ---------------------------------------------------------------------------
 // Config

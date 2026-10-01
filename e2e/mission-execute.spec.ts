@@ -30,7 +30,7 @@
  * Refs: dashboard#221 (slice 5.8).
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page, type BrowserContext } from "@playwright/test";
 
 // ---------------------------------------------------------------------------
 // Skip guards
