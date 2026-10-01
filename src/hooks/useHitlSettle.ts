@@ -8,8 +8,7 @@
  * #266/#280, dashboard#97). Reads go to GET /api/world/bet-settlements,
  * verdicts POST through `apiFetch` (CSRF). Both are real network calls
  * against the dashboard's own API route — never a fixture — so the queue
- * shown here is exactly what `src/lib/hitl-settle/client.ts` reports
- * (including its honest "backend not wired yet" state).
+ * shown here is exactly what `WorldService.ListOpenBets` reports.
  */
 
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
@@ -56,13 +55,12 @@ export function useOpenBets(): UseQueryResult<HitlSettleQueueResponse, Error> {
 interface SubmitVerdictVariables {
   id: string;
   verdict: BetVerdict;
-  category?: string;
 }
 
 /**
  * Records one human's verdict for a specific OPEN bet. true_positive/
  * false_positive settle the bet; dismiss records a label without settling
- * (the backend refuses to settle a bet as "dismiss" — see client.ts).
+ * (the daemon's own rule — see client.ts).
  */
 export function useSubmitBetVerdict() {
   const qc = useQueryClient();

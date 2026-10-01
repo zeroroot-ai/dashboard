@@ -21,7 +21,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { GavelIcon, CheckIcon, XIcon, CircleSlashIcon, ExternalLinkIcon, PlugZapIcon } from "lucide-react";
+import { GavelIcon, CheckIcon, XIcon, CircleSlashIcon, ExternalLinkIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,15 @@ import { ErrorAlert } from "@/components/gibson/shared/ErrorAlert";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { TableSkeleton } from "@/components/gibson/shared/DataSkeleton";
 import { useOpenBets, useSubmitBetVerdict } from "@/src/hooks/useHitlSettle";
-import type { BetVerdict, OpenBetForReview } from "@/src/types/hitl-settle";
+import type { BetEvidenceItem, BetVerdict, OpenBetForReview } from "@/src/types/hitl-settle";
+
+/** Render one referenced entity as "Label key=value, key=value". */
+function formatEvidence(item: BetEvidenceItem): string {
+  const props = Object.entries(item.idProperties)
+    .map(([k, v]) => `${k}=${v}`)
+    .join(", ");
+  return props ? `${item.label} (${props})` : item.label;
+}
 
 // ── One open bet ──────────────────────────────────────────────────────────
 
@@ -64,9 +72,6 @@ function OpenBetRow({ item }: { item: OpenBetForReview }) {
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3 space-y-0">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge className="border border-highlight/40 bg-highlight/10 font-mono text-xs uppercase tracking-wide text-highlight">
-              {item.technique}
-            </Badge>
             <Badge className="border border-border bg-muted/60 font-mono text-xs text-muted-foreground">
               confidence {(item.confidence * 100).toFixed(0)}%
             </Badge>
@@ -110,11 +115,15 @@ function OpenBetRow({ item }: { item: OpenBetForReview }) {
         <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Evidence
         </div>
-        <ul className="list-inside list-disc space-y-1">
-          {item.evidence.map((e, i) => (
-            <li key={i}>{e.description}</li>
-          ))}
-        </ul>
+        {item.evidence.length > 0 ? (
+          <ul className="list-inside list-disc space-y-1">
+            {item.evidence.map((e, i) => (
+              <li key={i}>{formatEvidence(e)}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-muted-foreground">No referenced entities recorded.</p>
+        )}
       </CardContent>
     </Card>
   );
@@ -148,15 +157,7 @@ export function HitlSettleQueueContent() {
         <ErrorAlert title="Failed to load the HITL settle queue" error={error} />
       )}
 
-      {!isLoading && !error && data && !data.available && (
-        <EmptyState
-          icon={PlugZapIcon}
-          title="HITL settlement backend not yet connected"
-          description="This queue has no live bets to show because the backend is not wired to a queryable source yet. This is not an error."
-        />
-      )}
-
-      {!isLoading && !error && data && data.available && data.items.length === 0 && (
+      {!isLoading && !error && data && data.items.length === 0 && (
         <EmptyState
           icon={GavelIcon}
           title="Nothing open right now"
@@ -164,7 +165,7 @@ export function HitlSettleQueueContent() {
         />
       )}
 
-      {!isLoading && !error && data && data.available && data.items.length > 0 && (
+      {!isLoading && !error && data && data.items.length > 0 && (
         <div className="space-y-3">
           {data.items.map((item) => (
             <OpenBetRow key={item.id} item={item} />

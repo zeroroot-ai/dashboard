@@ -3,6 +3,9 @@
 
 import "server-only";
 
+import { userClient } from "@/src/lib/gibson-client";
+import { WorldService } from "@/src/gen/gibson/world/v1/world_pb";
+import type { OpenBet } from "@/src/gen/gibson/world/v1/world_pb";
 import type {
   BetVerdict,
   HitlSettleVerdictResponse,
@@ -10,67 +13,73 @@ import type {
 } from "@/src/types/hitl-settle";
 
 /**
- * HITL bet-settlement backend seam (ADR-0023, gibson#264/#266/#280,
- * dashboard#97).
+ * HITL bet-settlement client (ADR-0023, gibson#264/#266/#280, dashboard#97).
  *
- * gibson#280 added `SettleBetByHITL` and a `LabelApplied` Timeline event on
- * the daemon side, but — as of this slice — there is no confirmed
- * gRPC/REST surface the dashboard can call to list OPEN bets or submit a
- * verdict. This module is the ONE seam a real implementation replaces once
- * that surface exists (mirroring `src/lib/destructive-actions/client.ts`,
- * dashboard#99's identical seam for the still-unwired destructive-action
- * authorizer): swap `UnwiredHitlSettleClient` for a ConnectRPC-backed
- * implementation of `HitlSettleClient` and nothing above this file (the
- * route handler, the hook, the component) needs to change.
+ * The queue is backed by `gibson.world.v1.WorldService`: `ListOpenBets` reads
+ * the tenant's placed-but-unsettled bets and `SettleBetByHITL` records one
+ * human's verdict. Both go through the sanctioned `userClient` transport
+ * (Envoy + ext-authz); the dashboard never opens a direct daemon channel.
  *
- * `submitVerdict`'s intended real semantics (for whoever wires the RPC):
- * `SettleBetByHITL` (bet_settlement.go:592) REFUSES `VerdictDismiss` outright
- * — only `true_positive`/`false_positive` settle a bet. A real
- * implementation should route "dismiss" to a label-only write (the same
- * `LabelApplied` channel, no settlement) and set `didSettle: false` on the
- * response, while "true_positive"/"false_positive" call `SettleBetByHITL`
- * and set `didSettle: true`.
+ * This module is the one seam that maps the generated proto messages into the
+ * plain view types the route returns. The route reads it through
+ * `getHitlSettleClient()`, and route tests swap in a fake via
+ * `__setHitlSettleClientForTest` so they can exercise the route contract
+ * without a live daemon.
  */
 
 export interface HitlSettleClient {
   /** Every OPEN bet in this tenant awaiting a human verdict. */
   listOpenBets(): Promise<OpenBetForReview[]>;
-  /** Record one human's verdict, settling the bet (SettleBetByHITL). */
-  submitVerdict(
-    id: string,
-    verdict: BetVerdict,
-    category?: string,
-  ): Promise<HitlSettleVerdictResponse>;
+  /** Record one human's verdict (SettleBetByHITL). */
+  submitVerdict(id: string, verdict: BetVerdict): Promise<HitlSettleVerdictResponse>;
 }
 
-/**
- * Thrown by the stub client. Callers (the API route) treat this as "the
- * queue is legitimately empty because nothing can be judged yet", not as a
- * daemon error — see `HitlSettleQueueResponse.available`.
- */
-export class HitlSettleBackendUnavailableError extends Error {
-  constructor() {
-    super(
-      "The HITL bet-settlement backend is not wired yet: gibson#280's " +
-        "SettleBetByHITL has no confirmed gRPC/REST surface for listing " +
-        "OPEN bets or submitting a verdict. This is the dashboard#97 stub " +
-        "seam (src/lib/hitl-settle/client.ts).",
-    );
-    this.name = "HitlSettleBackendUnavailableError";
+function mapBet(bet: OpenBet): OpenBetForReview {
+  return {
+    id: bet.hypothesisId,
+    hypothesisId: bet.hypothesisId,
+    claim: bet.claim,
+    proposer: bet.proposer,
+    confidence: bet.confidence,
+    evidence: bet.evidence.map((e) => ({
+      label: e.label,
+      idProperties: { ...e.idProperties },
+    })),
+    runId: bet.runId,
+  };
+}
+
+function effectFor(verdict: BetVerdict, didSettle: boolean): string {
+  if (didSettle) {
+    return "Bet settled. The fleet's belief and this technique's reputation are updated.";
   }
+  if (verdict === "dismiss") {
+    return "Labeled dismiss. The bet stays open and nothing was settled.";
+  }
+  return "The bet was already settled, so this verdict changed nothing.";
 }
 
-class UnwiredHitlSettleClient implements HitlSettleClient {
+class WorldServiceHitlSettleClient implements HitlSettleClient {
   async listOpenBets(): Promise<OpenBetForReview[]> {
-    throw new HitlSettleBackendUnavailableError();
+    const res = await userClient(WorldService).listOpenBets({});
+    return res.bets.map(mapBet);
   }
 
-  async submitVerdict(): Promise<HitlSettleVerdictResponse> {
-    throw new HitlSettleBackendUnavailableError();
+  async submitVerdict(id: string, verdict: BetVerdict): Promise<HitlSettleVerdictResponse> {
+    const res = await userClient(WorldService).settleBetByHITL({
+      hypothesisId: id,
+      verdict,
+    });
+    return {
+      ok: true,
+      settled: verdict,
+      didSettle: res.settled,
+      effect: effectFor(verdict, res.settled),
+    };
   }
 }
 
-const defaultClient: HitlSettleClient = new UnwiredHitlSettleClient();
+const defaultClient: HitlSettleClient = new WorldServiceHitlSettleClient();
 
 let activeClient: HitlSettleClient = defaultClient;
 
@@ -87,7 +96,7 @@ export function __setHitlSettleClientForTest(client: HitlSettleClient): void {
   activeClient = client;
 }
 
-/** Test-only reset back to the unwired stub. Call from `afterEach`. */
+/** Test-only reset back to the real client. Call from `afterEach`. */
 export function __resetHitlSettleClientForTest(): void {
   activeClient = defaultClient;
 }

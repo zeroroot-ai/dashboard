@@ -6,7 +6,7 @@
  * The data hooks (src/hooks/useHitlSettle.ts) are mocked here; their own
  * contract against the real API route is covered by useHitlSettle.test.tsx.
  * This file verifies:
- *   1. Loading, "backend not wired", empty, and populated states render.
+ *   1. Loading, empty, and populated states render.
  *   2. Each row surfaces the hypothesis (claim), evidence, and a link to the
  *      proposing agent's transcript when a runId is known.
  *   3. true-positive / false-positive / dismiss call the mutation with the
@@ -43,16 +43,12 @@ import { HitlSettleQueueContent } from "../HitlSettleQueueContent";
 
 const SAMPLE: OpenBetForReview = {
   id: "hyp-1",
-  missionId: "m1",
-  scopeId: "s1",
   hypothesisId: "hyp-1",
   claim: "port 6443 on 10.0.0.5 is unauthenticated",
   proposer: "recon-agent",
   confidence: 0.72,
-  technique: "http-probe",
-  evidence: [{ description: "200 OK with no Authorization header" }],
+  evidence: [{ label: "Host", idProperties: { address: "10.0.0.5" } }],
   runId: "run-1",
-  requestedAt: "2026-09-28T00:00:00.000Z",
 };
 
 beforeEach(() => {
@@ -61,7 +57,7 @@ beforeEach(() => {
     ok: true,
     settled: "true_positive",
     didSettle: true,
-    effect: "belief and reputation updated",
+    effect: "Bet settled. The fleet's belief and this technique's reputation are updated.",
   });
 });
 
@@ -72,21 +68,10 @@ describe("HitlSettleQueueContent", () => {
     expect(screen.getByTestId("hitl-settle-skeleton")).toBeInTheDocument();
   });
 
-  it("shows a distinct 'not connected' state when the backend is unwired, not a generic error", () => {
+  it("shows an empty state when no bet is open", () => {
     mockUseOpenBets.mockReturnValue({
       isLoading: false,
-      data: { items: [], available: false },
-      error: null,
-    });
-    render(<HitlSettleQueueContent />);
-    expect(screen.getByText(/not (yet )?connected/i)).toBeInTheDocument();
-    expect(screen.queryByText(/nothing.*open/i)).not.toBeInTheDocument();
-  });
-
-  it("shows an empty state when the backend is wired and no bet is open", () => {
-    mockUseOpenBets.mockReturnValue({
-      isLoading: false,
-      data: { items: [], available: true },
+      data: { items: [] },
       error: null,
     });
     render(<HitlSettleQueueContent />);
@@ -96,7 +81,7 @@ describe("HitlSettleQueueContent", () => {
   it("renders the hypothesis, evidence, and a transcript link when a run is known", () => {
     mockUseOpenBets.mockReturnValue({
       isLoading: false,
-      data: { items: [SAMPLE], available: true },
+      data: { items: [SAMPLE] },
       error: null,
     });
     render(<HitlSettleQueueContent />);
@@ -104,7 +89,7 @@ describe("HitlSettleQueueContent", () => {
     const row = screen.getByTestId(`hitl-bet-${SAMPLE.id}`);
     const withinRow = within(row);
     expect(withinRow.getByText(SAMPLE.claim)).toBeInTheDocument();
-    expect(withinRow.getByText(SAMPLE.evidence[0]!.description)).toBeInTheDocument();
+    expect(withinRow.getByText(/Host \(address=10\.0\.0\.5\)/)).toBeInTheDocument();
     expect(withinRow.getByText(SAMPLE.proposer)).toBeInTheDocument();
     const link = withinRow.getByRole("link", { name: /transcript/i });
     expect(link).toHaveAttribute("href", `/dashboard/traces/${SAMPLE.runId}`);
@@ -113,7 +98,7 @@ describe("HitlSettleQueueContent", () => {
   it("omits the transcript link when no run is known", () => {
     mockUseOpenBets.mockReturnValue({
       isLoading: false,
-      data: { items: [{ ...SAMPLE, runId: "" }], available: true },
+      data: { items: [{ ...SAMPLE, runId: "" }] },
       error: null,
     });
     render(<HitlSettleQueueContent />);
@@ -124,7 +109,7 @@ describe("HitlSettleQueueContent", () => {
   it("makes clear judging is asynchronous and never pauses the mission", () => {
     mockUseOpenBets.mockReturnValue({
       isLoading: false,
-      data: { items: [SAMPLE], available: true },
+      data: { items: [SAMPLE] },
       error: null,
     });
     render(<HitlSettleQueueContent />);
@@ -136,7 +121,7 @@ describe("HitlSettleQueueContent", () => {
   it("true positive calls the mutation with verdict=true_positive for that bet's id", async () => {
     mockUseOpenBets.mockReturnValue({
       isLoading: false,
-      data: { items: [SAMPLE], available: true },
+      data: { items: [SAMPLE] },
       error: null,
     });
     render(<HitlSettleQueueContent />);
@@ -152,7 +137,7 @@ describe("HitlSettleQueueContent", () => {
   it("false positive calls the mutation with verdict=false_positive for that bet's id", async () => {
     mockUseOpenBets.mockReturnValue({
       isLoading: false,
-      data: { items: [SAMPLE], available: true },
+      data: { items: [SAMPLE] },
       error: null,
     });
     render(<HitlSettleQueueContent />);
@@ -168,7 +153,7 @@ describe("HitlSettleQueueContent", () => {
   it("dismiss calls the mutation with verdict=dismiss for that bet's id", async () => {
     mockUseOpenBets.mockReturnValue({
       isLoading: false,
-      data: { items: [SAMPLE], available: true },
+      data: { items: [SAMPLE] },
       error: null,
     });
     render(<HitlSettleQueueContent />);

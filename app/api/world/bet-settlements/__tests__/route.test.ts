@@ -5,9 +5,8 @@
  * Per-route contract test for /api/world/bet-settlements — the ADR-0023 HITL
  * settle surface (dashboard#97). The backend client
  * (src/lib/hitl-settle/client.ts) is swapped per-test via its test-only seam,
- * so this is a pure route contract: GET maps the queue (including the
- * "backend not wired" case), POST validates + forwards the verdict, plus the
- * 401/400/503 paths.
+ * so this is a pure route contract: GET maps the queue, POST validates +
+ * forwards the verdict, plus the 401/400 paths.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -15,7 +14,6 @@ import { NextRequest } from "next/server";
 import {
   __setHitlSettleClientForTest,
   __resetHitlSettleClientForTest,
-  HitlSettleBackendUnavailableError,
   type HitlSettleClient,
 } from "@/src/lib/hitl-settle/client";
 import type { OpenBetForReview } from "@/src/types/hitl-settle";
@@ -48,16 +46,12 @@ const SESSION = { user: { id: "u1", tenantId: "t1" } };
 
 const SAMPLE: OpenBetForReview = {
   id: "hyp-1",
-  missionId: "m1",
-  scopeId: "s1",
   hypothesisId: "hyp-1",
   claim: "port 6443 is unauthenticated",
   proposer: "recon-agent",
   confidence: 0.72,
-  technique: "http-probe",
-  evidence: [{ description: "200 OK with no Authorization header" }],
+  evidence: [{ label: "Host", idProperties: { address: "10.0.0.5" } }],
   runId: "run-1",
-  requestedAt: "2026-09-28T00:00:00.000Z",
 };
 
 function postReq(body: unknown): NextRequest {
@@ -78,7 +72,7 @@ afterEach(() => {
 });
 
 describe("GET /api/world/bet-settlements", () => {
-  it("maps the OPEN-bet queue when the backend is wired", async () => {
+  it("maps the OPEN-bet queue", async () => {
     const fake: HitlSettleClient = {
       listOpenBets: vi.fn(async () => [SAMPLE]),
       submitVerdict: vi.fn(),
@@ -88,25 +82,15 @@ describe("GET /api/world/bet-settlements", () => {
     const res = await GET();
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.available).toBe(true);
     expect(body.items).toHaveLength(1);
     expect(body.items[0]).toEqual(SAMPLE);
   });
 
-  it("reports available:false (not an error) when the backend is not wired", async () => {
-    const fake: HitlSettleClient = {
-      listOpenBets: vi.fn(async () => {
-        throw new HitlSettleBackendUnavailableError();
-      }),
-      submitVerdict: vi.fn(),
-    };
-    __setHitlSettleClientForTest(fake);
-
+  it("returns an empty queue as items:[] (not an error)", async () => {
+    __setHitlSettleClientForTest({ listOpenBets: vi.fn(async () => []), submitVerdict: vi.fn() });
     const res = await GET();
     expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.available).toBe(false);
-    expect(body.items).toEqual([]);
+    expect((await res.json()).items).toEqual([]);
   });
 
   it("401 when unauthenticated", async () => {
@@ -122,30 +106,30 @@ describe("POST /api/world/bet-settlements", () => {
       ok: true as const,
       settled: "true_positive" as const,
       didSettle: true,
-      effect: "belief and reputation updated",
+      effect: "Bet settled. The fleet's belief and this technique's reputation are updated.",
     }));
     __setHitlSettleClientForTest({ listOpenBets: vi.fn(), submitVerdict });
 
     const res = await POST(postReq({ id: "hyp-1", verdict: "true_positive" }));
     expect(res.status).toBe(200);
-    expect(submitVerdict).toHaveBeenCalledWith("hyp-1", "true_positive", undefined);
+    expect(submitVerdict).toHaveBeenCalledWith("hyp-1", "true_positive");
     const body = await res.json();
-    expect(body.effect).toBe("belief and reputation updated");
     expect(body.didSettle).toBe(true);
+    expect(body.effect).toMatch(/settled/i);
   });
 
-  it("forwards a valid dismiss verdict with a category (label-only, does not settle)", async () => {
+  it("forwards a valid dismiss verdict (label-only, does not settle)", async () => {
     const submitVerdict = vi.fn(async () => ({
       ok: true as const,
       settled: "dismiss" as const,
       didSettle: false,
-      effect: "labeled dismiss; the bet remains open",
+      effect: "Labeled dismiss. The bet stays open and nothing was settled.",
     }));
     __setHitlSettleClientForTest({ listOpenBets: vi.fn(), submitVerdict });
 
-    const res = await POST(postReq({ id: "hyp-1", verdict: "dismiss", category: "duplicate" }));
+    const res = await POST(postReq({ id: "hyp-1", verdict: "dismiss" }));
     expect(res.status).toBe(200);
-    expect(submitVerdict).toHaveBeenCalledWith("hyp-1", "dismiss", "duplicate");
+    expect(submitVerdict).toHaveBeenCalledWith("hyp-1", "dismiss");
   });
 
   it("400 on an unknown verdict (fail-closed)", async () => {
@@ -162,18 +146,6 @@ describe("POST /api/world/bet-settlements", () => {
     const res = await POST(postReq({ verdict: "true_positive" }));
     expect(res.status).toBe(400);
     expect(submitVerdict).not.toHaveBeenCalled();
-  });
-
-  it("503 when the backend is not wired", async () => {
-    const submitVerdict = vi.fn(async () => {
-      throw new HitlSettleBackendUnavailableError();
-    });
-    __setHitlSettleClientForTest({ listOpenBets: vi.fn(), submitVerdict });
-
-    const res = await POST(postReq({ id: "hyp-1", verdict: "true_positive" }));
-    expect(res.status).toBe(503);
-    const body = await res.json();
-    expect(body.error.code).toBe("BACKEND_NOT_WIRED");
   });
 
   it("401 when unauthenticated", async () => {

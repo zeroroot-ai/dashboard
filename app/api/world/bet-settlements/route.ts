@@ -5,29 +5,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
-import {
-  getHitlSettleClient,
-  HitlSettleBackendUnavailableError,
-} from '@/src/lib/hitl-settle/client';
+import { getHitlSettleClient } from '@/src/lib/hitl-settle/client';
 import type { BetVerdict } from '@/src/types/hitl-settle';
 
 /**
  * /api/world/bet-settlements — the ADR-0023 HITL settle surface (gibson#264/
- * #266/#280, dashboard#97).
+ * #266/#280, dashboard#97), backed by `WorldService.ListOpenBets` +
+ * `WorldService.SettleBetByHITL` over Envoy + ext-authz.
  *
  * GET  returns the caller's tenant's OPEN bets: the hypothesis, its evidence,
  *      and the proposing agent's run (for the Gibson Traces transcript link).
- *      Read-only; judging is always asynchronous — this NEVER blocks a
- *      running mission (ADR-0008).
+ *      Read-only; judging is always asynchronous — this NEVER blocks a running
+ *      mission (ADR-0008).
  * POST records one human's verdict (true_positive / false_positive / dismiss)
- *      for a specific bet. true_positive/false_positive settle the bet
- *      (`SettleBetByHITL`); dismiss records a label without settling, since
- *      the backend refuses to settle a bet as "dismiss" (see client.ts).
- *
- * The backend queue itself does not exist on the wire yet — see
- * src/lib/hitl-settle/client.ts for the stub seam this route reads through.
- * `available: false` on GET (and a 503 BACKEND_NOT_WIRED on POST) is the
- * honest "nothing can be judged yet" state, not a route bug.
+ *      for a specific bet. true_positive/false_positive settle the bet;
+ *      dismiss records a label without settling (the daemon's own rule).
  */
 const VERDICTS = new Set<BetVerdict>(['true_positive', 'false_positive', 'dismiss']);
 
@@ -41,15 +33,8 @@ export async function GET() {
       );
     }
 
-    try {
-      const items = await getHitlSettleClient().listOpenBets();
-      return NextResponse.json({ items, available: true });
-    } catch (err) {
-      if (err instanceof HitlSettleBackendUnavailableError) {
-        return NextResponse.json({ items: [], available: false });
-      }
-      throw err;
-    }
+    const items = await getHitlSettleClient().listOpenBets();
+    return NextResponse.json({ items });
   } catch (error) {
     return daemonErrorResponse(error);
   }
@@ -77,7 +62,6 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as {
       id?: string;
       verdict?: string;
-      category?: string;
     };
 
     if (!body.id) {
@@ -98,22 +82,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    try {
-      const result = await getHitlSettleClient().submitVerdict(
-        body.id,
-        body.verdict as BetVerdict,
-        body.category,
-      );
-      return NextResponse.json(result);
-    } catch (err) {
-      if (err instanceof HitlSettleBackendUnavailableError) {
-        return NextResponse.json(
-          { error: { code: 'BACKEND_NOT_WIRED', message: err.message } },
-          { status: 503 },
-        );
-      }
-      throw err;
-    }
+    const result = await getHitlSettleClient().submitVerdict(body.id, body.verdict as BetVerdict);
+    return NextResponse.json(result);
   } catch (error) {
     return daemonErrorResponse(error);
   }
