@@ -59,10 +59,27 @@ export function getStripeClient(): Stripe {
 
   // Dynamic import defers the Stripe module until first use, keeping startup
   // cost low in pods that don't process billing events on boot.
+  //
+  // The interop dance is load-bearing, and the type checker cannot see why.
+  // stripe v22 removed `.default` and `.Stripe` from its CJS entry point,
+  // which now does `export = StripeConstructor` — so at runtime
+  // `require('stripe')` IS the constructor and `.default` is undefined. But
+  // under `moduleResolution: bundler` TypeScript resolves the ESM typings,
+  // which still declare a default export, so `.default` type-checks and
+  // would then throw "not a constructor" on the first billing call. Taking
+  // whichever of the two exists is the only form that is correct under both.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const StripeSDK = require('stripe') as typeof import('stripe');
-  _stripeClient = new StripeSDK.default(key, {
-    apiVersion: '2026-03-25.dahlia',
+  const mod: unknown = require('stripe');
+  const StripeCtor = ((mod as { default?: unknown }).default ?? mod) as new (
+    key: string,
+    config?: Stripe.StripeConfig,
+  ) => Stripe;
+  _stripeClient = new StripeCtor(key, {
+    // Pinned, never floating: the SDK and the account must agree on one API
+    // version, or a response shape changes under us with no deploy. stripe
+    // v22.6.0 moved its pin to 2026-08-26.dahlia and its types refuse any
+    // other value, so this moves with the SDK and cannot silently drift.
+    apiVersion: '2026-08-26.dahlia',
     typescript: true,
     // Telemetry off, avoid leaking build/runtime metadata to Stripe's
     // analytics pipeline. Unnecessary in a controlled SaaS environment.
