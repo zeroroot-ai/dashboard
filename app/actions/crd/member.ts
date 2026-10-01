@@ -119,7 +119,25 @@ export async function inviteMemberAction(input: {
  * the invitation accept page.
  */
 // @crd-authz-exempt: token-based redemption, the invitation token is the sole capability; AcceptInvitation is unauthenticated by design (gibson#633, ADR-0043). No CRD mutation; routes through the daemon RPC.
-export async function acceptInvitationAction(input: { token: string }): Promise<ActionResult> {
+/**
+ * Redeem an invitation token, and return the setup link the daemon mints.
+ *
+ * setupUrl is the whole point of the return value. AcceptInvitation mints a
+ * one-time Zitadel setup link with `returnCode`, never `sendCode`, so the
+ * identity service emails NOTHING — the response is the only place that link
+ * ever appears. This action used to discard it and the accept page told the
+ * invitee to watch for an identity-service email, so an invited person could
+ * not set a password at all. The proto has said "the dashboard's accept page
+ * redirects here immediately after this call returns" since gibson#633; this is
+ * that consumer.
+ *
+ * The link is single-use and carries no password, so it is safe to put in front
+ * of the browser that just redeemed the token — redeeming it is what proved
+ * control of the mailbox.
+ */
+export async function acceptInvitationAction(
+  input: { token: string },
+): Promise<ActionResult<{ setupUrl: string }>> {
   const parsed = acceptInvitationInput.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
@@ -131,8 +149,8 @@ export async function acceptInvitationAction(input: { token: string }): Promise<
     // ext-authz skips the FGA check and redeems by token (gibson#633,
     // dashboard#727). Empty tenant, the daemon derives it from the invitation.
     const client = serviceClient(MembershipService, '');
-    await client.acceptInvitation({ token: parsed.data.token });
-    return { ok: true, data: undefined };
+    const res = await client.acceptInvitation({ token: parsed.data.token });
+    return { ok: true, data: { setupUrl: res.setupUrl } };
   } catch (e) {
     return rpcError(e);
   }
