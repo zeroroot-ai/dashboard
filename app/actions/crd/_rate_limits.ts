@@ -15,7 +15,7 @@ import { checkRateLimitByKey, type RateLimitConfig } from "@/src/lib/rate-limite
  * outage shouldn't lock tenants out, not acceptable for bootstrap token
  * enumeration.
  */
-export const CRD_RATE_LIMITS = {
+const CRD_RATE_LIMITS = {
   fetchBootstrapToken: {
     window: 300, // 5 minutes
     max: 5,

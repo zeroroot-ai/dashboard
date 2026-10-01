@@ -90,7 +90,7 @@ another input to the unification follow-up.
 ## Dead-code gate — knip (blocking)
 
 `knip` runs at the end of the `prebuild` chain and is **blocking**
-(non-zero exit fails the build). Config: `knip.json`.
+(non-zero exit fails the build). Config: `knip.jsonc`.
 
 Scope of the blocking gate (the categories enforced as `error`):
 
