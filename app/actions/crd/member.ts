@@ -135,6 +135,7 @@ export async function inviteMemberAction(input: {
  * of the browser that just redeemed the token — redeeming it is what proved
  * control of the mailbox.
  */
+// @crd-authz-exempt: token-based redemption, the invitation token is the sole capability; AcceptInvitation is unauthenticated by design (gibson#633, ADR-0043). No CRD mutation; routes through the daemon RPC.
 export async function acceptInvitationAction(
   input: { token: string },
 ): Promise<ActionResult<{ setupUrl: string }>> {
