@@ -3,70 +3,88 @@
 
 import "server-only";
 
+import { userClient } from "@/src/lib/gibson-client";
+import {
+  DestructiveAuthorizationService,
+  Reversibility,
+} from "@/src/gen/gibson/daemon/destructiveauthz/v1/destructive_authz_pb";
+import type { PendingDestructiveAction as PbPendingDestructiveAction } from "@/src/gen/gibson/daemon/destructiveauthz/v1/destructive_authz_pb";
 import type {
   DestructiveActionDecision,
+  DestructiveReversibility,
   PendingDestructiveAction,
 } from "@/src/types/destructive-actions";
 
 /**
- * Destructive-action authorization backend seam (ADR-0028, gibson#278,
+ * Destructive-action authorization client (ADR-0028, gibson#278/#336,
  * dashboard#99).
  *
- * There is no gRPC/REST surface for this queue today. gibson's
- * `DestructiveProofAuthorizer` (internal/engine/brain/bet_settlement.go) is a
- * single synchronous Go function type invoked in-process from
- * `Engine.SettleBetTrue`:
+ * The queue is backed by
+ * `gibson.daemon.destructiveauthz.v1.DestructiveAuthorizationService`:
+ * `ListPendingDestructiveActions` reads the tenant's pending actions, and
+ * `ApproveDestructiveAction` / `DenyDestructiveAction` record one human's
+ * per-action decision. Every call goes through the sanctioned `userClient`
+ * transport (Envoy + ext-authz); the dashboard never opens a direct daemon
+ * channel.
  *
- *   type DestructiveProofAuthorizer func(ctx, tenant, req BetSettlementRequest) (approved bool, err error)
- *
- * `nil` means no authorizer is wired — which is production reality right
- * now — and every destructive request is refused outright, never queued and
- * never auto-approved. There is no "pending" record, no id, and no Timeline
- * event for the request or the decision yet.
- *
- * This module is the ONE seam a real implementation replaces once gibson
- * exposes that queue over the wire (mirroring how `gibson-client/transport.ts`
- * is the one seam for the real daemon transport): swap
- * `UnwiredDestructiveActionsClient` for a ConnectRPC-backed implementation of
- * `DestructiveActionsClient` and nothing above this file (the route handler,
- * the hook, the component) needs to change.
+ * This module is the one seam that maps the generated proto message into the
+ * plain view type the route returns. The route reads it through
+ * `getDestructiveActionsClient()`, and route tests swap in a fake via
+ * `__setDestructiveActionsClientForTest`.
  */
 
 export interface DestructiveActionsClient {
   /** Every pending destructive action awaiting this tenant's decision. */
   listPending(): Promise<PendingDestructiveAction[]>;
   /** Record one human's approve/deny decision for a specific pending action. */
-  decide(id: string, decision: DestructiveActionDecision, reason?: string): Promise<void>;
+  decide(id: string, decision: DestructiveActionDecision): Promise<void>;
 }
 
-/**
- * Thrown by the stub client. Callers (the API route) treat this as "the
- * queue is legitimately empty because nothing can be authorized yet", not as
- * a daemon error — see `DestructiveActionQueueResponse.available`.
- */
-export class DestructiveActionsBackendUnavailableError extends Error {
-  constructor() {
-    super(
-      "The destructive-action authorization backend is not wired yet: " +
-        "gibson's DestructiveProofAuthorizer (ADR-0028) has no queue, id, or " +
-        "wire surface — a destructive proof is refused outright, never queued. " +
-        "This is the dashboard#99 stub seam (src/lib/destructive-actions/client.ts).",
-    );
-    this.name = "DestructiveActionsBackendUnavailableError";
+function mapReversibility(r: Reversibility): DestructiveReversibility {
+  switch (r) {
+    case Reversibility.REVERSIBLE:
+      return "reversible";
+    case Reversibility.IRREVERSIBLE:
+      return "irreversible";
+    default:
+      return "unspecified";
   }
 }
 
-class UnwiredDestructiveActionsClient implements DestructiveActionsClient {
+function mapAction(a: PbPendingDestructiveAction): PendingDestructiveAction {
+  return {
+    id: a.actionId,
+    missionId: a.missionId,
+    scopeId: a.scopeId,
+    hypothesisId: a.hypothesisId,
+    technique: a.technique,
+    predicateType: a.predicateType,
+    blastRadius: a.blastRadius,
+    reversibility: mapReversibility(a.reversibility),
+    requestedAt:
+      Number(a.requestedAtUnixMs) > 0
+        ? new Date(Number(a.requestedAtUnixMs)).toISOString()
+        : "",
+  };
+}
+
+class DaemonDestructiveActionsClient implements DestructiveActionsClient {
   async listPending(): Promise<PendingDestructiveAction[]> {
-    throw new DestructiveActionsBackendUnavailableError();
+    const res = await userClient(DestructiveAuthorizationService).listPendingDestructiveActions({});
+    return res.actions.map(mapAction);
   }
 
-  async decide(): Promise<void> {
-    throw new DestructiveActionsBackendUnavailableError();
+  async decide(id: string, decision: DestructiveActionDecision): Promise<void> {
+    const client = userClient(DestructiveAuthorizationService);
+    if (decision === "approve") {
+      await client.approveDestructiveAction({ actionId: id });
+    } else {
+      await client.denyDestructiveAction({ actionId: id });
+    }
   }
 }
 
-const defaultClient: DestructiveActionsClient = new UnwiredDestructiveActionsClient();
+const defaultClient: DestructiveActionsClient = new DaemonDestructiveActionsClient();
 
 let activeClient: DestructiveActionsClient = defaultClient;
 
@@ -83,7 +101,7 @@ export function __setDestructiveActionsClientForTest(client: DestructiveActionsC
   activeClient = client;
 }
 
-/** Test-only reset back to the unwired stub. Call from `afterEach`. */
+/** Test-only reset back to the real client. Call from `afterEach`. */
 export function __resetDestructiveActionsClientForTest(): void {
   activeClient = defaultClient;
 }

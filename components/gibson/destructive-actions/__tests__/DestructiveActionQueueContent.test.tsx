@@ -6,7 +6,7 @@
  * (dashboard#99). The data hooks (src/hooks/useDestructiveActions.ts) are
  * mocked here; their own contract against the real API route is covered by
  * useDestructiveActions.test.tsx. This file verifies:
- *   1. Loading, "backend not wired", empty, and populated states render.
+ *   1. Loading, empty, and populated states render.
  *   2. Each row surfaces action, blast radius, reversibility, predicate, and
  *      the hypothesis/bet it belongs to.
  *   3. Approve/deny call the mutation with the right arguments.
@@ -35,18 +35,14 @@ vi.mock("@/src/hooks/useDestructiveActions", () => ({
 import { DestructiveActionQueueContent } from "../DestructiveActionQueueContent";
 
 const SAMPLE: PendingDestructiveAction = {
-  id: "hyp-1:0",
-  missionId: "m1",
-  scopeId: "s1",
+  id: "hyp-1",
   hypothesisId: "hyp-1",
-  claim: "port 6443 on 10.0.0.5 is unauthenticated",
-  technique: "http-probe",
+  scopeId: "s1",
+  missionId: "m1",
+  technique: "T1190",
   predicateType: "status_code",
-  predicateParams: { expect: 200 },
-  action: "Send an unauthenticated request to the Kubernetes API server",
   blastRadius: "single host: 10.0.0.5",
-  reversible: false,
-  reversibilityNote: "may trigger an audit-log alert on the target",
+  reversibility: "irreversible",
   requestedAt: "2026-09-28T00:00:00.000Z",
 };
 
@@ -62,21 +58,10 @@ describe("DestructiveActionQueueContent", () => {
     expect(screen.getByTestId("destructive-queue-skeleton")).toBeInTheDocument();
   });
 
-  it("shows a distinct 'not connected' state when the backend is unwired, not a generic error", () => {
+  it("shows an empty state when nothing is pending", () => {
     mockUseDestructiveActions.mockReturnValue({
       isLoading: false,
-      data: { items: [], available: false },
-      error: null,
-    });
-    render(<DestructiveActionQueueContent />);
-    expect(screen.getByText(/not (yet )?connected/i)).toBeInTheDocument();
-    expect(screen.queryByText(/nothing.*awaiting/i)).not.toBeInTheDocument();
-  });
-
-  it("shows an empty state when the backend is wired and nothing is pending", () => {
-    mockUseDestructiveActions.mockReturnValue({
-      isLoading: false,
-      data: { items: [], available: true },
+      data: { items: [] },
       error: null,
     });
     render(<DestructiveActionQueueContent />);
@@ -86,36 +71,51 @@ describe("DestructiveActionQueueContent", () => {
   it("renders every field the ADR requires: action, blast radius, reversibility, predicate, and the bet", () => {
     mockUseDestructiveActions.mockReturnValue({
       isLoading: false,
-      data: { items: [SAMPLE], available: true },
+      data: { items: [SAMPLE] },
       error: null,
     });
     render(<DestructiveActionQueueContent />);
 
     const row = screen.getByTestId(`destructive-action-${SAMPLE.id}`);
     const withinRow = within(row);
-    expect(withinRow.getByText(SAMPLE.action)).toBeInTheDocument();
+    // The composed "what it would do" headline names technique + predicate.
+    expect(withinRow.getByText(/Run the/i)).toBeInTheDocument();
     expect(withinRow.getByText(SAMPLE.blastRadius)).toBeInTheDocument();
-    expect(withinRow.getByText(/irreversible/i)).toBeInTheDocument(); // reversible: false
-    expect(withinRow.getByText(SAMPLE.reversibilityNote)).toBeInTheDocument();
-    expect(withinRow.getByText(new RegExp(SAMPLE.predicateType))).toBeInTheDocument();
-    expect(withinRow.getByText(SAMPLE.claim)).toBeInTheDocument(); // the hypothesis/bet
+    expect(withinRow.getAllByText(/irreversible/i).length).toBeGreaterThan(0);
+    // technique + predicate both surface (badge + predicate field).
+    expect(withinRow.getAllByText(new RegExp(SAMPLE.technique)).length).toBeGreaterThan(0);
+    expect(withinRow.getAllByText(new RegExp(SAMPLE.predicateType)).length).toBeGreaterThan(0);
     expect(withinRow.getByText(new RegExp(SAMPLE.hypothesisId))).toBeInTheDocument();
+  });
+
+  it("surfaces an honest fallback when blast radius and reversibility are not yet classified", () => {
+    mockUseDestructiveActions.mockReturnValue({
+      isLoading: false,
+      data: { items: [{ ...SAMPLE, blastRadius: "", reversibility: "unspecified" }] },
+      error: null,
+    });
+    render(<DestructiveActionQueueContent />);
+    const row = screen.getByTestId(`destructive-action-${SAMPLE.id}`);
+    expect(within(row).getByText(/not yet classified/i)).toBeInTheDocument();
+    expect(within(row).getByText(/not classified/i)).toBeInTheDocument();
   });
 
   it("makes clear the mission is not blocked, only the action waits", () => {
     mockUseDestructiveActions.mockReturnValue({
       isLoading: false,
-      data: { items: [SAMPLE], available: true },
+      data: { items: [SAMPLE] },
       error: null,
     });
     render(<DestructiveActionQueueContent />);
-    expect(screen.getByText(/mission.*(is not|isn't|never) (blocked|paused|stalled)/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/mission.*(is not|isn't|never) (blocked|paused|stalled)/i),
+    ).toBeInTheDocument();
   });
 
   it("approve calls the mutation with decision=approve for that action's id", async () => {
     mockUseDestructiveActions.mockReturnValue({
       isLoading: false,
-      data: { items: [SAMPLE], available: true },
+      data: { items: [SAMPLE] },
       error: null,
     });
     render(<DestructiveActionQueueContent />);
@@ -131,7 +131,7 @@ describe("DestructiveActionQueueContent", () => {
   it("deny calls the mutation with decision=deny for that action's id", async () => {
     mockUseDestructiveActions.mockReturnValue({
       isLoading: false,
-      data: { items: [SAMPLE], available: true },
+      data: { items: [SAMPLE] },
       error: null,
     });
     render(<DestructiveActionQueueContent />);
