@@ -510,17 +510,30 @@ When an intentional design change lands:
 3. Review the regenerated PNGs in the diff, every changed pixel should be expected.
 4. Commit the baselines alongside the design change. CI will compare future PRs against the new baseline.
 
-#### Auth-route coverage
+#### Auth-route coverage: there is none, and there is no bypass
 
-`e2e/visual/auth-routes.spec.ts` covers `/dashboard`, `/dashboard/pages/missions`, `/dashboard/pages/findings`, `/dashboard/pages/settings/account` in both modes. Authentication is synthesised via the test-only session encoder at `src/lib/test-fixtures/encode-session.ts`, which mints a JWE under the dashboard's own `AUTH_SECRET` that decodes through the same Auth.js pipeline as a real sign-in.
+There is no visual or browser coverage of an authenticated route, and there is no
+way to synthesise a session.
 
-```bash
-TEST_AUTH_BYPASS=1 AUTH_SECRET=$YOUR_LOCAL_SECRET pnpm test:visual
-```
+`src/lib/test-fixtures/encode-session.ts` used to mint a JWE under the dashboard's
+own `AUTH_SECRET`, gated on `NODE_ENV !== "production"` AND `TEST_AUTH_BYPASS=1`.
+Both guards worked; nothing ever ran it in production. It was removed anyway, for
+two reasons:
 
-Two independent production guards on the encoder, AND-ed: `NODE_ENV !== "production"` and `TEST_AUTH_BYPASS=1`. Neither alone activates it. The helm chart never sets `TEST_AUTH_BYPASS` so even a misconfigured prod deploy with the wrong `NODE_ENV` cannot run the encoder. Adding the env var to any production-bound config path is a smell, flag in review.
+1. A module that forges a session is a second way to be authenticated, and
+   ADR-0027 says there is one. Every flag that gates a second codepath is a flag
+   somebody can set.
+2. It bought nothing. `TEST_AUTH_BYPASS` was set in no workflow, no
+   `playwright.config.ts` and no `package.json` script, so every suite gated on it
+   had always been skipped.
 
-The spec also skips gracefully when `TEST_AUTH_BYPASS` is unset, so CI environments that haven't opted in don't fail; they just don't run the auth-route suite.
+`scripts/check-no-session-forgery.mjs` keeps it gone: it fails if anything outside
+the auth configuration imports Auth.js's token `encode`. Decoding is untouched —
+reading a session is what the app does on every request; minting one is what only
+the sign-in flow may do.
+
+**If you need an authenticated browser, sign in.** How that lane is built, and the
+kind-cluster suites it would also unblock, is dashboard#163.
 
 ### Legacy brand names, the org CI guard
 

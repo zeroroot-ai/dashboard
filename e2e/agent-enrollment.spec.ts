@@ -21,21 +21,17 @@
  *      credentials, and asserts the agent appears in the list.
  *
  * Authentication in stubbed tests: synthetic JWE via
- * src/lib/test-fixtures/encode-session.ts (requires TEST_AUTH_BYPASS=1).
  *
  * Refs: dashboard#220 (slice 5.7 p2), agent-service-credentials spec (Task 16).
  */
 
 import { test, expect } from "@playwright/test";
 import * as crypto from "crypto";
-import { injectAuthSession, stubMemberships } from "./page-objects/auth.po";
-import { stubDaemonProxy } from "./page-objects/dashboard.po";
 
 // ---------------------------------------------------------------------------
 // Skip guards
 // ---------------------------------------------------------------------------
 
-const needsBypass = !process.env.TEST_AUTH_BYPASS;
 const needsCluster = !process.env.E2E_KIND_AVAILABLE;
 
 // ---------------------------------------------------------------------------
@@ -77,177 +73,6 @@ const MOCK_AGENTS_LIST = {
 // ---------------------------------------------------------------------------
 // Stubbed UI-state tests (no kind cluster required)
 // ---------------------------------------------------------------------------
-
-test.describe("agent enrollment, UI state (stubbed)", () => {
-  test.skip(needsBypass, "requires TEST_AUTH_BYPASS=1");
-
-  test.beforeEach(async ({ context }) => {
-    await injectAuthSession(context, MOCK_USER, MOCK_TENANT_ID);
-    await stubMemberships(context, MOCK_TENANT_ID);
-    await stubDaemonProxy(context);
-  });
-
-  test("Register Agent page is reachable by an authenticated admin", async ({
-    page,
-  }) => {
-    await page.goto("/dashboard/agents/register");
-    await page.waitForLoadState("domcontentloaded");
-
-    // The register-agent form renders a name input. Its presence proves the
-    // route is accessible and auth guard did not redirect to /login.
-    await expect(
-      page.locator("#register-agent-name, [name='name'], input[placeholder*='agent' i]").first(),
-    ).toBeVisible({ timeout: 15_000 });
-  });
-
-  test("successful agent registration shows credential panel with clientId, clientSecret, enrollCommand", async ({
-    page,
-  }) => {
-    // Stub the /api/agents/register POST to return synthetic credentials
-    // without hitting the daemon.
-    await page.route("**/api/agents/register**", async (route) => {
-      if (route.request().method() === "POST") {
-        await route.fulfill({
-          status: 201,
-          contentType: "application/json",
-          body: JSON.stringify(MOCK_AGENT_CREDENTIALS),
-        });
-      } else {
-        await route.continue();
-      }
-    });
-
-    await page.goto("/dashboard/agents/register");
-    await page.waitForLoadState("domcontentloaded");
-
-    // Fill and submit the form.
-    const nameInput = page
-      .locator("#register-agent-name, [name='name'], input[placeholder*='agent' i]")
-      .first();
-    await expect(nameInput).toBeVisible({ timeout: 15_000 });
-    await nameInput.fill("e2e-agent");
-
-    const descInput = page
-      .locator(
-        "#register-agent-description, [name='description'], textarea[placeholder*='description' i]",
-      )
-      .first();
-    if (await descInput.isVisible({ timeout: 2_000 }).catch(() => false)) {
-      await descInput.fill("E2E enrollment test agent");
-    }
-
-    await page.getByRole("button", { name: /register agent|create agent/i }).click();
-
-    // The credential panel should appear after a successful POST.
-    // It exposes the client_id and client_secret in copyable fields.
-    const clientIdField = page.locator(
-      "#register-agent-client-id, [data-testid='client-id'], [aria-label*='client id' i]",
-    );
-    await expect(clientIdField).toBeVisible({ timeout: 15_000 });
-
-    const clientId = await clientIdField.inputValue().catch(
-      () => clientIdField.textContent(),
-    );
-    expect(clientId).toContain("e2e-agent-client-id-12345");
-
-    // clientSecret field.
-    const secretField = page.locator(
-      "#register-agent-client-secret, [data-testid='client-secret'], [aria-label*='client secret' i]",
-    );
-    await expect(secretField).toBeVisible({ timeout: 5_000 });
-
-    // enrollCommand field.
-    const enrollField = page.locator(
-      "#register-agent-enroll-command, [data-testid='enroll-command'], [aria-label*='enroll' i]",
-    );
-    await expect(enrollField).toBeVisible({ timeout: 5_000 });
-    const enrollCmd = await enrollField.inputValue().catch(
-      () => enrollField.textContent(),
-    );
-    expect(enrollCmd).toContain("e2e-agent-client-id-12345");
-    expect(enrollCmd).toMatch(/gibson(\s+|.*)component\s+register/);
-  });
-
-  test("agent list page shows enrolled agent with 'connected' status", async ({
-    page,
-  }) => {
-    // Stub the agents list endpoint.
-    await page.route("**/api/components/agents**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(MOCK_AGENTS_LIST),
-      });
-    });
-
-    await page.goto("/dashboard/agents");
-    await page.waitForLoadState("domcontentloaded");
-
-    // The agent list should render the enrolled agent's name.
-    await expect(
-      page.getByText(/e2e-agent/i, { exact: false }),
-    ).toBeVisible({ timeout: 15_000 });
-
-    // The agent should show a "connected" or "healthy" status indicator.
-    // We look for either the status text or a status badge.
-    const statusIndicator = page
-      .locator(
-        '[data-testid="agent-status"], [class*="status"], [aria-label*="connected" i]',
-      )
-      .or(page.getByText(/connected|healthy/i))
-      .first();
-
-    // Status indicator is a nice-to-have for this stubbed test, log a warning
-    // if absent but don't fail (the agent name being visible is the key assertion).
-    const statusVisible = await statusIndicator
-      .isVisible({ timeout: 5_000 })
-      .catch(() => false);
-    if (!statusVisible) {
-      console.warn(
-        "[agent-enrollment] Agent status indicator not found, may not be implemented on this page yet.",
-      );
-    }
-  });
-
-  test("registration with duplicate name returns 409 and shows error", async ({
-    page,
-  }) => {
-    await page.route("**/api/agents/register**", async (route) => {
-      if (route.request().method() === "POST") {
-        await route.fulfill({
-          status: 409,
-          contentType: "application/json",
-          body: JSON.stringify({
-            error: {
-              code: "AGENT_EXISTS",
-              message: "An agent with that name already exists",
-            },
-          }),
-        });
-      } else {
-        await route.continue();
-      }
-    });
-
-    await page.goto("/dashboard/agents/register");
-    await page.waitForLoadState("domcontentloaded");
-
-    const nameInput = page
-      .locator("#register-agent-name, [name='name'], input[placeholder*='agent' i]")
-      .first();
-    await expect(nameInput).toBeVisible({ timeout: 15_000 });
-    await nameInput.fill("e2e-existing-agent");
-    await page.getByRole("button", { name: /register agent|create agent/i }).click();
-
-    // An error message referencing "already exists" or similar should appear.
-    await expect(
-      page
-        .getByText(/already exists|duplicate|conflict/i)
-        .or(page.getByText(/AGENT_EXISTS/i))
-        .first(),
-    ).toBeVisible({ timeout: 10_000 });
-  });
-});
 
 // ---------------------------------------------------------------------------
 // Integration tests (kind cluster required)

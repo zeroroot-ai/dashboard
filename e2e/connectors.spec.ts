@@ -23,7 +23,6 @@
  * Two test groups, same convention as tenant-provision.spec.ts:
  *
  *   1. Stubbed (no kind cluster), synthetic session via
- *      TEST_AUTH_BYPASS=1; asserts the client-side authz gating and the
  *      static security-policy kind selector. The connector catalog and
  *      matrix data need the daemon, so the positive counterparts of
  *      these assertions live in group 2.
@@ -33,7 +32,6 @@
  *
  * Environment variables:
  *   PLAYWRIGHT_BASE_URL   - Dashboard URL (default: http://localhost:3000)
- *   TEST_AUTH_BYPASS      - enables the stubbed group
  *   E2E_KIND_AVAILABLE    - enables the integration group
  *   E2E_ADMIN_EMAIL       - Admin user email (seeded in the cluster IdP)
  *   E2E_ADMIN_PASSWORD    - Admin user password
@@ -43,9 +41,7 @@
  *   E2E_CONNECTOR_NAME    - Its display name (default: GitLab)
  */
 
-import { test, expect, type Page } from "@playwright/test";
-import { injectAuthSession, stubMemberships } from "./page-objects/auth.po";
-import { stubDaemonProxy, stubTierEndpoint } from "./page-objects/dashboard.po";
+import { test, expect } from "@playwright/test";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -67,7 +63,6 @@ const ALLOWED_TEAM = "conn-allowed";
 // Skip guards
 // ---------------------------------------------------------------------------
 
-const needsBypass = !process.env.TEST_AUTH_BYPASS;
 const needsCluster = !process.env.E2E_KIND_AVAILABLE;
 
 // ---------------------------------------------------------------------------
@@ -124,51 +119,6 @@ const MOCK_USER = {
   email: "connectors@e2e.zeroroot.local",
 };
 const MOCK_TENANT_ID = "tenant-e2e-connectors-test";
-
-test.describe("connectors, UI state (stubbed)", () => {
-  test.skip(needsBypass, "requires TEST_AUTH_BYPASS=1");
-
-  test.beforeEach(async ({ context }) => {
-    await injectAuthSession(context, MOCK_USER, MOCK_TENANT_ID);
-    await stubDaemonProxy(context);
-    await stubTierEndpoint(context, "team");
-  });
-
-  test("a plain member sees no Enable or Disable controls", async ({
-    context,
-    page,
-  }) => {
-    // EnableConnector / DisableConnector carry the admin relation in the
-    // AuthRegistry; useAuthorize fails closed for a tenant_member, so the
-    // controls never enter the DOM (hide-on-loading, no FOUC).
-    await stubMemberships(context, MOCK_TENANT_ID, "tenant_member");
-    await page.goto("/dashboard/connectors");
-    await expect(
-      page.getByRole("heading", { name: "Connectors", exact: true }),
-    ).toBeVisible({ timeout: 15_000 });
-    await expect(
-      page.getByRole("button", { name: /^enable$|^enabled$/i }),
-    ).toHaveCount(0);
-    await expect(page.getByRole("button", { name: /disable/i })).toHaveCount(0);
-  });
-
-  test("the security-policy matrix offers the connector kind", async ({
-    context,
-    page,
-  }) => {
-    await stubMemberships(context, MOCK_TENANT_ID, "tenant_admin");
-    await page.goto("/dashboard/organization/security-policy");
-    await expect(
-      page.getByRole("heading", { name: /security policy/i }),
-    ).toBeVisible({ timeout: 15_000 });
-    // The kind selector is static client UI: Connectors sits alongside
-    // plugins / tools / agents (dashboard#1130).
-    await page.getByRole("combobox").last().click();
-    await expect(
-      page.getByRole("option", { name: "Connectors" }),
-    ).toBeVisible();
-  });
-});
 
 // ---------------------------------------------------------------------------
 // Group 2, integration (kind cluster required)

@@ -40,7 +40,6 @@ import {
 // ---------------------------------------------------------------------------
 
 // UI flow tests run without a cluster but require the dev server.
-// They never need TEST_AUTH_BYPASS because they interact with public
 // billing pages and mock all API calls.
 //
 // Webhook delivery itself is no longer exercised here: the Stripe webhook
