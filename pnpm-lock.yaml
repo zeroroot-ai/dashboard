@@ -139,13 +139,13 @@ importers:
         version: 16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-auth:
         specifier: ^5.0.0-beta.32
-        version: 5.0.0-beta.32(patch_hash=99c9ceea7b9d0d4b7d0f57f65d4b3c39e96329dc4432f40dc41090c552e2146f)(next@16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(nodemailer@9.1.1)(react@19.2.3)
+        version: 5.0.0-beta.32(patch_hash=99c9ceea7b9d0d4b7d0f57f65d4b3c39e96329dc4432f40dc41090c552e2146f)(next@16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(nodemailer@10.0.9)(react@19.2.3)
       nextjs-toploader:
         specifier: ^3.9.17
         version: 3.9.17(next@16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       nodemailer:
-        specifier: ^9.1.1
-        version: 9.1.1
+        specifier: ^10.0.9
+        version: 10.0.9
       pdf-parse:
         specifier: ^2.4.5
         version: 2.4.5
@@ -4607,9 +4607,9 @@ packages:
       react: '>= 16.0.0'
       react-dom: '>= 16.0.0'
 
-  nodemailer@9.1.1:
-    resolution: {integrity: sha512-izw9mVKFix6YSnC9eLgV6g1opl9DUlRio9ZNcq+Wu9Ujn2UwF+8Nl0B8nz22kEC+CTZCvinkxwJ0DeFbb6NwcQ==}
-    engines: {node: '>=6.0.0'}
+  nodemailer@10.0.9:
+    resolution: {integrity: sha512-BF0qcyplCwp+jMk6HCjFykBz/YhhZSsxrARhOldLwFWH+8kGjQsd2WIMIZhqEuyXRoGFi0ONbDeWDMDoL8MhLw==}
+    engines: {node: '>=20.0.0'}
 
   nprogress@0.2.0:
     resolution: {integrity: sha512-I19aIingLgR1fmhftnbWWO3dXc0hSxqHQHQb3H8m+K3TnEn/iSeTZZOyvKXWqQESMwuUVnatlCnZdLBZZt2VSA==}
@@ -6021,7 +6021,7 @@ snapshots:
       '@types/react': 19.2.8
       react: 19.2.3
 
-  '@auth/core@0.41.3(nodemailer@9.1.1)':
+  '@auth/core@0.41.3(nodemailer@10.0.9)':
     dependencies:
       '@panva/hkdf': 1.2.1
       jose: 6.2.3
@@ -6029,7 +6029,7 @@ snapshots:
       preact: 10.24.3
       preact-render-to-string: 6.5.11(preact@10.24.3)
     optionalDependencies:
-      nodemailer: 9.1.1
+      nodemailer: 10.0.9
 
   '@aws-sdk/client-ses@3.1126.0':
     dependencies:
@@ -10358,13 +10358,13 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  next-auth@5.0.0-beta.32(patch_hash=99c9ceea7b9d0d4b7d0f57f65d4b3c39e96329dc4432f40dc41090c552e2146f)(next@16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(nodemailer@9.1.1)(react@19.2.3):
+  next-auth@5.0.0-beta.32(patch_hash=99c9ceea7b9d0d4b7d0f57f65d4b3c39e96329dc4432f40dc41090c552e2146f)(next@16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(nodemailer@10.0.9)(react@19.2.3):
     dependencies:
-      '@auth/core': 0.41.3(nodemailer@9.1.1)
+      '@auth/core': 0.41.3(nodemailer@10.0.9)
       next: 16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
     optionalDependencies:
-      nodemailer: 9.1.1
+      nodemailer: 10.0.9
 
   next@16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
@@ -10401,7 +10401,7 @@ snapshots:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
-  nodemailer@9.1.1: {}
+  nodemailer@10.0.9: {}
 
   nprogress@0.2.0: {}
 
