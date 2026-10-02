@@ -1,0 +1,163 @@
+# e2e-staging, the dashboard's browser suite against staging (dashboard#163).
+#
+# In plain words: A REAL PERSON'S BROWSER SIGNS IN TO STAGING AND USES THE
+# DASHBOARD. Every spec under e2e/ runs here, against
+# https://app.staging.zeroroot.ai, with two real accounts of the e2e tenant.
+# Nothing forges a session (ADR-0027, dashboard#164): the browser goes
+# through the /login gate and Zitadel's hosted Login v2, password and TOTP,
+# the way a customer does.
+#
+# TWO JOBS:
+#   guards   offline, no staging, no credential. Proves every spec compiles
+#            and lists, and that the skip floor can fail (--selftest).
+#   staging  the suite proper. Exports the credentials from repository
+#            secrets, runs Playwright, then applies the skip floor:
+#            e2e/skip-floor.mjs fails the job when zero tests ran or every
+#            test skipped, so a missing secret is red, never green.
+#
+# THE SECRETS (owner action, `gh secret set <NAME> -R zeroroot-ai/dashboard`):
+#   E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD, E2E_ADMIN_TOTP_SECRET
+#       the Owner or an Admin of the e2e tenant on staging.
+#   E2E_MEMBER_EMAIL, E2E_MEMBER_PASSWORD, E2E_MEMBER_TOTP_SECRET
+#       a Viewer of the same tenant.
+# ADR-0093 requires MFA on every account. The TOTP secret is the base32 key
+# the authenticator app was enrolled with.
+#
+# ADR-0012: never on pull_request. The suite measures staging on main and
+# runs on push to main and on its schedule. The merge gate stays node-ci.yml,
+# and dashboard.yml keeps its `!e2e/**` filter: a spec change runs the specs,
+# not the image build.
+name: e2e-staging
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'e2e/**'
+      - 'playwright.config.ts'
+      - '.github/workflows/e2e-staging.yml'
+  schedule:
+    # Daily, after hosted's exit tests (04:00 to 06:20 UTC) have measured
+    # the platform, so a failure here is the dashboard's and not the install's.
+    - cron: '45 6 * * *'
+
+concurrency:
+  group: e2e-staging-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PLAYWRIGHT_BASE_URL: https://app.staging.zeroroot.ai
+
+jobs:
+  guards:
+    name: guards (no staging)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: "10.34.5"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      # Every spec compiles and lists. A spec that cannot list never runs,
+      # and that is a defect, not a skip.
+      - name: Every spec lists
+        run: |
+          set -euo pipefail
+          pnpm exec playwright test --list --reporter=list | tee list.txt
+          total="$(grep -oE 'Total: [0-9]+ tests' list.txt | grep -oE '[0-9]+' || echo 0)"
+          echo "listed tests: ${total}"
+          if [ "${total}" -lt 1 ]; then
+            echo "::error::playwright listed no tests under e2e/"
+            exit 1
+          fi
+
+      # The floor proves it can fail before it is trusted.
+      - name: Skip floor selftest
+        run: node e2e/skip-floor.mjs --selftest
+
+  staging:
+    name: the browser suite against staging
+    needs: guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: "10.34.5"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      # Say which secret is missing, by name, before a single browser opens.
+      # The skip floor below would catch the silence too, but a named
+      # variable is the fix and this step names it.
+      - name: The lane's credentials are present
+        env:
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+          E2E_ADMIN_TOTP_SECRET: ${{ secrets.E2E_ADMIN_TOTP_SECRET }}
+          E2E_MEMBER_EMAIL: ${{ secrets.E2E_MEMBER_EMAIL }}
+          E2E_MEMBER_PASSWORD: ${{ secrets.E2E_MEMBER_PASSWORD }}
+          E2E_MEMBER_TOTP_SECRET: ${{ secrets.E2E_MEMBER_TOTP_SECRET }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in E2E_ADMIN_EMAIL E2E_ADMIN_PASSWORD E2E_ADMIN_TOTP_SECRET \
+                      E2E_MEMBER_EMAIL E2E_MEMBER_PASSWORD E2E_MEMBER_TOTP_SECRET; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::repository secret ${name} is not set. Set it: gh secret set ${name} -R ${{ github.repository }}"
+              missing=1
+            fi
+          done
+          [ "${missing}" -eq 0 ]
+
+      - name: The browser suite
+        env:
+          CI: "1"
+          E2E_CLUSTER_AVAILABLE: "1"
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+          E2E_ADMIN_TOTP_SECRET: ${{ secrets.E2E_ADMIN_TOTP_SECRET }}
+          E2E_MEMBER_EMAIL: ${{ secrets.E2E_MEMBER_EMAIL }}
+          E2E_MEMBER_PASSWORD: ${{ secrets.E2E_MEMBER_PASSWORD }}
+          E2E_MEMBER_TOTP_SECRET: ${{ secrets.E2E_MEMBER_TOTP_SECRET }}
+        run: pnpm test:e2e
+
+      # Zero tests ran, or every test skipped: the run proved nothing. Fail.
+      - name: Skip floor
+        run: node e2e/skip-floor.mjs playwright-report/test-results.json
+
+      - name: Upload the Playwright report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 14
