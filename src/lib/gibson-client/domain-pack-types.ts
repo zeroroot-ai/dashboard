@@ -21,8 +21,6 @@ export interface DomainPackCatalogEntryDTO {
   author: string;
   /** "public" or "private". A catalog entry is always "public". */
   visibility: string;
-  /** Billing entitlement key gating this pack. Empty means free. */
-  entitlement: string;
   taxonomyNodeLabels: string[];
   taxonomyRelationshipTypes: string[];
   /** The technique names this pack binds a settlement predicate for. */

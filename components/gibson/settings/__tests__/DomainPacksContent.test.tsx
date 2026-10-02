@@ -46,7 +46,6 @@ const CATALOG_ENTRY = {
   version: 1,
   author: "zeroroot-ai",
   visibility: "public",
-  entitlement: "",
   taxonomyNodeLabels: ["Finding"],
   taxonomyRelationshipTypes: ["DEMONSTRATES"],
   techniques: ["unauthenticated_endpoint_exposed", "credential_disclosure_detected"],

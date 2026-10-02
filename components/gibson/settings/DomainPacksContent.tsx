@@ -30,7 +30,7 @@ import { toast } from "sonner";
 import {
   listDomainPacksAction,
   enableDomainPackAction,
-  disableDomainPackAction,
+  disableDomainPackAction
 } from "@/app/actions/domain-packs";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -42,12 +42,12 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import type {
   DomainPackCatalogEntryDTO as DomainPackCatalogEntry,
-  DomainPackViewDTO as DomainPackView,
+  DomainPackViewDTO as DomainPackView
 } from "@/src/lib/gibson-client/domain-pack-types";
 
 // Tenant-admin lifecycle RPCs. Members must not see the toggle, so it gates
@@ -74,7 +74,8 @@ export function DomainPacksContent({ docsHref }: { docsHref: string }) {
 
   // Admin-only lifecycle control, hide-on-loading (no FOUC).
   const { allowed: canEnable, loading: enableAuthLoading } = useAuthorize(DOMAIN_PACK_ENABLE_RPC);
-  const { allowed: canDisable, loading: disableAuthLoading } = useAuthorize(DOMAIN_PACK_DISABLE_RPC);
+  const { allowed: canDisable, loading: disableAuthLoading } =
+    useAuthorize(DOMAIN_PACK_DISABLE_RPC);
   const showToggle = !enableAuthLoading && !disableAuthLoading && canEnable && canDisable;
 
   const setPackBusy = React.useCallback((name: string, value: boolean) => {
@@ -103,15 +104,12 @@ export function DomainPacksContent({ docsHref }: { docsHref: string }) {
     void load();
   }, [load]);
 
-  const enabledByName = React.useMemo(
-    () => new Map(enabled.map((p) => [p.name, p])),
-    [enabled],
-  );
+  const enabledByName = React.useMemo(() => new Map(enabled.map((p) => [p.name, p])), [enabled]);
 
   const notifySessionExpired = React.useCallback(() => {
     toast.error("Your session expired", {
       description: "Sign in again to continue.",
-      action: { label: "Sign in", onClick: () => router.push("/login") },
+      action: { label: "Sign in", onClick: () => router.push("/login") }
     });
   }, [router]);
 
@@ -125,18 +123,14 @@ export function DomainPacksContent({ docsHref }: { docsHref: string }) {
         if (isSessionExpired(res.code)) {
           notifySessionExpired();
         } else {
-          toast.error(
-            res.error || `Could not ${next ? "enable" : "disable"} ${entry.name}.`,
-          );
+          toast.error(res.error || `Could not ${next ? "enable" : "disable"} ${entry.name}.`);
         }
         return;
       }
       toast.success(`${entry.name} ${next ? "enabled" : "disabled"}.`);
       await load();
     } catch {
-      toast.error(
-        `Could not reach the service to ${next ? "enable" : "disable"} ${entry.name}.`,
-      );
+      toast.error(`Could not reach the service to ${next ? "enable" : "disable"} ${entry.name}.`);
     } finally {
       setPackBusy(entry.name, false);
     }
@@ -147,9 +141,9 @@ export function DomainPacksContent({ docsHref }: { docsHref: string }) {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Domain Packs</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          A Domain Pack is a curated set of taxonomy labels and settlement predicates for
-          one domain. Enable a pack to make its bindings live for your agents; disable it
-          to remove them. Changes apply to this workspace only.
+          A Domain Pack is a curated set of taxonomy labels and settlement predicates for one
+          domain. Enable a pack to make its bindings live for your agents; disable it to remove
+          them. Changes apply to this workspace only.
         </p>
         {/* Docs are a separate deployable on their own host (dashboard#820), so
             this is a plain cross-origin anchor: next/link cannot route to it,
@@ -158,7 +152,7 @@ export function DomainPacksContent({ docsHref }: { docsHref: string }) {
           href={docsHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-muted-foreground mt-2 inline-block text-xs underline underline-offset-2 hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground mt-2 inline-block text-xs underline underline-offset-2"
         >
           How Domain Packs work
         </a>
@@ -206,15 +200,6 @@ export function DomainPacksContent({ docsHref }: { docsHref: string }) {
                         <Badge variant="outline" className="text-[10px]">
                           v{isEnabled ? view.version : entry.version}
                         </Badge>
-                        {entry.entitlement ? (
-                          <Badge variant="secondary" className="text-[10px]">
-                            {entry.entitlement}
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="text-[10px]">
-                            Free
-                          </Badge>
-                        )}
                       </div>
                     </div>
                     <CardDescription>

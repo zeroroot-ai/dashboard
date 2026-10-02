@@ -165,7 +165,7 @@ export type GetTenantProvisioningStatusResponse = Message<"gibson.tenant.v1.GetT
   zitadelOrgSlug: string;
 
   /**
-   * stripe_customer_id mirrors status.billing.customerId. RETAINED for wire
+   * stripe_customer_id mirrors status.stripeCustomerId. RETAINED for wire
    * compatibility but NO LONGER POPULATED here (gibson#1339) — read it via
    * TenantService.GetTenantBilling / AdminTenantService.AdminGetTenantBilling.
    *
