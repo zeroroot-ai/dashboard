@@ -18,7 +18,7 @@ import type { UIMessage } from 'ai';
 // Types
 // ============================================================================
 
-export type AgentStatus = 'online' | 'busy' | 'offline';
+type AgentStatus = 'online' | 'busy' | 'offline';
 
 export interface ChatAgent {
   id: string;

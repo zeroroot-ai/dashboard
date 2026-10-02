@@ -48,4 +48,3 @@ function RevealableInput({
 }
 
 export { RevealableInput }
-export type { RevealableInputProps }

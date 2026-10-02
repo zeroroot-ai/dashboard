@@ -13,7 +13,7 @@
 /**
  * Status of a user account in the system.
  */
-export type UserStatus = 'active' | 'invited' | 'suspended';
+type UserStatus = 'active' | 'invited' | 'suspended';
 
 /**
  * User status display configuration for UI.
@@ -75,7 +75,7 @@ interface InAppNotificationSettings {
 /**
  * Complete user preferences.
  */
-export interface UserPreferences {
+interface UserPreferences {
   /** Email notification settings */
   emailNotifications: EmailNotificationSettings;
   /** In-app notification settings */
@@ -116,7 +116,7 @@ const DEFAULT_USER_PREFERENCES: UserPreferences = {
 /**
  * Role reference object (used in some API responses).
  */
-export interface RoleRef {
+interface RoleRef {
   id: string;
   name: string;
   displayName?: string;
@@ -304,7 +304,7 @@ interface TeamMember extends User {
 /**
  * Pagination info block returned in list responses.
  */
-export interface UserPaginationInfo {
+interface UserPaginationInfo {
   page: number;
   limit: number;
   total: number;
@@ -338,7 +338,7 @@ interface ListTeamMembersResponse {
 /**
  * Type of user activity event.
  */
-export type UserActivityType =
+type UserActivityType =
   | 'login'
   | 'logout'
   | 'mission_started'

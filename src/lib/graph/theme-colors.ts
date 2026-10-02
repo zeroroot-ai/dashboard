@@ -110,7 +110,7 @@ export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 /**
  * Glow color configuration for visual effects
  */
-export interface GlowColors {
+interface GlowColors {
   primary: string;
   active: string;
   critical: string;

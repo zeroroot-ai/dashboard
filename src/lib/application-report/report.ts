@@ -58,13 +58,13 @@ export type FindingStatus = (typeof FINDING_STATUSES)[number];
 // ---------------------------------------------------------------------------
 
 /** A measure the graph cannot answer yet, and precisely why. */
-export interface Unmeasurable {
+interface Unmeasurable {
   measurable: false;
   /** Plain-words reason, rendered to the operator. No blame, just the gap. */
   reason: string;
 }
 
-export interface VulnerabilitySummary {
+interface VulnerabilitySummary {
   /** The shared identity: a CVE, GHSA, CWE or platform id. */
   key: string;
   /** Findings on THIS Application that instance this Vulnerability. */
@@ -75,7 +75,7 @@ export interface VulnerabilitySummary {
   topSeverity: ReportSeverity | null;
 }
 
-export interface MergeRequestSummary {
+interface MergeRequestSummary {
   key: string;
   title: string;
   /** Outbound link to the git host, when the node carries one. */
@@ -86,7 +86,7 @@ export interface MergeRequestSummary {
   fixesFindings: number;
 }
 
-export interface ReportCost {
+interface ReportCost {
   estimatedCostUsd: number;
   llmCallCount: number;
   /**

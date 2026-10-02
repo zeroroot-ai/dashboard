@@ -17,7 +17,6 @@
 
 import type { ProviderCapability } from '@/src/lib/gibson-client-types';
 
-export type { ProviderCapability };
 
 // ============================================================================
 // Health Status Types
@@ -71,7 +70,7 @@ export const HEALTH_STATUS_CONFIG: Record<ProviderHealthStatus, {
 /**
  * Rate limiting configuration for a provider.
  */
-export interface RateLimitConfig {
+interface RateLimitConfig {
   /** Maximum requests per minute (0 = unlimited) */
   requestsPerMinute?: number;
   /** Maximum tokens per minute (0 = unlimited) */
@@ -185,7 +184,7 @@ export interface ProviderConfig {
 /**
  * Information about an available model from a provider.
  */
-export interface ModelInfo {
+interface ModelInfo {
   /** Model identifier */
   id: string;
   /** Human-readable model name */
@@ -299,7 +298,7 @@ const PROVIDER_AUDIT_EVENT_CONFIG: Record<ProviderAuditEventType, {
 /**
  * Describes a single field change in an update.
  */
-export interface FieldChange {
+interface FieldChange {
   /** Name of the changed field */
   field: string;
   /** Previous value (redacted for sensitive fields) */
@@ -347,7 +346,7 @@ export type ImportMergeStrategy = 'skip' | 'replace' | 'error';
 /**
  * Error encountered during import.
  */
-export interface ImportError {
+interface ImportError {
   /** Affected provider name */
   providerName: string;
   /** Error message */

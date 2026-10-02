@@ -19,7 +19,7 @@ import { GraphService } from '@/src/gen/gibson/graph/v1/graph_pb';
 // Types (public interface unchanged)
 // ============================================================================
 
-export interface GraphSummaryStats {
+interface GraphSummaryStats {
   hosts: number;
   services: number;
   findings: number;

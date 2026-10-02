@@ -53,7 +53,7 @@ export interface DiscoveredItem {
 
 export type ComponentSource = "platform-catalog" | "tenant-enrolled" | "unknown";
 
-export interface Provenance {
+interface Provenance {
   source: ComponentSource;
   /** The tenant the registry holds it under ("_system" for platform items). */
   ownerTenant?: string;

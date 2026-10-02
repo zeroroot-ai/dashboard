@@ -36,7 +36,7 @@ export interface ConstraintsJson {
   maxTokensPerCall?: number;
 }
 
-export interface RepositoryConfigJson {
+interface RepositoryConfigJson {
   name?: string;
   url?: string;
   branch?: string;
@@ -45,7 +45,7 @@ export interface RepositoryConfigJson {
   dependsOn?: string[];
 }
 
-export interface WorkspaceSettingsJson {
+interface WorkspaceSettingsJson {
   cleanupOnComplete?: boolean;
   useWorktrees?: boolean;
   lspEnabled?: boolean;
@@ -141,7 +141,7 @@ export interface MissionNodeJson {
   jobConfig?: import("@/src/lib/mission/job-node").JobNodeConfigJson;
 }
 
-export interface MissionEdgeJson {
+interface MissionEdgeJson {
   from?: string;
   to?: string;
   condition?: string;

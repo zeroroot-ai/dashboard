@@ -48,7 +48,7 @@ import {
 // Shared result types
 // ---------------------------------------------------------------------------
 
-export type BrokerActionResult<T = null> =
+type BrokerActionResult<T = null> =
   | { ok: true; data: T }
   | { ok: false; error: string; code?: string; errorClass?: string };
 

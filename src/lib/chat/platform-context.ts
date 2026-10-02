@@ -8,19 +8,19 @@ import { listAgents, listTools, listPlugins } from '@/src/lib/gibson-client';
 // Types
 // ============================================================================
 
-export interface AgentEntry {
+interface AgentEntry {
   id: string;
   name: string;
   kind: string;
   health: string;
 }
 
-export interface ToolEntry {
+interface ToolEntry {
   name: string;
   version: string;
 }
 
-export interface PluginEntry {
+interface PluginEntry {
   name: string;
   version: string;
   health: string;

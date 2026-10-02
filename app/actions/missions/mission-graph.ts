@@ -52,7 +52,7 @@ export interface MissionGraphEdgeData {
   role: string;
 }
 
-export interface ViewportData {
+interface ViewportData {
   x: number;
   y: number;
   zoom: number;

@@ -8,7 +8,7 @@ import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { CodeBlock, CodeBlockCode } from "./code-block";
 
-export type MarkdownProps = {
+type MarkdownProps = {
   children: string;
   id?: string;
   className?: string;

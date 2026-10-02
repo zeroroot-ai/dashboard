@@ -143,7 +143,7 @@ export const WIZARD_STEPS: WizardStep[] = [
 /**
  * Supported LLM provider types for onboarding.
  */
-export type LLMProviderType = 'anthropic' | 'openai' | 'google' | 'ollama';
+type LLMProviderType = 'anthropic' | 'openai' | 'google' | 'ollama';
 
 /**
  * LLM provider display configuration.
