@@ -56,7 +56,7 @@ export type SourceKind =
   | 'KIND_TEAM_MEMBER'
   | 'KIND_OWNER';
 
-export interface SourceVM {
+interface SourceVM {
   kind: SourceKind;
   sourceObject: string;
 }

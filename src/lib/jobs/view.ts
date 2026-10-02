@@ -22,7 +22,7 @@ export interface DeliverableView {
   url: string;
 }
 
-export interface RepositoryView {
+interface RepositoryView {
   name: string;
   connectorRef: string;
   project: string;
@@ -30,7 +30,7 @@ export interface RepositoryView {
   deliverable: DeliverableKindName;
 }
 
-export interface AcceptanceView {
+interface AcceptanceView {
   verifierComponent: string;
   passingScore: number;
   maxPasses: number;

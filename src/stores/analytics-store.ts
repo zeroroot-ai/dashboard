@@ -14,7 +14,7 @@ import type { KPIData } from '@/src/types/analytics';
 // WebSocket Update Types
 // ============================================================================
 
-export type WebSocketUpdateType =
+type WebSocketUpdateType =
   | 'kpi_update'
   | 'mission_status'
   | 'finding_created'

@@ -25,7 +25,7 @@ export interface Tenant {
   memberCount?: number;
 }
 
-export interface TenantSettings {
+interface TenantSettings {
   mission?: {
     defaultLLMSlot?: string;
     maxConcurrentMissions?: number;

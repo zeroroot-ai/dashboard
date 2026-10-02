@@ -3,7 +3,7 @@
 
 export type InstallAction = "read" | "write" | "execute";
 
-export interface InstallApproval {
+interface InstallApproval {
   /** Target reference, e.g. "component:plugin/gitlab". */
   target: string;
   action: InstallAction;

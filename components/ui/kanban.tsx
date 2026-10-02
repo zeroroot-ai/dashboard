@@ -156,7 +156,6 @@ const BOARD_NAME = "KanbanBoard";
 const COLUMN_NAME = "KanbanColumn";
 const COLUMN_HANDLE_NAME = "KanbanColumnHandle";
 const ITEM_NAME = "KanbanItem";
-const ITEM_HANDLE_NAME = "KanbanItemHandle";
 const OVERLAY_NAME = "KanbanOverlay";
 
 interface KanbanContextValue<T> {
@@ -920,49 +919,6 @@ const KanbanItem = React.forwardRef<HTMLDivElement, KanbanItemProps>((props, for
 });
 KanbanItem.displayName = ITEM_NAME;
 
-interface KanbanItemHandleProps extends React.ComponentPropsWithoutRef<"button"> {
-  asChild?: boolean;
-}
-
-const KanbanItemHandle = React.forwardRef<HTMLButtonElement, KanbanItemHandleProps>(
-  (props, forwardedRef) => {
-    const { asChild, disabled, className, ...itemHandleProps } = props;
-
-    const context = useKanbanContext(ITEM_HANDLE_NAME);
-    const itemContext = useKanbanItemContext(ITEM_HANDLE_NAME);
-
-    const isDisabled = disabled ?? itemContext.disabled;
-
-    const composedRef = useComposedRefs(forwardedRef, (node) => {
-      if (isDisabled) return;
-      itemContext.setActivatorNodeRef(node);
-    });
-
-    const HandlePrimitive = asChild ? Slot : "button";
-
-    return (
-      <HandlePrimitive
-        type="button"
-        aria-controls={itemContext.id}
-        data-disabled={isDisabled}
-        data-dragging={itemContext.isDragging ? "" : undefined}
-        data-slot="kanban-item-handle"
-        {...itemHandleProps}
-        {...(isDisabled ? {} : itemContext.attributes)}
-        {...(isDisabled ? {} : itemContext.listeners)}
-        ref={composedRef}
-        className={cn(
-          "select-none disabled:pointer-events-none disabled:opacity-50",
-          context.flatCursor ? "cursor-default" : "cursor-grab data-dragging:cursor-grabbing",
-          className
-        )}
-        disabled={isDisabled}
-      />
-    );
-  }
-);
-KanbanItemHandle.displayName = ITEM_HANDLE_NAME;
-
 const KanbanOverlayContext = React.createContext(false);
 KanbanOverlayContext.displayName = OVERLAY_NAME;
 
@@ -1020,19 +976,10 @@ function KanbanOverlay(props: KanbanOverlayProps) {
 }
 
 export {
-  KanbanRoot as Kanban,
-  KanbanBoard,
-  KanbanColumn,
-  KanbanColumnHandle,
-  KanbanItem,
-  KanbanItemHandle,
-  KanbanOverlay,
-  //
   KanbanRoot as Root,
   KanbanBoard as Board,
   KanbanColumn as Column,
   KanbanColumnHandle as ColumnHandle,
   KanbanItem as Item,
-  KanbanItemHandle as ItemHandle,
   KanbanOverlay as Overlay
 };

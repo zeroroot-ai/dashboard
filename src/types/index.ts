@@ -20,7 +20,7 @@ export type MissionStatus =
   | 'failed'
   | 'stopped';
 
-export interface MissionConfig {
+interface MissionConfig {
   target?: string;
   description?: string;
   hosts?: string[];
@@ -65,7 +65,7 @@ export type FindingSeverity =
   | 'low'
   | 'info';
 
-export interface TaxonomyReference {
+interface TaxonomyReference {
   framework?: string;
   category?: string;
   subcategory?: string;
@@ -186,7 +186,7 @@ export type EventType =
   | 'llm'
   | 'system';
 
-export type EventSeverity =
+type EventSeverity =
   | 'info'
   | 'warning'
   | 'error';
@@ -212,7 +212,7 @@ interface EventFilter {
 // Component Status Types
 // ============================================================================
 
-export type ComponentType =
+type ComponentType =
   | 'agent'
   | 'tool'
   | 'plugin';
@@ -351,7 +351,7 @@ type ConnectionStatus =
 // Metric Types
 // ============================================================================
 
-export interface MetricValue {
+interface MetricValue {
   current: number;
   trend?: 'up' | 'down' | 'stable';
   previousValue?: number;

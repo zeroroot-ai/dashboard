@@ -42,7 +42,7 @@ export interface KPIData {
 // Time Series Types
 // ============================================================================
 
-export interface TimeSeriesPoint {
+interface TimeSeriesPoint {
   timestamp: string; // ISO 8601 format
   critical: number;
   high: number;
@@ -82,7 +82,7 @@ export interface SeverityDistribution {
 // Mission Activity Types
 // ============================================================================
 
-export interface HeatmapCell {
+interface HeatmapCell {
   date: string; // YYYY-MM-DD format
   count: number; // number of missions on that day
   successRate: number; // 0-100 percentage
@@ -98,7 +98,7 @@ export interface MissionHeatmap {
 // Agent Performance Types
 // ============================================================================
 
-export type AgentStatus = 'idle' | 'busy' | 'degraded' | 'unhealthy';
+type AgentStatus = 'idle' | 'busy' | 'degraded' | 'unhealthy';
 
 export interface AgentPerformance {
   agentId: string;
@@ -114,8 +114,8 @@ export interface AgentPerformance {
 // Alert Types
 // ============================================================================
 
-export type AlertType = 'finding' | 'mission' | 'agent' | 'system';
-export type AlertSeverity = 'info' | 'warning' | 'critical';
+type AlertType = 'finding' | 'mission' | 'agent' | 'system';
+type AlertSeverity = 'info' | 'warning' | 'critical';
 
 export interface Alert {
   id: string;

@@ -18,13 +18,13 @@ import { GraphService } from '@/src/gen/gibson/graph/v1/graph_pb';
 // Types (public interface unchanged)
 // ============================================================================
 
-export interface GraphContextNode {
+interface GraphContextNode {
   id: string;
   labels: string[];
   properties: Record<string, unknown>;
 }
 
-export interface GraphContextNeighbor {
+interface GraphContextNeighbor {
   id: string;
   labels: string[];
   properties: Record<string, unknown>;

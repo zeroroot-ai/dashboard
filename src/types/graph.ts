@@ -9,7 +9,7 @@
  * Entity types in the knowledge graph taxonomy.
  * Used for rendering entity-specific icons and visual treatments.
  */
-export type EntityType =
+type EntityType =
   | 'mission' | 'mission_run' | 'agent_run' | 'tool_execution' | 'llm_call'
   | 'domain' | 'subdomain' | 'host' | 'port' | 'service' | 'endpoint' | 'technology' | 'certificate'
   | 'finding' | 'evidence' | 'technique'
@@ -21,7 +21,7 @@ export type EntityType =
  * Relationship types in the knowledge graph.
  * Used for rendering edges with semantic dash patterns.
  */
-export type RelationshipType =
+type RelationshipType =
   | 'HAS_SUBDOMAIN' | 'RESOLVES_TO' | 'HAS_PORT' | 'RUNS_SERVICE' | 'HAS_ENDPOINT'
   | 'USES_TECHNOLOGY' | 'SERVES_CERTIFICATE' | 'AFFECTS' | 'HAS_EVIDENCE'
   | 'USES_TECHNIQUE' | 'LEADS_TO' | 'USED_TOOL' | 'DELEGATED_TO' | 'DISCOVERED' | 'BELONGS_TO'

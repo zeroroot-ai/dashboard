@@ -23,7 +23,7 @@ export interface Frame {
 type EntityKind = 'mission' | 'host' | 'finding';
 export type ChangeType = 'added' | 'removed' | 'changed';
 
-export interface ChangedEntity {
+interface ChangedEntity {
   /** Graph node id — matches WorldGraph's projection so highlight + panel agree. */
   id: string;
   kind: EntityKind;

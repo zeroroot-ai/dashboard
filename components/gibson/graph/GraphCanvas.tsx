@@ -22,7 +22,7 @@ import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import type { GraphDisplaySettings, GraphLayoutMode } from '@/src/stores/graph-view-store';
 
 /** A path returned by QueryPaths, highlighted on the graph when present. */
-export interface HighlightedPath {
+interface HighlightedPath {
   node_ids: string[];
   edge_ids: string[];
 }
@@ -35,7 +35,7 @@ export interface HighlightState {
 }
 
 /** Everything the engine needs to render a frame. */
-export interface GraphCanvasData {
+interface GraphCanvasData {
   nodes: GraphNode[];
   edges: GraphEdge[];
   display: GraphDisplaySettings;
