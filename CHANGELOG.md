@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.127.0](https://github.com/zeroroot-ai/dashboard/compare/v0.126.0...v0.127.0) (2026-10-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* **targets:** a target carries no authentication shape ([#167](https://github.com/zeroroot-ai/dashboard/issues/167))
+* **auth:** TEST_AUTH_BYPASS no longer does anything, and the specs that required it are gone. An authenticated browser test has to sign in. That lane does not exist yet — dashboard#163 tracks building it, and the kind-gated suites it would also unblock.
+
+### Features
+
+* **destructive-actions:** wire authorization queue to DestructiveAuthorizationService (dashboard[#99](https://github.com/zeroroot-ai/dashboard/issues/99)) ([#153](https://github.com/zeroroot-ai/dashboard/issues/153)) ([0a59ff3](https://github.com/zeroroot-ai/dashboard/commit/0a59ff3f9e720ae7674aaf117b2ff1cc2ea6b1ca))
+* **hitl-settle:** wire bet-verdict queue to WorldService (dashboard[#97](https://github.com/zeroroot-ai/dashboard/issues/97)) ([#152](https://github.com/zeroroot-ai/dashboard/issues/152)) ([65bbb68](https://github.com/zeroroot-ai/dashboard/commit/65bbb680303a8be6d15c277a8fb3d5c2a3541009))
+* **reliability:** add calibration reliability diagram (dashboard[#98](https://github.com/zeroroot-ai/dashboard/issues/98)) ([759ec34](https://github.com/zeroroot-ai/dashboard/commit/759ec3410fb5e39ba4675560fbeda8f76a50986d))
+* **reliability:** calibration reliability diagram (dashboard[#98](https://github.com/zeroroot-ai/dashboard/issues/98)) ([#151](https://github.com/zeroroot-ai/dashboard/issues/151)) ([759ec34](https://github.com/zeroroot-ai/dashboard/commit/759ec3410fb5e39ba4675560fbeda8f76a50986d))
+* **targets:** a target carries no authentication shape ([#167](https://github.com/zeroroot-ai/dashboard/issues/167)) ([1e96f1c](https://github.com/zeroroot-ai/dashboard/commit/1e96f1c32599f6d48830be289ce602e53822cf8b))
+
+
+### Bug Fixes
+
+* **auth:** delete the session-forging test fixture and TEST_AUTH_BYPASS ([#164](https://github.com/zeroroot-ai/dashboard/issues/164)) ([60b4252](https://github.com/zeroroot-ai/dashboard/commit/60b4252c2b9f9b089446968385f39e54c77b352b))
+* **deps:** bump next to 16.3.8 to clear next/og RCE (GHSA-vcvr-r3jv-pc5j) ([#154](https://github.com/zeroroot-ai/dashboard/issues/154)) ([8ff5a3a](https://github.com/zeroroot-ai/dashboard/commit/8ff5a3ad4d9535f84a0710a8b2c63905ddfa2076))
+* **deps:** stripe 22, the AI SDK family at v7, and knip 6 ([#162](https://github.com/zeroroot-ai/dashboard/issues/162)) ([8cde343](https://github.com/zeroroot-ai/dashboard/commit/8cde343348487c7ec869fdcf4b3884e1b5d6d99f))
+* **invite:** hand over the setup link instead of pointing at mail nobody sends ([#166](https://github.com/zeroroot-ai/dashboard/issues/166)) ([23eeb88](https://github.com/zeroroot-ai/dashboard/commit/23eeb88237b75bd452f2297465e57316315d6368))
+
 ## [0.126.0](https://github.com/zeroroot-ai/dashboard/compare/v0.125.0...v0.126.0) (2026-09-30)
 
 
