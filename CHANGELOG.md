@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.127.1](https://github.com/zeroroot-ai/dashboard/compare/v0.127.0...v0.127.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **deps:** move undici off two fixable HIGH CVEs so the image can be pushed ([#169](https://github.com/zeroroot-ai/dashboard/issues/169)) ([2109b95](https://github.com/zeroroot-ai/dashboard/commit/2109b95867b485d7bcb831d30c34575899342913))
+
 ## [0.127.0](https://github.com/zeroroot-ai/dashboard/compare/v0.126.0...v0.127.0) (2026-10-01)
 
 
