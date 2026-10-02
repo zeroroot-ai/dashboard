@@ -61,14 +61,12 @@ const VALID_ENV: Record<string, string> = {
   // Daemon front door
   GIBSON_PLATFORM_PUBLIC_URL: 'https://api.zeroroot.local:30443',
   GIBSON_PUBLIC_URL: 'https://api.zeroroot.local:30443',
-  GIBSON_API_URL: 'http://gibson-envoy:30443',
   PUBLIC_URL: 'https://app.zeroroot.local:30443',
 
   // Stores
   DATABASE_URL: 'postgres://user:pass@db:5432/gibson_dashboard',
   NEO4J_URI: 'bolt://neo4j:7687',
   NEO4J_PASSWORD: 'neo4j-pw',
-  REDIS_URL: 'redis://redis:6379',
 
   // Feature switches
   DASHBOARD_CAPTCHA_PROVIDER: 'disabled',
@@ -139,7 +137,7 @@ describe('env-validator: validateEnv()', () => {
     setProcessEnv({ ...VALID_ENV });
     delete process.env.ZITADEL_ISSUER;
     delete process.env.AUTH_SECRET;
-    delete process.env.GIBSON_API_URL;
+    delete process.env.ZITADEL_CLIENT_ID;
 
     let caught: unknown;
     try {
@@ -151,7 +149,7 @@ describe('env-validator: validateEnv()', () => {
     const e = caught as EnvValidationError;
     const missingNames = e.missing.map((s) => s.name).sort();
     expect(missingNames).toEqual(
-      ['AUTH_SECRET', 'GIBSON_API_URL', 'ZITADEL_ISSUER'].sort(),
+      ['AUTH_SECRET', 'ZITADEL_CLIENT_ID', 'ZITADEL_ISSUER'].sort(),
     );
   });
 
