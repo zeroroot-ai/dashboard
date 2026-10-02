@@ -62,18 +62,12 @@ export async function stubTierEndpoint(
         config: {
           tier,
           displayName: tier.charAt(0).toUpperCase() + tier.slice(1),
-          maxTeamMembers: maxSeats,
-          maxAPIKeys: 100,
-          customRolesEnabled: true,
-          auditLogRetentionDays: 90,
-          ssoEnabled: true,
-          prioritySupport: false,
+          concurrentMissions: maxSeats,
+          concurrentAgents: maxAgents,
         },
         usage: {
-          teamMemberCount: opts.currentSeats ?? 0,
-          apiKeyCount: 0,
-          customRoleCount: 0,
-          pendingInvitationCount: 0,
+          concurrentMissions: opts.currentSeats ?? 0,
+          concurrentAgents: 0,
         },
       }),
     });

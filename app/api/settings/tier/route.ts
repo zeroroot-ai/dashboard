@@ -11,10 +11,9 @@ import { planIDs } from '@/src/generated/plans';
 /**
  * GET /api/settings/tier
  *
- * Returns the current tenant's tier configuration + usage. Spec
- * plans-and-quotas-simplification reduces this to two enforced quotas;
- * legacy fields (teamMemberCount / apiKeyCount / customRoleCount /
- * pendingInvitationCount) are removed from the response shape.
+ * Returns the current tenant's tier configuration and usage: the two
+ * enforced quotas, concurrent missions and concurrent agents, and nothing else.
+ * `useTierLimits` is the one reader of this shape.
  *
  * Requires authentication.
  */

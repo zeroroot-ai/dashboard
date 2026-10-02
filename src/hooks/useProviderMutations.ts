@@ -81,7 +81,9 @@ export function useCreateProvider(): UseMutationResult<
           name: config.name ?? 'new-provider',
           displayName: config.name ?? 'New Provider',
           type: config.type,
-          apiKeyMasked: config.credentials && Object.keys(config.credentials).length > 0 ? '****' : undefined,
+          credentialsMasked: Object.fromEntries(
+            Object.keys(config.credentials ?? {}).map((field) => [field, '****']),
+          ),
           defaultModel: config.defaultModel,
           isDefault: config.setAsDefault ?? false,
           isEnabled: true,

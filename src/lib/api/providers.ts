@@ -26,7 +26,7 @@ import type {
 import type {
   DaemonProviderConfigInput,
   SupportedProviderDescriptor,
-} from '@/src/lib/gibson-client';
+} from '@/src/lib/gibson-client-types';
 
 // ============================================================================
 // Error Types

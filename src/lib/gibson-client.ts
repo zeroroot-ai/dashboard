@@ -23,19 +23,9 @@ import type {
   ListUserActivitiesResponse,
 } from '@/src/types/user';
 import type {
-  CredentialFieldDescriptor,
-  ModelDescriptor,
-  SupportedProviderDescriptor,
   DaemonProviderConfigInput,
   ProviderCapability,
 } from './gibson-client-types';
-// Re-exported for back-compat; client components should import from
-// gibson-client-types directly to avoid pulling grpc-js into the browser bundle.
-export type {
-  SupportedProviderDescriptor,
-  DaemonProviderConfigInput,
-  ProviderCapability,
-};
 import {
   fromProtoCapabilities,
   toProtoCapabilities,
@@ -229,13 +219,6 @@ export async function getMissionDefinition(name: string, userId?: string, tenant
   return response;
 }
 
-// Per-tenant Langfuse credential RPCs were removed from the
-// gibson.tenant.v1.ProviderService proto when the tenant-admin surface was
-// re-homed into the gibson daemon-local tree (E6, gibson#921). The dashboard
-// wrappers had no callers, so they are dropped here rather than carried as
-// dead code referencing message types the regenerated bindings no longer
-// expose.
-
 export { ConnectError, Code };
 
 // ============================================================================
@@ -261,14 +244,6 @@ interface AuditLogEntry {
   resourceId: string;
   timestamp: string;
   metadata: Record<string, string>;
-}
-
-interface TenantQuota {
-  tenantId: string;
-  maxMissions: number;
-  maxAgents: number;
-  maxMembers: number;
-  rateLimitRpm: number;
 }
 
 interface ProvisioningStep {
@@ -298,33 +273,6 @@ interface ProvisioningStep {
 // ListAuditEvents has been deferred per design.md disposition table.
 // Dashboard call sites that previously called queryAuditLog now return empty
 // results to avoid hitting the Unimplemented stub.
-
-// ============================================================================
-// Quota Management, GetTenantQuota RPC (TenantAdminService)
-// ============================================================================
-
-/**
- * Retrieve the resource quota (limits) for a tenant via
- * TenantAdminService.GetTenantQuota. Spec
- * plans-and-quotas-simplification reduces the response to two enforced
- * quotas; legacy maxMembers / rateLimitRpm fields are kept in the
- * dashboard's TenantQuota shape for backward compatibility but always 0.
- */
-async function getTenantQuota(
-  tenantId: string,
-  targetTenantId: string,
-  userId?: string
-): Promise<TenantQuota> {
-  const client = await getTenantServiceClient(userId, tenantId);
-  const response = await client.getTenantQuota({ tenantId: targetTenantId });
-  return {
-    tenantId: targetTenantId,
-    maxMissions: response.concurrentMissions ?? 0,
-    maxAgents: response.concurrentAgents ?? 0,
-    maxMembers: 0,
-    rateLimitRpm: 0,
-  };
-}
 
 /**
  * Retrieve the live counter values (current usage) for a tenant via
@@ -806,71 +754,27 @@ export function serializeStatus(s: StatusResponse): SerializedStatus {
 // ============================================================================
 // Provider Management, thin wrappers over the daemon gRPC client
 //
-// spec 25-daemon-driven-provider-config (task 15): the legacy K8s Secret
-// storage layer (provider-storage.ts) has been deleted. Every provider
-// operation now routes through the TenantAdminService RPCs (migrated from
-// DaemonAdminService per admin-services-completion spec). The exported
-// function signatures are preserved so existing callers keep working without
-// changes.
-//
-// The daemon* prefixed functions added in task 9 remain as the canonical
-// implementations, they are called directly by the task-11 route handlers,
-// the task-10 GibsonLLMAdapter, and the thin wrappers below.
+// Every provider operation routes through the TenantAdminService RPCs. The
+// daemon* functions below are the canonical implementations. The route
+// handlers and the GibsonLLMAdapter call them directly.
 // ============================================================================
-
-/**
- * Legacy-compatible read shape for a provider record.
- * @deprecated Prefer {@link DaemonProviderRecord} for new code.
- */
-interface ProviderRecord {
-  name: string;
-  displayName: string;
-  type: string;
-  apiKeyMasked?: string;
-  baseUrl?: string;
-  defaultModel?: string;
-  isDefault: boolean;
-  isEnabled: boolean;
-  version: number;
-  createdAt: string;
-  updatedAt: string;
-  health?: { status: string; latencyMs?: number; lastCheckAt?: string; lastSuccessAt?: string };
-  credentialsMasked?: Record<string, string>;
-}
 
 /**
  * Result shape returned by {@link listProviders}.
  * `defaultProvider` is the name of the tenant's current default, or null.
  */
 interface ListProvidersResult {
-  providers: ProviderRecord[];
+  providers: DaemonProviderRecord[];
   defaultProvider: string | null;
 }
 
 /**
- * List all LLM provider configurations for a tenant.
- *
- * Thin wrapper over {@link daemonListProviders}.
+ * List all LLM provider configurations for a tenant, and name the default.
  * Credentials are never returned, only masked values are included.
  */
 export async function listProviders(tenantId: string, userId?: string): Promise<ListProvidersResult> {
-  const records = await daemonListProviders(userId, tenantId);
-
-  const providers: ProviderRecord[] = records.map((r) => ({
-    name: r.name,
-    displayName: r.name,
-    type: r.type,
-    defaultModel: r.defaultModel,
-    isDefault: r.isDefault,
-    isEnabled: r.enabled,
-    version: 1,
-    createdAt: r.createdAt,
-    updatedAt: r.updatedAt,
-    credentialsMasked: r.credentialsMasked,
-  }));
-
-  const defaultProvider = records.find((r) => r.isDefault)?.name ?? null;
-
+  const providers = await daemonListProviders(userId, tenantId);
+  const defaultProvider = providers.find((r) => r.isDefault)?.name ?? null;
   return { providers, defaultProvider };
 }
 
@@ -1271,9 +1175,8 @@ export async function getAgentPerformance(tenantId: string, userId?: string): Pr
 // ---------------------------------------------------------------------------
 
 // CredentialFieldDescriptor / ModelDescriptor / SupportedProviderDescriptor
-// moved to ./gibson-client-types so client components can type-import them
-// without pulling grpc-js into the browser bundle. Re-exported at the top of
-// this file for back-compat with server-side callers.
+// live in ./gibson-client-types so client components can type-import them
+// without pulling grpc-js into the browser bundle.
 
 // getSupportedProviders removed, DELETE per admin-services-completion design.md.
 // GetSupportedProviders was a Bucket C RPC with no active caller path and is
@@ -1295,9 +1198,6 @@ export async function getAgentPerformance(tenantId: string, userId?: string): Pr
 /**
  * Read-side representation of a daemon-managed LLM provider config.
  * Credentials are always masked: {"api_key": "****xyz"}.
- *
- * Prefixed `Daemon` to avoid collision with the legacy K8s-backed ProviderRecord
- * until task 15 removes the old function set.
  */
 export interface DaemonProviderRecord {
   /** Server-generated UUID. */
@@ -1334,9 +1234,6 @@ export interface DaemonProviderRecord {
  * Write-side shape for creating or updating a daemon-managed LLM provider.
  * Credentials are plaintext on the wire; the daemon encrypts them immediately
  * via AES-256-GCM + KeyProvider and never persists the plaintext.
- *
- * Prefixed `Daemon` to avoid collision with the legacy ProviderConfigInput
- * from src/types/provider.ts.
  */
 // DaemonProviderConfigInput moved to ./gibson-client-types, see top-of-file note.
 
@@ -1621,10 +1518,7 @@ function buildExecRequest(
 /**
  * List all LLM provider configs for the calling tenant via the daemon
  * ListProviders RPC. Returns masked credential values only.
- *
- * Named `daemonListProviders` to avoid collision with the legacy K8s-backed
- * `listProviders` function above. Task 15 will remove the K8s version and
- * rename this to `listProviders`.
+ * {@link listProviders} wraps this and names the default provider.
  */
 export async function daemonListProviders(
   userId?: string,

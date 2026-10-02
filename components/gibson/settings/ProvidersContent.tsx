@@ -326,7 +326,7 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
   // so the badge reflects reality when the field is omitted.
   const hasCredentials = provider.credentialsMasked
     ? Object.values(provider.credentialsMasked).some((v) => v !== "")
-    : !!provider.apiKeyMasked;
+    : false;
   const isConfigured = hasCredentials || provider.isEnabled;
 
   function onSaveCredentials() {
@@ -570,15 +570,6 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
               )}
             </div>
           )}
-        {/* Fallback: legacy apiKeyMasked chip when credentialsMasked is absent */}
-        {!provider.credentialsMasked && provider.apiKeyMasked && (
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline" className="font-mono text-xs">
-              {provider.apiKeyMasked}
-            </Badge>
-          </div>
-        )}
-
         <div className="flex items-center gap-2 pt-1">
           <Button
             type="button"

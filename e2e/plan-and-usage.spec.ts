@@ -64,18 +64,12 @@ async function mockTier(page: Page, tier: PlanID) {
         config: {
           tier,
           displayName: displayNames[tier],
-          maxTeamMembers: tier === "solo" ? 1 : 50,
-          maxAPIKeys: Infinity,
-          customRolesEnabled: tier !== "solo" && tier !== "squad",
-          auditLogRetentionDays: 90,
-          ssoEnabled: tier !== "solo" && tier !== "squad",
-          prioritySupport: tier === "org" || tier === "platform",
+          concurrentMissions: tier === "solo" ? 1 : 50,
+          concurrentAgents: tier === "solo" ? 1 : 50,
         },
         usage: {
-          teamMemberCount: 0,
-          apiKeyCount: 0,
-          customRoleCount: 0,
-          pendingInvitationCount: 0,
+          concurrentMissions: 0,
+          concurrentAgents: 0,
         },
       }),
     });

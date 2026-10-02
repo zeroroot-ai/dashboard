@@ -12,7 +12,6 @@ import { useSession } from "@/src/lib/session-client";
 import {
   BadgeCheck,
   Bell,
-  ChevronRightIcon,
   CreditCard,
   LogOut,
 } from "lucide-react";
@@ -27,9 +26,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTierQuota } from "@/src/hooks/useTierQuota";
+import { useTierLimits } from "@/src/hooks/useTierLimits";
 
 function getInitials(name?: string | null): string {
   if (!name) return "??";
@@ -43,19 +41,12 @@ function getInitials(name?: string | null): string {
 
 export default function UserMenu() {
   const { data: session } = useSession();
-  const { data: quota, isLoading: quotaLoading } = useTierQuota();
+  const { data: tier, isLoading: tierLoading } = useTierLimits();
   const user = session?.user;
   const name = user?.name || "User";
   const email = user?.email || "";
   const image = user?.image;
   const initials = getInitials(name);
-
-  const creditsUsed = quota?.usage.apiKeyCount ?? 0;
-  const creditsTotal = quota?.config.maxAPIKeys ?? 0;
-  const creditsLeft = creditsTotal === Infinity ? "\u221E" : Math.max(0, creditsTotal - creditsUsed);
-  const progressPct = creditsTotal > 0 && creditsTotal !== Infinity
-    ? Math.round((creditsUsed / creditsTotal) * 100)
-    : 0;
 
   return (
     <DropdownMenu>
@@ -103,26 +94,12 @@ export default function UserMenu() {
           Log out
         </DropdownMenuItem>
         <div className="bg-muted mt-1.5 rounded-md border">
-          <div className="space-y-3 p-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium">API Keys</h4>
-              <div className="text-muted-foreground flex cursor-pointer items-center text-sm">
-                {quotaLoading ? (
-                  <Skeleton className="h-4 w-10" />
-                ) : (
-                  <span>{creditsLeft} left</span>
-                )}
-                <ChevronRightIcon className="ml-1 h-4 w-4" />
-              </div>
-            </div>
-            {quotaLoading ? (
-              <Skeleton className="h-2 w-full" />
+          <div className="text-muted-foreground flex items-center p-3 text-sm">
+            {tierLoading ? (
+              <Skeleton className="h-4 w-24" />
             ) : (
-              <Progress value={progressPct} indicatorColor="bg-primary" />
+              <span>{tier?.config.displayName ?? "-"} plan</span>
             )}
-            <div className="text-muted-foreground flex items-center text-sm">
-              {quota?.config.displayName ?? "-"} plan
-            </div>
           </div>
         </div>
       </DropdownMenuContent>

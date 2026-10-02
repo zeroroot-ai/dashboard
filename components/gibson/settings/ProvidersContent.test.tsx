@@ -187,7 +187,7 @@ const mockConfiguredProvider = {
   name: "my-anthropic",
   displayName: "my-anthropic",
   type: "anthropic",
-  apiKeyMasked: "sk-ant-****xyz",
+  credentialsMasked: { api_key: "sk-ant-****xyz" },
   defaultModel: "claude-3-5-sonnet-20241022",
   isDefault: true,
   isEnabled: true,
@@ -273,7 +273,7 @@ describe("ProvidersContent", () => {
     } as ReturnType<typeof useProviders>);
     renderWithProviders(<ProvidersContent />);
     expect(screen.getByText(/my-anthropic/)).toBeInTheDocument();
-    expect(screen.getByText("sk-ant-****xyz")).toBeInTheDocument();
+    expect(screen.getByText("api_key: sk-ant-****xyz")).toBeInTheDocument();
   });
 
   it("shows empty state when no providers are configured", () => {
@@ -692,30 +692,6 @@ describe("ConfiguredProviderRow, credentialsMasked display", () => {
     expect(screen.queryByText(/: /)).not.toBeInTheDocument();
   });
 
-  it("renders legacy fallback chip when only apiKeyMasked is present (no credentialsMasked)", () => {
-    mockedUseProviders.mockReturnValue({
-      data: {
-        providers: [
-          {
-            name: "my-legacy",
-            displayName: "my-legacy",
-            type: "anthropic",
-            apiKeyMasked: "****1234",
-            isDefault: false,
-            isEnabled: true,
-            version: 1,
-            createdAt: "2024-01-01T00:00:00Z",
-            updatedAt: "2024-01-01T00:00:00Z",
-          },
-        ],
-        defaultProvider: undefined,
-            },
-      isLoading: false,
-      isError: false,
-    } as unknown as ReturnType<typeof useProviders>);
-    renderWithProviders(<ProvidersContent />);
-    expect(screen.getByText("****1234")).toBeInTheDocument();
-  });
 });
 
 // ---------------------------------------------------------------------------
