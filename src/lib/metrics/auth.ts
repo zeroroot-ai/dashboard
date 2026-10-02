@@ -15,96 +15,53 @@
  * detail belongs in the audit event stream (`src/lib/audit/auth.ts`), not in
  * metrics.
  *
- * Consumed by:
- *   - Server Actions in `app/actions/auth/*` (signup, signin, password reset,
- *     email verification), increment on every terminal outcome.
- *   - `src/lib/auth/hibp.ts` / `captcha.ts`, increment on check outcomes.
+ * Every metric declared here has a producer, and
+ * `scripts/check-metrics-have-producers.mjs` fails the build when one does
+ * not (dashboard#173). The producers:
+ *   - `app/actions/signup.ts` records every signup terminal outcome.
+ *   - `auth.ts` observes every sign-in callback.
+ *   - `src/lib/auth/membership.ts` records every ListMyMemberships resolution.
+ *   - `src/lib/auth/active-tenant.ts` records every active-tenant check.
+ *   - `src/lib/auth/breached-password-gate.ts` records every HIBP check.
+ *   - `src/lib/gibson-client/transport.ts` records SVID-less daemon RPCs.
+ *   - `app/(public)/login/error/page.tsx` records every login-error render.
+ *
+ * Zitadel owns sign-in credentials, password reset, email verification and
+ * lockout (ADR-0093), and the signup form has no CAPTCHA by decision. The
+ * dashboard never sees those events, so it declares no series for them.
  */
 
 import { getOrCreateCounter, getOrCreateHistogram } from "./helpers";
 
 // ---------------------------------------------------------------------------
-// Label type unions, enumerated so TypeScript catches typos at the call
-// site. prom-client itself does not constrain label values at the type level.
+// Signup
 // ---------------------------------------------------------------------------
 
-/** Terminal outcome for an auth attempt. */
-type AuthOutcome = "ok" | "failed" | "rate_limited" | "locked";
-
-/** Why the HIBP breach check returned. */
-type HibpOutcome = "clean" | "breached" | "unknown";
-
-/** Which CAPTCHA provider rejected a token. */
-type CaptchaProvider = "turnstile" | "hcaptcha" | "disabled";
-
-// ---------------------------------------------------------------------------
-// Counters
-// ---------------------------------------------------------------------------
+/** Terminal outcome of a signup action. */
+type SignupOutcome = "ok" | "failed" | "rate_limited";
 
 /**
- * Total signup attempts, partitioned by outcome and a coarse failure reason
- * (e.g. `password_policy`, `slug_owned_by_other`, `email_already_registered`,
- * `hibp_breached`, `captcha_failed`, `internal_error`). `reason` is `""` on
- * successful attempts so the label set stays stable.
+ * Total signup terminal outcomes, partitioned by outcome and the
+ * `SignupFailureCode` the action returned. `reason` is `""` on success so
+ * the label set stays stable.
  */
-export const signupAttempts = getOrCreateCounter({
+const signupAttempts = getOrCreateCounter({
   name: "dashboard_auth_signup_attempts_total",
-  help: "Total signup attempts, labeled by outcome and coarse failure reason.",
+  help: "Total signup terminal outcomes, labeled by outcome and failure code.",
   labelNames: ["outcome", "reason"] as const,
 });
 
 /**
- * Total signin attempts. `reason` mirrors signupAttempts (`invalid_credentials`,
- * `account_locked`, `email_not_verified`, `rate_limited`, `captcha_failed`,
- * `internal_error`) and is `""` on success.
+ * Record one signup terminal outcome. Called from the signup action's
+ * audit helper, which every exit path runs through.
  */
-export const signinAttempts = getOrCreateCounter({
-  name: "dashboard_auth_signin_attempts_total",
-  help: "Total signin attempts, labeled by outcome and coarse failure reason.",
-  labelNames: ["outcome", "reason"] as const,
-});
+export function recordSignup(outcome: SignupOutcome, reason: string = ""): void {
+  signupAttempts.inc({ outcome, reason });
+}
 
-/**
- * Total account lockout events (account-keyed rate limiter tripped the
- * threshold). Each increment corresponds to one newly-locked account.
- */
-export const accountLockouts = getOrCreateCounter({
-  name: "dashboard_auth_account_lockouts_total",
-  help: "Total account lockout events triggered by the account-keyed rate limiter.",
-  labelNames: [] as const,
-});
-
-/**
- * Total password reset terminal outcomes. `outcome` in `{ok,failed,rate_limited}`.
- * `ok` covers both "reset email sent" and "reset completed", the audit log
- * distinguishes those two; the metric captures aggregate success rate.
- */
-export const passwordResets = getOrCreateCounter({
-  name: "dashboard_auth_password_resets_total",
-  help: "Total password reset terminal outcomes.",
-  labelNames: ["outcome"] as const,
-});
-
-/**
- * Total email verification terminal outcomes. `outcome` in `{ok,failed,rate_limited}`.
- */
-export const emailVerifications = getOrCreateCounter({
-  name: "dashboard_auth_email_verifications_total",
-  help: "Total email verification terminal outcomes.",
-  labelNames: ["outcome"] as const,
-});
-
-/**
- * Total CAPTCHA verification failures, labeled by provider. A successful
- * CAPTCHA verification is implied by the parent action's `signupAttempts` /
- * `signinAttempts` success increment and is NOT counted here, this metric
- * exists specifically to alert on abuse/outage of the CAPTCHA provider.
- */
-export const captchaFailures = getOrCreateCounter({
-  name: "dashboard_auth_captcha_failures_total",
-  help: "Total CAPTCHA verification failures, labeled by provider.",
-  labelNames: ["provider"] as const,
-});
+// ---------------------------------------------------------------------------
+// Breached-password gate
+// ---------------------------------------------------------------------------
 
 /**
  * Total HIBP breach-check outcomes. `outcome` distinguishes `clean` (not
@@ -118,42 +75,25 @@ export const hibpChecks = getOrCreateCounter({
 });
 
 // ---------------------------------------------------------------------------
-// Histograms
+// Membership resolution (spec: tenant-membership-not-in-jwt R9)
 // ---------------------------------------------------------------------------
 
 /**
- * End-to-end duration of a provisioning call from the dashboard's perspective.
- * Buckets sized 100ms → 60s:
- * the floor catches happy-path idempotent replays, the ceiling catches
- * operator-initiated retries that block on external dependencies.
- *
- * Corresponding operator-side histogram lives in
- * `tenant-operator/internal/metrics/metrics.go` (declared but not yet
- * recorded, see task 17.1). Together they form the end-to-end view.
+ * Outcome of one ListMyMemberships resolution. `ok` is a parsed response.
+ * The rest mirror `MembershipResolutionReason` in `src/lib/auth/membership.ts`.
  */
-export const provisioningDuration = getOrCreateHistogram({
-  name: "dashboard_auth_provisioning_duration_seconds",
-  help: "Duration of dashboard-side provisioning calls, in seconds.",
-  labelNames: ["operation", "outcome"] as const,
-  // 100ms, 250ms, 500ms, 1s, 2.5s, 5s, 10s, 20s, 40s, 60s.
-  buckets: [0.1, 0.25, 0.5, 1, 2.5, 5, 10, 20, 40, 60],
-});
-
-// ---------------------------------------------------------------------------
-// Membership-resolution metrics (spec: tenant-membership-not-in-jwt R9)
-// ---------------------------------------------------------------------------
-
-/** Outcome of a membership-resolution attempt. */
-type MembershipResolutionOutcome =
-  | "single"        // exactly one membership returned
-  | "multi"         // multiple memberships returned (picker shown)
-  | "zero"          // user is a member of no tenants (onboarding shown)
-  | "fga_error"     // daemon/FGA call failed; middleware routed to /login/error
-  | "daemon_error"; // daemon unreachable
+export type MembershipResolutionOutcome =
+  | "ok"
+  | "unauthenticated"
+  | "permission_denied"
+  | "daemon_unavailable"
+  | "fga_unavailable"
+  | "malformed_response"
+  | "unknown";
 
 const membershipResolutionTotal = getOrCreateCounter({
   name: "dashboard_membership_resolution_total",
-  help: "Membership-resolution attempts during sign-in / per-render, by outcome.",
+  help: "ListMyMemberships resolutions from the dashboard, by outcome.",
   labelNames: ["outcome"] as const,
 });
 
@@ -165,24 +105,39 @@ const membershipResolutionDuration = getOrCreateHistogram({
   buckets: [0.05, 0.1, 0.25, 0.5, 1, 2.5, 5],
 });
 
-/** Outcome of a single active-tenant cookie validation pass. */
-type ActiveTenantValidationOutcome =
-  | "ok"
-  | "absent"
-  | "invalid"     // HMAC failed (tampered or stale AUTH_SECRET)
-  | "stale"       // membership revoked while signed-in
-  | "forbidden";  // attempted to set a non-member tenant
+/** Record one ListMyMemberships resolution and how long the RPC took. */
+export function recordMembershipResolution(
+  outcome: MembershipResolutionOutcome,
+  durationSeconds: number,
+): void {
+  membershipResolutionTotal.inc({ outcome });
+  membershipResolutionDuration.observe({ outcome }, durationSeconds);
+}
+
+// ---------------------------------------------------------------------------
+// Active tenant
+// ---------------------------------------------------------------------------
+
+/**
+ * Outcome of one `requireActiveTenant` check.
+ *   - `ok`: the session names a tenant and a current membership confirms it.
+ *   - `absent`: the session names no tenant.
+ *   - `stale`: the session names a tenant the person is no longer a member
+ *     of. A sustained non-zero rate means revocations are landing on
+ *     signed-in sessions, which is the signal worth watching.
+ */
+type ActiveTenantOutcome = "ok" | "absent" | "stale";
 
 const activeTenantValidationTotal = getOrCreateCounter({
   name: "dashboard_active_tenant_validation_total",
-  help: "Active-tenant cookie validation outcomes per request.",
+  help: "requireActiveTenant outcomes per request.",
   labelNames: ["outcome"] as const,
 });
 
-const tenantSwitchTotal = getOrCreateCounter({
-  name: "dashboard_tenant_switch_total",
-  help: "Number of successful in-app tenant switches.",
-});
+/** Record one `requireActiveTenant` outcome. */
+export function recordActiveTenantValidation(outcome: ActiveTenantOutcome): void {
+  activeTenantValidationTotal.inc({ outcome });
+}
 
 // ---------------------------------------------------------------------------
 // Workload-identity transport fallback
@@ -194,35 +149,18 @@ const tenantSwitchTotal = getOrCreateCounter({
  * Bearer token. Two causes: the SPIFFE Workload API socket is absent, or the
  * SVID cache was still cold.
  *
- * The chart alerts on this (`DashboardUserTokenForwardingDisabled`,
- * gibson-workloads/templates/dashboard/auth-prometheusrule.yaml), and until
- * now NOTHING incremented it, so the alert could not fire for any reason. The
- * counter was declared for the USE_USER_TOKEN_FORWARDING soak backout, that
- * flag was deleted, and charts#294 re-aimed the alert at a transport fault
- * without anything producing the series it reads.
+ * The chart alerts on this (`DashboardWorkloadSvidFallback`,
+ * gibson-workloads/templates/dashboard/auth-prometheusrule.yaml) reading
+ * `increase(dashboard_workload_svid_fallback_total[5m]) > 0`.
  *
  * A cold cache increments once per pod start, which the alert's `for: 10m`
  * absorbs: one increment makes `increase(...[5m]) > 0` true for five minutes,
  * not ten. A missing socket increments on every RPC and sustains, which is the
  * condition worth paging about.
  *
- * This was dual-emitted for one release under the old name
- * `dashboard_user_token_forwarding_disabled_total`, because the chart pins the
- * dashboard by release tag + digest and the new series therefore does not exist
- * in a cluster until the chart pins a release that emits it. Switching the
- * alert's expr first would have left it reading a series nobody writes.
- *
- * That overlap is now closed, in order, each step verified rather than assumed:
- *   1. dashboard v0.127.1 emits both names (checked at the TAG, not the branch)
- *   2. charts main renamed the alert to DashboardWorkloadSvidFallback reading
- *      `increase(dashboard_workload_svid_fallback_total[5m]) > 0` (charts#312),
- *      and staging runs chart 0.135.3, which pins v0.127.1 — so the producer and
- *      the renamed alert are in the same cluster
- *   3. this release drops the old name
- *   4. charts re-pins, no alert change
- *
- * Do not reintroduce a second name for this counter without the same four
- * steps. An alert whose series has no producer reads as coverage and is not.
+ * Do not rename this counter without moving the chart alert in the same
+ * ordered pair (producer at a pinned tag first, alert second). An alert whose
+ * series has no producer reads as coverage and is not.
  */
 const workloadSvidFallbackTotal = getOrCreateCounter({
   name: "dashboard_workload_svid_fallback_total",
@@ -243,22 +181,23 @@ export function recordWorkloadSvidFallback(): void {
 // ---------------------------------------------------------------------------
 
 /**
- * Sign-in attempts by terminal outcome. error_reason is the
- * machine-readable code from LoginErrorReason; "_n/a" on success.
+ * Sign-in callbacks by terminal outcome. error_reason is the
+ * machine-readable reason the callback threw with; "_n/a" on success.
  */
 const signinTotal = getOrCreateCounter({
   name: "dashboard_signin_total",
-  help: "Dashboard sign-in attempts by terminal outcome.",
+  help: "Dashboard sign-in callbacks by terminal outcome.",
   labelNames: ["outcome", "error_reason"] as const,
 });
 
 /**
- * Sign-in latency from OIDC callback start to JWT-cookie write.
- * Buckets sized to catch happy path (<500ms) and slow paths up to 10s.
+ * Sign-in callback latency: from the OIDC callback entering the jwt
+ * callback with an `account` to the tenant being stamped on the token.
+ * Buckets sized to catch the happy path (<500ms) and slow paths up to 10s.
  */
 const signinDuration = getOrCreateHistogram({
   name: "dashboard_signin_duration_seconds",
-  help: "Sign-in latency in seconds, by outcome.",
+  help: "Sign-in callback latency in seconds, by outcome.",
   labelNames: ["outcome"] as const,
   buckets: [0.1, 0.25, 0.5, 1, 1.5, 2, 3, 5, 10],
 });
@@ -282,10 +221,10 @@ export function incrementLoginError(reason: string): void {
 }
 
 /**
- * Helper: observe a sign-in attempt's outcome + duration. Caller
- * passes "_n/a" when outcome is success.
+ * Helper: observe a sign-in callback's outcome and duration. Called from
+ * the `jwt` callback in `auth.ts` on the initial sign-in only.
  */
-function observeSignin(
+export function observeSignin(
   outcome: "success" | "error",
   durationSeconds: number,
   errorReason: string = "_n/a",

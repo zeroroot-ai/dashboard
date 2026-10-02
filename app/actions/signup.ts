@@ -103,6 +103,7 @@ import {
   failProgress,
 } from "@/src/lib/signup/progress-store";
 import { logger } from "@/src/lib/logger";
+import { recordSignup } from "@/src/lib/metrics/auth";
 
 
 // ---------------------------------------------------------------------------
@@ -725,6 +726,10 @@ function logAudit(
   ctx: Ctx,
   failureCode?: SignupFailureCode,
 ): void {
+  recordSignup(
+    outcome === "signup_ok" ? "ok" : failureCode === "RATE_LIMITED" ? "rate_limited" : "failed",
+    failureCode ?? "",
+  );
   logger.info(
     {
       action: "signup",

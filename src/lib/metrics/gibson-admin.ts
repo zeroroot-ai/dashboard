@@ -5,11 +5,15 @@
  * Prometheus counters for the dashboard → daemon admin RPC path
  * (spec `dashboard-admin-via-envoy`, Req 8 criterion 4).
  *
- * Every admin-RPC call now routes through Envoy with a SPIFFE JWT-SVID in
- * the `Authorization` header. These three counters give operators the
- * signals needed to distinguish "app-layer denial" (FGA said no),
- * "auth-layer denial" (Envoy rejected the JWT), and "identity-layer
- * failure" (SPIRE couldn't mint a token at all).
+ * Every admin-RPC call routes through Envoy with the person's Zitadel
+ * bearer token (see `src/lib/auth/user-token.ts`). These two counters give
+ * operators the signals needed to distinguish "app-layer denial" (FGA said
+ * no) from "upstream failure" (Envoy returned 502, 503 or 504).
+ *
+ * `scripts/check-metrics-have-producers.mjs` fails the build when a series
+ * declared here has no producer. A JWT-SVID mint counter lived here with
+ * no minter behind it (dashboard#173); the minter was deleted with the
+ * SPIFFE JWT-SVID outbound path.
  *
  * All metrics register against the shared `registry` singleton and are
  * exposed via `/api/metrics`. Label cardinality is deliberately bounded:
@@ -26,15 +30,6 @@ export type AdminRpcStatus =
   | "unavailable" // transport/connect error (including Envoy 502/503)
   | "error"; // everything else, deserialization, unexpected exceptions
 
-/** Why a JWT-SVID mint attempt ended. */
-type JwtRefreshOutcome =
-  | "ok" // fresh token minted
-  | "cached" // served from in-process cache, no SPIRE round-trip
-  | "stale_while_revalidate" // served stale token, kicked off refresh
-  | "unreachable" // SPIRE Workload API timed out / refused
-  | "not_configured" // no socket path at runtime
-  | "rejected"; // minted token failed local validation
-
 /**
  * Every admin RPC the dashboard issues. `method` is the short gRPC method
  * name (e.g. `UpsertTenantQuota`), bounded by the TenantAdminService /
@@ -44,17 +39,6 @@ export const adminRpcTotal = getOrCreateCounter({
   name: "gibson_admin_rpc_total",
   help: "Total admin RPCs from the dashboard through Envoy to the daemon, labeled by gRPC method and terminal status.",
   labelNames: ["method", "status"] as const,
-});
-
-/**
- * SPIFFE JWT-SVID mint attempts. `outcome` partitions the cache-hit vs
- * SPIRE-miss cases so we can alert on SPIRE outages WITHOUT being misled
- * by steady-state cache hits.
- */
-const adminJwtRefreshTotal = getOrCreateCounter({
-  name: "gibson_admin_jwt_refresh_total",
-  help: "SPIFFE JWT-SVID fetch outcomes on the dashboard admin-RPC path.",
-  labelNames: ["outcome"] as const,
 });
 
 /**
