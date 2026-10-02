@@ -23,7 +23,9 @@
  *   - Full chart deployed to the `gibson` Kind cluster
  *     (deploy the umbrella chart from the charts repository).
  *   - `DASHBOARD_EMAIL_PROVIDER=log`, `DASHBOARD_CAPTCHA_PROVIDER=disabled`.
- *   - `BILLING_DEV_AUTOCONFIRM` either flipped on OR Stripe webhook reachable.
+ *   - The operator's Stripe client is nil on kind, so the
+ *     WaitForBillingConfirmation step returns done=true with no webhook
+ *     (spec tenant-operator-saga-capabilities Requirement 4).
  *
  * Cleanup:
  *   After the test, the Tenant CR is deleted via `kubectl` so re-runs stay

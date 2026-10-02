@@ -24,8 +24,9 @@
  *     (deploy the umbrella chart from the charts repository).
  *   - `dataPlane.vault.enabled=true` AND `dataPlane.vault.kindRootToken=true`
  *     (default in `values-kind.yaml` after this spec).
- *   - `BILLING_DEV_AUTOCONFIRM=true` so the WaitForBillingConfirmation
- *     step short-circuits without a real Stripe webhook tunnel.
+ *   - The operator's Stripe client is nil on kind, so the
+ *     WaitForBillingConfirmation step returns done=true with no webhook
+ *     (Requirement 4 below).
  *   - kubectl in PATH with kind-gibson context active.
  *
  * Cleanup:
@@ -42,8 +43,9 @@ import { BASE_URL, generateUserCredentials } from "./helpers/fixtures";
 // Conditions every Ready Tenant must carry post-saga in kind. Stripe
 // surfaces as `StripeReady=True (Skipped)` because the operator's
 // Stripe client is nil (capability declaration dropped per spec
-// Requirement 4), the step's body returns done=true on nil deps.
-// Stripe; BillingPending=True comes from BILLING_DEV_AUTOCONFIRM=true.
+// Requirement 4), the step's body returns done=true on nil deps. That same
+// nil client is why BillingPending=True on kind. No flag is involved:
+// BILLING_DEV_AUTOCONFIRM was read by nothing and charts#302 deleted it.
 const REQUIRED_CONDITIONS = [
   "LangfuseReady",
   "FGAReady",
