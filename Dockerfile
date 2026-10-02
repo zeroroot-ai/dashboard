@@ -120,7 +120,7 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 # Strip the bundled package managers from the RUNTIME image.
 #
-# Nothing in this stage uses them. The entrypoint is `node server.js` against
+# Nothing in this stage uses them. The command is `node server.js` against
 # the Next standalone output, and the healthcheck shells out to wget; npm, npx,
 # corepack and yarn are present only because the node base image ships them.
 # The build stages are unaffected — they run `npm ci` / `npm run build` in the
@@ -157,6 +157,10 @@ RUN rm -rf \
  && ! command -v npm >/dev/null 2>&1 \
  && node --version
 
+# The entrypoint sizes the V8 heap from the cgroup limit (dashboard#150).
+# Root-owned and world-readable; nextjs only needs to execute it.
+COPY --chmod=0755 docker/entrypoint.sh /app/entrypoint.sh
+
 # Copy standalone build output
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
@@ -179,4 +183,5 @@ HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
 COPY LICENSE /licenses/LICENSE
 COPY NOTICE /licenses/NOTICE
 
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["node", "server.js"]
