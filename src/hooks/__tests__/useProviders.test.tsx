@@ -34,7 +34,7 @@ const mockProvider: ProviderConfig = {
   name: 'anthropic-primary',
   displayName: 'Anthropic (Primary)',
   type: 'anthropic',
-  apiKeyMasked: 'sk-ant****xxx',
+  credentialsMasked: { api_key: 'sk-ant****xxx' },
   baseUrl: undefined,
   defaultModel: 'claude-3-5-sonnet-20241022',
   isDefault: true,

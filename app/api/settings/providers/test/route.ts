@@ -18,8 +18,8 @@ import { getServerSession } from '@/src/lib/auth';
 import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import {
   daemonTestProvider,
-  type DaemonProviderConfigInput,
 } from '@/src/lib/gibson-client';
+import type { DaemonProviderConfigInput } from '@/src/lib/gibson-client-types';
 import { translateError } from '@/src/lib/providers-route-error';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 

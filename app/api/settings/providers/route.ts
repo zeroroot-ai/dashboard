@@ -17,8 +17,8 @@ import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/act
 import {
   daemonListProviders,
   daemonCreateProvider,
-  type DaemonProviderConfigInput,
 } from '@/src/lib/gibson-client';
+import type { DaemonProviderConfigInput } from '@/src/lib/gibson-client-types';
 import { translateError } from '@/src/lib/providers-route-error';
 import { toProviderConfig } from '@/src/lib/providers-adapter';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
