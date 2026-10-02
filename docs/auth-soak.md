@@ -24,17 +24,19 @@ the in-cluster Prometheus.
 | `dashboard_membership_resolution_duration_seconds` | Histogram | ListMyMemberships RPC latency from dashboard | p99 < 500 ms under normal FGA load |
 | `dashboard_active_tenant_validation_total{outcome="..."}` | Counter | Cookie validation outcomes per protected request | `stale` and `forbidden` should be low; spikes indicate revocation events or cookie tampering |
 | `dashboard_workload_svid_fallback_total` | Counter | Outbound daemon RPCs that left without the pod's X509-SVID, over plain HTTPS | **A sustained rate means the SPIFFE Workload API is unreachable** and calls carry only their Bearer token. One increment per pod start is the cold SVID cache and is expected. |
-| `dashboard_user_token_forwarding_disabled_total` | Counter | Deprecated alias of the row above, same count | Written for ONE release while the chart alert moves to the new name. The chart pins the dashboard by release tag, so the new series does not exist in a cluster until the chart pins a release that emits it. Do not build anything new on this name. |
 
 ---
 
 ## Alert rules
 
-Rules are committed under `helm/gibson/files/prometheus/rules/` in the charts repository.
+Rules are committed as a PrometheusRule template in the charts repository:
+`zeroroot-ai/charts` → `helm/gibson-workloads/templates/dashboard/auth-prometheusrule.yaml`.
+The path this used to name, `helm/gibson/files/prometheus/rules/`, does not exist
+in that repository.
 
 ### `DashboardSignInErrorRateHigh`
 
-- **File:** `auth-alerts.yaml`
+- **File:** `helm/gibson-workloads/templates/dashboard/auth-prometheusrule.yaml` (charts)
 - **Condition:** Sign-in error rate (errors / total) > 1% sustained over 5 minutes.
 - **Severity:** `page`
 - **Fires when:** Any combination of `fga_unavailable`, `jwks_unavailable`,
@@ -46,7 +48,7 @@ Rules are committed under `helm/gibson/files/prometheus/rules/` in the charts re
 
 ### `DashboardFGAUnreachable`
 
-- **File:** `auth-alerts.yaml`
+- **File:** `helm/gibson-workloads/templates/dashboard/auth-prometheusrule.yaml` (charts)
 - **Condition:** `dashboard_membership_resolution_total{outcome="fga_error"}` > 0
   sustained for 30 seconds.
 - **Severity:** `page`
@@ -58,7 +60,7 @@ Rules are committed under `helm/gibson/files/prometheus/rules/` in the charts re
 
 ### `DashboardSignInLatencyBudgetBurn`
 
-- **File:** `auth-alerts.yaml`
+- **File:** `helm/gibson-workloads/templates/dashboard/auth-prometheusrule.yaml` (charts)
 - **Condition:** Multi-window error-budget burn rate for the
   `p95(dashboard_signin_duration_seconds) < 1.5s` SLO.
 - **Severity:** `page`
@@ -109,8 +111,8 @@ UX. It does not change the core authentication code path. However, if the
 
 3. **To roll back the Prometheus rules or Grafana dashboard** (e.g., if a
    recording rule causes query load issues):
-   - Edit `helm/gibson/files/prometheus/rules/auth-alerts.yaml`
-     or `auth-slos.yaml` in the charts repository.
+   - Edit `helm/gibson-workloads/templates/dashboard/auth-prometheusrule.yaml`
+     in the `zeroroot-ai/charts` repository.
    - The Prometheus operator will reconcile within 60 seconds.
    - Do NOT directly `kubectl edit` the PrometheusRule, use Helm/GitOps.
 

@@ -206,22 +206,23 @@ const tenantSwitchTotal = getOrCreateCounter({
  * not ten. A missing socket increments on every RPC and sustains, which is the
  * condition worth paging about.
  *
- * TWO series carry the same count during a rename, deliberately. The old name
- * says user-token-forwarding and the condition no longer does, but the chart
- * pins the dashboard by release tag + digest
- * (`helm/gibson-workloads/values.yaml` → `tag: "v0.126.0@sha256:..."`), so the
- * new series does not exist in a cluster until the chart pins a release that
- * emits it. Switching the alert's expr first would leave it reading a series
- * nobody writes for as long as the pin lagged.
+ * This was dual-emitted for one release under the old name
+ * `dashboard_user_token_forwarding_disabled_total`, because the chart pins the
+ * dashboard by release tag + digest and the new series therefore does not exist
+ * in a cluster until the chart pins a release that emits it. Switching the
+ * alert's expr first would have left it reading a series nobody writes.
  *
- * So the overlap closes the window to zero:
- *   1. this release emits BOTH names
- *   2. charts re-pins to it AND moves the expr to the new name, one PR
- *   3. a later dashboard release drops the old name
+ * That overlap is now closed, in order, each step verified rather than assumed:
+ *   1. dashboard v0.127.1 emits both names (checked at the TAG, not the branch)
+ *   2. charts main renamed the alert to DashboardWorkloadSvidFallback reading
+ *      `increase(dashboard_workload_svid_fallback_total[5m]) > 0` (charts#312),
+ *      and staging runs chart 0.135.3, which pins v0.127.1 — so the producer and
+ *      the renamed alert are in the same cluster
+ *   3. this release drops the old name
  *   4. charts re-pins, no alert change
  *
- * Step 3 deletes `legacyName` and this comment. Until then the duplicate is
- * load-bearing and must not be "cleaned up".
+ * Do not reintroduce a second name for this counter without the same four
+ * steps. An alert whose series has no producer reads as coverage and is not.
  */
 const workloadSvidFallbackTotal = getOrCreateCounter({
   name: "dashboard_workload_svid_fallback_total",
@@ -229,27 +230,12 @@ const workloadSvidFallbackTotal = getOrCreateCounter({
 });
 
 /**
- * The pre-rename name of {@link workloadSvidFallbackTotal}. Written for one
- * release so the chart's `DashboardUserTokenForwardingDisabled` alert keeps
- * reading a live series while the expr moves. Delete at step 3.
- */
-const workloadSvidFallbackTotalLegacyName = getOrCreateCounter({
-  name: "dashboard_user_token_forwarding_disabled_total",
-  help: "Deprecated alias of dashboard_workload_svid_fallback_total, kept for one release while the chart alert moves to the new name. Do not build anything new on it.",
-});
-
-/**
  * Helper: record one outbound RPC that went without the workload SVID.
  * Called from the transport's fallback branches, which run in the Node.js
  * runtime only.
- *
- * Increments BOTH series from the one event, so the two can never disagree
- * during the rename. A caller that bumped only one would make the overlap a
- * source of two different numbers.
  */
 export function recordWorkloadSvidFallback(): void {
   workloadSvidFallbackTotal.inc();
-  workloadSvidFallbackTotalLegacyName.inc();
 }
 
 // ---------------------------------------------------------------------------
