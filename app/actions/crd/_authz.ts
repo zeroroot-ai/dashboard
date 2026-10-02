@@ -281,7 +281,6 @@ export const CRD_PERMISSIONS: Record<
   // so the Owner resetting their own MFA is still covered by this gate.
   resetUserMfaAction: { relation: "admin" },
   setComponentAccessAction: { relation: "admin" },
-  installAgentAction: { relation: "admin" },
   listTeamsAction: { relation: "admin" },
   listTeamMembersAction: { relation: "admin" },
   createTeamAction: { relation: "admin" },

@@ -107,8 +107,6 @@ import * as roleActions from "../role";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import * as accessActions from "../access";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-import * as installAgentActions from "../installAgent";
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import * as transferOwnershipActions from "../transfer-ownership";
 import * as sessionActions from "../sessions";
 import * as resetMfaActions from "../reset-mfa";
@@ -198,7 +196,6 @@ const allExportedActions = [
   ...Object.keys(teamActions),
   ...Object.keys(roleActions),
   ...Object.keys(accessActions),
-  ...Object.keys(installAgentActions),
   ...Object.keys(transferOwnershipActions),
   ...Object.keys(sessionActions),
   ...Object.keys(resetMfaActions),

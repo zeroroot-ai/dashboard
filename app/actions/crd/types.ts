@@ -25,7 +25,6 @@ export type CrdActionName =
   | "revokeUserSessionsAction"
   | "resetUserMfaAction"
   | "setComponentAccessAction"
-  | "installAgentAction"
   | "listTeamsAction"
   | "listTeamMembersAction"
   | "createTeamAction"
