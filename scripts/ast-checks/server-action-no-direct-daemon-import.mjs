@@ -14,8 +14,7 @@
  * This is the file-system / CI-time variant of the ESLint rule
  * `zeroroot-ai/no-direct-daemon-import`. The ESLint rule is editor-time
  * (PR-blocking via eslint); the walker is invoked by
- * `pnpm test:ast-checks` as a faster targeted scan and is friendly to
- * zda-ast-style retrieval.
+ * `pnpm test:ast-checks` as a faster targeted scan.
  *
  * Slice 3.8 of the production-readiness epic (gibson#173 → board #16).
  *
