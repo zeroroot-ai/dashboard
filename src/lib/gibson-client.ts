@@ -1332,7 +1332,7 @@ export interface DaemonLLMToolCall {
  * The output of a tool call.
  * Maps to the proto gibson.tenant.v1.LLMToolResult.
  */
-export interface DaemonLLMToolResult {
+interface DaemonLLMToolResult {
   toolCallId: string;
   content: string;
   isError: boolean;

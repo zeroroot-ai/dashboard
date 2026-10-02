@@ -230,7 +230,7 @@ async function main() {
     console.warn(
       "[auth-latency-baseline] WARNING: dashboard_signin_duration_seconds not found in /api/metrics. " +
         "The histogram is only populated after at least one sign-in. " +
-        "Run pnpm test:e2e:auth-errors (happy_path test) to generate samples.",
+        "Run pnpm test:e2e e2e/auth/login-happy.spec.ts to generate samples.",
     );
   }
 
@@ -289,7 +289,7 @@ async function main() {
   if (sampleCount === 0) {
     console.warn(
       "[auth-latency-baseline] No sign-in samples in histogram. " +
-        "Run pnpm test:e2e:auth-errors first to populate it.",
+        "Run pnpm test:e2e e2e/auth/login-happy.spec.ts first to populate it.",
     );
   }
 }

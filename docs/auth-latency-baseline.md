@@ -15,7 +15,7 @@ pnpm build && pnpm start
 
 # 2. Drive sign-in traffic (the happy-path e2e test populates the histogram):
 PLAYWRIGHT_BASE_URL=http://localhost:3000 \
-  pnpm test:e2e:auth-errors --grep happy_path
+  pnpm test:e2e e2e/auth/login-happy.spec.ts
 
 # 3. Capture the histogram from /api/metrics:
 node scripts/auth-latency-baseline.mjs --base-url http://localhost:3000
