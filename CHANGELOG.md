@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.127.2](https://github.com/zeroroot-ai/dashboard/compare/v0.127.1...v0.127.2) (2026-10-02)
+
+
+### Bug Fixes
+
+* **adr-0027:** one provider shape, one tier shape, no back-compat re-export ([#177](https://github.com/zeroroot-ai/dashboard/issues/177)) ([4de9361](https://github.com/zeroroot-ai/dashboard/commit/4de93612245266268fe9c74e748d94633bf57750)), closes [#160](https://github.com/zeroroot-ai/dashboard/issues/160)
+* **ast-checks:** the walker header claims friendliness to a deleted CLI ([#171](https://github.com/zeroroot-ai/dashboard/issues/171)) ([82ebac3](https://github.com/zeroroot-ai/dashboard/commit/82ebac3b28a89a02e2683c04dcde83e178eee9ca))
+* **deps:** move off the dependency advisories behind the Scorecard alert ([#184](https://github.com/zeroroot-ai/dashboard/issues/184)) ([1a5c992](https://github.com/zeroroot-ai/dashboard/commit/1a5c992935436a6ab115228d9528e465fc329dd8))
+* **docker:** Node sizes its heap from the cgroup limit, so an OOM is an event ([c338a47](https://github.com/zeroroot-ai/dashboard/commit/c338a47cb35d09bd0800de9dbd22692ac000992a))
+* **docker:** the heap is sized from the cgroup limit, so an OOM is an event ([#183](https://github.com/zeroroot-ai/dashboard/issues/183)) ([c338a47](https://github.com/zeroroot-ai/dashboard/commit/c338a47cb35d09bd0800de9dbd22692ac000992a))
+* **email:** the dashboard sends no mail, so it declares no mail ([#181](https://github.com/zeroroot-ai/dashboard/issues/181)) ([1d7e073](https://github.com/zeroroot-ai/dashboard/commit/1d7e07386963636dd6c36544eee39019eac85474))
+* **env:** every declared env name has a reader, and a gate keeps it so ([#185](https://github.com/zeroroot-ai/dashboard/issues/185)) ([a9e32aa](https://github.com/zeroroot-ai/dashboard/commit/a9e32aa8ce7f77e0173a26ce35dc3c14d7343e72)), closes [#182](https://github.com/zeroroot-ai/dashboard/issues/182)
+* **metrics:** every auth metric has a producer, and a gate keeps it so ([#179](https://github.com/zeroroot-ai/dashboard/issues/179)) ([c819040](https://github.com/zeroroot-ai/dashboard/commit/c819040e991861b4b227456a0cb9d3587d5b330c)), closes [#173](https://github.com/zeroroot-ai/dashboard/issues/173)
+* **ui:** components/ui is inside the knip gate, and types is back at error ([#176](https://github.com/zeroroot-ai/dashboard/issues/176)) ([dde2996](https://github.com/zeroroot-ai/dashboard/commit/dde299601a1f046e2945c2abc52d2112ec30e745)), closes [#159](https://github.com/zeroroot-ai/dashboard/issues/159) [#161](https://github.com/zeroroot-ai/dashboard/issues/161)
+
 ## [0.127.1](https://github.com/zeroroot-ai/dashboard/compare/v0.127.0...v0.127.1) (2026-10-02)
 
 
