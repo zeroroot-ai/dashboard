@@ -73,7 +73,6 @@ const VALID_ENV: Record<string, string> = {
   // Feature switches
   DASHBOARD_CAPTCHA_PROVIDER: 'disabled',
   DASHBOARD_HIBP_ENABLED: 'true',
-  DASHBOARD_EMAIL_PROVIDER: 'log',
 
   // Force production codepath so prodOnly entries are enforced, the test
   // suite must exercise every required key, including prodOnly ones.

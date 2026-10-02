@@ -263,13 +263,6 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
       'Whether to call the haveibeenpwned range API during signup. ' +
       '"true" or "false", no implicit on-by-default.',
   },
-  {
-    name: 'DASHBOARD_EMAIL_PROVIDER',
-    kind: 'string',
-    hint:
-      'Email provider: "log" | "resend" | "smtp" | "ses". Explicit choice required.',
-  },
-
   // ---- Observability ----
   // Mission/daemon logs are now read through the daemon LogsService
   // (gibson.daemon.logs.v1) over Envoy + ext-authz (dashboard#811); the
@@ -314,22 +307,6 @@ const OPTIONAL_ENV = [
   // ---- SPIFFE socket (workload identity) ----
   // Defaults to /run/spire/agent.sock; chart override only.
   'SPIFFE_ENDPOINT_SOCKET',
-
-  // ---- Provider-specific email creds (gated by DASHBOARD_EMAIL_PROVIDER) ----
-  // The provider's constructor throws if its specific creds are missing -
-  // the validator enforces only that DASHBOARD_EMAIL_PROVIDER is set.
-  'DASHBOARD_EMAIL_RESEND_API_KEY',
-  'DASHBOARD_EMAIL_RESEND_FROM',
-  'DASHBOARD_EMAIL_SMTP_HOST',
-  'DASHBOARD_EMAIL_SMTP_PORT',
-  'DASHBOARD_EMAIL_SMTP_USER',
-  'DASHBOARD_EMAIL_SMTP_PASS',
-  'DASHBOARD_EMAIL_SMTP_FROM',
-  'SES_FROM_ADDRESS',
-  'AWS_REGION',
-  'DASHBOARD_EMAIL_FROM',
-  'CONTACT_SALES_INBOX',
-  'DASHBOARD_SUPPORT_EMAIL',
 
   // ---- CAPTCHA secret (gated by DASHBOARD_CAPTCHA_PROVIDER) ----
   'DASHBOARD_CAPTCHA_SECRET_KEY',
@@ -398,8 +375,6 @@ const OPTIONAL_ENV = [
   'DASHBOARD_METRICS_ALLOWED_CIDRS',
   // Auto-create personal org on first social-sign-in. Defaults true in code.
   'DASHBOARD_AUTO_CREATE_ORG',
-  // Email verification cutoff used by one-shot migration; safe absent.
-  'DASHBOARD_EMAIL_VERIFICATION_CUTOFF',
   // Social preview flag for the login page (dev knob).
   'DASHBOARD_SOCIAL_PREVIEW',
   // Debug toggle.
