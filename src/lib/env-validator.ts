@@ -22,11 +22,10 @@
  *   server start). It no longer reads ANY env var: its only reader was the
  *   `/api/grpc` rewrite, which was deleted because it forwarded browser
  *   traffic to the daemon without traversing Envoy + ext_authz.
- *   `GIBSON_API_URL` stays in the required set because the chart supplies it
- *   and there is a build-time check script
- *   (`scripts/check-required-build-env.mjs`) that runs before `next build`
- *   on the production codepath so a missing `GIBSON_API_URL` fails the
- *   image build, not just the pod boot. See the prebuild chain.
+ *   Every name declared here has a reader in the tree, and
+ *   `scripts/check-env-declared-is-read.mjs` fails the build when one does
+ *   not (dashboard#182). A declared name with no reader lets the chart
+ *   inject a value into a pod that never uses it.
  *
  * Calling pattern from instrumentation.ts:
  *
@@ -201,17 +200,6 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
       '(matches GIBSON_PLATFORM_PUBLIC_URL in practice; surface kept for the wizard).',
   },
   {
-    name: 'GIBSON_API_URL',
-    kind: 'url',
-    hint:
-      'Internal Envoy endpoint for the daemon front door (e.g. http://gibson-envoy:30443). ' +
-      'NOTE: the /api/grpc Next.js rewrite that used to consume this was deleted, ' +
-      'it proxied browser traffic onto the daemon without traversing ext_authz. ' +
-      'The value is still asserted at boot because the chart supplies it and ' +
-      'check-required-build-env.mjs enforces it in CI; it now has no in-repo reader. ' +
-      'Retiring it is a chart-coupled change, do that in the deploy repo first.',
-  },
-  {
     name: 'PUBLIC_URL',
     kind: 'url',
     hint:
@@ -239,13 +227,6 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
     hint:
       'Neo4j password mounted from the gibson-neo4j-auth secret. ' +
       'No default, fail-fast per one-code-path.',
-  },
-  {
-    name: 'REDIS_URL',
-    kind: 'string',
-    hint:
-      'Redis connection URL used for session invalidation + rate-limiter ' +
-      '(e.g. redis://gibson-redis:6379).',
   },
 
   // ---- Feature switches ----
@@ -339,19 +320,6 @@ const OPTIONAL_ENV = [
   // paid tiers are enabled; validateBillingConfig()/stripe.ts owns semantics.
   'STRIPE_EXPECTED_MODE',
 
-  // ---- Social-provider creds (each pair is gated by its own pair of creds) ----
-  // The dashboard's social-provider wiring refuses to start if exactly one of
-  // a pair is set, the validator does not need to police that.
-  'GITHUB_CLIENT_ID',
-  'GITHUB_CLIENT_SECRET',
-  'GITLAB_CLIENT_ID',
-  'GITLAB_CLIENT_SECRET',
-  'GOOGLE_CLIENT_ID',
-  'GOOGLE_CLIENT_SECRET',
-  'MICROSOFT_CLIENT_ID',
-  'MICROSOFT_CLIENT_SECRET',
-  'MICROSOFT_TENANT_ID',
-
   // ---- Zitadel admin ----
   // NOTE: the broad ZITADEL_SIGNUP_BOT_PAT + ZITADEL_EXTERNAL_DOMAIN pair was
   // removed in E9 (dashboard#812). Owner provisioning now runs daemon-side via
@@ -373,8 +341,6 @@ const OPTIONAL_ENV = [
   // ---- Misc dashboard knobs ----
   // CIDR allow-list for /api/metrics, when unset the route is open to all.
   'DASHBOARD_METRICS_ALLOWED_CIDRS',
-  // Auto-create personal org on first social-sign-in. Defaults true in code.
-  'DASHBOARD_AUTO_CREATE_ORG',
   // Social preview flag for the login page (dev knob).
   'DASHBOARD_SOCIAL_PREVIEW',
   // Debug toggle.

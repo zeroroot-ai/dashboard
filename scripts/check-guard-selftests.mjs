@@ -62,6 +62,9 @@ const GUARDS = [
   // metrics were declared and never incremented; this proves a declared
   // series without a producer fails the build.
   "check-metrics-have-producers.mjs",
+  // The env declaration gate (dashboard#182). Sixteen names sat in the
+  // validator with no reader; this proves a declared-but-unread name fails.
+  "check-env-declared-is-read.mjs",
 ];
 
 let failed = 0;
