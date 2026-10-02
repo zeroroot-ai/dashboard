@@ -6,34 +6,23 @@ import 'server-only';
 /**
  * Typed dashboard client methods for gibson.pluginadmin.v1.PluginAdminService.
  *
- * Backs the dashboard's plugin registration wizard and plugin detail page.
- * RegisterPlugin is atomic per Spec 2 R3.1, any partial failure rolls back
- * all created state (Zitadel SA, FGA tuples, inline secrets).
- *
- * Spec: secrets-tenant-lifecycle Task 6, Requirements 8.1.
- * NOTE: PluginAdminService is not yet served by the daemon (gibson#565);
- * expect Unavailable until that issue ships.
+ * Backs the plugin detail page and the secret-binding actions. The register
+ * wrapper left with the UI-less registration actions (gibson#555): a plugin
+ * declares itself at check-in (ADR-0097), and the deploy wizard registers
+ * through the register API.
  */
 
 import { userClient } from '../gibson-client';
 import { PluginAdminService } from '@/src/gen/gibson/pluginadmin/v1/plugin_admin_pb';
 import type {
   PluginInstallSummary,
-  PluginSecretBinding,
-  PluginManifestValidationError,
   ListPluginInstallsResponse,
   GetPluginInstallResponse,
-  RegisterPluginResponse,
   EditPluginSecretBindingResponse,
   RevokePluginSecretBindingResponse,
   PluginInstallStatus,
 } from '@/src/gen/gibson/pluginadmin/v1/plugin_admin_pb';
 import { throwMapped } from './secrets';
-
-export type {
-  PluginSecretBinding,
-  PluginManifestValidationError,
-};
 
 // ---------------------------------------------------------------------------
 // Read methods (tenant_member+)
@@ -80,42 +69,6 @@ export async function getPluginInstall(installId: string): Promise<GetPluginInst
 // ---------------------------------------------------------------------------
 // Write methods (tenant_admin)
 // ---------------------------------------------------------------------------
-
-interface RegisterPluginOptions {
-  /** The plugin manifest YAML bytes per Spec 2. */
-  manifestYaml: Uint8Array;
-  /** One binding per secret declared in manifest spec.secrets[]. */
-  bindings: PluginSecretBinding[];
-  /**
-   * When true, validates without creating any state. Used by wizard Step 2
-   * to surface validation errors before the final submit.
-   */
-  dryRun?: boolean;
-}
-
-/**
- * Atomically registers a plugin per Spec 2 R3.1.
- *
- * On success: creates the Zitadel plugin_principal SA, writes per-binding
- * FGA can_resolve tuples (creating any inline secrets in the broker), and
- * returns the bootstrap token.
- *
- * Any partial failure rolls back all created state.
- *
- * When dryRun is true, returns validation errors without side-effects.
- */
-export async function registerPlugin(opts: RegisterPluginOptions): Promise<RegisterPluginResponse> {
-  try {
-    const client = userClient(PluginAdminService);
-    return await client.registerPlugin({
-      manifestYaml: opts.manifestYaml,
-      bindings: opts.bindings,
-      dryRun: opts.dryRun ?? false,
-    });
-  } catch (err) {
-    throwMapped(err);
-  }
-}
 
 /**
  * Rebinds a plugin's declared secret to a different existing secret ref.
