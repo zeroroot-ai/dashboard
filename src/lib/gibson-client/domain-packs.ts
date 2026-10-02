@@ -32,7 +32,6 @@ function toCatalogEntryDTO(e: DomainPackCatalogEntry): DomainPackCatalogEntryDTO
     version: e.version,
     author: e.author,
     visibility: e.visibility,
-    entitlement: e.entitlement,
     taxonomyNodeLabels: e.taxonomyNodeLabels,
     taxonomyRelationshipTypes: e.taxonomyRelationshipTypes,
     techniques: e.techniques,

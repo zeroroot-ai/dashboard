@@ -26,7 +26,7 @@ import type { JsonObject, Message } from "@bufbuild/protobuf";
  * Describes the file gibson/target/v1/target.proto.
  */
 export const file_gibson_target_v1_target: GenFile = /*@__PURE__*/
-  fileDesc("Ch1naWJzb24vdGFyZ2V0L3YxL3RhcmdldC5wcm90bxIQZ2lic29uLnRhcmdldC52MSKABAoGVGFyZ2V0EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSDAoEdHlwZRgDIAEoCRIQCghwcm92aWRlchgEIAEoCRIrCgpjb25uZWN0aW9uGAUgASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdBINCgVtb2RlbBgGIAEoCRInCgZjb25maWcYByABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0EhQKDGNhcGFiaWxpdGllcxgIIAMoCRIRCglhdXRoX3R5cGUYCSABKAkSFQoNY3JlZGVudGlhbF9pZBgKIAEoCRIOCgZzdGF0dXMYCyABKAkSEwoLZGVzY3JpcHRpb24YDCABKAkSDAoEdGFncxgNIAMoCRIPCgd0aW1lb3V0GA4gASgFEi4KCmNyZWF0ZWRfYXQYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfYXQYECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEgsKA3VybBgRIAEoCRI2CgdoZWFkZXJzGBIgAygLMiUuZ2lic29uLnRhcmdldC52MS5UYXJnZXQuSGVhZGVyc0VudHJ5Gi4KDEhlYWRlcnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBImsKDFRhcmdldEZpbHRlchIQCghwcm92aWRlchgBIAEoCRIMCgR0eXBlGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIMCgR0YWdzGAQgAygJEg0KBWxpbWl0GAUgASgFEg4KBm9mZnNldBgGIAEoBUJQUAFaPGdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvc2RrL2FwaS9nZW4vZ2lic29uL3RhcmdldC92MTt0YXJnZXRwYqoCDUdpYnNvbi5UYXJnZXRiBnByb3RvMw", [file_google_protobuf_struct, file_google_protobuf_timestamp]);
+  fileDesc("Ch1naWJzb24vdGFyZ2V0L3YxL3RhcmdldC5wcm90bxIQZ2lic29uLnRhcmdldC52MSKPBAoGVGFyZ2V0EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSDAoEdHlwZRgDIAEoCRIQCghwcm92aWRlchgEIAEoCRIrCgpjb25uZWN0aW9uGAUgASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdBINCgVtb2RlbBgGIAEoCRInCgZjb25maWcYByABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0EhQKDGNhcGFiaWxpdGllcxgIIAMoCRIOCgZzdGF0dXMYCyABKAkSEwoLZGVzY3JpcHRpb24YDCABKAkSDAoEdGFncxgNIAMoCRIPCgd0aW1lb3V0GA4gASgFEi4KCmNyZWF0ZWRfYXQYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfYXQYECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEgsKA3VybBgRIAEoCRI2CgdoZWFkZXJzGBIgAygLMiUuZ2lic29uLnRhcmdldC52MS5UYXJnZXQuSGVhZGVyc0VudHJ5Gi4KDEhlYWRlcnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBSgQICRAKSgQIChALSgQIExAUUglhdXRoX3R5cGVSDWNyZWRlbnRpYWxfaWRSC3NlY3JldF9uYW1lImsKDFRhcmdldEZpbHRlchIQCghwcm92aWRlchgBIAEoCRIMCgR0eXBlGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIMCgR0YWdzGAQgAygJEg0KBWxpbWl0GAUgASgFEg4KBm9mZnNldBgGIAEoBUJQUAFaPGdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvc2RrL2FwaS9nZW4vZ2lic29uL3RhcmdldC92MTt0YXJnZXRwYqoCDUdpYnNvbi5UYXJnZXRiBnByb3RvMw", [file_google_protobuf_struct, file_google_protobuf_timestamp]);
 
 /**
  * Target represents a system to be assessed by a mission.
@@ -94,20 +94,6 @@ export type Target = Message<"gibson.target.v1.Target"> & {
    * @generated from field: repeated string capabilities = 8;
    */
   capabilities: string[];
-
-  /**
-   * auth_type is the authentication scheme for the target.
-   *
-   * @generated from field: string auth_type = 9;
-   */
-  authType: string;
-
-  /**
-   * credential_id references a stored credential. Empty when none.
-   *
-   * @generated from field: string credential_id = 10;
-   */
-  credentialId: string;
 
   /**
    * status is the target lifecycle status.
