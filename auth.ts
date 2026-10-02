@@ -338,6 +338,7 @@ const config: NextAuthConfig = {
       }
       // -----------------------------------------------------------------------
 
+      const signinStartedAt = Date.now();
       if (account) {
         // Stamp the start of this login. Written ONCE, on the initial sign-in
         // callback, and never touched again, so the absolute cap below cannot
@@ -402,7 +403,20 @@ const config: NextAuthConfig = {
         // fault-injection checks above use.
         if (typeof token["accessToken"] === "string") {
           const { stampSessionTenant } = await import("@/src/lib/auth/session-tenant");
-          await stampSessionTenant(token, token["accessToken"]);
+          const { observeSignin } = await import("@/src/lib/metrics/auth");
+          try {
+            await stampSessionTenant(token, token["accessToken"]);
+          } catch (err) {
+            observeSignin(
+              "error",
+              (Date.now() - signinStartedAt) / 1000,
+              err instanceof Error && "reason" in err && typeof err.reason === "string"
+                ? err.reason
+                : "tenant_resolution_failed",
+            );
+            throw err;
+          }
+          observeSignin("success", (Date.now() - signinStartedAt) / 1000);
         }
       } else if (trigger === "update" && typeof token["accessToken"] === "string") {
         // Re-resolve the tenant server-side only. The `session` argument a

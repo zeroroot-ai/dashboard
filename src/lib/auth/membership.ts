@@ -57,6 +57,7 @@ import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
 import { userClient } from '@/src/lib/gibson-client/transport';
 import { getFaultMode } from '@/src/lib/test-fixtures/fault-injection';
 import { logger } from '@/src/lib/logger';
+import { recordMembershipResolution } from '@/src/lib/metrics/auth';
 
 // ---------------------------------------------------------------------------
 // Public types + errors
@@ -276,7 +277,21 @@ export async function invalidateMembershipCache(userId: string): Promise<void> {
  */
 async function fetchMembershipsFromDaemon(): Promise<Membership[]> {
   _daemonCallCount += 1;
+  const startedAt = performance.now();
+  try {
+    const memberships = await resolveMembershipsFromDaemon();
+    recordMembershipResolution('ok', (performance.now() - startedAt) / 1000);
+    return memberships;
+  } catch (err) {
+    recordMembershipResolution(
+      err instanceof MembershipResolutionError ? err.reason : 'unknown',
+      (performance.now() - startedAt) / 1000,
+    );
+    throw err;
+  }
+}
 
+async function resolveMembershipsFromDaemon(): Promise<Membership[]> {
   let raw: unknown;
   try {
     const client = membershipsClient();

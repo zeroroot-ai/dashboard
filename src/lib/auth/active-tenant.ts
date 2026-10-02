@@ -43,6 +43,7 @@ import { NextResponse } from 'next/server';
 
 import { auth } from '@/auth';
 import { getMyMemberships, type Membership } from './membership';
+import { recordActiveTenantValidation } from '@/src/lib/metrics/auth';
 
 // ---------------------------------------------------------------------------
 // Branded TenantId (dashboard#815)
@@ -140,14 +141,17 @@ export const requireActiveTenant = cache(async (): Promise<TenantId> => {
   const session = await auth();
   const tenantId = session?.tenantId;
   if (!tenantId) {
+    recordActiveTenantValidation('absent');
     throw new NoActiveTenantError();
   }
   const memberships: Membership[] = await getMyMemberships();
   if (memberships.length !== 1 || memberships[0]?.tenantId !== tenantId) {
+    recordActiveTenantValidation('stale');
     throw new StaleActiveTenantError(tenantId);
   }
   // The value is the session's server-resolved tenant AND a confirmed
   // current membership: brand it.
+  recordActiveTenantValidation('ok');
   return tenantId as TenantId;
 });
 

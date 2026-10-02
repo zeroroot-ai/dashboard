@@ -58,6 +58,10 @@ const GUARDS = [
   // mission-template CUE and shipped for months with no self-test, so nothing
   // proved it could fail.
   "check-templates-fresh.mjs",
+  // The metrics producer gate (dashboard#173). Thirteen of sixteen auth
+  // metrics were declared and never incremented; this proves a declared
+  // series without a producer fails the build.
+  "check-metrics-have-producers.mjs",
 ];
 
 let failed = 0;

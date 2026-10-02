@@ -15,10 +15,8 @@
  *   - fails closed with `ConnectError(Unauthenticated)` when no session
  *     exists or the token is empty.
  *
- * Mirrors the workload-side helper `src/lib/spiffe/jwt-svid.ts` for the
- * admin transport. The two helpers are deliberately separate, user-token
- * code never touches the SPIRE Workload API; SPIFFE-token code never
- * touches `auth()`.
+ * The workload X509-SVID lives in `src/lib/gibson-client/transport.ts` and
+ * never touches `auth()`. This helper never touches the SPIRE Workload API.
  *
  * Per-request memoization via `react.cache()` keeps a single render that
  * issues multiple RPCs from making multiple `auth()` calls.

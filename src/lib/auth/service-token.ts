@@ -39,8 +39,8 @@
  *   - Zitadel returns non-2xx → throws {@link ServiceTokenFetchError} with
  *     the HTTP status; the bearer is NEVER logged.
  *
- * Spec: unified-identity-and-authorization Phase 4, replaces the SPIFFE
- * JWT-SVID outbound minter (`spiffe/jwt-svid.ts`) which is being deleted.
+ * Spec: unified-identity-and-authorization Phase 4. It replaced the SPIFFE
+ * JWT-SVID outbound minter, which no longer exists.
  *
  * @module auth/service-token
  */
