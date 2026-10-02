@@ -31,7 +31,7 @@ pnpm install        # install deps
 pnpm build          # full production build (runs prebuild chain first)
 pnpm dev            # dev server on :3000
 pnpm test           # vitest unit tests
-pnpm test:e2e       # playwright E2E suite
+pnpm test:e2e       # playwright suite against a live host (see e2e/README.md)
 pnpm typecheck      # tsc --noEmit
 pnpm lint           # eslint
 pnpm proto:generate # regenerate src/gen/ TS proto bindings
@@ -442,19 +442,13 @@ Located in `e2e/authz/`:
 
 | File | Purpose |
 |---|---|
-| `non-admin.spec.ts` | Mocks member session; asserts admin chrome is absent |
-| `admin.spec.ts` | Mocks admin session; asserts admin chrome is present |
-| `server-action-bypass.spec.ts` | POSTs directly to server action route; asserts 403/denial |
+| `non-admin.spec.ts` | Signs in as the Viewer account; asserts the admin chrome is absent and admin pages refuse |
+| `admin.spec.ts` | Signs in as the admin account; asserts the admin chrome is present |
+| `server-action-bypass.spec.ts` | POSTs directly to a server action as the Viewer; asserts denial |
 
-The mocks intercept `/api/auth/my-memberships` to inject the desired role without requiring a real tenant_member account on the cluster. Run against a live Kind cluster via:
-
-```bash
-E2E_AUTH_SUITE=1 PLAYWRIGHT_BASE_URL=http://localhost:30081 \
-  E2E_ADMIN_EMAIL=admin@example.com E2E_ADMIN_PASSWORD=... \
-  pnpm test:e2e e2e/authz/
-```
-
-All three suites compile and lint cleanly without a live cluster.
+Nothing is mocked. Both suites sign in as real accounts of the e2e tenant on
+staging, so the gating decision under test is the one the server makes from
+FGA. The lane, the accounts and the secrets are in `e2e/README.md`.
 
 ## Design system
 
@@ -492,28 +486,22 @@ When migrating a file, the drain procedure is:
 
 Adding a new entry to the allowlist is intentionally NOT automated. If a genuine exception exists, hand-edit the JSON file, that forces a review-time conversation about why the token system can't accommodate the case.
 
-### Visual regression, the snapshot suite
+### Visual regression: there is no snapshot suite
 
-`e2e/visual/` ships Playwright screenshot tests that capture every customer-facing route in both light and dark mode. The suite runs as part of `pnpm test:e2e`; visual diffs fail the run.
+`e2e/visual/` is gone (dashboard#163). It captured `/docs/*` and `/pricing`,
+routes the dashboard no longer serves, against a local dev server the lane does
+not run, and no baseline PNG was ever committed. A screenshot pass for the
+published quickstart is a different need, tracked in dashboard#149.
 
-```bash
-pnpm test:visual          # run snapshots; fail on diff
-pnpm test:visual:update   # regenerate baselines after an intentional design change
-```
+### The e2e lane: staging, and there is no bypass
 
-Baselines live under `e2e/visual/__screenshots__/<platform>/`. The theme is selected via the `theme_choice` cookie (the same cookie `app/layout.tsx` sets), so each route is captured against the rendered SSR theme, no FOUC, no animation noise (the spec pauses every animation + applies `prefers-reduced-motion: reduce` before sampling).
+`.github/workflows/e2e-staging.yml` runs every spec under `e2e/` against
+staging on push to `main` and daily, never on a pull request (ADR-0012). Every
+signed-in spec signs in through Zitadel as a real account. `e2e/README.md` is
+the one place that documents the lane, the verdict per spec file and the
+secrets.
 
-When an intentional design change lands:
-
-1. Make the visual change (token tweak, layout edit, etc.).
-2. Run `pnpm test:visual:update` to regenerate baselines.
-3. Review the regenerated PNGs in the diff, every changed pixel should be expected.
-4. Commit the baselines alongside the design change. CI will compare future PRs against the new baseline.
-
-#### Auth-route coverage: there is none, and there is no bypass
-
-There is no visual or browser coverage of an authenticated route, and there is no
-way to synthesise a session.
+There is no way to synthesise a session.
 
 `src/lib/test-fixtures/encode-session.ts` used to mint a JWE under the dashboard's
 own `AUTH_SECRET`, gated on `NODE_ENV !== "production"` AND `TEST_AUTH_BYPASS=1`.
@@ -532,8 +520,8 @@ the auth configuration imports Auth.js's token `encode`. Decoding is untouched â
 reading a session is what the app does on every request; minting one is what only
 the sign-in flow may do.
 
-**If you need an authenticated browser, sign in.** How that lane is built, and the
-kind-cluster suites it would also unblock, is dashboard#163.
+**If you need an authenticated browser, sign in.** `e2e/auth/helpers/accounts.ts`
+does that for the two lane accounts.
 
 ### Legacy brand names, the org CI guard
 

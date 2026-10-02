@@ -4,8 +4,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright configuration for E2E tests
- * See https://playwright.dev/docs/test-configuration
+ * Playwright configuration for the e2e suite.
+ *
+ * The suite runs against a live product host, staging by default
+ * (.github/workflows/e2e-staging.yml, on push to main and daily, never on a
+ * pull request). There is no dev server here: every spec signs in through
+ * Zitadel the way a person does, and that needs the real platform behind
+ * the host. See e2e/README.md.
  */
 export default defineConfig({
   testDir: './e2e',
@@ -19,10 +24,11 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
 
-  /* Opt out of parallel tests on CI */
+  /* One worker on CI: Zitadel refuses a reused TOTP code, so two sign-ins of
+   * the same account inside one 30 second window would collide. */
   workers: process.env.CI ? 1 : undefined,
 
-  /* Reporter to use */
+  /* Reporter to use. The JSON file feeds e2e/skip-floor.mjs. */
   reporter: [
     ['html'],
     ['list'],
@@ -34,11 +40,9 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('/')` */
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
 
-    /* The Kind dev cluster serves Envoy with a self-signed cert. Tests
-     * targeting https://app.zeroroot.local:30443 fail with
-     * ERR_CERT_AUTHORITY_INVALID without this. Production-like specs that
-     * point at a real cluster should override this back to false. */
-    ignoreHTTPSErrors: true,
+    /* The product host serves a real certificate. A self-signed chain is a
+     * failure, not something to ignore. */
+    ignoreHTTPSErrors: false,
 
     /* Collect trace when retrying the failed test */
     trace: 'on-first-retry',
@@ -50,50 +54,13 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
 
-  /* Configure projects for major browsers */
+  /* One browser. The hosted exit tests drive the same Login v2 pages with
+   * Chromium, and a second engine would double the sign-ins against staging
+   * without adding signal. */
   projects: [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-
-    /* Test against mobile viewports */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
   ],
-
-  /* Run your local dev server before starting the tests.
-   *
-   * Auth e2e tests (e2e/auth/) target the kind `gibson` cluster at port
-   * 30081 and do NOT use the local dev server, they set PLAYWRIGHT_BASE_URL
-   * to http://localhost:30081 and start their own webServer configuration is
-   * skipped for that sub-suite via the CI workflow.
-   *
-   * For the original e2e suite (e2e/*.spec.ts without e2e/auth/) the local
-   * dev server is still started as before.
-   */
-  webServer: process.env.E2E_AUTH_SUITE
-    ? undefined
-    : {
-        command: 'npm run dev',
-        url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
-        timeout: 120 * 1000,
-      },
 });

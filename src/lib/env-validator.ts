@@ -349,7 +349,6 @@ const OPTIONAL_ENV = [
   'LOG_LEVEL',
   // Test-fixtures bypass (NODE_ENV-gated independently).
   'TEST_FIXTURES_ENABLED',
-  'TEST_FIXTURES_BYPASS_PRICING',
 
   // ---- SA identity map override ----
   // The chart writes the map to /shared/sa-identity-map.json by default;

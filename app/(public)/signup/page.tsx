@@ -85,29 +85,18 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   const { marketingUrl, billingEnabled } = profile;
 
   if (!isValidPlan) {
-    // TEST_FIXTURES_BYPASS_PRICING: allow e2e tests to skip the plan-validation
-    // redirect so the signup form renders even when the test cluster has no
-    // plan configuration. NEVER set this in production, it removes the pricing
-    // gate entirely for any request to /signup.
-    if (process.env.TEST_FIXTURES_BYPASS_PRICING !== "true") {
-      if (billingEnabled && marketingUrl) {
-        // SaaS: bounce to the marketing pricing page so the user can pick a plan.
-        // Self-hosted (billingEnabled=false): no ?plan= required — plans are a
-        // SaaS concept; fall through to the card-free form. dashboard#923.
-        redirect(`${marketingUrl}/pricing?missing_plan=true`);
-      }
-      // Self-hosted (billingEnabled=false, marketingUrl null): fall through to
-      // the form with the first self-serve tier used for the daemon wire.
-      // The plan row is hidden from the user entirely (dashboard#923).
+    if (billingEnabled && marketingUrl) {
+      // SaaS: bounce to the marketing pricing page so the user can pick a plan.
+      // Self-hosted (billingEnabled=false): no ?plan= required — plans are a
+      // SaaS concept; fall through to the card-free form. dashboard#923.
+      redirect(`${marketingUrl}/pricing?missing_plan=true`);
     }
-    // In bypass mode (e2e), self-hosted mode, or card-free profile: fall through
-    // with the first self-serve plan so the daemon wire receives a valid tier.
+    // Self-hosted (billingEnabled=false, marketingUrl null): fall through to
+    // the form with the first self-serve tier used for the daemon wire.
+    // The plan row is hidden from the user entirely (dashboard#923).
     const fallbackPlan = selfServeTierIds[0] ?? "solo";
     const fallbackDisplayName =
-      process.env.TEST_FIXTURES_BYPASS_PRICING === "true"
-        ? "(test bypass)"
-        : (pricingDisplays.find((p) => p.id === fallbackPlan)?.name ??
-          fallbackPlan);
+      pricingDisplays.find((p) => p.id === fallbackPlan)?.name ?? fallbackPlan;
     return (
       <Suspense
         fallback={

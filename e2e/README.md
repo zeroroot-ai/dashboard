@@ -1,173 +1,184 @@
-# Dashboard E2E Test Suite
+# Dashboard e2e suite
+
+The suite runs a real browser against a live product host. The lane is
+`.github/workflows/e2e-staging.yml`. It runs against
+`https://app.staging.zeroroot.ai` on every push to `main` that touches
+`e2e/**`, `playwright.config.ts` or the workflow, and once a day. It never
+runs on a pull request (ADR-0012). The merge gate stays `node-ci.yml`.
+
+## How a spec signs in
+
+Nothing forges a session (ADR-0027, dashboard#164). A spec that needs a
+signed-in browser calls `signIn()` from `e2e/auth/helpers/accounts.ts`. The
+helper presses the `/login` gate, then drives Zitadel's hosted Login v2:
+email, password and a TOTP code. ADR-0093 requires MFA on every account, so
+each lane account carries the base32 secret of its authenticator app.
+
+Two accounts exist, both in the e2e tenant on staging:
+
+| Variables | Who |
+|---|---|
+| `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD`, `E2E_ADMIN_TOTP_SECRET` | the Owner or an Admin of the e2e tenant |
+| `E2E_MEMBER_EMAIL`, `E2E_MEMBER_PASSWORD`, `E2E_MEMBER_TOTP_SECRET` | a Viewer of the same tenant |
+
+The lane reads them from repository secrets of the same name. A spec whose
+account is unset skips with a reason that names the variables. The skip
+floor (below) turns an all-skipped run into a failure, so an unset secret is
+red, never green.
 
 ## Running
 
 ```bash
-# Full suite (all spec files under e2e/)
-pnpm test:e2e
+# The whole suite against a host (the lane's command)
+PLAYWRIGHT_BASE_URL=https://app.staging.zeroroot.ai \
+  E2E_CLUSTER_AVAILABLE=1 \
+  E2E_ADMIN_EMAIL=... E2E_ADMIN_PASSWORD=... E2E_ADMIN_TOTP_SECRET=... \
+  E2E_MEMBER_EMAIL=... E2E_MEMBER_PASSWORD=... E2E_MEMBER_TOTP_SECRET=... \
+  pnpm test:e2e
 
-# Auth error regression suite only
-pnpm test:e2e:auth-errors
+# One spec
+PLAYWRIGHT_BASE_URL=... E2E_ADMIN_EMAIL=... E2E_ADMIN_PASSWORD=... E2E_ADMIN_TOTP_SECRET=... \
+  pnpm test:e2e e2e/auth/login-happy.spec.ts
 
-# All auth regression checks (static + e2e)
-pnpm check:auth-regression
+# Developer conveniences: the Playwright UI and the inspector
+pnpm test:e2e:ui
+pnpm test:e2e:debug
 
-# Individual specs (compile + list without running, no cluster required)
-pnpm exec playwright test --list e2e/tenant-provision.spec.ts
-pnpm exec playwright test --list e2e/agent-enrollment.spec.ts
-pnpm exec playwright test --list e2e/mission-execute.spec.ts
-pnpm exec playwright test --list e2e/billing-webhook.spec.ts
-pnpm exec playwright test --list e2e/plan-change.spec.ts
+# Compile and list every spec, no host needed
+pnpm exec playwright test --list
 
-# Integration tests (require kind cluster)
-E2E_KIND_AVAILABLE=1 PLAYWRIGHT_BASE_URL=https://app.zeroroot.local:30443 \
-  pnpm test:e2e e2e/tenant-provision.spec.ts
-
-# Billing webhook tests against the kind cluster
-E2E_KIND_AVAILABLE=1 PLAYWRIGHT_BASE_URL=https://app.zeroroot.local:30443 \
-  STRIPE_WEBHOOK_SECRET=whsec_testonly_e2e_playwright_secret_1234567890 \
-  pnpm test:e2e e2e/billing-webhook.spec.ts
-E2E_KIND_AVAILABLE=1 PLAYWRIGHT_BASE_URL=https://app.zeroroot.local:30443 \
-  STRIPE_WEBHOOK_SECRET=whsec_testonly_e2e_playwright_secret_1234567890 \
-  pnpm test:e2e e2e/plan-change.spec.ts
+# The skip floor
+node e2e/skip-floor.mjs playwright-report/test-results.json
+node e2e/skip-floor.mjs --selftest
 ```
-
-## New specs (slices 5.7, 5.8, 5.9)
-
-### Spec inventory
-
-| Spec | Slice | Description |
-|---|---|---|
-| `e2e/tenant-provision.spec.ts` | 5.7 p1 | Tenant provisioning: signup → saga → dashboard state at each checkpoint |
-| `e2e/agent-enrollment.spec.ts` | 5.7 p2 | Agent enrollment: Register Agent form → credential panel → agent list |
-| `e2e/mission-execute.spec.ts` | 5.8 | Mission execution: submit → pending → completed → findings → audit |
-| `e2e/billing-webhook.spec.ts` | 5.9 p1 | Stripe webhook: subscription.updated, invoice.payment_failed, idempotency |
-| `e2e/plan-change.spec.ts` | 5.9 p2 | Plan change: checkout stub → callback → quota adjustment → audit |
-
-### Page objects (shared helpers)
-
-Located under `e2e/page-objects/`:
-
-| File | Purpose |
-|---|---|
-| `dashboard.po.ts` | Navigate to dashboard; stub daemon proxy and tier endpoints |
-| `billing.po.ts` | Sign Stripe webhooks with HMAC-SHA256; stub checkout; build event payloads |
-
-### Skip gate conventions
-
-Every spec uses `test.skip()` at the describe level for blocks that require
-infrastructure. The two gates used across these specs are:
-
-- `test.skip(!process.env.E2E_KIND_AVAILABLE, ...)`, for integration tests
-  that require a live kind cluster.
-
-There used to be a second gate, `TEST_AUTH_BYPASS`, for tests that injected a
-synthetic session cookie. The encoder behind it is deleted and
-`scripts/check-no-session-forgery.mjs` refuses it coming back: a module that
-forges a session is a second way to be authenticated (ADR-0027). A spec that needs
-a signed-in browser has to sign in, and that lane does not exist yet —
-dashboard#163.
-
-Tests with neither gate run unconditionally (e.g., the billing UI-stub tests
-that use only `page.route()` interception).
-
-### Stripe webhook secret wiring
-
-The billing webhook endpoint verifies the `Stripe-Signature` header using
-`STRIPE_WEBHOOK_SECRET`. For integration tests to exercise the full path:
-
-1. Set `STRIPE_WEBHOOK_SECRET=whsec_testonly_e2e_playwright_secret_1234567890`
-   on the kind cluster's dashboard pod (via Helm values override or kubectl patch).
-2. The spec uses the same constant (`STRIPE_WEBHOOK_TEST_SECRET` from
-   `e2e/page-objects/billing.po.ts`) to sign payloads.
-
-This secret is a test-only constant. It MUST NOT be set in production.
-
-A follow-up tracks wiring this secret into the
-`dispatch-auth-e2e` workflow so billing webhook tests run automatically on CI.
 
 ## Environment variables
 
-| Variable | Required | Description |
+| Variable | Set by | Meaning |
 |---|---|---|
-| `PLAYWRIGHT_BASE_URL` | No | Target cluster URL. Defaults to `http://localhost:30081` (Kind gibson NodePort). |
-| `E2E_AUTH_SUITE` | No | When set, Playwright skips the local dev server webServer config and targets the cluster directly. |
-| `DASHBOARD_K8S_NAMESPACE` | No | Kubernetes namespace for kubectl log tailing. Default: `gibson`. |
-| `DASHBOARD_K8S_POD_LABEL` | No | Label selector for the dashboard pod. Default: `app.kubernetes.io/name=gibson-dashboard`. |
-| `DASHBOARD_LOG_FILE` | No | Path to a local log file to tail instead of kubectl. Useful for local dev server runs. |
-| `DATABASE_URL` | No | Postgres connection string for DB assertion helpers. Falls back to PGHOST/PGPORT/PGUSER/PGPASSWORD/PGDATABASE env vars. |
-| `TRACE_EMAIL` | login-trace only | Pre-existing Zitadel user email for the login-trace diagnostic spec. |
-| `TRACE_PASSWORD` | login-trace only | Password for TRACE_EMAIL. |
+| `PLAYWRIGHT_BASE_URL` | the lane | The product host. Default `http://localhost:3000`. |
+| `E2E_CLUSTER_AVAILABLE` | the lane | `1` when a live platform is behind the host. Gates the specs that write to the tenant. |
+| `E2E_ADMIN_*`, `E2E_MEMBER_*` | repository secrets | The two accounts above. |
+| `E2E_CONNECTOR_NAME` | optional | Catalog display name `connectors.spec.ts` drives. Default `GitLab`. |
+| `E2E_MIN_RAN` | optional | The skip floor. Default `1`. |
+| `CI` | the lane | One worker, two retries, `test.only` refused. |
 
-## Test fixture environment variables (server-side)
+## The skip floor
 
-These variables are set on the **Next.js server process** (not in the Playwright runner) to enable
-test-only code paths. They must NEVER be set in production, staging, or any environment accessible
-to real users.
+`e2e/skip-floor.mjs` reads `playwright-report/test-results.json` after the
+run. It fails when the report holds zero tests, when every test skipped, or
+when fewer than `E2E_MIN_RAN` tests ran. It prints every skip with its
+reason. `--selftest` proves the floor can fail: an all-skipped report and an
+empty report are refused, one passed test is accepted. The lane runs the
+selftest in its `guards` job before the suite.
 
-| Variable | Value | Effect |
+## What the suite writes to staging
+
+Two specs write to the e2e tenant, and only with `E2E_CLUSTER_AVAILABLE=1`:
+
+- `agent-enrollment.spec.ts` registers one agent per run, named
+  `e2e-<timestamp>-<random>`.
+- `connectors.spec.ts` enables the catalog connector on its first run. Later
+  runs find it enabled.
+
+## Verdict per spec file
+
+Measured on `origin/main` on 2026-10-02: 53 spec files, 16,824 lines under
+`e2e/`, no workflow. Every file got one verdict after a read of its body:
+`staging lane` runs as is, `rewrite` runs after the change named, `delete`
+tests a surface the dashboard no longer has or needs a gate nobody can set
+on staging. The rewrites landed in the same change, so every file that
+stays runs in the lane.
+
+Facts the verdicts rest on:
+
+- `/login` is a gate with one "Sign in" button. The inline email and
+  password form every `loginAs()` helper filled does not exist.
+- Signup needs a verification mail. The daemon sends it through SES on
+  staging, and the lane cannot read it. The signup chain is proven daily
+  on kind with Mailpit by hosted's `exit-test-signup.yml`.
+- `/api/gibson-proxy` does not exist. The admin pages are server
+  components, and the data they show comes from server actions, so a
+  `page.route()` on that path mocks nothing.
+- Zitadel owns password reset, email verification and lockout (ADR-0093).
+- `TEST_FIXTURES_ENABLED` must never be set on a shared environment.
+- `/docs`, `/pricing`, `/dashboard/teams`, `/dashboard/audit`,
+  `/dashboard/permissions`, `/dashboard/pages/settings/permissions`,
+  `/dashboard/pages/missions`, `/dashboard/pages/findings`,
+  `/tenant/<slug>/findings`, `/api/missions/create`, `/api/audit`,
+  `/api/billing/checkout` and `/api/test/server-action` do not exist.
+
+| Spec file | Verdict | Why |
 |---|---|---|
-| `TEST_FIXTURES_ENABLED` | `"true"` | Activates the `/api/test/inject-fault` and `/api/test/fga-revoke` endpoints. Enables the `getFaultMode()` checks in `getMyMemberships()` and `auth.ts` callbacks. Returns 404 for both endpoints when unset. |
-| `TEST_FIXTURES_BYPASS_PRICING` | `"true"` | Bypasses the `/pricing?missing_plan=true` redirect on `/signup` when no `?plan=` query param is present. Allows e2e signup tests to run on clusters without plan configuration. Falls through with the first self-serve plan ID. |
+| `admin-chrome.spec.ts` | rewrite | Inline login replaced by `signIn()`. Users page path and CTA names updated. |
+| `agent-enrollment.spec.ts` | rewrite | Inline login replaced. `E2E_KIND_AVAILABLE` renamed `E2E_CLUSTER_AVAILABLE`. The credential panel shows a bootstrap token, not a client id. |
+| `connectors.spec.ts` | rewrite | Inline login replaced, gate renamed, member test uses the Viewer account. The team-deny and agent-grant tests are gone: the teams form changed and the agent grants tab does not exist. |
+| `crd-authz.spec.ts` | delete | Needs the `/api/test/server-action` bridge, a second tenant and a human platform-operator account (ADR-0093: never a person). |
+| `docs.spec.ts` | delete | `/docs` is not served by the dashboard. |
+| `extended-agents.spec.ts` | delete | Mocks `listAccessibleComponents`, a server action. The mock never fires and the asserted rows never render. |
+| `extended-plugins.spec.ts` | delete | Same mechanism as above. |
+| `extended-tools.spec.ts` | delete | Same mechanism as above. |
+| `grants.spec.ts` | delete | Mocks `/api/gibson-proxy`; the page is a server component. |
+| `granular-permissions.spec.ts` | delete | `/dashboard/teams`, `/dashboard/audit` and `/dashboard/permissions` do not exist. |
+| `install-agent-action.int.test.ts` | delete | A vitest file under `e2e/` with no config and a captured-session gate. It broke `playwright test --list`. |
+| `mission-execute.spec.ts` | delete | `/api/missions/create`, `/api/audit` and the `pages/missions` routes do not exist; needs a debug agent fixture. |
+| `mission-secrets-panel.spec.ts` | delete | Mocks `/api/gibson-proxy` for a mission id that does not exist. |
+| `missions-list.spec.ts` | rewrite | Inline login replaced by `signIn()`. |
+| `permissions.spec.ts` | delete | `/dashboard/pages/settings/permissions` does not exist. |
+| `plan-and-usage.spec.ts` | delete | The "Plan & Usage" copy is not in the tree; the quota mock targets a server action. |
+| `plan-change.spec.ts` | delete | `/api/billing/checkout` and `/pricing` do not exist. |
+| `secrets-backend.spec.ts` | delete | Mocks `/api/gibson-proxy`. A live run would switch the tenant's secret broker. |
+| `signup-smoke.spec.ts` | delete | Needs the verification mail; superseded by hosted `exit-test-signup.yml`. |
+| `social-signin.spec.ts` | delete | External identity providers are off (ADR-0093). The GitHub button does not render. |
+| `tenant-display.spec.ts` | rewrite | Inline login replaced by `signIn()`. |
+| `tenant-provision.spec.ts` | delete | Signup per run; superseded by hosted `exit-test-signup.yml`. |
+| `auth/dashboard-smoke.spec.ts` | delete | Self-provisions two tenants by signup, reads a gibson manifest from a sibling checkout, writes files for a Go half that does not run (gibson#215). |
+| `auth/forgot-reset.spec.ts` | delete | Zitadel owns password reset; scrapes the deleted log mail provider. |
+| `auth/login-error-regression.spec.ts` | rewrite | Trimmed to the public `/login/error` test, one per reason. The fault tests needed `TEST_FIXTURES_ENABLED` and a signup each. |
+| `auth/login-full-chain.spec.ts` | delete | Gated on `SIGNUP_VERIFY_TOKEN`, which nobody can set on staging (gibson#215). |
+| `auth/login-happy.spec.ts` | rewrite | Uses the admin account and the shared Zitadel helper. The signup branch and `E2E_SEED_*` are gone. |
+| `auth/login-lockout.spec.ts` | delete | Zitadel owns lockout; inline login; scrapes the log mail provider. |
+| `auth/login-trace.spec.ts` | delete | A diagnostic copy of the login helper, without MFA. |
+| `auth/mission-run.spec.ts` | delete | Reads a `/tmp` file a Go test writes; `/tenant/<slug>/findings` does not exist. |
+| `auth/no-workspace.spec.ts` | delete | Deletes membership rows in Postgres (ADR-0012) after a signup. |
+| `auth/session-cookie-samesite.spec.ts` | staging lane | Public routes only. |
+| `auth/session-expiry.spec.ts` | rewrite | Signs in as the admin, clears cookies, asserts the `/login?callbackUrl=` redirect. |
+| `auth/signup-autologin.spec.ts` | delete | Auto-login was retired in E9; `/pricing` does not exist. |
+| `auth/signup-collision.spec.ts` | delete | Drives the single-screen signup form that no longer exists. |
+| `auth/signup-duplicate-email.spec.ts` | delete | Same form. |
+| `auth/signup-full-chain.spec.ts` | delete | Gated on `SIGNUP_VERIFY_TOKEN`; superseded by hosted `exit-test-signup.yml`. |
+| `auth/signup-happy-path.spec.ts` | delete | `/pricing`, the old form, `kubectl` cleanup. |
+| `auth/signup-happy.spec.ts` | delete | Gated on `SIGNUP_VERIFY_TOKEN`. |
+| `auth/signup-saga-conditions.spec.ts` | delete | `kubectl --context kind-gibson`; the kind cluster is gone. |
+| `auth/signup-trace.spec.ts` | delete | Drives the old single-screen form; a diagnostic. |
+| `auth/signup-vault.spec.ts` | delete | Gated on `SIGNUP_VERIFY_TOKEN`; `kubectl` against kind. |
+| `auth/tenant-forbidden.spec.ts` | delete | Signup plus log scraping; `/dashboard/<slug>/...` routes do not exist; one tenant per person (ADR-0093). |
+| `auth/verify-email.spec.ts` | delete | The `/verify-email` flow is dead; scrapes the log mail provider. |
+| `authz/admin.spec.ts` | rewrite | Signs in as the admin; mocks removed; nav titles are `Secrets`, `Secret Broker`, `Permissions`. |
+| `authz/non-admin.spec.ts` | rewrite | Signs in as the Viewer; mocks removed, so the server-side refusals are real. |
+| `authz/server-action-bypass.spec.ts` | rewrite | Signs in as the Viewer; `/api/gibson-proxy` state check removed. |
+| `secrets/create.spec.ts` | delete | Mocks `/api/gibson-proxy`; the form submits a server action. |
+| `secrets/delete.spec.ts` | delete | Same, for a secret id that does not exist. |
+| `secrets/list.spec.ts` | delete | Same. |
+| `secrets/rotate.spec.ts` | delete | Same. |
+| `visual/docs-routes.spec.ts` | delete | `/docs/*` is not served; no baseline PNG was ever committed. |
+| `visual/public-routes.spec.ts` | delete | `/pricing` is not served; no baseline; the venue was a local dev server. |
 
-## Fault injection
+Helpers that only deleted specs used are gone with them: `auth/helpers/db.ts`,
+`auth/helpers/email-log.ts`, `auth/helpers/fixtures.ts`,
+`auth/helpers/signup-via-form.ts`, `auth/helpers/artifact-dir.ts`,
+`auth/fixtures/fault-proxy.ts`, `page-objects/billing.po.ts`,
+`page-objects/dashboard.po.ts` and `console-allowlist.yaml`.
 
-The auth error regression suite (`e2e/auth/login-error-regression.spec.ts`) uses
-server-side fault injection to deterministically trigger auth failures without killing
-real infrastructure pods.
+## Coverage the deletions removed
 
-### How it works
+These assertions had no venue and are listed so a later change can give
+them one:
 
-1. The test POSTs to `/api/test/inject-fault` (requires `TEST_FIXTURES_ENABLED=true` on the server)
-   to arm a fault for a specific subsystem.
-2. The test drives a sign-in flow (e.g. via `signUpViaForm` or `loginViaZitadelV2`).
-3. The Next.js server checks `getFaultMode(subsystem)` at the top of the relevant code path
-   and returns the configured failure shape instead of making the real call.
-4. The test asserts the user landed on `/login/error?reason=<expected>` with the right copy
-   and that the Prometheus counter incremented.
-5. The test clears the fault via `armFault(page, subsystem, "clear")`.
-
-### Subsystems
-
-| Subsystem | Where wired | Fault effect |
-|---|---|---|
-| `fga` | `src/lib/auth/membership.ts:getMyMemberships()` | `mode="503"` → `MembershipResolutionError("fga_unavailable")`. `mode="malformed-200"` → `MembershipResolutionError("malformed_response")`. |
-| `jwks` | `auth.ts` jwt callback (fires on initial sign-in only) | Throws inside the jwt callback → Auth.js redirects to `/login?error=Callback` → middleware reroutes to `/login/error?reason=jwks_unavailable`. |
-| `token-exchange` | `auth.ts` jwt callback (fires on initial sign-in only) | Same mechanism as jwks but reason=`oidc_token_exchange_failed`. |
-
-### Playwright helpers
-
-```typescript
-import { armFault, clearAllFaults, isFaultInjectionAvailable, revokeTestMembership }
-  from "./fixtures/fault-proxy";
-
-// Check availability before arming
-const faultable = await isFaultInjectionAvailable(page);
-if (!faultable) { test.skip(true, "TEST_FIXTURES_ENABLED not set"); return; }
-
-// Arm a fault
-await armFault(page, "fga", "503", "next-1-calls");
-
-// Arm for all subsequent calls
-await armFault(page, "fga", "malformed-200", "all");
-
-// Simulate mid-session membership revocation
-await revokeTestMembership(page, "user:abc", "tenant:xyz");
-
-// Always clean up in afterEach
-await clearAllFaults(page);
-```
-
-### FGA revoke (tenant_revoked test)
-
-The `/api/test/fga-revoke` endpoint arms a scoped `next-1-calls` FGA 503 fault to simulate
-mid-session membership revocation. Navigate to a protected route immediately after calling it.
-
-Current limitation: the endpoint arms a fault-injection fault rather than deleting the real FGA
-tuple (the dashboard pod does not hold FGA write access in test clusters). This is equivalent
-for deterministic e2e testing. When the daemon exposes an HTTP `InvalidateSubject` endpoint,
-the implementation can be upgraded to do a real tuple delete + cache flush.
-
-Cache TTL fallback: if neither the fault-injection path nor a direct delete works in a given
-environment, set the FGA cache TTL to 5s in chart values and call
-`await page.waitForTimeout(7000)` after a real DB membership delete before navigating.
+- the secrets form never writes a secret value to `localStorage` or
+  `sessionStorage`, and the detail page has no reveal control
+  (`secrets/*.spec.ts`);
+- the secret broker form never echoes a Vault token into an error
+  (`secrets-backend.spec.ts`);
+- an authenticated probe of every dashboard route in gibson's manifest, and
+  the cross-tenant 403 on each (`auth/dashboard-smoke.spec.ts`, gibson#215).

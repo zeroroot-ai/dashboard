@@ -2,43 +2,46 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * login-via-zitadel-v2.ts, canonical helper that drives the Zitadel V2 login UI.
+ * login-via-zitadel-v2.ts, the one helper that signs a browser in.
  *
- * ONE function, no per-spec Zitadel selector reimplementations. All login
- * spec files import this instead of inline Zitadel UI logic.
+ * The dashboard has no sign-in form of its own. `/login` renders a gate card
+ * with one "Sign in" button that fires Auth.js `signIn("zitadel")`, and
+ * Zitadel's hosted Login v2 does the rest: email, password, then a TOTP
+ * code, because ADR-0093 requires MFA on every account. This helper drives
+ * exactly that path, the way a person does. It never mints a session
+ * (ADR-0027, dashboard#164).
  *
- * The Zitadel V2 login UI flow (source of truth: login-trace.spec.ts, commit 659678e):
- *   1. Navigate to /login (dashboard's LoginForm fires signIn("zitadel"))
- *   2. Wait for Zitadel V2 loginname form at /ui/v2/login/loginname
- *   3. Fill loginname (email) and submit
- *   4. Wait for Zitadel V2 password form at /ui/v2/login/password
- *   5. Fill password and submit
- *   6. Wait for terminal landing (dashboard callback or /dashboard)
+ * Steps:
+ *   1. Open /login. A session that is still valid lands on /dashboard at once.
+ *   2. Press the gate's "Sign in" button.
+ *   3. Login v2 /ui/v2/login/loginname: fill the email, submit.
+ *   4. Login v2 /ui/v2/login/password: fill the password, submit.
+ *   5. Login v2 MFA: /otp/time-based asks for a code from a registered
+ *      authenticator (the normal case on staging), /mfa/set asks a new user to
+ *      enroll one.
+ *   6. Wait for the OIDC callback and the /dashboard landing.
  *
- * Front-door shapes (dashboard#961): /login renders differently per deployment
- * profile, so step 1 is shape-aware:
- *   (a) auto-handoff — the page fires signIn("zitadel") on load and the
- *       browser leaves /login on its own (legacy kind behavior). Nothing to do.
- *   (b) gate page (SaaS profile, deploy#1060) — "Welcome to Gibson" card with
- *       a "Sign in" button and ZERO inputs. We click the button, which hands
- *       off to the Zitadel V2 loginname page, then steps 2-5 run unchanged.
- *   (c) inline email/password form — filled and submitted directly on /login;
- *       the Zitadel V2 pages (steps 2-5) are skipped entirely.
+ * Selectors follow test/platform-owner/driver.mjs in zeroroot-ai/hosted, which
+ * drives the same Login v2 pages daily: Login v2 marks its inputs with
+ * data-testid (username-text-input, password-text-input, code-text-input) and
+ * its submit with data-testid="submit-button". Role and label fallbacks stay
+ * for a Login v2 build without those marks.
  *
- * Bug catalog:
- *   LOGIN-B1: useEffect double-fire causes duplicate signin/zitadel POSTs.
- *             Symptom: browser parks on /ui/v2/login/signedin. Fixed: commit 5dfa778.
- *   LOGIN-B2: JWT tenant claim absent. Symptom: callback lands then redirects to
- *             /federated-signout. Fixed: K8s fallback in auth.ts, commit 659678e.
+ * Hydration: Login v2 is server-rendered Next.js. A field accepts a value
+ * before React hydrates and hydration then empties it. `fillUntilHeld` reads
+ * the value back and fills again until it holds (hosted#229).
+ *
+ * TOTP reuse: Zitadel refuses a code that was already redeemed. Two sign-ins
+ * for the same account inside one 30 second window would collide, so the
+ * helper remembers the last code it sent per email and waits for the next
+ * window when the derivation repeats it.
  *
  * Security:
- *   - Passwords are never logged (only presence is confirmed).
- *   - Cookie values are never logged.
- *
- * Requirements: R3.3.
+ *   - Passwords, TOTP secrets and codes are never logged.
+ *   - OIDC code, state and token values are redacted from logged URLs.
  */
 
-import { type Page, type BrowserContext } from "@playwright/test";
+import { type BrowserContext, type Locator, type Page, type Response } from "@playwright/test";
 import { computeTotp, getTotpSecret, rememberTotpSecret } from "./totp";
 
 // ---------------------------------------------------------------------------
@@ -48,19 +51,20 @@ import { computeTotp, getTotpSecret, rememberTotpSecret } from "./totp";
 export interface LoginOptions {
   /** Email address (Zitadel loginname). */
   email: string;
-  /** Password for Zitadel. Must match Zitadel password policy. */
+  /** Password for Zitadel. */
   password: string;
-  /** Base URL of the cluster (default: PLAYWRIGHT_BASE_URL env or https://app.zeroroot.local:30443). */
-  baseURL?: string;
-  /** Milliseconds to wait for Zitadel loginname form to appear (default: 30_000). */
-  loginFormTimeoutMs?: number;
-  /** Milliseconds to wait for the terminal landing after password submit (default: 60_000). */
-  loginCompleteTimeoutMs?: number;
   /**
-   * Milliseconds to spend detecting the /login front-door shape
-   * (auto-handoff vs gate page vs inline form). Default: 15_000.
+   * Base32 TOTP secret of the account's registered authenticator. Required
+   * when Zitadel asks for a code. A secret enrolled earlier in this process
+   * through the /mfa/set page is used when this is absent.
    */
-  shapeDetectTimeoutMs?: number;
+  totpSecret?: string;
+  /** Base URL of the product host (default: PLAYWRIGHT_BASE_URL). */
+  baseURL?: string;
+  /** Milliseconds to wait for the Zitadel loginname form (default: 30_000). */
+  loginFormTimeoutMs?: number;
+  /** Milliseconds to wait for the landing after the last submit (default: 60_000). */
+  loginCompleteTimeoutMs?: number;
 }
 
 /** One hop captured during the OIDC redirect chain. */
@@ -74,47 +78,90 @@ export interface LoginHop {
 export interface LoginResult {
   /** Final URL after the OIDC flow completes. */
   finalUrl: string;
-  /** OIDC redirect chain captured via page.on('response'). */
+  /** OIDC redirect chain captured through page.on("response"). */
   chain: LoginHop[];
-  /** Whether an authjs session cookie is present after login. */
+  /** Whether an Auth.js session cookie is present after login. */
   sessionCookieSet: boolean;
 }
 
 // ---------------------------------------------------------------------------
-// MFA (hosted#193 D3, plan-193 section 3.6)
+// Login v2 page plumbing
 // ---------------------------------------------------------------------------
 
+const DEFAULT_BASE_URL =
+  process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
+
+/** Redact OIDC code/state/id_token from a URL for safe logging. */
+function redactOIDCParams(url: string): string {
+  return url.replace(
+    /([?&])(code|state|id_token|nonce|session_state)=[^&]+/g,
+    "$1$2=<redacted>",
+  );
+}
+
+function submitButton(page: Page): Locator {
+  return page
+    .locator('[data-testid="submit-button"]')
+    .or(page.getByRole("button", { name: /next|continue|submit|sign.?in|verify/i }))
+    .first();
+}
+
 /**
- * Handles Zitadel V2's post-password MFA step, when `forceMfa` presents
- * one. No-ops (returns immediately) when neither MFA URL appears within
- * `detectTimeoutMs` — the normal case while `forceMfa` is off.
- *
- * TWO shapes, matching the plan:
- *   - `/ui/v2/login/mfa/set` (first-factor enrollment): this test user was
- *     just created and has no factor yet. Choose "Authenticator app",
- *     read the TOTP secret the page displays, compute a code, submit.
- *   - `/ui/v2/login/otp/time-based` (an already-registered factor):
- *     compute a code from a secret remembered earlier in this process
- *     (`getTotpSecret`) and submit it.
- *
- * // TODO(hosted#193): the selectors below (the "Authenticator app" choice,
- * // the manual-entry secret text, and the code input on the enrollment
- * // page) are written from this file's existing patterns (role/label-based,
- * // tolerant regexes) but are NOT verified against a live Zitadel v2 login
- * // app — I do not have a running cluster to inspect the actual DOM. If
- * // `forceMfa` lands before this is checked against a real instance, run
- * // one login through it headed (`PWDEBUG=1` or `--headed`) and correct any
- * // selector that does not match, in particular how the secret is exposed
- * // (a "can't scan the code" / "enter manually" toggle is common in
- * // Zitadel's own screenshots, but the exact copy was not verified here).
+ * Types into a field and proves the value stayed. Login v2 resets a field
+ * that was filled before hydration, so read it back and fill again until it
+ * holds. A field that never holds its value is a real defect, named here.
  */
-async function handleMfaIfPresented(page: Page, email: string): Promise<void> {
+async function fillUntilHeld(
+  field: Locator,
+  value: string,
+  label: string,
+  timeoutMs = 15_000,
+): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  do {
+    await field.fill(value);
+    await field.page().waitForTimeout(300);
+    if ((await field.inputValue()) === value) return;
+  } while (Date.now() < deadline);
+  throw new Error(`[loginViaZitadelV2] the ${label} field never held its value`);
+}
+
+/** The last TOTP code submitted per email, so a second sign-in never reuses it. */
+const lastCodeByEmail = new Map<string, string>();
+
+async function freshTotpCode(email: string, secret: string): Promise<string> {
+  let code = computeTotp(secret);
+  while (code === lastCodeByEmail.get(email)) {
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    code = computeTotp(secret);
+  }
+  lastCodeByEmail.set(email, code);
+  return code;
+}
+
+/**
+ * Handles Login v2's MFA step after the password.
+ *
+ *   - /ui/v2/login/otp/time-based: a registered authenticator. Derive a code
+ *     from `totpSecret` and submit it.
+ *   - /ui/v2/login/mfa/set: first-factor enrollment for a new account. Choose
+ *     the authenticator app, read the secret from the otpauth link the page
+ *     renders, remember it for this process, and submit a code.
+ *
+ * Returns at once when neither page appears within `detectTimeoutMs`, so a
+ * deployment without forced MFA still signs in.
+ */
+async function handleMfaIfPresented(
+  page: Page,
+  email: string,
+  totpSecret: string | undefined,
+): Promise<void> {
   const detectTimeoutMs = 15_000;
   const deadline = Date.now() + detectTimeoutMs;
   let shape: "set" | "otp" | "none" = "none";
   while (Date.now() < deadline) {
     const path = new URL(page.url()).pathname;
-    if (path.includes("/ui/v2/login/mfa/set")) {
+    if (path.includes("/ui/v2/login/mfa/set") || path.includes("/otp/time-based/set")) {
       shape = "set";
       break;
     }
@@ -122,8 +169,6 @@ async function handleMfaIfPresented(page: Page, email: string): Promise<void> {
       shape = "otp";
       break;
     }
-    // Already past both MFA steps (forceMfa is off, or a passkey/other
-    // factor completed sign-in without a code prompt): nothing to do.
     if (
       path.startsWith("/api/auth/callback/zitadel") ||
       path.startsWith("/dashboard") ||
@@ -135,87 +180,57 @@ async function handleMfaIfPresented(page: Page, email: string): Promise<void> {
   }
   if (shape === "none") return;
 
+  const codeField = page
+    .locator('[data-testid="code-text-input"]')
+    .or(page.getByLabel(/code/i))
+    .first();
+
   if (shape === "set") {
-    console.log(`[loginViaZitadelV2] MFA enrollment required, choosing authenticator app`);
-    await page
+    console.log("[loginViaZitadelV2] MFA enrollment required, choosing the authenticator app");
+    const choose = page
       .getByRole("button", { name: /authenticator app/i })
       .or(page.getByRole("link", { name: /authenticator app/i }))
-      .or(page.getByText(/authenticator app/i))
-      .first()
-      .click();
-
-    // Zitadel shows a QR code plus a manually-enterable base32 secret. Try
-    // a "can't scan" / "enter manually" toggle first (common in Zitadel's
-    // own docs); fall back to reading a base32-shaped string directly off
-    // the page if the toggle isn't present.
-    const manualToggle = page.getByRole("button", { name: /manually|can.?t scan/i });
-    if (await manualToggle.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await manualToggle.click();
+      .first();
+    if (await choose.isVisible({ timeout: 5_000 }).catch(() => false)) {
+      await choose.click();
     }
-    const secretLocator = page.getByText(/^[A-Z2-7]{16,32}$/);
-    await secretLocator.first().waitFor({ timeout: 10_000 });
-    const secret = (await secretLocator.first().textContent())?.trim().replace(/\s+/g, "");
+    // Login v2 renders the secret as an otpauth:// link beside the QR code,
+    // never as bare text (hosted test/platform-owner/driver.mjs).
+    const otpauthLink = page.locator('a[href^="otpauth://"]').first();
+    await otpauthLink.waitFor({ timeout: 15_000 });
+    const href = (await otpauthLink.getAttribute("href")) ?? "";
+    const secret = new URL(href).searchParams.get("secret")?.replace(/\s+/g, "").toUpperCase();
     if (!secret) {
-      throw new Error(
-        "[loginViaZitadelV2] MFA enrollment: could not read the TOTP secret from the page. " +
-          "See the TODO(hosted#193) comment on handleMfaIfPresented: this selector is unverified.",
-      );
+      throw new Error("[loginViaZitadelV2] MFA enrollment: the otpauth link carries no secret");
     }
     rememberTotpSecret(email, secret);
-
-    const code = computeTotp(secret);
-    console.log(`[loginViaZitadelV2] submitting TOTP enrollment code`);
-    await page.getByLabel(/code/i).first().fill(code);
-    await page
-      .getByRole("button", { name: /next|continue|submit|verify/i })
-      .first()
-      .click();
+    await fillUntilHeld(codeField, await freshTotpCode(email, secret), "TOTP code");
+    await submitButton(page).click();
     return;
   }
 
-  // shape === "otp": an already-registered factor, compute a fresh code.
-  const secret = getTotpSecret(email);
+  const secret = totpSecret ?? getTotpSecret(email);
   if (!secret) {
     throw new Error(
-      `[loginViaZitadelV2] Zitadel asked for a TOTP code for ${email}, but no secret was ` +
-        "remembered for this process. This can only happen if the user was enrolled outside " +
-        "this helper (e.g. a previous test run against a persistent user).",
+      `[loginViaZitadelV2] Zitadel asked for a TOTP code for ${email} and no secret is known. ` +
+        "Pass totpSecret (the lane reads E2E_ADMIN_TOTP_SECRET / E2E_MEMBER_TOTP_SECRET).",
     );
   }
-  const code = computeTotp(secret);
-  console.log(`[loginViaZitadelV2] submitting TOTP code`);
-  await page.getByLabel(/code/i).first().fill(code);
-  await page
-    .getByRole("button", { name: /next|continue|submit|verify/i })
-    .first()
-    .click();
+  await fillUntilHeld(codeField, await freshTotpCode(email, secret), "TOTP code");
+  await submitButton(page).click();
 }
 
 // ---------------------------------------------------------------------------
 // Implementation
 // ---------------------------------------------------------------------------
 
-const DEFAULT_BASE_URL =
-  process.env.PLAYWRIGHT_BASE_URL ?? "https://app.zeroroot.local:30443";
-
-/** Redact OIDC code/state/id_token from a URL for safe logging. */
-function redactOIDCParams(url: string): string {
-  return url.replace(
-    /([?&])(code|state|id_token|nonce|session_state)=[^&]+/g,
-    "$1$2=<redacted>",
-  );
-}
-
 /**
- * loginViaZitadelV2, drives the Zitadel V2 OIDC login UI against the live cluster.
+ * loginViaZitadelV2 signs the browser in through the dashboard's /login gate
+ * and Zitadel's hosted Login v2.
  *
- * Returns the resolved { finalUrl, chain, sessionCookieSet } after the OIDC
- * flow completes (success or parked-at-signedin failure).
- * Throws if the flow cannot reach the Zitadel login UI or times out.
- *
- * @param page     Playwright Page (must be in a context with ignoreHTTPSErrors=true).
- * @param context  Playwright BrowserContext (for cookie inspection).
- * @param opts     Login options.
+ * Returns { finalUrl, chain, sessionCookieSet }. Throws when a Login v2 page
+ * never appears, when a code is required and no secret is known, or when
+ * Zitadel parks the browser on /signedin (the LOGIN-B1 double-fire bug).
  */
 export async function loginViaZitadelV2(
   page: Page,
@@ -225,254 +240,128 @@ export async function loginViaZitadelV2(
   const {
     email,
     password,
+    totpSecret,
     baseURL = DEFAULT_BASE_URL,
     loginFormTimeoutMs = 30_000,
     loginCompleteTimeoutMs = 60_000,
-    shapeDetectTimeoutMs = 15_000,
   } = opts;
 
   const chain: LoginHop[] = [];
-  page.on("response", (resp) => {
+  const onResponse = (resp: Response) => {
     chain.push({
       ts: new Date().toISOString(),
       status: resp.status(),
       method: resp.request().method(),
       url: redactOIDCParams(resp.url()),
     });
-  });
+  };
+  page.on("response", onResponse);
 
-  // -------------------------------------------------------------------------
-  // 1. Navigate to /login.
-  //    LoginForm's useEffect fires signIn("zitadel", …) which POSTs to
-  //    /api/auth/signin/zitadel and 302s to Zitadel.
-  // -------------------------------------------------------------------------
-  console.log(`[loginViaZitadelV2] navigating to ${baseURL}/login`);
-  await page.goto(`${baseURL}/login`, { waitUntil: "load", timeout: loginFormTimeoutMs });
+  try {
+    // 1. The gate.
+    console.log(`[loginViaZitadelV2] opening ${baseURL}/login`);
+    await page.goto(`${baseURL}/login`, { waitUntil: "load", timeout: loginFormTimeoutMs });
 
-  // If already on dashboard (previous session still valid), return early.
-  if (page.url().includes("/dashboard")) {
-    console.log(`[loginViaZitadelV2] Already authenticated, landed on ${page.url()}`);
-    const cookies = await context.cookies();
-    return {
-      finalUrl: page.url(),
-      chain,
-      sessionCookieSet: cookies.some((c) =>
-        c.name.includes("authjs.session-token"),
-      ),
-    };
-  }
-
-  // -------------------------------------------------------------------------
-  // 1b. Front-door shape detection (dashboard#961).
-  //     If we are still on /login, work out which shape rendered:
-  //       - inline: email + password inputs directly on /login (kind inline
-  //         form). Fill and submit here; the Zitadel V2 steps are skipped.
-  //       - gate: zero inputs, a "Sign in" button (SaaS profile,
-  //         deploy#1060). Click it to hand off to Zitadel V2.
-  //       - handoff: the page already left /login on its own (legacy
-  //         auto-fire). Fall through to the V2 wait unchanged.
-  // -------------------------------------------------------------------------
-  let inlineLoginDone = false;
-  if (new URL(page.url()).pathname.startsWith("/login")) {
-    const emailInput = page.getByLabel(/email/i).first();
-    const passwordInput = page.locator('input[type="password"]').first();
-    const gateButton = page
-      .getByRole("button", { name: /^sign ?in\b/i })
-      .first();
-
-    type FrontDoorShape = "handoff" | "inline" | "gate" | "unknown";
-    let shape: FrontDoorShape = "unknown";
-    const shapeDeadline = Date.now() + shapeDetectTimeoutMs;
-    while (Date.now() < shapeDeadline) {
-      if (!new URL(page.url()).pathname.startsWith("/login")) {
-        shape = "handoff";
-        break;
-      }
-      // Check for the inline form FIRST: the inline shape also has a submit
-      // button that matches the gate-button name pattern.
-      if (
-        (await emailInput.isVisible().catch(() => false)) &&
-        (await passwordInput.isVisible().catch(() => false))
-      ) {
-        shape = "inline";
-        break;
-      }
-      if (await gateButton.isVisible().catch(() => false)) {
-        shape = "gate";
-        break;
-      }
-      await page.waitForTimeout(250);
+    if (page.url().includes("/dashboard")) {
+      console.log(`[loginViaZitadelV2] already signed in, landed on ${page.url()}`);
+      const cookies = await context.cookies();
+      return {
+        finalUrl: page.url(),
+        chain,
+        sessionCookieSet: cookies.some((c) => c.name.includes("authjs.session-token")),
+      };
     }
-    console.log(`[loginViaZitadelV2] /login front-door shape: ${shape}`);
 
-    if (shape === "inline") {
-      // Kind inline-form path, unchanged behavior: credentials are submitted
-      // directly on /login, no Zitadel V2 pages are involved.
-      await emailInput.fill(email);
-      await passwordInput.fill(password);
-      await page
-        .getByRole("button", { name: /^log ?in$|^sign ?in$/i })
-        .first()
-        .click();
-      inlineLoginDone = true;
-    } else if (shape === "gate") {
-      // SaaS gate page: click "Sign in" to initiate the Zitadel OIDC flow.
-      await gateButton.click();
-      // Hydration guard: if the click landed before React attached the
-      // onClick handler, the URL never changes. Retry once.
+    // 2. Press "Sign in". The click starts an OIDC redirect chain, so it must
+    //    not wait for a navigation of its own. A click that lands before
+    //    React attached the handler changes nothing, so retry once.
+    const gateButton = page.getByRole("button", { name: /^sign in$/i }).first();
+    await gateButton.waitFor({ state: "visible", timeout: loginFormTimeoutMs });
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      await gateButton.click({ noWaitAfter: true }).catch(() => undefined);
       const left = await page
-        .waitForURL((url) => !url.pathname.startsWith("/login"), {
-          timeout: 10_000,
-        })
+        .waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 10_000 })
         .then(() => true)
         .catch(() => false);
-      if (!left) {
-        console.log(
-          `[loginViaZitadelV2] gate Sign-in click was a no-op (pre-hydration?), retrying once`,
-        );
-        await gateButton.click().catch(() => undefined);
-      }
+      if (left) break;
+      console.log(`[loginViaZitadelV2] the gate click changed nothing (attempt ${attempt})`);
     }
-    // shape === "handoff" | "unknown": fall through, step 2's wait either
-    // succeeds (auto-fire happened) or produces the existing rich error.
-  }
 
-  if (!inlineLoginDone) {
-    // -----------------------------------------------------------------------
-    // 2. Wait for Zitadel V2 loginname form.
-    //    LOGIN-B1: if /login triggered two POSTs to signin/zitadel, Zitadel
-    //    will park the browser on /signedin instead of /loginname.
-    // -----------------------------------------------------------------------
-    console.log(`[loginViaZitadelV2] waiting for Zitadel V2 loginname form`);
+    // 3. Loginname.
     try {
-      await page.waitForURL(/\/ui\/v2\/login\/loginname/, {
-        timeout: loginFormTimeoutMs,
-      });
+      await page.waitForURL(/\/ui\/v2\/login\/loginname/, { timeout: loginFormTimeoutMs });
     } catch {
-      const currentUrl = page.url();
-      if (currentUrl.includes("/ui/v2/login/signedin")) {
+      const current = page.url();
+      if (current.includes("/ui/v2/login/signedin")) {
         throw new Error(
-          `[loginViaZitadelV2] LOGIN-B1 REGRESSION: Zitadel parked browser on /signedin. ` +
-            `This is the useEffect double-fire bug (commit 5dfa778). ` +
-            `Check login-form.tsx for a useRef guard. URL=${currentUrl}`,
+          "[loginViaZitadelV2] LOGIN-B1 REGRESSION: Zitadel parked the browser on /signedin " +
+            `before the loginname page. URL=${redactOIDCParams(current)}`,
         );
       }
       throw new Error(
-        `[loginViaZitadelV2] Timed out waiting for Zitadel V2 loginname form. ` +
-          `Current URL=${currentUrl}. ` +
-          `Ensure the /login front door handed off to Zitadel (gate "Sign in" ` +
-          `clicked, or signIn("zitadel") fired on page load).`,
+        "[loginViaZitadelV2] the Zitadel loginname page never appeared. " +
+          `URL=${redactOIDCParams(current)}`,
       );
     }
+    const loginnameField = page
+      .locator('[data-testid="username-text-input"]')
+      .or(page.getByLabel(/login.?name|email|user/i))
+      .first();
+    await fillUntilHeld(loginnameField, email, "loginname");
+    await submitButton(page).click();
 
-    // -----------------------------------------------------------------------
-    // 3. Fill loginname (email) and submit.
-    // -----------------------------------------------------------------------
-    console.log(`[loginViaZitadelV2] filling loginname`);
-    await page.getByLabel(/login.?name|email|user/i).first().fill(email);
-    await page.getByRole("button", { name: /next|continue|submit/i }).first().click();
-
-    // -----------------------------------------------------------------------
-    // 4. Wait for Zitadel V2 password form.
-    // -----------------------------------------------------------------------
-    console.log(`[loginViaZitadelV2] waiting for Zitadel V2 password form`);
+    // 4. Password.
     try {
       await page.waitForURL(/\/ui\/v2\/login\/password/, { timeout: 20_000 });
     } catch {
-      const currentUrl = page.url();
       throw new Error(
-        `[loginViaZitadelV2] Timed out waiting for Zitadel V2 password form. ` +
-          `Current URL=${currentUrl}. ` +
-          `Check: loginname submitted correctly, user exists in Zitadel org.`,
+        "[loginViaZitadelV2] the Zitadel password page never appeared. " +
+          `URL=${redactOIDCParams(page.url())}. Check that the account exists.`,
+      );
+    }
+    const passwordField = page
+      .locator('[data-testid="password-text-input"]')
+      .or(page.locator('input[type="password"]'))
+      .first();
+    await fillUntilHeld(passwordField, password, "password");
+    await submitButton(page).click();
+
+    // 5. MFA.
+    await handleMfaIfPresented(page, email, totpSecret);
+
+    // 6. Landing.
+    await page
+      .waitForURL(
+        (url) =>
+          url.pathname.startsWith("/api/auth/callback/zitadel") ||
+          url.pathname.startsWith("/dashboard") ||
+          url.pathname === "/" ||
+          url.pathname.includes("/ui/v2/login/signedin"),
+        { timeout: loginCompleteTimeoutMs },
+      )
+      .catch(() => {
+        console.log(
+          `[loginViaZitadelV2] the landing wait timed out at ${redactOIDCParams(page.url())}`,
+        );
+      });
+
+    const finalUrl = page.url();
+    const cookies = await context.cookies();
+    const sessionCookieSet = cookies.some((c) => c.name.includes("authjs.session-token"));
+
+    if (finalUrl.includes("/ui/v2/login/signedin")) {
+      throw new Error(
+        "[loginViaZitadelV2] LOGIN-B1 REGRESSION: Zitadel parked the browser on /signedin. " +
+          `The OIDC callback never completed. session cookie: ${sessionCookieSet}.`,
       );
     }
 
-    // -----------------------------------------------------------------------
-    // 5. Fill password and submit.
-    // -----------------------------------------------------------------------
-    console.log(`[loginViaZitadelV2] filling password`);
-    await page.locator('input[type="password"]').first().fill(password);
-    await page
-      .getByRole("button", { name: /next|continue|submit|sign.?in/i })
-      .first()
-      .click();
-
-    // -----------------------------------------------------------------------
-    // 5b. MFA (hosted#193 D3, plan-193 section 3.6): once `forceMfa` is
-    //     enforced, a user with only a password lands on
-    //     `/ui/v2/login/mfa/set?force=true` right after the password step
-    //     (first-factor enrollment — this test user was just created and
-    //     has no factor yet), or on `/ui/v2/login/otp/time-based` if a
-    //     factor from an earlier run in this process is already known
-    //     (see `getTotpSecret`). Skipped entirely when `forceMfa` is off:
-    //     the wait below falls through to the terminal-landing wait in
-    //     step 6 without matching either MFA URL.
-    // -----------------------------------------------------------------------
-    await handleMfaIfPresented(page, email);
-  }
-
-  // -------------------------------------------------------------------------
-  // 6. Wait for terminal landing.
-  //    Success: /api/auth/callback/zitadel then /dashboard
-  //    Failure (LOGIN-B1): /ui/v2/login/signedin
-  // -------------------------------------------------------------------------
-  console.log(`[loginViaZitadelV2] waiting for terminal landing (timeout=${loginCompleteTimeoutMs}ms)`);
-  try {
-    await page.waitForURL(
-      (url) =>
-        url.pathname.startsWith("/api/auth/callback/zitadel") ||
-        url.pathname.startsWith("/dashboard") ||
-        url.pathname === "/" ||
-        url.pathname.includes("/ui/v2/login/signedin"),
-      { timeout: loginCompleteTimeoutMs },
-    );
-  } catch {
     console.log(
-      `[loginViaZitadelV2] terminal wait timed out, current URL=${page.url()}`,
+      `[loginViaZitadelV2] sign-in ${sessionCookieSet ? "PASSED" : "INCOMPLETE"} ` +
+        `for ${email}. finalUrl=${redactOIDCParams(finalUrl)}`,
     );
+    return { finalUrl, chain, sessionCookieSet };
+  } finally {
+    page.off("response", onResponse);
   }
-
-  const finalUrl = page.url();
-  console.log(`[loginViaZitadelV2] final URL: ${redactOIDCParams(finalUrl)}`);
-
-  // -------------------------------------------------------------------------
-  // 7. Check for session cookie.
-  // -------------------------------------------------------------------------
-  const cookies = await context.cookies();
-  const sessionCookieSet = cookies.some((c) =>
-    c.name.includes("authjs.session-token"),
-  );
-
-  // -------------------------------------------------------------------------
-  // 8. LOGIN-B2: if no callback hop and no session cookie, the OIDC flow
-  //    likely failed at the token exchange stage.
-  // -------------------------------------------------------------------------
-  const hasCallbackHop = chain.some((h) =>
-    h.url.includes("callback/zitadel"),
-  );
-  if (!hasCallbackHop && !sessionCookieSet) {
-    console.warn(
-      `[loginViaZitadelV2] LOGIN-B2 WARNING: no /api/auth/callback/zitadel hop detected ` +
-        `and no session cookie set. The JWT tenant claim may be absent. ` +
-        `Check auth.ts jwt callback K8s fallback (commit 659678e).`,
-    );
-  }
-
-  // -------------------------------------------------------------------------
-  // 9. LOGIN-B1: browser parked on signedin
-  // -------------------------------------------------------------------------
-  if (finalUrl.includes("/ui/v2/login/signedin")) {
-    throw new Error(
-      `[loginViaZitadelV2] LOGIN-B1 REGRESSION: Zitadel parked browser on /signedin. ` +
-        `OIDC callback never completed. session cookie: ${sessionCookieSet}. ` +
-        `Inspect the hop chain for duplicate signin/zitadel POSTs.`,
-    );
-  }
-
-  console.log(
-    `[loginViaZitadelV2] Login ${sessionCookieSet ? "PASSED" : "INCOMPLETE"} ` +
-      `for email=${email}. finalUrl=${redactOIDCParams(finalUrl)}`,
-  );
-
-  return { finalUrl, chain, sessionCookieSet };
 }
