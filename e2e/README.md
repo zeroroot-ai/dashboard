@@ -143,7 +143,7 @@ Facts the verdicts rest on:
 | `auth/no-workspace.spec.ts` | delete | Deletes membership rows in Postgres (ADR-0012) after a signup. |
 | `auth/session-cookie-samesite.spec.ts` | staging lane | Public routes only. |
 | `auth/session-expiry.spec.ts` | rewrite | Signs in as the admin, clears cookies, asserts the `/login?callbackUrl=` redirect. |
-| `auth/signup-autologin.spec.ts` | delete | Auto-login was retired (dashboard#812); `/pricing` does not exist. |
+| `auth/signup-autologin.spec.ts` | delete | Auto-login was retired in E9; `/pricing` does not exist. |
 | `auth/signup-collision.spec.ts` | delete | Drives the single-screen signup form that no longer exists. |
 | `auth/signup-duplicate-email.spec.ts` | delete | Same form. |
 | `auth/signup-full-chain.spec.ts` | delete | Gated on `SIGNUP_VERIFY_TOKEN`; superseded by hosted `exit-test-signup.yml`. |
