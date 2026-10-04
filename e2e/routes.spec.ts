@@ -72,6 +72,23 @@ const routes = routesUnder(APP_DIR);
 /** Text a Next.js error boundary or a 404 page renders. */
 const ERROR_TEXT = /Application error|This page could not be found|Internal Server Error/;
 
+/**
+ * The edge allows 600 requests per client per minute (x-ratelimit-limit
+ * "600;w=60", measured on staging 2026-10-04). A browser page load spends
+ * about fifteen of those, so a walk of this size must pace itself or it
+ * reads 429 pages as its result. After every response the walk reads the
+ * remaining budget and waits for the window to reset when it runs low.
+ */
+const RATE_LIMIT_FLOOR = 60;
+
+async function respectRateLimit(headers: Record<string, string>): Promise<void> {
+  const remaining = Number(headers["x-ratelimit-remaining"]);
+  const reset = Number(headers["x-ratelimit-reset"]);
+  if (Number.isFinite(remaining) && remaining < RATE_LIMIT_FLOOR && Number.isFinite(reset)) {
+    await new Promise((resolve) => setTimeout(resolve, (reset + 1) * 1000));
+  }
+}
+
 test.describe("every page renders on staging", () => {
   test("the walk found the app tree", () => {
     // A walk that found nothing would make every other test vacuous.
@@ -80,16 +97,24 @@ test.describe("every page renders on staging", () => {
 
   test.describe("signed out", () => {
     for (const route of routes) {
-      test(`GET ${route.path} signed out`, async ({ page }) => {
+      test(`GET ${route.path} signed out`, async ({ request }) => {
         test.skip(route.dynamic, `${route.path} has a dynamic segment and no fixture`);
-        const response = await page.goto(`${BASE_URL}${route.path}`);
-        expect(response, `no response for ${route.path}`).not.toBeNull();
-        expect(response!.status(), `${route.path} answered ${response!.status()}`).toBeLessThan(500);
+        // One request per page, no assets, no redirect follow: the first
+        // answer is the measurement.
+        const response = await request.get(`${BASE_URL}${route.path}`, { maxRedirects: 0 });
+        await respectRateLimit(response.headers());
+        const status = response.status();
+        // A rate-limited answer measures nothing, so it is a failure, never
+        // a pass.
+        expect(status, `${route.path} was rate limited; the walk measured nothing`).not.toBe(429);
+        expect(status, `${route.path} answered ${status}`).toBeLessThan(500);
         if (route.isAuth) {
-          // The (auth) layout redirects a visitor without a session to /login.
-          await expect(page).toHaveURL(/\/login/);
+          // The (auth) layout sends a visitor without a session to /login.
+          expect(status, `${route.path} answered ${status} signed out`).toBeGreaterThanOrEqual(300);
+          expect(status, `${route.path} answered ${status} signed out`).toBeLessThan(400);
+          expect(response.headers()["location"] ?? "", `${route.path} did not send the visitor to /login`).toMatch(/\/login/);
         } else {
-          await expect(page.locator("body")).not.toContainText(ERROR_TEXT);
+          expect(await response.text()).not.toMatch(ERROR_TEXT);
         }
       });
     }
@@ -104,6 +129,9 @@ test.describe("every page renders on staging", () => {
       // the slow part, and the session cookie is what every page needs.
       const account = requireAdmin();
       context = await browser.newContext();
+      // Images and fonts prove nothing about a page and spend the request
+      // budget; the document and its scripts still load.
+      await context.route(/\.(png|jpe?g|gif|webp|svg|ico|woff2?|ttf|mp4)(\?.*)?$/, (r) => r.abort());
       page = await context.newPage();
       await signIn(page, context, account);
     });
@@ -118,6 +146,8 @@ test.describe("every page renders on staging", () => {
         test.skip(!route.isAuth, `${route.path} is a public page; the signed-out walk covers it`);
         const response = await page.goto(`${BASE_URL}${route.path}`);
         expect(response, `no response for ${route.path}`).not.toBeNull();
+        await respectRateLimit(response!.headers());
+        expect(response!.status(), `${route.path} was rate limited; the walk measured nothing`).not.toBe(429);
         expect(response!.status(), `${route.path} answered ${response!.status()}`).toBe(200);
         await expect(page).not.toHaveURL(/\/login/);
         await expect(page.locator("body")).not.toContainText(ERROR_TEXT);
