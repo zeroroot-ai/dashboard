@@ -6,6 +6,16 @@ The suite runs a real browser against a live product host. The lane is
 `e2e/**`, `playwright.config.ts` or the workflow, and once a day. It never
 runs on a pull request (ADR-0012). The merge gate stays `node-ci.yml`.
 
+## The route walk
+
+`e2e/routes.spec.ts` lists every `page.tsx` under `app/` when Playwright loads
+the file, so the suite covers a new page the day it lands and drops a deleted
+one the same day. There is no manifest to keep current. Each static page gets
+two tests: signed out (below 500, and an `(auth)` page lands on `/login`) and
+signed in as the admin account (200, no error boundary, a non-empty `<main>`).
+A page with a dynamic segment skips with a reason that names the segment,
+because the walk has no fixture for it.
+
 ## How a spec signs in
 
 Nothing forges a session (ADR-0027, dashboard#164). A spec that needs a
