@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.128.0](https://github.com/zeroroot-ai/dashboard/compare/v0.127.2...v0.128.0) (2026-10-05)
+
+
+### Features
+
+* **auth:** server-side identity calls reach Zitadel by Service name ([#205](https://github.com/zeroroot-ai/dashboard/issues/205)) ([1b5ec60](https://github.com/zeroroot-ai/dashboard/commit/1b5ec60fdd80f6f1fffe6a1509bb46a76fbd1b87))
+* **env:** the env reader set is a committed artifact with a drift gate ([#204](https://github.com/zeroroot-ai/dashboard/issues/204)) ([a8fd4ac](https://github.com/zeroroot-ai/dashboard/commit/a8fd4ac64e20003cb96bcfbcd0f293c9a6c19f95))
+
 ## [0.127.2](https://github.com/zeroroot-ai/dashboard/compare/v0.127.1...v0.127.2) (2026-10-02)
 
 
