@@ -5,7 +5,7 @@
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_gibson_auth_v1_options } from "../../../auth/v1/options_pb";
-import type { GetConnectorAuthStatusResponse as GetConnectorAuthStatusResponse$1 } from "../../../tenant/v1/connector_auth_pb";
+import type { GetConnectorAuthStatusResponse as GetConnectorAuthStatusResponse$1, RevokeConnectorGrantResponseSchema } from "../../../tenant/v1/connector_auth_pb";
 import { file_gibson_tenant_v1_connector_auth } from "../../../tenant/v1/connector_auth_pb";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/daemon/operator/v1/operator.proto.
  */
 export const file_gibson_daemon_operator_v1_operator: GenFile = /*@__PURE__*/
-  fileDesc("CihnaWJzb24vZGFlbW9uL29wZXJhdG9yL3YxL29wZXJhdG9yLnByb3RvEhlnaWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxIj0KC0FjY2Vzc1R1cGxlEgwKBHVzZXIYASABKAkSEAoIcmVsYXRpb24YAiABKAkSDgoGb2JqZWN0GAMgASgJIpcBChhXcml0ZUFjY2Vzc1R1cGxlc1JlcXVlc3QSMwoDYWRkGAEgAygLMiYuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5BY2Nlc3NUdXBsZRI2CgZkZWxldGUYAiADKAsyJi5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkFjY2Vzc1R1cGxlEg4KBnJlYXNvbhgDIAEoCSI7ChlXcml0ZUFjY2Vzc1R1cGxlc1Jlc3BvbnNlEg0KBWFkZGVkGAEgASgFEg8KB2RlbGV0ZWQYAiABKAUi7AEKGFVwc2VydFRlbmFudFF1b3RhUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSGwoTY29uY3VycmVudF9taXNzaW9ucxgHIAEoBRIZChFjb25jdXJyZW50X2FnZW50cxgDIAEoBRIPCgdwbGFuX2lkGAggASgJEh0KFWNvbmN1cnJlbnRfY29ubmVjdG9ycxgJIAEoBUoECAIQA0oECAQQBUoECAUQBkoECAYQB1IFc2VhdHNSCnN0b3JhZ2VfZ2JSDnJldGVudGlvbl9kYXlzUhpzYW5kYm94X2xhdW5jaGVzX3Blcl9tb250aCIvChlVcHNlcnRUZW5hbnRRdW90YVJlc3BvbnNlEhIKCnVwZGF0ZWRfYXQYASABKAkiLQoYTGlzdEZlYXR1cmVUdXBsZXNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSIuChlMaXN0RmVhdHVyZVR1cGxlc1Jlc3BvbnNlEhEKCXJlbGF0aW9ucxgBIAMoCSI0Ch9TZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSI6CiBTZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWRSZXNwb25zZRIWCg50dXBsZXNfd3JpdHRlbhgBIAEoBSK0AgoRQXVkaXRFdmVudE1lc3NhZ2USDAoEdHlwZRgBIAEoCRIVCg1hY3Rvcl9zdWJqZWN0GAIgASgJEg0KBXR1cGxlGAQgASgJEhQKDGFjdGlvbl9jbGFzcxgFIAEoCRISCgpzY29wZV90eXBlGAYgASgJEhEKCW9wZXJhdGlvbhgHIAEoCRIOCgZyZWFzb24YCCABKAkSEQoJdGltZXN0YW1wGAkgASgJEkgKBmZpZWxkcxgKIAMoCzI4LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuQXVkaXRFdmVudE1lc3NhZ2UuRmllbGRzRW50cnkaLQoLRmllbGRzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUoECAMQBFIMYWN0b3Jfc291cmNlIlQKFUVtaXRBdWRpdEV2ZW50UmVxdWVzdBI7CgVldmVudBgBIAEoCzIsLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuQXVkaXRFdmVudE1lc3NhZ2UiGAoWRW1pdEF1ZGl0RXZlbnRSZXNwb25zZSJHChpTZXRUZW5hbnRaaXRhZGVsT3JnUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSFgoOeml0YWRlbF9vcmdfaWQYAiABKAkiHQobU2V0VGVuYW50Wml0YWRlbE9yZ1Jlc3BvbnNlIpABCg1QZW5kaW5nVGVuYW50EhEKCXRlbmFudF9pZBgBIAEoCRIVCg1vd25lcl91c2VyX2lkGAIgASgJEhMKC293bmVyX2VtYWlsGAMgASgJEhYKDndvcmtzcGFjZV9uYW1lGAQgASgJEgwKBHRpZXIYBSABKAkSGgoSc3RyaXBlX2N1c3RvbWVyX2lkGAYgASgJIiYKJExpc3RQZW5kaW5nVGVuYW50UHJvdmlzaW9uaW5nUmVxdWVzdCJiCiVMaXN0UGVuZGluZ1RlbmFudFByb3Zpc2lvbmluZ1Jlc3BvbnNlEjkKB3BlbmRpbmcYASADKAsyKC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlBlbmRpbmdUZW5hbnQiMAobQWNrVGVuYW50UHJvdmlzaW9uZWRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSItChxBY2tUZW5hbnRQcm92aXNpb25lZFJlc3BvbnNlEg0KBWFja2VkGAEgASgIIm4KIEVucXVldWVUZW5hbnRQcm92aXNpb25pbmdSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIUCgxkaXNwbGF5X25hbWUYAiABKAkSEwoLb3duZXJfZW1haWwYAyABKAkSDAoEdGllchgEIAEoCSJLCiFFbnF1ZXVlVGVuYW50UHJvdmlzaW9uaW5nUmVzcG9uc2USDQoFb3BfaWQYASABKAkSFwoPYWxyZWFkeV9leGlzdGVkGAIgASgIIs8BChlSZXBvcnRUZW5hbnRTdGF0dXNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRINCgVwaGFzZRgCIAEoCRIYChBkYXRhX3BsYW5lX3JlYWR5GAMgASgIEhYKDnN0b3JlX3Bvc3RncmVzGAQgASgJEhMKC3N0b3JlX3JlZGlzGAUgASgJEhMKC3N0b3JlX25lbzRqGAYgASgJEhgKEHppdGFkZWxfb3JnX3NsdWcYByABKAkSGgoSc3RyaXBlX2N1c3RvbWVyX2lkGAggASgJIkUKGlJlcG9ydFRlbmFudFN0YXR1c1Jlc3BvbnNlEg8KB3VwZGF0ZWQYASABKAgSFgoOYmlsbGluZ19hY3RpdmUYAiABKAgiogEKCFRlbmFudE9wEg0KBW9wX2lkGAEgASgJEhEKCXRlbmFudF9pZBgCIAEoCRIPCgdvcF90eXBlGAMgASgJEhQKDGRpc3BsYXlfbmFtZRgEIAEoCRIYChBkaXNwbGF5X25hbWVfc2V0GAUgASgIEhMKC293bmVyX2VtYWlsGAYgASgJEgwKBHRpZXIYByABKAkSEAoIdGllcl9zZXQYCCABKAgiHQobTGlzdFBlbmRpbmdUZW5hbnRPcHNSZXF1ZXN0IlAKHExpc3RQZW5kaW5nVGVuYW50T3BzUmVzcG9uc2USMAoDb3BzGAEgAygLMiMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5UZW5hbnRPcCIjChJBY2tUZW5hbnRPcFJlcXVlc3QSDQoFb3BfaWQYASABKAkiJAoTQWNrVGVuYW50T3BSZXNwb25zZRINCgVhY2tlZBgBIAEoCCJDChtSZXZva2VDb25uZWN0b3JHcmFudFJlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhEKCWNvbm5lY3RvchgCIAEoCSJFCh1HZXRDb25uZWN0b3JBdXRoU3RhdHVzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSEQoJY29ubmVjdG9yGAIgASgJImIKHkdldENvbm5lY3RvckF1dGhTdGF0dXNSZXNwb25zZRJACgZzdGF0dXMYASABKAsyMC5naWJzb24udGVuYW50LnYxLkdldENvbm5lY3RvckF1dGhTdGF0dXNSZXNwb25zZSJJChxSZXZva2VDb25uZWN0b3JHcmFudFJlc3BvbnNlEhEKCWhhZF9ncmFudBgBIAEoCBIWCg52ZW5kb3JfcmV2b2tlZBgCIAEoCDKsFQoVRGFlbW9uT3BlcmF0b3JTZXJ2aWNlErcBChFXcml0ZUFjY2Vzc1R1cGxlcxIzLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuV3JpdGVBY2Nlc3NUdXBsZXNSZXF1ZXN0GjQuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5Xcml0ZUFjY2Vzc1R1cGxlc1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADErcBChFVcHNlcnRUZW5hbnRRdW90YRIzLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuVXBzZXJ0VGVuYW50UXVvdGFSZXF1ZXN0GjQuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5VcHNlcnRUZW5hbnRRdW90YVJlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADErcBChFMaXN0RmVhdHVyZVR1cGxlcxIzLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuTGlzdEZlYXR1cmVUdXBsZXNSZXF1ZXN0GjQuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5MaXN0RmVhdHVyZVR1cGxlc1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEswBChhTZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWQSOi5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlNlZWRDYXRhbG9nVGVuYW50RW5hYmxlZFJlcXVlc3QaOy5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlNlZWRDYXRhbG9nVGVuYW50RW5hYmxlZFJlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEq4BCg5FbWl0QXVkaXRFdmVudBIwLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuRW1pdEF1ZGl0RXZlbnRSZXF1ZXN0GjEuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5FbWl0QXVkaXRFdmVudFJlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEr0BChNTZXRUZW5hbnRaaXRhZGVsT3JnEjUuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5TZXRUZW5hbnRaaXRhZGVsT3JnUmVxdWVzdBo2LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuU2V0VGVuYW50Wml0YWRlbE9yZ1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEtsBCh1MaXN0UGVuZGluZ1RlbmFudFByb3Zpc2lvbmluZxI/LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuTGlzdFBlbmRpbmdUZW5hbnRQcm92aXNpb25pbmdSZXF1ZXN0GkAuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5MaXN0UGVuZGluZ1RlbmFudFByb3Zpc2lvbmluZ1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEs8BChlFbnF1ZXVlVGVuYW50UHJvdmlzaW9uaW5nEjsuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5FbnF1ZXVlVGVuYW50UHJvdmlzaW9uaW5nUmVxdWVzdBo8LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuRW5xdWV1ZVRlbmFudFByb3Zpc2lvbmluZ1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEsABChRBY2tUZW5hbnRQcm92aXNpb25lZBI2LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuQWNrVGVuYW50UHJvdmlzaW9uZWRSZXF1ZXN0GjcuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5BY2tUZW5hbnRQcm92aXNpb25lZFJlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEroBChJSZXBvcnRUZW5hbnRTdGF0dXMSNC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlJlcG9ydFRlbmFudFN0YXR1c1JlcXVlc3QaNS5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlJlcG9ydFRlbmFudFN0YXR1c1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEsABChRMaXN0UGVuZGluZ1RlbmFudE9wcxI2LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuTGlzdFBlbmRpbmdUZW5hbnRPcHNSZXF1ZXN0GjcuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5MaXN0UGVuZGluZ1RlbmFudE9wc1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEqUBCgtBY2tUZW5hbnRPcBItLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuQWNrVGVuYW50T3BSZXF1ZXN0Gi4uZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5BY2tUZW5hbnRPcFJlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEsABChRSZXZva2VDb25uZWN0b3JHcmFudBI2LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuUmV2b2tlQ29ubmVjdG9yR3JhbnRSZXF1ZXN0GjcuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5SZXZva2VDb25uZWN0b3JHcmFudFJlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADEsYBChZHZXRDb25uZWN0b3JBdXRoU3RhdHVzEjguZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5HZXRDb25uZWN0b3JBdXRoU3RhdHVzUmVxdWVzdBo5LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuR2V0Q29ubmVjdG9yQXV0aFN0YXR1c1Jlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCADQmVaY2dpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi9kYWVtb24vb3BlcmF0b3IvdjE7ZGFlbW9ub3BlcmF0b3J2MWIGcHJvdG8z", [file_gibson_auth_v1_options, file_gibson_tenant_v1_connector_auth]);
+  fileDesc("CihnaWJzb24vZGFlbW9uL29wZXJhdG9yL3YxL29wZXJhdG9yLnByb3RvEhlnaWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxIj0KC0FjY2Vzc1R1cGxlEgwKBHVzZXIYASABKAkSEAoIcmVsYXRpb24YAiABKAkSDgoGb2JqZWN0GAMgASgJIpcBChhXcml0ZUFjY2Vzc1R1cGxlc1JlcXVlc3QSMwoDYWRkGAEgAygLMiYuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5BY2Nlc3NUdXBsZRI2CgZkZWxldGUYAiADKAsyJi5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkFjY2Vzc1R1cGxlEg4KBnJlYXNvbhgDIAEoCSI7ChlXcml0ZUFjY2Vzc1R1cGxlc1Jlc3BvbnNlEg0KBWFkZGVkGAEgASgFEg8KB2RlbGV0ZWQYAiABKAUi7AEKGFVwc2VydFRlbmFudFF1b3RhUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSGwoTY29uY3VycmVudF9taXNzaW9ucxgHIAEoBRIZChFjb25jdXJyZW50X2FnZW50cxgDIAEoBRIPCgdwbGFuX2lkGAggASgJEh0KFWNvbmN1cnJlbnRfY29ubmVjdG9ycxgJIAEoBUoECAIQA0oECAQQBUoECAUQBkoECAYQB1IFc2VhdHNSCnN0b3JhZ2VfZ2JSDnJldGVudGlvbl9kYXlzUhpzYW5kYm94X2xhdW5jaGVzX3Blcl9tb250aCIvChlVcHNlcnRUZW5hbnRRdW90YVJlc3BvbnNlEhIKCnVwZGF0ZWRfYXQYASABKAkiLQoYTGlzdEZlYXR1cmVUdXBsZXNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSIuChlMaXN0RmVhdHVyZVR1cGxlc1Jlc3BvbnNlEhEKCXJlbGF0aW9ucxgBIAMoCSI0Ch9TZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSI4CiBTZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWRSZXNwb25zZUoECAEQAlIOdHVwbGVzX3dyaXR0ZW4itAIKEUF1ZGl0RXZlbnRNZXNzYWdlEgwKBHR5cGUYASABKAkSFQoNYWN0b3Jfc3ViamVjdBgCIAEoCRINCgV0dXBsZRgEIAEoCRIUCgxhY3Rpb25fY2xhc3MYBSABKAkSEgoKc2NvcGVfdHlwZRgGIAEoCRIRCglvcGVyYXRpb24YByABKAkSDgoGcmVhc29uGAggASgJEhEKCXRpbWVzdGFtcBgJIAEoCRJICgZmaWVsZHMYCiADKAsyOC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkF1ZGl0RXZlbnRNZXNzYWdlLkZpZWxkc0VudHJ5Gi0KC0ZpZWxkc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFKBAgDEARSDGFjdG9yX3NvdXJjZSJUChVFbWl0QXVkaXRFdmVudFJlcXVlc3QSOwoFZXZlbnQYASABKAsyLC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkF1ZGl0RXZlbnRNZXNzYWdlIhgKFkVtaXRBdWRpdEV2ZW50UmVzcG9uc2UiRwoaU2V0VGVuYW50Wml0YWRlbE9yZ1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhYKDnppdGFkZWxfb3JnX2lkGAIgASgJIh0KG1NldFRlbmFudFppdGFkZWxPcmdSZXNwb25zZSKQAQoNUGVuZGluZ1RlbmFudBIRCgl0ZW5hbnRfaWQYASABKAkSFQoNb3duZXJfdXNlcl9pZBgCIAEoCRITCgtvd25lcl9lbWFpbBgDIAEoCRIWCg53b3Jrc3BhY2VfbmFtZRgEIAEoCRIMCgR0aWVyGAUgASgJEhoKEnN0cmlwZV9jdXN0b21lcl9pZBgGIAEoCSImCiRMaXN0UGVuZGluZ1RlbmFudFByb3Zpc2lvbmluZ1JlcXVlc3QiYgolTGlzdFBlbmRpbmdUZW5hbnRQcm92aXNpb25pbmdSZXNwb25zZRI5CgdwZW5kaW5nGAEgAygLMiguZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5QZW5kaW5nVGVuYW50IjAKG0Fja1RlbmFudFByb3Zpc2lvbmVkUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkiKwocQWNrVGVuYW50UHJvdmlzaW9uZWRSZXNwb25zZUoECAEQAlIFYWNrZWQibgogRW5xdWV1ZVRlbmFudFByb3Zpc2lvbmluZ1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRITCgtvd25lcl9lbWFpbBgDIAEoCRIMCgR0aWVyGAQgASgJIksKIUVucXVldWVUZW5hbnRQcm92aXNpb25pbmdSZXNwb25zZRINCgVvcF9pZBgBIAEoCRIXCg9hbHJlYWR5X2V4aXN0ZWQYAiABKAgizwEKGVJlcG9ydFRlbmFudFN0YXR1c1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEg0KBXBoYXNlGAIgASgJEhgKEGRhdGFfcGxhbmVfcmVhZHkYAyABKAgSFgoOc3RvcmVfcG9zdGdyZXMYBCABKAkSEwoLc3RvcmVfcmVkaXMYBSABKAkSEwoLc3RvcmVfbmVvNGoYBiABKAkSGAoQeml0YWRlbF9vcmdfc2x1ZxgHIAEoCRIaChJzdHJpcGVfY3VzdG9tZXJfaWQYCCABKAkiZQofU2V0QWdlbnRFbnJvbGxtZW50TGltaXRzUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSEgoKYWdlbnRfbmFtZRgCIAEoCRIbChNtYXhfcnVudGltZV9zZWNvbmRzGAMgASgDIiIKIFNldEFnZW50RW5yb2xsbWVudExpbWl0c1Jlc3BvbnNlIkUKGlJlcG9ydFRlbmFudFN0YXR1c1Jlc3BvbnNlEg8KB3VwZGF0ZWQYASABKAgSFgoOYmlsbGluZ19hY3RpdmUYAiABKAgiogEKCFRlbmFudE9wEg0KBW9wX2lkGAEgASgJEhEKCXRlbmFudF9pZBgCIAEoCRIPCgdvcF90eXBlGAMgASgJEhQKDGRpc3BsYXlfbmFtZRgEIAEoCRIYChBkaXNwbGF5X25hbWVfc2V0GAUgASgIEhMKC293bmVyX2VtYWlsGAYgASgJEgwKBHRpZXIYByABKAkSEAoIdGllcl9zZXQYCCABKAgiHQobTGlzdFBlbmRpbmdUZW5hbnRPcHNSZXF1ZXN0IlAKHExpc3RQZW5kaW5nVGVuYW50T3BzUmVzcG9uc2USMAoDb3BzGAEgAygLMiMuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5UZW5hbnRPcCIjChJBY2tUZW5hbnRPcFJlcXVlc3QSDQoFb3BfaWQYASABKAkiIgoTQWNrVGVuYW50T3BSZXNwb25zZUoECAEQAlIFYWNrZWQiQwobUmV2b2tlQ29ubmVjdG9yR3JhbnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIRCgljb25uZWN0b3IYAiABKAkiRQodR2V0Q29ubmVjdG9yQXV0aFN0YXR1c1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJEhEKCWNvbm5lY3RvchgCIAEoCSJiCh5HZXRDb25uZWN0b3JBdXRoU3RhdHVzUmVzcG9uc2USQAoGc3RhdHVzGAEgASgLMjAuZ2lic29uLnRlbmFudC52MS5HZXRDb25uZWN0b3JBdXRoU3RhdHVzUmVzcG9uc2Uy8hYKFURhZW1vbk9wZXJhdG9yU2VydmljZRK3AQoRV3JpdGVBY2Nlc3NUdXBsZXMSMy5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLldyaXRlQWNjZXNzVHVwbGVzUmVxdWVzdBo0LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuV3JpdGVBY2Nlc3NUdXBsZXNSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxK3AQoRVXBzZXJ0VGVuYW50UXVvdGESMy5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlVwc2VydFRlbmFudFF1b3RhUmVxdWVzdBo0LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuVXBzZXJ0VGVuYW50UXVvdGFSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxK3AQoRTGlzdEZlYXR1cmVUdXBsZXMSMy5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkxpc3RGZWF0dXJlVHVwbGVzUmVxdWVzdBo0LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuTGlzdEZlYXR1cmVUdXBsZXNSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxLMAQoYU2VlZENhdGFsb2dUZW5hbnRFbmFibGVkEjouZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5TZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWRSZXF1ZXN0GjsuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5TZWVkQ2F0YWxvZ1RlbmFudEVuYWJsZWRSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKuAQoORW1pdEF1ZGl0RXZlbnQSMC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkVtaXRBdWRpdEV2ZW50UmVxdWVzdBoxLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuRW1pdEF1ZGl0RXZlbnRSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxK9AQoTU2V0VGVuYW50Wml0YWRlbE9yZxI1LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuU2V0VGVuYW50Wml0YWRlbE9yZ1JlcXVlc3QaNi5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlNldFRlbmFudFppdGFkZWxPcmdSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxLbAQodTGlzdFBlbmRpbmdUZW5hbnRQcm92aXNpb25pbmcSPy5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkxpc3RQZW5kaW5nVGVuYW50UHJvdmlzaW9uaW5nUmVxdWVzdBpALmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuTGlzdFBlbmRpbmdUZW5hbnRQcm92aXNpb25pbmdSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxLPAQoZRW5xdWV1ZVRlbmFudFByb3Zpc2lvbmluZxI7LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuRW5xdWV1ZVRlbmFudFByb3Zpc2lvbmluZ1JlcXVlc3QaPC5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkVucXVldWVUZW5hbnRQcm92aXNpb25pbmdSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxLAAQoUQWNrVGVuYW50UHJvdmlzaW9uZWQSNi5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkFja1RlbmFudFByb3Zpc2lvbmVkUmVxdWVzdBo3LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuQWNrVGVuYW50UHJvdmlzaW9uZWRSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxLMAQoYU2V0QWdlbnRFbnJvbGxtZW50TGltaXRzEjouZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5TZXRBZ2VudEVucm9sbG1lbnRMaW1pdHNSZXF1ZXN0GjsuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5TZXRBZ2VudEVucm9sbG1lbnRMaW1pdHNSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxK6AQoSUmVwb3J0VGVuYW50U3RhdHVzEjQuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5SZXBvcnRUZW5hbnRTdGF0dXNSZXF1ZXN0GjUuZ2lic29uLmRhZW1vbi5vcGVyYXRvci52MS5SZXBvcnRUZW5hbnRTdGF0dXNSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxLAAQoUTGlzdFBlbmRpbmdUZW5hbnRPcHMSNi5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkxpc3RQZW5kaW5nVGVuYW50T3BzUmVxdWVzdBo3LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuTGlzdFBlbmRpbmdUZW5hbnRPcHNSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxKlAQoLQWNrVGVuYW50T3ASLS5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkFja1RlbmFudE9wUmVxdWVzdBouLmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuQWNrVGVuYW50T3BSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxK3AQoUUmV2b2tlQ29ubmVjdG9yR3JhbnQSNi5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLlJldm9rZUNvbm5lY3RvckdyYW50UmVxdWVzdBouLmdpYnNvbi50ZW5hbnQudjEuUmV2b2tlQ29ubmVjdG9yR3JhbnRSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAxLGAQoWR2V0Q29ubmVjdG9yQXV0aFN0YXR1cxI4LmdpYnNvbi5kYWVtb24ub3BlcmF0b3IudjEuR2V0Q29ubmVjdG9yQXV0aFN0YXR1c1JlcXVlc3QaOS5naWJzb24uZGFlbW9uLm9wZXJhdG9yLnYxLkdldENvbm5lY3RvckF1dGhTdGF0dXNSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgA0JlWmNnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vZGFlbW9uL29wZXJhdG9yL3YxO2RhZW1vbm9wZXJhdG9ydjFiBnByb3RvMw", [file_gibson_auth_v1_options, file_gibson_tenant_v1_connector_auth]);
 
 /**
  * AccessTuple is a single FGA relationship tuple.
@@ -138,7 +138,7 @@ export type UpsertTenantQuotaRequest = Message<"gibson.daemon.operator.v1.Upsert
 
   /**
    * concurrent_connectors is the cap on hosted MCP connector instances a
-   * tenant may have running at any moment. 0 = unlimited. Per ADR-0047
+   * tenant may have running at any moment. 0 = unlimited. Per ADR-0065
    * facet 3 (plan-tier connector-instance budget).
    *
    * @generated from field: int32 concurrent_connectors = 9;
@@ -235,10 +235,6 @@ export const SeedCatalogTenantEnabledRequestSchema: GenMessage<SeedCatalogTenant
  * @generated from message gibson.daemon.operator.v1.SeedCatalogTenantEnabledResponse
  */
 export type SeedCatalogTenantEnabledResponse = Message<"gibson.daemon.operator.v1.SeedCatalogTenantEnabledResponse"> & {
-  /**
-   * @generated from field: int32 tuples_written = 1;
-   */
-  tuplesWritten: number;
 };
 
 /**
@@ -515,13 +511,6 @@ export const AckTenantProvisionedRequestSchema: GenMessage<AckTenantProvisionedR
  * @generated from message gibson.daemon.operator.v1.AckTenantProvisionedResponse
  */
 export type AckTenantProvisionedResponse = Message<"gibson.daemon.operator.v1.AckTenantProvisionedResponse"> & {
-  /**
-   * acked is true when a pending row transitioned to done; false when the row
-   * was unknown or already done (both are idempotent successes).
-   *
-   * @generated from field: bool acked = 1;
-   */
-  acked: boolean;
 };
 
 /**
@@ -678,7 +667,55 @@ export const ReportTenantStatusRequestSchema: GenMessage<ReportTenantStatusReque
  * dashboard-owned billing_active flag back so the operator can stamp the
  * gibson.zeroroot.ai/billing-active CR annotation the saga waits on — without a
  * second round trip and without the operator ever owning that flag.
+ * SetAgentEnrollmentLimitsRequest carries one enrollment's runtime cap.
  *
+ * @generated from message gibson.daemon.operator.v1.SetAgentEnrollmentLimitsRequest
+ */
+export type SetAgentEnrollmentLimitsRequest = Message<"gibson.daemon.operator.v1.SetAgentEnrollmentLimitsRequest"> & {
+  /**
+   * tenant_id is the tenant slug (Tenant CR name). Required.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * agent_name is the enrolled agent's catalog id (spec.agentName). Required.
+   *
+   * @generated from field: string agent_name = 2;
+   */
+  agentName: string;
+
+  /**
+   * max_runtime_seconds bounds one sandboxed run of this agent. Zero clears
+   * the cap, so the launcher default applies again.
+   *
+   * @generated from field: int64 max_runtime_seconds = 3;
+   */
+  maxRuntimeSeconds: bigint;
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.SetAgentEnrollmentLimitsRequest.
+ * Use `create(SetAgentEnrollmentLimitsRequestSchema)` to create a new message.
+ */
+export const SetAgentEnrollmentLimitsRequestSchema: GenMessage<SetAgentEnrollmentLimitsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 22);
+
+/**
+ * @generated from message gibson.daemon.operator.v1.SetAgentEnrollmentLimitsResponse
+ */
+export type SetAgentEnrollmentLimitsResponse = Message<"gibson.daemon.operator.v1.SetAgentEnrollmentLimitsResponse"> & {
+};
+
+/**
+ * Describes the message gibson.daemon.operator.v1.SetAgentEnrollmentLimitsResponse.
+ * Use `create(SetAgentEnrollmentLimitsResponseSchema)` to create a new message.
+ */
+export const SetAgentEnrollmentLimitsResponseSchema: GenMessage<SetAgentEnrollmentLimitsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_operator_v1_operator, 23);
+
+/**
  * @generated from message gibson.daemon.operator.v1.ReportTenantStatusResponse
  */
 export type ReportTenantStatusResponse = Message<"gibson.daemon.operator.v1.ReportTenantStatusResponse"> & {
@@ -704,7 +741,7 @@ export type ReportTenantStatusResponse = Message<"gibson.daemon.operator.v1.Repo
  * Use `create(ReportTenantStatusResponseSchema)` to create a new message.
  */
 export const ReportTenantStatusResponseSchema: GenMessage<ReportTenantStatusResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 22);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 24);
 
 /**
  * TenantOp is one row of the daemon's admin tenant-op queue: a platform-admin
@@ -780,7 +817,7 @@ export type TenantOp = Message<"gibson.daemon.operator.v1.TenantOp"> & {
  * Use `create(TenantOpSchema)` to create a new message.
  */
 export const TenantOpSchema: GenMessage<TenantOp> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 23);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 25);
 
 /**
  * ListPendingTenantOpsRequest queries the pending admin-op queue. No filters
@@ -796,7 +833,7 @@ export type ListPendingTenantOpsRequest = Message<"gibson.daemon.operator.v1.Lis
  * Use `create(ListPendingTenantOpsRequestSchema)` to create a new message.
  */
 export const ListPendingTenantOpsRequestSchema: GenMessage<ListPendingTenantOpsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 24);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 26);
 
 /**
  * ListPendingTenantOpsResponse carries the pending admin-op records in
@@ -816,7 +853,7 @@ export type ListPendingTenantOpsResponse = Message<"gibson.daemon.operator.v1.Li
  * Use `create(ListPendingTenantOpsResponseSchema)` to create a new message.
  */
 export const ListPendingTenantOpsResponseSchema: GenMessage<ListPendingTenantOpsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 25);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 27);
 
 /**
  * AckTenantOpRequest marks an admin-op record done after the operator applied it.
@@ -837,7 +874,7 @@ export type AckTenantOpRequest = Message<"gibson.daemon.operator.v1.AckTenantOpR
  * Use `create(AckTenantOpRequestSchema)` to create a new message.
  */
 export const AckTenantOpRequestSchema: GenMessage<AckTenantOpRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 26);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 28);
 
 /**
  * AckTenantOpResponse confirms the ack.
@@ -845,13 +882,6 @@ export const AckTenantOpRequestSchema: GenMessage<AckTenantOpRequest> = /*@__PUR
  * @generated from message gibson.daemon.operator.v1.AckTenantOpResponse
  */
 export type AckTenantOpResponse = Message<"gibson.daemon.operator.v1.AckTenantOpResponse"> & {
-  /**
-   * acked is true when a pending row transitioned to done; false when the row
-   * was unknown or already done (both are idempotent successes).
-   *
-   * @generated from field: bool acked = 1;
-   */
-  acked: boolean;
 };
 
 /**
@@ -859,7 +889,7 @@ export type AckTenantOpResponse = Message<"gibson.daemon.operator.v1.AckTenantOp
  * Use `create(AckTenantOpResponseSchema)` to create a new message.
  */
 export const AckTenantOpResponseSchema: GenMessage<AckTenantOpResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 27);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 29);
 
 /**
  * RevokeConnectorGrantRequest names the tenant and connector whose grant the
@@ -889,7 +919,7 @@ export type RevokeConnectorGrantRequest = Message<"gibson.daemon.operator.v1.Rev
  * Use `create(RevokeConnectorGrantRequestSchema)` to create a new message.
  */
 export const RevokeConnectorGrantRequestSchema: GenMessage<RevokeConnectorGrantRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 28);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 30);
 
 /**
  * GetConnectorAuthStatusRequest names the tenant connector whose credential
@@ -919,7 +949,7 @@ export type GetConnectorAuthStatusRequest = Message<"gibson.daemon.operator.v1.G
  * Use `create(GetConnectorAuthStatusRequestSchema)` to create a new message.
  */
 export const GetConnectorAuthStatusRequestSchema: GenMessage<GetConnectorAuthStatusRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 29);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 31);
 
 /**
  * GetConnectorAuthStatusResponse carries the connector's credential state.
@@ -941,42 +971,11 @@ export type GetConnectorAuthStatusResponse = Message<"gibson.daemon.operator.v1.
  * Use `create(GetConnectorAuthStatusResponseSchema)` to create a new message.
  */
 export const GetConnectorAuthStatusResponseSchema: GenMessage<GetConnectorAuthStatusResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 30);
-
-/**
- * RevokeConnectorGrantResponse reports what the revoke found.
- *
- * @generated from message gibson.daemon.operator.v1.RevokeConnectorGrantResponse
- */
-export type RevokeConnectorGrantResponse = Message<"gibson.daemon.operator.v1.RevokeConnectorGrantResponse"> & {
-  /**
-   * had_grant reports whether a grant existed. Revoking an unauthorized
-   * connector is a successful no-op.
-   *
-   * @generated from field: bool had_grant = 1;
-   */
-  hadGrant: boolean;
-
-  /**
-   * vendor_revoked reports whether the vendor acknowledged the revocation.
-   * False when the grant recorded no revocation endpoint (a static credential
-   * never does) or the vendor call failed; local deletion happens regardless.
-   *
-   * @generated from field: bool vendor_revoked = 2;
-   */
-  vendorRevoked: boolean;
-};
-
-/**
- * Describes the message gibson.daemon.operator.v1.RevokeConnectorGrantResponse.
- * Use `create(RevokeConnectorGrantResponseSchema)` to create a new message.
- */
-export const RevokeConnectorGrantResponseSchema: GenMessage<RevokeConnectorGrantResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_operator_v1_operator, 31);
+  messageDesc(file_gibson_daemon_operator_v1_operator, 32);
 
 /**
  * DaemonOperatorService provides strictly ZD-internal operator operations on
- * the Gibson daemon. It is the post-ADR-0037 successor to the deleted
+ * the Gibson daemon. It is the post-ADR-0058 successor to the deleted
  * PlatformOperatorService, carrying only the operator-only RPCs that have no
  * customer surface. Customer-callable RPCs from the former admin services were
  * promoted to DaemonService / TenantService in the OSS SDK (sdk#205).
@@ -1057,8 +1056,8 @@ export const DaemonOperatorService: GenService<{
    * persists it so that gibson.tenant.v1.MembershipService can write the
    * Zitadel half of human membership (add/remove org member) for granular
    * member operations, without a K8s read or a token-claim dependency
-   * (ADR-0043: FGA is the principal tree; Zitadel is the per-org human-auth +
-   * tenant boundary).
+   * (ADR-0093: Zitadel owns users and tenant roles, one tenant for each
+   * person).
    *
    * Idempotent: re-seeding the same (tenant_id, zitadel_org_id) is a no-op;
    * a changed org id overwrites the prior mapping.
@@ -1138,7 +1137,19 @@ export const DaemonOperatorService: GenService<{
    * Note: billing_active is NOT carried here — it is owned by the dashboard
    * billing webhook via TenantProvisioningService.SetTenantBillingActive and
    * must not be clobbered by an operator status report.
+   * SetAgentEnrollmentLimits records the runtime cap an AgentEnrollment
+   * declares (spec.maxRuntime) so the daemon can bound that agent's
+   * sandboxed runs. The daemon cannot read the CR itself (ADR-0023), so the
+   * tenant-operator reports it on every enrollment pass. Idempotent upsert.
    *
+   * @generated from rpc gibson.daemon.operator.v1.DaemonOperatorService.SetAgentEnrollmentLimits
+   */
+  setAgentEnrollmentLimits: {
+    methodKind: "unary";
+    input: typeof SetAgentEnrollmentLimitsRequestSchema;
+    output: typeof SetAgentEnrollmentLimitsResponseSchema;
+  },
+  /**
    * @generated from rpc gibson.daemon.operator.v1.DaemonOperatorService.ReportTenantStatus
    */
   reportTenantStatus: {
@@ -1201,7 +1212,7 @@ export const DaemonOperatorService: GenService<{
    * GetConnectorAuthStatus reports one tenant connector's grant and token
    * state to the connector-operator, so the ConnectorInstance carries a
    * Degraded condition instead of a silent Active when the credential is
-   * dead (ADR-0015 decision 4).
+   * dead (ADR-0061 decision 4).
    *
    * Only the daemon holds a secret-store client, so only the daemon knows
    * whether a grant still refreshes. The operator owns the CR status and

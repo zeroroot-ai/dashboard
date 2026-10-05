@@ -181,10 +181,10 @@ export const DenyDestructiveActionResponseSchema: GenMessage<DenyDestructiveActi
   messageDesc(file_gibson_daemon_destructiveauthz_v1_destructive_authz, 6);
 
 /**
- * Reversibility is the demonstration's reversibility signal (ADR-0028
+ * Reversibility is the demonstration's reversibility signal (ADR-0132
  * decision 1). UNSPECIFIED today for every action: the signal is meant to
  * come from a technique flag in the Domain Pack, which is not built yet
- * (ADR-0028's own text names it a plus-one to the risk-tier decision) — the
+ * (ADR-0132's own text names it a plus-one to the risk-tier decision) — the
  * only live gating signal today is BetSettlementRequest.Destructive itself
  * (internal/engine/brain/bet_settlement.go), which is exactly why every
  * action reaching this queue is already known destructive-or-irreversible.
@@ -219,10 +219,10 @@ export const ReversibilitySchema: GenEnum<Reversibility> = /*@__PURE__*/
 /**
  * DestructiveAuthorizationService is the daemon API backing the dashboard's
  * destructive-action authorization queue (dashboard#99, gibson#336). Per
- * ADR-0028, a destructive or irreversible proof-of-demonstration
- * (ADR-0027) runs only after a human authorizes that one specific action
+ * ADR-0132, a destructive or irreversible proof-of-demonstration
+ * (ADR-0131) runs only after a human authorizes that one specific action
  * here: the bet stays OPEN and the rest of the fleet keeps working while
- * exactly one action awaits a decision (ADR-0028 decision 2 — the gate is
+ * exactly one action awaits a decision (ADR-0132 decision 2 — the gate is
  * per-action, never per-mission).
  *
  * Backed by internal/engine/brain.DestructiveAuthorizationQueue
@@ -248,7 +248,7 @@ export const DestructiveAuthorizationService: GenService<{
   },
   /**
    * ApproveDestructiveAction authorizes the named pending action
-   * (ADR-0028 decision 3), unblocking the fleet's settlement attempt for
+   * (ADR-0132 decision 3), unblocking the fleet's settlement attempt for
    * it. Refused if action_id names no pending action for the caller's
    * tenant, or one already decided (terminal: the first decision wins).
    *
@@ -260,7 +260,7 @@ export const DestructiveAuthorizationService: GenService<{
     output: typeof ApproveDestructiveActionResponseSchema;
   },
   /**
-   * DenyDestructiveAction refuses the named pending action (ADR-0028
+   * DenyDestructiveAction refuses the named pending action (ADR-0132
    * decision 3). Same refusal rules as ApproveDestructiveAction.
    *
    * @generated from rpc gibson.daemon.destructiveauthz.v1.DestructiveAuthorizationService.DenyDestructiveAction

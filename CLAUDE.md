@@ -15,7 +15,7 @@ This file documents conventions specific to the `zeroroot-ai/dashboard` reposito
 
 ## Two-surface platform contract (post-2026-05 refactor)
 
-Daemon protos consumed here come from two Go modules, both pinned in the sibling `gibson` repo's `go.mod` (the dashboard's proto-regen workspace resolves them via `go list -m`):
+Daemon protos consumed here come from two Go modules, both pinned in the sibling `gibson` repo's `go.mod` (the dashboard reads the SDK protos from the Buf Schema Registry at the release that `scripts/proto-generate.mjs` pins):
 
 - **OSS SDK** (`github.com/zeroroot-ai/sdk`), customer-facing. After the E6 narrow-SDK flip (ADR-0058 amendment) the SDK is the **component-developer** surface: `DaemonService`, the component-enrollment services `AgentIdentityService` (`gibson.agentidentity.v1`) and `PluginAdminService` (`gibson.pluginadmin.v1`) — each re-homed into its OWN wire package — plus mission / finding / discovery / budget types and the `gibson.auth.v1` annotation extension. The 9 tenant-administration services (`TenantService`, `MembershipService`, `GrantsService`, `ProviderService`, `SecretsService`, `BudgetService`, `UserService`, `UsageService`, `ModelAccessService`) were REMOVED from the SDK and re-homed into the gibson daemon-local tree (below); their wire package `gibson.tenant.v1` and full-method paths are unchanged.
 - **gibson daemon-local** (`internal/server/daemon/api` in the gibson repository), PRIVATE. Hosts the genuinely-internal platform services — `DaemonOperatorService` (`gibson.daemon.operator.v1`), `BillingService` (`gibson.billing.v1`), `DiscoveryService` (`gibson.daemon.discovery.v1`) — that used to live in the dissolved `platform-sdk` module (ADR-0056), AND the 9 re-homed tenant-administration services under `gibson.tenant.v1` (`internal/server/daemon/api/gibson/tenant/v1/`; E6). Wire paths for the tenant services are unchanged from when they lived in the SDK.
@@ -121,56 +121,47 @@ When the SDK schema changes: run `pnpm gen:mission-schema` and commit
 ## Proto regeneration
 
 The dashboard's TS proto bindings at `src/gen/` are generated from
-**two** proto trees (after the platform-sdk dissolution):
+**two** proto sources:
 
-- the **OSS SDK** protos at `<sdk-module>/api/proto/` (the module dir
-  resolved via `go list -m github.com/zeroroot-ai/sdk` against the gibson
-  repo's `go.mod`). The customer-facing OSS module hosts `DaemonService`, the
-  customer-callable mission / finding / discovery / budget
-  types, and the `gibson.auth.v1` annotation extension.
+- the **OSS SDK** protos, from the Buf Schema Registry module
+  `buf.build/zeroroot-ai/sdk` at one pinned release (ADR-0028). The constant
+  `SDK_BSR_VERSION` in `scripts/proto-generate.mjs` is the one place that
+  names the release. The script reads no `sdk` checkout and no Go module
+  cache, so the bindings do not depend on what is on the disk.
 - the **gibson daemon-local** protos at `internal/server/daemon/api/` in the
-  `gibson` checkout, which are not published anywhere. This tree hosts the daemon-internal services
-  AND the PRIVATE platform services (`DaemonOperatorService`, `BillingService`,
-  `DiscoveryService`) that used to live in the separate `platform-sdk` module
-  before it was dissolved into the gibson monorepo.
+  `gibson` checkout, which are not published anywhere. This tree hosts the
+  daemon-internal services AND the PRIVATE platform services
+  (`DaemonOperatorService`, `BillingService`, `DiscoveryService`).
 
 Buf v2 has a hard rule that every module path in `buf.yaml` must
-resolve **inside** the directory containing the `buf.yaml`.
-Both proto trees live outside this repo, so we cannot just point
-buf at them with `../../core/...` paths, buf rejects those.
-Instead, `pnpm proto:generate` runs
+resolve **inside** the directory containing the `buf.yaml`. The daemon-local
+tree lives outside this repo, so `pnpm proto:generate` runs
 [`scripts/proto-generate.mjs`](scripts/proto-generate.mjs) which
 builds a self-contained workspace:
 
 ```
 .tmp/proto-ws/
-├── buf.yaml                # generated, lists gibson-local + sdk-proto
+├── buf.yaml                # generated: the gibson-local module, and the SDK
+│                           # registry module as a dependency
 ├── buf.gen.yaml            # generated, drives protoc-gen-es
-├── gibson-local     -> <gibson checkout>/internal/server/daemon/api (symlink)
-└── sdk-proto        -> $(go list -m github.com/zeroroot-ai/sdk)/api/proto             (symlink)
+└── gibson-local     -> <gibson checkout>/internal/server/daemon/api (symlink)
 ```
 
-Then `buf generate` runs from inside `.tmp/proto-ws/`, the output
-is rsynced into `src/gen/`, and the workspace is removed. Same
-pattern as the daemon's `make authz-registry` recipe in the `gibson`
-repository's Makefile, which faces the identical "two proto trees, one buf
-invocation" constraint.
+Then `buf dep update` resolves the pinned SDK release, `buf generate` runs
+from inside `.tmp/proto-ws/`, the output is rsynced into `src/gen/`, and the
+workspace is removed.
 
 **No checked-in `buf.yaml` or `buf.gen.yaml`** at the dashboard
 root, they only exist transiently inside `.tmp/proto-ws/`.
 
 **Workstation-only.** The script needs a `gibson` checkout the resolver can
-reach. CI does not regenerate
-proto bindings, `src/gen/` is committed and CI just typechecks
-it. Run `pnpm proto:generate` locally whenever you change a
-`.proto` file in either tree, then commit the regenerated
-`src/gen/` alongside the proto edit.
+reach, and network access to the Buf Schema Registry. It has no offline
+path. CI does not regenerate proto bindings, `src/gen/` is committed and CI
+just typechecks it.
 
-The SDK side regen depends on `go list -m` succeeding from the
-gibson repo, which means gibson's `go.mod` must already pin the
-SDK version you want. If you're iterating on a new SDK release,
-bump gibson's `go.mod` first (or use `GOFLAGS=-mod=mod` per the
-top-level CLAUDE.md transient-dev guidance), then regen.
+To move to a new SDK release: set `SDK_BSR_VERSION` to the release that the
+`go.mod` of `gibson` pins, run `pnpm proto:generate`, and commit `src/gen/`
+with the change.
 
 ### Binding freshness gate
 
@@ -186,10 +177,10 @@ node scripts/check-proto-bindings-fresh.mjs --shrink     # drain the baseline
 
 It picks its mode from what is on disk:
 
-- **FULL** (both proto trees present, i.e. a polyrepo workstation): regenerates
+- **FULL** (the gibson daemon-local tree is present, i.e. a polyrepo workstation): regenerates
   the whole tree into a scratch dir via `proto-generate.mjs --out=<tmp>` and
   byte-diffs every produced file against the committed copy.
-- **STRUCTURAL** (a proto tree is absent, i.e. dashboard-only CI and the Docker
+- **STRUCTURAL** (the gibson daemon-local tree is absent, i.e. dashboard-only CI and the Docker
   build): cannot regenerate, so it walks the import closure rooted at every
   `@/src/gen/...` import in `app/ components/ hooks/ lib/ src/ e2e/` and
   requires each reachable binding to exist, be non-empty, and carry the

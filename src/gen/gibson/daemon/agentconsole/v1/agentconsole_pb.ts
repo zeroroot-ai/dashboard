@@ -68,7 +68,7 @@ export type RunningAgent = Message<"gibson.daemon.agentconsole.v1.RunningAgent">
 
   /**
    * sandbox_class is the setec SandboxClass the run was launched under
-   * (ADR-0016 decision 4), so a viewer sees the isolation posture.
+   * (ADR-0116 decision 4), so a viewer sees the isolation posture.
    *
    * @generated from field: string sandbox_class = 7;
    */
@@ -84,7 +84,7 @@ export type RunningAgent = Message<"gibson.daemon.agentconsole.v1.RunningAgent">
 
   /**
    * bank_id and member_id name the bank member this instance is, when it is
-   * one (ADR-0019). Empty for a one-shot dispatch. A console joins the row to
+   * one (ADR-0119). Empty for a one-shot dispatch. A console joins the row to
    * the bank surface by these rather than by mission_run_id.
    *
    * @generated from field: string bank_id = 9;
@@ -229,7 +229,7 @@ export const AgentEventSchema: GenMessage<AgentEvent> = /*@__PURE__*/
 
 /**
  * AgentConsoleService is the daemon's read-only, tenant-scoped view of the
- * agents running RIGHT NOW and their live structured events (ADR-0016 S11,
+ * agents running RIGHT NOW and their live structured events (ADR-0116 S11,
  * gibson#1599). While a sandboxed agent runs, the launcher tees the agent's
  * opencode NDJSON output into the daemon's in-memory registry; this service
  * exposes it. It backs the dashboard's live agent console (S12).

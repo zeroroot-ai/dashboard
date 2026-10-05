@@ -28,7 +28,7 @@
 //     Signup                    → identity, billing and provisioning, all of it
 //                                 strictly after that proof
 //
-//   The APPROVAL rung (ADR-0006, gibson#22) replaces that round trip with one
+//   The APPROVAL rung (ADR-0074, gibson#22) replaces that round trip with one
 //   Register call and an administrator's decision. It is a different proof of
 //   the same thing, not a second completion path: approval runs exactly the
 //   work Signup runs.
@@ -148,7 +148,8 @@ export const RegisterRequestSchema: GenMessage<RegisterRequest> = /*@__PURE__*/
 export type RegisterResponse = Message<"gibson.tenant.v1.RegisterResponse"> & {
   /**
    * registration_id identifies the pending registration to an administrator.
-   * It is the id an approval or a rejection names.
+   * It is the id an approval or a rejection names. Held under gibson#620: no
+   * consumer reads it yet.
    *
    * @generated from field: string registration_id = 1;
    */
@@ -593,7 +594,7 @@ export const SignupService: GenService<{
     output: typeof SignupResponseSchema;
   },
   /**
-   * Register is the APPROVAL rung's single registration call (ADR-0006,
+   * Register is the APPROVAL rung's single registration call (ADR-0074,
    * gibson#22). It is served only when the deployment selects that rung, and
    * the four RPCs above are refused on it; on every other rung Register is
    * refused instead. One rung is live at a time.
