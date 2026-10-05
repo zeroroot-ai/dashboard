@@ -2,15 +2,15 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * HITL settle surface types (ADR-0023, ADR-0006, gibson#264/#266/#280,
+ * HITL settle surface types (ADR-0123, ADR-0106, gibson#264/#266/#280,
  * dashboard#97).
  *
  * A human judges an OPEN bet the fleet is unsure about — true-positive,
  * false-positive, or dismiss — and the verdict settles the bet
  * (`WorldService.SettleBetByHITL`) and feeds `braintrain`. This is distinct
- * from the destructive-action authorization queue (dashboard#99, ADR-0028),
+ * from the destructive-action authorization queue (dashboard#99, ADR-0132),
  * which asks "may this dangerous action run at all", and from the
- * finding/surprise review queue (`/api/world/review`, ADR-0006), which labels
+ * finding/surprise review queue (`/api/world/review`, ADR-0106), which labels
  * surfaced surprises. Bets are a different domain object (gibson#339) even
  * though the verdict vocabulary matches.
  *

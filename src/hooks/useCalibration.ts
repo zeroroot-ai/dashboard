@@ -4,7 +4,7 @@
 'use client';
 
 /**
- * React Query hook for the ADR-0022 reliability/calibration report (gibson#284,
+ * React Query hook for the ADR-0122 reliability/calibration report (gibson#284,
  * dashboard#98). Reads go to GET /api/world/calibration, a real network call
  * against the dashboard's own API route — never a fixture — so the reliability
  * diagram shows exactly what the daemon computed from the tenant's settled bets.

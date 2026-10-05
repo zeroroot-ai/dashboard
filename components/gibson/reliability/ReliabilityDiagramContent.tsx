@@ -4,7 +4,7 @@
 'use client';
 
 /**
- * The ADR-0022 reliability diagram (gibson#284, dashboard#98): the visible
+ * The ADR-0122 reliability diagram (gibson#284, dashboard#98): the visible
  * proof that Gibson's confidence numbers are real, not high/medium/low theater.
  * It plots predicted probability against observed frequency from settled bets,
  * filterable by technique and by bin resolution.

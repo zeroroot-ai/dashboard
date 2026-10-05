@@ -16,7 +16,7 @@ import type {
 } from "@/src/types/destructive-actions";
 
 /**
- * Destructive-action authorization client (ADR-0028, gibson#278/#336,
+ * Destructive-action authorization client (ADR-0132, gibson#278/#336,
  * dashboard#99).
  *
  * The queue is backed by

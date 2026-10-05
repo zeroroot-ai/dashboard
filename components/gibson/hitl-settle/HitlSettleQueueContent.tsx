@@ -4,18 +4,18 @@
 "use client";
 
 /**
- * The ADR-0023 HITL settle surface (gibson#264/#266/#280, dashboard#97): a
+ * The ADR-0123 HITL settle surface (gibson#264/#266/#280, dashboard#97): a
  * human judges the bets the fleet is unsure about, and every verdict flows
  * back to make the system smarter. Distinct from the finding/surprise review
- * queue (ADR-0006) and the destructive-action authorization queue
- * (dashboard#99, ADR-0028) — this surface judges whether a claim was
+ * queue (ADR-0106) and the destructive-action authorization queue
+ * (dashboard#99, ADR-0132) — this surface judges whether a claim was
  * correct, not whether an action may run.
  *
  * Every row shows the hypothesis (its claim), its evidence, and a link to
  * the proposing agent's recorded transcript (Gibson Traces, gibson#755) when
  * a run is known — then true-positive / false-positive / dismiss. Judging is
  * always asynchronous: nothing here ever pauses the mission it's drawn from
- * (ADR-0008).
+ * (ADR-0108).
  */
 
 import * as React from "react";
@@ -142,7 +142,7 @@ export function HitlSettleQueueContent() {
         </h1>
         <p className="text-sm text-muted-foreground">
           Judge the bets the fleet is unsure about. Judging is asynchronous and never blocks or
-          pauses a running mission. The fleet keeps working while a bet is open (ADR-0008).
+          pauses a running mission. The fleet keeps working while a bet is open (ADR-0108).
           Every verdict feeds the learning loop.
         </p>
       </div>

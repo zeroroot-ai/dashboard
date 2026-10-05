@@ -233,7 +233,7 @@ export async function startConnectorAuthorizationAction(
 
 /**
  * Store a static credential (a personal access token) for an auth "secret"
- * connector (ADR-0015). Requires the tenant "admin" relation. The token is
+ * connector (ADR-0061). Requires the tenant "admin" relation. The token is
  * never echoed back; the returned status says who stored it.
  */
 export async function setConnectorSecretAction(

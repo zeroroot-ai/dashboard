@@ -9,7 +9,7 @@ import { getDestructiveActionsClient } from '@/src/lib/destructive-actions/clien
 import type { DestructiveActionDecision } from '@/src/types/destructive-actions';
 
 /**
- * /api/world/destructive-actions — the ADR-0028 destructive-action
+ * /api/world/destructive-actions — the ADR-0132 destructive-action
  * authorization queue (gibson#278/#336, dashboard#99), backed by
  * `DestructiveAuthorizationService` over Envoy + ext-authz.
  *
@@ -17,7 +17,7 @@ import type { DestructiveActionDecision } from '@/src/types/destructive-actions'
  *      one would do, its blast radius, its reversibility, the predicate it
  *      would satisfy, and the hypothesis/bet it belongs to. Read-only; this
  *      NEVER blocks the rest of the mission — only the one gated action
- *      waits (ADR-0028 §2).
+ *      waits (ADR-0132 §2).
  * POST records one human's approve/deny decision for a specific pending
  *      action. Per-action, not per-mission: the decision never touches any
  *      other pending action or the mission's own state.

@@ -4,7 +4,7 @@
 import 'server-only';
 /**
  * Typed dashboard client for gibson.tenant.v1.ConnectorService and
- * ConnectorAuthService (ADR-0014).
+ * ConnectorAuthService (ADR-0114).
  *
  * ConnectorService is the connector catalog and lifecycle: a person enables a
  * curated connector, lists what is enabled, and disables it. ConnectorAuthService
@@ -141,7 +141,7 @@ export async function daemonGetConnectorAuthStatus(connector: string): Promise<C
 
 /**
  * Store a static credential (a personal access token) for an auth "secret"
- * connector (ADR-0015). The daemon keeps it in the tenant's secret store and
+ * connector (ADR-0061). The daemon keeps it in the tenant's secret store and
  * publishes it to the connector; the credential crosses the API once, inbound,
  * and is never returned. Calling it again replaces the credential in place.
  */

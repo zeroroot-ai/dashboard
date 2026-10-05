@@ -3,7 +3,7 @@
 
 /**
  * Claude Code stream-json renderer for the Coding Agent Console
- * (ADR-0016 S12, dashboard#1144).
+ * (ADR-0116 S12, dashboard#1144).
  *
  * A hosted agent emits NDJSON in the Claude Code `stream-json` format. This
  * module turns one line of that stream into one or more readable terminal

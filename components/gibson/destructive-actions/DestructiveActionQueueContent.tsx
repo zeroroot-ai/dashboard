@@ -4,16 +4,16 @@
 "use client";
 
 /**
- * The ADR-0028 destructive-action authorization queue (gibson#278,
- * dashboard#99). Distinct from the review/label queue (ADR-0006, judges
+ * The ADR-0132 destructive-action authorization queue (gibson#278,
+ * dashboard#99). Distinct from the review/label queue (ADR-0106, judges
  * whether a finding is real) and the HITL settlement surface (dashboard#97,
  * judges a bet's verdict): this surface authorizes whether one specific
  * dangerous action may run at all, before it runs.
  *
  * Every row shows what the action would do, its blast radius, its
  * reversibility, the predicate it would satisfy, and the hypothesis/bet it
- * belongs to (ADR-0028 §3) — then approve or deny that one action. The copy
- * is deliberate about ADR-0028 §2: gating is per-action, never per-mission,
+ * belongs to (ADR-0132 §3) — then approve or deny that one action. The copy
+ * is deliberate about ADR-0132 §2: gating is per-action, never per-mission,
  * so the rest of the fleet keeps working while one action waits.
  */
 
@@ -185,7 +185,7 @@ export function DestructiveActionQueueContent() {
         <p className="text-sm text-muted-foreground">
           Before an irreversible or state-changing demonstration runs, it waits here for one
           human decision. The mission is not blocked while an action waits. The rest of the
-          fleet keeps working on everything else. Only that one action pauses (ADR-0028).
+          fleet keeps working on everything else. Only that one action pauses (ADR-0132).
         </p>
       </div>
 

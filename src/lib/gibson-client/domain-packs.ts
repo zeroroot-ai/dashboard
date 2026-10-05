@@ -3,15 +3,15 @@
 
 import 'server-only';
 /**
- * Typed dashboard client for gibson.tenant.v1.DomainPackService (ADR-0033,
+ * Typed dashboard client for gibson.tenant.v1.DomainPackService (ADR-0133,
  * gibson#383).
  *
  * A Domain Pack is curated, versioned structure, taxonomy labels, ontology
- * extensions and technique-to-CEL-predicate bindings, never code (ADR-0033
+ * extensions and technique-to-CEL-predicate bindings, never code (ADR-0133
  * decision 1). ListDomainPackCatalog reads the curated catalog a tenant may
  * enable; ListDomainPacks reads what that tenant currently has enabled;
  * EnableDomainPack/DisableDomainPack fold the per-tenant lifecycle event
- * (ADR-0033: "per-tenant, not per-install"). Every RPC dispatches through the
+ * (ADR-0133: "per-tenant, not per-install"). Every RPC dispatches through the
  * user-acting transport (userClient), so it flows dashboard -> Envoy ->
  * daemon like every other tenant RPC, never a direct daemon channel. The
  * daemon does all the work; this file is a thin, typed delegation surface

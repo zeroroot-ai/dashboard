@@ -12,7 +12,7 @@ import { WorldService } from '@/src/gen/gibson/world/v1/world_pb';
  *
  * The Scroller's scrub primitive (epic ecs-brain, gibson#752). Returns the
  * World materialized at Timeline position `seq` — a server-side fold of the
- * log to that point (ADR-0001: World == fold(Timeline)), NOT a client-side
+ * log to that point (ADR-0101: World == fold(Timeline)), NOT a client-side
  * slice. `seq` is clamped daemon-side to [0, total]; seq == total is the live
  * World. An optional `mission` scopes the fold to one mission's slice of the
  * Timeline (gibson#1060): the frame then materializes only that mission's World

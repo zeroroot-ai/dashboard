@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Per-route contract test for /api/world/destructive-actions — the ADR-0028
+ * Per-route contract test for /api/world/destructive-actions — the ADR-0132
  * destructive-action authorization queue (dashboard#99). The backend client
  * (src/lib/destructive-actions/client.ts) is swapped per-test via its
  * test-only seam, so this is a pure route contract: GET maps the queue, POST

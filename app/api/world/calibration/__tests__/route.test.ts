@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Per-route contract test for /api/world/calibration — the ADR-0022
+ * Per-route contract test for /api/world/calibration — the ADR-0122
  * reliability/calibration report (dashboard#98). WorldService is mocked via
  * userClient so this is a pure route contract: GET maps the report, clamps the
  * bin count, and 401s when unauthenticated.

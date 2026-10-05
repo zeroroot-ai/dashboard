@@ -116,7 +116,7 @@ export const navItems: NavGroup[] = [
         icon: ClipboardCheckIcon
       },
       {
-        // The HITL settle queue (ADR-0023, dashboard#97): a human judges the
+        // The HITL settle queue (ADR-0123, dashboard#97): a human judges the
         // bets the fleet is unsure about, and every verdict feeds the learning
         // loop. Distinct from the review queue, which labels surfaced surprises.
         title: "Settle Queue",
@@ -134,7 +134,7 @@ export const navItems: NavGroup[] = [
         icon: NetworkIcon
       },
       {
-        // The reliability diagram (ADR-0022, dashboard#98): the visible proof
+        // The reliability diagram (ADR-0122, dashboard#98): the visible proof
         // that the fleet's confidence numbers are calibrated against outcomes.
         title: "Reliability",
         href: "/dashboard/reliability",
@@ -176,7 +176,7 @@ export const navItems: NavGroup[] = [
       },
       {
         // Domain Packs are a curated, per-tenant enable/disable catalog
-        // (ADR-0033, gibson#383), the same shape as Connectors, so it sits
+        // (ADR-0133, gibson#383), the same shape as Connectors, so it sits
         // beside it in the primary nav.
         title: "Domain Packs",
         href: "/dashboard/domain-packs",
@@ -199,7 +199,7 @@ export const navItems: NavGroup[] = [
         icon: ActivityIcon
       },
       {
-        // The destructive-action authorization queue (ADR-0028, dashboard#99):
+        // The destructive-action authorization queue (ADR-0132, dashboard#99):
         // a human authorizes each irreversible demonstration before it runs.
         // The gate is per-action, never per-mission.
         title: "Authorizations",

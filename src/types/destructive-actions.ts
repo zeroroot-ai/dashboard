@@ -2,12 +2,12 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Destructive-action authorization queue types (ADR-0028, gibson#278/#336,
+ * Destructive-action authorization queue types (ADR-0132, gibson#278/#336,
  * dashboard#99).
  *
- * ADR-0028 amends ADR-0008: a destructive or irreversible proof-of-
+ * ADR-0132 amends ADR-0108: a destructive or irreversible proof-of-
  * demonstration runs only after a human authorizes that SPECIFIC action here.
- * This is distinct from the review/label queue (`/api/world/review`, ADR-0006),
+ * This is distinct from the review/label queue (`/api/world/review`, ADR-0106),
  * which judges whether a finding is real, and from the HITL settlement surface
  * (dashboard#97), which judges a bet's verdict. This surface authorizes whether
  * a dangerous action may run at all.

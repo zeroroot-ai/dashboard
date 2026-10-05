@@ -5,7 +5,7 @@
  * GET /api/agents/running
  *
  * Read-only list of the active tenant's currently running agent instances,
- * for the live agent console (ADR-0016 S12, dashboard#1134). Backs the
+ * for the live agent console (ADR-0116 S12, dashboard#1134). Backs the
  * console's list/tab view: one entry per running instance, each with the
  * run id the console subscribes by.
  *

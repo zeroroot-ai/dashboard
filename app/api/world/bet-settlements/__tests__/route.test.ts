@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Per-route contract test for /api/world/bet-settlements — the ADR-0023 HITL
+ * Per-route contract test for /api/world/bet-settlements — the ADR-0123 HITL
  * settle surface (dashboard#97). The backend client
  * (src/lib/hitl-settle/client.ts) is swapped per-test via its test-only seam,
  * so this is a pure route contract: GET maps the queue, POST validates +

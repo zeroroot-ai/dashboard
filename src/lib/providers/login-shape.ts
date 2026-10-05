@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Login shapes for bank members (gibson#1706, ADR-0019 decision 4).
+ * Login shapes for bank members (gibson#1706, ADR-0119 decision 4).
  *
  * A bank member is a Claude Code process. It authenticates to Anthropic in
  * one of five shapes: a person's subscription, the tenant's Anthropic API

@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * ReliabilityDiagramContent — the ADR-0022 reliability diagram UI (dashboard#98).
+ * ReliabilityDiagramContent — the ADR-0122 reliability diagram UI (dashboard#98).
  * The data hook (src/hooks/useCalibration.ts) is mocked here. This file verifies:
  *   1. Loading, empty (no settled bets), populated, and error states render.
  *   2. The diagram renders a point per non-empty bucket, from real report data.

@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Unit tests for gibson-client/domain-packs.ts (ADR-0033, gibson#383).
+ * Unit tests for gibson-client/domain-packs.ts (ADR-0133, gibson#383).
  *
  * Mocks the underlying userClient so the tests run without a live gRPC
  * connection. Verifies that:

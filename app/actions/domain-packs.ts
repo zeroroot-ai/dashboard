@@ -4,7 +4,7 @@
 "use server";
 
 /**
- * Server Actions for the /dashboard/domain-packs page (ADR-0033, gibson#383).
+ * Server Actions for the /dashboard/domain-packs page (ADR-0133, gibson#383).
  *
  * Each action wraps the typed gibson-client functions in
  * src/lib/gibson-client/domain-packs.ts, which dispatch through the

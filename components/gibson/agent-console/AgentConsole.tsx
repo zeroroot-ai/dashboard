@@ -5,7 +5,7 @@
 
 /**
  * AgentConsole, the read-only Ops wall for a tenant's running agents
- * (ADR-0016 S12, dashboard#1134, dashboard#1146).
+ * (ADR-0116 S12, dashboard#1134, dashboard#1146).
  *
  * It lists EVERY agent the tenant is running right now and gives each its
  * own always-mounted tile that streams that run's live output. The wall

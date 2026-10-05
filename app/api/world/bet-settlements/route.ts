@@ -9,14 +9,14 @@ import { getHitlSettleClient } from '@/src/lib/hitl-settle/client';
 import type { BetVerdict } from '@/src/types/hitl-settle';
 
 /**
- * /api/world/bet-settlements — the ADR-0023 HITL settle surface (gibson#264/
+ * /api/world/bet-settlements — the ADR-0123 HITL settle surface (gibson#264/
  * #266/#280, dashboard#97), backed by `WorldService.ListOpenBets` +
  * `WorldService.SettleBetByHITL` over Envoy + ext-authz.
  *
  * GET  returns the caller's tenant's OPEN bets: the hypothesis, its evidence,
  *      and the proposing agent's run (for the Gibson Traces transcript link).
  *      Read-only; judging is always asynchronous — this NEVER blocks a running
- *      mission (ADR-0008).
+ *      mission (ADR-0108).
  * POST records one human's verdict (true_positive / false_positive / dismiss)
  *      for a specific bet. true_positive/false_positive settle the bet;
  *      dismiss records a label without settling (the daemon's own rule).

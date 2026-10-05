@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Reliability / calibration report types (ADR-0022, gibson#284, dashboard#98).
+ * Reliability / calibration report types (ADR-0122, gibson#284, dashboard#98).
  *
  * A reliability diagram answers one question: when the fleet says a bet is 80%
  * likely, does it come true 80% of the time? The daemon computes this from
