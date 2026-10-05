@@ -104,10 +104,10 @@ function GrantFormCard() {
       <CardHeader>
         <CardTitle>Grant model access</CardTitle>
         <CardDescription>
-          Grant a user, team, or tenant access to a specific provider or
-          model. Without any grants, slot resolution permits all models
-          (backwards compatible default); the first grant flips gating
-          on for the whole tenant.
+          Each provider starts with one grant for all members of the
+          tenant. To restrict a provider, revoke that tenant grant. Then
+          grant the provider, or single models, to the users and teams
+          that keep access.
         </CardDescription>
       </CardHeader>
       <CardContent>
