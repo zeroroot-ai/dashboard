@@ -18,7 +18,6 @@ import {
   updateProvider,
   deleteProvider,
   setDefaultProvider,
-  rotateApiKey,
   toggleProvider,
   importConfig,
 } from '@/src/lib/api/providers';
@@ -312,41 +311,6 @@ export function useSetDefaultProvider(): UseMutationResult<
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: providerQueryKeys.lists() });
-    },
-  });
-}
-
-// ============================================================================
-// Rotate API Key Mutation
-// ============================================================================
-
-interface RotateApiKeyVariables {
-  name: string;
-  newApiKey: string;
-}
-
-/**
- * Hook for rotating a provider's API key
- *
- * @returns Mutation result for API key rotation
- */
-function useRotateApiKey(): UseMutationResult<
-  UpdateProviderResponse,
-  Error,
-  RotateApiKeyVariables,
-  unknown
-> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ name, newApiKey }) => rotateApiKey(name, newApiKey),
-    onSuccess: (data) => {
-      queryClient.setQueryData(providerQueryKeys.detail(data.provider.name), data.provider);
-    },
-    onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: providerQueryKeys.detail(variables.name) });
-      queryClient.invalidateQueries({ queryKey: providerQueryKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: providerQueryKeys.audit() });
     },
   });
 }

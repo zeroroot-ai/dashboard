@@ -307,25 +307,6 @@ async function refreshProviderHealth(name: string): Promise<HealthStatus> {
 // ============================================================================
 
 /**
- * Rotate API key for a provider
- */
-export async function rotateApiKey(
-  name: string,
-  newApiKey: string
-): Promise<UpdateProviderResponse> {
-  const response = await apiFetch(`/api/settings/providers/${encodeURIComponent(name)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      config: { apiKey: newApiKey },
-      rotateKey: true,
-    }),
-  });
-
-  return handleResponse<UpdateProviderResponse>(response);
-}
-
-/**
  * Enable or disable a provider
  */
 export async function toggleProvider(
