@@ -37,4 +37,4 @@ jobs:
     uses: zeroroot-ai/.github/.github/workflows/brand-guard.yml@40c67fd77152f2c4924abccbd992dbca065f325b # v0.8.2
 
   link-check:
-    uses: zeroroot-ai/.github/.github/workflows/link-check.yml@40c67fd77152f2c4924abccbd992dbca065f325b # v0.8.2
+    uses: zeroroot-ai/.github/.github/workflows/link-check.yml@105df5cab9e7bee2b55197d1e307050c1a365abc # v0.14.2
