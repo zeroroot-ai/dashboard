@@ -267,7 +267,7 @@ same sweep and are not listed per repo.
 | | |
 |---|---|
 | Rule | Scorecard `PinnedDependenciesID` ("third-party GitHubAction not pinned by hash") |
-| Alerts | 10 (`.github/workflows/architectural-doc-coverage.yml:21`), 11 (`.github/workflows/dashboard.yml:40`), 12 (`.github/workflows/node-ci.yml:114`), 13 (`.github/workflows/node-ci.yml:130`), 14 (`.github/workflows/vault-auth-method-deny-list.yml:15`) |
+| Alerts | 10 (line 21 of a caller workflow that the repo deleted on 2026-10-05), 11 (`.github/workflows/dashboard.yml:40`), 12 (`.github/workflows/node-ci.yml:114`), 13 (`.github/workflows/node-ci.yml:130`), 14 (`.github/workflows/vault-auth-method-deny-list.yml:15`) |
 | Reason | `won't fix` |
 
 Every flagged line calls a reusable workflow in `zeroroot-ai/.github` at
