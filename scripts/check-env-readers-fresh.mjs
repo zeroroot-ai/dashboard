@@ -24,7 +24,6 @@
  * Exit codes: 0 = fresh, 1 = stale or missing, 2 = the scan was refused.
  */
 
-import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -118,9 +117,10 @@ function selftest() {
   );
   expect("a comment is not a reader", none.length === 0, `got ${none.join(",")}`);
 
-  // 3. The gate, on a real git tree: fresh passes, a missing name fails and
-  //    is named, a stale name fails and is named, a test file adds nothing,
-  //    and a scan under the floor is refused.
+  // 3. The gate, on a real tree with no git: fresh passes, a missing name
+  //    fails and is named, a stale name fails and is named, a test, a
+  //    dependency and build output add nothing, and a scan under the floor
+  //    is refused.
   const dir = mkdtempSync(join(tmpdir(), "env-readers-selftest-"));
   const quiet = { lines: [], log() {}, error(m) { this.lines.push(m); } };
   const write = (rel, body) => {
@@ -131,15 +131,14 @@ function selftest() {
     write("src/a.ts", "export const a = process.env.LIVE_NAME;\n");
     write("src/a.test.ts", "const t = process.env.TEST_ONLY_NAME;\n");
     write("e2e/x.spec.ts", "const t = process.env.SPEC_ONLY_NAME;\n");
+    write("node_modules/dep/index.js", "const d = process.env.DEPENDENCY_NAME;\n");
+    write(".next/server/chunk.js", "const b = process.env.BUILD_OUTPUT_NAME;\n");
     write(ARTIFACT, render(["LIVE_NAME"]));
-    execFileSync("git", ["-C", dir, "init", "-q"]);
-    execFileSync("git", ["-C", dir, "add", "-A"]);
     const floors = { minFiles: 1, minNames: 1 };
 
     expect("a fresh artifact passes", check(dir, floors, quiet) === 0, quiet.lines.join(" | "));
 
     write("src/b.ts", "export const b = process.env.ADDED_NAME;\n");
-    execFileSync("git", ["-C", dir, "add", "-A"]);
     quiet.lines = [];
     expect("a new reader fails the gate", check(dir, floors, quiet) === 1);
     expect("the new reader is named", quiet.lines.some((l) => l.includes("the source reads ADDED_NAME")), quiet.lines.join(" | "));

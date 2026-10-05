@@ -15,8 +15,8 @@
  *
  * Extraction
  * ----------
- * The set over-approximates on purpose. From every tracked `.ts`, `.tsx`,
- * `.mjs` and `.js` file that is not a test or a spec, it takes:
+ * The set over-approximates on purpose. From every `.ts`, `.tsx`, `.mjs` and
+ * `.js` file in the tree that is not a test or a spec, it takes:
  *
  *   - every env-shaped token inside a string or a template literal. This
  *     covers the REQUIRED_ENV and OPTIONAL_ENV blocks of
@@ -37,8 +37,7 @@
  * The drift gate is `scripts/check-env-readers-fresh.mjs`.
  */
 
-import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -129,20 +128,38 @@ export function namesInSource(src) {
   return names;
 }
 
-/** Tracked source files, relative to `root`, that are not tests. */
-function trackedSources(root) {
-  const out = execFileSync("git", ["-C", root, "ls-files", "-z"], {
-    encoding: "utf8",
-    maxBuffer: 64 * 1024 * 1024,
-  });
-  return out
-    .split("\0")
-    .filter((f) => f && SOURCE_EXT.test(f) && !TEST_FILE.test(f) && !f.endsWith(".d.ts"));
+/**
+ * Directories that hold no dashboard source: dependencies, build output,
+ * reports and local tool state. The image build runs this scan with no git
+ * and no `.git` directory (`.dockerignore`), so the scan walks the tree. In a
+ * clean checkout and in the image build the walk reads the same files.
+ */
+const SKIP_DIRS = new Set([
+  "node_modules", ".next", ".git", ".worktrees", ".turbo", ".vercel", ".vscode",
+  ".claude", ".spec-workflow", "coverage", "playwright-report", "test-results",
+  "dist", "build", "out",
+]);
+
+/** Source files under `root`, relative to it, that are not tests. */
+function sourceFiles(root) {
+  const out = [];
+  const walk = (dir, rel) => {
+    for (const ent of readdirSync(dir, { withFileTypes: true })) {
+      const childRel = rel ? `${rel}/${ent.name}` : ent.name;
+      if (ent.isDirectory()) {
+        if (!SKIP_DIRS.has(ent.name)) walk(join(dir, ent.name), childRel);
+      } else if (ent.isFile() && SOURCE_EXT.test(ent.name) && !TEST_FILE.test(ent.name) && !ent.name.endsWith(".d.ts")) {
+        out.push(childRel);
+      }
+    }
+  };
+  walk(root, "");
+  return out.sort();
 }
 
 /** The sorted reader set of the tree at `root`. Throws under the floors. */
 export function scan(root, { minFiles = MIN_FILES, minNames = MIN_NAMES } = {}) {
-  const files = trackedSources(root);
+  const files = sourceFiles(root);
   if (files.length < minFiles) {
     throw new Error(
       `scanned ${files.length} source file(s) in ${root}, the floor is ${minFiles}: this is not the dashboard tree`,
