@@ -4,37 +4,32 @@
 
 /**
  * proto-generate, regenerate the dashboard's TypeScript proto bindings
- * from the SDK's published protos plus the gibson daemon-local protos at
- * `internal/server/daemon/api/` in the gibson repository.
+ * from two sources:
+ *
+ *   1. The OSS SDK protos, from the Buf Schema Registry module
+ *      `buf.build/zeroroot-ai/sdk` at the version `SDK_BSR_VERSION` below
+ *      (ADR-0028: a consumer in a language other than Go reads the protos
+ *      from the registry). No `sdk` checkout and no Go module cache is read,
+ *      so the bindings do not depend on what is on the disk.
+ *   2. The gibson daemon-local protos at `internal/server/daemon/api/` in a
+ *      gibson checkout. They are not published anywhere.
  *
  * Buf v2 requires every module path in buf.yaml to resolve INSIDE the
- * directory containing buf.yaml. The dashboard imports protos from two
- * places that live OUTSIDE the dashboard repo: the SDK (Go module
- * cache, resolved via `go list -m`) and the gibson daemon-local proto
- * tree (sibling checkout). Neither can sit "above" the dashboard root.
- *
- * To make buf happy, this script synthesises a temporary workspace at
- * `.tmp/proto-ws/` *inside* the dashboard, populates it with symlinks
- * to the two real proto trees, drops a generated buf.yaml + buf.gen.yaml
+ * directory containing buf.yaml. The daemon-local tree lives OUTSIDE the
+ * dashboard repo. To make buf happy, this script synthesises a temporary
+ * workspace at `.tmp/proto-ws/` *inside* the dashboard, puts a symlink to
+ * the daemon-local tree in it, drops a generated buf.yaml + buf.gen.yaml
  * inside that workspace, runs `buf generate` from there, and rsyncs the
  * output back into `src/gen/`.
  *
- * The pattern is the same one the daemon already uses for `make
- * authz-registry`, see the gibson repository's Makefile
- * `authz-registry` recipe, which builds a `.tmp/ws/` workspace by
- * symlinking the SDK proto root and the daemon-local proto root.
+ * To move to a new SDK release: change `SDK_BSR_VERSION`, run
+ * `pnpm proto:generate`, and commit `src/gen/` with the change. Use the
+ * version that the `go.mod` of gibson pins, so that the two proto trees agree.
  *
- * The PRIVATE platform protos (`gibson.daemon.operator.v1`,
- * `gibson.billing.v1`, `gibson.daemon.discovery.v1`) used to live in the
- * separate `platform-sdk` module; they now live in the gibson daemon-local
- * tree alongside the rest of the daemon-internal services, and the
- * `platform-sdk` module has been dissolved (open-core monorepo
- * consolidation, ADR-0056, gibson#781).
- *
- * **Workstation-only:** this script assumes the gibson repo is cloned
- * as a sibling of the dashboard repo, exactly as the rest of this
- * polyrepo workspace already requires. CI does not regenerate proto
- * bindings, `src/gen/` is committed and CI just typechecks it.
+ * **Workstation-only:** this script needs a gibson checkout that the
+ * resolver can reach, and network access to the Buf Schema Registry. CI does
+ * not regenerate proto bindings, `src/gen/` is committed and CI just
+ * typechecks it.
  *
  * Spec: component-bootstrap-dashboard-completion (proto-gen workflow).
  */
@@ -60,8 +55,8 @@ const DASHBOARD_ROOT = path.resolve(HERE, '..');
 //   --out=<dir>     generate into <dir> instead, leaving src/gen/ untouched.
 //                   Used by scripts/check-proto-bindings-fresh.mjs to produce
 //                   the "expected" tree for a byte-diff.
-//   --probe         resolve the two source proto trees, print a JSON report to
-//                   stdout, and exit 0 whether or not they are present. Lets
+//   --probe         resolve the daemon-local proto tree, print a JSON report to
+//                   stdout, and exit 0 whether or not it is present. Lets
 //                   the freshness gate decide between FULL and STRUCTURAL mode
 //                   without duplicating this file's path resolution.
 const ARGV = process.argv.slice(2);
@@ -78,12 +73,12 @@ const WS = path.join(
   `.tmp/proto-ws${OUT_FLAG ? `-${process.pid}` : ''}`,
 );
 
-// Pinned protovalidate BSR module, mirrors the SDK's committed buf.lock.
-// Used as an offline fallback when `buf dep update` can't reach the BSR
-// (no token) but the module is already in the local buf cache.
-const PROTOVALIDATE_COMMIT = '50325440f8f24053b047484a6bf60b76';
-const PROTOVALIDATE_DIGEST =
-  'b5:74cb6f5c0853c3c10aafc701614194bbd63326bdb8ef4068214454b8894b03ba4113e04b3a33a8321cdf05336e37db4dc14a5e2495db8462566914f36086ba31';
+// The OSS SDK protos come from the Buf Schema Registry at one pinned release.
+// A release label of the SDK module does not move. This is the one place that
+// names the version.
+const SDK_BSR_MODULE = 'buf.build/zeroroot-ai/sdk';
+const SDK_BSR_VERSION = 'v0.193.1';
+const SDK_BSR_REF = `${SDK_BSR_MODULE}:${SDK_BSR_VERSION}`;
 
 // The resolver takes a repository name and a path inside it, and finds the
 // checkout by searching the ancestors of this one. `go.mod` is the marker that
@@ -128,48 +123,11 @@ function run(file, args, opts = {}) {
   });
 }
 
-function resolveSdkProtoDir({ soft = false } = {}) {
-  // Prefer a local sdk checkout when present, it tracks main and avoids the
-  // "gibson go.mod pin lags one minor version behind the latest sdk release"
-  // hazard during multi-repo migrations. The module-cache fallback exists for
-  // the case where the dashboard is regenerated with no sdk checkout nearby.
-  const SDK_SIBLING =
-    resolveRepoPath('sdk', 'api/proto', { from: DASHBOARD_ROOT })?.path ??
-    path.join(DASHBOARD_ROOT, 'sdk/api/proto');
-  // Presence is a filesystem question; the old `stat` shelled out only to
-  // interpolate the path into a command line. existsSync answers it in process.
-  if (existsSync(SDK_SIBLING)) return SDK_SIBLING;
-
-  // Module-cache fallback: `go list -m` against the gibson repo
-  // resolves the SDK to whichever version gibson is pinned to. Only
-  // hit when the sibling checkout is absent.
-  try {
-    const dir = run(
-      'go',
-      ['list', '-m', '-f', '{{.Dir}}', 'github.com/zeroroot-ai/sdk'],
-      { cwd: GIBSON_REPO },
-    ).trim();
-    if (!dir) throw new Error('empty');
-    return path.join(dir, 'api/proto');
-  } catch (err) {
-    if (soft) return null;
-    console.error(
-      'proto-generate: failed to resolve github.com/zeroroot-ai/sdk.\n' +
-        `  Tried sibling checkout at: ${SDK_SIBLING}\n` +
-        `  Tried module-cache via gibson at: ${GIBSON_REPO}\n` +
-        '  Clone zeroroot-ai/sdk next to this checkout, or set\n' +
-        '  GIBSON_WORKSPACE_ROOT to the directory the checkouts hang off.\n' +
-        `  Underlying error: ${err.message ?? err}`,
-    );
-    process.exit(1);
-  }
-}
-
 function ensureGibsonLocalProtos({ soft = false } = {}) {
   // No-op-style sanity check: the daemon-local protos must exist.
-  // They are not a published Go module, so we can only get them via a
-  // sibling checkout. existsSync, not `stat` through a shell (see
-  // resolveSdkProtoDir).
+  // They are not a published module, so we can only get them via a
+  // gibson checkout. Presence is a filesystem question, so existsSync
+  // answers it in process.
   if (existsSync(GIBSON_LOCAL_PROTOS)) return true;
   if (soft) return false;
   console.error(
@@ -185,14 +143,12 @@ function buildWorkspace() {
   rmSync(WS, { recursive: true, force: true });
   mkdirSync(WS, { recursive: true });
 
-  const sdkProtoDir = resolveSdkProtoDir();
-
-  // Symlinks bring the two proto trees inside the buf.yaml's context
-  // directory (the .tmp/proto-ws root). Buf v2 follows symlinks; this
+  // The symlink brings the daemon-local proto tree inside the buf.yaml's
+  // context directory (the .tmp/proto-ws root). Buf v2 follows symlinks; this
   // satisfies the "modules must be inside the workspace" rule without
-  // copying files.
+  // copying files. The SDK protos need no symlink: they are a registry
+  // dependency.
   ensureGibsonLocalProtos();
-  symlinkSync(sdkProtoDir, path.join(WS, 'sdk-proto'));
   symlinkSync(GIBSON_LOCAL_PROTOS, path.join(WS, 'gibson-local'));
 
   writeFileSync(
@@ -200,14 +156,6 @@ function buildWorkspace() {
     [
       'version: v2',
       'modules:',
-      // The SDK vendors well-known google/* protos with a
-      // non-conforming go_package; excluding them from the module is
-      // critical (otherwise protoc-gen-* plugins choke on them and
-      // the dashboard ends up shipping a duplicate src/gen/google/
-      // tree that conflicts with @bufbuild/protobuf\'s built-ins).
-      '  - path: sdk-proto',
-      '    excludes:',
-      '      - sdk-proto/google',
       // gibson-local is the daemon-internal proto tree. It owns the
       // daemon-internal services (TracesService, session, world, user)
       // and the PRIVATE platform services that used to live in
@@ -218,7 +166,7 @@ function buildWorkspace() {
       // gibson/auth/v1/options.proto is the annotation extension; it
       // lives canonically in the OSS SDK and is imported (not vendored)
       // by the daemon-local protos. Exclude it here so buf does not see
-      // two copies under the two module roots.
+      // a second copy next to the one in the SDK registry module.
       '  - path: gibson-local',
       '    excludes:',
       '      - gibson-local/gibson/auth',
@@ -231,10 +179,13 @@ function buildWorkspace() {
       // daemon-local proto rather than being hand-edited). Exclude the rest.
       '      - gibson-local/gibson/session',
       '      - gibson-local/gibson/user',
+      // The SDK protos, at the pinned release. The daemon-local protos
+      // import them, and `buf dep update` below resolves the release label
+      // to one commit and one digest in buf.lock.
       // protovalidate provides the (buf.validate.field).* annotations
-      // adopted by the SDK from v1.5.0 onward. Pulled from the buf.build
-      // remote registry; resolved by `buf dep update` invoked below.
+      // that the SDK protos use.
       'deps:',
+      `  - ${SDK_BSR_REF}`,
       '  - buf.build/bufbuild/protovalidate',
       'lint:',
       '  use:',
@@ -258,7 +209,7 @@ function buildWorkspace() {
       '      - target=ts',
       '      - import_extension=none',
       'inputs:',
-      '  - directory: sdk-proto',
+      `  - module: ${SDK_BSR_REF}`,
       '  - directory: gibson-local',
       // Generate TS bindings for the protovalidate annotation proto so
       // imports of file_buf_validate_validate from generated SDK files
@@ -276,55 +227,34 @@ function generate() {
   const ws = buildWorkspace();
   console.log(`proto-generate: workspace at ${path.relative(DASHBOARD_ROOT, ws)}`);
 
-  // Resolve the protovalidate dep declared in buf.yaml. Writes a
-  // buf.lock alongside the generated buf.yaml so `buf generate` can
-  // find the (buf.validate.field).* import.
+  // Resolve the two registry deps declared in buf.yaml. Writes a buf.lock
+  // alongside the generated buf.yaml, which pins each dep to one commit and
+  // one digest for the `buf generate` below.
   //
-  // `buf dep update` contacts the BSR to re-resolve the pin, which
-  // requires a valid BSR token. On a workstation that already has the
-  // protovalidate module cached (every prior gibson `make proto` /
-  // dashboard `pnpm proto:generate` warms it), the network round-trip is
-  // unnecessary: `buf generate` resolves the dep from the local module
-  // cache as long as a buf.lock pins the commit. So tolerate a failed
-  // `dep update` and fall back to a pinned buf.lock; `buf generate` below
-  // is the real gate (it errors clearly if the dep can't resolve).
-  let offline = false;
+  // There is no offline path. The SDK protos are in the registry only, so a
+  // run that cannot reach it stops here. It never reads a checkout in place
+  // of the registry.
   try {
     run('npx', ['buf', 'dep', 'update'], {
       cwd: ws,
       stdio: 'inherit',
     });
-  } catch {
-    offline = true;
-    console.warn(
-      'proto-generate: `buf dep update` failed (offline / no BSR token); ' +
-        'falling back to pinned buf.lock + local module cache',
+  } catch (err) {
+    console.error(
+      `proto-generate: \`buf dep update\` failed, so ${SDK_BSR_REF} did not resolve.\n` +
+        '  The SDK protos come from the Buf Schema Registry (ADR-0028).\n' +
+        '  Make sure that this host reaches buf.build and that the release exists.\n' +
+        `  Underlying error: ${err.message ?? err}`,
     );
-    if (!existsSync(path.join(ws, 'buf.lock'))) {
-      writeFileSync(
-        path.join(ws, 'buf.lock'),
-        [
-          '# Generated by buf. DO NOT EDIT.',
-          'version: v2',
-          'deps:',
-          '  - name: buf.build/bufbuild/protovalidate',
-          `    commit: ${PROTOVALIDATE_COMMIT}`,
-          `    digest: ${PROTOVALIDATE_DIGEST}`,
-          '',
-        ].join('\n'),
-      );
-    }
+    rmSync(ws, { recursive: true, force: true });
+    process.exit(1);
   }
 
   // Run buf generate via the dashboard's npx (so we use the version
-  // pinned in package.json, not whatever the system has). When we fell
-  // back to the offline path, point NETRC at /dev/null so buf does not
-  // try to authenticate against the BSR with a stale/invalid token in
-  // ~/.netrc — it resolves the pinned dep straight from the local cache.
+  // pinned in package.json, not whatever the system has).
   run('npx', ['buf', 'generate'], {
     cwd: ws,
     stdio: 'inherit',
-    env: offline ? { ...process.env, NETRC: '/dev/null' } : process.env,
   });
 
   const out = path.join(ws, 'out');
@@ -357,17 +287,16 @@ function probe() {
   const gibsonLocalProtos = ensureGibsonLocalProtos({ soft: true })
     ? GIBSON_LOCAL_PROTOS
     : null;
-  const sdkProtoDir = resolveSdkProtoDir({ soft: true });
   process.stdout.write(
     JSON.stringify(
       {
         gibsonRepo: gibsonFound ? GIBSON_REPO : null,
-        sdkProtoDir,
+        // The SDK protos are a registry reference, not a path on the disk.
+        sdkModule: SDK_BSR_REF,
         gibsonLocalProtos,
-        // Both trees are required: buf generate reads them as two modules of
-        // one workspace, so a partial checkout cannot produce a comparable
-        // tree and must fall back to STRUCTURAL mode.
-        available: Boolean(sdkProtoDir && gibsonLocalProtos),
+        // The daemon-local tree is the one source that must be on the disk.
+        // Without it the gate falls back to STRUCTURAL mode.
+        available: Boolean(gibsonLocalProtos),
       },
       null,
       2,
