@@ -69,16 +69,6 @@ be non-empty, parse, and carry its generator's header, so a deleted or emptied
 artifact still fails the build. When the workspace is present, the gate
 byte-diffs the committed artifact against freshly generated output.
 
-The one skip that remains is unrelated to freshness:
-
-```bash
-SKIP_DASHBOARD_RBAC_CHECK=1 pnpm build
-```
-
-`check-dashboard-rbac-minimal.mjs` shells out to `helm template`, and a
-standalone checkout has no Helm binary. The `Dockerfile` builder stage sets
-this same env and nothing else; keep the two in sync.
-
 ## Architecture
 
 This repo is one piece of the wider Gibson platform polyrepo. For the

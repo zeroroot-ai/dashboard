@@ -84,13 +84,6 @@ ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 # exist, be non-empty, parse, and carry its generator's header. That much is
 # verified here; the byte-diff happens on the workstation and in polyrepo CI.
 # Being told to look away is no longer an option, which is the point.
-#
-# check-dashboard-rbac-minimal.mjs runs `helm template` to diff chart RBAC.
-# helm is not installed in this Node.js image; skip it here — the check runs
-# on the dev host via `npm run prebuild` before pushing. The underlying chart
-# RBAC is still enforced by the allowlist at commit time.
-# Spec: signup-zitadel-permissions-fix (Docker build fix for auth-resolution-hardening).
-ENV SKIP_DASHBOARD_RBAC_CHECK=1
 
 # Build the standalone application. All sibling-sourced generated files
 # (plans.ts, stripe_gen.ts, authz registry, proto bindings) are committed, and
