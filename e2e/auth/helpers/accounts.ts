@@ -9,7 +9,7 @@
  * /login gate and Zitadel's hosted Login v2 (see login-via-zitadel-v2.ts).
  *
  * The accounts are repository secrets on zeroroot-ai/dashboard, exported by
- * .github/workflows/e2e-staging.yml:
+ * .github/workflows/exit-test-e2e-staging.yml:
  *
  *   E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD, E2E_ADMIN_TOTP_SECRET
  *       the Owner or an Admin of the e2e tenant on staging.
