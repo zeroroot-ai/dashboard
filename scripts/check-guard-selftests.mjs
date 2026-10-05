@@ -69,6 +69,10 @@ const GUARDS = [
   // src/lib/env-readers.json; this proves a stale copy fails the build and
   // that a comment or a test is never counted as a reader.
   "check-env-readers-fresh.mjs",
+  // The deleted admin binding gate (dashboard#214). Its header and its deny
+  // array disagreed, and nothing proved that an import from each forbidden
+  // path fails.
+  "check-no-direct-admin-rpc.mjs",
 ];
 
 let failed = 0;
