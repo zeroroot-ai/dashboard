@@ -4,41 +4,28 @@ name: authz-registry-drift
 # src/gen/authz/registry.ts against the CURRENT zeroroot-ai/gibson main.
 #
 # node-ci.yml's reusable workflow (both the fast and heavy tiers) calls
-# check-proto-bindings-fresh.mjs / check-authz-registry-fresh.mjs with
-# `skip-sibling-generators: true`: a single-repo dashboard checkout has no
-# `gibson` or `sdk` sibling on disk, so those two gates can only ever run in
-# STRUCTURAL mode there (file exists, non-empty, carries the generator
-# header) — they cannot tell a stale relation string or a removed RPC from a
-# healthy one. That gap is what let a proto rename on gibson main
-# (platform_operator -> platform_owner on seven AdminTenantService RPCs,
-# admin -> owner on MembershipService.TransferOwnership) and several newly
-# added RPCs sit undetected in the committed registry.ts and src/gen/ until
-# an unrelated PR happened to run the real generators on a polyrepo
-# workstation and noticed the diff (see fix/authz-proto-drift's PR body for
-# the full list).
+# check-proto-bindings-fresh.mjs / check-authz-registry-fresh.mjs in a
+# single-repo dashboard checkout. No `gibson` checkout is on disk there, so
+# those two gates can only ever run in STRUCTURAL mode (file exists,
+# non-empty, carries the generator header). They cannot tell a stale relation
+# string or a removed RPC from a healthy one. That gap is what let a proto
+# rename on gibson main sit undetected in the committed registry.ts and
+# src/gen/ until an unrelated PR ran the real generators on a workstation.
 #
-# This workflow is the one gate with both proto trees on disk, so it is the
-# one that can actually catch that class of drift. It is intentionally NOT
-# folded into node-ci.yml: doing so would put a Go toolchain, a second-repo
-# checkout and a buf module fetch on every dashboard PR's critical path,
-# which is exactly the cost node-ci.yml's own comment says the single-repo
-# design was chosen to avoid. Scheduled + workflow_dispatch instead, the same
-# shape the org already uses for cross-repo drift/scorecard checks that must
+# This workflow has the gibson daemon-local protos on disk, so it is the one
+# that can catch that class of drift. It is intentionally NOT folded into
+# node-ci.yml: that would put a second-repo checkout and a buf module fetch on
+# the critical path of every dashboard PR. Scheduled + workflow_dispatch
+# instead, the same shape the org uses for cross-repo drift checks that must
 # not block every PR of the repo they run in.
 #
-# Needs no secret beyond the default GITHUB_TOKEN: zeroroot-ai/gibson and
-# zeroroot-ai/sdk are both public (org public-repos flip, 2026-09), so the
-# checkout and `go mod download` below need no credential at all. The
-# `buf dep update` step inside proto-generate.mjs / gen-authz-registry.mjs
-# separately tries to refresh buf.build/bufbuild/protovalidate from the BSR
-# and fails without a `buf registry login` token — this is EXPECTED and
-# already tolerated by both scripts (they log the failure and fall back to
-# the pinned buf.lock they generate plus whatever protovalidate copy is in
-# the runner's local buf module cache). Whether that fallback actually
-# succeeds on a cold runner with no pre-warmed buf cache is exactly what
-# this workflow's first real run answers; if it does not, the fix is a BSR
-# token (`secrets.BUF_TOKEN` or equivalent), not a checkout change, and that
-# requirement gets recorded in the PR this workflow shipped in.
+# Needs no secret beyond the default GITHUB_TOKEN. zeroroot-ai/gibson is
+# public, so its checkout needs no credential. Both generators read the SDK
+# protos from the public module buf.build/zeroroot-ai/sdk at the release that
+# scripts/lib/sdk-proto-source.mjs names (dashboard#217, dashboard#240). The
+# registry serves a public module with no token. The generators have no
+# offline path, so a registry that is not reachable fails this run. No Go
+# toolchain is needed.
 
 on:
   schedule:
@@ -50,6 +37,7 @@ on:
       - "scripts/proto-generate.mjs"
       - "scripts/gen-authz-registry.mjs"
       - "scripts/lib/freshness-gate.mjs"
+      - "scripts/lib/sdk-proto-source.mjs"
 
 concurrency:
   group: authz-registry-drift-${{ github.ref }}
@@ -74,14 +62,6 @@ jobs:
           path: _gws/gibson
           persist-credentials: false
 
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: _gws/gibson/go.mod
-
-      - name: Resolve the pinned SDK module (public, no token required)
-        working-directory: _gws/gibson
-        run: go mod download github.com/zeroroot-ai/sdk
-
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
           version: "10.34.5"
@@ -94,7 +74,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Confirm FULL mode (both sibling sources on disk)
+      - name: Confirm FULL mode (the gibson protos are on disk)
         env:
           GIBSON_WORKSPACE_ROOT: ${{ github.workspace }}/_gws
         run: |

@@ -7,7 +7,8 @@
  * from two sources:
  *
  *   1. The OSS SDK protos, from the Buf Schema Registry module
- *      `buf.build/zeroroot-ai/sdk` at the version `SDK_BSR_VERSION` below
+ *      `buf.build/zeroroot-ai/sdk` at the release that
+ *      `scripts/lib/sdk-proto-source.mjs` names
  *      (ADR-0028: a consumer in a language other than Go reads the protos
  *      from the registry). No `sdk` checkout and no Go module cache is read,
  *      so the bindings do not depend on what is on the disk.
@@ -22,9 +23,8 @@
  * inside that workspace, runs `buf generate` from there, and rsyncs the
  * output back into `src/gen/`.
  *
- * To move to a new SDK release: change `SDK_BSR_VERSION`, run
- * `pnpm proto:generate`, and commit `src/gen/` with the change. Use the
- * version that the `go.mod` of gibson pins, so that the two proto trees agree.
+ * To move to a new SDK release, follow the steps in
+ * `scripts/lib/sdk-proto-source.mjs`.
  *
  * **Workstation-only:** this script needs a gibson checkout that the
  * resolver can reach, and network access to the Buf Schema Registry. CI does
@@ -44,6 +44,7 @@ import {
 } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { SDK_BSR_REF } from './lib/sdk-proto-source.mjs';
 import { resolveRepoPath } from './lib/workspace-root.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -72,13 +73,6 @@ const WS = path.join(
   DASHBOARD_ROOT,
   `.tmp/proto-ws${OUT_FLAG ? `-${process.pid}` : ''}`,
 );
-
-// The OSS SDK protos come from the Buf Schema Registry at one pinned release.
-// A release label of the SDK module does not move. This is the one place that
-// names the version.
-const SDK_BSR_MODULE = 'buf.build/zeroroot-ai/sdk';
-const SDK_BSR_VERSION = 'v0.193.1';
-const SDK_BSR_REF = `${SDK_BSR_MODULE}:${SDK_BSR_VERSION}`;
 
 // The resolver takes a repository name and a path inside it, and finds the
 // checkout by searching the ancestors of this one. `go.mod` is the marker that

@@ -125,9 +125,10 @@ The dashboard's TS proto bindings at `src/gen/` are generated from
 
 - the **OSS SDK** protos, from the Buf Schema Registry module
   `buf.build/zeroroot-ai/sdk` at one pinned release (ADR-0028). The constant
-  `SDK_BSR_VERSION` in `scripts/proto-generate.mjs` is the one place that
-  names the release. The script reads no `sdk` checkout and no Go module
-  cache, so the bindings do not depend on what is on the disk.
+  `SDK_BSR_VERSION` in `scripts/lib/sdk-proto-source.mjs` is the one place
+  that names the release. `proto-generate.mjs` and `gen-authz-registry.mjs`
+  both import it. Neither script reads an `sdk` checkout or the Go module
+  cache, so the generated files do not depend on what is on the disk.
 - the **gibson daemon-local** protos at `internal/server/daemon/api/` in the
   `gibson` checkout, which are not published anywhere. This tree hosts the
   daemon-internal services AND the PRIVATE platform services
@@ -160,8 +161,8 @@ path. CI does not regenerate proto bindings, `src/gen/` is committed and CI
 just typechecks it.
 
 To move to a new SDK release: set `SDK_BSR_VERSION` to the release that the
-`go.mod` of `gibson` pins, run `pnpm proto:generate`, and commit `src/gen/`
-with the change.
+`go.mod` of `gibson` pins, run `pnpm proto:generate` and `pnpm gen:authz`, and
+commit `src/gen/` with the change.
 
 ### Binding freshness gate
 
@@ -277,7 +278,7 @@ Both layers read from a single static map, the `AuthRegistry`, generated from OS
 ### Pipeline: OSS SDK + gibson daemon-local protos → registry
 
 ```
-<sdk-module>/api/proto/**/*.proto       (OSS SDK, DaemonService + AgentIdentityService (gibson.agentidentity.v1) + PluginAdminService (gibson.pluginadmin.v1))
+buf.build/zeroroot-ai/sdk (pinned)      (OSS SDK, DaemonService + AgentIdentityService (gibson.agentidentity.v1) + PluginAdminService (gibson.pluginadmin.v1))
 <gibson>/internal/server/daemon/api/**/*.proto  (gibson daemon-local, gibson.tenant.v1.* admin services + DaemonOperatorService, BillingService, DiscoveryService)
   └─ (gibson.auth.v1.authz) extension on each method
        │
