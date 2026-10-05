@@ -32,11 +32,9 @@ WORKDIR /app
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
-# Copy dependency manifests for layer caching. The workspace file and the
-# patches/ directory carry the patched dependencies, which pnpm applies at
-# install time.
+# Copy dependency manifests for layer caching. The workspace file carries the
+# pnpm settings that the install reads.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY patches ./patches
 
 # Install production + dev dependencies (needed for build). --ignore-scripts
 # blocks arbitrary postinstall scripts; pnpm rebuild then runs install for the

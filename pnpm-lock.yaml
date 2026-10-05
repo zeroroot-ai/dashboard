@@ -11,11 +11,6 @@ overrides:
   '@ai-sdk/provider-utils@5': 5.0.53
   '@ai-sdk/provider@4': 4.0.21
 
-patchedDependencies:
-  next-auth:
-    hash: 99c9ceea7b9d0d4b7d0f57f65d4b3c39e96329dc4432f40dc41090c552e2146f
-    path: patches/next-auth.patch
-
 importers:
 
   .:
@@ -139,7 +134,7 @@ importers:
         version: 16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-auth:
         specifier: ^5.0.0-beta.32
-        version: 5.0.0-beta.32(patch_hash=99c9ceea7b9d0d4b7d0f57f65d4b3c39e96329dc4432f40dc41090c552e2146f)(next@16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        version: 5.0.0-beta.32(next@16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       nextjs-toploader:
         specifier: ^3.9.17
         version: 3.9.17(next@16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -10159,7 +10154,7 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  next-auth@5.0.0-beta.32(patch_hash=99c9ceea7b9d0d4b7d0f57f65d4b3c39e96329dc4432f40dc41090c552e2146f)(next@16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3):
+  next-auth@5.0.0-beta.32(next@16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3):
     dependencies:
       '@auth/core': 0.41.3
       next: 16.3.8(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(@types/node@24.10.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)

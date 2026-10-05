@@ -47,11 +47,15 @@ drifted apart, so the dev build and the image ran different patch versions.
 The npm path is deleted, with its sync check (`check-lockfile-sync.mjs`) and
 the npm-only `overrides` copy in `package.json`.
 
-### Patched dependencies
+### No patched dependencies
 
-`patchedDependencies` applies `patches/next-auth.patch` (adds explicit `.js`
-extensions to `next/*` imports). pnpm applies it at install time, so the
-image build now gets the same patched `next-auth` as dev.
+The repo carries no dependency patch. A patch for `next-auth` added `.js` to
+its `next/*` imports. npm never applied it, so the image never had it. With
+pnpm the patch reached the image, and `next build` failed: a route handler
+then loaded `next/navigation.js`, which Turbopack could not resolve. Vitest
+needed the patch, because plain Node ESM cannot resolve `next/server` with no
+extension. `vitest.config.ts` now inlines `next-auth`, and Vite resolves the
+import instead.
 
 After a dependency change, run `pnpm install` and commit `pnpm-lock.yaml`.
 

@@ -160,9 +160,6 @@
       "brace-expansion@2": "^2.1.7",
       "@ai-sdk/provider-utils@5": "5.0.53",
       "@ai-sdk/provider@4": "4.0.21"
-    },
-    "patchedDependencies": {
-      "next-auth": "patches/next-auth.patch"
     }
   }
 }

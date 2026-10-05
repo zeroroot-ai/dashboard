@@ -11,6 +11,16 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    // next-auth imports `next/server` with no file extension. The Next
+    // bundler resolves that in the image, but plain Node ESM does not.
+    // Vite transforms next-auth here, so its resolver handles the import.
+    // This replaces the old next-auth patch, which broke `next build`
+    // (dashboard#246).
+    server: {
+      deps: {
+        inline: ['next-auth'],
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
