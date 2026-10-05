@@ -27,19 +27,27 @@ FROM ghcr.io/zeroroot-ai/mirror/node:24-alpine@sha256:50c8e8ca1d27439048670df588
 
 WORKDIR /app
 
-# Copy dependency manifests for layer caching
-COPY package.json package-lock.json ./
+# pnpm-lock.yaml is the one lockfile (dashboard#246). Corepack in the base
+# image installs the pnpm release that `packageManager` in package.json names.
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
+
+# Copy dependency manifests for layer caching. The workspace file and the
+# patches/ directory carry the patched dependencies, which pnpm applies at
+# install time.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 
 # Install production + dev dependencies (needed for build). --ignore-scripts
-# blocks arbitrary postinstall scripts; npm rebuild then runs install for the
+# blocks arbitrary postinstall scripts; pnpm rebuild then runs install for the
 # specific native modules that need per-arch binaries extracted (multi-arch
 # Docker buildx builds linux/arm64 via QEMU and needs the right .node binary).
 #
 # @zeroroot-ai/brand comes from registry.npmjs.org (attic#17), so the install
 # needs no registry credential: a stranger's `docker build` and CI run the
 # same command.
-RUN npm ci --ignore-scripts --legacy-peer-deps && \
-    npm rebuild lightningcss
+RUN pnpm install --frozen-lockfile --ignore-scripts && \
+    pnpm rebuild lightningcss
 
 # ============================================================================
 # Stage 2: Builder - Build Next.js application
@@ -48,6 +56,9 @@ RUN npm ci --ignore-scripts --legacy-peer-deps && \
 FROM ghcr.io/zeroroot-ai/mirror/node:24-alpine@sha256:50c8e8ca1d27439048670df5883f32d57cf81cff6233222c893fd0d9884cbd81 AS builder
 
 WORKDIR /app
+
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -89,7 +100,7 @@ ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 # (plans.ts, stripe_gen.ts, authz registry, proto bindings) are committed, and
 # the freshness gates verify them structurally here (see the note above), so the
 # build performs no cross-repo fetch and reads no token.
-RUN npm run build
+RUN pnpm run build
 
 # ============================================================================
 # Stage 3: Runtime - Minimal production image
@@ -116,8 +127,8 @@ RUN addgroup --system --gid 1001 nodejs && \
 # Nothing in this stage uses them. The command is `node server.js` against
 # the Next standalone output, and the healthcheck shells out to wget; npm, npx,
 # corepack and yarn are present only because the node base image ships them.
-# The build stages are unaffected — they run `npm ci` / `npm run build` in the
-# `deps` and `builder` stages, which are discarded and never scanned.
+# The build stages are unaffected — they run `pnpm install` / `pnpm run build`
+# in the `deps` and `builder` stages, which are discarded and never scanned.
 #
 # They are worth deleting for two reasons:
 #

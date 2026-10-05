@@ -42,7 +42,6 @@ const GUARDS = [
   "check-authz-denial-unwrapped.mjs",
   "check-no-store-clients.mjs",
   "check-no-nodeenv-conditioned-auth.mjs",
-  "check-lockfile-sync.mjs",
   "check-api-route-csrf.mjs",
   "check-client-mutation-uses-apifetch.mjs",
   "check-proto-bindings-fresh.mjs",

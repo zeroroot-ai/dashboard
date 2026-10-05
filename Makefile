@@ -5,11 +5,9 @@
 #
 #     make bootstrap | build | test | check | image
 #
-# is the same set of commands in every repo. Dev tooling is pnpm (the
-# committed pnpm-lock.yaml is the dev source of truth); the production
-# container image is built from package-lock.json via `npm ci` (see Dockerfile
-# and docs/build-and-lockfiles.md for why the dashboard ships both lockfiles
-# and how they are kept in sync).
+# is the same set of commands in every repo. The committed pnpm-lock.yaml is
+# the one lockfile: local dev, CI and the container image all install from it
+# (see Dockerfile and docs/build-and-lockfiles.md).
 #
 # The Node toolchain is pinned in .tool-versions (nodejs 24.x, matching the
 # digest-pinned mirror base image in the Dockerfile). `make bootstrap` uses the
@@ -52,7 +50,7 @@ knip: ## Dead-code / unused-dependency gate (blocking; see knip.jsonc)
 proto: ## Regenerate the TS proto bindings (workstation-only; needs sibling repos)
 	$(PNPM) proto:generate
 
-image: ## Build the production container image (npm/package-lock.json path)
+image: ## Build the production container image (from pnpm-lock.yaml)
 	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) -f Dockerfile .
 
 help: ## List available targets
