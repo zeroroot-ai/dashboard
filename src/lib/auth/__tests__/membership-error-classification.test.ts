@@ -6,10 +6,10 @@
  * + ERROR_COPY page-copy guards. Regression coverage for dashboard#45 -
  * pre-fix, every ConnectRPC code other than Unauthenticated/Unavailable/
  * DeadlineExceeded/Internal silently collapsed to `daemon_unavailable`,
- * which surfaced as "Service unavailable / on-call has been paged" on the
+ * which surfaced as "Service unavailable / please retry" on the
  * error page. PermissionDenied (7) in particular was misclassified and
- * sent users to a page that paged on-call for a failure on-call could not
- * resolve.
+ * sent users to a page that told them to retry a failure that no retry
+ * could resolve.
  *
  * Tests assert:
  *   1. Each terminal ConnectRPC code (Unauthenticated, PermissionDenied,
@@ -21,7 +21,9 @@
  *      label in its `connectCode` field so the middleware's `auth.login_error`
  *      log can include it.
  *   4. `ERROR_COPY['permission_denied']` does NOT contain the misleading
- *      "Service unavailable" / "on-call has been paged" copy.
+ *      "Service unavailable" copy.
+ *   6. No entry of `ERROR_COPY` promises a page to an on-call person. No
+ *      paging integration exists (dashboard#211).
  *   5. `ERROR_COPY['permission_denied']` provides a sign-OUT CTA, not a
  *      retry-sign-in CTA (which would just repeat the failing call).
  */
@@ -184,9 +186,10 @@ describe('ERROR_COPY, permission_denied page copy', () => {
     expect(ERROR_COPY.permission_denied.title).not.toMatch(/service unavailable/i);
   });
 
-  it('does NOT claim on-call has been paged (no on-call action resolves an FGA denial)', () => {
-    expect(ERROR_COPY.permission_denied.description).not.toMatch(/on-call/i);
-    expect(ERROR_COPY.permission_denied.description).not.toMatch(/paged/i);
+  it('does NOT reuse the daemon_unavailable text (no retry resolves an FGA denial)', () => {
+    expect(ERROR_COPY.permission_denied.description).not.toBe(
+      ERROR_COPY.daemon_unavailable.description,
+    );
   });
 
   it('provides a sign-out CTA, not a retry-sign-in CTA', () => {
@@ -198,8 +201,19 @@ describe('ERROR_COPY, permission_denied page copy', () => {
   });
 });
 
-describe('ERROR_COPY, daemon_unavailable page copy (preserved for code 14)', () => {
-  it('still contains the on-call paging copy (this branch is correct when the daemon really is unreachable)', () => {
-    expect(ERROR_COPY.daemon_unavailable.description).toMatch(/on-call/i);
+describe('ERROR_COPY, daemon_unavailable page copy (approved text, dashboard#211)', () => {
+  it('has the approved title and text', () => {
+    expect(ERROR_COPY.daemon_unavailable.title).toBe('Service unavailable');
+    expect(ERROR_COPY.daemon_unavailable.description).toBe(
+      "We couldn't reach the platform to complete your sign-in. This usually clears within a minute. Please retry.",
+    );
+  });
+});
+
+describe('ERROR_COPY, no entry promises a page to an on-call person', () => {
+  it.each(Object.entries(ERROR_COPY))('%s', (_reason, copy) => {
+    const text = `${copy.title} ${copy.description} ${copy.cta.label}`;
+    expect(text).not.toMatch(/paged/i);
+    expect(text).not.toMatch(/on-call/i);
   });
 });

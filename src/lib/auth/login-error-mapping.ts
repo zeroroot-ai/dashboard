@@ -10,8 +10,8 @@
  * happened at the daemon-call boundary; the second describes WHICH error-page
  * copy + CTA to render. Lumping them together is what caused dashboard#45 -
  * `permission_denied` was silently coerced to `daemon_unavailable`, surfacing
- * "Service unavailable / on-call has been paged" to users whose actual
- * problem was a missing FGA grant. No on-call action would have helped.
+ * "Service unavailable / please retry" to users whose actual
+ * problem was a missing FGA grant. No retry would have helped.
  *
  * @module auth/login-error-mapping
  */

@@ -82,8 +82,8 @@ export type Membership = {
  * `permission_denied` and `unauthenticated` cover the two ext-authz / FGA
  * deny shapes (ConnectRPC codes 7 and 16). They must NOT be conflated with
  * `daemon_unavailable` (code 14), surfacing a permission failure as
- * "service unreachable" misattributes the cause and triggers "on-call has
- * been paged" copy where no on-call action would help. See dashboard#45.
+ * "Service unavailable" misattributes the cause and tells the user to retry
+ * where no retry would help. See dashboard#45.
  */
 export type MembershipResolutionReason =
   | 'unauthenticated'
@@ -307,7 +307,7 @@ async function resolveMembershipsFromDaemon(): Promise<Membership[]> {
           // JWT validated, but FGA / ext-authz denied this specific RPC.
           // Pre-dashboard#45 this fell through to the generic
           // `daemon_unavailable` branch below, surfacing as the wrong
-          // "service unreachable / on-call has been paged" UX.
+          // "Service unavailable / please retry" UX.
           throw new MembershipResolutionError('permission_denied', err, codeLabel);
         case Code.Unavailable:
         case Code.DeadlineExceeded:
@@ -317,8 +317,8 @@ async function resolveMembershipsFromDaemon(): Promise<Membership[]> {
           throw new MembershipResolutionError('fga_unavailable', err, codeLabel);
         default:
           // Any other ConnectRPC code is genuinely unknown, surfacing as
-          // `daemon_unavailable` would falsely page on-call. The generic
-          // error page is the honest UX.
+          // `daemon_unavailable` would falsely say that the platform is not
+          // reachable. The generic error page is the honest UX.
           throw new MembershipResolutionError('unknown', err, codeLabel);
       }
     }
