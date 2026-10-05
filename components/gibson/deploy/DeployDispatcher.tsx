@@ -524,8 +524,8 @@ function WaitForConnectionStep({
           Waiting for connection
         </h2>
         <p className="text-sm text-muted-foreground">
-          Run the enroll command on the {componentType}&apos;s host. The dashboard
-          will detect it once it heartbeats.
+          The component enrolls when it starts. The dashboard will detect it
+          once it heartbeats.
         </p>
       </div>
 

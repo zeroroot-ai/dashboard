@@ -11,8 +11,8 @@
  *   - 412 NO_ACTIVE_TENANT when the active-tenant cookie is missing.
  *   - 403 FORBIDDEN when the caller is a tenant member but not admin.
  *   - 400 INVALID_REQUEST on missing/invalid name.
- *   - 201 happy path returns the credentials shape with the pre-filled
- *     enroll command and `Cache-Control: no-store`.
+ *   - 201 happy path returns the credentials shape and
+ *     `Cache-Control: no-store`.
  *   - 409 AGENT_EXISTS when daemon returns AlreadyExists.
  *   - 502 DAEMON_ERROR on daemon Internal error.
  *   - The success path never threads the secret through any logger.
@@ -197,8 +197,6 @@ describe('POST /api/agents/register, happy path', () => {
       principalId: 'agent_principal:uuid-123',
       bootstrapToken: 'bt-abc',
       gibsonUrl: 'https://api.zeroroot.local:30443',
-      enrollCommand:
-        'gibson component register --kind agent --token - --gibson-url https://api.zeroroot.local:30443',
     });
 
     const { POST } = await import('../route');
@@ -213,8 +211,6 @@ describe('POST /api/agents/register, happy path', () => {
     expect(body).toEqual({
       bootstrapToken: 'bt-abc',
       gibsonUrl: 'https://api.zeroroot.local:30443',
-      enrollCommand:
-        'gibson component register --kind agent --token - --gibson-url https://api.zeroroot.local:30443',
     });
 
     // Verify the daemon received the correct input.
@@ -231,7 +227,6 @@ describe('POST /api/agents/register, happy path', () => {
       principalId: 'agent_principal:uuid-1',
       bootstrapToken: 'topsecret-do-not-leak',
       gibsonUrl: 'https://api.zeroroot.local:30443',
-      enrollCommand: 'gibson component register --kind agent --token - ...',
     });
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
