@@ -9,7 +9,7 @@
  * client functions and assert every direction of the translation table
  * in spec 25 §5.
  *
- * ADR-0037: StreamLLM was removed from TenantService. doStream is now
+ * ADR-0058: StreamLLM was removed from TenantService. doStream is now
  * implemented by wrapping ExecuteLLM in a ReadableStream. The streaming
  * tests assert the correct sequence of LanguageModelV2StreamPart values
  * emitted from a single non-streaming response.
@@ -227,7 +227,7 @@ describe('GibsonLLMAdapter.doGenerate', () => {
 });
 
 // ---------------------------------------------------------------------------
-// doStream (ADR-0037: non-incremental, wraps ExecuteLLM in a ReadableStream)
+// doStream (ADR-0058: non-incremental, wraps ExecuteLLM in a ReadableStream)
 // ---------------------------------------------------------------------------
 
 describe('GibsonLLMAdapter.doStream', () => {

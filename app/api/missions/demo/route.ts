@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     const definition = buildDemoMissionDefinition();
 
     // Step 1: register the mission definition.
-    // DaemonService.CreateMissionDefinition (OSS SDK, ADR-0037) accepts a
+    // DaemonService.CreateMissionDefinition (OSS SDK, ADR-0058) accepts a
     // fully-formed MissionDefinition proto in the `definition` field, no
     // source oneof. Pass the in-process proto directly.
     const defResp = await client.createMissionDefinition({ definition });

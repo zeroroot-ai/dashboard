@@ -84,7 +84,7 @@ export class GibsonLLMAdapter implements LanguageModelV2 {
     stream: ReadableStream<LanguageModelV2StreamPart>;
     warnings: LanguageModelV2CallWarning[];
   }> {
-    // ADR-0037: StreamLLM was removed from TenantService. Implement doStream
+    // ADR-0058: StreamLLM was removed from TenantService. Implement doStream
     // using ExecuteLLM (non-streaming) and wrap the single response into a
     // ReadableStream so the Vercel AI SDK streaming contract is satisfied.
     // This produces a non-incremental stream: the full response is enqueued
@@ -425,7 +425,7 @@ export function mapUsage(u?: DaemonLLMUsage): LanguageModelV2Usage {
  * {@link LanguageModelV2StreamPart} objects that {@link GibsonLLMAdapter.doStream}
  * enqueues into its `ReadableStream`.
  *
- * ADR-0037: StreamLLM was removed from TenantService. doStream is implemented
+ * ADR-0058: StreamLLM was removed from TenantService. doStream is implemented
  * by wrapping the single ExecuteLLM response. The emitted sequence is:
  *   - one `stream-start` part carrying any call warnings
  *   - `text-start` → `text-delta` → `text-end` for the text content (if any)

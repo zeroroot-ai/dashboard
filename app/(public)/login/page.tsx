@@ -22,7 +22,7 @@ import { LoginForm } from "./login-form";
 export default function LoginPage() {
   // Resolve the deployment posture from the single source of truth.
   // selfServeSignup governs whether a "Create account" CTA is shown.
-  // dashboard#922 / PRD dashboard#920 / deploy ADR-0006.
+  // dashboard#922 / PRD dashboard#920 / ADR-0074.
   const { selfServeSignup } = getDeploymentProfile();
 
   // buildSocialProviders() throws at startup if any provider has a partial

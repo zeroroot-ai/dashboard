@@ -6,7 +6,7 @@ import type { MetadataRoute } from "next";
 /**
  * sitemap.xml (Next.js metadata route).
  *
- * ADR-0006 / deploy#1033: the marketing surface (home / pricing / contact-sales)
+ * ADR-0074 / deploy#1033: the marketing surface (home / pricing / contact-sales)
  * has moved to the SaaS-only www.zeroroot.ai site. The dashboard no longer
  * serves go-to-market pages.
  *

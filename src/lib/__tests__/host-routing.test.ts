@@ -20,7 +20,7 @@ const cfg: HostSplitConfig = {
 
 describe("isMarketingPath", () => {
   it("treats marketing prefixes as marketing (deploy#1033: pricing/contact-sales moved to www-svc)", () => {
-    // ADR-0006 / deploy#1033: pricing and contact-sales are no longer served
+    // ADR-0074 / deploy#1033: pricing and contact-sales are no longer served
     // by the dashboard — they live in the SaaS-only www-svc (www.zeroroot.ai).
     // They ARE still in MARKETING_PREFIXES so that requests to app.<domain>/pricing
     // redirect to the canonical marketing host rather than 404.
@@ -29,7 +29,7 @@ describe("isMarketingPath", () => {
     }
   });
   it("root '/' is NOT a marketing path (handled separately as app-root → /dashboard)", () => {
-    // ADR-0006: on the app host, '/' → /dashboard (not www).
+    // ADR-0074: on the app host, '/' → /dashboard (not www).
     // The root is no longer a marketing landing — it redirects to /login (self-hosted)
     // or /dashboard (SaaS, via app-root special case in decideHostSplit).
     expect(isMarketingPath("/")).toBe(false);
@@ -95,7 +95,7 @@ describe("loadHostSplitConfig", () => {
   });
 
   it("falls back to the public docs host when DOCS_URL is unset", () => {
-    // Docs are core (ADR-0006), present self-hosted as well as SaaS, so there
+    // Docs are core (ADR-0074), present self-hosted as well as SaaS, so there
     // is always a real target — unlike marketingUrl, which is null off-SaaS.
     const c = loadHostSplitConfig({
       AUTH_URL: "https://app.zeroroot.ai",
@@ -144,7 +144,7 @@ describe("loadHostSplitConfig", () => {
 
 describe("decideHostSplit", () => {
   it("serves marketing paths on www (pass, in case dashboard is the www backend in dev)", () => {
-    // ADR-0006 / deploy#1033: in SaaS, www requests go to gibson_www_svc (nginx),
+    // ADR-0074 / deploy#1033: in SaaS, www requests go to gibson_www_svc (nginx),
     // not the dashboard. In dev, they may arrive here — marketing paths pass.
     for (const p of ["/pricing", "/contact-sales"]) {
       expect(decideHostSplit("www.zeroroot.ai", p, "", cfg)).toEqual({ kind: "pass" });

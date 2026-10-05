@@ -6,7 +6,7 @@
  *
  * Resolves a tenantId from the session into a full Tenant object from the
  * caller's FGA-backed membership list (daemon `ListMyMemberships`), NOT by
- * reading the Tenant CRD from Kubernetes. Per ADR-0044, tenant resolution is
+ * reading the Tenant CRD from Kubernetes. Per ADR-0058, tenant resolution is
  * an FGA/identity concern, not a Kubernetes operation, the dashboard's only
  * remaining K8s access is Tenant *provisioning* (signup) + billing lifecycle.
  *

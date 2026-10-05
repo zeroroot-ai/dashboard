@@ -261,7 +261,7 @@ interface ProvisioningStep {
 // TenantAdminService.CreateAgentIdentity (spec: agent-service-credentials).
 
 // listUserTenants / MembershipInfo removed, tenant membership is now
-// served by the daemon's MembershipService (ADR-0043/0044).
+// served by the daemon's MembershipService (ADR-0093/0058).
 
 // getAuthSchema / getProvisioningStatus / deprovisionTenant removed -
 // auth schema is now served by the FGA-backed GetMyPermissions RPC, and

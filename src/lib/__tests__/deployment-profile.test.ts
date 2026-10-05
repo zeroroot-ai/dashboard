@@ -3,7 +3,7 @@
 
 /**
  * Tests for getDeploymentProfile() — the single source of truth for
- * deployment posture (dashboard#921 / PRD dashboard#920 / deploy ADR-0006).
+ * deployment posture (dashboard#921 / PRD dashboard#920 / ADR-0074).
  *
  * Strategy: inject env via the `source` parameter so tests are isolated
  * from the real process.env and from each other. Mirrors the test pattern

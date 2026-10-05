@@ -26,7 +26,7 @@
  * Renders `<SignupForm>` inside a Suspense boundary (matching the pattern
  * used by `/login`).
  *
- * Self-hosted / SaaS seam gate (deploy ADR-0006, gibson#1088):
+ * Self-hosted / SaaS seam gate (ADR-0074, gibson#1088):
  * When SIGNUP_SELF_SERVE is unset (self-hosted profile), this page is not
  * accessible — redirect to /login so the self-hosted front door is login-only.
  * The env var is read server-side only; it is not exposed to the browser.
@@ -61,10 +61,10 @@ interface SignupPageProps {
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
   // Resolve the deployment posture from the single source of truth.
-  // dashboard#921 / PRD dashboard#920 / deploy ADR-0006.
+  // dashboard#921 / PRD dashboard#920 / ADR-0074.
   const profile = getDeploymentProfile();
 
-  // Self-hosted / SaaS seam gate (deploy ADR-0006, gibson#1088).
+  // Self-hosted / SaaS seam gate (ADR-0074, gibson#1088).
   // When selfServeSignup is false, /signup is never reachable — redirect to
   // login (the front door). Derived from SIGNUP_SELF_SERVE via the resolver.
   if (!profile.selfServeSignup) {

@@ -53,7 +53,7 @@ export type ActionResult<T = void> =
  * surface (dashboard#855 zero-kubeconfig capstone): the dashboard no longer
  * reads the TenantMember CR, so the role enum is a dashboard-side type, not a
  * mirror of a Kubernetes schema. Membership is owned by the daemon's
- * MembershipService (ADR-0043/0044); these are the role strings that service
+ * MembershipService (ADR-0093/0058); these are the role strings that service
  * returns.
  */
 /**

@@ -17,7 +17,7 @@ import { getDeploymentProfile } from "@/src/lib/deployment-profile";
 export default function NotFound() {
   // Resolve the deployment posture at the server boundary.
   // marketingUrl is null on self-hosted (WWW_URL unset), non-null on SaaS.
-  // dashboard#924 / PRD dashboard#920 / deploy ADR-0006.
+  // dashboard#924 / PRD dashboard#920 / ADR-0074.
   const { marketingUrl } = getDeploymentProfile();
 
   return (

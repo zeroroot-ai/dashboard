@@ -17,7 +17,7 @@
  *                      charts is public, so no token is needed.
  *                      Ref:  PLANS_REF env var, default "main".
  *
- * Open-core relocation (gibson#915 / ADR-0050): #915 ripped billing/plans out
+ * Open-core relocation (gibson#915 / ADR-0089): #915 ripped billing/plans out
  * of OSS gibson; the canonical plans source is the `charts` repo (the umbrella
  * chart, ADR-0086) under helm/gibson-operators/files/. Both source modes point at charts.
  *
@@ -59,7 +59,7 @@ const DASHBOARD_ROOT = resolve(HERE, "..");
 // segments and never names a directory outside a repository, so the layout of
 // the checkouts on any one machine is not encoded here.
 //
-// Open-core relocation (gibson#915 / ADR-0050): #915 ripped billing/plans out
+// Open-core relocation (gibson#915 / ADR-0089): #915 ripped billing/plans out
 // of OSS gibson, so the canonical plans source is the public `charts`
 // repository (ADR-0086), ELv2-readable by the dashboard; the closed billing
 // implementation reads the same copy.

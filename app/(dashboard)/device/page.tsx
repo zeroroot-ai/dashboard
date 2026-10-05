@@ -7,7 +7,7 @@
  * /dashboard/device, branded landing for the OAuth2 Device Authorization
  * Grant that `gibson login` runs.
  *
- * Post ADR-0043 the device grant is owned by the Gibson identity service
+ * Post ADR-0093 the device grant is owned by the Gibson identity service
  * (native device-grant app), NOT by the dashboard. The dashboard no longer
  * mints or approves device tokens itself, the old dashboard-as-authority
  * flow (device-auth-store + /api/auth/device/approve) is retired. This page is

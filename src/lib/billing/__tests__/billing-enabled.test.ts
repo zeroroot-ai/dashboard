@@ -13,7 +13,7 @@
  *
  * Critical property: fail-closed (absent flag ⇒ billing OFF, the on-prem
  * default). Preserves all behavioral guarantees from the original
- * dashboard#809 / ADR-0050 spec.
+ * dashboard#809 / ADR-0089 spec.
  */
 
 import { describe, it, expect, afterEach } from 'vitest';

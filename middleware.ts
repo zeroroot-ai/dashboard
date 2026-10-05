@@ -70,7 +70,7 @@ const PROTECTED_PREFIX = "/dashboard";
 
 /** Paths served to anonymous callers. Exact matches. */
 const PUBLIC_PATHS: ReadonlySet<string> = new Set([
-  // Front door. Self-hosted: the login page (ADR-0006). SaaS: the host split
+  // Front door. Self-hosted: the login page (ADR-0074). SaaS: the host split
   // above has already redirected app.<domain>/ to /dashboard.
   "/",
   "/login",
@@ -119,7 +119,7 @@ const PUBLIC_PREFIXES: readonly string[] = [
   "/api/config/public",
   // Public status endpoint. Its handler owns its own rate limiting and
   // validation. contact-sales is NOT here: www owns lead capture on its own
-  // CloudFront origin (ADR-0009), and an unauthenticated POST that emails a
+  // CloudFront origin (ADR-0077), and an unauthenticated POST that emails a
   // fixed inbox has no place in a customer's self-hosted cluster.
   "/api/status",
 ];

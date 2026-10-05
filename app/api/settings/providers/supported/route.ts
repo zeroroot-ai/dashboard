@@ -14,7 +14,7 @@
  * Uses the member-accessible client (user's session token). The FGA
  * annotation on GetSupportedProviders carries relation: "member" so any
  * signed-in user, not just tenant admins, can retrieve the static
- * provider catalog. ADR-0037: migrated from gibson.admin.v1 to the
+ * provider catalog. ADR-0058: migrated from gibson.admin.v1 to the
  * OSS SDK TenantService.
  */
 

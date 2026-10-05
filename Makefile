@@ -1,8 +1,7 @@
 # ============================================================================
 # Gibson Dashboard — uniform Makefile contract
 # ============================================================================
-# Implements the org-wide "just works" target contract from
-# docs/architecture/open-core/RESTRUCTURE-QUALITY-BARS.md §1:
+# Implements the org-wide "just works" target contract:
 #
 #     make bootstrap | build | test | check | image
 #

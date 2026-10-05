@@ -14,7 +14,7 @@ import { Lockup } from "@/components/layout/logo";
  * / PRD dashboard#920): when `marketingUrl` is null (self-hosted), no
  * off-cluster marketing links are rendered. When set (SaaS), pricing points at
  * `${marketingUrl}/pricing` and docs point at `docsUrl` — two different hosts,
- * because they are two different deployables (ADR-0006, ADR-0077).
+ * because they are two different deployables (ADR-0074, ADR-0077).
  *
  * Brand lockup: full BrainCRT mark (with monitor stand, "the actual terminal")
  * sitting next to the "zeroroot.ai" wordmark. Same treatment as the square
@@ -25,7 +25,7 @@ export async function SiteHeader() {
   const session = await getServerSession();
   // Resolve the deployment posture once at this server boundary.
   // marketingUrl is null on self-hosted (WWW_URL unset), non-null on SaaS.
-  // dashboard#924 / PRD dashboard#920 / deploy ADR-0006.
+  // dashboard#924 / PRD dashboard#920 / ADR-0074.
   const { marketingUrl, docsUrl } = getDeploymentProfile();
 
   return (

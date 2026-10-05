@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Tests for BillingContent's billing-flag gating (dashboard#809 / ADR-0050).
+ * Tests for BillingContent's billing-flag gating (dashboard#809 / ADR-0089).
  *
  * Plan + quota cards always render. The purchase/manage surfaces — the upgrade
  * CTA and the Stripe Customer Portal ("Manage payment") button — are gated on
