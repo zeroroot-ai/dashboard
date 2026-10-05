@@ -33,14 +33,6 @@ const DASHBOARD_ROOT = resolve(__dirname, '..');
 const COMMITTED = resolve(DASHBOARD_ROOT, 'docs/AUTH_RBAC_INVENTORY.md');
 const GENERATOR = resolve(__dirname, 'gen-auth-rbac-inventory.mjs');
 
-// Skip inside the Docker build, which carries neither the committed docs/ tree
-// nor a charts checkout. The check is a dev-host gate.
-// Spec: signup-zitadel-permissions-fix (Docker build fix for auth-resolution-hardening).
-if (process.env.SKIP_DASHBOARD_RBAC_CHECK === '1') {
-  console.log(`[${SCRIPT_NAME}] SKIPPED, SKIP_DASHBOARD_RBAC_CHECK=1`);
-  process.exit(0);
-}
-
 const HEADER = '# Auth RBAC Inventory, Gibson Dashboard';
 
 let committed;

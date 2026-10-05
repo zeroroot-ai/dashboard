@@ -35,10 +35,10 @@ const DASHBOARD_ROOT = resolve(__dirname, '..');
 // checkout by searching the ancestors of this one. The umbrella chart lives in
 // the public charts repository (ADR-0086).
 // The charts repository commits a golden render of the umbrella with the
-// vanilla overlay. Reading it needs neither helm nor a dependency build, and it
+// baseline values. Reading it needs neither helm nor a dependency build, and it
 // is the same artifact the chart's own gate asserts on. The rendered RBAC does
-// not depend on environment values, so the vanilla golden is enough.
-const GOLDEN_REL = 'helm/testdata/golden/values-vanilla.withcaps.yaml';
+// not depend on environment values, so the baseline golden is enough.
+const GOLDEN_REL = 'helm/testdata/golden/values-baseline.withcaps.yaml';
 const GOLDEN_PATH =
   resolveRepoPath('charts', GOLDEN_REL, { from: DASHBOARD_ROOT })?.path ??
   resolve(DASHBOARD_ROOT, 'charts', GOLDEN_REL);

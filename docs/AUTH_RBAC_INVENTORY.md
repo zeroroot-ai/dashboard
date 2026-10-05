@@ -10,15 +10,12 @@ Spec: `auth-resolution-hardening` (Req 9).
 
 ## 1. Kubernetes RBAC bound to the gibson-dashboard ServiceAccount
 
-### ClusterRole: `gibson-dashboard-crd`
+### Role: `gibson-dashboard-init-secrets`
+- Namespace: `gibson`
 
 | apiGroup | Resources | Verbs |
 | --- | --- | --- |
-| `""` (core) | `namespaces` | `get` (read one by name), `list` (enumerate all (cluster-wide if ClusterRole)), `watch` (subscribe to changes) |
 | `""` (core) | `secrets` | `get` (read one by name) |
-| `gibson.zeroroot.ai` | `agentenrollments`, `componentgrants`, `tenantmembers` | `create` (write new objects), `delete` (remove objects), `get` (read one by name), `list` (enumerate all (cluster-wide if ClusterRole)), `patch` (modify fields on existing objects), `update` (replace existing objects), `watch` (subscribe to changes) |
-| `gibson.zeroroot.ai` | `tenants` | `create` (write new objects), `get` (read one by name), `patch` (modify fields on existing objects), `update` (replace existing objects), `watch` (subscribe to changes) |
-| `gibson.zeroroot.ai` | `tenants/status` | `get` (read one by name) |
 
 ## 2. FGA tuples seeded for the dashboard workload identity
 

@@ -234,7 +234,7 @@ repo, and each has a gate in `pnpm prebuild`:
 | `src/lib/billing/stripe_gen.ts` | the same `plans.yaml` | `check-stripe-tiers-fresh.mjs` | `pnpm gen:stripe-tiers` |
 | `src/gen/authz/registry.ts` | SDK + gibson daemon-local protos | `check-authz-registry-fresh.mjs` | `pnpm gen:authz` |
 | `src/data/mission-definition.schema.json` | `sdk`: `gen/mission-definition.schema.json` | `check-mission-schema-fresh.mjs` | `pnpm gen:mission-schema` |
-| `docs/AUTH_RBAC_INVENTORY.md` | `charts`: `helm/testdata/golden/values-vanilla.withcaps.yaml` | `check-auth-rbac-inventory-fresh.mjs` | `pnpm gen:auth-rbac-inventory` |
+| `docs/AUTH_RBAC_INVENTORY.md` | `charts`: `helm/testdata/golden/values-baseline.withcaps.yaml` | `check-auth-rbac-inventory-fresh.mjs` | `pnpm gen:auth-rbac-inventory` |
 
 All four share one implementation, `scripts/lib/freshness-gate.mjs`. Read that
 file before touching any of them; the gate scripts themselves are configuration.
