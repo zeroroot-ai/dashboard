@@ -66,7 +66,7 @@
   "dependencies": {
     "@ai-sdk/provider": "^4.0.21",
     "@ai-sdk/react": "^4.0.129",
-    "@assistant-ui/react": "0.15.18",
+    "@assistant-ui/react": "0.15.23",
     "@assistant-ui/react-ai-sdk": "1.4.9",
     "@assistant-ui/react-markdown": "0.14.14",
     "@bufbuild/protobuf": "^2.0.0",
