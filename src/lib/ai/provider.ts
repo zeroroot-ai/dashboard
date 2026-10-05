@@ -36,8 +36,8 @@ export function resolveProvider(
   }
   if (providerName === 'custom') {
     throw new Error(
-      'resolveProvider: "custom" provider type is not resolvable from the dashboard; ' +
-        'see docs/byok-providers.md for operator-side configuration.',
+      'resolveProvider: "custom" provider type is not resolvable from the dashboard. ' +
+        'An operator configures a custom provider on the platform side.',
     );
   }
   return new GibsonLLMAdapter(providerName, opts?.userId, opts?.tenantId);

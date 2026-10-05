@@ -75,8 +75,8 @@ describe('resolveProvider', () => {
 
   it('throws for "custom" provider type with a docs pointer', () => {
     expect(() => resolveProvider('custom')).toThrow(
-      'resolveProvider: "custom" provider type is not resolvable from the dashboard; ' +
-        'see docs/byok-providers.md for operator-side configuration.',
+      'resolveProvider: "custom" provider type is not resolvable from the dashboard. ' +
+        'An operator configures a custom provider on the platform side.',
     );
   });
 

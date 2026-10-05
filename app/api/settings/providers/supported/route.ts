@@ -9,13 +9,14 @@
  * Settings → Providers wizard.
  *
  * Spec: providers-wizard. Daemon RPC:
- *   gibson.tenant.v1.TenantService/GetSupportedProviders
+ *   gibson.tenant.v1.ProviderService/GetSupportedProviders
  *
  * Uses the member-accessible client (user's session token). The FGA
  * annotation on GetSupportedProviders carries relation: "member" so any
  * signed-in user, not just tenant admins, can retrieve the static
- * provider catalog. ADR-0058: migrated from gibson.admin.v1 to the
- * OSS SDK TenantService.
+ * provider catalog. ADR-0058: `ProviderService` is one of the
+ * tenant-administration services of the daemon tenant API. It is not in
+ * the OSS SDK.
  */
 
 import 'server-only';
