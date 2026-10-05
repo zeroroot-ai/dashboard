@@ -50,7 +50,7 @@ export const ERROR_COPY: Record<LoginErrorReason, LoginErrorCopy> = {
   daemon_unavailable: {
     title: "Service unavailable",
     description:
-      "We couldn't reach the Gibson daemon to complete your sign-in. Our on-call has been paged automatically. Please retry shortly.",
+      "We couldn't reach the platform to complete your sign-in. This usually clears within a minute. Please retry.",
     cta: { label: "Retry sign-in", href: "/login" },
   },
   jwks_unavailable: {

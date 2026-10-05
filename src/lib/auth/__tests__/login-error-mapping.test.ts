@@ -8,7 +8,7 @@
  * Regression for dashboard#45: the mapper MUST send `permission_denied`
  * to a distinct page from `daemon_unavailable`, and MUST route
  * `unauthenticated` to `session_invalid` (so the existing "sign in again"
- * copy is reused without paging on-call).
+ * copy is reused, and not the "Service unavailable" copy).
  */
 
 import { describe, it, expect } from "vitest";
@@ -26,7 +26,7 @@ describe("membershipReasonToLoginErrorReason", () => {
     );
   });
 
-  it("unauthenticated → session_invalid (no on-call paging, sign-in CTA)", () => {
+  it("unauthenticated → session_invalid (sign-in CTA, not the unavailable page)", () => {
     expect(membershipReasonToLoginErrorReason("unauthenticated")).toBe(
       "session_invalid",
     );
