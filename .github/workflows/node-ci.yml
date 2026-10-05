@@ -26,12 +26,6 @@ name: node-ci
 # trust the committed generated files; the workstation / a full polyrepo CI
 # run is what actually catches drift on those.
 #
-# NOTE (temporary @main pin): this caller is pinned to @main rather than a
-# release tag because the tag @v2 predates reusable-node-ci.yml -- it does not
-# exist on that tag yet. Flip to the next tag (v2.1.0 / re-pointed v2) once
-# zeroroot-ai/.github#<this PR> merges and the tag moves, per the
-# blast-radius rule (pin a release tag, never @main, in steady state).
-#
 # Queue-entry compat (epic cicd-efficiency, board #44, merge-queue-entry
 # follow-up, canary PR dashboard#942): GitHub blocks a PR from entering the
 # merge queue until every ruleset-required check context has reported on the
