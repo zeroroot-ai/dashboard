@@ -17,7 +17,6 @@ updates:
           - patch
     commit-message:
       prefix: chore(deps)
-      include: scope
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -35,7 +34,6 @@ updates:
           - patch
     commit-message:
       prefix: chore(deps)
-      include: scope
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -64,4 +62,3 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: chore(deps)
-      include: scope
