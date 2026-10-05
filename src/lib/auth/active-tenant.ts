@@ -29,8 +29,8 @@
  * - `activeTenantActionResult(err)`, for Server Actions;
  *   returns `{ ok: false, code: 'no_active_tenant' | 'stale_active_tenant' }`.
  * - `activeTenantPageRedirect(err)`, for RSC pages; redirects to `/onboarding`
- *   for `NoActiveTenantError`, or `/api/auth/federated-signout` for
- *   `StaleActiveTenantError` (throws Next.js `NEXT_REDIRECT`).
+ *   for `NoActiveTenantError`, or `/login/error?reason=membership_revoked`
+ *   for `StaleActiveTenantError` (throws Next.js `NEXT_REDIRECT`).
  *
  * @module auth/active-tenant
  */
@@ -268,8 +268,9 @@ export function activeTenantActionResult(err: unknown): ActiveTenantActionError 
  * Call this from RSC page components that have caught an error from
  * `requireActiveTenant()`. A `NoActiveTenantError` (no tenant yet) redirects
  * to `/onboarding`; a `StaleActiveTenantError` (membership revoked since
- * sign-in) redirects to `/api/auth/federated-signout` so the next sign-in
- * re-resolves the tenant cleanly. Any other error is re-thrown. The function
+ * sign-in) redirects to `/login/error?reason=membership_revoked`. The action
+ * of that page posts to the sign-out route, so the next sign-in re-resolves
+ * the tenant cleanly. Any other error is re-thrown. The function
  * calls Next.js `redirect()`, which throws a `NEXT_REDIRECT` exception; it
  * never returns normally for the two handled error types.
  *
@@ -288,7 +289,7 @@ export function activeTenantActionResult(err: unknown): ActiveTenantActionError 
  */
 export function activeTenantPageRedirect(err: unknown): never {
   if (err instanceof StaleActiveTenantError) {
-    redirect('/api/auth/federated-signout');
+    redirect('/login/error?reason=membership_revoked');
   }
   if (err instanceof NoActiveTenantError) {
     redirect('/onboarding');

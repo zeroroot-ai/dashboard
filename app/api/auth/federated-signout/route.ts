@@ -10,12 +10,16 @@
  * re-issues tokens, making it feel like sign-out never happened.
  *
  * Fix: after clearing the Auth.js cookie, redirect the browser to Zitadel's
- * `end_session_endpoint` with `id_token_hint` (the last-issued ID token) and a
- * `post_logout_redirect_uri` pointing back at our landing page. Zitadel then:
+ * `end_session_endpoint` with `client_id` and a `post_logout_redirect_uri`
+ * pointing back at our landing page. The route never puts the ID token in a
+ * URL, and the session does not hold the ID token. Zitadel then:
  *
- *  1. Validates the hint
- *  2. Kills its own session cookie on `auth.zeroroot.local`
+ *  1. Resolves the client from `client_id`
+ *  2. Kills its own session cookie on the identity host
  *  3. Redirects the browser back to our post_logout URL
+ *
+ * The route accepts POST only, because a sign-out changes state. Next.js
+ * answers 405 for each other method.
  *
  * There is no dashboard-side tenant cookie to clear (ADR-0093 decision 4): a
  * person's tenant is resolved server-side at the NEXT sign-in, from their
@@ -197,7 +201,9 @@ async function handleSignout(req: NextRequest): Promise<NextResponse> {
     postLogoutRedirectUri,
   );
 
-  const res = NextResponse.redirect(endSession.toString());
+  // 303 makes the browser follow with GET. A 307 keeps the POST method, and
+  // `end_session` gets its parameters from the query string of a GET.
+  const res = NextResponse.redirect(endSession.toString(), 303);
   // Belt-and-suspenders: explicitly expire every Auth.js cookie shape on the
   // response. signOut() should do this, but observed behavior is that the
   // session cookie occasionally survives the call when redirect: false is set,
@@ -208,8 +214,10 @@ async function handleSignout(req: NextRequest): Promise<NextResponse> {
 }
 
 /**
- * POST is the correct method for a sign-out: it mutates state. The sign-out
- * forms in `no-workspace/page.tsx` and `onboarding/page.tsx` use it.
+ * POST is the one method for a sign-out: it mutates state. The sign-out
+ * forms in `no-workspace/page.tsx`, `onboarding/page.tsx` and
+ * `login/error/page.tsx` use it. The sidebar menu, the header menu and the
+ * leave-workspace action submit a form through `submitFederatedSignout`.
  *
  * @csrf-exempt: reached by top-level navigation and by `<form method="post">`,
  * neither of which can attach an `x-csrf-token` header, so the double-submit
@@ -219,24 +227,5 @@ async function handleSignout(req: NextRequest): Promise<NextResponse> {
  * this shape, not a weaker version of this one.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  return handleSignout(req);
-}
-
-/**
- * GET is still accepted because the primary logout affordances navigate to
- * this route (`window.location.href = "/api/auth/federated-signout"` in the
- * sidebar and header user menus) and middleware redirects tenantless sessions
- * here. Both are same-origin navigations.
- *
- * The forgery risk that normally makes a state-changing GET unacceptable is
- * closed by `isCrossSiteRequest`: a cross-origin page cannot produce a request
- * with `Sec-Fetch-Site: same-origin`, and the zero-click subresource vectors
- * (`<img>`, `<script>`, `fetch`) are rejected on `Sec-Fetch-Dest`.
- *
- * Follow-up: once the two `window.location.href` call sites and the middleware
- * redirect are converted to POST, delete this handler and let the route be
- * POST-only.
- */
-export async function GET(req: NextRequest): Promise<NextResponse> {
   return handleSignout(req);
 }

@@ -5,6 +5,8 @@
  * Deterministic auth-failure error page.
  *
  * Replaces the silent federated-signout loop the dashboard had pre-spec.
+ * The `membership_revoked` reason is also where middleware sends a session
+ * whose tenant was revoked: its action posts to the sign-out route.
  * Reads `?reason=<code>`, runs `safeReason()` to whitelist the value,
  * renders user-facing copy + an actionable CTA + an opaque correlation
  * ID for support to track. Server-rendered; works with JS disabled. No
@@ -55,9 +57,15 @@ export default async function LoginErrorPage({ searchParams }: PageProps) {
           <CardDescription>{copy.description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Link href={copy.cta.href}>
-            <Button>{copy.cta.label}</Button>
-          </Link>
+          {copy.cta.method === "post" ? (
+            <form method="post" action={copy.cta.href}>
+              <Button type="submit">{copy.cta.label}</Button>
+            </form>
+          ) : (
+            <Link href={copy.cta.href}>
+              <Button>{copy.cta.label}</Button>
+            </Link>
+          )}
           <p className="text-xs text-muted-foreground font-mono">
             Correlation ID: {correlationId}
           </p>

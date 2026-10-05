@@ -88,12 +88,6 @@ declare module "next-auth" {
      */
     accessToken?: string;
     /**
-     * Raw Zitadel ID token, required as `id_token_hint` on the
-     * end_session_endpoint during federated logout. Server-side only;
-     * stripped from `GET /api/auth/session` like accessToken (dashboard#818).
-     */
-    idToken?: string;
-    /**
      * The signed-in person's one tenant, resolved server-side at sign-in
      * (ADR-0093 decision 4). Null means none (the Platform owner, or a
      * tenant still provisioning). This value MAY reach the browser, it is
@@ -107,8 +101,6 @@ declare module "next-auth" {
   interface JWT {
     /** Raw Zitadel access token, stored in the encrypted JWT cookie, server-side only */
     accessToken?: string;
-    /** Raw Zitadel ID token, stored in the encrypted JWT cookie, server-side only */
-    idToken?: string;
     /**
      * Unix seconds at which this login began, stamped ONCE at sign-in and
      * never refreshed. Auth.js rewrites `iat`/`exp` on every re-mint, so
@@ -325,12 +317,6 @@ const config: NextAuthConfig = {
         if (typeof account.access_token === "string") {
           token["accessToken"] = account.access_token;
         }
-        // Stash the ID token too, Zitadel's end_session_endpoint requires
-        // it as `id_token_hint` to perform federated logout (sign the user
-        // out of Zitadel, not just the dashboard's own cookie).
-        if (typeof account.id_token === "string") {
-          token["idToken"] = account.id_token;
-        }
 
         // Fetch OIDC userinfo to populate name and email.
         // idToken: true makes Auth.js skip the userinfo endpoint; Zitadel
@@ -422,12 +408,6 @@ const config: NextAuthConfig = {
       // (dashboard#818).
       if (typeof token["accessToken"] === "string") {
         session.accessToken = token["accessToken"];
-      }
-      // Same treatment for the ID token, needed server-side by the
-      // federated-signout route (/api/auth/federated-signout) so it can
-      // pass id_token_hint to Zitadel's end_session_endpoint.
-      if (typeof token["idToken"] === "string") {
-        session.idToken = token["idToken"];
       }
       // The person's one tenant, stamped by stampSessionTenant above. May
       // reach the browser: it is the person's own tenant, not a secret.

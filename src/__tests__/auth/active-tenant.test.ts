@@ -177,9 +177,9 @@ describe("activeTenantPageRedirect", () => {
     expect(redirectTarget.url).toBe("/onboarding");
   });
 
-  it("redirects to /api/auth/federated-signout for StaleActiveTenantError", () => {
+  it("redirects to the membership_revoked error page for StaleActiveTenantError", () => {
     expect(() => activeTenantPageRedirect(new StaleActiveTenantError("t1"))).toThrow(/NEXT_REDIRECT/);
-    expect(redirectTarget.url).toBe("/api/auth/federated-signout");
+    expect(redirectTarget.url).toBe("/login/error?reason=membership_revoked");
   });
 
   it("re-throws any other error", () => {
