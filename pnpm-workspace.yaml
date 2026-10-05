@@ -1,6 +1,3 @@
-patchedDependencies:
-  next-auth: patches/next-auth.patch
-
 # pnpm 11+ quarantines any package published in the last 24h
 # (minimumReleaseAge). That protects against a compromised third-party
 # publish being pulled in before anyone notices, which is not the risk

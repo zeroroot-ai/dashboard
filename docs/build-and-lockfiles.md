@@ -32,60 +32,32 @@ docker buildx imagetools inspect ghcr.io/zeroroot-ai/mirror/node:24-alpine
 # copy the top-level (index) Digest into every FROM
 ```
 
-## Two lockfiles — why, and how they stay honest
+## One lockfile
 
-The dashboard ships **both** lockfiles, by necessity:
+`pnpm-lock.yaml` is the one lockfile (dashboard#246). Local dev
+(`pnpm install`, `make bootstrap`), CI and the container image all install
+from it. The `Dockerfile` enables corepack, which installs the pnpm release
+that `packageManager` in `package.json` names, and runs
+`pnpm install --frozen-lockfile`.
 
-| Lockfile | Manager | Used by | Notes |
-|---|---|---|---|
-| `pnpm-lock.yaml` | pnpm | local dev (`pnpm install`), `make bootstrap` | **dev source of truth**; the only lockfile that honors `pnpm.patchedDependencies` (the `next-auth` `.js`-extension patch). |
-| `package-lock.json` | npm | the production container image (`npm ci`, see `Dockerfile`) | the Next.js `node:24-alpine` image build path. |
+The repo used to carry a second lockfile, `package-lock.json`, for an
+`npm ci` image build. Dependabot updated only `pnpm-lock.yaml`, so each of its
+npm pull requests failed `npm ci` in the merge group. The two files had also
+drifted apart, so the dev build and the image ran different patch versions.
+The npm path is deleted, with its sync check (`check-lockfile-sync.mjs`) and
+the npm-only `overrides` copy in `package.json`.
 
-The image build uses `npm ci` (not pnpm) because the standalone Next.js image
-build was standardized on npm + `package-lock.json`; switching the image build
-to pnpm is the unification path tracked as the follow-up below.
+### No patched dependencies
 
-### Keeping the two in sync
+The repo carries no dependency patch. A patch for `next-auth` added `.js` to
+its `next/*` imports. npm never applied it, so the image never had it. With
+pnpm the patch reached the image, and `next build` failed: a route handler
+then loaded `next/navigation.js`, which Turbopack could not resolve. Vitest
+needed the patch, because plain Node ESM cannot resolve `next/server` with no
+extension. `vitest.config.ts` now inlines `next-auth`, and Vite resolves the
+import instead.
 
-After **any** dependency change you must regenerate **both** lockfiles:
-
-```bash
-pnpm install                                                   # updates pnpm-lock.yaml
-npm install --package-lock-only --ignore-scripts --legacy-peer-deps  # updates package-lock.json
-git add pnpm-lock.yaml package-lock.json
-```
-
-`scripts/check-lockfile-sync.mjs` runs in the `prebuild` chain and compares the
-resolved version of every **direct** dependency / devDependency across the two
-lockfiles. It is a **host-only** check: `pnpm-lock.yaml` is excluded from the
-Docker build context (`.dockerignore`), so inside the image build the check
-SKIPs cleanly (there is nothing to compare against), the same way the other
-sibling-dependent prebuild checks SKIP in the image. It deliberately scopes to the direct-dependency closure (pnpm and
-npm legitimately differ on transitive peer-dedupe and hoisting, so a full-tree
-compare would be all false positives) — direct deps are where an out-of-sync
-`pnpm add` / `npm install` actually diverges the dev and image builds.
-
-> **Current mode: `--report` (non-blocking).** The two committed lockfiles
-> carry a **pre-existing 38-direct-dependency version skew** (the dev pnpm tree
-> resolved older patches of `react`, `react-dom`, the `@tiptap/*` editor suite,
-> `fumadocs-*`, `motion`, `shiki`, `zustand`, `prettier`, etc. than the image
-> npm tree). That means today the dev build and the shipped image run
-> *different patch versions* of those packages. Converging the skew is a full
-> dual-lockfile re-resolution with multiple defensible answers (bump dev up to
-> the image versions, or pin the image down to dev), so it is tracked as a
-> **scoped follow-up**, not done blind in this pass. Until it lands, the gate
-> runs in `--report` mode so every build log surfaces the drift. **Flip the
-> `prebuild` invocation to strict (drop `--report`) when the follow-up
-> converges the lockfiles.**
-
-### Patched dependency caveat
-
-`pnpm.patchedDependencies` applies `patches/next-auth.patch` (adds explicit
-`.js` extensions to `next/*` imports) **only under pnpm**. The npm/image path
-pulls the unpatched `next-auth`; the Next.js bundler currently resolves the
-extensionless imports without the patch, so the image build succeeds. This is
-another reason the dev (pnpm) and image (npm) paths are not byte-identical, and
-another input to the unification follow-up.
+After a dependency change, run `pnpm install` and commit `pnpm-lock.yaml`.
 
 ## Dead-code gate — knip (blocking)
 
@@ -153,11 +125,7 @@ the `Makefile` for the full target list (`make help`).
 
 Tracked separately (filed against dashboard):
 
-1. **Lockfile unification** — converge `pnpm-lock.yaml` and
-   `package-lock.json` (or move the image build onto pnpm so there is a single
-   lockfile), resolve the patched-`next-auth` divergence, then flip
-   `check-lockfile-sync.mjs` to strict in `prebuild`.
-2. **Unused exports/types purge** — the dead-file and
+1. **Unused exports/types purge** — the dead-file and
    dead-dependency purge landed and `files` / `dependencies` / `devDependencies`
    are now `error`. The remaining `exports` (≈260) / `types` (≈491) categories
    stay `off` because they are entangled (kept-template `components/ui/**`
