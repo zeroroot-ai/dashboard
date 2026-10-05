@@ -5,7 +5,7 @@
 
 /**
  * Member-management Server Actions, backed by the daemon's MembershipService
- * (gibson#621/#626), NOT the TenantMember CR. Per ADR-0043/0044 the daemon owns
+ * (gibson#621/#626), NOT the TenantMember CR. Per ADR-0093/0058 the daemon owns
  * the membership + invitation lifecycle; the dashboard is a pure client.
  *
  *   inviteMemberAction    , MembershipService.InviteMember (issues a pending
@@ -118,7 +118,7 @@ export async function inviteMemberAction(input: {
  * AcceptInvitation is unauthenticated and provisions the invitee. Called from
  * the invitation accept page.
  */
-// @crd-authz-exempt: token-based redemption, the invitation token is the sole capability; AcceptInvitation is unauthenticated by design (gibson#633, ADR-0043). No CRD mutation; routes through the daemon RPC.
+// @crd-authz-exempt: token-based redemption, the invitation token is the sole capability; AcceptInvitation is unauthenticated by design (gibson#633, ADR-0093). No CRD mutation; routes through the daemon RPC.
 /**
  * Redeem an invitation token, and return the setup link the daemon mints.
  *
@@ -135,7 +135,7 @@ export async function inviteMemberAction(input: {
  * of the browser that just redeemed the token — redeeming it is what proved
  * control of the mailbox.
  */
-// @crd-authz-exempt: token-based redemption, the invitation token is the sole capability; AcceptInvitation is unauthenticated by design (gibson#633, ADR-0043). No CRD mutation; routes through the daemon RPC.
+// @crd-authz-exempt: token-based redemption, the invitation token is the sole capability; AcceptInvitation is unauthenticated by design (gibson#633, ADR-0093). No CRD mutation; routes through the daemon RPC.
 export async function acceptInvitationAction(
   input: { token: string },
 ): Promise<ActionResult<{ setupUrl: string }>> {

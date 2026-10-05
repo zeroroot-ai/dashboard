@@ -4,11 +4,11 @@
 /**
  * Root page — self-hosted front door.
  *
- * ADR-0006 / deploy#1033: the marketing surface (home / pricing / contact-sales)
+ * ADR-0074 / deploy#1033: the marketing surface (home / pricing / contact-sales)
  * has moved to the SaaS-only www-svc (zeroroot-ai/www) served at www.zeroroot.ai.
  * The dashboard no longer serves go-to-market pages.
  *
- * Per ADR-0006: self-hosted `GET /` = the **login** page.
+ * Per ADR-0074: self-hosted `GET /` = the **login** page.
  *
  * On the SaaS deployment the dashboard is served at app.zeroroot.ai. The Envoy
  * www vhost routes to the www-svc nginx instead of this app, so this file is

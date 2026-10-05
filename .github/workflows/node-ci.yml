@@ -1,8 +1,7 @@
 name: node-ci
 
 # Thin caller for the canonical three-tier Node/pnpm CI (Epic: cicd-efficiency,
-# board #44, slice S11a, dashboard#940). See docs/architecture/CICD-CONTEXT.md
-# (decisions 4, 8, 11) and docs/adr/0060-*.
+# board #44, slice S11a, dashboard#940).
 #
 # dashboard previously had NO formal typecheck/lint/vitest/build gate on pull
 # requests -- dashboard.yml only builds and pushes the container image
@@ -30,7 +29,7 @@ name: node-ci
 # NOTE (temporary @main pin): this caller is pinned to @main rather than a
 # release tag because the tag @v2 predates reusable-node-ci.yml -- it does not
 # exist on that tag yet. Flip to the next tag (v2.1.0 / re-pointed v2) once
-# zeroroot-ai/.github#<this PR> merges and the tag moves, per ADR-0060's
+# zeroroot-ai/.github#<this PR> merges and the tag moves, per the
 # blast-radius rule (pin a release tag, never @main, in steady state).
 #
 # Queue-entry compat (epic cicd-efficiency, board #44, merge-queue-entry

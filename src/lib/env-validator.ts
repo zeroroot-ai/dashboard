@@ -303,7 +303,7 @@ const OPTIONAL_ENV = [
   // src/lib/billing/billing-enabled.ts — the single source of truth read by
   // the pricing checkout CTA, the settings Billing portal/upgrade buttons,
   // the quota-banner upgrade CTA, and the /api/billing/{checkout,portal}
-  // routes (dashboard#809 / ADR-0050). Off (absent) = on-prem default:
+  // routes (dashboard#809 / ADR-0089). Off (absent) = on-prem default:
   // no Stripe UI, app runs on the config-driven Entitlements default.
   // Plan/tier + entitlement/quota DISPLAY is never gated.
   'DASHBOARD_BILLING_PAID_TIERS_ENABLED',

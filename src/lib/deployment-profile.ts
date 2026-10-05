@@ -4,7 +4,7 @@
 /**
  * deployment-profile.ts — single source of truth for deployment posture.
  *
- * Open-core seam model (deploy ADR-0006, dashboard#920/#921): the dashboard
+ * Open-core seam model (ADR-0074, dashboard#920/#921): the dashboard
  * can run as a self-hosted install (card-free, no marketing site, optional
  * open registration) or as the ZeroRoot SaaS offering (billing wired, card-
  * first signup, marketing host). Three env knobs govern the split:
@@ -98,7 +98,7 @@ interface DeploymentProfile {
    * Full origin of the docs site, no trailing slash. Never null.
    *
    * Docs are their own deployable on their own host, in BOTH audiences
-   * (ADR-0006 classes them a core component), so unlike `marketingUrl` there
+   * (ADR-0074 classes them a core component), so unlike `marketingUrl` there
    * is always somewhere real for a /docs link to land. That is precisely why
    * docs must never be addressed as a path under `marketingUrl`: the
    * marketing site serves no /docs and answers 404.

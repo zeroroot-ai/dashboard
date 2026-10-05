@@ -6,7 +6,7 @@
  * check-no-tenantmember-crd-writes.mjs
  *
  * Build-time guard enforcing the dashboard#715/#716 cutover: member + role
- * management is owned by the daemon's MembershipService (ADR-0043/0044), and
+ * management is owned by the daemon's MembershipService (ADR-0093/0058), and
  * the dashboard reads ListMembers, NOT the TenantMember CR.
  *
  * ## What is checked
@@ -15,7 +15,7 @@
  *   - call the removed TenantMember member-management helpers
  *     (listTenantMembers / patchTenantMember / deleteTenantMember), or
  *   - call applyTenantMember outside the single permitted provisioning path
- *     (app/actions/signup.ts, founding-owner creation, ADR-0044), or
+ *     (app/actions/signup.ts, founding-owner creation, ADR-0058), or
  *   - reference the removed AgentEnrollment CRD (type or 'agentenrollments'
  *     plural, enrollment is gibson.agentidentity.v1.AgentIdentityService, no CRD).
  *
@@ -39,7 +39,7 @@ const SCAN_DIRS = ['app', 'components', 'src'];
 // Files allowed to reference the listed symbols.
 const ALLOWLIST = new Set([
   'src/lib/k8s/tenants.ts', // defines applyTenantMember (provisioning helper)
-  'app/actions/signup.ts', // founding-owner creation during provisioning (ADR-0044)
+  'app/actions/signup.ts', // founding-owner creation during provisioning (ADR-0058)
 ]);
 
 // Forbidden everywhere (the member-management helpers were removed entirely).
@@ -132,7 +132,7 @@ function main() {
     for (const v of violations) console.error(`  - ${v}`);
     console.error(
       '\nMember/role management is owned by the daemon (MembershipService,\n' +
-        'ADR-0043/0044). Read ListMembers; do not write TenantMember CRs. The only\n' +
+        'ADR-0093/0058). Read ListMembers; do not write TenantMember CRs. The only\n' +
         'permitted applyTenantMember caller is the signup provisioning path.\n' +
         'AgentEnrollment is gone, enrollment is gibson.agentidentity.v1.AgentIdentityService.',
     );

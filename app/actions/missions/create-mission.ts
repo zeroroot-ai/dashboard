@@ -7,7 +7,7 @@
  * Server action for submitting a mission definition from CUE source and
  * creating a mission run.
  *
- * Three-RPC flow (sdk v0.121.0 / ADR-0037):
+ * Three-RPC flow (sdk v0.121.0 / ADR-0058):
  *   1. DaemonService.ValidateMissionCUE, daemon compiles CUE, returns
  *      diagnostics AND the compiled MissionDefinition proto. Any diagnostics
  *      abort submission.

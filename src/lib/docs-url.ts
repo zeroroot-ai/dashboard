@@ -5,11 +5,11 @@
  * Where the customer documentation lives.
  *
  * The docs moved out of this app into their own deployable (docs-site, served
- * at the docs host) — see dashboard#820 and deploy ADR-0006. Links from the
+ * at the docs host) — see dashboard#820 and ADR-0074. Links from the
  * product to a doc page are therefore cross-origin and must be absolute.
  *
  * Unlike `marketingUrl` on the deployment profile, this is never null. Docs
- * are a **core** component in ADR-0006's taxonomy, present in self-hosted as
+ * are a **core** component in ADR-0074's taxonomy, present in self-hosted as
  * well as SaaS (an air-gapped install ships a version-matched docs image), so
  * there is no posture in which the link should be omitted.
  *

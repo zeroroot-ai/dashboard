@@ -5,7 +5,7 @@
 /**
  * check-no-direct-admin-rpc.mjs
  *
- * Build-time guard enforcing ADR-0037: after the DaemonAdminService and
+ * Build-time guard enforcing ADR-0058: after the DaemonAdminService and
  * TenantAdminService deletion from platform-sdk, no source file under
  * `src/` or `app/` may import generated TypeScript bindings from the
  * deleted admin-only paths inside `src/gen/`:
@@ -30,7 +30,7 @@
  *     deleted paths in historical comments or negative assertions.
  *   - Lines that are purely comments (start with // or inside block comments)
  *
- * Spec: dashboard#336 (ADR-0037 platform-sdk admin surface removal).
+ * Spec: dashboard#336 (ADR-0058 platform-sdk admin surface removal).
  */
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -42,15 +42,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_ROOT = join(__dirname, '..');
 
 /**
- * Paths inside src/gen/ that are forbidden after ADR-0037 and ADR-0039:
+ * Paths inside src/gen/ that are forbidden after ADR-0058:
  *   - DaemonAdminService was deleted from platform-sdk; its RPCs moved to
  *     DaemonService (OSS SDK). Importing daemon_admin_pb is now forbidden.
  *   - PlatformOperatorService was moved to DaemonOperatorService (daemon/operator/v1).
- *   - gibson.admin.v1 was decomposed into gibson.tenant.v1.* (ADR-0039).
+ *   - gibson.admin.v1 was decomposed into gibson.tenant.v1.* (ADR-0058).
  *     TenantAdminService, SecretsAdminService, GrantsAdminService, PluginsAdminService
  *     are now MembershipService, SecretsService, GrantsService, PluginAdminService.
  *   - gibson.authz.v1, gibson.budget.v1, gibson.usage.v1, gibson.user.v1 were
- *     all moved to gibson.tenant.v1.* (ADR-0039).
+ *     all moved to gibson.tenant.v1.* (ADR-0058).
  *
  * All callers must import from src/gen/gibson/tenant/v1/ instead.
  */
@@ -61,11 +61,11 @@ const DASHBOARD_ROOT = join(__dirname, '..');
 const FORBIDDEN_GEN_PATHS = [
   'src/gen/gibson/daemon/admin',
   'src/gen/gibson/platform',     // PlatformOperatorService, moved to DaemonOperatorService (daemon/operator/v1)
-  'src/gen/gibson/admin/v1/',    // gibson.admin.v1, decomposed into gibson.tenant.v1.* (ADR-0039)
-  'src/gen/gibson/authz/v1/',    // gibson.authz.v1, moved to gibson.tenant.v1.ModelAccessService (ADR-0039)
-  'src/gen/gibson/budget/v1/',   // gibson.budget.v1, moved to gibson.tenant.v1.BudgetService (ADR-0039)
-  'src/gen/gibson/usage/v1/',    // gibson.usage.v1, moved to gibson.tenant.v1.UsageService (ADR-0039)
-  'src/gen/gibson/user/v1/',     // gibson.user.v1, moved to gibson.tenant.v1.UserService (ADR-0039)
+  'src/gen/gibson/admin/v1/',    // gibson.admin.v1, decomposed into gibson.tenant.v1.* (ADR-0058)
+  'src/gen/gibson/authz/v1/',    // gibson.authz.v1, moved to gibson.tenant.v1.ModelAccessService (ADR-0058)
+  'src/gen/gibson/budget/v1/',   // gibson.budget.v1, moved to gibson.tenant.v1.BudgetService (ADR-0058)
+  'src/gen/gibson/usage/v1/',    // gibson.usage.v1, moved to gibson.tenant.v1.UsageService (ADR-0058)
+  'src/gen/gibson/user/v1/',     // gibson.user.v1, moved to gibson.tenant.v1.UserService (ADR-0058)
 ];
 
 /** Directories and file patterns to skip entirely. */
@@ -166,12 +166,12 @@ function main() {
     process.stderr.write(
       `\ncheck-no-direct-admin-rpc: ${violations} violation(s) found.\n` +
         '  Forbidden gen paths detected. Migration guide:\n' +
-        '    ADR-0037: src/gen/gibson/daemon/admin → src/gen/gibson/daemon/v1/daemon_pb\n' +
-        '    ADR-0039: src/gen/gibson/admin/v1 → src/gen/gibson/tenant/v1/{membership,secrets,grants,plugin_admin}_pb\n' +
-        '    ADR-0039: src/gen/gibson/authz/v1 → src/gen/gibson/tenant/v1/model_access_pb\n' +
-        '    ADR-0039: src/gen/gibson/budget/v1 → src/gen/gibson/tenant/v1/budget_pb\n' +
-        '    ADR-0039: src/gen/gibson/usage/v1 → src/gen/gibson/tenant/v1/usage_pb\n' +
-        '    ADR-0039: src/gen/gibson/user/v1 → src/gen/gibson/tenant/v1/user_pb\n',
+        '    ADR-0058: src/gen/gibson/daemon/admin → src/gen/gibson/daemon/v1/daemon_pb\n' +
+        '    ADR-0058: src/gen/gibson/admin/v1 → src/gen/gibson/tenant/v1/{membership,secrets,grants,plugin_admin}_pb\n' +
+        '    ADR-0058: src/gen/gibson/authz/v1 → src/gen/gibson/tenant/v1/model_access_pb\n' +
+        '    ADR-0058: src/gen/gibson/budget/v1 → src/gen/gibson/tenant/v1/budget_pb\n' +
+        '    ADR-0058: src/gen/gibson/usage/v1 → src/gen/gibson/tenant/v1/usage_pb\n' +
+        '    ADR-0058: src/gen/gibson/user/v1 → src/gen/gibson/tenant/v1/user_pb\n',
     );
     process.exit(1);
   }

@@ -8,7 +8,7 @@
  * Fails the build when any hardcoded marketing host URL or `/pricing` literal
  * appears as a link destination in app/component/lib code.
  *
- * Background (dashboard#924 / PRD dashboard#920 / deploy ADR-0006):
+ * Background (dashboard#924 / PRD dashboard#920 / ADR-0074):
  * The dashboard can run as a self-hosted install (no marketing surface) or as
  * the ZeroRoot SaaS offering. On self-hosted, `marketingUrl` is null and NO
  * marketing links must be rendered — they would be dead URLs. All links to the

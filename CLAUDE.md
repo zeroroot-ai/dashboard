@@ -22,7 +22,7 @@ Daemon protos consumed here come from two Go modules, both pinned in the sibling
 
 Admin server-actions (tenant management, plugin install, secrets management, grants) call the `gibson.tenant.v1.*` services (now gibson daemon-local) and the enrollment services (`gibson.agentidentity.v1.AgentIdentityService`, `gibson.pluginadmin.v1.PluginAdminService`, both in the SDK). Each carries a `(gibson.auth.v1.authz)` annotation with an `admin`/`writer` relation, and Envoy gates those admin-relation prefixes behind the admin JWT requirement. The dashboard never opens a direct daemon channel.
 
-Cross-module proto sharing flows through BSR (`buf.build/zeroroot-ai-platform/...`). The two-surface contract is captured in `docs/adr/0025-two-surface-platform-contract.md` (private docs repo).
+Cross-module proto sharing flows through BSR (`buf.build/zeroroot-ai-platform/...`). The two-surface contract is captured in `docs/adr/0058-sdk-scope-component-dev-surface.md` (private docs repo).
 
 ## Commands
 
@@ -126,8 +126,7 @@ The dashboard's TS proto bindings at `src/gen/` are generated from
 - the **OSS SDK** protos at `<sdk-module>/api/proto/` (the module dir
   resolved via `go list -m github.com/zeroroot-ai/sdk` against the gibson
   repo's `go.mod`). The customer-facing OSS module hosts `DaemonService`, the
-  decomposed `gibson.tenant.v1.*` tenant-admin services (customer-facing per
-  ADR-0039), the customer-callable mission / finding / discovery / budget
+  customer-callable mission / finding / discovery / budget
   types, and the `gibson.auth.v1` annotation extension.
 - the **gibson daemon-local** protos at `internal/server/daemon/api/` in the
   `gibson` checkout, which are not published anywhere. This tree hosts the daemon-internal services
@@ -432,7 +431,7 @@ After the E6 narrow-SDK flip (ADR-0058 amendment), tenant-administration RPCs (`
 
 No other files need editing. The registry is the only source of authz rules.
 
-**Genuinely-private operator RPC?** Same flow, but the proto lives in `internal/server/daemon/api/gibson/{daemon.operator,billing,daemon.discovery}/v1/...` in the `gibson` repository and it never surfaces in customer UI. The two-surface contract (docs ADR-0025, refined by the ADR-0058 amendment and the gibson monorepo consolidation) keeps the component-developer and platform proto trees split.
+**Genuinely-private operator RPC?** Same flow, but the proto lives in `internal/server/daemon/api/gibson/{daemon.operator,billing,daemon.discovery}/v1/...` in the `gibson` repository and it never surfaces in customer UI. The two-surface contract (docs ADR-0058 and the gibson monorepo consolidation) keeps the component-developer and platform proto trees split.
 
 ---
 
@@ -496,7 +495,7 @@ published quickstart is a different need, tracked in dashboard#149.
 ### The e2e lane: staging, and there is no bypass
 
 `.github/workflows/e2e-staging.yml` runs every spec under `e2e/` against
-staging on push to `main` and daily, never on a pull request (ADR-0012). Every
+staging on push to `main` and daily, never on a pull request (ADR-0080). Every
 signed-in spec signs in through Zitadel as a real account. `e2e/README.md` is
 the one place that documents the lane, the verdict per spec file and the
 secrets.

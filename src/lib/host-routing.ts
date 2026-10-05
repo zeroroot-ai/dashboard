@@ -4,7 +4,7 @@
 /**
  * Host-aware routing for the www/app split (deploy#630 S11, deploy#1033).
  *
- * ADR-0006 / deploy#1033: the marketing surface (home / pricing / contact-sales)
+ * ADR-0074 / deploy#1033: the marketing surface (home / pricing / contact-sales)
  * has moved to the SaaS-only www-svc (zeroroot-ai/www) served by nginx at
  * www.zeroroot.ai. The dashboard no longer serves go-to-market pages.
  *
@@ -34,7 +34,7 @@ export interface HostSplitConfig {
    * Full origin of the docs site, no trailing slash.
    *
    * Derived from `DOCS_URL`, falling back to the public docs host. Unlike
-   * `marketingUrl` this is never null: ADR-0006 classes docs as a core
+   * `marketingUrl` this is never null: ADR-0074 classes docs as a core
    * component, shipped self-hosted as well as SaaS, so a /docs bookmark
    * always has somewhere real to land.
    */
@@ -54,7 +54,7 @@ type HostSplitDecision =
 
 /**
  * Paths on app.<domain> that should redirect to www.<domain>.
- * ADR-0006 / deploy#1033: pricing and contact-sales moved to the SaaS-only
+ * ADR-0074 / deploy#1033: pricing and contact-sales moved to the SaaS-only
  * www-svc (zeroroot-ai/www). Requests arriving at app.<domain>/pricing (e.g.
  * from old bookmarks) redirect to the canonical marketing host rather than
  * 404ing. Root "/" is handled separately (→ /dashboard, not www).
@@ -190,7 +190,7 @@ export function decideHostSplit(
   if (!onApp && !onWww) return { kind: "pass" };
 
   if (onWww) {
-    // ADR-0006 / deploy#1033: in SaaS the Envoy www vhost routes to gibson_www_svc
+    // ADR-0074 / deploy#1033: in SaaS the Envoy www vhost routes to gibson_www_svc
     // (nginx) NOT to the dashboard, so www requests normally never reach here.
     // In dev (no separate www-svc), they may arrive here — apply the split:
     // marketing paths pass (dashboard could serve them in dev), product/auth

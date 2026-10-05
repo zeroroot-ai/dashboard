@@ -27,7 +27,7 @@ import { DataPlaneProgressPanel } from "./DataPlaneProgressPanel";
  * client component polls GET /api/onboarding/data-plane every 2 s and renders
  * real per-store provisioning progress instead of a static spinner.
  *
- * Self-hosted / SaaS seam gate (deploy ADR-0006, gibson#1088):
+ * Self-hosted / SaaS seam gate (ADR-0074, gibson#1088):
  * On self-hosted (SIGNUP_SELF_SERVE unset) there is no public self-serve path.
  * The "Create your first organization" CTA is replaced with a contact-admin
  * message so operators know provisioning is admin-driven.
@@ -50,7 +50,7 @@ export default async function OnboardingPage() {
 
   const userEmail = session.user.email ?? null;
 
-  // Self-hosted / SaaS seam gate (deploy ADR-0006, gibson#1088).
+  // Self-hosted / SaaS seam gate (ADR-0074, gibson#1088).
   // When selfServeSignup is false, self-serve is not active — do not show a
   // CTA that links to /signup (which redirects back to /login on self-hosted).
   // dashboard#921: resolved via the deployment-profile resolver (single reader).

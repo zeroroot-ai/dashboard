@@ -90,7 +90,7 @@ describe('POST /api/missions/demo', () => {
     expect(body.target).toBe('scanme.nmap.org');
 
     // Definition step: a single-node mission targeting scanme.nmap.org via nmap-agent.
-    // ADR-0037 (OSS SDK v0.118.0): CreateMissionDefinitionRequest takes a structured
+    // ADR-0058 (OSS SDK v0.118.0): CreateMissionDefinitionRequest takes a structured
     // MissionDefinition proto in the `definition` field, no source oneof.
     expect(mockCreateMissionDefinition).toHaveBeenCalledTimes(1);
     const defArg = mockCreateMissionDefinition.mock.calls[0][0];

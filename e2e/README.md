@@ -4,7 +4,7 @@ The suite runs a real browser against a live product host. The lane is
 `.github/workflows/e2e-staging.yml`. It runs against
 `https://app.staging.zeroroot.ai` on every push to `main` that touches
 `e2e/**`, `playwright.config.ts` or the workflow, and once a day. It never
-runs on a pull request (ADR-0012). The merge gate stays `node-ci.yml`.
+runs on a pull request (ADR-0080). The merge gate stays `node-ci.yml`.
 
 ## The route walk
 
@@ -150,7 +150,7 @@ Facts the verdicts rest on:
 | `auth/login-lockout.spec.ts` | delete | Zitadel owns lockout; inline login; scrapes the log mail provider. |
 | `auth/login-trace.spec.ts` | delete | A diagnostic copy of the login helper, without MFA. |
 | `auth/mission-run.spec.ts` | delete | Reads a `/tmp` file a Go test writes; `/tenant/<slug>/findings` does not exist. |
-| `auth/no-workspace.spec.ts` | delete | Deletes membership rows in Postgres (ADR-0012) after a signup. |
+| `auth/no-workspace.spec.ts` | delete | Deletes membership rows in Postgres after a signup. |
 | `auth/session-cookie-samesite.spec.ts` | staging lane | Public routes only. |
 | `auth/session-expiry.spec.ts` | rewrite | Signs in as the admin, clears cookies, asserts the `/login?callbackUrl=` redirect. |
 | `auth/signup-autologin.spec.ts` | delete | Auto-login was retired in E9; `/pricing` does not exist. |

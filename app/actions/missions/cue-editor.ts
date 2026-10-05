@@ -15,7 +15,7 @@
  * graceful empty result (dashboard#904).
  *
  * Spec: dashboard#291 (CUE editor / platform-sdk v0.7.0). Migrated to
- * DaemonService (OSS SDK) per ADR-0037 in dashboard#336.
+ * DaemonService (OSS SDK) per ADR-0058 in dashboard#336.
  */
 
 import "server-only";

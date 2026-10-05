@@ -50,7 +50,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     throw err;
   }
 
-  // Billing master switch (dashboard#809 / ADR-0050). On-prem / self-host has
+  // Billing master switch (dashboard#809 / ADR-0089). On-prem / self-host has
   // no Stripe-backed billing backend; the "Manage payment" surface is hidden
   // in the UI and the route no-ops here as defense-in-depth (404). Fail-closed:
   // absent flag ⇒ billing off.

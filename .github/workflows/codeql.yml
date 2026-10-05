@@ -1,7 +1,7 @@
 name: CodeQL
 
 # Epic: cicd-efficiency (board #44), slice S11a (dashboard#940). Scanner
-# cadence per docs/architecture/CICD-CONTEXT.md decision 9, mirroring
+# cadence mirrors
 # gibson's S5 (gibson#1130): the authoritative CodeQL analysis moves to
 # merge_group (the pre-merge gate) instead of firing on every commit landed
 # to `main`, plus the existing weekly deep scan.

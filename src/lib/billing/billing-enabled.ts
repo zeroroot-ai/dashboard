@@ -4,7 +4,7 @@
 /**
  * billing-enabled.ts — thin shim over the deployment-profile resolver.
  *
- * Open-core context (ADR-0050, dashboard#809): gibson#798 ripped
+ * Open-core context (ADR-0089, dashboard#809): gibson#798 ripped
  * BillingService / Stripe / plans out of the OSS daemon; the closed billing
  * implementation lives in the (future) closed billing layer. On-prem /
  * self-host runs WITHOUT billing — it operates on the config-driven

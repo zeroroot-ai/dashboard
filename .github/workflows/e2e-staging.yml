@@ -23,7 +23,7 @@
 # ADR-0093 requires MFA on every account. The TOTP secret is the base32 key
 # the authenticator app was enrolled with.
 #
-# ADR-0012: never on pull_request. The suite measures staging on main and
+# ADR-0080: never on pull_request. The suite measures staging on main and
 # runs on push to main and on its schedule. The merge gate stays node-ci.yml,
 # and dashboard.yml keeps its `!e2e/**` filter: a spec change runs the specs,
 # not the image build.

@@ -12,7 +12,7 @@ export default function SecurityPolicyPage() {
   // link gets RSC-prefetched, 307s cross-host, and dies on CORS with a
   // console error (dashboard#963). The docs moved off the marketing host to
   // their own deployable (dashboard#820, #989) — linking marketingUrl here
-  // 404'd on SaaS, and docsUrl is env-derived and never null (ADR-0006
+  // 404'd on SaaS, and docsUrl is env-derived and never null (ADR-0074
   // classes docs as core, so self-hosted serves its own docs host too).
   const rbacDocsHref = docsUrl("rbac");
   return (

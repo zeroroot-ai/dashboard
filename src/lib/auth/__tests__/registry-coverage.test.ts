@@ -21,7 +21,7 @@
  *                                        renamed in dashboard#337)
  *
  * gibson.admin.v1, gibson.user.v1, gibson.authz.v1, gibson.budget.v1, and
- * gibson.usage.v1 have been removed from the registry as part of ADR-0039:
+ * gibson.usage.v1 have been removed from the registry as part of ADR-0058:
  * the customer-facing surfaces they served are now decomposed into focused
  * services under gibson.tenant.v1.
  *
@@ -30,7 +30,7 @@
  * synthesis failing for one tree) causes this test to fail at runtime
  * independently of the generator's exit code.
  *
- * Spec: cross-repo-cohesion-fixes Requirement 2.3; ADR-0039.
+ * Spec: cross-repo-cohesion-fixes Requirement 2.3; ADR-0058.
  *
  * @module auth/__tests__/registry-coverage
  */
@@ -40,7 +40,7 @@ import { AuthRegistry } from '@/src/gen/authz/registry';
 
 const allMethods = Object.keys(AuthRegistry);
 
-describe('AuthRegistry, tenant.v1 + platform-sdk service coverage (ADR-0039)', () => {
+describe('AuthRegistry, tenant.v1 + platform-sdk service coverage (ADR-0058)', () => {
   it('contains at least one method from gibson.tenant.v1.*', () => {
     const tenantMethods = allMethods.filter((m) => m.startsWith('/gibson.tenant.v1.'));
     expect(tenantMethods.length).toBeGreaterThan(0);
@@ -82,12 +82,12 @@ describe('AuthRegistry, tenant.v1 + platform-sdk service coverage (ADR-0039)', (
     expect(operatorMethods.length).toBeGreaterThan(0);
   });
 
-  it('does NOT contain deprecated gibson.admin.v1.* entries (ADR-0039)', () => {
+  it('does NOT contain deprecated gibson.admin.v1.* entries (ADR-0058)', () => {
     const adminMethods = allMethods.filter((m) => m.startsWith('/gibson.admin.v1.'));
     expect(adminMethods.length).toBe(0);
   });
 
-  it('does NOT contain deprecated gibson.user.v1.* entries (ADR-0039)', () => {
+  it('does NOT contain deprecated gibson.user.v1.* entries (ADR-0058)', () => {
     const userMethods = allMethods.filter((m) => m.startsWith('/gibson.user.v1.'));
     expect(userMethods.length).toBe(0);
   });
