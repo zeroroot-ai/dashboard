@@ -1,7 +1,7 @@
 # Dashboard e2e suite
 
 The suite runs a real browser against a live product host. The lane is
-`.github/workflows/e2e-staging.yml`. It runs against
+`.github/workflows/exit-test-e2e-staging.yml`. It runs against
 `https://app.staging.zeroroot.ai` on every push to `main` that touches
 `e2e/**`, `playwright.config.ts` or the workflow, and once a day. It never
 runs on a pull request (ADR-0080). The merge gate stays `node-ci.yml`.

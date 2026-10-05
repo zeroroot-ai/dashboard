@@ -494,7 +494,7 @@ published quickstart is a different need, tracked in dashboard#149.
 
 ### The e2e lane: staging, and there is no bypass
 
-`.github/workflows/e2e-staging.yml` runs every spec under `e2e/` against
+`.github/workflows/exit-test-e2e-staging.yml` runs every spec under `e2e/` against
 staging on push to `main` and daily, never on a pull request (ADR-0080). Every
 signed-in spec signs in through Zitadel as a real account. `e2e/README.md` is
 the one place that documents the lane, the verdict per spec file and the

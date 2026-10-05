@@ -7,7 +7,7 @@ import { defineConfig, devices } from '@playwright/test';
  * Playwright configuration for the e2e suite.
  *
  * The suite runs against a live product host, staging by default
- * (.github/workflows/e2e-staging.yml, on push to main and daily, never on a
+ * (.github/workflows/exit-test-e2e-staging.yml, on push to main and daily, never on a
  * pull request). There is no dev server here: every spec signs in through
  * Zitadel the way a person does, and that needs the real platform behind
  * the host. See e2e/README.md.

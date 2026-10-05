@@ -27,6 +27,11 @@
 # runs on push to main and on its schedule. The merge gate stays node-ci.yml,
 # and dashboard.yml keeps its `!e2e/**` filter: a spec change runs the specs,
 # not the image build.
+#
+# The file name starts with `exit-test-` on purpose. The shared guard
+# `exit-tests-off-pr` (tree-guards.yml) reads each `exit-test-*.yml` file and
+# fails when one has a `pull_request` or a `merge_group` trigger, or no
+# schedule (dashboard#218).
 name: e2e-staging
 
 on:
@@ -36,7 +41,7 @@ on:
     paths:
       - 'e2e/**'
       - 'playwright.config.ts'
-      - '.github/workflows/e2e-staging.yml'
+      - '.github/workflows/exit-test-e2e-staging.yml'
   schedule:
     # Daily, after hosted's exit tests (04:00 to 06:20 UTC) have measured
     # the platform, so a failure here is the dashboard's and not the install's.
