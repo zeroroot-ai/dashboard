@@ -153,7 +153,7 @@ export function authzDenial(err: unknown): AuthzDeniedError | null {
  * Assert that the current session is authorized to call `method`.
  *
  * @param method - Fully-qualified gRPC method path, e.g.
- *   `"/gibson.tenant.v1.SecretsService/SetSecret"`.
+ *   `"/gibson.secrets.v1.SecretsService/SetSecret"`.
  *
  * @throws {AuthzDeniedError} with a structured `reason` when the check fails.
  *

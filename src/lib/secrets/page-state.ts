@@ -15,7 +15,7 @@
  * tested directly.
  */
 
-import { BrokerProvider } from "@/src/gen/gibson/tenant/v1/secrets_pb";
+import { BrokerProvider } from "@/src/gen/gibson/secrets/v1/secrets_pb";
 
 type SecretsBackendView = "unavailable" | "hosted" | "byo";
 

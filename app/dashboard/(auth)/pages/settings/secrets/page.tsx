@@ -9,7 +9,7 @@ import { getServerSession } from "@/src/lib/auth";
 import { requireActiveTenant, activeTenantPageRedirect } from "@/src/lib/auth/active-tenant";
 import { listSecrets } from "@/src/lib/gibson-client/secrets";
 import { getBrokerConfig } from "@/src/lib/gibson-client/tenant-broker-config";
-import { type BrokerProvider } from "@/src/gen/gibson/tenant/v1/secrets_pb";
+import { type BrokerProvider } from "@/src/gen/gibson/secrets/v1/secrets_pb";
 import { resolveSecretsBackendView } from "@/src/lib/secrets/page-state";
 import { SecretsList } from "@/src/components/secrets/SecretsList";
 import { SecretsEmptyState } from "@/src/components/secrets/EmptyState";
@@ -49,7 +49,7 @@ export default async function SecretsPage({ searchParams }: SecretsPageProps) {
   // Authz: ListSecrets is tenant_member, so all members can view the list.
   // Non-members are redirected. Spec: dashboard-authz-ui-gating Task 14.
   try {
-    await assertAuthorized("/gibson.tenant.v1.SecretsService/ListSecrets");
+    await assertAuthorized("/gibson.secrets.v1.SecretsService/ListSecrets");
   } catch (err) {
     if (authzDenial(err)) {
       redirect("/dashboard/pages/settings");

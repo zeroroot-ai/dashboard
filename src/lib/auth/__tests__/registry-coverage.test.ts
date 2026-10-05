@@ -48,7 +48,7 @@ describe('AuthRegistry, tenant.v1 + platform-sdk service coverage (ADR-0058)', (
 
   it('contains gibson.tenant.v1 secrets methods', () => {
     const secretsMethods = allMethods.filter((m) =>
-      m.startsWith('/gibson.tenant.v1.SecretsService/'),
+      m.startsWith('/gibson.secrets.v1.SecretsService/'),
     );
     expect(secretsMethods.length).toBeGreaterThan(0);
   });

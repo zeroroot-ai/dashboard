@@ -4,7 +4,7 @@
 import 'server-only';
 
 /**
- * Typed dashboard client methods for gibson.tenant.v1.SecretsService.
+ * Typed dashboard client methods for gibson.secrets.v1.SecretsService.
  *
  * Each method wraps one tenant RPC using the existing userClient() factory so
  * all calls flow dashboard → Envoy (JWT + SPIFFE mTLS) → daemon, never direct.
@@ -19,7 +19,7 @@ import 'server-only';
 import { ConnectError } from '@connectrpc/connect';
 import { userClient } from '../gibson-client';
 import { authzDenial } from '../auth/assert-authorized';
-import { SecretsService } from '@/src/gen/gibson/tenant/v1/secrets_pb';
+import { SecretsService } from '@/src/gen/gibson/secrets/v1/secrets_pb';
 import type {
   SecretMetadata,
   ListSecretsResponse,
@@ -30,7 +30,7 @@ import type {
   GetMissionAuditResponse,
   MissionSecretAccess,
   SecretCategory,
-} from '@/src/gen/gibson/tenant/v1/secrets_pb';
+} from '@/src/gen/gibson/secrets/v1/secrets_pb';
 
 export type { SecretMetadata, SecretCategory, MissionSecretAccess };
 export type {

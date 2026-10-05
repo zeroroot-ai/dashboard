@@ -4,7 +4,7 @@
 import { describe, it, expect } from "vitest";
 
 import { resolveSecretsBackendView } from "../page-state";
-import { BrokerProvider } from "@/src/gen/gibson/tenant/v1/secrets_pb";
+import { BrokerProvider } from "@/src/gen/gibson/secrets/v1/secrets_pb";
 
 describe("resolveSecretsBackendView", () => {
   it("is 'unavailable' only when the broker is unreachable", () => {

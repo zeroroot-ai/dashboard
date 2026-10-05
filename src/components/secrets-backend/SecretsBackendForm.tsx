@@ -61,7 +61,7 @@ import {
   type BrokerFormValues,
   type BrokerProviderKey,
 } from "./types";
-import { BrokerProvider } from "@/src/gen/gibson/tenant/v1/secrets_pb";
+import { BrokerProvider } from "@/src/gen/gibson/secrets/v1/secrets_pb";
 import type { RedactedConfig } from "@/src/lib/gibson-client/tenant-broker-config";
 
 // ---------------------------------------------------------------------------
@@ -230,10 +230,10 @@ export function SecretsBackendForm({
   // Disable inputs for non-admins (read-only view).
   // Spec: dashboard-authz-ui-gating Task 15, Requirement 5.6.
   const { allowed: canProbe, loading: probeAuthLoading } = useAuthorize(
-    "/gibson.tenant.v1.SecretsService/ProbeBrokerConfig",
+    "/gibson.secrets.v1.SecretsService/ProbeBrokerConfig",
   );
   const { allowed: canSave, loading: saveAuthLoading } = useAuthorize(
-    "/gibson.tenant.v1.SecretsService/SetBrokerConfig",
+    "/gibson.secrets.v1.SecretsService/SetBrokerConfig",
   );
   const isReadOnly = probeAuthLoading || saveAuthLoading || (!canProbe && !canSave);
 

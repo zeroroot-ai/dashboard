@@ -165,7 +165,7 @@ const _getEnrichedSession = cache(async (): Promise<GibsonSession | null> => {
  * export default async function Page() {
  *   const session = await getServerSession();
  *   if (!session) redirect('/login');
- *   await assertAuthorized('/gibson.tenant.v1.SecretsService/GetMissionAudit');
+ *   await assertAuthorized('/gibson.secrets.v1.SecretsService/GetMissionAudit');
  *   return <div>Hello, {session.user.name}</div>;
  * }
  * ```

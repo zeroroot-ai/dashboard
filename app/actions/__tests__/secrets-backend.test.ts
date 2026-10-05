@@ -56,7 +56,7 @@ vi.mock("@/src/lib/gibson-client/tenant-broker-config", () => ({
   },
 }));
 
-vi.mock("@/src/gen/gibson/tenant/v1/secrets_pb", () => ({
+vi.mock("@/src/gen/gibson/secrets/v1/secrets_pb", () => ({
   BrokerProvider: {
     UNSPECIFIED: 0,
     VAULT_HOSTED: 6,
@@ -430,7 +430,7 @@ describe("probeBrokerConfigAction, authz denied", () => {
     vi.clearAllMocks();
     mockProbeBrokerConfig.mockRejectedValueOnce(
       new MockAuthzDeniedError(
-        "/gibson.tenant.v1.SecretsService/ProbeBrokerConfig",
+        "/gibson.secrets.v1.SecretsService/ProbeBrokerConfig",
         "relation-not-met",
       ),
     );
@@ -451,7 +451,7 @@ describe("setBrokerConfigAction, authz denied", () => {
     vi.clearAllMocks();
     mockSetBrokerConfig.mockRejectedValueOnce(
       new MockAuthzDeniedError(
-        "/gibson.tenant.v1.SecretsService/SetBrokerConfig",
+        "/gibson.secrets.v1.SecretsService/SetBrokerConfig",
         "relation-not-met",
       ),
     );
