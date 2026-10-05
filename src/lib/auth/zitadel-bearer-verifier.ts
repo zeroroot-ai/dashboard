@@ -47,6 +47,8 @@
 import 'server-only';
 import { createRemoteJWKSet, errors as joseErrors, jwtVerify } from 'jose';
 
+import { INSTANCE_HOST_HEADER, zitadelEndpoint } from '@/src/lib/zitadel/conn';
+
 // ---------------------------------------------------------------------------
 // Structured error
 // ---------------------------------------------------------------------------
@@ -173,12 +175,17 @@ let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 let _jwksIssuer = '';
 
 function getJWKS(): ReturnType<typeof createRemoteJWKSet> {
-  const issuer = getIssuer(); // throws if ZITADEL_ISSUER missing (one-code-path / deploy#196)
-  if (_jwks && _jwksIssuer === issuer) return _jwks;
-  _jwks = createRemoteJWKSet(new URL(`${issuer}/oauth/v2/keys`), {
+  // The key set comes from the in-cluster Service with the instance header
+  // (ADR-0092). The issuer is compared against the `iss` claim and is never
+  // dialed.
+  const endpoint = zitadelEndpoint();
+  const key = `${endpoint.jwksUrl}|${endpoint.host}`;
+  if (_jwks && _jwksIssuer === key) return _jwks;
+  _jwks = createRemoteJWKSet(new URL(endpoint.jwksUrl), {
     cacheMaxAge: 600_000,
+    headers: { [INSTANCE_HOST_HEADER]: endpoint.host },
   });
-  _jwksIssuer = issuer;
+  _jwksIssuer = key;
   return _jwks;
 }
 

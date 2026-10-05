@@ -80,8 +80,8 @@ describe('getServiceToken', () => {
     setEnv({
       ZITADEL_DASHBOARD_CLIENT_ID: 'dashboard-sa',
       ZITADEL_DASHBOARD_CLIENT_SECRET: 'super-secret-value',
-      ZITADEL_TOKEN_URL: 'https://zitadel.test/oauth/v2/token',
-      ZITADEL_INTERNAL_ISSUER: undefined,
+      ZITADEL_URL: 'http://gibson-zitadel:8080',
+      ZITADEL_EXTERNAL_DOMAIN: 'app.zitadel.test',
     });
   });
 
@@ -103,11 +103,11 @@ describe('getServiceToken', () => {
     const token = await getServiceToken();
     expect(token).toBe('tok-1');
     expect(fetch).toHaveBeenCalledTimes(1);
-    expect(calls[0].url).toBe('https://zitadel.test/oauth/v2/token');
+    // The in-cluster Service, never the public issuer (ADR-0092).
+    expect(calls[0].url).toBe('http://gibson-zitadel:8080/oauth/v2/token');
+    expect(new Headers(calls[0].init.headers).get('x-zitadel-instance-host')).toBe('app.zitadel.test');
     // Basic auth, we never want client_secret in the request body.
-    const auth = (calls[0].init.headers as Record<string, string>)[
-      'Authorization'
-    ];
+    const auth = new Headers(calls[0].init.headers).get('authorization') ?? '';
     expect(auth).toMatch(/^Basic /);
     const decoded = Buffer.from(auth.slice('Basic '.length), 'base64').toString();
     expect(decoded).toBe('dashboard-sa:super-secret-value');
@@ -217,19 +217,14 @@ describe('getServiceToken', () => {
     );
   });
 
-  it('falls back to ZITADEL_INTERNAL_ISSUER when ZITADEL_TOKEN_URL is unset', async () => {
-    setEnv({
-      ZITADEL_TOKEN_URL: undefined,
-      ZITADEL_INTERNAL_ISSUER: 'https://zitadel.gibson.svc:8080',
-    });
-    const { calls } = captureFetch(async () =>
-      jsonResponse({ access_token: 'tok-derived', expires_in: 600 }),
+  it('refuses to mint when ZITADEL_URL is unset, and does not fall back to the issuer', async () => {
+    setEnv({ ZITADEL_URL: undefined, ZITADEL_ISSUER: 'https://app.zitadel.test' });
+    const { fetch } = captureFetch(async () =>
+      jsonResponse({ access_token: 'tok-public', expires_in: 600 }),
     );
 
-    await getServiceToken();
-    expect(calls[0].url).toBe(
-      'https://zitadel.gibson.svc:8080/oauth/v2/token',
-    );
+    await expect(getServiceToken()).rejects.toThrow(/ZITADEL_URL/);
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it('Zitadel returns 401 → ServiceTokenFetchError surfaces status', async () => {

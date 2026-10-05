@@ -90,6 +90,8 @@ beforeEach(() => {
   process.env = { ...ORIGINAL_ENV };
   setEnv({
     ZITADEL_ISSUER: 'https://zitadel.test',
+    ZITADEL_URL: 'http://gibson-zitadel:8080',
+    ZITADEL_EXTERNAL_DOMAIN: 'zitadel.test',
     ZITADEL_AUDIENCE: 'gibson-platform',
     // Spec canonical-service-identity Req 5, NUMERIC subs only.
     ALLOWED_SERVICE_SUBJECTS: '123456789,987654321',
