@@ -10,7 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "Settings | Model access",
     additionalTitle: true,
     description:
-      "Control which users and teams can use which LLM providers and models. Grant absent → permit-all (backwards compatible).",
+      "Control which users and teams can use which LLM providers and models. Each member can use each provider until an administrator restricts it.",
     canonical: "/pages/settings/model-access",
   });
 }
