@@ -5,7 +5,7 @@
 
 /**
  * useRunningAgents, the live list of the active tenant's currently running
- * agent instances for the read-only agent console (ADR-0016 S12,
+ * agent instances for the read-only agent console (ADR-0116 S12,
  * dashboard#1134).
  *
  * Fetches GET /api/agents/running and re-polls so the console picks up agents

@@ -4,7 +4,7 @@
 'use client';
 
 /**
- * The reliability-diagram plot (ADR-0022, gibson#284, dashboard#98): predicted
+ * The reliability-diagram plot (ADR-0122, gibson#284, dashboard#98): predicted
  * probability on x, observed frequency on y, one point per predicted-probability
  * bucket. The diagonal is perfect calibration — a point above it means the
  * fleet was under-confident in that bucket, below means over-confident. Point

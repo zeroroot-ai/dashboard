@@ -150,7 +150,7 @@ export default function GraphPage() {
   // A seq-indexed scrubber over the scope's World Timeline. At the live tail we
   // render the full enriched graph (opsData); scrubbed off the tail we render a
   // server-side fold of the log (GetFrameAt) mapped to the World subset, so the
-  // graph rewinds in step with the World Scroller (ADR-0001: World ==
+  // graph rewinds in step with the World Scroller (ADR-0101: World ==
   // fold(Timeline)). This replaces the old client-side wall-clock reveal.
   const [timeline, setTimeline] = useState<{ seq: number }[]>([]);
   const total = timeline.length;

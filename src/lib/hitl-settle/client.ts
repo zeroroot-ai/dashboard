@@ -13,7 +13,7 @@ import type {
 } from "@/src/types/hitl-settle";
 
 /**
- * HITL bet-settlement client (ADR-0023, gibson#264/#266/#280, dashboard#97).
+ * HITL bet-settlement client (ADR-0123, gibson#264/#266/#280, dashboard#97).
  *
  * The queue is backed by `gibson.world.v1.WorldService`: `ListOpenBets` reads
  * the tenant's placed-but-unsettled bets and `SettleBetByHITL` records one

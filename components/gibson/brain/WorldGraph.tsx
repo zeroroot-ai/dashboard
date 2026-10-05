@@ -14,7 +14,7 @@ export interface WorldGraphMission {
   status: string;
   reason: string;
   /**
-   * The belief-model version the mission was pinned to at launch (ADR-0005
+   * The belief-model version the mission was pinned to at launch (ADR-0129
    * §5): the daemon stamps it at start and the World carries it, so a
    * reviewer can tell which model judged the run. Empty means unpinned.
    */

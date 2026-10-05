@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Client-safe view of jobs (gibson#1706, ADR-0019). The API routes map
+ * Client-safe view of jobs (gibson#1706, ADR-0119). The API routes map
  * `gibson.job.v1` protos to these shapes. State words match the published
  * docs: open, working, waiting, closed.
  */

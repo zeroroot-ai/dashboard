@@ -66,7 +66,7 @@ interface AdminEntry {
 
 // Member management is NOT in Settings, it lives in the single "Members &
 // Access" home under the Organization nav (Members / Teams / Security Policy),
-// per ADR-0039 / dashboard#609. /dashboard/pages/settings/members redirects there.
+// per dashboard#609. /dashboard/pages/settings/members redirects there.
 
 const adminNav: AdminEntry[] = [
   {

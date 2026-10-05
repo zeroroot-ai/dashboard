@@ -176,19 +176,19 @@ export const queryKeys = {
     full: (tenantId: string) => ['org-graph', tenantId, 'full'] as const,
   },
 
-  // Destructive-action authorization queue (ADR-0028, gibson#278, dashboard#99).
+  // Destructive-action authorization queue (ADR-0132, gibson#278, dashboard#99).
   destructiveActions: {
     all: ['destructive-actions'] as const,
     list: (tenantId: string) => ['destructive-actions', tenantId, 'list'] as const,
   },
 
-  // HITL bet-settlement queue (ADR-0023, gibson#264/#266/#280, dashboard#97).
+  // HITL bet-settlement queue (ADR-0123, gibson#264/#266/#280, dashboard#97).
   hitlSettle: {
     all: ['hitl-settle'] as const,
     list: (tenantId: string) => ['hitl-settle', tenantId, 'list'] as const,
   },
 
-  // Reliability / calibration report (ADR-0022, gibson#284, dashboard#98).
+  // Reliability / calibration report (ADR-0122, gibson#284, dashboard#98).
   calibration: {
     all: ['calibration'] as const,
     report: (tenantId: string, bins: number) =>

@@ -5,7 +5,7 @@
  * GET /api/agents/:runId/events
  *
  * Dashboard-side Server-Sent Events bridge for ONE running agent's live
- * output (ADR-0016 S12, dashboard#1134). Read-only: it forwards the daemon's
+ * output (ADR-0116 S12, dashboard#1134). Read-only: it forwards the daemon's
  * server-stream `AgentConsoleService.StreamAgentEvents` to the browser, one
  * SSE frame per relayed chunk. There is no input path, and this route never
  * writes to the agent.

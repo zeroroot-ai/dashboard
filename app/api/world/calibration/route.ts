@@ -10,7 +10,7 @@ import type { TechniqueCalibrationView } from '@/src/gen/gibson/world/v1/world_p
 import type { CalibrationReport, TechniqueCalibration } from '@/src/types/calibration';
 
 /**
- * /api/world/calibration — the ADR-0022 reliability/calibration report
+ * /api/world/calibration — the ADR-0122 reliability/calibration report
  * (gibson#284, dashboard#98).
  *
  * GET returns the caller's tenant's reliability report from settled, staked

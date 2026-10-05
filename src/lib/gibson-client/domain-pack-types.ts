@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Domain Pack data-transfer objects (ADR-0033, gibson#383).
+ * Domain Pack data-transfer objects (ADR-0133, gibson#383).
  *
  * Plain JSON shapes the domain-pack Server Actions return to the browser: the
  * daemon proto messages never cross the API boundary. The typed server client

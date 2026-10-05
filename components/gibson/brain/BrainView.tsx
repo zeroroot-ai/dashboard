@@ -145,7 +145,7 @@ function decisionStatusVariant(s: string): "default" | "secondary" {
  * gibson#752): the live per-tenant World (missions, hosts, findings) shown as
  * both tables and a force-directed graph, plus the Scroller — a scrubbable view
  * of the mission's domain-event Timeline. Scrubbing fetches a server-side fold
- * of the log (`GetFrameAt`, ADR-0001: World == fold(Timeline)) so the tables and
+ * of the log (`GetFrameAt`, ADR-0101: World == fold(Timeline)) so the tables and
  * graph re-materialize at that point in time, not a client-side slice. Reads
  * through /api/world + /api/world/frame (the daemon's tenant-scoped
  * WorldService); never touches the brain directly.
@@ -296,7 +296,7 @@ export function BrainView({
   );
 
   // Compute WHAT CHANGED at the selected tick by diffing the folded frame at
-  // seq N-1 vs N (ADR-0001: World == fold(Timeline)). Both frames come from the
+  // seq N-1 vs N (ADR-0101: World == fold(Timeline)). Both frames come from the
   // existing mission-scoped /api/world/frame route — no backend change. The diff
   // is pure + client-side (`diffFrames`). Degrades at seq 0 (before == empty
   // frame(0)) and on ticks with no entity change (empty diff). Abortable so a
@@ -486,7 +486,7 @@ export function BrainView({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {/* Juiciest targets first: the belief field (ADR-0005) drives
+                {/* Juiciest targets first: the belief field (ADR-0129) drives
                     attention, so sorting by it surfaces the highest-value hosts. */}
                 {[...view.hosts]
                   .sort((a, b) => b.attention - a.attention)

@@ -66,7 +66,7 @@ function toChanged(node: GraphNode, change: ChangeType): ChangedEntity {
 
 /**
  * diffFrames computes what changed between two adjacent folded frames (the World
- * at seq N-1 vs seq N — ADR-0001: World == fold(Timeline)). It is the testable
+ * at seq N-1 vs seq N — ADR-0101: World == fold(Timeline)). It is the testable
  * seam behind the per-tick inspector (gibson#1059): pure, deterministic, and
  * client-side, so the inspector needs no backend change. Both frames are projected
  * through `worldToGraph` (the single source of node/edge identity), then diffed by

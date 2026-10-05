@@ -5,7 +5,7 @@ import 'server-only';
 
 /**
  * Typed dashboard client methods for the daemon-mediated read-only agent
- * console, gibson.daemon.agentconsole.v1.AgentConsoleService (ADR-0016 S12,
+ * console, gibson.daemon.agentconsole.v1.AgentConsoleService (ADR-0116 S12,
  * dashboard#1134, gibson#1599).
  *
  * The service is a pure READ surface. It has no input/write path: it lists the
@@ -48,7 +48,7 @@ export interface RunningAgentView {
   /** The mission run this run serves. Empty for a run outside a mission. */
   missionRunId: string;
   /**
-   * The setec SandboxClass the run was launched under (ADR-0016 decision 4).
+   * The setec SandboxClass the run was launched under (ADR-0116 decision 4).
    * It names the isolation posture, so a viewer sees what confines a run.
    */
   sandboxClass: string;

@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * HitlSettleQueueContent — the ADR-0023 HITL settle surface UI (dashboard#97).
+ * HitlSettleQueueContent — the ADR-0123 HITL settle surface UI (dashboard#97).
  * The data hooks (src/hooks/useHitlSettle.ts) are mocked here; their own
  * contract against the real API route is covered by useHitlSettle.test.tsx.
  * This file verifies:

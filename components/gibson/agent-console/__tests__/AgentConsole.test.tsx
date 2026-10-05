@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * AgentConsole component tests (ADR-0016 S12, dashboard#1134).
+ * AgentConsole component tests (ADR-0116 S12, dashboard#1134).
  *
  * Covers the two hard requirements:
  *   1. Show them all: every running agent gets its own pane, and each pane

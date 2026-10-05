@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Connector data-transfer objects (ADR-0014).
+ * Connector data-transfer objects (ADR-0114).
  *
  * Plain JSON shapes the connectors API returns to the browser: the daemon proto
  * messages never cross the API boundary. The typed server client

@@ -4,7 +4,7 @@
 'use client';
 
 /**
- * React Query hooks for the ADR-0028 destructive-action authorization queue
+ * React Query hooks for the ADR-0132 destructive-action authorization queue
  * (gibson#278/#336, dashboard#99). Reads go to GET /api/world/destructive-actions,
  * decisions POST through `apiFetch` (CSRF). Both are real network calls
  * against the dashboard's own API route — never a fixture — so the queue shown
@@ -57,7 +57,7 @@ interface DecideVariables {
 /**
  * Records one human's approve/deny decision for a specific pending action.
  * Per-action: this never touches any other pending action or the mission
- * itself (ADR-0028 §2 — the fleet keeps working everything else).
+ * itself (ADR-0132 §2 — the fleet keeps working everything else).
  */
 export function useDecideDestructiveAction() {
   const qc = useQueryClient();

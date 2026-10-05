@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Client-safe view of banks and members (gibson#1706, ADR-0019).
+ * Client-safe view of banks and members (gibson#1706, ADR-0119).
  *
  * The API routes map `gibson.bank.v1` protos to these shapes, so a client
  * component never imports a proto binding. Enums travel as lower-case names

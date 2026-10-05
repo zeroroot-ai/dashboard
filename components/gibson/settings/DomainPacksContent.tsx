@@ -5,13 +5,13 @@
 /**
  * DomainPacksContent
  *
- * The Domain Pack catalog panel (ADR-0033, gibson#383). A Domain Pack is
+ * The Domain Pack catalog panel (ADR-0133, gibson#383). A Domain Pack is
  * curated, versioned structure, taxonomy labels, ontology extensions and
  * technique-to-CEL-predicate bindings that a settlement can reason about
  * once enabled. A tenant admin browses the curated catalog and enables or
  * disables a pack with one toggle; the daemon folds the corresponding
  * DomainPackEnabled/DomainPackDisabled event into that tenant's live World
- * only (ADR-0033: "per-tenant, not per-install").
+ * only (ADR-0133: "per-tenant, not per-install").
  *
  * Enable and Disable are tenant-admin RPCs (ADR-0067, mirroring
  * ConnectorService), so the toggle gates on useAuthorize with the

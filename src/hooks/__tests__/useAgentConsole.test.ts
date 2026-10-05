@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * useAgentConsole hook tests (ADR-0016 S12, dashboard#1134).
+ * useAgentConsole hook tests (ADR-0116 S12, dashboard#1134).
  *
  * Covers:
  *   - A `chunk` frame decodes its base64 and writes the reassembled line.

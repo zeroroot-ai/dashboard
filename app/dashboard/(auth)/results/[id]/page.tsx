@@ -533,7 +533,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
             gibson#1117 removed the checkpoint store. Same question ("what did
             this mission look like at step N?"), answered off the World
             Timeline: BrainView scrubs the mission's event log and every panel
-            re-materializes from the server-side fold (ADR-0001, World ==
+            re-materializes from the server-side fold (ADR-0101, World ==
             fold(Timeline)). It is the exact component /world?mission=<id>
             mounts, in embedded chrome, so there is one playback code path. */}
         {!loading && canViewSnapshot && (

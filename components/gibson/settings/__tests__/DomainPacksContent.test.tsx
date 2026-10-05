@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * DomainPacksContent — the ADR-0033 Domain Pack catalog panel (gibson#383).
+ * DomainPacksContent — the ADR-0133 Domain Pack catalog panel (gibson#383).
  * Server Actions (app/actions/domain-packs.ts) and useAuthorize are mocked
  * here. This file verifies:
  *   1. Loading, error (fail-loud), empty-catalog, and populated states render.

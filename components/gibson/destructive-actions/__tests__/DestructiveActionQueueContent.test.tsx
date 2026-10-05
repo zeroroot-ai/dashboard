@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * DestructiveActionQueueContent — the ADR-0028 authorization queue UI
+ * DestructiveActionQueueContent — the ADR-0132 authorization queue UI
  * (dashboard#99). The data hooks (src/hooks/useDestructiveActions.ts) are
  * mocked here; their own contract against the real API route is covered by
  * useDestructiveActions.test.tsx. This file verifies:

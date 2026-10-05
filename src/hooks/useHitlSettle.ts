@@ -4,7 +4,7 @@
 'use client';
 
 /**
- * React Query hooks for the ADR-0023 HITL bet-settlement queue (gibson#264/
+ * React Query hooks for the ADR-0123 HITL bet-settlement queue (gibson#264/
  * #266/#280, dashboard#97). Reads go to GET /api/world/bet-settlements,
  * verdicts POST through `apiFetch` (CSRF). Both are real network calls
  * against the dashboard's own API route — never a fixture — so the queue
@@ -40,7 +40,7 @@ async function fetchOpenBets(): Promise<HitlSettleQueueResponse> {
  * The tenant's OPEN bets awaiting a human verdict. Polls so a newly-proposed
  * bet (or another reviewer's verdict) shows up without a manual refresh.
  * Judging is always asynchronous — this read never pauses the mission it's
- * drawn from (ADR-0008).
+ * drawn from (ADR-0108).
  */
 export function useOpenBets(): UseQueryResult<HitlSettleQueueResponse, Error> {
   const tenantId = useTenantId() ?? '';

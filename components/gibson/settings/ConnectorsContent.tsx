@@ -5,10 +5,10 @@
 /**
  * ConnectorsContent
  *
- * The connectors settings panel (ADR-0014). A person browses the curated
+ * The connectors settings panel (ADR-0114). A person browses the curated
  * catalog, enables a connector with one click, authorizes an OAuth connector by
  * approving once at the vendor or stores a token for a secret connector
- * (ADR-0015), and sees the live status of every enabled connector. The daemon does all the work; this panel reads and drives it
+ * (ADR-0061), and sees the live status of every enabled connector. The daemon does all the work; this panel reads and drives it
  * through the connector Server Actions (ADR-0067, dashboard#1126).
  *
  * Enable and Disable are tenant-admin RPCs (gibson#1553), so their controls
