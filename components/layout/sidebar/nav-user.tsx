@@ -25,8 +25,9 @@ import { useSession } from "@/src/lib/session-client";
 // Logout uses the federated-signout route, not next-auth's client-side
 // signOut(). signOut() only clears the dashboard's Auth.js cookie, Zitadel
 // keeps a parallel SSO cookie that silently re-authenticates the next call
-// to /authorize. /api/auth/federated-signout clears Auth.js AND redirects
-// to Zitadel's end_session_endpoint with id_token_hint.
+// to /authorize. The route clears Auth.js AND redirects to Zitadel's
+// end_session_endpoint with client_id. The route accepts POST only.
+import { submitFederatedSignout } from "@/src/lib/auth/federated-signout-client";
 
 function getInitials(name?: string | null): string {
   if (!name) return "??";
@@ -101,7 +102,7 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => {
-                window.location.href = "/api/auth/federated-signout";
+                submitFederatedSignout();
               }}
             >
               <LogOutIcon />

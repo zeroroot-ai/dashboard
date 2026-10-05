@@ -21,8 +21,10 @@
  *     `/api/auth/session-tenant?return_to=...` to re-resolve it. Otherwise
  *     302 `/onboarding`.
  *   - Authenticated, `session.tenantId` set → `getMyMemberships()` must
- *     return exactly that tenant, or 302 `/api/auth/federated-signout` (the
- *     membership was revoked since sign-in).
+ *     return exactly that tenant, or 302 `/login/error?reason=membership_revoked`
+ *     (the membership was revoked since sign-in). The action of that page
+ *     posts to the sign-out route. A redirect cannot be a POST, and the
+ *     sign-out route accepts POST only.
  *   - Authenticated, FGA / daemon unreachable when validating membership →
  *     302 `/login/error?reason=<machine-readable>` (deterministic error page,
  *     never federated-signout).
@@ -402,17 +404,18 @@ export default auth(async (req) => {
 
   // 4. session.tenantId is set: confirm it is still exactly the caller's
   //    one current membership. A mismatch (revoked, or the invariant
-  //    somehow broke) sends the caller through federated sign-out so the
-  //    next sign-in re-resolves cleanly, never a silent re-scope.
+  //    somehow broke) sends the caller to the error page, whose action
+  //    posts to federated sign-out so the next sign-in re-resolves cleanly,
+  //    never a silent re-scope.
   const result = await membershipsOrDeny();
   if (result instanceof NextResponse) return result;
   const isMember =
     result.length === 1 && result[0]?.tenantId === session.tenantId;
   if (!isMember) {
     if (wantsJson) return apiRejection("membership_revoked", 403);
-    return NextResponse.redirect(
-      new URL("/api/auth/federated-signout", req.nextUrl.origin),
-    );
+    const url = new URL("/login/error", req.nextUrl.origin);
+    url.searchParams.set("reason", "membership_revoked");
+    return NextResponse.redirect(url);
   }
 
   // 5. Healthy state, let the route render. Seed the CSRF double-submit cookie

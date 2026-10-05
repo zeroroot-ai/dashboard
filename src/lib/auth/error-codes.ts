@@ -32,8 +32,12 @@ interface LoginErrorCopy {
   title: string;
   /** One-paragraph plain-English description of what happened. */
   description: string;
-  /** Primary action the user should take. */
-  cta: { label: string; href: string };
+  /**
+   * Primary action the user should take. With `method: "post"` the page
+   * renders a form that posts to `href`. A sign-out changes state, so it is
+   * never a link.
+   */
+  cta: { label: string; href: string; method?: "post" };
 }
 
 /**
@@ -86,7 +90,7 @@ export const ERROR_COPY: Record<LoginErrorReason, LoginErrorCopy> = {
     title: "Your access was revoked",
     description:
       "Your access to the organization you were signed into was removed. Sign in again, or contact your administrator if you believe this is a mistake.",
-    cta: { label: "Sign in again", href: "/api/auth/federated-signout" },
+    cta: { label: "Sign in again", href: "/api/auth/federated-signout", method: "post" },
   },
   mfa_required: {
     title: "Multi-factor sign-in required",

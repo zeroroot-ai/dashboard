@@ -61,6 +61,7 @@ import { useOrgGraph } from "@/src/hooks/use-org-graph";
 import { revokeMemberAction, resendInvitationAction, leaveTenantAction } from "@/app/actions/crd/member";
 import { setTenantRoleAction } from "@/app/actions/crd/role";
 import { listMembersAction, type MemberRow } from "@/app/actions/read/listMembers";
+import { submitFederatedSignout } from "@/src/lib/auth/federated-signout-client";
 import { ASSIGNABLE_TENANT_ROLES, isAssignableTenantRole, tenantRoleLabel, type AssignableTenantRole } from "@/src/lib/auth/tenant-roles";
 
 // ── Styles ────────────────────────────────────────────────────────────────────
@@ -318,7 +319,7 @@ export function UsersContent() {
       // out of the dashboard's own cookie too, same route the sidebar log-out
       // uses, so the browser does not keep pointing at a tenant the caller no
       // longer belongs to.
-      window.location.href = "/api/auth/federated-signout";
+      submitFederatedSignout();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to leave workspace.");
       setLeaving(false);

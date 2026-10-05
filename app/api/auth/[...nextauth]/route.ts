@@ -37,12 +37,10 @@ import { NextRequest, NextResponse } from "next/server";
 /**
  * Fields that the Auth.js `session` callback (auth.ts) attaches for
  * SERVER-SIDE consumers only and that must NEVER cross the wire to the
- * browser. These are raw Zitadel bearer credentials:
+ * browser. This is a raw Zitadel bearer credential:
  *
  *   - accessToken , a valid `Authorization: Bearer` against Envoy/the daemon
  *                   (src/lib/auth/user-token.ts, middleware.ts, mySessions.ts).
- *   - idToken     , the `id_token_hint` for federated logout
- *                   (app/api/auth/federated-signout/route.ts).
  *
  * Auth.js v5 with `session.strategy: "jwt"` serializes whatever the `session`
  * callback returns into the public `GET /api/auth/session` response body and
@@ -54,7 +52,7 @@ import { NextRequest, NextResponse } from "next/server";
  * but only AFTER the JSON has already crossed the wire, so it is cosmetic, not
  * a redaction. This filter is the actual redaction.
  */
-const SESSION_SERVER_ONLY_FIELDS = ["accessToken", "idToken"] as const;
+const SESSION_SERVER_ONLY_FIELDS = ["accessToken"] as const;
 
 /**
  * Strip server-only token fields from a `GET /api/auth/session` JSON response

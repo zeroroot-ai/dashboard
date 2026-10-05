@@ -8,7 +8,7 @@
  * app/api/auth/[...nextauth]/route.ts.
  *
  * Focus (dashboard#818, security audit): the GET handler must strip the
- * server-only Zitadel credentials (`accessToken`, `idToken`) from the
+ * server-only Zitadel credential (`accessToken`) from the
  * public `GET /api/auth/session` JSON response so they never reach the
  * browser, while leaving every other Auth.js endpoint untouched.
  *
@@ -50,12 +50,11 @@ describe("auth route GET — session token stripping", () => {
     vi.clearAllMocks();
   });
 
-  it("strips accessToken and idToken from /api/auth/session", async () => {
+  it("strips accessToken from /api/auth/session", async () => {
     mockHandlersGet.mockResolvedValue(
       jsonResponse({
         user: { id: "u1", email: "a@b.co" },
         accessToken: "header.payload.sig",
-        idToken: "id.header.payload",
         expires: "2099-01-01T00:00:00.000Z",
       }),
     );
@@ -66,7 +65,6 @@ describe("auth route GET — session token stripping", () => {
     const body = await res.json();
 
     expect(body).not.toHaveProperty("accessToken");
-    expect(body).not.toHaveProperty("idToken");
     // Non-secret session shape survives.
     expect(body.user).toEqual({ id: "u1", email: "a@b.co" });
     expect(body.expires).toBe("2099-01-01T00:00:00.000Z");

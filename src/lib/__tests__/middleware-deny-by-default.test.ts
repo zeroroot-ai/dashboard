@@ -206,14 +206,14 @@ describe('authenticated requests without a usable tenant', () => {
     expect(res.status).toBe(200);
   });
 
-  it('redirects a page navigation to federated sign-out when the session tenant is revoked', async () => {
+  it('redirects a page navigation to the membership_revoked error page when the session tenant is revoked', async () => {
     getMyMemberships.mockResolvedValue([]);
     const res = await run('/dashboard', SIGNED_IN);
 
     expect(res.status).toBe(307);
-    expect(new URL(res.headers.get('location')!).pathname).toBe(
-      '/api/auth/federated-signout',
-    );
+    const location = new URL(res.headers.get('location')!);
+    expect(location.pathname).toBe('/login/error');
+    expect(location.searchParams.get('reason')).toBe('membership_revoked');
   });
 });
 
