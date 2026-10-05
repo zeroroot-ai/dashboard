@@ -103,26 +103,22 @@ No JWT-SVID minting or JWT-SVID verification code lives in the dashboard.
 ## "Register Agent" flow
 
 [`app/api/agents/register/route.ts`](../app/api/agents/register/route.ts)
-mints Zitadel machine users on demand:
+asks the daemon for a new component identity:
 
 1. Authenticate caller via Auth.js (`auth()`).
 2. Resolve active tenant and assert caller has at least the `admin`
-   role (only tenant admins/owners may mint agents).
-3. Validate request body (name, optional description; tight regex on
-   the name so it round-trips into a Zitadel `userName`).
-4. `getSignupZitadelAdminClient()` → Zitadel admin API:
-   - create machine user `agent-${tenant}-${name}`
-   - mint a single `client_secret` (returned **once**)
-   - add the machine user to the tenant's project so the issued JWT
-     carries the `agent` role claim
-5. Respond with `{ clientId, clientSecret, gibsonUrl, enrollCommand }`.
-   `clientSecret` is the only place the secret ever appears outside
-   Zitadel; it is never logged. The
+   role (only tenant admins/owners may register agents).
+3. Validate request body (name, optional description, kind, grants).
+4. Call `AgentIdentityService.CreateAgentIdentity` through Envoy. The
+   daemon owns the IdP provisioning and the FGA tuple writes.
+5. Respond with `{ bootstrapToken, gibsonUrl }`. The response is the
+   only place the token appears. The route never logs it. The
    `scripts/check-no-secret-in-logs.mjs` build guard verifies this.
 
-The browser surface displays the secret once with a clear "store
-securely, you cannot view again" warning, plus a copy-paste
-`gibson-cli agent enroll …` command line.
+The browser shows the token once, with a warning that it cannot be
+viewed again, and the platform URL. There is no enroll command. The
+component reads `GIBSON_URL` and `GIBSON_BOOTSTRAP_TOKEN` and enrolls
+when it starts.
 
 ## What's gone
 

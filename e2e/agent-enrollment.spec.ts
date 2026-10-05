@@ -6,11 +6,10 @@
  *
  * The dashboard half of agent enrollment: an admin registers an agent on
  * /dashboard/agents/register, the credential panel shows a bootstrap token
- * and an enroll command, and the agent appears in the agents list.
+ * and the platform URL, and the agent appears in the agents list.
  *
  * The spec writes to the e2e tenant on staging: one agent per run, named
- * `e2e-<timestamp>-<random>`. The enroll command carries the bootstrap
- * token, which this spec never prints.
+ * `e2e-<timestamp>-<random>`. This spec never prints the bootstrap token.
  *
  * Gates:
  *   E2E_CLUSTER_AVAILABLE=1   a live platform is reachable at PLAYWRIGHT_BASE_URL
@@ -43,14 +42,14 @@ test.describe("agent enrollment, integration (live platform)", () => {
       await nameInput.fill(agentName);
       await page.getByRole("button", { name: /^register agent$/i }).click();
 
-      // The credential panel: a bootstrap token and the enroll command.
+      // The credential panel: a bootstrap token and the platform URL.
       const token = page.locator("#register-agent-bootstrap-token");
       await expect(token).toBeVisible({ timeout: 30_000 });
       expect((await token.inputValue()).length).toBeGreaterThan(0);
 
-      const enroll = page.locator("#register-agent-enroll-command");
-      await expect(enroll).toBeVisible({ timeout: 5_000 });
-      expect(await enroll.inputValue()).toContain("gibson");
+      const platformUrl = page.locator("#register-agent-platform-url");
+      await expect(platformUrl).toBeVisible({ timeout: 5_000 });
+      expect(await platformUrl.inputValue()).toMatch(/^https?:\/\//);
     });
 
     await test.step("the agent appears in the agents list", async () => {

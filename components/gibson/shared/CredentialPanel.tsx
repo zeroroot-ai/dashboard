@@ -45,7 +45,6 @@ import {
 export interface Credentials {
   bootstrapToken: string;
   gibsonUrl: string;
-  enrollCommand: string;
 }
 
 interface CredentialPanelProps {
@@ -128,23 +127,26 @@ export function CredentialPanel({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="cred-panel-enroll-command">Enroll command</Label>
+          <Label htmlFor="cred-panel-platform-url">Platform URL</Label>
           <div className="flex gap-2">
             <Input
-              id="cred-panel-enroll-command"
+              id="cred-panel-platform-url"
               readOnly
-              value={credentials.enrollCommand}
+              value={credentials.gibsonUrl}
               className="font-mono text-xs"
             />
-            <CopyButton value={credentials.enrollCommand} label="enroll command" />
+            <CopyButton value={credentials.gibsonUrl} label="platform URL" />
           </div>
           <p className="text-xs text-muted-foreground">
-            Run this on the host where the component will run. The CLI
-            writes the credentials and verifies connectivity to{' '}
+            On the host where the component runs, set
             <code className="mx-1 rounded bg-muted px-1 py-0.5 text-[0.7rem]">
-              {credentials.gibsonUrl}
+              GIBSON_URL
             </code>
-            .
+            to this address and
+            <code className="mx-1 rounded bg-muted px-1 py-0.5 text-[0.7rem]">
+              GIBSON_BOOTSTRAP_TOKEN
+            </code>
+            to the token above. The component enrolls when it starts.
           </p>
         </div>
 

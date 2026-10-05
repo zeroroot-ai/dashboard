@@ -12,8 +12,8 @@
  *   1. The default form (name + optional description), POSTs to
  *      /api/agents/register on submit.
  *   2. After a successful provision, the form is replaced by a one-time
- *      credential panel showing the bootstrap token and the pre-filled
- *      `gibson component register …` command.
+ *      credential panel showing the bootstrap token and the platform
+ *      URL the component reads on its first start.
  *
  * Under the unified-identity model (ADR-0045, gibson#670) a component's
  * sole credential is a one-time, daemon-signed Capability-Grant
@@ -50,7 +50,6 @@ import { apiFetch } from '@/src/lib/api/fetch';
 interface Credentials {
   bootstrapToken: string;
   gibsonUrl: string;
-  enrollCommand: string;
 }
 
 interface ApiError {
@@ -149,22 +148,26 @@ function CredentialPanel({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="register-agent-enroll-command">Enroll command</Label>
+          <Label htmlFor="register-agent-platform-url">Platform URL</Label>
           <div className="flex gap-2">
             <Input
-              id="register-agent-enroll-command"
+              id="register-agent-platform-url"
               readOnly
-              value={credentials.enrollCommand}
+              value={credentials.gibsonUrl}
               className="font-mono text-xs"
             />
-            <CopyButton value={credentials.enrollCommand} label="enroll command" />
+            <CopyButton value={credentials.gibsonUrl} label="platform URL" />
           </div>
           <p className="text-xs text-muted-foreground">
-            Run this on the agent host to write
+            On the host where the component runs, set
             <code className="mx-1 rounded bg-muted px-1 py-0.5 text-[0.7rem]">
-              ~/.gibson/agent/credentials
+              GIBSON_URL
             </code>
-            and verify connectivity.
+            to this address and
+            <code className="mx-1 rounded bg-muted px-1 py-0.5 text-[0.7rem]">
+              GIBSON_BOOTSTRAP_TOKEN
+            </code>
+            to the token above. The component enrolls when it starts.
           </p>
         </div>
 
