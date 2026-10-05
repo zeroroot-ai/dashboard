@@ -88,6 +88,8 @@ vi.mock('server-only', () => ({}));
 // dashboard#175.
 process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3000';
 process.env.ZITADEL_ISSUER ??= 'http://test.zitadel.invalid';
+process.env.ZITADEL_URL ??= 'http://gibson-zitadel.test.invalid:8080';
+process.env.ZITADEL_EXTERNAL_DOMAIN ??= 'app.test.invalid';
 process.env.ZITADEL_CLIENT_ID ??= 'test-client-id';
 process.env.ZITADEL_CLIENT_SECRET ??= 'test-client-secret';
 process.env.AUTH_SECRET ??= 'test-auth-secret-32-bytes-of-padding-aaaa';

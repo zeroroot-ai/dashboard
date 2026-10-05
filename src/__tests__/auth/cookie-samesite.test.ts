@@ -37,6 +37,8 @@ process.env.ZITADEL_CLIENT_ID = "dashboard-test-client";
 // gives us the full config tree to assert on.
 const captured: { config?: import("next-auth").NextAuthConfig } = {};
 vi.mock("next-auth", () => ({
+  // The Zitadel provider keys its fetch by this symbol (dashboard#88).
+  customFetch: Symbol("custom-fetch"),
   default: (config: import("next-auth").NextAuthConfig) => {
     captured.config = config;
     return {

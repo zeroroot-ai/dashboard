@@ -47,6 +47,8 @@
 
 import 'server-only';
 
+import { zitadelEndpoint, zitadelFetch } from '@/src/lib/zitadel/conn';
+
 // ---------------------------------------------------------------------------
 // Public errors
 // ---------------------------------------------------------------------------
@@ -110,26 +112,6 @@ const SERVICE_TOKEN_SCOPE =
 /** Refresh this many seconds before the token's reported `expires_in`. */
 const REFRESH_LEAD_S = 60;
 
-/**
- * Resolve the OAuth2 token endpoint. Explicit `ZITADEL_TOKEN_URL` wins;
- * otherwise we derive it from `ZITADEL_INTERNAL_ISSUER` (the same env var
- * the Auth.js OIDC discovery uses). The `/oauth/v2/token` suffix is
- * Zitadel's standard path.
- */
-function resolveTokenUrl(): string {
-  const explicit = process.env.ZITADEL_TOKEN_URL;
-  if (explicit && explicit.length > 0) return explicit;
-  const issuer = process.env.ZITADEL_INTERNAL_ISSUER;
-  if (!issuer) {
-    throw new MissingServiceTokenConfigError([
-      'ZITADEL_TOKEN_URL or ZITADEL_INTERNAL_ISSUER',
-    ]);
-  }
-  // Trim trailing slash so we don't emit `…//oauth/…`.
-  const trimmed = issuer.replace(/\/+$/, '');
-  return `${trimmed}/oauth/v2/token`;
-}
-
 // ---------------------------------------------------------------------------
 // Module-scoped cache
 // ---------------------------------------------------------------------------
@@ -173,7 +155,9 @@ function readConfig(): {
   return {
     clientId: process.env.ZITADEL_DASHBOARD_CLIENT_ID!,
     clientSecret: process.env.ZITADEL_DASHBOARD_CLIENT_SECRET!,
-    tokenUrl: resolveTokenUrl(),
+    // The in-cluster token endpoint (ADR-0092). The pod never dials the
+    // public issuer for its own token.
+    tokenUrl: zitadelEndpoint().tokenUrl,
   };
 }
 
@@ -195,7 +179,7 @@ async function fetchToken(): Promise<{ access_token: string; expires_in: number 
     scope: SERVICE_TOKEN_SCOPE,
   });
 
-  const res = await fetch(tokenUrl, {
+  const res = await zitadelFetch(tokenUrl, {
     method: 'POST',
     headers: {
       Authorization: `Basic ${basic}`,

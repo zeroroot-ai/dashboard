@@ -44,6 +44,8 @@ import {
 const VALID_ENV: Record<string, string> = {
   // Identity
   ZITADEL_ISSUER: 'https://auth.zeroroot.local:30443',
+  ZITADEL_URL: 'http://gibson-zitadel:8080',
+  ZITADEL_EXTERNAL_DOMAIN: 'auth.zeroroot.local',
   ZITADEL_CLIENT_ID: 'gibson-dashboard',
   ZITADEL_CLIENT_SECRET: 'shh-test',
   ZITADEL_AUDIENCE: 'gibson-platform',

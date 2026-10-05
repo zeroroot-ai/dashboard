@@ -11,10 +11,11 @@
  * per epic one-code-path / deploy#196):
  *   AUTH_SECRET         , random 32+ char secret (Helm: randAlphaNum 32, mounted via K8s Secret)
  *   ZITADEL_ISSUER      , OIDC issuer base URL (browser-facing, appears in `iss` claim)
- *   ZITADEL_INTERNAL_ISSUER, internal OIDC discovery URL (pod-side). Optional ONLY
- *                             as a deliberate divergence hatch; when unset, the
- *                             pod uses ZITADEL_ISSUER for both server and browser
- *                             sides (the normal hostAliases-based deploy).
+ *                         The pod compares it and never dials it.
+ *   ZITADEL_URL         , in-cluster Zitadel Service base URL. The pod connects
+ *                         here for the token exchange and userinfo (ADR-0092).
+ *   ZITADEL_EXTERNAL_DOMAIN, public app host, no port. Sent as the
+ *                         x-zitadel-instance-host header on those calls.
  *   ZITADEL_CLIENT_ID   , registered OIDC client ID (set by Zitadel bootstrap Job)
  *   ZITADEL_CLIENT_SECRET, OIDC client secret (registered as a confidential
  *                          client; required at runtime). Auth.js v5 sends
@@ -50,6 +51,8 @@ import { getFaultMode } from "@/src/lib/test-fixtures/fault-injection";
 
 import { resolvePostSignInRedirect } from "@/src/lib/auth/post-signin-redirect";
 import { evaluateMfaGate } from "@/src/lib/auth/mfa-gate";
+import { zitadelProvider } from "@/src/lib/auth/zitadel-provider";
+import { zitadelFetch } from "@/src/lib/zitadel/conn";
 import {
   SESSION_IDLE_MAX_AGE_SECONDS,
   isSessionBeyondAbsoluteCap,
@@ -172,18 +175,14 @@ function requireEnv(name: string): string {
 // Zitadel puts in the `iss` claim of issued tokens). Required.
 const issuer = requireEnv("ZITADEL_ISSUER");
 
-// The internal issuer is what the DASHBOARD POD uses to fetch OIDC discovery
-// and exchange the authorization code for tokens. In the production deploy
-// this is the SAME URL the browser sees, the pod resolves the public
-// hostname to Envoy's pinned ClusterIP via Kubernetes hostAliases, so server-
-// and browser-side calls hit the same authority and Zitadel mints a single
-// consistent issuer claim. ZITADEL_INTERNAL_ISSUER stays as a deliberate
-// divergence hatch (rare); when unset we use the public issuer, NOT an empty
-// string fallback.
-const internalIssuer =
-  process.env.ZITADEL_INTERNAL_ISSUER && process.env.ZITADEL_INTERNAL_ISSUER.length > 0
-    ? process.env.ZITADEL_INTERNAL_ISSUER
-    : issuer;
+// Where the DASHBOARD POD connects for its own identity calls: the token
+// exchange and userinfo (ADR-0092, dashboard#88). It is the in-cluster Zitadel
+// Service, and `zitadelFetch` states the public host in the instance header.
+// The pod never dials the issuer. Only the browser follows it.
+const zitadelConnectBase = requireEnv("ZITADEL_URL").replace(/\/+$/, "");
+// Read here so a pod without it refuses to boot. `zitadelFetch` reads it again
+// at call time.
+requireEnv("ZITADEL_EXTERNAL_DOMAIN");
 
 /**
  * Whether cookies this app sets should carry the `Secure` attribute.
@@ -224,45 +223,9 @@ const config: NextAuthConfig = {
   // document, so we never need to hard-code token/userinfo/jwks URLs.
   // -------------------------------------------------------------------------
   providers: [
-    {
-      // Provider id is kept as "zitadel" because it ends up in cookies
-      // (next-auth.session-token, next-auth.callback-url) and rotating it
-      // would invalidate every existing session. The display name is
-      // "Identity", IdP branding never reaches users (the dashboard's
-      // login page does its own redirect; Auth.js's built-in /api/auth/signin
-      // page is not used).
-      id: "zitadel",
-      name: "Identity",
-      type: "oidc",
-      issuer,
-      wellKnown: `${internalIssuer}/.well-known/openid-configuration`,
-      clientId,
-      clientSecret,
-      // Request the openid, profile, and email scopes, plus the Zitadel
-      // urn:zitadel:iam:user:resourceowner scope (ADR-0093 decision 4): it
-      // adds the person's org id to the access token, which is the ONLY
-      // input to tenant resolution (see stampSessionTenant in the jwt
-      // callback below). There is no client-asserted tenant claim.
-      authorization: {
-        params: {
-          scope: "openid profile email urn:zitadel:iam:user:resourceowner",
-          // Enforce PKCE for public clients even when a secret is present.
-          code_challenge_method: "S256",
-        },
-      },
-      // Trust Zitadel's ID token claims directly; skip the userinfo endpoint
-      // round-trip for name/email (fetched separately below).
-      idToken: true,
-      checks: ["pkce", "state"],
-      profile(profile) {
-        return {
-          id: profile.sub,
-          name: profile.name ?? profile.preferred_username ?? null,
-          email: profile.email ?? null,
-          image: profile.picture ?? null,
-        };
-      },
-    },
+    // The provider lives in its own module so a test can drive the real
+    // Auth.js flow against it (src/lib/auth/__tests__/zitadel-provider.test.ts).
+    zitadelProvider({ issuer, connectBase: zitadelConnectBase, clientId, clientSecret }),
   ],
 
   // -------------------------------------------------------------------------
@@ -379,8 +342,8 @@ const config: NextAuthConfig = {
         // crashing.
         if (typeof account.access_token === "string") {
           try {
-            const userinfoRes = await fetch(
-              `${issuer}/oidc/v1/userinfo`,
+            const userinfoRes = await zitadelFetch(
+              `${zitadelConnectBase}/oidc/v1/userinfo`,
               { headers: { Authorization: `Bearer ${account.access_token}` } }
             );
             if (userinfoRes.ok) {

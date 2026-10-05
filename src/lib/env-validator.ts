@@ -111,6 +111,21 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
       'Auth.js uses this for authorize redirects + iss-claim validation.',
   },
   {
+    name: 'ZITADEL_URL',
+    kind: 'url',
+    hint:
+      'In-cluster Zitadel Service base URL (e.g. http://gibson-zitadel:8080). The pod ' +
+      'connects here for the token exchange, userinfo, the key set and its service ' +
+      'token (ADR-0092). It never dials ZITADEL_ISSUER.',
+  },
+  {
+    name: 'ZITADEL_EXTERNAL_DOMAIN',
+    kind: 'string',
+    hint:
+      'Public app host with no scheme and no port (e.g. app.example.com). Sent as the ' +
+      'x-zitadel-instance-host header so Zitadel selects its instance (ADR-0092).',
+  },
+  {
     name: 'ZITADEL_CLIENT_ID',
     kind: 'string',
     hint:
@@ -259,11 +274,6 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
  * block whenever possible.
  */
 const OPTIONAL_ENV = [
-  // ---- Optional Zitadel divergence hatch ----
-  // Inherits ZITADEL_ISSUER when unset; only required in topologies where the
-  // browser-facing and pod-internal Zitadel URLs MUST differ.
-  'ZITADEL_INTERNAL_ISSUER',
-
   // ---- Auth.js legacy aliases ----
   // NEXTAUTH_URL / NEXTAUTH_SECRET are read-only legacy aliases for AUTH_URL /
   // AUTH_SECRET. Auth.js v5 honors either name; the dashboard requires
@@ -331,7 +341,6 @@ const OPTIONAL_ENV = [
   // holds no Zitadel PAT.
   'ZITADEL_DASHBOARD_CLIENT_ID',
   'ZITADEL_DASHBOARD_CLIENT_SECRET',
-  'ZITADEL_TOKEN_URL',
 
   // ---- Tier / Billing metadata ----
   // GIBSON_TIER picks a self-serve tier display config; only relevant when
