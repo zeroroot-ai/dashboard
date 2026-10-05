@@ -65,6 +65,10 @@ const GUARDS = [
   // The env declaration gate (dashboard#182). Sixteen names sat in the
   // validator with no reader; this proves a declared-but-unread name fails.
   "check-env-declared-is-read.mjs",
+  // The env reader artifact gate (charts#303). The chart vendors
+  // src/lib/env-readers.json; this proves a stale copy fails the build and
+  // that a comment or a test is never counted as a reader.
+  "check-env-readers-fresh.mjs",
 ];
 
 let failed = 0;
