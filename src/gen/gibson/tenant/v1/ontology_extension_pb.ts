@@ -2,7 +2,7 @@
 // that can be found in the LICENSE file in the repo root.
 
 // OntologyExtensionService is the tenant-OWNER-facing approval surface for
-// agent-proposed Taxonomy extensions (ADR-0024 §2, ADR-0033 decisions 2-3,
+// agent-proposed Taxonomy extensions (ADR-0124 §2, ADR-0133 decisions 2-3,
 // gibson#392).
 //
 // An agent proposes a new Taxonomy node label or relationship type it
@@ -10,7 +10,7 @@
 // agent-facing HarnessCallbackService RPC in the OSS SDK). That proposal is
 // folded into the caller's tenant World as a pending sighting and counted
 // for recurrence by taxonomy.PromotionGate — it is NEVER auto-promoted
-// (ADR-0033 decision 3).
+// (ADR-0133 decision 3).
 //
 // This service is the other end of that pipeline: the tenant owner reviews
 // every pending proposal (ListOntologyExtensionProposals) and explicitly
@@ -22,7 +22,7 @@
 // to every mission in that tenant from then on. Rejection is a terminal
 // decision recorded for audit; it never mutates the Taxonomy.
 //
-// Gated strictly to the tenant's OWNER relation (not "admin"): ADR-0033
+// Gated strictly to the tenant's OWNER relation (not "admin"): ADR-0133
 // decision 3 calls for "explicit tenant-owner approval" specifically — one
 // step stronger than the "tenant admin" gate DomainPackService's
 // EnableDomainPack uses for already-curated catalog content. A proposal
@@ -44,7 +44,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/ontology_extension.proto.
  */
 export const file_gibson_tenant_v1_ontology_extension: GenFile = /*@__PURE__*/
-  fileDesc("CilnaWJzb24vdGVuYW50L3YxL29udG9sb2d5X2V4dGVuc2lvbi5wcm90bxIQZ2lic29uLnRlbmFudC52MSK3AgoZT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbBI0CgRraW5kGAEgASgOMiYuZ2lic29uLnRlbmFudC52MS5PbnRvbG9neVByb3Bvc2FsS2luZBINCgVsYWJlbBgCIAEoCRISCgpyZWN1cnJlbmNlGAMgASgFEhUKDWxhc3RfcHJvcG9zZXIYBCABKAkSEgoKbGFzdF9jbGFpbRgFIAEoCRI4CgZzdGF0dXMYBiABKA4yKC5naWJzb24udGVuYW50LnYxLk9udG9sb2d5UHJvcG9zYWxTdGF0dXMSEAoIcmV2aWV3ZXIYByABKAkSFQoNcmVqZWN0X3JlYXNvbhgIIAEoCRIQCghwcm9tb3RlZBgJIAEoCBIhChlwcm9tb3RlZF90YXhvbm9teV92ZXJzaW9uGAogASgFIicKJUxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2Fsc1JlcXVlc3QiaAomTGlzdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxzUmVzcG9uc2USPgoJcHJvcG9zYWxzGAEgAygLMisuZ2lic29uLnRlbmFudC52MS5PbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsIm4KJ0FwcHJvdmVPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVxdWVzdBI0CgRraW5kGAEgASgOMiYuZ2lic29uLnRlbmFudC52MS5PbnRvbG9neVByb3Bvc2FsS2luZBINCgVsYWJlbBgCIAEoCSIqCihBcHByb3ZlT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlc3BvbnNlIn0KJlJlamVjdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxSZXF1ZXN0EjQKBGtpbmQYASABKA4yJi5naWJzb24udGVuYW50LnYxLk9udG9sb2d5UHJvcG9zYWxLaW5kEg0KBWxhYmVsGAIgASgJEg4KBnJlYXNvbhgDIAEoCSIpCidSZWplY3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVzcG9uc2UibQomU3VibWl0T250b2xvZ3lFeHRlbnNpb25VcHN0cmVhbVJlcXVlc3QSNAoEa2luZBgBIAEoDjImLmdpYnNvbi50ZW5hbnQudjEuT250b2xvZ3lQcm9wb3NhbEtpbmQSDQoFbGFiZWwYAiABKAkikAEKJ1N1Ym1pdE9udG9sb2d5RXh0ZW5zaW9uVXBzdHJlYW1SZXNwb25zZRIRCglwYWNrX2pzb24YASABKAwSGwoTc3VnZ2VzdGVkX2ZpbGVfcGF0aBgCIAEoCRIaChJzdWdnZXN0ZWRfcHJfdGl0bGUYAyABKAkSGQoRc3VnZ2VzdGVkX3ByX2JvZHkYBCABKAkqkwEKFE9udG9sb2d5UHJvcG9zYWxLaW5kEiYKIk9OVE9MT0dZX1BST1BPU0FMX0tJTkRfVU5TUEVDSUZJRUQQABIlCiFPTlRPTE9HWV9QUk9QT1NBTF9LSU5EX05PREVfTEFCRUwQARIsCihPTlRPTE9HWV9QUk9QT1NBTF9LSU5EX1JFTEFUSU9OU0hJUF9UWVBFEAIqtgEKFk9udG9sb2d5UHJvcG9zYWxTdGF0dXMSKAokT05UT0xPR1lfUFJPUE9TQUxfU1RBVFVTX1VOU1BFQ0lGSUVEEAASJAogT05UT0xPR1lfUFJPUE9TQUxfU1RBVFVTX1BFTkRJTkcQARIlCiFPTlRPTE9HWV9QUk9QT1NBTF9TVEFUVVNfQVBQUk9WRUQQAhIlCiFPTlRPTE9HWV9QUk9QT1NBTF9TVEFUVVNfUkVKRUNURUQQAzKyBgoYT250b2xvZ3lFeHRlbnNpb25TZXJ2aWNlEsABCh5MaXN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbHMSNy5naWJzb24udGVuYW50LnYxLkxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2Fsc1JlcXVlc3QaOC5naWJzb24udGVuYW50LnYxLkxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2Fsc1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEsYBCiBBcHByb3ZlT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbBI5LmdpYnNvbi50ZW5hbnQudjEuQXBwcm92ZU9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxSZXF1ZXN0GjouZ2lic29uLnRlbmFudC52MS5BcHByb3ZlT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlc3BvbnNlIiuKtRgnCgVvd25lchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEsMBCh9SZWplY3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsEjguZ2lic29uLnRlbmFudC52MS5SZWplY3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVxdWVzdBo5LmdpYnNvbi50ZW5hbnQudjEuUmVqZWN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlc3BvbnNlIiuKtRgnCgVvd25lchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEsMBCh9TdWJtaXRPbnRvbG9neUV4dGVuc2lvblVwc3RyZWFtEjguZ2lic29uLnRlbmFudC52MS5TdWJtaXRPbnRvbG9neUV4dGVuc2lvblVwc3RyZWFtUmVxdWVzdBo5LmdpYnNvbi50ZW5hbnQudjEuU3VibWl0T250b2xvZ3lFeHRlbnNpb25VcHN0cmVhbVJlc3BvbnNlIiuKtRgnCgVvd25lchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABQlRaUmdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_gibson_auth_v1_options]);
+  fileDesc("CilnaWJzb24vdGVuYW50L3YxL29udG9sb2d5X2V4dGVuc2lvbi5wcm90bxIQZ2lic29uLnRlbmFudC52MSKrAgoZT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbBI0CgRraW5kGAEgASgOMiYuZ2lic29uLnRlbmFudC52MS5PbnRvbG9neVByb3Bvc2FsS2luZBINCgVsYWJlbBgCIAEoCRI4CgZzdGF0dXMYBiABKA4yKC5naWJzb24udGVuYW50LnYxLk9udG9sb2d5UHJvcG9zYWxTdGF0dXMSEAoIcmV2aWV3ZXIYByABKAlKBAgDEARKBAgEEAVKBAgFEAZKBAgIEAlKBAgJEApKBAgKEAtSCnJlY3VycmVuY2VSDWxhc3RfcHJvcG9zZXJSCmxhc3RfY2xhaW1SDXJlamVjdF9yZWFzb25SCHByb21vdGVkUhlwcm9tb3RlZF90YXhvbm9teV92ZXJzaW9uIicKJUxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2Fsc1JlcXVlc3QiOQomTGlzdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxzUmVzcG9uc2VKBAgBEAJSCXByb3Bvc2FscyJuCidBcHByb3ZlT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlcXVlc3QSNAoEa2luZBgBIAEoDjImLmdpYnNvbi50ZW5hbnQudjEuT250b2xvZ3lQcm9wb3NhbEtpbmQSDQoFbGFiZWwYAiABKAkiKgooQXBwcm92ZU9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxSZXNwb25zZSJ9CiZSZWplY3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVxdWVzdBI0CgRraW5kGAEgASgOMiYuZ2lic29uLnRlbmFudC52MS5PbnRvbG9neVByb3Bvc2FsS2luZBINCgVsYWJlbBgCIAEoCRIOCgZyZWFzb24YAyABKAkiKQonUmVqZWN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlc3BvbnNlIm0KJlN1Ym1pdE9udG9sb2d5RXh0ZW5zaW9uVXBzdHJlYW1SZXF1ZXN0EjQKBGtpbmQYASABKA4yJi5naWJzb24udGVuYW50LnYxLk9udG9sb2d5UHJvcG9zYWxLaW5kEg0KBWxhYmVsGAIgASgJIogBCidTdWJtaXRPbnRvbG9neUV4dGVuc2lvblVwc3RyZWFtUmVzcG9uc2VKBAgBEAJKBAgCEANKBAgDEARKBAgEEAVSCXBhY2tfanNvblITc3VnZ2VzdGVkX2ZpbGVfcGF0aFISc3VnZ2VzdGVkX3ByX3RpdGxlUhFzdWdnZXN0ZWRfcHJfYm9keSqTAQoUT250b2xvZ3lQcm9wb3NhbEtpbmQSJgoiT05UT0xPR1lfUFJPUE9TQUxfS0lORF9VTlNQRUNJRklFRBAAEiUKIU9OVE9MT0dZX1BST1BPU0FMX0tJTkRfTk9ERV9MQUJFTBABEiwKKE9OVE9MT0dZX1BST1BPU0FMX0tJTkRfUkVMQVRJT05TSElQX1RZUEUQAiq2AQoWT250b2xvZ3lQcm9wb3NhbFN0YXR1cxIoCiRPTlRPTE9HWV9QUk9QT1NBTF9TVEFUVVNfVU5TUEVDSUZJRUQQABIkCiBPTlRPTE9HWV9QUk9QT1NBTF9TVEFUVVNfUEVORElORxABEiUKIU9OVE9MT0dZX1BST1BPU0FMX1NUQVRVU19BUFBST1ZFRBACEiUKIU9OVE9MT0dZX1BST1BPU0FMX1NUQVRVU19SRUpFQ1RFRBADMrIGChhPbnRvbG9neUV4dGVuc2lvblNlcnZpY2USwAEKHkxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FscxI3LmdpYnNvbi50ZW5hbnQudjEuTGlzdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxzUmVxdWVzdBo4LmdpYnNvbi50ZW5hbnQudjEuTGlzdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESxgEKIEFwcHJvdmVPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsEjkuZ2lic29uLnRlbmFudC52MS5BcHByb3ZlT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlcXVlc3QaOi5naWJzb24udGVuYW50LnYxLkFwcHJvdmVPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVzcG9uc2UiK4q1GCcKBW93bmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESwwEKH1JlamVjdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWwSOC5naWJzb24udGVuYW50LnYxLlJlamVjdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxSZXF1ZXN0GjkuZ2lic29uLnRlbmFudC52MS5SZWplY3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVzcG9uc2UiK4q1GCcKBW93bmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESwwEKH1N1Ym1pdE9udG9sb2d5RXh0ZW5zaW9uVXBzdHJlYW0SOC5naWJzb24udGVuYW50LnYxLlN1Ym1pdE9udG9sb2d5RXh0ZW5zaW9uVXBzdHJlYW1SZXF1ZXN0GjkuZ2lic29uLnRlbmFudC52MS5TdWJtaXRPbnRvbG9neUV4dGVuc2lvblVwc3RyZWFtUmVzcG9uc2UiK4q1GCcKBW93bmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAFCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_gibson_auth_v1_options]);
 
 /**
  * OntologyExtensionProposal is one taxonomy node label or relationship type
@@ -65,24 +65,6 @@ export type OntologyExtensionProposal = Message<"gibson.tenant.v1.OntologyExtens
   label: string;
 
   /**
-   * recurrence is how many independent times this exact (kind, label) has
-   * been sighted (taxonomy.PromotionGate.Observe's running count).
-   *
-   * @generated from field: int32 recurrence = 3;
-   */
-  recurrence: number;
-
-  /**
-   * @generated from field: string last_proposer = 4;
-   */
-  lastProposer: string;
-
-  /**
-   * @generated from field: string last_claim = 5;
-   */
-  lastClaim: string;
-
-  /**
    * @generated from field: gibson.tenant.v1.OntologyProposalStatus status = 6;
    */
   status: OntologyProposalStatus;
@@ -94,31 +76,6 @@ export type OntologyExtensionProposal = Message<"gibson.tenant.v1.OntologyExtens
    * @generated from field: string reviewer = 7;
    */
   reviewer: string;
-
-  /**
-   * reject_reason is set only when status is REJECTED.
-   *
-   * @generated from field: string reject_reason = 8;
-   */
-  rejectReason: string;
-
-  /**
-   * promoted is true once this proposal has actually been admitted into the
-   * tenant's live Taxonomy — the authoritative "is this a live tenant
-   * extension yet" signal. status == APPROVED alone does not imply promoted:
-   * the proposal may still be short of the recurrence settlement requires.
-   *
-   * @generated from field: bool promoted = 9;
-   */
-  promoted: boolean;
-
-  /**
-   * promoted_taxonomy_version is the resulting Taxonomy registry version
-   * once promoted is true; zero otherwise.
-   *
-   * @generated from field: int32 promoted_taxonomy_version = 10;
-   */
-  promotedTaxonomyVersion: number;
 };
 
 /**
@@ -145,10 +102,6 @@ export const ListOntologyExtensionProposalsRequestSchema: GenMessage<ListOntolog
  * @generated from message gibson.tenant.v1.ListOntologyExtensionProposalsResponse
  */
 export type ListOntologyExtensionProposalsResponse = Message<"gibson.tenant.v1.ListOntologyExtensionProposalsResponse"> & {
-  /**
-   * @generated from field: repeated gibson.tenant.v1.OntologyExtensionProposal proposals = 1;
-   */
-  proposals: OntologyExtensionProposal[];
 };
 
 /**
@@ -184,7 +137,7 @@ export const ApproveOntologyExtensionProposalRequestSchema: GenMessage<ApproveOn
  * ApproveOntologyExtensionProposalResponse is intentionally empty: whether
  * this approval ALSO completed settlement (the proposal had already recurred
  * enough times, so it is live now) is decided by the tenant's brain.Engine
- * single-writer fold, which runs asynchronously off this RPC (ADR-0001,
+ * single-writer fold, which runs asynchronously off this RPC (ADR-0101,
  * mirroring ProposeOntologyExtension's own documented contract). A caller
  * that needs the resulting promoted/live state calls
  * ListOntologyExtensionProposals afterward rather than assume it is visible
@@ -269,12 +222,12 @@ export const SubmitOntologyExtensionUpstreamRequestSchema: GenMessage<SubmitOnto
 
 /**
  * SubmitOntologyExtensionUpstreamResponse carries the rendered SDK Domain
- * Pack contribution artifact (ADR-0033 decision 2's final arrow: "owner
+ * Pack contribution artifact (ADR-0133 decision 2's final arrow: "owner
  * 'submit upstream' -> contribution", gibson#393) — the exact file content a
  * human or CI commits into the SDK's pack source tree to open the review PR.
  *
  * This daemon does NOT open that PR itself: gibson holds no GitHub credential
- * or bot identity scoped to the `sdk` repository, and ADR-0033 names the
+ * or bot identity scoped to the `sdk` repository, and ADR-0133 names the
  * contribution as "a PR into the SDK, which anyone may open" — a step the
  * design deliberately leaves to a person, the same way other owner-only
  * actions in this org (DNS, Stripe keys, required reviewers) are hand-offs
@@ -285,35 +238,6 @@ export const SubmitOntologyExtensionUpstreamRequestSchema: GenMessage<SubmitOnto
  * @generated from message gibson.tenant.v1.SubmitOntologyExtensionUpstreamResponse
  */
 export type SubmitOntologyExtensionUpstreamResponse = Message<"gibson.tenant.v1.SubmitOntologyExtensionUpstreamResponse"> & {
-  /**
-   * pack_json is the ontology.DomainPack fragment, JSON-encoded exactly as
-   * Export/Import already round-trip it (gibson#378) — never a new,
-   * one-off format invented for this RPC.
-   *
-   * @generated from field: bytes pack_json = 1;
-   */
-  packJson: Uint8Array;
-
-  /**
-   * suggested_file_path is where this fragment belongs in the SDK's pack
-   * source tree, e.g. "packs/<name>.json".
-   *
-   * @generated from field: string suggested_file_path = 2;
-   */
-  suggestedFilePath: string;
-
-  /**
-   * suggested_pr_title and suggested_pr_body are ready-to-paste PR text for
-   * whoever opens the contribution PR.
-   *
-   * @generated from field: string suggested_pr_title = 3;
-   */
-  suggestedPrTitle: string;
-
-  /**
-   * @generated from field: string suggested_pr_body = 4;
-   */
-  suggestedPrBody: string;
 };
 
 /**
@@ -393,7 +317,7 @@ export const OntologyExtensionService: GenService<{
    * ListOntologyExtensionProposals returns every ontology/taxonomy extension
    * proposal this tenant's agents have made, pending and decided alike, so
    * the tenant owner (or an admin assisting them) has full visibility into
-   * what agents are proposing (ADR-0033's "the tenant owner seeing every
+   * what agents are proposing (ADR-0133's "the tenant owner seeing every
    * proposal").
    *
    * @generated from rpc gibson.tenant.v1.OntologyExtensionService.ListOntologyExtensionProposals
@@ -405,12 +329,12 @@ export const OntologyExtensionService: GenService<{
   },
   /**
    * ApproveOntologyExtensionProposal is the tenant owner's explicit approval
-   * of a pending proposal (ADR-0033 decision 3). Refused (NOT_FOUND) if
+   * of a pending proposal (ADR-0133 decision 3). Refused (NOT_FOUND) if
    * (kind, label) names no proposal ever observed in this tenant, and
    * (FAILED_PRECONDITION) if it already carries a terminal decision.
    *
    * Gated to "owner", not "admin": this is the stronger, singular
-   * tenant-owner sign-off ADR-0033 decision 3 requires — not a routine
+   * tenant-owner sign-off ADR-0133 decision 3 requires — not a routine
    * admin action any delegated admin may take.
    *
    * @generated from rpc gibson.tenant.v1.OntologyExtensionService.ApproveOntologyExtensionProposal
@@ -436,7 +360,7 @@ export const OntologyExtensionService: GenService<{
    * SubmitOntologyExtensionUpstream renders a LIVE tenant extension (a
    * promoted proposal — NOT_FOUND if (kind, label) names no proposal ever
    * observed, FAILED_PRECONDITION if it has not yet been promoted) as an SDK
-   * Domain Pack contribution artifact (ADR-0033 decision 2's "submit
+   * Domain Pack contribution artifact (ADR-0133 decision 2's "submit
    * upstream -> contribution"). Gated to "owner", mirroring
    * ApproveOntologyExtensionProposal: only the tenant that vouches for its
    * own live extension nominates it for the shared catalog.

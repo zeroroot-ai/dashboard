@@ -2,18 +2,18 @@
 // that can be found in the LICENSE file in the repo root.
 
 // DomainPackService is the tenant-facing Domain Pack catalog + per-tenant
-// enable/disable lifecycle (ADR-0033). A Domain Pack is curated, versioned
+// enable/disable lifecycle (ADR-0133). A Domain Pack is curated, versioned
 // structure — taxonomy labels, ontology extensions, and technique -> CEL
-// predicate bindings — never code (ADR-0033 decision 1), shipped by the
-// platform through the standard SDK release/rollout pipeline (ADR-0033
+// predicate bindings — never code (ADR-0133 decision 1), shipped by the
+// platform through the standard SDK release/rollout pipeline (ADR-0133
 // decision 4).
 //
 // Enabling a pack for a tenant folds a DomainPackEnabled brain event
 // (Timeline-durable, replayable, mission-pinned) that loads its content into
-// that tenant's live World ONLY (ADR-0033: "per-tenant, not per-install").
+// that tenant's live World ONLY (ADR-0133: "per-tenant, not per-install").
 // Disabling folds DomainPackDisabled and removes it. This service is the
 // enablement LEVER ONLY — it never hot-reloads pack content; content ships
-// once, via a gibson release, and stays fixed until the next one (ADR-0033
+// once, via a gibson release, and stays fixed until the next one (ADR-0133
 // decision 4).
 //
 // Authorization: every RPC carries a (gibson.auth.v1.authz) annotation.
@@ -50,7 +50,7 @@ export type DomainPackCatalogEntry = Message<"gibson.tenant.v1.DomainPackCatalog
   version: number;
 
   /**
-   * author identifies who curates this pack (ADR-0033 decision 1): the
+   * author identifies who curates this pack (ADR-0133 decision 1): the
    * platform owner for a catalog pack.
    *
    * @generated from field: string author = 3;
@@ -58,7 +58,7 @@ export type DomainPackCatalogEntry = Message<"gibson.tenant.v1.DomainPackCatalog
   author: string;
 
   /**
-   * visibility is "public" or "private" (ADR-0033 decision 1). A catalog
+   * visibility is "public" or "private" (ADR-0133 decision 1). A catalog
    * entry is always "public" in practice — a "private" pack is a tenant
    * extension, which this service does not list.
    *
@@ -259,7 +259,7 @@ export const DomainPackService: GenService<{
   /**
    * ListDomainPackCatalog returns the curated Domain Packs this tenant may
    * enable. The set is the shipped catalog, filtered by the platform catalog
-   * gate (ADR-0033 decisions 1 and 5), mirroring ConnectorService.ListCatalog.
+   * gate (ADR-0133 decisions 1 and 5), mirroring ConnectorService.ListCatalog.
    * Named distinctly from ListCatalog (rather than reusing that RPC/message
    * name) because it lives in the same gibson.tenant.v1 package as
    * ConnectorService.ListCatalog — a second ListCatalogRequest/Response pair
