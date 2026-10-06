@@ -45,7 +45,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/ontology_extension.proto.
  */
 export const file_gibson_tenant_v1_ontology_extension: GenFile = /*@__PURE__*/
-  fileDesc("CilnaWJzb24vdGVuYW50L3YxL29udG9sb2d5X2V4dGVuc2lvbi5wcm90bxIQZ2lic29uLnRlbmFudC52MSKrAgoZT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbBI0CgRraW5kGAEgASgOMiYuZ2lic29uLnRlbmFudC52MS5PbnRvbG9neVByb3Bvc2FsS2luZBINCgVsYWJlbBgCIAEoCRI4CgZzdGF0dXMYBiABKA4yKC5naWJzb24udGVuYW50LnYxLk9udG9sb2d5UHJvcG9zYWxTdGF0dXMSEAoIcmV2aWV3ZXIYByABKAlKBAgDEARKBAgEEAVKBAgFEAZKBAgIEAlKBAgJEApKBAgKEAtSCnJlY3VycmVuY2VSDWxhc3RfcHJvcG9zZXJSCmxhc3RfY2xhaW1SDXJlamVjdF9yZWFzb25SCHByb21vdGVkUhlwcm9tb3RlZF90YXhvbm9teV92ZXJzaW9uIicKJUxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2Fsc1JlcXVlc3QiOQomTGlzdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxzUmVzcG9uc2VKBAgBEAJSCXByb3Bvc2FscyKCAQonQXBwcm92ZU9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxSZXF1ZXN0Ej4KBGtpbmQYASABKA4yJi5naWJzb24udGVuYW50LnYxLk9udG9sb2d5UHJvcG9zYWxLaW5kQgi6SAWCAQIQARIXCgVsYWJlbBgCIAEoCUIIukgFcgMYgCAiKgooQXBwcm92ZU9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxSZXNwb25zZSKdAQomUmVqZWN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlcXVlc3QSPgoEa2luZBgBIAEoDjImLmdpYnNvbi50ZW5hbnQudjEuT250b2xvZ3lQcm9wb3NhbEtpbmRCCLpIBYIBAhABEhcKBWxhYmVsGAIgASgJQgi6SAVyAxiAIBIaCgZyZWFzb24YAyABKAlCCrpIB3IFGICAgAgiKQonUmVqZWN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlc3BvbnNlIoEBCiZTdWJtaXRPbnRvbG9neUV4dGVuc2lvblVwc3RyZWFtUmVxdWVzdBI+CgRraW5kGAEgASgOMiYuZ2lic29uLnRlbmFudC52MS5PbnRvbG9neVByb3Bvc2FsS2luZEIIukgFggECEAESFwoFbGFiZWwYAiABKAlCCLpIBXIDGIAgIqEBCidTdWJtaXRPbnRvbG9neUV4dGVuc2lvblVwc3RyZWFtUmVzcG9uc2USFwoPYXVkaXRfcmVjb3JkX2lkGAUgASgJSgQIARACSgQIAhADSgQIAxAESgQIBBAFUglwYWNrX2pzb25SE3N1Z2dlc3RlZF9maWxlX3BhdGhSEnN1Z2dlc3RlZF9wcl90aXRsZVIRc3VnZ2VzdGVkX3ByX2JvZHkqkwEKFE9udG9sb2d5UHJvcG9zYWxLaW5kEiYKIk9OVE9MT0dZX1BST1BPU0FMX0tJTkRfVU5TUEVDSUZJRUQQABIlCiFPTlRPTE9HWV9QUk9QT1NBTF9LSU5EX05PREVfTEFCRUwQARIsCihPTlRPTE9HWV9QUk9QT1NBTF9LSU5EX1JFTEFUSU9OU0hJUF9UWVBFEAIqtgEKFk9udG9sb2d5UHJvcG9zYWxTdGF0dXMSKAokT05UT0xPR1lfUFJPUE9TQUxfU1RBVFVTX1VOU1BFQ0lGSUVEEAASJAogT05UT0xPR1lfUFJPUE9TQUxfU1RBVFVTX1BFTkRJTkcQARIlCiFPTlRPTE9HWV9QUk9QT1NBTF9TVEFUVVNfQVBQUk9WRUQQAhIlCiFPTlRPTE9HWV9QUk9QT1NBTF9TVEFUVVNfUkVKRUNURUQQAzKyBgoYT250b2xvZ3lFeHRlbnNpb25TZXJ2aWNlEsABCh5MaXN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbHMSNy5naWJzb24udGVuYW50LnYxLkxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2Fsc1JlcXVlc3QaOC5naWJzb24udGVuYW50LnYxLkxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2Fsc1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEsYBCiBBcHByb3ZlT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbBI5LmdpYnNvbi50ZW5hbnQudjEuQXBwcm92ZU9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxSZXF1ZXN0GjouZ2lic29uLnRlbmFudC52MS5BcHByb3ZlT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlc3BvbnNlIiuKtRgnCgVvd25lchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEsMBCh9SZWplY3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsEjguZ2lic29uLnRlbmFudC52MS5SZWplY3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVxdWVzdBo5LmdpYnNvbi50ZW5hbnQudjEuUmVqZWN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlc3BvbnNlIiuKtRgnCgVvd25lchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEsMBCh9TdWJtaXRPbnRvbG9neUV4dGVuc2lvblVwc3RyZWFtEjguZ2lic29uLnRlbmFudC52MS5TdWJtaXRPbnRvbG9neUV4dGVuc2lvblVwc3RyZWFtUmVxdWVzdBo5LmdpYnNvbi50ZW5hbnQudjEuU3VibWl0T250b2xvZ3lFeHRlbnNpb25VcHN0cmVhbVJlc3BvbnNlIiuKtRgnCgVvd25lchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABQlRaUmdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_gibson_auth_v1_options, file_buf_validate_validate]);
+  fileDesc("CilnaWJzb24vdGVuYW50L3YxL29udG9sb2d5X2V4dGVuc2lvbi5wcm90bxIQZ2lic29uLnRlbmFudC52MSK3AgoZT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbBI0CgRraW5kGAEgASgOMiYuZ2lic29uLnRlbmFudC52MS5PbnRvbG9neVByb3Bvc2FsS2luZBINCgVsYWJlbBgCIAEoCRISCgpyZWN1cnJlbmNlGAMgASgFEhUKDWxhc3RfcHJvcG9zZXIYBCABKAkSEgoKbGFzdF9jbGFpbRgFIAEoCRI4CgZzdGF0dXMYBiABKA4yKC5naWJzb24udGVuYW50LnYxLk9udG9sb2d5UHJvcG9zYWxTdGF0dXMSEAoIcmV2aWV3ZXIYByABKAkSFQoNcmVqZWN0X3JlYXNvbhgIIAEoCRIQCghwcm9tb3RlZBgJIAEoCBIhChlwcm9tb3RlZF90YXhvbm9teV92ZXJzaW9uGAogASgFIicKJUxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2Fsc1JlcXVlc3QiaAomTGlzdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxzUmVzcG9uc2USPgoJcHJvcG9zYWxzGAEgAygLMisuZ2lic29uLnRlbmFudC52MS5PbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsIoIBCidBcHByb3ZlT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlcXVlc3QSPgoEa2luZBgBIAEoDjImLmdpYnNvbi50ZW5hbnQudjEuT250b2xvZ3lQcm9wb3NhbEtpbmRCCLpIBYIBAhABEhcKBWxhYmVsGAIgASgJQgi6SAVyAxiAICIqCihBcHByb3ZlT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlc3BvbnNlIp0BCiZSZWplY3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVxdWVzdBI+CgRraW5kGAEgASgOMiYuZ2lic29uLnRlbmFudC52MS5PbnRvbG9neVByb3Bvc2FsS2luZEIIukgFggECEAESFwoFbGFiZWwYAiABKAlCCLpIBXIDGIAgEhoKBnJlYXNvbhgDIAEoCUIKukgHcgUYgICACCIpCidSZWplY3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVzcG9uc2UipAEKJlN1Ym1pdE9udG9sb2d5RXh0ZW5zaW9uVXBzdHJlYW1SZXF1ZXN0Ej4KBGtpbmQYASABKA4yJi5naWJzb24udGVuYW50LnYxLk9udG9sb2d5UHJvcG9zYWxLaW5kQgi6SAWCAQIQARIXCgVsYWJlbBgCIAEoCUIIukgFcgMYgCASIQoPaWRlbXBvdGVuY3lfa2V5GAMgASgJQgi6SAVyAxiAASKpAQonU3VibWl0T250b2xvZ3lFeHRlbnNpb25VcHN0cmVhbVJlc3BvbnNlEhEKCXBhY2tfanNvbhgBIAEoDBIbChNzdWdnZXN0ZWRfZmlsZV9wYXRoGAIgASgJEhoKEnN1Z2dlc3RlZF9wcl90aXRsZRgDIAEoCRIZChFzdWdnZXN0ZWRfcHJfYm9keRgEIAEoCRIXCg9hdWRpdF9yZWNvcmRfaWQYBSABKAkqkwEKFE9udG9sb2d5UHJvcG9zYWxLaW5kEiYKIk9OVE9MT0dZX1BST1BPU0FMX0tJTkRfVU5TUEVDSUZJRUQQABIlCiFPTlRPTE9HWV9QUk9QT1NBTF9LSU5EX05PREVfTEFCRUwQARIsCihPTlRPTE9HWV9QUk9QT1NBTF9LSU5EX1JFTEFUSU9OU0hJUF9UWVBFEAIqtgEKFk9udG9sb2d5UHJvcG9zYWxTdGF0dXMSKAokT05UT0xPR1lfUFJPUE9TQUxfU1RBVFVTX1VOU1BFQ0lGSUVEEAASJAogT05UT0xPR1lfUFJPUE9TQUxfU1RBVFVTX1BFTkRJTkcQARIlCiFPTlRPTE9HWV9QUk9QT1NBTF9TVEFUVVNfQVBQUk9WRUQQAhIlCiFPTlRPTE9HWV9QUk9QT1NBTF9TVEFUVVNfUkVKRUNURUQQAzKyBgoYT250b2xvZ3lFeHRlbnNpb25TZXJ2aWNlEsABCh5MaXN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbHMSNy5naWJzb24udGVuYW50LnYxLkxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2Fsc1JlcXVlc3QaOC5naWJzb24udGVuYW50LnYxLkxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2Fsc1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEsYBCiBBcHByb3ZlT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbBI5LmdpYnNvbi50ZW5hbnQudjEuQXBwcm92ZU9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxSZXF1ZXN0GjouZ2lic29uLnRlbmFudC52MS5BcHByb3ZlT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlc3BvbnNlIiuKtRgnCgVvd25lchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEsMBCh9SZWplY3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsEjguZ2lic29uLnRlbmFudC52MS5SZWplY3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVxdWVzdBo5LmdpYnNvbi50ZW5hbnQudjEuUmVqZWN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlc3BvbnNlIiuKtRgnCgVvd25lchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEsMBCh9TdWJtaXRPbnRvbG9neUV4dGVuc2lvblVwc3RyZWFtEjguZ2lic29uLnRlbmFudC52MS5TdWJtaXRPbnRvbG9neUV4dGVuc2lvblVwc3RyZWFtUmVxdWVzdBo5LmdpYnNvbi50ZW5hbnQudjEuU3VibWl0T250b2xvZ3lFeHRlbnNpb25VcHN0cmVhbVJlc3BvbnNlIiuKtRgnCgVvd25lchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABQlRaUmdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_gibson_auth_v1_options, file_buf_validate_validate]);
 
 /**
  * OntologyExtensionProposal is one taxonomy node label or relationship type
@@ -66,6 +66,24 @@ export type OntologyExtensionProposal = Message<"gibson.tenant.v1.OntologyExtens
   label: string;
 
   /**
+   * recurrence is how many independent times this exact (kind, label) has
+   * been sighted (taxonomy.PromotionGate.Observe's running count).
+   *
+   * @generated from field: int32 recurrence = 3;
+   */
+  recurrence: number;
+
+  /**
+   * @generated from field: string last_proposer = 4;
+   */
+  lastProposer: string;
+
+  /**
+   * @generated from field: string last_claim = 5;
+   */
+  lastClaim: string;
+
+  /**
    * @generated from field: gibson.tenant.v1.OntologyProposalStatus status = 6;
    */
   status: OntologyProposalStatus;
@@ -77,6 +95,31 @@ export type OntologyExtensionProposal = Message<"gibson.tenant.v1.OntologyExtens
    * @generated from field: string reviewer = 7;
    */
   reviewer: string;
+
+  /**
+   * reject_reason is set only when status is REJECTED.
+   *
+   * @generated from field: string reject_reason = 8;
+   */
+  rejectReason: string;
+
+  /**
+   * promoted is true once this proposal has actually been admitted into the
+   * tenant's live Taxonomy — the authoritative "is this a live tenant
+   * extension yet" signal. status == APPROVED alone does not imply promoted:
+   * the proposal may still be short of the recurrence settlement requires.
+   *
+   * @generated from field: bool promoted = 9;
+   */
+  promoted: boolean;
+
+  /**
+   * promoted_taxonomy_version is the resulting Taxonomy registry version
+   * once promoted is true; zero otherwise.
+   *
+   * @generated from field: int32 promoted_taxonomy_version = 10;
+   */
+  promotedTaxonomyVersion: number;
 };
 
 /**
@@ -103,6 +146,10 @@ export const ListOntologyExtensionProposalsRequestSchema: GenMessage<ListOntolog
  * @generated from message gibson.tenant.v1.ListOntologyExtensionProposalsResponse
  */
 export type ListOntologyExtensionProposalsResponse = Message<"gibson.tenant.v1.ListOntologyExtensionProposalsResponse"> & {
+  /**
+   * @generated from field: repeated gibson.tenant.v1.OntologyExtensionProposal proposals = 1;
+   */
+  proposals: OntologyExtensionProposal[];
 };
 
 /**
@@ -212,6 +259,15 @@ export type SubmitOntologyExtensionUpstreamRequest = Message<"gibson.tenant.v1.S
    * @generated from field: string label = 2;
    */
   label: string;
+
+  /**
+   * idempotency_key makes a retry safe (ADR-0028). A second request with the
+   * same key returns the result of the first request and does the work one
+   * time. An empty key turns the protection off for the call.
+   *
+   * @generated from field: string idempotency_key = 3;
+   */
+  idempotencyKey: string;
 };
 
 /**
@@ -240,10 +296,36 @@ export const SubmitOntologyExtensionUpstreamRequestSchema: GenMessage<SubmitOnto
  */
 export type SubmitOntologyExtensionUpstreamResponse = Message<"gibson.tenant.v1.SubmitOntologyExtensionUpstreamResponse"> & {
   /**
-   * audit_record_id names the place of the submitted fragment (gibson#712):
-   * the audit record with the action "ontology.extension.submitted", whose
-   * metadata holds the pack JSON. The Platform owner reviews it there.
+   * pack_json is the ontology.DomainPack fragment, JSON-encoded exactly as
+   * Export/Import already round-trip it (gibson#378) — never a new,
+   * one-off format invented for this RPC.
    *
+   * @generated from field: bytes pack_json = 1;
+   */
+  packJson: Uint8Array;
+
+  /**
+   * suggested_file_path is where this fragment belongs in the SDK's pack
+   * source tree, e.g. "packs/<name>.json".
+   *
+   * @generated from field: string suggested_file_path = 2;
+   */
+  suggestedFilePath: string;
+
+  /**
+   * suggested_pr_title and suggested_pr_body are ready-to-paste PR text for
+   * whoever opens the contribution PR.
+   *
+   * @generated from field: string suggested_pr_title = 3;
+   */
+  suggestedPrTitle: string;
+
+  /**
+   * @generated from field: string suggested_pr_body = 4;
+   */
+  suggestedPrBody: string;
+
+  /**
    * @generated from field: string audit_record_id = 5;
    */
   auditRecordId: string;

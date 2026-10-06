@@ -101,6 +101,16 @@ vi.mock('@/src/gen/authz/registry', () => ({
       unauthenticated: false,
       self: false,
     },
+    '/test/AdminTenantService/AdminListPendingRegistrations': {
+      method: '/test/AdminTenantService/AdminListPendingRegistrations',
+      service: 'test.AdminTenantService',
+      relation: 'platform_owner',
+      objectType: 'system_tenant',
+      objectDeriver: 'system_tenant',
+      allowedIdentities: 1, // USER
+      unauthenticated: false,
+      self: false,
+    },
     '/test/ServiceOnlyService/InternalMethod': {
       method: '/test/ServiceOnlyService/InternalMethod',
       service: 'test.ServiceOnlyService',
@@ -404,6 +414,35 @@ describe('assertAuthorized, object-scoped relations', () => {
   it('never throws an object-scoped reason: that verdict belongs to the UI hook only', async () => {
     setupMemberships('tenant-a', 'owner');
     await expect(assertAuthorized('/test/SecretsService/GetCredential')).resolves.toBeUndefined();
+  });
+});
+
+describe('assertAuthorized, system-tenant relation (dashboard#193)', () => {
+  const METHOD = '/test/AdminTenantService/AdminListPendingRegistrations';
+
+  // platform_owner is a grant on system_tenant:_system, never a tenant role.
+  // The dashboard cannot decide it, so it enforces the floor and forwards.
+  // ext-authz holds the grant and answers PERMISSION_DENIED itself.
+  it('FORWARDS the call for a tenant member, ext-authz decides the grant', async () => {
+    setupMemberships('tenant-a', 'member');
+    await expect(assertAuthorized(METHOD)).resolves.toBeUndefined();
+  });
+
+  it('still requires a session', async () => {
+    setupNoSession();
+    await expect(assertAuthorized(METHOD)).rejects.toMatchObject({ reason: 'no-session' });
+  });
+
+  it('still requires a membership on the active tenant', async () => {
+    setupMemberships('tenant-b', 'owner');
+    await expect(assertAuthorized(METHOD)).rejects.toMatchObject({ reason: 'not-a-member' });
+  });
+
+  it('still refuses the SERVICE-only system-tenant entry', async () => {
+    setupMemberships('tenant-a', 'owner');
+    await expect(assertAuthorized('/test/ServiceOnlyService/InternalMethod')).rejects.toMatchObject({
+      reason: 'service-only-rpc',
+    });
   });
 });
 

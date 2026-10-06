@@ -21,6 +21,8 @@ import {
 import { RunningAgentsBadge } from "@/components/gibson/agent-console/RunningAgentsBadge";
 import { ComplianceNavGate } from "@/components/gibson/compliance/ComplianceNavGate";
 import { COMPLIANCE_MENU_TITLE } from "@/components/gibson/compliance/texts";
+import { RegistrationsNavGate } from "@/components/gibson/registrations/RegistrationsNavGate";
+import { REGISTRATIONS_TEXT } from "@/components/gibson/registrations/texts";
 import {
   ActivityIcon,
   AlertTriangleIcon,
@@ -28,6 +30,7 @@ import {
   BoxIcon,
   CableIcon,
   UserIcon,
+  UserCheckIcon,
   UsersIcon,
   ChevronRight,
   CrosshairIcon,
@@ -65,6 +68,8 @@ import {
 
 type NavGroup = {
   title: string;
+  /** A gate on the whole group, label included. Same values as NavItem.gate. */
+  gate?: "compliance" | "registrations";
   items: NavItem;
 };
 
@@ -80,8 +85,10 @@ type NavItem = {
   /**
    * "compliance": the entry shows only for the Owner and the Admin, and only
    * when the tenant enabled a compliance pack (D56).
+   * "registrations": the entry shows only for a caller that may read the
+   * registration queue, the Platform owner (dashboard#193).
    */
-  gate?: "compliance";
+  gate?: "compliance" | "registrations";
   newTab?: boolean;
   items?: NavItem;
 }[];
@@ -250,6 +257,21 @@ export const navItems: NavGroup[] = [
     ],
   },
   {
+    // The Platform owner's surface. The whole group, label included, shows
+    // only for a caller that may read the registration queue.
+    title: "Platform",
+    gate: "registrations",
+    items: [
+      {
+        // The registration queue of the approval rung (ADR-0074,
+        // dashboard#193).
+        title: REGISTRATIONS_TEXT.menu,
+        href: "/dashboard/admin/registrations",
+        icon: UserCheckIcon,
+      },
+    ],
+  },
+  {
     title: "Configuration",
     items: [
       {
@@ -266,8 +288,15 @@ export const navItems: NavGroup[] = [
   },
 ];
 
-function GatedItem({ gate, children }: { gate?: "compliance"; children: React.ReactNode }) {
+function GatedItem({
+  gate,
+  children,
+}: {
+  gate?: "compliance" | "registrations";
+  children: React.ReactNode;
+}) {
   if (gate === "compliance") return <ComplianceNavGate>{children}</ComplianceNavGate>;
+  if (gate === "registrations") return <RegistrationsNavGate>{children}</RegistrationsNavGate>;
   return <>{children}</>;
 }
 
@@ -278,7 +307,8 @@ export function NavMain() {
   return (
     <>
       {navItems.map((nav) => (
-        <SidebarGroup key={nav.title}>
+        <GatedItem key={nav.title} gate={nav.gate}>
+        <SidebarGroup>
           <SidebarGroupLabel>{nav.title}</SidebarGroupLabel>
           <SidebarGroupContent className="flex flex-col gap-2">
             <SidebarMenu>
@@ -376,6 +406,7 @@ export function NavMain() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        </GatedItem>
       ))}
     </>
   );

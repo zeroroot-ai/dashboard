@@ -227,7 +227,14 @@ export async function assertAuthorized(method: string): Promise<void> {
   // daemon's to decide: ext-authz checks the caller's grant on the named
   // object. So the call is forwarded, and a caller without the grant gets
   // PERMISSION_DENIED from the daemon, not from here.
-  if (scopeOfEntry(entry) === 'per_object') return;
+  //
+  // A system-tenant entry (the "platform_owner" relation on
+  // system_tenant:_system) is the same case. The relation is a grant on the
+  // one platform object, never a tenant role, and the membership read above
+  // carries tenant roles only. ext-authz holds the grant and decides it
+  // (dashboard#193). The floor above still holds.
+  const scope = scopeOfEntry(entry);
+  if (scope === 'per_object' || scope === 'system_tenant') return;
 
   const verdict = decideAuthEntry(entry, membership.role);
   if (!verdict.allowed) {
